@@ -22,6 +22,7 @@ import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JEnumField;
 import com.google.gwt.dev.jjs.ast.JEnumType;
 import com.google.gwt.dev.jjs.ast.JExpression;
@@ -145,6 +146,10 @@ public class EnumOrdinalizer {
         return null;
       }
       return info.getFileName() + ": Line " + info.getStartLine();
+    }
+
+    public Set<String> getOrdinalizedNames() {
+      return allEnumsOrdinalized;
     }
 
     public int getNumOrdinalized() {
@@ -656,6 +661,26 @@ public class EnumOrdinalizer {
         // we transform 1.ordinal() into 1.
         ctx.replaceMe(x.getInstance());
       }
+    }
+
+    @Override
+    public void endVisit(JDeclarationStatement x, Context ctx) {
+      super.endVisit(x, ctx);
+      if (!(x.getVariableRef().getTarget() instanceof JEnumField)) {
+        return;
+      }
+
+      JEnumField enumField = (JEnumField) x.getVariableRef().getTarget();
+      if (!(canBeOrdinal(enumField.getEnclosingType()))) {
+        return;
+      }
+
+      // Also replace the declaration statement so that the enum instances are not constructed;
+      // eventually the field will be pruned but the declaration statement will only completely
+      // disappear if there are no side effects (constructing a new instance counts as side
+      // effects).
+      ctx.replaceMe(new JDeclarationStatement(x.getSourceInfo(), x.getVariableRef(),
+          program.getLiteralInt(enumField.ordinal())));
     }
 
     /**

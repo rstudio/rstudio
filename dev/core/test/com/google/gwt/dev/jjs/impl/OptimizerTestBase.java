@@ -133,6 +133,10 @@ public abstract class OptimizerTestBase extends JJSTestBase {
     public JDeclaredType findClass(String className) {
       return OptimizerTestBase.findDeclaredType(optimizedProgram, className);
     }
+
+    public JProgram getOptimizedProgram() {
+      return optimizedProgram;
+    }
   }
 
   /**

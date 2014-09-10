@@ -2198,6 +2198,10 @@ public class GwtAstBuilder {
         initializers.add(fieldRef);
       }
       JNewArray valuesArrayCopy = JNewArray.createInitializers(info, enumArrayType, initializers);
+      if (type.getEnumList().size() > MAX_INLINEABLE_ENUM_SIZE) {
+        // Only inline values() if it is small.
+        method.setInliningAllowed(false);
+      }
       implementMethod(method, valuesArrayCopy);
     }
 
@@ -2921,6 +2925,7 @@ public class GwtAstBuilder {
   private static final char[] _STRING = "_String".toCharArray();
   private static final String ARRAY_LENGTH_FIELD = "length";
 
+  private static final int MAX_INLINEABLE_ENUM_SIZE = 10;
   /**
    * Reflective access to {@link ForeachStatement#collectionElementType}.
    */
