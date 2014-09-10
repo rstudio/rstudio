@@ -170,9 +170,17 @@ public class StackTraceCreator {
 
     @Override
     public native void collect(Object t, Object jsThrown) /*-{
-      // TODO(goktug): optimize for Chrome by not evaluating stack (use Error.captureStackTrace)
-      t.stack = (jsThrown && jsThrown.stack) || @StackTraceCreator::makeException()().stack;
-     }-*/;
+      // Carefully crafted to delay the 'stack' property until stack trace construction as it is
+      // very costly in some browsers (e.g. Chrome).
+
+      var referenceThrown = jsThrown instanceof Object && "stack" in jsThrown
+          ? jsThrown
+          : @StackTraceCreator::makeException()();
+
+      @StackTraceCreator::addLazyProperty(*)(t, "stack", function() {
+        return referenceThrown.stack;
+      });
+    }-*/;
 
     @Override
     public StackTraceElement[] getStackTrace(Object t) {
@@ -376,6 +384,36 @@ public class StackTraceCreator {
 
   private static native JsArrayString split(Object e) /*-{
     return e.stack ? e.stack.split('\n') : [];
+  }-*/;
+
+  private static native void addLazyProperty(JavaScriptObject obj, String name,
+      JavaScriptObject getterFn) /*-{
+    if (Object.defineProperty) {
+      try {
+        Object.defineProperty(obj, name, {
+          configurable: true,
+          get: getterFn,
+          set: function(value) {
+            Object.defineProperty(this, name, {
+              value: value,
+              configurable: true,
+              writable: true,
+            });
+          },
+        });
+      } catch(defPropException) {
+        // This might happen because some old browsers like Safari5, IE8, have Object.defineProperty
+        // method which doesn't work on all objects.
+      };
+
+      // At this point we need to be sure that the property added, if not should fallback to eager.
+      if (name in obj) {
+        return;
+      }
+    }
+
+    // Fallback to eager property
+    obj[name] = getterFn();
   }-*/;
 
   private static native <T> T splice(T arr, int length) /*-{
