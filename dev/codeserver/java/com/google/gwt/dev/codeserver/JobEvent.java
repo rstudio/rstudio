@@ -18,9 +18,11 @@ package com.google.gwt.dev.codeserver;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefSchema;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSortedMap;
 
+import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 
@@ -39,6 +41,8 @@ public final class JobEvent {
   private final String message;
 
   private final CompileDir compileDir;
+  private final CompileStrategy compileStrategy;
+  private final ImmutableList<String> arguments;
 
   private JobEvent(Builder builder) {
     this.jobId = Preconditions.checkNotNull(builder.jobId);
@@ -49,6 +53,8 @@ public final class JobEvent {
 
     // The following fields may be null.
     this.compileDir = builder.compileDir;
+    this.compileStrategy = builder.compileStrategy;
+    this.arguments = ImmutableList.copyOf(builder.args);
 
     // Any new fields added should allow nulls for backward compatibility.
   }
@@ -99,9 +105,24 @@ public final class JobEvent {
   }
 
   /**
+   * Returns the strategy used to perform the compile or null if not available.
+   * (Normally available for finished compiles.)
+   */
+  public CompileStrategy getCompileStrategy() {
+    return compileStrategy;
+  }
+
+  /**
+   * The arguments passed to Super Dev Mode at startup, or null if not available.
+   */
+  public ImmutableList<String> getArguments() {
+    return arguments;
+  }
+
+  /**
    * Defines the lifecycle of a job.
    */
-  public static enum Status {
+  public enum Status {
     WAITING("waiting", "Waiting for the compiler to start"),
     COMPILING("compiling", "Compiling"),
     SERVING("serving", "Compiled output is ready"),
@@ -118,6 +139,28 @@ public final class JobEvent {
   }
 
   /**
+   * The approach taken to do the compile.
+   */
+  public enum CompileStrategy {
+    FULL("full"), // Compiled all the source.
+    INCREMENTAL("incremental"), // Only recompiled the source files that changed.
+    SKIPPED("skipped"); // Did not compile anything since nothing changed
+
+    final String jsonName;
+
+    CompileStrategy(String jsonName) {
+      this.jsonName = jsonName;
+    }
+
+    /**
+     * The string to use for serialization.
+     */
+    String getJsonName() {
+      return jsonName;
+    }
+  }
+
+  /**
    * Creates a JobEvent.
    * This is public to allow external tests of code that implements {@link JobChangeListener}.
    * Normally all JobEvents are created in the code server.
@@ -130,6 +173,8 @@ public final class JobEvent {
     private Status status;
     private String message;
     private CompileDir compileDir;
+    private CompileStrategy compileStrategy;
+    private List<String> args = ImmutableList.of();
 
     /**
      * A unique id for this job. Required.
@@ -187,6 +232,22 @@ public final class JobEvent {
      */
     public void setCompileDir(CompileDir compileDir) {
       this.compileDir = compileDir;
+    }
+
+    /**
+     * The strategy used to perform the compile.
+     * Optional.
+     */
+    public void setCompileStrategy(CompileStrategy compileStrategy) {
+      this.compileStrategy = compileStrategy;
+    }
+
+    /**
+     * The arguments passed to {@link Options#parseArgs} at startup.
+     * Optional but may not be null. If not set, defaults to the empty list.
+     */
+    public void setArguments(List<String> args) {
+      this.args = Preconditions.checkNotNull(args);
     }
 
     public JobEvent build() {

@@ -111,8 +111,7 @@ class Outbox {
    * Creates a Job whose output will be saved in this outbox.
    */
   Job makeJob(Map<String, String> bindingProperties, TreeLogger parentLogger) {
-    return new Job(this, bindingProperties, parentLogger,
-        options.getRecompileListener(), options.getJobChangeListener());
+    return new Job(this, bindingProperties, parentLogger, options);
   }
 
   /**

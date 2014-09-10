@@ -24,8 +24,6 @@ import com.google.gwt.core.linker.IFrameLinker;
 import com.google.gwt.dev.Compiler;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.CompilerOptions;
-import com.google.gwt.dev.IncrementalBuilder;
-import com.google.gwt.dev.IncrementalBuilder.BuildResultStatus;
 import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.NullRebuildCache;
 import com.google.gwt.dev.cfg.BindingProperty;
@@ -36,6 +34,7 @@ import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.ResourceLoader;
 import com.google.gwt.dev.cfg.ResourceLoaders;
 import com.google.gwt.dev.codeserver.Job.Result;
+import com.google.gwt.dev.codeserver.JobEvent.CompileStrategy;
 import com.google.gwt.dev.javac.UnitCacheSingleton;
 import com.google.gwt.dev.resource.impl.ResourceOracleImpl;
 import com.google.gwt.dev.resource.impl.ZipFileClassPathEntry;
@@ -59,7 +58,6 @@ class Recompiler {
   private final AppSpace appSpace;
   private final String inputModuleName;
 
-  private IncrementalBuilder incrementalBuilder;
   private String serverPrefix;
   private int compilesDone = 0;
   private Map<Map<String, String>, MinimalRebuildCache> minimalRebuildCacheForProperties =
@@ -155,14 +153,7 @@ class Recompiler {
 
     job.onStarted(compileId, compileDir);
 
-    boolean success;
-    if (options.shouldCompileIncremental()) {
-      job.onProgress("Compiling (incrementally)");
-      success = compileIncremental(compileLogger, compileDir);
-    } else {
-      success = compileMonolithic(compileLogger, compileDir, job);
-    }
-
+    boolean success = doCompile(compileLogger, compileDir, job);
     if (!success) {
       compileLogger.log(TreeLogger.Type.ERROR, "Compiler returned false");
       throw new UnableToCompleteException();
@@ -224,40 +215,7 @@ class Recompiler {
     return new Result(compileDir, null);
   }
 
-  private boolean compileIncremental(TreeLogger compileLogger, CompileDir compileDir) {
-    BuildResultStatus buildResultStatus;
-    // Perform a compile.
-    if (incrementalBuilder == null) {
-      // If it's the first compile.
-      ResourceLoader resources = ResourceLoaders.forClassLoader(Thread.currentThread());
-      resources = ResourceLoaders.forPathAndFallback(options.getSourcePath(), resources);
-      this.resourceLoader.set(resources);
-
-      incrementalBuilder = new IncrementalBuilder(inputModuleName,
-          compileDir.getWarDir().getPath(), compileDir.getWorkDir().getPath(),
-          compileDir.getGenDir().getPath(), resourceLoader.get());
-      buildResultStatus = incrementalBuilder.build(compileLogger);
-    } else {
-      // If it's a rebuild.
-      incrementalBuilder.setWarDir(compileDir.getWarDir().getPath());
-      buildResultStatus = incrementalBuilder.rebuild(compileLogger);
-    }
-
-    if (incrementalBuilder.isRootModuleKnown()) {
-      outputModuleName.set(incrementalBuilder.getRootModuleName());
-    }
-    // Unlike a monolithic compile, the incremental builder can successfully build but have no new
-    // output (for example when no files have changed). So it's important to only publish the new
-    // compileDir if it actually contains output.
-    if (buildResultStatus.isSuccess() && buildResultStatus.outputChanged()) {
-      publishedCompileDir = compileDir;
-    }
-    lastBuild.set(compileDir); // makes compile log available over HTTP
-
-    return buildResultStatus.isSuccess();
-  }
-
-  private boolean compileMonolithic(TreeLogger compileLogger, CompileDir compileDir, Job job)
+  private boolean doCompile(TreeLogger compileLogger, CompileDir compileDir, Job job)
       throws UnableToCompleteException {
 
     job.onProgress("Loading modules");
@@ -277,8 +235,10 @@ class Recompiler {
     InputSummary input = new InputSummary(bindingProperties, module);
     if (input.equals(lastBuildInput)) {
       compileLogger.log(Type.INFO, "skipped compile because no input files have changed");
+      job.setCompileStrategy(CompileStrategy.SKIPPED);
       return true;
     }
+
 
     job.onProgress("Compiling");
     // TODO: use speed tracer to get more compiler events?
@@ -288,6 +248,10 @@ class Recompiler {
 
     // Looks up the matching rebuild cache using the final set of overridden binding properties.
     MinimalRebuildCache minimalRebuildCache = getOrCreateMinimalRebuildCache(bindingProperties);
+
+    job.setCompileStrategy(minimalRebuildCache.isPopulated() ? CompileStrategy.INCREMENTAL :
+        CompileStrategy.FULL);
+
     boolean success = new Compiler(runOptions, minimalRebuildCache).run(compileLogger, module);
     if (success) {
       publishedCompileDir = compileDir;

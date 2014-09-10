@@ -18,8 +18,10 @@ package com.google.gwt.dev.codeserver;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.cfg.ModuleDef;
+import com.google.gwt.dev.codeserver.JobEvent.CompileStrategy;
 import com.google.gwt.dev.codeserver.JobEvent.Status;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSortedMap;
 import com.google.gwt.thirdparty.guava.common.util.concurrent.Futures;
 import com.google.gwt.thirdparty.guava.common.util.concurrent.ListenableFuture;
@@ -67,12 +69,15 @@ class Job {
 
   // Miscellaneous
 
+  private final ImmutableList<String> args;
+
   /**
    * The id to report to the recompile listener.
    */
   private int compileId = -1; // non-negative after the compile has started
 
   private CompileDir compileDir; // non-null after the compile has started
+  private CompileStrategy compileStrategy; // non-null after the compile has started
 
   private Exception listenerFailure;
 
@@ -83,16 +88,16 @@ class Job {
    * @param parentLogger  The parent of the logger that will be used for this job.
    */
   Job(Outbox box, Map<String, String> bindingProperties,
-      TreeLogger parentLogger, RecompileListener recompileListener,
-      JobChangeListener jobChangeListener) {
+      TreeLogger parentLogger, Options options) {
     this.id = chooseNextId(box);
     this.outbox = box;
     this.inputModuleName = box.getInputModuleName();
     // TODO: we will use the binding properties to find or create the outbox,
     // then take binding properties from the outbox here.
     this.bindingProperties = ImmutableSortedMap.copyOf(bindingProperties);
-    this.recompileListener = Preconditions.checkNotNull(recompileListener);
-    this.jobChangeListener = Preconditions.checkNotNull(jobChangeListener);
+    this.recompileListener = Preconditions.checkNotNull(options.getRecompileListener());
+    this.jobChangeListener = Preconditions.checkNotNull(options.getJobChangeListener());
+    this.args = Preconditions.checkNotNull(options.getArgs());
     this.logSupplier = new LogSupplier(parentLogger, id);
   }
 
@@ -214,10 +219,18 @@ class Job {
    * @throws IllegalStateException if the job is not running.
    */
   synchronized void onProgress(String stepMessage) {
-    if (table == null || table.getPublishedEvent(this).getStatus() != Status.COMPILING) {
-      throw new IllegalStateException("onProgress called for a job that isn't compiling: " + id);
-    }
+    checkIsCompiling("onProgress");
     publish(makeEvent(Status.COMPILING, stepMessage));
+  }
+
+  synchronized void setCompileStrategy(CompileStrategy strategy) {
+    checkIsCompiling("setCompileStrategy");
+    if (compileStrategy != null) {
+      throw new IllegalStateException("setCompileStrategy can only be set once per job");
+    }
+    this.compileStrategy = strategy;
+    // Not bothering to send an event just for this change, so it will be included
+    // in the next event.
   }
 
   /**
@@ -269,6 +282,8 @@ class Job {
     out.setStatus(status);
     out.setMessage(message);
     out.setCompileDir(compileDir);
+    out.setCompileStrategy(compileStrategy);
+    out.setArguments(args);
     return out.build();
   }
 
@@ -285,6 +300,12 @@ class Job {
       }
     }
     table.publish(event, getLogger());
+  }
+
+  private void checkIsCompiling(String methodName) {
+    if (table == null || table.getPublishedEvent(this).getStatus() != Status.COMPILING) {
+      throw new IllegalStateException(methodName + " called for a job that isn't compiling: " + id);
+    }
   }
 
   /**

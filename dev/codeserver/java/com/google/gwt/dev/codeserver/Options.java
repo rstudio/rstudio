@@ -27,6 +27,7 @@ import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.dev.util.arg.OptionLogLevel;
 import com.google.gwt.dev.util.arg.OptionSourceLevel;
 import com.google.gwt.dev.util.arg.SourceLevel;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.util.tools.ArgHandler;
 import com.google.gwt.util.tools.ArgHandlerDir;
 import com.google.gwt.util.tools.ArgHandlerExtra;
@@ -38,6 +39,7 @@ import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -46,7 +48,8 @@ import java.util.List;
  * <p>These flags are EXPERIMENTAL and subject to change.</p>
  */
 public class Options {
-  private boolean compileIncremental = false;
+  private ImmutableList<String> args;
+
   private boolean compilePerFile = false;
   private boolean noPrecompile = false;
   private boolean isCompileTest = false;
@@ -75,6 +78,11 @@ public class Options {
    * @return true if the arguments were parsed successfully.
    */
   public boolean parseArgs(String[] args) {
+    if (this.args != null) {
+      throw new IllegalStateException("parseArgs may only be called once");
+    }
+    this.args = ImmutableList.copyOf(Arrays.asList(args));
+
     boolean ok = new ArgProcessor().processArgs(args);
     if (!ok) {
       return false;
@@ -82,11 +90,6 @@ public class Options {
 
     if (isCompileTest && noPrecompile) {
       System.err.println("Usage: -noprecompile and -compiletest are incompatible");
-      return false;
-    }
-
-    if (compilePerFile && compileIncremental) {
-      System.err.println("Usage: -XcompilePerFile and -Xincremental are incompatible");
       return false;
     }
 
@@ -104,14 +107,21 @@ public class Options {
   }
 
   /**
+   * Returns the arguments passed to {@link #parseArgs}.
+   */
+  ImmutableList<String> getArgs() {
+    return args;
+  }
+
+  /**
    * A Java application that embeds Super Dev Mode can use this hook to find out
    * when compiles start and end.
    *
    * @deprecated replaced by {@link #setJobChangeListener}
    */
   @Deprecated
-  public void setRecompileListener(RecompileListener recompileListener) {
-    this.recompileListener = recompileListener;
+  public void setRecompileListener(RecompileListener listener) {
+    this.recompileListener = listener == null ? RecompileListener.NONE : listener;
   }
 
   RecompileListener getRecompileListener() {
@@ -124,8 +134,8 @@ public class Options {
    *
    * <p>Replaces {@link #setRecompileListener}
    */
-  public void setJobChangeListener(JobChangeListener jobChangeListener) {
-    this.jobChangeListener = jobChangeListener;
+  public void setJobChangeListener(JobChangeListener listener) {
+    this.jobChangeListener = listener == null ? JobChangeListener.NONE : listener;
   }
 
   JobChangeListener getJobChangeListener() {
@@ -151,13 +161,6 @@ public class Options {
    */
   boolean shouldAllowMissingSourceDir() {
     return allowMissingSourceDir;
-  }
-
-  /**
-   * Whether to compile a series of reusable libraries that are linked at the end.
-   */
-  boolean shouldCompileIncremental() {
-    return compileIncremental;
   }
 
   /**
@@ -258,7 +261,6 @@ public class Options {
       registerHandler(new ModuleNameArgument());
       registerHandler(new FailOnErrorFlag());
       registerHandler(new StrictResourcesFlag());
-      registerHandler(new CompileIncrementalFlag());
       registerHandler(new CompilePerFileFlag());
       registerHandler(new ArgHandlerSourceLevel(new OptionSourceLevel() {
         @Override
@@ -340,35 +342,6 @@ public class Options {
     @Override
     public boolean setFlag(boolean value) {
       compilePerFile = value;
-      return true;
-    }
-
-    @Override
-    public boolean getDefaultValue() {
-      return false;
-    }
-
-    @Override
-    public boolean isExperimental() {
-      return true;
-    }
-  }
-
-  private class CompileIncrementalFlag extends ArgHandlerFlag {
-
-    @Override
-    public String getLabel() {
-      return "incremental";
-    }
-
-    @Override
-    public String getPurposeSnippet() {
-      return "Compile and link the application as a set of separate libraries.";
-    }
-
-    @Override
-    public boolean setFlag(boolean value) {
-      compileIncremental = value;
       return true;
     }
 

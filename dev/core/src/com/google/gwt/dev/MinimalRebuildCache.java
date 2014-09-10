@@ -373,6 +373,13 @@ public class MinimalRebuildCache implements Serializable {
     return immediateTypeRelations;
   }
 
+  /**
+   * Returns true if there is cached data to reuse in the next recompile.
+   */
+  public boolean isPopulated() {
+    return !immediateTypeRelations.isEmpty();
+  }
+
   public IntTypeIdGenerator getIntTypeIdGenerator() {
     return intTypeIdGenerator;
   }
