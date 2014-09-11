@@ -37,9 +37,6 @@
     }
   };
 
-  // Reuse compute script base
-  __COMPUTE_SCRIPT_BASE__;
-
   // document.head does not exist in IE8
   var $head = $doc.head || $doc.getElementsByTagName('head')[0];
 
@@ -66,15 +63,21 @@
   var serverUrl = 'http://' + hostName + ':__SUPERDEV_PORT__';
   var nocacheUrl = serverUrl + '/__MODULE_NAME__/__MODULE_NAME__.nocache.js';
 
-  // Save supder-devmode url in session
+  // Save super-devmode url in session
   $wnd.sessionStorage[devModeHookKey] = nocacheUrl;
   // Save user.agent in session
   $wnd.sessionStorage[devModeSessionKey] = 'user.agent=' + ua + '&';
 
   // Set bookmarklet params in window
   $wnd.__gwt_bookmarklet_params = {'server_url': serverUrl};
-  // Save the original module base. (Returned by GWT.getModuleBaseURL.)
-  $wnd[devModeHookKey + ':moduleBase'] = computeScriptBase();
+
+  // Save the original module base. (Returned by GWT.getModuleBaseURL in the app)
+  // querySelector is in IE8
+  var script = $doc.querySelector("script[src*='/__MODULE_NAME__.nocache.js']");
+  // fallback to location if script is embedded (#8894)
+  var src = script && script.src || $wnd.location.href;
+  // Remove QS and hash fragment (#8895)
+  $wnd[devModeHookKey + ':moduleBase'] = src.replace(/[?#].*$/g,'').replace(/[^\/]+$/,'');
 
   // Needed in the real nocache.js logic
   $wnd.__gwt_activeModules['__MODULE_NAME__'].canRedirect = true;
