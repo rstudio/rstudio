@@ -32,6 +32,7 @@ import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNewArray;
+import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JNonNullType;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
@@ -90,7 +91,7 @@ import java.util.TreeSet;
  *
  * If there are enum classes that didn't get black-listed remaining, the
  * subsequent passes of the optimizer will be invoked. The first,
- * {@link EnumOrdinalizer.ReplaceEnumTypesWithInteger}, replaces the type info
+ * {@link ReplaceOrdinalizedEnumTypes}, replaces the type info
  * for each field or expression involved with a target enum constant with an
  * integer. Also replaces access to the field {@code ordinal} and to the method
  * {@code ordinal} with the appropriate ordinal value.
@@ -520,11 +521,12 @@ public class EnumOrdinalizer {
     @Override
     public boolean visit(JMethodCall x, Context ctx) {
       /*
-       * skip all calls to Enum.createValueOfMap, since they'd get falsely
-       * flagged for referencing $VALUES and for implicitly upcasting an array
-       * of an enum class, in the arg passing. This method is only used by the
-       * enumClass$Map class that gets generated for every enum class. Once
-       * ordinalization proceeds, this $Map class should be pruned.
+       * Skip all calls to Enum.createValueOfMap, since they'd get falsely
+       * flagged for implicitly upcasting an array of an enum class, in the
+       * arg passing. This method is only used by the enumClass$Map class to
+       * support Enum.valueOf(Class,String), which if reachable already prevents
+       * the enum from being ordinalized. Once ordinalization proceeds,
+       * this $Map class should be pruned.
        */
       if (x.getTarget() == enumCreateValueOfMapMethod) {
         return false;
@@ -617,7 +619,7 @@ public class EnumOrdinalizer {
    * ordinal int values; also replaces access to the ordinal field and class to
    * the ordinal() method with the corresponding int value.
    */
-  private class ReplaceEnumTypesWithInteger extends TypeRemapper {
+  private class ReplaceOrdinalizedEnumTypes extends TypeRemapper {
 
     @Override
     public boolean visit(JClassType x, Context ctx) {
@@ -645,22 +647,15 @@ public class EnumOrdinalizer {
           && !ctx.isLvalue()) {
         int ordinal = ((JEnumField) field).ordinal();
         ctx.replaceMe(program.getLiteralInt(ordinal));
-      } else if (x.getField() == enumOrdinalField &&
-          x.getInstance().getType() == JPrimitiveType.INT) {
-        // If it is a field access to ordinal, the instance would have already been replaced so
-        // we transform 1.ordinal into 1.
-        ctx.replaceMe(x.getInstance());
+        return;
       }
+      maybeReplaceOrdinalAccess(x.getInstance(), field, ctx);
     }
 
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
       super.endVisit(x, ctx);
-      if (x.getTarget() == enumOrdinalMethod && x.getInstance().getType() == JPrimitiveType.INT) {
-        // If it is a call to ordinal(), the instance would have already been replaced so
-        // we transform 1.ordinal() into 1.
-        ctx.replaceMe(x.getInstance());
-      }
+      maybeReplaceOrdinalAccess(x.getInstance(),x.getTarget(), ctx);
     }
 
     @Override
@@ -721,6 +716,19 @@ public class EnumOrdinalizer {
       }
 
       return null;
+    }
+
+    private void maybeReplaceOrdinalAccess(JExpression instance, JNode member, Context ctx) {
+      if (member  != enumOrdinalField && member != enumOrdinalMethod) {
+        return;
+      }
+
+      JType instanceType = instance.getType();
+      // Access to x.ordinal and x.ordinal() need to be replaced by x if the type was ordinalized.
+      // Ordinalized types in this stage can also appear as primitive ints.
+      if (instanceType == JPrimitiveType.INT || canBeOrdinal(instanceType)) {
+        ctx.replaceMe(instance);
+      }
     }
   }
 
@@ -807,7 +815,7 @@ public class EnumOrdinalizer {
     }
 
     // Replace enum type refs
-    ReplaceEnumTypesWithInteger replaceEnums = new ReplaceEnumTypesWithInteger();
+    ReplaceOrdinalizedEnumTypes replaceEnums = new ReplaceOrdinalizedEnumTypes();
     replaceEnums.accept(program);
     stats.recordModified(replaceEnums.getNumMods());
 

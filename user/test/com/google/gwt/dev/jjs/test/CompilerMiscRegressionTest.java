@@ -233,10 +233,31 @@ public class CompilerMiscRegressionTest extends GWTTestCase {
   /**
    * Tests that enum ordinalizer does not incorrectly optimize {@code MyEnum}.
    * <p>
-   * Test for issue 8846:.
+   * Test for issue 8846.
    */
   public void testMyEnum() {
     assertEquals(2, MyEnum.B.getPriority());
+  }
+
+  enum OrderingProblem {
+    A,
+    B;
+
+    public static OrderingProblem getPriority1() {
+      if (new Integer(1).toString().isEmpty()) {
+        return B;
+      }
+      return A;
+    }
+  }
+
+  /**
+   * Test for regression introduced in patch https://gwt-review.googlesource.com/#/c/9083; where
+   * depending on the order in which references to the enum class were encountered, some instances
+   * were not correctly replaced .
+   */
+  public void testOrderingProblem() {
+    assertEquals(OrderingProblem.A.ordinal(), OrderingProblem.getPriority1().ordinal());
   }
 
   /**
