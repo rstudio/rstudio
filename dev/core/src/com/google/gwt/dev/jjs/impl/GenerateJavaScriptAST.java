@@ -3570,7 +3570,7 @@ public class GenerateJavaScriptAST {
   }
 
   private void assumeAllClassesCanObserveUninitializedSubclassFields(JProgram program) {
-    canObserveSubclassFields.addAll(program.getModuleDeclaredTypes());
+    canObserveSubclassFields.addAll(program.getDeclaredTypes());
   }
 
   private Pair<JavaToJavaScriptMap, Set<JsNode>> execImpl() {

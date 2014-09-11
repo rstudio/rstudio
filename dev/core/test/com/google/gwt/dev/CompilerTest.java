@@ -119,6 +119,7 @@ public class CompilerTest extends ArgProcessorTestBase {
       JavaResourceBase.createMockJavaResource("com.foo.SimpleModel",
           "package com.foo;",
           "public class SimpleModel {",
+          "  private int value = Constants.CONSTANT;",
           "  public void copyFrom(Object object) {}",
           "}");
 
@@ -126,6 +127,7 @@ public class CompilerTest extends ArgProcessorTestBase {
       JavaResourceBase.createMockJavaResource("com.foo.SimpleModel",
           "package com.foo;",
           "public class SimpleModel {",
+          "  private int value = Constants.CONSTANT;",
           "  public void copyFrom(SimpleModel that) {}",
           "}");
 
@@ -135,6 +137,20 @@ public class CompilerTest extends ArgProcessorTestBase {
           "<source path=''/>",
           "<entry-point class='com.foo.TestEntryPoint'/>",
           "</module>");
+
+  private MockJavaResource constantsModelResource =
+      JavaResourceBase.createMockJavaResource("com.foo.Constants",
+          "package com.foo;",
+          "public class Constants {",
+          "  public static final int CONSTANT = 0;",
+          "}");
+
+  private MockJavaResource modifiedConstantsModelResource =
+      JavaResourceBase.createMockJavaResource("com.foo.Constants",
+          "package com.foo;",
+          "public class Constants {",
+          "  public static final int CONSTANT = 2;",
+          "}");
 
   private MockResource resourceReadingGeneratorModuleResource =
       JavaResourceBase.createMockResource("com/foo/SimpleModule.gwt.xml",
@@ -703,7 +719,8 @@ public class CompilerTest extends ArgProcessorTestBase {
     File relinkApplicationDir = Files.createTempDir();
 
     String originalJs = compileToJs(relinkApplicationDir, "com.foo.SimpleModule", Lists
-        .newArrayList(simpleModuleResource, simpleModelEntryPointResource, simpleModelResource),
+        .newArrayList(simpleModuleResource, simpleModelEntryPointResource, simpleModelResource,
+            constantsModelResource),
         relinkMinimalRebuildCache, emptySet, output);
 
     // Compile again with absolutely no file changes and reusing the minimalRebuildCache.
@@ -719,7 +736,8 @@ public class CompilerTest extends ArgProcessorTestBase {
     File relinkApplicationDir = Files.createTempDir();
 
     String originalJs = compileToJs(relinkApplicationDir, "com.foo.SimpleModule", Lists
-        .newArrayList(simpleModuleResource, simpleModelEntryPointResource, simpleModelResource),
+        .newArrayList(simpleModuleResource, simpleModelEntryPointResource, simpleModelResource,
+            constantsModelResource),
         relinkMinimalRebuildCache, emptySet, output);
 
     // Compile again with the same source but a new date stamp on SimpleModel and reusing the
@@ -745,7 +763,8 @@ public class CompilerTest extends ArgProcessorTestBase {
   private void checkPerFileRecompile_functionSignatureChange(JsOutputOption output)
       throws UnableToCompleteException, IOException, InterruptedException {
     checkRecompiledModifiedApp("com.foo.SimpleModule",
-        Lists.newArrayList(simpleModuleResource, simpleModelEntryPointResource),
+        Lists.newArrayList(simpleModuleResource, simpleModelEntryPointResource,
+            constantsModelResource),
         simpleModelResource, modifiedFunctionSignatureSimpleModelResource,
         stringSet("com.foo.TestEntryPoint", "com.foo.SimpleModel"), output);
   }
