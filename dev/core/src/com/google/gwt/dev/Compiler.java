@@ -31,9 +31,9 @@ import com.google.gwt.dev.shell.CheckForUpdates.UpdateResult;
 import com.google.gwt.dev.util.Memory;
 import com.google.gwt.dev.util.PersistenceBackedObject;
 import com.google.gwt.dev.util.Util;
-import com.google.gwt.dev.util.arg.ArgHandlerCompilePerFile;
 import com.google.gwt.dev.util.arg.ArgHandlerDeployDir;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
+import com.google.gwt.dev.util.arg.ArgHandlerIncrementalCompile;
 import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
 import com.google.gwt.dev.util.arg.ArgHandlerSaveSourceOutput;
 import com.google.gwt.dev.util.arg.ArgHandlerWarDir;
@@ -63,7 +63,7 @@ public class Compiler {
 
       // Override the ArgHandlerWorkDirRequired in the super class.
       registerHandler(new ArgHandlerWorkDirOptional(options));
-      registerHandler(new ArgHandlerCompilePerFile(options));
+      registerHandler(new ArgHandlerIncrementalCompile(options));
 
       registerHandler(new ArgHandlerWarDir(options));
       registerHandler(new ArgHandlerDeployDir(options));

@@ -21,32 +21,28 @@ import com.google.gwt.util.tools.ArgHandlerFlag;
  * Whether recompiles should process only changed files and construct JS output by
  * linking old and new JS on a per class basis.
  */
-public class ArgHandlerCompilePerFile extends ArgHandlerFlag {
+public class ArgHandlerIncrementalCompile extends ArgHandlerFlag {
 
-  private final OptionCompilePerFile option;
+  private final OptionIncrementalCompile option;
 
-  public ArgHandlerCompilePerFile(OptionCompilePerFile option) {
+  public ArgHandlerIncrementalCompile(OptionIncrementalCompile option) {
     this.option = option;
+    addTagValue("-XcompilePerFile", true);
   }
 
   @Override
   public String getPurposeSnippet() {
-    return "Compile, link and recompile on a per-file basis.";
+    return "Compiles faster by reusing data from the previous compile.";
   }
 
   @Override
   public String getLabel() {
-    return "compilePerFile";
+    return "incremental";
   }
 
   @Override
   public boolean setFlag(boolean value) {
     option.setCompilePerFile(value);
-    return true;
-  }
-
-  @Override
-  public boolean isExperimental() {
     return true;
   }
 

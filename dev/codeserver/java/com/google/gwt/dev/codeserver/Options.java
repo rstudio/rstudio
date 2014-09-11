@@ -19,10 +19,12 @@ package com.google.gwt.dev.codeserver;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.ArgProcessorBase;
 import com.google.gwt.dev.cfg.ModuleDef;
+import com.google.gwt.dev.util.arg.ArgHandlerIncrementalCompile;
 import com.google.gwt.dev.util.arg.ArgHandlerJsInteropMode;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.ArgHandlerSourceLevel;
 import com.google.gwt.dev.util.arg.JsInteropMode;
+import com.google.gwt.dev.util.arg.OptionIncrementalCompile;
 import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.dev.util.arg.OptionLogLevel;
 import com.google.gwt.dev.util.arg.OptionSourceLevel;
@@ -54,7 +56,7 @@ public class Options {
   private ImmutableList<String> args;
   private Set<String> tags = new LinkedHashSet<String>();
 
-  private boolean compilePerFile = false;
+  private boolean incremental = false;
   private boolean noPrecompile = false;
   private boolean isCompileTest = false;
   private File workDir;
@@ -102,7 +104,7 @@ public class Options {
       return false;
     }
 
-    if (compilePerFile && !noPrecompile) {
+    if (incremental && !noPrecompile) {
       System.out.println("Turning off precompile in compilePerFile mode.");
       noPrecompile = true;
     }
@@ -205,7 +207,7 @@ public class Options {
    * shouldCompileIncremental().
    */
   boolean shouldCompilePerFile() {
-    return compilePerFile;
+    return incremental;
   }
 
   /**
@@ -292,14 +294,23 @@ public class Options {
       registerHandler(new CompileTestFlag());
       registerHandler(new CompileTestRecompilesFlag());
       registerHandler(new FailOnErrorFlag());
-      registerHandler(new IncrementalCompileFlag());
       registerHandler(new ModuleNameArgument());
       registerHandler(new NoPrecompileFlag());
       registerHandler(new PortFlag());
       registerHandler(new SourceFlag());
       registerHandler(new StrictResourcesFlag());
       registerHandler(new WorkDirFlag());
+      registerHandler(new ArgHandlerIncrementalCompile(new OptionIncrementalCompile() {
+        @Override
+        public boolean shouldCompilePerFile() {
+          return incremental;
+        }
 
+        @Override
+        public void setCompilePerFile(boolean enabled) {
+          incremental = enabled;
+        }
+      }));
       registerHandler(new ArgHandlerSourceLevel(new OptionSourceLevel() {
         @Override
         public SourceLevel getSourceLevel() {
@@ -361,34 +372,6 @@ public class Options {
     @Override
     public boolean getDefaultValue() {
       return !noPrecompile;
-    }
-  }
-
-  private class IncrementalCompileFlag extends ArgHandlerFlag {
-
-    public IncrementalCompileFlag() {
-      addTagValue("-XcompilePerFile", true);
-    }
-
-    @Override
-    public String getLabel() {
-      return "incremental";
-    }
-
-    @Override
-    public String getPurposeSnippet() {
-      return "Compiles faster by reusing data from the previous compile.";
-    }
-
-    @Override
-    public boolean setFlag(boolean value) {
-      compilePerFile = value;
-      return true;
-    }
-
-    @Override
-    public boolean getDefaultValue() {
-      return false;
     }
   }
 

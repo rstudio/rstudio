@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.DevMode.HostedModeOptions;
 import com.google.gwt.dev.cfg.ModuleDef;
+import com.google.gwt.dev.util.arg.JsInteropMode;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
@@ -87,6 +88,13 @@ public class SuperDevListener implements CodeServerListener {
     if (options.getLogLevel() != null) {
       args.add("-logLevel");
       args.add(String.valueOf(options.getLogLevel()));
+    }
+    if (options.getJsInteropMode() != JsInteropMode.NONE) {
+      args.add("-XjsInteropMode");
+      args.add(options.getJsInteropMode().toString());
+    }
+    if (options.shouldCompilePerFile()) {
+      args.add("-incremental");
     }
     for (String mod : options.getModuleNames()) {
       args.add(mod);

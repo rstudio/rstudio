@@ -19,7 +19,7 @@ package com.google.gwt.dev.util.arg;
  * Whether recompiles should process only changed files and construct JS output by
  * linking old and new JS on a per class basis.
  */
-public interface OptionCompilePerFile {
+public interface OptionIncrementalCompile {
 
   /**
    * Whether monolithic recompiles should process only changed files and construct JS output by
