@@ -25,7 +25,10 @@ import com.google.gwt.resources.ext.ResourceContext;
 
 import junit.framework.TestCase;
 
-import org.easymock.EasyMock;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
@@ -40,38 +43,33 @@ public class CssOutputTestCase extends TestCase {
 
   public void testOutputCssMapArtifact() throws UnableToCompleteException {
     UnitTestTreeLogger testLogger = new UnitTestTreeLogger.Builder().createLogger();
-    ResourceContext mockResourceContext = EasyMock.createMock(ResourceContext.class);
+    ResourceContext mockResourceContext = mock(ResourceContext.class);
     Map<JMethod, String> testMap = new HashMap<JMethod, String>();
-    OutputStream mockOutputStream = EasyMock.createMock(OutputStream.class);
-    GeneratorContext mockGeneratorContext = EasyMock.createMock(GeneratorContext.class);
-    GeneratedResource mockGeneratedResource = EasyMock.createMock(GeneratedResource.class);
+    OutputStream mockOutputStream = mock(OutputStream.class);
+    GeneratorContext mockGeneratorContext = mock(GeneratorContext.class);
+    GeneratedResource mockGeneratedResource = mock(GeneratedResource.class);
 
-    EasyMock.expect(mockResourceContext.getGeneratorContext()).andReturn(mockGeneratorContext);
-    EasyMock.expectLastCall().times(2);
-    EasyMock.expect(mockGeneratorContext.tryCreateResource(
-        testLogger, "cssResource/com.test.Bundle.cssMethod.cssmap")).andReturn(mockOutputStream);
-    EasyMock.expect(mockGeneratorContext.commitResource(testLogger, mockOutputStream)).andReturn(
+    when(mockResourceContext.getGeneratorContext()).thenReturn(mockGeneratorContext);
+    when(mockGeneratorContext.tryCreateResource(
+        testLogger, "cssResource/com.test.Bundle.cssMethod.cssmap")).thenReturn(mockOutputStream);
+    when(mockGeneratorContext.commitResource(testLogger, mockOutputStream)).thenReturn(
         mockGeneratedResource);
 
-    JMethod method = EasyMock.createMock(JMethod.class);
-    JClassType bundleType = EasyMock.createMock(JClassType.class);
-    EasyMock.expect(method.getEnclosingType()).andReturn(bundleType);
-    EasyMock.expect(bundleType.getQualifiedSourceName()).andReturn("com.test.Bundle");
-    EasyMock.expect(method.getName()).andReturn("cssMethod");
-
-    EasyMock.replay(mockResourceContext);
-    EasyMock.replay(mockGeneratorContext);
-    EasyMock.replay(method);
-    EasyMock.replay(bundleType);
+    JMethod method = mock(JMethod.class);
+    JClassType bundleType = mock(JClassType.class);
+    when(method.getEnclosingType()).thenReturn(bundleType);
+    when(bundleType.getQualifiedSourceName()).thenReturn("com.test.Bundle");
+    when(method.getName()).thenReturn("cssMethod");
 
     CssResourceGenerator crg = new CssResourceGenerator();
+    // Test the method
     crg.outputCssMapArtifact(testLogger, mockResourceContext, method, testMap);
 
     testLogger.assertCorrectLogEntries();
-    EasyMock.verify(mockResourceContext);
-    EasyMock.verify(mockGeneratorContext);
-    EasyMock.verify(method);
-    EasyMock.verify(bundleType);
+
+    verify(mockGeneratorContext).tryCreateResource(testLogger, "cssResource/com.test.Bundle.cssMethod.cssmap");
+    verify(mockGeneratorContext).commitResource(testLogger, mockOutputStream);
+    verifyNoMoreInteractions(mockGeneratorContext);
   }
 
   public void testOutputCssMapArtifactThrowOnTryCreateResource() throws UnableToCompleteException {
@@ -79,68 +77,53 @@ public class CssOutputTestCase extends TestCase {
     builder.expectWarn(
         "Could not create resource: cssResource/com.test.Bundle.cssMethod.cssmap", null);
     UnitTestTreeLogger testLogger =  builder.createLogger();
-    ResourceContext mockResourceContext = EasyMock.createMock(ResourceContext.class);
+    ResourceContext mockResourceContext = mock(ResourceContext.class);
     Map<JMethod, String> testMap = new HashMap<JMethod, String>();
-    OutputStream mockOutputStream = EasyMock.createMock(OutputStream.class);
-    GeneratorContext mockGeneratorContext = EasyMock.createMock(GeneratorContext.class);
-    GeneratedResource mockGeneratedResource = EasyMock.createMock(GeneratedResource.class);
+    GeneratorContext mockGeneratorContext = mock(GeneratorContext.class);
 
-    EasyMock.expect(mockResourceContext.getGeneratorContext()).andReturn(mockGeneratorContext);
-    EasyMock.expect(mockGeneratorContext.tryCreateResource(testLogger,
-        "cssResource/com.test.Bundle.cssMethod.cssmap")).andThrow(new UnableToCompleteException());
+    when(mockResourceContext.getGeneratorContext()).thenReturn(mockGeneratorContext);
+    when(mockGeneratorContext.tryCreateResource(testLogger,
+        "cssResource/com.test.Bundle.cssMethod.cssmap")).thenThrow(new UnableToCompleteException());
 
-    JMethod method = EasyMock.createMock(JMethod.class);
-    JClassType bundleType = EasyMock.createMock(JClassType.class);
-    EasyMock.expect(method.getEnclosingType()).andReturn(bundleType);
-    EasyMock.expect(bundleType.getQualifiedSourceName()).andReturn("com.test.Bundle");
-    EasyMock.expect(method.getName()).andReturn("cssMethod");
-
-    EasyMock.replay(mockResourceContext);
-    EasyMock.replay(mockGeneratorContext);
-    EasyMock.replay(method);
-    EasyMock.replay(bundleType);
+    JMethod method = mock(JMethod.class);
+    JClassType bundleType = mock(JClassType.class);
+    when(method.getEnclosingType()).thenReturn(bundleType);
+    when(bundleType.getQualifiedSourceName()).thenReturn("com.test.Bundle");
+    when(method.getName()).thenReturn("cssMethod");
 
     CssResourceGenerator crg = new CssResourceGenerator();
     crg.outputCssMapArtifact(testLogger, mockResourceContext, method, testMap);
 
     testLogger.assertCorrectLogEntries();
-    EasyMock.verify(mockResourceContext);
-    EasyMock.verify(mockGeneratorContext);
-    EasyMock.verify(method);
-    EasyMock.verify(bundleType);
+
+    verify(mockGeneratorContext).tryCreateResource(testLogger, "cssResource/com.test.Bundle.cssMethod.cssmap");
+    verifyNoMoreInteractions(mockGeneratorContext);
   }
 
   public void testOutputCssMapArtifactReturnNullOutputString() throws UnableToCompleteException {
     UnitTestTreeLogger testLogger = new UnitTestTreeLogger.Builder().createLogger();
-    ResourceContext mockResourceContext = EasyMock.createMock(ResourceContext.class);
+    ResourceContext mockResourceContext = mock(ResourceContext.class);
     Map<JMethod, String> testMap = new HashMap<JMethod, String>();
-    OutputStream mockOutputStream = EasyMock.createMock(OutputStream.class);
-    GeneratorContext mockGeneratorContext = EasyMock.createMock(GeneratorContext.class);
-    GeneratedResource mockGeneratedResource = EasyMock.createMock(GeneratedResource.class);
+    GeneratorContext mockGeneratorContext = mock(GeneratorContext.class);
 
-    EasyMock.expect(mockResourceContext.getGeneratorContext()).andReturn(mockGeneratorContext);
-    EasyMock.expect(mockGeneratorContext.tryCreateResource(
-        testLogger, "cssResource/com.test.Bundle.cssMethod.cssmap")).andReturn(null);
+    when(mockResourceContext.getGeneratorContext()).thenReturn(mockGeneratorContext);
+    when(mockGeneratorContext.tryCreateResource(
+        testLogger, "cssResource/com.test.Bundle.cssMethod.cssmap")).thenReturn(null);
 
-    JMethod method = EasyMock.createMock(JMethod.class);
-    JClassType bundleType = EasyMock.createMock(JClassType.class);
-    EasyMock.expect(method.getEnclosingType()).andReturn(bundleType);
-    EasyMock.expect(bundleType.getQualifiedSourceName()).andReturn("com.test.Bundle");
-    EasyMock.expect(method.getName()).andReturn("cssMethod");
-
-    EasyMock.replay(mockResourceContext);
-    EasyMock.replay(mockGeneratorContext);
-    EasyMock.replay(method);
-    EasyMock.replay(bundleType);
+    JMethod method = mock(JMethod.class);
+    JClassType bundleType = mock(JClassType.class);
+    when(method.getEnclosingType()).thenReturn(bundleType);
+    when(bundleType.getQualifiedSourceName()).thenReturn("com.test.Bundle");
+    when(method.getName()).thenReturn("cssMethod");
 
     CssResourceGenerator crg = new CssResourceGenerator();
     crg.outputCssMapArtifact(testLogger, mockResourceContext, method, testMap);
 
     testLogger.assertCorrectLogEntries();
-    EasyMock.verify(mockResourceContext);
-    EasyMock.verify(mockGeneratorContext);
-    EasyMock.verify(method);
-    EasyMock.verify(bundleType);
+
+    verify(mockGeneratorContext).tryCreateResource(testLogger,
+        "cssResource/com.test.Bundle.cssMethod.cssmap");
+    verifyNoMoreInteractions(mockGeneratorContext);
   }
 
   public void testOutputCssMapArtifactThrowOnCommitResource() throws UnableToCompleteException {
@@ -148,89 +131,69 @@ public class CssOutputTestCase extends TestCase {
     builder.expectWarn(
         "Error trying to commit artifact: cssResource/com.test.Bundle.cssMethod.cssmap", null);
     UnitTestTreeLogger testLogger =  builder.createLogger();
-    ResourceContext mockResourceContext = EasyMock.createMock(ResourceContext.class);
+    ResourceContext mockResourceContext = mock(ResourceContext.class);
     Map<JMethod, String> testMap = new HashMap<JMethod, String>();
-    OutputStream mockOutputStream = EasyMock.createMock(OutputStream.class);
-    GeneratorContext mockGeneratorContext = EasyMock.createMock(GeneratorContext.class);
-    GeneratedResource mockGeneratedResource = EasyMock.createMock(GeneratedResource.class);
+    OutputStream mockOutputStream = mock(OutputStream.class);
+    GeneratorContext mockGeneratorContext = mock(GeneratorContext.class);
 
-    EasyMock.expect(mockResourceContext.getGeneratorContext()).andReturn(mockGeneratorContext);
-    EasyMock.expectLastCall().times(2);
-    EasyMock.expect(mockGeneratorContext.tryCreateResource(
-        testLogger, "cssResource/com.test.Bundle.cssMethod.cssmap")).andReturn(mockOutputStream);
-    EasyMock.expect(mockGeneratorContext.commitResource(testLogger, mockOutputStream)).andThrow(
+    when(mockResourceContext.getGeneratorContext()).thenReturn(mockGeneratorContext);
+    when(mockGeneratorContext.tryCreateResource(
+        testLogger, "cssResource/com.test.Bundle.cssMethod.cssmap")).thenReturn(mockOutputStream);
+    when(mockGeneratorContext.commitResource(testLogger, mockOutputStream)).thenThrow(
         new UnableToCompleteException());
 
-    JMethod method = EasyMock.createMock(JMethod.class);
-    JClassType bundleType = EasyMock.createMock(JClassType.class);
-    EasyMock.expect(method.getEnclosingType()).andReturn(bundleType);
-    EasyMock.expect(bundleType.getQualifiedSourceName()).andReturn("com.test.Bundle");
-    EasyMock.expect(method.getName()).andReturn("cssMethod");
-
-    EasyMock.replay(mockResourceContext);
-    EasyMock.replay(mockGeneratorContext);
-    EasyMock.replay(method);
-    EasyMock.replay(bundleType);
+    JMethod method = mock(JMethod.class);
+    JClassType bundleType = mock(JClassType.class);
+    when(method.getEnclosingType()).thenReturn(bundleType);
+    when(bundleType.getQualifiedSourceName()).thenReturn("com.test.Bundle");
+    when(method.getName()).thenReturn("cssMethod");
 
     CssResourceGenerator crg = new CssResourceGenerator();
     crg.outputCssMapArtifact(testLogger, mockResourceContext, method, testMap);
 
     testLogger.assertCorrectLogEntries();
-    EasyMock.verify(mockResourceContext);
-    EasyMock.verify(mockGeneratorContext);
-    EasyMock.verify(method);
-    EasyMock.verify(bundleType);
+
+    verify(mockGeneratorContext).tryCreateResource(testLogger, "cssResource/com.test.Bundle.cssMethod.cssmap");
+    verify(mockGeneratorContext).commitResource(testLogger, mockOutputStream);
   }
 
   public void testOutputCssMapArtifactWithTestData() throws UnableToCompleteException {
     UnitTestTreeLogger testLogger = new UnitTestTreeLogger.Builder().createLogger();
-    ResourceContext mockResourceContext = EasyMock.createMock(ResourceContext.class);
-    JMethod mockJMethod1 = EasyMock.createMock(JMethod.class);
-    JMethod mockJMethod2 = EasyMock.createMock(JMethod.class);
-    JMethod mockJMethod3 = EasyMock.createMock(JMethod.class);
-    JClassType mockJClassType1 = EasyMock.createMock(JClassType.class);
-    JClassType mockJClassType2 = EasyMock.createMock(JClassType.class);
-    JClassType mockJClassType3 = EasyMock.createMock(JClassType.class);
+    ResourceContext mockResourceContext = mock(ResourceContext.class);
+    JMethod mockJMethod1 = mock(JMethod.class);
+    JMethod mockJMethod2 = mock(JMethod.class);
+    JMethod mockJMethod3 = mock(JMethod.class);
+    JClassType mockJClassType1 = mock(JClassType.class);
+    JClassType mockJClassType2 = mock(JClassType.class);
+    JClassType mockJClassType3 = mock(JClassType.class);
     Map<JMethod, String> testMap = new LinkedHashMap<JMethod, String>();
     testMap.put(mockJMethod1, "TESTCSSNAME1");
     testMap.put(mockJMethod2, "TESTCSSNAME2");
     testMap.put(mockJMethod3, "TESTCSSNAME3");
     ByteArrayOutputStream testOutputStream = new ByteArrayOutputStream();
-    GeneratorContext mockGeneratorContext = EasyMock.createMock(GeneratorContext.class);
-    GeneratedResource mockGeneratedResource = EasyMock.createMock(GeneratedResource.class);
+    GeneratorContext mockGeneratorContext = mock(GeneratorContext.class);
+    GeneratedResource mockGeneratedResource = mock(GeneratedResource.class);
 
-    EasyMock.expect(mockResourceContext.getGeneratorContext()).andReturn(mockGeneratorContext);
-    EasyMock.expectLastCall().times(2);
-    EasyMock.expect(mockGeneratorContext.tryCreateResource(
-        testLogger, "cssResource/com.test.Bundle.cssMethod.cssmap")).andReturn(testOutputStream);
-    EasyMock.expect(mockJMethod1.getEnclosingType()).andReturn(mockJClassType1);
-    EasyMock.expect(mockJClassType1.getQualifiedSourceName()).andReturn("test.class.type.1");
-    EasyMock.expect(mockJMethod1.getName()).andReturn("basename1");
-    EasyMock.expect(mockJMethod2.getEnclosingType()).andReturn(mockJClassType2);
-    EasyMock.expect(mockJClassType2.getQualifiedSourceName()).andReturn("test.class.type.2");
-    EasyMock.expect(mockJMethod2.getName()).andReturn("basename2");
-    EasyMock.expect(mockJMethod3.getEnclosingType()).andReturn(mockJClassType3);
-    EasyMock.expect(mockJClassType3.getQualifiedSourceName()).andReturn("test.class.type.3");
-    EasyMock.expect(mockJMethod3.getName()).andReturn("basename3");
-    EasyMock.expect(mockGeneratorContext.commitResource(testLogger, testOutputStream)).andReturn(
+    when(mockResourceContext.getGeneratorContext()).thenReturn(mockGeneratorContext);
+    when(mockGeneratorContext.tryCreateResource(
+        testLogger, "cssResource/com.test.Bundle.cssMethod.cssmap")).thenReturn(testOutputStream);
+    when(mockJMethod1.getEnclosingType()).thenReturn(mockJClassType1);
+    when(mockJClassType1.getQualifiedSourceName()).thenReturn("test.class.type.1");
+    when(mockJMethod1.getName()).thenReturn("basename1");
+    when(mockJMethod2.getEnclosingType()).thenReturn(mockJClassType2);
+    when(mockJClassType2.getQualifiedSourceName()).thenReturn("test.class.type.2");
+    when(mockJMethod2.getName()).thenReturn("basename2");
+    when(mockJMethod3.getEnclosingType()).thenReturn(mockJClassType3);
+    when(mockJClassType3.getQualifiedSourceName()).thenReturn("test.class.type.3");
+    when(mockJMethod3.getName()).thenReturn("basename3");
+    when(mockGeneratorContext.commitResource(testLogger, testOutputStream)).thenReturn(
         mockGeneratedResource);
 
-    JMethod method = EasyMock.createMock(JMethod.class);
-    JClassType bundleType = EasyMock.createMock(JClassType.class);
-    EasyMock.expect(method.getEnclosingType()).andReturn(bundleType);
-    EasyMock.expect(bundleType.getQualifiedSourceName()).andReturn("com.test.Bundle");
-    EasyMock.expect(method.getName()).andReturn("cssMethod");
-
-    EasyMock.replay(mockResourceContext);
-    EasyMock.replay(mockGeneratorContext);
-    EasyMock.replay(mockJMethod1);
-    EasyMock.replay(mockJMethod2);
-    EasyMock.replay(mockJMethod3);
-    EasyMock.replay(mockJClassType1);
-    EasyMock.replay(mockJClassType2);
-    EasyMock.replay(mockJClassType3);
-    EasyMock.replay(method);
-    EasyMock.replay(bundleType);
+    JMethod method = mock(JMethod.class);
+    JClassType bundleType = mock(JClassType.class);
+    when(method.getEnclosingType()).thenReturn(bundleType);
+    when(bundleType.getQualifiedSourceName()).thenReturn("com.test.Bundle");
+    when(method.getName()).thenReturn("cssMethod");
 
     CssResourceGenerator crg = new CssResourceGenerator();
     crg.outputCssMapArtifact(testLogger, mockResourceContext, method, testMap);
@@ -240,16 +203,8 @@ public class CssOutputTestCase extends TestCase {
     assertEquals(expectedOutput, testOutputStream.toString());
 
     testLogger.assertCorrectLogEntries();
-    EasyMock.verify(mockResourceContext);
-    EasyMock.verify(mockGeneratorContext);
-    EasyMock.verify(mockJMethod1);
-    EasyMock.verify(mockJMethod2);
-    EasyMock.verify(mockJMethod3);
-    EasyMock.verify(mockJClassType1);
-    EasyMock.verify(mockJClassType2);
-    EasyMock.verify(mockJClassType3);
-    EasyMock.verify(method);
-    EasyMock.verify(bundleType);
-  }
 
+    verify(mockGeneratorContext).tryCreateResource(testLogger, "cssResource/com.test.Bundle.cssMethod.cssmap");
+    verify(mockGeneratorContext).commitResource(testLogger, testOutputStream);
+  }
 }

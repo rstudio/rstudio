@@ -24,8 +24,8 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import junit.framework.TestCase;
 
-import org.easymock.EasyMock;
-import org.easymock.IMocksControl;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -37,9 +37,6 @@ import java.io.StringWriter;
 public class HandlerEvaluatorTest extends TestCase {
 
   HandlerEvaluator evaluator;
-
-  // Defines the mock control.
-  private IMocksControl mockControl;
 
   private OwnerClass ownerType;
   private MortalLogger logger;
@@ -53,31 +50,22 @@ public class HandlerEvaluatorTest extends TestCase {
     logger = new MortalLogger(new PrintWriterTreeLogger());
 
     // Creates all needed mocks.
-    mockControl = EasyMock.createControl();
-    ownerType = mockControl.createMock(OwnerClass.class);
-    oracle = mockControl.createMock(TypeOracle.class);
-    fieldManager = mockControl.createMock(FieldManager.class);
-
-    // TODO(hermes): sucks I know!!!! This class shouldn't be using EasyMock
-    // but for now that's the easiest way of creating new instances of
-    // TypeOracle, TreeLogger, etc. Again, I must check a better way of
-    // injecting TypeOracle, TreeLogger and JClassType.
-
-    JClassType handlerRegistrationJClass = mockControl.createMock(JClassType.class);
-    EasyMock.expect(oracle.findType(HandlerRegistration.class.getName())).andReturn(
-        handlerRegistrationJClass);
-
-    JClassType eventHandlerJClass = mockControl.createMock(JClassType.class);
-    EasyMock.expect(oracle.findType(EventHandler.class.getName())).andReturn(
-        eventHandlerJClass);
-
-    mockControl.replay();
-    evaluator = new HandlerEvaluator(ownerType, logger, oracle, false);
-    mockControl.verify();
-    mockControl.reset();
+    ownerType = mock(OwnerClass.class);
+    oracle = mock(TypeOracle.class);
+    fieldManager = mock(FieldManager.class);
   }
 
   public void testWriteAddHandler() throws Exception {
+    JClassType handlerRegistrationJClass = mock(JClassType.class);
+    when(oracle.findType(HandlerRegistration.class.getName())).thenReturn(
+        handlerRegistrationJClass);
+
+    JClassType eventHandlerJClass = mock(JClassType.class);
+    when(oracle.findType(EventHandler.class.getName())).thenReturn(
+        eventHandlerJClass);
+
+    evaluator = new HandlerEvaluator(ownerType, logger, oracle, false);
+
     StringWriter sw = new StringWriter();
     evaluator.writeAddHandler(new IndentedWriter(new PrintWriter(sw)),
         fieldManager, "handler1", "addClickHandler", "label1");

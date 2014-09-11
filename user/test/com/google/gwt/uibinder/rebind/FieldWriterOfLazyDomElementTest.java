@@ -15,7 +15,8 @@
  */
 package com.google.gwt.uibinder.rebind;
 
-import static org.easymock.EasyMock.expect;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
@@ -23,9 +24,6 @@ import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.uibinder.rebind.model.OwnerField;
 
 import junit.framework.TestCase;
-
-import org.easymock.EasyMock;
-import org.easymock.IMocksControl;
 
 /**
  * Tests for FieldWriterOfLazyDomElement.
@@ -36,8 +34,6 @@ public class FieldWriterOfLazyDomElementTest extends TestCase {
   private static final String QUALIFIED_SOURCE_NAME = "qualified_source_name";
   private static final String ARG_QUALIFIED_SOURCE_NAME = "arg_qualified_source_name";
 
-  private IMocksControl control;
-
   private JClassType templateFieldType;
   private OwnerField ownerField;
   private JClassType ownerFieldType;
@@ -46,14 +42,12 @@ public class FieldWriterOfLazyDomElementTest extends TestCase {
   public void setUp() throws Exception {
     super.setUp();
 
-    control = EasyMock.createControl();
+    templateFieldType = mock(JClassType.class);
+    ownerField = mock(OwnerField.class);
+    ownerFieldType = mock(JClassType.class);
 
-    templateFieldType = control.createMock(JClassType.class);
-    ownerField = control.createMock(OwnerField.class);
-    ownerFieldType = control.createMock(JClassType.class);
-
-    expect(ownerField.getName()).andStubReturn(FIELD_NAME);
-    expect(ownerField.getRawType()).andStubReturn(ownerFieldType);
+    when(ownerField.getName()).thenReturn(FIELD_NAME);
+    when(ownerField.getRawType()).thenReturn(ownerFieldType);
   }
 
   /**
@@ -63,9 +57,8 @@ public class FieldWriterOfLazyDomElementTest extends TestCase {
    * </pre>
    */
   public void testLazyDomElementNotParameterized() throws Exception {
-    expect(ownerFieldType.isParameterized()).andReturn(null);
+    when(ownerFieldType.isParameterized()).thenReturn(null);
 
-    control.replay();
     try {
       FieldWriter field = new FieldWriterOfLazyDomElement(null,
           templateFieldType, ownerField, MortalLogger.NULL);
@@ -73,7 +66,6 @@ public class FieldWriterOfLazyDomElementTest extends TestCase {
     } catch (UnableToCompleteException utce) {
       // Expected
     }
-    control.verify();
   }
 
   /**
@@ -89,48 +81,44 @@ public class FieldWriterOfLazyDomElementTest extends TestCase {
    * </pre>
    */
   public void testLazyDomElementIncompatibleParameter() throws Exception {
-    JParameterizedType parameterClass = control.createMock(JParameterizedType.class);
-    expect(ownerFieldType.isParameterized()).andReturn(parameterClass);
+    JParameterizedType parameterClass = mock(JParameterizedType.class);
+    when(ownerFieldType.isParameterized()).thenReturn(parameterClass);
 
-    JClassType arg = control.createMock(JClassType.class);
-    expect(parameterClass.getTypeArgs()).andReturn(new JClassType[] { arg });
+    JClassType arg = mock(JClassType.class);
+    when(parameterClass.getTypeArgs()).thenReturn(new JClassType[] { arg });
 
-    expect(templateFieldType.isAssignableTo(arg)).andReturn(false);
-    expect(parameterClass.getQualifiedSourceName()).andStubReturn(QUALIFIED_SOURCE_NAME);
+    when(templateFieldType.isAssignableTo(arg)).thenReturn(false);
+    when(parameterClass.getQualifiedSourceName()).thenReturn(QUALIFIED_SOURCE_NAME);
 
-    control.replay();
     try {
-      FieldWriter field = new FieldWriterOfLazyDomElement(null,
+      new FieldWriterOfLazyDomElement(null,
           templateFieldType, ownerField, MortalLogger.NULL);
       fail("Expected exception not thrown.");
     } catch (UnableToCompleteException utce) {
       // Expected
     }
-    control.verify();
   }
 
   /**
    * The success test, everything works fine.
    */
   public void testLazyDomElementCompatibleType() throws Exception {
-    JParameterizedType parameterClass = control.createMock(JParameterizedType.class);
-    expect(ownerFieldType.isParameterized()).andReturn(parameterClass);
+    JParameterizedType parameterClass = mock(JParameterizedType.class);
+    when(ownerFieldType.isParameterized()).thenReturn(parameterClass);
 
-    JClassType arg = control.createMock(JClassType.class);
-    expect(parameterClass.getTypeArgs()).andReturn(new JClassType[] { arg });
+    JClassType arg = mock(JClassType.class);
+    when(parameterClass.getTypeArgs()).thenReturn(new JClassType[] { arg });
 
-    expect(templateFieldType.isAssignableTo(arg)).andReturn(true);
+    when(templateFieldType.isAssignableTo(arg)).thenReturn(true);
 
-    expect(parameterClass.getQualifiedSourceName()).andStubReturn(QUALIFIED_SOURCE_NAME);
-    expect(arg.getQualifiedSourceName()).andReturn(ARG_QUALIFIED_SOURCE_NAME);
+    when(parameterClass.getQualifiedSourceName()).thenReturn(QUALIFIED_SOURCE_NAME);
+    when(arg.getQualifiedSourceName()).thenReturn(ARG_QUALIFIED_SOURCE_NAME);
 
-    control.replay();
     FieldWriter field = new FieldWriterOfLazyDomElement(null,
         templateFieldType, ownerField, MortalLogger.NULL);
     assertSame(parameterClass, field.getAssignableType());
     assertSame(parameterClass, field.getInstantiableType());
     assertEquals(QUALIFIED_SOURCE_NAME + "<" + ARG_QUALIFIED_SOURCE_NAME + ">",
       field.getQualifiedSourceName());
-    control.verify();
   }
 }

@@ -15,14 +15,15 @@
  */
 package com.google.gwt.uibinder.rebind;
 
-import static org.easymock.EasyMock.expect;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.google.gwt.core.ext.typeinfo.JClassType;
 
 import junit.framework.TestCase;
 
-import org.easymock.EasyMock;
-import org.easymock.IMocksControl;
+import org.mockito.Mockito;
 
 /**
  * Tests for FieldWriterOfExistingType.
@@ -32,44 +33,37 @@ public class FieldWriterOfExistingTypeTest extends TestCase {
   private static final String FIELD_NAME = "field_name";
   private static final String QUALIFIED_SOURCE_NAME = "qualified_source_name";
 
-  private IMocksControl control;
-
   private JClassType type;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-
-    control = EasyMock.createControl();
-
-    type = control.createMock(JClassType.class);
+    type = mock(JClassType.class);
   }
 
   /**
    * Null type not allowed, must fail.
    */
   public void testNullType() throws Exception {
-    control.replay();
     try {
-      FieldWriter field = new FieldWriterOfExistingType(null,
+      new FieldWriterOfExistingType(null,
           FieldWriterType.DEFAULT, null, FIELD_NAME, MortalLogger.NULL);
       fail("Expected exception not thrown.");
     } catch (IllegalArgumentException e) {
       // Expected
     }
-    control.verify();
+    Mockito.verifyZeroInteractions(type);
   }
 
   public void testType() throws Exception {
-    expect(type.getQualifiedSourceName()).andReturn(QUALIFIED_SOURCE_NAME);
+    when(type.getQualifiedSourceName()).thenReturn(QUALIFIED_SOURCE_NAME);
 
-    control.replay();
     FieldWriter field = new FieldWriterOfExistingType(null,
         FieldWriterType.DEFAULT, type, FIELD_NAME, MortalLogger.NULL);
 
     assertSame(type, field.getAssignableType());
     assertSame(type, field.getInstantiableType());
     assertEquals(QUALIFIED_SOURCE_NAME, field.getQualifiedSourceName());
-    control.verify();
+    verify(type).getQualifiedSourceName();
   }
 }

@@ -15,9 +15,6 @@
  */
 package com.google.gwt.uibinder.rebind;
 
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.isA;
-
 import com.google.gwt.core.ext.typeinfo.HasAnnotations;
 import com.google.gwt.core.ext.typeinfo.HasTypeParameters;
 import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
@@ -29,8 +26,12 @@ import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 
-import org.easymock.EasyMock;
-import org.easymock.IAnswer;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.when;
+
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
@@ -78,10 +79,6 @@ public class JClassTypeAdapter {
     new HashMap<Class<?>, JClassType>();
   private final List<Object> allMocks = new ArrayList<Object>();
 
-  public void verifyAll() {
-    EasyMock.verify(allMocks.toArray());
-  }
-
   /**
    * Creates a mock GWT class type for the given Java class.
    *
@@ -112,9 +109,9 @@ public class JClassTypeAdapter {
     // TODO(rdamazio): Add generics behaviour
 
     // Add behaviour for getting methods
-    expect(type.getMethods()).andStubAnswer(new IAnswer<JMethod[]>() {
-      public JMethod[] answer() throws Throwable {
-        // TODO(rdamazio): Check behaviour for parent methods
+    when(type.getMethods()).thenAnswer(new Answer<JMethod[]>() {
+      @Override
+      public JMethod[] answer(InvocationOnMock invocation) throws Throwable {
         Method[] realMethods = clazz.getDeclaredMethods();
         JMethod[] methods = new JMethod[realMethods.length];
         for (int i = 0; i < realMethods.length; i++) {
@@ -125,8 +122,9 @@ public class JClassTypeAdapter {
     });
 
     // Add behaviour for getting constructors
-    expect(type.getConstructors()).andStubAnswer(new IAnswer<JConstructor[]>() {
-      public JConstructor[] answer() throws Throwable {
+    when(type.getConstructors()).thenAnswer(new Answer<JConstructor[]>() {
+      @Override
+      public JConstructor[] answer(InvocationOnMock invocation) throws Throwable {
         Constructor<?>[] realConstructors = clazz.getDeclaredConstructors();
         JConstructor[] constructors = new JConstructor[realConstructors.length];
         for (int i = 0; i < realConstructors.length; i++) {
@@ -137,8 +135,9 @@ public class JClassTypeAdapter {
     });
 
     // Add behaviour for getting fields
-    expect(type.getFields()).andStubAnswer(new IAnswer<JField[]>() {
-      public JField[] answer() throws Throwable {
+    when(type.getFields()).thenAnswer(new Answer<JField[]>() {
+      @Override
+      public JField[] answer(InvocationOnMock invocation) throws Throwable {
         Field[] realFields = clazz.getDeclaredFields();
         JField[] fields = new JField[realFields.length];
         for (int i = 0; i < realFields.length; i++) {
@@ -149,33 +148,34 @@ public class JClassTypeAdapter {
     });
 
     // Add behaviour for getting names
-    expect(type.getName()).andStubReturn(clazz.getName());
-    expect(type.getQualifiedSourceName()).andStubReturn(
+    when(type.getName()).thenReturn(clazz.getName());
+    when(type.getQualifiedSourceName()).thenReturn(
         clazz.getCanonicalName());
-    expect(type.getSimpleSourceName()).andStubReturn(clazz.getSimpleName());
+    when(type.getSimpleSourceName()).thenReturn(clazz.getSimpleName());
 
     // Add modifier behaviour
     int modifiers = clazz.getModifiers();
-    expect(type.isAbstract()).andStubReturn(Modifier.isAbstract(modifiers));
-    expect(type.isFinal()).andStubReturn(Modifier.isFinal(modifiers));
-    expect(type.isPublic()).andStubReturn(Modifier.isPublic(modifiers));
-    expect(type.isProtected()).andStubReturn(Modifier.isProtected(modifiers));
-    expect(type.isPrivate()).andStubReturn(Modifier.isPrivate(modifiers));
+    when(type.isAbstract()).thenReturn(Modifier.isAbstract(modifiers));
+    when(type.isFinal()).thenReturn(Modifier.isFinal(modifiers));
+    when(type.isPublic()).thenReturn(Modifier.isPublic(modifiers));
+    when(type.isProtected()).thenReturn(Modifier.isProtected(modifiers));
+    when(type.isPrivate()).thenReturn(Modifier.isPrivate(modifiers));
 
     // Add conversion behaviours
-    expect(type.isArray()).andStubReturn(null);
-    expect(type.isEnum()).andStubReturn(null);
-    expect(type.isPrimitive()).andStubReturn(null);
-    expect(type.isClassOrInterface()).andStubReturn(type);
+    when(type.isArray()).thenReturn(null);
+    when(type.isEnum()).thenReturn(null);
+    when(type.isPrimitive()).thenReturn(null);
+    when(type.isClassOrInterface()).thenReturn(type);
     if (clazz.isInterface()) {
-      expect(type.isClass()).andStubReturn(null);
-      expect(type.isInterface()).andStubReturn(type);
+      when(type.isClass()).thenReturn(null);
+      when(type.isInterface()).thenReturn(type);
     } else {
-      expect(type.isClass()).andStubReturn(type);
-      expect(type.isInterface()).andStubReturn(null);
+      when(type.isClass()).thenReturn(type);
+      when(type.isInterface()).thenReturn(null);
     }
-    expect(type.getEnclosingType()).andStubAnswer(new IAnswer<JClassType>() {
-      public JClassType answer() throws Throwable {
+    when(type.getEnclosingType()).thenAnswer(new Answer<JClassType>() {
+      @Override
+      public JClassType answer(InvocationOnMock invocation) throws Throwable {
         Class<?> enclosingClass = clazz.getEnclosingClass();
         if (enclosingClass == null) {
           return null;
@@ -184,8 +184,9 @@ public class JClassTypeAdapter {
         return adaptJavaClass(enclosingClass);
       }
     });
-    expect(type.getSuperclass()).andStubAnswer(new IAnswer<JClassType>() {
-      public JClassType answer() throws Throwable {
+    when(type.getSuperclass()).thenAnswer(new Answer<JClassType>() {
+      @Override
+      public JClassType answer(InvocationOnMock invocation) throws Throwable {
         Class<?> superclass = clazz.getSuperclass();
         if (superclass == null) {
           return null;
@@ -199,7 +200,6 @@ public class JClassTypeAdapter {
     // TODO(rdamazio): Figure out what to do with reflections that GWT allows
     //                 but Java doesn't
 
-    EasyMock.replay(type);
     return type;
   }
 
@@ -215,16 +215,16 @@ public class JClassTypeAdapter {
 
     addAnnotationBehaviour(realField, field);
 
-    expect(field.getType()).andStubAnswer(new IAnswer<JType>() {
-      public JType answer() throws Throwable {
+    when(field.getType()).thenAnswer(new Answer<JType>() {
+      @Override
+      public JType answer(InvocationOnMock invocation) throws Throwable {
         return adaptType(realField.getType());
       }
     });
 
-    expect(field.getEnclosingType()).andStubReturn(enclosingType);
-    expect(field.getName()).andStubReturn(realField.getName());
+    when(field.getEnclosingType()).thenReturn(enclosingType);
+    when(field.getName()).thenReturn(realField.getName());
 
-    EasyMock.replay(field);
     return field;
   }
 
@@ -244,18 +244,20 @@ public class JClassTypeAdapter {
     addAnnotationBehaviour(realConstructor, constructor);
 
     // Parameters
-    expect(constructor.getParameters()).andStubAnswer(
-        new IAnswer<JParameter[]>() {
-          public JParameter[] answer() throws Throwable {
+    when(constructor.getParameters()).thenAnswer(
+        new Answer<JParameter[]>() {
+          @Override
+          public JParameter[] answer(InvocationOnMock invocation) throws Throwable {
             return adaptParameters(realConstructor.getParameterTypes(),
                 realConstructor.getParameterAnnotations(), constructor);
           }
         });
 
     // Thrown exceptions
-    expect(constructor.getThrows()).andStubAnswer(
-        new IAnswer<JClassType[]>() {
-          public JClassType[] answer() throws Throwable {
+    when(constructor.getThrows()).thenAnswer(
+        new Answer<JClassType[]>() {
+          @Override
+          public JClassType[] answer(InvocationOnMock invocation) throws Throwable {
             Class<?>[] realThrows = realConstructor.getExceptionTypes();
             JClassType[] gwtThrows = new JClassType[realThrows.length];
             for (int i = 0; i < realThrows.length; i++) {
@@ -265,7 +267,6 @@ public class JClassTypeAdapter {
           }
         });
 
-    EasyMock.replay(constructor);
     return constructor;
   }
 
@@ -285,27 +286,30 @@ public class JClassTypeAdapter {
     addAnnotationBehaviour(realMethod, method);
     addGenericsBehaviour(realMethod, method);
 
-    expect(method.isStatic()).andStubReturn(
+    when(method.isStatic()).thenReturn(
         Modifier.isStatic(realMethod.getModifiers()));
 
     // Return type
-    expect(method.getReturnType()).andStubAnswer(new IAnswer<JType>() {
-      public JType answer() throws Throwable {
+    when(method.getReturnType()).thenAnswer(new Answer<JType>() {
+      @Override
+      public JType answer(InvocationOnMock invocation) throws Throwable {
         return adaptType(realMethod.getReturnType());
       }
     });
 
     // Parameters
-    expect(method.getParameters()).andStubAnswer(new IAnswer<JParameter[]>() {
-      public JParameter[] answer() throws Throwable {
+    when(method.getParameters()).thenAnswer(new Answer<JParameter[]>() {
+      @Override
+      public JParameter[] answer(InvocationOnMock invocation) throws Throwable {
         return adaptParameters(realMethod.getParameterTypes(),
             realMethod.getParameterAnnotations(), method);
       }
     });
 
     // Thrown exceptions
-    expect(method.getThrows()).andStubAnswer(new IAnswer<JClassType[]>() {
-      public JClassType[] answer() throws Throwable {
+    when(method.getThrows()).thenAnswer(new Answer<JClassType[]>() {
+      @Override
+      public JClassType[] answer(InvocationOnMock invocation) throws Throwable {
         Class<?>[] realThrows = realMethod.getExceptionTypes();
         JClassType[] gwtThrows = new JClassType[realThrows.length];
         for (int i = 0; i < realThrows.length; i++) {
@@ -315,7 +319,6 @@ public class JClassTypeAdapter {
       }
     });
 
-    EasyMock.replay(method);
     return method;
   }
 
@@ -340,9 +343,10 @@ public class JClassTypeAdapter {
       // TODO(rdamazio): getName() has no plain java equivalent.
       //                 Perhaps compiling with -g:vars ?
 
-      expect(parameter.getEnclosingMethod()).andStubReturn(method);
-      expect(parameter.getType()).andStubAnswer(new IAnswer<JType>() {
-        public JType answer() throws Throwable {
+      when(parameter.getEnclosingMethod()).thenReturn(method);
+      when(parameter.getType()).thenAnswer(new Answer<JType>() {
+        @Override
+        public JType answer(InvocationOnMock invocation) throws Throwable {
           return adaptType(realParameterType);
         }
       });
@@ -350,12 +354,14 @@ public class JClassTypeAdapter {
       // Add annotation behaviour
       final Annotation[] annotations = parameterAnnotations[i];
 
-      expect(parameter.isAnnotationPresent(isA(Class.class))).andStubAnswer(
-          new IAnswer<Boolean>() {
-            public Boolean answer() throws Throwable {
+      when(parameter.isAnnotationPresent(any(Class.class))).thenAnswer(
+          new Answer<Boolean>() {
+
+            @Override
+            public Boolean answer(InvocationOnMock invocation) throws Throwable {
               Class<? extends Annotation> annotationClass =
                   (Class<? extends Annotation>)
-                  EasyMock.getCurrentArguments()[0];
+                  invocation.getArguments()[0];
               for (Annotation annotation : annotations) {
                 if (annotation.equals(annotationClass)) {
                   return true;
@@ -365,12 +371,13 @@ public class JClassTypeAdapter {
             }
           });
 
-      expect(parameter.getAnnotation(isA(Class.class))).andStubAnswer(
-          new IAnswer<Annotation>() {
-            public Annotation answer() throws Throwable {
+      when(parameter.getAnnotation(any(Class.class))).thenAnswer(
+          new Answer<Annotation>() {
+            @Override
+            public Annotation answer(InvocationOnMock invocation) throws Throwable {
               Class<? extends Annotation> annotationClass =
                   (Class<? extends Annotation>)
-                  EasyMock.getCurrentArguments()[0];
+                  invocation.getArguments()[0];
               for (Annotation annotation : annotations) {
                 if (annotation.equals(annotationClass)) {
                   return annotation;
@@ -379,8 +386,6 @@ public class JClassTypeAdapter {
               return null;
             }
           });
-
-      EasyMock.replay(parameter);
     }
 
     return parameters;
@@ -433,11 +438,11 @@ public class JClassTypeAdapter {
       JAbstractMethod member, JClassType enclosingType) {
     // Attributes
     int modifiers = realMember.getModifiers();
-    expect(member.isPublic()).andStubReturn(Modifier.isPublic(modifiers));
-    expect(member.isProtected()).andStubReturn(Modifier.isProtected(modifiers));
-    expect(member.isPrivate()).andStubReturn(Modifier.isPrivate(modifiers));
-    expect(member.getName()).andStubReturn(realMember.getName());
-    expect(member.getEnclosingType()).andStubReturn(enclosingType);
+    when(member.isPublic()).thenReturn(Modifier.isPublic(modifiers));
+    when(member.isProtected()).thenReturn(Modifier.isProtected(modifiers));
+    when(member.isPrivate()).thenReturn(Modifier.isPrivate(modifiers));
+    when(member.getName()).thenReturn(realMember.getName());
+    when(member.getEnclosingType()).thenReturn(enclosingType);
   }
 
   /**
@@ -450,20 +455,22 @@ public class JClassTypeAdapter {
   @SuppressWarnings("unchecked")
   private void addAnnotationBehaviour(final AnnotatedElement realElement,
       final HasAnnotations element) {
-    expect(element.isAnnotationPresent(isA(Class.class))).andStubAnswer(
-        new IAnswer<Boolean>() {
-          public Boolean answer() throws Throwable {
+    when(element.isAnnotationPresent(any(Class.class))).thenAnswer(
+        new Answer<Boolean>() {
+          @Override
+          public Boolean answer(InvocationOnMock invocation) throws Throwable {
             Class<? extends Annotation> annotationClass =
-                (Class<? extends Annotation>) EasyMock.getCurrentArguments()[0];
+                (Class<? extends Annotation>) invocation.getArguments()[0];
             return realElement.isAnnotationPresent(annotationClass);
           }
         });
 
-    expect(element.getAnnotation(isA(Class.class))).andStubAnswer(
-        new IAnswer<Annotation>() {
-          public Annotation answer() throws Throwable {
+    when(element.getAnnotation(any(Class.class))).thenAnswer(
+        new Answer<Annotation>() {
+          @Override
+          public Annotation answer(InvocationOnMock invocation) throws Throwable {
             Class<? extends Annotation> annotationClass =
-                (Class<? extends Annotation>) EasyMock.getCurrentArguments()[0];
+                (Class<? extends Annotation>) invocation.getArguments()[0];
             return realElement.getAnnotation(annotationClass);
           }
         });
@@ -489,7 +496,7 @@ public class JClassTypeAdapter {
    * @return the mock
    */
   private <T> T createMock(Class<T> clazz) {
-    T mock = EasyMock.createMock(clazz);
+    T mock = Mockito.mock(clazz);
     allMocks.add(mock);
     return mock;
   }

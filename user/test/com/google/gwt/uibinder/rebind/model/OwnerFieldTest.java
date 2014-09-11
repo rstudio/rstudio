@@ -76,8 +76,6 @@ public class OwnerFieldTest extends TestCase {
     assertEquals("providedField", providedOwnerField.getName());
     assertEquals(buttonType, providedOwnerField.getType().getRawType());
     assertTrue(providedOwnerField.isProvided());
-
-    gwtTypeAdapter.verifyAll();
   }
 
   public void testOwnerField_badFieldType() throws Exception {
@@ -89,8 +87,6 @@ public class OwnerFieldTest extends TestCase {
     } catch (UnableToCompleteException utce) {
       // Expected
     }
-
-    gwtTypeAdapter.verifyAll();
   }
 
   public void testOwnerField_missingAnnotation() throws Exception {
@@ -102,7 +98,5 @@ public class OwnerFieldTest extends TestCase {
     } catch (UnableToCompleteException utce) {
       // Expected
     }
-
-    gwtTypeAdapter.verifyAll();
   }
 }
