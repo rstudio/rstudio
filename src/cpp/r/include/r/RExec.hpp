@@ -277,6 +277,10 @@ private:
    boost::scoped_ptr<core::system::SignalBlocker> pSignalBlocker_;
 };
 
+// returns true if the global context is on the top (i.e. the context stack is
+// empty and we're not debugging)
+bool atTopLevelContext();
+
 // create a scope for disabling Step Into--this is needed to protect internal
 // functions from being stepped into when we execute them while the user is
 // stepping while debugging. R does this itself for expressions entered at the
@@ -298,7 +302,9 @@ public:
    }
    virtual ~DisableStepIntoScope()
    {
-      if (didDisable_ && R_BrowserLastCommand == 'S') {
+      // if we disabled and are still debugging, restore the state
+      if (didDisable_ && !atTopLevelContext() && R_BrowserLastCommand == 'S') 
+      {
          R_BrowserLastCommand = 's';
       }
    }

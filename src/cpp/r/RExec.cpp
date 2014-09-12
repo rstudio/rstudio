@@ -275,6 +275,12 @@ Error evaluateString(const std::string& str,
    return Success();
 }
    
+bool atTopLevelContext() 
+{
+   return getGlobalContext() != NULL &&
+          getGlobalContext()->callflag == CTXT_TOPLEVEL;
+}
+
 RFunction::RFunction(SEXP functionSEXP)
 {
    functionSEXP_ = functionSEXP;
