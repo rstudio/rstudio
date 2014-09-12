@@ -441,6 +441,11 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   }
 
   @Override
+  public boolean shouldJDTInlineCompileTimeConstants() {
+    return jjsOptions.shouldJDTInlineCompileTimeConstants();
+  }
+
+  @Override
   public boolean shouldOptimizeDataflow() {
     return jjsOptions.shouldOptimizeDataflow();
   }

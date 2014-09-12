@@ -193,7 +193,6 @@ public class CompilerContext {
   private ResourceOracle sourceResourceOracle;
   private TinyCompileSummary tinyCompileSummary = new TinyCompileSummary();
   private UnitCache unitCache = new MemoryUnitCache();
-
   public ResourceOracle getBuildResourceOracle() {
     return buildResourceOracle;
   }

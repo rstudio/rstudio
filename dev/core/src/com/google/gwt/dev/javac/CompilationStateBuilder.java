@@ -138,7 +138,8 @@ public class CompilationStateBuilder {
             if (!cud.compilationResult().hasErrors()) {
               // The above checks might have recorded errors; so we need to check here again.
               // So only construct the GWT AST if no JDT errors and no errors from our checks.
-              types = astBuilder.process(cud, builder.getSourceMapPath(), jsniMethods, jsniRefs);
+              types = astBuilder.process(cud, builder.getSourceMapPath(), jsniMethods, jsniRefs,
+                  compilerContext);
             }
 
             // Only run this pass if JDT was able to compile the unit with no errors, otherwise
@@ -566,6 +567,8 @@ public class CompilationStateBuilder {
         continue;
       }
       builders.add(builder);
+      compilerContext.getMinimalRebuildCache().addSourceCompilationUnitTypeName(
+          builder.getTypeName());
     }
     int cachedSourceCount = cachedUnits.size();
     int sourceCount = resources.size();
@@ -635,6 +638,8 @@ public class CompilationStateBuilder {
         }
       }
       builders.add(builder);
+      compilerContext.getMinimalRebuildCache().addSourceCompilationUnitTypeName(
+          builder.getTypeName());
     }
     if (compilerContext.getOptions().shouldCompilePerFile()) {
       compilerContext.getMinimalRebuildCache().recordGeneratedUnits(generatedUnits);

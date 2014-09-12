@@ -282,6 +282,11 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   }
 
   @Override
+  public boolean shouldJDTInlineCompileTimeConstants() {
+    return !shouldCompilePerFile();
+  }
+
+  @Override
   public boolean shouldLink() {
     return false;
   }

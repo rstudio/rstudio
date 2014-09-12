@@ -18,6 +18,7 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
+import com.google.gwt.dev.PrecompileTaskOptionsImpl;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.JdtCompiler.AdditionalTypeProviderDelegate;
@@ -269,7 +270,12 @@ public abstract class JJSTestBase extends TestCase {
       }
     });
     CompilerContext compilerContext =
-        new CompilerContext.Builder().compileMonolithic(compileMonolithic).build();
+        new CompilerContext.Builder().options(new PrecompileTaskOptionsImpl() {
+          @Override
+          public boolean shouldJDTInlineCompileTimeConstants() {
+            return false;
+          }
+        }).compileMonolithic(compileMonolithic).build();
     compilerContext.getOptions().setSourceLevel(sourceLevel);
     compilerContext.getOptions().setStrict(true);
     CompilationState state =

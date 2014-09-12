@@ -37,6 +37,7 @@ import org.eclipse.jdt.internal.compiler.lookup.SyntheticArgumentBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SyntheticMethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
@@ -48,16 +49,49 @@ public final class JdtUtil {
    * Returns a source name from an array of names.
    */
   public static String asDottedString(char[][] name) {
+    return join(name, ".");
+  }
+
+  /**
+   * Returns a string name from an array of names using {@code separator}.
+   */
+  public static String join(char[][] name, String separator) {
     StringBuilder result = new StringBuilder();
     if (name.length > 0) {
       result.append(name[0]);
     }
 
     for (int i = 1; i < name.length; ++i) {
-      result.append('.');
+      result.append(separator);
       result.append(name[i]);
     }
     return result.toString();
+  }
+
+  /**
+   * Returns the relative file path for the resource of the compilation unit that defines
+   * {@code binding}.
+   */
+  public static String bindingToResourcePath(ReferenceBinding binding) {
+    String packagePathPrefix =
+        join(binding.getPackage().compoundName, File.separator);
+    String bindingFileName = CharOperation.charToString(binding.getFileName());
+    int relativePathPosition = bindingFileName.lastIndexOf(packagePathPrefix);
+    if (relativePathPosition == -1) {
+      return null;
+    }
+    return bindingFileName.substring(relativePathPosition);
+  }
+
+  /**
+   * Returns the top type of the compilation unit that defines
+   * {@code binding}.
+   */
+  public static String getDefiningCompilationUnitType(ReferenceBinding binding) {
+    // Get the compilation unit type name.
+    // TODO(rluble): check that this is valid for classes declared in the same compilation unit
+    // top scope.
+    return asDottedString(binding.outermostEnclosingType().compoundName);
   }
 
   public static String getSourceName(TypeBinding classBinding) {

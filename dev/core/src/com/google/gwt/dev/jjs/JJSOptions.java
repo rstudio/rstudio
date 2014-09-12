@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs;
 
 import com.google.gwt.dev.util.arg.OptionAggressivelyOptimize;
+import com.google.gwt.dev.util.arg.OptionAllowJDTConstantInlining;
 import com.google.gwt.dev.util.arg.OptionCheckedMode;
 import com.google.gwt.dev.util.arg.OptionClusterSimilarFunctions;
 import com.google.gwt.dev.util.arg.OptionCompilePerFile;
@@ -56,5 +57,6 @@ public interface JJSOptions extends OptionOptimize, OptionAggressivelyOptimize,
     OptionRemoveDuplicateFunctions, OptionStrict, OptionStrictSourceResources,
     OptionStrictPublicResources, OptionSoycHtmlDisabled, OptionEnableClosureCompiler,
     OptionFragmentsMerge, OptionFragmentCount, OptionSourceLevel, OptionNamespace,
-    OptionCheckedMode, OptionJsInteropMode, OptionUseDetailedTypeIds {
+    OptionCheckedMode, OptionJsInteropMode, OptionUseDetailedTypeIds,
+    OptionAllowJDTConstantInlining {
 }

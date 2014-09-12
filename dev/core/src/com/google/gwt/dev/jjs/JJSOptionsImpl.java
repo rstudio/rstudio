@@ -374,6 +374,11 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   }
 
   @Override
+  public boolean shouldJDTInlineCompileTimeConstants() {
+    return !shouldCompilePerFile();
+  }
+
+  @Override
   public boolean shouldOptimizeDataflow() {
     return optimizeDataflow;
   }
@@ -402,4 +407,5 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   public boolean useDetailedTypeIds() {
     return useDetailedTypeIds;
   }
+
 }
