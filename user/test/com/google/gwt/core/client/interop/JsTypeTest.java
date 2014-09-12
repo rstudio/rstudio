@@ -16,8 +16,6 @@
 package com.google.gwt.core.client.interop;
 
 import com.google.gwt.core.client.ScriptInjector;
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.Iterator;
@@ -25,7 +23,6 @@ import java.util.Iterator;
 /**
  * Tests JsType and JsExport.
  */
-@DoNotRunWith({Platform.Devel, Platform.HtmlUnitBug})
 public class JsTypeTest extends GWTTestCase {
 
   @Override

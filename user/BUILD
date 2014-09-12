@@ -575,8 +575,14 @@ filegroup(
         ["test/**/*Suite.java"],
         exclude = [
             "test/**/*JreSuite.java",
+            "test/**/*JsInteropSuite.java",
         ],
     ),
+)
+
+filegroup(
+    name = "jsinterop_suite_files",
+    srcs = glob(["test/**/*JsInteropSuite.java"]),
 )
 
 filegroup(
@@ -592,6 +598,7 @@ filegroup(
             "test/**/*CompilerSuite.java",
             "test/**/RunAsyncSuite.java",
             "test/**/*JreSuite.java",
+            "test/**/*JsInteropSuite.java",
         ],
     ),
 )
