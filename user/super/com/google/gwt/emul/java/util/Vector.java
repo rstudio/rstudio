@@ -91,7 +91,7 @@ public class Vector<E> extends AbstractList<E> implements List<E>,
   }
 
   public int capacity() {
-    return arrayList.capacity();
+    return arrayList.size();
   }
 
   @Override
@@ -256,9 +256,6 @@ public class Vector<E> extends AbstractList<E> implements List<E>,
     return arrayList.toString();
   }
 
-  /**
-   * Currently ignored.
-   */
   public void trimToSize() {
     arrayList.trimToSize();
   }

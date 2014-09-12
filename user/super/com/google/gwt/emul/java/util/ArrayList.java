@@ -40,10 +40,6 @@ import java.io.Serializable;
 public class ArrayList<E> extends AbstractList<E> implements List<E>,
     Cloneable, RandomAccess, Serializable {
 
-  private static native void setCapacity(Object[] array, int newSize) /*-{
-    array.length = newSize;
-  }-*/;
-
   private static native void splice(Object[] array, int index, int deleteCount) /*-{
     array.splice(index, deleteCount);
   }-*/;
@@ -69,18 +65,12 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
   @SuppressWarnings("unused")
   private E exposeElement;
 
-  /**
-   * The size of the array.
-   */
-  private int size = 0;
-
   public ArrayList() {
   }
 
   public ArrayList(Collection<? extends E> c) {
     // Avoid calling overridable methods from constructors
     insertAt(0, c.toArray());
-    size = array.length;
   }
 
   public ArrayList(int initialCapacity) {
@@ -88,22 +78,21 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     if (initialCapacity < 0) {
       throw new IllegalArgumentException("Initial capacity must not be negative");
     }
-    setCapacity(array, initialCapacity);
   }
 
   @Override
   public boolean add(E o) {
-    array[size++] = o;
+    array[array.length] = o;
     return true;
   }
 
   @Override
   public void add(int index, E o) {
+    int size = array.length;
     if (index < 0 || index > size) {
       indexOutOfBounds(index, size);
     }
     splice(array, index, 0, o);
-    ++size;
   }
 
   @Override
@@ -113,12 +102,13 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     if (len == 0) {
       return false;
     }
-    insertAt(size, cArray);
-    size += len;
+    insertAt(array.length, cArray);
     return true;
   }
 
+  @Override
   public boolean addAll(int index, Collection<? extends E> c) {
+    int size = array.length;
     if (index < 0 || index > size) {
       indexOutOfBounds(index, size);
     }
@@ -128,14 +118,12 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
       return false;
     }
     insertAt(index, cArray);
-    size += len;
     return true;
   }
 
   @Override
   public void clear() {
     array = (E[]) new Object[0];
-    size = 0;
   }
 
   public Object clone() {
@@ -147,15 +135,13 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     return (indexOf(o) != -1);
   }
 
-  public void ensureCapacity(int capacity) {
-    if (capacity > size) {
-      setCapacity(array, capacity);
-    }
+  public void ensureCapacity(int ignored) {
+    // Ignored.
   }
 
   @Override
   public E get(int index) {
-    checkIndex(index, size);
+    checkIndex(index, array.length);
     return array[index];
   }
 
@@ -166,7 +152,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
 
   @Override
   public boolean isEmpty() {
-    return size == 0;
+    return array.length == 0;
   }
 
   @Override
@@ -178,7 +164,6 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
   public E remove(int index) {
     E previous = get(index);
     splice(array, index, 1);
-    --size;
     return previous;
   }
 
@@ -201,12 +186,12 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
 
   @Override
   public int size() {
-    return size;
+    return array.length;
   }
 
   @Override
   public Object[] toArray() {
-    return Array.cloneSubrange(array, 0, size);
+    return Array.cloneSubrange(array, 0, array.length);
   }
 
   /*
@@ -215,6 +200,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
   @SuppressWarnings("unchecked")
   @Override
   public <T> T[] toArray(T[] out) {
+    int size = array.length;
     if (out.length < size) {
       out = Array.createFrom(out, size);
     }
@@ -228,32 +214,25 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
   }
 
   public void trimToSize() {
-    setCapacity(array, size);
+    // We are always trimmed to size.
   }
 
   @Override
   protected void removeRange(int fromIndex, int endIndex) {
+    int size = array.length;
     checkIndex(fromIndex, size + 1);
     if (endIndex < fromIndex || endIndex > size) {
       indexOutOfBounds(endIndex, size);
     }
     int count = endIndex - fromIndex;
     splice(array, fromIndex, count);
-    size -= count;
-  }
-
-  /**
-   * Used by Vector.
-   */
-  int capacity() {
-    return array.length;
   }
 
   /**
    * Used by Vector.
    */
   int indexOf(Object o, int index) {
-    for (; index < size; ++index) {
+    for (; index < array.length; ++index) {
       if (Objects.equals(o, array[index])) {
         return index;
       }
@@ -273,11 +252,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     return -1;
   }
 
-  /**
-   * Used by Vector.
-   */
-  void setSize(int newSize) {
-    setCapacity(array, newSize);
-    size = newSize;
-  }
+  native void setSize(int newSize) /*-{
+    this.@ArrayList::array.length = newSize;
+  }-*/;
 }
