@@ -17,6 +17,7 @@ package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.UnstableNestedAnonymousGenerator.OutputVersion;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.ResourceLoader;
 import com.google.gwt.dev.cfg.ResourceLoaders;
@@ -152,6 +153,16 @@ public class CompilerTest extends ArgProcessorTestBase {
           "  public static final int CONSTANT = 2;",
           "}");
 
+  private MockResource unstableGeneratorModuleResource = JavaResourceBase.createMockResource(
+      "com/foo/SimpleModule.gwt.xml",
+      "<module>",
+      "<source path=''/>",
+      "<entry-point class='com.foo.TestEntryPoint'/>",
+      "<generate-with class='com.google.gwt.dev.UnstableNestedAnonymousGenerator'>",
+      "  <when-type-is class='java.lang.Object' />",
+      "</generate-with>",
+      "</module>");
+
   private MockResource resourceReadingGeneratorModuleResource =
       JavaResourceBase.createMockResource("com/foo/SimpleModule.gwt.xml",
           "<module>",
@@ -282,6 +293,11 @@ public class CompilerTest extends ArgProcessorTestBase {
           "    testEntryPoint.runTest(Foo.createFoo());",
           "  }",
           "}");
+
+  private MockJavaResource sameContentDifferentTimeFooResource = JavaResourceBase
+      .createMockJavaResource("com.foo.Foo",
+          "package com.foo;",
+          "public class Foo {}");
 
   private MockJavaResource fooInterfaceResource =
       JavaResourceBase.createMockJavaResource("com.foo.FooInterface",
@@ -525,6 +541,12 @@ public class CompilerTest extends ArgProcessorTestBase {
     checkPerFileRecompile_dateStampChange(JsOutputOption.DETAILED);
   }
 
+  public void testPerFileRecompile_unstableGeneratorReferencesModifiedType()
+      throws UnableToCompleteException, IOException, InterruptedException {
+    checkPerFileRecompile_unstableGeneratorReferencesModifiedType(JsOutputOption.PRETTY);
+    checkPerFileRecompile_unstableGeneratorReferencesModifiedType(JsOutputOption.DETAILED);
+  }
+
   public void testPerFileRecompile_functionSignatureChange() throws UnableToCompleteException,
       IOException, InterruptedException {
     // Not testing recompile equality with Pretty output since the Pretty namer's behavior is order
@@ -671,7 +693,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     // FooResourceGenerator.
     compileToJs(compilerOptions, relinkApplicationDir, "com.foo.SimpleModule",
         Lists.<MockResource> newArrayList(classNameToGenerateResource), relinkMinimalRebuildCache,
-        stringSet("com.foo.TestEntryPoint", "com.foo.Baz$InnerBaz", "com.foo.Bar",
+        stringSet("com.foo.TestEntryPoint", "com.foo.Baz", "com.foo.Baz$InnerBaz", "com.foo.Bar",
             "com.foo.HasCustomContent", "com.foo.FooReplacementOne"), output);
 
     // Generators were run again.
@@ -766,6 +788,26 @@ public class CompilerTest extends ArgProcessorTestBase {
         stringSet("com.foo.JsoTwo", "com.foo.SomeClassReferringToJsoTwoArrays"), output);
   }
 
+  private void checkPerFileRecompile_unstableGeneratorReferencesModifiedType(JsOutputOption output)
+      throws UnableToCompleteException, IOException, InterruptedException {
+    // Make sure that the recompile with changes and the full compile with changes have the same
+    // output from the unstable generator, so that it is safe to make byte for byte output
+    // comparisons.
+    UnstableNestedAnonymousGenerator.outputVersionOrder.addAll(Lists.newArrayList(
+        // first compile
+        OutputVersion.A,
+        // recompile with changes
+        OutputVersion.B,
+        // full compile with changes
+        OutputVersion.B));
+    checkRecompiledModifiedApp("com.foo.SimpleModule",
+        Lists.newArrayList(generatorEntryPointResource, unstableGeneratorModuleResource),
+        fooResource, sameContentDifferentTimeFooResource, stringSet(
+            "com.foo.NestedAnonymousClasses$1", "com.foo.NestedAnonymousClasses",
+            "com.foo.NestedAnonymousClasses$ClassTwo", "com.foo.NestedAnonymousClasses$ClassOne",
+            "com.foo.TestEntryPoint", "com.foo.NestedAnonymousClasses$1$1", "com.foo.Foo"), output);
+  }
+
   private void checkPerFileRecompile_functionSignatureChange(JsOutputOption output)
       throws UnableToCompleteException, IOException, InterruptedException {
     checkRecompiledModifiedApp("com.foo.SimpleModule",
@@ -820,8 +862,8 @@ public class CompilerTest extends ArgProcessorTestBase {
 
     checkRecompiledModifiedApp(compilerOptions, "com.foo.SimpleModule",
         Lists.newArrayList(multipleClassGeneratorModuleResource, generatorEntryPointResource),
-        bazResource, bazResource, stringSet("com.foo.Baz", "com.foo.TestEntryPoint", "com.foo.Bar"),
-        output);
+        bazResource, bazResource,
+        stringSet("com.foo.Baz", "com.foo.TestEntryPoint", "com.foo.Foo", "com.foo.Bar"), output);
   }
 
   private void checkPerFileRecompile_dualJsoIntfDispatchChange(JsOutputOption output)

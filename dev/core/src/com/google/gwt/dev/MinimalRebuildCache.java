@@ -137,6 +137,8 @@ public class MinimalRebuildCache implements Serializable {
   private final Set<String> deletedResourcePaths = Sets.newHashSet();
   private final Set<String> dualJsoImplInterfaceNames = Sets.newHashSet();
   private final ArtifactSet generatedArtifacts = new ArtifactSet();
+  private final Multimap<String, String> generatedCompilationUnitNamesByReboundTypeNames =
+      HashMultimap.create();
   private final IntTypeIdGenerator intTypeIdGenerator = new IntTypeIdGenerator();
   private final Map<String, String> jsByTypeName = Maps.newHashMap();
   private final Set<String> jsoStatusChangedTypeNames = Sets.newHashSet();
@@ -246,6 +248,12 @@ public class MinimalRebuildCache implements Serializable {
       return Sets.newHashSet();
     }
 
+    // Cache the ReboundTypeNames -> GeneratedCompilationUnitNames reverse map as it will be needed
+    // several times.
+    generatedCompilationUnitNamesByReboundTypeNames.clear();
+    Multimaps.invertFrom(reboundTypeNamesByGeneratedCompilationUnitNames,
+        generatedCompilationUnitNamesByReboundTypeNames);
+
     // Store stale type names in a persisted field so that tests can inspect behavior.
     staleTypeNames.clear();
 
@@ -297,12 +305,7 @@ public class MinimalRebuildCache implements Serializable {
    * have been deleted.
    */
   public Set<String> computeDeletedTypeNames() {
-    Set<String> deletedTypeNames = Sets.newHashSet();
-    deletedTypeNames.addAll(deletedCompilationUnitNames);
-    for (String deletedCompilationUnitName : deletedCompilationUnitNames) {
-      deletedTypeNames.addAll(nestedTypeNamesByUnitTypeName.get(deletedCompilationUnitName));
-    }
-    return deletedTypeNames;
+    return computeNestedTypeNames(deletedCompilationUnitNames);
   }
 
   /**
@@ -315,26 +318,15 @@ public class MinimalRebuildCache implements Serializable {
   public Set<String> computeModifiedTypeNames() {
     // Accumulate the names of types that are nested within known modified compilation units.
     Set<String> modifiedTypeNames = Sets.newHashSet();
-    modifiedTypeNames.addAll(modifiedCompilationUnitNames);
-    for (String modifiedCompilationUnitName : modifiedCompilationUnitNames) {
-      modifiedTypeNames.addAll(nestedTypeNamesByUnitTypeName.get(modifiedCompilationUnitName));
-    }
+    modifiedTypeNames.addAll(computeNestedTypeNames(modifiedCompilationUnitNames));
 
     // Accumulate the names of types that are nested within compilation units that are expected to
     // be modified once invalidated Generators have been run (the Generators were invalidated
     // because they read resources that are known to be modified).
-    Multimap<String, String> generatedCompilationUnitNamesByReboundTypeNames =
-        HashMultimap.create();
-    Multimaps.invertFrom(reboundTypeNamesByGeneratedCompilationUnitNames,
-        generatedCompilationUnitNamesByReboundTypeNames);
     Set<String> affectedReboundTypeNames = computeReboundTypesAffectedByModifiedResources();
-    for (String affectedReboundTypeName : affectedReboundTypeNames) {
-      Collection<String> generatedCompilationUnitNames =
-          generatedCompilationUnitNamesByReboundTypeNames.get(affectedReboundTypeName);
-      for (String generatedCompilationUnitName : generatedCompilationUnitNames) {
-        modifiedTypeNames.addAll(nestedTypeNamesByUnitTypeName.get(generatedCompilationUnitName));
-      }
-    }
+    Set<String> assumedModifiedGeneratedCompilationUnitNames =
+        computeCompilationUnitsGeneratedForReboundTypes(affectedReboundTypeNames);
+    modifiedTypeNames.addAll(computeNestedTypeNames(assumedModifiedGeneratedCompilationUnitNames));
 
     return modifiedTypeNames;
   }
@@ -598,11 +590,21 @@ public class MinimalRebuildCache implements Serializable {
     do {
       // Accumulate staleGeneratedCompilationUnits -> generators ->
       // generatorTriggeringCompilationUnits.
-      Set<String> generatorTriggeringTypes = computeTypesThatRebindTypes(
-          computeReboundTypesThatGenerateTypes(staleGeneratedCompilationUnitNames));
+      Set<String> reboundTypesThatGenerateTheStaleCompilationUnits =
+          computeReboundTypesThatGenerateTypes(staleGeneratedCompilationUnitNames);
+      Set<String> generatorTriggeringTypes =
+          computeTypesThatRebindTypes(reboundTypesThatGenerateTheStaleCompilationUnits);
       // Mark these generator triggering types stale and keep track of whether any of them were not
       // previously known to be stale.
       discoveredMoreStaleTypes = staleTypeNames.addAll(generatorTriggeringTypes);
+      // Output of Generators run for these triggering types, might not be stable, so all the
+      // resulting generated types must be assumed stale.
+      // TODO(stalcup): this overly broad assumption that generated types are stale might be very
+      // costly for individual Generators that have lots of output (like GWTRPC). It would be faster
+      // (and more complicated to instead watch Generator output for actually modified types and
+      // then recalculate staleness.
+      staleTypeNames.addAll(computeNestedTypeNames(computeCompilationUnitsGeneratedForReboundTypes(
+          reboundTypesThatGenerateTheStaleCompilationUnits)));
 
       // It's possible that a generator triggering type was itself also created by a Generator.
       // Repeat the backwards trace process till none of the newly stale types are generated types.
@@ -626,6 +628,32 @@ public class MinimalRebuildCache implements Serializable {
       compilationUnitNames.add(compilationUnitTypeNameByNestedTypeName.get(typeName));
     }
     return compilationUnitNames;
+  }
+
+  /**
+   * Returns the set of names of compilation units that are generated by the given rebound type
+   * names.
+   */
+  private Set<String> computeCompilationUnitsGeneratedForReboundTypes(
+      Set<String> reboundTypeNames) {
+    Set<String> generatedCompilationUnitNames = Sets.newHashSet();
+    for (String reboundTypeName : reboundTypeNames) {
+      generatedCompilationUnitNames.addAll(
+          generatedCompilationUnitNamesByReboundTypeNames.get(reboundTypeName));
+    }
+    return generatedCompilationUnitNames;
+  }
+
+  /**
+   * Returns the set of type names contained within the given compilation units.
+   */
+  private Set<String> computeNestedTypeNames(Set<String> compilationUnitNames) {
+    Set<String> nestedTypeNames = Sets.newHashSet();
+    nestedTypeNames.addAll(compilationUnitNames);
+    for (String compilationUnitName : compilationUnitNames) {
+      nestedTypeNames.addAll(nestedTypeNamesByUnitTypeName.get(compilationUnitName));
+    }
+    return nestedTypeNames;
   }
 
   /**
