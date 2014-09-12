@@ -79,36 +79,6 @@ private:
 };
 
 
-// create a scope for disabling Step Into--this is needed to protect internal
-// functions from being stepped into when we execute them while the user is
-// stepping while debugging. R does this itself for expressions entered at the
-// Browse prompt, but we need to do it manually. 
-// Discussion here: https://bugs.r-project.org/bugzilla/show_bug.cgi?id=15770
-class DisableStepInto : boost::noncopyable
-{
-public:
-   DisableStepInto()
-      : didDisable_(false)
-   {
-      if (R_BrowserLastCommand == 's')
-      {
-         // R watches for 'S' and replaces with 's' after execution completes; see:
-         // https://github.com/wch/r-source/commit/8b672fe4f178aac0d2bea64097befb36b9f824f3
-         R_BrowserLastCommand = 'S';
-         didDisable_ = true;
-      }
-   }
-   virtual ~DisableStepInto()
-   {
-      if (didDisable_) {
-         R_BrowserLastCommand = 's';
-      }
-   }
-
-private:
-   bool didDisable_;
-};
-
 Error parseString(const std::string& str, SEXP* pSEXP, sexp::Protect* pProtect)
 {
    // string to parse
@@ -140,6 +110,10 @@ Error evaluateExpressionsUnsafe(SEXP expr,
                                 SEXP* pSEXP,
                                 sexp::Protect* pProtect)
 {
+   // regardless of safety, don't invoke the user-facing debugger on the code
+   // we're about to eval
+   DisableStepIntoScope disableStepInto;
+
    int er=0;
    int i=0,l;
    
@@ -187,7 +161,6 @@ Error evaluateExpressions(SEXP expr,
 {
    // disable custom error handlers while we execute code
    DisableErrorHandlerScope disableErrorHandler;
-   DisableStepInto disableStepInto;
 
    return evaluateExpressionsUnsafe(expr, env, pSEXP, pProtect);
 }
@@ -221,6 +194,7 @@ Error executeSafely(boost::function<void()> function)
 {
    // disable custom error handlers while we execute code
    DisableErrorHandlerScope disableErrorHandler;
+   DisableStepIntoScope disableStepInto;
 
    Rboolean success = R_ToplevelExec(topLevelExec, (void*)&function);
    if (!success)
@@ -237,6 +211,7 @@ core::Error executeSafely(boost::function<SEXP()> function, SEXP* pSEXP)
 {
    // disable custom error handlers while we execute code
    DisableErrorHandlerScope disableErrorHandler;
+   DisableStepIntoScope disableStepInto;
 
    SEXPTopLevelExecContext context ;
    context.function = function ;
