@@ -125,7 +125,7 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
   }
 
   public int compareTo(Date other) {
-    return Long.signum(getTime() - other.getTime());
+    return Long.compare(getTime(), other.getTime());
   }
 
   @Override

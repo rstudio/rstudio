@@ -350,7 +350,7 @@ public class BigDecimal extends Number implements Comparable<BigDecimal>,
     if (scaledDivisor.bitLength() < SMALL_VALUE_BITS) {
       long rem = remainder.longValue();
       long divisor = scaledDivisor.longValue();
-      compRem = longCompareTo(Math.abs(rem) << 1, Math.abs(divisor));
+      compRem = Long.compare(Math.abs(rem) << 1, Math.abs(divisor));
       // To look if there is a carry
       compRem = roundingBehavior(quotient.testBit(0) ? 1 : 0, sign
           * (5 + compRem), roundingMode);
@@ -393,10 +393,6 @@ public class BigDecimal extends Number implements Comparable<BigDecimal>,
   private static double intDivide(double dividend, double divisor) {
     double quotient = dividend / divisor;
     return quotient > 0 ? Math.floor(quotient) : Math.ceil(quotient);
-  }
-
-  private static int longCompareTo(long a, long b) {
-    return Long.signum(a - b);
   }
 
   private static native double parseUnscaled(String str) /*-{
@@ -2790,7 +2786,7 @@ public class BigDecimal extends Number implements Comparable<BigDecimal>,
     // If the discarded fraction is non-zero perform rounding
     if (fraction != 0) {
       // To check if the discarded fraction >= 0.5
-      compRem = longCompareTo(Math.abs(fraction) << 1, sizeOfFraction);
+      compRem = Long.compare(Math.abs(fraction) << 1, sizeOfFraction);
       // To look if there is a carry
       integer += roundingBehavior(((int) integer) & 1, Long.signum(fraction)
           * (5 + compRem), mc.getRoundingMode());

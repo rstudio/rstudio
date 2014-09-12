@@ -116,15 +116,15 @@ public class Timestamp extends java.util.Date {
   }
 
   public int compareTo(Timestamp o) {
-    int sign = Long.signum(getTime() - o.getTime());
-    return sign == 0 ? getNanos() - o.getNanos() : sign;
+    int cmp = Long.compare(getTime(), o.getTime());
+    return cmp == 0 ? Integer.compare(getNanos(), o.getNanos()) : cmp;
   }
 
   @Override
   public boolean equals(Object ts) {
     // Timestamps can't be compared to java.util.Date
     // This is known to not be symmetric, which follows the JRE.
-    return ts instanceof Timestamp ? equals((Timestamp) ts) : false;
+    return (ts instanceof Timestamp) && equals((Timestamp) ts);
   }
 
   public boolean equals(Timestamp ts) {
