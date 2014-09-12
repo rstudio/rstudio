@@ -528,6 +528,8 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
       Class<? extends Annotation> annotationClass, AnnotationData annotationData) {
     // Make a copy before we mutate the collection.
     Map<String, Object> values = Maps.newHashMap(annotationData.getValues());
+    logger =
+        logger.branch(TreeLogger.TRACE, "Resolving annotation for " + annotationClass.getName());
     for (Map.Entry<String, Object> entry : values.entrySet()) {
       Method method = null;
       Throwable caught = null;
@@ -541,8 +543,8 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
       }
       if (caught != null) {
         logger.log(TreeLogger.WARN,
-            "Exception resolving " + annotationClass.getCanonicalName() + "." + entry.getKey(),
-            caught);
+            "Exception resolving " + annotationClass.getCanonicalName() + "." + entry.getKey() +
+            " : " + caught.getMessage());
         return null;
       }
     }
@@ -786,7 +788,7 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
           return forName(valueType.getClassName());
         } catch (ClassNotFoundException e) {
           logger.log(
-              TreeLogger.ERROR, "Annotation error: cannot resolve " + valueType.getClassName(), e);
+              TreeLogger.WARN, "Annotation error: cannot resolve " + valueType.getClassName());
           return null;
         }
       }
