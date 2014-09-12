@@ -99,6 +99,8 @@ enum {
     CTXT_BUILTIN  = 64
 };
 
+extern "C" char R_BrowserLastCommand;
+
 namespace r {
 
 inline RCNTXT* getGlobalContext()
