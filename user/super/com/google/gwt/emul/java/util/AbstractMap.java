@@ -122,9 +122,9 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
     return implFindEntry(key, false) != null;
   }
 
+  @Override
   public boolean containsValue(Object value) {
-    for (Iterator<Entry<K, V>> iter = entrySet().iterator(); iter.hasNext();) {
-      Entry<K, V> entry = iter.next();
+    for (Entry<K, V> entry : entrySet()) {
       V v = entry.getValue();
       if (Objects.equals(value, v)) {
         return true;
@@ -173,9 +173,9 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
     return true;
   }
 
+  @Override
   public V get(Object key) {
-    Map.Entry<K, V> entry = implFindEntry(key, false);
-    return (entry == null ? null : entry.getValue());
+    return getEntryValueOrNull(implFindEntry(key, false));
   }
 
   @Override
@@ -242,17 +242,16 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
     throw new UnsupportedOperationException("Put not supported on this map");
   }
 
-  public void putAll(Map<? extends K, ? extends V> t) {
-    for (Iterator<? extends Entry<? extends K, ? extends V>> iter = t.entrySet().iterator();
-        iter.hasNext(); ) {
-      Entry<? extends K, ? extends V> e = iter.next();
+  @Override
+  public void putAll(Map<? extends K, ? extends V> map) {
+    for (Entry<? extends K, ? extends V> e : map.entrySet()) {
       put(e.getKey(), e.getValue());
     }
   }
 
+  @Override
   public V remove(Object key) {
-    Map.Entry<K, V> entry = implFindEntry(key, true);
-    return (entry == null ? null : entry.getValue());
+    return getEntryValueOrNull(implFindEntry(key, true));
   }
 
   public int size() {
@@ -261,20 +260,24 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
 
   @Override
   public String toString() {
-    String s = "{";
+    StringBuilder sb = new StringBuilder("{");
     boolean comma = false;
-    for (Iterator<Entry<K, V>> iter = entrySet().iterator(); iter.hasNext();) {
-      Entry<K, V> entry = iter.next();
+    for (Entry<K, V> entry : entrySet()) {
       if (comma) {
-        s += ", ";
+        sb.append(", ");
       } else {
         comma = true;
       }
-      s += String.valueOf(entry.getKey());
-      s += "=";
-      s += String.valueOf(entry.getValue());
+      sb.append(toString(entry.getKey()));
+      sb.append("=");
+      sb.append(toString(entry.getValue()));
     }
-    return s + "}";
+    sb.append("}");
+    return sb.toString();
+  }
+
+  private String toString(Object o) {
+    return o == this ? "(this Map)" : String.valueOf(o);
   }
 
   @Override
@@ -317,6 +320,10 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
         return AbstractMap.this.size();
       }
     };
+  }
+
+  static <K, V> V getEntryValueOrNull(Entry<K, V> entry) {
+    return entry == null ? null : entry.getValue();
   }
 
   private Entry<K, V> implFindEntry(Object key, boolean remove) {

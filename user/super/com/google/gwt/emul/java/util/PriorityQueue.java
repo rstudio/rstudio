@@ -86,15 +86,11 @@ public class PriorityQueue<E> extends AbstractQueue<E> {
 
   @Override
   public boolean addAll(Collection<? extends E> c) {
-    if (c.isEmpty()) {
-      return false;
+    if (heap.addAll(c)) {
+      makeHeap(0);
+      return true;
     }
-    Iterator<? extends E> iter = c.iterator();
-    while (iter.hasNext()) {
-      heap.add(iter.next());
-    }
-    makeHeap(0);
-    return true;
+    return false;
   }
 
   @Override

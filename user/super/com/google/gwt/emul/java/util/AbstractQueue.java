@@ -27,8 +27,7 @@ import static com.google.gwt.core.shared.impl.GwtPreconditions.checkState;
  * 
  * @param <E> element type.
  */
-public abstract class AbstractQueue<E> extends AbstractCollection<E> implements
-    Queue<E> {
+public abstract class AbstractQueue<E> extends AbstractCollection<E> implements Queue<E> {
 
   // Should not be instantiated directly.
   protected AbstractQueue() {
@@ -45,11 +44,7 @@ public abstract class AbstractQueue<E> extends AbstractCollection<E> implements
     checkNotNull(c);
     checkArgument(c != this, "Can't add a queue to itself");
 
-    boolean modified = false;
-    for (E val : c) {
-      modified |= add(val);
-    }
-    return modified;
+    return super.addAll(c);
   }
 
   @Override
@@ -59,18 +54,23 @@ public abstract class AbstractQueue<E> extends AbstractCollection<E> implements
     }
   }
 
+  @Override
   public E element() {
     E e = peek();
     checkElement(e != null, "Queue is empty");
     return e;
   }
 
+  @Override
   public abstract boolean offer(E o);
 
+  @Override
   public abstract E peek();
 
+  @Override
   public abstract E poll();
 
+  @Override
   public E remove() {
     E e = poll();
     checkElement(e != null, "Queue is empty");

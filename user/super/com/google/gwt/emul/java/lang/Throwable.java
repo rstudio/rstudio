@@ -176,8 +176,9 @@ public class Throwable implements Serializable {
   }
 
   public void setStackTrace(StackTraceElement[] stackTrace) {
-    StackTraceElement[] copy = new StackTraceElement[stackTrace.length];
-    for (int i = 0, c = stackTrace.length; i < c; ++i) {
+    int length = stackTrace.length;
+    StackTraceElement[] copy = new StackTraceElement[length];
+    for (int i = 0; i < length; ++i) {
       copy[i] = checkNotNull(stackTrace[i]);
     }
     this.stackTrace = copy;

@@ -233,8 +233,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
    * hashCode.
    */
   private V getHashValue(Object key) {
-    Entry<K, V> entry = hashCodeMap.getEntry(key);
-    return entry == null ? null : entry.getValue();
+    return getEntryValueOrNull(hashCodeMap.getEntry(key));
   }
 
   /**

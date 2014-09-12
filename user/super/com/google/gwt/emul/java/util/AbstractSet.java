@@ -66,8 +66,7 @@ public abstract class AbstractSet<E> extends AbstractCollection<E> implements
     } else {
       // Remove every member of 'c' from 'this'.
       //
-      for (Iterator<?> iter = c.iterator(); iter.hasNext();) {
-        Object o = iter.next();
+      for (Object o : c) {
         remove(o);
       }
     }
