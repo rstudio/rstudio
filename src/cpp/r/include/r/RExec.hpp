@@ -281,35 +281,19 @@ private:
 // empty and we're not debugging)
 bool atTopLevelContext();
 
-// create a scope for disabling Step Into--this is needed to protect internal
+// create a scope for disabling debugging--this is needed to protect internal
 // functions from being stepped into when we execute them while the user is
 // stepping while debugging. R does this itself for expressions entered at the
 // Browse prompt, but we need to do it manually. 
 // Discussion here: https://bugs.r-project.org/bugzilla/show_bug.cgi?id=15770
-class DisableStepIntoScope : boost::noncopyable
+class DisableDebugScope : boost::noncopyable
 {
 public:
-   DisableStepIntoScope()
-      : didDisable_(false)
-   {
-      if (R_BrowserLastCommand == 's')
-      {
-         // R watches for 'S' and replaces with 's' after execution completes; see:
-         // https://github.com/wch/r-source/commit/8b672fe4f178aac0d2bea64097befb36b9f824f3
-         R_BrowserLastCommand = 'S';
-         didDisable_ = true;
-      }
-   }
-   virtual ~DisableStepIntoScope()
-   {
-      // if we disabled and are still debugging, restore the state
-      if (didDisable_ && !atTopLevelContext() && R_BrowserLastCommand == 'S') 
-      {
-         R_BrowserLastCommand = 's';
-      }
-   }
+   DisableDebugScope();
+   virtual ~DisableDebugScope();
 
 private:
+   int rdebug_;
    bool didDisable_;
 };
 

@@ -112,7 +112,7 @@ Error evaluateExpressionsUnsafe(SEXP expr,
 {
    // regardless of safety, don't invoke the user-facing debugger on the code
    // we're about to eval
-   DisableStepIntoScope disableStepInto;
+   DisableDebugScope disableStepInto;
 
    int er=0;
    int i=0,l;
@@ -194,7 +194,7 @@ Error executeSafely(boost::function<void()> function)
 {
    // disable custom error handlers while we execute code
    DisableErrorHandlerScope disableErrorHandler;
-   DisableStepIntoScope disableStepInto;
+   DisableDebugScope disableStepInto;
 
    Rboolean success = R_ToplevelExec(topLevelExec, (void*)&function);
    if (!success)
@@ -211,7 +211,7 @@ core::Error executeSafely(boost::function<SEXP()> function, SEXP* pSEXP)
 {
    // disable custom error handlers while we execute code
    DisableErrorHandlerScope disableErrorHandler;
-   DisableStepIntoScope disableStepInto;
+   DisableDebugScope disableStepInto;
 
    SEXPTopLevelExecContext context ;
    context.function = function ;
@@ -515,6 +515,25 @@ IgnoreInterruptsScope::~IgnoreInterruptsScope()
    {
    }
 }
+
+DisableDebugScope::DisableDebugScope() 
+{
+   rdebug_ = RDEBUG(R_GlobalEnv);
+   if (rdebug_ != 0) 
+   {
+      SET_RDEBUG(R_GlobalEnv, 0);
+      didDisable_ = true;
+   } 
+}
+
+DisableDebugScope::~DisableDebugScope()
+{
+   if (didDisable_ && RDEBUG(R_GlobalEnv) == 0) 
+   {
+      SET_RDEBUG(R_GlobalEnv, rdebug_);
+   }
+}
+
 
 } // namespace exec   
 } // namespace r
