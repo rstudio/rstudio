@@ -611,6 +611,11 @@ public class Pruner {
     OptimizerStats stats = new OptimizerStats(NAME);
 
     ControlFlowAnalyzer livenessAnalyzer = new ControlFlowAnalyzer(program);
+    // Don't prune JSOs, JsTypes that were considered instantiated before removing
+    // casts at {@link ImplementCastsAndTypeChecks}.
+    // TODO(rluble): the AST should have been left in a state that whatever method, attribute, etc
+    // from a JSO, JsType needs to be live, should have been already reachable from the AST.
+    livenessAnalyzer.rescue(program.typeOracle.getInstantiatedJsoTypesViaCast());
     livenessAnalyzer.setForPruning();
 
     // SPECIAL: Immortal codegen types are never pruned

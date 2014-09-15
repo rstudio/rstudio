@@ -742,6 +742,10 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     return Collections.unmodifiableCollection(indexedMethods.values());
   }
 
+  public JMethod getIndexedMethodOrNull(String string) {
+    return indexedMethods.get(string);
+  }
+
   public JDeclaredType getIndexedType(String string) {
     JDeclaredType type = indexedTypes.get(string);
     if (type == null) {

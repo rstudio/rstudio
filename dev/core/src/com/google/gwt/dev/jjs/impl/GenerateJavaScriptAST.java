@@ -1901,18 +1901,17 @@ public class GenerateJavaScriptAST {
       if (program.isReferenceOnly(program.getIndexedType("Class"))) {
         return Collections.emptyList();
       }
-      // Include in the preamble all classes that are reachable for Class.createForClass and
-      // Class.createForEnum that are not JSOs nor interfaces.
+      // Include in the preamble all classes that are reachable for Class.createForClass,
+      // Class.createForInterface
       SortedSet<JDeclaredType> reachableClasses =
-          computeReachableTypes(program.getTypeClassLiteralHolder().getClinitMethod());
+          computeReachableTypes(METHODS_PROVIDED_BY_PREAMBLE);
 
       assert !modularCompile || checkCoreModulePreambleComplete(program,
           program.getTypeClassLiteralHolder().getClinitMethod());
 
-      // TODO(stalcup): modify CFA to not artificially add all JSOs.
       Set<JDeclaredType> orderedPreambleClasses = Sets.newLinkedHashSet();
       for (JDeclaredType type : reachableClasses) {
-        if (typeOracle.isJavaScriptObject(type) || alreadyProcessedTypes.contains(type)) {
+        if (alreadyProcessedTypes.contains(type)) {
           continue;
         }
         insertInTopologicalOrder(type, orderedPreambleClasses);
@@ -1941,9 +1940,7 @@ public class GenerateJavaScriptAST {
         }
       }.accept(classLiteralInitMethod);
 
-      for (String createForMethodName : ImmutableList.of(
-          "Class.createForClass", "Class.createForPrimitive", "Class.createForInterface",
-          "Class.createForEnum")) {
+      for (String createForMethodName : METHODS_PROVIDED_BY_PREAMBLE) {
         if (!calledMethods.contains(program.getIndexedMethod(createForMethodName))) {
           return false;
         }
@@ -1952,14 +1949,21 @@ public class GenerateJavaScriptAST {
     }
 
     /**
-     * Computes the set of types whose methods or fields are reachable from {@code method}.
+     * Computes the set of types whose methods or fields are reachable from {@code methods}.
      */
-    private SortedSet<JDeclaredType> computeReachableTypes(JMethod method) {
+    private SortedSet<JDeclaredType> computeReachableTypes(Iterable<String> methodNames) {
       ControlFlowAnalyzer cfa = new ControlFlowAnalyzer(program);
-      cfa.traverseFrom(method);
+      for (String methodName : methodNames) {
+        JMethod method = program.getIndexedMethodOrNull(methodName);
+        // Only traverse it if it has not been pruned.
+        if (method != null) {
+          cfa.traverseFrom(method);
+        }
+      }
 
       // Get the list of enclosing classes that were not excluded.
-      SortedSet<JDeclaredType> reachableTypes = ImmutableSortedSet.copyOf(HasName.BY_NAME_COMPARATOR,
+      SortedSet<JDeclaredType> reachableTypes =
+          ImmutableSortedSet.copyOf(HasName.BY_NAME_COMPARATOR,
          Iterables.filter(
           Iterables.transform(cfa.getLiveFieldsAndMethods(),
               new Function<JNode, JDeclaredType>() {
@@ -3263,6 +3267,10 @@ public class GenerateJavaScriptAST {
       event.end();
     }
   }
+
+  private static final ImmutableList<String> METHODS_PROVIDED_BY_PREAMBLE = ImmutableList.of(
+      "Class.createForClass", "Class.createForPrimitive", "Class.createForInterface",
+      "Class.createForEnum");
 
   private final Map<JBlock, JsCatch> catchMap = Maps.newIdentityHashMap();
 

@@ -92,19 +92,6 @@ public class ControlFlowAnalyzer {
   private class RescueVisitor extends JVisitor {
     private final List<JMethod> curMethodStack = Lists.newArrayList();
 
-    private RescueVisitor() {
-      /*
-       * Rescue any types that would have been rescued by JCastOperation/JInstanceOf
-       * after normalization.
-       */
-      if (rescuedViaCast != null) {
-        for (JReferenceType type : rescuedViaCast) {
-          rescue(type, true, true);
-        }
-        rescuedViaCast.clear();
-      }
-    }
-
     @Override
     public boolean visit(JArrayType type, Context ctx) {
       assert (referencedTypes.contains(type));
@@ -955,7 +942,6 @@ public class ControlFlowAnalyzer {
   private final JProgram program;
   private Set<JReferenceType> referencedTypes = Sets.newHashSet();
   private final RescueVisitor rescuer;
-  private final Set<JReferenceType> rescuedViaCast = Sets.newHashSet();
   private final JMethod runAsyncOnsuccess;
   private JMethod stringValueOfChar = null;
 
@@ -987,7 +973,6 @@ public class ControlFlowAnalyzer {
     runAsyncOnsuccess = program.getIndexedMethod("RunAsyncCallback.onSuccess");
     getClassField = program.getIndexedField("Object.___clazz");
     getClassMethod = program.getIndexedMethod("Object.getClass");
-    rescuedViaCast.addAll(program.typeOracle.getInstantiatedJsoTypesViaCast());
     buildMethodsOverriding();
     rescuer = new RescueVisitor();
   }
@@ -1023,6 +1008,20 @@ public class ControlFlowAnalyzer {
    */
   public Set<? extends JReferenceType> getReferencedTypes() {
     return referencedTypes;
+  }
+
+  /**
+   * Forcibly rescue {@code typesToRescue}.
+   * <p>
+   * NOTE: this is used to rescue types that are made live by operations (e.g. casts) that
+   * have been eliminated by a normalization pass.
+   */
+  public void rescue(Iterable<JReferenceType> typesToRescue) {
+    // TODO(rluble): this functionality should go away, the AST should contain all the information
+    // needed to determine whether a type is live or not.
+    for (JReferenceType type : typesToRescue) {
+      rescuer.rescue(type, true, true);
+    }
   }
 
   /**
