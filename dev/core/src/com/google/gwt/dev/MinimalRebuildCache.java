@@ -164,7 +164,7 @@ public class MinimalRebuildCache implements Serializable {
   private final Set<String> staleTypeNames = Sets.newHashSet();
   private final Map<String, StatementRanges> statementRangesByTypeName = Maps.newHashMap();
   private final Multimap<String, String> typeNamesByReferencingTypeName = HashMultimap.create();
-  private final Set<String> sourceCompilationUnitTypeNames = Sets.newHashSet();
+  private final Set<String> sourceCompilationUnitNames = Sets.newHashSet();
 
   /**
    * Accumulates generated artifacts so that they can be output on recompiles even if no generators
@@ -181,9 +181,16 @@ public class MinimalRebuildCache implements Serializable {
     this.modifiedCompilationUnitNames.addAll(modifiedCompilationUnitNames);
   }
 
-  public void addSourceCompilationUnitTypeName(String sourceCompilationUnitTypeName) {
-    this.sourceCompilationUnitTypeNames.add(sourceCompilationUnitTypeName);
+  public void addSourceCompilationUnitName(String sourceCompilationUnitName) {
+    // sourceCompilationUnitNames contains all compilation unit type names seen so far even
+    // across recompiles. There is a need to know whether a unit is available in source form (
+    // either compiled from source in this iteration or its AST available from cache) so that
+    // we insert the correct type of reference when we see a BinaryTypeReference in the JDT
+    // AST. {@see GwtAstBuilder}.
+    // NOTE: DO NOT RESET OR CLEAR THIS SET.
+    this.sourceCompilationUnitNames.add(sourceCompilationUnitName);
   }
+
   public void addTypeReference(String fromTypeName, String toTypeName) {
     referencedTypeNamesByTypeName.put(fromTypeName, toTypeName);
     typeNamesByReferencingTypeName.put(toTypeName, fromTypeName);
@@ -376,8 +383,8 @@ public class MinimalRebuildCache implements Serializable {
     return !immediateTypeRelations.isEmpty();
   }
 
-  public boolean isSourceCompilationUnit(String name) {
-    return sourceCompilationUnitTypeNames.contains(name);
+  public boolean isSourceCompilationUnit(String compilationUnitName) {
+    return sourceCompilationUnitNames.contains(compilationUnitName);
   }
 
   public IntTypeIdGenerator getIntTypeIdGenerator() {

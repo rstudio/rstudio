@@ -567,7 +567,7 @@ public class CompilationStateBuilder {
         continue;
       }
       builders.add(builder);
-      compilerContext.getMinimalRebuildCache().addSourceCompilationUnitTypeName(
+      compilerContext.getMinimalRebuildCache().addSourceCompilationUnitName(
           builder.getTypeName());
     }
     int cachedSourceCount = cachedUnits.size();
@@ -638,7 +638,7 @@ public class CompilationStateBuilder {
         }
       }
       builders.add(builder);
-      compilerContext.getMinimalRebuildCache().addSourceCompilationUnitTypeName(
+      compilerContext.getMinimalRebuildCache().addSourceCompilationUnitName(
           builder.getTypeName());
     }
     if (compilerContext.getOptions().shouldCompilePerFile()) {

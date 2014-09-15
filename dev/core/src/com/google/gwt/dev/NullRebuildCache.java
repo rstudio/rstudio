@@ -37,6 +37,10 @@ public class NullRebuildCache extends MinimalRebuildCache {
       "The RebuildCache should not be interacted with outside of per-file compiles.";
 
   @Override
+  public void addSourceCompilationUnitName(String sourceCompilationUnitName) {
+  }
+
+  @Override
   public void addGeneratedArtifacts(ArtifactSet generatedArtifacts) {
   }
 
@@ -144,6 +148,11 @@ public class NullRebuildCache extends MinimalRebuildCache {
   @Override
   public boolean hasPreambleTypeNames() {
     throw new UnsupportedOperationException(failMessage);
+  }
+
+  @Override
+  public boolean isSourceCompilationUnit(String compilationUnitName) {
+    return false;
   }
 
   @Override
