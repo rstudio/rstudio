@@ -110,6 +110,7 @@ Error evaluateExpressionsUnsafe(SEXP expr,
                                 SEXP* pSEXP,
                                 sexp::Protect* pProtect)
 {
+
    int er=0;
    int i=0,l;
    
@@ -117,6 +118,7 @@ Error evaluateExpressionsUnsafe(SEXP expr,
    // and return only the last one
    if (TYPEOF(expr)==EXPRSXP) 
    {
+      DisableDebugScope disableStepInto(env);
       l = LENGTH(expr);
       while (i<l) 
       {
@@ -127,6 +129,7 @@ Error evaluateExpressionsUnsafe(SEXP expr,
    // evaluate single expression
    else
    {
+      DisableDebugScope disableStepInto(R_GlobalEnv);
       *pSEXP = R_tryEval(expr, R_GlobalEnv, &er);
    }
    
@@ -190,6 +193,7 @@ Error executeSafely(boost::function<void()> function)
 {
    // disable custom error handlers while we execute code
    DisableErrorHandlerScope disableErrorHandler;
+   DisableDebugScope disableStepInto(R_GlobalEnv);
 
    Rboolean success = R_ToplevelExec(topLevelExec, (void*)&function);
    if (!success)
@@ -206,6 +210,7 @@ core::Error executeSafely(boost::function<SEXP()> function, SEXP* pSEXP)
 {
    // disable custom error handlers while we execute code
    DisableErrorHandlerScope disableErrorHandler;
+   DisableDebugScope disableStepInto(R_GlobalEnv);
 
    SEXPTopLevelExecContext context ;
    context.function = function ;
@@ -269,6 +274,12 @@ Error evaluateString(const std::string& str,
    return Success();
 }
    
+bool atTopLevelContext() 
+{
+   return getGlobalContext() != NULL &&
+          getGlobalContext()->callflag == CTXT_TOPLEVEL;
+}
+
 RFunction::RFunction(SEXP functionSEXP)
 {
    functionSEXP_ = functionSEXP;
@@ -503,6 +514,31 @@ IgnoreInterruptsScope::~IgnoreInterruptsScope()
    {
    }
 }
+
+DisableDebugScope::DisableDebugScope(SEXP env): 
+   rdebug_(0), 
+   env_(NULL)
+{
+   // check to see whether there's a debug flag set on this environment
+   rdebug_ = RDEBUG(env);
+
+   // if there is, turn it off and save the old flag for restoration
+   if (rdebug_ != 0) 
+   {
+      SET_RDEBUG(env, 0);
+      env_ = env;
+   } 
+}
+
+DisableDebugScope::~DisableDebugScope()
+{
+   // if we disabled debugging and it's still disabled, turn debugging back on
+   if (env_ != NULL && RDEBUG(env_) == 0) 
+   {
+      SET_RDEBUG(env_, rdebug_);
+   }
+}
+
 
 } // namespace exec   
 } // namespace r

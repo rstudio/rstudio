@@ -33,6 +33,7 @@
 #include <r/RFunctionHook.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RJson.hpp>
+#include <r/RInterface.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
@@ -274,7 +275,11 @@ void detectLibPathsChanges()
 
 void onDetectChanges(module_context::ChangeSource source)
 {
-   if (source == module_context::ChangeSourceREPL)
+   // check for libPaths changes if we're evaluating a change from the REPL at
+   // the top-level (i.e. not while debugging, as we don't want to mutate any
+   // state that might be under inspection)
+   if (source == module_context::ChangeSourceREPL && 
+       r::exec::atTopLevelContext())
       detectLibPathsChanges();
 }
 
