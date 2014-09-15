@@ -686,11 +686,14 @@ bool isRenderRunning()
    return s_pCurrentRender_ && s_pCurrentRender_->isRunning();
 }
 
-void initPandocPath()
+
+void initEnvironment()
 {
    r::exec::RFunction sysSetenv("Sys.setenv");
    sysSetenv.addParam("RSTUDIO_PANDOC",
                       session::options().pandocPath().absolutePath());
+   sysSetenv.addParam("RMARKDOWN_MATHJAX_PATH",
+                      session::options().mathjaxPath().absolutePath());
    Error error = sysSetenv.call();
    if (error)
       LOG_ERROR(error);
@@ -827,25 +830,10 @@ Error terminateRenderRmd(const json::JsonRpcRequest& request,
    return Success();
 }
 
-// return the path to the local copy of MathJax installed with the RMarkdown
-// package
+// return the path to the local copy of MathJax
 FilePath mathJaxDirectory()
 {
-   std::string path;
-   FilePath mathJaxDir;
-
-   // call system.file to find the appropriate path
-   r::exec::RFunction findMathJax("system.file", "rmd/h/m");
-   findMathJax.addParam("package", "rmarkdown");
-   Error error = findMathJax.call(&path);
-
-   // we don't expect this to fail since we shouldn't be here if RMarkdown
-   // is not installed at the correct verwion
-   if (error)
-      LOG_ERROR(error);
-   else
-      mathJaxDir = FilePath(path);
-   return mathJaxDir;
+   return session::options().mathjaxPath();
 }
 
 // Handles a request for RMarkdown output. This request embeds the name of
@@ -1026,7 +1014,7 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
-   initPandocPath();
+   initEnvironment();
 
    module_context::events().onDetectSourceExtendedType
                                         .connect(onDetectRmdSourceType);

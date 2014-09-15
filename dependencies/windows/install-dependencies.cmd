@@ -109,11 +109,11 @@ if not exist "dictionaries\en_US.dic" (
   )
 )
 
-set MATHJAX=mathjax-20.zip
-if not exist "mathjax" (
+set MATHJAX=mathjax-23.zip
+if not exist "mathjax-23" (
   wget %WGET_ARGS% "https://s3.amazonaws.com/rstudio-buildtools/%MATHJAX%"
   if exist "%MATHJAX%" (
-     mkdir mathjax
+     mkdir mathjax-23
      echo Unzipping %MATHJAX%
      unzip %UNZIP_ARGS% "%MATHJAX%"
      del "%MATHJAX%"

@@ -775,10 +775,10 @@ void modifyOutputForPreview(std::string* pOutput)
    }
 
    // serve mathjax locally
-   std::string previewMathjax = "mathjax";
+   std::string previewMathjax = "mathjax-23";
    boost::algorithm::replace_first(
         *pOutput,
-        "https://c328740.ssl.cf1.rackcdn.com/mathjax/2.0-latest",
+        "https://cdn.mathjax.org/mathjax/latest",
         previewMathjax);
 }
 
@@ -937,8 +937,9 @@ void handlePreviewRequest(const http::Request& request,
    }
 
    // request for mathjax file
-   else if (boost::algorithm::starts_with(path, "mathjax"))
+   else if (boost::algorithm::starts_with(path, "mathjax-23"))
    {
+
       FilePath filePath =
             session::options().mathjaxPath().parent().childPath(path);
       pResponse->setFile(filePath, request);
