@@ -77,7 +77,7 @@ SEXP findNamespace(const std::string& name)
        return R_UnboundValue;
    
    // case 4071: namespace look up executes R code that can trip the debugger
-   DisableDebugScope disableStepInto;
+   DisableDebugScope disableStepInto(R_GlobalEnv);
 
    return R_FindNamespace(Rf_mkString(name.c_str()));
 }

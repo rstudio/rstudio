@@ -281,20 +281,21 @@ private:
 // empty and we're not debugging)
 bool atTopLevelContext();
 
-// create a scope for disabling debugging--this is needed to protect internal
-// functions from being stepped into when we execute them while the user is
-// stepping while debugging. R does this itself for expressions entered at the
-// Browse prompt, but we need to do it manually. 
+// create a scope for disabling debugging while evaluating an expression in a
+// given environment--this is needed to protect internal functions from being
+// stepped into when we execute them while the user is stepping while
+// debugging. R does this itself for expressions entered at the Browse prompt,
+// but we need to do it manually. 
 // Discussion here: https://bugs.r-project.org/bugzilla/show_bug.cgi?id=15770
 class DisableDebugScope : boost::noncopyable
 {
 public:
-   DisableDebugScope();
+   DisableDebugScope(SEXP env);
    virtual ~DisableDebugScope();
 
 private:
-   int rdebug_;
-   bool didDisable_;
+   int rdebug_;  // stored debug flag
+   SEXP env_;    // debug environment (or NULL if not debugging)
 };
 
 
