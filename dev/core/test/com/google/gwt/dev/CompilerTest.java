@@ -51,6 +51,43 @@ public class CompilerTest extends ArgProcessorTestBase {
   private final Compiler.ArgProcessor argProcessor;
   private final CompilerOptionsImpl options = new CompilerOptionsImpl();
 
+  private MockJavaResource packagePrivateParentResource =
+      JavaResourceBase.createMockJavaResource("com.foo.PackagePrivateParent",
+          "package com.foo;",
+          "public abstract class PackagePrivateParent {",
+          "  abstract void someFunction();",
+          "}");
+
+  private MockJavaResource packagePrivateChildResource =
+      JavaResourceBase.createMockJavaResource("com.foo.PackagePrivateChild",
+          "package com.foo;",
+          "public class PackagePrivateChild extends PackagePrivateParent {",
+          "  @Override",
+          "  void someFunction() {}",
+          "}");
+
+  private MockJavaResource referencesParentResource =
+      JavaResourceBase.createMockJavaResource("com.foo.ReferencesParent",
+          "package com.foo;",
+          "public abstract class ReferencesParent {",
+          "  void run() {",
+          "    PackagePrivateParent packagePrivateParent = null;",
+          "    packagePrivateParent.someFunction();",
+          "  }",
+          "}");
+
+  private MockJavaResource packagePrivateDispatchEntryPointResource =
+      JavaResourceBase.createMockJavaResource("com.foo.TestEntryPoint",
+          "package com.foo;",
+          "import com.google.gwt.core.client.EntryPoint;",
+          "public class TestEntryPoint implements EntryPoint {",
+          "  @Override",
+          "  public void onModuleLoad() {",
+          "    ReferencesParent referencesParent = null;",
+          "    PackagePrivateChild packagePrivateChild = null;",
+          "  }",
+          "}");
+
   private MockJavaResource jsoOne =
       JavaResourceBase.createMockJavaResource("com.foo.JsoOne",
           "package com.foo;",
@@ -561,6 +598,12 @@ public class CompilerTest extends ArgProcessorTestBase {
     checkPerFileRecompile_compileTimeConstantChange(JsOutputOption.PRETTY);
   }
 
+  public void testPerFileRecompile_packagePrivateDispatch() throws UnableToCompleteException,
+      IOException, InterruptedException {
+    checkPerFileRecompile_packagePrivateOverride(JsOutputOption.PRETTY);
+    checkPerFileRecompile_packagePrivateOverride(JsOutputOption.DETAILED);
+  }
+
   public void testPerFileRecompile_regularClassMadeIntoJsoClass() throws UnableToCompleteException,
       IOException, InterruptedException {
     // Not testing recompile equality with Pretty output since the Pretty namer's behavior is order
@@ -775,6 +818,18 @@ public class CompilerTest extends ArgProcessorTestBase {
         stringSet("com.foo.TestEntryPoint", "com.foo.SimpleModel"), output);
 
     assertTrue(originalJs.equals(relinkedJs));
+  }
+
+  private void checkPerFileRecompile_packagePrivateOverride(JsOutputOption output)
+      throws UnableToCompleteException, IOException, InterruptedException {
+    CompilerOptions compilerOptions = new CompilerOptionsImpl();
+    compilerOptions.setUseDetailedTypeIds(true);
+
+    checkRecompiledModifiedApp(compilerOptions, "com.foo.SimpleModule", Lists.newArrayList(
+        simpleModuleResource, packagePrivateDispatchEntryPointResource,
+        packagePrivateParentResource, referencesParentResource), packagePrivateChildResource,
+        packagePrivateChildResource,
+        stringSet("com.foo.PackagePrivateChild", "com.foo.TestEntryPoint"), output);
   }
 
   private void checkPerFileRecompile_regularClassMadeIntoJsoClass(JsOutputOption output)

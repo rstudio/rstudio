@@ -869,11 +869,14 @@ public class UnifyAst {
       }
     }
 
+    // Compute overrides before pruning, otherwise if a parent class method is pruned an overriding
+    // child class method might not look like an override.
+    computeOverrides();
+
     // Post-stitching clean-ups.
     if (compilerContext.shouldCompileMonolithic()) {
       pruneDeadFieldsAndMethods();
     }
-    computeOverrides();
     if (errorsFound) {
       // Already logged.
       throw new UnableToCompleteException();
