@@ -35,7 +35,8 @@ public class PrunerTest extends OptimizerTestBase {
     addSnippetClassDecl("static void unusedMethod() { }");
     addSnippetClassDecl("static void usedMethod() { }");
     addSnippetClassDecl("static class UnusedClass { }");
-    addSnippetClassDecl("static class UninstantiatedClass { int field; void method() {} }");
+    addSnippetClassDecl("static class UninstantiatedClass { "
+        + "int field; native int method() /*-{ return 1; }-*/; }");
     addSnippetClassDecl("static UninstantiatedClass uninstantiatedField;");
     addSnippetClassDecl("static int unusedField;");
     addSnippetClassDecl("static int unreadField;");
@@ -185,6 +186,32 @@ public class PrunerTest extends OptimizerTestBase {
 
     // Should be rescued because of @JsExport
     assertNotNull(result.findClass("EntryPoint$JsProtoImpl2"));
+  }
+
+  /**
+   * Test for issue 2478.
+   */
+  public void testPrunerThenEqualityNormalizer() throws Exception {
+    runDeadCodeElimination = false;
+    addSnippetClassDecl("static int foo(int i) { return i; }");
+
+    addSnippetClassDecl("static class UninstantiatedClass { "
+        + "int field[]; native int method() /*-{ return 1; }-*/; }");
+    addSnippetClassDecl("static UninstantiatedClass uninstantiatedField;");
+    Result result;
+    (result = optimize("int",
+        "int i = 0;",
+        "if (uninstantiatedField.field[i] == 0) { i = 2; }",
+        "return i;"
+    )).intoString(
+        "int i = 0;",
+        "if (null.nullField[i] == 0) {",
+        "  i = 2;",
+        "}",
+        "return i;"
+    );
+
+    EqualityNormalizer.exec(result.getOptimizedProgram());
   }
 
   @Override

@@ -21,6 +21,7 @@ import com.google.gwt.dev.jjs.ast.CanBeStatic;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.HasEnclosingType;
 import com.google.gwt.dev.jjs.ast.HasName;
+import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JClassType;
@@ -537,7 +538,7 @@ public class Pruner {
 
     JFieldRef fieldRef =
         new JFieldRef(x.getSourceInfo(), instance, program.getNullField(), x.getEnclosingType(),
-            primitiveTypeOrNullType(program, x.getType()));
+            primitiveTypeOrNullTypeOrArray(program, x.getType()));
     return fieldRef;
   }
 
@@ -578,7 +579,7 @@ public class Pruner {
 
     JMethodCall newCall =
         new JMethodCall(x.getSourceInfo(), instance, program.getNullMethod(),
-            primitiveTypeOrNullType(program, x.getType()));
+            primitiveTypeOrNullTypeOrArray(program, x.getType()));
     // Retain the original arguments, they will be evaluated for side effects.
     for (JExpression arg : args) {
       if (arg.hasSideEffects()) {
@@ -591,7 +592,11 @@ public class Pruner {
   /**
    * Return the smallest type that is is a subtype of the argument.
    */
-  static JType primitiveTypeOrNullType(JProgram program, JType type) {
+  static JType primitiveTypeOrNullTypeOrArray(JProgram program, JType type) {
+    if (type instanceof JArrayType) {
+      JType leafType = primitiveTypeOrNullTypeOrArray(program, ((JArrayType) type).getLeafType());
+      return program.getOrCreateArrayType(leafType, ((JArrayType) type).getDims());
+    }
     if (type instanceof JPrimitiveType) {
       return type;
     }
