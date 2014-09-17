@@ -90,7 +90,8 @@ git merge \
     origin/patch/laggy-typing \
     origin/bugfix/outdent-newline \
     origin/bugfix/safari-fractional-cursor \
-    origin/feature/scrolling-compensation 
+    origin/feature/scrolling-compensation \
+    origin/bugfix/ie10-clipboard
 
 
 node ./Makefile.dryice.js normal

@@ -7711,6 +7711,16 @@ var TextInput = function(parentNode, host) {
             }
         });
         event.addListener(text, "cut", onCut); // for ie9 context menu
+        event.addListener(text, "copy", function(e) {
+            // IE overwrites the clipboardData set in onbeforecopy when it
+            // processes the copy event, so cancel that here. Note that we
+            // can't use useragent.isIE here since IE11+ deliberately omits
+            // MSIE from its user-agent. 
+            if (window.navigator.userAgent.indexOf("Trident/") >= 0 &&
+                host.getCopyText() === clipboardData.getData("Text")) {
+               e.preventDefault();
+            }
+        });
     }
     else if (useragent.isOpera && !("KeyboardEvent" in window)) {
         event.addListener(parentNode, "keydown", function(e) {
