@@ -17,14 +17,15 @@ package com.google.gwt.dev.javac.asm;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JType;
-import com.google.gwt.dev.asm.Type;
-import com.google.gwt.dev.asm.signature.SignatureVisitor;
 import com.google.gwt.dev.javac.MethodArgNamesLookup;
 import com.google.gwt.dev.javac.Resolver;
 import com.google.gwt.dev.javac.TypeParameterLookup;
 import com.google.gwt.dev.javac.typemodel.JAbstractMethod;
 import com.google.gwt.dev.javac.typemodel.JClassType;
 import com.google.gwt.dev.javac.typemodel.JTypeParameter;
+
+import org.objectweb.asm.Type;
+import org.objectweb.asm.signature.SignatureVisitor;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;

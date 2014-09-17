@@ -518,8 +518,8 @@ public final class CompilingClassLoader extends ClassLoader implements
    */
   private class MySingleJsoImplData implements SingleJsoImplData {
     private final SortedSet<String> mangledNames = new TreeSet<String>();
-    private final Map<String, List<com.google.gwt.dev.asm.commons.Method>> mangledNamesToDeclarations = new HashMap<String, List<com.google.gwt.dev.asm.commons.Method>>();
-    private final Map<String, List<com.google.gwt.dev.asm.commons.Method>> mangledNamesToImplementations = new HashMap<String, List<com.google.gwt.dev.asm.commons.Method>>();
+    private final Map<String, List<org.objectweb.asm.commons.Method>> mangledNamesToDeclarations = new HashMap<String, List<org.objectweb.asm.commons.Method>>();
+    private final Map<String, List<org.objectweb.asm.commons.Method>> mangledNamesToImplementations = new HashMap<String, List<org.objectweb.asm.commons.Method>>();
     private final Set<String> unmodifiableIntfNames = Collections.unmodifiableSet(singleJsoImplTypes);
     private final SortedSet<String> unmodifiableNames = Collections.unmodifiableSortedSet(mangledNames);
 
@@ -613,7 +613,7 @@ public final class CompilingClassLoader extends ClassLoader implements
             }
             decl += ")";
 
-            com.google.gwt.dev.asm.commons.Method declaration = com.google.gwt.dev.asm.commons.Method.getMethod(decl);
+            org.objectweb.asm.commons.Method declaration = org.objectweb.asm.commons.Method.getMethod(decl);
             addToMap(mangledNamesToDeclarations, mangledName, declaration);
           }
 
@@ -637,7 +637,7 @@ public final class CompilingClassLoader extends ClassLoader implements
             }
             decl += ")";
 
-            com.google.gwt.dev.asm.commons.Method toImplement = com.google.gwt.dev.asm.commons.Method.getMethod(decl);
+            org.objectweb.asm.commons.Method toImplement = org.objectweb.asm.commons.Method.getMethod(decl);
             addToMap(mangledNamesToImplementations, mangledName, toImplement);
           }
         }
@@ -646,23 +646,23 @@ public final class CompilingClassLoader extends ClassLoader implements
       if (logger.isLoggable(TreeLogger.SPAM)) {
         TreeLogger dumpLogger = logger.branch(TreeLogger.SPAM,
             "SingleJsoImpl method mappings");
-        for (Map.Entry<String, List<com.google.gwt.dev.asm.commons.Method>> entry : mangledNamesToImplementations.entrySet()) {
+        for (Map.Entry<String, List<org.objectweb.asm.commons.Method>> entry : mangledNamesToImplementations.entrySet()) {
           dumpLogger.log(TreeLogger.SPAM, entry.getKey() + " -> " + entry.getValue());
         }
       }
     }
 
     @Override
-    public List<com.google.gwt.dev.asm.commons.Method> getDeclarations(
+    public List<org.objectweb.asm.commons.Method> getDeclarations(
         String mangledName) {
-      List<com.google.gwt.dev.asm.commons.Method> toReturn = mangledNamesToDeclarations.get(mangledName);
+      List<org.objectweb.asm.commons.Method> toReturn = mangledNamesToDeclarations.get(mangledName);
       return toReturn == null ? null : Collections.unmodifiableList(toReturn);
     }
 
     @Override
-    public List<com.google.gwt.dev.asm.commons.Method> getImplementations(
+    public List<org.objectweb.asm.commons.Method> getImplementations(
         String mangledName) {
-      List<com.google.gwt.dev.asm.commons.Method> toReturn = mangledNamesToImplementations.get(mangledName);
+      List<org.objectweb.asm.commons.Method> toReturn = mangledNamesToImplementations.get(mangledName);
       return toReturn == null ? toReturn
           : Collections.unmodifiableList(toReturn);
     }

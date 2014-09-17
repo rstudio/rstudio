@@ -15,14 +15,15 @@
  */
 package com.google.gwt.dev.javac.asm;
 
-import com.google.gwt.dev.asm.AnnotationVisitor;
-import com.google.gwt.dev.asm.FieldVisitor;
-import com.google.gwt.dev.asm.MethodVisitor;
-import com.google.gwt.dev.asm.Opcodes;
-import com.google.gwt.dev.asm.Type;
-import com.google.gwt.dev.asm.signature.SignatureReader;
-import com.google.gwt.dev.asm.signature.SignatureVisitor;
 import com.google.gwt.dev.javac.asmbridge.EmptyVisitor;
+
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.signature.SignatureReader;
+import org.objectweb.asm.signature.SignatureVisitor;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -41,7 +42,7 @@ public class CollectReferencesVisitor extends EmptyVisitor {
   private class CollectGenericTypes extends SignatureVisitor {
 
     public CollectGenericTypes() {
-      super(Opcodes.ASM4);
+      super(Opcodes.ASM5);
     }
 
     @Override
@@ -121,7 +122,7 @@ public class CollectReferencesVisitor extends EmptyVisitor {
 
   CollectReferencesVisitor()
   {
-    this.av = new AnnotationVisitor(Opcodes.ASM4, this.av) {
+    this.av = new AnnotationVisitor(Opcodes.ASM5, this.av) {
       @Override
       public void visitEnum(String name, String desc, String value) {
         addTypeIfClass(desc);

@@ -16,10 +16,10 @@
 
 package com.google.gwt.dev.shell.rewrite;
 
-import com.google.gwt.dev.asm.ClassVisitor;
-import com.google.gwt.dev.asm.MethodVisitor;
-import com.google.gwt.dev.asm.Opcodes;
-import com.google.gwt.dev.asm.Type;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -72,24 +72,24 @@ public class UseMirroredClasses extends ClassVisitor {
     private String className;
 
     protected MethodInterceptor(MethodVisitor mv, String className) {
-      super(Opcodes.ASM4, mv);
+      super(Opcodes.ASM5, mv);
       this.className = className;
     }
 
     @Override
     public void visitMethodInsn(int opcode, String owner, String name,
-        String desc) {
+        String desc, boolean dintf) {
 
       // Check if this method is in our list
       Map<String, String> mirroredMethods = mirrorMap.get(owner);
       if (mirroredMethods == null) {
-        super.visitMethodInsn(opcode, owner, name, desc);
+        super.visitMethodInsn(opcode, owner, name, desc, dintf);
         return;
       }
 
       String mirrorClassMethod = mirroredMethods.get(name);
       if (mirrorClassMethod == null) {
-        super.visitMethodInsn(opcode, owner, name, desc);
+        super.visitMethodInsn(opcode, owner, name, desc, dintf);
         return;
       }
 
@@ -97,7 +97,7 @@ public class UseMirroredClasses extends ClassVisitor {
       // and split it into a class and a method
       String[] temp = mirrorClassMethod.split(":");
       if (temp.length < 2) {
-        super.visitMethodInsn(opcode, owner, name, desc);
+        super.visitMethodInsn(opcode, owner, name, desc, dintf);
         return;
       }
 
@@ -108,12 +108,12 @@ public class UseMirroredClasses extends ClassVisitor {
       // lead to infinite loops if the mirrored method wants to call
       // the original method in it's implementation).
       if (className.equals(mirrorClass.replace("/", "."))) {
-        super.visitMethodInsn(opcode, owner, name, desc);
+        super.visitMethodInsn(opcode, owner, name, desc, dintf);
         return;
       }
 
       if (opcode == Opcodes.INVOKESTATIC) {
-        super.visitMethodInsn(opcode, mirrorClass, mirrorMethod, desc);
+        super.visitMethodInsn(opcode, mirrorClass, mirrorMethod, desc, dintf);
         return;
       }
 
@@ -136,7 +136,7 @@ public class UseMirroredClasses extends ClassVisitor {
 
       // Call the corresponding static method on the mirror class
       super.visitMethodInsn(
-          Opcodes.INVOKESTATIC, mirrorClass, mirrorMethod, newDesc);
+          Opcodes.INVOKESTATIC, mirrorClass, mirrorMethod, newDesc, dintf);
       return;
     }
   }
@@ -144,7 +144,7 @@ public class UseMirroredClasses extends ClassVisitor {
   private String className;
 
   public UseMirroredClasses(ClassVisitor cv, String className) {
-    super(Opcodes.ASM4, cv);
+    super(Opcodes.ASM5, cv);
     this.className = className;
   }
 

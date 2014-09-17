@@ -15,20 +15,10 @@
  */
 package com.google.web.bindery.requestfactory.server;
 
-import com.google.gwt.dev.asm.AnnotationVisitor;
-import com.google.gwt.dev.asm.Attribute;
-import com.google.gwt.dev.asm.ClassReader;
-import com.google.gwt.dev.asm.ClassVisitor;
-import com.google.gwt.dev.asm.ClassWriter;
-import com.google.gwt.dev.asm.FieldVisitor;
-import com.google.gwt.dev.asm.Label;
-import com.google.gwt.dev.asm.MethodVisitor;
-import com.google.gwt.dev.asm.Opcodes;
-import com.google.gwt.dev.asm.Type;
-import com.google.gwt.dev.asm.commons.Method;
 import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.Name.SourceOrBinaryName;
 import com.google.gwt.dev.util.Util;
+
 import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.google.web.bindery.requestfactory.apt.RfValidator;
 import com.google.web.bindery.requestfactory.apt.ValidationTool;
@@ -63,6 +53,18 @@ import com.google.web.bindery.requestfactory.shared.ValueProxy;
 import com.google.web.bindery.requestfactory.shared.WriteOperation;
 import com.google.web.bindery.requestfactory.vm.RequestFactorySource;
 import com.google.web.bindery.requestfactory.vm.testing.UrlRequestTransport;
+
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.Attribute;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.commons.Method;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -350,7 +352,7 @@ public class RequestFactoryJarExtractor {
 
     public AnnotationProcessor(String sourceType, AnnotationVisitor av) {
       // TODO(rluble): should we chain av to super here?
-      super(Opcodes.ASM4);
+      super(Opcodes.ASM5);
       this.sourceType = sourceType;
       this.av = av;
     }
@@ -384,7 +386,7 @@ public class RequestFactoryJarExtractor {
     private String sourceType;
 
     public ClassProcessor(String sourceType, ClassVisitor cv, State state) {
-      super(Opcodes.ASM4, cv);
+      super(Opcodes.ASM5, cv);
       this.sourceType = sourceType;
       this.state = state;
     }
@@ -517,7 +519,7 @@ public class RequestFactoryJarExtractor {
 
     public FieldProcessor(String sourceType, FieldVisitor fv) {
       // TODO(rluble): Should we chain fv to super here?
-      super(Opcodes.ASM4);
+      super(Opcodes.ASM5);
       this.sourceType = sourceType;
       this.fv = fv;
     }
@@ -539,7 +541,7 @@ public class RequestFactoryJarExtractor {
     private final String sourceType;
 
     public MethodProcessor(String sourceType, MethodVisitor mv) {
-      super(Opcodes.ASM4, mv);
+      super(Opcodes.ASM5, mv);
       this.sourceType = sourceType;
     }
 
@@ -590,10 +592,10 @@ public class RequestFactoryJarExtractor {
     }
 
     @Override
-    public void visitMethodInsn(int opcode, String owner, String name, String desc) {
+    public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean dintf) {
       owner = processInternalName(sourceType, owner);
       desc = processMethod(sourceType, name, desc).getDescriptor();
-      super.visitMethodInsn(opcode, owner, name, desc);
+      super.visitMethodInsn(opcode, owner, name, desc, dintf);
     }
 
     @Override
@@ -628,7 +630,7 @@ public class RequestFactoryJarExtractor {
    */
   private class NativeMethodDefanger extends ClassVisitor {
     public NativeMethodDefanger(ClassVisitor cv) {
-      super(Opcodes.ASM4, cv);
+      super(Opcodes.ASM5, cv);
     }
 
     @Override
@@ -648,7 +650,7 @@ public class RequestFactoryJarExtractor {
           mv.visitLdcInsn(NATIVE_METHOD_ERROR);
           // obj, obj, string
           mv.visitMethodInsn(Opcodes.INVOKESPECIAL, exceptionName, "<init>",
-              "(Ljava/lang/String;)V");
+              "(Ljava/lang/String;)V", false);
           // obj
           mv.visitInsn(Opcodes.ATHROW);
 

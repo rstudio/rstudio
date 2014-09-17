@@ -15,13 +15,14 @@
  */
 package com.google.gwt.dev.javac.asm;
 
-import com.google.gwt.dev.asm.AnnotationVisitor;
-import com.google.gwt.dev.asm.FieldVisitor;
-import com.google.gwt.dev.asm.MethodVisitor;
-import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.javac.asmbridge.EmptyVisitor;
 import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.StringInterner;
+
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 import java.util.ArrayList;
 import java.util.List;

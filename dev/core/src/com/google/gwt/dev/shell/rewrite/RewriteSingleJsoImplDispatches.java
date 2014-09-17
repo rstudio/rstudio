@@ -17,14 +17,15 @@ package com.google.gwt.dev.shell.rewrite;
 
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.asm.ClassVisitor;
-import com.google.gwt.dev.asm.MethodVisitor;
-import com.google.gwt.dev.asm.Opcodes;
-import com.google.gwt.dev.asm.Type;
-import com.google.gwt.dev.asm.commons.Method;
 import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.SingleJsoImplData;
 import com.google.gwt.dev.util.collect.Maps;
 import com.google.gwt.dev.util.collect.Sets;
+
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.commons.Method;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -56,7 +57,7 @@ import java.util.TreeSet;
 public class RewriteSingleJsoImplDispatches extends ClassVisitor {
   private class MyMethodVisitor extends MethodVisitor {
     public MyMethodVisitor(MethodVisitor mv) {
-      super(Opcodes.ASM4, mv);
+      super(Opcodes.ASM5, mv);
     }
 
     /*
@@ -64,7 +65,7 @@ public class RewriteSingleJsoImplDispatches extends ClassVisitor {
      */
     @Override
     public void visitMethodInsn(int opcode, String owner, String name,
-        String desc) {
+        String desc, boolean dintf) {
       if (opcode == Opcodes.INVOKEINTERFACE) {
         if (jsoData.getSingleJsoIntfTypes().contains(owner)) {
           // Simple case; referring directly to a SingleJso interface.
@@ -119,7 +120,7 @@ public class RewriteSingleJsoImplDispatches extends ClassVisitor {
         }
       }
 
-      super.visitMethodInsn(opcode, owner, name, desc);
+      super.visitMethodInsn(opcode, owner, name, desc, dintf);
     }
   }
 
@@ -132,7 +133,7 @@ public class RewriteSingleJsoImplDispatches extends ClassVisitor {
 
   public RewriteSingleJsoImplDispatches(ClassVisitor v, TypeOracle typeOracle,
       SingleJsoImplData jsoData) {
-    super(Opcodes.ASM4, v);
+    super(Opcodes.ASM5, v);
     this.typeOracle = typeOracle;
     this.jsoData = jsoData;
   }
@@ -330,7 +331,7 @@ public class RewriteSingleJsoImplDispatches extends ClassVisitor {
           size = Math.max(size, toCall.getReturnType().getSize());
 
           mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, currentTypeName,
-              toCall.getName(), toCall.getDescriptor());
+              toCall.getName(), toCall.getDescriptor(), false);
           mv.visitInsn(toCall.getReturnType().getOpcode(Opcodes.IRETURN));
           mv.visitMaxs(size, var);
           mv.visitEnd();

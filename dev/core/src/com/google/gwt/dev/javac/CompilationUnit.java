@@ -16,9 +16,6 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.dev.asm.ClassReader;
-import com.google.gwt.dev.asm.MethodVisitor;
-import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.javac.asmbridge.EmptyVisitor;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -27,6 +24,8 @@ import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.collect.HashMap;
 
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.Opcodes;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -66,7 +65,7 @@ public abstract class CompilationUnit implements Serializable {
 
       public AnonymousClassVisitor() {
 
-        this.mv = new MethodVisitor(Opcodes.ASM4, this.mv) {
+        this.mv = new org.objectweb.asm.MethodVisitor(Opcodes.ASM5, this.mv) {
           @Override
           public void visitCode() {
             ++sawCode;
@@ -94,8 +93,9 @@ public abstract class CompilationUnit implements Serializable {
       }
 
       @Override
-      public MethodVisitor visitMethod(int access, String name, String desc, String signature,
-                                                              String[] exceptions) {
+      public org.objectweb.asm.MethodVisitor visitMethod(int access, String name, String desc,
+          String signature,
+          String[] exceptions) {
         if ((access & (Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE)) == 0) {
           ++expectCode;
         }

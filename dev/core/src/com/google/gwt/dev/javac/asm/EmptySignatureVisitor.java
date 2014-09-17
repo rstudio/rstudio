@@ -15,8 +15,8 @@
  */
 package com.google.gwt.dev.javac.asm;
 
-import com.google.gwt.dev.asm.Opcodes;
-import com.google.gwt.dev.asm.signature.SignatureVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.signature.SignatureVisitor;
 
 /**
  * Signature visitor that does nothing.
@@ -34,7 +34,7 @@ public class EmptySignatureVisitor extends SignatureVisitor {
   protected static EmptySignatureVisitor ignore = new EmptySignatureVisitor();
 
   public EmptySignatureVisitor() {
-    super(Opcodes.ASM4);
+    super(Opcodes.ASM5);
   }
 
   /**

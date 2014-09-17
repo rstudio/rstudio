@@ -15,14 +15,15 @@
  */
 package com.google.gwt.dev.shell.rewrite;
 
-import com.google.gwt.dev.asm.ClassVisitor;
-import com.google.gwt.dev.asm.FieldVisitor;
-import com.google.gwt.dev.asm.MethodVisitor;
-import com.google.gwt.dev.asm.Opcodes;
-import com.google.gwt.dev.asm.Type;
-import com.google.gwt.dev.asm.commons.Method;
 import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.InstanceMethodOracle;
 import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.SingleJsoImplData;
+
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.commons.Method;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -185,7 +186,7 @@ abstract class WriteJsoImpl extends ClassVisitor {
 
         mv.visitMethodInsn(Opcodes.INVOKESTATIC,
             implementingType.getInternalName(), implementingMethod.getName(),
-            implementingMethod.getDescriptor());
+            implementingMethod.getDescriptor(), false);
         mv.visitInsn(localMethod.getReturnType().getOpcode(Opcodes.IRETURN));
         mv.visitMaxs(size, var);
         mv.visitEnd();
@@ -263,7 +264,7 @@ abstract class WriteJsoImpl extends ClassVisitor {
    * @param mapper maps methods to the class in which they are declared
    */
   private WriteJsoImpl(ClassVisitor cv, InstanceMethodOracle mapper) {
-    super(Opcodes.ASM4, cv);
+    super(Opcodes.ASM5, cv);
     this.mapper = mapper;
   }
 

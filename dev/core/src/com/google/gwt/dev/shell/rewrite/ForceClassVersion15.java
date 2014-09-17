@@ -15,8 +15,8 @@
  */
 package com.google.gwt.dev.shell.rewrite;
 
-import com.google.gwt.dev.asm.ClassVisitor;
-import com.google.gwt.dev.asm.Opcodes;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.Opcodes;
 
 /**
  * Performs any rewriting necessary to ensure that class files are 1.5
@@ -25,7 +25,7 @@ import com.google.gwt.dev.asm.Opcodes;
 class ForceClassVersion15 extends ClassVisitor {
 
   public ForceClassVersion15(ClassVisitor v) {
-    super(Opcodes.ASM4, v);
+    super(Opcodes.ASM5, v);
   }
 
   @Override

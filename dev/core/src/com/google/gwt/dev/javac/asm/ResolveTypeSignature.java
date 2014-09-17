@@ -20,7 +20,6 @@ import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
-import com.google.gwt.dev.asm.signature.SignatureVisitor;
 import com.google.gwt.dev.javac.Resolver;
 import com.google.gwt.dev.javac.TypeParameterLookup;
 import com.google.gwt.dev.javac.typemodel.JClassType;
@@ -30,6 +29,8 @@ import com.google.gwt.dev.javac.typemodel.JRealClassType;
 import com.google.gwt.dev.javac.typemodel.JTypeParameter;
 import com.google.gwt.dev.javac.typemodel.JWildcardType;
 import com.google.gwt.dev.util.Name;
+
+import org.objectweb.asm.signature.SignatureVisitor;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -54,7 +54,7 @@
     <pathelement location="${gwt.tools.lib}/cglib/cglib-2.2.jar"/>
     <pathelement location="${gwt.tools.lib}/mockito/1.9.5/mockito-all-1.9.5.jar"/>
     <pathelement location="${gwt.tools.lib}/objenesis/objenesis-1.2.jar"/>
-    <pathelement location="${gwt.tools.lib}/objectweb/asm-3.1.jar"/>
+    <pathelement location="${gwt.tools.lib}/objectweb/asm-5.0.3/lib/asm-all-5.0.3.jar"/>
     <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA.jar"/>
     <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA-sources.jar"/>
     <pathelement

@@ -15,9 +15,10 @@
  */
 package com.google.gwt.dev.javac.asm;
 
-import com.google.gwt.dev.asm.ClassReader;
 import com.google.gwt.dev.javac.typemodel.test.TestAnnotation;
 import com.google.gwt.dev.util.Name.BinaryName;
+
+import org.objectweb.asm.ClassReader;
 
 import java.util.Map;
 import java.util.Set;

@@ -15,14 +15,14 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.gwt.dev.asm.AnnotationVisitor;
-import com.google.gwt.dev.asm.Attribute;
-import com.google.gwt.dev.asm.ClassReader;
-import com.google.gwt.dev.asm.ClassVisitor;
-import com.google.gwt.dev.asm.FieldVisitor;
-import com.google.gwt.dev.asm.MethodVisitor;
-import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.util.Util;
+
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.Attribute;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Opcodes;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -56,7 +56,7 @@ public class BytecodeSignatureMaker {
     private Map<String, String> methods = new HashMap<String, String>();
 
     public CompileDependencyVisitor() {
-      super(Opcodes.ASM4);
+      super(Opcodes.ASM5);
     }
 
     public String getSignature() {
@@ -137,7 +137,8 @@ public class BytecodeSignatureMaker {
     }
 
     @Override
-    public MethodVisitor visitMethod(int access, String name, String desc, String signature,
+    public org.objectweb.asm.MethodVisitor visitMethod(int access, String name, String desc,
+        String signature,
         String[] exceptions) {
       // We don't care about synthetic methods
       if ((access & (Opcodes.ACC_SYNTHETIC)) == 0) {

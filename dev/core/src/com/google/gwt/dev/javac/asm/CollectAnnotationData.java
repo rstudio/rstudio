@@ -15,10 +15,11 @@
  */
 package com.google.gwt.dev.javac.asm;
 
-import com.google.gwt.dev.asm.AnnotationVisitor;
-import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.javac.asm.CollectClassData.AnnotationEnum;
 import com.google.gwt.dev.util.StringInterner;
+
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.Opcodes;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -78,7 +79,7 @@ public class CollectAnnotationData extends AnnotationVisitor {
     private final List<Object> values = new ArrayList<Object>();
 
     public MyAnnotationArrayVisitor(Callback<Object> callback) {
-      super(Opcodes.ASM4);
+      super(Opcodes.ASM5);
       this.callback = callback;
     }
 
@@ -157,7 +158,7 @@ public class CollectAnnotationData extends AnnotationVisitor {
    */
   CollectAnnotationData(String desc, boolean visible,
       Callback<CollectAnnotationData.AnnotationData> callback) {
-    super(Opcodes.ASM4);
+    super(Opcodes.ASM5);
     annotation = new AnnotationData(desc, visible);
     this.callback = callback;
   }
