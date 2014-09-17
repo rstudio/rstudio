@@ -519,6 +519,11 @@ DisableDebugScope::DisableDebugScope(SEXP env):
    rdebug_(0), 
    env_(NULL)
 {
+   // nothing to do if no environment 
+   if (env == NULL) {
+      return;
+   }
+
    // check to see whether there's a debug flag set on this environment
    rdebug_ = RDEBUG(env);
 
@@ -532,8 +537,9 @@ DisableDebugScope::DisableDebugScope(SEXP env):
 
 DisableDebugScope::~DisableDebugScope()
 {
-   // if we disabled debugging and it's still disabled, turn debugging back on
-   if (env_ != NULL && RDEBUG(env_) == 0) 
+   // if we disabled debugging and debugging didn't end during the command 
+   // evaluation, restore debugging
+   if (env_ != NULL && !atTopLevelContext()) 
    {
       SET_RDEBUG(env_, rdebug_);
    }
