@@ -17,7 +17,7 @@
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
 
-#include <libclang/LibClang.hpp>
+#include <libclang/libclang.hpp>
 
 #include "rsclang-config.h"
 
