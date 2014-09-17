@@ -13,10 +13,10 @@
 #
 #
 
-project(CLANG)
+project(RSCLANG)
 
 # include files
-file(GLOB_RECURSE CLANG_HEADER_FILES "*.h*")
+file(GLOB_RECURSE RSCLANG_HEADER_FILES "*.h*")
 
 # set include directories
 include_directories(
@@ -25,7 +25,7 @@ include_directories(
    ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-set(CLANG_SOURCE_FILES
+set(RSCLANG_SOURCE_FILES
   Clang.cpp
   Main.cpp
 )
@@ -53,13 +53,13 @@ if(WIN32)
       DEPENDS
          "${CMAKE_CURRENT_BINARY_DIR}/rsclang.rc"
          "${CMAKE_CURRENT_SOURCE_DIR}/rsclang.exe.manifest")
-   set(CLANG_SOURCE_FILES
-      ${CLANG_SOURCE_FILES}
+   set(RSCLANG_SOURCE_FILES
+      ${RSCLANG_SOURCE_FILES}
       "${CMAKE_CURRENT_BINARY_DIR}/res.o")
 endif()
 
 add_executable(rsclang
-  ${CLANG_SOURCE_FILES} ${CLANG_HEADER_FILES}
+  ${RSCLANG_SOURCE_FILES} ${RSCLANG_HEADER_FILES}
 )
 
 # set link dependencies

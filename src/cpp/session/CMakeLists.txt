@@ -301,8 +301,8 @@ install(TARGETS rsession DESTINATION ${RSTUDIO_INSTALL_BIN})
 # include resources, R scripts and 64bit binaries if this isn't a session 64bit build
 if (NOT RSTUDIO_SESSION_WIN64)
 
-   # clang
-   add_subdirectory(clang)
+   # rsclang
+   add_subdirectory(rsclang)
 
    # postback
    add_subdirectory(postback)
