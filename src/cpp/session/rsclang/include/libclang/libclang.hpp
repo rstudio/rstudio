@@ -1,22 +1,22 @@
-#ifndef CLANG_HPP
-#define CLANG_HPP
+#ifndef __RSCLANG_LIBCLANG_HPP__
+#define __RSCLANG_LIBCLANG_HPP__
 
 #include <string>
 
-#include <clang-c/Index.h>
-#include <clang-c/CXCompilationDatabase.h>
+#include <boost/noncopyable.hpp>
 
-class LibClang
+#include "clang-c/Index.h"
+#include "clang-c/CXCompilationDatabase.h"
+
+namespace rsclang {
+namespace libclang {
+
+class libclang : boost::noncopyable
 {
 public:
-   LibClang(const std::string& libraryPath);
+   libclang(const std::string& libraryPath);
    bool isLoaded(std::string* pError);
-   ~LibClang();
-
-private:
-   // disallow copying and assignment
-   LibClang(const LibClang&);
-   LibClang& operator=(const LibClang&);
+   ~libclang();
 
 public:
 
@@ -324,4 +324,7 @@ private:
    std::string initError_;
 };
 
-#endif // CLANG_HPP
+} // namespace libclang
+} // namespace rsclang
+
+#endif // __RSCLANG_LIBCLANG_HPP__

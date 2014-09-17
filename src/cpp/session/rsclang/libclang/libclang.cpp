@@ -1,4 +1,5 @@
-#include "Clang.hpp"
+
+#include <libclang/LibClang.hpp>
 
 #include <iostream>
 
@@ -7,6 +8,9 @@
 #else
 #include <dlfcn.h>
 #endif
+
+namespace rsclang {
+namespace libclang {
 
 namespace {
 
@@ -153,7 +157,7 @@ bool closeLibrary(void* pLib, std::string* pError)
    if (!loadSymbol(pLib_, "clang_" #name, (void**)&name, &initError_)) \
        return;
 
-LibClang::LibClang(const std::string& libraryPath)
+libclang::libclang(const std::string& libraryPath)
    : pLib_(NULL)
 {
    if (!loadLibrary(libraryPath, (void**)&pLib_, &initError_))
@@ -350,7 +354,7 @@ LibClang::LibClang(const std::string& libraryPath)
    LOAD_CLANG_SYMBOL(findReferencesInFile)
 }
 
-bool LibClang::isLoaded(std::string* pError)
+bool libclang::isLoaded(std::string* pError)
 {
    if (initError_.empty())
    {
@@ -363,7 +367,7 @@ bool LibClang::isLoaded(std::string* pError)
    }
 }
 
-LibClang::~LibClang()
+libclang::~libclang()
 {
    try
    {
@@ -378,3 +382,6 @@ LibClang::~LibClang()
    {
    }
 }
+
+} // namespace libclang
+} // namespace rsclang

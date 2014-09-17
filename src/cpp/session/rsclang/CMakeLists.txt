@@ -26,8 +26,8 @@ include_directories(
 )
 
 set(RSCLANG_SOURCE_FILES
-  Clang.cpp
   Main.cpp
+  libclang/libclang.cpp
 )
 
 # config file

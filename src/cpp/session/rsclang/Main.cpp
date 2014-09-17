@@ -17,11 +17,12 @@
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
 
-#include <clang-c/Index.h>
+#include <libclang/LibClang.hpp>
 
 #include "rsclang-config.h"
 
 using namespace core;
+using namespace rsclang;
 
 namespace {
 
@@ -32,13 +33,15 @@ namespace {
 
 int main(int argc, char** argv)
 {
-  core::system::initializeStderrLog("rstudio-clang",
+  core::system::initializeStderrLog("rstudio-rsclang",
                                     core::system::kLogLevelWarning);
 
   // ignore SIGPIPE
   Error error = core::system::ignoreSignal(core::system::SigPipe);
   if (error)
      LOG_ERROR(error);
+
+
 
 
   return EXIT_SUCCESS;
