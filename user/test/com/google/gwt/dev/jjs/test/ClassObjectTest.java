@@ -57,9 +57,12 @@ public class ClassObjectTest extends GWTTestCase {
       assertEquals(Object.class, o.getClass().getSuperclass());
       assertEquals("[Lcom.google.gwt.dev.jjs.test.ClassObjectTest$Foo;",
           o.getClass().getName());
+      assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest.Foo[]",
+          o.getClass().getCanonicalName());
       assertEquals("class [Lcom.google.gwt.dev.jjs.test.ClassObjectTest$Foo;",
           o.getClass().toString());
     }
+
     assertTrue(o.getClass().isArray());
     assertFalse(o.getClass().isEnum());
     assertFalse(o.getClass().isInterface());
@@ -88,6 +91,8 @@ public class ClassObjectTest extends GWTTestCase {
       assertEquals(Object.class, o.getClass().getSuperclass());
       assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest$Foo",
           Foo.class.getName());
+      assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest.Foo",
+          Foo.class.getCanonicalName());
       assertEquals("class com.google.gwt.dev.jjs.test.ClassObjectTest$Foo",
           Foo.class.toString());
     }
@@ -103,6 +108,8 @@ public class ClassObjectTest extends GWTTestCase {
     if (expectClassMetadata()) {
       assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest$Bar",
           getBarClass().getName());
+      assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest.Bar",
+          getBarClass().getCanonicalName());
     }
   }
 
@@ -113,6 +120,8 @@ public class ClassObjectTest extends GWTTestCase {
       assertEquals(Enum.class, o.getClass().getSuperclass());
       assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest$Bar",
           o.getClass().getName());
+      assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest.Bar",
+          o.getClass().getCanonicalName());
       assertEquals("class com.google.gwt.dev.jjs.test.ClassObjectTest$Bar",
           o.getClass().toString());
     }
@@ -147,6 +156,8 @@ public class ClassObjectTest extends GWTTestCase {
     if (expectClassMetadata()) {
       assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest$IFoo",
           IFoo.class.getName());
+      assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest.IFoo",
+          IFoo.class.getCanonicalName());
       assertEquals(
           "interface com.google.gwt.dev.jjs.test.ClassObjectTest$IFoo",
           IFoo.class.toString());
@@ -162,6 +173,7 @@ public class ClassObjectTest extends GWTTestCase {
     assertNull(int.class.getSuperclass());
     if (expectClassMetadata()) {
       assertEquals("int", int.class.getName());
+      assertEquals("int", int.class.getCanonicalName());
       assertEquals("int", int.class.toString());
     }
     assertFalse(int.class.isArray());

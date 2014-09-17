@@ -57,12 +57,15 @@ public final class Class<T> implements Type {
       if (this.isPrimitive()) {
         // Primitives have an additional prepended space.
         clazz.typeName = this.simpleName.substring(1);
+        clazz.canonicalName = clazz.typeName;
       } else {
         clazz.typeName = "L" + this.typeName;
+        clazz.canonicalName = this.typeName.replace('$', '.');
       }
       clazz.simpleName = this.simpleName;
       for (int i = 0; i < dimensions; i++) {
         clazz.typeName = "[" + clazz.typeName;
+        clazz.canonicalName += "[]";
         clazz.simpleName += "[]";
       }
       if (!this.isPrimitive()) {
@@ -147,6 +150,7 @@ public final class Class<T> implements Type {
     Class<?> clazz = new Class<Object>();
     if (clazz.isClassMetadataEnabled()) {
       clazz.typeName = className;
+      clazz.canonicalName = className;
       clazz.simpleName = primitiveTypeId;
     } else {
       synthesizePrimitiveNamesFromTypeId(clazz, primitiveTypeId);
@@ -224,6 +228,11 @@ public final class Class<T> implements Type {
   private static native void initializeNames(Class<?> clazz, String packageName,
       String className) /*-{
     clazz.@java.lang.Class::typeName = packageName + className;
+    if (className.indexOf("$") == -1) {
+      clazz.@java.lang.Class::canonicalName = clazz.@java.lang.Class::typeName;
+    } else {
+      clazz.@java.lang.Class::canonicalName = packageName + className.replace("$", ".");
+    }
     clazz.@java.lang.Class::simpleName = className;
   }-*/;
 
@@ -241,6 +250,7 @@ public final class Class<T> implements Type {
 
     clazz.@java.lang.Class::typeName = "Class$" +
         (!!typeId ? "S" + typeId : "" + clazz.@java.lang.Class::sequentialId);
+    clazz.@java.lang.Class::canonicalName = clazz.@java.lang.Class::typeName;
     clazz.@java.lang.Class::simpleName = clazz.@java.lang.Class::typeName;
   }-*/;
 
@@ -251,6 +261,7 @@ public final class Class<T> implements Type {
    */
   static native void synthesizePrimitiveNamesFromTypeId(Class<?> clazz, String primitiveTypeId) /*-{
     clazz.@java.lang.Class::typeName = "Class$" + primitiveTypeId;
+    clazz.@java.lang.Class::canonicalName = clazz.@java.lang.Class::typeName;
     clazz.@java.lang.Class::simpleName = clazz.@java.lang.Class::typeName;
   }-*/;
 
@@ -270,6 +281,8 @@ public final class Class<T> implements Type {
   private String simpleName;
 
   private String typeName;
+
+  private String canonicalName;
 
   private JavaScriptObject typeId;
 
@@ -293,6 +306,10 @@ public final class Class<T> implements Type {
     // This body is ignored by the JJS compiler and a new one is
     // synthesized at compile-time based on the actual compilation arguments.
     return false;
+  }
+
+  public String getCanonicalName() {
+    return canonicalName;
   }
 
   public Class<?> getComponentType() {
