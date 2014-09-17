@@ -26,6 +26,7 @@ include_directories(
 )
 
 set(CLANG_SOURCE_FILES
+  Clang.cpp
   Main.cpp
 )
 
