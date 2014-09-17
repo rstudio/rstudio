@@ -177,7 +177,8 @@ public class Link {
       LinkOptions linkOptions)
       throws UnableToCompleteException, IOException {
     StandardLinkerContext linkerContext =
-        new StandardLinkerContext(logger, module, publicResourceOracle, precompileOptions);
+        new StandardLinkerContext(logger, module, publicResourceOracle,
+            precompileOptions.getOutput());
     ArtifactSet artifacts = doSimulatedShardingLink(
         logger, module, linkerContext, generatedArtifacts, permutations, resultFiles, libraries);
 
@@ -205,7 +206,7 @@ public class Link {
       JarOutputStream jar = new JarOutputStream(new FileOutputStream(jarFile));
 
       StandardLinkerContext linkerContext = new StandardLinkerContext(logger,
-          module, publicResourceOracle, precompileOptions);
+          module, publicResourceOracle, precompileOptions.getOutput());
 
       StandardCompilationResult compilation = new StandardCompilationResult(
           permResult);
@@ -714,7 +715,7 @@ public class Link {
     TreeLogger branch = logger.branch(TreeLogger.INFO, "Linking module "
         + module.getName());
     StandardLinkerContext linkerContext = new StandardLinkerContext(branch,
-        module, publicResourceOracle, precompileOptions);
+        module, publicResourceOracle, precompileOptions.getOutput());
 
     try {
       ArtifactSet artifacts = scanCompilePermResults(logger, resultFiles);

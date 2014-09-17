@@ -285,5 +285,4 @@ class Outbox {
     File prefix = new File(getOutputDir().getExtraDir(), getOutputModuleName());
     return new File(prefix, path);
   }
-
 }

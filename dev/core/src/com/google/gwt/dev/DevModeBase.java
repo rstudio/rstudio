@@ -982,7 +982,7 @@ public abstract class DevModeBase implements DoneCallback {
 
     // Create a new active linker stack for the fresh link.
     StandardLinkerContext linkerStack = new StandardLinkerContext(
-        linkLogger, module, compilerContext.getPublicResourceOracle(), options);
+        linkLogger, module, compilerContext.getPublicResourceOracle(), options.getOutput());
     ArtifactSet artifacts = linkerStack.getArtifactsForPublicResources(logger, module);
     artifacts = linkerStack.invokeLegacyLinkers(linkLogger, artifacts);
     artifacts = linkerStack.invokeFinalLink(linkLogger, artifacts);

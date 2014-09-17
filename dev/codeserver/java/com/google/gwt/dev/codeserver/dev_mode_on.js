@@ -546,9 +546,16 @@
     if (module_name && !error) {
       // The user clicked a "Compile" bookmarklet and we believe it will
       // succeed.
-      var active_modules = window.__gwt_activeModules;
-      compile(module_name, params.server_url,
-          active_modules[module_name].bindings);
+
+      // Use the binding properties provided in params if available.
+      // (This happens if we're being called from a stub rather than a bookmarklet.)
+      var getPropMap = params.getPropMap;
+      if (!getPropMap) {
+        // Probably a regular compile, so check in the page.
+        var active_modules = window.__gwt_activeModules;
+        getPropMap = active_modules[module_name].bindings;
+      }
+      compile(module_name, params.server_url, getPropMap);
     } else {
       // The user clicked the "Dev Mode On" bookmarklet or something is wrong.
       showModuleDialog(params.server_url);

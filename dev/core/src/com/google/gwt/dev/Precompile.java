@@ -438,7 +438,7 @@ public class Precompile {
       compilerContext = compilerContextBuilder.module(module).build();
 
       StandardLinkerContext linkerContext = new StandardLinkerContext(
-          TreeLogger.NULL, module, compilerContext.getPublicResourceOracle(), options);
+          TreeLogger.NULL, module, compilerContext.getPublicResourceOracle(), options.getOutput());
 
       boolean generateOnShards = true;
 

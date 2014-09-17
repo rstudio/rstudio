@@ -25,6 +25,8 @@
  * script tag with an absolute URL to head. (However, it's also okay for an html
  * file included in the GWT compiler's output to load the nocache.js file using
  * a relative URL.)
+ *
+ * As a side effect, sets superdevmode on in the __gwt_activeModules registry.
  */
 function computeScriptBase() {
   // TODO(skybrian) This approach won't work for workers.
@@ -48,5 +50,6 @@ function computeScriptBase() {
     }
   }
 
-  $wnd.alert('Unable to load Super Dev Mode version of ' + __MODULE_NAME__ + ".");
+  $wnd.alert('Unable to load Super Dev Mode version of __MODULE_NAME__.');
+  return null;
 }

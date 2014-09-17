@@ -35,6 +35,7 @@ import com.google.gwt.dev.cfg.Property;
 import com.google.gwt.dev.javac.CompilationProblemReporter;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
+import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.shell.CheckForUpdates;
 import com.google.gwt.dev.shell.jetty.JettyLauncher;
 import com.google.gwt.dev.util.arg.ArgHandlerCompilePerFile;
@@ -1126,7 +1127,8 @@ public class JUnitShell extends DevMode {
       try {
         Linker l = module.getActivePrimaryLinker().newInstance();
         StandardLinkerContext context = new StandardLinkerContext(
-            getTopLogger(), module, compilerContext.getPublicResourceOracle(), null);
+            getTopLogger(), module, compilerContext.getPublicResourceOracle(),
+            JsOutputOption.PRETTY);
         if (!l.supportsDevModeInJunit(context)) {
           if (module.getLinker("std") != null) {
             // TODO: unfortunately, this could be race condition between dev/prod

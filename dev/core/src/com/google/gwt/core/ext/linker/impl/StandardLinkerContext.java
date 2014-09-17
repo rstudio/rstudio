@@ -31,7 +31,7 @@ import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.Script;
 import com.google.gwt.dev.jjs.InternalCompilerException;
-import com.google.gwt.dev.jjs.JJSOptions;
+import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.js.JsLiteralInterner;
 import com.google.gwt.dev.js.JsNamer.IllegalNameException;
@@ -117,7 +117,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
 
   private final SortedSet<ConfigurationProperty> configurationProperties;
 
-  private final JJSOptions jjsOptions;
+  private final JsOutputOption outputOption;
 
   private final List<Class<? extends Linker>> linkerClasses;
   private Linker[] linkers;
@@ -133,7 +133,8 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
   private final SortedSet<SelectionProperty> selectionProperties;
 
   public StandardLinkerContext(TreeLogger logger, ModuleDef module,
-      ResourceOracle publicResourceOracle, JJSOptions jjsOptions) throws UnableToCompleteException {
+      ResourceOracle publicResourceOracle, JsOutputOption outputOption)
+      throws UnableToCompleteException {
     logger = logger.branch(TreeLogger.DEBUG,
         "Constructing StandardLinkerContext", null);
 
@@ -141,7 +142,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     this.moduleName = module.getName();
     this.moduleLastModified = module.lastModified();
     this.publicResourceOracle = publicResourceOracle;
-    this.jjsOptions = jjsOptions;
+    this.outputOption = outputOption;
 
     // Sort the linkers into the order they should actually run.
     linkerClasses = new ArrayList<Class<? extends Linker>>();
@@ -415,7 +416,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
 
   @Override
   public boolean isOutputCompact() {
-    return jjsOptions.getOutput().shouldMinimize();
+    return outputOption.shouldMinimize();
   }
 
   @Override
@@ -449,7 +450,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     JsUnusedFunctionRemover.exec(jsProgram);
 
     try {
-      switch (jjsOptions.getOutput()) {
+      switch (outputOption) {
         case OBFUSCATED:
           /*
            * We can't apply the regular JsLiteralInterner to the JsProgram that
@@ -478,8 +479,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
       throw new UnableToCompleteException();
     }
 
-    DefaultTextOutput out = new DefaultTextOutput(
-        jjsOptions.getOutput().shouldMinimize());
+    DefaultTextOutput out = new DefaultTextOutput(outputOption.shouldMinimize());
     JsSourceGenerationVisitor v = new JsSourceGenerationVisitor(out);
     v.accept(jsProgram);
     return out.toString();

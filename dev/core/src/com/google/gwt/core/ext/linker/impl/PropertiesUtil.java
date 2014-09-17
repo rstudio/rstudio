@@ -22,6 +22,8 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.ConfigurationProperty;
 import com.google.gwt.core.ext.linker.SelectionProperty;
+import com.google.gwt.dev.cfg.ModuleDef;
+import com.google.gwt.dev.jjs.JsOutputOption;
 
 import java.util.Map.Entry;
 import java.util.SortedSet;
@@ -59,15 +61,55 @@ public class PropertiesUtil {
 
     // Add property providers
     startPos = selectionScript.indexOf("// __PROPERTIES_END__");
-    if (startPos != -1) {
-      for (SelectionProperty p : context.getProperties()) {
-        String text = generatePropertyProvider(logger, p,
-            context.getConfigurationProperties());
-        selectionScript.insert(startPos, text);
-        startPos += text.length();
-      }
+    if (startPos == -1) {
+      return selectionScript;
     }
+    selectionScript.insert(startPos, generatePropertyProviders(logger, context));
     return selectionScript;
+  }
+
+  /**
+   * Returns JavaScript that declares and initializes the "providers" and "values" variables.
+   *
+   * <p>Requires $doc and $wnd variables to be defined. (And possibly others; this is unclear.)
+   *
+   * <p>Provides "providers" and "values" variables.</p>.
+   *
+   * <ul>
+   *   <li>"providers" is a mapping from each binding property (string) to a no-argument function
+   *   that determines its value.</li>
+   *   <li>"values" is a mapping from each binding property (string) to the set of allowed values
+   *   (represented as a mapping with the value as key).
+   *   </li>
+   * </ul>
+   */
+  public static String generatePropertiesSnippet(ModuleDef module, TreeLogger compileLogger)
+      throws UnableToCompleteException {
+
+    // TODO: PropertyProviderGenerator should specify the JavaScript environment that a
+    // property provider can assume so the caller of this function knows what it should provide.
+
+    LinkerContext linkerContext = new StandardLinkerContext(compileLogger, module,
+        module.getPublicResourceOracle(), JsOutputOption.PRETTY);
+
+    String initProvidersJs =
+        generatePropertyProviders(compileLogger, linkerContext);
+
+    return "var providers = {};\nvar values = {};\n" + initProvidersJs + "\n";
+  }
+
+  /**
+   * Generates JavaScript to create a property provider for each non-derived binding property
+   * in the given linker. The JavaScript mutates the "providers" and "values" variables which
+   * must already exist.
+   */
+  private static String generatePropertyProviders(TreeLogger logger, LinkerContext context)
+      throws UnableToCompleteException {
+    StringBuilder out = new StringBuilder();
+    for (SelectionProperty p : context.getProperties()) {
+      out.append(generatePropertyProvider(logger, p, context.getConfigurationProperties()));
+    }
+    return out.toString();
   }
 
   private static String generatePropertyProvider(TreeLogger logger,

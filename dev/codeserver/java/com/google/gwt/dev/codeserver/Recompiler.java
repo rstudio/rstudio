@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.Linker;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.impl.PropertiesUtil;
 import com.google.gwt.core.linker.CrossSiteIframeLinker;
 import com.google.gwt.core.linker.IFrameLinker;
 import com.google.gwt.dev.Compiler;
@@ -46,6 +47,7 @@ import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
@@ -183,36 +185,82 @@ class Recompiler {
     CompilerOptions loadOptions = new CompilerOptionsImpl(compileDir, inputModuleName, options);
     compilerContext = compilerContextBuilder.options(loadOptions).unitCache(
         Compiler.getOrCreateUnitCache(logger, loadOptions)).build();
+
+    // Loads and parses all the Java files in the GWT application using the JDT.
+    // (This is warmup to make compiling faster later; we stop at this point to avoid
+    // needing to know the binding properties.)
     module.getCompilationState(compileLogger, compilerContext);
 
-    String newModuleName = module.getName();  // includes any rename.
-    outputModuleName.set(newModuleName);
+    setUpCompileDir(compileDir, module, compileLogger);
 
+    outputModuleName.set(module.getName());
     lastBuild.set(compileDir);
 
-    try {
-      // Prepare directory.
-      File outputDir = new File(
-          compileDir.getWarDir().getCanonicalPath() + "/" + getOutputModuleName());
-      if (!outputDir.exists()) {
-        if (!outputDir.mkdir()) {
-          compileLogger.log(TreeLogger.Type.WARN, "cannot create directory: " + outputDir);
-        }
-      }
 
-      // Creates a "module_name.nocache.js" that just forces a recompile.
-      String moduleScript = PageUtil.loadResource(Recompiler.class, "nomodule.nocache.js");
-      moduleScript = moduleScript.replace("__MODULE_NAME__", getOutputModuleName());
-      PageUtil.writeFile(outputDir.getCanonicalPath() + "/" + getOutputModuleName() + ".nocache.js",
-          moduleScript);
-
-    } catch (IOException e) {
-      compileLogger.log(TreeLogger.Type.ERROR, "Error creating uncompiled module.", e);
-    }
     long elapsedTime = System.currentTimeMillis() - startTime;
     compileLogger.log(TreeLogger.Type.INFO, "Module setup completed in " + elapsedTime + " ms");
 
     return new Result(compileDir, null);
+  }
+
+  /**
+   * Prepares a stub compile directory.
+   * It will include all "public" resources and a nocache.js file that invokes the compiler.
+   */
+  private static void setUpCompileDir(CompileDir compileDir, ModuleDef module,
+      TreeLogger compileLogger) throws UnableToCompleteException {
+    try {
+      String outputModuleName = module.getName();
+
+      // Create the directory.
+      File outputDir = new File(
+          compileDir.getWarDir().getCanonicalPath() + "/" + outputModuleName);
+      if (!outputDir.exists()) {
+        if (!outputDir.mkdir()) {
+          compileLogger.log(Type.WARN, "cannot create directory: " + outputDir);
+        }
+      }
+
+      // Copy the public resources to the output.
+      ResourceOracleImpl publicResources = module.getPublicResourceOracle();
+      for (String pathName : publicResources.getPathNames()) {
+        File file = new File(outputDir, pathName);
+        File parent = file.getParentFile();
+        if (!parent.isDirectory() && !parent.mkdirs()) {
+          compileLogger.log(Type.ERROR, "cannot create directory: " + parent);
+          throw new UnableToCompleteException();
+        }
+        Files.copy(publicResources.getResourceAsStream(pathName), file.toPath());
+      }
+
+      // Create a "module_name.nocache.js" that calculates the permutation and forces a recompile.
+      String stubJs = generateStub(module, compileLogger);
+      PageUtil.writeFile(outputDir.getCanonicalPath() + "/" + outputModuleName + ".nocache.js",
+          stubJs);
+
+    } catch (IOException e) {
+      compileLogger.log(Type.ERROR, "Error creating stub compile directory.", e);
+      UnableToCompleteException wrapped = new UnableToCompleteException();
+      wrapped.initCause(e);
+      throw wrapped;
+    }
+  }
+
+  /**
+   * Generates the nocache.js file to use when precompile is not on.
+   */
+  private static String generateStub(ModuleDef module, TreeLogger compileLogger)
+      throws IOException, UnableToCompleteException {
+
+    String outputModuleName = module.getName();
+
+    String stub = PageUtil.loadResource(Recompiler.class, "nomodule.nocache.js");
+
+    return "(function() {\n"
+        + " var moduleName = '" + outputModuleName  + "';\n"
+        + PropertiesUtil.generatePropertiesSnippet(module, compileLogger)
+        + stub
+        + "})();\n";
   }
 
   private boolean doCompile(TreeLogger compileLogger, CompileDir compileDir, Job job)
