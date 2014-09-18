@@ -27,10 +27,14 @@ public:
    CXIndex (*createIndex)(int excludeDeclarationsFromPCH,
                           int displayDiagnostics);
    void (*disposeIndex)(CXIndex index);
+   void (*CXIndex_setGlobalOptions)(CXIndex, unsigned options);
+   unsigned (*CXIndex_getGlobalOptions)(CXIndex);
+
 
    // file manipulation routines
    CXString (*getFileName)(CXFile SFile);
    time_t (*getFileTime)(CXFile SFile);
+   int (*getFileUniqueID)(CXFile file, CXFileUniqueID *outID);
    unsigned (*isFileMultipleIncludeGuarded)(CXTranslationUnit tu, CXFile file);
    CXFile (*getFile)(CXTranslationUnit tu, const char *file_name);
 
@@ -44,15 +48,14 @@ public:
    CXSourceLocation (*getLocationForOffset)(CXTranslationUnit tu,
                                             CXFile file,
                                             unsigned offset);
+
+   int (*Location_isInSystemHeader)(CXSourceLocation location);
+   int (*Location_isFromMainFile)(CXSourceLocation location);
    CXSourceRange (*getNullRange)(void);
    CXSourceRange (*getRange)(CXSourceLocation begin, CXSourceLocation end);
    unsigned (*equalRanges)(CXSourceRange range1, CXSourceRange range2);
    int (*Range_isNull)(CXSourceRange range);
 
-   // Not available in Ubuntu 12.04 libclang.so. Therefore:
-   //   - It's not a fatal error if a lookup for this symbol fails
-   //   - Call hasGetExpansionLocation to check for availability before using
-   bool hasGetExpansionLocation() const { return getExpansionLocation != NULL; }
    void (*getExpansionLocation)(CXSourceLocation location,
                                 CXFile *file,
                                 unsigned *line,
@@ -73,13 +76,30 @@ public:
                                unsigned *line,
                                unsigned *column,
                                unsigned *offset);
+   void (*getFileLocation)(CXSourceLocation location,
+                           CXFile *file,
+                           unsigned *line,
+                           unsigned *column,
+                           unsigned *offset);
    CXSourceLocation (*getRangeStart)(CXSourceRange range);
    CXSourceLocation (*getRangeEnd)(CXSourceRange range);
+   CXSourceRangeList (*getSkippedRanges)(CXTranslationUnit tu,
+                                         CXFile file);
+   void (*disposeSourceRangeList)(CXSourceRangeList *ranges);
 
    // diagnostics
+   unsigned (*getNumDiagnosticsInSet)(CXDiagnosticSet Diags);
+   CXDiagnostic (*getDiagnosticInSet)(CXDiagnosticSet Diags,
+                                      unsigned Index);
+   CXDiagnosticSet (*loadDiagnostics)(const char *file,
+                                      enum CXLoadDiag_Error *error,
+                                      CXString *errorString);
+   void (*disposeDiagnosticSet)(CXDiagnosticSet Diags);
+   CXDiagnosticSet (*getChildDiagnostics)(CXDiagnostic D);
    unsigned (*getNumDiagnostics)(CXTranslationUnit Unit);
    CXDiagnostic (*getDiagnostic)(CXTranslationUnit Unit,
                                                    unsigned Index);
+   CXDiagnosticSet (*getDiagnosticSetFromTU)(CXTranslationUnit Unit);
    void (*disposeDiagnostic)(CXDiagnostic Diagnostic);
    CXString (*formatDiagnostic)(CXDiagnostic Diagnostic, unsigned Options);
    unsigned (*defaultDiagnosticDisplayOptions)(void);
@@ -89,6 +109,7 @@ public:
    CXString (*getDiagnosticOption)(CXDiagnostic Diag, CXString *Disable);
    unsigned (*getDiagnosticCategory)(CXDiagnostic);
    CXString (*getDiagnosticCategoryName)(unsigned Category);
+   CXString (*getDiagnosticCategoryText)(CXDiagnostic);
    unsigned (*getDiagnosticNumRanges)(CXDiagnostic);
    CXSourceRange (*getDiagnosticRange)(CXDiagnostic Diagnostic, unsigned Range);
    unsigned (*getDiagnosticNumFixIts)(CXDiagnostic Diagnostic);
@@ -109,6 +130,9 @@ public:
                                   struct CXUnsavedFile *unsaved_files);
    CXTranslationUnit (*createTranslationUnit)(CXIndex,
                                               const char *ast_filename);
+   enum CXErrorCode (*createTranslationUnit2)(CXIndex CIdx,
+                                              const char *ast_filename,
+                                              CXTranslationUnit *out_TU);
    unsigned (*defaultEditingTranslationUnitOptions)(void);
    CXTranslationUnit (*parseTranslationUnit)(
                                        CXIndex CIdx,
@@ -118,6 +142,15 @@ public:
                                        struct CXUnsavedFile *unsaved_files,
                                        unsigned num_unsaved_files,
                                        unsigned options);
+   enum CXErrorCode (*parseTranslationUnit2)(
+                               CXIndex CIdx,
+                               const char *source_filename,
+                               const char *const *command_line_args,
+                               int num_command_line_args,
+                               struct CXUnsavedFile *unsaved_files,
+                               unsigned num_unsaved_files,
+                               unsigned options,
+                               CXTranslationUnit *out_TU);
    unsigned (*defaultSaveOptions)(CXTranslationUnit TU);
    int (*saveTranslationUnit)(CXTranslationUnit TU,
                               const char *FileName,
@@ -148,7 +181,17 @@ public:
    unsigned (*isTranslationUnit)(enum CXCursorKind);
    unsigned (*isPreprocessing)(enum CXCursorKind);
    unsigned (*isUnexposed)(enum CXCursorKind);
+   enum CXLinkageKind (*getCursorLinkage)(CXCursor cursor);
    enum CXAvailabilityKind (*getCursorAvailability)(CXCursor cursor);
+   int (*getCursorPlatformAvailability)(CXCursor cursor,
+                                        int *always_deprecated,
+                                        CXString *deprecated_message,
+                                        int *always_unavailable,
+                                        CXString *unavailable_message,
+                                        CXPlatformAvailability *availability,
+                                        int availability_size);
+   void (*disposeCXPlatformAvailability)(CXPlatformAvailability *availability);
+
    enum CXLanguageKind (*getCursorLanguage)(CXCursor cursor);
    CXTranslationUnit (*Cursor_getTranslationUnit)(CXCursor);
    CXCursorSet (*createCXCursorSet)();
@@ -170,6 +213,14 @@ public:
 
    // type information for cursors
    CXType (*getCursorType)(CXCursor C);
+   CXString (*getTypeSpelling)(CXType CT);
+   CXType (*getTypedefDeclUnderlyingType)(CXCursor C);
+   CXType (*getEnumDeclIntegerType)(CXCursor C);
+   long long (*getEnumConstantDeclValue)(CXCursor C);
+   unsigned long long (*getEnumConstantDeclUnsignedValue)(CXCursor C);
+   int (*getFieldDeclBitWidth)(CXCursor C);
+   int (*Cursor_getNumArguments)(CXCursor C);
+   CXCursor (*Cursor_getArgument)(CXCursor C, unsigned i);
    unsigned (*equalTypes)(CXType A, CXType B);
    CXType (*getCanonicalType)(CXType T);
    unsigned (*isConstQualifiedType)(CXType T);
@@ -179,11 +230,25 @@ public:
    CXCursor (*getTypeDeclaration)(CXType T);
    CXString (*getDeclObjCTypeEncoding)(CXCursor C);
    CXString (*getTypeKindSpelling)(enum CXTypeKind K);
+   enum CXCallingConv (*getFunctionTypeCallingConv)(CXType T);
    CXType (*getResultType)(CXType T);
+   int (*getNumArgTypes)(CXType T);
+   CXType (*getArgType)(CXType T, unsigned i);
+   unsigned (*isFunctionTypeVariadic)(CXType T);
    CXType (*getCursorResultType)(CXCursor C);
    unsigned (*isPODType)(CXType T);
+   CXType (*getElementType)(CXType T);
+   long long (*getNumElements)(CXType T);
    CXType (*getArrayElementType)(CXType T);
    long long (*getArraySize)(CXType T);
+   long long (*Type_getAlignOf)(CXType T);
+   CXType (*Type_getClassType)(CXType T);
+   long long (*Type_getSizeOf)(CXType T);
+   long long (*Type_getOffsetOf)(CXType T, const char *S);
+   int (*Type_getNumTemplateArguments)(CXType T);
+   CXType (*Type_getTemplateArgumentAsType)(CXType T, unsigned i);
+   enum CXRefQualifierKind (*Type_getCXXRefQualifier)(CXType T);
+   unsigned (*Cursor_isBitField)(CXCursor C);
    unsigned (*isVirtualBase)(CXCursor);
    enum CX_CXXAccessSpecifier (*getCXXAccessSpecifier)(CXCursor);
    unsigned (*getNumOverloadedDecls)(CXCursor cursor);
@@ -210,15 +275,43 @@ public:
    CXString (*constructUSR_ObjCProperty)(const char *property,
                                          CXString classUSR);
    CXString (*getCursorSpelling)(CXCursor);
+   CXSourceRange (*Cursor_getSpellingNameRange)(CXCursor,
+                                                unsigned pieceIndex,
+                                                unsigned options);
+
    CXString (*getCursorDisplayName)(CXCursor);
    CXCursor (*getCursorReferenced)(CXCursor);
    CXCursor (*getCursorDefinition)(CXCursor);
    unsigned (*isCursorDefinition)(CXCursor);
    CXCursor (*getCanonicalCursor)(CXCursor);
+   int (*Cursor_getObjCSelectorIndex)(CXCursor);
+   int (*Cursor_isDynamicCall)(CXCursor C);
+   CXType (*Cursor_getReceiverType)(CXCursor C);
+   unsigned (*Cursor_getObjCPropertyAttributes)(CXCursor C,
+                                                unsigned reserved);
+   unsigned (*Cursor_getObjCDeclQualifiers)(CXCursor C);
+   unsigned (*Cursor_isObjCOptional)(CXCursor C);
+   unsigned (*Cursor_isVariadic)(CXCursor C);
+   CXSourceRange (*Cursor_getCommentRange)(CXCursor C);
+   CXString (*Cursor_getRawCommentText)(CXCursor C);
+   CXString (*Cursor_getBriefCommentText)(CXCursor C);
+   CXModule (*Cursor_getModule)(CXCursor C);
+   CXModule (*getModuleForFile)(CXTranslationUnit, CXFile);
+   CXFile (*Module_getASTFile)(CXModule Module);
+   CXModule (*Module_getParent)(CXModule Module);
+   CXString (*Module_getName)(CXModule Module);
+   CXString (*Module_getFullName)(CXModule Module);
+   int (*Module_isSystem)(CXModule Module);
+   unsigned (*Module_getNumTopLevelHeaders)(CXTranslationUnit, CXModule Module);
+   CXFile (*Module_getTopLevelHeader)(CXTranslationUnit,
+                                      CXModule Module,
+                                      unsigned Index);
 
    // C++ AST instrospection
+   unsigned (*CXXMethod_isPureVirtual)(CXCursor C);
    unsigned (*CXXMethod_isStatic)(CXCursor C);
    unsigned (*CXXMethod_isVirtual)(CXCursor C);
+   unsigned (*CXXMethod_isConst)(CXCursor C);
    enum CXCursorKind (*getTemplateCursorKind)(CXCursor C);
    CXCursor (*getSpecializedCursorTemplate)(CXCursor C);
    CXSourceRange (*getCursorReferenceNameRange)(CXCursor C,
@@ -274,6 +367,9 @@ public:
    unsigned (*getCompletionNumAnnotations)(CXCompletionString completion_string);
    CXString (*getCompletionAnnotation)(CXCompletionString completion_string,
                                        unsigned annotation_number);
+   CXString (*getCompletionParent)(CXCompletionString completion_string,
+                                   enum CXCursorKind *kind);
+   CXString (*getCompletionBriefComment)(CXCompletionString completion_string);
    CXCompletionString (*getCursorCompletionString)(CXCursor cursor);
    unsigned (*defaultCodeCompleteOptions)(void);
    CXCodeCompleteResults* (*codeCompleteAt)(
@@ -317,6 +413,142 @@ public:
    void (*findReferencesInFile)(CXCursor cursor,
                                 CXFile file,
                                 CXCursorAndRangeVisitor visitor);
+   CXResult (*findIncludesInFile)(CXTranslationUnit TU,
+                                  CXFile file,
+                                  CXCursorAndRangeVisitor visitor);
+
+
+   int (*index_isEntityObjCContainerKind)(CXIdxEntityKind);
+   const CXIdxObjCContainerDeclInfo *
+            (*index_getObjCContainerDeclInfo)(const CXIdxDeclInfo *);
+
+   const CXIdxObjCInterfaceDeclInfo *
+            (*index_getObjCInterfaceDeclInfo)(const CXIdxDeclInfo *);
+
+   const CXIdxObjCCategoryDeclInfo *
+            (*index_getObjCCategoryDeclInfo)(const CXIdxDeclInfo *);
+
+   const CXIdxObjCProtocolRefListInfo *
+            (*index_getObjCProtocolRefListInfo)(const CXIdxDeclInfo *);
+
+   const CXIdxObjCPropertyDeclInfo *
+            (*index_getObjCPropertyDeclInfo)(const CXIdxDeclInfo *);
+
+   const CXIdxIBOutletCollectionAttrInfo *
+            (*index_getIBOutletCollectionAttrInfo)(const CXIdxAttrInfo *);
+
+   const CXIdxCXXClassDeclInfo *
+            (*index_getCXXClassDeclInfo)(const CXIdxDeclInfo *);
+
+
+   CXIdxClientContainer (*index_getClientContainer)(const CXIdxContainerInfo *);
+   void (*index_setClientContainer)(const CXIdxContainerInfo *,CXIdxClientContainer);
+   CXIdxClientEntity (*index_getClientEntity)(const CXIdxEntityInfo *);
+   void (*index_setClientEntity)(const CXIdxEntityInfo *, CXIdxClientEntity);
+   CXIndexAction (*IndexAction_create)(CXIndex CIdx);
+   void (*IndexAction_dispose)(CXIndexAction);
+
+   int (*clang_indexSourceFile)(CXIndexAction,
+                                CXClientData client_data,
+                                IndexerCallbacks *index_callbacks,
+                                unsigned index_callbacks_size,
+                                unsigned index_options,
+                                const char *source_filename,
+                                const char * const *command_line_args,
+                                int num_command_line_args,
+                                struct CXUnsavedFile *unsaved_files,
+                                unsigned num_unsaved_files,
+                                CXTranslationUnit *out_TU,
+                                unsigned TU_options);
+
+   int (*indexTranslationUnit)(CXIndexAction,
+                               CXClientData client_data,
+                               IndexerCallbacks *index_callbacks,
+                               unsigned index_callbacks_size,
+                               unsigned index_options,
+                               CXTranslationUnit);
+
+   void (indexLoc_getFileLocation)(CXIdxLoc loc,
+                                   CXIdxClientFile *indexFile,
+                                   CXFile *file,
+                                   unsigned *line,
+                                   unsigned *column,
+                                   unsigned *offset);
+   CXSourceLocation (*indexLoc_getCXSourceLocation)(CXIdxLoc loc);
+
+   // documentation
+   CXComment (*Cursor_getParsedComment)(CXCursor C);
+   enum CXCommentKind (*Comment_getKind)(CXComment Comment);
+   unsigned (*Comment_getNumChildren)(CXComment Comment);
+   CXComment (*Comment_getChild)(CXComment Comment, unsigned ChildIdx);
+   unsigned (*Comment_isWhitespace)(CXComment Comment);
+   unsigned (*InlineContentComment_hasTrailingNewline)(CXComment Comment);
+   CXString (*TextComment_getText)(CXComment Comment);
+   CXString (*InlineCommandComment_getCommandName)(CXComment Comment);
+   enum CXCommentInlineCommandRenderKind
+            (*InlineCommandComment_getRenderKind)(CXComment Comment);
+   unsigned (*InlineCommandComment_getNumArgs)(CXComment Comment);
+   CXString (*InlineCommandComment_getArgText)(CXComment Comment,
+                                                  unsigned ArgIdx);
+   CXString (*HTMLTagComment_getTagName)(CXComment Comment);
+
+   unsigned (*HTMLStartTagComment_isSelfClosing)(CXComment Comment);
+   unsigned (*HTMLStartTag_getNumAttrs)(CXComment Comment);
+
+   CXString (*HTMLStartTag_getAttrName)(CXComment Comment, unsigned AttrIdx);
+
+   CXString (*HTMLStartTag_getAttrValue)(CXComment Comment, unsigned AttrIdx);
+
+   CXString (*BlockCommandComment_getCommandName)(CXComment Comment);
+
+   unsigned (*BlockCommandComment_getNumArgs)(CXComment Comment);
+   CXString (*BlockCommandComment_getArgText)(CXComment Comment,
+                                              unsigned ArgIdx);
+
+   CXComment (*BlockCommandComment_getParagraph)(CXComment Comment);
+
+   CXString (*ParamCommandComment_getParamName)(CXComment Comment);
+   unsigned (*ParamCommandComment_isParamIndexValid)(CXComment Comment);
+   unsigned (*ParamCommandComment_getParamIndex)(CXComment Comment);
+   unsigned (*ParamCommandComment_isDirectionExplicit)(CXComment Comment);
+   enum CXCommentParamPassDirection (*ParamCommandComment_getDirection)(
+                                                               CXComment Comment);
+   CXString (*TParamCommandComment_getParamName)(CXComment Comment);
+   unsigned (*TParamCommandComment_isParamPositionValid)(CXComment Comment);
+   unsigned (*TParamCommandComment_getDepth)(CXComment Comment);
+   unsigned (*TParamCommandComment_getIndex)(CXComment Comment, unsigned Depth);
+
+   CXString clang_VerbatimBlockLineComment_getText(CXComment Comment);
+   CXString (*VerbatimLineComment_getText)(CXComment Comment);
+   CXString (*HTMLTagComment_getAsString)(CXComment Comment);
+
+   CXString (*FullComment_getAsHTML)(CXComment Comment);
+   CXString (*FullComment_getAsXML)(CXComment Comment);
+
+
+   // compilation database
+   CXCompilationDatabase (*CompilationDatabase_fromDirectory)(
+                                           const char *BuildDir,
+                                           CXCompilationDatabase_Error *ErrorCode);
+   void (*CompilationDatabase_dispose)(CXCompilationDatabase);
+
+   CXCompileCommands (*CompilationDatabase_getCompileCommands)(
+                             CXCompilationDatabase,
+                             const char *CompleteFileName);
+   CXCompileCommands (*CompilationDatabase_getAllCompileCommands)(CXCompilationDatabase);
+   void (*CompileCommands_dispose)(CXCompileCommands);
+   unsigned (*CompileCommands_getSize)(CXCompileCommands);
+
+   CXCompileCommand (*CompileCommands_getCommand)(CXCompileCommands, unsigned I);
+
+   CXString (*CompileCommand_getDirectory)(CXCompileCommand);
+
+   unsigned (*CompileCommand_getNumArgs)(CXCompileCommand);
+   CXString (*CompileCommand_getArg)(CXCompileCommand, unsigned I);
+
+   unsigned (*CompileCommand_getNumMappedSources)(CXCompileCommand);
+   CXString (*CompileCommand_getMappedSourcePath)(CXCompileCommand, unsigned I);
+   CXString (*CompileCommand_getMappedSourceContent)(CXCompileCommand, unsigned I);
 
 private:
    void* pLib_;
