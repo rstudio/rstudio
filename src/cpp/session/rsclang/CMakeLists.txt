@@ -33,6 +33,7 @@ include_directories(
 )
 
 set(RSCLANG_SOURCE_FILES
+  Options.cpp
   Main.cpp
   libclang/libclang.cpp
 )

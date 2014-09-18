@@ -13,11 +13,16 @@
  *
  */
 
+#include <iostream>
+
 #include <core/Error.hpp>
 #include <core/Log.hpp>
+#include <core/ProgramStatus.hpp>
 #include <core/system/System.hpp>
 
 #include <libclang/libclang.hpp>
+
+#include "Options.hpp"
 
 #include "rsclang-config.h"
 
@@ -41,7 +46,27 @@ int main(int argc, char** argv)
   if (error)
      LOG_ERROR(error);
 
+  // read program options
+  Options& options = rsclang::options();
+  ProgramStatus status = options.read(argc, argv);
+  if ( status.exit() )
+     return status.exitCode() ;
 
+  // is this an availability check?
+  if (options.checkAvailable())
+  {
+     libclang::libclang lib(options.libclangPath().absolutePath());
+     std::string errMsg;
+     if (lib.isLoaded(&errMsg))
+     {
+        return EXIT_SUCCESS;
+     }
+     else
+     {
+        std::cerr << errMsg << std::endl;
+        return EXIT_FAILURE;
+     }
+  }
 
 
   return EXIT_SUCCESS;
