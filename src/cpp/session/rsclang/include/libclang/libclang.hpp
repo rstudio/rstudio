@@ -13,6 +13,9 @@ namespace rsclang {
 class libclang : boost::noncopyable
 {
 public:
+   static bool isLoadable(const std::string& libraryPath, std::string* pError);
+
+public:
    libclang(const std::string& libraryPath);
    bool isLoaded(std::string* pError);
    ~libclang();

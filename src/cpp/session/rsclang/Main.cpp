@@ -55,9 +55,8 @@ int main(int argc, char** argv)
   // is this an availability check?
   if (options.checkAvailable())
   {
-     libclang lib(options.libclangPath().absolutePath());
      std::string errMsg;
-     if (lib.isLoaded(&errMsg))
+     if (libclang::isLoadable(options.libclangPath().absolutePath(), &errMsg))
      {
         return EXIT_SUCCESS;
      }
@@ -67,7 +66,6 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
      }
   }
-
 
   return EXIT_SUCCESS;
 }

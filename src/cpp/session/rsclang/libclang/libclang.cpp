@@ -156,6 +156,21 @@ bool closeLibrary(void* pLib, std::string* pError)
    if (!loadSymbol(pLib_, "clang_" #name, (void**)&name, &initError_)) \
        return;
 
+bool libclang::isLoadable(const std::string& libraryPath, std::string* pError)
+{
+   void* pLib;
+   if (loadLibrary(libraryPath, (void**)&pLib, pError))
+   {
+      std::string error;
+      closeLibrary(pLib, &error);
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+}
+
 libclang::libclang(const std::string& libraryPath)
    : pLib_(NULL)
 {
