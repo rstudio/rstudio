@@ -25,6 +25,7 @@ import com.google.gwt.thirdparty.guava.common.collect.ImmutableSortedMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.regex.Pattern;
 
 /**
  * The status of a compile job submitted to Super Dev Mode.
@@ -32,6 +33,7 @@ import java.util.SortedMap;
  * <p>JobEvent objects are deeply immutable, though they describe a Job that changes.
  */
 public final class JobEvent {
+  private static final Pattern VALID_TAG = Pattern.compile("\\S{1,100}");
 
   private final String jobId;
 
@@ -43,6 +45,7 @@ public final class JobEvent {
   private final CompileDir compileDir;
   private final CompileStrategy compileStrategy;
   private final ImmutableList<String> arguments;
+  private final ImmutableList<String> tags;
 
   private JobEvent(Builder builder) {
     this.jobId = Preconditions.checkNotNull(builder.jobId);
@@ -55,6 +58,7 @@ public final class JobEvent {
     this.compileDir = builder.compileDir;
     this.compileStrategy = builder.compileStrategy;
     this.arguments = ImmutableList.copyOf(builder.args);
+    this.tags = ImmutableList.copyOf(builder.tags);
 
     // Any new fields added should allow nulls for backward compatibility.
   }
@@ -120,6 +124,34 @@ public final class JobEvent {
   }
 
   /**
+   * User-defined tags associated with this job. (Not null but may be empty.)
+   */
+  public ImmutableList<String> getTags() { return tags; }
+
+  /**
+   * If all the given tags are valid, returns a list containing the tags.
+   * @throws java.lang.IllegalArgumentException if any tag is invalid.
+   */
+  static ImmutableList<String> checkTags(Iterable<String> tags) {
+    ImmutableList.Builder<String> builder = ImmutableList.builder();
+    for (String tag : tags) {
+      if (!isValidTag(tag)) {
+        throw new IllegalArgumentException("invalid tag: " + tag);
+      }
+      builder.add(tag);
+    }
+    return builder.build();
+  }
+
+  /**
+   * Returns true if the tag is valid.
+   * Tags must not be null, contain whitespace, or be more than 100 characters.
+   */
+  private static boolean isValidTag(String candidate) {
+    return candidate != null && VALID_TAG.matcher(candidate).matches();
+  }
+
+  /**
    * Defines the lifecycle of a job.
    */
   public enum Status {
@@ -155,7 +187,7 @@ public final class JobEvent {
     /**
      * The string to use for serialization.
      */
-    String getJsonName() {
+    public String getJsonName() {
       return jsonName;
     }
   }
@@ -175,6 +207,7 @@ public final class JobEvent {
     private CompileDir compileDir;
     private CompileStrategy compileStrategy;
     private List<String> args = ImmutableList.of();
+    private List<String> tags = ImmutableList.of();
 
     /**
      * A unique id for this job. Required.
@@ -248,6 +281,14 @@ public final class JobEvent {
      */
     public void setArguments(List<String> args) {
       this.args = Preconditions.checkNotNull(args);
+    }
+
+    /**
+     * User-defined tags passed to {@link Options#addTags}.
+     * Optional but may not be null. If not set, defaults to the empty list.
+     */
+    public void setTags(Iterable<String> tags) {
+      this.tags = checkTags(tags);
     }
 
     public JobEvent build() {

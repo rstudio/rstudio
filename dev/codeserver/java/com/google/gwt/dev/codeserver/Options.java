@@ -28,6 +28,7 @@ import com.google.gwt.dev.util.arg.OptionLogLevel;
 import com.google.gwt.dev.util.arg.OptionSourceLevel;
 import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.util.tools.ArgHandler;
 import com.google.gwt.util.tools.ArgHandlerDir;
 import com.google.gwt.util.tools.ArgHandlerExtra;
@@ -40,7 +41,9 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Defines the command-line options for the {@link CodeServer CodeServer's} main() method.
@@ -49,6 +52,7 @@ import java.util.List;
  */
 public class Options {
   private ImmutableList<String> args;
+  private Set<String> tags = new LinkedHashSet<String>();
 
   private boolean compilePerFile = false;
   private boolean noPrecompile = false;
@@ -103,7 +107,33 @@ public class Options {
       noPrecompile = true;
     }
 
+    // Set some tags automatically for migration tracking.
+    if (shouldCompilePerFile()) {
+      addTags("incremental_on");
+    } else {
+      addTags("incremental_off");
+    }
+
+    if (getNoPrecompile()) {
+      addTags("precompile_off");
+    } else {
+      addTags("precompile_on");
+    }
+
     return true;
+  }
+
+  /**
+   * Adds some user-defined tags that will be passed through to {@link JobEvent#getTags}.
+   *
+   * <p>A tag may not be null, contain whitespace, or be more than 100 characters.
+   * If a tag was already added, it won't be added again.
+   *
+   * <p>This method may be called more than once, but compile jobs that are already running
+   * will not have the new tags.
+   */
+  public synchronized void addTags(String... tags) {
+    this.tags.addAll(JobEvent.checkTags(Arrays.asList(tags)));
   }
 
   /**
@@ -111,6 +141,13 @@ public class Options {
    */
   ImmutableList<String> getArgs() {
     return args;
+  }
+
+  /**
+   * Returns the tags passed to {@link #addTags}.
+   */
+  synchronized Set<String> getTags() {
+    return ImmutableSet.copyOf(tags);
   }
 
   /**

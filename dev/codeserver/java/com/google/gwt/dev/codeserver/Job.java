@@ -28,6 +28,7 @@ import com.google.gwt.thirdparty.guava.common.util.concurrent.ListenableFuture;
 import com.google.gwt.thirdparty.guava.common.util.concurrent.SettableFuture;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -70,6 +71,7 @@ class Job {
   // Miscellaneous
 
   private final ImmutableList<String> args;
+  private final Set<String> tags;
 
   /**
    * The id to report to the recompile listener.
@@ -98,6 +100,7 @@ class Job {
     this.recompileListener = Preconditions.checkNotNull(options.getRecompileListener());
     this.jobChangeListener = Preconditions.checkNotNull(options.getJobChangeListener());
     this.args = Preconditions.checkNotNull(options.getArgs());
+    this.tags = Preconditions.checkNotNull(options.getTags());
     this.logSupplier = new LogSupplier(parentLogger, id);
   }
 
@@ -284,6 +287,7 @@ class Job {
     out.setCompileDir(compileDir);
     out.setCompileStrategy(compileStrategy);
     out.setArguments(args);
+    out.setTags(tags);
     return out.build();
   }
 
