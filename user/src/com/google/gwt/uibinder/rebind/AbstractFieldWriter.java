@@ -45,12 +45,6 @@ abstract class AbstractFieldWriter implements FieldWriter {
       + " a @UiFactory method on the UiBinder's owner, or annotate a constructor of %2$s with"
       + " @UiConstructor.";
 
-  private static int nextAttachVar;
-
-  public static String getNextAttachVar() {
-    return "attachRecord" + nextAttachVar++;
-  }
-
   private final FieldManager manager;
   private final Set<FieldWriter> needs = new LinkedHashSet<FieldWriter>();
   private final List<String> statements = new ArrayList<String>();
@@ -260,16 +254,12 @@ abstract class AbstractFieldWriter implements FieldWriter {
     }
 
     w.write("// Setup section.");
-    for (String s : statements) {
-      w.write(s);
-    }
-
-    String attachedVar = null;
+    writeStatements(w, statements);
 
     if (attachStatements.size() > 0) {
       w.newline();
-      w.write("// Attach section.");
       if (outputAttachDetachCallbacks) {
+        w.write("// Attach section.");
         // TODO(rdcastro): This is too coupled with RenderablePanel.
         // Make this nicer.
         w.write("%s.wrapInitializationCallback = ", getName());
@@ -280,34 +270,37 @@ abstract class AbstractFieldWriter implements FieldWriter {
         w.outdent();
         w.write("@Override public void execute() {");
         w.indent();
-      } else {
-        attachedVar = getNextAttachVar();
 
+        writeStatements(w, attachStatements);
+
+        w.outdent();
+        w.write("}");
+        w.outdent();
+        w.write("};");
+      } else {
+        String attachedVar = "__attachRecord__";
+
+        w.write("{");
+        w.indent();
+        w.write("// Attach section.");
         String elementToAttach = getInstantiableType().isAssignableTo(getDomElement(typeOracle))
             ? name : name + ".getElement()";
 
         w.write("UiBinderUtil.TempAttachment %s = UiBinderUtil.attachToDom(%s);",
                 attachedVar, elementToAttach);
-      }
 
-      for (String s : attachStatements) {
-        w.write(s);
-      }
+        w.newline();
 
-      if (outputAttachDetachCallbacks) {
+        writeStatements(w, attachStatements);
+
+        w.newline();
+        // If we forced an attach, we should always detach, regardless of whether
+        // there are any detach statements.
+        w.write("// Detach section.");
+        w.write("%s.detach();", attachedVar);
         w.outdent();
         w.write("}");
-        w.outdent();
-        w.write("};");
       }
-    }
-
-    w.newline();
-    // If we forced an attach, we should always detach, regardless of whether
-    // there are any detach statements.
-    if (attachedVar != null) {
-      w.write("// Detach section.");
-      w.write("%s.detach();", attachedVar);
     }
 
     if (detachStatements.size() > 0) {
@@ -321,9 +314,7 @@ abstract class AbstractFieldWriter implements FieldWriter {
         w.indent();
       }
 
-      for (String s : detachStatements) {
-        w.write(s);
-      }
+      writeStatements(w, detachStatements);
 
       if (outputAttachDetachCallbacks) {
         w.outdent();
@@ -405,5 +396,11 @@ abstract class AbstractFieldWriter implements FieldWriter {
       type = m.getReturnType();
     }
     return type;
+  }
+
+  private static void writeStatements(IndentedWriter w, Iterable<String> statements) {
+    for (String s : statements) {
+      w.write(s);
+    }
   }
 }
