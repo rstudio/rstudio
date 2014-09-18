@@ -444,7 +444,7 @@ void rs_registerShinyFunction(SEXP params)
 }
 
 // Executes the contents of the given file under the debugger
-SEXP rs_debugSourceFile(SEXP filename, SEXP encoding, SEXP envir)
+SEXP rs_debugSourceFile(SEXP filename, SEXP encoding, SEXP local)
 {
    // Get the file that was sourced
    std::string path;
@@ -474,7 +474,7 @@ SEXP rs_debugSourceFile(SEXP filename, SEXP encoding, SEXP envir)
                         r::sexp::create(lines, &protect) :
                         R_NilValue;
    error = r::exec::RFunction(".rs.executeDebugSource", filename, encoding,
-                              lineSEXP, envir)
+                              lineSEXP, local)
                              .callUnsafe();
 
    // Let the client know we're done; this is the client's cue to re-inject

@@ -342,8 +342,21 @@
 })
 
 # Parses and executes a file for debugging
-.rs.addFunction("executeDebugSource", function(fileName, encoding, breaklines, envir)
+.rs.addFunction("executeDebugSource", function(fileName, encoding, breaklines, local)
 {
+   envir <-
+      if (isTRUE(local)) {
+         # If local is TRUE, we take the first frame as it's what was artificially
+         # constructed in earlier code
+         sys.frames()[[1]]
+      } else if (identical(local, FALSE)) {
+         .GlobalEnv
+      } else if (is.environment(local)) {
+         local
+      } else {
+         stop("'local' must be TRUE, FALSE or an environment")
+      }
+
    # Create a function containing the parsed contents of the file
    env <- new.env(parent = emptyenv())
    env$fun <- .rs.makeSourceEquivFunction(fileName, encoding, envir)
@@ -415,13 +428,6 @@
 # when executed, has the same effect as sourcing the file.
 .rs.addFunction("makeSourceEquivFunction", function(filename, encoding, envir = globalenv())
 {
-   # If the parent environment is the empty env, make it the base env
-   # This is so e.g. the `{` function can be resolved
-   if (identical(parent.env(envir), emptyenv()))
-   {
-      parent.env(envir) <- baseenv()
-   }
-
    content <- suppressWarnings(parse(filename, encoding))
 
    # Create an empty function to host the expressions in the file
@@ -462,12 +468,12 @@
 .rs.addGlobalFunction("debugSource", function(fileName,
                                               echo = FALSE,
                                               encoding = "unknown",
-                                              envir = globalenv())
+                                              local = FALSE)
 {
    # NYI: Consider whether we need to implement source with echo for debugging.
    # This would likely involve injecting print statements into the generated
    # source-equivalent function.
-   invisible(.Call("rs_debugSourceFile", fileName, encoding, envir))
+   invisible(.Call("rs_debugSourceFile", fileName, encoding, local))
 })
 
 # Parameters expected to be in environment:
