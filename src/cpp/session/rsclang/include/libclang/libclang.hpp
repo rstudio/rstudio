@@ -518,7 +518,7 @@ public:
    unsigned (*TParamCommandComment_getDepth)(CXComment Comment);
    unsigned (*TParamCommandComment_getIndex)(CXComment Comment, unsigned Depth);
 
-   CXString clang_VerbatimBlockLineComment_getText(CXComment Comment);
+   CXString (*VerbatimBlockLineComment_getText)(CXComment Comment);
    CXString (*VerbatimLineComment_getText)(CXComment Comment);
    CXString (*HTMLTagComment_getAsString)(CXComment Comment);
 
