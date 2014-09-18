@@ -46,12 +46,17 @@ else
   else
     BINARY_TYPE=rpm
   fi
-  ARCH=`uname -m`
-  if [ "$ARCH" == "x86_64" ]
+  if [ "$BINARY_TYPE" == "debian" ] 
   then
-    LIBCLANG_PLATFORM=linux/x86_64
+    ARCH=`uname -m`
+    if [ "$ARCH" == "x86_64" ]
+    then
+      LIBCLANG_PLATFORM=linux/x86_64
+    else
+      LIBCLANG_PLATFORM=linux/x86 
+    fi
   else
-    LIBCLANG_PLATFORM=linux/x86 
+    LIBCLANG_PLATFORM=NA
   fi
 fi
 
@@ -61,13 +66,16 @@ then
    echo "libclang ${LIBCLANG_VERSION} already installed"
 else
    mkdir -p "$LIBCLANG_DIR"
-   LIBCLANG_SRC_PATH=libclang-${LIBCLANG_VERSION}
-   LIBCLANG_ARCHIVE="${LIBCLANG_SRC_PATH}.zip"
-   download $LIBCLANG_ARCHIVE
-   unzip -q $LIBCLANG_ARCHIVE
-   cp ${LIBCLANG_SRC_PATH}/${LIBCLANG_PLATFORM}/* ${LIBCLANG_DIR} 
-   rm -rf ${LIBCLANG_SRC_PATH}
-   rm $LIBCLANG_ARCHIVE
+   if [ "$LIBCLANG_PLATFORM" != "NA" ]
+   then
+     LIBCLANG_SRC_PATH=libclang-${LIBCLANG_VERSION}
+     LIBCLANG_ARCHIVE="${LIBCLANG_SRC_PATH}.zip"
+     download $LIBCLANG_ARCHIVE
+     unzip -q $LIBCLANG_ARCHIVE
+     cp ${LIBCLANG_SRC_PATH}/${LIBCLANG_PLATFORM}/* ${LIBCLANG_DIR} 
+     rm -rf ${LIBCLANG_SRC_PATH}
+     rm $LIBCLANG_ARCHIVE
+   fi
 fi
 
 # back to install dir
