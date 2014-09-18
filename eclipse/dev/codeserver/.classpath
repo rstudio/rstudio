@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="codeserver/java"/>
-	<classpathentry kind="src" path="codeserver/test"/>
+	<classpathentry kind="src" path="codeserver/javatests"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jetty/jetty-8.1.12.v20130726/jetty-8.1.12.v20130726.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/guava/guava-16.0.1/guava-16.0.1-rebased.jar"/>
