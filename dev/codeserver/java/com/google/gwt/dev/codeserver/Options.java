@@ -287,18 +287,19 @@ public class Options {
   private class ArgProcessor extends ArgProcessorBase {
 
     public ArgProcessor() {
-      registerHandler(new NoPrecompileFlag());
+      registerHandler(new AllowMissingSourceDirFlag());
+      registerHandler(new BindAddressFlag());
       registerHandler(new CompileTestFlag());
       registerHandler(new CompileTestRecompilesFlag());
-      registerHandler(new BindAddressFlag());
-      registerHandler(new PortFlag());
-      registerHandler(new WorkDirFlag());
-      registerHandler(new AllowMissingSourceDirFlag());
-      registerHandler(new SourceFlag());
-      registerHandler(new ModuleNameArgument());
       registerHandler(new FailOnErrorFlag());
+      registerHandler(new IncrementalCompileFlag());
+      registerHandler(new ModuleNameArgument());
+      registerHandler(new NoPrecompileFlag());
+      registerHandler(new PortFlag());
+      registerHandler(new SourceFlag());
       registerHandler(new StrictResourcesFlag());
-      registerHandler(new CompilePerFileFlag());
+      registerHandler(new WorkDirFlag());
+
       registerHandler(new ArgHandlerSourceLevel(new OptionSourceLevel() {
         @Override
         public SourceLevel getSourceLevel() {
@@ -363,16 +364,20 @@ public class Options {
     }
   }
 
-  private class CompilePerFileFlag extends ArgHandlerFlag {
+  private class IncrementalCompileFlag extends ArgHandlerFlag {
+
+    public IncrementalCompileFlag() {
+      addTagValue("-XcompilePerFile", true);
+    }
 
     @Override
     public String getLabel() {
-      return "compilePerFile";
+      return "incremental";
     }
 
     @Override
     public String getPurposeSnippet() {
-      return "Compiles faster by creating/reusing a JS file per class.";
+      return "Compiles faster by reusing data from the previous compile.";
     }
 
     @Override
@@ -384,11 +389,6 @@ public class Options {
     @Override
     public boolean getDefaultValue() {
       return false;
-    }
-
-    @Override
-    public boolean isExperimental() {
-      return true;
     }
   }
 
