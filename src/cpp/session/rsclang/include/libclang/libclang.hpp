@@ -550,6 +550,33 @@ public:
    CXString (*CompileCommand_getMappedSourcePath)(CXCompileCommand, unsigned I);
    CXString (*CompileCommand_getMappedSourceContent)(CXCompileCommand, unsigned I);
 
+   // build system
+   unsigned long long (*getBuildSessionTimestamp)(void);
+   CXVirtualFileOverlay (*VirtualFileOverlay_create)(unsigned options);
+   enum CXErrorCode (*VirtualFileOverlay_addFileMapping)(
+                                           CXVirtualFileOverlay,
+                                           const char *virtualPath,
+                                           const char *realPath);
+   enum CXErrorCode (*VirtualFileOverlay_setCaseSensitivity)(
+                                CXVirtualFileOverlay,
+                                int caseSensitive);
+   enum CXErrorCode (*VirtualFileOverlay_writeToBuffer)(CXVirtualFileOverlay, unsigned options,
+                                          char **out_buffer_ptr,
+                                          unsigned *out_buffer_size);
+   void (*VirtualFileOverlay_dispose)(CXVirtualFileOverlay);
+   CXModuleMapDescriptor (*ModuleMapDescriptor_create)(unsigned options);
+   enum CXErrorCode (*ModuleMapDescriptor_setFrameworkModuleName)(CXModuleMapDescriptor,
+                                                    const char *name);
+   enum CXErrorCode (*ModuleMapDescriptor_setUmbrellaHeader)(
+                               CXModuleMapDescriptor,
+                               const char *name);
+   enum CXErrorCode (*ModuleMapDescriptor_writeToBuffer)(
+                               CXModuleMapDescriptor,
+                               unsigned options,
+                               char **out_buffer_ptr,
+                               unsigned *out_buffer_size);
+   void (*ModuleMapDescriptor_dispose)(CXModuleMapDescriptor);
+
 private:
    void* pLib_;
    std::string initError_;
