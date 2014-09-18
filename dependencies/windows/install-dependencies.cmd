@@ -22,6 +22,10 @@ set PANDOC_VERSION=1.12.4.2
 set PANDOC_NAME=pandoc-%PANDOC_VERSION%
 set PANDOC_FILE=%PANDOC_NAME%.zip
 
+set LIBCLANG_VERSION=3.5
+set LIBCLANG_NAME=libclang-%LIBCLANG_VERSION%
+set LIBCLANG_FILE=%LIBCLANG_NAME%.zip
+
 if not exist boost-1.50-win (
   wget %WGET_ARGS% "%BASEURL%%BOOST_FILE%"
   echo Unzipping %BOOST_FILE%
@@ -128,6 +132,16 @@ if not exist pandoc\%PANDOC_VERSION% (
   copy "%PANDOC_NAME%\windows\pandoc*" "pandoc\%PANDOC_VERSION%""
   del %PANDOC_FILE%
   rmdir /s /q %PANDOC_NAME%
+)
+
+if not exist libclang\%LIBCLANG_VERSION% (
+  wget %WGET_ARGS% "%BASEURL%%LIBCLANG_FILE%"
+  echo Unzipping %LIBCLANG_FILE%
+  unzip %UNZIP_ARGS% "%LIBCLANG_FILE%"
+  mkdir libclang\%LIBCLANG_VERSION%
+  copy "%LIBCLANG_NAME%\windows\x86\libclang.*" "libclang\%LIBCLANG_VERSION%"
+  del %LIBCLANG_FILE%
+  rmdir /s /q %LIBCLANG_NAME%
 )
 
 
