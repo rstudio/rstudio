@@ -448,7 +448,7 @@ public:
    CXIndexAction (*IndexAction_create)(CXIndex CIdx);
    void (*IndexAction_dispose)(CXIndexAction);
 
-   int (*clang_indexSourceFile)(CXIndexAction,
+   int (*indexSourceFile)(CXIndexAction,
                                 CXClientData client_data,
                                 IndexerCallbacks *index_callbacks,
                                 unsigned index_callbacks_size,
@@ -468,7 +468,7 @@ public:
                                unsigned index_options,
                                CXTranslationUnit);
 
-   void (indexLoc_getFileLocation)(CXIdxLoc loc,
+   void (*indexLoc_getFileLocation)(CXIdxLoc loc,
                                    CXIdxClientFile *indexFile,
                                    CXFile *file,
                                    unsigned *line,
@@ -546,9 +546,10 @@ public:
    unsigned (*CompileCommand_getNumArgs)(CXCompileCommand);
    CXString (*CompileCommand_getArg)(CXCompileCommand, unsigned I);
 
-   unsigned (*CompileCommand_getNumMappedSources)(CXCompileCommand);
-   CXString (*CompileCommand_getMappedSourcePath)(CXCompileCommand, unsigned I);
-   CXString (*CompileCommand_getMappedSourceContent)(CXCompileCommand, unsigned I);
+   // failed lookup on OSX
+   //unsigned (*CompileCommand_getNumMappedSources)(CXCompileCommand);
+   //CXString (*CompileCommand_getMappedSourcePath)(CXCompileCommand, unsigned I);
+   //CXString (*CompileCommand_getMappedSourceContent)(CXCompileCommand, unsigned I);
 
    // build system
    unsigned long long (*getBuildSessionTimestamp)(void);
