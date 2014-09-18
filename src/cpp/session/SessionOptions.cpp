@@ -35,6 +35,8 @@
 
 #include <session/SessionConstants.hpp>
 
+#include "session-config.h"
+
 using namespace core ;
 
 namespace session {  
@@ -411,6 +413,15 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
          ERROR_LOCATION);
       saveActionDefault_ = r::session::kSaveActionAsk;
    }
+   
+   // add /Debug to rsclangPath in Mac desktop debug mode
+#ifdef __APPLE__
+#ifndef NDEBUG
+#ifndef RSTUDIO_SERVER
+   rsclangPath_ += "/Debug";
+#endif
+#endif
+#endif
 
    // convert relative paths by completing from the app resource path
    resolvePath(resourcePath, &rResourcesPath_);
