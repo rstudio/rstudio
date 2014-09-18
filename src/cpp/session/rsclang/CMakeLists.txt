@@ -78,11 +78,11 @@ target_link_libraries(rsclang
 if(NOT RSTUDIO_SESSION_WIN64)
 
    # install rsclang utility
-   install(TARGETS rsclang DESTINATION ${RSTUDIO_INSTALL_BIN})
+   install(TARGETS rsclang DESTINATION ${RSTUDIO_INSTALL_BIN}/rsclang)
 
    # install libclang
    file(GLOB LIBCLANG_FILES "${LIBCLANG_DIR}/libclang.*")
    install(PROGRAMS ${LIBCLANG_FILES}
-           DESTINATION  ${RSTUDIO_INSTALL_BIN}/libclang)
+           DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang)
 
 endif()

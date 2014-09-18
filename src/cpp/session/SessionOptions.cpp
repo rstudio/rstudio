@@ -42,6 +42,7 @@ namespace session {
 namespace {
 const char* const kDefaultPandocPath = "bin/pandoc";
 const char* const kDefaultPostbackPath = "bin/postback/rpostback";
+const char* const kDefaultRsclangPath = "bin/rsclang";
 } // anonymous namespace
 
 Options& options()
@@ -276,7 +277,13 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
         "Path to mathjax library")
       ("external-pandoc-path",
         value<std::string>(&pandocPath_)->default_value(kDefaultPandocPath),
-        "Path to pandoc binaries");
+        "Path to pandoc binaries")
+      ("external-rsclang-path",
+        value<std::string>(&rsclangPath_)->default_value(kDefaultRsclangPath),
+        "Path to rsclang utility")
+      ("external-libclang-path",
+        value<std::string>(&libclangPath_)->default_value(kDefaultRsclangPath),
+        "Path to libclang shared library");
 
    // user options (default user identity to current username)
    std::string currentUsername = core::system::username();
@@ -426,6 +433,8 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    resolvePath(resourcePath, &hunspellDictionariesPath_);
    resolvePath(resourcePath, &mathjaxPath_);
    resolvePandocPath(resourcePath, &pandocPath_);
+   resolveRsclangPath(resourcePath, &rsclangPath_);
+   resolveRsclangPath(resourcePath, &libclangPath_);
 
    // shared secret with parent
    secret_ = core::system::getenv("RS_SHARED_SECRET");
@@ -510,6 +519,20 @@ void Options::resolvePandocPath(const FilePath& resourcePath,
    }
 }
 
+void Options::resolveRsclangPath(const FilePath& resourcePath,
+                                 std::string* pPath)
+{
+   if (*pPath == kDefaultRsclangPath)
+   {
+      FilePath path = resourcePath.parent().complete("MacOS/rsclang");
+      *pPath = path.absolutePath();
+   }
+   else
+   {
+      resolvePath(resourcePath, pPath);
+   }
+}
+
 #else
 
 void Options::resolvePostbackPath(const FilePath& resourcePath,
@@ -524,8 +547,11 @@ void Options::resolvePandocPath(const FilePath& resourcePath,
    resolvePath(resourcePath, pPath);
 }
 
-
-
+void Options::resolveRsclangPath(const FilePath& resourcePath,
+                                 std::string* pPath)
+{
+   resolvePath(resourcePath, pPath);
+}
 #endif
    
 } // namespace session
