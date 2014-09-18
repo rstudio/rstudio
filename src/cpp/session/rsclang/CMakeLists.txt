@@ -15,6 +15,13 @@
 
 project(RSCLANG)
 
+# verify libclang is installed
+set(LIBCLANG_VERSION "3.5")
+set(LIBCLANG_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/${LIBCLANG_VERSION}")
+if(NOT EXISTS "${LIBCLANG_DIR}")
+  message(FATAL_ERROR "liblang ${LIBCLANG_VERSION} not found  (re-run install-dependencies script to install)")
+endif()
+
 # include files
 file(GLOB_RECURSE RSCLANG_HEADER_FILES "*.h*")
 
@@ -69,5 +76,13 @@ target_link_libraries(rsclang
 )
 
 if(NOT RSTUDIO_SESSION_WIN64)
+
+   # install rsclang utility
    install(TARGETS rsclang DESTINATION ${RSTUDIO_INSTALL_BIN})
+
+   # install libclang
+   file(GLOB LIBCLANG_FILES "${LIBCLANG_DIR}/libclang.*")
+   install(PROGRAMS ${LIBCLANG_FILES}
+           DESTINATION  ${RSTUDIO_INSTALL_BIN}/libclang)
+
 endif()
