@@ -9,7 +9,6 @@
 #include "clang-c/CXCompilationDatabase.h"
 
 namespace rsclang {
-namespace libclang {
 
 class libclang : boost::noncopyable
 {
@@ -324,7 +323,6 @@ private:
    std::string initError_;
 };
 
-} // namespace libclang
 } // namespace rsclang
 
 #endif // __RSCLANG_LIBCLANG_HPP__

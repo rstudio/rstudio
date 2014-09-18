@@ -10,7 +10,6 @@
 #endif
 
 namespace rsclang {
-namespace libclang {
 
 namespace {
 
@@ -373,5 +372,4 @@ libclang::~libclang()
    }
 }
 
-} // namespace libclang
 } // namespace rsclang
