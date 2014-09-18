@@ -44,7 +44,7 @@ java_library(
 java_library(
     name = "testlib",
     testonly = 1,
-    srcs = glob(["test/**/*.java"]),
+    srcs = glob(["javatests/**/*.java"]),
     deps = [
         ":codeserver-bare",
         "//third_party/java/junit",
