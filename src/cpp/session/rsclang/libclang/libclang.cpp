@@ -183,17 +183,7 @@ libclang::libclang(const std::string& libraryPath)
    LOAD_CLANG_SYMBOL(equalRanges)
    LOAD_CLANG_SYMBOL(Range_isNull)
 
-   // not a fatal error if clang_getExpansionLocation isn't found
-   // (it isn't exported from libclang.so in Ubuntu 12.04)
-   std::string ignoredError;
-   if (!loadSymbol(pLib_,
-                   "clang_getExpansionLocation",
-                   (void**)&getExpansionLocation,
-                    &ignoredError))
-   {
-      getExpansionLocation = NULL;
-   }
-
+   LOAD_CLANG_SYMBOL(getExpansionLocation)
    LOAD_CLANG_SYMBOL(getPresumedLocation)
    LOAD_CLANG_SYMBOL(getInstantiationLocation)
    LOAD_CLANG_SYMBOL(getSpellingLocation)
