@@ -53,7 +53,7 @@ else
     then
       LIBCLANG_PLATFORM=linux/x86_64
     else
-      LIBCLANG_PLATFORM=linux/x86 
+      LIBCLANG_PLATFORM=NA 
     fi
   else
     LIBCLANG_PLATFORM=NA
