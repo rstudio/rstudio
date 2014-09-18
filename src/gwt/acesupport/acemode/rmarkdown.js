@@ -139,14 +139,14 @@ oop.inherits(Mode, MarkdownMode);
         if (this.inCppLanguageMode(state))
             return this.$outdent.checkOutdent(line, input);
         else
-            return this.$r_outdent.checkOutdent(line,input);
+            return this.$r_outdent.checkOutdent(state, line, input);
     };
 
     this.autoOutdent = function(state, doc, row) {
         if (this.inCppLanguageMode(state))
             return this.$outdent.autoOutdent(doc, row);
         else
-            return this.$r_outdent.autoOutdent(state, doc, row);
+            return this.$r_outdent.autoOutdent(state, doc, row, this.codeModel);
     };
 
     this.transformAction = function(state, action, editor, session, text) {
