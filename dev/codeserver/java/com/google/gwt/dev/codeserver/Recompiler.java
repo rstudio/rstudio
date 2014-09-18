@@ -440,6 +440,17 @@ class Recompiler {
     maybeOverrideConfig(moduleDef, "propertiesJs",
         "com/google/gwt/core/ext/linker/impl/properties.js");
 
+    if (options.shouldCompilePerFile()) {
+      // CSSResourceGenerator needs to produce stable, unique naming for its input.
+      // Currently on default settings CssResourceGenerator's obfuscation depends on
+      // whole world knowledge and thus will produce collision in obfuscated mode, since in
+      // incremental compiles that information is not available.
+      //
+      // TODO(dankurka): Once we do proper stable hashing of classes in CssResourceGenerator, we
+      // can probably replace / remove this.
+      maybeOverrideConfig(moduleDef, "CssResource.style", "stable");
+    }
+
     overrideBinding(moduleDef, "compiler.useSourceMaps", "true");
     overrideBinding(moduleDef, "compiler.useSymbolMaps", "false");
     overrideBinding(moduleDef, "superdevmode", "on");
