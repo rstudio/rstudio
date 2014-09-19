@@ -66,6 +66,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionAskPass.cpp
    modules/SessionAuthoring.cpp
    modules/SessionBreakpoints.cpp
+   modules/SessionClang.cpp
    modules/SessionCodeSearch.cpp
    modules/SessionConsole.cpp
    modules/SessionDependencies.cpp
@@ -101,7 +102,6 @@ set (SESSION_SOURCE_FILES
    modules/build/SessionBuildEnvironment.cpp
    modules/build/SessionBuildErrors.cpp
    modules/build/SessionSourceCpp.cpp
-   modules/clang/SessionClang.cpp
    modules/data/SessionData.cpp
    modules/data/DataViewer.cpp
    modules/environment/EnvironmentMonitor.cpp
