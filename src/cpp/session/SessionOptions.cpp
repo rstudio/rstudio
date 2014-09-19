@@ -280,9 +280,6 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("external-pandoc-path",
         value<std::string>(&pandocPath_)->default_value(kDefaultPandocPath),
         "Path to pandoc binaries")
-      ("external-rsclang-path",
-        value<std::string>(&rsclangPath_)->default_value(kDefaultRsclangPath),
-        "Path to rsclang utility")
       ("external-libclang-path",
         value<std::string>(&libclangPath_)->default_value(kDefaultRsclangPath),
         "Path to libclang shared library");
@@ -414,15 +411,6 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       saveActionDefault_ = r::session::kSaveActionAsk;
    }
    
-   // add /Debug to rsclangPath in Mac desktop debug mode
-#ifdef __APPLE__
-#ifndef NDEBUG
-#ifndef RSTUDIO_SERVER
-   rsclangPath_ += "/Debug";
-#endif
-#endif
-#endif
-
    // convert relative paths by completing from the app resource path
    resolvePath(resourcePath, &rResourcesPath_);
    resolvePath(resourcePath, &agreementFilePath_);
@@ -444,7 +432,16 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    resolvePath(resourcePath, &hunspellDictionariesPath_);
    resolvePath(resourcePath, &mathjaxPath_);
    resolvePandocPath(resourcePath, &pandocPath_);
-   resolveRsclangPath(resourcePath, &rsclangPath_);
+
+   // rsclang
+   if (libclangPath_ != kDefaultRsclangPath)
+   {
+#ifdef _WIN32
+      libclangPath_ += "/3.4";
+#else
+      libclangPath_ += "/3.5";
+#endif
+   }
    resolveRsclangPath(resourcePath, &libclangPath_);
 
    // shared secret with parent

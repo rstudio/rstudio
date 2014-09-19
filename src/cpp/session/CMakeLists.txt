@@ -35,6 +35,19 @@ if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/packrat")
   message(FATAL_ERROR "packrat package not found (re-run install-dependencies script to install)")
 endif()
 
+# verify libclang is installed
+if(WIN32)
+   set(LIBCLANG_VERSION "3.4")
+else()
+   set(LIBCLANG_VERSION "3.5")
+endif()
+set(LIBCLANG_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/${LIBCLANG_VERSION}")
+if(NOT EXISTS "${LIBCLANG_DIR}")
+  message(FATAL_ERROR "liblang ${LIBCLANG_VERSION} not found  (re-run install-dependencies script to install)")
+endif()
+
+
+
 # include files
 file(GLOB_RECURSE SESSION_HEADER_FILES "*.h*")
 
@@ -102,6 +115,7 @@ set (SESSION_SOURCE_FILES
    modules/build/SessionBuildErrors.cpp
    modules/build/SessionSourceCpp.cpp
    modules/clang/SessionClang.cpp
+   modules/clang/libclang/libclang.cpp
    modules/data/SessionData.cpp
    modules/data/DataViewer.cpp
    modules/environment/EnvironmentMonitor.cpp
@@ -302,9 +316,6 @@ install(TARGETS rsession DESTINATION ${RSTUDIO_INSTALL_BIN})
 # include resources, R scripts and 64bit binaries if this isn't a session 64bit build
 if (NOT RSTUDIO_SESSION_WIN64)
 
-   # rsclang
-   add_subdirectory(rsclang)
-
    # postback
    add_subdirectory(postback)
 
@@ -362,6 +373,20 @@ if (NOT RSTUDIO_SESSION_WIN64)
    # install PDF.js
    install(DIRECTORY "resources/pdfjs"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+
+   # install libclang
+   if(WIN32)
+      file(GLOB LIBCLANG_32_FILES "${LIBCLANG_DIR}/x86/libclang.*")
+      install(PROGRAMS ${LIBCLANG_32_FILES}
+              DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang/x86)
+      file(GLOB LIBCLANG_64_FILES "${LIBCLANG_DIR}/x86_64/libclang.*")
+      install(PROGRAMS ${LIBCLANG_64_FILES}
+              DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang/x86_64)
+   else()
+      file(GLOB_RECURSE LIBCLANG_FILES "${LIBCLANG_DIR}/libclang.*")
+      install(PROGRAMS ${LIBCLANG_FILES}
+              DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang)
+   endif()
 
    # install 64 bit binaries if we are on win64
    if(WIN32)

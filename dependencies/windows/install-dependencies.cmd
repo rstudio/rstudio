@@ -22,7 +22,7 @@ set PANDOC_VERSION=1.12.4.2
 set PANDOC_NAME=pandoc-%PANDOC_VERSION%
 set PANDOC_FILE=%PANDOC_NAME%.zip
 
-set LIBCLANG_VERSION=3.5
+set LIBCLANG_VERSION=3.4
 set LIBCLANG_NAME=libclang-%LIBCLANG_VERSION%
 set LIBCLANG_FILE=%LIBCLANG_NAME%.zip
 
@@ -139,7 +139,7 @@ if not exist libclang\%LIBCLANG_VERSION% (
   echo Unzipping %LIBCLANG_FILE%
   unzip %UNZIP_ARGS% "%LIBCLANG_FILE%"
   mkdir libclang\%LIBCLANG_VERSION%
-  copy "%LIBCLANG_NAME%\windows\msvc\x86\libclang.*" "libclang\%LIBCLANG_VERSION%"
+  xcopy /s "%LIBCLANG_NAME%\windows\mingw" "libclang\%LIBCLANG_VERSION%"
   del %LIBCLANG_FILE%
   rmdir /s /q %LIBCLANG_NAME%
 )

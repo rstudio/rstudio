@@ -24,6 +24,8 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
 
+#include "libclang/libclang.hpp"
+
 using namespace core ;
 
 namespace session {
@@ -32,61 +34,28 @@ namespace clang {
 
 namespace {
 
-FilePath rsclangPath()
-{
-   FilePath path = options().rsclangPath().childPath("rsclang");
-   core::system::fixupExecutablePath(&path);
-   return path;
-}
-
 FilePath libclangPath()
 {
-   // get the path to libclang
-#if defined(_WIN32)
-   std::string ext = ".dll";
+   // per-platform extension
+#if defined(_WIN64)
+   std::string libclang = "x86_64/libclang.dll";
+#elif defined(_WIN32)
+   std::string libclang = "x86/libclang.dll";
 #elif defined(__APPLE__)
-   std::string ext = ".dylib";
+   std::string libclang = "libclang.dylib";
 #else
-   std::string ext = ".so";
-#endif
-   return options().libclangPath().childPath("libclang" + ext);
-}
-
-
-std::vector<std::string> rsclangArgs(std::vector<std::string> args)
-{
-   args.push_back("--libclang-path");
-   args.push_back(libclangPath().absolutePath());
-   return args;
+   std::string libclang = "libclang.so";
+#endif   
+   return options().libclangPath().childPath(libclang);
 }
 
 bool isClangAvailable(std::string* pError)
 {
-   // call to check for availability
-   std::vector<std::string> args;
-   args.push_back("--check-available");
-   core::system::ProcessResult result;
-   Error error = core::system::runProgram(rsclangPath().absolutePath(),
-                                          rsclangArgs(args),
-                                          "",
-                                          core::system::ProcessOptions(),
-                                          &result);
-   if (error)
-   {
-      *pError = error.summary();
-      return false;
-   }
-   else if (result.exitStatus != EXIT_SUCCESS)
-   {
-      *pError = result.stdErr;
-      return false;
-   }
-   else
-   {
-      return true;
-   }
+   std::string path = libclangPath().absolutePath();
+   module_context::consoleWriteOutput(path + "\n");
+   rsclang::libclang::libclang lib(path);
+   return lib.isLoaded(pError);
 }
-
 
 SEXP rs_isClangAvailable()
 {   
