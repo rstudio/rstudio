@@ -139,7 +139,7 @@ if not exist libclang\%LIBCLANG_VERSION% (
   echo Unzipping %LIBCLANG_FILE%
   unzip %UNZIP_ARGS% "%LIBCLANG_FILE%"
   mkdir libclang\%LIBCLANG_VERSION%
-  copy "%LIBCLANG_NAME%\windows\x86\libclang.*" "libclang\%LIBCLANG_VERSION%"
+  copy "%LIBCLANG_NAME%\windows\msvc\x86\libclang.*" "libclang\%LIBCLANG_VERSION%"
   del %LIBCLANG_FILE%
   rmdir /s /q %LIBCLANG_NAME%
 )
