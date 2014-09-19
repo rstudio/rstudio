@@ -17,6 +17,7 @@ define("mode/r_code_model", function(require, exports, module) {
 
 var Range = require("ace/range").Range;
 var TokenIterator = require("ace/token_iterator").TokenIterator;
+var TokenCursor = require("mode/token_cursor").TokenCursor;
 
 var $verticallyAlignFunctionArgs = false;
 
@@ -43,149 +44,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       that.$onDocChange.apply(that, [evt]);
    });
 
-   this.$TokenCursor = function(row, offset)
-   {
-      this.$row = row || 0;
-      this.$offset = offset || 0;
-   };
-   (function() {
-      this.moveToStartOfRow = function(row)
-      {
-         this.$row = row;
-         this.$offset = 0;
-      };
-
-      this.moveToPreviousToken = function()
-      {
-         while (this.$offset == 0 && this.$row > 0)
-         {
-            this.$row--;
-            this.$offset = that.$tokens[this.$row].length;
-         }
-
-         if (this.$offset == 0)
-            return false;
-
-         this.$offset--;
-
-         return true;
-      };
-
-      this.moveToNextToken = function(maxRow)
-      {
-         if (this.$row > maxRow)
-            return;
-
-         this.$offset++;
-
-         while (this.$offset >= that.$tokens[this.$row].length && this.$row < maxRow)
-         {
-            this.$row++;
-            this.$offset = 0;
-         }
-
-         if (this.$offset >= that.$tokens[this.$row].length)
-            return false;
-
-         return true;
-      };
-
-      this.seekToNearestToken = function(position, maxRow)
-      {
-         if (position.row > maxRow)
-            return false;
-         this.$row = position.row;
-         var rowTokens = that.$tokens[this.$row] || [];
-         for (this.$offset = 0; this.$offset < rowTokens.length; this.$offset++)
-         {
-            var token = rowTokens[this.$offset];
-            if (token.column >= position.column)
-            {
-               return true;
-            }
-         }
-         return this.moveToNextToken(maxRow);
-      };
-
-      this.moveBackwardOverMatchingParens = function()
-      {
-         if (!this.moveToPreviousToken())
-            return false;
-         if (this.currentValue() !== ")")
-            return false;
-
-         var success = false;
-         var parenCount = 0;
-         while (this.moveToPreviousToken())
-         {
-            if (this.currentValue() === "(")
-            {
-               if (parenCount == 0)
-               {
-                  success = true;
-                  break;
-               }
-               parenCount--;
-            }
-            else if (this.currentValue() === ")")
-            {
-               parenCount++;
-            }
-         }
-         return success;
-      };
-
-      this.findToken = function(predicate, maxRow)
-      {
-         do
-         {
-            var t = this.currentToken();
-            if (t && predicate(t))
-               return t;
-         }
-         while (this.moveToNextToken(maxRow));
-         return null;
-      };
-
-      this.currentToken = function()
-      {
-         return (that.$tokens[this.$row] || [])[this.$offset];
-      };
-
-      this.currentValue = function()
-      {
-         return this.currentToken().value;
-      };
-
-      this.currentPosition = function()
-      {
-         var token = this.currentToken();
-         if (token === null)
-            return null;
-         else
-            return {row: this.$row, column: token.column};
-      };
-
-      this.cloneCursor = function()
-      {
-         var clone = new that.$TokenCursor();
-         clone.$row = this.$row;
-         clone.$offset = this.$offset;
-         return clone;
-      };
-
-      this.isFirstSignificantTokenOnLine = function()
-      {
-         return this.$offset == 0;
-      };
-
-      this.isLastSignificantTokenOnLine = function()
-      {
-         return this.$offset == (that.$tokens[this.$row] || []).length - 1;
-      };
-
-   }).call(this.$TokenCursor.prototype);
-
+   this.$TokenCursor = new TokenCursor(this.$tokens);
 };
 
 (function () {
@@ -279,11 +138,11 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       // on the identifier of a function whose open brace is a few tokens later.
       // Seems like it would be rare indeed for this distance to be more than 30
       // rows.
-      maxRow = Math.min(maxrow + 30, this.$doc.getLength() - 1);
+      var maxRow = Math.min(maxrow + 30, this.$doc.getLength() - 1);
       this.$tokenizeUpToRow(maxRow);
 
       //console.log("Seeking to " + this.$scopes.parsePos.row + "x"+ this.$scopes.parsePos.column);
-      var tokenCursor = new this.$TokenCursor();
+      var tokenCursor = this.$TokenCursor.cloneCursor();
       if (!tokenCursor.seekToNearestToken(this.$scopes.parsePos, maxRow))
          return;
 
@@ -554,7 +413,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    {
       if (this.$tokenizeUpToRow(pos.row))
       {
-         var tokenCursor = new this.$TokenCursor();
+         var tokenCursor = this.$TokenCursor.cloneCursor();
          if (tokenCursor.seekToNearestToken(pos, pos.row)
                    && tokenCursor.currentValue() == "{"
                && tokenCursor.moveBackwardOverMatchingParens())
@@ -775,7 +634,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                   if (rowEndState === "qstring" || rowEndState === "qqstring") 
                      continue;
                   thisIndent = this.$getLine(i).replace(/[^\s].*$/, '');
-                  thisIndentSize = thisIndent.replace("\t", tabAsSpaces).length;
+                  var thisIndentSize = thisIndent.replace("\t", tabAsSpaces).length;
                   if (thisIndentSize < resultSize) {
                      result = thisIndent;
                      resultSize = thisIndentSize;
@@ -1123,7 +982,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    this.findNextSignificantToken = function(pos)
    {
 	   return this.$findNextSignificantToken(pos, this.$tokens.length - 1);
-   }
+   };
    
    this.$findPreviousSignificantToken = function(pos, firstRow)
    {
@@ -1159,6 +1018,8 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             }
          }
       }
+
+      return null;
    };
    
    function isWhitespaceOrComment(token)

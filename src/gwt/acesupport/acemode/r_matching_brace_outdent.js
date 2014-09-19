@@ -66,7 +66,7 @@ define("mode/r_matching_brace_outdent", function(require, exports, module)
             if (!openBracePos || openBracePos.row == row) return 0;
 
             var indent = this.codeModel.getIndentForOpenBrace(openBracePos);
-            session.replace(new Range(row, 0, row, column-1), indent);
+            session.replace(new Range(row, 0, row, column - 1), indent);
          }
 
          match = line.match(/^(\s*\{)/);

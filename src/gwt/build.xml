@@ -49,6 +49,7 @@
          </sources>
          <sources dir="acesupport/acemode">
             <file name="auto_brace_insert.js"/>
+            <file name="token_cursor.js"/>
             <file name="r_background_highlighter.js"/>
             <file name="r_highlight_rules.js"/>
             <file name="r_matching_brace_outdent.js"/>
@@ -71,7 +72,10 @@
             <file name="rhtml.js"/>
             <file name="dcf_highlight_rules.js"/>
             <file name="dcf.js"/>
+            <file name="cpp_lookaround_heuristics.js"/>
             <file name="doc_comment_highlight_rules.js"/>
+            <file name="c_cpp_matching_brace_outdent.js"/>
+            <file name="c_cpp_style_behaviour.js"/>
             <file name="c_cpp_highlight_rules.js"/>
             <file name="c_cpp.js"/>
             <file name="c_cpp_fold_mode.js"/>

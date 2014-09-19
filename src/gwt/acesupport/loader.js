@@ -90,8 +90,6 @@ oop.inherits(RStudioEditSession, EditSession);
             var line = this.getLine(i-1);
             var newline = this.getLine(i);
 
-            var shouldOutdent = mode.checkOutdent(state, " ", newline);
-
             var newIndent = mode.getNextLineIndent(state,
                                                    line,
                                                    this.getTabString(),
@@ -99,10 +97,7 @@ oop.inherits(RStudioEditSession, EditSession);
                                                    i-1);
 
             this.applyIndent(i, newIndent);
-
-            if (shouldOutdent) {
-               mode.autoOutdent(state, this, i);
-            }
+            mode.autoOutdent(state, this, i);
          }
       }
    };

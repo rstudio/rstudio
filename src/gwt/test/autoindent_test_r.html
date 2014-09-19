@@ -5,6 +5,7 @@
   <script type="text/javascript" src="../tools/ace/build/src/ace.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/auto_brace_insert.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/tex_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/token_cursor.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/r_highlight_rules.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/r_matching_brace_outdent.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/r.js"></script>
@@ -235,6 +236,13 @@ var Document = require('ace/document').Document;
 var RMode = require('mode/r').Mode;
 require('mode/auto_brace_insert').setInsertMatching(true);
 
+var editor = ace.edit('editor');
+editor.renderer.setHScrollBarAlwaysVisible(false);
+editor.setHighlightActiveLine(false);
+var RMode = require('mode/r').Mode;
+editor.getSession().setMode(new RMode(false, editor.getSession().getDocument()));
+//editor.getSession().setUseSoftTabs(false);
+
 function doIndentTest(el, state) {
   var doc = new Document('');
   var mode = new RMode(false, doc);
@@ -314,12 +322,6 @@ if (test)
 document.getElementById('passed').innerText = passed;
 document.getElementById('failed').innerText = failed;
 
-var editor = ace.edit('editor');
-editor.renderer.setHScrollBarAlwaysVisible(false);
-editor.setHighlightActiveLine(false);
-var RMode = require('mode/r').Mode;
-editor.getSession().setMode(new RMode(false, editor.getSession().getDocument()));
-//editor.getSession().setUseSoftTabs(false);
 </script>
 </body>
 </html>

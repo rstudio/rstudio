@@ -1,0 +1,356 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <!script type="text/javascript" src="../tools/ace/build_support/mini_require.js"></script>
+  <script type="text/javascript" src="../tools/ace/build/src/ace.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/auto_brace_insert.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/doc_comment_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/tex_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/token_cursor.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_matching_brace_outdent.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_scope_tree.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_code_model.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/sweave_background_highlighter.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/cpp_lookaround_heuristics.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/c_cpp_fold_mode.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/c_cpp_style_behaviour.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/c_cpp_matching_brace_outdent.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/c_cpp_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/c_cpp.js"></script>
+  <style type="text/css">
+  pre {
+    margin-bottom: 30px;
+    padding: 3px;
+    border: 1px solid #999;
+  }
+  </style>
+</head>
+<body>
+
+<h2>Interactive Tester</h2>
+<div id="editor" style="width: 600px; height: 200px; border: 1px solid #999"></div>
+<div id="testEditor" style="display: none;"></div>
+<h2 style="margin-top: 250px">Automated Tests</h2>
+<p>Passed: <span id="passed"></span>, Failed: <span id="failed"></span></p>
+<ol id="testcontainer" style="display: none;">
+  
+<li><pre data-expected="0">
+class foo;
+</pre></li>
+
+<li><pre data-expected="4">
+class foo    {
+</pre></li>
+
+<li><pre data-expected="4">
+struct  bar{
+</pre></li>
+
+<li><pre data-expected="4">
+{
+</pre></li>
+
+<li><pre data-expected="0">
+struct bar{};
+</pre></li>
+
+<li><pre data-expected="2">
+class foo :
+  A,
+</pre></li>
+
+<li><pre data-expected="12">
+class foo : A,
+</pre></li>
+
+<li><pre data-expected="4">
+class foo : bar&lt;T&gt; {
+</pre></li>
+
+<li><pre data-expected="0">
+template &lt;typename T&gt;
+</pre></li>
+
+<li><pre data-expected="4">
+class foo:
+  public A {
+</pre></li>
+
+<li><pre data-expected="4">
+if (1 == 2) {
+</pre></li>
+
+<li><pre data-expected="0">
+if (1 == 2) { return 1 }
+</pre></li>
+
+<li><pre data-expected="4">
+if (1 == 2)
+</pre></li>
+
+<li><pre data-expected="8">
+if (a)
+    if (b)
+</pre></li>
+
+<li><pre data-expected="0">
+if (a)
+    if (b)
+        return foo;
+</pre></li>
+
+<li><pre data-expected="4">
+else
+</pre></li>
+
+<li><pre data-expected="4">
+public: 
+</pre></li>
+
+<li><pre data-expected="4">
+private: 
+</pre></li>
+
+<li><pre data-expected="4">
+protected: 
+</pre></li>
+
+<li><pre data-expected="4">
+case:
+</pre></li>
+
+<li><pre data-expected="0">
+namespace r {
+</pre></li>
+
+<li><pre data-expected="4">
+int z = 4;
+int x = 1 +
+</pre></li>
+
+<li><pre data-expected="4">
+    int q = 4;
+</pre></li>
+
+<li><pre data-expected="8">
+    void myFunction() {
+</pre></li>
+
+<li><pre data-expected="8">
+    void myFunction() { // This function will be amazing
+</pre></li>
+
+<li><pre data-expected="4">
+int foo(
+</pre></li>
+
+<li><pre data-expected="0">
+switch (x) {
+</pre></li>
+
+<li><pre data-expected="4">
+case foo:
+</pre></li>
+
+<li><pre data-expected="4">
+case foo: bar;
+</pre></li>
+
+<li><pre data-expected="4">
+case foo:
+    bar;
+</pre></li>
+
+<li><pre data-expected="4">
+std::find_if(x.begin(), x.end(), [](int x) {
+</pre></li>
+
+<li><pre data-expected="0">
+/***
+ *
+ */
+</pre></li>
+
+<li><pre data-expected="4">
+    /***
+     *
+     */
+</pre></li>
+
+<li><pre data-expected="6">
+/*******
+ *    Some text that's further ahead
+</pre></li>
+
+<li><pre data-expected="4">
+static void namespace_reader() {
+</pre></li>
+
+<li><pre data-expected="4">
+class Foo
+</pre></li>
+
+<li><pre data-expected="4">
+Foo(int a,
+    int b)
+    : a_(a),
+      b_(b),
+      c_(c) {
+</pre></li>
+
+<li><pre data-expected="0">
+Foo(int a,
+    int b)
+    : a_(a),
+      b_(b),
+      c_(c)
+</pre></li>
+
+<li><pre data-expected="4">
+class Foo :
+    public A,
+</pre></li>
+
+<li><pre data-expected="4">
+class Foo:
+</pre></li>
+
+<li><pre data-expected="4">
+class Foo :
+    public A,
+    public B,
+    public C {
+</pre></li>
+
+<li><pre data-expected="4">
+class Foo :
+    public A,
+    public B,
+    public C {
+</pre></li>
+
+<li><pre data-expected="12">
+class Foo : public A,
+</pre></li>
+
+<li><pre data-expected="4">
+class Foo : public A,
+            public B {
+</pre></li>
+
+<li><pre data-expected="12">
+class Foo : public A,
+            public B,
+</pre></li>
+
+<li><pre data-expected="0">
+class Foo : public A,
+            public B {
+
+};
+</pre></li>
+
+</ol>
+
+<script type="text/javascript">
+var Document = require('ace/document').Document;
+var CppMode = require('mode/c_cpp').Mode;
+require('mode/auto_brace_insert').setInsertMatching(true);
+
+var editor = ace.edit('editor');
+editor.renderer.setHScrollBarAlwaysVisible(false);
+editor.setHighlightActiveLine(false);
+editor.getSession().setMode(new CppMode(false, editor.getSession().getDocument(), editor.getSession()));
+editor.setBehavioursEnabled(false);
+
+var session = editor.getSession();
+
+function doIndentTest(el, state) {
+
+  var testEditor = ace.edit('testEditor');
+
+  // need to disable behaviours because they fudge with the test indentation
+  testEditor.setBehavioursEnabled(false);
+  
+  testEditor.getSession().setMode(
+    new CppMode(false,
+                testEditor.getSession().getDocument(),
+                testEditor.getSession()));
+
+  var doc = testEditor.session.getDocument();
+  doc.$lines = new Array(1);
+
+  testEditor.insert((el.innerText || el.textContext).trimRight());
+  testEditor.insert("\n");
+
+  var line = doc.$lines[doc.getLength() - 1];
+  var indent = line.match(/^(\s*)/)[1];
+
+  el.appendChild(document.createTextNode(indent + "|"));
+  var attrName = "data-expected"; 
+  if (state.length > 0 && 
+      el.getAttribute(attrName + "-" + state)) 
+  {
+     attrName += ("-" + state);
+  }
+  var expected = el.getAttribute(attrName);
+  if (expected == indent.length + "")
+  {
+    el.style.backgroundColor = '#BFB';
+    return true;
+  }
+  else
+  {
+    el.style.backgroundColor = 'pink';
+    return false;
+  }
+}
+
+var test = document.getElementById("runme");
+var container = document.getElementById("testcontainer");
+var passed = 0, failed = 0;
+var states = [ "" ];
+for (var i = 0; i < states.length; i++) 
+{
+   // Clone the tests for the new state
+   var testnode = container.cloneNode(true);
+   var header = document.createElement("h2");
+   header.innerText = "Test " + i + (
+      states[i].length > 0 ? 
+         ": " + states[i] : 
+         "");
+   container.parentNode.appendChild(header);
+   container.parentNode.appendChild(testnode);
+   testnode.style.display = "block";
+   pres = testnode.getElementsByTagName("pre");
+   for (var j = 0; j < pres.length; j++)
+   {
+     if (!test)
+     {
+       if (doIndentTest(pres[j], states[i], session))
+         passed++;
+       else
+         failed++;
+     }
+     else
+     {
+       if (pres[j] != test)
+         pres[j].style.display = 'none';
+     }
+   }
+}
+if (test)
+{
+  if (doIndentTest(test))
+    passed++;
+  else
+    failed++;
+}
+
+document.getElementById('passed').innerText = passed;
+document.getElementById('failed').innerText = failed;
+
+</script>
+</body>
+</html>
