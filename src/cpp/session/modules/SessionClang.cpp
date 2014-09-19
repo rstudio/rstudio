@@ -53,7 +53,8 @@ FilePath libclangPath()
 }
 
 
-std::vector<std::string> rsclangArgs(std::vector<std::string> args)
+std::vector<std::string> rsclangArgs(std::vector<std::string> args =
+                                              std::vector<std::string>())
 {
    args.push_back("--libclang-path");
    args.push_back(libclangPath().absolutePath());
@@ -100,6 +101,37 @@ SEXP rs_isClangAvailable()
    return r::sexp::create(isAvailable, &rProtect);
 }
 
+std::queue<std::string> s_inputQueue;
+
+bool onContinue(core::system::ProcessOperations& operations)
+{
+   if (!s_inputQueue.empty())
+   {
+      std::string input = s_inputQueue.front();
+      s_inputQueue.pop();
+      operations.writeToStdin(input + "\n", false);
+   }
+   return true;
+}
+
+void onStdout(core::system::ProcessOperations& operations,
+              const std::string& output)
+{
+   module_context::consoleWriteOutput(output);
+}
+
+void onStderr(core::system::ProcessOperations& operations,
+              const std::string& output)
+{
+   std::cerr << output;
+}
+
+bool enqueStuff()
+{
+   s_inputQueue.push(core::system::generateShortenedUuid() + "foobar");
+   return true;
+}
+
 } // anonymous namespace
    
 Error initialize()
@@ -109,6 +141,23 @@ Error initialize()
    methodDef.fun = (DL_FUNC)rs_isClangAvailable;
    methodDef.numArgs = 0;
    r::routines::addCallMethod(methodDef);
+
+
+
+
+   // run rsclang
+   core::system::ProcessCallbacks cb;
+   cb.onContinue = onContinue;
+   cb.onStdout = onStdout;
+   cb.onStderr = onStderr;
+   module_context::processSupervisor().runProgram(
+         rsclangPath().absolutePath(),
+         rsclangArgs(),
+         core::system::ProcessOptions(),
+         cb);
+
+   module_context::schedulePeriodicWork(boost::posix_time::seconds(3),
+                                        enqueStuff);
 
    return Success();
 }
