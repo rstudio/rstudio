@@ -15,8 +15,6 @@
 
 #include <iostream>
 
-#include <boost/algorithm/string/case_conv.hpp>
-
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/ProgramStatus.hpp>
@@ -68,30 +66,6 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
      }
   }
-
-  // otherwise wait for commands
-  while (true)
-  {
-     //std::cerr << "rsclang: waiting for input" << std::endl;
-
-     // read next command
-     std::string command;
-     char ch;
-     while ((ch = ::getc(stdin)) != '\n')
-     {
-        //std::cerr << "rsclang: got character" << std::endl;
-
-        command.push_back(ch);
-     }
-
-     //std::cerr << "rsclang: input termianted" << std::endl;
-
-     // execute and return output
-     boost::algorithm::to_upper(command);
-     std::cout << command << std::endl;
-     //::puts(command.c_str());
-  }
-
 
   return EXIT_SUCCESS;
 }
