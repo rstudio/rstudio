@@ -801,9 +801,10 @@ public class CompilerTest extends ArgProcessorTestBase {
     // FooResourceGenerator and cascade the invalidate the Generators that triggered
     // FooResourceGenerator.
     compileToJs(compilerOptions, relinkApplicationDir, "com.foo.SimpleModule",
-        Lists.<MockResource> newArrayList(classNameToGenerateResource), relinkMinimalRebuildCache,
-        stringSet("com.foo.TestEntryPoint", "com.foo.Baz", "com.foo.Baz$InnerBaz", "com.foo.Bar",
-            "com.foo.HasCustomContent", "com.foo.FooReplacementOne"), output);
+        Lists.<MockResource> newArrayList(modifiedClassNameToGenerateResource),
+        relinkMinimalRebuildCache, stringSet("com.foo.TestEntryPoint", "com.foo.Baz$InnerBaz",
+            "com.foo.Bar", "com.foo.HasCustomContent", "com.foo.FooReplacementOne",
+            "com.foo.FooReplacementTwo"), output);
 
     // Generators were run again.
     assertEquals(2, CauseStringRebindGenerator.runCount);
@@ -892,9 +893,8 @@ public class CompilerTest extends ArgProcessorTestBase {
 
     checkRecompiledModifiedApp(compilerOptions, "com.foo.UiBinderTestModule", Lists.newArrayList(
         uiBinderTestModuleResource, uiBinderTestEntryPointResource, myWidgetUiXml), myWidget,
-        myWidget, stringSet("com.foo.MyWidget", "com.foo.MyWidget_BinderImpl_GenBundle",
-        "com.foo.MyWidget$Binder", "com.foo.MyWidget_BinderImpl$Template", "com.foo.TestEntryPoint",
-        "com.foo.MyWidget_BinderImpl", "com.foo.MyWidget_BinderImpl$Widgets"), output);
+        myWidget, stringSet("com.foo.MyWidget", "com.foo.MyWidget$Binder", "com.foo.TestEntryPoint",
+            "com.foo.MyWidget_BinderImpl", "com.foo.MyWidget_BinderImpl$Widgets"), output);
   }
 
   private void checkPerFileRecompile_packagePrivateOverride(JsOutputOption output)
@@ -995,7 +995,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     checkRecompiledModifiedApp(compilerOptions, "com.foo.SimpleModule",
         Lists.newArrayList(multipleClassGeneratorModuleResource, generatorEntryPointResource),
         bazResource, bazResource,
-        stringSet("com.foo.Baz", "com.foo.TestEntryPoint", "com.foo.Foo", "com.foo.Bar"), output);
+        stringSet("com.foo.Baz", "com.foo.TestEntryPoint", "com.foo.Bar"), output);
   }
 
   private void checkPerFileRecompile_dualJsoIntfDispatchChange(JsOutputOption output)
@@ -1018,7 +1018,7 @@ public class CompilerTest extends ArgProcessorTestBase {
         resourceReadingGeneratorModuleResource, generatorEntryPointResource, fooInterfaceResource,
         nonJsoFooResource), classNameToGenerateResource, modifiedClassNameToGenerateResource, Sets.<
         String> newHashSet("com.foo.TestEntryPoint", "com.foo.FooReplacementOne",
-        "com.foo.HasCustomContent"), outputOption);
+        "com.foo.HasCustomContent", "com.foo.FooReplacementTwo"), outputOption);
   }
 
   private void assertDeterministicBuild(String topLevelModule, int optimizationLevel)

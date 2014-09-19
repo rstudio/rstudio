@@ -1049,6 +1049,10 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     }
   }
 
+  public void removeReferenceOnlyType(JDeclaredType type) {
+    referenceOnlyTypeNames.remove(type.getName());
+  }
+
   public void setFragmentPartitioningResult(FragmentPartitioningResult result) {
     fragmentPartitioningResult = result;
   }

@@ -486,7 +486,14 @@ public class UnifyAst {
           minimalRebuildCache.addGeneratedArtifacts(rpo.getGeneratorContext().getArtifacts());
         }
         rpo.getGeneratorContext().finish(logger);
-        fullFlowIntoStaleTypes();
+        if (compilePerFile) {
+          // There may be more types known to be modified after Generator execution, which would
+          // mean the previous stale types calculation was too small. Redo it.
+          staleTypeNames =
+              minimalRebuildCache.computeAndClearStaleTypesCache(logger, program.typeOracle);
+          checkPreambleTypesStillFresh(logger);
+          fullFlowIntoRemainingStaleTypes();
+        }
       } catch (UnableToCompleteException e) {
         error(gwtCreateCall, "Failed to resolve '" + reqType + "' via deferred binding");
         return null;
@@ -667,12 +674,15 @@ public class UnifyAst {
    * The names of types whose per-file compilation cached Js and StatementRanges are known to no
    * longer be valid.
    * <p>
-   * Is initialized to the full initial list at the beginning of exec() and shrinks as each stale
-   * type is processed. Reducing the stale types set size helps keep the repeated attempts (once
-   * after each Generator) to eagerly process stale types (some of which don't exist yet) from
-   * becoming a performance problem.
+   * Is initialized to the full initial list at the beginning of exec() and may be recalculated
+   * (larger) after Generator executions reveal more modified types.
    */
   private Set<String> staleTypeNames = Sets.newHashSet();
+
+  /**
+   * The names of stale types that have been processed (fully traversed) so far.
+   */
+  private Set<String> processedStaleTypeNames = Sets.newHashSet();
 
   /**
    * A work queue of methods whose bodies we need to traverse. Prevents
@@ -709,7 +719,7 @@ public class UnifyAst {
     this.minimalRebuildCache = compilerContext.getMinimalRebuildCache();
     if (compilePerFile) {
       this.staleTypeNames =
-          minimalRebuildCache.clearStaleTypeJsAndStatements(logger, program.typeOracle);
+          minimalRebuildCache.computeAndClearStaleTypesCache(logger, program.typeOracle);
       checkPreambleTypesStillFresh(logger);
     }
   }
@@ -794,7 +804,7 @@ public class UnifyAst {
     }
 
     if (compilePerFile) {
-      fullFlowIntoStaleTypes();
+      fullFlowIntoRemainingStaleTypes();
     } else if (isLibraryCompile) {
       // Trace execution from all types supplied as source and resolve references.
       Set<String> internalNames = ImmutableSet.copyOf(compiledClassesByInternalName.keySet());
@@ -862,10 +872,12 @@ public class UnifyAst {
           + program.getModuleDeclaredTypes().size()
           + " are considered part of the current module and " + fullFlowTypes.size()
           + " had all of their fields and methods traversed.");
-      if (!staleTypeNames.isEmpty()) {
-        logger.log(TreeLogger.WARN, "Some stale types (" + staleTypeNames
-            + ") should have been but were not reprocessed. This is likely "
-            + "a bug. Please report it to the GWT team.");
+
+      Set<String> remainingStaleTypeNames = computeRemainingStaleTypeNames();
+      if (!remainingStaleTypeNames.isEmpty()) {
+        logger.log(TreeLogger.WARN, "Some stale types (" + remainingStaleTypeNames
+            + ") were not reprocessed as was expected. This is either a compiler bug or a "
+            + "Generator has legitimately stopped creating these types.");
       }
     }
 
@@ -889,10 +901,8 @@ public class UnifyAst {
    * Some types may not exist till after some Generator execution so missing types will be
    * temporarily ignored.
    */
-  private void fullFlowIntoStaleTypes() {
-    Set<String> remainingStaleTypeNames = Sets.newHashSet(staleTypeNames);
-
-    for (String staleTypeName : remainingStaleTypeNames) {
+  private void fullFlowIntoRemainingStaleTypes() {
+    for (String staleTypeName : computeRemainingStaleTypeNames()) {
       JDeclaredType staleType =
           internalFindType(staleTypeName, binaryNameBasedTypeLocator, false);
       if (staleType == null) {
@@ -902,6 +912,12 @@ public class UnifyAst {
         // GWT.create() calls that process that create this type.
         continue;
       }
+      // It's possible that the type was previously loaded before it was discovered to be stale (it
+      // became stale as a result of a Generator execution). If this happens then the type will have
+      // already been marked "reference only" in JProgram. This needs to be undone.
+      program.removeReferenceOnlyType(staleType);
+
+      // Make sure that the entire type is traversed.
       fullFlowIntoType(staleType);
     }
   }
@@ -1112,6 +1128,10 @@ public class UnifyAst {
     }
   }
 
+  private Set<String> computeRemainingStaleTypeNames() {
+    return Sets.newHashSet(Sets.difference(staleTypeNames, processedStaleTypeNames));
+  }
+
   private boolean containsAllTypes(CompilationUnit unit, List<JDeclaredType> types) {
     Set<String> binaryTypeNames = new HashSet<String>();
     for (JDeclaredType type : types) {
@@ -1157,7 +1177,7 @@ public class UnifyAst {
       fullFlowTypes.add(type.getName());
       // Remove the type from the remaining stale types set so that the fullFlowIntoStaleTypes()
       // attempt is shorter.
-      staleTypeNames.remove(type.getName());
+      processedStaleTypeNames.add(type.getName());
       instantiate(type);
       for (JField field : type.getFields()) {
         flowInto(field);

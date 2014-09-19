@@ -37,16 +37,16 @@ public class NullRebuildCache extends MinimalRebuildCache {
       "The RebuildCache should not be interacted with outside of per-file compiles.";
 
   @Override
-  public void addSourceCompilationUnitName(String sourceCompilationUnitName) {
-  }
-
-  @Override
   public void addGeneratedArtifacts(ArtifactSet generatedArtifacts) {
   }
 
   @Override
   public void addModifiedCompilationUnitNames(TreeLogger logger,
       Set<String> modifiedCompilationUnitNames) {
+  }
+
+  @Override
+  public void addSourceCompilationUnitName(String sourceCompilationUnitName) {
   }
 
   @Override
@@ -76,7 +76,7 @@ public class NullRebuildCache extends MinimalRebuildCache {
   }
 
   @Override
-  public Set<String> clearStaleTypeJsAndStatements(TreeLogger logger, JTypeOracle typeOracle) {
+  public Set<String> computeAndClearStaleTypesCache(TreeLogger logger, JTypeOracle typeOracle) {
     throw new UnsupportedOperationException(failMessage);
   }
 
