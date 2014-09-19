@@ -53,7 +53,7 @@ bool isClangAvailable(std::string* pError)
 {
    std::string path = libclangPath().absolutePath();
    module_context::consoleWriteOutput(path + "\n");
-   rsclang::libclang::libclang lib(path);
+   rsclang::libclang lib(path);
    return lib.isLoaded(pError);
 }
 
