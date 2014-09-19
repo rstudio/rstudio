@@ -17,6 +17,7 @@
 package com.google.gwt.dev.codeserver;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.json.JsonObject;
 import com.google.gwt.thirdparty.guava.common.base.Charsets;
 import com.google.gwt.thirdparty.guava.common.io.Files;
@@ -219,5 +220,29 @@ class PageUtil {
     InputStream in = new ByteArrayInputStream(content.getBytes("UTF-8"));
     OutputStream out = new FileOutputStream(path);
     PageUtil.copyStream(in, out);
+  }
+
+  /**
+   * Sends an error response because something is unavailable. (Also logs it.)
+   */
+  static void sendUnavailable(HttpServletResponse response, TreeLogger logger, String message)
+      throws IOException {
+
+    response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+    response.setContentType("text/html");
+    HtmlWriter out = new HtmlWriter(response.getWriter());
+    out.startTag("html").nl();
+
+    out.startTag("head").nl();
+    out.startTag("title").text("Unavailable (GWT Code Server)").endTag("title").nl();
+    out.endTag("head").nl();
+
+    out.startTag("body").nl();
+    out.startTag("p").text(message).endTag("p");
+    out.endTag("body").nl();
+
+    out.endTag("html").nl();
+
+    logger.log(Type.INFO, "Sent unavailable response: " + message);
   }
 }

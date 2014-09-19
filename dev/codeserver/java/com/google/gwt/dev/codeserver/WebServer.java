@@ -200,10 +200,9 @@ public class WebServer {
     if (target.startsWith("/recompile/")) {
       setHandled(request);
       String moduleName = target.substring("/recompile/".length());
-      Outbox outbox = outboxes.findByOutputModuleName(moduleName);
-      if (outbox == null) {
-        response.sendError(HttpServletResponse.SC_NOT_FOUND);
-        logger.log(TreeLogger.WARN, "not found: " + target);
+      Outbox box = outboxes.findByOutputModuleName(moduleName);
+      if (box == null) {
+        PageUtil.sendUnavailable(response, logger, "No such module: " + moduleName);
         return;
       }
 
@@ -213,7 +212,7 @@ public class WebServer {
       // cause a spurious recompile, resulting in an unexpected permutation being loaded later.
       //
       // It would be unsafe to allow a configuration property to be changed.
-      Job job = outbox.makeJob(getBindingProperties(request), logger);
+      Job job = box.makeJob(getBindingProperties(request), logger);
       runner.submit(job);
       Job.Result result = job.waitForResult();
       JsonObject json = jsonExporter.exportRecompileResponse(result);
@@ -224,8 +223,14 @@ public class WebServer {
     if (target.startsWith("/log/")) {
       setHandled(request);
       String moduleName = target.substring("/log/".length());
-      File file = outboxes.findByOutputModuleName(moduleName).getCompileLog();
-      sendLogPage(moduleName, file, response);
+      Outbox box = outboxes.findByOutputModuleName(moduleName);
+      if (box == null) {
+        PageUtil.sendUnavailable(response, logger, "No such module: " + moduleName);
+      } else if (box.containsStubCompile()) {
+        PageUtil.sendUnavailable(response, logger, "This module hasn't been compiled yet.");
+      } else {
+        sendLogPage(box, response);
+      }
       return;
     }
 
@@ -299,12 +304,16 @@ public class WebServer {
 
     int secondSlash = target.indexOf('/', 1);
     String moduleName = target.substring(1, secondSlash);
-    Outbox outbox = outboxes.findByOutputModuleName(moduleName);
+    Outbox box = outboxes.findByOutputModuleName(moduleName);
+    if (box == null) {
+      PageUtil.sendUnavailable(response, logger, "No such module: " + moduleName);
+      return;
+    }
 
-    File file = outbox.getOutputFile(target);
+    File file = box.getOutputFile(target);
     if (!file.isFile()) {
       // perhaps it's compressed
-      file = outbox.getOutputFile(target + ".gz");
+      file = box.getOutputFile(target + ".gz");
       if (!file.isFile()) {
         response.sendError(HttpServletResponse.SC_NOT_FOUND);
         logger.log(TreeLogger.WARN, "not found: " + file.toString());
@@ -334,10 +343,10 @@ public class WebServer {
       throws IOException {
     Outbox box = outboxes.findByOutputModuleName(moduleName);
     if (box == null) {
-      response.sendError(HttpServletResponse.SC_NOT_FOUND);
-      logger.log(TreeLogger.WARN, "module not found: " + moduleName);
+      PageUtil.sendUnavailable(response, logger, "No such module: " + moduleName);
       return;
     }
+
     JsonObject json = jsonExporter.exportModulePageVars(box);
     PageUtil.sendJsonAndHtml("config", json, "modulepage.html", response, logger);
   }
@@ -356,11 +365,10 @@ public class WebServer {
 
     out.startTag("h1").text("Policy Files").endTag("h1").nl();
 
-    for (String moduleName : outboxes.getOutputModuleNames()) {
-      Outbox module = outboxes.findByOutputModuleName(moduleName);
-      File manifest = module.getExtraFile("rpcPolicyManifest/manifest.txt");
+    for (Outbox box : outboxes.getOutboxes()) {
+      File manifest = box.getExtraFile("rpcPolicyManifest/manifest.txt");
       if (manifest.isFile()) {
-        out.startTag("h2").text(moduleName).endTag("h2").nl();
+        out.startTag("h2").text(box.getOutputModuleName()).endTag("h2").nl();
 
         out.startTag("table").nl();
         String text = PageUtil.loadFile(manifest);
@@ -377,7 +385,7 @@ public class WebServer {
           String serviceName = fields[0];
           String policyFileName = fields[1];
 
-          String serviceUrl = SourceHandler.SOURCEMAP_PATH + moduleName + "/" +
+          String serviceUrl = SourceHandler.SOURCEMAP_PATH + box.getOutputModuleName() + "/" +
               serviceName.replace('.', '/') + ".java";
           String policyUrl = "/policies/" + policyFileName;
 
@@ -403,28 +411,26 @@ public class WebServer {
 
   private void sendPolicyFile(String target, HttpServletResponse response, TreeLogger logger)
       throws IOException {
+
     int secondSlash = target.indexOf('/', 1);
     if (secondSlash < 1) {
       response.sendError(HttpServletResponse.SC_NOT_FOUND);
       return;
     }
+
     String rest = target.substring(secondSlash + 1);
     if (rest.contains("/") || !rest.endsWith(".gwt.rpc")) {
       response.sendError(HttpServletResponse.SC_NOT_FOUND);
       return;
     }
 
-    for (String moduleName : outboxes.getOutputModuleNames()) {
-      Outbox module = outboxes.findByOutputModuleName(moduleName);
-      File policy = module.getOutputFile(moduleName + "/" + rest);
-      if (policy.isFile()) {
-        PageUtil.sendFile("text/plain", policy, response);
-        return;
-      }
+    File policy = outboxes.findPolicyFile(rest);
+    if (policy == null) {
+      PageUtil.sendUnavailable(response, logger, "Policy file not found: " + rest);
+      return;
     }
 
-    logger.log(TreeLogger.Type.WARN, "policy file not found: " + rest);
-    response.sendError(HttpServletResponse.SC_NOT_FOUND);
+    PageUtil.sendFile("text/plain", policy, response);
   }
 
   private void sendJsonResult(JsonObject json, HttpServletRequest request,
@@ -458,8 +464,9 @@ public class WebServer {
   /**
    * Sends the log file as html with errors highlighted in red.
    */
-  private void sendLogPage(String moduleName, File file, HttpServletResponse response)
+  private void sendLogPage(Outbox box, HttpServletResponse response)
        throws IOException {
+    File file = box.getCompileLog();
     BufferedReader reader = new BufferedReader(new FileReader(file));
 
     response.setStatus(HttpServletResponse.SC_OK);
@@ -469,7 +476,7 @@ public class WebServer {
     HtmlWriter out = new HtmlWriter(response.getWriter());
     out.startTag("html").nl();
     out.startTag("head").nl();
-    out.startTag("title").text(moduleName + " compile log").endTag("title").nl();
+    out.startTag("title").text(box.getOutputModuleName() + " compile log").endTag("title").nl();
     out.startTag("style").nl();
     out.text(".error { color: red; font-weight: bold; }").nl();
     out.endTag("style").nl();

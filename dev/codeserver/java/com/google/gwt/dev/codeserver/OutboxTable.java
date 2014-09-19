@@ -18,9 +18,11 @@ package com.google.gwt.dev.codeserver;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +44,10 @@ class OutboxTable {
    */
   void addOutbox(Outbox outbox) {
     outboxes.put(outbox.getId(), outbox);
+  }
+
+  ImmutableList<Outbox> getOutboxes() {
+    return ImmutableList.copyOf(outboxes.values());
   }
 
   /**
@@ -73,5 +79,20 @@ class OutboxTable {
     for (Outbox box: outboxes.values()) {
       box.maybePrecompile(logger);
     }
+  }
+
+  /**
+   * Given the name of a policy file, searches all the boxes for a file with that name.
+   * Returns null if not found.
+   */
+  File findPolicyFile(String filename) {
+    for (Outbox box : outboxes.values()) {
+      File candidate = box.getOutputFile(box.getOutputModuleName() + "/" + filename);
+      if (candidate.isFile()) {
+        return candidate;
+      }
+    }
+    // not found
+    return null;
   }
 }

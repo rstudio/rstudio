@@ -150,6 +150,14 @@ class Outbox {
   }
 
   /**
+   * Returns true if we haven't done a real compile yet, so the Outbox contains
+   * a stub that will automatically start a compile.
+   */
+  synchronized boolean containsStubCompile() {
+    return publishedJob == null;
+  }
+
+  /**
    * Returns the module name that will be sent to the compiler (before renaming).
    */
   String getInputModuleName() {

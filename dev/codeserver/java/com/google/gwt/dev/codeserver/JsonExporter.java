@@ -83,6 +83,7 @@ class JsonExporter {
     JsonObject result = new JsonObject();
     result.put("moduleName", box.getOutputModuleName()); // TODO: rename
     result.put("files", exportOutputFiles(box));
+    result.put("isCompiled", !box.containsStubCompile());
     return result;
   }
 

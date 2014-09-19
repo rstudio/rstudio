@@ -103,8 +103,10 @@ class SourceHandler {
 
     Outbox box = outboxes.findByOutputModuleName(moduleName);
     if (box == null) {
-      response.sendError(HttpServletResponse.SC_NOT_FOUND);
-      logger.log(TreeLogger.WARN, "unknown module; returned not found for request: " + target);
+      PageUtil.sendUnavailable(response, logger, "No such module: " + moduleName);
+      return;
+    } else if (box.containsStubCompile()) {
+      PageUtil.sendUnavailable(response, logger, "This module hasn't been compiled yet.");
       return;
     }
 
@@ -112,14 +114,14 @@ class SourceHandler {
     String rest = target.substring(rootDir.length());
 
     if (rest.isEmpty()) {
-      sendDirectoryListPage(moduleName, response, logger);
+      sendDirectoryListPage(box, response, logger);
     } else if (rest.equals("gwtSourceMap.json")) {
       // This URL is no longer used by debuggers (we use the strong name) but is used for testing.
       // It's useful not to need the strong name to download the sourcemap.
       // (But this only works when there is one permutation.)
       sendSourceMap(moduleName, box.findSourceMapForOnePermutation(), request, response, logger);
     } else if (rest.endsWith("/")) {
-      sendFileListPage(moduleName, rest, response, logger);
+      sendFileListPage(box, rest, response, logger);
     } else if (rest.endsWith(".java")) {
       sendSourceFile(box, rest, request.getQueryString(), response, logger);
     } else {
@@ -169,19 +171,17 @@ class SourceHandler {
         "' in " + elapsedTime + " ms");
   }
 
-  private void sendDirectoryListPage(String moduleName, HttpServletResponse response,
+  private void sendDirectoryListPage(Outbox box, HttpServletResponse response,
       TreeLogger logger) throws IOException {
 
-    Outbox box = outboxes.findByOutputModuleName(moduleName);
     SourceMap map = SourceMap.load(box.findSourceMapForOnePermutation());
     JsonObject json = exporter.exportSourceMapDirectoryListVars(box, map);
     PageUtil.sendJsonAndHtml("config", json, "directorylist.html", response, logger);
   }
 
-  private void sendFileListPage(String moduleName, String rest, HttpServletResponse response,
+  private void sendFileListPage(Outbox box, String rest, HttpServletResponse response,
       TreeLogger logger) throws IOException {
 
-    Outbox box = outboxes.findByOutputModuleName(moduleName);
     SourceMap map = SourceMap.load(box.findSourceMapForOnePermutation());
     JsonObject json = exporter.exportSourceMapFileListVars(box, map, rest);
     PageUtil.sendJsonAndHtml("config", json, "filelist.html", response, logger);
