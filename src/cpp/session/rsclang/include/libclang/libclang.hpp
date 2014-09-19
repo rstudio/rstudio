@@ -86,9 +86,6 @@ public:
                            unsigned *offset);
    CXSourceLocation (*getRangeStart)(CXSourceRange range);
    CXSourceLocation (*getRangeEnd)(CXSourceRange range);
-   CXSourceRangeList (*getSkippedRanges)(CXTranslationUnit tu,
-                                         CXFile file);
-   void (*disposeSourceRangeList)(CXSourceRangeList *ranges);
 
    // diagnostics
    unsigned (*getNumDiagnosticsInSet)(CXDiagnosticSet Diags);
@@ -133,9 +130,6 @@ public:
                                   struct CXUnsavedFile *unsaved_files);
    CXTranslationUnit (*createTranslationUnit)(CXIndex,
                                               const char *ast_filename);
-   enum CXErrorCode (*createTranslationUnit2)(CXIndex CIdx,
-                                              const char *ast_filename,
-                                              CXTranslationUnit *out_TU);
    unsigned (*defaultEditingTranslationUnitOptions)(void);
    CXTranslationUnit (*parseTranslationUnit)(
                                        CXIndex CIdx,
@@ -145,15 +139,6 @@ public:
                                        struct CXUnsavedFile *unsaved_files,
                                        unsigned num_unsaved_files,
                                        unsigned options);
-   enum CXErrorCode (*parseTranslationUnit2)(
-                               CXIndex CIdx,
-                               const char *source_filename,
-                               const char *const *command_line_args,
-                               int num_command_line_args,
-                               struct CXUnsavedFile *unsaved_files,
-                               unsigned num_unsaved_files,
-                               unsigned options,
-                               CXTranslationUnit *out_TU);
    unsigned (*defaultSaveOptions)(CXTranslationUnit TU);
    int (*saveTranslationUnit)(CXTranslationUnit TU,
                               const char *FileName,
@@ -245,12 +230,8 @@ public:
    CXType (*getArrayElementType)(CXType T);
    long long (*getArraySize)(CXType T);
    long long (*Type_getAlignOf)(CXType T);
-   CXType (*Type_getClassType)(CXType T);
    long long (*Type_getSizeOf)(CXType T);
    long long (*Type_getOffsetOf)(CXType T, const char *S);
-   int (*Type_getNumTemplateArguments)(CXType T);
-   CXType (*Type_getTemplateArgumentAsType)(CXType T, unsigned i);
-   enum CXRefQualifierKind (*Type_getCXXRefQualifier)(CXType T);
    unsigned (*Cursor_isBitField)(CXCursor C);
    unsigned (*isVirtualBase)(CXCursor);
    enum CX_CXXAccessSpecifier (*getCXXAccessSpecifier)(CXCursor);
@@ -299,12 +280,12 @@ public:
    CXString (*Cursor_getRawCommentText)(CXCursor C);
    CXString (*Cursor_getBriefCommentText)(CXCursor C);
    CXModule (*Cursor_getModule)(CXCursor C);
-   CXModule (*getModuleForFile)(CXTranslationUnit, CXFile);
+
    CXFile (*Module_getASTFile)(CXModule Module);
    CXModule (*Module_getParent)(CXModule Module);
    CXString (*Module_getName)(CXModule Module);
    CXString (*Module_getFullName)(CXModule Module);
-   int (*Module_isSystem)(CXModule Module);
+
    unsigned (*Module_getNumTopLevelHeaders)(CXTranslationUnit, CXModule Module);
    CXFile (*Module_getTopLevelHeader)(CXTranslationUnit,
                                       CXModule Module,
@@ -314,7 +295,6 @@ public:
    unsigned (*CXXMethod_isPureVirtual)(CXCursor C);
    unsigned (*CXXMethod_isStatic)(CXCursor C);
    unsigned (*CXXMethod_isVirtual)(CXCursor C);
-   unsigned (*CXXMethod_isConst)(CXCursor C);
    enum CXCursorKind (*getTemplateCursorKind)(CXCursor C);
    CXCursor (*getSpecializedCursorTemplate)(CXCursor C);
    CXSourceRange (*getCursorReferenceNameRange)(CXCursor C,
@@ -548,38 +528,6 @@ public:
 
    unsigned (*CompileCommand_getNumArgs)(CXCompileCommand);
    CXString (*CompileCommand_getArg)(CXCompileCommand, unsigned I);
-
-   // failed lookup on OSX
-   //unsigned (*CompileCommand_getNumMappedSources)(CXCompileCommand);
-   //CXString (*CompileCommand_getMappedSourcePath)(CXCompileCommand, unsigned I);
-   //CXString (*CompileCommand_getMappedSourceContent)(CXCompileCommand, unsigned I);
-
-   // build system
-   unsigned long long (*getBuildSessionTimestamp)(void);
-   CXVirtualFileOverlay (*VirtualFileOverlay_create)(unsigned options);
-   enum CXErrorCode (*VirtualFileOverlay_addFileMapping)(
-                                           CXVirtualFileOverlay,
-                                           const char *virtualPath,
-                                           const char *realPath);
-   enum CXErrorCode (*VirtualFileOverlay_setCaseSensitivity)(
-                                CXVirtualFileOverlay,
-                                int caseSensitive);
-   enum CXErrorCode (*VirtualFileOverlay_writeToBuffer)(CXVirtualFileOverlay, unsigned options,
-                                          char **out_buffer_ptr,
-                                          unsigned *out_buffer_size);
-   void (*VirtualFileOverlay_dispose)(CXVirtualFileOverlay);
-   CXModuleMapDescriptor (*ModuleMapDescriptor_create)(unsigned options);
-   enum CXErrorCode (*ModuleMapDescriptor_setFrameworkModuleName)(CXModuleMapDescriptor,
-                                                    const char *name);
-   enum CXErrorCode (*ModuleMapDescriptor_setUmbrellaHeader)(
-                               CXModuleMapDescriptor,
-                               const char *name);
-   enum CXErrorCode (*ModuleMapDescriptor_writeToBuffer)(
-                               CXModuleMapDescriptor,
-                               unsigned options,
-                               char **out_buffer_ptr,
-                               unsigned *out_buffer_size);
-   void (*ModuleMapDescriptor_dispose)(CXModuleMapDescriptor);
 
 private:
    void* pLib_;
