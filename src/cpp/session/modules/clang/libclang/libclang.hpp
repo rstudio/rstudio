@@ -17,32 +17,34 @@ namespace clang {
 
 struct Version
 {
-   Version() : major(0), minor(0), patch(0) {}
+   Version() : major_(0), minor_(0), patch_(0) {}
    Version(int major, int minor, int patch)
-      : major(major), minor(minor), patch(patch)
+      : major_(major), minor_(minor), patch_(patch)
    {
    }
-   const int major;
-   const int minor;
-   const int patch;
 
-   bool empty() const { return major == 0; }
+
+   bool empty() const { return major_ == 0; }
+
+   int major() const { return major_; }
+   int minor() const { return minor_; }
+   int patch() const { return patch_; }
 
    bool operator<(const Version& other) const
    {
-      if (major == other.major && minor == other.minor)
-         return patch < other.patch;
-      else if (major == other.major)
-         return minor < other.minor;
+      if (major_ == other.major_ && minor_ == other.minor_)
+         return patch_ < other.patch_;
+      else if (major_ == other.major_)
+         return minor_ < other.minor_;
       else
-         return major < other.major;
+         return major_ < other.major_;
    }
 
    bool operator==(const Version& other) const
    {
-      return major == other.major &&
-             minor == other.minor &&
-             patch == other.patch;
+      return major_ == other.major_ &&
+             minor_ == other.minor_ &&
+             patch_ == other.patch_;
    }
 
    bool operator!=(const Version& other) const
@@ -53,8 +55,13 @@ struct Version
    std::string asString() const
    {
       boost::format fmt("%1%.%2%.%3%");
-      return boost::str(fmt % major % minor % patch);
+      return boost::str(fmt % major_ % minor_ % patch_);
    }
+
+private:
+   const int major_;
+   const int minor_;
+   const int patch_;
 };
 
 class libclang : boost::noncopyable
