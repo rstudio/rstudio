@@ -51,21 +51,22 @@ FilePath embeddedLibClangPath()
 }
 
 
-std::vector<FilePath> clangVersions()
+std::vector<std::string> clangVersions()
 {
-   std::vector<FilePath> clangVersions;
+   std::vector<std::string> clangVersions;
 
    // embedded version
-   clangVersions.push_back(embeddedLibClangPath());
+   clangVersions.push_back(embeddedLibClangPath().absolutePath());
 
    // platform-specific other versions
 #ifndef _WIN32
 #ifdef __APPLE__
-   clangVersions.push_back(FilePath("/Applications/Xcode.app/Contents/"
+   clangVersions.push_back("/Applications/Xcode.app/Contents/"
                            "Developer/Toolchains/XcodeDefault.xctoolchain"
                            "/usr/lib/libclang.dylib"));
 #else
-
+   clangVersions.push_back("/usr/lib/i386-linux-gnu/libclang.so.1");
+   clangVersions.push_back("/usr/lib/x86_64-linux-gnu/libclang.so.1");
 #endif
 #endif
 
@@ -78,16 +79,18 @@ bool loadLibclang(libclang* pLibClang, std::string* pDiagnostics)
 {
    // get all possible clang versions
    std::ostringstream ostr;
-   std::vector<FilePath> versions = clangVersions();
-   BOOST_FOREACH(const FilePath& versionPath, versions)
+   std::vector<std::string> versions = clangVersions();
+   BOOST_FOREACH(const std::string& version, versions)
    {
+      FilePath versionPath(version);
       ostr << versionPath << std::endl;
       if (versionPath.exists())
       {
          Error error = pLibClang->load(versionPath.absolutePath());
          if (!error)
          {
-            ostr << "   (Successfully Loaded)" << std::endl;
+            ostr << "   LOADED: " << pLibClang->version().asString()
+                 << std::endl;
             *pDiagnostics = ostr.str();
             return true;
          }
