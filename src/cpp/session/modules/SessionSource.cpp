@@ -62,69 +62,6 @@ using namespace session::source_database;
 
 namespace {
 
-// maintain an in-memory list of R source document indexes (for fast
-// code searching)
-class RSourceIndexes : boost::noncopyable
-{
-private:
-   friend RSourceIndexes& rSourceIndexes();
-   RSourceIndexes() {}
-
-public:
-   virtual ~RSourceIndexes() {}
-
-   // COPYING: boost::noncopyable
-
-   void update(boost::shared_ptr<SourceDocument> pDoc)
-   {
-      // is this indexable? if not then bail
-      if ( pDoc->path().empty() ||
-           (FilePath(pDoc->path()).extensionLowerCase() != ".r") )
-      {
-         return;
-      }
-
-      // index the source
-      boost::shared_ptr<r_util::RSourceIndex> pIndex(
-                 new r_util::RSourceIndex(pDoc->path(), pDoc->contents()));
-
-      // insert it
-      indexes_[pDoc->id()] = pIndex;
-   }
-
-   void remove(const std::string& id)
-   {
-      indexes_.erase(id);
-   }
-
-   void removeAll()
-   {
-      indexes_.clear();
-   }
-
-   std::vector<boost::shared_ptr<r_util::RSourceIndex> > indexes()
-   {
-      std::vector<boost::shared_ptr<r_util::RSourceIndex> > indexes;
-      BOOST_FOREACH(const IndexMap::value_type& index, indexes_)
-      {
-         indexes.push_back(index.second);
-      }
-      return indexes;
-   }
-
-private:
-   typedef std::map<std::string, boost::shared_ptr<r_util::RSourceIndex> >
-                                                                    IndexMap;
-   IndexMap indexes_;
-};
-
-RSourceIndexes& rSourceIndexes()
-{
-   static RSourceIndexes instance;
-   return instance;
-}
-
-
 void writeDocToJson(boost::shared_ptr<SourceDocument> pDoc,
                     core::json::Object* pDocJson)
 {
@@ -161,8 +98,7 @@ Error sourceDatabasePutWithUpdatedContents(
    if (error)
       return error ;
 
-   // update index
-   rSourceIndexes().update(pDoc);
+   source_database::events().onDocUpdated(pDoc);
 
    return Success();
 }
@@ -697,7 +633,7 @@ Error closeDocument(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   rSourceIndexes().remove(id);
+   source_database::events().onDocRemoved(id);
 
    return Success();
 }
@@ -709,7 +645,7 @@ Error closeAllDocuments(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   rSourceIndexes().removeAll();
+   source_database::events().onRemoveAll();
 
    return Success();
 }
@@ -969,9 +905,14 @@ void onSuspend(Settings*)
 // source_database::list twice (which will cause us to read all of
 // the files twice). find a way to prevent this.
 
+void onDocUpdated(boost::shared_ptr<SourceDocument> pDoc)
+{
+   source_database::events().onDocUpdated(pDoc);
+}
+
 void onResume(const Settings&)
 {
-   rSourceIndexes().removeAll();
+   source_database::events().onRemoveAll();
 
    // get the docs and sort them by created
    std::vector<boost::shared_ptr<SourceDocument> > docs ;
@@ -983,10 +924,8 @@ void onResume(const Settings&)
    }
    std::sort(docs.begin(), docs.end(), sortByCreated);
 
-   // update the indexes
-   std::for_each(docs.begin(),
-                 docs.end(),
-                 boost::bind(&RSourceIndexes::update, &rSourceIndexes(), _1));
+   // notify listeners of updates
+   std::for_each(docs.begin(), docs.end(), onDocUpdated);
 }
 
 void onShutdown(bool terminatedNormally)
@@ -1032,8 +971,7 @@ SEXP rs_fileEdit(SEXP fileSEXP)
 
 Error clientInitDocuments(core::json::Array* pJsonDocs)
 {
-   // remove all items from the source index database
-   rSourceIndexes().removeAll();
+   source_database::events().onRemoveAll();
 
    // get the docs and sort them by created
    std::vector<boost::shared_ptr<SourceDocument> > docs ;
@@ -1065,23 +1003,17 @@ Error clientInitDocuments(core::json::Array* pJsonDocs)
       writeDocToJson(pDoc, &jsonDoc);
       pJsonDocs->push_back(jsonDoc);
 
-      // update the source index
-      rSourceIndexes().update(pDoc);
+      source_database::events().onDocUpdated(pDoc);
    }
 
    return Success();
-}
-
-std::vector<boost::shared_ptr<core::r_util::RSourceIndex> > rIndexes()
-{
-   return rSourceIndexes().indexes();
 }
 
 Error initialize()
 {   
    // connect to events
    using namespace module_context;
-   events().onShutdown.connect(onShutdown);
+   module_context::events().onShutdown.connect(onShutdown);
 
    // add suspend/resume handler
    addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));
