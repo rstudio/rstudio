@@ -15,6 +15,8 @@
 
 #include "SessionClang.hpp"
 
+#include <boost/foreach.hpp>
+
 #include <core/system/System.hpp>
 #include <core/system/Process.hpp>
 
@@ -34,7 +36,7 @@ namespace clang {
 
 namespace {
 
-FilePath libclangPath()
+FilePath embeddedLibClangPath()
 {
 #if defined(_WIN64)
    std::string libclang = "x86_64/libclang.dll";
@@ -44,43 +46,104 @@ FilePath libclangPath()
    std::string libclang = "libclang.dylib";
 #else
    std::string libclang = "libclang.so";
-#endif   
+#endif
    return options().libclangPath().childPath(libclang);
 }
 
-bool isClangAvailable(std::string* pError)
+
+std::vector<FilePath> clangVersions()
 {
-   std::string path = libclangPath().absolutePath();
-   module_context::consoleWriteOutput(path + "\n");
-   libclang lib;
-   Error error = lib.load(path);
-   if (error)
-   {
-      *pError = error.getProperty("dlerror");
-      return false;
-   }
-   else
-   {
-      return true;
-   }
+   std::vector<FilePath> clangVersions;
+
+   // embedded version
+   clangVersions.push_back(embeddedLibClangPath());
+
+   // platform-specific other versions
+#ifndef _WIN32
+#ifdef __APPLE__
+   clangVersions.push_back(FilePath("/Applications/Xcode.app/Contents/"
+                           "Developer/Toolchains/XcodeDefault.xctoolchain"
+                           "/usr/lib/libclang.dylib"));
+#else
+
+#endif
+#endif
+
+   return clangVersions;
 }
 
+// load libclang (using embedded version if possible then search
+// for other versions in well known locations)
+bool loadLibclang(libclang* pLibClang, std::string* pDiagnostics)
+{
+   // get all possible clang versions
+   std::ostringstream ostr;
+   std::vector<FilePath> versions = clangVersions();
+   BOOST_FOREACH(const FilePath& versionPath, versions)
+   {
+      ostr << versionPath << std::endl;
+      if (versionPath.exists())
+      {
+         Error error = pLibClang->load(versionPath.absolutePath());
+         if (!error)
+         {
+            ostr << "   (Successfully Loaded)" << std::endl;
+            *pDiagnostics = ostr.str();
+            return true;
+         }
+         else
+         {
+            ostr << "   (" << error.getProperty("dlerror") <<  ")" << std::endl;
+         }
+      }
+      else
+      {
+         ostr << "   (Not Found)" << std::endl;
+      }
+   }
+
+   // if we didn't find one by now then we failed
+   *pDiagnostics = ostr.str();
+   return false;
+}
+
+
+// diagnostic function to assist in determine whether/where
+// libclang was loaded from (and any errors which occurred
+// that prevented loading, e.g. inadequate version, missing
+// symbols, etc.)
 SEXP rs_isClangAvailable()
-{   
-   std::string error;
-   bool isAvailable = isClangAvailable(&error);
+{
+   // check availability
+   libclang lib;
+   std::string diagnostics;
+   bool isAvailable = loadLibclang(&lib, &diagnostics);
 
-   if (!isAvailable)
-      module_context::consoleWriteError(error + "\n");
+   // print diagnostics
+   module_context::consoleWriteOutput(diagnostics);
 
+   // return status
    r::sexp::Protect rProtect;
    return r::sexp::create(isAvailable, &rProtect);
 }
+
+// shared instance of libclang
+libclang& clang()
+{
+   static class libclang instance;
+   return instance;
+}
+
 
 } // anonymous namespace
    
 Error initialize()
 {
+   // attempt to load libclang
+   std::string diagnostics;
+   loadLibclang(&(clang()), &diagnostics);
+
+   // register diagnostics function
    R_CallMethodDef methodDef ;
    methodDef.name = "rs_isClangAvailable" ;
    methodDef.fun = (DL_FUNC)rs_isClangAvailable;

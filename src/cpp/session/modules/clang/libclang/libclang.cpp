@@ -2,8 +2,10 @@
 #include "libclang.hpp"
 
 #include <iostream>
+#include <vector>
 
 #include <boost/regex.hpp>
+#include <boost/foreach.hpp>
 
 #include <core/Log.hpp>
 #include <core/SafeConvert.hpp>
@@ -411,24 +413,30 @@ Version libclang::version() const
    std::string versionString(getCString(cxVer));
    disposeString(cxVer);
 
-   boost::regex re("(\\d+)\\.(\\d+)(?:.(\\d+))?");
-   boost::smatch match;
-   if (boost::regex_search(versionString, match, re))
+   // look for various version strings
+   std::string verRegex = "(\\d+)\\.(\\d+)(?:.(\\d+))?";
+   std::vector<boost::regex> patterns;
+   patterns.push_back(boost::regex("LLVM " + verRegex));
+   patterns.push_back(boost::regex(verRegex));
+   BOOST_FOREACH(boost::regex re, patterns)
    {
-      // default patch version if necessary
-      std::string match3 = match[3];
-      if (match3.empty())
-         match3 = "0";
+      boost::smatch match;
+      if (boost::regex_search(versionString, match, re))
+      {
+         // default patch version if necessary
+         std::string match3 = match[3];
+         if (match3.empty())
+            match3 = "0";
 
-      // return version structure
-      return Version(safe_convert::stringTo<int>(match[1], 0),
-                     safe_convert::stringTo<int>(match[2], 0),
-                     safe_convert::stringTo<int>(match3, 0));
+         // return version structure
+         return Version(safe_convert::stringTo<int>(match[1], 0),
+                        safe_convert::stringTo<int>(match[2], 0),
+                        safe_convert::stringTo<int>(match3, 0));
+      }
    }
-   else
-   {
-      return Version();
-   }
+
+   // no version found
+   return Version();
 }
 
 } // namespace clang
