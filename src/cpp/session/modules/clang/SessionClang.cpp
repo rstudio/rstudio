@@ -36,7 +36,6 @@ namespace {
 
 FilePath libclangPath()
 {
-   // per-platform extension
 #if defined(_WIN64)
    std::string libclang = "x86_64/libclang.dll";
 #elif defined(_WIN32)
