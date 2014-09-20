@@ -411,13 +411,19 @@ Version libclang::version() const
    std::string versionString(getCString(cxVer));
    disposeString(cxVer);
 
-   boost::regex re("(\\d+)\\.(\\d+).(\\d+)");
+   boost::regex re("(\\d+)\\.(\\d+)(?:.(\\d+))?");
    boost::smatch match;
    if (boost::regex_search(versionString, match, re))
    {
+      // default patch version if necessary
+      std::string match3 = match[3];
+      if (match3.empty())
+         match3 = "0";
+
+      // return version structure
       return Version(safe_convert::stringTo<int>(match[1], 0),
                      safe_convert::stringTo<int>(match[2], 0),
-                     safe_convert::stringTo<int>(match[3], 0));
+                     safe_convert::stringTo<int>(match3, 0));
    }
    else
    {
