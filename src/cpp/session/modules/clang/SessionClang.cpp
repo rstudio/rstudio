@@ -63,7 +63,7 @@ std::vector<std::string> clangVersions()
 #ifdef __APPLE__
    clangVersions.push_back("/Applications/Xcode.app/Contents/"
                            "Developer/Toolchains/XcodeDefault.xctoolchain"
-                           "/usr/lib/libclang.dylib"));
+                           "/usr/lib/libclang.dylib");
 #else
    clangVersions.push_back("/usr/lib/llvm/libclang.so");
    clangVersions.push_back("/usr/lib64/llvm/libclang.so");
