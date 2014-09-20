@@ -3,180 +3,44 @@
 
 #include <iostream>
 
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <dlfcn.h>
-#endif
+#include <core/Log.hpp>
 
-namespace rsclang {
+#include <core/system/LibraryLoader.hpp>
+
+using namespace core;
+
+namespace session {
+namespace modules {
+namespace clang {
 
 namespace {
-
-
-#ifdef _WIN32
-
-std::string getLastErrorMessage(const std::string& context)
-{
-   LPVOID lpMsgBuf;
-   DWORD dw = ::GetLastError();
-
-   DWORD length = ::FormatMessage(
-       FORMAT_MESSAGE_ALLOCATE_BUFFER |
-       FORMAT_MESSAGE_FROM_SYSTEM |
-       FORMAT_MESSAGE_IGNORE_INSERTS,
-       NULL,
-       dw,
-       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-       (LPTSTR) &lpMsgBuf,
-       0, NULL );
-
-   if (length != 0)
-   {
-      std::string msg((LPTSTR)lpMsgBuf);
-      msg.append(" (" + context + ")");
-      LocalFree(lpMsgBuf);
-      return msg;
-   }
-   else
-   {
-     return "Unknown error " + context;
-   }
-}
-
-bool loadLibrary(const std::string& libPath, void** ppLib, std::string* pError)
-{
-   *ppLib = NULL;
-   *ppLib = (void*)::LoadLibraryEx(libPath.c_str(), NULL, 0);
-   if (*ppLib == NULL)
-   {
-      *pError = getLastErrorMessage("loading library " + libPath);
-      return false;
-   }
-   else
-   {
-      return true;
-   }
-}
-
-bool loadSymbol(void* pLib,
-                const std::string& name,
-                void** ppSymbol,
-                std::string* pError)
-{
-   *ppSymbol = NULL;
-   *ppSymbol = (void*)::GetProcAddress((HINSTANCE)pLib, name.c_str());
-   if (*ppSymbol == NULL)
-   {
-      *pError = getLastErrorMessage("loading symbol " + name);
-      return false;
-   }
-   else
-   {
-      return true;
-   }
-}
-
-bool closeLibrary(void* pLib, std::string* pError)
-{
-   if (!::FreeLibrary((HMODULE)pLib))
-   {
-      *pError = getLastErrorMessage("closing library");
-      return false;
-   }
-   else
-   {
-      return true;
-   }
-}
-
-#else
-
-std::string getLastDlerror(const std::string& context)
-{
-   const char* msg = ::dlerror();
-   if (msg != NULL)
-      return std::string(msg);
-   else
-      return "Unknown error " + context;
-}
-
-bool loadLibrary(const std::string& libPath, void** ppLib, std::string* pError)
-{
-   *ppLib = NULL;
-   *ppLib = ::dlopen(libPath.c_str(), RTLD_NOW);
-   if (*ppLib == NULL)
-   {
-      *pError = getLastDlerror("loading library " + libPath);
-      return false;
-   }
-   else
-    {
-      return true;
-   }
-}
-
-bool loadSymbol(void* pLib,
-                const std::string& name,
-                void** ppSymbol,
-                std::string* pError)
-{
-   *ppSymbol = NULL;
-   *ppSymbol = ::dlsym(pLib, name.c_str());
-   if (*ppSymbol == NULL)
-   {
-      *pError = getLastDlerror("loading symbol " + name);
-      return false;
-   }
-   else
-   {
-      return true;
-   }
-}
-
-bool closeLibrary(void* pLib, std::string* pError)
-{
-   if (::dlclose(pLib) != 0)
-   {
-      *pError = getLastDlerror("closing library");
-      return false;
-   }
-   else
-   {
-      return true;
-   }
-}
-
-#endif
 
 
 } // anonymous namespace
 
 #define LOAD_CLANG_SYMBOL(name) \
-   if (!loadSymbol(pLib_, "clang_" #name, (void**)&name, &initError_)) \
-       return;
-
-bool libclang::isLoadable(const std::string& libraryPath, std::string* pError)
-{
-   void* pLib;
-   if (loadLibrary(libraryPath, (void**)&pLib, pError))
-   {
-      std::string error;
-      closeLibrary(pLib, &error);
-      return true;
+   error = core::system::loadSymbol(pLib_, "clang_" #name, (void**)&name); \
+   if (error) \
+   { \
+      Error unloadError = unload(); \
+      if (unloadError) \
+         LOG_ERROR(unloadError); \
+      return error; \
    }
-   else
-   {
-      return false;
-   }
-}
 
-libclang::libclang(const std::string& libraryPath)
-   : pLib_(NULL)
+Error libclang::load(const std::string& libraryPath, Version requiredVersion)
 {
-   if (!loadLibrary(libraryPath, (void**)&pLib_, &initError_))
-       return;
+   // load the library
+   Error error = core::system::loadLibrary(libraryPath, &pLib_);
+   if (error)
+      return error;
 
+   // check the version first
+   LOAD_CLANG_SYMBOL(getClangVersion)
+
+
+
+   // load the rest of the symbols
    LOAD_CLANG_SYMBOL(getCString)
    LOAD_CLANG_SYMBOL(disposeString)
 
@@ -346,7 +210,6 @@ libclang::libclang(const std::string& libraryPath)
    LOAD_CLANG_SYMBOL(codeCompleteGetContainerUSR)
    LOAD_CLANG_SYMBOL(codeCompleteGetObjCSelector)
 
-   LOAD_CLANG_SYMBOL(getClangVersion)
    LOAD_CLANG_SYMBOL(toggleCrashRecovery)
    LOAD_CLANG_SYMBOL(getInclusions)
 
@@ -482,18 +345,28 @@ libclang::libclang(const std::string& libraryPath)
    LOAD_CLANG_SYMBOL(CompileCommand_getDirectory)
    LOAD_CLANG_SYMBOL(CompileCommand_getNumArgs)
    LOAD_CLANG_SYMBOL(CompileCommand_getArg)
+
+   return Success();
 }
 
-bool libclang::isLoaded(std::string* pError)
+Error libclang::unload()
 {
-   if (initError_.empty())
+   if (pLib_ != NULL)
    {
-      return true;
+      Error error = core::system::closeLibrary(pLib_);
+      if (error)
+      {
+         return error;
+      }
+      else
+      {
+         pLib_ = NULL;
+         return Success();
+      }
    }
    else
    {
-      *pError = initError_;
-      return false;
+      return Success();
    }
 }
 
@@ -501,16 +374,15 @@ libclang::~libclang()
 {
    try
    {
-      if (pLib_ != NULL)
-      {
-         std::string errorMessage;
-         if (!closeLibrary(pLib_, &errorMessage))
-            std::cerr << errorMessage << std::endl;
-      }
+      Error error = unload();
+      if (error)
+         LOG_ERROR(error);
    }
    catch(...)
    {
    }
 }
 
-} // namespace rsclang
+} // namespace clang
+} // namespace modules
+} // namespace session

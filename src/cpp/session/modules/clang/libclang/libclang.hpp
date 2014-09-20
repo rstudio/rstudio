@@ -5,22 +5,36 @@
 
 #include <boost/noncopyable.hpp>
 
+#include <core/Error.hpp>
+
 #include "clang-c/Index.h"
 #include "clang-c/CXCompilationDatabase.h"
 
-namespace rsclang {
+namespace session {
+namespace modules {
+namespace clang {
+
+struct Version
+{
+   Version() : major(0), minor(0) {}
+   Version(int major, int minor) : major(major), minor(minor) {}
+   const int major;
+   const int minor;
+   bool empty() const { return major == 0; }
+};
 
 class libclang : boost::noncopyable
 {
 public:
-   static bool isLoadable(const std::string& libraryPath, std::string* pError);
+   // construction/destruction (copying prohibited)
+   libclang() : pLib_(NULL) {}
+   virtual ~libclang();
 
-public:
-   libclang(const std::string& libraryPath);
-   bool isLoaded(std::string* pError);
-   ~libclang();
-
-public:
+   // loading
+   core::Error load(const std::string& libraryPath,
+                    Version requiredVersion = Version(3,4));
+   core::Error unload();
+   bool isLoaded() const { return pLib_ != NULL; }
 
    // strings
    const char * (*getCString)(CXString string);
@@ -534,6 +548,8 @@ private:
    std::string initError_;
 };
 
-} // namespace rsclang
+} // namespace clang
+} // namespace modules
+} // namespace session
 
 #endif // __RSCLANG_LIBCLANG_HPP__

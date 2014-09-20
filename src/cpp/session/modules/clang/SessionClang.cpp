@@ -53,8 +53,17 @@ bool isClangAvailable(std::string* pError)
 {
    std::string path = libclangPath().absolutePath();
    module_context::consoleWriteOutput(path + "\n");
-   rsclang::libclang lib(path);
-   return lib.isLoaded(pError);
+   libclang lib;
+   Error error = lib.load(path);
+   if (error)
+   {
+      *pError = error.summary() + " " + error.getProperty("dlerror");
+      return false;
+   }
+   else
+   {
+      return true;
+   }
 }
 
 SEXP rs_isClangAvailable()
