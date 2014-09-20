@@ -65,6 +65,8 @@ std::vector<std::string> clangVersions()
                            "Developer/Toolchains/XcodeDefault.xctoolchain"
                            "/usr/lib/libclang.dylib"));
 #else
+   clangVersions.push_back("/usr/lib/llvm/libclang.so");
+   clangVersions.push_back("/usr/lib64/llvm/libclang.so");
    clangVersions.push_back("/usr/lib/i386-linux-gnu/libclang.so.1");
    clangVersions.push_back("/usr/lib/x86_64-linux-gnu/libclang.so.1");
 #endif
