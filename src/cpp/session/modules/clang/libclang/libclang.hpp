@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include <boost/format.hpp>
 #include <boost/noncopyable.hpp>
 
 #include <core/Error.hpp>
@@ -16,11 +17,44 @@ namespace clang {
 
 struct Version
 {
-   Version() : major(0), minor(0) {}
-   Version(int major, int minor) : major(major), minor(minor) {}
+   Version() : major(0), minor(0), patch(0) {}
+   Version(int major, int minor, int patch)
+      : major(major), minor(minor), patch(patch)
+   {
+   }
    const int major;
    const int minor;
+   const int patch;
+
    bool empty() const { return major == 0; }
+
+   bool operator<(const Version& other) const
+   {
+      if (major == other.major && minor == other.minor)
+         return patch < other.patch;
+      else if (major == other.major)
+         return minor < other.minor;
+      else
+         return major < other.major;
+   }
+
+   bool operator==(const Version& other) const
+   {
+      return major == other.major &&
+             minor == other.minor &&
+             patch == other.patch;
+   }
+
+   bool operator!=(const Version& other) const
+   {
+      return !(*this == other);
+   }
+
+   std::string asString() const
+   {
+      boost::format fmt("%1%.%2%.%3%");
+      return boost::str(fmt % major % minor % patch);
+   }
 };
 
 class libclang : boost::noncopyable
@@ -32,9 +66,12 @@ public:
 
    // loading
    core::Error load(const std::string& libraryPath,
-                    Version requiredVersion = Version(3,4));
+                    Version requiredVersion = Version(3,4,0));
    core::Error unload();
    bool isLoaded() const { return pLib_ != NULL; }
+
+   // version
+   Version version() const;
 
    // strings
    const char * (*getCString)(CXString string);

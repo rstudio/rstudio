@@ -3,9 +3,23 @@
 
 #include <iostream>
 
+#include <boost/regex.hpp>
+
 #include <core/Log.hpp>
+#include <core/SafeConvert.hpp>
 
 #include <core/system/LibraryLoader.hpp>
+
+#define LOAD_CLANG_SYMBOL(name) \
+   error = core::system::loadSymbol(pLib_, "clang_" #name, (void**)&name); \
+   if (error) \
+   { \
+      Error unloadError = unload(); \
+      if (unloadError) \
+         LOG_ERROR(unloadError); \
+      return error; \
+   }
+
 
 using namespace core;
 
@@ -18,15 +32,19 @@ namespace {
 
 } // anonymous namespace
 
-#define LOAD_CLANG_SYMBOL(name) \
-   error = core::system::loadSymbol(pLib_, "clang_" #name, (void**)&name); \
-   if (error) \
-   { \
-      Error unloadError = unload(); \
-      if (unloadError) \
-         LOG_ERROR(unloadError); \
-      return error; \
+libclang::~libclang()
+{
+   try
+   {
+      Error error = unload();
+      if (error)
+         LOG_ERROR(error);
    }
+   catch(...)
+   {
+   }
+}
+
 
 Error libclang::load(const std::string& libraryPath, Version requiredVersion)
 {
@@ -35,15 +53,31 @@ Error libclang::load(const std::string& libraryPath, Version requiredVersion)
    if (error)
       return error;
 
-   // check the version first
+   // load the symbols required to determine the version
    LOAD_CLANG_SYMBOL(getClangVersion)
-
-
-
-   // load the rest of the symbols
    LOAD_CLANG_SYMBOL(getCString)
    LOAD_CLANG_SYMBOL(disposeString)
 
+   // verify that we have the required version
+   Version libVersion = version();
+   if (libVersion < requiredVersion)
+   {
+      Error unloadError = unload();
+      if (unloadError)
+         LOG_ERROR(error);
+
+      Error error = systemError(boost::system::errc::protocol_not_supported,
+                                ERROR_LOCATION);
+      boost::format fmt("Required version %1% not found (library is "
+                        "version %2%)");
+      std::string err = boost::str(fmt %
+                                    requiredVersion.asString() %
+                                    libVersion.asString());
+      error.addProperty("dlerror", err);
+      return error;
+   }
+
+   // load the rest of the symbols
    LOAD_CLANG_SYMBOL(createIndex)
    LOAD_CLANG_SYMBOL(disposeIndex)
 
@@ -370,16 +404,24 @@ Error libclang::unload()
    }
 }
 
-libclang::~libclang()
+
+Version libclang::version() const
 {
-   try
+   CXString cxVer = getClangVersion();
+   std::string versionString(getCString(cxVer));
+   disposeString(cxVer);
+
+   boost::regex re("(\\d+)\\.(\\d+).(\\d+)");
+   boost::smatch match;
+   if (boost::regex_search(versionString, match, re))
    {
-      Error error = unload();
-      if (error)
-         LOG_ERROR(error);
+      return Version(safe_convert::stringTo<int>(match[1], 0),
+                     safe_convert::stringTo<int>(match[2], 0),
+                     safe_convert::stringTo<int>(match[3], 0));
    }
-   catch(...)
+   else
    {
+      return Version();
    }
 }
 
