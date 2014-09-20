@@ -203,7 +203,8 @@
     // in IE, and to avoid the same function being called twice.
     var callbackName = '__gwt_compile_callback_' + moduleIdx + '_' + new Date().getTime();
     $wnd[callbackName] = function(r) {
-      delete $wnd[callbackName];
+      // IE8 fails if we use delete
+      $wnd[callbackName] = undefined;
       // Avoid running callback if response came after timeout
       if (!expired) {
         clearTimeout(timeoutId);

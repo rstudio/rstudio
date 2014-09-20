@@ -478,7 +478,8 @@
     function onPollFinished(event) {
         if (compiling && event.status == "compiling") {
             dialog.updateProgress(event);
-            var waitTime = 1000 - (Date.now() - lastPollStart);
+            // Date.now() fails in IE8
+            var waitTime = 1000 - (new Date().getTime() - lastPollStart);
             if (waitTime > 0) {
                 setTimeout(poll, waitTime);
             } else {
@@ -490,7 +491,8 @@
 
     function poll() {
       if (compiling) {
-          lastPollStart = Date.now();
+          // Date.now() fails in IE8
+          lastPollStart = new Date().getTime();
           callJsonp(codeserver_url + 'progress?', onPollFinished);
       }
     }
