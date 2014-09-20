@@ -57,7 +57,7 @@ bool isClangAvailable(std::string* pError)
    Error error = lib.load(path);
    if (error)
    {
-      *pError = error.summary() + " " + error.getProperty("dlerror");
+      *pError = error.getProperty("dlerror");
       return false;
    }
    else

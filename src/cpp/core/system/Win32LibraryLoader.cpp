@@ -53,7 +53,7 @@ std::string getLastErrorMessage()
   
 } // anonymous namespace
 
-Error loadLibrary(const std::string& libPath, void** ppLip)
+Error loadLibrary(const std::string& libPath, void** ppLib)
 {
    // use
    *ppLib = NULL;
@@ -61,8 +61,7 @@ Error loadLibrary(const std::string& libPath, void** ppLip)
    if (*ppLib == NULL)
    {
       Error error = systemError(::GetLastError(), ERROR_LOCATION);
-      error.addProperty("dlerror", getLastErrorMessage());
-      error.addProperty("lib-path", libPath);
+      error.addProperty("dlerror", libPath + " - " + getLastErrorMessage());
       return error;
    }
    else
@@ -78,8 +77,7 @@ Error loadSymbol(void* pLib, const std::string& name, void** ppSymbol)
    if (*ppSymbol == NULL)
    {
       Error error = systemError(::GetLastError(), ERROR_LOCATION);
-      error.addProperty("dlerror", getLastErrorMessage());
-      error.addProperty("symbol", name);
+      error.addProperty("dlerror", name + " - " + getLastErrorMessage());
       return error;
    }
    else
