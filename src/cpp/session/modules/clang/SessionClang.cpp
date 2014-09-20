@@ -72,7 +72,7 @@ SEXP rs_isClangAvailable()
    bool isAvailable = isClangAvailable(&error);
 
    if (!isAvailable)
-      module_context::consoleWriteError(error);
+      module_context::consoleWriteError(error + "\n");
 
    r::sexp::Protect rProtect;
    return r::sexp::create(isAvailable, &rProtect);
