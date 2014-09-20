@@ -176,9 +176,8 @@ public class BinaryTypeReferenceRestrictionsCheckerTest extends TestCase {
   }
 
   private static LookupEnvironment createMockLookupEnvironment() {
-    LookupEnvironment lookupEnvironment = new LookupEnvironment(null, null,
+    LookupEnvironment lookupEnvironment = new LookupEnvironment(null, new CompilerOptions(),
         null, null);
-    lookupEnvironment.globalOptions = new CompilerOptions();
     return lookupEnvironment;
   }
 
