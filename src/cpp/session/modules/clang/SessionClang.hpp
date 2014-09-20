@@ -26,6 +26,8 @@ namespace session {
 namespace modules {      
 namespace clang {
 
+bool isClangAvailable();
+
 core::Error initialize();
    
 } // namespace clang

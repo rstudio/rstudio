@@ -142,6 +142,11 @@ libclang& clang()
 
 } // anonymous namespace
    
+bool isClangAvailable()
+{
+   return clang().isLoaded();
+}
+
 Error initialize()
 {
    // attempt to load libclang
