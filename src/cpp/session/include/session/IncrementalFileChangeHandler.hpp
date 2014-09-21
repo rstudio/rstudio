@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_PROJECTS_INCREMENTAL_FILE_CHANGE_HANDLER_HPP
-#define SESSION_PROJECTS_INCREMENTAL_FILE_CHANGE_HANDLER_HPP
+#ifndef SESSION_INCREMENTAL_FILE_CHANGE_HANDLER_HPP
+#define SESSION_INCREMENTAL_FILE_CHANGE_HANDLER_HPP
 
 #include <queue>
 
@@ -30,8 +30,9 @@
 
 #include <session/SessionModuleContext.hpp>
 
+#include <session/projects/SessionProjects.hpp>
+
 namespace session {
-namespace projects {
 
 class IncrementalFileChangeHandler : boost::noncopyable
 {
@@ -60,6 +61,19 @@ public:
    }
 
    // COPYING: prohibited
+
+
+   void subscribeToFileMonitor(const std::string& featureName)
+   {
+      projects::FileMonitorCallbacks cb;
+      cb.onMonitoringEnabled = boost::bind(
+           &IncrementalFileChangeHandler::onMonitoringEnabled, this, _1);
+      cb.onFilesChanged = boost::bind(
+               &IncrementalFileChangeHandler::onFilesChanged, this, _1);
+      cb.onMonitoringDisabled = boost::bind(
+               &IncrementalFileChangeHandler::clear, this);
+      projects::projectContext().subscribeToFileMonitor(featureName, cb);
+   }
 
    template <typename ForwardIterator>
    void enqueFiles(ForwardIterator begin, ForwardIterator end)
@@ -139,9 +153,7 @@ private:
       return processing_;
    }
 
-   // allow ProjectContext to hook this up to the file monitor
-
-   friend class ProjectContext;
+   // hooks for file monitor subscription
 
    void onMonitoringEnabled(const tree<core::FileInfo>& files)
    {
@@ -167,8 +179,7 @@ private:
 };
 
 
-} // namespace projects
 } // namespace session
 
 
-#endif // SESSION_PROJECTS_INCREMENTAL_FILE_CHANGE_HANDLER_HPP
+#endif // SESSION_INCREMENTAL_FILE_CHANGE_HANDLER_HPP

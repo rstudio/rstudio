@@ -26,6 +26,9 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
 
+#include <session/SessionSourceDatabase.hpp>
+#include <session/IncrementalFileChangeHandler.hpp>
+
 #include "libclang/libclang.hpp"
 
 using namespace core ;

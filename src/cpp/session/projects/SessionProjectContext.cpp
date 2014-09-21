@@ -455,20 +455,6 @@ void ProjectContext::subscribeToFileMonitor(const std::string& featureName,
       onMonitoringDisabled_.connect(cb.onMonitoringDisabled);
 }
 
-void ProjectContext::subscribeToFileMonitor(
-                            const std::string& featureName,
-                            IncrementalFileChangeHandler* pHandler)
-{
-   FileMonitorCallbacks cb;
-   cb.onMonitoringEnabled = boost::bind(
-            &IncrementalFileChangeHandler::onMonitoringEnabled, pHandler, _1);
-   cb.onFilesChanged = boost::bind(
-            &IncrementalFileChangeHandler::onFilesChanged, pHandler, _1);
-   cb.onMonitoringDisabled = boost::bind(
-            &IncrementalFileChangeHandler::clear, pHandler);
-   subscribeToFileMonitor(featureName, cb);
-}
-
 std::string ProjectContext::defaultEncoding() const
 {
    return defaultEncoding_;
