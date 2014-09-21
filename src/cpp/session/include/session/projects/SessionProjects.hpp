@@ -38,7 +38,9 @@
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RSourceIndex.hpp>
 #include <core/r_util/RPackageInfo.hpp>
- 
+
+#include "IncrementalFileChangeHandler.hpp"
+
 namespace session {
 namespace projects {
 
@@ -167,6 +169,8 @@ public:
    // occur during module initialization
    void subscribeToFileMonitor(const std::string& featureName,
                                const FileMonitorCallbacks& cb);
+   void subscribeToFileMonitor(const std::string& featureName,
+                               IncrementalFileChangeHandler* pHandler);
 
 public:
    static core::r_util::RProjectBuildDefaults buildDefaults();
