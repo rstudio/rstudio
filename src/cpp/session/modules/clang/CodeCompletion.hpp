@@ -19,6 +19,7 @@
 #include <boost/noncopyable.hpp>
 
 #include "Clang.hpp"
+#include "Diagnostic.hpp"
 
 namespace session {
 namespace modules {      
@@ -35,6 +36,9 @@ public:
    ~CodeCompleteResults();
 
    void sort();
+
+   unsigned getNumDiagnostics();
+   boost::shared_ptr<Diagnostic> getDiagnostic(unsigned index);
 
    unsigned long long getContexts();
 
