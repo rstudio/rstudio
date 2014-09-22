@@ -1,5 +1,5 @@
 /*
- * SessionClang.hpp
+ * Clang.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,25 +13,24 @@
  *
  */
 
-#ifndef SESSION_MODULES_CLANG_HPP
-#define SESSION_MODULES_CLANG_HPP
+#ifndef SESSION_MODULES_CLANG_CLANG_HPP
+#define SESSION_MODULES_CLANG_CLANG_HPP
 
-#include <core/Error.hpp>
+#include "libclang/libclang.hpp"
 
-namespace core {
-   class Error;
-}
- 
 namespace session {
 namespace modules {      
 namespace clang {
 
-bool isClangAvailable();
+// check for availablity of clang w/ diagnstics
+bool isClangAvailable(std::string* pDiagnostics);
 
-core::Error initialize();
-   
+// shared instance of clang
+bool loadClang();
+libclang& clang();
+
 } // namespace clang
 } // namepace handlers
 } // namesapce session
 
-#endif // SESSION_MODULES_CLANG_HPP
+#endif // SESSION_MODULES_CLANG_CLANG_HPP

@@ -1,5 +1,5 @@
 /*
- * SessionClang.hpp
+ * SourceIndex.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,25 +13,18 @@
  *
  */
 
-#ifndef SESSION_MODULES_CLANG_HPP
-#define SESSION_MODULES_CLANG_HPP
+#ifndef SESSION_MODULES_CLANG_SOURCE_INDEX_HPP
+#define SESSION_MODULES_CLANG_SOURCE_INDEX_HPP
 
-#include <core/Error.hpp>
 
-namespace core {
-   class Error;
-}
- 
 namespace session {
 namespace modules {      
 namespace clang {
 
-bool isClangAvailable();
 
-core::Error initialize();
    
 } // namespace clang
 } // namepace handlers
 } // namesapce session
 
-#endif // SESSION_MODULES_CLANG_HPP
+#endif // SESSION_MODULES_CLANG_SOURCE_INDEX_HPP

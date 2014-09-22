@@ -1,5 +1,5 @@
 /*
- * SessionClang.hpp
+ * SourceIndex.cpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,25 +13,27 @@
  *
  */
 
-#ifndef SESSION_MODULES_CLANG_HPP
-#define SESSION_MODULES_CLANG_HPP
+#include "SourceIndex.hpp"
 
-#include <core/Error.hpp>
 
-namespace core {
-   class Error;
-}
- 
+#include "libclang/libclang.hpp"
+
+// SourceIndex is maintained using file system and source editor callbacks
+
+
+// Separate unsavedFiles structure maintained using sourceEditor callbacks
+
+
+using namespace core ;
+
 namespace session {
-namespace modules {      
+namespace modules { 
 namespace clang {
 
-bool isClangAvailable();
 
-core::Error initialize();
-   
+
+
 } // namespace clang
-} // namepace handlers
+} // namespace modules
 } // namesapce session
 
-#endif // SESSION_MODULES_CLANG_HPP

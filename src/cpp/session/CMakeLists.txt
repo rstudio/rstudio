@@ -114,7 +114,9 @@ set (SESSION_SOURCE_FILES
    modules/build/SessionBuildEnvironment.cpp
    modules/build/SessionBuildErrors.cpp
    modules/build/SessionSourceCpp.cpp
+   modules/clang/Clang.cpp
    modules/clang/SessionClang.cpp
+   modules/clang/SourceIndex.cpp
    modules/clang/libclang/libclang.cpp
    modules/data/SessionData.cpp
    modules/data/DataViewer.cpp
