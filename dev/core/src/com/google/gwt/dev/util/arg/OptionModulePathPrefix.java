@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2014 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,17 +13,22 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev;
+package com.google.gwt.dev.util.arg;
 
-import com.google.gwt.dev.jjs.JJSOptions;
-import com.google.gwt.dev.util.arg.OptionExtraDir;
-import com.google.gwt.dev.util.arg.OptionGenDir;
-import com.google.gwt.dev.util.arg.OptionLogLevel;
-import com.google.gwt.dev.util.arg.OptionWarDir;
+import java.io.File;
 
 /**
- * The complete set of options for the GWT compiler.
+ * Option to set the module path prefix.
  */
-public interface HostedModeOptions extends JJSOptions, OptionLogLevel,
-    OptionExtraDir, OptionWarDir, OptionGenDir {
+public interface OptionModulePathPrefix {
+
+  /**
+   * Sets the path to be prefixed to the module output.
+   */
+  void setModulePathPrefix(String prefix);
+
+  /**
+   * Returns the path of the webserver root context.
+   */
+  File getModuleBaseDir();
 }

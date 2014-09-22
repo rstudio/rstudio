@@ -157,7 +157,7 @@ public class SuperDevListener implements CodeServerListener {
           Utility.getFileFromClassPath("com/google/gwt/dev/codeserver/stub.nocache.js");
 
       File file =
-          new File(options.getWarDir() + "/" + module.getName() + "/" + module.getName()
+          new File(options.getModuleBaseDir() + "/" + module.getName() + "/" + module.getName()
               + ".nocache.js");
 
       file.deleteOnExit();

@@ -167,7 +167,7 @@ public class BrowserListener implements CodeServerListener {
         logger.branch(TreeLogger.DEBUG, "Linking module '" + module.getName() + "'");
 
     OutputFileSetOnDirectory outFileSet =
-        new OutputFileSetOnDirectory(options.getWarDir(), module.getName() + "/");
+        new OutputFileSetOnDirectory(options.getModuleBaseDir(), module.getName() + "/");
     OutputFileSetOnDirectory deployFileSet =
         new OutputFileSetOnDirectory(options.getDeployDir(), module.getName() + "/");
     OutputFileSet extraFileSet = new NullOutputFileSet();
@@ -192,7 +192,7 @@ public class BrowserListener implements CodeServerListener {
     // The .nocache.js file produced by devmode has identical timestamp than the bootstrap
     // html page, hence the browser uses superdevmode cached file instead of refreshing it
     // with the new devmode version, setting ts to current time fixes the issue.
-    new File(options.getWarDir() + "/" + module.getName() + "/" + module.getName() + ".nocache.js")
+    new File(options.getModuleBaseDir() + "/" + module.getName() + "/" + module.getName() + ".nocache.js")
         .setLastModified(System.currentTimeMillis());
   }
 
