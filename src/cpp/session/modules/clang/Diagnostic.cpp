@@ -41,7 +41,7 @@ Diagnostic::~Diagnostic()
    }
 }
 
-std::string Diagnostic::format(unsigned options)
+std::string Diagnostic::format(unsigned options) const
 {
    CXString cxFormat = clang().formatDiagnostic(diagnostic_, options);
    std::string format(clang().getCString(cxFormat));
@@ -49,17 +49,17 @@ std::string Diagnostic::format(unsigned options)
    return format;
 }
 
-CXDiagnosticSeverity Diagnostic::getSeverity()
+CXDiagnosticSeverity Diagnostic::getSeverity() const
 {
    return clang().getDiagnosticSeverity(diagnostic_);
 }
 
-CXSourceLocation Diagnostic::getLocation()
+CXSourceLocation Diagnostic::getLocation() const
 {
    return clang().getDiagnosticLocation(diagnostic_);
 }
 
-std::string Diagnostic::getSpelling()
+std::string Diagnostic::getSpelling() const
 {
    CXString cxSpelling = clang().getDiagnosticSpelling(diagnostic_);
    std::string spelling(clang().getCString(cxSpelling));

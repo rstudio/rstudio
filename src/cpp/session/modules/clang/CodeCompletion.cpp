@@ -50,18 +50,19 @@ void CodeCompleteResults::sort()
    clang().sortCodeCompletionResults(pResults_->Results, pResults_->NumResults);
 }
 
-unsigned CodeCompleteResults::getNumDiagnostics()
+unsigned CodeCompleteResults::getNumDiagnostics() const
 {
    return clang().codeCompleteGetNumDiagnostics(pResults_);
 }
 
-boost::shared_ptr<Diagnostic> CodeCompleteResults::getDiagnostic(unsigned index)
+boost::shared_ptr<Diagnostic> CodeCompleteResults::getDiagnostic(
+                                                      unsigned index) const
 {
    CXDiagnostic cxDiag = clang().codeCompleteGetDiagnostic(pResults_, index);
    return boost::make_shared<Diagnostic>(cxDiag);
 }
 
-unsigned long long CodeCompleteResults::getContexts()
+unsigned long long CodeCompleteResults::getContexts() const
 {
    return clang().codeCompleteGetContexts(pResults_);
 }

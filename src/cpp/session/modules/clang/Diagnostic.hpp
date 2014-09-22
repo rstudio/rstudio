@@ -35,11 +35,11 @@ public:
    ~Diagnostic();
 
    std::string format(unsigned options =
-                                 clang().defaultDiagnosticDisplayOptions());
+                           clang().defaultDiagnosticDisplayOptions()) const;
 
-   CXDiagnosticSeverity getSeverity();
-   CXSourceLocation getLocation();
-   std::string getSpelling();
+   CXDiagnosticSeverity getSeverity() const;
+   CXSourceLocation getLocation() const;
+   std::string getSpelling() const;
 
 
 private:

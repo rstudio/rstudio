@@ -37,10 +37,10 @@ public:
 
    void sort();
 
-   unsigned getNumDiagnostics();
-   boost::shared_ptr<Diagnostic> getDiagnostic(unsigned index);
+   unsigned getNumDiagnostics() const;
+   boost::shared_ptr<Diagnostic> getDiagnostic(unsigned index) const;
 
-   unsigned long long getContexts();
+   unsigned long long getContexts() const;
 
 
 private:

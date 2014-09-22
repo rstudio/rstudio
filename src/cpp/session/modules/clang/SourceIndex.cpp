@@ -48,7 +48,7 @@ SourceIndex::~SourceIndex()
    }
 }
 
-unsigned SourceIndex::getGlobalOptions()
+unsigned SourceIndex::getGlobalOptions() const
 {
    return clang().CXIndex_getGlobalOptions(index_);
 }
@@ -105,7 +105,8 @@ void SourceIndex::removeTranslationUnit(const std::string& filename)
    }
 }
 
-CXTranslationUnit SourceIndex::getTranslationUnit(const std::string& filename)
+CXTranslationUnit SourceIndex::getTranslationUnit(
+                                          const std::string& filename) const
 {
    TranslationUnits::const_iterator it = translationUnits_.find(filename);
    if (it != translationUnits_.end())

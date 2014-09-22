@@ -32,12 +32,12 @@ public:
    SourceIndex();
    virtual ~SourceIndex();
 
-   unsigned getGlobalOptions();
+   unsigned getGlobalOptions() const;
    void setGlobalOptions(unsigned options);
 
    void updateTranslationUnit(const std::string& filename);
    void removeTranslationUnit(const std::string& filename);
-   CXTranslationUnit getTranslationUnit(const std::string& filename);
+   CXTranslationUnit getTranslationUnit(const std::string& filename) const;
 
 private:
    CXIndex index_;
