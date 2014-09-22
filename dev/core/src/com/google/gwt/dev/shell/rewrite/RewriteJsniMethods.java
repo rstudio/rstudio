@@ -206,7 +206,7 @@ public class RewriteJsniMethods extends ClassVisitor {
 
     public MyMethodAdapter(MethodVisitor mv, int access, String name,
         String desc) {
-      super(mv, access, name, desc);
+      super(Opcodes.ASM5, mv, access, name, desc);
       this.descriptor = desc;
       this.name = name;
       isStatic = (access & Opcodes.ACC_STATIC) != 0;
@@ -255,13 +255,6 @@ public class RewriteJsniMethods extends ClassVisitor {
         visitInsn(Opcodes.ACONST_NULL);
       } else {
         loadThis();
-        // Ensure the instance method is not invoked against null, otherwise
-        // JS's apply will turn it into the window object. See Issue 3069.
-        visitMethodInsn(
-            Opcodes.INVOKESTATIC,
-            "com/google/gwt/dev/shell/JavaScriptHost",
-            "checkNotNull",
-            "(Ljava/lang/Object;)Ljava/lang/Object;", false);
       }
       // Stack is at 2
 
