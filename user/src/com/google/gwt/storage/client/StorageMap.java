@@ -220,6 +220,10 @@ public class StorageMap extends AbstractMap<String, String> {
    */
   @Override
   public boolean containsKey(Object key) {
+    if (key == null) {
+      throw new NullPointerException();
+    }
+
     return storage.getItem(key.toString()) != null;
   }
 
@@ -230,6 +234,9 @@ public class StorageMap extends AbstractMap<String, String> {
    */
   @Override
   public boolean containsValue(Object value) {
+    if (value == null) {
+      throw new NullPointerException();
+    }
     int s = size();
     for (int i = 0; i < s; i++) {
       if (value.equals(storage.getItem(storage.key(i)))) {
@@ -259,7 +266,7 @@ public class StorageMap extends AbstractMap<String, String> {
   @Override
   public String get(Object key) {
     if (key == null) {
-      return null;
+      throw new NullPointerException();
     }
     return storage.getItem(key.toString());
   }
@@ -274,7 +281,7 @@ public class StorageMap extends AbstractMap<String, String> {
   @Override
   public String put(String key, String value) {
     if (key == null || value == null) {
-      throw new IllegalArgumentException("Key and value cannot be null!");
+      throw new NullPointerException();
     }
     String old = storage.getItem(key);
     storage.setItem(key, value);
@@ -291,6 +298,10 @@ public class StorageMap extends AbstractMap<String, String> {
    */
   @Override
   public String remove(Object key) {
+    if (key == null) {
+      throw new NullPointerException();
+    }
+
     String k = key.toString();
     String old = storage.getItem(k);
     storage.removeItem(k);

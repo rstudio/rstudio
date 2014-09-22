@@ -17,6 +17,7 @@ package com.google.gwt.regexp.shared;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.testing.TestUtils;
 
 /**
  * Unit tests for {@link RegExp}.
@@ -59,7 +60,7 @@ public class RegExpTest extends GWTTestCase {
   }
 
   private RegExp regExp;
-  
+
   // This is a hack to force a GWTTestCase to run as a vanilla JUnit TestCase.
   @Override
   public String getModuleName() {
@@ -458,7 +459,11 @@ public class RegExpTest extends GWTTestCase {
   }
 
   public void testExec_verticalTab() {
-    checkAlias("\\v", "\u000b");
+    // TODO(rluble): implement Java 8 semantics for regexps. See issue 8912.
+    String expected = (!GWT.isClient() && TestUtils.getJdkVersion() > 7) ?
+        "\u000b\n\f\r\u0085\u2028\u2029" :
+        "\u000b";
+    checkAlias("\\v", expected);
   }
 
   public void testExec_word() {

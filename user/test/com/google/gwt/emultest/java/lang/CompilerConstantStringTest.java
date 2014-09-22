@@ -15,8 +15,10 @@
  */
 package com.google.gwt.emultest.java.lang;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.testing.TestUtils;
 
 /**
  * This test verifies that the static evaluation performed by the compiler
@@ -229,9 +231,6 @@ public class CompilerConstantStringTest extends GWTTestCase {
   public void testSplit() {
     compareList("fullSplit", new String[] {"abc", "", "", "de", "f"},
         "abcxxxdexfxx".split("x"));
-    compareList("emptyRegexSplit", new String[] {
-        "", "a", "b", "c", "x", "x", "d", "e", "x", "f", "x"},
-        "abcxxdexfx".split(""));
     compareList("2:", "boo:and:foo".split(":", 2), new String[] {
         "boo", "and:foo"});
     compareList("5:", "boo:and:foo".split(":", 5), new String[] {
@@ -246,6 +245,15 @@ public class CompilerConstantStringTest extends GWTTestCase {
         "b", "", ":and:f"});
     compareList("0:", "boo:and:foo".split(":", 0), new String[] {
         "boo", "and", "foo"});
+  }
+
+  public void testSplit_emptyExpr() {
+    // TODO(rluble):  implement JDK8 string.split semantics and fix test.
+    // See issue 8913.
+    String[] expected = (!GWT.isScript() && TestUtils.getJdkVersion() > 7) ?
+        new String[] {"a", "b", "c", "x", "x", "d", "e", "x", "f", "x"} :
+        new String[] {"", "a", "b", "c", "x", "x", "d", "e", "x", "f", "x"};
+    compareList("emptyRegexSplit", expected, "abcxxdexfx".split(""));
   }
 
   public void testStartsWith() {
@@ -296,7 +304,8 @@ public class CompilerConstantStringTest extends GWTTestCase {
     assertTrue(String.valueOf(C.DOUBLE_VALUE).startsWith(C.DOUBLE_STRING));
     assertEquals(C.CHAR_STRING, String.valueOf(C.CHAR_VALUE));
     assertEquals(C.CHAR_ARRAY_STRING, String.valueOf(C.CHAR_ARRAY_VALUE));
-    assertEquals(C.CHAR_ARRAY_STRING_SUB, String.valueOf(C.CHAR_ARRAY_VALUE, 1,
+    assertEquals(
+        C.CHAR_ARRAY_STRING_SUB, String.valueOf(C.CHAR_ARRAY_VALUE, 1,
         4));
     assertEquals(C.FALSE_STRING, String.valueOf(C.FALSE_VALUE));
     assertEquals(C.TRUE_STRING, String.valueOf(C.TRUE_VALUE));

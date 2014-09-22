@@ -59,6 +59,9 @@ public abstract class AbstractSet<E> extends AbstractCollection<E> implements
 
   @Override
   public boolean removeAll(Collection<?> c) {
+    if (c == null) {
+      throw new NullPointerException();
+    }
     int size = size();
     if (size < c.size()) {
       // If the member of 'this' is in 'c', remove it from 'this'.

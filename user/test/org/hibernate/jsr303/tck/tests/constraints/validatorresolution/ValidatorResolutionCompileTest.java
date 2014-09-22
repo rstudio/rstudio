@@ -21,6 +21,8 @@ import org.hibernate.jsr303.tck.tests.constraints.validatorresolution.AmbiguousV
 import org.hibernate.jsr303.tck.tests.constraints.validatorresolution.UnexpectedTypeValidatorFactory.UnexpectedTypeValidator;
 import org.hibernate.jsr303.tck.util.TckCompileTestCase;
 
+import java.util.regex.Pattern;
+
 import javax.validation.ValidationException;
 
 /**
@@ -37,27 +39,30 @@ public class ValidatorResolutionCompileTest extends TckCompileTestCase {
         AmbiguousValidator.class,
         Foo.class,
         ValidationException.class,
-        "More than one maximally specific "
-            + "@org.hibernate.jsr303.tck.tests.constraints.validatorresolution"
-            + ".Ambiguous(message=foobar, payload=[], groups=[]) "
-            + "ConstraintValidator for type "
-            + "class org.hibernate.jsr303.tck.tests.constraints"
-            + ".validatorresolution.Bar, found "
-            + "[class org.hibernate.jsr303.tck.tests.constraints"
-            + ".validatorresolution.Ambiguous$AmbiguousValidatorForDummy,"
-            + " class org.hibernate.jsr303.tck.tests.constraints"
-            + ".validatorresolution.Ambiguous$"
-            + "AmbiguousValidatorForSerializable]");
+        Pattern.compile("More than one maximally specific "
+        + "\\@org\\.hibernate\\.jsr303\\.tck\\.tests\\.constraints\\.validatorresolution"
+        + ".Ambiguous\\("
+        + "((\\s)*(message=foobar|payload=\\[\\]|groups=\\[\\])(,)?){3}"
+        + "\\) "
+        + "ConstraintValidator for type "
+        + "class org\\.hibernate\\.jsr303\\.tck\\.tests\\.constraints"
+        + "\\.validatorresolution\\.Bar, found "
+        + "\\[class org\\.hibernate\\.jsr303\\.tck\\.tests\\.constraints"
+        + "\\.validatorresolution\\.Ambiguous\\$AmbiguousValidatorForDummy,"
+        + " class org\\.hibernate\\.jsr303\\.tck\\.tests\\.constraints"
+        + "\\.validatorresolution\\.Ambiguous\\$"
+        + "AmbiguousValidatorForSerializable\\]"));
 
   }
 
   public void testUnexpectedTypeInValidatorResolution()
       throws UnableToCompleteException {
     assertBeanValidatorFailsToCompile(UnexpectedTypeValidator.class, Bar.class,
-        ValidationException.class,
-        "No @javax.validation.constraints.Size(message="
-            + "{javax.validation.constraints.Size.message},"
-            + " min=0, max=2147483647, payload=[], groups=[]) "
-            + "ConstraintValidator for type class java.lang.Integer");
+        ValidationException.class, Pattern.compile(
+        "No \\@javax\\.validation\\.constraints\\.Size\\("
+            + "((\\s)*(message=\\{javax\\.validation\\.constraints\\.Size\\.message\\}|"
+            + "min=0|max=2147483647|payload=\\[\\]|groups=\\[\\])(,)?){5}"
+            + "\\) "
+            + "ConstraintValidator for type class java\\.lang\\.Integer"));
   }
 }

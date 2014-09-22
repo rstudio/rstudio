@@ -20,6 +20,8 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import org.hibernate.jsr303.tck.tests.constraints.constraintcomposition.OverriddenAttributesMustMatchInTypeValidatorFactory.OverriddenAttributesMustMatchInTypeValidator;
 import org.hibernate.jsr303.tck.util.TckCompileTestCase;
 
+import java.util.regex.Pattern;
+
 import javax.validation.ConstraintDefinitionException;
 import javax.validation.UnexpectedTypeException;
 
@@ -41,9 +43,11 @@ public class ConstraintCompositionCompileTest extends TckCompileTestCase {
         MustBeApplicableValidatorFactory.MustBeApplicableValidator.class,
         Shoe.class,
         UnexpectedTypeException.class,
-        "No @org.hibernate.jsr303.tck.tests.constraints.constraintcomposition"
-            + ".NotEmpty(message={constraint.notEmpty}, payload=[], groups=[]) "
-            + "ConstraintValidator for type int");
+        Pattern.compile(
+            "No \\@org\\.hibernate\\.jsr303\\.tck\\.tests\\.constraints\\.constraintcomposition"
+                + "\\.NotEmpty\\("
+                + "((\\s)*(message=\\{constraint\\.notEmpty\\}|payload=\\[\\]|groups=\\[\\])(,)?){3}"
+                + "\\) ConstraintValidator for type int"));
   }
 
   /**
@@ -57,11 +61,11 @@ public class ConstraintCompositionCompileTest extends TckCompileTestCase {
     assertValidatorFailsToCompile(
         OverriddenAttributesMustMatchInTypeValidator.class,
         ConstraintDefinitionException.class,
-        "Unable to create a validator for "
+        Pattern.compile("Unable to create a validator for "
             + "org.hibernate.jsr303.tck.tests.constraints.constraintcomposition."
             + "ConstraintCompositionTest.DummyEntityWithZipCode "
             + "because The overriding type of a composite constraint must be "
             + "identical to the overridden one. "
-            + "Expected int found class java.lang.String");
+            + "Expected int found class java.lang.String", Pattern.LITERAL));
   }
 }

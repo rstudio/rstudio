@@ -17,6 +17,7 @@ package com.google.gwt.emultest.java.util;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptException;
+import com.google.gwt.testing.TestUtils;
 
 import org.apache.commons.collections.TestMap;
 
@@ -1054,7 +1055,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
       sortedMap.subMap(getLessThanMinimumKey(), getGreaterThanMaximumKey());
       sortedMap.headMap(getLessThanMinimumKey());
       sortedMap.tailMap(getLessThanMinimumKey());
-    } else if (isJdk7()) {
+    } else if (!GWT.isScript() && TestUtils.getJdkVersion() > 6) {
       // nulls are rejected immediately and don't poison the map anymore
       try {
         assertNull(sortedMap.put(null, getValues()[0]));

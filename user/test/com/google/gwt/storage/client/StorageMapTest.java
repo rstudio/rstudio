@@ -30,7 +30,7 @@ public abstract class StorageMapTest extends MapInterfaceTest<String, String> {
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.storage.Storage";
+    return "com.google.gwt.storage.StorageTestModule";
   }
 
   @Override

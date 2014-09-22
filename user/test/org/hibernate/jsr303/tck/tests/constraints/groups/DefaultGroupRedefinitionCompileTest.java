@@ -19,6 +19,8 @@ import org.hibernate.jsr303.tck.tests.constraints.groups.GroupSequenceContaining
 import org.hibernate.jsr303.tck.tests.constraints.groups.GroupSequenceWithNoImplicitDefaultGroupValidatorFactory.TestValidator;
 import org.hibernate.jsr303.tck.util.TckCompileTestCase;
 
+import java.util.regex.Pattern;
+
 import javax.validation.GroupDefinitionException;
 
 /**
@@ -30,19 +32,19 @@ public class DefaultGroupRedefinitionCompileTest extends TckCompileTestCase {
   public void testGroupSequenceContainingDefault() {
     assertValidatorFailsToCompile(
         GroupSequenceContainingDefaultValidator.class,
-        GroupDefinitionException.class, "Unable to create a validator for "
-            + "org.hibernate.jsr303.tck.tests.constraints.groups."
-            + "DefaultGroupRedefinitionTest.AddressWithDefaultInGroupSequence "
-            + "because 'Default.class' cannot appear in default group "
-            + "sequence list.");
+        GroupDefinitionException.class, Pattern.compile("Unable to create a validator for "
+        + "org.hibernate.jsr303.tck.tests.constraints.groups."
+        + "DefaultGroupRedefinitionTest.AddressWithDefaultInGroupSequence "
+        + "because 'Default.class' cannot appear in default group "
+        + "sequence list.", Pattern.LITERAL));
   }
 
   public void testGroupSequenceWithNoImplicitDefaultGroup() {
     assertValidatorFailsToCompile(TestValidator.class,
-        GroupDefinitionException.class, "Unable to create a validator for "
+        GroupDefinitionException.class, Pattern.compile("Unable to create a validator for "
             + "org.hibernate.jsr303.tck.tests.constraints.groups."
             + "DefaultGroupRedefinitionTest.AddressWithDefaultInGroupSequence "
             + "because 'Default.class' cannot appear in default group "
-            + "sequence list.");
+            + "sequence list.", Pattern.LITERAL));
   }
 }

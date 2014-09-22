@@ -17,6 +17,8 @@ package org.hibernate.jsr303.tck.tests.constraints.invalidconstraintdefinitions;
 
 import org.hibernate.jsr303.tck.util.TckCompileTestCase;
 
+import java.util.regex.Pattern;
+
 import javax.validation.ConstraintDefinitionException;
 import javax.validation.Validator;
 
@@ -142,6 +144,6 @@ public class InvalidConstraintDefinitionsCompileTest extends TckCompileTestCase 
       final Class<? extends Validator> validatorClass,
       final String expectedMessage) {
     assertValidatorFailsToCompile(validatorClass,
-        ConstraintDefinitionException.class, expectedMessage);
+        ConstraintDefinitionException.class, Pattern.compile(expectedMessage, Pattern.LITERAL));
   }
 }

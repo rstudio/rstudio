@@ -20,6 +20,8 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import org.hibernate.jsr303.tck.tests.constraints.customconstraint.CustomConstraintValidatorTest.OddShoe;
 import org.hibernate.jsr303.tck.util.TckCompileTestCase;
 
+import java.util.regex.Pattern;
+
 import javax.validation.UnexpectedTypeException;
 
 /**
@@ -38,10 +40,11 @@ public class CustomConstraintValidatorCompileTest extends TckCompileTestCase {
       throws UnableToCompleteException {
     assertBeanValidatorFailsToCompile(
         TckCompileTestValidatorFactory.GwtValidator.class, OddShoe.class,
-        UnexpectedTypeException.class,
-        "No @org.hibernate.jsr303.tck.tests.constraints.customconstraint.Positive("
-            + "message={validation.positive}, payload=[], groups=[]) "
-            + "ConstraintValidator for type class java.lang.String");
+        UnexpectedTypeException.class, Pattern.compile(
+        "No \\@org\\.hibernate\\.jsr303\\.tck\\.tests\\.constraints\\.customconstraint\\"
+            + ".Positive\\("
+            + "((\\s)*(message=\\{validation\\.positive\\}|payload=\\[\\]|groups=\\[\\])(,)?){3}"
+            + "\\) ConstraintValidator for type class java\\.lang\\.String"));
   }
 
 }

@@ -15,5 +15,6 @@
 <module type="fileset">
   <!-- Inherit the JUnit support -->
   <inherits name="com.google.gwt.regexp.RegExp"/>
+  <inherits name='com.google.gwt.testing.TestUtils' />
   <source path="shared" />
 </module>

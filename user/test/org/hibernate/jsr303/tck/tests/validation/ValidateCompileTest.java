@@ -17,6 +17,8 @@ package org.hibernate.jsr303.tck.tests.validation;
 
 import org.hibernate.jsr303.tck.util.TckCompileTestCase;
 
+import java.util.regex.Pattern;
+
 import javax.validation.ValidationException;
 
 /**
@@ -28,9 +30,9 @@ public class ValidateCompileTest extends TckCompileTestCase {
   public void testValidatedPropertyDoesNotFollowJavaBeansConvention() {
     assertValidatorFailsToCompile(
         TckCompileTestValidatorFactory.GwtValidator.class,
-        ValidationException.class, "Unable to create a validator for "
-            + "org.hibernate.jsr303.tck.tests.validation.Boy "
-            + "because Annotated methods must follow the "
-            + "JavaBeans naming convention. age() does not.");
+        ValidationException.class, Pattern.compile("Unable to create a validator for "
+        + "org.hibernate.jsr303.tck.tests.validation.Boy "
+        + "because Annotated methods must follow the "
+        + "JavaBeans naming convention. age() does not.", Pattern.LITERAL));
   }
 }

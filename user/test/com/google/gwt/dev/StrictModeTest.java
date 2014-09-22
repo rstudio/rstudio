@@ -17,10 +17,12 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.jjs.JJSOptions;
+import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
 import junit.framework.TestCase;
 
@@ -38,8 +40,6 @@ public class StrictModeTest extends TestCase {
    */
   private static final String GOOD = "com.google.gwt.dev.strict.good.Good";
 
-  private TreeLogger logger = TreeLogger.NULL;
-
   private JJSOptions options = new CompilerOptionsImpl();
 
   protected final CompilerContext.Builder compilerContextBuilder = new CompilerContext.Builder();
@@ -55,7 +55,7 @@ public class StrictModeTest extends TestCase {
    * A normal compile with a bad file should still succeed.
    */
   public void testBadCompile() throws UnableToCompleteException {
-    precompile(BAD);
+    precompile(TreeLogger.NULL, BAD);
   }
 
   /**
@@ -66,7 +66,7 @@ public class StrictModeTest extends TestCase {
     compilerContext =
         compilerContextBuilder.options(new PrecompileTaskOptionsImpl(options)).build();
     try {
-      precompile(BAD);
+      precompile(TreeLogger.NULL, BAD);
       fail("Should have failed");
     } catch (UnableToCompleteException expected) {
     }
@@ -76,7 +76,7 @@ public class StrictModeTest extends TestCase {
    * A normal compile with a bad file should still succeed.
    */
   public void testBadValidate() {
-    assertTrue(validate(BAD));
+    assertTrue(validate(TreeLogger.NULL, BAD));
   }
 
   /**
@@ -86,14 +86,14 @@ public class StrictModeTest extends TestCase {
     options.setStrict(true);
     compilerContext =
         compilerContextBuilder.options(new PrecompileTaskOptionsImpl(options)).build();
-    assertFalse(validate(BAD));
+    assertFalse(validate(TreeLogger.NULL, BAD));
   }
 
   /**
    * Test a plain old successful compile.
    */
   public void testGoodCompile() throws UnableToCompleteException {
-    precompile(GOOD);
+    precompile(getErrorLoggingTreeLogger(), GOOD);
   }
 
   /**
@@ -103,14 +103,14 @@ public class StrictModeTest extends TestCase {
     options.setStrict(true);
     compilerContext =
         compilerContextBuilder.options(new PrecompileTaskOptionsImpl(options)).build();
-    precompile(GOOD);
+    precompile(getErrorLoggingTreeLogger(), GOOD);
   }
 
   /**
    * Test a plain old successful validate.
    */
   public void testGoodValidate() {
-    assertTrue(validate(GOOD));
+    assertTrue(validate(getErrorLoggingTreeLogger(), GOOD));
   }
 
   /**
@@ -120,10 +120,10 @@ public class StrictModeTest extends TestCase {
     options.setStrict(true);
     compilerContext =
         compilerContextBuilder.options(new PrecompileTaskOptionsImpl(options)).build();
-    assertTrue(validate(GOOD));
+    assertTrue(validate(getErrorLoggingTreeLogger(), GOOD));
   }
 
-  private void precompile(String moduleName) throws UnableToCompleteException {
+  private void precompile(TreeLogger logger, String moduleName) throws UnableToCompleteException {
     ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleName);
     compilerContext = compilerContextBuilder.module(module).build();
     if (Precompile.precompile(logger, compilerContext) == null) {
@@ -131,7 +131,7 @@ public class StrictModeTest extends TestCase {
     }
   }
 
-  private boolean validate(String moduleName) {
+  private boolean validate(TreeLogger logger, String moduleName) {
     ModuleDef module;
     try {
       module = ModuleDefLoader.loadFromClassPath(logger, compilerContext, moduleName);
@@ -141,5 +141,11 @@ public class StrictModeTest extends TestCase {
       return false;
     }
     return Precompile.validate(logger, compilerContext);
+  }
+
+  private TreeLogger getErrorLoggingTreeLogger() {
+    PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
+    logger.setMaxDetail(Type.ERROR);
+    return logger;
   }
 }

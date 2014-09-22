@@ -28,6 +28,7 @@ import com.google.gwt.dev.util.log.CompositeTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
 import java.io.File;
+import java.util.regex.Pattern;
 
 import javax.validation.ValidationException;
 
@@ -63,7 +64,7 @@ public class TckGeneratorTestUtils {
 
   static UnitTestTreeLogger createTestLogger(
       final Class<? extends ValidationException> expectedException,
-      final String expectedMessage) {
+      final Pattern expectedMessage) {
     UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
     builder.expect(TreeLogger.ERROR, expectedMessage, expectedException);
     builder.setLowestLogLevel(TreeLogger.INFO);

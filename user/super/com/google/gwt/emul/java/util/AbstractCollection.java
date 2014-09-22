@@ -83,6 +83,9 @@ public abstract class AbstractCollection<E> implements Collection<E> {
   }
 
   public boolean removeAll(Collection<?> c) {
+    if (c == null) {
+      throw new NullPointerException();
+    }
     Iterator<?> iter = iterator();
     boolean changed = false;
     while (iter.hasNext()) {
@@ -95,6 +98,9 @@ public abstract class AbstractCollection<E> implements Collection<E> {
   }
 
   public boolean retainAll(Collection<?> c) {
+    if (c == null) {
+      throw new NullPointerException();
+    }
     Iterator<?> iter = iterator();
     boolean changed = false;
     while (iter.hasNext()) {
