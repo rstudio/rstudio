@@ -23,6 +23,7 @@
 #include <session/SessionModuleContext.hpp>
 
 #include "Clang.hpp"
+#include "UnsavedFiles.hpp"
 
 using namespace core ;
 
@@ -31,6 +32,47 @@ namespace modules {
 namespace clang {
 
 namespace {
+
+bool isIndexableDoc(const FilePath& docPath)
+{
+   std::string ext = docPath.extensionLowerCase();
+   if (ext == ".h" || ext == ".hpp" || ext == ".c" || ext == ".cc" ||
+       ext == ".cpp" || ext == ".m" || ext == ".mm")
+   {
+      return module_context::isUserFile(docPath);
+   }
+   else
+   {
+      return false;
+   }
+}
+
+void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   // ignore if the file doesn't have a path
+   if (pDoc->path().empty())
+      return;
+
+   // resolve to a full path
+   FilePath docPath = module_context::resolveAliasedPath(pDoc->path());
+
+   // verify that it's an indexable C/C++ file
+   if (!isIndexableDoc(docPath))
+      return;
+
+   // update unsaved files (we do this even if the document is dirty
+   // as even in this case it will need to be removed from the list
+   // of unsaved files)
+   unsavedFiles().update(pDoc);
+
+   // update the main index (but only if it's not dirty as unsaved
+   // edits are tracked separaely)
+   if (!pDoc->dirty())
+   {
+
+   }
+}
+
 
 // diagnostic function to assist in determine whether/where
 // libclang was loaded from (and any errors which occurred
@@ -69,6 +111,17 @@ Error initialize()
    methodDef.numArgs = 0;
    r::routines::addCallMethod(methodDef);
 
+   // subscribe to onSourceDocUpdated (used for maintaining both the
+   // main source index and the unsaved files)
+   source_database::events().onDocUpdated.connect(onSourceDocUpdated);
+
+   // connect source doc removed events to unsaved files)
+   source_database::events().onDocRemoved.connect(
+            boost::bind(&UnsavedFiles::remove, &unsavedFiles(), _1));
+   source_database::events().onRemoveAll.connect(
+            boost::bind(&UnsavedFiles::removeAll, &unsavedFiles()));
+
+   // return success
    return Success();
 }
 

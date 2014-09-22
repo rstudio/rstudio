@@ -16,13 +16,28 @@
 #ifndef SESSION_MODULES_CLANG_SOURCE_INDEX_HPP
 #define SESSION_MODULES_CLANG_SOURCE_INDEX_HPP
 
+#include <boost/noncopyable.hpp>
+
+#include "Clang.hpp"
 
 namespace session {
 namespace modules {      
 namespace clang {
 
+class SourceIndex : boost::noncopyable
+{
+public:
+   SourceIndex(int excludeDeclarationsFromPCH, int displayDiagnostics);
+   virtual ~SourceIndex();
 
-   
+   unsigned getGlobalOptions();
+   void setGlobalOptions(unsigned options);
+
+private:
+   CXIndex index_;
+};
+
+
 } // namespace clang
 } // namepace handlers
 } // namesapce session

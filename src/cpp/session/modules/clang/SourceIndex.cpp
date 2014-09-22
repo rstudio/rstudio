@@ -30,8 +30,32 @@ namespace session {
 namespace modules { 
 namespace clang {
 
+SourceIndex::SourceIndex(int excludeDeclarationsFromPCH, int displayDiagnostics)
+{
+   index_ = clang().createIndex(excludeDeclarationsFromPCH,
+                                displayDiagnostics);
+}
 
+SourceIndex::~SourceIndex()
+{
+   try
+   {
+      clang().disposeIndex(index_);
+   }
+   catch(...)
+   {
+   }
+}
 
+unsigned SourceIndex::getGlobalOptions()
+{
+   return clang().CXIndex_getGlobalOptions(index_);
+}
+
+void SourceIndex::setGlobalOptions(unsigned options)
+{
+   clang().CXIndex_setGlobalOptions(index_, options);
+}
 
 } // namespace clang
 } // namespace modules

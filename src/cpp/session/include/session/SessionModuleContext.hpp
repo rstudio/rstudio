@@ -686,6 +686,8 @@ core::json::Object plotExportFormat(const std::string& name,
 core::Error createSelfContainedHtml(const core::FilePath& sourceFilePath,
                                     const core::FilePath& targetFilePath);
 
+bool isUserFile(const core::FilePath& filePath);
+
 } // namespace module_context
 } // namespace session
 

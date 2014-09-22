@@ -1707,5 +1707,29 @@ Error createSelfContainedHtml(const FilePath& sourceFilePath,
    return func.call();
 }
 
+bool isUserFile(const FilePath& filePath)
+{
+   if (projects::projectContext().hasProject())
+   {
+      // if we are in a package project then screen our src- files
+      if (projects::projectContext().config().buildType ==
+                                              r_util::kBuildTypePackage)
+      {
+          FilePath pkgPath = projects::projectContext().buildTargetPath();
+          std::string pkgRelative = filePath.relativePath(pkgPath);
+          if (boost::algorithm::starts_with(pkgRelative, "src-"))
+             return false;
+      }
+
+      // screen the packrat directory
+      FilePath projPath = projects::projectContext().directory();
+      std::string pkgRelative = filePath.relativePath(projPath);
+      if (boost::algorithm::starts_with(pkgRelative, "packrat/"))
+         return false;
+   }
+
+   return true;
+}
+
 } // namespace module_context         
 } // namespace session
