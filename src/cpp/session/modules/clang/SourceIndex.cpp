@@ -15,14 +15,8 @@
 
 #include "SourceIndex.hpp"
 
-
-#include "libclang/libclang.hpp"
-
-// SourceIndex is maintained using file system and source editor callbacks
-
-
-// Separate unsavedFiles structure maintained using sourceEditor callbacks
-
+#include "Clang.hpp"
+#include "UnsavedFiles.hpp"
 
 using namespace core ;
 
@@ -30,16 +24,23 @@ namespace session {
 namespace modules { 
 namespace clang {
 
-SourceIndex::SourceIndex(int excludeDeclarationsFromPCH, int displayDiagnostics)
+SourceIndex::SourceIndex()
 {
-   index_ = clang().createIndex(excludeDeclarationsFromPCH,
-                                displayDiagnostics);
+   index_ = clang().createIndex(0, 0);
 }
 
 SourceIndex::~SourceIndex()
 {
    try
    {
+      // dispose all translation units
+      for(TranslationUnits::const_iterator it = translationUnits_.begin();
+          it != translationUnits_.end(); ++it)
+      {
+         clang().disposeTranslationUnit(it->second);
+      }
+
+      // dispose the index
       clang().disposeIndex(index_);
    }
    catch(...)
@@ -56,6 +57,70 @@ void SourceIndex::setGlobalOptions(unsigned options)
 {
    clang().CXIndex_setGlobalOptions(index_, options);
 }
+
+void SourceIndex::updateTranslationUnit(const std::string& filename)
+{
+   // do we already have a translation unit for this filename?
+   TranslationUnits::iterator it = translationUnits_.find(filename);
+   if (it != translationUnits_.end())
+   {
+      // just reparse the translation unit
+      clang().reparseTranslationUnit(it->second,
+                                     unsavedFiles().numUnsavedFiles(),
+                                     unsavedFiles().unsavedFilesArray(),
+                                     clang().defaultReparseOptions(it->second));
+   }
+   else
+   {
+
+      // TODO: get the command line for file compliations and use it to
+      // create the translation unit
+      /*
+      // get the command line for this file's compilation
+      int numClangCommandLineArgs  = 0;
+      const char * const *clangCommandLineArgs = NULL;
+
+      // create a new translation unit from the file
+      CXTranslationUnit tu = clang().createTranslationUnitFromSourceFile(
+                                    index_,
+                                    filename.c_str(),
+                                    numClangCommandLineArgs,
+                                    clangCommandLineArgs,
+                                    unsavedFiles().numUnsavedFiles(),
+                                    unsavedFiles().unsavedFilesArray());
+
+      // save it for future reference
+      translationUnits_[filename] = tu;
+      */
+   }
+}
+
+void SourceIndex::removeTranslationUnit(const std::string& filename)
+{
+   TranslationUnits::iterator it = translationUnits_.find(filename);
+   if (it != translationUnits_.end())
+   {
+      clang().disposeTranslationUnit(it->second);
+      translationUnits_.erase(it->first);
+   }
+}
+
+CXTranslationUnit SourceIndex::getTranslationUnit(const std::string& filename)
+{
+   TranslationUnits::const_iterator it = translationUnits_.find(filename);
+   if (it != translationUnits_.end())
+      return it->second;
+   else
+      return NULL;
+}
+
+// singleton
+SourceIndex& sourceIndex()
+{
+   static SourceIndex instance;
+   return instance;
+}
+
 
 } // namespace clang
 } // namespace modules

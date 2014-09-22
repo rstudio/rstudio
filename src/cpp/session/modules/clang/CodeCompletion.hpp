@@ -1,5 +1,5 @@
 /*
- * SourceIndex.hpp
+ * CodeCompletion.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,10 +13,8 @@
  *
  */
 
-#ifndef SESSION_MODULES_CLANG_SOURCE_INDEX_HPP
-#define SESSION_MODULES_CLANG_SOURCE_INDEX_HPP
-
-#include <map>
+#ifndef SESSION_MODULES_CLANG_CODE_COMPLETION_HPP
+#define SESSION_MODULES_CLANG_CODE_COMPLETION_HPP
 
 #include <boost/noncopyable.hpp>
 
@@ -26,31 +24,35 @@ namespace session {
 namespace modules {      
 namespace clang {
 
-class SourceIndex : boost::noncopyable
+class CodeCompleteResults : boost::noncopyable
 {
 public:
-   SourceIndex();
-   virtual ~SourceIndex();
+   explicit CodeCompleteResults(CXCodeCompleteResults* pResults)
+      : pResults_(pResults)
+   {
+   }
 
-   unsigned getGlobalOptions();
-   void setGlobalOptions(unsigned options);
+   ~CodeCompleteResults();
 
-   void updateTranslationUnit(const std::string& filename);
-   void removeTranslationUnit(const std::string& filename);
-   CXTranslationUnit getTranslationUnit(const std::string& filename);
+   void sort();
+
+   unsigned long long getContexts();
+
 
 private:
-   CXIndex index_;
-   typedef std::map<std::string,CXTranslationUnit> TranslationUnits;
-   TranslationUnits translationUnits_;
+   CXCodeCompleteResults* pResults_;
 };
 
-// singleton
-SourceIndex& sourceIndex();
+
+boost::shared_ptr<CodeCompleteResults> codeCompleteAt(
+                                                  const std::string& filename,
+                                                  unsigned line,
+                                                  unsigned column);
+
 
 
 } // namespace clang
 } // namepace handlers
 } // namesapce session
 
-#endif // SESSION_MODULES_CLANG_SOURCE_INDEX_HPP
+#endif // SESSION_MODULES_CLANG_CODE_COMPLETION_HPP

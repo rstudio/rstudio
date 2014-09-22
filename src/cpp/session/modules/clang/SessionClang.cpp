@@ -21,9 +21,11 @@
 #include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/IncrementalFileChangeHandler.hpp>
 
 #include "Clang.hpp"
 #include "UnsavedFiles.hpp"
+#include "SourceIndex.hpp"
 
 using namespace core ;
 
@@ -33,17 +35,40 @@ namespace clang {
 
 namespace {
 
-bool isIndexableDoc(const FilePath& docPath)
+bool isCppSourceDoc(const FilePath& docPath, bool includeHeaders)
 {
-   std::string ext = docPath.extensionLowerCase();
-   if (ext == ".h" || ext == ".hpp" || ext == ".c" || ext == ".cc" ||
-       ext == ".cpp" || ext == ".m" || ext == ".mm")
+   std::string ex = docPath.extensionLowerCase();
+   if (ex == ".c" || ex == ".cc" || ex == ".cpp" || ex == ".m" || ex == ".mm"
+       || (includeHeaders && (ex == ".h" || ex == ".hpp")))
    {
       return module_context::isUserFile(docPath);
    }
    else
    {
       return false;
+   }
+}
+
+bool translationUnitFilter(const FileInfo& fileInfo)
+{
+   return isCppSourceDoc(FilePath(fileInfo.absolutePath()), false);
+}
+
+void translationUnitChangeHandler(const core::system::FileChangeEvent& event)
+{
+   using namespace core::system;
+
+   switch(event.type())
+   {
+      case FileChangeEvent::FileAdded:
+      case FileChangeEvent::FileModified:
+         sourceIndex().updateTranslationUnit(event.fileInfo().absolutePath());
+         break;
+      case FileChangeEvent::FileRemoved:
+         sourceIndex().removeTranslationUnit(event.fileInfo().absolutePath());
+         break;
+      case FileChangeEvent::None:
+         break;
    }
 }
 
@@ -57,7 +82,7 @@ void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
    FilePath docPath = module_context::resolveAliasedPath(pDoc->path());
 
    // verify that it's an indexable C/C++ file
-   if (!isIndexableDoc(docPath))
+   if (!isCppSourceDoc(docPath, true))
       return;
 
    // update unsaved files (we do this even if the document is dirty
@@ -66,11 +91,9 @@ void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
    unsavedFiles().update(pDoc);
 
    // update the main index (but only if it's not dirty as unsaved
-   // edits are tracked separaely)
+   // edits are tracked separately)
    if (!pDoc->dirty())
-   {
-
-   }
+      sourceIndex().updateTranslationUnit(docPath.absolutePath());
 }
 
 
@@ -92,6 +115,9 @@ SEXP rs_isClangAvailable()
    return r::sexp::create(isAvailable, &rProtect);
 }
 
+// incremental file change handler
+boost::scoped_ptr<IncrementalFileChangeHandler> pFileChangeHandler;
+
 } // anonymous namespace
    
 bool isClangAvailable()
@@ -112,14 +138,24 @@ Error initialize()
    r::routines::addCallMethod(methodDef);
 
    // subscribe to onSourceDocUpdated (used for maintaining both the
-   // main source index and the unsaved files)
+   // main source index and the unsaved files list)
    source_database::events().onDocUpdated.connect(onSourceDocUpdated);
 
-   // connect source doc removed events to unsaved files)
+   // connect source doc removed events to unsaved files list
    source_database::events().onDocRemoved.connect(
-            boost::bind(&UnsavedFiles::remove, &unsavedFiles(), _1));
+             boost::bind(&UnsavedFiles::remove, &unsavedFiles(), _1));
    source_database::events().onRemoveAll.connect(
-            boost::bind(&UnsavedFiles::removeAll, &unsavedFiles()));
+             boost::bind(&UnsavedFiles::removeAll, &unsavedFiles()));
+
+   // create incremental file change handler (this is used for updating
+   // the main source index). also subscribe it to the file monitor
+   pFileChangeHandler.reset(new IncrementalFileChangeHandler(
+             translationUnitFilter,
+             translationUnitChangeHandler,
+             boost::posix_time::milliseconds(200),
+             boost::posix_time::milliseconds(20),
+             false)); /* allow indexing during idle time */
+   pFileChangeHandler->subscribeToFileMonitor("C++ Code Completion");
 
    // return success
    return Success();

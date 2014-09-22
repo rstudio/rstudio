@@ -115,6 +115,7 @@ set (SESSION_SOURCE_FILES
    modules/build/SessionBuildErrors.cpp
    modules/build/SessionSourceCpp.cpp
    modules/clang/Clang.cpp
+   modules/clang/CodeCompletion.cpp
    modules/clang/SessionClang.cpp
    modules/clang/SourceIndex.cpp
    modules/clang/UnsavedFiles.cpp
