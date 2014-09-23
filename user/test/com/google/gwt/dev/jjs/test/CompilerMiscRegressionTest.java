@@ -25,7 +25,6 @@ import com.google.gwt.dev.jjs.test.overrides.package2.SomeSubClassInAnotherPacka
 import com.google.gwt.dev.jjs.test.overrides.package2.SomeSubSubClassInAnotherPackage;
 import com.google.gwt.dev.jjs.test.overrides.package3.SomeInterface;
 import com.google.gwt.dev.jjs.test.overrides.package3.SomePackageConfusedParent;
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.ArrayList;
@@ -155,21 +154,6 @@ public class CompilerMiscRegressionTest extends GWTTestCase {
     float[] dest = copy(src, new float[3]);
 
     assertEqualContents(src, dest);
-  }
-
-  @SuppressWarnings("null")
-  public void testJsoShouldNullPointerExceptionInDevMode() {
-    com.google.gwt.dom.client.Element foo = null;
-    try {
-      foo.setPropertyString("x", "y");
-      fail("Should have thrown Exception");
-    } catch (Exception npe) {
-      // is not yet a NullPointerException in prod mode
-    }
-    // once foo is not null, then it works
-    foo = Document.get().createDivElement();
-    foo.setPropertyString("x", "y");
-    assertEquals("y", foo.getPropertyString("x"));
   }
 
   /**
