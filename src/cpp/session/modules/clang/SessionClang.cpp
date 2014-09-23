@@ -130,30 +130,6 @@ SEXP rs_isLibClangAvailable()
 // incremental file change handler
 boost::scoped_ptr<IncrementalFileChangeHandler> pFileChangeHandler;
 
-
-void testRsclangHelper()
-{
-   FilePath rsclangPath = options().rsclangPath().complete("rsclang");
-   core::system::fixupExecutablePath(&rsclangPath);
-
-   core::system::ProcessResult result;
-   Error error = core::system::runProgram(rsclangPath.absolutePath(),
-                                          std::vector<std::string>(),
-                                          std::string(),
-                                          core::system::ProcessOptions(),
-                                          &result);
-
-   std::cerr << rsclangPath << std::endl;
-
-   if (error)
-      std::cerr << error.summary() << std::endl;
-   else if (result.exitStatus != EXIT_SUCCESS)
-      std::cerr << "failed to run rsclang " << result.exitStatus << std::endl;
-   else
-      std::cerr << "ran rsclang" << std::endl;
-}
-
-
 } // anonymous namespace
    
 bool isAvailable()
@@ -165,9 +141,6 @@ Error initialize()
 {
    // attempt to load clang interface
    loadLibClang();
-
-   // confirm that we can run rsclang
-   testRsclangHelper();
 
    // register diagnostics function
    R_CallMethodDef methodDef ;
