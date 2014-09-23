@@ -15,13 +15,12 @@
 
 #include "TranslationUnit.hpp"
 
-#include "Clang.hpp"
 #include "UnsavedFiles.hpp"
-#include "Utils.hpp"
 
 namespace session {
 namespace modules { 
 namespace clang {
+namespace libclang {
 
 std::string TranslationUnit::getSpelling() const
 {
@@ -53,6 +52,8 @@ CodeCompleteResults TranslationUnit::codeCompleteAt(unsigned line,
    return CodeCompleteResults(pResults);
 }
 
+
+} // namespace libclang
 } // namespace clang
 } // namespace modules
 } // namesapce session

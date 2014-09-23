@@ -18,12 +18,13 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "Clang.hpp"
+#include "LibClang.hpp"
 #include "SourceLocation.hpp"
 
 namespace session {
 namespace modules {      
 namespace clang {
+namespace libclang {
 
 class Diagnostic
 {
@@ -52,7 +53,7 @@ private:
    boost::shared_ptr<CXDiagnostic> pDiagnostic_;
 };
 
-
+} // namespace libclang
 } // namespace clang
 } // namepace handlers
 } // namesapce session

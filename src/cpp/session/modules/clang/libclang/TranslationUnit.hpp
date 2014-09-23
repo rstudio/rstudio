@@ -17,13 +17,14 @@
 #define SESSION_MODULES_CLANG_TRANSLATION_UNIT_HPP
 
 
-#include "Clang.hpp"
+#include "LibClang.hpp"
 #include "Diagnostic.hpp"
 #include "CodeCompleteResults.hpp"
 
 namespace session {
 namespace modules {      
 namespace clang {
+namespace libclang {
 
 class TranslationUnit
 {
@@ -55,6 +56,8 @@ private:
    CXTranslationUnit tu_;
 };
 
+
+} // namespace libclang
 } // namespace clang
 } // namepace handlers
 } // namesapce session

@@ -17,13 +17,13 @@
 
 #include "SourceIndex.hpp"
 #include "UnsavedFiles.hpp"
-#include "Utils.hpp"
 
 using namespace core ;
 
 namespace session {
 namespace modules { 
 namespace clang {
+namespace libclang {
 
 namespace {
 
@@ -90,7 +90,7 @@ unsigned long long CodeCompleteResults::getContexts() const
 }
 
 
-
+} // namespace libclang
 } // namespace clang
 } // namespace modules
 } // namesapce session

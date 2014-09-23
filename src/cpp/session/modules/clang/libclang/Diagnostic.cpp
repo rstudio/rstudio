@@ -17,14 +17,13 @@
 
 #include <boost/make_shared.hpp>
 
-#include "Clang.hpp"
-#include "Utils.hpp"
 
 using namespace core ;
 
 namespace session {
 namespace modules { 
 namespace clang {
+namespace libclang {
 
 namespace {
 
@@ -66,7 +65,7 @@ std::string Diagnostic::getSpelling() const
 
 
 
-
+} // namespace libclang
 } // namespace clang
 } // namespace modules
 } // namesapce session

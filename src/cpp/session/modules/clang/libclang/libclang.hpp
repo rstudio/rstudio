@@ -14,6 +14,7 @@
 namespace session {
 namespace modules {
 namespace clang {
+namespace libclang {
 
 struct Version
 {
@@ -64,12 +65,12 @@ private:
    const int patch_;
 };
 
-class libclang : boost::noncopyable
+class LibClang : boost::noncopyable
 {
 public:
    // construction/destruction (copying prohibited)
-   libclang() : pLib_(NULL) {}
-   virtual ~libclang();
+   LibClang() : pLib_(NULL) {}
+   virtual ~LibClang();
 
    // loading
    core::Error load(const std::string& libraryPath,
@@ -592,6 +593,19 @@ private:
    std::string initError_;
 };
 
+// note that this function disposes the underlying CXString so it
+// shouldn't be used after this call
+std::string toStdString(CXString cxStr);
+
+// check for availablity of clang w/ diagnstics
+bool isLibClangAvailable(std::string* pDiagnostics);
+
+// shared instance of lib clang
+bool loadLibClang();
+LibClang& clang();
+
+
+} // namespace libclang
 } // namespace clang
 } // namespace modules
 } // namespace session

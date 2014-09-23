@@ -23,12 +23,10 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/IncrementalFileChangeHandler.hpp>
 
-#include "Clang.hpp"
-#include "UnsavedFiles.hpp"
-#include "SourceIndex.hpp"
+#include "libclang/LibClang.hpp"
+#include "libclang/UnsavedFiles.hpp"
+#include "libclang/SourceIndex.hpp"
 
-
-// TODO: consider generalizing a bit and moving into libclang
 
 // TODO: error and null/empty value handling
 
@@ -38,6 +36,8 @@ using namespace core ;
 namespace session {
 namespace modules { 
 namespace clang {
+
+using namespace libclang;
 
 namespace {
 
@@ -107,11 +107,11 @@ void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 // libclang was loaded from (and any errors which occurred
 // that prevented loading, e.g. inadequate version, missing
 // symbols, etc.)
-SEXP rs_isClangAvailable()
+SEXP rs_isLibClangAvailable()
 {
    // check availability
    std::string diagnostics;
-   bool isAvailable = isClangAvailable(&diagnostics);
+   bool isAvailable = isLibClangAvailable(&diagnostics);
 
    // print diagnostics
    module_context::consoleWriteOutput(diagnostics);
@@ -126,7 +126,7 @@ boost::scoped_ptr<IncrementalFileChangeHandler> pFileChangeHandler;
 
 } // anonymous namespace
    
-bool isClangAvailable()
+bool isAvailable()
 {
    return clang().isLoaded();
 }
@@ -134,12 +134,12 @@ bool isClangAvailable()
 Error initialize()
 {
    // attempt to load clang interface
-   loadClang();
+   loadLibClang();
 
    // register diagnostics function
    R_CallMethodDef methodDef ;
-   methodDef.name = "rs_isClangAvailable" ;
-   methodDef.fun = (DL_FUNC)rs_isClangAvailable;
+   methodDef.name = "rs_isLibClangAvailable" ;
+   methodDef.fun = (DL_FUNC)rs_isLibClangAvailable;
    methodDef.numArgs = 0;
    r::routines::addCallMethod(methodDef);
 

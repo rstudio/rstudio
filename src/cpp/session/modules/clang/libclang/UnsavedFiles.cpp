@@ -15,7 +15,7 @@
 
 #include "UnsavedFiles.hpp"
 
-#include "Clang.hpp"
+#include "LibClang.hpp"
 
 #include <core/StringUtils.hpp>
 
@@ -26,6 +26,7 @@ using namespace core ;
 namespace session {
 namespace modules { 
 namespace clang {
+namespace libclang {
 
 namespace {
 
@@ -129,6 +130,7 @@ std::ostream& operator << (std::ostream& ostr, UnsavedFiles& unsaved)
 }
 
 
+} // namespace libclang
 } // namespace clang
 } // namespace modules
 } // namesapce session

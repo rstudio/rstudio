@@ -17,11 +17,12 @@
 #define SESSION_MODULES_CLANG_SOURCE_LOCATION_HPP
 
 
-#include "Clang.hpp"
+#include "LibClang.hpp"
 
 namespace session {
 namespace modules {      
 namespace clang {
+namespace libclang {
 
 class SourceLocation
 {
@@ -50,7 +51,7 @@ private:
 };
 
 
-
+} // namespace libclang
 } // namespace clang
 } // namepace handlers
 } // namesapce session

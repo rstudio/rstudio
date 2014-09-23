@@ -632,7 +632,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["rmarkdown_available"] =
          modules::rmarkdown::rmarkdownPackageAvailable();
 
-   sessionInfo["clang_available"] = modules::clang::isClangAvailable();
+   sessionInfo["clang_available"] = modules::clang::isAvailable();
 
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)

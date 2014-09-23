@@ -23,11 +23,12 @@
 
 #include <session/SessionSourceDatabase.hpp>
 
-#include "Clang.hpp"
+#include "LibClang.hpp"
 
 namespace session {
 namespace modules {      
 namespace clang {
+namespace libclang {
 
 class UnsavedFiles : boost::noncopyable
 {
@@ -58,6 +59,8 @@ UnsavedFiles& unsavedFiles();
 //  diagnosic helpers
 std::ostream& operator << (std::ostream& ostr, UnsavedFiles& unsaved);
 
+
+} // namespace libclang
 } // namespace clang
 } // namepace handlers
 } // namesapce session

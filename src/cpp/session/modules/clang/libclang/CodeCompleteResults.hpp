@@ -18,12 +18,13 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "Clang.hpp"
+#include "LibClang.hpp"
 #include "Diagnostic.hpp"
 
 namespace session {
 namespace modules {      
 namespace clang {
+namespace libclang {
 
 class CodeCompleteResults
 {
@@ -59,6 +60,7 @@ private:
    boost::shared_ptr<CXCodeCompleteResults*> pResults_;
 };
 
+} // namespace libclang
 } // namespace clang
 } // namepace handlers
 } // namesapce session

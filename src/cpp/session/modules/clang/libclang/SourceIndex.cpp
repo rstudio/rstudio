@@ -15,7 +15,6 @@
 
 #include "SourceIndex.hpp"
 
-#include "Clang.hpp"
 #include "UnsavedFiles.hpp"
 
 using namespace core ;
@@ -23,6 +22,7 @@ using namespace core ;
 namespace session {
 namespace modules { 
 namespace clang {
+namespace libclang {
 
 SourceIndex::SourceIndex()
 {
@@ -134,7 +134,7 @@ SourceIndex& sourceIndex()
    return instance;
 }
 
-
+} // namespace libclang
 } // namespace clang
 } // namespace modules
 } // namesapce session

@@ -20,12 +20,13 @@
 
 #include <boost/noncopyable.hpp>
 
-#include "Clang.hpp"
+#include "LibClang.hpp"
 #include "TranslationUnit.hpp"
 
 namespace session {
 namespace modules {      
 namespace clang {
+namespace libclang {
 
 class SourceIndex : boost::noncopyable
 {
@@ -49,7 +50,7 @@ private:
 // singleton
 SourceIndex& sourceIndex();
 
-
+} // namespace libclang
 } // namespace clang
 } // namepace handlers
 } // namesapce session

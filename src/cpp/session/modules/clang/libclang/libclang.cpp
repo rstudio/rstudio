@@ -1,5 +1,5 @@
 
-#include "libclang.hpp"
+#include "LibClang.hpp"
 
 #include <iostream>
 #include <vector>
@@ -8,9 +8,12 @@
 #include <boost/foreach.hpp>
 
 #include <core/Log.hpp>
+#include <core/FilePath.hpp>
 #include <core/SafeConvert.hpp>
 
 #include <core/system/LibraryLoader.hpp>
+
+#include <session/SessionOptions.hpp>
 
 #define LOAD_CLANG_SYMBOL(name) \
    error = core::system::loadSymbol(pLib_, "clang_" #name, (void**)&name); \
@@ -22,19 +25,95 @@
       return error; \
    }
 
-
 using namespace core;
 
 namespace session {
 namespace modules {
 namespace clang {
+namespace libclang {
 
 namespace {
 
 
+FilePath embeddedLibClangPath()
+{
+#if defined(_WIN64)
+   std::string libclang = "x86_64/libclang.dll";
+#elif defined(_WIN32)
+   std::string libclang = "x86/libclang.dll";
+#elif defined(__APPLE__)
+   std::string libclang = "libclang.dylib";
+#else
+   std::string libclang = "libclang.so";
+#endif
+   return options().libclangPath().childPath(libclang);
+}
+
+
+std::vector<std::string> clangVersions()
+{
+   std::vector<std::string> clangVersions;
+
+   // embedded version
+   clangVersions.push_back(embeddedLibClangPath().absolutePath());
+
+   // platform-specific other versions
+#ifndef _WIN32
+#ifdef __APPLE__
+   clangVersions.push_back("/Applications/Xcode.app/Contents/"
+                           "Developer/Toolchains/XcodeDefault.xctoolchain"
+                           "/usr/lib/libclang.dylib");
+#else
+   clangVersions.push_back("/usr/lib/llvm/libclang.so");
+   clangVersions.push_back("/usr/lib64/llvm/libclang.so");
+   clangVersions.push_back("/usr/lib/i386-linux-gnu/libclang.so.1");
+   clangVersions.push_back("/usr/lib/x86_64-linux-gnu/libclang.so.1");
+#endif
+#endif
+
+   return clangVersions;
+}
+
+// load libclang (using embedded version if possible then search
+// for other versions in well known locations)
+bool loadLibclang(LibClang* pLibClang, std::string* pDiagnostics)
+{
+   // get all possible clang versions
+   std::ostringstream ostr;
+   std::vector<std::string> versions = clangVersions();
+   BOOST_FOREACH(const std::string& version, versions)
+   {
+      FilePath versionPath(version);
+      ostr << versionPath << std::endl;
+      if (versionPath.exists())
+      {
+         Error error = pLibClang->load(versionPath.absolutePath());
+         if (!error)
+         {
+            ostr << "   LOADED: " << pLibClang->version().asString()
+                 << std::endl;
+            *pDiagnostics = ostr.str();
+            return true;
+         }
+         else
+         {
+            ostr << "   (" << error.getProperty("dlerror") <<  ")" << std::endl;
+         }
+      }
+      else
+      {
+         ostr << "   (Not Found)" << std::endl;
+      }
+   }
+
+   // if we didn't find one by now then we failed
+   *pDiagnostics = ostr.str();
+   return false;
+}
+
 } // anonymous namespace
 
-libclang::~libclang()
+LibClang::~LibClang()
 {
    try
    {
@@ -48,7 +127,7 @@ libclang::~libclang()
 }
 
 
-Error libclang::load(const std::string& libraryPath, Version requiredVersion)
+Error LibClang::load(const std::string& libraryPath, Version requiredVersion)
 {
    // load the library
    Error error = core::system::loadLibrary(libraryPath, &pLib_);
@@ -385,7 +464,7 @@ Error libclang::load(const std::string& libraryPath, Version requiredVersion)
    return Success();
 }
 
-Error libclang::unload()
+Error LibClang::unload()
 {
    if (pLib_ != NULL)
    {
@@ -407,7 +486,7 @@ Error libclang::unload()
 }
 
 
-Version libclang::version() const
+Version LibClang::version() const
 {
    CXString cxVer = getClangVersion();
    std::string versionString(getCString(cxVer));
@@ -439,6 +518,37 @@ Version libclang::version() const
    return Version();
 }
 
+std::string toStdString(CXString cxStr)
+{
+   std::string str(clang().getCString(cxStr));
+   clang().disposeString(cxStr);
+   return str;
+}
+
+
+// check for availablity of clang w/ diagnstics
+bool isLibClangAvailable(std::string* pDiagnostics)
+{
+   LibClang lib;
+   return loadLibclang(&lib, pDiagnostics);
+}
+
+// attempt to load the shared instance of clang
+bool loadLibClang()
+{
+   std::string diagnostics;
+   loadLibclang(&(clang()), &diagnostics);
+   return clang().isLoaded();
+}
+
+// shared instance of libclang
+LibClang& clang()
+{
+   static class LibClang instance;
+   return instance;
+}
+
+} // namesapce libclang
 } // namespace clang
 } // namespace modules
 } // namespace session

@@ -15,11 +15,11 @@
 
 #include "SourceLocation.hpp"
 
-#include "Clang.hpp"
 
 namespace session {
 namespace modules { 
 namespace clang {
+namespace libclang {
 
 SourceLocation::SourceLocation()
    : location_(clang().getNullLocation())
@@ -48,6 +48,7 @@ bool SourceLocation::operator!=(const SourceLocation& other) const
    return clang().equalLocations(location_, other.location_) == 0;
 }
 
+} // namespace libclang
 } // namespace clang
 } // namespace modules
 } // namesapce session
