@@ -51,16 +51,24 @@ UnsavedFiles::~UnsavedFiles()
 }
 
 void UnsavedFiles::update(
-                  boost::shared_ptr<source_database::SourceDocument> pDoc)
+                     boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   update(pDoc->id(), pDoc->path(), pDoc->contents(), pDoc->dirty());
+}
+
+void UnsavedFiles::update(const std::string& id,
+                          const std::string& path,
+                          const std::string& contents,
+                          bool dirty)
 {
    // always remove any existing version
-   remove(pDoc->id());
+   remove(id);
 
    // add it if it's dirty
-   if (pDoc->dirty())
+   if (dirty)
    {
       // get a regular file path
-      FilePath filePath = module_context::resolveAliasedPath(pDoc->path());
+      FilePath filePath = module_context::resolveAliasedPath(path);
       std::string path = filePath.absolutePath();
 
       // allocate an CXUnsavedFile
@@ -70,16 +78,16 @@ void UnsavedFiles::update(
                 path.data() + path.length() + 1,
                 filename);
       unsavedFile.Filename = filename;
-      char* contents = new char[pDoc->contents().length()];
-      std::copy(pDoc->contents().data(),
-                pDoc->contents().data() + pDoc->contents().length(),
-                contents);
-      unsavedFile.Contents = contents;
-      unsavedFile.Length = pDoc->contents().length();
+      char* buffContents = new char[contents.length()];
+      std::copy(contents.data(),
+                contents.data() + contents.length(),
+                buffContents);
+      unsavedFile.Contents = buffContents;
+      unsavedFile.Length = contents.length();
 
       // add it to the list
       files_.push_back(unsavedFile);
-      idToFilename_[pDoc->id()] = filename;
+      idToFilename_[id] = filename;
    }
 }
 

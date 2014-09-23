@@ -61,6 +61,7 @@ public abstract class
    public abstract AppCommand executeNextChunk();
    public abstract AppCommand goToHelp();
    public abstract AppCommand rcppHelp();
+   public abstract AppCommand printCppCompletions();
    public abstract AppCommand goToFunctionDefinition();
    public abstract AppCommand sourceNavigateBack();
    public abstract AppCommand sourceNavigateForward();

@@ -134,6 +134,11 @@ void SourceIndex::removeTranslationUnit(const std::string& filename)
    }
 }
 
+bool SourceIndex::hasTranslationUnit(const std::string& filename)
+{
+   return translationUnits_.find(filename) != translationUnits_.end();
+}
+
 TranslationUnit SourceIndex::getTranslationUnit(
                                           const std::string& filename) const
 {

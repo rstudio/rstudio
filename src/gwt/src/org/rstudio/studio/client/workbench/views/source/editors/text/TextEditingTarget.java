@@ -369,7 +369,7 @@ public class TextEditingTarget implements
       codeExecution_ = new EditingTargetCodeExecution(docDisplay_, this);
       compilePdfHelper_ = new TextEditingTargetCompilePdfHelper(docDisplay_);
       rmarkdownHelper_ = new TextEditingTargetRMarkdownHelper();
-      cppHelper_ = new TextEditingTargetCppHelper(server);
+      cppHelper_ = new TextEditingTargetCppHelper(server, server);
       presentationHelper_ = new TextEditingTargetPresentationHelper(
                                                                   docDisplay_);
       docDisplay_.setRnwCompletionContext(compilePdfHelper_);
@@ -3290,6 +3290,21 @@ public class TextEditingTarget implements
    void onRcppHelp()
    {
       globalDisplay_.openRStudioLink("rcpp_help");
+   }
+   
+   @Handler
+   void onPrintCppCompletions()
+   {
+      if (docUpdateSentinel_.getPath() != null)
+      {
+         Position position = docDisplay_.getCursorPosition();
+         cppHelper_.printCppCompletions(id_,
+                                        docUpdateSentinel_.getPath(),
+                                        docDisplay_.getCode(),
+                                        dirtyState_.getValue(),
+                                        position.getRow() + 1,
+                                        position.getColumn() + 1);
+      }
    }
 
    @Handler

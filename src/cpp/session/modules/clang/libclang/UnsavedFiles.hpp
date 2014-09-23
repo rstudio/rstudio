@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_MODULES_CLANG_UNSAVED_FILES_HPP
-#define SESSION_MODULES_CLANG_UNSAVED_FILES_HPP
+#ifndef SESSION_MODULES_CLANG_LIBCLANG_UNSAVED_FILES_HPP
+#define SESSION_MODULES_CLANG_LIBCLANG_UNSAVED_FILES_HPP
 
 #include <map>
 #include <iosfwd>
@@ -36,6 +36,10 @@ public:
    UnsavedFiles() {}
    virtual ~UnsavedFiles();
 
+   void update(const std::string& id,
+               const std::string& path,
+               const std::string& contents,
+               bool dirty);
    void update(boost::shared_ptr<source_database::SourceDocument> pDoc);
    void remove(const std::string& id);
    void removeAll();
@@ -65,4 +69,4 @@ std::ostream& operator << (std::ostream& ostr, UnsavedFiles& unsaved);
 } // namepace handlers
 } // namesapce session
 
-#endif // SESSION_MODULES_CLANG_UNSAVED_FILES_HPP
+#endif // SESSION_MODULES_CLANG_LIBCLANG_UNSAVED_FILES_HPP

@@ -70,6 +70,10 @@ public class CppFileType extends TextFileType
          result.add(commands.sourceActiveDocumentWithEcho());
          result.add(commands.rcppHelp());
       }
+      
+      // completions work even in .c files
+      result.add(commands.printCppCompletions());
+      
       return result;
    }
     

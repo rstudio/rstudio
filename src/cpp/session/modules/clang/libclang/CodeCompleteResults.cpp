@@ -30,6 +30,29 @@ namespace {
 
 } // anonymous namespace
 
+// NOTE: this is a toy version of inspecting completion chunks just
+// to see if we can get completion working -- we need to decompose
+// and analyze at a much higher fidelity to do "real" completion
+
+std::string CodeCompleteResult::getText() const
+{
+   std::string text;
+
+   unsigned chunks = clang().getNumCompletionChunks(result_.CompletionString);
+   for (unsigned i = 0; i < chunks; i++)
+   {
+      CXCompletionString cs = result_.CompletionString;
+      if (clang().getCompletionChunkKind(cs, i) != CXCompletionChunk_TypedText)
+         continue;
+
+      std::string chunk = toStdString(clang().getCompletionChunkText(cs, i));
+
+      text += chunk;
+   }
+
+   return text;
+}
+
 CodeCompleteResults:: ~CodeCompleteResults()
 {
    try
@@ -48,23 +71,9 @@ void CodeCompleteResults::sort()
                                      results()->NumResults);
 }
 
-unsigned CodeCompleteResults::getNumChunks() const
+CodeCompleteResult CodeCompleteResults::getResult(unsigned index) const
 {
-   return clang().getNumCompletionChunks(results()->Results->CompletionString);
-}
-
-enum CXCompletionChunkKind CodeCompleteResults::getChunkKind(unsigned idx) const
-{
-   return clang().getCompletionChunkKind(results()->Results->CompletionString,
-                                         idx);
-}
-
-std::string CodeCompleteResults::getChunkText(unsigned idx) const
-{
-   CXString cxText = clang().getCompletionChunkText(
-                                       results()->Results->CompletionString,
-                                       idx);
-   return toStdString(cxText);
+   return CodeCompleteResult(results()->Results[index]);
 }
 
 unsigned CodeCompleteResults::getNumDiagnostics() const
@@ -76,12 +85,6 @@ Diagnostic CodeCompleteResults::getDiagnostic(unsigned index) const
 {
    CXDiagnostic cxDiag = clang().codeCompleteGetDiagnostic(results(), index);
    return Diagnostic(cxDiag);
-}
-
-std::string CodeCompleteResults::getBriefComment() const
-{
-   return toStdString(clang().getCompletionBriefComment(
-                                       results()->Results->CompletionString));
 }
 
 unsigned long long CodeCompleteResults::getContexts() const

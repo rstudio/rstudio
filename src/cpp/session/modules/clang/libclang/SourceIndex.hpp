@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_MODULES_CLANG_SOURCE_INDEX_HPP
-#define SESSION_MODULES_CLANG_SOURCE_INDEX_HPP
+#ifndef SESSION_MODULES_CLANG_LIBCLANG_SOURCE_INDEX_HPP
+#define SESSION_MODULES_CLANG_LIBCLANG_SOURCE_INDEX_HPP
 
 #include <map>
 
@@ -40,6 +40,8 @@ public:
    void updateTranslationUnit(const std::string& filename);
    void removeTranslationUnit(const std::string& filename);
 
+   bool hasTranslationUnit(const std::string& filename);
+
    // NOTE: This can return an empty translation unit if none is found
    // for the specified filename
    TranslationUnit getTranslationUnit(const std::string& filename) const;
@@ -58,4 +60,4 @@ SourceIndex& sourceIndex();
 } // namepace handlers
 } // namesapce session
 
-#endif // SESSION_MODULES_CLANG_SOURCE_INDEX_HPP
+#endif // SESSION_MODULES_CLANG_LIBCLANG_SOURCE_INDEX_HPP

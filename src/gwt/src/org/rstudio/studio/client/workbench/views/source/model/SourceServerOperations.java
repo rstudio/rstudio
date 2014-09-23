@@ -40,6 +40,7 @@ import java.util.HashMap;
 public interface SourceServerOperations extends FilesServerOperations, 
                                                 CodeToolsServerOperations,
                                                 CodeSearchServerOperations,
+                                                CppServerOperations,
                                                 TexServerOperations,
                                                 HTMLPreviewServerOperations,
                                                 BuildServerOperations,

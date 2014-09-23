@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_MODULES_CLANG_CODE_COMPLETE_RESULTS_HPP
-#define SESSION_MODULES_CLANG_CODE_COMPLETE_RESULTS_HPP
+#ifndef SESSION_MODULES_CLANG_LIBCLANG_CODE_COMPLETE_RESULTS_HPP
+#define SESSION_MODULES_CLANG_LIBCLANG_CODE_COMPLETE_RESULTS_HPP
 
 #include <boost/shared_ptr.hpp>
 
@@ -25,6 +25,21 @@ namespace session {
 namespace modules {      
 namespace clang {
 namespace libclang {
+
+class CodeCompleteResult
+{
+public:
+   explicit CodeCompleteResult(CXCompletionResult result)
+      : result_(result)
+   {
+   }
+
+   std::string getText() const;
+
+private:
+   CXCompletionResult result_;
+};
+
 
 class CodeCompleteResults
 {
@@ -41,14 +56,11 @@ public:
 
    void sort();
 
-   unsigned getNumChunks() const;
-   enum CXCompletionChunkKind getChunkKind(unsigned index) const;
-   std::string getChunkText(unsigned index) const;
+   unsigned getNumResults() const { return results()->NumResults; }
+   CodeCompleteResult getResult(unsigned index) const;
 
    unsigned getNumDiagnostics() const;
    Diagnostic getDiagnostic(unsigned index) const;
-
-   std::string getBriefComment() const;
 
    unsigned long long getContexts() const;
 
@@ -65,4 +77,4 @@ private:
 } // namepace handlers
 } // namesapce session
 
-#endif // SESSION_MODULES_CLANG_CODE_COMPLETE_RESULTS_HPP
+#endif // SESSION_MODULES_CLANG_LIBCLANG_CODE_COMPLETE_RESULTS_HPP

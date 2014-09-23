@@ -114,6 +114,7 @@ set (SESSION_SOURCE_FILES
    modules/build/SessionBuildEnvironment.cpp
    modules/build/SessionBuildErrors.cpp
    modules/build/SessionSourceCpp.cpp
+   modules/clang/CodeCompletion.cpp
    modules/clang/SessionClang.cpp
    modules/clang/libclang/CodeCompleteResults.cpp
    modules/clang/libclang/Diagnostic.cpp
@@ -121,7 +122,7 @@ set (SESSION_SOURCE_FILES
    modules/clang/libclang/SourceIndex.cpp
    modules/clang/libclang/SourceLocation.cpp
    modules/clang/libclang/TranslationUnit.cpp
-   modules/clang/libclang//UnsavedFiles.cpp
+   modules/clang/libclang/UnsavedFiles.cpp
    modules/data/SessionData.cpp
    modules/data/DataViewer.cpp
    modules/environment/EnvironmentMonitor.cpp

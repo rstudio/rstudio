@@ -15,6 +15,10 @@
 
 #include "SessionClang.hpp"
 
+#include <core/Exec.hpp>
+
+#include <core/json/JsonRpc.hpp>
+
 #include <core/system/System.hpp>
 
 #include <r/RSexp.hpp>
@@ -26,6 +30,8 @@
 #include "libclang/LibClang.hpp"
 #include "libclang/UnsavedFiles.hpp"
 #include "libclang/SourceIndex.hpp"
+
+#include "CodeCompletion.hpp"
 
 using namespace core ;
 
@@ -92,10 +98,13 @@ void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
    // of unsaved files)
    unsavedFiles().update(pDoc);
 
-   // update the main index (but only if it's not dirty as unsaved
-   // edits are tracked separately)
-   if (!pDoc->dirty())
-      sourceIndex().updateTranslationUnit(docPath.absolutePath());
+   // update the main index if we've either never seen this doc
+   // or if it's not dirty (the former case is needed for resuming
+   // from suspend and ensuring that docs alive in the editor but
+   // not the project filesystem are tracked)
+   std::string path = docPath.absolutePath();
+   if (!sourceIndex().hasTranslationUnit(path) || !pDoc->dirty())
+      sourceIndex().updateTranslationUnit(path);
 }
 
 
@@ -119,6 +128,7 @@ SEXP rs_isLibClangAvailable()
 
 // incremental file change handler
 boost::scoped_ptr<IncrementalFileChangeHandler> pFileChangeHandler;
+
 
 } // anonymous namespace
    
@@ -158,6 +168,13 @@ Error initialize()
              boost::posix_time::milliseconds(20),
              false)); /* allow indexing during idle time */
    pFileChangeHandler->subscribeToFileMonitor("C++ Code Completion");
+
+   ExecBlock initBlock ;
+   using boost::bind;
+   using namespace module_context;
+   initBlock.addFunctions()
+      (bind(registerRpcMethod, "print_cpp_completions", printCppCompletions));
+   return initBlock.execute();
 
    // return success
    return Success();
