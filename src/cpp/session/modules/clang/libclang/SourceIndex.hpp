@@ -39,6 +39,9 @@ public:
 
    void updateTranslationUnit(const std::string& filename);
    void removeTranslationUnit(const std::string& filename);
+
+   // NOTE: This can return an empty translation unit if none is found
+   // for the specified filename
    TranslationUnit getTranslationUnit(const std::string& filename) const;
 
 private:

@@ -49,7 +49,14 @@ CodeCompleteResults TranslationUnit::codeCompleteAt(unsigned line,
                                  unsavedFiles().numUnsavedFiles(),
                                  clang().defaultCodeCompleteOptions());
 
-   return CodeCompleteResults(pResults);
+   if (pResults != NULL)
+   {
+      return CodeCompleteResults(pResults);
+   }
+   else
+   {
+      return CodeCompleteResults();
+   }
 }
 
 

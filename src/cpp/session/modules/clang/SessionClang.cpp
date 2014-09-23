@@ -27,10 +27,6 @@
 #include "libclang/UnsavedFiles.hpp"
 #include "libclang/SourceIndex.hpp"
 
-
-// TODO: error and null/empty value handling
-
-
 using namespace core ;
 
 namespace session {

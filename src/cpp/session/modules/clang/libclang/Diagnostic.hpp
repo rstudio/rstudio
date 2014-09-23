@@ -29,15 +29,12 @@ namespace libclang {
 class Diagnostic
 {
 public:
-   Diagnostic() {}
    explicit Diagnostic(CXDiagnostic diagnostic)
       : pDiagnostic_(new CXDiagnostic(diagnostic))
    {
    }
 
    ~Diagnostic();
-
-   bool empty() const { return ! pDiagnostic_; }
 
    std::string format(unsigned options =
                            clang().defaultDiagnosticDisplayOptions()) const;

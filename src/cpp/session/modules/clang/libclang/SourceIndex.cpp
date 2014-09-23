@@ -90,19 +90,38 @@ void SourceIndex::updateTranslationUnit(const std::string& filename)
                             unsavedFiles().numUnsavedFiles(),
                             clang().defaultEditingTranslationUnitOptions());
 
-      // save it for future reference
-      translationUnits_[filename] = tu;
 
+      // save it if we succeeded
+      if (tu != NULL)
+      {
+         translationUnits_[filename] = tu;
+      }
+      else
+      {
+         LOG_ERROR_MESSAGE("Error parsing translation unit " + filename);
+      }
    }
 
-   // reparse the translation unit
-   // (according to this thread you need to call both parseTranslationUnit and
-   // reparseTranslationUnit when adding a new file for caching/performance:
-   // http://lists.cs.uiuc.edu/pipermail/cfe-dev/2013-April/028804.html).
-   clang().reparseTranslationUnit(it->second,
+   // lookup and reparse the translation unit (multiple sources indicate that
+   // you need to immediately reparse the translation unit after creation
+   // in order to get the benefit of precompiled headers). note that this
+   // lookup will fail in the case of error occurring during parsing above
+   it = translationUnits_.find(filename);
+   if (it != translationUnits_.end())
+   {
+      int ret = clang().reparseTranslationUnit(
+                                  it->second,
                                   unsavedFiles().numUnsavedFiles(),
                                   unsavedFiles().unsavedFilesArray(),
                                   clang().defaultReparseOptions(it->second));
+
+      // if this returns an error then we need to dispose the translation unit
+      if (ret != 0)
+      {
+         LOG_ERROR_MESSAGE("Error re-parsing translation unit " + filename);
+         removeTranslationUnit(filename);
+      }
+   }
 }
 
 void SourceIndex::removeTranslationUnit(const std::string& filename)
