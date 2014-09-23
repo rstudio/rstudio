@@ -35,7 +35,8 @@ Diagnostic::~Diagnostic()
 {
    try
    {
-      clang().disposeDiagnostic(diagnostic());
+      if (!empty())
+         clang().disposeDiagnostic(diagnostic());
    }
    catch(...)
    {

@@ -34,7 +34,8 @@ CodeCompleteResults:: ~CodeCompleteResults()
 {
    try
    {
-      clang().disposeCodeCompleteResults(results());
+      if (!empty())
+         clang().disposeCodeCompleteResults(results());
    }
    catch(...)
    {
