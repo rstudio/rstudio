@@ -3295,6 +3295,9 @@ public class TextEditingTarget implements
    @Handler
    void onPrintCppCompletions()
    {
+      if (!session_.getSessionInfo().getClangAvailable())
+         return;
+      
       if (docUpdateSentinel_.getPath() != null)
       {
          Position position = docDisplay_.getCursorPosition();
