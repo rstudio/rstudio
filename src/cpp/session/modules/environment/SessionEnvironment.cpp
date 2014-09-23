@@ -246,10 +246,10 @@ RCNTXT* getFunctionContext(const int depth,
          }
          // Record the depth at which the error handler was found (if at all);
          // we will default to reporting code at the function that invoked
-         // the handler, which is two functions down.
+         // the handler, which is one function down.
          if (findUserCode && isErrorHandlerContext(pRContext))
          {
-            pErrContext = getFunctionContext(currentDepth + 2, false,
+            pErrContext = getFunctionContext(currentDepth + 1, false,
                                              &errorDepth);
          }
       }
