@@ -38,6 +38,16 @@ void SourceLocation::getSpellingLocation(unsigned* pLine,
    clang().getSpellingLocation(location_, NULL, pLine, pColumn, pOffset);
 }
 
+bool SourceLocation::operator==(const SourceLocation& other) const
+{
+   return clang().equalLocations(location_, other.location_) != 0;
+}
+
+bool SourceLocation::operator!=(const SourceLocation& other) const
+{
+   return clang().equalLocations(location_, other.location_) == 0;
+}
+
 } // namespace clang
 } // namespace modules
 } // namesapce session

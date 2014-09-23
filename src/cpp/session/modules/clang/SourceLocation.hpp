@@ -42,6 +42,9 @@ public:
                             unsigned* pColumn,
                             unsigned* pOffset = NULL) const;
 
+   bool operator==(const SourceLocation& other) const ;
+   bool operator!=(const SourceLocation& other) const ;
+
 private:
    CXSourceLocation location_;
 };
