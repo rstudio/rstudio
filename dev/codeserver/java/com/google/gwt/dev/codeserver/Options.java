@@ -56,7 +56,7 @@ public class Options {
   private ImmutableList<String> args;
   private Set<String> tags = new LinkedHashSet<String>();
 
-  private boolean incremental = false;
+  private boolean incremental = true;
   private boolean noPrecompile = false;
   private boolean isCompileTest = false;
   private File workDir;
