@@ -1,5 +1,5 @@
 /*
- * SourceIndex.hpp
+ * TranslationUnit.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,45 +13,44 @@
  *
  */
 
-#ifndef SESSION_MODULES_CLANG_SOURCE_INDEX_HPP
-#define SESSION_MODULES_CLANG_SOURCE_INDEX_HPP
-
-#include <map>
+#ifndef SESSION_MODULES_CLANG_TRANSLATION_UNIT_HPP
+#define SESSION_MODULES_CLANG_TRANSLATION_UNIT_HPP
 
 #include <boost/noncopyable.hpp>
 
 #include "Clang.hpp"
-#include "TranslationUnit.hpp"
 
 namespace session {
 namespace modules {      
 namespace clang {
 
-class SourceIndex : boost::noncopyable
+class TranslationUnit
 {
 public:
-   SourceIndex();
-   virtual ~SourceIndex();
+   TranslationUnit()
+      : tu_(NULL)
+   {
+   }
 
-   unsigned getGlobalOptions() const;
-   void setGlobalOptions(unsigned options);
+   explicit TranslationUnit(CXTranslationUnit tu)
+      : tu_(tu)
+   {
+   }
 
-   void updateTranslationUnit(const std::string& filename);
-   void removeTranslationUnit(const std::string& filename);
-   TranslationUnit getTranslationUnit(const std::string& filename) const;
+   // translation units are managed and disposed by the SourceIndex, so
+   // so instances of this class can be freely copied
+
+   operator CXTranslationUnit() const { return tu_; }
+
+   bool empty() const { return tu_ == NULL; }
+
 
 private:
-   CXIndex index_;
-   typedef std::map<std::string,CXTranslationUnit> TranslationUnits;
-   TranslationUnits translationUnits_;
+   CXTranslationUnit tu_;
 };
-
-// singleton
-SourceIndex& sourceIndex();
-
 
 } // namespace clang
 } // namepace handlers
 } // namesapce session
 
-#endif // SESSION_MODULES_CLANG_SOURCE_INDEX_HPP
+#endif // SESSION_MODULES_CLANG_TRANSLATION_UNIT_HPP

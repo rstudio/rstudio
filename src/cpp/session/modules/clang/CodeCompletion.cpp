@@ -99,8 +99,10 @@ boost::shared_ptr<CodeCompleteResults> codeCompleteAt(
                                                   unsigned column)
 {
    // get the translation unit for this file
-   CXTranslationUnit tu = sourceIndex().getTranslationUnit(filename);
-   CXCodeCompleteResults* pResults = clang().codeCompleteAt(
+   TranslationUnit tu = sourceIndex().getTranslationUnit(filename);
+   if (!tu.empty())
+   {
+      CXCodeCompleteResults* pResults = clang().codeCompleteAt(
                                  tu,
                                  filename.c_str(),
                                  line,
@@ -109,8 +111,13 @@ boost::shared_ptr<CodeCompleteResults> codeCompleteAt(
                                  unsavedFiles().numUnsavedFiles(),
                                  clang().defaultCodeCompleteOptions());
 
-   // return a shared pointer that wraps the results
-   return boost::make_shared<CodeCompleteResults>(pResults);
+      // return a shared pointer that wraps the results
+      return boost::make_shared<CodeCompleteResults>(pResults);
+   }
+   else
+   {
+      return boost::shared_ptr<CodeCompleteResults>();
+   }
 }
 
 } // namespace clang

@@ -27,6 +27,10 @@
 #include "UnsavedFiles.hpp"
 #include "SourceIndex.hpp"
 
+// TODO: consider using internal shared_ptr rather than external
+
+// TODO: error and null/empty value handling
+
 using namespace core ;
 
 namespace session {

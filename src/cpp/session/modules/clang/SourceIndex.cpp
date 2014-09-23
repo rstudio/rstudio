@@ -60,26 +60,32 @@ void SourceIndex::setGlobalOptions(unsigned options)
 
 void SourceIndex::updateTranslationUnit(const std::string& filename)
 {
-   /*
    // check for an existing translation unit, if we don't have one then
    // parse the source file into a translation unit
    TranslationUnits::iterator it = translationUnits_.find(filename);
    if (it == translationUnits_.end())
    {
 
-      // TODO: get the command line for file compliations and use it to
-      // create the translation unit
-
-      // get the command line for this file's compilation
-      int numClangCommandLineArgs  = 0;
-      const char * const *clangCommandLineArgs = NULL;
+      // for now we use the default R command line args for an Rcpp
+      // package on OSX. We ultimately need to do this dynamically.
+      // The best way to accomplish this would seem to be the creation
+      // of a compliation database json file and then the reading of it
+      // via clang_CompilationDatabase_getCompileCommands
+      const char *args[] = {
+         "-I/Library/Frameworks/R.framework/Resources/include",
+         "-DNDEBUG",
+         "-I/usr/local/include/freetype2",
+         "-I/opt/X11/include",
+         "-I/Library/Frameworks/R.framework/Resources/library/Rcpp/include"
+      };
+      int numArgs = sizeof(args) / sizeof(*args);
 
       // create a new translation unit from the file
       CXTranslationUnit tu = clang().parseTranslationUnit(
                             index_,
                             filename.c_str(),
-                            clangCommandLineArgs,
-                            numClangCommandLineArgs,
+                            args,
+                            numArgs,
                             unsavedFiles().unsavedFilesArray(),
                             unsavedFiles().numUnsavedFiles(),
                             clang().defaultEditingTranslationUnitOptions());
@@ -97,7 +103,6 @@ void SourceIndex::updateTranslationUnit(const std::string& filename)
                                   unsavedFiles().numUnsavedFiles(),
                                   unsavedFiles().unsavedFilesArray(),
                                   clang().defaultReparseOptions(it->second));
-   */
 }
 
 void SourceIndex::removeTranslationUnit(const std::string& filename)
@@ -110,15 +115,17 @@ void SourceIndex::removeTranslationUnit(const std::string& filename)
    }
 }
 
-CXTranslationUnit SourceIndex::getTranslationUnit(
+TranslationUnit SourceIndex::getTranslationUnit(
                                           const std::string& filename) const
 {
    TranslationUnits::const_iterator it = translationUnits_.find(filename);
    if (it != translationUnits_.end())
-      return it->second;
+      return TranslationUnit(it->second);
    else
-      return NULL;
+      return TranslationUnit();
 }
+
+
 
 // singleton
 SourceIndex& sourceIndex()
