@@ -35,11 +35,11 @@ namespace clang {
 
 namespace {
 
-bool isCppSourceDoc(const FilePath& docPath, bool includeHeaders)
+bool isCppSourceDoc(const FilePath& docPath)
 {
    std::string ex = docPath.extensionLowerCase();
-   if (ex == ".c" || ex == ".cc" || ex == ".cpp" || ex == ".m" || ex == ".mm"
-       || (includeHeaders && (ex == ".h" || ex == ".hpp")))
+   if (ex == ".c" || ex == ".cc" || ex == ".cpp" || ex == ".m" ||
+       ex == ".mm" || ex == ".h" || ex == ".hpp")
    {
       return module_context::isUserFile(docPath);
    }
@@ -51,7 +51,7 @@ bool isCppSourceDoc(const FilePath& docPath, bool includeHeaders)
 
 bool translationUnitFilter(const FileInfo& fileInfo)
 {
-   return isCppSourceDoc(FilePath(fileInfo.absolutePath()), false);
+   return isCppSourceDoc(FilePath(fileInfo.absolutePath()));
 }
 
 void translationUnitChangeHandler(const core::system::FileChangeEvent& event)
@@ -82,7 +82,7 @@ void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
    FilePath docPath = module_context::resolveAliasedPath(pDoc->path());
 
    // verify that it's an indexable C/C++ file
-   if (!isCppSourceDoc(docPath, true))
+   if (!isCppSourceDoc(docPath))
       return;
 
    // update unsaved files (we do this even if the document is dirty
