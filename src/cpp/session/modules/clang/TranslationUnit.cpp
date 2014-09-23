@@ -17,10 +17,26 @@
 
 #include "Clang.hpp"
 #include "UnsavedFiles.hpp"
+#include "Utils.hpp"
 
 namespace session {
 namespace modules { 
 namespace clang {
+
+std::string TranslationUnit::getSpelling() const
+{
+   return toStdString(clang().getTranslationUnitSpelling(tu_));
+}
+
+unsigned TranslationUnit::getNumDiagnostics() const
+{
+   return clang().getNumDiagnostics(tu_);
+}
+
+Diagnostic TranslationUnit::getDiagnostic(unsigned index) const
+{
+   return Diagnostic(clang().getDiagnostic(tu_, index));
+}
 
 CodeCompleteResults TranslationUnit::codeCompleteAt(unsigned line,
                                                     unsigned column)

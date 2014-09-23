@@ -19,6 +19,7 @@
 #include <boost/noncopyable.hpp>
 
 #include "Clang.hpp"
+#include "Diagnostic.hpp"
 #include "CodeCompleteResults.hpp"
 
 namespace session {
@@ -44,6 +45,11 @@ public:
    operator CXTranslationUnit() const { return tu_; }
 
    bool empty() const { return ! tu_; }
+
+   std::string getSpelling() const;
+
+   unsigned getNumDiagnostics() const;
+   Diagnostic getDiagnostic(unsigned index) const;
 
    CodeCompleteResults codeCompleteAt(unsigned line, unsigned column);
 
