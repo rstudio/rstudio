@@ -267,6 +267,35 @@ public class CompilerTest extends ArgProcessorTestBase {
           "  }",
           "}");
 
+  private MockJavaResource superClassOrderEntryPointResource =
+      JavaResourceBase.createMockJavaResource("com.foo.TestEntryPoint",
+          "package com.foo;",
+          "import com.google.gwt.core.client.EntryPoint;",
+          "public class TestEntryPoint implements EntryPoint {",
+          "  @Override",
+          "  public void onModuleLoad() {",
+          "    SuperClass superClass = new SuperClass();",
+          "    ASubClass aSubClass = new ASubClass();",
+          "  }",
+          "}");
+
+  private MockJavaResource referencedBySuperClassResource =
+      JavaResourceBase.createMockJavaResource("com.foo.ReferencedBySuperClass",
+          "package com.foo;",
+          "public class ReferencedBySuperClass {}");
+
+  private MockJavaResource superClassResource =
+      JavaResourceBase.createMockJavaResource("com.foo.SuperClass",
+          "package com.foo;",
+          "public class SuperClass {",
+          "  ReferencedBySuperClass referencedBySuperClass = new ReferencedBySuperClass();",
+          "}");
+
+  private MockJavaResource aSubClassResource =
+      JavaResourceBase.createMockJavaResource("com.foo.ASubClass",
+          "package com.foo;",
+          "public class ASubClass extends SuperClass {}");
+
   private MockJavaResource modifiedSuperEntryPointResource =
       JavaResourceBase.createMockJavaResource("com.foo.TestEntryPoint",
           "package com.foo;",
@@ -638,6 +667,15 @@ public class CompilerTest extends ArgProcessorTestBase {
     checkPerFileRecompile_dateStampChange(JsOutputOption.DETAILED);
   }
 
+  public void testPerFileRecompile_superClassOrder() throws UnableToCompleteException, IOException,
+      InterruptedException {
+    // Linked output is sorted alphabetically except that super-classes come before sub-classes. If
+    // on recompile a sub-class -> super-class relationship is lost then a sub-class with an
+    // alphabetically earlier name might start linking out before the super-class.
+    checkPerFileRecompile_superClassOrder(JsOutputOption.PRETTY);
+    checkPerFileRecompile_superClassOrder(JsOutputOption.DETAILED);
+  }
+
   public void testPerFileRecompile_deterministicUiBinder() throws UnableToCompleteException, IOException,
       InterruptedException {
     checkPerFileRecompile_deterministicUiBinder(JsOutputOption.PRETTY);
@@ -885,6 +923,17 @@ public class CompilerTest extends ArgProcessorTestBase {
         stringSet("com.foo.TestEntryPoint", "com.foo.SimpleModel"), output);
 
     assertTrue(originalJs.equals(relinkedJs));
+  }
+
+  private void checkPerFileRecompile_superClassOrder(JsOutputOption output)
+      throws UnableToCompleteException, IOException, InterruptedException {
+    // Mark ReferencedBySuperClassResource modified, so that SuperClass becomes stale. This will
+    // result in SuperClass's indexing being rebuilt but NOT ASubClasses's. If there is a bug in the
+    // index updates then the link output ordering will change.
+    checkRecompiledModifiedApp("com.foo.SimpleModule", Lists.newArrayList(simpleModuleResource,
+        superClassOrderEntryPointResource, referencedBySuperClassResource, superClassResource,
+        aSubClassResource), referencedBySuperClassResource, referencedBySuperClassResource,
+        stringSet("com.foo.SuperClass", "com.foo.ReferencedBySuperClass"), output);
   }
 
   private void checkPerFileRecompile_deterministicUiBinder(JsOutputOption output)
