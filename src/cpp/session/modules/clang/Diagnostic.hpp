@@ -16,7 +16,7 @@
 #ifndef SESSION_MODULES_CLANG_DIAGNOSTIC_HPP
 #define SESSION_MODULES_CLANG_DIAGNOSTIC_HPP
 
-#include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include "Clang.hpp"
 
@@ -24,15 +24,18 @@ namespace session {
 namespace modules {      
 namespace clang {
 
-class Diagnostic : boost::noncopyable
+class Diagnostic
 {
 public:
+   Diagnostic() {}
    explicit Diagnostic(CXDiagnostic diagnostic)
-      : diagnostic_(diagnostic)
+      : pDiagnostic_(new CXDiagnostic(diagnostic))
    {
    }
 
    ~Diagnostic();
+
+   bool empty() const { return ! pDiagnostic_; }
 
    std::string format(unsigned options =
                            clang().defaultDiagnosticDisplayOptions()) const;
@@ -41,9 +44,11 @@ public:
    CXSourceLocation getLocation() const;
    std::string getSpelling() const;
 
+private:
+   CXDiagnostic diagnostic() const { return *pDiagnostic_; }
 
 private:
-   CXDiagnostic diagnostic_;
+   boost::shared_ptr<CXDiagnostic> pDiagnostic_;
 };
 
 

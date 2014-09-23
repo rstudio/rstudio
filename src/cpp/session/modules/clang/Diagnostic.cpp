@@ -35,7 +35,7 @@ Diagnostic::~Diagnostic()
 {
    try
    {
-      clang().disposeDiagnostic(diagnostic_);
+      clang().disposeDiagnostic(diagnostic());
    }
    catch(...)
    {
@@ -44,22 +44,22 @@ Diagnostic::~Diagnostic()
 
 std::string Diagnostic::format(unsigned options) const
 {
-   return toStdString(clang().formatDiagnostic(diagnostic_, options));
+   return toStdString(clang().formatDiagnostic(diagnostic(), options));
 }
 
 CXDiagnosticSeverity Diagnostic::getSeverity() const
 {
-   return clang().getDiagnosticSeverity(diagnostic_);
+   return clang().getDiagnosticSeverity(diagnostic());
 }
 
 CXSourceLocation Diagnostic::getLocation() const
 {
-   return clang().getDiagnosticLocation(diagnostic_);
+   return clang().getDiagnosticLocation(diagnostic());
 }
 
 std::string Diagnostic::getSpelling() const
 {
-   return toStdString(clang().getDiagnosticSpelling(diagnostic_));
+   return toStdString(clang().getDiagnosticSpelling(diagnostic()));
 }
 
 

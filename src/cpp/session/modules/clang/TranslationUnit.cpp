@@ -15,11 +15,27 @@
 
 #include "TranslationUnit.hpp"
 
+#include "Clang.hpp"
+#include "UnsavedFiles.hpp"
+
 namespace session {
 namespace modules { 
 namespace clang {
 
+CodeCompleteResults TranslationUnit::codeCompleteAt(unsigned line,
+                                                    unsigned column)
+{
+   CXCodeCompleteResults* pResults = clang().codeCompleteAt(
+                                 tu_,
+                                 filename_.c_str(),
+                                 line,
+                                 column,
+                                 unsavedFiles().unsavedFilesArray(),
+                                 unsavedFiles().numUnsavedFiles(),
+                                 clang().defaultCodeCompleteOptions());
 
+   return CodeCompleteResults(pResults);
+}
 
 } // namespace clang
 } // namespace modules

@@ -19,6 +19,7 @@
 #include <boost/noncopyable.hpp>
 
 #include "Clang.hpp"
+#include "CodeCompleteResults.hpp"
 
 namespace session {
 namespace modules {      
@@ -32,8 +33,8 @@ public:
    {
    }
 
-   explicit TranslationUnit(CXTranslationUnit tu)
-      : tu_(tu)
+   TranslationUnit(const std::string& filename, CXTranslationUnit tu)
+      : filename_(filename), tu_(tu)
    {
    }
 
@@ -42,10 +43,12 @@ public:
 
    operator CXTranslationUnit() const { return tu_; }
 
-   bool empty() const { return tu_ == NULL; }
+   bool empty() const { return ! tu_; }
 
+   CodeCompleteResults codeCompleteAt(unsigned line, unsigned column);
 
 private:
+   std::string filename_;
    CXTranslationUnit tu_;
 };
 

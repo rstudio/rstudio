@@ -1,5 +1,5 @@
 /*
- * CodeCompletion.hpp
+ * CodeCompleteResults.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,10 +13,10 @@
  *
  */
 
-#ifndef SESSION_MODULES_CLANG_CODE_COMPLETION_HPP
-#define SESSION_MODULES_CLANG_CODE_COMPLETION_HPP
+#ifndef SESSION_MODULES_CLANG_CODE_COMPLETE_RESULTS_HPP
+#define SESSION_MODULES_CLANG_CODE_COMPLETE_RESULTS_HPP
 
-#include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include "Clang.hpp"
 #include "Diagnostic.hpp"
@@ -25,15 +25,18 @@ namespace session {
 namespace modules {      
 namespace clang {
 
-class CodeCompleteResults : boost::noncopyable
+class CodeCompleteResults
 {
 public:
+   CodeCompleteResults() {}
    explicit CodeCompleteResults(CXCodeCompleteResults* pResults)
-      : pResults_(pResults)
+      : pResults_(new CXCodeCompleteResults*(pResults))
    {
    }
 
    ~CodeCompleteResults();
+
+   bool empty() const { return ! pResults_; }
 
    void sort();
 
@@ -42,7 +45,7 @@ public:
    std::string getChunkText(unsigned index) const;
 
    unsigned getNumDiagnostics() const;
-   boost::shared_ptr<Diagnostic> getDiagnostic(unsigned index) const;
+   Diagnostic getDiagnostic(unsigned index) const;
 
    std::string getBriefComment() const;
 
@@ -50,19 +53,14 @@ public:
 
 
 private:
-   CXCodeCompleteResults* pResults_;
+   CXCodeCompleteResults* results() const { return *pResults_; }
+
+private:
+   boost::shared_ptr<CXCodeCompleteResults*> pResults_;
 };
-
-
-boost::shared_ptr<CodeCompleteResults> codeCompleteAt(
-                                                  const std::string& filename,
-                                                  unsigned line,
-                                                  unsigned column);
-
-
 
 } // namespace clang
 } // namepace handlers
 } // namesapce session
 
-#endif // SESSION_MODULES_CLANG_CODE_COMPLETION_HPP
+#endif // SESSION_MODULES_CLANG_CODE_COMPLETE_RESULTS_HPP

@@ -120,7 +120,7 @@ TranslationUnit SourceIndex::getTranslationUnit(
 {
    TranslationUnits::const_iterator it = translationUnits_.find(filename);
    if (it != translationUnits_.end())
-      return TranslationUnit(it->second);
+      return TranslationUnit(it->first, it->second);
    else
       return TranslationUnit();
 }
