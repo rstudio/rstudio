@@ -18,6 +18,7 @@
 #include <boost/make_shared.hpp>
 
 #include "Clang.hpp"
+#include "Utils.hpp"
 
 using namespace core ;
 
@@ -43,10 +44,7 @@ Diagnostic::~Diagnostic()
 
 std::string Diagnostic::format(unsigned options) const
 {
-   CXString cxFormat = clang().formatDiagnostic(diagnostic_, options);
-   std::string format(clang().getCString(cxFormat));
-   clang().disposeString(cxFormat);
-   return format;
+   return toStdString(clang().formatDiagnostic(diagnostic_, options));
 }
 
 CXDiagnosticSeverity Diagnostic::getSeverity() const
@@ -61,10 +59,7 @@ CXSourceLocation Diagnostic::getLocation() const
 
 std::string Diagnostic::getSpelling() const
 {
-   CXString cxSpelling = clang().getDiagnosticSpelling(diagnostic_);
-   std::string spelling(clang().getCString(cxSpelling));
-   clang().disposeString(cxSpelling);
-   return spelling;
+   return toStdString(clang().getDiagnosticSpelling(diagnostic_));
 }
 
 

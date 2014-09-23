@@ -60,39 +60,44 @@ void SourceIndex::setGlobalOptions(unsigned options)
 
 void SourceIndex::updateTranslationUnit(const std::string& filename)
 {
-   // do we already have a translation unit for this filename?
+   /*
+   // check for an existing translation unit, if we don't have one then
+   // parse the source file into a translation unit
    TranslationUnits::iterator it = translationUnits_.find(filename);
-   if (it != translationUnits_.end())
-   {
-      // just reparse the translation unit
-      clang().reparseTranslationUnit(it->second,
-                                     unsavedFiles().numUnsavedFiles(),
-                                     unsavedFiles().unsavedFilesArray(),
-                                     clang().defaultReparseOptions(it->second));
-   }
-   else
+   if (it == translationUnits_.end())
    {
 
       // TODO: get the command line for file compliations and use it to
       // create the translation unit
-      /*
+
       // get the command line for this file's compilation
       int numClangCommandLineArgs  = 0;
       const char * const *clangCommandLineArgs = NULL;
 
       // create a new translation unit from the file
-      CXTranslationUnit tu = clang().createTranslationUnitFromSourceFile(
-                                    index_,
-                                    filename.c_str(),
-                                    numClangCommandLineArgs,
-                                    clangCommandLineArgs,
-                                    unsavedFiles().numUnsavedFiles(),
-                                    unsavedFiles().unsavedFilesArray());
+      CXTranslationUnit tu = clang().parseTranslationUnit(
+                            index_,
+                            filename.c_str(),
+                            clangCommandLineArgs,
+                            numClangCommandLineArgs,
+                            unsavedFiles().unsavedFilesArray(),
+                            unsavedFiles().numUnsavedFiles(),
+                            clang().defaultEditingTranslationUnitOptions());
 
       // save it for future reference
       translationUnits_[filename] = tu;
-      */
+
    }
+
+   // reparse the translation unit
+   // (according to this thread you need to call both parseTranslationUnit and
+   // reparseTranslationUnit when adding a new file for caching/performance:
+   // http://lists.cs.uiuc.edu/pipermail/cfe-dev/2013-April/028804.html).
+   clang().reparseTranslationUnit(it->second,
+                                  unsavedFiles().numUnsavedFiles(),
+                                  unsavedFiles().unsavedFilesArray(),
+                                  clang().defaultReparseOptions(it->second));
+   */
 }
 
 void SourceIndex::removeTranslationUnit(const std::string& filename)

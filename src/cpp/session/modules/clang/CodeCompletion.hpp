@@ -37,8 +37,14 @@ public:
 
    void sort();
 
+   unsigned getNumChunks() const;
+   enum CXCompletionChunkKind getChunkKind(unsigned index) const;
+   std::string getChunkText(unsigned index) const;
+
    unsigned getNumDiagnostics() const;
    boost::shared_ptr<Diagnostic> getDiagnostic(unsigned index) const;
+
+   std::string getBriefComment() const;
 
    unsigned long long getContexts() const;
 

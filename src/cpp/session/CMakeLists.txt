@@ -120,6 +120,7 @@ set (SESSION_SOURCE_FILES
    modules/clang/SessionClang.cpp
    modules/clang/SourceIndex.cpp
    modules/clang/UnsavedFiles.cpp
+   modules/clang/Utils.cpp
    modules/clang/libclang/libclang.cpp
    modules/data/SessionData.cpp
    modules/data/DataViewer.cpp

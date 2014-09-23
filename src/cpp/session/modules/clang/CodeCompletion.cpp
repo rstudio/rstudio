@@ -22,6 +22,7 @@
 #include "Clang.hpp"
 #include "SourceIndex.hpp"
 #include "UnsavedFiles.hpp"
+#include "Utils.hpp"
 
 using namespace core ;
 
@@ -50,6 +51,25 @@ void CodeCompleteResults::sort()
    clang().sortCodeCompletionResults(pResults_->Results, pResults_->NumResults);
 }
 
+unsigned CodeCompleteResults::getNumChunks() const
+{
+   return clang().getNumCompletionChunks(pResults_->Results->CompletionString);
+}
+
+enum CXCompletionChunkKind CodeCompleteResults::getChunkKind(unsigned idx) const
+{
+   return clang().getCompletionChunkKind(pResults_->Results->CompletionString,
+                                         idx);
+}
+
+std::string CodeCompleteResults::getChunkText(unsigned idx) const
+{
+   CXString cxText = clang().getCompletionChunkText(
+                                       pResults_->Results->CompletionString,
+                                       idx);
+   return toStdString(cxText);
+}
+
 unsigned CodeCompleteResults::getNumDiagnostics() const
 {
    return clang().codeCompleteGetNumDiagnostics(pResults_);
@@ -60,6 +80,12 @@ boost::shared_ptr<Diagnostic> CodeCompleteResults::getDiagnostic(
 {
    CXDiagnostic cxDiag = clang().codeCompleteGetDiagnostic(pResults_, index);
    return boost::make_shared<Diagnostic>(cxDiag);
+}
+
+std::string CodeCompleteResults::getBriefComment() const
+{
+   return toStdString(clang().getCompletionBriefComment(
+                                       pResults_->Results->CompletionString));
 }
 
 unsigned long long CodeCompleteResults::getContexts() const
