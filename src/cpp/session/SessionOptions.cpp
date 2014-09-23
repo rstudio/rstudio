@@ -280,6 +280,9 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("external-pandoc-path",
         value<std::string>(&pandocPath_)->default_value(kDefaultPandocPath),
         "Path to pandoc binaries")
+      ("external-rsclang-path",
+        value<std::string>(&rsclangPath_)->default_value(kDefaultRsclangPath),
+        "Path to rsclang utility")
       ("external-libclang-path",
         value<std::string>(&libclangPath_)->default_value(kDefaultRsclangPath),
         "Path to libclang shared library");
@@ -443,6 +446,16 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 #endif
    }
    resolveRsclangPath(resourcePath, &libclangPath_);
+
+   // add /Debug to rsclangPath_ in Mac desktop debug mode
+#ifdef __APPLE__
+#ifndef NDEBUG
+#ifndef RSTUDIO_SERVER
+   rsclangPath_ += "/Debug";
+#endif
+#endif
+#endif
+   resolveRsclangPath(resourcePath, &rsclangPath_);
 
    // shared secret with parent
    secret_ = core::system::getenv("RS_SHARED_SECRET");
