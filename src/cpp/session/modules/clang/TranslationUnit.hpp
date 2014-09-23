@@ -16,7 +16,6 @@
 #ifndef SESSION_MODULES_CLANG_TRANSLATION_UNIT_HPP
 #define SESSION_MODULES_CLANG_TRANSLATION_UNIT_HPP
 
-#include <boost/noncopyable.hpp>
 
 #include "Clang.hpp"
 #include "Diagnostic.hpp"
@@ -41,8 +40,6 @@ public:
 
    // translation units are managed and disposed by the SourceIndex, so
    // so instances of this class can be freely copied
-
-   operator CXTranslationUnit() const { return tu_; }
 
    bool empty() const { return ! tu_; }
 

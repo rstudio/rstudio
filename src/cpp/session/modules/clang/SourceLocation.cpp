@@ -1,5 +1,5 @@
 /*
- * Utils.hpp
+ * SourceLocation.cpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,23 +13,32 @@
  *
  */
 
-#ifndef SESSION_MODULES_CLANG_UTILS_HPP
-#define SESSION_MODULES_CLANG_UTILS_HPP
-
-#include <string>
+#include "SourceLocation.hpp"
 
 #include "Clang.hpp"
 
 namespace session {
-namespace modules {      
+namespace modules { 
 namespace clang {
 
-// note that this function disposes the underlying CXString so it
-// shouldn't be used after this call
-std::string toStdString(CXString cxStr);
+SourceLocation::SourceLocation()
+   : location_(clang().getNullLocation())
+{
+}
+
+bool SourceLocation::empty() const
+{
+   return clang().equalLocations(location_, clang().getNullLocation());
+}
+
+void SourceLocation::getSpellingLocation(unsigned* pLine,
+                                         unsigned* pColumn,
+                                         unsigned* pOffset) const
+{
+   clang().getSpellingLocation(location_, NULL, pLine, pColumn, pOffset);
+}
 
 } // namespace clang
-} // namepace handlers
+} // namespace modules
 } // namesapce session
 
-#endif // SESSION_MODULES_CLANG_UTILS_HPP

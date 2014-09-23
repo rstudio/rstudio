@@ -28,9 +28,9 @@
 #include "SourceIndex.hpp"
 
 
-// TODO: error and null/empty value handling
+// TODO: consider generalizing a bit and moving into libclang
 
-// TODO: more functions on TranslationUnit
+// TODO: error and null/empty value handling
 
 
 using namespace core ;

@@ -19,6 +19,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "Clang.hpp"
+#include "SourceLocation.hpp"
 
 namespace session {
 namespace modules {      
@@ -41,7 +42,7 @@ public:
                            clang().defaultDiagnosticDisplayOptions()) const;
 
    CXDiagnosticSeverity getSeverity() const;
-   CXSourceLocation getLocation() const;
+   SourceLocation getLocation() const;
    std::string getSpelling() const;
 
 private:

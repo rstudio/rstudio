@@ -119,6 +119,7 @@ set (SESSION_SOURCE_FILES
    modules/clang/Diagnostic.cpp
    modules/clang/SessionClang.cpp
    modules/clang/SourceIndex.cpp
+   modules/clang/SourceLocation.cpp
    modules/clang/TranslationUnit.cpp
    modules/clang/UnsavedFiles.cpp
    modules/clang/Utils.cpp

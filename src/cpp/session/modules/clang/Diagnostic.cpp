@@ -52,9 +52,9 @@ CXDiagnosticSeverity Diagnostic::getSeverity() const
    return clang().getDiagnosticSeverity(diagnostic());
 }
 
-CXSourceLocation Diagnostic::getLocation() const
+SourceLocation Diagnostic::getLocation() const
 {
-   return clang().getDiagnosticLocation(diagnostic());
+   return SourceLocation(clang().getDiagnosticLocation(diagnostic()));
 }
 
 std::string Diagnostic::getSpelling() const
