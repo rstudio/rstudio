@@ -47,20 +47,27 @@ namespace {
 bool isCppSourceDoc(const FilePath& docPath)
 {
    std::string ex = docPath.extensionLowerCase();
-   if (ex == ".c" || ex == ".cc" || ex == ".cpp" || ex == ".m" ||
-       ex == ".mm" || ex == ".h" || ex == ".hpp")
-   {
-      return module_context::isUserFile(docPath);
-   }
-   else
-   {
-      return false;
-   }
+   return (ex == ".c" || ex == ".cc" || ex == ".cpp" || ex == ".m" ||
+           ex == ".mm" || ex == ".h" || ex == ".hpp");
 }
 
-bool translationUnitFilter(const FileInfo& fileInfo)
+
+bool noTranslationUnitsFilter(const FileInfo& fileInfo)
 {
-   return isCppSourceDoc(FilePath(fileInfo.absolutePath()));
+   return false;
+}
+
+bool translationUnitFilter(const FileInfo& packageSrcDir,
+                           const FileInfo& fileInfo)
+{
+
+   return
+      // must be within package/src
+      boost::algorithm::starts_with(fileInfo.absolutePath(),
+                                    packageSrcDir.absolutePath()) &&
+
+      // must be a C++ source doc
+      isCppSourceDoc(FilePath(fileInfo.absolutePath()));
 }
 
 void translationUnitChangeHandler(const core::system::FileChangeEvent& event)
@@ -90,7 +97,9 @@ void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
    // resolve to a full path
    FilePath docPath = module_context::resolveAliasedPath(pDoc->path());
 
-   // verify that it's an indexable C/C++ file
+   // verify that it's an indexable C/C++ file (we allow any and all
+   // files into the database here since these files are open within
+   // the source editor)
    if (!isCppSourceDoc(docPath))
       return;
 
@@ -159,10 +168,21 @@ Error initialize()
    source_database::events().onRemoveAll.connect(
              boost::bind(&UnsavedFiles::removeAll, &unsavedFiles()));
 
+
+   // create a filter based on whether we are in a package
+   using namespace projects;
+   IncrementalFileChangeHandler::Filter filter = noTranslationUnitsFilter;
+   if (projectContext().config().buildType == r_util::kBuildTypePackage)
+   {
+      FilePath pkgSrc = projectContext().buildTargetPath().childPath("src");
+      if (pkgSrc.exists())
+         filter = boost::bind(translationUnitFilter, FileInfo(pkgSrc), _1);
+   }
+
    // create incremental file change handler (this is used for updating
    // the main source index). also subscribe it to the file monitor
    pFileChangeHandler.reset(new IncrementalFileChangeHandler(
-             translationUnitFilter,
+             filter,
              translationUnitChangeHandler,
              boost::posix_time::milliseconds(200),
              boost::posix_time::milliseconds(20),
