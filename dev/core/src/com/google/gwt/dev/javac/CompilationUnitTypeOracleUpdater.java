@@ -837,6 +837,14 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
     return resolvedType;
   }
 
+  // TODO(stalcup): refactor this recursive resolveFoo() process. At the moment there is a recursive
+  // tree of resolveFoo() calls. Most of them return a boolean, but some do not. Some of the
+  // booleans are read and acted upon, some are not. Some functions do their own logging and some
+  // return a false to indicate that the caller should log. Sometimes the boolean return value is an
+  // indication of whether logging should occur and other times it's an indication of whether
+  // exploration should continue. It's a mess. Some ideas that would probably make this more sane:
+  // be consistent about SPAM logging throughout and WARN logging only at the tip, and process types
+  // in a queue instead of with recursion.
   private boolean resolveClass(
       TreeLogger logger, JRealClassType unresolvedType, TypeOracleBuildContext context) {
     assert unresolvedType != null;

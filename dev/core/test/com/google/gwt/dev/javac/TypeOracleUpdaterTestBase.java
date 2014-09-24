@@ -1017,9 +1017,9 @@ public abstract class TypeOracleUpdaterTestBase extends TestCase {
 
   public void testConstrainedField() throws TypeOracleException {
     addTestResource(CU_Object);
-    addTestResource(CU_Throwable);
     addTestResource(CU_ConstrainedList);
     addTestResource(CU_ConstrainedListAsField);
+    addTestResource(CU_Throwable);
     buildTypeOracle();
 
     // Get the types produced by the TypeOracle
