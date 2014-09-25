@@ -25,6 +25,8 @@ set PANDOC_FILE=%PANDOC_NAME%.zip
 set LIBCLANG_VERSION=3.4
 set LIBCLANG_NAME=libclang-%LIBCLANG_VERSION%
 set LIBCLANG_FILE=%LIBCLANG_NAME%.zip
+set LIBCLANG_HEADERS=builtin-headers
+set LIBCLANG_HEADERS_FILE=libclang-%LIBCLANG_HEADERS%.zip
 
 if not exist boost-1.50-win (
   wget %WGET_ARGS% "%BASEURL%%BOOST_FILE%"
@@ -143,6 +145,14 @@ if not exist libclang\%LIBCLANG_VERSION% (
   del %LIBCLANG_FILE%
   rmdir /s /q %LIBCLANG_NAME%
 )
+
+if not exist libclang\%LIBCLANG_HEADERS% (
+  wget %WGET_ARGS% "%BASEURL%%LIBCLANG_HEADERS_FILE%"
+  echo Unzipping %LIBCLANG_HEADERS%
+  unzip %UNZIP_ARGS% "%LIBCLANG_HEADERS_FILE%" -d libclang
+  del %LIBCLANG_HEADERS_FILE%
+)
+
 
 
 install-packages.cmd
