@@ -256,11 +256,6 @@ public:
       return core::FilePath(pandocPath_.c_str());
    }
 
-   core::FilePath rsclangPath() const
-   {
-      return core::FilePath(rsclangPath_.c_str());
-   }
-
    core::FilePath libclangPath() const
    {
       return core::FilePath(libclangPath_.c_str());
@@ -474,7 +469,6 @@ private:
    std::string hunspellDictionariesPath_;
    std::string mathjaxPath_;
    std::string pandocPath_;
-   std::string rsclangPath_;
    std::string libclangPath_;
 
    bool allowFileDownloads_;
