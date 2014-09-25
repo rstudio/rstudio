@@ -78,5 +78,22 @@ else
    fi
 fi
 
+LIBCLANG_HEADERS=builtin-headers
+LIBCLANG_HEADERS_DIR="libclang/${LIBCLANG_HEADERS}"
+if [ -d "$LIBCLANG_HEADERS_DIR" ]
+then
+   echo "libclang headers already installed"
+else
+   mkdir -p "LIBCLANG_HEADERS_DIR"
+   if [ "$LIBCLANG_PLATFORM" != "NA" ]
+   then
+     LIBCLANG_HEADERS_ARCHIVE="libclang-${LIBCLANG_HEADERS}.zip"
+     download $LIBCLANG_HEADERS_ARCHIVE
+     unzip -q $LIBCLANG_HEADERS_ARCHIVE -d libclang
+     rm $LIBCLANG_HEADERS_ARCHIVE
+   fi
+fi
+
+
 # back to install dir
 cd $INSTALL_DIR
