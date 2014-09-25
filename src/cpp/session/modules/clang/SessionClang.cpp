@@ -47,8 +47,8 @@ namespace {
 bool isCppSourceDoc(const FilePath& docPath)
 {
    std::string ex = docPath.extensionLowerCase();
-   return (ex == ".c" || ex == ".cc" || ex == ".cpp" || ex == ".m" ||
-           ex == ".mm" || ex == ".h" || ex == ".hpp");
+   return (ex == ".c" || ex == ".cc" || ex == ".cpp" ||
+           ex == ".m" || ex == ".mm");
 }
 
 
@@ -57,16 +57,15 @@ bool noTranslationUnitsFilter(const FileInfo& fileInfo)
    return false;
 }
 
-bool translationUnitFilter(const FileInfo& packageSrcDir,
+bool translationUnitFilter(const std::string packageSrcDir,
                            const FileInfo& fileInfo)
 {
 
    return
       // must be within package/src
-      boost::algorithm::starts_with(fileInfo.absolutePath(),
-                                    packageSrcDir.absolutePath()) &&
+      boost::algorithm::starts_with(fileInfo.absolutePath(), packageSrcDir) &&
 
-      // must be a C++ source doc
+      // must be a C++ doc
       isCppSourceDoc(FilePath(fileInfo.absolutePath()));
 }
 
@@ -176,7 +175,7 @@ Error initialize()
    {
       FilePath pkgSrc = projectContext().buildTargetPath().childPath("src");
       if (pkgSrc.exists())
-         filter = boost::bind(translationUnitFilter, FileInfo(pkgSrc), _1);
+         filter = boost::bind(translationUnitFilter, pkgSrc.absolutePath(), _1);
    }
 
    // create incremental file change handler (this is used for updating
