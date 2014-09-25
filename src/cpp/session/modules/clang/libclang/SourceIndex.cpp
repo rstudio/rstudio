@@ -185,6 +185,9 @@ bool SourceIndex::hasTranslationUnit(const std::string& filename)
 TranslationUnit SourceIndex::getTranslationUnit(
                                           const std::string& filename) const
 {
+   // TODO: for header files we'll need to scan the translation
+   // units for them and use the appropriate one
+
    TranslationUnits::const_iterator it = translationUnits_.find(filename);
    if (it != translationUnits_.end())
       return TranslationUnit(it->first, it->second);

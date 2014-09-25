@@ -58,7 +58,7 @@ Error printCppCompletions(const core::json::JsonRpcRequest& request,
    TranslationUnit tu = sourceIndex().getTranslationUnit(docPath);
    if (!tu.empty())
    {
-      CodeCompleteResults results = tu.codeCompleteAt(line, column);
+      CodeCompleteResults results = tu.codeCompleteAt(docPath, line, column);
       if (!results.empty())
       {
          for (unsigned i = 0; i<results.getNumResults(); i++)

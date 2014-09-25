@@ -37,12 +37,13 @@ Diagnostic TranslationUnit::getDiagnostic(unsigned index) const
    return Diagnostic(clang().getDiagnostic(tu_, index));
 }
 
-CodeCompleteResults TranslationUnit::codeCompleteAt(unsigned line,
+CodeCompleteResults TranslationUnit::codeCompleteAt(const std::string& filename,
+                                                    unsigned line,
                                                     unsigned column)
 {
    CXCodeCompleteResults* pResults = clang().codeCompleteAt(
                                  tu_,
-                                 filename_.c_str(),
+                                 filename.c_str(),
                                  line,
                                  column,
                                  unsavedFiles().unsavedFilesArray(),
