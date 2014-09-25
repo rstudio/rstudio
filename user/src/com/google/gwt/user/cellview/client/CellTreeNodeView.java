@@ -561,7 +561,7 @@ class CellTreeNodeView<T> extends UIObject {
    * might move it to a new {@link CellTreeNodeView}, and we don't want
    * non-static references to the old {@link CellTreeNodeView}.
    */
-  private static class TreeNodeImpl implements TreeNode {
+  static class TreeNodeImpl implements TreeNode {
 
     private CellTreeNodeView<?> nodeView;
 
@@ -588,6 +588,10 @@ class CellTreeNodeView<T> extends UIObject {
     public int getIndex() {
       assertNotDestroyed();
       return (nodeView.parentNode == null) ? 0 : nodeView.parentNode.children.indexOf(nodeView);
+    }
+
+    final CellTreeNodeView<?> getNodeView() {
+      return nodeView;
     }
 
     @Override
@@ -669,7 +673,7 @@ class CellTreeNodeView<T> extends UIObject {
     /**
      * Flush pending changes in the view.
      */
-    private void flush() {
+    void flush() {
       if (nodeView.listView != null) {
         nodeView.listView.presenter.flush();
       }
@@ -724,7 +728,7 @@ class CellTreeNodeView<T> extends UIObject {
    * @param nodeElem the element that represents the node
    * @return the cell parent within the node
    */
-  private static Element getSelectionElement(Element nodeElem) {
+  static Element getSelectionElement(Element nodeElem) {
     return nodeElem.getFirstChildElement();
   }
 
@@ -1137,6 +1141,10 @@ class CellTreeNodeView<T> extends UIObject {
     listView = view;
     view.setSelectionModel(nodeInfo.getSelectionModel());
     nodeInfo.setDataDisplay(view);
+  }
+
+  boolean belongsToTree(final CellTree tree) {
+    return this.tree == tree;
   }
 
   /**

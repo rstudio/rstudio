@@ -820,6 +820,22 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
     keyboardSelectedNode.setKeyboardSelected(true, true);
   }
 
+  /**
+   * Sets the node that will be selected when the CellTree gains keyboard focus.
+   *
+   * @param parentNode a node in the tree that is currently open
+   * @param childIndex the index of the child to select
+   * @param stealFocus if true, also change keyboard focus to this CellTree.
+   */
+  public void setKeyboardSelectedTreeNode(TreeNode parentNode, int childIndex, boolean stealFocus) {
+    CellTreeNodeView nodeView = getCellTreeNodeView(parentNode);
+    // Just to ensure necessary checks are done, e.g.
+    //   assertNotDestroyed();checkChildBounds(childIndex);flush();
+    nodeView.getTreeNode().getChildValue(childIndex);
+
+    keyboardSelect(nodeView.getChildNode(childIndex), stealFocus);
+  }
+
   public void setTabIndex(int index) {
     this.tabIndex = index;
     keyboardSelectedNode.setKeyboardSelected(true, false);
@@ -880,6 +896,13 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
    */
   CellTreeNodeView<?> getKeyboardSelectedNode() {
     return keyboardSelectedNode;
+  }
+
+  /**
+   * Returns the TreeNode that is selected when the CellTree has keyboard focus.
+   */
+  public TreeNode getKeyboardSelectedTreeNode() {
+    return keyboardSelectedNode == null ? null : keyboardSelectedNode.getTreeNode();
   }
 
   /**
@@ -962,6 +985,19 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
 
     collectElementChain(chain, hRoot, hElem.getParentElement());
     chain.add(hElem);
+  }
+
+  private CellTreeNodeView getCellTreeNodeView(TreeNode treeNode) {
+    if (!(treeNode instanceof CellTreeNodeView.TreeNodeImpl)) {
+      throw new UnsupportedOperationException("Operation not supported for " + treeNode.getClass());
+    }
+
+    CellTreeNodeView nodeView = ((CellTreeNodeView.TreeNodeImpl) treeNode).getNodeView();
+    if (!nodeView.belongsToTree(this)) {
+      throw new IllegalArgumentException("The tree node does not belong to the tree.");
+    }
+
+    return nodeView;
   }
 
   private CellTreeNodeView<?> findItemByChain(ArrayList<Element> chain,

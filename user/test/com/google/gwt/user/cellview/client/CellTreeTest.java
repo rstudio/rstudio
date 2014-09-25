@@ -264,6 +264,81 @@ public class CellTreeTest extends AbstractCellTreeTestBase {
     assertEquals("5", cViewChildLast.getElement().getAttribute("aria-setsize"));
   }
 
+  public void testExplicitKeyboardSelection() {
+    CellTree cellTree = (CellTree) tree;
+    TreeNode root = cellTree.getRootTreeNode();
+
+    final String cellTreeKeyboardSelectedItemStyleName =
+        cellTree.getStyle().cellTreeKeyboardSelectedItem();
+
+    // Navigate through tree to level 4 nodes.
+    TreeNode l1Node = root.setChildOpen(0, true); // a
+    CellTreeNodeView<?> l1View = cellTree.rootNode.getChildNode(0);
+    TreeNode l2Node = l1Node.setChildOpen(0, true); // aa
+    CellTreeNodeView<?> l2View = l1View.getChildNode(0);
+    TreeNode l3Node = l2Node.setChildOpen(0, true); // aaa
+    CellTreeNodeView<?> l3View = l2View.getChildNode(0);
+
+    ((CellTreeNodeView.TreeNodeImpl) l3Node).flush();
+    CellTreeNodeView<?> l4View = l3View.getChildNode(0);
+    // l4Node is leaf, cannot get a reference via setChildOpen except via non-public nodeView
+    TreeNode l4Node = l4View.getTreeNode(); // aaaa
+
+    // Set keyboard selected node to a subtree node, l3Node = first child of l2Node
+    cellTree.setKeyboardSelectedTreeNode(l2Node, 0, true);
+    assertEquals(l3View, cellTree.getKeyboardSelectedNode());
+    assertEquals(l3Node, cellTree.getKeyboardSelectedTreeNode());
+    assertTrue(CellTreeNodeView.getSelectionElement(l3View.getElement()).getClassName()
+        .indexOf(cellTreeKeyboardSelectedItemStyleName) >= 0);
+
+    // Set keyboard selected node to a leaf node.
+    cellTree.setKeyboardSelectedTreeNode(l3Node, 0, true);
+    assertEquals(l4View, cellTree.getKeyboardSelectedNode());
+    assertEquals(l4Node, cellTree.getKeyboardSelectedTreeNode());
+    assertTrue(CellTreeNodeView.getSelectionElement(l4View.getElement()).getClassName()
+        .indexOf(cellTreeKeyboardSelectedItemStyleName) >= 0);
+
+    l1Node.setChildOpen(0, false); // close l2node
+    ((CellTreeNodeView.TreeNodeImpl) l1Node).flush();
+
+    // Try to select a leaf node in closed subtree
+    try {
+      cellTree.setKeyboardSelectedTreeNode(l3Node, 0, true);
+      fail("should have thrown");
+    } catch (IllegalStateException e) {
+      assertEquals(e.getMessage(), "TreeNode no longer exists.");
+    }
+
+    // Try to select a subtree node in closed subtree
+    try {
+      cellTree.setKeyboardSelectedTreeNode(l2Node, 0, true);
+      fail("should have thrown");
+    } catch (IllegalStateException e) {
+      assertEquals(e.getMessage(), "TreeNode no longer exists.");
+    }
+
+    // Still ok to select closed subtree node
+    cellTree.setKeyboardSelectedTreeNode(l1Node, 0, true);
+
+    // Create another tree of same structure
+    CellTree anotherTree = createAbstractCellTree(model, root.getValue());
+    // Navigate to leaf
+    l1Node = anotherTree.getRootTreeNode().setChildOpen(0, true); // a
+    ((CellTreeNodeView.TreeNodeImpl) l1Node).flush();
+
+    // Now l1Node refers to a subtree node in anotherTree
+    // Select in the same cell tree is ok
+    anotherTree.setKeyboardSelectedTreeNode(l1Node, 0, true);
+
+    // Select in a different tree will throw exception.
+    try {
+      cellTree.setKeyboardSelectedTreeNode(l1Node, 0, true);
+      fail("should have thrown");
+    } catch (IllegalArgumentException e) {
+      assertEquals(e.getMessage(), "The tree node does not belong to the tree.");
+    }
+  }
+
   @Override
   protected <T> CellTree createAbstractCellTree(TreeViewModel model, T rootValue) {
     return new CellTree(model, rootValue);
