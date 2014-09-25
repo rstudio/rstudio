@@ -93,8 +93,9 @@ void SourceIndex::updateTranslationUnit(const std::string& filename)
       args.push_back("-I/opt/X11/include");
       args.push_back("-I/Library/Frameworks/R.framework/Resources/library/Rcpp/include");
 #else
-
-
+      args.push_back("-I/usr/share/R/include");
+      args.push_back("-DNDEBUG");
+      args.push_back("-I/home/jjallaire/R/x86_64-pc-linux-gnu-library/3.1/Rcpp/include");
 #endif
 
       // create a new translation unit from the file
