@@ -61,9 +61,6 @@ java_library(
     name = "requestfactory-apt-deps",
     srcs = [
         "core/src/com/google/gwt/core/ext/typeinfo/JniConstants.java",
-        "core/src/com/google/gwt/dev/asm/Opcodes.java",
-        "core/src/com/google/gwt/dev/asm/Type.java",
-        "core/src/com/google/gwt/dev/asm/commons/Method.java",
         "core/src/com/google/gwt/dev/util/Name.java",
         "core/src/com/google/gwt/dev/util/StringKey.java",
     ],
@@ -75,7 +72,6 @@ java_library(
     srcs = glob(
         [
             "core/src/com/google/gwt/**/shared/**/*.java",
-            "core/src/com/google/gwt/dev/asm/**/*.java",
             "core/src/com/google/gwt/dev/util/Name.java",
             "core/src/com/google/gwt/dev/util/StringKey.java",
             "core/src/com/google/gwt/util/tools/Utility.java",
@@ -192,7 +188,6 @@ java_library(
             "core/src/com/google/gwt/dev/PrecompileTaskOptions.java",
             "core/src/com/google/gwt/dev/PrecompileTaskOptionsImpl.java",
             "core/src/com/google/gwt/dev/PrecompilationResult.java",
-            "core/src/com/google/gwt/dev/asm/**/*.java",
             "core/src/com/google/gwt/dev/cfg/**/*.java",
             "core/src/com/google/gwt/dev/javac/**/*.java",
             "core/src/com/google/gwt/dev/jdt/**/*.java",
@@ -366,8 +361,8 @@ test_suite(
     name = "alltests",
     tests = [
         ":tests",
-        "//third_party/java_src/gwt/svn/trunk/dev/codeserver:tests"
-    ]
+        "//third_party/java_src/gwt/svn/trunk/dev/codeserver:tests",
+    ],
 )
 
 GwtTestSuites(
