@@ -282,7 +282,11 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
         "Path to pandoc binaries")
       ("external-libclang-path",
         value<std::string>(&libclangPath_)->default_value(kDefaultRsclangPath),
-        "Path to libclang shared library");
+        "Path to libclang shared library")
+      ("external-libclang-headers-path",
+        value<std::string>(&libclangHeadersPath_)->default_value(
+                                       "resources/libclang/builtin-headers"),
+        "Path to libclang builtin headers");
 
    // user options (default user identity to current username)
    std::string currentUsername = core::system::username();
@@ -431,6 +435,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 #endif
    resolvePath(resourcePath, &hunspellDictionariesPath_);
    resolvePath(resourcePath, &mathjaxPath_);
+   resolvePath(resourcePath, &libclangHeadersPath_);
    resolvePandocPath(resourcePath, &pandocPath_);
 
    // rsclang

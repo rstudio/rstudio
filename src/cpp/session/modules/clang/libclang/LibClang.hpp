@@ -96,6 +96,9 @@ public:
    // version
    Version version() const;
 
+   // builtin-headers directory
+   std::string builtinHeaders() const;
+
    // strings
    const char * (*getCString)(CXString string);
    void (*disposeString)(CXString string);

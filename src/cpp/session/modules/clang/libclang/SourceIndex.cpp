@@ -15,6 +15,8 @@
 
 #include "SourceIndex.hpp"
 
+#include <core/PerformanceTimer.hpp>
+
 #include "UnsavedFiles.hpp"
 
 using namespace core ;
@@ -26,7 +28,7 @@ namespace libclang {
 
 SourceIndex::SourceIndex()
 {
-   index_ = clang().createIndex(0, 0);
+   index_ = clang().createIndex(0, 1);
 }
 
 SourceIndex::~SourceIndex()
@@ -60,34 +62,35 @@ void SourceIndex::setGlobalOptions(unsigned options)
 
 void SourceIndex::updateTranslationUnit(const std::string& filename)
 {
+   PerformanceTimer timer("libclang: " + filename);
+
    // check for an existing translation unit, if we don't have one then
    // parse the source file into a translation unit
    TranslationUnits::iterator it = translationUnits_.find(filename);
    if (it == translationUnits_.end())
    {
-
       // for now we use the default R command line args for an Rcpp
       // package on OSX. We ultimately need to do this dynamically.
       // The best way to accomplish this would seem to be the creation
       // of a compliation database json file and then the reading of it
-      // via clang_CompilationDatabase_getCompileCommands
-      const char *args[] = {
-         "-stdlib=libstdc++",
-         "-I/Library/Frameworks/R.framework/Resources/include",
-         "-DNDEBUG",
-         "-I/usr/local/include",
-         "-I/usr/local/include/freetype2",
-         "-I/opt/X11/include",
-         "-I/Library/Frameworks/R.framework/Resources/library/Rcpp/include"
-      };
-      int numArgs = sizeof(args) / sizeof(*args);
+
+      std::vector<const char*> args;
+      args.push_back("-stdlib=libstdc++");
+      std::string builtinHeaders = "-I" + clang().builtinHeaders();
+      args.push_back(builtinHeaders.c_str());
+      args.push_back("-I/Library/Frameworks/R.framework/Resources/include");
+      args.push_back("-DNDEBUG");
+      args.push_back("-I/usr/local/include");
+      args.push_back("-I/usr/local/include/freetype2");
+      args.push_back("-I/opt/X11/include");
+      args.push_back("-I/Library/Frameworks/R.framework/Resources/library/Rcpp/include");
 
       // create a new translation unit from the file
       CXTranslationUnit tu = clang().parseTranslationUnit(
                             index_,
                             filename.c_str(),
-                            args,
-                            numArgs,
+                            &(args[0]),
+                            args.size(),
                             unsavedFiles().unsavedFilesArray(),
                             unsavedFiles().numUnsavedFiles(),
                             clang().defaultEditingTranslationUnitOptions());

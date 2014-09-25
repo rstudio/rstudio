@@ -45,7 +45,10 @@ set(LIBCLANG_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/${LIBCLANG_VERSION
 if(NOT EXISTS "${LIBCLANG_DIR}")
   message(FATAL_ERROR "liblang ${LIBCLANG_VERSION} not found  (re-run install-dependencies script to install)")
 endif()
-
+set(LIBCLANG_HEADERS_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/builtin-headers")
+if(NOT EXISTS "${LIBCLANG_HEADERS_DIR}")
+  message(FATAL_ERROR "liblang builtin-headers not found  (re-run install-dependencies script to install)")
+endif()
 
 
 # include files
@@ -395,6 +398,10 @@ if (NOT RSTUDIO_SESSION_WIN64)
       install(PROGRAMS ${LIBCLANG_FILES}
               DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang)
    endif()
+
+   # install libclang builtin-headers
+   install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/builtin-headers"
+           DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources/libclang")
 
    # install 64 bit binaries if we are on win64
    if(WIN32)

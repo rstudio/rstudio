@@ -532,6 +532,17 @@ Version LibClang::version() const
    return Version();
 }
 
+std::string LibClang::builtinHeaders() const
+{
+   std::string headersVersion = "3.5";
+   if (version() < Version(3,5,0))
+      headersVersion = "3.4";
+
+   return options().libclangHeadersPath()
+                        .childPath(headersVersion).absolutePath();
+}
+
+
 std::string toStdString(CXString cxStr)
 {
    std::string str(clang().getCString(cxStr));

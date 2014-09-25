@@ -261,6 +261,11 @@ public:
       return core::FilePath(libclangPath_.c_str());
    }
 
+   core::FilePath libclangHeadersPath() const
+   {
+      return core::FilePath(libclangHeadersPath_.c_str());
+   }
+
    bool allowFileDownloads() const
    {
       return allowOverlay() || allowFileDownloads_;
@@ -470,6 +475,7 @@ private:
    std::string mathjaxPath_;
    std::string pandocPath_;
    std::string libclangPath_;
+   std::string libclangHeadersPath_;
 
    bool allowFileDownloads_;
    bool allowShell_;
