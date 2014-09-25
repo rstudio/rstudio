@@ -75,9 +75,9 @@ void SourceIndex::updateTranslationUnit(const std::string& filename)
       // of a compliation database json file and then the reading of it
 
       std::vector<const char*> args;
-      args.push_back("-stdlib=libstdc++");
       std::string builtinHeaders = "-I" + clang().builtinHeaders();
       args.push_back(builtinHeaders.c_str());
+      args.push_back("-stdlib=libstdc++");
       args.push_back("-I/Library/Frameworks/R.framework/Resources/include");
       args.push_back("-DNDEBUG");
       args.push_back("-I/usr/local/include");
