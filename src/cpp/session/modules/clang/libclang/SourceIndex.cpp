@@ -69,14 +69,22 @@ void SourceIndex::updateTranslationUnit(const std::string& filename)
    TranslationUnits::iterator it = translationUnits_.find(filename);
    if (it == translationUnits_.end())
    {
-      // for now we use the default R command line args for an Rcpp
-      // package on OSX. We ultimately need to do this dynamically.
-      // The best way to accomplish this would seem to be the creation
-      // of a compliation database json file and then the reading of it
-
       std::vector<const char*> args;
       std::string builtinHeaders = "-I" + clang().builtinHeaders();
       args.push_back(builtinHeaders.c_str());
+
+#if defined(_WIN32)
+      args.push_back("-IC:/RBuildTools/3.1/gcc-4.6.3/include/c++/4.6.3");
+      args.push_back("-IC:/RBuildTools/3.1/gcc-4.6.3/include/c++/4.6.3/i686-w64-mingw32");
+      args.push_back("-m32");
+      args.push_back("-IC:PROGRA~1/R/R-31~1.0/include");
+      args.push_back("-DNDEBUG");
+      args.push_back("-IC:/Users/jjallaire/Documents/R/win-library/3.1/Rcpp/include");
+      args.push_back("-Id:/RCompile/CRANpkg/extralibs64/local/include");
+      args.push_back("-O2");
+      args.push_back("-Wall");
+      args.push_back("-mtune=core2");
+#elif defined(__APPLE__)
       args.push_back("-stdlib=libstdc++");
       args.push_back("-I/Library/Frameworks/R.framework/Resources/include");
       args.push_back("-DNDEBUG");
@@ -84,6 +92,10 @@ void SourceIndex::updateTranslationUnit(const std::string& filename)
       args.push_back("-I/usr/local/include/freetype2");
       args.push_back("-I/opt/X11/include");
       args.push_back("-I/Library/Frameworks/R.framework/Resources/library/Rcpp/include");
+#else
+
+
+#endif
 
       // create a new translation unit from the file
       CXTranslationUnit tu = clang().parseTranslationUnit(
