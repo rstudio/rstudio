@@ -92,6 +92,7 @@ class PageUtil {
     ServletOutputStream outBytes = response.getOutputStream();
     Writer out = new OutputStreamWriter(outBytes, "UTF-8");
 
+    out.append("<!DOCTYPE html>\n");
     out.append("<script>\n");
     out.append("window." + variableName + " = ");
     json.write(out);

@@ -80,7 +80,7 @@ function makeDevModeOffBookmarklet() {
 
 function makeBookmarklet(name, javascript) {
   var result = document.createElement("a");
-  result.setAttribute(document.all ? "className" : "class", "bookmarklet");
+  result.className = "bookmarklet";
   result.setAttribute("href", "javascript:" + encodeURIComponent(javascript));
   setTextContent(result, name);
   return result;
