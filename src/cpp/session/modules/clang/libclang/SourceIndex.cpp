@@ -72,8 +72,10 @@ void SourceIndex::updateTranslationUnit(const std::string& filename)
       // of a compliation database json file and then the reading of it
       // via clang_CompilationDatabase_getCompileCommands
       const char *args[] = {
+         "-stdlib=libstdc++",
          "-I/Library/Frameworks/R.framework/Resources/include",
          "-DNDEBUG",
+         "-I/usr/local/include",
          "-I/usr/local/include/freetype2",
          "-I/opt/X11/include",
          "-I/Library/Frameworks/R.framework/Resources/library/Rcpp/include"
