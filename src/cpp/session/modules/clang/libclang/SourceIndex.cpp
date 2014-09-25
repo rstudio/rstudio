@@ -74,16 +74,13 @@ void SourceIndex::updateTranslationUnit(const std::string& filename)
       args.push_back(builtinHeaders.c_str());
 
 #if defined(_WIN32)
+      args.push_back("-IC:/RBuildTools/3.1/gcc-4.6.3/i686-w64-mingw32/include");
       args.push_back("-IC:/RBuildTools/3.1/gcc-4.6.3/include/c++/4.6.3");
       args.push_back("-IC:/RBuildTools/3.1/gcc-4.6.3/include/c++/4.6.3/i686-w64-mingw32");
-      args.push_back("-m32");
-      args.push_back("-IC:PROGRA~1/R/R-31~1.0/include");
+      args.push_back("-IC:/Program Files/R/R-3.1.0/include");
       args.push_back("-DNDEBUG");
       args.push_back("-IC:/Users/jjallaire/Documents/R/win-library/3.1/Rcpp/include");
       args.push_back("-Id:/RCompile/CRANpkg/extralibs64/local/include");
-      args.push_back("-O2");
-      args.push_back("-Wall");
-      args.push_back("-mtune=core2");
 #elif defined(__APPLE__)
       args.push_back("-stdlib=libstdc++");
       args.push_back("-I/Library/Frameworks/R.framework/Resources/include");
