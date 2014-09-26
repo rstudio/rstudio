@@ -979,6 +979,17 @@ bool isPackageVersionInstalled(const std::string& packageName,
    return !error ? installed : false;
 }
 
+bool hasMinimumRVersion(const std::string &version)
+{
+   bool hasVersion = false;
+   boost::format fmt("getRversion() >= '%1%'");
+   std::string versionTest = boost::str(fmt % version);
+   Error error = r::exec::evaluateString(versionTest, &hasVersion);
+   if (error)
+      LOG_ERROR(error);
+   return hasVersion;
+}
+
 PackageCompatStatus getPackageCompatStatus(
       const std::string& packageName,
       const std::string& packageVersion,

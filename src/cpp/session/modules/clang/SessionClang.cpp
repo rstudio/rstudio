@@ -221,6 +221,12 @@ bool isAvailable()
 
 Error initialize()
 {
+   // we don't even attempt to use these features if R < 3.0.1
+   // (we need that version of R in able to turn off the processing
+   // of site and user Makevars to force make --dry-run)
+   if (!module_context::hasMinimumRVersion("3.0.1"))
+      return Success();
+
    // attempt to load clang interface
    loadLibClang();
 
