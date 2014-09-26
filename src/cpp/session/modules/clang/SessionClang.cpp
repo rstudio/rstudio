@@ -131,13 +131,8 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
    // is this a source file? if so updated the source index
    if (isCppSourceDoc(filePath))
    {
-      // new files mean we need to update the package compilation database
-      if (event.type() == FileChangeEvent::FileAdded)
-      {
-         compilationDatabase().updateForPackageCppAddition(filePath);
-         sourceIndex().updateTranslationUnit(filePath.absolutePath());
-      }
-      else if (event.type() == FileChangeEvent::FileModified)
+      if (event.type() == FileChangeEvent::FileAdded ||
+          event.type() == FileChangeEvent::FileModified)
       {
          sourceIndex().updateTranslationUnit(filePath.absolutePath());
       }
@@ -224,12 +219,6 @@ bool isAvailable()
 
 Error initialize()
 {
-   // we don't even attempt to use these features if R < 3.0.1
-   // (we need that version of R in able to turn off the processing
-   // of site and user Makevars to force make --dry-run)
-   if (!module_context::hasMinimumRVersion("3.0.1"))
-      return Success();
-
    // if we don't have a recent version of Rcpp (that can do dryRun with
    // sourceCpp) then forget it
    if (!module_context::isPackageVersionInstalled("Rcpp", "0.11.2.7"))

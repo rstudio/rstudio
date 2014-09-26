@@ -38,9 +38,6 @@ public:
    virtual ~CompilationDatabase();
 
    void updateForCurrentPackage();
-
-   void updateForPackageCppAddition(const core::FilePath& cppPath);
-
    void updateForStandaloneCpp(const core::FilePath& cppPath);
 
    std::vector<std::string> argsForFile(const std::string& cppPath) const;
@@ -56,14 +53,18 @@ private:
    // Rtools arguments (cache once we successfully get them)
    mutable std::vector<std::string> rToolsArgs_;
 
-   // arguments for various translation units
-   typedef std::map<std::string,std::vector<std::string> > ArgsMap;
-   ArgsMap argsMap_;
-
    // track the set of attributes used to derive args (don't re-run
    // detection if attributes haven't changed)
    typedef std::map<std::string,std::string> AttribsMap;
    AttribsMap attribsMap_;
+
+   // arguments for various translation units
+   typedef std::map<std::string,std::vector<std::string> > ArgsMap;
+   ArgsMap argsMap_;
+
+   // package src args
+   std::vector<std::string> packageSrcArgs_;
+
 };
 
 // global instance

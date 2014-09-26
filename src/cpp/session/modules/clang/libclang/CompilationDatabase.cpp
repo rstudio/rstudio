@@ -30,11 +30,14 @@
 #include <core/system/Process.hpp>
 #include <core/system/Environment.hpp>
 
-#include "LibClang.hpp"
-#include "SourceIndex.hpp"
+#include <core/r_util/RPackageInfo.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
+
+#include "LibClang.hpp"
+#include "SourceIndex.hpp"
+
 
 using namespace core ;
 
@@ -75,6 +78,17 @@ std::string readDependencyAttributes(const core::FilePath& cppPath)
 
 std::vector<std::string> argsForSourceCpp(const core::FilePath& cppPath)
 {
+   // baseline args
+   std::vector<std::string> args;
+   std::string builtinHeaders = "-I" + clang().builtinHeaders();
+   args.push_back(builtinHeaders);
+#if defined(_WIN32)
+   std::vector<std::string> rtoolsArgs = rToolsArgs();
+   std::copy(rtoolsArgs.begin(), rtoolsArgs.end(), std::back_inserter(args));
+#elif defined(__APPLE__)
+   args.push_back("-stdlib=libstdc++");
+#endif
+
    // get path to R script
    FilePath rScriptPath;
    Error error = module_context::rScriptPath(&rScriptPath);
@@ -84,19 +98,12 @@ std::vector<std::string> argsForSourceCpp(const core::FilePath& cppPath)
       return std::vector<std::string>();
    }
 
-   // setup args and options
-   std::vector<std::string> args;
+   // setup env and options
+   core::system::Options env;
    core::system::ProcessOptions options;
 
    // always run as a slave
    args.push_back("--slave");
-
-   // setup environment to force make into --dry-run mode
-   core::system::Options env;
-   core::system::environment(&env);
-   core::system::setenv(&env, "MAKE", "make --dry-run");
-   core::system::setenv(&env, "R_MAKEVARS_USER", "");
-   core::system::setenv(&env, "R_MAKEVARS_SITE", "");
 
    // for packrat projects we execute the profile and set the working
    // directory to the project directory; for other contexts we just
@@ -186,27 +193,77 @@ CompilationDatabase::~CompilationDatabase()
    }
 }
 
-void CompilationDatabase::updateForPackageCppAddition(
-                                          const core::FilePath& cppPath)
-{
-   // if we don't have this source file already then fully update
-   if (argsMap_.find(cppPath.absolutePath()) == argsMap_.end())
-      updateForCurrentPackage();
-}
-
 void CompilationDatabase::updateForCurrentPackage()
 {
-   // possible approach:
+   TIME_FUNCTION
 
-   // Only create translation units for the files in src
+   // to approximate the compiler flags for files in the package src
+   // directory we will build a temporary sourceCpp file
+   std::ostringstream ostr;
+   ostr << "#include <Rcpp.h>" << std::endl;
+   ostr << "// [[Rcpp::export]]" << std::endl;
+   ostr << "void foo() {}" << std::endl;
 
-   // Discover all of the LinkingTo relationships and then
-   // emit Rcpp::depends for them
+   // read the package description file
+   using namespace projects;
+   core::r_util::RPackageInfo pkgInfo;
+   Error error = pkgInfo.read(projectContext().buildTargetPath());
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   // Discover all of the LinkingTo relationships
+   std::vector<std::string> linkingTo;
+
+   // TODO
+
+
+
+   // emit Rcpp::depends for linking to
+   BOOST_FOREACH(const std::string& pkg, linkingTo)
+   {
+      ostr << "// [[Rcpp::depends(" << pkg << ")]]" << std::endl;
+   }
+
+   // write a temp file with all of the depends
+   FilePath tempCpp = module_context::tempFile("clangdb", "cpp");
+   error = core::writeStringToFile(tempCpp, ostr.str());
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
 
    // Do a sourceCpp dryRun to capture the baseline config
+   std::vector<std::string> args = argsForSourceCpp(tempCpp);
 
-   // Read Makevars to get PKG_CXXFLAGS
+   if (!args.empty())
+   {
+      // always add the pkg include dir
+      args.push_back("-I../inst/include");
 
+      // Read Makevars to get PKG_CXXFLAGS and add that
+      // TODO
+
+      // set the args
+      packageSrcArgs_ = args;
+   }
+
+   // wipe out any exising translation units that map to this package
+   FilePath pkgSrcDir = projectContext().buildTargetPath().childPath("src");
+   std::vector<FilePath> pkgSrcFiles;
+   error = pkgSrcDir.children(&pkgSrcFiles);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   BOOST_FOREACH(const FilePath& srcPath, pkgSrcFiles)
+   {
+      sourceIndex().removeTranslationUnit(srcPath.absolutePath());
+   }
 }
 
 void CompilationDatabase::updateForStandaloneCpp(const core::FilePath& cppPath)
@@ -221,26 +278,12 @@ void CompilationDatabase::updateForStandaloneCpp(const core::FilePath& cppPath)
    if (it != attribsMap_.end() && it->second == attributes)
       return;
 
-   // baseline arguments
-   std::vector<std::string> args;
-   std::string builtinHeaders = "-I" + clang().builtinHeaders();
-   args.push_back(builtinHeaders);
-#if defined(_WIN32)
-   std::vector<std::string> rtoolsArgs = rToolsArgs();
-   std::copy(rtoolsArgs.begin(), rtoolsArgs.end(), std::back_inserter(args));
-#elif defined(__APPLE__)
-   args.push_back("-stdlib=libstdc++");
-#endif
-
    // arguments for this translation unit
-   std::vector<std::string> fileArgs = argsForSourceCpp(cppPath);
+   std::vector<std::string> args = argsForSourceCpp(cppPath);
 
    // if we got args then update
-   if (!fileArgs.empty())
+   if (!args.empty())
    {
-      // combine them
-      std::copy(fileArgs.begin(), fileArgs.end(), std::back_inserter(args));
-
       // update if necessary
       updateIfNecessary(cppPath.absolutePath(), args);
 
@@ -252,11 +295,23 @@ void CompilationDatabase::updateForStandaloneCpp(const core::FilePath& cppPath)
 std::vector<std::string> CompilationDatabase::argsForFile(
                                        const std::string& cppPath) const
 {
-   ArgsMap::const_iterator it = argsMap_.find(cppPath);
-   if (it != argsMap_.end())
-      return it->second;
+   // if this is a package source file then return the package args
+   using namespace projects;
+   FilePath filePath(cppPath);
+   if (projectContext().config().buildType == r_util::kBuildTypePackage &&
+       filePath.parent() == projectContext().buildTargetPath().childPath("src"))
+   {
+      return packageSrcArgs_;
+   }
+   // otherwise lookup in the global dictionary
    else
-      return std::vector<std::string>();
+   {
+      ArgsMap::const_iterator it = argsMap_.find(cppPath);
+      if (it != argsMap_.end())
+         return it->second;
+      else
+         return std::vector<std::string>();
+   }
 }
 
 std::vector<std::string> CompilationDatabase::rToolsArgs() const
