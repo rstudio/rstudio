@@ -124,7 +124,7 @@ std::vector<std::string> argsForSourceCpp(const core::FilePath& cppPath)
 
    // add command to arguments
    args.push_back("-e");
-   boost::format fmt("Rcpp::sourceCpp('%1%', showOutput = TRUE)");
+   boost::format fmt("Rcpp::sourceCpp('%1%', showOutput = TRUE, dryRun = TRUE)");
    args.push_back(boost::str(fmt % cppPath.absolutePath()));
 
    // execute and capture output
@@ -203,8 +203,9 @@ void CompilationDatabase::updateForStandaloneCpp(const core::FilePath& cppPath)
 {
    TIME_FUNCTION
 
-   // if we don't have Rcpp attributes then forget it
-   if (!module_context::haveRcppAttributes())
+   // if we don't have a recent version of Rcpp (that can do dryRun with
+   // sourceCpp) then forget it
+   if (!module_context::isPackageVersionInstalled("Rcpp", "0.11.2.7"))
       return;
 
    // read the dependency attributes within the cpp file to compare to
