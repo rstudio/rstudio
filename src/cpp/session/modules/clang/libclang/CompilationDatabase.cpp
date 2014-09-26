@@ -196,6 +196,16 @@ void CompilationDatabase::updateForPackageCppAddition(
 
 void CompilationDatabase::updateForCurrentPackage()
 {
+   // possible approach:
+
+   // Only create translation units for the files in src
+
+   // Discover all of the LinkingTo relationships and then
+   // emit Rcpp::depends for them
+
+   // Do a sourceCpp dryRun to capture the baseline config
+
+   // Read Makevars to get PKG_CXXFLAGS
 
 }
 

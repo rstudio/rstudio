@@ -91,13 +91,16 @@ bool packageCppFileFilter(const std::string& pkgSrcDir,
                           const std::string& pkgDescFile,
                           const FileInfo& fileInfo)
 {
+   // create file path
+   FilePath filePath(fileInfo.absolutePath());
+
    // DESCRIPTION file
-   if (fileInfo.absolutePath() == pkgDescFile)
+   if (filePath.absolutePath() == pkgDescFile)
    {
       return true;
    }
    // otherwise must be an appropriate file type within the src directory
-   else if (boost::algorithm::starts_with(fileInfo.absolutePath(), pkgSrcDir))
+   else if (filePath.parent().absolutePath() == pkgSrcDir)
    {
       FilePath filePath(fileInfo.absolutePath());
       if (isCppSourceDoc(filePath))
