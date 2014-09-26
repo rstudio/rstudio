@@ -146,8 +146,8 @@ std::vector<std::string> argsForSourceCpp(const core::FilePath& cppPath)
    {
       if (line.find(compile) != std::string::npos)
       {
-         // find the include and define arguments
-         boost::regex re("-[I|D](?:\\\"[^\\\"]+\\\"|[^ ]+)");
+         // find arguments libclang might care about
+         boost::regex re("-[I|D|i|f|s](?:\\\"[^\\\"]+\\\"|[^ ]+)");
          boost::sregex_token_iterator it(line.begin(), line.end(), re, 0);
          boost::sregex_token_iterator end;
          for ( ; it != end; ++it)
