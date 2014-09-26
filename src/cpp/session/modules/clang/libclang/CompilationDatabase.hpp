@@ -49,8 +49,14 @@ private:
    void updateIfNecessary(const std::string& cppPath,
                           const std::vector<std::string>& args);
 private:
+   // arguments for various translation units
    typedef std::map<std::string,std::vector<std::string> > ArgsMap;
    ArgsMap argsMap_;
+
+   // track the set of attributes used to derive args (don't re-run
+   // detection if attributes haven't changed)
+   typedef std::map<std::string,std::string> AttribsMap;
+   AttribsMap attribsMap_;
 };
 
 // global instance
