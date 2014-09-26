@@ -18,7 +18,6 @@ package com.google.gwt.xml.client;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.xml.client.impl.DOMParseException;
 import com.google.gwt.xml.client.impl.XMLParserImplSafari;
 
@@ -201,11 +200,19 @@ public class XMLTest extends GWTTestCase {
     Node e1Node = e1Nodes.item(0);
     assertEquals(((Element) e1Node).getTagName(), "e1");
 
-    // we didn't define a dtd, so no id for us
+    // It used to be that XML nodes without a DTD would never be returned by getElementById().
+    // In DOM 4, an Element's "id" attribute is always used as its id. [1]
+    // This seems to be the behavior starting with Chrome 11 and Firefox 32.
+    // [1] http://www.w3.org/TR/dom/#concept-id
+
     Element e1NodeDirect = d.getElementById("e1Id");
-    // Chrome 11 and up fail to implement this behavior
-    if (!Window.Navigator.getUserAgent().matches(".*Chrome/(1[1-9]|[2-9][0-9])\\..*")) {
-      assertNull(e1NodeDirect);
+    // Allow both the old and new behavior.
+    if (e1NodeDirect != null) {
+      // Check toString() first for a better error message.
+      assertEquals("getElementId returned unexpected element for XML node",
+          e1Node.toString(), e1NodeDirect.toString());
+      assertSame("getElementId returned unexpected element for XML node",
+          e1Node, e1NodeDirect);
     }
 
     Document alienDoc = XMLParser.createDocument();
