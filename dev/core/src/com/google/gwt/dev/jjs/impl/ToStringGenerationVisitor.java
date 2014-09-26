@@ -462,7 +462,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
 
   @Override
   public boolean visit(JFloatLiteral x, Context ctx) {
-    printFloatLiteral(x.getValue());
+    printDoubleLiteral(x.getValue());
     return false;
   }
 
@@ -1041,11 +1041,6 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     if (x.isFinal()) {
       print(CHARS_FINAL);
     }
-  }
-
-  protected void printFloatLiteral(float value) {
-    print(Float.toString(value));
-    print('f');
   }
 
   protected void printLongLiteral(long value) {

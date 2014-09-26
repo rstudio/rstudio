@@ -45,7 +45,7 @@ public class JsStaticEvalTest extends OptimizerTestBase {
     assertEquals("a()&&b,c();", optimize("a() && b, c()"));
 
     // Don't damage math expressions
-    assertEquals("alert(seconds/(60*60));",
+    assertEquals("alert(seconds/3600);",
         optimize("alert(seconds / (60 * 60))"));
     assertEquals("alert(1-(1-foo));", optimize("alert(1 - (1 - foo))"));
 

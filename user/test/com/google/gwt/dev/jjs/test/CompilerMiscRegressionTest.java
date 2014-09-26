@@ -25,6 +25,8 @@ import com.google.gwt.dev.jjs.test.overrides.package2.SomeSubClassInAnotherPacka
 import com.google.gwt.dev.jjs.test.overrides.package2.SomeSubSubClassInAnotherPackage;
 import com.google.gwt.dev.jjs.test.overrides.package3.SomeInterface;
 import com.google.gwt.dev.jjs.test.overrides.package3.SomePackageConfusedParent;
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.ArrayList;
@@ -257,6 +259,23 @@ public class CompilerMiscRegressionTest extends GWTTestCase {
     @junit.framework.Assert::assertEquals(ZZ)(
        regExp1.test(str), regExp2.test(str));
   }-*/;
+
+  /**
+   * Test for issue 8909.
+   * <p>
+   * DevMode does not conform to JS arithmetic semantics and this method tests exactly that.
+   */
+  @DoNotRunWith(Platform.Devel)
+  public void testStaticEvaluationSematics() {
+    float num = getRoundedValue(1.005f);
+    assertEquals(1.00, num, 0.001);
+  }
+
+  private float getRoundedValue(float parameter) {
+    float local = parameter;
+    local = local * 100f;
+    return Math.round(local) / 100f;
+  }
 
   private static void assertEqualContents(float[] expected, float[] actual) {
 

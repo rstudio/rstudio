@@ -23,10 +23,10 @@ import com.google.gwt.dev.jjs.SourceOrigin;
  */
 public class JFloatLiteral extends JValueLiteral {
 
-  public static final JFloatLiteral ZERO = new JFloatLiteral(SourceOrigin.UNKNOWN, Float
-      .intBitsToFloat(0));
+  public static final JFloatLiteral ZERO = new JFloatLiteral(SourceOrigin.UNKNOWN, Double
+      .longBitsToDouble(0));
 
-  public static JFloatLiteral get(float value) {
+  public static JFloatLiteral get(double value) {
     return isZero(value) ? ZERO : new JFloatLiteral(SourceOrigin.UNKNOWN, value);
   }
 
@@ -34,13 +34,13 @@ public class JFloatLiteral extends JValueLiteral {
    * Does this value match the exact 0 bit pattern? (This precludes
    * canonicalizing -0.0 as 0.0).
    */
-  private static boolean isZero(float value) {
-    return Float.floatToRawIntBits(value) == 0;
+  private static boolean isZero(double value) {
+    return Double.doubleToRawLongBits(value) == 0L;
   }
 
-  private final float value;
+  private final double value;
 
-  public JFloatLiteral(SourceInfo sourceInfo, float value) {
+  public JFloatLiteral(SourceInfo sourceInfo, double value) {
     super(sourceInfo);
     this.value = value;
   }
@@ -50,13 +50,13 @@ public class JFloatLiteral extends JValueLiteral {
     return JPrimitiveType.FLOAT;
   }
 
-  public float getValue() {
+  public double getValue() {
     return value;
   }
 
   @Override
   public Object getValueObj() {
-    return new Float(value);
+    return new Double(value);
   }
 
   @Override

@@ -136,9 +136,9 @@ public class ConstantsAssumption implements Assumption<ConstantsAssumption> {
     }
 
     if (literal1 instanceof JFloatLiteral) {
-      int bits1 = Float.floatToRawIntBits(
+      long bits1 = Double.doubleToRawLongBits(
           ((JFloatLiteral) literal1).getValue());
-      int bits2 = Float.floatToRawIntBits(
+      long bits2 = Double.doubleToRawLongBits(
           ((JFloatLiteral) literal2).getValue());
       return bits1 == bits2;
     }

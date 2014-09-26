@@ -62,7 +62,9 @@ public class GwtSpecificValidatorCreatorTest extends TestCase {
   }
 
   public void testAsLiteral_1_1f() {
-    assertLiteral("1.1f", 1.1f);
+    // Internally we represent float literals as double, so here we make sure that 1.1f is
+    // is printed as a double with the right precision.
+    assertLiteral(String.format("%.16g", (double) 1.1f), 1.1f);
   }
 
   public void testAsLiteral_1L() {

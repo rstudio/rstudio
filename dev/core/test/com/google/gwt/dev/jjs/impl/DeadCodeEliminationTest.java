@@ -305,9 +305,16 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
     // Verify that float/double subtracts from zero aren't replaced, since they
     // are needed for obscure IEEE754 functionality -- specifically, converting
     // 0.0 - v into -v means the sign of the result is the opposite of the input
-    // rathe than always being positive.
-    optimize("float", "return 0.0F - f;").intoString("return 0.0f - EntryPoint.f;");
+    // rather than always being positive.
+    optimize("float", "return 0.0F - f;").intoString("return 0.0 - EntryPoint.f;");
     optimize("double", "return 0.0 - d;").intoString("return 0.0 - EntryPoint.d;");
+  }
+
+  public void testFloatingPoint() throws Exception {
+    // Internally we represent float literals as double, so here we make sure that 1.1f is
+    // is printed as a double with the right precision.
+    optimize("float", "return 1.1f;").intoString("return " + String.format("%.16g", (double) 1.1f) +
+        ";");
   }
 
   public void testMultiExpression_RedundantClinitRemoval() throws Exception {

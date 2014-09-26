@@ -50,6 +50,7 @@ import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.js.ast.JsWhile;
 import com.google.gwt.dev.js.rhino.ScriptRuntime;
+import com.google.gwt.dev.util.Ieee754_64_Arithmetic;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -182,19 +183,22 @@ public class JsStaticEval {
         trySimplifyEqAndRefEq(x, arg1, arg2, ctx);
       } else if (op == JsBinaryOperator.NEQ || op == JsBinaryOperator.REF_NEQ) {
         trySimplifyNeAndRefNe(x, arg1, arg2, ctx);
-      } else if (op == JsBinaryOperator.ADD) {
-        trySimplifyAdd(x, arg1, arg2, ctx);
-      } else  {
-       switch (op) {
-         case GT:
-         case GTE:
-         case LT:
-         case LTE:
-           trySimplifyCompare(x, arg1, arg2, op, ctx);
-           break;
-         default:
-           break;
-       }
+      } else if (arg1 instanceof JsValueLiteral && arg2 instanceof JsValueLiteral) {
+         switch (op) {
+           case ADD:
+           case SUB:
+           case MUL:
+           case DIV:
+           case MOD:
+           case GT:
+           case GTE:
+           case LT:
+           case LTE:
+             trySimplifyOp(x, arg1, arg2, op, ctx);
+             break;
+           default:
+             break;
+         }
       }
     }
 
@@ -565,37 +569,6 @@ public class JsStaticEval {
       }
     }
 
-    private JsExpression simplifyCompare(JsExpression original, JsExpression arg1,
-        JsExpression arg2, JsBinaryOperator op) {
-      assert (original != null);
-
-      // TODO(cromwellian) handle all types
-      if (arg1 instanceof JsNumberLiteral && arg2 instanceof JsNumberLiteral) {
-          double num1 = ((JsNumberLiteral) arg1).getValue();
-          double num2 = ((JsNumberLiteral) arg2).getValue();
-          boolean result = false;
-          switch(op) {
-            case LT:
-              result = num1 < num2;
-              break;
-            case LTE:
-              result = num1 <= num2;
-              break;
-            case GT:
-              result = num1 > num2;
-              break;
-            case GTE:
-              result = num1 >= num2;
-              break;
-            default:
-              throw new InternalCompilerException("Can't handle simplify of op " + op);
-          }
-        return JsBooleanLiteral.get(result);
-      }
-      // no simplification made
-      return original;
-    }
-
     private JsExpression simplifyEqAndRefEq(JsExpression original, JsExpression arg1,
         JsExpression arg2) {
       assert (original != null);
@@ -653,25 +626,62 @@ public class JsStaticEval {
     }
 
     /**
-     * Simplify a + b.
+     * Simplify a op b.
      */
-    private void trySimplifyAdd(JsExpression original, JsExpression arg1,
-        JsExpression arg2, JsContext ctx) {
-      if (arg1 instanceof JsValueLiteral && arg2 instanceof JsValueLiteral) {
-        SourceInfo info = original.getSourceInfo();
-        // case: number + number
-        if (arg1 instanceof JsNumberLiteral && arg2 instanceof JsNumberLiteral) {
-          double value = ((JsNumberLiteral) arg1).getValue()
-              + ((JsNumberLiteral) arg2).getValue();
-          ctx.replaceMe(new JsNumberLiteral(info, value));
-        } else {
-          // cases: number + string or string + number
-          StringBuilder result = new StringBuilder();
-          if (appendLiteral(result, (JsValueLiteral) arg1)
-              && appendLiteral(result, (JsValueLiteral) arg2)) {
-            ctx.replaceMe(new JsStringLiteral(info, result.toString()));
-          }
+    private void trySimplifyOp(JsExpression original, JsExpression arg1, JsExpression arg2,
+        JsBinaryOperator op, JsContext ctx) {
+      SourceInfo info = original.getSourceInfo();
+
+      if (op == JsBinaryOperator.ADD &&
+          (arg1 instanceof JsStringLiteral || arg2 instanceof JsStringLiteral)) {
+        // cases: number + string or string + number
+        StringBuilder result = new StringBuilder();
+        if (appendLiteral(result, (JsValueLiteral) arg1)
+            && appendLiteral(result, (JsValueLiteral) arg2)) {
+          ctx.replaceMe(new JsStringLiteral(info, result.toString()));
         }
+        return;
+      }
+
+      if (arg1 instanceof JsNumberLiteral && arg2 instanceof JsNumberLiteral) {
+        double num1 = ((JsNumberLiteral) arg1).getValue();
+        double num2 = ((JsNumberLiteral) arg2).getValue();
+        Object result;
+
+        switch (op) {
+          case ADD:
+            result = Ieee754_64_Arithmetic.add(num1, num2);
+            break;
+          case SUB:
+            result = Ieee754_64_Arithmetic.subtract(num1, num2);
+            break;
+          case MUL:
+            result = Ieee754_64_Arithmetic.multiply(num1, num2);
+            break;
+          case DIV:
+            result = Ieee754_64_Arithmetic.divide(num1, num2);
+            break;
+          case MOD:
+            result = Ieee754_64_Arithmetic.mod(num1, num2);
+            break;
+          case LT:
+            result = Ieee754_64_Arithmetic.lt(num1, num2);
+            break;
+          case LTE:
+            result = Ieee754_64_Arithmetic.le(num1, num2);
+            break;
+          case GT:
+            result = Ieee754_64_Arithmetic.gt(num1, num2);
+            break;
+          case GTE:
+            result = Ieee754_64_Arithmetic.ge(num1, num2);
+            break;
+          default:
+            throw new InternalCompilerException("Can't handle simplify of op " + op);
+        }
+        ctx.replaceMe(result instanceof Double ?
+            new JsNumberLiteral(info, ((Double) result).doubleValue()) :
+            JsBooleanLiteral.get(((Boolean) result).booleanValue()));
       }
     }
 
@@ -772,14 +782,6 @@ public class JsStaticEval {
         }
       }
       return toReturn;
-    }
-
-    private void trySimplifyCompare(JsExpression original, JsExpression arg1,
-        JsExpression arg2, JsBinaryOperator op, JsContext ctx) {
-      JsExpression updated = simplifyCompare(original, arg1, arg2, op);
-      if (updated != original) {
-        ctx.replaceMe(updated);
-      }
     }
 
     private void trySimplifyEqAndRefEq(JsExpression original, JsExpression arg1,

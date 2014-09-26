@@ -782,7 +782,7 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     return JDoubleLiteral.get(d);
   }
 
-  public JFloatLiteral getLiteralFloat(float f) {
+  public JFloatLiteral getLiteralFloat(double f) {
     return JFloatLiteral.get(f);
   }
 
