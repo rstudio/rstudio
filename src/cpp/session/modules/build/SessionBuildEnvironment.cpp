@@ -13,8 +13,6 @@
  *
  */
 
-#include "SessionBuildEnvironment.hpp"
-
 #include <string>
 #include <vector>
 
@@ -34,9 +32,8 @@
 
 using namespace core ;
 
-namespace session {  
-namespace modules {
-namespace build {
+namespace session {
+namespace module_context {
 
 #ifdef _WIN32
 
@@ -191,6 +188,15 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget, std::string* pWarningMessage)
 
 } // anonymous namespace
 
+bool isRtoolsCompatible(const r_util::RToolsInfo& rTools)
+{
+   bool isCompatible = false;
+   Error error = r::exec::evaluateString(rTools.versionPredicate(),
+                                         &isCompatible);
+   if (error)
+      LOG_ERROR(error);
+   return isCompatible;
+}
 
 bool addRtoolsToPathIfNecessary(std::string* pPath,
                                 std::string* pWarningMessage)
@@ -207,6 +213,11 @@ bool addRtoolsToPathIfNecessary(core::system::Options* pEnvironment,
 
 #else
 
+bool isRtoolsCompatible(const r_util::RToolsInfo& rTools)
+{
+   return false;
+}
+
 bool addRtoolsToPathIfNecessary(std::string* pPath,
                                 std::string* pWarningMessage)
 {
@@ -218,34 +229,7 @@ bool addRtoolsToPathIfNecessary(core::system::Options* pEnvironment,
 {
    return false;
 }
-
 #endif
 
-
-} // namespace build
-} // namespace modules
-
-namespace module_context {
-
-#ifdef _WIN32
-
-bool isRtoolsCompatible(const r_util::RToolsInfo& rTools)
-{
-   bool isCompatible = false;
-   Error error = r::exec::evaluateString(rTools.versionPredicate(),
-                                         &isCompatible);
-   if (error)
-      LOG_ERROR(error);
-   return isCompatible;
-}
-
-#else
-
-bool isRtoolsCompatible(const r_util::RToolsInfo& rTools)
-{
-   return false;
-}
-#endif
-}
-
+} // namespace module_context
 } // namespace session

@@ -30,7 +30,6 @@
 #include <session/SessionModuleContext.hpp>
 
 #include "SessionBuildErrors.hpp"
-#include "SessionBuildEnvironment.hpp"
 
 using namespace core ;
 
@@ -122,7 +121,7 @@ public:
       // fixup path if necessary
       std::string path = core::system::getenv("PATH");
       std::string newPath = path;
-      if (build::addRtoolsToPathIfNecessary(&newPath, &rToolsWarning_))
+      if (module_context::addRtoolsToPathIfNecessary(&newPath, &rToolsWarning_))
       {
           previousPath_ = path;
           core::system::setenv("PATH", newPath);

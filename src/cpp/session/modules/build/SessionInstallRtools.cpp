@@ -27,8 +27,6 @@
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionUserSettings.hpp>
 
-#include "SessionBuildEnvironment.hpp"
-
 using namespace core ;
 
 namespace session {  

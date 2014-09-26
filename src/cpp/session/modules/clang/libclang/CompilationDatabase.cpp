@@ -115,6 +115,10 @@ std::vector<std::string> argsForSourceCpp(const core::FilePath& cppPath)
          core::system::setenv(&env, "R_LIBS", libPaths);
    }
 
+   // add rtools to path if we need to
+   std::string warning;
+   module_context::addRtoolsToPathIfNecessary(&env, &warning);
+
    // set environment into options
    options.environment = env;
 

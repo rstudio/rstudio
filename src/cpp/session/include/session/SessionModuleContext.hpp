@@ -417,6 +417,10 @@ bool canBuildCpp();
 bool installRBuildTools(const std::string& action);
 bool haveRcppAttributes();
 bool isRtoolsCompatible(const core::r_util::RToolsInfo& rTools);
+bool addRtoolsToPathIfNecessary(std::string* pPath,
+                                std::string* pWarningMessage);
+bool addRtoolsToPathIfNecessary(core::system::Options* pEnvironment,
+                                std::string* pWarningMessage);
 
 #ifdef __APPLE__
 bool isOSXMavericks();
