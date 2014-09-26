@@ -255,6 +255,8 @@ std::vector<std::string> CompilationDatabase::argsForFile(
 
 std::vector<std::string> CompilationDatabase::rToolsArgs() const
 {
+
+#ifdef _WIN32
    if (rToolsArgs_.empty())
    {
       // scan for Rtools
@@ -289,6 +291,7 @@ std::vector<std::string> CompilationDatabase::rToolsArgs() const
          }
       }
    }
+#endif
 
    return rToolsArgs_;
 }
