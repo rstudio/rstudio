@@ -56,7 +56,7 @@ std::string readDependencyAttributes(const core::FilePath& cppPath)
    // find dependency attributes
    std::string attributes;
    boost::regex re(
-     "^\\s*//\\s*\\[\\[Rcpp::(depends|plugins)(\\(.*?\\))?\\]\\]\\s*$");
+     "^\\s*//\\s*\\[\\[Rcpp::(\\w+)(\\(.*?\\))?\\]\\]\\s*$");
    boost::sregex_token_iterator it(contents.begin(), contents.end(), re, 0);
    boost::sregex_token_iterator end;
    for ( ; it != end; ++it)
