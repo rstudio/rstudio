@@ -16,8 +16,12 @@
 #ifndef SESSION_MODULES_CLANG_LIBCLANG_COMPILATION_DATABASE_HPP
 #define SESSION_MODULES_CLANG_LIBCLANG_COMPILATION_DATABASE_HPP
 
+#include <map>
+#include <vector>
 
 #include <boost/noncopyable.hpp>
+
+#include <core/FilePath.hpp>
 
 namespace session {
 namespace modules {      
@@ -32,6 +36,18 @@ private:
 
 public:
    virtual ~CompilationDatabase();
+
+   void updateForCurrentPackage();
+   void updateForStandaloneCpp(const core::FilePath& cppPath);
+
+   std::vector<std::string> argsForFile(const std::string& cppPath) const;
+
+private:
+   void updateIfNecessary(const std::string& cppPath,
+                          const std::vector<std::string>& args);
+private:
+   typedef std::map<std::string,std::vector<std::string> > ArgsMap;
+   ArgsMap argsMap_;
 };
 
 // global instance

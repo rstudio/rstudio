@@ -17,7 +17,10 @@
 
 #include <core/PerformanceTimer.hpp>
 
+#include <core/system/ProcessArgs.hpp>
+
 #include "UnsavedFiles.hpp"
+#include "CompilationDatabase.hpp"
 
 /*
 Args/includes come from:
@@ -88,60 +91,42 @@ void SourceIndex::setGlobalOptions(unsigned options)
    clang().CXIndex_setGlobalOptions(index_, options);
 }
 
-void SourceIndex::updateTranslationUnit(const std::string& filename)
+void SourceIndex::updateTranslationUnit(const std::string& file)
 {
-   PerformanceTimer timer("libclang: " + filename);
+   PerformanceTimer timer("libclang: " + file);
 
    // check for an existing translation unit, if we don't have one then
    // parse the source file into a translation unit
-   TranslationUnits::iterator it = translationUnits_.find(filename);
+   TranslationUnits::iterator it = translationUnits_.find(file);
    if (it == translationUnits_.end())
    {
-      std::vector<const char*> args;
-      std::string builtinHeaders = "-I" + clang().builtinHeaders();
-      args.push_back(builtinHeaders.c_str());
-
-#if defined(_WIN32)
-      args.push_back("-IC:/RBuildTools/3.1/gcc-4.6.3/i686-w64-mingw32/include");
-      args.push_back("-IC:/RBuildTools/3.1/gcc-4.6.3/include/c++/4.6.3");
-      args.push_back("-IC:/RBuildTools/3.1/gcc-4.6.3/include/c++/4.6.3/i686-w64-mingw32");
-      args.push_back("-IC:/Program Files/R/R-3.1.0/include");
-      args.push_back("-DNDEBUG");
-      args.push_back("-IC:/Users/jjallaire/Documents/R/win-library/3.1/Rcpp/include");
-      args.push_back("-Id:/RCompile/CRANpkg/extralibs64/local/include");
-#elif defined(__APPLE__)
-      args.push_back("-stdlib=libstdc++");
-      args.push_back("-I/Library/Frameworks/R.framework/Resources/include");
-      args.push_back("-DNDEBUG");
-      args.push_back("-I/usr/local/include");
-      args.push_back("-I/usr/local/include/freetype2");
-      args.push_back("-I/opt/X11/include");
-      args.push_back("-I/Library/Frameworks/R.framework/Resources/library/Rcpp/include");
-#else
-      args.push_back("-I/usr/share/R/include");
-      args.push_back("-DNDEBUG");
-      args.push_back("-I/home/jjallaire/R/x86_64-pc-linux-gnu-library/3.1/Rcpp/include");
-#endif
-
-      // create a new translation unit from the file
-      CXTranslationUnit tu = clang().parseTranslationUnit(
-                            index_,
-                            filename.c_str(),
-                            &(args[0]),
-                            args.size(),
-                            unsavedFiles().unsavedFilesArray(),
-                            unsavedFiles().numUnsavedFiles(),
-                            clang().defaultEditingTranslationUnitOptions());
-
-
-      // save it if we succeeded
-      if (tu != NULL)
+      // get the args from the compilation database
+      std::vector<std::string> args = compilationDatabase().argsForFile(file);
+      if (!args.empty())
       {
-         translationUnits_[filename] = tu;
-      }
-      else
-      {
-         LOG_ERROR_MESSAGE("Error parsing translation unit " + filename);
+         // get the args in the fashion libclang expects (char**)
+         core::system::ProcessArgs argsArray(args);
+
+         // create a new translation unit from the file
+         CXTranslationUnit tu = clang().parseTranslationUnit(
+                               index_,
+                               file.c_str(),
+                               argsArray.args(),
+                               argsArray.argCount(),
+                               unsavedFiles().unsavedFilesArray(),
+                               unsavedFiles().numUnsavedFiles(),
+                               clang().defaultEditingTranslationUnitOptions());
+
+
+         // save it if we succeeded
+         if (tu != NULL)
+         {
+            translationUnits_[file] = tu;
+         }
+         else
+         {
+            LOG_ERROR_MESSAGE("Error parsing translation unit " + file);
+         }
       }
    }
 
@@ -149,7 +134,7 @@ void SourceIndex::updateTranslationUnit(const std::string& filename)
    // you need to immediately reparse the translation unit after creation
    // in order to get the benefit of precompiled headers). note that this
    // lookup will fail in the case of error occurring during parsing above
-   it = translationUnits_.find(filename);
+   it = translationUnits_.find(file);
    if (it != translationUnits_.end())
    {
       int ret = clang().reparseTranslationUnit(
@@ -161,8 +146,8 @@ void SourceIndex::updateTranslationUnit(const std::string& filename)
       // if this returns an error then we need to dispose the translation unit
       if (ret != 0)
       {
-         LOG_ERROR_MESSAGE("Error re-parsing translation unit " + filename);
-         removeTranslationUnit(filename);
+         LOG_ERROR_MESSAGE("Error re-parsing translation unit " + file);
+         removeTranslationUnit(file);
       }
    }
 }
