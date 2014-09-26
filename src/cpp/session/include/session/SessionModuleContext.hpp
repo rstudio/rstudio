@@ -28,6 +28,7 @@
 #include <core/system/FileChangeEvent.hpp>
 #include <core/http/UriHandler.hpp>
 #include <core/json/JsonRpc.hpp>
+#include <core/r_util/RToolsInfo.hpp>
 #include <core/Thread.hpp>
 
 #include <session/SessionOptions.hpp>
@@ -415,6 +416,7 @@ std::string libPathsString();
 bool canBuildCpp();
 bool installRBuildTools(const std::string& action);
 bool haveRcppAttributes();
+bool isRtoolsCompatible(const core::r_util::RToolsInfo& rTools);
 
 #ifdef __APPLE__
 bool isOSXMavericks();

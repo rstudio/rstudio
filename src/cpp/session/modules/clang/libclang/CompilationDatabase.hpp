@@ -46,9 +46,16 @@ public:
    std::vector<std::string> argsForFile(const std::string& cppPath) const;
 
 private:
+
+   std::vector<std::string> rToolsArgs() const;
+
    void updateIfNecessary(const std::string& cppPath,
                           const std::vector<std::string>& args);
 private:
+
+   // Rtools arguments (cache once we successfully get them)
+   mutable std::vector<std::string> rToolsArgs_;
+
    // arguments for various translation units
    typedef std::map<std::string,std::vector<std::string> > ArgsMap;
    ArgsMap argsMap_;

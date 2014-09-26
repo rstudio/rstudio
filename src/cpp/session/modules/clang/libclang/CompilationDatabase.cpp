@@ -19,10 +19,13 @@
 
 #include <boost/regex.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/trim_all.hpp>
 
 #include <core/Error.hpp>
 #include <core/PerformanceTimer.hpp>
 #include <core/FileSerializer.hpp>
+
+#include <core/r_util/RToolsInfo.hpp>
 
 #include <core/system/Process.hpp>
 #include <core/system/Environment.hpp>
@@ -62,6 +65,7 @@ std::string readDependencyAttributes(const core::FilePath& cppPath)
    for ( ; it != end; ++it)
    {
       std::string attrib = *it;
+      boost::algorithm::trim_all(attrib);
       attributes.append(attrib);
    }
 
@@ -207,16 +211,13 @@ void CompilationDatabase::updateForStandaloneCpp(const core::FilePath& cppPath)
    if (it != attribsMap_.end() && it->second == attributes)
       return;
 
-   std::cerr << attributes << std::endl;
-
    // baseline arguments
    std::vector<std::string> args;
    std::string builtinHeaders = "-I" + clang().builtinHeaders();
    args.push_back(builtinHeaders);
 #if defined(_WIN32)
-   args.push_back("-IC:/RBuildTools/3.1/gcc-4.6.3/i686-w64-mingw32/include");
-   args.push_back("-IC:/RBuildTools/3.1/gcc-4.6.3/include/c++/4.6.3");
-   args.push_back("-IC:/RBuildTools/3.1/gcc-4.6.3/include/c++/4.6.3/i686-w64-mingw32");
+   std::vector<std::string> rtoolsArgs = rToolsArgs();
+   std::copy(rtoolsArgs.begin(), rtoolsArgs.end(), std::back_inserter(args));
 #elif defined(__APPLE__)
    args.push_back("-stdlib=libstdc++");
 #endif
@@ -246,6 +247,46 @@ std::vector<std::string> CompilationDatabase::argsForFile(
       return it->second;
    else
       return std::vector<std::string>();
+}
+
+std::vector<std::string> CompilationDatabase::rToolsArgs() const
+{
+   if (rToolsArgs_.empty())
+   {
+      // scan for Rtools
+      std::vector<core::r_util::RToolsInfo> rTools;
+      Error error = core::r_util::scanRegistryForRTools(&rTools);
+      if (error)
+         LOG_ERROR(error);
+
+      // enumerate them to see if we have a compatible version
+      // (go in reverse order for most recent first)
+      std::vector<r_util::RToolsInfo>::const_reverse_iterator it = rTools.rbegin();
+      for ( ; it != rTools.rend(); ++it)
+      {
+         if (module_context::isRtoolsCompatible(*it))
+         {
+            FilePath rtoolsPath = it->installPath();
+
+            rToolsArgs_.push_back("-I" + rtoolsPath.childPath(
+               "gcc-4.6.3/i686-w64-mingw32/include").absolutePath());
+
+            rToolsArgs_.push_back("-I" + rtoolsPath.childPath(
+               "gcc-4.6.3/include/c++/4.6.3").absolutePath());
+
+            std::string bits = "-I" + rtoolsPath.childPath(
+               "gcc-4.6.3/include/c++/4.6.3/i686-w64-mingw32").absolutePath();
+#ifdef _WIN64
+            bits += "/64";
+#endif
+            rToolsArgs_.push_back(bits);
+
+            break;
+         }
+      }
+   }
+
+   return rToolsArgs_;
 }
 
 void CompilationDatabase::updateIfNecessary(

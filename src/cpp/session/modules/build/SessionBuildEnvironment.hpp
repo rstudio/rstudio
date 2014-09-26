@@ -30,8 +30,6 @@ namespace session {
 namespace modules {
 namespace build {
 
-bool isRtoolsCompatible(const core::r_util::RToolsInfo& rTools);
-
 bool addRtoolsToPathIfNecessary(std::string* pPath,
                                 std::string* pWarningMessage);
 
