@@ -30,8 +30,12 @@ namespace libclang {
 
 class SourceIndex : boost::noncopyable
 {
-public:
+private:
+   // singleton
+   friend SourceIndex& sourceIndex();
    SourceIndex();
+
+public:
    virtual ~SourceIndex();
 
    unsigned getGlobalOptions() const;

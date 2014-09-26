@@ -32,8 +32,13 @@ namespace libclang {
 
 class UnsavedFiles : boost::noncopyable
 {
-public:
+private:
+   // singleton
+   friend UnsavedFiles& unsavedFiles();
    UnsavedFiles() {}
+
+public:
+
    virtual ~UnsavedFiles();
 
    void update(const std::string& id,
