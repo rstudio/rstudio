@@ -128,17 +128,19 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
    // is this a source file? if so updated the source index
    if (isCppSourceDoc(filePath))
    {
-      switch(event.type())
+      // new files mean we need to update the package compilation database
+      if (event.type() == FileChangeEvent::FileAdded)
       {
-         case FileChangeEvent::FileAdded:
-         case FileChangeEvent::FileModified:
-            sourceIndex().updateTranslationUnit(filePath.absolutePath());
-            break;
-         case FileChangeEvent::FileRemoved:
-            sourceIndex().removeTranslationUnit(filePath.absolutePath());
-            break;
-         case FileChangeEvent::None:
-            break;
+         compilationDatabase().updateForPackageCppAddition(filePath);
+         sourceIndex().updateTranslationUnit(filePath.absolutePath());
+      }
+      else if (event.type() == FileChangeEvent::FileModified)
+      {
+         sourceIndex().updateTranslationUnit(filePath.absolutePath());
+      }
+      else if (event.type() == FileChangeEvent::FileRemoved)
+      {
+         sourceIndex().removeTranslationUnit(filePath.absolutePath());
       }
    }
 

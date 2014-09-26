@@ -22,34 +22,6 @@
 #include "UnsavedFiles.hpp"
 #include "CompilationDatabase.hpp"
 
-/*
-Args/includes come from:
-
-  - Builtin clang headers shipped with the product
-  - Platform-specific additions:
-      * -stdlib=libstdc++ on OSX
-      * Rtools includes on Windows
-  - Arguments emmitted from R CMD SHLIB
-
-How to track R CMD SHLIB arguments:
-
-  - For a package, run make --dry-run at startup and then again
-    every time a source file is added or the DESCRIPTION or
-    Makevars[.win] is changed
-
-  - For a C++ file that is NOT in a package, check for use of Rcpp
-    and do make --dry-run with sourceCpp in that case (otherwise
-    do make --dry-run with R CMD SHLIB
-
-Separate CompilationDatabase class that tracks all of this and can
-cough up the include args for any given file
-
-Note that this implies that code completion in header files will be
-done by searching the TranlationUnits for a use of that header
-
-*/
-
-
 using namespace core ;
 
 namespace session {

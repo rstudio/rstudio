@@ -45,6 +45,14 @@ CompilationDatabase::~CompilationDatabase()
    }
 }
 
+void CompilationDatabase::updateForPackageCppAddition(
+                                          const core::FilePath& cppPath)
+{
+   // if we don't have this source file already then fully update
+   if (argsMap_.find(cppPath.absolutePath()) == argsMap_.end())
+      updateForCurrentPackage();
+}
+
 void CompilationDatabase::updateForCurrentPackage()
 {
 

@@ -38,6 +38,9 @@ public:
    virtual ~CompilationDatabase();
 
    void updateForCurrentPackage();
+
+   void updateForPackageCppAddition(const core::FilePath& cppPath);
+
    void updateForStandaloneCpp(const core::FilePath& cppPath);
 
    std::vector<std::string> argsForFile(const std::string& cppPath) const;
