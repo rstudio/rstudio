@@ -502,7 +502,7 @@ private:
       core::system::setenv(&childEnv, "NOT_CRAN", "true");
 
       // add r tools to path if necessary
-     module_context::addRtoolsToPathIfNecessary(&childEnv, &buildToolsWarning_);
+      module_context::addRtoolsToPathIfNecessary(&childEnv, &buildToolsWarning_);
 
       pkgOptions.environment = childEnv;
 
