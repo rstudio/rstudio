@@ -90,6 +90,16 @@
    paste(.libPaths(), collapse = .Platform$path.sep)
 })
 
+.rs.addFunction("parseLinkingTo", function(linkingTo)
+{
+   if (is.null(linkingTo))
+      return (character())
+
+   linkingTo <- strsplit(linkingTo, "\\s*\\,")[[1]]
+   result <- gsub("\\s", "", linkingTo)
+   gsub("\\(.*", "", result)
+})
+
 
 .rs.addFunction("isPackageInstalled", function(name, libLoc = NULL)
 {

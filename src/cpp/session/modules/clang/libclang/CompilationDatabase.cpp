@@ -32,6 +32,8 @@
 
 #include <core/r_util/RPackageInfo.hpp>
 
+#include <r/RExec.hpp>
+
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
 
@@ -74,6 +76,25 @@ std::string readDependencyAttributes(const core::FilePath& cppPath)
 
    // return them
    return attributes;
+}
+
+std::vector<std::string> extractCompileArgs(const std::string& line)
+{
+   std::vector<std::string> compileArgs;
+
+   // find arguments libclang might care about
+   boost::regex re("-[I|D|i|f|s](?:\\\"[^\\\"]+\\\"|[^ ]+)");
+   boost::sregex_token_iterator it(line.begin(), line.end(), re, 0);
+   boost::sregex_token_iterator end;
+   for ( ; it != end; ++it)
+   {
+      // remove quotes and add it to the compile args
+      std::string arg = *it;
+      boost::algorithm::replace_all(arg, "\"", "");
+      compileArgs.push_back(arg);
+   }
+
+   return compileArgs;
 }
 
 std::vector<std::string> argsForSourceCpp(const core::FilePath& cppPath)
@@ -163,18 +184,8 @@ std::vector<std::string> argsForSourceCpp(const core::FilePath& cppPath)
    {
       if (line.find(compile) != std::string::npos)
       {
-         // find arguments libclang might care about
-         boost::regex re("-[I|D|i|f|s](?:\\\"[^\\\"]+\\\"|[^ ]+)");
-         boost::sregex_token_iterator it(line.begin(), line.end(), re, 0);
-         boost::sregex_token_iterator end;
-         for ( ; it != end; ++it)
-         {
-            // remove quotes and add it to the compile args
-            std::string arg = *it;
-            boost::algorithm::replace_all(arg, "\"", "");
-            compileArgs.push_back(arg);
-         }
-         break;
+         std::vector<std::string> args = extractCompileArgs(line);
+         std::copy(args.begin(), args.end(), std::back_inserter(compileArgs));
       }
    }
 
@@ -243,8 +254,9 @@ void CompilationDatabase::updateForCurrentPackage()
 
    // read the package description file
    using namespace projects;
+   FilePath pkgPath = projectContext().buildTargetPath();
    core::r_util::RPackageInfo pkgInfo;
-   Error error = pkgInfo.read(projectContext().buildTargetPath());
+   Error error = pkgInfo.read(pkgPath);
    if (error)
    {
       LOG_ERROR(error);
@@ -252,16 +264,20 @@ void CompilationDatabase::updateForCurrentPackage()
    }
 
    // Discover all of the LinkingTo relationships
-   std::vector<std::string> linkingTo;
-
-   // TODO
-
-
-
-   // emit Rcpp::depends for linking to
-   BOOST_FOREACH(const std::string& pkg, linkingTo)
+   if (!pkgInfo.linkingTo().empty())
    {
-      ostr << "// [[Rcpp::depends(" << pkg << ")]]" << std::endl;
+      std::vector<std::string> linkingTo;
+      r::exec::RFunction parseLinkingTo(".rs.parseLinkingTo");
+      parseLinkingTo.addParam(pkgInfo.linkingTo());
+      Error error = parseLinkingTo.call(&linkingTo);
+      if (error)
+         LOG_ERROR(error);
+
+      // emit Rcpp::depends for linking to
+      BOOST_FOREACH(const std::string& pkg, linkingTo)
+      {
+         ostr << "// [[Rcpp::depends(" << pkg << ")]]" << std::endl;
+      }
    }
 
    // write a temp file with all of the depends
@@ -273,20 +289,63 @@ void CompilationDatabase::updateForCurrentPackage()
       return;
    }
 
-   // Do a sourceCpp dryRun to capture the baseline config
+   // Do a sourceCpp dryRun to capture the baseline config (bail on error)
    std::vector<std::string> args = argsForSourceCpp(tempCpp);
+   if (args.empty())
+      return;
 
-   if (!args.empty())
+   // always add the pkg include dir
+   FilePath includePath = pkgPath.childPath("inst/include");
+   if (includePath.exists())
+      args.push_back("-I" + includePath.absolutePath());
+
+   // Read Makevars to get PKG_CXXFLAGS and add that
+   FilePath srcPath = pkgPath.childPath("src");
+   if (srcPath.exists())
    {
-      // always add the pkg include dir
-      args.push_back("-I../inst/include");
+      std::string makevars = "Makevars";
+#ifdef _WIN32
+      if (srcPath.childPath("Makevars.win").exists())
+         makevars = "Makevars.win";
+#endif
+      FilePath makevarsPath = srcPath.childPath(makevars);
+      if (makevarsPath.exists())
+      {
+         // read makevars into lines
+         std::vector<std::string> lines;
+         Error error = core::readStringVectorFromFile(makevarsPath, &lines);
+         if (error)
+            LOG_ERROR(error);
 
-      // Read Makevars to get PKG_CXXFLAGS and add that
-      // TODO
 
-      // set the args
-      packageSrcArgs_ = args;
+         BOOST_FOREACH(const std::string& line, lines)
+         {
+            if (line.find("PKG_CFLAGS") != std::string::npos ||
+                line.find("PKG_CXXFLAGS") != std::string::npos ||
+                line.find("PKG_CPPFLAGS") != std::string::npos)
+            {
+               std::vector<std::string> mArgs = extractCompileArgs(line);
+               BOOST_FOREACH(std::string arg, mArgs)
+               {
+                  // do path substitutions
+                  boost::algorithm::replace_first(
+                           arg,
+                           "-I..",
+                           "-I" + srcPath.parent().absolutePath());
+                  boost::algorithm::replace_first(
+                           arg,
+                           "-I.",
+                           "-I" + srcPath.absolutePath());
+
+                  args.push_back(arg);
+               }
+            }
+         }
+      }
    }
+
+   // set the args
+   packageSrcArgs_ = args;
 
    // wipe out any exising translation units that map to this package
    FilePath pkgSrcDir = projectContext().buildTargetPath().childPath("src");
