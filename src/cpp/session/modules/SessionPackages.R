@@ -240,11 +240,6 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
   }
 })
 
-.rs.addFunction("libPathsString", function()
-{
-   paste(.libPaths(), collapse = .Platform$path.sep)
-})
-
 .rs.addFunction("packageVersion", function(name, libPath, pkgs)
 {
    pkgs <- subset(pkgs, Package == name & LibPath == libPath)

@@ -79,14 +79,16 @@ std::string readDependencyAttributes(const core::FilePath& cppPath)
 std::vector<std::string> argsForSourceCpp(const core::FilePath& cppPath)
 {
    // baseline args
-   std::vector<std::string> args;
+   std::vector<std::string> compileArgs;
    std::string builtinHeaders = "-I" + clang().builtinHeaders();
-   args.push_back(builtinHeaders);
+   compileArgs.push_back(builtinHeaders);
 #if defined(_WIN32)
    std::vector<std::string> rtoolsArgs = rToolsArgs();
-   std::copy(rtoolsArgs.begin(), rtoolsArgs.end(), std::back_inserter(args));
+   std::copy(rtoolsArgs.begin(),
+             rtoolsArgs.end(),
+             std::back_inserter(compileArgs));
 #elif defined(__APPLE__)
-   args.push_back("-stdlib=libstdc++");
+   compileArgs.push_back("-stdlib=libstdc++");
 #endif
 
    // get path to R script
@@ -103,6 +105,7 @@ std::vector<std::string> argsForSourceCpp(const core::FilePath& cppPath)
    core::system::ProcessOptions options;
 
    // always run as a slave
+   std::vector<std::string> args;
    args.push_back("--slave");
 
    // for packrat projects we execute the profile and set the working
@@ -155,7 +158,6 @@ std::vector<std::string> argsForSourceCpp(const core::FilePath& cppPath)
 
 
    // find the line with the compilation and add it's args
-   std::vector<std::string> compileArgs;
    std::string compile = "-c " + cppPath.filename() + " -o " + cppPath.stem();
    BOOST_FOREACH(const std::string& line, lines)
    {

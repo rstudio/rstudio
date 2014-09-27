@@ -85,6 +85,12 @@
             error = function(e) NULL)
 })
 
+.rs.addFunction("libPathsString", function()
+{
+   paste(.libPaths(), collapse = .Platform$path.sep)
+})
+
+
 .rs.addFunction("isPackageInstalled", function(name, libLoc = NULL)
 {
   name %in% .packages(all.available = TRUE, lib.loc = libLoc)
