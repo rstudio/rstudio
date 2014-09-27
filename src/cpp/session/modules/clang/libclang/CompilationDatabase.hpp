@@ -62,9 +62,10 @@ private:
    typedef std::map<std::string,std::vector<std::string> > ArgsMap;
    ArgsMap argsMap_;
 
-   // package src args
+   // package src args (track file modification times on build
+   // oriented files to avoid re-running detection)
+   std::string packageBuildFileHash_;
    std::vector<std::string> packageSrcArgs_;
-
 };
 
 // global instance

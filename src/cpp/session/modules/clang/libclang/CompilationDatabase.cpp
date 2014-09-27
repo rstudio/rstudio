@@ -182,6 +182,35 @@ std::vector<std::string> argsForSourceCpp(const core::FilePath& cppPath)
    return compileArgs;
 }
 
+std::string buildFileHash(const FilePath& filePath)
+{
+   if (filePath.exists())
+   {
+      std::ostringstream ostr;
+      ostr << filePath.lastWriteTime();
+      return ostr.str();
+   }
+   else
+   {
+      return std::string();
+   }
+}
+
+std::string packageBuildFileHash()
+{
+   std::ostringstream ostr;
+   FilePath buildPath = projects::projectContext().buildTargetPath();
+   ostr << buildFileHash(buildPath.childPath("DESCRIPTION"));
+   FilePath srcPath = buildPath.childPath("src");
+   if (srcPath.exists())
+   {
+      ostr << buildFileHash(srcPath.childPath("Makevars"));
+      ostr << buildFileHash(srcPath.childPath("Makevars.win"));
+   }
+   return ostr.str();
+}
+
+
 } // anonymous namespace
 
 CompilationDatabase::~CompilationDatabase()
@@ -197,6 +226,12 @@ CompilationDatabase::~CompilationDatabase()
 
 void CompilationDatabase::updateForCurrentPackage()
 {
+   // check hash to see if we can avoid this computation
+   std::string buildFileHash = packageBuildFileHash();
+   if (buildFileHash == packageBuildFileHash_)
+      return;
+   packageBuildFileHash_ = buildFileHash;
+
    TIME_FUNCTION
 
    // to approximate the compiler flags for files in the package src
