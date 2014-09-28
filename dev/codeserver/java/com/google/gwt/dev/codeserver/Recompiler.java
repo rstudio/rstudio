@@ -234,10 +234,10 @@ class Recompiler {
       }
 
       // Create a "module_name.nocache.js" that calculates the permutation and forces a recompile.
-      String stubJs = generateStub(module, compileLogger);
+      String nocacheJs = generateModuleRecompileJs(module, compileLogger);
       PageUtil.writeFile(outputDir.getCanonicalPath() + "/" + outputModuleName + ".nocache.js",
-          stubJs);
-
+          nocacheJs);
+      writeRecompileNoCacheJs(outputDir, outputModuleName, nocacheJs, compileLogger);
     } catch (IOException e) {
       compileLogger.log(Type.ERROR, "Error creating stub compile directory.", e);
       UnableToCompleteException wrapped = new UnableToCompleteException();
@@ -249,18 +249,22 @@ class Recompiler {
   /**
    * Generates the nocache.js file to use when precompile is not on.
    */
-  private static String generateStub(ModuleDef module, TreeLogger compileLogger)
-      throws IOException, UnableToCompleteException {
+  private static String generateModuleRecompileJs(ModuleDef module, TreeLogger compileLogger)
+      throws UnableToCompleteException {
 
     String outputModuleName = module.getName();
-
-    String stub = PageUtil.loadResource(Recompiler.class, "nomodule.nocache.js");
-
-    return "(function() {\n"
-        + " var moduleName = '" + outputModuleName  + "';\n"
-        + PropertiesUtil.generatePropertiesSnippet(module, compileLogger)
-        + stub
-        + "})();\n";
+    try {
+      String stub = PageUtil.loadResource(Recompiler.class, "recompile.nocache.js");
+      return "(function() {\n"
+      + " var moduleName = '" + outputModuleName  + "';\n"
+      + PropertiesUtil.generatePropertiesSnippet(module, compileLogger)
+      + stub
+      + "})();\n";
+    } catch (IOException e) {
+      compileLogger.log(Type.ERROR, "Can not generate + " + outputModuleName
+          + " + .recompile.nocache.js", e);
+      throw new UnableToCompleteException();
+    }
   }
 
   private boolean doCompile(TreeLogger compileLogger, CompileDir compileDir, Job job)
@@ -272,6 +276,9 @@ class Recompiler {
     compilerContext = compilerContextBuilder.options(loadOptions).build();
 
     ModuleDef module = loadModule(compileLogger);
+    // We need to generate the stub before restricting permutations
+    String recompileJs = generateModuleRecompileJs(module, compileLogger);
+
     Map<String, String> bindingProperties = restrictPermutations(compileLogger, module,
         job.getBindingProperties());
 
@@ -309,6 +316,9 @@ class Recompiler {
       publishedCompileDir = compileDir;
       lastBuildInput = input;
       saveKnownGoodMinimalRebuildCache(bindingProperties, mutableMinimalRebuildCache);
+      String moduleName = outputModuleName.get();
+      writeRecompileNoCacheJs(new File(publishedCompileDir.getWarDir(), moduleName), moduleName,
+          recompileJs, compileLogger);
     } else {
       // always recompile after an error
       lastBuildInput = null;
@@ -316,6 +326,17 @@ class Recompiler {
     lastBuild.set(compileDir); // makes compile log available over HTTP
 
     return success;
+  }
+
+  private static void writeRecompileNoCacheJs(File outputDir, String moduleName, String content,
+      TreeLogger compileLogger) throws UnableToCompleteException {
+    try {
+      PageUtil.writeFile(outputDir.getCanonicalPath() + "/" + moduleName + ".recompile.nocache.js",
+          content);
+    } catch (IOException e) {
+      compileLogger.log(Type.ERROR, "Can not write recompile.nocache.js", e);
+      throw new UnableToCompleteException();
+    }
   }
 
   /**
