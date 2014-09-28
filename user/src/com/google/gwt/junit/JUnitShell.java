@@ -933,6 +933,16 @@ public class JUnitShell extends DevMode {
   }
 
   @Override
+  protected HostedModeBaseOptions createOptions() {
+    HostedModeBaseOptions options = super.createOptions();
+    // DevMode defaults to incremental because it passes the flag to the
+    // CodeServer, which is incremental by default. But for GWTTestCase
+    // we don't want an incremental-by-default behavior, so reset it here.
+    options.setCompilePerFile(false);
+    return options;
+  }
+
+  @Override
   protected boolean doStartup() {
     if (!super.doStartup()) {
       return false;
