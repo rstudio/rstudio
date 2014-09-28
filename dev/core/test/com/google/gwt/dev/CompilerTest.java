@@ -476,6 +476,30 @@ public class CompilerTest extends ArgProcessorTestBase {
           "</g:HTMLPanel>",
           "</ui:UiBinder>");
 
+  private MockResource myWidgetWithWhiteStyleUiXml =
+      JavaResourceBase.createMockResource("com/foo/MyWidget.ui.xml",
+          "<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'",
+          "    xmlns:g='urn:import:com.google.gwt.user.client.ui'>",
+          "  <ui:style>",
+          "  .title {",
+          "    background-color: white;",
+          "  }",
+          "  </ui:style>",
+          "  <g:HTMLPanel><g:ListBox ui:field='myListBox' visibleItemCount='1'/></g:HTMLPanel>",
+          "</ui:UiBinder>");
+
+  private MockResource myWidgetWithGreyStyleUiXml =
+      JavaResourceBase.createMockResource("com/foo/MyWidget.ui.xml",
+          "<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'",
+          "    xmlns:g='urn:import:com.google.gwt.user.client.ui'>",
+          "  <ui:style>",
+          "  .title {",
+          "    background-color: grey;",
+          "  }",
+          "  </ui:style>",
+          "  <g:HTMLPanel><g:ListBox ui:field='myListBox' visibleItemCount='1'/></g:HTMLPanel>",
+          "</ui:UiBinder>");
+
   private MockJavaResource myWidget =
       JavaResourceBase.createMockJavaResource("com.foo.MyWidget",
           "package com.foo;",
@@ -676,10 +700,16 @@ public class CompilerTest extends ArgProcessorTestBase {
     checkPerFileRecompile_superClassOrder(JsOutputOption.DETAILED);
   }
 
-  public void testPerFileRecompile_deterministicUiBinder() throws UnableToCompleteException, IOException,
-      InterruptedException {
+  public void testPerFileRecompile_deterministicUiBinder() throws UnableToCompleteException,
+      IOException, InterruptedException {
     checkPerFileRecompile_deterministicUiBinder(JsOutputOption.PRETTY);
     checkPerFileRecompile_deterministicUiBinder(JsOutputOption.DETAILED);
+  }
+
+  public void testPerFileRecompile_uiBinderCssChange() throws UnableToCompleteException,
+      IOException, InterruptedException {
+    checkPerFileRecompile_uiBinderCssChange(JsOutputOption.PRETTY);
+    checkPerFileRecompile_uiBinderCssChange(JsOutputOption.DETAILED);
   }
 
   public void testPerFileRecompile_unstableGeneratorReferencesModifiedType()
@@ -943,6 +973,22 @@ public class CompilerTest extends ArgProcessorTestBase {
     checkRecompiledModifiedApp(compilerOptions, "com.foo.UiBinderTestModule", Lists.newArrayList(
         uiBinderTestModuleResource, uiBinderTestEntryPointResource, myWidgetUiXml), myWidget,
         myWidget, stringSet("com.foo.MyWidget", "com.foo.MyWidget$Binder", "com.foo.TestEntryPoint",
+            "com.foo.MyWidget_BinderImpl", "com.foo.MyWidget_BinderImpl$Widgets"), output);
+  }
+
+  private void checkPerFileRecompile_uiBinderCssChange(JsOutputOption output)
+      throws UnableToCompleteException, IOException, InterruptedException {
+    // Switches from a white styled widget to a grey styled widget in the CSS in the style tag
+    // nested in the .ui.xml template file.
+    checkRecompiledModifiedApp("com.foo.UiBinderTestModule",
+        Lists.newArrayList(uiBinderTestModuleResource, uiBinderTestEntryPointResource, myWidget),
+        myWidgetWithWhiteStyleUiXml, myWidgetWithGreyStyleUiXml,
+        stringSet("com.foo.MyWidget",
+            "com.foo.MyWidget_BinderImpl$Template",
+            "com.foo.MyWidget_BinderImpl_GenBundle_default_InlineClientBundleGenerator",
+            "com.foo.MyWidget_BinderImpl_GenBundle_default_InlineClientBundleGenerator$1",
+            "com.foo.MyWidget_BinderImpl_TemplateImpl",
+            "com.foo.MyWidget_BinderImpl_GenBundle_default_InlineClientBundleGenerator$styleInitializer",
             "com.foo.MyWidget_BinderImpl", "com.foo.MyWidget_BinderImpl$Widgets"), output);
   }
 

@@ -567,7 +567,9 @@ public class JTypeOracle implements Serializable {
   }
 
   public boolean hasLiveImplementors(JType type) {
-    if (!hasWholeWorldKnowledge) {
+    // If our knowledge is limited or we're not optimizing.
+    if (!hasWholeWorldKnowledge || !optimize) {
+      // Assume the worst case, that the provided type does have live implementors.
       return true;
     }
     if (type instanceof JInterfaceType) {
@@ -1494,6 +1496,12 @@ public class JTypeOracle implements Serializable {
     }
   }
 
+  /**
+   * Returns an iterable set of types for the given iterable set of type names.
+   * <p>
+   * Incremental builds will not have all type instances available, so users of this function should
+   * be careful to only use it when they know that their expected types will be loaded.
+   */
   private Iterable<JReferenceType> getTypes(Iterable<String> typeNameSet) {
     return Iterables.transform(typeNameSet,
         new Function<String, JReferenceType>() {

@@ -172,7 +172,13 @@ public class UiBinderGenerator extends Generator {
         useSafeHtmlTemplates(logger, propertyOracle), useLazyWidgetBuilders, BINDER_URI,
         resourceOracle);
 
-    Document doc = getW3cDoc(logger, designTime, resourceOracle, templatePath);
+    Resource resource = getTemplateResource(logger, templatePath, resourceOracle);
+
+    // Ensure that generated uibinder source is modified at least as often as synthesized .cssmap
+    // resources, otherwise it would be possible to synthesize a modified .cssmap resource but fail
+    // to retrigger the InlineClientBundleGenerator that processes it.
+    binderPrintWriter.println("// .ui.xml template last modified: " + resource.getLastModified());
+    Document doc = getW3cDoc(logger, designTime, resourceOracle, templatePath, resource);
     designTime.rememberPathForElements(doc);
 
     uiBinderWriter.parseDocument(doc, binderPrintWriter);
@@ -188,13 +194,8 @@ public class UiBinderGenerator extends Generator {
   }
 
   private Document getW3cDoc(MortalLogger logger, DesignTimeUtils designTime,
-      ResourceOracle resourceOracle, String templatePath)
+      ResourceOracle resourceOracle, String templatePath, Resource resource)
       throws UnableToCompleteException {
-
-    Resource resource = resourceOracle.getResource(templatePath);
-    if (null == resource) {
-      logger.die("Unable to find resource: " + templatePath);
-    }
 
     Document doc = null;
     try {
@@ -212,6 +213,15 @@ public class UiBinderGenerator extends Generator {
               + e.getMessage(), e);
     }
     return doc;
+  }
+
+  private Resource getTemplateResource(MortalLogger logger, String templatePath,
+      ResourceOracle resourceOracle) throws UnableToCompleteException {
+    Resource resource = resourceOracle.getResource(templatePath);
+    if (null == resource) {
+      logger.die("Unable to find resource: " + templatePath);
+    }
+    return resource;
   }
 
   private Boolean useLazyWidgetBuilders(MortalLogger logger, PropertyOracle propertyOracle) {
