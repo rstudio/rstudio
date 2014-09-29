@@ -26,7 +26,6 @@
 #include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
-#include <session/IncrementalFileChangeHandler.hpp>
 
 #include "libclang/LibClang.hpp"
 #include "libclang/UnsavedFiles.hpp"
@@ -52,104 +51,6 @@ bool isCppSourceDoc(const FilePath& filePath)
            ex == ".m" || ex == ".mm");
 }
 
-bool isMakefile(const FilePath& filePath, const std::string& pkgSrcDir)
-{
-   if (filePath.parent().absolutePath() == pkgSrcDir)
-   {
-      std::string filename = filePath.filename();
-      return filename == "Makevars" ||
-             filename == "Makevars.win" ||
-             filename == "Makefile";
-   }
-   else
-   {
-      return false;
-   }
-}
-
-bool isPackageBuildFile(const FilePath& filePath)
-{
-   using namespace projects;
-   FilePath buildTargetPath = projectContext().buildTargetPath();
-   FilePath descPath = buildTargetPath.childPath("DESCRIPTION");
-   FilePath srcPath = buildTargetPath.childPath("src");
-   if (filePath == descPath)
-   {
-      return true;
-   }
-   else if (isMakefile(filePath, srcPath.absolutePath()))
-   {
-      return true;
-   }
-   else
-   {
-      return false;
-   }
-}
-
-bool packageCppFileFilter(const std::string& pkgSrcDir,
-                          const std::string& pkgDescFile,
-                          const FileInfo& fileInfo)
-{
-   // create file path
-   FilePath filePath(fileInfo.absolutePath());
-   if (!filePath.exists())
-      return false;
-
-   // DESCRIPTION file
-   if (filePath.absolutePath() == pkgDescFile)
-   {
-      return true;
-   }
-   // otherwise must be an appropriate file type within the src directory
-   else if (filePath.parent().absolutePath() == pkgSrcDir)
-   {
-      if (isCppSourceDoc(filePath))
-      {
-         return true;
-      }
-      else if (isMakefile(filePath, pkgSrcDir))
-      {
-         return true;
-      }
-      else
-      {
-         return false;
-      }
-   }
-   else
-   {
-      return false;
-   }
-}
-
-void fileChangeHandler(const core::system::FileChangeEvent& event)
-{
-   using namespace core::system;
-
-   FilePath filePath(event.fileInfo().absolutePath());
-
-   // is this a source file? if so updated the source index
-   if (isCppSourceDoc(filePath))
-   {
-      if (event.type() == FileChangeEvent::FileAdded ||
-          event.type() == FileChangeEvent::FileModified)
-      {
-         sourceIndex().updateTranslationUnit(filePath.absolutePath());
-      }
-      else if (event.type() == FileChangeEvent::FileRemoved)
-      {
-         sourceIndex().removeTranslationUnit(filePath.absolutePath());
-      }
-   }
-
-   // is this a build related file? if so update the compilation database
-   else if (isPackageBuildFile(filePath))
-   {
-      compilationDatabase().updateForCurrentPackage();
-   }
-}
-
 void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    // ignore if the file doesn't have a path
@@ -170,22 +71,14 @@ void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
    // of unsaved files)
    unsavedFiles().update(pDoc);
 
-   // if the file isn't dirty of if we've never seen it before then
-   // update the compilation database and/or source index
-   std::string path = docPath.absolutePath();
-   if (!pDoc->dirty() || !sourceIndex().hasTranslationUnit(path))
+   // update the index (later) if this was a full save
+   if (!pDoc->dirty())
    {
-      // if this is a standalone c++ file outside of a project then
-      // we need to update it's compilation database
-      projects::ProjectContext& projectContext = projects::projectContext();
-      if ((projectContext.config().buildType != r_util::kBuildTypePackage) ||
-          !docPath.isWithin(projectContext.buildTargetPath().childPath("src")))
-      {
-         compilationDatabase().updateForStandaloneCpp(docPath);
-      }
-
-      // update the source index for this file
-      sourceIndex().updateTranslationUnit(path);
+      module_context::scheduleDelayedWork(
+            boost::posix_time::milliseconds(500),
+            boost::bind(&SourceIndex::getTranslationUnit,
+                        &(sourceIndex()), docPath.absolutePath()),
+            true); /* require idle */
    }
 }
 
@@ -207,9 +100,6 @@ SEXP rs_isLibClangAvailable()
    r::sexp::Protect rProtect;
    return r::sexp::create(isAvailable, &rProtect);
 }
-
-// incremental file change handler
-boost::scoped_ptr<IncrementalFileChangeHandler> pFileChangeHandler;
 
 } // anonymous namespace
    
@@ -235,48 +125,13 @@ Error initialize()
    methodDef.numArgs = 0;
    r::routines::addCallMethod(methodDef);
 
-   // subscribe to onSourceDocUpdated (used for maintaining both the
+   // subscribe to source docs events for maintaining the unsaved files list
    // main source index and the unsaved files list)
    source_database::events().onDocUpdated.connect(onSourceDocUpdated);
-
-   // connect source doc removed events to unsaved files list
    source_database::events().onDocRemoved.connect(
              boost::bind(&UnsavedFiles::remove, &unsavedFiles(), _1));
    source_database::events().onRemoveAll.connect(
              boost::bind(&UnsavedFiles::removeAll, &unsavedFiles()));
-
-   // if this is a pakcage with a src directory then initialize various
-   // things related to maintaining the package src index
-   using namespace projects;
-   if ((projectContext().config().buildType == r_util::kBuildTypePackage) &&
-       projectContext().buildTargetPath().childPath("src").exists())
-   {
-      FilePath buildTargetPath = projectContext().buildTargetPath();
-      FilePath descPath = buildTargetPath.childPath("DESCRIPTION");
-      FilePath srcPath = projectContext().buildTargetPath().childPath("src");
-
-      // update the compilation database for this package
-      compilationDatabase().updateForCurrentPackage();
-
-      // filter file change notifications to files of interest
-      IncrementalFileChangeHandler::Filter filter =
-         boost::bind(packageCppFileFilter,
-                     srcPath.absolutePath(),
-                     descPath.absolutePath(),
-                    _1);
-
-      // create incremental file change handler (this is used for updating
-      // the main source index)
-      pFileChangeHandler.reset(new IncrementalFileChangeHandler(
-                filter,
-                fileChangeHandler,
-                boost::posix_time::milliseconds(200),
-                boost::posix_time::milliseconds(20),
-                false)); /* allow indexing during idle time */
-
-      // subscribe to the file monitor
-      pFileChangeHandler->subscribeToFileMonitor("C++ Code Completion");
-   }
 
    ExecBlock initBlock ;
    using boost::bind;

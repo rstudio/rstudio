@@ -38,8 +38,6 @@
 #include <session/SessionModuleContext.hpp>
 
 #include "LibClang.hpp"
-#include "SourceIndex.hpp"
-
 
 using namespace core ;
 
@@ -149,8 +147,6 @@ void CompilationDatabase::updateForCurrentPackage()
       return;
    packageBuildFileHash_ = buildFileHash;
 
-   TIME_FUNCTION
-
    // to approximate the compiler flags for files in the package src
    // directory we will build a temporary sourceCpp file
    std::ostringstream ostr;
@@ -250,36 +246,12 @@ void CompilationDatabase::updateForCurrentPackage()
       }
    }
 
-   // set the args and re-build translation units if necessary
-   if (args != packageSrcArgs_)
-   {
-      packageSrcArgs_ = args;
-
-      // wipe out any exising translation units that map to this package
-      FilePath pkgSrcDir = projectContext().buildTargetPath().childPath("src");
-      std::vector<FilePath> pkgSrcFiles;
-      error = pkgSrcDir.children(&pkgSrcFiles);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return;
-      }
-      BOOST_FOREACH(const FilePath& srcPath, pkgSrcFiles)
-      {
-         std::string filename = srcPath.absolutePath();
-         if (sourceIndex().hasTranslationUnit(filename))
-         {
-            sourceIndex().removeTranslationUnit(filename);
-            sourceIndex().updateTranslationUnit(filename);
-         }
-      }
-   }
+   // set the args
+   packageSrcArgs_ = args;
 }
 
 void CompilationDatabase::updateForStandaloneCpp(const core::FilePath& cppPath)
 {
-   TIME_FUNCTION
-
    // read the dependency attributes within the cpp file to compare to
    // previous sets of attributes we've used to generate compilation args.
    // bail if we've already generated based on these attributes
@@ -294,8 +266,7 @@ void CompilationDatabase::updateForStandaloneCpp(const core::FilePath& cppPath)
    // if we got args then update
    if (!args.empty())
    {
-      // update if necessary
-      updateIfNecessary(cppPath.absolutePath(), args);
+      argsMap_[cppPath.absolutePath()] = args;
 
       // save attributes to prevent recomputation
       attribsMap_[cppPath.absolutePath()] = attributes;
@@ -405,7 +376,7 @@ std::vector<std::string> CompilationDatabase::argsForSourceCpp(
 }
 
 std::vector<std::string> CompilationDatabase::argsForFile(
-                                       const std::string& cppPath) const
+                                       const std::string& cppPath)
 {
    // if this is a package source file then return the package args
    using namespace projects;
@@ -413,11 +384,17 @@ std::vector<std::string> CompilationDatabase::argsForFile(
    if (projectContext().config().buildType == r_util::kBuildTypePackage &&
        filePath.parent() == projectContext().buildTargetPath().childPath("src"))
    {
+      // (re-)create on demand
+      updateForCurrentPackage();
+
       return packageSrcArgs_;
    }
    // otherwise lookup in the global dictionary
    else
    {
+      // (re-)create on demand
+      updateForStandaloneCpp(FilePath(cppPath));
+
       ArgsMap::const_iterator it = argsMap_.find(cppPath);
       if (it != argsMap_.end())
          return it->second;
@@ -469,21 +446,6 @@ std::vector<std::string> CompilationDatabase::rToolsArgs() const
    return rToolsArgs_;
 }
 
-void CompilationDatabase::updateIfNecessary(
-                                    const std::string& cppPath,
-                                    const std::vector<std::string>& args)
-{
-   // get existing args
-   std::vector<std::string> existingArgs = argsForFile(cppPath);
-   if (args != existingArgs)
-   {
-      // invalidate the source index
-      sourceIndex().removeTranslationUnit(cppPath);
-
-      // update
-      argsMap_[cppPath] = args;
-   }
-}
 
 CompilationDatabase& compilationDatabase()
 {

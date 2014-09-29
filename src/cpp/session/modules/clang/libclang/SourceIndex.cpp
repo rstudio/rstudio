@@ -42,7 +42,7 @@ SourceIndex::~SourceIndex()
       for(TranslationUnits::const_iterator it = translationUnits_.begin();
           it != translationUnits_.end(); ++it)
       {
-         clang().disposeTranslationUnit(it->second);
+         clang().disposeTranslationUnit(it->second.tu);
       }
 
       // dispose the index
@@ -63,93 +63,101 @@ void SourceIndex::setGlobalOptions(unsigned options)
    clang().CXIndex_setGlobalOptions(index_, options);
 }
 
-void SourceIndex::updateTranslationUnit(const std::string& file)
-{
-   PerformanceTimer timer("libclang: " + file);
-
-   // check for an existing translation unit, if we don't have one then
-   // parse the source file into a translation unit
-   TranslationUnits::iterator it = translationUnits_.find(file);
-   if (it == translationUnits_.end())
-   {
-      // get the args from the compilation database
-      std::vector<std::string> args = compilationDatabase().argsForFile(file);
-      if (!args.empty())
-      {
-         // get the args in the fashion libclang expects (char**)
-         core::system::ProcessArgs argsArray(args);
-
-         // create a new translation unit from the file
-         CXTranslationUnit tu = clang().parseTranslationUnit(
-                               index_,
-                               file.c_str(),
-                               argsArray.args(),
-                               argsArray.argCount(),
-                               unsavedFiles().unsavedFilesArray(),
-                               unsavedFiles().numUnsavedFiles(),
-                               clang().defaultEditingTranslationUnitOptions());
-
-
-         // save it if we succeeded
-         if (tu != NULL)
-         {
-            translationUnits_[file] = tu;
-         }
-         else
-         {
-            LOG_ERROR_MESSAGE("Error parsing translation unit " + file);
-         }
-      }
-   }
-
-   // lookup and reparse the translation unit (multiple sources indicate that
-   // you need to immediately reparse the translation unit after creation
-   // in order to get the benefit of precompiled headers). note that this
-   // lookup will fail in the case of error occurring during parsing above
-   it = translationUnits_.find(file);
-   if (it != translationUnits_.end())
-   {
-      int ret = clang().reparseTranslationUnit(
-                                  it->second,
-                                  unsavedFiles().numUnsavedFiles(),
-                                  unsavedFiles().unsavedFilesArray(),
-                                  clang().defaultReparseOptions(it->second));
-
-      // if this returns an error then we need to dispose the translation unit
-      if (ret != 0)
-      {
-         LOG_ERROR_MESSAGE("Error re-parsing translation unit " + file);
-         removeTranslationUnit(file);
-      }
-   }
-}
-
 void SourceIndex::removeTranslationUnit(const std::string& filename)
 {
    TranslationUnits::iterator it = translationUnits_.find(filename);
    if (it != translationUnits_.end())
    {
-      clang().disposeTranslationUnit(it->second);
+      clang().disposeTranslationUnit(it->second.tu);
       translationUnits_.erase(it->first);
    }
 }
 
-bool SourceIndex::hasTranslationUnit(const std::string& filename)
-{
-   return translationUnits_.find(filename) != translationUnits_.end();
-}
-
 TranslationUnit SourceIndex::getTranslationUnit(
-                                          const std::string& filename) const
+                                          const std::string& filename)
 {
+   core::PerformanceTimer timer("libclang: " + FilePath(filename).filename());
+
    // TODO: for header files we'll need to scan the translation
    // units for them and use the appropriate one
+   // (perhaps using clang_getFile)
 
-   TranslationUnits::const_iterator it = translationUnits_.find(filename);
+   // get the arguments and last write time for this file
+   std::vector<std::string> args = compilationDatabase().argsForFile(filename);
+   std::time_t lastWriteTime = FilePath(filename).lastWriteTime();
+
+   // look it up
+   TranslationUnits::iterator it = translationUnits_.find(filename);
+
+   // check for various incremental processing scenarios
    if (it != translationUnits_.end())
-      return TranslationUnit(it->first, it->second);
+   {
+      // alias record
+      StoredTranslationUnit& stored = it->second;
+
+      // already up to date?
+      if (args == stored.compileArgs && lastWriteTime == stored.lastWriteTime)
+      {
+         return TranslationUnit(filename, stored.tu);
+      }
+
+      // just needs reparse?
+      else if (args == stored.compileArgs)
+      {
+         int ret = clang().reparseTranslationUnit(
+                                stored.tu,
+                                unsavedFiles().numUnsavedFiles(),
+                                unsavedFiles().unsavedFilesArray(),
+                                clang().defaultReparseOptions(stored.tu));
+
+         if (ret == 0)
+         {
+            // update last write time
+            stored.lastWriteTime = lastWriteTime;
+
+            // return it
+            return TranslationUnit(filename, stored.tu);
+         }
+         else
+         {
+            LOG_ERROR_MESSAGE("Error re-parsing translation unit " + filename);
+         }
+      }
+   }
+
+   // if we got this far then there either was no existing translation
+   // unit or we require a full rebuild. in all cases remove any existing
+   // translation unit we have
+   removeTranslationUnit(filename);
+
+   // get the args in the fashion libclang expects (char**)
+   core::system::ProcessArgs argsArray(args);
+
+   // create a new translation unit from the file
+   CXTranslationUnit tu = clang().parseTranslationUnit(
+                         index_,
+                         filename.c_str(),
+                         argsArray.args(),
+                         argsArray.argCount(),
+                         unsavedFiles().unsavedFilesArray(),
+                         unsavedFiles().numUnsavedFiles(),
+                         clang().defaultEditingTranslationUnitOptions());
+
+
+   // save and return it if we succeeded
+   if (tu != NULL)
+   {
+      translationUnits_[filename] = StoredTranslationUnit(args,
+                                                          lastWriteTime,
+                                                          tu);
+
+      return TranslationUnit(filename, tu);
+   }
    else
+   {
+      LOG_ERROR_MESSAGE("Error parsing translation unit " + filename);
       return TranslationUnit();
+   }
 }
 
 

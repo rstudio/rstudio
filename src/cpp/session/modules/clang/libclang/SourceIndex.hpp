@@ -41,18 +41,28 @@ public:
    unsigned getGlobalOptions() const;
    void setGlobalOptions(unsigned options);
 
-   void updateTranslationUnit(const std::string& filename);
+   TranslationUnit getTranslationUnit(const std::string& filename);
+
+private:
    void removeTranslationUnit(const std::string& filename);
-
-   bool hasTranslationUnit(const std::string& filename);
-
-   // NOTE: This can return an empty translation unit if none is found
-   // for the specified filename
-   TranslationUnit getTranslationUnit(const std::string& filename) const;
 
 private:
    CXIndex index_;
-   typedef std::map<std::string,CXTranslationUnit> TranslationUnits;
+   struct StoredTranslationUnit
+   {
+      StoredTranslationUnit() : lastWriteTime(0), tu(NULL) {}
+      StoredTranslationUnit(const std::vector<std::string>& compileArgs,
+                            std::time_t lastWriteTime,
+                            CXTranslationUnit tu)
+         : compileArgs(compileArgs), lastWriteTime(lastWriteTime), tu(tu)
+      {
+      }
+      std::vector<std::string> compileArgs;
+      std::time_t lastWriteTime;
+      CXTranslationUnit tu;
+   };
+
+   typedef std::map<std::string,StoredTranslationUnit> TranslationUnits;
    TranslationUnits translationUnits_;
 };
 

@@ -37,19 +37,17 @@ private:
 public:
    virtual ~CompilationDatabase();
 
-   void updateForCurrentPackage();
-   void updateForStandaloneCpp(const core::FilePath& cppPath);
-
-   std::vector<std::string> argsForFile(const std::string& cppPath) const;
+   std::vector<std::string> argsForFile(const std::string& cppPath);
 
 private:
+
+   void updateForCurrentPackage();
+   void updateForStandaloneCpp(const core::FilePath& cppPath);
 
    std::vector<std::string> rToolsArgs() const;
 
    std::vector<std::string> argsForSourceCpp(const core::FilePath& cppPath);
 
-   void updateIfNecessary(const std::string& cppPath,
-                          const std::vector<std::string>& args);
 private:
 
    // Rtools arguments (cache once we successfully get them)
