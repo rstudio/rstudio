@@ -93,6 +93,8 @@ bool packageCppFileFilter(const std::string& pkgSrcDir,
 {
    // create file path
    FilePath filePath(fileInfo.absolutePath());
+   if (!filePath.exists())
+      return false;
 
    // DESCRIPTION file
    if (filePath.absolutePath() == pkgDescFile)
@@ -102,7 +104,6 @@ bool packageCppFileFilter(const std::string& pkgSrcDir,
    // otherwise must be an appropriate file type within the src directory
    else if (filePath.parent().absolutePath() == pkgSrcDir)
    {
-      FilePath filePath(fileInfo.absolutePath());
       if (isCppSourceDoc(filePath))
       {
          return true;
