@@ -294,11 +294,6 @@ void CompilationDatabase::updateForCurrentPackage()
    if (args.empty())
       return;
 
-   // always add the pkg include dir
-   FilePath includePath = pkgPath.childPath("inst/include");
-   if (includePath.exists())
-      args.push_back("-I" + includePath.absolutePath());
-
    // Read Makevars to get PKG_CXXFLAGS and add that
    FilePath srcPath = pkgPath.childPath("src");
    if (srcPath.exists())
