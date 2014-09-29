@@ -21,8 +21,6 @@
 
 #include <boost/noncopyable.hpp>
 
-#include <session/SessionSourceDatabase.hpp>
-
 #include "LibClang.hpp"
 
 namespace session {
@@ -42,10 +40,9 @@ public:
    virtual ~UnsavedFiles();
 
    void update(const std::string& id,
-               const std::string& path,
+               const core::FilePath& filePath,
                const std::string& contents,
                bool dirty);
-   void update(boost::shared_ptr<source_database::SourceDocument> pDoc);
    void remove(const std::string& id);
    void removeAll();
 

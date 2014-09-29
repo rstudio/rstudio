@@ -49,16 +49,18 @@ Error printCppCompletions(const core::json::JsonRpcRequest& request,
       return error;
 
    // resolve the docPath if it's aliased
-   docPath = module_context::resolveAliasedPath(docPath).absolutePath();
+   FilePath filePath = module_context::resolveAliasedPath(docPath);
 
    // first update the unsaved file database
-   unsavedFiles().update(docId, docPath, docContents, docDirty);
+   unsavedFiles().update(docId, filePath, docContents, docDirty);
 
    // now get the translation unit
-   TranslationUnit tu = sourceIndex().getTranslationUnit(docPath);
+   TranslationUnit tu = sourceIndex().getTranslationUnit(filePath);
    if (!tu.empty())
    {
-      CodeCompleteResults results = tu.codeCompleteAt(docPath, line, column);
+      CodeCompleteResults results = tu.codeCompleteAt(filePath.absolutePath(),
+                                                      line,
+                                                      column);
       if (!results.empty())
       {
          for (unsigned i = 0; i<results.getNumResults(); i++)

@@ -15,12 +15,12 @@
 
 #include "SourceIndex.hpp"
 
+#include <core/FilePath.hpp>
 #include <core/PerformanceTimer.hpp>
 
 #include <core/system/ProcessArgs.hpp>
 
 #include "UnsavedFiles.hpp"
-#include "CompilationDatabase.hpp"
 
 using namespace core ;
 
@@ -53,6 +53,11 @@ SourceIndex::~SourceIndex()
    }
 }
 
+void SourceIndex::initialize(CompileArgsSource compileArgsSource)
+{
+   compileArgsSource_ = compileArgsSource;
+}
+
 unsigned SourceIndex::getGlobalOptions() const
 {
    return clang().CXIndex_getGlobalOptions(index_);
@@ -73,25 +78,26 @@ void SourceIndex::removeTranslationUnit(const std::string& filename)
    }
 }
 
-void SourceIndex::primeTranslationUnit(const std::string& filename)
+void SourceIndex::primeTranslationUnit(const FilePath& filePath)
 {
    // if we have no record of this translation unit then do a first pass
+   std::string filename = filePath.absolutePath();
    if (translationUnits_.find(filename) == translationUnits_.end())
-      getTranslationUnit(filename);
+      getTranslationUnit(filePath);
 }
 
-TranslationUnit SourceIndex::getTranslationUnit(
-                                          const std::string& filename)
+TranslationUnit SourceIndex::getTranslationUnit(const FilePath& filePath)
 {
-   core::PerformanceTimer timer("libclang: " + FilePath(filename).filename());
+   core::PerformanceTimer timer("libclang: " + filePath.filename());
 
    // TODO: for header files we'll need to scan the translation
    // units for them and use the appropriate one
    // (perhaps using clang_getFile)
 
    // get the arguments and last write time for this file
-   std::vector<std::string> args = compilationDatabase().argsForSourceFile(filename);
-   std::time_t lastWriteTime = FilePath(filename).lastWriteTime();
+   std::string filename = filePath.absolutePath();
+   std::vector<std::string> args = compileArgsSource_(filename);
+   std::time_t lastWriteTime = filePath.lastWriteTime();
 
    // look it up
    TranslationUnits::iterator it = translationUnits_.find(filename);

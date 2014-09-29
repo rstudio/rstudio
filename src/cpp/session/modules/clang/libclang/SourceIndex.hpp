@@ -18,6 +18,7 @@
 
 #include <map>
 
+#include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 
 #include "LibClang.hpp"
@@ -29,7 +30,7 @@ namespace clang {
 namespace libclang {
 
 class SourceIndex : boost::noncopyable
-{
+{   
 private:
    // singleton
    friend SourceIndex& sourceIndex();
@@ -38,16 +39,21 @@ private:
 public:
    virtual ~SourceIndex();
 
+   typedef boost::function<std::vector<std::string>(const std::string&)>
+                                                           CompileArgsSource;
+   void initialize(CompileArgsSource compileArgsSource);
+
    unsigned getGlobalOptions() const;
    void setGlobalOptions(unsigned options);
 
-   void primeTranslationUnit(const std::string& filename);
-   TranslationUnit getTranslationUnit(const std::string& filename);
+   void primeTranslationUnit(const core::FilePath& filePath);
+   TranslationUnit getTranslationUnit(const core::FilePath& filePath);
 
 private:
    void removeTranslationUnit(const std::string& filename);
 
 private:
+   CompileArgsSource compileArgsSource_;
    CXIndex index_;
    struct StoredTranslationUnit
    {

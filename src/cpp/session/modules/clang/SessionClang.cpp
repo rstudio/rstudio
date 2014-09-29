@@ -30,9 +30,9 @@
 #include "libclang/LibClang.hpp"
 #include "libclang/UnsavedFiles.hpp"
 #include "libclang/SourceIndex.hpp"
-#include "libclang/CompilationDatabase.hpp"
 
 #include "CodeCompletion.hpp"
+#include "CompilationDatabase.hpp"
 
 using namespace core ;
 
@@ -69,7 +69,7 @@ void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
    // update unsaved files (we do this even if the document is dirty
    // as even in this case it will need to be removed from the list
    // of unsaved files)
-   unsavedFiles().update(pDoc);
+   unsavedFiles().update(pDoc->id(), docPath, pDoc->contents(), pDoc->dirty());
 
    // dirty files indicate active user editing, prime if necessary
    if (pDoc->dirty())
@@ -77,7 +77,7 @@ void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
       module_context::scheduleDelayedWork(
             boost::posix_time::milliseconds(100),
             boost::bind(&SourceIndex::primeTranslationUnit,
-                        &(sourceIndex()), docPath.absolutePath()),
+                        &(sourceIndex()), docPath),
             true); // require idle
    }
 }
@@ -117,6 +117,12 @@ Error initialize()
 
    // attempt to load clang interface
    loadLibClang();
+
+   // connect the source index to the compilation database
+   sourceIndex().initialize(
+       boost::bind(&CompilationDatabase::argsForSourceFile,
+                   &compilationDatabase(), _1)
+   );
 
    // register diagnostics function
    R_CallMethodDef methodDef ;

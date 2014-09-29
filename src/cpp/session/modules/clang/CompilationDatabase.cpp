@@ -38,14 +38,15 @@
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
 
-#include "LibClang.hpp"
+#include "libclang/LibClang.hpp"
 
 using namespace core ;
 
 namespace session {
 namespace modules { 
 namespace clang {
-namespace libclang {
+
+using namespace libclang;
 
 namespace {
 
@@ -604,9 +605,6 @@ CompilationDatabase& compilationDatabase()
    return instance;
 }
 
-
-
-} // namespace libclang
 } // namespace clang
 } // namespace modules
 } // namesapce session

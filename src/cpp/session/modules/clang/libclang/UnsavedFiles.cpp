@@ -19,8 +19,6 @@
 
 #include <core/StringUtils.hpp>
 
-#include <session/SessionModuleContext.hpp>
-
 using namespace core ;
 
 namespace session {
@@ -50,14 +48,8 @@ UnsavedFiles::~UnsavedFiles()
    }
 }
 
-void UnsavedFiles::update(
-                     boost::shared_ptr<source_database::SourceDocument> pDoc)
-{
-   update(pDoc->id(), pDoc->path(), pDoc->contents(), pDoc->dirty());
-}
-
 void UnsavedFiles::update(const std::string& id,
-                          const std::string& path,
+                          const core::FilePath& filePath,
                           const std::string& contents,
                           bool dirty)
 {
@@ -68,7 +60,6 @@ void UnsavedFiles::update(const std::string& id,
    if (dirty)
    {
       // get a regular file path
-      FilePath filePath = module_context::resolveAliasedPath(path);
       std::string path = filePath.absolutePath();
 
       // allocate an CXUnsavedFile

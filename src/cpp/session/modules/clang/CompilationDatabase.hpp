@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_MODULES_CLANG_LIBCLANG_COMPILATION_DATABASE_HPP
-#define SESSION_MODULES_CLANG_LIBCLANG_COMPILATION_DATABASE_HPP
+#ifndef SESSION_MODULES_CLANG_COMPILATION_DATABASE_HPP
+#define SESSION_MODULES_CLANG_COMPILATION_DATABASE_HPP
 
 #include <map>
 #include <vector>
@@ -28,7 +28,6 @@
 namespace session {
 namespace modules {      
 namespace clang {
-namespace libclang {
 
 class CompilationDatabase : boost::noncopyable
 {
@@ -83,10 +82,8 @@ private:
 // global instance
 CompilationDatabase& compilationDatabase();
 
-
-} // namespace libclang
 } // namespace clang
 } // namepace handlers
 } // namesapce session
 
-#endif // SESSION_MODULES_CLANG_LIBCLANG_COMPILATION_DATABASE_HPP
+#endif // SESSION_MODULES_CLANG_COMPILATION_DATABASE_HPP
