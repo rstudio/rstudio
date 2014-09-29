@@ -29,6 +29,7 @@
 
 #include <core/system/Process.hpp>
 #include <core/system/Environment.hpp>
+#include <core/system/ProcessArgs.hpp>
 
 #include <core/r_util/RPackageInfo.hpp>
 
@@ -274,7 +275,8 @@ void CompilationDatabase::updateForStandaloneCpp(const core::FilePath& cppPath)
 }
 
 std::vector<std::string> CompilationDatabase::argsForSourceCpp(
-                                                     const FilePath& cppPath)
+                                                     const FilePath& cppPath,
+                                                     bool includePCH)
 {
    // baseline args
    std::vector<std::string> compileArgs;
@@ -288,6 +290,15 @@ std::vector<std::string> CompilationDatabase::argsForSourceCpp(
 #elif defined(__APPLE__)
    compileArgs.push_back("-stdlib=libstdc++");
 #endif
+
+   // PCH if requested
+   if (includePCH)
+   {
+      std::vector<std::string> pchArgs = precompiledHeaderArgs();
+      std::copy(pchArgs.begin(),
+                pchArgs.end(),
+                std::back_inserter(compileArgs));
+   }
 
    // get path to R script
    FilePath rScriptPath;
@@ -445,6 +456,95 @@ std::vector<std::string> CompilationDatabase::rToolsArgs() const
 
    return rToolsArgs_;
 }
+
+std::vector<std::string> CompilationDatabase::precompiledHeaderArgs()
+{
+   // args to return
+   std::vector<std::string> args;
+
+   // precompiled rcpp dir
+   const std::string kPrecompiledRcppDir = "libclang/precompiled/Rcpp";
+   FilePath precompiledRcppDir = module_context::userScratchPath().
+                                            childPath(kPrecompiledRcppDir);
+
+   // platform/rcpp version specific filename
+   std::string pchFile;
+   Error error = r::exec::RFunction(".rs.precompiledRcppPath").call(&pchFile);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return std::vector<std::string>();
+   }
+
+   // check for Rcpp.pch file and create it if necessary
+   FilePath pchPath = precompiledRcppDir.childPath(pchFile);
+   if (!pchPath.exists())
+   {
+      // delete and recreate directory
+      Error error = precompiledRcppDir.removeIfExists();
+      if (error)
+      {
+         LOG_ERROR(error);
+         return std::vector<std::string>();
+      }
+      error = precompiledRcppDir.ensureDirectory();
+      if (error)
+      {
+         LOG_ERROR(error);
+         return std::vector<std::string>();
+      }
+
+      // state cpp file for creating precompiled headers
+      FilePath cppPath = pchPath.parent().childPath("Rcpp.cpp");
+      error = core::writeStringToFile(cppPath, "#include <Rcpp.h>\n");
+      if (error)
+      {
+         LOG_ERROR(error);
+         return std::vector<std::string>();
+      }
+
+      std::vector<std::string> args = argsForSourceCpp(cppPath, false);
+      core::system::ProcessArgs argsArray(args);
+
+      CXIndex index = clang().createIndex(0,0);
+
+      CXTranslationUnit tu = clang().parseTranslationUnit(
+                            index,
+                            cppPath.absolutePath().c_str(),
+                            argsArray.args(),
+                            argsArray.argCount(),
+                            0,
+                            0,
+                            CXTranslationUnit_ForSerialization);
+      if (tu == NULL)
+      {
+         LOG_ERROR_MESSAGE("Error parsing translation unit " +
+                           cppPath.absolutePath());
+         clang().disposeIndex(index);
+         return std::vector<std::string>();
+      }
+
+      int ret = clang().saveTranslationUnit(tu,
+                                            pchPath.absolutePath().c_str(),
+                                            clang().defaultSaveOptions(tu));
+      if (ret != CXSaveError_None)
+      {
+         boost::format fmt("Error %1% saving translation unit %2%");
+         std::string msg = boost::str(fmt % ret % pchPath.absolutePath());
+         LOG_ERROR_MESSAGE(msg);
+      }
+
+      clang().disposeTranslationUnit(tu);
+
+      clang().disposeIndex(index);
+   }
+
+   // reutrn the pch header file args
+   args.push_back("-include-pch");
+   args.push_back(pchPath.absolutePath());
+   return args;
+}
+
 
 
 CompilationDatabase& compilationDatabase()

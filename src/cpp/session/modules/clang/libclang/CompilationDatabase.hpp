@@ -45,8 +45,10 @@ private:
    void updateForStandaloneCpp(const core::FilePath& cppPath);
 
    std::vector<std::string> rToolsArgs() const;
+   std::vector<std::string> precompiledHeaderArgs();
 
-   std::vector<std::string> argsForSourceCpp(const core::FilePath& cppPath);
+   std::vector<std::string> argsForSourceCpp(const core::FilePath& cppPath,
+                                             bool includePCH = true);
 
 private:
 

@@ -78,7 +78,7 @@ void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
             boost::posix_time::milliseconds(500),
             boost::bind(&SourceIndex::getTranslationUnit,
                         &(sourceIndex()), docPath.absolutePath()),
-            true); /* require idle */
+            true); // require idle
    }
 }
 
@@ -137,6 +137,7 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
    initBlock.addFunctions()
+      (bind(sourceModuleRFile, "SessionClang.R"))
       (bind(registerRpcMethod, "print_cpp_completions", printCppCompletions));
    return initBlock.execute();
 
