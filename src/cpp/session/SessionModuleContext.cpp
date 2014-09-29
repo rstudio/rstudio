@@ -979,6 +979,22 @@ bool isPackageVersionInstalled(const std::string& packageName,
    return !error ? installed : false;
 }
 
+std::string packageVersion(const std::string& packageName)
+{
+   std::string version;
+   Error error = r::exec::RFunction(".rs.packageVersionString", packageName)
+                                                               .call(&version);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return "(Unknown)";
+   }
+   else
+   {
+      return version;
+   }
+}
+
 bool hasMinimumRVersion(const std::string &version)
 {
    bool hasVersion = false;

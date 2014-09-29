@@ -110,6 +110,10 @@
   .rs.isPackageInstalled(name) && (.rs.getPackageVersion(name) >= version)
 })
 
+.rs.addFunction("packageVersionString", function(pkg) {
+   as.character(packageVersion(pkg))
+})
+
 .rs.addFunction("getPackageCompatStatus", 
   function(name, packageVersion, protocolVersion) 
   {  

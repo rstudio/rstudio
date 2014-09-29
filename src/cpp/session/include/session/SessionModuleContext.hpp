@@ -113,6 +113,8 @@ bool isPackageInstalled(const std::string& packageName);
 bool isPackageVersionInstalled(const std::string& packageName,
                                const std::string& version);
 
+std::string packageVersion(const std::string& packageName);
+
 bool hasMinimumRVersion(const std::string& version);
 
 // check if a package is installed with a specific version and RStudio protocol
