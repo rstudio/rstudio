@@ -298,6 +298,7 @@ std::vector<std::string> CompilationDatabase::computeArgsForSourceFile(
 
    // add rtools to path if we need to
    core::system::Options env;
+   core::system::environment(&env);
    std::string warning;
    module_context::addRtoolsToPathIfNecessary(&env, &warning);
 
