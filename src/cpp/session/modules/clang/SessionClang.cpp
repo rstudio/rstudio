@@ -26,6 +26,7 @@
 #include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionUserSettings.hpp>
 
 #include "libclang/LibClang.hpp"
 #include "libclang/UnsavedFiles.hpp"
@@ -121,7 +122,8 @@ Error initialize()
    // connect the source index to the compilation database
    sourceIndex().initialize(
        boost::bind(&CompilationDatabase::argsForSourceFile,
-                   &compilationDatabase(), _1)
+                   &compilationDatabase(), _1),
+       session::userSettings().clangVerbose()
    );
 
    // register diagnostics function

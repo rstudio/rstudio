@@ -167,6 +167,8 @@ public:
    bool useDevtools() const;
    void setUseDevtools(bool useDevtools);
 
+   int clangVerbose() const;
+
 private:
 
    void onSettingsFileChanged(

@@ -644,4 +644,9 @@ void UserSettings::setUseDevtools(bool useDevtools)
    settings_.set("useDevtools", useDevtools);
 }
 
+int UserSettings::clangVerbose() const
+{
+   return settings_.getInt("clangVerbose", 0);
+}
+
 }// namespace session

@@ -30,8 +30,8 @@ namespace clang {
 namespace libclang {
 
 SourceIndex::SourceIndex()
+   : verbose_(false), index_(NULL)
 {
-   index_ = clang().createIndex(0, 1);
 }
 
 SourceIndex::~SourceIndex()
@@ -46,15 +46,18 @@ SourceIndex::~SourceIndex()
       }
 
       // dispose the index
-      clang().disposeIndex(index_);
+      if (index_ != NULL)
+         clang().disposeIndex(index_);
    }
    catch(...)
    {
    }
 }
 
-void SourceIndex::initialize(CompileArgsSource compileArgsSource)
+void SourceIndex::initialize(CompileArgsSource compileArgsSource, int verbose)
 {
+   verbose_ = verbose;
+   index_ = clang().createIndex(0, (verbose_ > 0) ? 1 : 0);
    compileArgsSource_ = compileArgsSource;
 }
 
@@ -88,7 +91,12 @@ void SourceIndex::primeTranslationUnit(const FilePath& filePath)
 
 TranslationUnit SourceIndex::getTranslationUnit(const FilePath& filePath)
 {
-   core::PerformanceTimer timer("libclang: " + filePath.filename());
+   boost::scoped_ptr<core::PerformanceTimer> pTimer;
+   if (verbose_ > 0)
+   {
+      std::cerr << "CLANG INDEXING: " << filePath.absolutePath() << std::endl;
+      pTimer.reset(new core::PerformanceTimer(filePath.filename()));
+   }
 
    // TODO: for header files we'll need to scan the translation
    // units for them and use the appropriate one
@@ -142,6 +150,10 @@ TranslationUnit SourceIndex::getTranslationUnit(const FilePath& filePath)
    // unit or we require a full rebuild. in all cases remove any existing
    // translation unit we have
    removeTranslationUnit(filename);
+
+   // add verbose output if requested
+   if (verbose_ >= 2)
+     args.push_back("-v");
 
    // get the args in the fashion libclang expects (char**)
    core::system::ProcessArgs argsArray(args);

@@ -41,7 +41,7 @@ public:
 
    typedef boost::function<std::vector<std::string>(const std::string&)>
                                                            CompileArgsSource;
-   void initialize(CompileArgsSource compileArgsSource);
+   void initialize(CompileArgsSource compileArgsSource, int verbose);
 
    unsigned getGlobalOptions() const;
    void setGlobalOptions(unsigned options);
@@ -54,6 +54,7 @@ private:
 
 private:
    CompileArgsSource compileArgsSource_;
+   int verbose_;
    CXIndex index_;
    struct StoredTranslationUnit
    {
