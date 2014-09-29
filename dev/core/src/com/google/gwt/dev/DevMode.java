@@ -84,9 +84,9 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
    * Runs the superdev-mode code server instead of classic one.
    */
   protected static class ArgHandlerSuperDevMode extends ArgHandlerFlag {
-    private final OptionSuperDevMode options;
+    private final HostedModeOptions options;
 
-    public ArgHandlerSuperDevMode(OptionSuperDevMode options) {
+    public ArgHandlerSuperDevMode(HostedModeOptions options) {
       this.options = options;
       addTagValue("-superDevMode", true);
     }
@@ -109,6 +109,10 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
     @Override
     public boolean setFlag(boolean value) {
       options.setSuperDevMode(value);
+      // Superdev uses incremental by default
+      if (options.isSuperDevMode()) {
+        options.setCompilePerFile(true);
+      }
       return true;
     }
   }
@@ -239,8 +243,8 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       registerHandler(new ArgHandlerWorkDirOptional(options));
       registerHandler(new ArgHandlerDisableUpdateCheck(options));
       registerHandler(new ArgHandlerSourceLevel(options));
-      registerHandler(new ArgHandlerIncrementalCompile(options));
       registerHandler(new ArgHandlerJsInteropMode(options));
+      registerHandler(new ArgHandlerIncrementalCompile(options));
       registerHandler(new ArgHandlerModuleName(options) {
         @Override
         public String getPurpose() {
@@ -453,7 +457,6 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
   @Override
   protected HostedModeBaseOptions createOptions() {
     HostedModeOptionsImpl hostedModeOptions = new HostedModeOptionsImpl();
-    hostedModeOptions.setCompilePerFile(true);
     compilerContext = compilerContextBuilder.options(hostedModeOptions).build();
     return hostedModeOptions;
   }
