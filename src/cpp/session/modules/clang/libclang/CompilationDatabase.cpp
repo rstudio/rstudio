@@ -344,21 +344,29 @@ void CompilationDatabase::updateForCurrentPackage()
       }
    }
 
-   // set the args
-   packageSrcArgs_ = args;
+   // set the args and re-build translation units if necessary
+   if (args != packageSrcArgs_)
+   {
+      packageSrcArgs_ = args;
 
-   // wipe out any exising translation units that map to this package
-   FilePath pkgSrcDir = projectContext().buildTargetPath().childPath("src");
-   std::vector<FilePath> pkgSrcFiles;
-   error = pkgSrcDir.children(&pkgSrcFiles);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
-   BOOST_FOREACH(const FilePath& srcPath, pkgSrcFiles)
-   {
-      sourceIndex().removeTranslationUnit(srcPath.absolutePath());
+      // wipe out any exising translation units that map to this package
+      FilePath pkgSrcDir = projectContext().buildTargetPath().childPath("src");
+      std::vector<FilePath> pkgSrcFiles;
+      error = pkgSrcDir.children(&pkgSrcFiles);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+      BOOST_FOREACH(const FilePath& srcPath, pkgSrcFiles)
+      {
+         std::string filename = srcPath.absolutePath();
+         if (sourceIndex().hasTranslationUnit(filename))
+         {
+            sourceIndex().removeTranslationUnit(filename);
+            sourceIndex().updateTranslationUnit(filename);
+         }
+      }
    }
 }
 
