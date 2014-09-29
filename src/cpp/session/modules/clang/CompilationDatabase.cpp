@@ -429,8 +429,9 @@ std::vector<std::string> CompilationDatabase::argsForSourceFile(
    // if this is a package source file then return the package args
    using namespace projects;
    FilePath filePath(srcPath);
-   if (projectContext().config().buildType == r_util::kBuildTypePackage &&
-       filePath.parent() == projectContext().buildTargetPath().childPath("src"))
+   FilePath srcDirPath = projectContext().buildTargetPath().childPath("src");
+   if ((projectContext().config().buildType == r_util::kBuildTypePackage) &&
+       !filePath.relativePath(srcDirPath).empty())
    {
       // (re-)create on demand
       updateForCurrentPackage();
