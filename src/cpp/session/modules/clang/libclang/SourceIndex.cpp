@@ -73,6 +73,13 @@ void SourceIndex::removeTranslationUnit(const std::string& filename)
    }
 }
 
+void SourceIndex::primeTranslationUnit(const std::string& filename)
+{
+   // if we have no record of this translation unit then do a first pass
+   if (translationUnits_.find(filename) == translationUnits_.end())
+      getTranslationUnit(filename);
+}
+
 TranslationUnit SourceIndex::getTranslationUnit(
                                           const std::string& filename)
 {

@@ -71,12 +71,12 @@ void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
    // of unsaved files)
    unsavedFiles().update(pDoc);
 
-   // update the index (later) if this was a full save
-   if (!pDoc->dirty())
+   // dirty files indicate active user editing, prime if necessary
+   if (pDoc->dirty())
    {
       module_context::scheduleDelayedWork(
-            boost::posix_time::milliseconds(500),
-            boost::bind(&SourceIndex::getTranslationUnit,
+            boost::posix_time::milliseconds(100),
+            boost::bind(&SourceIndex::primeTranslationUnit,
                         &(sourceIndex()), docPath.absolutePath()),
             true); // require idle
    }

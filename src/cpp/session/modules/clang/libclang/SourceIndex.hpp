@@ -41,6 +41,7 @@ public:
    unsigned getGlobalOptions() const;
    void setGlobalOptions(unsigned options);
 
+   void primeTranslationUnit(const std::string& filename);
    TranslationUnit getTranslationUnit(const std::string& filename);
 
 private:
