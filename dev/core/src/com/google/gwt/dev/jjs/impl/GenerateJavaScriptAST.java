@@ -3400,8 +3400,8 @@ public class GenerateJavaScriptAST {
     this.optimize =
         compilerContext.getOptions().getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT;
     this.hasWholeWorldKnowledge = compilerContext.shouldCompileMonolithic()
-        && !compilerContext.getOptions().shouldCompilePerFile();
-    this.compilePerFile = compilerContext.getOptions().shouldCompilePerFile();
+        && !compilerContext.getOptions().isIncrementalCompileEnabled();
+    this.compilePerFile = compilerContext.getOptions().isIncrementalCompileEnabled();
     this.modularCompile = !compilerContext.shouldCompileMonolithic();
     this.symbolTable = symbolTable;
     this.typeIdsByType = typeIdsByType;

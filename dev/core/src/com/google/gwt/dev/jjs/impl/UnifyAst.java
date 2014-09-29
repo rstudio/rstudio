@@ -464,7 +464,7 @@ public class UnifyAst {
       // could occur between the two stages and leave the cache in an invalid state. Switch to a
       // transactionally safe update pattern like always updating a copy and swapping out the
       // original for the copy at the end of a successful compile.
-      if (compilePerFile) {
+      if (incrementalCompile) {
         // If this is the first time we've rebound this type during this compile.
         if (reboundTypeNames.add(reboundTypeName)) {
           // The rebinding of this type will accumulate rebound type to input resource associations,
@@ -480,13 +480,13 @@ public class UnifyAst {
       List<String> answers;
       try {
         answers = Lists.create(rpo.getAllPossibleRebindAnswers(logger, reqType));
-        if (compilePerFile) {
+        if (incrementalCompile) {
           // Accumulate generated artifacts so that they can be output on recompiles even if no
           // generators are run.
           minimalRebuildCache.addGeneratedArtifacts(rpo.getGeneratorContext().getArtifacts());
         }
         rpo.getGeneratorContext().finish(logger);
-        if (compilePerFile) {
+        if (incrementalCompile) {
           // There may be more types known to be modified after Generator execution, which would
           // mean the previous stale types calculation was too small. Redo it.
           staleTypeNames =
@@ -699,12 +699,12 @@ public class UnifyAst {
   private NameBasedTypeLocator internalNameBasedTypeLocator;
 
   private MinimalRebuildCache minimalRebuildCache;
-  private boolean compilePerFile;
+  private boolean incrementalCompile;
   private boolean isLibraryCompile;
 
   public UnifyAst(TreeLogger logger, CompilerContext compilerContext, JProgram program,
       JsProgram jsProgram, RebindPermutationOracle rpo) {
-    this.compilePerFile = compilerContext.getOptions().shouldCompilePerFile();
+    this.incrementalCompile = compilerContext.getOptions().isIncrementalCompileEnabled();
     this.isLibraryCompile = !compilerContext.shouldCompileMonolithic();
 
     this.logger = logger;
@@ -717,7 +717,7 @@ public class UnifyAst {
     this.compiledClassesBySourceName = compilationState.getClassFileMapBySource();
     initializeNameBasedLocators();
     this.minimalRebuildCache = compilerContext.getMinimalRebuildCache();
-    if (compilePerFile) {
+    if (incrementalCompile) {
       this.staleTypeNames =
           minimalRebuildCache.computeAndClearStaleTypesCache(logger, program.typeOracle);
       checkPreambleTypesStillFresh(logger);
@@ -803,7 +803,7 @@ public class UnifyAst {
       }
     }
 
-    if (compilePerFile) {
+    if (incrementalCompile) {
       fullFlowIntoRemainingStaleTypes();
     } else if (isLibraryCompile) {
       // Trace execution from all types supplied as source and resolve references.
@@ -866,7 +866,7 @@ public class UnifyAst {
 
     mainLoop();
 
-    if (compilePerFile) {
+    if (incrementalCompile) {
       logger.log(TreeLogger.INFO, "Unification traversed " + liveFieldsAndMethods.size()
           + " fields and methods and " + program.getDeclaredTypes().size() + " types. "
           + program.getModuleDeclaredTypes().size()
@@ -987,7 +987,7 @@ public class UnifyAst {
     }
     // Staleness calculations need to be able to trace from CompilationUnit name to the names of
     // immediately nested types. So record those associations now.
-    if (compilePerFile) {
+    if (incrementalCompile) {
       compilerContext.getMinimalRebuildCache().recordNestedTypeNamesPerType(unit);
     }
     // TODO(zundel): ask for a recompile if deserialization fails?
@@ -996,7 +996,7 @@ public class UnifyAst {
     for (JDeclaredType t : types) {
       program.addType(t);
       // If we're compiling per file and we already have currently valid output for this type.
-      if (compilePerFile && !needsNewJs(t)) {
+      if (incrementalCompile && !needsNewJs(t)) {
         // Then make sure we don't output new Js for this type.
         program.addReferenceOnlyType(t);
       }
@@ -1005,7 +1005,7 @@ public class UnifyAst {
       resolveType(t);
     }
     // When compiling per file.
-    if (compilePerFile) {
+    if (incrementalCompile) {
       // It's possible that a users' edits have made a type referenceable that was not previously
       // referenceable.
       for (JDeclaredType type : types) {

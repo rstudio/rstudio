@@ -111,7 +111,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       options.setSuperDevMode(value);
       // Superdev uses incremental by default
       if (options.isSuperDevMode()) {
-        options.setCompilePerFile(true);
+        options.setIncrementalCompileEnabled(true);
       }
       return true;
     }

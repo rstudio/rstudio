@@ -256,8 +256,8 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   }
 
   @Override
-  public void setCompilePerFile(boolean enabled) {
-    jjsOptions.setCompilePerFile(enabled);
+  public void setIncrementalCompileEnabled(boolean enabled) {
+    jjsOptions.setIncrementalCompileEnabled(enabled);
   }
 
   @Override
@@ -431,8 +431,8 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   }
 
   @Override
-  public boolean shouldCompilePerFile() {
-    return jjsOptions.shouldCompilePerFile();
+  public boolean isIncrementalCompileEnabled() {
+    return jjsOptions.isIncrementalCompileEnabled();
   }
 
   @Override

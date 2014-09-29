@@ -152,9 +152,7 @@ class JsonExporter {
 
   private JsonArray exportWarnings() {
     JsonArray out = new JsonArray();
-    if (options.shouldCompilePerFile()) {
-      out.add("-XcompilePerFile is not done yet. Generators might not be run when needed.");
-    }
+    // Add warnings if any
     return out;
   }
 

@@ -353,7 +353,7 @@ class Recompiler {
 
   private MinimalRebuildCache getOrCreateMinimalRebuildCache(
       Map<String, String> bindingProperties) {
-    if (!options.shouldCompilePerFile()) {
+    if (!options.isIncrementalCompileEnabled()) {
       return new NullRebuildCache();
     }
 
@@ -440,7 +440,7 @@ class Recompiler {
     maybeOverrideConfig(moduleDef, "propertiesJs",
         "com/google/gwt/core/ext/linker/impl/properties.js");
 
-    if (options.shouldCompilePerFile()) {
+    if (options.isIncrementalCompileEnabled()) {
       // CSSResourceGenerator needs to produce stable, unique naming for its input.
       // Currently on default settings CssResourceGenerator's obfuscation depends on
       // whole world knowledge and thus will produce collision in obfuscated mode, since in

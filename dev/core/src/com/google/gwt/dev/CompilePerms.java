@@ -244,7 +244,7 @@ public class CompilePerms {
       File compilerWorkDir, Permutation[] perms, PrecompileTaskOptions options) {
     List<PersistenceBackedObject<PermutationResult>> toReturn = Lists.newArrayList();
     for (int i = 0; i < perms.length; ++i) {
-      if (options.shouldCompilePerFile()) {
+      if (options.isIncrementalCompileEnabled()) {
         toReturn.add(new MemoryBackedObject<PermutationResult>(PermutationResult.class));
       } else {
         File f = makePermFilename(compilerWorkDir, perms[i].getId());

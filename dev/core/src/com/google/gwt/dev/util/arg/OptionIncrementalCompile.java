@@ -25,10 +25,10 @@ public interface OptionIncrementalCompile {
    * Whether monolithic recompiles should process only changed files and construct JS output by
    * linking old and new JS on a per class basis.
    */
-  boolean shouldCompilePerFile();
+  boolean isIncrementalCompileEnabled();
 
   /**
    * Sets whether or not monolithic recompiles should process only changed files.
    */
-  void setCompilePerFile(boolean enabled);
+  void setIncrementalCompileEnabled(boolean enabled);
 }

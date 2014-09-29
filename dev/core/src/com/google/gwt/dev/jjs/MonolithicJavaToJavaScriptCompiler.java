@@ -99,7 +99,7 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
         LongEmulationNormalizer.exec(jprogram);
         TypeCoercionNormalizer.exec(jprogram);
 
-        if (options.shouldCompilePerFile()) {
+        if (options.isIncrementalCompileEnabled()) {
           // Per file compilation reuses type JS even as references (like casts) in other files
           // change, which means all legal casts need to be allowed now before they are actually
           // used later.
@@ -120,8 +120,8 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
           return ResolveRuntimeTypeReferences.IntoStringLiterals.exec(jprogram);
         } else {
           TypeOrder typeIdOrder =
-              options.shouldCompilePerFile() ? TypeOrder.ALPHABETICAL : TypeOrder.FREQUENCY;
-          IntTypeIdGenerator typeIdGenerator = options.shouldCompilePerFile()
+              options.isIncrementalCompileEnabled() ? TypeOrder.ALPHABETICAL : TypeOrder.FREQUENCY;
+          IntTypeIdGenerator typeIdGenerator = options.isIncrementalCompileEnabled()
               ? compilerContext.getMinimalRebuildCache().getIntTypeIdGenerator()
               : new IntTypeIdGenerator();
           return ResolveRuntimeTypeReferences.IntoIntLiterals.exec(jprogram, typeIdOrder,

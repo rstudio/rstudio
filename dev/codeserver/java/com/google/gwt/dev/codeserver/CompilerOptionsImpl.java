@@ -35,7 +35,7 @@ import java.util.List;
  */
 class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   private final CompileDir compileDir;
-  private final boolean compilePerFile;
+  private final boolean incremental;
   private final boolean failOnError;
   private final TreeLogger.Type logLevel;
   private final List<String> moduleNames;
@@ -46,7 +46,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
 
   CompilerOptionsImpl(CompileDir compileDir, String moduleName, Options options) {
     this.compileDir = compileDir;
-    this.compilePerFile = options.shouldCompilePerFile();
+    this.incremental = options.isIncrementalCompileEnabled();
     this.moduleNames = Lists.newArrayList(moduleName);
     this.sourceLevel = options.getSourceLevel();
     this.failOnError = options.isFailOnError();
@@ -272,8 +272,8 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   }
 
   @Override
-  public boolean shouldCompilePerFile() {
-    return compilePerFile;
+  public boolean isIncrementalCompileEnabled() {
+    return incremental;
   }
 
   @Override
@@ -283,7 +283,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
 
   @Override
   public boolean shouldJDTInlineCompileTimeConstants() {
-    return !shouldCompilePerFile();
+    return !isIncrementalCompileEnabled();
   }
 
   @Override

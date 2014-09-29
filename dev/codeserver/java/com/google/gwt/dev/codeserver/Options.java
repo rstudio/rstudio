@@ -105,12 +105,12 @@ public class Options {
     }
 
     if (incremental && !noPrecompile) {
-      System.out.println("Turning off precompile in compilePerFile mode.");
+      System.out.println("Turning off precompile in incremental mode.");
       noPrecompile = true;
     }
 
     // Set some tags automatically for migration tracking.
-    if (shouldCompilePerFile()) {
+    if (isIncrementalCompileEnabled()) {
       addTags("incremental_on");
     } else {
       addTags("incremental_off");
@@ -206,7 +206,7 @@ public class Options {
    * Compiles faster by creating a JavaScript file per class. Can't be turned on at the same time as
    * shouldCompileIncremental().
    */
-  boolean shouldCompilePerFile() {
+  boolean isIncrementalCompileEnabled() {
     return incremental;
   }
 
@@ -302,12 +302,12 @@ public class Options {
       registerHandler(new WorkDirFlag());
       registerHandler(new ArgHandlerIncrementalCompile(new OptionIncrementalCompile() {
         @Override
-        public boolean shouldCompilePerFile() {
+        public boolean isIncrementalCompileEnabled() {
           return incremental;
         }
 
         @Override
-        public void setCompilePerFile(boolean enabled) {
+        public void setIncrementalCompileEnabled(boolean enabled) {
           incremental = enabled;
         }
       }));

@@ -71,7 +71,7 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   }
 
   @Override
-  public void setCompilePerFile(boolean enabled) {
+  public void setIncrementalCompileEnabled(boolean enabled) {
     throw new UnsupportedOperationException();
   }
 

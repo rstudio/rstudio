@@ -42,12 +42,12 @@ public class ArgHandlerIncrementalCompile extends ArgHandlerFlag {
 
   @Override
   public boolean setFlag(boolean value) {
-    option.setCompilePerFile(value);
+    option.setIncrementalCompileEnabled(value);
     return true;
   }
 
   @Override
   public boolean getDefaultValue() {
-    return option.shouldCompilePerFile();
+    return option.isIncrementalCompileEnabled();
   }
 }

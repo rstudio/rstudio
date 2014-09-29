@@ -136,7 +136,7 @@ public class Compiler {
   private final CompilerOptionsImpl options;
 
   public Compiler(CompilerOptions compilerOptions) {
-    this(compilerOptions, compilerOptions.shouldCompilePerFile() ? new MinimalRebuildCache()
+    this(compilerOptions, compilerOptions.isIncrementalCompileEnabled() ? new MinimalRebuildCache()
         : new NullRebuildCache());
   }
 
@@ -168,7 +168,7 @@ public class Compiler {
            options.getExtraDir() == null) {
         options.setExtraDir(new File("extras"));
       }
-      if (options.shouldCompilePerFile()) {
+      if (options.isIncrementalCompileEnabled()) {
         // Disable options that disrupt contiguous output JS source per class.
         options.setClusterSimilarFunctions(false);
         options.setOptimizationLevel(OptionOptimize.OPTIMIZE_LEVEL_DRAFT);

@@ -85,7 +85,7 @@ public class CompilationStateTest extends CompilationStateTestBase {
     return text.toString();
   }
 
-  public void testAddGeneratedCompilationUnit_compilePerFile() {
+  public void testAddGeneratedCompilationUnit_incremental() {
     checkAddGeneratedCompilationUnit(true);
   }
 
@@ -93,8 +93,8 @@ public class CompilationStateTest extends CompilationStateTestBase {
     checkAddGeneratedCompilationUnit(false);
   }
 
-  private void checkAddGeneratedCompilationUnit(boolean compilePerFile) {
-    compilerContext.getOptions().setCompilePerFile(compilePerFile);
+  private void checkAddGeneratedCompilationUnit(boolean incremental) {
+    compilerContext.getOptions().setIncrementalCompileEnabled(incremental);
 
     MinimalRebuildCache minimalRebuildCache = compilerContext.getMinimalRebuildCache();
 
@@ -105,7 +105,7 @@ public class CompilationStateTest extends CompilationStateTestBase {
     // Add a generated unit and ensure it shows up as a new modified unit.
     addGeneratedUnits(JavaResourceBase.FOO);
     validateCompilationState(Shared.getTypeName(JavaResourceBase.FOO));
-    assertEquals(compilePerFile,
+    assertEquals(incremental,
         minimalRebuildCache.getModifiedCompilationUnitNames().contains("test.Foo"));
 
     rebuildCompilationState();

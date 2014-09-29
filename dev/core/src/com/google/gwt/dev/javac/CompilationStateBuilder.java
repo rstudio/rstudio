@@ -641,7 +641,7 @@ public class CompilationStateBuilder {
       compilerContext.getMinimalRebuildCache().addSourceCompilationUnitName(
           builder.getTypeName());
     }
-    if (compilerContext.getOptions().shouldCompilePerFile()) {
+    if (compilerContext.getOptions().isIncrementalCompileEnabled()) {
       compilerContext.getMinimalRebuildCache().recordGeneratedUnits(generatedUnits);
     }
     compilationState.incrementGeneratedSourceCount(builders.size() + cachedUnits.size());

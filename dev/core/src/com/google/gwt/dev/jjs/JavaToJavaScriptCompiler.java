@@ -372,7 +372,7 @@ public abstract class JavaToJavaScriptCompiler {
     }
 
     private void maybeRecordTypeReferences(boolean onlyUpdate) {
-      if (options.shouldCompilePerFile()) {
+      if (options.isIncrementalCompileEnabled()) {
         // Per file compilation needs the type reference graph to construct the set of reachable
         // types when linking.
         TypeReferencesRecorder.exec(jprogram, getMinimalRebuildCache(),onlyUpdate);
@@ -455,7 +455,7 @@ public abstract class JavaToJavaScriptCompiler {
      * compile.
      */
     private void maybeAddGeneratedArtifacts(PermutationResult permutationResult) {
-      if (options.shouldCompilePerFile()) {
+      if (options.isIncrementalCompileEnabled()) {
         permutationResult.addArtifacts(
             compilerContext.getMinimalRebuildCache().getGeneratedArtifacts());
       }
@@ -543,7 +543,7 @@ public abstract class JavaToJavaScriptCompiler {
          * Cut generated JS up on class boundaries and re-link the source (possibly making use of
          * source from previous compiles, thus making it possible to perform partial recompiles).
          */
-        if (options.shouldCompilePerFile()) {
+        if (options.isIncrementalCompileEnabled()) {
           transformer = new JsTypeLinker(logger, transformer, v.getClassRanges(),
               v.getProgramClassRange(), getMinimalRebuildCache(), jprogram.typeOracle);
           transformer.exec();
@@ -864,7 +864,7 @@ public abstract class JavaToJavaScriptCompiler {
     }
 
     private Map<JsName, JsLiteral> runPrettyNamer(ConfigProps config) throws IllegalNameException {
-      if (compilerContext.getOptions().shouldCompilePerFile()) {
+      if (compilerContext.getOptions().isIncrementalCompileEnabled()) {
         JsPersistentPrettyNamer.exec(jsProgram, config,
             compilerContext.getMinimalRebuildCache().getPersistentPrettyNamerState());
         return null;
@@ -1053,7 +1053,7 @@ public abstract class JavaToJavaScriptCompiler {
 
       // Free up memory.
       rpo.clear();
-      Set<String> deletedTypeNames = options.shouldCompilePerFile()
+      Set<String> deletedTypeNames = options.isIncrementalCompileEnabled()
           ? getMinimalRebuildCache().computeDeletedTypeNames() : Sets.<String> newHashSet();
       jprogram.typeOracle.computeBeforeAST(StandardTypes.createFrom(jprogram),
           jprogram.getDeclaredTypes(), jprogram.getModuleDeclaredTypes(), deletedTypeNames);
@@ -1192,7 +1192,7 @@ public abstract class JavaToJavaScriptCompiler {
     }
 
     private void recordJsoTypes(TypeOracle typeOracle) {
-      if (!options.shouldCompilePerFile()) {
+      if (!options.isIncrementalCompileEnabled()) {
         return;
       }
 

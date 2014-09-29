@@ -136,7 +136,7 @@ public class Precompile {
     PropertyPermutations allPermutations = new PropertyPermutations(
         compilerContext.getModule().getProperties(),
         compilerContext.getModule().getActiveLinkerNames());
-    if (compilerContext.getOptions().shouldCompilePerFile() && allPermutations.size() > 1) {
+    if (compilerContext.getOptions().isIncrementalCompileEnabled() && allPermutations.size() > 1) {
       logger.log(TreeLogger.ERROR,
           "Current binding properties are expanding to more than one permutation "
           + "but per-file compilation requires that each compile operate on only one permutation.");
@@ -248,7 +248,7 @@ public class Precompile {
     try {
       ModuleDef module = compilerContext.getModule();
       PrecompileTaskOptions jjsOptions = compilerContext.getOptions();
-      if (jjsOptions.shouldCompilePerFile()) {
+      if (jjsOptions.isIncrementalCompileEnabled()) {
         compilerContext.getMinimalRebuildCache().recordDiskSourceResources(module);
         compilerContext.getMinimalRebuildCache().recordBuildResources(module);
       }

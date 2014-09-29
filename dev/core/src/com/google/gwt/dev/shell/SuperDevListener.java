@@ -93,7 +93,7 @@ public class SuperDevListener implements CodeServerListener {
       args.add("-XjsInteropMode");
       args.add(options.getJsInteropMode().toString());
     }
-    if (!options.shouldCompilePerFile()) {
+    if (!options.isIncrementalCompileEnabled()) {
       args.add("-noincremental");
     }
     for (String mod : options.getModuleNames()) {
