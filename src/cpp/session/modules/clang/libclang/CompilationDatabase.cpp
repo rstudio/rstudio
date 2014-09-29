@@ -49,11 +49,11 @@ namespace libclang {
 
 namespace {
 
-std::string readDependencyAttributes(const core::FilePath& cppPath)
+std::string readDependencyAttributes(const core::FilePath& srcPath)
 {
    // read file
    std::string contents;
-   Error error = core::readStringFromFile(cppPath, &contents);
+   Error error = core::readStringFromFile(srcPath, &contents);
    if (error)
    {
       LOG_ERROR(error);
@@ -193,7 +193,7 @@ void CompilationDatabase::updateForCurrentPackage()
    }
 
    // Do a sourceCpp dryRun to capture the baseline config (bail on error)
-   std::vector<std::string> args = argsForSourceCpp(tempCpp);
+   std::vector<std::string> args = computeArgsForSourceFile(tempCpp);
    if (args.empty())
       return;
 
@@ -251,33 +251,36 @@ void CompilationDatabase::updateForCurrentPackage()
    packageSrcArgs_ = args;
 }
 
-void CompilationDatabase::updateForStandaloneCpp(const core::FilePath& cppPath)
+void CompilationDatabase::updateForStandalone(const core::FilePath& srcPath)
 {
-   // read the dependency attributes within the cpp file to compare to
+   // read the dependency attributes within the source file to compare to
    // previous sets of attributes we've used to generate compilation args.
    // bail if we've already generated based on these attributes
-   std::string attributes = readDependencyAttributes(cppPath);
-   AttribsMap::const_iterator it = attribsMap_.find(cppPath.absolutePath());
+   std::string attributes = readDependencyAttributes(srcPath);
+   AttribsMap::const_iterator it = attribsMap_.find(srcPath.absolutePath());
    if (it != attribsMap_.end() && it->second == attributes)
       return;
 
    // arguments for this translation unit
-   std::vector<std::string> args = argsForSourceCpp(cppPath);
+   std::vector<std::string> args = computeArgsForSourceFile(srcPath);
 
    // if we got args then update
    if (!args.empty())
    {
-      argsMap_[cppPath.absolutePath()] = args;
+      argsMap_[srcPath.absolutePath()] = args;
 
       // save attributes to prevent recomputation
-      attribsMap_[cppPath.absolutePath()] = attributes;
+      attribsMap_[srcPath.absolutePath()] = attributes;
    }
 }
 
-std::vector<std::string> CompilationDatabase::argsForSourceCpp(
-                                                     const FilePath& cppPath,
-                                                     bool includePCH)
+std::vector<std::string> CompilationDatabase::computeArgsForSourceFile(
+                                                     const FilePath& srcFile)
 {
+   // is this a c++ file
+   std::string ext = srcFile.extensionLowerCase();
+   bool isCppFile = (ext == ".cc") || (ext == ".cpp");
+
    // baseline args
    std::vector<std::string> compileArgs;
    std::string builtinHeaders = "-I" + clang().builtinHeaders();
@@ -288,29 +291,68 @@ std::vector<std::string> CompilationDatabase::argsForSourceCpp(
              rtoolsArgs.end(),
              std::back_inserter(compileArgs));
 #elif defined(__APPLE__)
-   compileArgs.push_back("-stdlib=libstdc++");
+   if (isCppFile)
+      compileArgs.push_back("-stdlib=libstdc++");
 #endif
 
-   // PCH if requested
-   if (includePCH)
-   {
-      std::vector<std::string> pchArgs = precompiledHeaderArgs();
-      std::copy(pchArgs.begin(),
-                pchArgs.end(),
-                std::back_inserter(compileArgs));
-   }
+   // add rtools to path if we need to
+   core::system::Options env;
+   std::string warning;
+   module_context::addRtoolsToPathIfNecessary(&env, &warning);
 
-   // get path to R script
-   FilePath rScriptPath;
-   Error error = module_context::rScriptPath(&rScriptPath);
+   // handle C++ and C differently
+   Error error;
+   core::system::ProcessResult result;
+   if (isCppFile)
+       error = executeSourceCpp(env, srcFile, &result);
+   else
+       error = executeRCmdSHLIB(env, srcFile, &result);
+
+   // process results
    if (error)
    {
       LOG_ERROR(error);
       return std::vector<std::string>();
    }
+   else if (result.exitStatus != EXIT_SUCCESS)
+   {
+      LOG_ERROR_MESSAGE("Error performing dry run: " + result.stdErr);
+      return std::vector<std::string>();
+   }
 
-   // setup env and options
-   core::system::Options env;
+   // break into lines
+   std::vector<std::string> lines;
+   boost::algorithm::split(lines, result.stdOut,
+                           boost::algorithm::is_any_of("\r\n"));
+
+
+   // find the line with the compilation and add it's args
+   std::string compile = "-c " + srcFile.filename() + " -o " + srcFile.stem();
+   BOOST_FOREACH(const std::string& line, lines)
+   {
+      if (line.find(compile) != std::string::npos)
+      {
+         std::vector<std::string> args = extractCompileArgs(line);
+         std::copy(args.begin(), args.end(), std::back_inserter(compileArgs));
+      }
+   }
+
+   // return the args
+   return compileArgs;
+}
+
+Error CompilationDatabase::executeSourceCpp(
+                                      core::system::Options env,
+                                      const core::FilePath& srcPath,
+                                      core::system::ProcessResult* pResult)
+{
+   // get path to R script
+   FilePath rScriptPath;
+   Error error = module_context::rScriptPath(&rScriptPath);
+   if (error)
+      return error;
+
+   // establish options
    core::system::ProcessOptions options;
 
    // always run as a slave
@@ -334,9 +376,6 @@ std::vector<std::string> CompilationDatabase::argsForSourceCpp(
          core::system::setenv(&env, "R_LIBS", libPaths);
    }
 
-   // add rtools to path if we need to
-   std::string warning;
-   module_context::addRtoolsToPathIfNecessary(&env, &warning);
 
    // set environment into options
    options.environment = env;
@@ -344,74 +383,86 @@ std::vector<std::string> CompilationDatabase::argsForSourceCpp(
    // add command to arguments
    args.push_back("-e");
    boost::format fmt("Rcpp::sourceCpp('%1%', showOutput = TRUE, dryRun = TRUE)");
-   args.push_back(boost::str(fmt % cppPath.absolutePath()));
+   args.push_back(boost::str(fmt % srcPath.absolutePath()));
 
    // execute and capture output
-   core::system::ProcessResult result;
-   error = core::system::runProgram(
+   return core::system::runProgram(
             core::string_utils::utf8ToSystem(rScriptPath.absolutePath()),
             args,
             "",
             options,
-            &result);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return std::vector<std::string>();
-   }
-   else if (result.exitStatus != EXIT_SUCCESS)
-   {
-      LOG_ERROR_MESSAGE("Error performing dry run: " + result.stdErr);
-      return std::vector<std::string>();
-   }
-
-   // break into lines
-   std::vector<std::string> lines;
-   boost::algorithm::split(lines, result.stdOut,
-                           boost::algorithm::is_any_of("\r\n"));
-
-
-   // find the line with the compilation and add it's args
-   std::string compile = "-c " + cppPath.filename() + " -o " + cppPath.stem();
-   BOOST_FOREACH(const std::string& line, lines)
-   {
-      if (line.find(compile) != std::string::npos)
-      {
-         std::vector<std::string> args = extractCompileArgs(line);
-         std::copy(args.begin(), args.end(), std::back_inserter(compileArgs));
-      }
-   }
-
-   // return the args
-   return compileArgs;
+            pResult);
 }
 
-std::vector<std::string> CompilationDatabase::argsForFile(
-                                       const std::string& cppPath)
+core::Error CompilationDatabase::executeRCmdSHLIB(
+                                 core::system::Options env,
+                                 const core::FilePath& srcPath,
+                                 core::system::ProcessResult* pResult)
 {
+   // get R bin directory
+   FilePath rBinDir;
+   Error error = module_context::rBinDir(&rBinDir);
+   if (error)
+      return error;
+
+   // compile the file as dry-run
+   module_context::RCommand rCmd(rBinDir);
+   rCmd << "SHLIB";
+   rCmd << "--dry-run";
+   rCmd << srcPath.filename();
+
+   // set options and run
+   core::system::ProcessOptions options;
+   options.workingDir = srcPath.parent();
+   options.environment = env;
+   return core::system::runCommand(rCmd.commandString(), options, pResult);
+}
+
+
+std::vector<std::string> CompilationDatabase::argsForSourceFile(
+                                       const std::string& srcPath)
+{
+   // args to return
+   std::vector<std::string> args;
+
    // if this is a package source file then return the package args
    using namespace projects;
-   FilePath filePath(cppPath);
+   FilePath filePath(srcPath);
    if (projectContext().config().buildType == r_util::kBuildTypePackage &&
        filePath.parent() == projectContext().buildTargetPath().childPath("src"))
    {
       // (re-)create on demand
       updateForCurrentPackage();
 
-      return packageSrcArgs_;
+      args = packageSrcArgs_;
    }
    // otherwise lookup in the global dictionary
    else
    {
       // (re-)create on demand
-      updateForStandaloneCpp(FilePath(cppPath));
+      updateForStandalone(FilePath(srcPath));
 
-      ArgsMap::const_iterator it = argsMap_.find(cppPath);
+      ArgsMap::const_iterator it = argsMap_.find(srcPath);
       if (it != argsMap_.end())
-         return it->second;
-      else
-         return std::vector<std::string>();
+         args = it->second;
    }
+
+   // add precompiled Rcpp headers if appropriate
+   if (!args.empty())
+   {
+      std::string ext = filePath.extensionLowerCase();
+      bool isCppFile = (ext == ".cc") || (ext == ".cpp");
+      if (isCppFile)
+      {
+         std::vector<std::string> pchArgs = rcppPrecompiledHeaderArgs();
+         std::copy(pchArgs.begin(),
+                   pchArgs.end(),
+                   std::back_inserter(args));
+      }
+   }
+
+   // return args
+   return args;
 }
 
 std::vector<std::string> CompilationDatabase::rToolsArgs() const
@@ -457,7 +508,7 @@ std::vector<std::string> CompilationDatabase::rToolsArgs() const
    return rToolsArgs_;
 }
 
-std::vector<std::string> CompilationDatabase::precompiledHeaderArgs()
+std::vector<std::string> CompilationDatabase::rcppPrecompiledHeaderArgs()
 {
    // args to return
    std::vector<std::string> args;
@@ -503,7 +554,7 @@ std::vector<std::string> CompilationDatabase::precompiledHeaderArgs()
          return std::vector<std::string>();
       }
 
-      std::vector<std::string> args = argsForSourceCpp(cppPath, false);
+      std::vector<std::string> args = computeArgsForSourceFile(cppPath);
       core::system::ProcessArgs argsArray(args);
 
       CXIndex index = clang().createIndex(0,0);

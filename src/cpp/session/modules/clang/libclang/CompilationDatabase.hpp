@@ -23,6 +23,8 @@
 
 #include <core/FilePath.hpp>
 
+#include <core/system/Process.hpp>
+
 namespace session {
 namespace modules {      
 namespace clang {
@@ -37,18 +39,26 @@ private:
 public:
    virtual ~CompilationDatabase();
 
-   std::vector<std::string> argsForFile(const std::string& cppPath);
+   std::vector<std::string> argsForSourceFile(const std::string& srcPath);
 
 private:
 
+   core::Error executeSourceCpp(core::system::Options env,
+                                const core::FilePath& srcPath,
+                                core::system::ProcessResult* pResult);
+
+   core::Error executeRCmdSHLIB(core::system::Options env,
+                                const core::FilePath& srcPath,
+                                core::system::ProcessResult* pResult);
+
    void updateForCurrentPackage();
-   void updateForStandaloneCpp(const core::FilePath& cppPath);
+   void updateForStandalone(const core::FilePath& cppPath);
 
    std::vector<std::string> rToolsArgs() const;
-   std::vector<std::string> precompiledHeaderArgs();
+   std::vector<std::string> rcppPrecompiledHeaderArgs();
 
-   std::vector<std::string> argsForSourceCpp(const core::FilePath& cppPath,
-                                             bool includePCH = true);
+   std::vector<std::string> computeArgsForSourceFile(
+                                          const core::FilePath& srcPath);
 
 private:
 

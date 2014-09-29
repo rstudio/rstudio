@@ -90,7 +90,7 @@ TranslationUnit SourceIndex::getTranslationUnit(
    // (perhaps using clang_getFile)
 
    // get the arguments and last write time for this file
-   std::vector<std::string> args = compilationDatabase().argsForFile(filename);
+   std::vector<std::string> args = compilationDatabase().argsForSourceFile(filename);
    std::time_t lastWriteTime = FilePath(filename).lastWriteTime();
 
    // look it up
