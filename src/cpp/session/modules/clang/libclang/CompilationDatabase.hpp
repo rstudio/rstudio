@@ -46,6 +46,8 @@ private:
 
    std::vector<std::string> rToolsArgs() const;
 
+   std::vector<std::string> argsForSourceCpp(const core::FilePath& cppPath);
+
    void updateIfNecessary(const std::string& cppPath,
                           const std::vector<std::string>& args);
 private:

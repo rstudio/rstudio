@@ -97,101 +97,7 @@ std::vector<std::string> extractCompileArgs(const std::string& line)
    return compileArgs;
 }
 
-std::vector<std::string> argsForSourceCpp(const core::FilePath& cppPath)
-{
-   // baseline args
-   std::vector<std::string> compileArgs;
-   std::string builtinHeaders = "-I" + clang().builtinHeaders();
-   compileArgs.push_back(builtinHeaders);
-#if defined(_WIN32)
-   std::vector<std::string> rtoolsArgs = rToolsArgs();
-   std::copy(rtoolsArgs.begin(),
-             rtoolsArgs.end(),
-             std::back_inserter(compileArgs));
-#elif defined(__APPLE__)
-   compileArgs.push_back("-stdlib=libstdc++");
-#endif
 
-   // get path to R script
-   FilePath rScriptPath;
-   Error error = module_context::rScriptPath(&rScriptPath);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return std::vector<std::string>();
-   }
-
-   // setup env and options
-   core::system::Options env;
-   core::system::ProcessOptions options;
-
-   // always run as a slave
-   std::vector<std::string> args;
-   args.push_back("--slave");
-
-   // for packrat projects we execute the profile and set the working
-   // directory to the project directory; for other contexts we just
-   // propagate the R_LIBS
-   if (module_context::packratContext().modeOn)
-   {
-      options.workingDir = projects::projectContext().directory();
-      args.push_back("--no-save");
-      args.push_back("--no-restore");
-   }
-   else
-   {
-      args.push_back("--vanilla");
-      std::string libPaths = module_context::libPathsString();
-      if (!libPaths.empty())
-         core::system::setenv(&env, "R_LIBS", libPaths);
-   }
-
-   // add rtools to path if we need to
-   std::string warning;
-   module_context::addRtoolsToPathIfNecessary(&env, &warning);
-
-   // set environment into options
-   options.environment = env;
-
-   // add command to arguments
-   args.push_back("-e");
-   boost::format fmt("Rcpp::sourceCpp('%1%', showOutput = TRUE, dryRun = TRUE)");
-   args.push_back(boost::str(fmt % cppPath.absolutePath()));
-
-   // execute and capture output
-   core::system::ProcessResult result;
-   error = core::system::runProgram(
-            core::string_utils::utf8ToSystem(rScriptPath.absolutePath()),
-            args,
-            "",
-            options,
-            &result);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return std::vector<std::string>();
-   }
-
-   // break into lines
-   std::vector<std::string> lines;
-   boost::algorithm::split(lines, result.stdOut,
-                           boost::algorithm::is_any_of("\r\n"));
-
-
-   // find the line with the compilation and add it's args
-   std::string compile = "-c " + cppPath.filename() + " -o " + cppPath.stem();
-   BOOST_FOREACH(const std::string& line, lines)
-   {
-      if (line.find(compile) != std::string::npos)
-      {
-         std::vector<std::string> args = extractCompileArgs(line);
-         std::copy(args.begin(), args.end(), std::back_inserter(compileArgs));
-      }
-   }
-
-   // return the args
-   return compileArgs;
-}
 
 std::string buildFileHash(const FilePath& filePath)
 {
@@ -394,6 +300,103 @@ void CompilationDatabase::updateForStandaloneCpp(const core::FilePath& cppPath)
       // save attributes to prevent recomputation
       attribsMap_[cppPath.absolutePath()] = attributes;
    }
+}
+
+std::vector<std::string> CompilationDatabase::argsForSourceCpp(
+                                                     const FilePath& cppPath)
+{
+   // baseline args
+   std::vector<std::string> compileArgs;
+   std::string builtinHeaders = "-I" + clang().builtinHeaders();
+   compileArgs.push_back(builtinHeaders);
+#if defined(_WIN32)
+   std::vector<std::string> rtoolsArgs = rToolsArgs();
+   std::copy(rtoolsArgs.begin(),
+             rtoolsArgs.end(),
+             std::back_inserter(compileArgs));
+#elif defined(__APPLE__)
+   compileArgs.push_back("-stdlib=libstdc++");
+#endif
+
+   // get path to R script
+   FilePath rScriptPath;
+   Error error = module_context::rScriptPath(&rScriptPath);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return std::vector<std::string>();
+   }
+
+   // setup env and options
+   core::system::Options env;
+   core::system::ProcessOptions options;
+
+   // always run as a slave
+   std::vector<std::string> args;
+   args.push_back("--slave");
+
+   // for packrat projects we execute the profile and set the working
+   // directory to the project directory; for other contexts we just
+   // propagate the R_LIBS
+   if (module_context::packratContext().modeOn)
+   {
+      options.workingDir = projects::projectContext().directory();
+      args.push_back("--no-save");
+      args.push_back("--no-restore");
+   }
+   else
+   {
+      args.push_back("--vanilla");
+      std::string libPaths = module_context::libPathsString();
+      if (!libPaths.empty())
+         core::system::setenv(&env, "R_LIBS", libPaths);
+   }
+
+   // add rtools to path if we need to
+   std::string warning;
+   module_context::addRtoolsToPathIfNecessary(&env, &warning);
+
+   // set environment into options
+   options.environment = env;
+
+   // add command to arguments
+   args.push_back("-e");
+   boost::format fmt("Rcpp::sourceCpp('%1%', showOutput = TRUE, dryRun = TRUE)");
+   args.push_back(boost::str(fmt % cppPath.absolutePath()));
+
+   // execute and capture output
+   core::system::ProcessResult result;
+   error = core::system::runProgram(
+            core::string_utils::utf8ToSystem(rScriptPath.absolutePath()),
+            args,
+            "",
+            options,
+            &result);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return std::vector<std::string>();
+   }
+
+   // break into lines
+   std::vector<std::string> lines;
+   boost::algorithm::split(lines, result.stdOut,
+                           boost::algorithm::is_any_of("\r\n"));
+
+
+   // find the line with the compilation and add it's args
+   std::string compile = "-c " + cppPath.filename() + " -o " + cppPath.stem();
+   BOOST_FOREACH(const std::string& line, lines)
+   {
+      if (line.find(compile) != std::string::npos)
+      {
+         std::vector<std::string> args = extractCompileArgs(line);
+         std::copy(args.begin(), args.end(), std::back_inserter(compileArgs));
+      }
+   }
+
+   // return the args
+   return compileArgs;
 }
 
 std::vector<std::string> CompilationDatabase::argsForFile(
