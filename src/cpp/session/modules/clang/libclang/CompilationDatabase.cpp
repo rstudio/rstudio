@@ -377,6 +377,11 @@ std::vector<std::string> CompilationDatabase::argsForSourceCpp(
       LOG_ERROR(error);
       return std::vector<std::string>();
    }
+   else if (result.exitStatus != EXIT_SUCCESS)
+   {
+      LOG_ERROR_MESSAGE("Error performing dry run: " + result.stdErr);
+      return std::vector<std::string>();
+   }
 
    // break into lines
    std::vector<std::string> lines;
