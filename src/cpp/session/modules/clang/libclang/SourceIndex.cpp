@@ -101,6 +101,7 @@ TranslationUnit SourceIndex::getTranslationUnit(const FilePath& filePath)
    // TODO: for header files we'll need to scan the translation
    // units for them and use the appropriate one
    // (perhaps using clang_getFile)
+   // (perhaps using translationUnit_includes_callback)
 
    // get the arguments and last write time for this file
    std::string filename = filePath.absolutePath();
