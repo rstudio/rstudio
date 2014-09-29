@@ -312,12 +312,15 @@ void CompilationDatabase::updateForCurrentPackage()
          if (error)
             LOG_ERROR(error);
 
-
-         BOOST_FOREACH(const std::string& line, lines)
+         bool continuationLine = false;
+         BOOST_FOREACH(std::string line, lines)
          {
+            boost::algorithm::trim_all(line);
+
             if (line.find("PKG_CFLAGS") != std::string::npos ||
                 line.find("PKG_CXXFLAGS") != std::string::npos ||
-                line.find("PKG_CPPFLAGS") != std::string::npos)
+                line.find("PKG_CPPFLAGS") != std::string::npos ||
+                continuationLine)
             {
                std::vector<std::string> mArgs = extractCompileArgs(line);
                BOOST_FOREACH(std::string arg, mArgs)
@@ -334,6 +337,8 @@ void CompilationDatabase::updateForCurrentPackage()
 
                   args.push_back(arg);
                }
+
+               continuationLine = boost::algorithm::ends_with(line, "\\");
             }
          }
       }
