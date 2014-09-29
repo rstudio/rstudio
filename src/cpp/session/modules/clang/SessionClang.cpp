@@ -113,7 +113,7 @@ Error initialize()
 {
    // if we don't have a recent version of Rcpp (that can do dryRun with
    // sourceCpp) then forget it
-   if (!module_context::isPackageVersionInstalled("Rcpp", "0.11.2.7"))
+   if (!module_context::isPackageVersionInstalled("Rcpp", "0.11.3"))
       return Success();
 
    // attempt to load clang interface
