@@ -293,6 +293,7 @@ std::vector<std::string> CompilationDatabase::computeArgsForSourceFile(
 
    // rtools on windows
    core::system::Options env;
+   core::system::environment(&env);
 #if defined(_WIN32)
    std::vector<std::string> rtoolsArgs = rToolsArgs();
    std::copy(rtoolsArgs.begin(),
