@@ -537,8 +537,10 @@ std::vector<std::string> CompilationDatabase::rcppPrecompiledHeaderArgs(
                                             childPath(kPrecompiledRcppDir);
 
    // platform/rcpp version specific directory name
+   std::string clangVersion = clang().version().asString();
    std::string platformDir;
-   Error error = r::exec::RFunction(".rs.precompiledRcppPath").call(&platformDir);
+   Error error = r::exec::RFunction(".rs.precompiledRcppPath", clangVersion)
+                                                         .call(&platformDir);
    if (error)
    {
       LOG_ERROR(error);

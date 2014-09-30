@@ -15,10 +15,11 @@
 
 
 
-.rs.addFunction( "precompiledRcppPath", function() {
+.rs.addFunction( "precompiledRcppPath", function(clangVersion) {
    paste(packageVersion("Rcpp"),
          R.version$platform,
          R.version$`svn rev`,
+         clangVersion,
          sep = "-")
 })
 
