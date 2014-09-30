@@ -77,16 +77,16 @@ public class I18N_es_AR_RuntimeTest extends GWTTestCase {
     assertEquals(2, ars.getDefaultFractionDigits());
     CurrencyData data = CurrencyList.get().lookup("MXN");
     assertEquals("MXN", data.getCurrencyCode());
-    assertEquals("$", data.getCurrencySymbol());
+    assertEquals("MX$", data.getCurrencySymbol());
     assertEquals(2, data.getDefaultFractionDigits());
     CurrencyData usd = CurrencyList.get().lookup("USD");
     assertEquals("USD", usd.getCurrencyCode());
-    assertEquals("$", usd.getCurrencySymbol());
+    assertEquals("US$", usd.getCurrencySymbol());
     assertEquals(2, usd.getDefaultFractionDigits());
     boolean found = false;
     for (CurrencyData it : CurrencyList.get()) {
       if ("USD".equals(it.getCurrencyCode())) {
-        assertEquals("$", it.getCurrencySymbol());
+        assertEquals("US$", it.getCurrencySymbol());
         assertEquals(2, it.getDefaultFractionDigits());
         found = true;
         break;

@@ -135,7 +135,7 @@ public class I18NTest extends GWTTestCase {
         m.quotedText());
     assertEquals("PL: This {0} would be an argument if not quoted",
         m.quotedArg());
-    assertEquals("PL: Total is $11,305.01", m.currencyFormat(11305.01));
+    assertEquals("PL: Total is US$11,305.01", m.currencyFormat(11305.01));
     assertEquals("PL: Default number format is 1,017.1",
         m.defaultNumberFormat(1017.1));
     @SuppressWarnings("deprecation")
@@ -166,7 +166,7 @@ public class I18NTest extends GWTTestCase {
         m.quotedTextAsSafeHtml().asString());
     assertEquals("PL: This {0} would be an argument if not quoted",
         m.quotedArgAsSafeHtml().asString());
-    assertEquals("PL: Total is $11,305.01",
+    assertEquals("PL: Total is US$11,305.01",
         m.currencyFormatAsSafeHtml(11305.01).asString());
     assertEquals("PL: Default number format is 1,017.1",
         m.defaultNumberFormatAsSafeHtml(1017.1).asString());
@@ -631,10 +631,10 @@ public class I18NTest extends GWTTestCase {
   public void testNumber() {
     TestAnnotatedMessages m = GWT.create(TestAnnotatedMessages.class);
     BigInteger intVal = new BigInteger("1000000000000000000");
-    assertEquals("Total is $1,000,000,000,000,000,000.00",
+    assertEquals("Total is US$1,000,000,000,000,000,000.00",
         m.withNumberCurrency(intVal));
     BigDecimal decVal = new BigDecimal("1000000000000000000.01");
-    assertEquals("Total is $1,000,000,000,000,000,000.01",
+    assertEquals("Total is US$1,000,000,000,000,000,000.01",
         m.withNumberCurrency(decVal));
     assertEquals("Distance is 1.0E18", m.withNumberExponent(intVal));
     assertEquals("Distance is 100.0E6", m.withNumberExponent(1e8f));
