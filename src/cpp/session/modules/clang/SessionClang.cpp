@@ -83,6 +83,12 @@ void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
    }
 }
 
+const char * const kRequiredRcpp = "0.11.3";
+
+bool haveRequiredRcpp()
+{
+   return module_context::isPackageVersionInstalled("Rcpp", kRequiredRcpp);
+}
 
 // diagnostic function to assist in determine whether/where
 // libclang was loaded from (and any errors which occurred
@@ -90,9 +96,19 @@ void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 // symbols, etc.)
 SEXP rs_isLibClangAvailable()
 {
-   // check availability
+   bool isAvailable = false;
    std::string diagnostics;
-   bool isAvailable = isLibClangAvailable(&diagnostics);
+
+   // check for required Rcpp
+   if (haveRequiredRcpp())
+   {
+      isAvailable = isLibClangAvailable(&diagnostics);
+   }
+   else
+   {
+      diagnostics = "Rcpp version " + std::string(kRequiredRcpp) + " or "
+                    "greater is required in order to use libclang.\n";
+   }
 
    // print diagnostics
    module_context::consoleWriteOutput(diagnostics);
@@ -111,13 +127,21 @@ bool isAvailable()
 
 Error initialize()
 {
+   // register diagnostics function
+   R_CallMethodDef methodDef ;
+   methodDef.name = "rs_isLibClangAvailable" ;
+   methodDef.fun = (DL_FUNC)rs_isLibClangAvailable;
+   methodDef.numArgs = 0;
+   r::routines::addCallMethod(methodDef);
+
    // if we don't have a recent version of Rcpp (that can do dryRun with
    // sourceCpp) then forget it
-   if (!module_context::isPackageVersionInstalled("Rcpp", "0.11.3"))
+   if (!haveRequiredRcpp())
       return Success();
 
    // attempt to load clang interface
-   loadLibClang();
+   if (!loadLibClang())
+      return Success();
 
    // connect the source index to the compilation database
    sourceIndex().initialize(
@@ -126,12 +150,6 @@ Error initialize()
        session::userSettings().clangVerbose()
    );
 
-   // register diagnostics function
-   R_CallMethodDef methodDef ;
-   methodDef.name = "rs_isLibClangAvailable" ;
-   methodDef.fun = (DL_FUNC)rs_isLibClangAvailable;
-   methodDef.numArgs = 0;
-   r::routines::addCallMethod(methodDef);
 
    // subscribe to source docs events for maintaining the unsaved files list
    // main source index and the unsaved files list)
@@ -148,9 +166,6 @@ Error initialize()
       (bind(sourceModuleRFile, "SessionClang.R"))
       (bind(registerRpcMethod, "print_cpp_completions", printCppCompletions));
    return initBlock.execute();
-
-   // return success
-   return Success();
 }
 
 
