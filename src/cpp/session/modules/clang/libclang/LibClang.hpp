@@ -84,7 +84,7 @@ class LibClang : boost::noncopyable
 {
 public:
    // construction/destruction (copying prohibited)
-   LibClang() : pLib_(NULL) {}
+   LibClang() : pLib_(NULL), usingEmbedded_(false) {}
    virtual ~LibClang();
 
    // loading
@@ -609,6 +609,7 @@ public:
 private:
    void* pLib_;
    std::string initError_;
+   bool usingEmbedded_;
 };
 
 // note that this function disposes the underlying CXString so it

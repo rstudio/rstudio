@@ -475,6 +475,9 @@ Error LibClang::load(const std::string& libraryPath, Version requiredVersion)
    LOAD_CLANG_SYMBOL(CompileCommand_getNumArgs)
    LOAD_CLANG_SYMBOL(CompileCommand_getArg)
 
+   // note whether we are using embedded libclang
+   usingEmbedded_ = (libraryPath == embeddedLibClangPath().absolutePath());
+
    return Success();
 }
 
@@ -536,17 +539,20 @@ std::vector<std::string> LibClang::compileArgs(bool isCppFile) const
 {
    std::vector<std::string> compileArgs;
 
-   std::string headersVersion = "3.5";
-   if (version() < Version(3,5,0))
-      headersVersion = "3.4";
+   if (usingEmbedded_)
+   {
+      std::string headersVersion = "3.5";
+      if (version() < Version(3,5,0))
+         headersVersion = "3.4";
 
-   compileArgs.push_back("-I" + options().libclangHeadersPath()
-                        .childPath(headersVersion).absolutePath());
+      compileArgs.push_back("-I" + options().libclangHeadersPath()
+                           .childPath(headersVersion).absolutePath());
 
 #ifdef __APPLE__
-   if (isCppFile)
-      compileArgs.push_back("-stdlib=libstdc++");
+      if (isCppFile)
+         compileArgs.push_back("-stdlib=libstdc++");
 #endif
+   }
 
    return compileArgs;
 }
