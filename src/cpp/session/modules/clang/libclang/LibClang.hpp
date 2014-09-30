@@ -96,8 +96,8 @@ public:
    // version
    Version version() const;
 
-   // builtin-headers directory
-   std::string builtinHeaders() const;
+   // compile args required by this configuration of liblcnag
+   std::vector<std::string> compileArgs(bool isCppFile) const;
 
    // strings
    const char * (*getCString)(CXString string);

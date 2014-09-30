@@ -532,14 +532,23 @@ Version LibClang::version() const
    return Version();
 }
 
-std::string LibClang::builtinHeaders() const
+std::vector<std::string> LibClang::compileArgs(bool isCppFile) const
 {
+   std::vector<std::string> compileArgs;
+
    std::string headersVersion = "3.5";
    if (version() < Version(3,5,0))
       headersVersion = "3.4";
 
-   return options().libclangHeadersPath()
-                        .childPath(headersVersion).absolutePath();
+   compileArgs.push_back("-I" + options().libclangHeadersPath()
+                        .childPath(headersVersion).absolutePath());
+
+#ifdef __APPLE__
+   if (isCppFile)
+      compileArgs.push_back("-stdlib=libstdc++");
+#endif
+
+   return compileArgs;
 }
 
 

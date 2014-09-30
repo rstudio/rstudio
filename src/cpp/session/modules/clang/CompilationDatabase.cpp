@@ -282,24 +282,26 @@ std::vector<std::string> CompilationDatabase::computeArgsForSourceFile(
    std::string ext = srcFile.extensionLowerCase();
    bool isCppFile = (ext == ".cc") || (ext == ".cpp");
 
-   // baseline args
+   // compile args
    std::vector<std::string> compileArgs;
-   std::string builtinHeaders = "-I" + clang().builtinHeaders();
-   compileArgs.push_back(builtinHeaders);
+
+   // clang compile args
+   std::vector<std::string> clangCompileArgs = clang().compileArgs(isCppFile);
+   std::copy(clangCompileArgs.begin(),
+             clangCompileArgs.end(),
+             std::back_inserter(compileArgs));
+
+   // rtools on windows
+   core::system::Options env;
 #if defined(_WIN32)
    std::vector<std::string> rtoolsArgs = rToolsArgs();
    std::copy(rtoolsArgs.begin(),
              rtoolsArgs.end(),
              std::back_inserter(compileArgs));
-#elif defined(__APPLE__)
-   if (isCppFile)
-      compileArgs.push_back("-stdlib=libstdc++");
-#endif
 
-   // add rtools to path if we need to
-   core::system::Options env;
    std::string warning;
    module_context::addRtoolsToPathIfNecessary(&env, &warning);
+#endif 
 
    // handle C++ and C differently
    Error error;
