@@ -541,17 +541,22 @@ std::vector<std::string> LibClang::compileArgs(bool isCppFile) const
 
    if (usingEmbedded_)
    {
+      // headers path
+      FilePath headersPath = options().libclangHeadersPath();
+
+      // add compiler headers
       std::string headersVersion = "3.5";
       if (version() < Version(3,5,0))
          headersVersion = "3.4";
+      compileArgs.push_back("-I" + headersPath.childPath(headersVersion)
+                                                      .absolutePath());
 
-      compileArgs.push_back("-I" + options().libclangHeadersPath()
-                           .childPath(headersVersion).absolutePath());
-
-#ifdef __APPLE__
-      if (isCppFile)
-         compileArgs.push_back("-stdlib=libstdc++");
-#endif
+      // add libc++ for embedded clang 3.5
+      if (isCppFile && (headersVersion == "3.5"))
+      {
+         compileArgs.push_back("-I" + headersPath.childPath("libc++/3.5")
+                                                      .absolutePath());
+      }
    }
 
    return compileArgs;
