@@ -46,11 +46,15 @@ public:
    unsigned getGlobalOptions() const;
    void setGlobalOptions(unsigned options);
 
+   // functions used to keep the index "hot" based on recent user edits
    void primeTranslationUnit(const core::FilePath& filePath);
-   TranslationUnit getTranslationUnit(const core::FilePath& filePath);
+   void reprimeTranslationUnit(const core::FilePath& filePath);
 
-private:
+   // remove translation units so they don't occupy memory
    void removeTranslationUnit(const std::string& filename);
+   void removeAllTranslationUnits();
+
+   TranslationUnit getTranslationUnit(const core::FilePath& filePath);
 
 private:
    CompileArgsSource compileArgsSource_;

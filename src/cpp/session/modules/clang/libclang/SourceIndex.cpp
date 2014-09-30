@@ -38,12 +38,8 @@ SourceIndex::~SourceIndex()
 {
    try
    {
-      // dispose all translation units
-      for(TranslationUnits::const_iterator it = translationUnits_.begin();
-          it != translationUnits_.end(); ++it)
-      {
-         clang().disposeTranslationUnit(it->second.tu);
-      }
+      // remove all
+      removeAllTranslationUnits();
 
       // dispose the index
       if (index_ != NULL)
@@ -81,11 +77,31 @@ void SourceIndex::removeTranslationUnit(const std::string& filename)
    }
 }
 
+void SourceIndex::removeAllTranslationUnits()
+{
+   for(TranslationUnits::const_iterator it = translationUnits_.begin();
+       it != translationUnits_.end(); ++it)
+   {
+      clang().disposeTranslationUnit(it->second.tu);
+   }
+
+   translationUnits_.clear();
+}
+
+
 void SourceIndex::primeTranslationUnit(const FilePath& filePath)
 {
    // if we have no record of this translation unit then do a first pass
    std::string filename = filePath.absolutePath();
    if (translationUnits_.find(filename) == translationUnits_.end())
+      getTranslationUnit(filePath);
+}
+
+void SourceIndex::reprimeTranslationUnit(const core::FilePath& filePath)
+{
+   // if we have already indexed this translation unit then re-index it
+   std::string filename = filePath.absolutePath();
+   if (translationUnits_.find(filename) != translationUnits_.end())
       getTranslationUnit(filePath);
 }
 
