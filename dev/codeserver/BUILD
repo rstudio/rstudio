@@ -55,8 +55,16 @@ java_library(
     ],
 )
 
+test_suite(
+    name = "tests",
+    tests = [
+        ":RecompilerTest",
+        ":SourceHandlerTest",
+    ],
+)
+
 java_test(
-    name = "source-handler-test",
+    name = "SourceHandlerTest",
     test_class = "com.google.gwt.dev.codeserver.SourceHandlerTest",
     runtime_deps = [
         ":testlib",
@@ -64,7 +72,7 @@ java_test(
 )
 
 java_test(
-    name = "recompiler-test",
+    name = "RecompilerTest",
     test_class = "com.google.gwt.dev.codeserver.RecompilerTest",
     runtime_deps = [
         ":testlib",
