@@ -72,6 +72,24 @@ public class MinimalRebuildCache implements Serializable {
     }
   }
 
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  private static void copyCollection(Collection fromCollection, Collection toCollection) {
+    toCollection.clear();
+    toCollection.addAll(fromCollection);
+  }
+
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  private static void copyMap(Map fromMap, Map toMap) {
+    toMap.clear();
+    toMap.putAll(fromMap);
+  }
+
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  private static void copyMultimap(Multimap fromMap, Multimap toMap) {
+    toMap.clear();
+    toMap.putAll(fromMap);
+  }
+
   /**
    * Diffs lastModifiedByResourcePath from the previous compile against currentResources from the
    * current compile. modifiedResourcePaths is wiped and recreated to be a list of just the modified
@@ -354,6 +372,58 @@ public class MinimalRebuildCache implements Serializable {
       }
     }
     return reachableTypeNames;
+  }
+
+  /**
+   * Replaces the contents of this cache with the contents of the given cache.
+   * <p>
+   * This operation should be kept fast as it will be called once per compile. At the moment it
+   * takes about 2.5% of the time in an incremental recompile. If wanting to recover this time in
+   * the future consider parallelizing the copy or grouping the values from hash tables with similar
+   * keys into a single data object and hashtable so that fewer references need to be replicated.
+   */
+  public void copyFrom(MinimalRebuildCache that) {
+    this.lastLinkedJsBytes = that.lastLinkedJsBytes;
+
+    this.intTypeIdGenerator.copyFrom(that.intTypeIdGenerator);
+    this.persistentPrettyNamerState.copyFrom(that.persistentPrettyNamerState);
+    this.immediateTypeRelations.copyFrom(that.immediateTypeRelations);
+
+    copyMap(that.compilationUnitTypeNameByNestedTypeName,
+        this.compilationUnitTypeNameByNestedTypeName);
+    copyMap(that.contentHashByGeneratedTypeName, this.contentHashByGeneratedTypeName);
+    copyMap(that.jsByTypeName, this.jsByTypeName);
+    copyMap(that.lastModifiedByDiskSourcePath, this.lastModifiedByDiskSourcePath);
+    copyMap(that.lastModifiedByResourcePath, this.lastModifiedByResourcePath);
+    copyMap(that.sourceMapsByTypeName, this.sourceMapsByTypeName);
+    copyMap(that.statementRangesByTypeName, this.statementRangesByTypeName);
+
+    copyMultimap(that.generatedCompilationUnitNamesByReboundTypeNames,
+        this.generatedCompilationUnitNamesByReboundTypeNames);
+    copyMultimap(that.nestedTypeNamesByUnitTypeName, this.nestedTypeNamesByUnitTypeName);
+    copyMultimap(that.rebinderTypeNamesByReboundTypeName,
+        this.rebinderTypeNamesByReboundTypeName);
+    copyMultimap(that.reboundTypeNamesByGeneratedCompilationUnitNames,
+        this.reboundTypeNamesByGeneratedCompilationUnitNames);
+    copyMultimap(that.reboundTypeNamesByInputResource, this.reboundTypeNamesByInputResource);
+    copyMultimap(that.referencedTypeNamesByTypeName, this.referencedTypeNamesByTypeName);
+    copyMultimap(that.typeNamesByReferencingTypeName, this.typeNamesByReferencingTypeName);
+
+    copyCollection(that.deletedCompilationUnitNames, this.deletedCompilationUnitNames);
+    copyCollection(that.deletedDiskSourcePaths, this.deletedDiskSourcePaths);
+    copyCollection(that.deletedResourcePaths, this.deletedResourcePaths);
+    copyCollection(that.dualJsoImplInterfaceNames, this.dualJsoImplInterfaceNames);
+    copyCollection(that.generatedArtifacts, this.generatedArtifacts);
+    copyCollection(that.jsoStatusChangedTypeNames, this.jsoStatusChangedTypeNames);
+    copyCollection(that.jsoTypeNames, this.jsoTypeNames);
+    copyCollection(that.modifiedCompilationUnitNames, this.modifiedCompilationUnitNames);
+    copyCollection(that.modifiedDiskSourcePaths, this.modifiedDiskSourcePaths);
+    copyCollection(that.modifiedResourcePaths, this.modifiedResourcePaths);
+    copyCollection(that.preambleTypeNames, this.preambleTypeNames);
+    copyCollection(that.rootTypeNames, this.rootTypeNames);
+    copyCollection(that.singleJsoImplInterfaceNames, this.singleJsoImplInterfaceNames);
+    copyCollection(that.sourceCompilationUnitNames, this.sourceCompilationUnitNames);
+    copyCollection(that.staleTypeNames, this.staleTypeNames);
   }
 
   public ArtifactSet getGeneratedArtifacts() {

@@ -42,6 +42,16 @@ public class JsPersistentPrettyNamer extends JsNamer {
     private Map<String, String> prettyIdentByOriginalIdent = Maps.newHashMap();
 
     private Set<String> usedPrettyIdents = Sets.newHashSet();
+
+    public void copyFrom(PersistentPrettyNamerState that) {
+      this.shortIdentCollisionCounts.clear();
+      this.prettyIdentByOriginalIdent.clear();
+      this.usedPrettyIdents.clear();
+
+      this.shortIdentCollisionCounts.addAll(that.shortIdentCollisionCounts);
+      this.prettyIdentByOriginalIdent.putAll(that.prettyIdentByOriginalIdent);
+      this.usedPrettyIdents.addAll(that.usedPrettyIdents);
+    }
   }
 
   @VisibleForTesting

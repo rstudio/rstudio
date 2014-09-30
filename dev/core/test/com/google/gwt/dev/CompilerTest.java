@@ -21,6 +21,7 @@ import com.google.gwt.dev.UnstableNestedAnonymousGenerator.OutputVersion;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.ResourceLoader;
 import com.google.gwt.dev.cfg.ResourceLoaders;
+import com.google.gwt.dev.javac.UnitCacheSingleton;
 import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.javac.testing.impl.MockResource;
@@ -45,7 +46,6 @@ import java.util.Set;
  */
 public class CompilerTest extends ArgProcessorTestBase {
 
-  public static final String GWT_PERSISTENTUNITCACHE = "gwt.persistentunitcache";
   public static final String HELLO_MODULE = "com.google.gwt.sample.hello.Hello";
   public static final String HELLO_MODULE_STACKMODE_STRIP =
       "com.google.gwt.sample.hello.Hello_stackMode_strip";
@@ -1131,7 +1131,8 @@ public class CompilerTest extends ArgProcessorTestBase {
 
     File firstCompileWorkDir = Utility.makeTemporaryDirectory(null, "hellowork");
     File secondCompileWorkDir = Utility.makeTemporaryDirectory(null, "hellowork");
-    String oldPersistentUnitCacheValue = System.setProperty(GWT_PERSISTENTUNITCACHE, "false");
+    String oldPersistentUnitCacheValue =
+        System.setProperty(UnitCacheSingleton.GWT_PERSISTENTUNITCACHE, "false");
     try {
       options.addModuleName(topLevelModule);
       options.setWarDir(new File(firstCompileWorkDir, "war"));
@@ -1156,9 +1157,9 @@ public class CompilerTest extends ArgProcessorTestBase {
           secondTimeOutput);
     } finally {
       if (oldPersistentUnitCacheValue == null) {
-        System.clearProperty(GWT_PERSISTENTUNITCACHE);
+        System.clearProperty(UnitCacheSingleton.GWT_PERSISTENTUNITCACHE);
       } else {
-        System.setProperty(GWT_PERSISTENTUNITCACHE, oldPersistentUnitCacheValue);
+        System.setProperty(UnitCacheSingleton.GWT_PERSISTENTUNITCACHE, oldPersistentUnitCacheValue);
       }
       Util.recursiveDelete(firstCompileWorkDir, false);
       Util.recursiveDelete(secondCompileWorkDir, false);
@@ -1223,7 +1224,7 @@ public class CompilerTest extends ArgProcessorTestBase {
       MinimalRebuildCache minimalRebuildCache, Set<String> expectedStaleTypeNames,
       JsOutputOption output) throws IOException, UnableToCompleteException, InterruptedException {
     // Make sure we're using a MemoryUnitCache.
-    System.setProperty(GWT_PERSISTENTUNITCACHE, "false");
+    System.setProperty(UnitCacheSingleton.GWT_PERSISTENTUNITCACHE, "false");
     // Wait 1 second so that any new file modification times are actually different.
     Thread.sleep(1001);
     PrintWriterTreeLogger logger = new PrintWriterTreeLogger();

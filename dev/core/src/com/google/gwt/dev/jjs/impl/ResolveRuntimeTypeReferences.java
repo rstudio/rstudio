@@ -59,6 +59,12 @@ public abstract class ResolveRuntimeTypeReferences {
     private final Map<String, Integer> typeIdByTypeName = Maps.newHashMap();
     private int nextAvailableId =  0;
 
+    public void copyFrom(IntTypeIdGenerator that) {
+      this.nextAvailableId = that.nextAvailableId;
+      this.typeIdByTypeName.clear();
+      this.typeIdByTypeName.putAll(that.typeIdByTypeName);
+    }
+
     public int getOrCreateTypeId(String typeName) {
       if (typeIdByTypeName.containsKey(typeName)) {
         return typeIdByTypeName.get(typeName);

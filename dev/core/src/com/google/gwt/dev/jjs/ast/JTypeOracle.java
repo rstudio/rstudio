@@ -78,6 +78,16 @@ public class JTypeOracle implements Serializable {
     private Multimap<String, String> immediateImplementedInterfacesByClass =
         HashMultimap.create();
 
+    public void copyFrom(ImmediateTypeRelations that) {
+      this.immediateImplementedInterfacesByClass.clear();
+      this.immediateSuperclassesByClass.clear();
+      this.immediateSuperInterfacesByInterface.clear();
+
+      this.immediateImplementedInterfacesByClass.putAll(that.immediateImplementedInterfacesByClass);
+      this.immediateSuperclassesByClass.putAll(that.immediateSuperclassesByClass);
+      this.immediateSuperInterfacesByInterface.putAll(that.immediateSuperInterfacesByInterface);
+    }
+
     @VisibleForTesting
     public Map<String, String> getImmediateSuperclassesByClass() {
       return immediateSuperclassesByClass;

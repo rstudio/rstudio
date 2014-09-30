@@ -47,14 +47,25 @@ java_library(
     srcs = glob(["javatests/**/*.java"]),
     deps = [
         ":codeserver-bare",
+        "//java/com/google/common/collect",
         "//third_party/java/junit",
-        "//third_party/java_src/gwt/svn/trunk/dev:gwt-dev-bare",
+        "//third_party/java_src/gwt/svn/tools:dev_deps",
+        "//third_party/java_src/gwt/svn/trunk/dev:gwt-dev-only",
+        "//third_party/java_src/gwt/svn/trunk/user:user-test-code",
     ],
 )
 
 java_test(
-    name = "tests",
+    name = "source-handler-test",
     test_class = "com.google.gwt.dev.codeserver.SourceHandlerTest",
+    runtime_deps = [
+        ":testlib",
+    ],
+)
+
+java_test(
+    name = "recompiler-test",
+    test_class = "com.google.gwt.dev.codeserver.RecompilerTest",
     runtime_deps = [
         ":testlib",
     ],

@@ -25,10 +25,12 @@ import java.io.File;
  */
 public class UnitCacheSingleton {
 
+  public static final String GWT_PERSISTENTUNITCACHE = "gwt.persistentunitcache";
+
   /**
    * The API must be enabled explicitly for persistent caching to be live.
    */
-  private static final String configPropertyValue = System.getProperty("gwt.persistentunitcache",
+  private static final String configPropertyValue = System.getProperty(GWT_PERSISTENTUNITCACHE,
       "true");
   private static final boolean usePersistent = configPropertyValue.length() == 0
       || Boolean.parseBoolean(configPropertyValue);

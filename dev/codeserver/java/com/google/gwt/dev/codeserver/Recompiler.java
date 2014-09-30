@@ -295,15 +295,20 @@ class Recompiler {
     compilerContext = compilerContextBuilder.options(runOptions).build();
 
     // Looks up the matching rebuild cache using the final set of overridden binding properties.
-    MinimalRebuildCache minimalRebuildCache = getOrCreateMinimalRebuildCache(bindingProperties);
+    MinimalRebuildCache knownGoodMinimalRebuildCache =
+        getKnownGoodMinimalRebuildCache(bindingProperties);
+    job.setCompileStrategy(knownGoodMinimalRebuildCache.isPopulated() ? CompileStrategy.INCREMENTAL
+        : CompileStrategy.FULL);
 
-    job.setCompileStrategy(minimalRebuildCache.isPopulated() ? CompileStrategy.INCREMENTAL :
-        CompileStrategy.FULL);
-
-    boolean success = new Compiler(runOptions, minimalRebuildCache).run(compileLogger, module);
+    // Takes care to transactionally replace the saved cache only after a successful compile.
+    MinimalRebuildCache mutableMinimalRebuildCache = new MinimalRebuildCache();
+    mutableMinimalRebuildCache.copyFrom(knownGoodMinimalRebuildCache);
+    boolean success =
+        new Compiler(runOptions, mutableMinimalRebuildCache).run(compileLogger, module);
     if (success) {
       publishedCompileDir = compileDir;
       lastBuildInput = input;
+      saveKnownGoodMinimalRebuildCache(bindingProperties, mutableMinimalRebuildCache);
     } else {
       // always recompile after an error
       lastBuildInput = null;
@@ -351,7 +356,7 @@ class Recompiler {
     }
   }
 
-  private MinimalRebuildCache getOrCreateMinimalRebuildCache(
+  private MinimalRebuildCache getKnownGoodMinimalRebuildCache(
       Map<String, String> bindingProperties) {
     if (!options.isIncrementalCompileEnabled()) {
       return new NullRebuildCache();
@@ -364,6 +369,15 @@ class Recompiler {
       minimalRebuildCacheForProperties.put(bindingProperties, minimalRebuildCache);
     }
     return minimalRebuildCache;
+  }
+
+  private void saveKnownGoodMinimalRebuildCache(Map<String, String> bindingProperties,
+      MinimalRebuildCache knownGoodMinimalRebuildCache) {
+    if (!options.isIncrementalCompileEnabled()) {
+      return;
+    }
+
+    minimalRebuildCacheForProperties.put(bindingProperties, knownGoodMinimalRebuildCache);
   }
 
   /**
