@@ -440,6 +440,7 @@ std::vector<std::string> CompilationDatabase::argsForSourceFile(
    std::vector<std::string> args;
 
    // if this is a package source file then return the package args
+   std::string packageName;
    using namespace projects;
    FilePath filePath(srcPath);
    FilePath srcDirPath = projectContext().buildTargetPath().childPath("src");
@@ -450,6 +451,8 @@ std::vector<std::string> CompilationDatabase::argsForSourceFile(
       updateForCurrentPackage();
 
       args = packageSrcArgs_;
+
+      packageName = projectContext().packageInfo().name();
    }
    // otherwise lookup in the global dictionary
    else
@@ -463,7 +466,7 @@ std::vector<std::string> CompilationDatabase::argsForSourceFile(
    }
 
    // add precompiled Rcpp headers if appropriate
-   if (!args.empty())
+   if (!args.empty() && (packageName != "Rcpp"))
    {
       std::string ext = filePath.extensionLowerCase();
       bool isCppFile = (ext == ".cc") || (ext == ".cpp");
