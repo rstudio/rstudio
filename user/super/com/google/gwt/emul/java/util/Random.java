@@ -34,6 +34,9 @@
  */
 package java.util;
 
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkCriticalArgument;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkNotNull;
+
 import com.google.gwt.core.client.JsDate;
 
 /**
@@ -147,9 +150,7 @@ public class Random {
    * @see #next
    */
   public void nextBytes(byte[] buf) {
-    if (buf == null) {
-      throw new NullPointerException();
-    }
+    checkNotNull(buf);
 
     int rand = 0, count = 0, loop = 0;
     while (count < buf.length) {
@@ -244,19 +245,17 @@ public class Random {
    * @return a random {@code int}.
    */
   public int nextInt(int n) {
-    if (n > 0) {
-      if ((n & -n) == n) {
-        return (int) ((n * nextInternal(31)) * twoToTheMinus31);
-      }
-      double bits, val;
-      do {
-        bits = nextInternal(31);
-        val = bits % n;
-      } while (bits - val + (n - 1) < 0);
-      return (int) val;
+    checkCriticalArgument(n > 0);
+
+    if ((n & -n) == n) {
+      return (int) ((n * nextInternal(31)) * twoToTheMinus31);
     }
-    
-    throw new IllegalArgumentException();
+    double bits, val;
+    do {
+      bits = nextInternal(31);
+      val = bits % n;
+    } while (bits - val + (n - 1) < 0);
+    return (int) val;
   }
   
   /**

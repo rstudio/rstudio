@@ -34,6 +34,9 @@
  */
 package java.math;
 
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkCriticalArgument;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkNotNull;
+
 import java.io.Serializable;
 import java.util.Random;
 
@@ -128,7 +131,7 @@ public class BigInteger extends Number implements Comparable<BigInteger>,
    * @param bitLength length of the new {@code BigInteger} in bits.
    * @param rnd random generator used to generate the new {@code BigInteger}.
    * @return probably prime random {@code BigInteger} instance.
-   * @throws IllegalArgumentException if {@code bitLength < 2}.
+   * @throws ArithmeticException if {@code bitLength < 2}.
    */
   public static BigInteger probablePrime(int bitLength, Random rnd) {
     return new BigInteger(bitLength, 100, rnd);
@@ -312,9 +315,8 @@ public class BigInteger extends Number implements Comparable<BigInteger>,
    *           sign is zero and the magnitude contains non-zero entries.
    */
   public BigInteger(int signum, byte[] magnitude) {
-    if (magnitude == null) {
-      throw new NullPointerException();
-    }
+    checkNotNull(magnitude);
+
     if ((signum < -1) || (signum > 1)) {
       // math.13=Invalid signum value
       throw new NumberFormatException("Invalid signum value"); //$NON-NLS-1$
@@ -368,10 +370,8 @@ public class BigInteger extends Number implements Comparable<BigInteger>,
    * @throws IllegalArgumentException if {@code numBits} < 0.
    */
   public BigInteger(int numBits, Random rnd) {
-    if (numBits < 0) {
-      // math.1B=numBits must be non-negative
-      throw new IllegalArgumentException("numBits must be non-negative"); //$NON-NLS-1$
-    }
+    checkCriticalArgument(numBits >= 0, "numBits must be non-negative");
+
     if (numBits == 0) {
       sign = 0;
       numberLength = 1;
@@ -417,14 +417,13 @@ public class BigInteger extends Number implements Comparable<BigInteger>,
    *           or {@code radix > Character.MAX_RADIX}.
    */
   public BigInteger(String val, int radix) {
-    if (val == null) {
-      throw new NullPointerException();
-    }
+    checkNotNull(val);
+
     if ((radix < Character.MIN_RADIX) || (radix > Character.MAX_RADIX)) {
       // math.11=Radix out of range
       throw new NumberFormatException("Radix out of range"); //$NON-NLS-1$
     }
-    if (val.length() == 0) {
+    if (val.isEmpty()) {
       // math.12=Zero length BigInteger
       throw new NumberFormatException("Zero length BigInteger"); //$NON-NLS-1$
     }

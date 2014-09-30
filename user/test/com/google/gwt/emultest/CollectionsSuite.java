@@ -33,6 +33,7 @@ import com.google.gwt.emultest.java.util.ObjectsTest;
 import com.google.gwt.emultest.java.util.PriorityQueueTest;
 import com.google.gwt.emultest.java.util.RandomTest;
 import com.google.gwt.emultest.java.util.StackTest;
+import com.google.gwt.emultest.java.util.VectorTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
 import junit.framework.Test;
@@ -64,6 +65,7 @@ public class CollectionsSuite {
     suite.addTestSuite(PriorityQueueTest.class);
     suite.addTestSuite(RandomTest.class);
     suite.addTestSuite(StackTest.class);
+    suite.addTestSuite(VectorTest.class);
     suite.addTest(TreeMapSuiteSub.suite());
     suite.addTest(TreeSetSuiteSub.suite());
     // $JUnit-END$

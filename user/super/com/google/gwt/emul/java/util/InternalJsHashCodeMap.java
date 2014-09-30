@@ -15,6 +15,9 @@
  */
 package java.util;
 
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkElement;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkState;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 import java.util.AbstractMap.SimpleEntry;
@@ -182,9 +185,7 @@ class InternalJsHashCodeMap<K, V> {
 
       @Override
       public Entry<K, V> next() {
-        if (!hasNext()) {
-          throw new NoSuchElementException();
-        }
+        checkElement(hasNext());
 
         lastChain = chain;
         lastEntry = chain[itemIndex++];
@@ -193,9 +194,7 @@ class InternalJsHashCodeMap<K, V> {
 
       @Override
       public void remove() {
-        if (lastChain == null) {
-          throw new IllegalStateException();
-        }
+        checkState(lastEntry != null);
 
         InternalJsHashCodeMap.this.remove(lastEntry.getKey());
 
@@ -207,7 +206,7 @@ class InternalJsHashCodeMap<K, V> {
           itemIndex--;
         }
 
-        lastChain = null;
+        lastEntry = null;
       }
     };
   }

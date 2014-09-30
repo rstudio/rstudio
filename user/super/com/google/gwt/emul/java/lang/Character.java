@@ -15,6 +15,8 @@
  */
 package java.lang;
 
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkCriticalArgument;
+
 import java.io.Serializable;
 
 /**
@@ -329,9 +331,8 @@ public final class Character implements Comparable<Character>, Serializable {
   }
 
   public static char[] toChars(int codePoint) {
-    if (codePoint < 0 || codePoint > MAX_CODE_POINT) {
-      throw new IllegalArgumentException();
-    }
+    checkCriticalArgument(codePoint >= 0 && codePoint <= MAX_CODE_POINT);
+
     if (codePoint >= MIN_SUPPLEMENTARY_CODE_POINT) {
       return new char[] {
           getHighSurrogate(codePoint),
@@ -345,9 +346,8 @@ public final class Character implements Comparable<Character>, Serializable {
   }
 
   public static int toChars(int codePoint, char[] dst, int dstIndex) {
-    if (codePoint < 0 || codePoint > MAX_CODE_POINT) {
-      throw new IllegalArgumentException();
-    }
+    checkCriticalArgument(codePoint >= 0 && codePoint <= MAX_CODE_POINT);
+
     if (codePoint >= MIN_SUPPLEMENTARY_CODE_POINT) {
       dst[dstIndex++] = getHighSurrogate(codePoint);
       dst[dstIndex] = getLowSurrogate(codePoint);

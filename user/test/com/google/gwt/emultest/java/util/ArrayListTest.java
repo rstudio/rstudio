@@ -70,6 +70,9 @@ public class ArrayListTest extends ListTestBase {
       l.removeRange(2, 1);
       fail();
     } catch (IndexOutOfBoundsException expected) {
+      // JRE
+    } catch (IllegalArgumentException expected) {
+      // GWT emulation
     }
 
     try {

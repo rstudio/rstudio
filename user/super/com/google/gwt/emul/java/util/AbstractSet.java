@@ -15,6 +15,8 @@
  */
 package java.util;
 
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkNotNull;
+
 /**
  * Skeletal implementation of the Set interface. <a
  * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/AbstractSet.html">[Sun
@@ -59,9 +61,8 @@ public abstract class AbstractSet<E> extends AbstractCollection<E> implements
 
   @Override
   public boolean removeAll(Collection<?> c) {
-    if (c == null) {
-      throw new NullPointerException();
-    }
+    checkNotNull(c);
+
     int size = size();
     if (size < c.size()) {
       // If the member of 'this' is in 'c', remove it from 'this'.

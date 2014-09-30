@@ -15,6 +15,8 @@
  */
 package java.util;
 
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkNotNull;
+
 class Comparators {
   /*
    * This is a utility class that provides a default Comparator. This class
@@ -31,10 +33,8 @@ class Comparators {
    */
   private static final Comparator<Object> NATURAL = new Comparator<Object>() {
     public int compare(Object o1, Object o2) {
-      // Explicit null check to match JRE specs
-      if (o1 == null || o2 == null) {
-        throw new NullPointerException();
-      }
+      checkNotNull(o1);
+      checkNotNull(o2);
       return ((Comparable<Object>) o1).compareTo(o2);
     }
   };

@@ -15,6 +15,9 @@
  */
 package java.util;
 
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkCriticalElement;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkPositionIndex;
+
 import java.io.Serializable;
 
 /**
@@ -255,20 +258,20 @@ public class LinkedList<E> extends AbstractSequentialList<E> implements
   }
 
   public E getFirst() {
-    throwEmptyException();
+    checkCriticalElement(size != 0);
+
     return header.next.value;
   }
 
   public E getLast() {
-    throwEmptyException();
+    checkCriticalElement(size != 0);
+
     return header.prev.value;
   }
 
   @Override
   public ListIterator<E> listIterator(final int index) {
-    if (index < 0 || index > size) {
-      indexOutOfBounds(index, size);
-    }
+    checkPositionIndex(index, size);
 
     Node<E> node;
     // start from the nearest end of the list
@@ -398,18 +401,10 @@ public class LinkedList<E> extends AbstractSequentialList<E> implements
   }
 
   private Node<E> removeNode(Node<E> node) {
-    throwEmptyException();
+    checkCriticalElement(size != 0);
+
     --size;
     node.remove();
     return node;
-  }
-
-  /**
-   * Throw an exception if the list is empty.
-   */
-  private void throwEmptyException() {
-    if (size == 0) {
-      throw new NoSuchElementException();
-    }
   }
 }

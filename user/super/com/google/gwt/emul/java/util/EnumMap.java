@@ -15,6 +15,9 @@
  */
 package java.util;
 
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkArgument;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkState;
+
 import com.google.gwt.lang.Array;
 
 /**
@@ -76,9 +79,8 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V> {
     }
 
     public void remove() {
-      if (key == null) {
-        throw new IllegalStateException();
-      }
+      checkState(key != null);
+
       EnumMap.this.remove(key);
       key = null;
     }
@@ -121,9 +123,7 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V> {
     if (m instanceof EnumMap) {
       init((EnumMap<K, ? extends V>) m);
     } else {
-      if (m.isEmpty()) {
-        throw new IllegalArgumentException("Specified map is empty");
-      }
+      checkArgument(!m.isEmpty(), "Specified map is empty");
       init(m.keySet().iterator().next().getDeclaringClass());
       putAll(m);
     }

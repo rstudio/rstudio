@@ -15,6 +15,10 @@
  */
 package java.util;
 
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkArgument;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkElement;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkState;
+
 import static java.util.ConcurrentModificationDetector.checkStructuralChange;
 import static java.util.ConcurrentModificationDetector.recordLastKnownStructure;
 import static java.util.ConcurrentModificationDetector.structureChanged;
@@ -95,19 +99,17 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
     @Override
     public Entry<K, V> next() {
       checkStructuralChange(AbstractHashMap.this, this);
-      if (!hasNext()) {
-        throw new NoSuchElementException();
-      }
+      checkElement(hasNext());
+
       last = current;
       return current.next();
     }
 
     @Override
     public void remove() {
-      if (last == null) {
-        throw new IllegalStateException();
-      }
+      checkState(last != null);
       checkStructuralChange(AbstractHashMap.this, this);
+
       last.remove();
       last = null;
       recordLastKnownStructure(AbstractHashMap.this, this);
@@ -137,10 +139,9 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
 
   public AbstractHashMap(int ignored, float alsoIgnored) {
     // This implementation of HashMap has no need of load factors or capacities.
-    if (ignored < 0 || alsoIgnored < 0) {
-      throw new IllegalArgumentException(
-          "initial capacity was negative or load factor was non-positive");
-    }
+    checkArgument(ignored >= 0, "Negative initial capacity");
+    checkArgument(alsoIgnored >= 0, "Non-positive load factor");
+
     reset();
   }
 

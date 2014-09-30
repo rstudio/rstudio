@@ -15,6 +15,8 @@
  */
 package java.util;
 
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkNotNull;
+
 import com.google.gwt.lang.Array;
 
 /**
@@ -83,9 +85,8 @@ public abstract class AbstractCollection<E> implements Collection<E> {
   }
 
   public boolean removeAll(Collection<?> c) {
-    if (c == null) {
-      throw new NullPointerException();
-    }
+    checkNotNull(c);
+
     Iterator<?> iter = iterator();
     boolean changed = false;
     while (iter.hasNext()) {
@@ -98,9 +99,8 @@ public abstract class AbstractCollection<E> implements Collection<E> {
   }
 
   public boolean retainAll(Collection<?> c) {
-    if (c == null) {
-      throw new NullPointerException();
-    }
+    checkNotNull(c);
+
     Iterator<?> iter = iterator();
     boolean changed = false;
     while (iter.hasNext()) {

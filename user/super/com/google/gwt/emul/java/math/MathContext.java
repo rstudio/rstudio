@@ -34,6 +34,9 @@
  */
 package java.math;
 
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkCriticalArgument;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkNotNull;
+
 import java.io.Serializable;
 
 /**
@@ -115,14 +118,9 @@ public final class MathContext implements Serializable {
    * @throws NullPointerException if {@code roundingMode} is {@code null}.
    */
   public MathContext(int precision, RoundingMode roundingMode) {
-    if (precision < 0) {
-      // math.0C=Digits < 0
-      throw new IllegalArgumentException("Digits < 0"); //$NON-NLS-1$
-    }
-    if (roundingMode == null) {
-      // math.0D=null RoundingMode
-      throw new NullPointerException("null RoundingMode"); //$NON-NLS-1$
-    }
+    checkCriticalArgument(precision >= 0, "Digits < 0");
+    checkNotNull(roundingMode, "null RoundingMode");
+
     this.precision = precision;
     this.roundingMode = roundingMode;
   }
@@ -140,16 +138,10 @@ public final class MathContext implements Serializable {
    *           or if the precision specified is < 0.
    */
   public MathContext(String val) {
-    if (val == null) {
-      throw new NullPointerException("null string");
-    }
-
-    String[] extractedValues = parseValue(val);
-    if (extractedValues == null) {
-      throw new IllegalArgumentException("bad string format");
-    }
+    checkNotNull(val, "null string");
 
     try {
+      String[] extractedValues = parseValue(val);
       this.precision = Integer.parseInt(extractedValues[1]);
       // Can use RoundingMode.valueOf here because it is blacklisted in enum obfuscation.
       this.roundingMode = RoundingMode.valueOf(extractedValues[2]);
@@ -157,6 +149,8 @@ public final class MathContext implements Serializable {
       // Ensure that we only throw IllegalArgumentException for any illegal value.
       throw new IllegalArgumentException("bad string format");
     }
+
+    checkCriticalArgument(this.precision >= 0, "Digits < 0");
   }
 
   private static native String[] parseValue(String val) /*-{

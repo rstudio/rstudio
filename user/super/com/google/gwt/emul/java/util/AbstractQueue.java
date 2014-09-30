@@ -15,6 +15,11 @@
  */
 package java.util;
 
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkArgument;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkElement;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkNotNull;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkState;
+
 /**
  * Skeletal implementation of the Queue interface. <a
  * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/AbstractQueue.html">[Sun
@@ -31,17 +36,15 @@ public abstract class AbstractQueue<E> extends AbstractCollection<E> implements
 
   @Override
   public boolean add(E o) {
-    if (offer(o)) {
-      return true;
-    }
-    throw new IllegalStateException("Unable to add element to queue");
+    checkState(offer(o), "Unable to add element to queue");
+    return true;
   }
 
   @Override
   public boolean addAll(Collection<? extends E> c) {
-    if (c == this) {
-      throw new IllegalArgumentException("Can't add a queue to itself");
-    }
+    checkNotNull(c);
+    checkArgument(c != this, "Can't add a queue to itself");
+
     boolean modified = false;
     for (E val : c) {
       modified |= add(val);
@@ -58,9 +61,7 @@ public abstract class AbstractQueue<E> extends AbstractCollection<E> implements
 
   public E element() {
     E e = peek();
-    if (e == null) {
-      throw new NoSuchElementException("Queue is empty");
-    }
+    checkElement(e != null, "Queue is empty");
     return e;
   }
 
@@ -72,9 +73,7 @@ public abstract class AbstractQueue<E> extends AbstractCollection<E> implements
 
   public E remove() {
     E e = poll();
-    if (e == null) {
-      throw new NoSuchElementException("Queue is empty");
-    }
+    checkElement(e != null, "Queue is empty");
     return e;
   }
 

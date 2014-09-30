@@ -15,6 +15,9 @@
  */
 package java.lang;
 
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkArrayType;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkNotNull;
+
 import com.google.gwt.core.client.JsDate;
 import com.google.gwt.core.client.impl.Impl;
 import com.google.gwt.lang.Array;
@@ -40,27 +43,22 @@ public final class System {
    */
   public static final PrintStream out = new PrintStream(null);
 
-  public static void arraycopy(Object src, int srcOfs, Object dest,
-      int destOfs, int len) {
-    if (src == null || dest == null) {
-      throw new NullPointerException();
-    }
+  public static void arraycopy(Object src, int srcOfs, Object dest, int destOfs, int len) {
+    checkNotNull(src, "src");
+    checkNotNull(dest, "dest");
 
     Class<?> srcType = src.getClass();
     Class<?> destType = dest.getClass();
-    if (!srcType.isArray() || !destType.isArray()) {
-      throw new ArrayStoreException("Must be array types");
-    }
+    checkArrayType(srcType.isArray(), "srcType is not an array");
+    checkArrayType(destType.isArray(), "destType is not an array");
 
     Class<?> srcComp = srcType.getComponentType();
     Class<?> destComp = destType.getComponentType();
-    if (!arrayTypeMatch(srcComp, destComp)) {
-      throw new ArrayStoreException("Array types must match");
-    }
+    checkArrayType(arrayTypeMatch(srcComp, destComp), "Array types don't match");
+
     int srclen = getArrayLength(src);
     int destlen = getArrayLength(dest);
-    if (srcOfs < 0 || destOfs < 0 || len < 0 || srcOfs + len > srclen
-        || destOfs + len > destlen) {
+    if (srcOfs < 0 || destOfs < 0 || len < 0 || srcOfs + len > srclen || destOfs + len > destlen) {
       throw new IndexOutOfBoundsException();
     }
     /*

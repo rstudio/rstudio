@@ -34,6 +34,8 @@
  */
 package java.math;
 
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkNotNull;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 import java.io.Serializable;
@@ -577,11 +579,7 @@ public class BigDecimal extends Number implements Comparable<BigDecimal>,
    * @throws NullPointerException if {@code unscaledVal == null}.
    */
   public BigDecimal(BigInteger unscaledVal, int scale) {
-    if (unscaledVal == null) {
-      throw new NullPointerException();
-    }
-    this.scale = scale;
-    setUnscaledValue(unscaledVal);
+    this(unscaledVal, (double) scale);
   }
 
   /**
@@ -818,11 +816,8 @@ public class BigDecimal extends Number implements Comparable<BigDecimal>,
   }
 
   private BigDecimal(BigInteger unscaledVal, double scale) {
-    if (unscaledVal == null) {
-      throw new NullPointerException();
-    }
     this.scale = scale;
-    setUnscaledValue(unscaledVal);
+    setUnscaledValue(checkNotNull(unscaledVal));
   }
 
   private BigDecimal(double smallValue, double scale) {
@@ -1153,12 +1148,10 @@ public class BigDecimal extends Number implements Comparable<BigDecimal>,
    *           RoundingMode.UNNECESSAR}Y and rounding is necessary according to
    *           the given scale and given precision.
    */
-  public BigDecimal divide(BigDecimal divisor, int scale,
-      RoundingMode roundingMode) {
+  public BigDecimal divide(BigDecimal divisor, int scale, RoundingMode roundingMode) {
+    checkNotNull(roundingMode);
+
     // Let be: this = [u1,s1] and divisor = [u2,s2]
-    if (roundingMode == null) {
-      throw new NullPointerException();
-    }
     if (divisor.isZero()) {
       // math.04=Division by zero
       throw new ArithmeticException("Division by zero"); //$NON-NLS-1$
@@ -2111,9 +2104,8 @@ public class BigDecimal extends Number implements Comparable<BigDecimal>,
    *           and rounding is necessary according to the given scale.
    */
   public BigDecimal setScale(int newScale, RoundingMode roundingMode) {
-    if (roundingMode == null) {
-      throw new NullPointerException();
-    }
+    checkNotNull(roundingMode);
+
     double diffScale = newScale - scale;
     // Let be: 'this' = [u,s]
     if (diffScale == 0) {

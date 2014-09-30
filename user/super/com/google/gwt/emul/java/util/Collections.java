@@ -15,6 +15,9 @@
  */
 package java.util;
 
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkArgument;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkElementIndex;
+
 import java.io.Serializable;
 
 /**
@@ -68,7 +71,8 @@ public class Collections {
 
     @Override
     public Object get(int location) {
-      throw new IndexOutOfBoundsException();
+      checkElementIndex(location, 0);
+      return null;
     }
 
     @Override
@@ -280,11 +284,8 @@ public class Collections {
     }
 
     public E get(int index) {
-      if (index == 0) {
-        return element;
-      } else {
-        throw new IndexOutOfBoundsException();
-      }
+      checkElementIndex(index, 1);
+      return element;
     }
 
     public int size() {
@@ -1039,9 +1040,7 @@ public class Collections {
   }
 
   public static <E> Set<E> newSetFromMap(Map<E, Boolean> map) {
-    if (!map.isEmpty()) {
-      throw new IllegalArgumentException("map is not empty");
-    }
+    checkArgument(map.isEmpty(), "map is not empty");
     return new SetFromMap<E>(map);
   }
 

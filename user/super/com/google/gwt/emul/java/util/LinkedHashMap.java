@@ -15,6 +15,9 @@
  */
 package java.util;
 
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkCriticalElement;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkState;
+
 import static java.util.ConcurrentModificationDetector.checkStructuralChange;
 import static java.util.ConcurrentModificationDetector.recordLastKnownStructure;
 
@@ -100,20 +103,18 @@ public class LinkedHashMap<K, V> extends HashMap<K, V> implements Map<K, V> {
       }
 
       public Map.Entry<K, V> next() {
-        if (next == head) {
-          throw new NoSuchElementException();
-        }
         checkStructuralChange(map, this);
+        checkCriticalElement(hasNext());
+
         last = next;
         next = next.next;
         return last;
       }
 
       public void remove() {
-        if (last == null) {
-          throw new IllegalStateException("No current entry");
-        }
+        checkState(last != null);
         checkStructuralChange(map, this);
+
         last.remove();
         map.remove(last.getKey());
         recordLastKnownStructure(map, this);

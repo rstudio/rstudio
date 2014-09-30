@@ -15,6 +15,11 @@
  */
 package java.util;
 
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkArgument;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkElement;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkNotNull;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkState;
+
 import com.google.gwt.lang.Array;
 
 /**
@@ -55,19 +60,16 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
       }
 
       public E next() {
-        if (!hasNext()) {
-          throw new NoSuchElementException();
-        }
+        checkElement(hasNext());
         last = i;
         findNext();
         return set[last];
       }
 
       public void remove() {
-        if (last < 0) {
-          throw new IllegalStateException();
-        }
+        checkState(last != -1);
         assert (set[last] != null);
+
         set[last] = null;
         --size;
         last = -1;
@@ -117,9 +119,8 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
 
     @Override
     public boolean add(E e) {
-      if (e == null) {
-        throw new NullPointerException();
-      }
+      checkNotNull(e);
+
       int ordinal = e.ordinal();
       if (set[ordinal] == null) {
         set[ordinal] = e;
@@ -241,9 +242,8 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
   }
 
   public static <E extends Enum<E>> EnumSet<E> range(E from, E to) {
-    if (from.compareTo(to) > 0) {
-      throw new IllegalArgumentException(from + " > " + to);
-    }
+    checkArgument(from.compareTo(to) <= 0, "%s > %s", from, to);
+
     E[] all = from.getDeclaringClass().getEnumConstants();
     E[] set = Array.createFrom(all);
 

@@ -15,6 +15,11 @@
  */
 package java.util;
 
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkArgument;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkElementIndex;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkPositionIndex;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkPositionIndexes;
+
 import com.google.gwt.lang.Array;
 
 import java.io.Serializable;
@@ -75,9 +80,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
 
   public ArrayList(int initialCapacity) {
     // Avoid calling overridable methods from constructors
-    if (initialCapacity < 0) {
-      throw new IllegalArgumentException("Initial capacity must not be negative");
-    }
+    checkArgument(initialCapacity >= 0, "Initial capacity must not be negative");
   }
 
   @Override
@@ -88,10 +91,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
 
   @Override
   public void add(int index, E o) {
-    int size = array.length;
-    if (index < 0 || index > size) {
-      indexOutOfBounds(index, size);
-    }
+    checkPositionIndex(index, array.length);
     splice(array, index, 0, o);
   }
 
@@ -108,10 +108,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
 
   @Override
   public boolean addAll(int index, Collection<? extends E> c) {
-    int size = array.length;
-    if (index < 0 || index > size) {
-      indexOutOfBounds(index, size);
-    }
+    checkPositionIndex(index, array.length);
     Object[] cArray = c.toArray();
     int len = cArray.length;
     if (len == 0) {
@@ -141,7 +138,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
 
   @Override
   public E get(int index) {
-    checkIndex(index, array.length);
+    checkElementIndex(index, array.length);
     return array[index];
   }
 
@@ -219,11 +216,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
 
   @Override
   protected void removeRange(int fromIndex, int endIndex) {
-    int size = array.length;
-    checkIndex(fromIndex, size + 1);
-    if (endIndex < fromIndex || endIndex > size) {
-      indexOutOfBounds(endIndex, size);
-    }
+    checkPositionIndexes(fromIndex, endIndex, array.length);
     int count = endIndex - fromIndex;
     splice(array, fromIndex, count);
   }

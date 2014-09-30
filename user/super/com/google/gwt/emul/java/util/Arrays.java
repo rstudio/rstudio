@@ -16,6 +16,11 @@
 
 package java.util;
 
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkArgument;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkArraySize;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkElementIndex;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkPositionIndexes;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.UnsafeNativeLong;
 import com.google.gwt.lang.Array;
@@ -50,14 +55,13 @@ public class Arrays {
 
     @Override
     public E get(int index) {
-      checkIndex(index, size());
+      checkElementIndex(index, size());
       return array[index];
     }
 
     @Override
     public E set(int index, E value) {
-      checkIndex(index, size());
-      E was = array[index];
+      E was = get(index);
       array[index] = value;
       return was;
     }
@@ -386,47 +390,47 @@ public class Arrays {
   }
 
   public static boolean[] copyOf(boolean[] original, int newLength) {
-    checkArrayLength(newLength);
+    checkArraySize(newLength);
     return copyOfRange(original, 0, newLength);
   }
 
   public static byte[] copyOf(byte[] original, int newLength) {
-    checkArrayLength(newLength);
+    checkArraySize(newLength);
     return copyOfRange(original, 0, newLength);
   }
 
   public static char[] copyOf(char[] original, int newLength) {
-    checkArrayLength(newLength);
+    checkArraySize(newLength);
     return copyOfRange(original, 0, newLength);
   }
 
   public static double[] copyOf(double[] original, int newLength) {
-    checkArrayLength(newLength);
+    checkArraySize(newLength);
     return copyOfRange(original, 0, newLength);
   }
 
   public static float[] copyOf(float[] original, int newLength) {
-    checkArrayLength(newLength);
+    checkArraySize(newLength);
     return copyOfRange(original, 0, newLength);
   }
 
   public static int[] copyOf(int[] original, int newLength) {
-    checkArrayLength(newLength);
+    checkArraySize(newLength);
     return copyOfRange(original, 0, newLength);
   }
 
   public static long[] copyOf(long[] original, int newLength) {
-    checkArrayLength(newLength);
+    checkArraySize(newLength);
     return copyOfRange(original, 0, newLength);
   }
 
   public static short[] copyOf(short[] original, int newLength) {
-    checkArrayLength(newLength);
+    checkArraySize(newLength);
     return copyOfRange(original, 0, newLength);
   }
 
   public static <T> T[] copyOf(T[] original, int newLength) {
-    checkArrayLength(newLength);
+    checkArraySize(newLength);
     return copyOfRange(original, 0, newLength);
   }
 
@@ -973,7 +977,7 @@ public class Arrays {
   }
 
   public static void sort(byte[] array, int fromIndex, int toIndex) {
-    verifySortIndices(fromIndex, toIndex, array.length);
+    checkPositionIndexes(fromIndex, toIndex, array.length);
     nativeNumberSort(array, fromIndex, toIndex);
   }
 
@@ -982,7 +986,7 @@ public class Arrays {
   }
 
   public static void sort(char[] array, int fromIndex, int toIndex) {
-    verifySortIndices(fromIndex, toIndex, array.length);
+    checkPositionIndexes(fromIndex, toIndex, array.length);
     nativeNumberSort(array, fromIndex, toIndex);
   }
 
@@ -991,7 +995,7 @@ public class Arrays {
   }
 
   public static void sort(double[] array, int fromIndex, int toIndex) {
-    verifySortIndices(fromIndex, toIndex, array.length);
+    checkPositionIndexes(fromIndex, toIndex, array.length);
     nativeNumberSort(array, fromIndex, toIndex);
   }
 
@@ -1000,7 +1004,7 @@ public class Arrays {
   }
 
   public static void sort(float[] array, int fromIndex, int toIndex) {
-    verifySortIndices(fromIndex, toIndex, array.length);
+    checkPositionIndexes(fromIndex, toIndex, array.length);
     nativeNumberSort(array, fromIndex, toIndex);
   }
 
@@ -1009,7 +1013,7 @@ public class Arrays {
   }
 
   public static void sort(int[] array, int fromIndex, int toIndex) {
-    verifySortIndices(fromIndex, toIndex, array.length);
+    checkPositionIndexes(fromIndex, toIndex, array.length);
     nativeNumberSort(array, fromIndex, toIndex);
   }
 
@@ -1018,7 +1022,7 @@ public class Arrays {
   }
 
   public static void sort(long[] array, int fromIndex, int toIndex) {
-    verifySortIndices(fromIndex, toIndex, array.length);
+    checkPositionIndexes(fromIndex, toIndex, array.length);
     nativeLongSort(array, fromIndex, toIndex);
   }
 
@@ -1045,7 +1049,7 @@ public class Arrays {
   }
 
   public static void sort(short[] array, int fromIndex, int toIndex) {
-    verifySortIndices(fromIndex, toIndex, array.length);
+    checkPositionIndexes(fromIndex, toIndex, array.length);
     nativeNumberSort(array, fromIndex, toIndex);
   }
 
@@ -1061,7 +1065,7 @@ public class Arrays {
       Comparator<? super T> c) {
     // Commented out implementation that uses the native sort with a fixup.
 
-    verifySortIndices(fromIndex, toIndex, x.length);
+    checkPositionIndexes(fromIndex, toIndex, x.length);
     // nativeObjSort(x, fromIndex, toIndex, getNativeComparator(x, c != null ? c
     // : Comparators.natural()));
     mergeSort(x, fromIndex, toIndex, c != null ? c : Comparators.natural());
@@ -1203,12 +1207,6 @@ public class Arrays {
     return b.toString();
   }
 
-  private static void checkArrayLength(int length) {
-    if (length < 0) {
-      throw new NegativeArraySizeException();
-    }
-  }
-
   /**
    * Recursive helper function for {@link Arrays#deepToString(Object[])}.
    */
@@ -1269,9 +1267,7 @@ public class Arrays {
 
   private static int getLengthFromRange(int from, int to) {
     int length = to - from;
-    if (length < 0) {
-      throw new IllegalArgumentException(from + " > " + to);
-    }
+    checkArgument(length >= 0, "%s > %s", from, to);
     return length;
   }
 
@@ -1500,26 +1496,4 @@ public class Arrays {
       }
     }
   }-*/;
-
-  /**
-   * Performs the checks specified by the JRE docs and throws appropriate
-   * exceptions.
-   *
-   * @param fromIndex beginning of the range to sort
-   * @param toIndex past the end of the range to sort
-   * @param length size of the array to sort
-   *
-   * @throws IllegalArgumentException if fromIndex > toIndex
-   * @throws ArrayIndexOutOfBoundsException if fromIndex < 0 or toIndex > length
-   */
-  private static void verifySortIndices(int fromIndex, int toIndex, int length) {
-    if (fromIndex > toIndex) {
-      throw new IllegalArgumentException("fromIndex(" + fromIndex
-          + ") > toIndex(" + toIndex + ")");
-    }
-    if (fromIndex < 0 || toIndex > length) {
-      throw new ArrayIndexOutOfBoundsException("fromIndex(" + fromIndex
-          + ") or toIndex(" + toIndex + ") out of bounds (0 - " + length + ")");
-    }
-  }
 }

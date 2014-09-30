@@ -15,6 +15,9 @@
  */
 package java.lang;
 
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkCriticalArgument;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkNotNull;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 import java.io.Serializable;
@@ -29,9 +32,8 @@ public abstract class Enum<E extends Enum<E>> implements Comparable<E>,
 
   public static <T extends Enum<T>> T valueOf(Class<T> enumType, String name) {
     JavaScriptObject enumValueOfFunc = enumType.enumValueOfFunc;
-    if (enumValueOfFunc == null) {
-      throw new IllegalArgumentException();
-    }
+    checkCriticalArgument(enumValueOfFunc != null);
+
     return invokeValueOf(enumValueOfFunc, name);
   }
 
@@ -44,16 +46,12 @@ public abstract class Enum<E extends Enum<E>> implements Comparable<E>,
     return result;
   }
 
-  protected static <T extends Enum<T>> T valueOf(JavaScriptObject map,
-      String name) {
+  protected static <T extends Enum<T>> T valueOf(JavaScriptObject map, String name) {
+    checkNotNull(name);
+
     T result = Enum.<T> get0(map, ":" + name);
-    if (result != null) {
-      return result;
-    }
-    if (name == null) {
-      throw new NullPointerException();
-    }
-    throw new IllegalArgumentException("Enum constant undefined: " + name);
+    checkCriticalArgument(result != null, "Enum constant undefined: %s", name);
+    return result;
   }
 
   private static native <T extends Enum<T>> T get0(JavaScriptObject map,

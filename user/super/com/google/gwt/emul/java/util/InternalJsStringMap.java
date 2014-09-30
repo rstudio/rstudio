@@ -15,6 +15,9 @@
  */
 package java.util;
 
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkElement;
+import static com.google.gwt.core.shared.impl.GwtPreconditions.checkState;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 import java.util.Map.Entry;
@@ -198,16 +201,14 @@ class InternalJsStringMap<K, V> {
       }
       @Override
       public Entry<K, V> next() {
-        if (!hasNext()) {
-          throw new NoSuchElementException();
-        }
+        checkElement(hasNext());
+
         return newMapEntry(keys[last = i++]);
       }
       @Override
       public void remove() {
-        if (last < 0) {
-          throw new IllegalStateException();
-        }
+        checkState(last != -1);
+
         InternalJsStringMap.this.remove(keys[last]);
         last = -1;
       }
