@@ -18,6 +18,7 @@
 
 #include <map>
 #include <vector>
+#include <ctime>
 
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
