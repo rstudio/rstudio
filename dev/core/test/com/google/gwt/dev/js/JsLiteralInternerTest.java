@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.js;
 
-import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.js.ast.JsArrayLiteral;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsLiteral;
@@ -23,22 +22,14 @@ import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsProgram;
-import com.google.gwt.dev.js.ast.JsStatement;
-import com.google.gwt.dev.js.ast.JsVisitor;
-import com.google.gwt.dev.util.DefaultTextOutput;
-import com.google.gwt.dev.util.TextOutput;
-
-import junit.framework.TestCase;
 
 import java.io.IOException;
-import java.io.StringReader;
-import java.util.List;
 import java.util.Map;
 
 /**
  * Verifies that {@link JsNamespaceChooser} can put globals into namespaces.
  */
-public class JsLiteralInternerTest extends TestCase {
+public class JsLiteralInternerTest extends OptimizerTestBase {
 
   private static final String ONES = "1111111111111";
   private static final String TWOS = "2222222222222";
@@ -176,7 +167,8 @@ public class JsLiteralInternerTest extends TestCase {
       }.accept(program);
     }
     exec(program);
-    String actual = serializeJs(program);
+
+    String actual = getOutputJs(program);
     assertEquals(expectedJs, actual);
   }
 
@@ -184,20 +176,5 @@ public class JsLiteralInternerTest extends TestCase {
     // Prerequisite: resolve name references.
     JsSymbolResolver.exec(program);
     return JsLiteralInterner.exec(null, program, JsLiteralInterner.INTERN_ALL);
-  }
-
-  private static JsProgram parseJs(String js) throws IOException, JsParserException {
-    JsProgram program = new JsProgram();
-    List<JsStatement> statements = JsParser.parse(SourceOrigin.UNKNOWN, program.getScope(),
-        new StringReader(js));
-    program.getGlobalBlock().getStatements().addAll(statements);
-    return program;
-  }
-
-  private static String serializeJs(JsProgram program1) {
-    TextOutput text = new DefaultTextOutput(true);
-    JsVisitor generator = new JsSourceGenerationVisitor(text);
-    generator.accept(program1);
-    return text.toString();
   }
 }

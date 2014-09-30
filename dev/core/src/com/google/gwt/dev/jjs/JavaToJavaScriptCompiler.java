@@ -530,7 +530,7 @@ public abstract class JavaToJavaScriptCompiler {
         DefaultTextOutput out = new DefaultTextOutput(options.getOutput().shouldMinimize());
         JsReportGenerationVisitor v = new JsReportGenerationVisitor(out, jjsMap,
             options.isJsonSoycEnabled());
-        v.accept(jsProgram.getFragmentBlock(i));
+        v.accept(jsProgram.getFragment(i));
 
         StatementRanges statementRanges = v.getStatementRanges();
         String code = out.toString();
@@ -727,7 +727,7 @@ public abstract class JavaToJavaScriptCompiler {
             nameUsed.add(x.getName().getIdent());
           }
 
-        }.accept(jsProgram.getFragmentBlock(i));
+        }.accept(jsProgram.getFragment(i));
       }
 
       // TODO(acleung): This is a temp fix. Once we know this is safe. We

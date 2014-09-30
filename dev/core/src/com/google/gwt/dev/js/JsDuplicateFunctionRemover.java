@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.js;
 
-import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsInvocation;
@@ -24,6 +23,7 @@ import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameOf;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
+import com.google.gwt.dev.js.ast.JsProgramFragment;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.util.collect.Stack;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
@@ -239,7 +239,7 @@ public class JsDuplicateFunctionRemover {
   private boolean execImpl() {
     boolean changed = false;
     for (int i = 0; i < program.getFragmentCount(); i++) {
-      JsBlock fragment = program.getFragmentBlock(i);
+      JsProgramFragment fragment = program.getFragment(i);
 
       DuplicateFunctionBodyRecorder dfbr = new DuplicateFunctionBodyRecorder();
       dfbr.accept(fragment);
@@ -260,7 +260,7 @@ public class JsDuplicateFunctionRemover {
         // also copy the parameters from the old function
         newFunc.getParameters().addAll(dupMethod.getParameters());
         // add the new function to the top level list of statements
-        fragment.getStatements().add(newFunc.makeStmt());
+        fragment.getGlobalBlock().getStatements().add(newFunc.makeStmt());
         newNamesByHoistedFunction.put(dupMethod, newName);
       }
 

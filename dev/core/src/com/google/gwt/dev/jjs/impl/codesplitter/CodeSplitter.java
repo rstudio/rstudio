@@ -492,7 +492,7 @@ public class CodeSplitter {
     // now install the new statements in the program fragments
     jsprogram.setFragmentCount(fragments.size());
     for (int i = 0; i < fragments.size(); i++) {
-      JsBlock fragBlock = jsprogram.getFragmentBlock(i);
+      JsBlock fragBlock = jsprogram.getFragment(i).getGlobalBlock();
       fragBlock.getStatements().clear();
       fragBlock.getStatements().addAll(fragments.get(i).getStatements());
     }

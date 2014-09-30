@@ -28,7 +28,6 @@ import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.SoftPermutation;
 import com.google.gwt.core.ext.linker.StatementRanges;
-import com.google.gwt.core.linker.SymbolMapsLinker;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.util.tools.Utility;
 
@@ -196,15 +195,6 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
         toReturn.addAll(doEmitCompilation(logger, context, compilation, writableArtifacts));
         maybeAddHostedModeFile(logger, context, toReturn, compilation);
       }
-      /*
-       * Find edit artifacts added during linking and add them. This is done as a way of returning
-       * arbitrary extra outputs from within the linker methods without having to modify
-       * their return signatures to pass extra return data around.
-       */
-      for (SymbolMapsLinker.ScriptFragmentEditsArtifact ea : writableArtifacts.find(
-          SymbolMapsLinker.ScriptFragmentEditsArtifact.class)) {
-        toReturn.add(ea);
-      }
       return toReturn;
     } else {
       permutationsUtil.setupPermutationsMap(artifacts);
@@ -356,7 +346,11 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     StringBuilder b = new StringBuilder();
     String strongName = result == null ? "" : result.getStrongName();
     String prefix = getDeferredFragmentPrefix(logger, context, fragment);
+    // Remove all newlines so that it fits as the first program line.
+    prefix = prefix.replaceAll("[\\v\\r\\n]", " ");
+    assert !prefix.contains("\n") && !prefix.contains("\r");
     b.append(prefix);
+    assert js.charAt(0) == '\n';
     b.append(js);
     String suffix = getDeferredFragmentSuffix(logger, context, fragment);
     if (suffix == null) {
@@ -368,10 +362,6 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
       }
     }
     b.append(suffix);
-    SymbolMapsLinker.ScriptFragmentEditsArtifact editsArtifact
-        = new SymbolMapsLinker.ScriptFragmentEditsArtifact(strongName, fragment);
-    editsArtifact.prefixLines(prefix);
-    artifacts.add(editsArtifact);
     return wrapDeferredFragment(logger, context, fragment, b.toString(), artifacts);
   }
 
@@ -385,6 +375,8 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
       ArtifactSet artifacts) throws UnableToCompleteException {
     String temp = splitPrimaryJavaScript(result.getStatementRanges()[0], js[0],
         charsPerChunk(context, logger), getScriptChunkSeparator(logger, context), context);
+    // Every fragment must include an initial blank line.
+    assert temp.charAt(0) == '\n';
     String primaryFragmentString =
         generatePrimaryFragmentString(logger, context, result, temp, js.length, artifacts);
     return Util.getBytes(primaryFragmentString);
@@ -398,11 +390,15 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     String strongName = result == null ? "" : result.getStrongName();
 
     String modulePrefix = getModulePrefix(logger, context, strongName, length);
-    SymbolMapsLinker.ScriptFragmentEditsArtifact editsArtifact
-        = new SymbolMapsLinker.ScriptFragmentEditsArtifact(strongName, 0);
-    editsArtifact.prefixLines(modulePrefix);
-    artifacts.add(editsArtifact);
+    // Remove all newlines so that it fits as the first program line.
+    modulePrefix = modulePrefix.replaceAll("[\\v\\r\\n]", " ");
+    assert !modulePrefix.contains("\n") && !modulePrefix.contains("\r");
     b.append(modulePrefix);
+    if (js.charAt(0) != '\n') {
+      // Add a line break at the end of the prefix if there is no empty line at the beginning of the
+      // JS. JS output from the compiler will allways have an empty line at the beginning.
+      b.append('\n');
+    }
     b.append(js);
     String suffix = getModuleSuffix(logger, context);
     if (suffix == null) {

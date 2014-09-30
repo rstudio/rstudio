@@ -77,13 +77,6 @@ public final class JsProgram extends JsNode {
     return fragments[fragment];
   }
 
-  public JsBlock getFragmentBlock(int fragment) {
-    if (fragment < 0 || fragment >= fragments.length) {
-      throw new IllegalArgumentException("Invalid fragment: " + fragment);
-    }
-    return fragments[fragment].getGlobalBlock();
-  }
-
   public int getFragmentCount() {
     return this.fragments.length;
   }
@@ -92,7 +85,7 @@ public final class JsProgram extends JsNode {
    * Gets the one and only global block.
    */
   public JsBlock getGlobalBlock() {
-    return getFragmentBlock(0);
+    return getFragment(0).getGlobalBlock();
   }
 
   public JsName getIndexedField(String name) {

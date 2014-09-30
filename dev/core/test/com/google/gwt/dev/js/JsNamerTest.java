@@ -29,15 +29,8 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.dev.js.ast.JsStatement;
-import com.google.gwt.dev.js.ast.JsVisitor;
-import com.google.gwt.dev.util.DefaultTextOutput;
-import com.google.gwt.dev.util.TextOutput;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
-import junit.framework.TestCase;
-
-import java.io.IOException;
-import java.io.StringReader;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +38,7 @@ import java.util.Map;
 /**
  * Tests the JsStaticEval optimizer.
  */
-public class JsNamerTest extends TestCase {
+public class JsNamerTest extends OptimizerTestBase {
 
   private BlacklistProps props;
   private PersistentPrettyNamerState persistentPrettyNamerState;
@@ -155,14 +148,6 @@ public class JsNamerTest extends TestCase {
     }
   }
 
-  private JsProgram parseJs(String js) throws IOException, JsParserException {
-    JsProgram program = new JsProgram();
-    List<JsStatement> expected = JsParser.parse(SourceOrigin.UNKNOWN,
-        program.getScope(), new StringReader(js));
-    program.getGlobalBlock().getStatements().addAll(expected);
-    return program;
-  }
-
   private String rename(JsProgram program) throws IllegalNameException {
     return rename(program, JsOutputOption.PRETTY, false);
   }
@@ -186,10 +171,8 @@ public class JsNamerTest extends TestCase {
         JsVerboseNamer.exec(program, config);
         break;
     }
-    TextOutput text = new DefaultTextOutput(true);
-    JsVisitor generator = new JsSourceGenerationVisitor(text);
-    generator.accept(program);
-    return text.toString();
+
+    return getOutputJs(program);
   }
 
   private String rename(String js) throws Exception {

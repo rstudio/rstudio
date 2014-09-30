@@ -52,7 +52,7 @@ public class JsReportGenerationVisitorTest extends TestCase {
   public void testAssignmentDraft() throws Exception {
     program = parseJs("x = 1");
     checkMappings(
-        "x = 1;\n"
+        "x = 1;"
     );
   }
 
@@ -78,9 +78,9 @@ public class JsReportGenerationVisitorTest extends TestCase {
   public void testTwoStatementsDraft() throws Exception {
     program = parseJs("x = 1; y = 2");
     checkMappings(
-        "x = 1;\ny = 2;\n",
-        "x = 1;\n",
-        "y = 2;\n"
+        "x = 1;y = 2;",
+        "x = 1;",
+        "y = 2;"
     );
   }
 
@@ -102,9 +102,9 @@ public class JsReportGenerationVisitorTest extends TestCase {
   public void testIfStatementDraft() throws Exception {
     program = parseJs("if(true) { x=1 } else { y=2 }");
     checkMappings(
-        "if (true) {\n  x = 1;\n}\n else {\n  y = 2;\n}\n",
-        "  x = 1;\n",
-        "  y = 2;\n"
+        "if (true) {  x = 1;} else {  y = 2;}",
+        "  x = 1;",
+        "  y = 2;"
     );
   }
 
@@ -124,11 +124,10 @@ public class JsReportGenerationVisitorTest extends TestCase {
   }
 
   public void testFunctionDraft() throws Exception {
-    program = parseJs("function f() { return 42; }");
+    program = parseJs("function f() { return 42; }\n");
     checkMappings(
-        "function f(){\n  return 42;\n}\n\n",
-        "function f(){\n  return 42;\n}\n",
-        "  return 42;\n"
+        "function f(){  return 42;}",
+        "  return 42;"
     );
   }
 
@@ -136,7 +135,7 @@ public class JsReportGenerationVisitorTest extends TestCase {
     compact = true;
     includeInlinedRanges = true;
     program = parseJs("function f() { return 42; }");
-    checkMappings("function f(){return 42}\n",
+    checkMappings(
         "function f(){return 42}",
         "return 42",
         "42"
@@ -146,7 +145,7 @@ public class JsReportGenerationVisitorTest extends TestCase {
   public void testTryStatementDraft() throws Exception {
     program = parseJs("try { 123 } catch (e) { 456 } finally { 789 }");
     checkMappings(
-        "try {\n  123;\n}\n catch (e) {\n  456;\n}\n finally {\n  789;\n}\n",
+        "try {  123;} catch (e) {  456;} finally {  789;}",
         "  123;\n",
         "  456;\n",
         "  789;\n"
@@ -168,8 +167,8 @@ public class JsReportGenerationVisitorTest extends TestCase {
   public void testDoWhileDraft() throws Exception {
     program = parseJs("do { something() } while (x>1)");
     checkMappings(
-        "do {\n  something();\n}\n while (x > 1);\n",
-        "  something();\n",
+        "do {  something();} while (x > 1);" ,
+        "  something();",
         "x > 1"
     );
   }
@@ -177,17 +176,17 @@ public class JsReportGenerationVisitorTest extends TestCase {
   public void testForStatementDraft() throws Exception {
     program = parseJs("for (var i = 0; i < 10; i++) { something() }");
     checkMappings(
-        "for (var i = 0; i < 10; i++) {\n  something();\n}\n",
+        "for (var i = 0; i < 10; i++) {  something();}",
         "var i = 0;", // a separate range because it's a statement TODO: remove?
-        "  something();\n"
+        "  something();"
     );
   }
 
   public void testForInStatementDraft() throws Exception {
     program = parseJs("for (var x in someIterable) { something() }");
     checkMappings(
-        "for (var x in someIterable) {\n  something();\n}\n",
-        "  something();\n"
+        "for (var x in someIterable) {  something();}",
+        "  something();"
     );
   }
 
@@ -221,8 +220,8 @@ public class JsReportGenerationVisitorTest extends TestCase {
   public void testWhileStatementDraft() throws Exception {
     program = parseJs("while (a>2) { a--; }");
     checkMappings(
-      "while (a > 2) {\n  a--;\n}\n",
-       "  a--;\n"
+      "while (a > 2) {  a--;}",
+       "  a--;"
     );
   }
 
@@ -263,16 +262,19 @@ public class JsReportGenerationVisitorTest extends TestCase {
       }
     };
     generator.accept(program);
-    String actual = dumpMappings(text.toString(), generator.getSourceInfoMap());
+    String outputJs = text.toString();
+    assertTrue(outputJs.charAt(0) == '\n');
+    String actual = dumpMappings(outputJs, generator.getSourceInfoMap());
 
-    StringBuilder expected = new StringBuilder();
-    expected.append("Mappings:\n");
+    StringBuilder expectedResult = new StringBuilder();
+    expectedResult.append("Mappings:\n");
+
     for (String line : expectedLines) {
-      expected.append(escape(line));
-      expected.append("\n");
+      expectedResult.append(removeNewLines(line));
+      expectedResult.append("\n");
     }
 
-    assertEquals(expected.toString(), actual);
+    assertEquals(expectedResult.toString(), actual);
   }
 
   private String dumpMappings(String javascript, JsSourceMap mappings) {
@@ -281,9 +283,15 @@ public class JsReportGenerationVisitorTest extends TestCase {
 
     StringBuilder out = new StringBuilder();
     out.append("Mappings:\n");
+    String lastJsLine = "";
     for (Range r : ranges) {
-      String js = javascript.substring(r.getStart(), r.getEnd());
-      out.append(escape(js));
+      String js = removeNewLines(javascript.substring(r.getStart(), r.getEnd()));
+      // Remove empty and duplicate lines. Some ranges only differ on new lines.
+      if (js.isEmpty() || js.equals(lastJsLine)) {
+        continue;
+      }
+      lastJsLine = js;
+      out.append(js);
       out.append("\n");
     }
     return out.toString();
@@ -292,7 +300,7 @@ public class JsReportGenerationVisitorTest extends TestCase {
   /**
    * Escape newlines in a readable way so that each range is on one line for comparison.
    */
-  private String escape(String js) {
-    return js.replace("\\n", "\\\\n").replace("\n", "\\n");
+  private String removeNewLines(String js) {
+    return js.replace("\n", "");
   }
 }
