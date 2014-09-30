@@ -151,12 +151,8 @@ Error initialize()
       return Success();
 
    // connect the source index to the compilation database
-   sourceIndex().initialize(
-       boost::bind(&CompilationDatabase::argsForSourceFile,
-                   &compilationDatabase(), _1),
-       session::userSettings().clangVerbose()
-   );
-
+   sourceIndex().initialize(&compilationDatabase(),
+                            userSettings().clangVerbose());
 
    // subscribe to source docs events for maintaining the unsaved files list
    // main source index and the unsaved files list)

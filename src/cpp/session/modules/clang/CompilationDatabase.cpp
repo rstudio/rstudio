@@ -442,8 +442,8 @@ inline bool endsWith(const std::string& input, const std::string& test)
 } // anonymous namespace
 
 
-std::vector<std::string> CompilationDatabase::argsForSourceFile(
-                                       const std::string& srcPath)
+std::vector<std::string> CompilationDatabase::compileArgsForTranslationUnit(
+                                       const core::FilePath& filePath)
 {
    // args to return
    std::vector<std::string> args;
@@ -451,7 +451,6 @@ std::vector<std::string> CompilationDatabase::argsForSourceFile(
    // if this is a package source file then return the package args
    std::string packageName;
    using namespace projects;
-   FilePath filePath(srcPath);
    FilePath srcDirPath = projectContext().buildTargetPath().childPath("src");
    if ((projectContext().config().buildType == r_util::kBuildTypePackage) &&
        !filePath.relativePath(srcDirPath).empty())
@@ -467,9 +466,9 @@ std::vector<std::string> CompilationDatabase::argsForSourceFile(
    else
    {
       // (re-)create on demand
-      updateForStandalone(FilePath(srcPath));
+      updateForStandalone(filePath);
 
-      ArgsMap::const_iterator it = argsMap_.find(srcPath);
+      ArgsMap::const_iterator it = argsMap_.find(filePath.absolutePath());
       if (it != argsMap_.end())
          args = it->second;
    }
@@ -506,6 +505,37 @@ std::vector<std::string> CompilationDatabase::argsForSourceFile(
 
    // return args
    return args;
+}
+
+std::vector<core::FilePath> CompilationDatabase::translationUnits()
+{
+   using namespace projects;
+   std::vector<FilePath> allSrcFiles;
+   if (projectContext().config().buildType == r_util::kBuildTypePackage)
+   {
+      FilePath srcPath = projectContext().buildTargetPath().childPath("src");
+      if (srcPath.exists())
+      {
+         Error error = srcPath.children(&allSrcFiles);
+         if (!error)
+         {
+            std::vector<FilePath> srcFiles;
+            BOOST_FOREACH(const FilePath& srcFile, allSrcFiles)
+            {
+               if (SourceIndex::isTranslationUnit(srcFile))
+                  srcFiles.push_back(srcFile);
+            }
+            return srcFiles;
+         }
+         else
+         {
+            LOG_ERROR(error);
+         }
+      }
+   }
+
+   // no love
+   return std::vector<FilePath>();
 }
 
 std::vector<std::string> CompilationDatabase::rToolsArgs() const

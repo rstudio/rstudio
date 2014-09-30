@@ -39,7 +39,7 @@ bool SourceIndex::isTranslationUnit(const core::FilePath& filePath)
 }
 
 SourceIndex::SourceIndex()
-   : verbose_(false), index_(NULL)
+   : index_(NULL), pCompilationDatabase_(NULL), verbose_(false)
 {
 }
 
@@ -59,11 +59,12 @@ SourceIndex::~SourceIndex()
    }
 }
 
-void SourceIndex::initialize(CompileArgsSource compileArgsSource, int verbose)
+void SourceIndex::initialize(CompilationDatabase* pCompilationDatabase,
+                             int verbose)
 {
    verbose_ = verbose;
    index_ = clang().createIndex(0, (verbose_ > 0) ? 1 : 0);
-   compileArgsSource_ = compileArgsSource;
+   pCompilationDatabase_ = pCompilationDatabase;
 }
 
 unsigned SourceIndex::getGlobalOptions() const
@@ -117,6 +118,10 @@ void SourceIndex::reprimeTranslationUnit(const core::FilePath& filePath)
 
 TranslationUnit SourceIndex::getTranslationUnit(const FilePath& filePath)
 {
+   // header files get their own codepath
+   if (!SourceIndex::isTranslationUnit(filePath))
+      return getHeaderTranslationUnit(filePath);
+
    boost::scoped_ptr<core::PerformanceTimer> pTimer;
    if (verbose_ > 0)
    {
@@ -125,11 +130,12 @@ TranslationUnit SourceIndex::getTranslationUnit(const FilePath& filePath)
    }
 
    // get the arguments and last write time for this file
-   std::string filename = filePath.absolutePath();
-   std::vector<std::string> args = compileArgsSource_(filename);
+   std::vector<std::string> args =
+               pCompilationDatabase_->compileArgsForTranslationUnit(filePath);
    std::time_t lastWriteTime = filePath.lastWriteTime();
 
    // look it up
+   std::string filename = filePath.absolutePath();
    TranslationUnits::iterator it = translationUnits_.find(filename);
 
    // check for various incremental processing scenarios
@@ -208,8 +214,7 @@ TranslationUnit SourceIndex::getTranslationUnit(const FilePath& filePath)
 }
 
 TranslationUnit SourceIndex::getHeaderTranslationUnit(
-                                 const core::FilePath& filePath,
-                                 const std::vector<core::FilePath>& srcFiles)
+                                        const core::FilePath& filePath)
 {
    // scan through our existing translation units for this file
    for(TranslationUnits::const_iterator it = translationUnits_.begin();
@@ -222,15 +227,23 @@ TranslationUnit SourceIndex::getHeaderTranslationUnit(
 
    // drats we don't have it! we can still try to index other src files
    // in search of one that includes this header
+   std::vector<core::FilePath> srcFiles =
+                                  pCompilationDatabase_->translationUnits();
    BOOST_FOREACH(const FilePath& srcFile, srcFiles)
    {
       TranslationUnit tu = getTranslationUnit(srcFile);
       if (!tu.empty())
       {
+         // found it! (keep it in case we need it again)
          if (tu.includesFile(filePath))
+         {
             return tu;
+         }
+         // didn't find it (dispose it to free memory)
          else
+         {
             removeTranslationUnit(filePath.absolutePath());
+         }
       }
    }
 

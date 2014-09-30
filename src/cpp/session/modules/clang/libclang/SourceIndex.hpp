@@ -40,11 +40,19 @@ public:
    static bool isTranslationUnit(const core::FilePath& filePath);
 
 public:
+   class CompilationDatabase
+   {
+   public:
+      virtual ~CompilationDatabase() {}
+      virtual std::vector<std::string> compileArgsForTranslationUnit(
+                                            const core::FilePath& srcFile) = 0;
+      virtual std::vector<core::FilePath> translationUnits() = 0;
+   };
+
+public:
    virtual ~SourceIndex();
 
-   typedef boost::function<std::vector<std::string>(const std::string&)>
-                                                           CompileArgsSource;
-   void initialize(CompileArgsSource compileArgsSource, int verbose);
+   void initialize(CompilationDatabase* pCompilationDatabase, int verbose);
 
    unsigned getGlobalOptions() const;
    void setGlobalOptions(unsigned options);
@@ -57,20 +65,18 @@ public:
    void removeTranslationUnit(const std::string& filename);
    void removeAllTranslationUnits();
 
-   // get the translation unit for the passed c or cpp file
+   // get the translation unit for the passed file (can be a c/cpp file
+   // or a header file)
    TranslationUnit getTranslationUnit(const core::FilePath& filePath);
 
-   // get a translation unit for a header file (include a list of src
-   // files to progressively add translation units for if we don't already
-   // have a translation unit that includes this header)
-   TranslationUnit getHeaderTranslationUnit(
-                       const core::FilePath& filePath,
-                       const std::vector<core::FilePath>& srcFiles);
+private:
+
+   // get a translation unit for a header file
+   TranslationUnit getHeaderTranslationUnit(const core::FilePath& filePath);
 
 private:
-   CompileArgsSource compileArgsSource_;
-   int verbose_;
    CXIndex index_;
+
    struct StoredTranslationUnit
    {
       StoredTranslationUnit() : lastWriteTime(0), tu(NULL) {}
@@ -84,9 +90,12 @@ private:
       std::time_t lastWriteTime;
       CXTranslationUnit tu;
    };
-
    typedef std::map<std::string,StoredTranslationUnit> TranslationUnits;
    TranslationUnits translationUnits_;
+
+   CompilationDatabase* pCompilationDatabase_;
+
+   int verbose_;
 };
 
 // singleton

@@ -33,41 +33,6 @@ namespace clang {
 
 using namespace libclang;
 
-namespace {
-
-std::vector<FilePath> packageSrcFiles()
-{
-   using namespace projects;
-   std::vector<FilePath> allSrcFiles;
-   if (projectContext().config().buildType == r_util::kBuildTypePackage)
-   {
-      FilePath srcPath = projectContext().buildTargetPath().childPath("src");
-      if (srcPath.exists())
-      {
-         Error error = srcPath.children(&allSrcFiles);
-         if (!error)
-         {
-            std::vector<FilePath> srcFiles;
-            BOOST_FOREACH(const FilePath& srcFile, allSrcFiles)
-            {
-               if (SourceIndex::isTranslationUnit(srcFile))
-                  srcFiles.push_back(srcFile);
-            }
-            return srcFiles;
-         }
-         else
-         {
-            LOG_ERROR(error);
-         }
-      }
-   }
-
-   // no love
-   return std::vector<FilePath>();
-}
-
-} // anonymous namespace
-
 Error printCppCompletions(const core::json::JsonRpcRequest& request,
                           core::json::JsonRpcResponse* pResponse)
 {
@@ -91,11 +56,7 @@ Error printCppCompletions(const core::json::JsonRpcRequest& request,
    unsavedFiles().update(docId, filePath, docContents, docDirty);
 
    // now get the translation unit and do the code completion
-   TranslationUnit tu;
-   if (SourceIndex::isTranslationUnit(filePath))
-      tu = sourceIndex().getTranslationUnit(filePath);
-   else
-      tu = sourceIndex().getHeaderTranslationUnit(filePath, packageSrcFiles());
+   TranslationUnit tu = sourceIndex().getTranslationUnit(filePath);
    if (!tu.empty())
    {
       CodeCompleteResults results = tu.codeCompleteAt(filePath.absolutePath(),

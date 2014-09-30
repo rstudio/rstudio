@@ -25,11 +25,14 @@
 
 #include <core/system/Process.hpp>
 
+#include "libclang/SourceIndex.hpp"
+
 namespace session {
 namespace modules {      
 namespace clang {
 
-class CompilationDatabase : boost::noncopyable
+class CompilationDatabase : public libclang::SourceIndex::CompilationDatabase,
+                            boost::noncopyable
 {
 private:
    friend CompilationDatabase& compilationDatabase();
@@ -38,7 +41,10 @@ private:
 public:
    virtual ~CompilationDatabase();
 
-   std::vector<std::string> argsForSourceFile(const std::string& srcPath);
+   virtual std::vector<std::string> compileArgsForTranslationUnit(
+                                             const core::FilePath& srcPath);
+
+   virtual std::vector<core::FilePath> translationUnits();
 
 private:
 
