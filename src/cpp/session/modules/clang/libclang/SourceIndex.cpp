@@ -15,6 +15,8 @@
 
 #include "SourceIndex.hpp"
 
+#include <boost/foreach.hpp>
+
 #include <core/FilePath.hpp>
 #include <core/PerformanceTimer.hpp>
 
@@ -115,21 +117,12 @@ void SourceIndex::reprimeTranslationUnit(const core::FilePath& filePath)
 
 TranslationUnit SourceIndex::getTranslationUnit(const FilePath& filePath)
 {
-   // headers have a special codepath
-   if (!isTranslationUnit(filePath))
-      return getHeaderTranslationUnit(filePath);
-
    boost::scoped_ptr<core::PerformanceTimer> pTimer;
    if (verbose_ > 0)
    {
       std::cerr << "CLANG INDEXING: " << filePath.absolutePath() << std::endl;
       pTimer.reset(new core::PerformanceTimer(filePath.filename()));
    }
-
-   // TODO: for header files we'll need to scan the translation
-   // units for them and use the appropriate one
-   // (perhaps using clang_getFile)
-   // (perhaps using translationUnit_includes_callback)
 
    // get the arguments and last write time for this file
    std::string filename = filePath.absolutePath();
@@ -215,7 +208,8 @@ TranslationUnit SourceIndex::getTranslationUnit(const FilePath& filePath)
 }
 
 TranslationUnit SourceIndex::getHeaderTranslationUnit(
-                                             const core::FilePath& filePath)
+                                 const core::FilePath& filePath,
+                                 const std::vector<core::FilePath>& srcFiles)
 {
    // scan through our existing translation units for this file
    for(TranslationUnits::const_iterator it = translationUnits_.begin();
@@ -224,6 +218,20 @@ TranslationUnit SourceIndex::getHeaderTranslationUnit(
       TranslationUnit tu(it->first, it->second.tu);
       if (tu.includesFile(filePath))
          return tu;
+   }
+
+   // drats we don't have it! we can still try to index other src files
+   // in search of one that includes this header
+   BOOST_FOREACH(const FilePath& srcFile, srcFiles)
+   {
+      TranslationUnit tu = getTranslationUnit(srcFile);
+      if (!tu.empty())
+      {
+         if (tu.includesFile(filePath))
+            return tu;
+         else
+            removeTranslationUnit(filePath.absolutePath());
+      }
    }
 
    return TranslationUnit();

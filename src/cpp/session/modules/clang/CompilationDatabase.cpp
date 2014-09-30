@@ -83,7 +83,7 @@ std::vector<std::string> extractCompileArgs(const std::string& line)
    std::vector<std::string> compileArgs;
 
    // find arguments libclang might care about
-   boost::regex re(" -(?:[IDif]|std)(?:\\\"[^\\\"]+\\\"|[^ ]+)");
+   boost::regex re("[ \\t]-(?:[IDif]|std)(?:\\\"[^\\\"]+\\\"|[^ ]+)");
    boost::sregex_token_iterator it(line.begin(), line.end(), re, 0);
    boost::sregex_token_iterator end;
    for ( ; it != end; ++it)
@@ -432,6 +432,15 @@ core::Error CompilationDatabase::executeRCmdSHLIB(
    return core::system::runCommand(rCmd.commandString(), options, pResult);
 }
 
+namespace {
+
+inline bool endsWith(const std::string& input, const std::string& test)
+{
+   return boost::algorithm::ends_with(input, test);
+}
+
+} // anonymous namespace
+
 
 std::vector<std::string> CompilationDatabase::argsForSourceFile(
                                        const std::string& srcPath)
@@ -463,6 +472,19 @@ std::vector<std::string> CompilationDatabase::argsForSourceFile(
       ArgsMap::const_iterator it = argsMap_.find(srcPath);
       if (it != argsMap_.end())
          args = it->second;
+   }
+
+   // if we are working on Rcpp then remove the automatically
+   // included Rcpp/include directory from the list (that allows us
+   // to use the local Rcpp/inst/include directory)
+   if (packageName == "Rcpp")
+   {
+      std::vector<std::string>::iterator it = std::find_if(
+                     args.begin(),
+                     args.end(),
+                     boost::bind(endsWith, _1, "Rcpp/include"));
+      if (it != args.end())
+         args.erase(it);
    }
 
    // add precompiled Rcpp headers if appropriate

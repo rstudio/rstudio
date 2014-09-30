@@ -57,10 +57,15 @@ public:
    void removeTranslationUnit(const std::string& filename);
    void removeAllTranslationUnits();
 
+   // get the translation unit for the passed c or cpp file
    TranslationUnit getTranslationUnit(const core::FilePath& filePath);
 
-private:
-   TranslationUnit getHeaderTranslationUnit(const core::FilePath& filePath);
+   // get a translation unit for a header file (include a list of src
+   // files to progressively add translation units for if we don't already
+   // have a translation unit that includes this header)
+   TranslationUnit getHeaderTranslationUnit(
+                       const core::FilePath& filePath,
+                       const std::vector<core::FilePath>& srcFiles);
 
 private:
    CompileArgsSource compileArgsSource_;

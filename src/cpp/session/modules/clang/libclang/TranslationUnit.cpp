@@ -31,7 +31,7 @@ std::string TranslationUnit::getSpelling() const
 
 bool TranslationUnit::includesFile(const core::FilePath& filePath) const
 {
-   return clang().getFile(tu_, filePath.absolutePath().c_str());
+   return clang().getFile(tu_, filePath.absolutePath().c_str()) != NULL;
 }
 
 unsigned TranslationUnit::getNumDiagnostics() const
