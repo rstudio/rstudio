@@ -83,13 +83,14 @@ std::vector<std::string> extractCompileArgs(const std::string& line)
    std::vector<std::string> compileArgs;
 
    // find arguments libclang might care about
-   boost::regex re("-[I|D|i|f|std](?:\\\"[^\\\"]+\\\"|[^ ]+)");
+   boost::regex re(" -(?:[IDif]|std)(?:\\\"[^\\\"]+\\\"|[^ ]+)");
    boost::sregex_token_iterator it(line.begin(), line.end(), re, 0);
    boost::sregex_token_iterator end;
    for ( ; it != end; ++it)
    {
       // remove quotes and add it to the compile args
       std::string arg = *it;
+      boost::algorithm::trim_all(arg);
       boost::algorithm::replace_all(arg, "\"", "");
       compileArgs.push_back(arg);
    }
