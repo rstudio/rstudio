@@ -19,7 +19,6 @@
    paste(packageVersion("Rcpp"),
          R.version$platform,
          R.version$`svn rev`,
-         "Rcpp.pch",
          sep = "-")
 })
 

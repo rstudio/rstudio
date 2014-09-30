@@ -97,7 +97,16 @@ std::vector<std::string> extractCompileArgs(const std::string& line)
    return compileArgs;
 }
 
+std::string extractStdArg(const std::vector<std::string>& args)
+{
+   BOOST_FOREACH(const std::string& arg, args)
+   {
+      if (boost::algorithm::starts_with(arg, "-std="))
+         return arg;
+   }
 
+   return std::string();
+}
 
 std::string buildFileHash(const FilePath& filePath)
 {
@@ -459,7 +468,10 @@ std::vector<std::string> CompilationDatabase::argsForSourceFile(
       bool isCppFile = (ext == ".cc") || (ext == ".cpp");
       if (isCppFile)
       {
-         std::vector<std::string> pchArgs = rcppPrecompiledHeaderArgs();
+         // extract any -std= argument
+         std::string stdArg = extractStdArg(args);
+
+         std::vector<std::string> pchArgs = rcppPrecompiledHeaderArgs(stdArg);
          std::copy(pchArgs.begin(),
                    pchArgs.end(),
                    std::back_inserter(args));
@@ -513,7 +525,8 @@ std::vector<std::string> CompilationDatabase::rToolsArgs() const
    return rToolsArgs_;
 }
 
-std::vector<std::string> CompilationDatabase::rcppPrecompiledHeaderArgs()
+std::vector<std::string> CompilationDatabase::rcppPrecompiledHeaderArgs(
+                                                   const std::string& stdArg)
 {
    // args to return
    std::vector<std::string> args;
@@ -523,35 +536,45 @@ std::vector<std::string> CompilationDatabase::rcppPrecompiledHeaderArgs()
    FilePath precompiledRcppDir = module_context::userScratchPath().
                                             childPath(kPrecompiledRcppDir);
 
-   // platform/rcpp version specific filename
-   std::string pchFile;
-   Error error = r::exec::RFunction(".rs.precompiledRcppPath").call(&pchFile);
+   // platform/rcpp version specific directory name
+   std::string platformDir;
+   Error error = r::exec::RFunction(".rs.precompiledRcppPath").call(&platformDir);
    if (error)
    {
       LOG_ERROR(error);
       return std::vector<std::string>();
    }
 
-   // check for Rcpp.pch file and create it if necessary
-   FilePath pchPath = precompiledRcppDir.childPath(pchFile);
-   if (!pchPath.exists())
+   // if this path doesn't exist then blow away all Rcpp precompiled paths
+   // and re-create this one. this enforces only storing precompiled headers
+   // for the current version of R/Rcpp -- if we didn't do this then the
+   // storage cost could really pile up over time (~25MB per PCH)
+   FilePath platformPath = precompiledRcppDir.childPath(platformDir);
+   if (!platformPath.exists())
    {
-      // delete and recreate directory
+      // delete root rcpp directory
       Error error = precompiledRcppDir.removeIfExists();
       if (error)
       {
          LOG_ERROR(error);
          return std::vector<std::string>();
       }
-      error = precompiledRcppDir.ensureDirectory();
+
+      // create platform directory
+      error = platformPath.ensureDirectory();
       if (error)
       {
          LOG_ERROR(error);
          return std::vector<std::string>();
       }
+   }
 
+   // now create the PCH if we need to
+   FilePath pchPath = platformPath.childPath("Rcpp" + stdArg + ".pch");
+   if (!pchPath.exists())
+   {
       // state cpp file for creating precompiled headers
-      FilePath cppPath = pchPath.parent().childPath("Rcpp.cpp");
+      FilePath cppPath = platformPath.childPath("Rcpp" + stdArg + ".cpp");
       error = core::writeStringToFile(cppPath, "#include <Rcpp.h>\n");
       if (error)
       {
@@ -559,7 +582,10 @@ std::vector<std::string> CompilationDatabase::rcppPrecompiledHeaderArgs()
          return std::vector<std::string>();
       }
 
+      // compute args (including -std= if we have one)
       std::vector<std::string> args = computeArgsForSourceFile(cppPath);
+      if (!stdArg.empty())
+         args.push_back(stdArg);
       core::system::ProcessArgs argsArray(args);
 
       CXIndex index = clang().createIndex(0,0);
