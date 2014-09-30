@@ -29,6 +29,13 @@ namespace modules {
 namespace clang {
 namespace libclang {
 
+bool SourceIndex::isTranslationUnit(const core::FilePath& filePath)
+{
+   std::string ex = filePath.extensionLowerCase();
+   return (ex == ".c" || ex == ".cc" || ex == ".cpp" ||
+           ex == ".m" || ex == ".mm");
+}
+
 SourceIndex::SourceIndex()
    : verbose_(false), index_(NULL)
 {
@@ -105,8 +112,13 @@ void SourceIndex::reprimeTranslationUnit(const core::FilePath& filePath)
       getTranslationUnit(filePath);
 }
 
+
 TranslationUnit SourceIndex::getTranslationUnit(const FilePath& filePath)
 {
+   // headers have a special codepath
+   if (!isTranslationUnit(filePath))
+      return getHeaderTranslationUnit(filePath);
+
    boost::scoped_ptr<core::PerformanceTimer> pTimer;
    if (verbose_ > 0)
    {
@@ -200,6 +212,21 @@ TranslationUnit SourceIndex::getTranslationUnit(const FilePath& filePath)
       LOG_ERROR_MESSAGE("Error parsing translation unit " + filename);
       return TranslationUnit();
    }
+}
+
+TranslationUnit SourceIndex::getHeaderTranslationUnit(
+                                             const core::FilePath& filePath)
+{
+   // scan through our existing translation units for this file
+   for(TranslationUnits::const_iterator it = translationUnits_.begin();
+       it != translationUnits_.end(); ++it)
+   {
+      TranslationUnit tu(it->first, it->second.tu);
+      if (tu.includesFile(filePath))
+         return tu;
+   }
+
+   return TranslationUnit();
 }
 
 

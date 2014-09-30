@@ -37,6 +37,9 @@ private:
    SourceIndex();
 
 public:
+   static bool isTranslationUnit(const core::FilePath& filePath);
+
+public:
    virtual ~SourceIndex();
 
    typedef boost::function<std::vector<std::string>(const std::string&)>
@@ -55,6 +58,9 @@ public:
    void removeAllTranslationUnits();
 
    TranslationUnit getTranslationUnit(const core::FilePath& filePath);
+
+private:
+   TranslationUnit getHeaderTranslationUnit(const core::FilePath& filePath);
 
 private:
    CompileArgsSource compileArgsSource_;

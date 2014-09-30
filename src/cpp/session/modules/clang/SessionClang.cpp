@@ -45,13 +45,6 @@ using namespace libclang;
 
 namespace {
 
-bool isCppSourceDoc(const FilePath& filePath)
-{
-   std::string ex = filePath.extensionLowerCase();
-   return (ex == ".c" || ex == ".cc" || ex == ".cpp" ||
-           ex == ".m" || ex == ".mm");
-}
-
 void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    // ignore if the file doesn't have a path
@@ -64,7 +57,7 @@ void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
    // verify that it's an indexable C/C++ file (we allow any and all
    // files into the database here since these files are open within
    // the source editor)
-   if (!isCppSourceDoc(docPath))
+   if (!SourceIndex::isTranslationUnit(docPath))
       return;
 
    // update unsaved files (we do this even if the document is dirty

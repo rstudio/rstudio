@@ -15,6 +15,8 @@
 
 #include "TranslationUnit.hpp"
 
+#include <core/FilePath.hpp>
+
 #include "UnsavedFiles.hpp"
 
 namespace session {
@@ -25,6 +27,11 @@ namespace libclang {
 std::string TranslationUnit::getSpelling() const
 {
    return toStdString(clang().getTranslationUnitSpelling(tu_));
+}
+
+bool TranslationUnit::includesFile(const core::FilePath& filePath) const
+{
+   return clang().getFile(tu_, filePath.absolutePath().c_str());
 }
 
 unsigned TranslationUnit::getNumDiagnostics() const

@@ -46,6 +46,8 @@ public:
 
    std::string getSpelling() const;
 
+   bool includesFile(const core::FilePath& filePath) const;
+
    unsigned getNumDiagnostics() const;
    Diagnostic getDiagnostic(unsigned index) const;
 
