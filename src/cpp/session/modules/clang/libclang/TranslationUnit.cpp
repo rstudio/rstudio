@@ -29,9 +29,9 @@ std::string TranslationUnit::getSpelling() const
    return toStdString(clang().getTranslationUnitSpelling(tu_));
 }
 
-bool TranslationUnit::includesFile(const core::FilePath& filePath) const
+bool TranslationUnit::includesFile(const std::string& filename) const
 {
-   return clang().getFile(tu_, filePath.absolutePath().c_str()) != NULL;
+   return clang().getFile(tu_, filename.c_str()) != NULL;
 }
 
 unsigned TranslationUnit::getNumDiagnostics() const
@@ -65,6 +65,22 @@ CodeCompleteResults TranslationUnit::codeCompleteAt(const std::string& filename,
    {
       return CodeCompleteResults();
    }
+}
+
+void TranslationUnit::printResourceUsage(std::ostream& ostr)
+{
+   CXTUResourceUsage usage = clang().getCXTUResourceUsage(tu_);
+
+   unsigned long totalBytes = 0;
+   for (unsigned i = 0; i<usage.numEntries; i++)
+   {
+      CXTUResourceUsageEntry entry = usage.entries[i];
+      ostr << clang().getTUResourceUsageName(entry.kind) << ": "
+           << entry.amount << std::endl;
+      totalBytes += entry.amount;
+   }
+
+   clang().disposeCXTUResourceUsage(usage);
 }
 
 

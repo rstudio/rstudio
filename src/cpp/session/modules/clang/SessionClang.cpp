@@ -45,7 +45,10 @@ using namespace libclang;
 
 namespace {
 
-void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
+typedef std::map<std::string,std::string> IdToFile;
+
+void onSourceDocUpdated(boost::shared_ptr<IdToFile> pIdToFile,
+                        boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    // ignore if the file doesn't have a path
    if (pDoc->path().empty())
@@ -53,17 +56,21 @@ void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 
    // resolve to a full path
    FilePath docPath = module_context::resolveAliasedPath(pDoc->path());
+   std::string filename = docPath.absolutePath();
 
    // verify that it's an indexable C/C++ file (we allow any and all
    // files into the database here since these files are open within
    // the source editor)
-   if (!SourceIndex::isTranslationUnit(docPath))
+   if (!SourceIndex::isTranslationUnit(filename))
       return;
+
+   // track the mapping between id and filename
+   (*pIdToFile)[pDoc->id()] = filename;
 
    // update unsaved files (we do this even if the document is dirty
    // as even in this case it will need to be removed from the list
    // of unsaved files)
-   unsavedFiles().update(pDoc->id(), docPath, pDoc->contents(), pDoc->dirty());
+   unsavedFiles().update(filename, pDoc->contents(), pDoc->dirty());
 
    // dirty files indicate active user editing, prime if necessary
    if (pDoc->dirty())
@@ -71,7 +78,7 @@ void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
       module_context::scheduleDelayedWork(
             boost::posix_time::milliseconds(100),
             boost::bind(&SourceIndex::primeTranslationUnit,
-                        &(sourceIndex()), docPath),
+                        &(sourceIndex()), filename),
             true); // require idle
    }
 
@@ -85,9 +92,34 @@ void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
       module_context::scheduleDelayedWork(
             boost::posix_time::milliseconds(100),
             boost::bind(&SourceIndex::reprimeTranslationUnit,
-                        &(sourceIndex()), docPath),
+                        &(sourceIndex()), filename),
             true); // require idle
    }
+}
+
+void onSourceDocRemoved(boost::shared_ptr<IdToFile> pIdToFile,
+                        const std::string& id)
+{
+   // get the filename for this id
+   IdToFile::iterator it = pIdToFile->find(id);
+   if (it != pIdToFile->end())
+   {
+      // remove from unsaved file
+      unsavedFiles().remove(it->second);
+
+      // remove the translation unit
+      sourceIndex().removeTranslationUnit(it->second);
+
+      // remove the id from the map
+      pIdToFile->erase(it);
+   }
+}
+
+void onAllSourceDocsRemoved(boost::shared_ptr<IdToFile> pIdToFile)
+{
+   unsavedFiles().removeAll();
+   sourceIndex().removeAllTranslationUnits();
+   pIdToFile->clear();
 }
 
 const char * const kRequiredRcpp = "0.11.3";
@@ -154,13 +186,18 @@ Error initialize()
    sourceIndex().initialize(&compilationDatabase(),
                             userSettings().clangVerbose());
 
+
+   // keep a map of id to filename for source database event forwarding
+   boost::shared_ptr<IdToFile> pIdToFile = boost::make_shared<IdToFile>();
+
    // subscribe to source docs events for maintaining the unsaved files list
    // main source index and the unsaved files list)
-   source_database::events().onDocUpdated.connect(onSourceDocUpdated);
+   source_database::events().onDocUpdated.connect(
+             boost::bind(onSourceDocUpdated, pIdToFile, _1));
    source_database::events().onDocRemoved.connect(
-             boost::bind(&UnsavedFiles::remove, &unsavedFiles(), _1));
+             boost::bind(onSourceDocRemoved, pIdToFile, _1));
    source_database::events().onRemoveAll.connect(
-             boost::bind(&UnsavedFiles::removeAll, &unsavedFiles()));
+             boost::bind(onAllSourceDocsRemoved, pIdToFile));
 
    ExecBlock initBlock ;
    using boost::bind;

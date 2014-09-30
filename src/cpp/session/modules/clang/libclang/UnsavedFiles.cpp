@@ -48,27 +48,23 @@ UnsavedFiles::~UnsavedFiles()
    }
 }
 
-void UnsavedFiles::update(const std::string& id,
-                          const core::FilePath& filePath,
+void UnsavedFiles::update(const std::string& filename,
                           const std::string& contents,
                           bool dirty)
 {
    // always remove any existing version
-   remove(id);
+   remove(filename);
 
    // add it if it's dirty
    if (dirty)
    {
-      // get a regular file path
-      std::string path = filePath.absolutePath();
-
       // allocate an CXUnsavedFile
       CXUnsavedFile unsavedFile;
-      char* filename = new char[path.length() + 1];
-      std::copy(path.c_str(),
-                path.data() + path.length() + 1,
-                filename);
-      unsavedFile.Filename = filename;
+      char* Filename = new char[filename.length() + 1];
+      std::copy(filename.c_str(),
+                filename.data() + filename.length() + 1,
+                Filename);
+      unsavedFile.Filename = Filename;
       char* buffContents = new char[contents.length()];
       std::copy(contents.data(),
                 contents.data() + contents.length(),
@@ -78,29 +74,21 @@ void UnsavedFiles::update(const std::string& id,
 
       // add it to the list
       files_.push_back(unsavedFile);
-      idToFilename_[id] = filename;
    }
 }
 
-void UnsavedFiles::remove(const std::string& id)
+void UnsavedFiles::remove(const std::string& filename)
 {
-   // find the filename for this id then remove it from the map
-   std::string filename = idToFilename_[id];
-   idToFilename_.erase(id);
-
-   if (!filename.empty())
+   // scan for an unsaved file with this filename, if we find it
+   // then free it and remove it from the vector
+   for (std::vector<CXUnsavedFile>::iterator pos = files_.begin();
+        pos != files_.end(); ++pos)
    {
-      // scan for an unsaved file with this filename, if we find it
-      // then free it and remove it from the vector
-      for (std::vector<CXUnsavedFile>::iterator pos = files_.begin();
-           pos != files_.end(); ++pos)
+      if (pos->Filename == filename)
       {
-         if (pos->Filename == filename)
-         {
-            freeUnsavedFile(*pos);
-            files_.erase(pos);
-            break;
-         }
+         freeUnsavedFile(*pos);
+         files_.erase(pos);
+         break;
       }
    }
 }
@@ -112,7 +100,6 @@ void UnsavedFiles::removeAll()
 
    // empty out our data structures
    files_.clear();
-   idToFilename_.clear();
 }
 
 UnsavedFiles& unsavedFiles()

@@ -42,9 +42,9 @@ public:
    virtual ~CompilationDatabase();
 
    virtual std::vector<std::string> compileArgsForTranslationUnit(
-                                             const core::FilePath& srcPath);
+                                             const std::string& filename);
 
-   virtual std::vector<core::FilePath> translationUnits();
+   virtual std::vector<std::string> translationUnits();
 
 private:
 

@@ -31,9 +31,9 @@ namespace modules {
 namespace clang {
 namespace libclang {
 
-bool SourceIndex::isTranslationUnit(const core::FilePath& filePath)
+bool SourceIndex::isTranslationUnit(const std::string& filename)
 {
-   std::string ex = filePath.extensionLowerCase();
+   std::string ex = FilePath(filename).extensionLowerCase();
    return (ex == ".c" || ex == ".cc" || ex == ".cpp" ||
            ex == ".m" || ex == ".mm");
 }
@@ -82,6 +82,8 @@ void SourceIndex::removeTranslationUnit(const std::string& filename)
    TranslationUnits::iterator it = translationUnits_.find(filename);
    if (it != translationUnits_.end())
    {
+      if (verbose_ > 0)
+         std::cerr << "CLANG REMOVE INDEX: " << it->first << std::endl;
       clang().disposeTranslationUnit(it->second.tu);
       translationUnits_.erase(it->first);
    }
@@ -92,6 +94,9 @@ void SourceIndex::removeAllTranslationUnits()
    for(TranslationUnits::const_iterator it = translationUnits_.begin();
        it != translationUnits_.end(); ++it)
    {
+      if (verbose_ > 0)
+         std::cerr << "CLANG REMOVE INDEX: " << it->first << std::endl;
+
       clang().disposeTranslationUnit(it->second.tu);
    }
 
@@ -99,28 +104,28 @@ void SourceIndex::removeAllTranslationUnits()
 }
 
 
-void SourceIndex::primeTranslationUnit(const FilePath& filePath)
+void SourceIndex::primeTranslationUnit(const std::string& filename)
 {
    // if we have no record of this translation unit then do a first pass
-   std::string filename = filePath.absolutePath();
    if (translationUnits_.find(filename) == translationUnits_.end())
-      getTranslationUnit(filePath);
+      getTranslationUnit(filename);
 }
 
-void SourceIndex::reprimeTranslationUnit(const core::FilePath& filePath)
+void SourceIndex::reprimeTranslationUnit(const std::string& filename)
 {
    // if we have already indexed this translation unit then re-index it
-   std::string filename = filePath.absolutePath();
    if (translationUnits_.find(filename) != translationUnits_.end())
-      getTranslationUnit(filePath);
+      getTranslationUnit(filename);
 }
 
 
-TranslationUnit SourceIndex::getTranslationUnit(const FilePath& filePath)
+TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename)
 {
    // header files get their own codepath
-   if (!SourceIndex::isTranslationUnit(filePath))
-      return getHeaderTranslationUnit(filePath);
+   if (!SourceIndex::isTranslationUnit(filename))
+      return getHeaderTranslationUnit(filename);
+
+   FilePath filePath(filename);
 
    boost::scoped_ptr<core::PerformanceTimer> pTimer;
    if (verbose_ > 0)
@@ -131,11 +136,10 @@ TranslationUnit SourceIndex::getTranslationUnit(const FilePath& filePath)
 
    // get the arguments and last write time for this file
    std::vector<std::string> args =
-               pCompilationDatabase_->compileArgsForTranslationUnit(filePath);
+               pCompilationDatabase_->compileArgsForTranslationUnit(filename);
    std::time_t lastWriteTime = filePath.lastWriteTime();
 
    // look it up
-   std::string filename = filePath.absolutePath();
    TranslationUnits::iterator it = translationUnits_.find(filename);
 
    // check for various incremental processing scenarios
@@ -214,35 +218,35 @@ TranslationUnit SourceIndex::getTranslationUnit(const FilePath& filePath)
 }
 
 TranslationUnit SourceIndex::getHeaderTranslationUnit(
-                                        const core::FilePath& filePath)
+                                             const std::string& filename)
 {
    // scan through our existing translation units for this file
    for(TranslationUnits::const_iterator it = translationUnits_.begin();
        it != translationUnits_.end(); ++it)
    {
       TranslationUnit tu(it->first, it->second.tu);
-      if (tu.includesFile(filePath))
+      if (tu.includesFile(filename))
          return tu;
    }
 
    // drats we don't have it! we can still try to index other src files
    // in search of one that includes this header
-   std::vector<core::FilePath> srcFiles =
+   std::vector<std::string> srcFiles =
                                   pCompilationDatabase_->translationUnits();
-   BOOST_FOREACH(const FilePath& srcFile, srcFiles)
+   BOOST_FOREACH(const std::string& filename, srcFiles)
    {
-      TranslationUnit tu = getTranslationUnit(srcFile);
+      TranslationUnit tu = getTranslationUnit(filename);
       if (!tu.empty())
       {
          // found it! (keep it in case we need it again)
-         if (tu.includesFile(filePath))
+         if (tu.includesFile(filename))
          {
             return tu;
          }
          // didn't find it (dispose it to free memory)
          else
          {
-            removeTranslationUnit(filePath.absolutePath());
+            removeTranslationUnit(filename);
          }
       }
    }

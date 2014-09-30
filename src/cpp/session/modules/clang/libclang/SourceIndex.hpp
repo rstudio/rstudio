@@ -37,7 +37,7 @@ private:
    SourceIndex();
 
 public:
-   static bool isTranslationUnit(const core::FilePath& filePath);
+   static bool isTranslationUnit(const std::string& filename);
 
 public:
    class CompilationDatabase
@@ -45,8 +45,8 @@ public:
    public:
       virtual ~CompilationDatabase() {}
       virtual std::vector<std::string> compileArgsForTranslationUnit(
-                                            const core::FilePath& srcFile) = 0;
-      virtual std::vector<core::FilePath> translationUnits() = 0;
+                                            const std::string& filename) = 0;
+      virtual std::vector<std::string> translationUnits() = 0;
    };
 
 public:
@@ -58,8 +58,8 @@ public:
    void setGlobalOptions(unsigned options);
 
    // functions used to keep the index "hot" based on recent user edits
-   void primeTranslationUnit(const core::FilePath& filePath);
-   void reprimeTranslationUnit(const core::FilePath& filePath);
+   void primeTranslationUnit(const std::string& filename);
+   void reprimeTranslationUnit(const std::string& filename);
 
    // remove translation units so they don't occupy memory
    void removeTranslationUnit(const std::string& filename);
@@ -67,12 +67,12 @@ public:
 
    // get the translation unit for the passed file (can be a c/cpp file
    // or a header file)
-   TranslationUnit getTranslationUnit(const core::FilePath& filePath);
+   TranslationUnit getTranslationUnit(const std::string& filename);
 
 private:
 
    // get a translation unit for a header file
-   TranslationUnit getHeaderTranslationUnit(const core::FilePath& filePath);
+   TranslationUnit getHeaderTranslationUnit(const std::string& filename);
 
 private:
    CXIndex index_;

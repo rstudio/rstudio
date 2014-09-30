@@ -16,6 +16,7 @@
 #ifndef SESSION_MODULES_CLANG_LIBCLANG_TRANSLATION_UNIT_HPP
 #define SESSION_MODULES_CLANG_LIBCLANG_TRANSLATION_UNIT_HPP
 
+#include <iosfwd>
 
 #include "LibClang.hpp"
 #include "Diagnostic.hpp"
@@ -46,7 +47,7 @@ public:
 
    std::string getSpelling() const;
 
-   bool includesFile(const core::FilePath& filePath) const;
+   bool includesFile(const std::string& filename) const;
 
    unsigned getNumDiagnostics() const;
    Diagnostic getDiagnostic(unsigned index) const;
@@ -56,6 +57,8 @@ public:
    CodeCompleteResults codeCompleteAt(const std::string& filename,
                                       unsigned line,
                                       unsigned column);
+
+   void printResourceUsage(std::ostream& ostr);
 
 private:
    std::string filename_;

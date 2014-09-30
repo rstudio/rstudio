@@ -39,11 +39,10 @@ public:
 
    virtual ~UnsavedFiles();
 
-   void update(const std::string& id,
-               const core::FilePath& filePath,
+   void update(const std::string& filename,
                const std::string& contents,
                bool dirty);
-   void remove(const std::string& id);
+   void remove(const std::string& filename);
    void removeAll();
 
    CXUnsavedFile* unsavedFilesArray() { return &(files_[0]); }
@@ -52,11 +51,6 @@ public:
 private:
    // vector of unsaved files we pass to various clang functions
    std::vector<CXUnsavedFile> files_;
-
-   // track relationship betwween source document ids and
-   // filenames so we can remove them from the unsaved files
-   // list when they are closed
-   std::map<std::string,std::string> idToFilename_;
 };
 
 // global instance

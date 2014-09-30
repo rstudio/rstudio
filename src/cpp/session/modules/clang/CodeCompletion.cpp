@@ -53,15 +53,14 @@ Error printCppCompletions(const core::json::JsonRpcRequest& request,
    FilePath filePath = module_context::resolveAliasedPath(docPath);
 
    // first update the unsaved file database
-   unsavedFiles().update(docId, filePath, docContents, docDirty);
+   std::string filename = filePath.absolutePath();
+   unsavedFiles().update(filename, docContents, docDirty);
 
    // now get the translation unit and do the code completion
-   TranslationUnit tu = sourceIndex().getTranslationUnit(filePath);
+   TranslationUnit tu = sourceIndex().getTranslationUnit(filename);
    if (!tu.empty())
    {
-      CodeCompleteResults results = tu.codeCompleteAt(filePath.absolutePath(),
-                                                      line,
-                                                      column);
+      CodeCompleteResults results = tu.codeCompleteAt(filename, line, column);
       if (!results.empty())
       {
          for (unsigned i = 0; i<results.getNumResults(); i++)

@@ -443,10 +443,13 @@ inline bool endsWith(const std::string& input, const std::string& test)
 
 
 std::vector<std::string> CompilationDatabase::compileArgsForTranslationUnit(
-                                       const core::FilePath& filePath)
+                                            const std::string& filename)
 {
    // args to return
    std::vector<std::string> args;
+
+   // get a file path object
+   FilePath filePath(filename);
 
    // if this is a package source file then return the package args
    std::string packageName;
@@ -507,7 +510,7 @@ std::vector<std::string> CompilationDatabase::compileArgsForTranslationUnit(
    return args;
 }
 
-std::vector<core::FilePath> CompilationDatabase::translationUnits()
+std::vector<std::string> CompilationDatabase::translationUnits()
 {
    using namespace projects;
    std::vector<FilePath> allSrcFiles;
@@ -519,11 +522,12 @@ std::vector<core::FilePath> CompilationDatabase::translationUnits()
          Error error = srcPath.children(&allSrcFiles);
          if (!error)
          {
-            std::vector<FilePath> srcFiles;
+            std::vector<std::string> srcFiles;
             BOOST_FOREACH(const FilePath& srcFile, allSrcFiles)
             {
-               if (SourceIndex::isTranslationUnit(srcFile))
-                  srcFiles.push_back(srcFile);
+               std::string filename = srcFile.absolutePath();
+               if (SourceIndex::isTranslationUnit(filename))
+                  srcFiles.push_back(filename);
             }
             return srcFiles;
          }
@@ -535,7 +539,7 @@ std::vector<core::FilePath> CompilationDatabase::translationUnits()
    }
 
    // no love
-   return std::vector<FilePath>();
+   return std::vector<std::string>();
 }
 
 std::vector<std::string> CompilationDatabase::rToolsArgs() const
