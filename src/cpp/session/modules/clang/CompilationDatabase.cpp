@@ -83,7 +83,7 @@ std::vector<std::string> extractCompileArgs(const std::string& line)
    std::vector<std::string> compileArgs;
 
    // find arguments libclang might care about
-   boost::regex re("-[I|D|i|f|s](?:\\\"[^\\\"]+\\\"|[^ ]+)");
+   boost::regex re("-[I|D|i|f|std](?:\\\"[^\\\"]+\\\"|[^ ]+)");
    boost::sregex_token_iterator it(line.begin(), line.end(), re, 0);
    boost::sregex_token_iterator end;
    for ( ; it != end; ++it)
