@@ -57,7 +57,11 @@
         test.out="${junit.out}/codeserver"
         test.cases="tests">
       <extraclasspaths>
+        <pathelement location="${project.lib}"/>
         <pathelement location="${gwt.dev.jar}" />
+        <!-- Pull in gwt-user sources -->
+        <pathelement location="${gwt.root}/user/src/"/>
+        <pathelement location="${gwt.root}/user/super/"/>
       </extraclasspaths>
     </gwt.junit>
   </target>
