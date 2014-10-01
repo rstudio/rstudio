@@ -244,6 +244,10 @@ oop.inherits(Mode, TextMode);
          // Note that we strip _after_ the define steps so that we can
          // effectively leverage the indentation rules within macro settings.
          line = this.getLineSansComments(doc, row);
+         var cursor = session.getSelection().getCursor();
+         if (cursor) {
+            line = line.substring(0, cursor.column);
+         }
          lastLine = this.getLineSansComments(doc, row - 1);
 
          // Only indent on an ending '>' if we're not in a template
