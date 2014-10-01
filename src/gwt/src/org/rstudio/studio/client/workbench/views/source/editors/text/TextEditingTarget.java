@@ -2237,12 +2237,13 @@ public class TextEditingTarget implements
    @Handler
    void onCommentUncomment()
    {
-      if (fileType_.isCpp())
-         doCommentUncomment("//");
-      else if (isCursorInTexMode())
+      if (isCursorInTexMode())
          doCommentUncomment("%");
       else if (isCursorInRMode())
          doCommentUncomment("#");
+      else if (fileType_.isCpp())
+         doCommentUncomment("//");
+      
    }
    
    private void doCommentUncomment(String c)
