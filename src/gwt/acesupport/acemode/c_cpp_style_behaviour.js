@@ -122,7 +122,8 @@ var CStyleBehaviour = function () {
          //
          // then indent appropriately, and put the closing paren on its
          // own line as well.
-         if (thisChar == "(" && rightChar == ")") {
+         if ((thisChar == "(" && rightChar == ")") ||
+             (thisChar == "[" && rightChar == "]")) {
 
             var nextIndent = this.$getIndent(line);
             var indent = nextIndent + tab;
@@ -237,6 +238,19 @@ var CStyleBehaviour = function () {
          // include a closing ;
          // Avoid doing this if there's an 'else' token on the same line
          if (line.match(/[\w>]+\s*$/) && !line.match(/\belse\b/)) {
+            return {
+               text: '{};',
+               selection: [1, 1]
+            };
+         }
+
+         // If class-style indentation can produce an appropriate indentation for
+         // the brace, then insert a closing brace with a semi-colon
+         var openBracePos = $heuristics.getRowForOpenBraceIndentClassStyle(
+            session, row - 1, 20
+         );
+         
+         if (openBracePos !== null) {
             return {
                text: '{};',
                selection: [1, 1]

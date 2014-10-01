@@ -554,6 +554,11 @@ oop.inherits(Mode, TextMode);
             return indent;
          }
 
+         // If we end with a semi-colon, match the line's indentation
+         if (/;\s*$/.test(line)) {
+            return indent;
+         }
+
          // Indent based on lookaround heuristics
          if (!/^\s*$/.test(line)) {
 
