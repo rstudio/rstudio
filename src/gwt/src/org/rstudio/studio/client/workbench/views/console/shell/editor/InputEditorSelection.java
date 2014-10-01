@@ -67,7 +67,7 @@ public final class InputEditorSelection
    {
       return new InputEditorSelection(
             start_,
-            end_.movePosition(end_.getLineLength(), false));
+            end_.movePosition(end_.getLineLength() - 1, false));
    }
 
    @Override
