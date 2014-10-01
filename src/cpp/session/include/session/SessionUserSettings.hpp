@@ -168,6 +168,7 @@ public:
    void setUseDevtools(bool useDevtools);
 
    int clangVerbose() const;
+   void setClangVerbose(int level);
 
 private:
 

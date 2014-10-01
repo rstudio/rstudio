@@ -23,4 +23,18 @@
          sep = "-")
 })
 
+.rs.addFunction( "isClangAvailable", function() {
+   .Call("rs_isLibClangAvailable")
+})
+
+.rs.addFunction( "setClangDiagnostics", function(level) {
+   if (!is.numeric(level) || (level < 0) || (level > 2))
+      stop("level must be 0, 1, or 2")
+   if (level > 0)
+      .rs.isClangAvailable()
+   .Call("rs_setClangDiagnostics", level)
+   .rs.restartR()
+   invisible(NULL)
+})
+
 

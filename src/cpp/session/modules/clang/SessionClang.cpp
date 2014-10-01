@@ -157,6 +157,13 @@ SEXP rs_isLibClangAvailable()
    return r::sexp::create(isAvailable, &rProtect);
 }
 
+SEXP rs_setClangDiagnostics(SEXP levelSEXP)
+{
+   int level = r::sexp::asInteger(levelSEXP);
+   userSettings().setClangVerbose(level);
+   return R_NilValue;
+}
+
 } // anonymous namespace
    
 bool isAvailable()
@@ -166,12 +173,18 @@ bool isAvailable()
 
 Error initialize()
 {
-   // register diagnostics function
-   R_CallMethodDef methodDef ;
-   methodDef.name = "rs_isLibClangAvailable" ;
-   methodDef.fun = (DL_FUNC)rs_isLibClangAvailable;
-   methodDef.numArgs = 0;
-   r::routines::addCallMethod(methodDef);
+   // register diagnostics functions
+   R_CallMethodDef methodDef1 ;
+   methodDef1.name = "rs_isLibClangAvailable" ;
+   methodDef1.fun = (DL_FUNC)rs_isLibClangAvailable;
+   methodDef1.numArgs = 0;
+   r::routines::addCallMethod(methodDef1);
+
+   R_CallMethodDef methodDef2 ;
+   methodDef2.name = "rs_setClangDiagnostics" ;
+   methodDef2.fun = (DL_FUNC)rs_setClangDiagnostics;
+   methodDef2.numArgs = 1;
+   r::routines::addCallMethod(methodDef2);
 
    // if we don't have a recent version of Rcpp (that can do dryRun with
    // sourceCpp) then forget it
