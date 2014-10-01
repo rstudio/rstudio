@@ -293,6 +293,53 @@ class Foo : public A
 [[[1, 2, 3,
 </pre></li>
 
+<li><pre data-expected="4">
+[]() noexcept {
+</pre></li>
+
+<li><pre data-expected="4">
+int foo(int a,
+        int b,
+        int c) const {
+</pre></li>
+
+<li><pre data-expected="4">
+int foo(int a,
+        int b,
+        int c) const noexcept {
+</pre></li>
+
+<li><pre data-expected="0">
+int foo(int a,
+        int b,
+        int c) const noexcept
+</pre></li>
+
+<li><pre data-expected="4">
+int foo(int a,
+        int b,
+        int c) noexcept :
+</pre></li>
+
+<li><pre data-expected="4">
+try {
+</pre></li>
+
+<li><pre data-expected="0">
+try
+</pre></li>
+
+<li><pre data-expected="4">
+try {
+} catch(Exception& e) {
+</pre></li>
+
+<li><pre data-expected="0">
+try {
+} catch(Exception& e)
+</pre></li>
+
+
 </ol>
 
 <script type="text/javascript">

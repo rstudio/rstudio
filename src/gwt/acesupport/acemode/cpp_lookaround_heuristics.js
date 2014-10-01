@@ -170,7 +170,6 @@ var CppLookaroundHeuristics = function() {};
       // Fail -- return null
       return null;
       
-      
    };
    
    // Given a row with a '{', we look back for the row that provides
@@ -215,12 +214,16 @@ var CppLookaroundHeuristics = function() {};
       
       var index = line.indexOf("//");
       if (index != -1) {
-         return line.substring(0, index);
+         line = line.substring(0, index);
       }
       
       if (reEndsWithBackslash.test(line)) {
-         return line.substring(0, line.lastIndexOf("\\"));
+         line = line.substring(0, line.lastIndexOf("\\"));
       }
+
+      line = line.replace(/bconst&\b/, "");
+      line = line.replace(/\bconst\b/, "");
+      line = line.replace(/\bnoexcept\b/, "");
       
       return line;
       

@@ -245,7 +245,11 @@ oop.inherits(Mode, TextMode);
          // effectively leverage the indentation rules within macro settings.
          line = this.getLineSansComments(doc, row);
          var cursor = session.getSelection().getCursor();
-         if (cursor) {
+
+         // Choose indentation for the current line based on the position
+         // of the cursor -- but make sure we only apply this if the
+         // cursor is on the same row as the line being indented
+         if (cursor && cursor.row == row) {
             line = line.substring(0, cursor.column);
          }
          lastLine = this.getLineSansComments(doc, row - 1);
