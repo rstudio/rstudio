@@ -418,6 +418,7 @@ public class AceEditor implements DocDisplay,
                completionManager = new CppCompletionManager(this,
                                                             this,
                                                             new Filter(),
+                                                            server_,
                                                             completionManager);
             }
          }
