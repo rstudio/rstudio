@@ -9,7 +9,7 @@ var CppLookaroundHeuristics = function() {};
    var reStartsWithCommaOrColon = /^\s*[,:]/;
    var reEndsWithComma = /,\s*$|,\s*\/\//;
    var reEndsWithColon = /:\s*$|:\s*\/\//;
-   var reClass = /\bclass\b/;
+   var reClassOrStruct = /\bclass\b|\bstruct\b/;
    var reEndsWithBackslash = /\\\s*$/;
 
    this.$complements = {
@@ -59,7 +59,7 @@ var CppLookaroundHeuristics = function() {};
             line = this.getLineSansComments(doc, row);
          }
 
-         if (reClass.test(line)) {
+         if (reClassOrStruct.test(line)) {
             return row;
          }
 
