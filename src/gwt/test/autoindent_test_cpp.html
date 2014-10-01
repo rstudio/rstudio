@@ -31,7 +31,13 @@
 <h2>Interactive Tester</h2>
 <div id="editor" style="width: 600px; height: 200px; border: 1px solid #999"></div>
 <div id="testEditor" style="display: none;"></div>
-<h2 style="margin-top: 250px">Automated Tests</h2>
+
+<div style="height: 200px;"></div>
+
+<h2>Configure Editor</h2>
+<button id="setBehavioursEnabled" onclick="editor.setBehavioursEnabled(!editor.getBehavioursEnabled())">Toggle Behaviour</button>
+
+<h2>Automated Tests</h2>
 <p>Passed: <span id="passed"></span>, Failed: <span id="failed"></span></p>
 <ol id="testcontainer" style="display: none;">
   

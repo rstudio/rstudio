@@ -66,7 +66,7 @@ var CStyleBehaviour = function () {
             };
          }
       }
-   })
+   });
 
    this.add("newline", "insertion", function(state, action, editor, session, text) {
 

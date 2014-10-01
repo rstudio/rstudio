@@ -557,7 +557,7 @@ oop.inherits(Mode, TextMode);
 
    this.autoOutdent = function(state, doc, row) {
       if (this.inRLanguageMode(state))
-         return this.$r_outdent.autoOutdent(state, doc, row);
+         return this.$r_outdent.autoOutdent(state, doc, row, this.codeModel);
       else
          return this.$outdent.autoOutdent(state, doc, row);
    };
