@@ -48,6 +48,8 @@ var RMatchingBraceOutdent = require("mode/r_matching_brace_outdent").RMatchingBr
 
 var CppLookaroundHeuristics = require("mode/cpp_lookaround_heuristics").CppLookaroundHeuristics;
 
+var getVerticallyAlignFunctionArgs = require("mode/r_code_model").getVerticallyAlignFunctionArgs;
+
 var Mode = function(suppressHighlighting, doc, session) {
    this.$session = session;
    this.$doc = doc;
@@ -181,6 +183,9 @@ oop.inherits(Mode, TextMode);
       // Defer to the R language indentation rules when in R language mode
       if (this.inRLanguageMode(state))
          return this.codeModel.getNextLineIndent(row, line, state, tab, tabSize);
+
+      // Ask the R code model if we want to use vertical alignment
+      var $verticallyAlignFunctionArgs = getVerticallyAlignFunctionArgs();
 
       var session = this.$session;
       var doc = session.getDocument();
@@ -344,7 +349,9 @@ oop.inherits(Mode, TextMode);
          //
          var match = line.match(/^(\s*for\s*\().*;\s*$/);
          if (match) {
-            return new Array(match[1].length + 1).join(" ");
+            return $verticallyAlignFunctionArgs ?
+               new Array(match[1].length + 1).join(" ") :
+               indent + tab;
          }
 
          // Unindent after leaving a naked for
@@ -370,7 +377,9 @@ oop.inherits(Mode, TextMode);
          //
          // this is for users who like to line up commas with colons
          if (/^\s*[:,]\s*[\w_]+\(.*\)\s*$/.test(line)) {
-            return this.$getIndent(line);
+            return $verticallyAlignFunctionArgs ?
+               this.$getIndent(line) :
+               indent + tab;
          }
 
          // If we're looking at a class with one inherited member
@@ -390,7 +399,9 @@ oop.inherits(Mode, TextMode);
          //
          // Note the absence of a closing comma.
          if (/^\s*class\s+[\w_]+\s*:\s*[\w_]+/.test(line) && !/,\s*/.test(line)) {
-            return new Array(line.indexOf(":") + 1).join(" ");
+            return $verticallyAlignFunctionArgs ?
+               new Array(line.indexOf(":") + 1).join(" ") :
+               indent + tab;
          }
 
          // If we're looking at a class with the first inheritted member
@@ -400,7 +411,9 @@ oop.inherits(Mode, TextMode);
          //               ^
          var match = line.match(/^(\s*(class|struct)\s+\w+\s*:\s*).*,\s*$/);
          if (match) {
-            return new Array(match[1].length + 1).join(" ");
+            return $verticallyAlignFunctionArgs ?
+               new Array(match[1].length + 1).join(" ") :
+               indent + tab;
          }
 
          // If we're looking at something like inheritance for a class, e.g.
@@ -411,7 +424,9 @@ oop.inherits(Mode, TextMode);
          // then indent according to the first word following the ':'.
          var match = line.match(/^(\s*:\s*)(\w+).*,\s*$/);
          if (match) {
-            return new Array(match[1].length + 1).join(" ");
+            return $verticallyAlignFunctionArgs ?
+               new Array(match[1].length + 1).join(" ") :
+               indent + tab;
          }
 
          // Similar to the above, but we have a leading colon with some
@@ -422,7 +437,9 @@ oop.inherits(Mode, TextMode);
          //       ^
          var match = line.match(/^(\s*)[:,]\s*[\w\s]*$/);
          if (match) {
-            return new Array(match[1].length + 1).join(" ");
+            return $verticallyAlignFunctionArgs ?
+               new Array(match[1].length + 1).join(" ") :
+               indent + tab;
          }
 
          // If the line ends with a parenthesis, indent based on the
@@ -493,11 +510,16 @@ oop.inherits(Mode, TextMode);
 
                var index = lIndices[indexToUse];
 
-               // Find the first character following the open token --
-               // this is where we want to set the indentation
-               var firstCharAfter = line.substr(index + 1).match(/([^\s])/);
+               if ($verticallyAlignFunctionArgs) {
 
-               return new Array(index + firstCharAfter.index + 2).join(" ");
+                  // Find the first character following the open token --
+                  // this is where we want to set the indentation
+                  var firstCharAfter = line.substr(index + 1).match(/([^\s])/);
+                  return new Array(index + firstCharAfter.index + 2).join(" ");
+                  
+               } else {
+                  return indent + tab;
+               }
                
             }
          }
@@ -521,7 +543,9 @@ oop.inherits(Mode, TextMode);
             });
 
             if (openBracePos) {
-               return this.$getIndent(lines[openBracePos.row]);
+               return $verticallyAlignFunctionArgs ?
+                  this.$getIndent(lines[openBracePos.row]) :
+                  indent + tab;
             }
          }
          
@@ -544,6 +568,7 @@ oop.inherits(Mode, TextMode);
             }
 
          }
+
 
          // If the closing character is an 'opener' (ie, one of
          // '(', '{', '[', or '<'), then indent

@@ -36,6 +36,7 @@
 
 <h2>Configure Editor</h2>
 <button id="setBehavioursEnabled" onclick="editor.setBehavioursEnabled(!editor.getBehavioursEnabled())">Toggle Behaviour</button>
+<button onclick="require('mode/r_code_model').setVerticallyAlignFunctionArgs(!require('mode/r_code_model').getVerticallyAlignFunctionArgs())">Toggle Vertical Alignment</button>
 
 <h2>Automated Tests</h2>
 <p>Passed: <span id="passed"></span>, Failed: <span id="failed"></span></p>
@@ -402,6 +403,7 @@ var passed = 0, failed = 0;
 var states = [ "" ];
 for (var i = 0; i < states.length; i++) 
 {
+  require('mode/r_code_model').setVerticallyAlignFunctionArgs(true);
    // Clone the tests for the new state
    var testnode = container.cloneNode(true);
    var header = document.createElement("h2");
