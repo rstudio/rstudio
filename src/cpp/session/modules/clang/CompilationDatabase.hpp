@@ -60,8 +60,8 @@ private:
    void updateForStandalone(const core::FilePath& cppPath);
 
    std::vector<std::string> rToolsArgs() const;
-   std::vector<std::string> rcppPrecompiledHeaderArgs(
-                                             const std::string& stdArg);
+   std::vector<std::string> precompiledHeaderArgs(const std::string& pkgName,
+                                                  const std::string& stdArg);
 
    std::vector<std::string> computeArgsForSourceFile(
                                           const core::FilePath& srcPath);

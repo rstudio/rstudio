@@ -15,8 +15,8 @@
 
 
 
-.rs.addFunction( "precompiledRcppPath", function(clangVersion) {
-   paste(packageVersion("Rcpp"),
+.rs.addFunction( "clangPCHPath", function(pkg, clangVersion) {
+   paste(packageVersion(pkg),
          R.version$platform,
          R.version$`svn rev`,
          clangVersion,

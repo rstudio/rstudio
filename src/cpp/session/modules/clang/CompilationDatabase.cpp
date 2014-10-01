@@ -439,6 +439,11 @@ inline bool endsWith(const std::string& input, const std::string& test)
    return boost::algorithm::ends_with(input, test);
 }
 
+std::string determinePCHPackage(const std::vector<std::string>&)
+{
+   return "Rcpp";
+}
+
 } // anonymous namespace
 
 
@@ -476,21 +481,29 @@ std::vector<std::string> CompilationDatabase::compileArgsForTranslationUnit(
          args = it->second;
    }
 
-   // if we are working on Rcpp then remove the automatically
-   // included Rcpp/include directory from the list (that allows us
-   // to use the local Rcpp/inst/include directory)
-   if (packageName == "Rcpp")
+   // bail if we have no args
+   if (args.empty())
+      return args;
+
+   // determine which precompiled headers to include (default to Rcpp
+   // but also check for RcppArmadillo)
+   std::string pchPackage = determinePCHPackage(args);
+
+   // remove automatically included directory for the package that we are
+   // currently working on (we'll rely on inst/include which should be
+   // picked up from the scan of Makevars)
+   if (!packageName.empty())
    {
       std::vector<std::string>::iterator it = std::find_if(
-                     args.begin(),
-                     args.end(),
-                     boost::bind(endsWith, _1, "Rcpp/include"));
+               args.begin(),
+               args.end(),
+               boost::bind(endsWith, _1, "/" + packageName + "/include"));
       if (it != args.end())
          args.erase(it);
    }
 
-   // add precompiled Rcpp headers if appropriate
-   if (!args.empty() && (packageName != "Rcpp"))
+   // add precompiled headers if they are not for this package
+   if (packageName != pchPackage)
    {
       std::string ext = filePath.extensionLowerCase();
       bool isCppFile = (ext == ".cc") || (ext == ".cpp");
@@ -499,7 +512,8 @@ std::vector<std::string> CompilationDatabase::compileArgsForTranslationUnit(
          // extract any -std= argument
          std::string stdArg = extractStdArg(args);
 
-         std::vector<std::string> pchArgs = rcppPrecompiledHeaderArgs(stdArg);
+         std::vector<std::string> pchArgs = precompiledHeaderArgs(pchPackage,
+                                                                  stdArg);
          std::copy(pchArgs.begin(),
                    pchArgs.end(),
                    std::back_inserter(args));
@@ -585,21 +599,22 @@ std::vector<std::string> CompilationDatabase::rToolsArgs() const
    return rToolsArgs_;
 }
 
-std::vector<std::string> CompilationDatabase::rcppPrecompiledHeaderArgs(
-                                                   const std::string& stdArg)
+std::vector<std::string> CompilationDatabase::precompiledHeaderArgs(
+                                                  const std::string& pkgName,
+                                                  const std::string& stdArg)
 {
    // args to return
    std::vector<std::string> args;
 
    // precompiled rcpp dir
-   const std::string kPrecompiledRcppDir = "libclang/precompiled/Rcpp";
-   FilePath precompiledRcppDir = module_context::userScratchPath().
-                                            childPath(kPrecompiledRcppDir);
+   const std::string kPrecompiledDir = "libclang/precompiled/" + pkgName;
+   FilePath precompiledDir = module_context::userScratchPath().
+                                            childPath(kPrecompiledDir);
 
    // platform/rcpp version specific directory name
    std::string clangVersion = clang().version().asString();
    std::string platformDir;
-   Error error = r::exec::RFunction(".rs.precompiledRcppPath", clangVersion)
+   Error error = r::exec::RFunction(".rs.clangPCHPath", pkgName, clangVersion)
                                                          .call(&platformDir);
    if (error)
    {
@@ -607,15 +622,15 @@ std::vector<std::string> CompilationDatabase::rcppPrecompiledHeaderArgs(
       return std::vector<std::string>();
    }
 
-   // if this path doesn't exist then blow away all Rcpp precompiled paths
+   // if this path doesn't exist then blow away all precompiled paths
    // and re-create this one. this enforces only storing precompiled headers
-   // for the current version of R/Rcpp -- if we didn't do this then the
+   // for the current version of R/Rcpp/pkg -- if we didn't do this then the
    // storage cost could really pile up over time (~25MB per PCH)
-   FilePath platformPath = precompiledRcppDir.childPath(platformDir);
+   FilePath platformPath = precompiledDir.childPath(platformDir);
    if (!platformPath.exists())
    {
-      // delete root rcpp directory
-      Error error = precompiledRcppDir.removeIfExists();
+      // delete root directory
+      Error error = precompiledDir.removeIfExists();
       if (error)
       {
          LOG_ERROR(error);
@@ -632,12 +647,15 @@ std::vector<std::string> CompilationDatabase::rcppPrecompiledHeaderArgs(
    }
 
    // now create the PCH if we need to
-   FilePath pchPath = platformPath.childPath("Rcpp" + stdArg + ".pch");
+   FilePath pchPath = platformPath.childPath(pkgName + stdArg + ".pch");
    if (!pchPath.exists())
    {
       // state cpp file for creating precompiled headers
-      FilePath cppPath = platformPath.childPath("Rcpp" + stdArg + ".cpp");
-      error = core::writeStringToFile(cppPath, "#include <Rcpp.h>\n");
+      FilePath cppPath = platformPath.childPath(pkgName + stdArg + ".cpp");
+      std::string contents;
+      boost::format fmt("#include <%1%.h>\n");
+      contents.append(boost::str(fmt % pkgName));
+      error = core::writeStringToFile(cppPath, contents);
       if (error)
       {
          LOG_ERROR(error);
