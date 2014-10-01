@@ -14,11 +14,9 @@
  * under the License.
  */
 
-
-// These variables are used by property providers.
-// (We also use them below.)
-var $wnd = window;
-var $doc = document;
+// Export into our name space
+// We do not consider any of these classes a public API and they will be changed as needed.
+$namespace.lib = $namespace.lib || {};
 
 /**
  * Construct an instance of the PropertyHelper.
@@ -50,7 +48,8 @@ PropertyHelper.prototype.__computePropValue = function(propName) {
     // TODO(dankurka): trigger this error in the ui
     // IE8 only has console defined if its dev tools have been opened before
     if ($wnd.console && $wnd.console.log) {
-      $wnd.console.log("provider for " + propName + " returned unexpected value: '" + val + "'");
+      $wnd.console.log("provider for " + propName
+          + " returned unexpected value: '" + val + "'");
     }
     throw "can't compute binding property value for " + propName;
   }
@@ -69,6 +68,9 @@ PropertyHelper.prototype.computeBindingProperties = function() {
   }
   return result;
 };
+
+// Export PropertyHelper to namespace
+$namespace.lib.PropertyHelper = PropertyHelper;
 
 /**
  * Create a dialog.
@@ -147,6 +149,9 @@ Dialog.prototype.hide = function() {
   $doc.body.removeChild(this.__dialog);
 };
 
+//Export Dialog to namespace
+$namespace.lib.Dialog = Dialog;
+
 /**
  * Construct a Recompiler object.
  * @constructor
@@ -155,10 +160,15 @@ Dialog.prototype.hide = function() {
  * @returns
  */
 function Recompiler(moduleName, permutationProperties) {
-  $wnd.__gwt_sdm__recompiler = $wnd.__gwt_sdm__recompiler || {};
-  $wnd.__gwt_sdm__recompiler.counter = $wnd.__gwt_sdm__recompiler.counter || 0;
-  $wnd.__gwt_sdm__recompiler.callbacks = $wnd.__gwt_sdm__recompiler.callback || {};
-  this.__globals = $wnd.__gwt_sdm__recompiler;
+  if ($wnd.__gwt_sdm_globals) {
+    this.__globals = $wnd.__gwt_sdm_globals;
+  } else {
+    this.__globals = {
+      callbackCounter: new Date().getTime(), // avoid cache hits
+      callbacks: {}
+    };
+    $wnd.__gwt_sdm_globals = this.__globals;
+  }
   this.__moduleName = moduleName;
   this.__permutationProperties = permutationProperties;
   this.__compiling = false;
@@ -175,7 +185,7 @@ Recompiler.prototype.__buildCompileUrl = function() {
     props.push($wnd.encodeURIComponent(key) + '=' +
         $wnd.encodeURIComponent(this.__permutationProperties[key]));
   }
-  return url + props.join('&') + '&';
+  return url + props.join('&');
 };
 
 /**
@@ -205,7 +215,7 @@ Recompiler.prototype.__jsonp = function(url, callback) {
     callback(json);
   };
 
-  var url = url + '_callback=__gwt_sdm__recompiler.callbacks.' + callback_id;
+  var url = url + '&_callback=__gwt_sdm_globals.callbacks.' + callback_id;
   var script = $doc.createElement('script');
   script.src = url;
   var $head = $doc.head || $doc.getElementsByTagName('head')[0];
@@ -268,65 +278,5 @@ Recompiler.prototype.getLogUrl = function() {
   return this.getCodeServerBaseUrl() + 'log/' + this.__moduleName;
 };
 
-/**
- * Construct the main class.
- *
- * @constructor
- * @param {string} moduleName
- * @param {Object} propertyProviders
- * @param {Object} propertyValues
- */
-function Main(moduleName, propertyProviders, propertyValues){
-  var propertyHelper = new PropertyHelper(moduleName, propertyProviders, propertyValues);
-  this.__moduleName = moduleName;
-  this.__dialog = new Dialog();
-  this.__recompiler = new Recompiler(moduleName, propertyHelper.computeBindingProperties());
-  // Publish a global variable to let others know that we have been loaded
-  $wnd.__gwt_sdm__recompiler = $wnd.__gwt_sdm__recompiler || {};
-  $wnd.__gwt_sdm__recompiler.loaded = true;
-}
-
-/**
- * Compile the current gwt module.
- */
-Main.prototype.compile = function() {
-  var that = this;
-  this.__dialog.clear();
-  this.__dialog.add(this.__dialog.createTextElement("div", "12pt", "Compiling " + this.__moduleName));
-  this.__dialog.show();
-  this.__recompiler.compile(function(result) {
-    that.__dialog.clear();
-    if (result.status != 'ok') {
-      that.__renderError(result);
-    } else {
-      that.__dialog.hide();
-      that.__recompiler.loadApp();
-    }
-  });
-};
-
-/**
- * Render an error if compile failed.
- * @param {object} result - the jsonp object from the compile server.
- */
-Main.prototype.__renderError = function(result) {
-  var that = this;
-  var link = this.__dialog.createTextElement('a', '16pt', result.status);
-  link.setAttribute('href', this.__recompiler.getLogUrl());
-  link.setAttribute('target', 'gwt_dev_mode_log');
-  link.style.color = 'red';
-  link.style.textDecoration = 'underline';
-  this.__dialog.add(link);
-
-  var button = this.__dialog.createTextElement('button', '12pt', 'Try Again');
-  button.onclick = function() {
-    that.compile();
-  };
-  button.style.marginLeft = '10px';
-  this.__dialog.add(button);
-};
-
-
-new Main(moduleName, providers, values).compile();
-
-
+//Export Recompiler to namespace
+$namespace.lib.Recompiler = Recompiler;

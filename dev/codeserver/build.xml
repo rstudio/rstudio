@@ -21,6 +21,7 @@
       <src path="java" />
       <src path="javatests" />
       <classpath>
+        <pathelement location="${gwt.root}/build/out/dev/bin-test"/>
         <pathelement location="${javac.out}"/>
         <pathelement location="${gwt.dev.jar}" />
         <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar" />
@@ -57,11 +58,14 @@
         test.out="${junit.out}/codeserver"
         test.cases="tests">
       <extraclasspaths>
+        <pathelement location="${gwt.root}/build/out/dev/bin-test"/>
         <pathelement location="${project.lib}"/>
         <pathelement location="${gwt.dev.jar}" />
         <!-- Pull in gwt-user sources -->
         <pathelement location="${gwt.root}/user/src/"/>
         <pathelement location="${gwt.root}/user/super/"/>
+        <pathelement location="java/" />
+        <pathelement location="javatests/" />
       </extraclasspaths>
     </gwt.junit>
   </target>

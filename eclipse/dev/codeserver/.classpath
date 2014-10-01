@@ -10,5 +10,6 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jetty/jetty-8.1.12.v20130726/servlet-api-3.0-NoMetaInf.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/junit/junit-4.8.2.jar" sourcepath="/GWT_TOOLS/lib/junit/junit-4.8.2-src.zip"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/gwt-dev"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/gwt-user"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

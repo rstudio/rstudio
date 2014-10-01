@@ -51,7 +51,6 @@ import com.google.gwt.thirdparty.guava.common.io.Resources;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -260,13 +259,20 @@ class Recompiler {
 
     String outputModuleName = module.getName();
     try {
-      URL resource = Resources.getResource(Recompiler.class, "recompile.nocache.js");
-      String stub = Resources.toString(resource, Charsets.UTF_8);
-      return "(function() {\n"
-      + " var moduleName = '" + outputModuleName  + "';\n"
-      + PropertiesUtil.generatePropertiesSnippet(module, compileLogger)
-      + stub
-      + "})();\n";
+      String templateJs = Resources.toString(
+          Resources.getResource(Recompiler.class, "recompile_template.js"), Charsets.UTF_8);
+      String propertyProviders = PropertiesUtil.generatePropertiesSnippet(module, compileLogger);
+      String libJs = Resources.toString(
+          Resources.getResource(Recompiler.class, "recompile_lib.js"), Charsets.UTF_8);
+      String recompileJs = Resources.toString(
+          Resources.getResource(Recompiler.class, "recompile_main.js"), Charsets.UTF_8);
+      templateJs = templateJs.replace("__MODULE_NAME__", "'" + outputModuleName + "'");
+      templateJs = templateJs.replace("__PROPERTY_PROVIDERS__", propertyProviders);
+      templateJs = templateJs.replace("__LIB_JS__", libJs);
+      templateJs = templateJs.replace("__MAIN__", recompileJs);
+
+      return templateJs;
+
     } catch (IOException e) {
       compileLogger.log(Type.ERROR, "Can not generate + " + outputModuleName
           + " + .recompile.nocache.js", e);
