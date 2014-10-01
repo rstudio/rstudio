@@ -10,6 +10,7 @@ var CppLookaroundHeuristics = function() {};
    var reEndsWithComma = /,\s*$|,\s*\/\//;
    var reEndsWithColon = /:\s*$|:\s*\/\//;
    var reClass = /\bclass\b/;
+   var reEndsWithBackslash = /\\\s*$/;
 
    this.$complements = {
       "<" : ">",
@@ -41,12 +42,12 @@ var CppLookaroundHeuristics = function() {};
       var canRetry = true;
 
       var startRow = row;
-      var firstLine = this.getLineWithoutComments(doc, startRow);
+      var firstLine = this.getLineSansComments(doc, startRow);
 
       // If the first line is just an open brace, go up one
       if (/^\s*\{\s*$/.test(firstLine)) {
          row = row - 1;
-         firstLine = this.getLineWithoutComments(doc, row);
+         firstLine = this.getLineSansComments(doc, row);
       }
 
       while (count < maxLookback && row >= 0) {
@@ -55,7 +56,7 @@ var CppLookaroundHeuristics = function() {};
          if (count == 0) {
             line = firstLine;
          } else {
-            line = this.getLineWithoutComments(doc, row);
+            line = this.getLineSansComments(doc, row);
          }
 
          if (reClass.test(line)) {
@@ -65,7 +66,7 @@ var CppLookaroundHeuristics = function() {};
          // If this line starts with a colon, check the previous line
          // for a parenthesis to indent with.
          if (reStartsWithColon.test(line)) {
-            var prevLine = this.getLineWithoutComments(doc, row - 1);
+            var prevLine = this.getLineSansComments(doc, row - 1);
             if (/\)\s*$/.test(prevLine)) {
                
                var openParenPos = session.findMatchingBracket({
@@ -128,7 +129,7 @@ var CppLookaroundHeuristics = function() {};
    this.getRowForOpenBraceIndentFunctionStyle = function(session, row, maxLookback) {
 
       var doc = session.getDocument();
-      var firstLine = this.getLineWithoutComments(doc, row);
+      var firstLine = this.getLineSansComments(doc, row);
 
       // Fallback to indentation for functions, e.g.
       //
@@ -152,7 +153,7 @@ var CppLookaroundHeuristics = function() {};
       //   int foo(int a, int b,
       //           int c, int d)
       //   {
-      var prevLine = this.getLineWithoutComments(doc, row - 1);
+      var prevLine = this.getLineSansComments(doc, row - 1);
 
       if (/\s*\{\s*$/.test(firstLine) && /\)\s*$/.test(prevLine)) {
 
@@ -206,14 +207,23 @@ var CppLookaroundHeuristics = function() {};
       
    };
 
-   // Get a line, with comments (following '//') stripped.
-   this.getLineWithoutComments = function(doc, row) {
+   // Get a line, with comments (following '//') stripped. Also strip
+   // a trailing '\' anticipating e.g. macros.
+   this.getLineSansComments = function(doc, row) {
+      
       var line = doc.getLine(row);
+      
       var index = line.indexOf("//");
       if (index != -1) {
          return line.substring(0, index);
       }
+      
+      if (reEndsWithBackslash.test(line)) {
+         return line.substring(0, line.lastIndexOf("\\"));
+      }
+      
       return line;
+      
    };
 
    // Find the row for which a matching character for the character

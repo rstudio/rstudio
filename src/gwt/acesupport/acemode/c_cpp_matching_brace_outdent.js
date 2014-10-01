@@ -42,7 +42,7 @@ var MatchingBraceOutdent = function() {
             return true;
          }
 
-         if (/^\s*[\{\}\>]/.test(input)) {
+         if (/^\s*[\{\}\>\]]/.test(input)) {
             return true;
          }
 
@@ -64,10 +64,10 @@ var MatchingBraceOutdent = function() {
    this.autoOutdent = function(state, session, row) {
 
       var doc = session.doc;
-      var line = this.$heuristics.getLineWithoutComments(doc, row);
+      var line = this.$heuristics.getLineSansComments(doc, row);
       var lastLine = null;
       if (row > 0)
-         lastLine = this.$heuristics.getLineWithoutComments(doc, row - 1);
+         lastLine = this.$heuristics.getLineSansComments(doc, row - 1);
       var indent = this.$getIndent(line);
 
       // If we just inserted a '{' on a blank line after a naked else,
@@ -155,6 +155,21 @@ var MatchingBraceOutdent = function() {
 
       }
 
+      // If we inserted ']' on a blank line, match the indentation
+      // of its associated '['.
+      if (/^\s*\]/.test(line)) {
+
+         var openBracketPos = session.findMatchingBracket({
+            row: row,
+            column: line.lastIndexOf("]") + 1
+         });
+
+         if (openBracketPos) {
+            this.setIndent(session, row, openBracketPos.row);
+            return;
+         }
+      }
+
       // if we just typed 'public:', 'private:' or 'protected:',
       // we should outdent if possible. Do so by looking for the
       // enclosing 'class' scope.
@@ -166,7 +181,7 @@ var MatchingBraceOutdent = function() {
          var maxLookback = 200;
          var count = 0;
          for (var i = row; i >= 0; i--) {
-            var line = this.$heuristics.getLineWithoutComments(doc, i);
+            var line = this.$heuristics.getLineSansComments(doc, i);
             match = line.match(/\bclass\b/);
             if (match) {
                len = match.index;
@@ -193,7 +208,7 @@ var MatchingBraceOutdent = function() {
          var maxLookback = 200;
          var count = 0;
          for (var i = row; i >= 0; i--) {
-            var line = this.$heuristics.getLineWithoutComments(doc, i);
+            var line = this.$heuristics.getLineSansComments(doc, i);
             match = line.match(/\bswitch\b/);
             if (match) {
                len = match.index;

@@ -255,6 +255,30 @@ Foo(int a, int b):
           d_(d), e_(e), f_(f)
     {
 </pre></li>
+
+<li><pre data-expected="13">
+std::find_if(x.begin(),
+</pre></li>
+
+<li><pre data-expected="13">
+std::find_if(x.begin(),
+             x.end(),
+</pre></li>
+
+<li><pre data-expected="4">
+std::find_if(x.begin(),
+             x.end(),
+             [](x) {
+</pre></li>
+
+<li><pre data-expected="5">
+foo( int a,
+</pre></li>
+
+<li><pre data-expected="10">
+class Foo : public A
+</pre></li>
+
 </ol>
 
 <script type="text/javascript">

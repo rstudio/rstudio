@@ -69,15 +69,28 @@ var Mode = function(suppressHighlighting, doc, session) {
       this.foldingRules = new CppStyleFoldMode();
 
    this.$heuristics = new CppLookaroundHeuristics();
+   this.getLineSansComments = this.$heuristics.getLineSansComments;
 
 };
 oop.inherits(Mode, TextMode);
 
 (function() {
 
+   var that = this;
+
    var reStartsWithOpenBrace = /^\s*\{/;
    var reStartsWithDefine = /^\s*#define/;
    var reEndsWithBackslash = /\\\s*$/;
+
+   this.allIndicesOf = function(string, character) {
+      var result = [];
+      for (var i = 0; i < string.length; i++) {
+         if (string[i] == character) {
+            result.push(i);
+         }
+      }
+      return result;
+   };
 
    this.insertChunkInfo = {
       value: "/*** R\n\n*/\n",
@@ -165,17 +178,18 @@ oop.inherits(Mode, TextMode);
 
    this.getNextLineIndent = function(state, line, tab, tabSize, row) {
 
-      var session = this.$session;
-
       // Defer to the R language indentation rules when in R language mode
       if (this.inRLanguageMode(state))
          return this.codeModel.getNextLineIndent(row, line, state, tab, tabSize);
 
+      var session = this.$session;
+      var doc = session.getDocument();
+
       var indent = this.$getIndent(line);
       var unindent = this.$getUnindent(line, tabSize);
       
-      var lines = this.$doc.$lines;
-
+      var lines = doc.$lines;
+      
       var lastLine;
       if (row > 0) {
          lastLine = lines[row - 1];
@@ -206,10 +220,6 @@ oop.inherits(Mode, TextMode);
       // Rules for the 'general' state
       if (state == "start") {
 
-         // Decisions made should not depend on trailing comments in the line
-         // So, we strip those out for the purposes of indentation
-         line = line.replace(/\/\/.*/, "");
-         lastLine = lastLine.replace(/\/\/.*/, "");
 
          /**
           * We start by checking some special-cases for indentation --
@@ -228,8 +238,16 @@ oop.inherits(Mode, TextMode);
             return unindent;
          }
 
+         // Decisions made should not depend on trailing comments in the line
+         // So, we strip those out for the purposes of indentation.
+         //
+         // Note that we strip _after_ the define steps so that we can
+         // effectively leverage the indentation rules within macro settings.
+         line = this.getLineSansComments(doc, row);
+         lastLine = this.getLineSansComments(doc, row - 1);
+
          // Only indent on an ending '>' if we're not in a template
-         // We can do this by checking for a matching '>'
+         // We can do this by checking for a matching '<'
          if (/>\s*$/.test(line)) {
             var loc = this.$heuristics.findMatchingBracketRow(">", lines, row, 50);
             if (loc >= 0) {
@@ -246,7 +264,7 @@ oop.inherits(Mode, TextMode);
             var blockStartRow = this.$heuristics.findStartOfCommentBlock(
                lines,
                row,
-               100
+               200
             );
             
             if (blockStartRow >= 0) {
@@ -275,9 +293,6 @@ oop.inherits(Mode, TextMode);
          // for templates (it's handled above)
          var reEndsWithOperator = /[\+\-\/\*\|\<\&\^\%\=]\s*$/;
          if (reEndsWithOperator.test(line)) {
-            if (reEndsWithOperator.test(lastLine)) {
-               return indent;
-            }
             return indent + tab;
          }
 
@@ -350,16 +365,6 @@ oop.inherits(Mode, TextMode);
             return this.$getIndent(line);
          }
 
-         // If we're looking at a class with the first inheritted member
-         // on the same line, e.g.
-         //
-         //   class Foo : public A,
-         //               ^
-         var match = line.match(/^(\s*(class|struct)\s+\w+\s*:\s*).*,\s*$/);
-         if (match) {
-            return new Array(match[1].length + 1).join(" ");
-         }
-
          // If we're looking at a class with one inherited member
          // on the same line, e.g.
          //
@@ -369,6 +374,25 @@ oop.inherits(Mode, TextMode);
          var match = line.match(/^\s*(class|struct)\s+\w+\s*:\s*.*\{\s*$/);
          if (match) {
             return indent + tab;
+         }
+
+         // Match the indentation of the ':' in a statement e.g.
+         //
+         //   class Foo : public A
+         //
+         // Note the absence of a closing comma.
+         if (/^\s*class\s+[\w_]+\s*:\s*[\w_]+/.test(line) && !/,\s*/.test(line)) {
+            return new Array(line.indexOf(":") + 1).join(" ");
+         }
+
+         // If we're looking at a class with the first inheritted member
+         // on the same line, e.g.
+         //
+         //   class Foo : public A,
+         //               ^
+         var match = line.match(/^(\s*(class|struct)\s+\w+\s*:\s*).*,\s*$/);
+         if (match) {
+            return new Array(match[1].length + 1).join(" ");
          }
 
          // If we're looking at something like inheritance for a class, e.g.
@@ -437,31 +461,65 @@ oop.inherits(Mode, TextMode);
          //       : a_(a),
          //         b_(b),
          //         ^
-         if (line.match(/,\s*$/)) {
+         var bracePos = /^.*([\[\{\(]).+,\s*$/.exec(line);
+         if (bracePos) {
 
-            // Get the balance of parentheses on the line
-            var leftParens = line.split("(").length - 1;
-            var rightParens = line.split(")").length - 1;
+            // Loop through the openers until we find an unmatched brace on
+            // the line
+            var openers = ["(", "{", "["];
+            for (var i = 0; i < openers.length; i++) {
 
-            if (leftParens > rightParens) {
-               // get the associated brace position
-               var bracePos = line.match(/[[{(]/);
-               if (bracePos) {
-                  var firstCharAfter = line.substr(bracePos.index).match(/([^\s])/);
-                  var idx = firstCharAfter.index;
+               // Get the character alongside its complement
+               var lChar = openers[i];
+               var rChar = this.$heuristics.$complements[lChar];
 
-                  // Nudge out if the brace we just looked at was unmatched
-                  var complement = this.$heuristics.$complements[firstCharAfter[1]];
-                  if (!line.match("\\" + complement)) {
-                     idx += 1;
-                  }
+               // Get the indices for matches of the character and its complement
+               var lIndices = this.allIndicesOf(line, lChar);
+               if (!lIndices.length) continue;
+               
+               var rIndices = this.allIndicesOf(line, rChar);
 
-                  return Array(idx + bracePos.index + 1).join(" ");
+               // Get the index -- we use the first unmatched index
+               var indexToUse = lIndices.length - rIndices.length - 1;
+               if (indexToUse < 0) continue;
 
-               }
-            } else {
-               return indent;
+               var index = lIndices[indexToUse];
+
+               // Find the first character following the open token --
+               // this is where we want to set the indentation
+               var firstCharAfter = line.substr(index + 1).match(/([^\s])/);
+
+               return new Array(index + firstCharAfter.index + 2).join(" ");
+               
             }
+         }
+
+         // Vertical alignment for closing parens
+         //
+         // This allows us to infer an appropriate indentation for things
+         // like multi-dimensional arrays, e.g.
+         //
+         //   [
+         //      [1, 2, 3,
+         //       4, 5, 6,
+         //       7, 8, 9],
+         //      ^
+         var match = /([\]\}\)]),\s*$/.exec(line);
+         if (match) {
+            
+            var openBracePos = session.findMatchingBracket({
+               row: row,
+               column: match.index + 1
+            });
+
+            if (openBracePos) {
+               return this.$getIndent(lines[openBracePos.row]);
+            }
+         }
+         
+         // Simpler comma ending indentation
+         if (/,\s*$/.test(line)) {
+            return indent;
          }
 
          // Indent based on lookaround heuristics
