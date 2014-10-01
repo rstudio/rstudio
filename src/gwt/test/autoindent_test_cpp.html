@@ -199,14 +199,6 @@ Foo(int a,
       c_(c) {
 </pre></li>
 
-<li><pre data-expected="0">
-Foo(int a,
-    int b)
-    : a_(a),
-      b_(b),
-      c_(c)
-</pre></li>
-
 <li><pre data-expected="4">
 class Foo :
     public A,
@@ -251,6 +243,18 @@ class Foo : public A,
 };
 </pre></li>
 
+<li><pre data-expected="4">
+Foo(int a, int b):
+    a_(a),
+</pre></li>
+
+<li><pre data-expected="8">
+    Foo(int a, int b, int c,
+        int d, int e, int f)
+        : a_(a), b_(b), c_(c),
+          d_(d), e_(e), f_(f)
+    {
+</pre></li>
 </ol>
 
 <script type="text/javascript">

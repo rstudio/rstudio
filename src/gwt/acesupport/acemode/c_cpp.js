@@ -281,15 +281,15 @@ oop.inherits(Mode, TextMode);
             return indent + tab;
          }
 
-         // Indent after a 'case foo'
-         if (/\s*case\s+[\w_'"]+/.test(line)) {
-            return indent + tab;
-         }
-
          // Indent if the line ends on an operator token
          // Can't include > here since they may be used
          // for templates (it's handled above)
          if (/[\+\-\/\*\|\<\&\^\%\=]\s*$/.test(line)) {
+            return indent + tab;
+         }
+
+         // Indent after a 'case foo'
+         if (/\s*case\s+[\w_'"]+/.test(line)) {
             return indent + tab;
          }
 
@@ -325,7 +325,8 @@ oop.inherits(Mode, TextMode);
          }
 
          // Unindent after leaving a naked for
-         if (/^\s*for\s*\(.*\)\s*$/.test(lastLine) && !/^\s*\{/.test(line)) {
+         if (/^\s*for\s*\(.*\)\s*$/.test(lastLine) &&
+             !/^\s*\{/.test(line)) {
             return unindent;
          }
          
@@ -347,11 +348,6 @@ oop.inherits(Mode, TextMode);
          // this is for users who like to line up commas with colons
          if (/^\s*[:,]\s*[\w_]+\(.*\)\s*$/.test(line)) {
             return this.$getIndent(line);
-         }
-
-         // Indent following a closing paren
-         if (/\)\s*$/.test(line)) {
-            return indent + tab;
          }
 
          // If we're looking at a class with the first inheritted member
@@ -423,33 +419,46 @@ oop.inherits(Mode, TextMode);
          // We need to handle vertical alignment for two scenarios:
          // One, for multi-line function declarations, so that e.g.
          //
-         // void foo(int a, int b, 
-         //
-         //          ^
+         //   void foo(int a, int b, 
+         //            ^
          //
          // and two, for cases where we have multiple objects. Maybe
          // this can just be specialized for {.
-         // static object foo {
-         //      {foo, bar},
          //
-         //      ^
+         //   static object foo {
+         //        {foo, bar},
+         //        ^
          //
+         // Only do this if there are more opening parens than closing parens
+         // on the line, so that indentation for e.g. initialization lists
+         // work as expected:
+         //
+         //   Foo(Foo const& other)
+         //       : a_(a),
+         //         b_(b),
+         //         ^
          if (line.match(/,\s*$/)) {
 
-            // get the associated brace position
-            var bracePos = line.match(/[[{(]/);
-            if (bracePos) {
-               var firstCharAfter = line.substr(bracePos.index).match(/([^\s])/);
-               var idx = firstCharAfter.index;
+            // Get the balance of parentheses on the line
+            var leftParens = line.split("(").length - 1;
+            var rightParens = line.split(")").length - 1;
 
-               // Nudge out if the brace we just looked at was unmatched
-               var complement = this.$heuristics.$complements[firstCharAfter[1]];
-               if (!line.match("\\" + complement)) {
-                  idx += 1;
+            if (leftParens > rightParens) {
+               // get the associated brace position
+               var bracePos = line.match(/[[{(]/);
+               if (bracePos) {
+                  var firstCharAfter = line.substr(bracePos.index).match(/([^\s])/);
+                  var idx = firstCharAfter.index;
+
+                  // Nudge out if the brace we just looked at was unmatched
+                  var complement = this.$heuristics.$complements[firstCharAfter[1]];
+                  if (!line.match("\\" + complement)) {
+                     idx += 1;
+                  }
+
+                  return Array(idx + bracePos.index + 1).join(" ");
+
                }
-
-               return Array(idx + bracePos.index + 1).join(" ");
-
             } else {
                return indent;
             }
@@ -457,7 +466,7 @@ oop.inherits(Mode, TextMode);
 
          // Indent based on lookaround heuristics
          if (!/^\s*$/.test(line)) {
-            
+
             var heuristicRow = this.$heuristics.getRowForOpenBraceIndent(
                this.$session,
                row,

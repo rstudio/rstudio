@@ -23,21 +23,10 @@ var CppLookaroundHeuristics = function() {};
       "'" : "'",
       '"' : '"'
    };
-   
-   // Given a row with a '{', we look back for the row that provides
-   // the start of the scope, for purposes of indentation. We look back
-   // for:
-   //
-   // 1. A class token, or
-   // 2. A constructor with an initializer list.
-   //
-   // Return 'null' if no row could be found, and the corresponding row
-   // otherwise.
-   this.getRowForOpenBraceIndent = function(session, row, maxLookback) {
 
-      var lines = session.getDocument().$lines;
-      if (lines.length <= 1) return null;
-      
+   this.getRowForOpenBraceIndentClassStyle = function(session, row, maxLookback) {
+
+      var doc = session.getDocument();
       var count = 0;
 
       // We allow one 'miss' as far as looking for lines that start/end
@@ -48,18 +37,25 @@ var CppLookaroundHeuristics = function() {};
       //               public C
       //   {
       //
-      // as the first line we view wil not have any commas or colons.
+      // as the first line we view will not have any commas or colons.
       var canRetry = true;
 
       var startRow = row;
-      var firstLine = lines[startRow].replace(/\/\/.*/, "");
+      var firstLine = this.getLineWithoutComments(doc, startRow);
+
+      // If the first line is just an open brace, go up one
+      if (/^\s*\{\s*$/.test(firstLine)) {
+         row = row - 1;
+         firstLine = this.getLineWithoutComments(doc, row);
+      }
 
       while (count < maxLookback && row >= 0) {
 
+         var line;
          if (count == 0) {
-            var line = firstLine;
+            line = firstLine;
          } else {
-            var line = lines[row].replace(/\/\/.*/, "");
+            line = this.getLineWithoutComments(doc, row);
          }
 
          if (reClass.test(line)) {
@@ -69,7 +65,7 @@ var CppLookaroundHeuristics = function() {};
          // If this line starts with a colon, check the previous line
          // for a parenthesis to indent with.
          if (reStartsWithColon.test(line)) {
-            var prevLine = lines[row - 1].replace(/\/\/.*/, "");
+            var prevLine = this.getLineWithoutComments(doc, row - 1);
             if (/\)\s*$/.test(prevLine)) {
                
                var openParenPos = session.findMatchingBracket({
@@ -124,6 +120,16 @@ var CppLookaroundHeuristics = function() {};
          row--;
       }
 
+      // Return null on failure
+      return null;
+      
+   };
+
+   this.getRowForOpenBraceIndentFunctionStyle = function(session, row, maxLookback) {
+
+      var doc = session.getDocument();
+      var firstLine = this.getLineWithoutComments(doc, row);
+
       // Fallback to indentation for functions, e.g.
       //
       //   int foo(int a, int b,
@@ -132,8 +138,27 @@ var CppLookaroundHeuristics = function() {};
       if (/\)\s*\{/.test(firstLine)) {
          
          var openParenPos = session.findMatchingBracket({
-            row: startRow,
+            row: row,
             column: firstLine.lastIndexOf(")") + 1
+         });
+
+         if (openParenPos) {
+            return openParenPos.row;
+         }
+      }
+
+      // Fallback to indentation for functions, e.g.
+      //
+      //   int foo(int a, int b,
+      //           int c, int d)
+      //   {
+      var prevLine = this.getLineWithoutComments(doc, row - 1);
+
+      if (/\s*\{\s*$/.test(firstLine) && /\)\s*$/.test(prevLine)) {
+
+         var openParenPos = session.findMatchingBracket({
+            row: row - 1,
+            column: prevLine.lastIndexOf(")") + 1
          });
 
          if (openParenPos) {
@@ -143,6 +168,42 @@ var CppLookaroundHeuristics = function() {};
 
       // Fail -- return null
       return null;
+      
+      
+   };
+   
+   // Given a row with a '{', we look back for the row that provides
+   // the start of the scope, for purposes of indentation. We look back
+   // for:
+   //
+   // 1. A class token, or
+   // 2. A constructor with an initializer list.
+   //
+   // Return 'null' if no row could be found, and the corresponding row
+   // otherwise.
+   this.getRowForOpenBraceIndent = function(session, row, maxLookback) {
+
+      var doc = session.getDocument();
+      var lines = doc.$lines;
+      if (lines.length <= 1) return null;
+
+      // First, try class-style indentation lookup
+      var classStyleIndent =
+             this.getRowForOpenBraceIndentClassStyle(session, row, maxLookback);
+      if (classStyleIndent !== null) {
+         return classStyleIndent;
+      }
+
+      // Then, try function-style indentation lookup
+      var fnStyleIndent =
+             this.getRowForOpenBraceIndentFunctionStyle(session, row, maxLookback);
+      if (fnStyleIndent !== null) {
+         return fnStyleIndent;
+      }
+
+      // Give up and return null
+      return null;
+      
    };
 
    // Get a line, with comments (following '//') stripped.

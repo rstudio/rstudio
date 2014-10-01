@@ -114,6 +114,16 @@ var MatchingBraceOutdent = function() {
 
          if (openBracketPos !== null) {
 
+            // If the open brace lies on its own line, match its indentation
+            var openBracketLine =
+                   doc.$lines[openBracketPos.row].replace(/\/\/.*/, "");
+            
+            if (/^\s*\{\s*$/.test(openBracketLine)) {
+               this.setIndent(session, row, openBracketPos.row);
+               return;
+            }
+
+            // Otherwise, try looking upwards to get an appropriate indentation
             var heuristicRow = this.$heuristics.getRowForOpenBraceIndent(
                session,
                openBracketPos.row,
@@ -228,7 +238,7 @@ var MatchingBraceOutdent = function() {
 
          var scopeRow = this.$heuristics.getRowForOpenBraceIndent(
             session,
-            row - 1, // since we're matching '{' as first char on line, go up one
+            row - 1,
             20
          );
 
@@ -237,20 +247,6 @@ var MatchingBraceOutdent = function() {
             return;
          }
 
-         // If we just inserted a '{' on a blank line, look upwards to
-         // determine an appropriate indentation if necessary.
-         // This test has to come later as we want to handle
-         // constructors with initializer lists first.
-         if (/^\s*\{/.test(line) && /.*\)\s*/.test(lastLine)) {
-            
-            var openBracePos = session.findMatchingBracket({
-               row: row - 1,
-               column: lastLine.length
-            });
-
-            this.setIndent(session, row, openBracePos.row);
-            return;
-         }
       }
 
       // Default matching rules
