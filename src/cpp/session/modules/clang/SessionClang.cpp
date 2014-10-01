@@ -24,6 +24,7 @@
 
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
+#include <r/ROptions.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
@@ -129,6 +130,11 @@ bool haveRequiredRcpp()
    return module_context::isPackageVersionInstalled("Rcpp", kRequiredRcpp);
 }
 
+bool cppIndexingDisabled()
+{
+   return ! r::options::getOption<bool>("rstudio.indexCpp", true, false);
+}
+
 // diagnostic function to assist in determine whether/where
 // libclang was loaded from (and any errors which occurred
 // that prevented loading, e.g. inadequate version, missing
@@ -138,8 +144,14 @@ SEXP rs_isLibClangAvailable()
    bool isAvailable = false;
    std::string diagnostics;
 
+   // check for explicit disable
+   if (cppIndexingDisabled())
+   {
+      diagnostics = "Libclang is disabled because the rstudio.indexCpp "
+                    "option is set to FALSE\n";
+   }
    // check for required Rcpp
-   if (haveRequiredRcpp())
+   else if (haveRequiredRcpp())
    {
       isAvailable = isLibClangAvailable(&diagnostics);
    }
@@ -186,6 +198,20 @@ Error initialize()
    methodDef2.numArgs = 1;
    r::routines::addCallMethod(methodDef2);
 
+   ExecBlock initBlock ;
+   using boost::bind;
+   using namespace module_context;
+   initBlock.addFunctions()
+      (bind(sourceModuleRFile, "SessionClang.R"))
+      (bind(registerRpcMethod, "print_cpp_completions", printCppCompletions));
+   Error error = initBlock.execute();
+   if (error)
+      return error;
+
+   // if we have disabled indexing then forget it
+   if (cppIndexingDisabled())
+      return Success();
+
    // if we don't have a recent version of Rcpp (that can do dryRun with
    // sourceCpp) then forget it
    if (!haveRequiredRcpp())
@@ -212,13 +238,7 @@ Error initialize()
    source_database::events().onRemoveAll.connect(
              boost::bind(onAllSourceDocsRemoved, pIdToFile));
 
-   ExecBlock initBlock ;
-   using boost::bind;
-   using namespace module_context;
-   initBlock.addFunctions()
-      (bind(sourceModuleRFile, "SessionClang.R"))
-      (bind(registerRpcMethod, "print_cpp_completions", printCppCompletions));
-   return initBlock.execute();
+   return Success();
 }
 
 
