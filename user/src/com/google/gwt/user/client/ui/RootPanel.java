@@ -15,8 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.client.impl.Disposable;
-import com.google.gwt.core.client.impl.Impl;
 import com.google.gwt.dom.client.BodyElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -261,12 +259,6 @@ public class RootPanel extends AbsolutePanel {
   }-*/;
 
   private static void hookWindowClosing() {
-    Impl.scheduleDispose(new Disposable() {
-      @Override
-      public void dispose() {
-        detachWidgets();
-      }
-    });
     // Catch the window closing event.
     Window.addCloseHandler(new CloseHandler<Window>() {
       public void onClose(CloseEvent<Window> closeEvent) {

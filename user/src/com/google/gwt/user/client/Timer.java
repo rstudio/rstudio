@@ -16,7 +16,6 @@
 package com.google.gwt.user.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.impl.Impl;
 
 /**
  * A simplified, browser-safe timer class. This class serves the same purpose as
@@ -40,10 +39,6 @@ import com.google.gwt.core.client.impl.Impl;
  * </p>
  */
 public abstract class Timer {
-
-  private static native JavaScriptObject createCallback(Timer timer, int cancelCounter) /*-{
-    return $entry(function() { timer.@com.google.gwt.user.client.Timer::fire(I)(cancelCounter); });
-  }-*/;
 
   private boolean isRepeating;
 
@@ -73,9 +68,9 @@ public abstract class Timer {
 
     cancelCounter++;
     if (isRepeating) {
-      Impl.clearInterval(timerId);
+      clearInterval(timerId);
     } else {
-      Impl.clearTimeout(timerId);
+      clearTimeout(timerId);
     }
     timerId = null;
   }
@@ -100,7 +95,7 @@ public abstract class Timer {
       cancel();
     }
     isRepeating = false;
-    timerId = Impl.setTimeout(createCallback(this, cancelCounter), delayMillis);
+    timerId = setTimeout(createCallback(this, cancelCounter), delayMillis);
   }
 
   /**
@@ -118,7 +113,7 @@ public abstract class Timer {
       cancel();
     }
     isRepeating = true;
-    timerId = Impl.setInterval(createCallback(this, cancelCounter), periodMillis);
+    timerId = setInterval(createCallback(this, cancelCounter), periodMillis);
   }
 
   /*
@@ -139,4 +134,24 @@ public abstract class Timer {
     // Run the timer's code.
     run();
   }
+
+  private static native JavaScriptObject createCallback(Timer timer, int cancelCounter) /*-{
+    return $entry(function() { timer.@Timer::fire(I)(cancelCounter); });
+  }-*/;
+
+  private static native int setInterval(JavaScriptObject func, int time) /*-{
+    return $wnd.setInterval(func, time);
+  }-*/;
+
+  private static native int setTimeout(JavaScriptObject func, int time) /*-{
+    return $wnd.setTimeout(func, time);
+  }-*/;
+
+  private static native void clearInterval(int timerId) /*-{
+    $wnd.clearInterval(timerId);
+  }-*/;
+
+  private static native void clearTimeout(int timerId) /*-{
+    $wnd.clearTimeout(timerId);
+  }-*/;
 }

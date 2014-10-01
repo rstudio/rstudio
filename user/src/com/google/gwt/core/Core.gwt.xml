@@ -47,15 +47,6 @@
   <define-configuration-property name="iframe.linker.suppressDeprecationWarning" is-multi-valued="false" />
   <set-configuration-property name="iframe.linker.suppressDeprecationWarning" value="false" />
 
-  <!-- When true, compiles in support for GWT.unloadModule(), otherwise it is a no-op. -->
-  <define-property name="gwt.unloadEnabled" values="false, true"/>
-  <set-property name="gwt.unloadEnabled" value="false"/>
-
-  <replace-with class="com.google.gwt.core.client.impl.UnloadSupportEnabled">
-      <when-property-is name="gwt.unloadEnabled" value="true"/>
-      <when-type-is class="com.google.gwt.core.client.impl.UnloadSupport"/>
-  </replace-with>
-
   <replace-with class="com.google.gwt.core.client.impl.SuperDevModeLogger">
       <when-property-is name="superdevmode" value="on"/>
       <when-type-is class="com.google.gwt.core.shared.impl.JsLogger"/>

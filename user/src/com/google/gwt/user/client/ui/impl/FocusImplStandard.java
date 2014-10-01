@@ -56,9 +56,7 @@ public class FocusImplStandard extends FocusImpl {
     // involving the div and input).  This also allows us to share a single
     // set of handlers among every focusable item.
     input.addEventListener('focus', focusHandler, false);
-    // We will scan for these later to deregister them
-    @com.google.gwt.user.client.impl.DOMImpl::addDisposableEvent(*)(input,
-        'focus', focusHandler, false);
+
     div.appendChild(input);
     return div;
   }-*/;

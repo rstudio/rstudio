@@ -17,8 +17,6 @@ package com.google.gwt.user.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptException;
-import com.google.gwt.core.client.impl.Disposable;
-import com.google.gwt.core.client.impl.Impl;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
@@ -915,12 +913,6 @@ public class Window {
   private static void maybeInitializeCloseHandlers() {
     if (GWT.isClient() && !closeHandlersInitialized) {
       impl.initWindowCloseHandler();
-      Impl.scheduleDispose(new Disposable() {
-        @Override
-        public void dispose() {
-          impl.disposeWindowCloseHandlers();
-        }
-      });
       closeHandlersInitialized = true;
     }
   }
@@ -928,12 +920,6 @@ public class Window {
   private static void maybeInitializeResizeHandlers() {
     if (GWT.isClient() && !resizeHandlersInitialized) {
       impl.initWindowResizeHandler();
-      Impl.scheduleDispose(new Disposable() {
-        @Override
-        public void dispose() {
-          impl.disposeWindowResizeHandlers();
-        }
-      });
       resizeHandlersInitialized = true;
     }
   }
@@ -941,12 +927,6 @@ public class Window {
   private static void maybeInitializeScrollHandlers() {
     if (GWT.isClient() && !scrollHandlersInitialized) {
       impl.initWindowScrollHandler();
-      Impl.scheduleDispose(new Disposable() {
-        @Override
-        public void dispose() {
-          impl.disposeWindowScrollHandlers();
-        }
-      });
       scrollHandlersInitialized = true;
     }
   }

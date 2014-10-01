@@ -241,14 +241,6 @@ public abstract class DOMImplStandard extends DOMImpl {
     foreach(captureEvents, function(e, fn) { $wnd.addEventListener(e, fn, true); });
   }-*/;
 
-  @Override
-  protected native void disposeEventSystem() /*-{
-    var foreach = @com.google.gwt.user.client.impl.EventMap::foreach(*);
-
-    // Remove capture event listeners
-    foreach(captureEvents, function(e, fn) { $wnd.removeEventListener(e, fn, true); });
-  }-*/;
-
   protected native void sinkBitlessEventImpl(Element elem, String eventTypeName) /*-{
     var dispatchMap = @com.google.gwt.user.client.impl.DOMImplStandard::bitlessEventDispatchers;
     var dispatcher = dispatchMap[eventTypeName] || dispatchMap['_default_'];

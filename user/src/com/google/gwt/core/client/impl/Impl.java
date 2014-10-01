@@ -27,8 +27,6 @@ import com.google.gwt.core.client.JavaScriptObject;
  */
 public final class Impl {
 
-  public static boolean moduleUnloaded = false;
-
   private static final int WATCHDOG_ENTRY_DEPTH_CHECK_INTERVAL_MS = 2000;
 
   /**
@@ -46,25 +44,6 @@ public final class Impl {
    * Timer id of the entry depth watchdog. -1 if not scheduled.
    */
   private static int watchdogEntryDepthTimerId = -1;
-
-  private static UnloadSupport unloadSupport = GWT.isScript() ?
-      (UnloadSupport) GWT.create(UnloadSupport.class) : new UnloadSupport();
-
-  static {
-     exportUnloadModule();
-  }
-
-  public static void clearInterval(int timerId) {
-    unloadSupport.clearInterval(timerId);
-  }
-
-  public static void clearTimeout(int timerId) {
-    unloadSupport.clearTimeout(timerId);
-  }
-
-  public static void dispose(Disposable d) {
-    unloadSupport.dispose(d);
-  }
 
   /**
    * This method should be used whenever GWT code is entered from a JS context
@@ -90,9 +69,9 @@ public final class Impl {
   public static native JavaScriptObject entry(JavaScriptObject jsFunction) /*-{
     return function() {
       if (@com.google.gwt.core.client.GWT::isScript()()) {
-        return @com.google.gwt.core.client.impl.Impl::entry0(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)(jsFunction, this, arguments);
+        return @Impl::entry0(*)(jsFunction, this, arguments);
       } else {
-        var _ = @com.google.gwt.core.client.impl.Impl::entry0(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)(jsFunction, this, arguments);
+        var _ = @Impl::entry0(*)(jsFunction, this, arguments);
         if (_ != null) {
           // Unwraps for Development Mode (see #apply())
           _ = _.val;
@@ -101,10 +80,6 @@ public final class Impl {
       }
     };
   }-*/;
-
-  public static void exportUnloadModule() {
-    unloadSupport.exportUnloadModule();
-  }
 
   /**
    * Gets an identity-based hash code on the passed-in Object by adding an
@@ -116,7 +91,7 @@ public final class Impl {
    * monotonically-increasing sequence.
    */
   public static native int getHashCode(Object o) /*-{
-    return o.$H || (o.$H = @com.google.gwt.core.client.impl.Impl::getNextHashId()());
+    return o.$H || (o.$H = @Impl::getNextHashId()());
   }-*/;
 
   public static native String getHostPageBaseURL() /*-{
@@ -246,10 +221,6 @@ public final class Impl {
     return entryDepth > 0;
   }
 
-  public static boolean isModuleUnloaded() {
-    return moduleUnloaded;
-  }
-
   /**
    * Indicates if <code>$entry</code> is present on the stack more than once.
    */
@@ -263,31 +234,12 @@ public final class Impl {
   public static native JavaScriptObject registerEntry() /*-{
     if (@com.google.gwt.core.client.GWT::isScript()()) {
       // Assignment to $entry is done by the compiler
-      return @com.google.gwt.core.client.impl.Impl::entry(Lcom/google/gwt/core/client/JavaScriptObject;);
+      return @Impl::entry(*);
     } else {
       // But we have to do in in Development Mode
-      return $entry = @com.google.gwt.core.client.impl.Impl::entry(Lcom/google/gwt/core/client/JavaScriptObject;);
+      return $entry = @Impl::entry(*);
     }
   }-*/;
-
-  public static void scheduleDispose(Disposable d) {
-    unloadSupport.scheduleDispose(d);
-  }
-
-  public static int setInterval(JavaScriptObject func, int time) {
-    return unloadSupport.setInterval(func, time);
-  }
-
-  public static int setTimeout(JavaScriptObject func, int time) {
-    return unloadSupport.setTimeout(func, time);
-  }
-
-  public static void unloadModule() {
-    if (unloadSupport.isUnloadSupported()) {
-      moduleUnloaded = true;
-      unloadSupport.disposeAll();
-    }
-  }
 
   private static native Object apply(Object jsFunction, Object thisObj,
       Object args) /*-{
@@ -328,12 +280,7 @@ public final class Impl {
   /**
    * Implements {@link #entry(JavaScriptObject)}.
    */
-  private static Object entry0(Object jsFunction, Object thisObj,
-      Object args) throws Throwable {
-    // if module is unloaded, don't run anything
-    if (unloadSupport.isUnloadSupported() && Impl.isModuleUnloaded()) {
-      return null;
-    }
+  private static Object entry0(Object jsFunction, Object thisObj, Object args) throws Throwable {
     boolean initialEntry = enter();
 
     try {
@@ -404,7 +351,7 @@ public final class Impl {
   }-*/;
 
   private static native void watchdogEntryDepthCancel(int timerId) /*-{
-    @com.google.gwt.core.client.impl.Impl::clearTimeout(I)(timerId);
+    $wnd.clearTimeout(timerId);
   }-*/;
 
   private static void watchdogEntryDepthRun() {
@@ -417,8 +364,6 @@ public final class Impl {
   }
 
   private static native int watchdogEntryDepthSchedule() /*-{
-    return @com.google.gwt.core.client.impl.Impl::setTimeout(Lcom/google/gwt/core/client/JavaScriptObject;I)(function() {
-      @com.google.gwt.core.client.impl.Impl::watchdogEntryDepthRun()();
-    }, 10);
+    return $wnd.setTimeout(@Impl::watchdogEntryDepthRun(), 10);
   }-*/;
 }

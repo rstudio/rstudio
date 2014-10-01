@@ -16,9 +16,6 @@
 package com.google.gwt.user.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.impl.Disposable;
-import com.google.gwt.core.client.impl.Impl;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -91,18 +88,16 @@ public class History {
    */
   private static class HistoryImpl {
 
-    public native void attachListener(JavaScriptObject handler) /*-{
-      // We explicitly use the third parameter for capture, since Firefox before version 6
-      // throws an exception if the parameter is missing.
-      // See: https://developer.mozilla.org/es/docs/DOM/elemento.addEventListener#Gecko_notes
-      $wnd.addEventListener('hashchange', handler, false);
-    }-*/;
+    public HistoryImpl() {
+      attachListener();
+    }
 
-    public native void detachListener(JavaScriptObject handler) /*-{
+    protected native void attachListener() /*-{
       // We explicitly use the third parameter for capture, since Firefox before version 6
       // throws an exception if the parameter is missing.
       // See: https://developer.mozilla.org/es/docs/DOM/elemento.addEventListener#Gecko_notes
-      $wnd.removeEventListener('hashchange', handler, false);
+      var handler = $entry(@History::onHashChanged());
+      $wnd.addEventListener('hashchange', handler, false);
     }-*/;
 
     public native void newToken(String historyToken) /*-{
@@ -112,11 +107,6 @@ public class History {
     public void replaceToken(String historyToken) {
       Window.Location.replace("#" + historyToken);
     }
-
-    // Only kept in deferred binding to allow mocking frameworks to intercept calls
-    public native JavaScriptObject getHistoryChangeHandler() /*-{
-      return $entry(@com.google.gwt.user.client.History::onHashChanged());
-    }-*/;
 
     // Only kept in deferred binding to allow mocking frameworks to intercept calls
     public native String decodeHistoryToken(String historyToken) /*-{
@@ -135,11 +125,9 @@ public class History {
    */
   @SuppressWarnings("unused")
   private static class HistoryImplIE8 extends HistoryImpl {
-
-    private JavaScriptObject oldHandler;
-
     @Override
-    public native void attachListener(JavaScriptObject handler) /*-{
+    protected native void attachListener() /*-{
+      var handler = $entry(@History::onHashChanged());
       var oldHandler = $wnd.onhashchange;
       $wnd.onhashchange = function() {
         var ex;
@@ -162,13 +150,6 @@ public class History {
           throw ex;
         }
       };
-      this.@com.google.gwt.user.client.History.HistoryImplIE8::oldHandler = oldHandler;
-    }-*/;
-
-    @Override
-    public native void detachListener(JavaScriptObject handler) /*-{
-      $wnd.onhashchange = this.@com.google.gwt.user.client.History.HistoryImplIE8::oldHandler;
-      this.@com.google.gwt.user.client.History.HistoryImplIE8::oldHandler = null;
     }-*/;
   }
 
@@ -194,23 +175,9 @@ public class History {
     }
   }
 
-  private static HistoryEventSource historyEventSource;
-  private static String token;
-  private static HistoryImpl impl;
-
-  static {
-    impl = GWT.create(HistoryImpl.class);
-    historyEventSource = new HistoryEventSource();
-    token = getDecodedHash();
-    final JavaScriptObject handler = impl.getHistoryChangeHandler();
-    impl.attachListener(handler);
-    Impl.scheduleDispose(new Disposable() {
-      @Override
-      public void dispose() {
-        impl.detachListener(handler);
-      }
-    });
-  }
+  private static HistoryImpl impl = GWT.create(HistoryImpl.class);
+  private static HistoryEventSource historyEventSource = new HistoryEventSource();
+  private static String token = getDecodedHash();
 
   /**
    * Adds a listener to be informed of changes to the browser's history stack.

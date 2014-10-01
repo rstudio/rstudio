@@ -15,13 +15,8 @@
  */
 package com.google.gwt.user.client.impl;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.impl.Disposable;
-import com.google.gwt.core.client.impl.Impl;
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
 
@@ -32,38 +27,10 @@ public abstract class DOMImpl {
 
   protected static boolean eventSystemIsInitialized;
 
-  /**
-   * Registers a raw DOM event listener to be cleaned up when the module is unloaded.
-   */
-  public static native void addDisposableEvent(com.google.gwt.dom.client.Element elem, String event,
-                                               JavaScriptObject handler, boolean capture) /*-{
-      elem.__gwt_disposeEvent = elem.__gwt_disposeEvent || [];
-      elem.__gwt_disposeEvent.push({event: event, handler: handler, capture: capture});
-  }-*/;
-
-  /**
-   * Scan all DOM elements looking for event listeners from our module and remove event listeners from them.
-   * @param dom
-   */
-  public static void cleanupDOM(DOMImpl dom) {
-    NodeList<com.google.gwt.dom.client.Element> allElements = Document.get().getElementsByTagName("*");
-    for (int i = 0; i < allElements.getLength(); i++) {
-      com.google.gwt.dom.client.Element elem = allElements.getItem(i);
-      Element userElem = (Element) elem;
-      EventListener listener = getEventListener(userElem);
-      if (GWT.isScript() && listener != null) {
-        dom.sinkEvents(userElem, 0);
-        setEventListener(userElem, null);
-      }
-      // cleans up DOM-style addEventListener registered handlers
-      maybeRemoveDisposableEvent(elem);
-    }
-  }
-
   public static native EventListener getEventListener(Element elem) /*-{
     // Return elem.__listener if and only if it was assigned from our module
     var maybeListener = elem.__listener;
-    return @com.google.gwt.user.client.impl.DOMImpl::isMyListener(*)(maybeListener) ? maybeListener : null;
+    return @DOMImpl::isMyListener(*)(maybeListener) ? maybeListener : null;
   }-*/;
 
   public static native void setEventListener(Element elem, EventListener listener) /*-{
@@ -98,17 +65,6 @@ public abstract class DOMImpl {
     return !(object instanceof JavaScriptObject)
         && (object instanceof com.google.gwt.user.client.EventListener);
   }
-
-  private static native void maybeRemoveDisposableEvent(com.google.gwt.dom.client.Element elem) /*-{
-    var diEvents = elem.__gwt_disposeEvent;
-    if (diEvents) {
-      for (var i = 0, l = diEvents.length; i < l; i++) {
-        var diEvent = diEvents[i];
-        elem.removeEventListener(diEvent.event, diEvent.handler, diEvent.capture);
-        elem.__gwt_disposeEvent = null;
-      }
-    }
-  }-*/;
 
   public native void eventCancelBubble(Event evt, boolean cancel) /*-{
     evt.cancelBubble = cancel;
@@ -179,13 +135,6 @@ public abstract class DOMImpl {
   public void maybeInitializeEventSystem() {
     if (!eventSystemIsInitialized) {
       initEventSystem();
-      Impl.scheduleDispose(new Disposable() {
-        @Override
-        public void dispose() {
-          disposeEventSystem();
-          cleanupDOM(DOMImpl.this);
-        }
-      });
       eventSystemIsInitialized = true;
     }
   }
@@ -197,8 +146,6 @@ public abstract class DOMImpl {
   public abstract void sinkBitlessEvent(Element elem, String eventTypeName);
 
   public abstract void sinkEvents(Element elem, int eventBits);
-
-  protected abstract void disposeEventSystem();
 
   /**
    * Initializes the event dispatch system.

@@ -94,7 +94,7 @@ class CellBasedWidgetImplStandard extends CellBasedWidgetImpl {
   }
 
   @Override
-  protected int sinkEvent(Widget widget, final String typeName) {
+  protected int sinkEvent(Widget widget, String typeName) {
     if (nonBubblingEvents.contains(typeName)) {
       // Initialize the event system.
       if (dispatchNonBubblingEvent == null) {
@@ -102,11 +102,10 @@ class CellBasedWidgetImplStandard extends CellBasedWidgetImpl {
       }
 
       // Sink the non-bubbling event.
-      final Element elem = widget.getElement();
+      Element elem = widget.getElement();
       if (!isNonBubblingEventHandled(elem, typeName)) {
         elem.setAttribute("__gwtCellBasedWidgetImplDispatching" + typeName, "true");
         sinkEventImpl(elem, typeName);
-        markDisposeEventImpl(elem, typeName);
       }
       return -1;
     } else {
@@ -118,20 +117,9 @@ class CellBasedWidgetImplStandard extends CellBasedWidgetImpl {
    * Initialize the event system.
    */
   private native void initEventSystem() /*-{
-    @com.google.gwt.user.cellview.client.CellBasedWidgetImplStandard::dispatchNonBubblingEvent = $entry(function (evt) {
-      @com.google.gwt.user.cellview.client.CellBasedWidgetImplStandard::handleNonBubblingEvent(Lcom/google/gwt/user/client/Event;)(evt);
+    @CellBasedWidgetImplStandard::dispatchNonBubblingEvent = $entry(function (evt) {
+      @CellBasedWidgetImplStandard::handleNonBubblingEvent(Lcom/google/gwt/user/client/Event;)(evt);
     });
-  }-*/;
-
-  /**
-   * Dispose of an event listener on the element.
-   *
-   * @param elem     the element to sink the event on
-   * @param typeName the name of the event to sink
-   */
-  private native void markDisposeEventImpl(Element elem, String typeName) /*-{
-    @com.google.gwt.user.client.impl.DOMImpl::addDisposableEvent(*)(elem,
-    typeName, @com.google.gwt.user.cellview.client.CellBasedWidgetImplStandard::dispatchNonBubblingEvent, true);
   }-*/;
 
   /**
@@ -141,6 +129,6 @@ class CellBasedWidgetImplStandard extends CellBasedWidgetImpl {
    * @param typeName the name of the event to sink
    */
   private native void sinkEventImpl(Element elem, String typeName) /*-{
-    elem.addEventListener(typeName, @com.google.gwt.user.cellview.client.CellBasedWidgetImplStandard::dispatchNonBubblingEvent, true);
+    elem.addEventListener(typeName, @CellBasedWidgetImplStandard::dispatchNonBubblingEvent, true);
   }-*/;
 }
