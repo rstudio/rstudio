@@ -72,7 +72,7 @@ class foo :
   A,
 </pre></li>
 
-<li><pre data-expected="12">
+<li><pre data-expected="4" data-expected-vertical-args="12">
 class foo : A,
 </pre></li>
 
@@ -234,7 +234,7 @@ class Foo :
     public C {
 </pre></li>
 
-<li><pre data-expected="12">
+<li><pre data-expected="4" data-expected-vertical-args="12">
 class Foo : public A,
 </pre></li>
 
@@ -268,13 +268,8 @@ Foo(int a, int b):
     {
 </pre></li>
 
-<li><pre data-expected="13">
+<li><pre data-expected="4" data-expected-vertical-args="13">
 std::find_if(x.begin(),
-</pre></li>
-
-<li><pre data-expected="13">
-std::find_if(x.begin(),
-             x.end(),
 </pre></li>
 
 <li><pre data-expected="4">
@@ -283,19 +278,19 @@ std::find_if(x.begin(),
              [](x) {
 </pre></li>
 
-<li><pre data-expected="5">
+<li><pre data-expected="4" data-expected-vertical-args="5">
 foo( int a,
 </pre></li>
 
-<li><pre data-expected="10">
+<li><pre data-expected="4" data-expected-vertical-args="10">
 class Foo : public A
 </pre></li>
 
-<li><pre data-expected="1">
+<li><pre data-expected="4" data-expected-vertical-args="1">
 [1, 2, 3,
 </pre></li>
 
-<li><pre data-expected="3">
+<li><pre data-expected="4" data-expected-vertical-args="3">
 [[[1, 2, 3,
 </pre></li>
 
@@ -405,14 +400,18 @@ function doIndentTest(el, state) {
 var test = document.getElementById("runme");
 var container = document.getElementById("testcontainer");
 var passed = 0, failed = 0;
-var states = [ "" ];
+var states = [ "", "vertical-args" ];
 for (var i = 0; i < states.length; i++) 
 {
-  require('mode/r_code_model').setVerticallyAlignFunctionArgs(true);
+
+  // Set vertical alignment
+  require('mode/r_code_model').setVerticallyAlignFunctionArgs(
+    states[i] === "vertical-args");
+  
    // Clone the tests for the new state
    var testnode = container.cloneNode(true);
    var header = document.createElement("h2");
-   header.innerText = "Test " + i + (
+   header.innerText = "Test " + (i + 1) + (
       states[i].length > 0 ? 
          ": " + states[i] : 
          "");
