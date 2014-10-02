@@ -221,9 +221,10 @@ var CppLookaroundHeuristics = function() {};
          line = line.substring(0, line.lastIndexOf("\\"));
       }
 
-      line = line.replace(/bconst&\b/, "");
-      line = line.replace(/\bconst\b/, "");
-      line = line.replace(/\bnoexcept\b/, "");
+      line = line.replace(/\bconst&\b/, "")
+                 .replace(/\bconst\b/, "")
+                 .replace(/\bnoexcept\b/, "");
+      
       
       return line;
       
