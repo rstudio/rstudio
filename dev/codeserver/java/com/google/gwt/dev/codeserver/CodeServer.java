@@ -93,8 +93,7 @@ public class CodeServer {
       String url = "http://" + options.getPreferredHost() + ":" + options.getPort() + "/";
 
       System.out.println();
-      System.out.println("The code server is ready.");
-      System.out.println("Next, visit: " + url);
+      System.out.println("The code server is ready at " + url);
     } catch (UnableToCompleteException e) {
       // Already logged.
       System.exit(1);
