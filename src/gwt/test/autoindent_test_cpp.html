@@ -37,6 +37,7 @@
 <h2>Configure Editor</h2>
 <button id="setBehavioursEnabled" onclick="editor.setBehavioursEnabled(!editor.getBehavioursEnabled())">Toggle Behaviour</button>
 <button onclick="require('mode/r_code_model').setVerticallyAlignFunctionArgs(!require('mode/r_code_model').getVerticallyAlignFunctionArgs())">Toggle Vertical Alignment</button>
+<button onclick="editor.getSession().reindent()">Reindent</button>
 
 <h2>Automated Tests</h2>
 <p>Passed: <span id="passed"></span>, Failed: <span id="failed"></span></p>
@@ -344,8 +345,12 @@ try {
 </ol>
 
 <script type="text/javascript">
+ 
 var Document = require('ace/document').Document;
 var CppMode = require('mode/c_cpp').Mode;
+var EditSession = require("ace/edit_session").EditSession;
+var Range = require("ace/range").Range;
+ 
 require('mode/auto_brace_insert').setInsertMatching(true);
 
 var editor = ace.edit('editor');
@@ -355,6 +360,48 @@ editor.getSession().setMode(new CppMode(false, editor.getSession().getDocument()
 editor.setBehavioursEnabled(false);
 
 var session = editor.getSession();
+
+(function() {
+  
+   this.reindent = function() {
+      var mode = this.getMode();
+      if (!mode.getNextLineIndent)
+         return;
+      var start = 0;
+      var end = this.getDocument().$lines.length - 1;
+      for (var i = start; i <= end; i++) {
+         // First line is always unindented
+         if (i == 0) {
+            this.applyIndent(i, "");
+         }
+         else {
+            var state = this.getState(i-1);
+            if (state == 'qstring' || state == 'qqstring')
+               continue;
+            var line = this.getLine(i-1);
+            var newline = this.getLine(i);
+
+            var newIndent = mode.getNextLineIndent(state,
+                                                   line,
+                                                   this.getTabString(),
+                                                   this.getTabSize(),
+                                                   i-1);
+
+            this.applyIndent(i, newIndent);
+            mode.autoOutdent(state, this, i);
+         }
+      }
+   };
+  
+   this.applyIndent = function(lineNum, indent) {
+      var line = this.getLine(lineNum);
+      var matchLen = line.match(/^\s*/g)[0].length;
+      this.replace(new Range(lineNum, 0, lineNum, matchLen), indent);
+   };
+
+}).call(EditSession.prototype);
+ 
+
 
 function doIndentTest(el, state) {
 

@@ -205,26 +205,33 @@ oop.inherits(Mode, TextMode);
       // Indentation rules for comments
       if (state == "comment" || state == "doc-start") {
 
-         // If we're inserting a newline within a block comment, insert
-         // more '*'.
-         var spacesBeforeStarMatch = line.match(/^(\s*\/*)/);
-         var spacesBeforeStar = spacesBeforeStarMatch !== null ?
-                new Array(spacesBeforeStarMatch[1].length + 1).join(" ") :
-                indent;
-         
-         var spacesAfterStar = " ";
-         var spacesAfterStarMatch = line.match(/^\s*\*(\s*)/);
-         if (spacesAfterStarMatch) {
-            spacesAfterStar = new Array(spacesAfterStarMatch[1].length + 1).join(" ");
+         // Choose indentation for the current line based on the position
+         // of the cursor -- but make sure we only apply this if the
+         // cursor is on the same row as the line being indented
+         if (cursor && cursor.row == row) {
+            line = line.substring(0, cursor.column);
+         }
+
+         // Bail if line is just whitespace. This is necessary for when the
+         // cursor is to the left of a comment block.
+         if (/^\s*$/.test(line)) {
+            return this.$getIndent(lines[row]);
          }
          
-         return spacesBeforeStar + "*" + spacesAfterStar;
+
+         // NOTE: It is the responsibility of c_style_behaviour to insert
+         // a '*' and leading spaces on newline insertion! We just look
+         // for the opening block and use indentation based on that. Otherwise,
+         // reindent will replicate the leading comment stars.
+         var commentStartRow = this.$heuristics.findStartOfCommentBlock(lines, row, 200);
+         if (commentStartRow !== null) {
+            return this.$getIndent(lines[commentStartRow]) + " ";
+         }
          
       }
 
       // Rules for the 'general' state
       if (state == "start") {
-
 
          /**
           * We start by checking some special-cases for indentation --

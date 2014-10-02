@@ -43,11 +43,11 @@ var CStyleBehaviour = function () {
 
          var cursor = editor.getCursorPosition();
          var line = new String(session.doc.getLine(cursor.row));
-         var match = line.match(/^(\s*\/\*{3,}\s+)/);
+         var match = line.match(/^(\s*)\/\*{3,}\s+/);
          if (match) {
             return {
-               text: "R\n\n*/\n",
-               selection: [1, 0, 1, 0]
+               text: "R\n" + match[1] + "\n" + match[1] + "*/",
+               selection: [1, match[1].length, 1, match[1].length]
             };
          }
       }
@@ -79,7 +79,30 @@ var CStyleBehaviour = function () {
          var tab = new Array(session.getTabSize() + 1).join(" ");
 
          var cursor = editor.getCursorPosition();
-         var line = new String(session.doc.getLine(cursor.row));
+         var line = session.doc.getLine(cursor.row);
+         
+
+         // Comment indentation rules
+         if (state == "comment" || state == "doc-start") {
+
+            // Choose indentation for the current line based on the position
+            // of the cursor -- but make sure we only apply this if the
+            // cursor is on the same row as the line being indented
+            if (cursor && cursor.row == row) {
+               line = line.substring(0, cursor.column);
+            }
+
+            // We want to insert stars and spaces to match the indentation of the line.
+            // Make sure we trim up to the cursor when necessary.
+            var styleMatch = /^(\s*\*+\s*)/.exec(line);
+            if (styleMatch) {
+               return {
+                  text: '\n' + styleMatch[1],
+                  selection: [1, styleMatch[1].length, 1, styleMatch[1].length]
+               };
+            }
+            
+         }
 
          // Walk backwards over whitespace to find first non-whitespace char
          var i = col - 1;
