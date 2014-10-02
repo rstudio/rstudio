@@ -215,11 +215,46 @@ var CppLookaroundHeuristics = function() {};
       
    };
 
+   var getRegexIndices = function(regex, line) {
+
+      var match = null;
+      var indices = [];
+      while ((match = regex.exec(line))) {
+         indices.push(match.index);
+      }
+      return indices;
+   };
+
    // Get a line, with comments (following '//') stripped. Also strip
    // a trailing '\' anticipating e.g. macros.
    this.getLineSansComments = function(doc, row) {
       
       var line = doc.getLine(row);
+
+      // Strip quotes before stripping comments -- this is to avoid
+      // problems with e.g.
+      //
+      //   int foo("// comment");
+      //
+      // Note that we preserve the quotes themselves, e.g. post strip
+      // the line would appear as:
+      //
+      //   int foo("");
+      //
+      // as this allows other heuristics to still work fine.
+      var indices = getRegexIndices(/(?!\\)\"/g, line);
+
+      if (indices.length > 0 && indices.length % 2 == 0) {
+
+         for (var i = 0; i < indices.length / 2; i = i + 2) {
+
+            var start = indices[i];
+            var end = indices[i + 1];
+            
+            line = line.substring(0, start - 1) +
+                   line.substring(end, line.length);
+         }
+      }
       
       var index = line.indexOf("//");
       if (index != -1) {
@@ -233,8 +268,7 @@ var CppLookaroundHeuristics = function() {};
       line = line.replace(/\bconst\s*&\s*\b/g, "")
                  .replace(/\bconst\s*\b/g, "")
                  .replace(/\bnoexcept\s*\b/g, "");
-      
-      
+
       return line;
       
    };
