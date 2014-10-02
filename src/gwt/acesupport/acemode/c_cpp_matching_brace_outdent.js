@@ -11,18 +11,18 @@ var MatchingBraceOutdent = function() {
 
    // Set the indent of the line at 'row' to the indentation
    // at 'rowFrom'.
-   this.setIndent = function(session, row, rowFrom) {
+   this.setIndent = function(session, rowTo, rowFrom) {
 
       var doc = session.getDocument();
 
-      var line = doc.$lines[row];
+      var line = doc.$lines[rowTo];
       var lastLine = doc.$lines[rowFrom];
 
       var oldIndent = this.$getIndent(line);
       var newIndent = this.$getIndent(lastLine);
 
       doc.replace(
-         new Range(row, 0, row, oldIndent.length),
+         new Range(rowTo, 0, rowTo, oldIndent.length),
          newIndent
       );
       
@@ -61,6 +61,36 @@ var MatchingBraceOutdent = function() {
 
    };
 
+   this.outdentBraceForNakedTokens = function(session, row, line, lastLine) {
+
+      if (/^\s*\{\s*$/.test(line)) {
+
+         if (/^\s*if\s*\(.*\)\s*$/.test(lastLine)) {
+            this.setIndent(session, row, row - 1);
+            return true;
+         }
+         
+         if (/^\s*else\s*$/.test(lastLine)) {
+            this.setIndent(session, row, row - 1);
+            return true;
+         }
+
+         if (/^\s*for\s*\(.*\)\s*$/.test(lastLine)) {
+            this.setIndent(session, row, row - 1);
+            return true;
+         }
+
+         if (/^\s*while\s*\(.*\)\s*$/.test(lastLine)) {
+            this.setIndent(session, row, row - 1);
+            return true;
+         }
+
+      }
+
+      return false;
+
+   };
+
    this.autoOutdent = function(state, session, row) {
 
       var doc = session.doc;
@@ -70,10 +100,8 @@ var MatchingBraceOutdent = function() {
          lastLine = this.$heuristics.getLineSansComments(doc, row - 1);
       var indent = this.$getIndent(line);
 
-      // If we just inserted a '{' on a blank line after a naked else,
-      // match the indentation of that else
-      if (/^\s*else\s*$/.test(lastLine)) {
-         this.setIndent(session, row, row - 1);
+      // Check for naked token outdenting
+      if (this.outdentBraceForNakedTokens(session, row, line, lastLine)) {
          return;
       }
 

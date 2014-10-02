@@ -4,13 +4,23 @@ var CppLookaroundHeuristics = function() {};
 
 (function() {
 
-   var reStartsWithComma = /^\s*,/;
-   var reStartsWithColon = /^\s*:/;
+   var reStartsWithComma        = /^\s*,/;
+   var reStartsWithColon        = /^\s*:/;
    var reStartsWithCommaOrColon = /^\s*[,:]/;
-   var reEndsWithComma = /,\s*$|,\s*\/\//;
-   var reEndsWithColon = /:\s*$|:\s*\/\//;
-   var reClassOrStruct = /\bclass\b|\bstruct\b/;
+
+   var reStartsWithContinuationToken = /^\s*[,+-/*&^%$!<>.?|=~]/;
+   var reEndsWithContinuationToken =       /[,+-/*&^%$!<>.?|=~]\s*$/;
+
+   this.reStartsWithContinuationToken = reStartsWithContinuationToken;
+   this.reEndsWithContinuationToken   = reEndsWithContinuationToken;
+   
+
+   var reEndsWithComma     = /,\s*$|,\s*\/\//;
+   var reEndsWithColon     = /:\s*$|:\s*\/\//;
+   var reClassOrStruct     = /\bclass\b|\bstruct\b/;
    var reEndsWithBackslash = /\\\s*$/;
+
+   var reStartsWithOpenBrace = /\s*\{/;
 
    this.$complements = {
       "<" : ">",
@@ -108,8 +118,8 @@ var CppLookaroundHeuristics = function() {};
 
          // Check whether we can keep walking up, or if we've run out of
          // 'valid' formats.
-         if (!(reStartsWithCommaOrColon.test(line) ||
-               reEndsWithComma.test(line))) {
+         if (!(reStartsWithContinuationToken.test(line) ||
+               reEndsWithContinuationToken.test(line))) {
             if (!canRetry) {
                break;
             } else {
@@ -291,6 +301,53 @@ var CppLookaroundHeuristics = function() {};
          ++count;
       }
       return null;
+   };
+
+   this.indentNakedTokens = function(doc, indent, tab, row) {
+
+      var line = this.getLineSansComments(doc, row);
+
+      // All of the common control block generating tokens
+      var blockTokens = [
+         /^\s*for\s*\(.*\)\s*$/,
+         /^\s*else\s*$/,
+         /^\s*if\s*\(.*\)\s*$/,
+         /^\s*while\s*\(.*\)\s*$/
+      ];
+
+      // First, check for an indentation
+      for (var i = 0; i < blockTokens.length; i++) {
+         if (blockTokens[i].test(line)) {
+            return indent + tab;
+         }
+      }
+
+      // If the line ends with a semicolon, try walking up naked
+      // block generating tokens
+      var lastLine = this.getLineSansComments(doc, row - 1);
+
+      var someMatch = blockTokens.some(function(x) {
+         x.test(lastLine);
+      });
+
+      console.log(someMatch);
+
+      if (/.*;\s*$/.test(line) &&
+          blockTokens.some(function(x) { return x.test(lastLine); })) {
+
+         var lookbackRow = row - 1;
+
+         while (blockTokens.some(function(x) { return x.test(lastLine); })) {
+            lookbackRow--;
+            lastLine = this.getLineSansComments(doc, lookbackRow);
+         }
+
+         return lookbackRow + 1;
+         
+      }
+
+      return null;
+
    };
    
 }).call(CppLookaroundHeuristics.prototype);

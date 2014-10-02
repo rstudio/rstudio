@@ -329,28 +329,6 @@ oop.inherits(Mode, TextMode);
             return indent + tab;
          }
 
-         // Indent a naked else
-         if (/^\s*else\s*$/.test(line)) {
-            return indent + tab;
-         }
-
-         // Unindent after leaving a naked else
-         if (/^\s*else\s*$/.test(lastLine) &&
-             !reStartsWithOpenBrace.test(line)) {
-            return unindent;
-         }
-
-         // Indent e.g. "if (foo)"
-         if (/^\s*if\s*\(.*\)\s*$/.test(line)) {
-            return indent + tab;
-         }
-
-         // Unindent after leaving a naked if
-         if (/^\s*if\s*\(.*\)\s*$/.test(lastLine) &&
-             !reStartsWithOpenBrace.test(line)) {
-            return unindent;
-         }
-
          // Indent for an unfinished 'for' statement, e.g.
          //
          //   for (int i = 0;
@@ -362,12 +340,19 @@ oop.inherits(Mode, TextMode);
                indent + tab;
          }
 
-         // Unindent after leaving a naked for
-         if (/^\s*for\s*\(.*\)\s*$/.test(lastLine) &&
-             !/^\s*\{/.test(line)) {
-            return unindent;
+         // Handle naked 'for', 'if' etc. tokens
+         var newIndent = this.$heuristics.indentNakedTokens(doc, indent, tab, row);
+         if (newIndent !== null) {
+            console.log(newIndent);
+            if (typeof newIndent === "string") {
+               return newIndent;
+            } else if (typeof newIndent === "number") {
+               return this.$getIndent(lines[newIndent]);
+            } else {
+               console.log(typeof newIndent);
+            }
          }
-         
+
          // Indent after 'class foo {' or 'struct foo {'
          if (line.match(/^\s*(class|struct)\s+\w+\s*\{\s*$/)) {
             return indent + tab;
@@ -470,8 +455,9 @@ oop.inherits(Mode, TextMode);
          // foo(int a,
          //     int b,
          //     int c);
-         // |
+         // ^
          //
+         // Do this only when the parenthesis is not matched on the same row.
          var match = line.match(/([\)\]]);?\s*$/);
          if (match) {
 
@@ -480,7 +466,7 @@ oop.inherits(Mode, TextMode);
                column: lines[row].lastIndexOf(match[1]) + 1
             });
 
-            if (openPos) {
+            if (openPos && openPos.row != row) {
                return this.$getIndent(lines[openPos.row]);
             }
 
@@ -556,7 +542,7 @@ oop.inherits(Mode, TextMode);
          //       4, 5, 6,
          //       7, 8, 9],
          //      ^
-         var match = /([\]\}\)]),\s*$/.exec(line);
+         var match = /(\]),\s*$/.exec(line);
          if (match) {
             
             var openBracePos = session.findMatchingBracket({
@@ -576,9 +562,18 @@ oop.inherits(Mode, TextMode);
             return indent;
          }
 
-         // If we end with a semi-colon, match the line's indentation
+         // If the line ends with a semicolon, follow lines that begin /
+         // end with operator tokens until we find a line without.
          if (/;\s*$/.test(line)) {
-            return indent;
+            var thisRow = row - 1;
+            var thisLine = this.getLineSansComments(doc, thisRow);
+
+            while (this.$heuristics.reStartsWithContinuationToken.test(thisLine) ||
+                   this.$heuristics.reEndsWithContinuationToken.test(thisLine)) {
+               thisRow--;
+               thisLine = this.getLineSansComments(doc, thisRow);
+            }
+            return this.$getIndent(lines[thisRow + 1]);
          }
 
          // Indent based on lookaround heuristics
