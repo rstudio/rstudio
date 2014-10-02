@@ -14,16 +14,15 @@
  */
 
 #include <iostream>
+#include <fstream>
 
 #include <boost/test/minimal.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
 
-#include <core/r_util/RVersionInfo.hpp>
-#include <core/r_util/RVersionsPosix.hpp>
+#include <core/libclang/LibClang.hpp>
 
 using namespace core ;
 
@@ -39,22 +38,29 @@ int test_main(int argc, char * argv[])
       if (error)
          LOG_ERROR(error);
 
-      using namespace core::r_util;
+      // write a C++ file
+      std::string cpp =
+        "#include <string>\n"
+        "void foobar() {\n"
+        "   std::string str;\n"
+        "   str.\n"
+        "}";
+      std::ofstream ostr("foo.cpp");
+      ostr << cpp;
+      ostr.close();
 
-      std::vector<RVersionNumber> vers;
-      vers.push_back(RVersionNumber::parse("3.0"));
-      vers.push_back(RVersionNumber::parse("2.14.3"));
-      vers.push_back(RVersionNumber::parse("3.0.1"));
-      vers.push_back(RVersionNumber::parse("2.15"));
-      vers.push_back(RVersionNumber::parse("3.1.0"));
+      // load libclang
+      using namespace libclang;
+      clang().load();
 
-      std::sort(vers.begin(), vers.end());
-      std::reverse(vers.begin(), vers.end());
+      // create a source index and get a translation unit for it
+      SourceIndex sourceIndex;
+      TranslationUnit tu = sourceIndex.getTranslationUnit("foo.cpp");
 
-      BOOST_FOREACH(RVersionNumber ver, vers)
-      {
-         std::cerr << ver << std::endl;
-      }
+      // code complete
+      CodeCompleteResults results = tu.codeCompleteAt("foo.cpp", 4, 8);
+      for (unsigned i = 0; i<results.getNumResults(); i++)
+        std::cout << results.getResult(i).getText() << std::endl;
 
       return EXIT_SUCCESS;
    }
