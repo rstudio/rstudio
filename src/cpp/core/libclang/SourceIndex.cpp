@@ -143,12 +143,17 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename)
       // already up to date?
       if (args == stored.compileArgs && lastWriteTime == stored.lastWriteTime)
       {
+         if (verbose_ > 0)
+            std::cerr << "  (Index already up to date)" << std::endl;
          return TranslationUnit(filename, stored.tu, &unsavedFiles_);
       }
 
       // just needs reparse?
       else if (args == stored.compileArgs)
       {
+         if (verbose_ > 0)
+            std::cerr << "  (File changed on disk, reparsing)" << std::endl;
+
          int ret = clang().reparseTranslationUnit(
                                 stored.tu,
                                 unsavedFiles().numUnsavedFiles(),
@@ -181,6 +186,9 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename)
 
    // get the args in the fashion libclang expects (char**)
    core::system::ProcessArgs argsArray(args);
+
+   if (verbose_ > 0)
+      std::cerr << "  (Creating new index)" << std::endl;
 
    // create a new translation unit from the file
    CXTranslationUnit tu = clang().parseTranslationUnit(
