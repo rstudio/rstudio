@@ -492,18 +492,47 @@ var CStyleBehaviour = function () {
 
    });
 
+   // Provide an experimental 'macro mode' -- this allows for automatic indentation
+   // and alignment of inserted '/' characters, and also provides the regular
+   // indentation rules for expressions constructed within a macro.
    this.add("macro", "insertion", function(state, action, editor, session, text) {
 
-      // If we insert a backslash and we're in 'macro mode', then nudge the
-      // closing backslash to the right.
+      // Get some useful quantities
       var lines = session.getDocument().$lines;
       var cursor = editor.getCursorPosition();
       var row = cursor.row;
       var line = lines[row];
       var lineSub = line.substring(0, cursor.column);
 
-      if (/^\s*#\s*define/.test(line) || this.inMacro(lines, row - 1)) {
+      // Enter macro mode: we enter macro mode if the user inserts a
+      // '\' after a '#define' line.
+      if (/^\s*#\s*define/.test(line) && text == "\\") {
 
+         var len = 60 - lineSub.length + 1;
+
+         if (len >= 0) {
+            return {
+               text: new Array(len + 1).join(" ") + "\\\n" + session.getTabString(),
+               selection: false
+            };
+         } else {
+            return {
+               text: "\\\n" + session.getTabString(),
+               selection: false
+            };
+         }
+      }
+
+      // Special rules for 'macro mode'.
+      if (this.inMacro(lines, row - 1)) {
+
+         // Handle insertion of a '\'.
+         //
+         // If there is only whitespace following the cursor, then
+         // we try to nudge out the inserted '\'. Note that we
+         // have some protection in this outdenting because of the
+         // automatic matching done by '', "" insertion (which is the
+         // only other context where we would expect a user to insert '\')
          if (text == "\\" &&
              (/^\s*$/.test(line.substring(lineSub.length, line.length)))) {
                 
@@ -522,18 +551,15 @@ var CStyleBehaviour = function () {
             }
          }
 
-         var nextIndent = session.getMode().getNextLineIndent(
-            state,
-            line + "\\",
-            session.getTabString(),
-            session.getTabSize(),
-            row,
-            true
-         );
-
+         // Newlines function slightly differently in 'macro mode'.
+         // When a newline is inserted, we automatically add in an aligned
+         // '\' for continuation if the line isn't blank.
+         // If we try to insert a newline on a line that already has a
+         // closing '\', then we just move the cursor down.
          if (text == "\n") {
 
-            // Leave the macro if the line is blank
+            // Leave the macro if the line is blank. This provides an
+            // escape hatch for '\n'.
             if (/^\s*$/.test(line)) {
                return {
                   text: "\n",
@@ -553,24 +579,30 @@ var CStyleBehaviour = function () {
 
             // Otherwise, on enter, push a '\' out to an alignment column, so that
             // macros get formatted in a 'pretty' way.
-            else {
-               
-               var len = 60 - lineSub.length + 1;
-               var backSlash = /\\\s*$/.test(lineSub) ?
-                      "" :
-                      "\\";
+            var nextIndent = session.getMode().getNextLineIndent(
+               state,
+               line + "\\",
+               session.getTabString(),
+               session.getTabSize(),
+               row,
+               true
+            );
+            
+            var len = 60 - lineSub.length + 1;
+            var backSlash = /\\\s*$/.test(lineSub) ?
+                   "" :
+                   "\\";
 
-               if (len >= 0) {
-                  return {
-                     text: new Array(len + 1).join(" ") + backSlash + "\n" + nextIndent,
-                     selection: false
-                  };
-               } else {
-                  return {
-                     text: backSlash + "\n" + nextIndent,
-                     selection: false
-                  };
-               }
+            if (len >= 0) {
+               return {
+                  text: new Array(len + 1).join(" ") + backSlash + "\n" + nextIndent,
+                  selection: false
+               };
+            } else {
+               return {
+                  text: backSlash + "\n" + nextIndent,
+                  selection: false
+               };
             }
          }
       }

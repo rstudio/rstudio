@@ -240,7 +240,7 @@ oop.inherits(Mode, TextMode);
           */
 
          // Indent after a #define with continuation
-         if (reStartsWithDefine.test(line)) {
+         if (reStartsWithDefine.test(line) && /\\\s*$/.test(line)) {
             return indent + tab;
          }
 
