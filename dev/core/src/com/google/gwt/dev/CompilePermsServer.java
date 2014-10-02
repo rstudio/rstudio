@@ -313,8 +313,11 @@ public class CompilePermsServer {
     Throwable caught = null;
     try {
       TreeLogger branch = logger.branch(TreeLogger.DEBUG, "Compiling");
+      CompilerContext compilerContext =
+          new CompilerContext.Builder().options(ast.getOptions()).build();
+
       PermutationResult result =
-          CompilePerms.compile(branch, new CompilerContext(), permutation, ast);
+          CompilePerms.compile(branch, compilerContext, permutation, ast);
       resultFile.set(logger, result);
       logger.log(TreeLogger.DEBUG, "Successfully compiled permutation");
     } catch (UnableToCompleteException e) {
