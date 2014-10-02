@@ -13,7 +13,7 @@
  *
  */
 
-#include "LibClang.hpp"
+#include <core/libclang/LibClang.hpp>
 
 #include <iostream>
 #include <vector>
@@ -26,8 +26,6 @@
 #include <core/SafeConvert.hpp>
 
 #include <core/system/LibraryLoader.hpp>
-
-#include "SourceIndex.hpp"
 
 #define LOAD_CLANG_SYMBOL(name) \
    error = core::system::loadSymbol(pLib_, "clang_" #name, (void**)&name); \

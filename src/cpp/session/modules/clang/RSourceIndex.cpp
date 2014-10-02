@@ -41,7 +41,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
 
-#include "libclang/LibClang.hpp"
+#include <core/libclang/LibClang.hpp>
 
 using namespace core ;
 using namespace core::libclang;
@@ -778,8 +778,6 @@ SourceIndex& rSourceIndex()
    static RSourceIndex instance;
    return instance;
 }
-
-
 
 } // namespace clang
 } // namespace modules

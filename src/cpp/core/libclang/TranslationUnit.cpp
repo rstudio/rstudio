@@ -13,13 +13,13 @@
  *
  */
 
-#include "TranslationUnit.hpp"
+#include <core/libclang/TranslationUnit.hpp>
 
 #include <core/FilePath.hpp>
 
-#include "Utils.hpp"
-#include "LibClang.hpp"
-#include "UnsavedFiles.hpp"
+#include <core/libclang/Utils.hpp>
+#include <core/libclang/LibClang.hpp>
+#include <core/libclang/UnsavedFiles.hpp>
 
 namespace core {
 namespace libclang {

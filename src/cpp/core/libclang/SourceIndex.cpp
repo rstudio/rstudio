@@ -13,7 +13,7 @@
  *
  */
 
-#include "SourceIndex.hpp"
+#include <core/libclang/SourceIndex.hpp>
 
 #include <boost/foreach.hpp>
 
@@ -22,8 +22,8 @@
 
 #include <core/system/ProcessArgs.hpp>
 
-#include "LibClang.hpp"
-#include "UnsavedFiles.hpp"
+#include <core/libclang/LibClang.hpp>
+#include <core/libclang/UnsavedFiles.hpp>
 
 namespace core {
 namespace libclang {

@@ -120,14 +120,6 @@ set (SESSION_SOURCE_FILES
    modules/clang/CodeCompletion.cpp
    modules/clang/RSourceIndex.cpp
    modules/clang/SessionClang.cpp
-   modules/clang/libclang/CodeCompleteResults.cpp
-   modules/clang/libclang/Diagnostic.cpp
-   modules/clang/libclang/LibClang.cpp
-   modules/clang/libclang/SourceIndex.cpp
-   modules/clang/libclang/SourceLocation.cpp
-   modules/clang/libclang/TranslationUnit.cpp
-   modules/clang/libclang/UnsavedFiles.cpp
-   modules/clang/libclang/Utils.cpp
    modules/data/SessionData.cpp
    modules/data/DataViewer.cpp
    modules/environment/EnvironmentMonitor.cpp

@@ -16,7 +16,7 @@
 #ifndef SESSION_MODULES_CLANG_R_SOURCE_INDEX_HPP
 #define SESSION_MODULES_CLANG_R_SOURCE_INDEX_HPP
 
-#include "libclang/SourceIndex.hpp"
+#include <core/libclang/SourceIndex.hpp>
 
 namespace session {
 namespace modules {      

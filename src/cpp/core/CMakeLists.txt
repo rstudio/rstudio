@@ -56,6 +56,14 @@ set (CORE_SOURCE_FILES
    gwt/GwtFileHandler.cpp
    gwt/GwtLogHandler.cpp
    gwt/GwtSymbolMaps.cpp
+   libclang/CodeCompleteResults.cpp
+   libclang/Diagnostic.cpp
+   libclang/LibClang.cpp
+   libclang/SourceIndex.cpp
+   libclang/SourceLocation.cpp
+   libclang/TranslationUnit.cpp
+   libclang/UnsavedFiles.cpp
+   libclang/Utils.cpp
    json/Json.cpp
    json/JsonRpc.cpp
    json/spirit/json_spirit_reader.cpp

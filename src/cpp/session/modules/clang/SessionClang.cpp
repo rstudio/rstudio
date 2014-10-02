@@ -29,7 +29,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
 
-#include "libclang/LibClang.hpp"
+#include <core/libclang/LibClang.hpp>
 
 #include "CodeCompletion.hpp"
 #include "RSourceIndex.hpp"
@@ -152,7 +152,7 @@ void onSourceDocRemoved(boost::shared_ptr<IdToFile> pIdToFile,
    IdToFile::iterator it = pIdToFile->find(id);
    if (it != pIdToFile->end())
    {
-      // remove from unsaved file
+      // remove from unsaved files
       rSourceIndex().unsavedFiles().remove(it->second);
 
       // remove the translation unit

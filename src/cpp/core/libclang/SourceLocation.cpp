@@ -13,9 +13,9 @@
  *
  */
 
-#include "SourceLocation.hpp"
+#include <core/libclang/SourceLocation.hpp>
 
-#include "LibClang.hpp"
+#include <core/libclang/LibClang.hpp>
 
 namespace core {
 namespace libclang {

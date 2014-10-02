@@ -13,9 +13,9 @@
  *
  */
 
-#include "Utils.hpp"
+#include <core/libclang/Utils.hpp>
 
-#include "LibClang.hpp"
+#include <core/libclang/LibClang.hpp>
 
 namespace core {
 namespace libclang {

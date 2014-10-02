@@ -13,13 +13,12 @@
  *
  */
 
-#include "CodeCompleteResults.hpp"
+#include <core/libclang/CodeCompleteResults.hpp>
 
-
-#include "LibClang.hpp"
-#include "SourceIndex.hpp"
-#include "UnsavedFiles.hpp"
-#include "Utils.hpp"
+#include <core/libclang/LibClang.hpp>
+#include <core/libclang/SourceIndex.hpp>
+#include <core/libclang/UnsavedFiles.hpp>
+#include <core/libclang/Utils.hpp>
 
 namespace core {
 namespace libclang {
