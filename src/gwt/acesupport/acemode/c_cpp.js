@@ -156,33 +156,53 @@ oop.inherits(Mode, TextMode);
       }
    };
 
+   // Pad an indentation up to some size by adding leading spaces.
+   // This preserves tabs in the indent. Returns indentation as-is
+   // if it's already that size or greater.
+   this.$padIndent = function(indent, tabSize, newIndentSize) {
+
+      var tabsAsSpaces = new Array(tabSize + 1).join(" ");
+      var indentLength = indent.replace("\t", tabsAsSpaces);
+
+      if (indentLength >= newIndentSize) {
+         return indent;
+      } else {
+         return indent +
+            new Array(newIndentSize - indentLength + 1).join(" ");
+      }
+   };
+
    this.$getUnindent = function(line, tabSize) {
 
       // Get the current line indent
       var indent = this.$getIndent(line);
-      if (indent[0] == "\t") {
-         return indent.substring(1, indent.length);
+      if (indent === null || indent.length == 0) {
+         return "";
+      }
+
+      // Try cutting off a tab.
+      var tabIndex = indent.indexOf("\t");
+      if (tabIndex != -1) {
+         return indent.substring(0, tabIndex) +
+            indent.substring(tabIndex + 1, indent.length);
       }
 
       // Otherwise, try to remove a 'tabSize' number of spaces
-      var hasLeadingSpaces = true;
-      for (var i = 0; i < tabSize; i++) {
-         if (indent[i] != " ") {
-            hasLeadingSpaces = false;
-            break;
+      var numLeadingSpaces = 0;
+      for (var i = 0; i < tabSize && i < indent.length; i++) {
+         if (indent[i] === " ") {
+            numLeadingSpaces++;
          }
       }
-
-      if (hasLeadingSpaces) {
-         return indent.substring(tabSize, indent.length);
-      }
+      
+      return indent.substring(numLeadingSpaces, indent.length);
 
       // Otherwise, just return the regular line indent
       return indent;
       
    };
 
-   this.getNextLineIndent = function(state, line, tab, tabSize, row, subset) {
+   this.getNextLineIndent = function(state, line, tab, tabSize, row, dontSubset) {
 
       // Defer to the R language indentation rules when in R language mode
       if (this.inRLanguageMode(state))
@@ -222,7 +242,6 @@ oop.inherits(Mode, TextMode);
             return this.$getIndent(lines[row]);
          }
          
-
          // NOTE: It is the responsibility of c_style_behaviour to insert
          // a '*' and leading spaces on newline insertion! We just look
          // for the opening block and use indentation based on that. Otherwise,
@@ -265,7 +284,7 @@ oop.inherits(Mode, TextMode);
          // Choose indentation for the current line based on the position
          // of the cursor -- but make sure we only apply this if the
          // cursor is on the same row as the line being indented.
-         if (cursor && cursor.row == row && subset) {
+         if (cursor && cursor.row == row && !dontSubset) {
             line = line.substring(0, cursor.column);
          }
          
@@ -313,11 +332,6 @@ oop.inherits(Mode, TextMode);
             return this.$getIndent(lines[currentRow]);
          }
 
-         // Indent for an unfinished class statement
-         if (/^\s*class\s+[\w_]+\s*$/.test(line)) {
-            return indent + tab;
-         }
-
          // Indent for a :
          if (/:\s*$/.test(line)) {
 
@@ -357,17 +371,25 @@ oop.inherits(Mode, TextMode);
             return indent + tab;
          }
 
-         // Indent after a 'case foo'
-         if (/\s*case\s+[\w_'"]+/.test(line)) {
+         // Indent after a 'case foo' -- this handles e.g.
+         //
+         //   case foo: bar;
+         //
+         // ie, with the first statement on the same line
+         if (/^\s*case\s+[\w_]+/.test(line)) {
             return indent + tab;
          }
 
          // Indent for an unfinished 'for' statement, e.g.
          //
          //   for (int i = 0;
+         //        ^
          //
-         var match = line.match(/^(\s*for\s*\().*;\s*$/);
+         var match = line.match(/^(\s*for\s*\().*[;,]\s*$/);
          if (match) {
+
+            // TODO: function that pads current indentation with spaces,
+            // so that we respect tabs?
             return $verticallyAlignFunctionArgs ?
                new Array(match[1].length + 1).join(" ") :
                indent + tab;
@@ -383,11 +405,6 @@ oop.inherits(Mode, TextMode);
             } else if (typeof newIndent === "number") {
                return this.$getIndent(lines[newIndent]);
             }
-         }
-
-         // Indent after 'class foo {' or 'struct foo {'
-         if (line.match(/^\s*(class|struct)\s+\w+\s*\{\s*$/)) {
-            return indent + tab;
          }
 
          // Indent following an opening paren
@@ -413,31 +430,28 @@ oop.inherits(Mode, TextMode);
 
          // If we've made a function definition all on one line,
          // just return the current indent.
-         var lBraces = this.allIndicesOf(line, "{");
-         var rBraces = this.allIndicesOf(line, "}");
          if (/\(.*\).*\{.*\}\s*;?\s*/.test(line)) {
+            var lBraces = this.allIndicesOf(line, "{");
+            var rBraces = this.allIndicesOf(line, "}");
             if (lBraces.length > 0 && lBraces.length == rBraces.length) {
                return indent;
             }
          }
 
-         // If we're looking at a class with one inherited member
-         // on the same line, e.g.
-         //
-         //  class Foo : public Bar<T> {
-         //
-         // then insert a tab.
-         var match = line.match(/^\s*(class|struct)\s+\w+\s*:\s*.*\{\s*$/);
-         if (match) {
+         // If we have a class with an open brace on the same line, indent
+         if (/^\s*(class|struct).*\{\s*$/.test(line)) {
             return indent + tab;
          }
 
          // Match the indentation of the ':' in a statement e.g.
          //
          //   class Foo : public A
+         //             ^
          //
-         // Note the absence of a closing comma.
-         if (/^\s*class\s+[\w_]+\s*:\s*[\w_]+/.test(line) && !/,\s*/.test(line)) {
+         // Note the absence of a closing comma. This is for users
+         // who would prefer to align commas with colons, when
+         // doing multi-line inheritance.
+         if (/^\s*(class|struct).*:\s*[\w_]+/.test(line) && !/,\s*/.test(line)) {
             return $verticallyAlignFunctionArgs ?
                new Array(line.indexOf(":") + 1).join(" ") :
                indent + tab;
@@ -448,7 +462,8 @@ oop.inherits(Mode, TextMode);
          //
          //   class Foo : public A,
          //               ^
-         var match = line.match(/^(\s*(class|struct)\s+\w+\s*:\s*).*,\s*$/);
+         //
+         var match = line.match(/^(\s*(class|struct).*:\s*).*,\s*$/);
          if (match) {
             return $verticallyAlignFunctionArgs ?
                new Array(match[1].length + 1).join(" ") :
@@ -460,6 +475,7 @@ oop.inherits(Mode, TextMode);
          // class Foo
          // : public Bar,
          //   ^
+         //
          // then indent according to the first word following the ':'.
          var match = line.match(/^(\s*:\s*)(\w+).*,\s*$/);
          if (match) {
@@ -665,7 +681,6 @@ oop.inherits(Mode, TextMode);
             }
 
          }
-
 
          // If the closing character is an 'opener' (ie, one of
          // '(', '{', '[', or '<'), then indent

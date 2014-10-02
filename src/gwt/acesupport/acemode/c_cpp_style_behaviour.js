@@ -497,6 +497,8 @@ var CStyleBehaviour = function () {
    // indentation rules for expressions constructed within a macro.
    this.add("macro", "insertion", function(state, action, editor, session, text) {
 
+      var backslashAlignColumn = 62;
+
       // Get some useful quantities
       var lines = session.getDocument().$lines;
       var cursor = editor.getCursorPosition();
@@ -506,9 +508,9 @@ var CStyleBehaviour = function () {
 
       // Enter macro mode: we enter macro mode if the user inserts a
       // '\' after a '#define' line.
-      if (/^\s*#\s*define/.test(line) && text == "\\") {
+      if (/^\s*#\s*define[^\\]*$/.test(line) && text == "\\") {
 
-         var len = 60 - lineSub.length + 1;
+         var len = backslashAlignColumn - lineSub.length + 1;
 
          if (len >= 0) {
             return {
@@ -524,7 +526,7 @@ var CStyleBehaviour = function () {
       }
 
       // Special rules for 'macro mode'.
-      if (this.inMacro(lines, row - 1)) {
+      if (/^\s*#\s*define/.test(line) || this.inMacro(lines, row - 1)) {
 
          // Handle insertion of a '\'.
          //
@@ -536,7 +538,7 @@ var CStyleBehaviour = function () {
          if (text == "\\" &&
              (/^\s*$/.test(line.substring(lineSub.length, line.length)))) {
                 
-            var len = 60 - lineSub.length + 1;
+            var len = backslashAlignColumn - lineSub.length + 1;
 
             if (len >= 0) {
                return {
@@ -585,10 +587,10 @@ var CStyleBehaviour = function () {
                session.getTabString(),
                session.getTabSize(),
                row,
-               true
+               false
             );
             
-            var len = 60 - lineSub.length + 1;
+            var len = backslashAlignColumn - lineSub.length + 1;
             var backSlash = /\\\s*$/.test(lineSub) ?
                    "" :
                    "\\";

@@ -14,6 +14,16 @@ var CppLookaroundHeuristics = function() {};
    this.reStartsWithContinuationToken = reStartsWithContinuationToken;
    this.reEndsWithContinuationToken   = reEndsWithContinuationToken;
 
+   // All of the common control block generating tokens
+   this.reNakedBlockTokens = {
+      "while": /^\s*while\s*\(.*\)\s*$/,
+      "for": /^\s*for\s*\(.*\)\s*$/,
+      "else": /^\s*else\s*$/,
+      "if": /^\s*if\s*\(.*\)\s*$/,
+      "elseif": /^\s*else\s+if\s*\(.*\)\s*$/
+   };
+   var reNakedBlockTokens = this.reNakedBlockTokens;
+
    var reEndsWithComma     = /,\s*$|,\s*\/\//;
    var reEndsWithColon     = /:\s*$|:\s*\/\//;
    var reClassOrStruct     = /\bclass\b|\bstruct\b/;
@@ -228,6 +238,10 @@ var CppLookaroundHeuristics = function() {};
    // Get a line, with comments (following '//') stripped. Also strip
    // a trailing '\' anticipating e.g. macros.
    this.getLineSansComments = function(doc, row) {
+
+      if (row < 0) {
+         return "";
+      }
       
       var line = doc.getLine(row);
 
@@ -255,16 +269,25 @@ var CppLookaroundHeuristics = function() {};
                    line.substring(end, line.length);
          }
       }
-      
+
+      // Strip out a trailing line comment
       var index = line.indexOf("//");
       if (index != -1) {
          line = line.substring(0, index);
       }
-      
+
+      // Strip off a trailing '\' -- this is mainly done
+      // for macro mode (so we get regular indentation rules)
       if (reEndsWithBackslash.test(line)) {
          line = line.substring(0, line.lastIndexOf("\\"));
       }
 
+      // Strip some tokens
+      //
+      // This allows vertical alignment for e.g.
+      //
+      //   foo( const bar,
+      //        ^
       line = line.replace(/\bconst\s*&\s*\b/g, "")
                  .replace(/\bconst\s*\b/g, "")
                  .replace(/\bnoexcept\s*\b/g, "");
@@ -298,20 +321,21 @@ var CppLookaroundHeuristics = function() {};
       if (count > maxLookaround) return -1;
       if (row < 0 || row > lines.length - 1) return -1;
 
+      // TODO: strip lines when getting them?
       var line = lines[row];
 
-      var nRight = line.split(character).length - 1;
-      var nLeft = line.split(this.$complements[character]).length - 1;
+      var nChar = line.split(character).length - 1;
+      var nComp = line.split(this.$complements[character]).length - 1;
 
-      balance = balance + nRight - nLeft;
-      
+      balance = balance + nChar - nComp;
+
       if (balance <= 0) {
          return row;
       }
 
-      if (direction == "backward") {
+      if (direction === "backward") {
          row = row - 1;
-      } else if (direction == "forward") {
+      } else if (direction === "forward") {
          row = row + 1;
       } else {
          row = row - 1;
@@ -333,21 +357,17 @@ var CppLookaroundHeuristics = function() {};
          --row;
          ++count;
       }
-      return null;
+      return -1;
    };
 
    this.indentNakedTokens = function(doc, indent, tab, row) {
 
       var line = this.getLineSansComments(doc, row);
 
-      // All of the common control block generating tokens
-      var reBlockTokens = {
-         "while": /^\s*while\s*\(.*\)\s*$/,
-         "for": /^\s*for\s*\(.*\)\s*$/,
-         "else": /^\s*else\s*$/,
-         "if": /^\s*if\s*\(.*\)\s*$/
-      };
-      
+      // Generic 'naked-looking' tokens -- e.g.
+      //
+      //   BOOST_FOREACH()
+      //       ^
       var reNaked = /^\s*[\w_:]+\s*$|^\s*[\w_:]+\s*\(.*\)\s*$/;
 
       // First, check for an indentation
@@ -355,11 +375,18 @@ var CppLookaroundHeuristics = function() {};
          return indent + tab;
       }
 
+      // Explicitly check for the other main 'naked' tokens
+      for (var key in reNakedBlockTokens) {
+         if (reNakedBlockTokens[key].test(line)) {
+            return indent + tab;
+         }
+      }
+
       // If the line ends with a semicolon, try walking up naked
       // block generating tokens
       var lastLine = this.getLineSansComments(doc, row - 1);
 
-      if (/.*;\s*$/.test(line) && reNaked.test(lastLine)) {
+      if (/;\s*$/.test(line) && reNaked.test(lastLine)) {
 
          // Quit if we hit a class access modifier -- this is
          // a workaround for walking over e.g.
@@ -367,7 +394,7 @@ var CppLookaroundHeuristics = function() {};
          //   public:
          //       foo () {};
          //       ^
-         if (/^\s*public:\s*$|^\s*private:\s*$|^\s*protected:\s*$/.test(lastLine)) {
+         if (/^\s*public\s*:\s*$|^\s*private\s*:\s*$|^\s*protected\s*:\s*$/.test(lastLine)) {
             return indent;
          }
 
@@ -375,8 +402,9 @@ var CppLookaroundHeuristics = function() {};
          while (reNaked.test(lastLine)) {
 
             // Quit if we encountered an 'if' or 'else'
-            if (reBlockTokens["if"].test(lastLine) ||
-                reBlockTokens["else"].test(lastLine)) {
+            if (reNakedBlockTokens["if"].test(lastLine) ||
+                reNakedBlockTokens["else"].test(lastLine) ||
+                reNakedBlockTokens["elseif"].test(lastLine)) {
                return lookbackRow;
             }
             lookbackRow--;

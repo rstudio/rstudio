@@ -9,8 +9,6 @@ var MatchingBraceOutdent = function() {
 
 (function() {
 
-   var reNaked = /^\s*[\w_:]+\s*$|^\s*[\w_:]+\s*\(.*\)\s*$/;
-
    // Set the indent of the line at 'row' to the indentation
    // at 'rowFrom'.
    this.setIndent = function(session, rowTo, rowFrom) {
@@ -66,16 +64,17 @@ var MatchingBraceOutdent = function() {
    this.outdentBraceForNakedTokens = function(session, row, line, lastLine) {
 
       if (/^\s*\{/.test(line)) {
-
-         if (lastLine !== null && reNaked.test(lastLine)) {
-            this.setIndent(session, row, row - 1);
-            return true;
+         var re = this.$heuristics.reNakedBlockTokens;
+         if (lastLine !== null) {
+            for (var key in re) {
+               if (re[key].test(lastLine)) {
+                  this.setIndent(session, row, row - 1);
+                  return true;
+               }
+            }
          }
-
       }
-
       return false;
-
    };
 
    this.checkDoubleArrowAlignment = function(session, row, line, lastLine) {
@@ -243,7 +242,7 @@ var MatchingBraceOutdent = function() {
 
       // If we just typed 'case <word>:', outdent if possible. Do so
       // by looking for the enclosing 'switch'.
-      if (/^\s*case\s+\w+:/.test(line)) {
+      if (/^\s*case.+:/.test(line)) {
 
          // look for 'switch' statement for indentation
          var len = 0;

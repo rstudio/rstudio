@@ -121,6 +121,10 @@ if (a)
     if (b)
 </pre></li>
 
+<li><pre data-expected="4">
+else if (bar)
+</pre></li>
+
 <li><pre data-expected="0">
 while (a)
     while (b)
@@ -214,7 +218,7 @@ std::find_if(x.begin(), x.end(), [](int x) {
 static void namespace_reader() {
 </pre></li>
 
-<li><pre data-expected="4">
+<li><pre data-expected="0">
 class Foo
 </pre></li>
 
