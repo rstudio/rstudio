@@ -35,9 +35,11 @@ bool SourceIndex::isTranslationUnit(const std::string& filename)
            ex == ".m" || ex == ".mm");
 }
 
-SourceIndex::SourceIndex()
-   : index_(NULL), verbose_(false)
+SourceIndex::SourceIndex(CompilationDatabase compilationDB, int verbose)
 {
+   verbose_ = verbose;
+   index_ = clang().createIndex(0, (verbose_ > 0) ? 1 : 0);
+   compilationDB_ = compilationDB;
 }
 
 SourceIndex::~SourceIndex()
@@ -54,13 +56,6 @@ SourceIndex::~SourceIndex()
    catch(...)
    {
    }
-}
-
-void SourceIndex::initialize(CompilationDatabase compilationDB, int verbose)
-{
-   verbose_ = verbose;
-   index_ = clang().createIndex(0, (verbose_ > 0) ? 1 : 0);
-   compilationDB_ = compilationDB;
 }
 
 unsigned SourceIndex::getGlobalOptions() const
@@ -132,7 +127,7 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename)
 
    // get the arguments and last write time for this file
    std::vector<std::string> args;
-   if (!compilationDB_.empty())
+   if (compilationDB_.compileArgsForTranslationUnit)
       args = compilationDB_.compileArgsForTranslationUnit(filename);
    std::time_t lastWriteTime = filePath.lastWriteTime();
 
@@ -229,7 +224,7 @@ TranslationUnit SourceIndex::getHeaderTranslationUnit(
    // drats we don't have it! we can still try to index other src files
    // in search of one that includes this header
    std::vector<std::string> srcFiles;
-   if (!compilationDB_.empty())
+   if (compilationDB_.translationUnits)
       srcFiles = compilationDB_.translationUnits();
    BOOST_FOREACH(const std::string& filename, srcFiles)
    {
@@ -250,13 +245,6 @@ TranslationUnit SourceIndex::getHeaderTranslationUnit(
    }
 
    return TranslationUnit();
-}
-
-// singleton
-SourceIndex& sourceIndex()
-{
-   static SourceIndex instance;
-   return instance;
 }
 
 } // namespace libclang

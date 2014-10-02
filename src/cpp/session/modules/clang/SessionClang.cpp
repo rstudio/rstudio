@@ -32,7 +32,7 @@
 #include "libclang/LibClang.hpp"
 
 #include "CodeCompletion.hpp"
-#include "RCompilationDatabase.hpp"
+#include "RSourceIndex.hpp"
 
 using namespace core ;
 using namespace core::libclang;
@@ -91,18 +91,6 @@ EmbeddedLibrary embeddedLibClang()
    return embedded;
 }
 
-CompilationDatabase compilationDatabase()
-{
-   CompilationDatabase compilationDB;
-   compilationDB.compileArgsForTranslationUnit =
-      boost::bind(&RCompilationDatabase::compileArgsForTranslationUnit,
-                  &rCompilationDatabase(), _1);
-   compilationDB.translationUnits =
-      boost::bind(&RCompilationDatabase::translationUnits,
-                  &rCompilationDatabase());
-   return compilationDB;
-}
-
 typedef std::map<std::string,std::string> IdToFile;
 
 void onSourceDocUpdated(boost::shared_ptr<IdToFile> pIdToFile,
@@ -128,7 +116,7 @@ void onSourceDocUpdated(boost::shared_ptr<IdToFile> pIdToFile,
    // update unsaved files (we do this even if the document is dirty
    // as even in this case it will need to be removed from the list
    // of unsaved files)
-   sourceIndex().unsavedFiles().update(filename,
+   rSourceIndex().unsavedFiles().update(filename,
                                        pDoc->contents(),
                                        pDoc->dirty());
 
@@ -138,7 +126,7 @@ void onSourceDocUpdated(boost::shared_ptr<IdToFile> pIdToFile,
       module_context::scheduleDelayedWork(
             boost::posix_time::milliseconds(100),
             boost::bind(&SourceIndex::primeTranslationUnit,
-                        &(sourceIndex()), filename),
+                        &(rSourceIndex()), filename),
             true); // require idle
    }
 
@@ -152,7 +140,7 @@ void onSourceDocUpdated(boost::shared_ptr<IdToFile> pIdToFile,
       module_context::scheduleDelayedWork(
             boost::posix_time::milliseconds(100),
             boost::bind(&SourceIndex::reprimeTranslationUnit,
-                        &(sourceIndex()), filename),
+                        &(rSourceIndex()), filename),
             true); // require idle
    }
 }
@@ -165,10 +153,10 @@ void onSourceDocRemoved(boost::shared_ptr<IdToFile> pIdToFile,
    if (it != pIdToFile->end())
    {
       // remove from unsaved file
-      sourceIndex().unsavedFiles().remove(it->second);
+      rSourceIndex().unsavedFiles().remove(it->second);
 
       // remove the translation unit
-      sourceIndex().removeTranslationUnit(it->second);
+      rSourceIndex().removeTranslationUnit(it->second);
 
       // remove the id from the map
       pIdToFile->erase(it);
@@ -177,8 +165,8 @@ void onSourceDocRemoved(boost::shared_ptr<IdToFile> pIdToFile,
 
 void onAllSourceDocsRemoved(boost::shared_ptr<IdToFile> pIdToFile)
 {
-   sourceIndex().unsavedFiles().removeAll();
-   sourceIndex().removeAllTranslationUnits();
+   rSourceIndex().unsavedFiles().removeAll();
+   rSourceIndex().removeAllTranslationUnits();
    pIdToFile->clear();
 }
 
@@ -193,21 +181,6 @@ bool cppIndexingDisabled()
 {
    return ! r::options::getOption<bool>("rstudio.indexCpp", true, false);
 }
-
-// convenience function to load libclang and initialize the source index
-bool initializeLibClang()
-{
-   bool loaded = libclang::clang().load(embeddedLibClang(),
-                                        LibraryVersion(3,4,0));
-   if (!loaded)
-      return false;
-
-   sourceIndex().initialize(compilationDatabase(),
-                            userSettings().clangVerbose());
-
-   return true;
-}
-
 
 // diagnostic function to assist in determine whether/where
 // libclang was loaded from (and any errors which occurred
@@ -294,8 +267,8 @@ Error initialize()
    if (!haveRequiredRcpp())
       return Success();
 
-   // attempt to initialize libclang interface
-   if (!initializeLibClang())
+   // attempt to load libclang
+   if (!libclang::clang().load(embeddedLibClang(), LibraryVersion(3,4,0)))
       return Success();
 
    // keep a map of id to filename for source database event forwarding

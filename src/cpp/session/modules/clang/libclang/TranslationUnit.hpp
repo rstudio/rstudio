@@ -39,7 +39,7 @@ public:
    TranslationUnit(const std::string& filename,
                    CXTranslationUnit tu,
                    UnsavedFiles* pUnsavedFiles)
-      : filename_(filename), tu_(tu)
+      : filename_(filename), tu_(tu), pUnsavedFiles_(pUnsavedFiles)
    {
    }
 

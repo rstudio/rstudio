@@ -31,7 +31,6 @@ namespace libclang {
 
 struct CompilationDatabase
 {
-   bool empty() const { return ! compileArgsForTranslationUnit; }
    boost::function<std::vector<std::string>(const std::string&)>
                                             compileArgsForTranslationUnit;
    boost::function<std::vector<std::string>()> translationUnits;
@@ -39,20 +38,15 @@ struct CompilationDatabase
 
 class SourceIndex : boost::noncopyable
 {   
-private:
-   // singleton
-   friend SourceIndex& sourceIndex();
-   SourceIndex();
-
 public:
    static bool isTranslationUnit(const std::string& filename);
 
 public:
+   explicit SourceIndex(
+               CompilationDatabase compilationDB = CompilationDatabase(),
+               int verbose = 0);
 
    virtual ~SourceIndex();
-
-   void initialize(CompilationDatabase compilationDB = CompilationDatabase(),
-                   int verbose = 0);
 
    UnsavedFiles& unsavedFiles() { return unsavedFiles_; }
 
@@ -102,9 +96,6 @@ private:
 
    int verbose_;
 };
-
-// singleton
-SourceIndex& sourceIndex();
 
 } // namespace libclang
 } // namespace core

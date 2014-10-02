@@ -22,8 +22,7 @@
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
 
-#include "libclang/UnsavedFiles.hpp"
-#include "libclang/SourceIndex.hpp"
+#include "RSourceIndex.hpp"
 
 using namespace core ;
 using namespace core::libclang;
@@ -53,10 +52,10 @@ Error printCppCompletions(const core::json::JsonRpcRequest& request,
 
    // first update the unsaved file database
    std::string filename = filePath.absolutePath();
-   sourceIndex().unsavedFiles().update(filename, docContents, docDirty);
+   rSourceIndex().unsavedFiles().update(filename, docContents, docDirty);
 
    // now get the translation unit and do the code completion
-   TranslationUnit tu = sourceIndex().getTranslationUnit(filename);
+   TranslationUnit tu = rSourceIndex().getTranslationUnit(filename);
    if (!tu.empty())
    {
       CodeCompleteResults results = tu.codeCompleteAt(filename, line, column);

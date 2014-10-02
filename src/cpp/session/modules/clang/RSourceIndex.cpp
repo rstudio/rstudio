@@ -1,5 +1,5 @@
 /*
- * CompilationDatabase.cpp
+ * RSourceIndex.cpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,8 +13,9 @@
  *
  */
 
-#include "RCompilationDatabase.hpp"
+#include "RSourceIndex.hpp"
 
+#include <map>
 #include <algorithm>
 
 #include <boost/format.hpp>
@@ -38,6 +39,7 @@
 
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionUserSettings.hpp>
 
 #include "libclang/LibClang.hpp"
 
@@ -49,6 +51,56 @@ namespace modules {
 namespace clang {
 
 namespace {
+
+class RCompilationDatabase : boost::noncopyable
+{
+public:
+   virtual ~RCompilationDatabase() {}
+
+   std::vector<std::string> compileArgsForTranslationUnit(
+                                             const std::string& filename);
+   std::vector<std::string> translationUnits();
+
+private:
+
+   core::Error executeSourceCpp(core::system::Options env,
+                                const core::FilePath& srcPath,
+                                core::system::ProcessResult* pResult);
+
+   core::Error executeRCmdSHLIB(core::system::Options env,
+                                const core::FilePath& srcPath,
+                                core::system::ProcessResult* pResult);
+
+   void updateForCurrentPackage();
+   void updateForStandalone(const core::FilePath& cppPath);
+
+   std::vector<std::string> rToolsArgs() const;
+   std::vector<std::string> precompiledHeaderArgs(const std::string& pkgName,
+                                                  const std::string& stdArg);
+
+   std::vector<std::string> computeArgsForSourceFile(
+                                          const core::FilePath& srcPath);
+
+private:
+
+   // Rtools arguments (cache once we successfully get them)
+   mutable std::vector<std::string> rToolsArgs_;
+
+   // track the set of attributes used to derive args (don't re-run
+   // detection if attributes haven't changed)
+   typedef std::map<std::string,std::string> AttribsMap;
+   AttribsMap attribsMap_;
+
+   // arguments for various translation units
+   typedef std::map<std::string,std::vector<std::string> > ArgsMap;
+   ArgsMap argsMap_;
+
+   // package src args (track file modification times on build
+   // oriented files to avoid re-running detection)
+   std::string packageBuildFileHash_;
+   std::vector<std::string> packageSrcArgs_;
+};
+
 
 std::string readDependencyAttributes(const core::FilePath& srcPath)
 {
@@ -143,18 +195,6 @@ LibClang& clang()
 }
 
 
-} // anonymous namespace
-
-RCompilationDatabase::~RCompilationDatabase()
-{
-   try
-   {
-
-   }
-   catch(...)
-   {
-   }
-}
 
 void RCompilationDatabase::updateForCurrentPackage()
 {
@@ -437,8 +477,6 @@ core::Error RCompilationDatabase::executeRCmdSHLIB(
    return core::system::runCommand(rCmd.commandString(), options, pResult);
 }
 
-namespace {
-
 inline bool endsWith(const std::string& input, const std::string& test)
 {
    return boost::algorithm::ends_with(input, test);
@@ -448,9 +486,6 @@ std::string determinePCHPackage(const std::vector<std::string>&)
 {
    return "Rcpp";
 }
-
-} // anonymous namespace
-
 
 std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
                                             const std::string& filename)
@@ -712,13 +747,39 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
    return args;
 }
 
-
-
-RCompilationDatabase& rCompilationDatabase()
+core::libclang::CompilationDatabase rCompilationDatabase()
 {
    static RCompilationDatabase instance;
+
+   CompilationDatabase compilationDatabase;
+   compilationDatabase.compileArgsForTranslationUnit =
+      boost::bind(&RCompilationDatabase::compileArgsForTranslationUnit,
+                  &instance, _1);
+   compilationDatabase.translationUnits =
+      boost::bind(&RCompilationDatabase::translationUnits,
+                  &instance);
+
+   return compilationDatabase;
+}
+
+class RSourceIndex : public SourceIndex
+{
+public:
+   RSourceIndex()
+      : SourceIndex(rCompilationDatabase(), userSettings().clangVerbose())
+   {
+   }
+};
+
+} // anonymous namespace
+
+SourceIndex& rSourceIndex()
+{
+   static RSourceIndex instance;
    return instance;
 }
+
+
 
 } // namespace clang
 } // namespace modules
