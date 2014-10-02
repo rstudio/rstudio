@@ -8,8 +8,8 @@ var CppLookaroundHeuristics = function() {};
    var reStartsWithColon        = /^\s*:/;
    var reStartsWithCommaOrColon = /^\s*[,:]/;
 
-   var reStartsWithContinuationToken = /^\s*[,+-/*&^%$!\<\>.?|=~\'\":]/;
-   var reEndsWithContinuationToken =       /[,+-/*&^%$!\<\>.?|=~\'\":]\s*$/;
+   var reStartsWithContinuationToken = /^\s*[,+-/*&^%$!\<\>.?|=\'\":]/;
+   var reEndsWithContinuationToken =       /[,+-/*&^%$!\<\>.?|=\'\":]\s*$/;
 
    this.reStartsWithContinuationToken = reStartsWithContinuationToken;
    this.reEndsWithContinuationToken   = reEndsWithContinuationToken;
@@ -326,6 +326,16 @@ var CppLookaroundHeuristics = function() {};
       var lastLine = this.getLineSansComments(doc, row - 1);
 
       if (/.*;\s*$/.test(line) && reNaked.test(lastLine)) {
+
+         // Quit if we hit a class access modifier -- this is
+         // a workaround for walking over e.g.
+         //
+         //   public:
+         //       foo () {};
+         //       ^
+         if (/^\s*public:\s*$|^\s*private:\s*$|^\s*protected:\s*$/.test(lastLine)) {
+            return indent;
+         }
 
          var lookbackRow = row - 1;
          while (reNaked.test(lastLine)) {
