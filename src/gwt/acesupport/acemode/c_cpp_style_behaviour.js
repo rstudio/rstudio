@@ -349,6 +349,21 @@ var CStyleBehaviour = function () {
       }
    });
 
+   // Note -- we restrict this to 'template' contexts (which we use
+   // a very simple heuristic to look up...
+   this.add("arrows", "insertion", function (state, action, editor, session, text) {
+      var cursor = editor.getCursorPosition();
+      var line = session.getDocument().getLine(cursor.row);
+      if (/^\s*template/.test(line)) {
+         return autoPairInsertion("<", text, editor, session);
+      }
+   });
+
+   this.add("arrows", "deletion", function (state, action, editor, session, range) {
+      return autoPairDeletion("<", range, session);
+   });
+   
+
    this.add("parens", "insertion", function (state, action, editor, session, text) {
       return autoPairInsertion("(", text, editor, session);
    });
