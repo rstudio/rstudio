@@ -43,13 +43,17 @@ import com.google.gwt.dev.util.log.CompositeTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSortedMap;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSortedSet;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -179,7 +183,7 @@ class Recompiler {
     CompileDir compileDir = makeCompileDir(++compilesDone, logger);
     TreeLogger compileLogger = makeCompileLogger(compileDir, logger);
 
-    ModuleDef module = loadModule(compileLogger);
+    ModuleDef module = loadModule(Sets.<String>newHashSet(), compileLogger);
 
     logger.log(TreeLogger.INFO, "Loading Java files in " + inputModuleName + ".");
     CompilerOptions loadOptions = new CompilerOptionsImpl(compileDir, inputModuleName, options);
@@ -275,7 +279,8 @@ class Recompiler {
     CompilerOptions loadOptions = new CompilerOptionsImpl(compileDir, inputModuleName, options);
     compilerContext = compilerContextBuilder.options(loadOptions).build();
 
-    ModuleDef module = loadModule(compileLogger);
+    ModuleDef module = loadModule(job.getBindingProperties().keySet(), compileLogger);
+
     // We need to generate the stub before restricting permutations
     String recompileJs = generateModuleRecompileJs(module, compileLogger);
 
@@ -404,7 +409,7 @@ class Recompiler {
   /**
    * Loads the module and configures it for SuperDevMode. (Does not restrict permutations.)
    */
-  private ModuleDef loadModule(TreeLogger logger) throws UnableToCompleteException {
+  private ModuleDef loadModule(Set<String> propertyNames, TreeLogger logger) throws UnableToCompleteException {
 
     // make sure we get the latest version of any modified jar
     ZipFileClassPathEntry.clearCache();
@@ -489,6 +494,12 @@ class Recompiler {
     overrideBinding(moduleDef, "compiler.useSourceMaps", "true");
     overrideBinding(moduleDef, "compiler.useSymbolMaps", "false");
     overrideBinding(moduleDef, "superdevmode", "on");
+
+    // Unrestrict permutations so we can properly generate property providers
+    for (String propertyName : propertyNames) {
+      BindingProperty bindingProp = moduleDef.getProperties().findBindingProp(propertyName);
+      bindingProp.setRootGeneratedValues(bindingProp.getDefinedValues());
+    }
     return moduleDef;
   }
 
