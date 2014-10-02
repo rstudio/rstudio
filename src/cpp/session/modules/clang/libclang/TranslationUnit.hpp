@@ -18,7 +18,7 @@
 
 #include <iosfwd>
 
-#include "LibClang.hpp"
+#include "ClangLibrary.hpp"
 #include "Diagnostic.hpp"
 #include "CodeCompleteResults.hpp"
 

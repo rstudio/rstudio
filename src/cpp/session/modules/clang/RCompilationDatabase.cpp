@@ -38,7 +38,7 @@
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
 
-#include "libclang/LibClang.hpp"
+#include "libclang/ClangLibrary.hpp"
 
 using namespace core ;
 

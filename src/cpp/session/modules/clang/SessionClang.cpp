@@ -29,7 +29,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
 
-#include "libclang/LibClang.hpp"
+#include "libclang/ClangLibrary.hpp"
 #include "libclang/UnsavedFiles.hpp"
 #include "libclang/SourceIndex.hpp"
 
@@ -61,7 +61,7 @@ std::string embeddedLibClangPath()
    return options().libclangPath().childPath(libclang).absolutePath();
 }
 
-std::vector<std::string> embeddedLibClangCompileArgs(const Version& version,
+std::vector<std::string> embeddedLibClangCompileArgs(const LibraryVersion& version,
                                                      bool isCppFile)
 {
    std::vector<std::string> compileArgs;
@@ -71,7 +71,7 @@ std::vector<std::string> embeddedLibClangCompileArgs(const Version& version,
 
    // add compiler headers
    std::string headersVersion = "3.5";
-   if (version < Version(3,5,0))
+   if (version < LibraryVersion(3,5,0))
       headersVersion = "3.4";
    compileArgs.push_back("-I" + headersPath.childPath(headersVersion)
                                                    .absolutePath());
@@ -86,9 +86,9 @@ std::vector<std::string> embeddedLibClangCompileArgs(const Version& version,
    return compileArgs;
 }
 
-Embedded embeddedLibClang()
+EmbeddedLibrary embeddedLibClang()
 {
-   Embedded embedded;
+   EmbeddedLibrary embedded;
    embedded.libraryPath = embeddedLibClangPath;
    embedded.compileArgs = embeddedLibClangCompileArgs;
    return embedded;
@@ -214,8 +214,8 @@ SEXP rs_isLibClangAvailable()
    // check for required Rcpp
    else if (haveRequiredRcpp())
    {
-      LibClang lib;
-      isAvailable = lib.load(embeddedLibClang(), Version(3,4,0), &diagnostics);
+      ClangLibrary lib;
+      isAvailable = lib.load(embeddedLibClang(), LibraryVersion(3,4,0), &diagnostics);
    }
    else
    {
@@ -282,7 +282,7 @@ Error initialize()
    // attempt to initialize libclang interface
    if (!libclang::initialize(compilationDatabase(),
                              embeddedLibClang(),
-                             Version(3,4,0),
+                             LibraryVersion(3,4,0),
                              userSettings().clangVerbose()))
    {
       return Success();

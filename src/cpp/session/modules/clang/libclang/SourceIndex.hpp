@@ -21,7 +21,7 @@
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 
-#include "LibClang.hpp"
+#include "ClangLibrary.hpp"
 #include "TranslationUnit.hpp"
 #include "CompilationDatabase.hpp"
 

@@ -21,7 +21,7 @@
 
 #include <boost/noncopyable.hpp>
 
-#include "LibClang.hpp"
+#include "ClangLibrary.hpp"
 
 namespace session {
 namespace modules {      

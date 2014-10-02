@@ -15,8 +15,6 @@
 
 #include "UnsavedFiles.hpp"
 
-#include "LibClang.hpp"
-
 #include <core/StringUtils.hpp>
 
 using namespace core ;

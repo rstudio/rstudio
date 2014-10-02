@@ -1,5 +1,5 @@
 /*
- * LibClang.hpp
+ * ClangLibrary.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_MODULES_CLANG_LIBCLANG_LIBCLANG_HPP
-#define SESSION_MODULES_CLANG_LIBCLANG_LIBCLANG_HPP
+#ifndef SESSION_MODULES_CLANG_LIBCLANG_CLANG_LIBRARY_HPP
+#define SESSION_MODULES_CLANG_LIBCLANG_CLANG_LIBRARY_HPP
 
 #include <string>
 
@@ -27,6 +27,8 @@
 #include "clang-c/Index.h"
 #include "clang-c/CXCompilationDatabase.h"
 
+#include "LibraryVersion.hpp"
+#include "EmbeddedLibrary.hpp"
 #include "CompilationDatabase.hpp"
 
 namespace session {
@@ -34,79 +36,23 @@ namespace modules {
 namespace clang {
 namespace libclang {
 
-struct Version
-{
-   Version() : major_(0), minor_(0), patch_(0) {}
-   Version(int major, int minor, int patch)
-      : major_(major), minor_(minor), patch_(patch)
-   {
-   }
-
-
-   bool empty() const { return major_ == 0; }
-
-   int major() const { return major_; }
-   int minor() const { return minor_; }
-   int patch() const { return patch_; }
-
-   bool operator<(const Version& other) const
-   {
-      if (major_ == other.major_ && minor_ == other.minor_)
-         return patch_ < other.patch_;
-      else if (major_ == other.major_)
-         return minor_ < other.minor_;
-      else
-         return major_ < other.major_;
-   }
-
-   bool operator==(const Version& other) const
-   {
-      return major_ == other.major_ &&
-             minor_ == other.minor_ &&
-             patch_ == other.patch_;
-   }
-
-   bool operator!=(const Version& other) const
-   {
-      return !(*this == other);
-   }
-
-   std::string asString() const
-   {
-      boost::format fmt("%1%.%2%.%3%");
-      return boost::str(fmt % major_ % minor_ % patch_);
-   }
-
-private:
-   const int major_;
-   const int minor_;
-   const int patch_;
-};
-
-struct Embedded
-{
-   bool empty() const { return ! libraryPath; }
-   boost::function<std::string()> libraryPath;
-   boost::function<std::vector<std::string>(const Version&, bool)> compileArgs;
-};
-
-class LibClang : boost::noncopyable
+class ClangLibrary : boost::noncopyable
 {
 public:
    // construction/destruction (copying prohibited)
-   LibClang() : pLib_(NULL) {}
-   virtual ~LibClang();
+   ClangLibrary() : pLib_(NULL) {}
+   virtual ~ClangLibrary();
 
    // loading
-   bool load(Embedded embedded = Embedded(),
-             Version requiredVersion = Version(3,4,0),
+   bool load(EmbeddedLibrary embedded = EmbeddedLibrary(),
+             LibraryVersion requiredVersion = LibraryVersion(3,4,0),
              std::string* pDiagnostics = NULL);
 
    core::Error unload();
    bool isLoaded() const { return pLib_ != NULL; }
 
    // version
-   Version version() const;
+   LibraryVersion version() const;
 
    // compile args required by this configuration of liblcnag
    std::vector<std::string> compileArgs(bool isCppFile) const;
@@ -619,24 +565,20 @@ public:
    CXString (*CompileCommand_getArg)(CXCompileCommand, unsigned I);
 
 private:
-   core::Error tryLoad(const std::string& libraryPath, Version requiredVersion);
+   core::Error tryLoad(const std::string& libraryPath, LibraryVersion requiredVersion);
 
 private:
    void* pLib_;
-   Embedded embedded_;
+   EmbeddedLibrary embedded_;
 };
 
-// note that this function disposes the underlying CXString so it
-// shouldn't be used after this call
-std::string toStdString(CXString cxStr);
-
 // shared instance of lib clang
-LibClang& clang();
+ClangLibrary& clang();
 
 // convenience function to load libclang and initialize the source index
 bool initialize(CompilationDatabase compilationDB = CompilationDatabase(),
-                Embedded embedded = Embedded(),
-                Version requiredVersion = Version(3,4,0),
+                EmbeddedLibrary embedded = EmbeddedLibrary(),
+                LibraryVersion requiredVersion = LibraryVersion(3,4,0),
                 int verbose = 0,
                 std::string* pDiagnostics = NULL);
 
@@ -646,4 +588,4 @@ bool initialize(CompilationDatabase compilationDB = CompilationDatabase(),
 } // namespace modules
 } // namespace session
 
-#endif // SESSION_MODULES_CLANG_LIBCLANG_LIBCLANG_HPP
+#endif // SESSION_MODULES_CLANG_LIBCLANG_CLANG_LIBRARY_HPP

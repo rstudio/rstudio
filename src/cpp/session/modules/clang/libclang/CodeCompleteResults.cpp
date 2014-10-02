@@ -17,6 +17,7 @@
 
 #include "SourceIndex.hpp"
 #include "UnsavedFiles.hpp"
+#include "Utils.hpp"
 
 using namespace core ;
 

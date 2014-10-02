@@ -17,6 +17,7 @@
 
 #include <boost/make_shared.hpp>
 
+#include "Utils.hpp"
 
 using namespace core ;
 

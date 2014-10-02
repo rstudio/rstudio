@@ -1,5 +1,5 @@
 /*
- * Diagnostic.hpp
+ * Utils.cpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,46 +13,26 @@
  *
  */
 
-#ifndef SESSION_MODULES_CLANG_LIBCLANG_DIAGNOSTIC_HPP
-#define SESSION_MODULES_CLANG_LIBCLANG_DIAGNOSTIC_HPP
-
-#include <boost/shared_ptr.hpp>
+#include "Utils.hpp"
 
 #include "ClangLibrary.hpp"
-#include "SourceLocation.hpp"
 
 namespace session {
 namespace modules {      
 namespace clang {
 namespace libclang {
 
-class Diagnostic
+// note that this function disposes the underlying CXString so it
+// shouldn't be used after this call
+std::string toStdString(CXString cxStr)
 {
-public:
-   explicit Diagnostic(CXDiagnostic diagnostic)
-      : pDiagnostic_(new CXDiagnostic(diagnostic))
-   {
-   }
-
-   ~Diagnostic();
-
-   std::string format(unsigned options =
-                           clang().defaultDiagnosticDisplayOptions()) const;
-
-   CXDiagnosticSeverity getSeverity() const;
-   SourceLocation getLocation() const;
-   std::string getSpelling() const;
-
-private:
-   CXDiagnostic diagnostic() const { return *pDiagnostic_; }
-
-private:
-   boost::shared_ptr<CXDiagnostic> pDiagnostic_;
-};
+   std::string str(clang().getCString(cxStr));
+   clang().disposeString(cxStr);
+   return str;
+}
 
 } // namespace libclang
 } // namespace clang
 } // namepace handlers
 } // namesapce session
 
-#endif // SESSION_MODULES_CLANG_LIBCLANG_DIAGNOSTIC_HPP

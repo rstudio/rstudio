@@ -1,5 +1,5 @@
 /*
- * LibClang.cpp
+ * ClangLibrary.cpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,7 +13,7 @@
  *
  */
 
-#include "LibClang.hpp"
+#include "ClangLibrary.hpp"
 
 #include <iostream>
 #include <vector>
@@ -72,7 +72,7 @@ std::vector<std::string> systemClangVersions()
 
 } // anonymous namespace
 
-LibClang::~LibClang()
+ClangLibrary::~ClangLibrary()
 {
    try
    {
@@ -85,9 +85,9 @@ LibClang::~LibClang()
    }
 }
 
-bool LibClang::load(Embedded embedded,
-                    Version requiredVersion,
-                    std::string* pDiagnostics)
+bool ClangLibrary::load(EmbeddedLibrary embedded,
+                        LibraryVersion requiredVersion,
+                        std::string* pDiagnostics)
 {
    // diagnostics stream
    std::ostringstream ostr;
@@ -143,7 +143,8 @@ bool LibClang::load(Embedded embedded,
    return false;
 }
 
-Error LibClang::tryLoad(const std::string& libraryPath, Version requiredVersion)
+Error ClangLibrary::tryLoad(const std::string& libraryPath,
+                            LibraryVersion requiredVersion)
 {
    // load the library
    Error error = core::system::loadLibrary(libraryPath, &pLib_);
@@ -156,7 +157,7 @@ Error LibClang::tryLoad(const std::string& libraryPath, Version requiredVersion)
    LOAD_CLANG_SYMBOL(disposeString)
 
    // verify that we have the required version
-   Version libVersion = version();
+   LibraryVersion libVersion = version();
    if (libVersion < requiredVersion)
    {
       Error unloadError = unload();
@@ -480,7 +481,7 @@ Error LibClang::tryLoad(const std::string& libraryPath, Version requiredVersion)
    return Success();
 }
 
-Error LibClang::unload()
+Error ClangLibrary::unload()
 {
    if (pLib_ != NULL)
    {
@@ -502,7 +503,7 @@ Error LibClang::unload()
 }
 
 
-Version LibClang::version() const
+LibraryVersion ClangLibrary::version() const
 {
    CXString cxVer = getClangVersion();
    std::string versionString(getCString(cxVer));
@@ -524,17 +525,17 @@ Version LibClang::version() const
             match3 = "0";
 
          // return version structure
-         return Version(safe_convert::stringTo<int>(match[1], 0),
+         return LibraryVersion(safe_convert::stringTo<int>(match[1], 0),
                         safe_convert::stringTo<int>(match[2], 0),
                         safe_convert::stringTo<int>(match3, 0));
       }
    }
 
    // no version found
-   return Version();
+   return LibraryVersion();
 }
 
-std::vector<std::string> LibClang::compileArgs(bool isCppFile) const
+std::vector<std::string> ClangLibrary::compileArgs(bool isCppFile) const
 {
    std::vector<std::string> compileArgs;
 
@@ -544,25 +545,17 @@ std::vector<std::string> LibClang::compileArgs(bool isCppFile) const
    return compileArgs;
 }
 
-
-std::string toStdString(CXString cxStr)
-{
-   std::string str(clang().getCString(cxStr));
-   clang().disposeString(cxStr);
-   return str;
-}
-
 // shared instance of libclang
-LibClang& clang()
+ClangLibrary& clang()
 {
-   static class LibClang instance;
+   static class ClangLibrary instance;
    return instance;
 }
 
 // convenience function to load libclang and initialize the source index
 bool initialize(CompilationDatabase compilationDB,
-                Embedded embedded,
-                Version requiredVersion,
+                EmbeddedLibrary embedded,
+                LibraryVersion requiredVersion,
                 int verbose,
                 std::string* pDiagnostics)
 {
