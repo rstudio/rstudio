@@ -36,6 +36,67 @@ var CppLookaroundHeuristics = require("mode/cpp_lookaround_heuristics").CppLooka
 var CStyleBehaviour = function () {
 
    var $heuristics = new CppLookaroundHeuristics();
+   var $complements = $heuristics.$complements;
+
+   var autoPairInsertion = function(text, input, editor, session) {
+
+      var leftChar = text;
+      var rightChar = $complements[leftChar];
+
+      if (input == leftChar) {
+
+         var selection = editor.getSelectionRange();
+         var selected = session.doc.getTextRange(selection);
+         if (selected !== "") {
+            return {
+               text: leftChar + selected + rightChar,
+               selection: false
+            };
+         } else {
+            return {
+               text: leftChar + rightChar,
+               selection: [1, 1]
+            };
+         }
+      } else if (input == rightChar) {
+         var cursor = editor.getCursorPosition();
+         var line = session.doc.getLine(cursor.row);
+         var cursorRightChar = line[cursor.column];
+         if (cursorRightChar == rightChar) {
+            var matching = $heuristics.findMatchingBracketRow(
+               rightChar,
+               session.getDocument().$lines,
+               cursor.row,
+               200,
+               "backward"
+            );
+            if (matching !== null) {
+               return {
+                  text: '',
+                  selection: [1, 1]
+               };
+            }
+         }
+      }
+      
+   };
+
+   var autoPairDeletion = function(text, range, session) {
+
+      var lChar = text;
+      var rChar = $complements[text];
+      
+      var selected = session.doc.getTextRange(range);
+      if (!range.isMultiLine() && selected == lChar) {
+         var line = session.doc.getLine(range.start.row);
+         var rightChar = line.substring(range.start.column + 1, range.start.column + 2);
+         if (rightChar == rChar) {
+            range.end.column++;
+            return range;
+         }
+      }
+   };
+   
 
    this.add("R", "insertion", function(state, action, editor, session, text) {
 
@@ -54,20 +115,6 @@ var CStyleBehaviour = function () {
 
    });
 
-   this.add("<", "insertion", function(state, action, editor, session, text) {
-
-      if (text == "<") {
-         var selection = editor.getSelectionRange();
-         var selected = session.doc.getTextRange(selection);
-         if (selected !== "") {
-            return {
-               text: '<' + selected + '>',
-               selection: false
-            };
-         }
-      }
-   });
-
    this.add("newline", "insertion", function(state, action, editor, session, text) {
 
       if (text == "\n") {
@@ -80,7 +127,6 @@ var CStyleBehaviour = function () {
 
          var cursor = editor.getCursorPosition();
          var line = session.doc.getLine(cursor.row);
-         
 
          // Comment indentation rules
          if (state == "comment" || state == "doc-start") {
@@ -110,8 +156,7 @@ var CStyleBehaviour = function () {
             --i;
          }
          var thisChar = line[i];
-
-         var rightChar = line.substring(cursor.column, cursor.column + 1);
+         var rightChar = line[col];
 
          // If we're creating a namespace, just use the line's indent itself
          var match = line.match(/\s*namespace\s*\w*\s*{/);
@@ -159,26 +204,11 @@ var CStyleBehaviour = function () {
 
          // These insertion rules handle the case where we're inserting a newline
          // when within an auto-generated {} block; e.g. as class Foo {|};
-         if (thisChar == '{') {
-
-            var indentRow = $heuristics.getRowForOpenBraceIndent(
-               session,
-               row,
-               20
-            );
-
-            if (indentRow !== null) {
-               var indent = this.$getIndent(session.doc.$lines[indentRow]);
-               return {
-                  text: "\n" + indent + tab + "\n" + indent,
-                  selection: [1, indent.length + session.getTabSize(),
-                              1, indent.length + session.getTabSize()]
-               };
-            }
+         if (thisChar == '{' && rightChar == "}") {
 
             // default behavior -- based on just the current row
-            var indent = this.$getIndent(line) + tab;
             var nextIndent = this.$getIndent(line);
+            var indent = nextIndent + tab;
             
             return {
                text: "\n" + indent + "\n" + nextIndent,
@@ -320,89 +350,19 @@ var CStyleBehaviour = function () {
    });
 
    this.add("parens", "insertion", function (state, action, editor, session, text) {
-      if (text == '(') {
-         var selection = editor.getSelectionRange();
-         var selected = session.doc.getTextRange(selection);
-         if (selected !== "") {
-            return {
-               text: '(' + selected + ')',
-               selection: false
-            };
-         } else {
-            return {
-               text: '()',
-               selection: [1, 1]
-            };
-         }
-      } else if (text == ')') {
-         var cursor = editor.getCursorPosition();
-         var line = session.doc.getLine(cursor.row);
-         var rightChar = line.substring(cursor.column, cursor.column + 1);
-         if (rightChar == ')') {
-            var matching = session.$findOpeningBracket(')', {column: cursor.column + 1, row: cursor.row});
-            if (matching !== null) {
-               return {
-                  text: '',
-                  selection: [1, 1]
-               };
-            }
-         }
-      }
+      return autoPairInsertion("(", text, editor, session);
    });
 
    this.add("parens", "deletion", function (state, action, editor, session, range) {
-      var selected = session.doc.getTextRange(range);
-      if (!range.isMultiLine() && selected == '(') {
-         var line = session.doc.getLine(range.start.row);
-         var rightChar = line.substring(range.start.column + 1, range.start.column + 2);
-         if (rightChar == ')') {
-            range.end.column++;
-            return range;
-         }
-      }
+      return autoPairDeletion("(", range, session);
    });
-
+   
    this.add("brackets", "insertion", function (state, action, editor, session, text) {
-      if (text == '[') {
-         var selection = editor.getSelectionRange();
-         var selected = session.doc.getTextRange(selection);
-         if (selected !== "") {
-            return {
-               text: '[' + selected + ']',
-               selection: false
-            };
-         } else {
-            return {
-               text: '[]',
-               selection: [1, 1]
-            };
-         }
-      } else if (text == ']') {
-         var cursor = editor.getCursorPosition();
-         var line = session.doc.getLine(cursor.row);
-         var rightChar = line.substring(cursor.column, cursor.column + 1);
-         if (rightChar == ']') {
-            var matching = session.$findOpeningBracket(']', {column: cursor.column + 1, row: cursor.row});
-            if (matching !== null) {
-               return {
-                  text: '',
-                  selection: [1, 1]
-               };
-            }
-         }
-      }
+      return autoPairInsertion("[", text, editor, session);
    });
 
-   this.add("brackets", "deletion", function (state, action, editor, session, range) {
-      var selected = session.doc.getTextRange(range);
-      if (!range.isMultiLine() && selected == '[') {
-         var line = session.doc.getLine(range.start.row);
-         var rightChar = line.substring(range.start.column + 1, range.start.column + 2);
-         if (rightChar == ']') {
-            range.end.column++;
-            return range;
-         }
-      }
+   this.add("brackets", "deletion", function (state, action, edditor, session, range) {
+      return autoPairDeletion("[", range, session);
    });
 
    this.add("string_dquotes", "insertion", function (state, action, editor, session, text) {
@@ -497,8 +457,7 @@ var CStyleBehaviour = function () {
 
    });
 
-   this.add("punctuation.operator", "insertion", function (state, action, editor, session, text) {
-      
+   this.add("punctuation.operator", "insertion", function(state, action, editor, session, text) {
       // Step over ';'
       if (text == ";") {
          var cursor = editor.selection.getCursor();
