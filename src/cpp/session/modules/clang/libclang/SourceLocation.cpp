@@ -15,7 +15,7 @@
 
 #include "SourceLocation.hpp"
 
-#include "SharedLibrary.hpp"
+#include "LibClang.hpp"
 
 namespace session {
 namespace modules { 

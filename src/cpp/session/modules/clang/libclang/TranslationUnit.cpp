@@ -18,7 +18,7 @@
 #include <core/FilePath.hpp>
 
 #include "Utils.hpp"
-#include "SharedLibrary.hpp"
+#include "LibClang.hpp"
 #include "UnsavedFiles.hpp"
 
 namespace session {

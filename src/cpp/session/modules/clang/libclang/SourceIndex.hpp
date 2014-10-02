@@ -17,6 +17,7 @@
 #define SESSION_MODULES_CLANG_LIBCLANG_SOURCE_INDEX_HPP
 
 #include <map>
+#include <vector>
 
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
@@ -24,12 +25,19 @@
 #include "clang-c/Index.h"
 
 #include "TranslationUnit.hpp"
-#include "CompilationDatabase.hpp"
 
 namespace session {
 namespace modules {      
 namespace clang {
 namespace libclang {
+
+struct CompilationDatabase
+{
+   bool empty() const { return ! compileArgsForTranslationUnit; }
+   boost::function<std::vector<std::string>(const std::string&)>
+                                            compileArgsForTranslationUnit;
+   boost::function<std::vector<std::string>()> translationUnits;
+};
 
 class SourceIndex : boost::noncopyable
 {   

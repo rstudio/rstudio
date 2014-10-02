@@ -1,5 +1,5 @@
 /*
- * ClangLibrary.hpp
+ * LibClang.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -18,29 +18,92 @@
 
 #include <string>
 
-#include <boost/format.hpp>
 #include <boost/noncopyable.hpp>
+#include <boost/format.hpp>
 #include <boost/function.hpp>
 
 #include <core/Error.hpp>
 
+#include "Diagnostic.hpp"
+#include "SourceIndex.hpp"
+#include "SourceLocation.hpp"
+#include "TranslationUnit.hpp"
+#include "UnsavedFiles.hpp"
+#include "Utils.hpp"
+
 #include "clang-c/Index.h"
 #include "clang-c/CXCompilationDatabase.h"
-
-#include "LibraryVersion.hpp"
-#include "EmbeddedLibrary.hpp"
 
 namespace session {
 namespace modules {
 namespace clang {
 namespace libclang {
 
-class SharedLibrary : boost::noncopyable
+struct LibraryVersion
+{
+   LibraryVersion() : major_(0), minor_(0), patch_(0) {}
+   LibraryVersion(int major, int minor, int patch)
+      : major_(major), minor_(minor), patch_(patch)
+   {
+   }
+
+
+   bool empty() const { return major_ == 0; }
+
+   int major() const { return major_; }
+   int minor() const { return minor_; }
+   int patch() const { return patch_; }
+
+   bool operator<(const LibraryVersion& other) const
+   {
+      if (major_ == other.major_ && minor_ == other.minor_)
+         return patch_ < other.patch_;
+      else if (major_ == other.major_)
+         return minor_ < other.minor_;
+      else
+         return major_ < other.major_;
+   }
+
+   bool operator==(const LibraryVersion& other) const
+   {
+      return major_ == other.major_ &&
+             minor_ == other.minor_ &&
+             patch_ == other.patch_;
+   }
+
+   bool operator!=(const LibraryVersion& other) const
+   {
+      return !(*this == other);
+   }
+
+   std::string asString() const
+   {
+      boost::format fmt("%1%.%2%.%3%");
+      return boost::str(fmt % major_ % minor_ % patch_);
+   }
+
+private:
+   const int major_;
+   const int minor_;
+   const int patch_;
+};
+
+
+struct EmbeddedLibrary
+{
+   bool empty() const { return ! libraryPath; }
+   boost::function<std::string()> libraryPath;
+   boost::function<std::vector<std::string>(const LibraryVersion&, bool)>
+                                                                compileArgs;
+};
+
+
+class LibClang : boost::noncopyable
 {
 public:
    // construction/destruction (copying prohibited)
-   SharedLibrary() : pLib_(NULL) {}
-   virtual ~SharedLibrary();
+   LibClang() : pLib_(NULL) {}
+   virtual ~LibClang();
 
    // loading
    bool load(EmbeddedLibrary embedded = EmbeddedLibrary(),
@@ -564,7 +627,8 @@ public:
    CXString (*CompileCommand_getArg)(CXCompileCommand, unsigned I);
 
 private:
-   core::Error tryLoad(const std::string& libraryPath, LibraryVersion requiredVersion);
+   core::Error tryLoad(const std::string& libraryPath,
+                       LibraryVersion requiredVersion);
 
 private:
    void* pLib_;
@@ -572,7 +636,14 @@ private:
 };
 
 // shared instance of lib clang
-SharedLibrary& clang();
+LibClang& clang();
+
+// convenience function to load libclang and initialize the source index
+bool initialize(CompilationDatabase compilationDB = CompilationDatabase(),
+                EmbeddedLibrary embedded = EmbeddedLibrary(),
+                LibraryVersion requiredVersion = LibraryVersion(3,4,0),
+                int verbose = 0,
+                std::string* pDiagnostics = NULL);
 
 
 } // namespace libclang

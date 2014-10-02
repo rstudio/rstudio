@@ -1,5 +1,5 @@
 /*
- * ClangLibrary.cpp
+ * LibClang.cpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,7 +13,7 @@
  *
  */
 
-#include "SharedLibrary.hpp"
+#include "LibClang.hpp"
 
 #include <iostream>
 #include <vector>
@@ -72,7 +72,7 @@ std::vector<std::string> systemClangVersions()
 
 } // anonymous namespace
 
-SharedLibrary::~SharedLibrary()
+LibClang::~LibClang()
 {
    try
    {
@@ -85,7 +85,7 @@ SharedLibrary::~SharedLibrary()
    }
 }
 
-bool SharedLibrary::load(EmbeddedLibrary embedded,
+bool LibClang::load(EmbeddedLibrary embedded,
                          LibraryVersion requiredVersion,
                          std::string* pDiagnostics)
 {
@@ -143,7 +143,7 @@ bool SharedLibrary::load(EmbeddedLibrary embedded,
    return false;
 }
 
-Error SharedLibrary::tryLoad(const std::string& libraryPath,
+Error LibClang::tryLoad(const std::string& libraryPath,
                              LibraryVersion requiredVersion)
 {
    // load the library
@@ -481,7 +481,7 @@ Error SharedLibrary::tryLoad(const std::string& libraryPath,
    return Success();
 }
 
-Error SharedLibrary::unload()
+Error LibClang::unload()
 {
    if (pLib_ != NULL)
    {
@@ -503,7 +503,7 @@ Error SharedLibrary::unload()
 }
 
 
-LibraryVersion SharedLibrary::version() const
+LibraryVersion LibClang::version() const
 {
    CXString cxVer = getClangVersion();
    std::string versionString(getCString(cxVer));
@@ -535,7 +535,7 @@ LibraryVersion SharedLibrary::version() const
    return LibraryVersion();
 }
 
-std::vector<std::string> SharedLibrary::compileArgs(bool isCppFile) const
+std::vector<std::string> LibClang::compileArgs(bool isCppFile) const
 {
    std::vector<std::string> compileArgs;
 
@@ -546,10 +546,26 @@ std::vector<std::string> SharedLibrary::compileArgs(bool isCppFile) const
 }
 
 // shared instance of libclang
-SharedLibrary& clang()
+LibClang& clang()
 {
-   static class SharedLibrary instance;
+   static class LibClang instance;
    return instance;
+}
+
+// convenience function to load libclang and initialize the source index
+bool initialize(CompilationDatabase compilationDB,
+                EmbeddedLibrary embedded,
+                LibraryVersion requiredVersion,
+                int verbose,
+                std::string* pDiagnostics)
+{
+   bool loaded = clang().load(embedded, requiredVersion, pDiagnostics);
+   if (!loaded)
+      return false;
+
+   sourceIndex().initialize(compilationDB, verbose);
+
+   return true;
 }
 
 } // namesapce libclang

@@ -120,10 +120,9 @@ set (SESSION_SOURCE_FILES
    modules/clang/CodeCompletion.cpp
    modules/clang/RCompilationDatabase.cpp
    modules/clang/SessionClang.cpp
-   modules/clang/libclang/Clang.cpp
    modules/clang/libclang/CodeCompleteResults.cpp
    modules/clang/libclang/Diagnostic.cpp
-   modules/clang/libclang/SharedLibrary.cpp
+   modules/clang/libclang/LibClang.cpp
    modules/clang/libclang/SourceIndex.cpp
    modules/clang/libclang/SourceLocation.cpp
    modules/clang/libclang/TranslationUnit.cpp

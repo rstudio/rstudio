@@ -29,7 +29,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
 
-#include "libclang/Clang.hpp"
+#include "libclang/LibClang.hpp"
 
 #include "CodeCompletion.hpp"
 #include "RCompilationDatabase.hpp"
@@ -212,7 +212,7 @@ SEXP rs_isLibClangAvailable()
    // check for required Rcpp
    else if (haveRequiredRcpp())
    {
-      SharedLibrary lib;
+      LibClang lib;
       isAvailable = lib.load(embeddedLibClang(),
                              LibraryVersion(3,4,0),
                              &diagnostics);

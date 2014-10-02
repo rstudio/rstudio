@@ -39,7 +39,7 @@
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
 
-#include "libclang/Clang.hpp"
+#include "libclang/LibClang.hpp"
 
 using namespace core ;
 
