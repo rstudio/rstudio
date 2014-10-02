@@ -39,11 +39,7 @@
       return error; \
    }
 
-using namespace core;
-
-namespace session {
-namespace modules {
-namespace clang {
+namespace core {
 namespace libclang {
 
 namespace {
@@ -569,6 +565,5 @@ bool initialize(CompilationDatabase compilationDB,
 }
 
 } // namesapce libclang
-} // namespace clang
-} // namespace modules
-} // namespace session
+} // namespace core
+

@@ -21,17 +21,8 @@
 #include "UnsavedFiles.hpp"
 #include "Utils.hpp"
 
-using namespace core ;
-
-namespace session {
-namespace modules { 
-namespace clang {
+namespace core {
 namespace libclang {
-
-namespace {
-
-
-} // anonymous namespace
 
 // NOTE: this is a toy version of inspecting completion chunks just
 // to see if we can get completion working -- we need to decompose
@@ -97,7 +88,6 @@ unsigned long long CodeCompleteResults::getContexts() const
 
 
 } // namespace libclang
-} // namespace clang
-} // namespace modules
-} // namesapce session
+} // namespace core
+
 

@@ -13,16 +13,14 @@
  *
  */
 
-#ifndef SESSION_MODULES_CLANG_LIBCLANG_UTILS_HPP
-#define SESSION_MODULES_CLANG_LIBCLANG_UTILS_HPP
+#ifndef CORE_LIBCLANG_UTILS_HPP
+#define CORE_LIBCLANG_UTILS_HPP
 
 #include <string>
 
 #include "clang-c/CXString.h"
 
-namespace session {
-namespace modules {      
-namespace clang {
+namespace core {
 namespace libclang {
 
 // note that this function disposes the underlying CXString so it
@@ -30,8 +28,6 @@ namespace libclang {
 std::string toStdString(CXString cxStr);
 
 } // namespace libclang
-} // namespace clang
-} // namepace handlers
-} // namesapce session
+} // namespace core
 
-#endif // SESSION_MODULES_CLANG_LIBCLANG_UTILS_HPP
+#endif // CORE_LIBCLANG_UTILS_HPP

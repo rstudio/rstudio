@@ -21,9 +21,7 @@
 #include "LibClang.hpp"
 #include "UnsavedFiles.hpp"
 
-namespace session {
-namespace modules { 
-namespace clang {
+namespace core {
 namespace libclang {
 
 std::string TranslationUnit::getSpelling() const
@@ -87,7 +85,6 @@ void TranslationUnit::printResourceUsage(std::ostream& ostr)
 
 
 } // namespace libclang
-} // namespace clang
-} // namespace modules
-} // namesapce session
+} // namespace core
+
 

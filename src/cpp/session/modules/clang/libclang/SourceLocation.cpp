@@ -17,9 +17,7 @@
 
 #include "LibClang.hpp"
 
-namespace session {
-namespace modules { 
-namespace clang {
+namespace core {
 namespace libclang {
 
 SourceLocation::SourceLocation()
@@ -50,7 +48,4 @@ bool SourceLocation::operator!=(const SourceLocation& other) const
 }
 
 } // namespace libclang
-} // namespace clang
-} // namespace modules
-} // namesapce session
-
+} // namespace core

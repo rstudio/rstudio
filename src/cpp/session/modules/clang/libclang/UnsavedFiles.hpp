@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_MODULES_CLANG_LIBCLANG_UNSAVED_FILES_HPP
-#define SESSION_MODULES_CLANG_LIBCLANG_UNSAVED_FILES_HPP
+#ifndef CORE_LIBCLANG_UNSAVED_FILES_HPP
+#define CORE_LIBCLANG_UNSAVED_FILES_HPP
 
 #include <map>
 #include <iosfwd>
@@ -24,9 +24,7 @@
 
 #include "clang-c/Index.h"
 
-namespace session {
-namespace modules {      
-namespace clang {
+namespace core {
 namespace libclang {
 
 class UnsavedFiles : boost::noncopyable
@@ -62,8 +60,7 @@ std::ostream& operator << (std::ostream& ostr, UnsavedFiles& unsaved);
 
 
 } // namespace libclang
-} // namespace clang
-} // namepace handlers
-} // namesapce session
+} // namespace core
 
-#endif // SESSION_MODULES_CLANG_LIBCLANG_UNSAVED_FILES_HPP
+
+#endif // CORE_LIBCLANG_UNSAVED_FILES_HPP

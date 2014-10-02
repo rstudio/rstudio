@@ -13,15 +13,13 @@
  *
  */
 
-#ifndef SESSION_MODULES_CLANG_LIBCLANG_SOURCE_LOCATION_HPP
-#define SESSION_MODULES_CLANG_LIBCLANG_SOURCE_LOCATION_HPP
+#ifndef CORE_LIBCLANG_SOURCE_LOCATION_HPP
+#define CORE_LIBCLANG_SOURCE_LOCATION_HPP
 
 
 #include "clang-c/Index.h"
 
-namespace session {
-namespace modules {      
-namespace clang {
+namespace core {
 namespace libclang {
 
 class SourceLocation
@@ -52,8 +50,6 @@ private:
 
 
 } // namespace libclang
-} // namespace clang
-} // namepace handlers
-} // namesapce session
+} // namespace core
 
-#endif // SESSION_MODULES_CLANG_LIBCLANG_SOURCE_LOCATION_HPP
+#endif // CORE_LIBCLANG_SOURCE_LOCATION_HPP

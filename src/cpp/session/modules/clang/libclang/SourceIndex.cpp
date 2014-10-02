@@ -25,11 +25,7 @@
 #include "LibClang.hpp"
 #include "UnsavedFiles.hpp"
 
-using namespace core ;
-
-namespace session {
-namespace modules { 
-namespace clang {
+namespace core {
 namespace libclang {
 
 bool SourceIndex::isTranslationUnit(const std::string& filename)
@@ -256,8 +252,6 @@ TranslationUnit SourceIndex::getHeaderTranslationUnit(
    return TranslationUnit();
 }
 
-
-
 // singleton
 SourceIndex& sourceIndex()
 {
@@ -266,7 +260,6 @@ SourceIndex& sourceIndex()
 }
 
 } // namespace libclang
-} // namespace clang
-} // namespace modules
-} // namesapce session
+} // namespace core
+
 

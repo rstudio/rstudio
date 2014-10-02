@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_MODULES_CLANG_LIBCLANG_CLANG_LIBRARY_HPP
-#define SESSION_MODULES_CLANG_LIBCLANG_CLANG_LIBRARY_HPP
+#ifndef CORE_LIBCLANG_LIBCLANG_HPP
+#define CORE_LIBCLANG_LIBCLANG_HPP
 
 #include <string>
 
@@ -34,9 +34,7 @@
 #include "clang-c/Index.h"
 #include "clang-c/CXCompilationDatabase.h"
 
-namespace session {
-namespace modules {
-namespace clang {
+namespace core {
 namespace libclang {
 
 struct LibraryVersion
@@ -647,8 +645,7 @@ bool initialize(CompilationDatabase compilationDB = CompilationDatabase(),
 
 
 } // namespace libclang
-} // namespace clang
-} // namespace modules
-} // namespace session
+} // namespace core
 
-#endif // SESSION_MODULES_CLANG_LIBCLANG_CLANG_LIBRARY_HPP
+
+#endif // CORE_LIBCLANG_LIBCLANG_HPP

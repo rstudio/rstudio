@@ -42,12 +42,11 @@
 #include "libclang/LibClang.hpp"
 
 using namespace core ;
+using namespace core::libclang;
 
 namespace session {
 namespace modules { 
 namespace clang {
-
-using namespace libclang;
 
 namespace {
 
@@ -136,6 +135,11 @@ std::string packageBuildFileHash()
       ostr << buildFileHash(srcPath.childPath("Makevars.win"));
    }
    return ostr.str();
+}
+
+LibClang& clang()
+{
+   return libclang::clang();
 }
 
 

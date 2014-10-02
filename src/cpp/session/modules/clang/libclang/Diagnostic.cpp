@@ -21,15 +21,8 @@
 
 #include "LibClang.hpp"
 
-namespace session {
-namespace modules { 
-namespace clang {
+namespace core {
 namespace libclang {
-
-namespace {
-
-
-} // anonymous namespace
 
 Diagnostic::~Diagnostic()
 {
@@ -67,11 +60,6 @@ std::string Diagnostic::getSpelling() const
    return toStdString(clang().getDiagnosticSpelling(diagnostic()));
 }
 
-
-
-
 } // namespace libclang
-} // namespace clang
-} // namespace modules
-} // namesapce session
+} // namespace core
 

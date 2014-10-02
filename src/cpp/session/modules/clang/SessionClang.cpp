@@ -35,12 +35,11 @@
 #include "RCompilationDatabase.hpp"
 
 using namespace core ;
+using namespace core::libclang;
 
 namespace session {
 namespace modules { 
 namespace clang {
-
-using namespace libclang;
 
 namespace {
 
@@ -242,7 +241,7 @@ SEXP rs_setClangDiagnostics(SEXP levelSEXP)
    
 bool isAvailable()
 {
-   return clang().isLoaded();
+   return libclang::clang().isLoaded();
 }
 
 Error initialize()

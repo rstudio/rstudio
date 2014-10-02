@@ -17,9 +17,7 @@
 
 #include "LibClang.hpp"
 
-namespace session {
-namespace modules {      
-namespace clang {
+namespace core {
 namespace libclang {
 
 // note that this function disposes the underlying CXString so it
@@ -32,7 +30,5 @@ std::string toStdString(CXString cxStr)
 }
 
 } // namespace libclang
-} // namespace clang
-} // namepace handlers
-} // namesapce session
+} // namespace core
 

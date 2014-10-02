@@ -26,12 +26,11 @@
 #include "libclang/SourceIndex.hpp"
 
 using namespace core ;
+using namespace core::libclang;
 
 namespace session {
 namespace modules { 
 namespace clang {
-
-using namespace libclang;
 
 Error printCppCompletions(const core::json::JsonRpcRequest& request,
                           core::json::JsonRpcResponse* pResponse)
