@@ -128,6 +128,10 @@ var CStyleBehaviour = function () {
          var cursor = editor.getCursorPosition();
          var line = session.doc.getLine(cursor.row);
 
+         if (this.inMacro(session.getDocument().$lines, row - 1)) {
+            return;
+         }
+
          // Comment indentation rules
          if (state == "comment" || state == "doc-start") {
 
@@ -486,6 +490,91 @@ var CStyleBehaviour = function () {
 
       }
 
+   });
+
+   this.add("macro", "insertion", function(state, action, editor, session, text) {
+
+      // If we insert a backslash and we're in 'macro mode', then nudge the
+      // closing backslash to the right.
+      var lines = session.getDocument().$lines;
+      var cursor = editor.getCursorPosition();
+      var row = cursor.row;
+      var line = lines[row];
+      var lineSub = line.substring(0, cursor.column);
+
+      if (/^\s*#\s*define/.test(line) || this.inMacro(lines, row - 1)) {
+
+         if (text == "\\" &&
+             (/^\s*$/.test(line.substring(lineSub.length, line.length)))) {
+                
+            var len = 60 - lineSub.length + 1;
+
+            if (len >= 0) {
+               return {
+                  text: new Array(len + 1).join(" ") + "\\",
+                  selection: false
+               };
+            } else {
+               return {
+                  text: "\\",
+                  selection: false
+               };
+            }
+         }
+
+         var nextIndent = session.getMode().getNextLineIndent(
+            state,
+            line + "\\",
+            session.getTabString(),
+            session.getTabSize(),
+            row,
+            true
+         );
+
+         if (text == "\n") {
+
+            // Leave the macro if the line is blank
+            if (/^\s*$/.test(line)) {
+               return {
+                  text: "\n",
+                  selection: false
+               };
+            }
+
+            // Check if we already have a closing backslash to the right of the cursor.
+            // This rule makes enter effectively function as a 'move down' action, e.g.
+            // pressing the down arrow on the keyboard.
+            if (/\\\s*$/.test(line) && !/\\\s*$/.test(lineSub)) {
+               return {
+                  text: '',
+                  selection: [1, cursor.column, 1, cursor.column]
+               };
+            }
+
+            // Otherwise, on enter, push a '\' out to an alignment column, so that
+            // macros get formatted in a 'pretty' way.
+            else {
+               
+               var len = 60 - lineSub.length + 1;
+               var backSlash = /\\\s*$/.test(lineSub) ?
+                      "" :
+                      "\\";
+
+               if (len >= 0) {
+                  return {
+                     text: new Array(len + 1).join(" ") + backSlash + "\n" + nextIndent,
+                     selection: false
+                  };
+               } else {
+                  return {
+                     text: backSlash + "\n" + nextIndent,
+                     selection: false
+                  };
+               }
+            }
+         }
+      }
+      
    });
 
 };

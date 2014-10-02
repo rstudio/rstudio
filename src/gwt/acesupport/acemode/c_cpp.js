@@ -81,7 +81,7 @@ oop.inherits(Mode, TextMode);
    var that = this;
 
    var reStartsWithOpenBrace = /^\s*\{/;
-   var reStartsWithDefine = /^\s*#define/;
+   var reStartsWithDefine = /^\s*#\s*define/;
    var reEndsWithBackslash = /\\\s*$/;
 
    this.allIndicesOf = function(string, character) {
@@ -240,7 +240,7 @@ oop.inherits(Mode, TextMode);
           */
 
          // Indent after a #define with continuation
-         if (/^\s*#define.*\\/.test(line)) {
+         if (reStartsWithDefine.test(line)) {
             return indent + tab;
          }
 
