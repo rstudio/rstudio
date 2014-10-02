@@ -44,7 +44,7 @@ var MatchingBraceOutdent = function() {
             return true;
          }
 
-         if (/^\s*[\{\}\>\]]/.test(input)) {
+         if (/^\s*[\{\}\>\]\<]/.test(input)) {
             return true;
          }
 
@@ -78,6 +78,29 @@ var MatchingBraceOutdent = function() {
 
    };
 
+   this.checkDoubleArrowAlignment = function(session, row, line, lastLine) {
+
+      if (/^\s*<<\s*$/.test(line)) {
+         var index = lastLine.indexOf("<<");
+         if (index >= 0) {
+
+            var doc = session.getDocument();
+
+            var oldIndent = this.$getIndent(line);
+            var newIndent = new Array(index + 1).join(" ");
+
+            doc.replace(
+               new Range(row, 0, row, oldIndent.length),
+               newIndent
+            );
+
+            return true;
+            
+         }
+      }
+      return false;
+   };
+
    this.autoOutdent = function(state, session, row) {
 
       var doc = session.doc;
@@ -89,6 +112,11 @@ var MatchingBraceOutdent = function() {
 
       // Check for naked token outdenting
       if (this.outdentBraceForNakedTokens(session, row, line, lastLine)) {
+         return;
+      }
+
+      // Check for '<<' alignment
+      if (this.checkDoubleArrowAlignment(session, row, line, lastLine)) {
          return;
       }
 

@@ -293,6 +293,22 @@ oop.inherits(Mode, TextMode);
             }
          }
 
+         // Special-case indentation for aligned streaming.
+         // This handles indentation for the case of e.g.
+         //
+         //   std::cout << foo
+         //             << bar
+         //             << baz;
+         //   ^
+         //
+         if (/^\s*\<\</.test(line)) {
+            var currentRow = row - 1;
+            while (/^\s*\<\</.test(lines[currentRow])) {
+               currentRow--;
+            }
+            return this.$getIndent(lines[currentRow]);
+         }
+
          // Indent for an unfinished class statement
          if (/^\s*class\s+[\w_]+\s*$/.test(line)) {
             return indent + tab;
@@ -577,37 +593,62 @@ oop.inherits(Mode, TextMode);
          // If the line ends with a semicolon, follow lines that begin /
          // end with operator tokens until we find a line without.
          if (/;\s*$/.test(line)) {
-            var thisRow = row - 1;
+            
+            var thisRow = row;
             var thisLine = this.getLineSansComments(doc, thisRow);
 
-            while (this.$heuristics.reStartsWithContinuationToken.test(thisLine) ||
-                   this.$heuristics.reEndsWithContinuationToken.test(thisLine)) {
-
-               // Short-circuit if we bump into e.g. 'case foo:' --
-               // this is so we don't walk too far past a ':', which is considered
-               // a continuation token. This is so cases like:
-               //
-               //   x = foo ?
-               //       bar :
-               //       baz;
-               //   ^
-               // can be indented correctly, without walking over a
-               //
-               //   case Foo:
-               //       bar;
-               //
-               // accidentally.
-               if (/^\s*case\b.*:\s*$/.test(thisLine)) {
-                  return indent;
+            // Try to indent for e.g.
+            //
+            //   x = 1
+            //       + 2
+            //       + 3;
+            //   ^
+            //
+            // first.
+            if (this.$heuristics.reStartsWithContinuationToken.test(thisLine)) {
+               while (this.$heuristics.reStartsWithContinuationToken.test(thisLine)) {
+                  thisRow--;
+                  thisLine = this.getLineSansComments(doc, thisRow);
                }
-               thisRow--;
-               thisLine = this.getLineSansComments(doc, thisRow);
+               return this.$getIndent(thisLine);
             }
-            return this.$getIndent(lines[thisRow + 1]);
+
+            // Now, try for
+            //
+            //   x = 1 +
+            //       2 +
+            //       3;
+            //   ^
+            thisRow--;
+            thisLine = this.getLineSansComments(doc, thisRow);
+            if (this.$heuristics.reEndsWithContinuationToken.test(thisLine)) {
+               while (this.$heuristics.reEndsWithContinuationToken.test(thisLine)) {
+                  // Short-circuit if we bump into e.g. 'case foo:' --
+                  // this is so we don't walk too far past a ':', which is considered
+                  // a continuation token. This is so cases like:
+                  //
+                  //   x = foo ?
+                  //       bar :
+                  //       baz;
+                  //   ^
+                  // can be indented correctly, without walking over a
+                  //
+                  //   case Foo:
+                  //       bar;
+                  //
+                  // accidentally.
+                  if (/^\s*case\b.*:\s*$/.test(thisLine)) {
+                     return indent;
+                  }
+                  thisRow--;
+                  thisLine = this.getLineSansComments(doc, thisRow);
+               }
+               return this.$getIndent(lines[thisRow + 1]);
+            }
          }
 
-         // Indent based on lookaround heuristics
-         if (!/^\s*$/.test(line)) {
+         // Indent based on lookaround heuristics for open braces.
+         if (!/^\s*$/.test(line) && /\{\s*$/.test(line)) {
 
             var heuristicRow = this.$heuristics.getRowForOpenBraceIndent(
                this.$session,
