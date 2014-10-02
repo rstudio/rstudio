@@ -65,7 +65,7 @@ var MatchingBraceOutdent = function() {
 
    this.outdentBraceForNakedTokens = function(session, row, line, lastLine) {
 
-      if (/^\s*\{\s*$/.test(line)) {
+      if (/^\s*\{/.test(line)) {
 
          if (lastLine !== null && reNaked.test(lastLine)) {
             this.setIndent(session, row, row - 1);
@@ -292,7 +292,7 @@ var MatchingBraceOutdent = function() {
       //    : foo_(foo),
       //      bar_(bar),
       //      baz_(baz)
-      if (line.match(/^\s*{/)) {
+      if (/^\s*\{/.test(line)) {
 
          var scopeRow = this.$heuristics.getRowForOpenBraceIndent(
             session,
