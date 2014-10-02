@@ -1,5 +1,5 @@
 /*
- * EmbeddedLibrary.hpp
+ * Clang.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,31 +13,39 @@
  *
  */
 
-#ifndef SESSION_MODULES_CLANG_LIBCLANG_EMBEDDED_LIBRARY_HPP
-#define SESSION_MODULES_CLANG_LIBCLANG_EMBEDDED_LIBRARY_HPP
+#ifndef SESSION_MODULES_CLANG_LIBCLANG_CLANG_HPP
+#define SESSION_MODULES_CLANG_LIBCLANG_CLANG_HPP
 
 #include <string>
 
-#include <boost/function.hpp>
-
+#include "CompilationDatabase.hpp"
+#include "Diagnostic.hpp"
+#include "EmbeddedLibrary.hpp"
 #include "LibraryVersion.hpp"
+#include "SharedLibrary.hpp"
+#include "SourceIndex.hpp"
+#include "SourceLocation.hpp"
+#include "TranslationUnit.hpp"
+#include "UnsavedFiles.hpp"
 
 namespace session {
 namespace modules {      
 namespace clang {
 namespace libclang {
 
-struct EmbeddedLibrary
-{
-   bool empty() const { return ! libraryPath; }
-   boost::function<std::string()> libraryPath;
-   boost::function<std::vector<std::string>(const LibraryVersion&, bool)>
-                                                                compileArgs;
-};
+
+// convenience function to load libclang and initialize the source index
+bool initialize(CompilationDatabase compilationDB = CompilationDatabase(),
+                EmbeddedLibrary embedded = EmbeddedLibrary(),
+                LibraryVersion requiredVersion = LibraryVersion(3,4,0),
+                int verbose = 0,
+                std::string* pDiagnostics = NULL);
+
+
 
 } // namespace libclang
 } // namespace clang
 } // namepace handlers
 } // namesapce session
 
-#endif // SESSION_MODULES_CLANG_LIBCLANG_EMBEDDED_LIBRARY_HPP
+#endif // SESSION_MODULES_CLANG_LIBCLANG_CLANG_HPP

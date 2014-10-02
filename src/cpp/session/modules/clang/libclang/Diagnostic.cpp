@@ -19,7 +19,7 @@
 
 #include "Utils.hpp"
 
-using namespace core ;
+#include "SharedLibrary.hpp"
 
 namespace session {
 namespace modules { 
@@ -40,6 +40,11 @@ Diagnostic::~Diagnostic()
    catch(...)
    {
    }
+}
+
+std::string Diagnostic::format() const
+{
+   return format(clang().defaultDiagnosticDisplayOptions());
 }
 
 std::string Diagnostic::format(unsigned options) const

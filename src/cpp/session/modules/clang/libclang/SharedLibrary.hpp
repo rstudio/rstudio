@@ -29,19 +29,18 @@
 
 #include "LibraryVersion.hpp"
 #include "EmbeddedLibrary.hpp"
-#include "CompilationDatabase.hpp"
 
 namespace session {
 namespace modules {
 namespace clang {
 namespace libclang {
 
-class ClangLibrary : boost::noncopyable
+class SharedLibrary : boost::noncopyable
 {
 public:
    // construction/destruction (copying prohibited)
-   ClangLibrary() : pLib_(NULL) {}
-   virtual ~ClangLibrary();
+   SharedLibrary() : pLib_(NULL) {}
+   virtual ~SharedLibrary();
 
    // loading
    bool load(EmbeddedLibrary embedded = EmbeddedLibrary(),
@@ -573,14 +572,7 @@ private:
 };
 
 // shared instance of lib clang
-ClangLibrary& clang();
-
-// convenience function to load libclang and initialize the source index
-bool initialize(CompilationDatabase compilationDB = CompilationDatabase(),
-                EmbeddedLibrary embedded = EmbeddedLibrary(),
-                LibraryVersion requiredVersion = LibraryVersion(3,4,0),
-                int verbose = 0,
-                std::string* pDiagnostics = NULL);
+SharedLibrary& clang();
 
 
 } // namespace libclang

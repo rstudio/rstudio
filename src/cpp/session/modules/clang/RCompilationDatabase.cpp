@@ -17,6 +17,7 @@
 
 #include <algorithm>
 
+#include <boost/format.hpp>
 #include <boost/regex.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim_all.hpp>
@@ -38,7 +39,7 @@
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
 
-#include "libclang/ClangLibrary.hpp"
+#include "libclang/Clang.hpp"
 
 using namespace core ;
 

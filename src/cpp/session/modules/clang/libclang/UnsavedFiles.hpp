@@ -18,10 +18,11 @@
 
 #include <map>
 #include <iosfwd>
+#include <vector>
 
 #include <boost/noncopyable.hpp>
 
-#include "ClangLibrary.hpp"
+#include "clang-c/Index.h"
 
 namespace session {
 namespace modules {      

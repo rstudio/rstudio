@@ -17,8 +17,10 @@
 #define SESSION_MODULES_CLANG_LIBCLANG_TRANSLATION_UNIT_HPP
 
 #include <iosfwd>
+#include <string>
 
-#include "ClangLibrary.hpp"
+#include "clang-c/Index.h"
+
 #include "Diagnostic.hpp"
 #include "CodeCompleteResults.hpp"
 

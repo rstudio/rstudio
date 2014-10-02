@@ -13,7 +13,7 @@
  *
  */
 
-#include "ClangLibrary.hpp"
+#include "SharedLibrary.hpp"
 
 #include <iostream>
 #include <vector>
@@ -72,7 +72,7 @@ std::vector<std::string> systemClangVersions()
 
 } // anonymous namespace
 
-ClangLibrary::~ClangLibrary()
+SharedLibrary::~SharedLibrary()
 {
    try
    {
@@ -85,9 +85,9 @@ ClangLibrary::~ClangLibrary()
    }
 }
 
-bool ClangLibrary::load(EmbeddedLibrary embedded,
-                        LibraryVersion requiredVersion,
-                        std::string* pDiagnostics)
+bool SharedLibrary::load(EmbeddedLibrary embedded,
+                         LibraryVersion requiredVersion,
+                         std::string* pDiagnostics)
 {
    // diagnostics stream
    std::ostringstream ostr;
@@ -143,8 +143,8 @@ bool ClangLibrary::load(EmbeddedLibrary embedded,
    return false;
 }
 
-Error ClangLibrary::tryLoad(const std::string& libraryPath,
-                            LibraryVersion requiredVersion)
+Error SharedLibrary::tryLoad(const std::string& libraryPath,
+                             LibraryVersion requiredVersion)
 {
    // load the library
    Error error = core::system::loadLibrary(libraryPath, &pLib_);
@@ -481,7 +481,7 @@ Error ClangLibrary::tryLoad(const std::string& libraryPath,
    return Success();
 }
 
-Error ClangLibrary::unload()
+Error SharedLibrary::unload()
 {
    if (pLib_ != NULL)
    {
@@ -503,7 +503,7 @@ Error ClangLibrary::unload()
 }
 
 
-LibraryVersion ClangLibrary::version() const
+LibraryVersion SharedLibrary::version() const
 {
    CXString cxVer = getClangVersion();
    std::string versionString(getCString(cxVer));
@@ -535,7 +535,7 @@ LibraryVersion ClangLibrary::version() const
    return LibraryVersion();
 }
 
-std::vector<std::string> ClangLibrary::compileArgs(bool isCppFile) const
+std::vector<std::string> SharedLibrary::compileArgs(bool isCppFile) const
 {
    std::vector<std::string> compileArgs;
 
@@ -546,26 +546,10 @@ std::vector<std::string> ClangLibrary::compileArgs(bool isCppFile) const
 }
 
 // shared instance of libclang
-ClangLibrary& clang()
+SharedLibrary& clang()
 {
-   static class ClangLibrary instance;
+   static class SharedLibrary instance;
    return instance;
-}
-
-// convenience function to load libclang and initialize the source index
-bool initialize(CompilationDatabase compilationDB,
-                EmbeddedLibrary embedded,
-                LibraryVersion requiredVersion,
-                int verbose,
-                std::string* pDiagnostics)
-{
-   bool loaded = clang().load(embedded, requiredVersion, pDiagnostics);
-   if (!loaded)
-      return false;
-
-   sourceIndex().initialize(compilationDB, verbose);
-
-   return true;
 }
 
 } // namesapce libclang

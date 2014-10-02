@@ -17,7 +17,7 @@
 #define SESSION_MODULES_CLANG_LIBCLANG_SOURCE_LOCATION_HPP
 
 
-#include "ClangLibrary.hpp"
+#include "clang-c/Index.h"
 
 namespace session {
 namespace modules {      

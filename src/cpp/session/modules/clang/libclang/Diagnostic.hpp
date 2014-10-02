@@ -18,7 +18,8 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "ClangLibrary.hpp"
+#include "clang-c/Index.h"
+
 #include "SourceLocation.hpp"
 
 namespace session {
@@ -36,8 +37,8 @@ public:
 
    ~Diagnostic();
 
-   std::string format(unsigned options =
-                           clang().defaultDiagnosticDisplayOptions()) const;
+   std::string format() const;
+   std::string format(unsigned options) const;
 
    CXDiagnosticSeverity getSeverity() const;
    SourceLocation getLocation() const;

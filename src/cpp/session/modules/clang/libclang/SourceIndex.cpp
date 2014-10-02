@@ -22,6 +22,7 @@
 
 #include <core/system/ProcessArgs.hpp>
 
+#include "SharedLibrary.hpp"
 #include "UnsavedFiles.hpp"
 
 using namespace core ;

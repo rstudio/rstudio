@@ -18,7 +18,8 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "ClangLibrary.hpp"
+#include "clang-c/Index.h"
+
 #include "Diagnostic.hpp"
 
 namespace session {

@@ -15,6 +15,8 @@
 
 #include "CodeCompleteResults.hpp"
 
+
+#include "SharedLibrary.hpp"
 #include "SourceIndex.hpp"
 #include "UnsavedFiles.hpp"
 #include "Utils.hpp"

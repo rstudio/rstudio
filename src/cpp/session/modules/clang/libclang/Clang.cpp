@@ -1,5 +1,5 @@
 /*
- * Utils.cpp
+ * Clang.cpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,23 +13,32 @@
  *
  */
 
-#include "Utils.hpp"
+#include "Clang.hpp"
 
 #include "SharedLibrary.hpp"
+#include "SourceIndex.hpp"
 
 namespace session {
 namespace modules {      
 namespace clang {
 namespace libclang {
 
-// note that this function disposes the underlying CXString so it
-// shouldn't be used after this call
-std::string toStdString(CXString cxStr)
+// convenience function to load libclang and initialize the source index
+bool initialize(CompilationDatabase compilationDB,
+                EmbeddedLibrary embedded,
+                LibraryVersion requiredVersion,
+                int verbose,
+                std::string* pDiagnostics)
 {
-   std::string str(clang().getCString(cxStr));
-   clang().disposeString(cxStr);
-   return str;
+   bool loaded = clang().load(embedded, requiredVersion, pDiagnostics);
+   if (!loaded)
+      return false;
+
+   sourceIndex().initialize(compilationDB, verbose);
+
+   return true;
 }
+
 
 } // namespace libclang
 } // namespace clang
