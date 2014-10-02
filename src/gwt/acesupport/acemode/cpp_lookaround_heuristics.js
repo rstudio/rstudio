@@ -71,7 +71,7 @@ var CppLookaroundHeuristics = function() {};
                
                var openParenPos = session.findMatchingBracket({
                   row: row - 1,
-                  column: prevLine.lastIndexOf(")") + 1
+                  column: doc.$lines[row - 1].lastIndexOf(")") + 1
                });
 
                if (openParenPos) {
@@ -93,7 +93,7 @@ var CppLookaroundHeuristics = function() {};
 
                var openParenPos = session.findMatchingBracket({
                   row: row,
-                  column: line.lastIndexOf(")") + 1
+                  column: doc.$lines[row].lastIndexOf(")") + 1
                });
 
                if (openParenPos) {
@@ -140,7 +140,7 @@ var CppLookaroundHeuristics = function() {};
          
          var openParenPos = session.findMatchingBracket({
             row: row,
-            column: firstLine.lastIndexOf(")") + 1
+            column: doc.$lines[row].lastIndexOf(")") + 1
          });
 
          if (openParenPos) {
@@ -159,7 +159,7 @@ var CppLookaroundHeuristics = function() {};
 
          var openParenPos = session.findMatchingBracket({
             row: row - 1,
-            column: prevLine.lastIndexOf(")") + 1
+            column: doc.$lines[row - 1].lastIndexOf(")") + 1
          });
 
          if (openParenPos) {
@@ -221,9 +221,9 @@ var CppLookaroundHeuristics = function() {};
          line = line.substring(0, line.lastIndexOf("\\"));
       }
 
-      line = line.replace(/\bconst&\b/, "")
-                 .replace(/\bconst\b/, "")
-                 .replace(/\bnoexcept\b/, "");
+      line = line.replace(/\bconst\s*&\s*\b/g, "")
+                 .replace(/\bconst\s*\b/g, "")
+                 .replace(/\bnoexcept\s*\b/g, "");
       
       
       return line;
@@ -247,6 +247,7 @@ var CppLookaroundHeuristics = function() {};
                                            0, 0);
       
    };
+   
    this.doFindMatchingBracketRow = function(character, lines, row,
                                             maxLookaround, direction,
                                             balance, count) {
@@ -291,8 +292,6 @@ var CppLookaroundHeuristics = function() {};
       }
       return null;
    };
-
-   
    
 }).call(CppLookaroundHeuristics.prototype);
 

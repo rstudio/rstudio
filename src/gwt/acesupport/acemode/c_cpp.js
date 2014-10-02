@@ -178,7 +178,7 @@ oop.inherits(Mode, TextMode);
       
    };
 
-   this.getNextLineIndent = function(state, line, tab, tabSize, row) {
+   this.getNextLineIndent = function(state, line, tab, tabSize, row, subset) {
 
       // Defer to the R language indentation rules when in R language mode
       if (this.inRLanguageMode(state))
@@ -260,10 +260,11 @@ oop.inherits(Mode, TextMode);
 
          // Choose indentation for the current line based on the position
          // of the cursor -- but make sure we only apply this if the
-         // cursor is on the same row as the line being indented
-         if (cursor && cursor.row == row) {
+         // cursor is on the same row as the line being indented.
+         if (cursor && cursor.row == row && subset) {
             line = line.substring(0, cursor.column);
          }
+         
          lastLine = this.getLineSansComments(doc, row - 1);
 
          // Only indent on an ending '>' if we're not in a template
@@ -383,10 +384,24 @@ oop.inherits(Mode, TextMode);
          //    : foo_(foo)
          //
          // this is for users who like to line up commas with colons
-         if (/^\s*[:,]\s*[\w_]+\(.*\)\s*$/.test(line)) {
-            return $verticallyAlignFunctionArgs ?
-               this.$getIndent(line) :
-               indent + tab;
+         // NOTE: This is a bad rule to use by default! Prefer auto-outdenting
+         // commas instead if we really desire this behaviour. Leaving this
+         // comment here in case I change my mind later ...
+         //
+         // if (/^\s*[:,]\s*[\w_]+\(.*\)\s*$/.test(line)) {
+         //    return $verticallyAlignFunctionArgs ?
+         //       this.$getIndent(line) :
+         //       indent + tab;
+         // }
+
+         // If we've made a function definition all on one line,
+         // just return the current indent.
+         var lBraces = this.allIndicesOf(line, "{");
+         var rBraces = this.allIndicesOf(line, "}");
+         if (/\(.*\).*\{.*\}\s*;?\s*/.test(line)) {
+            if (lBraces.length > 0 && lBraces.length == rBraces.length) {
+               return indent;
+            }
          }
 
          // If we're looking at a class with one inherited member
@@ -462,7 +477,7 @@ oop.inherits(Mode, TextMode);
 
             var openPos = session.findMatchingBracket({
                row: row,
-               column: match.index + 1
+               column: lines[row].lastIndexOf(match[1]) + 1
             });
 
             if (openPos) {

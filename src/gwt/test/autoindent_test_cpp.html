@@ -55,6 +55,10 @@ class foo    {
 struct  bar{
 </pre></li>
 
+<li><pre data-expected="4">
+    inline void foo() { return foo_; }
+</pre></li>
+
 <li><pre data-expected="0">
 class Foo{};
 class Foo{};
@@ -205,8 +209,8 @@ class Foo
 </pre></li>
 
 <li><pre data-expected="4">
-Foo(int a,
-    int b)
+Foo(const int a,
+    const int b)
     : a_(a),
       b_(b),
       c_(c) {
@@ -262,8 +266,8 @@ Foo(int a, int b):
 </pre></li>
 
 <li><pre data-expected="8">
-    Foo(int a, int b, int c,
-        int d, int e, int f)
+    Foo(const int a, int b, int c,
+        const int d, int e, int f)
         : a_(a), b_(b), c_(c),
           d_(d), e_(e), f_(f)
     {
@@ -300,27 +304,27 @@ class Foo : public A
 </pre></li>
 
 <li><pre data-expected="4">
-int foo(int a,
-        int b,
-        int c) const {
+int foo(const int a,
+        const int b,
+        const unsigned int c) const {
 </pre></li>
 
 <li><pre data-expected="4">
-int foo(int a,
-        int b,
-        int c) const noexcept {
+int foo(const unsigned int a,
+        const unsigned int b,
+        const unsigned int c) const noexcept {
 </pre></li>
 
 <li><pre data-expected="0">
-int foo(int a,
-        int b,
-        int c) const noexcept
+int foo(const unsigned int a,
+        const unsigned int b,
+        const unsigned int c) const noexcept
 </pre></li>
 
 <li><pre data-expected="4">
-int foo(int a,
-        int b,
-        int c) noexcept :
+int foo(const unsigned int a,
+        const unsigned int b,
+        const unsigned int c) noexcept :
 </pre></li>
 
 <li><pre data-expected="4">
@@ -370,6 +374,7 @@ var session = editor.getSession();
       var start = 0;
       var end = this.getDocument().$lines.length - 1;
       for (var i = start; i <= end; i++) {
+
          // First line is always unindented
          if (i == 0) {
             this.applyIndent(i, "");
@@ -385,7 +390,8 @@ var session = editor.getSession();
                                                    line,
                                                    this.getTabString(),
                                                    this.getTabSize(),
-                                                   i-1);
+                                                   i-1,
+                               false);
 
             this.applyIndent(i, newIndent);
             mode.autoOutdent(state, this, i);
