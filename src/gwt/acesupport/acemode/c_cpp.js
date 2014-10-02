@@ -300,6 +300,19 @@ oop.inherits(Mode, TextMode);
 
          // Indent for a :
          if (/:\s*$/.test(line)) {
+
+            // If the line ends with a colon, and the previous line
+            // ends with a question mark, then match the current line's
+            // indent. This supports indentation for e.g.
+            //
+            //   x = foo ?
+            //       bar :
+            //       ^
+            //
+            if (/\?\s*$/.test(lastLine)) {
+               return indent;
+            }
+            
             return indent + tab;
          }
 
@@ -312,7 +325,7 @@ oop.inherits(Mode, TextMode);
          // Indent if the line ends on an operator token
          // Can't include > here since they may be used
          // for templates (it's handled above)
-         var reEndsWithOperator = /[\+\-\/\*\|\<\&\^\%\=]\s*$/;
+         var reEndsWithOperator = /[\+\-\/\*\|\?\<\&\^\%\=]\s*$/;
          if (reEndsWithOperator.test(line)) {
             return indent + tab;
          }
@@ -569,6 +582,24 @@ oop.inherits(Mode, TextMode);
 
             while (this.$heuristics.reStartsWithContinuationToken.test(thisLine) ||
                    this.$heuristics.reEndsWithContinuationToken.test(thisLine)) {
+
+               // Short-circuit if we bump into e.g. 'case foo:' --
+               // this is so we don't walk too far past a ':', which is considered
+               // a continuation token. This is so cases like:
+               //
+               //   x = foo ?
+               //       bar :
+               //       baz;
+               //   ^
+               // can be indented correctly, without walking over a
+               //
+               //   case Foo:
+               //       bar;
+               //
+               // accidentally.
+               if (/^\s*case\b.*:\s*$/.test(thisLine)) {
+                  return indent;
+               }
                thisRow--;
                thisLine = this.getLineSansComments(doc, thisRow);
             }

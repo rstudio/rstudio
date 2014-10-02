@@ -8,8 +8,8 @@ var CppLookaroundHeuristics = function() {};
    var reStartsWithColon        = /^\s*:/;
    var reStartsWithCommaOrColon = /^\s*[,:]/;
 
-   var reStartsWithContinuationToken = /^\s*[,+-/*&^%$!<>.?|=~\'\"]/;
-   var reEndsWithContinuationToken =       /[,+-/*&^%$!<>.?|=~\'\"]\s*$/;
+   var reStartsWithContinuationToken = /^\s*[,+-/*&^%$!<>.?|=~\'\":]/;
+   var reEndsWithContinuationToken =       /[,+-/*&^%$!<>.?|=~\'\":]\s*$/;
 
    this.reStartsWithContinuationToken = reStartsWithContinuationToken;
    this.reEndsWithContinuationToken   = reEndsWithContinuationToken;
