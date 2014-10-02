@@ -27,6 +27,8 @@
 #include "clang-c/Index.h"
 #include "clang-c/CXCompilationDatabase.h"
 
+#include "CompilationDatabase.hpp"
+
 namespace session {
 namespace modules {
 namespace clang {
@@ -80,7 +82,6 @@ private:
    const int minor_;
    const int patch_;
 };
-
 
 struct Embedded
 {
@@ -631,6 +632,13 @@ std::string toStdString(CXString cxStr);
 
 // shared instance of lib clang
 LibClang& clang();
+
+// convenience function to load libclang and initialize the source index
+bool initialize(CompilationDatabase compilationDB = CompilationDatabase(),
+                Embedded embedded = Embedded(),
+                Version requiredVersion = Version(3,4,0),
+                int verbose = 0,
+                std::string* pDiagnostics = NULL);
 
 
 } // namespace libclang

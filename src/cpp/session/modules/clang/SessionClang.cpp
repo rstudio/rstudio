@@ -94,6 +94,18 @@ Embedded embeddedLibClang()
    return embedded;
 }
 
+CompilationDatabase compilationDatabase()
+{
+   CompilationDatabase compilationDB;
+   compilationDB.compileArgsForTranslationUnit =
+      boost::bind(&RCompilationDatabase::compileArgsForTranslationUnit,
+                  &rCompilationDatabase(), _1);
+   compilationDB.translationUnits =
+      boost::bind(&RCompilationDatabase::translationUnits,
+                  &rCompilationDatabase());
+   return compilationDB;
+}
+
 typedef std::map<std::string,std::string> IdToFile;
 
 void onSourceDocUpdated(boost::shared_ptr<IdToFile> pIdToFile,
@@ -184,21 +196,6 @@ bool cppIndexingDisabled()
 }
 
 
-
-// check for availablity of clang w/ diagnostics
-bool isLibClangAvailable(std::string* pDiagnostics)
-{
-   LibClang lib;
-   return lib.load(embeddedLibClang(), Version(3,4,0), pDiagnostics);
-}
-
-// attempt to load the shared instance of clang
-bool loadLibClang()
-{
-   std::string diagnostics;
-   return clang().load(embeddedLibClang(), Version(3,4,0), &diagnostics);
-}
-
 // diagnostic function to assist in determine whether/where
 // libclang was loaded from (and any errors which occurred
 // that prevented loading, e.g. inadequate version, missing
@@ -217,7 +214,8 @@ SEXP rs_isLibClangAvailable()
    // check for required Rcpp
    else if (haveRequiredRcpp())
    {
-      isAvailable = isLibClangAvailable(&diagnostics);
+      LibClang lib;
+      isAvailable = lib.load(embeddedLibClang(), Version(3,4,0), &diagnostics);
    }
    else
    {
@@ -281,19 +279,14 @@ Error initialize()
    if (!haveRequiredRcpp())
       return Success();
 
-   // attempt to load clang interface
-   if (!loadLibClang())
+   // attempt to initialize libclang interface
+   if (!libclang::initialize(compilationDatabase(),
+                             embeddedLibClang(),
+                             Version(3,4,0),
+                             userSettings().clangVerbose()))
+   {
       return Success();
-
-   // connect the source index to the compilation database
-   CompilationDatabase compilationDB;
-   compilationDB.compileArgsForTranslationUnit =
-      boost::bind(&RCompilationDatabase::compileArgsForTranslationUnit,
-                  &compilationDatabase(), _1);
-   compilationDB.translationUnits =
-      boost::bind(&RCompilationDatabase::translationUnits,
-                  &compilationDatabase());
-   sourceIndex().initialize(compilationDB, userSettings().clangVerbose());
+   }
 
    // keep a map of id to filename for source database event forwarding
    boost::shared_ptr<IdToFile> pIdToFile = boost::make_shared<IdToFile>();

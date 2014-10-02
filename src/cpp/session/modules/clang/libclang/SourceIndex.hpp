@@ -23,19 +23,12 @@
 
 #include "LibClang.hpp"
 #include "TranslationUnit.hpp"
+#include "CompilationDatabase.hpp"
 
 namespace session {
 namespace modules {      
 namespace clang {
 namespace libclang {
-
-struct CompilationDatabase
-{
-   bool empty() const { return ! compileArgsForTranslationUnit; }
-   boost::function<std::vector<std::string>(const std::string&)>
-                                            compileArgsForTranslationUnit;
-   boost::function<std::vector<std::string>()> translationUnits;
-};
 
 class SourceIndex : boost::noncopyable
 {   
@@ -50,7 +43,8 @@ public:
 public:
    virtual ~SourceIndex();
 
-   void initialize(CompilationDatabase compilationDatabase, int verbose);
+   void initialize(CompilationDatabase compilationDB = CompilationDatabase(),
+                   int verbose = 0);
 
    unsigned getGlobalOptions() const;
    void setGlobalOptions(unsigned options);
@@ -91,7 +85,7 @@ private:
    typedef std::map<std::string,StoredTranslationUnit> TranslationUnits;
    TranslationUnits translationUnits_;
 
-   CompilationDatabase compilationDatabase_;
+   CompilationDatabase compilationDB_;
 
    int verbose_;
 };

@@ -27,6 +27,8 @@
 
 #include <core/system/LibraryLoader.hpp>
 
+#include "SourceIndex.hpp"
+
 #define LOAD_CLANG_SYMBOL(name) \
    error = core::system::loadSymbol(pLib_, "clang_" #name, (void**)&name); \
    if (error) \
@@ -118,7 +120,8 @@ bool LibClang::load(Embedded embedded,
             // print diagnostics
             ostr << "   LOADED: " << this->version().asString()
                  << std::endl;
-            *pDiagnostics = ostr.str();
+            if (pDiagnostics)
+               *pDiagnostics = ostr.str();
 
             // return true
             return true;
@@ -135,7 +138,8 @@ bool LibClang::load(Embedded embedded,
    }
 
    // if we didn't find one by now then we failed
-   *pDiagnostics = ostr.str();
+   if (pDiagnostics)
+      *pDiagnostics = ostr.str();
    return false;
 }
 
@@ -553,6 +557,22 @@ LibClang& clang()
 {
    static class LibClang instance;
    return instance;
+}
+
+// convenience function to load libclang and initialize the source index
+bool initialize(CompilationDatabase compilationDB,
+                Embedded embedded,
+                Version requiredVersion,
+                int verbose,
+                std::string* pDiagnostics)
+{
+   bool loaded = clang().load(embedded, requiredVersion, pDiagnostics);
+   if (!loaded)
+      return false;
+
+   sourceIndex().initialize(compilationDB, verbose);
+
+   return true;
 }
 
 } // namesapce libclang

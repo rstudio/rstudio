@@ -59,12 +59,11 @@ SourceIndex::~SourceIndex()
    }
 }
 
-void SourceIndex::initialize(CompilationDatabase compilationDatabase,
-                             int verbose)
+void SourceIndex::initialize(CompilationDatabase compilationDB, int verbose)
 {
    verbose_ = verbose;
    index_ = clang().createIndex(0, (verbose_ > 0) ? 1 : 0);
-   compilationDatabase_ = compilationDatabase;
+   compilationDB_ = compilationDB;
 }
 
 unsigned SourceIndex::getGlobalOptions() const
@@ -135,8 +134,9 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename)
    }
 
    // get the arguments and last write time for this file
-   std::vector<std::string> args =
-               compilationDatabase_.compileArgsForTranslationUnit(filename);
+   std::vector<std::string> args;
+   if (!compilationDB_.empty())
+      args = compilationDB_.compileArgsForTranslationUnit(filename);
    std::time_t lastWriteTime = filePath.lastWriteTime();
 
    // look it up
@@ -231,7 +231,9 @@ TranslationUnit SourceIndex::getHeaderTranslationUnit(
 
    // drats we don't have it! we can still try to index other src files
    // in search of one that includes this header
-   std::vector<std::string> srcFiles = compilationDatabase_.translationUnits();
+   std::vector<std::string> srcFiles;
+   if (!compilationDB_.empty())
+      srcFiles = compilationDB_.translationUnits();
    BOOST_FOREACH(const std::string& filename, srcFiles)
    {
       TranslationUnit tu = getTranslationUnit(filename);

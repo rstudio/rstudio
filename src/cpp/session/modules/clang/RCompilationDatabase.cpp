@@ -709,7 +709,7 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
 
 
 
-RCompilationDatabase& compilationDatabase()
+RCompilationDatabase& rCompilationDatabase()
 {
    static RCompilationDatabase instance;
    return instance;

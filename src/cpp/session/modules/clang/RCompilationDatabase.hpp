@@ -34,7 +34,7 @@ namespace clang {
 class RCompilationDatabase : boost::noncopyable
 {
 private:
-   friend RCompilationDatabase& compilationDatabase();
+   friend RCompilationDatabase& rCompilationDatabase();
    RCompilationDatabase() {}
 
 public:
@@ -85,7 +85,7 @@ private:
 };
 
 // global instance
-RCompilationDatabase& compilationDatabase();
+RCompilationDatabase& rCompilationDatabase();
 
 } // namespace clang
 } // namepace handlers
