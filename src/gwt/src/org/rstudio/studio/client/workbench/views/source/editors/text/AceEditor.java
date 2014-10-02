@@ -70,6 +70,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Rendere
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.WordIterable;
+import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
@@ -361,7 +362,7 @@ public class AceEditor implements DocDisplay,
    @Inject
    void initialize(CodeToolsServerOperations server)
    {
-      server_ = server;
+      server_ = server;  
    }
 
    public TextFileType getFileType()
@@ -392,6 +393,12 @@ public class AceEditor implements DocDisplay,
    {
       rnwContext_ = rnwContext;
    }
+   
+   @Override
+   public void setCppCompletionContext(CppCompletionContext cppContext)
+   {
+      cppContext_ = cppContext;
+   }
 
    private void updateLanguage(boolean suppressCompletion)
    {
@@ -415,11 +422,12 @@ public class AceEditor implements DocDisplay,
             // that can optionally delegate to the R completion manager
             if (fileType_.isCpp() || fileType_.isRmd())
             {
-               completionManager = new CppCompletionManager(this,
-                                                            this,
-                                                            new Filter(),
-                                                            server_,
-                                                            completionManager);
+               completionManager = new CppCompletionManager(
+                                                     this,
+                                                     new Filter(),
+                                                     server_,
+                                                     cppContext_,
+                                                     completionManager);
             }
          }
          else
@@ -1899,6 +1907,7 @@ public class AceEditor implements DocDisplay,
    private boolean passwordMode_;
    private boolean useVimMode_ = false;
    private RnwCompletionContext rnwContext_;
+   private CppCompletionContext cppContext_;
    private Integer lineHighlightMarkerId_ = null;
    private Integer lineDebugMarkerId_ = null;
    private Integer executionLine_ = null;

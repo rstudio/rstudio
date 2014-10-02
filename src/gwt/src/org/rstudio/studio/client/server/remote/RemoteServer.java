@@ -126,6 +126,7 @@ import org.rstudio.studio.client.workbench.views.presentation.model.Presentation
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
 import org.rstudio.studio.client.workbench.views.source.model.CppCapabilities;
+import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResult;
 import org.rstudio.studio.client.workbench.views.source.model.RdShellResult;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -517,6 +518,23 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(StringUtil.notNull(nextProj)));
       sendRequest(RPC_SCOPE, ABORT, params, requestCallback);
+   }
+   
+   public void getCppCompletions(
+                  String docPath, 
+                  String docContents,
+                  boolean docDirty,
+                  int line, 
+                  int column,
+                  ServerRequestCallback<CppCompletionResult> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(docPath));
+      params.set(1, new JSONString(docContents));
+      params.set(2,  JSONBoolean.getInstance(docDirty));
+      params.set(3, new JSONNumber(line));
+      params.set(4, new JSONNumber(column));
+      sendRequest(RPC_SCOPE, "get_cpp_completions", params, requestCallback);
    }
    
    public void printCppCompletions(String docId, 

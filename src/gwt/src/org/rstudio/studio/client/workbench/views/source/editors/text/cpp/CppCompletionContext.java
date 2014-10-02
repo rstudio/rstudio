@@ -1,5 +1,5 @@
 /*
- * CppCompletionResult.java
+ * CppCompletionContext.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -15,25 +15,10 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArrayString;
-
-public class CppCompletionResult extends JavaScriptObject
+public interface CppCompletionContext
 {
-   protected CppCompletionResult()
-   {
-   }
-   
-   public static native final CppCompletionResult create(
-                                          JsArrayString completions) /*-{
-      return {
-         completions: completions
-      };
-      
-   }-*/;
-   
-   public native final JsArrayString getCompletions() /*-{
-      return this.completions;
-   }-*/;
-   
+   boolean isCompletionEnabled();
+   String getDocPath();
+   String getDocContents();
+   boolean isDocDirty();
 }

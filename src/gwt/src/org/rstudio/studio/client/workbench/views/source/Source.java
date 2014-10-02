@@ -269,7 +269,6 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.checkSpelling());
       dynamicCommands_.add(commands.codeCompletion());
       dynamicCommands_.add(commands.rcppHelp());
-      dynamicCommands_.add(commands.printCppCompletions());
       dynamicCommands_.add(commands.debugBreakpoint());
       dynamicCommands_.add(commands.vcsViewOnGitHub());
       dynamicCommands_.add(commands.vcsBlameOnGitHub());

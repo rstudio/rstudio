@@ -253,7 +253,7 @@ Error initialize()
    using namespace module_context;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionClang.R"))
-      (bind(registerRpcMethod, "print_cpp_completions", printCppCompletions));
+      (bind(registerRpcMethod, "get_cpp_completions", getCppCompletions));
    Error error = initBlock.execute();
    if (error)
       return error;

@@ -21,20 +21,19 @@ import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
-import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionListPopupPanel;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionUtils;
-import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
-import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorLineWithCursorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
-import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
-import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
+import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResult;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
@@ -48,20 +47,20 @@ import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 
 public class CppCompletionManager implements CompletionManager
 {
-   public CppCompletionManager(InputEditorDisplay input,
-                               NavigableSourceEditor navigableSourceEditor,
+   public CppCompletionManager(DocDisplay docDisplay,
                                InitCompletionFilter initFilter,
                                CppServerOperations server,
+                               CppCompletionContext completionContext,
                                CompletionManager rCompletionManager)
    {
-      input_ = input;
-      navigableSourceEditor_ = navigableSourceEditor;
+      docDisplay_ = docDisplay;
       initFilter_ = initFilter;
       server_ = server;
+      completionContext_ = completionContext;
       rCompletionManager_ = rCompletionManager;
       requester_ = new CppCompletionRequester(server_);
       
-      input_.addClickHandler(new ClickHandler()
+      docDisplay_.addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)
          {
@@ -116,10 +115,6 @@ public class CppCompletionManager implements CompletionManager
       {
          // TODO: go to help
          
-         // determine current line and cursor position
-         @SuppressWarnings("unused")
-         InputEditorLineWithCursorPosition lineWithPos = 
-                         InputEditorUtil.getLineWithCursorPosition(input_);
       }
    }
 
@@ -136,10 +131,7 @@ public class CppCompletionManager implements CompletionManager
       {
          // TODO: go to function definition
          
-         // determine current line and cursor position
-         @SuppressWarnings("unused")
-         InputEditorLineWithCursorPosition lineWithPos = 
-                         InputEditorUtil.getLineWithCursorPosition(input_);
+        
       }
    }
    
@@ -282,7 +274,7 @@ public class CppCompletionManager implements CompletionManager
          return false;
       }
       
-      else if (CompletionUtils.handleEncloseSelection(input_, c))
+      else if (CompletionUtils.handleEncloseSelection(docDisplay_, c))
       {
          return true;
       }
@@ -294,7 +286,14 @@ public class CppCompletionManager implements CompletionManager
    
    private boolean triggerCompletion(char c)
    {
-      return false;
+      if (c == '.')
+      {
+         return true;
+      }
+      else
+      {
+         return false;
+      }
    }
   
   
@@ -313,25 +312,31 @@ public class CppCompletionManager implements CompletionManager
    
    private boolean beginSuggest(boolean flushCache, boolean implicit)
    {
-      if (!input_.isSelectionCollapsed())
+      // check for completions disabled
+      if (!completionContext_.isCompletionEnabled())
+         return false;
+      
+      // check for selected text
+      if (!docDisplay_.isSelectionCollapsed())
          return false ;
       
       invalidatePendingRequests(flushCache) ;
       
-      InputEditorSelection selection = input_.getSelection() ;
+      InputEditorSelection selection = docDisplay_.getSelection() ;
       if (selection == null)
          return false;
-      
-      String line = input_.getText() ;
-      
+        
       boolean canAutoAccept = flushCache;
       context_ = new CompletionRequestContext(
                         completionRequestInvalidation_.getInvalidationToken(),
                         selection,
                         canAutoAccept);
       
-      requester_.getCompletions(line,
-                                selection.getStart().getPosition(),
+      requester_.getCompletions(completionContext_.getDocPath(),
+                                completionContext_.getDocContents(),
+                                completionContext_.isDocDirty(),
+                                docDisplay_,
+                                docDisplay_.getCursorPosition(),
                                 implicit,
                                 context_);
       
@@ -364,16 +369,19 @@ public class CppCompletionManager implements CompletionManager
          }
          else
          {
-            String[] entries = JsUtil.toStringArray(result.getCompletions());
+            JsArray<CppCompletion> completions = result.getCompletions();
+            String[] entries = new String[completions.length()];
+            for (int i = 0; i < completions.length(); i++)
+               entries[i] = completions.get(i).getText();
             popup_ = new CompletionListPopupPanel(entries);
          }
          
-         popup_.setMaxWidth(input_.getBounds().getWidth());
+         popup_.setMaxWidth(docDisplay_.getBounds().getWidth());
          popup_.setPopupPositionAndShow(new PositionCallback()
          {
             public void setPosition(int offsetWidth, int offsetHeight)
             {
-               Rectangle bounds = input_.getCursorBounds();
+               Rectangle bounds = docDisplay_.getCursorBounds();
 
                int top = bounds.getTop() + bounds.getHeight();
               
@@ -396,8 +404,7 @@ public class CppCompletionManager implements CompletionManager
             public void onClose(CloseEvent<PopupPanel> event)
             {
                popup_ = null;          
-            }
-            
+            } 
          });
       }
       
@@ -420,7 +427,7 @@ public class CppCompletionManager implements CompletionManager
          
          requester_.flushCache();
          
-         input_.insertCode(completion);
+         docDisplay_.insertCode(completion);
       }
 
       private final Invalidation.Token invalidationToken_;
@@ -438,10 +445,10 @@ public class CppCompletionManager implements CompletionManager
 
    private boolean isCursorInRMode()
    {
-      String mode = input_.getLanguageMode(input_.getCursorPosition());
-      if (mode == null)
+      String m = docDisplay_.getLanguageMode(docDisplay_.getCursorPosition());
+      if (m == null)
          return false;
-      if (mode.equals(TextFileType.R_LANG_MODE))
+      if (m.equals(TextFileType.R_LANG_MODE))
          return true;
       return false;
    }
@@ -485,10 +492,9 @@ public class CppCompletionManager implements CompletionManager
       }
    }
   
-   private final InputEditorDisplay input_ ;
-   @SuppressWarnings("unused")
-   private final NavigableSourceEditor navigableSourceEditor_;
+   private final DocDisplay docDisplay_;
    private CompletionListPopupPanel popup_;
+   private final CppCompletionContext completionContext_;
    private final CppServerOperations server_;
    private final CppCompletionRequester requester_ ;
    private CompletionRequestContext context_;

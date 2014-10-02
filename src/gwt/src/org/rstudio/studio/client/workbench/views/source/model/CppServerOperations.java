@@ -15,15 +15,14 @@
 package org.rstudio.studio.client.workbench.views.source.model;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
 
 public interface CppServerOperations
 {
-   void printCppCompletions(String docId, 
-                            String docPath, 
-                            String docContents,
-                            boolean docDirty,
-                            int line, 
-                            int column,
-                            ServerRequestCallback<Void> requestCallback);
+   void getCppCompletions(
+                String docPath, 
+                String docContents,
+                boolean docDirty,
+                int line, 
+                int column,
+                ServerRequestCallback<CppCompletionResult> requestCallback);
 }

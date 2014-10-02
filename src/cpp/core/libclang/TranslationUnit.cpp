@@ -59,6 +59,9 @@ CodeCompleteResults TranslationUnit::codeCompleteAt(const std::string& filename,
 
    if (pResults != NULL)
    {
+      clang().sortCodeCompletionResults(pResults->Results,
+                                        pResults->NumResults);
+
       return CodeCompleteResults(pResults);
    }
    else

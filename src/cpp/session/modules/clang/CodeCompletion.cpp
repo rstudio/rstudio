@@ -31,14 +31,27 @@ namespace session {
 namespace modules { 
 namespace clang {
 
-Error printCppCompletions(const core::json::JsonRpcRequest& request,
-                          core::json::JsonRpcResponse* pResponse)
+namespace {
+
+core::json::Object toJson(const CodeCompleteResult& result)
 {
-   std::string docId, docPath, docContents;
+   json::Object resultJson;
+   resultJson["text"] = result.getText();
+   return resultJson;
+}
+
+
+} // anonymous namespace
+
+
+Error getCppCompletions(const core::json::JsonRpcRequest& request,
+                        core::json::JsonRpcResponse* pResponse)
+{
+   // get params
+   std::string docPath, docContents;
    bool docDirty;
    int line, column;
    Error error = json::readParams(request.params,
-                                  &docId,
                                   &docPath,
                                   &docContents,
                                   &docDirty,
@@ -54,6 +67,10 @@ Error printCppCompletions(const core::json::JsonRpcRequest& request,
    std::string filename = filePath.absolutePath();
    rSourceIndex().unsavedFiles().update(filename, docContents, docDirty);
 
+   // results to return
+   json::Object resultJson;
+   json::Array completionsJson;
+
    // now get the translation unit and do the code completion
    TranslationUnit tu = rSourceIndex().getTranslationUnit(filename);
    if (!tu.empty())
@@ -62,17 +79,15 @@ Error printCppCompletions(const core::json::JsonRpcRequest& request,
       if (!results.empty())
       {
          for (unsigned i = 0; i<results.getNumResults(); i++)
-         {
-            std::string result = results.getResult(i).getText();
-            module_context::consoleWriteOutput(result + "\n");
-         }
+            completionsJson.push_back(toJson(results.getResult(i)));
       }
    }
 
+   // set results and return
+   resultJson["completions"] = completionsJson;
+   pResponse->setResult(resultJson);
    return Success();
 }
-
-
 
 } // namespace clang
 } // namespace modules

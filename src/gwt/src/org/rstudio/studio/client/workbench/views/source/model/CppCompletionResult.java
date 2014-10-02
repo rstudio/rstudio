@@ -1,5 +1,5 @@
 /*
- * CodeCompletion.hpp
+ * CppCompletionResult.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,22 +13,19 @@
  *
  */
 
-#ifndef SESSION_MODULES_CLANG_CODE_COMPLETION_HPP
-#define SESSION_MODULES_CLANG_CODE_COMPLETION_HPP
+package org.rstudio.studio.client.workbench.views.source.model;
 
-#include <core/Error.hpp>
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
 
-#include <core/json/JsonRpc.hpp>
- 
-namespace session {
-namespace modules {      
-namespace clang {
-
-core::Error getCppCompletions(const core::json::JsonRpcRequest& request,
-                              core::json::JsonRpcResponse* pResponse);
+public class CppCompletionResult extends JavaScriptObject
+{
+   protected CppCompletionResult()
+   {
+   }
    
-} // namespace clang
-} // namepace handlers
-} // namesapce session
-
-#endif // SESSION_MODULES_CLANG_CODE_COMPLETION_HPP
+   public native final JsArray<CppCompletion> getCompletions() /*-{
+      return this.completions;
+   }-*/;
+   
+}

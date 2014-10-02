@@ -119,6 +119,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupMenu;
@@ -369,10 +370,11 @@ public class TextEditingTarget implements
       codeExecution_ = new EditingTargetCodeExecution(docDisplay_, this);
       compilePdfHelper_ = new TextEditingTargetCompilePdfHelper(docDisplay_);
       rmarkdownHelper_ = new TextEditingTargetRMarkdownHelper();
-      cppHelper_ = new TextEditingTargetCppHelper(server, server);
+      cppHelper_ = new TextEditingTargetCppHelper(server);
       presentationHelper_ = new TextEditingTargetPresentationHelper(
                                                                   docDisplay_);
       docDisplay_.setRnwCompletionContext(compilePdfHelper_);
+      docDisplay_.setCppCompletionContext(cppCompletionContext_);
       scopeHelper_ = new TextEditingTargetScopeHelper(docDisplay_);
       
       addRecordNavigationPositionHandler(releaseOnDismiss_, 
@@ -3293,24 +3295,6 @@ public class TextEditingTarget implements
    }
    
    @Handler
-   void onPrintCppCompletions()
-   {
-      if (!session_.getSessionInfo().getClangAvailable())
-         return;
-      
-      if (docUpdateSentinel_.getPath() != null)
-      {
-         Position position = docDisplay_.getCursorPosition();
-         cppHelper_.printCppCompletions(id_,
-                                        docUpdateSentinel_.getPath(),
-                                        docDisplay_.getCode(),
-                                        dirtyState_.getValue(),
-                                        position.getRow() + 1,
-                                        position.getColumn() + 1);
-      }
-   }
-
-   @Handler
    void onDebugHelp()
    {
       globalDisplay_.openRStudioLink("visual_debugger");
@@ -4154,6 +4138,34 @@ public class TextEditingTarget implements
    {
       return docUpdateSentinel_.getPath() == null;
    }
+   
+   private CppCompletionContext cppCompletionContext_ = 
+                                          new CppCompletionContext() {
+      @Override
+      public boolean isCompletionEnabled()
+      {
+         return session_.getSessionInfo().getClangAvailable() &&
+                (docUpdateSentinel_.getPath() != null);
+      }
+
+      @Override
+      public String getDocPath()
+      {
+         return docUpdateSentinel_.getPath();
+      }
+
+      @Override
+      public String getDocContents()
+      {
+         return docUpdateSentinel_.getContents();
+      }
+
+      @Override
+      public boolean isDocDirty()
+      {
+         return dirtyState_.getValue();
+      }   
+   };
    
    // these methods are public static so that other editing targets which
    // display source code (but don't inherit from TextEditingTarget) can share

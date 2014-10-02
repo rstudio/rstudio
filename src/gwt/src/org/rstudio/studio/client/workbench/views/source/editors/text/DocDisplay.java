@@ -29,6 +29,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
+import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointMoveEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.BreakpointSetEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
@@ -45,6 +46,7 @@ import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.IsWidget;
+
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
@@ -68,6 +70,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setFileType(TextFileType fileType, boolean suppressCompletion);
    void setFileType(TextFileType fileType, CompletionManager completionManager);
    void setRnwCompletionContext(RnwCompletionContext rnwContext);
+   void setCppCompletionContext(CppCompletionContext cppContext);
    String getCode();
    void setCode(String code, boolean preserveCursorPosition);
    void insertCode(String code, boolean blockMode);

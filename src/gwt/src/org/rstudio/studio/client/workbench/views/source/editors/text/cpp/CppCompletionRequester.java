@@ -15,14 +15,12 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
-import java.util.ArrayList;
-
-import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResult;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 
 public class CppCompletionRequester
 {
@@ -32,27 +30,20 @@ public class CppCompletionRequester
    }
    
    public void getCompletions(
-         final String line, 
-         final int pos,
+         String docPath,
+         String docContents,
+         boolean docIsDirty,
+         DocDisplay docDisplay,
+         Position position,
          final boolean implicit,
          final ServerRequestCallback<CppCompletionResult> requestCallback)
    {
-      ArrayList<String> completions = new ArrayList<String>();
-      completions.add("Lenny");
-      completions.add("Moe");
-      completions.add("Curly");
-      
-      final CppCompletionResult result = CppCompletionResult.create(
-                                       JsUtil.toJsArrayString(completions));
-      
-      Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-
-         @Override
-         public void execute()
-         {
-            requestCallback.onResponseReceived(result);   
-         }  
-      });
+      server_.getCppCompletions(docPath, 
+                                docContents, 
+                                docIsDirty, 
+                                position.getRow() + 1, 
+                                position.getColumn() + 1, 
+                                requestCallback);
    }
    
    
@@ -61,6 +52,5 @@ public class CppCompletionRequester
    }
    
    
-   @SuppressWarnings("unused")
    private final CppServerOperations server_;
 }
