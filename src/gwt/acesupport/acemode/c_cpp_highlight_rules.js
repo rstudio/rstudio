@@ -103,12 +103,15 @@ var c_cppHighlightRules = function() {
                 token : "constant.numeric", // float
                 regex : "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
             }, {
-              token : "constant", // <CONSTANT>
-              regex : "<[a-zA-Z0-9.]+>"
+                token : "constant", // <CONSTANT>
+                regex : "<[a-zA-Z0-9./]+>"
             }, {
-              token : "keyword", // pre-compiler directivs
-              regex : "(?:#include|#pragma|#line|#define|#undef|#ifdef|#else|#elif|#endif|#ifndef)"
-          }, {
+                token : "keyword", // pre-compiler directivs
+                regex : "(?:#\\s*include|#\\s*pragma|#\\s*line|#\\s*define|#\\s*undef|#\\s*ifdef|#\\s*if|#\\s*else|#\\s*elif|#\\s*endif|#\\s*ifndef|#\\s*error|#\\s*warning)"
+            }, {
+                token : "variable.language", // compiler-specific constructs
+                regex : "\\b__.*__\\b"
+            }, {
                 token : function(value) {
                     if (value == "this")
                         return "variable.language";
@@ -124,14 +127,20 @@ var c_cppHighlightRules = function() {
                 token : "keyword.operator",
                 regex : "!|\\$|%|&|\\*|\\-\\-|\\-|\\+\\+|\\+|~|==|=|!=|<=|>=|<<=|>>=|>>>=|<>|<|>|!|&&|\\|\\||\\?\\:|\\*=|%=|\\+=|\\-=|&=|\\^=|\\b(?:in|new|delete|typeof|void)"
             }, {
-              token : "punctuation.operator",
-              regex : "\\?|\\:|\\,|\\;|\\."
+                token : "punctuation.operator",
+                regex : "\\?|\\:|\\,|\\;|\\."
             }, {
-                token : "paren.lparen",
-                regex : "[[({]"
+                // Obviously these are neither keywords nor operators, but
+                // labelling them as such was the easiest way to get them
+                // to be colored distinctly from regular text
+                token : "paren.keyword.operator",
+                regex : "[[({<]"
             }, {
-                token : "paren.rparen",
-                regex : "[\\])}]"
+                // Obviously these are neither keywords nor operators, but
+                // labelling them as such was the easiest way to get them
+                // to be colored distinctly from regular text
+                token : "paren.keyword.operator",
+                regex : "[\\])}>]"
             }, {
                 token : "text",
                 regex : "\\s+"

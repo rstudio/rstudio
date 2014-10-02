@@ -141,12 +141,16 @@ oop.inherits(Mode, TextMode);
    // '\' leads back to a line starting with a '#define' statement.
    this.inMacro = function(lines, row) {
 
+      var line = lines[row];
+
       if (row < 0) {
          return false;
-      } else if (reStartsWithDefine.test(lines[row])) {
-         return true;
-      } else if (reEndsWithBackslash.test(lines[row])) {
-         return this.inMacro(lines, row - 1);
+      } else if (reEndsWithBackslash.test(line)) {
+         if (reStartsWithDefine.test(line)) {
+            return true;
+         } else {
+            return this.inMacro(lines, row - 1);
+         }
       } else {
          return false;
       }
