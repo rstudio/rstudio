@@ -148,7 +148,7 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename)
       // already up to date?
       if (args == stored.compileArgs && lastWriteTime == stored.lastWriteTime)
       {
-         return TranslationUnit(filename, stored.tu);
+         return TranslationUnit(filename, stored.tu, &unsavedFiles_);
       }
 
       // just needs reparse?
@@ -166,7 +166,7 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename)
             stored.lastWriteTime = lastWriteTime;
 
             // return it
-            return TranslationUnit(filename, stored.tu);
+            return TranslationUnit(filename, stored.tu, &unsavedFiles_);
          }
          else
          {
@@ -205,7 +205,7 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename)
                                                           lastWriteTime,
                                                           tu);
 
-      return TranslationUnit(filename, tu);
+      return TranslationUnit(filename, tu, &unsavedFiles_);
    }
    else
    {
@@ -221,7 +221,7 @@ TranslationUnit SourceIndex::getHeaderTranslationUnit(
    for(TranslationUnits::const_iterator it = translationUnits_.begin();
        it != translationUnits_.end(); ++it)
    {
-      TranslationUnit tu(it->first, it->second.tu);
+      TranslationUnit tu(it->first, it->second.tu, &unsavedFiles_);
       if (tu.includesFile(filename))
          return tu;
    }

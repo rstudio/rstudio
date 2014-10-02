@@ -96,12 +96,6 @@ void UnsavedFiles::removeAll()
    files_.clear();
 }
 
-UnsavedFiles& unsavedFiles()
-{
-   static UnsavedFiles instance;
-   return instance;
-}
-
 std::ostream& operator << (std::ostream& ostr, UnsavedFiles& unsaved)
 {
    for (std::size_t i = 0; i<unsaved.numUnsavedFiles(); i++)

@@ -23,6 +23,7 @@
 
 #include "Diagnostic.hpp"
 #include "CodeCompleteResults.hpp"
+#include "UnsavedFiles.hpp"
 
 namespace core {
 namespace libclang {
@@ -31,11 +32,13 @@ class TranslationUnit
 {
 public:
    TranslationUnit()
-      : tu_(NULL)
+      : tu_(NULL), pUnsavedFiles_(NULL)
    {
    }
 
-   TranslationUnit(const std::string& filename, CXTranslationUnit tu)
+   TranslationUnit(const std::string& filename,
+                   CXTranslationUnit tu,
+                   UnsavedFiles* pUnsavedFiles)
       : filename_(filename), tu_(tu)
    {
    }
@@ -63,6 +66,7 @@ public:
 private:
    std::string filename_;
    CXTranslationUnit tu_;
+   UnsavedFiles* pUnsavedFiles_;
 };
 
 } // namespace libclang

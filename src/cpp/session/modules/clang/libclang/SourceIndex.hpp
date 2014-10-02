@@ -48,10 +48,13 @@ public:
    static bool isTranslationUnit(const std::string& filename);
 
 public:
+
    virtual ~SourceIndex();
 
    void initialize(CompilationDatabase compilationDB = CompilationDatabase(),
                    int verbose = 0);
+
+   UnsavedFiles& unsavedFiles() { return unsavedFiles_; }
 
    unsigned getGlobalOptions() const;
    void setGlobalOptions(unsigned options);
@@ -74,6 +77,9 @@ private:
    TranslationUnit getHeaderTranslationUnit(const std::string& filename);
 
 private:
+
+   UnsavedFiles unsavedFiles_;
+
    CXIndex index_;
 
    struct StoredTranslationUnit

@@ -53,8 +53,8 @@ CodeCompleteResults TranslationUnit::codeCompleteAt(const std::string& filename,
                                  filename.c_str(),
                                  line,
                                  column,
-                                 unsavedFiles().unsavedFilesArray(),
-                                 unsavedFiles().numUnsavedFiles(),
+                                 pUnsavedFiles_->unsavedFilesArray(),
+                                 pUnsavedFiles_->numUnsavedFiles(),
                                  clang().defaultCodeCompleteOptions());
 
    if (pResults != NULL)

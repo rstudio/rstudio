@@ -128,7 +128,9 @@ void onSourceDocUpdated(boost::shared_ptr<IdToFile> pIdToFile,
    // update unsaved files (we do this even if the document is dirty
    // as even in this case it will need to be removed from the list
    // of unsaved files)
-   unsavedFiles().update(filename, pDoc->contents(), pDoc->dirty());
+   sourceIndex().unsavedFiles().update(filename,
+                                       pDoc->contents(),
+                                       pDoc->dirty());
 
    // dirty files indicate active user editing, prime if necessary
    if (pDoc->dirty())
@@ -163,7 +165,7 @@ void onSourceDocRemoved(boost::shared_ptr<IdToFile> pIdToFile,
    if (it != pIdToFile->end())
    {
       // remove from unsaved file
-      unsavedFiles().remove(it->second);
+      sourceIndex().unsavedFiles().remove(it->second);
 
       // remove the translation unit
       sourceIndex().removeTranslationUnit(it->second);
@@ -175,7 +177,7 @@ void onSourceDocRemoved(boost::shared_ptr<IdToFile> pIdToFile,
 
 void onAllSourceDocsRemoved(boost::shared_ptr<IdToFile> pIdToFile)
 {
-   unsavedFiles().removeAll();
+   sourceIndex().unsavedFiles().removeAll();
    sourceIndex().removeAllTranslationUnits();
    pIdToFile->clear();
 }
@@ -190,6 +192,20 @@ bool haveRequiredRcpp()
 bool cppIndexingDisabled()
 {
    return ! r::options::getOption<bool>("rstudio.indexCpp", true, false);
+}
+
+// convenience function to load libclang and initialize the source index
+bool initializeLibClang()
+{
+   bool loaded = libclang::clang().load(embeddedLibClang(),
+                                        LibraryVersion(3,4,0));
+   if (!loaded)
+      return false;
+
+   sourceIndex().initialize(compilationDatabase(),
+                            userSettings().clangVerbose());
+
+   return true;
 }
 
 
@@ -279,13 +295,8 @@ Error initialize()
       return Success();
 
    // attempt to initialize libclang interface
-   if (!libclang::initialize(compilationDatabase(),
-                             embeddedLibClang(),
-                             LibraryVersion(3,4,0),
-                             userSettings().clangVerbose()))
-   {
+   if (!initializeLibClang())
       return Success();
-   }
 
    // keep a map of id to filename for source database event forwarding
    boost::shared_ptr<IdToFile> pIdToFile = boost::make_shared<IdToFile>();

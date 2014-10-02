@@ -53,7 +53,7 @@ Error printCppCompletions(const core::json::JsonRpcRequest& request,
 
    // first update the unsaved file database
    std::string filename = filePath.absolutePath();
-   unsavedFiles().update(filename, docContents, docDirty);
+   sourceIndex().unsavedFiles().update(filename, docContents, docDirty);
 
    // now get the translation unit and do the code completion
    TranslationUnit tu = sourceIndex().getTranslationUnit(filename);

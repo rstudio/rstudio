@@ -29,13 +29,8 @@ namespace libclang {
 
 class UnsavedFiles : boost::noncopyable
 {
-private:
-   // singleton
-   friend UnsavedFiles& unsavedFiles();
-   UnsavedFiles() {}
-
 public:
-
+   UnsavedFiles() {}
    virtual ~UnsavedFiles();
 
    void update(const std::string& filename,
@@ -51,9 +46,6 @@ private:
    // vector of unsaved files we pass to various clang functions
    std::vector<CXUnsavedFile> files_;
 };
-
-// global instance
-UnsavedFiles& unsavedFiles();
 
 //  diagnosic helpers
 std::ostream& operator << (std::ostream& ostr, UnsavedFiles& unsaved);

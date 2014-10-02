@@ -636,14 +636,6 @@ private:
 // shared instance of lib clang
 LibClang& clang();
 
-// convenience function to load libclang and initialize the source index
-bool initialize(CompilationDatabase compilationDB = CompilationDatabase(),
-                EmbeddedLibrary embedded = EmbeddedLibrary(),
-                LibraryVersion requiredVersion = LibraryVersion(3,4,0),
-                int verbose = 0,
-                std::string* pDiagnostics = NULL);
-
-
 } // namespace libclang
 } // namespace core
 

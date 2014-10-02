@@ -548,22 +548,6 @@ LibClang& clang()
    return instance;
 }
 
-// convenience function to load libclang and initialize the source index
-bool initialize(CompilationDatabase compilationDB,
-                EmbeddedLibrary embedded,
-                LibraryVersion requiredVersion,
-                int verbose,
-                std::string* pDiagnostics)
-{
-   bool loaded = clang().load(embedded, requiredVersion, pDiagnostics);
-   if (!loaded)
-      return false;
-
-   sourceIndex().initialize(compilationDB, verbose);
-
-   return true;
-}
-
 } // namesapce libclang
 } // namespace core
 
