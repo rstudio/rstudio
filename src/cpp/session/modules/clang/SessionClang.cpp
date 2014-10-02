@@ -34,7 +34,7 @@
 #include "libclang/SourceIndex.hpp"
 
 #include "CodeCompletion.hpp"
-#include "CompilationDatabase.hpp"
+#include "RCompilationDatabase.hpp"
 
 using namespace core ;
 
@@ -286,9 +286,14 @@ Error initialize()
       return Success();
 
    // connect the source index to the compilation database
-   sourceIndex().initialize(&compilationDatabase(),
-                            userSettings().clangVerbose());
-
+   CompilationDatabase compilationDB;
+   compilationDB.compileArgsForTranslationUnit =
+      boost::bind(&RCompilationDatabase::compileArgsForTranslationUnit,
+                  &compilationDatabase(), _1);
+   compilationDB.translationUnits =
+      boost::bind(&RCompilationDatabase::translationUnits,
+                  &compilationDatabase());
+   sourceIndex().initialize(compilationDB, userSettings().clangVerbose());
 
    // keep a map of id to filename for source database event forwarding
    boost::shared_ptr<IdToFile> pIdToFile = boost::make_shared<IdToFile>();

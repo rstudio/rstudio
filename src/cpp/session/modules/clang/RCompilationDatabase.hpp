@@ -31,20 +31,18 @@ namespace session {
 namespace modules {      
 namespace clang {
 
-class CompilationDatabase : public libclang::SourceIndex::CompilationDatabase,
-                            boost::noncopyable
+class RCompilationDatabase : boost::noncopyable
 {
 private:
-   friend CompilationDatabase& compilationDatabase();
-   CompilationDatabase() {}
+   friend RCompilationDatabase& compilationDatabase();
+   RCompilationDatabase() {}
 
 public:
-   virtual ~CompilationDatabase();
+   virtual ~RCompilationDatabase();
 
-   virtual std::vector<std::string> compileArgsForTranslationUnit(
+   std::vector<std::string> compileArgsForTranslationUnit(
                                              const std::string& filename);
-
-   virtual std::vector<std::string> translationUnits();
+   std::vector<std::string> translationUnits();
 
 private:
 
@@ -87,7 +85,7 @@ private:
 };
 
 // global instance
-CompilationDatabase& compilationDatabase();
+RCompilationDatabase& compilationDatabase();
 
 } // namespace clang
 } // namepace handlers

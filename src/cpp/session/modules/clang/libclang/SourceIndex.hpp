@@ -29,6 +29,14 @@ namespace modules {
 namespace clang {
 namespace libclang {
 
+struct CompilationDatabase
+{
+   bool empty() const { return ! compileArgsForTranslationUnit; }
+   boost::function<std::vector<std::string>(const std::string&)>
+                                            compileArgsForTranslationUnit;
+   boost::function<std::vector<std::string>()> translationUnits;
+};
+
 class SourceIndex : boost::noncopyable
 {   
 private:
@@ -40,19 +48,9 @@ public:
    static bool isTranslationUnit(const std::string& filename);
 
 public:
-   class CompilationDatabase
-   {
-   public:
-      virtual ~CompilationDatabase() {}
-      virtual std::vector<std::string> compileArgsForTranslationUnit(
-                                            const std::string& filename) = 0;
-      virtual std::vector<std::string> translationUnits() = 0;
-   };
-
-public:
    virtual ~SourceIndex();
 
-   void initialize(CompilationDatabase* pCompilationDatabase, int verbose);
+   void initialize(CompilationDatabase compilationDatabase, int verbose);
 
    unsigned getGlobalOptions() const;
    void setGlobalOptions(unsigned options);
@@ -93,7 +91,7 @@ private:
    typedef std::map<std::string,StoredTranslationUnit> TranslationUnits;
    TranslationUnits translationUnits_;
 
-   CompilationDatabase* pCompilationDatabase_;
+   CompilationDatabase compilationDatabase_;
 
    int verbose_;
 };

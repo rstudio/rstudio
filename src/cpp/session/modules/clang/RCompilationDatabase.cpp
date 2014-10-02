@@ -13,7 +13,7 @@
  *
  */
 
-#include "CompilationDatabase.hpp"
+#include "RCompilationDatabase.hpp"
 
 #include <algorithm>
 
@@ -140,7 +140,7 @@ std::string packageBuildFileHash()
 
 } // anonymous namespace
 
-CompilationDatabase::~CompilationDatabase()
+RCompilationDatabase::~RCompilationDatabase()
 {
    try
    {
@@ -151,7 +151,7 @@ CompilationDatabase::~CompilationDatabase()
    }
 }
 
-void CompilationDatabase::updateForCurrentPackage()
+void RCompilationDatabase::updateForCurrentPackage()
 {
    // check hash to see if we can avoid this computation
    std::string buildFileHash = packageBuildFileHash();
@@ -262,7 +262,7 @@ void CompilationDatabase::updateForCurrentPackage()
    packageSrcArgs_ = args;
 }
 
-void CompilationDatabase::updateForStandalone(const core::FilePath& srcPath)
+void RCompilationDatabase::updateForStandalone(const core::FilePath& srcPath)
 {
    // read the dependency attributes within the source file to compare to
    // previous sets of attributes we've used to generate compilation args.
@@ -285,7 +285,7 @@ void CompilationDatabase::updateForStandalone(const core::FilePath& srcPath)
    }
 }
 
-std::vector<std::string> CompilationDatabase::computeArgsForSourceFile(
+std::vector<std::string> RCompilationDatabase::computeArgsForSourceFile(
                                                      const FilePath& srcFile)
 {
    // is this a c++ file
@@ -355,7 +355,7 @@ std::vector<std::string> CompilationDatabase::computeArgsForSourceFile(
    return compileArgs;
 }
 
-Error CompilationDatabase::executeSourceCpp(
+Error RCompilationDatabase::executeSourceCpp(
                                       core::system::Options env,
                                       const core::FilePath& srcPath,
                                       core::system::ProcessResult* pResult)
@@ -408,7 +408,7 @@ Error CompilationDatabase::executeSourceCpp(
             pResult);
 }
 
-core::Error CompilationDatabase::executeRCmdSHLIB(
+core::Error RCompilationDatabase::executeRCmdSHLIB(
                                  core::system::Options env,
                                  const core::FilePath& srcPath,
                                  core::system::ProcessResult* pResult)
@@ -447,7 +447,7 @@ std::string determinePCHPackage(const std::vector<std::string>&)
 } // anonymous namespace
 
 
-std::vector<std::string> CompilationDatabase::compileArgsForTranslationUnit(
+std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
                                             const std::string& filename)
 {
    // args to return
@@ -524,7 +524,7 @@ std::vector<std::string> CompilationDatabase::compileArgsForTranslationUnit(
    return args;
 }
 
-std::vector<std::string> CompilationDatabase::translationUnits()
+std::vector<std::string> RCompilationDatabase::translationUnits()
 {
    using namespace projects;
    std::vector<FilePath> allSrcFiles;
@@ -556,7 +556,7 @@ std::vector<std::string> CompilationDatabase::translationUnits()
    return std::vector<std::string>();
 }
 
-std::vector<std::string> CompilationDatabase::rToolsArgs() const
+std::vector<std::string> RCompilationDatabase::rToolsArgs() const
 {
 
 #ifdef _WIN32
@@ -599,7 +599,7 @@ std::vector<std::string> CompilationDatabase::rToolsArgs() const
    return rToolsArgs_;
 }
 
-std::vector<std::string> CompilationDatabase::precompiledHeaderArgs(
+std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
                                                   const std::string& pkgName,
                                                   const std::string& stdArg)
 {
@@ -709,9 +709,9 @@ std::vector<std::string> CompilationDatabase::precompiledHeaderArgs(
 
 
 
-CompilationDatabase& compilationDatabase()
+RCompilationDatabase& compilationDatabase()
 {
-   static CompilationDatabase instance;
+   static RCompilationDatabase instance;
    return instance;
 }
 
