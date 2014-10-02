@@ -77,16 +77,20 @@ public class JsonUtils {
       return @JsonUtils::throwIllegalArgumentException(*)("Error parsing JSON: " + e, json);
     }
   }-*/;
-  
+
   /**
    * Returns true if the given JSON string may be safely evaluated by {@code
-   * eval()} without undersired side effects or security risks. Note that a true
+   * eval()} without undesired side effects or security risks. Note that a true
    * result from this method does not guarantee that the input string is valid
    * JSON.  This method does not consider the contents of quoted strings; it
    * may still be necessary to perform escaping prior to evaluation for correct
    * results.
-   * 
    * <p> The technique used is taken from <a href="http://www.ietf.org/rfc/rfc4627.txt">RFC 4627</a>.
+   *
+   * <p> Note that this function may fail in sufficiently large text in some
+   * browsers (e.g. Chrome). It is always better to use {@link #safeEval}
+   * instead which is safer, faster and also works with large texts but less
+   * lenient than this one for invalid JSON.
    */
   public static native boolean safeToEval(String text) /*-{
     // Remove quoted strings and disallow anything except:
