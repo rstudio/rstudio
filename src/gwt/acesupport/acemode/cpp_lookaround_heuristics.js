@@ -13,7 +13,6 @@ var CppLookaroundHeuristics = function() {};
 
    this.reStartsWithContinuationToken = reStartsWithContinuationToken;
    this.reEndsWithContinuationToken   = reEndsWithContinuationToken;
-   
 
    var reEndsWithComma     = /,\s*$|,\s*\/\//;
    var reEndsWithColon     = /:\s*$|:\s*\/\//;
@@ -308,40 +307,38 @@ var CppLookaroundHeuristics = function() {};
       var line = this.getLineSansComments(doc, row);
 
       // All of the common control block generating tokens
-      var blockTokens = [
-         /^\s*for\s*\(.*\)\s*$/,
-         /^\s*else\s*$/,
-         /^\s*if\s*\(.*\)\s*$/,
-         /^\s*while\s*\(.*\)\s*$/
-      ];
+      var reBlockTokens = {
+         "while": /^\s*while\s*\(.*\)\s*$/,
+         "for": /^\s*for\s*\(.*\)\s*$/,
+         "else": /^\s*else\s*$/,
+         "if": /^\s*if\s*\(.*\)\s*$/
+      };
+      
+      var reNaked = /^\s*[\w_:]+\s*$|^\s*[\w_:]+\s*\(.*\)\s*$/;
 
       // First, check for an indentation
-      for (var i = 0; i < blockTokens.length; i++) {
-         if (blockTokens[i].test(line)) {
-            return indent + tab;
-         }
+      if (reNaked.test(line)) {
+         return indent + tab;
       }
 
       // If the line ends with a semicolon, try walking up naked
       // block generating tokens
       var lastLine = this.getLineSansComments(doc, row - 1);
 
-      var someMatch = blockTokens.some(function(x) {
-         x.test(lastLine);
-      });
-
-      console.log(someMatch);
-
-      if (/.*;\s*$/.test(line) &&
-          blockTokens.some(function(x) { return x.test(lastLine); })) {
+      if (/.*;\s*$/.test(line) && reNaked.test(lastLine)) {
 
          var lookbackRow = row - 1;
+         while (reNaked.test(lastLine)) {
 
-         while (blockTokens.some(function(x) { return x.test(lastLine); })) {
+            // Quit if we encountered an 'if' or 'else'
+            if (reBlockTokens["if"].test(lastLine) ||
+                reBlockTokens["else"].test(lastLine)) {
+               return lookbackRow;
+            }
             lookbackRow--;
             lastLine = this.getLineSansComments(doc, lookbackRow);
          }
-
+         
          return lookbackRow + 1;
          
       }

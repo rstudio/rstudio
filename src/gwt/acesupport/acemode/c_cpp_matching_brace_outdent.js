@@ -9,6 +9,8 @@ var MatchingBraceOutdent = function() {
 
 (function() {
 
+   var reNaked = /^\s*[\w_:]+\s*$|^\s*[\w_:]+\s*\(.*\)\s*$/;
+
    // Set the indent of the line at 'row' to the indentation
    // at 'rowFrom'.
    this.setIndent = function(session, rowTo, rowFrom) {
@@ -65,22 +67,7 @@ var MatchingBraceOutdent = function() {
 
       if (/^\s*\{\s*$/.test(line)) {
 
-         if (/^\s*if\s*\(.*\)\s*$/.test(lastLine)) {
-            this.setIndent(session, row, row - 1);
-            return true;
-         }
-         
-         if (/^\s*else\s*$/.test(lastLine)) {
-            this.setIndent(session, row, row - 1);
-            return true;
-         }
-
-         if (/^\s*for\s*\(.*\)\s*$/.test(lastLine)) {
-            this.setIndent(session, row, row - 1);
-            return true;
-         }
-
-         if (/^\s*while\s*\(.*\)\s*$/.test(lastLine)) {
+         if (lastLine !== null && reNaked.test(lastLine)) {
             this.setIndent(session, row, row - 1);
             return true;
          }

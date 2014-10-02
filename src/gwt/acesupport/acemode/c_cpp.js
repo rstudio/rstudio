@@ -340,16 +340,15 @@ oop.inherits(Mode, TextMode);
                indent + tab;
          }
 
-         // Handle naked 'for', 'if' etc. tokens
+         // Handle naked 'for', 'if' etc. tokens. This function is a bit awkward --
+         // either it returns an indent to use, or returns a row number from
+         // which we can infer the indent.
          var newIndent = this.$heuristics.indentNakedTokens(doc, indent, tab, row);
          if (newIndent !== null) {
-            console.log(newIndent);
             if (typeof newIndent === "string") {
                return newIndent;
             } else if (typeof newIndent === "number") {
                return this.$getIndent(lines[newIndent]);
-            } else {
-               console.log(typeof newIndent);
             }
          }
 
