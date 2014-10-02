@@ -27,8 +27,6 @@
 
 #include <core/system/LibraryLoader.hpp>
 
-#include <session/SessionOptions.hpp>
-
 #define LOAD_CLANG_SYMBOL(name) \
    error = core::system::loadSymbol(pLib_, "clang_" #name, (void**)&name); \
    if (error) \
@@ -48,30 +46,11 @@ namespace libclang {
 
 namespace {
 
-
-FilePath embeddedLibClangPath()
-{
-#if defined(_WIN64)
-   std::string libclang = "x86_64/libclang.dll";
-#elif defined(_WIN32)
-   std::string libclang = "x86/libclang.dll";
-#elif defined(__APPLE__)
-   std::string libclang = "libclang.dylib";
-#else
-   std::string libclang = "libclang.so";
-#endif
-   return options().libclangPath().childPath(libclang);
-}
-
-
-std::vector<std::string> clangVersions()
+std::vector<std::string> systemClangVersions()
 {
    std::vector<std::string> clangVersions;
 
-   // embedded version
-   clangVersions.push_back(embeddedLibClangPath().absolutePath());
-
-   // platform-specific other versions
+   // platform-specific
 #ifndef _WIN32
 #ifdef __APPLE__
    clangVersions.push_back("/Applications/Xcode.app/Contents/"
@@ -88,25 +67,60 @@ std::vector<std::string> clangVersions()
    return clangVersions;
 }
 
-// load libclang (using embedded version if possible then search
-// for other versions in well known locations)
-bool loadLibclang(LibClang* pLibClang, std::string* pDiagnostics)
+
+} // anonymous namespace
+
+LibClang::~LibClang()
 {
-   // get all possible clang versions
+   try
+   {
+      Error error = unload();
+      if (error)
+         LOG_ERROR(error);
+   }
+   catch(...)
+   {
+   }
+}
+
+bool LibClang::load(Embedded embedded,
+                    Version requiredVersion,
+                    std::string* pDiagnostics)
+{
+   // diagnostics stream
    std::ostringstream ostr;
-   std::vector<std::string> versions = clangVersions();
+
+   // see if we have an embedded version
+   std::string embeddedVersion;
+   if (!embedded.empty())
+      embeddedVersion = embedded.libraryPath();
+
+   // build a list of clang versions to try (start with embedded)
+   std::vector<std::string> versions;
+   if (!embeddedVersion.empty())
+      versions.push_back(embeddedVersion);
+   std::vector<std::string> sysVersions = systemClangVersions();
+   versions.insert(versions.end(), sysVersions.begin(), sysVersions.end());
+
    BOOST_FOREACH(const std::string& version, versions)
    {
       FilePath versionPath(version);
       ostr << versionPath << std::endl;
       if (versionPath.exists())
       {
-         Error error = pLibClang->load(versionPath.absolutePath());
+         Error error = tryLoad(versionPath.absolutePath(), requiredVersion);
          if (!error)
          {
-            ostr << "   LOADED: " << pLibClang->version().asString()
+            // if this was the embedded version then record it
+            if (version == embeddedVersion)
+               embedded_ = embedded;
+
+            // print diagnostics
+            ostr << "   LOADED: " << this->version().asString()
                  << std::endl;
             *pDiagnostics = ostr.str();
+
+            // return true
             return true;
          }
          else
@@ -125,23 +139,7 @@ bool loadLibclang(LibClang* pLibClang, std::string* pDiagnostics)
    return false;
 }
 
-} // anonymous namespace
-
-LibClang::~LibClang()
-{
-   try
-   {
-      Error error = unload();
-      if (error)
-         LOG_ERROR(error);
-   }
-   catch(...)
-   {
-   }
-}
-
-
-Error LibClang::load(const std::string& libraryPath, Version requiredVersion)
+Error LibClang::tryLoad(const std::string& libraryPath, Version requiredVersion)
 {
    // load the library
    Error error = core::system::loadLibrary(libraryPath, &pLib_);
@@ -475,9 +473,6 @@ Error LibClang::load(const std::string& libraryPath, Version requiredVersion)
    LOAD_CLANG_SYMBOL(CompileCommand_getNumArgs)
    LOAD_CLANG_SYMBOL(CompileCommand_getArg)
 
-   // note whether we are using embedded libclang
-   usingEmbedded_ = (libraryPath == embeddedLibClangPath().absolutePath());
-
    return Success();
 }
 
@@ -539,25 +534,8 @@ std::vector<std::string> LibClang::compileArgs(bool isCppFile) const
 {
    std::vector<std::string> compileArgs;
 
-   if (usingEmbedded_)
-   {
-      // headers path
-      FilePath headersPath = options().libclangHeadersPath();
-
-      // add compiler headers
-      std::string headersVersion = "3.5";
-      if (version() < Version(3,5,0))
-         headersVersion = "3.4";
-      compileArgs.push_back("-I" + headersPath.childPath(headersVersion)
-                                                      .absolutePath());
-
-      // add libc++ for embedded clang 3.5
-      if (isCppFile && (headersVersion == "3.5"))
-      {
-         compileArgs.push_back("-I" + headersPath.childPath("libc++/3.5")
-                                                      .absolutePath());
-      }
-   }
+   if (!embedded_.empty())
+      compileArgs = embedded_.compileArgs(version(), isCppFile);
 
    return compileArgs;
 }
@@ -568,22 +546,6 @@ std::string toStdString(CXString cxStr)
    std::string str(clang().getCString(cxStr));
    clang().disposeString(cxStr);
    return str;
-}
-
-
-// check for availablity of clang w/ diagnstics
-bool isLibClangAvailable(std::string* pDiagnostics)
-{
-   LibClang lib;
-   return loadLibclang(&lib, pDiagnostics);
-}
-
-// attempt to load the shared instance of clang
-bool loadLibClang()
-{
-   std::string diagnostics;
-   loadLibclang(&(clang()), &diagnostics);
-   return clang().isLoaded();
 }
 
 // shared instance of libclang

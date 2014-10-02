@@ -46,6 +46,54 @@ using namespace libclang;
 
 namespace {
 
+
+std::string embeddedLibClangPath()
+{
+#if defined(_WIN64)
+   std::string libclang = "x86_64/libclang.dll";
+#elif defined(_WIN32)
+   std::string libclang = "x86/libclang.dll";
+#elif defined(__APPLE__)
+   std::string libclang = "libclang.dylib";
+#else
+   std::string libclang = "libclang.so";
+#endif
+   return options().libclangPath().childPath(libclang).absolutePath();
+}
+
+std::vector<std::string> embeddedLibClangCompileArgs(const Version& version,
+                                                     bool isCppFile)
+{
+   std::vector<std::string> compileArgs;
+
+   // headers path
+   FilePath headersPath = options().libclangHeadersPath();
+
+   // add compiler headers
+   std::string headersVersion = "3.5";
+   if (version < Version(3,5,0))
+      headersVersion = "3.4";
+   compileArgs.push_back("-I" + headersPath.childPath(headersVersion)
+                                                   .absolutePath());
+
+   // add libc++ for embedded clang 3.5
+   if (isCppFile && (headersVersion == "3.5"))
+   {
+      compileArgs.push_back("-I" + headersPath.childPath("libc++/3.5")
+                                                   .absolutePath());
+   }
+
+   return compileArgs;
+}
+
+Embedded embeddedLibClang()
+{
+   Embedded embedded;
+   embedded.libraryPath = embeddedLibClangPath;
+   embedded.compileArgs = embeddedLibClangCompileArgs;
+   return embedded;
+}
+
 typedef std::map<std::string,std::string> IdToFile;
 
 void onSourceDocUpdated(boost::shared_ptr<IdToFile> pIdToFile,
@@ -133,6 +181,22 @@ bool haveRequiredRcpp()
 bool cppIndexingDisabled()
 {
    return ! r::options::getOption<bool>("rstudio.indexCpp", true, false);
+}
+
+
+
+// check for availablity of clang w/ diagnostics
+bool isLibClangAvailable(std::string* pDiagnostics)
+{
+   LibClang lib;
+   return lib.load(embeddedLibClang(), Version(3,4,0), pDiagnostics);
+}
+
+// attempt to load the shared instance of clang
+bool loadLibClang()
+{
+   std::string diagnostics;
+   return clang().load(embeddedLibClang(), Version(3,4,0), &diagnostics);
 }
 
 // diagnostic function to assist in determine whether/where

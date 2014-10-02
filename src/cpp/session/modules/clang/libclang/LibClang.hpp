@@ -20,6 +20,7 @@
 
 #include <boost/format.hpp>
 #include <boost/noncopyable.hpp>
+#include <boost/function.hpp>
 
 #include <core/Error.hpp>
 
@@ -80,16 +81,26 @@ private:
    const int patch_;
 };
 
+
+struct Embedded
+{
+   bool empty() const { return ! libraryPath; }
+   boost::function<std::string()> libraryPath;
+   boost::function<std::vector<std::string>(const Version&, bool)> compileArgs;
+};
+
 class LibClang : boost::noncopyable
 {
 public:
    // construction/destruction (copying prohibited)
-   LibClang() : pLib_(NULL), usingEmbedded_(false) {}
+   LibClang() : pLib_(NULL) {}
    virtual ~LibClang();
 
    // loading
-   core::Error load(const std::string& libraryPath,
-                    Version requiredVersion = Version(3,4,0));
+   bool load(Embedded embedded = Embedded(),
+             Version requiredVersion = Version(3,4,0),
+             std::string* pDiagnostics = NULL);
+
    core::Error unload();
    bool isLoaded() const { return pLib_ != NULL; }
 
@@ -607,20 +618,18 @@ public:
    CXString (*CompileCommand_getArg)(CXCompileCommand, unsigned I);
 
 private:
+   core::Error tryLoad(const std::string& libraryPath, Version requiredVersion);
+
+private:
    void* pLib_;
-   std::string initError_;
-   bool usingEmbedded_;
+   Embedded embedded_;
 };
 
 // note that this function disposes the underlying CXString so it
 // shouldn't be used after this call
 std::string toStdString(CXString cxStr);
 
-// check for availablity of clang w/ diagnstics
-bool isLibClangAvailable(std::string* pDiagnostics);
-
 // shared instance of lib clang
-bool loadLibClang();
 LibClang& clang();
 
 
