@@ -17,6 +17,7 @@
 package com.google.gwt.dev.codeserver;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.codeserver.Pages.ErrorPage;
 import com.google.gwt.dev.json.JsonObject;
 
 import java.io.BufferedReader;
@@ -93,8 +94,7 @@ class SourceHandler {
     return SOURCEMAP_PATH + moduleName + "/__HASH__" + SOURCEMAP_URL_SUFFIX;
   }
 
-  void handle(String target, HttpServletRequest request, HttpServletResponse response,
-      TreeLogger logger)
+  Response handle(String target, HttpServletRequest request, TreeLogger logger)
       throws IOException {
     String moduleName = getModuleNameFromRequest(target);
     if (moduleName == null) {
@@ -103,35 +103,32 @@ class SourceHandler {
 
     Outbox box = outboxes.findByOutputModuleName(moduleName);
     if (box == null) {
-      PageUtil.sendUnavailable(response, logger, "No such module: " + moduleName);
-      return;
+      return new ErrorPage("No such module: " + moduleName);
     } else if (box.containsStubCompile()) {
-      PageUtil.sendUnavailable(response, logger, "This module hasn't been compiled yet.");
-      return;
+      return new ErrorPage("This module hasn't been compiled yet.");
     }
 
     String rootDir = SOURCEMAP_PATH + moduleName + "/";
     String rest = target.substring(rootDir.length());
 
     if (rest.isEmpty()) {
-      sendDirectoryListPage(box, response, logger);
+      return makeDirectoryListPage(box);
     } else if (rest.equals("gwtSourceMap.json")) {
       // This URL is no longer used by debuggers (we use the strong name) but is used for testing.
       // It's useful not to need the strong name to download the sourcemap.
       // (But this only works when there is one permutation.)
-      sendSourceMap(moduleName, box.findSourceMapForOnePermutation(), request, response, logger);
+      return makeSourceMapPage(moduleName, box.findSourceMapForOnePermutation(), request);
     } else if (rest.endsWith("/")) {
-      sendFileListPage(box, rest, response, logger);
+      return sendFileListPage(box, rest);
     } else if (rest.endsWith(".java")) {
-      sendSourceFile(box, rest, request.getQueryString(), response, logger);
+      return makeSourcePage(box, rest, request.getQueryString(), logger);
     } else {
       String strongName = getStrongNameFromSourcemapFilename(rest);
       if (strongName != null) {
         File sourceMap = box.findSourceMap(strongName).getAbsoluteFile();
-        sendSourceMap(moduleName, sourceMap, request, response, logger);
+        return makeSourceMapPage(moduleName, sourceMap, request);
       } else {
-        response.sendError(HttpServletResponse.SC_NOT_FOUND);
-        logger.log(TreeLogger.WARN, "returned not found for request: " + target);
+        return new ErrorPage("page not found");
       }
     }
   }
@@ -146,10 +143,8 @@ class SourceHandler {
     return matcher.matches() ? matcher.group(1) : null;
   }
 
-  private void sendSourceMap(String moduleName, File sourceMap, HttpServletRequest request,
-      HttpServletResponse response, TreeLogger logger) throws IOException {
-
-    long startTime = System.currentTimeMillis();
+  private Response makeSourceMapPage(final String moduleName, File sourceMap,
+      HttpServletRequest request) {
 
     // Stream the file, substituting the sourceroot variable with the filename.
     // (This is more efficient than parsing the file as JSON.)
@@ -161,104 +156,103 @@ class SourceHandler {
     String sourceRoot = String.format("http://%s:%d/sourcemaps/%s/", request.getServerName(),
         request.getServerPort(), moduleName);
 
-    PageUtil.sendTemplateFile("application/json", sourceMap,
+    final Response barePage = Responses.newTextTemplateResponse("application/json", sourceMap,
         "\"" + SOURCEROOT_TEMPLATE_VARIABLE + "\"",
-        "\"" + sourceRoot + "\"", response);
+        "\"" + sourceRoot + "\"");
 
-    long elapsedTime = System.currentTimeMillis() - startTime;
-
-    logger.log(TreeLogger.INFO, "sent source map for module '" + moduleName +
-        "' in " + elapsedTime + " ms");
+    // Wrap it in another response to time how long it takes.
+    return Responses.newTimedResponse(barePage, "sent source map for module '" + moduleName + "'");
   }
 
-  private void sendDirectoryListPage(Outbox box, HttpServletResponse response,
-      TreeLogger logger) throws IOException {
-
+  private Response makeDirectoryListPage(Outbox box) throws IOException {
     SourceMap map = SourceMap.load(box.findSourceMapForOnePermutation());
     JsonObject json = exporter.exportSourceMapDirectoryListVars(box, map);
-    PageUtil.sendJsonAndHtml("config", json, "directorylist.html", response, logger);
+    return Pages.newHtmlPage("config", json, "directorylist.html");
   }
 
-  private void sendFileListPage(Outbox box, String rest, HttpServletResponse response,
-      TreeLogger logger) throws IOException {
+  private Response sendFileListPage(Outbox box, String rest) throws IOException {
 
     SourceMap map = SourceMap.load(box.findSourceMapForOnePermutation());
     JsonObject json = exporter.exportSourceMapFileListVars(box, map, rest);
-    PageUtil.sendJsonAndHtml("config", json, "filelist.html", response, logger);
+    return Pages.newHtmlPage("config", json, "filelist.html");
   }
 
   /**
-   * Sends an HTTP response containing a Java source. It will be sent as plain text by default,
+   * Returns a page displaying a Java source file. It will be sent as plain text by default,
    * or as HTML if the query string is equal to "html".
    */
-  private void sendSourceFile(Outbox box, String sourcePath, String query,
-      HttpServletResponse response, TreeLogger logger) throws IOException {
-    InputStream pageBytes = box.openSourceFile(sourcePath);
+  private Response makeSourcePage(Outbox box, String sourcePath, String query, TreeLogger logger)
+      throws IOException {
 
+    InputStream pageBytes = box.openSourceFile(sourcePath);
     if (pageBytes == null) {
-      response.sendError(HttpServletResponse.SC_NOT_FOUND);
-      logger.log(TreeLogger.WARN, "unknown source file: " + sourcePath);
-      return;
+      return new ErrorPage("unknown source file: " + sourcePath);
     }
 
     if (query != null && query.equals("html")) {
-      BufferedReader reader = new BufferedReader(new InputStreamReader(pageBytes));
-      sendSourceFileAsHtml(box, sourcePath, reader, response, logger);
+      return makeHtmlSourcePage(box, sourcePath, pageBytes, logger);
     } else {
-      PageUtil.sendStream("text/plain", pageBytes, response);
+      return Responses.newBinaryStreamResponse("text/plain", pageBytes);
     }
   }
 
   /**
-   * Sends an HTTP response containing Java source rendered as HTML. The lines of source
+   * Returns a page that will send a Java source file as HTML. The lines of source
    * that have corresponding JavaScript will be highlighted (as determined by reading the
    * source map).
    */
-  private void sendSourceFileAsHtml(Outbox box, String sourcePath, BufferedReader lines,
-      HttpServletResponse response, TreeLogger logger) throws IOException {
+  private Response makeHtmlSourcePage(Outbox box, final String sourcePath,
+      final InputStream pageBytes, TreeLogger logger) throws IOException {
 
-    ReverseSourceMap sourceMap = ReverseSourceMap.load(logger,
+    final ReverseSourceMap sourceMap = ReverseSourceMap.load(logger,
         box.findSourceMapForOnePermutation());
 
-    File sourceFile = new File(sourcePath);
+    final File sourceFile = new File(sourcePath);
 
-    response.setStatus(HttpServletResponse.SC_OK);
-    response.setContentType("text/html");
+    return new Response() {
+      @Override
+      public void send(HttpServletRequest request, HttpServletResponse response, TreeLogger logger)
+          throws IOException {
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.setContentType("text/html");
 
-    HtmlWriter out = new HtmlWriter(response.getWriter());
-    out.startTag("html").nl();
-    out.startTag("head").nl();
-    out.startTag("title").text(sourceFile.getName() + " (GWT Code Server)").endTag("title").nl();
-    out.startTag("style").nl();
-    out.text(".unused { color: grey; }").nl();
-    out.text(".used { color: black; }").nl();
-    out.text(".title { margin-top: 0; }").nl();
-    out.endTag("style").nl();
-    out.endTag("head").nl();
-    out.startTag("body").nl();
+        HtmlWriter out = new HtmlWriter(response.getWriter());
+        out.startTag("html").nl();
+        out.startTag("head").nl();
+        out.startTag("title").text(sourceFile.getName() + " (GWT Code Server)").endTag("title").nl();
+        out.startTag("style").nl();
+        out.text(".unused { color: grey; }").nl();
+        out.text(".used { color: black; }").nl();
+        out.text(".title { margin-top: 0; }").nl();
+        out.endTag("style").nl();
+        out.endTag("head").nl();
+        out.startTag("body").nl();
 
-    out.startTag("a", "href=", ".").text(sourceFile.getParent()).endTag("a").nl();
-    out.startTag("h1", "class=", "title").text(sourceFile.getName()).endTag("h1").nl();
+        out.startTag("a", "href=", ".").text(sourceFile.getParent()).endTag("a").nl();
+        out.startTag("h1", "class=", "title").text(sourceFile.getName()).endTag("h1").nl();
 
-    out.startTag("pre", "class=", "unused").nl();
-    try {
-      int lineNumber = 1;
-      for (String line = lines.readLine(); line != null; line = lines.readLine()) {
-        if (sourceMap.appearsInJavaScript(sourcePath, lineNumber)) {
-          out.startTag("span", "class=", "used").text(line).endTag("span").nl();
-        } else {
-          out.text(line).nl();
+        out.startTag("pre", "class=", "unused").nl();
+
+        BufferedReader lines = new BufferedReader(new InputStreamReader(pageBytes));
+        try {
+          int lineNumber = 1;
+          for (String line = lines.readLine(); line != null; line = lines.readLine()) {
+            if (sourceMap.appearsInJavaScript(sourcePath, lineNumber)) {
+              out.startTag("span", "class=", "used").text(line).endTag("span").nl();
+            } else {
+              out.text(line).nl();
+            }
+            lineNumber++;
+          }
+
+        } finally {
+          lines.close();
         }
-        lineNumber++;
+        out.endTag("pre").nl();
+
+        out.endTag("body").nl();
+        out.endTag("html").nl();
       }
-
-    } finally {
-      lines.close();
-    }
-    out.endTag("pre").nl();
-
-    out.endTag("body").nl();
-    out.endTag("html").nl();
+    };
   }
-
 }

@@ -41,14 +41,17 @@ import com.google.gwt.dev.resource.impl.ResourceOracleImpl;
 import com.google.gwt.dev.resource.impl.ZipFileClassPathEntry;
 import com.google.gwt.dev.util.log.CompositeTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
+import com.google.gwt.thirdparty.guava.common.base.Charsets;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
+import com.google.gwt.thirdparty.guava.common.io.Files;
+import com.google.gwt.thirdparty.guava.common.io.Resources;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.net.URL;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -232,13 +235,14 @@ class Recompiler {
           compileLogger.log(Type.ERROR, "cannot create directory: " + parent);
           throw new UnableToCompleteException();
         }
-        Files.copy(publicResources.getResourceAsStream(pathName), file.toPath());
+        Files.asByteSink(file).writeFrom(publicResources.getResourceAsStream(pathName));
       }
 
       // Create a "module_name.nocache.js" that calculates the permutation and forces a recompile.
       String nocacheJs = generateModuleRecompileJs(module, compileLogger);
-      PageUtil.writeFile(outputDir.getCanonicalPath() + "/" + outputModuleName + ".nocache.js",
-          nocacheJs);
+      Files.write(nocacheJs,
+          new File(outputDir.getCanonicalPath() + "/" + outputModuleName + ".nocache.js"),
+          Charsets.UTF_8);
       writeRecompileNoCacheJs(outputDir, outputModuleName, nocacheJs, compileLogger);
     } catch (IOException e) {
       compileLogger.log(Type.ERROR, "Error creating stub compile directory.", e);
@@ -256,7 +260,8 @@ class Recompiler {
 
     String outputModuleName = module.getName();
     try {
-      String stub = PageUtil.loadResource(Recompiler.class, "recompile.nocache.js");
+      URL resource = Resources.getResource(Recompiler.class, "recompile.nocache.js");
+      String stub = Resources.toString(resource, Charsets.UTF_8);
       return "(function() {\n"
       + " var moduleName = '" + outputModuleName  + "';\n"
       + PropertiesUtil.generatePropertiesSnippet(module, compileLogger)
@@ -334,8 +339,9 @@ class Recompiler {
   private static void writeRecompileNoCacheJs(File outputDir, String moduleName, String content,
       TreeLogger compileLogger) throws UnableToCompleteException {
     try {
-      PageUtil.writeFile(outputDir.getCanonicalPath() + "/" + moduleName + ".recompile.nocache.js",
-          content);
+      Files.write(content,
+          new File(outputDir.getCanonicalPath() + "/" + moduleName + ".recompile.nocache.js"),
+          Charsets.UTF_8);
     } catch (IOException e) {
       compileLogger.log(Type.ERROR, "Can not write recompile.nocache.js", e);
       throw new UnableToCompleteException();

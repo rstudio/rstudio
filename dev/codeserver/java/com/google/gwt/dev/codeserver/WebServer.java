@@ -19,7 +19,10 @@ package com.google.gwt.dev.codeserver;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.codeserver.Pages.ErrorPage;
 import com.google.gwt.dev.json.JsonObject;
+import com.google.gwt.thirdparty.guava.common.base.Charsets;
+import com.google.gwt.thirdparty.guava.common.io.Files;
 
 import org.eclipse.jetty.http.MimeTypes;
 import org.eclipse.jetty.io.Buffer;
@@ -36,7 +39,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -80,14 +83,13 @@ public class WebServer {
   static final Pattern SAFE_FILE_PATH =
       Pattern.compile("/(" + SAFE_DIRECTORY + "/)+" + SAFE_FILENAME + "$");
 
-  private static final Pattern SAFE_CALLBACK =
-      Pattern.compile("([a-zA-Z_][a-zA-Z0-9_]*\\.)*[a-zA-Z_][a-zA-Z0-9_]*");
-
   static final Pattern STRONG_NAME = Pattern.compile("[\\dA-F]{32}");
 
   private static final Pattern CACHE_JS_FILE = Pattern.compile("/(" + STRONG_NAME + ").cache.js$");
 
   private static final MimeTypes MIME_TYPES = new MimeTypes();
+
+  private static final String TIME_IN_THE_PAST = "Fri, 01 Jan 1990 00:00:00 GMT";
 
   private final SourceHandler handler;
   private final JsonExporter jsonExporter;
@@ -160,50 +162,56 @@ public class WebServer {
   }
 
   private void handleRequest(String target, HttpServletRequest request,
-      HttpServletResponse response, TreeLogger logger)
+      HttpServletResponse response, TreeLogger parentLogger)
       throws IOException {
 
     if (request.getMethod().equalsIgnoreCase("get")) {
-      doGet(target, request, response, logger);
+
+      TreeLogger logger = parentLogger.branch(Type.TRACE, "GET " + target);
+
+      Response page = doGet(target, request, logger);
+      if (page == null) {
+        logger.log(Type.WARN, "not handled: " + target);
+        return;
+      }
+
+      setHandled(request);
+      if (!target.endsWith(".cache.js")) {
+        // Make sure IE9 doesn't cache any pages.
+        // (Nearly all pages may change on server restart.)
+        response.setHeader("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
+        response.setHeader("Pragma", "no-cache");
+        response.setHeader("Expires", TIME_IN_THE_PAST);
+        response.setDateHeader("Date", new Date().getTime());
+      }
+      page.send(request, response, logger);
     }
   }
 
-  private void doGet(String target, HttpServletRequest request, HttpServletResponse response,
-      TreeLogger parentLogger)
+  /**
+   * Returns the page that should be sent in response to a GET request, or null for no response.
+   */
+  private Response doGet(String target, HttpServletRequest request, TreeLogger logger)
       throws IOException {
 
-    TreeLogger logger = parentLogger.branch(Type.TRACE, "GET " + target);
-
-    if (!target.endsWith(".cache.js")) {
-      // Make sure IE9 doesn't cache any pages.
-      // (Nearly all pages may change on server restart.)
-      PageUtil.setNoCacheHeaders(response);
-    }
-
     if (target.equals("/")) {
-      setHandled(request);
       JsonObject json = jsonExporter.exportFrontPageVars();
-      PageUtil.sendJsonAndHtml("config", json, "frontpage.html", response, logger);
-      return;
+      return Pages.newHtmlPage("config", json, "frontpage.html");
     }
 
     if (target.equals("/dev_mode_on.js")) {
-      setHandled(request);
       JsonObject json = jsonExporter.exportDevModeOnVars();
-      PageUtil.sendJsonAndJavaScript("__gwt_codeserver_config", json, "dev_mode_on.js", response,
-          logger);
-      return;
+      return Responses.newJavascriptResponse("__gwt_codeserver_config", json,
+          "dev_mode_on.js");
     }
 
     // Recompile on request from the bookmarklet.
     // This is a GET because a bookmarklet can call it from a different origin (JSONP).
     if (target.startsWith("/recompile/")) {
-      setHandled(request);
       String moduleName = target.substring("/recompile/".length());
       Outbox box = outboxes.findByOutputModuleName(moduleName);
       if (box == null) {
-        PageUtil.sendUnavailable(response, logger, "No such module: " + moduleName);
-        return;
+        return new ErrorPage("No such module: " + moduleName);
       }
 
       // We are passing properties from an unauthenticated GET request directly to the compiler.
@@ -216,43 +224,36 @@ public class WebServer {
       runner.submit(job);
       Job.Result result = job.waitForResult();
       JsonObject json = jsonExporter.exportRecompileResponse(result);
-      sendJsonResult(json, request, response, logger);
-      return;
+      return Responses.newJsonResponse(json);
     }
 
     if (target.startsWith("/log/")) {
-      setHandled(request);
       String moduleName = target.substring("/log/".length());
       Outbox box = outboxes.findByOutputModuleName(moduleName);
       if (box == null) {
-        PageUtil.sendUnavailable(response, logger, "No such module: " + moduleName);
+        return new ErrorPage("No such module: " + moduleName);
       } else if (box.containsStubCompile()) {
-        PageUtil.sendUnavailable(response, logger, "This module hasn't been compiled yet.");
+        return new ErrorPage("This module hasn't been compiled yet.");
       } else {
-        sendLogPage(box, response);
+        return makeLogPage(box);
       }
-      return;
     }
 
     if (target.equals("/favicon.ico")) {
       InputStream faviconStream = getClass().getResourceAsStream("favicon.ico");
-      if (faviconStream != null) {
-        setHandled(request);
-        // IE8 will not load the favicon in an img tag with the default MIME type,
-        // so use "image/x-icon" instead.
-        PageUtil.sendStream("image/x-icon", faviconStream, response);
+      if (faviconStream == null) {
+        return new ErrorPage("icon not found");
       }
-      return;
+      // IE8 will not load the favicon in an img tag with the default MIME type,
+      // so use "image/x-icon" instead.
+      return Responses.newBinaryStreamResponse("image/x-icon", faviconStream);
     }
 
     if (target.equals("/policies/")) {
-      setHandled(request);
-      sendPolicyIndex(response);
-      return;
+      return makePolicyIndexPage();
     }
 
     if (target.equals("/progress")) {
-      setHandled(request);
       // TODO: return a list of progress objects here, one for each job.
       JobEvent event = eventTable.getCompilingJobEvent();
 
@@ -263,228 +264,229 @@ public class WebServer {
       } else {
         json = jsonExporter.exportProgressResponse(event);
       }
-      sendJsonResult(json, request, response, logger);
-      return;
+      return Responses.newJsonResponse(json);
     }
 
     Matcher matcher = SAFE_MODULE_PATH.matcher(target);
     if (matcher.matches()) {
-      setHandled(request);
-      sendModulePage(matcher.group(1), response, logger);
-      return;
+      return makeModulePage(matcher.group(1));
     }
 
     matcher = SAFE_DIRECTORY_PATH.matcher(target);
-    if (matcher.matches() && handler.isSourceMapRequest(target)) {
-      setHandled(request);
-      handler.handle(target, request, response, logger);
-      return;
+    if (matcher.matches() && SourceHandler.isSourceMapRequest(target)) {
+      return handler.handle(target, request, logger);
     }
 
     matcher = SAFE_FILE_PATH.matcher(target);
     if (matcher.matches()) {
-      setHandled(request);
-      if (handler.isSourceMapRequest(target)) {
-        handler.handle(target, request, response, logger);
-        return;
+      if (SourceHandler.isSourceMapRequest(target)) {
+        return handler.handle(target, request, logger);
       }
       if (target.startsWith("/policies/")) {
-        sendPolicyFile(target, response, logger);
-        return;
+        return makePolicyFilePage(target);
       }
-      sendOutputFile(target, request, response, logger);
-      return;
+      return makeCompilerOutputPage(target);
     }
 
     logger.log(TreeLogger.WARN, "ignored get request: " + target);
+    return null; // not handled
   }
 
-  private void sendOutputFile(String target, HttpServletRequest request,
-      HttpServletResponse response, TreeLogger logger) throws IOException {
+  /**
+   * Returns a file that the compiler wrote to its war directory.
+   */
+  private Response makeCompilerOutputPage(String target) throws IOException {
 
     int secondSlash = target.indexOf('/', 1);
     String moduleName = target.substring(1, secondSlash);
     Outbox box = outboxes.findByOutputModuleName(moduleName);
     if (box == null) {
-      PageUtil.sendUnavailable(response, logger, "No such module: " + moduleName);
-      return;
+      return new ErrorPage("No such module: " + moduleName);
     }
 
+    final String contentEncoding;
     File file = box.getOutputFile(target);
     if (!file.isFile()) {
       // perhaps it's compressed
       file = box.getOutputFile(target + ".gz");
       if (!file.isFile()) {
-        response.sendError(HttpServletResponse.SC_NOT_FOUND);
-        logger.log(TreeLogger.WARN, "not found: " + file.toString());
-        return;
+        return new ErrorPage("not found: " + file.toString());
       }
-      if (!request.getHeader("Accept-Encoding").contains("gzip")) {
-        response.sendError(HttpServletResponse.SC_NOT_IMPLEMENTED);
-        logger.log(TreeLogger.WARN, "client doesn't accept gzip; bailing");
-        return;
-      }
-      response.setHeader("Content-Encoding", "gzip");
+      contentEncoding = "gzip";
+    } else {
+      contentEncoding = null;
     }
 
+    final String sourceMapUrl;
     Matcher match = CACHE_JS_FILE.matcher(target);
     if (match.matches()) {
       String strongName = match.group(1);
       String template = SourceHandler.sourceMapLocationTemplate(moduleName);
-      String sourceMapUrl = template.replace("__HASH__", strongName);
-      response.setHeader("X-SourceMap", sourceMapUrl);
+      sourceMapUrl = template.replace("__HASH__", strongName);
+    } else {
+      sourceMapUrl = null;
     }
-    response.setHeader("Access-Control-Allow-Origin", "*");
+
     String mimeType = guessMimeType(target);
-    PageUtil.sendFile(mimeType, file, response);
+    final Response barePage = Responses.newFileResponse(mimeType, file);
+
+    // Wrap the response to send the extra headers.
+    return new Response() {
+      @Override
+      public void send(HttpServletRequest request, HttpServletResponse response, TreeLogger logger)
+          throws IOException {
+        // TODO: why do we need this? Looks like Ray added it a long time ago.
+        response.setHeader("Access-Control-Allow-Origin", "*");
+
+        if (sourceMapUrl != null) {
+          response.setHeader("X-SourceMap", sourceMapUrl);
+          response.setHeader("SourceMap", sourceMapUrl);
+        }
+
+        if (contentEncoding != null) {
+          if (!request.getHeader("Accept-Encoding").contains("gzip")) {
+            response.sendError(HttpServletResponse.SC_NOT_IMPLEMENTED);
+            logger.log(TreeLogger.WARN, "client doesn't accept gzip; bailing");
+            return;
+          }
+          response.setHeader("Content-Encoding", "gzip");
+        }
+
+        barePage.send(request, response, logger);
+      }
+    };
   }
 
-  private void sendModulePage(String moduleName, HttpServletResponse response, TreeLogger logger)
-      throws IOException {
+  private Response makeModulePage(String moduleName) throws IOException {
     Outbox box = outboxes.findByOutputModuleName(moduleName);
     if (box == null) {
-      PageUtil.sendUnavailable(response, logger, "No such module: " + moduleName);
-      return;
+      return new ErrorPage("No such module: " + moduleName);
     }
 
     JsonObject json = jsonExporter.exportModulePageVars(box);
-    PageUtil.sendJsonAndHtml("config", json, "modulepage.html", response, logger);
+    return Pages.newHtmlPage("config", json, "modulepage.html");
   }
 
-  private void sendPolicyIndex(HttpServletResponse response) throws IOException {
+  private Response makePolicyIndexPage() {
 
-    response.setContentType("text/html");
+    return new Response() {
 
-    HtmlWriter out = new HtmlWriter(response.getWriter());
+      @Override
+      public void send(HttpServletRequest request, HttpServletResponse response, TreeLogger logger)
+          throws IOException {
+        response.setContentType("text/html");
 
-    out.startTag("html").nl();
-    out.startTag("head").nl();
-    out.startTag("title").text("Policy Files").endTag("title").nl();
-    out.endTag("head");
-    out.startTag("body");
+        HtmlWriter out = new HtmlWriter(response.getWriter());
 
-    out.startTag("h1").text("Policy Files").endTag("h1").nl();
+        out.startTag("html").nl();
+        out.startTag("head").nl();
+        out.startTag("title").text("Policy Files").endTag("title").nl();
+        out.endTag("head");
+        out.startTag("body");
 
-    for (Outbox box : outboxes.getOutboxes()) {
-      File manifest = box.getExtraFile("rpcPolicyManifest/manifest.txt");
-      if (manifest.isFile()) {
-        out.startTag("h2").text(box.getOutputModuleName()).endTag("h2").nl();
+        out.startTag("h1").text("Policy Files").endTag("h1").nl();
 
-        out.startTag("table").nl();
-        String text = PageUtil.loadFile(manifest);
-        for (String line : text.split("\n")) {
-          line = line.trim();
-          if (line.isEmpty() || line.startsWith("#")) {
-            continue;
+        for (Outbox box : outboxes.getOutboxes()) {
+          File manifest = box.getExtraFile("rpcPolicyManifest/manifest.txt");
+          if (manifest.isFile()) {
+            out.startTag("h2").text(box.getOutputModuleName()).endTag("h2").nl();
+
+            out.startTag("table").nl();
+            String text = Files.toString(manifest, Charsets.UTF_8);
+            for (String line : text.split("\n")) {
+              line = line.trim();
+              if (line.isEmpty() || line.startsWith("#")) {
+                continue;
+              }
+              String[] fields = line.split(", ");
+              if (fields.length < 2) {
+                continue;
+              }
+
+              String serviceName = fields[0];
+              String policyFileName = fields[1];
+
+              String serviceUrl = SourceHandler.SOURCEMAP_PATH + box.getOutputModuleName() + "/" +
+                  serviceName.replace('.', '/') + ".java";
+              String policyUrl = "/policies/" + policyFileName;
+
+              out.startTag("tr");
+
+              out.startTag("td");
+              out.startTag("a", "href=", serviceUrl).text(serviceName).endTag("a");
+              out.endTag("td");
+
+              out.startTag("td");
+              out.startTag("a", "href=", policyUrl).text(policyFileName).endTag("a");
+              out.endTag("td");
+
+              out.endTag("tr").nl();
+            }
+            out.endTag("table").nl();
           }
-          String[] fields = line.split(", ");
-          if (fields.length < 2) {
-            continue;
-          }
-
-          String serviceName = fields[0];
-          String policyFileName = fields[1];
-
-          String serviceUrl = SourceHandler.SOURCEMAP_PATH + box.getOutputModuleName() + "/" +
-              serviceName.replace('.', '/') + ".java";
-          String policyUrl = "/policies/" + policyFileName;
-
-          out.startTag("tr");
-
-          out.startTag("td");
-          out.startTag("a", "href=", serviceUrl).text(serviceName).endTag("a");
-          out.endTag("td");
-
-          out.startTag("td");
-          out.startTag("a", "href=", policyUrl).text(policyFileName).endTag("a");
-          out.endTag("td");
-
-          out.endTag("tr").nl();
         }
-        out.endTag("table").nl();
-      }
-    }
 
-    out.endTag("body").nl();
-    out.endTag("html").nl();
+        out.endTag("body").nl();
+        out.endTag("html").nl();
+      }
+    };
   }
 
-  private void sendPolicyFile(String target, HttpServletResponse response, TreeLogger logger)
-      throws IOException {
+  private Response makePolicyFilePage(String target) throws IOException {
 
     int secondSlash = target.indexOf('/', 1);
     if (secondSlash < 1) {
-      response.sendError(HttpServletResponse.SC_NOT_FOUND);
-      return;
+      return new ErrorPage("invalid URL for policy file: " + target);
     }
 
     String rest = target.substring(secondSlash + 1);
     if (rest.contains("/") || !rest.endsWith(".gwt.rpc")) {
-      response.sendError(HttpServletResponse.SC_NOT_FOUND);
-      return;
+      return new ErrorPage("invalid name for policy file: " + rest);
     }
 
-    File policy = outboxes.findPolicyFile(rest);
-    if (policy == null) {
-      PageUtil.sendUnavailable(response, logger, "Policy file not found: " + rest);
-      return;
+    File fileToSend = outboxes.findPolicyFile(rest);
+    if (fileToSend == null) {
+      return new ErrorPage("Policy file not found: " + rest);
     }
 
-    PageUtil.sendFile("text/plain", policy, response);
-  }
-
-  private void sendJsonResult(JsonObject json, HttpServletRequest request,
-      HttpServletResponse response, TreeLogger logger) throws IOException {
-
-    response.setStatus(HttpServletResponse.SC_OK);
-    response.setHeader("Cache-control", "no-cache");
-    PrintWriter out = response.getWriter();
-
-    String callbackExpression = request.getParameter("_callback");
-    if (callbackExpression == null) {
-      // AJAX
-      response.setContentType("application/json");
-      json.write(out);
-    } else {
-      // JSONP
-      response.setContentType("application/javascript");
-      if (SAFE_CALLBACK.matcher(callbackExpression).matches()) {
-        out.print(callbackExpression + "(");
-        json.write(out);
-        out.println(");");
-      } else {
-        logger.log(TreeLogger.ERROR, "invalid callback: " + callbackExpression);
-        // Notice that we cannot execute the callback
-        out.print("alert('invalid callback parameter');\n");
-        json.write(out);
-      }
-    }
+    return Responses.newFileResponse("text/plain", fileToSend);
   }
 
   /**
    * Sends the log file as html with errors highlighted in red.
    */
-  private void sendLogPage(Outbox box, HttpServletResponse response)
+  private Response makeLogPage(final Outbox box)
        throws IOException {
-    File file = box.getCompileLog();
-    BufferedReader reader = new BufferedReader(new FileReader(file));
+    final File file = box.getCompileLog();
+    if (!file.isFile()) {
+      return new ErrorPage("log file not found");
+    }
 
-    response.setStatus(HttpServletResponse.SC_OK);
-    response.setContentType("text/html");
-    response.setHeader("Content-Style-Type", "text/css");
+    return new Response() {
 
-    HtmlWriter out = new HtmlWriter(response.getWriter());
-    out.startTag("html").nl();
-    out.startTag("head").nl();
-    out.startTag("title").text(box.getOutputModuleName() + " compile log").endTag("title").nl();
-    out.startTag("style").nl();
-    out.text(".error { color: red; font-weight: bold; }").nl();
-    out.endTag("style").nl();
-    out.endTag("head").nl();
-    out.startTag("body").nl();
-    sendLogAsHtml(reader, out);
-    out.endTag("body").nl();
-    out.endTag("html").nl();
+      @Override
+      public void send(HttpServletRequest request, HttpServletResponse response, TreeLogger logger)
+          throws IOException {
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.setContentType("text/html");
+        response.setHeader("Content-Style-Type", "text/css");
+
+        HtmlWriter out = new HtmlWriter(response.getWriter());
+        out.startTag("html").nl();
+        out.startTag("head").nl();
+        out.startTag("title").text(box.getOutputModuleName() + " compile log").endTag("title").nl();
+        out.startTag("style").nl();
+        out.text(".error { color: red; font-weight: bold; }").nl();
+        out.endTag("style").nl();
+        out.endTag("head").nl();
+        out.startTag("body").nl();
+        sendLogAsHtml(reader, out);
+        out.endTag("body").nl();
+        out.endTag("html").nl();
+      }
+    };
   }
 
   private static final Pattern ERROR_PATTERN = Pattern.compile("\\[ERROR\\]");
