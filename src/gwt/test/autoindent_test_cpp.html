@@ -42,6 +42,10 @@
 <h2>Automated Tests</h2>
 <p>Passed: <span id="passed"></span>, Failed: <span id="failed"></span></p>
 <ol id="testcontainer" style="display: none;">
+
+<li><pre data-expected="0">
+#define foo
+</pre></li>
   
 <li><pre data-expected="0">
 class foo;
@@ -99,7 +103,7 @@ class foo : bar&lt;T&gt; {
 template &lt;typename T&gt;
 </pre></li>
 
-<li><pre data-expected="4">
+<li><pre data-expected="4" data-expected-open-brace="0">
 class foo:
   public A {
 </pre></li>
@@ -209,11 +213,6 @@ std::find_if(x.begin(), x.end(), [](int x) {
      */
 </pre></li>
 
-<li><pre data-expected="1" open-brace-skip>
-/*******
- *    Some text that's further ahead
-</pre></li>
-
 <li><pre data-expected="4">
 static void namespace_reader() {
 </pre></li>
@@ -291,7 +290,7 @@ Foo(int a, int b):
 std::find_if(x.begin(),
 </pre></li>
 
-<li><pre data-expected="4">
+<li><pre data-expected="17">
 std::find_if(x.begin(),
              x.end(),
              [](x) {

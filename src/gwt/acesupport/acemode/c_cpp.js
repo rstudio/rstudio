@@ -261,9 +261,13 @@ oop.inherits(Mode, TextMode);
           * indentation from just the first, or previous, line.
           */
 
-         // Indent after a #define with continuation
-         if (reStartsWithDefine.test(line) && /\\\s*$/.test(line)) {
-            return indent + tab;
+         // Indent after a #define with continuation; but don't indent
+         // without continutation
+         if (reStartsWithDefine.test(line)) {
+            if (/\\\s*$/.test(line)) {
+               return indent + tab;
+            }
+            return indent;
          }
 
          // Unindent after leaving a #define with continuation
