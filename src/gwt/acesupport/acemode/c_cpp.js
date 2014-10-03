@@ -475,7 +475,14 @@ oop.inherits(Mode, TextMode);
 
          // If we have a class / struct definition all on one line, don't
          // indent
-         if (/^\s*(class|struct).*\{.*\};?\s*/.test(line)) {
+         //
+         //   class Foo {} ;
+         //   ^
+         //
+         // Also applies to template classes all on one line, e.g.
+         //
+         //   template <typename T> struct { ... } ;
+         if (/^\s*(template|class|struct).*\{.*\}\s*;?\s*/.test(line)) {
             return indent;
          }
 

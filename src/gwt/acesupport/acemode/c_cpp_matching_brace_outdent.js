@@ -220,8 +220,6 @@ var MatchingBraceOutdent = function() {
          // look for the enclosing 'class' to get the indentation
          var len = 0;
          var match = false;
-         var maxLookback = 200;
-         var count = 0;
          for (var i = row; i >= 0; i--) {
             var line = this.$heuristics.getLineSansComments(doc, i);
             match = line.match(/\bclass\b/);
@@ -229,9 +227,6 @@ var MatchingBraceOutdent = function() {
                len = match.index;
                break;
             }
-
-            count++;
-            if (count > maxLookback) break;
          }
 
          if (match)
