@@ -220,15 +220,47 @@ var MatchingBraceOutdent = function() {
          // look for the enclosing 'class' to get the indentation
          var len = 0;
          var match = false;
-         for (var i = row; i >= 0; i--) {
-            var line = this.$heuristics.getLineSansComments(doc, i);
+         var thisRow = row;
+         while (thisRow >= 0) {
+
+            var line = this.$heuristics.getLineSansComments(doc, thisRow);
+
+            // Check for a class token.
             match = line.match(/\bclass\b/);
             if (match) {
                len = match.index;
                break;
             }
-         }
 
+            // Walk backwards -- prefer walking over matching braces when
+            // possible, otherwise just step up a row.
+            if (line.indexOf("}") !== -1) {
+               
+               var openBracePos = session.findMatchingBracket({
+                  row: thisRow,
+                  column: line.lastIndexOf("}") + 1
+               });
+               
+               if (openBracePos) {
+
+                  // If this open brace is already associated with a class or struct,
+                  // step over all of those rows.
+                  var heuristicRow =
+                         this.$heuristics.getRowForOpenBraceIndent(session, openBracePos.row);
+
+                  if (heuristicRow !== null && heuristicRow >= 0) {
+                     thisRow = heuristicRow - 1;
+                  } else {
+                     thisRow = openBracePos.row - 2;
+                  }
+                  
+               }
+               
+            } else {
+               thisRow--;
+            }
+         }
+         
          if (match)
             doc.replace(new Range(row, 0, row, indent.length - len), "");
 

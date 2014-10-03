@@ -55,6 +55,10 @@ var CppLookaroundHeuristics = function() {};
 
    this.getRowForOpenBraceIndentClassStyle = function(session, row, maxLookback) {
 
+      if (typeof maxLookback === "undefined") {
+         maxLookback = 50;
+      }
+
       var doc = session.getDocument();
       var count = 0;
 
@@ -73,7 +77,7 @@ var CppLookaroundHeuristics = function() {};
       var firstLine = this.getLineSansComments(doc, startRow);
 
       // If the first line is just an open brace, go up one
-      if (/^\s*\{\s*$/.test(firstLine)) {
+      if (/^\s*\{/.test(firstLine)) {
          row = row - 1;
          firstLine = this.getLineSansComments(doc, row);
       }
@@ -155,6 +159,10 @@ var CppLookaroundHeuristics = function() {};
    };
 
    this.getRowForOpenBraceIndentFunctionStyle = function(session, row, maxLookback) {
+
+      if (typeof maxLookback === "undefined") {
+         maxLookback = 50;
+      }
 
       var doc = session.getDocument();
       var firstLine = this.getLineSansComments(doc, row);

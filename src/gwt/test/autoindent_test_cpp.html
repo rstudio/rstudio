@@ -561,6 +561,10 @@ for (var i = 0; i < states.length; i++)
      }
    }
 }
+
+ // turn vertical alignment back on now that we're done
+  require('mode/r_code_model').setVerticallyAlignFunctionArgs(true);
+ 
 if (test)
 {
   if (doIndentTest(test))
