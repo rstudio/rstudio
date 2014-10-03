@@ -465,8 +465,18 @@ oop.inherits(Mode, TextMode);
          }
 
          // If we have a class with an open brace on the same line, indent
+         //
+         //   class Foo {
+         //       ^
+         //
          if (/^\s*(class|struct).*\{\s*$/.test(line)) {
             return indent + tab;
+         }
+
+         // If we have a class / struct definition all on one line, don't
+         // indent
+         if (/^\s*(class|struct).*\{.*\};?\s*/.test(line)) {
+            return indent;
          }
 
          // Match the indentation of the ':' in a statement e.g.
