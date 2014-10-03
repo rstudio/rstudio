@@ -79,7 +79,7 @@ var MatchingBraceOutdent = function() {
 
    this.checkDoubleArrowAlignment = function(session, row, line, lastLine) {
 
-      if (/^\s*<<\s*$/.test(line)) {
+      if (/^\s*<</.test(line)) {
          var index = lastLine.indexOf("<<");
          if (index >= 0) {
 

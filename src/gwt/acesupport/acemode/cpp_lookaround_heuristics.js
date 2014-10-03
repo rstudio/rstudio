@@ -219,11 +219,6 @@ var CppLookaroundHeuristics = function() {};
       var lines = doc.$lines;
       if (lines.length <= 1) return null;
 
-      // Special-case for 'do {'
-      if (/^\s*do\s*\{\s*$/.test(this.getLineSansComments(doc, row))) {
-         return row;
-      }
-
       // First, try class-style indentation lookup
       var classStyleIndent =
              this.getRowForOpenBraceIndentClassStyle(session, row, maxLookback);
@@ -236,6 +231,14 @@ var CppLookaroundHeuristics = function() {};
              this.getRowForOpenBraceIndentFunctionStyle(session, row, maxLookback);
       if (fnStyleIndent !== null) {
          return fnStyleIndent;
+      }
+
+      // Special case for e.g.
+      //
+      //   do {
+      //
+      if (/^\s*[\w:_]+\s*\{\s*$/.test(this.getLineSansComments(doc, row))) {
+         return row;
       }
 
       // Give up and return null
