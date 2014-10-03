@@ -588,6 +588,15 @@ var CStyleBehaviour = function () {
                };
             }
 
+            // Don't enter macro mode if the line is just a #define (with
+            // no trailing \)
+            if (/^\s*#\s*define/.test(line) && !/\\\s*$/.test(line)) {
+               return {
+                  text: '\n',
+                  selection: false
+               };
+            }
+
             // Check if we already have a closing backslash to the right of the cursor.
             // This rule makes enter effectively function as a 'move down' action, e.g.
             // pressing the down arrow on the keyboard.
