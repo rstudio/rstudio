@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -30,16 +31,26 @@ public class CppCompletionRequester
    }
    
    public void getCompletions(
-         String docPath,
+         CppCompletionContext completionContext,
          DocDisplay docDisplay,
-         Position position,
+         final Position position,
          final boolean implicit,
          final ServerRequestCallback<CppCompletionResult> requestCallback)
    {
-      server_.getCppCompletions(docPath, 
-                                position.getRow() + 1, 
-                                position.getColumn() + 1, 
-                                requestCallback);
+      completionContext.withUpdatedDoc(new CommandWithArg<String>() {
+
+         @Override
+         public void execute(String docPath)
+         {
+            server_.getCppCompletions(docPath, 
+                                      position.getRow() + 1, 
+                                      position.getColumn() + 1, 
+                                      requestCallback);
+            
+         }
+         
+      });
+    
    }
    
    

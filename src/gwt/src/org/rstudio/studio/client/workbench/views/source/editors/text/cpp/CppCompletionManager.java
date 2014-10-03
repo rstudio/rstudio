@@ -16,7 +16,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
 
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -333,25 +332,12 @@ public class CppCompletionManager implements CompletionManager
                         selection,
                         canAutoAccept);
       
-      // ensure the doc is saved then request the completion
-      // TODO: if we are filtering then don't do this! (i.e.
-      // this part needs to go in the requester)
-      completionContext_.withUpdatedDoc(new CommandWithArg<String>() {
-
-         @Override
-         public void execute(String docPath)
-         {
-            requester_.getCompletions(docPath,
-                                      docDisplay_,
-                                      docDisplay_.getCursorPosition(),
-                                      implicit,
-                                      context_);
-         }
-         
-      });
-      
-      
-      
+      // request the completion
+      requester_.getCompletions(completionContext_,
+                                docDisplay_,
+                                docDisplay_.getCursorPosition(),
+                                implicit,
+                                context_);
       return true ;   
    }
   
