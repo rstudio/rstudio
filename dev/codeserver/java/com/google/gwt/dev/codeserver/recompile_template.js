@@ -18,7 +18,21 @@
   var $doc = $wnd.document;
   var $namespace = {};
   var moduleName = __MODULE_NAME__;
-  __PROPERTY_PROVIDERS__
-  __LIB_JS__
-  __MAIN__
+  
+  var executeMain = function(){
+    __PROPERTY_PROVIDERS__
+    __LIB_JS__
+    __MAIN__
+  };
+
+  if (/loaded|complete/.test($doc.readyState)) {
+    executeMain();
+  } else {
+    //defer app script insertion until the body is ready
+    if($wnd.addEventListener){
+      $wnd.addEventListener('DOMContentLoaded', executeMain, false);
+    } else{
+      $wnd.attachEvent('onload', executeMain);
+    }
+  }
 })();
