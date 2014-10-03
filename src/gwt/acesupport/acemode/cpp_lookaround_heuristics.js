@@ -191,6 +191,15 @@ var CppLookaroundHeuristics = function() {};
          });
 
          if (openParenPos) {
+            // NOTE: We need to look back in case the function argument list
+            // is on its own line, e.g.
+            //
+            //   foo
+            //       ()
+            //
+            if (/^\s*\(.*\)\s*$/.test(this.getLineSansComments(doc, openParenPos.row))) {
+               return openParenPos.row - 1;
+            }
             return openParenPos.row;
          }
       }

@@ -294,7 +294,11 @@ oop.inherits(Mode, TextMode);
          lastLine = this.getLineSansComments(doc, row - 1);
 
          // Only indent on an ending '>' if we're not in a template
-         // We can do this by checking for a matching '<'
+         // We can do this by checking for a matching '<'. This also
+         // handles system includes, e.g.
+         //
+         //   #include <header>
+         //   ^
          if (/>\s*$/.test(line)) {
             var loc = this.$heuristics.findMatchingBracketRow(">", lines, row, 50);
             if (loc >= 0) {
@@ -304,7 +308,12 @@ oop.inherits(Mode, TextMode);
             }
          }
 
-         // Unindent after leaving a block comment
+         // Unindent after leaving a block comment.
+         //
+         // /**
+         //  *
+         //  */
+         // ^
          if (/\*\/\s*$/.test(line)) {
 
             // Find the start of the comment block
@@ -353,7 +362,8 @@ oop.inherits(Mode, TextMode);
             return indent + tab;
          }
 
-         // Don't indent for namespaces, switch statements
+         // Don't indent for namespaces, switch statements. Note that
+         // we can have
          if (/\bnamespace\b.*\{\s*$/.test(line) ||
              /\bswitch\b.*\{\s*$/.test(line)) {
             return indent;
@@ -414,22 +424,6 @@ oop.inherits(Mode, TextMode);
          if (line.match(/\(\s*$/)) {
             return indent + tab;
          }
-
-         // Match the indent of the ':' for an initializer list, e.g.
-         // if the user types
-         //
-         //    : foo_(foo)
-         //
-         // this is for users who like to line up commas with colons
-         // NOTE: This is a bad rule to use by default! Prefer auto-outdenting
-         // commas instead if we really desire this behaviour. Leaving this
-         // comment here in case I change my mind later ...
-         //
-         // if (/^\s*[:,]\s*[\w_]+\(.*\)\s*$/.test(line)) {
-         //    return $verticallyAlignFunctionArgs ?
-         //       this.$getIndent(line) :
-         //       indent + tab;
-         // }
 
          // If we've made a function definition all on one line,
          // just return the current indent.

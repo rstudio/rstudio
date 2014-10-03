@@ -288,6 +288,7 @@ var MatchingBraceOutdent = function() {
          );
 
          if (scopeRow !== null) {
+
             // Don't indent if the 'class' has an associated open brace.
             if (this.$heuristics.getLineSansComments(doc, scopeRow).indexOf("{") === -1) {
                this.setIndent(session, row, scopeRow);
