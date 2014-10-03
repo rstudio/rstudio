@@ -33,6 +33,8 @@ var oop = require("ace/lib/oop");
 var Behaviour = require("ace/mode/behaviour").Behaviour;
 var CppLookaroundHeuristics = require("mode/cpp_lookaround_heuristics").CppLookaroundHeuristics;
 
+var $addNamespaceComment = true;
+
 var CStyleBehaviour = function () {
 
    var $heuristics = new CppLookaroundHeuristics();
@@ -268,21 +270,23 @@ var CStyleBehaviour = function () {
 
          // namespace specific indenting -- note that 'lineTrimmed'
          // does not contain the now-inserted '{'
-         var anonNamespace = /\s*namespace\s*$/.test(lineTrimmed);
-         var namedNamespace = lineTrimmed.match(/\s*namespace\s+(\S+)\s*/);
+         if ($addNamespaceComment) {
+            var anonNamespace = /\s*namespace\s*$/.test(lineTrimmed);
+            var namedNamespace = lineTrimmed.match(/\s*namespace\s+(\S+)\s*/);
 
-         if (namedNamespace) {
-            return {
-               text: '{} // end namespace ' + namedNamespace[1],
-               selection: [1, 1]
-            };
-         }
+            if (namedNamespace) {
+               return {
+                  text: '{} // end namespace ' + namedNamespace[1],
+                  selection: [1, 1]
+               };
+            }
 
-         if (anonNamespace) {
-            return {
-               text: '{} // end anonymous namespace',
-               selection: [1, 1]
-            };
+            if (anonNamespace) {
+               return {
+                  text: '{} // end anonymous namespace',
+                  selection: [1, 1]
+               };
+            }
          }
 
          // if we're assigning, e.g. through an initializor list, then
@@ -644,4 +648,12 @@ var CStyleBehaviour = function () {
 oop.inherits(CStyleBehaviour, Behaviour);
 
 exports.CStyleBehaviour = CStyleBehaviour;
+
+exports.setAddNamespaceComment = function(x) {
+   $addNamespaceComment = x;
+};
+
+exports.getAddNamespaceComment = function() {
+   return $addNamespaceComment;
+}
 });
