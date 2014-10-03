@@ -333,3 +333,41 @@ MetaTagParser.prototype.get = function() {
 
 //Export MetaTagParser to namespace
 $namespace.lib.MetaTagParser = MetaTagParser;
+
+/**
+ * BaseUrlProvider provides the url to the original server that the app has been loaded from.
+ * This is not the url of super dev mode.
+ *
+ * @constructor
+ * @param {string} moduleName - the module for which we should determine the base url.
+ */
+function BaseUrlProvider(moduleName) {
+  this.__moduleName = moduleName;
+}
+
+BaseUrlProvider.prototype.__getScriptTags = function() {
+  return $doc.getElementsByTagName('script');
+};
+
+BaseUrlProvider.prototype.getBaseUrl = function() {
+  var expectedSuffix = this.__moduleName + '.nocache.js';
+  var scriptTags = this.__getScriptTags();
+  for (var i = 0;; i++) {
+    var tag = scriptTags[i];
+    if (!tag) {
+      break;
+    }
+    var candidate = tag.src;
+    var lastMatch = candidate.lastIndexOf(expectedSuffix);
+    if (lastMatch == candidate.length - expectedSuffix.length) {
+      // Assumes that either the URL is absolute, or it's relative
+      // and the html file is hosted by this code server.
+      return candidate.substring(0, lastMatch);
+    }
+  }
+
+  throw 'Unable to compute base url for module: ' + this.__moduleName;
+};
+
+//Export BaseUrlProvider to namespace
+$namespace.lib.BaseUrlProvider = BaseUrlProvider;

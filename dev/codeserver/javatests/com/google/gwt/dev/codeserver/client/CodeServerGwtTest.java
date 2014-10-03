@@ -152,6 +152,23 @@ public class CodeServerGwtTest extends GWTTestCase {
     assertStringEquals('test2', props.test1);
   }-*/;
 
+  public native void testBaseUrlProvider () /*-{
+    var assertStringEquals = @CodeServerGwtTest::assertEquals(Ljava/lang/String;Ljava/lang/String;);
+    var BaseUrlProvider = $wnd.namespace.lib.BaseUrlProvider;
+    var baseUrlProvider = new BaseUrlProvider('testModule');
+
+    baseUrlProvider.__getScriptTags = function() {
+      return [
+        {src: 'http://localhost:9876/somepath/testModule.recompile.nocache.js'},
+        {src: 'http://localhost:8888/somepath/testModule.nocache.js'},
+        {src: 'http://localhost:9876/somepath/testModule.recompile.nocache.js'}
+      ];
+    };
+
+    assertStringEquals('http://localhost:8888/somepath/',
+        baseUrlProvider.getBaseUrl());
+  }-*/;
+
   private void ensureJsInjected() {
     if(injected) {
       return;

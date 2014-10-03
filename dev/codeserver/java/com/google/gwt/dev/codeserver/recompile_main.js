@@ -17,6 +17,7 @@
 var Dialog = $namespace.lib.Dialog;
 var PropertyHelper = $namespace.lib.PropertyHelper;
 var Recompiler = $namespace.lib.Recompiler;
+var BaseUrlProvider = $namespace.lib.BaseUrlProvider;
 //Publish a global variable to let others know that we have been loaded
 $wnd.__gwt_sdm = $wnd.__gwt_sdm || {};
 $wnd.__gwt_sdm.loaded = true;
@@ -34,6 +35,7 @@ function Main(moduleName, propertyProviders, propertyValues){
   this.__moduleName = moduleName;
   this.__dialog = new Dialog();
   this.__recompiler = new Recompiler(moduleName, propertyHelper.computeBindingProperties());
+  this.__baseUrlProvider = new BaseUrlProvider(moduleName);
 }
 
 /**
@@ -41,6 +43,10 @@ function Main(moduleName, propertyProviders, propertyValues){
  */
 Main.prototype.compile = function() {
   var that = this;
+  // Export the module base of the server running the backend. (Returned by GWT.getModuleBaseURL.)
+  var moduleBaseKey = '__gwtDevModeHook:' + this.__moduleName + ':moduleBase';
+  $wnd[moduleBaseKey] = this.__baseUrlProvider.getBaseUrl();
+
   this.__dialog.clear();
   this.__dialog.add(this.__dialog.createTextElement("div", "12pt", "Compiling " + this.__moduleName));
   this.__dialog.show();
