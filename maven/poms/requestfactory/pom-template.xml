@@ -3,9 +3,9 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <parent>
-	<groupId>org.sonatype.oss</groupId>
-	<artifactId>oss-parent</artifactId>
-	<version>4</version>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>4</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.google.web.bindery</groupId>
@@ -22,16 +22,16 @@
     </licenses>
     <dependencyManagement>
         <dependencies>
-	    <dependency>
-	        <groupId>javax.validation</groupId>
-	        <artifactId>validation-api</artifactId>
-	        <version>1.0.0.GA</version>
-	    </dependency>
-	    <dependency>
-	        <groupId>org.json</groupId>
-	        <artifactId>json</artifactId>
-	        <version>20090211</version>
-	    </dependency>
+            <dependency>
+                <groupId>javax.validation</groupId>
+                <artifactId>validation-api</artifactId>
+                <version>1.0.0.GA</version>
+            </dependency>
+            <dependency>
+                <groupId>org.json</groupId>
+                <artifactId>json</artifactId>
+                <version>20090211</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 </project>

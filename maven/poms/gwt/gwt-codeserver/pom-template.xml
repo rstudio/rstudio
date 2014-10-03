@@ -17,7 +17,6 @@
       <dependency>
         <groupId>com.google.gwt</groupId>
         <artifactId>gwt-dev</artifactId>
-        <version>${gwtVersion}</version>
       </dependency>
     </dependencies>
 </project>

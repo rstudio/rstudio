@@ -90,12 +90,12 @@ function maven-gwt() {
   for i in server client
   do
     echo "Removing org.json classes from requestfactory-${i}"
-    zip -d $GWT_EXTRACT_DIR/requestfactory-${i}.jar org/json/*
+    zip -d $GWT_EXTRACT_DIR/requestfactory-${i}.jar "org/json/*"
   done
 
-  # Remove bundled org/json classes from gwt-dev
-  echo "Removing org.json classes from gwt-dev"
-  zip -d $GWT_EXTRACT_DIR/gwt-dev.jar org/json/*
+  # Remove bundled org/json and org/objectweb/asm classes from gwt-dev
+  echo "Removing org.json and ASM classes from gwt-dev"
+  zip -d $GWT_EXTRACT_DIR/gwt-dev.jar "org/json/*" "org/objectweb/asm/*"
 
   # Silently skip Elemental if it doesn't exist
   gwtLibs='dev user servlet codeserver'
