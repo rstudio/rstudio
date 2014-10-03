@@ -135,8 +135,9 @@ var MatchingBraceOutdent = function() {
          }
       }
 
-      // If we just inserted a '}' on a blank line, try and find the
-      // matching '{' for indentation.
+      // Outdent for closing braces (to match the indentation of their
+      // matched opening brace
+      //
       // If the line on which the matching '{' was found is of
       // the form
       //
@@ -180,8 +181,8 @@ var MatchingBraceOutdent = function() {
 
       }
 
-      // If we inserted ']' on a blank line, match the indentation
-      // of its associated '['.
+      // Indentation for lines beginning with ']'. Match the
+      // indentation of its associated '['.
       if (/^\s*\]/.test(line)) {
 
          var openBracketPos = session.findMatchingBracket({
@@ -276,15 +277,22 @@ var MatchingBraceOutdent = function() {
       //      baz_(baz)
       if (/^\s*\{/.test(line)) {
 
+         // Bail if the previous line ends with a semi-colon (don't auto-outdent)
+         if (/;\s*$/.test(lastLine)) {
+            return;
+         }
+
          var scopeRow = this.$heuristics.getRowForOpenBraceIndent(
             session,
-            row,
-            20
+            row
          );
 
          if (scopeRow !== null) {
-            this.setIndent(session, row, scopeRow);
-            return;
+            // Don't indent if the 'class' has an associated open brace.
+            if (this.$heuristics.getLineSansComments(doc, scopeRow).indexOf("{") === -1) {
+               this.setIndent(session, row, scopeRow);
+               return;
+            }
          }
 
       }

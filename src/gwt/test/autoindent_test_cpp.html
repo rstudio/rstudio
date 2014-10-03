@@ -82,12 +82,12 @@ class Foo{};
 struct bar{};
 </pre></li>
 
-<li><pre data-expected="2">
+<li><pre data-expected="2" open-brace-skip="true">
 class foo :
   A,
 </pre></li>
 
-<li><pre data-expected="4" data-expected-vertical-args="12">
+<li><pre data-expected="4" data-expected-vertical-args="12" open-brace-skip="true">
 class foo : A,
 </pre></li>
 
@@ -112,16 +112,16 @@ if (1 == 2) {
 if (1 == 2) { return 1 }
 </pre></li>
 
-<li><pre data-expected="4">
+<li><pre data-expected="4" data-expected-open-brace="0">
 if (1 == 2)
 </pre></li>
 
-<li><pre data-expected="8">
+<li><pre data-expected="8" data-expected-open-brace="4">
 if (a)
     if (b)
 </pre></li>
 
-<li><pre data-expected="4">
+<li><pre data-expected="4" data-expected-open-brace="0">
 else if (bar)
 </pre></li>
 
@@ -131,7 +131,7 @@ while (a)
         c++;
 </pre></li>
 
-<li><pre data-expected="4">
+<li><pre data-expected="4" data-expected-open-brace="0">
 else
 </pre></li>
 
@@ -209,7 +209,7 @@ std::find_if(x.begin(), x.end(), [](int x) {
      */
 </pre></li>
 
-<li><pre data-expected="1">
+<li><pre data-expected="1" open-brace-skip>
 /*******
  *    Some text that's further ahead
 </pre></li>
@@ -218,11 +218,11 @@ std::find_if(x.begin(), x.end(), [](int x) {
 static void namespace_reader() {
 </pre></li>
 
-<li><pre data-expected="0">
+<li><pre data-expected="4" data-expected-open-brace="0">
 class Foo
 </pre></li>
 
-<li><pre data-expected="4">
+<li><pre data-expected="4" data-expected-open-brace="0">
 Foo(const int a,
     const int b)
     : a_(a),
@@ -230,39 +230,39 @@ Foo(const int a,
       c_(c) {
 </pre></li>
 
-<li><pre data-expected="4">
+<li><pre data-expected="4" open-brace-skip>
 class Foo :
     public A,
 </pre></li>
 
-<li><pre data-expected="4">
+<li><pre data-expected="4" open-brace-skip>
 class Foo:
 </pre></li>
 
-<li><pre data-expected="4">
+<li><pre data-expected="4" data-expected-open-brace="0">
 class Foo :
     public A,
     public B,
     public C {
 </pre></li>
 
-<li><pre data-expected="4">
+<li><pre data-expected="4" data-expected-open-brace="0">
 class Foo :
     public A,
     public B,
     public C {
 </pre></li>
 
-<li><pre data-expected="4" data-expected-vertical-args="12">
+<li><pre data-expected="4" data-expected-vertical-args="12" open-brace-skip>
 class Foo : public A,
 </pre></li>
 
-<li><pre data-expected="4">
+<li><pre data-expected="4" data-expected-open-brace="0">
 class Foo : public A,
             public B {
 </pre></li>
 
-<li><pre data-expected="12">
+<li><pre data-expected="12" open-brace-skip>
 class Foo : public A,
             public B,
 </pre></li>
@@ -274,7 +274,7 @@ class Foo : public A,
 };
 </pre></li>
 
-<li><pre data-expected="4">
+<li><pre data-expected="4" open-brace-skip>
 Foo(int a, int b):
     a_(a),
 </pre></li>
@@ -297,19 +297,19 @@ std::find_if(x.begin(),
              [](x) {
 </pre></li>
 
-<li><pre data-expected="4" data-expected-vertical-args="5">
+<li><pre data-expected="4" data-expected-vertical-args="5" open-brace-skip>
 foo( int a,
 </pre></li>
 
-<li><pre data-expected="4" data-expected-vertical-args="10">
+<li><pre data-expected="4" data-expected-vertical-args="10" data-expected-open-brace="0">
 class Foo : public A
 </pre></li>
 
-<li><pre data-expected="4" data-expected-vertical-args="1">
+<li><pre data-expected="4" data-expected-vertical-args="1" open-brace-skip>
 [1, 2, 3,
 </pre></li>
 
-<li><pre data-expected="4" data-expected-vertical-args="3">
+<li><pre data-expected="4" data-expected-vertical-args="3" open-brace-skip>
 [[[1, 2, 3,
 </pre></li>
 
@@ -329,13 +329,13 @@ int foo(const unsigned int a,
         const unsigned int c) const noexcept {
 </pre></li>
 
-<li><pre data-expected="0">
+<li><pre data-expected="4" data-expected-open-brace="0">
 int foo(const unsigned int a,
         const unsigned int b,
         const unsigned int c) const noexcept
 </pre></li>
 
-<li><pre data-expected="4">
+<li><pre data-expected="4" open-brace-skip>
 int foo(const unsigned int a,
         const unsigned int b,
         const unsigned int c) noexcept :
@@ -354,7 +354,7 @@ try {
 } catch(Exception& e) {
 </pre></li>
 
-<li><pre data-expected="0">
+<li><pre data-expected="4" data-expected-open-brace="0">
 try {
 } catch(Exception& e)
 </pre></li>
@@ -387,7 +387,7 @@ else if (bar)
     baz;
 </pre></li>
 
-<li><pre data-expected="4">
+<li><pre data-expected="4" data-expected-open-brace="0">
 Param::Param(const std::string& paramText)
 </pre></li>
 
@@ -471,34 +471,48 @@ function doIndentTest(el, state) {
 
   testEditor.insert((el.innerText || el.textContext).trimRight());
   testEditor.insert("\n");
+  if (state === "open-brace") {
+    testEditor.insert("{");
+  }
 
   var line = doc.$lines[doc.getLength() - 1];
   var indent = line.match(/^(\s*)/)[1];
 
-  el.appendChild(document.createTextNode(indent + "|"));
+  var symbol = state === "open-brace" ? "{" : "|";
+
+  el.appendChild(document.createTextNode(indent + symbol));
   var attrName = "data-expected"; 
   if (state.length > 0 && 
       el.getAttribute(attrName + "-" + state)) 
   {
      attrName += ("-" + state);
   }
-  var expected = el.getAttribute(attrName);
-  if (expected == indent.length + "")
-  {
-    el.style.backgroundColor = '#BFB';
+
+  var skip = el.getAttribute(state + "-skip") !== null;
+  if (skip) {
+    el.style.backgroundColor = "#DDD";
     return true;
-  }
-  else
-  {
-    el.style.backgroundColor = 'pink';
-    return false;
+  } else {
+  
+    var expected = el.getAttribute(attrName);
+    if (expected == indent.length + "")
+    {
+      el.style.backgroundColor = '#BFB';
+      return true;
+    }
+    else
+    {
+      el.style.backgroundColor = 'pink';
+      return false;
+    }
+
   }
 }
 
 var test = document.getElementById("runme");
 var container = document.getElementById("testcontainer");
 var passed = 0, failed = 0;
-var states = [ "", "vertical-args" ];
+var states = [ "", "vertical-args" , "open-brace"];
 for (var i = 0; i < states.length; i++) 
 {
 

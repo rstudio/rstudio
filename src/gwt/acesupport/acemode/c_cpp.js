@@ -504,8 +504,9 @@ oop.inherits(Mode, TextMode);
          //     int c);
          // ^
          //
-         // Do this only when the parenthesis is not matched on the same row.
-         match = line.match(/([\)\]]);?\s*$/);
+         // Do this only when the parenthesis is not matched on the same row
+         // (because otherwise we're missing potential lookback information)
+         match = line.match(/([\)\]])(;)?\s*$/);
          if (match) {
 
             var openPos = session.findMatchingBracket({
@@ -513,8 +514,12 @@ oop.inherits(Mode, TextMode);
                column: lines[row].lastIndexOf(match[1]) + 1
             });
 
+            var maybeTab = typeof match[2] !== "undefined" ?
+                   "" :
+                   tab;
+
             if (openPos && openPos.row != row) {
-               return this.$getIndent(lines[openPos.row]);
+               return this.$getIndent(lines[openPos.row]) + maybeTab;
             }
 
          }
@@ -681,9 +686,24 @@ oop.inherits(Mode, TextMode);
 
          }
 
+         // If the closing character is a 'closer', then indent.
+         // We do this so that we get indentation for a class ctor, e.g.
+         //
+         //   ClassCtor(int a, int b)
+         //       ^
+         //
+         if (/\)\s*$/.test(line)) {
+            return indent + tab;
+         }
+
          // If the closing character is an 'opener' (ie, one of
          // '(', '{', '[', or '<'), then indent
-         if (/.*[\(\{\[<]\s*$/.test(line)) {
+         if (/[\(\{\[<]\s*$/.test(line)) {
+            return indent + tab;
+         }
+
+         // Prefer indenting if the line ends with a character
+         if (/\w\s*$/.test(line)) {
             return indent + tab;
          }
 
