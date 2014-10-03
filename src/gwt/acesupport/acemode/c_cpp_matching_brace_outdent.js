@@ -42,7 +42,7 @@ var MatchingBraceOutdent = function() {
             return true;
          }
 
-         if (/^\s*[\{\}\>\]\<]/.test(input)) {
+         if (/^\s*[\{\}\>\]<]/.test(input)) {
             return true;
          }
 
@@ -215,7 +215,7 @@ var MatchingBraceOutdent = function() {
       // if we just typed 'public:', 'private:' or 'protected:',
       // we should outdent if possible. Do so by looking for the
       // enclosing 'class' scope.
-      if (/^\s*public:\s*$|^\s*private:\s*$|^\s*protected:\s*$/.test(line)) {
+      if (/^\s*public\s*:\s*$|^\s*private\s*:\s*$|^\s*protected\s*:\s*$/.test(line)) {
 
          // look for the enclosing 'class' to get the indentation
          var len = 0;

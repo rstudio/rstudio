@@ -210,6 +210,25 @@ var CStyleBehaviour = function () {
          // when within an auto-generated {} block; e.g. as class Foo {|};
          if (thisChar == '{' && rightChar == "}") {
 
+            // Use heuristic indentation if possible
+            var heuristicRow = $heuristics.getRowForOpenBraceIndent(
+               session, row
+            );
+
+            if (heuristicRow !== null && heuristicRow >= 0) {
+
+               var nextIndent =
+                      this.$getIndent(session.getDocument().getLine(heuristicRow));
+               
+               var indent = nextIndent + session.getTabString();
+               
+               return {
+                  text: "\n" + indent + "\n" + nextIndent,
+                  selection: [1, indent.length, 1, indent.length]
+               };
+               
+            }
+
             // default behavior -- based on just the current row
             var nextIndent = this.$getIndent(line);
             var indent = nextIndent + tab;
@@ -303,11 +322,11 @@ var CStyleBehaviour = function () {
 
          // If class-style indentation can produce an appropriate indentation for
          // the brace, then insert a closing brace with a semi-colon
-         var openBracePos = $heuristics.getRowForOpenBraceIndentClassStyle(
+         var heuristicRow = $heuristics.getRowForOpenBraceIndentClassStyle(
             session, row - 1, 20
          );
          
-         if (openBracePos !== null) {
+         if (heuristicRow !== null) {
             return {
                text: '{};',
                selection: [1, 1]

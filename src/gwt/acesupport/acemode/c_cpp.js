@@ -176,7 +176,7 @@ oop.inherits(Mode, TextMode);
 
       // Get the current line indent
       var indent = this.$getIndent(line);
-      if (indent === null || indent.length == 0) {
+      if (indent === null || indent.length === 0) {
          return "";
       }
 
@@ -196,9 +196,6 @@ oop.inherits(Mode, TextMode);
       }
       
       return indent.substring(numLeadingSpaces, indent.length);
-
-      // Otherwise, just return the regular line indent
-      return indent;
       
    };
 
@@ -255,6 +252,8 @@ oop.inherits(Mode, TextMode);
 
       // Rules for the 'general' state
       if (state == "start") {
+
+         var match = null;
 
          /**
           * We start by checking some special-cases for indentation --
@@ -324,9 +323,9 @@ oop.inherits(Mode, TextMode);
          //             << baz;
          //   ^
          //
-         if (/^\s*\<\</.test(line)) {
+         if (/^\s*<</.test(line)) {
             var currentRow = row - 1;
-            while (/^\s*\<\</.test(lines[currentRow])) {
+            while (/^\s*<</.test(lines[currentRow])) {
                currentRow--;
             }
             return this.$getIndent(lines[currentRow]);
@@ -359,7 +358,7 @@ oop.inherits(Mode, TextMode);
          // Indent if the line ends on an operator token
          // Can't include > here since they may be used
          // for templates (it's handled above)
-         var reEndsWithOperator = /[\+\-\/\*\|\?\<\&\^\%\=]\s*$/;
+         var reEndsWithOperator = /[\+\-\/\*\|\?<\&\^\%\=]\s*$/;
          if (reEndsWithOperator.test(line)) {
             return indent + tab;
          }
@@ -367,7 +366,7 @@ oop.inherits(Mode, TextMode);
          // Indent if the line ends on an operator token
          // Can't include > here since they may be used
          // for templates (it's handled above)
-         if (/[\+\-\/\*\|\<\&\^\%\=]\s*$/.test(line)) {
+         if (/[\+\-\/\*\|<\&\^\%\=]\s*$/.test(line)) {
             return indent + tab;
          }
 
@@ -385,7 +384,7 @@ oop.inherits(Mode, TextMode);
          //   for (int i = 0;
          //        ^
          //
-         var match = line.match(/^(\s*for\s*\().*[;,]\s*$/);
+         match = line.match(/^(\s*for\s*\().*[;,]\s*$/);
          if (match) {
 
             // TODO: function that pads current indentation with spaces,
@@ -463,7 +462,7 @@ oop.inherits(Mode, TextMode);
          //   class Foo : public A,
          //               ^
          //
-         var match = line.match(/^(\s*(class|struct).*:\s*).*,\s*$/);
+         match = line.match(/^(\s*(class|struct).*:\s*).*,\s*$/);
          if (match) {
             return $verticallyAlignFunctionArgs ?
                new Array(match[1].length + 1).join(" ") :
@@ -477,7 +476,7 @@ oop.inherits(Mode, TextMode);
          //   ^
          //
          // then indent according to the first word following the ':'.
-         var match = line.match(/^(\s*:\s*)(\w+).*,\s*$/);
+         match = line.match(/^(\s*:\s*)(\w+).*,\s*$/);
          if (match) {
             return $verticallyAlignFunctionArgs ?
                new Array(match[1].length + 1).join(" ") :
@@ -490,7 +489,7 @@ oop.inherits(Mode, TextMode);
          //   class Foo
          //       : public A
          //       ^
-         var match = line.match(/^(\s*)[:,]\s*[\w\s]*$/);
+         match = line.match(/^(\s*)[:,]\s*[\w\s]*$/);
          if (match) {
             return $verticallyAlignFunctionArgs ?
                new Array(match[1].length + 1).join(" ") :
@@ -506,7 +505,7 @@ oop.inherits(Mode, TextMode);
          // ^
          //
          // Do this only when the parenthesis is not matched on the same row.
-         var match = line.match(/([\)\]]);?\s*$/);
+         match = line.match(/([\)\]]);?\s*$/);
          if (match) {
 
             var openPos = session.findMatchingBracket({
@@ -590,7 +589,7 @@ oop.inherits(Mode, TextMode);
          //       4, 5, 6,
          //       7, 8, 9],
          //      ^
-         var match = /(\]),\s*$/.exec(line);
+         match = /(\]),\s*$/.exec(line);
          if (match) {
             
             var openBracePos = session.findMatchingBracket({
@@ -684,7 +683,7 @@ oop.inherits(Mode, TextMode);
 
          // If the closing character is an 'opener' (ie, one of
          // '(', '{', '[', or '<'), then indent
-         if (/.*[\(\{\[\<]\s*$/.test(line)) {
+         if (/.*[\(\{\[<]\s*$/.test(line)) {
             return indent + tab;
          }
 

@@ -8,8 +8,8 @@ var CppLookaroundHeuristics = function() {};
    var reStartsWithColon        = /^\s*:/;
    var reStartsWithCommaOrColon = /^\s*[,:]/;
 
-   var reStartsWithContinuationToken = /^\s*[,+-/*&^%$!\<\>.?|=\'\":]/;
-   var reEndsWithContinuationToken =       /[,+-/*&^%$!\<\>.?|=\'\":]\s*$/;
+   var reStartsWithContinuationToken = /^\s*[,+-/*&^%$!<\>.?|=\'\":]/;
+   var reEndsWithContinuationToken =       /[,+-/*&^%$!<\>.?|=\'\":]\s*$/;
 
    this.reStartsWithContinuationToken = reStartsWithContinuationToken;
    this.reEndsWithContinuationToken   = reEndsWithContinuationToken;
@@ -72,7 +72,7 @@ var CppLookaroundHeuristics = function() {};
       while (count < maxLookback && row >= 0) {
 
          var line;
-         if (count == 0) {
+         if (count === 0) {
             line = firstLine;
          } else {
             line = this.getLineSansComments(doc, row);
@@ -202,6 +202,10 @@ var CppLookaroundHeuristics = function() {};
    // otherwise.
    this.getRowForOpenBraceIndent = function(session, row, maxLookback) {
 
+      if (typeof maxLookback === "undefined") {
+         maxLookback = 200;
+      }
+
       var doc = session.getDocument();
       var lines = doc.$lines;
       if (lines.length <= 1) return null;
@@ -258,7 +262,7 @@ var CppLookaroundHeuristics = function() {};
       // as this allows other heuristics to still work fine.
       var indices = getRegexIndices(/(?!\\)\"/g, line);
 
-      if (indices.length > 0 && indices.length % 2 == 0) {
+      if (indices.length > 0 && indices.length % 2 === 0) {
 
          for (var i = 0; i < indices.length / 2; i = i + 2) {
 
