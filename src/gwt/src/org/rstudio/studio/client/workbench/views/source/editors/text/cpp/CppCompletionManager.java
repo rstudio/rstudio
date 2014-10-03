@@ -363,6 +363,9 @@ public class CppCompletionManager implements CompletionManager
          if (invalidationToken_.isInvalid())
             return ;
          
+         // close existing popup
+         closeCompletionPopup();
+         
          if (result.getCompletions().length() == 0)
          {
             popup_ = new CompletionListPopupPanel(new String[0]);
