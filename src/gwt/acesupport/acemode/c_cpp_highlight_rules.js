@@ -110,7 +110,7 @@ var c_cppHighlightRules = function() {
                 regex : "(?:#\\s*include|#\\s*pragma|#\\s*line|#\\s*define|#\\s*undef|#\\s*ifdef|#\\s*ifndef#\\s*if|#\\s*else|#\\s*elif|#\\s*endif|#\\s*error|#\\s*warning)"
             }, {
                 token : "variable.language", // compiler-specific constructs
-                regex : "\\b__.*__\\b"
+                regex : "\\b__[^\s]*?__\\b"
             }, {
                 token : function(value) {
                     if (value == "this")
