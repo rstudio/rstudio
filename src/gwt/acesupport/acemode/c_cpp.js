@@ -270,6 +270,11 @@ oop.inherits(Mode, TextMode);
             return indent;
          }
 
+         // Don't indent after a preprocessor line
+         if (/^\s*#\s*\S/.test(line)) {
+            return indent;
+         }
+
          // Unindent after leaving a #define with continuation
          if (this.inMacro(lines, row - 1) &&
              !reEndsWithBackslash.test(line)) {

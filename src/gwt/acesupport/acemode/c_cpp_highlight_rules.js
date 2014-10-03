@@ -51,6 +51,11 @@ var c_cppHighlightRules = function() {
         "wchar_t|while|xor|xor_eq").split("|")
     );
 
+    var preProcTokens = [
+      "include", "pragma", "line", "define", "undef", "ifdef", "ifndef",
+       "if", "else", "elif", "endif", "warning", "error"
+    ];
+
     var buildinConstants = lang.arrayToMap(
         ("NULL").split("|")
     );
@@ -103,11 +108,11 @@ var c_cppHighlightRules = function() {
                 token : "constant.numeric", // float
                 regex : "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
             }, {
-                token : "variable.language", // <CONSTANT>
+                token : "constant", // <CONSTANT>
                 regex : "<[a-zA-Z0-9./]+>"
             }, {
                 token : "keyword", // pre-compiler directives
-                regex : "(?:#\\s*include|#\\s*pragma|#\\s*line|#\\s*define|#\\s*undef|#\\s*ifdef|#\\s*ifndef#\\s*if|#\\s*else|#\\s*elif|#\\s*endif|#\\s*error|#\\s*warning)"
+                regex : "(?:" + preProcTokens.map(function(x) { return "#\\s*" + x + "\\b"; }).join("|") + ")"
             }, {
                 token : "variable.language", // compiler-specific constructs
                 regex : "\\b__\\S+__\\b"
