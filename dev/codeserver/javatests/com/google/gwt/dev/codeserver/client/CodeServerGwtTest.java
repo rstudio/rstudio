@@ -111,6 +111,47 @@ public class CodeServerGwtTest extends GWTTestCase {
     assertTrue(callbackCalled, 'callback for successful recompile was not executed');
   }-*/;
 
+  public native void testMetaTagParser() /*-{
+    var assertStringEquals = @CodeServerGwtTest::assertEquals(Ljava/lang/String;Ljava/lang/String;);
+    var assertTrue = @CodeServerGwtTest::assertTrue(Ljava/lang/String;Z);
+    var MetaTagParser = $wnd.namespace.lib.MetaTagParser;
+    var parser = new MetaTagParser('testModule');
+
+    parser.__getMetaTags = function() {
+      // provide mocks
+      var returnValues = [
+          'testModule::gwt:property',
+          'bar',
+          'testModule::gwt:property',
+          'test1=test2',
+          'ignored1',
+          'ignored2',
+          'otherModule::gwt:property',
+          'bar1=foo1'
+      ];
+      var index = 0;
+
+      var readEntry = function() {
+        return returnValues[index++];
+      };
+
+      return [
+          {getAttribute: readEntry},
+          {getAttribute: readEntry},
+          {getAttribute: readEntry},
+          {getAttribute: readEntry}
+      ];
+    };
+
+    var props = parser.get();
+    var len = Object.keys(props).length;
+    assertTrue('Wrong number of entries: ' + len, len == 2);
+
+    assertTrue('bar is missing', 'bar' in props);
+    assertTrue('test1 is missing', 'test1' in props);
+    assertStringEquals('test2', props.test1);
+  }-*/;
+
   private void ensureJsInjected() {
     if(injected) {
       return;

@@ -18,10 +18,18 @@
   var $doc = $wnd.document;
   var $namespace = {};
   var moduleName = __MODULE_NAME__;
-  
+
   var executeMain = function(){
-    __PROPERTY_PROVIDERS__
     __LIB_JS__
+
+    var metaTagParser = new $namespace.lib.MetaTagParser(moduleName);
+
+    //Property providers need a certain environment to run
+    var __gwt_getMetaProperty = function(name) {
+      return metaTagParser.get()[name];
+    };
+
+    __PROPERTY_PROVIDERS__
     __MAIN__
   };
 
