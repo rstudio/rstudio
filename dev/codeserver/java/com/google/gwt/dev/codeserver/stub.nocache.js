@@ -41,8 +41,18 @@
     devModeScript.addEventListener("error", callback, true);
   }
 
-  //defer app script insertion until the body is ready
-  setTimeout(function(){
+  var injectScriptTag = function(){
     $head.insertBefore(devModeScript, $head.firstElementChild || $head.children[0]);
-  }, 1);
+  };
+
+  if (/loaded|complete/.test($doc.readyState)) {
+    injectScriptTag();
+  } else {
+    //defer app script insertion until the body is ready
+    if($wnd.addEventListener){
+      $wnd.addEventListener('DOMContentLoaded', injectScriptTag, false);
+    } else{
+      $wnd.attachEvent('onload', injectScriptTag);
+    }
+  }
 })(window, document);
