@@ -107,7 +107,7 @@ var c_cppHighlightRules = function() {
                 regex : "<[a-zA-Z0-9./]+>"
             }, {
                 token : "keyword", // pre-compiler directivs
-                regex : "(?:#\\s*include|#\\s*pragma|#\\s*line|#\\s*define|#\\s*undef|#\\s*ifdef|#\\s*if|#\\s*else|#\\s*elif|#\\s*endif|#\\s*ifndef|#\\s*error|#\\s*warning)"
+                regex : "(?:#\\s*include|#\\s*pragma|#\\s*line|#\\s*define|#\\s*undef|#\\s*ifdef|#\\s*ifndef#\\s*if|#\\s*else|#\\s*elif|#\\s*endif|#\\s*error|#\\s*warning)"
             }, {
                 token : "variable.language", // compiler-specific constructs
                 regex : "\\b__.*__\\b"
