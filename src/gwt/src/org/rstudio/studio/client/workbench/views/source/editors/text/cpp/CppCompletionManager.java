@@ -35,6 +35,8 @@ import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResul
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -243,14 +245,32 @@ public class CppCompletionManager implements CompletionManager
       // then re-execute the completion request
       if ((popup_ != null) && isCppIdentifierChar(c))
       {
-         return beginSuggest(c, false, false);
+         // defer to allow the key to enter the editor
+         Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+            @Override
+            public void execute()
+            {
+               beginSuggest(false, false);  
+            }
+         });
+         
+         return false;
       }
       
       // if there is no popup and this key should begin a completion
       // then do that
       else if ((popup_ == null) && triggerCompletion(c))
       {
-         return beginSuggest(c, false, false);
+         // defer to allow the key to enter the editor
+         Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+            @Override
+            public void execute()
+            {
+               beginSuggest(false, true);  
+            }
+         });
+         
+         return false;
       }
       
       else if (CompletionUtils.handleEncloseSelection(docDisplay_, c))
@@ -289,13 +309,8 @@ public class CppCompletionManager implements CompletionManager
          requester_.flushCache() ;
    }
    
-   private boolean beginSuggest(boolean flushCache, boolean implicit)
-   {
-      return beginSuggest(null, flushCache, implicit);
-   }
    
-   private boolean beginSuggest(Character c, 
-                                boolean flushCache, 
+   private boolean beginSuggest(boolean flushCache, 
                                 final boolean implicit)
    {
       // check for completions disabled
@@ -311,10 +326,6 @@ public class CppCompletionManager implements CompletionManager
       InputEditorSelection selection = docDisplay_.getSelection() ;
       if (selection == null)
          return false;
-        
-      // if there is a chracater then insert it 
-      if (c != null)
-         docDisplay_.insertCode(String.valueOf(c));
       
       boolean canAutoAccept = flushCache;
       context_ = new CompletionRequestContext(
