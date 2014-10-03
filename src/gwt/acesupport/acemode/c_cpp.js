@@ -344,6 +344,15 @@ oop.inherits(Mode, TextMode);
             return this.$getIndent(lines[currentRow]);
          }
 
+         // Match indentation of function with arguments on own line, e.g.
+         //
+         // foo::bar
+         //    (argList)
+         // ^
+         if (/^\s*\(.*\)\s*$/.test(line) && row > 0) {
+            return this.$getIndent(lines[row - 1]) + tab;
+         }
+
          // Indent for a :
          if (/:\s*$/.test(line)) {
 
