@@ -33,14 +33,14 @@
   <target name="compile.tests" if="generated" depends="check.generated" description="Compile Tests">
     <echo message="${javac.junit.out}" />
     <mkdir dir="${javac.junit.out}" />
-    <javac srcdir="src:idl/generated/src:tests" destdir="${javac.junit.out}" excludes="**/super/**">
+    <gwt.javac srcdir="src:idl/generated/src:tests" destdir="${javac.junit.out}" excludes="**/super/**">
       <classpath>
         <pathelement location="${javac.out}"/>
         <pathelement location="${gwt.dev.jar}" />
         <pathelement location="${gwt.user.jar}" />
         <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar" />
       </classpath>
-    </javac>
+    </gwt.javac>
   </target>
 
   <target name="build" depends="generate, compile"
