@@ -344,6 +344,21 @@ oop.inherits(Mode, TextMode);
             return this.$getIndent(lines[currentRow]);
          }
 
+         // Do something similar for '.' alignment, for chained
+         // function calls:
+         //
+         //   foo.bar()
+         //      .baz()
+         //      .bam();
+         //
+         if (/^\s*\./.test(line)) {
+            var currentRow = row - 1;
+            while (/^\s*\./.test(lines[currentRow])) {
+               currentRow--;
+            }
+            return this.$getIndent(lines[currentRow]);
+         }
+
          // Match indentation of function with arguments on own line, e.g.
          //
          // foo::bar

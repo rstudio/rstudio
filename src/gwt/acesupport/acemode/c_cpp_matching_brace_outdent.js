@@ -42,7 +42,7 @@ var MatchingBraceOutdent = function() {
             return true;
          }
 
-         if (/^\s*[\{\}\>\]<]/.test(input)) {
+         if (/^\s*[\{\}\>\]<.:]/.test(input)) {
             return true;
          }
 
@@ -77,14 +77,19 @@ var MatchingBraceOutdent = function() {
       return false;
    };
 
-   this.checkDoubleArrowAlignment = function(session, row, line, lastLine) {
+   this.escapeRegExp = function(string) {
+      return string.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+   };
 
-      if (/^\s*<</.test(line)) {
-         var index = lastLine.indexOf("<<");
+   this.alignStartToken = function(token, session, row, line, lastLine) {
+
+      if (lastLine === null || line === null) return false;
+      var regex = new RegExp("^\\s*" + this.escapeRegExp(token));
+      if (regex.test(line)) {
+         var index = lastLine.indexOf(token);
          if (index >= 0) {
 
             var doc = session.getDocument();
-
             var oldIndent = this.$getIndent(line);
             var newIndent = new Array(index + 1).join(" ");
 
@@ -94,7 +99,6 @@ var MatchingBraceOutdent = function() {
             );
 
             return true;
-            
          }
       }
       return false;
@@ -114,12 +118,21 @@ var MatchingBraceOutdent = function() {
          return;
       }
 
-      // Check for '<<' alignment
-      if (this.checkDoubleArrowAlignment(session, row, line, lastLine)) {
+      // Check for '<<', '.'alignment
+      if (this.alignStartToken("<<", session, row, line, lastLine) ||
+          this.alignStartToken(".", session, row, line, lastLine)) {
          return;
       }
 
       // If we just inserted a '>', find the matching '<' for indentation.
+      //
+      // But this runs into problems with indentation for use of the '>>'
+      // operator on its own line, e.g.
+      //
+      //    std::cin >> foo
+      //             >> bar
+      //             >> baz;
+      //
       if (/^\s*\>$/.test(line)) {
 
          var matchedRow = this.$heuristics.findMatchingBracketRow(
@@ -130,8 +143,11 @@ var MatchingBraceOutdent = function() {
          );
 
          if (matchedRow >= 0) {
-            this.setIndent(session, row, matchedRow);
-            return;
+            var matchedLine = this.$heuristics.getLineSansComments(doc, matchedRow);
+            if (matchedLine.indexOf("<<") === -1) {
+               this.setIndent(session, row, matchedRow);
+               return;
+            }
          }
       }
 

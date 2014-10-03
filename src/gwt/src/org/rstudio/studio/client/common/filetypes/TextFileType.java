@@ -261,7 +261,7 @@ public class TextFileType extends EditableFileType
       results.add(commands.vcsViewOnGitHub());
       results.add(commands.vcsBlameOnGitHub());
       results.add(commands.goToLine());
-      if (canExecuteCode())
+      if (canExecuteCode() || isC())
       {
          results.add(commands.executeCode());
          results.add(commands.executeCodeWithoutFocus());
