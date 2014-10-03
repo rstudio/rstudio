@@ -103,14 +103,14 @@ var c_cppHighlightRules = function() {
                 token : "constant.numeric", // float
                 regex : "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
             }, {
-                token : "constant", // <CONSTANT>
+                token : "variable.language", // <CONSTANT>
                 regex : "<[a-zA-Z0-9./]+>"
             }, {
-                token : "keyword", // pre-compiler directivs
+                token : "keyword", // pre-compiler directives
                 regex : "(?:#\\s*include|#\\s*pragma|#\\s*line|#\\s*define|#\\s*undef|#\\s*ifdef|#\\s*ifndef#\\s*if|#\\s*else|#\\s*elif|#\\s*endif|#\\s*error|#\\s*warning)"
             }, {
                 token : "variable.language", // compiler-specific constructs
-                regex : "\\b__[^\s]*?__\\b"
+                regex : "\\b__\\S+__\\b"
             }, {
                 token : function(value) {
                     if (value == "this")
