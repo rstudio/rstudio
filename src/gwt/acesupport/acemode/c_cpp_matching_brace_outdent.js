@@ -295,7 +295,7 @@ var MatchingBraceOutdent = function() {
 
          var scopeRow = this.$heuristics.getRowForOpenBraceIndent(
             session,
-            row - 1,
+            row,
             20
          );
 

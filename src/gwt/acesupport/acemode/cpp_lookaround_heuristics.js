@@ -22,7 +22,16 @@ var CppLookaroundHeuristics = function() {};
       "if": /^\s*if\s*\(.*\)\s*$/,
       "elseif": /^\s*else\s+if\s*\(.*\)\s*$/
    };
-   var reNakedBlockTokens = this.reNakedBlockTokens;
+   
+   this.reNakedMatch = function(x) {
+      for (var key in this.reNakedBlockTokens) {
+         if (this.reNakedBlockTokens[key].test(x)) {
+            return true;
+         }
+      }
+      return false;
+   };
+   
 
    var reEndsWithComma     = /,\s*$|,\s*\/\//;
    var reEndsWithColon     = /:\s*$|:\s*\/\//;
@@ -174,7 +183,7 @@ var CppLookaroundHeuristics = function() {};
       //   {
       var prevLine = this.getLineSansComments(doc, row - 1);
 
-      if (/\s*\{\s*$/.test(firstLine) && /\)\s*$/.test(prevLine)) {
+      if (/\s*\{/.test(firstLine) && /\)\s*$/.test(prevLine)) {
 
          var openParenPos = session.findMatchingBracket({
             row: row - 1,
@@ -375,22 +384,15 @@ var CppLookaroundHeuristics = function() {};
       var reNaked = /^\s*[\w_:]+\s*$|^\s*[\w_:]+\s*\(.*\)\s*$/;
 
       // First, check for an indentation
-      if (reNaked.test(line)) {
+      if (reNaked.test(line) || this.reNakedMatch(line)) {
          return indent + tab;
-      }
-
-      // Explicitly check for the other main 'naked' tokens
-      for (var key in reNakedBlockTokens) {
-         if (reNakedBlockTokens[key].test(line)) {
-            return indent + tab;
-         }
       }
 
       // If the line ends with a semicolon, try walking up naked
       // block generating tokens
       var lastLine = this.getLineSansComments(doc, row - 1);
 
-      if (/;\s*$/.test(line) && reNaked.test(lastLine)) {
+      if (/;\s*$/.test(line) && (reNaked.test(lastLine) || this.reNakedMatch(lastLine))) {
 
          // Quit if we hit a class access modifier -- this is
          // a workaround for walking over e.g.
@@ -403,12 +405,12 @@ var CppLookaroundHeuristics = function() {};
          }
 
          var lookbackRow = row - 1;
-         while (reNaked.test(lastLine)) {
+         while (reNaked.test(lastLine) || this.reNakedMatch(lastLine)) {
 
             // Quit if we encountered an 'if' or 'else'
-            if (reNakedBlockTokens["if"].test(lastLine) ||
-                reNakedBlockTokens["else"].test(lastLine) ||
-                reNakedBlockTokens["elseif"].test(lastLine)) {
+            if (this.reNakedBlockTokens["if"].test(lastLine) ||
+                this.reNakedBlockTokens["else"].test(lastLine) ||
+                this.reNakedBlockTokens["elseif"].test(lastLine)) {
                return lookbackRow;
             }
             lookbackRow--;
