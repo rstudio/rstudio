@@ -31,16 +31,12 @@ public class CppCompletionRequester
    
    public void getCompletions(
          String docPath,
-         String docContents,
-         boolean docIsDirty,
          DocDisplay docDisplay,
          Position position,
          final boolean implicit,
          final ServerRequestCallback<CppCompletionResult> requestCallback)
    {
       server_.getCppCompletions(docPath, 
-                                docContents, 
-                                docIsDirty, 
                                 position.getRow() + 1, 
                                 position.getColumn() + 1, 
                                 requestCallback);

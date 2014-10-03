@@ -4149,21 +4149,16 @@ public class TextEditingTarget implements
       }
 
       @Override
-      public String getDocPath()
+      public void withUpdatedDoc(final CommandWithArg<String> onUpdated)
       {
-         return docUpdateSentinel_.getPath();
-      }
+         docUpdateSentinel_.withSavedDoc(new Command() {
+            @Override
+            public void execute()
+            {
+               onUpdated.execute(docUpdateSentinel_.getPath());
+            }
+         });
 
-      @Override
-      public String getDocContents()
-      {
-         return docUpdateSentinel_.getContents();
-      }
-
-      @Override
-      public boolean isDocDirty()
-      {
-         return dirtyState_.getValue();
       }   
    };
    

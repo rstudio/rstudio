@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -34,8 +35,6 @@ import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResul
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -244,34 +243,14 @@ public class CppCompletionManager implements CompletionManager
       // then re-execute the completion request
       if ((popup_ != null) && isCppIdentifierChar(c))
       {
-         Scheduler.get().scheduleDeferred(new ScheduledCommand()
-         {
-            @Override
-            public void execute()
-            {
-               beginSuggest(false,   // don't flush cache
-                            false);  // explicit (can show none found ui)
-            }
-         });
-         
-         return false;
+         return beginSuggest(c, false, false);
       }
       
       // if there is no popup and this key should begin a completion
       // then do that
       else if ((popup_ == null) && triggerCompletion(c))
       {
-         Scheduler.get().scheduleDeferred(new ScheduledCommand()
-         {
-            @Override
-            public void execute()
-            {
-               beginSuggest(true,    // flush cache 
-                            true);   // implicit (don't show none found ui)
-            }
-         });
-         
-         return false;
+         return beginSuggest(c, false, false);
       }
       
       else if (CompletionUtils.handleEncloseSelection(docDisplay_, c))
@@ -312,6 +291,13 @@ public class CppCompletionManager implements CompletionManager
    
    private boolean beginSuggest(boolean flushCache, boolean implicit)
    {
+      return beginSuggest(null, flushCache, implicit);
+   }
+   
+   private boolean beginSuggest(Character c, 
+                                boolean flushCache, 
+                                final boolean implicit)
+   {
       // check for completions disabled
       if (!completionContext_.isCompletionEnabled())
          return false;
@@ -326,19 +312,34 @@ public class CppCompletionManager implements CompletionManager
       if (selection == null)
          return false;
         
+      // if there is a chracater then insert it 
+      if (c != null)
+         docDisplay_.insertCode(String.valueOf(c));
+      
       boolean canAutoAccept = flushCache;
       context_ = new CompletionRequestContext(
                         completionRequestInvalidation_.getInvalidationToken(),
                         selection,
                         canAutoAccept);
       
-      requester_.getCompletions(completionContext_.getDocPath(),
-                                completionContext_.getDocContents(),
-                                completionContext_.isDocDirty(),
-                                docDisplay_,
-                                docDisplay_.getCursorPosition(),
-                                implicit,
-                                context_);
+      // ensure the doc is saved then request the completion
+      // TODO: if we are filtering then don't do this! (i.e.
+      // this part needs to go in the requester)
+      completionContext_.withUpdatedDoc(new CommandWithArg<String>() {
+
+         @Override
+         public void execute(String docPath)
+         {
+            requester_.getCompletions(docPath,
+                                      docDisplay_,
+                                      docDisplay_.getCursorPosition(),
+                                      implicit,
+                                      context_);
+         }
+         
+      });
+      
+      
       
       return true ;   
    }

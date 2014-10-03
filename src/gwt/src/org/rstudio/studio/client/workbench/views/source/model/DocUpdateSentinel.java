@@ -21,6 +21,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.ClosingEvent;
 import com.google.gwt.user.client.Window.ClosingHandler;
+
 import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.TimeBufferedCommand;
@@ -174,6 +175,32 @@ public class DocUpdateSentinel
             });
    }
 
+   public void withSavedDoc(final Command onSaved)
+   {
+      if (changeTracker_.hasChanged())
+      {
+         boolean saved = doSave(null, null, null, new ProgressIndicator() {
+
+            @Override
+            public void onCompleted()
+            {
+               onSaved.execute(); 
+            }
+   
+            @Override public void onProgress(String message) {}
+            @Override public void onError(String message) {}
+            @Override public void clearProgress() {}
+         });
+         
+         if (!saved)
+            onSaved.execute();
+      }
+      else
+      {
+         onSaved.execute();
+      }
+   }
+   
    private boolean maybeAutoSave()
    {
       if (changeTracker_.hasChanged())

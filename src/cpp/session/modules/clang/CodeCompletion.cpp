@@ -48,13 +48,10 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
                         core::json::JsonRpcResponse* pResponse)
 {
    // get params
-   std::string docPath, docContents;
-   bool docDirty;
+   std::string docPath;
    int line, column;
    Error error = json::readParams(request.params,
                                   &docPath,
-                                  &docContents,
-                                  &docDirty,
                                   &line,
                                   &column);
    if (error)
@@ -63,15 +60,12 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
    // resolve the docPath if it's aliased
    FilePath filePath = module_context::resolveAliasedPath(docPath);
 
-   // first update the unsaved file database
-   std::string filename = filePath.absolutePath();
-   rSourceIndex().unsavedFiles().update(filename, docContents, docDirty);
-
    // results to return
    json::Object resultJson;
    json::Array completionsJson;
 
-   // now get the translation unit and do the code completion
+   // get the translation unit and do the code completion
+   std::string filename = filePath.absolutePath();
    TranslationUnit tu = rSourceIndex().getTranslationUnit(filename);
    if (!tu.empty())
    {

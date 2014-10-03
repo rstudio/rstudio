@@ -20,8 +20,6 @@ public interface CppServerOperations
 {
    void getCppCompletions(
                 String docPath, 
-                String docContents,
-                boolean docDirty,
                 int line, 
                 int column,
                 ServerRequestCallback<CppCompletionResult> requestCallback);

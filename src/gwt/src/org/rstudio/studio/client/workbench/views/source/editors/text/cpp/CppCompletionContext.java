@@ -15,10 +15,10 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
+import org.rstudio.core.client.CommandWithArg;
+
 public interface CppCompletionContext
 {
    boolean isCompletionEnabled();
-   String getDocPath();
-   String getDocContents();
-   boolean isDocDirty();
+   void withUpdatedDoc(CommandWithArg<String> onUpdated);
 }
