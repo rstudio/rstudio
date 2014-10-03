@@ -118,6 +118,7 @@ set (SESSION_SOURCE_FILES
    modules/build/SessionBuildErrors.cpp
    modules/build/SessionSourceCpp.cpp
    modules/clang/CodeCompletion.cpp
+   modules/clang/RCompilationDatabase.cpp
    modules/clang/RSourceIndex.cpp
    modules/clang/SessionClang.cpp
    modules/data/SessionData.cpp
