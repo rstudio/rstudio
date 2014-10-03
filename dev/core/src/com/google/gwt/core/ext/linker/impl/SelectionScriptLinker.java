@@ -28,6 +28,7 @@ import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.SoftPermutation;
 import com.google.gwt.core.ext.linker.StatementRanges;
+import com.google.gwt.dev.js.JsSourceUtils;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.util.tools.Utility;
 
@@ -346,9 +347,8 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     StringBuilder b = new StringBuilder();
     String strongName = result == null ? "" : result.getStrongName();
     String prefix = getDeferredFragmentPrefix(logger, context, fragment);
-    // Remove all newlines so that it fits as the first program line.
-    prefix = prefix.replaceAll("[\\v\\r\\n]", " ");
-    assert !prefix.contains("\n") && !prefix.contains("\r");
+    // Transform the prefix into a one liner snippet.
+    prefix = JsSourceUtils.condenseAndRemoveLineBreaks(prefix);
     b.append(prefix);
     assert js.charAt(0) == '\n';
     b.append(js);
@@ -390,9 +390,8 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     String strongName = result == null ? "" : result.getStrongName();
 
     String modulePrefix = getModulePrefix(logger, context, strongName, length);
-    // Remove all newlines so that it fits as the first program line.
-    modulePrefix = modulePrefix.replaceAll("[\\v\\r\\n]", " ");
-    assert !modulePrefix.contains("\n") && !modulePrefix.contains("\r");
+    // Transform the prefix into a one liner snippet
+    modulePrefix = JsSourceUtils.condenseAndRemoveLineBreaks(modulePrefix);
     b.append(modulePrefix);
     if (js.charAt(0) != '\n') {
       // Add a line break at the end of the prefix if there is no empty line at the beginning of the
