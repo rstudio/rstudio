@@ -16,6 +16,7 @@ var CppLookaroundHeuristics = function() {};
 
    // All of the common control block generating tokens
    this.reNakedBlockTokens = {
+      "do": /^\s*do\s*$/,
       "while": /^\s*while\s*\(.*\)\s*$/,
       "for": /^\s*for\s*\(.*\)\s*$/,
       "else": /^\s*else\s*$/,
@@ -32,7 +33,6 @@ var CppLookaroundHeuristics = function() {};
       return false;
    };
    
-
    var reEndsWithComma     = /,\s*$|,\s*\/\//;
    var reEndsWithColon     = /:\s*$|:\s*\/\//;
    var reClassOrStruct     = /\bclass\b|\bstruct\b/;
@@ -212,12 +212,17 @@ var CppLookaroundHeuristics = function() {};
    this.getRowForOpenBraceIndent = function(session, row, maxLookback) {
 
       if (typeof maxLookback === "undefined") {
-         maxLookback = 200;
+         maxLookback = 5000;
       }
 
       var doc = session.getDocument();
       var lines = doc.$lines;
       if (lines.length <= 1) return null;
+
+      // Special-case for 'do {'
+      if (/^\s*do\s*\{\s*$/.test(this.getLineSansComments(doc, row))) {
+         return row;
+      }
 
       // First, try class-style indentation lookup
       var classStyleIndent =

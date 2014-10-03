@@ -159,7 +159,7 @@ var MatchingBraceOutdent = function() {
             // If the open brace lies on its own line, match its indentation
             var openBracketLine =
                    doc.$lines[openBracketPos.row].replace(/\/\/.*/, "");
-            
+
             if (/^\s*\{\s*$/.test(openBracketLine)) {
                this.setIndent(session, row, openBracketPos.row);
                return;
@@ -168,29 +168,12 @@ var MatchingBraceOutdent = function() {
             // Otherwise, try looking upwards to get an appropriate indentation
             var heuristicRow = this.$heuristics.getRowForOpenBraceIndent(
                session,
-               openBracketPos.row,
-               20
+               openBracketPos.row
             );
 
             if (heuristicRow !== null) {
                this.setIndent(session, row, heuristicRow);
                return;
-            }
-            // We didn't find a class token -- check if
-            // we can look back for an initializer list
-            var lineToCheck = doc.$lines[openBracketPos.row];
-            if (/.*\)\s*\{/.test(lineToCheck)) {
-
-               var openParenPos = session.findMatchingBracket({
-                  row: openBracketPos.row,
-                  column: lineToCheck.lastIndexOf(")") + 1
-               });
-               
-               if (openParenPos) {
-                  this.setIndent(session, row, openParenPos.row);
-                  return;
-               }
-               
             }
 
          } 
