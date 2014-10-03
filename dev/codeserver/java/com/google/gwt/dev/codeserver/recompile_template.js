@@ -38,7 +38,7 @@
   } else {
     //defer app script insertion until the body is ready
     if($wnd.addEventListener){
-      $wnd.addEventListener('DOMContentLoaded', executeMain, false);
+      $wnd.addEventListener('load', executeMain, false);
     } else{
       $wnd.attachEvent('onload', executeMain);
     }

@@ -50,7 +50,7 @@
   } else {
     //defer app script insertion until the body is ready
     if($wnd.addEventListener){
-      $wnd.addEventListener('DOMContentLoaded', injectScriptTag, false);
+      $wnd.addEventListener('load', injectScriptTag, false);
     } else{
       $wnd.attachEvent('onload', injectScriptTag);
     }
