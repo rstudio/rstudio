@@ -215,109 +215,31 @@ var MatchingBraceOutdent = function() {
       // If we just typed 'public:', 'private:' or 'protected:',
       // we should outdent if possible. Do so by looking for the
       // enclosing 'class' scope.
-      if (/^\s*public\s*:|^\s*private\s*:|^\s*protected\s*:/.test(line)) {
+      if (/^\s*public\s*:|^\s*private\s*:|^\s*protected\s*:|^\s*case.+:/.test(line)) {
 
-         var len = 0;
-         var match = false;
-         var thisRow = row;
-         while (thisRow >= 0) {
+         // Find the associated open bracket
+         var openBracePos = session.$findOpeningBracket("}", {
+            row: row,
+            column: line.length - 1
+         });
 
-            var line = this.$heuristics.getLineSansComments(doc, thisRow);
+         if (openBracePos) {
+            // If this open brace is already associated with a class or struct,
+            // step over all of those rows.
+            var heuristicRow =
+                   this.$heuristics.getRowForOpenBraceIndent(session, openBracePos.row);
 
-            // Check for a class token.
-            match = line.match(/\bclass.*[^;]\s*$/);
-            if (match) {
-               len = match.index;
-               break;
-            }
-
-            // Walk backwards -- prefer walking over matching braces when
-            // possible, otherwise just step up a row.
-            if (line.indexOf("}") !== -1) {
-               
-               var openBracePos = session.findMatchingBracket({
-                  row: thisRow,
-                  column: doc.$lines[thisRow].lastIndexOf("}") + 1
-               });
-               
-               if (openBracePos) {
-
-                  // If this open brace is already associated with a class or struct,
-                  // step over all of those rows.
-                  var heuristicRow =
-                         this.$heuristics.getRowForOpenBraceIndent(session, openBracePos.row);
-
-                  if (heuristicRow !== null && heuristicRow >= 0) {
-                     thisRow = heuristicRow - 1;
-                  } else {
-                     thisRow = openBracePos.row - 1;
-                  }
-                  
-               }
-               
+            if (heuristicRow !== null && heuristicRow >= 0) {
+               this.setIndent(session, row, heuristicRow);
+               return;
             } else {
-               thisRow--;
+               this.setIndent(session, row, openBracePos.row);
+               return;
             }
          }
          
-         if (match)
-            doc.replace(new Range(row, 0, row, indent.length - len), "");
-
-         return;
       }
 
-      // Similar for 'case' outdenting.
-      if (/^\s*case.+:/.test(line)) {
-
-         var len = 0;
-         var match = false;
-         var thisRow = row;
-         while (thisRow >= 0) {
-
-            var line = this.$heuristics.getLineSansComments(doc, thisRow);
-
-            // Find the enclosing switch.
-            match = line.match(/^(\s*)switch/);
-            if (match) {
-               len = match[1].length;
-               break;
-            }
-
-            // Walk backwards -- prefer walking over matching braces when
-            // possible, otherwise just step up a row.
-            if (line.indexOf("}") !== -1) {
-               
-               var openBracePos = session.findMatchingBracket({
-                  row: thisRow,
-                  column: doc.$lines[thisRow].lastIndexOf("}") + 1
-               });
-               
-               if (openBracePos) {
-
-                  // If this open brace is already associated with a class or struct,
-                  // step over all of those rows.
-                  var heuristicRow =
-                         this.$heuristics.getRowForOpenBraceIndent(session, openBracePos.row);
-
-                  if (heuristicRow !== null && heuristicRow >= 0) {
-                     thisRow = heuristicRow - 1;
-                  } else {
-                     thisRow = openBracePos.row - 1;
-                  }
-                  
-               }
-               
-            } else {
-               thisRow--;
-            }
-         }
-         
-         if (match)
-            doc.replace(new Range(row, 0, row, indent.length - len), "");
-
-         return;
-      }
-      
       // If we just inserted a '{' on a new line to begin a class definition,
       // try looking up for the associated class statement.
       // We want to look back over the following common indentation styles:
