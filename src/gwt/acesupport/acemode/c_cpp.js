@@ -876,11 +876,6 @@ oop.inherits(Mode, TextMode);
             return indent + tab;
          }
 
-         // Prefer indenting if the line ends with a character
-         if (/\w\s*$/.test(line)) {
-            return indent + tab;
-         }
-
       } // start state rules
 
       return indent;

@@ -11,9 +11,12 @@ var MatchingBraceOutdent = function() {
 
    // Set the indent of the line at 'row' to the indentation
    // at 'rowFrom'.
-   this.setIndent = function(session, rowTo, rowFrom) {
+   this.setIndent = function(session, rowTo, rowFrom, extraIndent) {
 
       var doc = session.getDocument();
+      extraIndent = typeof extraIndent === "string" ?
+         extraIndent :
+         "";
 
       var line = doc.$lines[rowTo];
       var lastLine = doc.$lines[rowFrom];
@@ -23,7 +26,7 @@ var MatchingBraceOutdent = function() {
 
       doc.replace(
          new Range(rowTo, 0, rowTo, oldIndent.length),
-         newIndent
+         newIndent + extraIndent
       );
       
    };
@@ -32,7 +35,8 @@ var MatchingBraceOutdent = function() {
 
       if (state == "start") {
 
-         // private: / public: / protected:
+         // private: / public: / protected
+         // also class initializer lists
          if (input == ":") {
             return true;
          }
@@ -123,6 +127,27 @@ var MatchingBraceOutdent = function() {
       if (this.alignStartToken("<<", session, row, line, lastLine) ||
           this.alignStartToken(".", session, row, line, lastLine)) {
          return;
+      }
+
+      // Outdent for a ':' places on its own line if it appears the
+      // user is creating an initialization list for
+      // a constructor, e.g.
+      //
+      //     SomeConstructor(int a,
+      //                     int b)
+      //         :
+      //         ^
+      //
+      if (/^\s*:/.test(line)) {
+
+         var scopeRow = this.$heuristics.getRowForOpenBraceIndentClassStyle(
+            session,
+            row
+         );
+
+         if (scopeRow >= 0) {
+            this.setIndent(session, row, scopeRow, session.getTabString());
+         }
       }
 
       // If we just inserted a '>', find the matching '<' for indentation.
