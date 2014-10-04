@@ -75,7 +75,7 @@ public class CodeServerGwtTest extends GWTTestCase {
     var assertTrue = @CodeServerGwtTest::assertTrue(Ljava/lang/String;Z);
 
     var length = Object.keys(result).length;
-    assertTrue(length == 2, "PropertyHelper did not return two entries: " + length);
+    assertTrue("PropertyHelper did not return two entries: " + length, length == 2);
     assertStringEquals('val1_1', result['prop1']);
     assertStringEquals('val2_2', result['prop2']);
   }-*/;
@@ -108,7 +108,7 @@ public class CodeServerGwtTest extends GWTTestCase {
       assertStringEquals('http://mytesthost:7812/recompile/testModule?prop1=val1&prop2=val2',
           jsonpUrl);
     });
-    assertTrue(callbackCalled, 'callback for successful recompile was not executed');
+    assertTrue('callback for successful recompile was not executed', callbackCalled);
   }-*/;
 
   public native void testMetaTagParser() /*-{
