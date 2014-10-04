@@ -313,6 +313,28 @@ oop.inherits(Mode, TextMode);
             }
          }
 
+         // If the line starts with a single '>', followed by another token,
+         // then look for the matching opening token for indentation. This
+         // is done anticipating
+         //
+         //   template <
+         //       typename Foo
+         //   >::type bar;
+         //   ^
+         //
+         // or even
+         //
+         //   template <
+         //       typename FOO
+         //   > class Bar;
+         //
+         // Note this assumes the token is not a 'greater than'; rather it's
+         // used for templating.
+         if (/^\s*>[^>]/.test(line)) {
+            var loc = this.$heuristics.findMatchingBracketRow(">", lines, row, 50);
+            if (loc >= 0) return indent;
+         }
+
          // Unindent after leaving a block comment.
          //
          // /**
@@ -482,6 +504,9 @@ oop.inherits(Mode, TextMode);
          // Also applies to template classes all on one line, e.g.
          //
          //   template <typename T> struct { ... } ;
+         //
+         // NOTE: This rule seems unnecessary if we have proper scope inference on
+         // semicolon tokens...
          if (/^\s*(template|class|struct).*\{.*\}\s*;?\s*/.test(line)) {
             return indent;
          }
@@ -665,6 +690,17 @@ oop.inherits(Mode, TextMode);
             var thisRow = row;
             var thisLine = this.getLineSansComments(doc, thisRow);
 
+            // Short circuit if we run into a template, since we could see
+            // e.g.
+            //
+            //   template <int RTYPE>
+            //
+            // and we might erroneously consider the closing '>' to be a
+            // continuation token.
+            if (/^\s*template/.test(thisLine)) {
+               return this.$getIndent(thisLine);
+            }
+
             // Try to indent for e.g.
             //
             //   x = 1
@@ -672,25 +708,36 @@ oop.inherits(Mode, TextMode);
             //       + 3;
             //   ^
             //
-            // first.
-            if (this.$heuristics.reStartsWithContinuationToken.test(thisLine)) {
-               while (this.$heuristics.reStartsWithContinuationToken.test(thisLine)) {
-                  thisRow--;
-                  thisLine = this.getLineSansComments(doc, thisRow);
-               }
-               return this.$getIndent(thisLine);
-            }
-
-            // Now, try for
+            // and
             //
             //   x = 1 +
             //       2 +
             //       3;
             //   ^
-            thisRow--;
-            thisLine = this.getLineSansComments(doc, thisRow);
-            if (this.$heuristics.reEndsWithContinuationToken.test(thisLine)) {
-               while (this.$heuristics.reEndsWithContinuationToken.test(thisLine)) {
+            //
+            // If the current line does not start with an operator token, move
+            // up one.
+            if (!this.$heuristics.reStartsWithContinuationToken.test(thisLine)) {
+               thisRow--;
+               if (thisRow >= 0)
+                  thisLine = this.getLineSansComments(doc, thisRow);
+            }
+
+            if (/^\s*template/.test(thisLine)) {
+               return this.$getIndent(thisLine);
+            }
+
+            if (this.$heuristics.reStartsWithContinuationToken.test(thisLine) ||
+                this.$heuristics.reEndsWithContinuationToken.test(thisLine)) {
+               
+               while (this.$heuristics.reStartsWithContinuationToken.test(thisLine) ||
+                      this.$heuristics.reEndsWithContinuationToken.test(thisLine) &&
+                      thisRow >= 0) {
+
+                  if (/^\s*template/.test(thisLine)) {
+                     return this.$getIndent(thisLine);
+                  }
+
                   // Short-circuit if we bump into e.g. 'case foo:' --
                   // this is so we don't walk too far past a ':', which is considered
                   // a continuation token. This is so cases like:
@@ -708,11 +755,57 @@ oop.inherits(Mode, TextMode);
                   if (/^\s*case\b.*:\s*$/.test(thisLine)) {
                      return indent;
                   }
+
+                  // If the line starts with a '>:', find the matching
+                  // row and continue. This allows for proper indentation of
+                  // e.g.
+                  //
+                  //   template <
+                  //       typename T
+                  //   > class
+                  //   foo;
+                  //   ^
+                  //
+                  // as a nice short-circuiting mechanism.
+                  if (/^\s*>[^>]/.test(thisLine)) {
+
+                     heuristicRow = this.$heuristics.findMatchingBracketRow(
+                        ">",
+                        lines,
+                        row,
+                        50
+                     );
+                     
+                     if (heuristicRow >= 0) {
+                        thisRow = heuristicRow + 1; // anticipating a decrement later
+                     }
+                     
+                  }
+                  
                   thisRow--;
                   thisLine = this.getLineSansComments(doc, thisRow);
                }
-               return this.$getIndent(lines[thisRow + 1]);
+
+               // We might have gone one line too far back if we had encountered
+               // a line beginning with an operator token, e.g.
+               //
+               //   a = b +
+               //       c +
+               //
+               // vs.
+               //
+               //   a = b
+               //     + c
+               //
+               // so we re-correct for that here.
+               var lastLine = doc.getLine(thisRow + 1);
+               if (this.$heuristics.reEndsWithContinuationToken.test(lastLine)) {
+                  return this.$getIndent(lastLine);
+               } else {
+                  return this.$getIndent(thisLine);
+               }
             }
+
          }
 
          // Indent based on lookaround heuristics for open braces.

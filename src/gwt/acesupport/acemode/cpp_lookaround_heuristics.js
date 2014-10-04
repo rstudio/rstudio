@@ -8,8 +8,8 @@ var CppLookaroundHeuristics = function() {};
    var reStartsWithColon        = /^\s*:/;
    var reStartsWithCommaOrColon = /^\s*[,:]/;
 
-   var reStartsWithContinuationToken = /^\s*[,+-/*&^%$!<\>.?|=\'\":]/;
-   var reEndsWithContinuationToken =       /[,+-/*&^%$!<\>.?|=\'\":]\s*$/;
+   var reStartsWithContinuationToken = /^\s*[,+\-/&^%$!<\>.?|=\'\":]|^\s*\*[^/]/;
+   var reEndsWithContinuationToken =       /[,+\-/&^%$!<\>.?|=\'\":]\s*$|\*[^/]\s*$/;
 
    this.reStartsWithContinuationToken = reStartsWithContinuationToken;
    this.reEndsWithContinuationToken   = reEndsWithContinuationToken;
@@ -118,6 +118,11 @@ var CppLookaroundHeuristics = function() {};
          // Similarly, if the line ends with a colon, this line is most likely
          // the one containing the parenthesis that provides the scope.
          if (reEndsWithColon.test(line)) {
+
+            // If we hit a class modifier, then bail
+            if (/^\s*public\s*:|\s*private\s*:|\s*protected\s*:/.test(line)) {
+               return row + 1;
+            }
 
             var lastParen = line.lastIndexOf(")");
 

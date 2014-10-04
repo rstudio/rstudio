@@ -226,7 +226,7 @@ var MatchingBraceOutdent = function() {
             var line = this.$heuristics.getLineSansComments(doc, thisRow);
 
             // Check for a class token.
-            match = line.match(/\bclass\b/);
+            match = line.match(/\bclass.*[^;]\s*$/);
             if (match) {
                len = match.index;
                break;
@@ -238,7 +238,7 @@ var MatchingBraceOutdent = function() {
                
                var openBracePos = session.findMatchingBracket({
                   row: thisRow,
-                  column: line.lastIndexOf("}") + 1
+                  column: doc.$lines[thisRow].lastIndexOf("}") + 1
                });
                
                if (openBracePos) {
@@ -251,7 +251,7 @@ var MatchingBraceOutdent = function() {
                   if (heuristicRow !== null && heuristicRow >= 0) {
                      thisRow = heuristicRow - 1;
                   } else {
-                     thisRow = openBracePos.row - 2;
+                     thisRow = openBracePos.row - 1;
                   }
                   
                }
