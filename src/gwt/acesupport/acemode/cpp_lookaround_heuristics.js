@@ -352,9 +352,10 @@ var CppLookaroundHeuristics = function() {};
       //
       //   foo( const bar,
       //        ^
-      line = line.replace(/\bconst\s*&\s*\b/g, "")
-                 .replace(/\bconst\s*\b/g, "")
-                 .replace(/\bnoexcept\s*\b/g, "");
+      line = line.replace(/\bconst\s*&\s*/g, "")
+                 .replace(/\bconst\s*/g, "")
+                 .replace(/\bnoexcept\s*/g, "")
+                 .replace(/\bdecltype\s*/g, "");
 
       return line;
       

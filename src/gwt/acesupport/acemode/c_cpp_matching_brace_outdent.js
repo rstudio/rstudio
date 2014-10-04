@@ -276,7 +276,23 @@ var MatchingBraceOutdent = function() {
 
          if (scopeRow !== null) {
 
-            // Don't indent if the 'class' has an associated open brace.
+            // Walk over un-informative lines
+            var scopeLine = this.$heuristics.getLineSansComments(doc, scopeRow);
+            while (/^\s*$/.test(scopeLine) ||
+                   /^\s*\(.*\)\s*$/.test(scopeLine)) {
+               scopeRow--;
+               scopeLine = this.$heuristics.getLineSansComments(doc, scopeRow);
+               if (scopeRow === 0) break;
+            }
+
+            // Don't indent if the 'class' has an associated open brace. This ensures
+            // that we get outdenting e.g.
+            //
+            //     class Foo {
+            //         {
+            //         ^
+            //
+            // , ie, we avoid putting the open brace at indentation of 'class' token.
             if (this.$heuristics.getLineSansComments(doc, scopeRow).indexOf("{") === -1) {
                this.setIndent(session, row, scopeRow);
                return;
