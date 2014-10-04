@@ -7,11 +7,28 @@ var MatchingBraceOutdent = function() {
    this.$heuristics = new CppLookaroundHeuristics();
 };
 
+// Allow the user to control outdenting if desired
+var $outdentColon = true;                        // : (initializer list)
+var $outdentRightParen = true;                   // )
+var $outdentLeftBrace = true;                    // {
+var $outdentRightBrace = true;                   // }
+var $outdentRightBracket = true;                 // ]
+var $outdentChevron = true;                      // >
+var $alignDots = true;                           // .
+var $alignStreamIn = true;                       // >>
+var $alignStreamOut = true;                      // <<
+var $alignClassAccessModifiers = true;           // public: etc.
+var $alignCase = true;                           // case 'a':
+
 (function() {
 
    // Set the indent of the line at 'row' to the indentation
-   // at 'rowFrom'.
-   this.setIndent = function(session, rowTo, rowFrom, extraIndent) {
+   // at 'rowFrom'. This operation is only performed if the indentation
+   // of the lines at 'rowTo' and 'rowFrom' match.
+   // 'predicate' is a function taking the old and new indents, and returning
+   // true or false -- this is used to give more fine-grained control over when
+   // outdenting occurs.
+   this.setIndent = function(session, rowTo, rowFrom, extraIndent, predicate) {
 
       var doc = session.getDocument();
       extraIndent = typeof extraIndent === "string" ?
@@ -24,10 +41,12 @@ var MatchingBraceOutdent = function() {
       var oldIndent = this.$getIndent(line);
       var newIndent = this.$getIndent(lastLine);
 
-      doc.replace(
-         new Range(rowTo, 0, rowTo, oldIndent.length),
-         newIndent + extraIndent
-      );
+      if (typeof predicate !== "function" || predicate(oldIndent, newIndent)) {
+         doc.replace(
+            new Range(rowTo, 0, rowTo, oldIndent.length),
+            newIndent + extraIndent
+         );
+      }
       
    };
 
@@ -38,11 +57,6 @@ var MatchingBraceOutdent = function() {
          // private: / public: / protected
          // also class initializer lists
          if (input == ":") {
-            return true;
-         }
-
-         // outdenting for '\'
-         if (input == "\\") {
             return true;
          }
 
@@ -124,8 +138,15 @@ var MatchingBraceOutdent = function() {
       }
 
       // Check for '<<', '.'alignment
-      if (this.alignStartToken("<<", session, row, line, lastLine) ||
-          this.alignStartToken(".", session, row, line, lastLine)) {
+      if ($alignStreamOut && this.alignStartToken("<<", session, row, line, lastLine)) {
+         return;
+      }
+
+      if ($alignStreamIn && this.alignStartToken(">>", session, row, line, lastLine)) {
+         return;
+      }
+
+      if ($alignDots && this.alignStartToken(".", session, row, line, lastLine)) {
          return;
       }
 
@@ -138,7 +159,7 @@ var MatchingBraceOutdent = function() {
       //         :
       //         ^
       //
-      if (/^\s*:/.test(line)) {
+      if ($outdentColon && /^\s*:/.test(line)) {
 
          var scopeRow = this.$heuristics.getRowForOpenBraceIndentClassStyle(
             session,
@@ -146,7 +167,10 @@ var MatchingBraceOutdent = function() {
          );
 
          if (scopeRow >= 0) {
-            this.setIndent(session, row, scopeRow, session.getTabString());
+            this.setIndent(session, row, scopeRow, session.getTabString(),
+                          function(oldIndent, newIndent) {
+                             return oldIndent === newIndent;
+                          });
          }
       }
 
@@ -159,7 +183,7 @@ var MatchingBraceOutdent = function() {
       //             >> bar
       //             >> baz;
       //
-      if (/^\s*\>$/.test(line)) {
+      if ($outdentChevron && /^\s*\>$/.test(line)) {
 
          var matchedRow = this.$heuristics.findMatchingBracketRow(
             ">",
@@ -170,7 +194,7 @@ var MatchingBraceOutdent = function() {
 
          if (matchedRow >= 0) {
             var matchedLine = this.$heuristics.getLineSansComments(doc, matchedRow);
-            if (matchedLine.indexOf("<<") === -1) {
+            if (!/^\s*>>/.test(line)) {
                this.setIndent(session, row, matchedRow);
                return;
             }
@@ -190,7 +214,7 @@ var MatchingBraceOutdent = function() {
       //
       // This rule should apply to closing braces with semi-colons
       // or comments following as well.
-      if (/^\s*\}/.test(line)) {
+      if ($outdentRightBrace && /^\s*\}/.test(line)) {
 
          var openBracketPos = session.findMatchingBracket({
             row: row,
@@ -223,26 +247,39 @@ var MatchingBraceOutdent = function() {
 
       }
 
-      // Indentation for lines beginning with ']'. Match the
-      // indentation of its associated '['.
-      var closerMatch = /^\s*([\]\)])/.exec(line);
-      if (closerMatch) {
-
-         var openBracketPos = session.findMatchingBracket({
-            row: row,
-            column: line.lastIndexOf(closerMatch[1]) + 1
-         });
-
-         if (openBracketPos) {
-            this.setIndent(session, row, openBracketPos.row);
-            return;
+      if ($outdentRightParen) {
+         var closingParenMatch = /^\s*\)/.exec(line);
+         if (closingParenMatch) {
+            var openParenPos = session.findMatchingBracket({
+               row: row,
+               column: line.indexOf(closerMatch[1]) + 1
+            });
+            if (openParenPos) {
+               this.setIndent(session, row, openParenPos.row);
+               return;
+            }
          }
       }
 
+      if ($outdentRightBracket) {
+         var closingBracketMatch = /^\s*\]/.exec(line);
+         if (closingBracketMatch) {
+            var openBracketPos = session.findMatchingBracket({
+               row: row,
+               column: line.indexOf(closerMatch[1]) + 1
+            });
+            if (openBracketPos) {
+               this.setIndent(session, row, openBracketPos.row);
+               return;
+            }
+         }
+      }
+      
       // If we just typed 'public:', 'private:' or 'protected:',
       // we should outdent if possible. Do so by looking for the
       // enclosing 'class' scope.
-      if (/^\s*public\s*:|^\s*private\s*:|^\s*protected\s*:/.test(line)) {
+      if ($alignClassAccessModifiers &&
+          /^\s*public\s*:|^\s*private\s*:|^\s*protected\s*:/.test(line)) {
 
          // Find the associated open bracket.
          var openBraceRow = this.$heuristics.doFindMatchingBracketRow(
@@ -285,7 +322,7 @@ var MatchingBraceOutdent = function() {
       //
       // so we match the indentation of the 'case', rather than the open brace
       // associated with the switch.
-      if (/^\s*case.+:/.test(line)) {
+      if ($alignCase && /^\s*case.+:/.test(line)) {
 
          // Find the associated open bracket.
          var openBraceRow = this.$heuristics.doFindMatchingBracketRow(
@@ -337,7 +374,7 @@ var MatchingBraceOutdent = function() {
       //    : foo_(foo),
       //      bar_(bar),
       //      baz_(baz)
-      if (/^\s*\{/.test(line)) {
+      if ($outdentLeftBrace && /^\s*\{/.test(line)) {
 
          // Bail if the previous line ends with a semi-colon (don't auto-outdent)
          if (/;\s*$/.test(lastLine)) {
@@ -381,24 +418,6 @@ var MatchingBraceOutdent = function() {
 
       }
 
-      // Default matching rules
-      var match = line.match(/^(\s*\})$/);
-      if (!match) return 0;
-
-      var column = match[1].length;
-      var openBracePos = session.findMatchingBracket({
-         row: row,
-         column: column
-      });
-
-      if (!openBracePos) return 0;
-
-      // Just use the indentation of the matching brace
-      if (openBracePos.row >= 0) {
-         this.setIndent(session, row, openBracePos.row);
-         return;
-      }
-      
    };
 
    this.$getIndent = function(line) {
@@ -412,4 +431,39 @@ var MatchingBraceOutdent = function() {
 }).call(MatchingBraceOutdent.prototype);
 
 exports.MatchingBraceOutdent = MatchingBraceOutdent;
+
+exports.getOutdentColon = function() { return $outdentColon; };
+exports.setOutdentColon = function(x) { $outdentColon = x; };
+
+exports.getOutdentRightParen = function() { return $outdentRightParen; };
+exports.setOutdentRightParen = function(x) { $outdentRightParen = x; };
+
+exports.getOutdentLeftBrace = function() { return $outdentLeftBrace; };
+exports.setOutdentLeftBrace = function(x) { $outdentLeftBrace = x; };
+
+exports.getOutdentRightBrace = function() { return $outdentRightBrace; };
+exports.setOutdentRightBrace = function(x) { $outdentRightBrace = x; };
+
+exports.getOutdentRightBracket = function() { return $outdentRightBracket; };
+exports.setOutdentRightBracket = function(x) { $outdentRightBracket = x; };
+
+exports.getOutdentChevron = function() { return $outdentChevron; };
+exports.setOutdentChevron = function(x) { $outdentChevron = x; };
+
+exports.getAlignDots = function() { return $alignDots; };
+exports.setAlignDots = function(x) { $alignDots = x; };
+
+exports.getAlignStreamIn = function() { return $alignStreamIn; };
+exports.setAlignStreamIn = function(x) { $alignStreamIn = x; };
+
+exports.getAlignStreamOut = function() { return $alignStreamOut; };
+exports.setAlignStreamOut = function(x) { $alignStreamOut = x; };
+
+exports.getAlignClassAccessModifiers = function() { return $alignClassAccessModifiers; };
+exports.setAlignClassAccessModifiers = function(x) { $alignClassAccessModifiers = x; };
+
+exports.getAlignCase = function() { return $alignCase; };
+exports.setAlignCase = function(x) { $alignCase = x; };
+
+
 });
