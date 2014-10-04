@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.test;
 
+import com.google.gwt.core.client.impl.DoNotInline;
 import com.google.gwt.dev.jjs.test.overrides.package1.Caller;
 import com.google.gwt.dev.jjs.test.overrides.package1.ClassExposingM;
 import com.google.gwt.dev.jjs.test.overrides.package1.SomeParent;
@@ -259,6 +260,27 @@ public class CompilerMiscRegressionTest extends GWTTestCase {
     @junit.framework.Assert::assertEquals(ZZ)(
        regExp1.test(str), regExp2.test(str));
   }-*/;
+
+  private static final double MINUTES_IN_DAY = 24 * 60;
+
+  @DoNotInline
+  public void assertStaticEvaluationRegression(int hour, int minute) {
+    // Do not inline this method so that the problematic expression reaches JsStaticEval.
+    double expected = hour * 60 + minute;
+    expected /= MINUTES_IN_DAY;
+    expected *= 100;
+    assertEquals(expected , (hour * 60 + minute) / MINUTES_IN_DAY * 100);
+  }
+
+  /**
+   * Test for issue 8934.
+   */
+  public void testStaticEvaluationRegression() {
+    // Perform two calls with different constant values to make sure the assertStaticEvaluation does
+    // not get the constant parameters propagated and statically evaluated in the Java AST.
+    assertStaticEvaluationRegression(10, 20);
+    assertStaticEvaluationRegression(20, 10);
+  }
 
   /**
    * Test for issue 8909.

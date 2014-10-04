@@ -170,19 +170,18 @@ public class JsStaticEval {
       JsExpression arg1 = x.getArg1();
       JsExpression arg2 = x.getArg2();
 
-      if (MATH_ASSOCIATIVE.contains(op)
-          && trySimplifyAssociativeExpression(x, ctx)) {
-        // Nothing else to do
-      } else if (op == JsBinaryOperator.AND) {
-        shortCircuitAnd(arg1, arg2, ctx);
+      JsExpression result = x;
+
+      if (op == JsBinaryOperator.AND) {
+        result = shortCircuitAnd(x);
       } else if (op == JsBinaryOperator.OR) {
-        shortCircuitOr(arg1, arg2, ctx);
+        result = shortCircuitOr(x);
       } else if (op == JsBinaryOperator.COMMA) {
-        trySimplifyComma(arg1, arg2, ctx);
+        result = trySimplifyComma(x);
       } else if (op == JsBinaryOperator.EQ || op == JsBinaryOperator.REF_EQ) {
-        trySimplifyEqAndRefEq(x, arg1, arg2, ctx);
+        result = simplifyEqAndRefEq(x);
       } else if (op == JsBinaryOperator.NEQ || op == JsBinaryOperator.REF_NEQ) {
-        trySimplifyNeAndRefNe(x, arg1, arg2, ctx);
+        result = simplifyNeAndRefNe(x);
       } else if (arg1 instanceof JsValueLiteral && arg2 instanceof JsValueLiteral) {
          switch (op) {
            case ADD:
@@ -194,11 +193,17 @@ public class JsStaticEval {
            case GTE:
            case LT:
            case LTE:
-             trySimplifyOp(x, arg1, arg2, op, ctx);
+             result = simplifyOp(x);
              break;
            default:
              break;
          }
+      }
+
+      result = maybeReorderOperations(result);
+
+      if (result != x) {
+        ctx.replaceMe(result);
       }
     }
 
@@ -523,22 +528,6 @@ public class JsStaticEval {
       return toReturn;
     }
 
-    private boolean appendLiteral(StringBuilder result, JsValueLiteral val) {
-      if (val instanceof JsNumberLiteral) {
-        double number = ((JsNumberLiteral) val).getValue();
-        result.append(ScriptRuntime.numberToString(number, 10));
-      } else if (val instanceof JsStringLiteral) {
-        result.append(((JsStringLiteral) val).getValue());
-      } else if (val instanceof JsBooleanLiteral) {
-        result.append(((JsBooleanLiteral) val).getValue());
-      } else if (val instanceof JsNullLiteral) {
-        result.append("null");
-      } else {
-        return false;
-      }
-      return true;
-    }
-
     /**
      * This method MUST be called whenever any statements are removed from a
      * function. This is because some statements, such as JsVars or JsFunction
@@ -566,237 +555,6 @@ public class JsStaticEval {
         JsBlock jsBlock = new JsBlock(stmt.getSourceInfo());
         jsBlock.getStatements().addAll(stmts);
         return jsBlock;
-      }
-    }
-
-    private JsExpression simplifyEqAndRefEq(JsExpression original, JsExpression arg1,
-        JsExpression arg2) {
-      assert (original != null);
-
-      if (arg1 instanceof JsNullLiteral) {
-        return simplifyNullEq(original, arg2);
-      }
-
-      if (arg2 instanceof JsNullLiteral) {
-        return simplifyNullEq(original, arg1);
-      }
-
-      if (arg1 instanceof JsNumberLiteral && arg2 instanceof JsNumberLiteral) {
-          return JsBooleanLiteral.get(((JsNumberLiteral) arg1).getValue()
-           == ((JsNumberLiteral) arg2).getValue());
-      }
-
-      if (arg1 instanceof JsStringLiteral && arg2 instanceof JsStringLiteral) {
-        return JsBooleanLiteral.get(
-            ((JsStringLiteral) arg1).getValue().equals(((JsStringLiteral) arg2).getValue()));
-      }
-      // no simplification made
-      return original;
-    }
-
-    private JsExpression simplifyNeAndRefNe(JsExpression original, JsExpression arg1,
-        JsExpression arg2) {
-      assert (original != null);
-
-      JsExpression simplifiedEq = simplifyEqAndRefEq(original, arg1, arg2);
-      if (simplifiedEq == original) {
-        return original;
-      }
-
-      assert simplifiedEq instanceof JsBooleanLiteral;
-
-      return JsBooleanLiteral.get(!((JsBooleanLiteral) simplifiedEq).getValue());
-    }
-
-    /**
-     * Simplify exp == null.
-     */
-    private JsExpression simplifyNullEq(JsExpression original, JsExpression exp) {
-      assert (original != null);
-
-      if (exp instanceof JsValueLiteral) {
-        // "undefined" is not a JsValueLiteral, so the only way
-        // the result can be true is if exp is itself a JsNullLiteral
-        boolean result = exp instanceof JsNullLiteral;
-        return JsBooleanLiteral.get(result);
-      }
-
-      // no simplification made
-      return original;
-    }
-
-    /**
-     * Simplify a op b.
-     */
-    private void trySimplifyOp(JsExpression original, JsExpression arg1, JsExpression arg2,
-        JsBinaryOperator op, JsContext ctx) {
-      SourceInfo info = original.getSourceInfo();
-
-      if (op == JsBinaryOperator.ADD &&
-          (arg1 instanceof JsStringLiteral || arg2 instanceof JsStringLiteral)) {
-        // cases: number + string or string + number
-        StringBuilder result = new StringBuilder();
-        if (appendLiteral(result, (JsValueLiteral) arg1)
-            && appendLiteral(result, (JsValueLiteral) arg2)) {
-          ctx.replaceMe(new JsStringLiteral(info, result.toString()));
-        }
-        return;
-      }
-
-      if (arg1 instanceof JsNumberLiteral && arg2 instanceof JsNumberLiteral) {
-        double num1 = ((JsNumberLiteral) arg1).getValue();
-        double num2 = ((JsNumberLiteral) arg2).getValue();
-        Object result;
-
-        switch (op) {
-          case ADD:
-            result = Ieee754_64_Arithmetic.add(num1, num2);
-            break;
-          case SUB:
-            result = Ieee754_64_Arithmetic.subtract(num1, num2);
-            break;
-          case MUL:
-            result = Ieee754_64_Arithmetic.multiply(num1, num2);
-            break;
-          case DIV:
-            result = Ieee754_64_Arithmetic.divide(num1, num2);
-            break;
-          case MOD:
-            result = Ieee754_64_Arithmetic.mod(num1, num2);
-            break;
-          case LT:
-            result = Ieee754_64_Arithmetic.lt(num1, num2);
-            break;
-          case LTE:
-            result = Ieee754_64_Arithmetic.le(num1, num2);
-            break;
-          case GT:
-            result = Ieee754_64_Arithmetic.gt(num1, num2);
-            break;
-          case GTE:
-            result = Ieee754_64_Arithmetic.ge(num1, num2);
-            break;
-          default:
-            throw new InternalCompilerException("Can't handle simplify of op " + op);
-        }
-        ctx.replaceMe(result instanceof Double ?
-            new JsNumberLiteral(info, ((Double) result).doubleValue()) :
-            JsBooleanLiteral.get(((Boolean) result).booleanValue()));
-      }
-    }
-
-    /**
-     * Attempts to simplify adjoining binary expressions with mathematically
-     * associative operators. This pass also tries to make these binary
-     * expressions as left-normal as possible.
-     */
-    private boolean trySimplifyAssociativeExpression(JsBinaryOperation x,
-        JsContext ctx) {
-      boolean toReturn = false;
-      JsBinaryOperator op = x.getOperator();
-      JsExpression arg1 = x.getArg1();
-      JsExpression arg2 = x.getArg2();
-
-      /*
-       * First, we'll try to normalize the nesting of any binary expressions
-       * that we encounter. If we do this correctly,it will help to cut down on
-       * the number of unnecessary parens in the emitted JS.
-       */
-      // (X) O (c O d) ==> ((X) O c) O d
-      {
-        JsBinaryOperation rightOp = null;
-        if (arg2 instanceof JsBinaryOperation) {
-          rightOp = (JsBinaryOperation) arg2;
-        }
-        if (rightOp != null && !rightOp.getOperator().isAssignment()
-            && op == rightOp.getOperator()) {
-
-          if (op == JsBinaryOperator.ADD) {
-            /*
-             * JS type coercion is a problem if we don't know for certain that
-             * the right-hand expression will definitely be evaluated in a
-             * string context.
-             */
-            boolean mustBeString = additionCoercesToString(rightOp.getArg1())
-                || (additionCoercesToString(arg1) && additionCoercesToString(rightOp.getArg2()));
-            if (!mustBeString) {
-              return toReturn;
-            }
-          }
-
-          // (X) O c --> Try to reduce this
-          JsExpression newLeft = new JsBinaryOperation(x.getSourceInfo(), op,
-              arg1, rightOp.getArg1());
-
-          // Reset local vars with new state
-          op = rightOp.getOperator();
-          arg1 = accept(newLeft);
-          arg2 = rightOp.getArg2();
-          x = new JsBinaryOperation(x.getSourceInfo(), op, arg1, arg2);
-
-          ctx.replaceMe(x);
-          toReturn = didChange = true;
-        }
-      }
-
-      /*
-       * Now that we know that our AST is as left-normal as we can make it
-       * (because this method is called from endVisit), we now try to simplify
-       * the left-right node and the right node.
-       */
-      // (a O b) O c ==> a O s
-      {
-        JsBinaryOperation leftOp = null;
-        JsExpression leftLeft = null;
-        JsExpression leftRight = null;
-
-        if (arg1 instanceof JsBinaryOperation) {
-          leftOp = (JsBinaryOperation) arg1;
-          if (op.getPrecedence() == leftOp.getOperator().getPrecedence()) {
-            leftLeft = leftOp.getArg1();
-            leftRight = leftOp.getArg2();
-          }
-        }
-
-        if (leftRight != null) {
-          if (op == JsBinaryOperator.ADD) {
-            // Behavior as described above
-            boolean mustBeString = additionCoercesToString(leftRight)
-                || (additionCoercesToString(leftLeft) && additionCoercesToString(arg2));
-            if (!mustBeString) {
-              return toReturn;
-            }
-          }
-
-          // (b O c)
-          JsBinaryOperation middle = new JsBinaryOperation(x.getSourceInfo(),
-              op, leftRight, arg2);
-          StaticEvalVisitor v = new StaticEvalVisitor();
-          JsExpression maybeSimplified = v.accept(middle);
-
-          if (v.didChange()) {
-            x.setArg1(leftLeft);
-            x.setArg2(maybeSimplified);
-            toReturn = didChange = true;
-          }
-        }
-      }
-      return toReturn;
-    }
-
-    private void trySimplifyEqAndRefEq(JsExpression original, JsExpression arg1,
-        JsExpression arg2, JsContext ctx) {
-      JsExpression updated = simplifyEqAndRefEq(original, arg1, arg2);
-      if (updated != original) {
-        ctx.replaceMe(updated);
-      }
-    }
-
-    private void trySimplifyNeAndRefNe(JsExpression original, JsExpression arg1,
-        JsExpression arg2, JsContext ctx) {
-      JsExpression updated = simplifyNeAndRefNe(original, arg1, arg2);
-      if (updated != original) {
-        ctx.replaceMe(updated);
       }
     }
 
@@ -836,12 +594,13 @@ public class JsStaticEval {
   private static final String NAME = JsStaticEval.class.getSimpleName();
 
   /**
-   * A set of the JS operators that are mathematically associative in nature.
+   * A set of the JS operators that are fully associative in nature; NOT included in this set are
+   * operators that are only left-associative or right-associative or perform floating point
+   * arithmetic.
    */
-  private static final Set<JsBinaryOperator> MATH_ASSOCIATIVE = EnumSet.of(
-      JsBinaryOperator.ADD, JsBinaryOperator.AND, JsBinaryOperator.BIT_AND,
-      JsBinaryOperator.BIT_OR, JsBinaryOperator.BIT_XOR,
-      JsBinaryOperator.COMMA, JsBinaryOperator.MUL, JsBinaryOperator.OR);
+  private static final Set<JsBinaryOperator> REORDERABLE_OPERATORS = EnumSet.of(
+      JsBinaryOperator.OR, JsBinaryOperator.AND, JsBinaryOperator.BIT_AND,
+      JsBinaryOperator.BIT_OR, JsBinaryOperator.COMMA);
 
   public static <T extends JsVisitable> T exec(JsProgram program, T node) {
     Event optimizeJsEvent = SpeedTracerLogger.start(
@@ -912,16 +671,18 @@ public class JsStaticEval {
    * if (false() && isWhatever()) -> if (false())
    * </pre>
    */
-  protected static void shortCircuitAnd(JsExpression arg1, JsExpression arg2,
-      JsContext ctx) {
+  protected static JsExpression shortCircuitAnd(JsBinaryOperation expr) {
+    JsExpression arg1 = expr.getArg1();
+    JsExpression arg2 = expr.getArg2();
     if (arg1 instanceof CanBooleanEval) {
       CanBooleanEval eval1 = (CanBooleanEval) arg1;
       if (eval1.isBooleanTrue() && !arg1.hasSideEffects()) {
-        ctx.replaceMe(arg2);
+        return arg2;
       } else if (eval1.isBooleanFalse()) {
-        ctx.replaceMe(arg1);
+        return arg1;
       }
     }
+    return expr;
   }
 
   /**
@@ -932,23 +693,199 @@ public class JsStaticEval {
    * if (false || isWhatever()) -> if (isWhatever()), unless side effects
    * </pre>
    */
-  protected static void shortCircuitOr(JsExpression arg1, JsExpression arg2,
-      JsContext ctx) {
+  protected static JsExpression shortCircuitOr(JsBinaryOperation expr) {
+    JsExpression arg1 = expr.getArg1();
+    JsExpression arg2 = expr.getArg2();
     if (arg1 instanceof CanBooleanEval) {
       CanBooleanEval eval1 = (CanBooleanEval) arg1;
       if (eval1.isBooleanTrue()) {
-        ctx.replaceMe(arg1);
+        return arg1;
       } else if (eval1.isBooleanFalse() && !arg1.hasSideEffects()) {
-        ctx.replaceMe(arg2);
+        return arg2;
       }
     }
+    return expr;
   }
 
-  protected static void trySimplifyComma(JsExpression arg1, JsExpression arg2,
-      JsContext ctx) {
+  protected static JsExpression trySimplifyComma(JsBinaryOperation expr) {
+    JsExpression arg1 = expr.getArg1();
+    JsExpression arg2 = expr.getArg2();
     if (!arg1.hasSideEffects()) {
-      ctx.replaceMe(arg2);
+      return arg2;
     }
+    return expr;
+  }
+
+  private static JsExpression simplifyEqAndRefEq(JsBinaryOperation expr) {
+    JsExpression arg1 = expr.getArg1();
+    JsExpression arg2 = expr.getArg2();
+
+    if (arg1 instanceof JsNullLiteral) {
+      return simplifyNullEq(expr, arg2);
+    }
+
+    if (arg2 instanceof JsNullLiteral) {
+      return simplifyNullEq(expr, arg1);
+    }
+
+    if (arg1 instanceof JsNumberLiteral && arg2 instanceof JsNumberLiteral) {
+      return JsBooleanLiteral.get(((JsNumberLiteral) arg1).getValue()
+          == ((JsNumberLiteral) arg2).getValue());
+    }
+
+    if (arg1 instanceof JsStringLiteral && arg2 instanceof JsStringLiteral) {
+      return JsBooleanLiteral.get(
+          ((JsStringLiteral) arg1).getValue().equals(((JsStringLiteral) arg2).getValue()));
+    }
+    // no simplification made
+    return expr;
+  }
+
+  /**
+   * Simplify exp == null.
+   */
+  private static JsExpression simplifyNullEq(JsExpression original, JsExpression exp) {
+    assert (original != null);
+
+    if (exp instanceof JsValueLiteral) {
+      // "undefined" is not a JsValueLiteral, so the only way
+      // the result can be true is if exp is itself a JsNullLiteral
+      boolean result = exp instanceof JsNullLiteral;
+      return JsBooleanLiteral.get(result);
+    }
+
+    // no simplification made
+    return original;
+  }
+
+  private static  JsExpression simplifyNeAndRefNe(JsBinaryOperation expr) {
+    JsExpression arg1 = expr.getArg1();
+    JsExpression arg2 = expr.getArg2();
+
+    JsExpression simplifiedEq = simplifyEqAndRefEq(expr);
+    if (simplifiedEq == expr) {
+      return expr;
+    }
+
+    assert simplifiedEq instanceof JsBooleanLiteral;
+
+    return JsBooleanLiteral.get(!((JsBooleanLiteral) simplifiedEq).getValue());
+  }
+
+  /**
+   * Simplify a op b.
+   */
+  private static JsExpression simplifyOp(JsBinaryOperation expr) {
+    SourceInfo info = expr.getSourceInfo();
+    JsExpression arg1 = expr.getArg1();
+    JsExpression arg2 = expr.getArg2();
+    JsBinaryOperator op = expr.getOperator();
+
+    if (op == JsBinaryOperator.ADD &&
+        (arg1 instanceof JsStringLiteral || arg2 instanceof JsStringLiteral)) {
+      // cases: number + string or string + number
+      StringBuilder result = new StringBuilder();
+      if (appendLiteral(result, (JsValueLiteral) arg1)
+          && appendLiteral(result, (JsValueLiteral) arg2)) {
+        return new JsStringLiteral(info, result.toString());
+      }
+      return expr;
+    }
+
+    if (arg1 instanceof JsNumberLiteral && arg2 instanceof JsNumberLiteral) {
+      double num1 = ((JsNumberLiteral) arg1).getValue();
+      double num2 = ((JsNumberLiteral) arg2).getValue();
+      Object result;
+
+      switch (op) {
+        case ADD:
+          result = Ieee754_64_Arithmetic.add(num1, num2);
+          break;
+        case SUB:
+          result = Ieee754_64_Arithmetic.subtract(num1, num2);
+          break;
+        case MUL:
+          result = Ieee754_64_Arithmetic.multiply(num1, num2);
+          break;
+        case DIV:
+          result = Ieee754_64_Arithmetic.divide(num1, num2);
+          break;
+        case MOD:
+          result = Ieee754_64_Arithmetic.mod(num1, num2);
+          break;
+        case LT:
+          result = Ieee754_64_Arithmetic.lt(num1, num2);
+          break;
+        case LTE:
+          result = Ieee754_64_Arithmetic.le(num1, num2);
+          break;
+        case GT:
+          result = Ieee754_64_Arithmetic.gt(num1, num2);
+          break;
+        case GTE:
+          result = Ieee754_64_Arithmetic.ge(num1, num2);
+          break;
+        default:
+          throw new InternalCompilerException("Can't handle simplify of op " + op);
+      }
+      return result instanceof Double ?
+          new JsNumberLiteral(info, ((Double) result).doubleValue()) :
+          JsBooleanLiteral.get(((Boolean) result).booleanValue());
+    }
+    return expr;
+  }
+
+  private static boolean appendLiteral(StringBuilder result, JsValueLiteral val) {
+    if (val instanceof JsNumberLiteral) {
+      double number = ((JsNumberLiteral) val).getValue();
+      result.append(ScriptRuntime.numberToString(number, 10));
+    } else if (val instanceof JsStringLiteral) {
+      result.append(((JsStringLiteral) val).getValue());
+    } else if (val instanceof JsBooleanLiteral) {
+      result.append(((JsBooleanLiteral) val).getValue());
+    } else if (val instanceof JsNullLiteral) {
+      result.append("null");
+    } else {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Makes expressions as expressions as left-normal as possible, i.e. prefers
+   *
+   *      o1                 o1
+   *     /  \               /  \
+   *    o2   e3     to     e1  o2
+   *   /  \                   /  \
+   *  e1  e2                e2   e3
+   *
+   *  when equivalent.
+   */
+  private static JsExpression maybeReorderOperations(JsExpression x) {
+    if (!(x instanceof JsBinaryOperation)) {
+      return x;
+    }
+
+    JsBinaryOperation expr = (JsBinaryOperation) x;
+    JsBinaryOperator outerOp = expr.getOperator();
+
+    if (!REORDERABLE_OPERATORS.contains(outerOp)) {
+      return expr;
+    }
+
+    if (!(expr.getArg2() instanceof JsBinaryOperation) ||
+        ((JsBinaryOperation) expr.getArg2()).getOperator() != outerOp) {
+      return expr;
+    }
+
+    JsBinaryOperation leftExpr = (JsBinaryOperation) expr.getArg2();
+
+    // Perform rotation.
+    return new JsBinaryOperation(x.getSourceInfo(), leftExpr.getOperator(),
+        maybeReorderOperations(
+          new JsBinaryOperation(x.getSourceInfo(), outerOp, expr.getArg1(), leftExpr.getArg1())),
+        leftExpr.getArg2());
   }
 
   private final JsProgram program;
