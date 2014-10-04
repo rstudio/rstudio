@@ -212,12 +212,11 @@ var MatchingBraceOutdent = function() {
          }
       }
 
-      // if we just typed 'public:', 'private:' or 'protected:',
+      // If we just typed 'public:', 'private:' or 'protected:',
       // we should outdent if possible. Do so by looking for the
       // enclosing 'class' scope.
-      if (/^\s*public\s*:\s*$|^\s*private\s*:\s*$|^\s*protected\s*:\s*$/.test(line)) {
+      if (/^\s*public\s*:|^\s*private\s*:|^\s*protected\s*:/.test(line)) {
 
-         // look for the enclosing 'class' to get the indentation
          var len = 0;
          var match = false;
          var thisRow = row;
@@ -267,35 +266,58 @@ var MatchingBraceOutdent = function() {
          return;
       }
 
-      // If we just typed 'case <word>:', outdent if possible. Do so
-      // by looking for the enclosing 'switch'.
+      // Similar for 'case' outdenting.
       if (/^\s*case.+:/.test(line)) {
 
-         // look for 'switch' statement for indentation
          var len = 0;
          var match = false;
-         var maxLookback = 200;
-         var count = 0;
-         for (var i = row; i >= 0; i--) {
-            var line = this.$heuristics.getLineSansComments(doc, i);
-            match = line.match(/\bswitch\b/);
+         var thisRow = row;
+         while (thisRow >= 0) {
+
+            var line = this.$heuristics.getLineSansComments(doc, thisRow);
+
+            // Find the enclosing switch.
+            match = line.match(/^(\s*)switch/);
             if (match) {
-               len = match.index;
+               len = match[1].length;
                break;
             }
 
-            count++;
-            if (count > maxLookback) break;
+            // Walk backwards -- prefer walking over matching braces when
+            // possible, otherwise just step up a row.
+            if (line.indexOf("}") !== -1) {
+               
+               var openBracePos = session.findMatchingBracket({
+                  row: thisRow,
+                  column: doc.$lines[thisRow].lastIndexOf("}") + 1
+               });
+               
+               if (openBracePos) {
 
+                  // If this open brace is already associated with a class or struct,
+                  // step over all of those rows.
+                  var heuristicRow =
+                         this.$heuristics.getRowForOpenBraceIndent(session, openBracePos.row);
+
+                  if (heuristicRow !== null && heuristicRow >= 0) {
+                     thisRow = heuristicRow - 1;
+                  } else {
+                     thisRow = openBracePos.row - 1;
+                  }
+                  
+               }
+               
+            } else {
+               thisRow--;
+            }
          }
-
-         if (match) {
+         
+         if (match)
             doc.replace(new Range(row, 0, row, indent.length - len), "");
-         }
 
          return;
       }
-
+      
       // If we just inserted a '{' on a new line to begin a class definition,
       // try looking up for the associated class statement.
       // We want to look back over the following common indentation styles:
