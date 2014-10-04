@@ -485,9 +485,12 @@ oop.inherits(Mode, TextMode);
             }
          }
 
-         // Indent following an opening paren
+         // Indent following an opening paren.
+         // We prefer inserting two tabs here, reflecting the rules of
+         // the Google C++ style guide:
+         // http://google-styleguide.googlecode.com/svn/trunk/cppguide.html#Function_Declarations_and_Definitions
          if (line.match(/\(\s*$/)) {
-            return indent + tab;
+            return indent + tab + tab;
          }
 
          // If we've made a function definition all on one line,
