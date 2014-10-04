@@ -60,6 +60,7 @@ public class Options {
   private boolean noPrecompile = false;
   private boolean isCompileTest = false;
   private File workDir;
+  private File launcherDir;
   private final List<String> moduleNames = new ArrayList<String>();
   private boolean allowMissingSourceDir = false;
   private final List<File> sourcePath = new ArrayList<File>();
@@ -189,6 +190,15 @@ public class Options {
   }
 
   /**
+   * A directory where each module's files for launching Super Dev Mode should be written,
+   * or null if not supplied.
+   * (For example, nocache.js and public resource files will go here.)
+   */
+  File getLauncherDir() {
+    return launcherDir;
+  }
+
+  /**
    * The names of the module that will be compiled (along with all its dependencies).
    */
   List<String> getModuleNames() {
@@ -300,6 +310,7 @@ public class Options {
       registerHandler(new SourceFlag());
       registerHandler(new StrictResourcesFlag());
       registerHandler(new WorkDirFlag());
+      registerHandler(new LauncherDir());
       registerHandler(new ArgHandlerIncrementalCompile(new OptionIncrementalCompile() {
         @Override
         public boolean isIncrementalCompileEnabled() {
@@ -621,6 +632,48 @@ public class Options {
       }
 
       sourcePath.add(candidate);
+      return 1;
+    }
+  }
+
+  private class LauncherDir extends ArgHandler {
+
+    @Override
+    public String getTag() {
+      return "-launcherDir";
+    }
+
+    @Override
+    public String[] getTags() {
+      // add an alias since in DevMode this was "-war"
+      return new String[] {getTag(), "-war"};
+    }
+
+    @Override
+    public String[] getTagArgs() {
+      return new String[0];
+    }
+
+    @Override
+    public String getPurpose() {
+      return "An output directory where files for launching Super Dev Mode will be written. "
+          + "(Optional.)";
+    }
+
+    @Override
+    public int handle(String[] args, int startIndex) {
+      if (startIndex + 1 >= args.length) {
+        System.err.println(getTag() + " should be followed by the name of a directory");
+        return -1;
+      }
+
+      File candidate = new File(args[startIndex + 1]);
+      if (!candidate.isDirectory()) {
+        System.err.println("not a directory: " + candidate);
+        return -1;
+      }
+
+      launcherDir = candidate;
       return 1;
     }
   }
