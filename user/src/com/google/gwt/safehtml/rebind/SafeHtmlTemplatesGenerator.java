@@ -16,7 +16,6 @@
 package com.google.gwt.safehtml.rebind;
 
 import com.google.gwt.core.ext.Generator;
-import com.google.gwt.core.ext.Generator.RunsLocal;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -32,7 +31,6 @@ import java.io.PrintWriter;
  * Generator for implementations of
  * {@link com.google.gwt.safehtml.client.SafeHtmlTemplates}.
  */
-@RunsLocal
 public class SafeHtmlTemplatesGenerator extends Generator {
 
   @Override

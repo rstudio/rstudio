@@ -15,7 +15,6 @@ package com.google.gwt.dev.jjs;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.Generator;
-import com.google.gwt.core.ext.Generator.RunsLocal;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -73,7 +72,6 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
    * Test Generator that wants to create a FooShim%user.agent% type for every processed FooShim
    * type.
    */
-  @RunsLocal(requiresProperties = {"user.agent"})
   public static class BrowserShimGenerator extends Generator {
 
     @Override
@@ -98,7 +96,6 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
    * Test Generator that wants to create a FooShim%locale% type for every processed FooShim
    * type.
    */
-  @RunsLocal(requiresProperties = {"locale"})
   public static class LocaleMessageGenerator extends Generator {
 
     @Override
@@ -404,7 +401,9 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
         "registerPropertyValueProvider(" + "new PropertyValueProvider1())"));
   }
 
-  public void testRunGeneratorsToFixedPoint() throws UnableToCompleteException {
+  // TODO: Behavior depends on the generator running multiple times. Re-enable after we introduce
+  // @RunsLocal again.
+  public void _disabled_testRunGeneratorsToFixedPoint() throws UnableToCompleteException {
     // Sets up environment.
     Map<String, String> runtimeRebindRuleSourcesByShortName =
         RuntimeRebindRuleGenerator.RUNTIME_REBIND_RULE_SOURCES_BY_SHORT_NAME;

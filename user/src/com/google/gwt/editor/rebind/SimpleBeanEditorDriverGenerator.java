@@ -15,7 +15,6 @@
  */
 package com.google.gwt.editor.rebind;
 
-import com.google.gwt.core.ext.Generator.RunsLocal;
 import com.google.gwt.editor.client.SimpleBeanEditorDriver;
 import com.google.gwt.editor.client.impl.AbstractSimpleBeanEditorDriver;
 import com.google.gwt.editor.client.impl.SimpleBeanEditorDelegate;
@@ -24,7 +23,6 @@ import com.google.gwt.editor.rebind.model.EditorData;
 /**
  * Generates implementations of {@link SimpleBeanEditorDriver}.
  */
-@RunsLocal
 public class SimpleBeanEditorDriverGenerator extends
     AbstractEditorDriverGenerator {
 

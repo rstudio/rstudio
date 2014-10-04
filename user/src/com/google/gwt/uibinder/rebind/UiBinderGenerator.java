@@ -17,7 +17,6 @@ package com.google.gwt.uibinder.rebind;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.Generator;
-import com.google.gwt.core.ext.Generator.RunsLocal;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
@@ -42,7 +41,6 @@ import java.util.List;
 /**
  * Generator for implementations of {@link com.google.gwt.uibinder.client.UiBinder}.
  */
-@RunsLocal(requiresProperties = {"UiBinder.useSafeHtmlTemplates", "UiBinder.useLazyWidgetBuilders"})
 public class UiBinderGenerator extends Generator {
 
   private static final String BINDER_URI = "urn:ui:com.google.gwt.uibinder";

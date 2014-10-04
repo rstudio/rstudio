@@ -17,7 +17,6 @@ package com.google.gwt.dev.cfg;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.Generator;
-import com.google.gwt.core.ext.Generator.RunsLocal;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.RebindResult;
 import com.google.gwt.core.ext.TreeLogger;
@@ -45,14 +44,14 @@ import java.util.Set;
  */
 public class RuleGenerateWith extends Rule {
 
-  public static final Set<String> ALL_PROPERTIES = ImmutableSet.of(RunsLocal.ALL);
+  public static final Set<String> ALL_PROPERTIES = ImmutableSet.of("%ALL%");
 
   /**
    * Returns a Set of the names of properties that will be accessed by the given Generator.
    */
   public static Set<String> getAccessedPropertyNames(Class<? extends Generator> generatorClass) {
-    RunsLocal runsLocal = generatorClass.getAnnotation(RunsLocal.class);
-    return runsLocal == null ? ALL_PROPERTIES : ImmutableSet.copyOf(runsLocal.requiresProperties());
+    // TODO: Make this based on @RunsLocal
+    return ALL_PROPERTIES;
   }
 
   private final Set<String> accessedPropertyNames;
@@ -92,7 +91,8 @@ public class RuleGenerateWith extends Rule {
    * global set of types to be able to run accurately.
    */
   public boolean contentDependsOnTypes() {
-    return generatorClass.getAnnotation(RunsLocal.class) == null;
+    // TODO: Make this based on @RunsLocal
+    return true;
   }
 
   @Override

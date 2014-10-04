@@ -14,7 +14,6 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.Generator;
-import com.google.gwt.core.ext.Generator.RunsLocal;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -30,7 +29,6 @@ import java.util.LinkedList;
  * Makes it possible to test what how much Generator output is recreated when a referenced external
  * type is modified.
  */
-@RunsLocal
 public class UnstableNestedAnonymousGenerator extends Generator {
 
   /**

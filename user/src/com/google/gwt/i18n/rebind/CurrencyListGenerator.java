@@ -17,7 +17,6 @@ package com.google.gwt.i18n.rebind;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.ext.Generator;
-import com.google.gwt.core.ext.Generator.RunsLocal;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
@@ -54,7 +53,6 @@ import java.util.regex.Pattern;
  * Generator used to generate a localized version of CurrencyList, which contains the list of
  * currencies (with names, symbols, and other information) localized to the current locale.
  */
-@RunsLocal(requiresProperties = {"locale.queryparam", "locale", "runtime.locales", "locale.cookie"})
 public class CurrencyListGenerator extends Generator {
 
   /**

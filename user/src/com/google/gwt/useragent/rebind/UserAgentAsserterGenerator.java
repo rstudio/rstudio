@@ -19,7 +19,6 @@ package com.google.gwt.useragent.rebind;
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.Generator;
-import com.google.gwt.core.ext.Generator.RunsLocal;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -30,7 +29,6 @@ import com.google.gwt.useragent.client.UserAgentAsserter.UserAgentAsserterDisabl
  * Generator to enable/disable {@link UserAgentAsserter}. This generator exists because we can't
  * deferred-bind via configuration property.
  */
-@RunsLocal(requiresProperties = {"user.agent", "user.agent.runtimeWarning"})
 public class UserAgentAsserterGenerator extends Generator {
 
   private static final String PROPERTY_USER_AGENT_RUNTIME_WARNING = "user.agent.runtimeWarning";

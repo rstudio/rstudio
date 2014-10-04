@@ -14,7 +14,6 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.Generator;
-import com.google.gwt.core.ext.Generator.RunsLocal;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -24,7 +23,6 @@ import java.io.PrintWriter;
 /**
  * A simple generator for running in tests, converts class Foo to Bar.
  */
-@RunsLocal
 public class FooBarGenerator extends Generator {
 
   @Override

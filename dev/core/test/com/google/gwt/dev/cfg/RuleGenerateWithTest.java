@@ -15,7 +15,6 @@ package com.google.gwt.dev.cfg;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.Generator;
-import com.google.gwt.core.ext.Generator.RunsLocal;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
@@ -42,7 +41,7 @@ public class RuleGenerateWithTest extends TestCase {
   /**
    * Test Generator that cares about properties Foo and Bar.
    */
-  @RunsLocal(requiresProperties = {"Foo", "Bar"})
+  // @RunsLocal(requiresProperties = {"Foo", "Bar"})
   public static class CaresAboutSomePropertiesGenerator extends Generator {
 
     @Override
@@ -56,7 +55,6 @@ public class RuleGenerateWithTest extends TestCase {
    * Test Generator that wants to create types for some combination of user.agent and flavor
    * property values.
    */
-  @RunsLocal(requiresProperties = {"user.agent", "flavor"})
   public static class FooGenerator extends Generator {
 
     @Override
@@ -92,7 +90,6 @@ public class RuleGenerateWithTest extends TestCase {
     }
   }
 
-  @RunsLocal(requiresProperties = RunsLocal.ALL)
   private class CaresAboutAllPropertiesGenerator extends Generator {
 
     @Override
@@ -151,7 +148,8 @@ public class RuleGenerateWithTest extends TestCase {
     assertTrue(rule.caresAboutProperties(Sets.newHashSet("Foo", "Bar")));
   }
 
-  public void testCaresAboutSomeProperties() {
+  // TODO: Re-enable after we introduce back RunsLocal.
+  public void _disabled_testCaresAboutSomeProperties() {
     RuleGenerateWith rule = new RuleGenerateWith(CaresAboutSomePropertiesGenerator.class);
 
     assertFalse(rule.caresAboutProperties(Sets.<String>newHashSet()));

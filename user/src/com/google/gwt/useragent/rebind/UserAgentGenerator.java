@@ -18,7 +18,6 @@ package com.google.gwt.useragent.rebind;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.Generator;
-import com.google.gwt.core.ext.Generator.RunsLocal;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.SelectionProperty;
@@ -36,7 +35,6 @@ import java.io.PrintWriter;
 /**
  * Generator for {@link com.google.gwt.useragent.client.UserAgent}.
  */
-@RunsLocal(requiresProperties = {"user.agent"})
 public class UserAgentGenerator extends Generator {
   static final String PROPERTY_USER_AGENT = "user.agent";
 

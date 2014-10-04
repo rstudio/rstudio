@@ -203,7 +203,9 @@ public class IncrementalBuilderTest extends TestCase {
     testLogger.assertLogEntriesContainExpected();
   }
 
-  public void testDuplicateGeneratorOutput() throws MalformedURLException {
+  // TODO: Behavior depends on the generator running multiple times. Re-enable after we introduce
+  // @RunsLocal again.
+  public void _disabled_testDuplicateGeneratorOutput() throws MalformedURLException {
     String duplicateCompilationUnitError = LibraryGroup.formatDuplicateCompilationUnitMessage(
         "com.google.gwt.dev.Bar", "com.google.gwt.dev.testdata.incrementalbuildsystem.ParallelLeft",
         "com.google.gwt.dev.testdata.incrementalbuildsystem.ParallelRight");

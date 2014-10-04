@@ -16,7 +16,6 @@
 package com.google.gwt.user.rebind.ui;
 
 import com.google.gwt.core.ext.Generator;
-import com.google.gwt.core.ext.Generator.RunsLocal;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -47,7 +46,6 @@ import java.util.List;
  * <code>.png, .jpg, or .gif</code> defines the name of the image, and the
  * image file must be located in the same package as <code>T</code>.
  */
-@RunsLocal
 public class ImageBundleGenerator extends Generator {
 
   /**

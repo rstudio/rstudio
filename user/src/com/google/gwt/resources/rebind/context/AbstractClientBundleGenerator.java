@@ -19,7 +19,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.CachedGeneratorResult;
 import com.google.gwt.core.ext.CachedPropertyInformation;
-import com.google.gwt.core.ext.Generator.RunsLocal;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.IncrementalGenerator;
 import com.google.gwt.core.ext.PropertyOracle;
@@ -115,7 +114,6 @@ import java.util.Set;
  * of an instance of the ClientBundle type so that resources can refer to one
  * another by simply emitting a call to <code>resource()</code>.
  */
-@RunsLocal(requiresProperties = RunsLocal.ALL)
 public abstract class AbstractClientBundleGenerator extends IncrementalGenerator {
   private static final String CACHED_PROPERTY_INFORMATION = "cached-property-info";
   private static final String CACHED_RESOURCE_INFORMATION = "cached-resource-info";

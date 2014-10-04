@@ -21,7 +21,6 @@ import com.google.gwt.codegen.server.CodeGenUtils;
 import com.google.gwt.codegen.server.JavaSourceWriterBuilder;
 import com.google.gwt.codegen.server.SourceWriter;
 import com.google.gwt.core.ext.Generator;
-import com.google.gwt.core.ext.Generator.RunsLocal;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
@@ -52,7 +51,6 @@ import java.util.TreeSet;
  * Generator used to bind classes extending the <code>Localizable</code> and
  * <code>Constants</code> interfaces.
  */
-@RunsLocal(requiresProperties = {"locale.queryparam", "locale", "runtime.locales", "locale.cookie"})
 public class LocalizableGenerator extends Generator {
 
   /**

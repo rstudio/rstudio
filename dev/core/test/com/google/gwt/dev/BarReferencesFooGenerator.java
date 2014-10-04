@@ -14,7 +14,6 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.Generator;
-import com.google.gwt.core.ext.Generator.RunsLocal;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -27,7 +26,6 @@ import java.io.PrintWriter;
  * This backward reference makes it possible to test invalidation of types that trigger runs of
  * Generators that refer to types that have been modified.
  */
-@RunsLocal
 public class BarReferencesFooGenerator extends Generator {
 
   public static int runCount = 0;

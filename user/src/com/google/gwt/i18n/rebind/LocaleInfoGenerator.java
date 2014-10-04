@@ -19,7 +19,6 @@ import com.google.gwt.codegen.server.CodeGenUtils;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.ext.Generator;
-import com.google.gwt.core.ext.Generator.RunsLocal;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
@@ -51,7 +50,6 @@ import java.util.Set;
  * Generator used to generate an implementation of the LocaleInfoImpl class, which is used by the
  * LocaleInfo class.
  */
-@RunsLocal(requiresProperties = {"locale.queryparam", "locale", "runtime.locales", "locale.cookie"})
 public class LocaleInfoGenerator extends Generator {
 
   /**

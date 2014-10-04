@@ -14,7 +14,6 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.Generator;
-import com.google.gwt.core.ext.Generator.RunsLocal;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -24,7 +23,6 @@ import java.io.PrintWriter;
 /**
  * Generates multiple classes and a GWT.create() -> Foo -> Bar reference path.
  */
-@RunsLocal
 public class MultipleClassGenerator extends Generator {
 
   @Override

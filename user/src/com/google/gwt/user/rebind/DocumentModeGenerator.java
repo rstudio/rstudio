@@ -19,7 +19,6 @@ package com.google.gwt.user.rebind;
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.Generator;
-import com.google.gwt.core.ext.Generator.RunsLocal;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
@@ -37,7 +36,6 @@ import java.util.List;
 /**
  * Generator for {@link com.google.gwt.user.client.DocumentModeAsserter}.
  */
-@RunsLocal(requiresProperties = {"document.compatMode", "document.compatMode.severity"})
 public class DocumentModeGenerator extends Generator {
 
   @Override
