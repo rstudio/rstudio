@@ -109,7 +109,18 @@ var CppLookaroundHeuristics = function() {};
                });
 
                if (openParenPos) {
-                  return openParenPos.row;
+                  
+                  // Walk up over uninformative lines
+                  var rowToUse = openParenPos.row;
+                  var lineToUse = this.getLineSansComments(doc, rowToUse);
+                  while (/^\s*$/.test(lineToUse) ||
+                         /^\s*\(.*\)\s*$/.test(lineToUse)) {
+                     rowToUse--;
+                     lineToUse = this.getLineSansComments(doc, rowToUse);
+                     if (rowToUse === 0) break;
+                  }
+                  return rowToUse;
+                  
                }
                
             } else {
@@ -136,7 +147,18 @@ var CppLookaroundHeuristics = function() {};
                });
 
                if (openParenPos) {
-                  return openParenPos.row;
+
+                  // Walk up over uninformative lines
+                  var rowToUse = openParenPos.row;
+                  var lineToUse = this.getLineSansComments(doc, rowToUse);
+                  while (/^\s*$/.test(lineToUse) ||
+                         /^\s*\(.*\)\s*$/.test(lineToUse)) {
+                     rowToUse--;
+                     lineToUse = this.getLineSansComments(doc, rowToUse);
+                     if (rowToUse === 0) break;
+                  }
+                  return rowToUse;
+                  
                } else {
                   return row;
                }
@@ -369,25 +391,28 @@ var CppLookaroundHeuristics = function() {};
    // 'backward', and defaults to 'backward'.  Returns -1 is nothing
    // is found. 'balance' should be left undefined but can be
    // specified optionally if desired.
-   this.findMatchingBracketRow = function(character, lines, row,
+   this.findMatchingBracketRow = function(character, doc, row,
                                           maxLookaround, direction) {
 
       direction = typeof direction !== 'undefined' ? direction : "backward";
-      return this.doFindMatchingBracketRow(character, lines, row,
+      return this.doFindMatchingBracketRow(character, doc, row,
                                            maxLookaround, direction,
                                            0, 0);
       
    };
    
-   this.doFindMatchingBracketRow = function(character, lines, row,
+   this.doFindMatchingBracketRow = function(character, doc, row,
                                             maxLookaround, direction,
-                                            balance, count) {
+                                            balance, count, shortCircuit) {
 
       if (count > maxLookaround) return -1;
-      if (row < 0 || row > lines.length - 1) return -1;
+      if (row < 0 || row > doc.$lines.length - 1) return -1;
 
-      // TODO: strip lines when getting them?
-      var line = lines[row];
+      var line = this.getLineSansComments(doc, row);
+
+      if (typeof shortCircuit === "function") {
+         if (shortCircuit(line)) return row;
+      }
 
       var nChar = line.split(character).length - 1;
       var nComp = line.split(this.$complements[character]).length - 1;
@@ -406,9 +431,9 @@ var CppLookaroundHeuristics = function() {};
          row = row - 1;
       }
 
-      return this.doFindMatchingBracketRow(character, lines, row,
+      return this.doFindMatchingBracketRow(character, doc, row,
                                            maxLookaround, direction, balance,
-                                           count + 1);
+                                           count + 1, shortCircuit);
    };
 
    this.findStartOfCommentBlock = function(lines, row, maxLookback) {

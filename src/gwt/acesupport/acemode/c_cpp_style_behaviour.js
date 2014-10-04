@@ -67,9 +67,9 @@ var CStyleBehaviour = function () {
          if (cursorRightChar == rightChar) {
             var matching = $heuristics.findMatchingBracketRow(
                rightChar,
-               session.getDocument().$lines,
+               session.getDocument(),
                cursor.row,
-               200,
+               1E4,
                "backward"
             );
             if (matching !== null) {

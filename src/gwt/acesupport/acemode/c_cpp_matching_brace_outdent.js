@@ -42,7 +42,8 @@ var MatchingBraceOutdent = function() {
             return true;
          }
 
-         if (/^\s*[\{\}\>\]<.:]/.test(input)) {
+         // outdenting for lines starting with 'closers' and 'openers'
+         if (/^\s*[\{\}\>\]\)<.:]/.test(input)) {
             return true;
          }
 
@@ -137,7 +138,7 @@ var MatchingBraceOutdent = function() {
 
          var matchedRow = this.$heuristics.findMatchingBracketRow(
             ">",
-            doc.$lines,
+            doc,
             row,
             50
          );
@@ -199,11 +200,12 @@ var MatchingBraceOutdent = function() {
 
       // Indentation for lines beginning with ']'. Match the
       // indentation of its associated '['.
-      if (/^\s*\]/.test(line)) {
+      var closerMatch = /^\s*([\]\)])/.exec(line);
+      if (closerMatch) {
 
          var openBracketPos = session.findMatchingBracket({
             row: row,
-            column: line.lastIndexOf("]") + 1
+            column: line.lastIndexOf(closerMatch[1]) + 1
          });
 
          if (openBracketPos) {
@@ -215,30 +217,78 @@ var MatchingBraceOutdent = function() {
       // If we just typed 'public:', 'private:' or 'protected:',
       // we should outdent if possible. Do so by looking for the
       // enclosing 'class' scope.
-      if (/^\s*public\s*:|^\s*private\s*:|^\s*protected\s*:|^\s*case.+:/.test(line)) {
+      if (/^\s*public\s*:|^\s*private\s*:|^\s*protected\s*:/.test(line)) {
 
-         // Find the associated open bracket
-         var openBracePos = session.$findOpeningBracket("}", {
-            row: row,
-            column: line.length - 1
-         });
+         // Find the associated open bracket.
+         var openBraceRow = this.$heuristics.doFindMatchingBracketRow(
+            "}",
+            doc,
+            row,
+            1E6,
+            "backward",
+            1,
+            0
+         );
 
-         if (openBracePos) {
+         if (openBraceRow >= 0) {
             // If this open brace is already associated with a class or struct,
             // step over all of those rows.
             var heuristicRow =
-                   this.$heuristics.getRowForOpenBraceIndent(session, openBracePos.row);
+                   this.$heuristics.getRowForOpenBraceIndent(session, openBraceRow);
 
             if (heuristicRow !== null && heuristicRow >= 0) {
                this.setIndent(session, row, heuristicRow);
                return;
             } else {
-               this.setIndent(session, row, openBracePos.row);
+               this.setIndent(session, row, openBraceRow);
                return;
             }
          }
          
       }
+
+      // Similar lookback for 'case foo:', but we have a twist: we want to walk
+      // up rows, but in case we run into a 'case:' with indentation already set
+      // in a different way from the auto-outdent, we match that indentation.
+      //
+      // This implies that e.g.
+      //
+      //     switch (x)
+      //     {
+      //         case Foo: bar; break;
+      //         ^
+      //
+      // so we match the indentation of the 'case', rather than the open brace
+      // associated with the switch.
+      if (/^\s*case.+:/.test(line)) {
+
+         // Find the associated open bracket.
+         var openBraceRow = this.$heuristics.doFindMatchingBracketRow(
+            "}",
+            doc,
+            row - 1,
+            1E6,
+            "backward",
+            1,
+            0,
+            function(x) { return /^\s*case.+:/.test(x); }
+         );
+
+         if (openBraceRow >= 0) {
+            var heuristicRow =
+                   this.$heuristics.getRowForOpenBraceIndent(session, openBraceRow);
+
+            if (heuristicRow !== null && heuristicRow >= 0) {
+               this.setIndent(session, row, heuristicRow);
+               return;
+            } else {
+               this.setIndent(session, row, openBraceRow);
+               return;
+            }
+         }
+         
+      }
+      
 
       // If we just inserted a '{' on a new line to begin a class definition,
       // try looking up for the associated class statement.
@@ -279,11 +329,16 @@ var MatchingBraceOutdent = function() {
             // Walk over un-informative lines
             var scopeLine = this.$heuristics.getLineSansComments(doc, scopeRow);
             while (/^\s*$/.test(scopeLine) ||
-                   /^\s*\(.*\)\s*$/.test(scopeLine)) {
+                   /^\s*\(.*\)\s*$/.test(scopeLine) ||
+                   /:\s*$/.test(scopeLine)) {
                scopeRow--;
                scopeLine = this.$heuristics.getLineSansComments(doc, scopeRow);
-               if (scopeRow === 0) break;
+               if (scopeRow <= 0) break;
             }
+
+            // If the first line had a continuation token then the row is now -1;
+            // nudge it back up
+            if (scopeRow < 0) scopeRow = 0;
 
             // Don't indent if the 'class' has an associated open brace. This ensures
             // that we get outdenting e.g.

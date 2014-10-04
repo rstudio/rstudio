@@ -305,7 +305,7 @@ oop.inherits(Mode, TextMode);
          //   #include <header>
          //   ^
          if (/>\s*$/.test(line)) {
-            var loc = this.$heuristics.findMatchingBracketRow(">", lines, row, 50);
+            var loc = this.$heuristics.findMatchingBracketRow(">", doc, row, 50);
             if (loc >= 0) {
                return indent;
             } else {
@@ -331,7 +331,7 @@ oop.inherits(Mode, TextMode);
          // Note this assumes the token is not a 'greater than'; rather it's
          // used for templating.
          if (/^\s*>[^>]/.test(line)) {
-            var loc = this.$heuristics.findMatchingBracketRow(">", lines, row, 50);
+            var loc = this.$heuristics.findMatchingBracketRow(">", doc, row, 50);
             if (loc >= 0) return indent;
          }
 
@@ -800,7 +800,7 @@ oop.inherits(Mode, TextMode);
 
                      heuristicRow = this.$heuristics.findMatchingBracketRow(
                         ">",
-                        lines,
+                        doc,
                         row,
                         50
                      );
