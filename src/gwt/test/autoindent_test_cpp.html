@@ -164,6 +164,17 @@ class foo:
 if (1 == 2) {
 </pre></li>
 
+<li><pre data-expected="4" data-expected-open-brace="0">
+if (1 >
+    2)
+</pre></li>
+
+<li><pre data-expected="0">
+if (1 >
+              2)
+    return true;
+</pre></li>
+
 <li><pre data-expected="0">
 if (1 == 2) { return 1 }
 </pre></li>

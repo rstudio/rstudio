@@ -757,11 +757,26 @@ oop.inherits(Mode, TextMode);
             }
 
             if (this.$heuristics.reStartsWithContinuationToken.test(thisLine) ||
-                this.$heuristics.reEndsWithContinuationToken.test(thisLine)) {
+                this.$heuristics.reEndsWithContinuationToken.test(thisLine) ||
+                /\)\s*$/.test(thisLine)) {
                
-               while (this.$heuristics.reStartsWithContinuationToken.test(thisLine) ||
-                      this.$heuristics.reEndsWithContinuationToken.test(thisLine) &&
-                      thisRow >= 0) {
+               while (
+                  (this.$heuristics.reStartsWithContinuationToken.test(thisLine) ||
+                   this.$heuristics.reEndsWithContinuationToken.test(thisLine) ||
+                   /\)\s*$/.test(thisLine)) &&
+                     thisRow >= 0) {
+
+                  // If this line ends with a closing paren, move to the opening paren
+                  if (/\)\s*$/.test(thisLine)) {
+
+                     var openParenPos = session.findMatchingBracket({
+                        row: thisRow,
+                        column: lines[thisRow].lastIndexOf(")") + 1
+                     });
+
+                     if (openParenPos && openParenPos.row < thisRow)
+                        thisRow = openParenPos.row;
+                  }
 
                   if (/^\s*template/.test(thisLine)) {
                      return this.$getIndent(thisLine);
@@ -785,9 +800,9 @@ oop.inherits(Mode, TextMode);
                      return indent;
                   }
 
-                  // If the line starts with a '>:', find the matching
-                  // row and continue. This allows for proper indentation of
-                  // e.g.
+                  // If the line starts with a '>' (but not '>>'),
+                  // find the matching row and continue. This allows
+                  // for proper indentation of e.g.
                   //
                   //   template <
                   //       typename T
