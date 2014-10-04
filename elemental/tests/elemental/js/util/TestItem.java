@@ -18,11 +18,16 @@ package elemental.js.util;
 /**
  * A simple object for testing collections.
  */
-public class TestItem {
+public class TestItem implements Comparable<TestItem> {
   private final int id;
 
   public TestItem(int id) {
     this.id = id;
+  }
+
+  @Override
+  public int compareTo(TestItem other) {
+    return (id < other.id) ? -1 : (id == other.id ? 0 : 1);
   }
 
   public int id() {

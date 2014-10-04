@@ -15,13 +15,19 @@
  */
 package elemental.js.util;
 
-import com.google.gwt.junit.client.GWTTestCase;
-
 import static elemental.js.util.TestUtils.assertSamelitude;
 
+import com.google.gwt.junit.client.GWTTestCase;
+
+import elemental.util.ArrayOf;
+import elemental.util.ArrayOfInt;
+import elemental.util.ArrayOfString;
+import elemental.util.CanCompare;
 import elemental.util.Collections;
 import elemental.util.MapFromIntTo;
 import elemental.util.MapFromIntToString;
+
+import java.util.Arrays;
 
 /**
  * Tests {@link MapFromIntTo} and {@link MapFromIntToString}.
@@ -71,8 +77,7 @@ public class MapFromIntTests extends GWTTestCase {
       assertEquals(newVals[i], map.get(keys[i]));
     }
 
-    assertSamelitude(keys, map.keys());
-    assertSamelitude(newVals, map.values());
+    checkMapContents(map, keys, newVals);
 
     // Let's remove a key, did it go away?
     map.remove(keys[0]);
@@ -118,12 +123,44 @@ public class MapFromIntTests extends GWTTestCase {
       assertEquals(newVals[i], map.get(keys[i]));
     }
 
-    assertSamelitude(keys, map.keys());
-    assertSamelitude(newVals, map.values());
+    checkMapContents(map, keys, newVals);
 
     // Let's remove a key, did it go away?
     map.remove(keys[0]);
     assertNull(map.get(keys[0]));
     assertFalse(map.hasKey(keys[0]));
+  }
+
+  private void checkMapContents(MapFromIntTo<TestItem> map, int[] keys, TestItem[] values) {
+    keys = Arrays.copyOf(keys, keys.length);
+    Arrays.sort(keys);
+    ArrayOfInt mapKeys = map.keys();
+    mapKeys.sort();
+    assertSamelitude(keys, mapKeys);
+
+    values = Arrays.copyOf(values, values.length);
+    Arrays.sort(values);
+    ArrayOf<TestItem> mapValues = map.values();
+    mapValues.sort(new CanCompare<TestItem>() {
+      @Override
+      public int compare(TestItem a, TestItem b) {
+        return a.compareTo(b);
+      }
+    });
+    assertSamelitude(values, mapValues);
+  }
+
+  private void checkMapContents(MapFromIntToString map, int[] keys, String[] values) {
+    keys = Arrays.copyOf(keys, keys.length);
+    Arrays.sort(keys);
+    ArrayOfInt mapKeys = map.keys();
+    mapKeys.sort();
+    assertSamelitude(keys, mapKeys);
+
+    values = Arrays.copyOf(values, values.length);
+    Arrays.sort(values);
+    ArrayOfString mapValues = map.values();
+    mapValues.sort();
+    assertSamelitude(values, mapValues);
   }
 }
