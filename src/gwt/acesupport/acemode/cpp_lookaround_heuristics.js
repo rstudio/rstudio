@@ -34,6 +34,10 @@ var CppLookaroundHeuristics = function() {};
       }
       return false;
    };
+
+   var charCount = function(string, character) {
+      return string.split(character).length - 1;
+   };
    
    var reEndsWithComma     = /,\s*$|,\s*\/\//;
    var reEndsWithColon     = /:\s*$|:\s*\/\//;
@@ -461,7 +465,10 @@ var CppLookaroundHeuristics = function() {};
       var reNaked = /^\s*[\w_:]+\s*$|^\s*[\w_:]+\s*\(.*\)\s*$/;
 
       // First, check for an indentation
-      if (reNaked.test(line) || this.reNakedMatch(line)) {
+      if (
+         (charCount(line, "(") === charCount(line, ")")) &&
+         (reNaked.test(line) || this.reNakedMatch(line))
+      ) {
          return indent + tab;
       }
 

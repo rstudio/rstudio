@@ -442,13 +442,6 @@ oop.inherits(Mode, TextMode);
             return indent + tab;
          }
 
-         // Indent if the line ends on an operator token
-         // Can't include > here since they may be used
-         // for templates (it's handled above)
-         if (/[\+\-\/\*\|<\&\^\%\=]\s*$/.test(line)) {
-            return indent + tab;
-         }
-
          // Indent after a 'case foo' -- this handles e.g.
          //
          //   case foo: bar;
