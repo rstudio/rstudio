@@ -391,8 +391,22 @@ oop.inherits(Mode, TextMode);
          // foo::bar
          //    (argList)
          // ^
-         if (/^\s*\(.*\)\s*$/.test(line) && row > 0) {
-            return this.$getIndent(lines[row - 1]) + tab;
+         //
+         // We walk up blank rows until we find something that provides
+         // information for indenting (first line found with a word character)
+         if (/^\s*\(.*\);?\s*$/.test(line) && row > 0) {
+            var rowToUse = row - 1;
+            while (rowToUse >= 0 &&
+                   !/\w/.test(this.$heuristics.getLineSansComments(doc, rowToUse))) {
+               rowToUse--;
+            }
+
+            // Insert a tab if the line didn't end with a semicolon
+            var maybeTab = /;\s*/.test(line) ?
+                   "" :
+                   tab;
+            
+            return this.$getIndent(lines[rowToUse]) + maybeTab;
          }
 
          // Indent for a :
@@ -583,14 +597,26 @@ oop.inherits(Mode, TextMode);
                column: lines[row].lastIndexOf(match[1]) + 1
             });
 
-            var maybeTab = typeof match[2] !== "undefined" ?
-                   "" :
-                   tab;
+            if (openPos && openPos.row !== row) {
 
-            if (openPos && openPos.row != row) {
-               return this.$getIndent(lines[openPos.row]) + maybeTab;
+               var rowToUse = openPos.row;
+
+               // If the parenthesis is the first token on the line, look up
+               if (lines[rowToUse].indexOf("(") === openPos.column) {
+                  while (rowToUse >= 0 && !/\w/.test(lines[rowToUse])) {
+                     rowToUse--;
+                  }
+                  if (rowToUse == -1) rowToUse++;
+               }
+
+               // Insert a tab if there was no semi-colon at the end of the line
+               var maybeTab = typeof match[2] !== "undefined" ?
+                      "" :
+                      tab;
+
+               return this.$getIndent(lines[rowToUse]) + maybeTab;
             }
-
+            
          }
 
          // Vertical alignment

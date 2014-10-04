@@ -8,6 +8,8 @@ var CppLookaroundHeuristics = function() {};
    var reStartsWithColon        = /^\s*:/;
    var reStartsWithCommaOrColon = /^\s*[,:]/;
 
+   var reOnlyWhitespace = /^\s*$/;
+
    var reStartsWithContinuationToken = /^\s*[,+\-/&^%$!<\>.?|=\'\":]|^\s*\*[^/]/;
    var reEndsWithContinuationToken =       /[,+\-/&^%$!<\>.?|=\'\":]\s*$|\*[^/]\s*$/;
 
@@ -145,7 +147,8 @@ var CppLookaroundHeuristics = function() {};
 
          // Check whether we can keep walking up, or if we've run out of
          // 'valid' formats.
-         if (!(reStartsWithContinuationToken.test(line) ||
+         if (reOnlyWhitespace.test(line) ||
+             !(reStartsWithContinuationToken.test(line) ||
                reEndsWithContinuationToken.test(line))) {
             if (!canRetry) {
                break;
@@ -185,7 +188,21 @@ var CppLookaroundHeuristics = function() {};
          });
 
          if (openParenPos) {
-            return openParenPos.row;
+
+            // NOTE: We need to look back in case the function argument list
+            // is on its own line, e.g.
+            //
+            //   foo
+            //       () {
+            //
+            var rowToUse = openParenPos.row;
+            var line = this.getLineSansComments(doc, rowToUse);
+            while (/^\s*$/.test(line) ||
+                   /^\s*\(.*\).*\{?\s*$/.test(line)) {
+               rowToUse--;
+               line = this.getLineSansComments(doc, rowToUse);
+            }
+            return rowToUse;
          }
       }
 
@@ -210,10 +227,14 @@ var CppLookaroundHeuristics = function() {};
             //   foo
             //       ()
             //
-            if (/^\s*\(.*\)\s*$/.test(this.getLineSansComments(doc, openParenPos.row))) {
-               return openParenPos.row - 1;
+            var rowToUse = openParenPos.row;
+            var line = this.getLineSansComments(doc, rowToUse);
+            while (/^\s*$/.test(line) ||
+                   /^\s*\(.*\).*\{?\s*$/.test(line)) {
+               rowToUse--;
+               line = this.getLineSansComments(doc, rowToUse);
             }
-            return openParenPos.row;
+            return rowToUse;
          }
       }
 

@@ -91,12 +91,18 @@ int foo =
 
 <li><pre data-expected="4" data-expected-open-brace="0">
 foo::bar
+    // some weird comment
     (arguments on own line)
 </pre></li>
 
 <li><pre data-expected="0">
 class Foo{};
 class Foo{};
+</pre></li>
+
+<li><pre data-expected="4">
+int foo
+    (int a) {
 </pre></li>
 
 <li><pre data-expected="4">
