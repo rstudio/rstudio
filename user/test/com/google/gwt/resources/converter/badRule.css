@@ -1,0 +1,15 @@
+.foo {
+  width: 822px;
+  min-height: 62px;
+  position: relative;
+  margin: 0 0 0 -1px;
+  border-top: 1px solid #e2e2e2;
+
+  background-image:literal("-moz-linear-gradient(19% 0% -90deg,rgb(252,252,252) 0%,rgb(248,248,248) 100%))");
+  background-image:literal("-webkit-gradient(linear,19% 0%,19% 109%,color-stop(0, rgb(252,252,252)),color-stop(1, rgb(248,248,248)))");
+  background-image:literal("-webkit-linear-gradient(-90deg,rgb(252,252,252) 0%,rgb(248,248,248) 100%)");
+  background-image:literal("-ms-linear-gradient(-90deg,rgb(252,252,252) 0%,rgb(248,248,248) 100%)");
+  background-image:literal("linear-gradient(-90deg,rgb(252,252,252) 0%,rgb(248,248,248) 100%)");
+  -ms-filter:literal("'progid:DXImageTransform.Microsoft.gradient(startColorstr=#fffcfcfc,endColorstr=#fff8f8f8,GradientType=0)'");
+  filter:literal("progid:DXImageTransform.Microsoft.gradient(startColorstr=#fffcfcfc,endColorstr=#fff8f8f8,GradientType=0)");
+}

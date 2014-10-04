@@ -1,0 +1,6 @@
+
+.foo {
+  display: none;
+  color: jfk_my_stuff;
+  background-color: jfk_123_asd;
+}

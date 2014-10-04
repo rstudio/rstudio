@@ -89,6 +89,7 @@
     <mkdir dir="${javac.out}"/>
     <gwt.javac excludes="**/super/**">
       <classpath>
+        <pathelement location="${gwt.tools.lib}/gss/2014-09-11/closure-stylesheets-rebased.jar"/>
         <pathelement
             location="${gwt.tools.lib}/jetty/jetty-8.1.12.v20130726/servlet-api-3.0-NoMetaInf.jar"/>
         <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar"/>
@@ -132,6 +133,7 @@
         <pathelement location="${javac.out}"/>
         <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar"/>
         <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar"/>
+        <pathelement location="${gwt.tools.lib}/gss/2014-09-11/closure-stylesheets-rebased.jar"/>
         <path refid="test.extraclasspath"/>
       </classpath>
       <compilerarg value="-processor"/>

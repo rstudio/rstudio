@@ -1,0 +1,64 @@
+@def MY_CONSTANT 15px;
+@def MY_EVAL eval('com.foo.bar.foo()');
+@def MY_URL resourceUrl("imageName");
+
+@if (is("propertyname", "value1")) {
+  @def MY_CONSTANT1 15px;
+  @def MY_EVAL1 eval('com.foo.bar.foo()');
+  @def MY_URL1 resourceUrl("imageName");
+}
+
+@if (is("propertyname", "value2")) {
+  @def MY_CONSTANT1 15px;
+  @def MY_EVAL1 eval('com.foo.bar.foo()');
+  @def MY_URL1 resourceUrl("imageName");
+
+  @if (is("propertyname", "value3")) {
+    @def MY_CONSTANT11 15px;
+    @def MY_EVAL11 eval('com.foo.bar.foo()');
+    @def MY_URL11 resourceUrl("imageName");
+  }
+  @elseif (eval('com.google.gwt.i18n.client.LocaleInfo.getCurrentLocale().isRTL()')) {
+    @def MY_CONSTANT12 15px;
+    @def MY_EVAL12 eval('com.foo.bar.foo()');
+    @def MY_URL12 resourceUrl("imageName");
+  }
+  @else  {
+    @def MY_CONSTANT13 15px;
+    @def MY_EVAL13 eval('com.foo.bar.foo()');
+    @def MY_URL13 resourceUrl("imageName");
+  }
+}
+@elseif (is("property", "value")) {
+  @def MY_CONSTANT2 15px;
+  @def MY_EVAL2 eval('com.foo.bar.foo()');
+  @def MY_URL2 resourceUrl("imageName");
+
+  @if (is("propertyname", "value4")) {
+    @def MY_CONSTANT21 15px;
+    @def MY_EVAL21 eval('com.foo.bar.foo()');
+    @def MY_URL21 resourceUrl("imageName");
+  }
+  @else  {
+    @def MY_CONSTANT22 15px;
+    @def MY_EVAL22 eval('com.foo.bar.foo()');
+    @def MY_URL22 resourceUrl("imageName");
+  }
+}
+@else  {
+  @def MY_CONSTANT3 15px;
+  @def MY_EVAL3 eval('com.foo.bar.foo()');
+  @def MY_URL3 resourceUrl("imageName");
+}
+@media print {
+
+  .appFooter-appPanel {
+    text-align: center;
+  }
+}
+@def MY_CONSTANT4 15px;
+@def MY_EVAL4 eval('com.foo.bar.foo()');
+@def MY_URL4 resourceUrl("imageName");
+@def MY_CONSTANT7 15px;
+@def MY_EVAL7 eval('com.foo.bar.foo()');
+@def MY_URL7 resourceUrl("imageName");

@@ -1,0 +1,14 @@
+
+pre {
+  white-space: pre-wrap;
+  /* @alternate */ white-space: -moz-pre-wrap;
+  /* @alternate */ white-space: -pre-wrap;
+  /* @alternate */ white-space: -o-pre-wrap;
+  word-wrap: break-word;
+}
+
+.foo {
+  gwt-sprite: "bar";
+  height: 10px;
+  /* @alternate */ height: 20px;
+}

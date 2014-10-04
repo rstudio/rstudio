@@ -1,0 +1,38 @@
+@def myConstant 15px;
+@def my_constant 20px;
+@def my-constant 25px;
+
+@url myUrl imageName;
+@url my_url imageName2;
+@url my-url imageName3;
+
+@eval myEval com.foo.bar.foo();
+@eval my_eval com.foo.bar.foo();
+@eval my-eval com.foo.bar.foo();
+
+.foo {
+  width: myConstant;
+  height: my-constant;
+  top: my_constant;
+  left: myEval;
+
+  cursor: myUrl;
+}
+
+.bar {
+  width: myConstant;
+  height: my-constant;
+  top: my_constant;
+  left: my_eval;
+
+  cursor: my_url;
+}
+
+.blop {
+  width: myConstant;
+  height: my-constant;
+  top: my_constant;
+  left: my-eval;
+
+  cursor: my-url;
+}

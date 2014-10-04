@@ -1,0 +1,67 @@
+@def myConstant 15px;
+@eval myEval com.foo.bar.foo();
+@url myUrl imageName;
+
+@if propertyname value1 {
+  @def myConstant1 15px;
+  @eval myEval1 com.foo.bar.foo();
+  @url myUrl1 imageName;
+}
+
+/* Lenient mode, the constant will be redefined outside the conditionals evalueated at runtime */
+@if propertyname value2 {
+  @def myConstant1 15px;
+  @eval myEval1 com.foo.bar.foo();
+  @url myUrl1 imageName;
+
+  @if propertyname value3 {
+    @def myConstant11 15px;
+    @eval myEval11 com.foo.bar.foo();
+    @url myUrl11 imageName;
+  }
+  @elif (com.google.gwt.i18n.client.LocaleInfo.getCurrentLocale().isRTL()) {
+    @def myConstant12 15px;
+    @eval myEval12 com.foo.bar.foo();
+    @url myUrl12 imageName;
+  }
+  @else {
+    @def myConstant13 15px;
+    @eval myEval13 com.foo.bar.foo();
+    @url myUrl13 imageName;
+  }
+}
+@elif property value {
+  @def myConstant2 15px;
+  @eval myEval2 com.foo.bar.foo();
+  @url myUrl2 imageName;
+
+  @if propertyname value4 {
+    @def myConstant21 15px;
+    @eval myEval21 com.foo.bar.foo();
+    @url myUrl21 imageName;
+  }
+  @else {
+    @def myConstant22 15px;
+    @eval myEval22 com.foo.bar.foo();
+    @url myUrl22 imageName;
+  }
+}
+@else {
+  @def myConstant3 15px;
+  @eval myEval3 com.foo.bar.foo();
+  @url myUrl3 imageName;
+}
+
+@media print {
+  @def myConstant4 15px;
+  @eval myEval4 com.foo.bar.foo();
+  @url myUrl4 imageName;
+
+  .appFooter-appPanel {
+    text-align: center;
+  }
+}
+
+@def myConstant7 15px;
+@eval myEval7 com.foo.bar.foo();
+@url myUrl7 imageName;

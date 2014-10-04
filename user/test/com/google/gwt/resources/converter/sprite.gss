@@ -1,0 +1,8 @@
+
+.topLeft {
+  gwt-sprite: "topLeftBorder";
+  padding-left: value('topLeftBorder.getWidth', 'px');
+  zoom: 1;
+  width: auto;
+  height: auto;
+}

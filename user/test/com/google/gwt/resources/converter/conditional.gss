@@ -1,0 +1,112 @@
+
+@if (is("user.agent", "ie6") || is("user.agent", "opera")) {
+  .blop {
+    color: wheat;
+  }
+}
+@elseif (is("user.agent", "ie8")) {
+
+  @if (is("local", "en")) {
+    .blop {
+      color: black;
+    }
+  }
+  @elseif (is("local", "fr")) {
+    .blop {
+      color: black;
+    }
+  }
+}
+@else  {
+  .blop {
+    color: black;
+  }
+}
+
+@if (eval('com.foo.BAR')) {
+  .blop {
+    color: black;
+  }
+
+  @if (eval('com.foo.BAR2')) {
+    .blop {
+      color: black;
+    }
+  }
+  @else  {
+    .blop {
+      color: black;
+    }
+  }
+}
+@elseif (eval('com.foo.foo()')) {
+  .blop {
+    color: black;
+  }
+}
+
+@if (eval('com.foo.BAR')) {
+  .blop {
+    color: black;
+  }
+}
+
+@if (eval('com.foo.foo()')) {
+  .blop {
+    color: black;
+  }
+}
+
+@if (eval('com.foo.foo("blop")')) {
+  .blop {
+    color: black;
+  }
+}
+
+@if (is("property1", "desktop")) {
+  .foo3 {
+  }
+
+  @if (is("property2", "true")) {
+    .foo1 {
+    }
+  }
+  @else  {
+    .foo2 {
+    }
+  }
+}
+@elseif (is("property1", "blop")) {
+  .foo3 {
+  }
+}
+@elseif (is("property1", "blop2")) {
+
+  @if (is("property2", "true")) {
+    .foo4 {
+    }
+  }
+}
+@else  {
+
+  @if (is("property2", "true")) {
+    .foo4 {
+    }
+  }
+  @else  {
+    .foo5 {
+    }
+  }
+
+  .foo6 {
+  }
+
+  @if (is("property1", "tablet")) {
+    .foo7 {
+    }
+  }
+  @else  {
+    .foo8 {
+    }
+  }
+}

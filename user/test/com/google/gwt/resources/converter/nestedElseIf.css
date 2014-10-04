@@ -1,0 +1,66 @@
+@if propertyname value1 {
+  .foo {
+    width: 1px;
+  }
+
+  @if propertyname value11 {
+    .foo {
+      width: 11px;
+    }
+  }
+  @elif propertyname value12 {
+    .foo {
+      width: 12px;
+    }
+  }
+  @else propertyname value13 {
+    .foo {
+      width: 13px;
+    }
+
+    @if propertyname value131 {
+      .foo {
+        width: 131px;
+      }
+    }
+    @else propertyname value132 {
+      .foo {
+        width: 132px;
+      }
+    }
+  }
+}
+@elif propertyname value2 {
+  .foo {
+    width: 2px;
+  }
+} @else {
+  .foo {
+    width: 3px;
+  }
+
+  @if propertyname value31 {
+    .foo {
+      width: 31px;
+    }
+  } @else {
+    .foo {
+      width: 32px;
+    }
+    @if propertyname value321 {
+      .foo {
+        width: 312px;
+      }
+    }
+    @elif propertyname value322 {
+      .foo {
+        width: 322px;
+      }
+    }
+    @elif propertyname value323 {
+      .foo {
+        width: 323px;
+      }
+    }
+  }
+}

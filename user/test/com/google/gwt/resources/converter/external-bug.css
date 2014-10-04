@@ -1,0 +1,51 @@
+@media \(max-width\:767px\) {
+  @external .appFooter-appPanel;
+  .appFooter-appPanel {
+    text-align: center;
+  }
+
+  @external .appFooter-linksPanelWithApps;
+  .appFooter-linksPanelWithApps div {
+    text-align: center !important;
+  }
+
+  .bankAccountCard {
+    margin-left: 5%;
+    margin-right: 5%;
+    max-width: 800px;
+    width: 90%;
+  }
+
+  .footer {
+    position: relative;
+  }
+
+  @external .panel;
+  .panel {
+    padding-bottom: 0;
+  }
+}
+
+@if user.agent safari {
+  @external foo;
+  .foo {
+
+  }
+  @if locale en {
+    @external bar;
+    .bar {}
+  }
+  @elif (com.bar.foo()) {
+    @external foo2;
+    .foo2 {}
+  }
+  @else {
+    @external baz;
+    .baz {}
+  }
+}
+
+@external foo foo:after;
+@external .dragdrop-proxy;
+@external .dragdrop-selected
+@external .dragdrop-movable-panel;

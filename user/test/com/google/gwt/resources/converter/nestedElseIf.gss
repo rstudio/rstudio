@@ -1,0 +1,70 @@
+
+@if (is("propertyname", "value1")) {
+  .foo {
+    width: 1px;
+  }
+
+  @if (is("propertyname", "value11")) {
+    .foo {
+      width: 11px;
+    }
+  }
+  @elseif (is("propertyname", "value12")) {
+    .foo {
+      width: 12px;
+    }
+  }
+  @else  {
+    .foo {
+      width: 13px;
+    }
+
+    @if (is("propertyname", "value131")) {
+      .foo {
+        width: 131px;
+      }
+    }
+    @else  {
+      .foo {
+        width: 132px;
+      }
+    }
+  }
+}
+@elseif (is("propertyname", "value2")) {
+  .foo {
+    width: 2px;
+  }
+}
+@else  {
+  .foo {
+    width: 3px;
+  }
+
+  @if (is("propertyname", "value31")) {
+    .foo {
+      width: 31px;
+    }
+  }
+  @else  {
+    .foo {
+      width: 32px;
+    }
+
+    @if (is("propertyname", "value321")) {
+      .foo {
+        width: 312px;
+      }
+    }
+    @elseif (is("propertyname", "value322")) {
+      .foo {
+        width: 322px;
+      }
+    }
+    @elseif (is("propertyname", "value323")) {
+      .foo {
+        width: 323px;
+      }
+    }
+  }
+}

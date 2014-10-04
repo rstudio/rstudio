@@ -1,0 +1,18 @@
+
+@if (is("user.agent", "gecko1_8")) {
+  .inlineBlock {
+    display: -moz-inline-box;
+  }
+}
+
+.inlineBlock {
+  position: relative;
+  display: inline-block;
+}
+
+@if (is("user.agent", "ie6")) {
+  .inlineBlock {
+    zoom: 1;
+    display: inline;
+  }
+}

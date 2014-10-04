@@ -1,0 +1,13 @@
+pre {
+ white-space: pre-wrap;
+ white-space: -moz-pre-wrap;
+ white-space: -pre-wrap;
+ white-space: -o-pre-wrap;
+ word-wrap: break-word;
+}
+
+@sprite .foo {
+  gwt-image: 'bar';
+  height: 10px;
+  height: 20px;
+}

@@ -1,0 +1,33 @@
+@def MY_CONSTANT 15px;
+@def MY_CONSTANT__RENAMED__0 20px;
+@def MY_CONSTANT__RENAMED__1 25px;
+@def MY_URL resourceUrl("imageName");
+@def MY_URL__RENAMED__2 resourceUrl("imageName2");
+@def MY_URL__RENAMED__3 resourceUrl("imageName3");
+@def MY_EVAL eval('com.foo.bar.foo()');
+@def MY_EVAL__RENAMED__4 eval('com.foo.bar.foo()');
+@def MY_EVAL__RENAMED__5 eval('com.foo.bar.foo()');
+
+.foo {
+  width: MY_CONSTANT;
+  height: MY_CONSTANT__RENAMED__1;
+  top: MY_CONSTANT__RENAMED__0;
+  left: MY_EVAL;
+  cursor: MY_URL;
+}
+
+.bar {
+  width: MY_CONSTANT;
+  height: MY_CONSTANT__RENAMED__1;
+  top: MY_CONSTANT__RENAMED__0;
+  left: MY_EVAL__RENAMED__4;
+  cursor: MY_URL__RENAMED__2;
+}
+
+.blop {
+  width: MY_CONSTANT;
+  height: MY_CONSTANT__RENAMED__1;
+  top: MY_CONSTANT__RENAMED__0;
+  left: MY_EVAL__RENAMED__5;
+  cursor: MY_URL__RENAMED__3;
+}

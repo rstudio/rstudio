@@ -1,0 +1,14 @@
+@CHARSET "UTF-8";
+
+@external .dragdrop-dropTarget;
+@external .dragdrop-dropTarget-engage;
+@external .dragdrop-flow-panel-positioner;
+@external .dragdrop-positioner;
+@external .dragdrop-boundary;
+@external .dragdrop-handle;
+@external .dragdrop-draggable;
+@external .dragdrop-selected;
+@external .dragdrop-dragging;
+@external .dragdrop-proxy;
+@external .dragdrop-selected1
+@external .dragdrop-movable-panel;
