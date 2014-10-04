@@ -23,7 +23,6 @@ import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.DevMode.HostedModeOptions;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.util.arg.JsInteropMode;
-import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,9 +31,7 @@ import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Starts a superdev-mode codeserver.
@@ -50,55 +47,14 @@ public class SuperDevListener implements CodeServerListener {
    * Listens for new connections from browsers.
    */
   public SuperDevListener(TreeLogger treeLogger, HostedModeOptions options) {
-    List<String> args = new ArrayList<String>();
     this.logger = treeLogger;
     this.options = options;
+    this.codeServerPort = chooseCodeServerPort(treeLogger, options);
 
-    int port = options.getCodeServerPort();
-    if (port < 0 || port == 9997) {
-      port = 9876;
-    } else if (port == 0) {
-      try {
-        ServerSocket serverSocket = new ServerSocket(0);
-        port = serverSocket.getLocalPort();
-        serverSocket.close();
-      } catch (IOException e) {
-        logger.log(TreeLogger.ERROR, "Unable to get an unnused port.");
-        throw new RuntimeException(e);
-      }
-    }
+    // This directory must exist when the Code Server starts.
+    ensureModuleBaseDir(options);
 
-    codeServerPort = port;
-    // Let RemoteServiceServlet know the location of RPC serialization policies (issue #8850)
-    System.setProperty("gwt.codeserver.port", String.valueOf(codeServerPort));
-
-    args.add("-noprecompile");
-    args.add("-port");
-    args.add(String.valueOf(codeServerPort));
-    args.add("-sourceLevel");
-    args.add(String.valueOf(options.getSourceLevel()));
-    if (options.getBindAddress() != null) {
-      args.add("-bindAddress");
-      args.add(options.getBindAddress());
-    }
-    if (options.getWorkDir() != null) {
-      args.add("-workDir");
-      args.add(String.valueOf(options.getWorkDir()));
-    }
-    if (options.getLogLevel() != null) {
-      args.add("-logLevel");
-      args.add(String.valueOf(options.getLogLevel()));
-    }
-    if (options.getJsInteropMode() != JsInteropMode.NONE) {
-      args.add("-XjsInteropMode");
-      args.add(options.getJsInteropMode().toString());
-    }
-    if (!options.isIncrementalCompileEnabled()) {
-      args.add("-noincremental");
-    }
-    for (String mod : options.getModuleNames()) {
-      args.add(mod);
-    }
+    List<String> args = makeCodeServerArgs(options, codeServerPort);
 
     final String[] codeServerArgs = args.toArray(new String[0]);
 
@@ -150,31 +106,7 @@ public class SuperDevListener implements CodeServerListener {
   @Override
   public void writeCompilerOutput(StandardLinkerContext linkerStack, ArtifactSet artifacts,
       ModuleDef module, boolean isRelink) throws UnableToCompleteException {
-    try {
-      String computeScriptBase =
-          Utility.getFileFromClassPath("com/google/gwt/dev/codeserver/computeScriptBase.js");
-      String contents =
-          Utility.getFileFromClassPath("com/google/gwt/dev/codeserver/stub.nocache.js");
-
-      File file =
-          new File(options.getModuleBaseDir() + "/" + module.getName() + "/" + module.getName()
-              + ".nocache.js");
-
-      file.deleteOnExit();
-
-      file.getParentFile().mkdirs();
-
-      Map<String, String> replacements = new HashMap<String, String>();
-      replacements.put("__COMPUTE_SCRIPT_BASE__", computeScriptBase);
-      // must go after script base
-      replacements.put("__MODULE_NAME__", module.getName());
-      replacements.put("__SUPERDEV_PORT__", "" + codeServerPort);
-
-      Utility.writeTemplateFile(file, contents, replacements);
-    } catch (IOException e) {
-      logger.log(TreeLogger.ERROR, "Unable to create nocache script ", e);
-      throw new UnableToCompleteException();
-    }
+    // The code server will do this.
   }
 
   @Override
@@ -184,5 +116,71 @@ public class SuperDevListener implements CodeServerListener {
   @Override
   public void start() {
     listenThread.start();
+  }
+
+  private static int chooseCodeServerPort(TreeLogger logger, HostedModeOptions options) {
+    int port = options.getCodeServerPort();
+    if (port == 0) {
+      // Automatically choose an unused port.
+      try {
+        ServerSocket serverSocket = new ServerSocket(0);
+        port = serverSocket.getLocalPort();
+        serverSocket.close();
+        return port;
+      } catch (IOException e) {
+        logger.log(TreeLogger.ERROR, "Unable to get an unnused port.");
+        throw new RuntimeException(e);
+      }
+    } else if (port < 0 || port == 9997) {
+      // 9997 is the default non-SuperDevMode port from DevModeBase. TODO: use constant.
+      return 9876; // Default Super Dev Mode port
+    } else {
+      return port; // User-specified port
+    }
+  }
+
+  private static void ensureModuleBaseDir(HostedModeOptions options) {
+    File dir = options.getModuleBaseDir();
+    if (!dir.isDirectory()) {
+      dir.mkdirs();
+      if (!dir.isDirectory()) {
+        throw new RuntimeException("unable to create module base directory: " +
+            dir.getAbsolutePath());
+      }
+    }
+  }
+
+  private static List<String> makeCodeServerArgs(HostedModeOptions options, int port) {
+    List<String> args = new ArrayList<String>();
+    args.add("-noprecompile");
+    args.add("-port");
+    args.add(String.valueOf(port));
+    args.add("-sourceLevel");
+    args.add(String.valueOf(options.getSourceLevel()));
+    if (options.getBindAddress() != null) {
+      args.add("-bindAddress");
+      args.add(options.getBindAddress());
+    }
+    if (options.getWorkDir() != null) {
+      args.add("-workDir");
+      args.add(String.valueOf(options.getWorkDir()));
+    }
+    args.add("-launcherDir");
+    args.add(options.getModuleBaseDir().getAbsolutePath());
+    if (options.getLogLevel() != null) {
+      args.add("-logLevel");
+      args.add(String.valueOf(options.getLogLevel()));
+    }
+    if (options.getJsInteropMode() != JsInteropMode.NONE) {
+      args.add("-XjsInteropMode");
+      args.add(options.getJsInteropMode().toString());
+    }
+    if (!options.isIncrementalCompileEnabled()) {
+      args.add("-noincremental");
+    }
+    for (String mod : options.getModuleNames()) {
+      args.add(mod);
+    }
+    return args;
   }
 }
