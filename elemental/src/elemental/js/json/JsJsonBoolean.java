@@ -32,7 +32,8 @@ final public class JsJsonBoolean extends JsJsonValue
    * MAGIC: primitive boolean cast to object interface.
    */
   private static native JsJsonBoolean createProd(boolean bool) /*-{
-    return @elemental.js.json.JsJsonValue::box(Lelemental/json/JsonValue;)(bool);
+    // box for DevMode, not ProdMode
+    return @com.google.gwt.core.client.GWT::isScript()() ? bool : Object(bool);
   }-*/;
 
   protected JsJsonBoolean() {

@@ -31,7 +31,8 @@ public class JsJsonFactory implements JsonFactory {
   private static native <T extends JsonValue> T parse0(String jsonString) /*-{
     // assume Chrome, safe and non-broken JSON.parse impl
     var value = $wnd.JSON.parse(jsonString);
-    return @elemental.js.json.JsJsonValue::box(Lelemental/json/JsonValue;)(value);
+    // box for DevMode, not ProdMode
+    return @com.google.gwt.core.client.GWT::isScript()() || value == null ? value : Object(value);
   }-*/;
 
   public JsonString create(String string) {

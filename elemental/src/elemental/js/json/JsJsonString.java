@@ -32,7 +32,8 @@ final public class JsJsonString extends JsJsonValue
    * MAGIC: String cast to object interface.
    */
   private static native JsJsonString createProd(String string) /*-{
-    return @elemental.js.json.JsJsonValue::box(Lelemental/json/JsonValue;)(string);
+    // no need to box String for ProdMode and DevMode
+    return string;
   }-*/;
 
   protected JsJsonString() {

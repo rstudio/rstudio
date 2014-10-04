@@ -39,7 +39,9 @@ final public class JsJsonObject extends JsJsonValue
   }
 
   public final native JsonValue get(String key) /*-{
-    return @elemental.js.json.JsJsonValue::box(Lelemental/json/JsonValue;)(this[key]);
+    var value = this[key];
+    // box for DevMode, not ProdMode
+    return @com.google.gwt.core.client.GWT::isScript()() || value == null ? value : Object(value);
   }-*/;
 
   public JsonArray getArray(String key) {
