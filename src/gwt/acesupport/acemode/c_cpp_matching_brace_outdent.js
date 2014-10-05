@@ -253,7 +253,7 @@ var $alignCase                 = true; // case 'a':
          if (closingParenMatch) {
             var openParenPos = session.findMatchingBracket({
                row: row,
-               column: line.indexOf(closerMatch[1]) + 1
+               column: line.indexOf(")") + 1
             });
             if (openParenPos) {
                this.setIndent(session, row, openParenPos.row);
@@ -267,7 +267,7 @@ var $alignCase                 = true; // case 'a':
          if (closingBracketMatch) {
             var openBracketPos = session.findMatchingBracket({
                row: row,
-               column: line.indexOf(closerMatch[1]) + 1
+               column: line.indexOf("]") + 1
             });
             if (openBracketPos) {
                this.setIndent(session, row, openBracketPos.row);
