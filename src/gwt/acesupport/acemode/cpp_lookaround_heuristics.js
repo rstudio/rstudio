@@ -11,7 +11,7 @@ var CppLookaroundHeuristics = function() {};
    var reOnlyWhitespace = /^\s*$/;
 
    var reStartsWithContinuationToken = /^\s*[,+\-/&^%$!<\>.?|=\'\":]|^\s*\*[^/]/;
-   var reEndsWithContinuationToken =       /[,+\-/&^%$!<\>.?|=\'\":]\s*$|\*[^/]\s*$/;
+   var reEndsWithContinuationToken =       /[,+\-*&^%$!<\>.?|=\'\":]\s*$|\*[^/]\s*$/;
 
    this.reStartsWithContinuationToken = reStartsWithContinuationToken;
    this.reEndsWithContinuationToken   = reEndsWithContinuationToken;
