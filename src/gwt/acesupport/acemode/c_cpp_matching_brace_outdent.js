@@ -8,26 +8,27 @@ var MatchingBraceOutdent = function() {
 };
 
 // Allow the user to control outdenting if desired
-var $outdentColon = true;                        // : (initializer list)
-var $outdentRightParen = true;                   // )
-var $outdentLeftBrace = true;                    // {
-var $outdentRightBrace = true;                   // }
-var $outdentRightBracket = true;                 // ]
-var $outdentChevron = true;                      // >
-var $alignDots = true;                           // .
-var $alignStreamIn = true;                       // >>
-var $alignStreamOut = true;                      // <<
-var $alignClassAccessModifiers = true;           // public: etc.
-var $alignCase = true;                           // case 'a':
+var $outdentColon              = true; // : (initializer list)
+var $outdentRightParen         = true; // )
+var $outdentLeftBrace          = true; // {
+var $outdentRightBrace         = true; // }
+var $outdentRightBracket       = true; // ]
+var $outdentChevron            = true; // >
+var $alignDots                 = true; // .
+var $alignStreamIn             = true; // >>
+var $alignStreamOut            = true; // <<
+var $alignClassAccessModifiers = true; // public: etc.
+var $alignCase                 = true; // case 'a':
 
 (function() {
 
-   // Set the indent of the line at 'row' to the indentation
-   // at 'rowFrom'. This operation is only performed if the indentation
+   // Set the indent of the line at 'row' to the indentation at
+   // 'rowFrom'. This operation is only performed if the indentation
    // of the lines at 'rowTo' and 'rowFrom' match.
-   // 'predicate' is a function taking the old and new indents, and returning
-   // true or false -- this is used to give more fine-grained control over when
-   // outdenting occurs.
+   //
+   // 'predicate' is an (optional) function taking the old and new
+   // indents, and returning true or false -- this is used to ensure
+   // outdenting only occurs when explicitly desired.
    this.setIndent = function(session, rowTo, rowFrom, extraIndent, predicate) {
 
       var doc = session.getDocument();

@@ -459,11 +459,18 @@ oop.inherits(Mode, TextMode);
          match = line.match(/^(\s*for\s*\().*[;,]\s*$/);
          if (match) {
 
-            // TODO: function that pads current indentation with spaces,
-            // so that we respect tabs?
-            return $verticallyAlignFunctionArgs ?
-               new Array(match[1].length + 1).join(" ") :
-               indent + tab;
+            // Make sure there is one more left paren than right paren on the line
+            var parenBalance = line.split("(").length - line.split(")").length;
+
+            if (parenBalance === 1) {
+               // TODO: function that pads current indentation with spaces,
+               // so that we respect tabs?
+               return $verticallyAlignFunctionArgs ?
+                  new Array(match[1].length + 1).join(" ") :
+                  indent + tab;
+               
+            }
+
          }
 
          // Handle naked 'for', 'if' etc. tokens. This function is a bit awkward --
