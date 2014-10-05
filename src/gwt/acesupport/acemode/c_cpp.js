@@ -774,8 +774,9 @@ oop.inherits(Mode, TextMode);
                         column: lines[thisRow].lastIndexOf(")") + 1
                      });
 
-                     if (openParenPos && openParenPos.row < thisRow)
+                     if (openParenPos && openParenPos.row < thisRow) {
                         thisRow = openParenPos.row;
+                     }
                   }
 
                   if (/^\s*template/.test(thisLine)) {
@@ -843,7 +844,8 @@ oop.inherits(Mode, TextMode);
                //
                // so we re-correct for that here.
                var lastLine = doc.getLine(thisRow + 1);
-               if (this.$heuristics.reEndsWithContinuationToken.test(lastLine)) {
+               if (thisRow < 0 ||
+                   this.$heuristics.reEndsWithContinuationToken.test(lastLine)) {
                   return this.$getIndent(lastLine);
                } else {
                   return this.$getIndent(thisLine);
