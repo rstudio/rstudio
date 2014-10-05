@@ -257,106 +257,91 @@ var CStyleBehaviour = function () {
          line = line.substr(0, commentMatch.index - 1);
       }
 
+      // Specialized insertion rules -- we infer whether a closing ';'
+      // is appropriate, and we also provide comments for closing namespaces
+      // (if desired)
       if (text == '{') {
 
+         // Ensure these rules are only run if there is no selection
          var selection = editor.getSelectionRange();
          var selected = session.doc.getTextRange(selection);
-         if (selected !== "") {
-            return {
-               text: '{' + selected + '}',
-               selection: false
-            };
-         }
+         if (selected === "") {
 
-         // namespace specific indenting -- note that 'lineTrimmed'
-         // does not contain the now-inserted '{'
-         if ($addNamespaceComment) {
-            var anonNamespace = /\s*namespace\s*$/.test(lineTrimmed);
-            var namedNamespace = lineTrimmed.match(/\s*namespace\s+(\S+)\s*/);
+            // namespace specific indenting -- note that 'lineTrimmed'
+            // does not contain the now-inserted '{'
+            if ($addNamespaceComment) {
+               var anonNamespace = /\s*namespace\s*$/.test(lineTrimmed);
+               var namedNamespace = lineTrimmed.match(/\s*namespace\s+(\S+)\s*/);
 
-            if (namedNamespace) {
+               if (namedNamespace) {
+                  return {
+                     text: '{} // end namespace ' + namedNamespace[1],
+                     selection: [1, 1]
+                  };
+               }
+
+               if (anonNamespace) {
+                  return {
+                     text: '{} // end anonymous namespace',
+                     selection: [1, 1]
+                  };
+               }
+            }
+
+            // if we're assigning, e.g. through an initializor list, then
+            // we should include a semi-colon
+            if (line.match(/\=\s*$/)) {
                return {
-                  text: '{} // end namespace ' + namedNamespace[1],
+                  text: '{};',
                   selection: [1, 1]
                };
             }
 
-            if (anonNamespace) {
+            // if we're defining a function, don't include a semi-colon
+            if (line.match(/\)\s*/)) {
                return {
-                  text: '{} // end anonymous namespace',
+                  text: '{}',
                   selection: [1, 1]
                };
             }
-         }
 
-         // if we're assigning, e.g. through an initializor list, then
-         // we should include a semi-colon
-         if (line.match(/\=\s*$/)) {
-            return {
-               text: '{};',
-               selection: [1, 1]
-            };
-         }
-
-         // if we're defining a function, don't include a semi-colon
-         if (line.match(/\)\s*/)) {
-            return {
-               text: '{}',
-               selection: [1, 1]
-            };
-         }
-
-         // if we're making a block define, don't add a semi-colon
-         if (line.match(/#define\s+\w+/)) {
-            return {
-               text: '{}',
-               selection: [1, 1]
-            };
-         }
-
-         // if it looks like we're using a initializor eg 'obj {', then
-         // include a closing ;
-         // Avoid doing this if there's an 'else' token on the same line
-         if (line.match(/[\w>]+\s*$/) && !line.match(/\belse\b/)) {
-            return {
-               text: '{};',
-               selection: [1, 1]
-            };
-         }
-
-         // If class-style indentation can produce an appropriate indentation for
-         // the brace, then insert a closing brace with a semi-colon
-         var heuristicRow = $heuristics.getRowForOpenBraceIndentClassStyle(
-            session, row - 1, 20
-         );
-         
-         if (heuristicRow !== null) {
-            return {
-               text: '{};',
-               selection: [1, 1]
-            };
-         }
-         
-         // default matching scenario
-         return {
-            text: '{}',
-            selection: [1, 1]
-         };
-
-      } else if (text == '}') {
-         var cursor = editor.getCursorPosition();
-         var line = session.doc.getLine(cursor.row);
-         var rightChar = line.substring(cursor.column, cursor.column + 1);
-         if (rightChar == '}') {
-            var matching = session.$findOpeningBracket('}', {column: cursor.column + 1, row: cursor.row});
-            if (matching !== null) {
+            // if we're making a block define, don't add a semi-colon
+            if (line.match(/#define\s+\w+/)) {
                return {
-                  text: '',
+                  text: '{}',
                   selection: [1, 1]
                };
             }
+
+            // if it looks like we're using a initializor eg 'obj {', then
+            // include a closing ;
+            // Avoid doing this if there's an 'else' token on the same line
+            if (line.match(/[\w>]+\s*$/) && !line.match(/\belse\b/)) {
+               return {
+                  text: '{};',
+                  selection: [1, 1]
+               };
+            }
+
+            // If class-style indentation can produce an appropriate indentation for
+            // the brace, then insert a closing brace with a semi-colon
+            var heuristicRow = $heuristics.getRowForOpenBraceIndentClassStyle(
+               session, row - 1, 20
+            );
+            
+            if (heuristicRow !== null) {
+               return {
+                  text: '{};',
+                  selection: [1, 1]
+               };
+            }
+            
          }
+
       }
+
+      return autoPairInsertion("{", text, editor, session);
+
    });
 
    this.add("braces", "deletion", function (state, action, editor, session, range) {
@@ -375,21 +360,6 @@ var CStyleBehaviour = function () {
          }
       }
    });
-
-   // Note -- we restrict this to 'template' contexts (which we use
-   // a very simple heuristic to look up...
-   this.add("arrows", "insertion", function (state, action, editor, session, text) {
-      var cursor = editor.getCursorPosition();
-      var line = session.getDocument().getLine(cursor.row);
-      if (/^\s*template/.test(line)) {
-         return autoPairInsertion("<", text, editor, session);
-      }
-   });
-
-   this.add("arrows", "deletion", function (state, action, editor, session, range) {
-      return autoPairDeletion("<", range, session);
-   });
-   
 
    this.add("parens", "insertion", function (state, action, editor, session, text) {
       return autoPairInsertion("(", text, editor, session);
