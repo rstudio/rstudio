@@ -44,6 +44,7 @@ public:
 private:
 
    core::Error executeSourceCpp(core::system::Options env,
+                                const std::string& rcppPkg,
                                 const core::FilePath& srcPath,
                                 core::system::ProcessResult* pResult);
 
@@ -54,7 +55,15 @@ private:
    void updateForCurrentPackage();
    void updateForSourceCpp(const core::FilePath& cppPath);
 
-   std::vector<std::string> argsForSourceCpp(core::FilePath srcFile);
+   // struct used to represent compilation settings
+   struct CompilationConfig
+   {
+      bool empty() const { return args.empty(); }
+      std::vector<std::string> args;
+      std::string PCH;
+   };
+   CompilationConfig configForSourceCpp(const std::string& rcppPkg,
+                                        core::FilePath srcFile);
 
    std::vector<std::string> argsForRCmdSHLIB(core::system::Options env,
                                              core::FilePath tempSrcFile);
@@ -72,13 +81,6 @@ private:
    // detection if hash hasn't changed)
    typedef std::map<std::string,std::string> SourceCppHashes;
    SourceCppHashes sourceCppHashes_;
-
-   // struct used to represent compilation settings
-   struct CompilationConfig
-   {
-      std::vector<std::string> args;
-      std::string PCH;
-   };
 
    // source file compilation settings
    typedef std::map<std::string,CompilationConfig> ConfigMap;

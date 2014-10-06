@@ -54,7 +54,14 @@ LibClang& clang()
 }
 
 
-std::string sourceCppHash(const core::FilePath& srcPath)
+struct SourceCppFileInfo
+{
+   bool empty() const { return hash.empty(); }
+   std::string hash;
+   std::string rcppPkg;
+};
+
+SourceCppFileInfo sourceCppFileInfo(const core::FilePath& srcPath)
 {
    // read file
    std::string contents;
@@ -62,25 +69,22 @@ std::string sourceCppHash(const core::FilePath& srcPath)
    if (error)
    {
       LOG_ERROR(error);
-      return std::string();
+      return SourceCppFileInfo();
    }
 
-   // we use Rcpp::sourceCpp with dryRun to determine the compiler command
-   // line, as well as generate and use Rcpp precompiled headers. For this
-   // reason we need to restrict sourceCpp support to straight Rcpp --
-   // this code filters out files that use Rcpp11 (note that packages using
-   // Rcpp11 do however work correctly)
-   boost::regex reRcpp11("#include\\s+<Rcpp11");
-   if (boost::regex_search(contents, reRcpp11))
-      return std::string();
-
-   // hash to return
-   std::string hash;
-
-   // ensure that we include Rcpp (or one of the wrapper packages of it)
+   // ensure that have at least one Rcpp include
    boost::regex reRcpp("#include\\s+<Rcpp");
-   if (boost::regex_search(contents, reRcpp))
-      hash.append("Rcpp"); // sentinel indicating Rcpp include detected
+   if (!boost::regex_search(contents, reRcpp))
+      return SourceCppFileInfo();
+
+   // info to return
+   SourceCppFileInfo info;
+
+   // check for rcpp 11
+   boost::regex reRcpp11("#include\\s+<Rcpp11");
+   bool isRcpp11 = boost::regex_search(contents, reRcpp11);
+   info.rcppPkg = isRcpp11 ? "Rcpp11" : "Rcpp";
+   info.hash.append(info.rcppPkg);
 
    // find dependency attributes
    boost::regex re(
@@ -91,11 +95,11 @@ std::string sourceCppHash(const core::FilePath& srcPath)
    {
       std::string attrib = *it;
       boost::algorithm::trim_all(attrib);
-      hash.append(attrib);
+      info.hash.append(attrib);
    }
 
-   // return hash
-   return hash;
+   // return info
+   return info;
 }
 
 std::vector<std::string> extractCompileArgs(const std::string& line)
@@ -187,13 +191,14 @@ std::vector<std::string> parseCompilationResults(const FilePath& srcFile,
 
 
    // find the line with the compilation and add it's args
-   std::string compile = "-c " + srcFile.filename() + " -o " + srcFile.stem();
+   boost::regex re("-c [^\\.]+\\.c\\w* -o");
    BOOST_FOREACH(const std::string& line, lines)
    {
-      if (line.find(compile) != std::string::npos)
+      if (boost::regex_search(line, re))
       {
          std::vector<std::string> args = extractCompileArgs(line);
          std::copy(args.begin(), args.end(), std::back_inserter(compileArgs));
+         break;
       }
    }
 
@@ -312,38 +317,36 @@ void RCompilationDatabase::updateForCurrentPackage()
 void RCompilationDatabase::updateForSourceCpp(const core::FilePath& srcFile)
 {
    // read the the source cpp hash for this file
-   std::string hash = sourceCppHash(srcFile);
+   SourceCppFileInfo info = sourceCppFileInfo(srcFile);
 
    // check if we already have the args for this hash value
    std::string filename = srcFile.absolutePath();
    SourceCppHashes::const_iterator it = sourceCppHashes_.find(filename);
-   if (it != sourceCppHashes_.end() && it->second == hash)
+   if (it != sourceCppHashes_.end() && it->second == info.hash)
       return;
 
-   // if there is no hash then bail (means this is not a sourceCpp file)
-   if (hash.empty())
+   // if there is no info then bail
+   if (info.empty())
       return;
 
-   // get args
-   std::vector<std::string> args = argsForSourceCpp(srcFile);
+   // get config
+   CompilationConfig config = configForSourceCpp(info.rcppPkg, srcFile);
 
-   // save them
-   if (!args.empty())
+   // save it
+   if (!config.empty())
    {
       // update map
-      CompilationConfig config;
-      config.args = args;
-      config.PCH = "Rcpp";
-      sourceCppConfigMap_[srcFile.absolutePath()] = config;
+      sourceCppConfigMap_[filename] = config;
 
       // save hash to prevent recomputation
-      sourceCppHashes_[srcFile.absolutePath()] = hash;
+      sourceCppHashes_[filename] = info.hash;
    }
 }
 
 
 Error RCompilationDatabase::executeSourceCpp(
                                       core::system::Options env,
+                                      const std::string& rcppPkg,
                                       const core::FilePath& srcPath,
                                       core::system::ProcessResult* pResult)
 {
@@ -377,20 +380,33 @@ Error RCompilationDatabase::executeSourceCpp(
          core::system::setenv(&env, "R_LIBS", libPaths);
    }
 
-   // we try to force --dry-run differently depending on the version of Rcpp
-   std::string extraParams;
-   if (module_context::isPackageVersionInstalled("Rcpp", "0.11.3"))
-      extraParams = ", dryRun = TRUE";
+   // execute code
+   args.push_back("-e");
+
+   // difference sequence depending on the version of Rcpp we are using
+   if (rcppPkg == "Rcpp")
+   {
+      // we try to force --dry-run differently depending on the version of Rcpp
+      std::string extraParams;
+      if (module_context::isPackageVersionInstalled("Rcpp", "0.11.3"))
+         extraParams = ", dryRun = TRUE";
+      else
+         core::system::setenv(&env, "MAKE", "make --dry-run");
+
+      // add command to arguments
+      boost::format fmt("Rcpp::sourceCpp('%1%', showOutput = TRUE%2%)");
+      args.push_back(boost::str(fmt % srcPath.absolutePath() % extraParams));
+   }
    else
+   {
       core::system::setenv(&env, "MAKE", "make --dry-run");
+      boost::format fmt("attributes::sourceCpp('%1%', verbose = TRUE)");
+      args.push_back(boost::str(fmt % srcPath.absolutePath()));
+   }
+
 
    // set environment into options
    options.environment = env;
-
-   // add command to arguments
-   args.push_back("-e");
-   boost::format fmt("Rcpp::sourceCpp('%1%', showOutput = TRUE%2%)");
-   args.push_back(boost::str(fmt % srcPath.absolutePath() % extraParams));
 
    // execute and capture output
    return core::system::runProgram(
@@ -522,8 +538,9 @@ std::vector<std::string> RCompilationDatabase::translationUnits()
    return std::vector<std::string>();
 }
 
-std::vector<std::string> RCompilationDatabase::argsForSourceCpp(
-                                                             FilePath srcFile)
+RCompilationDatabase::CompilationConfig
+         RCompilationDatabase::configForSourceCpp(const std::string& rcppPkg,
+                                                  FilePath srcFile)
 {
    // build compile args
    std::vector<std::string> args;
@@ -537,31 +554,26 @@ std::vector<std::string> RCompilationDatabase::argsForSourceCpp(
    // execute sourceCpp
    core::system::ProcessResult result;
    core::system::Options env = compilationEnvironment();
-   Error error = executeSourceCpp(env, srcFile, &result);
-
-   // process results of sourceCpp
+   Error error = executeSourceCpp(env, rcppPkg, srcFile, &result);
    if (error)
    {
       LOG_ERROR(error);
-      return std::vector<std::string>();
+      return CompilationConfig();
    }
-   else if (result.exitStatus != EXIT_SUCCESS)
-   {
-      LOG_ERROR_MESSAGE("Error performing sourceCpp: " + result.stdErr);
-      return std::vector<std::string>();
-   }
-   else
-   {
-      // parse the compilation results
-      std::vector<std::string> compileArgs = parseCompilationResults(
-                                                              srcFile,
-                                                              result.stdOut);
-      std::copy(compileArgs.begin(),
-                compileArgs.end(),
-                std::back_inserter(args));
 
-      return args;
-   }
+   // parse the compilation results
+   std::vector<std::string> compileArgs = parseCompilationResults(
+                                                           srcFile,
+                                                           result.stdOut);
+   std::copy(compileArgs.begin(),
+             compileArgs.end(),
+             std::back_inserter(args));
+
+   CompilationConfig config;
+   config.args = args;
+   config.PCH = rcppPkg;
+   return config;
+
 }
 
 std::vector<std::string> RCompilationDatabase::argsForRCmdSHLIB(
