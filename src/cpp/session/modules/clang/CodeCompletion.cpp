@@ -60,26 +60,29 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
    // resolve the docPath if it's aliased
    FilePath filePath = module_context::resolveAliasedPath(docPath);
 
-   // results to return
-   json::Object resultJson;
-   json::Array completionsJson;
-
    // get the translation unit and do the code completion
    std::string filename = filePath.absolutePath();
    TranslationUnit tu = rSourceIndex().getTranslationUnit(filename);
    if (!tu.empty())
    {
+      json::Array completionsJson;
       CodeCompleteResults results = tu.codeCompleteAt(filename, line, column);
       if (!results.empty())
       {
          for (unsigned i = 0; i<results.getNumResults(); i++)
             completionsJson.push_back(toJson(results.getResult(i)));
       }
+
+      json::Object resultJson;
+      resultJson["completions"] = completionsJson;
+      pResponse->setResult(resultJson);
+   }
+   else
+   {
+      // set null result indicating this file doesn't support completions
+      pResponse->setResult(json::Value());
    }
 
-   // set results and return
-   resultJson["completions"] = completionsJson;
-   pResponse->setResult(resultJson);
    return Success();
 }
 

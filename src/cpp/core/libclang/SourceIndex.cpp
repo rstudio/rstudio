@@ -131,6 +131,10 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename)
       args = compilationDB_.compileArgsForTranslationUnit(filename);
    std::time_t lastWriteTime = filePath.lastWriteTime();
 
+   // if there are no args then there is no translation unit to return
+   if (args.empty())
+      return TranslationUnit();
+
    // look it up
    TranslationUnits::iterator it = translationUnits_.find(filename);
 
