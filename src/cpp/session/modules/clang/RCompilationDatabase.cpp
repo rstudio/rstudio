@@ -542,6 +542,11 @@ RCompilationDatabase::CompilationConfig
          RCompilationDatabase::configForSourceCpp(const std::string& rcppPkg,
                                                   FilePath srcFile)
 {
+   // validation: if this is Rcpp11 and we don't have the attributes
+   // package then there's no way for us to execute sourceCpp
+   if (rcppPkg == "Rcpp11" && !module_context::isPackageInstalled("attributes"))
+      return CompilationConfig();
+
    // build compile args
    std::vector<std::string> args;
 
