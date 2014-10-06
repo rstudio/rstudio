@@ -33,6 +33,13 @@ var TokenCursor = function(tokens, row, offset) {
 
    this.moveToPreviousToken = function()
    {
+      if (this.$row >= this.$tokens.length) {
+         while (this.$row >= this.$tokens.length) {
+            this.$row--;
+         }
+         this.$offset = this.$tokens[this.$row].length;
+      }
+      
       while (this.$offset == 0 && this.$row > 0)
       {
          this.$row--;
@@ -80,15 +87,23 @@ var TokenCursor = function(tokens, row, offset) {
             return true;
          }
       }
-      return this.moveToNextToken(maxRow);
+
+      if (position.row < maxRow) {
+         return this.moveToNextToken(maxRow);
+      } else {
+         return false;
+      }
+      
    };
 
    this.moveBackwardOverMatchingParens = function()
    {
       if (!this.moveToPreviousToken())
          return false;
-      if (this.currentValue() !== ")")
+      if (this.currentValue() !== ")") {
+         this.moveToNextToken();
          return false;
+      }
 
       var success = false;
       var parenCount = 0;
@@ -125,12 +140,20 @@ var TokenCursor = function(tokens, row, offset) {
 
    this.currentToken = function()
    {
-      return (this.$tokens[this.$row] || [])[this.$offset];
+      var token = (this.$tokens[this.$row] || [])[this.$offset];
+      return typeof token === "undefined" ?
+         {} :
+         token;
    };
 
    this.currentValue = function()
    {
       return this.currentToken().value;
+   };
+
+   this.currentType = function()
+   {
+      return this.currentToken().type;
    };
 
    this.currentPosition = function()
@@ -156,7 +179,6 @@ var TokenCursor = function(tokens, row, offset) {
    {
       return this.$offset == (this.$tokens[this.$row] || []).length - 1;
    };
-   
    
 }).call(TokenCursor.prototype);
 

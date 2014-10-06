@@ -15,10 +15,10 @@
 
 define("mode/token_utils", function(require, exports, module) {
 
-var TokenUtils = function(doc, tokenizer, statePattern, codeBeginPattern) {
+var TokenUtils = function(doc, tokenizer, tokens, statePattern, codeBeginPattern) {
    this.$doc = doc;
-   this.$tokens = new Array(doc.getLength());
    this.$tokenizer = tokenizer;
+   this.$tokens = tokens;
    this.$endStates = new Array(doc.getLength());
    this.$statePattern = statePattern;
    this.$codeBeginPattern = codeBeginPattern;
@@ -78,13 +78,15 @@ var TokenUtils = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
    this.$tokenizeUpToRow = function(lastRow)
    {
-      // Don't let lastRow be past the end of the document
-      lastRow = Math.min(lastRow, this.$endStates.length - 1);
 
+      // Don't let lastRow be past the end of the document
+      lastRow = Math.min(lastRow, this.$doc.getLength() - 1);
+      
       var row = 0;
       var assumeGood = true;
       for ( ; row <= lastRow; row++)
       {
+
          // No need to tokenize rows until we hit one that has been explicitly
          // invalidated.
          if (assumeGood && this.$endStates[row])

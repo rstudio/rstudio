@@ -32,15 +32,23 @@ function comparePoints(pos1, pos2)
 var ScopeManager = require("mode/r_scope_tree").ScopeManager;
 
 var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
+
+   
    this.$doc = doc;
    this.$tokenizer = tokenizer;
-   
-   this.$tokenUtils = new TokenUtils(doc, tokenizer, statePattern, codeBeginPattern);
-   
-   this.$tokens = this.$tokenUtils.$tokens;
-   this.$endStates = this.$tokenUtils.$endStates;
-   this.$statePattern = this.$tokenUtils.$statePattern;
-   this.$codeBeginPattern = this.$tokenUtils.$codeBeginPattern;
+
+   this.$tokens = new Array(doc.getLength());
+   this.$endStates = new Array(doc.getLength());
+   this.$statePattern = statePattern;
+   this.$codeBeginPattern = codeBeginPattern;
+
+   this.$tokenUtils = new TokenUtils(
+      this.$doc,
+      this.$tokenizer,
+      this.$tokens,
+      this.$statePattern,
+      this.$codeBeginPattern
+   );
    
    this.$scopes = new ScopeManager();
 
@@ -739,7 +747,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       }
       else if (delta.action === "removeLines")
       {
-         this.$removeRows(delta.range.start.row,
+         this.$tokenUtils.$removeRows(delta.range.start.row,
                           delta.range.end.row - delta.range.start.row);
          this.$tokenUtils.$invalidateRow(delta.range.start.row);
       }
@@ -747,7 +755,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       {
          if (this.$doc.isNewLine(delta.text))
          {
-            this.$removeRows(delta.range.end.row, 1);
+            this.$tokenUtils.$removeRows(delta.range.end.row, 1);
             this.$tokenUtils.$invalidateRow(delta.range.start.row);
          }
          else
@@ -774,8 +782,6 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          return this.$lineOverrides[row];
       return this.$doc.getLine(row);
    };
-
-   
 
 }).call(RCodeModel.prototype);
 

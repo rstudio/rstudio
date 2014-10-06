@@ -16,20 +16,41 @@
 define("mode/cpp_code_model", function(require, exports, module) {
 
 var Range = require("ace/range").Range;
+var TokenUtils = require("mode/token_utils").TokenUtils;
 var TokenIterator = require("ace/token_iterator").TokenIterator;
 var TokenCursor = require("mode/token_cursor").TokenCursor;
 
 var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
+   
    this.$doc = doc;
    this.$tokenizer = tokenizer;
+
    this.$tokens = new Array(doc.getLength());
-   this.$endStates = new Array(doc.getLength());
    this.$statePattern = statePattern;
    this.$codeBeginPattern = codeBeginPattern;
-   this.$tokenCursor = new TokenCursor(this.$tokens);
+
+   this.$tokenUtils = new TokenUtils(
+      this.$doc,
+      this.$tokenizer,
+      this.$tokens,
+      this.$statePattern,
+      this.$codeBeginPattern
+   );
+
+   var that = this;
+   this.$doc.on('change', function(evt) {
+      that.$onDocChange.apply(that, [evt]);
+   });
+   
 };
 
 (function() {
+
+   var debugCursor = function(message, cursor) {
+      // console.log(message);
+      // console.log(cursor);
+      // console.log(cursor.currentToken());
+   };
 
    this.$complements = {
       "<" : ">",
@@ -54,10 +75,12 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    var reStartsWithContinuationToken = /^\s*[,+\-/&^%$!<\>.?|=\'\":]|^\s*\*[^/]/;
    var reEndsWithContinuationToken =       /[,+\-*&^%$!<\>.?|=\'\":]\s*$|\*[^/]\s*$/;
 
+   // Attach to 'this' so others can use it
    this.reStartsWithContinuationToken = reStartsWithContinuationToken;
    this.reEndsWithContinuationToken   = reEndsWithContinuationToken;
 
-   // All of the common control block generating tokens
+   // All of the common control block generating tokens in their 'naked' form --
+   // ie, without an associated open brace on the same line.
    this.reNakedBlockTokens = {
       "do": /^\s*do\s*$/,
       "while": /^\s*while\s*\(.*\)\s*$/,
@@ -87,216 +110,74 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
    var reStartsWithOpenBrace = /\s*\{/;
 
-   this.getRowForOpenBraceIndentClassStyle = function(session, row, maxLookback) {
+   // Move backwards over an initialization list, e.g.
+   //
+   //     Foo : a_(a),
+   //           b_(b),
+   //           c_(c) const noexcept() {
+   //
+   // The assumption is that the cursor will have been placed on the opening '{'.
+   var moveBackwardOverInitializationList = function(tokenCursor, lines) {
 
-      if (typeof maxLookback === "undefined") {
-         maxLookback = 50;
+      var c = tokenCursor.cloneCursor();
+
+      // Move over matching parentheses -- note that this action puts
+      // the cursor on the open paren on success.
+      c.moveBackwardOverMatchingParens();
+      if (!c.moveBackwardOverMatchingParens()) {
+         if (!c.moveToPreviousToken()) {
+            return false;
+         }
       }
 
-      var doc = session.getDocument();
-      var count = 0;
-
-      // We allow one 'miss' as far as looking for lines that start/end
-      // with commas. This heuristic allows us to handle e.g.
-      //
-      //   class Foo : public A,
-      //               public B,
-      //               public C
-      //   {
-      //
-      // as the first line we view will not have any commas or colons.
-      var canRetry = true;
-
-      var startRow = row;
-      var firstLine = this.getLineSansComments(doc, startRow);
-
-      // If the first line is just an open brace, go up one
-      if (/^\s*\{/.test(firstLine)) {
-         row = row - 1;
-         firstLine = this.getLineSansComments(doc, row);
-      }
-
-      while (count < maxLookback && row >= 0) {
-
-         var line;
-         if (count === 0) {
-            line = firstLine;
-         } else {
-            line = this.getLineSansComments(doc, row);
-         }
-
-         if (reClassOrStruct.test(line)) {
-            return row;
-         }
-
-         // If this line starts with a colon, check the previous line
-         // for a parenthesis to indent with.
-         if (reStartsWithColon.test(line)) {
-            var prevLine = this.getLineSansComments(doc, row - 1);
-            if (/\)\s*$/.test(prevLine)) {
-               
-               var openParenPos = session.findMatchingBracket({
-                  row: row - 1,
-                  column: doc.$lines[row - 1].lastIndexOf(")") + 1
-               });
-
-               if (openParenPos) {
-                  
-                  // Walk up over uninformative lines
-                  var rowToUse = openParenPos.row;
-                  var lineToUse = this.getLineSansComments(doc, rowToUse);
-                  while (/^\s*$/.test(lineToUse) ||
-                         /^\s*\(.*\)\s*$/.test(lineToUse)) {
-                     rowToUse--;
-                     lineToUse = this.getLineSansComments(doc, rowToUse);
-                     if (rowToUse === 0) break;
-                  }
-                  return rowToUse;
-                  
-               }
-               
-            } else {
-               return row - 1;
-            }
-         }
-
-         // Similarly, if the line ends with a colon, this line is most likely
-         // the one containing the parenthesis that provides the scope.
-         if (reEndsWithColon.test(line)) {
-
-            // If we hit a class modifier, then bail
-            if (/^\s*public\s*:|\s*private\s*:|\s*protected\s*:/.test(line)) {
-               return row + 1;
-            }
-
-            var lastParen = line.lastIndexOf(")");
-
-            if (lastParen >= 0) {
-
-               var openParenPos = session.findMatchingBracket({
-                  row: row,
-                  column: doc.$lines[row].lastIndexOf(")") + 1
-               });
-
-               if (openParenPos) {
-
-                  // Walk up over uninformative lines
-                  var rowToUse = openParenPos.row;
-                  var lineToUse = this.getLineSansComments(doc, rowToUse);
-                  while (/^\s*$/.test(lineToUse) ||
-                         /^\s*\(.*\)\s*$/.test(lineToUse)) {
-                     rowToUse--;
-                     lineToUse = this.getLineSansComments(doc, rowToUse);
-                     if (rowToUse === 0) break;
-                  }
-                  return rowToUse;
-                  
-               } else {
-                  return row;
-               }
-               
-            }
-
-         }
-
-         // Check whether we can keep walking up, or if we've run out of
-         // 'valid' formats.
-         if (reOnlyWhitespace.test(line) ||
-             !(reStartsWithContinuationToken.test(line) ||
-               reEndsWithContinuationToken.test(line))) {
-            if (!canRetry) {
-               break;
-            } else {
-               canRetry = false;
-            }
-         }
-
-         count++;
-         row--;
-      }
-
-      // Return null on failure
-      return null;
-      
-   };
-
-   this.getRowForOpenBraceIndentFunctionStyle = function(session, row, maxLookback) {
-
-      if (typeof maxLookback === "undefined") {
-         maxLookback = 50;
-      }
-
-      var doc = session.getDocument();
-      var firstLine = this.getLineSansComments(doc, row);
-
-      // Fallback to indentation for functions, e.g.
-      //
-      //   int foo(int a, int b,
-      //           int c, int d) {
-      //
-      if (/\)\s*\{/.test(firstLine)) {
+      // Chomp keywords, exiting on a 'struct' or 'class'
+      while (c.currentType() === "keyword") {
          
-         var openParenPos = session.findMatchingBracket({
-            row: row,
-            column: doc.$lines[row].lastIndexOf(")") + 1
-         });
-
-         if (openParenPos) {
-
-            // NOTE: We need to look back in case the function argument list
-            // is on its own line, e.g.
-            //
-            //   foo
-            //       () {
-            //
-            var rowToUse = openParenPos.row;
-            var line = this.getLineSansComments(doc, rowToUse);
-            while (/^\s*$/.test(line) ||
-                   /^\s*\(.*\).*\{?\s*$/.test(line)) {
-               rowToUse--;
-               line = this.getLineSansComments(doc, rowToUse);
-            }
-            return rowToUse;
+         if (c.currentValue() === "struct" || c.currentValue() === "class") {
+            tokenCursor.$row = c.$row;
+            tokenCursor.$offset = c.$offset;
+            return false;
          }
-      }
-
-      // Fallback to indentation for functions, e.g.
-      //
-      //   int foo(int a, int b,
-      //           int c, int d)
-      //   {
-      var prevLine = this.getLineSansComments(doc, row - 1);
-
-      if (/\s*\{/.test(firstLine) && /\)\s*$/.test(prevLine)) {
-
-         var openParenPos = session.findMatchingBracket({
-            row: row - 1,
-            column: doc.$lines[row - 1].lastIndexOf(")") + 1
-         });
-
-         if (openParenPos) {
-            // NOTE: We need to look back in case the function argument list
-            // is on its own line, e.g.
-            //
-            //   foo
-            //       ()
-            //
-            var rowToUse = openParenPos.row;
-            var line = this.getLineSansComments(doc, rowToUse);
-            while (/^\s*$/.test(line) ||
-                   /^\s*\(.*\).*\{?\s*$/.test(line)) {
-               rowToUse--;
-               line = this.getLineSansComments(doc, rowToUse);
-            }
-            return rowToUse;
+         
+         if (!c.moveToPreviousToken()) {
+            return false;
          }
+         
       }
-
-      // Fail -- return null
-      return null;
       
+      // Move backwards over the name of the element initialized
+      if (c.moveToPreviousToken()) {
+
+         // Chomp keywords, exiting on a 'struct' or 'class'
+         while (c.currentType() === "keyword") {
+            
+            if (c.currentValue() === "struct" || c.currentValue() === "class") {
+               tokenCursor.$row = c.$row;
+               tokenCursor.$offset = c.$offset;
+               return false;
+            }
+            
+            if (!c.moveToPreviousToken()) {
+               return false;
+            }
+            
+         }
+         
+         // Check for a ':' or a ','
+         var value = c.currentValue();
+         if (value === ":" || value === ",") {
+
+            tokenCursor.$row = c.$row;
+            tokenCursor.$offset = c.$offset;
+            return true;
+               
+         }
+      }
+
+      return false;
+
    };
-   
+
    // Given a row with a '{', we look back for the row that provides
    // the start of the scope, for purposes of indentation. We look back
    // for:
@@ -308,34 +189,85 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    // otherwise.
    this.getRowForOpenBraceIndent = function(session, row, maxLookback) {
 
-      if (typeof maxLookback === "undefined") {
-         maxLookback = 5000;
-      }
-
       var doc = session.getDocument();
       var lines = doc.$lines;
       if (lines.length <= 1) return null;
 
-      // First, try class-style indentation lookup
-      var classStyleIndent =
-             this.getRowForOpenBraceIndentClassStyle(session, row, maxLookback);
-      if (classStyleIndent !== null) {
-         return classStyleIndent;
+      var line = lines[row];
+      
+      var braceColumn = line.lastIndexOf("{");
+      if (braceColumn === -1) {
+         return null;
       }
 
-      // Then, try function-style indentation lookup
-      var fnStyleIndent =
-             this.getRowForOpenBraceIndentFunctionStyle(session, row, maxLookback);
-      if (fnStyleIndent !== null) {
-         return fnStyleIndent;
-      }
+      // Walk tokens backwards until we find something that provides the appropriate indentation.
+      if (this.$tokenUtils.$tokenizeUpToRow(row)) {
 
-      // Special case for e.g.
-      //
-      //   do {
-      //
-      if (/^\s*[\w:_]+\s*\{\s*$/.test(this.getLineSansComments(doc, row))) {
-         return row;
+         // The brace should be the last token on the line -- place it there.
+         var tokenCursor = new TokenCursor(this.$tokens);
+         tokenCursor.$row = row;
+         tokenCursor.$offset = this.$tokens[row].length - 1;
+         if (!tokenCursor.currentValue() === "{") {
+            return null;
+         }
+
+         // Move backwards over matching parens. Note that we may need to walk up
+         // e.g. a constructor's initialization list, so we need to check for
+         //
+         //     , a_(a)
+         //
+         // so we need to look two tokens backwards to see if it's a comma or a colon.
+         debugCursor("Before moving over initialization list", tokenCursor);
+         while (moveBackwardOverInitializationList(tokenCursor, lines))
+            ;
+
+         // If we didn't walk over anything previously, the cursor will still be on the same '{'.
+         // Walk backwards one token.
+         if (tokenCursor.currentValue() === "{") {
+            if (!tokenCursor.moveToPreviousToken()) {
+               return null;
+            }
+         }
+
+         // Bail if we encountered a '{'
+         if (tokenCursor.currentValue() === "{") {
+            return null;
+         }
+
+         // Move backwards over any keywords.
+         debugCursor("Before walking over keywords", tokenCursor);
+         while (tokenCursor.currentType() === "keyword") {
+
+            if (tokenCursor.currentValue() === "class") {
+               return tokenCursor.$row;
+            }
+
+            if (tokenCursor.$row === 0 && tokenCursor.$offset === 0) {
+               return tokenCursor.$row;
+            }
+            
+            if (!tokenCursor.moveToPreviousToken()) {
+               return null;
+            }
+         }
+
+         // Move backwards over matching parentheses. Note that the function expects the
+         // cursor to be on the token just after a closing paren.
+         debugCursor("Before walking over matching parens", tokenCursor);
+         if (tokenCursor.currentValue() === ")") {
+            tokenCursor.moveToNextToken();
+         }
+         
+         if (tokenCursor.moveBackwardOverMatchingParens()) {
+            if (!tokenCursor.moveToPreviousToken()) {
+               return null;
+            }
+         };
+
+         // Use this row for indentation.
+         debugCursor("Ended at", tokenCursor);
+         return tokenCursor.$row;
+         
       }
 
       // Give up and return null
@@ -536,6 +468,49 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       return null;
 
    };
+
+   this.$onDocChange = function(evt)
+   {
+      var delta = evt.data;
+
+      if (delta.action === "insertLines")
+      {
+         this.$tokenUtils.$insertNewRows(delta.range.start.row,
+                             delta.range.end.row - delta.range.start.row);
+      }
+      else if (delta.action === "insertText")
+      {
+         if (this.$doc.isNewLine(delta.text))
+         {
+            this.$tokenUtils.$invalidateRow(delta.range.start.row);
+            this.$tokenUtils.$insertNewRows(delta.range.end.row, 1);
+         }
+         else
+         {
+            this.$tokenUtils.$invalidateRow(delta.range.start.row);
+         }
+      }
+      else if (delta.action === "removeLines")
+      {
+         this.$tokenUtils.$removeRows(delta.range.start.row,
+                          delta.range.end.row - delta.range.start.row);
+         this.$tokenUtils.$invalidateRow(delta.range.start.row);
+      }
+      else if (delta.action === "removeText")
+      {
+         if (this.$doc.isNewLine(delta.text))
+         {
+            this.$tokenUtils.$removeRows(delta.range.end.row, 1);
+            this.$tokenUtils.$invalidateRow(delta.range.start.row);
+         }
+         else
+         {
+            this.$tokenUtils.$invalidateRow(delta.range.start.row);
+         }
+      }
+
+   };
+   
    
 }).call(CppCodeModel.prototype);
 

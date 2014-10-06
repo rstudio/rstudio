@@ -49,6 +49,7 @@
          </sources>
          <sources dir="acesupport/acemode">
             <file name="auto_brace_insert.js"/>
+            <file name="token_utils.js"/>
             <file name="token_cursor.js"/>
             <file name="r_background_highlighter.js"/>
             <file name="r_highlight_rules.js"/>

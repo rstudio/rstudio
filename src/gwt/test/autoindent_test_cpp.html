@@ -107,7 +107,7 @@ foo
     : a_(a)
 </pre></li>
 
-<li><pre data-expected="4" data-expected-open-brace="8">
+<li><pre data-expected="4" data-expected-open-brace="4">
 foo
     ()
     : a_(a)
@@ -156,7 +156,7 @@ class foo : bar&lt;T&gt; {
 template &lt;typename T&gt;
 </pre></li>
 
-<li><pre data-expected="4" data-expected-open-brace="0">
+<li><pre data-expected="4" data-expected-open-brace="4">
 class foo:
   public A {
 </pre></li>
@@ -320,13 +320,6 @@ class Foo :
     public C {
 </pre></li>
 
-<li><pre data-expected="4" data-expected-open-brace="0">
-class Foo :
-    public A,
-    public B,
-    public C {
-</pre></li>
-
 <li><pre data-expected="4" data-expected-vertical-args="12" open-brace-skip>
 class Foo : public A,
 </pre></li>
@@ -419,7 +412,7 @@ int foo(const unsigned int a,
 try {
 </pre></li>
 
-<li><pre data-expected="4">
+<li><pre data-expected="4" data-expected-open-brace="0">
 try
 </pre></li>
 
@@ -526,8 +519,6 @@ var session = editor.getSession();
 
 }).call(EditSession.prototype);
  
-
-
 function doIndentTest(el, state) {
 
   var testEditor = ace.edit('testEditor');
