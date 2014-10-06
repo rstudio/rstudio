@@ -1,0 +1,7 @@
+@def WHITE eval('com.google.gwt.resources.client.gss.Constants.white()');
+
+.someClass {
+    color: WHITE;
+    background-color: eval('com.google.gwt.resources.client.gss.Constants.red("blop")');
+    width: eval('com.google.gwt.resources.client.gss.Constants.width() - 15 + "px"')
+}

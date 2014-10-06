@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.EmittedArtifact.Visibility;
 import com.google.gwt.core.ext.typeinfo.JClassType;
@@ -141,6 +142,7 @@ public class CssResourceGenerator extends AbstractCssResourceGenerator
   private static final String KEY_RESERVED_PREFIXES = "CssResource.reservedClassPrefixes";
   private static final String KEY_SHARED_METHODS = "sharedMethods";
   private static final String KEY_STYLE = "CssResource.style";
+  private static final String KEY_ENABLE_GSS = "CssResource.enableGss";
 
   /**
    * This character must not appear in {@link #BASE32_CHARS}.
@@ -205,12 +207,6 @@ public class CssResourceGenerator extends AbstractCssResourceGenerator
     }
 
     return false;
-  }
-
-  public static void main(String[] args) {
-    for (int i = 0; i < 1000; i++) {
-      System.out.println(makeIdent(i));
-    }
   }
 
   /**
@@ -432,6 +428,8 @@ public class CssResourceGenerator extends AbstractCssResourceGenerator
   protected CssObfuscationStyle obfuscationStyle;
   private Counter classCounter;
   private boolean enableMerge;
+  private boolean gssEnabled;
+  private GssResourceGenerator gssResourceGenerator;
   private List<String> ignoredMethods = new ArrayList<String>();
   private Map<JClassType, Map<JMethod, String>> replacementsByClassAndMethod;
   private Map<JMethod, String> replacementsForSharedMethods;
@@ -440,6 +438,12 @@ public class CssResourceGenerator extends AbstractCssResourceGenerator
   @Override
   public String createAssignment(TreeLogger logger, ResourceContext context,
       JMethod method) throws UnableToCompleteException {
+
+    // if Gss is enabled, defer the call to the Gss generator.
+    if (gssEnabled) {
+      return gssResourceGenerator.createAssignment(logger, context, method);
+    }
+
     JClassType cssResourceSubtype = method.getReturnType().isInterface();
     assert cssResourceSubtype != null;
     CssStylesheet stylesheet = stylesheetMap.get(method);
@@ -459,6 +463,17 @@ public class CssResourceGenerator extends AbstractCssResourceGenerator
   @Override
   public void init(TreeLogger logger, ResourceContext context)
       throws UnableToCompleteException {
+
+    // if Gss is enabled, defer the call to the Gss generator.
+    if (checkIfGssEnabled(context, logger)) {
+      gssEnabled = true;
+      gssResourceGenerator = new GssResourceGenerator();
+      gssResourceGenerator.init(logger, context);
+      return;
+    }
+
+    gssEnabled = false;
+
     String classPrefix;
     try {
       PropertyOracle propertyOracle =
@@ -506,6 +521,12 @@ public class CssResourceGenerator extends AbstractCssResourceGenerator
   public void prepare(TreeLogger logger, ResourceContext context,
       ClientBundleRequirements requirements, JMethod method)
       throws UnableToCompleteException {
+
+    // if Gss is enabled, defer the call to the Gss generator.
+    if (gssEnabled) {
+      gssResourceGenerator.prepare(logger, context, requirements, method);
+      return;
+    }
 
     if (method.getReturnType().isInterface() == null) {
       logger.log(TreeLogger.ERROR, "Return type must be an interface");
@@ -1186,5 +1207,23 @@ public class CssResourceGenerator extends AbstractCssResourceGenerator
     }
 
     writeSimpleGetter(toImplement, returnExpr, sw);
+  }
+
+  private boolean checkIfGssEnabled(ResourceContext context, TreeLogger logger)
+      throws UnableToCompleteException {
+    try {
+      PropertyOracle propertyOracle =
+          context.getGeneratorContext().getPropertyOracle();
+
+      ConfigurationProperty enableGssProp =
+          propertyOracle.getConfigurationProperty(KEY_ENABLE_GSS);
+      String enableGss = enableGssProp.getValues().get(0);
+
+      return "true".equals(enableGss);
+
+    } catch (BadPropertyValueException ex) {
+      logger.log(Type.ERROR, "Unable to determine if GSS need to be used");
+      throw new UnableToCompleteException();
+    }
   }
 }

@@ -1,0 +1,14 @@
+@def CONSTANT_ONE 15px;
+@def CONSTANT_TWO 5px;
+@def CONSTANT_THREE black;
+@def CONFLICT_CONSTANT_CLASS white;
+
+.className1 {
+    padding-right: CONSTANT_ONE;
+    padding-left: CONSTANT_TWO;
+    color: CONSTANT_THREE;
+}
+
+.conflictConstantClass{
+    color: CONFLICT_CONSTANT_CLASS;
+}

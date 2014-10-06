@@ -1,0 +1,7 @@
+.renamed-class {
+    color: black;
+}
+
+.nonRenamedClass {
+    color: white;
+}

@@ -1,0 +1,3 @@
+.someClass {
+    width: add(120px, 100px);
+}

@@ -1,0 +1,11 @@
+.other {
+    color: black;
+}
+
+.ImportCss-className .other {
+    color: white;
+}
+
+.testPrefix-className .other {
+    color: gray;
+}

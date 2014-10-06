@@ -1,0 +1,5 @@
+.foo {
+    top: expression(15px);
+    color: green;
+    filter: progid:DXImageTransform.Microsoft.gradient(enabled='false', startColorstr=#550000FF, endColorstr=#55FFFF00)
+}

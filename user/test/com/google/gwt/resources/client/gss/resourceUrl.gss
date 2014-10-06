@@ -1,0 +1,9 @@
+@def THE_DATA_URL resourceUrl('someDataResource');
+@def THE_IMG_URL resourceUrl('someImageResource');
+
+.someClass {
+    cursor: THE_DATA_URL;
+    background-image: THE_IMG_URL;
+    cursor: resourceUrl('someDataResource');
+    /* @alternate */ background-image: resourceUrl('someImageResource');
+}

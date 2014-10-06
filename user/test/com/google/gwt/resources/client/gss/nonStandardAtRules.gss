@@ -1,0 +1,10 @@
+@extenal;
+@-moz-document;
+
+@supports ( display: flex ) {
+    body{ display: flex; }
+}
+
+.foo {
+    color:black;
+}

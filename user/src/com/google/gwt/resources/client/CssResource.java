@@ -146,7 +146,7 @@ import java.lang.annotation.Target;
  * @see <a href="http://code.google.com/p/google-web-toolkit/wiki/CssResource"
  *      >CssResource design doc</a>
  */
-@DefaultExtensions(value = {".css"})
+@DefaultExtensions(value = {".css", ".gss"})
 @ResourceGeneratorType(CssResourceGenerator.class)
 public interface CssResource extends CssResourceBase {
   /**

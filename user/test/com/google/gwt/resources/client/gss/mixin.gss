@@ -1,0 +1,8 @@
+@defmixin size(WIDTH, HEIGHT) {
+  width: WIDTH;
+  height: HEIGHT;
+}
+
+.someClass {
+  @mixin size(120px, 100px);
+}
