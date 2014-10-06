@@ -1,0 +1,65 @@
+.foo {
+    width: 100%;
+}
+
+/* will be evaluated to false) */
+@if (is("custom.one", "foo")) {
+    .foo {
+        color: black;
+    }
+}
+@elseif (eval("com.google.gwt.resources.client.gss.BooleanEval.FIRST")) {
+    /* will be evaluated to false) */
+    @if (is("custom.one", "foo")) {
+        .foo {
+            color: orange;
+        }
+    }
+    @else {
+        .foo {
+            color: purple;
+        }
+    }
+}
+@elseif (eval("com.google.gwt.resources.client.gss.BooleanEval.SECOND")) {
+    @if (eval("com.google.gwt.resources.client.gss.BooleanEval.THIRD")) {
+        .foo {
+            color: black;
+        }
+    } @else {
+        .foo {
+            color: khaki;
+        }
+    }
+}
+@else {
+    .foo {
+        color: gray;
+    }
+}
+
+/* will be evaluated to false */
+@if (is("custom.one", "foo")) {
+    .foo {
+        padding: 5px;
+    }
+}
+/* will be evaluated to true */
+@elseif (is("custom.two", "bar")) {
+    .foo {
+        padding: 10px;
+    }
+}
+/* will be never evaluated */
+@elseif (eval("com.google.gwt.resources.client.gss.BooleanEval.FIRST")) {
+    .foo {
+        padding: 20px;
+    }
+}
+
+/* Test that we can pass String parameters */
+@if (eval('java.lang.Boolean.valueOf("true")')) {
+  .foo {
+    margin: 100px;
+  }
+}

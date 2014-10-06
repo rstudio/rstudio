@@ -1,0 +1,23 @@
+@def WIDTH 10px;
+@def HEIGHT 10px;
+@def COLOR white;
+
+/* will be considered as outside the conditional */
+/* Compiler fails when lenient mode is disable */
+@if (eval("com.google.gwt.resources.client.gss.BooleanEval.FIRST")) {
+  @def WIDTH 15px;
+}
+
+@if (is("customProperty", "true")) {
+  @def COLOR black;
+}
+
+@if (!is("customProperty", "true")) {
+  @def HEIGHT 15px;
+}
+
+.foo {
+  width: WIDTH;
+  height: HEIGHT;
+  color: COLOR;
+}

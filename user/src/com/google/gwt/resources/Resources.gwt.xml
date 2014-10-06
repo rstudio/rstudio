@@ -76,4 +76,27 @@
   <!-- by setting the value to true. -->
   <define-configuration-property name="ExternalTextResource.useJsonp" is-multi-valued="false" />
   <set-configuration-property name="ExternalTextResource.useJsonp" value="false" />
+
+  <!-- Enable GSS with CssResource -->
+  <define-configuration-property name="CssResource.enableGss" is-multi-valued="false" />
+  <set-configuration-property name="CssResource.enableGss" value="false" />
+
+  <!-- A multi-valued configuration property that defines the list of allowed non standard -->
+  <!-- at-rules in the css files -->
+  <define-configuration-property name="CssResource.allowedAtRules" is-multi-valued="true" />
+  <extend-configuration-property name="CssResource.allowedAtRules" value="-moz-document" />
+  <extend-configuration-property name="CssResource.allowedAtRules" value="supports" />
+
+  <!-- A multi-valued configuration property that defines the list of allowed non standard -->
+  <!-- functions in the css files -->
+  <define-configuration-property name="CssResource.allowedFunctions" is-multi-valued="true" />
+  <extend-configuration-property name="CssResource.allowedFunctions" value="" />
+
+  <!-- Enable the in-memory conversion of css files with .css extension to GSS -->
+  <define-configuration-property name="CssResource.legacy" is-multi-valued="false" />
+  <set-configuration-property name="CssResource.legacy" value="false" />
+
+  <!-- Set the mode used by the in-memory conversion: strict or lenient -->
+  <define-configuration-property name="CssResource.conversionMode" is-multi-valued="false" />
+  <set-configuration-property name="CssResource.conversionMode" value="strict" />
 </module>

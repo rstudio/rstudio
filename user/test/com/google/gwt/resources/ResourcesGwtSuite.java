@@ -25,41 +25,41 @@ import com.google.gwt.resources.client.ImageResourceNoInliningTest;
 import com.google.gwt.resources.client.ImageResourceTest;
 import com.google.gwt.resources.client.NestedBundleTest;
 import com.google.gwt.resources.client.TextResourceTest;
-import com.google.gwt.resources.css.CssExternalTest;
-import com.google.gwt.resources.css.CssNodeClonerTest;
-import com.google.gwt.resources.css.CssReorderTest;
-import com.google.gwt.resources.css.CssRtlTest;
-import com.google.gwt.resources.css.ExtractClassNamesVisitorTest;
-import com.google.gwt.resources.css.UnknownAtRuleTest;
-import com.google.gwt.resources.ext.ResourceGeneratorUtilTest;
-import com.google.gwt.resources.rg.CssClassNamesTestCase;
+import com.google.gwt.resources.client.gss.AutoConversionTest;
+import com.google.gwt.resources.client.gss.DebugObfuscationStyleTest;
+import com.google.gwt.resources.client.gss.GssResourceTest;
+import com.google.gwt.resources.client.gss.PrettyObfuscationStyleTest;
+import com.google.gwt.resources.client.gss.StableNoTypeObfuscationStyleTest;
+import com.google.gwt.resources.client.gss.StableObfuscationStyleTest;
+import com.google.gwt.resources.client.gss.StableShortTypeObfuscationStyleTest;
 
 import junit.framework.Test;
 
 /**
  * Tests the ClientBundle framework.
  */
-public class ResourcesSuite {
+public class ResourcesGwtSuite {
   public static Test suite() {
 
     GWTTestSuite suite = new GWTTestSuite("Test for com.google.gwt.resources");
-    suite.addTestSuite(CssClassNamesTestCase.class);
-    suite.addTestSuite(CssExternalTest.class);
-    suite.addTestSuite(CssNodeClonerTest.class);
-    suite.addTestSuite(CssReorderTest.class);
-    suite.addTestSuite(CSSResourceTest.class);
-    suite.addTestSuite(CssRtlTest.class);
     suite.addTestSuite(DataResourceDoNotEmbedTest.class);
     suite.addTestSuite(DataResourceMimeTypeTest.class);
     suite.addTestSuite(ExternalTextResourceJsonpTest.class);
     suite.addTestSuite(ExternalTextResourceTest.class);
-    suite.addTestSuite(ExtractClassNamesVisitorTest.class);
     suite.addTestSuite(ImageResourceNoInliningTest.class);
     suite.addTestSuite(ImageResourceTest.class);
     suite.addTestSuite(NestedBundleTest.class);
-    suite.addTestSuite(ResourceGeneratorUtilTest.class);
     suite.addTestSuite(TextResourceTest.class);
-    suite.addTestSuite(UnknownAtRuleTest.class);
+    suite.addTestSuite(CSSResourceTest.class);
+
+    // GSS
+    suite.addTestSuite(GssResourceTest.class);
+    suite.addTestSuite(DebugObfuscationStyleTest.class);
+    suite.addTestSuite(PrettyObfuscationStyleTest.class);
+    suite.addTestSuite(StableShortTypeObfuscationStyleTest.class);
+    suite.addTestSuite(StableNoTypeObfuscationStyleTest.class);
+    suite.addTestSuite(StableObfuscationStyleTest.class);
+    suite.addTestSuite(AutoConversionTest.class);
     return suite;
   }
 }

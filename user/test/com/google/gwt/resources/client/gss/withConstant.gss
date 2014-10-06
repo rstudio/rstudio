@@ -1,0 +1,5 @@
+@def CONSTANT_ONE 15px;
+
+.classOne {
+    padding: CONSTANT_ONE;
+}

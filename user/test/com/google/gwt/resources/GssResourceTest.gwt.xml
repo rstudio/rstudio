@@ -1,0 +1,29 @@
+<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.0//EN"
+        "http://google-web-toolkit.googlecode.com/svn/releases/2.0/distro-source/core/src/gwt-module.dtd">
+<module>
+  <inherits name="com.google.gwt.resources.Resources" />
+
+  <!-- enable GSS -->
+  <set-configuration-property name="CssResource.enableGss" value="true" />
+
+  <!-- Define two other non standards at-rules -->
+  <extend-configuration-property name="CssResource.allowedAtRules" value="extenal" />
+
+  <!-- Define two other non standards functions -->
+  <extend-configuration-property name="CssResource.allowedFunctions" value="expression" />
+  <extend-configuration-property name="CssResource.allowedFunctions"
+                                 value="progid:DXImageTransform.Microsoft.gradient" />
+
+  <set-configuration-property name="CssResource.obfuscationPrefix" value="" />
+
+  <!-- Define a configuration property to test some if-else nodes -->
+  <define-configuration-property name="test.property" is-multi-valued="false" />
+  <set-configuration-property name="test.property" value="true" />
+
+  <!-- Define properties to test some if-else nodes -->
+  <define-property name="custom.one" values="foo,bar"/>
+  <set-property name="custom.one" value="bar"/>
+
+  <define-property name="custom.two" values="foo,bar"/>
+  <set-property name="custom.two" value="bar"/>
+</module>

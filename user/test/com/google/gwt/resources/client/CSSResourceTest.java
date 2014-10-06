@@ -21,7 +21,6 @@ import com.google.gwt.resources.client.CssResource.Import;
 import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
 import com.google.gwt.resources.client.CssResource.Shared;
 
-
 /**
  * Contains various full-stack tests of the CssResource system.
  */

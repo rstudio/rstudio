@@ -1,0 +1,7 @@
+.someClass {
+    color: black;
+}
+
+.otherNotStrictClass {
+    color: white;
+}
