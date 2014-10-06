@@ -170,13 +170,6 @@ void onAllSourceDocsRemoved(boost::shared_ptr<IdToFile> pIdToFile)
    pIdToFile->clear();
 }
 
-const char * const kRequiredRcpp = "0.11.3";
-
-bool haveRequiredRcpp()
-{
-   return module_context::isPackageVersionInstalled("Rcpp", kRequiredRcpp);
-}
-
 bool cppIndexingDisabled()
 {
    return ! r::options::getOption<bool>("rstudio.indexCpp", true, false);
@@ -197,18 +190,12 @@ SEXP rs_isLibClangAvailable()
       diagnostics = "Libclang is disabled because the rstudio.indexCpp "
                     "option is set to FALSE\n";
    }
-   // check for required Rcpp
-   else if (haveRequiredRcpp())
+   else
    {
       LibClang lib;
       isAvailable = lib.load(embeddedLibClang(),
                              LibraryVersion(3,4,0),
                              &diagnostics);
-   }
-   else
-   {
-      diagnostics = "Rcpp version " + std::string(kRequiredRcpp) + " or "
-                    "greater is required in order to use libclang.\n";
    }
 
    // print diagnostics
@@ -260,11 +247,6 @@ Error initialize()
 
    // if we have disabled indexing then forget it
    if (cppIndexingDisabled())
-      return Success();
-
-   // if we don't have a recent version of Rcpp (that can do dryRun with
-   // sourceCpp) then forget it
-   if (!haveRequiredRcpp())
       return Success();
 
    // attempt to load libclang

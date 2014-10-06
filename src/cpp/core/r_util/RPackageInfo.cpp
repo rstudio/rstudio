@@ -73,6 +73,11 @@ Error RPackageInfo::read(const FilePath& packageDir)
    if (it != fields.end())
       linkingTo_ = it->second;
 
+   // SystemRequirements field
+   it = fields.find("SystemRequirements");
+   if (it != fields.end())
+      systemRequirements_ = it->second;
+
    // Type field
    it = fields.find("Type");
    if (it != fields.end())

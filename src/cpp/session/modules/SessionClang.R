@@ -38,4 +38,34 @@
    invisible(NULL)
 })
 
+.rs.addFunction( "linkingToRcpp", function(linkingTo) {
+   linkingTo <- .rs.parseLinkingTo(linkingTo)
+   "Rcpp" %in% linkingTo
+})
+
+.rs.addFunction( "includesForLinkingTo", function(linkingTo) {
+  includes <- character()
+  linkingTo <- .rs.parseLinkingTo(linkingTo)
+  for (pkg in linkingTo) {
+    includeDir <- system.file("include", package = pkg)
+    if (file.exists(includeDir)) {
+      includes <- c(includes, 
+                    paste("-I", .rs.asBuildPath(includeDir), sep = ""))
+    }
+  }
+  includes
+})
+
+.rs.addFunction( "asBuildPath", function(path) {  
+  if (.Platform$OS.type == "windows") {
+    path <- normalizePath(path)
+    if (grepl(' ', path, fixed=TRUE))
+      path <- utils::shortPathName(path)
+    path <- gsub("\\\\", "/", path)
+  }
+  return(path)
+})
+
+
+
 

@@ -35,6 +35,7 @@ namespace clang {
 class RCompilationDatabase : boost::noncopyable
 {
 public:
+   RCompilationDatabase() : packageIncludesRcpp_(false) {}
    virtual ~RCompilationDatabase() {}
 
    std::vector<std::string> compileArgsForTranslationUnit(
@@ -52,32 +53,32 @@ private:
                                 core::system::ProcessResult* pResult);
 
    void updateForCurrentPackage();
-   void updateForStandalone(const core::FilePath& cppPath);
+   void updateForSourceCpp(const core::FilePath& cppPath);
+
+   std::vector<std::string> argsForSourceCpp(core::FilePath srcFile);
 
    std::vector<std::string> rToolsArgs() const;
    std::vector<std::string> precompiledHeaderArgs(const std::string& pkgName,
                                                   const std::string& stdArg);
-
-   std::vector<std::string> computeArgsForSourceFile(
-                                          const core::FilePath& srcPath);
 
 private:
 
    // Rtools arguments (cache once we successfully get them)
    mutable std::vector<std::string> rToolsArgs_;
 
-   // track the set of attributes used to derive args (don't re-run
-   // detection if attributes haven't changed)
-   typedef std::map<std::string,std::string> AttribsMap;
-   AttribsMap attribsMap_;
+   // track the sourceCpp hash values used to derive args (don't re-run
+   // detection if hash hasn't changed)
+   typedef std::map<std::string,std::string> SourceCppHashes;
+   SourceCppHashes sourceCppHashes_;
 
    // arguments for various translation units
    typedef std::map<std::string,std::vector<std::string> > ArgsMap;
-   ArgsMap argsMap_;
+   ArgsMap sourceCppArgsMap_;
 
    // package src args (track file modification times on build
    // oriented files to avoid re-running detection)
    std::string packageBuildFileHash_;
+   bool packageIncludesRcpp_;
    std::vector<std::string> packageSrcArgs_;
 };
 
