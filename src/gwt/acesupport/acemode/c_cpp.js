@@ -32,6 +32,7 @@ var oop = require("ace/lib/oop");
 var TextMode = require("ace/mode/text").Mode;
 var Tokenizer = require("ace/tokenizer").Tokenizer;
 var Range = require("ace/range").Range;
+var RHighlightRules = require("mode/r_highlight_rules").RHighlightRules;
 var c_cppHighlightRules = require("mode/c_cpp_highlight_rules").c_cppHighlightRules;
 
 var MatchingBraceOutdent = require("mode/c_cpp_matching_brace_outdent").MatchingBraceOutdent;
@@ -51,15 +52,22 @@ var CppLookaroundHeuristics = require("mode/cpp_lookaround_heuristics").CppLooka
 var getVerticallyAlignFunctionArgs = require("mode/r_code_model").getVerticallyAlignFunctionArgs;
 
 var Mode = function(suppressHighlighting, doc, session) {
+
+   // Keep references to current session, document
    this.$session = session;
    this.$doc = doc;
-   this.$tokenizer = new Tokenizer(new c_cppHighlightRules().getRules());
-   this.$tokens = new Array(doc.getLength());
-   this.$outdent = new MatchingBraceOutdent();
+
+   // R-related tokenization
+   this.$r_tokenizer = new Tokenizer(new RHighlightRules().getRules());
    this.$r_outdent = {};
    oop.implement(this.$r_outdent, RMatchingBraceOutdent);
-   this.$behaviour = new CStyleBehaviour();
-   this.codeModel = new RCodeModel(doc, this.$tokenizer, /^r-/, /^\s*\/\*{3,}\s+[Rr]\s*$/);
+   this.$r_codeModel = new RCodeModel(doc, this.$r_tokenizer, /^r-/, /^\s*\/\*{3,}\s+[Rr]\s*$/);
+
+   // C/C++ related tokenization
+   this.$tokenizer = new Tokenizer(new c_cppHighlightRules().getRules());
+   this.$behaviour = new CStyleBehaviour(this.$doc, this.$tokenizer);
+   this.$outdent = new MatchingBraceOutdent(this.$doc, this.$tokenizer);
+   
    this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
       session,
          /^\s*\/\*{3,}\s+[Rr]\s*$/,
@@ -70,7 +78,7 @@ var Mode = function(suppressHighlighting, doc, session) {
    if (!window.NodeWebkit)     
       this.foldingRules = new CppStyleFoldMode();
 
-   this.$heuristics = new CppLookaroundHeuristics();
+   this.$heuristics = new CppLookaroundHeuristics(this.$doc, this.$tokenizer);
    this.getLineSansComments = this.$heuristics.getLineSansComments;
 
 };
@@ -203,7 +211,7 @@ oop.inherits(Mode, TextMode);
 
       // Defer to the R language indentation rules when in R language mode
       if (this.inRLanguageMode(state))
-         return this.codeModel.getNextLineIndent(row, line, state, tab, tabSize);
+         return this.$r_codeModel.getNextLineIndent(row, line, state, tab, tabSize);
 
       // Ask the R code model if we want to use vertical alignment
       var $verticallyAlignFunctionArgs = getVerticallyAlignFunctionArgs();
@@ -899,7 +907,7 @@ oop.inherits(Mode, TextMode);
 
    this.autoOutdent = function(state, doc, row) {
       if (this.inRLanguageMode(state))
-         return this.$r_outdent.autoOutdent(state, doc, row, this.codeModel);
+         return this.$r_outdent.autoOutdent(state, doc, row, this.$r_codeModel);
       else
          return this.$outdent.autoOutdent(state, doc, row);
    };

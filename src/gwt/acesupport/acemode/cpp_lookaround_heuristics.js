@@ -1,6 +1,12 @@
 define("mode/cpp_lookaround_heuristics", function(require, exports, module) {
 
-var CppLookaroundHeuristics = function() {};
+var TokenCursor = require("mode/token_cursor").TokenCursor;
+var CppLookaroundHeuristics = function(doc, tokenizer) {
+   this.$doc = doc;
+   this.$tokenizer = tokenizer;
+   this.$tokens = new Array(doc.getLength());
+   this.$tokenCursor = new TokenCursor(this.$tokens);
+};
 
 (function() {
 
@@ -10,6 +16,7 @@ var CppLookaroundHeuristics = function() {};
 
    var reOnlyWhitespace = /^\s*$/;
 
+   // NOTE: We need to be careful of comment block starts and ends. (/*, */)
    var reStartsWithContinuationToken = /^\s*[,+\-/&^%$!<\>.?|=\'\":]|^\s*\*[^/]/;
    var reEndsWithContinuationToken =       /[,+\-*&^%$!<\>.?|=\'\":]\s*$|\*[^/]\s*$/;
 

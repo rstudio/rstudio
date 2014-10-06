@@ -3,8 +3,8 @@ define("mode/c_cpp_matching_brace_outdent", function(require, exports, module) {
 var Range = require("ace/range").Range;
 var CppLookaroundHeuristics = require("mode/cpp_lookaround_heuristics").CppLookaroundHeuristics;
 
-var MatchingBraceOutdent = function() {
-   this.$heuristics = new CppLookaroundHeuristics();
+var MatchingBraceOutdent = function(doc, tokenizer) {
+   this.$heuristics = new CppLookaroundHeuristics(doc, tokenizer);
 };
 
 // Allow the user to control outdenting if desired

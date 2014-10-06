@@ -35,9 +35,9 @@ var CppLookaroundHeuristics = require("mode/cpp_lookaround_heuristics").CppLooka
 
 var $addNamespaceComment = true;
 
-var CStyleBehaviour = function () {
+var CStyleBehaviour = function(doc, tokenizer) {
 
-   var $heuristics = new CppLookaroundHeuristics();
+   var $heuristics = new CppLookaroundHeuristics(doc, tokenizer);
    var $complements = $heuristics.$complements;
 
    var autoPairInsertion = function(text, input, editor, session) {
