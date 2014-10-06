@@ -39,6 +39,7 @@ struct CompilationDatabase
 class SourceIndex : boost::noncopyable
 {   
 public:
+   static bool isSourceFile(const std::string& filename);
    static bool isTranslationUnit(const std::string& filename);
 
 public:

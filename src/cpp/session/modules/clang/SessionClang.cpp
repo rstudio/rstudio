@@ -104,44 +104,45 @@ void onSourceDocUpdated(boost::shared_ptr<IdToFile> pIdToFile,
    FilePath docPath = module_context::resolveAliasedPath(pDoc->path());
    std::string filename = docPath.absolutePath();
 
-   // verify that it's an indexable C/C++ file (we allow any and all
-   // files into the database here since these files are open within
-   // the source editor)
-   if (!SourceIndex::isTranslationUnit(filename))
-      return;
-
    // track the mapping between id and filename
    (*pIdToFile)[pDoc->id()] = filename;
 
-   // update unsaved files (we do this even if the document is dirty
-   // as even in this case it will need to be removed from the list
-   // of unsaved files)
+   // verify that it's a C/C++ file
+   if (!SourceIndex::isSourceFile(filename))
+      return;
+
+   // update unsaved files
    rSourceIndex().unsavedFiles().update(filename,
-                                       pDoc->contents(),
-                                       pDoc->dirty());
+                                        pDoc->contents(),
+                                        pDoc->dirty());
 
-   // dirty files indicate active user editing, prime if necessary
-   if (pDoc->dirty())
-   {
-      module_context::scheduleDelayedWork(
-            boost::posix_time::milliseconds(100),
-            boost::bind(&SourceIndex::primeTranslationUnit,
-                        &(rSourceIndex()), filename),
-            true); // require idle
-   }
 
-   // non dirty-files may be eligible for re-priming (i.e. process them again
-   // only if they are already in the source index). the reason we don't do
-   // this for all source doc updates is that it would expose us to an
-   // unbounded number of update operations at IDE startup (based on how
-   // many C++ files are open in the source editing pane)
-   else
+   // for full translation units we do some index priming
+   if (SourceIndex::isTranslationUnit(filename))
    {
-      module_context::scheduleDelayedWork(
-            boost::posix_time::milliseconds(100),
-            boost::bind(&SourceIndex::reprimeTranslationUnit,
-                        &(rSourceIndex()), filename),
-            true); // require idle
+      // dirty files indicate active user editing, prime if necessary
+      if (pDoc->dirty())
+      {
+         module_context::scheduleDelayedWork(
+               boost::posix_time::milliseconds(100),
+               boost::bind(&SourceIndex::primeTranslationUnit,
+                           &(rSourceIndex()), filename),
+               true); // require idle
+      }
+
+      // non dirty-files may be eligible for re-priming (i.e. process them again
+      // only if they are already in the source index). the reason we don't do
+      // this for all source doc updates is that it would expose us to an
+      // unbounded number of update operations at IDE startup (based on how
+      // many C++ files are open in the source editing pane)
+      else
+      {
+         module_context::scheduleDelayedWork(
+               boost::posix_time::milliseconds(100),
+               boost::bind(&SourceIndex::reprimeTranslationUnit,
+                           &(rSourceIndex()), filename),
+               true); // require idle
+      }
    }
 }
 

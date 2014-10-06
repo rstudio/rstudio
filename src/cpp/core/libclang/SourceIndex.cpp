@@ -28,6 +28,19 @@
 namespace core {
 namespace libclang {
 
+bool SourceIndex::isSourceFile(const std::string& filename)
+{
+   if (isTranslationUnit(filename))
+   {
+      return true;
+   }
+   else
+   {
+      std::string ex = FilePath(filename).extensionLowerCase();
+      return (ex == ".h" || ex == ".hh" || ex == ".hpp");
+   }
+}
+
 bool SourceIndex::isTranslationUnit(const std::string& filename)
 {
    std::string ex = FilePath(filename).extensionLowerCase();
