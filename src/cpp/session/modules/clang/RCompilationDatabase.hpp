@@ -35,7 +35,6 @@ namespace clang {
 class RCompilationDatabase : boost::noncopyable
 {
 public:
-   RCompilationDatabase() : packageIncludesRcpp_(false) {}
    virtual ~RCompilationDatabase() {}
 
    std::vector<std::string> compileArgsForTranslationUnit(
@@ -56,6 +55,9 @@ private:
    void updateForSourceCpp(const core::FilePath& cppPath);
 
    std::vector<std::string> argsForSourceCpp(core::FilePath srcFile);
+
+   std::vector<std::string> argsForRCmdSHLIB(core::system::Options env,
+                                             core::FilePath tempSrcFile);
 
    std::vector<std::string> rToolsArgs() const;
    std::vector<std::string> precompiledHeaderArgs(const std::string& pkgName,
@@ -78,7 +80,7 @@ private:
    // package src args (track file modification times on build
    // oriented files to avoid re-running detection)
    std::string packageBuildFileHash_;
-   bool packageIncludesRcpp_;
+   std::string packagePCH_;
    std::vector<std::string> packageSrcArgs_;
 };
 

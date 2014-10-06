@@ -205,17 +205,17 @@ std::vector<std::string> parseCompilationResults(const FilePath& srcFile,
    return compileArgs;
 }
 
-bool linkingToRcpp(const std::string& linkingTo)
+std::string packagePCH(const std::string& linkingTo)
 {
-   bool linkingToRcpp = false;
-   r::exec::RFunction func(".rs.linkingToRcpp", linkingTo);
-   Error error = func.call(&linkingToRcpp);
+   std::string pch;
+   r::exec::RFunction func(".rs.packagePCH", linkingTo);
+   Error error = func.call(&pch);
    if (error)
    {
       error.addProperty("linking-to", linkingTo);
       LOG_ERROR(error);
    }
-   return linkingToRcpp;
+   return pch;
 }
 
 std::vector<std::string> includesForLinkingTo(const std::string& linkingTo)
@@ -230,6 +230,7 @@ std::vector<std::string> includesForLinkingTo(const std::string& linkingTo)
    }
    return includes;
 }
+
 
 
 
@@ -280,39 +281,14 @@ void RCompilationDatabase::updateForCurrentPackage()
    if (boost::algorithm::icontains(pkgInfo.systemRequirements(), "C++11"))
       env.push_back(std::make_pair("USE_CXX1X", "1"));
 
-   // write a fake source file into the src directory to call
-   // R CMD SHLIB on (that will give us the Makevars processing)
+   // Run R CMD SHLIB
    FilePath srcDir = pkgPath.childPath("src");
-   FilePath srcFile = srcDir.childPath(core::system::generateUuid() + ".cpp");
-   error = core::writeStringToFile(srcFile, "void foo() {}\n");
-   if (error)
-      LOG_ERROR(error);
+   FilePath tempSrcFile = srcDir.childPath(
+                                 core::system::generateUuid() + ".cpp");
+   std::vector<std::string> compileArgs = argsForRCmdSHLIB(env, tempSrcFile);
 
-   // execute R CMD SHLIB
-   core::system::ProcessResult result;
-   error = executeRCmdSHLIB(env, srcFile, &result);
-
-   // remove the temporary source file
-   Error removeError = srcFile.remove();
-   if (removeError)
-      LOG_ERROR(removeError);
-
-   // process results of R CMD SHLIB
-   if (error)
+   if (!compileArgs.empty())
    {
-      LOG_ERROR(error);
-   }
-   else if (result.exitStatus != EXIT_SUCCESS)
-   {
-      LOG_ERROR_MESSAGE("Error performing R CMD SHLIB: " + result.stdErr);
-   }
-   else
-   {
-      // parse the compilation results
-      std::vector<std::string> compileArgs = parseCompilationResults(
-                                                              srcFile,
-                                                              result.stdOut);
-
       // do path substitutions
       BOOST_FOREACH(std::string arg, compileArgs)
       {
@@ -331,9 +307,10 @@ void RCompilationDatabase::updateForCurrentPackage()
 
       // set the args and build file hash (to avoid recomputation)
       packageSrcArgs_ = args;
-      packageIncludesRcpp_ = linkingToRcpp(pkgInfo.linkingTo());
+      packagePCH_ = packagePCH(pkgInfo.linkingTo());
       packageBuildFileHash_ = buildFileHash;
    }
+
 }
 
 void RCompilationDatabase::updateForSourceCpp(const core::FilePath& srcFile)
@@ -460,8 +437,8 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
    FilePath filePath(filename);
 
    // if this is a package source file then return the package args
-   bool includesRcpp = false;
    using namespace projects;
+   std::string packagePCH;
    FilePath srcDirPath = projectContext().buildTargetPath().childPath("src");
    if ((projectContext().config().buildType == r_util::kBuildTypePackage) &&
        !filePath.relativePath(srcDirPath).empty())
@@ -471,7 +448,7 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
 
       // if we have args then capture them
       args = packageSrcArgs_;
-      includesRcpp = packageIncludesRcpp_;
+      packagePCH = packagePCH_;
    }
    // otherwise lookup in the global dictionary
    else
@@ -485,7 +462,7 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
       if (it != sourceCppArgsMap_.end())
       {
          args = it->second;
-         includesRcpp = true;
+         packagePCH = "Rcpp";
       }
    }
 
@@ -493,8 +470,8 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
    if (args.empty())
       return args;
 
-   // add precompiled headers if we are LinkingTo Rcpp
-   if (includesRcpp)
+   // add precompiled headers if necessary
+   if (!packagePCH.empty())
    {
       std::string ext = filePath.extensionLowerCase();
       bool isCppFile = (ext == ".cc") || (ext == ".cpp");
@@ -503,7 +480,7 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
          // extract any -std= argument
          std::string stdArg = extractStdArg(args);
 
-         std::vector<std::string> pchArgs = precompiledHeaderArgs("Rcpp",
+         std::vector<std::string> pchArgs = precompiledHeaderArgs(packagePCH,
                                                                   stdArg);
          std::copy(pchArgs.begin(),
                    pchArgs.end(),
@@ -588,6 +565,45 @@ std::vector<std::string> RCompilationDatabase::argsForSourceCpp(
       return args;
    }
 }
+
+std::vector<std::string> RCompilationDatabase::argsForRCmdSHLIB(
+                                          core::system::Options env,
+                                          FilePath tempSrcFile)
+{
+   Error error = core::writeStringToFile(tempSrcFile, "void foo() {}\n");
+   if (error)
+   {
+      LOG_ERROR(error);
+      return std::vector<std::string>();
+   }
+
+   // execute R CMD SHLIB
+   core::system::ProcessResult result;
+   error = executeRCmdSHLIB(env, tempSrcFile, &result);
+
+   // remove the temporary source file
+   Error removeError = tempSrcFile.remove();
+   if (removeError)
+      LOG_ERROR(removeError);
+
+   // process results of R CMD SHLIB
+   if (error)
+   {
+      LOG_ERROR(error);
+      return std::vector<std::string>();
+   }
+   else if (result.exitStatus != EXIT_SUCCESS)
+   {
+      LOG_ERROR_MESSAGE("Error performing R CMD SHLIB: " + result.stdErr);
+      return std::vector<std::string>();
+   }
+   else
+   {
+      // parse the compilation results
+      return parseCompilationResults(tempSrcFile, result.stdOut);
+   }
+}
+
 
 std::vector<std::string> RCompilationDatabase::rToolsArgs() const
 {
@@ -696,8 +712,28 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
       }
 
       // compute args
-      std::vector<std::string> args = argsForSourceCpp(cppPath);
+      std::vector<std::string> args;
 
+      // start with clang compile args
+      std::vector<std::string> clangCompileArgs = clang().compileArgs(true);
+      std::copy(clangCompileArgs.begin(),
+                clangCompileArgs.end(),
+                std::back_inserter(args));
+      // -std argument
+      if (!stdArg.empty())
+         args.push_back(stdArg);
+
+      // run R CMD SHLIB
+      core::system::Options env = compilationEnvironment();
+      FilePath tempSrcFile = module_context::tempFile("clang", "cpp");
+      std::vector<std::string> cArgs = argsForRCmdSHLIB(env, tempSrcFile);
+      std::copy(cArgs.begin(), cArgs.end(), std::back_inserter(args));
+
+      // add this package's path to the args
+      std::vector<std::string> pkgArgs = includesForLinkingTo(pkgName);
+      std::copy(pkgArgs.begin(), pkgArgs.end(), std::back_inserter(args));
+
+      // create args array
       core::system::ProcessArgs argsArray(args);
 
       CXIndex index = clang().createIndex(0,0);

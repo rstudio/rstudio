@@ -38,9 +38,14 @@
    invisible(NULL)
 })
 
-.rs.addFunction( "linkingToRcpp", function(linkingTo) {
+.rs.addFunction( "packagePCH", function(linkingTo) {
    linkingTo <- .rs.parseLinkingTo(linkingTo)
-   "Rcpp" %in% linkingTo
+   if ("Rcpp" %in% linkingTo)
+      "Rcpp"
+   else if ("Rcpp11" %in% linkingTo)
+      "Rcpp11"
+   else
+      ""
 })
 
 .rs.addFunction( "includesForLinkingTo", function(linkingTo) {
