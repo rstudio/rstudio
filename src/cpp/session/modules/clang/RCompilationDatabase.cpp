@@ -77,6 +77,11 @@ std::string sourceCppHash(const core::FilePath& srcPath)
    // hash to return
    std::string hash;
 
+   // ensure that we include Rcpp (or one of the wrapper packages of it)
+   boost::regex reRcpp("#include\\s+<Rcpp");
+   if (boost::regex_search(contents, reRcpp))
+      hash.append("Rcpp"); // sentinel indicating Rcpp include detected
+
    // find dependency attributes
    boost::regex re(
      "^\\s*//\\s*\\[\\[Rcpp::(\\w+)(\\(.*?\\))?\\]\\]\\s*$");
@@ -87,15 +92,6 @@ std::string sourceCppHash(const core::FilePath& srcPath)
       std::string attrib = *it;
       boost::algorithm::trim_all(attrib);
       hash.append(attrib);
-   }
-
-   // if the hash is empty we can still quality with an explicit
-   // include of Rcpp
-   if (hash.empty())
-   {
-      boost::regex reRcpp("#include\\s+<Rcpp");
-      if (boost::regex_search(contents, reRcpp))
-         hash = "Rcpp";
    }
 
    // return hash
