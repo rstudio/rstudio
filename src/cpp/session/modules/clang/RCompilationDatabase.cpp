@@ -22,6 +22,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim_all.hpp>
 
+#include <core/Hash.hpp>
 #include <core/PerformanceTimer.hpp>
 #include <core/FileSerializer.hpp>
 
@@ -675,10 +676,22 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
    FilePath precompiledDir = module_context::scopedScratchPath().
                                             childPath(kPrecompiledDir);
 
+   // further scope to actual path of package (as the locations of the
+   // header files must be stable)
+   std::string pkgPath;
+   Error error = r::exec::RFunction("find.package", pkgName).call(&pkgPath);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return std::vector<std::string>();
+   }
+   pkgPath = core::hash::crc32HexHash(pkgPath);
+   precompiledDir = precompiledDir.childPath(pkgPath);
+
    // platform/rcpp version specific directory name
    std::string clangVersion = clang().version().asString();
    std::string platformDir;
-   Error error = r::exec::RFunction(".rs.clangPCHPath", pkgName, clangVersion)
+   error = r::exec::RFunction(".rs.clangPCHPath", pkgName, clangVersion)
                                                          .call(&platformDir);
    if (error)
    {
@@ -766,6 +779,11 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
          LOG_ERROR_MESSAGE("Error parsing translation unit " +
                            cppPath.absolutePath());
          clang().disposeIndex(index);
+
+         Error removeError = precompiledDir.removeIfExists();
+         if (removeError)
+            LOG_ERROR(removeError);
+
          return std::vector<std::string>();
       }
 
@@ -777,6 +795,10 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
          boost::format fmt("Error %1% saving translation unit %2%");
          std::string msg = boost::str(fmt % ret % pchPath.absolutePath());
          LOG_ERROR_MESSAGE(msg);
+
+         Error removeError = precompiledDir.removeIfExists();
+         if (removeError)
+            LOG_ERROR(removeError);
       }
 
       clang().disposeTranslationUnit(tu);
