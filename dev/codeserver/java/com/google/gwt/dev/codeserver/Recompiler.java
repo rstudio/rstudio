@@ -212,7 +212,7 @@ class Recompiler {
    * Prepares a stub compile directory.
    * It will include all "public" resources and a nocache.js file that invokes the compiler.
    */
-  private static void setUpCompileDir(CompileDir compileDir, ModuleDef module,
+  private void setUpCompileDir(CompileDir compileDir, ModuleDef module,
       TreeLogger compileLogger) throws UnableToCompleteException {
     try {
       String outputModuleName = module.getName();
@@ -227,12 +227,15 @@ class Recompiler {
       }
       writePublicResources(outputDir, module, compileLogger);
 
-      // Create a "module_name.nocache.js" that calculates the permutation and forces a recompile.
-      String nocacheJs = generateModuleRecompileJs(module, compileLogger);
-      Files.write(nocacheJs,
-          new File(outputDir.getCanonicalPath() + "/" + outputModuleName + ".nocache.js"),
-          Charsets.UTF_8);
-      writeRecompileNoCacheJs(outputDir, outputModuleName, nocacheJs, compileLogger);
+      // write no cache that will inject recompile.nocache.js
+      String stub = generateStubNocacheJs(module.getName());
+      File noCacheJs = new File(outputDir.getCanonicalPath(), module.getName() + ".nocache.js");
+      Files.write(stub, noCacheJs, Charsets.UTF_8);
+
+      // Create a "module_name.recompile.nocache.js" that calculates the permutation
+      // and forces a recompile.
+      String recompileNoCache = generateModuleRecompileJs(module, compileLogger);
+      writeRecompileNoCacheJs(outputDir, outputModuleName, recompileNoCache, compileLogger);
     } catch (IOException e) {
       compileLogger.log(Type.ERROR, "Error creating stub compile directory.", e);
       UnableToCompleteException wrapped = new UnableToCompleteException();
