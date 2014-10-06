@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<module>
+  <inherits name="com.google.gwt.core.Core" />
+  <inherits name="elemental.Collections" />
+
+  <source path="js/json" />
+  <source path='json'/>
+  <super-source path="super" includes="elemental/json/**/*"/>
+</module>
+

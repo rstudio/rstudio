@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <module>
   <inherits name="com.google.gwt.core.Core" />
+  <inherits name="elemental.Json" />
+  <inherits name="elemental.Collections" />
 
   <!-- Enables use of ClientBundle -->
   <inherits name="com.google.gwt.resources.Resources" />
@@ -13,7 +15,6 @@
   <source path='dom'/>
   <source path='events'/>
   <source path='html'/>
-  <source path='json'/>
   <source path='ranges'/>
   <source path='stylesheets'/>
   <source path='svg'/>

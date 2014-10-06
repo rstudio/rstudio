@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<module>
+  <inherits name="com.google.gwt.core.Core" />
+
+  <source path="js/util" includes="JsIndexable.java,JsArray*,JsMap*,JsElementalBase.java" />
+  <source path="util" skips="Timer.java"/>
+  <super-source path="super" includes="elemental/util/**/*"/>
+</module>
+
