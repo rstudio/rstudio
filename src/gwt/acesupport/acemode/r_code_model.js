@@ -18,6 +18,7 @@ define("mode/r_code_model", function(require, exports, module) {
 var Range = require("ace/range").Range;
 var TokenIterator = require("ace/token_iterator").TokenIterator;
 var TokenCursor = require("mode/token_cursor").TokenCursor;
+var TokenUtils = require("mode/token_utils").TokenUtils;
 
 var $verticallyAlignFunctionArgs = false;
 
@@ -33,10 +34,14 @@ var ScopeManager = require("mode/r_scope_tree").ScopeManager;
 var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    this.$doc = doc;
    this.$tokenizer = tokenizer;
-   this.$tokens = new Array(doc.getLength());
-   this.$endStates = new Array(doc.getLength());
-   this.$statePattern = statePattern;
-   this.$codeBeginPattern = codeBeginPattern;
+   
+   this.$tokenUtils = new TokenUtils(doc, tokenizer, statePattern, codeBeginPattern);
+   
+   this.$tokens = this.$tokenUtils.$tokens;
+   this.$endStates = this.$tokenUtils.$endStates;
+   this.$statePattern = this.$tokenUtils.$statePattern;
+   this.$codeBeginPattern = this.$tokenUtils.$codeBeginPattern;
+   
    this.$scopes = new ScopeManager();
 
    var that = this;
@@ -44,7 +49,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       that.$onDocChange.apply(that, [evt]);
    });
 
-   this.$TokenCursor = new TokenCursor(this.$tokens);
+   this.$tokenCursor = new TokenCursor(this.$tokens);
 };
 
 (function () {
@@ -139,10 +144,10 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       // Seems like it would be rare indeed for this distance to be more than 30
       // rows.
       var maxRow = Math.min(maxrow + 30, this.$doc.getLength() - 1);
-      this.$tokenizeUpToRow(maxRow);
+      this.$tokenUtils.$tokenizeUpToRow(maxRow);
 
       //console.log("Seeking to " + this.$scopes.parsePos.row + "x"+ this.$scopes.parsePos.column);
-      var tokenCursor = this.$TokenCursor.cloneCursor();
+      var tokenCursor = this.$tokenCursor.cloneCursor();
       if (!tokenCursor.seekToNearestToken(this.$scopes.parsePos, maxRow))
          return;
 
@@ -231,7 +236,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    };
 
    this.$getFoldToken = function(session, foldStyle, row) {
-      this.$tokenizeUpToRow(row);
+      this.$tokenUtils.$tokenizeUpToRow(row);
 
       if (this.$statePattern && !this.$statePattern.test(this.$endStates[row]))
          return "";
@@ -378,7 +383,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    this.getCurrentScope = function(position, filter)
    {
       if (!filter)
-         filter = function(scope) { return true; }
+         filter = function(scope) { return true; };
 
       if (!position)
          return "";
@@ -411,9 +416,9 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
    this.getIndentForOpenBrace = function(pos)
    {
-      if (this.$tokenizeUpToRow(pos.row))
+      if (this.$tokenUtils.$tokenizeUpToRow(pos.row))
       {
-         var tokenCursor = this.$TokenCursor.cloneCursor();
+         var tokenCursor = this.$tokenCursor.cloneCursor();
          if (tokenCursor.seekToNearestToken(pos, pos.row)
                    && tokenCursor.currentValue() == "{"
                && tokenCursor.moveBackwardOverMatchingParens())
@@ -445,7 +450,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       {
          this.$lineOverrides = {};
          this.$lineOverrides[lastRow] = line;
-         this.$invalidateRow(lastRow);
+         this.$tokenUtils.$invalidateRow(lastRow);
       }
       
       try
@@ -453,9 +458,9 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          var defaultIndent = lastRow < 0 ? "" 
                                          : this.$getIndent(this.$getLine(lastRow));
 
-         // jcheng 12/7/2013: It doesn't look to me like $tokenizeUpToRow can return
+         // jcheng 12/7/2013: It doesn't look to me like $tokenUtils.$tokenizeUpToRow can return
          // anything but true, at least not today.
-         if (!this.$tokenizeUpToRow(lastRow))
+         if (!this.$tokenUtils.$tokenizeUpToRow(lastRow))
             return defaultIndent;
 
          // If we're in an Sweave/Rmd/etc. document and this line isn't R, then
@@ -470,8 +475,13 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          // The significant token (no whitespace, comments) that most immediately
          // precedes this line. We don't look back further than 10 rows or so for
          // performance reasons.
-         var prevToken = this.$findPreviousSignificantToken({row: lastRow, column: this.$getLine(lastRow).length},
-                                                            lastRow - 10);
+         var prevToken = this.$tokenUtils.$findPreviousSignificantToken(
+            {
+               row: lastRow,
+               column: this.$getLine(lastRow).length
+            },
+            lastRow - 10
+         );
 
          if (prevToken
                && /\bparen\b/.test(prevToken.token.type)
@@ -486,18 +496,20 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             //     isTRUE(bar) &&
             //     (!is.null(baz) && !is.na(baz)))
             //   |
-            var openParenPos = this.$walkParensBalanced(
+            var openParenPos = this.$tokenUtils.$walkParensBalanced(
                   prevToken.row,
                   prevToken.row - 10,
                   null,
                   function(parens, paren, pos)
                   {
                      return parens.length === 0;
-                  });
+                  },
+                  this.$complements
+            );
 
             if (openParenPos != null)
             {
-               var preParenToken = this.$findPreviousSignificantToken(openParenPos, 0);
+               var preParenToken = this.$tokenUtils.$findPreviousSignificantToken(openParenPos, 0);
                if (preParenToken && preParenToken.token.type === "keyword"
                      && /^(if|while|for|function)$/.test(preParenToken.token.value))
                {
@@ -526,15 +538,17 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
          // Walk backwards looking for an open paren, square bracket, or curly
          // brace, *ignoring matched pairs along the way*. (That's the "balanced"
-         // in $walkParensBalanced.)
-         var openBracePos = this.$walkParensBalanced(
+         // in $tokenUtils.$walkParensBalanced.)
+         var openBracePos = this.$tokenUtils.$walkParensBalanced(
                lastRow,
                0,
                function(parens, paren, pos)
                {
                   return /[\[({]/.test(paren) && parens.length === 0;
                },
-               null);
+               null,
+               this.$complements
+         );
 
          if (openBracePos != null)
          {
@@ -564,7 +578,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                // soDomethingAwesome(a = 1,
                //   b = 2,
                //   c = 3)
-               nextTokenPos = this.$findNextSignificantToken(
+               nextTokenPos = this.$tokenUtils.$findNextSignificantToken(
                      {
                         row: openBracePos.row,
                         column: openBracePos.column + 1
@@ -645,7 +659,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             }
          }
 
-         var firstToken = this.$findNextSignificantToken({row: 0, column: 0}, lastRow);
+         var firstToken = this.$tokenUtils.$findNextSignificantToken({row: 0, column: 0}, lastRow);
          if (firstToken)
             return this.$getIndent(this.$getLine(firstToken.row)) + continuationIndent;
          else
@@ -656,33 +670,35 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          if (this.$lineOverrides)
          {
             this.$lineOverrides = null;
-            this.$invalidateRow(lastRow);
+            this.$tokenUtils.$invalidateRow(lastRow);
          }
       }
    };
 
    this.getBraceIndent = function(lastRow)
    {
-      this.$tokenizeUpToRow(lastRow);
+      this.$tokenUtils.$tokenizeUpToRow(lastRow);
 
-      var prevToken = this.$findPreviousSignificantToken({row: lastRow, column: this.$getLine(lastRow).length},
+      var prevToken = this.$tokenUtils.$findPreviousSignificantToken({row: lastRow, column: this.$getLine(lastRow).length},
                                                          lastRow - 10);
       if (prevToken
             && /\bparen\b/.test(prevToken.token.type)
             && /\)$/.test(prevToken.token.value))
       {
-         var lastPos = this.$walkParensBalanced(
+         var lastPos = this.$tokenUtils.$walkParensBalanced(
                prevToken.row,
                prevToken.row - 10,
                null,
                function(parens, paren, pos)
                {
                   return parens.length == 0;
-               });
+               },
+               this.$complements
+         );
 
          if (lastPos != null)
          {
-            var preParenToken = this.$findPreviousSignificantToken(lastPos, 0);
+            var preParenToken = this.$tokenUtils.$findPreviousSignificantToken(lastPos, 0);
             if (preParenToken && preParenToken.token.type === "keyword"
                   && /^(if|while|for|function)$/.test(preParenToken.token.value))
             {
@@ -700,148 +716,47 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       return this.$getIndent(lastRow);
    };
 
-   /**
-    * If headInclusive, then a token will match if it starts at pos.
-    * If tailInclusive, then a token will match if it ends at pos (meaning
-    *    token.column + token.length == pos.column, and token.row == pos.row
-    * In all cases, a token will match if pos is after the head and before the
-    *    tail.
-    *
-    * If no token is found, null is returned.
-    *
-    * Note that whitespace and comment tokens will never be returned.
-    */
-   this.getTokenForPos = function(pos, headInclusive, tailInclusive)
-   {
-      this.$tokenizeUpToRow(pos.row);
-
-      if (this.$tokens.length <= pos.row)
-         return null;
-      var tokens = this.$tokens[pos.row];
-      for (var i = 0; i < tokens.length; i++)
-      {
-         var token = tokens[i];
-
-         if (headInclusive && pos.column == token.column)
-            return token;
-         if (pos.column <= token.column)
-            return null;
-
-         if (tailInclusive && pos.column == token.column + token.value.length)
-            return token;
-         if (pos.column < token.column + token.value.length)
-            return token;
-      }
-      return null;
-   };
-
-   this.$tokenizeUpToRow = function(lastRow)
-   {
-      // Don't let lastRow be past the end of the document
-      lastRow = Math.min(lastRow, this.$endStates.length - 1);
-
-      var row = 0;
-      var assumeGood = true;
-      for ( ; row <= lastRow; row++)
-      {
-         // No need to tokenize rows until we hit one that has been explicitly
-         // invalidated.
-         if (assumeGood && this.$endStates[row])
-            continue;
-         
-         assumeGood = false;
-
-         var state = (row === 0) ? 'start' : this.$endStates[row-1];
-         var lineTokens = this.$tokenizer.getLineTokens(this.$getLine(row), state);
-         if (!this.$statePattern || this.$statePattern.test(lineTokens.state) || this.$statePattern.test(state))
-            this.$tokens[row] = this.$filterWhitespaceAndComments(lineTokens.tokens);
-         else
-            this.$tokens[row] = [];
-
-         // If we ended in the same state that the cache says, then we know that
-         // the cache is up-to-date for the subsequent lines--UNTIL we hit a row
-         // that has been explicitly invalidated.
-         if (lineTokens.state === this.$endStates[row])
-            assumeGood = true;
-         else
-            this.$endStates[row] = lineTokens.state;
-      }
-      
-      if (!assumeGood)
-      {
-         // If we get here, it means the last row we saw before we exited
-         // was invalidated or impacted by an invalidated row. We need to
-         // make sure the NEXT row doesn't get ignored next time the tokenizer
-         // makes a pass.
-         if (row < this.$tokens.length)
-            this.$invalidateRow(row);
-      }
-      
-      return true;
-   };
-
    this.$onDocChange = function(evt)
    {
       var delta = evt.data;
 
       if (delta.action === "insertLines")
       {
-         this.$insertNewRows(delta.range.start.row,
+         this.$tokenUtils.$insertNewRows(delta.range.start.row,
                              delta.range.end.row - delta.range.start.row);
       }
       else if (delta.action === "insertText")
       {
          if (this.$doc.isNewLine(delta.text))
          {
-            this.$invalidateRow(delta.range.start.row);
-            this.$insertNewRows(delta.range.end.row, 1);
+            this.$tokenUtils.$invalidateRow(delta.range.start.row);
+            this.$tokenUtils.$insertNewRows(delta.range.end.row, 1);
          }
          else
          {
-            this.$invalidateRow(delta.range.start.row);
+            this.$tokenUtils.$invalidateRow(delta.range.start.row);
          }
       }
       else if (delta.action === "removeLines")
       {
          this.$removeRows(delta.range.start.row,
                           delta.range.end.row - delta.range.start.row);
-         this.$invalidateRow(delta.range.start.row);
+         this.$tokenUtils.$invalidateRow(delta.range.start.row);
       }
       else if (delta.action === "removeText")
       {
          if (this.$doc.isNewLine(delta.text))
          {
             this.$removeRows(delta.range.end.row, 1);
-            this.$invalidateRow(delta.range.start.row);
+            this.$tokenUtils.$invalidateRow(delta.range.start.row);
          }
          else
          {
-            this.$invalidateRow(delta.range.start.row);
+            this.$tokenUtils.$invalidateRow(delta.range.start.row);
          }
       }
 
       this.$scopes.invalidateFrom(delta.range.start);
-   };
-   
-   this.$invalidateRow = function(row)
-   {
-      this.$tokens[row] = null;
-      this.$endStates[row] = null;
-   };
-   
-   this.$insertNewRows = function(row, count)
-   {
-      var args = [row, 0];
-      for (var i = 0; i < count; i++)
-         args.push(null);
-      this.$tokens.splice.apply(this.$tokens, args);
-      this.$endStates.splice.apply(this.$endStates, args);
-   };
-   
-   this.$removeRows = function(row, count)
-   {
-      this.$tokens.splice(row, count);
-      this.$endStates.splice(row, count);
    };
    
    this.$getIndent = function(line)
@@ -860,208 +775,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       return this.$doc.getLine(row);
    };
 
-   this.$walkParens = function(startRow, endRow, fun)
-   {
-      var parenRe = /\bparen\b/;
-
-      if (startRow < endRow)  // forward
-      {
-         return (function() {
-            for ( ; startRow <= endRow; startRow++)
-            {
-               var tokens = this.$tokens[startRow];
-               for (var i = 0; i < tokens.length; i++)
-               {
-                  if (parenRe.test(tokens[i].type))
-                  {
-                     var value = tokens[i].value;
-                     if (!fun(value, {row: startRow, column: tokens[i].column}))
-                        return false;
-                  }
-               }
-            }
-            return true;
-         }).call(this);
-      }
-      else // backward
-      {
-         return (function() {
-            startRow = Math.max(0, startRow);
-            endRow = Math.max(0, endRow);
-
-            for ( ; startRow >= endRow; startRow--)
-            {
-               var tokens = this.$tokens[startRow];
-               for (var i = tokens.length - 1; i >= 0; i--)
-               {
-                  if (parenRe.test(tokens[i].type))
-                  {
-                     var value = tokens[i].value;
-                     if (!fun(value, {row: startRow, column: tokens[i].column}))
-                        return false;
-                  }
-               }
-            }
-            return true;
-         }).call(this);
-      }
-   };
-
-   // Walks BACKWARD over matched pairs of parens. Stop and return result
-   // when optional function params preMatch or postMatch return true.
-   // preMatch is called when a paren is encountered and BEFORE the parens
-   // stack is modified. postMatch is called after the parens stack is modified.
-   this.$walkParensBalanced = function(startRow, endRow, preMatch, postMatch)
-   {
-      // The current stack of parens that are in effect.
-      var parens = [];
-      var result = null;
-      var that = this;
-      this.$walkParens(startRow, endRow, function(paren, pos)
-      {
-         if (preMatch && preMatch(parens, paren, pos))
-         {
-            result = pos;
-            return false;
-         }
-
-         if (/[\[({]/.test(paren))
-         {
-            if (parens[parens.length - 1] === that.$complements[paren])
-               parens.pop();
-            else
-               return true;
-         }
-         else
-         {
-            parens.push(paren);
-         }
-
-         if (postMatch && postMatch(parens, paren, pos))
-         {
-            result = pos;
-            return false;
-         }
-
-         return true;
-      });
-
-      return result;
-   };
    
-   this.$findNextSignificantToken = function(pos, lastRow)
-   {
-      if (this.$tokens.length == 0)
-         return null;
-      lastRow = Math.min(lastRow, this.$tokens.length - 1);
-      
-      var row = pos.row;
-      var col = pos.column;
-      for ( ; row <= lastRow; row++)
-      {
-         var tokens = this.$tokens[row];
-
-         for (var i = 0; i < tokens.length; i++)
-         {
-            if (tokens[i].column + tokens[i].value.length > col)
-            {
-               return {
-                  token: tokens[i], 
-                  row: row, 
-                  column: Math.max(tokens[i].column, col),
-                  offset: i
-               };
-            }
-         }
-
-         col = 0; // After the first row, we'll settle for a token anywhere
-      }
-      return null;
-   };
-
-   this.findNextSignificantToken = function(pos)
-   {
-	   return this.$findNextSignificantToken(pos, this.$tokens.length - 1);
-   };
-   
-   this.$findPreviousSignificantToken = function(pos, firstRow)
-   {
-      if (this.$tokens.length == 0)
-         return null;
-      firstRow = Math.max(0, firstRow);
-      
-      var row = Math.min(pos.row, this.$tokens.length - 1);
-      for ( ; row >= firstRow; row--)
-      {
-         var tokens = this.$tokens[row];
-         if (tokens.length == 0)
-            continue;
-         
-         if (row != pos.row)
-            return {
-               row: row,
-               column: tokens[tokens.length - 1].column,
-               token: tokens[tokens.length - 1],
-               offset: tokens.length - 1
-            };
-         
-         for (var i = tokens.length - 1; i >= 0; i--)
-         {
-            if (tokens[i].column < pos.column)
-            {
-               return {
-                  row: row,
-                  column: tokens[i].column,
-                  token: tokens[i],
-                  offset: i
-               };
-            }
-         }
-      }
-
-      return null;
-   };
-   
-   function isWhitespaceOrComment(token)
-   {
-      // virtual-comment is for roxygen content that needs to be highlighted
-      // as TeX, but for the purposes of the code model should be invisible.
-
-      if (/\bcode(?:begin|end)\b/.test(token.type))
-         return false;
-
-      if (/\bsectionhead\b/.test(token.type))
-         return false;
-
-      return /^\s*$/.test(token.value) ||
-             token.type.match(/\b(?:ace_virtual-)?comment\b/);
-   }
-
-   this.$filterWhitespaceAndComments = function(tokens)
-   {
-      tokens = tokens.filter(function (t) {
-         return !isWhitespaceOrComment(t);
-      });
-
-      for (var i = tokens.length - 1; i >= 0; i--)
-      {
-         if (tokens[i].value.length > 1 && /\bparen\b/.test(tokens[i].type))
-         {
-            var token = tokens[i];
-            tokens.splice(i, 1);
-            for (var j = token.value.length - 1; j >= 0; j--)
-            {
-               var newToken = {
-                  type: token.type,
-                  value: token.value.charAt(j),
-                  column: token.column + j
-               };
-               tokens.splice(i, 0, newToken);
-            }
-         }
-      }
-      return tokens;
-   };
 
 }).call(RCodeModel.prototype);
 

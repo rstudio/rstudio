@@ -15,15 +15,34 @@
 
 define("mode/cpp_code_model", function(require, exports, module) {
 
+var Range = require("ace/range").Range;
+var TokenIterator = require("ace/token_iterator").TokenIterator;
 var TokenCursor = require("mode/token_cursor").TokenCursor;
-var CppCodeModel = function(doc, tokenizer) {
+
+var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    this.$doc = doc;
    this.$tokenizer = tokenizer;
    this.$tokens = new Array(doc.getLength());
+   this.$endStates = new Array(doc.getLength());
+   this.$statePattern = statePattern;
+   this.$codeBeginPattern = codeBeginPattern;
    this.$tokenCursor = new TokenCursor(this.$tokens);
 };
 
 (function() {
+
+   this.$complements = {
+      "<" : ">",
+      ">" : "<",
+      "{" : "}",
+      "}" : "{",
+      "[" : "]",
+      "]" : "[",
+      "(" : ")",
+      ")" : "(",
+      "'" : "'",
+      '"' : '"'
+   };
 
    var reStartsWithComma        = /^\s*,/;
    var reStartsWithColon        = /^\s*:/;
@@ -67,19 +86,6 @@ var CppCodeModel = function(doc, tokenizer) {
    var reEndsWithBackslash = /\\\s*$/;
 
    var reStartsWithOpenBrace = /\s*\{/;
-
-   this.$complements = {
-      "<" : ">",
-      ">" : "<",
-      "{" : "}",
-      "}" : "{",
-      "[" : "]",
-      "]" : "[",
-      "(" : ")",
-      ")" : "(",
-      "'" : "'",
-      '"' : '"'
-   };
 
    this.getRowForOpenBraceIndentClassStyle = function(session, row, maxLookback) {
 
