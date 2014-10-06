@@ -65,11 +65,11 @@ std::string sourceCppHash(const core::FilePath& srcPath)
       return std::string();
    }
 
-   // we do precompiled headers for Rcpp so we can't mix that with a
-   // sourceCpp file that includes Rcpp11. it would be great to
-   // actually signal this from here and just proceed with Rcpp11
-   // but excluce the precompiled headers (or add support for actually
-   // precompiling Rcpp11)
+   // we use Rcpp::sourceCpp with dryRun to determine the compiler command
+   // line, as well as generate and use Rcpp precompiled headers. For this
+   // reason we need to restrict sourceCpp support to straight Rcpp --
+   // this code filters out files that use Rcpp11 (note that packages using
+   // Rcpp11 do however work correctly)
    boost::regex reRcpp11("#include\\s+<Rcpp11");
    if (boost::regex_search(contents, reRcpp11))
       return std::string();
