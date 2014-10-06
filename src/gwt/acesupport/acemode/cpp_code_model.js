@@ -1,7 +1,22 @@
-define("mode/cpp_lookaround_heuristics", function(require, exports, module) {
+/*
+ * cpp_code_model.js
+ *
+ * Copyright (C) 2009-12 by RStudio, Inc.
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+define("mode/cpp_code_model", function(require, exports, module) {
 
 var TokenCursor = require("mode/token_cursor").TokenCursor;
-var CppLookaroundHeuristics = function(doc, tokenizer) {
+var CppCodeModel = function(doc, tokenizer) {
    this.$doc = doc;
    this.$tokenizer = tokenizer;
    this.$tokens = new Array(doc.getLength());
@@ -516,9 +531,9 @@ var CppLookaroundHeuristics = function(doc, tokenizer) {
 
    };
    
-}).call(CppLookaroundHeuristics.prototype);
+}).call(CppCodeModel.prototype);
 
-exports.CppLookaroundHeuristics = CppLookaroundHeuristics;
+exports.CppCodeModel = CppCodeModel;
 
 });
 

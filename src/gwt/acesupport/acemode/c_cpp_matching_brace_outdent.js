@@ -1,10 +1,9 @@
 define("mode/c_cpp_matching_brace_outdent", function(require, exports, module) {
 
 var Range = require("ace/range").Range;
-var CppLookaroundHeuristics = require("mode/cpp_lookaround_heuristics").CppLookaroundHeuristics;
 
-var MatchingBraceOutdent = function(doc, tokenizer) {
-   this.$heuristics = new CppLookaroundHeuristics(doc, tokenizer);
+var MatchingBraceOutdent = function(codeModel) {
+   this.$codeModel = codeModel;
 };
 
 // Allow the user to control outdenting if desired
@@ -84,7 +83,7 @@ var $alignCase                 = true; // case 'a':
    this.outdentBraceForNakedTokens = function(session, row, line, lastLine) {
 
       if (/^\s*\{/.test(line)) {
-         var re = this.$heuristics.reNakedBlockTokens;
+         var re = this.$codeModel.reNakedBlockTokens;
          if (lastLine !== null) {
             for (var key in re) {
                if (re[key].test(lastLine)) {
@@ -127,10 +126,10 @@ var $alignCase                 = true; // case 'a':
    this.autoOutdent = function(state, session, row) {
 
       var doc = session.doc;
-      var line = this.$heuristics.getLineSansComments(doc, row);
+      var line = this.$codeModel.getLineSansComments(doc, row);
       var lastLine = null;
       if (row > 0)
-         lastLine = this.$heuristics.getLineSansComments(doc, row - 1);
+         lastLine = this.$codeModel.getLineSansComments(doc, row - 1);
       var indent = this.$getIndent(line);
 
       // Check for naked token outdenting
@@ -162,7 +161,7 @@ var $alignCase                 = true; // case 'a':
       //
       if ($outdentColon && /^\s*:/.test(line)) {
 
-         var scopeRow = this.$heuristics.getRowForOpenBraceIndentClassStyle(
+         var scopeRow = this.$codeModel.getRowForOpenBraceIndentClassStyle(
             session,
             row
          );
@@ -186,7 +185,7 @@ var $alignCase                 = true; // case 'a':
       //
       if ($outdentChevron && /^\s*\>$/.test(line)) {
 
-         var matchedRow = this.$heuristics.findMatchingBracketRow(
+         var matchedRow = this.$codeModel.findMatchingBracketRow(
             ">",
             doc,
             row,
@@ -194,7 +193,7 @@ var $alignCase                 = true; // case 'a':
          );
 
          if (matchedRow >= 0) {
-            var matchedLine = this.$heuristics.getLineSansComments(doc, matchedRow);
+            var matchedLine = this.$codeModel.getLineSansComments(doc, matchedRow);
             if (!/^\s*>>/.test(line)) {
                this.setIndent(session, row, matchedRow);
                return;
@@ -234,7 +233,7 @@ var $alignCase                 = true; // case 'a':
             }
 
             // Otherwise, try looking upwards to get an appropriate indentation
-            var heuristicRow = this.$heuristics.getRowForOpenBraceIndent(
+            var heuristicRow = this.$codeModel.getRowForOpenBraceIndent(
                session,
                openBracketPos.row
             );
@@ -283,7 +282,7 @@ var $alignCase                 = true; // case 'a':
           /^\s*public\s*:|^\s*private\s*:|^\s*protected\s*:/.test(line)) {
 
          // Find the associated open bracket.
-         var openBraceRow = this.$heuristics.doFindMatchingBracketRow(
+         var openBraceRow = this.$codeModel.doFindMatchingBracketRow(
             "}",
             doc,
             row,
@@ -297,7 +296,7 @@ var $alignCase                 = true; // case 'a':
             // If this open brace is already associated with a class or struct,
             // step over all of those rows.
             var heuristicRow =
-                   this.$heuristics.getRowForOpenBraceIndent(session, openBraceRow);
+                   this.$codeModel.getRowForOpenBraceIndent(session, openBraceRow);
 
             if (heuristicRow !== null && heuristicRow >= 0) {
                this.setIndent(session, row, heuristicRow);
@@ -326,7 +325,7 @@ var $alignCase                 = true; // case 'a':
       if ($alignCase && /^\s*case.+:/.test(line)) {
 
          // Find the associated open bracket.
-         var openBraceRow = this.$heuristics.doFindMatchingBracketRow(
+         var openBraceRow = this.$codeModel.doFindMatchingBracketRow(
             "}",
             doc,
             row - 1,
@@ -339,7 +338,7 @@ var $alignCase                 = true; // case 'a':
 
          if (openBraceRow >= 0) {
             var heuristicRow =
-                   this.$heuristics.getRowForOpenBraceIndent(session, openBraceRow);
+                   this.$codeModel.getRowForOpenBraceIndent(session, openBraceRow);
 
             if (heuristicRow !== null && heuristicRow >= 0) {
                this.setIndent(session, row, heuristicRow);
@@ -382,7 +381,7 @@ var $alignCase                 = true; // case 'a':
             return;
          }
 
-         var scopeRow = this.$heuristics.getRowForOpenBraceIndent(
+         var scopeRow = this.$codeModel.getRowForOpenBraceIndent(
             session,
             row
          );
@@ -390,12 +389,12 @@ var $alignCase                 = true; // case 'a':
          if (scopeRow !== null) {
 
             // Walk over un-informative lines
-            var scopeLine = this.$heuristics.getLineSansComments(doc, scopeRow);
+            var scopeLine = this.$codeModel.getLineSansComments(doc, scopeRow);
             while (/^\s*$/.test(scopeLine) ||
                    /^\s*\(.*\)\s*$/.test(scopeLine) ||
                    /:\s*$/.test(scopeLine)) {
                scopeRow--;
-               scopeLine = this.$heuristics.getLineSansComments(doc, scopeRow);
+               scopeLine = this.$codeModel.getLineSansComments(doc, scopeRow);
                if (scopeRow <= 0) break;
             }
 
@@ -411,7 +410,7 @@ var $alignCase                 = true; // case 'a':
             //         ^
             //
             // , ie, we avoid putting the open brace at indentation of 'class' token.
-            if (this.$heuristics.getLineSansComments(doc, scopeRow).indexOf("{") === -1) {
+            if (this.$codeModel.getLineSansComments(doc, scopeRow).indexOf("{") === -1) {
                this.setIndent(session, row, scopeRow);
                return;
             }

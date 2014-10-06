@@ -47,7 +47,7 @@ var SweaveBackgroundHighlighter = require("mode/sweave_background_highlighter").
 var RCodeModel = require("mode/r_code_model").RCodeModel;
 var RMatchingBraceOutdent = require("mode/r_matching_brace_outdent").RMatchingBraceOutdent;
 
-var CppLookaroundHeuristics = require("mode/cpp_lookaround_heuristics").CppLookaroundHeuristics;
+var CppCodeModel = require("mode/cpp_code_model").CppCodeModel;
 
 var getVerticallyAlignFunctionArgs = require("mode/r_code_model").getVerticallyAlignFunctionArgs;
 
@@ -65,8 +65,10 @@ var Mode = function(suppressHighlighting, doc, session) {
 
    // C/C++ related tokenization
    this.$tokenizer = new Tokenizer(new c_cppHighlightRules().getRules());
+   this.$codeModel = new CppCodeModel(this.$doc, this.$tokenizer);
+   
    this.$behaviour = new CStyleBehaviour(this.$doc, this.$tokenizer);
-   this.$outdent = new MatchingBraceOutdent(this.$doc, this.$tokenizer);
+   this.$outdent = new MatchingBraceOutdent(this.$codeModel);
    
    this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
       session,
@@ -78,8 +80,7 @@ var Mode = function(suppressHighlighting, doc, session) {
    if (!window.NodeWebkit)     
       this.foldingRules = new CppStyleFoldMode();
 
-   this.$heuristics = new CppLookaroundHeuristics(this.$doc, this.$tokenizer);
-   this.getLineSansComments = this.$heuristics.getLineSansComments;
+   this.getLineSansComments = this.$codeModel.getLineSansComments;
 
 };
 oop.inherits(Mode, TextMode);
@@ -251,7 +252,7 @@ oop.inherits(Mode, TextMode);
          // a '*' and leading spaces on newline insertion! We just look
          // for the opening block and use indentation based on that. Otherwise,
          // reindent will replicate the leading comment stars.
-         var commentStartRow = this.$heuristics.findStartOfCommentBlock(lines, row, 200);
+         var commentStartRow = this.$codeModel.findStartOfCommentBlock(lines, row, 200);
          if (commentStartRow !== null) {
             return this.$getIndent(lines[commentStartRow]) + " ";
          }
@@ -313,7 +314,7 @@ oop.inherits(Mode, TextMode);
          //   #include <header>
          //   ^
          if (/>\s*$/.test(line)) {
-            var loc = this.$heuristics.findMatchingBracketRow(">", doc, row, 50);
+            var loc = this.$codeModel.findMatchingBracketRow(">", doc, row, 50);
             if (loc >= 0) {
                return indent;
             } else {
@@ -339,7 +340,7 @@ oop.inherits(Mode, TextMode);
          // Note this assumes the token is not a 'greater than'; rather it's
          // used for templating.
          if (/^\s*>[^>]/.test(line)) {
-            var loc = this.$heuristics.findMatchingBracketRow(">", doc, row, 50);
+            var loc = this.$codeModel.findMatchingBracketRow(">", doc, row, 50);
             if (loc >= 0) return indent;
          }
 
@@ -352,7 +353,7 @@ oop.inherits(Mode, TextMode);
          if (/\*\/\s*$/.test(line)) {
 
             // Find the start of the comment block
-            var blockStartRow = this.$heuristics.findStartOfCommentBlock(
+            var blockStartRow = this.$codeModel.findStartOfCommentBlock(
                lines,
                row,
                200
@@ -405,7 +406,7 @@ oop.inherits(Mode, TextMode);
          if (/^\s*\(.*\);?\s*$/.test(line) && row > 0) {
             var rowToUse = row - 1;
             while (rowToUse >= 0 &&
-                   !/\w/.test(this.$heuristics.getLineSansComments(doc, rowToUse))) {
+                   !/\w/.test(this.$codeModel.getLineSansComments(doc, rowToUse))) {
                rowToUse--;
             }
 
@@ -484,7 +485,7 @@ oop.inherits(Mode, TextMode);
          // Handle naked 'for', 'if' etc. tokens. This function is a bit awkward --
          // either it returns an indent to use, or returns a row number from
          // which we can infer the indent.
-         var newIndent = this.$heuristics.indentNakedTokens(doc, indent, tab, row);
+         var newIndent = this.$codeModel.indentNakedTokens(doc, indent, tab, row);
          if (newIndent !== null) {
             if (typeof newIndent === "string") {
                return newIndent;
@@ -662,7 +663,7 @@ oop.inherits(Mode, TextMode);
 
                // Get the character alongside its complement
                var lChar = openers[i];
-               var rChar = this.$heuristics.$complements[lChar];
+               var rChar = this.$codeModel.$complements[lChar];
 
                // Get the indices for matches of the character and its complement
                var lIndices = this.allIndicesOf(line, lChar);
@@ -754,7 +755,7 @@ oop.inherits(Mode, TextMode);
             //
             // If the current line does not start with an operator token, move
             // up one.
-            if (!this.$heuristics.reStartsWithContinuationToken.test(thisLine)) {
+            if (!this.$codeModel.reStartsWithContinuationToken.test(thisLine)) {
                thisRow--;
                if (thisRow >= 0)
                   thisLine = this.getLineSansComments(doc, thisRow);
@@ -764,13 +765,13 @@ oop.inherits(Mode, TextMode);
                return this.$getIndent(thisLine);
             }
 
-            if (this.$heuristics.reStartsWithContinuationToken.test(thisLine) ||
-                this.$heuristics.reEndsWithContinuationToken.test(thisLine) ||
+            if (this.$codeModel.reStartsWithContinuationToken.test(thisLine) ||
+                this.$codeModel.reEndsWithContinuationToken.test(thisLine) ||
                 /\)\s*$/.test(thisLine)) {
                
                while (
-                  (this.$heuristics.reStartsWithContinuationToken.test(thisLine) ||
-                   this.$heuristics.reEndsWithContinuationToken.test(thisLine) ||
+                  (this.$codeModel.reStartsWithContinuationToken.test(thisLine) ||
+                   this.$codeModel.reEndsWithContinuationToken.test(thisLine) ||
                    /\)\s*$/.test(thisLine)) &&
                      thisRow >= 0) {
 
@@ -822,7 +823,7 @@ oop.inherits(Mode, TextMode);
                   // as a nice short-circuiting mechanism.
                   if (/^\s*>[^>]/.test(thisLine)) {
 
-                     heuristicRow = this.$heuristics.findMatchingBracketRow(
+                     heuristicRow = this.$codeModel.findMatchingBracketRow(
                         ">",
                         doc,
                         row,
@@ -853,7 +854,7 @@ oop.inherits(Mode, TextMode);
                // so we re-correct for that here.
                var lastLine = doc.getLine(thisRow + 1);
                if (thisRow < 0 ||
-                   this.$heuristics.reEndsWithContinuationToken.test(lastLine)) {
+                   this.$codeModel.reEndsWithContinuationToken.test(lastLine)) {
                   return this.$getIndent(lastLine);
                } else {
                   return this.$getIndent(thisLine);
@@ -865,7 +866,7 @@ oop.inherits(Mode, TextMode);
          // Indent based on lookaround heuristics for open braces.
          if (!/^\s*$/.test(line) && /\{\s*$/.test(line)) {
 
-            var heuristicRow = this.$heuristics.getRowForOpenBraceIndent(
+            var heuristicRow = this.$codeModel.getRowForOpenBraceIndent(
                this.$session,
                row,
                20

@@ -31,14 +31,14 @@ define('mode/behaviour/cstyle', function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var Behaviour = require("ace/mode/behaviour").Behaviour;
-var CppLookaroundHeuristics = require("mode/cpp_lookaround_heuristics").CppLookaroundHeuristics;
+var CppCodeModel = require("mode/cpp_code_model").CppCodeModel;
 
 var $addNamespaceComment = true;
 
-var CStyleBehaviour = function(doc, tokenizer) {
+var CStyleBehaviour = function(codeModel) {
 
-   var $heuristics = new CppLookaroundHeuristics(doc, tokenizer);
-   var $complements = $heuristics.$complements;
+   var $codeModel = codeModel;
+   var $complements = $codeModel.$complements;
 
    var autoPairInsertion = function(text, input, editor, session) {
 
@@ -65,7 +65,7 @@ var CStyleBehaviour = function(doc, tokenizer) {
          var line = session.doc.getLine(cursor.row);
          var cursorRightChar = line[cursor.column];
          if (cursorRightChar == rightChar) {
-            var matching = $heuristics.findMatchingBracketRow(
+            var matching = $codeModel.findMatchingBracketRow(
                rightChar,
                session.getDocument(),
                cursor.row,
@@ -213,7 +213,7 @@ var CStyleBehaviour = function(doc, tokenizer) {
          if (thisChar == '{' && rightChar == "}") {
 
             // Use heuristic indentation if possible
-            var heuristicRow = $heuristics.getRowForOpenBraceIndent(
+            var heuristicRow = $codeModel.getRowForOpenBraceIndent(
                session, row
             );
 
@@ -325,7 +325,7 @@ var CStyleBehaviour = function(doc, tokenizer) {
 
             // If class-style indentation can produce an appropriate indentation for
             // the brace, then insert a closing brace with a semi-colon
-            var heuristicRow = $heuristics.getRowForOpenBraceIndentClassStyle(
+            var heuristicRow = $codeModel.getRowForOpenBraceIndentClassStyle(
                session, row - 1, 20
             );
             

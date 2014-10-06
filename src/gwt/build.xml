@@ -72,7 +72,7 @@
             <file name="rhtml.js"/>
             <file name="dcf_highlight_rules.js"/>
             <file name="dcf.js"/>
-            <file name="cpp_lookaround_heuristics.js"/>
+            <file name="cpp_code_model.js"/>
             <file name="doc_comment_highlight_rules.js"/>
             <file name="c_cpp_matching_brace_outdent.js"/>
             <file name="c_cpp_style_behaviour.js"/>
