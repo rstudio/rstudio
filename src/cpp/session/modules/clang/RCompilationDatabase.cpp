@@ -672,7 +672,7 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
 
    // precompiled rcpp dir
    const std::string kPrecompiledDir = "libclang/precompiled/" + pkgName;
-   FilePath precompiledDir = module_context::userScratchPath().
+   FilePath precompiledDir = module_context::scopedScratchPath().
                                             childPath(kPrecompiledDir);
 
    // platform/rcpp version specific directory name
