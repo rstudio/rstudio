@@ -73,15 +73,21 @@ private:
    typedef std::map<std::string,std::string> SourceCppHashes;
    SourceCppHashes sourceCppHashes_;
 
-   // arguments for various translation units
-   typedef std::map<std::string,std::vector<std::string> > ArgsMap;
-   ArgsMap sourceCppArgsMap_;
+   // struct used to represent compilation settings
+   struct CompilationConfig
+   {
+      std::vector<std::string> args;
+      std::string PCH;
+   };
 
-   // package src args (track file modification times on build
+   // source file compilation settings
+   typedef std::map<std::string,CompilationConfig> ConfigMap;
+   ConfigMap sourceCppConfigMap_;
+
+   // package compliation settings (track file modification times on build
    // oriented files to avoid re-running detection)
    std::string packageBuildFileHash_;
-   std::string packagePCH_;
-   std::vector<std::string> packageSrcArgs_;
+   CompilationConfig packageCompilationConfig_;
 };
 
 

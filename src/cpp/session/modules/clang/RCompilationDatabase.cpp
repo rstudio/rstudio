@@ -302,8 +302,8 @@ void RCompilationDatabase::updateForCurrentPackage()
       }
 
       // set the args and build file hash (to avoid recomputation)
-      packageSrcArgs_ = args;
-      packagePCH_ = packagePCH(pkgInfo.linkingTo());
+      packageCompilationConfig_.args = args;
+      packageCompilationConfig_.PCH = packagePCH(pkgInfo.linkingTo());
       packageBuildFileHash_ = buildFileHash;
    }
 
@@ -331,7 +331,10 @@ void RCompilationDatabase::updateForSourceCpp(const core::FilePath& srcFile)
    if (!args.empty())
    {
       // update map
-      sourceCppArgsMap_[srcFile.absolutePath()] = args;
+      CompilationConfig config;
+      config.args = args;
+      config.PCH = "Rcpp";
+      sourceCppConfigMap_[srcFile.absolutePath()] = config;
 
       // save hash to prevent recomputation
       sourceCppHashes_[srcFile.absolutePath()] = hash;
@@ -434,7 +437,7 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
 
    // if this is a package source file then return the package args
    using namespace projects;
-   std::string packagePCH;
+   CompilationConfig config;
    FilePath srcDirPath = projectContext().buildTargetPath().childPath("src");
    if ((projectContext().config().buildType == r_util::kBuildTypePackage) &&
        !filePath.relativePath(srcDirPath).empty())
@@ -443,8 +446,7 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
       updateForCurrentPackage();
 
       // if we have args then capture them
-      args = packageSrcArgs_;
-      packagePCH = packagePCH_;
+      config = packageCompilationConfig_;
    }
    // otherwise lookup in the global dictionary
    else
@@ -454,20 +456,20 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
 
       // if we have args then capture them
       std::string filename = filePath.absolutePath();
-      ArgsMap::const_iterator it = sourceCppArgsMap_.find(filename);
-      if (it != sourceCppArgsMap_.end())
-      {
-         args = it->second;
-         packagePCH = "Rcpp";
-      }
+      ConfigMap::const_iterator it = sourceCppConfigMap_.find(filename);
+      if (it != sourceCppConfigMap_.end())
+         config = it->second;
    }
 
    // bail if we have no args
-   if (args.empty())
-      return args;
+   if (config.args.empty())
+      return std::vector<std::string>();
+
+   // copy the args
+   std::copy(config.args.begin(), config.args.end(), std::back_inserter(args));
 
    // add precompiled headers if necessary
-   if (!packagePCH.empty())
+   if (!config.PCH.empty())
    {
       std::string ext = filePath.extensionLowerCase();
       bool isCppFile = (ext == ".cc") || (ext == ".cpp");
@@ -476,7 +478,7 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
          // extract any -std= argument
          std::string stdArg = extractStdArg(args);
 
-         std::vector<std::string> pchArgs = precompiledHeaderArgs(packagePCH,
+         std::vector<std::string> pchArgs = precompiledHeaderArgs(config.PCH,
                                                                   stdArg);
          std::copy(pchArgs.begin(),
                    pchArgs.end(),
