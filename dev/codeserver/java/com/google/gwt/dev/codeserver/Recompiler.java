@@ -215,11 +215,11 @@ class Recompiler {
   private void setUpCompileDir(CompileDir compileDir, ModuleDef module,
       TreeLogger compileLogger) throws UnableToCompleteException {
     try {
-      String outputModuleName = module.getName();
+      String currentModuleName = module.getName();
 
       // Create the directory.
       File outputDir = new File(
-          compileDir.getWarDir().getCanonicalPath() + "/" + outputModuleName);
+          compileDir.getWarDir().getCanonicalPath() + "/" + currentModuleName);
       if (!outputDir.exists()) {
         if (!outputDir.mkdir()) {
           compileLogger.log(Type.WARN, "cannot create directory: " + outputDir);
@@ -235,7 +235,7 @@ class Recompiler {
       // Create a "module_name.recompile.nocache.js" that calculates the permutation
       // and forces a recompile.
       String recompileNoCache = generateModuleRecompileJs(module, compileLogger);
-      writeRecompileNoCacheJs(outputDir, outputModuleName, recompileNoCache, compileLogger);
+      writeRecompileNoCacheJs(outputDir, currentModuleName, recompileNoCache, compileLogger);
     } catch (IOException e) {
       compileLogger.log(Type.ERROR, "Error creating stub compile directory.", e);
       UnableToCompleteException wrapped = new UnableToCompleteException();
