@@ -1163,9 +1163,24 @@ public class Collections {
     return new UnmodifiableSortedSet<T>(set);
   }
 
-  static <T> int hashCode(Collection<T> collection) {
-    int hashCode = 1;
+  /**
+   * Computes hash code without preserving elements order (e.g. HashSet).
+   */
+  static <T> int hashCode(Iterable<T> collection) {
+    int hashCode = 0;
     for (T e : collection) {
+      hashCode = hashCode + Objects.hashCode(e);
+      hashCode = ensureInt(hashCode); // make sure we don't overflow
+    }
+    return hashCode;
+  }
+
+  /**
+   * Computes hash code preserving collection order (e.g. ArrayList).
+   */
+  static <T> int hashCode(List<T> list) {
+    int hashCode = 1;
+    for (T e : list) {
       hashCode = 31 * hashCode + Objects.hashCode(e);
       hashCode = ensureInt(hashCode); // make sure we don't overflow
     }
