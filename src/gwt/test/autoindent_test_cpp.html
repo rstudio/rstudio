@@ -561,24 +561,36 @@ var session = editor.getSession();
    };
 
 }).call(EditSession.prototype);
+
+var testEditor = ace.edit('testEditor');
+ 
+// need to disable behaviours because they fudge with the test indentation
+testEditor.setBehavioursEnabled(false);
+ 
+testEditor.getSession().setMode(
+   new CppMode(false,
+               testEditor.getSession().getDocument(),
+               testEditor.getSession()));
  
 function doIndentTest(el, state) {
 
-  var testEditor = ace.edit('testEditor');
-
-  // need to disable behaviours because they fudge with the test indentation
-  testEditor.setBehavioursEnabled(false);
-  
-  testEditor.getSession().setMode(
-    new CppMode(false,
-                testEditor.getSession().getDocument(),
-                testEditor.getSession()));
-
+  // Clean out document, tokens from the test editor
   var doc = testEditor.session.getDocument();
   doc.$lines = new Array(1);
 
+  var codeModel = testEditor.getSession().getMode().$codeModel;
+  codeModel.$tokenUtils.$removeRows(
+    0,
+    codeModel.$tokens.length
+  );
+
+  // Insert text + a newline (the editor will auto-insert after the newline)
+
   testEditor.insert((el.innerText || el.textContext).trimRight());
   testEditor.insert("\n");
+
+  // Insert an open-brace after the newline for those tests
+  // The editor will auto-outdent the open brace
   if (state === "open-brace") {
     testEditor.insert("{");
   }
@@ -656,17 +668,17 @@ for (var i = 0; i < states.length; i++)
    }
 }
 
- // turn vertical alignment back on now that we're done
-  require('mode/r_code_model').setVerticallyAlignFunctionArgs(true);
+// turn vertical alignment back on now that we're done
+require('mode/r_code_model').setVerticallyAlignFunctionArgs(true);
  
 if (test)
 {
-  if (doIndentTest(test))
+ if (doIndentTest(test))
     passed++;
   else
     failed++;
 }
-
+ 
 document.getElementById('passed').innerText = passed;
 document.getElementById('failed').innerText = failed;
 

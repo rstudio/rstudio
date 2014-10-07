@@ -37,17 +37,21 @@ var RHighlightRules = require("mode/r_highlight_rules").RHighlightRules;
 
 var c_cppHighlightRules = function() {
 
+   function escapeRegExp(str) {
+      return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+   }
+
     var keywords = lang.arrayToMap(
         ("alignas|alignof|and|and_eq|asm|auto|bitand|bitor|bool|break|" +
         "case|catch|char|char16_t|char32_t|class|compl|const|" +
         "constexpr|const_cast|continue|decltype|default|delete|do|" +
         "double|dynamic_cast|else|enum|explicit|export|extern|false|" +
-        "float|for|friend|goto|if|inline|int|long|mutable|namespace|" +
+        "float|for|friend|goto|if|inline|int|in|long|mutable|namespace|" +
         "new|noexcept|not|not_eq|nullptr|operator|or|or_eq|private|" +
         "protected|public|register|reinterpret_cast|return|short|" +
         "signed|sizeof|static|static_assert|static_cast|struct|" +
         "switch|template|this|thread_local|throw|true|try|typedef|" +
-        "typeid|typename|union|unsigned|using|virtual|void|volatile|" +
+        "typeid|typeof|typename|union|unsigned|using|virtual|void|volatile|" +
         "wchar_t|while|xor|xor_eq").split("|")
     );
 
@@ -59,6 +63,20 @@ var c_cppHighlightRules = function() {
     var buildinConstants = lang.arrayToMap(
         ("NULL").split("|")
     );
+
+   var reOperatorTokens = [
+      
+      ">>=", "<<=",
+      
+      "<<", ">>", "&&", "||", "==", "!=", "<=", ">=", "::",
+      "*=", "+=", "-=", "/=", "++", "--", "<>", "&=", "^=",
+      "%=",
+      
+      "!", "$", "&", "|", "*", "-", "+", "~", "=", ":"
+      
+    ].map(function(x) {
+       return escapeRegExp(x);
+    }).join("|");
 
     // regexp must not have capturing parentheses. Use (?:) instead.
     // regexps are ordered -> the first match is used
@@ -130,7 +148,7 @@ var c_cppHighlightRules = function() {
                 regex : "[a-zA-Z_$][a-zA-Z0-9_$]*\\b"
             }, {
                 token : "keyword.operator",
-                regex : "!|\\$|%|&|\\*|\\-\\-|\\-|\\+\\+|\\+|~|==|=|!=|<=|>=|<<=|>>=|<>|<<|<|>>|>|!|&&|\\|\\||\\:\\:|\\?\\:|\\*=|%=|\\+=|\\-=|&=|\\^=|\\b(?:in|new|delete|typeof|void)"
+                regex : reOperatorTokens
             }, {
                 token : "punctuation.operator",
                 regex : "\\?|\\:|\\,|\\;|\\."
