@@ -162,23 +162,6 @@ std::string packageBuildFileHash()
    return ostr.str();
 }
 
-core::system::Options compilationEnvironment()
-{
-   // rtools on windows
-   core::system::Options env;
-   core::system::environment(&env);
-#if defined(_WIN32)
-   std::vector<std::string> rtoolsArgs = rToolsArgs();
-   std::copy(rtoolsArgs.begin(),
-             rtoolsArgs.end(),
-             std::back_inserter(compileArgs));
-
-   std::string warning;
-   module_context::addRtoolsToPathIfNecessary(&env, &warning);
-#endif
-   return env;
-}
-
 std::vector<std::string> parseCompilationResults(const FilePath& srcFile,
                                                  const std::string& results)
 {
@@ -662,6 +645,23 @@ std::vector<std::string> RCompilationDatabase::rToolsArgs() const
 #endif
 
    return rToolsArgs_;
+}
+
+core::system::Options RCompilationDatabase::compilationEnvironment() const
+{
+   // rtools on windows
+   core::system::Options env;
+   core::system::environment(&env);
+#if defined(_WIN32)
+   std::vector<std::string> rtoolsArgs = rToolsArgs();
+   std::copy(rtoolsArgs.begin(),
+             rtoolsArgs.end(),
+             std::back_inserter(rtoolsArgs));
+
+   std::string warning;
+   module_context::addRtoolsToPathIfNecessary(&env, &warning);
+#endif
+   return env;
 }
 
 std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
