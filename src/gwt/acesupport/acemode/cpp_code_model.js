@@ -325,7 +325,9 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          debugCursor("Before walking over keywords", tokenCursor);
          while (tokenCursor.currentType() === "keyword") {
 
-            if (tokenCursor.currentValue() === "class") {
+            // Return on 'control flow' keywords.
+            var value = tokenCursor.currentValue();
+            if (["if", "else", "for", "while", "do", "struct", "class"].some(function(x) { return x === value; })) {
                return tokenCursor.$row;
             }
 
