@@ -117,58 +117,49 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    //           c_(c) const noexcept() {
    //
    // The assumption is that the cursor will have been placed on the opening '{'.
-   var moveBackwardOverInitializationList = function(tokenCursor, lines) {
+   var bwdOverInitializationList = function(tokenCursor) {
 
-      var c = tokenCursor.cloneCursor();
+      var clonedCursor = tokenCursor.cloneCursor();
+      while (doBwdOverInitializationList(clonedCursor, tokenCursor))
+         ;
+      return tokenCursor;
+   };
+
+   var doBwdOverInitializationList = function(clonedCursor, tokenCursor) {
 
       // Move over matching parentheses -- note that this action puts
       // the cursor on the open paren on success.
-      c.moveBackwardOverMatchingParens();
-      if (!c.moveBackwardOverMatchingParens()) {
-         if (!c.moveToPreviousToken()) {
+      clonedCursor.moveBackwardOverMatchingParens();
+      if (!clonedCursor.moveBackwardOverMatchingParens()) {
+         if (!clonedCursor.moveToPreviousToken()) {
             return false;
          }
       }
 
       // Chomp keywords, exiting on a 'struct' or 'class'
-      while (c.currentType() === "keyword") {
+      while (clonedCursor.currentType() === "keyword") {
          
-         if (c.currentValue() === "struct" || c.currentValue() === "class") {
-            tokenCursor.$row = c.$row;
-            tokenCursor.$offset = c.$offset;
+         if (clonedCursor.currentValue() === "struct" || clonedCursor.currentValue() === "class") {
+            tokenCursor.$row = clonedCursor.$row;
+            tokenCursor.$offset = clonedCursor.$offset;
             return false;
          }
          
-         if (!c.moveToPreviousToken()) {
+         if (!clonedCursor.moveToPreviousToken()) {
             return false;
          }
          
       }
       
       // Move backwards over the name of the element initialized
-      if (c.moveToPreviousToken()) {
+      if (clonedCursor.moveToPreviousToken()) {
 
-         // Chomp keywords, exiting on a 'struct' or 'class'
-         while (c.currentType() === "keyword") {
-            
-            if (c.currentValue() === "struct" || c.currentValue() === "class") {
-               tokenCursor.$row = c.$row;
-               tokenCursor.$offset = c.$offset;
-               return false;
-            }
-            
-            if (!c.moveToPreviousToken()) {
-               return false;
-            }
-            
-         }
-         
          // Check for a ':' or a ','
-         var value = c.currentValue();
+         var value = clonedCursor.currentValue();
          if (value === ":" || value === ",") {
 
-            tokenCursor.$row = c.$row;
-            tokenCursor.$offset = c.$offset;
+            tokenCursor.$row = clonedCursor.$row;
+            tokenCursor.$offset = clonedCursor.$offset;
             return true;
                
          }
@@ -176,6 +167,82 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
       return false;
 
+   };
+
+   // Move backwards over class inheritance.
+   //
+   // This moves the cursor backwards over any inheritting classes,
+   // e.g.
+   //
+   //     class Foo :
+   //         public A,
+   //         public B {
+   //
+   // The cursor is expected to be on the opening brace.
+   var bwdOverClassInheritance = function(tokenCursor) {
+
+      var clonedCursor = tokenCursor.cloneCursor();
+      return doBwdOverClassInheritance(clonedCursor, tokenCursor);
+
+   };
+
+   var doBwdOverClassInheritance = function(clonedCursor, tokenCursor) {
+
+      // Move off of the open brace or comma
+      if (!clonedCursor.moveToPreviousToken()) {
+         return false;
+      }
+
+      // Jump over constants
+      if (clonedCursor.currentType() === "constant") {
+         if (!clonedCursor.moveToPreviousToken()) {
+            return false;
+         }
+      }
+
+      // Jump over '<>' pair if necessary -- this is for inheritance
+      // from template classes, e.g.
+      //
+      //     class Foo :
+      //         public A<T1, T2>
+      //
+      if (clonedCursor.currentValue() === ">") {
+
+         if (!clonedCursor.bwdToMatchingToken()) {
+            return false;
+         }
+
+         if (!clonedCursor.moveToPreviousToken()) {
+            return false;
+         }
+         
+      }
+
+      // Move backwards over the name of the element initialized
+      if (clonedCursor.moveToPreviousToken()) {
+
+         // Chomp keywords
+         while (clonedCursor.currentType() === "keyword") {
+            if (!clonedCursor.moveToPreviousToken()) {
+               return false;
+            }
+         }
+
+         // Check for a ':' or a ','
+         var value = clonedCursor.currentValue();
+         if (value === ",") {
+            return doBwdOverClassInheritance(clonedCursor, tokenCursor);
+         } else if (value === ":") {
+            tokenCursor.$row = clonedCursor.$row;
+            tokenCursor.$offset = clonedCursor.$offset;
+            return true;
+         } else {
+            return false;
+         }
+      }
+
+      return false;
+      
    };
 
    // Given a row with a '{', we look back for the row that provides
@@ -218,8 +285,10 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          //
          // so we need to look two tokens backwards to see if it's a comma or a colon.
          debugCursor("Before moving over initialization list", tokenCursor);
-         while (moveBackwardOverInitializationList(tokenCursor, lines))
-            ;
+         bwdOverInitializationList(tokenCursor);
+
+         debugCursor("Before moving over class inheritance", tokenCursor);
+         bwdOverClassInheritance(tokenCursor);
 
          // If we didn't walk over anything previously, the cursor will still be on the same '{'.
          // Walk backwards one token.

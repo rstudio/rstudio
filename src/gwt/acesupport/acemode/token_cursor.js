@@ -25,6 +25,17 @@ var TokenCursor = function(tokens, row, offset) {
 
 (function () {
 
+   var $complements = {
+      "(" : ")",
+      "{" : "}",
+      "<" : ">",
+      "[" : "]",
+      ")" : "(",
+      "}" : "{",
+      ">" : "<",
+      "]" : "["
+   };
+
    this.moveToStartOfRow = function(row)
    {
       this.$row = row;
@@ -33,6 +44,11 @@ var TokenCursor = function(tokens, row, offset) {
 
    this.moveToPreviousToken = function()
    {
+      if (this.$row < 0) return false;
+      
+      if (this.$row === 0 && this.$offset === 0)
+         return false;
+      
       if (this.$row >= this.$tokens.length) {
          while (this.$row >= this.$tokens.length) {
             this.$row--;
@@ -93,6 +109,41 @@ var TokenCursor = function(tokens, row, offset) {
       } else {
          return false;
       }
+      
+   };
+
+   this.bwdToMatchingToken = function() {
+
+      var thisValue = this.currentValue();
+      var compValue = $complements[thisValue];
+
+      var isCloser = [")", "}", "]", ">"].some(function(x) {
+         return x === thisValue;
+      });
+
+      if (!isCloser) {
+         return false;
+      }
+
+      var success = false;
+      var parenCount = 0;
+      while (this.moveToPreviousToken())
+      {
+         if (this.currentValue() === compValue)
+         {
+            if (parenCount == 0)
+            {
+               return true;
+            }
+            parenCount--;
+         }
+         else if (this.currentValue() === thisValue)
+         {
+            parenCount++;
+         }
+      }
+
+      return false;
       
    };
 

@@ -2,6 +2,7 @@ define("mode/c_cpp_matching_brace_outdent", function(require, exports, module) {
 
 var Range = require("ace/range").Range;
 
+var TokenCursor = require("mode/token_cursor").TokenCursor;
 var MatchingBraceOutdent = function(codeModel) {
    this.$codeModel = codeModel;
 };
@@ -36,10 +37,10 @@ var $alignCase                 = true; // case 'a':
          "";
 
       var line = doc.$lines[rowTo];
-      var lastLine = doc.$lines[rowFrom];
+      var prevLine = doc.$lines[rowFrom];
 
       var oldIndent = this.$getIndent(line);
-      var newIndent = this.$getIndent(lastLine);
+      var newIndent = this.$getIndent(prevLine);
 
       if (typeof predicate !== "function" || predicate(oldIndent, newIndent)) {
          doc.replace(
@@ -80,13 +81,13 @@ var $alignCase                 = true; // case 'a':
 
    };
 
-   this.outdentBraceForNakedTokens = function(session, row, line, lastLine) {
+   this.outdentBraceForNakedTokens = function(session, row, line, prevLine) {
 
       if (/^\s*\{/.test(line)) {
          var re = this.$codeModel.reNakedBlockTokens;
-         if (lastLine !== null) {
+         if (prevLine !== null) {
             for (var key in re) {
-               if (re[key].test(lastLine)) {
+               if (re[key].test(prevLine)) {
                   this.setIndent(session, row, row - 1);
                   return true;
                }
@@ -100,12 +101,12 @@ var $alignCase                 = true; // case 'a':
       return string.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
    };
 
-   this.alignStartToken = function(token, session, row, line, lastLine) {
+   this.alignStartToken = function(token, session, row, line, prevLine) {
 
-      if (lastLine === null || line === null) return false;
+      if (prevLine === null || line === null) return false;
       var regex = new RegExp("^\\s*" + this.escapeRegExp(token));
       if (regex.test(line)) {
-         var index = lastLine.indexOf(token);
+         var index = prevLine.indexOf(token);
          if (index >= 0) {
 
             var doc = session.getDocument();
@@ -127,26 +128,26 @@ var $alignCase                 = true; // case 'a':
 
       var doc = session.doc;
       var line = this.$codeModel.getLineSansComments(doc, row);
-      var lastLine = null;
+      var prevLine = null;
       if (row > 0)
-         lastLine = this.$codeModel.getLineSansComments(doc, row - 1);
+         prevLine = this.$codeModel.getLineSansComments(doc, row - 1);
       var indent = this.$getIndent(line);
 
       // Check for naked token outdenting
-      if (this.outdentBraceForNakedTokens(session, row, line, lastLine)) {
+      if (this.outdentBraceForNakedTokens(session, row, line, prevLine)) {
          return;
       }
 
       // Check for '<<', '.'alignment
-      if ($alignStreamOut && this.alignStartToken("<<", session, row, line, lastLine)) {
+      if ($alignStreamOut && this.alignStartToken("<<", session, row, line, prevLine)) {
          return;
       }
 
-      if ($alignStreamIn && this.alignStartToken(">>", session, row, line, lastLine)) {
+      if ($alignStreamIn && this.alignStartToken(">>", session, row, line, prevLine)) {
          return;
       }
 
-      if ($alignDots && this.alignStartToken(".", session, row, line, lastLine)) {
+      if ($alignDots && this.alignStartToken(".", session, row, line, prevLine)) {
          return;
       }
 
@@ -159,18 +160,41 @@ var $alignCase                 = true; // case 'a':
       //         :
       //         ^
       //
+      // We also perform a similar action for class inheritance, e.g.
+      //
+      //     class Foo
+      //         :
       if ($outdentColon && /^\s*:/.test(line)) {
 
-         var scopeRow = this.$codeModel.getRowForOpenBraceIndentClassStyle(
-            session,
-            row
-         );
+         if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row)) {
 
-         if (scopeRow >= 0) {
-            this.setIndent(session, row, scopeRow, session.getTabString(),
-                          function(oldIndent, newIndent) {
-                             return oldIndent === newIndent;
-                          });
+            var tokenCursor = new TokenCursor(this.$codeModel.$tokens, row, 0);
+            var rowToUse = null;
+            if (tokenCursor.moveBackwardOverMatchingParens()) {
+               if (tokenCursor.moveToPreviousToken()) {
+                  rowToUse = tokenCursor.$row;
+               }
+            } else {
+               while (tokenCursor.moveToPreviousToken()) {
+                  if (tokenCursor.currentValue() === "class") {
+                     rowToUse = tokenCursor.$row;
+                     break;
+                  }
+
+                  var type = tokenCursor.currentType();
+                  if (!(type === "keyword" || type === "identifier")) {
+                     break;
+                  }
+               }
+            }
+         
+            if (rowToUse !== null) {
+               this.setIndent(session, row, rowToUse, session.getTabString(),
+                              function(oldIndent, newIndent) {
+                                 return oldIndent === newIndent;
+                              });
+            }
+
          }
       }
 
@@ -376,44 +400,30 @@ var $alignCase                 = true; // case 'a':
       //      baz_(baz)
       if ($outdentLeftBrace && /^\s*\{/.test(line)) {
 
-         // Bail if the previous line ends with a semi-colon (don't auto-outdent)
-         if (/;\s*$/.test(lastLine)) {
-            return;
-         }
+         // Don't outdent if the previous line ends with a semicolon
+         if (!/;\s*$/.test(prevLine)) {
 
-         var scopeRow = this.$codeModel.getRowForOpenBraceIndent(
-            session,
-            row
-         );
+            var scopeRow = this.$codeModel.getRowForOpenBraceIndent(
+               session,
+               row
+            );
 
-         if (scopeRow !== null) {
+            if (scopeRow !== null) {
 
-            // Walk over un-informative lines
-            var scopeLine = this.$codeModel.getLineSansComments(doc, scopeRow);
-            while (/^\s*$/.test(scopeLine) ||
-                   /^\s*\(.*\)\s*$/.test(scopeLine) ||
-                   /:\s*$/.test(scopeLine)) {
-               scopeRow--;
-               scopeLine = this.$codeModel.getLineSansComments(doc, scopeRow);
-               if (scopeRow <= 0) break;
+               // Don't indent if the 'class' has an associated open brace. This ensures
+               // that we get outdenting e.g.
+               //
+               //     class Foo {
+               //         {
+               //         ^
+               //
+               // , ie, we avoid putting the open brace at indentation of 'class' token.
+               if (this.$codeModel.getLineSansComments(doc, scopeRow).indexOf("{") === -1) {
+                  this.setIndent(session, row, scopeRow);
+                  return;
+               }
             }
 
-            // If the first line had a continuation token then the row is now -1;
-            // nudge it back up
-            if (scopeRow < 0) scopeRow = 0;
-
-            // Don't indent if the 'class' has an associated open brace. This ensures
-            // that we get outdenting e.g.
-            //
-            //     class Foo {
-            //         {
-            //         ^
-            //
-            // , ie, we avoid putting the open brace at indentation of 'class' token.
-            if (this.$codeModel.getLineSansComments(doc, scopeRow).indexOf("{") === -1) {
-               this.setIndent(session, row, scopeRow);
-               return;
-            }
          }
 
       }

@@ -214,19 +214,19 @@ while (a)
 else
 </pre></li>
 
-<li><pre data-expected="4">
+<li><pre data-expected="4" open-brace-skip>
 public: 
 </pre></li>
 
-<li><pre data-expected="4">
+<li><pre data-expected="4" open-brace-skip>
 private: 
 </pre></li>
 
-<li><pre data-expected="4">
+<li><pre data-expected="4" open-brace-skip>
 protected: 
 </pre></li>
 
-<li><pre data-expected="4">
+<li><pre data-expected="4" open-brace-skip>
 case:
 </pre></li>
 
@@ -234,7 +234,7 @@ case:
 namespace r {
 </pre></li>
 
-<li><pre data-expected="4">
+<li><pre data-expected="4" open-brace-skip>
 int z = 4;
 int x = 1 +
 </pre></li>
@@ -251,7 +251,7 @@ int x = 1 +
     void myFunction() { // This function will be amazing
 </pre></li>
 
-<li><pre data-expected="8">
+<li><pre data-expected="8" open-brace-skip>
 int foo(
 </pre></li>
 
@@ -259,7 +259,7 @@ int foo(
 switch (x) {
 </pre></li>
 
-<li><pre data-expected="4">
+<li><pre data-expected="4" data-expected-open-brace="0">
 case foo:
 </pre></li>
 
@@ -296,7 +296,7 @@ static void namespace_reader() {
 class Foo
 </pre></li>
 
-<li><pre data-expected="4" data-expected-open-brace="0">
+<li><pre data-expected="4">
 Foo(const int a,
     const int b)
     : a_(a),
@@ -313,18 +313,29 @@ class Foo :
 class Foo:
 </pre></li>
 
-<li><pre data-expected="4" data-expected-open-brace="0">
+<li><pre data-expected="4" open-brace-skip>
 class Foo :
     public A,
     public B,
     public C {
 </pre></li>
 
+<li><pre data-expected="4" data-expected-open-brace="0">
+class Foo :
+    public TemplateClass&lt;Params&gt;
+</pre></li>
+
+<li><pre data-expected="4" data-expected-open-brace="0">
+class Foo :
+    public TemplateClass&lt;Many, Template, Parameters&gt;
+</pre></li>
+
+
 <li><pre data-expected="4" data-expected-vertical-args="12" open-brace-skip>
 class Foo : public A,
 </pre></li>
 
-<li><pre data-expected="4" data-expected-open-brace="0">
+<li><pre data-expected="4">
 class Foo : public A,
             public B {
 </pre></li>
@@ -456,6 +467,13 @@ else if (bar)
 
 <li><pre data-expected="4" data-expected-open-brace="0">
 Param::Param(const std::string& paramText)
+</pre></li>
+
+<li><pre data-expected="8" data-expected-open-brace="4">
+class Foo {
+public:
+    int foo(int a,
+            int b)
 </pre></li>
 
 </ol>
