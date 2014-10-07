@@ -209,13 +209,17 @@ Recompiler.prototype.compile = function(finishCallback) {
  */
 Recompiler.prototype.__jsonp = function(url, callback) {
   var that = this;
-  var callback_id = 'c' + this.__globals.counter++;
+  var callback_id = 'c' + this.__globals.callbackCounter++;
   this.__globals.callbacks[callback_id] = function(json) {
     delete that.__globals.callbacks[callback_id];
     callback(json);
   };
 
   var url = url + '&_callback=__gwt_sdm_globals.callbacks.' + callback_id;
+  this.__injectScriptTag(url);
+};
+
+Recompiler.prototype.__injectScriptTag = function(url) {
   var script = $doc.createElement('script');
   script.src = url;
   var $head = $doc.head || $doc.getElementsByTagName('head')[0];

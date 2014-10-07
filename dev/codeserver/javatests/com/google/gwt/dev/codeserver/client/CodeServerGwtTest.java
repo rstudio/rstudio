@@ -82,6 +82,8 @@ public class CodeServerGwtTest extends GWTTestCase {
 
   public native void testRecompiler() /*-{
     var Recompiler = $wnd.namespace.lib.Recompiler;
+
+    $wnd.__gwt_sdm_globals = { callbacks: {}, callbackCounter: 1234};
     var recompiler = new Recompiler('testModule', {prop1: 'val1', prop2 : 'val2'});
 
     var jsonpUrl = '';
@@ -95,9 +97,13 @@ public class CodeServerGwtTest extends GWTTestCase {
       return "http://mytesthost:7812/";
     };
 
-    recompiler.__jsonp = function(url, callback) {
+    recompiler.__injectScriptTag = function(url) {
       jsonpUrl = url;
+      // call the callback that should have been stored in global context
+      var callback = $wnd.__gwt_sdm_globals.callbacks['c1234'];
+      assertTrue('No function found', typeof callback == 'function');
       callback({status : 'ok'});
+      assertTrue('Callback has not been deleted', $wnd.__gwt_sdm_globals.callbacks['c1234'] == null);
     };
 
     // do the test
@@ -105,7 +111,8 @@ public class CodeServerGwtTest extends GWTTestCase {
       callbackCalled = true;
       //compile is done
       assertStringEquals('ok', result.status);
-      assertStringEquals('http://mytesthost:7812/recompile/testModule?prop1=val1&prop2=val2',
+      assertStringEquals('http://mytesthost:7812/recompile/testModule' +
+          '?prop1=val1&prop2=val2&_callback=__gwt_sdm_globals.callbacks.c1234',
           jsonpUrl);
     });
     assertTrue('callback for successful recompile was not executed', callbackCalled);
@@ -174,8 +181,7 @@ public class CodeServerGwtTest extends GWTTestCase {
       return;
     }
     Resource res = GWT.create(Resource.class);
-    String before = "(function(){ \n" +
-    		"$wnd.namespace = {};$namespace = $wnd.namespace; $global = $wnd";
+    String before = "(function(){ \n $wnd.namespace = {};$namespace = $wnd.namespace;";
     String js = res.libJS().getText();
     ScriptInjector.fromString(before + js + "})()").inject();
   }
