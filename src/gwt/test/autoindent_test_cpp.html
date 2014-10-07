@@ -156,6 +156,19 @@ class foo : bar&lt;T&gt; {
 template &lt;typename T&gt;
 </pre></li>
 
+<li><pre data-expected="4">
+class foo : public bar::baz<bam, bat> {
+</pre></li>
+
+<li><pre data-expected="8">
+    class foo
+
+    :
+
+public ::bar::baz<bam, bat>,
+public ::bat::man<robin> {
+</pre></li>
+
 <li><pre data-expected="4" data-expected-open-brace="4">
 class foo:
   public A {

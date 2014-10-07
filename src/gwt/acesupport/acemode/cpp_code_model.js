@@ -139,12 +139,6 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       // Chomp keywords, exiting on a 'struct' or 'class'
       while (clonedCursor.currentType() === "keyword") {
          
-         if (clonedCursor.currentValue() === "struct" || clonedCursor.currentValue() === "class") {
-            tokenCursor.$row = clonedCursor.$row;
-            tokenCursor.$offset = clonedCursor.$offset;
-            return false;
-         }
-         
          if (!clonedCursor.moveToPreviousToken()) {
             return false;
          }
@@ -221,6 +215,28 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       // Move backwards over the name of the element initialized
       if (clonedCursor.moveToPreviousToken()) {
 
+         // Chomp through '::' tokens
+         while (clonedCursor.currentValue() === "::") {
+
+            if (!clonedCursor.moveToPreviousToken()) {
+               return false;
+            }
+
+            // Chomp keywords
+            while (clonedCursor.currentType() === "keyword") {
+               if (!clonedCursor.moveToPreviousToken()) {
+                  return false;
+               }
+            }
+
+            // Move backwards over any more identifiers
+            if (clonedCursor.currentType() === "identifier") {
+               if (!clonedCursor.moveToPreviousToken()) {
+                  return false;
+               }
+            }
+         }
+
          // Chomp keywords
          while (clonedCursor.currentType() === "keyword") {
             if (!clonedCursor.moveToPreviousToken()) {
@@ -283,15 +299,16 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          //
          //     , a_(a)
          //
-         // so we need to look two tokens backwards to see if it's a comma or a colon.
+         // so we need to look two tokens backwards to see if it's a
+         // comma or a colon.
          debugCursor("Before moving over initialization list", tokenCursor);
          bwdOverInitializationList(tokenCursor);
 
          debugCursor("Before moving over class inheritance", tokenCursor);
          bwdOverClassInheritance(tokenCursor);
 
-         // If we didn't walk over anything previously, the cursor will still be on the same '{'.
-         // Walk backwards one token.
+         // If we didn't walk over anything previously, the cursor
+         // will still be on the same '{'.  Walk backwards one token.
          if (tokenCursor.currentValue() === "{") {
             if (!tokenCursor.moveToPreviousToken()) {
                return null;
