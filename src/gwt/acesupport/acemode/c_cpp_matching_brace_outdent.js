@@ -198,29 +198,17 @@ var $alignCase                 = true; // case 'a':
          }
       }
 
-      // If we just inserted a '>', find the matching '<' for indentation.
-      //
-      // But this runs into problems with indentation for use of the '>>'
-      // operator on its own line, e.g.
-      //
-      //    std::cin >> foo
-      //             >> bar
-      //             >> baz;
-      //
-      if ($outdentChevron && /^\s*\>$/.test(line)) {
-
-         var matchedRow = this.$codeModel.findMatchingBracketRow(
-            ">",
-            doc,
-            row,
-            50
-         );
-
-         if (matchedRow >= 0) {
-            var matchedLine = this.$codeModel.getLineSansComments(doc, matchedRow);
-            if (!/^\s*>>/.test(line)) {
-               this.setIndent(session, row, matchedRow);
-               return;
+      // Outdent for lines starting with a '>' if an associated matching
+      // token can be found. This is intended for template contexts --
+      // we short-circuit our lookback if we bump into a ';' token.
+      if ($outdentChevron && /^\s*>/.test(line)) {
+         if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row)) {
+            var tokenCursor = new TokenCursor(this.$codeModel.$tokens, row, 0);
+            if (tokenCursor.bwdToMatchingTokenShortCircuit(function(cursor) {
+               return cursor.currentValue() === ";";
+            }))
+            {
+               this.setIndent(session, row, tokenCursor.$row);
             }
          }
       }
@@ -251,7 +239,7 @@ var $alignCase                 = true; // case 'a':
             var openBracketLine =
                    doc.$lines[openBracketPos.row].replace(/\/\/.*/, "");
 
-            if (/^\s*\{\s*$/.test(openBracketLine)) {
+            if (/^\s*\{/.test(openBracketLine)) {
                this.setIndent(session, row, openBracketPos.row);
                return;
             }
@@ -410,18 +398,9 @@ var $alignCase                 = true; // case 'a':
 
             if (scopeRow !== null) {
 
-               // Don't indent if the 'class' has an associated open brace. This ensures
-               // that we get outdenting e.g.
-               //
-               //     class Foo {
-               //         {
-               //         ^
-               //
-               // , ie, we avoid putting the open brace at indentation of 'class' token.
-               if (this.$codeModel.getLineSansComments(doc, scopeRow).indexOf("{") === -1) {
-                  this.setIndent(session, row, scopeRow);
-                  return;
-               }
+               this.setIndent(session, row, scopeRow);
+               return;
+               
             }
 
          }

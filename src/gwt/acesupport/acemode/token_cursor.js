@@ -127,7 +127,7 @@ var TokenCursor = function(tokens, row, offset) {
       var thisValue = this.currentValue();
       var compValue = $complements[thisValue];
 
-      var isCloser = [")", "}", "]", ">"].some(function(x) {
+      var isCloser = [")", "}", "]", ">", "'", "\""].some(function(x) {
          return x === thisValue;
       });
 
@@ -141,7 +141,7 @@ var TokenCursor = function(tokens, row, offset) {
       {
          if (this.currentValue() === compValue)
          {
-            if (parenCount == 0)
+            if (parenCount === 0)
             {
                return true;
             }
@@ -156,6 +156,47 @@ var TokenCursor = function(tokens, row, offset) {
       return false;
       
    };
+
+   this.bwdToMatchingTokenShortCircuit = function(shortCircuit) {
+
+      var thisValue = this.currentValue();
+      var compValue = $complements[thisValue];
+
+      var isCloser = [")", "}", "]", ">", "'", "\""].some(function(x) {
+         return x === thisValue;
+      });
+
+      if (!isCloser) {
+         return false;
+      }
+
+      var success = false;
+      var parenCount = 0;
+      while (this.moveToPreviousToken())
+      {
+         if (shortCircuit(this))
+         {
+            return false;
+         }
+         
+         if (this.currentValue() === compValue)
+         {
+            if (parenCount === 0)
+            {
+               return true;
+            }
+            parenCount--;
+         }
+         else if (this.currentValue() === thisValue)
+         {
+            parenCount++;
+         }
+      }
+
+      return false;
+      
+   };
+   
 
    this.moveBackwardOverMatchingParens = function()
    {
@@ -196,6 +237,18 @@ var TokenCursor = function(tokens, row, offset) {
             return t;
       }
       while (this.moveToNextToken(maxRow));
+      return null;
+   };
+
+   this.findTokenBwd = function(predicate, maxRow)
+   {
+      do
+      {
+         var t = this.currentToken();
+         if (t && predicate(t))
+            return t;
+      }
+      while (this.moveToPreviousToken(maxRow));
       return null;
    };
 

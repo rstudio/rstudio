@@ -116,7 +116,7 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    //           b_(b),
    //           c_(c) const noexcept() {
    //
-   // The assumption is that the cursor will have been placed on the opening '{'.
+   // The assumption is that the cursor starts on an opening brace.
    var bwdOverInitializationList = function(tokenCursor) {
 
       var clonedCursor = tokenCursor.cloneCursor();
@@ -137,7 +137,7 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          }
       }
 
-      // Chomp keywords, exiting on a 'struct' or 'class'
+      // Chomp keywords
       while (clonedCursor.currentType() === "keyword") {
          
          if (!clonedCursor.moveToPreviousToken()) {
@@ -173,7 +173,7 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    //         public A,
    //         public B {
    //
-   // The cursor is expected to be on the opening brace.
+   // The cursor is expected to start on the opening brace.
    var bwdOverClassInheritance = function(tokenCursor) {
 
       var clonedCursor = tokenCursor.cloneCursor();
@@ -216,11 +216,30 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       // Move backwards over the name of the element initialized
       if (clonedCursor.moveToPreviousToken()) {
 
-         // Chomp through '::' tokens
+         // Chomp through '::' tokens and their associated
+         // identifiers
          while (clonedCursor.currentValue() === "::") {
 
             if (!clonedCursor.moveToPreviousToken()) {
                return false;
+            }
+
+            if (clonedCursor.currentType() === "constant") {
+               if (!clonedCursor.moveToPreviousToken()) {
+                  return false;
+               }
+            }
+
+            // Jump over '<>' pairs
+            if (clonedCursor.currentValue() === ">") {
+
+               if (!clonedCursor.bwdToMatchingToken()) {
+                  return false;
+               }
+
+               if (!clonedCursor.moveToPreviousToken()) {
+                  return false;
+               }
             }
 
             // Chomp keywords

@@ -51,6 +51,8 @@ var CppCodeModel = require("mode/cpp_code_model").CppCodeModel;
 
 var getVerticallyAlignFunctionArgs = require("mode/r_code_model").getVerticallyAlignFunctionArgs;
 
+var TokenCursor = require("mode/token_cursor").TokenCursor;
+
 var Mode = function(suppressHighlighting, doc, session) {
 
    // Keep references to current session, document
@@ -73,7 +75,7 @@ var Mode = function(suppressHighlighting, doc, session) {
    this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
       session,
          /^\s*\/\*{3,}\s+[Rr]\s*$/,
-         /^\*\/$/,
+         /^\s*\*\/$/,
       true
    );
 
@@ -301,6 +303,10 @@ oop.inherits(Mode, TextMode);
          // Choose indentation for the current line based on the position
          // of the cursor -- but make sure we only apply this if the
          // cursor is on the same row as the line being indented.
+         //
+         // Note that callers can set 'dontSubset' to avoid this behaviour;
+         // this is desired for e.g. the 'reindent' function (which should
+         // not take the position of the cursor into account)
          if (cursor && cursor.row == row && !dontSubset) {
             line = line.substring(0, cursor.column);
          }
@@ -314,34 +320,14 @@ oop.inherits(Mode, TextMode);
          //   #include <header>
          //   ^
          if (/>\s*$/.test(line)) {
-            var loc = this.$codeModel.findMatchingBracketRow(">", doc, row, 50);
-            if (loc >= 0) {
-               return indent;
+            if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row)) {
+               var tokenCursor = new TokenCursor(this.$codeModel.$tokens, row, 0);
+               if (tokenCursor.bwdToMatchingToken()) {
+                  return this.$getIndent(lines[tokenCursor.$row]);
+               }
             } else {
                return indent + tab;
             }
-         }
-
-         // If the line starts with a single '>', followed by another token,
-         // then look for the matching opening token for indentation. This
-         // is done anticipating
-         //
-         //   template <
-         //       typename Foo
-         //   >::type bar;
-         //   ^
-         //
-         // or even
-         //
-         //   template <
-         //       typename FOO
-         //   > class Bar;
-         //
-         // Note this assumes the token is not a 'greater than'; rather it's
-         // used for templating.
-         if (/^\s*>[^>]/.test(line)) {
-            var loc = this.$codeModel.findMatchingBracketRow(">", doc, row, 50);
-            if (loc >= 0) return indent;
          }
 
          // Unindent after leaving a block comment.
