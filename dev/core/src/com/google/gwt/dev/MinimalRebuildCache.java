@@ -31,8 +31,10 @@ import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.base.Objects;
+import com.google.gwt.thirdparty.guava.common.base.Predicates;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 import com.google.gwt.thirdparty.guava.common.collect.Multimaps;
@@ -147,6 +149,9 @@ public class MinimalRebuildCache implements Serializable {
     return modifiedByPath;
   }
 
+  /*
+   * Update copyFrom() whenever adding more fields.
+   */
   protected final ImmediateTypeRelations immediateTypeRelations = new ImmediateTypeRelations();
   private final Map<String, String> compilationUnitTypeNameByNestedTypeName = Maps.newHashMap();
   private final Map<String, String> contentHashByGeneratedTypeName = Maps.newHashMap();
@@ -164,6 +169,7 @@ public class MinimalRebuildCache implements Serializable {
   private Integer lastLinkedJsBytes;
   private final Map<String, Long> lastModifiedByDiskSourcePath = Maps.newHashMap();
   private final Map<String, Long> lastModifiedByResourcePath = Maps.newHashMap();
+  private final Set<String> lastReachableTypeNames = Sets.newHashSet();
   private final Set<String> modifiedCompilationUnitNames = Sets.newHashSet();
   private final Set<String> modifiedDiskSourcePaths = Sets.newHashSet();
   private final Set<String> modifiedResourcePaths = Sets.newHashSet();
@@ -171,6 +177,7 @@ public class MinimalRebuildCache implements Serializable {
   private final PersistentPrettyNamerState persistentPrettyNamerState =
       new PersistentPrettyNamerState();
   private final Set<String> preambleTypeNames = Sets.newHashSet();
+  private transient ImmutableSet<String> processedStaleTypeNames = ImmutableSet.<String> of();
   private final Multimap<String, String> rebinderTypeNamesByReboundTypeName = HashMultimap.create();
   private final Multimap<String, String> reboundTypeNamesByGeneratedCompilationUnitNames =
       HashMultimap.create();
@@ -312,6 +319,14 @@ public class MinimalRebuildCache implements Serializable {
       staleTypeNames.removeAll(JProgram.SYNTHETIC_TYPE_NAMES);
     }
 
+    /*
+     * Filter for just those stale types that are actually reachable. Since if they're not
+     * reachable we don't want to artificially traverse them and unnecessarily reveal dependency
+     * problems. And if they have become reachable, since they're missing JS, they will already be
+     * fully traversed when seen in Unify.
+     */
+    copyCollection(filterUnreachableTypeNames(staleTypeNames), staleTypeNames);
+
     // These log lines can be expensive.
     if (logger.isLoggable(TreeLogger.DEBUG)) {
       logger.log(TreeLogger.DEBUG, "known modified types = " + modifiedTypeNames);
@@ -345,12 +360,15 @@ public class MinimalRebuildCache implements Serializable {
    */
   public Set<String> computeModifiedTypeNames() {
     // Accumulate the names of types that are nested within known modified compilation units.
-    return Sets.newHashSet(computeNestedTypeNames(modifiedCompilationUnitNames));
+    return computeNestedTypeNames(modifiedCompilationUnitNames);
   }
 
   /**
    * Computes and returns the names of the set of types that are transitively referenceable starting
    * from the set of root types.
+   * <p>
+   * Should only be called once per compile, so that the "lastReachableTypeNames" list accurately
+   * reflects the reachable types of the immediately previous compile.
    */
   public Set<String> computeReachableTypeNames() {
     Set<String> openTypeNames = Sets.newHashSet(rootTypeNames);
@@ -371,6 +389,7 @@ public class MinimalRebuildCache implements Serializable {
         openTypeNames.add(referencedType);
       }
     }
+    copyCollection(reachableTypeNames, lastReachableTypeNames);
     return reachableTypeNames;
   }
 
@@ -401,8 +420,7 @@ public class MinimalRebuildCache implements Serializable {
     copyMultimap(that.generatedCompilationUnitNamesByReboundTypeNames,
         this.generatedCompilationUnitNamesByReboundTypeNames);
     copyMultimap(that.nestedTypeNamesByUnitTypeName, this.nestedTypeNamesByUnitTypeName);
-    copyMultimap(that.rebinderTypeNamesByReboundTypeName,
-        this.rebinderTypeNamesByReboundTypeName);
+    copyMultimap(that.rebinderTypeNamesByReboundTypeName, this.rebinderTypeNamesByReboundTypeName);
     copyMultimap(that.reboundTypeNamesByGeneratedCompilationUnitNames,
         this.reboundTypeNamesByGeneratedCompilationUnitNames);
     copyMultimap(that.reboundTypeNamesByInputResource, this.reboundTypeNamesByInputResource);
@@ -416,6 +434,7 @@ public class MinimalRebuildCache implements Serializable {
     copyCollection(that.generatedArtifacts, this.generatedArtifacts);
     copyCollection(that.jsoStatusChangedTypeNames, this.jsoStatusChangedTypeNames);
     copyCollection(that.jsoTypeNames, this.jsoTypeNames);
+    copyCollection(that.lastReachableTypeNames, this.lastReachableTypeNames);
     copyCollection(that.modifiedCompilationUnitNames, this.modifiedCompilationUnitNames);
     copyCollection(that.modifiedDiskSourcePaths, this.modifiedDiskSourcePaths);
     copyCollection(that.modifiedResourcePaths, this.modifiedResourcePaths);
@@ -424,6 +443,13 @@ public class MinimalRebuildCache implements Serializable {
     copyCollection(that.singleJsoImplInterfaceNames, this.singleJsoImplInterfaceNames);
     copyCollection(that.sourceCompilationUnitNames, this.sourceCompilationUnitNames);
     copyCollection(that.staleTypeNames, this.staleTypeNames);
+  }
+
+  /**
+   * Return the set of provided typeNames with unreachable types filtered out.
+   */
+  public Set<String> filterUnreachableTypeNames(Set<String> typeNames) {
+    return Sets.newHashSet(Sets.filter(typeNames, Predicates.in(lastReachableTypeNames)));
   }
 
   public ArtifactSet getGeneratedArtifacts() {
@@ -457,6 +483,15 @@ public class MinimalRebuildCache implements Serializable {
 
   public Set<String> getPreambleTypeNames() {
     return preambleTypeNames;
+  }
+
+  /**
+   * Returns the set of the names of types that were processed as stale. This list can be larger
+   * than the calculated list of stale types for example when a new reference is created to a type
+   * that had not been processed in a previous compile.
+   */
+  public Set<String> getProcessedStaleTypeNames() {
+    return processedStaleTypeNames;
   }
 
   public JsSourceMap getSourceMap(String typeName) {
@@ -621,6 +656,17 @@ public class MinimalRebuildCache implements Serializable {
   public void setPreambleTypeNames(TreeLogger logger, Set<String> preambleTypeNames) {
     logger.log(TreeLogger.DEBUG, "caching list of known preamble types " + preambleTypeNames);
     this.preambleTypeNames.addAll(preambleTypeNames);
+  }
+
+  public void setProcessedStaleTypeNames(Set<String> processedStaleTypeNames) {
+    // If this is the first compile.
+    if (!isPopulated()) {
+      // Don't record processed stale types, since the list is huge and not useful for test
+      // assertions.
+      return;
+    }
+
+    this.processedStaleTypeNames = ImmutableSet.copyOf(processedStaleTypeNames);
   }
 
   public void setRootTypeNames(Collection<String> rootTypeNames) {

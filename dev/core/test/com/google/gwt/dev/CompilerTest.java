@@ -267,6 +267,19 @@ public class CompilerTest extends ArgProcessorTestBase {
           "  }",
           "}");
 
+  private MockJavaResource referencesBarAndGeneratorEntryPointResource =
+      JavaResourceBase.createMockJavaResource("com.foo.TestEntryPoint",
+          "package com.foo;",
+          "import com.google.gwt.core.client.EntryPoint;",
+          "import com.google.gwt.core.client.GWT;",
+          "public class TestEntryPoint implements EntryPoint {",
+          "  Bar bar = new Bar();",
+          "  @Override",
+          "  public void onModuleLoad() {",
+          "    GWT.create(Object.class);",
+          "  }",
+          "}");
+
   private MockJavaResource superClassOrderEntryPointResource =
       JavaResourceBase.createMockJavaResource("com.foo.TestEntryPoint",
           "package com.foo;",
@@ -404,6 +417,32 @@ public class CompilerTest extends ArgProcessorTestBase {
       JavaResourceBase.createMockJavaResource("com.foo.Foo",
           "package com.foo;",
           "public class Foo {}");
+
+  private MockJavaResource barReferencesFooResource =
+      JavaResourceBase.createMockJavaResource("com.foo.Bar",
+          "package com.foo;",
+          "public class Bar {",
+          "  Foo foo = new Foo();",
+          "}");
+
+  private MockJavaResource nonCompilableFooResource =
+      JavaResourceBase.createMockJavaResource("com.foo.Foo",
+          "package com.foo;",
+          "public class Foo {",
+          "  public void run() {",
+          "    // Not available in GWT.",
+          "    String.format(\"asdf\");",
+          "  }",
+          "}");
+
+  private MockJavaResource emptyEntryPointResource =
+      JavaResourceBase.createMockJavaResource("com.foo.TestEntryPoint",
+          "package com.foo;",
+          "import com.google.gwt.core.client.EntryPoint;",
+          "public class TestEntryPoint implements EntryPoint {",
+          "  @Override",
+          "  public void onModuleLoad() {}",
+          "}");
 
   private MockJavaResource bazResource =
       JavaResourceBase.createMockJavaResource("com.foo.Baz",
@@ -749,6 +788,15 @@ public class CompilerTest extends ArgProcessorTestBase {
     checkIncrementalRecompile_regularClassMadeIntoJsoClass(JsOutputOption.DETAILED);
   }
 
+  public void testIncrementalRecompile_unreachableIncompatibleChange()
+      throws UnableToCompleteException, IOException, InterruptedException {
+    // Foo class is uncompilable but unreachable, so the first compile should succeed. Modifying it
+    // should still succeed since staleness marking should be smart enough to not force it to be
+    // unnecessarily traversed.
+    checkIncrementalRecompile_unreachableIncompatibleChange(JsOutputOption.PRETTY);
+    checkIncrementalRecompile_unreachableIncompatibleChange(JsOutputOption.DETAILED);
+  }
+
   public void testIncrementalRecompile_typeHierarchyChange() throws UnableToCompleteException,
       IOException, InterruptedException {
     checkIncrementalRecompile_typeHierarchyChange(JsOutputOption.PRETTY);
@@ -849,7 +897,7 @@ public class CompilerTest extends ArgProcessorTestBase {
 
     List<MockResource> originalResources = Lists.newArrayList(sharedResources);
 
-    // Compile the app with original files, modify a file and do a per-file recompile.
+    // Compile the app with original files.
     MinimalRebuildCache relinkMinimalRebuildCache = new MinimalRebuildCache();
     File relinkApplicationDir = Files.createTempDir();
     compileToJs(compilerOptions, relinkApplicationDir, "com.foo.SimpleModule", originalResources,
@@ -875,8 +923,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     compileToJs(compilerOptions, relinkApplicationDir, "com.foo.SimpleModule",
         Lists.<MockResource> newArrayList(modifiedClassNameToGenerateResource),
         relinkMinimalRebuildCache, stringSet("com.foo.TestEntryPoint", "com.foo.Baz$InnerBaz",
-            "com.foo.Bar", "com.foo.HasCustomContent", "com.foo.FooReplacementOne",
-            "com.foo.FooReplacementTwo"), output);
+            "com.foo.Bar", "com.foo.HasCustomContent", "com.foo.FooReplacementTwo"), output);
 
     // Generators were run again.
     assertEquals(2, CauseStringRebindGenerator.runCount);
@@ -892,13 +939,14 @@ public class CompilerTest extends ArgProcessorTestBase {
 
     CompilerOptions compilerOptions = new CompilerOptionsImpl();
     List<MockResource> sharedResources = Lists.newArrayList(resourceReadingGeneratorModuleResource,
-        generatorEntryPointResource, fooInterfaceResource, classNameToGenerateResource);
+        referencesBarAndGeneratorEntryPointResource, classNameToGenerateResource,
+        barReferencesFooResource);
     JsOutputOption output = JsOutputOption.PRETTY;
 
     List<MockResource> originalResources = Lists.newArrayList(sharedResources);
-    originalResources.add(nonJsoFooResource);
+    originalResources.add(fooResource);
 
-    // Compile the app with original files, modify a file and do a per-file recompile.
+    // Compile the app with original files.
     MinimalRebuildCache relinkMinimalRebuildCache = new MinimalRebuildCache();
     File relinkApplicationDir = Files.createTempDir();
     compileToJs(compilerOptions, relinkApplicationDir, "com.foo.SimpleModule", originalResources,
@@ -913,8 +961,8 @@ public class CompilerTest extends ArgProcessorTestBase {
 
     // Recompile with just 1 file change, which should not trigger any Generator runs.
     compileToJs(compilerOptions, relinkApplicationDir, "com.foo.SimpleModule",
-        Lists.<MockResource> newArrayList(nonJsoFooResource), relinkMinimalRebuildCache,
-        stringSet("com.foo.Foo"), output);
+        Lists.<MockResource> newArrayList(fooResource), relinkMinimalRebuildCache,
+        stringSet("com.foo.Foo", "com.foo.Bar"), output);
 
     // Foo Generator was not run again.
     assertEquals(1, FooResourceGenerator.runCount);
@@ -1059,6 +1107,13 @@ public class CompilerTest extends ArgProcessorTestBase {
         stringSet("com.foo.SimpleModel", "com.foo.Constants"), output);
   }
 
+  private void checkIncrementalRecompile_unreachableIncompatibleChange(JsOutputOption output)
+      throws UnableToCompleteException, IOException, InterruptedException {
+    checkRecompiledModifiedApp("com.foo.SimpleModule",
+        Lists.newArrayList(simpleModuleResource, emptyEntryPointResource), nonCompilableFooResource,
+        nonCompilableFooResource, stringSet(), output);
+  }
+
   private void checkIncrementalRecompile_typeHierarchyChange(JsOutputOption output)
       throws UnableToCompleteException, IOException, InterruptedException {
     checkRecompiledModifiedApp("com.foo.SimpleModule", Lists.newArrayList(simpleModuleResource,
@@ -1119,8 +1174,8 @@ public class CompilerTest extends ArgProcessorTestBase {
     checkRecompiledModifiedApp(compilerOptions, "com.foo.SimpleModule", Lists.newArrayList(
         resourceReadingGeneratorModuleResource, generatorEntryPointResource, fooInterfaceResource,
         nonJsoFooResource), classNameToGenerateResource, modifiedClassNameToGenerateResource, Sets.<
-        String> newHashSet("com.foo.TestEntryPoint", "com.foo.FooReplacementOne",
-        "com.foo.HasCustomContent", "com.foo.FooReplacementTwo"), outputOption);
+        String> newHashSet("com.foo.TestEntryPoint", "com.foo.HasCustomContent",
+        "com.foo.FooReplacementTwo"), outputOption);
   }
 
   private void assertDeterministicBuild(String topLevelModule, int optimizationLevel)
@@ -1221,7 +1276,7 @@ public class CompilerTest extends ArgProcessorTestBase {
 
   private String compileToJs(CompilerOptions compilerOptions, File applicationDir,
       String moduleName, List<MockResource> applicationResources,
-      MinimalRebuildCache minimalRebuildCache, Set<String> expectedStaleTypeNames,
+      MinimalRebuildCache minimalRebuildCache, Set<String> expectedProcessedStaleTypeNames,
       JsOutputOption output) throws IOException, UnableToCompleteException, InterruptedException {
     // Make sure we're using a MemoryUnitCache.
     System.setProperty(UnitCacheSingleton.GWT_PERSISTENTUNITCACHE, "false");
@@ -1279,7 +1334,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     }
 
     assertNotNull(outputJsFile);
-    assertEquals(expectedStaleTypeNames, minimalRebuildCache.getStaleTypeNames());
+    assertEquals(expectedProcessedStaleTypeNames, minimalRebuildCache.getProcessedStaleTypeNames());
     return Files.toString(outputJsFile, Charsets.UTF_8);
   }
 

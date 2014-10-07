@@ -879,6 +879,8 @@ public class UnifyAst {
             + ") were not reprocessed as was expected. This is either a compiler bug or a "
             + "Generator has legitimately stopped creating these types.");
       }
+      // Record the list of names of stale types that were processed, for test assertion purposes.
+      minimalRebuildCache.setProcessedStaleTypeNames(fullFlowTypes);
     }
 
     // Compute overrides before pruning, otherwise if a parent class method is pruned an overriding

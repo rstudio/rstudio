@@ -56,10 +56,19 @@ public class MinimalRebuildCacheTest extends TestCase {
     minimalRebuildCache.getImmediateTypeRelations().getImmediateSuperclassesByClass().put("Baz",
         "Foo");
 
+    // Record that these types reference their inner classes.
+    minimalRebuildCache.addTypeReference("Foo", "Foo$Inner");
+    minimalRebuildCache.addTypeReference("Bar", "Bar$Inner");
+    minimalRebuildCache.addTypeReference("Baz", "Baz$Inner");
+
     // In the next compile only Foo is modified.
     Map<String, Long> laterModifiedBySourcePath = new ImmutableMap.Builder<String, Long>().put(
         "Foo.java", 9999L).put("Bar.java", 0L).put("Baz.java", 0L).build();
     minimalRebuildCache.recordDiskSourceResources(laterModifiedBySourcePath);
+
+    // Ensure the types are known to be reachable.
+    minimalRebuildCache.setRootTypeNames(Sets.newHashSet("Foo", "Bar", "Baz"));
+    minimalRebuildCache.computeReachableTypeNames();
 
     // Request clearing of cache related to stale types.
     minimalRebuildCache.computeAndClearStaleTypesCache(TreeLogger.NULL,
