@@ -117,9 +117,6 @@ var c_cppHighlightRules = function() {
                 token : "variable.language", // compiler-specific constructs
                 regex : "\\b__\\S+__\\b"
             }, {
-                token : "keyword", // compiler-specific constructs
-                regex : /private:|public:|protected:/
-            }, {
                 token : function(value) {
                     if (value == "this")
                         return "variable.language";
@@ -188,7 +185,7 @@ var c_cppHighlightRules = function() {
             }
         ]
     };
-    
+
     var rdRules = new TexHighlightRules("comment").getRules();
 
     // Make all embedded TeX virtual-comment so they don't interfere with
@@ -215,7 +212,7 @@ var c_cppHighlightRules = function() {
        token : "comment",
        regex : "[^%\\\\[({\\])}]+"
     });
-    
+
     this.embedRules(DocCommentHighlightRules, "doc-",
         [ DocCommentHighlightRules.getEndRule("start") ]);
 
