@@ -93,7 +93,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
 
     @Override
     public boolean getDefaultValue() {
-      return false;
+      return true;
     }
 
     @Override
@@ -270,7 +270,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
     private int localWorkers;
     private ServletContainerLauncher scl;
     private String sclArgs;
-    private boolean sdm;
+    private boolean sdm = true;
     private File moduleBaseDir;
     private String modulePathPrefix = "";
     private File warDir;
@@ -455,8 +455,9 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
   }
 
   @Override
-  protected HostedModeBaseOptions createOptions() {
+  protected HostedModeOptions createOptions() {
     HostedModeOptionsImpl hostedModeOptions = new HostedModeOptionsImpl();
+    hostedModeOptions.setIncrementalCompileEnabled(true);
     compilerContext = compilerContextBuilder.options(hostedModeOptions).build();
     return hostedModeOptions;
   }

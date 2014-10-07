@@ -933,6 +933,14 @@ public class JUnitShell extends DevMode {
   }
 
   @Override
+  protected HostedModeOptions createOptions() {
+    HostedModeOptions options = super.createOptions();
+    options.setSuperDevMode(false);
+    options.setIncrementalCompileEnabled(false);
+    return options;
+  }
+
+  @Override
   protected boolean doStartup() {
     if (!super.doStartup()) {
       return false;
