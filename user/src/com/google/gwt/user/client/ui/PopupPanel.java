@@ -219,7 +219,6 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
           }
           impl.setClip(curPanel.getElement(), getRectString(0, 0, 0, 0));
           RootPanel.get().add(curPanel);
-          impl.onShow(curPanel.getElement());
 
           // Wait for the popup panel and iframe to be attached before running
           // the animation. We use a Timer instead of a DeferredCommand so we
@@ -247,7 +246,6 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
         if (!isUnloading) {
           RootPanel.get().remove(curPanel);
         }
-        impl.onHide(curPanel.getElement());
       }
       impl.setClip(curPanel.getElement(), "rect(auto, auto, auto, auto)");
       curPanel.getElement().getStyle().setProperty("overflow", "visible");
@@ -313,7 +311,6 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
       if (showing) {
         if (curPanel.isGlassEnabled) {
           Document.get().getBody().appendChild(curPanel.glass);
-          impl.onShow(curPanel.glass);
 
           resizeRegistration = Window.addResizeHandler(curPanel.glassResizer);
           curPanel.glassResizer.onResize(null);
@@ -322,7 +319,6 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
         }
       } else if (glassShowing) {
         Document.get().getBody().removeChild(curPanel.glass);
-        impl.onHide(curPanel.glass);
 
         resizeRegistration.removeHandler();
         resizeRegistration = null;
@@ -342,12 +338,10 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
           curPanel.setPopupPosition(curPanel.leftPosition, curPanel.topPosition);
         }
         RootPanel.get().add(curPanel);
-        impl.onShow(curPanel.getElement());
       } else {
         if (!isUnloading) {
           RootPanel.get().remove(curPanel);
         }
-        impl.onHide(curPanel.getElement());
       }
       curPanel.getElement().getStyle().setProperty("overflow", "visible");
     }
@@ -959,9 +953,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
     // If the PopupImpl creates an iframe shim, it's also necessary to hide it
     // as well.
-    impl.setVisible(getElement(), visible);
     if (glass != null) {
-      impl.setVisible(glass, visible);
       glass.getStyle().setProperty("visibility", visible ? "visible" : "hidden");
     }
   }

@@ -112,7 +112,7 @@ public class TreeItem extends UIObject implements IsTreeItem, HasTreeItems,
   /**
    * IE specific implementation class for {@link TreeItem}.
    */
-  public static class TreeItemImplIE6 extends TreeItemImpl {
+  public static class TreeItemImplIE8ToIE10 extends TreeItemImpl {
     @Override
     void convertToFullNode(TreeItem item) {
       super.convertToFullNode(item);

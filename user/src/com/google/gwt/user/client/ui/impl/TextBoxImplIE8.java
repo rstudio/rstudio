@@ -18,10 +18,10 @@ package com.google.gwt.user.client.ui.impl;
 import com.google.gwt.dom.client.Element;
 
 /**
- * IE6-specific implementation of
+ * IE8-specific implementation of
  * {@link com.google.gwt.user.client.ui.impl.TextBoxImpl}.
  */
-public class TextBoxImplIE6 extends TextBoxImpl {
+public class TextBoxImplIE8 extends TextBoxImpl {
 
   @Override
   public native int getCursorPos(Element elem) /*-{

@@ -63,7 +63,7 @@ public final class SafeStylesUtils {
    */
   static class ImplServer extends Impl {
 
-    private ImplIE6To8 implIE = new ImplIE6To8();
+    private ImplIE8 implIE = new ImplIE8();
 
     @Override
     public SafeStyles forOpacity(double value) {
@@ -75,12 +75,12 @@ public final class SafeStylesUtils {
   }
 
   /**
-   * IE6-IE8 implementation of this class.
+   * IE8 implementation of this class.
    */
-  static class ImplIE6To8 extends Impl {
+  static class ImplIE8 extends Impl {
     @Override
     public SafeStyles forOpacity(double value) {
-      // IE6-IE8 uses an alpha filter instead of opacity.
+      // IE8 uses an alpha filter instead of opacity.
       return new SafeStylesString("filter: alpha(opacity=" + (value * 100) + ");");
     }
   }

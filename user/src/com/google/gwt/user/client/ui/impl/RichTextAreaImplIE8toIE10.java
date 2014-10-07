@@ -21,7 +21,7 @@ import com.google.gwt.dom.client.Node;
 /**
  * IE6-specific implementation of rich-text editing.
  */
-public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
+public class RichTextAreaImplIE8toIE10 extends RichTextAreaImplStandard {
 
   /**
    * Helper method to allow {@link #insertHTML(String)} code to invoke
@@ -78,7 +78,7 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
       if (tr == null) {
         return;
       }
-      if (!@com.google.gwt.user.client.ui.impl.RichTextAreaImplIE6::isOrHasChild(*)(doc.body, tr.parentElement())) {
+      if (!@com.google.gwt.user.client.ui.impl.RichTextAreaImplIE8toIE10::isOrHasChild(*)(doc.body, tr.parentElement())) {
         return;
       }
       tr.pasteHTML(html);

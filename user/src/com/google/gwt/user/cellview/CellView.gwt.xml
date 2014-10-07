@@ -34,7 +34,6 @@
   <replace-with class="com.google.gwt.user.cellview.client.CellBasedWidgetImplTrident">
     <when-type-is class="com.google.gwt.user.cellview.client.CellBasedWidgetImpl"/>
     <any>
-      <when-property-is name="user.agent" value="ie6"/>
       <when-property-is name="user.agent" value="ie8"/>
     </any>
   </replace-with>
@@ -61,7 +60,6 @@
   <replace-with class="com.google.gwt.user.cellview.client.AbstractCellTable.ImplTrident">
     <when-type-is class="com.google.gwt.user.cellview.client.AbstractCellTable.Impl"/>
     <any>
-      <when-property-is name="user.agent" value="ie6"/>
       <when-property-is name="user.agent" value="ie8"/>
       <when-property-is name="user.agent" value="ie9"/>
       <when-property-is name="user.agent" value="ie10"/>

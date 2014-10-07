@@ -306,28 +306,6 @@ public class ResizeLayoutPanel extends SimplePanel implements ProvidesResize,
     }-*/;
   }
 
-  /**
-   * Implementation of resize event used by IE6.
-   */
-  static class ImplIE6 extends ImplTrident {
-    @Override
-    public void onAttach() {
-      super.onAttach();
-
-      /*
-       * IE6 doesn't render this panel unless you kick it after its been
-       * attached.
-       */
-      Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-        public void execute() {
-          if (isAttached) {
-            parent.getStyle().setProperty("zoom", "1");
-          }
-        }
-      });
-    }
-  }
-
   private final Impl impl = GWT.create(Impl.class);
   private Layer layer;
   private final Layout layout;

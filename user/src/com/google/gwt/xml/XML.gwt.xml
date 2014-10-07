@@ -27,7 +27,6 @@
   <replace-with class="com.google.gwt.xml.client.impl.XMLParserImplIE6">
     <when-type-is class="com.google.gwt.xml.client.impl.XMLParserImpl"/>
     <any>
-      <when-property-is name="user.agent" value="ie6"/>
       <when-property-is name="user.agent" value="ie8"/>
       <when-property-is name="user.agent" value="ie9"/>
     </any>

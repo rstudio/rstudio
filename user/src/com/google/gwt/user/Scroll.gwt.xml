@@ -19,7 +19,6 @@
   <replace-with class="com.google.gwt.user.client.ui.ScrollImpl.ScrollImplTrident">
     <when-type-is class="com.google.gwt.user.client.ui.ScrollImpl"/>
     <any>
-      <when-property-is name="user.agent" value="ie6"/>
       <when-property-is name="user.agent" value="ie8"/>
       <when-property-is name="user.agent" value="ie9"/>
     </any>

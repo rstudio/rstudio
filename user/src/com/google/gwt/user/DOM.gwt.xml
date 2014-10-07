@@ -59,11 +59,6 @@
     <when-property-is name="user.agent" value="ie8"/>
   </replace-with>
 
-  <replace-with class="com.google.gwt.user.client.impl.DOMImplIE6">
-    <when-type-is class="com.google.gwt.user.client.impl.DOMImpl"/>
-    <when-property-is name="user.agent" value="ie6"/>
-  </replace-with>
-
   <replace-with class="com.google.gwt.user.client.impl.DOMImplMozilla">
     <when-type-is class="com.google.gwt.user.client.impl.DOMImpl"/>
     <when-property-is name="user.agent" value="gecko1_8"/>

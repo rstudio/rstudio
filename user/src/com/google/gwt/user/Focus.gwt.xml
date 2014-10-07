@@ -37,11 +37,10 @@
   <replace-with class="com.google.gwt.user.client.ui.impl.FocusImplIE6">
     <when-type-is class="com.google.gwt.user.client.ui.impl.FocusImpl"/>
     <any>
-      <when-property-is name="user.agent" value="ie6"/>
       <when-property-is name="user.agent" value="ie8"/>
-      <!-- IE9 is only bound explicitly to the IE6 impl because leaving -->
+      <!-- IE9 is only bound explicitly to the IE8 impl because leaving -->
       <!-- it unbound leads to a warning when compiling. If attempting  -->
-      <!-- to let IE9 use a non-IE6 impl, explicitly bind it to avoid   -->
+      <!-- to let IE9 use a non-IE8 impl, explicitly bind it to avoid   -->
       <!-- this warning                                                 -->
       <when-property-is name="user.agent" value="ie9"/>
     </any>

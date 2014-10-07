@@ -18,9 +18,9 @@ package com.google.gwt.user.client.ui.impl;
 import com.google.gwt.dom.client.Element;
 
 /**
- * IE6 implementation of {@link com.google.gwt.user.client.ui.impl.FormPanelImpl}.
+ * IE8 implementation of {@link com.google.gwt.user.client.ui.impl.FormPanelImpl}.
  */
-public class FormPanelImplIE6 extends FormPanelImpl {
+public class FormPanelImplIE8 extends FormPanelImpl {
 
   @Override
   public native void hookEvents(Element iframe, Element form, FormPanelImplHost listener) /*-{
