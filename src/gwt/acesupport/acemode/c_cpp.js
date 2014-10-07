@@ -766,14 +766,12 @@ oop.inherits(Mode, TextMode);
             }
 
             if (this.$codeModel.reStartsWithContinuationToken.test(thisLine) ||
-                this.$codeModel.reEndsWithContinuationToken.test(thisLine) ||
-                /\)\s*$/.test(thisLine)) {
+                this.$codeModel.reEndsWithContinuationToken.test(thisLine)) {
                
                while (
                   (this.$codeModel.reStartsWithContinuationToken.test(thisLine) ||
-                   this.$codeModel.reEndsWithContinuationToken.test(thisLine) ||
-                   /\)\s*$/.test(thisLine)) &&
-                     thisRow >= 0) {
+                   this.$codeModel.reEndsWithContinuationToken.test(thisLine))
+                     && thisRow >= 0) {
 
                   // If this line ends with a closing paren, move to the opening paren
                   if (/\)\s*$/.test(thisLine)) {

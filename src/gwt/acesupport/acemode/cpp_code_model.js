@@ -72,8 +72,8 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    var reOnlyWhitespace = /^\s*$/;
 
    // NOTE: We need to be careful of comment block starts and ends. (/*, */)
-   var reStartsWithContinuationToken = /^\s*[,+\-/&^%$!<\>.?|=\'\":]|^\s*\*[^/]/;
-   var reEndsWithContinuationToken =       /[,+\-*&^%$!<\>.?|=\'\":]\s*$|\*[^/]\s*$/;
+   var reStartsWithContinuationToken = /^\s*[,+\-/&^%$!<\>.?|=\'\":\)\(~]|^\s*\*[^/]|^\s*\/[^\*]/;
+   var reEndsWithContinuationToken =       /[,+\-*&^%$!<\>.?|=\'\":\)\(~]\s*$|\*[^/]\s*$|\/[^\*]\s*$/;
 
    // Attach to 'this' so others can use it
    this.reStartsWithContinuationToken = reStartsWithContinuationToken;
@@ -120,8 +120,9 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    var bwdOverInitializationList = function(tokenCursor) {
 
       var clonedCursor = tokenCursor.cloneCursor();
-      while (doBwdOverInitializationList(clonedCursor, tokenCursor))
-         ;
+      while (doBwdOverInitializationList(clonedCursor, tokenCursor)) {
+      }
+      
       return tokenCursor;
    };
 

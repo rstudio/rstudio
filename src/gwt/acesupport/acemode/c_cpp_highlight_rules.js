@@ -117,6 +117,9 @@ var c_cppHighlightRules = function() {
                 token : "variable.language", // compiler-specific constructs
                 regex : "\\b__\\S+__\\b"
             }, {
+                token : "keyword", // compiler-specific constructs
+                regex : /private:|public:|protected:/
+            }, {
                 token : function(value) {
                     if (value == "this")
                         return "variable.language";
