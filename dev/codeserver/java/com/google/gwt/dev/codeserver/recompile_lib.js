@@ -18,6 +18,14 @@
 // We do not consider any of these classes a public API and they will be changed as needed.
 $namespace.lib = $namespace.lib || {};
 
+StringHelper = {};
+
+StringHelper.endsWith = function(str, suffix) {
+  return str.indexOf(suffix, str.length - suffix.length) !== -1;
+};
+
+$namespace.lib.StringHelper = StringHelper;
+
 /**
  * Construct an instance of the PropertyHelper.
  *
@@ -350,21 +358,80 @@ BaseUrlProvider.prototype.__getScriptTags = function() {
   return $doc.getElementsByTagName('script');
 };
 
+BaseUrlProvider.prototype.__stripHashQueryAndFileName = function(url) {
+  // Truncate starting at the first '?' or '#', whichever comes first.
+  var hashIndex = url.lastIndexOf('#');
+  if (hashIndex == -1) {
+    hashIndex = url.length;
+  }
+
+  var queryIndex = url.indexOf('?');
+  if (queryIndex == -1) {
+    queryIndex = url.length;
+  }
+
+  var slashIndex = url.lastIndexOf('/', Math.min(queryIndex, hashIndex));
+  if (slashIndex < 0) {
+    throw new 'Cannot find slash in: ' + url;
+  }
+
+  return url.substring(0, slashIndex + 1);
+};
+
+BaseUrlProvider.prototype.__maybeConvertToAbsoluteUrl = function(url) {
+  // test for valid protocol starts
+  if ((url.match(/^(?:(?:https)|(?:http)|(?:file)):\/\//))) {
+    return url;
+  }
+
+  // Probably a relative URL; use magic to make the browser absolutify it.
+  // I wish there were a better way to do this, but this seems the only
+  // sure way!  (A side benefit is it preloads clear.cache.gif)
+  // Note: this trick is harmless if the URL was really already absolute.
+  var img = $doc.createElement("img");
+  img.src = url + 'clear.cache.gif';
+  return this.__stripHashQueryAndFileName(img.src);
+};
+
 BaseUrlProvider.prototype.getBaseUrl = function() {
+  // This code follows the order in com/google/gwt/core/ext/linker/impl/computeScriptBase.js
+  // Try to get the url from a meta property first
+  var url = this.__getBaseUrlFromMetaTag();
+  if (url) {
+    return this.__maybeConvertToAbsoluteUrl(url);
+  }
+
+  // try the nocache next
   var expectedSuffix = this.__moduleName + '.nocache.js';
   var scriptTags = this.__getScriptTags();
   for (var i = 0; i < scriptTags.length; i++) {
     var tag = scriptTags[i];
     var candidate = tag.src;
-    var lastMatch = candidate.lastIndexOf(expectedSuffix);
-    if (lastMatch == candidate.length - expectedSuffix.length) {
-      // Assumes that either the URL is absolute, or it's relative
-      // and the html file is hosted by this code server.
-      return candidate.substring(0, lastMatch);
+    if (StringHelper.endsWith(candidate, expectedSuffix)) {
+      var stripedUrl = this.__stripHashQueryAndFileName(candidate);
+      return this.__maybeConvertToAbsoluteUrl(stripedUrl);
     }
   }
 
-  throw 'Unable to compute base url for module: ' + this.__moduleName;
+  //try the base tag
+  var baseElements = this.__getBaseElements();
+  if (baseElements.length > 0) {
+    // It's always the last parsed base tag that will apply to this script.
+    var baseElementUrl = baseElements[baseElements.length - 1].href;
+    return this.__maybeConvertToAbsoluteUrl(baseElementUrl);
+  }
+
+  // Now we are getting desperate and as a last resort we try the current doc
+  var fallbackUrl = this.__stripHashQueryAndFileName($doc.location.href);
+  return this.__maybeConvertToAbsoluteUrl(fallbackUrl);
+};
+
+BaseUrlProvider.prototype.__getBaseElements = function() {
+  return $doc.getElementsByTagName('base');
+};
+
+BaseUrlProvider.prototype.__getBaseUrlFromMetaTag = function() {
+  return __gwt_getMetaProperty('baseUrl');
 };
 
 //Export BaseUrlProvider to namespace

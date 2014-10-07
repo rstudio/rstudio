@@ -92,6 +92,9 @@ function computeScriptBase() {
   }
 
   function isLocationOk() {
+    // Dealing with CVE-2012-3695
+    // https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-3695
+    // Safari is affected until 5.1.7 and iOS until 5.1.1
     var loc = $doc.location;
     return loc.href ==
         (loc.protocol + "//" + loc.host + loc.pathname + loc.search + loc.hash);

@@ -159,10 +159,20 @@ public class CodeServerGwtTest extends GWTTestCase {
     assertStringEquals('test2', props.test1);
   }-*/;
 
-  public native void testBaseUrlProvider () /*-{
+  public native void testBaseUrlProvider_nocache () /*-{
     var assertStringEquals = @CodeServerGwtTest::assertEquals(Ljava/lang/String;Ljava/lang/String;);
     var BaseUrlProvider = $wnd.namespace.lib.BaseUrlProvider;
     var baseUrlProvider = new BaseUrlProvider('testModule');
+
+    // have other sources return null
+    baseUrlProvider.__getBaseUrlFromMetaTag = function() {
+      return null;
+    };
+
+    // have other sources return nothing
+    baseUrlProvider.__getBaseElements = function() {
+      return [];
+    };
 
     baseUrlProvider.__getScriptTags = function() {
       return [
@@ -173,6 +183,57 @@ public class CodeServerGwtTest extends GWTTestCase {
     };
 
     assertStringEquals('http://localhost:8888/somepath/',
+        baseUrlProvider.getBaseUrl());
+  }-*/;
+
+  public native void testBaseUrlProvider_metatag() /*-{
+    var assertStringEquals = @CodeServerGwtTest::assertEquals(Ljava/lang/String;Ljava/lang/String;);
+    var BaseUrlProvider = $wnd.namespace.lib.BaseUrlProvider;
+    var baseUrlProvider = new BaseUrlProvider('testModule');
+
+    baseUrlProvider.__getBaseUrlFromMetaTag = function() {
+      return 'http://localhost:8888/somepathFromMeta/';
+    };
+
+    // have other sources return nothing
+    baseUrlProvider.__getBaseElements = function() {
+      return [];
+    };
+
+    // have other sources return nothing
+    baseUrlProvider.__getScriptTags = function() {
+      return [];
+    };
+
+    assertStringEquals('http://localhost:8888/somepathFromMeta/',
+        baseUrlProvider.getBaseUrl());
+  }-*/;
+
+  public native void testBaseUrlProvider_basetag() /*-{
+    var assertStringEquals = @CodeServerGwtTest::assertEquals(Ljava/lang/String;Ljava/lang/String;);
+    var BaseUrlProvider = $wnd.namespace.lib.BaseUrlProvider;
+    var baseUrlProvider = new BaseUrlProvider('testModule');
+
+    // have other sources return null
+    baseUrlProvider.__getBaseUrlFromMetaTag = function() {
+      return null;
+    };
+
+
+    baseUrlProvider.__getBaseElements = function() {
+      return [
+        {href: 'http://localhost:9876/somepath1/'},
+        {href: 'http://localhost:9876/somepath2/'},
+        {href: 'http://localhost:9876/somepath3/'}
+      ];;
+    };
+
+    // have other sources return nothing
+    baseUrlProvider.__getScriptTags = function() {
+      return [];
+    };
+
+    assertStringEquals('http://localhost:9876/somepath3/',
         baseUrlProvider.getBaseUrl());
   }-*/;
 
