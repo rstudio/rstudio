@@ -56,18 +56,28 @@ var TokenCursor = function(tokens, row, offset) {
          this.$offset = this.$tokens[this.$row].length;
       }
       
-      while (this.$offset == 0 && this.$row > 0)
+      while (this.$offset === 0 && this.$row > 0)
       {
          this.$row--;
          this.$offset = this.$tokens[this.$row].length;
       }
 
-      if (this.$offset == 0)
+      if (this.$offset === 0)
          return false;
 
       this.$offset--;
 
       return true;
+   };
+
+   this.peekBack = function(n) {
+      var clone = this.cloneCursor();
+      for (var i = 0; i < n; i++) {
+         if (!clone.moveToPreviousToken()) {
+            return null;
+         }
+      }
+      return clone;
    };
 
    this.moveToNextToken = function(maxRow)

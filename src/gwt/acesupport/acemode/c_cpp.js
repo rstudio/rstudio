@@ -67,7 +67,7 @@ var Mode = function(suppressHighlighting, doc, session) {
    this.$tokenizer = new Tokenizer(new c_cppHighlightRules().getRules());
    this.$codeModel = new CppCodeModel(this.$doc, this.$tokenizer);
    
-   this.$behaviour = new CStyleBehaviour(this.$doc, this.$tokenizer);
+   this.$behaviour = new CStyleBehaviour(this.$codeModel);
    this.$outdent = new MatchingBraceOutdent(this.$codeModel);
    
    this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(

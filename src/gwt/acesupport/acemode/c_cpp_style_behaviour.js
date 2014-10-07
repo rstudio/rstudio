@@ -38,7 +38,7 @@ var $addNamespaceComment = true;
 var CStyleBehaviour = function(codeModel) {
 
    var $codeModel = codeModel;
-   var $complements = $codeModel.$complements;
+   var $complements = codeModel.$complements;
 
    var autoPairInsertion = function(text, input, editor, session) {
 
@@ -507,7 +507,7 @@ var CStyleBehaviour = function(codeModel) {
 
          if (len >= 0) {
             return {
-               text: new Array(len + 1).join(" ") + "\\\n" + session.getTabString(),
+               text: new Array(len + 1).join(" ") + "\\\n" + this.$getIndent(line) + session.getTabString(),
                selection: false
             };
          } else {
