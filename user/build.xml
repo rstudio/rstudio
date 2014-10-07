@@ -461,6 +461,7 @@
 
   <target name="test"
           depends="compile, compile.tests"
+          unless="test.user.disable"
           description="Run all tests for this project.">
     <!-- Prevent compilation for every target. -->
     <property name="compile.complete" value="true"/>
