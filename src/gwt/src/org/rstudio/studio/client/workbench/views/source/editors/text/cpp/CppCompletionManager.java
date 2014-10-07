@@ -179,6 +179,15 @@ public class CppCompletionManager implements CompletionManager
       { 
          // bare modifiers do nothing
          int keyCode = event.getKeyCode();
+         
+         // chrome on ubuntu now sends this before every keydown
+         // so we need to explicitly ignore it. see:
+         // https://github.com/ivaynberg/select2/issues/2482
+         if (keyCode == KeyCodes.KEY_WIN_IME)
+         {
+            return false ;
+         }
+         
          if (keyCode == KeyCodes.KEY_SHIFT ||
              keyCode == KeyCodes.KEY_CTRL ||
              keyCode == KeyCodes.KEY_ALT)
