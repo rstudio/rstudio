@@ -71,6 +71,11 @@ var TokenCursor = function(tokens, row, offset) {
    };
 
    this.peekBack = function(n) {
+      
+      if (typeof n === "undefined") {
+         n = 1;
+      }
+      
       var clone = this.cloneCursor();
       for (var i = 0; i < n; i++) {
          if (!clone.moveToPreviousToken()) {
@@ -82,6 +87,11 @@ var TokenCursor = function(tokens, row, offset) {
 
    this.moveToNextToken = function(maxRow)
    {
+
+      if (typeof maxRow === "undefined") {
+         maxRow = Infinity;
+      }
+      
       if (this.$row > maxRow)
          return false;
 

@@ -32,6 +32,7 @@ define('mode/behaviour/cstyle', function(require, exports, module) {
 var oop = require("ace/lib/oop");
 var Behaviour = require("ace/mode/behaviour").Behaviour;
 var CppCodeModel = require("mode/cpp_code_model").CppCodeModel;
+var TokenCursor = require("mode/token_cursor").TokenCursor;
 
 var $addNamespaceComment = true;
 
@@ -251,6 +252,7 @@ var CStyleBehaviour = function(codeModel) {
       var row = editor.selection.getCursor().row;
       var col = editor.selection.getCursor().column;
       var line = session.getLine(row);
+      var prevLine = session.getLine(row - 1);
       var lineTrimmed = line.substring(0, col);
       var commentMatch = line.match(/\/\//);
       if (commentMatch) {
@@ -297,7 +299,9 @@ var CStyleBehaviour = function(codeModel) {
                };
             }
 
-            // if we're defining a function, don't include a semi-colon
+            // If we're defining a function, don't include a semi-colon.
+            // We can only use the tokenizer if the open brace was inserted
+            // on a new line (it has not yet been tokenized)
             if (line.match(/\)\s*/)) {
                return {
                   text: '{}',
@@ -305,10 +309,37 @@ var CStyleBehaviour = function(codeModel) {
                };
             }
 
+            if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row)) {
+               var tokenCursor = new TokenCursor(this.$codeModel.$tokens);
+               tokenCursor.$row = row;
+               tokenCursor.$offset = 0;
+               if (tokenCursor.moveToPreviousToken()) {
+                  if (tokenCursor.currentValue() === ")") {
+                     return {
+                        text: '{}',
+                        selection: [1, 1]
+                     };
+                  }
+               }
+            }
+
             // if we're making a block define, don't add a semi-colon
             if (line.match(/#define\s+\w+/)) {
                return {
                   text: '{}',
+                  selection: [1, 1]
+               };
+            }
+
+            // If class-style indentation can produce an appropriate indentation for
+            // the brace, then insert a closing brace with a semi-colon
+            var heuristicRow = $codeModel.getRowForOpenBraceIndent(
+               session, row
+            );
+
+            if (heuristicRow !== null) {
+               return {
+                  text: '{};',
                   selection: [1, 1]
                };
             }
@@ -323,18 +354,6 @@ var CStyleBehaviour = function(codeModel) {
                };
             }
 
-            // If class-style indentation can produce an appropriate indentation for
-            // the brace, then insert a closing brace with a semi-colon
-            var heuristicRow = $codeModel.getRowForOpenBraceIndentClassStyle(
-               session, row - 1, 20
-            );
-            
-            if (heuristicRow !== null) {
-               return {
-                  text: '{};',
-                  selection: [1, 1]
-               };
-            }
             
          }
 
@@ -446,22 +465,6 @@ var CStyleBehaviour = function(codeModel) {
          }
       }
    });
-
-   // this.add("comment", "insertion", function (state, action, editor, session, text) {
-   //    return text;
-   //    if (text == "*") {
-   //       var row = editor.selection.getCursor().row;
-   //       var line = session.getLine(row);
-   //       var indent = this.$getIndent(line);
-
-   //       if (/\s*\/\*$/.test(line)) {
-   //          return {
-   //             text: '*\n ' + indent + '*/',
-   //             selection: [1, 1]
-   //          };
-   //       }
-   //    }
-   // });
 
    this.add("comment", "deletion", function (state, action, editor, session, range) {
       

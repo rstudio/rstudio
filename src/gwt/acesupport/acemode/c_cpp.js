@@ -403,7 +403,7 @@ oop.inherits(Mode, TextMode);
             
             return this.$getIndent(lines[rowToUse]) + maybeTab;
          }
-
+         
          // Indent for a :
          if (/:\s*$/.test(line)) {
 
@@ -466,18 +466,6 @@ oop.inherits(Mode, TextMode);
                
             }
 
-         }
-
-         // Handle naked 'for', 'if' etc. tokens. This function is a bit awkward --
-         // either it returns an indent to use, or returns a row number from
-         // which we can infer the indent.
-         var newIndent = this.$codeModel.indentNakedTokens(doc, indent, tab, row);
-         if (newIndent !== null) {
-            if (typeof newIndent === "string") {
-               return newIndent;
-            } else if (typeof newIndent === "number") {
-               return this.$getIndent(lines[newIndent]);
-            }
          }
 
          // Indent following an opening paren.
@@ -639,7 +627,7 @@ oop.inherits(Mode, TextMode);
          //       : a_(a),
          //         b_(b),
          //         ^
-         var bracePos = /^.*([\[\{\(]).+,\s*$/.exec(line);
+         var bracePos = /([\[\{\(]).+,\s*$/.exec(line);
          if (bracePos) {
 
             // Loop through the openers until we find an unmatched brace on
@@ -739,6 +727,22 @@ oop.inherits(Mode, TextMode);
             //       3;
             //   ^
             //
+
+            // Walk along parens
+            var braceMatch = thisLine.match(/[\)\}\]]/);
+            if (braceMatch) {
+
+               var openParenPos = session.findMatchingBracket({
+                  row: thisRow,
+                  column: lines[thisRow].lastIndexOf(braceMatch[0]) + 1
+               });
+
+               if (openParenPos && openParenPos.row < thisRow) {
+                  thisRow = openParenPos.row;
+                  thisLine = this.getLineSansComments(doc, thisRow);
+               }
+            }
+            
             // If the current line does not start with an operator token, move
             // up one.
             if (!this.$codeModel.reStartsWithContinuationToken.test(thisLine)) {
@@ -759,12 +763,13 @@ oop.inherits(Mode, TextMode);
                    this.$codeModel.reEndsWithContinuationToken.test(thisLine))
                      && thisRow >= 0) {
 
-                  // If this line ends with a closing paren, move to the opening paren
-                  if (/\)\s*$/.test(thisLine)) {
+                  // Walk along parens
+                  var braceMatch = thisLine.match(/[\)\}\]]$/);
+                  if (braceMatch) {
 
                      var openParenPos = session.findMatchingBracket({
                         row: thisRow,
-                        column: lines[thisRow].lastIndexOf(")") + 1
+                        column: lines[thisRow].lastIndexOf(braceMatch[0]) + 1
                      });
 
                      if (openParenPos && openParenPos.row < thisRow) {
@@ -836,10 +841,10 @@ oop.inherits(Mode, TextMode);
                //     + c
                //
                // so we re-correct for that here.
-               var lastLine = doc.getLine(thisRow + 1);
+               var lineAhead = doc.getLine(thisRow + 1);
                if (thisRow < 0 ||
-                   this.$codeModel.reEndsWithContinuationToken.test(lastLine)) {
-                  return this.$getIndent(lastLine);
+                   this.$codeModel.reEndsWithContinuationToken.test(lineAhead)) {
+                  return this.$getIndent(lineAhead);
                } else {
                   return this.$getIndent(thisLine);
                }
@@ -847,8 +852,20 @@ oop.inherits(Mode, TextMode);
 
          }
 
+         // Handle naked 'for', 'if' etc. tokens. This function is a bit awkward --
+         // either it returns an indent to use, or returns a row number from
+         // which we can infer the indent.
+         var newIndent = this.$codeModel.indentNakedTokens(doc, indent, tab, row, line);
+         if (newIndent !== null) {
+            if (typeof newIndent === "string") {
+               return newIndent;
+            } else if (typeof newIndent === "number") {
+               return this.$getIndent(lines[newIndent]);
+            }
+         }
+
          // Indent based on lookaround heuristics for open braces.
-         if (!/^\s*$/.test(line) && /\{\s*$/.test(line)) {
+         if (/\{\s*$/.test(line)) {
 
             var heuristicRow = this.$codeModel.getRowForOpenBraceIndent(
                this.$session,
@@ -875,6 +892,11 @@ oop.inherits(Mode, TextMode);
          // If the closing character is an 'opener' (ie, one of
          // '(', '{', '[', or '<'), then indent
          if (/[\(\{\[<]\s*$/.test(line)) {
+            return indent + tab;
+         }
+
+         // Prefer indenting if the closing character is a letter.
+         if (/\w\s*$/.test(line)) {
             return indent + tab;
          }
 

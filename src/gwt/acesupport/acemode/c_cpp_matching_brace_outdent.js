@@ -391,6 +391,19 @@ var $alignCase                 = true; // case 'a':
          // Don't outdent if the previous line ends with a semicolon
          if (!/;\s*$/.test(prevLine)) {
 
+            if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row)) {
+
+               var tokenCursor = new TokenCursor(this.$codeModel.$tokens);
+               tokenCursor.$row = row,
+               tokenCursor.$offset = 0;
+
+               if (tokenCursor.moveToPreviousToken()) {
+                  if (tokenCursor.currentValue() === "=") {
+                     return;
+                  }
+               }
+            }
+
             var scopeRow = this.$codeModel.getRowForOpenBraceIndent(
                session,
                row

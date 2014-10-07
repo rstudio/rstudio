@@ -297,23 +297,44 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       if (lines.length <= 1) return null;
 
       var line = lines[row];
-      
-      var braceColumn = line.lastIndexOf("{");
-      if (braceColumn === -1) {
-         return null;
-      }
 
-      // Walk tokens backwards until we find something that provides the appropriate indentation.
+      // Walk tokens backwards until we find something that provides
+      // the appropriate indentation.
       if (this.$tokenUtils.$tokenizeUpToRow(row)) {
 
          // The brace should be the last token on the line -- place it there.
+         // But the behaviour rules might insert a closing '}' or ';', so we'll
+         // also try to walk back tokens to get the opening brace.
+         //
+         // This is necessary for the auto-outdenting -- it will see a line with
+         // e.g. '{};'
+         // and we want to select the '{' token on that line.
          var tokenCursor = new TokenCursor(this.$tokens);
+
          tokenCursor.$row = row;
          tokenCursor.$offset = this.$tokens[row].length - 1;
-         if (!tokenCursor.currentValue() === "{") {
-            return null;
-         }
 
+         // Try to find an open brace on this line (okay if we fail)
+         while (tokenCursor.currentValue() !== "{") {
+
+            if (tokenCursor.$row !== row) {
+               return null;
+            }
+            
+            if (!tokenCursor.moveToPreviousToken()) {
+               return null;
+            }
+
+            if (tokenCursor.$offset < 0) {
+               break;
+            }
+
+            if (typeof tokenCursor.currentValue() === "undefined") {
+               break;
+            }
+
+         }
+      
          // Move backwards over matching parens. Note that we may need to walk up
          // e.g. a constructor's initialization list, so we need to check for
          //
@@ -362,19 +383,40 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          // Move backwards over matching parentheses. Note that the function expects the
          // cursor to be on the token just after a closing paren.
          debugCursor("Before walking over matching parens", tokenCursor);
+         
          if (tokenCursor.currentValue() === ")") {
             tokenCursor.moveToNextToken();
          }
-         
+
          if (tokenCursor.moveBackwardOverMatchingParens()) {
             if (!tokenCursor.moveToPreviousToken()) {
                return null;
             }
-         };
+         }
+         
 
+         // If we landed on a ':' token and the previous token is
+         // e.g. public, then we went too far -- go back up one token.
+         if (tokenCursor.currentValue() === ":") {
+
+            var prevValue = tokenCursor.peekBack().currentValue();
+            if (["public", "private", "protected"].some(function(x) {
+               return x === prevValue;
+            }))
+            {
+               tokenCursor.moveToNextToken();
+            }
+            else
+            {
+               tokenCursor.moveToPreviousToken();
+            }
+         }
+         
          // Use this row for indentation.
          debugCursor("Ended at", tokenCursor);
-         return tokenCursor.$row;
+         if (tokenCursor.currentValue() !== "=") {
+            return tokenCursor.$row;
+         }
          
       }
 
@@ -522,9 +564,11 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       return -1;
    };
 
-   this.indentNakedTokens = function(doc, indent, tab, row) {
+   this.indentNakedTokens = function(doc, indent, tab, row, line) {
 
-      var line = this.getLineSansComments(doc, row);
+      if (typeof line === "undefined") {
+         line = this.getLineSansComments(doc, row);
+      }
 
       // Generic 'naked-looking' tokens -- e.g.
       //
