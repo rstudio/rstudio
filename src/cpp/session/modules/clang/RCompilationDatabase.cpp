@@ -229,12 +229,8 @@ void RCompilationDatabase::updateForCurrentPackage()
    if (buildFileHash == packageBuildFileHash_)
       return;
 
-   // args to set
-   std::vector<std::string> args;
-
-   // start with clang compile args
-   std::vector<std::string> clangArgs = clang().compileArgs(true);
-   std::copy(clangArgs.begin(), clangArgs.end(), std::back_inserter(args));
+   // start with base args
+   std::vector<std::string> args = baseCompilationArgs(true);
 
    // read the package description file
    using namespace projects;
@@ -531,14 +527,8 @@ RCompilationDatabase::CompilationConfig
    if (rcppPkg == "Rcpp11" && !module_context::isPackageInstalled("attributes"))
       return CompilationConfig();
 
-   // build compile args
-   std::vector<std::string> args;
-
-   // start with clang compile args
-   std::vector<std::string> clangCompileArgs = clang().compileArgs(true);
-   std::copy(clangCompileArgs.begin(),
-             clangCompileArgs.end(),
-             std::back_inserter(args));
+   // start with base args
+   std::vector<std::string> args = baseCompilationArgs(true);
 
    // execute sourceCpp
    core::system::ProcessResult result;
@@ -604,6 +594,20 @@ std::vector<std::string> RCompilationDatabase::argsForRCmdSHLIB(
 }
 
 
+std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp)
+                                                                          const
+{
+   std::vector<std::string> args = clang().compileArgs(isCpp);
+
+   // add rTools when on windows
+#ifdef _WIN32
+   std::vector<std::string> rtArgs = rToolsArgs();
+   std::copy(rtArgs.begin(), rtArgs.end(), std::back_inserter(args));
+#endif
+
+   return args;
+}
+
 std::vector<std::string> RCompilationDatabase::rToolsArgs() const
 {
 
@@ -653,11 +657,6 @@ core::system::Options RCompilationDatabase::compilationEnvironment() const
    core::system::Options env;
    core::system::environment(&env);
 #if defined(_WIN32)
-   std::vector<std::string> rtoolsArgs = rToolsArgs();
-   std::copy(rtoolsArgs.begin(),
-             rtoolsArgs.end(),
-             std::back_inserter(rtoolsArgs));
-
    std::string warning;
    module_context::addRtoolsToPathIfNecessary(&env, &warning);
 #endif
@@ -739,14 +738,9 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
          return std::vector<std::string>();
       }
 
-      // compute args
-      std::vector<std::string> args;
+      // start with base args
+      std::vector<std::string> args = baseCompilationArgs(true);
 
-      // start with clang compile args
-      std::vector<std::string> clangCompileArgs = clang().compileArgs(true);
-      std::copy(clangCompileArgs.begin(),
-                clangCompileArgs.end(),
-                std::back_inserter(args));
       // -std argument
       if (!stdArg.empty())
          args.push_back(stdArg);

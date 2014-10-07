@@ -68,6 +68,7 @@ private:
    std::vector<std::string> argsForRCmdSHLIB(core::system::Options env,
                                              core::FilePath tempSrcFile);
 
+   std::vector<std::string> baseCompilationArgs(bool isCppFile) const;
    std::vector<std::string> rToolsArgs() const;
    core::system::Options compilationEnvironment() const;
    std::vector<std::string> precompiledHeaderArgs(const std::string& pkgName,
