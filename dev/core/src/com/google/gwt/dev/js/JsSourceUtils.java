@@ -24,13 +24,16 @@ import java.util.regex.Pattern;
  * Utils for handling JS source.
  */
 public class JsSourceUtils {
+  // NOTE: All * operations are always written as *? to avoid a recursive path in the regular
+  // expression code in Java.
+
   // Regular expression that maches a JS string.
   @VisibleForTesting
-  static final Pattern JS_STRING_PATTERN = Pattern.compile("(\"([^\"\\\\]|(\\\\.))*\")");
+  static final Pattern JS_STRING_PATTERN = Pattern.compile("(?>\"(?>[^\"\\\\]|(?>\\\\.))*?\")");
 
   // A regular expression that matches a single line comment
   private static final Pattern OPEN_TRAILING_BLOCK_COMMENT_PATTERN =
-      Pattern.compile("/\\*([^*]|\\*[^/])*");
+      Pattern.compile("/\\*(?>[^*]|\\*[^/])*?");
 
   // Regular expression that maches a C-style a comment of the form /* .... */.
   @VisibleForTesting
@@ -39,32 +42,32 @@ public class JsSourceUtils {
 
   // Regular expression that maches a JS regular expression.
   @VisibleForTesting
-  static final Pattern JS_REG_EXP_PATTERN = Pattern.compile("(/([^/\\\\]|\\\\.)+/([mgi]{0,3}))");
+  static final Pattern JS_REG_EXP_PATTERN =
+      Pattern.compile("(?>/(?>[^/\\\\]|\\\\.)+/)");
 
   // A regular expression that matches the part of a JS program line that is not part of
   // either a line comment (//) or an unfinished block comment (/*)
-  private static final Pattern REGULAR_TEXT_PATTERN = Pattern.compile("("
-      +   "[^\"/]|(/[^/*])|"          // any sequence of that does not contain ", // or /*
-      + BLOCK_COMMENT_PATTERN + "|"
+  @VisibleForTesting
+  static final Pattern REGULAR_TEXT_PATTERN = Pattern.compile("(?>"
+      + "[^\"/]|/[^/*]|"               // any sequence of that does not contain ", // or /*
+      + "(?>" + BLOCK_COMMENT_PATTERN + ")|"
       + JS_STRING_PATTERN + "|"
       + JS_REG_EXP_PATTERN
-      + ")*"                          // any sequence of the former.
+      + ")*?"                          // any sequence of the former.
   );
 
   // A regular expression that matches a single line comment
-  private static final Pattern TRAILING_SINGLE_LINE_COMMENT_PATTERN = Pattern.compile("//.*");
+  private static final Pattern TRAILING_SINGLE_LINE_COMMENT_PATTERN = Pattern.compile("//.*?");
 
   /**
-   * Pattern that matches lines that end up with a single line comment (// ....), while making sure
-   * that // can appear inside strings. DOES NOT HANDLE // inside multiline comments.
-   * <p>
-   * Group 7 will contain the whole single line comment if matched.
-   *
+   * Pattern that matches lines that end up with a single line comment (// ....) or an open
+   * block comment (/*). The named groups can be used to distinguish which of the two was matched.
    */
-  private static final Pattern matchCommentToEndOfLine = Pattern.compile(REGULAR_TEXT_PATTERN +
-      "(?<trailing>" +
-      "(?<single>" + TRAILING_SINGLE_LINE_COMMENT_PATTERN + ")" + "|" +
-      "(?<block>" + OPEN_TRAILING_BLOCK_COMMENT_PATTERN + "))");
+  private static final Pattern MATCH_COMMENT_TO_END_OF_LINE_PATTERN = Pattern.compile(
+      REGULAR_TEXT_PATTERN +
+        "(?<trailing>" +
+        "(?<single>" + TRAILING_SINGLE_LINE_COMMENT_PATTERN + ")" + "|" +
+        "(?<block>" + OPEN_TRAILING_BLOCK_COMMENT_PATTERN + "))");
 
   /**
    * Transforms a multiline JS snippet into the equivalent single line program. This is
@@ -84,7 +87,7 @@ public class JsSourceUtils {
         line = line.substring(endBlockCommentPosition + 2);
         inMultiline = false;
       }
-      Matcher matcher = matchCommentToEndOfLine.matcher(line);
+      Matcher matcher = MATCH_COMMENT_TO_END_OF_LINE_PATTERN.matcher(line);
       if (matcher.matches()) {
         assert matcher.group("trailing") != null;
         oneLinerBuilder.append(

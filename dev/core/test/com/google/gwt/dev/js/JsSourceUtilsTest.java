@@ -16,13 +16,31 @@
 package com.google.gwt.dev.js;
 
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.thirdparty.guava.common.base.Strings;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * Tests for {@link JsSourceUtils}.
  */
 public class JsSourceUtilsTest extends OptimizerTestBase {
+
+  public void testMatchDoesNotThrowStackOverflow() {
+    String large = Strings.repeat("a\\\\", 2000000);
+    Pattern textPattern =
+        Pattern.compile(JsSourceUtils.REGULAR_TEXT_PATTERN.toString());
+    Matcher matcher = textPattern.matcher(large);
+    assertTrue(matcher.matches());
+
+    large = Strings.repeat("ab/2/6/* hhh -- */", 20000);
+    matcher = textPattern.matcher(large);
+    assertTrue(matcher.matches());
+
+    large = Strings.repeat("ab/2/6/* hhh -- */ / \\/* /", 20000);
+    matcher = textPattern.matcher(large);
+    assertTrue(matcher.matches());
+  }
 
   public void testMatchString() {
     Pattern stringPattern = JsSourceUtils.JS_STRING_PATTERN;
@@ -45,8 +63,6 @@ public class JsSourceUtilsTest extends OptimizerTestBase {
     Pattern jsRegExpPattern = JsSourceUtils.JS_REG_EXP_PATTERN;
 
     assertMatches("/ /", jsRegExpPattern);
-    assertMatches("/ /g", jsRegExpPattern);
-    assertMatches("/ /gi", jsRegExpPattern);
     assertMatches("/\"\\\"\"/", jsRegExpPattern);
     assertMatches("/ --/", jsRegExpPattern);
     assertMatches("/ \\//", jsRegExpPattern);
