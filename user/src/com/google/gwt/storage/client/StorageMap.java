@@ -16,14 +16,11 @@
 
 package com.google.gwt.storage.client;
 
-import static com.google.gwt.core.shared.impl.GwtPreconditions.checkElement;
-import static com.google.gwt.core.shared.impl.GwtPreconditions.checkNotNull;
-import static com.google.gwt.core.shared.impl.GwtPreconditions.checkState;
-
 import java.util.AbstractMap;
 import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 /**
@@ -118,7 +115,10 @@ public class StorageMap extends AbstractMap<String, String> {
 
     @Override
     public Map.Entry<String, String> next() {
-      checkElement(hasNext());
+      if (!hasNext()) {
+        throw new NoSuchElementException();
+      }
+
       index++;
       lastKey = storage.key(index);
       return new StorageEntry(lastKey);
@@ -126,7 +126,10 @@ public class StorageMap extends AbstractMap<String, String> {
 
     @Override
     public void remove() {
-      checkState(lastKey != null);
+      if (lastKey == null) {
+        throw new IllegalStateException();
+      }
+
       storage.removeItem(lastKey);
       lastKey = null;
       index--;
@@ -213,7 +216,10 @@ public class StorageMap extends AbstractMap<String, String> {
    */
   @Override
   public boolean containsValue(Object value) {
-    checkNotNull(value);
+    if (value == null) {
+      throw new NullPointerException();
+    }
+
     int s = size();
     for (int i = 0; i < s; i++) {
       if (value.equals(storage.getItem(storage.key(i)))) {
@@ -239,7 +245,10 @@ public class StorageMap extends AbstractMap<String, String> {
    */
   @Override
   public String get(Object key) {
-    checkNotNull(key);
+    if (key == null) {
+      throw new NullPointerException();
+    }
+
     return storage.getItem(key.toString());
   }
 
@@ -252,8 +261,10 @@ public class StorageMap extends AbstractMap<String, String> {
    */
   @Override
   public String put(String key, String value) {
-    checkNotNull(key);
-    checkNotNull(value);
+    if (key == null || value == null) {
+      throw new NullPointerException();
+    }
+
     String old = storage.getItem(key);
     storage.setItem(key, value);
     return old;
@@ -269,7 +280,10 @@ public class StorageMap extends AbstractMap<String, String> {
    */
   @Override
   public String remove(Object key) {
-    checkNotNull(key);
+    if (key == null) {
+      throw new NullPointerException();
+    }
+
     String k = key.toString();
     String old = storage.getItem(k);
     storage.removeItem(k);
