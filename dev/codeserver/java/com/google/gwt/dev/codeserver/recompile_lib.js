@@ -251,12 +251,9 @@ Recompiler.prototype.__isRecompileNoCacheJs = function(url) {
  */
 Recompiler.prototype.getCodeServerBaseUrl = function() {
   var scriptTagsToSearch = $doc.getElementsByTagName('script');
-  for (var i = 0; ; i++) {
+  for (var i = 0; i < scriptTagsToSearch.length; i++) {
     var tag = scriptTagsToSearch[i];
-    if (!tag) {
-      break; // end of list; not found
-    }
-    if (tag && this.__isRecompileNoCacheJs(tag.src)) {
+    if (this.__isRecompileNoCacheJs(tag.src)) {
       return this.__getBaseUrl(tag.src);
     }
   }
@@ -352,11 +349,8 @@ BaseUrlProvider.prototype.__getScriptTags = function() {
 BaseUrlProvider.prototype.getBaseUrl = function() {
   var expectedSuffix = this.__moduleName + '.nocache.js';
   var scriptTags = this.__getScriptTags();
-  for (var i = 0;; i++) {
+  for (var i = 0; i < scriptTags.length; i++) {
     var tag = scriptTags[i];
-    if (!tag) {
-      break;
-    }
     var candidate = tag.src;
     var lastMatch = candidate.lastIndexOf(expectedSuffix);
     if (lastMatch == candidate.length - expectedSuffix.length) {
