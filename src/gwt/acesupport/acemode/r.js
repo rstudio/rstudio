@@ -42,14 +42,13 @@ define("mode/r", function(require, exports, module)
 
       this.codeModel = new RCodeModel(doc, this.$tokenizer, null);
       this.foldingRules = this.codeModel;
-      this.$outdent = {};
-      oop.implement(this.$outdent, RMatchingBraceOutdent);
    };
-
    oop.inherits(Mode, TextMode);
 
    (function()
    {
+      oop.implement(this, RMatchingBraceOutdent);
+
       this.tokenRe = new RegExp("^["
           + unicode.packages.L
           + unicode.packages.Mn + unicode.packages.Mc
@@ -93,14 +92,6 @@ define("mode/r", function(require, exports, module)
          }
 
          return "";
-      };
-
-      this.checkOutdent = function(state, line, input) {
-         return this.$outdent.checkOutdent(state, line, input);
-      };
-
-      this.autoOutdent = function(state, doc, row) {
-         return this.$outdent.autoOutdent(state, doc, row, this.codeModel);
       };
 
       this.transformAction = function(state, action, editor, session, text) {

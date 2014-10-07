@@ -51,7 +51,7 @@ define("mode/r_matching_brace_outdent", function(require, exports, module)
          return false;
       };
 
-      this.autoOutdent = function(state, session, row, codeModel) {
+      this.autoOutdent = function(state, session, row) {
          if (row == 0)
             return 0;
 
@@ -65,15 +65,15 @@ define("mode/r_matching_brace_outdent", function(require, exports, module)
 
             if (!openBracePos || openBracePos.row == row) return 0;
 
-            var indent = codeModel.getIndentForOpenBrace(openBracePos);
-            session.replace(new Range(row, 0, row, column - 1), indent);
+            var indent = this.codeModel.getIndentForOpenBrace(openBracePos);
+            session.replace(new Range(row, 0, row, column-1), indent);
          }
 
          match = line.match(/^(\s*\{)/);
          if (match)
          {
             var column = match[1].length;
-            var indent = codeModel.getBraceIndent(row-1);
+            var indent = this.codeModel.getBraceIndent(row-1);
             session.replace(new Range(row, 0, row, column-1), indent);
          }
       };
