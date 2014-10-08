@@ -75,9 +75,15 @@
 
 
 .rs.addFunction("posixSysWhich", function(program) {
-   system2("/usr/bin/which", program,
-           stdout=TRUE,
-           env = paste("PATH=", Sys.getenv("PATH"), sep=""))
+  res <- suppressWarnings({
+    system(paste("PATH=", Sys.getenv("PATH"), " /usr/bin/which ",
+                 program, sep=""),
+           intern = TRUE)
+  })
+  if (length(res) == 0)
+    ""
+  else
+    res
 })
 
 .rs.addFunction("isRtoolsOnPath", function()
