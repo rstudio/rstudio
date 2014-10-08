@@ -381,41 +381,10 @@ oop.inherits(Mode, TextMode);
             return this.$getIndent(lines[currentRow]);
          }
 
-         // Match indentation of function with arguments on own line, e.g.
-         //
-         // foo::bar
-         //    (argList)
-         // ^
-         //
-         // We walk up blank rows until we find something that provides
-         // information for indenting (first line found with a word character)
-         if (/^\s*\(.*\);?\s*$/.test(line) && row > 0) {
-            var rowToUse = row - 1;
-            while (rowToUse >= 0 &&
-                   !/\w/.test(this.$codeModel.getLineSansComments(doc, rowToUse))) {
-               rowToUse--;
-            }
-
-            // Insert a tab if the line didn't end with a semicolon
-            var maybeTab = /;\s*/.test(line) ?
-                   "" :
-                   tab;
-            
-            return this.$getIndent(lines[rowToUse]) + maybeTab;
-         }
-         
          // Don't indent for namespaces, switch statements.
          if (/\bnamespace\b.*\{\s*$/.test(line) ||
              /\bswitch\b.*\{\s*$/.test(line)) {
             return indent;
-         }
-
-         // Indent if the line ends on an operator token
-         // Can't include > here since they may be used
-         // for templates (it's handled above)
-         var reEndsWithOperator = /[\+\-\/\*\|\?<\&\^\%\=]\s*$/;
-         if (reEndsWithOperator.test(line)) {
-            return indent + tab;
          }
 
          // Indent following an opening paren.
@@ -549,31 +518,6 @@ oop.inherits(Mode, TextMode);
             }
          }
 
-         // Vertical alignment for closing parens
-         //
-         // This allows us to infer an appropriate indentation for things
-         // like multi-dimensional arrays, e.g.
-         //
-         //   [
-         //      [1, 2, 3,
-         //       4, 5, 6,
-         //       7, 8, 9],
-         //      ^
-         match = /(\]),\s*$/.exec(line);
-         if (match) {
-            
-            var openBracePos = session.findMatchingBracket({
-               row: row,
-               column: match.index + 1
-            });
-
-            if (openBracePos) {
-               return $verticallyAlignFunctionArgs ?
-                  this.$getIndent(lines[openBracePos.row]) :
-                  indent + tab;
-            }
-         }
-         
          // Try token walking
          if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row + 1)) {
 
@@ -593,6 +537,7 @@ oop.inherits(Mode, TextMode);
             var additionalIndent = "";
 
             // Keep track of where we started
+
             var startCursor = tokenCursor.cloneCursor();
             var startValue = startCursor.currentValue();
             var startType = startCursor.currentType();
@@ -615,10 +560,21 @@ oop.inherits(Mode, TextMode);
             var lastCursor = tokenCursor.cloneCursor();
             var walkedOverParens = false;
 
-            // If the token cursor is on a comma, then maybe perform
-            // vertical alignment. Otherwise, just match the previous
-            // line's indentation.
+            // If the token cursor is on a comma...
             if (tokenCursor.currentValue() === ",") {
+
+               // ... and the previous character is a ']', find its match for indentation.
+               if ($verticallyAlignFunctionArgs) {
+                  var peekOne = tokenCursor.peekBack();
+                  if (peekOne.currentValue() === "]") {
+                     if (peekOne.bwdToMatchingToken()) {
+                        return new Array(peekOne.currentPosition().column + 1).join(" ");
+                     }
+                  }
+               }
+
+               // ... and there are more opening parens than closing on the line,
+               // then vertically align
                if ($verticallyAlignFunctionArgs) {
                   var balance = line.split("(").length - line.split(")").length;
                   if (balance > 0) {
@@ -628,7 +584,15 @@ oop.inherits(Mode, TextMode);
                      }
                   }
                }
+
+               // ... just return the indent of the current line
                return this.$getIndent(lines[row]);
+            }
+
+            // If the token cursor is on an operator, just indent.
+            if (startType === "keyword.operator" &&
+                startValue !== ":") {
+               return this.$getIndent(lines[row]) + tab;
             }
 
             while (true) {
@@ -653,6 +617,18 @@ oop.inherits(Mode, TextMode);
                   if (tokenCursor.moveToNextToken()) {
                      return this.$getIndent(lines[tokenCursor.$row]) + additionalIndent;
                   }
+               }
+
+               // We hit a 'control flow' keyword ...
+               if (["for", "while", "do", "try"].some(function(x) {
+                  return x === tokenCursor.currentValue();
+               }))
+               {
+                  // ... and the first token wasn't a semi-colon, then indent
+                  if (startValue !== ";") {
+                     return this.$getIndent(lines[tokenCursor.$row]) + additionalIndent;
+                  }
+                  
                }
 
                // We hit a ':'...
@@ -707,31 +683,20 @@ oop.inherits(Mode, TextMode);
 
                // Vertical alignment for e.g. 'for ( ... ;'.
                //
-               // This is tricky -- we need to differentiate this case from e.g.
-               //
-               //     for (;;);
-               //
-               if (tokenCursor.currentValue() === "for" &&
-                   tokenCursor.peekFwd().currentValue() === "(" &&
+               // NOTE: Any ')' token found with a match _will have been jumped over_,
+               // so we can assume that any opening token found does not have a match.
+               if (tokenCursor.currentValue() === "(" &&
+                   peekOne.currentValue() === "for" &&
                    startValue === ";")
                {
-
+                  
                   // Find the matching paren for the '(' after the cursor
                   var lookaheadCursor = tokenCursor.peekFwd().cloneCursor();
 
-                  if (!lookaheadCursor.fwdToMatchingToken()) {
-                     var firstTokenAfterParen = tokenCursor.peekFwd(2);
-                     return $verticallyAlignFunctionArgs ?
-                        new Array(firstTokenAfterParen.currentPosition().column + 1).join(" ") :
-                        this.$getIndent(lines[tokenCursor.$row]) + tab;
-                  } else {
-                     if (!lookaheadCursor.peekFwd().equals(startCursor)) {
-                        var firstTokenAfterParen = tokenCursor.peekFwd(2);
-                        return $verticallyAlignFunctionArgs ?
-                           new Array(firstTokenAfterParen.currentPosition().column + 1).join(" ") :
-                           this.$getIndent(lines[tokenCursor.$row]) + tab;
-                     }
-                  }
+                  return $verticallyAlignFunctionArgs ?
+                     new Array(tokenCursor.peekFwd().currentPosition().column + 1).join(" ") :
+                     this.$getIndent(lines[tokenCursor.peekFwd().$row]) + tab;
+                     
                }
 
                // We hit an 'if'

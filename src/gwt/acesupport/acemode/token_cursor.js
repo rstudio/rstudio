@@ -121,12 +121,16 @@ var TokenCursor = function(tokens, row, offset) {
       clone.$offset++;
 
       while (clone.$row < clone.$tokens.length &&
+             clone.$tokens[clone.$row] !== null &&
              clone.$offset >= clone.$tokens[clone.$row].length &&
              clone.$row < maxRow)
       {
          clone.$row++;
          clone.$offset = 0;
       }
+
+      if (clone.$tokens[clone.$row] === null)
+         return false;
 
       if (clone.$row >= clone.$tokens.length)
          return false;
