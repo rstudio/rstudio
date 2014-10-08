@@ -58,9 +58,15 @@ else
         BINARY_TYPE=debian
       else
         BINARY_TYPE=rpm
+        INCLUDE_STATIC="1"
       fi
       ARCH=`uname -m`
       cp ${PANDOC_NAME}/linux/${BINARY_TYPE}/${ARCH}/pandoc* ${PANDOC_DIR}
+      if [ "$INCLUDE_STATIC" == "1" ]
+      then
+        cp ${PANDOC_NAME}/linux/${BINARY_TYPE}/${ARCH}/pandoc ${PANDOC_DIR}/pandoc-static
+        cp ${PANDOC_NAME}/linux/${BINARY_TYPE}/${ARCH}/pandoc-citeproc ${PANDOC_DIR}/pando-citeproc-static
+      fi
    fi
    rm $PANDOC_ZIP
    rm -rf $PANDOC_NAME
