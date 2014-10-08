@@ -38,12 +38,12 @@ rstudio-server force-suspend-all
 # softlink ssl libraries for suse
 if test -f /etc/SuSE-release
 then
-  ln -s /usr/lib/libssl.so.0.9.8 /usr/lib/libssl.so.6
-  ln -s /usr/lib/libcrypto.so.0.9.8 /usr/lib/libcrypto.so.6
+  ln -f -s /usr/lib/libssl.so.0.9.8 /usr/lib/libssl.so.6
+  ln -f -s /usr/lib/libcrypto.so.0.9.8 /usr/lib/libcrypto.so.6
   if test -d /usr/lib64
   then
-     ln -s /usr/lib64/libssl.so.0.9.8 /usr/lib64/libssl.so.6
-     ln -s /usr/lib64/libcrypto.so.0.9.8 /usr/lib64/libcrypto.so.6
+     ln -f -s /usr/lib64/libssl.so.0.9.8 /usr/lib64/libssl.so.6
+     ln -f -s /usr/lib64/libcrypto.so.0.9.8 /usr/lib64/libcrypto.so.6
   fi
 fi
 
