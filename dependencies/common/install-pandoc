@@ -56,8 +56,6 @@ else
       # of fedora. rhel 5 and 6 use the rpm binaries
       if [[ -x /usr/bin/dpkg ]] || [[ -f /etc/fedora-release ]]; then
         BINARY_TYPE=debian
-      elif grep -q -i -s "release 7" /etc/redhat-release; then
-        BINARY_TYPE=debian
       else
         BINARY_TYPE=rpm
       fi
