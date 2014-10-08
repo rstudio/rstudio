@@ -521,9 +521,11 @@ oop.inherits(Mode, TextMode);
          // Try token walking
          if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row + 1)) {
 
-            var tokenCursor = new TokenCursor(this.$codeModel.$tokens,
-                                              row,
-                                              this.$codeModel.$tokens[row].length - 1);
+            var tokenCursor = new TokenCursor(
+               this.$codeModel.$tokens,
+               row,
+               this.$codeModel.$tokens[row].length - 1
+            );
 
             // If there is no token on this current line (this can occur when this code
             // is accessed by e.g. the matching brace offset code) then move back
@@ -714,10 +716,23 @@ oop.inherits(Mode, TextMode);
                if (tokenCursor.currentValue() === "{") {
                   var openBraceIndentRow = this.$codeModel.getRowForOpenBraceIndent(session, tokenCursor.$row);
                   if (openBraceIndentRow >= 0) {
-                     return this.$getIndent(lines[openBraceIndentRow]) + tab;
+                     
+                     // Don't indent if the brace is on the same line as a 'namespace' token
+                     var line = this.getLineSansComments(doc, openBraceIndentRow);
+                     var indent = this.$getIndent(line);
+                     
+                     return /\bnamespace\b/.test(line) ?
+                        indent :
+                        indent + tab;
+                     
                   } else {
                      return this.$getIndent(lines[tokenCursor.$row]) + tab;
                   }
+               }
+
+               // We hit a preprocessor token
+               if (/\bpreproc\b/.test(tokenCursor.currentType())) {
+                  return this.$getIndent(lines[tokenCursor.$row]);
                }
 
                // We're at the start of the document
