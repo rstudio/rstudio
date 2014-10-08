@@ -65,7 +65,6 @@ else
    else
       cp ${CMAKE_INSTALL_PREFIX}/extras/init.d/redhat/rstudio-server /etc/init.d/
    fi
-   cp ${CMAKE_INSTALL_PREFIX}/extras/init.d/redhat/rstudio-server /etc/init.d/
    chmod +x /etc/init.d/rstudio-server
    chkconfig --add rstudio-server
    service rstudio-server stop 2>/dev/null
