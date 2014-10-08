@@ -597,8 +597,6 @@ oop.inherits(Mode, TextMode);
 
             while (true) {
 
-               console.log(tokenCursor.currentValue());
-
                // Stop conditions:
 
                // The token cursor is undefined (we moved past the start of the
@@ -710,6 +708,16 @@ oop.inherits(Mode, TextMode);
                    tokenCursor.peekFwd().currentValue() === "<")
                {
                   return this.$getIndent(lines[tokenCursor.$row]);
+               }
+
+               // We hit an '{'
+               if (tokenCursor.currentValue() === "{") {
+                  var openBraceIndentRow = this.$codeModel.getRowForOpenBraceIndent(session, tokenCursor.$row);
+                  if (openBraceIndentRow >= 0) {
+                     return this.$getIndent(lines[openBraceIndentRow]) + tab;
+                  } else {
+                     return this.$getIndent(lines[tokenCursor.$row]) + tab;
+                  }
                }
 
                // We're at the start of the document

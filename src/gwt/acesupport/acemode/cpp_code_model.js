@@ -47,9 +47,9 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 (function() {
 
    var debugCursor = function(message, cursor) {
-      // console.log(message);
-      // console.log(cursor);
-      // console.log(cursor.currentToken());
+      console.log(message);
+      console.log(cursor);
+      console.log(cursor.currentToken());
    };
 
    this.$complements = {
@@ -294,7 +294,7 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
       var doc = session.getDocument();
       var lines = doc.$lines;
-      if (lines.length <= 1) return null;
+      if (lines.length <= 1) return -1;
 
       var line = lines[row];
 
@@ -318,11 +318,11 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          while (tokenCursor.currentValue() !== "{") {
 
             if (tokenCursor.$row !== row) {
-               return null;
+               return -1;
             }
             
             if (!tokenCursor.moveToPreviousToken()) {
-               return null;
+               return -1;
             }
 
             if (tokenCursor.$offset < 0) {
@@ -352,13 +352,13 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          // will still be on the same '{'.  Walk backwards one token.
          if (tokenCursor.currentValue() === "{") {
             if (!tokenCursor.moveToPreviousToken()) {
-               return null;
+               return -1;
             }
          }
 
          // Bail if we encountered a '{'
          if (tokenCursor.currentValue() === "{") {
-            return null;
+            return -1;
          }
 
          // Move backwards over any keywords.
@@ -376,7 +376,7 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             }
             
             if (!tokenCursor.moveToPreviousToken()) {
-               return null;
+               return -1;
             }
          }
 
@@ -390,10 +390,9 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
          if (tokenCursor.moveBackwardOverMatchingParens()) {
             if (!tokenCursor.moveToPreviousToken()) {
-               return null;
+               return -1;
             }
          }
-         
 
          // If we landed on a ':' token and the previous token is
          // e.g. public, then we went too far -- go back up one token.
@@ -414,14 +413,18 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          
          // Use this row for indentation.
          debugCursor("Ended at", tokenCursor);
-         if (tokenCursor.currentValue() !== "=") {
-            return tokenCursor.$row;
+         if (tokenCursor.currentValue() === "=") {
+            if (tokenCursor.moveToPreviousToken()) {
+               return tokenCursor.$row;
+            }
          }
+
+         return tokenCursor.$row;
          
       }
 
-      // Give up and return null
-      return null;
+      // Give up
+      return -1;
       
    };
 

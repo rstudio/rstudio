@@ -188,7 +188,7 @@ var $alignCase                 = true; // case 'a':
                }
             }
          
-            if (rowToUse !== null) {
+            if (rowToUse >= 0) {
                this.setIndent(session, row, rowToUse, session.getTabString(),
                               function(oldIndent, newIndent) {
                                  return oldIndent === newIndent;
@@ -250,7 +250,7 @@ var $alignCase                 = true; // case 'a':
                openBracketPos.row
             );
 
-            if (heuristicRow !== null) {
+            if (heuristicRow >= 0) {
                this.setIndent(session, row, heuristicRow);
                return;
             }
@@ -310,7 +310,7 @@ var $alignCase                 = true; // case 'a':
             var heuristicRow =
                    this.$codeModel.getRowForOpenBraceIndent(session, openBraceRow);
 
-            if (heuristicRow !== null && heuristicRow >= 0) {
+            if (heuristicRow >= 0) {
                this.setIndent(session, row, heuristicRow);
                return;
             } else {
@@ -352,7 +352,7 @@ var $alignCase                 = true; // case 'a':
             var heuristicRow =
                    this.$codeModel.getRowForOpenBraceIndent(session, openBraceRow);
 
-            if (heuristicRow !== null && heuristicRow >= 0) {
+            if (heuristicRow >= 0) {
                this.setIndent(session, row, heuristicRow);
                return;
             } else {
@@ -409,7 +409,7 @@ var $alignCase                 = true; // case 'a':
                row
             );
 
-            if (scopeRow !== null) {
+            if (scopeRow >= 0) {
 
                this.setIndent(session, row, scopeRow);
                return;
