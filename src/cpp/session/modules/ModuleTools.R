@@ -74,6 +74,12 @@
 })
 
 
+.rs.addFunction("posixSysWhich", function(program) {
+   system2("/usr/bin/which", program,
+           stdout=TRUE,
+           env = paste("PATH=", Sys.getenv("PATH"), sep=""))
+})
+
 .rs.addFunction("isRtoolsOnPath", function()
 {
    return (nzchar(Sys.which("ls.exe")) && nzchar(Sys.which("gcc.exe")))

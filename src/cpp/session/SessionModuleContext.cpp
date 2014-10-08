@@ -799,33 +799,17 @@ FilePath tempDir()
 }
 
 
+FilePath findProgram(const std::string& name)
+{
+   // determine function to call for sys which
 #ifdef __APPLE__
-FilePath findProgram(const std::string& name)
-{
-   // get the current PATH
-   std::string path = core::system::getenv("PATH");
-
-   // break it into directories and look for the program in each one
-   using namespace boost;
-   char_separator<char> sep(":");
-   tokenizer<char_separator<char> > tokens(path, sep);
-   tokenizer<char_separator<char> >::iterator it = tokens.begin();
-   for( ; it != tokens.end(); ++it)
-   {
-      FilePath pathDir(*it);
-      FilePath programPath = pathDir.childPath(name);
-      if (programPath.exists())
-         return programPath;
-   }
-
-   // none found
-   return FilePath();
-}
+   std::string sysWhich = ".rs.posixSysWhich";
 #else
-FilePath findProgram(const std::string& name)
-{
+   std::string sysWhich = "Sys.which";
+#endif
+
    std::string which;
-   Error error = r::exec::RFunction("Sys.which", name).call(&which);
+   Error error = r::exec::RFunction(sysWhich, name).call(&which);
    if (error)
    {
       LOG_ERROR(error);
@@ -836,7 +820,6 @@ FilePath findProgram(const std::string& name)
       return FilePath(which);
    }
 }
-#endif
 
 bool isPdfLatexInstalled()
 {
