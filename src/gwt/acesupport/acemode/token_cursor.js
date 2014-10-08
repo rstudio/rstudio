@@ -87,25 +87,33 @@ var TokenCursor = function(tokens, row, offset) {
 
    this.moveToNextToken = function(maxRow)
    {
+      var clone = this.cloneCursor();
 
       if (typeof maxRow === "undefined") {
          maxRow = Infinity;
       }
       
-      if (this.$row > maxRow)
+      if (clone.$row > maxRow)
          return false;
 
-      this.$offset++;
+      clone.$offset++;
 
-      while (this.$offset >= this.$tokens[this.$row].length && this.$row < maxRow)
+      while (clone.$row < clone.$tokens.length &&
+             clone.$offset >= clone.$tokens[clone.$row].length &&
+             clone.$row < maxRow)
       {
-         this.$row++;
-         this.$offset = 0;
+         clone.$row++;
+         clone.$offset = 0;
       }
 
-      if (this.$offset >= this.$tokens[this.$row].length)
+      if (clone.$row >= clone.$tokens.length)
          return false;
 
+      if (clone.$offset > clone.$tokens[clone.$row].length)
+         return false;
+
+      this.$row = clone.$row;
+      this.$offset = clone.$offset;
       return true;
    };
 

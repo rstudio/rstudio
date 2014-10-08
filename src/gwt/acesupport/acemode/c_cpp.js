@@ -592,159 +592,177 @@ oop.inherits(Mode, TextMode);
             }
          }
          
-         // Simpler comma ending indentation
-         if (/,\s*$/.test(line)) {
-            return indent;
-         }
+         // Try token walking
+         if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row + 1)) {
 
-         // Handle naked 'for', 'if' etc. tokens. This function is a bit awkward --
-         // either it returns an indent to use, or returns a row number from
-         // which we can infer the indent.
-         var newIndent = this.$codeModel.indentNakedTokens(doc, indent, tab, row, line);
-         if (newIndent !== null) {
-            if (typeof newIndent === "string") {
-               return newIndent;
-            } else if (typeof newIndent === "number") {
-               return this.$getIndent(lines[newIndent]);
+            var tokenCursor = new TokenCursor(this.$codeModel.$tokens,
+                                              row,
+                                              this.$codeModel.$tokens[row].length - 1);
+
+            console.log("\n\n\n");
+            console.log(tokenCursor);
+            if (tokenCursor.$offset === -1 && tokenCursor.$row > 0) {
+               tokenCursor.$row--;
+               tokenCursor.$offset = tokenCursor.$tokens[tokenCursor.$row].length - 1;
             }
-         }
+            console.log(tokenCursor);
 
-         // Indentation for lines ending with a semicolon
-         var match = line.match(/([;\)\{])\s*$/);
-         if (match) {
+            // Set additional indent based on the first character
+            var additionalIndent = "";
 
-            if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row + 1)) {
+            var startValue = tokenCursor.currentValue();
+            var startType = tokenCursor.currentType();
+            if (startType === "constant" ||
+                startType === "keyword" || 
+                ["{", ")", ">"].some(function(x) {
+                   return x === startValue;
+                })) {
+               additionalIndent = tab;
+            }
 
-               var additionalIndent = "";
-               if (match[1] === ")" || match[1] === "{") {
-                  additionalIndent = tab;
+            // Move over any initial semicolons
+            while (tokenCursor.currentValue() === ";") {
+               if (!tokenCursor.moveToPreviousToken()) {
+                  break;
                }
-               
-               var tokenCursor = new TokenCursor(this.$codeModel.$tokens,
-                                                row,
-                                                this.$codeModel.$tokens[row].length - 1);
+            }
 
-               // Move over any initial semicolons
-               while (tokenCursor.currentValue() === ";") {
-                  if (!tokenCursor.moveToPreviousToken()) {
-                     break;
+            var lastCursor = tokenCursor.cloneCursor();
+            var walkedOverParens = false;
+
+            // If the token cursor is on a comma, then maybe perform
+            // vertical alignment. Otherwise, just match
+            if (tokenCursor.currentValue() === ",") {
+               if ($verticallyAlignFunctionArgs) {
+                  var balance = line.split("(").length - line.split(")").length;
+                  if (balance > 0) {
+                     var parenMatch = line.match(/\(\s*(.)/);
+                     if (parenMatch) {
+                        return new Array(parenMatch.index + 1).join(" ");
+                     }
                   }
                }
+               return this.$getIndent(lines[row]);
+            }
 
-               var lastCursor = tokenCursor.cloneCursor();
-               var walkedOverParens = false;
+            while (true) {
 
-               while (true) {
+               console.log(tokenCursor.currentValue());
 
-                  // Stop conditions:
+               // Stop conditions:
 
-                  // The token cursor is undefined (we moved past the start of the
-                  // document)
-                  if (typeof tokenCursor.currentValue() === "undefined") {
+               // The token cursor is undefined (we moved past the start of the
+               // document)
+               if (typeof tokenCursor.currentValue() === "undefined") {
+                  if (typeof lastCursor.currentValue() !== "undefined") {
                      return this.$getIndent(lines[lastCursor.$row]) + additionalIndent;
                   }
+                  return additionalIndent;
+               }
 
-                  lastCursor = tokenCursor.cloneCursor();
+               lastCursor = tokenCursor.cloneCursor();
 
-                  // We hit a semi-colon -- use the first token after that semi-colon.
-                  if (tokenCursor.currentValue() === ";") {
+               // We hit a semi-colon -- use the first token after that semi-colon.
+               if (tokenCursor.currentValue() === ";") {
+                  if (tokenCursor.moveToNextToken()) {
+                     return this.$getIndent(lines[tokenCursor.$row]) + additionalIndent;
+                  }
+               }
+
+               // We hit a ':'...
+               var peekOne = tokenCursor.peekBack();
+               if (tokenCursor.currentValue() === ":") {
+
+                  // ... preceeded by a class access modifier
+                  if (["public", "private", "protected"].some(function(x) {
+                     return x === peekOne.currentValue();
+                  }))
+                  {
                      if (tokenCursor.moveToNextToken()) {
                         return this.$getIndent(lines[tokenCursor.$row]) + additionalIndent;
                      }
                   }
 
-                  // We hit a ':'...
-                  var peekOne = tokenCursor.peekBack();
-                  if (tokenCursor.currentValue() === ":") {
-
-                     // ... preceeded by a class access modifier
-                     if (["public", "private", "protected"].some(function(x) {
-                        return x === peekOne.currentValue();
-                     }))
-                     {
-                        if (tokenCursor.moveToNextToken()) {
-                           return this.$getIndent(lines[tokenCursor.$row]) + additionalIndent;
-                        }
-                     }
-
-                     // ... with a line starting with 'case'
-                     var maybeCaseLine = lines[tokenCursor.$row];
-                     if (/^\s*case/.test(maybeCaseLine)) {
-                        return this.$getIndent(maybeCaseLine) + tab;
-                     }
-
-                     // ... opening an initialization list
-                     if (peekOne.currentValue() === ")") {
-                        var clone = peekOne.cloneCursor();
-                        if (clone.bwdToMatchingToken()) {
-                           var peek1 = clone.peekBack(1);
-                           var peek2 = clone.peekBack(2);
-                           if (
-                              (peek1 !== null && peek1.currentType() === "identifier") &&
-                              (peek2 !== null && !/\boperator\b/.test(peek2.currentType()))
-                           )
-                           {
-                              
-                              return this.$getIndent(lines[clone.peekBack().$row]) + additionalIndent;
-                           }
-                        }
-                     }
-
+                  // ... with a line starting with 'case'
+                  var maybeCaseLine = lines[tokenCursor.$row];
+                  if (/^\s*case/.test(maybeCaseLine)) {
+                     return this.$getIndent(maybeCaseLine) + tab;
                   }
 
-                  // We hit a '[]()' lambda expression.
-                  if (tokenCursor.currentValue() === "(" &&
-                      peekOne.currentValue() === "]") {
+                  // ... opening an initialization list
+                  if (peekOne.currentValue() === ")") {
                      var clone = peekOne.cloneCursor();
                      if (clone.bwdToMatchingToken()) {
-                        return this.$getIndent(lines[clone.$row]) + additionalIndent;
-                     }
-                  }
-
-                  // We hit 'for (' -- this implies the semi-colon
-                  // was within the for loop.
-                  if (tokenCursor.currentValue() === "(" &&
-                      peekOne.currentValue() === "for") {
-                     if ($verticallyAlignFunctionArgs && !walkedOverParens) {
-                        if (tokenCursor.moveToNextToken()) {
-                           var pos = tokenCursor.currentPosition();
-                           return new Array(pos.column + 1).join(" ");
+                        var peek1 = clone.peekBack(1);
+                        var peek2 = clone.peekBack(2);
+                        if (
+                           (peek1 !== null && peek1.currentType() === "identifier") &&
+                              (peek2 !== null && !/\boperator\b/.test(peek2.currentType()))
+                        )
+                        {
+                           
+                           return this.$getIndent(lines[clone.peekBack().$row]) + additionalIndent;
                         }
-                     } else {
-                        return this.$getIndent(lines[tokenCursor.$row]);
                      }
-                  }
-
-                  // We hit 'template <'
-                  if (tokenCursor.currentValue() === "<" &&
-                      peekOne.currentValue() === "template")
-                  {
-                     return this.$getIndent(lines[peekOne.$row]);
-                  }
-
-                  // We're at the start of the document
-                  if (tokenCursor.$row === 0 && tokenCursor.$offset === 0) {
-                     return this.$getIndent(lines[0]) + additionalIndent;
-                  }
-
-                  // Walking:
-
-                  // Step over parens
-                  if (tokenCursor.bwdToMatchingToken()) {
-                     if (tokenCursor.currentValue() === "(") {
-                        walkedOverParens = true;
-                     }
-                  } else {
-                     tokenCursor.moveToPreviousToken();
                   }
 
                }
-               
+
+               // We hit a '[]()' lambda expression.
+               if (tokenCursor.currentValue() === "(" &&
+                   peekOne.currentValue() === "]") {
+                  var clone = peekOne.cloneCursor();
+                  if (clone.bwdToMatchingToken()) {
+                     return this.$getIndent(lines[clone.$row]) + additionalIndent;
+                  }
+               }
+
+               // We hit 'for (' -- this implies the semi-colon
+               // was within the for loop.
+               if (tokenCursor.currentValue() === "(" &&
+                   peekOne.currentValue() === "for") {
+                  if ($verticallyAlignFunctionArgs && !walkedOverParens) {
+                     if (tokenCursor.moveToNextToken()) {
+                        var pos = tokenCursor.currentPosition();
+                        return new Array(pos.column + 1).join(" ");
+                     }
+                  } else {
+                     return this.$getIndent(lines[tokenCursor.$row]);
+                  }
+               }
+
+               // We hit an 'if'
+               if (tokenCursor.currentValue() === "if" ||
+                   tokenCursor.currentValue() === "else") {
+                  return this.$getIndent(lines[tokenCursor.$row]) + additionalIndent;
+               }
+
+               // We hit 'template <'
+               if (tokenCursor.currentValue() === "<" &&
+                   peekOne.currentValue() === "template")
+               {
+                  return this.$getIndent(lines[peekOne.$row]);
+               }
+
+               // We're at the start of the document
+               if (tokenCursor.$row === 0 && tokenCursor.$offset === 0) {
+                  return this.$getIndent(lines[0]) + additionalIndent;
+               }
+
+               // Walking:
+
+               // Step over parens
+               if (tokenCursor.bwdToMatchingToken()) {
+                  if (tokenCursor.currentValue() === "(") {
+                     walkedOverParens = true;
+                  }
+               } else {
+                  tokenCursor.moveToPreviousToken();
+               }
+
             }
             
          }
-
-         
 
          // Indent based on lookaround heuristics for open braces.
          if (/\{\s*$/.test(line)) {

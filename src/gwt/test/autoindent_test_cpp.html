@@ -415,9 +415,24 @@ class Foo : public A
 </pre></li>
 
 <li><pre data-expected="4">
+    SomeBigFunction(
+            a
+    );
+</pre></li>
+
+<li><pre data-expected="4">
 int foo(const int a,
         const int b,
         const unsigned int c) const {
+</pre></li>
+
+<li><pre data-expected="4" data-expected-open-brace="0">
+int foo(const unsigned int a,
+        const unsigned int b,
+        const unsigned int c) const noexcept
+    : a_(a),
+      b_(b),
+      c_(c)
 </pre></li>
 
 <li><pre data-expected="4">

@@ -482,17 +482,6 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          line = line.substring(0, line.lastIndexOf("\\"));
       }
 
-      // Strip some tokens
-      //
-      // This allows vertical alignment for e.g.
-      //
-      //   foo( const bar,
-      //        ^
-      line = line.replace(/\bconst\s*&\s*/g, "")
-                 .replace(/\bconst\s*/g, "")
-                 .replace(/\bnoexcept\s*/g, "")
-                 .replace(/\bdecltype\s*/g, "");
-
       return line;
       
    };
