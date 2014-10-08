@@ -580,9 +580,9 @@ public class ArrayTests extends GWTTestCase {
 
     array.sort(new CanCompareString() {
       @Override
-      public native int compare(String a, String b) /*-{
-    return (a > b) ? -1 : (a < b) ? 1 : 0;
-  }-*/;
+      public int compare(String a, String b) {
+        return b.compareTo(a);
+      }
     });
     assertEquals(items.length, array.length());
     for (int i = 0, n = array.length(); i < n; ++i) {

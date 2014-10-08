@@ -85,7 +85,13 @@
     <run-tests output="${junit.out}/web" args="${test.args} -prod" classes="**/AllTests.class"/>
   </target>
 
+  <target name="test.nongwt" if="generated" depends="compile.tests"
+          description="Run tests in the JVM">
+    <run-tests output="${junit.out}/nongwt" args="" classes="**/*JreTest.class"/>
+  </target>
+
   <target name="test" description="Run tests">
+    <antcall target="test.nongwt" />
     <antcall target="test.web.htmlunit" />
     <antcall target="test.dev.htmlunit" />
   </target>
