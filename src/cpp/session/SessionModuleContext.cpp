@@ -798,6 +798,30 @@ FilePath tempDir()
    return r::session::utils::tempDir();
 }
 
+
+#ifdef __APPLE__
+FilePath findProgram(const std::string& name)
+{
+   // get the current PATH
+   std::string path = core::system::getenv("PATH");
+
+   // break it into directories and look for the program in each one
+   using namespace boost;
+   char_separator<char> sep(":");
+   tokenizer<char_separator<char> > tokens(path, sep);
+   tokenizer<char_separator<char> >::iterator it = tokens.begin();
+   for( ; it != tokens.end(); ++it)
+   {
+      FilePath pathDir(*it);
+      FilePath programPath = pathDir.childPath(name);
+      if (programPath.exists())
+         return programPath;
+   }
+
+   // none found
+   return FilePath();
+}
+#else
 FilePath findProgram(const std::string& name)
 {
    std::string which;
@@ -812,6 +836,7 @@ FilePath findProgram(const std::string& name)
       return FilePath(which);
    }
 }
+#endif
 
 bool isPdfLatexInstalled()
 {
