@@ -530,7 +530,7 @@ oop.inherits(Mode, TextMode);
             // If there is no token on this current line (this can occur when this code
             // is accessed by e.g. the matching brace offset code) then move back
             // to the previous row
-            if (tokenCursor.$offset === -1 && tokenCursor.$row > 0) {
+            while (tokenCursor.$offset === -1 && tokenCursor.$row > 0) {
                tokenCursor.$row--;
                tokenCursor.$offset = tokenCursor.$tokens[tokenCursor.$row].length - 1;
             }
@@ -591,10 +591,18 @@ oop.inherits(Mode, TextMode);
                return this.$getIndent(lines[row]);
             }
 
-            // If the token cursor is on an operator, just indent.
+            // If the token cursor is on an operator, ident if the previous
+            // token is not a class modifier token.
             if (startType === "keyword.operator" &&
                 startValue !== ":") {
                return this.$getIndent(lines[row]) + tab;
+            }
+
+            // If we started on an opening '<' for a template, indent.
+            if (startValue === "<") {
+               if (startCursor.peekBack().currentValue() === "template") {
+                  return this.$getIndent(lines[row]) + tab;
+               }
             }
 
             while (true) {
@@ -640,9 +648,8 @@ oop.inherits(Mode, TextMode);
                      return x === peekOne.currentValue();
                   }))
                   {
-                     if (tokenCursor.moveToNextToken()) {
-                        return this.$getIndent(lines[tokenCursor.$row]) + additionalIndent;
-                     }
+                     // Indent once relative to the 'public:'s indentation.
+                     return this.$getIndent(lines[peekOne.$row]) + tab;
                   }
 
                   // ... with a line starting with 'case'
@@ -669,7 +676,6 @@ oop.inherits(Mode, TextMode);
                         }
                      }
                   }
-
                }
 
                // We hit a '[]()' lambda expression.
@@ -714,6 +720,7 @@ oop.inherits(Mode, TextMode);
 
                // We hit an '{'
                if (tokenCursor.currentValue() === "{") {
+
                   var openBraceIndentRow = this.$codeModel.getRowForOpenBraceIndent(session, tokenCursor.$row);
                   if (openBraceIndentRow >= 0) {
                      

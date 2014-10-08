@@ -383,6 +383,23 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          // Move backwards over matching parens.
          debugCursor("Before walking over matching parens", tokenCursor);
 
+         // If we landed on a ':' token and the previous token is
+         // e.g. public, then we went too far -- go back up one token.
+         if (tokenCursor.currentValue() === ":") {
+
+            var prevValue = tokenCursor.peekBack().currentValue();
+            if (["public", "private", "protected"].some(function(x) {
+               return x === prevValue;
+            }))
+            {
+               tokenCursor.moveToNextToken();
+            }
+            else
+            {
+               tokenCursor.moveToPreviousToken();
+            }
+         }
+
          if (tokenCursor.currentValue() === ":") {
 
             if (!tokenCursor.moveToPreviousToken())
@@ -427,23 +444,6 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             }
          }
 
-         // If we landed on a ':' token and the previous token is
-         // e.g. public, then we went too far -- go back up one token.
-         if (tokenCursor.currentValue() === ":") {
-
-            var prevValue = tokenCursor.peekBack().currentValue();
-            if (["public", "private", "protected"].some(function(x) {
-               return x === prevValue;
-            }))
-            {
-               tokenCursor.moveToNextToken();
-            }
-            else
-            {
-               tokenCursor.moveToPreviousToken();
-            }
-         }
-         
          // Use this row for indentation.
          debugCursor("Ended at", tokenCursor);
          if (tokenCursor.currentValue() === "=") {

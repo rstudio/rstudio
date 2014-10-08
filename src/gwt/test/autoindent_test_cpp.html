@@ -364,6 +364,13 @@ static void namespace_reader() {
 class Foo
 </pre></li>
 
+<li><pre data-expected="8" data-expected-open-brace="8">
+class Foo {
+public:
+    struct Entry {
+        std::string file;
+</pre></li>
+
 <li><pre data-expected="4">
 Foo(const int a,
     const int b)
