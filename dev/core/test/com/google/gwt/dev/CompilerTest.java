@@ -18,6 +18,7 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.UnstableNestedAnonymousGenerator.OutputVersion;
+import com.google.gwt.dev.cfg.EntryMethodHolderGenerator;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.ResourceLoader;
 import com.google.gwt.dev.cfg.ResourceLoaders;
@@ -608,6 +609,46 @@ public class CompilerTest extends ArgProcessorTestBase {
           "  }",
           "}");
 
+  private MockResource transitivelyFoldableConstantModuleResource =
+      JavaResourceBase.createMockResource(
+          "com/foo/TransitivelyFoldableConstantModule.gwt.xml",
+          "<module>",
+          "<source path=''/>",
+          "<entry-point class='com.foo.TransitivelyFoldableConstantEntryPoint'/>",
+          "</module>");
+
+  private MockJavaResource transitivelyFoldableConstantEntryPointResource =
+      JavaResourceBase.createMockJavaResource(
+          "com.foo.TransitivelyFoldableConstantEntryPoint",
+          "package com.foo;",
+          "import com.google.gwt.core.client.EntryPoint;",
+          "public class TransitivelyFoldableConstantEntryPoint",
+          "    implements EntryPoint {",
+          "  static final int CONST = 1 + ClassOne.CONST;",
+          "  @Override",
+          "  public void onModuleLoad() {",
+          "    int c = CONST;",
+          "  }",
+          "}");
+
+  private MockJavaResource classOneResource =
+      JavaResourceBase.createMockJavaResource(
+          "com.foo.ClassOne",
+          "package com.foo;",
+          "import com.google.gwt.core.client.EntryPoint;",
+          "public class ClassOne {",
+          "  static final int CONST = 1 + ClassTwo.CONST;",
+          "}");
+
+  private MockJavaResource classTwoResource =
+      JavaResourceBase.createMockJavaResource(
+          "com.foo.ClassTwo",
+          "package com.foo;",
+          "import com.google.gwt.core.client.EntryPoint;",
+          "public class ClassTwo {",
+          "  static final int CONST = 1 + 3;",
+          "}");
+
   private Set<String> emptySet = stringSet();
 
   public CompilerTest() {
@@ -817,6 +858,13 @@ public class CompilerTest extends ArgProcessorTestBase {
       IOException, InterruptedException {
     checkIncrementalRecompile_compileTimeConstantChange(JsOutputOption.DETAILED);
     checkIncrementalRecompile_compileTimeConstantChange(JsOutputOption.PRETTY);
+  }
+
+  public void testIncrementalRecompile_transitivelyFoldableConstant()
+      throws UnableToCompleteException,
+      IOException, InterruptedException {
+    checkIncrementalRecompile_transitivelyFoldableConstant(JsOutputOption.DETAILED);
+    checkIncrementalRecompile_transitivelyFoldableConstant(JsOutputOption.PRETTY);
   }
 
   public void testIncrementalRecompile_packagePrivateDispatch() throws UnableToCompleteException,
@@ -1161,6 +1209,20 @@ public class CompilerTest extends ArgProcessorTestBase {
         stringSet("com.foo.SimpleModel", "com.foo.Constants"), output);
   }
 
+  private void checkIncrementalRecompile_transitivelyFoldableConstant(JsOutputOption output)
+      throws UnableToCompleteException, IOException, InterruptedException {
+    // Tests that constants that are provided by types are only referenced by reference only types
+    // (hence not traversed) are still available for constant propagation.
+    checkRecompiledModifiedApp("com.foo.TransitivelyFoldableConstantModule",
+        Lists.newArrayList(transitivelyFoldableConstantModuleResource, classOneResource,
+            classTwoResource),
+        transitivelyFoldableConstantEntryPointResource,
+        transitivelyFoldableConstantEntryPointResource,
+        stringSet("com.foo.TransitivelyFoldableConstantEntryPoint",
+            getEntryMethodHolderTypeName("com.foo.TransitivelyFoldableConstantModule")),
+        output);
+  }
+
   private void checkIncrementalRecompile_unreachableIncompatibleChange(JsOutputOption output)
       throws UnableToCompleteException, IOException, InterruptedException {
     checkRecompiledModifiedApp("com.foo.SimpleModule",
@@ -1195,7 +1257,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     checkRecompiledModifiedApp(compilerOptions, "com.foo.SimpleModule",
         Lists.newArrayList(jsoTestModuleResource, simpleFactory, simpleIntf, simpleJso),
         jsoTestEntryPointResource, jsoTestEntryPointResource, stringSet("com.foo.TestEntryPoint",
-            "com.google.gwt.lang.com_00046foo_00046SimpleModule__EntryMethodHolder"), output);
+        getEntryMethodHolderTypeName("com.foo.SimpleModule")), output);
   }
 
   private void checkIncrementalRecompile_devirtualizeString(JsOutputOption output)
@@ -1207,7 +1269,7 @@ public class CompilerTest extends ArgProcessorTestBase {
         Lists.newArrayList(devirtualizeStringModuleResource),
         devirtualizeStringEntryPointResource, devirtualizeStringEntryPointResource,
         stringSet("com.foo.DevirtualizeStringEntryPoint",
-        "com.google.gwt.lang.com_00046foo_00046DevirtualizeStringModule__EntryMethodHolder"),
+            getEntryMethodHolderTypeName("com.foo.DevirtualizeStringModule")),
         output);
   }
 
@@ -1406,6 +1468,11 @@ public class CompilerTest extends ArgProcessorTestBase {
           minimalRebuildCache.getProcessedStaleTypeNames());
     }
     return Files.toString(outputJsFile, Charsets.UTF_8);
+  }
+
+  private String getEntryMethodHolderTypeName(String typeName) {
+    return "com.google.gwt.lang." +
+        EntryMethodHolderGenerator.getEntryMethodHolderTypeName(typeName);
   }
 
   private Set<String> stringSet(String... strings) {

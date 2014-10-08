@@ -404,8 +404,11 @@ public class UnifyAst {
     @Override
     public boolean visit(JMethod x, Context ctx) {
       currentMethod = x;
-      // Only visit contents of methods defined in types which are part of this compile.
-      return !program.isReferenceOnly(x.getEnclosingType());
+      // Only visit contents of methods defined in types which are part of this compile. Visit
+      // also clinits that are reachable to make sure all the nodes that are needed for
+      // propagating compile time constants are available.
+      return !program.isReferenceOnly(x.getEnclosingType()) ||
+          x == x.getEnclosingType().getClinitMethod();
     }
 
     @Override

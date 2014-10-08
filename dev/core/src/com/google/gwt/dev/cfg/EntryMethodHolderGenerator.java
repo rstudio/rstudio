@@ -17,6 +17,7 @@ import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 
 import java.io.PrintWriter;
 
@@ -37,7 +38,7 @@ public class EntryMethodHolderGenerator extends Generator {
     // based on module canonical name, to avoid collisions resulting from multiple modules
     // with the same rename.
     String typeName =
-        Generator.escapeClassName(moduleCanonicalName + "_" + ENTRY_METHOD_HOLDER_SUFFIX);
+        getEntryMethodHolderTypeName(moduleCanonicalName);
     PrintWriter out = context.tryCreate(logger, PACKAGE_PATH, typeName);
 
     if (out != null) {
@@ -54,5 +55,10 @@ public class EntryMethodHolderGenerator extends Generator {
     }
 
     return PACKAGE_PATH + "." + typeName;
+  }
+
+  @VisibleForTesting
+  public static String getEntryMethodHolderTypeName(String moduleCanonicalName) {
+    return Generator.escapeClassName(moduleCanonicalName + "_" + ENTRY_METHOD_HOLDER_SUFFIX);
   }
 }
