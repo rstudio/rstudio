@@ -35,6 +35,13 @@ mkdir -p /var/lib/rstudio-server/proxy
 sh -c "echo `date +%s` > /var/lib/rstudio-server/installed"
 rstudio-server force-suspend-all
 
+# softlink ssl libraries for suse
+if test -f /etc/SuSE-release
+then
+  ln -s /usr/lib/libssl.so.0.9.8 /usr/lib/libssl.so.6
+  ln -s /usr/lib/libcrypto.so.0.9.8 /usr/lib/libcrypto.so.6
+fi
+
 # add upstart profile or init.d script and start the server
 if test -d /etc/init/
 then
