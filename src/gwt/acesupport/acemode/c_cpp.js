@@ -495,22 +495,6 @@ oop.inherits(Mode, TextMode);
             return indent + tab;
          }
 
-         // If we have a class / struct definition all on one line, don't
-         // indent
-         //
-         //   class Foo {} ;
-         //   ^
-         //
-         // Also applies to template classes all on one line, e.g.
-         //
-         //   template <typename T> struct { ... } ;
-         //
-         // NOTE: This rule seems unnecessary if we have proper scope inference on
-         // semicolon tokens...
-         if (/^\s*(template|class|struct).*\{.*\}\s*;?\s*/.test(line)) {
-            return indent;
-         }
-
          // Match the indentation of the ':' in a statement e.g.
          //
          //   class Foo : public A
@@ -695,161 +679,90 @@ oop.inherits(Mode, TextMode);
             return indent;
          }
 
-         // If the line ends with a semicolon, follow lines that begin /
-         // end with operator tokens until we find a line without.
+         // Indentation for lines ending with a semicolon
          if (/;\s*$/.test(line)) {
-            
-            var thisRow = row;
-            var thisLine = this.getLineSansComments(doc, thisRow);
 
-            // Short circuit if we run into a template, since we could see
-            // e.g.
-            //
-            //   template <int RTYPE>
-            //
-            // and we might erroneously consider the closing '>' to be a
-            // continuation token.
-            if (/^\s*template/.test(thisLine)) {
-               return this.$getIndent(thisLine);
-            }
+            if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row + 1)) {
 
-            // Try to indent for e.g.
-            //
-            //   x = 1
-            //       + 2
-            //       + 3;
-            //   ^
-            //
-            // and
-            //
-            //   x = 1 +
-            //       2 +
-            //       3;
-            //   ^
-            //
+               var tokenCursor = new TokenCursor(this.$codeModel.$tokens,
+                                                row,
+                                                this.$codeModel.$tokens[row].length - 1);
 
-            // Walk along parens
-            var braceMatch = thisLine.match(/[\)\}\]]/);
-            if (braceMatch) {
-
-               var openParenPos = session.findMatchingBracket({
-                  row: thisRow,
-                  column: lines[thisRow].lastIndexOf(braceMatch[0]) + 1
-               });
-
-               if (openParenPos && openParenPos.row < thisRow) {
-                  thisRow = openParenPos.row;
-                  thisLine = this.getLineSansComments(doc, thisRow);
+               // Move over any initial semicolons
+               while (tokenCursor.currentValue() === ";") {
+                  if (!tokenCursor.moveToPreviousToken()) {
+                     break;
+                  }
                }
-            }
-            
-            // If the current line does not start with an operator token, move
-            // up one.
-            if (!this.$codeModel.reStartsWithContinuationToken.test(thisLine)) {
-               thisRow--;
-               if (thisRow >= 0)
-                  thisLine = this.getLineSansComments(doc, thisRow);
-            }
 
-            if (/^\s*template/.test(thisLine)) {
-               return this.$getIndent(thisLine);
-            }
+               var lastCursor = tokenCursor.cloneCursor();
 
-            if (this.$codeModel.reStartsWithContinuationToken.test(thisLine) ||
-                this.$codeModel.reEndsWithContinuationToken.test(thisLine)) {
+               while (true) {
+
+                  // Stop conditions:
+
+                  // The token cursor is undefined (we moved past the start of the
+                  // document)
+                  if (typeof tokenCursor.currentValue() === "undefined") {
+                     return this.$getIndent(lines[lastCursor.$row]);
+                  }
+
+                  lastCursor = tokenCursor.cloneCursor();
+
+                  // We hit a semi-colon -- use the first token after that semi-colon.
+                  if (tokenCursor.currentValue() === ";") {
+                     if (tokenCursor.moveToNextToken()) {
+                        return this.$getIndent(lines[tokenCursor.$row]);
+                     }
+                  }
+
+                  // We hit a ':'...
+                  var peekOne = tokenCursor.peekBack();
+                  if (tokenCursor.currentValue() === ":") {
+
+                     // ... preceeded by a class access modifier
+                     if (["public", "private", "protected"].some(function(x) {
+                        return x === peekOne.currentValue();
+                     }))
+                     {
+                        if (tokenCursor.moveToNextToken()) {
+                           return this.$getIndent(lines[tokenCursor.$row]);
+                        }
+                     }
+
+                     // ... with a line starting with 'case'
+                     var maybeCaseLine = lines[tokenCursor.$row];
+                     if (/^\s*case/.test(maybeCaseLine)) {
+                        return this.$getIndent(maybeCaseLine) + tab;
+                     }
+
+                  }
+
+                  // We hit 'template <'
+                  if (tokenCursor.currentValue() === "<" &&
+                      peekOne.currentValue() === "template")
+                  {
+                     return this.$getIndent(lines[peekOne.$row]);
+                  }
+
+                  // We're at the start of the document
+                  if (tokenCursor.$row === 0 && tokenCursor.$offset === 0) {
+                     return this.$getIndent(lines[0]);
+                  }
+
+                  // Walking:
+
+                  // Step over parens
+                  if (tokenCursor.bwdToMatchingToken()) {
+                     
+                  } else {
+                     tokenCursor.moveToPreviousToken();
+                  }
+
+               }
                
-               while (
-                  (this.$codeModel.reStartsWithContinuationToken.test(thisLine) ||
-                   this.$codeModel.reEndsWithContinuationToken.test(thisLine))
-                     && thisRow >= 0) {
-
-                  // Walk along parens
-                  var braceMatch = thisLine.match(/[\)\}\]]$/);
-                  if (braceMatch) {
-
-                     var openParenPos = session.findMatchingBracket({
-                        row: thisRow,
-                        column: lines[thisRow].lastIndexOf(braceMatch[0]) + 1
-                     });
-
-                     if (openParenPos && openParenPos.row < thisRow) {
-                        thisRow = openParenPos.row;
-                     }
-                  }
-
-                  if (/^\s*template/.test(thisLine)) {
-                     return this.$getIndent(thisLine);
-                  }
-
-                  // Short-circuit if we bump into e.g. 'case foo:' --
-                  // this is so we don't walk too far past a ':', which is considered
-                  // a continuation token. This is so cases like:
-                  //
-                  //   x = foo ?
-                  //       bar :
-                  //       baz;
-                  //   ^
-                  // can be indented correctly, without walking over a
-                  //
-                  //   case Foo:
-                  //       bar;
-                  //
-                  // accidentally.
-                  if (/^\s*case\b.*:\s*$/.test(thisLine)) {
-                     return indent;
-                  }
-
-                  // If the line starts with a '>' (but not '>>'),
-                  // find the matching row and continue. This allows
-                  // for proper indentation of e.g.
-                  //
-                  //   template <
-                  //       typename T
-                  //   > class
-                  //   foo;
-                  //   ^
-                  //
-                  // as a nice short-circuiting mechanism.
-                  if (/^\s*>[^>]/.test(thisLine)) {
-
-                     heuristicRow = this.$codeModel.findMatchingBracketRow(
-                        ">",
-                        doc,
-                        row,
-                        50
-                     );
-                     
-                     if (heuristicRow >= 0) {
-                        thisRow = heuristicRow + 1; // anticipating a decrement later
-                     }
-                     
-                  }
-                  
-                  thisRow--;
-                  thisLine = this.getLineSansComments(doc, thisRow);
-               }
-
-               // We might have gone one line too far back if we had encountered
-               // a line beginning with an operator token, e.g.
-               //
-               //   a = b +
-               //       c +
-               //
-               // vs.
-               //
-               //   a = b
-               //     + c
-               //
-               // so we re-correct for that here.
-               var lineAhead = doc.getLine(thisRow + 1);
-               if (thisRow < 0 ||
-                   this.$codeModel.reEndsWithContinuationToken.test(lineAhead)) {
-                  return this.$getIndent(lineAhead);
-               } else {
-                  return this.$getIndent(thisLine);
-               }
             }
-
+            
          }
 
          // Handle naked 'for', 'if' etc. tokens. This function is a bit awkward --

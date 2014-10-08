@@ -65,6 +65,7 @@ struct  bar{
 </pre></li>
 
 <li><pre data-expected="0">
+            /*
             */
 struct some_tag_struct_with_block_comment_above{} ;
 </pre></li>
@@ -225,6 +226,11 @@ while (a)
 
 <li><pre data-expected="4" data-expected-open-brace="0">
 else
+</pre></li>
+
+<li><pre data-expected="4">
+public:
+    int x;
 </pre></li>
 
 <li><pre data-expected="4" open-brace-skip>
