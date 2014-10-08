@@ -2514,12 +2514,11 @@ Error augmentGitIgnore(const FilePath& gitIgnoreFile)
 
 FilePath whichGitExe()
 {
-   std::string whichGit;
-   Error error = r::exec::RFunction("Sys.which", "git").call(&whichGit);
-   if (error)
+   // find git
+   FilePath whichGit = module_context::findProgram("git");
+   if (whichGit.empty())
    {
-      LOG_ERROR(error);
-      return FilePath();
+      return whichGit;
    }
    else
    {
@@ -2528,13 +2527,13 @@ FilePath whichGitExe()
       if (module_context::isOSXMavericks())
       {
          if (module_context::hasOSXMavericksDeveloperTools())
-            return FilePath(whichGit);
+            return whichGit;
          else
             return FilePath();
       }
       else
       {
-         return FilePath(whichGit);
+         return whichGit;
       }
    }
 }
