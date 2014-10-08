@@ -589,6 +589,25 @@ public class CompilerTest extends ArgProcessorTestBase {
           "  <entry-point class='com.foo.TestEntryPoint'/>",
           "</module>");
 
+  private MockResource devirtualizeStringModuleResource =
+      JavaResourceBase.createMockResource("com/foo/DevirtualizeStringModule.gwt.xml",
+          "<module>",
+          "<source path=''/>",
+          "<entry-point class='com.foo.DevirtualizeStringEntryPoint'/>",
+          "</module>");
+
+  private MockJavaResource devirtualizeStringEntryPointResource =
+      JavaResourceBase.createMockJavaResource("com.foo.DevirtualizeStringEntryPoint",
+          "package com.foo;",
+          "import com.google.gwt.core.client.EntryPoint;",
+          "public class DevirtualizeStringEntryPoint implements EntryPoint {",
+          "  @Override",
+          "  public void onModuleLoad() {",
+          "    CharSequence seq = \"A\";",
+          "    seq.subSequence(0,1);",
+          "  }",
+          "}");
+
   private Set<String> emptySet = stringSet();
 
   public CompilerTest() {
@@ -836,6 +855,14 @@ public class CompilerTest extends ArgProcessorTestBase {
     // and the JSOs nor their single impl interfaces are not stale.
     checkIncrementalRecompile_devirtualizeUnchangedJso(JsOutputOption.PRETTY);
     checkIncrementalRecompile_devirtualizeUnchangedJso(JsOutputOption.DETAILED);
+  }
+
+  public void testIncrementalRecompile_devirtualizeString() throws UnableToCompleteException,
+      IOException, InterruptedException {
+    // Tests that String calls through interfaces are correctly devirtualized when compiling per
+    // file and neither String nor CharSequence interface are stale.
+    checkIncrementalRecompile_devirtualizeString(JsOutputOption.PRETTY);
+    checkIncrementalRecompile_devirtualizeString(JsOutputOption.DETAILED);
   }
 
   public void testIncrementalRecompile_multipleClassGenerator() throws UnableToCompleteException,
@@ -1169,6 +1196,19 @@ public class CompilerTest extends ArgProcessorTestBase {
         Lists.newArrayList(jsoTestModuleResource, simpleFactory, simpleIntf, simpleJso),
         jsoTestEntryPointResource, jsoTestEntryPointResource, stringSet("com.foo.TestEntryPoint",
             "com.google.gwt.lang.com_00046foo_00046SimpleModule__EntryMethodHolder"), output);
+  }
+
+  private void checkIncrementalRecompile_devirtualizeString(JsOutputOption output)
+      throws UnableToCompleteException, IOException, InterruptedException {
+    CompilerOptions compilerOptions = new CompilerOptionsImpl();
+    compilerOptions.setUseDetailedTypeIds(true);
+
+    checkRecompiledModifiedApp(compilerOptions, "com.foo.DevirtualizeStringModule",
+        Lists.newArrayList(devirtualizeStringModuleResource),
+        devirtualizeStringEntryPointResource, devirtualizeStringEntryPointResource,
+        stringSet("com.foo.DevirtualizeStringEntryPoint",
+        "com.google.gwt.lang.com_00046foo_00046DevirtualizeStringModule__EntryMethodHolder"),
+        output);
   }
 
   private void checkIncrementalRecompile_multipleClassGenerator(JsOutputOption output)

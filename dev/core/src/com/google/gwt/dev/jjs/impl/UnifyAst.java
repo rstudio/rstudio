@@ -514,7 +514,7 @@ public class UnifyAst {
           error(gwtCreateCall, "Rebind result '" + answer + "' cannot be abstract");
           return null;
         }
-        if (isJso((JClassType) answerType)) {
+        if (isJso(answerType)) {
           error(gwtCreateCall, "Rebind result '" + answer + "' cannot be a JSO");
           return null;
         }
@@ -1019,11 +1019,11 @@ public class UnifyAst {
       }
     }
     /*
-     * Eagerly instantiate any JavaScriptObject subtypes. That way we don't have
-     * to copy the exact semantics of ControlFlowAnalyzer.
+     * Eagerly instantiate any type that requires devirtualization, i.e. String and JavaScriptObject
+     * subtypes. That way we don't have to copy the exact semantics of ControlFlowAnalyzer.
      */
     for (JDeclaredType t : types) {
-      if (t instanceof JClassType && isJso((JClassType) t)
+      if (t instanceof JClassType && requiresDevirtualization(t)
           || hasAnyExports(t)) {
         instantiate(t);
       }
@@ -1395,8 +1395,9 @@ public class UnifyAst {
 
   private void instantiate(JDeclaredType type) {
     // Don't flow into all the parts of types defined outside this compile; except when the type is
-    // a Jso.
-    if (program.isReferenceOnly(type) && !isJso(type)) {
+    // requires devirtualization (JSOs, Strings, etc) in which case the original (non devirtualized)
+    // methods may not be reachable anymore.
+    if (program.isReferenceOnly(type) && !requiresDevirtualization(type)) {
       return;
     }
     if (type.isExternal()) {
@@ -1449,6 +1450,11 @@ public class UnifyAst {
         }
       }
     }
+  }
+
+  private boolean requiresDevirtualization(JDeclaredType type) {
+    // NOTE: these types are the ones {@link Devirtualizer} handles.
+    return isJso(type) || type == program.getTypeJavaLangString();
   }
 
   private boolean isJso(JDeclaredType type) {
