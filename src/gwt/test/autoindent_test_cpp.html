@@ -267,6 +267,11 @@ for ()
         ;
 </pre></li>
 
+<li><pre data-expected="4">
+for () {
+    x > 0;
+</pre></li>
+
 <li><pre data-expected="4" data-expected-open-brace="0">
 else
 </pre></li>
@@ -354,6 +359,11 @@ std::find_if(x.begin(), x.end(), [](int x) {
     /***
      *
      */
+</pre></li>
+
+<li><pre data-expected="8">
+std::string msg =
+        "A multi-line message"
 </pre></li>
 
 <li><pre data-expected="4">

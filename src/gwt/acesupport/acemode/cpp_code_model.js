@@ -500,8 +500,8 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
             var start = indices[i];
             var end = indices[i + 1];
-            
-            line = line.substring(0, start - 1) +
+
+            line = line.substring(0, start + 1) +
                    line.substring(end, line.length);
          }
       }

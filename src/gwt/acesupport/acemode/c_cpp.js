@@ -298,6 +298,13 @@ oop.inherits(Mode, TextMode);
          // Note that we strip _after_ the define steps so that we can
          // effectively leverage the indentation rules within macro settings.
          line = this.getLineSansComments(doc, row);
+
+         // If this line is just whitespace, match that indent. Otherwise
+         // multiple presses of enter can send the cursor off into space.
+         if (line.length > 0 && /^\s*$/.test(line)) {
+            return this.$getIndent(line);
+         }
+         
          var cursor = session.getSelection().getCursor();
 
          // Choose indentation for the current line based on the position
@@ -310,7 +317,6 @@ oop.inherits(Mode, TextMode);
          if (cursor && cursor.row == row && !dontSubset) {
             line = line.substring(0, cursor.column);
          }
-         
          prevLine = this.getLineSansComments(doc, row - 1);
 
          // Only indent on an ending '>' if we're not in a template
@@ -456,6 +462,11 @@ oop.inherits(Mode, TextMode);
             return $verticallyAlignFunctionArgs ?
                new Array(match[1].length + 1).join(" ") :
                indent + tab;
+         }
+
+         // If the line is entirely a string, then match that line's indent.
+         if (/^\s*\".*\"\s*$/.test(line)) {
+            return this.$getIndent(line);
          }
 
          // Vertical alignment
@@ -749,10 +760,18 @@ oop.inherits(Mode, TextMode);
 
                // Walking:
 
-               // Step over parens
-               if (tokenCursor.bwdToMatchingToken()) {
-                  if (tokenCursor.currentValue() === "(") {
-                     walkedOverParens = true;
+               // Step over parens. Walk over '>' only if the next token
+               // is a 'class' or 'struct'.
+               if ([")", "}", "]"].some(function(x) {
+                  return x === tokenCursor.currentValue();
+               }) ||
+                   (tokenCursor.currentValue() === ">" &&
+                    tokenCursor.peekFwd().currentType() === "keyword"))
+               {
+                  if (tokenCursor.bwdToMatchingToken()) {
+                     if (tokenCursor.currentValue() === "(") {
+                        walkedOverParens = true;
+                     }
                   }
                }
 
