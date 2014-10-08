@@ -35,7 +35,7 @@ mkdir -p /var/lib/rstudio-server/proxy
 sh -c "echo `date +%s` > /var/lib/rstudio-server/installed"
 rstudio-server force-suspend-all
 
-# softlink ssl libraries for suse
+# suse stuff
 if test -f /etc/SuSE-release
 then
   ln -f -s /usr/lib/libssl.so.0.9.8 /usr/lib/libssl.so.6
@@ -45,6 +45,8 @@ then
      ln -f -s /usr/lib64/libssl.so.0.9.8 /usr/lib64/libssl.so.6
      ln -f -s /usr/lib64/libcrypto.so.0.9.8 /usr/lib64/libcrypto.so.6
   fi
+  cp ${CMAKE_INSTALL_PREFIX}/bin/pandoc/pandoc-static ${CMAKE_INSTALL_PREFIX}/bin/pandoc/pandoc
+  cp ${CMAKE_INSTALL_PREFIX}/bin/pandoc/pandoc-citeproc-static ${CMAKE_INSTALL_PREFIX}/bin/pandoc/pandoc-citeproc
 fi
 
 # add upstart profile or init.d script and start the server
