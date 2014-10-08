@@ -893,7 +893,8 @@ private:
    std::string version(
                        [systemVersion cStringUsingEncoding:NSASCIIStringEncoding]);
    
-   return boost::algorithm::starts_with(version, "10.9");
+   return boost::algorithm::starts_with(version, "10.9") ||
+          boost::algorithm::starts_with(version, "10.10");
 }
 
 // On Mavericks we need to tell the OS that we are busy so that
