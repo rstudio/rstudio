@@ -79,10 +79,32 @@ var TokenCursor = function(tokens, row, offset) {
       var clone = this.cloneCursor();
       for (var i = 0; i < n; i++) {
          if (!clone.moveToPreviousToken()) {
-            return null;
+            return clone.$invalidate();
          }
       }
       return clone;
+   };
+
+   this.peekFwd = function(n) {
+      
+      if (typeof n === "undefined") {
+         n = 1;
+      }
+      
+      var clone = this.cloneCursor();
+      for (var i = 0; i < n; i++) {
+         if (!clone.moveToNextToken()) {
+            return clone.$invalidate();
+         }
+      }
+      return clone;
+   };
+
+   this.$invalidate = function() {
+      this.$row = 0;
+      this.$column = 0;
+      this.$tokens = [];
+      return this;
    };
 
    this.moveToNextToken = function(maxRow)

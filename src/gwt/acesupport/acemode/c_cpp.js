@@ -404,24 +404,6 @@ oop.inherits(Mode, TextMode);
             return this.$getIndent(lines[rowToUse]) + maybeTab;
          }
          
-         // Indent for a colon :
-         if (/:\s*$/.test(line)) {
-
-            // If the line ends with a colon, and the previous line
-            // ends with a question mark, then match the current line's
-            // indent. This supports indentation for e.g.
-            //
-            //   x = foo ?
-            //       bar :
-            //       ^
-            //
-            if (/\?\s*$/.test(prevLine)) {
-               return indent;
-            }
-            
-            return indent + tab;
-         }
-
          // Don't indent for namespaces, switch statements.
          if (/\bnamespace\b.*\{\s*$/.test(line) ||
              /\bswitch\b.*\{\s*$/.test(line)) {
@@ -599,13 +581,13 @@ oop.inherits(Mode, TextMode);
                                               row,
                                               this.$codeModel.$tokens[row].length - 1);
 
-            console.log("\n\n\n");
-            console.log(tokenCursor);
+            // If there is no token on this current line (this can occur when this code
+            // is accessed by e.g. the matching brace offset code) then move back
+            // to the previous row
             if (tokenCursor.$offset === -1 && tokenCursor.$row > 0) {
                tokenCursor.$row--;
                tokenCursor.$offset = tokenCursor.$tokens[tokenCursor.$row].length - 1;
             }
-            console.log(tokenCursor);
 
             // Set additional indent based on the first character
             var additionalIndent = "";
@@ -614,7 +596,7 @@ oop.inherits(Mode, TextMode);
             var startType = tokenCursor.currentType();
             if (startType === "constant" ||
                 startType === "keyword" || 
-                ["{", ")", ">"].some(function(x) {
+                ["{", ")", ">", ":"].some(function(x) {
                    return x === startValue;
                 })) {
                additionalIndent = tab;
@@ -693,11 +675,13 @@ oop.inherits(Mode, TextMode);
                   if (peekOne.currentValue() === ")") {
                      var clone = peekOne.cloneCursor();
                      if (clone.bwdToMatchingToken()) {
+
                         var peek1 = clone.peekBack(1);
                         var peek2 = clone.peekBack(2);
+
                         if (
                            (peek1 !== null && peek1.currentType() === "identifier") &&
-                              (peek2 !== null && !/\boperator\b/.test(peek2.currentType()))
+                           (peek2 !== null && !/\boperator\b/.test(peek2.currentType()))
                         )
                         {
                            
@@ -709,9 +693,9 @@ oop.inherits(Mode, TextMode);
                }
 
                // We hit a '[]()' lambda expression.
-               if (tokenCursor.currentValue() === "(" &&
-                   peekOne.currentValue() === "]") {
-                  var clone = peekOne.cloneCursor();
+               if (tokenCursor.currentValue() === "]" &&
+                   tokenCursor.peekFwd().currentValue() === "(") {
+                  var clone = tokenCursor.cloneCursor();
                   if (clone.bwdToMatchingToken()) {
                      return this.$getIndent(lines[clone.$row]) + additionalIndent;
                   }
@@ -719,8 +703,8 @@ oop.inherits(Mode, TextMode);
 
                // We hit 'for (' -- this implies the semi-colon
                // was within the for loop.
-               if (tokenCursor.currentValue() === "(" &&
-                   peekOne.currentValue() === "for") {
+               if (tokenCursor.currentValue() === "for" &&
+                   tokenCursor.peekFwd().currentValue() === "(") {
                   if ($verticallyAlignFunctionArgs && !walkedOverParens) {
                      if (tokenCursor.moveToNextToken()) {
                         var pos = tokenCursor.currentPosition();
@@ -738,10 +722,10 @@ oop.inherits(Mode, TextMode);
                }
 
                // We hit 'template <'
-               if (tokenCursor.currentValue() === "<" &&
-                   peekOne.currentValue() === "template")
+               if (tokenCursor.currentValue() === "template" &&
+                   tokenCursor.peekFwd().currentValue() === "<")
                {
-                  return this.$getIndent(lines[peekOne.$row]);
+                  return this.$getIndent(lines[tokenCursor.$row]);
                }
 
                // We're at the start of the document
@@ -756,10 +740,8 @@ oop.inherits(Mode, TextMode);
                   if (tokenCursor.currentValue() === "(") {
                      walkedOverParens = true;
                   }
-               } else {
-                  tokenCursor.moveToPreviousToken();
                }
-
+               tokenCursor.moveToPreviousToken();
             }
             
          }
