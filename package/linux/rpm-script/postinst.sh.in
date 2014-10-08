@@ -47,6 +47,12 @@ then
    initctl stop rstudio-server 2>/dev/null
    initctl start rstudio-server
 else
+   if test -f /etc/SuSE-release
+   then
+      cp ${CMAKE_INSTALL_PREFIX}/extras/init.d/suse/rstudio-server /etc/init.d/
+   else
+      cp ${CMAKE_INSTALL_PREFIX}/extras/init.d/redhat/rstudio-server /etc/init.d/
+   fi
    cp ${CMAKE_INSTALL_PREFIX}/extras/init.d/redhat/rstudio-server /etc/init.d/
    chmod +x /etc/init.d/rstudio-server
    chkconfig --add rstudio-server
