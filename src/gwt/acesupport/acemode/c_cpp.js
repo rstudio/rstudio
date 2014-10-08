@@ -404,7 +404,7 @@ oop.inherits(Mode, TextMode);
             return this.$getIndent(lines[rowToUse]) + maybeTab;
          }
          
-         // Indent for a :
+         // Indent for a colon :
          if (/:\s*$/.test(line)) {
 
             // If the line ends with a colon, and the previous line
@@ -444,28 +444,6 @@ oop.inherits(Mode, TextMode);
          // ie, with the first statement on the same line
          if (/^\s*case\s+[\w_]+/.test(line)) {
             return indent + tab;
-         }
-
-         // Indent for an unfinished 'for' statement, e.g.
-         //
-         //   for (int i = 0;
-         //        ^
-         //
-         match = line.match(/^(\s*for\s*\().*[;,]\s*$/);
-         if (match) {
-
-            // Make sure there is one more left paren than right paren on the line
-            var parenBalance = line.split("(").length - line.split(")").length;
-
-            if (parenBalance === 1) {
-               // TODO: function that pads current indentation with spaces,
-               // so that we respect tabs?
-               return $verticallyAlignFunctionArgs ?
-                  new Array(match[1].length + 1).join(" ") :
-                  indent + tab;
-               
-            }
-
          }
 
          // Indent following an opening paren.
@@ -696,6 +674,7 @@ oop.inherits(Mode, TextMode);
                }
 
                var lastCursor = tokenCursor.cloneCursor();
+               var walkedOverParens = false;
 
                while (true) {
 
@@ -738,6 +717,20 @@ oop.inherits(Mode, TextMode);
 
                   }
 
+                  // We hit 'for (' -- this implies the semi-colon
+                  // was within the for loop.
+                  if (tokenCursor.currentValue() === "(" &&
+                      peekOne.currentValue() === "for") {
+                     if ($verticallyAlignFunctionArgs && !walkedOverParens) {
+                        if (tokenCursor.moveToNextToken()) {
+                           var pos = tokenCursor.currentPosition();
+                           return new Array(pos.column + 1).join(" ");
+                        }
+                     } else {
+                        return this.$getIndent(lines[tokenCursor.$row]);
+                     }
+                  }
+
                   // We hit 'template <'
                   if (tokenCursor.currentValue() === "<" &&
                       peekOne.currentValue() === "template")
@@ -754,7 +747,9 @@ oop.inherits(Mode, TextMode);
 
                   // Step over parens
                   if (tokenCursor.bwdToMatchingToken()) {
-                     
+                     if (tokenCursor.currentValue() === "(") {
+                        walkedOverParens = true;
+                     }
                   } else {
                      tokenCursor.moveToPreviousToken();
                   }
