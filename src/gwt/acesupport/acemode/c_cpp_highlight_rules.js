@@ -129,7 +129,7 @@ var c_cppHighlightRules = function() {
                 token : "constant", // <CONSTANT>
                 regex : "<[a-zA-Z0-9./]+>"
             }, {
-                token : "keyword", // pre-compiler directives
+                token : "keyword.preproc", // pre-compiler directives
                 regex : "(?:" + preProcTokens.map(function(x) { return "#\\s*" + x + "\\b"; }).join("|") + ")"
             }, {
                 token : "variable.language", // compiler-specific constructs

@@ -227,11 +227,11 @@ oop.inherits(Mode, TextMode);
       
       var lines = doc.$lines;
       
-      var lastLine;
+      var prevLine;
       if (row > 0) {
-         lastLine = lines[row - 1];
+         prevLine = lines[row - 1];
       } else {
-         lastLine = "";
+         prevLine = "";
       }
 
       // Indentation rules for comments
@@ -311,7 +311,7 @@ oop.inherits(Mode, TextMode);
             line = line.substring(0, cursor.column);
          }
          
-         lastLine = this.getLineSansComments(doc, row - 1);
+         prevLine = this.getLineSansComments(doc, row - 1);
 
          // Only indent on an ending '>' if we're not in a template
          // We can do this by checking for a matching '<'. This also
@@ -415,15 +415,14 @@ oop.inherits(Mode, TextMode);
             //       bar :
             //       ^
             //
-            if (/\?\s*$/.test(lastLine)) {
+            if (/\?\s*$/.test(prevLine)) {
                return indent;
             }
             
             return indent + tab;
          }
 
-         // Don't indent for namespaces, switch statements. Note that
-         // we can have
+         // Don't indent for namespaces, switch statements.
          if (/\bnamespace\b.*\{\s*$/.test(line) ||
              /\bswitch\b.*\{\s*$/.test(line)) {
             return indent;
@@ -437,31 +436,12 @@ oop.inherits(Mode, TextMode);
             return indent + tab;
          }
 
-         // Indent after a 'case foo' -- this handles e.g.
-         //
-         //   case foo: bar;
-         //
-         // ie, with the first statement on the same line
-         if (/^\s*case\s+[\w_]+/.test(line)) {
-            return indent + tab;
-         }
-
          // Indent following an opening paren.
          // We prefer inserting two tabs here, reflecting the rules of
          // the Google C++ style guide:
          // http://google-styleguide.googlecode.com/svn/trunk/cppguide.html#Function_Declarations_and_Definitions
          if (line.match(/\(\s*$/)) {
             return indent + tab + tab;
-         }
-
-         // If we've made a function definition all on one line,
-         // just return the current indent.
-         if (/\(.*\).*\{.*\}\s*;?\s*/.test(line)) {
-            var lBraces = this.allIndicesOf(line, "{");
-            var rBraces = this.allIndicesOf(line, "}");
-            if (lBraces.length > 0 && lBraces.length == rBraces.length) {
-               return indent;
-            }
          }
 
          // If we have a class with an open brace on the same line, indent
@@ -525,46 +505,6 @@ oop.inherits(Mode, TextMode);
             return $verticallyAlignFunctionArgs ?
                new Array(match[1].length + 1).join(" ") :
                indent + tab;
-         }
-
-         // If the line ends with a parenthesis, indent based on the
-         // matching opening bracket. This allows indentation for e.g.
-         //
-         // foo(int a,
-         //     int b,
-         //     int c);
-         // ^
-         //
-         // Do this only when the parenthesis is not matched on the same row
-         // (because otherwise we're missing potential lookback information)
-         match = line.match(/([\)\]])(;)?\s*$/);
-         if (match) {
-
-            var openPos = session.findMatchingBracket({
-               row: row,
-               column: lines[row].lastIndexOf(match[1]) + 1
-            });
-
-            if (openPos && openPos.row !== row) {
-
-               var rowToUse = openPos.row;
-
-               // If the parenthesis is the first token on the line, look up
-               if (lines[rowToUse].indexOf("(") === openPos.column) {
-                  while (rowToUse >= 0 && !/\w/.test(lines[rowToUse])) {
-                     rowToUse--;
-                  }
-                  if (rowToUse == -1) rowToUse++;
-               }
-
-               // Insert a tab if there was no semi-colon at the end of the line
-               var maybeTab = typeof match[2] !== "undefined" ?
-                      "" :
-                      tab;
-
-               return this.$getIndent(lines[rowToUse]) + maybeTab;
-            }
-            
          }
 
          // Vertical alignment
@@ -657,11 +597,29 @@ oop.inherits(Mode, TextMode);
             return indent;
          }
 
+         // Handle naked 'for', 'if' etc. tokens. This function is a bit awkward --
+         // either it returns an indent to use, or returns a row number from
+         // which we can infer the indent.
+         var newIndent = this.$codeModel.indentNakedTokens(doc, indent, tab, row, line);
+         if (newIndent !== null) {
+            if (typeof newIndent === "string") {
+               return newIndent;
+            } else if (typeof newIndent === "number") {
+               return this.$getIndent(lines[newIndent]);
+            }
+         }
+
          // Indentation for lines ending with a semicolon
-         if (/;\s*$/.test(line)) {
+         var match = line.match(/([;\)\{])\s*$/);
+         if (match) {
 
             if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row + 1)) {
 
+               var additionalIndent = "";
+               if (match[1] === ")" || match[1] === "{") {
+                  additionalIndent = tab;
+               }
+               
                var tokenCursor = new TokenCursor(this.$codeModel.$tokens,
                                                 row,
                                                 this.$codeModel.$tokens[row].length - 1);
@@ -683,7 +641,7 @@ oop.inherits(Mode, TextMode);
                   // The token cursor is undefined (we moved past the start of the
                   // document)
                   if (typeof tokenCursor.currentValue() === "undefined") {
-                     return this.$getIndent(lines[lastCursor.$row]);
+                     return this.$getIndent(lines[lastCursor.$row]) + additionalIndent;
                   }
 
                   lastCursor = tokenCursor.cloneCursor();
@@ -691,7 +649,7 @@ oop.inherits(Mode, TextMode);
                   // We hit a semi-colon -- use the first token after that semi-colon.
                   if (tokenCursor.currentValue() === ";") {
                      if (tokenCursor.moveToNextToken()) {
-                        return this.$getIndent(lines[tokenCursor.$row]);
+                        return this.$getIndent(lines[tokenCursor.$row]) + additionalIndent;
                      }
                   }
 
@@ -705,7 +663,7 @@ oop.inherits(Mode, TextMode);
                      }))
                      {
                         if (tokenCursor.moveToNextToken()) {
-                           return this.$getIndent(lines[tokenCursor.$row]);
+                           return this.$getIndent(lines[tokenCursor.$row]) + additionalIndent;
                         }
                      }
 
@@ -715,6 +673,32 @@ oop.inherits(Mode, TextMode);
                         return this.$getIndent(maybeCaseLine) + tab;
                      }
 
+                     // ... opening an initialization list
+                     if (peekOne.currentValue() === ")") {
+                        var clone = peekOne.cloneCursor();
+                        if (clone.bwdToMatchingToken()) {
+                           var peek1 = clone.peekBack(1);
+                           var peek2 = clone.peekBack(2);
+                           if (
+                              (peek1 !== null && peek1.currentType() === "identifier") &&
+                              (peek2 !== null && !/\boperator\b/.test(peek2.currentType()))
+                           )
+                           {
+                              
+                              return this.$getIndent(lines[clone.peekBack().$row]) + additionalIndent;
+                           }
+                        }
+                     }
+
+                  }
+
+                  // We hit a '[]()' lambda expression.
+                  if (tokenCursor.currentValue() === "(" &&
+                      peekOne.currentValue() === "]") {
+                     var clone = peekOne.cloneCursor();
+                     if (clone.bwdToMatchingToken()) {
+                        return this.$getIndent(lines[clone.$row]) + additionalIndent;
+                     }
                   }
 
                   // We hit 'for (' -- this implies the semi-colon
@@ -740,7 +724,7 @@ oop.inherits(Mode, TextMode);
 
                   // We're at the start of the document
                   if (tokenCursor.$row === 0 && tokenCursor.$offset === 0) {
-                     return this.$getIndent(lines[0]);
+                     return this.$getIndent(lines[0]) + additionalIndent;
                   }
 
                   // Walking:
@@ -760,17 +744,7 @@ oop.inherits(Mode, TextMode);
             
          }
 
-         // Handle naked 'for', 'if' etc. tokens. This function is a bit awkward --
-         // either it returns an indent to use, or returns a row number from
-         // which we can infer the indent.
-         var newIndent = this.$codeModel.indentNakedTokens(doc, indent, tab, row, line);
-         if (newIndent !== null) {
-            if (typeof newIndent === "string") {
-               return newIndent;
-            } else if (typeof newIndent === "number") {
-               return this.$getIndent(lines[newIndent]);
-            }
-         }
+         
 
          // Indent based on lookaround heuristics for open braces.
          if (/\{\s*$/.test(line)) {
