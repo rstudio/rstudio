@@ -725,10 +725,37 @@ public class CompilerTest extends ArgProcessorTestBase {
   }
 
   public void testIncrementalRecompile_dateStampChange() throws UnableToCompleteException,
-      IOException,
-      InterruptedException {
+      IOException, InterruptedException {
     checkIncrementalRecompile_dateStampChange(JsOutputOption.PRETTY);
     checkIncrementalRecompile_dateStampChange(JsOutputOption.DETAILED);
+  }
+
+  public void testIncrementalRecompile_invalidatePreamble() throws UnableToCompleteException,
+      IOException, InterruptedException {
+    MinimalRebuildCache relinkMinimalRebuildCache = new MinimalRebuildCache();
+    File relinkApplicationDir = Files.createTempDir();
+
+    // Perform a first compile.
+    compileToJs(relinkApplicationDir, "com.foo.SimpleModule",
+        Lists.newArrayList(simpleModuleResource, emptyEntryPointResource),
+        relinkMinimalRebuildCache, null, JsOutputOption.PRETTY);
+    // On first compile nothing is explicitly stale, only implicitly stale.
+    assertEquals(0, relinkMinimalRebuildCache.getStaleTypeNames().size());
+
+    // Recompile with a deep change that invalidates the preamble.
+    relinkMinimalRebuildCache.markSourceFileStale("java/lang/Object.java");
+    compileToJs(relinkApplicationDir, "com.foo.SimpleModule", Lists.<MockResource> newArrayList(),
+        relinkMinimalRebuildCache, null, JsOutputOption.PRETTY);
+    // Show that preamble invalidation marks everything stale.
+    assertTrue(relinkMinimalRebuildCache.getProcessedStaleTypeNames().size() > 100);
+
+    // Recompile again with a tiny change. Prove that it's not stuck repeatedly invalidating the
+    // whole world.
+    compileToJs(relinkApplicationDir, "com.foo.SimpleModule",
+        Lists.<MockResource> newArrayList(emptyEntryPointResource), relinkMinimalRebuildCache, null,
+        JsOutputOption.PRETTY);
+    // Show that only this little change is stale, not the whole world.
+    assertEquals(2, relinkMinimalRebuildCache.getProcessedStaleTypeNames().size());
   }
 
   public void testIncrementalRecompile_superClassOrder() throws UnableToCompleteException,
@@ -1334,7 +1361,10 @@ public class CompilerTest extends ArgProcessorTestBase {
     }
 
     assertNotNull(outputJsFile);
-    assertEquals(expectedProcessedStaleTypeNames, minimalRebuildCache.getProcessedStaleTypeNames());
+    if (expectedProcessedStaleTypeNames != null) {
+      assertEquals(expectedProcessedStaleTypeNames,
+          minimalRebuildCache.getProcessedStaleTypeNames());
+    }
     return Files.toString(outputJsFile, Charsets.UTF_8);
   }
 
