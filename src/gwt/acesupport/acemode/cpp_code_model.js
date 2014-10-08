@@ -47,9 +47,9 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 (function() {
 
    var debugCursor = function(message, cursor) {
-      console.log(message);
-      console.log(cursor);
-      console.log(cursor.currentToken());
+      // console.log(message);
+      // console.log(cursor);
+      // console.log(cursor.currentToken());
    };
 
    this.$complements = {
@@ -380,15 +380,48 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             }
          }
 
-         // Move backwards over matching parentheses. Note that the function expects the
-         // cursor to be on the token just after a closing paren.
+         // Move backwards over matching parens.
          debugCursor("Before walking over matching parens", tokenCursor);
-         
-         if (tokenCursor.currentValue() === ")") {
-            tokenCursor.moveToNextToken();
+
+         if (tokenCursor.currentValue() === ":") {
+
+            if (!tokenCursor.moveToPreviousToken())
+               return -1;
+
+            // We want to walk over specifiers preceeding the ':' which may
+            // specify an initializer list. We need to walk e.g.
+            //
+            //    const foo) const noexcept(bar) :
+            //
+            // so we do this by jumping parens and keywords, stopping once
+            // we hit an actual identifier.
+            do {
+
+               if (tokenCursor.currentValue() === ")") {
+                  if (tokenCursor.bwdToMatchingToken()) {
+
+                     if (tokenCursor.peekBack().currentType() === "keyword") {
+                        continue;
+                     } else {
+                        break;
+                     }
+                  }
+               }
+
+               if (tokenCursor.currentType() === "identifier")
+                  break;
+
+            } while (tokenCursor.moveToPreviousToken());
+
          }
 
-         if (tokenCursor.moveBackwardOverMatchingParens()) {
+         if (tokenCursor.currentValue() === ")") {
+            if (!tokenCursor.bwdToMatchingToken()) {
+               return -1;
+            }
+         }
+
+         if (tokenCursor.currentValue() === "(") {
             if (!tokenCursor.moveToPreviousToken()) {
                return -1;
             }
