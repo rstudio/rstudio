@@ -197,6 +197,45 @@ var TokenCursor = function(tokens, row, offset) {
       
    };
 
+   this.fwdToMatchingToken = function() {
+
+      var thisValue = this.currentValue();
+      var compValue = $complements[thisValue];
+
+      var isOpener = ["(", "{", "[", "<", "'", "\""].some(function(x) {
+         return x === thisValue;
+      });
+
+      if (!isOpener) {
+         return false;
+      }
+
+      var success = false;
+      var parenCount = 0;
+      while (this.moveToNextToken())
+      {
+         if (this.currentValue() === compValue)
+         {
+            if (parenCount === 0)
+            {
+               return true;
+            }
+            parenCount--;
+         }
+         else if (this.currentValue() === thisValue)
+         {
+            parenCount++;
+         }
+      }
+
+      return false;
+      
+   };
+
+   this.equals = function(other) {
+      return this.$row === other.$row && this.$offset === other.$offset;
+   };
+
    this.bwdToMatchingTokenShortCircuit = function(shortCircuit) {
 
       var thisValue = this.currentValue();

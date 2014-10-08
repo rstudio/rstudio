@@ -592,8 +592,11 @@ oop.inherits(Mode, TextMode);
             // Set additional indent based on the first character
             var additionalIndent = "";
 
-            var startValue = tokenCursor.currentValue();
-            var startType = tokenCursor.currentType();
+            // Keep track of where we started
+            var startCursor = tokenCursor.cloneCursor();
+            var startValue = startCursor.currentValue();
+            var startType = startCursor.currentType();
+            
             if (startType === "constant" ||
                 startType === "keyword" || 
                 ["{", ")", ">", ":"].some(function(x) {
@@ -613,7 +616,8 @@ oop.inherits(Mode, TextMode);
             var walkedOverParens = false;
 
             // If the token cursor is on a comma, then maybe perform
-            // vertical alignment. Otherwise, just match
+            // vertical alignment. Otherwise, just match the previous
+            // line's indentation.
             if (tokenCursor.currentValue() === ",") {
                if ($verticallyAlignFunctionArgs) {
                   var balance = line.split("(").length - line.split(")").length;
@@ -701,17 +705,32 @@ oop.inherits(Mode, TextMode);
                   }
                }
 
-               // We hit 'for (' -- this implies the semi-colon
-               // was within the for loop.
+               // Vertical alignment for e.g. 'for ( ... ;'.
+               //
+               // This is tricky -- we need to differentiate this case from e.g.
+               //
+               //     for (;;);
+               //
                if (tokenCursor.currentValue() === "for" &&
-                   tokenCursor.peekFwd().currentValue() === "(") {
-                  if ($verticallyAlignFunctionArgs && !walkedOverParens) {
-                     if (tokenCursor.moveToNextToken()) {
-                        var pos = tokenCursor.currentPosition();
-                        return new Array(pos.column + 1).join(" ");
-                     }
+                   tokenCursor.peekFwd().currentValue() === "(" &&
+                   startValue === ";")
+               {
+
+                  // Find the matching paren for the '(' after the cursor
+                  var lookaheadCursor = tokenCursor.peekFwd().cloneCursor();
+
+                  if (!lookaheadCursor.fwdToMatchingToken()) {
+                     var firstTokenAfterParen = tokenCursor.peekFwd(2);
+                     return $verticallyAlignFunctionArgs ?
+                        new Array(firstTokenAfterParen.currentPosition().column + 1).join(" ") :
+                        this.$getIndent(lines[tokenCursor.$row]) + tab;
                   } else {
-                     return this.$getIndent(lines[tokenCursor.$row]);
+                     if (!lookaheadCursor.peekFwd().equals(startCursor)) {
+                        var firstTokenAfterParen = tokenCursor.peekFwd(2);
+                        return $verticallyAlignFunctionArgs ?
+                           new Array(firstTokenAfterParen.currentPosition().column + 1).join(" ") :
+                           this.$getIndent(lines[tokenCursor.$row]) + tab;
+                     }
                   }
                }
 
@@ -741,6 +760,7 @@ oop.inherits(Mode, TextMode);
                      walkedOverParens = true;
                   }
                }
+
                tokenCursor.moveToPreviousToken();
             }
             
