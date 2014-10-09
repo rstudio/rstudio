@@ -44,8 +44,6 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
    this.$doc.on('change', function(evt) {
       that.$onDocChange.apply(that, [evt]);
    });
-
-   
    
 };
 
@@ -447,10 +445,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                }))
                {
                   tokenCursor.moveToNextToken();
-               }
-               else
-               {
-                  tokenCursor.moveToPreviousToken();
+                  return tokenCursor.$row;
                }
             }
 
@@ -1321,21 +1316,6 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
             
          }
 
-         // Indent based on lookaround heuristics for open braces.
-         if (/\{\s*$/.test(line)) {
-
-            var heuristicRow = this.getRowForOpenBraceIndent(
-               this.$session,
-               row,
-               20
-            );
-
-            if (heuristicRow !== null) {
-               return this.$getIndent(lines[heuristicRow]) + tab;
-            }
-
-         }
-
          // If the closing character is a 'closer', then indent.
          // We do this so that we get indentation for a class ctor, e.g.
          //
@@ -1361,7 +1341,6 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
       return indent;
    };
-   
 
    this.$onDocChange = function(evt)
    {
