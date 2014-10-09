@@ -51,7 +51,6 @@ import com.google.gwt.thirdparty.guava.common.io.Resources;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -63,6 +62,7 @@ import java.util.concurrent.atomic.AtomicReference;
 class Recompiler {
 
   private final AppSpace appSpace;
+  private final LauncherDir launcherDir;
   private final String inputModuleName;
 
   private String serverPrefix;
@@ -84,8 +84,9 @@ class Recompiler {
   private CompilerContext compilerContext;
   private Options options;
 
-  Recompiler(AppSpace appSpace, String inputModuleName, Options options) {
+  Recompiler(AppSpace appSpace, LauncherDir launcherDir, String inputModuleName, Options options) {
     this.appSpace = appSpace;
+    this.launcherDir = launcherDir;
     this.inputModuleName = inputModuleName;
     this.options = options;
     this.serverPrefix = options.getPreferredHost() + ":" + options.getPort();
@@ -197,7 +198,9 @@ class Recompiler {
     module.getCompilationState(compileLogger, compilerContext);
 
     setUpCompileDir(compileDir, module, compileLogger);
-    writeLauncherFiles(module, compileLogger);
+    if (launcherDir != null) {
+      launcherDir.update(module, compileDir, compileLogger);
+    }
 
     outputModuleName.set(module.getName());
     lastBuild.set(compileDir);
@@ -225,10 +228,10 @@ class Recompiler {
           compileLogger.log(Type.WARN, "cannot create directory: " + outputDir);
         }
       }
-      writePublicResources(outputDir, module, compileLogger);
+      LauncherDir.writePublicResources(outputDir, module, compileLogger);
 
       // write no cache that will inject recompile.nocache.js
-      String stub = generateStubNocacheJs(module.getName());
+      String stub = LauncherDir.generateStubNocacheJs(module.getName(), options);
       File noCacheJs = new File(outputDir.getCanonicalPath(), module.getName() + ".nocache.js");
       Files.write(stub, noCacheJs, Charsets.UTF_8);
 
@@ -241,21 +244,6 @@ class Recompiler {
       UnableToCompleteException wrapped = new UnableToCompleteException();
       wrapped.initCause(e);
       throw wrapped;
-    }
-  }
-
-  private static void writePublicResources(File moduleOutputDir, ModuleDef module,
-      TreeLogger compileLogger) throws UnableToCompleteException, IOException {
-    // Copy the public resources to the output.
-    ResourceOracleImpl publicResources = module.getPublicResourceOracle();
-    for (String pathName : publicResources.getPathNames()) {
-      File file = new File(moduleOutputDir, pathName);
-      File parent = file.getParentFile();
-      if (!parent.isDirectory() && !parent.mkdirs()) {
-        compileLogger.log(Type.ERROR, "cannot create directory: " + parent);
-        throw new UnableToCompleteException();
-      }
-      Files.asByteSink(file).writeFrom(publicResources.getResourceAsStream(pathName));
     }
   }
 
@@ -341,7 +329,9 @@ class Recompiler {
       String moduleName = outputModuleName.get();
       writeRecompileNoCacheJs(new File(publishedCompileDir.getWarDir(), moduleName), moduleName,
           recompileJs, compileLogger);
-      writeLauncherFiles(module, compileLogger);
+      if (launcherDir != null) {
+        launcherDir.update(module, compileDir, compileLogger);
+      }
     } else {
       // always recompile after an error
       lastBuildInput = null;
@@ -361,61 +351,6 @@ class Recompiler {
       compileLogger.log(Type.ERROR, "Can not write recompile.nocache.js", e);
       throw new UnableToCompleteException();
     }
-  }
-
-  /**
-   * Updates files for launching Super Dev Mode.
-   */
-  private void writeLauncherFiles(ModuleDef module, TreeLogger compileLogger)
-      throws UnableToCompleteException {
-
-    File launcherDir = options.getLauncherDir();
-    if (launcherDir == null) {
-      return; // not turned on
-    }
-
-    File moduleDir = new File(launcherDir + "/" + module.getName());
-    if (!moduleDir.isDirectory()) {
-      if (!moduleDir.mkdirs()) {
-        compileLogger.log(Type.ERROR, "Can't create launcher dir for module: " + moduleDir);
-        throw new UnableToCompleteException();
-      }
-    }
-
-    try {
-      String stub = generateStubNocacheJs(module.getName());
-
-      final File noCacheJs = new File(moduleDir, module.getName() + ".nocache.js");
-      Files.write(stub, noCacheJs, Charsets.UTF_8);
-
-      // Remove gz file so it doesn't get used instead.
-      // (We may be writing to an existing war directory.)
-      final File noCacheJsGz = new File(noCacheJs.getPath() + ".gz");
-      if (noCacheJsGz.exists()) {
-        if (!noCacheJsGz.delete()) {
-          compileLogger.log(Type.ERROR, "cannot delete file: " + noCacheJsGz);
-          throw new UnableToCompleteException();
-        }
-      }
-
-      writePublicResources(moduleDir, module, compileLogger);
-
-    } catch (IOException e) {
-      compileLogger.log(Type.ERROR, "Can't update launcher dir", e);
-      throw new UnableToCompleteException();
-    }
-  }
-
-  /**
-   * Returns the contents of a nocache.js file that will compile and then run a GWT application
-   * using Super Dev Mode.
-   */
-  private String generateStubNocacheJs(String outputModuleName) throws IOException {
-    URL url = Resources.getResource(Recompiler.class, "stub.nocache.js");
-    final String template = Resources.toString(url, Charsets.UTF_8);
-    return template
-        .replace("__MODULE_NAME__", outputModuleName)
-        .replace("__SUPERDEV_PORT__", String.valueOf(options.getPort()));
   }
 
   /**

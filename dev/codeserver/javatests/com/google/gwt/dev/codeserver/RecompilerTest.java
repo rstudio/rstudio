@@ -113,8 +113,8 @@ public class RecompilerTest extends TestCase {
         fooResource);
     writeResourcesTo(originalResources, sourcePath);
 
-    Recompiler recompiler =
-        new Recompiler(AppSpace.create(Files.createTempDir()), "com.foo.SimpleModule", options);
+    Recompiler recompiler = new Recompiler(AppSpace.create(Files.createTempDir()), null,
+        "com.foo.SimpleModule", options);
     Outbox outbox = new Outbox("Transactional Cache", recompiler, options, logger);
     OutboxTable outboxes = new OutboxTable();
     outboxes.addOutbox(outbox);

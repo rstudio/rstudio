@@ -19,10 +19,9 @@ package com.google.gwt.dev.codeserver;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.codeserver.CompileDir.PolicyFile;
 import com.google.gwt.dev.codeserver.Pages.ErrorPage;
 import com.google.gwt.dev.json.JsonObject;
-import com.google.gwt.thirdparty.guava.common.base.Charsets;
-import com.google.gwt.thirdparty.guava.common.io.Files;
 
 import org.eclipse.jetty.http.MimeTypes;
 import org.eclipse.jetty.io.Buffer;
@@ -42,6 +41,7 @@ import java.io.InputStream;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -387,37 +387,29 @@ public class WebServer {
         out.startTag("h1").text("Policy Files").endTag("h1").nl();
 
         for (Outbox box : outboxes.getOutboxes()) {
-          File manifest = box.getExtraFile("rpcPolicyManifest/manifest.txt");
-          if (manifest.isFile()) {
+          List<PolicyFile> policies = box.readRpcPolicyManifest();
+          if (!policies.isEmpty()) {
             out.startTag("h2").text(box.getOutputModuleName()).endTag("h2").nl();
 
             out.startTag("table").nl();
-            String text = Files.toString(manifest, Charsets.UTF_8);
-            for (String line : text.split("\n")) {
-              line = line.trim();
-              if (line.isEmpty() || line.startsWith("#")) {
-                continue;
-              }
-              String[] fields = line.split(", ");
-              if (fields.length < 2) {
-                continue;
-              }
-
-              String serviceName = fields[0];
-              String policyFileName = fields[1];
-
-              String serviceUrl = SourceHandler.SOURCEMAP_PATH + box.getOutputModuleName() + "/" +
-                  serviceName.replace('.', '/') + ".java";
-              String policyUrl = "/policies/" + policyFileName;
+            for (PolicyFile policy : policies) {
 
               out.startTag("tr");
 
               out.startTag("td");
-              out.startTag("a", "href=", serviceUrl).text(serviceName).endTag("a");
+
+              out.startTag("a", "href=", policy.getServiceSourceUrl());
+              out.text(policy.getServiceName());
+              out.endTag("a");
+
               out.endTag("td");
 
               out.startTag("td");
-              out.startTag("a", "href=", policyUrl).text(policyFileName).endTag("a");
+
+              out.startTag("a", "href=", policy.getUrl());
+              out.text(policy.getName());
+              out.endTag("a");
+
               out.endTag("td");
 
               out.endTag("tr").nl();

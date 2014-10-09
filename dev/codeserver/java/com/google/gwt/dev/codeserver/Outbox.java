@@ -19,6 +19,7 @@ package com.google.gwt.dev.codeserver;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.cfg.ModuleDef;
+import com.google.gwt.dev.codeserver.CompileDir.PolicyFile;
 import com.google.gwt.dev.codeserver.Job.Result;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
@@ -30,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -285,12 +287,11 @@ class Outbox {
   }
 
   /**
-   * Returns a file out of the "extras" directory.
-   * @param path relative path of the file, not including the module name.
-   * @return The location of the file, which might not actually exist.
+   * Reads the GWT-RPC serialization policy manifest in this outbox.
+   * If it's not there, returns the empty list.
+   * @return a PolicyFile record for each entry in the policy file.
    */
-  File getExtraFile(String path) {
-    File prefix = new File(getOutputDir().getExtraDir(), getOutputModuleName());
-    return new File(prefix, path);
+  List<PolicyFile> readRpcPolicyManifest() throws IOException {
+    return getOutputDir().readRpcPolicyManifest(getOutputModuleName());
   }
 }

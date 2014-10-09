@@ -44,8 +44,12 @@ function Main(moduleName, propertyProviders, propertyValues){
 Main.prototype.compile = function() {
   var that = this;
   // Export the module base of the server running the backend. (Returned by GWT.getModuleBaseURL.)
+  // (If we are using the bookmarklets with an external server, the dev mode hook has already set
+  // this up to point somewhere different, so don't override it.)
   var moduleBaseKey = '__gwtDevModeHook:' + this.__moduleName + ':moduleBase';
-  $wnd[moduleBaseKey] = this.__baseUrlProvider.getBaseUrl();
+  if (!$wnd[moduleBaseKey]) {
+    $wnd[moduleBaseKey] = this.__baseUrlProvider.getBaseUrl();
+  }
 
   this.__dialog.clear();
   this.__dialog.add(this.__dialog.createTextElement("div", "12pt", "Compiling " + this.__moduleName));
