@@ -38,13 +38,6 @@ rstudio-server force-suspend-all
 # suse stuff
 if test -f /etc/SuSE-release
 then
-  ln -f -s /usr/lib/libssl.so.0.9.8 /usr/lib/libssl.so.6
-  ln -f -s /usr/lib/libcrypto.so.0.9.8 /usr/lib/libcrypto.so.6
-  if test -d /usr/lib64
-  then
-     ln -f -s /usr/lib64/libssl.so.0.9.8 /usr/lib64/libssl.so.6
-     ln -f -s /usr/lib64/libcrypto.so.0.9.8 /usr/lib64/libcrypto.so.6
-  fi
   mv ${CMAKE_INSTALL_PREFIX}/bin/pandoc/pandoc-static ${CMAKE_INSTALL_PREFIX}/bin/pandoc/pandoc
   mv ${CMAKE_INSTALL_PREFIX}/bin/pandoc/pandoc-citeproc-static ${CMAKE_INSTALL_PREFIX}/bin/pandoc/pandoc-citeproc
 fi
