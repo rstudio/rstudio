@@ -342,7 +342,8 @@ if (NOT RSTUDIO_SESSION_WIN64)
    # install pandoc
    set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/1.12.4.2")
    file(GLOB PANDOC_FILES "${PANDOC_BIN}/pandoc*")
-   install(PROGRAMS ${PANDOC_FILES}
+   install(FILES ${PANDOC_FILES}
+           USE_SOURCE_PERMISSIONS
            DESTINATION  ${RSTUDIO_INSTALL_BIN}/pandoc)
 
    # install rmarkdown package
