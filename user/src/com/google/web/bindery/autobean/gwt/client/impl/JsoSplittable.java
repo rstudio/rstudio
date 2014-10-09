@@ -58,9 +58,9 @@ public final class JsoSplittable extends JavaScriptObject implements Splittable,
     return [];
   }-*/;
 
-  public static native JsoSplittable nullValue() /*-{
-    return null;
-  }-*/;
+  public static Splittable nullValue() {
+    return NullSplittable.INSTANCE;
+  }
 
   private static native Splittable create0(boolean object) /*-{
     return Boolean(object);

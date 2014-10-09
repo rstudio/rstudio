@@ -185,11 +185,7 @@ public class SplittableTest extends GWTTestCase {
    */
   public void testNull() {
     Splittable n = Splittable.NULL;
-    if (GWT.isScript()) {
-      assertNull(n);
-    } else {
-      assertNotNull(n);
-    }
+    assertNotNull(n);
     assertFalse("boolean", n.isBoolean());
     assertFalse("indexed", n.isIndexed());
     assertFalse("keyed", n.isKeyed());
