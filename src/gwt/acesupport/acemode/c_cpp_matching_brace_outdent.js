@@ -288,7 +288,7 @@ var $alignCase                 = true; // case 'a':
       // we should outdent if possible. Do so by looking for the
       // enclosing 'class' scope.
       if ($alignClassAccessModifiers &&
-          /^\s*public\s*:[^:]|^\s*private\s*:[^:]|^\s*protected\s*:[^:]/.test(line)) {
+          /^\s*public\s*:\s*$|^\s*private\s*:\s*$|^\s*protected\s*:\s*$]/.test(line)) {
 
          // Find the associated open bracket.
          var openBraceRow = this.$codeModel.doFindMatchingBracketRow(
