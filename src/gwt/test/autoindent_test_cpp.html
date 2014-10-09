@@ -645,7 +645,7 @@ var session = editor.getSession();
                                                    this.getTabString(),
                                                    this.getTabSize(),
                                                    i-1,
-                               false);
+                                                   true);
 
             this.applyIndent(i, newIndent);
             mode.autoOutdent(state, this, i);
