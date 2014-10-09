@@ -132,49 +132,6 @@ oop.inherits(Mode, TextMode);
       return state.match(/^r-/);
    };
 
-   // Pad an indentation up to some size by adding leading spaces.
-   // This preserves tabs in the indent. Returns indentation as-is
-   // if it's already that size or greater.
-   this.$padIndent = function(indent, tabSize, newIndentSize) {
-
-      var tabsAsSpaces = new Array(tabSize + 1).join(" ");
-      var indentLength = indent.replace("\t", tabsAsSpaces);
-
-      if (indentLength >= newIndentSize) {
-         return indent;
-      } else {
-         return indent +
-            new Array(newIndentSize - indentLength + 1).join(" ");
-      }
-   };
-
-   this.$getUnindent = function(line, tabSize) {
-
-      // Get the current line indent
-      var indent = this.$getIndent(line);
-      if (indent === null || indent.length === 0) {
-         return "";
-      }
-
-      // Try cutting off a tab.
-      var tabIndex = indent.indexOf("\t");
-      if (tabIndex != -1) {
-         return indent.substring(0, tabIndex) +
-            indent.substring(tabIndex + 1, indent.length);
-      }
-
-      // Otherwise, try to remove a 'tabSize' number of spaces
-      var numLeadingSpaces = 0;
-      for (var i = 0; i < tabSize && i < indent.length; i++) {
-         if (indent[i] === " ") {
-            numLeadingSpaces++;
-         }
-      }
-      
-      return indent.substring(numLeadingSpaces, indent.length);
-      
-   };
-
    this.getNextLineIndent = function(state, line, tab, tabSize, row, dontSubset) {
 
       // Defer to the R language indentation rules when in R language mode

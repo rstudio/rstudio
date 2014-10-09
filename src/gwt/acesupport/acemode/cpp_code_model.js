@@ -317,11 +317,13 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
             }
          }
 
+         // If we hit a '::', pop over it and repeat
          if (clonedCursor.currentValue() === "::") {
             clonedCursor.moveToPreviousToken();
             continue;
          }
 
+         // The cursor should now be on an identifier.
          if (clonedCursor.currentType() !== "identifier") {
             return false;
          }
@@ -684,63 +686,6 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
       return -1;
    };
 
-   this.indentNakedTokens = function(doc, indent, tab, row, line) {
-
-      if (typeof line === "undefined") {
-         line = this.getLineSansComments(doc, row);
-      }
-
-      // Generic 'naked-looking' tokens -- e.g.
-      //
-      //   BOOST_FOREACH()
-      //       ^
-      var reNaked = /^\s*[\w_:]+\s*$|^\s*[\w_:]+\s*\(.*\)\s*$/;
-
-      // First, check for an indentation
-      if (
-         (charCount(line, "(") === charCount(line, ")")) &&
-         (reNaked.test(line) || this.reNakedMatch(line))
-      ) {
-         return indent + tab;
-      }
-
-      // If the line ends with a semicolon, try walking up naked
-      // block generating tokens
-      var lastLine = this.getLineSansComments(doc, row - 1);
-
-      if (/;\s*$/.test(line) && (reNaked.test(lastLine) || this.reNakedMatch(lastLine))) {
-
-         // Quit if we hit a class access modifier -- this is
-         // a workaround for walking over e.g.
-         //
-         //   public:
-         //       foo () {};
-         //       ^
-         if (/^\s*public\s*:\s*$|^\s*private\s*:\s*$|^\s*protected\s*:\s*$/.test(lastLine)) {
-            return indent;
-         }
-
-         var lookbackRow = row - 1;
-         while (reNaked.test(lastLine) || this.reNakedMatch(lastLine)) {
-
-            // Quit if we encountered an 'if' or 'else'
-            if (this.reNakedBlockTokens["if"].test(lastLine) ||
-                this.reNakedBlockTokens["else"].test(lastLine) ||
-                this.reNakedBlockTokens["elseif"].test(lastLine)) {
-               return lookbackRow;
-            }
-            lookbackRow--;
-            lastLine = this.getLineSansComments(doc, lookbackRow);
-         }
-         
-         return lookbackRow + 1;
-         
-      }
-
-      return null;
-
-   };
-
    this.getNextLineIndent = function(row, line, state, tab, tabSize, dontSubset) {
 
       // Ask the R code model if we want to use vertical alignment
@@ -748,6 +693,21 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
       var session = this.$session;
       var doc = session.getDocument();
+
+      // If we went back too far, use the first row for indentation.
+      if (row === -1) {
+         var lineZero = doc.getLine(0);
+         if (lineZero.length > 0) {
+            return this.$getIndent(lineZero);
+         } else {
+            return "";
+         }
+      }
+
+      // If the line is blank, try looking back for indentation.
+      if (line.length === 0) {
+         return this.getNextLineIndent(row - 1, doc.getLine(row - 1), state, tab, tabSize, dontSubset);
+      }
 
       var indent = this.$getIndent(line);
       var unindent = this.$getUnindent(line, tabSize);
@@ -834,7 +794,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
          } else if (line.length === 0 ||
                     /^\s*$/.test(line))
          {
-            return this.$getIndent(line);
+            return this.$getIndent(lines[row]);
          }
          
          var cursor = session.getSelection().getCursor();

@@ -30,7 +30,7 @@
 <body>
 
 <h2>Interactive Tester</h2>
-<div id="editor" style="width: 600px; height: 200px; border: 1px solid #999"></div>
+<div id="editor" style="width: 600px; height: 200px; border: 1px solid #999" onkeypress="doIndent()"></div>
 <div id="testEditor" style="display: none;"></div>
 
 <div style="height: 200px;"></div>
@@ -608,7 +608,7 @@ var Document = require('ace/document').Document;
 var CppMode = require('mode/c_cpp').Mode;
 var EditSession = require("ace/edit_session").EditSession;
 var Range = require("ace/range").Range;
- 
+
 require('mode/auto_brace_insert').setInsertMatching(true);
 
 var editor = ace.edit('editor');
@@ -621,56 +621,63 @@ var session = editor.getSession();
 
 (function() {
   
-   this.reindent = function() {
-      var mode = this.getMode();
-      if (!mode.getNextLineIndent)
-         return;
-      var start = 0;
-      var end = this.getDocument().$lines.length - 1;
-      for (var i = start; i <= end; i++) {
+  this.reindent = function(start, end) {
+    var mode = this.getMode();
+    if (!mode.getNextLineIndent)
+      return;
+    
+    if (typeof start === "undefined") {
+      start = 0;
+    }
 
-         // First line is always unindented
-         if (i == 0) {
-            this.applyIndent(i, "");
-         }
-         else {
-            var state = this.getState(i-1);
-            if (state == 'qstring' || state == 'qqstring')
-               continue;
-            var line = this.getLine(i-1);
-            var newline = this.getLine(i);
+    if (typeof end === "undefined") {
+      end = this.getDocument().$lines.length - 1;
+    }
+    
+    for (var i = start; i <= end; i++) {
 
-            var newIndent = mode.getNextLineIndent(state,
-                                                   line,
-                                                   this.getTabString(),
-                                                   this.getTabSize(),
-                                                   i-1,
-                                                   true);
-
-            this.applyIndent(i, newIndent);
-            mode.autoOutdent(state, this, i);
-         }
+      // First line is always unindented
+      if (i == 0) {
+        this.applyIndent(i, "");
       }
-   };
+      else {
+        var state = this.getState(i-1);
+        if (state == 'qstring' || state == 'qqstring')
+          continue;
+        var line = this.getLine(i-1);
+        var newline = this.getLine(i);
+
+        var newIndent = mode.getNextLineIndent(state,
+                                               line,
+                                               this.getTabString(),
+                                               this.getTabSize(),
+                                               i-1,
+                                               true);
+
+        this.applyIndent(i, newIndent);
+        mode.autoOutdent(state, this, i);
+      }
+    }
+  };
   
-   this.applyIndent = function(lineNum, indent) {
-      var line = this.getLine(lineNum);
-      var matchLen = line.match(/^\s*/g)[0].length;
-      this.replace(new Range(lineNum, 0, lineNum, matchLen), indent);
-   };
+  this.applyIndent = function(lineNum, indent) {
+    var line = this.getLine(lineNum);
+    var matchLen = line.match(/^\s*/g)[0].length;
+    this.replace(new Range(lineNum, 0, lineNum, matchLen), indent);
+  };
 
 }).call(EditSession.prototype);
 
 var testEditor = ace.edit('testEditor');
- 
+
 // need to disable behaviours because they fudge with the test indentation
 testEditor.setBehavioursEnabled(false);
- 
+
 testEditor.getSession().setMode(
-   new CppMode(false,
-               testEditor.getSession().getDocument(),
-               testEditor.getSession()));
- 
+  new CppMode(false,
+              testEditor.getSession().getDocument(),
+              testEditor.getSession()));
+
 function doIndentTest(el, state) {
 
   // Clean out document, tokens from the test editor
@@ -704,7 +711,7 @@ function doIndentTest(el, state) {
   if (state.length > 0 && 
       el.getAttribute(attrName + "-" + state)) 
   {
-     attrName += ("-" + state);
+    attrName += ("-" + state);
   }
 
   var skip = el.getAttribute(state + "-skip") !== null;
@@ -712,7 +719,7 @@ function doIndentTest(el, state) {
     el.style.backgroundColor = "#DDD";
     return true;
   } else {
-  
+    
     var expected = el.getAttribute(attrName);
     if (expected == indent.length + "")
     {
@@ -739,47 +746,60 @@ for (var i = 0; i < states.length; i++)
   require('mode/r_code_model').setVerticallyAlignFunctionArgs(
     states[i] === "vertical-args");
   
-   // Clone the tests for the new state
-   var testnode = container.cloneNode(true);
-   var header = document.createElement("h2");
-   header.innerText = "Test " + (i + 1) + (
-      states[i].length > 0 ? 
-         ": " + states[i] : 
-         "");
-   container.parentNode.appendChild(header);
-   container.parentNode.appendChild(testnode);
-   testnode.style.display = "block";
-   pres = testnode.getElementsByTagName("pre");
-   for (var j = 0; j < pres.length; j++)
-   {
-     if (!test)
-     {
-       if (doIndentTest(pres[j], states[i], session))
-         passed++;
-       else
-         failed++;
-     }
-     else
-     {
-       if (pres[j] != test)
-         pres[j].style.display = 'none';
-     }
-   }
+  // Clone the tests for the new state
+  var testnode = container.cloneNode(true);
+  var header = document.createElement("h2");
+  header.innerText = "Test " + (i + 1) + (
+    states[i].length > 0 ? 
+                                          ": " + states[i] : 
+                                          "");
+  container.parentNode.appendChild(header);
+  container.parentNode.appendChild(testnode);
+  testnode.style.display = "block";
+  pres = testnode.getElementsByTagName("pre");
+  for (var j = 0; j < pres.length; j++)
+  {
+    if (!test)
+    {
+      if (doIndentTest(pres[j], states[i], session))
+        passed++;
+      else
+        failed++;
+    }
+    else
+    {
+      if (pres[j] != test)
+        pres[j].style.display = 'none';
+    }
+  }
 }
 
 // turn vertical alignment back on now that we're done
 require('mode/r_code_model').setVerticallyAlignFunctionArgs(true);
- 
+
 if (test)
 {
- if (doIndentTest(test))
+  if (doIndentTest(test))
     passed++;
   else
     failed++;
 }
- 
+
 document.getElementById('passed').innerText = passed;
 document.getElementById('failed').innerText = failed;
+
+function doIndent() {
+
+  var e = window.event;
+  if (e.metaKey && e.which === 105) {
+    var cursor = editor.getCursorPosition();
+    editor.getSession().reindent(cursor.row, cursor.row);
+    editor.moveCursorToPosition({
+      row: cursor.row + 1,
+      column: cursor.column
+    });
+  }
+}
 
 </script>
 </body>
