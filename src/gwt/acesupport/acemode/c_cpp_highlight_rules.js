@@ -151,7 +151,7 @@ var c_cppHighlightRules = function() {
                 regex : reOperatorTokens
             }, {
                 token : "punctuation.operator",
-                regex : "\\?|\\:|\\,|\\;|\\."
+                regex : "\\?|\\:|\\,|\\;|\\.|\\\\"
             }, {
                 // Obviously these are neither keywords nor operators, but
                 // labelling them as such was the easiest way to get them

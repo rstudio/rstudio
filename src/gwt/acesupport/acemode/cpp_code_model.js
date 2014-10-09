@@ -302,158 +302,184 @@ var CppCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       // the appropriate indentation.
       if (this.$tokenUtils.$tokenizeUpToRow(row)) {
 
-         // The brace should be the last token on the line -- place it there.
-         // But the behaviour rules might insert a closing '}' or ';', so we'll
-         // also try to walk back tokens to get the opening brace.
-         //
-         // This is necessary for the auto-outdenting -- it will see a line with
-         // e.g. '{};'
-         // and we want to select the '{' token on that line.
-         var tokenCursor = new TokenCursor(this.$tokens);
+         try {
 
-         tokenCursor.$row = row;
-         tokenCursor.$offset = this.$tokens[row].length - 1;
+            // Remove any trailing '\' tokens, then reapply them. This way, indentation
+            // will work even in 'macro mode'.
+            var tokens = new Array(this.$tokens.length);
 
-         // Try to find an open brace on this line (okay if we fail)
-         while (tokenCursor.currentValue() !== "{") {
-
-            if (tokenCursor.$row !== row) {
-               return -1;
-            }
-            
-            if (!tokenCursor.moveToPreviousToken()) {
-               return -1;
-            }
-
-            if (tokenCursor.$offset < 0) {
-               break;
-            }
-
-            if (typeof tokenCursor.currentValue() === "undefined") {
-               break;
-            }
-
-         }
-      
-         // Move backwards over matching parens. Note that we may need to walk up
-         // e.g. a constructor's initialization list, so we need to check for
-         //
-         //     , a_(a)
-         //
-         // so we need to look two tokens backwards to see if it's a
-         // comma or a colon.
-         debugCursor("Before moving over initialization list", tokenCursor);
-         bwdOverInitializationList(tokenCursor);
-
-         debugCursor("Before moving over class inheritance", tokenCursor);
-         bwdOverClassInheritance(tokenCursor);
-
-         // If we didn't walk over anything previously, the cursor
-         // will still be on the same '{'.  Walk backwards one token.
-         if (tokenCursor.currentValue() === "{") {
-            if (!tokenCursor.moveToPreviousToken()) {
-               return -1;
-            }
-         }
-
-         // Bail if we encountered a '{'
-         if (tokenCursor.currentValue() === "{") {
-            return -1;
-         }
-
-         // Move backwards over any keywords.
-         debugCursor("Before walking over keywords", tokenCursor);
-         while (tokenCursor.currentType() === "keyword") {
-
-            // Return on 'control flow' keywords.
-            var value = tokenCursor.currentValue();
-            if (["if", "else", "for", "while", "do", "struct", "class"].some(function(x) { return x === value; })) {
-               return tokenCursor.$row;
-            }
-
-            if (tokenCursor.$row === 0 && tokenCursor.$offset === 0) {
-               return tokenCursor.$row;
-            }
-            
-            if (!tokenCursor.moveToPreviousToken()) {
-               return -1;
-            }
-         }
-
-         // Move backwards over matching parens.
-         debugCursor("Before walking over matching parens", tokenCursor);
-
-         // If we landed on a ':' token and the previous token is
-         // e.g. public, then we went too far -- go back up one token.
-         if (tokenCursor.currentValue() === ":") {
-
-            var prevValue = tokenCursor.peekBack().currentValue();
-            if (["public", "private", "protected"].some(function(x) {
-               return x === prevValue;
-            }))
-            {
-               tokenCursor.moveToNextToken();
-            }
-            else
-            {
-               tokenCursor.moveToPreviousToken();
-            }
-         }
-
-         if (tokenCursor.currentValue() === ":") {
-
-            if (!tokenCursor.moveToPreviousToken())
-               return -1;
-
-            // We want to walk over specifiers preceeding the ':' which may
-            // specify an initializer list. We need to walk e.g.
-            //
-            //    const foo) const noexcept(bar) :
-            //
-            // so we do this by jumping parens and keywords, stopping once
-            // we hit an actual identifier.
-            do {
-
-               if (tokenCursor.currentValue() === ")") {
-                  if (tokenCursor.bwdToMatchingToken()) {
-
-                     if (tokenCursor.peekBack().currentType() === "keyword") {
-                        continue;
-                     } else {
-                        break;
-                     }
+            for (var i = 0; i < this.$tokens.length; i++) {
+               if (this.$tokens[i] != null &&
+                   this.$tokens[i].length > 0) {
+                  var rowTokens = this.$tokens[i];
+                  if (rowTokens[rowTokens.length - 1].value === "\\") {
+                     tokens[i] = this.$tokens[i].splice(rowTokens.length - 1, 1)[0];
                   }
+               } 
+            }
+
+            // The brace should be the last token on the line -- place it there.
+            // But the behaviour rules might insert a closing '}' or ';', so we'll
+            // also try to walk back tokens to get the opening brace.
+            //
+            // This is necessary for the auto-outdenting -- it will see a line with
+            // e.g. '{};'
+            // and we want to select the '{' token on that line.
+            var tokenCursor = new TokenCursor(this.$tokens);
+
+            tokenCursor.$row = row;
+            tokenCursor.$offset = this.$tokens[row].length - 1;
+
+            // Try to find an open brace on this line (okay if we fail)
+            while (tokenCursor.currentValue() !== "{") {
+
+               if (tokenCursor.$row !== row) {
+                  return -1;
+               }
+               
+               if (!tokenCursor.moveToPreviousToken()) {
+                  return -1;
                }
 
-               if (tokenCursor.currentType() === "identifier")
+               if (tokenCursor.$offset < 0) {
                   break;
+               }
 
-            } while (tokenCursor.moveToPreviousToken());
+               if (typeof tokenCursor.currentValue() === "undefined") {
+                  break;
+               }
 
-         }
+            }
+            
+            // Move backwards over matching parens. Note that we may need to walk up
+            // e.g. a constructor's initialization list, so we need to check for
+            //
+            //     , a_(a)
+            //
+            // so we need to look two tokens backwards to see if it's a
+            // comma or a colon.
+            debugCursor("Before moving over initialization list", tokenCursor);
+            bwdOverInitializationList(tokenCursor);
 
-         if (tokenCursor.currentValue() === ")") {
-            if (!tokenCursor.bwdToMatchingToken()) {
+            debugCursor("Before moving over class inheritance", tokenCursor);
+            bwdOverClassInheritance(tokenCursor);
+
+            // If we didn't walk over anything previously, the cursor
+            // will still be on the same '{'.  Walk backwards one token.
+            if (tokenCursor.currentValue() === "{") {
+               if (!tokenCursor.moveToPreviousToken()) {
+                  return -1;
+               }
+            }
+
+            // Bail if we encountered a '{'
+            if (tokenCursor.currentValue() === "{") {
                return -1;
             }
-         }
 
-         if (tokenCursor.currentValue() === "(") {
-            if (!tokenCursor.moveToPreviousToken()) {
-               return -1;
+            // Move backwards over any keywords.
+            debugCursor("Before walking over keywords", tokenCursor);
+            while (tokenCursor.currentType() === "keyword") {
+
+               // Return on 'control flow' keywords.
+               var value = tokenCursor.currentValue();
+               if (["if", "else", "for", "while", "do", "struct", "class"].some(function(x) { return x === value; })) {
+                  return tokenCursor.$row;
+               }
+
+               if (tokenCursor.$row === 0 && tokenCursor.$offset === 0) {
+                  return tokenCursor.$row;
+               }
+               
+               if (!tokenCursor.moveToPreviousToken()) {
+                  return -1;
+               }
             }
-         }
 
-         // Use this row for indentation.
-         debugCursor("Ended at", tokenCursor);
-         if (tokenCursor.currentValue() === "=") {
-            if (tokenCursor.moveToPreviousToken()) {
-               return tokenCursor.$row;
+            // Move backwards over matching parens.
+            debugCursor("Before walking over matching parens", tokenCursor);
+
+            // If we landed on a ':' token and the previous token is
+            // e.g. public, then we went too far -- go back up one token.
+            if (tokenCursor.currentValue() === ":") {
+
+               var prevValue = tokenCursor.peekBack().currentValue();
+               if (["public", "private", "protected"].some(function(x) {
+                  return x === prevValue;
+               }))
+               {
+                  tokenCursor.moveToNextToken();
+               }
+               else
+               {
+                  tokenCursor.moveToPreviousToken();
+               }
             }
+
+            if (tokenCursor.currentValue() === ":") {
+
+               if (!tokenCursor.moveToPreviousToken())
+                  return -1;
+
+               // We want to walk over specifiers preceeding the ':' which may
+               // specify an initializer list. We need to walk e.g.
+               //
+               //    const foo) const noexcept(bar) :
+               //
+               // so we do this by jumping parens and keywords, stopping once
+               // we hit an actual identifier.
+               do {
+
+                  if (tokenCursor.currentValue() === ")") {
+                     if (tokenCursor.bwdToMatchingToken()) {
+
+                        if (tokenCursor.peekBack().currentType() === "keyword") {
+                           continue;
+                        } else {
+                           break;
+                        }
+                     }
+                  }
+
+                  if (tokenCursor.currentType() === "identifier")
+                     break;
+
+               } while (tokenCursor.moveToPreviousToken());
+
+            }
+
+            if (tokenCursor.currentValue() === ")") {
+               if (!tokenCursor.bwdToMatchingToken()) {
+                  return -1;
+               }
+            }
+
+            if (tokenCursor.currentValue() === "(") {
+               if (!tokenCursor.moveToPreviousToken()) {
+                  return -1;
+               }
+            }
+
+            // Use this row for indentation.
+            debugCursor("Ended at", tokenCursor);
+            if (tokenCursor.currentValue() === "=") {
+               if (tokenCursor.moveToPreviousToken()) {
+                  return tokenCursor.$row;
+               }
+            }
+
+            return tokenCursor.$row;
+            
+         } finally {
+
+            for (var i = 0; i < tokens.length; i++) {
+               if (typeof tokens[i] !== "undefined") {
+                  this.$tokens[i].push(tokens[i]);
+               }
+            }
+            
          }
 
-         return tokenCursor.$row;
-         
       }
 
       // Give up

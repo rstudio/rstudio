@@ -171,7 +171,7 @@ var TokenCursor = function(tokens, row, offset) {
       var thisValue = this.currentValue();
       var compValue = $complements[thisValue];
 
-      var isCloser = [")", "}", "]", ">", "'", "\""].some(function(x) {
+      var isCloser = [")", "}", "]"].some(function(x) {
          return x === thisValue;
       });
 
@@ -206,7 +206,7 @@ var TokenCursor = function(tokens, row, offset) {
       var thisValue = this.currentValue();
       var compValue = $complements[thisValue];
 
-      var isOpener = ["(", "{", "[", "<", "'", "\""].some(function(x) {
+      var isOpener = ["(", "{", "["].some(function(x) {
          return x === thisValue;
       });
 

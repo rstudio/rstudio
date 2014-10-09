@@ -82,6 +82,7 @@ var Mode = function(suppressHighlighting, doc, session) {
    if (!window.NodeWebkit)     
       this.foldingRules = new CppStyleFoldMode();
 
+   this.$tokens = this.$codeModel.$tokens;
    this.getLineSansComments = this.$codeModel.getLineSansComments;
 
 };
@@ -299,9 +300,14 @@ oop.inherits(Mode, TextMode);
          // effectively leverage the indentation rules within macro settings.
          line = this.getLineSansComments(doc, row);
 
-         // If this line is just whitespace, match that indent. Otherwise
-         // multiple presses of enter can send the cursor off into space.
-         if (line.length > 0 && /^\s*$/.test(line)) {
+         // If this line is just whitespace, match that line's indent. This
+         // ensures multiple enter keypresses can blast the cursor off into
+         // space.
+         if (typeof line !== "string") {
+            return "";
+         } else if (line.length === 0 ||
+                    /^\s*$/.test(line))
+         {
             return this.$getIndent(line);
          }
          
@@ -326,7 +332,7 @@ oop.inherits(Mode, TextMode);
          //   #include <header>
          //   ^
          if (/>\s*$/.test(line)) {
-            if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row)) {
+            if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row + 1)) {
                var tokenCursor = new TokenCursor(this.$codeModel.$tokens, row, 0);
                if (tokenCursor.bwdToMatchingToken()) {
                   return this.$getIndent(lines[tokenCursor.$row]);
@@ -530,266 +536,292 @@ oop.inherits(Mode, TextMode);
          }
 
          // Try token walking
-         if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row + 1)) {
+         if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row + 2)) {
 
-            var tokenCursor = new TokenCursor(
-               this.$codeModel.$tokens,
-               row,
-               this.$codeModel.$tokens[row].length - 1
-            );
+            try {
+               
+               // Remove any trailing '\' tokens, then reapply them. This way, indentation
+               // will work even in 'macro mode'.
+               var tokens = new Array(this.$tokens.length);
 
-            // If there is no token on this current line (this can occur when this code
-            // is accessed by e.g. the matching brace offset code) then move back
-            // to the previous row
-            while (tokenCursor.$offset === -1 && tokenCursor.$row > 0) {
-               tokenCursor.$row--;
-               tokenCursor.$offset = tokenCursor.$tokens[tokenCursor.$row].length - 1;
-            }
-
-            // Set additional indent based on the first character
-            var additionalIndent = "";
-
-            // Keep track of where we started
-
-            var startCursor = tokenCursor.cloneCursor();
-            var startValue = startCursor.currentValue();
-            var startType = startCursor.currentType();
-            
-            if (startType === "constant" ||
-                startType === "keyword" || 
-                ["{", ")", ">", ":"].some(function(x) {
-                   return x === startValue;
-                })) {
-               additionalIndent = tab;
-            }
-
-            // Move over any initial semicolons
-            while (tokenCursor.currentValue() === ";") {
-               if (!tokenCursor.moveToPreviousToken()) {
-                  break;
-               }
-            }
-
-            var lastCursor = tokenCursor.cloneCursor();
-            var walkedOverParens = false;
-
-            // If the token cursor is on a comma...
-            if (tokenCursor.currentValue() === ",") {
-
-               // ... and the previous character is a ']', find its match for indentation.
-               if ($verticallyAlignFunctionArgs) {
-                  var peekOne = tokenCursor.peekBack();
-                  if (peekOne.currentValue() === "]") {
-                     if (peekOne.bwdToMatchingToken()) {
-                        return new Array(peekOne.currentPosition().column + 1).join(" ");
+               for (var i = 0; i < this.$tokens.length; i++) {
+                  if (this.$tokens[i] != null &&
+                      this.$tokens[i].length > 0) {
+                     var rowTokens = this.$tokens[i];
+                     if (rowTokens[rowTokens.length - 1].value === "\\") {
+                        tokens[i] = this.$tokens[i].splice(rowTokens.length - 1, 1)[0];
                      }
+                  } 
+               }
+
+               var tokenCursor = new TokenCursor(
+                  this.$codeModel.$tokens,
+                  row,
+                  this.$codeModel.$tokens[row].length - 1
+               );
+
+               // If there is no token on this current line (this can occur when this code
+               // is accessed by e.g. the matching brace offset code) then move back
+               // to the previous row
+               while (tokenCursor.$offset === -1 && tokenCursor.$row > 0) {
+                  tokenCursor.$row--;
+                  tokenCursor.$offset = tokenCursor.$tokens[tokenCursor.$row].length - 1;
+               }
+
+               // Set additional indent based on the first character
+               var additionalIndent = "";
+
+               // Keep track of where we started
+
+               var startCursor = tokenCursor.cloneCursor();
+               var startValue = startCursor.currentValue();
+               var startType = startCursor.currentType();
+               
+               if (startType === "constant" ||
+                   startType === "keyword" || 
+                   ["{", ")", ">", ":"].some(function(x) {
+                      return x === startValue;
+                   })) {
+                  additionalIndent = tab;
+               }
+
+               // Move over any initial semicolons
+               while (tokenCursor.currentValue() === ";") {
+                  if (!tokenCursor.moveToPreviousToken()) {
+                     break;
                   }
                }
 
-               // ... and there are more opening parens than closing on the line,
-               // then vertically align
-               if ($verticallyAlignFunctionArgs) {
-                  var balance = line.split("(").length - line.split(")").length;
-                  if (balance > 0) {
-                     var parenMatch = line.match(/\(\s*(.)/);
-                     if (parenMatch) {
-                        return new Array(parenMatch.index + 1).join(" ");
-                     }
-                  }
-               }
+               var lastCursor = tokenCursor.cloneCursor();
+               var walkedOverParens = false;
 
-               // ... just return the indent of the current line
-               return this.$getIndent(lines[row]);
-            }
+               // If the token cursor is on a comma...
+               if (tokenCursor.currentValue() === ",") {
 
-            // If the token cursor is on an operator, ident if the previous
-            // token is not a class modifier token.
-            if (startType === "keyword.operator" &&
-                startValue !== ":") {
-               return this.$getIndent(lines[row]) + tab;
-            }
-
-            // If we started on an opening '<' for a template, indent.
-            if (startValue === "<") {
-               if (startCursor.peekBack().currentValue() === "template") {
-                  return this.$getIndent(lines[row]) + tab;
-               }
-            }
-
-            while (true) {
-
-               // Stop conditions:
-
-               // The token cursor is undefined (we moved past the start of the
-               // document)
-               if (typeof tokenCursor.currentValue() === "undefined") {
-                  if (typeof lastCursor.currentValue() !== "undefined") {
-                     return this.$getIndent(lines[lastCursor.$row]) + additionalIndent;
-                  }
-                  return additionalIndent;
-               }
-
-               lastCursor = tokenCursor.cloneCursor();
-
-               // We hit a semi-colon -- use the first token after that semi-colon.
-               if (tokenCursor.currentValue() === ";") {
-                  if (tokenCursor.moveToNextToken()) {
-                     return this.$getIndent(lines[tokenCursor.$row]) + additionalIndent;
-                  }
-               }
-
-               // We hit a 'control flow' keyword ...
-               if (["for", "while", "do", "try"].some(function(x) {
-                  return x === tokenCursor.currentValue();
-               }))
-               {
-                  // ... and the first token wasn't a semi-colon, then indent
-                  if (startValue !== ";") {
-                     return this.$getIndent(lines[tokenCursor.$row]) + additionalIndent;
-                  }
-                  
-               }
-
-               // We hit a ':'...
-               var peekOne = tokenCursor.peekBack();
-               if (tokenCursor.currentValue() === ":") {
-
-                  // ... preceeded by a class access modifier
-                  if (["public", "private", "protected"].some(function(x) {
-                     return x === peekOne.currentValue();
-                  }))
-                  {
-                     // Indent once relative to the 'public:'s indentation.
-                     return this.$getIndent(lines[peekOne.$row]) + tab;
-                  }
-
-                  // ... with a line starting with 'case'
-                  var maybeCaseLine = lines[tokenCursor.$row];
-                  if (/^\s*case/.test(maybeCaseLine)) {
-                     return this.$getIndent(maybeCaseLine) + tab;
-                  }
-
-                  // ... opening an initialization list
-                  if (peekOne.currentValue() === ")") {
-                     var clone = peekOne.cloneCursor();
-                     if (clone.bwdToMatchingToken()) {
-
-                        var peek1 = clone.peekBack(1);
-                        var peek2 = clone.peekBack(2);
-
-                        if (
-                           (peek1 !== null && peek1.currentType() === "identifier") &&
-                           (peek2 !== null && !/\boperator\b/.test(peek2.currentType()))
-                        )
-                        {
-                           
-                           return this.$getIndent(lines[clone.peekBack().$row]) + additionalIndent;
+                  // ... and the previous character is a ']', find its match for indentation.
+                  if ($verticallyAlignFunctionArgs) {
+                     var peekOne = tokenCursor.peekBack();
+                     if (peekOne.currentValue() === "]") {
+                        if (peekOne.bwdToMatchingToken()) {
+                           return new Array(peekOne.currentPosition().column + 1).join(" ");
                         }
                      }
                   }
-               }
 
-               // We hit a '[]()' lambda expression.
-               if (tokenCursor.currentValue() === "]" &&
-                   tokenCursor.peekFwd().currentValue() === "(") {
-                  var clone = tokenCursor.cloneCursor();
-                  if (clone.bwdToMatchingToken()) {
-                     return this.$getIndent(lines[clone.$row]) + additionalIndent;
-                  }
-               }
-
-               // Vertical alignment for e.g. 'for ( ... ;'.
-               //
-               // NOTE: Any ')' token found with a match _will have been jumped over_,
-               // so we can assume that any opening token found does not have a match.
-               if (tokenCursor.currentValue() === "(" &&
-                   peekOne.currentValue() === "for" &&
-                   startValue === ";")
-               {
-                  
-                  // Find the matching paren for the '(' after the cursor
-                  var lookaheadCursor = tokenCursor.peekFwd().cloneCursor();
-
-                  return $verticallyAlignFunctionArgs ?
-                     new Array(tokenCursor.peekFwd().currentPosition().column + 1).join(" ") :
-                     this.$getIndent(lines[tokenCursor.peekFwd().$row]) + tab;
-                     
-               }
-
-               // Alignment for e.g.
-               // int foo(int
-               //
-               //             ^
-               if ($verticallyAlignFunctionArgs) {
-                  if (tokenCursor.currentValue() === "(" &&
-                      !tokenCursor.isLastSignificantTokenOnLine())
-                  {
-                     tokenCursor.moveToNextToken();
-                     return new Array(tokenCursor.currentPosition().column + 1 + tabSize).join(" ");
-                     
-                  }
-               }
-
-               // We hit an 'if'
-               if (tokenCursor.currentValue() === "if" ||
-                   tokenCursor.currentValue() === "else") {
-                  return this.$getIndent(lines[tokenCursor.$row]) + additionalIndent;
-               }
-
-               // We hit 'template <'
-               if (tokenCursor.currentValue() === "template" &&
-                   tokenCursor.peekFwd().currentValue() === "<")
-               {
-                  return this.$getIndent(lines[tokenCursor.$row]);
-               }
-
-               // We hit an '{'
-               if (tokenCursor.currentValue() === "{") {
-
-                  var openBraceIndentRow = this.$codeModel.getRowForOpenBraceIndent(session, tokenCursor.$row);
-                  if (openBraceIndentRow >= 0) {
-                     
-                     // Don't indent if the brace is on the same line as a 'namespace' token
-                     var line = this.getLineSansComments(doc, openBraceIndentRow);
-                     var indent = this.$getIndent(line);
-                     
-                     return /\bnamespace\b/.test(line) ?
-                        indent :
-                        indent + tab;
-                     
-                  } else {
-                     return this.$getIndent(lines[tokenCursor.$row]) + tab;
-                  }
-               }
-
-               // We hit a preprocessor token
-               if (/\bpreproc\b/.test(tokenCursor.currentType())) {
-                  return this.$getIndent(lines[tokenCursor.$row]);
-               }
-
-               // We're at the start of the document
-               if (tokenCursor.$row === 0 && tokenCursor.$offset === 0) {
-                  return this.$getIndent(lines[0]) + additionalIndent;
-               }
-
-               // Walking:
-
-               // Step over parens. Walk over '>' only if the next token
-               // is a 'class' or 'struct'.
-               if ([")", "}", "]"].some(function(x) {
-                  return x === tokenCursor.currentValue();
-               }) ||
-                   (tokenCursor.currentValue() === ">" &&
-                    tokenCursor.peekFwd().currentType() === "keyword"))
-               {
-                  if (tokenCursor.bwdToMatchingToken()) {
-                     if (tokenCursor.currentValue() === "(") {
-                        walkedOverParens = true;
+                  // ... and there are more opening parens than closing on the line,
+                  // then vertically align
+                  if ($verticallyAlignFunctionArgs) {
+                     var balance = line.split("(").length - line.split(")").length;
+                     if (balance > 0) {
+                        var parenMatch = line.match(/\(\s*(.)/);
+                        if (parenMatch) {
+                           return new Array(parenMatch.index + 1).join(" ");
+                        }
                      }
                   }
+
+                  // ... just return the indent of the current line
+                  return this.$getIndent(lines[row]);
                }
 
-               tokenCursor.moveToPreviousToken();
+               // If the token cursor is on an operator, ident if the previous
+               // token is not a class modifier token.
+               if (startType === "keyword.operator" &&
+                   startValue !== ":") {
+                  return this.$getIndent(lines[row]) + tab;
+               }
+
+               // If we started on an opening '<' for a template, indent.
+               if (startValue === "<") {
+                  if (startCursor.peekBack().currentValue() === "template") {
+                     return this.$getIndent(lines[row]) + tab;
+                  }
+               }
+
+               while (true) {
+
+                  // Stop conditions:
+
+                  // The token cursor is undefined (we moved past the start of the
+                  // document)
+                  if (typeof tokenCursor.currentValue() === "undefined") {
+                     if (typeof lastCursor.currentValue() !== "undefined") {
+                        return this.$getIndent(lines[lastCursor.$row]) + additionalIndent;
+                     }
+                     return additionalIndent;
+                  }
+
+                  lastCursor = tokenCursor.cloneCursor();
+
+                  // We hit a semi-colon -- use the first token after that semi-colon.
+                  if (tokenCursor.currentValue() === ";") {
+                     if (tokenCursor.moveToNextToken()) {
+                        return this.$getIndent(lines[tokenCursor.$row]) + additionalIndent;
+                     }
+                  }
+
+                  // We hit a 'control flow' keyword ...
+                  if (["for", "while", "do", "try"].some(function(x) {
+                     return x === tokenCursor.currentValue();
+                  }))
+                  {
+                     // ... and the first token wasn't a semi-colon, then indent
+                     if (startValue !== ";") {
+                        return this.$getIndent(lines[tokenCursor.$row]) + additionalIndent;
+                     }
+                     
+                  }
+
+                  // We hit a ':'...
+                  var peekOne = tokenCursor.peekBack();
+                  if (tokenCursor.currentValue() === ":") {
+
+                     // ... preceeded by a class access modifier
+                     if (["public", "private", "protected"].some(function(x) {
+                        return x === peekOne.currentValue();
+                     }))
+                     {
+                        // Indent once relative to the 'public:'s indentation.
+                        return this.$getIndent(lines[peekOne.$row]) + tab;
+                     }
+
+                     // ... with a line starting with 'case'
+                     var maybeCaseLine = lines[tokenCursor.$row];
+                     if (/^\s*case/.test(maybeCaseLine)) {
+                        return this.$getIndent(maybeCaseLine) + tab;
+                     }
+
+                     // ... opening an initialization list
+                     if (peekOne.currentValue() === ")") {
+                        var clone = peekOne.cloneCursor();
+                        if (clone.bwdToMatchingToken()) {
+
+                           var peek1 = clone.peekBack(1);
+                           var peek2 = clone.peekBack(2);
+
+                           if (
+                              (peek1 !== null && peek1.currentType() === "identifier") &&
+                                 (peek2 !== null && !/\boperator\b/.test(peek2.currentType()))
+                           )
+                           {
+                              
+                              return this.$getIndent(lines[clone.peekBack().$row]) + additionalIndent;
+                           }
+                        }
+                     }
+                  }
+
+                  // We hit a '[]()' lambda expression.
+                  if (tokenCursor.currentValue() === "]" &&
+                      tokenCursor.peekFwd().currentValue() === "(") {
+                     var clone = tokenCursor.cloneCursor();
+                     if (clone.bwdToMatchingToken()) {
+                        return this.$getIndent(lines[clone.$row]) + additionalIndent;
+                     }
+                  }
+
+                  // Vertical alignment for e.g. 'for ( ... ;'.
+                  //
+                  // NOTE: Any ')' token found with a match _will have been jumped over_,
+                  // so we can assume that any opening token found does not have a match.
+                  if (tokenCursor.currentValue() === "(" &&
+                      peekOne.currentValue() === "for" &&
+                      startValue === ";")
+                  {
+                     
+                     // Find the matching paren for the '(' after the cursor
+                     var lookaheadCursor = tokenCursor.peekFwd().cloneCursor();
+
+                     return $verticallyAlignFunctionArgs ?
+                        new Array(tokenCursor.peekFwd().currentPosition().column + 1).join(" ") :
+                        this.$getIndent(lines[tokenCursor.peekFwd().$row]) + tab;
+                     
+                  }
+
+                  // Alignment for e.g.
+                  // int foo(int
+                  //
+                  //             ^
+                  if ($verticallyAlignFunctionArgs) {
+                     if (tokenCursor.currentValue() === "(" &&
+                         !tokenCursor.isLastSignificantTokenOnLine())
+                     {
+                        tokenCursor.moveToNextToken();
+                        return new Array(tokenCursor.currentPosition().column + 1 + tabSize).join(" ");
+                        
+                     }
+                  }
+
+                  // We hit an 'if'
+                  if (tokenCursor.currentValue() === "if" ||
+                      tokenCursor.currentValue() === "else") {
+                     return this.$getIndent(lines[tokenCursor.$row]) + additionalIndent;
+                  }
+
+                  // We hit 'template <'
+                  if (tokenCursor.currentValue() === "template" &&
+                      tokenCursor.peekFwd().currentValue() === "<")
+                  {
+                     return this.$getIndent(lines[tokenCursor.$row]);
+                  }
+
+                  // We hit an '{'
+                  if (tokenCursor.currentValue() === "{") {
+
+                     var openBraceIndentRow = this.$codeModel.getRowForOpenBraceIndent(session, tokenCursor.$row);
+                     if (openBraceIndentRow >= 0) {
+                        
+                        // Don't indent if the brace is on the same line as a 'namespace' token
+                        var line = this.getLineSansComments(doc, openBraceIndentRow);
+                        var indent = this.$getIndent(line);
+                        
+                        return /\bnamespace\b/.test(line) ?
+                           indent :
+                           indent + tab;
+                        
+                     } else {
+                        return this.$getIndent(lines[tokenCursor.$row]) + tab;
+                     }
+                  }
+
+                  // We hit a preprocessor token
+                  if (/\bpreproc\b/.test(tokenCursor.currentType())) {
+                     return this.$getIndent(lines[tokenCursor.$row]);
+                  }
+
+                  // We're at the start of the document
+                  if (tokenCursor.$row === 0 && tokenCursor.$offset === 0) {
+                     return this.$getIndent(lines[0]) + additionalIndent;
+                  }
+
+                  // Walking:
+
+                  // Step over parens. Walk over '>' only if the next token
+                  // is a 'class' or 'struct'.
+                  if ([")", "}", "]"].some(function(x) {
+                     return x === tokenCursor.currentValue();
+                  }) ||
+                      (tokenCursor.currentValue() === ">" &&
+                       tokenCursor.peekFwd().currentType() === "keyword"))
+                  {
+                     if (tokenCursor.bwdToMatchingToken()) {
+                        if (tokenCursor.currentValue() === "(") {
+                           walkedOverParens = true;
+                        }
+                     }
+                  }
+
+                  tokenCursor.moveToPreviousToken();
+               }
+
+            } finally {
+
+               for (var i = 0; i < tokens.length; i++) {
+                  if (typeof tokens[i] !== "undefined") {
+                     this.$tokens[i].push(tokens[i]);
+                  }
+               }
+
             }
             
          }
