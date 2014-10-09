@@ -55,6 +55,10 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
       // console.log(cursor.currentToken());
    };
 
+   var controlFlowKeywords = [
+      "if", "else", "for", "do", "while", "struct", "class", "try", "catch", "switch"
+   ];
+
    this.$complements = {
       "<" : ">",
       ">" : "<",
@@ -417,7 +421,8 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
                // Return on 'control flow' keywords.
                var value = tokenCursor.currentValue();
-               if (["if", "else", "for", "while", "do", "struct", "class"].some(function(x) { return x === value; })) {
+               if (controlFlowKeywords.some(function(x) { return x === value; }))
+               {
                   return tokenCursor.$row;
                }
 
@@ -1259,7 +1264,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                      }
                   }
 
-                  // We hit an 'if'
+                  // We hit an 'if' or an 'else'
                   if (tokenCursor.currentValue() === "if" ||
                       tokenCursor.currentValue() === "else") {
                      return this.$getIndent(lines[tokenCursor.$row]) + additionalIndent;
