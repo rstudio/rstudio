@@ -131,7 +131,7 @@ var CStyleBehaviour = function(codeModel) {
          var cursor = editor.getCursorPosition();
          var line = session.doc.getLine(cursor.row);
 
-         if (this.inMacro(session.getDocument().$lines, row - 1)) {
+         if (this.$codeModel.inMacro(session.getDocument().$lines, row - 1)) {
             return;
          }
 
@@ -534,7 +534,7 @@ var CStyleBehaviour = function(codeModel) {
       }
 
       // Special rules for 'macro mode'.
-      if (/^\s*#\s*define/.test(line) || this.inMacro(lines, row - 1)) {
+      if (/^\s*#\s*define/.test(line) || this.$codeModel.inMacro(lines, row - 1)) {
 
          // Handle insertion of a '\'.
          //
