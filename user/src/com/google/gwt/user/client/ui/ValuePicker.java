@@ -108,8 +108,8 @@ public class ValuePicker<T> extends Composite
     return value;
   }
 
-  public void setAcceptableValues(Collection<T> places) {
-    cellList.setRowData(0, new ArrayList<T>(places));
+  public void setAcceptableValues(Collection<T> values) {
+    cellList.setRowData(new ArrayList<T>(values));
   }
 
   public void setPageSize(int size) {
