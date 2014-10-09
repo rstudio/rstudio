@@ -1056,7 +1056,8 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
    *
    * @param keyCode the key code that was pressed
    */
-  private void handleKeyNavigation(int keyCode) {
+  //@VisibleForTesting
+  void handleKeyNavigation(int keyCode) {
     CellTreeNodeView<?> parent = keyboardSelectedNode.getParentNode();
     int parentChildCount = (parent == null) ? 0 : parent.getChildCount();
     int index = keyboardSelectedNode.getIndex();
@@ -1097,7 +1098,7 @@ public class CellTree extends AbstractCellTree implements HasAnimation,
         if (index > 0) {
           // Deepest node of previous sibling hierarchy.
           CellTreeNodeView<?> prevSibling = parent.getChildNode(index - 1);
-          if (prevSibling.isOpen() && prevSibling.getChildCount() > 0) {
+          while (prevSibling.isOpen() && prevSibling.getChildCount() > 0) {
             prevSibling = prevSibling.getChildNode(prevSibling.getChildCount() - 1);
           }
           keyboardSelect(prevSibling, true);

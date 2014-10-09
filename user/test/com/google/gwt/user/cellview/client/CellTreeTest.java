@@ -17,12 +17,15 @@ package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.TreeViewModel;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -322,7 +325,6 @@ public class CellTreeTest extends AbstractCellTreeTestBase {
 
     // Create another tree of same structure
     CellTree anotherTree = createAbstractCellTree(model, root.getValue());
-    // Navigate to leaf
     l1Node = anotherTree.getRootTreeNode().setChildOpen(0, true); // a
     ((CellTreeNodeView.TreeNodeImpl) l1Node).flush();
 
@@ -337,6 +339,48 @@ public class CellTreeTest extends AbstractCellTreeTestBase {
     } catch (IllegalArgumentException e) {
       assertEquals(e.getMessage(), "The tree node does not belong to the tree.");
     }
+  }
+
+  public void testKeyboardNavigationForUpAndDownKeys() {
+    CellTree cellTree = (CellTree) tree;
+    TreeNode root = cellTree.getRootTreeNode();
+
+    // Open nodes: a and aj
+    TreeNode l1Node = root.setChildOpen(0, true); // a
+    assertEquals(l1Node.getValue(), "a");
+    TreeNode l2Node = l1Node.setChildOpen(9, true); // aj
+    assertEquals(l2Node.getValue(), "aj");
+    // To force tree structure changes (internal flush()).
+    assertEquals(l2Node.getChildCount(), 10);
+
+    // CellTree structure with node 'a' and 'aj' opened.
+    List<String> expectedNavigationPath = Arrays.asList("a",
+        "aa", "ab", "ac", "ad", "ae", "af", "ag", "ah", "ai", "aj",
+        "aja", "ajb", "ajc", "ajd", "aje", "ajf", "ajg", "ajh", "aji", "ajj",
+        "b", "c", "d", "e", "f", "g", "h", "i", "j");
+
+    // Default KeyboardSelected is at "a"
+    assertEquals(cellTree.getKeyboardSelectedTreeNode().getValue(), "a");
+
+    int steps = expectedNavigationPath.size() - 1;
+    assertEquals(expectedNavigationPath, repeatKeyInTree(cellTree, KeyCodes.KEY_DOWN, steps));
+
+    Collections.reverse(expectedNavigationPath);
+    assertEquals(expectedNavigationPath, repeatKeyInTree(cellTree, KeyCodes.KEY_UP, steps));
+  }
+
+  /**
+   * Repeats a keystroke in the CellTree that contains string values.
+   * @return the nodes selected before starting and after each keystroke.
+   */
+  private List<String> repeatKeyInTree(CellTree cellTree, int keyCode, int keyCount) {
+    List<String> values = new ArrayList<String>();
+    values.add((String) cellTree.getKeyboardSelectedTreeNode().getValue());
+    for (int i = 0; i < keyCount; i++) {
+      cellTree.handleKeyNavigation(keyCode);
+      values.add((String) cellTree.getKeyboardSelectedTreeNode().getValue());
+    }
+    return values;
   }
 
   @Override
