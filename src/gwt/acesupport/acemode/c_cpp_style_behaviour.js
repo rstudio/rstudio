@@ -213,6 +213,18 @@ var CStyleBehaviour = function(codeModel) {
          // when within an auto-generated {} block; e.g. as class Foo {|};
          if (thisChar == '{' && rightChar == "}") {
 
+            // If this line starts with an open brace, match that brace's indentation
+            if (/^\s*{/.test(line)) {
+
+               var nextIndent = this.$getIndent(line);
+               var indent = nextIndent + session.getTabString();
+               
+               return {
+                  text: "\n" + indent + "\n" + nextIndent,
+                  selection: [1, indent.length, 1, indent.length]
+               };
+            }
+
             // Use heuristic indentation if possible
             var heuristicRow = $codeModel.getRowForOpenBraceIndent(
                session, row

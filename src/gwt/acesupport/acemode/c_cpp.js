@@ -716,6 +716,20 @@ oop.inherits(Mode, TextMode);
                      
                }
 
+               // Alignment for e.g.
+               // int foo(int
+               //
+               //             ^
+               if ($verticallyAlignFunctionArgs) {
+                  if (tokenCursor.currentValue() === "(" &&
+                      !tokenCursor.isLastSignificantTokenOnLine())
+                  {
+                     tokenCursor.moveToNextToken();
+                     return new Array(tokenCursor.currentPosition().column + 1 + tabSize).join(" ");
+                     
+                  }
+               }
+
                // We hit an 'if'
                if (tokenCursor.currentValue() === "if" ||
                    tokenCursor.currentValue() === "else") {
