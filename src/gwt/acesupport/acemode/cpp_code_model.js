@@ -144,8 +144,6 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
       }
    };
 
-   
-
    // Move backwards over an initialization list, e.g.
    //
    //     Foo : a_(a),
@@ -813,6 +811,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
          if (cursor && cursor.row == row && !dontSubset) {
             line = line.substring(0, cursor.column);
          }
+         
          prevLine = this.getLineSansComments(doc, row - 1);
 
          // Only indent on an ending '>' if we're not in a template
@@ -1049,6 +1048,24 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                   row,
                   this.$tokens[row].length - 1
                );
+
+               // If 'dontSubset' is false, then we want to plonk the token cursor
+               // on the first token before the cursor.
+               if (!dontSubset) {
+                  var rowTokens = this.$tokens[row];
+                  if (rowTokens != null && rowTokens.length > 0) {
+                     for (var i = 0; i < rowTokens.length; i++) {
+                        var tokenColumn = rowTokens[i].column;
+                        if (tokenColumn >= cursor.column) {
+                           break;
+                        }
+                     }
+                     if (i > 0) {
+                        tokenCursor.$offset = i - 1;
+                     }
+                  }
+               }
+               
 
                // If there is no token on this current line (this can occur when this code
                // is accessed by e.g. the matching brace offset code) then move back

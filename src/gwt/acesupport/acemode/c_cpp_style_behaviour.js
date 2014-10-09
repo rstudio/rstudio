@@ -600,7 +600,7 @@ var CStyleBehaviour = function(codeModel) {
             // macros get formatted in a 'pretty' way.
             var nextIndent = session.getMode().getNextLineIndent(
                state,
-               line + "\\",
+               line + "\\", // added so the indentation mode believes we're still in a macro
                session.getTabString(),
                session.getTabSize(),
                row,
