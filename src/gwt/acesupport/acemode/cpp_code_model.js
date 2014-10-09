@@ -15,6 +15,7 @@
 
 define("mode/cpp_code_model", function(require, exports, module) {
 
+var oop = require("ace/lib/oop");
 var Range = require("ace/range").Range;
 var TokenUtils = require("mode/token_utils").TokenUtils;
 var TokenIterator = require("ace/token_iterator").TokenIterator;
@@ -93,8 +94,13 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
    var reOnlyWhitespace = /^\s*$/;
 
    // NOTE: We need to be careful of comment block starts and ends. (/*, */)
-   var reStartsWithContinuationToken = /^\s*[,+\-/&^%$!<\>.?|=\'\":\)\(~]|^\s*\*[^/]|^\s*\/[^\*]/;
-   var reEndsWithContinuationToken =       /[,+\-*&^%$!<\>.?|=\'\":\)\(~]\s*$|\*[^/]\s*$|\/[^\*]\s*$/;
+   var reStartsWithContinuationToken = /^\s*[+\-/&^%$!<\>.?|=~]|^\s*\*[^/]|^\s*\/[^\*]/;
+   var reEndsWithContinuationToken =       /[+\-*&^%$!<\>.?|=~]\s*$|\*[^/]\s*$|\/[^\*]\s*$/;
+
+   var reContinuation = function(x) {
+      return reStartsWithContinuationToken.test(x) ||
+         reEndsWithContinuationToken.test(x);
+   };
 
    // Attach to 'this' so others can use it
    this.reStartsWithContinuationToken = reStartsWithContinuationToken;
@@ -127,6 +133,63 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
    var reEndsWithComma     = /,\s*$|,\s*\/\//;
    var reEndsWithColon     = /:\s*$|:\s*\/\//;
    var reClassOrStruct     = /\bclass\b|\bstruct\b/;
+
+   // Find a matching arrow for either template lookback or for template
+   // classes in inheritance.
+   //
+   // This means we're looking for a '<' where the token before is:
+   //
+   // 1. An identifier preceding by one or more keywords, and
+   //    a colon (':') or a comma (','), e.g.
+   //
+   //    class Foo : public TemplateClass<Some, T<x > 0>, Parameters>
+   //                                    ^                          ^
+   // 2. The preceding token is the 'template' keyword, e.g.
+   //
+   //    template < ... >
+   //             ^     ^
+   //
+   var moveToMatchingArrow = function(tokenCursor) {
+
+      if (tokenCursor.currentValue() !== ">") {
+         return false;
+      }
+
+      while (tokenCursor.moveToPreviousToken()) {
+
+         if (tokenCursor.currentValue() === "<") {
+
+            if (tokenCursor.peekBack().currentValue() === "template") {
+               return tokenCursor.moveToPreviousToken();
+            }
+
+            var peekBack = tokenCursor.cloneCursor();
+            if (!peekBack.moveToPreviousToken()) {
+               return false;
+            }
+
+            if (peekBack.currentType() === "identifier") {
+
+               if (!peekBack.moveToPreviousToken()) {
+                  return false;
+               }
+               
+               while (peekBack.currentType() === "keyword") {
+                  if (!peekBack.moveToPreviousToken()) {
+                     return false;
+                  }
+               }
+
+               if (peekBack.currentValue() === ":" ||
+                   peekBack.currentValue() === ",") {
+                  return true;
+               }
+            }
+         }
+         
+      }
+      return false;
+   };
 
    // Identify whether we're currently writing a macro -- either the current
    // line starts with a '#define' statement, or a chain of lines ending with
@@ -189,12 +252,12 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
          // Check for a ':' or a ','
          var value = clonedCursor.currentValue();
-         if (value === ":" || value === ",") {
-
+         if (value === ",") {
+            return doBwdOverInitializationList(clonedCursor, tokenCursor);
+         } else if (value === ":") {
             tokenCursor.$row = clonedCursor.$row;
             tokenCursor.$offset = clonedCursor.$offset;
             return true;
-               
          }
       }
 
@@ -211,7 +274,8 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
    //         public A,
    //         public B {
    //
-   // The cursor is expected to start on the opening brace.
+   // The cursor is expected to start on the opening brace, and will
+   // end on the opening ':' on success.
    var bwdOverClassInheritance = function(tokenCursor) {
 
       var clonedCursor = tokenCursor.cloneCursor();
@@ -226,77 +290,48 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
          return false;
       }
 
-      // Jump over constants
-      if (clonedCursor.currentType() === "constant") {
-         if (!clonedCursor.moveToPreviousToken()) {
-            return false;
-         }
-      }
-
-      // Jump over '<>' pair if necessary -- this is for inheritance
-      // from template classes, e.g.
+      // The scenarios:
       //
-      //     class Foo :
-      //         public A<T1, T2>
+      //     <keywords> Foo<bar, baz>::a::b<c, tt::d
       //
-      if (clonedCursor.currentValue() === ">") {
+      // 1. If the token is a '>', jump to the matching arrow, then back over that arrow.
+      //    Then check that the token is an identifier.
+      //    If the token before that is '::', repeat.
+      //    Otherwise, chomp keywords until we find a ':'.
+      while (true) {
 
-         if (!clonedCursor.bwdToMatchingToken()) {
-            return false;
-         }
+         // Jump over arrows, constants (<>)
+         if (clonedCursor.currentValue() === ">") {
 
-         if (!clonedCursor.moveToPreviousToken()) {
-            return false;
-         }
-         
-      }
-
-      // Move backwards over the name of the element initialized
-      if (clonedCursor.moveToPreviousToken()) {
-
-         // Chomp through '::' tokens and their associated
-         // identifiers
-         while (clonedCursor.currentValue() === "::") {
-
-            if (!clonedCursor.moveToPreviousToken()) {
+            if (!moveToMatchingArrow(clonedCursor)) {
                return false;
             }
 
-            if (clonedCursor.currentType() === "constant") {
-               if (!clonedCursor.moveToPreviousToken()) {
-                  return false;
-               }
-            }
+            clonedCursor.moveToPreviousToken();
 
-            // Jump over '<>' pairs
-            if (clonedCursor.currentValue() === ">") {
+         }
 
-               if (!clonedCursor.bwdToMatchingToken()) {
-                  return false;
-               }
-
-               if (!clonedCursor.moveToPreviousToken()) {
-                  return false;
-               }
-            }
-
-            // Chomp keywords
-            while (clonedCursor.currentType() === "keyword") {
-               if (!clonedCursor.moveToPreviousToken()) {
-                  return false;
-               }
-            }
-
-            // Move backwards over any more identifiers
-            if (clonedCursor.currentType() === "identifier") {
-               if (!clonedCursor.moveToPreviousToken()) {
-                  return false;
-               }
+         if (clonedCursor.currentType() === "constant") {
+            if (!clonedCursor.moveToPreviousToken()) {
+               return false;
             }
          }
 
-         // Chomp keywords
-         while (clonedCursor.currentType() === "keyword") {
+         if (clonedCursor.currentValue() === "::") {
+            clonedCursor.moveToPreviousToken();
+            continue;
+         }
+
+         if (clonedCursor.currentType() !== "identifier") {
+            return false;
+         }
+
+         if (!clonedCursor.moveToPreviousToken()) {
+            return false;
+         }
+
+         while (clonedCursor.currentType() === "keyword" ||
+                clonedCursor.currentValue() === "::") {
             if (!clonedCursor.moveToPreviousToken()) {
                return false;
             }
@@ -310,9 +345,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
             tokenCursor.$row = clonedCursor.$row;
             tokenCursor.$offset = clonedCursor.$offset;
             return true;
-         } else {
-            return false;
-         }
+         }            
       }
 
       return false;
@@ -1029,6 +1062,18 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
             }
          }
 
+         // If this line begins, or ends, with an operator token alongside the previous,
+         // then just use this line's indentation. This ensures that we match the indentation
+         // for continued lines, e.g.
+         //
+         //     a +
+         //         b +
+         //         ^
+         // 
+         if (reContinuation(line) && reContinuation(prevLine)) {
+            return this.$getIndent(line);
+         }
+
          // Try token walking
          if (this.$tokenUtils.$tokenizeUpToRow(row + 2)) {
 
@@ -1070,7 +1115,6 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                      }
                   }
                }
-               
 
                // If there is no token on this current line (this can occur when this code
                // is accessed by e.g. the matching brace offset code) then move back
@@ -1457,10 +1501,11 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
       return indent.substring(numLeadingSpaces, indent.length);
       
    };
-   
-   
+
    
 }).call(CppCodeModel.prototype);
+
+
 
 exports.CppCodeModel = CppCodeModel;
 

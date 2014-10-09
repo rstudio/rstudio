@@ -133,11 +133,6 @@ var $alignCase                 = true; // case 'a':
          prevLine = this.$codeModel.getLineSansComments(doc, row - 1);
       var indent = this.$getIndent(line);
 
-      // Check for naked token outdenting
-      if (this.outdentBraceForNakedTokens(session, row, line, prevLine)) {
-         return;
-      }
-
       // Check for '<<', '.'alignment
       if ($alignStreamOut && this.alignStartToken("<<", session, row, line, prevLine)) {
          return;
@@ -164,7 +159,7 @@ var $alignCase                 = true; // case 'a':
       //
       //     class Foo
       //         :
-      if ($outdentColon && /^\s*:/.test(line)) {
+      if ($outdentColon && /^\s*:[^:]/.test(line)) {
 
          if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row)) {
 
@@ -260,6 +255,7 @@ var $alignCase                 = true; // case 'a':
       }
 
       if ($outdentRightParen) {
+
          var closingParenMatch = /^\s*\)/.exec(line);
          if (closingParenMatch) {
             var openParenPos = session.findMatchingBracket({
@@ -274,6 +270,7 @@ var $alignCase                 = true; // case 'a':
       }
 
       if ($outdentRightBracket) {
+
          var closingBracketMatch = /^\s*\]/.exec(line);
          if (closingBracketMatch) {
             var openBracketPos = session.findMatchingBracket({
@@ -291,7 +288,7 @@ var $alignCase                 = true; // case 'a':
       // we should outdent if possible. Do so by looking for the
       // enclosing 'class' scope.
       if ($alignClassAccessModifiers &&
-          /^\s*public\s*:|^\s*private\s*:|^\s*protected\s*:/.test(line)) {
+          /^\s*public\s*:[^:]|^\s*private\s*:[^:]|^\s*protected\s*:[^:]/.test(line)) {
 
          // Find the associated open bracket.
          var openBraceRow = this.$codeModel.doFindMatchingBracketRow(
