@@ -1053,6 +1053,12 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                         return x === peekOne.currentValue();
                      }))
                      {
+                        // If there is a token ahead of the ':', indent using that.
+                        var peekFwd = tokenCursor.peekFwd();
+                        if (peekFwd) {
+                           return this.$getIndent(lines[peekFwd.$row]) + additionalIndent;
+                        }
+                        
                         // Indent once relative to the 'public:'s indentation.
                         return this.$getIndent(lines[peekOne.$row]) + tab;
                      }
