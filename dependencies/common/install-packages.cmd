@@ -6,7 +6,6 @@ set PATH=%PATH%;%CD%\tools
 
 call:install rmarkdown v0.98.1000
 call:install packrat v0.98.1000
-call:install shinyapps v0.98.1000
 
 GOTO:EOF
 
