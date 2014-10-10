@@ -25,9 +25,7 @@ import com.google.gwt.dev.Permutation;
 import com.google.gwt.dev.cfg.ConfigProps;
 import com.google.gwt.dev.cfg.PermProps;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
-import com.google.gwt.dev.jjs.ast.JLiteral;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
 import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
 import com.google.gwt.dev.jjs.impl.ComputeCastabilityInformation;
@@ -47,7 +45,9 @@ import com.google.gwt.dev.jjs.impl.RemoveEmptySuperCalls;
 import com.google.gwt.dev.jjs.impl.RemoveSpecializations;
 import com.google.gwt.dev.jjs.impl.ReplaceGetClassOverrides;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences;
-import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.IntTypeIdGenerator;
+import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.IntTypeMapper;
+import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.StringTypeMapper;
+import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.TypeMapper;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.TypeOrder;
 import com.google.gwt.dev.jjs.impl.TypeCoercionNormalizer;
 import com.google.gwt.dev.jjs.impl.codesplitter.CodeSplitter;
@@ -89,7 +89,7 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
     }
 
     @Override
-    protected Map<JType, JLiteral> normalizeSemantics() {
+    protected TypeMapper<?> normalizeSemantics() {
       Event event = SpeedTracerLogger.start(CompilerEventType.JAVA_NORMALIZERS);
       try {
         Devirtualizer.exec(jprogram);
@@ -116,17 +116,9 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
         ArrayNormalizer.exec(jprogram, options.isCastCheckingDisabled());
         EqualityNormalizer.exec(jprogram);
 
-        if (options.useDetailedTypeIds()) {
-          return ResolveRuntimeTypeReferences.IntoStringLiterals.exec(jprogram);
-        } else {
-          TypeOrder typeIdOrder =
-              options.isIncrementalCompileEnabled() ? TypeOrder.ALPHABETICAL : TypeOrder.FREQUENCY;
-          IntTypeIdGenerator typeIdGenerator = options.isIncrementalCompileEnabled()
-              ? compilerContext.getMinimalRebuildCache().getIntTypeIdGenerator()
-              : new IntTypeIdGenerator();
-          return ResolveRuntimeTypeReferences.IntoIntLiterals.exec(jprogram, typeIdOrder,
-              typeIdGenerator);
-        }
+        TypeMapper<?> typeMapper = getTypeMapper();
+        ResolveRuntimeTypeReferences.exec(jprogram, typeMapper, getTypeOrder());
+        return typeMapper;
       } finally {
         event.end();
       }
@@ -314,5 +306,21 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
 
   private boolean shouldOptimize() {
     return options.getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT;
+  }
+
+  private TypeMapper getTypeMapper() {
+    if (options.useDetailedTypeIds()) {
+      return new StringTypeMapper();
+    }
+    return options.isIncrementalCompileEnabled() ?
+        compilerContext.getMinimalRebuildCache().getTypeMapper() :
+        new IntTypeMapper();
+  }
+
+  private TypeOrder getTypeOrder() {
+    if (options.useDetailedTypeIds()) {
+      return TypeOrder.NONE;
+    }
+    return options.isIncrementalCompileEnabled() ? TypeOrder.ALPHABETICAL : TypeOrder.FREQUENCY;
   }
 }

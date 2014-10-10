@@ -36,9 +36,7 @@ import com.google.gwt.dev.javac.CompiledClass;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
-import com.google.gwt.dev.jjs.ast.JLiteral;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
 import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
 import com.google.gwt.dev.jjs.impl.ComputeExhaustiveCastabilityInformation;
@@ -53,6 +51,9 @@ import com.google.gwt.dev.jjs.impl.PostOptimizationCompoundAssignmentNormalizer;
 import com.google.gwt.dev.jjs.impl.ReboundTypeRecorder;
 import com.google.gwt.dev.jjs.impl.ReplaceGetClassOverrides;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences;
+import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.StringTypeMapper;
+import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.TypeMapper;
+import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.TypeOrder;
 import com.google.gwt.dev.jjs.impl.TypeCoercionNormalizer;
 import com.google.gwt.dev.jjs.impl.codesplitter.MultipleDependencyGraphRecorder;
 import com.google.gwt.dev.js.JsNamer.IllegalNameException;
@@ -94,7 +95,7 @@ public class LibraryJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler {
     }
 
     @Override
-    protected Map<JType, JLiteral> normalizeSemantics() {
+    protected TypeMapper<?> normalizeSemantics() {
       Devirtualizer.exec(jprogram);
       CatchBlockNormalizer.exec(jprogram);
       PostOptimizationCompoundAssignmentNormalizer.exec(jprogram);
@@ -106,7 +107,9 @@ public class LibraryJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler {
       ImplementCastsAndTypeChecks.exec(jprogram, options.isCastCheckingDisabled(), false);
       ArrayNormalizer.exec(jprogram, options.isCastCheckingDisabled());
       EqualityNormalizer.exec(jprogram);
-      return ResolveRuntimeTypeReferences.IntoStringLiterals.exec(jprogram);
+      TypeMapper<?> typeMapper = new StringTypeMapper();
+      ResolveRuntimeTypeReferences.exec(jprogram, typeMapper, TypeOrder.NONE);
+      return typeMapper;
     }
 
     @Override

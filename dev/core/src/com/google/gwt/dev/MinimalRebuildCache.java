@@ -25,7 +25,7 @@ import com.google.gwt.dev.jjs.JsSourceMap;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.dev.jjs.ast.JTypeOracle.ImmediateTypeRelations;
-import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.IntTypeIdGenerator;
+import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.IntTypeMapper;
 import com.google.gwt.dev.js.JsPersistentPrettyNamer.PersistentPrettyNamerState;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Name.InternalName;
@@ -162,7 +162,7 @@ public class MinimalRebuildCache implements Serializable {
   private final ArtifactSet generatedArtifacts = new ArtifactSet();
   private final Multimap<String, String> generatedCompilationUnitNamesByReboundTypeNames =
       HashMultimap.create();
-  private final IntTypeIdGenerator intTypeIdGenerator = new IntTypeIdGenerator();
+  private final IntTypeMapper intTypeMapper = new IntTypeMapper();
   private final Map<String, String> jsByTypeName = Maps.newHashMap();
   private final Set<String> jsoStatusChangedTypeNames = Sets.newHashSet();
   private final Set<String> jsoTypeNames = Sets.newHashSet();
@@ -402,7 +402,7 @@ public class MinimalRebuildCache implements Serializable {
   public void copyFrom(MinimalRebuildCache that) {
     this.lastLinkedJsBytes = that.lastLinkedJsBytes;
 
-    this.intTypeIdGenerator.copyFrom(that.intTypeIdGenerator);
+    this.intTypeMapper.copyFrom(that.intTypeMapper);
     this.persistentPrettyNamerState.copyFrom(that.persistentPrettyNamerState);
     this.immediateTypeRelations.copyFrom(that.immediateTypeRelations);
 
@@ -458,8 +458,8 @@ public class MinimalRebuildCache implements Serializable {
     return immediateTypeRelations;
   }
 
-  public IntTypeIdGenerator getIntTypeIdGenerator() {
-    return intTypeIdGenerator;
+  public IntTypeMapper getTypeMapper() {
+    return intTypeMapper;
   }
 
   public String getJs(String typeName) {

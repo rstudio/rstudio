@@ -35,9 +35,7 @@ import com.google.gwt.dev.javac.testing.impl.MockResourceOracle;
 import com.google.gwt.dev.jjs.AstConstructor;
 import com.google.gwt.dev.jjs.JavaAstConstructor;
 import com.google.gwt.dev.jjs.JsOutputOption;
-import com.google.gwt.dev.jjs.ast.JLiteral;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
 import com.google.gwt.dev.jjs.impl.ComputeCastabilityInformation;
 import com.google.gwt.dev.jjs.impl.ComputeInstantiatedJsoInterfaces;
@@ -47,6 +45,9 @@ import com.google.gwt.dev.jjs.impl.ImplementCastsAndTypeChecks;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.jjs.impl.MethodInliner;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences;
+import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.IntTypeMapper;
+import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.TypeMapper;
+import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.TypeOrder;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
@@ -295,8 +296,8 @@ public class JsStackEmulatorTest extends FullCompileTestBase {
     ImplementCastsAndTypeChecks.exec(jProgram, false);
     ArrayNormalizer.exec(jProgram, false);
 
-    Map<JType, JLiteral> typeIdsByType =
-        ResolveRuntimeTypeReferences.IntoIntLiterals.exec(jProgram);
+    TypeMapper<Integer> typeMapper = new IntTypeMapper();
+    ResolveRuntimeTypeReferences.exec(jProgram, typeMapper, TypeOrder.FREQUENCY);
     Map<StandardSymbolData, JsName> symbolTable =
         new TreeMap<StandardSymbolData, JsName>(new SymbolData.ClassIdentComparator());
 
@@ -309,7 +310,7 @@ public class JsStackEmulatorTest extends FullCompileTestBase {
 
     JsProgram jsProgram = new JsProgram();
     JavaToJavaScriptMap jjsmap = GenerateJavaScriptAST.exec(
-        logger, jProgram, jsProgram, context, typeIdsByType,
+        logger, jProgram, jsProgram, context, typeMapper,
         symbolTable, props).getLeft();
 
     // Finally, run the pass we care about.

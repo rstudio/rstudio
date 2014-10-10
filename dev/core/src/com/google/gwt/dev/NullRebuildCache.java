@@ -21,7 +21,7 @@ import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.GeneratedUnit;
 import com.google.gwt.dev.jjs.JsSourceMap;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
-import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.IntTypeIdGenerator;
+import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.IntTypeMapper;
 import com.google.gwt.dev.js.JsPersistentPrettyNamer.PersistentPrettyNamerState;
 
 import java.util.Collection;
@@ -101,7 +101,7 @@ public class NullRebuildCache extends MinimalRebuildCache {
   }
 
   @Override
-  public IntTypeIdGenerator getIntTypeIdGenerator() {
+  public IntTypeMapper getTypeMapper() {
     throw new UnsupportedOperationException(failMessage);
   }
 

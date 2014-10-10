@@ -100,6 +100,7 @@ import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.jjs.ast.js.JsonArray;
+import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.TypeMapper;
 import com.google.gwt.dev.js.JsInliner;
 import com.google.gwt.dev.js.JsStackEmulator;
 import com.google.gwt.dev.js.ast.JsArrayAccess;
@@ -1366,7 +1367,7 @@ public class GenerateJavaScriptAST {
 
         JsInvocation getPrototypeCall = constructInvocation(x.getSourceInfo(),
             "JavaClassHierarchySetupUtil.getClassPrototype",
-            convertJavaLiteral(typeIdsByType.get(superMethodTargetType)));
+            JjsUtils.translateLiteral(program.getLiteral(typeMapper.get(superMethodTargetType))));
 
         JsNameRef methodNameRef = polymorphicNames.get(method).makeRef(x.getSourceInfo());
         methodNameRef.setQualifier(getPrototypeCall);
@@ -3185,13 +3186,13 @@ public class GenerateJavaScriptAST {
    *         considered for inlining.
    */
   public static Pair<JavaToJavaScriptMap, Set<JsNode>> exec(TreeLogger logger, JProgram program,
-      JsProgram jsProgram, CompilerContext compilerContext, Map<JType, JLiteral> typeIdsByType,
+      JsProgram jsProgram, CompilerContext compilerContext, TypeMapper<?> typeMapper,
       Map<StandardSymbolData, JsName> symbolTable, PermProps props) {
 
     Event event = SpeedTracerLogger.start(CompilerEventType.GENERATE_JS_AST);
     try {
       GenerateJavaScriptAST generateJavaScriptAST = new GenerateJavaScriptAST(logger, program,
-          jsProgram, compilerContext, typeIdsByType, symbolTable, props);
+          jsProgram, compilerContext, typeMapper, symbolTable, props);
       return generateJavaScriptAST.execImpl();
     } finally {
       event.end();
@@ -3308,14 +3309,14 @@ public class GenerateJavaScriptAST {
 
   private final Map<JsStatement, JMethod> vtableInitForMethodMap = Maps.newHashMap();
 
-  private final Map<JType, JLiteral> typeIdsByType;
+  private final TypeMapper<?> typeMapper;
 
   private final MinimalRebuildCache minimalRebuildCache;
 
   private final PermProps props;
 
   private GenerateJavaScriptAST(TreeLogger logger, JProgram program, JsProgram jsProgram,
-      CompilerContext compilerContext, Map<JType, JLiteral> typeIdsByType,
+      CompilerContext compilerContext, TypeMapper<?> typeMapper,
       Map<StandardSymbolData, JsName> symbolTable, PermProps props) {
     this.logger = logger;
     this.program = program;
@@ -3333,7 +3334,7 @@ public class GenerateJavaScriptAST {
     this.compilePerFile = compilerContext.getOptions().isIncrementalCompileEnabled();
     this.modularCompile = !compilerContext.shouldCompileMonolithic();
     this.symbolTable = symbolTable;
-    this.typeIdsByType = typeIdsByType;
+    this.typeMapper = typeMapper;
     this.props = props;
 
     this.stripStack = JsStackEmulator.getStackMode(props) == JsStackEmulator.StackMode.STRIP;
@@ -3390,7 +3391,11 @@ public class GenerateJavaScriptAST {
    * Retrieves the runtime typeId for {@code type}.
    */
   JLiteral getRuntimeTypeReference(JReferenceType type) {
-    return typeIdsByType.get(type);
+    Object typeId = typeMapper.get(type);
+    if (typeId == null) {
+      return null;
+    }
+    return program.getLiteral(typeId);
   }
 
   String mangleName(JField x) {

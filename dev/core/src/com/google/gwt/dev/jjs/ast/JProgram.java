@@ -21,6 +21,7 @@ import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.impl.codesplitter.FragmentPartitioningResult;
+import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
@@ -770,6 +771,16 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     return typeSpecialJavaScriptObject;
   }
 
+  public JLiteral getLiteral(Object value) {
+    if (value instanceof String) {
+      return getStringLiteral(SourceOrigin.UNKNOWN, (String) value);
+    }
+    if (value instanceof Integer) {
+      return getLiteralInt((Integer) value);
+    }
+    throw new IllegalArgumentException("Argument must be a String or an Integer but was " + value);
+  }
+
   public JBooleanLiteral getLiteralBoolean(boolean value) {
     return JBooleanLiteral.get(value);
   }
@@ -800,7 +811,7 @@ public class JProgram extends JNode implements ArrayTypeCreator {
 
   public JStringLiteral getStringLiteral(SourceInfo sourceInfo, String s) {
     sourceInfo.addCorrelation(sourceInfo.getCorrelator().by(Literal.STRING));
-    return new JStringLiteral(sourceInfo, s, typeString);
+    return new JStringLiteral(sourceInfo, StringInterner.get().intern(s), typeString);
   }
 
   public List<JDeclaredType> getModuleDeclaredTypes() {

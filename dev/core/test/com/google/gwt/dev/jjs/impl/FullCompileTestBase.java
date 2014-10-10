@@ -28,9 +28,10 @@ import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
 import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.jjs.JavaAstConstructor;
-import com.google.gwt.dev.jjs.ast.JLiteral;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.IntTypeMapper;
+import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.TypeMapper;
+import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.TypeOrder;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsProgram;
@@ -92,8 +93,9 @@ public abstract class FullCompileTestBase extends JJSTestBase {
     TypeTightener.exec(jProgram);
     MethodCallTightener.exec(jProgram);
 
-    Map<JType, JLiteral> typeIdsByType =
-        ResolveRuntimeTypeReferences.IntoIntLiterals.exec(jProgram);
+    TypeMapper<Integer> typeMapper = new IntTypeMapper();
+    ResolveRuntimeTypeReferences.exec(jProgram, typeMapper, TypeOrder.FREQUENCY);
+
     Map<StandardSymbolData, JsName> symbolTable =
         new TreeMap<StandardSymbolData, JsName>(new SymbolData.ClassIdentComparator());
 
@@ -101,7 +103,7 @@ public abstract class FullCompileTestBase extends JJSTestBase {
         new BindingProps(orderedProps, orderedPropValues, config)
     ));
     return GenerateJavaScriptAST.exec(logger, jProgram, jsProgram, compilerContext,
-        typeIdsByType, symbolTable, props);
+        typeMapper, symbolTable, props);
   }
 
   abstract protected void optimizeJava();

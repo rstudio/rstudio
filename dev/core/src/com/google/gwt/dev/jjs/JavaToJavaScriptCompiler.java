@@ -54,12 +54,10 @@ import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
-import com.google.gwt.dev.jjs.ast.JLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JTypeOracle.StandardTypes;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.impl.AssertionNormalizer;
@@ -85,6 +83,7 @@ import com.google.gwt.dev.jjs.impl.OptimizerStats;
 import com.google.gwt.dev.jjs.impl.Pruner;
 import com.google.gwt.dev.jjs.impl.RecordRebinds;
 import com.google.gwt.dev.jjs.impl.ResolveRebinds;
+import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.TypeMapper;
 import com.google.gwt.dev.jjs.impl.SameParameterValueOptimizer;
 import com.google.gwt.dev.jjs.impl.SourceInfoCorrelator;
 import com.google.gwt.dev.jjs.impl.TypeRefDepsChecker;
@@ -282,7 +281,7 @@ public abstract class JavaToJavaScriptCompiler {
 
         // TODO(stalcup): move to before optimize.
         // (4) Normalize the resolved Java AST
-        Map<JType, JLiteral> typeIdLiteralsByType = normalizeSemantics();
+        TypeMapper<?> typeMapper = normalizeSemantics();
 
         // TODO(stalcup): this stage shouldn't exist, move into optimize.
         postNormalizationOptimizeJava();
@@ -299,7 +298,7 @@ public abstract class JavaToJavaScriptCompiler {
         // (5) Construct the Js AST
         Pair<? extends JavaToJavaScriptMap, Set<JsNode>> jjsMapAndInlineableFunctions =
             GenerateJavaScriptAST.exec(logger, jprogram, jsProgram,
-                compilerContext,  typeIdLiteralsByType, symbolTable, props);
+                compilerContext, typeMapper, symbolTable, props);
         JavaToJavaScriptMap jjsmap = jjsMapAndInlineableFunctions.getLeft();
 
         // TODO(stalcup): hide metrics gathering in a callback or subclass
@@ -758,7 +757,7 @@ public abstract class JavaToJavaScriptCompiler {
      *
      * These passes can not be reordering because of subtle interdependencies.
      */
-    protected abstract Map<JType, JLiteral> normalizeSemantics();
+    protected abstract TypeMapper<?> normalizeSemantics();
 
     /**
      * Open an emitted artifact and gunzip its contents.

@@ -649,6 +649,44 @@ public class CompilerTest extends ArgProcessorTestBase {
           "  static final int CONST = 1 + 3;",
           "}");
 
+  private MockResource superFromStaleInnerModuleResource =
+      JavaResourceBase.createMockResource(
+          "com/foo/SuperFromStaleInnerModule.gwt.xml",
+          "<module>",
+          "<source path=''/>",
+          "<entry-point class='com.foo.SuperFromStaleInnerEntryPoint'/>",
+          "</module>");
+
+  private MockJavaResource superFromStaleInnerEntryPointResource =
+      JavaResourceBase.createMockJavaResource(
+          "com.foo.SuperFromStaleInnerEntryPoint",
+          "package com.foo;",
+          "import com.google.gwt.core.client.EntryPoint;",
+          "public class SuperFromStaleInnerEntryPoint",
+          "    implements EntryPoint {",
+          "  static class A { int f() { return 1; } }",
+          "  static class B extends A {",
+          "    int f() { return 2; }",
+          "    void g() {",
+          "      new InterfaceOne() {",
+          "        public int m() { return 2 + B.super.f(); }",
+          "      }.m();",
+          "    }",
+          "  }",
+          "  @Override",
+          "  public void onModuleLoad() {",
+          "    new B().g();",
+          "  }",
+          "}");
+
+  private MockJavaResource interfaceOneResource =
+      JavaResourceBase.createMockJavaResource(
+          "com.foo.InterfaceOne",
+          "package com.foo;",
+          "interface InterfaceOne {",
+          "  int m();",
+          "}");
+
   private Set<String> emptySet = stringSet();
 
   public CompilerTest() {
@@ -826,6 +864,13 @@ public class CompilerTest extends ArgProcessorTestBase {
     // alphabetically earlier name might start linking out before the super-class.
     checkIncrementalRecompile_superClassOrder(JsOutputOption.PRETTY);
     checkIncrementalRecompile_superClassOrder(JsOutputOption.DETAILED);
+  }
+
+  public void testIncrementalRecompile_superFromStaleInner() throws UnableToCompleteException,
+      IOException,
+      InterruptedException {
+    checkIncrementalRecompile_superFromStaleInner(JsOutputOption.PRETTY);
+    checkIncrementalRecompile_superFromStaleInner(JsOutputOption.DETAILED);
   }
 
   public void testIncrementalRecompile_deterministicUiBinder() throws UnableToCompleteException,
@@ -1116,9 +1161,19 @@ public class CompilerTest extends ArgProcessorTestBase {
     // result in SuperClass's indexing being rebuilt but NOT ASubClasses's. If there is a bug in the
     // index updates then the link output ordering will change.
     checkRecompiledModifiedApp("com.foo.SimpleModule", Lists.newArrayList(simpleModuleResource,
-        superClassOrderEntryPointResource, referencedBySuperClassResource, superClassResource,
-        aSubClassResource), referencedBySuperClassResource, referencedBySuperClassResource,
+            superClassOrderEntryPointResource, referencedBySuperClassResource, superClassResource,
+            aSubClassResource), referencedBySuperClassResource, referencedBySuperClassResource,
         stringSet("com.foo.SuperClass", "com.foo.ReferencedBySuperClass"), output);
+  }
+
+  private void checkIncrementalRecompile_superFromStaleInner(JsOutputOption output)
+      throws UnableToCompleteException, IOException, InterruptedException {
+    // Makes sure that type ids for (effectively static) super dispatches, i.e. of the form
+    // super.m() or X.this.m(), are computed also for classes only referenced by stale classes.
+    checkRecompiledModifiedApp("com.foo.SuperFromStaleInnerModule",
+        Lists.newArrayList(superFromStaleInnerModuleResource,
+            superFromStaleInnerEntryPointResource), interfaceOneResource, interfaceOneResource,
+        stringSet("com.foo.SuperFromStaleInnerEntryPoint$B$1", "com.foo.InterfaceOne"), output);
   }
 
   private void checkIncrementalRecompile_deterministicUiBinder(JsOutputOption output)
