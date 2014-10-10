@@ -44,6 +44,13 @@ public class AutoDirectionHandler implements KeyUpHandler,
      * Gets this object's text.
      */
     String getText();
+
+    /**
+     * Sets this object's text.
+     *
+     * @param text the object's new text
+     */
+    void setText(String text);
   }
 
   /**
