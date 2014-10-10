@@ -13,7 +13,7 @@
 
   <properties>
     <!-- Convenience property to set the GWT version -->
-    <gwtVersion>2.6.1</gwtVersion>
+    <gwtVersion>2.7.0-SNAPSHOT</gwtVersion>
 
     <!-- GWT needs at least java 1.6 -->
     <maven.compiler.source>1.6</maven.compiler.source>
@@ -116,25 +116,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>gwt-maven-plugin</artifactId>
-        <!-- TODO: Update version to 2.6.1 once gwt-maven-plugin 2.6.1 final is released (post-GWT 2.6.1) -->
-        <version>2.6.1-rc2</version>
-        <dependencies>
-          <dependency>
-            <groupId>com.google.gwt</groupId>
-            <artifactId>gwt-user</artifactId>
-            <version>${gwtVersion}</version>
-          </dependency>
-          <dependency>
-            <groupId>com.google.gwt</groupId>
-            <artifactId>gwt-dev</artifactId>
-            <version>${gwtVersion}</version>
-          </dependency>
-          <dependency>
-            <groupId>com.google.gwt</groupId>
-            <artifactId>gwt-codeserver</artifactId>
-            <version>${gwtVersion}</version>
-          </dependency>
-        </dependencies>
+        <version>${gwtVersion}</version>
         <!-- JS is only needed in the package phase, this speeds up testing -->
         <executions>
           <execution>
@@ -184,4 +166,39 @@
     </plugins>
 
   </build>
+
+  <repositories>
+    <repository>
+      <id>google-snapshots</id>
+      <url>https://oss.sonatype.org/content/repositories/google-snapshots/</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>codehaus-snapshots</id>
+      <url>https://nexus.codehaus.org/content/groups/snapshots-group/</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </pluginRepository>
+    <pluginRepository>
+      <id>google-snapshots</id>
+      <url>https://oss.sonatype.org/content/repositories/google-snapshots/</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </pluginRepository>
+  </pluginRepositories>
 </project>
