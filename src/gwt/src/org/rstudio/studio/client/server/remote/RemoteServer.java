@@ -3516,11 +3516,15 @@ public class RemoteServer implements Server
    @Override
    public void unsatisfiedDependencies(
       JsArray<Dependency> dependencies,
+      boolean silentUpdate,
       ServerRequestCallback<JsArray<Dependency>> requestCallback)
    {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONArray(dependencies));
+      params.set(1, JSONBoolean.getInstance(silentUpdate));
       sendRequest(RPC_SCOPE, 
                   "unsatisfied_dependencies", 
-                  dependencies, 
+                  params, 
                   requestCallback);
    }
      

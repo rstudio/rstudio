@@ -34,6 +34,10 @@ endif()
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/packrat")
   message(FATAL_ERROR "packrat package not found (re-run install-dependencies script to install)")
 endif()
+if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/shinyapps")
+  message(FATAL_ERROR "shinyapps package not found (re-run install-dependencies script to install)")
+endif()
+
 
 # include files
 file(GLOB_RECURSE SESSION_HEADER_FILES "*.h*")
@@ -354,6 +358,11 @@ if (NOT RSTUDIO_SESSION_WIN64)
    # install packrat package
    file(GLOB PACKRAT_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/packrat*.tar.gz")
    install(FILES ${PACKRAT_PACKAGE}
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
+
+   # install shinyapps package
+   file(GLOB SHINYAPPS_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/shinyapps*.tar.gz")
+   install(FILES ${SHINYAPPS_PACKAGE}
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
 
    # install PDF.js

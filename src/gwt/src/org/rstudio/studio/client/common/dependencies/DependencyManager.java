@@ -55,38 +55,47 @@ public class DependencyManager implements InstallShinyEvent.Handler
    }
    
    public void withDependencies(String progressCaption,
-                                Dependency[] dependencies, 
-                                Command command)
-   {
-      withDependencies(progressCaption,
-                       null,
-                       null,
-                       dependencies,
-                       command);
-   }
-   
-   public void withDependencies(String progressCaption,
                                 CommandWithArg<Command> userPrompt,
                                 Dependency[] dependencies, 
+                                boolean silentUpdate,
                                 Command command)
    {
       withDependencies(progressCaption,
                        null,
                        userPrompt,
                        dependencies,
+                       silentUpdate,
                        command);
    }
    
    public void withDependencies(String progressCaption,
                                 String userAction,
                                 Dependency[] dependencies, 
+                                boolean silentUpdate,
                                 final Command command)
    {
       withDependencies(progressCaption, 
                        userAction, 
                        null, 
                        dependencies, 
+                       silentUpdate,
                        command);
+   }
+   
+   public void withShinyapps(String userAction, final Command command)
+   {
+      withDependencies(
+        "Shinyapps",
+        userAction,
+        new Dependency[] {
+          Dependency.cranPackage("digest", "0.6"),
+          Dependency.cranPackage("RCurl", "1.95"),
+          Dependency.cranPackage("RJSONIO", "1.0"),
+          Dependency.embeddedPackage("shinyapps")
+        },
+        false,
+        command
+      );
    }
    
    public void withRMarkdown(String userAction, final Command command)
@@ -102,6 +111,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
           Dependency.cranPackage("bitops", "1.0-6"),
           Dependency.embeddedPackage("rmarkdown")
         }, 
+        true,
         command
      );
    }
@@ -143,6 +153,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
             Dependency.cranPackage("htmltools", "0.2.4"),
             Dependency.cranPackage("shiny", "0.10.0")
           }, 
+          true,
           command
        ); 
    }
@@ -158,6 +169,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
                                  final String userAction,
                                  final CommandWithArg<Command> userPrompt,
                                  Dependency[] dependencies, 
+                                 final boolean silentUpdate,
                                  final Command command)
    {
       // convert dependencies to JsArray
@@ -174,7 +186,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
       
       // query for unsatisfied dependencies
       server_.unsatisfiedDependencies(
-            deps, new ServerRequestCallback<JsArray<Dependency>>() {
+            deps, silentUpdate, new ServerRequestCallback<JsArray<Dependency>>() {
 
          @Override
          public void onResponseReceived(
@@ -196,7 +208,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
                   @Override
                   public void execute()
                   {
-                     installDependencies(unsatisfiedDeps, command);
+                     installDependencies(unsatisfiedDeps, silentUpdate, command);
                   }
                };
                
@@ -224,6 +236,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
    }
    
    private void installDependencies(final JsArray<Dependency> dependencies,
+                                    final boolean silentUpdate,
                                     final Command onSuccess)
    {
       server_.installDependencies(
@@ -243,7 +256,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
                      @Override
                      public void onProcessExit(ProcessExitEvent event)
                      {
-                        ifDependenciesSatisifed(dependencies, new Command(){
+                        ifDependenciesSatisifed(dependencies, silentUpdate, new Command(){
                            @Override
                            public void execute()
                            {
@@ -258,10 +271,11 @@ public class DependencyManager implements InstallShinyEvent.Handler
    }
    
    private void ifDependenciesSatisifed(JsArray<Dependency> dependencies,
+                                        boolean silentUpdate,
                                         final Command onInstalled)
    {
       server_.unsatisfiedDependencies(
-        dependencies, new SimpleRequestCallback<JsArray<Dependency>>() {
+        dependencies, silentUpdate, new SimpleRequestCallback<JsArray<Dependency>>() {
            
            @Override
            public void onResponseReceived(JsArray<Dependency> dependencies)

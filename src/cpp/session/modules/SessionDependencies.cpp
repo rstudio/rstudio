@@ -199,9 +199,10 @@ void silentUpdateEmbeddedPackage(const EmbeddedPackage& pkg)
 Error unsatisfiedDependencies(const json::JsonRpcRequest& request,
                               json::JsonRpcResponse* pResponse)
 {
-   // get list of dependencies
+   // get list of dependencies and silentUpdate flag
    json::Array depsJson;
-   Error error = json::readParams(request.params, &depsJson);
+   bool silentUpdate;
+   Error error = json::readParams(request.params, &depsJson, &silentUpdate);
    if (error)
       return error;
    std::vector<Dependency> deps = dependenciesFromJson(depsJson);
@@ -229,13 +230,13 @@ Error unsatisfiedDependencies(const json::JsonRpcRequest& request,
             unsatisfiedDeps.push_back(dep);
          }
          // package installed was from IDE but is out of date -- silent update
-         else if (embeddedPackageRequiresUpdate(pkg))
+         else if (silentUpdate && embeddedPackageRequiresUpdate(pkg))
          {
             silentUpdateEmbeddedPackage(pkg);
          }
          // package installed wasn't from the IDE but is older than
          // the version we currently have embedded -- silent update
-         else if (!isPackageVersionInstalled(pkg.name, pkg.version))
+         else if (silentUpdate && !isPackageVersionInstalled(pkg.name, pkg.version))
          {
             silentUpdateEmbeddedPackage(pkg);
          }

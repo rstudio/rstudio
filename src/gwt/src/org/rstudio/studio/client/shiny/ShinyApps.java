@@ -27,6 +27,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.shiny.model.ShinyAppsServerOperations;
 import org.rstudio.studio.client.server.ServerError;
@@ -50,6 +51,7 @@ import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEve
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -67,13 +69,15 @@ public class ShinyApps implements SessionInitHandler,
                     Commands commands, 
                     Session session,
                     Satellite satellite,
-                    GlobalDisplay display, 
+                    GlobalDisplay display,
+                    DependencyManager dependencyManager,
                     Binder binder, 
                     ShinyAppsServerOperations server)
                     
    {
       commands_ = commands;
       display_ = display;
+      dependencyManager_ = dependencyManager;
       session_ = session;
       server_ = server;
       events_ = events;
@@ -96,7 +100,20 @@ public class ShinyApps implements SessionInitHandler,
    }
    
    @Override
-   public void onShinyAppsAction(ShinyAppsActionEvent event)
+   public void onShinyAppsAction(final ShinyAppsActionEvent event)
+   {
+      dependencyManager_.withShinyapps(
+         "Publishing shiny applications", new Command() {
+
+            @Override
+            public void execute()
+            {
+               handleShinyAppsAction(event); 
+            }
+         });  
+   }
+   
+   private void handleShinyAppsAction(ShinyAppsActionEvent event)
    {
       if (event.getAction() == ShinyAppsActionEvent.ACTION_TYPE_DEPLOY)
       {
@@ -183,9 +200,16 @@ public class ShinyApps implements SessionInitHandler,
    @Handler
    public void onShinyAppsManageAccounts()
    {
-      ShinyAppsAccountManagerDialog dialog = 
-            new ShinyAppsAccountManagerDialog(server_, display_);
-      dialog.showModal();
+      dependencyManager_.withShinyapps(
+         "Publishing shiny applications", new Command() {
+            @Override
+            public void execute()
+            {
+               ShinyAppsAccountManagerDialog dialog = 
+                     new ShinyAppsAccountManagerDialog(server_, display_);
+               dialog.showModal();
+            }
+         });
    }
    
    public void ensureSessionInit()
@@ -195,7 +219,7 @@ public class ShinyApps implements SessionInitHandler,
       
       // "Manage accounts" can be invoked any time the package is available
       commands_.shinyAppsManageAccounts().setVisible(
-            session_.getSessionInfo().getShinyappsInstalled());
+            session_.getSessionInfo().getShinyappsAvailable());
       
       // This object keeps track of the most recent deployment we made of each
       // directory, and is used to default directory deployments to last-used
@@ -398,6 +422,7 @@ public class ShinyApps implements SessionInitHandler,
    private final GlobalDisplay display_;
    private final Session session_;
    private final ShinyAppsServerOperations server_;
+   private final DependencyManager dependencyManager_;
    private final EventBus events_;
    private final Satellite satellite_;
    private boolean launchBrowser_ = false;

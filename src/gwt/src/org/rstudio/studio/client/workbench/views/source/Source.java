@@ -2249,7 +2249,7 @@ public class Source implements InsertSourceHandler,
    private void manageShinyAppsCommands()
    {
       boolean shinyCommandsAvailable = 
-            session_.getSessionInfo().getShinyappsInstalled() &&
+            session_.getSessionInfo().getShinyappsAvailable() &&
             (activeEditor_ != null) &&
             (activeEditor_.getPath() != null) &&
             ((activeEditor_.getExtendedFileType() == "shiny"));
