@@ -1,0 +1,18 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+  <ui:style gss="true" type="com.google.gwt.uibinder.test.client.gss.WidgetUsingGss.GssStyle">
+    @def BLACK black;
+
+    @defmixin size(WIDTH, HEIGHT) {
+      width: WIDTH;
+      height: HEIGHT;
+    }
+
+    .main {
+      background-color: BLACK;
+      color: white;
+      @mixin size(200px, 300px);
+    }
+  </ui:style>
+  <g:SimplePanel styleName="{style.main}"/>
+</ui:UiBinder>

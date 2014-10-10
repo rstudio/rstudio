@@ -539,11 +539,27 @@ public class CssResourceGenerator extends AbstractCssResourceGenerator
       throw new UnableToCompleteException();
     }
 
+    // At this point, gss is not enabled so we shouldn't try to compile a gss file.
+    ensureNoGssFile(resources, logger);
+
     // Create the AST and do a quick scan for requirements
     CssStylesheet sheet = GenerateCssAst.exec(logger, resources);
     checkSheet(logger, sheet);
     stylesheetMap.put(method, sheet);
     (new RequirementsCollector(logger, context.getRequirements())).accept(sheet);
+  }
+
+  private void ensureNoGssFile(URL[] resources, TreeLogger logger)
+      throws UnableToCompleteException {
+
+    for (URL stylesheet : resources) {
+      if (stylesheet.getFile().endsWith(".gss")) {
+        logger.log(Type.ERROR, "GSS is not enabled. Add the following line to your gwt.xml file " +
+            "to enable it: " +
+            "<set-configuration-property name=\"CssResource.enableGss\" value=\"true\" />");
+        throw new UnableToCompleteException();
+      }
+    }
   }
 
   protected void checkSheet(TreeLogger logger, CssStylesheet stylesheet)

@@ -92,6 +92,7 @@ public class UiBinderParser {
   private static final String REPEAT_STYLE_ATTRIBUTE = "repeatStyle";
   private static final String SOURCE_ATTRIBUTE = "src";
   private static final String TYPE_ATTRIBUTE = "type";
+  private static final String GSS_ATTRIBUTE = "gss";
 
   // TODO(rjrjr) Make all the ElementParsers receive their dependencies via
   // constructor like this one does, and make this an ElementParser. I want
@@ -445,8 +446,10 @@ public class UiBinderParser {
       importTypes.add(findCssResourceType(elem, type));
     }
 
+    Boolean gss = elem.consumeBooleanConstantAttribute(GSS_ATTRIBUTE);
+
     ImplicitCssResource cssMethod = bundleClass.createCssResource(name, source,
-        publicType, body, importTypes, resourceOracle);
+        publicType, body, importTypes, gss, resourceOracle);
 
     FieldWriter field = fieldManager.registerFieldForGeneratedCssResource(cssMethod);
     field.setInitializer(String.format("%s.%s()",

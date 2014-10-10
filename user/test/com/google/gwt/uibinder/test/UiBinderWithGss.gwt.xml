@@ -1,0 +1,8 @@
+<module type="fileset">
+  <inherits name="com.google.gwt.user.User" />
+  <inherits name="com.google.gwt.debug.Debug"/>
+  <inherits name="com.google.gwt.junit.JUnit"/>
+
+  <set-configuration-property name="CssResource.enableGss" value="true" />
+  <set-configuration-property name="CssResource.legacy" value="true" />
+</module>

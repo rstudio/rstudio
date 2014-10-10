@@ -243,6 +243,19 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
       'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', '0', '1',
       '2', '3', '4', '5', '6'};
 
+  /**
+   * Returns the import prefix for a type, including the trailing hyphen.
+   */
+  public static String getImportPrefix(JClassType importType) {
+    String prefix = importType.getSimpleSourceName();
+    ImportedWithPrefix exp = importType.getAnnotation(ImportedWithPrefix.class);
+    if (exp != null) {
+      prefix = exp.value();
+    }
+
+    return prefix + "-";
+  }
+
   private static String encode(long id) {
     assert id >= 0;
 
@@ -1106,7 +1119,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
       // This substitution map will prefix each renamed class with the resource prefix and use a
       // MinimalSubstitutionMap for computing the obfuscated name.
       SubstitutionMap prefixingSubstitutionMap = new PrefixingSubstitutionMap(
-          new MinimalSubstitutionMap(), obfuscationPrefix + resourcePrefix + "_");
+          new MinimalSubstitutionMap(), obfuscationPrefix + resourcePrefix + "-");
 
       for (JMethod method : cssResource.getOverridableMethods()) {
         if (method == getNameMethod || method == getTextMethod || method == ensuredInjectedMethod) {
@@ -1138,18 +1151,5 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     if (shared != null) {
       replacementsForSharedMethods.put(method, obfuscatedClassName);
     }
-  }
-
-  /**
-   * Returns the import prefix for a type, including the trailing hyphen.
-   */
-  private String getImportPrefix(JClassType importType) {
-    String prefix = importType.getSimpleSourceName();
-    ImportedWithPrefix exp = importType.getAnnotation(ImportedWithPrefix.class);
-    if (exp != null) {
-      prefix = exp.value();
-    }
-
-    return prefix + "-";
   }
 }
