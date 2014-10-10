@@ -190,10 +190,7 @@ var $alignCase                 = true; // case 'a':
       if ($outdentChevron && /^\s*>/.test(line)) {
          if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row)) {
             var tokenCursor = new CppTokenCursor(this.$codeModel.$tokens, row, 0);
-            if (tokenCursor.bwdToMatchingTokenShortCircuit(function(cursor) {
-               return cursor.currentValue() === ";";
-            }))
-            {
+            if (tokenCursor.moveToMatchingArrow()) {
                this.setIndent(session, row, tokenCursor.$row);
             }
          }
