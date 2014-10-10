@@ -58,7 +58,8 @@ public class FieldWriterOfGeneratedCssResourceTest extends TestCase {
 
     ImplicitCssResource css = new ImplicitCssResource("package", "ClassName",
         "fieldName", new String[] {}, cssResourceType, ".able-baker {}",
-        MortalLogger.NULL, Collections.<JClassType> emptySet(), new MockResourceOracle());
+        MortalLogger.NULL, Collections.<JClassType> emptySet(), false,
+        new MockResourceOracle());
 
     FieldWriterOfGeneratedCssResource f = new FieldWriterOfGeneratedCssResource(
         null, stringType, css, MortalLogger.NULL);
@@ -74,7 +75,7 @@ public class FieldWriterOfGeneratedCssResourceTest extends TestCase {
 
     ImplicitCssResource css = new ImplicitCssResource("package", "ClassName",
         "fieldName", new String[] {}, cssResourceType, ".ableBaker {}",
-        MortalLogger.NULL, Collections.<JClassType> emptySet(), new MockResourceOracle());
+        MortalLogger.NULL, Collections.<JClassType> emptySet(), false, new MockResourceOracle());
 
     FieldWriterOfGeneratedCssResource f = new FieldWriterOfGeneratedCssResource(
         null, stringType, css, MortalLogger.NULL);
