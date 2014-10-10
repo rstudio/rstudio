@@ -423,6 +423,15 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
       return suggestionPopup;
     }
 
+    /**
+     * Get the {@link MenuBar} used to display suggestions.
+     *
+     * @return the suggestions menu
+     */
+    protected MenuBar getSuggestionMenu() {
+      return suggestionMenu;
+    }
+
     @Override
     protected void moveSelectionDown() {
       // Make sure that the menu is actually showing. These keystrokes
