@@ -65,7 +65,7 @@ mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
 
 install rmarkdown v0.98.1000
 install packrat v0.98.1000
-
+install shinyapps v0.98.1000
 
 # back to install-dir
 cd $INSTALL_DIR
