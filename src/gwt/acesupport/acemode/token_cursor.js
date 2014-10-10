@@ -380,6 +380,8 @@ var TokenCursor = function(tokens, row, offset) {
    
 }).call(TokenCursor.prototype);
 
+
+
 var CppTokenCursor = function(tokens, row, offset) {
    this.$tokens = tokens;
    this.$row = row || 0;

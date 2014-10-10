@@ -13,7 +13,7 @@ var $outdentRightParen         = true; // )
 var $outdentLeftBrace          = true; // {
 var $outdentRightBrace         = true; // }
 var $outdentRightBracket       = true; // ]
-var $outdentChevron            = true; // >
+var $outdentRightArrow            = true; // >
 var $alignDots                 = true; // .
 var $alignStreamIn             = true; // >>
 var $alignStreamOut            = true; // <<
@@ -150,14 +150,19 @@ var $alignCase                 = true; // case 'a':
          if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row)) {
 
             var tokenCursor = new CppTokenCursor(this.$codeModel.$tokens, row, 0);
-            var rowToUse = null;
+            var rowToUse = -1;
+            
             if (tokenCursor.moveBackwardOverMatchingParens()) {
+
                if (tokenCursor.moveToPreviousToken()) {
                   rowToUse = tokenCursor.$row;
                }
+               
             } else {
+               
                while (tokenCursor.moveToPreviousToken()) {
-                  if (tokenCursor.currentValue() === "class") {
+                  if (tokenCursor.currentValue() === "class" ||
+                      tokenCursor.currentValue() === "struct") {
                      rowToUse = tokenCursor.$row;
                      break;
                   }
@@ -187,7 +192,7 @@ var $alignCase                 = true; // case 'a':
       //     >
       //     ^
       //
-      if ($outdentChevron && /^\s*>/.test(line)) {
+      if ($outdentRightArrow && /^\s*>/.test(line)) {
          if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row)) {
             var tokenCursor = new CppTokenCursor(this.$codeModel.$tokens, row, 0);
             if (tokenCursor.moveToMatchingArrow()) {
@@ -220,7 +225,7 @@ var $alignCase                 = true; // case 'a':
 
             // If the open brace lies on its own line, match its indentation
             var openBracketLine =
-                   doc.$lines[openBracketPos.row].replace(/\/\/.*/, "");
+                   doc.$lines[openBracketPos.row];
 
             if (/^\s*\{/.test(openBracketLine)) {
                this.setIndent(session, row, openBracketPos.row);
@@ -324,7 +329,7 @@ var $alignCase                 = true; // case 'a':
                this.setIndent(session, row, heuristicRow);
                return;
             } else {
-               this.setIndent(session, row, openBracePos);
+               this.setIndent(session, row, openBracePos.row);
                return;
             }
          }
@@ -417,8 +422,8 @@ exports.setOutdentRightBrace = function(x) { $outdentRightBrace = x; };
 exports.getOutdentRightBracket = function() { return $outdentRightBracket; };
 exports.setOutdentRightBracket = function(x) { $outdentRightBracket = x; };
 
-exports.getOutdentChevron = function() { return $outdentChevron; };
-exports.setOutdentChevron = function(x) { $outdentChevron = x; };
+exports.getOutdentRightArrow = function() { return $outdentRightArrow; };
+exports.setOutdentRightArrow = function(x) { $outdentRightArrow = x; };
 
 exports.getAlignDots = function() { return $alignDots; };
 exports.setAlignDots = function(x) { $alignDots = x; };

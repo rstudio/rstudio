@@ -201,7 +201,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
       // The scenarios:
       //
-      //     <keywords> Foo<bar, baz>::a::b<c, tt::d
+      //     <keywords> Foo<bar, baz>::a::b<c, tt::d>
       //
       // 1. If the token is a '>', jump to the matching arrow, then back over that arrow.
       //    Then check that the token is an identifier.
@@ -307,6 +307,8 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
             // This is necessary for the auto-outdenting -- it will see a line with
             // e.g. '{};'
             // and we want to select the '{' token on that line.
+            //
+            // TODO: translate cursor position to token offset
             var tokenCursor = new CppTokenCursor(this.$tokens);
 
             tokenCursor.$row = row;
@@ -398,9 +400,6 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
             if (tokenCursor.currentValue() === ":") {
 
-               if (!tokenCursor.moveToPreviousToken())
-                  return -1;
-
                // We want to walk over specifiers preceeding the ':' which may
                // specify an initializer list. We need to walk e.g.
                //
@@ -408,7 +407,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                //
                // so we do this by jumping parens and keywords, stopping once
                // we hit an actual identifier.
-               do {
+               while (tokenCursor.moveToPreviousToken()) {
 
                   if (tokenCursor.currentValue() === ")") {
                      if (tokenCursor.bwdToMatchingToken()) {
@@ -423,8 +422,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
                   if (tokenCursor.currentType() === "identifier")
                      break;
-
-               } while (tokenCursor.moveToPreviousToken());
+               }
 
             }
 
@@ -667,23 +665,6 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
          }
          
          prevLine = this.getLineSansComments(doc, row - 1);
-
-         // Only indent on an ending '>' if we're not in a template
-         // We can do this by checking for a matching '<'. This also
-         // handles system includes, e.g.
-         //
-         //   #include <header>
-         //   ^
-         if (/>\s*$/.test(line)) {
-            if (this.$tokenUtils.$tokenizeUpToRow(row + 1)) {
-               var tokenCursor = new CppTokenCursor(this.$tokens, row, 0);
-               if (tokenCursor.bwdToMatchingToken()) {
-                  return this.$getIndent(lines[tokenCursor.$row]);
-               }
-            } else {
-               return indent + tab;
-            }
-         }
 
          // Unindent after leaving a block comment.
          //
@@ -965,7 +946,6 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                }
 
                var lastCursor = tokenCursor.cloneCursor();
-               var walkedOverParens = false;
 
                // If the token cursor is on a comma...
                if (tokenCursor.currentValue() === ",") {
@@ -985,9 +965,9 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                   if ($verticallyAlignFunctionArgs) {
                      var balance = line.split("(").length - line.split(")").length;
                      if (balance > 0) {
-                        var parenMatch = line.match(/\(\s*(.)/);
+                        var parenMatch = line.match(/.*?\(\s*(\S)/);
                         if (parenMatch) {
-                           return new Array(parenMatch.index + 1).join(" ");
+                           return new Array(parenMatch[0].length).join(" ");
                         }
                      }
                   }
@@ -1176,19 +1156,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
                   // Step over parens. Walk over '>' only if the next token
                   // is a 'class' or 'struct'.
-                  if ([")", "}", "]"].some(function(x) {
-                     return x === tokenCursor.currentValue();
-                  }) ||
-                      (tokenCursor.currentValue() === ">" &&
-                       tokenCursor.peekFwd().currentType() === "keyword"))
-                  {
-                     if (tokenCursor.bwdToMatchingToken()) {
-                        if (tokenCursor.currentValue() === "(") {
-                           walkedOverParens = true;
-                        }
-                     }
-                  }
-
+                  tokenCursor.bwdToMatchingToken();
                   tokenCursor.moveToPreviousToken();
                }
 
@@ -1202,27 +1170,6 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
             }
             
-         }
-
-         // If the closing character is a 'closer', then indent.
-         // We do this so that we get indentation for a class ctor, e.g.
-         //
-         //   ClassCtor(int a, int b)
-         //       ^
-         //
-         if (/\)\s*$/.test(line)) {
-            return indent + tab;
-         }
-
-         // If the closing character is an 'opener' (ie, one of
-         // '(', '{', '[', or '<'), then indent
-         if (/[\(\{\[<]\s*$/.test(line)) {
-            return indent + tab;
-         }
-
-         // Prefer indenting if the closing character is a letter.
-         if (/\w\s*$/.test(line)) {
-            return indent + tab;
          }
 
       } // start state rules
@@ -1312,7 +1259,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
             indent.substring(tabIndex + 1, indent.length);
       }
 
-      // Otherwise, try to remove a 'tabSize' number of spaces
+      // Otherwise, try to remove up to 'tabSize' number of spaces
       var numLeadingSpaces = 0;
       for (var i = 0; i < tabSize && i < indent.length; i++) {
          if (indent[i] === " ") {
