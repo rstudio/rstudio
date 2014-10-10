@@ -19,7 +19,7 @@ var oop = require("ace/lib/oop");
 var Range = require("ace/range").Range;
 var TokenUtils = require("mode/token_utils").TokenUtils;
 var TokenIterator = require("ace/token_iterator").TokenIterator;
-var TokenCursor = require("mode/token_cursor").TokenCursor;
+var CppTokenCursor = require("mode/token_cursor").CppTokenCursor;
 
 var getVerticallyAlignFunctionArgs = require("mode/r_code_model").getVerticallyAlignFunctionArgs;
 
@@ -100,71 +100,6 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
       return string.split(character).length - 1;
    };
    
-   // Find a matching arrow for either template lookback or for template
-   // classes in inheritance.
-   //
-   // This means we're looking for a '<' where the token before is:
-   //
-   // 1. An identifier preceding by one or more keywords, and
-   //    a colon (':') or a comma (','), e.g.
-   //
-   //    class Foo : public TemplateClass<Some, T<x > 0>, Parameters>
-   //                                    ^                          ^
-   // 2. The preceding token is the 'template' keyword, e.g.
-   //
-   //    template < ... >
-   //             ^     ^
-   //
-   // Note that we cannot just look for a '<' token because it may be
-   // a 'less-than' operator rather than a 'template pack' opener.
-   var moveToMatchingArrow = function(tokenCursor) {
-
-      if (tokenCursor.currentValue() !== ">") {
-         return false;
-      }
-
-      while (tokenCursor.moveToPreviousToken()) {
-
-         if (tokenCursor.currentValue() === "<") {
-
-            // Template check is easy
-            if (tokenCursor.peekBack().currentValue() === "template") {
-               return tokenCursor.moveToPreviousToken();
-            }
-
-            // We now need to potentially walk over e.g.
-            //
-            //     : public ::A<T, U>::B<K, V>
-            //     ^~~~~~~~~~~~~~~~~~~~^
-            //
-            // to determine whether this arrow is associated with
-            // class inheritance.
-            var clone = tokenCursor.cloneCursor();
-            while (clone.moveToPreviousToken()) {
-
-               if (clone.currentValue() === "::" ||
-                   clone.currentType() === "keyword") {
-                  continue;
-               }
-
-               if (clone.currentValue() === ">") {
-                  return moveToMatchingArrow(clone.cloneCursor());
-               }
-
-               if (clone.currentValue() === ":" ||
-                   clone.currentValue() === ",")
-               {
-                  return true;
-               }
-
-            }
-
-         }
-         
-      }
-      return false;
-   };
-
    // Identify whether we're currently writing a macro -- either the current
    // line starts with a '#define' statement, or a chain of lines ending with
    // '\' leads back to a line starting with a '#define' statement.
@@ -277,7 +212,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
          // Jump over arrows, constants (<>)
          if (clonedCursor.currentValue() === ">") {
 
-            if (!moveToMatchingArrow(clonedCursor)) {
+            if (!clonedCursor.moveToMatchingArrow()) {
                return false;
             }
 
@@ -372,7 +307,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
             // This is necessary for the auto-outdenting -- it will see a line with
             // e.g. '{};'
             // and we want to select the '{' token on that line.
-            var tokenCursor = new TokenCursor(this.$tokens);
+            var tokenCursor = new CppTokenCursor(this.$tokens);
 
             tokenCursor.$row = row;
             tokenCursor.$offset = this.$tokens[row].length - 1;
@@ -741,7 +676,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
          //   ^
          if (/>\s*$/.test(line)) {
             if (this.$tokenUtils.$tokenizeUpToRow(row + 1)) {
-               var tokenCursor = new TokenCursor(this.$tokens, row, 0);
+               var tokenCursor = new CppTokenCursor(this.$tokens, row, 0);
                if (tokenCursor.bwdToMatchingToken()) {
                   return this.$getIndent(lines[tokenCursor.$row]);
                }
@@ -974,7 +909,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                   } 
                }
 
-               var tokenCursor = new TokenCursor(
+               var tokenCursor = new CppTokenCursor(
                   this.$tokens,
                   row,
                   this.$tokens[row].length - 1
@@ -1385,8 +1320,6 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
    
 }).call(CppCodeModel.prototype);
-
-
 
 exports.CppCodeModel = CppCodeModel;
 

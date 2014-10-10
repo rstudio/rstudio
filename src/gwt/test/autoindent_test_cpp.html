@@ -644,6 +644,7 @@ var session = editor.getSession();
         var state = this.getState(i-1);
         if (state == 'qstring' || state == 'qqstring')
           continue;
+
         var line = this.getLine(i-1);
         var newline = this.getLine(i);
 

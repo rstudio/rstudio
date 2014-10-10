@@ -2,7 +2,7 @@ define("mode/c_cpp_matching_brace_outdent", function(require, exports, module) {
 
 var Range = require("ace/range").Range;
 
-var TokenCursor = require("mode/token_cursor").TokenCursor;
+var CppTokenCursor = require("mode/token_cursor").CppTokenCursor;
 var MatchingBraceOutdent = function(codeModel) {
    this.$codeModel = codeModel;
 };
@@ -111,10 +111,10 @@ var $alignCase                 = true; // case 'a':
    this.autoOutdent = function(state, session, row) {
 
       var doc = session.doc;
-      var line = this.$codeModel.getLineSansComments(doc, row);
+      var line = doc.getLine(row);
       var prevLine = null;
       if (row > 0)
-         prevLine = this.$codeModel.getLineSansComments(doc, row - 1);
+         prevLine = doc.getLine(row - 1);
       var indent = this.$getIndent(line);
 
       // Check for '<<', '.'alignment
@@ -143,11 +143,13 @@ var $alignCase                 = true; // case 'a':
       //
       //     class Foo
       //         :
-      if ($outdentColon && /^\s*:[^:]/.test(line)) {
+      if ($outdentColon &&
+          /^\s*:/.test(doc.getLine(row)) &&
+          !/^\s*::/.test(doc.getLine(row))) {
 
          if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row)) {
 
-            var tokenCursor = new TokenCursor(this.$codeModel.$tokens, row, 0);
+            var tokenCursor = new CppTokenCursor(this.$codeModel.$tokens, row, 0);
             var rowToUse = null;
             if (tokenCursor.moveBackwardOverMatchingParens()) {
                if (tokenCursor.moveToPreviousToken()) {
@@ -178,11 +180,16 @@ var $alignCase                 = true; // case 'a':
       }
 
       // Outdent for lines starting with a '>' if an associated matching
-      // token can be found. This is intended for template contexts --
-      // we short-circuit our lookback if we bump into a ';' token.
+      // token can be found. This is intended for template contexts, e.g.
+      //
+      //     template <
+      //         int RTYPE
+      //     >
+      //     ^
+      //
       if ($outdentChevron && /^\s*>/.test(line)) {
          if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row)) {
-            var tokenCursor = new TokenCursor(this.$codeModel.$tokens, row, 0);
+            var tokenCursor = new CppTokenCursor(this.$codeModel.$tokens, row, 0);
             if (tokenCursor.bwdToMatchingTokenShortCircuit(function(cursor) {
                return cursor.currentValue() === ";";
             }))
@@ -272,12 +279,15 @@ var $alignCase                 = true; // case 'a':
       // we should outdent if possible. Do so by looking for the
       // enclosing 'class' scope.
       if ($alignClassAccessModifiers &&
-          /^\s*public\s*:\s*$|^\s*private\s*:\s*$|^\s*protected\s*:\s*$]/.test(line)) {
+          /^\s*public\s*:\s*$|^\s*private\s*:\s*$|^\s*protected\s*:\s*$/.test(line)) {
 
          // Find the associated open bracket.
          var openBracePos = session.$findOpeningBracket(
             "}",
-            session.getSelection().getCursor()
+            {
+               row: row,
+               column: line.length
+            }
          );
          
          if (openBracePos) {
@@ -303,7 +313,10 @@ var $alignCase                 = true; // case 'a':
          // Find the associated open bracket.
          var openBracePos = session.$findOpeningBracket(
             "}",
-            session.getSelection().getCursor()
+            {
+               row: row,
+               column: line.length
+            }
          );
 
          if (openBracePos) {
@@ -351,7 +364,7 @@ var $alignCase                 = true; // case 'a':
 
             if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row)) {
 
-               var tokenCursor = new TokenCursor(this.$codeModel.$tokens);
+               var tokenCursor = new CppTokenCursor(this.$codeModel.$tokens);
                tokenCursor.$row = row,
                tokenCursor.$offset = 0;
 

@@ -15,6 +15,7 @@
 
 define("mode/token_cursor", function(require, exports, module) {
 
+var oop = require("ace/lib/oop");
 var TokenCursor = function(tokens, row, offset) {
 
    this.$tokens = tokens;
@@ -379,8 +380,92 @@ var TokenCursor = function(tokens, row, offset) {
    
 }).call(TokenCursor.prototype);
 
+var CppTokenCursor = function(tokens, row, offset) {
+   this.$tokens = tokens;
+   this.$row = row || 0;
+   this.$offset = offset || 0;
+};
+oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
+
+(function() {
+
+   this.cloneCursor = function()
+   {
+      return new CppTokenCursor(this.$tokens, this.$row, this.$offset);
+   };
+
+   // Find a matching arrow for either template lookback or for template
+   // classes in inheritance.
+   //
+   // This means we're looking for a '<' where the token before is:
+   //
+   // 1. An identifier preceding by one or more keywords, and
+   //    a colon (':') or a comma (','), e.g.
+   //
+   //    class Foo : public TemplateClass<Some, T<x > 0>, Parameters>
+   //                                    ^                          ^
+   // 2. The preceding token is the 'template' keyword, e.g.
+   //
+   //    template < ... >
+   //             ^     ^
+   //
+   // Note that we cannot just look for a '<' token because it may be
+   // a 'less-than' operator rather than a 'template pack' opener.
+   this.moveToMatchingArrow = function() {
+
+      if (this.currentValue() !== ">") {
+         return false;
+      }
+
+      while (this.moveToPreviousToken()) {
+
+         if (this.currentValue() === "<") {
+
+            // Template check is easy
+            if (this.peekBack().currentValue() === "template") {
+               return this.moveToPreviousToken();
+            }
+
+            // We now need to potentially walk over e.g.
+            //
+            //     : public ::A<T, U>::B<K, V>
+            //     ^~~~~~~~~~~~~~~~~~~~^
+            //
+            // to determine whether this arrow is associated with
+            // class inheritance.
+            var clone = this.cloneCursor();
+            while (clone.moveToPreviousToken()) {
+
+               if (clone.currentValue() === "::" ||
+                   clone.currentType() === "keyword") {
+                  continue;
+               }
+
+               if (clone.currentValue() === ">") {
+                  return clone.moveToMatchingArrow();
+               }
+
+               if (clone.currentValue() === ":" ||
+                   clone.currentValue() === ",")
+               {
+                  return true;
+               }
+
+            }
+
+         }
+         
+      }
+      return false;
+   };
+
+   
+   
+}).call(CppTokenCursor.prototype);
 
 exports.TokenCursor = TokenCursor;
+exports.CppTokenCursor = CppTokenCursor;
+
 });
 
 

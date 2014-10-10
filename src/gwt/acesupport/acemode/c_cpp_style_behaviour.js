@@ -32,7 +32,7 @@ define('mode/behaviour/cstyle', function(require, exports, module) {
 var oop = require("ace/lib/oop");
 var Behaviour = require("ace/mode/behaviour").Behaviour;
 var CppCodeModel = require("mode/cpp_code_model").CppCodeModel;
-var TokenCursor = require("mode/token_cursor").TokenCursor;
+var CppTokenCursor = require("mode/token_cursor").CppTokenCursor;
 
 var $addNamespaceComment = true;
 
@@ -321,7 +321,7 @@ var CStyleBehaviour = function(codeModel) {
             }
 
             if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row)) {
-               var tokenCursor = new TokenCursor(this.$codeModel.$tokens);
+               var tokenCursor = new CppTokenCursor(this.$codeModel.$tokens);
                tokenCursor.$row = row;
                tokenCursor.$offset = 0;
                if (tokenCursor.moveToPreviousToken()) {
