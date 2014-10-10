@@ -57,7 +57,8 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
    };
 
    var controlFlowKeywords = [
-      "if", "else", "for", "do", "while", "struct", "class", "try", "catch", "switch"
+      "if", "else", "for", "do", "while", "struct", "class", "try",
+      "catch", "switch"
    ];
 
    this.$complements = {
@@ -73,10 +74,6 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
       '"' : '"'
    };
 
-   var reStartsWithOpenBrace = /^\s*\{/;
-   var reStartsWithDefine = /^\s*#\s*define/;
-   var reEndsWithBackslash = /\\\s*$/;
-
    this.allIndicesOf = function(string, character) {
       var result = [];
       for (var i = 0; i < string.length; i++) {
@@ -87,11 +84,8 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
       return result;
    };
 
-   var reStartsWithComma        = /^\s*,/;
-   var reStartsWithColon        = /^\s*:/;
-   var reStartsWithCommaOrColon = /^\s*[,:]/;
-
-   var reOnlyWhitespace = /^\s*$/;
+   var reStartsWithDefine = /^\s*#\s*define/;
+   var reEndsWithBackslash = /\\\s*$/;
 
    // NOTE: We need to be careful of comment block starts and ends. (/*, */)
    var reStartsWithContinuationToken = /^\s*[+\-/&^%$!<\>.?|=~]|^\s*\*[^/]|^\s*\/[^\*]/;
@@ -102,38 +96,10 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
          reEndsWithContinuationToken.test(x);
    };
 
-   // Attach to 'this' so others can use it
-   this.reStartsWithContinuationToken = reStartsWithContinuationToken;
-   this.reEndsWithContinuationToken   = reEndsWithContinuationToken;
-
-   // All of the common control block generating tokens in their 'naked' form --
-   // ie, without an associated open brace on the same line.
-   this.reNakedBlockTokens = {
-      "do": /^\s*do\s*$/,
-      "while": /^\s*while\s*\(.*\)\s*$/,
-      "for": /^\s*for\s*\(.*\)\s*$/,
-      "else": /^\s*else\s*$/,
-      "if": /^\s*if\s*\(.*\)\s*$/,
-      "elseif": /^\s*else\s+if\s*\(.*\)\s*$/
-   };
-   
-   this.reNakedMatch = function(x) {
-      for (var key in this.reNakedBlockTokens) {
-         if (this.reNakedBlockTokens[key].test(x)) {
-            return true;
-         }
-      }
-      return false;
-   };
-
    var charCount = function(string, character) {
       return string.split(character).length - 1;
    };
    
-   var reEndsWithComma     = /,\s*$|,\s*\/\//;
-   var reEndsWithColon     = /:\s*$|:\s*\/\//;
-   var reClassOrStruct     = /\bclass\b|\bstruct\b/;
-
    // Find a matching arrow for either template lookback or for template
    // classes in inheritance.
    //
@@ -149,6 +115,8 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
    //    template < ... >
    //             ^     ^
    //
+   // Note that we cannot just look for a '<' token because it may be
+   // a 'less-than' operator rather than a 'template pack' opener.
    var moveToMatchingArrow = function(tokenCursor) {
 
       if (tokenCursor.currentValue() !== ">") {
@@ -617,59 +585,6 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
       return line;
       
-   };
-
-   // Find the row for which a matching character for the character
-   // 'character' is on. 'lines' is the set of lines to search
-   // through, 'row' is the row to begin the search on, and
-   // 'maxLookaround' gives the maximum number of lines we should look
-   // over. Direction gives the direction and should be 'forward' or
-   // 'backward', and defaults to 'backward'.  Returns -1 is nothing
-   // is found. 'balance' should be left undefined but can be
-   // specified optionally if desired.
-   this.findMatchingBracketRow = function(character, doc, row,
-                                          maxLookaround, direction) {
-
-      direction = typeof direction !== 'undefined' ? direction : "backward";
-      return this.doFindMatchingBracketRow(character, doc, row,
-                                           maxLookaround, direction,
-                                           0, 0);
-      
-   };
-   
-   this.doFindMatchingBracketRow = function(character, doc, row,
-                                            maxLookaround, direction,
-                                            balance, count, shortCircuit) {
-
-      if (count > maxLookaround) return -1;
-      if (row < 0 || row > doc.$lines.length - 1) return -1;
-
-      var line = this.getLineSansComments(doc, row);
-
-      if (typeof shortCircuit === "function") {
-         if (shortCircuit(line)) return row;
-      }
-
-      var nChar = line.split(character).length - 1;
-      var nComp = line.split(this.$complements[character]).length - 1;
-
-      balance = balance + nChar - nComp;
-
-      if (balance <= 0) {
-         return row;
-      }
-
-      if (direction === "backward") {
-         row = row - 1;
-      } else if (direction === "forward") {
-         row = row + 1;
-      } else {
-         row = row - 1;
-      }
-
-      return this.doFindMatchingBracketRow(character, doc, row,
-                                           maxLookaround, direction, balance,
-                                           count + 1, shortCircuit);
    };
 
    this.findStartOfCommentBlock = function(lines, row, maxLookback) {

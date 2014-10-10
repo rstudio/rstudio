@@ -7,7 +7,7 @@ var MatchingBraceOutdent = function(codeModel) {
    this.$codeModel = codeModel;
 };
 
-// Allow the user to control outdenting if desired
+// Allow the user to control various levels of outdenting if desired
 var $outdentColon              = true; // : (initializer list)
 var $outdentRightParen         = true; // )
 var $outdentLeftBrace          = true; // {
@@ -79,22 +79,6 @@ var $alignCase                 = true; // case 'a':
 
       return false;
 
-   };
-
-   this.outdentBraceForNakedTokens = function(session, row, line, prevLine) {
-
-      if (/^\s*\{/.test(line)) {
-         var re = this.$codeModel.reNakedBlockTokens;
-         if (prevLine !== null) {
-            for (var key in re) {
-               if (re[key].test(prevLine)) {
-                  this.setIndent(session, row, row - 1);
-                  return true;
-               }
-            }
-         }
-      }
-      return false;
    };
 
    this.escapeRegExp = function(string) {
@@ -291,69 +275,46 @@ var $alignCase                 = true; // case 'a':
           /^\s*public\s*:\s*$|^\s*private\s*:\s*$|^\s*protected\s*:\s*$]/.test(line)) {
 
          // Find the associated open bracket.
-         var openBraceRow = this.$codeModel.doFindMatchingBracketRow(
+         var openBracePos = session.$findOpeningBracket(
             "}",
-            doc,
-            row,
-            1E6,
-            "backward",
-            1,
-            0
+            session.getSelection().getCursor()
          );
-
-         if (openBraceRow >= 0) {
+         
+         if (openBracePos) {
             // If this open brace is already associated with a class or struct,
             // step over all of those rows.
             var heuristicRow =
-                   this.$codeModel.getRowForOpenBraceIndent(session, openBraceRow);
+                   this.$codeModel.getRowForOpenBraceIndent(session, openBracePos.row);
 
             if (heuristicRow >= 0) {
                this.setIndent(session, row, heuristicRow);
                return;
             } else {
-               this.setIndent(session, row, openBraceRow);
+               this.setIndent(session, row, openBracePos.row);
                return;
             }
          }
          
       }
 
-      // Similar lookback for 'case foo:', but we have a twist: we want to walk
-      // up rows, but in case we run into a 'case:' with indentation already set
-      // in a different way from the auto-outdent, we match that indentation.
-      //
-      // This implies that e.g.
-      //
-      //     switch (x)
-      //     {
-      //         case Foo: bar; break;
-      //         ^
-      //
-      // so we match the indentation of the 'case', rather than the open brace
-      // associated with the switch.
+      // Similar lookback for 'case foo:'.
       if ($alignCase && /^\s*case.+:/.test(line)) {
 
          // Find the associated open bracket.
-         var openBraceRow = this.$codeModel.doFindMatchingBracketRow(
+         var openBracePos = session.$findOpeningBracket(
             "}",
-            doc,
-            row - 1,
-            1E6,
-            "backward",
-            1,
-            0,
-            function(x) { return /^\s*case.+:/.test(x); }
+            session.getSelection().getCursor()
          );
 
-         if (openBraceRow >= 0) {
+         if (openBracePos) {
             var heuristicRow =
-                   this.$codeModel.getRowForOpenBraceIndent(session, openBraceRow);
+                   this.$codeModel.getRowForOpenBraceIndent(session, openBracePos.row);
 
             if (heuristicRow >= 0) {
                this.setIndent(session, row, heuristicRow);
                return;
             } else {
-               this.setIndent(session, row, openBraceRow);
+               this.setIndent(session, row, openBracePos);
                return;
             }
          }

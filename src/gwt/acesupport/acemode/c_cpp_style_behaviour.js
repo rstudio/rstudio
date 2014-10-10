@@ -66,14 +66,13 @@ var CStyleBehaviour = function(codeModel) {
          var line = session.doc.getLine(cursor.row);
          var cursorRightChar = line[cursor.column];
          if (cursorRightChar == rightChar) {
-            var matching = $codeModel.findMatchingBracketRow(
-               rightChar,
-               session.getDocument(),
-               cursor.row,
-               1E4,
-               "backward"
-            );
-            if (matching !== null) {
+
+            var matchPos = session.findMatchingBracket({
+               row: cursor.row,
+               column: cursor.column + 1
+            });
+            
+            if (matchPos !== null) {
                return {
                   text: '',
                   selection: [1, 1]
