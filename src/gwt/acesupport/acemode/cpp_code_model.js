@@ -127,32 +127,38 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
          if (tokenCursor.currentValue() === "<") {
 
+            // Template check is easy
             if (tokenCursor.peekBack().currentValue() === "template") {
                return tokenCursor.moveToPreviousToken();
             }
 
-            var peekBack = tokenCursor.cloneCursor();
-            if (!peekBack.moveToPreviousToken()) {
-               return false;
-            }
+            // We now need to potentially walk over e.g.
+            //
+            //     : public ::A<T, U>::B<K, V>
+            //     ^~~~~~~~~~~~~~~~~~~~^
+            //
+            // to determine whether this arrow is associated with
+            // class inheritance.
+            var clone = tokenCursor.cloneCursor();
+            while (clone.moveToPreviousToken()) {
 
-            if (peekBack.currentType() === "identifier") {
-
-               if (!peekBack.moveToPreviousToken()) {
-                  return false;
-               }
-               
-               while (peekBack.currentType() === "keyword") {
-                  if (!peekBack.moveToPreviousToken()) {
-                     return false;
-                  }
+               if (clone.currentValue() === "::" ||
+                   clone.currentType() === "keyword") {
+                  continue;
                }
 
-               if (peekBack.currentValue() === ":" ||
-                   peekBack.currentValue() === ",") {
+               if (clone.currentValue() === ">") {
+                  return moveToMatchingArrow(clone.cloneCursor());
+               }
+
+               if (clone.currentValue() === ":" ||
+                   clone.currentValue() === ",")
+               {
                   return true;
                }
+
             }
+
          }
          
       }
