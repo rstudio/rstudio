@@ -152,25 +152,42 @@ var $alignCase                 = true; // case 'a':
             var tokenCursor = new CppTokenCursor(this.$codeModel.$tokens, row, 0);
             var rowToUse = -1;
 
-            // First handle constructors: look if we can walk over matching parens,
-            // and if we can, check that the token preceeding is an identifier
-            if (tokenCursor.moveBackwardOverMatchingParens()) {
+            // First, handle constructors. Note that we need to first walk
+            // over some keywords, e.g.
+            //
+            //     int foo(int a, int b) const noexcept()
+            //         :
+            //
+            var clone = tokenCursor.cloneCursor();
+            if (clone.peekBack().currentValue() === ")" ||
+                clone.peekBack().currentType() === "keyword")
+            {
+               do {
+                  
+                  var type = clone.currentType();
+                  var value = clone.currentValue();
 
-               // Move off of opening paren
-               tokenCursor.bwd();
-
-               // Chomp up keywords
-               tokenCursor.bwdWhile(function(x) { return x.currentType() === "keyword"; });
-
-               // Move over parens once more
-               tokenCursor.bwdToMatchingToken();
-
-               if (tokenCursor.moveToPreviousToken()) {
-                  if (tokenCursor.currentType() === "identifier") {
-                     rowToUse = tokenCursor.$row;
+                  // Stop conditions
+                  if (type === "identifier" ||
+                      value === ";") {
+                     rowToUse = clone.$row;
+                     break;
                   }
-               }
-               
+
+                  // Chomp keywords
+                  if (type === "keyword") {
+                     continue;
+                  }
+
+                  // Walk over parens
+                  if (clone.bwdToMatchingToken()) {
+                     if (!clone.moveToPreviousToken()) {
+                        break;
+                     }
+                  }
+                  
+               } while (clone.moveToPreviousToken());
+
             }
 
             // Otherwise, try walking over class inheritance
