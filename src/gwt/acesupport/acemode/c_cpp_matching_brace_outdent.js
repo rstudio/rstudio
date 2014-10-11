@@ -169,7 +169,8 @@ var $alignCase                 = true; // case 'a':
 
                   // Stop conditions
                   if (type === "identifier" ||
-                      value === ";") {
+                      value === ";")
+                  {
                      rowToUse = clone.$row;
                      break;
                   }
@@ -180,11 +181,7 @@ var $alignCase                 = true; // case 'a':
                   }
 
                   // Walk over parens
-                  if (clone.bwdToMatchingToken()) {
-                     if (!clone.moveToPreviousToken()) {
-                        break;
-                     }
-                  }
+                  clone.bwdToMatchingToken();
                   
                } while (clone.moveToPreviousToken());
 
