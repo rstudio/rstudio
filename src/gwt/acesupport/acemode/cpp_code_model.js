@@ -647,6 +647,11 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                indent + tab;
          }
 
+         // Indent for lines ending with a '<'.
+         if (/<\s*$/.test(line)) {
+            return indent + tab;
+         }
+
          // If the line is entirely a string, then match that line's indent.
          if (/^\s*\".*\"\s*$/.test(line)) {
             return this.$getIndent(line);
