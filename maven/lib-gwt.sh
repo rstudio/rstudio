@@ -28,7 +28,7 @@ function finishAndCleanup () {
 function die () {
   thereHaveBeenErrors=1
   if [[ "$continueOnErrors" != "y" ]]; then
-    read -e -p"Error while deploying, ignore errors? (y/N): " -i "N" continueOnErrors
+    read -e -p"Error while deploying, ignore errors? (y/N): " continueOnErrors
     if [[ "$continueOnErrors" != "y" ]]; then
       finishAndCleanup
       exit 1
