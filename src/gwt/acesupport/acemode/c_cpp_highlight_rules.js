@@ -41,19 +41,23 @@ var c_cppHighlightRules = function() {
       return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
    }
 
-   var keywords = lang.arrayToMap(
-      ("alignas|alignof|and|and_eq|asm|auto|bitand|bitor|bool|break|" +
-       "case|catch|char|char16_t|char32_t|class|compl|const|" +
-       "constexpr|const_cast|continue|decltype|default|delete|do|" +
-       "double|dynamic_cast|else|enum|explicit|export|extern|false|" +
-       "float|for|friend|goto|if|inline|int|in|long|mutable|namespace|" +
-       "new|noexcept|not|not_eq|nullptr|operator|or|or_eq|private|" +
-       "protected|public|register|reinterpret_cast|return|short|" +
-       "signed|sizeof|static|static_assert|static_cast|struct|" +
-       "switch|template|this|thread_local|throw|true|try|typedef|" +
-       "typeid|typeof|typename|union|unsigned|using|virtual|void|volatile|" +
-       "wchar_t|while|xor|xor_eq").split("|")
-   );
+   var keywords = lang.arrayToMap([
+      "alignas", "alignof", "and", "and_eq", "asm", "auto", "bitand",
+       "bitor", "bool", "break", "case", "catch", "char", "char16_t",
+       "char32_t", "class", "compl", "const", "constexpr",
+       "const_cast", "continue", "decltype", "default", "delete",
+       "do", "double", "dynamic_cast", "else", "enum", "explicit",
+       "export", "extern", "false", "float", "for", "friend", "goto",
+       "if", "inline", "int", "in", "long", "mutable", "namespace",
+       "new", "noexcept", "not", "not_eq", "nullptr", "or", "or_eq",
+       "private", "protected", "public", "register",
+       "reinterpret_cast", "return", "short", "signed", "sizeof",
+       "static", "static_assert", "static_cast", "struct", "switch",
+       "template", "this", "thread_local", "throw", "true", "try",
+       "typedef", "typeid", "typeof", "typename", "union", "unsigned",
+       "using", "virtual", "void", "volatile", "wchar_t", "while",
+       "xor", "xor_eq"
+   ]);
 
    var preProcTokens = [
       "include", "pragma", "line", "define", "undef", "ifdef", "ifndef",
@@ -64,9 +68,9 @@ var c_cppHighlightRules = function() {
       ("NULL").split("|")
    );
 
-   var reOperatorTokens = [
+   var operatorTokens = [
       
-      ">>=", "<<=",
+      ">>=", "<<=", "new",
       
       "<<", ">>", "&&", "||", "==", "!=", "<=", ">=", "::",
       "*=", "+=", "-=", "/=", "++", "--", "<>", "&=", "^=",
@@ -74,8 +78,14 @@ var c_cppHighlightRules = function() {
       
       "!", "$", "&", "|", "*", "-", "+", "~", "=", ":"
       
-   ].map(function(x) {
+   ];
+
+   var reOperatorTokens = operatorTokens.map(function(x) {
       return escapeRegExp(x);
+   }).join("|");
+
+   var reOperator = operatorTokens.map(function(x) {
+      return "operator\\s*" + escapeRegExp(x);
    }).join("|");
 
    // regexp must not have capturing parentheses. Use (?:) instead.
@@ -83,7 +93,6 @@ var c_cppHighlightRules = function() {
 
    this.$rules = {
       "start" : [
-         
          {
             // Attributes
             token: "comment.doc.tag",
@@ -135,6 +144,9 @@ var c_cppHighlightRules = function() {
          }, {
             token : "variable.language", // compiler-specific constructs
             regex : "\\b__\\S+__\\b"
+         }, {
+            token: "keyword",
+            regex: reOperator
          }, {
             token : function(value) {
                if (value == "this")
