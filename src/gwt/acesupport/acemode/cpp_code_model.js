@@ -129,7 +129,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
    //
    // Return 'null' if no row could be found, and the corresponding row
    // otherwise.
-   this.getRowForOpenBraceIndent = function(session, row, maxLookback) {
+   this.getRowForOpenBraceIndent = function(session, row, useCursor) {
 
       var doc = session.getDocument();
       var lines = doc.$lines;
@@ -157,39 +157,30 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                } 
             }
 
-            // The brace should be the last token on the line -- place it there.
-            // But the behaviour rules might insert a closing '}' or ';', so we'll
-            // also try to walk back tokens to get the opening brace.
-            //
-            // This is necessary for the auto-outdenting -- it will see a line with
-            // e.g. '{};'
-            // and we want to select the '{' token on that line.
-            //
-            // TODO: translate cursor position to token offset
             var tokenCursor = new CppTokenCursor(this.$tokens);
+            if (useCursor) {
+               var cursor = session.getSelection().getCursor();
+               tokenCursor.moveToPosition(cursor);
+            } else {
+               tokenCursor.$row = row;
 
-            tokenCursor.$row = row;
-            tokenCursor.$offset = this.$tokens[row].length - 1;
-
-            // Try to find an open brace on this line (okay if we fail)
-            while (tokenCursor.currentValue() !== "{") {
-
-               if (tokenCursor.$row !== row) {
-                  return -1;
+               var i = tokenCursor.$tokens[row].length - 1;
+               for (var i = tokenCursor.$tokens[row].length - 1;
+                    i >= 0;
+                    i--)
+               {
+                  tokenCursor.$offset = i;
+                  if (tokenCursor.currentValue() === "{") {
+                     break;
+                  }
                }
-               
-               if (!tokenCursor.moveToPreviousToken()) {
-                  return -1;
-               }
+            }
+            if (tokenCursor.currentValue() !== "{") {
+               return -1;
+            }
 
-               if (tokenCursor.$offset < 0) {
-                  break;
-               }
-
-               if (typeof tokenCursor.currentValue() === "undefined") {
-                  break;
-               }
-
+            if (tokenCursor.peekBack().currentValue() === "{") {
+               return -1;
             }
             
             // Move backwards over matching parens. Note that we may need to walk up
@@ -266,14 +257,12 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                // we hit an actual identifier.
                while (tokenCursor.moveToPreviousToken()) {
 
-                  if (tokenCursor.currentValue() === ")") {
-                     if (tokenCursor.bwdToMatchingToken()) {
+                  if (tokenCursor.bwdToMatchingToken()) {
 
-                        if (tokenCursor.peekBack().currentType() === "keyword") {
-                           continue;
-                        } else {
-                           break;
-                        }
+                     if (tokenCursor.peekBack().currentType() === "keyword") {
+                        continue;
+                     } else {
+                        break;
                      }
                   }
 
@@ -497,17 +486,6 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
          // effectively leverage the indentation rules within macro settings.
          line = this.getLineSansComments(doc, row);
 
-         // If this line is just whitespace, match that line's indent. This
-         // ensures multiple enter keypresses can blast the cursor off into
-         // space.
-         if (typeof line !== "string") {
-            return "";
-         } else if (line.length === 0 ||
-                    /^\s*$/.test(line))
-         {
-            return this.$getIndent(lines[row]);
-         }
-         
          var cursor = session.getSelection().getCursor();
 
          // Choose indentation for the current line based on the position
@@ -522,6 +500,17 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
          }
          
          prevLine = this.getLineSansComments(doc, row - 1);
+
+         // If this line is just whitespace, match that line's indent. This
+         // ensures multiple enter keypresses can blast the cursor off into
+         // space.
+         if (typeof line !== "string") {
+            return "";
+         } else if (line.length === 0 ||
+                    /^\s*$/.test(line))
+         {
+            return this.$getIndent(lines[row]);
+         }
 
          // Unindent after leaving a block comment.
          //
@@ -897,9 +886,10 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                         return x === peekOne.currentValue();
                      }))
                      {
-                        // If there is a token ahead of the ':', indent using that.
+                        // If there is a token ahead of the ':', indent using that
+                        // -- but only if that is not on the same line as the cursor.
                         var peekFwd = tokenCursor.peekFwd();
-                        if (peekFwd) {
+                        if (peekFwd && peekFwd.$row !== cursor.row) {
                            return this.$getIndent(lines[peekFwd.$row]) + additionalIndent;
                         }
                         

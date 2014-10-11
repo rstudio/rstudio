@@ -393,6 +393,25 @@ var TokenCursor = function(tokens, row, offset) {
          this.moveToPreviousToken();
       }
    };
+
+   this.moveToPosition = function(pos) {
+
+      var rowTokens = this.$tokens[pos.row];
+      if (rowTokens == null) {
+         return false;
+      }
+
+      for (var i = 0; i < rowTokens.length; i++) {
+         if (rowTokens[i].column >= pos.column) {
+            break;
+         }
+      }
+
+      this.$row = pos.row;
+      this.$offset = i - 1;
+      return true;
+      
+   };
    
    
 }).call(TokenCursor.prototype);
@@ -420,35 +439,44 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
    // This amounts to moving over identifiers, keywords and matching arrows.
    this.bwdOverClassySpecifiers = function() {
 
-      if (this.currentValue() === ":") {
+      var startValue = this.currentValue();
+      if (startValue === ":" ||
+          startValue === "," ||
+          startValue === "{")
+      {
          this.moveToPreviousToken();
       }
-
+      
       do {
 
          if (this.moveToMatchingArrow()) {
             this.moveToPreviousToken();
          }
 
-         console.log(this.currentToken());
+         var type = this.currentType();
+         var value = this.currentValue();
 
          if (!(
-            this.currentType() === "keyword" ||
-            this.currentValue() === "::" ||
-            this.currentType() === "identifier" ||
-            this.currentType() === "constant"
+            type === "keyword" ||
+            value === "::" ||
+            type === "identifier" ||
+            type === "constant"
          ))
          {
             break;
          }
 
-         if (this.currentValue() === "class" ||
-             this.currentValue() === "struct")
+         if (value === "class" ||
+             value === "struct" ||
+             value === ":" ||
+             value === ",")
          {
             return true;
          }
          
       } while (this.moveToPreviousToken());
+
+      return false;
 
    };
 
@@ -531,76 +559,23 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
    this.bwdOverClassInheritance = function() {
 
       var clonedCursor = this.cloneCursor();
-      return this.doBwdOverClassInheritance(clonedCursor, this);
+      return doBwdOverClassInheritance(clonedCursor, this);
 
    };
 
-   this.doBwdOverClassInheritance = function(clonedCursor, tokenCursor) {
+   var doBwdOverClassInheritance = function(clonedCursor, tokenCursor) {
 
-      // Move off of the open brace or comma
-      if (!clonedCursor.moveToPreviousToken()) {
-         return false;
-      }
+      clonedCursor.bwdOverClassySpecifiers();
 
-      // The scenarios:
-      //
-      //     <keywords> Foo<bar, baz>::a::b<c, tt::d>
-      //
-      // 1. If the token is a '>', jump to the matching arrow, then back over that arrow.
-      //    Then check that the token is an identifier.
-      //    If the token before that is '::', repeat.
-      //    Otherwise, chomp keywords until we find a ':'.
-      while (true) {
-
-         // Jump over arrows, constants (<>)
-         if (clonedCursor.currentValue() === ">") {
-
-            if (!clonedCursor.moveToMatchingArrow()) {
-               return false;
-            }
-
-            clonedCursor.moveToPreviousToken();
-
-         }
-
-         if (clonedCursor.currentType() === "constant") {
-            if (!clonedCursor.moveToPreviousToken()) {
-               return false;
-            }
-         }
-
-         // If we hit a '::', pop over it and repeat
-         if (clonedCursor.currentValue() === "::") {
-            clonedCursor.moveToPreviousToken();
-            continue;
-         }
-
-         // The cursor should now be on an identifier.
-         if (clonedCursor.currentType() !== "identifier") {
-            return false;
-         }
-
-         if (!clonedCursor.moveToPreviousToken()) {
-            return false;
-         }
-
-         while (clonedCursor.currentType() === "keyword" ||
-                clonedCursor.currentValue() === "::") {
-            if (!clonedCursor.moveToPreviousToken()) {
-               return false;
-            }
-         }
-
-         // Check for a ':' or a ','
-         var value = clonedCursor.currentValue();
-         if (value === ",") {
-            return this.doBwdOverClassInheritance(clonedCursor, tokenCursor);
-         } else if (value === ":") {
-            tokenCursor.$row = clonedCursor.$row;
-            tokenCursor.$offset = clonedCursor.$offset;
-            return true;
-         }            
-      }
+      // Check for a ':' or a ','
+      var value = clonedCursor.currentValue();
+      if (value === ",") {
+         return doBwdOverClassInheritance(clonedCursor, tokenCursor);
+      } else if (value === ":") {
+         tokenCursor.$row = clonedCursor.$row;
+         tokenCursor.$offset = clonedCursor.$offset;
+         return true;
+      }            
 
       return false;
       
