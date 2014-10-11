@@ -889,7 +889,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                      
                   }
 
-                  // We hit a ':'...
+                  // We hit a colon ':'...
                   var peekOne = tokenCursor.peekBack();
                   if (tokenCursor.currentValue() === ":") {
 
@@ -1015,9 +1015,19 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
                   // Step over parens. Walk over '>' only if the next token
                   // is a 'class' or 'struct'.
-                  if (tokenCursor.bwdToMatchingArrow()) {
-                     return this.$getIndent(lines[tokenCursor.$row]);
+                  if (tokenCursor.currentValue() === ">")
+                  {
+                     var peekFwd = tokenCursor.peekFwd();
+                     var v = peekFwd.currentValue();
+                     if (v === "class" || v === "struct")
+                     {
+                        if (tokenCursor.bwdToMatchingArrow())
+                        {
+                           return this.$getIndent(lines[tokenCursor.$row]) + additionalIndent;
+                        }
+                     }
                   }
+                  
                   tokenCursor.bwdToMatchingToken();
                   tokenCursor.moveToPreviousToken();
                }
