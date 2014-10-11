@@ -1015,6 +1015,9 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
                   // Step over parens. Walk over '>' only if the next token
                   // is a 'class' or 'struct'.
+                  if (tokenCursor.bwdToMatchingArrow()) {
+                     return this.$getIndent(lines[tokenCursor.$row]);
+                  }
                   tokenCursor.bwdToMatchingToken();
                   tokenCursor.moveToPreviousToken();
                }

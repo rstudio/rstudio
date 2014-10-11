@@ -301,7 +301,7 @@ var TokenCursor = function(tokens, row, offset) {
       {
          if (this.currentValue() === "(")
          {
-            if (parenCount == 0)
+            if (parenCount === 0)
             {
                success = true;
                break;
@@ -374,7 +374,7 @@ var TokenCursor = function(tokens, row, offset) {
 
    this.isFirstSignificantTokenOnLine = function()
    {
-      return this.$offset == 0;
+      return this.$offset === 0;
    };
 
    this.isLastSignificantTokenOnLine = function()
@@ -430,6 +430,42 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
    this.cloneCursor = function()
    {
       return new CppTokenCursor(this.$tokens, this.$row, this.$offset);
+   };
+
+   this.bwdToMatchingArrow = function() {
+
+      var thisValue = ">";
+      var compValue = "<";
+
+      if (this.currentValue() !== ">") return false;
+
+      var success = false;
+      var parenCount = 0;
+      var clone = this.cloneCursor();
+      while (clone.moveToPreviousToken())
+      {
+         if (clone.currentValue() === compValue)
+         {
+            if (parenCount === 0)
+            {
+               if (clone.peekBack().currentValue() === "template") {
+                  this.$row = clone.$row;
+                  this.$offset = clone.$offset;
+                  return true;
+               } else {
+                  return false;
+               }
+            }
+            parenCount--;
+         }
+         else if (clone.currentValue() === thisValue)
+         {
+            parenCount++;
+         }
+      }
+
+      return false;
+      
    };
 
    // Move over a 'classy' specifier, e.g.
