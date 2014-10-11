@@ -136,8 +136,9 @@ var c_cppHighlightRules = function() {
             token : "constant.numeric", // float
             regex : "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
          }, {
-            token : "constant", // <CONSTANT>
-            regex : "<[a-zA-Z0-9./]+>"
+            token : "keyword.preproc",
+            regex : "#\\s*include\\b",
+            next : "include"
          }, {
             token : "keyword.preproc", // pre-compiler directives
             regex : "(?:" + preProcTokens.map(function(x) { return "#\\s*" + x + "\\b"; }).join("|") + ")"
@@ -214,7 +215,20 @@ var c_cppHighlightRules = function() {
             merge : true,
             regex : '.+'
          }
+      ],
+      "include" : [
+         {
+            token : "constant", // <CONSTANT>
+            regex : /<.+>/,
+            next : "start"
+         },
+         {
+            token : "constant",
+            regex : /\".+\"/,
+            next : "start"
+         }
       ]
+      
    };
 
    var rdRules = new TexHighlightRules("comment").getRules();
