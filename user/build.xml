@@ -82,6 +82,7 @@
     <pathelement location="${gwt.tools.lib}/testng/testng-5.14.1-sources.jar"/>
     <pathelement location="${gwt.tools.lib}/testng/testng-5.14.1-nojunit.jar"/>
     <pathelement location="${gwt.dev.jar}"/>
+    <pathelement location="${gwt.tools.lib}/gss/2014-09-11/closure-stylesheets-rebased.jar"/>
   </path>
 
   <target name="compile" description="Compile all class files"
@@ -133,7 +134,6 @@
         <pathelement location="${javac.out}"/>
         <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar"/>
         <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar"/>
-        <pathelement location="${gwt.tools.lib}/gss/2014-09-11/closure-stylesheets-rebased.jar"/>
         <path refid="test.extraclasspath"/>
       </classpath>
       <compilerarg value="-processor"/>
