@@ -719,8 +719,15 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
          //     a +
          //         b +
          //         ^
-         // 
-         if (reContinuation(line) && reContinuation(prevLine)) {
+         //
+         var i = row - 1;
+         var prevLineNotWhitespace = prevLine;
+         while (i >= 0 && /^\s*/.test(prevLineNotWhitespace)) {
+            prevLineNotWhitespace = this.getLineSansComments(doc, i);
+            i--;
+         }
+
+         if (reContinuation(line) && reContinuation(prevLineNotWhitespace)) {
             return this.$getIndent(line);
          }
 

@@ -488,8 +488,8 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
    // 1. An identifier preceding by one or more keywords, and
    //    a colon (':') or a comma (','), e.g.
    //
-   //    class Foo : public TemplateClass<Some, T<x > 0>, Parameters>
-   //                                    ^                          ^
+   //    class Foo : public TemplateClass<Some, T<x < 0>, Parameters>
+   //                                    ^~~~~~~~~x~x~~~~~~~~~~~~~~~^
    // 2. The preceding token is the 'template' keyword, e.g.
    //
    //    template < ... >
