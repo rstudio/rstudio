@@ -120,149 +120,6 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
       }
    };
 
-   // Move backwards over an initialization list, e.g.
-   //
-   //     Foo : a_(a),
-   //           b_(b),
-   //           c_(c) const noexcept() {
-   //
-   // The assumption is that the cursor starts on an opening brace.
-   var bwdOverInitializationList = function(tokenCursor) {
-
-      var clonedCursor = tokenCursor.cloneCursor();
-      while (doBwdOverInitializationList(clonedCursor, tokenCursor)) {
-      }
-      
-      return tokenCursor;
-   };
-
-   var doBwdOverInitializationList = function(clonedCursor, tokenCursor) {
-
-      // Move over matching parentheses -- note that this action puts
-      // the cursor on the open paren on success.
-      clonedCursor.moveBackwardOverMatchingParens();
-      if (!clonedCursor.moveBackwardOverMatchingParens()) {
-         if (!clonedCursor.moveToPreviousToken()) {
-            return false;
-         }
-      }
-
-      // Chomp keywords
-      while (clonedCursor.currentType() === "keyword") {
-         
-         if (!clonedCursor.moveToPreviousToken()) {
-            return false;
-         }
-         
-      }
-      
-      // Move backwards over the name of the element initialized
-      if (clonedCursor.moveToPreviousToken()) {
-
-         // Check for a ':' or a ','
-         var value = clonedCursor.currentValue();
-         if (value === ",") {
-            return doBwdOverInitializationList(clonedCursor, tokenCursor);
-         } else if (value === ":") {
-            tokenCursor.$row = clonedCursor.$row;
-            tokenCursor.$offset = clonedCursor.$offset;
-            return true;
-         }
-      }
-
-      return false;
-
-   };
-
-   // Move backwards over class inheritance.
-   //
-   // This moves the cursor backwards over any inheritting classes,
-   // e.g.
-   //
-   //     class Foo :
-   //         public A,
-   //         public B {
-   //
-   // The cursor is expected to start on the opening brace, and will
-   // end on the opening ':' on success.
-   var bwdOverClassInheritance = function(tokenCursor) {
-
-      var clonedCursor = tokenCursor.cloneCursor();
-      return doBwdOverClassInheritance(clonedCursor, tokenCursor);
-
-   };
-
-   var doBwdOverClassInheritance = function(clonedCursor, tokenCursor) {
-
-      // Move off of the open brace or comma
-      if (!clonedCursor.moveToPreviousToken()) {
-         return false;
-      }
-
-      // The scenarios:
-      //
-      //     <keywords> Foo<bar, baz>::a::b<c, tt::d>
-      //
-      // 1. If the token is a '>', jump to the matching arrow, then back over that arrow.
-      //    Then check that the token is an identifier.
-      //    If the token before that is '::', repeat.
-      //    Otherwise, chomp keywords until we find a ':'.
-      while (true) {
-
-         // Jump over arrows, constants (<>)
-         if (clonedCursor.currentValue() === ">") {
-
-            if (!clonedCursor.moveToMatchingArrow()) {
-               return false;
-            }
-
-            clonedCursor.moveToPreviousToken();
-
-         }
-
-         if (clonedCursor.currentType() === "constant") {
-            if (!clonedCursor.moveToPreviousToken()) {
-               return false;
-            }
-         }
-
-         // If we hit a '::', pop over it and repeat
-         if (clonedCursor.currentValue() === "::") {
-            clonedCursor.moveToPreviousToken();
-            continue;
-         }
-
-         // The cursor should now be on an identifier.
-         if (clonedCursor.currentType() !== "identifier") {
-            return false;
-         }
-
-         if (!clonedCursor.moveToPreviousToken()) {
-            return false;
-         }
-
-         while (clonedCursor.currentType() === "keyword" ||
-                clonedCursor.currentValue() === "::") {
-            if (!clonedCursor.moveToPreviousToken()) {
-               return false;
-            }
-         }
-
-         // Check for a ':' or a ','
-         var value = clonedCursor.currentValue();
-         if (value === ",") {
-            return doBwdOverClassInheritance(clonedCursor, tokenCursor);
-         } else if (value === ":") {
-            tokenCursor.$row = clonedCursor.$row;
-            tokenCursor.$offset = clonedCursor.$offset;
-            return true;
-         }            
-      }
-
-      return false;
-      
-   };
-
    // Given a row with a '{', we look back for the row that provides
    // the start of the scope, for purposes of indentation. We look back
    // for:
@@ -343,10 +200,10 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
             // so we need to look two tokens backwards to see if it's a
             // comma or a colon.
             debugCursor("Before moving over initialization list", tokenCursor);
-            bwdOverInitializationList(tokenCursor);
+            tokenCursor.bwdOverInitializationList();
 
             debugCursor("Before moving over class inheritance", tokenCursor);
-            bwdOverClassInheritance(tokenCursor);
+            tokenCursor.bwdOverClassInheritance();
 
             // If we didn't walk over anything previously, the cursor
             // will still be on the same '{'.  Walk backwards one token.
@@ -748,9 +605,16 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
          // Note the absence of a closing comma. This is for users
          // who would prefer to align commas with colons, when
          // doing multi-line inheritance.
-         if (/^\s*(class|struct).*:\s*[\w_]+/.test(line) && !/,\s*/.test(line)) {
+         //
+         // Need some special handling for e.g.
+         //
+         //   class Foo::Bar : public A
+         //                  ^
+         //
+         var match = line.match(/(^\s*(?:class|struct)\s+.*\w[^:]):[^:]\s*.+/);
+         if (match && !/,\s*/.test(line)) {
             return $verticallyAlignFunctionArgs ?
-               new Array(line.indexOf(":") + 1).join(" ") :
+               new Array(match[1].length + 1).join(" ") :
                indent + tab;
          }
 

@@ -71,6 +71,8 @@ var TokenCursor = function(tokens, row, offset) {
       return true;
    };
 
+   this.bwd = this.moveToPreviousToken;
+
    this.peekBack = function(n) {
       
       if (typeof n === "undefined") {
@@ -143,6 +145,8 @@ var TokenCursor = function(tokens, row, offset) {
       this.$offset = clone.$offset;
       return true;
    };
+
+   this.fwd = this.moveToNextToken;
 
    this.seekToNearestToken = function(position, maxRow)
    {
@@ -377,6 +381,19 @@ var TokenCursor = function(tokens, row, offset) {
    {
       return this.$offset == (this.$tokens[this.$row] || []).length - 1;
    };
+
+   this.bwdUntil = function(predicate) {
+      while (!predicate(this)) {
+         this.moveToPreviousToken();
+      }
+   };
+
+   this.bwdWhile = function(predicate) {
+      while (predicate(this)) {
+         this.moveToPreviousToken();
+      }
+   };
+   
    
 }).call(TokenCursor.prototype);
 
@@ -394,6 +411,45 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
    this.cloneCursor = function()
    {
       return new CppTokenCursor(this.$tokens, this.$row, this.$offset);
+   };
+
+   // Move over a 'classy' specifier, e.g.
+   //
+   //     ::foo::bar<A, T>::baz<T>::bat
+   //
+   // This amounts to moving over identifiers, keywords and matching arrows.
+   this.bwdOverClassySpecifiers = function() {
+
+      if (this.currentValue() === ":") {
+         this.moveToPreviousToken();
+      }
+
+      do {
+
+         if (this.moveToMatchingArrow()) {
+            this.moveToPreviousToken();
+         }
+
+         console.log(this.currentToken());
+
+         if (!(
+            this.currentType() === "keyword" ||
+            this.currentValue() === "::" ||
+            this.currentType() === "identifier" ||
+            this.currentType() === "constant"
+         ))
+         {
+            break;
+         }
+
+         if (this.currentValue() === "class" ||
+             this.currentValue() === "struct")
+         {
+            return true;
+         }
+         
+      } while (this.moveToPreviousToken());
+
    };
 
    // Find a matching arrow for either template lookback or for template
@@ -461,7 +517,146 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
       return false;
    };
 
-   
+   // Move backwards over class inheritance.
+   //
+   // This moves the cursor backwards over any inheritting classes,
+   // e.g.
+   //
+   //     class Foo :
+   //         public A,
+   //         public B {
+   //
+   // The cursor is expected to start on the opening brace, and will
+   // end on the opening ':' on success.
+   this.bwdOverClassInheritance = function() {
+
+      var clonedCursor = this.cloneCursor();
+      return this.doBwdOverClassInheritance(clonedCursor, this);
+
+   };
+
+   this.doBwdOverClassInheritance = function(clonedCursor, tokenCursor) {
+
+      // Move off of the open brace or comma
+      if (!clonedCursor.moveToPreviousToken()) {
+         return false;
+      }
+
+      // The scenarios:
+      //
+      //     <keywords> Foo<bar, baz>::a::b<c, tt::d>
+      //
+      // 1. If the token is a '>', jump to the matching arrow, then back over that arrow.
+      //    Then check that the token is an identifier.
+      //    If the token before that is '::', repeat.
+      //    Otherwise, chomp keywords until we find a ':'.
+      while (true) {
+
+         // Jump over arrows, constants (<>)
+         if (clonedCursor.currentValue() === ">") {
+
+            if (!clonedCursor.moveToMatchingArrow()) {
+               return false;
+            }
+
+            clonedCursor.moveToPreviousToken();
+
+         }
+
+         if (clonedCursor.currentType() === "constant") {
+            if (!clonedCursor.moveToPreviousToken()) {
+               return false;
+            }
+         }
+
+         // If we hit a '::', pop over it and repeat
+         if (clonedCursor.currentValue() === "::") {
+            clonedCursor.moveToPreviousToken();
+            continue;
+         }
+
+         // The cursor should now be on an identifier.
+         if (clonedCursor.currentType() !== "identifier") {
+            return false;
+         }
+
+         if (!clonedCursor.moveToPreviousToken()) {
+            return false;
+         }
+
+         while (clonedCursor.currentType() === "keyword" ||
+                clonedCursor.currentValue() === "::") {
+            if (!clonedCursor.moveToPreviousToken()) {
+               return false;
+            }
+         }
+
+         // Check for a ':' or a ','
+         var value = clonedCursor.currentValue();
+         if (value === ",") {
+            return this.doBwdOverClassInheritance(clonedCursor, tokenCursor);
+         } else if (value === ":") {
+            tokenCursor.$row = clonedCursor.$row;
+            tokenCursor.$offset = clonedCursor.$offset;
+            return true;
+         }            
+      }
+
+      return false;
+      
+   };
+
+   // Move backwards over an initialization list, e.g.
+   //
+   //     Foo : a_(a),
+   //           b_(b),
+   //           c_(c) const noexcept() {
+   //
+   // The assumption is that the cursor starts on an opening brace.
+   this.bwdOverInitializationList = function() {
+
+      var clonedCursor = this.cloneCursor();
+      return this.doBwdOverInitializationList(clonedCursor, this);
+
+   };
+
+   this.doBwdOverInitializationList = function(clonedCursor, tokenCursor) {
+
+      // Move over matching parentheses -- note that this action puts
+      // the cursor on the open paren on success.
+      clonedCursor.moveBackwardOverMatchingParens();
+      if (!clonedCursor.moveBackwardOverMatchingParens()) {
+         if (!clonedCursor.moveToPreviousToken()) {
+            return false;
+         }
+      }
+
+      // Chomp keywords
+      while (clonedCursor.currentType() === "keyword") {
+         
+         if (!clonedCursor.moveToPreviousToken()) {
+            return false;
+         }
+         
+      }
+      
+      // Move backwards over the name of the element initialized
+      if (clonedCursor.moveToPreviousToken()) {
+
+         // Check for a ':' or a ','
+         var value = clonedCursor.currentValue();
+         if (value === ",") {
+            return this.doBwdOverInitializationList(clonedCursor, tokenCursor);
+         } else if (value === ":") {
+            tokenCursor.$row = clonedCursor.$row;
+            tokenCursor.$offset = clonedCursor.$offset;
+            return true;
+         }
+      }
+
+      return false;
+
+   };
    
 }).call(CppTokenCursor.prototype);
 

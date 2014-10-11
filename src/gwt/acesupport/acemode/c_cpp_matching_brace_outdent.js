@@ -151,29 +151,36 @@ var $alignCase                 = true; // case 'a':
 
             var tokenCursor = new CppTokenCursor(this.$codeModel.$tokens, row, 0);
             var rowToUse = -1;
-            
+
+            // First handle constructors: look if we can walk over matching parens,
+            // and if we can, check that the token preceeding is an identifier
             if (tokenCursor.moveBackwardOverMatchingParens()) {
 
+               // Move off of opening paren
+               tokenCursor.bwd();
+
+               // Chomp up keywords
+               tokenCursor.bwdWhile(function(x) { return x.currentType() === "keyword"; });
+
+               // Move over parens once more
+               tokenCursor.bwdToMatchingToken();
+
                if (tokenCursor.moveToPreviousToken()) {
+                  if (tokenCursor.currentType() === "identifier") {
+                     rowToUse = tokenCursor.$row;
+                  }
+               }
+               
+            }
+
+            // Otherwise, try walking over class inheritance
+            else {
+               tokenCursor.moveToPreviousToken();
+               if (tokenCursor.bwdOverClassySpecifiers()) {
                   rowToUse = tokenCursor.$row;
                }
-               
-            } else {
-               
-               while (tokenCursor.moveToPreviousToken()) {
-                  if (tokenCursor.currentValue() === "class" ||
-                      tokenCursor.currentValue() === "struct") {
-                     rowToUse = tokenCursor.$row;
-                     break;
-                  }
-
-                  var type = tokenCursor.currentType();
-                  if (!(type === "keyword" || type === "identifier")) {
-                     break;
-                  }
-               }
             }
-         
+            
             if (rowToUse >= 0) {
                this.setIndent(session, row, rowToUse, session.getTabString(),
                               function(oldIndent, newIndent) {
