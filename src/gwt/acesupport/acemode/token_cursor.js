@@ -448,13 +448,9 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
          {
             if (parenCount === 0)
             {
-               if (clone.peekBack().currentValue() === "template") {
-                  this.$row = clone.$row;
-                  this.$offset = clone.$offset;
-                  return true;
-               } else {
-                  return false;
-               }
+               this.$row = clone.$row;
+               this.$offset = clone.$offset;
+               return true;
             }
             parenCount--;
          }
@@ -485,7 +481,7 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
       
       do {
 
-         if (this.moveToMatchingArrow()) {
+         if (this.bwdToMatchingArrow()) {
             this.moveToPreviousToken();
          }
 
@@ -514,71 +510,6 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
 
       return false;
 
-   };
-
-   // Find a matching arrow for either template lookback or for template
-   // classes in inheritance.
-   //
-   // This means we're looking for a '<' where the token before is:
-   //
-   // 1. An identifier preceding by one or more keywords, and
-   //    a colon (':') or a comma (','), e.g.
-   //
-   //    class Foo : public TemplateClass<Some, T<x < 0>, Parameters>
-   //                                    ^~~~~~~~~x~x~~~~~~~~~~~~~~~^
-   // 2. The preceding token is the 'template' keyword, e.g.
-   //
-   //    template < ... >
-   //             ^     ^
-   //
-   // Note that we cannot just look for a '<' token because it may be
-   // a 'less-than' operator rather than a 'template pack' opener.
-   this.moveToMatchingArrow = function() {
-
-      if (this.currentValue() !== ">") {
-         return false;
-      }
-
-      while (this.moveToPreviousToken()) {
-
-         if (this.currentValue() === "<") {
-
-            // Template check is easy
-            if (this.peekBack().currentValue() === "template") {
-               return this.moveToPreviousToken();
-            }
-
-            // We now need to potentially walk over e.g.
-            //
-            //     : public ::A<T, U>::B<K, V>
-            //     ^~~~~~~~~~~~~~~~~~~~^
-            //
-            // to determine whether this arrow is associated with
-            // class inheritance.
-            var clone = this.cloneCursor();
-            while (clone.moveToPreviousToken()) {
-
-               if (clone.currentValue() === "::" ||
-                   clone.currentType() === "keyword") {
-                  continue;
-               }
-
-               if (clone.currentValue() === ">") {
-                  return clone.moveToMatchingArrow();
-               }
-
-               if (clone.currentValue() === ":" ||
-                   clone.currentValue() === ",")
-               {
-                  return true;
-               }
-
-            }
-
-         }
-         
-      }
-      return false;
    };
 
    // Move backwards over class inheritance.
