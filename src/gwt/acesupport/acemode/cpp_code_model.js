@@ -654,7 +654,14 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
          // If the line is entirely a string, then match that line's indent.
          if (/^\s*\".*\"\s*$/.test(line)) {
-            return this.$getIndent(line);
+            return indent;
+         }
+
+         // Don't indent for templates e.g.
+         //
+         //     template < ... >
+         if (/^\s*template\s*<.*>\s*$/.test(line)) {
+            return indent;
          }
 
          // Vertical alignment
