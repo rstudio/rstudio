@@ -679,12 +679,12 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
          //       : a_(a),
          //         b_(b),
          //         ^
-         var bracePos = /([\[\{\(]).+,\s*$/.exec(line);
+         var bracePos = /([\[\{\(<]).+,\s*$/.exec(line);
          if (bracePos) {
 
             // Loop through the openers until we find an unmatched brace on
             // the line
-            var openers = ["(", "{", "["];
+            var openers = ["(", "{", "[", "<"];
             for (var i = 0; i < openers.length; i++) {
 
                // Get the character alongside its complement
