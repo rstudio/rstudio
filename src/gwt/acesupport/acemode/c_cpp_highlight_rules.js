@@ -37,23 +37,46 @@ var RHighlightRules = require("mode/r_highlight_rules").RHighlightRules;
 
 var c_cppHighlightRules = function() {
 
+   function escapeRegExp(str) {
+      return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+   }
+
     var keywords = lang.arrayToMap(
         ("alignas|alignof|and|and_eq|asm|auto|bitand|bitor|bool|break|" +
         "case|catch|char|char16_t|char32_t|class|compl|const|" +
         "constexpr|const_cast|continue|decltype|default|delete|do|" +
         "double|dynamic_cast|else|enum|explicit|export|extern|false|" +
-        "float|for|friend|goto|if|inline|int|long|mutable|namespace|" +
+        "float|for|friend|goto|if|inline|int|in|long|mutable|namespace|" +
         "new|noexcept|not|not_eq|nullptr|operator|or|or_eq|private|" +
         "protected|public|register|reinterpret_cast|return|short|" +
         "signed|sizeof|static|static_assert|static_cast|struct|" +
         "switch|template|this|thread_local|throw|true|try|typedef|" +
-        "typeid|typename|union|unsigned|using|virtual|void|volatile|" +
+        "typeid|typeof|typename|union|unsigned|using|virtual|void|volatile|" +
         "wchar_t|while|xor|xor_eq").split("|")
     );
+
+    var preProcTokens = [
+      "include", "pragma", "line", "define", "undef", "ifdef", "ifndef",
+       "if", "else", "elif", "endif", "warning", "error"
+    ];
 
     var buildinConstants = lang.arrayToMap(
         ("NULL").split("|")
     );
+
+   var reOperatorTokens = [
+      
+      ">>=", "<<=",
+      
+      "<<", ">>", "&&", "||", "==", "!=", "<=", ">=", "::",
+      "*=", "+=", "-=", "/=", "++", "--", "<>", "&=", "^=",
+      "%=",
+      
+      "!", "$", "&", "|", "*", "-", "+", "~", "=", ":"
+      
+    ].map(function(x) {
+       return escapeRegExp(x);
+    }).join("|");
 
     // regexp must not have capturing parentheses. Use (?:) instead.
     // regexps are ordered -> the first match is used
@@ -103,12 +126,15 @@ var c_cppHighlightRules = function() {
                 token : "constant.numeric", // float
                 regex : "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
             }, {
-              token : "constant", // <CONSTANT>
-              regex : "<[a-zA-Z0-9.]+>"
+                token : "constant", // <CONSTANT>
+                regex : "<[a-zA-Z0-9./]+>"
             }, {
-              token : "keyword", // pre-compiler directivs
-              regex : "(?:#include|#pragma|#line|#define|#undef|#ifdef|#else|#elif|#endif|#ifndef)"
-          }, {
+                token : "keyword.preproc", // pre-compiler directives
+                regex : "(?:" + preProcTokens.map(function(x) { return "#\\s*" + x + "\\b"; }).join("|") + ")"
+            }, {
+                token : "variable.language", // compiler-specific constructs
+                regex : "\\b__\\S+__\\b"
+            }, {
                 token : function(value) {
                     if (value == "this")
                         return "variable.language";
@@ -122,16 +148,22 @@ var c_cppHighlightRules = function() {
                 regex : "[a-zA-Z_$][a-zA-Z0-9_$]*\\b"
             }, {
                 token : "keyword.operator",
-                regex : "!|\\$|%|&|\\*|\\-\\-|\\-|\\+\\+|\\+|~|==|=|!=|<=|>=|<<=|>>=|>>>=|<>|<|>|!|&&|\\|\\||\\?\\:|\\*=|%=|\\+=|\\-=|&=|\\^=|\\b(?:in|new|delete|typeof|void)"
+                regex : reOperatorTokens
             }, {
-              token : "punctuation.operator",
-              regex : "\\?|\\:|\\,|\\;|\\."
+                token : "punctuation.operator",
+                regex : "\\?|\\:|\\,|\\;|\\.|\\\\"
             }, {
-                token : "paren.lparen",
-                regex : "[[({]"
+                // Obviously these are neither keywords nor operators, but
+                // labelling them as such was the easiest way to get them
+                // to be colored distinctly from regular text
+                token : "paren.keyword.operator",
+                regex : "[[({<]"
             }, {
-                token : "paren.rparen",
-                regex : "[\\])}]"
+                // Obviously these are neither keywords nor operators, but
+                // labelling them as such was the easiest way to get them
+                // to be colored distinctly from regular text
+                token : "paren.keyword.operator",
+                regex : "[\\])}>]"
             }, {
                 token : "text",
                 regex : "\\s+"
@@ -171,7 +203,7 @@ var c_cppHighlightRules = function() {
             }
         ]
     };
-    
+
     var rdRules = new TexHighlightRules("comment").getRules();
 
     // Make all embedded TeX virtual-comment so they don't interfere with
@@ -198,7 +230,7 @@ var c_cppHighlightRules = function() {
        token : "comment",
        regex : "[^%\\\\[({\\])}]+"
     });
-    
+
     this.embedRules(DocCommentHighlightRules, "doc-",
         [ DocCommentHighlightRules.getEndRule("start") ]);
 

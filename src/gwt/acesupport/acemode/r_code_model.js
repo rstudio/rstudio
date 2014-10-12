@@ -1210,5 +1210,8 @@ exports.setVerticallyAlignFunctionArgs = function(verticallyAlign) {
    $verticallyAlignFunctionArgs = verticallyAlign;
 };
 
+exports.getVerticallyAlignFunctionArgs = function() {
+   return $verticallyAlignFunctionArgs;
+};
 
 });
