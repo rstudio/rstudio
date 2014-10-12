@@ -542,14 +542,13 @@ public final class WebAppCreator {
         + "\n-->";
     GwtVersion gwtVersion = About.getGwtVersionObject();
     if (!gwtVersion.isNoNagVersion() && !gwtVersion.equals(new GwtVersion(null))) {
-      // TODO: put gwt-module.dtd online at gwtproject.org
       gwtModuleDtd = "\n<!--"
           + "\n  When updating your version of GWT, you should also update this DTD reference,"
           + "\n  so that your app can take advantage of the latest GWT module capabilities."
           + "\n-->"
           + "\n<!DOCTYPE module PUBLIC \"-//Google Inc.//DTD Google Web Toolkit "
           + About.getGwtVersionNum() + "//EN\""
-          + "\n  \"file:///" + installPath + "/gwt-module.dtd\">";
+          + "\n  \"http://gwtproject.org/doctype/" + About.getGwtVersionNum() + "/gwt-module.dtd\">";
     }
 
     // Compute module package and name.

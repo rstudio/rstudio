@@ -9,9 +9,11 @@
   <path id="project.class.path">
     <pathelement location="@warFolder/WEB-INF/classes"/>
     <pathelement location="${gwt.sdk}/gwt-user.jar"/>
-    <fileset dir="${gwt.sdk}" includes="gwt-dev*.jar"/>
-    <!-- Add any additional non-server libs (such as JUnit) -->
+    <pathelement location="${gwt.sdk}/gwt-dev.jar"/>
+    <pathelement location="${gwt.sdk}/validation-api-1.0.0.GA.jar"/>
+    <pathelement location="${gwt.sdk}/validation-api-1.0.0.GA-sources.jar"/>
     <fileset dir="@warFolder/WEB-INF/lib" includes="**/*.jar"/>
+    <!-- Add any additional non-server libs (such as JUnit) here -->
   </path>
 
   <target name="libs" description="Copy libs to WEB-INF/lib">
@@ -25,7 +27,7 @@
     <mkdir dir="@warFolder/WEB-INF/classes"/>
     <javac srcdir="@srcFolder" includes="**" encoding="utf-8"
         destdir="@warFolder/WEB-INF/classes"
-        source="1.5" target="1.5" nowarn="true"
+        source="1.7" target="1.7" nowarn="true"
         debug="true" debuglevel="lines,vars,source">
       <classpath refid="project.class.path"/>
     </javac>
@@ -39,11 +41,7 @@
       <classpath>
         <pathelement location="@srcFolder"/>
         <path refid="project.class.path"/>
-        <pathelement location="@gwtValidationPath" />
-        <pathelement location="@gwtValidationSourcesPath" />
       </classpath>
-      <!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
-      <jvmarg value="-Xmx256M"/>
       <arg line="-war"/>
       <arg value="@warFolder"/>
       <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
@@ -52,42 +50,27 @@
     </java>
   </target>
 
-  <target name="devmode" depends="javac" description="Run development mode">
+  <target name="devmode" depends="javac" description="Run development mode (pass -Dgwt.args=-nosuperDevMode to fallback to classic DevMode)">
     <java failonerror="true" fork="true" classname="@shellClass">
       <classpath>
         <pathelement location="@srcFolder"/>
         <path refid="project.class.path"/>
-        <pathelement location="@gwtValidationPath" />
-        <pathelement location="@gwtValidationSourcesPath" />
+        <pathelement location="${gwt.sdk}/gwt-codeserver.jar"/>
       </classpath>
-      <jvmarg value="-Xmx256M"/>
       <arg value="-startupUrl"/>
       <arg value="@startupUrl"/>
       <arg line="-war"/>
       <arg value="@warFolder"/>
-      <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
+      <!-- Additional arguments like -style PRETTY, -logLevel DEBUG or -nosuperDevMode -->
       <arg line="${gwt.args}"/>
       <arg value="@moduleName"/>
-    </java>
-  </target>
-
-  <target name="superdevmode" depends="javac" description="Run Super Dev Mode">
-    <java failonerror="true" fork="true" classname="com.google.gwt.dev.codeserver.CodeServer">
-      <classpath>
-        <pathelement location="@srcFolder"/>
-        <pathelement location="@gwtCodeServerPath" />
-        <path refid="project.class.path"/>
-        <pathelement location="@gwtValidationPath" />
-        <pathelement location="@gwtValidationSourcesPath" />
-      </classpath>
-      <jvmarg value="-Xmx256M"/>
       <arg value="@moduleName"/>
     </java>
   </target>@antEclipseRule
 @testTargetsBegin
   <target name="javac.tests" depends="javac" description="Compiles test code">
     <javac srcdir="@testFolder" includes="**" encoding="utf-8"
-      source="1.5" target="1.5" nowarn="true"
+      source="1.7" target="1.7" nowarn="true"
       destdir="@warFolder/WEB-INF/classes"
       debug="true" debuglevel="lines,vars,source">
       <classpath location="@junitJar"/>
@@ -98,8 +81,7 @@
   <target name="test.dev" depends="javac.tests" description="Run development mode tests">
     <mkdir dir="reports/htmlunit.dev" />
     <junit fork="yes" printsummary="yes" haltonfailure="yes">
-      <jvmarg line="-Xmx256m" />
-      <sysproperty key="gwt.args" value="-logLevel WARN" />
+      <sysproperty key="gwt.args" value="-logLevel WARN -war www-test" />
       <sysproperty key="java.awt.headless" value="true" />
       <classpath>
         <pathelement location="@srcFolder" />
@@ -122,7 +104,6 @@
   <target name="test.prod" depends="javac.tests" description="Run production mode tests">
     <mkdir dir="reports/htmlunit.prod" />
     <junit fork="yes" printsummary="yes" haltonfailure="yes">
-      <jvmarg line="-Xmx256m" />
       <sysproperty key="gwt.args" value="-prod -logLevel WARN -war www-test" />
       <sysproperty key="java.awt.headless" value="true" />
       <classpath>
@@ -148,8 +129,6 @@
     <antcall target="test.prod" />
   </target>
 @testTargetsEnd
-  <target name="hosted" depends="devmode" description="Run development mode (NOTE: the 'hosted' target is deprecated)" />
-
   <target name="build" depends="gwtc" description="Build this project" />
 
   <target name="war" depends="build" description="Create a war file">

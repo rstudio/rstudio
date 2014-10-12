@@ -13,54 +13,53 @@
   <properties>
     <!-- Convenience property to set the GWT version -->
     <gwtVersion>@gwtVersion</gwtVersion>
-    <!-- GWT needs at least java 1.6 -->
-    <maven.compiler.source>1.6</maven.compiler.source>
-    <maven.compiler.target>1.6</maven.compiler.target>
+    <!-- Note: GWT needs at least java 1.6 -->
+    <maven.compiler.source>1.7</maven.compiler.source>
+    <maven.compiler.target>1.7</maven.compiler.target>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- ensure all GWT deps use the same version (unless overridden) -->
+      <dependency>
+        <groupId>com.google.gwt</groupId>
+        <artifactId>gwt</artifactId>
+        <version>${gwtVersion}</version>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <dependencies>
     <dependency>
       <groupId>com.google.gwt</groupId>
       <artifactId>gwt-servlet</artifactId>
-      <version>${gwtVersion}</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>com.google.gwt</groupId>
       <artifactId>gwt-user</artifactId>
-      <version>${gwtVersion}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.google.gwt</groupId>
       <artifactId>gwt-dev</artifactId>
-      <version>${gwtVersion}</version>
-      <scope>test</scope>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.gwt</groupId>
+      <artifactId>gwt-codeserver</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.8.1</version>
+      <version>4.11</version>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>javax.validation</groupId>
-      <artifactId>validation-api</artifactId>
-      <version>1.0.0.GA</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>javax.validation</groupId>
-      <artifactId>validation-api</artifactId>
-      <version>1.0.0.GA</version>
-      <classifier>sources</classifier>
-      <scope>provided</scope>
     </dependency>
   </dependencies>
   
   <build>
-    <!-- Generate compiled stuff in the folder used for developing mode --> 
-    <outputDirectory>target/www/WEB-INF/classes</outputDirectory>
     
     <plugins>
       
@@ -68,108 +67,54 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>gwt-maven-plugin</artifactId>
-	<version>2.2.0</version>
-	<dependencies>
-          <dependency>
-            <groupId>com.google.gwt</groupId>
-            <artifactId>gwt-user</artifactId>
-            <version>${gwtVersion}</version>
-          </dependency>
-          <dependency>
-            <groupId>com.google.gwt</groupId>
-            <artifactId>gwt-dev</artifactId>
-            <version>${gwtVersion}</version>
-          </dependency>
-          <dependency>
-            <groupId>com.google.gwt</groupId>
-            <artifactId>gwt-servlet</artifactId>
-            <version>${gwtVersion}</version>
-          </dependency>
-	</dependencies>
-        <!-- JS is only needed in the package phase, this speeds up testing --> 
+        <version>${gwtVersion}</version>
         <executions>
           <execution>
-            <phase>prepare-package</phase>
             <goals>
               <goal>compile</goal>
+            </goals>
+          </execution>
+          <execution>
+            <!-- Run tests through gwt:test, this allows reusing the plugin configuration for GWTTestCases -->
+            <id>gwt-tests</id>
+            <phase>test</phase>
+            <goals>
+              <goal>test</goal>
             </goals>
           </execution>
         </executions>
         <!-- Plugin configuration. There are many available options, 
              see gwt-maven-plugin documentation at codehaus.org --> 
         <configuration>
-          <!-- URL that should be automatically opened in the GWT shell (gwt:run). -->
+          <modules>
+            <module>@moduleName</module>
+          </modules>
+          <!-- URL that should be opened by DevMode (gwt:run). -->
           <runTarget>@moduleShortName.html</runTarget>
-          <!-- Location of the develop-mode web application structure (gwt:run). -->
-          <hostedWebapp>target/www</hostedWebapp>
           <!-- Ask GWT to create the Story of Your Compile (SOYC) (gwt:compile) -->
           <compileReport>true</compileReport>
+          <!-- Run tests using HtmlUnit -->
+          <mode>htmlunit</mode>
+          <!-- Tests patterns -->
+          <includes>**/Test*.java,**/*Test.java,**/*TestCase.java</includes>
         </configuration>
       </plugin>
 
-      <!-- Add source folders to test classpath in order to run gwt-tests as normal junit-tests -->
+      <!-- Skip normal test execution, we use gwt:test instead -->
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
-	<version>2.5</version>
+        <version>2.17</version>
         <configuration>
-          <additionalClasspathElements>
-            <additionalClasspathElement>${project.build.sourceDirectory}</additionalClasspathElement>
-            <additionalClasspathElement>${project.build.testSourceDirectory}</additionalClasspathElement>
-          </additionalClasspathElements>
-          <useManifestOnlyJar>false</useManifestOnlyJar>
-          <forkMode>always</forkMode>
-
-          <!-- Folder for generated testing stuff --> 
-          <systemProperties>
-            <property>
-              <name>gwt.args</name>
-              <value>-war target/www</value>
-            </property>
-          </systemProperties>
-        </configuration>
-      </plugin>
-      
-      <!-- Copy static web files before executing gwt:run -->
-      <plugin>
-        <artifactId>maven-resources-plugin</artifactId>
-        <version>2.4.2</version>
-        <executions>
-          <execution>
-            <phase>compile</phase>
-            <goals>
-              <goal>copy-resources</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>target/www</outputDirectory>
-              <resources>
-                <resource>
-                  <directory>src/main/webapp</directory>
-                </resource>
-              </resources>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
-      <!-- Delete gwt generated stuff -->
-      <plugin>
-        <artifactId>maven-clean-plugin</artifactId>
-	<version>2.3</version>
-        <configuration>
-          <filesets>
-            <fileset><directory>src/main/webapp/@renameTo</directory></fileset>
-            <fileset><directory>src/main/webapp/WEB-INF/classes</directory></fileset>
-            <fileset><directory>tomcat</directory></fileset>
-            <fileset><directory>www-test</directory></fileset>
-            <fileset><directory>.gwt-tmp</directory></fileset>
-          </filesets>
+          <skip>true</skip>
         </configuration>
       </plugin>
 
+      <!-- NOTE: this is only needed if you use "mvn eclipse:eclipse". -->
+      <!-- You can remove this plugin if you intend to only use the Maven integration in Eclipse, or another IDE -->
       <plugin>
-	<artifactId>maven-eclipse-plugin</artifactId>
-	<version>2.7</version>  <!--  Note 2.8 does not work with AspectJ aspect path -->
-	<configuration>
+        <artifactId>maven-eclipse-plugin</artifactId>
+        <version>2.7</version>  <!--  Note 2.8 does not work with AspectJ aspect path -->
+        <configuration>
           <downloadSources>true</downloadSources>
           <downloadJavadocs>false</downloadJavadocs>
           <wtpversion>2.0</wtpversion>
@@ -181,7 +126,7 @@
           <additionalProjectnatures>
             <projectnature>com.google.gwt.eclipse.core.gwtNature</projectnature>
           </additionalProjectnatures>
-	</configuration>
+        </configuration>
       </plugin>
 
     </plugins>

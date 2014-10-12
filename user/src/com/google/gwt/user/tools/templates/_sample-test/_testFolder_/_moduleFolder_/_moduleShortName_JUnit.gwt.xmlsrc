@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>@gwtModuleDtd
-<module>
+<module rename-to='@renameTo'>
   <!-- Inherit our applications main module.                      -->
   <inherits name='@moduleName'/>
 
