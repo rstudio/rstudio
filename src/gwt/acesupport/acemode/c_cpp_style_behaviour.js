@@ -35,6 +35,7 @@ var CppCodeModel = require("mode/cpp_code_model").CppCodeModel;
 var CppTokenCursor = require("mode/token_cursor").CppTokenCursor;
 
 var $addNamespaceComment = true;
+var $fillinDoWhile = true;
 
 var CStyleBehaviour = function(codeModel) {
 
@@ -342,6 +343,16 @@ var CStyleBehaviour = function(codeModel) {
                };
             }
 
+            // if we're constructing a 'do-while' loop, fill in the pieces
+            if ($fillinDoWhile &&
+                (/^\s*do\s*$/.test(line) ||
+                (/^\s*do\s*$/.test(prevLine) && /^\s*$/.test(line)))) {
+               return {
+                  text: "{} while ();",
+                  selection: [1, 1]
+               };
+            }
+
             // If class-style indentation can produce an appropriate indentation for
             // the brace, then insert a closing brace with a semi-colon
             var heuristicRow = $codeModel.getRowForOpenBraceIndent(
@@ -375,9 +386,25 @@ var CStyleBehaviour = function(codeModel) {
    });
 
    this.add("braces", "deletion", function (state, action, editor, session, range) {
+      
       var selected = session.doc.getTextRange(range);
       if (!range.isMultiLine() && selected == '{') {
+         
          var line = session.doc.getLine(range.start.row);
+
+         // Undo an auto-inserted do-while
+         if (/^\s*do\s*\{\} while \(\);\s*$/.test(line)) {
+            range.end.column = line.length;
+            return range;
+         }
+
+         // Undo an auto-inserted namespace closer
+         if (/^\s*namespace\s*\{\} \/\/ end anonymous namespace\s*$/.test(line) ||
+             /^\s*namespace\s+.+\{\} \/\/ end namespace .+\s*$/.test(line)) {
+            range.end.column = line.length;
+            return range;
+         }
+         
          var rightChar = line.substring(range.end.column, range.end.column + 1);
          var rightRightChar =
                 line.substring(range.end.column + 1, range.end.column + 2);
