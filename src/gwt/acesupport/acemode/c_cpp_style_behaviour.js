@@ -225,6 +225,16 @@ var CStyleBehaviour = function(codeModel) {
                };
             }
 
+            // If this line is for a namespace, don't indent
+            if (/^\s*namespace/.test(line)) {
+               var indent = this.$getIndent(line);
+
+               return {
+                  text: "\n" + indent + "\n" + indent,
+                  selection: [1, indent.length, 1, indent.length]
+               };
+            }
+
             // Use heuristic indentation if possible
             var heuristicRow = $codeModel.getRowForOpenBraceIndent(
                session, row
@@ -284,6 +294,7 @@ var CStyleBehaviour = function(codeModel) {
             // namespace specific indenting -- note that 'lineTrimmed'
             // does not contain the now-inserted '{'
             if ($addNamespaceComment) {
+               
                var anonNamespace = /\s*namespace\s*$/.test(lineTrimmed);
                var namedNamespace = lineTrimmed.match(/\s*namespace\s+(\S+)\s*/);
 
