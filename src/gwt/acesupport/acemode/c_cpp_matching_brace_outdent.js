@@ -213,13 +213,37 @@ var $alignCase                 = true; // case 'a':
       //     >
       //     ^
       //
-      if ($outdentRightArrow && /^\s*>/.test(line)) {
-         if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row)) {
-            var tokenCursor = new CppTokenCursor(this.$codeModel.$tokens, row, 0);
-            if (tokenCursor.bwdToMatchingArrow()) {
-               this.setIndent(session, row, tokenCursor.$row);
+      if ($outdentRightArrow &&
+          /^\s*>/.test(line) &&
+          !/^\s*>>/.test(line)) {
+
+         var maxLookback = 100;
+         var balance = 0;
+         var thisLine = "";
+         for (var i = 1; i < maxLookback; i++) {
+            thisLine = this.$codeModel.getLineSansComments(doc, row - i);
+            if (/<\s*$/.test(thisLine) && !/<<\s*$/.test(thisLine)) {
+               if (balance === 0) {
+                  this.setIndent(session, row, row - i);
+                  return;
+               } else {
+                  balance--;
+               }
+            } else if (/^\s*>/.test(thisLine) && !/^\s*>>/.test(thisLine)) {
+               balance++;
             }
          }
+
+         // TODO: Renable this block if we get better tokenization
+         // (need to discover whether '<', '>' are operators or not)
+         //
+         // if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row)) {
+         //    var tokenCursor = new CppTokenCursor(this.$codeModel.$tokens, row, 0);
+         //    if (tokenCursor.bwdToMatchingArrow()) {
+         //       this.setIndent(session, row, tokenCursor.$row);
+         //    }
+         // }
+         
       }
 
       // Outdent for closing braces (to match the indentation of their
