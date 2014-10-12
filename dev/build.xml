@@ -313,7 +313,6 @@
     </gwt.junit>
   </target>
 
-  <property.ensure name="gwt.tools.soyc" location="${gwt.root}/tools/soyc-vis"/>
   <target name="build" depends="compile" description="Build and package this project">
     <mkdir dir="${gwt.build.lib}"/>
     <outofdate>
@@ -327,8 +326,6 @@
         <fileset dir="${javac.out}"/>
         <fileset dir="${project.build}/bin"/>
         <fileset file="${project.build}/alldeps.jar"/>
-        <fileset file="${gwt.tools.soyc}/classLevel.css"/>
-        <fileset file="${gwt.tools.soyc}/roundedCorners.css"/>
       </sourcefiles>
       <targetfiles>
         <fileset file="${project.lib}"/>
@@ -343,11 +340,6 @@
           <fileset dir="core/super" excludes="**/package.html"/>
           <fileset dir="${javac.out}"/>
           <zipfileset src="${alldeps.jar}"/>
-
-          <zipfileset file="${gwt.tools.soyc}/classLevel.css"
-                      prefix="com/google/gwt/soyc/resources/"/>
-          <zipfileset file="${gwt.tools.soyc}/roundedCorners.css"
-                      prefix="com/google/gwt/soyc/resources/"/>
 
           <manifest>
             <attribute name="Main-Class" value="com.google.gwt.dev.GWTMain"/>
