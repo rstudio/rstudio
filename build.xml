@@ -77,13 +77,6 @@
     <gwt.ant dir="elemental"/>
   </target>
 
-  <target name="soyc"
-          description="[subdir] Builds (or runs ${target} if set) only the soyc library">
-    <call-subproject subproject="dev" subtarget="build"/>
-    <call-subproject subproject="user" subtarget="build"/>
-    <gwt.ant dir="tools/soyc-vis"/>
-  </target>
-
   <target name="tools" description="[subdir] Builds (or runs ${target} if set) only the tools">
     <call-subproject subproject="user" subtarget="build"/>
     <gwt.ant dir="tools"/>

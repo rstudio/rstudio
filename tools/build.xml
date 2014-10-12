@@ -11,15 +11,11 @@
                 <gwt.ant dir="api-checker" />
         </target>
 
-        <target name="soyc-vis" depends="" description="Compile SOYC dashboard">
-                <gwt.ant dir="soyc-vis" />
-        </target>
-
         <target name="cldr-import" depends="" description="Compile CLDR import">
                 <gwt.ant dir="cldr-import" />
         </target>
 
-  <target name="-do" depends="api-checker,soyc-vis,cldr-import"
+  <target name="-do" depends="api-checker,cldr-import"
     description="Run all subfolders that don't have additional dependencies" />
 
   <target name="build" description="Build each subfolder">

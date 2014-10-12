@@ -22,18 +22,12 @@ import com.google.gwt.core.ext.linker.PrecompilationMetricsArtifact;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.soyc.MakeTopLevelHtmlForPerm.DependencyLinker;
 import com.google.gwt.soyc.MakeTopLevelHtmlForPerm.NullDependencyLinker;
-import com.google.gwt.soyc.io.FileSystemOutputDirectory;
 import com.google.gwt.soyc.io.OutputDirectory;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -42,10 +36,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Scanner;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.zip.GZIPInputStream;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -67,84 +59,6 @@ public class SoycDashboard {
     public FormatException(Throwable cause) {
       super(cause);
     }
-  }
-
-  public static void main(final String[] args) throws InterruptedException {
-
-    System.out.println("WARNING: The direct use of the SoycDashboard is deprecated and will be removed. " +
-      "The preferred usage is to invoke the compiler with the -compileReport option, which " +
-      "writes the compile report directly to the extra directory.");
-    Thread.currentThread();
-    Thread.sleep(5000);
-
-    Settings settings;
-    try {
-      settings = Settings.fromArgumentList(args);
-    } catch (Settings.ArgumentListException e) {
-      System.err.println(e.getMessage());
-      System.err.println("Usage: "
-          + "java com.google.gwt.soyc.SoycDashboard -resources dir -soycDir dir -symbolMaps dir [-out dir]");
-      System.err.println("(Legacy usage: "
-          + "java com.google.gwt.soyc.SoycDashboard options stories0.xml[.gz] [dependencies0.xml[.gz]] [splitpoints0.xml[.gz]])");
-      System.err.println("Options:");
-      System.err.println(Settings.settingsHelp());
-      System.exit(1);
-      return; // not reached
-    }
-
-    System.out.println("Generating the Story of Your Compile...");
-
-    OutputDirectory outDir = new FileSystemOutputDirectory(new File(
-        settings.out.get()));
-
-    try {
-      Map<String, List<String>> permInfo = readPermutationInfo(settings);
-      SoycDashboard dashboard = new SoycDashboard(outDir);
-      for (String permutationId : permInfo.keySet()) {
-        dashboard.startNewPermutation(permutationId);
-        if (settings.symbolMapsDir.get() == null) {
-          dashboard.readFromFilesNamed(settings.storiesFileName,
-              settings.depFileName, settings.splitPointsFileName);
-        } else {
-          String soycDir = settings.soycDir.get();
-          dashboard.readFromFilesNamed(soycInputFile(soycDir, "stories",
-              permutationId), soycInputFile(soycDir, "dependencies",
-              permutationId), soycInputFile(soycDir, "splitPoints",
-              permutationId));
-        }
-        dashboard.generateForOnePermutation();
-        System.out.println("Finished creating reports for permutation.");
-      }
-
-      dashboard.generateCrossPermutationFiles(permInfo);
-      System.out.println("Finished creating reports. To see the dashboard, open index.html in your browser.");
-    } catch (ParserConfigurationException e) {
-      System.err.println("Could not parse document. " + e.getMessage());
-      System.exit(1);
-    } catch (SAXException e) {
-      System.err.println("Could not create SAX parser. " + e.getMessage());
-      System.exit(1);
-    } catch (FileNotFoundException e) {
-      System.err.println("Cannot open file " + e.getMessage());
-      System.exit(1);
-    } catch (IOException e) {
-      System.err.println("Error creating html file. " + e.getMessage());
-      System.exit(1);
-    }
-  }
-
-  /**
-   * Open a file for reading. If the filename ends in .gz, then wrap the stream
-   * with a {@link GZIPInputStream}.
-   */
-  public static InputStream openPossiblyGzippedFile(String filename)
-      throws IOException {
-    InputStream in = new FileInputStream(filename);
-    if (filename.endsWith(".gz")) {
-      in = new GZIPInputStream(in);
-    }
-    in = new BufferedInputStream(in);
-    return in;
   }
 
   /*
@@ -237,63 +151,6 @@ public class SoycDashboard {
       }
     };
     return handler;
-  }
-
-  private static Map<String, List<String>> readPermutationInfo(Settings settings)
-      throws FileNotFoundException {
-    Map<String, List<String>> allPermsInfo = new TreeMap<String, List<String>>();
-    if (settings.symbolMapsDir.get() == null) {
-      String permutationId = settings.storiesFileName;
-      permutationId = permutationId.replaceAll(".*/stories", "");
-      permutationId = permutationId.replaceAll("\\.xml(\\.gz)?", "");
-    } else {
-      File dir = new File(settings.symbolMapsDir.get());
-      String files[] = dir.list();
-      for (Integer i = 0; i < files.length; i++) {
-        String permFileName = settings.symbolMapsDir.get() + "/" + files[i];
-        FileReader fir = new FileReader(permFileName);
-
-        Scanner sc = new Scanner(fir);
-
-        String permutationId = "";
-        String permutationInfo = "";
-        List<String> permutationInfoList = new ArrayList<String>();
-        boolean firstLine = true;
-        String curLine = sc.nextLine();
-        curLine = curLine.trim();
-        while (curLine.startsWith("# {")) {
-
-            curLine = curLine.replace("# {", "");
-            curLine = curLine.replace("}", "");
-            curLine = curLine.trim();
-            if (firstLine) {
-              permutationId = curLine;
-              firstLine = false;
-            } else {
-              if (permutationInfo.length() > 0) {
-                permutationInfo += "<br>";
-              }
-              permutationInfo += curLine;
-              permutationInfoList.add(curLine);
-            }
-            if (sc.hasNextLine()) {
-              curLine = sc.nextLine();
-              curLine = curLine.trim();
-            }
-        }
-        allPermsInfo.put(permutationId, permutationInfoList);
-      }
-    }
-    return allPermsInfo;
-  }
-
-  private static String soycInputFile(String soycDir, String baseName,
-      String permutationId) {
-    String name = soycDir + "/" + baseName + permutationId + ".xml.gz";
-    if (new File(name).exists()) {
-      return name;
-    }
-    return soycDir + "/" + baseName + permutationId + ".xml";
   }
 
   /**
@@ -644,20 +501,6 @@ public class SoycDashboard {
 
     };
     return handler;
-  }
-
-  private void readFromFilesNamed(String storiesFileName,
-      String dependenciesFileName, String splitPointsFileName)
-      throws ParserConfigurationException, SAXException, IOException {
-    if (dependenciesFileName != null && new File(dependenciesFileName).exists()) {
-      readDependencies(openPossiblyGzippedFile(dependenciesFileName));
-    }
-
-    if (splitPointsFileName != null && new File(splitPointsFileName).exists()) {
-      readSplitPoints(openPossiblyGzippedFile(splitPointsFileName));
-    }
-
-    readSizeMaps(openPossiblyGzippedFile(storiesFileName));
   }
 
   /*
