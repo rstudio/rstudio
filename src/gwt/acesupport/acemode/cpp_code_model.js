@@ -803,7 +803,8 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                var startType = startCursor.currentType();
                
                if (startType === "constant" ||
-                   startType === "keyword" || 
+                   startType === "keyword" ||
+                   startType === "identifier" ||
                    ["{", ")", ">", ":"].some(function(x) {
                       return x === startValue;
                    })) {
