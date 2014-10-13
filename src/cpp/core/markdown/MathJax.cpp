@@ -24,7 +24,7 @@
 
 #include <core/system/System.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace markdown {
 
 namespace {
@@ -228,7 +228,7 @@ std::string MathJaxFilter::substitute(
    }
    else
    {
-      std::string guid = core::system::generateUuid(false);
+      std::string guid = rstudiocore::system::generateUuid(false);
       std::string suffix = (match.size() > 2) ? std::string(match[2]) : "";
       pMathBlocks->insert(std::make_pair(guid, MathBlock(equation,suffix)));
       return guid;
@@ -265,7 +265,7 @@ bool requiresMathjax(const std::string& htmlOutput)
 }
 
 } // namespace markdown
-} // namespace core
+} // namespace rstudiocore
    
 
 

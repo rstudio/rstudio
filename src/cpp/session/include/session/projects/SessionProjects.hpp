@@ -46,9 +46,9 @@ namespace projects {
 // file monitoring callbacks (all callbacks are optional)
 struct FileMonitorCallbacks
 {
-   boost::function<void(const tree<core::FileInfo>&)> onMonitoringEnabled;
+   boost::function<void(const tree<rstudiocore::FileInfo>&)> onMonitoringEnabled;
    boost::function<void(
-         const std::vector<core::system::FileChangeEvent>&)> onFilesChanged;
+         const std::vector<rstudiocore::system::FileChangeEvent>&)> onFilesChanged;
    boost::function<void()> onMonitoringDisabled;
 };
 
@@ -83,10 +83,10 @@ public:
    }
    virtual ~ProjectContext() {}
 
-   core::Error startup(const core::FilePath& projectFile,
+   rstudiocore::Error startup(const rstudiocore::FilePath& projectFile,
                        std::string* pUserErrMsg);
 
-   core::Error initialize();
+   rstudiocore::Error initialize();
 
 public:
    // these functions can be called even when there is no project
@@ -98,17 +98,17 @@ public:
    void setNextSessionProject(const std::string& nextSessionProject);
 
    // last project path -- used to implement restore last project user setting
-   core::FilePath lastProjectPath() const;
-   void setLastProjectPath(const core::FilePath& lastProjectPath);
+   rstudiocore::FilePath lastProjectPath() const;
+   void setLastProjectPath(const rstudiocore::FilePath& lastProjectPath);
 
-   const core::FilePath& file() const { return file_; }
-   const core::FilePath& directory() const { return directory_; }
-   const core::FilePath& scratchPath() const { return scratchPath_; }
+   const rstudiocore::FilePath& file() const { return file_; }
+   const rstudiocore::FilePath& directory() const { return directory_; }
+   const rstudiocore::FilePath& scratchPath() const { return scratchPath_; }
 
-   core::FilePath oldScratchPath() const;
+   rstudiocore::FilePath oldScratchPath() const;
 
-   const core::r_util::RProjectConfig& config() const { return config_; }
-   void setConfig(const core::r_util::RProjectConfig& config)
+   const rstudiocore::r_util::RProjectConfig& config() const { return config_; }
+   void setConfig(const rstudiocore::r_util::RProjectConfig& config)
    {
       config_ = config;
       updateDefaultEncoding();
@@ -116,11 +116,11 @@ public:
       updatePackageInfo();
    }
 
-   core::Error readVcsOptions(RProjectVcsOptions* pOptions) const;
-   core::Error writeVcsOptions(const RProjectVcsOptions& options) const;
+   rstudiocore::Error readVcsOptions(RProjectVcsOptions* pOptions) const;
+   rstudiocore::Error writeVcsOptions(const RProjectVcsOptions& options) const;
 
-   core::Error readBuildOptions(RProjectBuildOptions* pOptions);
-   core::Error writeBuildOptions(const RProjectBuildOptions& options);
+   rstudiocore::Error readBuildOptions(RProjectBuildOptions* pOptions);
+   rstudiocore::Error writeBuildOptions(const RProjectBuildOptions& options);
 
    // code which needs to rely on the encoding should call this method
    // rather than getting the encoding off of the config (because the
@@ -131,14 +131,14 @@ public:
    std::string defaultEncoding() const;
 
    // computed absolute path to project build target directory
-   const core::FilePath& buildTargetPath() const
+   const rstudiocore::FilePath& buildTargetPath() const
    {
       return buildTargetPath_;
    }
 
-   core::json::Object uiPrefs() const;
+   rstudiocore::json::Object uiPrefs() const;
 
-   core::json::Array openDocs() const;
+   rstudiocore::json::Array openDocs() const;
 
    // current build options (note that these are not synchronized
    // accross processes!)
@@ -148,7 +148,7 @@ public:
    }
 
    // current package info (if this is a package)
-   const core::r_util::RPackageInfo& packageInfo() const
+   const rstudiocore::r_util::RPackageInfo& packageInfo() const
    {
       return packageInfo_;
    }
@@ -160,7 +160,7 @@ public:
 
    // are we monitoring the specified directory? (used by other modules to
    // suppress file monitoring if the project already has it covered)
-   bool isMonitoringDirectory(const core::FilePath& directory) const;
+   bool isMonitoringDirectory(const rstudiocore::FilePath& directory) const;
 
    // subscribe to file monitor notifications -- note that to ensure
    // receipt of the onMonitoringEnabled callback subscription should
@@ -169,8 +169,8 @@ public:
                                const FileMonitorCallbacks& cb);
 
 public:
-   static core::r_util::RProjectBuildDefaults buildDefaults();
-   static core::r_util::RProjectConfig defaultConfig();
+   static rstudiocore::r_util::RProjectBuildDefaults buildDefaults();
+   static rstudiocore::r_util::RProjectConfig defaultConfig();
 
 private:
    // deferred init handler (this allows other modules to reliably subscribe
@@ -179,14 +179,14 @@ private:
    void onDeferredInit(bool newSession);
 
    // file monitor event handlers
-   void fileMonitorRegistered(core::system::file_monitor::Handle handle,
-                              const tree<core::FileInfo>& files);
+   void fileMonitorRegistered(rstudiocore::system::file_monitor::Handle handle,
+                              const tree<rstudiocore::FileInfo>& files);
    void fileMonitorFilesChanged(
-                   const std::vector<core::system::FileChangeEvent>& events);
-   void fileMonitorTermination(const core::Error& error);
+                   const std::vector<rstudiocore::system::FileChangeEvent>& events);
+   void fileMonitorTermination(const rstudiocore::Error& error);
 
-   core::FilePath vcsOptionsFilePath() const;
-   core::Error buildOptionsFile(core::Settings* pOptionsFile) const;
+   rstudiocore::FilePath vcsOptionsFilePath() const;
+   rstudiocore::Error buildOptionsFile(rstudiocore::Settings* pOptionsFile) const;
 
    void updateDefaultEncoding();
    void updateBuildTargetPath();
@@ -195,19 +195,19 @@ private:
    void augmentRbuildignore();
 
 private:
-   core::FilePath file_;
-   core::FilePath directory_;
-   core::FilePath scratchPath_;
-   core::r_util::RProjectConfig config_;
+   rstudiocore::FilePath file_;
+   rstudiocore::FilePath directory_;
+   rstudiocore::FilePath scratchPath_;
+   rstudiocore::r_util::RProjectConfig config_;
    std::string defaultEncoding_;
-   core::FilePath buildTargetPath_;
+   rstudiocore::FilePath buildTargetPath_;
    RProjectBuildOptions buildOptions_;
-   core::r_util::RPackageInfo packageInfo_;
+   rstudiocore::r_util::RPackageInfo packageInfo_;
 
    bool hasFileMonitor_;
    std::vector<std::string> monitorSubscribers_;
-   boost::signal<void(const tree<core::FileInfo>&)> onMonitoringEnabled_;
-   boost::signal<void(const std::vector<core::system::FileChangeEvent>&)>
+   boost::signal<void(const tree<rstudiocore::FileInfo>&)> onMonitoringEnabled_;
+   boost::signal<void(const std::vector<rstudiocore::system::FileChangeEvent>&)>
                                                             onFilesChanged_;
    boost::signal<void()> onMonitoringDisabled_;
 };

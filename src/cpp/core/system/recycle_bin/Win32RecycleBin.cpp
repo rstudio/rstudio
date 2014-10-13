@@ -19,7 +19,7 @@
 #include <windows.h>
 #include <shellapi.h>
 
-namespace core {
+namespace rstudiocore {
 namespace system {
 namespace recycle_bin {
       
@@ -62,5 +62,5 @@ Error sendTo(const FilePath& filePath)
 
 } // namespace recycle_bin
 } // namespace system
-} // namespace core
+} // namespace rstudiocore
 

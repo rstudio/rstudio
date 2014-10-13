@@ -20,7 +20,7 @@
 
 #include <core/Algorithm.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace spelling {
 
 namespace {
@@ -95,7 +95,7 @@ Error listAffFiles(const FilePath& baseDir, std::vector<FilePath>* pAffFiles)
    if (error)
       return error;
 
-   core::algorithm::copy_if(children.begin(),
+   rstudiocore::algorithm::copy_if(children.begin(),
                             children.end(),
                             std::back_inserter(*pAffFiles),
                             isDictionaryAff);
@@ -202,4 +202,4 @@ FilePath HunspellDictionaryManager::userLanguagesDir() const
 
 
 } // namespace spelling
-} // namespace core
+} // namespace rstudiocore

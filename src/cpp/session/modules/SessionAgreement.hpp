@@ -18,7 +18,7 @@
 
 #include <core/json/JsonRpc.hpp>
 
-namespace core {
+namespace rstudiocore {
    class Error;
 }
 
@@ -28,9 +28,9 @@ namespace agreement {
 
 bool hasAgreement();
 
-core::json::Value pendingAgreement();
+rstudiocore::json::Value pendingAgreement();
    
-core::Error initialize();
+rstudiocore::Error initialize();
    
 } // namespace agreeement
 } // namespace modules

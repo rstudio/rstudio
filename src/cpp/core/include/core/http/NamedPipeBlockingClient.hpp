@@ -21,7 +21,7 @@
 
 #include <core/http/NamedPipeAsyncClient.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace http {  
 
 inline Error sendRequest(const std::string& pipeName,
@@ -42,6 +42,6 @@ inline Error sendRequest(const std::string& pipeName,
 }
    
 } // namespace http
-} // namespace core
+} // namespace rstudiocore
 
 #endif // CORE_HTTP_NAMED_PIPE_BLOCKING_CLIENT_HPP

@@ -27,7 +27,7 @@
 
 #include <r/ROptions.hpp>
 
-using namespace core ;
+using namespace rstudiocore ;
 
 namespace r {
 namespace session {
@@ -214,7 +214,7 @@ Error ConsoleActions::loadFromFile(const FilePath& filePath)
    return Success();
 }
    
-Error ConsoleActions::saveToFile(const core::FilePath& filePath) const
+Error ConsoleActions::saveToFile(const rstudiocore::FilePath& filePath) const
 {
    // write actions
    json::Object actionsObject;

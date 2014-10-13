@@ -15,7 +15,7 @@
 
 #include <server/ServerOptions.hpp>
 
-using namespace core ;
+using namespace rstudiocore ;
 
 namespace server {
 

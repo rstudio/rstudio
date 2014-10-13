@@ -22,7 +22,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace session {
 namespace modules { 
@@ -34,7 +34,7 @@ namespace {
 // supervisor is a module level static so that we can terminateChildren
 // upon exit of the session (otherwise we could leave a long running
 // operation still hogging cpu after we exit)
-core::system::ProcessSupervisor s_processSupervisor;
+rstudiocore::system::ProcessSupervisor s_processSupervisor;
 
 void onBackgroundProcessing(bool)
 {
@@ -110,10 +110,10 @@ Error terminateAll(const boost::posix_time::time_duration& waitDuration)
    }
 }
 
-Error runProgram(const core::FilePath& programFilePath,
+Error runProgram(const rstudiocore::FilePath& programFilePath,
                  const std::vector<std::string>& args,
-                 const core::system::Options& extraEnvVars,
-                 const core::FilePath& workingDir,
+                 const rstudiocore::system::Options& extraEnvVars,
+                 const rstudiocore::FilePath& workingDir,
                  const boost::function<void(const std::string&)>& onOutput,
                  const boost::function<void(int,const std::string&)>& onExited)
 {
@@ -122,17 +122,17 @@ Error runProgram(const core::FilePath& programFilePath,
                                           programFilePath.absolutePath());
 
    // setup options
-   core::system::ProcessOptions options;
+   rstudiocore::system::ProcessOptions options;
    options.terminateChildren = true;
    options.redirectStdErrToStdOut = true;
-   core::system::Options env;
-   core::system::getModifiedEnv(extraEnvVars, &env);
+   rstudiocore::system::Options env;
+   rstudiocore::system::getModifiedEnv(extraEnvVars, &env);
    options.environment = env;
    options.workingDir = workingDir;
 
    // setup callbacks
    boost::shared_ptr<CB> pCB(new CB(onOutput, onExited));
-   core::system::ProcessCallbacks cb;
+   rstudiocore::system::ProcessCallbacks cb;
    cb.onStdout = cb.onStderr = boost::bind(&CB::onOutput, pCB, _2);
    cb.onExit = boost::bind(&CB::onExit, pCB, _1);
 

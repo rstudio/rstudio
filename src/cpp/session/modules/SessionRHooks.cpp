@@ -28,7 +28,7 @@ namespace session {
 namespace modules { 
 namespace rhooks {
 
-using namespace core;
+using namespace rstudiocore;
 
 Error initialize()
 {

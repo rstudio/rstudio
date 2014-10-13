@@ -28,10 +28,10 @@ namespace vcs_utils {
 void enqueRefreshEventWithDelay(int delay);
 void enqueueRefreshEvent();
 
-core::json::Object processResultToJson(
-      const core::system::ProcessResult& result);
+rstudiocore::json::Object processResultToJson(
+      const rstudiocore::system::ProcessResult& result);
 
-core::FilePath fileFilterPath(const core::json::Value& fileFilterJson);
+rstudiocore::FilePath fileFilterPath(const rstudiocore::json::Value& fileFilterJson);
 
 void splitMessage(const std::string message,
                   std::string* pSubject,

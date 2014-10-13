@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace core {
+namespace rstudiocore {
    class Error;
    class FilePath;
 } // anonymous namespace
@@ -29,7 +29,7 @@ namespace presentation {
 
 class SlideDeck;
 
-core::Error renderSlides(const SlideDeck& slideDeck,
+rstudiocore::Error renderSlides(const SlideDeck& slideDeck,
                          std::string* pSlidesHead,
                          std::string* pSlides,
                          std::string* pRevealConfig,

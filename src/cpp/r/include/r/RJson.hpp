@@ -20,7 +20,7 @@
 
 typedef struct SEXPREC *SEXP;
 
-namespace core {
+namespace rstudiocore {
    class Error;
    class FilePath;
 }
@@ -31,10 +31,10 @@ namespace core {
 namespace r {
 namespace json {
    
-core::Error jsonValueFromScalar(SEXP scalarSEXP, core::json::Value* pValue);
-core::Error jsonValueFromVector(SEXP vectorSEXP, core::json::Value* pValue);
-core::Error jsonValueFromList(SEXP listSEXP, core::json::Value* pValue);
-core::Error jsonValueFromObject(SEXP objectSEXP, core::json::Value* pValue);
+rstudiocore::Error jsonValueFromScalar(SEXP scalarSEXP, rstudiocore::json::Value* pValue);
+rstudiocore::Error jsonValueFromVector(SEXP vectorSEXP, rstudiocore::json::Value* pValue);
+rstudiocore::Error jsonValueFromList(SEXP listSEXP, rstudiocore::json::Value* pValue);
+rstudiocore::Error jsonValueFromObject(SEXP objectSEXP, rstudiocore::json::Value* pValue);
    
 } // namespace json
 } // namesapce r

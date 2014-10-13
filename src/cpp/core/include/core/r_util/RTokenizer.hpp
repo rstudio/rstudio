@@ -29,7 +29,7 @@
    #error "wchar_t is not Unicode"
 #endif
 
-namespace core {
+namespace rstudiocore {
 
 class Error;
 
@@ -214,7 +214,7 @@ private:
 
 
 } // namespace r_util
-} // namespace core 
+} // namespace rstudiocore 
 
 
 #endif // CORE_R_UTIL_R_ENVIRONMENT_HPP

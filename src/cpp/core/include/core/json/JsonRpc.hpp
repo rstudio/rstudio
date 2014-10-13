@@ -18,7 +18,7 @@
 
 #include <boost/system/error_code.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace json {
 namespace errc {
 
@@ -57,12 +57,12 @@ enum errc_t {
 
 } // namespace errc
 } // namespace json
-} // namespace core
+} // namespace rstudiocore
 
 namespace boost {
 namespace system {
 template <>
-struct is_error_code_enum<core::json::errc::errc_t>
+struct is_error_code_enum<rstudiocore::json::errc::errc_t>
  { static const bool value = true; };
 } // namespace system
 } // namespace boost
@@ -79,13 +79,13 @@ struct is_error_code_enum<core::json::errc::errc_t>
 #include <core/Error.hpp>
 #include <core/json/Json.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace http {
    class Response ;
 }
 }
 
-namespace core {
+namespace rstudiocore {
 namespace json {
 
 // constants
@@ -114,9 +114,9 @@ inline boost::system::error_condition make_error_condition( errc_t e )
 
 } // namespace errc
 } // namespace json
-} // namespace core
+} // namespace rstudiocore
 
-namespace core {
+namespace rstudiocore {
 namespace json {
 
 struct JsonRpcRequest
@@ -157,25 +157,25 @@ bool parseJsonRpcRequestForMethod(const std::string& input,
 //
    
 
-inline core::Error readParam(const json::Array& params, 
+inline rstudiocore::Error readParam(const json::Array& params, 
                              unsigned int index, 
                              json::Value* pValue)
 {
    if (index >= params.size())
-      return core::Error(errc::ParamMissing, ERROR_LOCATION);
+      return rstudiocore::Error(errc::ParamMissing, ERROR_LOCATION);
    
    *pValue = params[index] ;
    return Success();
 }
 
 template <typename T>
-core::Error readParam(const json::Array& params, unsigned int index, T* pValue)
+rstudiocore::Error readParam(const json::Array& params, unsigned int index, T* pValue)
 {
    if (index >= params.size())
-      return core::Error(errc::ParamMissing, ERROR_LOCATION);
+      return rstudiocore::Error(errc::ParamMissing, ERROR_LOCATION);
 
    if (!isType<T>(params[index]))
-      return core::Error(errc::ParamTypeMismatch, ERROR_LOCATION) ;
+      return rstudiocore::Error(errc::ParamTypeMismatch, ERROR_LOCATION) ;
 
    *pValue = params[index].get_value<T>();
 
@@ -183,15 +183,15 @@ core::Error readParam(const json::Array& params, unsigned int index, T* pValue)
 }
    
 template <typename T1>
-core::Error readParams(const json::Array& params, T1* pValue1)
+rstudiocore::Error readParams(const json::Array& params, T1* pValue1)
 {
    return readParam(params, 0, pValue1) ;
 }
 
 template <typename T1, typename T2>
-core::Error readParams(const json::Array& params, T1* pValue1, T2* pValue2)
+rstudiocore::Error readParams(const json::Array& params, T1* pValue1, T2* pValue2)
 {
-   core::Error error = readParam(params, 0, pValue1) ;
+   rstudiocore::Error error = readParam(params, 0, pValue1) ;
    if (error)
       return error ;
 
@@ -199,12 +199,12 @@ core::Error readParams(const json::Array& params, T1* pValue1, T2* pValue2)
 }
 
 template <typename T1, typename T2, typename T3>
-core::Error readParams(const json::Array& params, 
+rstudiocore::Error readParams(const json::Array& params, 
                         T1* pValue1, 
                         T2* pValue2, 
                         T3* pValue3)
 {
-   core::Error error = readParams(params, pValue1, pValue2) ;
+   rstudiocore::Error error = readParams(params, pValue1, pValue2) ;
    if (error)
       return error ;
 
@@ -212,13 +212,13 @@ core::Error readParams(const json::Array& params,
 }
 
 template <typename T1, typename T2, typename T3, typename T4>
-core::Error readParams(const json::Array& params, 
+rstudiocore::Error readParams(const json::Array& params, 
                        T1* pValue1, 
                        T2* pValue2, 
                        T3* pValue3,
                        T4* pValue4)
 {
-   core::Error error = readParams(params, pValue1, pValue2, pValue3) ;
+   rstudiocore::Error error = readParams(params, pValue1, pValue2, pValue3) ;
    if (error)
       return error ;
    
@@ -227,14 +227,14 @@ core::Error readParams(const json::Array& params,
 
    
 template <typename T1, typename T2, typename T3, typename T4, typename T5>
-core::Error readParams(const json::Array& params, 
+rstudiocore::Error readParams(const json::Array& params, 
                        T1* pValue1, 
                        T2* pValue2, 
                        T3* pValue3,
                        T4* pValue4,
                        T5* pValue5)
 {
-   core::Error error = readParams(params, pValue1, pValue2, pValue3, pValue4) ;
+   rstudiocore::Error error = readParams(params, pValue1, pValue2, pValue3, pValue4) ;
    if (error)
       return error ;
    
@@ -243,7 +243,7 @@ core::Error readParams(const json::Array& params,
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5,
           typename T6>
-core::Error readParams(const json::Array& params,
+rstudiocore::Error readParams(const json::Array& params,
                        T1* pValue1,
                        T2* pValue2,
                        T3* pValue3,
@@ -251,7 +251,7 @@ core::Error readParams(const json::Array& params,
                        T5* pValue5,
                        T6* pValue6)
 {
-   core::Error error = readParams(params,
+   rstudiocore::Error error = readParams(params,
                                   pValue1,
                                   pValue2,
                                   pValue3, 
@@ -265,7 +265,7 @@ core::Error readParams(const json::Array& params,
    
 template <typename T1, typename T2, typename T3, typename T4, typename T5,
 typename T6, typename T7>
-core::Error readParams(const json::Array& params,
+rstudiocore::Error readParams(const json::Array& params,
                        T1* pValue1,
                        T2* pValue2,
                        T3* pValue3,
@@ -274,7 +274,7 @@ core::Error readParams(const json::Array& params,
                        T6* pValue6,
                        T7* pValue7)
 {
-   core::Error error = readParams(params,
+   rstudiocore::Error error = readParams(params,
                                   pValue1,
                                   pValue2,
                                   pValue3,
@@ -289,7 +289,7 @@ core::Error readParams(const json::Array& params,
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5,
 typename T6, typename T7, typename T8>
-core::Error readParams(const json::Array& params,
+rstudiocore::Error readParams(const json::Array& params,
                        T1* pValue1,
                        T2* pValue2,
                        T3* pValue3,
@@ -299,7 +299,7 @@ core::Error readParams(const json::Array& params,
                        T7* pValue7,
                        T8* pValue8)
 {
-   core::Error error = readParams(params,
+   rstudiocore::Error error = readParams(params,
                                   pValue1,
                                   pValue2,
                                   pValue3,
@@ -315,7 +315,7 @@ core::Error readParams(const json::Array& params,
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5,
 typename T6, typename T7, typename T8, typename T9>
-core::Error readParams(const json::Array& params,
+rstudiocore::Error readParams(const json::Array& params,
                        T1* pValue1,
                        T2* pValue2,
                        T3* pValue3,
@@ -326,7 +326,7 @@ core::Error readParams(const json::Array& params,
                        T8* pValue8,
                        T9* pValue9)
 {
-   core::Error error = readParams(params,
+   rstudiocore::Error error = readParams(params,
                                   pValue1,
                                   pValue2,
                                   pValue3,
@@ -343,7 +343,7 @@ core::Error readParams(const json::Array& params,
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5,
 typename T6, typename T7, typename T8, typename T9, typename T10>
-core::Error readParams(const json::Array& params,
+rstudiocore::Error readParams(const json::Array& params,
                        T1* pValue1,
                        T2* pValue2,
                        T3* pValue3,
@@ -355,7 +355,7 @@ core::Error readParams(const json::Array& params,
                        T9* pValue9,
                        T10* pValue10)
 {
-   core::Error error = readParams(params,
+   rstudiocore::Error error = readParams(params,
                                   pValue1,
                                   pValue2,
                                   pValue3,
@@ -373,7 +373,7 @@ core::Error readParams(const json::Array& params,
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5,
 typename T6, typename T7, typename T8, typename T9, typename T10, typename T11>
-core::Error readParams(const json::Array& params,
+rstudiocore::Error readParams(const json::Array& params,
                        T1* pValue1,
                        T2* pValue2,
                        T3* pValue3,
@@ -386,7 +386,7 @@ core::Error readParams(const json::Array& params,
                        T10* pValue10,
                        T11* pValue11)
 {
-   core::Error error = readParams(params,
+   rstudiocore::Error error = readParams(params,
                                   pValue1,
                                   pValue2,
                                   pValue3,
@@ -404,7 +404,7 @@ core::Error readParams(const json::Array& params,
 }
 
 template <typename T>
-core::Error readObject(const json::Object& object, 
+rstudiocore::Error readObject(const json::Object& object, 
                        const std::string& name, 
                        T* pValue)
 {
@@ -421,7 +421,7 @@ core::Error readObject(const json::Object& object,
 }
 
 template <typename T>
-core::Error readObject(const json::Object& object,
+rstudiocore::Error readObject(const json::Object& object,
                        const std::string& name,
                        const T& defaultValue,
                        T* pValue)
@@ -442,7 +442,7 @@ core::Error readObject(const json::Object& object,
 }
 
 template <typename T>
-core::Error readObjectParam(const json::Array& params,
+rstudiocore::Error readObjectParam(const json::Array& params,
                             unsigned int index, 
                             const std::string& name, 
                             T* pValue)
@@ -457,7 +457,7 @@ core::Error readObjectParam(const json::Array& params,
    
 
 template <typename T1, typename T2>
-core::Error readObject(const json::Object& object, 
+rstudiocore::Error readObject(const json::Object& object, 
                        const std::string& name1, T1* pValue1,
                        const std::string& name2, T2* pValue2)
 {
@@ -469,7 +469,7 @@ core::Error readObject(const json::Object& object,
 }
    
 template <typename T1, typename T2>
-core::Error readObjectParam(const json::Array& params, 
+rstudiocore::Error readObjectParam(const json::Array& params, 
                             unsigned int index,
                             const std::string& name1, T1* pValue1,
                             const std::string& name2, T2* pValue2)
@@ -483,7 +483,7 @@ core::Error readObjectParam(const json::Array& params,
 }
 
 template <typename T1, typename T2, typename T3>
-core::Error readObject(const json::Object& object, 
+rstudiocore::Error readObject(const json::Object& object, 
                        const std::string& name1, T1* pValue1,
                        const std::string& name2, T2* pValue2,
                        const std::string& name3, T3* pValue3)
@@ -496,7 +496,7 @@ core::Error readObject(const json::Object& object,
 }
    
 template <typename T1, typename T2, typename T3>
-core::Error readObjectParam(const json::Array& params,
+rstudiocore::Error readObjectParam(const json::Array& params,
                             unsigned int index,
                             const std::string& name1, T1* pValue1,
                             const std::string& name2, T2* pValue2,
@@ -511,7 +511,7 @@ core::Error readObjectParam(const json::Array& params,
 }
    
 template <typename T1, typename T2, typename T3, typename T4>
-core::Error readObject(const json::Object& object, 
+rstudiocore::Error readObject(const json::Object& object, 
                        const std::string& name1, T1* pValue1,
                        const std::string& name2, T2* pValue2,
                        const std::string& name3, T3* pValue3,
@@ -528,7 +528,7 @@ core::Error readObject(const json::Object& object,
 }
    
 template <typename T1, typename T2, typename T3, typename T4>
-core::Error readObjectParam(const json::Array& params,
+rstudiocore::Error readObjectParam(const json::Array& params,
                             unsigned int index,
                             const std::string& name1, T1* pValue1,
                             const std::string& name2, T2* pValue2,
@@ -549,7 +549,7 @@ core::Error readObjectParam(const json::Array& params,
 
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5>
-core::Error readObject(const json::Object& object,
+rstudiocore::Error readObject(const json::Object& object,
                        const std::string& name1, T1* pValue1,
                        const std::string& name2, T2* pValue2,
                        const std::string& name3, T3* pValue3,
@@ -568,7 +568,7 @@ core::Error readObject(const json::Object& object,
 }
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5>
-core::Error readObjectParam(const json::Array& params,
+rstudiocore::Error readObjectParam(const json::Array& params,
                             unsigned int index,
                             const std::string& name1, T1* pValue1,
                             const std::string& name2, T2* pValue2,
@@ -591,7 +591,7 @@ core::Error readObjectParam(const json::Array& params,
 
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
-core::Error readObject(const json::Object& object,
+rstudiocore::Error readObject(const json::Object& object,
                        const std::string& name1, T1* pValue1,
                        const std::string& name2, T2* pValue2,
                        const std::string& name3, T3* pValue3,
@@ -613,7 +613,7 @@ core::Error readObject(const json::Object& object,
 
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
-core::Error readObjectParam(const json::Array& params,
+rstudiocore::Error readObjectParam(const json::Array& params,
                             unsigned int index,
                             const std::string& name1, T1* pValue1,
                             const std::string& name2, T2* pValue2,
@@ -638,7 +638,7 @@ core::Error readObjectParam(const json::Array& params,
 
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
-core::Error readObject(const json::Object& object,
+rstudiocore::Error readObject(const json::Object& object,
                        const std::string& name1, T1* pValue1,
                        const std::string& name2, T2* pValue2,
                        const std::string& name3, T3* pValue3,
@@ -661,7 +661,7 @@ core::Error readObject(const json::Object& object,
 }
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
-core::Error readObjectParam(const json::Array& params,
+rstudiocore::Error readObjectParam(const json::Array& params,
                             unsigned int index,
                             const std::string& name1, T1* pValue1,
                             const std::string& name2, T2* pValue2,
@@ -687,7 +687,7 @@ core::Error readObjectParam(const json::Array& params,
 }
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
-core::Error readObject(const json::Object& object,
+rstudiocore::Error readObject(const json::Object& object,
                        const std::string& name1, T1* pValue1,
                        const std::string& name2, T2* pValue2,
                        const std::string& name3, T3* pValue3,
@@ -712,7 +712,7 @@ core::Error readObject(const json::Object& object,
 }
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
-core::Error readObjectParam(const json::Array& params,
+rstudiocore::Error readObjectParam(const json::Array& params,
                             unsigned int index,
                             const std::string& name1, T1* pValue1,
                             const std::string& name2, T2* pValue2,
@@ -740,7 +740,7 @@ core::Error readObjectParam(const json::Array& params,
 }
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
-core::Error readObject(const json::Object& object,
+rstudiocore::Error readObject(const json::Object& object,
                        const std::string& name1, T1* pValue1,
                        const std::string& name2, T2* pValue2,
                        const std::string& name3, T3* pValue3,
@@ -767,7 +767,7 @@ core::Error readObject(const json::Object& object,
 }
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
-core::Error readObjectParam(const json::Array& params,
+rstudiocore::Error readObjectParam(const json::Array& params,
                             unsigned int index,
                             const std::string& name1, T1* pValue1,
                             const std::string& name2, T2* pValue2,
@@ -797,7 +797,7 @@ core::Error readObjectParam(const json::Array& params,
 }
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10>
-core::Error readObject(const json::Object& object,
+rstudiocore::Error readObject(const json::Object& object,
                        const std::string& name1, T1* pValue1,
                        const std::string& name2, T2* pValue2,
                        const std::string& name3, T3* pValue3,
@@ -826,7 +826,7 @@ core::Error readObject(const json::Object& object,
 }
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10>
-core::Error readObjectParam(const json::Array& params,
+rstudiocore::Error readObjectParam(const json::Array& params,
                             unsigned int index,
                             const std::string& name1, T1* pValue1,
                             const std::string& name2, T2* pValue2,
@@ -859,7 +859,7 @@ core::Error readObjectParam(const json::Array& params,
 
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10, typename T11>
-core::Error readObject(const json::Object& object,
+rstudiocore::Error readObject(const json::Object& object,
                        const std::string& name1, T1* pValue1,
                        const std::string& name2, T2* pValue2,
                        const std::string& name3, T3* pValue3,
@@ -914,9 +914,9 @@ public:
       return response_[kRpcResult];
    }
    
-   void setError(const core::Error& error);
+   void setError(const rstudiocore::Error& error);
 
-   void setError(const core::Error& error, const json::Value& clientInfo);
+   void setError(const rstudiocore::Error& error, const json::Value& clientInfo);
 
    void setError(const boost::system::error_code& ec);
 
@@ -983,7 +983,7 @@ void setJsonRpcResult(const T& result, http::Response* pResponse)
 }   
 
 template <typename T>
-void setJsonRpcError(const T& error, core::http::Response* pResponse)
+void setJsonRpcError(const T& error, rstudiocore::http::Response* pResponse)
 {   
    JsonRpcResponse jsonRpcResponse ;
    jsonRpcResponse.setError(error);
@@ -992,9 +992,9 @@ void setJsonRpcError(const T& error, core::http::Response* pResponse)
 
 
 // convenience typedefs for managing a map of json rpc functions
-typedef boost::function<core::Error(const core::json::JsonRpcRequest&, core::json::JsonRpcResponse*)>
+typedef boost::function<rstudiocore::Error(const rstudiocore::json::JsonRpcRequest&, rstudiocore::json::JsonRpcResponse*)>
       JsonRpcFunction ;
-typedef std::pair<std::string,core::json::JsonRpcFunction>
+typedef std::pair<std::string,rstudiocore::json::JsonRpcFunction>
       JsonRpcMethod ;
 typedef boost::unordered_map<std::string,JsonRpcFunction>
       JsonRpcMethods;
@@ -1009,9 +1009,9 @@ typedef boost::unordered_map<std::string,JsonRpcFunction>
 
 // JsonRpcFunctionContinuation is what a JsonRpcAsyncFunction needs to call
 // when its work is complete
-typedef boost::function<void(const core::Error&, core::json::JsonRpcResponse*)>
+typedef boost::function<void(const rstudiocore::Error&, rstudiocore::json::JsonRpcResponse*)>
       JsonRpcFunctionContinuation ;
-typedef boost::function<void(const core::json::JsonRpcRequest&, const JsonRpcFunctionContinuation&)>
+typedef boost::function<void(const rstudiocore::json::JsonRpcRequest&, const JsonRpcFunctionContinuation&)>
       JsonRpcAsyncFunction ;
 // The bool in the next two typedefs specifies whether the function wants the
 // HTTP connection to stay open until the method finishes executing (direct return),
@@ -1020,7 +1020,7 @@ typedef boost::function<void(const core::json::JsonRpcRequest&, const JsonRpcFun
 // return). Direct return provides lower latency for short operations, and indirect
 // return must be used for longer-running operations to prevent the browser from
 // being starved of available HTTP connections to the server.
-typedef std::pair<std::string,std::pair<bool, core::json::JsonRpcAsyncFunction> >
+typedef std::pair<std::string,std::pair<bool, rstudiocore::json::JsonRpcAsyncFunction> >
       JsonRpcAsyncMethod ;
 typedef boost::unordered_map<std::string,std::pair<bool, JsonRpcAsyncFunction> >
       JsonRpcAsyncMethods ;
@@ -1029,7 +1029,7 @@ JsonRpcAsyncFunction adaptToAsync(JsonRpcFunction synchronousFunction);
 JsonRpcAsyncMethod adaptMethodToAsync(JsonRpcMethod synchronousMethod);
 
 } // namespace json
-} // namespace core
+} // namespace rstudiocore
 
 
 

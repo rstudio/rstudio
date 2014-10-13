@@ -22,7 +22,7 @@
 
 #include <r/RSexp.hpp>
 
-namespace core {
+namespace rstudiocore {
    class Error;
    class FilePath;
 }
@@ -42,18 +42,18 @@ public:
 
    void clear();
 
-   core::Error save(const core::FilePath& filePath) const;
-   core::Error load(const core::FilePath& filePath);
+   rstudiocore::Error save(const rstudiocore::FilePath& filePath) const;
+   rstudiocore::Error load(const rstudiocore::FilePath& filePath);
 
-   void asJson(core::json::Value* pValue) const;
+   void asJson(rstudiocore::json::Value* pValue) const;
 
    SEXP sexp() const;
 
 private:
    SEXP get(const std::string& name) const;
-   core::json::Value getAsJson(const std::string& name) const;
-   core::json::Object getControlAsJson(SEXP controlSEXP) const;
-   core::json::Object getControlsAsJson() const;
+   rstudiocore::json::Value getAsJson(const std::string& name) const;
+   rstudiocore::json::Object getControlAsJson(SEXP controlSEXP) const;
+   rstudiocore::json::Object getControlsAsJson() const;
    SEXP getUserVisibleValuesList() const;
 
 private:

@@ -16,7 +16,7 @@
 #ifndef SESSION_PROFILER_HPP
 #define SESSION_PROFILER_HPP
 
-namespace core {
+namespace rstudiocore {
    class Error;
 }
  
@@ -24,7 +24,7 @@ namespace session {
 namespace modules { 
 namespace profiler {
    
-core::Error initialize();
+rstudiocore::Error initialize();
                        
 } // namespace profiler
 } // namespace modules

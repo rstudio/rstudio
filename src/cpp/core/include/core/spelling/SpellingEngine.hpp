@@ -21,7 +21,7 @@
 
 #include <boost/utility.hpp>
 
-namespace core {
+namespace rstudiocore {
 
 class Error;
 
@@ -44,7 +44,7 @@ public:
 };
 
 } // namespace spelling
-} // namespace core 
+} // namespace rstudiocore 
 
 
 #endif // CORE_SPELLING_SPELLING_ENGINE_HPP

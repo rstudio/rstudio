@@ -50,8 +50,8 @@
 #include "SessionWorkbench.hpp"
 #include "SessionGit.hpp"
 
-using namespace core;
-using namespace core::shell_utils;
+using namespace rstudiocore;
+using namespace rstudiocore::shell_utils;
 using namespace session::modules::vcs_utils;
 using namespace session::console_process;
 
@@ -101,9 +101,9 @@ std::vector<FilePath> resolveAliasedPaths(const json::Array& paths,
    return results;
 }
 
-core::system::ProcessOptions procOptions(bool requiresSsh)
+rstudiocore::system::ProcessOptions procOptions(bool requiresSsh)
 {
-   core::system::ProcessOptions options;
+   rstudiocore::system::ProcessOptions options;
 
    // detach the session so there is no terminal
 #ifndef _WIN32
@@ -111,16 +111,16 @@ core::system::ProcessOptions procOptions(bool requiresSsh)
 #endif
 
    // get current environment for modification prior to passing to child
-   core::system::Options childEnv;
-   core::system::environment(&childEnv);
+   rstudiocore::system::Options childEnv;
+   rstudiocore::system::environment(&childEnv);
 
    // add postback directory to PATH
    FilePath postbackDir = session::options().rpostbackPath().parent();
-   core::system::addToPath(&childEnv, postbackDir.absolutePath());
+   rstudiocore::system::addToPath(&childEnv, postbackDir.absolutePath());
 
    // on windows add gnudiff directory to the path
 #ifdef _WIN32
-   core::system::addToPath(&childEnv,
+   rstudiocore::system::addToPath(&childEnv,
                            session::options().gnudiffPath().absolutePath());
 #endif
 
@@ -128,7 +128,7 @@ core::system::ProcessOptions procOptions(bool requiresSsh)
 #ifdef _WIN32
    if (requiresSsh)
    {
-      core::system::addToPath(&childEnv,
+      rstudiocore::system::addToPath(&childEnv,
                               session::options().msysSshPath().absolutePath());
    }
 #endif
@@ -140,14 +140,14 @@ core::system::ProcessOptions procOptions(bool requiresSsh)
 
    // on windows set HOME to USERPROFILE
 #ifdef _WIN32
-   std::string userProfile = core::system::getenv(childEnv, "USERPROFILE");
-   core::system::setenv(&childEnv, "HOME", userProfile);
+   std::string userProfile = rstudiocore::system::getenv(childEnv, "USERPROFILE");
+   rstudiocore::system::setenv(&childEnv, "HOME", userProfile);
 #endif
 
    // set the SVN_EDITOR if it is available
    std::string editFileCommand = workbench::editFileCommand();
    if (!editFileCommand.empty())
-      core::system::setenv(&childEnv, "SVN_EDITOR", editFileCommand);
+      rstudiocore::system::setenv(&childEnv, "SVN_EDITOR", editFileCommand);
 
    // set custom environment
    options.environment = childEnv;
@@ -155,7 +155,7 @@ core::system::ProcessOptions procOptions(bool requiresSsh)
    return options;
 }
 
-core::system::ProcessOptions procOptions()
+rstudiocore::system::ProcessOptions procOptions()
 {
    return procOptions(s_isSvnSshRepository);
 }
@@ -175,13 +175,13 @@ ShellCommand svn()
 Error runSvn(const ShellArgs& args,
              const FilePath& workingDir,
              bool redirectStdErrToStdOut,
-             core::system::ProcessResult* pResult)
+             rstudiocore::system::ProcessResult* pResult)
 {
-   core::system::ProcessOptions options = procOptions();
+   rstudiocore::system::ProcessOptions options = procOptions();
    if (!workingDir.empty())
       options.workingDir = workingDir;
    options.redirectStdErrToStdOut = redirectStdErrToStdOut;
-   Error error = core::system::runCommand(svn() << args.args(),
+   Error error = rstudiocore::system::runCommand(svn() << args.args(),
                                           options,
                                           pResult);
    return error;
@@ -189,7 +189,7 @@ Error runSvn(const ShellArgs& args,
 
 Error runSvn(const ShellArgs& args,
              bool redirectStdErrToStdOut,
-             core::system::ProcessResult* pResult)
+             rstudiocore::system::ProcessResult* pResult)
 {
    FilePath workingDir;
    if (!s_workingDir.empty())
@@ -203,7 +203,7 @@ Error runSvn(const ShellArgs& args,
              std::string* pStdErr=NULL,
              int* pExitCode=NULL)
 {
-   core::system::ProcessResult result;
+   rstudiocore::system::ProcessResult result;
    Error error = runSvn(args, false, &result);
    if (error)
       return error;
@@ -225,7 +225,7 @@ std::vector<std::string> globalArgs()
 }
 
 
-core::Error createConsoleProc(const ShellArgs& args,
+rstudiocore::Error createConsoleProc(const ShellArgs& args,
                               const FilePath& outputFile,
                               const boost::optional<FilePath>& workingDir,
                               const std::string& caption,
@@ -234,7 +234,7 @@ core::Error createConsoleProc(const ShellArgs& args,
                               bool enqueueRefreshOnExit,
                               boost::shared_ptr<ConsoleProcess>* ppCP)
 {
-   core::system::ProcessOptions options = procOptions(requiresSsh);
+   rstudiocore::system::ProcessOptions options = procOptions(requiresSsh);
    if (!workingDir)
       options.workingDir = s_workingDir;
    else if (!workingDir.get().empty())
@@ -268,7 +268,7 @@ core::Error createConsoleProc(const ShellArgs& args,
    return Success();
 }
 
-core::Error createConsoleProc(const ShellArgs& args,
+rstudiocore::Error createConsoleProc(const ShellArgs& args,
                               const std::string& caption,
                               bool requiresSsh,
                               bool dialog,
@@ -285,8 +285,8 @@ core::Error createConsoleProc(const ShellArgs& args,
                             ppCP);
 }
 
-typedef boost::function<void(const core::Error&,
-                             const core::system::ProcessResult&)>
+typedef boost::function<void(const rstudiocore::Error&,
+                             const rstudiocore::system::ProcessResult&)>
                                                             ProcResultCallback;
 
 void onAsyncSvnExit(int exitCode,
@@ -297,14 +297,14 @@ void onAsyncSvnExit(int exitCode,
    {
       // read the file
       std::string contents;
-      Error error = core::readStringFromFile(outputFile, &contents);
+      Error error = rstudiocore::readStringFromFile(outputFile, &contents);
       if (error)
       {
-         completionCallback(error, core::system::ProcessResult());
+         completionCallback(error, rstudiocore::system::ProcessResult());
          return;
       }
 
-      core::system::ProcessResult result;
+      rstudiocore::system::ProcessResult result;
       result.exitStatus = exitCode;
       result.stdOut = contents;
       completionCallback(Success(), result);
@@ -314,7 +314,7 @@ void onAsyncSvnExit(int exitCode,
       completionCallback(
         systemError(boost::system::errc::operation_canceled,
                     ERROR_LOCATION),
-        core::system::ProcessResult());
+        rstudiocore::system::ProcessResult());
    }
 }
 
@@ -338,7 +338,7 @@ void runSvnAsync(const ShellArgs& args,
                                    enqueueRefreshOnExit,
                                    &pCP);
    if (error)
-      completionCallback(error, core::system::ProcessResult());
+      completionCallback(error, rstudiocore::system::ProcessResult());
 
    // set showOnOutput
    pCP->setShowOnOutput(true);
@@ -448,12 +448,12 @@ struct SvnInfo
 };
 
 
-Error runSvnInfo(const core::FilePath& workingDir, SvnInfo* pSvnInfo)
+Error runSvnInfo(const rstudiocore::FilePath& workingDir, SvnInfo* pSvnInfo)
 {
    if (workingDir.empty())
       return Success();
 
-   core::system::ProcessResult result;
+   rstudiocore::system::ProcessResult result;
    Error error = runSvn(ShellArgs() << "info" << "--xml",
                         workingDir,
                         true,
@@ -492,7 +492,7 @@ Error runSvnInfo(const core::FilePath& workingDir, SvnInfo* pSvnInfo)
    return Success();
 }
 
-bool isSvnDirectory(const core::FilePath& workingDir)
+bool isSvnDirectory(const rstudiocore::FilePath& workingDir)
 {
    return !repositoryRoot(workingDir).empty();
 }
@@ -669,7 +669,7 @@ Error svnAdd(const json::JsonRpcRequest& request,
    std::transform(files.begin(), files.end(), std::back_inserter(paths),
                   &resolveAliasedJsonPath);
 
-   core::system::ProcessResult result;
+   rstudiocore::system::ProcessResult result;
    error = runSvn(ShellArgs() << "add" << globalArgs() << "-q" << "--" << paths,
                   true, &result);
    if (error)
@@ -694,7 +694,7 @@ Error svnDelete(const json::JsonRpcRequest& request,
    std::transform(files.begin(), files.end(), std::back_inserter(paths),
                   &resolveAliasedJsonPath);
 
-   core::system::ProcessResult result;
+   rstudiocore::system::ProcessResult result;
    error = runSvn(ShellArgs() << "delete" << globalArgs() << "-q" << "--" << paths,
                   true, &result);
    if (error)
@@ -719,7 +719,7 @@ Error svnRevert(const json::JsonRpcRequest& request,
    std::transform(files.begin(), files.end(), std::back_inserter(paths),
                   &resolveAliasedJsonPath);
 
-   core::system::ProcessResult result;
+   rstudiocore::system::ProcessResult result;
    error = runSvn(ShellArgs() << "revert" << globalArgs() << "-q" <<
                   "--depth" << "infinity" <<
                   "--" << paths,
@@ -747,7 +747,7 @@ Error svnResolve(const json::JsonRpcRequest& request,
     std::transform(files.begin(), files.end(), std::back_inserter(paths),
                    &resolveAliasedJsonPath);
 
-    core::system::ProcessResult result;
+    rstudiocore::system::ProcessResult result;
     error = runSvn(ShellArgs() << "resolve" << globalArgs() << "-q" <<
                    "--accept" << accept <<
                    "--" << paths,
@@ -760,9 +760,9 @@ Error svnResolve(const json::JsonRpcRequest& request,
     return Success();
  }
 
-Error statusToJson(const core::FilePath &path,
+Error statusToJson(const rstudiocore::FilePath &path,
                    const source_control::VCSStatus &status,
-                   core::json::Object *pObject)
+                   rstudiocore::json::Object *pObject)
 {
    json::Object& obj = *pObject;
    obj["status"] = status.status();
@@ -936,7 +936,7 @@ Error svnCleanup(const json::JsonRpcRequest& request,
 {
    RefreshOnExit refreshOnExit;
 
-   core::system::ProcessResult result;
+   rstudiocore::system::ProcessResult result;
    Error error = runSvn(ShellArgs() << "cleanup" << globalArgs(),
                         true,
                         &result);
@@ -1098,10 +1098,10 @@ Error svnApplyPatch(const json::JsonRpcRequest& request,
    cmd << "-i" << tempFile;
    cmd << filePath;
 
-   core::system::ProcessOptions options = procOptions();
+   rstudiocore::system::ProcessOptions options = procOptions();
 
-   core::system::ProcessResult result;
-   error = core::system::runCommand(cmd,
+   rstudiocore::system::ProcessResult result;
+   error = rstudiocore::system::runCommand(cmd,
                                     options,
                                     &result);
    if (error)
@@ -1230,7 +1230,7 @@ Error parseHistoryXml(int skip,
 
 void historyEnd(boost::function<void(Error, const std::string&)> callback,
                 const Error& error,
-                const core::system::ProcessResult& result)
+                const rstudiocore::system::ProcessResult& result)
 {
    if (!error && result.exitStatus != EXIT_SUCCESS && !result.stdErr.empty())
       LOG_ERROR_MESSAGE(result.stdErr);
@@ -1459,7 +1459,7 @@ void svnHistory(const json::JsonRpcRequest& request,
 void svnShowEnd(bool noSizeWarning,
                 const json::JsonRpcFunctionContinuation& cont,
                 Error error,
-                const core::system::ProcessResult& result)
+                const rstudiocore::system::ProcessResult& result)
 {
    json::JsonRpcResponse response;
 
@@ -1512,7 +1512,7 @@ void svnShow(const json::JsonRpcRequest& request,
 
 void svnShowFileEnd(const json::JsonRpcFunctionContinuation& cont,
                     Error error,
-                    const core::system::ProcessResult& result)
+                    const rstudiocore::system::ProcessResult& result)
 {
    json::JsonRpcResponse response;
 
@@ -1550,7 +1550,7 @@ void svnShowFile(const json::JsonRpcRequest& request,
 }
 
 Error getIgnores(const FilePath& filePath,
-                    core::system::ProcessResult* pResult)
+                    rstudiocore::system::ProcessResult* pResult)
 {
    return runSvn(ShellArgs() << "propget" << "svn:ignore"
                               << filePath << globalArgs(),
@@ -1569,7 +1569,7 @@ Error svnGetIgnores(const json::JsonRpcRequest& request,
    // resolve path
    FilePath filePath = module_context::resolveAliasedPath(path);
 
-   core::system::ProcessResult result;
+   rstudiocore::system::ProcessResult result;
    error = getIgnores(filePath, &result);
    if (error)
       return error;
@@ -1581,11 +1581,11 @@ Error svnGetIgnores(const json::JsonRpcRequest& request,
 
 Error setIgnores(const FilePath& filePath,
                  const std::string& ignores,
-                 core::system::ProcessResult* pResult)
+                 rstudiocore::system::ProcessResult* pResult)
 {
    // write the ignores to a temporary file
    FilePath ignoresFile = module_context::tempFile("svn-ignore", "txt");
-   Error error = core::writeStringToFile(ignoresFile, ignores);
+   Error error = rstudiocore::writeStringToFile(ignoresFile, ignores);
    if (error)
       return error;
 
@@ -1619,7 +1619,7 @@ Error svnSetIgnores(const json::JsonRpcRequest& request,
    // resolve path
    FilePath filePath = module_context::resolveAliasedPath(path);
 
-   core::system::ProcessResult result;
+   rstudiocore::system::ProcessResult result;
    error = setIgnores(filePath, ignores, &result);
    if (error)
       return error;
@@ -1632,7 +1632,7 @@ Error svnSetIgnores(const json::JsonRpcRequest& request,
 Error checkout(const std::string& url,
                const std::string& username,
                const std::string dirName,
-               const core::FilePath& parentPath,
+               const rstudiocore::FilePath& parentPath,
                boost::shared_ptr<console_process::ConsoleProcess>* ppCP)
 {
    // optional username arg
@@ -1700,7 +1700,7 @@ bool promptForPassword(const std::string& prompt,
 }
 
 SvnFileDecorationContext::SvnFileDecorationContext(
-                                                 const core::FilePath& rootDir)
+                                                 const rstudiocore::FilePath& rootDir)
 {
    using namespace source_control;
 
@@ -1716,8 +1716,8 @@ SvnFileDecorationContext::~SvnFileDecorationContext()
 {
 }
 
-void SvnFileDecorationContext::decorateFile(const core::FilePath& filePath,
-                                            core::json::Object* pFileObject)
+void SvnFileDecorationContext::decorateFile(const rstudiocore::FilePath& filePath,
+                                            rstudiocore::json::Object* pFileObject)
 {
    using namespace source_control;
 
@@ -1737,7 +1737,7 @@ void SvnFileDecorationContext::decorateFile(const core::FilePath& filePath,
 Error augmentSvnIgnore()
 {
    // check for existing svn:ignore
-   core::system::ProcessResult result;
+   rstudiocore::system::ProcessResult result;
    Error error = getIgnores(s_workingDir, &result);
    if (error)
       return error;
@@ -1771,7 +1771,7 @@ Error augmentSvnIgnore()
    }
 
    // write back svn:ignore
-   core::system::ProcessResult setResult;
+   rstudiocore::system::ProcessResult setResult;
    error = setIgnores(s_workingDir, svnIgnore, &setResult);
    if (error)
       return error;
@@ -1820,7 +1820,7 @@ Error initialize()
    return Success();
 }
 
-Error initializeSvn(const core::FilePath& workingDir)
+Error initializeSvn(const rstudiocore::FilePath& workingDir)
 {
    s_workingDir = workingDir;
 

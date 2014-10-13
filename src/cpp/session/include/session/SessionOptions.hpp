@@ -30,7 +30,7 @@
 
 #include <session/SessionConstants.hpp>
 
-namespace core {
+namespace rstudiocore {
    class ProgramStatus;
 }
 
@@ -53,7 +53,7 @@ private:
 
 public:
    // read options  
-   core::ProgramStatus read(int argc, char * const argv[]);   
+   rstudiocore::ProgramStatus read(int argc, char * const argv[]);   
    virtual ~Options() {}
    
    bool verifyInstallation() const
@@ -61,12 +61,12 @@ public:
       return verifyInstallation_;
    }
 
-   core::FilePath verifyInstallationHomeDir() const
+   rstudiocore::FilePath verifyInstallationHomeDir() const
    {
       if (!verifyInstallationHomeDir_.empty())
-         return core::FilePath(verifyInstallationHomeDir_.c_str());
+         return rstudiocore::FilePath(verifyInstallationHomeDir_.c_str());
       else
-         return core::FilePath();
+         return rstudiocore::FilePath();
    }
 
    std::string programIdentity() const 
@@ -85,12 +85,12 @@ public:
    }
    
    // agreement
-   core::FilePath agreementFilePath() const
+   rstudiocore::FilePath agreementFilePath() const
    { 
       if (!agreementFilePath_.empty())
-         return core::FilePath(agreementFilePath_.c_str());
+         return rstudiocore::FilePath(agreementFilePath_.c_str());
       else
-         return core::FilePath();
+         return rstudiocore::FilePath();
    }
 
    // docs
@@ -105,9 +105,9 @@ public:
       return std::string(wwwLocalPath_.c_str());
    }
 
-   core::FilePath wwwSymbolMapsPath() const
+   rstudiocore::FilePath wwwSymbolMapsPath() const
    {
-      return core::FilePath(wwwSymbolMapsPath_.c_str());
+      return rstudiocore::FilePath(wwwSymbolMapsPath_.c_str());
    }
 
    std::string wwwPort() const
@@ -125,9 +125,9 @@ public:
       return std::string(secret_.c_str());
    }
 
-   core::FilePath preflightScriptPath() const
+   rstudiocore::FilePath preflightScriptPath() const
    {
-      return core::FilePath(preflightScript_.c_str());
+      return rstudiocore::FilePath(preflightScript_.c_str());
    }
 
    int timeoutMinutes() const { return timeoutMinutes_; }
@@ -144,29 +144,29 @@ public:
 
    unsigned int minimumUserId() const { return 100; }
    
-   core::FilePath coreRSourcePath() const 
+   rstudiocore::FilePath coreRSourcePath() const 
    { 
-      return core::FilePath(coreRSourcePath_.c_str());
+      return rstudiocore::FilePath(coreRSourcePath_.c_str());
    }
    
-   core::FilePath modulesRSourcePath() const 
+   rstudiocore::FilePath modulesRSourcePath() const 
    { 
-      return core::FilePath(modulesRSourcePath_.c_str()); 
+      return rstudiocore::FilePath(modulesRSourcePath_.c_str()); 
    }
 
-   core::FilePath sessionLibraryPath() const
+   rstudiocore::FilePath sessionLibraryPath() const
    {
-      return core::FilePath(sessionLibraryPath_.c_str());
+      return rstudiocore::FilePath(sessionLibraryPath_.c_str());
    }
    
-   core::FilePath sessionPackagesPath() const
+   rstudiocore::FilePath sessionPackagesPath() const
    {
-      return core::FilePath(sessionPackagesPath_.c_str());
+      return rstudiocore::FilePath(sessionPackagesPath_.c_str());
    }
 
-   core::FilePath sessionPackageArchivesPath() const
+   rstudiocore::FilePath sessionPackageArchivesPath() const
    {
-      return core::FilePath(sessionPackageArchivesPath_.c_str());
+      return rstudiocore::FilePath(sessionPackageArchivesPath_.c_str());
    }
 
    
@@ -185,9 +185,9 @@ public:
       return rCompatibleGraphicsEngineVersion_;
    }
 
-   core::FilePath rResourcesPath() const
+   rstudiocore::FilePath rResourcesPath() const
    {
-      return core::FilePath(rResourcesPath_.c_str());
+      return rstudiocore::FilePath(rResourcesPath_.c_str());
    }
 
    std::string rHomeDirOverride()
@@ -211,49 +211,49 @@ public:
    bool limitXfsDiskQuota() const { return limitXfsDiskQuota_; }
    
    // external
-   core::FilePath rpostbackPath() const
+   rstudiocore::FilePath rpostbackPath() const
    {
-      return core::FilePath(rpostbackPath_.c_str());
+      return rstudiocore::FilePath(rpostbackPath_.c_str());
    }
 
-   core::FilePath consoleIoPath() const
+   rstudiocore::FilePath consoleIoPath() const
    {
-      return core::FilePath(consoleIoPath_.c_str());
+      return rstudiocore::FilePath(consoleIoPath_.c_str());
    }
 
-   core::FilePath gnudiffPath() const
+   rstudiocore::FilePath gnudiffPath() const
    {
-      return core::FilePath(gnudiffPath_.c_str());
+      return rstudiocore::FilePath(gnudiffPath_.c_str());
    }
 
-   core::FilePath gnugrepPath() const
+   rstudiocore::FilePath gnugrepPath() const
    {
-      return core::FilePath(gnugrepPath_.c_str());
+      return rstudiocore::FilePath(gnugrepPath_.c_str());
    }
 
-   core::FilePath msysSshPath() const
+   rstudiocore::FilePath msysSshPath() const
    {
-      return core::FilePath(msysSshPath_.c_str());
+      return rstudiocore::FilePath(msysSshPath_.c_str());
    }
 
-   core::FilePath sumatraPath() const
+   rstudiocore::FilePath sumatraPath() const
    {
-      return core::FilePath(sumatraPath_.c_str());
+      return rstudiocore::FilePath(sumatraPath_.c_str());
    }
    
-   core::FilePath hunspellDictionariesPath() const
+   rstudiocore::FilePath hunspellDictionariesPath() const
    {
-      return core::FilePath(hunspellDictionariesPath_.c_str());
+      return rstudiocore::FilePath(hunspellDictionariesPath_.c_str());
    }
 
-   core::FilePath mathjaxPath() const
+   rstudiocore::FilePath mathjaxPath() const
    {
-      return core::FilePath(mathjaxPath_.c_str());
+      return rstudiocore::FilePath(mathjaxPath_.c_str());
    }
 
-   core::FilePath pandocPath() const
+   rstudiocore::FilePath pandocPath() const
    {
-      return core::FilePath(pandocPath_.c_str());
+      return rstudiocore::FilePath(pandocPath_.c_str());
    }
 
    bool allowFileDownloads() const
@@ -307,43 +307,43 @@ public:
       return showUserIdentity_;
    }
 
-   core::FilePath userHomePath() const 
+   rstudiocore::FilePath userHomePath() const 
    { 
-      return core::FilePath(userHomePath_.c_str());
+      return rstudiocore::FilePath(userHomePath_.c_str());
    }
    
-   core::FilePath userScratchPath() const 
+   rstudiocore::FilePath userScratchPath() const 
    { 
-      return core::FilePath(userScratchPath_.c_str()); 
+      return rstudiocore::FilePath(userScratchPath_.c_str()); 
    }
 
-   core::FilePath userLogPath() const
+   rstudiocore::FilePath userLogPath() const
    {
       return userScratchPath().childPath("log");
    }
 
-   core::FilePath initialWorkingDirOverride()
+   rstudiocore::FilePath initialWorkingDirOverride()
    {
       if (!initialWorkingDirOverride_.empty())
-         return core::FilePath(initialWorkingDirOverride_.c_str());
+         return rstudiocore::FilePath(initialWorkingDirOverride_.c_str());
       else
-         return core::FilePath();
+         return rstudiocore::FilePath();
    }
 
-   core::FilePath initialEnvironmentFileOverride()
+   rstudiocore::FilePath initialEnvironmentFileOverride()
    {
       if (!initialEnvironmentFileOverride_.empty())
-         return core::FilePath(initialEnvironmentFileOverride_.c_str());
+         return rstudiocore::FilePath(initialEnvironmentFileOverride_.c_str());
       else
-         return core::FilePath();
+         return rstudiocore::FilePath();
    }
 
-   core::FilePath initialProjectPath()
+   rstudiocore::FilePath initialProjectPath()
    {
       if (!initialProjectPath_.empty())
-         return core::FilePath(initialProjectPath_.c_str());
+         return rstudiocore::FilePath(initialProjectPath_.c_str());
       else
-         return core::FilePath();
+         return rstudiocore::FilePath();
    }
 
    void clearInitialContextSettings()
@@ -356,16 +356,16 @@ public:
    // The line ending we use when working with source documents
    // in memory. This doesn't really make sense for the user to
    // change.
-   core::string_utils::LineEnding sourceLineEnding() const
+   rstudiocore::string_utils::LineEnding sourceLineEnding() const
    {
-      return core::string_utils::LineEndingPosix;
+      return rstudiocore::string_utils::LineEndingPosix;
    }
 
    // The line ending we persist to disk with. This could potentially
    // be a per-user or even per-file option.
-   core::string_utils::LineEnding sourcePersistLineEnding() const
+   rstudiocore::string_utils::LineEnding sourcePersistLineEnding() const
    {
-      return core::string_utils::LineEndingNative;
+      return rstudiocore::string_utils::LineEndingNative;
    }
 
    std::string monitorSharedSecret() const
@@ -386,11 +386,11 @@ public:
    bool getBoolOverlayOption(const std::string& name);
 
 private:
-   void resolvePath(const core::FilePath& resourcePath,
+   void resolvePath(const rstudiocore::FilePath& resourcePath,
                     std::string* pPath);
-   void resolvePostbackPath(const core::FilePath& resourcePath,
+   void resolvePostbackPath(const rstudiocore::FilePath& resourcePath,
                             std::string* pPath);
-   void resolvePandocPath(const core::FilePath& resourcePath, std::string* pPath);
+   void resolvePandocPath(const rstudiocore::FilePath& resourcePath, std::string* pPath);
 
    void addOverlayOptions(boost::program_options::options_description* pOpt);
    bool validateOverlayOptions(std::string* pErrMsg);

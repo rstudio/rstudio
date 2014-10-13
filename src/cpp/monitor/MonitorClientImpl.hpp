@@ -30,7 +30,7 @@ public:
    }
 
    void logMessage(const std::string& programIdentity,
-                   core::system::LogLevel level,
+                   rstudiocore::system::LogLevel level,
                    const std::string& message);
 
    void sendMetrics(const std::vector<metrics::Metric>& metrics);
@@ -52,7 +52,7 @@ public:
    }
 
    void logMessage(const std::string& programIdentity,
-                   core::system::LogLevel level,
+                   rstudiocore::system::LogLevel level,
                    const std::string& message);
 
    void sendMetrics(const std::vector<metrics::Metric>& metrics);

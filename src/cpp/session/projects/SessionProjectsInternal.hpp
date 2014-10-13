@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace core {
+namespace rstudiocore {
    class Error;
    class FilePath;
 }
@@ -28,10 +28,10 @@ namespace projects {
 
 void startup();
 
-core::Error initialize();
+rstudiocore::Error initialize();
 
-core::Error computeScratchPath(const core::FilePath& projectFile,
-                               core::FilePath* pScratchPath);
+rstudiocore::Error computeScratchPath(const rstudiocore::FilePath& projectFile,
+                               rstudiocore::FilePath* pScratchPath);
 
 } // namespace projects
 } // namesapce session

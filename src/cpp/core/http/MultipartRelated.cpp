@@ -22,7 +22,7 @@
 #define kTerminatingBoundary  "--END_OF_PART--"
 #define kContentType          "multipart/related; boundary=END_OF_PART"
 
-namespace core {
+namespace rstudiocore {
 namespace http {
 
 void MultipartRelated::addPart(const std::string& contentType,
@@ -49,4 +49,4 @@ std::string MultipartRelated::body() const
 }
 
 } // namespace http
-} // namespace core
+} // namespace rstudiocore

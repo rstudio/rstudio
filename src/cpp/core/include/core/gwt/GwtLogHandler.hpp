@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace core {
+namespace rstudiocore {
 
 class FilePath;
 
@@ -30,14 +30,14 @@ namespace http {
 namespace gwt {
    
 
-void initializeSymbolMaps(const core::FilePath& symbolMapsPath);
+void initializeSymbolMaps(const rstudiocore::FilePath& symbolMapsPath);
 
 void handleLogRequest(const std::string& username,
                       const http::Request& request, 
                       http::Response* pResponse);
                            
 } // namespace gwt
-} // namespace core
+} // namespace rstudiocore
 
 #endif // CORE_GWT_LOG_HANDLER_HPP
 

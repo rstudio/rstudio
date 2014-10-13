@@ -29,7 +29,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace session {
 namespace modules { 
@@ -52,7 +52,7 @@ json::Object publicKeyInfoJson()
 {
    std::string exponent;
    std::string modulo;
-   core::system::crypto::rsaPublicKey(&exponent, &modulo);
+   rstudiocore::system::crypto::rsaPublicKey(&exponent, &modulo);
 
    json::Object result;
    result["exponent"] = exponent;

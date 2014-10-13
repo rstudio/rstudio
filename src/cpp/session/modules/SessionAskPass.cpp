@@ -34,7 +34,7 @@
 #endif
 
 
-using namespace core ;
+using namespace rstudiocore ;
 
 namespace session {
 namespace modules { 
@@ -103,7 +103,7 @@ Error askForPassword(const std::string& prompt,
    ClientEvent askPassEvent(client_events::kAskPass, payload);
 
    // wait for method
-   core::json::JsonRpcRequest request;
+   rstudiocore::json::JsonRpcRequest request;
    if (!s_waitForAskPass(&request, askPassEvent))
    {
       return systemError(boost::system::errc::operation_canceled,
@@ -133,7 +133,7 @@ Error askForPassword(const std::string& prompt,
    if (options().programMode() == kSessionProgramModeServer)
    {
       // In server mode, passphrases are encrypted
-      error = core::system::crypto::rsaPrivateDecrypt(
+      error = rstudiocore::system::crypto::rsaPrivateDecrypt(
                                              pInput->password,
                                              &pInput->password);
       if (error)

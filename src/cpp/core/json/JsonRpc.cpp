@@ -21,7 +21,7 @@
 #include <core/http/Response.hpp>
 
 
-namespace core {
+namespace rstudiocore {
 namespace json {
 
 const char * const kRpcResult = "result";
@@ -242,8 +242,8 @@ void JsonRpcResponse::setAsyncHandle(const std::string& handle)
    setField(kRpcAsyncHandle, handle);
 }
 
-void setJsonRpcResponse(const core::json::JsonRpcResponse& jsonRpcResponse,
-                        core::http::Response* pResponse)
+void setJsonRpcResponse(const rstudiocore::json::JsonRpcResponse& jsonRpcResponse,
+                        rstudiocore::http::Response* pResponse)
 {
    // no cache!
    pResponse->setNoCacheHeaders();
@@ -349,13 +349,13 @@ std::string JsonRpcErrorCategory::message( int ev ) const
 namespace {
 
 void runSynchronousFunction(const JsonRpcFunction& func,
-                            const core::json::JsonRpcRequest& request,
+                            const rstudiocore::json::JsonRpcRequest& request,
                             const JsonRpcFunctionContinuation& continuation)
 {
-   core::json::JsonRpcResponse response;
+   rstudiocore::json::JsonRpcResponse response;
    if (request.isBackgroundConnection)
       response.setSuppressDetectChanges(true);
-   core::Error error = func(request, &response);
+   rstudiocore::Error error = func(request, &response);
    continuation(error, &response);
 }
 
@@ -374,7 +374,7 @@ JsonRpcAsyncMethod adaptMethodToAsync(JsonRpcMethod synchronousMethod)
 }
 
 } // namespace json
-} // namespace core
+} // namespace rstudiocore
 
 
 

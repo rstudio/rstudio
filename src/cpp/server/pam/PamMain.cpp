@@ -25,7 +25,7 @@
 #include <core/system/PosixUser.hpp>
 #include <core/system/Pam.hpp>
 
-using namespace core ;
+using namespace rstudiocore ;
 
 namespace {
 
@@ -34,8 +34,8 @@ int inappropriateUsage(const ErrorLocation& location)
    // log warning
    boost::format fmt("Inappropriate use of pam helper binary (user=%1%)");
    std::string msg = boost::str(
-               fmt % core::system::user::currentUserIdentity().userId);
-   core::log::logWarningMessage(msg, location);
+               fmt % rstudiocore::system::user::currentUserIdentity().userId);
+   rstudiocore::log::logWarningMessage(msg, location);
 
    // additional notification to the user
    std::cerr << "\nThis binary is not designed for running this way\n"
@@ -55,10 +55,10 @@ int main(int argc, char * const argv[])
    try
    { 
       // initialize log
-      initializeSystemLog("rserver-pam", core::system::kLogLevelWarning);
+      initializeSystemLog("rserver-pam", rstudiocore::system::kLogLevelWarning);
 
       // ignore SIGPIPE
-      Error error = core::system::ignoreSignal(core::system::SigPipe);
+      Error error = rstudiocore::system::ignoreSignal(rstudiocore::system::SigPipe);
       if (error)
          LOG_ERROR(error);
 
@@ -93,7 +93,7 @@ int main(int argc, char * const argv[])
       }
 
       // verify password
-      if (core::system::PAM("rstudio", false).login(username,
+      if (rstudiocore::system::PAM("rstudio", false).login(username,
                                                     password) == PAM_SUCCESS)
          return EXIT_SUCCESS;
       else

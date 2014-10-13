@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace core {
+namespace rstudiocore {
    class Error;
    class FilePath;
 }
@@ -28,9 +28,9 @@ namespace modules {
 namespace tex {
 namespace view_pdf {
 
-std::string createViewPdfUrl(const core::FilePath& filePath);
+std::string createViewPdfUrl(const rstudiocore::FilePath& filePath);
 
-core::Error initialize();
+rstudiocore::Error initialize();
 
 } // namespace view_pdf
 } // namespace tex

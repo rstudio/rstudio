@@ -52,7 +52,7 @@ extern "C" const char *locale2charset(const char *);
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace session {
 namespace modules { 
@@ -126,7 +126,7 @@ RSourceIndexes& rSourceIndexes()
 
 
 void writeDocToJson(boost::shared_ptr<SourceDocument> pDoc,
-                    core::json::Object* pDocJson)
+                    rstudiocore::json::Object* pDocJson)
 {
    // write the doc
    pDoc->writeToJson(pDocJson);
@@ -216,7 +216,7 @@ Error openDocument(const json::JsonRpcRequest& request,
 
    std::string encoding;
    error = json::readParam(request.params, 2, &encoding);
-   if (error && error.code() != core::json::errc::ParamTypeMismatch)
+   if (error && error.code() != rstudiocore::json::errc::ParamTypeMismatch)
       return error ;
    if (encoding.empty())
       encoding = ::locale2charset(NULL);
@@ -362,7 +362,7 @@ Error saveDocumentCore(const std::string& contents,
       // enque file changed event if we need to
       if (!module_context::isDirectoryMonitored(fullDocPath.parent()))
       {
-         using core::system::FileChangeEvent;
+         using rstudiocore::system::FileChangeEvent;
          FileChangeEvent changeEvent(newFile ? FileChangeEvent::FileAdded :
                                                FileChangeEvent::FileModified,
                                      FileInfo(fullDocPath));
@@ -423,7 +423,7 @@ Error saveDocument(const json::JsonRpcRequest& request,
 Error saveDocumentDiff(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
-   using namespace core::string_utils;
+   using namespace rstudiocore::string_utils;
 
    // unique id and jsonPath (can be null for auto-save)
    std::string id;
@@ -721,12 +721,12 @@ Error processSourceTemplate(const std::string& name,
    // setup template filter
    std::map<std::string,std::string> vars;
    vars["name"] = name;
-   core::text::TemplateFilter filter(vars);
+   rstudiocore::text::TemplateFilter filter(vars);
 
    // read file with template filter
    FilePath templatePath = session::options().rResourcesPath().complete(
                                              "templates/" +  templateName);
-   return core::readStringFromFile(templatePath,
+   return rstudiocore::readStringFromFile(templatePath,
                                    filter,
                                    pContents,
                                    string_utils::LineEndingPosix);
@@ -761,7 +761,7 @@ Error defaultRdResponse(const std::string& name,
       return error;
 
    std::string contents;
-   error = core::readStringFromFile(
+   error = rstudiocore::readStringFromFile(
                         FilePath(string_utils::systemToUtf8(filePath)),
                         &contents,
                         string_utils::LineEndingPosix);
@@ -830,7 +830,7 @@ Error createRdShell(const json::JsonRpcRequest& request,
          else
          {
             std::string contents;
-            error = core::readStringFromFile(rdFilePath,
+            error = rstudiocore::readStringFromFile(rdFilePath,
                                              &contents,
                                              string_utils::LineEndingPosix);
             if (error)
@@ -867,7 +867,7 @@ Error isReadOnlyFile(const json::JsonRpcRequest& request,
    FilePath filePath = module_context::resolveAliasedPath(path);
 
    pResponse->setResult(filePath.exists() &&
-                        core::system::isReadOnly(filePath));
+                        rstudiocore::system::isReadOnly(filePath));
 
    return Success();
 }
@@ -944,7 +944,7 @@ void enqueFileEditEvent(const std::string& file)
    // if it doesn't exist then create it
    if (!filePath.exists())
    {
-      Error error = core::writeStringToFile(filePath, "",
+      Error error = rstudiocore::writeStringToFile(filePath, "",
                                             options().sourcePersistLineEnding());
       if (error)
       {
@@ -1030,7 +1030,7 @@ SEXP rs_fileEdit(SEXP fileSEXP)
 
 } // anonymous namespace
 
-Error clientInitDocuments(core::json::Array* pJsonDocs)
+Error clientInitDocuments(rstudiocore::json::Array* pJsonDocs)
 {
    // remove all items from the source index database
    rSourceIndexes().removeAll();
@@ -1072,7 +1072,7 @@ Error clientInitDocuments(core::json::Array* pJsonDocs)
    return Success();
 }
 
-std::vector<boost::shared_ptr<core::r_util::RSourceIndex> > rIndexes()
+std::vector<boost::shared_ptr<rstudiocore::r_util::RSourceIndex> > rIndexes()
 {
    return rSourceIndexes().indexes();
 }

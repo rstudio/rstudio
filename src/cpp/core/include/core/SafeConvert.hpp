@@ -27,7 +27,7 @@
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace safe_convert {
    
 template <typename T>
@@ -86,7 +86,7 @@ TOutput numberTo(TInput input, TOutput defaultValue)
 }
 
 } // namespace safe_convert
-} // namespace core 
+} // namespace rstudiocore 
 
 
 #endif // CORE_SAFE_CONVERT_HPP

@@ -16,7 +16,7 @@
 #ifndef SESSION_SESSION_DIRTY_HPP
 #define SESSION_SESSION_DIRTY_HPP
 
-namespace core {
+namespace rstudiocore {
    class Error ;
 }
 
@@ -24,7 +24,7 @@ namespace session {
 namespace modules { 
 namespace dirty {
 
-core::Error initialize();
+rstudiocore::Error initialize();
 
 } // namespace dirty
 } // namespace modules

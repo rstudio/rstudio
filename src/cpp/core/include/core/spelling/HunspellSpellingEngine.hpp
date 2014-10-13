@@ -23,13 +23,13 @@
 
 #include <core/spelling/HunspellDictionaryManager.hpp>
 
-namespace core {
+namespace rstudiocore {
 
 class FilePath;
 
 namespace spelling {
 
-typedef boost::function<core::Error(const std::string&,
+typedef boost::function<rstudiocore::Error(const std::string&,
                                     const std::string&,
                                     const std::string&,
                                     bool,
@@ -60,7 +60,7 @@ private:
 };
 
 } // namespace spelling
-} // namespace core 
+} // namespace rstudiocore 
 
 
 #endif // CORE_SPELLING_HUNSPELL_SPELLING_ENGINE_HPP

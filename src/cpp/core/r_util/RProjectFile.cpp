@@ -31,7 +31,7 @@
 #include <core/r_util/RPackageInfo.hpp>
 #include <core/r_util/RVersionInfo.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace r_util {
 
 const char * const kBuildTypeNone = "None";
@@ -854,7 +854,7 @@ bool updateSetPackageInstallArgsDefault(RProjectConfig* pConfig)
 }
 
 } // namespace r_util
-} // namespace core 
+} // namespace rstudiocore 
 
 
 

@@ -42,7 +42,7 @@
 
 #include "config.h"
 
-namespace core {
+namespace rstudiocore {
 namespace system {
 namespace file_monitor {
 
@@ -435,7 +435,7 @@ Handle registrationFailure(int errorNumber,
 namespace detail {
 
 // register a new file monitor
-Handle registerMonitor(const core::FilePath& filePath,
+Handle registerMonitor(const rstudiocore::FilePath& filePath,
                        bool recursive,
                        const boost::function<bool(const FileInfo&)>& filter,
                        const Callbacks& callbacks)
@@ -639,7 +639,7 @@ void stop()
 } // namespace detail
 } // namespace file_monitor
 } // namespace system
-} // namespace core 
+} // namespace rstudiocore 
 
    
 

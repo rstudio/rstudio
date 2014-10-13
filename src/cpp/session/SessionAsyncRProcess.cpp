@@ -22,7 +22,7 @@
 
 #include <session/SessionAsyncRProcess.hpp>
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace session {
 namespace async_r {
@@ -34,12 +34,12 @@ AsyncRProcess::AsyncRProcess():
 }
 
 void AsyncRProcess::start(const char* rCommand, 
-                          const core::FilePath& workingDir, 
+                          const rstudiocore::FilePath& workingDir, 
                           AsyncRProcessOptions rOptions)
 {
    // R binary
-   core::FilePath rProgramPath;
-   core::Error error = module_context::rScriptPath(&rProgramPath);
+   rstudiocore::FilePath rProgramPath;
+   rstudiocore::Error error = module_context::rScriptPath(&rProgramPath);
    if (error)
    {
       LOG_ERROR(error);
@@ -48,7 +48,7 @@ void AsyncRProcess::start(const char* rCommand,
    }
 
    // program path and args
-   core::FilePath programPath;
+   rstudiocore::FilePath programPath;
    std::vector<std::string> args;
 
    // call R through a login shell on OSX so that it can pickup
@@ -70,7 +70,7 @@ void AsyncRProcess::start(const char* rCommand,
    args.push_back(rCommand);
 
    // options
-   core::system::ProcessOptions options;
+   rstudiocore::system::ProcessOptions options;
    options.terminateChildren = true;
    if (rOptions & R_PROCESS_REDIRECTSTDERR)
       options.redirectStdErrToStdOut = true;
@@ -83,16 +83,16 @@ void AsyncRProcess::start(const char* rCommand,
 
    // forward R_LIBS so the child process has access to the same libraries
    // we do
-   core::system::Options childEnv;
-   core::system::environment(&childEnv);
+   rstudiocore::system::Options childEnv;
+   rstudiocore::system::environment(&childEnv);
    std::string libPaths = module_context::libPathsString();
    if (!libPaths.empty())
    {
-      core::system::setenv(&childEnv, "R_LIBS", libPaths);
+      rstudiocore::system::setenv(&childEnv, "R_LIBS", libPaths);
       options.environment = childEnv;
    }
 
-   core::system::ProcessCallbacks cb;
+   rstudiocore::system::ProcessCallbacks cb;
    using namespace module_context;
    cb.onContinue = boost::bind(&AsyncRProcess::onContinue,
                                AsyncRProcess::shared_from_this());

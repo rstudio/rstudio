@@ -29,7 +29,7 @@
 
 #include "ChildProcess.hpp"
 
-namespace core {
+namespace rstudiocore {
 namespace system {
 
 
@@ -331,6 +331,6 @@ bool ProcessSupervisor::wait(
 }
 
 } // namespace system
-} // namespace core
+} // namespace rstudiocore
 
 

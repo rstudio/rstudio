@@ -43,7 +43,7 @@
 QProcess* pRSessionProcess;
 QString sharedSecret;
 
-using namespace core;
+using namespace rstudiocore;
 using namespace desktop;
 
 namespace {
@@ -54,7 +54,7 @@ void initializeSharedSecret()
                   + QString::number(rand())
                   + QString::number(rand());
    std::string value = sharedSecret.toUtf8().constData();
-   core::system::setenv("RS_SHARED_SECRET", value);
+   rstudiocore::system::setenv("RS_SHARED_SECRET", value);
 }
 
 void initializeWorkingDirectory(int argc,
@@ -82,7 +82,7 @@ void initializeWorkingDirectory(int argc,
    {
       // get current path
       FilePath currentPath = FilePath::safeCurrentPath(
-                                       core::system::userHomePath());
+                                       rstudiocore::system::userHomePath());
 
 #if defined(_WIN32) || defined(__APPLE__)
 
@@ -93,7 +93,7 @@ void initializeWorkingDirectory(int argc,
       // wd to the current path
 
       FilePath exePath;
-      Error error = core::system::executablePath(argv[0], &exePath);
+      Error error = rstudiocore::system::executablePath(argv[0], &exePath);
       if (!error)
       {
          if (!exePath.isWithin(currentPath))
@@ -108,8 +108,8 @@ void initializeWorkingDirectory(int argc,
 
       // on linux we take the current working dir if we were launched
       // from within a terminal
-      if (core::system::stdoutIsTerminal() &&
-         (currentPath != core::system::userHomePath()))
+      if (rstudiocore::system::stdoutIsTerminal() &&
+         (currentPath != rstudiocore::system::userHomePath()))
       {
          workingDir = currentPath.absolutePath();
       }
@@ -120,12 +120,12 @@ void initializeWorkingDirectory(int argc,
 
    // set the working dir if we have one
    if (!workingDir.empty())
-      core::system::setenv(kRStudioInitialWorkingDir, workingDir);
+      rstudiocore::system::setenv(kRStudioInitialWorkingDir, workingDir);
 }
 
 void setInitialProject(const FilePath& projectFile, QString* pFilename)
 {
-   core::system::setenv(kRStudioInitialProject, projectFile.absolutePath());
+   rstudiocore::system::setenv(kRStudioInitialProject, projectFile.absolutePath());
    pFilename->clear();
 }
 
@@ -157,7 +157,7 @@ void initializeStartupEnvironment(QString* pFilename)
       }
       else if (ext == ".rdata" || ext == ".rda")
       {   
-         core::system::setenv(kRStudioInitialEnvironment, filePath.absolutePath());
+         rstudiocore::system::setenv(kRStudioInitialEnvironment, filePath.absolutePath());
          pFilename->clear();
       }
 
@@ -189,7 +189,7 @@ bool isNonProjectFilename(QString filename)
 
 int main(int argc, char* argv[])
 {
-   core::system::initHook();
+   rstudiocore::system::initHook();
 
    try
    {
@@ -197,12 +197,12 @@ int main(int argc, char* argv[])
       QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
 
       // initialize log
-      core::system::initializeLog("rdesktop",
-                                  core::system::kLogLevelWarning,
+      rstudiocore::system::initializeLog("rdesktop",
+                                  rstudiocore::system::kLogLevelWarning,
                                   desktop::userLogPath());
 
       // ignore SIGPIPE
-      Error error = core::system::ignoreSignal(core::system::SigPipe);
+      Error error = rstudiocore::system::ignoreSignal(rstudiocore::system::SigPipe);
       if (error)
          LOG_ERROR(error);
 
@@ -265,7 +265,7 @@ int main(int argc, char* argv[])
       if (desktop::options().runDiagnostics())
       {
          desktop::reattachConsoleIfNecessary();
-         initializeStderrLog("rdesktop", core::system::kLogLevelWarning);
+         initializeStderrLog("rdesktop", rstudiocore::system::kLogLevelWarning);
       }
 
       pApp->setAttribute(Qt::AA_MacDontSwapCtrlAndMeta);
@@ -280,7 +280,7 @@ int main(int argc, char* argv[])
 
       // get install path
       FilePath installPath;
-      error = core::system::installPath("..", argv[0], &installPath);
+      error = rstudiocore::system::installPath("..", argv[0], &installPath);
       if (error)
       {
          LOG_ERROR(error);
@@ -331,7 +331,7 @@ int main(int argc, char* argv[])
          }
 #endif
       }
-      core::system::fixupExecutablePath(&sessionPath);
+      rstudiocore::system::fixupExecutablePath(&sessionPath);
 
       // set the scripts path in options
       desktop::options().setScriptsPath(scriptsPath);

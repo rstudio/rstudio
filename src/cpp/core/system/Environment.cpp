@@ -26,7 +26,7 @@
 #define kPathSeparator ":"
 #endif
 
-namespace core {
+namespace rstudiocore {
 namespace system {
 
 namespace impl {
@@ -52,10 +52,10 @@ std::string getenv(const Options& environment, const std::string& name)
 
 void getModifiedEnv(const Options& extraVars, Options* pEnv)
 {
-   core::system::environment(pEnv);
+   rstudiocore::system::environment(pEnv);
    BOOST_FOREACH(const Option& var, extraVars)
    {
-      core::system::setenv(pEnv, var.first, var.second);
+      rstudiocore::system::setenv(pEnv, var.first, var.second);
    }
 }
 
@@ -135,4 +135,4 @@ bool parseEnvVar(const std::string envVar, Option* pEnvVar)
 }
 
 } // namespace system
-} // namespace core
+} // namespace rstudiocore

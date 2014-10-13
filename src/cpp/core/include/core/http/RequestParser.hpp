@@ -19,7 +19,7 @@
 
 #include <core/http/Request.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace http {
 
 /// Parser for incoming requests.
@@ -126,6 +126,6 @@ private:
 };
 
 } // namespace http
-} // namespace core
+} // namespace rstudiocore
 
 #endif // CORE_HTTP_REQUEST_PARSER_HPP

@@ -21,7 +21,7 @@
 
 #include <boost/utility.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace system {
 
 // helper class used to manage argument memory during child spawn
@@ -90,7 +90,7 @@ private:
 };
 
 } // namespace system 
-} // namespace core
+} // namespace rstudiocore
 
 #endif // CORE_SYSTEM_PROCESS_ARGS_HPP
 

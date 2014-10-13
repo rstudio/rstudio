@@ -40,7 +40,7 @@ enum VCS
 };
 
 boost::shared_ptr<FileDecorationContext> fileDecorationContext(
-                                            const core::FilePath& rootDir);
+                                            const rstudiocore::FilePath& rootDir);
 
 VCS activeVCS();
 std::string activeVCSName();
@@ -48,14 +48,14 @@ bool isGitInstalled();
 bool isSvnInstalled();
 
 // default directory for reading/writing ssh keys
-core::FilePath defaultSshKeyDir();
+rstudiocore::FilePath defaultSshKeyDir();
 
 void enqueueRefreshEvent();
 
-core::Error fileStatus(const core::FilePath& filePath,
+rstudiocore::Error fileStatus(const rstudiocore::FilePath& filePath,
                        source_control::VCSStatus* pStatus);
 
-core::Error initialize();
+rstudiocore::Error initialize();
 
 } // namespace source_control
 } // namespace modules

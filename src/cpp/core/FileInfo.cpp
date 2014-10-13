@@ -17,7 +17,7 @@
 
 #include <core/FilePath.hpp>
 
-namespace core {
+namespace rstudiocore {
 
 FileInfo::FileInfo(const FilePath& filePath, bool isSymlink)
    :  absolutePath_(filePath.absolutePath()),
@@ -66,7 +66,7 @@ std::ostream& operator << (std::ostream& stream, const FileInfo& fileInfo)
    
 
    
-} // namespace core 
+} // namespace rstudiocore 
 
 
 

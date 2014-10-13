@@ -32,7 +32,7 @@
 #include "SessionBuildErrors.hpp"
 #include "SessionBuildEnvironment.hpp"
 
-using namespace core ;
+using namespace rstudiocore ;
 
 namespace session {  
 namespace modules {
@@ -120,12 +120,12 @@ public:
       showOutput_ = showOutput;
 
       // fixup path if necessary
-      std::string path = core::system::getenv("PATH");
+      std::string path = rstudiocore::system::getenv("PATH");
       std::string newPath = path;
       if (build::addRtoolsToPathIfNecessary(&newPath, &rToolsWarning_))
       {
           previousPath_ = path;
-          core::system::setenv("PATH", newPath);
+          rstudiocore::system::setenv("PATH", newPath);
       }
 
       // capture all output that goes to the console
@@ -156,7 +156,7 @@ private:
    {
       // restore previous path
       if (!previousPath_.empty())
-         core::system::setenv("PATH", previousPath_);
+         rstudiocore::system::setenv("PATH", previousPath_);
 
       // collect all build output (do this before r tools warning so
       // it's output doesn't end up in consoleErrorBuffer_)

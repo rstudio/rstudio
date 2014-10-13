@@ -20,7 +20,7 @@
 
 #include <core/FilePath.hpp>
 
-namespace core {
+namespace rstudiocore {
 
 class Error;
 class FilePath;
@@ -64,7 +64,7 @@ private:
 bool isPackageDirectory(const FilePath& dir);
 
 } // namespace r_util
-} // namespace core 
+} // namespace rstudiocore 
 
 
 #endif // CORE_R_UTIL_R_PACKAGE_INFO_HPP

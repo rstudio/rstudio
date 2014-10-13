@@ -31,7 +31,7 @@ namespace asio {
 
 #include "Header.hpp"
 
-namespace core {
+namespace rstudiocore {
 
 class Error;
 class FilePath;
@@ -159,6 +159,6 @@ private:
 std::ostream& operator << (std::ostream& stream, const Message& m) ;
 
 } // namespace http
-} // namespace core 
+} // namespace rstudiocore 
 
 #endif // CORE_HTTP_MESSAGE_HPP

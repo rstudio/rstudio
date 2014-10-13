@@ -23,7 +23,7 @@
 #include <signal.h>
 #endif
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace boost
 {
@@ -37,7 +37,7 @@ void assertion_failed(char const * expr,
 
    // always log the failure
    std::string msg = "ASSERTION FAILED: " + std::string(expr);
-   core::log::logWarningMessage(msg, location);
+   rstudiocore::log::logWarningMessage(msg, location);
 
 #ifndef NDEBUG
 #ifdef _WIN32
@@ -61,7 +61,7 @@ void assertion_failed_msg(char const * expr,
    // always log the failure
    std::string message = "ASSERTION FAILED: " + std::string(expr) +
                          " - " + std::string(msg);
-   core::log::logWarningMessage(message, location);
+   rstudiocore::log::logWarningMessage(message, location);
 
 #ifndef NDEBUG
 #ifdef _WIN32

@@ -20,17 +20,17 @@
 
 
 
-namespace core {
+namespace rstudiocore {
 
 class FilePath;
 
 namespace file_utils {
 
-FilePath uniqueFilePath(const core::FilePath& parent,
+FilePath uniqueFilePath(const rstudiocore::FilePath& parent,
                         const std::string& prefix = "");
 
 
 } // namespace file_utils
-} // namespace core
+} // namespace rstudiocore
 
 #endif // CORE_FILEUTILS_HPP

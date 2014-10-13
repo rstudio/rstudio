@@ -25,7 +25,7 @@
 #include <core/FilePath.hpp>
 #include <core/json/Json.hpp>
 
-namespace core {
+namespace rstudiocore {
    class Error;
    class FilePath;
 }
@@ -50,7 +50,7 @@ public:
    bool dirty() const { return dirty_; }
    double created() const { return created_; }
    bool sourceOnSave() const { return sourceOnSave_; }
-   const core::json::Object& properties() const { return properties_; }
+   const rstudiocore::json::Object& properties() const { return properties_; }
    const std::string& folds() const { return folds_; }
    std::string getProperty(const std::string& name) const;
 
@@ -61,10 +61,10 @@ public:
    void setContents(const std::string& contents);
 
    // set contents from file
-   core::Error setPathAndContents(const std::string& path,
+   rstudiocore::Error setPathAndContents(const std::string& path,
                                   bool allowSubstChars = true);
 
-   core::Error updateDirty();
+   rstudiocore::Error updateDirty();
 
    // set dirty
    void setDirty(bool dirty)
@@ -97,20 +97,20 @@ public:
    // properties that already exist but are not present in the given object are
    // left unchanged. if an entry in the given object has a null value, that
    // property should be removed.
-   void editProperties(core::json::Object& properties);
+   void editProperties(rstudiocore::json::Object& properties);
 
    void setType(const std::string& type)
    {
       type_ = type;
    }
 
-   core::Error readFromJson(core::json::Object* pDocJson);
-   void writeToJson(core::json::Object* pDocJson) const;
+   rstudiocore::Error readFromJson(rstudiocore::json::Object* pDocJson);
+   void writeToJson(rstudiocore::json::Object* pDocJson) const;
 
-   core::Error writeToFile(const core::FilePath& filePath) const;
+   rstudiocore::Error writeToFile(const rstudiocore::FilePath& filePath) const;
 
 private:
-   void editProperty(const core::json::Object::value_type& property);
+   void editProperty(const rstudiocore::json::Object::value_type& property);
 
 private:
    std::string id_;
@@ -124,22 +124,22 @@ private:
    bool dirty_;
    double created_;
    bool sourceOnSave_;
-   core::json::Object properties_;
+   rstudiocore::json::Object properties_;
 };
 
 bool sortByCreated(const boost::shared_ptr<SourceDocument>& pDoc1,
                    const boost::shared_ptr<SourceDocument>& pDoc2);
 
-core::FilePath path();
-core::Error get(const std::string& id, boost::shared_ptr<SourceDocument> pDoc);
-core::Error getDurableProperties(const std::string& path,
-                                 core::json::Object* pProperties);
-core::Error list(std::vector<boost::shared_ptr<SourceDocument> >* pDocs);
-core::Error put(boost::shared_ptr<SourceDocument> pDoc);
-core::Error remove(const std::string& id);
-core::Error removeAll();
+rstudiocore::FilePath path();
+rstudiocore::Error get(const std::string& id, boost::shared_ptr<SourceDocument> pDoc);
+rstudiocore::Error getDurableProperties(const std::string& path,
+                                 rstudiocore::json::Object* pProperties);
+rstudiocore::Error list(std::vector<boost::shared_ptr<SourceDocument> >* pDocs);
+rstudiocore::Error put(boost::shared_ptr<SourceDocument> pDoc);
+rstudiocore::Error remove(const std::string& id);
+rstudiocore::Error removeAll();
 
-core::Error initialize();
+rstudiocore::Error initialize();
 
 } // namespace source_database
 } // namesapce session

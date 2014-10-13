@@ -29,7 +29,7 @@
 
 #include <core/system/FileMonitor.hpp>
 
-namespace core {   
+namespace rstudiocore {   
 namespace system {
 namespace file_monitor {
 namespace impl {
@@ -117,7 +117,7 @@ std::list<void*> activeEventContexts();
 } // namespace impl
 } // namespace file_monitor
 } // namespace system
-} // namespace core 
+} // namespace rstudiocore 
 
 #endif // CORE_SYSTEM_FILE_MONITOR_IMPL_HPP
 

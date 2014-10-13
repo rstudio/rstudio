@@ -16,7 +16,7 @@
 #ifndef SESSION_HISTORY_HPP
 #define SESSION_HISTORY_HPP
 
-namespace core {
+namespace rstudiocore {
    class Error;
 }
  
@@ -24,7 +24,7 @@ namespace session {
 namespace modules { 
 namespace history {
    
-core::Error initialize();
+rstudiocore::Error initialize();
                        
 } // namespace history
 } // namespace modules

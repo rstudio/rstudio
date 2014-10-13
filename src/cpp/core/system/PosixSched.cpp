@@ -19,7 +19,7 @@
 
 #include <core/Error.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace system {
 
 int cpuCount()
@@ -86,6 +86,6 @@ Error setCpuAffinity(const CpuAffinity& cpus)
 }
 
 } // namespace system
-} // namespace core
+} // namespace rstudiocore
 
 

@@ -25,7 +25,7 @@
 #include <core/http/Response.hpp>
 
 
-namespace core {
+namespace rstudiocore {
 namespace gwt {   
    
 namespace {
@@ -45,7 +45,7 @@ FilePath requestedFile(const std::string& wwwLocalPath,
 
    // calculate "real" wwwPath
    FilePath wwwRealPath;
-   Error error = core::system::realPath(wwwLocalPath, &wwwRealPath);
+   Error error = rstudiocore::system::realPath(wwwLocalPath, &wwwRealPath);
    if (error)
    {
       LOG_ERROR(error);
@@ -55,7 +55,7 @@ FilePath requestedFile(const std::string& wwwLocalPath,
    // calculate "real" requested path
    FilePath realRequestedPath;
    FilePath requestedPath = wwwRealPath.complete(relativePath);
-   error = core::system::realPath(requestedPath.absolutePath(),
+   error = rstudiocore::system::realPath(requestedPath.absolutePath(),
                                   &realRequestedPath);
    if (error)
    {
@@ -91,7 +91,7 @@ FilePath requestedFile(const std::string& wwwLocalPath,
 
 void handleFileRequest(const std::string& wwwLocalPath,
                        const std::string& baseUri,
-                       core::http::UriFilterFunction mainPageFilter,
+                       rstudiocore::http::UriFilterFunction mainPageFilter,
                        const std::string& initJs,
                        bool useEmulatedStack,
                        const http::Request& request, 
@@ -211,5 +211,5 @@ http::UriHandlerFunction fileHandlerFunction(
 }  
 
 } // namespace gwt
-} // namespace core
+} // namespace rstudiocore
 

@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace core {
+namespace rstudiocore {
    class Error;
    class FilePath;
 }
@@ -35,14 +35,14 @@ bool isPackratModeOn();
 bool isDefaultPrompt(const std::string& prompt);
 
 // user home path
-const core::FilePath& userHomePath();  
+const rstudiocore::FilePath& userHomePath();  
 
-core::FilePath safeCurrentPath();
+rstudiocore::FilePath safeCurrentPath();
    
-core::FilePath tempFile(const std::string& prefix, 
+rstudiocore::FilePath tempFile(const std::string& prefix, 
                         const std::string& extension);
 
-core::FilePath tempDir();
+rstudiocore::FilePath tempDir();
 
      
 // suppress output in scope

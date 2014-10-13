@@ -21,7 +21,7 @@
 
 #include <core/FilePath.hpp>
 
-namespace core {
+namespace rstudiocore {
 
 class Error;
 
@@ -48,11 +48,11 @@ public:
    Error remove(const std::string& name) const;
 
 private:
-   core::FilePath customDictionariesDir_;
+   rstudiocore::FilePath customDictionariesDir_;
 };
 
 } // namespace spelling
-} // namespace core 
+} // namespace rstudiocore 
 
 
 #endif // CORE_SPELLING_HUNSPELL_CUSTOM_DICTIONARIES_HPP

@@ -41,10 +41,10 @@ extern const char * const kVcsId;
 class GitFileDecorationContext : public source_control::FileDecorationContext
 {
 public:
-   GitFileDecorationContext(const core::FilePath& rootDir);
+   GitFileDecorationContext(const rstudiocore::FilePath& rootDir);
    virtual ~GitFileDecorationContext();
-   virtual void decorateFile(const core::FilePath &filePath,
-                             core::json::Object *pFileObject);
+   virtual void decorateFile(const rstudiocore::FilePath &filePath,
+                             rstudiocore::json::Object *pFileObject);
 
 private:
    source_control::StatusResult vcsStatus_;
@@ -54,32 +54,32 @@ private:
 bool isGitInstalled();
 bool isGitEnabled();
 
-bool isGitDirectory(const core::FilePath& workingDir);
+bool isGitDirectory(const rstudiocore::FilePath& workingDir);
 
-std::string remoteOriginUrl(const core::FilePath& workingDir);
+std::string remoteOriginUrl(const rstudiocore::FilePath& workingDir);
 
 bool isGithubRepository();
 
-core::Error initializeGit(const core::FilePath& workingDir);
+rstudiocore::Error initializeGit(const rstudiocore::FilePath& workingDir);
 
-core::FilePath detectedGitExePath();
+rstudiocore::FilePath detectedGitExePath();
 
 std::string nonPathGitBinDir();
 
-core::Error status(const core::FilePath& dir,
+rstudiocore::Error status(const rstudiocore::FilePath& dir,
                    source_control::StatusResult* pStatusResult);
-core::Error fileStatus(const core::FilePath& filePath,
+rstudiocore::Error fileStatus(const rstudiocore::FilePath& filePath,
                        source_control::VCSStatus* pStatus);
-core::Error statusToJson(const core::FilePath& path,
+rstudiocore::Error statusToJson(const rstudiocore::FilePath& path,
                          const source_control::VCSStatus& status,
-                         core::json::Object* pObject);
+                         rstudiocore::json::Object* pObject);
 
-core::Error clone(const std::string& url,
+rstudiocore::Error clone(const std::string& url,
                   const std::string dirName,
-                  const core::FilePath& parentPath,
+                  const rstudiocore::FilePath& parentPath,
                   boost::shared_ptr<console_process::ConsoleProcess>* ppCP);
 
-core::Error initialize();
+rstudiocore::Error initialize();
 
 } // namespace git
 } // namespace modules

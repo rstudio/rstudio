@@ -34,7 +34,7 @@
 #include <session/SessionModuleContext.hpp>
 #include "session/SessionSourceDatabase.hpp"
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace session {
 namespace source_database {

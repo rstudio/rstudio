@@ -23,12 +23,12 @@
 typedef uid_t  UidType;
 typedef gid_t  GidType;
 
-namespace core {
+namespace rstudiocore {
    class Error;
    class FilePath;
 }
 
-namespace core {
+namespace rstudiocore {
 namespace system {
 namespace user {
 
@@ -40,7 +40,7 @@ struct UserIdentity
 
 UserIdentity currentUserIdentity();
    
-core::Error socketPeerIdentity(int socket, UserIdentity* pIdentity);
+rstudiocore::Error socketPeerIdentity(int socket, UserIdentity* pIdentity);
 
 struct User
 {
@@ -50,16 +50,16 @@ struct User
    std::string homeDirectory;
 };
 
-core::Error currentUser(User* pUser);
+rstudiocore::Error currentUser(User* pUser);
 
 bool exists(const std::string& username);
-core::Error userFromUsername(const std::string& username, User* pUser);
-core::Error userFromId(UidType uid, User* pUser);
+rstudiocore::Error userFromUsername(const std::string& username, User* pUser);
+rstudiocore::Error userFromId(UidType uid, User* pUser);
 
    
 } // namespace user
 } // namespace system
-} // namespace core
+} // namespace rstudiocore
 
 #endif // CORE_SYSTEM_POSIX_USER_HPP
 

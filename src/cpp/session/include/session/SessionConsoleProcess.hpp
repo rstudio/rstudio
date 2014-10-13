@@ -27,7 +27,7 @@
 
 #include <core/json/Json.hpp>
 
-namespace core {
+namespace rstudiocore {
    class Error;
 }
 
@@ -53,7 +53,7 @@ private:
 
    ConsoleProcess(
          const std::string& command,
-         const core::system::ProcessOptions& options,
+         const rstudiocore::system::ProcessOptions& options,
          const std::string& caption,
          bool dialog,
          InteractionMode mode,
@@ -62,7 +62,7 @@ private:
    ConsoleProcess(
          const std::string& program,
          const std::vector<std::string>& args,
-         const core::system::ProcessOptions& options,
+         const rstudiocore::system::ProcessOptions& options,
          const std::string& caption,
          bool dialog,
          InteractionMode mode,
@@ -95,7 +95,7 @@ public:
    // the runProgram codepath
    static boost::shared_ptr<ConsoleProcess> create(
          const std::string& command,
-         core::system::ProcessOptions options,
+         rstudiocore::system::ProcessOptions options,
          const std::string& caption,
          bool dialog,
          InteractionMode mode,
@@ -104,7 +104,7 @@ public:
    static boost::shared_ptr<ConsoleProcess> create(
          const std::string& program,
          const std::vector<std::string>& args,
-         core::system::ProcessOptions options,
+         rstudiocore::system::ProcessOptions options,
          const std::string& caption,
          bool dialog,
          InteractionMode mode,
@@ -124,29 +124,29 @@ public:
    std::string handle() const { return handle_; }
    InteractionMode interactionMode() const { return interactionMode_; }
 
-   core::Error start();
+   rstudiocore::Error start();
    void enqueInput(const Input& input);
    void interrupt();
 
    void setShowOnOutput(bool showOnOutput) { showOnOutput_ = showOnOutput; }
 
-   core::json::Object toJson() const;
+   rstudiocore::json::Object toJson() const;
    static boost::shared_ptr<ConsoleProcess> fromJson(
-                                              core::json::Object& obj);
+                                              rstudiocore::json::Object& obj);
 
 private:
-   core::system::ProcessCallbacks createProcessCallbacks();
-   bool onContinue(core::system::ProcessOperations& ops);
-   void onStdout(core::system::ProcessOperations& ops,
+   rstudiocore::system::ProcessCallbacks createProcessCallbacks();
+   bool onContinue(rstudiocore::system::ProcessOperations& ops);
+   void onStdout(rstudiocore::system::ProcessOperations& ops,
                  const std::string& output);
    void onExit(int exitCode);
 
    std::string bufferedOutput() const;
    void appendToOutputBuffer(const std::string& str);
    void enqueOutputEvent(const std::string& output, bool error);
-   void handleConsolePrompt(core::system::ProcessOperations& ops,
+   void handleConsolePrompt(rstudiocore::system::ProcessOperations& ops,
                             const std::string& prompt);
-   void maybeConsolePrompt(core::system::ProcessOperations& ops,
+   void maybeConsolePrompt(rstudiocore::system::ProcessOperations& ops,
                            const std::string& output);
 
 private:
@@ -154,7 +154,7 @@ private:
    std::string command_;
    std::string program_;
    std::vector<std::string> args_;
-   core::system::ProcessOptions options_;
+   rstudiocore::system::ProcessOptions options_;
 
    std::string caption_;
    bool dialog_;
@@ -245,8 +245,8 @@ private:
    std::vector<CachedPassword> passwords_;
 };
 
-core::json::Array processesAsJson();
-core::Error initialize();
+rstudiocore::json::Array processesAsJson();
+rstudiocore::Error initialize();
 
 } // namespace console_process
 } // namespace session

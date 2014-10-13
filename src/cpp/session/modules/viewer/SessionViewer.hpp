@@ -16,7 +16,7 @@
 #ifndef SESSION_VIEWER_HPP
 #define SESSION_VIEWER_HPP
 
-namespace core {
+namespace rstudiocore {
    class Error;
 }
  
@@ -24,7 +24,7 @@ namespace session {
 namespace modules { 
 namespace viewer {
 
-core::Error initialize();
+rstudiocore::Error initialize();
                        
 } // namespace viewer
 } // namespace modules

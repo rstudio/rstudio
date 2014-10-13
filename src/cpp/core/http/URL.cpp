@@ -20,7 +20,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/regex.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace http {
 
 URL::URL(const std::string& absoluteURL)
@@ -305,4 +305,4 @@ void URL::test()
 }
  
 } // namespace http
-} // namespace core
+} // namespace rstudiocore

@@ -55,7 +55,7 @@
 #undef TRUE
 #undef FALSE
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace session {
 namespace modules { 
@@ -192,7 +192,7 @@ bool handleLocalHttpUrl(const std::string& url)
    
 // As of R 2.10 RShowDoc still uses the legacy file::// mechanism for
 // displaying the manual. Redirect these to the appropriate help event
-bool handleRShowDocFile(const core::FilePath& filePath)
+bool handleRShowDocFile(const rstudiocore::FilePath& filePath)
 {
    boost::regex manualRegx(".*/lib/R/(doc/manual/[A-Za-z0-9_\\-]*\\.html)");
    boost::smatch match;
@@ -640,9 +640,9 @@ void handleRdPreviewRequest(const http::Request& request,
    rCmd << filePath;
 
    // run the converstion and return it
-   core::system::ProcessOptions options;
-   core::system::ProcessResult result;
-   error = core::system::runCommand(rCmd, options, &result);
+   rstudiocore::system::ProcessOptions options;
+   rstudiocore::system::ProcessResult result;
+   error = rstudiocore::system::runCommand(rCmd, options, &result);
    if (error)
    {
       pResponse->setError(error);
@@ -673,7 +673,7 @@ void handleHttpdRequest(const std::string& location,
    // server custom css file if necessary
    if (boost::algorithm::ends_with(path, "/R.css"))
    {
-      core::FilePath cssFile = options().rResourcesPath().childPath("R.css");
+      rstudiocore::FilePath cssFile = options().rResourcesPath().childPath("R.css");
       if (cssFile.exists())
       {
          pResponse->setFile(cssFile, request, filter);
@@ -698,7 +698,7 @@ void handleHttpdRequest(const std::string& location,
    // markdown help is also a special case
    if (path == "/doc/markdown_help.html")
    {
-      core::FilePath helpFile = options().rResourcesPath().childPath(
+      rstudiocore::FilePath helpFile = options().rResourcesPath().childPath(
                                                       "markdown_help.html");
       if (helpFile.exists())
       {
@@ -870,7 +870,7 @@ Error initialize()
    r::routines::addCallMethod(previewRdMethodDef);
 
    using boost::bind;
-   using core::http::UriHandler;
+   using rstudiocore::http::UriHandler;
    using namespace module_context;
    using namespace r::function_hook ;
    ExecBlock initBlock ;

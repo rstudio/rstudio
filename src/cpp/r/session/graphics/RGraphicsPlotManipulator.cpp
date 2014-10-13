@@ -21,7 +21,7 @@
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace r {
 namespace session {
@@ -78,12 +78,12 @@ Error PlotManipulator::load(const FilePath& filePath)
    return Success();
 }
 
-void PlotManipulator::asJson(core::json::Value* pValue) const
+void PlotManipulator::asJson(rstudiocore::json::Value* pValue) const
 {
    if (!empty())
    {
       // build manipulator json
-      core::json::Object manipulator;
+      rstudiocore::json::Object manipulator;
 
       // meta-info
       manipulator["id"] = getAsJson(".id");
@@ -91,7 +91,7 @@ void PlotManipulator::asJson(core::json::Value* pValue) const
       manipulator["variables"] = getAsJson(".variables");
 
       // variable values
-      core::json::Value valuesJson;
+      rstudiocore::json::Value valuesJson;
       SEXP valuesSEXP = getUserVisibleValuesList();
       Error error = r::json::jsonValueFromObject(valuesSEXP, &valuesJson);
       if (error)
@@ -103,7 +103,7 @@ void PlotManipulator::asJson(core::json::Value* pValue) const
    }
    else
    {
-      *pValue = core::json::Value();
+      *pValue = rstudiocore::json::Value();
    }
 }
 
@@ -138,16 +138,16 @@ SEXP PlotManipulator::get(const std::string& name) const
    }
 }
 
-core::json::Value PlotManipulator::getAsJson(const std::string& name) const
+rstudiocore::json::Value PlotManipulator::getAsJson(const std::string& name) const
 {
-   core::json::Value value;
+   rstudiocore::json::Value value;
    Error error = r::json::jsonValueFromObject(get(name), &value);
    if (error)
       LOG_ERROR(error);
    return value;
 }
 
-core::json::Object PlotManipulator::getControlAsJson(SEXP controlSEXP) const
+rstudiocore::json::Object PlotManipulator::getControlAsJson(SEXP controlSEXP) const
 {
    // field names
    std::vector<std::string> names ;
@@ -155,11 +155,11 @@ core::json::Object PlotManipulator::getControlAsJson(SEXP controlSEXP) const
    if (error)
    {
       LOG_ERROR(error);
-      return core::json::Object();
+      return rstudiocore::json::Object();
    }
 
    // json object to return
-   core::json::Object control;
+   rstudiocore::json::Object control;
 
    int length = r::sexp::length(controlSEXP);
    for (int i=0; i<length; i++)
@@ -173,12 +173,12 @@ core::json::Object PlotManipulator::getControlAsJson(SEXP controlSEXP) const
 
       // get json for field
       SEXP fieldSEXP = VECTOR_ELT(controlSEXP, i);
-      core::json::Value fieldValue;
+      rstudiocore::json::Value fieldValue;
       Error error = r::json::jsonValueFromObject(fieldSEXP, &fieldValue);
       if (error)
       {
          LOG_ERROR(error);
-         return core::json::Object();
+         return rstudiocore::json::Object();
       }
 
       // set the field
@@ -189,7 +189,7 @@ core::json::Object PlotManipulator::getControlAsJson(SEXP controlSEXP) const
    return control;
 }
 
-core::json::Object PlotManipulator::getControlsAsJson() const
+rstudiocore::json::Object PlotManipulator::getControlsAsJson() const
 {
    // extract controls
    r::sexp::Protect rProtect;
@@ -208,11 +208,11 @@ core::json::Object PlotManipulator::getControlsAsJson() const
          if (error)
          {
             LOG_ERROR(error);
-            return core::json::Object();
+            return rstudiocore::json::Object();
          }
 
          // json object to return
-         core::json::Object controls;
+         rstudiocore::json::Object controls;
 
          int length = r::sexp::length(controlsSEXP);
          for (int i=0; i<length; i++)
@@ -228,12 +228,12 @@ core::json::Object PlotManipulator::getControlsAsJson() const
       }
       else
       {
-         return core::json::Object();
+         return rstudiocore::json::Object();
       }
    }
    else
    {
-      return core::json::Object();
+      return rstudiocore::json::Object();
    }
 }
 

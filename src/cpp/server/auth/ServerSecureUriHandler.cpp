@@ -29,7 +29,7 @@
 #include <server/auth/ServerAuthHandler.hpp>
 #include <server/auth/ServerValidateUser.hpp>
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace server {
 namespace auth {

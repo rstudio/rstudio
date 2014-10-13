@@ -16,14 +16,14 @@
 #ifndef SESSION_ADDINS_HPP
 #define SESSION_ADDINS_HPP
 
-namespace core {
+namespace rstudiocore {
    class Error;
 }
 
 namespace session {
 namespace addins {
    
-core::Error initialize();
+rstudiocore::Error initialize();
 
 } // namespace addins
 } // namespace session

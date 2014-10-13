@@ -21,7 +21,7 @@
 
 #include <core/r_util/RVersionInfo.hpp>
 
-namespace core {
+namespace rstudiocore {
 
 class Error;
 class FilePath;
@@ -133,7 +133,7 @@ FilePath projectFromDirectory(const FilePath& directoryPath);
 bool updateSetPackageInstallArgsDefault(RProjectConfig* pConfig);
 
 } // namespace r_util
-} // namespace core 
+} // namespace rstudiocore 
 
 
 #endif // CORE_R_UTIL_R_PROJECT_FILE_HPP

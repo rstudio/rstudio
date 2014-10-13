@@ -19,7 +19,7 @@
 
 #include <core/Algorithm.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace spelling {
 
 std::vector<std::string> HunspellCustomDictionaries::dictionaries() const
@@ -82,4 +82,4 @@ Error HunspellCustomDictionaries::remove(const std::string& name) const
 
 
 } // namespace spelling
-} // namespace core
+} // namespace rstudiocore

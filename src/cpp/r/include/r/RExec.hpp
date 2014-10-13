@@ -31,7 +31,7 @@
 #include <r/RInterface.hpp>
 
 
-namespace core {
+namespace rstudiocore {
    class FilePath;
 }
 
@@ -42,7 +42,7 @@ namespace r {
 namespace exec {
    
 // safe (no r error longjump) execution of abritrary nullary function
-core::Error executeSafely(boost::function<void()> function);
+rstudiocore::Error executeSafely(boost::function<void()> function);
 
 // helper class for variation of executeSafely w/ return value (impl below)
 template <typename T>
@@ -63,7 +63,7 @@ private:
  
 // safe (no r error longjump) execution of abritrary nullary function w/ return
 template <typename T>
-core::Error executeSafely(boost::function<T()> function, T* pReturn)
+rstudiocore::Error executeSafely(boost::function<T()> function, T* pReturn)
 {
    ExecuteTargetWithReturn<T> target(function, pReturn);
    return executeSafely(target);
@@ -71,16 +71,16 @@ core::Error executeSafely(boost::function<T()> function, T* pReturn)
 
    
 // parse and evaluate expressions  
-core::Error executeString(const std::string& str);
-core::Error evaluateString(const std::string& str, 
+rstudiocore::Error executeString(const std::string& str);
+rstudiocore::Error evaluateString(const std::string& str, 
                            SEXP* pSEXP, 
                            sexp::Protect* pProtect);
 template <typename T>
-core::Error evaluateString(const std::string& str, T* pValue)
+rstudiocore::Error evaluateString(const std::string& str, T* pValue)
 {
    sexp::Protect rProtect;
    SEXP valueSEXP ;
-   core::Error error = evaluateString(str, &valueSEXP, &rProtect);
+   rstudiocore::Error error = evaluateString(str, &valueSEXP, &rProtect);
    if (error)
       return error ;
 
@@ -174,27 +174,27 @@ public:
       params_.push_back(Param(name, paramSEXP));
    }
                         
-   core::Error call(SEXP evalNS = R_GlobalEnv, bool safely = true);
-   core::Error callUnsafe();
+   rstudiocore::Error call(SEXP evalNS = R_GlobalEnv, bool safely = true);
+   rstudiocore::Error callUnsafe();
 
-   core::Error call(SEXP* pResultSEXP, sexp::Protect* pProtect);
-   core::Error call(SEXP evalNS, SEXP* pResultSEXP, sexp::Protect* pProtect);
-   core::Error call(SEXP evalNS, bool safely, SEXP* pResultSEXP,
+   rstudiocore::Error call(SEXP* pResultSEXP, sexp::Protect* pProtect);
+   rstudiocore::Error call(SEXP evalNS, SEXP* pResultSEXP, sexp::Protect* pProtect);
+   rstudiocore::Error call(SEXP evalNS, bool safely, SEXP* pResultSEXP,
                     sexp::Protect* pProtect);
 
    template <typename T>
-   core::Error call(T* pValue)
+   rstudiocore::Error call(T* pValue)
    {
       return call(R_GlobalEnv, pValue);
    }
 
    template <typename T>
-   core::Error call(SEXP evalNS, T* pValue)
+   rstudiocore::Error call(SEXP evalNS, T* pValue)
    {
       // call the function
       sexp::Protect rProtect;
       SEXP resultSEXP ;
-      core::Error error = call(evalNS, &resultSEXP, &rProtect);  
+      rstudiocore::Error error = call(evalNS, &resultSEXP, &rProtect);  
       if (error)
          return error ;
       
@@ -253,9 +253,9 @@ private:
 };
    
    
-core::FilePath rBinaryPath();
+rstudiocore::FilePath rBinaryPath();
 
-core::Error system(const std::string& command, std::string* pOutput);
+rstudiocore::Error system(const std::string& command, std::string* pOutput);
    
 // raise error and get last error message
 void error(const std::string& message);
@@ -274,7 +274,7 @@ public:
    virtual ~IgnoreInterruptsScope();
 private:
    bool previousInterruptsSuspended_ ;
-   boost::scoped_ptr<core::system::SignalBlocker> pSignalBlocker_;
+   boost::scoped_ptr<rstudiocore::system::SignalBlocker> pSignalBlocker_;
 };
 
 // returns true if the global context is on the top (i.e. the context stack is

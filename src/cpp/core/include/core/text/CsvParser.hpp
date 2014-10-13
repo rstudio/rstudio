@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-namespace core {
+namespace rstudiocore {
 namespace text {
 
 /*
@@ -127,6 +127,6 @@ std::pair<std::vector<std::string>, InputIterator> parseCsvLine(InputIterator be
 }
 
 } // namespace text
-} // namespace core
+} // namespace rstudiocore
 
 #endif // CSV_PARSER_HPP

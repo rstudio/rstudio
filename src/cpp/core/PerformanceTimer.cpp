@@ -20,7 +20,7 @@
 
 using namespace boost::posix_time;
 
-namespace core {
+namespace rstudiocore {
    
 PerformanceTimer::PerformanceTimer()
    : startTime_(ptime(not_a_date_time))
@@ -127,7 +127,7 @@ std::ostream& operator << (std::ostream& os, const PerformanceTimer& t)
 }
          
 
-} // namespace core 
+} // namespace rstudiocore 
 
 
 

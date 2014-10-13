@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace core {
+namespace rstudiocore {
    class Error;
    namespace http {
       class AsyncServer;
@@ -27,8 +27,8 @@ namespace core {
 
 namespace server {
 
-core::http::AsyncServer* httpServerCreate();
-core::Error httpServerInit(core::http::AsyncServer* pAsyncServer);
+rstudiocore::http::AsyncServer* httpServerCreate();
+rstudiocore::Error httpServerInit(rstudiocore::http::AsyncServer* pAsyncServer);
 
 
 } // namespace server

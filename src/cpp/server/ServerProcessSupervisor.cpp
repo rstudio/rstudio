@@ -23,7 +23,7 @@
 
 #include <server/ServerScheduler.hpp>
 
-using namespace core ;
+using namespace rstudiocore ;
 
 namespace server {
 namespace process_supervisor {
@@ -33,9 +33,9 @@ namespace {
 // mutex that protects access to the process supervisor's methods
 boost::mutex s_mutex;
 
-core::system::ProcessSupervisor& processSupervisor()
+rstudiocore::system::ProcessSupervisor& processSupervisor()
 {
-   static core::system::ProcessSupervisor instance;
+   static rstudiocore::system::ProcessSupervisor instance;
    return instance;
 }
 
@@ -56,8 +56,8 @@ Error runProgram(
   const std::string& executable,
   const std::vector<std::string>& args,
   const std::string& input,
-  const core::system::ProcessOptions& options,
-  const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
+  const rstudiocore::system::ProcessOptions& options,
+  const boost::function<void(const rstudiocore::system::ProcessResult&)>& onCompleted)
 {
    LOCK_MUTEX(s_mutex)
    {
@@ -70,7 +70,7 @@ Error runProgram(
    END_LOCK_MUTEX
 
    // fulfill closure and keep compiler happy
-   core::system::ProcessResult result;
+   rstudiocore::system::ProcessResult result;
    result.exitStatus = EXIT_FAILURE;
    result.stdErr = "Thread resource error occurred while running program " +
                    executable;

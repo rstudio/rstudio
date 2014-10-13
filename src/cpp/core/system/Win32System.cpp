@@ -55,7 +55,7 @@
 #define JOB_OBJECT_LIMIT_BREAKAWAY_OK 0x00000800
 #endif
 
-namespace core {
+namespace rstudiocore {
 namespace system {
 
 namespace {
@@ -203,7 +203,7 @@ void setLogToStderr(bool logToStderr)
       s_pLogWriter->setLogToStderr(logToStderr);
 }
 
-void addLogWriter(boost::shared_ptr<core::LogWriter> pLogWriter)
+void addLogWriter(boost::shared_ptr<rstudiocore::LogWriter> pLogWriter)
 {
    s_logWriters.push_back(pLogWriter);
 }
@@ -323,8 +323,8 @@ FilePath defaultCSIDLPersonalHomePath()
 
 FilePath homepathHomePath()
 {
-   std::string homeDrive = core::system::getenv("HOMEDRIVE");
-   std::string homePath = core::system::getenv("HOMEPATH");
+   std::string homeDrive = rstudiocore::system::getenv("HOMEDRIVE");
+   std::string homePath = rstudiocore::system::getenv("HOMEPATH");
    if (!homeDrive.empty() && !homePath.empty())
       return FilePath(homeDrive + homePath);
    else
@@ -333,7 +333,7 @@ FilePath homepathHomePath()
 
 FilePath homedriveHomePath()
 {
-   std::string homeDrive = core::system::getenv("HOMEDRIVE");
+   std::string homeDrive = rstudiocore::system::getenv("HOMEDRIVE");
    if (homeDrive.empty())
       homeDrive = "C:";
    return FilePath(homeDrive);
@@ -650,7 +650,7 @@ Error handleSignal(SignalType signal, void (*handler)(int))
   return Success();
 }
    
-core::Error ignoreSignal(SignalType signal)
+rstudiocore::Error ignoreSignal(SignalType signal)
 {
    return Success();
 }   
@@ -832,5 +832,5 @@ CloseHandleOnExitScope::~CloseHandleOnExitScope()
 
 
 } // namespace system
-} // namespace core
+} // namespace rstudiocore
 

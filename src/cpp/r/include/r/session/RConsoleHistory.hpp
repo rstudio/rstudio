@@ -24,7 +24,7 @@
 
 #include <core/json/Json.hpp>
 
-namespace core {
+namespace rstudiocore {
    class Error ;
    class FilePath;
 }
@@ -78,10 +78,10 @@ public:
                int endIndex,   // exclusive,
                std::vector<std::string>* pEntries) const;
 
-   void asJson(core::json::Array* pHistoryArray) const;
+   void asJson(rstudiocore::json::Array* pHistoryArray) const;
    
-   core::Error loadFromFile(const core::FilePath& filePath, bool verifyFile);
-   core::Error saveToFile(const core::FilePath& filePath) const;
+   rstudiocore::Error loadFromFile(const rstudiocore::FilePath& filePath, bool verifyFile);
+   rstudiocore::Error saveToFile(const rstudiocore::FilePath& filePath) const;
    
    boost::signals::connection connectOnAdd(
                                  const AddSignal::slot_function_type& slot)

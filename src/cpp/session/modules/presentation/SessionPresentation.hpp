@@ -20,7 +20,7 @@
 
 #include <core/json/Json.hpp>
 
-namespace core {
+namespace rstudiocore {
    class Error;
    class FilePath;
    namespace http {
@@ -33,9 +33,9 @@ namespace session {
 namespace modules { 
 namespace presentation {
 
-core::json::Value presentationStateAsJson();
+rstudiocore::json::Value presentationStateAsJson();
 
-core::Error initialize();
+rstudiocore::Error initialize();
                        
 } // namespace presentation
 } // namespace modules

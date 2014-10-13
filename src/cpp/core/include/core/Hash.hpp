@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace core {
+namespace rstudiocore {
 namespace hash {
    
 std::string crc32Hash(const std::string& content);
@@ -26,7 +26,7 @@ std::string crc32Hash(const std::string& content);
 std::string crc32HexHash(const std::string& content);
 
 } // namespace hash
-} // namespace core 
+} // namespace rstudiocore 
 
 
 #endif // CORE_HASH_HPP

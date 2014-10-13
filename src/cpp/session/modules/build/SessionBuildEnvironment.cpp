@@ -32,7 +32,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace core ;
+using namespace rstudiocore ;
 
 namespace session {  
 namespace modules {
@@ -52,7 +52,7 @@ r_util::RToolsInfo scanPathForRTools()
 
    // we have a candidate installPath
    FilePath installPath = lsPath.parent().parent();
-   core::system::ensureLongPath(&installPath);
+   rstudiocore::system::ensureLongPath(&installPath);
    if (!installPath.childPath("Rtools.txt").exists())
       return noToolsFound;
 
@@ -70,7 +70,7 @@ r_util::RToolsInfo scanPathForRTools()
 
    // Rtools is in the path -- now crack the VERSION file
    std::string contents;
-   Error error = core::readStringFromFile(versionPath, &contents);
+   Error error = rstudiocore::readStringFromFile(versionPath, &contents);
    if (error)
    {
       LOG_ERROR(error);
@@ -90,7 +90,7 @@ r_util::RToolsInfo scanPathForRTools()
 std::string formatPath(const FilePath& filePath)
 {
    FilePath displayPath = filePath;
-   core::system::ensureLongPath(&displayPath);
+   rstudiocore::system::ensureLongPath(&displayPath);
    return boost::algorithm::replace_all_copy(
                                  displayPath.absolutePath(), "/", "\\");
 }
@@ -133,7 +133,7 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget, std::string* pWarningMessage)
 
     // ok so scan for R tools
     std::vector<r_util::RToolsInfo> rTools;
-    error = core::r_util::scanRegistryForRTools(&rTools);
+    error = rstudiocore::r_util::scanRegistryForRTools(&rTools);
     if (error)
     {
        LOG_ERROR(error);
@@ -209,7 +209,7 @@ bool addRtoolsToPathIfNecessary(std::string* pPath,
    return doAddRtoolsToPathIfNecessary(pPath, pWarningMessage);
 }
 
-bool addRtoolsToPathIfNecessary(core::system::Options* pEnvironment,
+bool addRtoolsToPathIfNecessary(rstudiocore::system::Options* pEnvironment,
                                 std::string* pWarningMessage)
 {
    return doAddRtoolsToPathIfNecessary(pEnvironment, pWarningMessage);
@@ -231,7 +231,7 @@ bool addRtoolsToPathIfNecessary(std::string* pPath,
    return false;
 }
 
-bool addRtoolsToPathIfNecessary(core::system::Options* pEnvironment,
+bool addRtoolsToPathIfNecessary(rstudiocore::system::Options* pEnvironment,
                                 std::string* pWarningMessage)
 {
    return false;
