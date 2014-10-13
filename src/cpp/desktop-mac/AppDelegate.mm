@@ -19,13 +19,13 @@
 #import "Utils.hpp"
 #import "MainFrameController.h"
 
-using namespace core;
+using namespace rstudiocore;
 using namespace desktop;
 
 NSString* executablePath()
 {
    FilePath exePath;
-   Error error = core::system::executablePath(NULL, &exePath);
+   Error error = rstudiocore::system::executablePath(NULL, &exePath);
    if (error)
       LOG_ERROR(error);
    return [NSString stringWithUTF8String: exePath.absolutePath().c_str()];
@@ -86,9 +86,9 @@ NSString* verifyAndNormalizeFilename(NSString* filename)
 
 void initializeSharedSecret()
 {
-   std::string sharedSecret = core::system::generateUuid();
+   std::string sharedSecret = rstudiocore::system::generateUuid();
    desktop::options().setSharedSecret(sharedSecret);
-   core::system::setenv("RS_SHARED_SECRET", sharedSecret);
+   rstudiocore::system::setenv("RS_SHARED_SECRET", sharedSecret);
 }
 
 
@@ -116,7 +116,7 @@ void initializeWorkingDirectory(const std::string& filename)
    {
       // get current path
       FilePath currentPath = FilePath::safeCurrentPath(
-                                                core::system::userHomePath());
+                                                rstudiocore::system::userHomePath());
       
       // detect whether we were launched from the system application menu
       // (e.g. Dock, Program File icon, etc.). we do this by checking
@@ -131,13 +131,13 @@ void initializeWorkingDirectory(const std::string& filename)
    
    // set the working dir if we have one
    if (!workingDir.empty())
-      core::system::setenv(kRStudioInitialWorkingDir, workingDir);
+      rstudiocore::system::setenv(kRStudioInitialWorkingDir, workingDir);
 }
 
 // PORT: from DesktopMain.cpp
 void setInitialProject(const FilePath& projectFile, std::string* pFilename)
 {
-   core::system::setenv(kRStudioInitialProject, projectFile.absolutePath());
+   rstudiocore::system::setenv(kRStudioInitialProject, projectFile.absolutePath());
    pFilename->clear();
 }
 
@@ -170,7 +170,7 @@ void initializeStartupEnvironment(std::string* pFilename)
       }
       else if (ext == ".rdata" || ext == ".rda")
       {
-         core::system::setenv(kRStudioInitialEnvironment, filePath.absolutePath());
+         rstudiocore::system::setenv(kRStudioInitialEnvironment, filePath.absolutePath());
          pFilename->clear();
       }
       
@@ -182,7 +182,7 @@ bool prepareEnvironment(Options& options)
 {
    // check for which R override
    FilePath rWhichRPath;
-   std::string whichROverride = core::system::getenv("RSTUDIO_WHICH_R");
+   std::string whichROverride = rstudiocore::system::getenv("RSTUDIO_WHICH_R");
    if (!whichROverride.empty())
       rWhichRPath = FilePath(whichROverride);
    
@@ -274,7 +274,7 @@ bool prepareEnvironment(Options& options)
    
    // reset log if we are in run-diagnostics mode
    if (desktop::options().runDiagnostics())
-      initializeStderrLog("rdesktop", core::system::kLogLevelWarning);
+      initializeStderrLog("rdesktop", rstudiocore::system::kLogLevelWarning);
    
    // initialize startup environment
    initializeSharedSecret();
@@ -289,7 +289,7 @@ bool prepareEnvironment(Options& options)
        
    // get install path
    FilePath installPath;
-   Error error = core::system::installPath("..", NULL, &installPath);
+   Error error = rstudiocore::system::installPath("..", NULL, &installPath);
    if (error)
    {
       LOG_ERROR(error);

@@ -41,7 +41,7 @@
                    std::cout << (message) << std::endl;
 
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace desktop {
    
@@ -50,9 +50,9 @@ namespace {
 Error launchProcess(
        std::string absPath,
        std::vector<std::string> argList,
-       boost::function<void(const core::system::ProcessResult&)> onCompleted)
+       boost::function<void(const rstudiocore::system::ProcessResult&)> onCompleted)
 {
-   core::system::ProcessOptions options;
+   rstudiocore::system::ProcessOptions options;
    return utils::processSupervisor().runProgram(absPath,
                                                 argList,
                                                 "",
@@ -67,23 +67,23 @@ FilePath abendLogPath()
 
 void logEnvVar(const std::string& name)
 {
-   std::string value = core::system::getenv(name);
+   std::string value = rstudiocore::system::getenv(name);
    if (!value.empty())
       RUN_DIAGNOSTICS_LOG("  " + name + "=" + value);
 }
    
-core::WaitResult serverReady(const std::string& host,
+rstudiocore::WaitResult serverReady(const std::string& host,
                              const std::string& port)
 {
-   core::http::Request request;
+   rstudiocore::http::Request request;
    request.setMethod("GET");
    request.setHost("host");
    request.setUri("/");
    request.setHeader("Accept", "*/*");
    request.setHeader("Connection", "close");
    
-   core::http::Response response;
-   Error error = core::http::sendRequest(host, port, request, &response);
+   rstudiocore::http::Response response;
+   Error error = rstudiocore::http::sendRequest(host, port, request, &response);
    if (error)
       return WaitResult(WaitContinue, Success());
    else
@@ -98,8 +98,8 @@ SessionLauncher& sessionLauncher()
    return instance;
 }
    
-void SessionLauncher::init(const core::FilePath& sessionPath,
-                           const core::FilePath& confPath)
+void SessionLauncher::init(const rstudiocore::FilePath& sessionPath,
+                           const rstudiocore::FilePath& confPath)
 {
    sessionPath_ = sessionPath;
    confPath_ = confPath;
@@ -109,7 +109,7 @@ Error SessionLauncher::launchFirstSession(const std::string& filename)
 {
    // remove the DYLD_VERSIONED_FRAMEWORK_PATH so it doesn't interact
    // with the rsession process or any of it's child processes
-   core::system::unsetenv("DYLD_VERSIONED_FRAMEWORK_PATH");
+   rstudiocore::system::unsetenv("DYLD_VERSIONED_FRAMEWORK_PATH");
    
    // build a new new launch context
    std::string host, port, appUrl;
@@ -241,7 +241,7 @@ PendingQuit SessionLauncher::collectPendingQuit()
 }
    
 void SessionLauncher::onRSessionExited(
-                              const core::system::ProcessResult& result)
+                              const rstudiocore::system::ProcessResult& result)
 {
    // set flag indicating a process is no longer active
    sessionProcessActive_ = false;
@@ -346,7 +346,7 @@ Error SessionLauncher::launchSession(const std::string& host,
       LOG_ERROR(error);
    sessionStderr_.clear();
    
-   boost::function<void(const core::system::ProcessResult&)> onCompleted =
+   boost::function<void(const rstudiocore::system::ProcessResult&)> onCompleted =
                   boost::bind(&SessionLauncher::onRSessionExited, this, _1);
    
    error = launchProcess(sessionPath_.absolutePath(), args, onCompleted);
@@ -367,7 +367,7 @@ std::string SessionLauncher::collectAbendLogMessage()
    FilePath abendLog = abendLogPath();
    if (abendLog.exists())
    {
-      Error error = core::readStringFromFile(abendLog, &contents);
+      Error error = rstudiocore::readStringFromFile(abendLog, &contents);
       if (error)
          LOG_ERROR(error);
       

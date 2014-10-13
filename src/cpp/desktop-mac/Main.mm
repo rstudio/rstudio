@@ -11,7 +11,7 @@
 #import "AppDelegate.h"
 #import "Utils.hpp"
 
-using namespace core;
+using namespace rstudiocore;
 
 int main(int argc, char* argv[])
 {
@@ -22,12 +22,12 @@ int main(int argc, char* argv[])
    desktop::utils::initializeLang();
  
    // initialize log
-   core::system::initializeLog("rdesktop",
-                               core::system::kLogLevelWarning,
+   rstudiocore::system::initializeLog("rdesktop",
+                               rstudiocore::system::kLogLevelWarning,
                                desktop::utils::userLogPath());
    
    // ignore SIGPIPE
-   Error error = core::system::ignoreSignal(core::system::SigPipe);
+   Error error = rstudiocore::system::ignoreSignal(rstudiocore::system::SigPipe);
    if (error)
       LOG_ERROR(error);
    
