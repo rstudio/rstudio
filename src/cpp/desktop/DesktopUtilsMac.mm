@@ -131,7 +131,7 @@ void initializeLang()
    // Next highest precedence: LANG environment variable.
    if (!lang)
    {
-      std::string envLang = core::system::getenv("LANG");
+      std::string envLang = rstudiocore::system::getenv("LANG");
       if (!envLang.empty())
       {
          lang = [NSString stringWithCString:envLang.c_str()
@@ -167,8 +167,8 @@ void initializeLang()
    }
 
    const char* clang = [lang cStringUsingEncoding:NSASCIIStringEncoding];
-   core::system::setenv("LANG", clang);
-   core::system::setenv("LC_CTYPE", clang);
+   rstudiocore::system::setenv("LANG", clang);
+   rstudiocore::system::setenv("LC_CTYPE", clang);
 }
 
 } // namespace desktop

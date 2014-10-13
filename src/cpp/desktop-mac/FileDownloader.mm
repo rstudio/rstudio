@@ -64,18 +64,18 @@ openWhenComplete: (bool) open
 - (id) init: (NSURLRequest*) request
 {
    // no supplied destination for this download; create a temporary directory
-   core::FilePath tempPath;
-   core::Error error = core::FilePath::tempFilePath(&tempPath);
+   rstudiocore::FilePath tempPath;
+   rstudiocore::Error error = rstudiocore::FilePath::tempFilePath(&tempPath);
    if (error)
    {
       LOG_ERROR(error);
-      tempPath = core::FilePath("/tmp");
+      tempPath = rstudiocore::FilePath("/tmp");
    }
    error = tempPath.ensureDirectory();
    if (error)
    {
       LOG_ERROR(error);
-      tempPath = core::FilePath("/tmp");
+      tempPath = rstudiocore::FilePath("/tmp");
    }
    NSString* tempDir = [NSString stringWithUTF8String:
                         tempPath.absolutePath().c_str()];

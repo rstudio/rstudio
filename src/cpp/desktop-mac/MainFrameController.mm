@@ -188,11 +188,11 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
 {
    // must be absolute
    std::string filename = [openFile UTF8String];
-   if (!core::FilePath::isRootPath(filename))
+   if (!rstudiocore::FilePath::isRootPath(filename))
        return;
    
    // must exist and be a standard file rather than a directory
-   core::FilePath filePath(filename);
+   rstudiocore::FilePath filePath(filename);
    if (!filePath.exists() || filePath.isDirectory())
       return;
    
@@ -262,7 +262,7 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
    boost::smatch match;
    if (boost::regex_match(std::string([userAgent UTF8String]), match, re))
    {
-      int version = core::safe_convert::stringTo<int>(match[1], 0);
+      int version = rstudiocore::safe_convert::stringTo<int>(match[1], 0);
       if (version < 534)
       {
          desktop::utils::showMessageBox(
