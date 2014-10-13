@@ -62,7 +62,7 @@ public:
    // COPYING: boost::noncopyable
    
    // intialize
-   core::Error initialize();
+   rstudiocore::Error initialize();
    
    // enable batch updates
    void beginUpdate() { settings_.beginUpdate(); }
@@ -83,8 +83,8 @@ public:
    bool autoCreatedProfile() const;
    void setAutoCreatedProfile(bool autoCreated) ;
 
-   core::json::Object uiPrefs() const;
-   void setUiPrefs(const core::json::Object& prefsObject);
+   rstudiocore::json::Object uiPrefs() const;
+   void setUiPrefs(const rstudiocore::json::Object& prefsObject);
 
    // readers for ui prefs
    bool useSpacesForTab() const;
@@ -110,8 +110,8 @@ public:
    bool loadRData() const;
    void setLoadRData(bool loadRData);
 
-   core::FilePath initialWorkingDirectory() const;
-   void setInitialWorkingDirectory(const core::FilePath& filePath);
+   rstudiocore::FilePath initialWorkingDirectory() const;
+   void setInitialWorkingDirectory(const rstudiocore::FilePath& filePath);
 
    bool alwaysSaveHistory() const;
    void setAlwaysSaveHistory(bool alwaysSave);
@@ -128,14 +128,14 @@ public:
    bool vcsEnabled() const;
    void setVcsEnabled(bool enabled);
 
-   core::FilePath gitExePath() const;
-   void setGitExePath(const core::FilePath& gitExePath);
+   rstudiocore::FilePath gitExePath() const;
+   void setGitExePath(const rstudiocore::FilePath& gitExePath);
 
-   core::FilePath svnExePath() const;
-   void setSvnExePath(const core::FilePath& svnExePath);
+   rstudiocore::FilePath svnExePath() const;
+   void setSvnExePath(const rstudiocore::FilePath& svnExePath);
 
-   core::FilePath vcsTerminalPath() const;
-   void setVcsTerminalPath(const core::FilePath& terminalPath);
+   rstudiocore::FilePath vcsTerminalPath() const;
+   void setVcsTerminalPath(const rstudiocore::FilePath& terminalPath);
 
    bool vcsUseGitBash() const;
    void setVcsUseGitBash(bool useGitBash);
@@ -170,13 +170,13 @@ public:
 private:
 
    void onSettingsFileChanged(
-                        const core::system::FileChangeEvent& changeEvent);
+                        const rstudiocore::system::FileChangeEvent& changeEvent);
 
-   core::FilePath getWorkingDirectoryValue(const std::string& key) const;
+   rstudiocore::FilePath getWorkingDirectoryValue(const std::string& key) const;
    void setWorkingDirectoryValue(const std::string& key,
-                                 const core::FilePath& filePath) ;
+                                 const rstudiocore::FilePath& filePath) ;
 
-   void updatePrefsCache(const core::json::Object& uiPrefs) const;
+   void updatePrefsCache(const rstudiocore::json::Object& uiPrefs) const;
 
    template <typename T>
    T readUiPref(const boost::scoped_ptr<T>& pPref) const
@@ -188,8 +188,8 @@ private:
    }
 
 private:
-   core::FilePath settingsFilePath_;
-   core::Settings settings_;
+   rstudiocore::FilePath settingsFilePath_;
+   rstudiocore::Settings settings_;
 
    // cached prefs values
    mutable boost::scoped_ptr<bool> pUseSpacesForTab_;
@@ -201,7 +201,7 @@ private:
    mutable boost::scoped_ptr<std::string> pDefaultLatexProgram_;
    mutable boost::scoped_ptr<bool> pAlwaysEnableRnwConcordance_;
    mutable boost::scoped_ptr<std::string> pSpellingLanguage_;
-   mutable boost::scoped_ptr<core::json::Array> pSpellingCustomDicts_;
+   mutable boost::scoped_ptr<rstudiocore::json::Array> pSpellingCustomDicts_;
    mutable boost::scoped_ptr<bool> pHandleErrorsInUserCodeOnly_;
    mutable boost::scoped_ptr<int> pShinyViewerType_;
 };

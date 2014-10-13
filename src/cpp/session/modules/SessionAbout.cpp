@@ -25,7 +25,7 @@
 
 #include "session-config.h"
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace session {
 namespace modules {

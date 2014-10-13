@@ -42,7 +42,7 @@
 #include "tex/SessionSynctex.hpp"
 #include "tex/SessionViewPdf.hpp"
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace session {
 namespace modules { 
@@ -61,7 +61,7 @@ void viewPdfExternal(const FilePath& texPath)
                             "_rstudio_compile_pdf");
 }
 
-Error getTexCapabilities(const core::json::JsonRpcRequest& request,
+Error getTexCapabilities(const rstudiocore::json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
    pResponse->setResult(authoring::texCapabilitiesAsJson());

@@ -22,7 +22,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace session {
 namespace modules { 

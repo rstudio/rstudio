@@ -27,7 +27,7 @@
 #endif
 #include <Rembedded.h>
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace r {
 namespace session {
@@ -56,16 +56,16 @@ Error discoverR(RLocations* pLocations)
 Error discoverR(RLocations* pLocations)
 {
    // rhome
-   std::string rHome = core::system::getenv("R_HOME");
+   std::string rHome = rstudiocore::system::getenv("R_HOME");
    if (rHome.empty() || !FilePath(rHome).exists())
-      return core::pathNotFoundError(rHome, ERROR_LOCATION);
+      return rstudiocore::pathNotFoundError(rHome, ERROR_LOCATION);
    else
       pLocations->homePath = rHome;
 
    // rdocdir
-   std::string rDocDir = core::system::getenv("R_DOC_DIR");
+   std::string rDocDir = rstudiocore::system::getenv("R_DOC_DIR");
    if (rDocDir.empty() || !FilePath(rDocDir).exists())
-      return core::pathNotFoundError(rDocDir, ERROR_LOCATION);
+      return rstudiocore::pathNotFoundError(rDocDir, ERROR_LOCATION);
    else
       pLocations->docPath = rDocDir;
 

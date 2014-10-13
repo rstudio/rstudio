@@ -38,9 +38,9 @@
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
-using namespace core;
+using namespace rstudiocore;
 
-namespace core {
+namespace rstudiocore {
 namespace system {
 namespace crypto {
 
@@ -251,7 +251,7 @@ std::string s_modulo;
 std::string s_exponent;
 }
 
-core::Error rsaInit()
+rstudiocore::Error rsaInit()
 {
    const int KEY_SIZE = 1024;
    const int ENTROPY_BYTES = 4096;
@@ -290,7 +290,7 @@ void rsaPublicKey(std::string* pExponent, std::string* pModulo)
    pExponent->assign(s_exponent.begin(), s_exponent.end());
 }
 
-core::Error rsaPrivateDecrypt(const std::string& cipherText, std::string* pPlainText)
+rstudiocore::Error rsaPrivateDecrypt(const std::string& cipherText, std::string* pPlainText)
 {
    std::vector<unsigned char> cipherTextBytes;
    Error error = base64Decode(cipherText, &cipherTextBytes);
@@ -316,5 +316,5 @@ core::Error rsaPrivateDecrypt(const std::string& cipherText, std::string* pPlain
                       
 } // namespace crypto
 } // namespace system
-} // namespace core
+} // namespace rstudiocore
 

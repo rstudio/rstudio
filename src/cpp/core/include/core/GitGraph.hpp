@@ -20,7 +20,7 @@
 
 #include <boost/noncopyable.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace gitgraph {
 
 struct Column
@@ -82,6 +82,6 @@ private:
 };
 
 } // namespace gitgraph
-} // namespace core
+} // namespace rstudiocore
 
 #endif // CORE_GITGRAPH_HPP

@@ -31,7 +31,7 @@
 #define kHistoryDatabase "history_database"
 #define kHistoryMaxBytes (750*1024)  // rotate/remove every 750K
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace session {
 namespace modules { 
@@ -137,7 +137,7 @@ Error HistoryArchive::add(const std::string& command)
 
    // write the entry to the file
    std::ostringstream ostrEntry ;
-   double currentTime = core::date_time::millisecondsSinceEpoch();
+   double currentTime = rstudiocore::date_time::millisecondsSinceEpoch();
    writeEntry(currentTime, command, &ostrEntry);
    ostrEntry << std::endl;
    return appendToFile(historyDatabaseFilePath(), ostrEntry.str());

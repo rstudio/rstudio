@@ -36,7 +36,7 @@
 #include <core/system/Crypto.hpp>
 #endif
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace session {
 namespace console_process {
@@ -62,7 +62,7 @@ ConsoleProcess::ConsoleProcess()
 }
 
 ConsoleProcess::ConsoleProcess(const std::string& command,
-                               const core::system::ProcessOptions& options,
+                               const rstudiocore::system::ProcessOptions& options,
                                const std::string& caption,
                                bool dialog,
                                InteractionMode interactionMode,
@@ -78,7 +78,7 @@ ConsoleProcess::ConsoleProcess(const std::string& command,
 
 ConsoleProcess::ConsoleProcess(const std::string& program,
                                const std::vector<std::string>& args,
-                               const core::system::ProcessOptions& options,
+                               const rstudiocore::system::ProcessOptions& options,
                                const std::string& caption,
                                bool dialog,
                                InteractionMode interactionMode,
@@ -102,7 +102,7 @@ void ConsoleProcess::commonInit()
 {
    regexInit();
 
-   handle_ = core::system::generateUuid(false);
+   handle_ = rstudiocore::system::generateUuid(false);
 
    // always redirect stderr to stdout so output is interleaved
    options_.redirectStdErrToStdOut = true;
@@ -135,17 +135,17 @@ void ConsoleProcess::commonInit()
       }
 #else
       // request a pseudoterminal if this is an interactive console process
-      options_.pseudoterminal = core::system::Pseudoterminal(80, 1);
+      options_.pseudoterminal = rstudiocore::system::Pseudoterminal(80, 1);
 
       // define TERM to dumb (but first make sure we have an environment
       // block to modify)
       if (!options_.environment)
       {
-         core::system::Options childEnv;
-         core::system::environment(&childEnv);
+         rstudiocore::system::Options childEnv;
+         rstudiocore::system::environment(&childEnv);
          options_.environment = childEnv;
       }
-      core::system::setenv(&(options_.environment.get()), "TERM", "dumb");
+      rstudiocore::system::setenv(&(options_.environment.get()), "TERM", "dumb");
 #endif
    }
 
@@ -205,7 +205,7 @@ void ConsoleProcess::interrupt()
    interrupt_ = true;
 }
 
-bool ConsoleProcess::onContinue(core::system::ProcessOperations& ops)
+bool ConsoleProcess::onContinue(rstudiocore::system::ProcessOperations& ops)
 {
    // full stop interrupt if requested
    if (interrupt_)
@@ -275,7 +275,7 @@ void ConsoleProcess::enqueOutputEvent(const std::string &output, bool error)
          ClientEvent(client_events::kConsoleProcessOutput, data));
 }
 
-void ConsoleProcess::onStdout(core::system::ProcessOperations& ops,
+void ConsoleProcess::onStdout(rstudiocore::system::ProcessOperations& ops,
                               const std::string& output)
 {
    // convert line endings to posix
@@ -305,7 +305,7 @@ void ConsoleProcess::onStdout(core::system::ProcessOperations& ops,
    }
 }
 
-void ConsoleProcess::maybeConsolePrompt(core::system::ProcessOperations& ops,
+void ConsoleProcess::maybeConsolePrompt(rstudiocore::system::ProcessOperations& ops,
                                         const std::string& output)
 {
    boost::smatch smatch;
@@ -323,7 +323,7 @@ void ConsoleProcess::maybeConsolePrompt(core::system::ProcessOperations& ops,
       handleConsolePrompt(ops, output);
 }
 
-void ConsoleProcess::handleConsolePrompt(core::system::ProcessOperations& ops,
+void ConsoleProcess::handleConsolePrompt(rstudiocore::system::ProcessOperations& ops,
                                          const std::string& prompt)
 {
    // if there is a custom prmopt handler then give it a chance to
@@ -370,7 +370,7 @@ void ConsoleProcess::onExit(int exitCode)
    onExit_(exitCode);
 }
 
-core::json::Object ConsoleProcess::toJson() const
+rstudiocore::json::Object ConsoleProcess::toJson() const
 {
    json::Object result;
    result["handle"] = handle_;
@@ -388,7 +388,7 @@ core::json::Object ConsoleProcess::toJson() const
 }
 
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::fromJson(
-                                             core::json::Object &obj)
+                                             rstudiocore::json::Object &obj)
 {
    boost::shared_ptr<ConsoleProcess> pProc(new ConsoleProcess());
    pProc->handle_ = obj["handle"].get_str();
@@ -425,9 +425,9 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::fromJson(
    return pProc;
 }
 
-core::system::ProcessCallbacks ConsoleProcess::createProcessCallbacks()
+rstudiocore::system::ProcessCallbacks ConsoleProcess::createProcessCallbacks()
 {
-   core::system::ProcessCallbacks cb;
+   rstudiocore::system::ProcessCallbacks cb;
    cb.onContinue = boost::bind(&ConsoleProcess::onContinue, ConsoleProcess::shared_from_this(), _1);
    cb.onStdout = boost::bind(&ConsoleProcess::onStdout, ConsoleProcess::shared_from_this(), _1, _2);
    cb.onExit = boost::bind(&ConsoleProcess::onExit, ConsoleProcess::shared_from_this(), _1);
@@ -516,7 +516,7 @@ Error procWriteStdin(const json::JsonRpcRequest& request,
       {
          if (!input.interrupt)
          {
-            error = core::system::crypto::rsaPrivateDecrypt(input.text,
+            error = rstudiocore::system::crypto::rsaPrivateDecrypt(input.text,
                                                             &input.text);
             if (error)
                return error;
@@ -537,7 +537,7 @@ Error procWriteStdin(const json::JsonRpcRequest& request,
 
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::string& command,
-      core::system::ProcessOptions options,
+      rstudiocore::system::ProcessOptions options,
       const std::string& caption,
       bool dialog,
       InteractionMode interactionMode,
@@ -558,7 +558,7 @@ boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
 boost::shared_ptr<ConsoleProcess> ConsoleProcess::create(
       const std::string& program,
       const std::vector<std::string>& args,
-      core::system::ProcessOptions options,
+      rstudiocore::system::ProcessOptions options,
       const std::string& caption,
       bool dialog,
       InteractionMode interactionMode,
@@ -693,7 +693,7 @@ bool PasswordManager::forgetOnExit(const CachedPassword& cachedPassword,
    return hasHandle(cachedPassword, cpHandle) && !cachedPassword.remember;
 }
 
-core::json::Array processesAsJson()
+rstudiocore::json::Array processesAsJson()
 {
    json::Array procInfos;
    for (ProcTable::const_iterator it = s_procs.begin();
@@ -705,7 +705,7 @@ core::json::Array processesAsJson()
    return procInfos;
 }
 
-void onSuspend(core::Settings* pSettings)
+void onSuspend(rstudiocore::Settings* pSettings)
 {
    json::Array array;
    for (ProcTable::const_iterator it = s_procs.begin();
@@ -720,7 +720,7 @@ void onSuspend(core::Settings* pSettings)
    pSettings->set("console_procs", ostr.str());
 }
 
-void onResume(const core::Settings& settings)
+void onResume(const rstudiocore::Settings& settings)
 {
    std::string strVal = settings.get("console_procs");
    if (strVal.empty())

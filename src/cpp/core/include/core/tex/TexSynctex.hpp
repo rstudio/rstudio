@@ -31,7 +31,7 @@
 
 #include <core/FilePath.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace tex {
 
 class SourceLocation
@@ -136,7 +136,7 @@ std::string normalizeSynctexName(const std::string& name);
 
 
 } // namespace tex
-} // namespace core 
+} // namespace rstudiocore 
 
 
 #endif // CORE_TEX_TEX_SYNCTEX_HPP

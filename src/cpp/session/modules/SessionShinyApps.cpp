@@ -33,7 +33,7 @@
 
 #define kMaxDeploymentSize 104857600
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace session {
 namespace modules { 

@@ -31,7 +31,7 @@ void (*setDeviceAttributes)(pDevDesc pDev);
 void (*onBeforeAddDevice)(DeviceContext* pDC);
 void (*onAfterAddDevice)(DeviceContext* pDC);
 
-core::Error (*writeToPNG)(const core::FilePath& targetPath,
+rstudiocore::Error (*writeToPNG)(const rstudiocore::FilePath& targetPath,
                                  DeviceContext* pDC);
 
 void (*circle)(double x,

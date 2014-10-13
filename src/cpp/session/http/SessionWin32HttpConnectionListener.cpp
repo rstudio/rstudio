@@ -24,7 +24,7 @@
 
 #include "SessionNamedPipeHttpConnectionListener.hpp"
 
-using namespace core ;
+using namespace rstudiocore ;
 
 namespace session {
 
@@ -39,7 +39,7 @@ HttpConnectionListener* s_pHttpConnectionListener = NULL ;
 void initializeHttpConnectionListener()
 {
    session::Options& options = session::options();
-   std::string pipeName = core::system::getenv("RS_LOCAL_PEER");
+   std::string pipeName = rstudiocore::system::getenv("RS_LOCAL_PEER");
    std::string secret = options.sharedSecret();
    s_pHttpConnectionListener = new NamedPipeHttpConnectionListener(pipeName,
                                                                    secret);

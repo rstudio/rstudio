@@ -16,7 +16,7 @@
 #ifndef SESSION_UPDATES_HPP
 #define SESSION_UPDATES_HPP
 
-namespace core {
+namespace rstudiocore {
    class Error;
 }
 
@@ -24,7 +24,7 @@ namespace session {
 namespace modules {
 namespace updates {
 
-core::Error initialize();
+rstudiocore::Error initialize();
    
 } // namespace updates
 } // namespace modules

@@ -37,31 +37,31 @@
 
 namespace session {
 
-void HttpConnection::sendJsonRpcError(const core::Error& error)
+void HttpConnection::sendJsonRpcError(const rstudiocore::Error& error)
 {
-   core::json::JsonRpcResponse jsonRpcResponse;
+   rstudiocore::json::JsonRpcResponse jsonRpcResponse;
    jsonRpcResponse.setError(error);
    sendJsonRpcResponse(jsonRpcResponse);
 }
 
 void HttpConnection::sendJsonRpcResponse()
 {
-   core::json::JsonRpcResponse jsonRpcResponse ;
+   rstudiocore::json::JsonRpcResponse jsonRpcResponse ;
    sendJsonRpcResponse(jsonRpcResponse);
 }
 
 void HttpConnection::sendJsonRpcResponse(
-                     const core::json::JsonRpcResponse& jsonRpcResponse)
+                     const rstudiocore::json::JsonRpcResponse& jsonRpcResponse)
 {
    // setup response
-   core::http::Response response ;
+   rstudiocore::http::Response response ;
 
    // automagic gzip support
-   if (request().acceptsEncoding(core::http::kGzipEncoding))
-      response.setContentEncoding(core::http::kGzipEncoding);
+   if (request().acceptsEncoding(rstudiocore::http::kGzipEncoding))
+      response.setContentEncoding(rstudiocore::http::kGzipEncoding);
 
    // set response
-   core::json::setJsonRpcResponse(jsonRpcResponse, &response);
+   rstudiocore::json::setJsonRpcResponse(jsonRpcResponse, &response);
 
    // send the response
    sendResponse(response);
@@ -71,7 +71,7 @@ void HttpConnection::sendJsonRpcResponse(
 
 namespace connection {
 
-std::string rstudioRequestIdFromRequest(const core::http::Request& request)
+std::string rstudioRequestIdFromRequest(const rstudiocore::http::Request& request)
 {
    return request.headerValue("X-RS-RID");
 }
@@ -94,13 +94,13 @@ void handleAbortNextProjParam(
                boost::shared_ptr<HttpConnection> ptrConnection)
 {
    std::string nextProj;
-   core::json::JsonRpcRequest jsonRpcRequest;
-   core::Error error = core::json::parseJsonRpcRequest(
+   rstudiocore::json::JsonRpcRequest jsonRpcRequest;
+   rstudiocore::Error error = rstudiocore::json::parseJsonRpcRequest(
                                          ptrConnection->request().body(),
                                          &jsonRpcRequest);
    if (!error)
    {
-      error = core::json::readParam(jsonRpcRequest.params, 0, &nextProj);
+      error = rstudiocore::json::readParam(jsonRpcRequest.params, 0, &nextProj);
       if (error)
          LOG_ERROR(error);
 
@@ -111,13 +111,13 @@ void handleAbortNextProjParam(
          // constants rather than code so that this code (which runs in
          // a background thread) don't call into the projects module (which
          // is designed to be foreground and single-threaded)
-         core::FilePath userScratch = session::options().userScratchPath();
-         core::FilePath settings = userScratch.complete(kProjectsSettings);
+         rstudiocore::FilePath userScratch = session::options().userScratchPath();
+         rstudiocore::FilePath settings = userScratch.complete(kProjectsSettings);
          error = settings.ensureDirectory();
          if (error)
             LOG_ERROR(error);
-         core::FilePath writePath = settings.complete(kNextSessionProject);
-         core::Error error = core::writeStringToFile(writePath, nextProj);
+         rstudiocore::FilePath writePath = settings.complete(kNextSessionProject);
+         rstudiocore::Error error = rstudiocore::writeStringToFile(writePath, nextProj);
          if (error)
             LOG_ERROR(error);
       }
@@ -185,12 +185,12 @@ bool checkForSuspend(boost::shared_ptr<HttpConnection> ptrConnection)
 
 bool checkForSuspend(boost::shared_ptr<HttpConnection> ptrConnection)
 {
-   using namespace core::json;
+   using namespace rstudiocore::json;
    if (isMethod(ptrConnection, "suspend_session"))
    {
       bool force = false;
       JsonRpcRequest jsonRpcRequest;
-      core::Error error = parseJsonRpcRequest(ptrConnection->request().body(),
+      rstudiocore::Error error = parseJsonRpcRequest(ptrConnection->request().body(),
                                               &jsonRpcRequest);
       if (error)
       {
@@ -203,7 +203,7 @@ bool checkForSuspend(boost::shared_ptr<HttpConnection> ptrConnection)
       else
       {
          // send a signal to this process to suspend
-         using namespace core::system;
+         using namespace rstudiocore::system;
          sendSignalToSelf(force ? SigUsr2 : SigUsr1);
 
          // send response

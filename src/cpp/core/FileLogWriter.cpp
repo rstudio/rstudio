@@ -20,7 +20,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 
-namespace core {
+namespace rstudiocore {
 
 FileLogWriter::FileLogWriter(const std::string& programIdentity,
                              int logLevel,
@@ -36,7 +36,7 @@ FileLogWriter::FileLogWriter(const std::string& programIdentity,
    if (!logFile_.exists())
    {
       // swallow errors -- we can't log so it doesn't matter
-      core::appendToFile(logFile_, "");
+      rstudiocore::appendToFile(logFile_, "");
    }
 }
 
@@ -51,14 +51,14 @@ FileLogWriter::~FileLogWriter()
    }
 }
 
-void FileLogWriter::log(core::system::LogLevel logLevel,
+void FileLogWriter::log(rstudiocore::system::LogLevel logLevel,
                         const std::string& message)
 {
    log(programIdentity_, logLevel, message);
 }
 
 void FileLogWriter::log(const std::string& programIdentity,
-                        core::system::LogLevel logLevel,
+                        rstudiocore::system::LogLevel logLevel,
                         const std::string& message)
 {
    if (logLevel > logLevel_)
@@ -67,7 +67,7 @@ void FileLogWriter::log(const std::string& programIdentity,
    rotateLogFile();
 
    // Swallow errors--we can't do anything anyway
-   core::appendToFile(logFile_, formatLogEntry(programIdentity, message));
+   rstudiocore::appendToFile(logFile_, formatLogEntry(programIdentity, message));
 }
 
 
@@ -90,4 +90,4 @@ bool FileLogWriter::rotateLogFile()
 }
 
 
-} // namespace core
+} // namespace rstudiocore

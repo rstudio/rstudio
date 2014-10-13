@@ -19,7 +19,7 @@
 #include <string>
 #include <core/http/Response.hpp>
 
-namespace core {
+namespace rstudiocore {
    class Error;
    class FilePath;
    namespace http {
@@ -34,30 +34,30 @@ namespace presentation {
 struct ErrorResponse
 {
    explicit ErrorResponse(const std::string& message = std::string(),
-                          core::http::status::Code statusCode
-                                  = core::http::status::InternalServerError)
+                          rstudiocore::http::status::Code statusCode
+                                  = rstudiocore::http::status::InternalServerError)
       : message(message), statusCode(statusCode)
    {
    }
 
    std::string message;
-   core::http::status::Code statusCode;
+   rstudiocore::http::status::Code statusCode;
 };
 
 bool clearKnitrCache(ErrorResponse* pErrorResponse);
 
-void handlePresentationPaneRequest(const core::http::Request& request,
-                                  core::http::Response* pResponse);
+void handlePresentationPaneRequest(const rstudiocore::http::Request& request,
+                                  rstudiocore::http::Response* pResponse);
                        
 
-void handlePresentationHelpRequest(const core::http::Request& request,
+void handlePresentationHelpRequest(const rstudiocore::http::Request& request,
                                    const std::string& jsCallbacks,
-                                   core::http::Response* pResponse);
+                                   rstudiocore::http::Response* pResponse);
 
-bool savePresentationAsStandalone(const core::FilePath& filePath,
+bool savePresentationAsStandalone(const rstudiocore::FilePath& filePath,
                                   ErrorResponse* pErrorResponse);
 
-bool savePresentationAsRpubsSource(const core::FilePath& filePath,
+bool savePresentationAsRpubsSource(const rstudiocore::FilePath& filePath,
                                    ErrorResponse* pErrorResponse);
 
 } // namespace presentation

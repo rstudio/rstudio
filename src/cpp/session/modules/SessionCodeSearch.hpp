@@ -16,7 +16,7 @@
 #ifndef SESSION_CODE_SEARCH_HPP
 #define SESSION_CODE_SEARCH_HPP
 
-namespace core {
+namespace rstudiocore {
    class Error;
 }
 
@@ -24,7 +24,7 @@ namespace session {
 namespace modules {
 namespace code_search {
 
-core::Error initialize();
+rstudiocore::Error initialize();
    
 } // namespace code_search
 } // namespace modules

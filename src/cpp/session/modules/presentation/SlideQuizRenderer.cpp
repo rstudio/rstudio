@@ -25,7 +25,7 @@
 #include <core/SafeConvert.hpp>
 #include <core/RegexUtils.hpp>
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace session {
 namespace modules { 

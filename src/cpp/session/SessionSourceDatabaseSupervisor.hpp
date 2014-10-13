@@ -16,7 +16,7 @@
 #ifndef SESSION_SOURCE_DATABASE_SUPERVISOR_HPP
 #define SESSION_SOURCE_DATABASE_SUPERVISOR_HPP
 
-namespace core {
+namespace rstudiocore {
    class Error;
    class FilePath;
 }
@@ -25,9 +25,9 @@ namespace session {
 namespace source_database {
 namespace supervisor {
 
-core::Error attachToSourceDatabase(core::FilePath* pSessionDir);
+rstudiocore::Error attachToSourceDatabase(rstudiocore::FilePath* pSessionDir);
 
-core::Error detachFromSourceDatabase();
+rstudiocore::Error detachFromSourceDatabase();
 
 } // namespace supervisor
 } // namespace source_database

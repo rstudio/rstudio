@@ -20,7 +20,7 @@
 
 #include <boost/utility.hpp>
 
-namespace core {
+namespace rstudiocore {
    class ProgramStatus;
 }
 
@@ -39,7 +39,7 @@ private:
    // COPYING: boost::noncopyable
    
 public:
-   core::ProgramStatus read(int argc, char * const argv[]);
+   rstudiocore::ProgramStatus read(int argc, char * const argv[]);
 
    std::string command() const
    {

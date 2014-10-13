@@ -23,7 +23,7 @@
 #include <core/FilePath.hpp>
 #include <core/BoostThread.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace system {
 
 namespace {
@@ -70,7 +70,7 @@ FileInfo convertToFileInfo(const FilePath& filePath, bool yield, int *pCount)
 // interfere with the caller getting a listing of everything else
 // and proceeding with its work
 Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
-                const core::system::FileScannerOptions& options,
+                const rstudiocore::system::FileScannerOptions& options,
                 tree<FileInfo>* pTree)
 {
    // clear all existing
@@ -142,5 +142,5 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
 
 
 } // namespace system
-} // namespace core
+} // namespace rstudiocore
 

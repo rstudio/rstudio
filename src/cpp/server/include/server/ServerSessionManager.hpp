@@ -29,7 +29,7 @@
 
 #include <core/r_util/RSessionLaunchProfile.hpp>
 
-namespace core {
+namespace rstudiocore {
    class Error;
 }
 
@@ -52,18 +52,18 @@ private:
 
 public:
    // launching
-   core::Error launchSession(const std::string& username);
+   rstudiocore::Error launchSession(const std::string& username);
    void removePendingLaunch(const std::string& username);
 
    // set a custom session launcher
-   typedef boost::function<core::Error(
-                           const core::r_util::SessionLaunchProfile&)>
+   typedef boost::function<rstudiocore::Error(
+                           const rstudiocore::r_util::SessionLaunchProfile&)>
                                                   SessionLaunchFunction;
    void setSessionLaunchFunction(const SessionLaunchFunction& launchFunction);
 
    // set a launch profile filter
    typedef boost::function<void(
-                           core::r_util::SessionLaunchProfile*)>
+                           rstudiocore::r_util::SessionLaunchProfile*)>
                                                   SessionLaunchProfileFilter;
    void addSessionLaunchProfileFilter(const SessionLaunchProfileFilter& filter);
 
@@ -73,8 +73,8 @@ public:
 private:
    // default session launcher -- runs the process then uses the
    // ChildProcessTracker to track it's pid for later reaping
-   core::Error launchAndTrackSession(
-                        const core::r_util::SessionLaunchProfile& profile);
+   rstudiocore::Error launchAndTrackSession(
+                        const rstudiocore::r_util::SessionLaunchProfile& profile);
 
 private:
    // pending launches
@@ -89,13 +89,13 @@ private:
    std::vector<SessionLaunchProfileFilter> sessionLaunchProfileFilters_;
 
    // child process tracker
-   core::system::ChildProcessTracker processTracker_;
+   rstudiocore::system::ChildProcessTracker processTracker_;
 };
 
 // Lower-level global functions for launching sessions. These are used
 // internally by the SessionManager as well as for verify-installation
-core::Error launchSession(const std::string& username,
-                          const core::system::Options& extraArgs,
+rstudiocore::Error launchSession(const std::string& username,
+                          const rstudiocore::system::Options& extraArgs,
                           PidType* pPid);
 
 

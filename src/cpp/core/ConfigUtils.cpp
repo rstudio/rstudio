@@ -26,7 +26,7 @@
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace config_utils {
 
 namespace {
@@ -73,7 +73,7 @@ Error extractVariables(const FilePath& file, Variables* pVariables)
 }
 
 } // namespace config_utils
-} // namespace core 
+} // namespace rstudiocore 
 
 
 

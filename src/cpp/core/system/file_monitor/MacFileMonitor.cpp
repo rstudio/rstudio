@@ -31,7 +31,7 @@
 
 #include "FileMonitorImpl.hpp"
 
-namespace core {
+namespace rstudiocore {
 namespace system {
 namespace file_monitor {
 
@@ -245,7 +245,7 @@ Handle registerMonitor(const FilePath& filePath,
    }
 
    // scan the files
-   core::system::FileScannerOptions options;
+   rstudiocore::system::FileScannerOptions options;
    options.recursive = recursive;
    options.yield = true;
    options.filter = filter;
@@ -329,7 +329,7 @@ void stop()
 } // namespace detail
 } // namespace file_monitor
 } // namespace system
-} // namespace core 
+} // namespace rstudiocore 
 
    
 

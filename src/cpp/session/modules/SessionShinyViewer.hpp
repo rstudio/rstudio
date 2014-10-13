@@ -16,7 +16,7 @@
 #ifndef SESSION_SHINY_VIEWER_HPP
 #define SESSION_SHINY_VIEWER_HPP
 
-namespace core {
+namespace rstudiocore {
    class Error;
 }
  
@@ -30,7 +30,7 @@ const int SHINY_VIEWER_PANE = 2;
 const int SHINY_VIEWER_WINDOW = 3;
 const int SHINY_VIEWER_BROWSER = 4;
 
-core::Error initialize();
+rstudiocore::Error initialize();
                        
 } // namespace shiny_viewer
 } // namespace modules

@@ -36,7 +36,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
 
-using namespace core ;
+using namespace rstudiocore ;
 using namespace r::sexp;
 using namespace r::exec;
 

@@ -19,7 +19,7 @@
 #include <string>
 #include <boost/regex.hpp>
 
-namespace core {
+namespace rstudiocore {
 
 class Error;
 class FilePath;
@@ -39,7 +39,7 @@ bool isTridentOlderThan(const std::string& userAgent, double version);
 bool hasRequiredBrowser(const std::string& userAgent);
 
 } // namespace browser_utils
-} // namespace core 
+} // namespace rstudiocore 
 
 
 #endif // CORE_BROWSER_UTILS_HPP

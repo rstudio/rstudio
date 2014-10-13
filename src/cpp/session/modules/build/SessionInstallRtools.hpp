@@ -16,7 +16,7 @@
 #ifndef SESSION_BUILD_INSTALL_RTOOLS_HPP
 #define SESSION_BUILD_INSTALL_RTOOLS_HPP
 
-namespace core {
+namespace rstudiocore {
    class Error;
 }
 
@@ -24,7 +24,7 @@ namespace session {
 namespace modules {
 namespace build {
 
-core::Error installRtools();
+rstudiocore::Error installRtools();
 
 } // namespace build
 } // namespace modules

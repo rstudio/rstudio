@@ -33,7 +33,7 @@
 
 #include "SessionProjectFirstRun.hpp"
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace session {
 namespace projects {
@@ -42,8 +42,8 @@ namespace {
 
 bool canWriteToProjectDir(const FilePath& projectDirPath)
 {
-   FilePath testFile = projectDirPath.complete(core::system::generateUuid());
-   Error error = core::writeStringToFile(testFile, "test");
+   FilePath testFile = projectDirPath.complete(rstudiocore::system::generateUuid());
+   Error error = rstudiocore::writeStringToFile(testFile, "test");
    if (error)
    {
       return false;
@@ -78,7 +78,7 @@ Error computeScratchPath(const FilePath& projectFile, FilePath* pScratchPath)
 
       // mark hidden if we are on win32
 #ifdef _WIN32
-      error = core::system::makeFileHidden(projectUserDir);
+      error = rstudiocore::system::makeFileHidden(projectUserDir);
       if (error)
          return error;
 #endif
@@ -103,7 +103,7 @@ FilePath ProjectContext::oldScratchPath() const
       return FilePath();
 
    // add username if we can get one
-   std::string username = core::system::username();
+   std::string username = rstudiocore::system::username();
    if (!username.empty())
       projectUserDir = projectUserDir.complete(username);
 
@@ -224,7 +224,7 @@ void ProjectContext::augmentRbuildignore()
          // they are already there
 
          std::string strIgnore;
-         Error error = core::readStringFromFile(
+         Error error = rstudiocore::readStringFromFile(
                                              rbuildIgnorePath,
                                              &strIgnore,
                                              string_utils::LineEndingPosix);
@@ -251,7 +251,7 @@ void ProjectContext::augmentRbuildignore()
             strIgnore += kIgnoreRproj + std::string("\n");
          if (!hasRProjUser)
             strIgnore += kIgnoreRprojUser + std::string("\n");
-         error = core::writeStringToFile(rbuildIgnorePath,
+         error = rstudiocore::writeStringToFile(rbuildIgnorePath,
                                          strIgnore,
                                          string_utils::LineEndingNative);
          if (error)
@@ -353,7 +353,7 @@ void ProjectContext::onDeferredInit(bool newSession)
 {
    // kickoff file monitoring for this directory
    using namespace boost;
-   core::system::file_monitor::Callbacks cb;
+   rstudiocore::system::file_monitor::Callbacks cb;
    cb.onRegistered = bind(&ProjectContext::fileMonitorRegistered,
                           this, _1, _2);
    cb.onRegistrationError = bind(&ProjectContext::fileMonitorTermination,
@@ -364,7 +364,7 @@ void ProjectContext::onDeferredInit(bool newSession)
                             this, _1);
    cb.onUnregistered = bind(&ProjectContext::fileMonitorTermination,
                             this, Success());
-   core::system::file_monitor::registerMonitor(
+   rstudiocore::system::file_monitor::registerMonitor(
                                          directory(),
                                          true,
                                          module_context::fileListingFilter,
@@ -372,8 +372,8 @@ void ProjectContext::onDeferredInit(bool newSession)
 }
 
 void ProjectContext::fileMonitorRegistered(
-                              core::system::file_monitor::Handle handle,
-                              const tree<core::FileInfo>& files)
+                              rstudiocore::system::file_monitor::Handle handle,
+                              const tree<rstudiocore::FileInfo>& files)
 {
    // update state
    hasFileMonitor_ = true;
@@ -383,7 +383,7 @@ void ProjectContext::fileMonitorRegistered(
 }
 
 void ProjectContext::fileMonitorFilesChanged(
-                   const std::vector<core::system::FileChangeEvent>& events)
+                   const std::vector<rstudiocore::system::FileChangeEvent>& events)
 {
    // notify client (gwt)
    module_context::enqueFileChangedEvents(directory(), events);
@@ -606,7 +606,7 @@ Error ProjectContext::buildOptionsFile(Settings* pOptionsFile) const
 
 Error ProjectContext::readVcsOptions(RProjectVcsOptions* pOptions) const
 {
-   core::Settings settings;
+   rstudiocore::Settings settings;
    Error error = settings.initialize(vcsOptionsFilePath());
    if (error)
       return error;
@@ -620,7 +620,7 @@ Error ProjectContext::readVcsOptions(RProjectVcsOptions* pOptions) const
 
 Error ProjectContext::writeVcsOptions(const RProjectVcsOptions& options) const
 {
-   core::Settings settings;
+   rstudiocore::Settings settings;
    Error error = settings.initialize(vcsOptionsFilePath());
    if (error)
       return error;
@@ -634,7 +634,7 @@ Error ProjectContext::writeVcsOptions(const RProjectVcsOptions& options) const
 
 Error ProjectContext::readBuildOptions(RProjectBuildOptions* pOptions)
 {
-   core::Settings optionsFile;
+   rstudiocore::Settings optionsFile;
    Error error = buildOptionsFile(&optionsFile);
    if (error)
       return error;
@@ -658,7 +658,7 @@ Error ProjectContext::readBuildOptions(RProjectBuildOptions* pOptions)
 
 Error ProjectContext::writeBuildOptions(const RProjectBuildOptions& options)
 {
-   core::Settings optionsFile;
+   rstudiocore::Settings optionsFile;
    Error error = buildOptionsFile(&optionsFile);
    if (error)
       return error;

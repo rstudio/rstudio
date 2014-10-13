@@ -18,7 +18,7 @@
 #include <core/ProgramStatus.hpp>
 #include <core/ProgramOptions.hpp>
 
-using namespace core ;
+using namespace rstudiocore ;
 
 namespace session {
 namespace postback {
@@ -50,7 +50,7 @@ ProgramStatus Options::read(int argc, char * const argv[])
    optionsDesc.positionalOptions.add("argument", 1);
    
    // read options
-   ProgramStatus status = core::program_options::read(optionsDesc, argc, argv);
+   ProgramStatus status = rstudiocore::program_options::read(optionsDesc, argc, argv);
    if (status.exit())
       return status;
    

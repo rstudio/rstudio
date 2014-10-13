@@ -34,7 +34,7 @@
 #include <session/SessionClientEvent.hpp>
 #include <session/SessionSourceDatabase.hpp>
 
-namespace core {
+namespace rstudiocore {
    class Error;
    class Success;
    class FilePath;
@@ -68,39 +68,39 @@ enum PackageCompatStatus
 };
     
 // paths 
-core::FilePath userHomePath();
-std::string createAliasedPath(const core::FileInfo& fileInfo);
-std::string createAliasedPath(const core::FilePath& path);
-std::string createFileUrl(const core::FilePath& path);
-core::FilePath resolveAliasedPath(const std::string& aliasedPath);
-core::FilePath userScratchPath();
-core::FilePath scopedScratchPath();
-core::FilePath oldScopedScratchPath();
-bool isVisibleUserFile(const core::FilePath& filePath);
+rstudiocore::FilePath userHomePath();
+std::string createAliasedPath(const rstudiocore::FileInfo& fileInfo);
+std::string createAliasedPath(const rstudiocore::FilePath& path);
+std::string createFileUrl(const rstudiocore::FilePath& path);
+rstudiocore::FilePath resolveAliasedPath(const std::string& aliasedPath);
+rstudiocore::FilePath userScratchPath();
+rstudiocore::FilePath scopedScratchPath();
+rstudiocore::FilePath oldScopedScratchPath();
+bool isVisibleUserFile(const rstudiocore::FilePath& filePath);
 
-core::FilePath safeCurrentPath();
+rstudiocore::FilePath safeCurrentPath();
 
-core::json::Object createFileSystemItem(const core::FileInfo& fileInfo);
-core::json::Object createFileSystemItem(const core::FilePath& filePath);
+rstudiocore::json::Object createFileSystemItem(const rstudiocore::FileInfo& fileInfo);
+rstudiocore::json::Object createFileSystemItem(const rstudiocore::FilePath& filePath);
    
 // get a temp file
-core::FilePath tempFile(const std::string& prefix, 
+rstudiocore::FilePath tempFile(const std::string& prefix, 
                         const std::string& extension);
 
-core::FilePath tempDir();
+rstudiocore::FilePath tempDir();
 
 // find out the location of a binary
-core::FilePath findProgram(const std::string& name);
+rstudiocore::FilePath findProgram(const std::string& name);
 
 bool isPdfLatexInstalled();
 
 // is the file a text file
-bool isTextFile(const core::FilePath& targetPath);
+bool isTextFile(const rstudiocore::FilePath& targetPath);
 
 // find the location of the R script
-core::Error rBinDir(core::FilePath* pRBinDirPath);
-core::Error rScriptPath(core::FilePath* pRScriptPath);
-core::shell_utils::ShellCommand rCmd(const core::FilePath& rBinDir);
+rstudiocore::Error rBinDir(rstudiocore::FilePath* pRBinDirPath);
+rstudiocore::Error rScriptPath(rstudiocore::FilePath* pRScriptPath);
+rstudiocore::shell_utils::ShellCommand rCmd(const rstudiocore::FilePath& rBinDir);
 
 // get the R local help port
 std::string rLocalHelpPort();
@@ -120,43 +120,43 @@ PackageCompatStatus getPackageCompatStatus(
       const std::string& packageVersion,
       int protocolVersion);
 
-core::Error installPackage(const std::string& pkgPath,
+rstudiocore::Error installPackage(const std::string& pkgPath,
                            const std::string& libPath = std::string());
 
-core::Error installEmbeddedPackage(const std::string& name);
+rstudiocore::Error installEmbeddedPackage(const std::string& name);
 
 // find the package name for a source file
-std::string packageNameForSourceFile(const core::FilePath& sourceFilePath);
+std::string packageNameForSourceFile(const rstudiocore::FilePath& sourceFilePath);
 
 // register a handler for rBrowseUrl
 typedef boost::function<bool(const std::string&)> RBrowseUrlHandler;
-core::Error registerRBrowseUrlHandler(const RBrowseUrlHandler& handler);
+rstudiocore::Error registerRBrowseUrlHandler(const RBrowseUrlHandler& handler);
    
 // register a handler for rBrowseFile
-typedef boost::function<bool(const core::FilePath&)> RBrowseFileHandler;
-core::Error registerRBrowseFileHandler(const RBrowseFileHandler& handler);
+typedef boost::function<bool(const rstudiocore::FilePath&)> RBrowseFileHandler;
+rstudiocore::Error registerRBrowseFileHandler(const RBrowseFileHandler& handler);
    
 // register an inbound uri handler (include a leading slash)
-core::Error registerAsyncUriHandler(
+rstudiocore::Error registerAsyncUriHandler(
                    const std::string& name,
-                   const core::http::UriAsyncHandlerFunction& handlerFunction);
+                   const rstudiocore::http::UriAsyncHandlerFunction& handlerFunction);
 
 // register an inbound uri handler (include a leading slash)
-core::Error registerUriHandler(
+rstudiocore::Error registerUriHandler(
                         const std::string& name,
-                        const core::http::UriHandlerFunction& handlerFunction);
+                        const rstudiocore::http::UriHandlerFunction& handlerFunction);
 
 // register a local uri handler (scoped by a special prefix which indicates
 // a local scope)
-core::Error registerAsyncLocalUriHandler(
+rstudiocore::Error registerAsyncLocalUriHandler(
                    const std::string& name,
-                   const core::http::UriAsyncHandlerFunction& handlerFunction);
+                   const rstudiocore::http::UriAsyncHandlerFunction& handlerFunction);
 
 // register a local uri handler (scoped by a special prefix which indicates
 // a local scope)
-core::Error registerLocalUriHandler(
+rstudiocore::Error registerLocalUriHandler(
                         const std::string& name,
-                        const core::http::UriHandlerFunction& handlerFunction);
+                        const rstudiocore::http::UriHandlerFunction& handlerFunction);
 
 typedef boost::function<void(int, const std::string&)> PostbackHandlerContinuation;
 
@@ -164,24 +164,24 @@ typedef boost::function<void(int, const std::string&)> PostbackHandlerContinuati
 // details on the requirements of postback handlers
 typedef boost::function<void(const std::string&, const PostbackHandlerContinuation&)>
                                                       PostbackHandlerFunction;
-core::Error registerPostbackHandler(
+rstudiocore::Error registerPostbackHandler(
                               const std::string& name,
                               const PostbackHandlerFunction& handlerFunction,
                               std::string* pShellCommand); 
                         
 // register an rpc method
-core::Error registerAsyncRpcMethod(
+rstudiocore::Error registerAsyncRpcMethod(
                               const std::string& name,
-                              const core::json::JsonRpcAsyncFunction& function);
+                              const rstudiocore::json::JsonRpcAsyncFunction& function);
 
 // register an rpc method
-core::Error registerRpcMethod(const std::string& name,
-                              const core::json::JsonRpcFunction& function);
+rstudiocore::Error registerRpcMethod(const std::string& name,
+                              const rstudiocore::json::JsonRpcFunction& function);
 
 
-core::Error executeAsync(const core::json::JsonRpcFunction& function,
-                         const core::json::JsonRpcRequest& request,
-                         core::json::JsonRpcResponse* pResponse);
+rstudiocore::Error executeAsync(const rstudiocore::json::JsonRpcFunction& function,
+                         const rstudiocore::json::JsonRpcRequest& request,
+                         rstudiocore::json::JsonRpcResponse* pResponse);
 
 
 // create a waitForMethod function -- when called this function will:
@@ -190,20 +190,20 @@ core::Error executeAsync(const core::json::JsonRpcFunction& function,
 //   (b) wait for the specified methodName to be returned from the client
 //   (c) automatically re-issue the event after a client-init
 //
-typedef boost::function<bool(core::json::JsonRpcRequest*, const ClientEvent&)> WaitForMethodFunction;
+typedef boost::function<bool(rstudiocore::json::JsonRpcRequest*, const ClientEvent&)> WaitForMethodFunction;
 WaitForMethodFunction registerWaitForMethod(const std::string& methodName);
 
 namespace {
 
 template <typename T>
-core::Error rpcAsyncCoupleRunner(
-      boost::function<core::Error(const core::json::JsonRpcRequest&, T*)> initFunc,
-      boost::function<core::Error(const core::json::JsonRpcRequest&, const T&, core::json::JsonRpcResponse*)> workerFunc,
-      const core::json::JsonRpcRequest& request,
-      core::json::JsonRpcResponse* pResponse)
+rstudiocore::Error rpcAsyncCoupleRunner(
+      boost::function<rstudiocore::Error(const rstudiocore::json::JsonRpcRequest&, T*)> initFunc,
+      boost::function<rstudiocore::Error(const rstudiocore::json::JsonRpcRequest&, const T&, rstudiocore::json::JsonRpcResponse*)> workerFunc,
+      const rstudiocore::json::JsonRpcRequest& request,
+      rstudiocore::json::JsonRpcResponse* pResponse)
 {
    T state;
-   core::Error error = initFunc(request, &state);
+   rstudiocore::Error error = initFunc(request, &state);
    if (error)
       return error;
 
@@ -223,10 +223,10 @@ core::Error rpcAsyncCoupleRunner(
 // The T type parameter represents the type of a value that initFunc produces
 // and workerFunc consumes. This can be used to pass context between the two.
 template <typename T>
-core::Error registerRpcAsyncCoupleMethod(
+rstudiocore::Error registerRpcAsyncCoupleMethod(
       const std::string& name,
-      boost::function<core::Error(const core::json::JsonRpcRequest&, T*)> initFunc,
-      boost::function<core::Error(const core::json::JsonRpcRequest&, const T&, core::json::JsonRpcResponse*)> workerFunc)
+      boost::function<rstudiocore::Error(const rstudiocore::json::JsonRpcRequest&, T*)> initFunc,
+      boost::function<rstudiocore::Error(const rstudiocore::json::JsonRpcRequest&, const T&, rstudiocore::json::JsonRpcResponse*)> workerFunc)
 {
    return registerRpcMethod(name, boost::bind(rpcAsyncCoupleRunner<T>,
                                               initFunc,
@@ -278,7 +278,7 @@ struct Events : boost::noncopyable
    boost::signal<void (ConsoleOutputType, const std::string&)>
                                              onConsoleOutput;
    boost::signal<void (ChangeSource)>        onDetectChanges;
-   boost::signal<void (core::FilePath)>      onSourceEditorFileSaved;
+   boost::signal<void (rstudiocore::FilePath)>      onSourceEditorFileSaved;
    boost::signal<void(bool)>                 onDeferredInit;
    boost::signal<void(bool)>                 onBackgroundProcessing;
    boost::signal<void(bool)>                 onShutdown;
@@ -294,7 +294,7 @@ struct Events : boost::noncopyable
 Events& events();
 
 // ProcessSupervisor
-core::system::ProcessSupervisor& processSupervisor();
+rstudiocore::system::ProcessSupervisor& processSupervisor();
 
 // schedule incremental work. execute will be called back periodically
 // (up to every 25ms if the process is completely idle). if execute
@@ -339,43 +339,43 @@ void scheduleDelayedWork(const boost::posix_time::time_duration& period,
                          bool idleOnly = true);
 
 
-core::Error readAndDecodeFile(const core::FilePath& filePath,
+rstudiocore::Error readAndDecodeFile(const rstudiocore::FilePath& filePath,
                               const std::string& encoding,
                               bool allowSubstChars,
                               std::string* pContents);
 
-core::Error convertToUtf8(const std::string& encodedContent,
+rstudiocore::Error convertToUtf8(const std::string& encodedContent,
                           const std::string& encoding,
                           bool allowSubstChars,
                           std::string* pDecodedContent);
 
 // source R files
-core::Error sourceModuleRFile(const std::string& rSourceFile);   
-core::Error sourceModuleRFileWithResult(const std::string& rSourceFile,
-                                        const core::FilePath& workingDir,
-                                        core::system::ProcessResult* pResult);
+rstudiocore::Error sourceModuleRFile(const std::string& rSourceFile);   
+rstudiocore::Error sourceModuleRFileWithResult(const std::string& rSourceFile,
+                                        const rstudiocore::FilePath& workingDir,
+                                        rstudiocore::system::ProcessResult* pResult);
    
 // enque client events (note R methods can do this via .rs.enqueClientEvent)
 void enqueClientEvent(const ClientEvent& event);
 
 // check whether a directory is currently being monitored by one of our subsystems
-bool isDirectoryMonitored(const core::FilePath& directory);
+bool isDirectoryMonitored(const rstudiocore::FilePath& directory);
 
 // check whether an R source file belongs to the package under development
-bool isRScriptInPackageBuildTarget(const core::FilePath& filePath);
+bool isRScriptInPackageBuildTarget(const rstudiocore::FilePath& filePath);
 
 // convenience method for filtering out file listing and changes
-bool fileListingFilter(const core::FileInfo& fileInfo);
+bool fileListingFilter(const rstudiocore::FileInfo& fileInfo);
 
 // enque file changed events
-void enqueFileChangedEvent(const core::system::FileChangeEvent& event);
-void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
-                            const std::vector<core::system::FileChangeEvent>& events);
+void enqueFileChangedEvent(const rstudiocore::system::FileChangeEvent& event);
+void enqueFileChangedEvents(const rstudiocore::FilePath& vcsStatusRoot,
+                            const std::vector<rstudiocore::system::FileChangeEvent>& events);
 
 
 // register a scratch path which is monitored.
-typedef boost::function<void(const core::system::FileChangeEvent&)> OnFileChange;
-core::FilePath registerMonitoredUserScratchDir(const std::string& dirName,
+typedef boost::function<void(const rstudiocore::system::FileChangeEvent&)> OnFileChange;
+rstudiocore::FilePath registerMonitoredUserScratchDir(const std::string& dirName,
                                                const OnFileChange& onFileChange);
 
 // write output to the console (convenience wrapper for enquing a 
@@ -389,11 +389,11 @@ void consoleWriteError(const std::string& message);
 // show an error dialog (convenience wrapper for enquing kShowErrorMessage)
 void showErrorMessage(const std::string& title, const std::string& message);
 
-void showFile(const core::FilePath& filePath,
+void showFile(const rstudiocore::FilePath& filePath,
               const std::string& window = "_blank");
 
 
-void showContent(const std::string& title, const core::FilePath& filePath);
+void showContent(const std::string& title, const rstudiocore::FilePath& filePath);
 
 std::string resourceFileAsString(const std::string& fileName);
 
@@ -401,8 +401,8 @@ bool portmapPathForLocalhostUrl(const std::string& url, std::string* pPath);
 
 std::string mapUrlPorts(const std::string& url);
 
-std::string pathRelativeTo(const core::FilePath& sourcePath,
-                           const core::FilePath& targetPath);
+std::string pathRelativeTo(const rstudiocore::FilePath& sourcePath,
+                           const rstudiocore::FilePath& targetPath);
 
 void activatePane(const std::string& pane);
 
@@ -417,7 +417,7 @@ bool haveRcppAttributes();
 #ifdef __APPLE__
 bool isOSXMavericks();
 bool hasOSXMavericksDeveloperTools();
-core::Error copyImageToCocoaPasteboard(const core::FilePath& filePath);
+rstudiocore::Error copyImageToCocoaPasteboard(const rstudiocore::FilePath& filePath);
 #else
 inline bool isOSXMavericks()
 {
@@ -427,9 +427,9 @@ inline bool hasOSXMavericksDeveloperTools()
 {
    return false;
 }
-inline core::Error copyImageToCocoaPasteboard(const core::FilePath& filePath)
+inline rstudiocore::Error copyImageToCocoaPasteboard(const rstudiocore::FilePath& filePath)
 {
-   return core::systemError(boost::system::errc::not_supported, ERROR_LOCATION);
+   return rstudiocore::systemError(boost::system::errc::not_supported, ERROR_LOCATION);
 }
 #endif
 
@@ -440,17 +440,17 @@ struct VcsContext
    std::string svnRepositoryRoot;
    std::string gitRemoteOriginUrl;
 };
-VcsContext vcsContext(const core::FilePath& workingDir);
+VcsContext vcsContext(const rstudiocore::FilePath& workingDir);
 
 std::string normalizeVcsOverride(const std::string& vcsOverride);
 
-core::FilePath shellWorkingDirectory();
+rstudiocore::FilePath shellWorkingDirectory();
 
 // persist state accross suspend and resume
    
 typedef boost::function<void (const r::session::RSuspendOptions&,
-                              core::Settings*)> SuspendFunction;
-typedef boost::function<void(const core::Settings&)> ResumeFunction;
+                              rstudiocore::Settings*)> SuspendFunction;
+typedef boost::function<void(const rstudiocore::Settings&)> ResumeFunction;
 
 class SuspendHandler
 {
@@ -490,10 +490,10 @@ struct CompileOutput
    std::string output;
 };
 
-core::json::Object compileOutputAsJson(const CompileOutput& compileOutput);
+rstudiocore::json::Object compileOutputAsJson(const CompileOutput& compileOutput);
 
 
-std::string previousRpubsUploadId(const core::FilePath& filePath);
+std::string previousRpubsUploadId(const rstudiocore::FilePath& filePath);
 
 std::string CRANReposURL();
 
@@ -584,16 +584,16 @@ struct PackratContext
 bool isRequiredPackratInstalled();
 
 PackratContext packratContext();
-core::json::Object packratContextAsJson();
+rstudiocore::json::Object packratContextAsJson();
 
-core::json::Object packratOptionsAsJson();
+rstudiocore::json::Object packratOptionsAsJson();
 
 // R command invocation -- has two representations, one to be submitted
 // (shellCmd_) and one to show the user (cmdString_)
 class RCommand
 {
 public:
-   explicit RCommand(const core::FilePath& rBinDir)
+   explicit RCommand(const rstudiocore::FilePath& rBinDir)
       : shellCmd_(buildRCmd(rBinDir))
    {
 #ifdef _WIN32
@@ -605,7 +605,7 @@ public:
       // set escape mode to files-only. this is so that when we
       // add the group of extra arguments from the user that we
       // don't put quotes around it.
-      shellCmd_ << core::shell_utils::EscapeFilesOnly;
+      shellCmd_ << rstudiocore::shell_utils::EscapeFilesOnly;
    }
 
    RCommand& operator<<(const std::string& arg)
@@ -618,7 +618,7 @@ public:
       return *this;
    }
 
-   RCommand& operator<<(const core::FilePath& arg)
+   RCommand& operator<<(const rstudiocore::FilePath& arg)
    {
       cmdString_ += " " + arg.absolutePath();
       shellCmd_ << arg;
@@ -631,18 +631,18 @@ public:
       return cmdString_;
    }
 
-   const core::shell_utils::ShellCommand& shellCommand() const
+   const rstudiocore::shell_utils::ShellCommand& shellCommand() const
    {
       return shellCmd_;
    }
 
 private:
-   static core::shell_utils::ShellCommand buildRCmd(
-                                 const core::FilePath& rBinDir);
+   static rstudiocore::shell_utils::ShellCommand buildRCmd(
+                                 const rstudiocore::FilePath& rBinDir);
 
 private:
    std::string cmdString_;
-   core::shell_utils::ShellCommand shellCmd_;
+   rstudiocore::shell_utils::ShellCommand shellCmd_;
 };
 
 
@@ -661,8 +661,8 @@ public:
 
    const std::string& sessionTempPath() const { return sessionTempPath_; }
 
-   core::Error copy(const core::FilePath& sourceDir,
-                    const core::FilePath& destinationDir) const;
+   rstudiocore::Error copy(const rstudiocore::FilePath& sourceDir,
+                    const rstudiocore::FilePath& destinationDir) const;
 
 private:
    std::string sessionTempPath_;
@@ -670,21 +670,21 @@ private:
 
 void addViewerHistoryEntry(const ViewerHistoryEntry& entry);
 
-core::Error recursiveCopyDirectory(const core::FilePath& fromDir,
-                                   const core::FilePath& toDir);
+rstudiocore::Error recursiveCopyDirectory(const rstudiocore::FilePath& fromDir,
+                                   const rstudiocore::FilePath& toDir);
 
 std::string sessionTempDirUrl(const std::string& sessionTempPath);
 
-core::Error uniqueSaveStem(const core::FilePath& directoryPath,
+rstudiocore::Error uniqueSaveStem(const rstudiocore::FilePath& directoryPath,
                            const std::string& base,
                            std::string* pStem);
 
-core::json::Object plotExportFormat(const std::string& name,
+rstudiocore::json::Object plotExportFormat(const std::string& name,
                                     const std::string& extension);
 
 
-core::Error createSelfContainedHtml(const core::FilePath& sourceFilePath,
-                                    const core::FilePath& targetFilePath);
+rstudiocore::Error createSelfContainedHtml(const rstudiocore::FilePath& sourceFilePath,
+                                    const rstudiocore::FilePath& targetFilePath);
 
 } // namespace module_context
 } // namespace session

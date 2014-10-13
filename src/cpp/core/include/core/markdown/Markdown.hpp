@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace core {
+namespace rstudiocore {
 
 class Error;
 class FilePath;
@@ -102,7 +102,7 @@ Error markdownToHTML(const std::string& markdownInput,
 bool isMathJaxRequired(const std::string& htmlOutput);
 
 } // namespace markdown
-} // namespace core 
+} // namespace rstudiocore 
 
 #endif // CORE_MARKDOWN_MARKDOWN_HPP
 

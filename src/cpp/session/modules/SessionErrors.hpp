@@ -18,7 +18,7 @@
 
 #include <core/json/Json.hpp>
 
-namespace core {
+namespace rstudiocore {
    class Error;
 }
 
@@ -34,8 +34,8 @@ const int ERRORS_TRACEBACK = 1;
 const int ERRORS_BREAK = 2;
 const int ERRORS_CUSTOM = 3;
 
-core::Error initialize();
-core::json::Value errorStateAsJson();
+rstudiocore::Error initialize();
+rstudiocore::json::Value errorStateAsJson();
 
 } // namespace errors
 } // namepace modules

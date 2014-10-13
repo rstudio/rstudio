@@ -39,7 +39,7 @@
       handleUnexpectedError("Unknown exception", ERROR_LOCATION); \
    }
 
-namespace core {
+namespace rstudiocore {
 namespace http {  
 
 class TcpIpAsyncConnector :
@@ -48,7 +48,7 @@ class TcpIpAsyncConnector :
 {
 public:
    typedef boost::function<void()> ConnectedHandler;
-   typedef boost::function<void(const core::Error&)> ErrorHandler;
+   typedef boost::function<void(const rstudiocore::Error&)> ErrorHandler;
 
 public:
    TcpIpAsyncConnector(boost::asio::io_service& ioService,
@@ -166,6 +166,6 @@ private:
 };
 
 } // namespace http
-} // namespace core
+} // namespace rstudiocore
 
 #endif // CORE_HTTP_TCP_IP_ASYNC_CONNECTOR_HPP

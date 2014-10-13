@@ -34,7 +34,7 @@
 #define kRStudioInitialEnvironment     "RS_INITIAL_ENV"
 #define kRStudioInitialProject         "RS_INITIAL_PROJECT"
 
-namespace core {
+namespace rstudiocore {
 namespace r_util {
 
 enum SessionType
@@ -69,7 +69,7 @@ RVersionInfo nextSessionRVersion(SessionType sessionType,
                                  const std::string& homePath = std::string());
 
 } // namespace r_util
-} // namespace core 
+} // namespace rstudiocore 
 
 
 #endif // CORE_R_UTIL_R_SESSION_CONTEXT_HPP

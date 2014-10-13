@@ -18,7 +18,7 @@
 
 #include <core/json/Json.hpp>
 
-namespace core {
+namespace rstudiocore {
    class Error;
 }
  
@@ -26,7 +26,7 @@ namespace session {
 namespace modules { 
 namespace shiny {
 
-core::Error initialize();
+rstudiocore::Error initialize();
                        
 } // namespace shiny
 } // namespace modules

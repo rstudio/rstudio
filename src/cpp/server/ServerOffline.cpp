@@ -28,7 +28,7 @@
 #include <server/ServerOptions.hpp>
 #include <server/ServerUriHandlers.hpp>
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace server {
 namespace offline {

@@ -23,9 +23,9 @@ namespace session {
 namespace modules {
 namespace find {
 
-core::json::Object findInFilesStateAsJson();
+rstudiocore::json::Object findInFilesStateAsJson();
 
-core::Error initialize();
+rstudiocore::Error initialize();
 
 } // namespace find
 } // namespace modules

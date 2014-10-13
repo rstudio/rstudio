@@ -58,7 +58,7 @@ extern "C" BOOL WINAPI ConvertStringSecurityDescriptorToSecurityDescriptorA(
 
 #include "SessionHttpConnectionUtils.hpp"
 
-using namespace core ;
+using namespace rstudiocore ;
 
 #define kReadBufferSize 4096
 
@@ -84,7 +84,7 @@ public:
 
    bool readRequest()
    {
-      core::http::RequestParser parser;
+      rstudiocore::http::RequestParser parser;
       CHAR buff[kReadBufferSize];
       DWORD bytesRead;
 
@@ -97,7 +97,7 @@ public:
          if (!result)
          {
             Error error = systemError(::GetLastError(), ERROR_LOCATION);
-            if (!core::http::isConnectionTerminatedError(error))
+            if (!rstudiocore::http::isConnectionTerminatedError(error))
                LOG_ERROR(error);
 
             close();
@@ -111,8 +111,8 @@ public:
          {
             LOG_WARNING_MESSAGE("ReadFile returned 0 bytes");
 
-            core::http::Response response;
-            response.setStatusCode(core::http::status::BadRequest);
+            rstudiocore::http::Response response;
+            response.setStatusCode(rstudiocore::http::status::BadRequest);
             sendResponse(response);
 
             return false;
@@ -128,17 +128,17 @@ public:
                                                    buff + bytesRead);
 
             // error - return bad request
-            if (status == core::http::RequestParser::error)
+            if (status == rstudiocore::http::RequestParser::error)
             {
-               core::http::Response response;
-               response.setStatusCode(core::http::status::BadRequest);
+               rstudiocore::http::Response response;
+               response.setStatusCode(rstudiocore::http::status::BadRequest);
                sendResponse(response);
 
                return false;
             }
 
             // incomplete -- keep reading
-            else if (status == core::http::RequestParser::incomplete)
+            else if (status == rstudiocore::http::RequestParser::incomplete)
             {
                continue;
             }
@@ -156,13 +156,13 @@ public:
       return false;
    }
 
-   virtual const core::http::Request& request() { return request_; }
+   virtual const rstudiocore::http::Request& request() { return request_; }
 
-   virtual void sendResponse(const core::http::Response &response)
+   virtual void sendResponse(const rstudiocore::http::Response &response)
    {
       // get the buffers
       std::vector<boost::asio::const_buffer> buffers =response.toBuffers(
-                                        core::http::Header::connectionClose());
+                                        rstudiocore::http::Header::connectionClose());
 
       // write them
       DWORD bytesWritten;
@@ -183,7 +183,7 @@ public:
             error.addProperty("request-uri", request_.uri());
 
             // log the error if it wasn't connection terminated
-            if (!core::http::isConnectionTerminatedError(error))
+            if (!rstudiocore::http::isConnectionTerminatedError(error))
                LOG_ERROR(error);
 
             // close and terminate
@@ -218,7 +218,7 @@ public:
 
 private:
    HANDLE hPipe_;
-   core::http::Request request_;
+   rstudiocore::http::Request request_;
    std::string requestId_;
 };
 
@@ -236,7 +236,7 @@ public:
 
    virtual Error start()
    {
-      core::thread::safeLaunchThread(
+      rstudiocore::thread::safeLaunchThread(
          boost::bind(&NamedPipeHttpConnectionListener::listenerThread,
                      this));
 
@@ -286,7 +286,7 @@ private:
 
             // set pipe mode, specify rejection of remote clients if >= vista
             DWORD dwPipeMode = PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT;
-            if (core::system::isVistaOrLater())
+            if (rstudiocore::system::isVistaOrLater())
                 dwPipeMode |= PIPE_REJECT_REMOTE_CLIENTS;
 
             // create pipe
@@ -345,7 +345,7 @@ private:
 
       if (!authenticate(ptrHttpConnection))
       {
-         core::http::Response response;
+         rstudiocore::http::Response response;
          response.setStatusCode(403);
          response.setStatusMessage("Forbidden");
          ptrConnection->sendResponse(response);
@@ -382,7 +382,7 @@ private:
       return connection::authenticate(ptrConnection, secret_);
    }
 
-   core::Error cleanup()
+   rstudiocore::Error cleanup()
    {
       return Success();
    }
@@ -419,13 +419,13 @@ private:
       }
    }
 
-   static core::Error logonSessionOnlyDescriptor(std::string* pDescriptor)
+   static rstudiocore::Error logonSessionOnlyDescriptor(std::string* pDescriptor)
    {
       // token for current process
       HANDLE hToken = NULL;
       if (!OpenProcessToken(::GetCurrentProcess(), TOKEN_QUERY, &hToken))
          return systemError(::GetLastError(), ERROR_LOCATION);
-      core::system::CloseHandleOnExitScope tokenScope(&hToken, ERROR_LOCATION);
+      rstudiocore::system::CloseHandleOnExitScope tokenScope(&hToken, ERROR_LOCATION);
 
       // size of token groups structure (note that we exepct the error
       // since we pass NULL for the token information buffer)

@@ -27,7 +27,7 @@ int main(int argc, char** argv)
    try
    {
       // initialize log
-      initializeSystemLog("urlopener", core::system::kLogLevelWarning);
+      initializeSystemLog("urlopener", rstudiocore::system::kLogLevelWarning);
 
       // check arguments
       if (argc < 2)

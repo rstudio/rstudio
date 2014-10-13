@@ -35,7 +35,7 @@
 #define RUN_DIAGNOSTICS_LOG(message) if (desktop::options().runDiagnostics()) \
              std::cout << (message) << std::endl;
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace desktop {
 
@@ -61,7 +61,7 @@ FilePath abendLogPath()
 
 void logEnvVar(const std::string& name)
 {
-   std::string value = core::system::getenv(name);
+   std::string value = rstudiocore::system::getenv(name);
    if (!value.empty())
       RUN_DIAGNOSTICS_LOG("  " + name + "=" + value);
 }
@@ -302,7 +302,7 @@ QString SessionLauncher::collectAbendLogMessage() const
    FilePath abendLog = abendLogPath();
    if (abendLog.exists())
    {
-      Error error = core::readStringFromFile(abendLog, &contents);
+      Error error = rstudiocore::readStringFromFile(abendLog, &contents);
       if (error)
          LOG_ERROR(error);
 

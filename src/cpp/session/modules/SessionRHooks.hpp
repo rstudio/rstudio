@@ -18,7 +18,7 @@
 
 #define kSessionInitHook "rstudio.sessionInit"
 
-namespace core {
+namespace rstudiocore {
    class Error;
 }
 
@@ -26,11 +26,11 @@ namespace session {
 namespace modules { 
 namespace rhooks {
 
-core::Error initialize();
+rstudiocore::Error initialize();
 
 // thin wrapper around hook invocation 
 template<typename ParamType> 
-core::Error invokeHook(const std::string& hookName, const ParamType& param)
+rstudiocore::Error invokeHook(const std::string& hookName, const ParamType& param)
 {
    return r::exec::RFunction(".rs.invokeHook", hookName, param).call();
 }

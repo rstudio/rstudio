@@ -80,10 +80,10 @@ protected:
    // COPYING: boost::noncopyable
    
 public:
-   virtual core::Error start()
+   virtual rstudiocore::Error start()
    {
       // cleanup any existing networking state
-      core::Error error = cleanup();
+      rstudiocore::Error error = cleanup();
       if (error)
          return error ;
 
@@ -97,7 +97,7 @@ public:
 
       // block all signals for launch of listener thread (will cause it
       // to never receive signals)
-      core::system::SignalBlocker signalBlocker;
+      rstudiocore::system::SignalBlocker signalBlocker;
       error = signalBlocker.blockAll();
       if (error)
          return error ;
@@ -113,11 +113,11 @@ public:
          // set started flag
          started_ = true;
 
-         return core::Success();
+         return rstudiocore::Success();
       }
       catch(const boost::thread_resource_error& e)
       {
-         return core::Error(boost::thread_error::ec_from_exception(e),
+         return rstudiocore::Error(boost::thread_error::ec_from_exception(e),
                             ERROR_LOCATION);
       }
    }
@@ -136,7 +136,7 @@ public:
       boost::system::error_code ec ;
       acceptorService_.closeAcceptor(ec);
       if (ec)
-         LOG_ERROR(core::Error(ec, ERROR_LOCATION));
+         LOG_ERROR(rstudiocore::Error(ec, ERROR_LOCATION));
 
       // stop the server
       ioService().stop();
@@ -154,7 +154,7 @@ public:
       }
 
       // allow subclass specific cleanup
-      core::Error error = cleanup();
+      rstudiocore::Error error = cleanup();
       if (error)
          LOG_ERROR(error);
    }
@@ -179,13 +179,13 @@ protected:
 
 private:
    // required subclass hooks
-   virtual core::Error initializeAcceptor(
-             core::http::SocketAcceptorService<ProtocolType>* pAcceptor) = 0;
+   virtual rstudiocore::Error initializeAcceptor(
+             rstudiocore::http::SocketAcceptorService<ProtocolType>* pAcceptor) = 0;
 
    virtual bool validateConnection(
       boost::shared_ptr<HttpConnectionImpl<ProtocolType> > ptrConnection) = 0;
 
-   virtual core::Error cleanup() = 0 ;
+   virtual rstudiocore::Error cleanup() = 0 ;
 
 private:
    boost::asio::io_service& ioService() { return acceptorService_.ioService(); }
@@ -234,7 +234,7 @@ private:
             // for errors, log and continue,but don't log errors caused
             // by normal course of socket shutdown
             if (!isShutdownError(ec))
-               LOG_ERROR(core::Error(ec, ERROR_LOCATION)) ;
+               LOG_ERROR(rstudiocore::Error(ec, ERROR_LOCATION)) ;
          }
       }
       catch(const boost::system::system_error& e)
@@ -262,7 +262,7 @@ private:
 
       if (!authenticate(ptrHttpConnection))
       {
-         core::http::Response response;
+         rstudiocore::http::Response response;
          response.setStatusCode(403);
          response.setStatusMessage("Forbidden");
          ptrConnection->sendResponse(response);
@@ -297,7 +297,7 @@ private:
 private:
 
    // acceptor service (includes io service)
-   core::http::SocketAcceptorService<ProtocolType> acceptorService_;
+   rstudiocore::http::SocketAcceptorService<ProtocolType> acceptorService_;
 
    // next connection
    boost::shared_ptr<HttpConnectionImpl<ProtocolType> > ptrNextConnection_;

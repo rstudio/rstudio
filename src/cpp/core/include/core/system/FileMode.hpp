@@ -26,7 +26,7 @@
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace system {
 
 enum FileMode
@@ -147,6 +147,6 @@ inline Error getFileMode(const FilePath& filePath, FileMode* pFileMode)
 
 
 } // namespace system
-} // namespace core
+} // namespace rstudiocore
 
 #endif // CORE_SYSTEM_FILE_MODE_HPP

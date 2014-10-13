@@ -23,7 +23,7 @@
 
 #include <boost/asio/buffer.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace http {  
 
 class Socket
@@ -44,6 +44,6 @@ public:
 };
 
 } // namespace http
-} // namespace core
+} // namespace rstudiocore
 
 #endif // CORE_HTTP_SOCKET_HPP

@@ -80,16 +80,16 @@ std::string RErrorCategory::message( int ev ) const
 	return message ;
 }
 
-core::Error rCodeExecutionError(const std::string& errMsg, 
-                                const core::ErrorLocation& location)
+rstudiocore::Error rCodeExecutionError(const std::string& errMsg, 
+                                const rstudiocore::ErrorLocation& location)
 {
-   core::Error error(errc::CodeExecutionError, location);
+   rstudiocore::Error error(errc::CodeExecutionError, location);
    error.addProperty("errormsg", errMsg);
    return error;
 }
    
    
-bool isCodeExecutionError(const core::Error& error, std::string* pErrMsg)
+bool isCodeExecutionError(const rstudiocore::Error& error, std::string* pErrMsg)
 {
    if (error.code() == r::errc::CodeExecutionError)
    {
@@ -103,7 +103,7 @@ bool isCodeExecutionError(const core::Error& error, std::string* pErrMsg)
    }
 }
    
-std::string endUserErrorMessage(const core::Error& error)
+std::string endUserErrorMessage(const rstudiocore::Error& error)
 {
    std::string errMsg;
    if (isCodeExecutionError(error, &errMsg))

@@ -24,7 +24,7 @@
 
 #include <core/SafeConvert.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace http {
   
 // encodings
@@ -240,6 +240,6 @@ std::ostream& operator << (std::ostream& stream, const Message& m)
 
 
 } // namespace http
-} // namespace core
+} // namespace rstudiocore
 
 

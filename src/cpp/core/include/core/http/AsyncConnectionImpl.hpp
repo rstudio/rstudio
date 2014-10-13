@@ -34,7 +34,7 @@
 #include <core/http/RequestParser.hpp>
 #include <core/http/AsyncConnection.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace http {
    
 template <typename ProtocolType>
@@ -143,7 +143,7 @@ public:
    virtual void close()
    {
       Error error = closeSocket(socket_);
-      if (error && !core::http::isConnectionTerminatedError(error))
+      if (error && !rstudiocore::http::isConnectionTerminatedError(error))
          LOG_ERROR(error);
    }
    
@@ -257,7 +257,7 @@ private:
    
 
 } // namespace http
-} // namespace core
+} // namespace rstudiocore
 
 #endif // CORE_HTTP_ASYNC_CONNECTION_IMPL_HPP
 

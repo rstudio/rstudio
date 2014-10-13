@@ -25,7 +25,7 @@
 #include <core/FilePath.hpp>
 #include <core/system/Environment.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace r_util {
 
 class RToolsInfo
@@ -68,13 +68,13 @@ void prependToSystemPath(const RToolsInfo& toolsInfo, T* pTarget)
    {
       std::string path = it->absolutePath();
       boost::algorithm::replace_all(path, "/", "\\");
-      core::system::addToPath(pTarget, path, true);
+      rstudiocore::system::addToPath(pTarget, path, true);
    }
 }
 
 
 } // namespace r_util
-} // namespace core 
+} // namespace rstudiocore 
 
 
 #endif // CORE_R_UTIL_R_TOOLS_INFO_HPP

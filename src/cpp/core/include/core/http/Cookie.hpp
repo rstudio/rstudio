@@ -21,7 +21,7 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include "Request.hpp"
 
-namespace core {
+namespace rstudiocore {
 namespace http {
 
 class Cookie
@@ -68,7 +68,7 @@ private:
 
 
 } // namespace http
-} // namespace core 
+} // namespace rstudiocore 
 
 
 #endif // CORE_HTTP_COOKIE_HTTP

@@ -28,7 +28,7 @@
 #include "EvinceDaemon.hpp"
 #include "EvinceWindow.hpp"
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace desktop {
 namespace synctex {
@@ -41,7 +41,7 @@ void logDBusError(const QDBusError& error, const ErrorLocation& location)
    std::string msg = boost::str(fmt % error.type() %
                                       error.name().toStdString() %
                                       error.message().toStdString());
-   core::log::logErrorMessage(msg, location);
+   rstudiocore::log::logErrorMessage(msg, location);
 }
 
 } // anonymous namespace
@@ -160,7 +160,7 @@ void EvinceSynctex::syncView(EvinceWindow* pWindow,
    QDBusPendingReply<> reply = pWindow->SyncView(
                                        srcFile,
                                        srcLoc,
-                                       core::date_time::secondsSinceEpoch());
+                                       rstudiocore::date_time::secondsSinceEpoch());
 
    // wait for the results asynchronously
    QDBusPendingCallWatcher* pWatcher = new QDBusPendingCallWatcher(reply,

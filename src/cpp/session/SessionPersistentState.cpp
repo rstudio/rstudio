@@ -23,7 +23,7 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
 
-using namespace core ;
+using namespace rstudiocore ;
 
 namespace session {  
 
@@ -72,7 +72,7 @@ std::string PersistentState::newActiveClientId()
 {
    if (serverMode_)
    {
-      std::string newId = core::system::generateUuid();
+      std::string newId = rstudiocore::system::generateUuid();
       settings_.set(kActiveClientId, newId);
       return newId;
    }

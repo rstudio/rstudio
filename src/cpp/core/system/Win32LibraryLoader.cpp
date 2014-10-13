@@ -19,7 +19,7 @@
 
 #include <core/Error.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace system {
 
 Error loadLibrary(const std::string& libPath, int options, void** ppLib)
@@ -64,4 +64,4 @@ Error closeLibrary(void* pLib)
 }
 
 } // namespace system
-} // namespace core
+} // namespace rstudiocore

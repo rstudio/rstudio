@@ -34,7 +34,7 @@
 
 #include "PresentationState.hpp"
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace session {
 namespace modules { 
@@ -212,7 +212,7 @@ Error ensureTargetFile(const std::string& filename,
    *pTargetFile = presDir.childPath(filename);
    if (!pTargetFile->exists())
    {
-      Error error = core::writeStringToFile(*pTargetFile, header + "\n");
+      Error error = rstudiocore::writeStringToFile(*pTargetFile, header + "\n");
       if (error)
          return error;
    }
@@ -276,7 +276,7 @@ void Log::append(EntryType type,
    std::vector<std::string> fields;
    fields.push_back((type == NavigationEntry) ? "Navigation" : "Input");
    fields.push_back(timestamp());
-   fields.push_back(csvString(core::system::username()));
+   fields.push_back(csvString(rstudiocore::system::username()));
    fields.push_back(csvPresentationPath());
    fields.push_back(safe_convert::numberToString(slideIndex));
    fields.push_back(slideType);
@@ -287,7 +287,7 @@ void Log::append(EntryType type,
    std::string entry = boost::algorithm::join(fields, ",");
 
    // append entry
-   error = core::appendToFile(logFilePath, entry + "\n");
+   error = rstudiocore::appendToFile(logFilePath, entry + "\n");
    if (error)
       LOG_ERROR(error);
 }
@@ -313,14 +313,14 @@ void Log::recordFeedback(const std::string& feedback)
    // generate entry
    std::vector<std::string> fields;
    fields.push_back(timestamp());
-   fields.push_back(csvString(core::system::username()));
+   fields.push_back(csvString(rstudiocore::system::username()));
    fields.push_back(csvPresentationPath());
    fields.push_back(safe_convert::numberToString(currentSlideIndex_));
    fields.push_back(csvString(feedback));
    std::string entry = boost::algorithm::join(fields, ",");
 
    // append entry
-   error = core::appendToFile(feedbackFilePath, entry + "\n");
+   error = rstudiocore::appendToFile(feedbackFilePath, entry + "\n");
    if (error)
       LOG_ERROR(error);
 }
@@ -347,7 +347,7 @@ void Log::recordQuizResponse(int index, int answer, bool correct)
    // generate entry
    std::vector<std::string> fields;
    fields.push_back(timestamp());
-   fields.push_back(csvString(core::system::username()));
+   fields.push_back(csvString(rstudiocore::system::username()));
    fields.push_back(csvPresentationPath());
    fields.push_back(safe_convert::numberToString(index));
    fields.push_back(safe_convert::numberToString(answer));
@@ -355,7 +355,7 @@ void Log::recordQuizResponse(int index, int answer, bool correct)
    std::string entry = boost::algorithm::join(fields, ",");
 
    // append entry
-   error = core::appendToFile(quizResponseFilePath, entry + "\n");
+   error = rstudiocore::appendToFile(quizResponseFilePath, entry + "\n");
    if (error)
       LOG_ERROR(error);
 }

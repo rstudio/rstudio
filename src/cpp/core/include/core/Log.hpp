@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace core {
+namespace rstudiocore {
 
 class Error ;
 class ErrorLocation ;
@@ -44,23 +44,23 @@ void logDebugMessage(const std::string& message);
 std::string errorAsLogEntry(const Error& error);  
   
 } // namespace log
-} // namespace core 
+} // namespace rstudiocore 
 
 // Macros for automatic inclusion of ERROR_LOCATION and easy ability to 
 // compile out logging calls
 
-#define LOG_ERROR(error) core::log::logError(error, ERROR_LOCATION) 
+#define LOG_ERROR(error) rstudiocore::log::logError(error, ERROR_LOCATION) 
 
-#define LOG_ERROR_MESSAGE(message) core::log::logErrorMessage(message, \
+#define LOG_ERROR_MESSAGE(message) rstudiocore::log::logErrorMessage(message, \
                                                               ERROR_LOCATION)
 
-#define LOG_WARNING_MESSAGE(message) core::log::logWarningMessage( \
+#define LOG_WARNING_MESSAGE(message) rstudiocore::log::logWarningMessage( \
                                                                message, \
                                                                ERROR_LOCATION)
 
-#define LOG_INFO_MESSAGE(message) core::log::logInfoMessage(message)
+#define LOG_INFO_MESSAGE(message) rstudiocore::log::logInfoMessage(message)
 
-#define LOG_DEBUG_MESSAGE(message) core::log::logDebugMessage(message)
+#define LOG_DEBUG_MESSAGE(message) rstudiocore::log::logDebugMessage(message)
 
 #endif // CORE_LOG_HPP
 

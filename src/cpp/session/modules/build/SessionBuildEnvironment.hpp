@@ -20,7 +20,7 @@
 
 #include <core/system/Environment.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace r_util {
    class RToolsInfo;
 }
@@ -30,12 +30,12 @@ namespace session {
 namespace modules {
 namespace build {
 
-bool isRtoolsCompatible(const core::r_util::RToolsInfo& rTools);
+bool isRtoolsCompatible(const rstudiocore::r_util::RToolsInfo& rTools);
 
 bool addRtoolsToPathIfNecessary(std::string* pPath,
                                 std::string* pWarningMessage);
 
-bool addRtoolsToPathIfNecessary(core::system::Options* pEnvironment,
+bool addRtoolsToPathIfNecessary(rstudiocore::system::Options* pEnvironment,
                                 std::string* pWarningMessage);
 
 } // namespace build

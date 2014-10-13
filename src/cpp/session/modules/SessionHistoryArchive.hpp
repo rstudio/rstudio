@@ -21,7 +21,7 @@
 
 #include <boost/utility.hpp>
 
-namespace core {
+namespace rstudiocore {
    class Error;
    class FilePath;
 }
@@ -55,7 +55,7 @@ public:
    static void migrateRhistoryIfNecessary();
 
 public:
-   core::Error add(const std::string& command);
+   rstudiocore::Error add(const std::string& command);
    const std::vector<HistoryEntry>& entries() const;
 
 private:

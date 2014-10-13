@@ -31,7 +31,7 @@
 #define kRScriptPath "Resources/bin/R"
 #endif
 
-namespace core {
+namespace rstudiocore {
 namespace r_util {
 
 namespace {
@@ -57,7 +57,7 @@ std::ostream& operator<<(std::ostream& os, const RVersion& version)
       os << " [default]";
    os << std::endl;
    os << version.homeDir() << std::endl;
-   BOOST_FOREACH(const core::system::Option& option, version.environment)
+   BOOST_FOREACH(const rstudiocore::system::Option& option, version.environment)
    {
       os << option.first << "=" << option.second << std::endl;
    }
@@ -113,7 +113,7 @@ std::vector<RVersion> enumerateRVersions(
    BOOST_FOREACH(const FilePath& rScriptPath, rScriptPaths)
    {
       std::string rDiscoveredScriptPath, rVersion, errMsg;
-      core::system::Options env;
+      rstudiocore::system::Options env;
       if (detectREnvironment(rScriptPath,
                              ldPathsScript,
                              ldLibraryPath,
@@ -147,27 +147,27 @@ std::vector<RVersion> enumerateRVersions(
    {
       if (!versionPath.isHidden() && (versionPath.filename() != "Current"))
       {
-         using namespace core::system;
-         core::system::Options env;
+         using namespace rstudiocore::system;
+         rstudiocore::system::Options env;
          FilePath rHomePath = versionPath.childPath("Resources");
          FilePath rLibPath = rHomePath.childPath("lib");
-         core::system::setenv(&env, "R_HOME", rHomePath.absolutePath());
-         core::system::setenv(&env,
+         rstudiocore::system::setenv(&env, "R_HOME", rHomePath.absolutePath());
+         rstudiocore::system::setenv(&env,
                               "R_SHARE_DIR",
                               rHomePath.childPath("share").absolutePath());
-         core::system::setenv(&env,
+         rstudiocore::system::setenv(&env,
                               "R_INCLUDE_DIR",
                                rHomePath.childPath("include").absolutePath());
-         core::system::setenv(&env,
+         rstudiocore::system::setenv(&env,
                               "R_DOC_DIR",
                                rHomePath.childPath("doc").absolutePath());
-         core::system::setenv(&env,
+         rstudiocore::system::setenv(&env,
                               "DYLD_FALLBACK_LIBRARY_PATH",
                               r_util::rLibraryPath(rHomePath,
                                                    rLibPath,
                                                    ldPathsScript,
                                                    ldLibraryPath));
-         core::system::setenv(&env, "R_ARCH", "/x86_64");
+         rstudiocore::system::setenv(&env, "R_ARCH", "/x86_64");
 
          RVersion version;
          version.number = versionPath.filename();
@@ -285,7 +285,7 @@ RVersion selectVersion(const RVersionInfo& matchVersion,
 
 
 } // namespace r_util
-} // namespace core 
+} // namespace rstudiocore 
 
 
 

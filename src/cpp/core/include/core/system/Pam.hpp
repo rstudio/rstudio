@@ -19,7 +19,7 @@
 
 #include <boost/utility.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace system {
 
 // NOTE: Mac OS X supports PAM but ships with it in a locked-down config
@@ -55,4 +55,4 @@ protected:
 };
 
 } // namespace system
-} // namespace core
+} // namespace rstudiocore

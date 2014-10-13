@@ -18,7 +18,7 @@
 
 #include <core/json/Json.hpp>
 
-namespace core {
+namespace rstudiocore {
    class Error;
 }
  
@@ -26,9 +26,9 @@ namespace session {
 namespace modules { 
 namespace crypto {
    
-core::json::Object publicKeyInfoJson();
+rstudiocore::json::Object publicKeyInfoJson();
 
-core::Error initialize();
+rstudiocore::Error initialize();
                        
 } // namespace crypto
 } // namespace modules

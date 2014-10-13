@@ -20,14 +20,14 @@
 
 #include <boost/function.hpp>
 
-namespace core {
+namespace rstudiocore {
 
 class Error ;   
    
 class ExecBlock
 {
 public:
-   typedef boost::function<core::Error()> Function ; 
+   typedef boost::function<rstudiocore::Error()> Function ; 
 
 public:
    ExecBlock() {}
@@ -42,10 +42,10 @@ public:
    EasyInit addFunctions() { return EasyInit(this); }
    
    // execute the block
-   core::Error execute() const;
+   rstudiocore::Error execute() const;
    
-   // allow an ExecBlock to act as a boost::function<core::Error()>
-   core::Error operator()() const;
+   // allow an ExecBlock to act as a boost::function<rstudiocore::Error()>
+   rstudiocore::Error operator()() const;
    
 public:
    // easy init helper class
@@ -66,7 +66,7 @@ private:
 };
    
 
-} // namespace core 
+} // namespace rstudiocore 
 
 #endif // CORE_EXEC_HPP
 

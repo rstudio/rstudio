@@ -34,7 +34,7 @@
 #include "DesktopUtils.hpp"
 #include "DesktopSessionLauncher.hpp"
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace desktop {
 

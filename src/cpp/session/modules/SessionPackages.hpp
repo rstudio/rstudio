@@ -16,7 +16,7 @@
 #ifndef SESSION_PACKAGES_HPP
 #define SESSION_PACKAGES_HPP
 
-namespace core {
+namespace rstudiocore {
    class Error;
 }
  
@@ -24,7 +24,7 @@ namespace session {
 namespace modules { 
 namespace packages {
    
-core::Error initialize();
+rstudiocore::Error initialize();
 void enquePackageStateChanged();
                        
 } // namespace packages

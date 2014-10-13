@@ -22,7 +22,7 @@
 #include <core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
 
-namespace core {
+namespace rstudiocore {
 
 Settings::Settings()
    : updatePending_(false),
@@ -38,7 +38,7 @@ Error Settings::initialize(const FilePath& filePath)
 {
    settingsFile_ = filePath ;
    settingsMap_.clear() ;
-   Error error = core::readStringMapFromFile(settingsFile_, &settingsMap_) ;
+   Error error = rstudiocore::readStringMapFromFile(settingsFile_, &settingsMap_) ;
    if (error)
    {
       // we don't consider file-not-found and error because it is a 
@@ -135,7 +135,7 @@ void Settings::endUpdate()
 void Settings::writeSettings() 
 {
    isDirty_ = false;
-   Error error = core::writeStringMapToFile(settingsFile_, settingsMap_) ; 
+   Error error = rstudiocore::writeStringMapToFile(settingsFile_, settingsMap_) ; 
    if (error)
      LOG_ERROR(error);
 }

@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace core {
+namespace rstudiocore {
    class FilePath;
 }
 
@@ -30,9 +30,9 @@ namespace rmarkdown {
 namespace presentation {
 
 void ammendResults(const std::string& formatName,
-                   core::FilePath& targetFile,
+                   rstudiocore::FilePath& targetFile,
                    int sourceLine,
-                   core::json::Object* pResultsJson);
+                   rstudiocore::json::Object* pResultsJson);
 
 
 } // namespace presentation

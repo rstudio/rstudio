@@ -30,7 +30,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace session {
 namespace modules { 
@@ -84,11 +84,11 @@ Error initializeOutputCapture()
 {
    // only capture stderr if it isn't connected to a  terminal
    boost::function<void(const std::string&)> stderrHandler;
-   if (!core::system::stderrIsTerminal())
+   if (!rstudiocore::system::stderrIsTerminal())
       stderrHandler = writeStandardError;
 
    // initialize
-   return core::system::captureStandardStreams(writeStandardOutput,
+   return rstudiocore::system::captureStandardStreams(writeStandardOutput,
                                                stderrHandler);
 }
 

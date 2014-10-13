@@ -33,7 +33,7 @@
 
 #include <core/r_util/RTokenizer.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace r_util {
 
 class RS4MethodParam
@@ -120,8 +120,8 @@ public:
    const std::string& name() const { return name_; }
    const std::vector<RS4MethodParam>& signature() const { return signature_; }
    const int braceLevel() const { return braceLevel_; }
-   int line() const { return core::safe_convert::numberTo<int>(line_,0); }
-   int column() const { return core::safe_convert::numberTo<int>(column_,0); }
+   int line() const { return rstudiocore::safe_convert::numberTo<int>(line_,0); }
+   int column() const { return rstudiocore::safe_convert::numberTo<int>(column_,0); }
 
    // support for RSourceIndex::search
 
@@ -192,7 +192,7 @@ public:
                   OutputIterator out) const
    {
       // perform the copy and transform to include context
-      core::algorithm::copy_transformed_if(
+      rstudiocore::algorithm::copy_transformed_if(
                 items_.begin(),
                 items_.end(),
                 out,
@@ -263,7 +263,7 @@ private:
 
 
 } // namespace r_util
-} // namespace core 
+} // namespace rstudiocore 
 
 
 #endif // CORE_R_UTIL_R_SOURCE_INDEX_HPP

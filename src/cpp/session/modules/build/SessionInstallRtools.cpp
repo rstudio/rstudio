@@ -29,7 +29,7 @@
 
 #include "SessionBuildEnvironment.hpp"
 
-using namespace core ;
+using namespace rstudiocore ;
 
 namespace session {  
 namespace modules {
@@ -37,7 +37,7 @@ namespace build {
 
 namespace {
 
-void onDownloadCompleted(const core::system::ProcessResult& result,
+void onDownloadCompleted(const rstudiocore::system::ProcessResult& result,
                          const std::string& version,
                          const FilePath& installerPath)
 {
@@ -84,7 +84,7 @@ Error installRtools()
       }
    }
    if (version.empty())
-      return core::pathNotFoundError(ERROR_LOCATION);
+      return rstudiocore::pathNotFoundError(ERROR_LOCATION);
 
    // R binary
    FilePath rProgramPath;
@@ -118,7 +118,7 @@ Error installRtools()
    args.push_back(cmd);
 
    // create and execute the process
-   core::system::ProcessOptions options;
+   rstudiocore::system::ProcessOptions options;
    options.redirectStdErrToStdOut = true;
    options.terminateChildren = true;
    module_context::processSupervisor().runProgram(

@@ -20,7 +20,7 @@
 #include <boost/optional.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-namespace core {
+namespace rstudiocore {
    class Error;
    namespace http {
       class Request;
@@ -28,13 +28,13 @@ namespace core {
    }
 }
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace server {
 namespace auth {
 namespace secure_cookie {
 
-std::string readSecureCookie(const core::http::Request& request,
+std::string readSecureCookie(const rstudiocore::http::Request& request,
                              const std::string& name);
 
 void set(const std::string& name,
@@ -55,9 +55,9 @@ void set(const std::string& name,
 void remove(const http::Request& request,
             const std::string& name,
             const std::string& path,
-            core::http::Response* pResponse);
+            rstudiocore::http::Response* pResponse);
 
-core::Error initialize();
+rstudiocore::Error initialize();
 
 } // namespace secure_cookie
 } // namespace auth

@@ -40,13 +40,13 @@ extern "C"  typedef void (*ptr_QuartzCocoa_SetupEventLoop)(int, unsigned long);
 
 extern int R_running_as_main_program;  // from unix/system.c
 
-using namespace core;
+using namespace rstudiocore;
 
 namespace r {
 namespace session {
 
-void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
-                  const core::FilePath& /*userHome*/, // ignored on posix
+void runEmbeddedR(const rstudiocore::FilePath& /*rHome*/,    // ignored on posix
+                  const rstudiocore::FilePath& /*userHome*/, // ignored on posix
                   bool quiet,
                   bool loadInitFile,
                   SA_TYPE defaultSaveAction,
@@ -185,7 +185,7 @@ void logDLError(const std::string& message, const ErrorLocation& location)
    char* dlError = ::dlerror();
    if (dlError)
       errmsg += ": " + std::string(dlError);
-   core::log::logErrorMessage(errmsg, location);
+   rstudiocore::log::logErrorMessage(errmsg, location);
 }
 
 // Note that when we passed QCF_SET_FRONT to QuartzCocoa_SetupEventLoop

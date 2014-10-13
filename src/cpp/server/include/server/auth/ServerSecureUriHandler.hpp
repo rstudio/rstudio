@@ -21,45 +21,45 @@
 #include <core/http/UriHandler.hpp>
 #include <core/http/AsyncUriHandler.hpp>
 
-namespace core {
+namespace rstudiocore {
 namespace http { 
    class Request;
    class Response;
 } // namespace http
-} // namespace core
+} // namespace rstudiocore
 
 namespace server {
 namespace auth {
    
 typedef boost::function<void(
                            const std::string& username,
-                           const core::http::Request&,
-                           core::http::Response*)> SecureUriHandlerFunction ;
+                           const rstudiocore::http::Request&,
+                           rstudiocore::http::Response*)> SecureUriHandlerFunction ;
 
 typedef boost::function<void(
                      const std::string& username,
-                     boost::shared_ptr<core::http::AsyncConnection>)>
+                     boost::shared_ptr<rstudiocore::http::AsyncConnection>)>
                                           SecureAsyncUriHandlerFunction;
 
       
-core::http::UriHandlerFunction secureHttpHandler(
+rstudiocore::http::UriHandlerFunction secureHttpHandler(
                                     SecureUriHandlerFunction handler,
                                     bool authenticate = false);
 
-core::http::UriHandlerFunction secureJsonRpcHandler(
+rstudiocore::http::UriHandlerFunction secureJsonRpcHandler(
                                     SecureUriHandlerFunction handler);
 
-core::http::UriHandlerFunction secureUploadHandler(
+rstudiocore::http::UriHandlerFunction secureUploadHandler(
                                     SecureUriHandlerFunction handler);
 
-core::http::AsyncUriHandlerFunction secureAsyncHttpHandler(
+rstudiocore::http::AsyncUriHandlerFunction secureAsyncHttpHandler(
                                     SecureAsyncUriHandlerFunction handler,
                                     bool authenticate = false);
 
-core::http::AsyncUriHandlerFunction secureAsyncJsonRpcHandler(
+rstudiocore::http::AsyncUriHandlerFunction secureAsyncJsonRpcHandler(
                                     SecureAsyncUriHandlerFunction handler);
 
-core::http::AsyncUriHandlerFunction secureAsyncUploadHandler(
+rstudiocore::http::AsyncUriHandlerFunction secureAsyncUploadHandler(
                                     SecureAsyncUriHandlerFunction handler);
 
 } // namespace auth
