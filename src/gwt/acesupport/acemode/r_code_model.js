@@ -878,6 +878,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
    this.$tokenizeUpToRow = function(lastRow)
    {
+
       // Don't let lastRow be past the end of the document
       lastRow = Math.min(lastRow, this.$endStates.length - 1);
 
