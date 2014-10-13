@@ -781,7 +781,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
          //
          var i = row - 1;
          var prevLineNotWhitespace = prevLine;
-         while (i >= 0 && /^\s*/.test(prevLineNotWhitespace)) {
+         while (i >= 0 && /^\s*$/.test(prevLineNotWhitespace)) {
             prevLineNotWhitespace = this.getLineSansComments(doc, i);
             i--;
          }
