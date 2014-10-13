@@ -161,6 +161,8 @@ oop.inherits(Mode, TextMode);
    this.$transformAction = this.transformAction;
    this.transformAction = function(state, action, editor, session, param) {
       if (this.inRLanguageMode(state)) {
+         // intentionally left blank -- this behaviour is handled elsewhere
+         // in the code base
       } else {
          return this.$transformAction(state, action, editor, session, param);
       }
