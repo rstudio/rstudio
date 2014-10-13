@@ -160,6 +160,56 @@ public class StackPanelTest extends PanelTestBase<StackPanel> {
   }
 
   /**
+   * Tests adding and removing class names from header row elements.
+   */
+  public void testAddAndRemoveHeaderStyleName() {
+    final String firstStyleName = "className";
+    final String secondStyleName = "secondClassName";
+
+    final StackPanel stackPanel = createStackPanel();
+
+    stackPanel.add(new HTML("&nbsp;"));
+    stackPanel.add(new HTML("&nbsp;"));
+
+    Element tBody = stackPanel.getElement().getFirstChildElement();
+    Element firstHeaderRow = tBody.getFirstChildElement();
+    // There are 2 rows per entry.
+    Element secondHeaderRow = firstHeaderRow.getNextSiblingElement().getNextSiblingElement();
+
+    // Add class name to first row.
+    stackPanel.addHeaderStyleName(0, firstStyleName);
+
+    // Check that the class name was added to the first row but not the second.
+    assertContainsStyleName(firstHeaderRow, firstStyleName);
+    assertDoesNotContainStyleName(secondHeaderRow, firstStyleName);
+
+    // Add second class name to both rows.
+    stackPanel.addHeaderStyleName(0, secondStyleName);
+    stackPanel.addHeaderStyleName(1, secondStyleName);
+
+    // Check that both rows have the second class name and that first row has previous preserved.
+    assertContainsStyleName(firstHeaderRow, firstStyleName);
+    assertContainsStyleName(firstHeaderRow, secondStyleName);
+    assertContainsStyleName(secondHeaderRow, secondStyleName);
+
+    // Remove the second class name from the first row.
+    stackPanel.removeHeaderStyleName(0, secondStyleName);
+
+    // Check that first row still has the first class name.
+    assertContainsStyleName(firstHeaderRow, firstStyleName);
+  }
+
+  private static void assertContainsStyleName(Element element, String styleName) {
+    assertTrue("Style name '" + styleName + "' was not found in '" + element.getClassName() + "'",
+        element.hasClassName(styleName));
+  }
+
+  private static void assertDoesNotContainStyleName(Element element, String styleName) {
+    assertFalse("Style name '" + styleName + "' was found in '" + element.getClassName() + "'",
+        element.hasClassName(styleName));
+  }
+
+  /**
    * Create a new stack panel.
    */
   protected StackPanel createStackPanel() {
