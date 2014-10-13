@@ -39,6 +39,7 @@
 <button id="setBehavioursEnabled" onclick="editor.setBehavioursEnabled(!editor.getBehavioursEnabled())">Toggle Behaviour</button>
 <button onclick="require('mode/r_code_model').setVerticallyAlignFunctionArgs(!require('mode/r_code_model').getVerticallyAlignFunctionArgs())">Toggle Vertical Alignment</button>
 <button onclick="editor.getSession().reindent()">Reindent</button>
+<button onclick="codeModel.alignContinuationSlashes(doc)">Align Slashes</button>
 
 <h2>Automated Tests</h2>
 <p>Passed: <span id="passed"></span>, Failed: <span id="failed"></span></p>
@@ -830,6 +831,12 @@ function doIndent() {
     });
   }
 }
+
+var session = editor.getSession();
+var doc = session.getDocument();
+var mode = session.getMode();
+var codeModel = mode.$codeModel;
+
 
 </script>
 </body>

@@ -74,6 +74,49 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
       '"' : '"'
    };
 
+   // Align continuation slashses (for e.g. macros)
+   this.alignContinuationSlashes = function(doc) {
+
+      var lines = doc.$lines;
+      if (!(lines instanceof Array)) {
+         return false;
+      }
+
+      var n = lines.length;
+      for (var i = 0; i < n; i++) {
+         if (reEndsWithBackslash.test(lines[i])) {
+            var start = i;
+            var j = i + 1;
+            while (reEndsWithBackslash.test(lines[j])) {
+               j++;
+            }
+            var end = j;
+
+            var indices = lines.slice(start, end).map(function(x) {
+               return x.lastIndexOf("\\");
+            });
+
+            var maxIndex = Math.max.apply(null, indices);
+
+            for (var idx = 0; idx < end - start; idx++) {
+
+               var pos = {
+                  row: start + idx,
+                  column: indices[idx]
+               };
+
+               var whitespace = new Array(maxIndex - indices[idx] + 1).join(" ");
+               doc.insert(pos, whitespace);
+            }
+            
+            i = j;
+         }
+      }
+
+      return true;
+      
+   };
+
    this.allIndicesOf = function(string, character) {
       var result = [];
       for (var i = 0; i < string.length; i++) {
