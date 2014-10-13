@@ -94,7 +94,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
          if (reEndsWithBackslash.test(lines[i])) {
             var start = i;
             var j = i + 1;
-            while (reEndsWithBackslash.test(lines[j])) {
+            while (reEndsWithBackslash.test(lines[j]) && j <= range.end) {
                j++;
             }
             var end = j;

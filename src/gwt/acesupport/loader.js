@@ -99,16 +99,22 @@ oop.inherits(RStudioEditSession, EditSession);
 
             this.applyIndent(i, newIndent);
             mode.autoOutdent(state, this, i);
-            var codeModel = mode.$codeModel;
-            if (typeof codeModel !== "undefined") {
-               var align = codeModel.alignContinuationSlashes;
-               if (typeof align !== "undefined") {
-                  align(this.getDocument(), range);
-               }
-            }
-
          }
       }
+
+      // optional outdenting (currently hard-wired for C++ modes)
+      var codeModel = mode.$codeModel;
+      if (typeof codeModel !== "undefined") {
+         var align = codeModel.alignContinuationSlashes;
+         if (typeof align !== "undefined") {
+            align(this.getDocument(), {
+               start: start,
+               end: end
+            });
+         }
+      }
+
+      
    };
    this.applyIndent = function(lineNum, indent) {
       var line = this.getLine(lineNum);
