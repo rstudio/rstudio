@@ -222,6 +222,12 @@ var $alignCase                 = true; // case 'a':
          var thisLine = "";
          for (var i = 1; i < maxLookback; i++) {
             thisLine = this.$codeModel.getLineSansComments(doc, row - i);
+
+            // Small escape hatch -- break if we encounter a line ending with
+            // a semi-colon since that should never happen in template contexts
+            if (/;\s*$/.test(thisLine))
+               break;
+            
             if (/<\s*$/.test(thisLine) && !/<<\s*$/.test(thisLine)) {
                if (balance === 0) {
                   this.setIndent(session, row, row - i);
