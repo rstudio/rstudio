@@ -75,7 +75,14 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
    };
 
    // Align continuation slashses (for e.g. macros)
-   this.alignContinuationSlashes = function(doc) {
+   this.alignContinuationSlashes = function(doc, range) {
+
+      if (typeof range === "undefined") {
+         range = {
+            start: 0,
+            end: doc.getLength()
+         };
+      }
 
       var lines = doc.$lines;
       if (!(lines instanceof Array)) {
@@ -83,7 +90,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
       }
 
       var n = lines.length;
-      for (var i = 0; i < n; i++) {
+      for (var i = range.start; i < range.end; i++) {
          if (reEndsWithBackslash.test(lines[i])) {
             var start = i;
             var j = i + 1;

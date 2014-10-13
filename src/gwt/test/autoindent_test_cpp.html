@@ -687,6 +687,14 @@ var session = editor.getSession();
 
         this.applyIndent(i, newIndent);
         mode.autoOutdent(state, this, i);
+            var codeModel = mode.$codeModel;
+            if (typeof codeModel !== "undefined") {
+               var align = codeModel.alignContinuationSlashes;
+               if (typeof align !== "undefined") {
+                  align(this.getDocument(), { start: start, end: end });
+               }
+            }
+        
       }
     }
   };
@@ -823,12 +831,21 @@ function doIndent() {
 
   var e = window.event;
   if (e.metaKey && e.which === 105) {
-    var cursor = editor.getCursorPosition();
-    editor.getSession().reindent(cursor.row, cursor.row);
-    editor.moveCursorToPosition({
-      row: cursor.row + 1,
-      column: cursor.column
-    });
+    var selection = editor.getSelection();
+    if (selection.$isEmpty) {
+      var cursor = editor.getCursorPosition();
+      editor.getSession().reindent(cursor.row, cursor.row);
+      editor.moveCursorToPosition({
+        row: cursor.row + 1,
+        column: cursor.column
+      });
+    } else {
+      var selectionRange = editor.getSelectionRange();
+      editor.getSession().reindent(
+        selectionRange.start.row,
+        selectionRange.end.row
+      );
+    }
   }
 }
 

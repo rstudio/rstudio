@@ -99,6 +99,14 @@ oop.inherits(RStudioEditSession, EditSession);
 
             this.applyIndent(i, newIndent);
             mode.autoOutdent(state, this, i);
+            var codeModel = mode.$codeModel;
+            if (typeof codeModel !== "undefined") {
+               var align = codeModel.alignContinuationSlashes;
+               if (typeof align !== "undefined") {
+                  align(this.getDocument(), range);
+               }
+            }
+
          }
       }
    };
