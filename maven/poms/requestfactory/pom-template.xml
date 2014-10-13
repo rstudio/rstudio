@@ -23,6 +23,21 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>com.google.web.bindery</groupId>
+                <artifactId>requestfactory-apt</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.web.bindery</groupId>
+                <artifactId>requestfactory-client</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.web.bindery</groupId>
+                <artifactId>requestfactory-server</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>javax.validation</groupId>
                 <artifactId>validation-api</artifactId>
                 <version>1.0.0.GA</version>
