@@ -181,6 +181,30 @@ public class DeadCodeEliminationTest extends OptimizerTestBase {
         .into("A.f1 = 1; new A();");
   }
 
+  public void testCommuteMultiExpression() throws Exception {
+    runMethodInliner = true;
+    addSnippetClassDecl(
+        "static class A  { "
+            + "static int f1;"
+            + "static A createA() { A.f1 = 1; return new A(); } "
+            + "static boolean booleanWithSideEffects() { createA(); return true;}"
+            + "static boolean booleanWithoutSideEffects() { return true;}"
+            + "static int arithmeticWithSideEffects() { createA(); return 4;}"
+            + "}");
+
+    optimizeExpressions(false, "boolean", "true && A.booleanWithoutSideEffects()")
+        .intoString("return true;");
+
+    optimizeExpressions(false, "boolean", "true && A.booleanWithSideEffects()")
+        .intoString("return (EntryPoint$A.f1 = 1, new EntryPoint$A(), true);");
+
+    optimizeExpressions(false, "boolean", "false && A.booleanWithSideEffects()")
+        .intoString("return false;");
+
+    optimizeExpressions(false, "int", "3 + A.arithmeticWithSideEffects()")
+        .intoString("return (EntryPoint$A.f1 = 1, new EntryPoint$A(), 7);");
+  }
+
   public void testStringOptimizations() throws Exception {
     runMethodInliner = true;
     addSnippetClassDecl(

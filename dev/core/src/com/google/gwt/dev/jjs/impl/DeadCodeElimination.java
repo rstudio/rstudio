@@ -168,12 +168,15 @@ public class DeadCodeElimination {
         return;
       }
 
-      if (isNonEmptyMultiExpression(rhs) && lhs instanceof JValueLiteral) {
+      if (isNonEmptyMultiExpression(rhs) &&  lhs instanceof JValueLiteral &&
+          op != JBinaryOperator.AND && op != JBinaryOperator.OR) {
         // Push the operation inside the multiexpression if the lhs is a value literal.
         // This exposes other optimization opportunities for latter passes e.g:
         //
         // 2 + (a(), b(), 1) ==> (a(), b(), 2 + 1) ==> (a(), b(), 3)
         //
+        // And exception must be made for || and &&, as these operations might not evaluate the
+        // rhs due to shortcutting.
         List<JExpression> expressions = ((JMultiExpression) rhs).getExpressions();
         JMultiExpression result = new JMultiExpression(rhs.getSourceInfo(),
             expressions.subList(0, expressions.size() - 1));
