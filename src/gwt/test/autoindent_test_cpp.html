@@ -69,7 +69,7 @@ template <>
 </pre></li>
 
 <li><pre data-expected="0">
-
+    
 template <
 >
 </pre></li>
@@ -79,9 +79,13 @@ template <
     template <
 </pre></li>
 
-<li><pre data-expected="8" open-brace-skip>
-template <
-    template <
+<li><pre data-expected="4" data-expected-vertical-args="10" open-brace-skip>
+template &lt;int RTYPE,
+</pre></li>
+
+<li><pre data-expected="0" open-brace-skip>
+template &lt;int RTYPE,
+          template &lt;class&gt; class StoragePolicy&gt;
 </pre></li>
 
 <li><pre data-expected="4" open-brace-skip>

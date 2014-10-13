@@ -701,7 +701,8 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
          // Don't indent for templates e.g.
          //
          //     template < ... >
-         if (/^\s*template\s*<.*>\s*$/.test(line)) {
+         if (/^\s*template\s*<.*>\s*$/.test(line) &&
+             line.split(">").length == line.split("<").length) {
             return indent;
          }
 
@@ -902,13 +903,6 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                   return this.$getIndent(lines[row]) + tab;
                }
 
-               // If we started on an opening '<' for a template, indent.
-               if (startValue === "<") {
-                  if (startCursor.peekBack().currentValue() === "template") {
-                     return this.$getIndent(lines[row]) + tab;
-                  }
-               }
-
                while (true) {
 
                   // Stop conditions:
@@ -1067,17 +1061,15 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
                   // Walking:
 
-                  // Step over parens. Walk over '>' only if the next token
-                  // is a 'class' or 'struct'.
+                  // Step over parens. Walk over '>' only if we can
+                  // find its match to be associated with a 'template'.
                   if (tokenCursor.currentValue() === ">")
                   {
-                     var peekFwd = tokenCursor.peekFwd();
-                     var v = peekFwd.currentValue();
-                     if (v === "class" || v === "struct")
-                     {
-                        if (tokenCursor.bwdToMatchingArrow())
-                        {
-                           return this.$getIndent(lines[tokenCursor.$row]) + additionalIndent;
+                     var clone = tokenCursor.cloneCursor();
+                     if (clone.bwdToMatchingArrow()) {
+                        if (clone.peekBack().currentValue() === "template") {
+                           if (startValue === ">") additionalIndent = "";
+                           return this.$getIndent(lines[clone.$row]) + additionalIndent;
                         }
                      }
                   }
