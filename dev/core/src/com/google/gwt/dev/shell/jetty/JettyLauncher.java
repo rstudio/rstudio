@@ -49,8 +49,6 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 import javax.imageio.ImageIO;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -734,20 +732,6 @@ public class JettyLauncher extends ServletContainerLauncher {
 
     // Create a new web app in the war directory.
     WebAppContext wac = createWebAppContext(logger, appRootDir);
-
-    try {
-      // Allow Servlet 3.0 configuration via annotations (issue #8472)
-      String className = "org.eclipse.jetty.annotations.AnnotationConfiguration";
-      Class.forName(className, false, this.getClass().getClassLoader());
-      // Avoid context.getWebInf() == null in AnnotationConfiguration.parseWebInfClasses
-      wac.setResourceBase(appRootDir.getAbsolutePath());
-      ArrayList<String> confs = new ArrayList<String>(Arrays.asList(wac.getConfigurationClasses()));
-      confs.add(className);
-      wac.setConfigurationClasses(confs.toArray(new String[confs.size()]));
-    } catch (ClassNotFoundException ignored) {
-      branch.log(TreeLogger.INFO,
-              "To enable Servlet 3.0 annotations add jetty-annotations.jar to your classpath.");
-    }
 
     RequestLogHandler logHandler = new RequestLogHandler();
     logHandler.setRequestLog(new JettyRequestLogger(logger, getBaseLogLevel()));
