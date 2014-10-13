@@ -218,12 +218,12 @@ var c_cppHighlightRules = function() {
       ],
       "include" : [
          {
-            token : "constant", // <CONSTANT>
+            token : "string", // <CONSTANT>
             regex : /<.+>/,
             next : "start"
          },
          {
-            token : "constant",
+            token : "string",
             regex : /\".+\"/,
             next : "start"
          }
