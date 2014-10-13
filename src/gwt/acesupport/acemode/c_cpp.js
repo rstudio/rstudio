@@ -158,6 +158,14 @@ oop.inherits(Mode, TextMode);
          return this.$outdent.autoOutdent(state, doc, row);
    };
 
+   this.$transformAction = this.transformAction;
+   this.transformAction = function(state, action, editor, session, param) {
+      if (this.inRLanguageMode(state)) {
+      } else {
+         return this.$transformAction(state, action, editor, session, param);
+      }
+   };
+
 }).call(Mode.prototype);
 
 exports.Mode = Mode;
