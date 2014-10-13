@@ -84,6 +84,47 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
       return result;
    };
 
+   // Heuristic for finding a matching '>'.
+   //
+   // We attempt to find matches for '<' and '>' where:
+   //
+   // 1. '>' occurs at the beginning of the line, and
+   // 2. '<' occurs at the end of the line.
+   //
+   // Primarily intended for template contexts, e.g.
+   //
+   // template <                     <-- returns this row
+   //     int RTYPE
+   // >
+   //
+   // ^                              <-- want to align with that line
+   this.getRowForMatchingEOLArrows = function(session, doc, row) {
+      var maxLookback = 100;
+      var balance = 0;
+      var thisLine = "";
+      for (var i = 1; i < maxLookback; i++) {
+         thisLine = this.getLineSansComments(doc, row - i);
+
+         // Small escape hatch -- break if we encounter a line ending with
+         // a semi-colon since that should never happen in template contexts
+         if (/;\s*$/.test(thisLine))
+            break;
+         
+         if (/<\s*$/.test(thisLine) && !/<<\s*$/.test(thisLine)) {
+            if (balance === 0) {
+               return row - i;
+            } else {
+               balance--;
+            }
+         } else if (/^\s*>/.test(thisLine) && !/^\s*>>/.test(thisLine)) {
+            balance++;
+         }
+      }
+      
+      return -1;
+      
+   };
+
    var reStartsWithDefine = /^\s*#\s*define/;
    var reEndsWithBackslash = /\\\s*$/;
 
@@ -663,6 +704,11 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
          if (/^\s*template\s*<.*>\s*$/.test(line)) {
             return indent;
          }
+
+         // If the line is just a '>', try looking back for an opening '<'.
+         var templateArrowRow = this.getRowForMatchingEOLArrows(session, doc, row);
+         if (templateArrowRow >= 0)
+            return this.$getIndent(lines[templateArrowRow]);
 
          // Vertical alignment
          // We need to handle vertical alignment for two scenarios:

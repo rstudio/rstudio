@@ -217,27 +217,10 @@ var $alignCase                 = true; // case 'a':
           /^\s*>/.test(line) &&
           !/^\s*>>/.test(line)) {
 
-         var maxLookback = 100;
-         var balance = 0;
-         var thisLine = "";
-         for (var i = 1; i < maxLookback; i++) {
-            thisLine = this.$codeModel.getLineSansComments(doc, row - i);
-
-            // Small escape hatch -- break if we encounter a line ending with
-            // a semi-colon since that should never happen in template contexts
-            if (/;\s*$/.test(thisLine))
-               break;
-            
-            if (/<\s*$/.test(thisLine) && !/<<\s*$/.test(thisLine)) {
-               if (balance === 0) {
-                  this.setIndent(session, row, row - i);
-                  return;
-               } else {
-                  balance--;
-               }
-            } else if (/^\s*>/.test(thisLine) && !/^\s*>>/.test(thisLine)) {
-               balance++;
-            }
+         var rowToUse = this.$codeModel.getRowForMatchingEOLArrows(session, doc, row);
+         if (rowToUse >= 0) {
+            this.setIndent(session, row, rowToUse);
+            return;
          }
 
          // TODO: Renable this block if we get better tokenization
