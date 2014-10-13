@@ -29,17 +29,24 @@ import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMapImpl;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
+import com.google.gwt.dev.js.ast.JsVisitor;
+import com.google.gwt.dev.util.DefaultTextOutput;
+import com.google.gwt.dev.util.TextOutput;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
+import junit.framework.TestCase;
+
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Verifies that {@link JsNamespaceChooser} can put globals into namespaces.
  */
-public class JsNamespaceChooserTest extends OptimizerTestBase {
+public class JsNamespaceChooserTest extends TestCase {
   private JsProgram program;
 
   // components of the jjsmap
@@ -130,7 +137,7 @@ public class JsNamespaceChooserTest extends OptimizerTestBase {
 
   private void checkResult(String expectedJs) {
     exec();
-    String actual = getOutputJs(program);
+    String actual = serializeJs(program);
     assertEquals(expectedJs, actual);
   }
 
@@ -156,5 +163,20 @@ public class JsNamespaceChooserTest extends OptimizerTestBase {
 
     // Run it.
     JsNamespaceChooser.exec(program, jjsmap);
+  }
+
+  private static JsProgram parseJs(String js) throws IOException, JsParserException {
+    JsProgram program = new JsProgram();
+    List<JsStatement> statements = JsParser.parse(SourceOrigin.UNKNOWN, program.getScope(),
+        new StringReader(js));
+    program.getGlobalBlock().getStatements().addAll(statements);
+    return program;
+  }
+
+  private static String serializeJs(JsProgram program1) {
+    TextOutput text = new DefaultTextOutput(true);
+    JsVisitor generator = new JsSourceGenerationVisitor(text);
+    generator.accept(program1);
+    return text.toString();
   }
 }

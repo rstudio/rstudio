@@ -24,7 +24,6 @@ import com.google.gwt.dev.util.TextOutput;
 
 import junit.framework.TestCase;
 
-import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -33,14 +32,6 @@ import java.util.List;
  * A utility base type for writing tests for JS optimizers.
  */
 public abstract class OptimizerTestBase extends TestCase {
-
-  protected static JsProgram parseJs(String js) throws IOException, JsParserException {
-    JsProgram program = new JsProgram();
-    List<JsStatement> statements = JsParser.parse(SourceOrigin.UNKNOWN, program.getScope(),
-        new StringReader(js));
-    program.getGlobalBlock().getStatements().addAll(statements);
-    return program;
-  }
 
   /**
    * Optimize a JS program.
@@ -57,37 +48,15 @@ public abstract class OptimizerTestBase extends TestCase {
 
     program.getGlobalBlock().getStatements().addAll(expected);
 
-    return optimize(program, toExec);
-  }
-
-  /**
-   * Optimize a JS program.
-   *
-   * @param program the source program
-   * @param toExec a list of classes that implement
-   *          <code>static void exec(JsProgram)</code>
-   * @return optimized JS
-   */
-  protected String optimize(JsProgram program, Class<?>... toExec) throws Exception {
-
     for (Class<?> clazz : toExec) {
       Method m = clazz.getMethod("exec", JsProgram.class);
       m.invoke(null, program);
     }
 
-    return getOutputJs(program);
-  }
-
-  /**
-   * Returns the source representation of the JsProgram. Removes the first (empty) line.
-   */
-  protected static String getOutputJs(JsProgram program) {
     TextOutput text = new DefaultTextOutput(true);
     JsVisitor generator = new JsSourceGenerationVisitor(text);
 
     generator.accept(program);
-    String outputJs = text.toString();
-    assert outputJs.charAt(0) == '\n';
-    return outputJs.substring(1);
+    return text.toString();
   }
 }

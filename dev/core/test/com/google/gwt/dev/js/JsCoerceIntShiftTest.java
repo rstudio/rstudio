@@ -21,16 +21,25 @@ import com.google.gwt.core.ext.DefaultSelectionProperty;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.js.ast.JsProgram;
+import com.google.gwt.dev.js.ast.JsStatement;
+import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.shell.FailErrorLogger;
+import com.google.gwt.dev.util.DefaultTextOutput;
+import com.google.gwt.dev.util.TextOutput;
 
+import junit.framework.TestCase;
+
+import java.io.StringReader;
+import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
 /**
  * Test for {@link JsCoerceIntShift}.
  */
-public class JsCoerceIntShiftTest extends OptimizerTestBase {
+public class JsCoerceIntShiftTest extends TestCase {
 
   /**
    * Oracle that mocks the user.agent property.
@@ -131,18 +140,18 @@ public class JsCoerceIntShiftTest extends OptimizerTestBase {
    */
   private String process(String js, PropertyOracle[] oracles)
       throws Exception {
-    return optimize(js, new JsCoerceIntShiftProxy(oracles).getClass());
-  }
+    JsProgram program = new JsProgram();
+    List<JsStatement> expected = JsParser.parse(SourceOrigin.UNKNOWN,
+        program.getScope(), new StringReader(js));
 
-  // JsCoerceIntShift does not have a one parameter exec function. Test infrastructure
-  // call exec(JsProgram) reflectively.
-  private static class JsCoerceIntShiftProxy {
-    static PropertyOracle[] oracles;
-    JsCoerceIntShiftProxy(PropertyOracle[] oracles) {
-      JsCoerceIntShiftProxy.oracles = oracles;
-    }
-    static public void exec(JsProgram program) {
-      JsCoerceIntShift.exec(program, TreeLogger.NULL, oracles);
-    }
+    program.getGlobalBlock().getStatements().addAll(expected);
+
+    JsCoerceIntShift.exec(program, logger, oracles);
+
+    TextOutput text = new DefaultTextOutput(true);
+    JsVisitor generator = new JsSourceGenerationVisitor(text);
+
+    generator.accept(program);
+    return text.toString();
   }
 }

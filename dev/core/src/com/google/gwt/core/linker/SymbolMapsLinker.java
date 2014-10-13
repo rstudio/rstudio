@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.AbstractLinker;
+import com.google.gwt.core.ext.linker.Artifact;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
@@ -35,10 +36,14 @@ import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapGeneratorV3;
+import com.google.gwt.thirdparty.debugging.sourcemap.SourceMapGeneratorV3.ExtensionMergeAction;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.SortedMap;
@@ -54,6 +59,111 @@ import java.util.regex.Pattern;
 public class SymbolMapsLinker extends AbstractLinker {
 
   public static final String MAKE_SYMBOL_MAPS = "compiler.useSymbolMaps";
+
+  /**
+   * Artifact to record insertions or deletions made to Javascript fragments.
+   */
+  public static class ScriptFragmentEditsArtifact extends Artifact<ScriptFragmentEditsArtifact> {
+
+    /**
+     * Operation type performed on script.
+     */
+    public enum Edit {
+      PREFIX, INSERT, REMOVE
+    }
+
+    private static class EditOperation {
+
+      public static EditOperation insert(int lineNumber, String data) {
+        return new EditOperation(Edit.INSERT, lineNumber, data);
+      }
+
+      public static EditOperation prefix(String data) {
+        return new EditOperation(Edit.PREFIX, 0, data);
+      }
+
+      public static EditOperation remove(int lineNumber) {
+        return new EditOperation(Edit.REMOVE, lineNumber, null);
+      }
+
+      Edit op;
+      int lineNumber;
+      int numLines;
+
+      public EditOperation(
+          Edit op, int lineNumber, String data) {
+        this.op = op;
+        this.lineNumber = lineNumber;
+        this.numLines = countNewLines(data);
+      }
+
+      public int getLineNumber() {
+        return lineNumber;
+      }
+
+      public int getNumLines() {
+        return numLines;
+      }
+
+      public Edit getOp() {
+        return op;
+      }
+
+      private int countNewLines(String chunkJs) {
+        int newLineCount = 0;
+        for (int j = 0; j < chunkJs.length(); j++) {
+          if (chunkJs.charAt(j) == '\n') {
+            newLineCount++;
+          }
+        }
+        return newLineCount;
+      }
+    }
+
+    private List<EditOperation> editOperations = new ArrayList<EditOperation>();
+
+    private String strongName;
+    private int fragment;
+
+    public ScriptFragmentEditsArtifact(String strongName,
+        int fragment) {
+      super(SymbolMapsLinker.class);
+      this.strongName = strongName;
+      this.fragment = fragment;
+    }
+
+    public int getFragment() {
+      return fragment;
+    }
+
+    public String getStrongName() {
+      return strongName;
+    }
+
+    @Override
+    public int hashCode() {
+      return (strongName + fragment).hashCode();
+    }
+
+    public void insertLinesBefore(int position, String lines) {
+      editOperations.add(EditOperation.insert(position, lines));
+    }
+
+    public void prefixLines(String lines) {
+      editOperations.add(EditOperation.prefix(lines));
+    }
+
+    @Override
+    protected int compareToComparableArtifact(SymbolMapsLinker.ScriptFragmentEditsArtifact o) {
+      int result = (strongName + fragment).compareTo(strongName + fragment);
+      return result;
+    }
+
+    @Override
+    protected Class<ScriptFragmentEditsArtifact> getComparableArtifactType() {
+      return ScriptFragmentEditsArtifact.class;
+    }
+  }
 
   /**
    * Artifact to represent a sourcemap file to be processed by SymbolMapsLinker.
@@ -190,7 +300,52 @@ public class SymbolMapsLinker extends AbstractLinker {
         String sourceMapString = Util.readStreamAsString(se.getContents(logger));
         String strongName = permMap.get(se.getPermutationId());
         String partialPath = strongName + "_sourceMap" + se.getFragment() + ".json";
-        artifacts.add(emitSourceMapString(logger, sourceMapString, partialPath));
+
+        int fragment = se.getFragment();
+        ScriptFragmentEditsArtifact editArtifact = null;
+        for (ScriptFragmentEditsArtifact mp : artifacts.find(ScriptFragmentEditsArtifact.class)) {
+          if (mp.getStrongName().equals(strongName) && mp.getFragment() == fragment) {
+            editArtifact = mp;
+            artifacts.remove(editArtifact);
+            break;
+          }
+        }
+
+        SyntheticArtifact emArt = null;
+        // no need to adjust source map
+        if (editArtifact == null) {
+          emArt = emitSourceMapString(logger, sourceMapString, partialPath);
+        } else {
+          SourceMapGeneratorV3 sourceMapGenerator = new SourceMapGeneratorV3();
+
+          if (se.getSourceRoot() != null) {
+            // Reapply source root since mergeMapSection() will not copy it.
+            sourceMapGenerator.setSourceRoot(se.getSourceRoot());
+          }
+
+          try {
+            int totalPrefixLines = 0;
+            for (ScriptFragmentEditsArtifact.EditOperation op : editArtifact.editOperations) {
+              if (op.getOp() == ScriptFragmentEditsArtifact.Edit.PREFIX) {
+                totalPrefixLines += op.getNumLines();
+              }
+            }
+            // TODO(cromwellian): apply insert and remove edits
+            sourceMapGenerator.mergeMapSection(totalPrefixLines, 0, sourceMapString,
+                new ExtensionMergeAction() {
+                  @Override
+                  public Object merge(String extKey, Object oldVal, Object newVal) {
+                    return newVal;
+                  }
+                });
+            StringWriter stringWriter = new StringWriter();
+            sourceMapGenerator.appendTo(stringWriter, "sourceMap");
+            emArt = emitSourceMapString(logger, stringWriter.toString(), partialPath);
+          } catch (Exception e) {
+            logger.log(TreeLogger.Type.WARN, "Can't write source map " + partialPath, e);
+          }
+        }
+        artifacts.add(emArt);
         artifacts.remove(se);
       }
       writeSourceMapsEvent.end();

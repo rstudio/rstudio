@@ -175,7 +175,7 @@ public class SelectionScriptLinkerUnitTest extends TestCase {
   }
 
   private StandardCompilationResult createCompilationResult() {
-    byte[][] js = new byte[][] {getBytes("\ncode for fragment 0"), getBytes("\ncode for fragment 1")};
+    byte[][] js = new byte[][] {getBytes("code for fragment 0"), getBytes("code for fragment 1")};
     String jsStrongName = "fooStrongName";
     StatementRanges[] statementRanges = new StatementRanges[] {
         new StandardStatementRanges(Lists.newArrayList(0), Lists.newArrayList(10)),

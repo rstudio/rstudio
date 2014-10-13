@@ -956,7 +956,7 @@ public class JsToStringGenerationVisitor extends JsVisitor {
         }
       }
       if (shouldRecordPositions) {
-        recordStatementStart();
+        statementStarts.add(p.getPosition());
       }
       accept(stmt);
       if (stmtIsGlobalBlock) {
@@ -994,7 +994,7 @@ public class JsToStringGenerationVisitor extends JsVisitor {
       }
       if (shouldRecordPositions) {
         assert (statementStarts.size() == statementEnds.size() + 1);
-        recordStatementEnd();
+        statementEnds.add(p.getPosition());
       }
     }
 
@@ -1007,14 +1007,6 @@ public class JsToStringGenerationVisitor extends JsVisitor {
       }
     }
     needSemi = false;
-  }
-
-  protected boolean recordStatementEnd() {
-    return statementEnds.add(p.getPosition());
-  }
-
-  protected void recordStatementStart() {
-    statementStarts.add(p.getPosition());
   }
 
   private void _assignment() {

@@ -480,7 +480,7 @@ public class JsLiteralInterner {
     }
 
     for (Map.Entry<Integer, Set<JsLiteral>> entry : bins.entrySet()) {
-      createVars(program, program.getFragment(entry.getKey()).getGlobalBlock(),
+      createVars(program, program.getFragmentBlock(entry.getKey()),
           entry.getValue(), v.variableNameForInternedLiteral);
     }
 

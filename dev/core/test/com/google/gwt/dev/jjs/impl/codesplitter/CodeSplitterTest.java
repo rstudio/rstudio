@@ -433,7 +433,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
   private void assertInFragment(String functionName, int fragmentNum) {
     Set<Integer> fragments = Sets.newHashSet();
     for (int i = 0; i < jsProgram.getFragmentCount(); i++) {
-      JsBlock fragment = jsProgram.getFragment(fragmentNum).getGlobalBlock();
+      JsBlock fragment = jsProgram.getFragmentBlock(fragmentNum);
       if (findFunctionIn(functionName, fragment)) {
         fragments.add(fragmentNum);
       }
@@ -443,7 +443,7 @@ public class CodeSplitterTest extends FullCompileTestBase {
   }
 
   private void assertNotInFragment(String functionName, int fragmentNum) {
-    JsBlock fragment = jsProgram.getFragment(fragmentNum).getGlobalBlock();
+    JsBlock fragment = jsProgram.getFragmentBlock(fragmentNum);
     assertFalse("function " + functionName + " should not be in fragment " + fragmentNum,
         findFunctionIn(functionName, fragment));
   }

@@ -26,8 +26,12 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.dev.js.ast.JsStatement;
+import com.google.gwt.dev.js.ast.JsVisitor;
+import com.google.gwt.dev.util.DefaultTextOutput;
+import com.google.gwt.dev.util.TextOutput;
 
 import java.io.StringReader;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -107,8 +111,8 @@ public class JsDuplicateFunctionRemoverTest extends OptimizerTestBase {
     List<JsStatement> fragment1 = JsParser.parse(SourceOrigin.UNKNOWN,
         program.getScope(), new StringReader(fragment1js));
     program.setFragmentCount(2);
-    program.getFragment(0).getGlobalBlock().getStatements().addAll(fragment0);
-    program.getFragment(1).getGlobalBlock().getStatements().addAll(fragment1);
+    program.getFragmentBlock(0).getStatements().addAll(fragment0);
+    program.getFragmentBlock(1).getStatements().addAll(fragment1);
 
     // Mark all functions as if they were translated from Java sources.
     setAllFromJava(program);
@@ -205,5 +209,27 @@ public class JsDuplicateFunctionRemoverTest extends OptimizerTestBase {
   private String optimize(String js) throws Exception {
     return optimize(js, JsSymbolResolver.class,
         JsDuplicateFunctionRemoverProxy.class);
+  }
+
+  /**
+   * Optimize a JS program.
+   *
+   * @param program the source program
+   * @param toExec a list of classes that implement
+   *          <code>static void exec(JsProgram)</code>
+   * @return optimized JS
+   */
+  protected String optimize(JsProgram program, Class<?>... toExec) throws Exception {
+
+    for (Class<?> clazz : toExec) {
+      Method m = clazz.getMethod("exec", JsProgram.class);
+      m.invoke(null, program);
+    }
+
+    TextOutput text = new DefaultTextOutput(true);
+    JsVisitor generator = new JsSourceGenerationVisitor(text);
+
+    generator.accept(program);
+    return text.toString();
   }
 }

@@ -62,13 +62,6 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
   private static final int SEARCH_LIMIT = 10;
 
   /**
-   * Returns true if the line is empty.
-   */
-  private static boolean isEmptyLine(String code) {
-    return code.equals("\n");
-  }
-
-  /**
    * Tells whether a statement is a function declaration or not.
    */
   private static boolean isFunctionDeclaration(String code) {
@@ -103,7 +96,7 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
     // gather up all of the indices of function decl statements
     for (int i = 0; i < statementRanges.numStatements(); i++) {
       String code = getJsForRange(i);
-      if (isReorderableStatement(code)) {
+      if (isFunctionDeclaration(code)) {
         functionIndices.add(i);
       }
     }
@@ -171,8 +164,7 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
     // Then output everything else that is not a function.
     for (int i = 0; i < statementRanges.numStatements(); i++) {
       String code = getJsForRange(i);
-      // Output any statements that were not previously selected for reordering.
-      if (!isReorderableStatement(code)) {
+      if (!isFunctionDeclaration(code)) {
         addStatement(j, code, newJs, starts, ends);
         reorderedIndices[j] = i;
         j++;
@@ -232,13 +224,6 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
       sourceInfoMap =
           new JsSourceMap(updatedRanges, sourceInfoMap.getBytes(), sourceInfoMap.getLines());
     }
-  }
-
-  private boolean isReorderableStatement(String code) {
-    // Functions and empty lines to be moved to the top and reordered according to size and edit
-    // distance. Linkers require that the first line is empty to prepend statements without
-    // affecting sourcemaps.
-    return isFunctionDeclaration(code) || isEmptyLine(code);
   }
 
   private int stmtSize(int index1) {

@@ -50,11 +50,6 @@ public class JsSourceGenerationVisitor extends JsToStringGenerationVisitor {
 
   @Override
   public boolean visit(JsProgramFragment x, JsContext ctx) {
-    // Every program fragment must start with an empty line so that linkers can prepend
-    // code without invalidating the corresponding source map.
-    // TODO(rluble): this can be done more elegantly by emitting separate sourcemaps per
-    // class/chunnk that are included and offset in a global sourcemap.
-    recordEmptyLine();
     // Descend naturally.
     return true;
   }
@@ -65,9 +60,4 @@ public class JsSourceGenerationVisitor extends JsToStringGenerationVisitor {
     return false;
   }
 
-  private void recordEmptyLine() {
-    recordStatementStart();
-    _newline();
-    recordStatementEnd();
-  }
 }

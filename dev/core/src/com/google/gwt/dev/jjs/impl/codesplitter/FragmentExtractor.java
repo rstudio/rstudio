@@ -270,7 +270,7 @@ public class FragmentExtractor {
   public Set<JMethod> findAllMethodsInJavaScript() {
     Set<JMethod> methodsInJs = new HashSet<JMethod>();
     for (int frag = 0; frag < jsprogram.getFragmentCount(); frag++) {
-      List<JsStatement> stats = jsprogram.getFragment(frag).getGlobalBlock().getStatements();
+      List<JsStatement> stats = jsprogram.getFragmentBlock(frag).getStatements();
       for (JsStatement stat : stats) {
         JMethod method = methodFor(stat);
         if (method != null) {

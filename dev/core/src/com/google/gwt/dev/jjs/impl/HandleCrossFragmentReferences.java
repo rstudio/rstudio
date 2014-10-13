@@ -88,7 +88,7 @@ public class HandleCrossFragmentReferences {
     public boolean visit(JsProgram x, JsContext ctx) {
       for (int i = 0; i < x.getFragmentCount(); i++) {
         currentIsland = i;
-        accept(x.getFragment(i));
+        accept(x.getFragmentBlock(i));
       }
 
       return false;
@@ -258,7 +258,7 @@ public class HandleCrossFragmentReferences {
     JsVar var = new JsVar(info, jslink);
     var.setInitExpr(new JsObjectLiteral(info));
     vars.add(var);
-    jsProgram.getFragment(0).getGlobalBlock().getStatements().add(0, vars);
+    jsProgram.getFragmentBlock(0).getStatements().add(0, vars);
   }
 
   private void execImpl() {
