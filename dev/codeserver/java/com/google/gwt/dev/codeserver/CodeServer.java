@@ -144,9 +144,9 @@ public class CodeServer {
     int nextOutboxId = 1;
     OutboxTable outboxes = new OutboxTable();
     for (String moduleName : options.getModuleNames()) {
-      AppSpace appSpace = AppSpace.create(new File(workDir, moduleName));
+      OutboxDir outboxDir = OutboxDir.create(new File(workDir, moduleName), logger);
 
-      Recompiler recompiler = new Recompiler(appSpace, launcherDir, moduleName, options);
+      Recompiler recompiler = new Recompiler(outboxDir, launcherDir, moduleName, options);
 
       // The id should be treated as an opaque string since we will change it again.
       // TODO: change outbox id to include binding properties.

@@ -61,7 +61,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 class Recompiler {
 
-  private final AppSpace appSpace;
+  private final OutboxDir outboxDir;
   private final LauncherDir launcherDir;
   private final String inputModuleName;
 
@@ -84,8 +84,8 @@ class Recompiler {
   private CompilerContext compilerContext;
   private Options options;
 
-  Recompiler(AppSpace appSpace, LauncherDir launcherDir, String inputModuleName, Options options) {
-    this.appSpace = appSpace;
+  Recompiler(OutboxDir outboxDir, LauncherDir launcherDir, String inputModuleName, Options options) {
+    this.outboxDir = outboxDir;
     this.launcherDir = launcherDir;
     this.inputModuleName = inputModuleName;
     this.options = options;
@@ -148,15 +148,15 @@ class Recompiler {
       System.setProperty("java.awt.headless", "true");
       if (System.getProperty("gwt.speedtracerlog") == null) {
         System.setProperty("gwt.speedtracerlog",
-            appSpace.getSpeedTracerLogFile().getAbsolutePath());
+            outboxDir.getSpeedTracerLogFile().getAbsolutePath());
       }
       compilerContext = compilerContextBuilder.unitCache(
-          UnitCacheSingleton.get(job.getLogger(), appSpace.getUnitCacheDir())).build();
+          UnitCacheSingleton.get(job.getLogger(), outboxDir.getUnitCacheDir())).build();
     }
 
     long startTime = System.currentTimeMillis();
     int compileId = ++compilesDone;
-    CompileDir compileDir = makeCompileDir(compileId, job.getLogger());
+    CompileDir compileDir = outboxDir.makeCompileDir(job.getLogger());
     TreeLogger compileLogger = makeCompileLogger(compileDir, job.getLogger());
 
     job.onStarted(compileId, compileDir);
@@ -182,7 +182,7 @@ class Recompiler {
       throws UnableToCompleteException {
 
     long startTime = System.currentTimeMillis();
-    CompileDir compileDir = makeCompileDir(++compilesDone, logger);
+    CompileDir compileDir = outboxDir.makeCompileDir(logger);
     TreeLogger compileLogger = makeCompileLogger(compileDir, logger);
 
     ModuleDef module = loadModule(Sets.<String>newHashSet(), compileLogger);
@@ -617,11 +617,6 @@ class Recompiler {
     if (!maybeOverrideConfig(module, propName, newValue)) {
       throw new RuntimeException("not found: " + propName);
     }
-  }
-
-  private CompileDir makeCompileDir(int compileId, TreeLogger logger)
-      throws UnableToCompleteException {
-    return CompileDir.create(appSpace.getCompileDir(compileId), logger);
   }
 
   /**

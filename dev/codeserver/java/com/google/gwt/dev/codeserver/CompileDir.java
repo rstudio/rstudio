@@ -31,7 +31,7 @@ import java.util.List;
  * the app, we will create a new, empty CompileDir. This way, a failed compile doesn't
  * modify the last good compile.
  *
- * <p>The CompileDir gets created within the appropriate {@link AppSpace} for the app
+ * <p>The CompileDir gets created within the appropriate {@link OutboxDir} for the app
  * being compiled.
  */
 public class CompileDir {
