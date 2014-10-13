@@ -57,14 +57,16 @@ var Mode = function(suppressHighlighting, doc, session) {
    this.$session = session;
    this.$doc = doc;
 
+   // Only need one tokenizer for the document (we assume other rules
+   // have been properly embedded)
+   this.$tokenizer = new Tokenizer(new c_cppHighlightRules().getRules());
+
    // R-related tokenization
-   this.$r_tokenizer = new Tokenizer(new RHighlightRules().getRules());
    this.$r_outdent = {};
    oop.implement(this.$r_outdent, RMatchingBraceOutdent);
-   this.$r_codeModel = new RCodeModel(doc, this.$r_tokenizer, null, /^\s*\/\*{3,}\s+[Rr]\s*$/);
+   this.$r_codeModel = new RCodeModel(doc, this.$tokenizer, /^r-/, /^\s*\/\*{3,}\s+[Rr]\s*$/);
 
    // C/C++ related tokenization
-   this.$tokenizer = new Tokenizer(new c_cppHighlightRules().getRules());
    this.$codeModel = new CppCodeModel(session, this.$tokenizer);
    
    this.$behaviour = new CStyleBehaviour(this.$codeModel);
