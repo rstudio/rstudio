@@ -25,6 +25,7 @@ public interface DependencyServerOperations extends CryptoServerOperations
 {
    void unsatisfiedDependencies(
        JsArray<Dependency> dependencies,
+       boolean silentUpdate,
        ServerRequestCallback<JsArray<Dependency>> requestCallback);
    
    void installDependencies(

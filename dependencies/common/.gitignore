@@ -9,5 +9,5 @@ packrat/
 packrat*.tar.gz
 rmarkdown/
 rmarkdown*.tar.gz
-shiny/
-shiny*.tar.gz
+shinyapps/
+shinyapps*.tar.gz

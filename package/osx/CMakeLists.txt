@@ -14,7 +14,7 @@ if (RSTUDIO_PACKAGE_BUILD)
      list (APPEND CODESIGN_TARGETS \${CODESIGN_MACOS})
   
      foreach(CODESIGN_TARGET \${CODESIGN_TARGETS})
-        execute_process(COMMAND codesign \"-s\" \"Developer ID Application: RStudio Inc.\" \"-i\" \"org.rstudio.RStudio\" \"\${CODESIGN_TARGET}\")
+        execute_process(COMMAND codesign \"-s\" \"Developer ID Application: RStudio Inc.\" \"--deep\" \"-i\" \"org.rstudio.RStudio\" \"\${CODESIGN_TARGET}\")
      endforeach()   
      ")
 endif()

@@ -48,7 +48,8 @@ bool isOSXMavericks()
 
    [pool release];
 
-   return boost::algorithm::starts_with(version, "10.9");
+   return boost::algorithm::starts_with(version, "10.9") ||
+          boost::algorithm::starts_with(version, "10.10");
 }
 
 bool hasOSXMavericksDeveloperTools()

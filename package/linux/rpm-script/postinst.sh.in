@@ -35,6 +35,13 @@ mkdir -p /var/lib/rstudio-server/proxy
 sh -c "echo `date +%s` > /var/lib/rstudio-server/installed"
 rstudio-server force-suspend-all
 
+# suse stuff
+if test -f /etc/SuSE-release
+then
+  mv ${CMAKE_INSTALL_PREFIX}/bin/pandoc/pandoc-static ${CMAKE_INSTALL_PREFIX}/bin/pandoc/pandoc
+  mv ${CMAKE_INSTALL_PREFIX}/bin/pandoc/pandoc-citeproc-static ${CMAKE_INSTALL_PREFIX}/bin/pandoc/pandoc-citeproc
+fi
+
 # add upstart profile or init.d script and start the server
 if test -d /etc/init/
 then
@@ -47,7 +54,12 @@ then
    initctl stop rstudio-server 2>/dev/null
    initctl start rstudio-server
 else
-   cp ${CMAKE_INSTALL_PREFIX}/extras/init.d/redhat/rstudio-server /etc/init.d/
+   if test -f /etc/SuSE-release
+   then
+      cp ${CMAKE_INSTALL_PREFIX}/extras/init.d/suse/rstudio-server /etc/init.d/
+   else
+      cp ${CMAKE_INSTALL_PREFIX}/extras/init.d/redhat/rstudio-server /etc/init.d/
+   fi
    chmod +x /etc/init.d/rstudio-server
    chkconfig --add rstudio-server
    service rstudio-server stop 2>/dev/null

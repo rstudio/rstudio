@@ -377,17 +377,7 @@ bool detectSvnExeOnPath(FilePath* pPath)
 
 FilePath whichSvnExe()
 {
-   std::string whichSvn;
-   Error error = r::exec::RFunction("Sys.which", "svn").call(&whichSvn);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return FilePath();
-   }
-   else
-   {
-      return FilePath(whichSvn);
-   }
+   return module_context::findProgram("svn");
 }
 
 void initSvnBin()

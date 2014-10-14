@@ -286,6 +286,12 @@ public class RCompletionManager implements CompletionManager
       {
          switch (event.getKeyCode())
          {
+         // chrome on ubuntu now sends this before every keydown
+         // so we need to explicitly ignore it. see:
+         // https://github.com/ivaynberg/select2/issues/2482
+         case KeyCodes.KEY_WIN_IME: 
+            return false ;
+            
          case KeyCodes.KEY_SHIFT:
          case KeyCodes.KEY_CTRL:
          case KeyCodes.KEY_ALT:

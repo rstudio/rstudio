@@ -163,7 +163,7 @@ public class GlobalToolbar extends Toolbar
          addLeftWidget(vcsButton);
       }
       
-      if (sessionInfo.getShinyappsInstalled())
+      if (sessionInfo.getShinyappsAvailable())
       {
          addLeftSeparator();
          ToolbarButton deployButton = 

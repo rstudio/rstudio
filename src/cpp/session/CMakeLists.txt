@@ -34,6 +34,10 @@ endif()
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/packrat")
   message(FATAL_ERROR "packrat package not found (re-run install-dependencies script to install)")
 endif()
+if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/shinyapps")
+  message(FATAL_ERROR "shinyapps package not found (re-run install-dependencies script to install)")
+endif()
+
 
 # verify libclang is installed
 if(WIN32)
@@ -363,7 +367,8 @@ if (NOT RSTUDIO_SESSION_WIN64)
    # install pandoc
    set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/1.12.4.2")
    file(GLOB PANDOC_FILES "${PANDOC_BIN}/pandoc*")
-   install(PROGRAMS ${PANDOC_FILES}
+   install(FILES ${PANDOC_FILES}
+           PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
            DESTINATION  ${RSTUDIO_INSTALL_BIN}/pandoc)
 
    # install rmarkdown package
@@ -374,6 +379,11 @@ if (NOT RSTUDIO_SESSION_WIN64)
    # install packrat package
    file(GLOB PACKRAT_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/packrat*.tar.gz")
    install(FILES ${PACKRAT_PACKAGE}
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
+
+   # install shinyapps package
+   file(GLOB SHINYAPPS_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/shinyapps*.tar.gz")
+   install(FILES ${SHINYAPPS_PACKAGE}
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
 
    # install PDF.js

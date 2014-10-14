@@ -191,7 +191,7 @@ public class RmdOutputPresenter implements
             params_.getResult().equals(params.getResult());
       params_ = params;
       view_.showOutput(params, session_.getSessionInfo().getAllowRpubsPublish(), 
-                       session_.getSessionInfo().getShinyappsInstalled(), refresh);
+                       session_.getSessionInfo().getShinyappsAvailable(), refresh);
    }
    
    private native void initializeEvents() /*-{  
