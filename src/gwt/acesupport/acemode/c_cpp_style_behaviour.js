@@ -103,11 +103,11 @@ var CStyleBehaviour = function(codeModel) {
 
    this.add("R", "insertion", function(state, action, editor, session, text) {
 
-      if (text == "R") {
+      if (text === "R" || text === "r") {
 
          var cursor = editor.getCursorPosition();
          var line = new String(session.doc.getLine(cursor.row));
-         var match = line.match(/^(\s*)\/\*{3,}\s+/);
+         var match = line.match(/^(\s*)\/\*{3,}\s/);
          if (match) {
             return {
                text: "R\n" + match[1] + "\n" + match[1] + "*/",
@@ -120,13 +120,13 @@ var CStyleBehaviour = function(codeModel) {
 
    this.add("newline", "insertion", function(state, action, editor, session, text) {
 
-      if (text == "\n") {
+      if (text === "\n") {
 
          // Get some needed variables
          var row = editor.selection.getCursor().row;
          var col = editor.selection.getCursor().column;
 
-         var tab = new Array(session.getTabSize() + 1).join(" ");
+         var tab = session.getTabString();
 
          var cursor = editor.getCursorPosition();
          var line = session.doc.getLine(cursor.row);
@@ -157,6 +157,19 @@ var CStyleBehaviour = function(codeModel) {
             
          }
 
+         // If we're inserting a newline within a newly constructed comment
+         // block, insert a '*'.
+         if (/^\s*\/\*/.test(line)) {
+
+            var indent = this.$getIndent(line);
+            var newIndent = indent + " * ";
+            
+            return {
+               text: "\n" + newIndent + "\n" + indent + " */",
+               selection: [1, newIndent.length, 1, newIndent.length]
+            };
+         }
+
          // Walk backwards over whitespace to find first non-whitespace char
          var i = col - 1;
          while (/\s/.test(line[i])) {
@@ -172,19 +185,6 @@ var CStyleBehaviour = function(codeModel) {
             return {
                text: '\n' + indent + '\n' + indent,
                selection: [1, indent.length, 1, indent.length]
-            };
-         }
-
-         // If we're inserting a newline within a newly constructed comment
-         // block, insert a '*'.
-         if (/^\s*\/\*/.test(line)) {
-
-            var indent = this.$getIndent(line);
-            var newIndent = indent + " * ";
-            
-            return {
-               text: "\n" + newIndent + "\n" + indent + " */",
-               selection: [1, newIndent.length, 1, newIndent.length]
             };
          }
 
@@ -221,16 +221,6 @@ var CStyleBehaviour = function(codeModel) {
                
                return {
                   text: "\n" + indent + "\n" + nextIndent,
-                  selection: [1, indent.length, 1, indent.length]
-               };
-            }
-
-            // If this line is for a namespace, don't indent
-            if (/^\s*namespace/.test(line)) {
-               var indent = this.$getIndent(line);
-
-               return {
-                  text: "\n" + indent + "\n" + indent,
                   selection: [1, indent.length, 1, indent.length]
                };
             }
@@ -276,6 +266,8 @@ var CStyleBehaviour = function(codeModel) {
       var line = session.getLine(row);
       var prevLine = session.getLine(row - 1);
       var lineTrimmed = line.substring(0, col);
+
+      // TODO: getLineSansComments
       var commentMatch = line.match(/\/\//);
       if (commentMatch) {
          line = line.substr(0, commentMatch.index - 1);
@@ -315,7 +307,8 @@ var CStyleBehaviour = function(codeModel) {
 
             // if we're assigning, e.g. through an initializor list, then
             // we should include a semi-colon
-            if (line.match(/\=\s*$/)) {
+            if (line.match(/\=\s*$/) &&
+                line.indexOf(";") === -1) {
                return {
                   text: '{};',
                   selection: [1, 1]
@@ -370,7 +363,9 @@ var CStyleBehaviour = function(codeModel) {
                session, row
             );
 
-            if (heuristicRow !== null) {
+            // TODO: this works for the wrong reason!
+            if (heuristicRow !== null &&
+                line.indexOf(";") === -1) {
                return {
                   text: '{};',
                   selection: [1, 1]
@@ -380,7 +375,9 @@ var CStyleBehaviour = function(codeModel) {
             // if it looks like we're using a initializor eg 'obj {', then
             // include a closing ;
             // Avoid doing this if there's an 'else' token on the same line
-            if (line.match(/[\w>]+\s*$/) && !line.match(/\belse\b/)) {
+            if (line.match(/\S+\s*$/) &&
+                !line.match(/\belse\b/) &&
+                line.indexOf(";") === -1) {
                return {
                   text: '{};',
                   selection: [1, 1]
@@ -508,22 +505,19 @@ var CStyleBehaviour = function(codeModel) {
       if (!range.isMultiLine() && (selected == '"' || selected == "'")) {
          var line = session.doc.getLine(range.start.row);
          var rightChar = line.substring(range.start.column + 1, range.start.column + 2);
-         if (rightChar == '"') {
+         if (rightChar === '"' || rightChar === "'") {
             range.end.column++;
             return range;
          }
       }
    });
 
-   this.add("comment", "deletion", function (state, action, editor, session, range) {
-      
-      return range;
-
-   });
-
    this.add("punctuation.operator", "insertion", function(state, action, editor, session, text) {
+      
       // Step over ';'
-      if (text == ";") {
+      // TODO: only insert semi-colon if text following cursor is just
+      // semi-colon + whitespace
+      if (text === ";") {
          var cursor = editor.selection.getCursor();
          var line = session.getLine(cursor.row);
          if (line[cursor.column] == ";") {
@@ -542,6 +536,7 @@ var CStyleBehaviour = function(codeModel) {
    // indentation rules for expressions constructed within a macro.
    this.add("macro", "insertion", function(state, action, editor, session, text) {
 
+      // TODO: reconcile with margin (ensure it is not greater than margin)
       var backslashAlignColumn = 62;
 
       // Get some useful quantities
@@ -678,4 +673,13 @@ exports.setAddNamespaceComment = function(x) {
 exports.getAddNamespaceComment = function() {
    return $addNamespaceComment;
 }
+
+exports.setFillinDoWhile = function(x) {
+   $fillinDoWhile = x;
+};
+
+exports.getFillinDoWhile = function() {
+   return $fillinDoWhile;
+}
+
 });
