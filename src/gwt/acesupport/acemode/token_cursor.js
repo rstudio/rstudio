@@ -369,7 +369,7 @@ var TokenCursor = function(tokens, row, offset) {
 
    this.cloneCursor = function()
    {
-      return new TokenCursor(this.$tokens, this.$row, this.$offset);
+      return new this.constructor(this.$tokens, this.$row, this.$offset);
    };
 
    this.isFirstSignificantTokenOnLine = function()
@@ -426,11 +426,6 @@ var CppTokenCursor = function(tokens, row, offset) {
 oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
 
 (function() {
-
-   this.cloneCursor = function()
-   {
-      return new CppTokenCursor(this.$tokens, this.$row, this.$offset);
-   };
 
    this.bwdToMatchingArrow = function() {
 
