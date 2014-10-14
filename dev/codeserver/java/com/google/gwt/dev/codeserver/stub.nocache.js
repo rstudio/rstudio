@@ -23,7 +23,8 @@
   // Compute some codeserver urls so as the user does not need bookmarklets
   var hostName = $wnd.location.hostname;
   var serverUrl = 'http://' + hostName + ':__SUPERDEV_PORT__';
-  var nocacheUrl = serverUrl + '/__MODULE_NAME__/__MODULE_NAME__.recompile.nocache.js';
+  var module = '__MODULE_NAME__';
+  var nocacheUrl = serverUrl + '/' + module + '/' + module + '.recompile.nocache.js';
 
   // Insert the superdevmode nocache script in the first position of the head
   var devModeScript = $doc.createElement('script');
@@ -33,9 +34,17 @@
   // This means that we do not detect a non running SDM with IE8.
   if (devModeScript.addEventListener) {
     var callback = function() {
-      if (!$wnd.__gwt_sdm__recompiler || !$wnd.__gwt_sdm__recompiler.loaded) {
-        $wnd.alert("Could not load application from super dev mode. " +
-            "Make sure your super dev mode server is running and hit reload.");
+      // Don't show the confirmation dialogue twice (multimodule)
+      if (!$wnd.__gwt__sdm__confirmed &&
+           (!$wnd.__gwt_sdm__recompiler || !$wnd.__gwt_sdm__recompiler.loaded)) {
+        $wnd.__gwt__sdm__confirmed = true;
+        if ($wnd.confirm(
+            "Couldn't load " +  module + " from Super Dev Mode\n" +
+            "server at " + serverUrl + ".\n" +
+            "Please make sure this server is ready.\n" +
+            "Do you want to try again?")) {
+          $wnd.location.reload();
+        }
       }
     };
     devModeScript.addEventListener("error", callback, true);
