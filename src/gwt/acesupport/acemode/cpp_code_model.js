@@ -358,7 +358,9 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                 localCursor.moveBackwardOverMatchingParens()) ||
                   localCursor.moveBackwardOverMatchingParens()) {
 
-               if (localCursor.peekBack().currentType() === "identifier") {
+               if (localCursor.peekBack().currentType() === "identifier" ||
+                   localCursor.peekBack().currentValue() === "]") {
+                  
                   var functionName = localCursor.peekBack().currentValue();
                   if (functionName === "]") 
                      this.$scopes.onLambdaScopeStart("[lambda function]",
