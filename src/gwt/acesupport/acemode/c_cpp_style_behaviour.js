@@ -532,8 +532,8 @@ var CStyleBehaviour = function(codeModel) {
    // indentation rules for expressions constructed within a macro.
    this.add("macro", "insertion", function(state, action, editor, session, text) {
 
-      // TODO: reconcile with margin (ensure it is not greater than margin)
-      var backslashAlignColumn = 62;
+      var margin = editor.getPrintMarginColumn();
+      var backslashAlignColumn = Math.min(62, margin);
 
       // Get some useful quantities
       var lines = session.getDocument().$lines;
