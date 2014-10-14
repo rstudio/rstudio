@@ -397,8 +397,22 @@ var TokenCursor = function(tokens, row, offset) {
    this.moveToPosition = function(pos) {
 
       var rowTokens = this.$tokens[pos.row];
-      if (rowTokens == null) {
+
+      // If there's no tokens on this line, walk back until we find
+      // a line with tokens
+      var row = pos.row;
+      while (rowTokens == null || rowTokens.length === 0) {
+         row--;
+         rowTokens = this.$tokens[row];
+      }
+
+      if (row < 0)
          return false;
+
+      if (row !== pos.row) {
+         this.$row = row;
+         this.$offset = this.$tokens[row].length - 1;
+         return true;
       }
 
       for (var i = 0; i < rowTokens.length; i++) {
@@ -415,7 +429,6 @@ var TokenCursor = function(tokens, row, offset) {
    
    
 }).call(TokenCursor.prototype);
-
 
 
 var CppTokenCursor = function(tokens, row, offset) {

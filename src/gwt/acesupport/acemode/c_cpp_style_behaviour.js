@@ -261,18 +261,6 @@ var CStyleBehaviour = function(codeModel) {
 
    this.add("braces", "insertion", function (state, action, editor, session, text) {
 
-      var row = editor.selection.getCursor().row;
-      var col = editor.selection.getCursor().column;
-      var line = session.getLine(row);
-      var prevLine = session.getLine(row - 1);
-      var lineTrimmed = line.substring(0, col);
-
-      // TODO: getLineSansComments
-      var commentMatch = line.match(/\/\//);
-      if (commentMatch) {
-         line = line.substr(0, commentMatch.index - 1);
-      }
-
       // Specialized insertion rules -- we infer whether a closing ';'
       // is appropriate, and we also provide comments for closing namespaces
       // (if desired)
@@ -282,6 +270,28 @@ var CStyleBehaviour = function(codeModel) {
          var selection = editor.getSelectionRange();
          var selected = session.doc.getTextRange(selection);
          if (selected === "") {
+
+            var row = editor.selection.getCursor().row;
+            var col = editor.selection.getCursor().column;
+            var doc = session.getDocument();
+            var line = this.$codeModel.getLineSansComments(doc, row, true);
+            var prevLine = "";
+            if (row > 0) {
+               prevLine = this.$codeModel.getLineSansComments(doc, row - 1, true);
+               for (var i = row - 1; i >= 0; i--) {
+                  if (!/^\s*$/.test(prevLine)) break;
+                  prevLine = this.$codeModel.getLineSansComments(doc, i, true);
+               }
+            }
+            
+            var lineTrimmed = line.substring(0, col);
+            var cursor = editor.getCursorPosition();
+
+            // TODO: getLineSansComments
+            var commentMatch = line.match(/\/\//);
+            if (commentMatch) {
+               line = line.substr(0, commentMatch.index - 1);
+            }
 
             // namespace specific indenting -- note that 'lineTrimmed'
             // does not contain the now-inserted '{'
@@ -318,25 +328,13 @@ var CStyleBehaviour = function(codeModel) {
             // If we're defining a function, don't include a semi-colon.
             // We can only use the tokenizer if the open brace was inserted
             // on a new line (it has not yet been tokenized)
-            if (line.match(/\)\s*/)) {
+            if (/\)\s*$/.test(line) ||
+                (/\)\s*$/.test(prevLine) && /^\s*$/.test(line)))
+            {
                return {
                   text: '{}',
                   selection: [1, 1]
                };
-            }
-
-            if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row)) {
-               var tokenCursor = new CppTokenCursor(this.$codeModel.$tokens);
-               tokenCursor.$row = row;
-               tokenCursor.$offset = 0;
-               if (tokenCursor.moveToPreviousToken()) {
-                  if (tokenCursor.currentValue() === ")") {
-                     return {
-                        text: '{}',
-                        selection: [1, 1]
-                     };
-                  }
-               }
             }
 
             // if we're making a block define, don't add a semi-colon
@@ -358,14 +356,12 @@ var CStyleBehaviour = function(codeModel) {
             }
 
             // If class-style indentation can produce an appropriate indentation for
-            // the brace, then insert a closing brace with a semi-colon
+            // the brace, then insert a closing brace with a semi-colon.
             var heuristicRow = $codeModel.getRowForOpenBraceIndent(
-               session, row
+               session, row, true
             );
 
-            // TODO: this works for the wrong reason!
-            if (heuristicRow !== null &&
-                line.indexOf(";") === -1) {
+            if (heuristicRow >= 0 && line.indexOf(";") === -1) {
                return {
                   text: '{};',
                   selection: [1, 1]

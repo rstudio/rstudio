@@ -266,9 +266,6 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                   }
                }
             }
-            if (tokenCursor.currentValue() !== "{") {
-               return -1;
-            }
 
             if (tokenCursor.peekBack().currentValue() === "{") {
                return -1;
@@ -414,7 +411,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
    // Get a line, with comments (following '//') stripped. Also strip
    // a trailing '\' anticipating e.g. macros.
-   this.getLineSansComments = function(doc, row) {
+   this.getLineSansComments = function(doc, row, stripConstAndNoexcept) {
 
       if (row < 0) {
          return "";
@@ -457,6 +454,12 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
       // for macro mode (so we get regular indentation rules)
       if (reEndsWithBackslash.test(line)) {
          line = line.substring(0, line.lastIndexOf("\\"));
+      }
+
+      if (stripConstAndNoexcept) {
+         line = line
+            .replace(/\bconst\b/, "")
+            .replace(/\bnoexcept\b/, "");
       }
 
       return line;
