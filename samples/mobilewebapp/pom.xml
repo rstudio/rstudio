@@ -14,8 +14,8 @@
     <gwtVersion>2.7.0-SNAPSHOT</gwtVersion>
 
     <!-- GWT needs at least java 1.6 -->
-    <maven.compiler.source>1.6</maven.compiler.source>
-    <maven.compiler.target>1.6</maven.compiler.target>
+    <maven.compiler.source>1.7</maven.compiler.source>
+    <maven.compiler.target>1.7</maven.compiler.target>
 
     <!-- GAE properties -->
     <gae.version>1.7.1</gae.version>
@@ -27,37 +27,59 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
   </properties>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.google.gwt</groupId>
+        <artifactId>gwt</artifactId>
+        <version>${gwtVersion}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
     <!-- GWT -->
 
     <dependency>
       <groupId>com.google.gwt</groupId>
       <artifactId>gwt-user</artifactId>
-      <version>${gwtVersion}</version>
       <!-- "provided" so that we don't deploy -->
       <scope>provided</scope>
     </dependency>
-
-    <!-- GWT projects do not usually need a dependency on gwt-dev, but MobileWebApp
-         contains a GWTC Linker (AppCacheLinker) which in turn depends on internals
-         of the GWT compiler. -->
     <dependency>
       <groupId>com.google.gwt</groupId>
       <artifactId>gwt-dev</artifactId>
-      <version>${gwtVersion}</version>
       <!-- "provided" so that we don't deploy -->
       <scope>provided</scope>
     </dependency>
-
-    <!-- RequestFactory server -->
+    <dependency>
+      <groupId>com.google.gwt</groupId>
+      <artifactId>gwt-codeserver</artifactId>
+      <!-- "provided" so that we don't deploy -->
+      <scope>provided</scope>
+    </dependency>
 
     <dependency>
       <groupId>com.google.web.bindery</groupId>
       <artifactId>requestfactory-server</artifactId>
-      <version>${gwtVersion}</version>
+    </dependency>
+    <!-- Need to run the RF Validation tool. This works on both the command-line
+         and in Eclipse, provided that m2e-apt is installed. -->
+    <dependency>
+      <groupId>com.google.web.bindery</groupId>
+      <artifactId>requestfactory-apt</artifactId>
+      <!-- "provided" so that we don't deploy -->
+      <scope>provided</scope>
     </dependency>
 
     <!-- RequestFactory will use JSR 303 javax.validation if you let it -->
+    <dependency>
+      <groupId>javax.validation</groupId>
+      <artifactId>validation-api</artifactId>
+      <version>1.0.0.GA</version>
+    </dependency>
     <dependency>
       <groupId>org.hibernate</groupId>
       <artifactId>hibernate-validator</artifactId>
@@ -129,12 +151,12 @@
     <dependency>
       <groupId>com.google.inject</groupId>
       <artifactId>guice</artifactId>
-      <version>2.0</version>
+      <version>3.0</version>
     </dependency>
     <dependency>
       <groupId>com.google.gwt.inject</groupId>
       <artifactId>gin</artifactId>
-      <version>1.0</version>
+      <version>2.1.2</version>
     </dependency>
     <!-- Use the JSR 330 injection interfaces-->
     <dependency>
@@ -148,46 +170,31 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.8.1</version>
+      <version>4.11</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
 
   <build>
-    <!-- Generate compiled stuff in the folder used for development mode -->
-    <outputDirectory>${project.build.directory}/${project.build.finalName}/WEB-INF/classes</outputDirectory>
-
     <plugins>
-
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>2.4</version>
-        <configuration>
-          <source>1.6</source>
-          <target>1.6</target>
-        </configuration>
-        <dependencies>
-          <!-- Need to run the RF Validation tool. This works on both the command-line
-               and in Eclipse, provided that m2e-apt is installed. -->
-          <dependency>
-            <groupId>com.google.web.bindery</groupId>
-            <artifactId>requestfactory-apt</artifactId>
-            <version>${gwtVersion}</version>
-          </dependency>
-        </dependencies>
-      </plugin>
 
       <!-- GWT Maven Plugin-->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>gwt-maven-plugin</artifactId>
-        <!-- JS is only needed in the package phase, this speeds up testing -->
         <version>${gwtVersion}</version>
         <executions>
           <execution>
-            <phase>prepare-package</phase>
             <goals>
               <goal>compile</goal>
+            </goals>
+          </execution>
+          <execution>
+            <!-- Run tests through gwt:test, this allows reusing the plugin configuration for GWTTestCases -->
+            <id>gwt-tests</id>
+            <phase>test</phase>
+            <goals>
+              <goal>test</goal>
             </goals>
           </execution>
         </executions>
@@ -195,11 +202,13 @@
         <!-- Plugin configuration. There are many available options,
              see gwt-maven-plugin documentation at codehaus.org -->
         <configuration>
-          <!-- URL that should be automatically opened in the GWT shell (gwt:run). -->
+          <!-- URL that should be opened by DevMode (gwt:run). -->
           <runTarget>MobileWebApp.html</runTarget>
           <!-- Ask GWT to create the Story of Your Compile (SOYC) (gwt:compile) -->
           <compileReport>true</compileReport>
-          <module>com.google.gwt.sample.mobilewebapp.MobileWebApp</module>
+          <modules>
+            <module>com.google.gwt.sample.mobilewebapp.MobileWebApp</module>
+          </modules>
           <appEngineVersion>${gae.version}</appEngineVersion>
           <appEngineHome>${gae.home}</appEngineHome>
           <logLevel>INFO</logLevel>
@@ -207,7 +216,12 @@
 
           <server>com.google.appengine.tools.development.gwt.AppEngineLauncher</server>
           <copyWebapp>true</copyWebapp>
-        </configuration>
+
+          <!-- Run tests using HtmlUnit -->
+          <mode>htmlunit</mode>
+          <!-- Tests patterns -->
+          <includes>**/Test*.java,**/*Test.java,**/*TestCase.java</includes>
+         </configuration>
       </plugin>
 
       <!-- Google App Engine plugin -->
@@ -226,49 +240,15 @@
         </executions>
       </plugin>
 
-      <!-- Add source folders to test classpath in order to run gwt-tests as normal junit-tests -->
+      <!-- Skip normal test execution, we use gwt:test instead -->
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.5</version>
+        <version>2.17</version>
         <configuration>
-          <additionalClasspathElements>
-            <additionalClasspathElement>${project.build.sourceDirectory}</additionalClasspathElement>
-            <additionalClasspathElement>${project.build.testSourceDirectory}</additionalClasspathElement>
-          </additionalClasspathElements>
-          <useManifestOnlyJar>false</useManifestOnlyJar>
-          <forkMode>always</forkMode>
-
-          <!-- Folder for generated testing stuff -->
-          <systemProperties>
-            <property>
-              <name>gwt.args</name>
-              <value>-out ${project.build.directory}/${project.build.finalName}</value>
-            </property>
-          </systemProperties>
+          <skip>true</skip>
         </configuration>
       </plugin>
 
-      <!-- Copy static web files before executing gwt:run -->
-      <plugin>
-        <artifactId>maven-resources-plugin</artifactId>
-        <version>2.4.2</version>
-        <executions>
-          <execution>
-            <phase>compile</phase>
-            <goals>
-              <goal>copy-resources</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.build.directory}/${project.build.finalName}</outputDirectory>
-              <resources>
-                <resource>
-                  <directory>src/main/webapp</directory>
-                </resource>
-              </resources>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
     </plugins>
 
     <!-- Required by m2e for import into eclipse. No effect on command line builds  -->
@@ -301,6 +281,7 @@
       </plugins>
     </pluginManagement>
   </build>
+
   <repositories>
     <repository>
       <id>objectify-appengine</id>
