@@ -1287,9 +1287,9 @@ public class TextEditingTarget implements
    private void updateStatusBarLanguage()
    {
       statusBar_.getLanguage().setValue(fileType_.getLabel());
-      boolean isR = fileType_.canShowScopeTree();
-      statusBar_.setScopeVisible(isR);
-      if (isR)
+      boolean canShowScope = fileType_.canShowScopeTree();
+      statusBar_.setScopeVisible(canShowScope);
+      if (canShowScope)
          updateCurrentScope();
    }
 
@@ -1311,7 +1311,7 @@ public class TextEditingTarget implements
                public void execute()
                {
                   // special handing for presentations since we extract
-                  // the slide structure in a differerent manner than 
+                  // the slide structure in a different manner than 
                   // the editor scope trees
                   if (fileType_.isRpres())
                   {
@@ -1323,6 +1323,7 @@ public class TextEditingTarget implements
                   else
                   {
                      Scope function = docDisplay_.getCurrentScope();
+                     Debug.logObject(function);
                      String label = function != null
                                    ? function.getLabel()
                                    : null;

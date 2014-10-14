@@ -15,7 +15,7 @@
 define('mode/r_scope_tree', function(require, exports, module) {
 
    function debuglog(str) {
-      //console.log(str);
+      // console.log(str);
    }
 
    function assert(condition, label) {
@@ -30,9 +30,10 @@ define('mode/r_scope_tree', function(require, exports, module) {
    }
 
 
-   var ScopeManager = function() {
+   var ScopeManager = function(ScopeNodeFactory) {
+      this.$ScopeNodeFactory = ScopeNodeFactory;
       this.parsePos = {row: 0, column: 0};
-      this.$root = new ScopeNode("(Top Level)", this.parsePos, null,
+      this.$root = new this.$ScopeNodeFactory("(Top Level)", this.parsePos, null,
                                  ScopeNode.TYPE_ROOT);
    };
 
@@ -46,7 +47,7 @@ define('mode/r_scope_tree', function(require, exports, module) {
          else if (existingScopes.length != 1)
             return;
 
-         this.$root.addNode(new ScopeNode(sectionLabel, sectionPos, sectionPos,
+         this.$root.addNode(new this.$ScopeNodeFactory(sectionLabel, sectionPos, sectionPos,
                                           ScopeNode.TYPE_SECTION));
       };
 
@@ -57,7 +58,7 @@ define('mode/r_scope_tree', function(require, exports, module) {
             debuglog("chunk-scope implicit end: " + prev.label);
 
          debuglog("adding chunk-scope " + label);
-         var node = new ScopeNode(label, chunkPos, chunkStartPos,
+         var node = new this.$ScopeNodeFactory(label, chunkPos, chunkStartPos,
                                   ScopeNode.TYPE_CHUNK);
          node.chunkLabel = chunkLabel;
          this.$root.addNode(node);
@@ -76,14 +77,14 @@ define('mode/r_scope_tree', function(require, exports, module) {
 
       this.onFunctionScopeStart = function(label, functionStartPos, scopePos) {
          debuglog("adding function brace-scope " + label);
-         this.$root.addNode(new ScopeNode(label, scopePos, functionStartPos,
+         this.$root.addNode(new this.$ScopeNodeFactory(label, scopePos, functionStartPos,
                                           ScopeNode.TYPE_BRACE));
          this.printScopeTree();
       };
 
       this.onScopeStart = function(pos) {
          debuglog("adding anon brace-scope");
-         this.$root.addNode(new ScopeNode(null, pos, null,
+         this.$root.addNode(new this.$ScopeNodeFactory(null, pos, null,
                                           ScopeNode.TYPE_BRACE));
          this.printScopeTree();
       };
@@ -391,5 +392,6 @@ define('mode/r_scope_tree', function(require, exports, module) {
 
 
    exports.ScopeManager = ScopeManager;
+   exports.ScopeNode = ScopeNode;
 
 });

@@ -13,6 +13,7 @@
   <script type="text/javascript" src="../acesupport/acemode/r_scope_tree.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/r_code_model.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/sweave_background_highlighter.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/cpp_scope_tree.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/cpp_code_model.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/c_cpp_fold_mode.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/c_cpp_style_behaviour.js"></script>
@@ -687,7 +688,7 @@ var session = editor.getSession();
 
         this.applyIndent(i, newIndent);
         mode.autoOutdent(state, this, i);
-            var codeModel = mode.$codeModel;
+            var codeModel = mode.codeModel;
             if (typeof codeModel !== "undefined") {
                var align = codeModel.alignContinuationSlashes;
                if (typeof align !== "undefined") {
@@ -723,7 +724,7 @@ function doIndentTest(el, state) {
   var doc = testEditor.session.getDocument();
   doc.$lines = new Array(1);
 
-  var codeModel = testEditor.getSession().getMode().$codeModel;
+  var codeModel = testEditor.getSession().getMode().codeModel;
   codeModel.$tokenUtils.$removeRows(
     0,
     codeModel.$tokens.length
@@ -852,7 +853,7 @@ function doIndent() {
 var session = editor.getSession();
 var doc = session.getDocument();
 var mode = session.getMode();
-var codeModel = mode.$codeModel;
+var codeModel = mode.codeModel;
 
 
 </script>

@@ -17,9 +17,13 @@ define("mode/cpp_code_model", function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
 var Range = require("ace/range").Range;
+
 var TokenUtils = require("mode/token_utils").TokenUtils;
 var TokenIterator = require("ace/token_iterator").TokenIterator;
 var CppTokenCursor = require("mode/token_cursor").CppTokenCursor;
+
+var CppScopeNode = require("mode/cpp_scope_tree").CppScopeNode;
+var CppScopeManager = require("mode/cpp_scope_tree").CppScopeManager;
 
 var getVerticallyAlignFunctionArgs = require("mode/r_code_model").getVerticallyAlignFunctionArgs;
 
@@ -40,6 +44,8 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
       this.$statePattern,
       this.$codeBeginPattern
    );
+
+   this.$scopes = new CppScopeManager(CppScopeNode);
 
    var that = this;
    this.$doc.on('change', function(evt) {
@@ -210,6 +216,210 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
          return false;
       }
    };
+
+   this.$buildScopeTreeUpToRow = function(maxrow) {
+
+      function maybeEvaluateLiteralString(value) {
+         // NOTE: We could evaluate escape sequences and whatnot here as well.
+         //       Hard to imagine who would abuse Rnw by putting escape
+         //       sequences in chunk labels, though.
+         var match = /^(['"])(.*)\1$/.exec(value);
+         if (!match)
+            return value;
+         else
+            return match[2];
+      }
+
+      function getChunkLabel(reOptions, comment) {
+         var match = reOptions.exec(comment);
+         if (!match)
+            return null;
+         var value = match[1];
+         var values = value.split(',');
+         if (values.length == 0)
+            return null;
+
+         // If first arg has no =, it's a label
+         if (!/=/.test(values[0])) {
+            return values[0].replace(/(^\s+)|(\s+$)/g, '');
+         }
+
+         for (var i = 0; i < values.length; i++) {
+            match = /^\s*label\s*=\s*(.*)$/.exec(values[i]);
+            if (match) {
+               return maybeEvaluateLiteralString(
+                                        match[1].replace(/(^\s+)|(\s+$)/g, ''));
+            }
+         }
+
+         return null;
+      }
+
+      var maxRow = Math.min(maxrow + 30, this.$doc.getLength() - 1);
+      this.$tokenUtils.$tokenizeUpToRow(maxRow);
+
+      var tokenCursor = new CppTokenCursor(this.$tokens);
+      if (!tokenCursor.seekToNearestToken(this.$scopes.parsePos, maxRow))
+         return;
+
+      do
+      {
+         this.$scopes.parsePos = tokenCursor.currentPosition();
+         this.$scopes.parsePos.column += tokenCursor.currentValue().length;
+
+         //console.log("                                 Token: " + tokenCursor.currentValue() + " [" + tokenCursor.currentPosition().row + "x" + tokenCursor.currentPosition().column + "]");
+
+         var tokenType = tokenCursor.currentToken().type;
+         if (/\bsectionhead\b/.test(tokenType))
+         {
+            var sectionHeadMatch = /^\/\/'?[-=#\s]*(.*?)\s*[-=#]+\s*$/.exec(
+                  tokenCursor.currentValue());
+
+            var label = "" + sectionHeadMatch[1];
+            if (label.length == 0)
+               label = "(Untitled)";
+            if (label.length > 50)
+               label = label.substring(0, 50) + "...";
+
+            this.$scopes.onSectionHead(label, tokenCursor.currentPosition());
+         }
+         else if (/\bcodebegin\b/.test(tokenType))
+         {
+            var chunkStartPos = tokenCursor.currentPosition();
+            var chunkPos = {row: chunkStartPos.row + 1, column: 0};
+            var chunkNum = this.$scopes.getTopLevelScopeCount()+1;
+            var chunkLabel = getChunkLabel(this.$codeBeginPattern,
+                                           tokenCursor.currentValue());
+            var scopeName = "Chunk " + chunkNum;
+            if (chunkLabel)
+               scopeName += ": " + chunkLabel;
+            this.$scopes.onChunkStart(chunkLabel,
+                                      scopeName,
+                                      chunkStartPos,
+                                      chunkPos);
+         }
+         else if (/\bcodeend\b/.test(tokenType))
+         {
+            var pos = tokenCursor.currentPosition();
+            // Close any open functions
+            while (this.$scopes.onScopeEnd(pos))
+            {
+            }
+
+            pos.column += tokenCursor.currentValue().length;
+            this.$scopes.onChunkEnd(pos);
+         }
+         else if (tokenCursor.currentValue() === "{")
+         {
+            // We need to determine if this open brace is associated with an
+            // 1. namespace,
+            // 2. class (struct),
+            // 3. function,
+            // 4. lambda,
+            // 5. anonymous / other
+            var localCursor = tokenCursor.cloneCursor();
+            var startPos = localCursor.currentPosition();
+            if (localCursor.isFirstSignificantTokenOnLine())
+               startPos.column = 0;
+
+            // namespace
+            if (localCursor.peekBack().peekBack().currentValue() === "namespace") {
+
+               // named namespace
+               localCursor.moveToPreviousToken();
+               var namespaceName = localCursor.currentValue();
+               this.$scopes.onNamespaceScopeStart("[namespace " + namespaceName + "]",
+                                                  localCursor.currentPosition(),
+                                                  tokenCursor.currentPosition());
+               
+            }
+
+            // anonymous namespace
+            else if (localCursor.peekBack().currentValue() === "namespace") {
+               this.$scopes.onNamespaceScopeStart("[anonymous namespace]",
+                                                  startPos,
+                                                  tokenCursor.currentPosition());
+            }
+
+            // class (struct)
+            else if (localCursor.peekBack(2).currentValue() === "class" ||
+                     localCursor.peekBack(2).currentValue() === "struct" ||
+                     localCursor.bwdOverClassInheritance()) {
+               localCursor.moveToPreviousToken();
+               var className = localCursor.currentValue();
+               this.$scopes.onClassScopeStart("[class " + className + "]",
+                                              localCursor.currentPosition(),
+                                              tokenCursor.currentPosition());
+            }
+
+            // function and lambdas
+            else if (
+               (localCursor.bwdOverInitializationList() &&
+                localCursor.moveBackwardOverMatchingParens()) ||
+                  localCursor.moveBackwardOverMatchingParens()) {
+
+               if (localCursor.peekBack().currentType() === "identifier") {
+                  var functionName = localCursor.peekBack().currentValue();
+                  if (functionName === "]") 
+                     this.$scopes.onLambdaScopeStart("[lambda function]",
+                                                     startPos,
+                                                     tokenCursor.currentPosition());
+                  else
+                     this.$scopes.onFunctionScopeStart("[function " + functionName + "]",
+                                                       localCursor.peekBack().currentPosition(),
+                                                       tokenCursor.currentPosition());
+               }
+            }
+            // other (unknown)
+            else {
+               this.$scopes.onScopeStart(startPos);
+            }
+            
+         }
+         else if (tokenCursor.currentValue() === "}")
+         {
+            var pos = tokenCursor.currentPosition();
+            if (tokenCursor.isLastSignificantTokenOnLine())
+            {
+               pos.column = this.$doc.getLine(pos.row).length + 1;
+            }
+            else
+            {
+               pos.column++;
+            }
+            this.$scopes.onScopeEnd(pos);
+         }
+      } while (tokenCursor.moveToNextToken(maxRow));
+      
+   };
+
+   this.getCurrentScope = function(position, filter)
+   {
+      if (!filter)
+         filter = function(scope) { return true; };
+
+      if (!position)
+         return "";
+      this.$buildScopeTreeUpToRow(position.row);
+
+      var scopePath = this.$scopes.getActiveScopes(position);
+      if (scopePath)
+      {
+         for (var i = scopePath.length-1; i >= 0; i--) {
+            if (filter(scopePath[i]))
+               return scopePath[i];
+         }
+      }
+
+      return null;
+   };
+
+   this.getScopeTree = function()
+   {
+      this.$buildScopeTreeUpToRow(this.$doc.getLength() - 1);
+      return this.$scopes.getScopeList();
+   };
+   
 
    // Given a row with a '{', we look back for the row that provides
    // the start of the scope, for purposes of indentation. We look back
@@ -1188,6 +1398,8 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
             this.$tokenUtils.$invalidateRow(delta.range.start.row);
          }
       }
+
+      this.$scopes.invalidateFrom(delta.range.start);
 
    };
 

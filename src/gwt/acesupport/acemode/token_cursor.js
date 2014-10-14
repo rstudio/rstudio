@@ -132,13 +132,13 @@ var TokenCursor = function(tokens, row, offset) {
          clone.$offset = 0;
       }
 
-      if (clone.$tokens[clone.$row] === null)
+      if (clone.$tokens[clone.$row] == null || clone.$tokens[clone.$row].length === 0)
          return false;
 
       if (clone.$row >= clone.$tokens.length)
          return false;
 
-      if (clone.$offset > clone.$tokens[clone.$row].length)
+      if (clone.$offset >= clone.$tokens[clone.$row].length)
          return false;
 
       this.$row = clone.$row;
@@ -152,6 +152,7 @@ var TokenCursor = function(tokens, row, offset) {
    {
       if (position.row > maxRow)
          return false;
+
       this.$row = position.row;
       var rowTokens = this.$tokens[this.$row] || [];
       for (this.$offset = 0; this.$offset < rowTokens.length; this.$offset++)

@@ -15,7 +15,7 @@
 define('mode/cpp_scope_tree', function(require, exports, module) {
 
 function debuglog(str) {
-   console.log(str);
+   // console.log(str);
 }
 
 var oop = require('ace/lib/oop');
@@ -23,13 +23,23 @@ var ScopeTree = require('mode/r_scope_tree');
 var ScopeManager = ScopeTree.ScopeManager;
 var ScopeNode = ScopeTree.ScopeNode;
 
-var CppScopeNode = ScopeNode;
-CppScopeNode.prototype = new ScopeNode();
+var CppScopeNode = function(label, start, preamble, scopeType, scopeCategory) {
+   this.label = label;
+   this.start = start;
+   this.preamble = preamble || start;
+   this.end = null;
+   this.scopeType = scopeType;
+   this.scopeCategory = scopeCategory;
+   this.parentScope = null;
+   this.$children = [];
+};
+oop.mixin(CppScopeNode.prototype, ScopeNode.prototype);
 
-CppScopeNode.TYPE_CLASS     = 1;
-CppScopeNode.TYPE_NAMESPACE = 2;
-CppScopeNode.TYPE_FUNCTION  = 3;
-CppScopeNode.TYPE_LAMBDA    = 4;
+CppScopeNode.CATEGORY_CLASS     = 1;
+CppScopeNode.CATEGORY_NAMESPACE = 2;
+CppScopeNode.CATEGORY_FUNCTION  = 3;
+CppScopeNode.CATEGORY_LAMBDA    = 4;
+CppScopeNode.CATEGORY_ANON      = 5;
 
 (function() {
 
@@ -37,29 +47,97 @@ CppScopeNode.TYPE_LAMBDA    = 4;
       return this.scopeType == CppScopeNode.TYPE_BRACE &&
          this.scopeCategory == CppScopeNode.TYPE_CLASS;
    };
+
+   this.isNamespace = function() {
+      return this.scopeType == CppScopeNode.TYPE_BRACE &&
+         this.scopeCategory == CppScopeNode.TYPE_NAMESPACE;
+   };
+
+   this.isFunction = function() {
+      return this.scopeType == CppScopeNode.TYPE_BRACE &&
+         this.scopeCategory == CppScopeNode.TYPE_FUNCTION;
+   };
+   
+   this.isLambda = function() {
+      return this.scopeType == CppScopeNode.TYPE_BRACE &&
+         this.scopeCategory == CppScopeNode.TYPE_LAMBDA;
+   };
+   
    
 }).call(CppScopeNode.prototype);
 
-var CppScopeManager = {};
-oop.inherits(CppScopeManager, ScopeTree.ScopeManager);
+var CppScopeManager = function(ScopeNodeFactory) {
+
+   this.$ScopeNodeFactory = ScopeNodeFactory;
+   
+   this.parsePos = {
+      row: 0,
+      column: 0
+   };
+
+   this.$root = new CppScopeNode("(Top Level)",
+                                 this.parsePos,
+                                 null,
+                                 ScopeNode.TYPE_ROOT,
+                                 null);
+   
+};
+oop.mixin(CppScopeManager.prototype, ScopeManager.prototype);
 
 (function() {
 
    this.onClassScopeStart = function(label, startPos, scopePos) {
+      debuglog("adding class scope " + label);
       this.$root.addNode(
-         new ScopeNode(label, scopePos, startPos, ScopeNode.TYPE_BRACE)
+         new this.$ScopeNodeFactory(label, scopePos, startPos, ScopeNode.TYPE_BRACE, CppScopeNode.CATEGORY_CLASS)
       );
       this.printScopeTree();
    };
 
    this.onNamespaceScopeStart = function(label, startPos, scopePos) {
+      debuglog("adding namespace scope " + label);
       this.$root.addNode(
-         new ScopeNode(label, scopePos, startPos, ScopeNode.TYPE_BRACE)
+         new this.$ScopeNodeFactory(label, scopePos, startPos, ScopeNode.TYPE_BRACE, CppScopeNode.CATEGORY_NAMESPACE)
       );
       this.printScopeTree();
    };
 
+   this.onFunctionScopeStart = function(label, startPos, scopePos) {
+      debuglog("adding function scope " + label);
+      this.$root.addNode(
+         new this.$ScopeNodeFactory(label, scopePos, startPos, ScopeNode.TYPE_BRACE, CppScopeNode.CATEGORY_FUNCTION)
+      );
+      this.printScopeTree();
+   };
+
+   this.onLambdaScopeStart = function(label, startPos, scopePos) {
+      debuglog("adding lambda scope " + label);
+      this.$root.addNode(
+         new this.$ScopeNodeFactory(label, scopePos, startPos, ScopeNode.TYPE_BRACE, CppScopeNode.CATEGORY_LAMBDA)
+      );
+      this.printScopeTree();
+   };
+
+   this.onScopeStart = function(pos) {
+      debuglog("adding anon brace-scope");
+      this.$root.addNode(new this.$ScopeNodeFactory(null, pos, null,
+                                          ScopeNode.TYPE_BRACE));
+      this.printScopeTree();
+   };
+
+   this.onScopeEnd = function(pos) {
+      var closed = this.$root.closeScope(pos, ScopeNode.TYPE_BRACE);
+      if (closed)
+         debuglog("brace-scope end: " + closed.label);
+      else
+         debuglog("extra brace-scope end");
+      this.printScopeTree();
+      return closed;
+   };
    
 }).call(CppScopeManager.prototype);
+
+exports.CppScopeManager = CppScopeManager;
+exports.CppScopeNode = CppScopeNode;
 
 });
