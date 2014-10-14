@@ -465,7 +465,11 @@ public class CrossSiteIframeLinker extends SelectionScriptLinker {
     // linker, some of the compilation code still needs the $stats and
     // $sessionId
     // variables to be available.
-    out.print("var $stats = $wnd.__gwtStatsEvent ? function(a) {return $wnd.__gwtStatsEvent(a);} : null;");
+    out.print("var $stats = $wnd.__gwtStatsEvent ? function(a) {");
+    out.newlineOpt();
+    out.print("return $wnd.__gwtStatsEvent && $wnd.__gwtStatsEvent(a);");
+    out.newlineOpt();
+    out.print("} : null;");
     out.newlineOpt();
     out.print("var $sessionId = $wnd.__gwtStatsSessionId ? $wnd.__gwtStatsSessionId : null;");
     out.newlineOpt();
