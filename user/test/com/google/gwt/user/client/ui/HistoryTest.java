@@ -56,14 +56,6 @@ public class HistoryTest extends GWTTestCase {
     return "com.google.gwt.user.User";
   }
 
-  @Override
-  protected void gwtSetUp() throws Exception {
-    if (this.handlerRegistration != null) {
-      this.handlerRegistration.removeHandler();
-      this.handlerRegistration = null;
-    }
-  }
-
   // TODO(dankurka): Fix up HTML unit hash change handling
   @DoNotRunWith(Platform.HtmlUnitUnknown)
   public void testClickLink() {
@@ -501,6 +493,11 @@ public class HistoryTest extends GWTTestCase {
       timer.cancel();
       timer = null;
     }
+
+    // HtmlUnit tends to fire events after adding a new item with fireEvent set
+    // to false. This makes 'testEmptyHistoryTokens' randomly fail after running
+    // 'testReplaceItemNoEvent'. Reseting the hash fragment here fixes the issue.
+    History.newItem("");
   }
 
   private void addHistoryListenerImpl(ValueChangeHandler<String> handler) {
