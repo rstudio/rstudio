@@ -91,7 +91,7 @@ public final class Impl {
    * monotonically-increasing sequence.
    */
   public static native int getHashCode(Object o) /*-{
-    return o['$H'] || (o['$H'] = @Impl::getNextHashId()());
+    return o.$H || (o.$H = @Impl::getNextHashId()());
   }-*/;
 
   public static native String getHostPageBaseURL() /*-{
