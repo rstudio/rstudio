@@ -171,15 +171,12 @@ public class StackTraceCreator {
     @Override
     public native void collect(Object t, Object jsThrown) /*-{
       // Carefully crafted to delay the 'stack' property until stack trace construction as it is
-      // very costly in some browsers (e.g. Chrome).
-
-      var referenceThrown = jsThrown instanceof Object && "stack" in jsThrown
-          ? jsThrown
-          : @StackTraceCreator::makeException()();
-
-      @StackTraceCreator::addLazyProperty(*)(t, "stack", function() {
-        return referenceThrown.stack;
-      });
+      // costly in some browsers (e.g. Chrome).
+      t.__gwt$backingJsError = typeof jsThrown == 'string'
+          ? new Error(jsThrown)
+          : jsThrown instanceof Object && "stack" in jsThrown
+              ? jsThrown
+              : new Error();
     }-*/;
 
     @Override
@@ -354,17 +351,7 @@ public class StackTraceCreator {
 
   private static native boolean supportsErrorStack() /*-{
     // Error.stackTraceLimit is cheaper to check and available in both IE and Chrome
-    return !!Error.stackTraceLimit || "stack" in @StackTraceCreator::makeException()();
-  }-*/;
-
-  private static native JavaScriptObject makeException() /*-{
-    // TODO(goktug): new Error().stack is broken for htmlunit:
-    // https://sourceforge.net/p/htmlunit/bugs/1606/
-    try {
-      null.a();
-    } catch (e) {
-      return e;
-    }
+    return !!Error.stackTraceLimit || "stack" in new Error();
   }-*/;
 
   private static native JsArrayString getFnStack(Object e) /*-{
@@ -382,38 +369,9 @@ public class StackTraceCreator {
     return (match && match[1]) || @StackTraceCreator::ANONYMOUS;
   }-*/;
 
-  private static native JsArrayString split(Object e) /*-{
-    return e.stack ? e.stack.split('\n') : [];
-  }-*/;
-
-  private static native void addLazyProperty(JavaScriptObject obj, String name,
-      JavaScriptObject getterFn) /*-{
-    if (Object.defineProperty) {
-      try {
-        Object.defineProperty(obj, name, {
-          configurable: true,
-          get: getterFn,
-          set: function(value) {
-            Object.defineProperty(this, name, {
-              value: value,
-              configurable: true,
-              writable: true,
-            });
-          },
-        });
-      } catch(defPropException) {
-        // This might happen because some old browsers like Safari5, IE8, have Object.defineProperty
-        // method which doesn't work on all objects.
-      };
-
-      // At this point we need to be sure that the property added, if not should fallback to eager.
-      if (name in obj) {
-        return;
-      }
-    }
-
-    // Fallback to eager property
-    obj[name] = getterFn();
+  private static native JsArrayString split(Object t) /*-{
+    var e = t.__gwt$backingJsError;
+    return (e && e.stack) ? e.stack.split('\n') : [];
   }-*/;
 
   private static native <T> T splice(T arr, int length) /*-{

@@ -95,6 +95,9 @@ public class StackTraceNativeTest extends StackTraceTestBase {
     return (isLegacyCollector() || thrown != TYPE_ERROR) ? limited : full;
   }
 
+  // TODO(goktug): new Error().stack is broken for htmlunit:
+  // https://sourceforge.net/p/htmlunit/bugs/1606/
+  @DoNotRunWith(Platform.HtmlUnitBug)
   public void testCollectorType() {
     if (isIE8() || isSafari5()) {
       assertTrue(isLegacyCollector());

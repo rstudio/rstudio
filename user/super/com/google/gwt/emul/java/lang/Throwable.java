@@ -113,7 +113,7 @@ public class Throwable implements Serializable {
    */
   public Throwable fillInStackTrace() {
     stackTrace = null; // Invalidate the cached trace
-    StackTraceCreator.captureStackTrace(this, null);
+    StackTraceCreator.captureStackTrace(this, detailMessage);
     return this;
   }
 

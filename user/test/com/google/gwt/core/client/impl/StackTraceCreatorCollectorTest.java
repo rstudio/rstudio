@@ -205,9 +205,13 @@ public class StackTraceCreatorCollectorTest extends GWTTestCase {
     return new StackTraceElement("Unknown", methodName, fileName, lineNumber);
   }
 
-  private static void assertStackTrace(JavaScriptObject exception, StackTraceElement[] expected) {
-    assertEquals(expected, new CollectorModern().getStackTrace(exception));
+  private static void assertStackTrace(JavaScriptObject jsError, StackTraceElement[] expected) {
+    assertEquals(expected, new CollectorModern().getStackTrace(toException(jsError)));
   }
+
+  private static native Object toException(JavaScriptObject jsError) /*-{
+    return { __gwt$backingJsError: jsError };
+  }-*/;
 
   private static void assertEquals(StackTraceElement[] expecteds, StackTraceElement[] actuals) {
     assertEquals("Traces differ in size", expecteds.length, actuals.length);
