@@ -97,7 +97,7 @@ public class CppCompletionManager implements CompletionManager
       // check whether it's okay to do a completion
       else if ((popup_ == null) && shouldComplete(null))
       {
-         suggestCompletions(); 
+         suggestCompletions(true); 
       }
    }
 
@@ -151,7 +151,7 @@ public class CppCompletionManager implements CompletionManager
          if (CompletionUtils.isCompletionRequest(event, modifier) &&
              shouldComplete(event)) 
          {
-            suggestCompletions();
+            suggestCompletions(true);
             return true;  
          }
          else if (event.getKeyCode() == 112 // F1
@@ -286,16 +286,21 @@ public class CppCompletionManager implements CompletionManager
    
    private void suggestCompletions()
    {
+      suggestCompletions(false);
+   }
+   
+   private void suggestCompletions(final boolean explicit)
+   {
       Scheduler.get().scheduleDeferred(new ScheduledCommand() {
          @Override
          public void execute()
          {
-            doSuggestCompletions();  
+            doSuggestCompletions(explicit);  
          }
       });
    }
    
-   private void doSuggestCompletions()
+   private void doSuggestCompletions(boolean explicit)
    {
       // check for completions disabled
       if (!completionContext_.isCompletionEnabled())
@@ -316,7 +321,8 @@ public class CppCompletionManager implements CompletionManager
      
       
       context_ = new CompletionRequestContext(
-                        completionRequestInvalidation_.getInvalidationToken());
+                        completionRequestInvalidation_.getInvalidationToken(),
+                        explicit);
       
       final Position cursorPos = docDisplay_.getCursorPosition();
       completionContext_.withUpdatedDoc(new CommandWithArg<String>() {
@@ -338,9 +344,11 @@ public class CppCompletionManager implements CompletionManager
    private final class CompletionRequestContext extends
                                  ServerRequestCallback<CppCompletionResult>
    {  
-      public CompletionRequestContext(Invalidation.Token token)
+      public CompletionRequestContext(Invalidation.Token token,
+                                      boolean explicit)
       {
          invalidationToken_ = token;
+         explicit_ = explicit;
       }
       
       @Override 
@@ -356,14 +364,21 @@ public class CppCompletionManager implements CompletionManager
          // close existing popup
          closeCompletionPopup();     
           
-         if (result.getCompletions().length() == 0)
+         JsArray<CppCompletion> completions = result.getCompletions();
+         if (completions.length() == 0)
          {
-            popup_ = new CompletionListPopupPanel(new String[0]);
-            popup_.setText("(No matching commands)");
+            if (explicit_)
+            {
+               popup_ = new CompletionListPopupPanel(new String[0]);
+               popup_.setText("(No matches)");
+            }
+         }
+         else if ((completions.length() == 1) && explicit_)
+         {
+            onSelected(completions.get(0).getText());
          }
          else
          {
-            JsArray<CppCompletion> completions = result.getCompletions();
             String[] entries = new String[completions.length()];
             for (int i = 0; i < completions.length(); i++)
                entries[i] = completions.get(i).getText();
@@ -422,6 +437,7 @@ public class CppCompletionManager implements CompletionManager
          docDisplay_.insertCode(completion);
       }
 
+      private final boolean explicit_;
       private final Invalidation.Token invalidationToken_;
    }
    
