@@ -76,6 +76,19 @@ public abstract class JType extends JNode implements HasName, CanBeFinal {
   }
 
   /**
+   * Returns the compound name.
+   * <p>
+   * The compound name of a class is an array that contains the simple names of all enclosing
+   * types followed by the simple name of this type (in outer to inner order).
+   * <p>
+   * A simple name is the name as it appears in the class declaration (e.g. Name in
+   * "class Name { .. }"), i.e. it is a name that does not include enclosing type names nor package.
+   */
+  public String[] getCompoundName() {
+    return new String[] { shortName };
+  }
+
+  /**
    * If this type is a non-null type, returns the underlying (original) type.
    */
   public JType getUnderlyingType() {

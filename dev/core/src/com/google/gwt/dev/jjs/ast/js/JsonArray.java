@@ -42,6 +42,10 @@ public class JsonArray extends JExpression {
     return exprs;
   }
 
+  public void addExprs(List<JExpression> exprs) {
+    this.exprs.addAll(exprs);
+  }
+
   @Override
   public JClassType getType() {
     return jsoType;

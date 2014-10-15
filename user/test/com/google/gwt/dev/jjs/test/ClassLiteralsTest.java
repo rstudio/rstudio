@@ -21,7 +21,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 /**
  * Tests the Production Mode implementation of class literals.
  */
-public class ClassObjectTest extends GWTTestCase {
+public class ClassLiteralsTest extends GWTTestCase {
 
   private static enum Bar {
     BAR, BAZ {
@@ -45,6 +45,11 @@ public class ClassObjectTest extends GWTTestCase {
     }
   }
 
+  private static class My$Class {
+    private static class My$InnerClass {
+    }
+  }
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
@@ -55,13 +60,12 @@ public class ClassObjectTest extends GWTTestCase {
     assertEquals(Foo[].class, o.getClass());
     if (expectClassMetadata()) {
       assertEquals(Object.class, o.getClass().getSuperclass());
-      assertEquals("[Lcom.google.gwt.dev.jjs.test.ClassObjectTest$Foo;",
-          o.getClass().getName());
-      assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest.Foo[]",
-          o.getClass().getCanonicalName());
-      assertEquals("class [Lcom.google.gwt.dev.jjs.test.ClassObjectTest$Foo;",
-          o.getClass().toString());
     }
+
+    assertEquals("[L" + Foo.class.getName() + ";", o.getClass().getName());
+    assertEquals(Foo.class.getCanonicalName() + "[]", o.getClass().getCanonicalName());
+    assertEquals(Foo.class.getSimpleName() + "[]", o.getClass().getSimpleName());
+    assertEquals("class [L" + Foo.class.getName() + ";", o.getClass().toString());
 
     assertTrue(o.getClass().isArray());
     assertFalse(o.getClass().isEnum());
@@ -75,7 +79,7 @@ public class ClassObjectTest extends GWTTestCase {
   }
 
   public void testAssertionStatus() {
-    boolean assertionStatus = ClassObjectTest.class.desiredAssertionStatus();
+    boolean assertionStatus = ClassLiteralsTest.class.desiredAssertionStatus();
     try {
       assert false;
       assertFalse(assertionStatus);
@@ -89,11 +93,12 @@ public class ClassObjectTest extends GWTTestCase {
     assertEquals(Foo.class, o.getClass());
     if (expectClassMetadata()) {
       assertEquals(Object.class, o.getClass().getSuperclass());
-      assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest$Foo",
+      assertEquals("com.google.gwt.dev.jjs.test.ClassLiteralsTest$Foo",
           Foo.class.getName());
-      assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest.Foo",
+      assertEquals("com.google.gwt.dev.jjs.test.ClassLiteralsTest.Foo",
           Foo.class.getCanonicalName());
-      assertEquals("class com.google.gwt.dev.jjs.test.ClassObjectTest$Foo",
+      assertEquals("Foo", Foo.class.getSimpleName());
+      assertEquals("class com.google.gwt.dev.jjs.test.ClassLiteralsTest$Foo",
           Foo.class.toString());
     }
     assertFalse(Foo.class.isArray());
@@ -106,10 +111,36 @@ public class ClassObjectTest extends GWTTestCase {
   public void testCloneClassLiteral() {
     // getBarClass() should inline, causing a clone of a class literal
     if (expectClassMetadata()) {
-      assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest$Bar",
+      assertEquals("com.google.gwt.dev.jjs.test.ClassLiteralsTest$Bar",
           getBarClass().getName());
-      assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest.Bar",
+      assertEquals("com.google.gwt.dev.jjs.test.ClassLiteralsTest.Bar",
           getBarClass().getCanonicalName());
+    }
+  }
+
+  public void testDollarInName() {
+    if (expectClassMetadata()) {
+      assertEquals("com.google.gwt.dev.jjs.test.ClassLiteralsTest$My$Class",
+          My$Class.class.getName());
+      assertEquals("com.google.gwt.dev.jjs.test.ClassLiteralsTest.My$Class",
+          My$Class.class.getCanonicalName());
+      assertEquals("My$Class", My$Class.class.getSimpleName());
+      assertEquals("com.google.gwt.dev.jjs.test.ClassLiteralsTest$My$Class$My$InnerClass",
+          My$Class.My$InnerClass.class.getName());
+      assertEquals("com.google.gwt.dev.jjs.test.ClassLiteralsTest.My$Class.My$InnerClass",
+          My$Class.My$InnerClass.class.getCanonicalName());
+      assertEquals("My$InnerClass",
+          My$Class.My$InnerClass.class.getSimpleName());
+      assertEquals("[Lcom.google.gwt.dev.jjs.test.ClassLiteralsTest$My$Class;",
+          My$Class[].class.getName());
+      assertEquals("com.google.gwt.dev.jjs.test.ClassLiteralsTest.My$Class[]",
+          My$Class[].class.getCanonicalName());
+      assertEquals("My$Class[]", My$Class[].class.getSimpleName());
+      assertEquals("[Lcom.google.gwt.dev.jjs.test.ClassLiteralsTest$My$Class$My$InnerClass;",
+          My$Class.My$InnerClass[].class.getName());
+      assertEquals("com.google.gwt.dev.jjs.test.ClassLiteralsTest.My$Class.My$InnerClass[]",
+          My$Class.My$InnerClass[].class.getCanonicalName());
+      assertEquals("My$InnerClass[]", My$Class.My$InnerClass[].class.getSimpleName());
     }
   }
 
@@ -118,11 +149,13 @@ public class ClassObjectTest extends GWTTestCase {
     assertEquals(Bar.class, o.getClass());
     if (expectClassMetadata()) {
       assertEquals(Enum.class, o.getClass().getSuperclass());
-      assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest$Bar",
+      assertEquals("com.google.gwt.dev.jjs.test.ClassLiteralsTest$Bar",
           o.getClass().getName());
-      assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest.Bar",
+      assertEquals("com.google.gwt.dev.jjs.test.ClassLiteralsTest.Bar",
           o.getClass().getCanonicalName());
-      assertEquals("class com.google.gwt.dev.jjs.test.ClassObjectTest$Bar",
+      assertEquals("Bar",
+          o.getClass().getSimpleName());
+      assertEquals("class com.google.gwt.dev.jjs.test.ClassLiteralsTest$Bar",
           o.getClass().toString());
     }
     assertFalse(o.getClass().isArray());
@@ -154,12 +187,11 @@ public class ClassObjectTest extends GWTTestCase {
   public void testInterface() {
     assertNull(IFoo.class.getSuperclass());
     if (expectClassMetadata()) {
-      assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest$IFoo",
-          IFoo.class.getName());
-      assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest.IFoo",
+      assertEquals("com.google.gwt.dev.jjs.test.ClassLiteralsTest$IFoo", IFoo.class.getName());
+      assertEquals("com.google.gwt.dev.jjs.test.ClassLiteralsTest.IFoo",
           IFoo.class.getCanonicalName());
-      assertEquals(
-          "interface com.google.gwt.dev.jjs.test.ClassObjectTest$IFoo",
+      assertEquals("IFoo", IFoo.class.getSimpleName());
+      assertEquals("interface com.google.gwt.dev.jjs.test.ClassLiteralsTest$IFoo",
           IFoo.class.toString());
     }
     assertFalse(IFoo.class.isArray());
@@ -174,6 +206,8 @@ public class ClassObjectTest extends GWTTestCase {
     if (expectClassMetadata()) {
       assertEquals("int", int.class.getName());
       assertEquals("int", int.class.getCanonicalName());
+      // TODO(rluble): getSimpleName() for primitives does not comp[y with the Java standard.
+      // assertEquals("int", int.class.getSimpleName());
       assertEquals("int", int.class.toString());
     }
     assertFalse(int.class.isArray());
@@ -195,10 +229,10 @@ public class ClassObjectTest extends GWTTestCase {
   public void testSpecialClassLiterals() {
     if (expectClassMetadata()) {
       assertEquals("com.google.gwt.core.client.JavaScriptObject$", JSO.class.getName());
+      assertEquals("[[Lcom.google.gwt.core.client.JavaScriptObject$;", JSO[][].class.getName());
       assertEquals("[Lcom.google.gwt.core.client.JavaScriptObject$;",
           new JSO[3].getClass().getName());
-      assertEquals("com.google.gwt.core.client.JavaScriptObject$",
-          getJSO().getClass().getName());
+      assertEquals("com.google.gwt.core.client.JavaScriptObject$", getJSO().getClass().getName());
     }
   }
 
