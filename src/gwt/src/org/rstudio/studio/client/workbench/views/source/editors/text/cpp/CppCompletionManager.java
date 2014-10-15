@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -29,6 +30,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionUtils;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResult;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
@@ -57,9 +59,7 @@ public class CppCompletionManager implements CompletionManager
       initFilter_ = initFilter;
       server_ = server;
       completionContext_ = completionContext;
-      rCompletionManager_ = rCompletionManager;
-      requester_ = new CppCompletionRequester(server_);
-      
+      rCompletionManager_ = rCompletionManager; 
       docDisplay_.addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)
@@ -318,11 +318,20 @@ public class CppCompletionManager implements CompletionManager
       context_ = new CompletionRequestContext(
                         completionRequestInvalidation_.getInvalidationToken());
       
-      // request the completion
-      requester_.getCompletions(completionContext_,
-                                docDisplay_,
-                                docDisplay_.getCursorPosition(),
-                                context_);
+      final Position cursorPos = docDisplay_.getCursorPosition();
+      completionContext_.withUpdatedDoc(new CommandWithArg<String>() {
+
+         @Override
+         public void execute(String docPath)
+         {
+            server_.getCppCompletions(docPath, 
+                                      cursorPos.getRow() + 1, 
+                                      cursorPos.getColumn() + 1, 
+                                      context_);
+            
+         }
+         
+      });
    }
   
    
@@ -409,9 +418,7 @@ public class CppCompletionManager implements CompletionManager
             return;
          
          closeCompletionPopup();
-         
-         requester_.flushCache();
-         
+          
          docDisplay_.insertCode(completion);
       }
 
@@ -485,7 +492,6 @@ public class CppCompletionManager implements CompletionManager
    private CompletionListPopupPanel popup_;
    private final CppCompletionContext completionContext_;
    private final CppServerOperations server_;
-   private final CppCompletionRequester requester_ ;
    private CompletionRequestContext context_;
    private final InitCompletionFilter initFilter_ ;
    private final CompletionManager rCompletionManager_;
