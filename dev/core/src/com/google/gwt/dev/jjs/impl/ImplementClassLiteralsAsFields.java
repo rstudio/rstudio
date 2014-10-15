@@ -43,20 +43,22 @@ import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.js.JsniClassLiteral;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
+import com.google.gwt.dev.jjs.ast.js.JsonArray;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsInvocation;
 import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNumberLiteral;
-import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
@@ -157,7 +159,7 @@ public class ImplementClassLiteralsAsFields {
         JMethodCall call =
             new JMethodCall(info, null, program.getIndexedMethod("Class.createForPrimitive"));
         call.addArg(program.getStringLiteral(info, type.getShortName()));
-        call.addArg(program.getStringLiteral(info, " " + type.getJavahSignatureName()));
+        call.addArg(program.getStringLiteral(info, type.getJavahSignatureName()));
         return call;
       }
     },
@@ -179,24 +181,42 @@ public class ImplementClassLiteralsAsFields {
     abstract JMethodCall createCall(SourceInfo info, JProgram program, JType type,
         JLiteral superclassLiteral);
 
-    static JMethodCall createBaseCall(SourceInfo info, JProgram program, JType type,
+    private static JMethodCall createBaseCall(SourceInfo info, JProgram program, JType type,
         String indexedMethodName) {
 
+      String[] compoundName = maybeMangleJSOTypeName(program, type);
       JMethodCall call = new JMethodCall(info, null, program.getIndexedMethod(indexedMethodName),
-          program.getStringLiteral(info, StringInterner.get().intern(type.getPackageName() + ".")),
-          program.getStringLiteral(info, maybeMangleJSOTypeName(program, type)));
+          program.getStringLiteral(info, type.getPackageName()),
+          getCompoundNameLiteral(program, info, compoundName));
 
       return call;
     }
 
-    static String maybeMangleJSOTypeName(JProgram program, JType type) {
+    private static String[] maybeMangleJSOTypeName(JProgram program, JType type) {
       assert !(type instanceof JArrayType);
+      String[] compoundName = type.getCompoundName();
 
       // Mangle the class name to match hosted mode.
       if (program.typeOracle.isJavaScriptObject(type)) {
-        return type.getShortName() + '$';
+        compoundName[compoundName.length - 1] = compoundName[compoundName.length - 1] + '$';
       }
-      return type.getShortName();
+      return compoundName;
+    }
+
+    private static JExpression getCompoundNameLiteral(final JProgram program, final SourceInfo info,
+        String[] compoundName) {
+      if (compoundName.length == 1) {
+        return program.getStringLiteral(info, compoundName[0]);
+      }
+      JsonArray array = new JsonArray(info, program.getJavaScriptObject());
+      array.addExprs(Lists.transform(Arrays.asList(compoundName),
+          new Function<String, JExpression>() {
+            @Override
+            public JExpression apply(String name) {
+              return program.getStringLiteral(info, name);
+            }
+          }));
+      return array;
     }
   }
 
@@ -406,7 +426,7 @@ public class ImplementClassLiteralsAsFields {
    * Primitive:
    *
    * <pre>
-   * Class.createForPrimitive(&quot;&quot;, &quot;int&quot;, &quot; I&quot;)
+   * Class.createForPrimitive(&quot;&quot;, &quot;int&quot;, &quot;I&quot;)
    * </pre>
    *
    * Enum:

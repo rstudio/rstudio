@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
@@ -213,6 +214,24 @@ public abstract class JDeclaredType extends JReferenceType {
    */
   public final JDeclaredType getClinitTarget() {
     return clinitTarget;
+  }
+
+  @Override
+  public String[] getCompoundName() {
+    // TODO(rluble): refactor the way names are constructed so that the ground data passed from
+    // JDT is stored.
+    if (enclosingType == null) {
+      return new String[] { getShortName() };
+    }
+
+    String className = StringInterner.get().intern(
+        getShortName().substring(enclosingType.getShortName().length() + 1));
+
+    String[] enclosingCompoundName = enclosingType.getCompoundName();
+    String[] compoundName = new String[enclosingCompoundName.length + 1];
+    System.arraycopy(enclosingCompoundName, 0, compoundName, 0, enclosingCompoundName.length);
+    compoundName[compoundName.length - 1] = className;
+    return compoundName;
   }
 
   /**
