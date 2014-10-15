@@ -84,6 +84,8 @@ public class JsProtectedNames {
     illegalNames.addAll(loadGlobals("chrome"));
     illegalNames.addAll(loadGlobals("firefox25"));
     illegalNames.addAll(loadGlobals("ie9"));
+    // Impl.getHashCode
+    illegalNames.add("$H");
   }
 
   /**
