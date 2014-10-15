@@ -108,8 +108,8 @@ public class EnumOrdinalizer {
           @Override
           public int compare(SourceInfo s1, SourceInfo s2) {
             int fileNameComp = s1.getFileName().compareTo(s2.getFileName());
-            return fileNameComp != 0 ? fileNameComp :
-                Integer.compare(s1.getStartLine(), s2.getStartLine());
+            return fileNameComp != 0 ? fileNameComp : s1.getStartLine()
+                - s2.getStartLine();
           }
         };
 

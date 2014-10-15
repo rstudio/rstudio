@@ -43,6 +43,7 @@ import com.google.gwt.dev.util.log.CompositeTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.thirdparty.guava.common.base.Charsets;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.thirdparty.guava.common.base.Objects;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
@@ -52,7 +53,6 @@ import com.google.gwt.thirdparty.guava.common.io.Resources;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -650,7 +650,7 @@ class Recompiler {
 
     @Override
     public int hashCode() {
-      return Objects.hash(bindingProperties, moduleLastModified, resourcesLastModified,
+      return Objects.hashCode(bindingProperties, moduleLastModified, resourcesLastModified,
           filenameHash);
     }
   }
