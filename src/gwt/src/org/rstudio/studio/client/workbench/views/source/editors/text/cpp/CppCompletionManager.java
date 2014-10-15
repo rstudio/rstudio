@@ -97,8 +97,7 @@ public class CppCompletionManager implements CompletionManager
       // check whether it's okay to do a completion
       else if ((popup_ == null) && shouldComplete(null))
       {
-         beginSuggest(true,    // flush cache
-                      false);  // explicit (can show none found ui)
+         suggestCompletions(); 
       }
    }
 
@@ -152,9 +151,7 @@ public class CppCompletionManager implements CompletionManager
          if (CompletionUtils.isCompletionRequest(event, modifier) &&
              shouldComplete(event)) 
          {
-            beginSuggest(true,    // flush cache
-                         false);  // explicit (can show none found ui)
-            
+            suggestCompletions();
             return true;  
          }
          else if (event.getKeyCode() == 112 // F1
@@ -253,15 +250,7 @@ public class CppCompletionManager implements CompletionManager
       // then re-execute the completion request
       if ((popup_ != null) && isCppIdentifierChar(c))
       {
-         // defer to allow the key to enter the editor
-         Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-            @Override
-            public void execute()
-            {
-               beginSuggest(false, false);  
-            }
-         });
-         
+         suggestCompletions(); 
          return false;
       }
       
@@ -269,15 +258,7 @@ public class CppCompletionManager implements CompletionManager
       // then do that
       else if ((popup_ == null) && triggerCompletion(c))
       {
-         // defer to allow the key to enter the editor
-         Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-            @Override
-            public void execute()
-            {
-               beginSuggest(false, true);  
-            }
-         });
-         
+         suggestCompletions();  
          return false;
       }
       
@@ -302,65 +283,55 @@ public class CppCompletionManager implements CompletionManager
          return false;
       }
    }
-  
-  
-   private void invalidatePendingRequests()
+   
+   private void suggestCompletions()
    {
-      invalidatePendingRequests(true) ;
-   }
-
-   private void invalidatePendingRequests(boolean flushCache)
-   {
-      completionRequestInvalidation_.invalidate();
-      closeCompletionPopup();
-      if (flushCache)
-         requester_.flushCache() ;
+      Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+         @Override
+         public void execute()
+         {
+            doSuggestCompletions();  
+         }
+      });
    }
    
-   
-   private boolean beginSuggest(boolean flushCache, 
-                                final boolean implicit)
+   private void doSuggestCompletions()
    {
       // check for completions disabled
       if (!completionContext_.isCompletionEnabled())
-         return false;
+         return;
       
-      // check for selected text
-      if (!docDisplay_.isSelectionCollapsed())
-         return false ;
-      
-      invalidatePendingRequests(flushCache) ;
-      
+      // check for no selection
       InputEditorSelection selection = docDisplay_.getSelection() ;
       if (selection == null)
-         return false;
+         return;
       
-      boolean canAutoAccept = flushCache;
+      // check for contiguous selection
+      if (!docDisplay_.isSelectionCollapsed())
+         return;
+     
+      // scratch any existing requests
+      invalidatePendingRequests() ;
+      
+     
+      
       context_ = new CompletionRequestContext(
-                        completionRequestInvalidation_.getInvalidationToken(),
-                        selection,
-                        canAutoAccept);
+                        completionRequestInvalidation_.getInvalidationToken());
       
       // request the completion
       requester_.getCompletions(completionContext_,
                                 docDisplay_,
                                 docDisplay_.getCursorPosition(),
-                                implicit,
                                 context_);
-      return true ;   
    }
   
    
    private final class CompletionRequestContext extends
                                  ServerRequestCallback<CppCompletionResult>
    {  
-      public CompletionRequestContext(Invalidation.Token token,
-                                      InputEditorSelection selection,
-                                      boolean canAutoAccept)
+      public CompletionRequestContext(Invalidation.Token token)
       {
          invalidationToken_ = token;
-         selection_ = selection;
-         canAutoAccept_ = canAutoAccept;
       }
       
       @Override 
@@ -445,11 +416,24 @@ public class CppCompletionManager implements CompletionManager
       }
 
       private final Invalidation.Token invalidationToken_;
-      @SuppressWarnings("unused")
-      private final InputEditorSelection selection_;
-      @SuppressWarnings("unused")
-      private final boolean canAutoAccept_;
    }
+   
+   private void invalidatePendingRequests()
+   {
+      completionRequestInvalidation_.invalidate();
+      closeCompletionPopup();
+   }
+   
+  
+   private void closeCompletionPopup()
+   {
+      if (popup_ != null)
+      {
+         popup_.hide();
+         popup_ = null;
+      }
+   }
+  
 
    
    private boolean shouldComplete(NativeEvent event)
@@ -496,16 +480,7 @@ public class CppCompletionManager implements CompletionManager
               (c >= '0' && c <= '9') ||
                c == '_');
    }
-  
-   private void closeCompletionPopup()
-   {
-      if (popup_ != null)
-      {
-         popup_.hide();
-         popup_ = null;
-      }
-   }
-  
+   
    private final DocDisplay docDisplay_;
    private CompletionListPopupPanel popup_;
    private final CppCompletionContext completionContext_;

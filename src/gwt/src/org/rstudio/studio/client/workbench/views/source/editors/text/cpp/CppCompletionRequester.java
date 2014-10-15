@@ -34,7 +34,6 @@ public class CppCompletionRequester
          CppCompletionContext completionContext,
          DocDisplay docDisplay,
          final Position position,
-         final boolean implicit,
          final ServerRequestCallback<CppCompletionResult> requestCallback)
    {
       completionContext.withUpdatedDoc(new CommandWithArg<String>() {
