@@ -35,8 +35,8 @@ mkdir -p /var/lib/rstudio-server/proxy
 sh -c "echo `date +%s` > /var/lib/rstudio-server/installed"
 rstudio-server force-suspend-all
 
-# suse stuff
-if test -f /etc/SuSE-release
+# static pandoc binaries for RHEL7 and SLES
+if test -f /etc/SuSE-release || grep -q -i -s "release 7" /etc/redhat-release
 then
   mv ${CMAKE_INSTALL_PREFIX}/bin/pandoc/pandoc-static ${CMAKE_INSTALL_PREFIX}/bin/pandoc/pandoc
   mv ${CMAKE_INSTALL_PREFIX}/bin/pandoc/pandoc-citeproc-static ${CMAKE_INSTALL_PREFIX}/bin/pandoc/pandoc-citeproc

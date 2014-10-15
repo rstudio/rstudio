@@ -39,6 +39,9 @@ if(RSTUDIO_SERVER)
   # rpm dependencies
   set(RSTUDIO_RPM_DEPENDS "psmisc, libffi, ")
 
+  # don't auto-resolve other dependencies
+  set(CPACK_RPM_PACKAGE_AUTOREQPROV " no")
+
 elseif(RSTUDIO_DESKTOP)
  
    # debian control files
