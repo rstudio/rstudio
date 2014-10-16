@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.rebind.rpc;
 
+import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
@@ -115,11 +116,11 @@ public class SerializationUtils {
    * Returns the set of fields that are serializable for a given class type.
    * This method does not consider any superclass fields.
    * 
-   * @param typeOracle the type oracle
+   * @param context the context
    * @param classType the class for which we want serializable fields
    * @return array of fields that meet the serialization criteria
    */
-  public static JField[] getSerializableFields(TypeOracle typeOracle, JClassType classType) {
+  public static JField[] getSerializableFields(GeneratorContext context, JClassType classType) {
     assert (classType != null);
 
     List<JField> fields = new ArrayList<JField>();
@@ -127,7 +128,7 @@ public class SerializationUtils {
     assert (declFields != null);
     for (JField field : declFields) {
       if (SerializableTypeOracleBuilder
-          .shouldConsiderForSerialization(TreeLogger.NULL, true, field)) {
+          .shouldConsiderForSerialization(TreeLogger.NULL, context, field)) {
         fields.add(field);
       }
     }
@@ -162,12 +163,12 @@ public class SerializationUtils {
    * @param instanceType
    * @return a string representing the serialization signature of a type
    */
-  static String getSerializationSignature(TypeOracle typeOracle, JType type)
+  static String getSerializationSignature(GeneratorContext context, JType type)
       throws RuntimeException {
     CRC32 crc = new CRC32();
 
     try {
-      generateSerializationSignature(typeOracle, type, crc);
+      generateSerializationSignature(context, type, crc);
     } catch (UnsupportedEncodingException e) {
       throw new RuntimeException("Could not compute the serialization signature", e);
     }
@@ -247,11 +248,11 @@ public class SerializationUtils {
     return false;
   }
 
-  private static void generateSerializationSignature(TypeOracle typeOracle, JType type, CRC32 crc)
+  private static void generateSerializationSignature(GeneratorContext context, JType type, CRC32 crc)
       throws UnsupportedEncodingException {
     JParameterizedType parameterizedType = type.isParameterized();
     if (parameterizedType != null) {
-      generateSerializationSignature(typeOracle, parameterizedType.getRawType(), crc);
+      generateSerializationSignature(context, parameterizedType.getRawType(), crc);
 
       return;
     }
@@ -264,12 +265,12 @@ public class SerializationUtils {
     }
 
     JClassType customSerializer =
-        SerializableTypeOracleBuilder.findCustomFieldSerializer(typeOracle, type);
+        SerializableTypeOracleBuilder.findCustomFieldSerializer(context.getTypeOracle(), type);
     if (customSerializer != null) {
-      generateSerializationSignature(typeOracle, customSerializer, crc);
+      generateSerializationSignature(context, customSerializer, crc);
     } else if (type.isArray() != null) {
       JArrayType isArray = type.isArray();
-      generateSerializationSignature(typeOracle, isArray.getComponentType(), crc);
+      generateSerializationSignature(context, isArray.getComponentType(), crc);
     } else if (type.isEnum() != null) {
       List<JEnumConstant> constants = Arrays.asList(type.isEnum().getEnumConstants());
       // Make sure the list is sorted; the getEnumConstants contract doesn't guarantees it.
@@ -292,7 +293,7 @@ public class SerializationUtils {
       }
     } else if (type.isClassOrInterface() != null) {
       JClassType isClassOrInterface = type.isClassOrInterface();
-      JField[] fields = getSerializableFields(typeOracle, isClassOrInterface);
+      JField[] fields = getSerializableFields(context, isClassOrInterface);
       for (JField field : fields) {
         assert (field != null);
 
@@ -302,7 +303,7 @@ public class SerializationUtils {
 
       JClassType superClass = isClassOrInterface.getSuperclass();
       if (superClass != null) {
-        generateSerializationSignature(typeOracle, superClass, crc);
+        generateSerializationSignature(context, superClass, crc);
       }
     }
   }

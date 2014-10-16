@@ -17,6 +17,7 @@ package com.google.gwt.user.rebind.rpc;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.ConfigurationProperty;
+import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
@@ -32,6 +33,11 @@ import java.util.Locale;
 import java.util.Set;
 
 class Shared {
+
+  /**
+   * Property used to control whether or not the RPC system will serialize final fields.
+   */
+  private static final String RPC_PROP_SERIALIZE_FINAL_FIELDS = "rpc.XserializeFinalFields";
 
   /**
    * Property used to control whether or not the RPC system will emit warnings
@@ -83,12 +89,21 @@ class Shared {
   }
 
   /**
+   * Returns <code>true</code> if final field should be serialized.
+   */
+  static boolean shouldSerializeFinalFields(TreeLogger logger,
+      GeneratorContext context) {
+    return getBooleanProperty(logger, context.getPropertyOracle(),
+        RPC_PROP_SERIALIZE_FINAL_FIELDS, false);
+  }
+
+  /**
    * Returns <code>true</code> if warnings should not be emitted for final
    * fields in serializable types.
    */
   static boolean shouldSuppressNonStaticFinalFieldWarnings(TreeLogger logger,
-      PropertyOracle propertyOracle) {
-    return getBooleanProperty(logger, propertyOracle,
+      GeneratorContext context) {
+    return getBooleanProperty(logger, context.getPropertyOracle(),
         RPC_PROP_SUPPRESS_NON_STATIC_FINAL_FIELD_WARNINGS, false);
   }
 

@@ -15,12 +15,8 @@
  */
 package com.google.gwt.user.client.rpc;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertSame;
-
 import com.google.gwt.event.shared.UmbrellaException;
+import com.google.gwt.user.client.rpc.FinalFieldsTestService.FinalFieldsNode;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyKey;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptyList;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeEmptySet;
@@ -36,6 +32,11 @@ import com.google.gwt.user.client.rpc.TestSetFactory.SerializableDoublyLinkedNod
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableGraphWithCFS;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializablePrivateNoArg;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableWithTwoArrays;
+
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertSame;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -864,5 +865,20 @@ public class TestSetValidator {
 
   private static boolean equalsWithNullCheck(Object a, Object b) {
     return a == b || (a != null && a.equals(b));
+  }
+
+  public static boolean isValidFinalFieldsObjectDefault(FinalFieldsNode result) {
+    return result != null && result.i == 5
+      && result.str.equals("A") && result.f.length == 3;
+  }
+
+  public static boolean isValidFinalFieldsObjectFromClient(FinalFieldsNode result) {
+    return result != null && result.i == 4
+      && result.str.equals("C") && result.f.length == 9;
+  }
+
+  public static boolean isValidFinalFieldsObjectFromServer(FinalFieldsNode result) {
+    return result != null && result.i == 6
+      && result.str.equals("B") && result.f.length == 10;
   }
 }

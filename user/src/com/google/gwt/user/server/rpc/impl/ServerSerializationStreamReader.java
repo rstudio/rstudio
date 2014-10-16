@@ -821,7 +821,8 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
       setters = getSetters(instanceClass);
     }
 
-    Field[] serializableFields = SerializabilityUtil.applyFieldSerializationPolicy(instanceClass);
+    Field[] serializableFields = SerializabilityUtil.applyFieldSerializationPolicy(instanceClass,
+        serializationPolicy);
     for (Field declField : serializableFields) {
       assert (declField != null);
       if ((clientFieldNames != null) && !clientFieldNames.contains(declField.getName())) {
@@ -844,7 +845,9 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
         setter.invoke(instance, value);
       } else {
         boolean isAccessible = declField.isAccessible();
-        boolean needsAccessOverride = !isAccessible && !Modifier.isPublic(declField.getModifiers());
+        boolean needsAccessOverride = (!isAccessible
+            && !Modifier.isPublic(declField.getModifiers()))
+            || Modifier.isFinal(declField.getModifiers());
         if (needsAccessOverride) {
           // Override access restrictions
           declField.setAccessible(true);
@@ -1044,9 +1047,9 @@ public final class ServerSerializationStreamReader extends AbstractSerialization
         // Iterate over each field and locate a suitable setter method
         Field[] fields = instanceClass.getDeclaredFields();
         for (Field field : fields) {
-          // Consider non-final, non-static, non-transient (or @GwtTransient)
-          // fields only
-          if (SerializabilityUtil.isNotStaticTransientOrFinal(field)) {
+          // Consider non-static, non-transient (or @GwtTransient) fields only
+          if (SerializabilityUtil.isNotStaticOrTransient(field)
+              && SerializabilityUtil.isNotFinal(field)) {
             String fieldName = field.getName();
             String setterName =
                 "set" + Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);

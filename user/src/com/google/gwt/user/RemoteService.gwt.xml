@@ -46,6 +46,33 @@
   <set-configuration-property name="gwt.elideTypeNamesFromRPC" value="false" />
 
   <!--
+      Declare a property to determine whether final fields should be serialized.
+
+      ATTENTION:
+      This property is experimental and can change/disappear any time in the future.
+      It is not well-tested and provided as an option so that we can get feedback
+      from developers.
+      At this moment, we don't recommend any downstream libraries to rely on existence
+      of this option. Instead we encourage them to keep their custom serializers and
+      run their tests without enabling the option.
+
+      One of the potential implications of enabling this option is the code size. This
+      is because it forces us to traverse the final fields which weren't traversed earlier
+      and those fields might have a too broad definition like java.lang.Object. This can
+      result in pulling in a lot of new types for serialization. So we recommend you to
+      check the size of the generated JavaScript after the flag is enabled.
+      If you encounter such issue, one way to solve is marking the field as transient
+      (via transient keyword or @GwtTransient annotation), or use rpc.blacklist property
+      to block the new types.
+  -->
+  <define-property name="rpc.XserializeFinalFields" values="false,true" />
+
+  <!--
+      Default value for rpc serialization on final fields.
+  -->
+  <set-property name="rpc.XserializeFinalFields" value="false" />
+
+  <!--
       Contains regular expressions, optionally prefixed with '+' or '-'.
       Each type being considered for serialization is tested against the
       list of expressions in order, and if there is a match it is added to the

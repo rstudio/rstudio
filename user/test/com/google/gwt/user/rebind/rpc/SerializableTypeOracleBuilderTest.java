@@ -76,14 +76,25 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   static class MockContext extends StubGeneratorContext {
     private TypeOracle typeOracle;
+    private PropertyOracle propertyOracle;
 
     MockContext(TypeOracle typeOracle) {
       this.typeOracle = typeOracle;
     }
 
+    MockContext(TypeOracle typeOracle, PropertyOracle propertyOracle) {
+      this.typeOracle = typeOracle;
+      this.propertyOracle = propertyOracle;
+    }
+
     @Override
     public TypeOracle getTypeOracle() {
       return typeOracle;
+    }
+
+    @Override
+    public PropertyOracle getPropertyOracle() {
+      return propertyOracle;
     }
 
     @Override
@@ -217,9 +228,9 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   private static SerializableTypeOracleBuilder createSerializableTypeOracleBuilder(
       TreeLogger logger, TypeOracle to) throws UnableToCompleteException {
     // Make an empty property oracle.
-    PropertyOracle props = new BindingProps(new BindingProperty[0], new String[0],
-        ConfigProps.EMPTY).toPropertyOracle();
-    return new SerializableTypeOracleBuilder(logger, props, new MockContext(to));
+    PropertyOracle props =
+        new BindingProps(new BindingProperty[0], new String[0], ConfigProps.EMPTY).toPropertyOracle();
+    return new SerializableTypeOracleBuilder(logger, new MockContext(to, props));
   }
 
   private static TypeInfo[] getActualTypeInfo(SerializableTypeOracle sto) {

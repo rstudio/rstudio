@@ -62,6 +62,8 @@ public class FieldSerializerCreator {
 
   private static final String WEAK_MAPPING_CLASS_NAME = WeakMapping.class.getName();
 
+  private final TreeLogger logger;
+
   private final GeneratorContext context;
 
   private final JClassType customFieldSerializer;
@@ -93,9 +95,10 @@ public class FieldSerializerCreator {
   /**
    * Constructs a field serializer for the class.
    */
-  public FieldSerializerCreator(GeneratorContext context,
+  public FieldSerializerCreator(TreeLogger logger, GeneratorContext context,
       SerializableTypeOracle typesSentFromBrowser, SerializableTypeOracle typesSentToBrowser,
       JClassType requestedClass, JClassType customFieldSerializer) {
+    this.logger = logger;
     this.context = context;
     this.isProd = context.isProdMode();
     methodStart = isProd ? "/*-{" : "{";
@@ -108,7 +111,7 @@ public class FieldSerializerCreator {
     this.typesSentFromBrowser = typesSentFromBrowser;
     this.typesSentToBrowser = typesSentToBrowser;
     serializableClass = requestedClass;
-    serializableFields = SerializationUtils.getSerializableFields(typeOracle, requestedClass);
+    serializableFields = SerializationUtils.getSerializableFields(context, requestedClass);
     this.fieldSerializerName = SerializationUtils.getStandardSerializerName(serializableClass);
     this.isJRE =
         SerializableTypeOracleBuilder.isInStandardJavaPackage(serializableClass
@@ -462,12 +465,16 @@ public class FieldSerializerCreator {
     /*
      * Field serializers are always emitted into the same package as the
      * class that they serialize. This enables the serializer class to access
-     * all fields except those that are private.
-     * 
+     * all fields except those that are private or final.
+     *
      * Java Access Levels: default - package private - class only protected -
      * package and all subclasses public - all
      */
-    return field.isPrivate();
+    if (Shared.shouldSerializeFinalFields(logger, context)) {
+      return field.isPrivate() || field.isFinal();
+    } else {
+      return field.isPrivate();
+    }
   }
 
   /**

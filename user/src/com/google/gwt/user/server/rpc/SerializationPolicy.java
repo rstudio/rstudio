@@ -58,6 +58,13 @@ public abstract class SerializationPolicy {
   public abstract boolean shouldSerializeFields(Class<?> clazz);
 
   /**
+   * Returns whether the client was compiled with {@code rpc.XserializeFinalFields = true}.
+   */
+  public boolean shouldSerializeFinalFields() {
+    return false;
+  }
+
+  /**
    * Validates that the specified class should be deserialized from a stream.
    * 
    * @param clazz the class to validate

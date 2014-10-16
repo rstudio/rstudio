@@ -693,7 +693,8 @@ public final class ServerSerializationStreamWriter extends
   private void serializeClass(Object instance, Class<?> instanceClass)
       throws SerializationException {
     assert (instance != null);
-    Field[] serializableFields = SerializabilityUtil.applyFieldSerializationPolicy(instanceClass);
+    Field[] serializableFields = SerializabilityUtil.applyFieldSerializationPolicy(instanceClass,
+        serializationPolicy);
 
     /**
      * If clientFieldNames is non-null, identify any additional server-only fields and serialize

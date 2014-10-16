@@ -169,18 +169,29 @@ public class SerializabilityUtil {
   }
 
   /**
+   * @deprecated use {@link #applyFieldSerializationPolicy(Class, SerializationPolicy)} instead.
+   */
+  @Deprecated
+  public static Field[] applyFieldSerializationPolicy(Class<?> clazz) {
+    return applyFieldSerializationPolicy(clazz, false);
+  }
+
+  /**
    * Returns the fields of a particular class that can be considered for
    * serialization. The returned list will be sorted into a canonical order to
    * ensure consistent answers.
    */
-  public static Field[] applyFieldSerializationPolicy(Class<?> clazz) {
-    Field[] serializableFields;
-    serializableFields = classSerializableFieldsCache.get(clazz);
+  public static Field[] applyFieldSerializationPolicy(Class<?> clazz, SerializationPolicy policy) {
+    return applyFieldSerializationPolicy(clazz, policy.shouldSerializeFinalFields());
+  }
+
+  private static Field[] applyFieldSerializationPolicy(Class<?> clazz, boolean includeFinalFields) {
+    Field[] serializableFields = classSerializableFieldsCache.get(clazz);
     if (serializableFields == null) {
       ArrayList<Field> fieldList = new ArrayList<Field>();
       Field[] fields = clazz.getDeclaredFields();
       for (Field field : fields) {
-        if (fieldQualifiesForSerialization(field)) {
+        if (fieldQualifiesForSerialization(field, includeFinalFields)) {
           fieldList.add(field);
         }
       }
@@ -465,7 +476,7 @@ public class SerializabilityUtil {
   /**
    * Returns true if this field has an annotation named "GwtTransient".
    */
-  static boolean hasGwtTransientAnnotation(Field field) {
+  private static boolean hasGwtTransientAnnotation(Field field) {
     for (Annotation a : field.getAnnotations()) {
       if (a.annotationType().getSimpleName().equals(GwtTransient.class.getSimpleName())) {
         return true;
@@ -474,14 +485,15 @@ public class SerializabilityUtil {
     return false;
   }
 
-  static boolean isNotStaticTransientOrFinal(Field field) {
-    /*
-     * Only serialize fields that are not static, transient (including
-     * @GwtTransient), or final.
-     */
+  static boolean isNotStaticOrTransient(Field field) {
     int fieldModifiers = field.getModifiers();
-    return !Modifier.isStatic(fieldModifiers) && !Modifier.isTransient(fieldModifiers)
-        && !hasGwtTransientAnnotation(field) && !Modifier.isFinal(fieldModifiers);
+    return !Modifier.isStatic(fieldModifiers)
+        && !Modifier.isTransient(fieldModifiers)
+        && !hasGwtTransientAnnotation(field);
+  }
+
+  static boolean isNotFinal(Field field) {
+    return !Modifier.isFinal(field.getModifiers());
   }
 
   /**
@@ -586,7 +598,7 @@ public class SerializabilityUtil {
     return false;
   }
 
-  private static boolean fieldQualifiesForSerialization(Field field) {
+  private static boolean fieldQualifiesForSerialization(Field field, boolean includeFinal) {
     if (Throwable.class == field.getDeclaringClass()) {
       /**
        * Only serialize Throwable's detailMessage field; all others are ignored.
@@ -595,13 +607,13 @@ public class SerializabilityUtil {
        * necessitate a change to our JRE emulation's version of Throwable.
        */
       if ("detailMessage".equals(field.getName())) {
-        assert (isNotStaticTransientOrFinal(field));
+        assert (isNotStaticOrTransient(field));
         return true;
       } else {
         return false;
       }
     } else {
-      return isNotStaticTransientOrFinal(field);
+      return isNotStaticOrTransient(field) && (includeFinal || isNotFinal(field));
     }
   }
 
@@ -904,7 +916,7 @@ public class SerializabilityUtil {
         crc.update(constant.name().getBytes(RPCServletUtils.CHARSET_UTF8));
       }
     } else if (!instanceType.isPrimitive()) {
-      Field[] fields = applyFieldSerializationPolicy(instanceType);
+      Field[] fields = applyFieldSerializationPolicy(instanceType, policy);
       Set<String> clientFieldNames = policy.getClientFieldNamesForEnhancedClass(instanceType);
       for (Field field : fields) {
         assert (field != null);

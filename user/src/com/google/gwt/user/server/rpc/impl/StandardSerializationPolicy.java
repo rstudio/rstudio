@@ -56,6 +56,7 @@ public class StandardSerializationPolicy extends SerializationPolicy implements
   private final Map<Class<?>, Set<String>> clientFields;
   private final Map<Class<?>, Boolean> deserializationWhitelist;
   private final Map<Class<?>, Boolean> serializationWhitelist;
+  private final boolean shouldSerializeFinalFields;
   private final Map<Class<?>, String> typeIds;
   private final Map<String, Class<?>> typeIdsToClasses = new HashMap<String, Class<?>>();
 
@@ -78,6 +79,19 @@ public class StandardSerializationPolicy extends SerializationPolicy implements
       Map<Class<?>, Boolean> deserializationWhitelist,
       Map<Class<?>, String> obfuscatedTypeIds,
       Map<Class<?>, Set<String>> clientFields) {
+    this(serializationWhitelist, deserializationWhitelist, obfuscatedTypeIds,
+        clientFields, false);
+  }
+
+  /**
+   * Constructs a {@link SerializationPolicy} from several {@link Map}s.
+   */
+  public StandardSerializationPolicy(
+      Map<Class<?>, Boolean> serializationWhitelist,
+      Map<Class<?>, Boolean> deserializationWhitelist,
+      Map<Class<?>, String> obfuscatedTypeIds,
+      Map<Class<?>, Set<String>> clientFields,
+      boolean shouldSerializeFinalFields) {
     if (serializationWhitelist == null || deserializationWhitelist == null) {
       throw new NullPointerException("whitelist");
     }
@@ -86,6 +100,7 @@ public class StandardSerializationPolicy extends SerializationPolicy implements
     this.deserializationWhitelist = deserializationWhitelist;
     this.typeIds = obfuscatedTypeIds;
     this.clientFields = clientFields;
+    this.shouldSerializeFinalFields = shouldSerializeFinalFields;
 
     for (Map.Entry<Class<?>, String> entry : obfuscatedTypeIds.entrySet()) {
       assert entry.getKey() != null : "null key";
@@ -143,6 +158,11 @@ public class StandardSerializationPolicy extends SerializationPolicy implements
   @Override
   public boolean shouldSerializeFields(Class<?> clazz) {
     return isFieldSerializable(clazz, serializationWhitelist);
+  }
+
+  @Override
+  public boolean shouldSerializeFinalFields() {
+    return shouldSerializeFinalFields;
   }
 
   /*

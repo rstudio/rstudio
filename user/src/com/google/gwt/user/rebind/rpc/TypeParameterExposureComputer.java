@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.rebind.rpc;
 
+import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
@@ -91,7 +92,7 @@ class TypeParameterExposureComputer {
           JField[] fields = type.getFields();
           for (JField field : fields) {
             if (!SerializableTypeOracleBuilder.shouldConsiderForSerialization(TreeLogger.NULL,
-                true, field)) {
+                context, field)) {
               continue;
             }
 
@@ -276,7 +277,7 @@ class TypeParameterExposureComputer {
           JField[] fields = type.getFields();
           for (JField field : fields) {
             if (!SerializableTypeOracleBuilder.shouldConsiderForSerialization(TreeLogger.NULL,
-                true, field)) {
+                context, field)) {
               continue;
             }
 
@@ -355,6 +356,8 @@ class TypeParameterExposureComputer {
    */
   static final int EXPOSURE_NONE = -1;
 
+  private final GeneratorContext context;
+
   private TypeFilter typeFilter;
 
   private final Map<JTypeParameter, TypeParameterFlowInfo> typeParameterToFlowInfo =
@@ -362,7 +365,8 @@ class TypeParameterExposureComputer {
 
   private final Set<TypeParameterFlowInfo> worklist = new LinkedHashSet<TypeParameterFlowInfo>();
 
-  TypeParameterExposureComputer(TypeFilter typeFilter) {
+  TypeParameterExposureComputer(GeneratorContext context, TypeFilter typeFilter) {
+    this.context = context;
     this.typeFilter = typeFilter;
   }
 

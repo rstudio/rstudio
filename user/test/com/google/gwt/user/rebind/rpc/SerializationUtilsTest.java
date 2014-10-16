@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.TypeOracleTestingUtils;
 import com.google.gwt.dev.javac.testing.impl.StaticJavaResource;
+import com.google.gwt.user.rebind.rpc.SerializableTypeOracleBuilderTest.MockContext;
 
 import junit.framework.TestCase;
 
@@ -57,7 +58,8 @@ public class SerializationUtilsTest extends TestCase {
   protected String getEnumSerializationSignature(String constants) throws NotFoundException {
     TypeOracle to = TypeOracleTestingUtils.buildStandardTypeOracleWith(TreeLogger.NULL,
         new StaticJavaResource("TestEnum", "public enum TestEnum { " + constants + " }"));
+    MockContext context = new MockContext(to);
     JClassType enumType = to.getType("TestEnum");
-    return SerializationUtils.getSerializationSignature(to, enumType);
+    return SerializationUtils.getSerializationSignature(context, enumType);
   }
 }
