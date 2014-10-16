@@ -432,7 +432,8 @@ public class TextEditingTarget implements
             {
                event.preventDefault();
                event.stopPropagation();
-               commands_.interruptR().execute();
+               if (commands_.interruptR().isEnabled())
+                  commands_.interruptR().execute();
             }
             else if (ne.getKeyCode() == KeyCodes.KEY_M && (
                   (BrowseCap.hasMetaKey() &&
