@@ -59,40 +59,37 @@ public class CppCompletionUtils
       
       // determine the column right before this one
       Position position = docDisplay.getCursorPosition();
-      int col = position.getColumn() - 1;
+      int inputCol = position.getColumn() - 1;
                
       // walk backwards across C++ identifer symbols 
+      int col = inputCol;
       while ((col >= 0) && 
             CppCompletionUtils.isCppIdentifierChar(line.charAt(col)))
       {
          col--;
       }
-            
-      if (col >= 0)
+     
+      // check for a completion triggering sequence
+      char ch = line.charAt(col);   
+      char prefixCh = line.charAt(col - 1);
+      
+      // member
+      if (ch == '.')
       {
-         // check for a completion triggering sequence
-         char ch = line.charAt(col);   
-         if (ch == '.')
-         {
-            return Position.create(position.getRow(), col + 1);
-         }
-         else if (col > 0)
-         {
-            char prefixCh = line.charAt(col - 1);
-            if ((prefixCh == ':' && ch == ':') || 
-                 prefixCh == '-' && ch == '>')
-            {
-               return Position.create(position.getRow(), col + 1);
-            }
-            else
-            {
-               return null;
-            }
-         }
-         else
-         {
-            return null;
-         }
+         return Position.create(position.getRow(), col + 1);
+      }
+      
+      // scope or pointer to member
+      else if ((prefixCh == ':' && ch == ':') || 
+                prefixCh == '-' && ch == '>')
+      {
+         return Position.create(position.getRow(), col + 1);
+      }
+      
+      // at least 5 characters
+      else if ((inputCol - col) >= 5)
+      {
+         return Position.create(position.getRow(), col + 1);
       }
       else
       {

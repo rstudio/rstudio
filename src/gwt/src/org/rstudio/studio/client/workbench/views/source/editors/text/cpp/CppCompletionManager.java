@@ -314,7 +314,7 @@ public class CppCompletionManager implements CompletionManager
             {
                request_ = new CppCompletionRequest(
                   docPath,
-                  CppCompletionUtils.getCompletionPosition(docDisplay_),
+                  completionPosition,
                   docDisplay_,
                   completionRequestInvalidation_.getInvalidationToken(),
                   explicit);
