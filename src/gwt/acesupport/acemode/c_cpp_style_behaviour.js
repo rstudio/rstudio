@@ -33,6 +33,7 @@ var oop = require("ace/lib/oop");
 var Behaviour = require("ace/mode/behaviour").Behaviour;
 var CppCodeModel = require("mode/cpp_code_model").CppCodeModel;
 var CppTokenCursor = require("mode/token_cursor").CppTokenCursor;
+var TextMode = require("ace/mode/text").Mode;
 
 var $addNamespaceComment = true;
 var $fillinDoWhile = true;
@@ -264,6 +265,9 @@ var CStyleBehaviour = function(codeModel) {
       // Specialized insertion rules -- we infer whether a closing ';'
       // is appropriate, and we also provide comments for closing namespaces
       // (if desired)
+
+      if (!this.insertMatching) return;
+      
       if (text == '{') {
 
          // Ensure these rules are only run if there is no selection
@@ -390,6 +394,8 @@ var CStyleBehaviour = function(codeModel) {
    });
 
    this.add("braces", "deletion", function (state, action, editor, session, range) {
+
+      if (!this.insertMatching) return;
       
       var selected = session.doc.getTextRange(range);
       if (!range.isMultiLine() && selected == '{') {
@@ -423,22 +429,27 @@ var CStyleBehaviour = function(codeModel) {
    });
 
    this.add("parens", "insertion", function (state, action, editor, session, text) {
+      if (!this.insertMatching) return;
       return autoPairInsertion("(", text, editor, session);
    });
 
    this.add("parens", "deletion", function (state, action, editor, session, range) {
+      if (!this.insertMatching) return;
       return autoPairDeletion("(", range, session);
    });
    
    this.add("brackets", "insertion", function (state, action, editor, session, text) {
+      if (!this.insertMatching) return;
       return autoPairInsertion("[", text, editor, session);
    });
 
    this.add("brackets", "deletion", function (state, action, edditor, session, range) {
+      if (!this.insertMatching) return;
       return autoPairDeletion("[", range, session);
    });
 
    this.add("string_dquotes", "insertion", function (state, action, editor, session, text) {
+      if (!this.insertMatching) return;
       if (text == '"' || text == "'") {
          var quote = text;
          var selection = editor.getSelectionRange();
@@ -497,6 +508,7 @@ var CStyleBehaviour = function(codeModel) {
    });
 
    this.add("string_dquotes", "deletion", function (state, action, editor, session, range) {
+      if (!this.insertMatching) return;
       var selected = session.doc.getTextRange(range);
       if (!range.isMultiLine() && (selected == '"' || selected == "'")) {
          var line = session.doc.getLine(range.start.row);
@@ -510,6 +522,7 @@ var CStyleBehaviour = function(codeModel) {
 
    this.add("punctuation.operator", "insertion", function(state, action, editor, session, text) {
       
+      if (!this.insertMatching) return;
       // Step over ';'
       // TODO: only insert semi-colon if text following cursor is just
       // semi-colon + whitespace

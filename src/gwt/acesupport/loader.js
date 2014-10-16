@@ -38,7 +38,7 @@ oop.inherits(RStudioEditor, Editor);
 
 (function() {
    this.remove = function(dir) {
-      if (this.session.getMode().wrapRemove) {
+      if (typeof this.session.getMode().$behaviour === "undefined" && this.session.getMode().wrapRemove) {
          return this.session.getMode().wrapRemove(this, Editor.prototype.remove, dir);
       }
       else {
@@ -65,7 +65,7 @@ oop.inherits(RStudioEditSession, EditSession);
 
 (function() {
    this.insert = function(position, text) {
-      if (this.getMode().wrapInsert) {
+      if (typeof this.getMode().$behaviour === "undefined" && this.getMode().wrapInsert) {
          return this.getMode().wrapInsert(this, EditSession.prototype.insert, position, text);
       }
       else {
@@ -114,7 +114,7 @@ oop.inherits(RStudioEditSession, EditSession);
          }
       }
 
-      
+
    };
    this.applyIndent = function(lineNum, indent) {
       var line = this.getLine(lineNum);
