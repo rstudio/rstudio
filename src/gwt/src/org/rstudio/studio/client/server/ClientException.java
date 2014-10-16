@@ -28,7 +28,7 @@ public class ClientException extends JavaScriptObject
       for (StackTraceElement element : e.getStackTrace())
          stack.push(StackElement.create(element));
       
-      return create(e.getMessage(),
+      return create(StringUtil.notNull(e.getMessage()),
                     GWT.getPermutationStrongName(),
                     stack);
    }
