@@ -90,6 +90,26 @@ oop.inherits(Mode, TextMode);
 
 (function() {
 
+   // We define our own 'wrapInsert', 'wrapRemove' functions that
+   // delegate directly back to the editor / session -- this is
+   // because we don't want to inherit the automatic matching brace
+   // behaviour. Note that it is attached to the TextMode prototype by
+   // 'matching_brace_outdent.js' and called through the wrappers set
+   // in 'loader.js'.
+   this.wrapInsert = function(session, __insert, position, text) {
+      if (!this.cursorInRLanguageMode())
+         return __insert.call(session, position, text);
+      else
+         return TextMode.prototype.wrapInsert(session, __insert, position, text);
+   };
+
+   this.wrapRemove = function(editor, __remove, dir) {
+      if (!this.cursorInRLanguageMode())
+         return __remove.call(editor, dir);
+      else
+         return TextMode.prototype.wrapRemove(editor, __remove, dir);
+   };
+
    var that = this;
 
    this.insertChunkInfo = {
@@ -127,6 +147,11 @@ oop.inherits(Mode, TextMode);
    this.getLanguageMode = function(position)
    {
       return this.$session.getState(position.row).match(/^r-/) ? 'R' : 'C_CPP';
+   };
+
+   this.cursorInRLanguageMode = function()
+   {
+      return this.getLanguageMode(this.$session.getSelection().getCursor()) === "R";
    };
 
    this.inRLanguageMode = function(state)
