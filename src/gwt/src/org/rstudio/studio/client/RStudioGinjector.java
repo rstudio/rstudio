@@ -62,6 +62,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
 import org.rstudio.studio.client.workbench.views.environment.ClearAllDialog;
 
@@ -94,6 +95,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(TextEditingTargetRMarkdownHelper rmarkdownHelper);
    void injectMembers(EditingTargetCodeExecution codeExecution);
    void injectMembers(LocalRepositoriesWidget localRepositoriesWidget);
+   void injectMembers(CppCompletionRequest request);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

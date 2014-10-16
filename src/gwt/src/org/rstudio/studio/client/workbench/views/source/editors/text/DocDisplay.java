@@ -200,6 +200,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    // HACK: InputEditorPosition should just become AceInputEditorPosition
    Position selectionToPosition(InputEditorPosition pos);
+   
+   InputEditorPosition createInputEditorPosition(Position pos);
 
    Iterable<Range> getWords(TokenPredicate tokenPredicate,
                             CharClassifier charClassifier,

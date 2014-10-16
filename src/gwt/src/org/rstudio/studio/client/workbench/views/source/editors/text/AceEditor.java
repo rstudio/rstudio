@@ -425,7 +425,6 @@ public class AceEditor implements DocDisplay,
                completionManager = new CppCompletionManager(
                                                      this,
                                                      new Filter(),
-                                                     server_,
                                                      cppContext_,
                                                      completionManager);
             }
@@ -830,6 +829,12 @@ public class AceEditor implements DocDisplay,
       // HACK: This cast is gross, InputEditorPosition should just become
       // AceInputEditorPosition
       return Position.create((Integer) pos.getLine(), pos.getPosition());
+   }
+   
+   @Override
+   public InputEditorPosition createInputEditorPosition(Position pos)
+   {
+      return new AceInputEditorPosition(getSession(), pos);
    }
 
    @Override
