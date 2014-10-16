@@ -267,7 +267,8 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                }
             }
 
-            if (tokenCursor.peekBack().currentValue() === "{") {
+            if (tokenCursor.peekBack().currentValue() === "{" ||
+                tokenCursor.currentValue() === ";") {
                return -1;
             }
             
