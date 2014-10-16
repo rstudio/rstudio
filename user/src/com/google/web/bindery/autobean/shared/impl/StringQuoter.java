@@ -15,10 +15,9 @@
  */
 package com.google.web.bindery.autobean.shared.impl;
 
+import com.google.gwt.thirdparty.json.JSONObject;
 import com.google.web.bindery.autobean.shared.Splittable;
 import com.google.web.bindery.autobean.vm.impl.JsonSplittable;
-
-import org.json.JSONObject;
 
 import java.text.DateFormat;
 import java.text.ParseException;

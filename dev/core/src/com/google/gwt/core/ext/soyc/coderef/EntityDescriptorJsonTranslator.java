@@ -18,10 +18,9 @@ package com.google.gwt.core.ext.soyc.coderef;
 
 import com.google.gwt.core.ext.soyc.coderef.EntityDescriptor.Fragment;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.google.gwt.thirdparty.json.JSONArray;
+import com.google.gwt.thirdparty.json.JSONException;
+import com.google.gwt.thirdparty.json.JSONObject;
 
 import java.util.Map;
 

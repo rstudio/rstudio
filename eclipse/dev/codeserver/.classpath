@@ -5,8 +5,8 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jetty/jetty-8.1.12.v20130726/jetty-8.1.12.v20130726.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/guava/guava-16.0.1/guava-16.0.1-rebased.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20131118/sourcemap-rebased.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20131118/compiler-rebased.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20131118.json.rebased/sourcemap-rebased.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/jscomp/20131118.json.rebased/compiler-rebased.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jetty/jetty-8.1.12.v20130726/servlet-api-3.0-NoMetaInf.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/junit/junit-4.8.2.jar" sourcepath="/GWT_TOOLS/lib/junit/junit-4.8.2-src.zip"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/gwt-dev"/>

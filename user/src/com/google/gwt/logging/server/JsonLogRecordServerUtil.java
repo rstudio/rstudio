@@ -16,9 +16,9 @@
 
 package com.google.gwt.logging.server;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.google.gwt.thirdparty.json.JSONArray;
+import com.google.gwt.thirdparty.json.JSONException;
+import com.google.gwt.thirdparty.json.JSONObject;
 
 import java.util.logging.Level;
 import java.util.logging.LogRecord;

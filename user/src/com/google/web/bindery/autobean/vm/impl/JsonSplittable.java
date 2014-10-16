@@ -16,13 +16,12 @@
 package com.google.web.bindery.autobean.vm.impl;
 
 import com.google.gwt.core.client.impl.WeakMapping;
+import com.google.gwt.thirdparty.json.JSONArray;
+import com.google.gwt.thirdparty.json.JSONException;
+import com.google.gwt.thirdparty.json.JSONObject;
 import com.google.web.bindery.autobean.shared.Splittable;
 import com.google.web.bindery.autobean.shared.impl.HasSplittable;
 import com.google.web.bindery.autobean.shared.impl.StringQuoter;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -83,7 +82,7 @@ public class JsonSplittable implements Splittable, HasSplittable {
   }
 
   /**
-   * Private equivalent of org.json.JSONObject.getNames(JSONObject) since that
+   * Private equivalent of com.google.gwt.thirdparty.json.JSONObject.getNames(JSONObject) since that
    * method is not available in Android 2.2. Used to represent a null value.
    */
   private static String[] getNames(JSONObject json) {
