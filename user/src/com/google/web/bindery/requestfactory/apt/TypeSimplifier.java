@@ -102,7 +102,15 @@ public class TypeSimplifier extends SimpleTypeVisitor6<TypeMirror, State> {
 
   @Override
   public TypeMirror visitWildcard(WildcardType x, State state) {
-    return state.types.erasure(x).accept(this, state);
+    // The JLS doesn't define erasure for wildcards [1], so don't rely on
+    // javac's implementation. Instead, simplify wildcards as:
+    // ? extends Foo -> erasure(Foo)
+    // and: ? -> Object
+    //
+    // [1] https://bugs.openjdk.java.net/browse/JDK-8055054
+    return x.getExtendsBound() != null
+        ? x.getExtendsBound().accept(this, state)
+        : state.findType(Object.class);
   }
 
   @Override
