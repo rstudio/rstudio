@@ -465,7 +465,7 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
    std::copy(config.args.begin(), config.args.end(), std::back_inserter(args));
 
    // add precompiled headers if necessary
-   if (!config.PCH.empty())
+   if (usePrecompiledHeaders_ && !config.PCH.empty())
    {
       std::string ext = filePath.extensionLowerCase();
       bool isCppFile = (ext == ".cc") || (ext == ".cpp");

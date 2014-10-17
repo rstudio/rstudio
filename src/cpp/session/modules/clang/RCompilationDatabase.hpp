@@ -35,6 +35,7 @@ namespace clang {
 class RCompilationDatabase : boost::noncopyable
 {
 public:
+   RCompilationDatabase() : usePrecompiledHeaders_(false) {}
    virtual ~RCompilationDatabase() {}
 
    std::vector<std::string> compileArgsForTranslationUnit(
@@ -92,6 +93,7 @@ private:
    // oriented files to avoid re-running detection)
    std::string packageBuildFileHash_;
    CompilationConfig packageCompilationConfig_;
+   bool usePrecompiledHeaders_;
 };
 
 
