@@ -29,6 +29,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  * Unit test for {@link PersistentUnitCache}.
@@ -160,7 +161,7 @@ public class PersistentUnitCacheTest extends TestCase {
     // There should be a single file in the cache dir.
     assertNumCacheFiles(unitCacheDir, 1);
 
-    // Fire up the cache again. It be pre-populated.
+    // Fire up the cache again. It should be pre-populated.
     // Search by type name
     cache = new PersistentUnitCache(logger, cacheDir);
     result = cache.find("com/example/Foo.java");
@@ -188,17 +189,21 @@ public class PersistentUnitCacheTest extends TestCase {
 
     // We didn't write anything, still 1 file.
     cache.shutdown();
+
+    // There should be a single file in the cache dir.
     assertNumCacheFiles(unitCacheDir, 1);
+
+    // Fire up the cache again.
+    cache = new PersistentUnitCache(logger, cacheDir);
 
     // keep making more files
     MockCompilationUnit lastUnit = null;
     assertTrue(PersistentUnitCache.CACHE_FILE_THRESHOLD > 3);
-    for (int i = 2; i <= PersistentUnitCache.CACHE_FILE_THRESHOLD - 1; i++) {
-      cache = new PersistentUnitCache(logger, cacheDir);
+    for (int i = 2; i <= PersistentUnitCache.CACHE_FILE_THRESHOLD - 3; i++) {
       lastUnit = new MockCompilationUnit("com.example.Foo", "Foo Source" + i);
-      cache.add(lastUnit);
+      Future<Void> addFuture = cache.internalAdd(lastUnit);
+      addFuture.get();
       cache.cleanup(logger);
-      cache.shutdown();
       assertNumCacheFiles(unitCacheDir, i);
     }
 
@@ -224,14 +229,29 @@ public class PersistentUnitCacheTest extends TestCase {
     assertEquals("com.example.Bar", result.getTypeName());
     assertEquals(bar1.getContentId(), result.getContentId());
 
-    lastUnit = new MockCompilationUnit("com.example.Foo", "Foo Source");
+    lastUnit = new MockCompilationUnit("com.example.Baz", "Baz Source");
     cache.add(lastUnit);
+    cache.cleanup(logger);
 
     // This time, the cleanup logic should coalesce the logs into one file
     // again.
+    lastUnit = new MockCompilationUnit("com.example.Qux", "Qux Source");
+    Future<Void> addFuture = cache.internalAdd(lastUnit);
+    addFuture.get();
     cache.cleanup(logger);
     cache.shutdown();
+
+    // There should be a single file in the cache dir.
     assertNumCacheFiles(unitCacheDir, 1);
+
+    // Fire up the cache on this one coalesced file.
+    cache = new PersistentUnitCache(logger, cacheDir);
+
+    // Verify that we can still find the content that was coalesced.
+    assertNotNull(cache.find("com/example/Foo.java"));
+    assertNotNull(cache.find("com/example/Bar.java"));
+    assertNotNull(cache.find("com/example/Baz.java"));
+    assertNotNull(cache.find("com/example/Qux.java"));
   }
 
   private void assertNumCacheFiles(File unitCacheDir, int expected) {

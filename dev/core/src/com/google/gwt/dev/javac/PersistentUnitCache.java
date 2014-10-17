@@ -24,6 +24,7 @@ import com.google.gwt.dev.util.StringInterningObjectInputStream;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.hash.Hashing;
 import com.google.gwt.thirdparty.guava.common.io.Files;
 import com.google.gwt.util.tools.Utility;
@@ -340,10 +341,15 @@ class PersistentUnitCache extends MemoryUnitCache {
    */
   @Override
   public void add(CompilationUnit newUnit) {
+    internalAdd(newUnit);
+  }
+
+  @VisibleForTesting
+  Future<Void> internalAdd(CompilationUnit newUnit) {
     awaitUnitCacheMapLoad();
     addedSinceLastCleanup++;
     super.add(newUnit);
-    addImpl(unitMap.get(newUnit.getResourcePath()));
+    return addImpl(unitMap.get(newUnit.getResourcePath()));
   }
 
   /**
@@ -393,9 +399,12 @@ class PersistentUnitCache extends MemoryUnitCache {
        */
       synchronized (unitMap) {
         for (UnitCacheEntry unitCacheEntry : unitMap.values()) {
-          if (unitCacheEntry.getOrigin() == UnitOrigin.PERSISTENT) {
-            addImpl(unitCacheEntry);
+          if (unitCacheEntry.getOrigin() == UnitOrigin.ARCHIVE) {
+            // Units from GWTAR archives should not be kept in the persistent unit cache on disk
+            // because they are already being kept in their original GWTAR file location.
+            continue;
           }
+          addImpl(unitCacheEntry);
         }
       }
 
@@ -481,9 +490,9 @@ class PersistentUnitCache extends MemoryUnitCache {
     return CACHE_FILE_PREFIX;
   }
 
-  private void addImpl(final UnitCacheEntry entry) {
+  private Future<Void> addImpl(final UnitCacheEntry entry) {
     try {
-      backgroundService.execute(new Runnable() {
+      return backgroundService.submit(new Runnable() {
         @Override
         public void run() {
           try {
@@ -500,9 +509,10 @@ class PersistentUnitCache extends MemoryUnitCache {
             }
           }
         }
-      });
+      }, null);
     } catch (RejectedExecutionException ex) {
       // background thread is not running, ignore
+      return null;
     }
   }
 
