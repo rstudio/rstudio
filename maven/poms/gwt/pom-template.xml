@@ -67,11 +67,6 @@
                 <classifier>sources</classifier>
             </dependency>
             <dependency>
-                <groupId>org.json</groupId>
-                <artifactId>json</artifactId>
-                <version>20090211</version>
-            </dependency>
-            <dependency>
                 <groupId>org.ow2.asm</groupId>
                 <artifactId>asm-parent</artifactId>
                 <version>5.0.3</version>

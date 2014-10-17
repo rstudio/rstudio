@@ -19,10 +19,5 @@
             <artifactId>validation-api</artifactId>
             <optional>true</optional>
         </dependency>
-        <dependency>
-            <groupId>org.json</groupId>
-            <artifactId>json</artifactId>
-            <optional>true</optional>
-        </dependency>
     </dependencies>
 </project>

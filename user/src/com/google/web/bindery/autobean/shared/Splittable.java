@@ -21,8 +21,7 @@ import java.util.List;
 
 /**
  * This interface provides an abstraction around the underlying data model
- * (JavaScriptObject, {@code org.json}, or XML) used to encode an AutoBeanCodex
- * payload.
+ * (JavaScriptObject, or JSON) used to encode an AutoBeanCodex payload.
  */
 public interface Splittable {
   /**

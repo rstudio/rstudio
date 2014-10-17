@@ -295,8 +295,8 @@ public class JsonSplittable implements Splittable, HasSplittable {
     }
     /*
      * Maintain a 1:1 mapping between object instances and JsonSplittables.
-     * Doing this with a WeakHashMap doesn't work on Android, since its org.json
-     * arrays appear to have value-based equality.
+     * Doing this with a WeakHashMap doesn't work, since our c.g.g.thirdparty.json
+     * arrays, coming from Android, appear to have value-based equality.
      */
     JsonSplittable seen = (JsonSplittable) WeakMapping.get(object, JsonSplittable.class.getName());
     if (seen == null) {

@@ -25,7 +25,6 @@
   <path id="USER_CLASS_PATH">
     <pathelement location="${gwt.dev.jar}" />
     <pathelement location="${gwt.user.jar}" />
-    <pathelement location="${gwt.tools.lib}/lib/json/android-sdk-19.1/json-android-rebased.jar" />
     <pathelement location="${gwt.tools.lib}/junit/junit-4.8.2.jar" />
     <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA.jar" />
     <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA-sources.jar" />
@@ -103,9 +102,6 @@
       <arg value="-linkoffline" />
       <arg value="http://download.oracle.com/javaee/6/api/" />
       <arg value="validation-package-list" />
-      <arg value="-linkoffline" />
-      <arg value="http://www.json.org/javadoc" />
-      <arg value="json-package-list" />
       <arg value="-classpath" />
       <arg pathref="USER_CLASS_PATH" />
       <arg value="-sourcepath" />
