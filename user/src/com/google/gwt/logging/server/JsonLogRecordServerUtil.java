@@ -24,27 +24,31 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
 /**
- * A set of functions to convert standard JSON strings into
- * LogRecords. The corresponding functions to create the JSON
- * strings are in JsonLogRecordClientUtil.java. This class should only be used
+ * A set of functions to convert standard JSON strings into LogRecords. The corresponding functions
+ * to create the JSON strings are in JsonLogRecordClientUtil.java. This class should only be used
  * in server-side code since it imports c.g.g.thirdparty.json classes.
  * TODO(unnurg) once there is a unified JSON GWT library, combine this with
  * JsonLogRecordClientUtil.
  */
 public class JsonLogRecordServerUtil {
 
-  public static LogRecord logRecordFromJson(String jsonString) throws JSONException {
-    JSONObject lro = new JSONObject(jsonString);
-    String level = lro.getString("level");
-    String loggerName = lro.getString("loggerName");
-    String msg = lro.getString("msg");
-    long timestamp = Long.parseLong(lro.getString("timestamp"));
-    Throwable thrown = JsonLogRecordThrowable.fromJsonString(lro.getString("thrown"));
-    LogRecord lr = new LogRecord(Level.parse(level), msg);
-    lr.setLoggerName(loggerName);
-    lr.setThrown(thrown);
-    lr.setMillis(timestamp);
-    return lr;
+  public static LogRecord logRecordFromJson(String jsonString)
+      throws InvalidJsonLogRecordFormatException {
+    try {
+      JSONObject lro = new JSONObject(jsonString);
+      String level = lro.getString("level");
+      String loggerName = lro.getString("loggerName");
+      String msg = lro.getString("msg");
+      long timestamp = Long.parseLong(lro.getString("timestamp"));
+      Throwable thrown = JsonLogRecordThrowable.fromJsonString(lro.getString("thrown"));
+      LogRecord lr = new LogRecord(Level.parse(level), msg);
+      lr.setLoggerName(loggerName);
+      lr.setThrown(thrown);
+      lr.setMillis(timestamp);
+      return lr;
+    } catch (JSONException e) {
+      throw new InvalidJsonLogRecordFormatException(e);
+    }
   }
 
   private static class JsonLogRecordThrowable extends Throwable {
