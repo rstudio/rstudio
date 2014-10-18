@@ -13,14 +13,13 @@
  */
 package com.google.gwt.dev.cfg;
 
-import com.google.gwt.core.ext.impl.ResourceLocatorImpl;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.ResourceOracle;
+import com.google.gwt.dev.resource.impl.AbstractResourceOracle;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -34,7 +33,7 @@ import java.util.Set;
  * that surfaces resources on disk and one that surfaces resources in a set of precompiled
  * libraries.
  */
-public class CombinedResourceOracle implements ResourceOracle {
+public class CombinedResourceOracle extends AbstractResourceOracle {
 
   private Set<Resource> buildResources;
   private Map<String, Resource> buildResourcesByPath;
@@ -60,16 +59,6 @@ public class CombinedResourceOracle implements ResourceOracle {
       pathNames = Collections.unmodifiableSet(pathNames);
     }
     return pathNames;
-  }
-
-  @Override
-  public Resource getResource(String pathName) {
-    return getResourceMap().get(pathName);
-  }
-
-  @Override
-  public InputStream getResourceAsStream(String pathName) {
-    return ResourceLocatorImpl.toStreamOrNull(getResource(pathName));
   }
 
   @Deprecated

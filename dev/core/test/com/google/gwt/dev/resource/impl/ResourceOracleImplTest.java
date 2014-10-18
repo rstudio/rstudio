@@ -591,61 +591,48 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
       throws IOException {
     TreeLogger logger = createTestTreeLogger();
 
+    String commandPath = "com/google/gwt/user/client/Command.java";
+    String messagesPath = "com/google/gwt/i18n/client/Messages.java";
+
+    String userPackage = "cpe1.com.google.gwt.user.client";
+    String i18nPackage = "cpe2.com.google.gwt.i18n.client";
+
     ResourceOracleImpl oracle = createResourceOracle(cpe1, cpe2);
     ResourceOracleSnapshot s = refreshAndSnapshot(logger, oracle);
     s.assertCollectionsConsistent(10);
-    s.assertPathIncluded("com/google/gwt/user/client/Command.java", cpe1);
-    s.assertPathIncluded("com/google/gwt/i18n/client/Messages.java", cpe2);
 
-    {
-      /*
-       * Read a resource in cpe1.
-       */
-      AbstractResource res = s.findResourceWithPath("com/google/gwt/user/client/Command.java");
-      BufferedReader rdr = null;
-      try {
-        InputStream is = res.openContents();
-        assertNotNull(is);
-        rdr = new BufferedReader(new InputStreamReader(is));
+    // Read a resource in cpe1.
+    readAndAssertResource(oracle, commandPath, userPackage);
 
-        // Skip lines until package line is found.
-        String line = rdr.readLine();
-        while (line != null && !line.startsWith("package")) {
-          line = rdr.readLine();
-        }
-        assertTrue(line != null && line.indexOf(
-            "package com.google.gwt.dev.resource.impl.testdata.cpe1.com.google.gwt.user.client;") >= 0);
-      } finally {
-        Utility.close(rdr);
+    // Read a resource in cpe2.
+    readAndAssertResource(oracle, messagesPath, i18nPackage);
+
+    // Read relative path.
+    readAndAssertResource(oracle, "com/google/gwt/i18n/../i18n/client/Messages.java", i18nPackage);
+
+    // Read path that doesn't exist.
+    assertNull(oracle.getResource("com/google/gwt/i18n/client/DoesntExist.java"));
+  }
+
+  private void readAndAssertResource(ResourceOracleImpl oracle, String path, String expectedPackage)
+      throws IOException {
+    Resource res = oracle.getResource(path);
+    assertNotNull(res);
+    BufferedReader rdr = null;
+    try {
+      InputStream is = res.openContents();
+      assertNotNull(is);
+      rdr = new BufferedReader(new InputStreamReader(is));
+      // Skip lines until package line is found.
+      String line = rdr.readLine();
+      while (line != null && !line.startsWith("package")) {
+        line = rdr.readLine();
       }
-    }
-
-    {
-      /*
-       * Read a resource in cpe2.
-       */
-      AbstractResource res = s.findResourceWithPath("com/google/gwt/i18n/client/Messages.java");
-      BufferedReader rdr = null;
-      try {
-        InputStream is = res.openContents();
-        assertNotNull(is);
-        rdr = new BufferedReader(new InputStreamReader(is));
-        // Skip lines until package line is found.
-        String line = rdr.readLine();
-        while (line != null && !line.startsWith("package")) {
-          line = rdr.readLine();
-        }
-        assertTrue(line != null && line.indexOf(
-            "package com.google.gwt.dev.resource.impl.testdata.cpe2.com.google.gwt.i18n.client;") >= 0);
-      } finally {
-        Utility.close(rdr);
-      }
-    }
-
-    {
-      /*
-       * TODO: Try to read an invalid resource and watch it fail as intended.
-       */
+      assertTrue(line != null
+          && line.indexOf("package com.google.gwt.dev.resource.impl.testdata." + expectedPackage
+              + ";") >= 0);
+    } finally {
+      Utility.close(rdr);
     }
   }
 

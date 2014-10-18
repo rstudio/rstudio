@@ -37,12 +37,14 @@ import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.cfg.RuleGenerateWith;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.ResourceOracle;
+import com.google.gwt.dev.resource.impl.AbstractResourceOracle;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.dev.util.collect.IdentityHashMap;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.io.Files;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.BufferedOutputStream;
@@ -50,7 +52,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -71,7 +72,7 @@ public class StandardGeneratorContext implements GeneratorContext {
   /**
    * Wraps a ResourceOracle to collect the paths of Resources read by Generators.
    */
-  private class RecordingResourceOracle implements ResourceOracle {
+  private class RecordingResourceOracle extends AbstractResourceOracle {
 
     private final ResourceOracle wrappedResourceOracle;
 
@@ -91,6 +92,7 @@ public class StandardGeneratorContext implements GeneratorContext {
 
     @Override
     public Resource getResource(String pathName) {
+      pathName = Files.simplifyPath(pathName);
       compilerContext.getMinimalRebuildCache().associateReboundTypeWithInputResource(
           currentRebindBinaryTypeName, pathName);
       return wrappedResourceOracle.getResource(pathName);
@@ -105,11 +107,6 @@ public class StandardGeneratorContext implements GeneratorContext {
     @Override
     public Set<Resource> getResources() {
       return wrappedResourceOracle.getResources();
-    }
-
-    @Override
-    public InputStream getResourceAsStream(String pathName) {
-      return ResourceLocatorImpl.toStreamOrNull(getResource(pathName));
     }
   }
 

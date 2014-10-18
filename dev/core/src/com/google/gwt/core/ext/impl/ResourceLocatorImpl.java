@@ -36,17 +36,6 @@ public class ResourceLocatorImpl {
     classLoaderLoadCount = 0;
   }
 
-  public static InputStream toStreamOrNull(Resource resource) {
-    if (resource == null) {
-      return null;
-    }
-    try {
-      return resource.openContents();
-    } catch (IOException e) {
-      return null;
-    }
-  }
-
   /**
    * Returns an InputStream for the given resource as found in the ResourceOracle.
    * <p>
