@@ -172,11 +172,26 @@ public class StackTraceCreator {
     public native void collect(Object t, Object jsThrown) /*-{
       // Carefully crafted to delay the 'stack' property until stack trace construction as it is
       // costly in some browsers (e.g. Chrome).
-      t.__gwt$backingJsError = typeof jsThrown == 'string'
-          ? new Error(jsThrown)
-          : jsThrown instanceof Object && "stack" in jsThrown
-              ? jsThrown
-              : new Error();
+
+     function fixIE(e) {
+        // In IE -unlike every other browser-, the stack property is not defined until you throw
+        // the Error object. Sometimes I hope they would just stop developing browsers...
+        if (!("stack" in e)) {
+          try { throw e; } catch(ignored) {}
+        }
+        return e;
+      }
+
+      var backingJsError;
+      if (typeof jsThrown == 'string') {
+        backingJsError = fixIE(new Error(jsThrown));
+      } else if (jsThrown instanceof Object && "stack" in jsThrown){
+        backingJsError = jsThrown;
+      } else {
+        backingJsError = fixIE(new Error());
+      }
+
+      t.__gwt$backingJsError = backingJsError;
     }-*/;
 
     @Override
