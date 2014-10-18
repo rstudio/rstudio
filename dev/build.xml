@@ -308,7 +308,8 @@
         <!-- CompilerTest compiles the hello sample. -->
         <pathelement location="${gwt.root}/samples/hello/src/"/>
         <!-- CompilerTest needs the dependecies to compile a project that uses UiBinder. -->
-        <pathelement location="${gwt.tools.lib}/streamhtmlparser/streamhtmlparser-jsilver-r10/streamhtmlparser-jsilver-r10-1.5-rebased.jar"/>
+        <pathelement location="${gwt.tools.lib}/gss/2014-09-11/closure-stylesheets-rebased.jar"/>
+	<pathelement location="${gwt.tools.lib}/streamhtmlparser/streamhtmlparser-jsilver-r10/streamhtmlparser-jsilver-r10-1.5-rebased.jar"/>
       </extraclasspaths>
     </gwt.junit>
   </target>

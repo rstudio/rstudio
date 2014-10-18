@@ -31,7 +31,7 @@ import com.google.gwt.resources.client.gss.TestResources.TestImportCss;
  * @see com.google.gwt.resources.client.gss.GssResourceTest
  */
 public abstract class RenamingClassNameTest extends GWTTestCase {
-  static final String OBFUSCATION_PATTERN = "[a-zA-Z][a-zA-Z0-9]*_[a-zA-Z][a-zA-Z0-9]*";
+  static final String OBFUSCATION_PATTERN = "[a-zA-Z][a-zA-Z0-9]*-[a-zA-Z][a-zA-Z0-9]*";
 
   /**
    * Test that style classes mentioned as external are not obfuscated.
