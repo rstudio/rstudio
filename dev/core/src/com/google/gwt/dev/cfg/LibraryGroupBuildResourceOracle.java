@@ -15,22 +15,20 @@
  */
 package com.google.gwt.dev.cfg;
 
-import com.google.gwt.core.ext.impl.ResourceLocatorImpl;
 import com.google.gwt.dev.resource.Resource;
-import com.google.gwt.dev.resource.ResourceOracle;
+import com.google.gwt.dev.resource.impl.AbstractResourceOracle;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
-import java.io.InputStream;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * A {@link ResourceOracle} for finding build resources in a library group.
+ * A {@code ResourceOracle} for finding build resources in a library group.
  */
-public class LibraryGroupBuildResourceOracle implements ResourceOracle {
+public class LibraryGroupBuildResourceOracle extends AbstractResourceOracle {
 
   private Set<Resource> buildResources;
   private Map<String, Resource> buildResourcesByPath;
@@ -52,16 +50,6 @@ public class LibraryGroupBuildResourceOracle implements ResourceOracle {
       pathNames = ImmutableSet.<String> copyOf(libraryGroup.getBuildResourcePaths());
     }
     return pathNames;
-  }
-
-  @Override
-  public Resource getResource(String pathName) {
-    return getResourceMap().get(pathName);
-  }
-
-  @Override
-  public InputStream getResourceAsStream(String pathName) {
-    return ResourceLocatorImpl.toStreamOrNull(getResource(pathName));
   }
 
   @Deprecated
