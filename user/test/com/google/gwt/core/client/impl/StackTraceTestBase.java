@@ -30,14 +30,14 @@ public abstract class StackTraceTestBase extends GWTTestCase {
 
   public void testTraceJava() {
     Exception t = StackTraceExamples.getLiveException(JAVA);
-    assertTrace(getTraceJava(), t, 0);
+    assertTrace(getTraceJava(), t);
   }
 
   protected abstract String[] getTraceJava();
 
   public void testTraceRecursion() {
     Exception t = StackTraceExamples.getLiveException(RECURSION);
-    assertTrace(getTraceRecursion(), t, 0);
+    assertTrace(getTraceRecursion(), t);
   }
 
   protected abstract String[] getTraceRecursion();
@@ -58,16 +58,15 @@ public abstract class StackTraceTestBase extends GWTTestCase {
     Exception t = StackTraceExamples.getLiveException(whatToThrow);
 
     String[] expected = getTraceJse(whatToThrow);
-    int offset = getTraceOffset(t.getStackTrace(), expected[0]);
-    assertTrace(expected, t, offset);
+    assertTrace(expected, t);
   }
 
   protected abstract String[] getTraceJse(Object whatToThrow);
 
-  private void assertTrace(String[] expected, Exception t, int offset) {
+  private void assertTrace(String[] expected, Exception t) {
     StackTraceElement[] trace = t.getStackTrace();
     for (int i = 0; i < expected.length; i++) {
-      StackTraceElement actualElement = trace[i + offset];
+      StackTraceElement actualElement = trace[i];
       String methodName = actualElement == null ? "!MISSING!" : actualElement.getMethodName();
       if (expected[i].equals(methodName)) {
         continue;
@@ -77,18 +76,5 @@ public abstract class StackTraceTestBase extends GWTTestCase {
       e.initCause(t);
       throw e;
     }
-  }
-
-  protected int getTraceOffset(StackTraceElement[] trace, String firstFrame) {
-    // TODO(goktug): Native exception traces are not properly stripped,
-    // Working around that for now by calculating an offset.
-    int offset = 0;
-    for (StackTraceElement ste : trace) {
-      if (ste.getMethodName().equals(firstFrame)) {
-        break;
-      }
-      offset++;
-    }
-    return offset;
   }
 }

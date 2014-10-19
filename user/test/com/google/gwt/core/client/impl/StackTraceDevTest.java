@@ -57,6 +57,11 @@ public class StackTraceDevTest extends StackTraceTestBase {
   @Override
   protected String[] getTraceJse(Object whatToThrow) {
     return new String[] {
+        "invokeJavascript",
+        "doInvoke",
+        "invokeNative",
+        "invokeNativeObject",
+        "invokeNativeObject",
         "throwJse",
         "throwException2",
         "throwException1",
