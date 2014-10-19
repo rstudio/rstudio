@@ -7,11 +7,10 @@
       width: 400px;
     }
     .panel {
-      align: center;
-    }
-    .send {
-      display: block;
-      font-size: 16pt;
+      position: absolute;
+      left: 50%;
+      width: 14em;
+      margin-left: -7em;
     }
     .error {
       color: red;
@@ -19,8 +18,8 @@
     .dialogPanel {
       margin: 5px;
     }
-    .close {
-      margin: 15px 6px 6px;
+    .send, .close {
+      margin: 15px 0px 6px;
     }
   </ui:style>
   <g:VerticalPanel styleName="{style.panel}">

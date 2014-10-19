@@ -6,28 +6,4 @@
   <!-- these are after the common.ant.xml so they have gwt.tools... -->
   <path id="sample.extraclasspath">
   </path>
-
-  <target name="devmode" description="Run development mode without building distribution">
-    <delete dir="${sample.build}/war-devmode"/>
-    <copy todir="${sample.build}/war-devmode">
-      <fileset dir="war"/>
-    </copy>
-
-    <java failonerror="true" fork="true" classname="com.google.gwt.dev.DevMode">
-      <classpath>
-        <pathelement location="src"/>
-        <pathelement location="../../build/lib/gwt-user.jar"/>
-        <pathelement location="../../build/lib/gwt-dev.jar"/>
-        <pathelement location="../../build/lib/gwt-codeserver.jar"/>
-      </classpath>
-      <arg value="-startupUrl"/>
-      <arg value="Hello.html"/>
-      <arg value="-superDevMode"/>
-      <arg line="-war"/>
-      <arg value="${sample.build}/war-devmode"/>
-      <arg value="com.google.gwt.sample.hello.Hello"/>
-    </java>
-  </target>
-
-
 </project>

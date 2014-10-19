@@ -14,9 +14,23 @@
   <property name="sample.lower" value="${sample.root}" />
   <property name="sample.upper" value="${sample.module}" />
 
+  <property name="gwt.args" value="" />
+
   <property.ensure name="gwt.user.jar" location="${gwt.build.lib}/gwt-user.jar" />
   <property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev.jar" />
   <property.ensure name="gwt.codeserver.jar" location="${gwt.build.lib}/gwt-codeserver.jar" />
+  <condition property="type.maven">
+    <available file="pom.xml" />
+  </condition>
+
+  <!-- In maven projects show a message indicating how to build the project using 'mvn' -->
+  <target name="check.build.type" if="type.maven">
+    <echo>
+        ${sample.upper} is a maven project.
+         - use 'mvn clean package' to build it.
+         - or use 'mvn gwt:run' to run it in dev mode.
+    </echo>
+  </target>
 
   <!-- Mirror directory for scripts; makes building distro easier -->
   <property name="samples.scripts" value="${gwt.build.out}/samples-scripts" />
@@ -34,7 +48,7 @@
     <include name="" />
   </fileset>
 
-  <target name="source" description="Copy source to the output folder">
+  <target name="source" depends="check.build.type" description="Copy source to the output folder">
     <mkdir dir="${sample.build}/src" />
     <copy todir="${sample.build}/src">
       <fileset dir="src" />
@@ -94,14 +108,14 @@
     </if>
   </target>
 
-  <target name="serverlibs" description="Copy server libs to the output folder">
+  <target name="serverlibs" unless="type.maven" description="Copy server libs to the output folder">
     <mkdir dir="${sample.build}/war/WEB-INF/lib" />
     <copy todir="${sample.build}/war/WEB-INF/lib/" flatten="true">
       <fileset refid="sample.server.libs" />
     </copy>
   </target>
 
-  <target name="compile" description="Compile all java files">
+  <target name="compile" unless="type.maven" description="Compile all java files">
     <mkdir dir="${sample.build}/war/WEB-INF/classes" />
     <gwt.javac destdir="${sample.build}/war/WEB-INF/classes"
                excludes="**/super/**">
@@ -109,12 +123,11 @@
         <pathelement location="${gwt.user.jar}" />
         <pathelement location="${gwt.dev.jar}" />
         <path refid="sample.extraclasspath" />
-        <path refid="gae.extraclasspath" />
       </classpath>
     </gwt.javac>
   </target>
 
-  <target name="gwtc" description="Compile to JavaScript">
+  <target name="gwtc" unless="type.maven" description="Compile to JavaScript">
     <outofdate>
       <sourcefiles>
         <fileset dir="${sample.path}" />
@@ -134,8 +147,6 @@
             <pathelement location="${sample.build}/war/WEB-INF/classes" />
             <pathelement location="${gwt.user.jar}" />
             <pathelement location="${gwt.dev.jar}" />
-            <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA.jar" />
-            <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA-sources.jar" />
           </classpath>
           <jvmarg value="-Xmx384M" />
           <arg value="-localWorkers" />
@@ -177,7 +188,7 @@
     </sequential>
   </macrodef>
 
-  <target name="scripts" description="Create launch scripts">
+  <target name="scripts" unless="type.maven" description="Create launch scripts">
     <webAppCreator platform="linux" />
     <webAppCreator platform="windows" extension=".cmd" />
     <webAppCreator platform="mac" />
@@ -201,5 +212,24 @@
         <include name="*/${sample.upper}/**" />
       </fileset>
     </delete>
+  </target>
+
+  <target name="devmode" depends="source, compile" unless="type.maven"
+    description="Run Super Dev Mode (pass -Dgwt.args=-nosuperDevMode to fallback to classic DevMode)">
+    <property name="sample.package" value="com.google.gwt.sample.${sample.root}" />
+    <java failonerror="true" fork="true" classname="com.google.gwt.dev.DevMode">
+      <classpath>
+        <pathelement location="${sample.path}"/>
+        <pathelement location="${gwt.user.jar}"/>
+        <pathelement location="${gwt.dev.jar}"/>
+        <pathelement location="${gwt.codeserver.jar}"/>
+        <pathelement location="${sample.build}/war/WEB-INF/classes" />
+        <path refid="sample.extraclasspath" />
+      </classpath>
+      <arg line="${gwt.args}"/>
+      <arg line="-war"/>
+      <arg value="${sample.build}/war"/>
+      <arg value="${sample.package}.${sample.module}"/>
+    </java>
   </target>
 </project>

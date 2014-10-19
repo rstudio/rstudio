@@ -11,7 +11,7 @@
   </target>
 
   <target name="dynatablerf" description="Build dynatablerf">
-    <gwt.ant dir="dynatablerf" target="source" />
+    <gwt.ant dir="dynatablerf" />
   </target>
 
   <target name="hello" description="Build hello">
@@ -27,7 +27,7 @@
   </target>
 
   <target name="mobilewebapp" description="Build mobile web app">
-    <gwt.ant dir="mobilewebapp" target="source" />
+    <gwt.ant dir="mobilewebapp" />
   </target>
 
   <target name="showcase" description="Build showcase">
@@ -35,7 +35,7 @@
   </target>
 
   <target name="validation" description="Build validation">
-    <gwt.ant dir="validation" target="source" />
+    <gwt.ant dir="validation" />
   </target>
 
   <target name="validationtck" description="Build validation TCK">
