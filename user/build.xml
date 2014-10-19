@@ -213,6 +213,7 @@
       <zipfileset src="${gwt.tools.lib}/w3c/flute/flute-1.3-gg2.jar"/>
       <zipfileset
           src="${gwt.tools.lib}/streamhtmlparser/streamhtmlparser-jsilver-r10/streamhtmlparser-jsilver-r10-1.5-rebased.jar"/>
+      <zipfileset src="${gwt.tools.lib}/gss/2014-09-11/closure-stylesheets-rebased.jar"/> 
     </gwt.jar>
   </target>
 
