@@ -92,7 +92,6 @@
           <include name="apache/commons/commons-lang3-3.1.jar"/>
           <include name="apache/commons/commons-logging-1.1.3.jar"/>
           <include name="cssparser/cssparser-0.9.11.jar"/>
-          <include name="gss/2014-09-11/closure-stylesheets-rebased.jar"/>
           <include name="htmlunit/htmlunit-2.13/htmlunit-2.13.jar"/>
           <include name="htmlunit/htmlunit-2.13/htmlunit-core-js-2.13.jar"/>
           <include name="nekohtml/nekohtml-1.9.19.jar"/>
@@ -120,7 +119,6 @@
           <zipfileset
               src="${gwt.tools.lib}/eclipse/jdtCompilerAdapter-3.10.0.jar"/>
           <zipfileset src="${gwt.tools.lib}/guava/guava-16.0.1/guava-16.0.1-rebased.jar"/>
-          <zipfileset src="${gwt.tools.lib}/gss/2014-09-11/closure-stylesheets-rebased.jar"/>
           <zipfileset src="${gwt.tools.lib}/icu4j/50.1.1/icu4j.jar"/>
           <zipfileset
               src="${gwt.tools.lib}/jetty/jetty-8.1.12.v20130726/jetty-8.1.12.v20130726.jar"/>
