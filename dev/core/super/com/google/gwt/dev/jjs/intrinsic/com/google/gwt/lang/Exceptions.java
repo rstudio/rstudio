@@ -16,6 +16,7 @@
 package com.google.gwt.lang;
 
 import com.google.gwt.core.client.JavaScriptException;
+import com.google.gwt.core.client.impl.DoNotInline;
 import com.google.gwt.core.client.impl.StackTraceCreator;
 
 /**
@@ -23,11 +24,20 @@ import com.google.gwt.core.client.impl.StackTraceCreator;
  */
 final class Exceptions {
 
+  @DoNotInline // This frame can be useful in understanding the native stack
   static Object wrap(Object e) {
     if (e instanceof Throwable) {
       return e;
     }
-    return getCachableJavaScriptException(e);
+
+    JavaScriptException jse = getCachedJavaScriptException(e);
+    if (jse == null) {
+      jse = new JavaScriptException(e);
+      StackTraceCreator.captureStackTrace(jse, e);
+      cacheJavaScriptException(e, jse);
+    }
+
+    return jse;
   }
 
   static Object unwrap(Object e) {
@@ -40,28 +50,19 @@ final class Exceptions {
     return e;
   }
 
-  private static native JavaScriptException getCachableJavaScriptException(Object e)/*-{
-    var jse = e && e.__gwt$exception;
-    if (!jse) {
-      jse = @Exceptions::makeJavaScriptException(*)(e);
-
-      // Cache if possible
-      if (typeof e == 'object') {
-        try {
-          e.__gwt$exception = jse;
-        } catch (e1) {
-          // See https://code.google.com/p/google-web-toolkit/issues/detail?id=8449
-        }
-      }
-    }
-    return jse;
+  private static native JavaScriptException getCachedJavaScriptException(Object e) /*-{
+    return e && e.__gwt$exception;
   }-*/;
 
-  private static JavaScriptException makeJavaScriptException(Object e) {
-    JavaScriptException jse = new JavaScriptException(e);
-    StackTraceCreator.captureStackTrace(jse, e);
-    return jse;
-  }
+  private static native void cacheJavaScriptException(Object e, JavaScriptException jse) /*-{
+    if (e && typeof e == 'object') {
+      try {
+        e.__gwt$exception = jse;
+      } catch (ignored) {
+        // See https://code.google.com/p/google-web-toolkit/issues/detail?id=8449
+      }
+    }
+  }-*/;
 
   static AssertionError makeAssertionError() {
     return new AssertionError();

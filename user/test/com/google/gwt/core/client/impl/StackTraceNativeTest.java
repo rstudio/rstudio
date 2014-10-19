@@ -36,6 +36,7 @@ public class StackTraceNativeTest extends StackTraceTestBase {
   @Override
   protected String[] getTraceJava() {
     return new String[] {
+        Impl.getNameOf("@java.lang.Throwable::fillInStackTrace()"),
         Impl.getNameOf("@java.lang.Throwable::new(Ljava/lang/String;)"),
         Impl.getNameOf("@java.lang.Exception::new(Ljava/lang/String;)"),
         Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceExamples::throwException2(*)"),
@@ -48,6 +49,7 @@ public class StackTraceNativeTest extends StackTraceTestBase {
   @Override
   protected String[] getTraceRecursion() {
     final String[] expectedModern = {
+        Impl.getNameOf("@java.lang.Throwable::fillInStackTrace()"),
         Impl.getNameOf("@java.lang.Throwable::new(Ljava/lang/String;)"),
         Impl.getNameOf("@java.lang.Exception::new(Ljava/lang/String;)"),
         Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceExamples::throwException2(*)"),
@@ -62,6 +64,7 @@ public class StackTraceNativeTest extends StackTraceTestBase {
     };
 
     final String[] expectedLegacy = {
+        Impl.getNameOf("@java.lang.Throwable::fillInStackTrace()"),
         Impl.getNameOf("@java.lang.Throwable::new(Ljava/lang/String;)"),
         Impl.getNameOf("@java.lang.Exception::new(Ljava/lang/String;)"),
         Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceExamples::throwException2(*)"),
@@ -86,6 +89,8 @@ public class StackTraceNativeTest extends StackTraceTestBase {
     };
 
     final String[] limited = {
+        Impl.getNameOf("@com.google.gwt.lang.Exceptions::wrap(*)"),
+        Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceExamples::getLiveException(*)"),
         Impl.getNameOf("@com.google.gwt.core.client.impl.StackTraceTestBase::assertJse(*)"),
     };
 

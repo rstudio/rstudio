@@ -18,6 +18,10 @@ package com.google.gwt.core.client.impl;
 import static com.google.gwt.core.client.impl.StackTraceExamples.JAVA;
 import static com.google.gwt.core.client.impl.StackTraceExamples.TYPE_ERROR;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Tests {@link StackTraceCreator} in the emulated mode.
  */
@@ -26,6 +30,13 @@ public class StackTraceEmulTest extends StackTraceNativeTest {
   @Override
   public String getModuleName() {
     return "com.google.gwt.core.Core";
+  }
+
+  @Override
+  protected String[] getTraceJse(Object thrown) {
+    List<String> list = new ArrayList<String>(Arrays.asList(super.getTraceJse(TYPE_ERROR)));
+    list.add(0, Impl.getNameOf("@com.google.gwt.lang.Exceptions::wrap(*)"));
+    return list.toArray(new String[0]);
   }
 
   @Override

@@ -36,7 +36,7 @@ public class ThrowableTest extends GWTTestCase {
 
     final int lineNumber2 = 38; // should be the next line.
     throwable.fillInStackTrace();
-    assertTrace(throwable.getStackTrace(), lineNumber2, 1);
+    assertTrace(throwable.getStackTrace(), lineNumber2, 2);
 
     // break fillinstacktrace and test again
   }
