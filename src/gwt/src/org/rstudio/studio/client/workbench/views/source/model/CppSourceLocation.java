@@ -1,5 +1,5 @@
 /*
- * CppServerOperations.java
+ * CppSourceLocation.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -14,19 +14,23 @@
  */
 package org.rstudio.studio.client.workbench.views.source.model;
 
-import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.files.FileSystemItem;
 
-public interface CppServerOperations
+import com.google.gwt.core.client.JavaScriptObject;
+
+public class CppSourceLocation extends JavaScriptObject
 {
-   void goToCppDefinition(
-                String docPath, 
-                int line, 
-                int column,
-                ServerRequestCallback<CppSourceLocation> requestCallback);
+   protected CppSourceLocation()
+   {
+      
+   }
+
+   public final native FileSystemItem getFile() /*-{
+      return this.file;
+   }-*/;
    
-   void getCppCompletions(
-                String docPath, 
-                int line, 
-                int column,
-                ServerRequestCallback<CppCompletionResult> requestCallback);
+   public final native FilePosition getPosition()/*-{
+      return this.position;
+   }-*/;
 }

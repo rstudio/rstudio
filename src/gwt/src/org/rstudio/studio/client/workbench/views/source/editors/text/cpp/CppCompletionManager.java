@@ -19,6 +19,9 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionListPopupPanel;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
@@ -26,6 +29,8 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
+import org.rstudio.studio.client.workbench.views.source.model.CppSourceLocation;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -33,6 +38,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.inject.Inject;
 
 public class CppCompletionManager implements CompletionManager
 {
@@ -41,6 +47,7 @@ public class CppCompletionManager implements CompletionManager
                                CppCompletionContext completionContext,
                                CompletionManager rCompletionManager)
    {
+      RStudioGinjector.INSTANCE.injectMembers(this);
       docDisplay_ = docDisplay;
       initFilter_ = initFilter;
       completionContext_ = completionContext;
@@ -54,6 +61,14 @@ public class CppCompletionManager implements CompletionManager
       });
    }
  
+   @Inject
+   void initialize(CppServerOperations server, 
+                   FileTypeRegistry fileTypeRegistry)
+   {
+      server_ = server;
+      fileTypeRegistry_ = fileTypeRegistry;
+   }
+   
    // close the completion popup (if any)
    @Override
    public void close()
@@ -113,9 +128,30 @@ public class CppCompletionManager implements CompletionManager
       }
       else
       {
-         // TODO: go to function definition
-         
-        
+         completionContext_.withUpdatedDoc(new CommandWithArg<String>() {
+            @Override
+            public void execute(final String docPath)
+            {
+               Position pos = docDisplay_.getCursorPosition();
+               
+               server_.goToCppDefinition(
+                   docPath, 
+                   pos.getRow() + 1, 
+                   pos.getColumn() + 1, 
+                   new SimpleRequestCallback<CppSourceLocation>() {
+                      @Override
+                      public void onResponseReceived(CppSourceLocation loc)
+                      {
+                         if (loc != null)
+                         {
+                            fileTypeRegistry_.editFile(loc.getFile(), 
+                                                       loc.getPosition());  
+                         }
+                      }
+                   });
+               
+            }
+         });
       }
    }
    
@@ -356,6 +392,8 @@ public class CppCompletionManager implements CompletionManager
       return false;
    }
    
+   private CppServerOperations server_;
+   private FileTypeRegistry fileTypeRegistry_;
    private final DocDisplay docDisplay_;
    private final CppCompletionContext completionContext_;
    private CppCompletionRequest request_;

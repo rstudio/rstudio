@@ -31,6 +31,7 @@
 
 #include <core/libclang/LibClang.hpp>
 
+#include "GoToDefinition.hpp"
 #include "CodeCompletion.hpp"
 #include "RSourceIndex.hpp"
 
@@ -241,6 +242,7 @@ Error initialize()
    using namespace module_context;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionClang.R"))
+      (bind(registerRpcMethod, "go_to_cpp_definition", goToCppDefinition))
       (bind(registerRpcMethod, "get_cpp_completions", getCppCompletions));
    Error error = initBlock.execute();
    if (error)
