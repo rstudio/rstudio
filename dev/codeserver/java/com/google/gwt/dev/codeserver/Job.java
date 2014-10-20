@@ -80,6 +80,7 @@ class Job {
 
   private CompileDir compileDir; // non-null after the compile has started
   private CompileStrategy compileStrategy; // non-null after the compile has started
+  private String outputModuleName; // non-null after successful compile
 
   private Exception listenerFailure;
 
@@ -256,6 +257,7 @@ class Job {
     }
 
     result.set(newResult);
+    outputModuleName = newResult.outputModuleName;
     if (newResult.isOk()) {
       publish(makeEvent(Status.SERVING));
     } else {
@@ -284,6 +286,7 @@ class Job {
     out.setBindings(getBindingProperties());
     out.setStatus(status);
     out.setMessage(message);
+    out.setOutputModuleName(outputModuleName);
     out.setCompileDir(compileDir);
     out.setCompileStrategy(compileStrategy);
     out.setArguments(args);
@@ -344,13 +347,19 @@ class Job {
     final CompileDir outputDir;
 
     /**
+     * non-null if successful.
+     */
+    final String outputModuleName;
+
+    /**
      * non-null for an error
      */
     final Throwable error;
 
-    Result(CompileDir outputDir, Throwable error) {
+    Result(CompileDir outputDir, String outputModuleName, Throwable error) {
       assert (outputDir == null) != (error == null);
       this.outputDir = outputDir;
+      this.outputModuleName = outputModuleName;
       this.error = error;
     }
 

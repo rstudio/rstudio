@@ -26,7 +26,6 @@ import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -44,7 +43,7 @@ class Outbox {
   /**
    * The suffix that the GWT compiler uses when writing a sourcemap file.
    */
-  private static final String SOURCEMAP_FILE_SUFFIX = "_sourceMap0.json";
+  static final String SOURCEMAP_FILE_SUFFIX = "_sourceMap0.json";
 
   private final String id;
   private final Recompiler recompiler;
@@ -180,28 +179,22 @@ class Outbox {
    * @throws RuntimeException if unable
    */
   File findSourceMapForOnePermutation() {
-    File dir = findSymbolMapDir();
+    String moduleName = recompiler.getOutputModuleName();
 
-    File[] sourceMapFiles = dir.listFiles(new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, String name) {
-        return name.endsWith(SOURCEMAP_FILE_SUFFIX);
-      }
-    });
-
+    List<File> sourceMapFiles = getOutputDir().findSourceMapFiles(moduleName);
     if (sourceMapFiles == null) {
-      throw new RuntimeException("Can't list contents of symbol map directory: " + dir);
+      throw new RuntimeException("Can't find sourcemap files.");
     }
 
-    if (sourceMapFiles.length > 1) {
+    if (sourceMapFiles.size() > 1) {
       throw new RuntimeException("Multiple fragment 0 sourcemaps found. Too many permutations.");
     }
 
-    if (sourceMapFiles.length == 0) {
+    if (sourceMapFiles.isEmpty()) {
       throw new RuntimeException("No sourcemaps found. Not enabled?");
     }
 
-    return new File(dir, sourceMapFiles[0].getName());
+    return sourceMapFiles.get(0);
   }
 
   /**
