@@ -4,6 +4,7 @@ overlay/
 CEF/
 node-webkit/
 pandoc/
+libclang/
 packrat/
 packrat*.tar.gz
 rmarkdown/
