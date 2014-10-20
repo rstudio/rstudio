@@ -65,12 +65,22 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
    TranslationUnit tu = rSourceIndex().getTranslationUnit(filename);
    if (!tu.empty())
    {
+      std::string lastCompletionText;
       json::Array completionsJson;
       CodeCompleteResults results = tu.codeCompleteAt(filename, line, column);
       if (!results.empty())
       {
          for (unsigned i = 0; i<results.getNumResults(); i++)
-            completionsJson.push_back(toJson(results.getResult(i)));
+         {
+            std::string completionText = results.getResult(i).getText();
+
+            // de-dup (works because we know the completions have been sorted)
+            if (completionText != lastCompletionText)
+               completionsJson.push_back(toJson(results.getResult(i)));
+
+            lastCompletionText = completionText;
+         }
+
       }
 
       json::Object resultJson;
