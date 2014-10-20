@@ -27,18 +27,46 @@ StringHelper.endsWith = function(str, suffix) {
 $namespace.lib.StringHelper = StringHelper;
 
 /**
- * Construct an instance of the PropertyHelper.
+ * A PropertySource computes the binding properties to use for calling the GWT compiler.
  *
  * @constructor
  * @param {string} moduleName - the name of the gwt module
- * @param {Object} propertyProviders - A map of all property providers
- * @param {Object} propertyValues - A map of all possible property values
+ * @param {Function} propertyProvidersHolder - a function returning property providers and
+ *                       their values when invoked.
+ * @param {MetaTagParser} metaTagParser - an instance of {@link MetaTagParser}
  */
-function PropertyHelper(moduleName, propertyProviders, propertyValues) {
-  this.moduleName = moduleName;
-  this.propertyProviders = propertyProviders;
-  this.propertyValues = propertyValues;
+function PropertySource(moduleName, propertyProvidersHolder, metaTagParser) {
+  this.__moduleName = moduleName;
+  this.__metaTagParser = metaTagParser;
+  var props = this.__getProvidersAndValues(propertyProvidersHolder);
+  this.__propertyProviders = props.providers;
+  this.__propertyValues = props.values;
 }
+
+/**
+ * Setup the environment that property providers need to run and initialize property providers
+ * with that environment.
+ *
+ * @returns an object containing property providers and possible values.
+ */
+PropertySource.prototype.__getProvidersAndValues = function(propertyProvidersHolder) {
+  // Setup scope for property providers
+  var that = this;
+
+  //Used by LocalePropertyGenerator
+  var __gwt_getMetaProperty = function(name) {
+    return that.__metaTagParser.get()[name];
+  };
+
+  // Used by LocalePropertyGenerator
+  var __gwt_isKnownPropertyValue = function(propName, propValue) {
+    return propValue in that.__propertyValues[propName];
+  };
+
+  // This function is defined in recompile_template.js and parameters being passed here need to be
+  // kept in sync.
+  return propertyProvidersHolder(__gwt_getMetaProperty, __gwt_isKnownPropertyValue);
+};
 
 /**
  * Compute the binding property value for a given property name.
@@ -46,10 +74,10 @@ function PropertyHelper(moduleName, propertyProviders, propertyValues) {
  * @param {string} propName - the binding property name
  * @returns {string} the computed value of the binding property
  */
-PropertyHelper.prototype.__computePropValue = function(propName) {
-  var val = this.propertyProviders[propName]();
+PropertySource.prototype.__computePropValue = function(propName) {
+  var val = this.__propertyProviders[propName]();
   // sanity check
-  var allowedValuesMap = this.propertyValues[propName];
+  var allowedValuesMap = this.__propertyValues[propName];
   if (val in allowedValuesMap) {
     return val;
   } else {
@@ -67,18 +95,17 @@ PropertyHelper.prototype.__computePropValue = function(propName) {
  * Compute all binding properties for a given module.
  * @returns {Object} a map of from binding properties to their current values
  */
-PropertyHelper.prototype.computeBindingProperties = function() {
+PropertySource.prototype.computeBindingProperties = function() {
   var result = {};
-  for (var key in this.propertyValues) {
-    if (this.propertyValues.hasOwnProperty(key)) {
+  for (var key in this.__propertyValues) {
+    if (this.__propertyValues.hasOwnProperty(key)) {
       result[key] = this.__computePropValue(key);
     }
   }
   return result;
 };
 
-// Export PropertyHelper to namespace
-$namespace.lib.PropertyHelper = PropertyHelper;
+$namespace.lib.PropertySource = PropertySource;
 
 /**
  * Create a dialog.
@@ -252,7 +279,7 @@ Recompiler.prototype.__getBaseUrl = function(url) {
 Recompiler.prototype.__isRecompileNoCacheJs = function(url) {
   // Remove trailing query string and/or fragment
   url = url.split("?")[0].split("#")[0];
-  var suffix = '/' + moduleName + '.recompile.nocache.js';
+  var suffix = '/' + this.__moduleName + '.recompile.nocache.js';
   var startPos =  url.length - suffix.length;
   return url.indexOf(suffix, startPos) == startPos;
 };
@@ -350,8 +377,9 @@ $namespace.lib.MetaTagParser = MetaTagParser;
  * @constructor
  * @param {string} moduleName - the module for which we should determine the base url.
  */
-function BaseUrlProvider(moduleName) {
+function BaseUrlProvider(moduleName, metaTagParser) {
   this.__moduleName = moduleName;
+  this.__metaTagParser = metaTagParser;
 }
 
 BaseUrlProvider.prototype.__getScriptTags = function() {
@@ -431,7 +459,7 @@ BaseUrlProvider.prototype.__getBaseElements = function() {
 };
 
 BaseUrlProvider.prototype.__getBaseUrlFromMetaTag = function() {
-  return __gwt_getMetaProperty('baseUrl');
+  return this.__metaTagParser.get()['baseUrl'];
 };
 
 //Export BaseUrlProvider to namespace
