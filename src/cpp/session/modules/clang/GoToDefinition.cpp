@@ -35,8 +35,6 @@ namespace {
 } // anonymous namespace
 
 
-// https://github.com/Rip-Rip/clang_complete/issues/134
-
 Error goToCppDefinition(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
@@ -50,6 +48,9 @@ Error goToCppDefinition(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   // default to returning null (no-op)
+   pResponse->setResult(json::Value());
+
    // resolve the docPath if it's aliased
    FilePath filePath = module_context::resolveAliasedPath(docPath);
 
@@ -58,21 +59,14 @@ Error goToCppDefinition(const json::JsonRpcRequest& request,
    TranslationUnit tu = rSourceIndex().getTranslationUnit(filename);
    if (!tu.empty())
    {
-      json::Object resultJson;
+      // get the cursor
+      Cursor cursor = tu.getCursor(filename, line, column);
+      if (cursor.empty())
+         return Success();
 
-      resultJson["file"] = module_context::createFileSystemItem(filePath);
-
-      json::Object posJson;
-      posJson["line"] = line + 5;
-      posJson["column"] = 1;
-      resultJson["position"] = posJson;
-
-      pResponse->setResult(resultJson);
-   }
-   else
-   {
-      // set null result indicating this file doesn't support completions
-      pResponse->setResult(json::Value());
+      //
+      // do something with it
+      //
    }
 
    return Success();
