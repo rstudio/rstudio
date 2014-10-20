@@ -179,17 +179,17 @@ public class CppCompletionManager implements CompletionManager
             return false ; 
          }
          
-         // backspace always triggers a reset of completion state
+         // get the popup -- if there is no popup then bail
+         CompletionListPopupPanel popup = getCompletionPopup();
+         if (popup == null)
+            return false;
+         
+         // backspace triggers completion if the popup is visible
          if (keyCode == KeyCodes.KEY_BACKSPACE)
          {
             suggestCompletions();
             return false;
          }
-         
-         // get the popup -- if there is no popup then bail
-         CompletionListPopupPanel popup = getCompletionPopup();
-         if (popup == null)
-            return false;
          
          // escape and left keys terminate the request
          if (event.getKeyCode() == KeyCodes.KEY_ESCAPE ||
