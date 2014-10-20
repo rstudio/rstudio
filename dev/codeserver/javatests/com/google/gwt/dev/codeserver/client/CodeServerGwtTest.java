@@ -48,9 +48,9 @@ public class CodeServerGwtTest extends GWTTestCase {
     ensureJsInjected();
   }
 
-  public native void testPropertyHelper_withProperInput() /*-{
+  public native void testPropertySource_withProperInput() /*-{
     // setup property providers and values for the test
-    var mocks = (function(){
+    var propertyProvidersHolder = function() {
       var propProviders = {};
       var propValues = {};
       propProviders['prop1'] = function(){
@@ -64,20 +64,61 @@ public class CodeServerGwtTest extends GWTTestCase {
       };
 
       propValues['prop2'] = {'val2_1':0,'val2_2':1,'val2_3':2};
-      return {provider: propProviders, values : propValues};
-    })();
+      return {providers: propProviders, values : propValues};
+    };
 
     // Actual test
-    var PropertyHelper = $wnd.namespace.lib.PropertyHelper;
-    var propertyHelper = new PropertyHelper('testModule', mocks.provider, mocks.values);
-    var result = propertyHelper.computeBindingProperties();
+    var PropertySource = $wnd.namespace.lib.PropertySource;
+    var propertySource = new PropertySource('testModule', propertyProvidersHolder, {});
+    var result = propertySource.computeBindingProperties();
     var assertStringEquals = @CodeServerGwtTest::assertEquals(Ljava/lang/String;Ljava/lang/String;);
     var assertTrue = @CodeServerGwtTest::assertTrue(Ljava/lang/String;Z);
 
     var length = Object.keys(result).length;
-    assertTrue("PropertyHelper did not return two entries: " + length, length == 2);
+    assertTrue("PropertySource did not return two entries: " + length, length == 2);
     assertStringEquals('val1_1', result['prop1']);
     assertStringEquals('val2_2', result['prop2']);
+  }-*/;
+
+  public native void testPropertySource_environment() /*-{
+
+    var assertStringEquals = @CodeServerGwtTest::assertEquals(Ljava/lang/String;Ljava/lang/String;);
+    var assertTrue = @CodeServerGwtTest::assertTrue(Ljava/lang/String;Z);
+
+    // setup property providers and values for the test
+    var propertyProvidersHolder = function(local_getMetaProperty, local_isKnownPropertyValue) {
+      var propProviders = {};
+      var propValues = {};
+      propProviders['prop1'] = function() {
+        assertTrue('__gwt_isKnownPropertyValue not working',
+            local_isKnownPropertyValue('prop1', 'val1_1'));
+        return 'val1_1';
+      };
+
+      propValues['prop1'] = {'val1_1':0,'val1_2':1,'val1_3':2};
+
+      propProviders['prop2'] = function(){
+        return local_getMetaProperty('meta1');
+      };
+
+      propValues['prop2'] = {'meta1_val':0};
+      return {providers: propProviders, values : propValues};
+    };
+
+    var metaTagParserMock = {};
+    metaTagParserMock.get = function() {
+      return {meta1: 'meta1_val'};
+    };
+
+    // Actual test
+    var PropertySource = $wnd.namespace.lib.PropertySource;
+    var propertySource = new PropertySource('testModule', propertyProvidersHolder, metaTagParserMock);
+    var result = propertySource.computeBindingProperties();
+
+    var length = Object.keys(result).length;
+    assertTrue("PropertySource did not return two entries: " + length, length == 2);
+    assertStringEquals('val1_1', result['prop1']);
+    assertStringEquals('meta1_val', result['prop2']);
   }-*/;
 
   public native void testRecompiler() /*-{

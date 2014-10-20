@@ -15,9 +15,10 @@
  */
 
 var Dialog = $namespace.lib.Dialog;
-var PropertyHelper = $namespace.lib.PropertyHelper;
+var PropertySource = $namespace.lib.PropertySource;
 var Recompiler = $namespace.lib.Recompiler;
 var BaseUrlProvider = $namespace.lib.BaseUrlProvider;
+var MetaTagParser = $namespace.lib.MetaTagParser;
 //Publish a global variable to let others know that we have been loaded
 $wnd.__gwt_sdm = $wnd.__gwt_sdm || {};
 $wnd.__gwt_sdm.loaded = true;
@@ -27,15 +28,15 @@ $wnd.__gwt_sdm.loaded = true;
  *
  * @constructor
  * @param {string} moduleName
- * @param {Object} propertyProviders
- * @param {Object} propertyValues
+ * @param {Function} initPropertyProviders
  */
-function Main(moduleName, propertyProviders, propertyValues){
-  var propertyHelper = new PropertyHelper(moduleName, propertyProviders, propertyValues);
+function Main(moduleName, initPropertyProviders){
+  var metaTagParser = new MetaTagParser(moduleName);
+  var propertySource = new PropertySource(moduleName, initPropertyProviders, metaTagParser);
   this.__moduleName = moduleName;
   this.__dialog = new Dialog();
-  this.__recompiler = new Recompiler(moduleName, propertyHelper.computeBindingProperties());
-  this.__baseUrlProvider = new BaseUrlProvider(moduleName);
+  this.__recompiler = new Recompiler(moduleName, propertySource.computeBindingProperties());
+  this.__baseUrlProvider = new BaseUrlProvider(moduleName, metaTagParser);
 }
 
 /**
@@ -86,4 +87,4 @@ Main.prototype.__renderError = function(result) {
   this.__dialog.add(button);
 };
 
-new Main(moduleName, providers, values).compile();
+new Main(__moduleName, __initPropertyProviders).compile();

@@ -14,22 +14,26 @@
  * the License.
  */
 (function(){
+  // Variables declared in this scope will be seen by both recompile_lib and the property providers.
   var $wnd = window;
   var $doc = $wnd.document;
-  var $namespace = {};
-  var moduleName = __MODULE_NAME__;
+  var __moduleName = __MODULE_NAME__;
 
-  var executeMain = function(){
-    __LIB_JS__
-
-    var metaTagParser = new $namespace.lib.MetaTagParser(moduleName);
-
-    //Property providers need a certain environment to run
-    var __gwt_getMetaProperty = function(name) {
-      return metaTagParser.get()[name];
-    };
-
+  // Because GWT linker architecture allows property providers to use global variables
+  // we need to make sure that these are defined in the scope of property providers.
+  // Initializes the property providers.
+  // Note: The parameters of this function are used by property providers so they cannot be renamed
+  // and need to be kept in sync with PropertySource.__getProvidersAndValues.
+  // TODO(dankurka): refactor linkers and templates to not use global symbols anymore.
+  var __initPropertyProviders = function(__gwt_getMetaProperty, __gwt_isKnownPropertyValue){
     __PROPERTY_PROVIDERS__
+    return {values: values, providers: providers};
+  };
+
+  var executeMain = function() {
+    // $namespace is used by the library to publish its symbols
+    var $namespace = {};
+    __LIB_JS__
     __MAIN__
   };
 
