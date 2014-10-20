@@ -30,11 +30,29 @@ bool SourceLocation::empty() const
    return clang().equalLocations(location_, clang().getNullLocation());
 }
 
-void SourceLocation::getSpellingLocation(unsigned* pLine,
+void SourceLocation::getExpansionLocation(std::string* pFile,
+                                          unsigned* pLine,
+                                          unsigned* pColumn,
+                                          unsigned* pOffset) const
+{
+   CXFile file;
+   clang().getExpansionLocation(location_, &file, pLine, pColumn, pOffset);
+
+   CXString filename = clang().getFileName(file);
+   *pFile = toStdString(filename);
+}
+
+
+void SourceLocation::getSpellingLocation(std::string* pFile,
+                                         unsigned* pLine,
                                          unsigned* pColumn,
                                          unsigned* pOffset) const
 {
-   clang().getSpellingLocation(location_, NULL, pLine, pColumn, pOffset);
+   CXFile file;
+   clang().getSpellingLocation(location_, &file, pLine, pColumn, pOffset);
+
+   CXString filename = clang().getFileName(file);
+   *pFile = toStdString(filename);
 }
 
 bool SourceLocation::operator==(const SourceLocation& other) const

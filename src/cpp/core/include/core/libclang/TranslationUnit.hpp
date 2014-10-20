@@ -21,6 +21,7 @@
 
 #include "clang-c/Index.h"
 
+#include "Cursor.hpp"
 #include "Diagnostic.hpp"
 #include "CodeCompleteResults.hpp"
 #include "UnsavedFiles.hpp"
@@ -54,6 +55,11 @@ public:
 
    unsigned getNumDiagnostics() const;
    Diagnostic getDiagnostic(unsigned index) const;
+
+   // NOTE: this can return an empty cursor if no cursor is found
+   Cursor getCursor(const std::string& filename,
+                    unsigned line,
+                    unsigned column);
 
    // NOTE: this can return an empty code completion object
    // if the operation fails

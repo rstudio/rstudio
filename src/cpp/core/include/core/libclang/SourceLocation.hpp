@@ -16,6 +16,7 @@
 #ifndef CORE_LIBCLANG_SOURCE_LOCATION_HPP
 #define CORE_LIBCLANG_SOURCE_LOCATION_HPP
 
+#include <string>
 
 #include "clang-c/Index.h"
 
@@ -37,7 +38,13 @@ public:
 
    bool empty() const;
 
-   void getSpellingLocation(unsigned* pLine,
+   void getExpansionLocation(std::string* pFile,
+                             unsigned* pLine,
+                             unsigned* pColumn,
+                             unsigned* pOffset = NULL) const;
+
+   void getSpellingLocation(std::string* pFile,
+                            unsigned* pLine,
                             unsigned* pColumn,
                             unsigned* pOffset = NULL) const;
 

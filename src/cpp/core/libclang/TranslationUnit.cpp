@@ -44,6 +44,27 @@ Diagnostic TranslationUnit::getDiagnostic(unsigned index) const
    return Diagnostic(clang().getDiagnostic(tu_, index));
 }
 
+Cursor TranslationUnit::getCursor(const std::string& filename,
+                                  unsigned line,
+                                  unsigned column)
+{
+   // get the file
+   CXFile file = clang().getFile(tu_, filename.c_str());
+   if (file == NULL)
+      return Cursor();
+
+   // get the source location
+   CXSourceLocation sourceLoc = clang().getLocation(tu_, file, line, column);
+
+   // get the cursor
+   CXCursor cursor = clang().getCursor(tu_, sourceLoc);
+   if (clang().equalCursors(cursor, clang().getNullCursor()))
+      return Cursor();
+
+   // return it
+   return Cursor(cursor);
+}
+
 CodeCompleteResults TranslationUnit::codeCompleteAt(const std::string& filename,
                                                     unsigned line,
                                                     unsigned column)

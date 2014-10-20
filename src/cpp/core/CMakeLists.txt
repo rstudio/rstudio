@@ -57,6 +57,7 @@ set (CORE_SOURCE_FILES
    gwt/GwtLogHandler.cpp
    gwt/GwtSymbolMaps.cpp
    libclang/CodeCompleteResults.cpp
+   libclang/Cursor.cpp
    libclang/Diagnostic.cpp
    libclang/LibClang.cpp
    libclang/SourceIndex.cpp
