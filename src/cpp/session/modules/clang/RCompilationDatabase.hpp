@@ -35,7 +35,7 @@ namespace clang {
 class RCompilationDatabase : boost::noncopyable
 {
 public:
-   RCompilationDatabase() : usePrecompiledHeaders_(false) {}
+   RCompilationDatabase() : usePrecompiledHeaders_(true) {}
    virtual ~RCompilationDatabase() {}
 
    std::vector<std::string> compileArgsForTranslationUnit(
