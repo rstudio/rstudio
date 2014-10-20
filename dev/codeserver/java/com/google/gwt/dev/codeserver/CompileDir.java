@@ -19,10 +19,12 @@ package com.google.gwt.dev.codeserver;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.thirdparty.guava.common.base.Charsets;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.io.Files;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.List;
 
@@ -91,12 +93,37 @@ public class CompileDir {
     return new File(dir, "compile.log");
   }
 
-  File findSymbolMapDir(String moduleName) {
+  /**
+   * Given the outputModuleName from the compiler, returns all the sourcemap
+   * files generated, or null if the directory couldn't  be listed.
+   */
+  public List<File> findSourceMapFiles(String outputModuleName) {
+    File symbolMapsDir = findSymbolMapDir(outputModuleName);
+    if (symbolMapsDir == null) {
+      return null;
+    }
+    File mapDir = symbolMapsDir.getAbsoluteFile();
+
+    File[] files = mapDir.listFiles(new FilenameFilter() {
+      @Override
+      public boolean accept(File dir, String name) {
+        return name.endsWith(Outbox.SOURCEMAP_FILE_SUFFIX);
+      }
+    });
+
+    return files == null ? null : ImmutableList.copyOf(files);
+  }
+
+  /**
+   * Given the outputModuleName from the compiler, returns the location of
+   * the symbol maps directory, or null if not available.
+   */
+  File findSymbolMapDir(String outputModuleName) {
     // The JUnit module moves the symbolMaps directory in a post linker.
     // TODO(skybrian) query this information from the compiler somehow?
     File[] candidates = {
-        new File(getExtraDir(), moduleName + "/symbolMaps"),
-        new File(getWarDir(), moduleName + "/.junit_symbolMaps")
+        new File(getExtraDir(), outputModuleName + "/symbolMaps"),
+        new File(getWarDir(), outputModuleName + "/.junit_symbolMaps")
     };
 
     for (File candidate : candidates) {

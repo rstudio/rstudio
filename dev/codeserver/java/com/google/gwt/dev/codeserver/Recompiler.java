@@ -122,10 +122,10 @@ class Recompiler {
     } catch (UnableToCompleteException e) {
       // No point in logging a stack trace for this exception
       job.getLogger().log(TreeLogger.Type.WARN, "recompile failed");
-      result = new Result(null, e);
+      result = new Result(null, null, e);
     } catch (Throwable error) {
       job.getLogger().log(TreeLogger.Type.WARN, "recompile failed", error);
-      result = new Result(null, error);
+      result = new Result(null, null, error);
     }
 
     job.onFinished(result);
@@ -171,7 +171,7 @@ class Recompiler {
     compileLogger.log(TreeLogger.Type.INFO,
         String.format("%.3fs total -- Compile completed", elapsedTime / 1000d));
 
-    return new Result(publishedCompileDir, null);
+    return new Result(publishedCompileDir, outputModuleName.get(), null);
   }
 
   /**
@@ -208,7 +208,7 @@ class Recompiler {
     long elapsedTime = System.currentTimeMillis() - startTime;
     compileLogger.log(TreeLogger.Type.INFO, "Module setup completed in " + elapsedTime + " ms");
 
-    return new Result(compileDir, null);
+    return new Result(compileDir, module.getName(), null);
   }
 
   /**
