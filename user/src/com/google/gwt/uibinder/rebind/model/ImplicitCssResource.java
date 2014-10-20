@@ -51,6 +51,25 @@ import java.util.Set;
  * Models a method returning a CssResource on a generated ClientBundle.
  */
 public class ImplicitCssResource {
+
+  /**
+   * Class wrapping code using GSS in order to keep Java6 compatibility if GSS is not used.
+   */
+  private static class GssWrapper {
+    private static Set<String> getCssClassNames(String fileName, String cssSource,
+        Set<JClassType> imports, TreeLogger logger) throws UnableToCompleteException {
+      SourceCode sourceCode = new SourceCode(fileName, cssSource);
+      CssTree tree;
+      try {
+        tree = new GssParser(sourceCode).parse();
+      } catch (GssParserException e) {
+        logger.log(TreeLogger.ERROR, "Unable to parse CSS", e);
+        throw new UnableToCompleteException();
+      }
+      return new ClassNamesCollector().getClassNames(tree, imports);
+    }
+  }
+
   private static final CssNameConverter nameConverter = new CssNameConverter();
   private final String packageName;
   private final String className;
@@ -113,16 +132,8 @@ public class ImplicitCssResource {
       assert urls.size() > 0;
 
       if (gss) {
-        SourceCode sourceCode = new SourceCode(bodyFile.getName(), body);
-        CssTree tree;
-        try {
-          tree = new GssParser(sourceCode).parse();
-        } catch (GssParserException e) {
-          logger.getTreeLogger().log(TreeLogger.ERROR, "Unable to parse CSS", e);
-          throw new UnableToCompleteException();
-        }
-        cssClassNames = new ClassNamesCollector().getClassNames(tree, imports);
-
+       return GssWrapper.getCssClassNames(bodyFile.getName(), body, imports,
+           logger.getTreeLogger());
       } else {
         CssStylesheet sheet = GenerateCssAst.exec(logger.getTreeLogger(),
             urls.toArray(new URL[urls.size()]));
