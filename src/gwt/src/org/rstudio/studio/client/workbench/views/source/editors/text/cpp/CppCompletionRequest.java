@@ -35,6 +35,7 @@ import org.rstudio.studio.client.workbench.views.source.model.CppServerOperation
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.inject.Inject;
@@ -168,14 +169,20 @@ public class CppCompletionRequest
       {
          public void setPosition(int offsetWidth, int offsetHeight)
          {
+            popup_.selectFirst();
+            
             InputEditorPosition position = 
                   docDisplay_.createInputEditorPosition(completionPosition_);  
             Rectangle bounds = docDisplay_.getPositionBounds(position);
-
-            int top = bounds.getTop() + bounds.getHeight();
-           
-            popup_.selectFirst();
-            popup_.setPopupPosition(bounds.getLeft(), top);
+            
+            int windowBottom = Window.getScrollTop() + Window.getClientHeight() ;
+            int cursorBottom = bounds.getBottom() ;
+            
+            if (windowBottom - cursorBottom >= offsetHeight)
+               popup_.setPopupPosition(bounds.getLeft(), cursorBottom) ;
+            else
+               popup_.setPopupPosition(bounds.getLeft(), 
+                                       bounds.getTop() - offsetHeight) ;
          }
       });
 
