@@ -71,13 +71,7 @@ public final class Class<T> implements Type {
   @DoNotInline
   static <T> Class<T> createForClass(String packageName, String compoundClassName,
       JavaScriptObject typeId, Class<? super T> superclass) {
-    Class<T> clazz = new Class<T>();
-    if (clazz.isClassMetadataEnabled()) {
-      clazz.packageName = packageName;
-      clazz.compoundName = compoundClassName;
-    } else {
-      synthesizeClassNamesFromTypeId(clazz, typeId);
-    }
+    Class<T> clazz = createClassObject(packageName, compoundClassName, typeId);
     maybeSetClassLiteral(typeId, clazz);
     clazz.superclass = superclass;
     return clazz;
@@ -92,13 +86,7 @@ public final class Class<T> implements Type {
   static <T> Class<T> createForEnum(String packageName, String compoundClassName,
       JavaScriptObject typeId, Class<? super T> superclass,
       JavaScriptObject enumConstantsFunc, JavaScriptObject enumValueOfFunc) {
-    Class<T> clazz = new Class<T>();
-    if (clazz.isClassMetadataEnabled()) {
-      clazz.packageName = packageName;
-      clazz.compoundName = compoundClassName;
-    } else {
-      synthesizeClassNamesFromTypeId(clazz, typeId);
-    }
+    Class<T> clazz = createClassObject(packageName, compoundClassName, typeId);
     maybeSetClassLiteral(typeId, clazz);
     clazz.modifiers = (enumConstantsFunc != null) ? ENUM : 0;
     clazz.superclass = clazz.enumSuperclass = superclass;
@@ -114,13 +102,7 @@ public final class Class<T> implements Type {
    */
   @DoNotInline
   static <T> Class<T> createForInterface(String packageName, String compoundClassName) {
-    Class<T> clazz = new Class<T>();
-    if (clazz.isClassMetadataEnabled()) {
-      clazz.packageName = packageName;
-      clazz.compoundName = compoundClassName;
-    } else {
-      synthesizeClassNamesFromTypeId(clazz, null);
-    }
+    Class<T> clazz = createClassObject(packageName, compoundClassName, null);
     clazz.modifiers = INTERFACE;
     return clazz;
   }
@@ -132,14 +114,8 @@ public final class Class<T> implements Type {
    */
   @DoNotInline
   static Class<?> createForPrimitive(String className, JavaScriptObject primitiveTypeId) {
-    Class<?> clazz = new Class<Object>();
-    if (clazz.isClassMetadataEnabled()) {
-      clazz.packageName = "";
-      clazz.compoundName = className;
-      clazz.typeId = primitiveTypeId;
-    } else {
-      synthesizePrimitiveNamesFromTypeId(clazz, primitiveTypeId);
-    }
+    Class<?> clazz = createClassObject("", className, primitiveTypeId);
+    clazz.typeId = primitiveTypeId;
     clazz.modifiers = PRIMITIVE;
     return clazz;
   }
@@ -169,6 +145,21 @@ public final class Class<T> implements Type {
   private static native boolean isInstantiable(JavaScriptObject typeId) /*-{
     return !!typeId;
   }-*/;
+
+  /**
+   * Creates the class object for a type and initiliazes its fields.
+   */
+  private static <T> Class<T> createClassObject(String packageName, String compoundClassName,
+      JavaScriptObject typeId) {
+    Class<T> clazz = new Class<T>();
+    if (isClassMetadataEnabled()) {
+      clazz.packageName = packageName;
+      clazz.compoundName = compoundClassName;
+    } else {
+      synthesizeClassNamesFromTypeId(clazz, typeId);
+    }
+    return clazz;
+  }
 
   /**
    * Install class literal into prototype.clazz field (if type is instantiable) such that
