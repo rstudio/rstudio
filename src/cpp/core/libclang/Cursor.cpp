@@ -32,9 +32,28 @@ Cursor::~Cursor()
    }
 }
 
+
+bool Cursor::isDefinition() const
+{
+   return clang().isCursorDefinition(cursor()) != 0;
+}
+
+Cursor Cursor::getDefinition() const
+{
+   return Cursor(clang().getCursorDefinition(cursor()));
+}
+
 SourceLocation Cursor::getSourceLocation() const
 {
    return SourceLocation(clang().getCursorLocation(cursor()));
+}
+
+bool Cursor::isNull() const
+{
+   if (! pCursor_)
+      return true;
+   else
+      return (clang().equalCursors(cursor(), clang().getNullCursor()));
 }
 
 } // namespace libclang

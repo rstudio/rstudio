@@ -65,7 +65,8 @@ public:
 
    // get the translation unit for the passed file (can be a c/cpp file
    // or a header file)
-   TranslationUnit getTranslationUnit(const std::string& filename);
+   TranslationUnit getTranslationUnit(const std::string& filename,
+                                      bool alwaysReparse = false);
 
 private:
 

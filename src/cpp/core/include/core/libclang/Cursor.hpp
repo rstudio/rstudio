@@ -40,9 +40,13 @@ public:
 
 public:
 
+   bool isDefinition() const;
+
+   Cursor getDefinition() const;
+
    SourceLocation getSourceLocation() const;
 
-   bool empty() const { return ! pCursor_; }
+   bool isNull() const;
 
 private:
    CXCursor cursor() const { return *pCursor_; }

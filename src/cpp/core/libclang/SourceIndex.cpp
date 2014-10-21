@@ -123,7 +123,8 @@ void SourceIndex::reprimeTranslationUnit(const std::string& filename)
 }
 
 
-TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename)
+TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
+                                                bool alwaysReparse)
 {
    // header files get their own codepath
    if (!SourceIndex::isTranslationUnit(filename))
@@ -158,7 +159,9 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename)
       StoredTranslationUnit& stored = it->second;
 
       // already up to date?
-      if (args == stored.compileArgs && lastWriteTime == stored.lastWriteTime)
+      if (!alwaysReparse &&
+          (args == stored.compileArgs) &&
+          (lastWriteTime == stored.lastWriteTime))
       {
          if (verbose_ > 0)
             std::cerr << "  (Index already up to date)" << std::endl;

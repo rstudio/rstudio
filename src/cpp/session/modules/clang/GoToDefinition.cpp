@@ -56,17 +56,37 @@ Error goToCppDefinition(const json::JsonRpcRequest& request,
 
    // get the translation unit and do the code completion
    std::string filename = filePath.absolutePath();
-   TranslationUnit tu = rSourceIndex().getTranslationUnit(filename);
+   TranslationUnit tu = rSourceIndex().getTranslationUnit(filename, true);
    if (!tu.empty())
    {
       // get the cursor
       Cursor cursor = tu.getCursor(filename, line, column);
-      if (cursor.empty())
+      if (cursor.isNull())
          return Success();
 
-      //
-      // do something with it
-      //
+      // if it's not a definition then get the definition
+      if (!cursor.isDefinition())
+      {
+         cursor = cursor.getDefinition();
+         if (cursor.isNull())
+            return Success();
+      }
+
+      // get the source location of the definition
+      SourceLocation loc = cursor.getSourceLocation();
+      std::string filename;
+      unsigned line, column;
+      loc.getSpellingLocation(&filename, &line, &column);
+
+      // return it
+      using namespace module_context;
+      json::Object jsonResult;
+      jsonResult["file"] = createFileSystemItem(FilePath(filename));
+      json::Object jsonPosition;
+      jsonPosition["line"] = safe_convert::numberTo<double>(line, 1);
+      jsonPosition["column"] = safe_convert::numberTo<double>(column, 1);
+      jsonResult["position"] = jsonPosition;
+      pResponse->setResult(jsonResult);
    }
 
    return Success();
