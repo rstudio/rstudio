@@ -69,7 +69,7 @@ public final class Class<T> implements Type {
    * @skip
    */
   @DoNotInline
-  static <T> Class<T> createForClass(String packageName, JavaScriptObject compoundClassName,
+  static <T> Class<T> createForClass(String packageName, String compoundClassName,
       JavaScriptObject typeId, Class<? super T> superclass) {
     Class<T> clazz = new Class<T>();
     if (clazz.isClassMetadataEnabled()) {
@@ -89,7 +89,7 @@ public final class Class<T> implements Type {
    * @skip
    */
   @DoNotInline
-  static <T> Class<T> createForEnum(String packageName, JavaScriptObject compoundClassName,
+  static <T> Class<T> createForEnum(String packageName, String compoundClassName,
       JavaScriptObject typeId, Class<? super T> superclass,
       JavaScriptObject enumConstantsFunc, JavaScriptObject enumValueOfFunc) {
     Class<T> clazz = new Class<T>();
@@ -113,7 +113,7 @@ public final class Class<T> implements Type {
    * @skip
    */
   @DoNotInline
-  static <T> Class<T> createForInterface(String packageName, JavaScriptObject compoundClassName) {
+  static <T> Class<T> createForInterface(String packageName, String compoundClassName) {
     Class<T> clazz = new Class<T>();
     if (clazz.isClassMetadataEnabled()) {
       clazz.packageName = packageName;
@@ -131,7 +131,7 @@ public final class Class<T> implements Type {
    * @skip
    */
   @DoNotInline
-  static Class<?> createForPrimitive(JavaScriptObject className, JavaScriptObject primitiveTypeId) {
+  static Class<?> createForPrimitive(String className, JavaScriptObject primitiveTypeId) {
     Class<?> clazz = new Class<Object>();
     if (clazz.isClassMetadataEnabled()) {
       clazz.packageName = "";
@@ -225,7 +225,7 @@ public final class Class<T> implements Type {
 
     var packageName = clazz.@Class::packageName;
     var compoundName = clazz.@Class::compoundName;
-    compoundName =  (typeof compoundName == "string") ? [ compoundName ] : compoundName;
+    compoundName =  compoundName.split("/");
     clazz.@Class::typeName =
         @Class::join(*)('.', [packageName , @Class::join(*)("$", compoundName)]);
     clazz.@Class::canonicalName =
@@ -304,7 +304,7 @@ public final class Class<T> implements Type {
 
   private String packageName;
 
-  private JavaScriptObject compoundName;
+  private String compoundName;
 
   private JavaScriptObject typeId;
 
