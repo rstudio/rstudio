@@ -44,6 +44,8 @@ public:
 
    Cursor getDefinition() const;
 
+   Cursor getCannonical() const;
+
    SourceLocation getSourceLocation() const;
 
    bool isNull() const;
