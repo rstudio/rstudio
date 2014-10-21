@@ -126,7 +126,7 @@ void onSourceDocUpdated(boost::shared_ptr<IdToFile> pIdToFile,
       {
          module_context::scheduleDelayedWork(
                boost::posix_time::milliseconds(100),
-               boost::bind(&SourceIndex::primeTranslationUnit,
+               boost::bind(&SourceIndex::primeEditorTranslationUnit,
                            &(rSourceIndex()), filename),
                true); // require idle
       }
@@ -140,7 +140,7 @@ void onSourceDocUpdated(boost::shared_ptr<IdToFile> pIdToFile,
       {
          module_context::scheduleDelayedWork(
                boost::posix_time::milliseconds(100),
-               boost::bind(&SourceIndex::reprimeTranslationUnit,
+               boost::bind(&SourceIndex::reprimeEditorTranslationUnit,
                            &(rSourceIndex()), filename),
                true); // require idle
       }

@@ -56,8 +56,8 @@ public:
    void setGlobalOptions(unsigned options);
 
    // functions used to keep the index "hot" based on recent user edits
-   void primeTranslationUnit(const std::string& filename);
-   void reprimeTranslationUnit(const std::string& filename);
+   void primeEditorTranslationUnit(const std::string& filename);
+   void reprimeEditorTranslationUnit(const std::string& filename);
 
    // remove translation units so they don't occupy memory
    void removeTranslationUnit(const std::string& filename);

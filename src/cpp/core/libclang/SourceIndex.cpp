@@ -108,14 +108,14 @@ void SourceIndex::removeAllTranslationUnits()
 }
 
 
-void SourceIndex::primeTranslationUnit(const std::string& filename)
+void SourceIndex::primeEditorTranslationUnit(const std::string& filename)
 {
    // if we have no record of this translation unit then do a first pass
    if (translationUnits_.find(filename) == translationUnits_.end())
       getTranslationUnit(filename);
 }
 
-void SourceIndex::reprimeTranslationUnit(const std::string& filename)
+void SourceIndex::reprimeEditorTranslationUnit(const std::string& filename)
 {
    // if we have already indexed this translation unit then re-index it
    if (translationUnits_.find(filename) != translationUnits_.end())
