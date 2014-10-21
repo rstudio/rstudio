@@ -225,7 +225,10 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename)
                                                           lastWriteTime,
                                                           tu);
 
-      return TranslationUnit(filename, tu, &unsavedFiles_);
+      TranslationUnit unit(filename, tu, &unsavedFiles_);
+      if (verbose_ > 0)
+         unit.printResourceUsage(std::cerr, false);
+      return unit;
    }
    else
    {

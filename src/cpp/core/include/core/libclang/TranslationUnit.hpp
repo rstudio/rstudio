@@ -67,7 +67,7 @@ public:
                                       unsigned line,
                                       unsigned column);
 
-   void printResourceUsage(std::ostream& ostr);
+   void printResourceUsage(std::ostream& ostr, bool detailed = false);
 
 private:
    std::string filename_;

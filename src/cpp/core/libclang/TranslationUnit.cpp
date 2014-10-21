@@ -24,6 +24,31 @@
 namespace core {
 namespace libclang {
 
+namespace  {
+
+std::string formatBytes(double value)
+{
+   int mb = static_cast<int>(value / 1024 / 1024);
+   if (mb > 1024)
+   {
+      double gb = (double)mb / 1024.0;
+      boost::format fmt("%1.1f gb");
+      return boost::str(fmt % gb);
+   }
+   else if (mb > 1)
+   {
+      boost::format fmt("%1% mb");
+      return boost::str(fmt % mb);
+   }
+   else
+   {
+      boost::format fmt("%1% kb");
+      return boost::str(fmt % static_cast<int>(value / 1024));
+   }
+}
+
+} // anonymous namespace
+
 std::string TranslationUnit::getSpelling() const
 {
    return toStdString(clang().getTranslationUnitSpelling(tu_));
@@ -91,18 +116,29 @@ CodeCompleteResults TranslationUnit::codeCompleteAt(const std::string& filename,
    }
 }
 
-void TranslationUnit::printResourceUsage(std::ostream& ostr)
+void TranslationUnit::printResourceUsage(std::ostream& ostr, bool detailed)
 {
    CXTUResourceUsage usage = clang().getCXTUResourceUsage(tu_);
 
    unsigned long totalBytes = 0;
-   for (unsigned i = 0; i<usage.numEntries; i++)
+   for (unsigned i = 0; i < usage.numEntries; i++)
    {
       CXTUResourceUsageEntry entry = usage.entries[i];
-      ostr << clang().getTUResourceUsageName(entry.kind) << ": "
-           << entry.amount << std::endl;
-      totalBytes += entry.amount;
+
+      if (detailed)
+      {
+         ostr << clang().getTUResourceUsageName(entry.kind) << ": "
+              << formatBytes(entry.amount) << std::endl;
+      }
+
+      if (entry.kind >= CXTUResourceUsage_MEMORY_IN_BYTES_BEGIN &&
+          entry.kind <= CXTUResourceUsage_MEMORY_IN_BYTES_END)
+      {
+         totalBytes += entry.amount;
+      }
    }
+   ostr << "TOTAL MEMORY: " << formatBytes(totalBytes)
+        << " (" << FilePath(getSpelling()).filename() << ")" << std::endl;
 
    clang().disposeCXTUResourceUsage(usage);
 }
