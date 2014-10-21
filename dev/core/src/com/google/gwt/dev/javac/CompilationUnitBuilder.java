@@ -177,7 +177,7 @@ public abstract class CompilationUnitBuilder {
 
     @Override
     public CachedCompilationUnit asCachedCompilationUnit() {
-      return new CachedCompilationUnit(this, serializedAst);
+      return new CachedCompilationUnit(this, astToken);
     }
 
     @Override

@@ -18,31 +18,45 @@ package com.google.gwt.core.ext.linker.impl;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.GeneratedResource;
+import com.google.gwt.dev.util.DiskCache;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 
 /**
  * The standard implementation of {@link GeneratedResource}.
  */
 public class StandardGeneratedResource extends GeneratedResource {
+  private static final DiskCache diskCache = DiskCache.INSTANCE;
+
   private final long lastModified = System.currentTimeMillis();
-  private final byte[] data;
+
+  private transient long token;
 
   /**
-   * Creates an artifact.
+   * Creates an artifact by writing bytes to the disk cache.
    */
   public StandardGeneratedResource(String partialPath, byte[] data) {
     super(StandardLinkerContext.class, partialPath);
-    this.data = data;
+    this.token = diskCache.writeByteArray(data);
+  }
+
+  /**
+   * Creates an artifact that points to a file already saved in the disk cache.
+   */
+  public StandardGeneratedResource(String partialPath, long token) {
+    super(StandardLinkerContext.class, partialPath);
+    this.token = token;
   }
 
   @Override
   public InputStream getContents(TreeLogger logger)
       throws UnableToCompleteException {
-    return new ByteArrayInputStream(data);
+    return new ByteArrayInputStream(diskCache.readByteArray(token));
   }
 
   @Override
@@ -54,10 +68,21 @@ public class StandardGeneratedResource extends GeneratedResource {
   public void writeTo(TreeLogger logger, OutputStream out)
       throws UnableToCompleteException {
     try {
-      out.write(data);
+      diskCache.transferToStream(token, out);
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Unable to copy artifact: " + getPartialPath(), e);
       throw new UnableToCompleteException();
     }
+  }
+
+  private void readObject(ObjectInputStream stream) throws IOException,
+      ClassNotFoundException {
+    stream.defaultReadObject();
+    token = diskCache.transferFromStream(stream);
+  }
+
+  private void writeObject(ObjectOutputStream stream) throws IOException {
+    stream.defaultWriteObject();
+    diskCache.transferToStream(token, stream);
   }
 }

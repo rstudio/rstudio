@@ -30,9 +30,9 @@ import java.util.List;
 abstract class CompilationUnitImpl extends CompilationUnit {
 
   /**
-   * Serialized GWT AST.
+   * Handle to serialized GWT AST.
    */
-  protected final byte[] serializedAst;
+  protected transient long astToken;
 
   private final Dependencies dependencies;
   private final List<CompiledClass> exposedCompiledClasses;
@@ -67,7 +67,7 @@ abstract class CompilationUnitImpl extends CompilationUnit {
       ObjectOutputStream out = new ObjectOutputStream(baos);
       JProgram.serializeTypes(types, out);
       out.close();
-      serializedAst = baos.toByteArray();
+      astToken = diskCache.writeByteArray(baos.toByteArray());
     } catch (IOException e) {
       throw new RuntimeException("Unexpected IOException on in-memory stream",
           e);
@@ -91,7 +91,7 @@ abstract class CompilationUnitImpl extends CompilationUnit {
 
   @Override
   public byte[] getTypesSerialized() {
-    return serializedAst;
+    return diskCache.readByteArray(astToken);
   }
 
   @Override
