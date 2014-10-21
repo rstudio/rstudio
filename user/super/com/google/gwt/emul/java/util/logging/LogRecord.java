@@ -16,8 +16,6 @@
 
 package java.util.logging;
 
-import com.google.gwt.core.shared.SerializableThrowable;
-
 import java.io.Serializable;
 
 /**
@@ -29,7 +27,7 @@ public class LogRecord implements Serializable {
   private Level level;
   private String loggerName = "";
   private String msg;
-  private SerializableThrowable thrown = null;
+  private Throwable thrown = null;
   private long millis;
   
   public LogRecord(Level level, String msg) {
@@ -79,7 +77,7 @@ public class LogRecord implements Serializable {
   }
 
   public void setThrown(Throwable newThrown) {
-    thrown = SerializableThrowable.fromThrowable(newThrown);
+    thrown = newThrown;
   }
 
   /* Not Implemented */
