@@ -35,6 +35,13 @@ namespace {
 } // anonymous namespace
 
 
+// NOTE: go to definition works for types/functions declared in header files
+// as well as for types/functions declared within the same translation unit.
+// it does not however locate function definitions in other translation
+// units (rather it just navigates to the header/declaration). in order to
+// go to definitions across translation units we'll need to build (or create
+// on demand) the source indexes for the other translation units.
+
 Error goToCppDefinition(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
