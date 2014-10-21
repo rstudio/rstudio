@@ -671,7 +671,7 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
    std::vector<std::string> args;
 
    // precompiled rcpp dir
-   const std::string kPrecompiledDir = "libclang/precompiled/" + pkgName;
+   const std::string kPrecompiledDir = "libclang/precomp/" + pkgName;
    FilePath precompiledDir = module_context::scopedScratchPath().
                                             childPath(kPrecompiledDir);
 
@@ -767,7 +767,8 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
                             argsArray.argCount(),
                             0,
                             0,
-                            CXTranslationUnit_ForSerialization);
+                            CXTranslationUnit_ForSerialization |
+                            CXTranslationUnit_SkipFunctionBodies);
       if (tu == NULL)
       {
          LOG_ERROR_MESSAGE("Error parsing translation unit " +
