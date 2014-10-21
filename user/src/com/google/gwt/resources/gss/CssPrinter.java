@@ -31,8 +31,27 @@ import com.google.gwt.thirdparty.common.css.compiler.passes.CompactPrinter;
 import java.util.Stack;
 
 /**
- * Visitor that converts the ast to a {@code String} chain. This string will contain the
- * needed java code that will be used to build the final css at runtime.
+ * Visitor that converts the AST to a {@code String} that can be evaluated as a Java expression.
+ *
+ * <p>For example, the following GSS code
+ * <pre>
+ *   @if(eval("com.foo.bar()")) {
+ *     .foo {
+ *       padding: 5px;
+ *     }
+ *   }
+ *   {@literal @}else {
+ *     .foo {
+ *       padding: 15px;
+ *     }
+ *   }
+ *   .bar {
+ *     width:10px;
+ *   }
+ * }
+ * </pre>
+ * will be translated to
+ * {@code "(com.foo.bar() ? (\".foo{padding:5px}\") : (\".foo{padding:15px}\")) + (\".bar{width:10px}\")"}
  */
 public class CssPrinter extends CompactPrinter {
   /**
@@ -183,6 +202,11 @@ public class CssPrinter extends CompactPrinter {
    * @return
    */
   private String flushInternalStringBuilder() {
+    // NOTE(flan): Note that you have to be careful where you do this. Internally,
+    // the compact printer sometimes deletes characters from the end of the stringBuilder to save
+    // space. I believe that you'll be safe because, if there's nothing in the buffer, there is
+    // nothing to delete, but you may have some unnecessary characters in the output. you may
+    // want to call that out explicitly in the code.
     String content = DOUBLE_QUOTE + Generator.escape(sb.toString()) + DOUBLE_QUOTE;
     sb = new StringBuilder();
 
