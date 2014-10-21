@@ -20,14 +20,12 @@ import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.SoftPermutation;
 import com.google.gwt.core.ext.linker.StatementRanges;
 import com.google.gwt.core.ext.linker.SymbolData;
-import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.PermutationResult;
+import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -79,6 +77,8 @@ public class StandardCompilationResult extends CompilationResult {
    */
   public static final Comparator<SortedMap<SelectionProperty, String>> MAP_COMPARATOR = new MapComparator();
 
+  private static final DiskCache diskCache = DiskCache.INSTANCE;
+
   private final SortedSet<SortedMap<SelectionProperty, String>> propertyValues = new TreeSet<SortedMap<SelectionProperty, String>>(
       MAP_COMPARATOR);
 
@@ -88,7 +88,7 @@ public class StandardCompilationResult extends CompilationResult {
 
   private final String strongName;
 
-  private final byte[] symbolData;
+  private final long symbolToken;
 
   private final int permutationId;
 
@@ -108,7 +108,8 @@ public class StandardCompilationResult extends CompilationResult {
     this.strongName = computeStrongName();
     this.applicationStatementRanges = applicationPermutationResult.getStatementRanges();
     this.permutationId = applicationPermutationResult.getPermutation().getId();
-    this.symbolData = applicationPermutationResult.getSerializedSymbolMap();
+    this.symbolToken =
+        diskCache.writeByteArray(applicationPermutationResult.getSerializedSymbolMap());
   }
 
   private String computeStrongName() {
@@ -233,12 +234,6 @@ public class StandardCompilationResult extends CompilationResult {
 
   @Override
   public SymbolData[] getSymbolMap() {
-    try {
-      return Util.readStreamAsObject(new ByteArrayInputStream(symbolData), SymbolData[].class);
-    } catch (ClassNotFoundException e) {
-      throw new InternalCompilerException("Unexpected exception deserializing Symbol data", e);
-    } catch (IOException e) {
-      throw new InternalCompilerException("Unexpected exception deserializing Symbol data", e);
-    }
+    return diskCache.readObject(symbolToken, SymbolData[].class);
   }
 }

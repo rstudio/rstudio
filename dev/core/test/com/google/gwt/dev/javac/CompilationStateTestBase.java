@@ -76,6 +76,11 @@ public abstract class CompilationStateTestBase extends TestCase {
         }
 
         @Override
+        public long getSourceToken() {
+          return -1;
+        }
+
+        @Override
         public String getStrongHash() {
           return Util.computeStrongName(Util.getBytes(getSource()));
         }

@@ -18,6 +18,7 @@ package com.google.gwt.dev.javac;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
+import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
@@ -55,7 +56,9 @@ public class MockCompilationUnit extends CompilationUnit {
 
   @Override
   public CachedCompilationUnit asCachedCompilationUnit() {
-    return new CachedCompilationUnit(this, Util.getBytes("Dummy AST data"));
+    DiskCache diskCache = DiskCache.INSTANCE;
+    long astToken = diskCache.writeByteArray(Util.getBytes("Dummy AST data"));
+    return new CachedCompilationUnit(this, astToken);
   }
 
   @Override

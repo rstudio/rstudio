@@ -16,6 +16,7 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
+import com.google.gwt.dev.util.DiskCacheToken;
 import com.google.gwt.dev.util.Util;
 
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
@@ -36,7 +37,7 @@ public class CachedCompilationUnit extends CompilationUnit {
   private static final boolean normalizeTimestamps = Boolean.parseBoolean(
       System.getProperty("gwt.normalizeTimestamps", "false"));
 
-  private final byte[] serializedAst;
+  private final DiskCacheToken astToken;
   private final long astVersion;
   private transient Collection<CompiledClass> compiledClasses;
   private final ContentId contentId;
@@ -74,7 +75,7 @@ public class CachedCompilationUnit extends CompilationUnit {
     this.isGenerated = unit.isGenerated();
     this.isSuperSource = unit.isSuperSource();
     this.problems = unit.problems;
-    this.serializedAst = unit.serializedAst;
+    this.astToken = unit.astToken;
     this.astVersion = unit.astVersion;
 
     // Override these fields
@@ -86,10 +87,11 @@ public class CachedCompilationUnit extends CompilationUnit {
    * {@link CompilationUnit}.
    *
    * @param unit A unit to copy
-   * @param serializedAst the unit's serialized AST types.
+   * @param astToken A valid {@DiskCache} token for this unit's
+   *          serialized AST types.
    */
   @SuppressWarnings("deprecation")
-  CachedCompilationUnit(CompilationUnit unit, byte[] serializedAst) {
+  CachedCompilationUnit(CompilationUnit unit, long astToken) {
     assert unit != null;
     this.compiledClasses = CompiledClass.copyForUnit(unit.getCompiledClasses(), this);
     this.contentId = unit.getContentId();
@@ -112,7 +114,7 @@ public class CachedCompilationUnit extends CompilationUnit {
         this.problems[i] = new SerializableCategorizedProblem(problemsIn[i]);
       }
     }
-    this.serializedAst = serializedAst;
+    this.astToken = new DiskCacheToken(astToken);
     this.astVersion = GwtAstBuilder.getSerializationVersion();
   }
 
@@ -158,7 +160,7 @@ public class CachedCompilationUnit extends CompilationUnit {
 
   @Override
   public byte[] getTypesSerialized() {
-    return serializedAst;
+    return astToken.readByteArray();
   }
 
   @Override

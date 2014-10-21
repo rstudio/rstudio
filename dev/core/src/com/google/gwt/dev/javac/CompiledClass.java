@@ -16,6 +16,8 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.util.DiskCache;
+import com.google.gwt.dev.util.DiskCacheToken;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 
@@ -36,10 +38,13 @@ import java.util.Map;
  */
 public class CompiledClass implements Serializable {
 
+  private static final DiskCache diskCache = DiskCache.INSTANCE;
+
   static Collection<CompiledClass> copyForUnit(Collection<CompiledClass> in, CompilationUnit newUnit) {
     if (in == null) {
       return null;
     }
+    CompiledClass[] orig = new CompiledClass[in.size()];
     List<CompiledClass> copy = new ArrayList<CompiledClass>();
 
     Map<CompiledClass, CompiledClass> enclosingClassMap = new HashMap<CompiledClass, CompiledClass>();
@@ -69,7 +74,7 @@ public class CompiledClass implements Serializable {
    * A token to retrieve this object's bytes from the disk cache. byte code is
    * placed in the cache when the object is deserialized.
    */
-  private final byte[] classBytes;
+  private final DiskCacheToken classBytesToken;
   private CompiledClass enclosingClass;
   private final String internalName;
   private final boolean isLocal;
@@ -90,7 +95,7 @@ public class CompiledClass implements Serializable {
     this.internalName = StringInterner.get().intern(internalName);
     this.sourceName = StringInterner.get().intern(sourceName);
     this.isLocal = false;
-    this.classBytes = null;
+    this.classBytesToken = null;
   }
 
   /**
@@ -110,7 +115,7 @@ public class CompiledClass implements Serializable {
     this.enclosingClass = enclosingClass;
     this.internalName = StringInterner.get().intern(internalName);
     this.sourceName = StringInterner.get().intern(sourceName);
-    this.classBytes = classBytes;
+    this.classBytesToken = new DiskCacheToken(diskCache.writeByteArray(classBytes));
     this.isLocal = isLocal;
   }
 
@@ -121,7 +126,7 @@ public class CompiledClass implements Serializable {
     this.enclosingClass = orig.enclosingClass;
     this.internalName = orig.internalName;
     this.sourceName = orig.sourceName;
-    this.classBytes = orig.classBytes;
+    this.classBytesToken = orig.classBytesToken;
     this.isLocal = orig.isLocal;
     this.unit = newUnit;
     this.signatureHash = orig.signatureHash;
@@ -131,7 +136,7 @@ public class CompiledClass implements Serializable {
    * Reads the bytes of the compiled class from the disk cache.
    */
   public byte[] getBytes() {
-    return classBytes;
+    return classBytesToken.readByteArray();
   }
 
   public CompiledClass getEnclosingClass() {
