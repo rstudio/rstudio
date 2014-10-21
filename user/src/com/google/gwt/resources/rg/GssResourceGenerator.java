@@ -204,12 +204,12 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     }
   }
 
-  private static class ExtendedCssTree {
+  private static class CssTreeResult {
     final CssTree tree;
     final List<String> permutationAxes;
     final Map<String, String> originalConstantNameMapping;
 
-    private ExtendedCssTree(CssTree tree, List<String> permutationAxis,
+    private CssTreeResult(CssTree tree, List<String> permutationAxis,
         Map<String, String> originalConstantNameMapping) {
       this.tree = tree;
       this.permutationAxes = permutationAxis;
@@ -217,12 +217,12 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     }
   }
 
-  private static final Cache<List<URL>, ExtendedCssTree> TREE_CACHE = CacheBuilder.newBuilder()
-      .softValues().build();
-  private static final Cache<List<URL>, Long> LAST_MODIFIED_CACHE = CacheBuilder.newBuilder()
+  private static final Cache<List<URL>, CssTreeResult> compiledGssTreeCache = CacheBuilder
+      .newBuilder().softValues().build();
+  private static final Cache<List<URL>, Long> lastModifiedCache = CacheBuilder.newBuilder()
       .build();
 
-  // To be sure to avoid conflict during the style classes renaming between different GssResource,
+  // To be sure to avoid conflict during the style classes renaming between different GssResources,
   // we will create a different prefix for each GssResource. We use a MinimalSubstitutionMap
   // that will create a String with 1-6 characters in length but keeping the length of the prefix
   // as short as possible. For instance if we have two GssResources to compile, the  prefix
@@ -273,7 +273,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     return b.toString();
   }
 
-  private Map<JMethod, ExtendedCssTree> cssTreeMap;
+  private Map<JMethod, CssTreeResult> cssTreeMap;
   private Set<String> allowedNonStandardFunctions;
   private LoggerErrorManager errorManager;
   private JMethod getTextMethod;
@@ -290,19 +290,19 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
   @Override
   public String createAssignment(TreeLogger logger, ResourceContext context, JMethod method)
       throws UnableToCompleteException {
-    ExtendedCssTree extendedCssTree = cssTreeMap.get(method);
+    CssTreeResult cssTreeResult = cssTreeMap.get(method);
 
-    RenamingResult renamingResult = doClassRenaming(extendedCssTree.tree,
+    RenamingResult renamingResult = doClassRenaming(cssTreeResult.tree,
         method, logger, context);
 
     // TODO : Should we foresee configuration properties for simplifyCss and eliminateDeadCode
     // booleans ?
-    ConstantDefinitions constantDefinitions = optimize(extendedCssTree, context, true, true,
+    ConstantDefinitions constantDefinitions = optimizeTree(cssTreeResult, context, true, true,
         logger);
 
     checkErrors();
 
-    Set<String> externalClasses = revertRenamingOfExternalClasses(extendedCssTree.tree,
+    Set<String> externalClasses = revertRenamingOfExternalClasses(cssTreeResult.tree,
         renamingResult.mapping);
 
     checkErrors();
@@ -315,7 +315,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     sw.indent();
 
     writeMethods(logger, context, method, sw, constantDefinitions,
-        extendedCssTree.originalConstantNameMapping, renamingResult.mapping);
+        cssTreeResult.originalConstantNameMapping, renamingResult.mapping);
 
     sw.outdent();
     sw.println("}");
@@ -347,7 +347,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
 
   @Override
   public void init(TreeLogger logger, ResourceContext context) throws UnableToCompleteException {
-    cssTreeMap = new IdentityHashMap<JMethod, ExtendedCssTree>();
+    cssTreeMap = new IdentityHashMap<JMethod, CssTreeResult>();
     errorManager = new LoggerErrorManager(logger);
 
     allowedNonStandardFunctions = new HashSet<String>();
@@ -492,15 +492,15 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
 
     maybeInvalidateCacheFor(resources, lastModified, logger);
 
-    ExtendedCssTree extTree;
+    CssTreeResult extTree;
 
     try {
-      extTree = TREE_CACHE.get(resources, new Callable<ExtendedCssTree>() {
+      extTree = compiledGssTreeCache.get(resources, new Callable<CssTreeResult>() {
         @Override
-        public ExtendedCssTree call() throws Exception {
-          ExtendedCssTree tree = parseResources(resources, logger);
+        public CssTreeResult call() throws Exception {
+          CssTreeResult tree = parseResources(resources, logger);
           // add last modified time in cache
-          LAST_MODIFIED_CACHE.put(resources, lastModified);
+          lastModifiedCache.put(resources, lastModified);
           return tree;
         }
       });
@@ -513,7 +513,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
       }
     }
 
-    ExtendedCssTree finalTree = new ExtendedCssTree(deepCopy(extTree.tree),
+    CssTreeResult finalTree = new CssTreeResult(deepCopy(extTree.tree),
         extTree.permutationAxes, extTree.originalConstantNameMapping);
     cssTreeMap.put(method, finalTree);
 
@@ -645,18 +645,18 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
   }
 
   private void maybeInvalidateCacheFor(List<URL> resources, long lastModified, TreeLogger logger) {
-    Long lastModifiedFromCache = LAST_MODIFIED_CACHE.getIfPresent(resources);
+    Long lastModifiedFromCache = lastModifiedCache.getIfPresent(resources);
 
     if (lastModifiedFromCache == null || lastModified == 0 || (lastModified >
         lastModifiedFromCache)) {
-      TREE_CACHE.invalidate(resources);
+      compiledGssTreeCache.invalidate(resources);
     }
   }
 
-  private ConstantDefinitions optimize(ExtendedCssTree extendedCssTree, ResourceContext context,
+  private ConstantDefinitions optimizeTree(CssTreeResult cssTreeResult, ResourceContext context,
       boolean simplifyCss, boolean eliminateDeadStyles, TreeLogger logger)
       throws UnableToCompleteException {
-    CssTree cssTree = extendedCssTree.tree;
+    CssTree cssTree = cssTreeResult.tree;
 
     // Collect mixin definitions and replace mixins
     CollectMixinDefinitions collectMixinDefinitions = new CollectMixinDefinitions(
@@ -672,7 +672,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     runtimeConditionalBlockCollector.runPass();
 
     new ExtendedEliminateConditionalNodes(cssTree.getMutatingVisitController(),
-        getPermutationsConditions(context, extendedCssTree.permutationAxes, logger),
+        getPermutationsConditions(context, cssTreeResult.permutationAxes, logger),
         runtimeConditionalBlockCollector.getRuntimeConditionalBlock()).runPass();
 
     new ValidateRuntimeConditionalNode(cssTree.getVisitController(), errorManager,
@@ -753,7 +753,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     return setBuilder.build();
   }
 
-  private ExtendedCssTree parseResources(List<URL> resources, TreeLogger logger)
+  private CssTreeResult parseResources(List<URL> resources, TreeLogger logger)
       throws UnableToCompleteException {
     List<SourceCode> sourceCodes = new ArrayList<SourceCode>(resources.size());
     ImmutableMap.Builder<String, String> constantNameMappingBuilder = ImmutableMap.builder();
@@ -814,7 +814,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
 
     checkErrors();
 
-    return new ExtendedCssTree(tree, permutationAxes, constantNameMappingBuilder.build());
+    return new CssTreeResult(tree, permutationAxes, constantNameMappingBuilder.build());
   }
 
   private ConversionResult convertToGss(String concatenatedCss, TreeLogger logger)
