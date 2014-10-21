@@ -74,7 +74,7 @@ function maven-gwt() {
 
   JAVADOC_FILE_PATH=$RANDOM_DIR/gwt-javadoc.jar
   jar cf $JAVADOC_FILE_PATH -C $GWT_EXTRACT_DIR/doc/javadoc .
-    
+
   jarExpandDir=/tmp/tmp-jar-expand-dir-$RANDOM
 
   # Generate POMs with correct version
@@ -99,7 +99,7 @@ function maven-gwt() {
   for i in $gwtLibs
   do
     CUR_FILE=`ls $GWT_EXTRACT_DIR/gwt-${i}.jar`
-    
+
     # Get rid of the INDEX.LIST file, since it's going to be out of date
     # once we rename the jar files for Maven
     echo "Removing INDEX.LIST from gwt-${i}"
@@ -116,17 +116,12 @@ function maven-gwt() {
 
     rm -rf javafilelist
     find . -name "*.java" -print  > javafilelist
-    # If there are no java files create one entry
-    # This is really hacky and needs to be resolved,
-    # but sonatype now requires a source jar.
-    if [ ! -s javafilelist ]; then
-      echo "No sources" > nosources
-      echo "nosources" > javafilelist
+    if [ -s javafilelist ]; then
+      jar cf $SOURCES_FILE @javafilelist
     fi
-    jar cf $SOURCES_FILE @javafilelist
     popd > /dev/null
   done
-   
+
   # push parent poms
   maven-deploy-file $mavenRepoUrl $mavenRepoId $pomDir/gwt/pom.xml $pomDir/gwt/pom.xml
 
@@ -136,8 +131,13 @@ function maven-gwt() {
     gwtPomFile=$pomDir/gwt/gwt-$i/pom.xml
     SOURCES_FILE=gwt-${i}-sources.jar
     SOURCES_PATH_FILE=$jarExpandDir-${i}/$SOURCES_FILE
+    # If there are no sources, use gwt-user sources.
+    # This is a bit hacky but Sonatype requires a
+    # source jar for Central, and lack of sources
+    # should only happen for gwt-servlet which is
+    # basically a subset of gwt-user.
     if [ ! -f $SOURCES_PATH_FILE ]; then
-      SOURCES_PATH_FILE=""
+      SOURCES_PATH_FILE=$jarExpandDir-user/gwt-user-sources.jar
     fi
 
     maven-deploy-file $mavenRepoUrl $mavenRepoId "$CUR_FILE" $gwtPomFile "$JAVADOC_FILE_PATH" "$SOURCES_PATH_FILE" || die
