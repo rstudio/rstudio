@@ -21,6 +21,7 @@ import com.google.gwt.dev.CompilerOptions;
 import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.js.JsNamespaceOption;
+import com.google.gwt.dev.util.arg.DisplayNameMode;
 import com.google.gwt.dev.util.arg.JsInteropMode;
 import com.google.gwt.dev.util.arg.SourceLevel;
 
@@ -297,6 +298,11 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
 
   @Override
   public final void setWorkDir(File dir) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setDisplayNameMode(DisplayNameMode displayNameMode) {
     throw new UnsupportedOperationException();
   }
 }

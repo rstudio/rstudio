@@ -23,7 +23,9 @@ import com.google.gwt.dev.util.arg.ArgHandlerIncrementalCompile;
 import com.google.gwt.dev.util.arg.ArgHandlerJsInteropMode;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.ArgHandlerSourceLevel;
+import com.google.gwt.dev.util.arg.DisplayNameMode;
 import com.google.gwt.dev.util.arg.JsInteropMode;
+import com.google.gwt.dev.util.arg.OptionDisplayNameLevel;
 import com.google.gwt.dev.util.arg.OptionIncrementalCompile;
 import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.dev.util.arg.OptionLogLevel;
@@ -78,6 +80,7 @@ public class Options {
   private boolean strictResources = false;
   private int compileTestRecompiles = 0;
   private JsInteropMode jsInteropMode = JsInteropMode.NONE;
+  private DisplayNameMode displayNameMode = DisplayNameMode.ABBREVIATED;
 
   /**
    * Sets each option to the appropriate value, based on command-line arguments.
@@ -303,6 +306,7 @@ public class Options {
       registerHandler(new BindAddressFlag());
       registerHandler(new CompileTestFlag());
       registerHandler(new CompileTestRecompilesFlag());
+      registerHandler(new DisplayNameLevel());
       registerHandler(new FailOnErrorFlag());
       registerHandler(new ModuleNameArgument());
       registerHandler(new NoPrecompileFlag());
@@ -699,5 +703,53 @@ public class Options {
       moduleNames.add(arg);
       return true;
     }
+  }
+
+  private class DisplayNameLevel extends ArgHandlerString {
+
+    public DisplayNameLevel() {
+    }
+
+    @Override
+    public String getPurpose() {
+      return "Emit extra information allow chrome dev tools to display Java identifiers in many" +
+          " places instead of JavaScript functions.";
+    }
+
+    @Override
+    public String getTag() {
+      return "-XdisplayNameMode";
+    }
+
+    @Override
+    public boolean isExperimental() {
+      return true;
+    }
+
+    @Override
+    public boolean setString(String str) {
+      String value = str.toUpperCase();
+      if ("NONE".equals(value)) {
+        displayNameMode = DisplayNameMode.NONE;
+      } else if ("ONLY_METHOD_NAME".equals(value)) {
+        displayNameMode = DisplayNameMode.ONLY_METHOD_NAME;
+      } else if ("ABBREVIATED".equals(value)) {
+        displayNameMode = DisplayNameMode.ABBREVIATED;
+      } else if ("FULL".equals(value)) {
+        displayNameMode = DisplayNameMode.FULL;
+      } else {
+        return false;
+      }
+      return true;
+    }
+
+    @Override
+    public String[] getTagArgs() {
+      return new String[] {"NONE | ONLY_METHOD_NAME | ABBREVIATED | FULL"};
+    }
+  }
+
+  public DisplayNameMode getDisplayNameMode() {
+    return displayNameMode;
   }
 }

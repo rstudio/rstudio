@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.DevMode.HostedModeOptions;
 import com.google.gwt.dev.cfg.ModuleDef;
+import com.google.gwt.dev.util.arg.DisplayNameMode;
 import com.google.gwt.dev.util.arg.JsInteropMode;
 
 import java.io.File;
@@ -180,6 +181,11 @@ public class SuperDevListener implements CodeServerListener {
     }
     for (String mod : options.getModuleNames()) {
       args.add(mod);
+    }
+
+    if (options.getDisplayNameMode() != DisplayNameMode.ABBREVIATED) {
+      args.add("-XdisplayNameMode");
+      args.add(options.getDisplayNameMode().toString());
     }
     return args;
   }

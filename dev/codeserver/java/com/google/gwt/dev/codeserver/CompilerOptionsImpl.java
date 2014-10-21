@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.js.JsNamespaceOption;
+import com.google.gwt.dev.util.arg.DisplayNameMode;
 import com.google.gwt.dev.util.arg.JsInteropMode;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.arg.SourceLevel;
@@ -43,6 +44,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   private final boolean strictPublicResources;
   private final boolean strictSourceResources;
   private final JsInteropMode jsInteropMode;
+  private final DisplayNameMode displayNameMode;
 
   CompilerOptionsImpl(CompileDir compileDir, String moduleName, Options options) {
     this.compileDir = compileDir;
@@ -54,6 +56,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
     this.strictPublicResources = options.enforceStrictResources();
     this.logLevel = options.getLogLevel();
     this.jsInteropMode = options.getJsInteropMode();
+    this.displayNameMode = options.getDisplayNameMode();
   }
 
   @Override
@@ -324,5 +327,10 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   @Override
   public boolean warnMissingDeps() {
     return false;
+  }
+
+  @Override
+  public DisplayNameMode getDisplayNameMode() {
+    return displayNameMode;
   }
 }

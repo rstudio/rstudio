@@ -82,7 +82,7 @@ class Recompiler {
       new AtomicReference<ResourceLoader>();
   private final CompilerContext.Builder compilerContextBuilder = new CompilerContext.Builder();
   private CompilerContext compilerContext;
-  private Options options;
+  private final Options options;
 
   Recompiler(OutboxDir outboxDir, LauncherDir launcherDir, String inputModuleName, Options options) {
     this.outboxDir = outboxDir;

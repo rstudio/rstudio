@@ -164,6 +164,7 @@ import com.google.gwt.dev.js.ast.JsWhile;
 import com.google.gwt.dev.util.Name.SourceName;
 import com.google.gwt.dev.util.Pair;
 import com.google.gwt.dev.util.StringInterner;
+import com.google.gwt.dev.util.arg.DisplayNameMode;
 import com.google.gwt.dev.util.arg.JsInteropMode;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.collect.Stack;
@@ -903,6 +904,14 @@ public class GenerateJavaScriptAST {
         // don't add polymorphic JsFuncs, inline decl into vtable assignment
         if (func != null && !polymorphicJsFunctions.contains(func)) {
           globalStmts.add(func.makeStmt());
+
+          if (shouldEmitDisplayNames()) {
+            // get the original method for this function
+            JMethod originalMethod = javaMethodForJSFunction.get(func);
+            JsExprStmt displayNameAssignment =
+                outputDisplayName(func.getName().makeRef(func.getSourceInfo()), originalMethod);
+            globalStmts.add(displayNameAssignment);
+          }
         }
       }
 
@@ -1213,6 +1222,8 @@ public class GenerateJavaScriptAST {
       }
 
       JsFunction jsFunc = pop(); // body
+
+      javaMethodForJSFunction.put(jsFunc, x);
 
       if (!program.isInliningAllowed(x)) {
         jsProgram.disallowInlining(jsFunc);
@@ -2605,6 +2616,37 @@ public class GenerateJavaScriptAST {
       JsExprStmt polyAssignment = createAssignment(lhs, rhs).makeStmt();
       globalStmts.add(polyAssignment);
       vtableInitForMethodMap.put(polyAssignment, method);
+
+      if (shouldEmitDisplayNames()) {
+        JsExprStmt displayNameAssignment = outputDisplayName(lhs, method);
+        globalStmts.add(displayNameAssignment);
+        vtableInitForMethodMap.put(displayNameAssignment, method);
+      }
+    }
+
+    private JsExprStmt outputDisplayName(JsNameRef function, JMethod method) {
+      JsNameRef displayName = new JsNameRef(function.getSourceInfo(), "displayName");
+      displayName.setQualifier(function);
+      String displayStringName = getDisplayName(method);
+      JsStringLiteral displayMethodName = new JsStringLiteral(function.getSourceInfo(), displayStringName);
+      return createAssignment(displayName, displayMethodName).makeStmt();
+    }
+
+    private boolean shouldEmitDisplayNames() {
+      return displayNames != DisplayNameMode.NONE;
+    }
+
+    private String getDisplayName(JMethod method) {
+      switch (displayNames) {
+        case ONLY_METHOD_NAME:
+          return method.getName();
+        case ABBREVIATED:
+          return method.getEnclosingType().getShortName() + "." + method.getName();
+        case FULL:
+          return method.getEnclosingType().getName() + "." + method.getName();
+        default:
+          throw new RuntimeException("Invalid value for displayNames: " + displayNames);
+      }
     }
 
     /**
@@ -3248,6 +3290,7 @@ public class GenerateJavaScriptAST {
 
   private final Map<JAbstractMethodBody, JsFunction> methodBodyMap = Maps.newIdentityHashMap();
   private final Map<HasName, JsName> names = Maps.newIdentityHashMap();
+  private final Map<JsFunction, JMethod> javaMethodForJSFunction = Maps.newIdentityHashMap();
 
   /**
    * Contains JsNames for the Object instance methods, such as equals, hashCode,
@@ -3315,6 +3358,8 @@ public class GenerateJavaScriptAST {
 
   private final PermProps props;
 
+  private DisplayNameMode displayNames;
+
   private GenerateJavaScriptAST(TreeLogger logger, JProgram program, JsProgram jsProgram,
       CompilerContext compilerContext, TypeMapper<?> typeMapper,
       Map<StandardSymbolData, JsName> symbolTable, PermProps props) {
@@ -3329,6 +3374,7 @@ public class GenerateJavaScriptAST {
     this.output = compilerContext.getOptions().getOutput();
     this.optimize =
         compilerContext.getOptions().getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT;
+    this.displayNames = compilerContext.getOptions().getDisplayNameMode();
     this.hasWholeWorldKnowledge = compilerContext.shouldCompileMonolithic()
         && !compilerContext.getOptions().isIncrementalCompileEnabled();
     this.compilePerFile = compilerContext.getOptions().isIncrementalCompileEnabled();
