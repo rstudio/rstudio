@@ -214,7 +214,6 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       int width = 1070;
       int height = 1200;
       Point pos = null;
-      final String pdfUrl = url.startsWith("/") ? url : "/" + url;
       
       // if there's a window open, restore the position when we're done
       if (restorePosition && 
@@ -234,7 +233,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
          @Override
          public void execute()
          {
-            pdfJsWindow_.openPdf(pdfUrl, 0, synctex);
+            pdfJsWindow_.openPdf(server_.getApplicationURL(url), 0, synctex);
             lastSuccessfulPdfUrl_ = url;
          }
       };
