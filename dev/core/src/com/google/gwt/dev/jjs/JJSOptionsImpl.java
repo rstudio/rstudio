@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs;
 
 import com.google.gwt.dev.js.JsNamespaceOption;
+import com.google.gwt.dev.util.arg.DisplayNameMode;
 import com.google.gwt.dev.util.arg.JsInteropMode;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.arg.SourceLevel;
@@ -57,6 +58,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private boolean strictPublicResources = false;
   private JsInteropMode jsInteropMode = JsInteropMode.NONE;
   private boolean useDetailedTypeIds = false;
+  private DisplayNameMode displayNameMode = DisplayNameMode.NONE;
 
   public JJSOptionsImpl() {
   }
@@ -95,6 +97,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     setNamespace(other.getNamespace());
     setJsInteropMode(other.getJsInteropMode());
     setUseDetailedTypeIds(other.useDetailedTypeIds());
+    setDisplayNameMode(other.getDisplayNameMode());
   }
 
   @Override
@@ -408,4 +411,13 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     return useDetailedTypeIds;
   }
 
+  @Override
+  public DisplayNameMode getDisplayNameMode() {
+    return displayNameMode;
+  }
+
+  @Override
+  public void setDisplayNameMode(DisplayNameMode displayNameMode) {
+    this.displayNameMode = displayNameMode;
+  }
 }
