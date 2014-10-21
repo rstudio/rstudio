@@ -35,12 +35,20 @@ namespace {
 } // anonymous namespace
 
 
-// NOTE: go to definition works for types/functions declared in header files
+// NOTE: Go to definition works for types/functions declared in header files
 // as well as for types/functions declared within the same translation unit.
-// it does not however locate function definitions in other translation
-// units (rather it just navigates to the header/declaration). in order to
+// It does not however locate function definitions in other translation
+// units (rather it just navigates to the header/declaration). In order to
 // go to definitions across translation units we'll need to build (or create
 // on demand) the source indexes for the other translation units.
+//
+// Note also that the right implementation for cross translation unit
+// definition seeking is likely not to do keep full libclang parses of every
+// translation unit in memory (as this could be expensive from a resource
+// and time standpoint). Rather, we might want to parse with the following
+// flag (CXTranslationUnit_SkipFunctionBodies) and then store the results
+// in a separate index (as discussed on this thread:
+// https://github.com/Rip-Rip/clang_complete/issues/134).
 
 Error goToCppDefinition(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
