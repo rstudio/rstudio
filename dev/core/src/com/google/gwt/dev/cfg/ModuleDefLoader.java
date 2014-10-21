@@ -28,6 +28,7 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.dev.util.xml.ReflectiveParser;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.collect.MapMaker;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
@@ -247,7 +248,7 @@ public class ModuleDefLoader {
     ClassLoader keyClassLoader = Thread.currentThread().getContextClassLoader();
     Map<String, ModuleDef> cache = loadedModulesCaches.get(keyClassLoader);
     if (cache == null) {
-      cache = new MapMaker().softValues().makeMap();
+      cache = Maps.newHashMap();
       loadedModulesCaches.put(keyClassLoader, cache);
     }
     return cache;

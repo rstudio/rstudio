@@ -22,6 +22,7 @@ import com.google.gwt.dev.util.collect.IdentityMaps;
 import com.google.gwt.dev.util.collect.Sets;
 import com.google.gwt.dev.util.msg.Message1String;
 import com.google.gwt.thirdparty.guava.common.collect.MapMaker;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import java.io.File;
 import java.io.IOException;
@@ -72,7 +73,7 @@ public class ZipFileClassPathEntry extends ClassPathEntry {
    * not referenced anywhere else, so we use hard reference, and soft reference on
    * {@link ZipFileClassPathEntry} allows its clearing in response to memory demand.
    */
-  private static final Map<String, ZipFileClassPathEntry> entryCache = new MapMaker().softValues().makeMap();
+  private static final Map<String, ZipFileClassPathEntry> entryCache = Maps.newHashMap();
 
   public static void clearCache() {
     entryCache.clear();
