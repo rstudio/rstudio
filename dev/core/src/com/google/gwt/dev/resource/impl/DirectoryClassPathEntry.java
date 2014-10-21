@@ -18,6 +18,7 @@ package com.google.gwt.dev.resource.impl;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.msg.Message1String;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -93,7 +94,8 @@ public class DirectoryClassPathEntry extends ClassPathEntry {
    * @param dirPath the abstract path name associated with 'parent', which
    *          explicitly does not include the classpath entry in its path
    */
-  private void descendToFindResources(TreeLogger logger,
+  @VisibleForTesting
+  void descendToFindResources(TreeLogger logger,
       List<PathPrefixSet> pathPrefixSets,
       List<Map<AbstractResource, ResourceResolution>> results, File dir, String dirPath) {
     assert (dir.isDirectory()) : dir + " is not a directory";
@@ -105,6 +107,11 @@ public class DirectoryClassPathEntry extends ClassPathEntry {
     for (File child : children) {
       String childPath = dirPath + child.getName();
       if (child.isDirectory()) {
+        if (child.isHidden()) {
+          // Don't look inside of intentionally hidden directories. It's just a waste of time,
+          // sometimes lots of time.
+          continue;
+        }
         String childDirPath = childPath + "/";
         for (int i = 0; i < len; ++i) {
           if (pathPrefixSets.get(i).includesDirectory(childDirPath)) {
