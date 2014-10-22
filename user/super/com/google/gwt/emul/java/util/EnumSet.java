@@ -15,10 +15,10 @@
  */
 package java.util;
 
-import static com.google.gwt.core.shared.impl.GwtPreconditions.checkArgument;
-import static com.google.gwt.core.shared.impl.GwtPreconditions.checkElement;
-import static com.google.gwt.core.shared.impl.GwtPreconditions.checkNotNull;
-import static com.google.gwt.core.shared.impl.GwtPreconditions.checkState;
+import static com.google.gwt.core.shared.impl.InternalPreconditions.checkArgument;
+import static com.google.gwt.core.shared.impl.InternalPreconditions.checkElement;
+import static com.google.gwt.core.shared.impl.InternalPreconditions.checkNotNull;
+import static com.google.gwt.core.shared.impl.InternalPreconditions.checkState;
 
 import com.google.gwt.core.client.impl.SpecializeMethod;
 import com.google.gwt.lang.Array;

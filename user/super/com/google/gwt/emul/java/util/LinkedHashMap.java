@@ -15,8 +15,8 @@
  */
 package java.util;
 
-import static com.google.gwt.core.shared.impl.GwtPreconditions.checkCriticalElement;
-import static com.google.gwt.core.shared.impl.GwtPreconditions.checkState;
+import static com.google.gwt.core.shared.impl.InternalPreconditions.checkCriticalElement;
+import static com.google.gwt.core.shared.impl.InternalPreconditions.checkState;
 
 import static java.util.ConcurrentModificationDetector.checkStructuralChange;
 import static java.util.ConcurrentModificationDetector.recordLastKnownStructure;

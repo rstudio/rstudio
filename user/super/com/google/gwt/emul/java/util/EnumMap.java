@@ -15,8 +15,8 @@
  */
 package java.util;
 
-import static com.google.gwt.core.shared.impl.GwtPreconditions.checkArgument;
-import static com.google.gwt.core.shared.impl.GwtPreconditions.checkState;
+import static com.google.gwt.core.shared.impl.InternalPreconditions.checkArgument;
+import static com.google.gwt.core.shared.impl.InternalPreconditions.checkState;
 
 import com.google.gwt.lang.Array;
 

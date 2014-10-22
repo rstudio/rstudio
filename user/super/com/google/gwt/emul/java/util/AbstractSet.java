@@ -15,7 +15,7 @@
  */
 package java.util;
 
-import static com.google.gwt.core.shared.impl.GwtPreconditions.checkNotNull;
+import static com.google.gwt.core.shared.impl.InternalPreconditions.checkNotNull;
 
 /**
  * Skeletal implementation of the Set interface. <a

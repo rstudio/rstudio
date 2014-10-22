@@ -15,8 +15,8 @@
  */
 package java.lang;
 
-import static com.google.gwt.core.shared.impl.GwtPreconditions.checkArrayType;
-import static com.google.gwt.core.shared.impl.GwtPreconditions.checkNotNull;
+import static com.google.gwt.core.shared.impl.InternalPreconditions.checkArrayType;
+import static com.google.gwt.core.shared.impl.InternalPreconditions.checkNotNull;
 
 import com.google.gwt.core.client.JsDate;
 import com.google.gwt.core.client.impl.Impl;

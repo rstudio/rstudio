@@ -15,10 +15,10 @@
  */
 package java.util;
 
-import static com.google.gwt.core.shared.impl.GwtPreconditions.checkArgument;
-import static com.google.gwt.core.shared.impl.GwtPreconditions.checkElementIndex;
-import static com.google.gwt.core.shared.impl.GwtPreconditions.checkPositionIndex;
-import static com.google.gwt.core.shared.impl.GwtPreconditions.checkPositionIndexes;
+import static com.google.gwt.core.shared.impl.InternalPreconditions.checkArgument;
+import static com.google.gwt.core.shared.impl.InternalPreconditions.checkElementIndex;
+import static com.google.gwt.core.shared.impl.InternalPreconditions.checkPositionIndex;
+import static com.google.gwt.core.shared.impl.InternalPreconditions.checkPositionIndexes;
 
 import com.google.gwt.lang.Array;
 
