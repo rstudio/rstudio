@@ -138,6 +138,9 @@
                 <xs:attribute
                     name="type"
                     type="xs:string" />
+                <xs:attribute
+                    name="gss"
+                    type="xs:string" />
 
                 <!-- Allow any attributes (e.g. from other schemas) -->
                 <xs:anyAttribute
