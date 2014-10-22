@@ -78,7 +78,7 @@ public class JavaScriptObject {
       return strip(obj.outerHTML);
     // Output nodes that have innerHTML
     if (defined(obj.innerHTML) && obj.cloneNode) {
-      return $doc.createElement('div').appendChild(obj.cloneNode(true)).innerHTML;
+      $doc.createElement('div').appendChild(obj.cloneNode(true)).innerHTML;
     }
     // Output text nodes
     if (defined(obj.nodeType) && obj.nodeType == 3) {
