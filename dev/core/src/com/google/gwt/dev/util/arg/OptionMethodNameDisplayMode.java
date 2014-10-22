@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Google Inc.
+ * Copyright 2014 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,29 +16,32 @@
 package com.google.gwt.dev.util.arg;
 
 /**
- * An option that can indicates the Javascript interop mode.
+ * Option to set the what is mapping mode for function names in chrome dev tools.
  */
-public interface OptionJsInteropMode {
+public interface OptionMethodNameDisplayMode {
   /**
-   * Specifies which level of JsInterop support is enabled in the compiler,
-   * NONE, JS, and CLOSURE.
+   * Specifies which level of displayNames the GWT compiler outputs for chrome dev tools.
    */
   public enum Mode {
     /**
-     * Disabled, interop annotations are no-ops.
+     * Emit no extra information.
      */
     NONE,
     /**
-     * For hand coded, external JS, not run through an external compiler.
+     * Use the method name as displayName.
      */
-    JS,
+    ONLY_METHOD_NAME,
     /**
-     * For cases where GWT code is post-optimized and checked with the Closure Compiler.
+     * Use the class and method name as displayName.
      */
-    CLOSURE
+    ABBREVIATED,
+    /**
+     * Use the full qualified class and method name as displayName.
+     */
+    FULL
   }
 
-  Mode getJsInteropMode();
+  Mode getMethodNameDisplayMode();
 
-  void setJsInteropMode(Mode mode);
+  void setMethodNameDisplayMode(Mode methodNameDisplayMode);
 }

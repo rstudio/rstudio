@@ -22,8 +22,7 @@ import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.DevMode.HostedModeOptions;
 import com.google.gwt.dev.cfg.ModuleDef;
-import com.google.gwt.dev.util.arg.DisplayNameMode;
-import com.google.gwt.dev.util.arg.JsInteropMode;
+import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 
 import java.io.File;
 import java.io.IOException;
@@ -172,20 +171,19 @@ public class SuperDevListener implements CodeServerListener {
       args.add("-logLevel");
       args.add(String.valueOf(options.getLogLevel()));
     }
-    if (options.getJsInteropMode() != JsInteropMode.NONE) {
+    if (options.getJsInteropMode() != OptionJsInteropMode.Mode.NONE) {
       args.add("-XjsInteropMode");
       args.add(options.getJsInteropMode().toString());
     }
     if (!options.isIncrementalCompileEnabled()) {
       args.add("-noincremental");
     }
+
+    args.add("-XdisplayNameMode");
+    args.add(options.getMethodNameDisplayMode().toString());
+
     for (String mod : options.getModuleNames()) {
       args.add(mod);
-    }
-
-    if (options.getDisplayNameMode() != DisplayNameMode.ABBREVIATED) {
-      args.add("-XdisplayNameMode");
-      args.add(options.getDisplayNameMode().toString());
     }
     return args;
   }

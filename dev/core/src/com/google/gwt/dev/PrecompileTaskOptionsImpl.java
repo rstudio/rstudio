@@ -20,8 +20,7 @@ import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.JJSOptionsImpl;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.js.JsNamespaceOption;
-import com.google.gwt.dev.util.arg.DisplayNameMode;
-import com.google.gwt.dev.util.arg.JsInteropMode;
+import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.dev.util.arg.SourceLevel;
 
 import java.io.File;
@@ -42,7 +41,6 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   private boolean validateOnly;
   private boolean warnOverlappingSource;
   private boolean warnMissingDeps;
-  private DisplayNameMode displayNameMode;
 
   public PrecompileTaskOptionsImpl() {
   }
@@ -78,7 +76,6 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
     setMissingDepsFile(other.getMissingDepsFile());
     setValidateOnly(other.isValidateOnly());
     setEnabledGeneratingOnShards(other.isEnabledGeneratingOnShards());
-    setDisplayNameMode(other.getDisplayNameMode());
   }
 
   @Override
@@ -109,6 +106,11 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   @Override
   public int getMaxPermsPerPrecompile() {
     return maxPermsPerPrecompile;
+  }
+
+  @Override
+  public com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode.Mode getMethodNameDisplayMode() {
+    return jjsOptions.getMethodNameDisplayMode();
   }
 
   @Override
@@ -324,6 +326,12 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   }
 
   @Override
+  public void setMethodNameDisplayMode(
+      com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode.Mode methodNameDisplayMode) {
+    jjsOptions.setMethodNameDisplayMode(methodNameDisplayMode);
+  }
+
+  @Override
   public void setMissingDepsFile(File missingDepsFile) {
     this.missingDepsFile = missingDepsFile;
   }
@@ -482,21 +490,11 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
     return warnMissingDeps;
   }
 
-  @Override public JsInteropMode getJsInteropMode() {
+  @Override public OptionJsInteropMode.Mode getJsInteropMode() {
     return jjsOptions.getJsInteropMode();
   }
 
-  @Override public void setJsInteropMode(JsInteropMode mode) {
+  @Override public void setJsInteropMode(OptionJsInteropMode.Mode mode) {
     jjsOptions.setJsInteropMode(mode);
-  }
-
-  @Override
-  public DisplayNameMode getDisplayNameMode() {
-    return displayNameMode;
-  }
-
-  @Override
-  public void setDisplayNameMode(DisplayNameMode displayNameMode) {
-    this.displayNameMode = displayNameMode;
   }
 }

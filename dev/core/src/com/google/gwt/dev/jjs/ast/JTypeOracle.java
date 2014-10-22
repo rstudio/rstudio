@@ -17,7 +17,7 @@ package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.MinimalRebuildCache;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
-import com.google.gwt.dev.util.arg.JsInteropMode;
+import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
@@ -130,7 +130,7 @@ public class JTypeOracle implements Serializable {
   private Set<JField> exportedFields = Sets.newLinkedHashSet();
 
   private Set<JReferenceType> instantiatedJsoTypesViaCast = Sets.newHashSet();
-  private JsInteropMode jsInteropMode;
+  private OptionJsInteropMode.Mode jsInteropMode;
 
   public Set<JMethod> getExportedMethods() {
     return exportedMethods;
@@ -253,10 +253,10 @@ public class JTypeOracle implements Serializable {
   }
 
   public boolean isInteropEnabled() {
-    return jsInteropMode != JsInteropMode.NONE;
+    return jsInteropMode != OptionJsInteropMode.Mode.NONE;
   }
 
-  public void setJsInteropMode(JsInteropMode jsInteropMode) {
+  public void setJsInteropMode(OptionJsInteropMode.Mode jsInteropMode) {
     this.jsInteropMode = jsInteropMode;
   }
 
