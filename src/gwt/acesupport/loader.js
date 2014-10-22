@@ -90,21 +90,31 @@ oop.inherits(RStudioEditSession, EditSession);
             var line = this.getLine(i-1);
             var newline = this.getLine(i);
 
-            var shouldOutdent = mode.checkOutdent(state, " ", newline);
-
             var newIndent = mode.getNextLineIndent(state,
                                                    line,
                                                    this.getTabString(),
                                                    this.getTabSize(),
-                                                   i-1);
+                                                   i-1,
+                                                   true);
 
             this.applyIndent(i, newIndent);
-
-            if (shouldOutdent) {
-               mode.autoOutdent(state, this, i);
-            }
+            mode.autoOutdent(state, this, i);
          }
       }
+
+      // optional outdenting (currently hard-wired for C++ modes)
+      var codeModel = mode.$codeModel;
+      if (typeof codeModel !== "undefined") {
+         var align = codeModel.alignContinuationSlashes;
+         if (typeof align !== "undefined") {
+            align(this.getDocument(), {
+               start: start,
+               end: end
+            });
+         }
+      }
+
+
    };
    this.applyIndent = function(lineNum, indent) {
       var line = this.getLine(lineNum);

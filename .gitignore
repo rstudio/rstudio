@@ -23,3 +23,5 @@ rstudio*.Rproj
 NEWS.html
 CMakeLists.txt.user
 .idea/
+**/\.tern-port
+.#*

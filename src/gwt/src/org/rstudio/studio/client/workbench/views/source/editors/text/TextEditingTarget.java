@@ -2237,12 +2237,13 @@ public class TextEditingTarget implements
    @Handler
    void onCommentUncomment()
    {
-      if (fileType_.isCpp())
-         docDisplay_.toggleCommentLines();
-      else if (isCursorInTexMode())
+      if (isCursorInTexMode())
          doCommentUncomment("%");
       else if (isCursorInRMode())
          doCommentUncomment("#");
+      else if (fileType_.isCpp())
+         doCommentUncomment("//");
+      
    }
    
    private void doCommentUncomment(String c)
@@ -2271,7 +2272,7 @@ public class TextEditingTarget implements
          // to comment out that line. This enables Shift+DownArrow to select
          // one line at a time.
          if (selection.endsWith("\n" + c + " "))
-            selection = selection.substring(0, selection.length() - 2);
+            selection = selection.substring(0, selection.length() - 1 - c.length());
       }
 
       docDisplay_.replaceSelection(selection);
