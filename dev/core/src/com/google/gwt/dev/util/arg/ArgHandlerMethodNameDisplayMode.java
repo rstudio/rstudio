@@ -15,16 +15,18 @@
  */
 package com.google.gwt.dev.util.arg;
 
+import com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode.Mode;
+import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.util.tools.ArgHandlerString;
 
 /**
  * Argument handler set setting the display name setting in the compiler.
  */
-public class ArgHandlerDisplayNameLevel extends ArgHandlerString {
+public class ArgHandlerMethodNameDisplayMode extends ArgHandlerString {
 
-  private final OptionDisplayNameLevel option;
+  private final OptionMethodNameDisplayMode option;
 
-  public ArgHandlerDisplayNameLevel(OptionDisplayNameLevel option) {
+  public ArgHandlerMethodNameDisplayMode(OptionMethodNameDisplayMode option) {
     this.option = option;
   }
 
@@ -36,7 +38,7 @@ public class ArgHandlerDisplayNameLevel extends ArgHandlerString {
 
   @Override
   public String getTag() {
-    return "-XdisplayNameMode";
+    return "-XmethodNameDisplayMode";
   }
 
   @Override
@@ -45,24 +47,19 @@ public class ArgHandlerDisplayNameLevel extends ArgHandlerString {
   }
 
   @Override
-  public boolean setString(String str) {
-    String value = str.toUpperCase();
-    if ("NONE".equals(value)) {
-      option.setDisplayNameMode(DisplayNameMode.NONE);
-    } else if ("ONLY_METHOD_NAME".equals(value)) {
-      option.setDisplayNameMode(DisplayNameMode.ONLY_METHOD_NAME);
-    } else if ("ABBREVIATED".equals(value)) {
-      option.setDisplayNameMode(DisplayNameMode.ABBREVIATED);
-    } else if ("FULL".equals(value)) {
-      option.setDisplayNameMode(DisplayNameMode.FULL);
-    } else {
+  public boolean setString(String value) {
+    Mode methodNameDisplayMode =
+        Mode.valueOf(value.toUpperCase());
+    if (methodNameDisplayMode == null) {
       return false;
     }
+    option.setMethodNameDisplayMode(methodNameDisplayMode);
     return true;
   }
 
   @Override
   public String[] getTagArgs() {
-    return new String[] {"NONE | ONLY_METHOD_NAME | ABBREVIATED | FULL"};
+    return new String[] {Joiner.on(" | ").join(
+        Mode.values())};
   }
 }

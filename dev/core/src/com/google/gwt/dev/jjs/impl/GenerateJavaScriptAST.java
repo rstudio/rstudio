@@ -164,8 +164,7 @@ import com.google.gwt.dev.js.ast.JsWhile;
 import com.google.gwt.dev.util.Name.SourceName;
 import com.google.gwt.dev.util.Pair;
 import com.google.gwt.dev.util.StringInterner;
-import com.google.gwt.dev.util.arg.DisplayNameMode;
-import com.google.gwt.dev.util.arg.JsInteropMode;
+import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.collect.Stack;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
@@ -2633,20 +2632,20 @@ public class GenerateJavaScriptAST {
     }
 
     private boolean shouldEmitDisplayNames() {
-      return displayNames != DisplayNameMode.NONE;
+      return methodNameMappingMode != com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode.Mode.NONE;
     }
 
     private String getDisplayName(JMethod method) {
-      switch (displayNames) {
+      switch (methodNameMappingMode) {
         case ONLY_METHOD_NAME:
           return method.getName();
         case ABBREVIATED:
           return method.getEnclosingType().getShortName() + "." + method.getName();
         case FULL:
           return method.getEnclosingType().getName() + "." + method.getName();
-        default:
-          throw new RuntimeException("Invalid value for displayNames: " + displayNames);
       }
+      assert false;
+      return null;
     }
 
     /**
@@ -2841,7 +2840,7 @@ public class GenerateJavaScriptAST {
     private String exportProvidedNamespace(JDeclaredType x, List<JsStatement> globalStmts,
                                            String lastProvidedNamespace, Pair<String, String> exportNamespacePair) {
       if (!lastProvidedNamespace.equals(exportNamespacePair.getLeft())) {
-        if (jsInteropMode == JsInteropMode.JS) {
+        if (jsInteropMode == OptionJsInteropMode.Mode.JS) {
           JsName provideFunc = indexedFunctions.get("JavaClassHierarchySetupUtil.provide").getName();
           JsNameRef provideFuncRef = provideFunc.makeRef(x.getSourceInfo());
           JsInvocation provideCall = new JsInvocation(x.getSourceInfo());
@@ -2854,7 +2853,7 @@ public class GenerateJavaScriptAST {
           JsExprStmt provideStat = createAssignment(globalTemp.makeRef(x.getSourceInfo()),
               provideCall).makeStmt();
           globalStmts.add(provideStat);
-        } else if (jsInteropMode == JsInteropMode.CLOSURE) {
+        } else if (jsInteropMode == OptionJsInteropMode.Mode.CLOSURE) {
           // goog.provide statements prepended by linker, so namespace already exists
           // but enclosing constructor exports may have overwritten them
           // so write foo.bar.Baz = foo.bar.Baz || {}
@@ -3274,7 +3273,7 @@ public class GenerateJavaScriptAST {
    */
   private final JsScope interfaceScope;
 
-  private final JsInteropMode jsInteropMode;
+  private final OptionJsInteropMode.Mode jsInteropMode;
 
   private final JsProgram jsProgram;
 
@@ -3358,7 +3357,7 @@ public class GenerateJavaScriptAST {
 
   private final PermProps props;
 
-  private DisplayNameMode displayNames;
+  private com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode.Mode methodNameMappingMode;
 
   private GenerateJavaScriptAST(TreeLogger logger, JProgram program, JsProgram jsProgram,
       CompilerContext compilerContext, TypeMapper<?> typeMapper,
@@ -3374,7 +3373,8 @@ public class GenerateJavaScriptAST {
     this.output = compilerContext.getOptions().getOutput();
     this.optimize =
         compilerContext.getOptions().getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT;
-    this.displayNames = compilerContext.getOptions().getDisplayNameMode();
+    this.methodNameMappingMode = compilerContext.getOptions().getMethodNameDisplayMode();
+    assert methodNameMappingMode != null;
     this.hasWholeWorldKnowledge = compilerContext.shouldCompileMonolithic()
         && !compilerContext.getOptions().isIncrementalCompileEnabled();
     this.compilePerFile = compilerContext.getOptions().isIncrementalCompileEnabled();
@@ -3385,7 +3385,7 @@ public class GenerateJavaScriptAST {
 
     this.stripStack = JsStackEmulator.getStackMode(props) == JsStackEmulator.StackMode.STRIP;
     this.jsExportClosureStyle = compilerContext.getOptions().getJsInteropMode()
-        == JsInteropMode.CLOSURE;
+        == OptionJsInteropMode.Mode.CLOSURE;
     this.jsInteropMode = compilerContext.getOptions().getJsInteropMode();
 
     /*

@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.util.arg;
 
+import com.google.gwt.dev.util.arg.OptionJsInteropMode.Mode;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.util.tools.ArgHandlerString;
 
@@ -41,21 +42,21 @@ public class ArgHandlerJsInteropMode extends ArgHandlerString {
   @Override
   public String[] getTagArgs() {
     return new String[]{"[" + Joiner.on(", ").skipNulls().join(
-        JsInteropMode.values()) + "]"};
+        Mode.values()) + "]"};
   }
 
   @Override
   public boolean setString(String value) {
-    JsInteropMode mode = null;
+    Mode mode = null;
     try {
-      mode = JsInteropMode.valueOf(value.trim().toUpperCase());
+      mode = Mode.valueOf(value.trim().toUpperCase());
     } catch (Exception e) {
       System.err.println("JsInteropMode " + value + " not recognized");
     }
 
     if (mode == null) {
       System.err.println("JsInteropMode must be one of [" +
-          Joiner.on(", ").skipNulls().join(JsInteropMode.values()) + "].");
+          Joiner.on(", ").skipNulls().join(Mode.values()) + "].");
       return false;
     }
     options.setJsInteropMode(mode);

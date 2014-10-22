@@ -22,13 +22,12 @@ import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.util.arg.ArgHandlerIncrementalCompile;
 import com.google.gwt.dev.util.arg.ArgHandlerJsInteropMode;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
+import com.google.gwt.dev.util.arg.ArgHandlerMethodNameDisplayMode;
 import com.google.gwt.dev.util.arg.ArgHandlerSourceLevel;
-import com.google.gwt.dev.util.arg.DisplayNameMode;
-import com.google.gwt.dev.util.arg.JsInteropMode;
-import com.google.gwt.dev.util.arg.OptionDisplayNameLevel;
 import com.google.gwt.dev.util.arg.OptionIncrementalCompile;
 import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.dev.util.arg.OptionLogLevel;
+import com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode;
 import com.google.gwt.dev.util.arg.OptionSourceLevel;
 import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
@@ -79,8 +78,9 @@ public class Options {
   private boolean failOnError = false;
   private boolean strictResources = false;
   private int compileTestRecompiles = 0;
-  private JsInteropMode jsInteropMode = JsInteropMode.NONE;
-  private DisplayNameMode displayNameMode = DisplayNameMode.ABBREVIATED;
+  private OptionJsInteropMode.Mode jsInteropMode = OptionJsInteropMode.Mode.NONE;
+  private OptionMethodNameDisplayMode.Mode methodNameDisplayMode =
+      OptionMethodNameDisplayMode.Mode.NONE;
 
   /**
    * Sets each option to the appropriate value, based on command-line arguments.
@@ -295,7 +295,7 @@ public class Options {
     return failOnError;
   }
 
-  JsInteropMode getJsInteropMode() {
+  OptionJsInteropMode.Mode getJsInteropMode() {
     return jsInteropMode;
   }
 
@@ -306,7 +306,6 @@ public class Options {
       registerHandler(new BindAddressFlag());
       registerHandler(new CompileTestFlag());
       registerHandler(new CompileTestRecompilesFlag());
-      registerHandler(new DisplayNameLevel());
       registerHandler(new FailOnErrorFlag());
       registerHandler(new ModuleNameArgument());
       registerHandler(new NoPrecompileFlag());
@@ -350,14 +349,26 @@ public class Options {
       }));
       registerHandler(new ArgHandlerJsInteropMode(new OptionJsInteropMode() {
         @Override
-        public JsInteropMode getJsInteropMode() {
+        public OptionJsInteropMode.Mode getJsInteropMode() {
           return Options.this.jsInteropMode;
         }
 
         @Override
-        public void setJsInteropMode(JsInteropMode mode) {
+        public void setJsInteropMode(OptionJsInteropMode.Mode mode) {
           Options.this.jsInteropMode = mode;
         }}));
+      registerHandler(new ArgHandlerMethodNameDisplayMode(new OptionMethodNameDisplayMode() {
+        @Override
+        public OptionMethodNameDisplayMode.Mode getMethodNameDisplayMode() {
+          return Options.this.methodNameDisplayMode;
+        }
+
+        @Override
+        public void setMethodNameDisplayMode(Mode mode) {
+          Options.this.methodNameDisplayMode = mode;
+        }
+      }) {
+      });
     }
 
     @Override
@@ -705,51 +716,7 @@ public class Options {
     }
   }
 
-  private class DisplayNameLevel extends ArgHandlerString {
-
-    public DisplayNameLevel() {
-    }
-
-    @Override
-    public String getPurpose() {
-      return "Emit extra information allow chrome dev tools to display Java identifiers in many" +
-          " places instead of JavaScript functions.";
-    }
-
-    @Override
-    public String getTag() {
-      return "-XdisplayNameMode";
-    }
-
-    @Override
-    public boolean isExperimental() {
-      return true;
-    }
-
-    @Override
-    public boolean setString(String str) {
-      String value = str.toUpperCase();
-      if ("NONE".equals(value)) {
-        displayNameMode = DisplayNameMode.NONE;
-      } else if ("ONLY_METHOD_NAME".equals(value)) {
-        displayNameMode = DisplayNameMode.ONLY_METHOD_NAME;
-      } else if ("ABBREVIATED".equals(value)) {
-        displayNameMode = DisplayNameMode.ABBREVIATED;
-      } else if ("FULL".equals(value)) {
-        displayNameMode = DisplayNameMode.FULL;
-      } else {
-        return false;
-      }
-      return true;
-    }
-
-    @Override
-    public String[] getTagArgs() {
-      return new String[] {"NONE | ONLY_METHOD_NAME | ABBREVIATED | FULL"};
-    }
-  }
-
-  public DisplayNameMode getDisplayNameMode() {
-    return displayNameMode;
+  public OptionMethodNameDisplayMode.Mode getMethodNameDisplayMode() {
+    return methodNameDisplayMode;
   }
 }

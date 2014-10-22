@@ -20,8 +20,8 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.js.JsNamespaceOption;
-import com.google.gwt.dev.util.arg.DisplayNameMode;
-import com.google.gwt.dev.util.arg.JsInteropMode;
+import com.google.gwt.dev.util.arg.OptionJsInteropMode;
+import com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
@@ -43,8 +43,8 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   private final SourceLevel sourceLevel;
   private final boolean strictPublicResources;
   private final boolean strictSourceResources;
-  private final JsInteropMode jsInteropMode;
-  private final DisplayNameMode displayNameMode;
+  private final OptionJsInteropMode.Mode jsInteropMode;
+  private final OptionMethodNameDisplayMode.Mode methodNameDisplayMode;
 
   CompilerOptionsImpl(CompileDir compileDir, String moduleName, Options options) {
     this.compileDir = compileDir;
@@ -56,7 +56,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
     this.strictPublicResources = options.enforceStrictResources();
     this.logLevel = options.getLogLevel();
     this.jsInteropMode = options.getJsInteropMode();
-    this.displayNameMode = options.getDisplayNameMode();
+    this.methodNameDisplayMode = options.getMethodNameDisplayMode();
   }
 
   @Override
@@ -100,13 +100,18 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   }
 
   @Override
-  public JsInteropMode getJsInteropMode() {
+  public OptionJsInteropMode.Mode getJsInteropMode() {
     return jsInteropMode;
   }
 
   @Override
   public List<String> getLibraryPaths() {
     return ImmutableList.of();
+  }
+
+  @Override
+  public OptionMethodNameDisplayMode.Mode getMethodNameDisplayMode() {
+    return methodNameDisplayMode;
   }
 
   /**
@@ -327,10 +332,5 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   @Override
   public boolean warnMissingDeps() {
     return false;
-  }
-
-  @Override
-  public DisplayNameMode getDisplayNameMode() {
-    return displayNameMode;
   }
 }
