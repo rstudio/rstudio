@@ -479,6 +479,14 @@ pre {
    display: none;
 }
 
+.windowframe {
+   -webkit-font-smoothing: subpixel-antialiased;
+}
+
+.ace_editor > textarea {
+   z-index: 5;
+}
+
 .C  { background-color: white; }
 .N  { background-image: PODTOP; }
 .NE { background-image: PODTOPRIGHT; }
