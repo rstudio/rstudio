@@ -15,8 +15,8 @@
  */
 package java.lang;
 
-import static com.google.gwt.core.shared.impl.GwtPreconditions.checkCriticalArgument;
-import static com.google.gwt.core.shared.impl.GwtPreconditions.checkNotNull;
+import static com.google.gwt.core.shared.impl.InternalPreconditions.checkCriticalArgument;
+import static com.google.gwt.core.shared.impl.InternalPreconditions.checkNotNull;
 
 import com.google.gwt.core.client.JavaScriptObject;
 

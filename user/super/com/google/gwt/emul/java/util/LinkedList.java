@@ -15,9 +15,9 @@
  */
 package java.util;
 
-import static com.google.gwt.core.shared.impl.GwtPreconditions.checkElement;
-import static com.google.gwt.core.shared.impl.GwtPreconditions.checkPositionIndex;
-import static com.google.gwt.core.shared.impl.GwtPreconditions.checkState;
+import static com.google.gwt.core.shared.impl.InternalPreconditions.checkElement;
+import static com.google.gwt.core.shared.impl.InternalPreconditions.checkPositionIndex;
+import static com.google.gwt.core.shared.impl.InternalPreconditions.checkState;
 
 import java.io.Serializable;
 

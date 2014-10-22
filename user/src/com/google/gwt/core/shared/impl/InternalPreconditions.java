@@ -20,7 +20,7 @@ import java.util.NoSuchElementException;
 /**
  * A utility class that provides utility functions to do precondition checks inside GWT-SDK.
  */
-public class GwtPreconditions {
+public class InternalPreconditions {
   // Some parts adapted from Guava
 
   /**

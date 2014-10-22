@@ -15,7 +15,7 @@
  */
 package java.lang;
 
-import static com.google.gwt.core.shared.impl.GwtPreconditions.checkCriticalArgument;
+import static com.google.gwt.core.shared.impl.InternalPreconditions.checkCriticalArgument;
 
 import java.io.Serializable;
 
