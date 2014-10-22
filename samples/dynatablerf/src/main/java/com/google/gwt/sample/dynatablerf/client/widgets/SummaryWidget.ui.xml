@@ -1,6 +1,6 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder' xmlns:g='urn:import:com.google.gwt.user.client.ui'
   xmlns:cv='urn:import:com.google.gwt.user.cellview.client'>
-  <ui:style src="com/google/gwt/sample/dynatablerf/client/common.css"
+  <ui:style src="../common.css"
     type="com.google.gwt.sample.dynatablerf.client.widgets.SummaryWidget.Style">
       .displayInline {
       	display: inline;
