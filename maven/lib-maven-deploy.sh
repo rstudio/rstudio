@@ -52,6 +52,8 @@ function maven-deploy-file() {
            install:install-file
             -Dfile=$curFile \
             -DpomFile=$pomFile \
+            $javadoc \
+            $sources \
             -q"
   elif [[ "$gpgPassphrase" != "" ]]; then
     echo "Signing and Deploying $curFile to $mavenRepoUrl"
