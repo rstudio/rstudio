@@ -43,7 +43,11 @@ WebView::WebView(QUrl baseUrl, QWidget *parent) :
 {
 #ifdef Q_OS_LINUX
    if (!core::system::getenv("KDE_FULL_SESSION").empty())
-      setStyle(QStyleFactory::create(QString::fromUtf8("fusion")));
+   {
+      QString fusion = QString::fromUtf8("fusion");
+      if (QStyleFactory::keys().contains(fusion))
+         setStyle(QStyleFactory::create(fusion));
+   }
 #endif
    pWebPage_ = new WebPage(baseUrl, this);
    setPage(pWebPage_);
