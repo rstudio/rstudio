@@ -44,23 +44,23 @@ CppScopeNode.CATEGORY_ANON      = 5;
 (function() {
 
    this.isClass = function() {
-      return this.scopeType == CppScopeNode.TYPE_BRACE &&
-         this.scopeCategory == CppScopeNode.TYPE_CLASS;
+      return this.scopeType == ScopeNode.TYPE_BRACE &&
+         this.scopeCategory == CppScopeNode.CATEGORY_CLASS;
    };
 
    this.isNamespace = function() {
-      return this.scopeType == CppScopeNode.TYPE_BRACE &&
-         this.scopeCategory == CppScopeNode.TYPE_NAMESPACE;
+      return this.scopeType == ScopeNode.TYPE_BRACE &&
+         this.scopeCategory == CppScopeNode.CATEGORY_NAMESPACE;
    };
 
    this.isFunction = function() {
-      return this.scopeType == CppScopeNode.TYPE_BRACE &&
-         this.scopeCategory == CppScopeNode.TYPE_FUNCTION;
+      return this.scopeType == ScopeNode.TYPE_BRACE &&
+         this.scopeCategory == CppScopeNode.CATEGORY_FUNCTION;
    };
    
    this.isLambda = function() {
-      return this.scopeType == CppScopeNode.TYPE_BRACE &&
-         this.scopeCategory == CppScopeNode.TYPE_LAMBDA;
+      return this.scopeType == ScopeNode.TYPE_BRACE &&
+         this.scopeCategory == CppScopeNode.CATEGORY_LAMBDA;
    };
    
    

@@ -1322,21 +1322,24 @@ public class TextEditingTarget implements
                   }
                   else
                   {
-                     Scope function = docDisplay_.getCurrentScope();
-                     Debug.logObject(function);
-                     String label = function != null
-                                   ? function.getLabel()
+                     Scope scope = docDisplay_.getCurrentScope();
+                     String label = scope != null
+                                   ? scope.getLabel()
                                    : null;
                      statusBar_.getScope().setValue(label);
                      
-                     if (function != null)
+                     if (scope != null)
                      {
                         boolean useChunk = 
-                                 function.isChunk() || 
-                                 (fileType_.isRnw() && function.isTopLevel());
+                                 scope.isChunk() || 
+                                 (fileType_.isRnw() && scope.isTopLevel());
                         if (useChunk)
                            statusBar_.setScopeType(StatusBar.SCOPE_CHUNK);
-                        else if (function.isSection())
+                        else if (scope.isNamespace())
+                          statusBar_.setScopeType(StatusBar.SCOPE_NAMESPACE);
+                        else if (scope.isClass())
+                           statusBar_.setScopeType(StatusBar.SCOPE_CLASS);
+                        else if (scope.isSection())
                            statusBar_.setScopeType(StatusBar.SCOPE_SECTION);
                         else
                            statusBar_.setScopeType(StatusBar.SCOPE_FUNCTION);

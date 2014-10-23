@@ -16,10 +16,15 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
 public interface StatusBar
 {
-   public static final int SCOPE_SLIDE = 4;
-   public static final int SCOPE_SECTION = 3;
-   public static final int SCOPE_CHUNK = 2;
    public static final int SCOPE_FUNCTION = 1;
+   public static final int SCOPE_CHUNK    = 2;
+   public static final int SCOPE_SECTION  = 3;
+   public static final int SCOPE_SLIDE    = 4;
+   public static final int SCOPE_CLASS    = 5;
+   public static final int SCOPE_NAMESPACE= 6;
+   public static final int SCOPE_LAMBDA   = 7;
+   public static final int SCOPE_ANON     = 8;
+   
    
    StatusBarElement getPosition();
    StatusBarElement getScope();
