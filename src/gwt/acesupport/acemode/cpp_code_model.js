@@ -893,6 +893,16 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
             return indent + tab;
          }
 
+         // If we have a line beginning a class definition ending with a colon, indent
+         //
+         //   class Foo :
+         //       |
+         //       ^
+         //
+         if (/^\s*(class|struct)\s+.+:\s*$/.test(line)) {
+            return indent + tab;
+         }
+
          // Match the indentation of the ':' in a statement e.g.
          //
          //   class Foo : public A
