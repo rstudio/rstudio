@@ -109,8 +109,8 @@
 
 .rs.addFunction("getPackageRStudioProtocol", function(name) {
 
-   ## First check to see if the package has a '.rstudio-protocol' file
-   path <- system.file(".rstudio-protocol", package = name)
+   ## First check to see if the package has a 'rstudio-protocol' file
+   path <- system.file("rstudio-protocol", package = name)
    if (path != "") {
       tryCatch(
          expr = {
