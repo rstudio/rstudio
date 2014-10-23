@@ -48,7 +48,6 @@
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 
-#include "SessionBuildEnvironment.hpp"
 #include "SessionBuildErrors.hpp"
 #include "SessionSourceCpp.hpp"
 #include "SessionInstallRtools.hpp"
@@ -503,7 +502,7 @@ private:
       core::system::setenv(&childEnv, "NOT_CRAN", "true");
 
       // add r tools to path if necessary
-      addRtoolsToPathIfNecessary(&childEnv, &buildToolsWarning_);
+      module_context::addRtoolsToPathIfNecessary(&childEnv, &buildToolsWarning_);
 
       pkgOptions.environment = childEnv;
 
@@ -1473,7 +1472,7 @@ SEXP rs_addRToolsToPath()
     s_previousPath = core::system::getenv("PATH");
     std::string newPath = s_previousPath;
     std::string warningMsg;
-    build::addRtoolsToPathIfNecessary(&newPath, &warningMsg);
+    module_context::addRtoolsToPathIfNecessary(&newPath, &warningMsg);
     core::system::setenv("PATH", newPath);
 
 #endif
@@ -1723,7 +1722,7 @@ bool canBuildCpp()
    core::system::Options childEnv;
    core::system::environment(&childEnv);
    std::string warningMsg;
-   modules::build::addRtoolsToPathIfNecessary(&childEnv, &warningMsg);
+   module_context::addRtoolsToPathIfNecessary(&childEnv, &warningMsg);
    options.environment = childEnv;
 
    core::system::ProcessResult result;

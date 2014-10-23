@@ -429,24 +429,8 @@ private:
       FilePath filePath(fileInfo.absolutePath());
 
       // screen directories
-      if (projects::projectContext().hasProject())
-      {
-         // if we are in a package project then screen our src- files
-         if (projects::projectContext().config().buildType ==
-                                                 r_util::kBuildTypePackage)
-         {
-             FilePath pkgPath = projects::projectContext().buildTargetPath();
-             std::string pkgRelative = filePath.relativePath(pkgPath);
-             if (boost::algorithm::starts_with(pkgRelative, "src-"))
-                return false;
-         }
-
-         // screen the packrat directory
-         FilePath projPath = projects::projectContext().directory();
-         std::string pkgRelative = filePath.relativePath(projPath);
-         if (boost::algorithm::starts_with(pkgRelative, "packrat/"))
-            return false;
-      }
+      if (!module_context::isUserFile(filePath))
+         return false;
 
       // filter files by name and extension
       std::string ext = filePath.extensionLowerCase();
@@ -488,6 +472,77 @@ private:
 SourceFileIndex s_projectIndex;
 
 
+// maintain an in-memory list of R source document indexes (for fast
+// code searching)
+class RSourceIndexes : boost::noncopyable
+{
+public:
+   RSourceIndexes() {}
+   virtual ~RSourceIndexes() {}
+
+   // COPYING: boost::noncopyable
+
+   void initialize()
+   {
+      source_database::events().onDocUpdated.connect(
+                              boost::bind(&RSourceIndexes::update, this, _1));
+      source_database::events().onDocRemoved.connect(
+                              boost::bind(&RSourceIndexes::remove, this, _1));
+      source_database::events().onRemoveAll.connect(
+                              boost::bind(&RSourceIndexes::removeAll, this));
+   }
+
+   void update(boost::shared_ptr<session::source_database::SourceDocument> pDoc)
+   {
+      // is this indexable? if not then bail
+      if ( pDoc->path().empty() ||
+           (FilePath(pDoc->path()).extensionLowerCase() != ".r") )
+      {
+         return;
+      }
+
+      // index the source
+      boost::shared_ptr<r_util::RSourceIndex> pIndex(
+                 new r_util::RSourceIndex(pDoc->path(), pDoc->contents()));
+
+      // insert it
+      indexes_[pDoc->id()] = pIndex;
+   }
+
+   void remove(const std::string& id)
+   {
+      indexes_.erase(id);
+   }
+
+   void removeAll()
+   {
+      indexes_.clear();
+   }
+
+   std::vector<boost::shared_ptr<r_util::RSourceIndex> > indexes()
+   {
+      std::vector<boost::shared_ptr<r_util::RSourceIndex> > indexes;
+      BOOST_FOREACH(const IndexMap::value_type& index, indexes_)
+      {
+         indexes.push_back(index.second);
+      }
+      return indexes;
+   }
+
+private:
+   typedef std::map<std::string, boost::shared_ptr<r_util::RSourceIndex> >
+                                                                    IndexMap;
+   IndexMap indexes_;
+};
+
+RSourceIndexes& rSourceIndex()
+{
+   static RSourceIndexes instance;
+   return instance;
+}
+
+
+
 // if we have a project active then restrict results to the project
 bool sourceDatabaseFilter(const r_util::RSourceIndex& index)
 {
@@ -509,11 +564,11 @@ bool findGlobalFunctionInSourceDatabase(
                         std::set<std::string>* pContextsSearched)
 {
    // get all of the source indexes
-   std::vector<boost::shared_ptr<r_util::RSourceIndex> > rIndexes =
-                                             modules::source::rIndexes();
+   std::vector<boost::shared_ptr<r_util::RSourceIndex> > indexes =
+                                                   rSourceIndex().indexes();
 
    std::vector<r_util::RSourceItem> sourceItems;
-   BOOST_FOREACH(boost::shared_ptr<r_util::RSourceIndex>& pIndex, rIndexes)
+   BOOST_FOREACH(boost::shared_ptr<r_util::RSourceIndex>& pIndex, indexes)
    {
       // apply the filter
       if (!sourceDatabaseFilter(*pIndex))
@@ -547,10 +602,10 @@ void searchSourceDatabase(const std::string& term,
                           std::set<std::string>* pContextsSearched)
 {
    // get all of the source indexes
-   std::vector<boost::shared_ptr<r_util::RSourceIndex> > rIndexes =
-                                             modules::source::rIndexes();
+   std::vector<boost::shared_ptr<r_util::RSourceIndex> > indexes
+                                                = rSourceIndex().indexes();
 
-   BOOST_FOREACH(boost::shared_ptr<r_util::RSourceIndex>& pIndex, rIndexes)
+   BOOST_FOREACH(boost::shared_ptr<r_util::RSourceIndex>& pIndex, indexes)
    {
       // apply the filter
       if (!sourceDatabaseFilter(*pIndex))
@@ -635,10 +690,10 @@ void searchSourceDatabaseFiles(const std::string& term,
    boost::regex pattern = regexFromTerm(term);
 
    // get all of the source indexes
-   std::vector<boost::shared_ptr<r_util::RSourceIndex> > rIndexes =
-                                             modules::source::rIndexes();
+   std::vector<boost::shared_ptr<r_util::RSourceIndex> > indexes =
+                                                   rSourceIndex().indexes();
 
-   BOOST_FOREACH(boost::shared_ptr<r_util::RSourceIndex>& pIndex, rIndexes)
+   BOOST_FOREACH(boost::shared_ptr<r_util::RSourceIndex>& pIndex, indexes)
    {
       // bail if there is no path
       std::string context = pIndex->context();
@@ -1434,6 +1489,9 @@ Error initialize()
    cb.onMonitoringDisabled = onFileMonitorDisabled;
    projects::projectContext().subscribeToFileMonitor("R source file indexing",
                                                      cb);
+
+   // initialize r source indexes
+   rSourceIndex().initialize();
 
    using boost::bind;
    using namespace module_context;

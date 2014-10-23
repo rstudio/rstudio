@@ -264,8 +264,7 @@ public class RCompletionManager implements CompletionManager
 
       if (!popup_.isShowing())
       {
-         if ((event.getKeyCode() == KeyCodes.KEY_TAB && modifier == KeyboardShortcut.NONE)
-               || (event.getKeyCode() == ' ' && modifier == KeyboardShortcut.CTRL))
+         if (CompletionUtils.isCompletionRequest(event, modifier))
          {
             if (initFilter_ == null || initFilter_.shouldComplete(event))
             {
@@ -389,38 +388,14 @@ public class RCompletionManager implements CompletionManager
                }
             });
          }
-         else if (!input_.isSelectionCollapsed())
+         else if (CompletionUtils.handleEncloseSelection(input_, c))
          {
-            switch(c)
-            {
-            case '"':
-            case '\'':
-               encloseSelection(c, c);
-               return true;
-            case '(':
-               encloseSelection('(', ')');
-               return true;
-            case '{':
-               encloseSelection('{', '}');
-               return true;
-            case '[':
-               encloseSelection('[', ']');
-               return true;     
-            }
+            return true;
          }
       }
       return false ;
    }
    
-   private void encloseSelection(char beginChar, char endChar) 
-   {
-      StringBuilder builder = new StringBuilder();
-      builder.append(beginChar);
-      builder.append(input_.getSelectionValue());
-      builder.append(endChar);
-      input_.replaceSelection(builder.toString(), true);
-   }
-
    private boolean isRoxygenTagValidHere()
    {
       if (input_.getText().matches("\\s*#+'.*"))

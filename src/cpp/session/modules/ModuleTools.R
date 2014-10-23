@@ -97,6 +97,22 @@
             error = function(e) NULL)
 })
 
+.rs.addFunction("libPathsString", function()
+{
+   paste(.libPaths(), collapse = .Platform$path.sep)
+})
+
+.rs.addFunction("parseLinkingTo", function(linkingTo)
+{
+   if (is.null(linkingTo))
+      return (character())
+
+   linkingTo <- strsplit(linkingTo, "\\s*\\,")[[1]]
+   result <- gsub("\\s", "", linkingTo)
+   gsub("\\(.*", "", result)
+})
+
+
 .rs.addFunction("isPackageInstalled", function(name, libLoc = NULL)
 {
   name %in% .packages(all.available = TRUE, lib.loc = libLoc)
@@ -104,6 +120,10 @@
 
 .rs.addFunction("isPackageVersionInstalled", function(name, version) {  
   .rs.isPackageInstalled(name) && (.rs.getPackageVersion(name) >= version)
+})
+
+.rs.addFunction("packageVersionString", function(pkg) {
+   as.character(packageVersion(pkg))
 })
 
 .rs.addFunction("getPackageCompatStatus", 

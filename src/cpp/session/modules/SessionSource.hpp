@@ -35,8 +35,6 @@ namespace source {
    
 core::Error clientInitDocuments(core::json::Array* pJsonDocs) ;
 
-std::vector<boost::shared_ptr<core::r_util::RSourceIndex> > rIndexes();
-
 core::Error initialize();
                        
 } // namespace source

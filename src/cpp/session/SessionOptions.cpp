@@ -35,6 +35,8 @@
 
 #include <session/SessionConstants.hpp>
 
+#include "session-config.h"
+
 using namespace core ;
 
 namespace session {  
@@ -42,6 +44,7 @@ namespace session {
 namespace {
 const char* const kDefaultPandocPath = "bin/pandoc";
 const char* const kDefaultPostbackPath = "bin/postback/rpostback";
+const char* const kDefaultRsclangPath = "bin/rsclang";
 } // anonymous namespace
 
 Options& options()
@@ -276,7 +279,14 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
         "Path to mathjax library")
       ("external-pandoc-path",
         value<std::string>(&pandocPath_)->default_value(kDefaultPandocPath),
-        "Path to pandoc binaries");
+        "Path to pandoc binaries")
+      ("external-libclang-path",
+        value<std::string>(&libclangPath_)->default_value(kDefaultRsclangPath),
+        "Path to libclang shared library")
+      ("external-libclang-headers-path",
+        value<std::string>(&libclangHeadersPath_)->default_value(
+                                       "resources/libclang/builtin-headers"),
+        "Path to libclang builtin headers");
 
    // user options (default user identity to current username)
    std::string currentUsername = core::system::username();
@@ -404,7 +414,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
          ERROR_LOCATION);
       saveActionDefault_ = r::session::kSaveActionAsk;
    }
-
+   
    // convert relative paths by completing from the app resource path
    resolvePath(resourcePath, &rResourcesPath_);
    resolvePath(resourcePath, &agreementFilePath_);
@@ -425,7 +435,19 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
 #endif
    resolvePath(resourcePath, &hunspellDictionariesPath_);
    resolvePath(resourcePath, &mathjaxPath_);
+   resolvePath(resourcePath, &libclangHeadersPath_);
    resolvePandocPath(resourcePath, &pandocPath_);
+
+   // rsclang
+   if (libclangPath_ != kDefaultRsclangPath)
+   {
+#ifdef _WIN32
+      libclangPath_ += "/3.4";
+#else
+      libclangPath_ += "/3.5";
+#endif
+   }
+   resolveRsclangPath(resourcePath, &libclangPath_);
 
    // shared secret with parent
    secret_ = core::system::getenv("RS_SHARED_SECRET");
@@ -510,6 +532,20 @@ void Options::resolvePandocPath(const FilePath& resourcePath,
    }
 }
 
+void Options::resolveRsclangPath(const FilePath& resourcePath,
+                                 std::string* pPath)
+{
+   if (*pPath == kDefaultRsclangPath)
+   {
+      FilePath path = resourcePath.parent().complete("MacOS/rsclang");
+      *pPath = path.absolutePath();
+   }
+   else
+   {
+      resolvePath(resourcePath, pPath);
+   }
+}
+
 #else
 
 void Options::resolvePostbackPath(const FilePath& resourcePath,
@@ -524,8 +560,11 @@ void Options::resolvePandocPath(const FilePath& resourcePath,
    resolvePath(resourcePath, pPath);
 }
 
-
-
+void Options::resolveRsclangPath(const FilePath& resourcePath,
+                                 std::string* pPath)
+{
+   resolvePath(resourcePath, pPath);
+}
 #endif
    
 } // namespace session

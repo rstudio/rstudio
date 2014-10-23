@@ -17,9 +17,11 @@ package org.rstudio.studio.client.common.codetools;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
+import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 
 public interface CodeToolsServerOperations extends HelpServerOperations,
-                                                   CodeSearchServerOperations
+                                                   CodeSearchServerOperations,
+                                                   CppServerOperations
 {
    void getCompletions(String line, int cursorPos, 
          ServerRequestCallback<Completions> completions);

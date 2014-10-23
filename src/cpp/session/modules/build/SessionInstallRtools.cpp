@@ -27,8 +27,6 @@
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionUserSettings.hpp>
 
-#include "SessionBuildEnvironment.hpp"
-
 using namespace core ;
 
 namespace session {  
@@ -72,7 +70,7 @@ Error installRtools()
    availableRtools.push_back(r_util::RToolsInfo("2.11", installPath));
    BOOST_FOREACH(const r_util::RToolsInfo& rTools, availableRtools)
    {
-      if (isRtoolsCompatible(rTools))
+      if (module_context::isRtoolsCompatible(rTools))
       {
          version = rTools.name();
 

@@ -119,6 +119,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupMenu;
@@ -373,6 +374,7 @@ public class TextEditingTarget implements
       presentationHelper_ = new TextEditingTargetPresentationHelper(
                                                                   docDisplay_);
       docDisplay_.setRnwCompletionContext(compilePdfHelper_);
+      docDisplay_.setCppCompletionContext(cppCompletionContext_);
       scopeHelper_ = new TextEditingTargetScopeHelper(docDisplay_);
       
       addRecordNavigationPositionHandler(releaseOnDismiss_, 
@@ -430,7 +432,8 @@ public class TextEditingTarget implements
             {
                event.preventDefault();
                event.stopPropagation();
-               commands_.interruptR().execute();
+               if (commands_.interruptR().isEnabled())
+                  commands_.interruptR().execute();
             }
             else if (ne.getKeyCode() == KeyCodes.KEY_M && (
                   (BrowseCap.hasMetaKey() &&
@@ -3292,7 +3295,7 @@ public class TextEditingTarget implements
    {
       globalDisplay_.openRStudioLink("rcpp_help");
    }
-
+   
    @Handler
    void onDebugHelp()
    {
@@ -4137,6 +4140,29 @@ public class TextEditingTarget implements
    {
       return docUpdateSentinel_.getPath() == null;
    }
+   
+   private CppCompletionContext cppCompletionContext_ = 
+                                          new CppCompletionContext() {
+      @Override
+      public boolean isCompletionEnabled()
+      {
+         return session_.getSessionInfo().getClangAvailable() &&
+                (docUpdateSentinel_.getPath() != null);
+      }
+
+      @Override
+      public void withUpdatedDoc(final CommandWithArg<String> onUpdated)
+      {
+         docUpdateSentinel_.withSavedDoc(new Command() {
+            @Override
+            public void execute()
+            {
+               onUpdated.execute(docUpdateSentinel_.getPath());
+            }
+         });
+
+      }   
+   };
    
    // these methods are public static so that other editing targets which
    // display source code (but don't inherit from TextEditingTarget) can share

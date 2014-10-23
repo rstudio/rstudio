@@ -655,6 +655,12 @@ void onShutdown(bool)
 
 } // anonymous namespace
 
+Events& events()
+{
+   static Events instance;
+   return instance;
+}
+
 Error initialize()
 {
    // provision a source database directory

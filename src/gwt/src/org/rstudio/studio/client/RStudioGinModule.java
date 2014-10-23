@@ -166,6 +166,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.profiler.Profile
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.TexServerOperations;
 import org.rstudio.studio.client.workbench.views.vcs.VCSTab;
@@ -335,6 +336,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(RMarkdownServerOperations.class).to(RemoteServer.class);
       bind(DependencyServerOperations.class).to(RemoteServer.class);
       bind(PackratServerOperations.class).to(RemoteServer.class);
+      bind(CppServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 

@@ -21,6 +21,7 @@
 
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/signals.hpp>
 
 #include <core/FilePath.hpp>
 #include <core/json/Json.hpp>
@@ -138,6 +139,16 @@ core::Error list(std::vector<boost::shared_ptr<SourceDocument> >* pDocs);
 core::Error put(boost::shared_ptr<SourceDocument> pDoc);
 core::Error remove(const std::string& id);
 core::Error removeAll();
+
+// source database events
+struct Events : boost::noncopyable
+{
+   boost::signal<void(boost::shared_ptr<SourceDocument>)> onDocUpdated;
+   boost::signal<void(const std::string&)>                onDocRemoved;
+   boost::signal<void()>                                  onRemoveAll;
+};
+
+Events& events();
 
 core::Error initialize();
 

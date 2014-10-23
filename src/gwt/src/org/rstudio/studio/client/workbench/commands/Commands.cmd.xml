@@ -571,6 +571,9 @@ well as menu structures (for main menu and popup menus).
    <cmd id="rcppHelp"
         desc="Help on using Rcpp"/>         
               
+   <cmd id="printCppCompletions"
+        desc="Print C++ Completions"/>           
+              
    <cmd id="newSweaveDoc"
         menuLabel="R _Sweave"
         desc="Create a new R Sweave document"/>  

@@ -987,6 +987,33 @@ bool isPackageVersionInstalled(const std::string& packageName,
    return !error ? installed : false;
 }
 
+std::string packageVersion(const std::string& packageName)
+{
+   std::string version;
+   Error error = r::exec::RFunction(".rs.packageVersionString", packageName)
+                                                               .call(&version);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return "(Unknown)";
+   }
+   else
+   {
+      return version;
+   }
+}
+
+bool hasMinimumRVersion(const std::string &version)
+{
+   bool hasVersion = false;
+   boost::format fmt("getRversion() >= '%1%'");
+   std::string versionTest = boost::str(fmt % version);
+   Error error = r::exec::evaluateString(versionTest, &hasVersion);
+   if (error)
+      LOG_ERROR(error);
+   return hasVersion;
+}
+
 PackageCompatStatus getPackageCompatStatus(
       const std::string& packageName,
       const std::string& packageVersion,
@@ -1713,6 +1740,30 @@ Error createSelfContainedHtml(const FilePath& sourceFilePath,
    func.addParam(string_utils::utf8ToSystem(sourceFilePath.absolutePath()));
    func.addParam(string_utils::utf8ToSystem(targetFilePath.absolutePath()));
    return func.call();
+}
+
+bool isUserFile(const FilePath& filePath)
+{
+   if (projects::projectContext().hasProject())
+   {
+      // if we are in a package project then screen our src- files
+      if (projects::projectContext().config().buildType ==
+                                              r_util::kBuildTypePackage)
+      {
+          FilePath pkgPath = projects::projectContext().buildTargetPath();
+          std::string pkgRelative = filePath.relativePath(pkgPath);
+          if (boost::algorithm::starts_with(pkgRelative, "src-"))
+             return false;
+      }
+
+      // screen the packrat directory
+      FilePath projPath = projects::projectContext().directory();
+      std::string pkgRelative = filePath.relativePath(projPath);
+      if (boost::algorithm::starts_with(pkgRelative, "packrat/"))
+         return false;
+   }
+
+   return true;
 }
 
 } // namespace module_context         
