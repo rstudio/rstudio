@@ -1333,7 +1333,7 @@ public class TextEditingTarget implements
                         boolean useChunk = 
                                  scope.isChunk() || 
                                  (fileType_.isRnw() && scope.isTopLevel());
-                        if (useChunk)
+                             if (useChunk)
                            statusBar_.setScopeType(StatusBar.SCOPE_CHUNK);
                         else if (scope.isNamespace())
                           statusBar_.setScopeType(StatusBar.SCOPE_NAMESPACE);
@@ -1341,7 +1341,9 @@ public class TextEditingTarget implements
                            statusBar_.setScopeType(StatusBar.SCOPE_CLASS);
                         else if (scope.isSection())
                            statusBar_.setScopeType(StatusBar.SCOPE_SECTION);
-                        else
+                        else if (scope.isTopLevel())
+                           statusBar_.setScopeType(StatusBar.SCOPE_TOP_LEVEL);
+                        else if (scope.isFunction())
                            statusBar_.setScopeType(StatusBar.SCOPE_FUNCTION);
                      }
                   }
