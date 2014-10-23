@@ -144,6 +144,7 @@ HTMLOptionsCollection
 HTMLOutputElement
 HTMLParagraphElement
 HTMLParamElement
+HTMLPictureElement
 HTMLPreElement
 HTMLProgressElement
 HTMLQuoteElement
@@ -396,6 +397,7 @@ SVGViewElement
 SVGViewSpec
 SVGZoomEvent
 Screen
+ScreenOrientation
 ScriptProcessorNode
 SecurityPolicy
 Selection
@@ -408,6 +410,7 @@ StorageEvent
 String
 StyleSheet
 StyleSheetList
+Symbol
 SyntaxError
 Text
 TextEvent
