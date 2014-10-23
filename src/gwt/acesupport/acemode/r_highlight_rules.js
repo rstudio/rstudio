@@ -70,6 +70,11 @@ define("mode/r_highlight_rules", function(require, exports, module)
                next : "qstring"
             },
             {
+               token : "symbol",
+               regex : "[`]",
+               next : "symbol"
+            },
+            {
                token : "constant.numeric", // hex
                regex : "0[xX][0-9a-fA-F]+[Li]?\\b"
             },
@@ -151,7 +156,19 @@ define("mode/r_highlight_rules", function(require, exports, module)
                token : "string",
                regex : '.+'
             }
+         ],
+         "symbol" : [
+            {
+               token : "symbol",
+               regex : "(?:(?:\\\\.)|(?:[^`\\\\]))*?`",
+               next : "start"
+            },
+            {
+               token : "symbol",
+               regex : '.+'
+            }
          ]
+         
       };
 
       var rdRules = new TexHighlightRules("comment").getRules();
