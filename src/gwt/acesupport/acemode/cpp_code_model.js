@@ -429,6 +429,12 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                                                        tokenCursor.currentPosition());
                   }
                }
+
+               // It's possible that we were on something that 'looked' like a function call,
+               // but wasn't actually (e.g. `while () { ... }`) -- handle these cases
+               else {
+                  this.$scopes.onScopeStart(startPos);
+               }
             }
             // other (unknown)
             else {
