@@ -84,7 +84,7 @@ if [ -d "$LIBCLANG_HEADERS_DIR" ]
 then
    echo "libclang headers already installed"
 else
-   mkdir -p "LIBCLANG_HEADERS_DIR"
+   mkdir -p "$LIBCLANG_HEADERS_DIR"
    if [ "$LIBCLANG_PLATFORM" != "NA" ]
    then
      LIBCLANG_HEADERS_ARCHIVE="libclang-${LIBCLANG_HEADERS}.zip"
