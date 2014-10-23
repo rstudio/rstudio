@@ -311,7 +311,7 @@ public abstract class JavaToJavaScriptCompiler {
 
         // TODO(stalcup): move to AST construction
         JsSymbolResolver.exec(jsProgram);
-        if (options.getNamespace() == JsNamespaceOption.BY_JAVA_PACKAGE) {
+        if (options.getNamespace() == JsNamespaceOption.PACKAGE) {
           JsNamespaceChooser.exec(jsProgram, jjsmap);
         }
 

@@ -28,5 +28,5 @@ public enum JsNamespaceOption {
   /**
    * Put the globals for each Java package into their own namespace.
    */
-  BY_JAVA_PACKAGE,
+  PACKAGE,
 }

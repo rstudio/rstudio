@@ -295,13 +295,8 @@ public class JUnitShell extends DevMode {
        * ----- Options specific to JUnitShell -----
        */
 
-      // Override log level to set WARN by default..
-      registerHandler(new ArgHandlerLogLevel(options) {
-        @Override
-        protected Type getDefaultLogLevel() {
-          return TreeLogger.WARN;
-        }
-      });
+      // Override log level to set WARN by default.
+      registerHandler(new ArgHandlerLogLevel(options, TreeLogger.WARN));
 
       registerHandler(new ArgHandlerRunCompiledJavascript(shell));
 

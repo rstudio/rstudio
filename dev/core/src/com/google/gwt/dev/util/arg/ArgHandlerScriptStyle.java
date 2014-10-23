@@ -16,29 +16,23 @@
 package com.google.gwt.dev.util.arg;
 
 import com.google.gwt.dev.jjs.JsOutputOption;
-import com.google.gwt.util.tools.ArgHandler;
-
-import java.util.Locale;
+import com.google.gwt.util.tools.ArgHandlerEnum;
 
 /**
  * Argument handler for processing the script style flag.
  */
-public final class ArgHandlerScriptStyle extends ArgHandler {
+public final class ArgHandlerScriptStyle extends ArgHandlerEnum<JsOutputOption> {
 
-  private final OptionScriptStyle option;
+  private final OptionScriptStyle options;
 
-  public ArgHandlerScriptStyle(OptionScriptStyle option) {
-    this.option = option;
-  }
-
-  @Override
-  public String[] getDefaultArgs() {
-    return new String[] {getTag(), "obfuscate"};
+  public ArgHandlerScriptStyle(OptionScriptStyle options) {
+    super(JsOutputOption.class, options.getOutput(), true);
+    this.options = options;
   }
 
   @Override
   public String getPurpose() {
-    return "Script output style: OBF[USCATED], PRETTY, or DETAILED (defaults to OBF)";
+    return getPurposeString("Script output style:");
   }
 
   @Override
@@ -47,28 +41,9 @@ public final class ArgHandlerScriptStyle extends ArgHandler {
   }
 
   @Override
-  public String[] getTagArgs() {
-    return new String[] {"style"};
-  }
-
-  @Override
-  public int handle(String[] args, int startIndex) {
-    if (startIndex + 1 < args.length) {
-      String style = args[startIndex + 1].toLowerCase(Locale.ENGLISH);
-      if (style.startsWith("obf")) {
-        option.setOutput(JsOutputOption.OBFUSCATED);
-        return 1;
-      } else if ("pretty".equals(style)) {
-        option.setOutput(JsOutputOption.PRETTY);
-        return 1;
-      } else if ("detailed".equals(style)) {
-        option.setOutput(JsOutputOption.DETAILED);
-        return 1;
-      }
+  public void setValue(JsOutputOption jsOutputOption) {
+    if (options.getOutput() != jsOutputOption) {
+      options.setOutput(jsOutputOption);
     }
-
-    System.err.println(getTag() + " should be followed by one of");
-    System.err.println("  OBF, PRETTY, or DETAILED");
-    return -1;
-  }
+ }
 }

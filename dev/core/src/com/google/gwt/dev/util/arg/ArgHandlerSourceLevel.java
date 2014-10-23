@@ -22,6 +22,7 @@ import com.google.gwt.util.tools.ArgHandlerString;
  * Set the Java source level compatibility.
  */
 public class ArgHandlerSourceLevel extends ArgHandlerString {
+  // TODO(rluble) simplify and make it extend ArgHandlerEnum.
   private static final String AUTO_SELECT = "auto";
   private final OptionSourceLevel options;
 

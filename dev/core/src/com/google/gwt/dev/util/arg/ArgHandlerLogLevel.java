@@ -15,45 +15,28 @@
  */
 package com.google.gwt.dev.util.arg;
 
-import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.util.tools.ArgHandler;
+import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.util.tools.ArgHandlerEnum;
 
 /**
  * Argument handler for processing the log level flag.
  */
-public class ArgHandlerLogLevel extends ArgHandler {
-
-  private static final String OPTIONS_STRING = computeOptionsString();
-
-  private static String computeOptionsString() {
-    StringBuffer sb = new StringBuffer();
-    TreeLogger.Type[] values = TreeLogger.Type.values();
-    for (int i = 0, c = values.length; i < c; ++i) {
-      if (i > 0) {
-        sb.append(", ");
-      }
-      if (i + 1 == c) {
-        sb.append("or ");
-      }
-      sb.append(values[i].name());
-    }
-    return sb.toString();
-  }
+public class ArgHandlerLogLevel extends ArgHandlerEnum<Type> {
 
   private final OptionLogLevel options;
 
   public ArgHandlerLogLevel(OptionLogLevel options) {
+    this(options, options.getLogLevel() == null ? Type.INFO : options.getLogLevel());
+  }
+
+  public ArgHandlerLogLevel(OptionLogLevel options, Type defaultLogLevel) {
+    super(Type.class, defaultLogLevel, false);
     this.options = options;
   }
 
   @Override
-  public String[] getDefaultArgs() {
-    return new String[] {getTag(), getDefaultLogLevel().name()};
-  }
-
-  @Override
   public String getPurpose() {
-    return "The level of logging detail: " + OPTIONS_STRING;
+    return getPurposeString("The level of logging detail:");
   }
 
   @Override
@@ -62,28 +45,9 @@ public class ArgHandlerLogLevel extends ArgHandler {
   }
 
   @Override
-  public String[] getTagArgs() {
-    return new String[] {"level"};
-  }
-
-  @Override
-  public int handle(String[] args, int startIndex) {
-    if (startIndex + 1 < args.length) {
-      try {
-        TreeLogger.Type level = TreeLogger.Type.valueOf(args[startIndex + 1]);
-        options.setLogLevel(level);
-        return 1;
-      } catch (IllegalArgumentException e) {
-        // Argument did not match any enum value; fall through to error case.
-      }
+  public void setValue(Type logLevel) {
+    if (options.getLogLevel() != logLevel) {
+      options.setLogLevel(logLevel);
     }
-
-    System.err.println(getTag() + " should be followed by one of");
-    System.err.println("  " + OPTIONS_STRING);
-    return -1;
-  }
-
-  protected TreeLogger.Type getDefaultLogLevel() {
-    return TreeLogger.INFO;
   }
 }

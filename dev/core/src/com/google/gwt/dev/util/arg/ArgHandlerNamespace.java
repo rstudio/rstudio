@@ -16,18 +16,19 @@
 package com.google.gwt.dev.util.arg;
 
 import com.google.gwt.dev.js.JsNamespaceOption;
-import com.google.gwt.util.tools.ArgHandlerString;
+import com.google.gwt.util.tools.ArgHandlerEnum;
 
 /**
  * When enabled, the GWT compiler will place most JavaScript globals into
  * namespaces instead of putting them all on the "window" object. This reduces
  * the number of globals but increases code size.
  */
-public class ArgHandlerNamespace extends ArgHandlerString {
-  private final OptionNamespace option;
+public class ArgHandlerNamespace extends ArgHandlerEnum<JsNamespaceOption> {
+  private final OptionNamespace options;
 
-  public ArgHandlerNamespace(OptionNamespace option) {
-    this.option = option;
+  public ArgHandlerNamespace(OptionNamespace options) {
+    super(JsNamespaceOption.class);
+    this.options = options;
   }
 
   @Override
@@ -47,19 +48,9 @@ public class ArgHandlerNamespace extends ArgHandlerString {
   }
 
   @Override
-  public String[] getTagArgs() {
-    return new String[] {"PACKAGE, NONE"};
-  }
-
-  @Override
-  public boolean setString(String newValue) {
-    if (newValue.equalsIgnoreCase("PACKAGE")) {
-      option.setNamespace(JsNamespaceOption.BY_JAVA_PACKAGE);
-    } else if (newValue.equalsIgnoreCase("NONE")) {
-      option.setNamespace(JsNamespaceOption.NONE);
-    } else {
-      return false;
+  public void setValue(JsNamespaceOption value) {
+    if (options.getNamespace() != value) {
+      options.setNamespace(value);
     }
-    return true;
   }
 }

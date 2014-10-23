@@ -16,24 +16,23 @@
 package com.google.gwt.dev.util.arg;
 
 import com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode.Mode;
-import com.google.gwt.thirdparty.guava.common.base.Joiner;
-import com.google.gwt.util.tools.ArgHandlerString;
+import com.google.gwt.util.tools.ArgHandlerEnum;
 
 /**
  * Argument handler set setting the display name setting in the compiler.
  */
-public class ArgHandlerMethodNameDisplayMode extends ArgHandlerString {
+public class ArgHandlerMethodNameDisplayMode extends ArgHandlerEnum<Mode> {
 
   private final OptionMethodNameDisplayMode option;
 
   public ArgHandlerMethodNameDisplayMode(OptionMethodNameDisplayMode option) {
+    super(Mode.class, option.getMethodNameDisplayMode(), false);
     this.option = option;
   }
 
   @Override
   public String getPurpose() {
-    return "Emit extra information allow chrome dev tools to display Java identifiers in many" +
-        " places instead of JavaScript functions.";
+    return getPurposeString("Specifies method display name mode for chrome devtools:");
   }
 
   @Override
@@ -46,19 +45,9 @@ public class ArgHandlerMethodNameDisplayMode extends ArgHandlerString {
     return true;
   }
 
-  @Override
-  public boolean setString(String value) {
-    Mode methodNameDisplayMode =
-        Mode.valueOf(value.toUpperCase());
-    if (methodNameDisplayMode == null) {
-      return false;
+  public void setValue(Mode value) {
+    if (option.getMethodNameDisplayMode() != value) {
+      option.setMethodNameDisplayMode(value);
     }
-    option.setMethodNameDisplayMode(methodNameDisplayMode);
-    return true;
-  }
-
-  @Override
-  public String[] getTagArgs() {
-    return new String[] { Joiner.on(" | ").join(Mode.values()) };
   }
 }
