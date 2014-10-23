@@ -39,6 +39,9 @@ if(RSTUDIO_SERVER)
   # rpm dependencies
   set(RSTUDIO_RPM_DEPENDS "psmisc, libffi, ")
 
+  # don't auto-resolve other dependencies
+  set(CPACK_RPM_PACKAGE_AUTOREQPROV " no")
+
 elseif(RSTUDIO_DESKTOP)
  
    # debian control files
@@ -82,6 +85,10 @@ set(CPACK_RPM_SPEC_INSTALL_POST "/bin/true")
 set(CPACK_RPM_POST_INSTALL_SCRIPT_FILE "${CMAKE_CURRENT_BINARY_DIR}/rpm-script/postinst.sh")
 set(CPACK_RPM_POST_UNINSTALL_SCRIPT_FILE "${CMAKE_CURRENT_BINARY_DIR}/rpm-script/postrm.sh")
 
+set(CPACK_RPM_SPEC_MORE_DEFINE "%define ignore \#")
+set(CPACK_RPM_USER_FILELIST 
+  "%ignore /usr"
+  "%ignore /usr/lib")
 
 # package file name
 set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}${RSTUDIO_PACKAGE_SUFFIX}${CPACK_PACKAGE_VERSION}-${PACKAGE_ARCHITECTURE}")
