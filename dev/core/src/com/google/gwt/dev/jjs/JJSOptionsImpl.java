@@ -17,6 +17,7 @@ package com.google.gwt.dev.jjs;
 
 import com.google.gwt.dev.js.JsNamespaceOption;
 import com.google.gwt.dev.util.arg.OptionJsInteropMode;
+import com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.arg.SourceLevel;
 
@@ -57,8 +58,8 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private boolean strictPublicResources = false;
   private OptionJsInteropMode.Mode jsInteropMode = OptionJsInteropMode.Mode.NONE;
   private boolean useDetailedTypeIds = false;
-  private com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode.Mode methodNameDisplayMode =
-      com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode.Mode.NONE;
+  private OptionMethodNameDisplayMode.Mode methodNameDisplayMode =
+      OptionMethodNameDisplayMode.Mode.NONE;
 
   public JJSOptionsImpl() {
   }

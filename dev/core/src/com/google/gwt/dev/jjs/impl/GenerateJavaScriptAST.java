@@ -165,6 +165,7 @@ import com.google.gwt.dev.util.Name.SourceName;
 import com.google.gwt.dev.util.Pair;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.arg.OptionJsInteropMode;
+import com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.collect.Stack;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
@@ -2632,7 +2633,7 @@ public class GenerateJavaScriptAST {
     }
 
     private boolean shouldEmitDisplayNames() {
-      return methodNameMappingMode != com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode.Mode.NONE;
+      return methodNameMappingMode != OptionMethodNameDisplayMode.Mode.NONE;
     }
 
     private String getDisplayName(JMethod method) {
@@ -2643,8 +2644,9 @@ public class GenerateJavaScriptAST {
           return method.getEnclosingType().getShortName() + "." + method.getName();
         case FULL:
           return method.getEnclosingType().getName() + "." + method.getName();
+        default:
+          assert false : "Invalid display mode option " + methodNameMappingMode;
       }
-      assert false;
       return null;
     }
 
@@ -3357,7 +3359,7 @@ public class GenerateJavaScriptAST {
 
   private final PermProps props;
 
-  private com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode.Mode methodNameMappingMode;
+  private OptionMethodNameDisplayMode.Mode methodNameMappingMode;
 
   private GenerateJavaScriptAST(TreeLogger logger, JProgram program, JsProgram jsProgram,
       CompilerContext compilerContext, TypeMapper<?> typeMapper,

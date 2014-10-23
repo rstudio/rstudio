@@ -21,6 +21,7 @@ import com.google.gwt.dev.jjs.JJSOptionsImpl;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.js.JsNamespaceOption;
 import com.google.gwt.dev.util.arg.OptionJsInteropMode;
+import com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode;
 import com.google.gwt.dev.util.arg.SourceLevel;
 
 import java.io.File;
@@ -109,7 +110,7 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   }
 
   @Override
-  public com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode.Mode getMethodNameDisplayMode() {
+  public OptionMethodNameDisplayMode.Mode getMethodNameDisplayMode() {
     return jjsOptions.getMethodNameDisplayMode();
   }
 
@@ -326,8 +327,7 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   }
 
   @Override
-  public void setMethodNameDisplayMode(
-      com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode.Mode methodNameDisplayMode) {
+  public void setMethodNameDisplayMode(OptionMethodNameDisplayMode.Mode methodNameDisplayMode) {
     jjsOptions.setMethodNameDisplayMode(methodNameDisplayMode);
   }
 
