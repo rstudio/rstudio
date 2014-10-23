@@ -14,6 +14,11 @@
  */
 
 #include "DesktopSecondaryWindow.hpp"
+
+#include <QApplication>
+#include <QToolBar>
+#include <QDesktopWidget>
+
 #include "DesktopWebView.hpp"
 
 namespace desktop {
@@ -22,12 +27,12 @@ namespace {
 
 QIcon icon(const char* name)
 {
-#ifdef Q_WS_MACX
-   static QString suffix(QString::fromAscii("_mac"));
+#ifdef Q_OS_MACX
+   static QString suffix(QString::fromUtf8("_mac"));
 #else
-   static QString suffix(QString::fromAscii(""));
+   static QString suffix(QString::fromUtf8(""));
 #endif
-   return QIcon(QString::fromAscii(":/icons/") + QString::fromAscii(name) + suffix + QString::fromAscii(".png"));
+   return QIcon(QString::fromUtf8(":/icons/") + QString::fromUtf8(name) + suffix + QString::fromUtf8(".png"));
 }
 
 }
@@ -38,7 +43,7 @@ SecondaryWindow::SecondaryWindow(QUrl baseUrl, QWidget* pParent) :
    setAttribute(Qt::WA_QuitOnClose, false);
    setAttribute(Qt::WA_DeleteOnClose, true);
 
-#ifdef Q_WS_MACX
+#ifdef Q_OS_MACX
    setIconSize(QSize(26, 22));
 #else
    setIconSize(QSize(26, 20));

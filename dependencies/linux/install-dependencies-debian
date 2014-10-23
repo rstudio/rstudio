@@ -67,6 +67,9 @@ then
    # Ubuntu 12.04 doesn't include libjpeg62 (and it's required by Qt 4.8)
    sudo apt-get -y install libjpeg62
 
+   # Need the OpenGL development libraries to build QtGui
+   sudo apt-get -y install libgl1-mesa-dev
+
    # install Qt 4.8 SDK (into a private /opt/RStudio-QtSDK directory so as to 
    # not conflict with any other installed versions of Qt on the system)
    ./install-qt-sdk

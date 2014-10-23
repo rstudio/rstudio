@@ -21,12 +21,27 @@
 
 #include <core/system/Environment.hpp>
 
+#import <Foundation/NSString.h>
+#import <AppKit/NSView.h>
+#import <AppKit/NSWindow.h>
+
+
+
 namespace desktop {
+
+namespace {
+
+NSWindow* nsWindowForMainWindow(QMainWindow* pMainWindow)
+{
+   NSView *nsview = (NSView *) pMainWindow->winId();
+   return [nsview window];
+}
+
+}
 
 bool isRetina(QMainWindow* pMainWindow)
 {
-   OSWindowRef macWindow = qt_mac_window_for(pMainWindow);
-   NSWindow* pWindow = (NSWindow*)macWindow;
+   NSWindow* pWindow = nsWindowForMainWindow(pMainWindow);
 
    if ([pWindow respondsToSelector:@selector(backingScaleFactor)])
    {
@@ -56,13 +71,6 @@ bool isOSXMavericks()
 
 
 namespace {
-
-NSWindow* nsWindowForMainWindow(QMainWindow* pMainWindow)
-{
-   OSWindowRef macWindow = qt_mac_window_for(pMainWindow);
-   NSWindow* pWindow = (NSWindow*)macWindow;
-   return pWindow;
-}
 
 bool supportsFullscreenMode(NSWindow* pWindow)
 {

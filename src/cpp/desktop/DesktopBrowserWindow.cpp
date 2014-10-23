@@ -15,6 +15,11 @@
 
 #include "DesktopBrowserWindow.hpp"
 #include <QWebFrame>
+#include <QToolBar>
+#include <QShortcut>
+
+#include <QtPrintSupport/QPrintPreviewDialog>
+
 #include "DesktopWebView.hpp"
 
 #include "DesktopUtils.hpp"
@@ -104,9 +109,9 @@ WebView* BrowserWindow::webView()
 
 void BrowserWindow::avoidMoveCursorIfNecessary()
 {
-#ifdef Q_WS_MACX
+#ifdef Q_OS_MACX
    webView()->page()->mainFrame()->evaluateJavaScript(
-         QString::fromAscii("document.body.className = document.body.className + ' avoid-move-cursor'"));
+         QString::fromUtf8("document.body.className = document.body.className + ' avoid-move-cursor'"));
 #endif
 }
 

@@ -18,6 +18,7 @@
 
 #include <QtGui>
 #include <QtWebKit>
+#include <QWebPage>
 
 namespace desktop {
 
