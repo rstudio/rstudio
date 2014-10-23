@@ -217,6 +217,32 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
       }
    };
 
+   this.$getEnclosingText = function(position, trim) {
+
+      var text = null;
+
+      var matchingPos = this.$session.findMatchingBracket({
+         row: position.row,
+         column: position.column + 1
+      });
+
+      if (matchingPos) {
+         
+         text = this.$session.getTextRange(new Range(
+            position.row, position.column, matchingPos.row, matchingPos.column + 1
+         ));
+
+         if (trim) {
+            text = text.replace(/[\n\s]+/g, " ");
+            if (text.length > 80)
+               text = text.substring(0, 80) + "...";
+         }
+      }
+
+      return text;
+      
+   };
+
    this.$buildScopeTreeUpToRow = function(maxrow) {
 
       function maybeEvaluateLiteralString(value) {
@@ -328,7 +354,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                // named namespace
                localCursor.moveToPreviousToken();
                var namespaceName = localCursor.currentValue();
-               this.$scopes.onNamespaceScopeStart("[namespace " + namespaceName + "]",
+               this.$scopes.onNamespaceScopeStart("namespace " + namespaceName,
                                                   localCursor.currentPosition(),
                                                   tokenCursor.currentPosition());
                
@@ -336,7 +362,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
             // anonymous namespace
             else if (localCursor.peekBack().currentValue() === "namespace") {
-               this.$scopes.onNamespaceScopeStart("[anonymous namespace]",
+               this.$scopes.onNamespaceScopeStart("anonymous namespace",
                                                   startPos,
                                                   tokenCursor.currentPosition());
             }
@@ -347,7 +373,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                      localCursor.bwdOverClassInheritance()) {
                localCursor.moveToPreviousToken();
                var className = localCursor.currentValue();
-               this.$scopes.onClassScopeStart("[class " + className + "]",
+               this.$scopes.onClassScopeStart("class " + className,
                                               localCursor.currentPosition(),
                                               tokenCursor.currentPosition());
             }
@@ -362,14 +388,46 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                    localCursor.peekBack().currentValue() === "]") {
                   
                   var functionName = localCursor.peekBack().currentValue();
-                  if (functionName === "]") 
-                     this.$scopes.onLambdaScopeStart("[lambda function]",
+                  if (functionName === "]") {
+
+                     var args = "";
+
+                     if (localCursor.currentValue() === "(") {
+                        var enclosingText = this.$getEnclosingText(localCursor.currentPosition(), true);
+                        if (enclosingText != null)
+                           args = enclosingText;
+                     }
+
+                     this.$scopes.onLambdaScopeStart("lambda " + args,
                                                      startPos,
                                                      tokenCursor.currentPosition());
-                  else
-                     this.$scopes.onFunctionScopeStart("[function " + functionName + "]",
+                     
+                  } else {
+                     
+                     var name = functionName;
+                     var args = "";
+
+                     // Check if this is a constructor (the function name matches the
+                     // enclosing scope class name)
+                     var fnType = "function";
+                     var enclosingScopes = this.$scopes.getActiveScopes(localCursor.currentPosition());
+                     if (enclosingScopes != null) {
+                        var parentScope = enclosingScopes[enclosingScopes.length - 1];
+                        if (parentScope.isClass() && parentScope.label === "class " + name) {
+                           fnType = "constructor";
+                        }
+                     }
+                     
+                     if (localCursor.currentValue() === "(") {
+                        var enclosingText = this.$getEnclosingText(localCursor.currentPosition(), true);
+                        if (enclosingText != null)
+                           args = enclosingText;
+                     }
+                     
+                     this.$scopes.onFunctionScopeStart(fnType + " " + name + args,
                                                        localCursor.peekBack().currentPosition(),
                                                        tokenCursor.currentPosition());
+                  }
                }
             }
             // other (unknown)

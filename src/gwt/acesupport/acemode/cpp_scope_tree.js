@@ -75,7 +75,7 @@ var CppScopeManager = function(ScopeNodeFactory) {
       column: 0
    };
 
-   this.$root = new CppScopeNode("(Top Level)",
+   this.$root = new ScopeNodeFactory("(Top Level)",
                                  this.parsePos,
                                  null,
                                  ScopeNode.TYPE_ROOT,
