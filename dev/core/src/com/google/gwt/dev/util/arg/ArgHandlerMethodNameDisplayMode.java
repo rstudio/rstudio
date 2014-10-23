@@ -59,7 +59,6 @@ public class ArgHandlerMethodNameDisplayMode extends ArgHandlerString {
 
   @Override
   public String[] getTagArgs() {
-    return new String[] {Joiner.on(" | ").join(
-        Mode.values())};
+    return new String[] { Joiner.on(" | ").join(Mode.values()) };
   }
 }
