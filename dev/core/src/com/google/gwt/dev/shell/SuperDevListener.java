@@ -179,7 +179,7 @@ public class SuperDevListener implements CodeServerListener {
       args.add("-noincremental");
     }
 
-    args.add("-XdisplayNameMode");
+    args.add("-XmethodNameDisplayMode");
     args.add(options.getMethodNameDisplayMode().toString());
 
     for (String mod : options.getModuleNames()) {
