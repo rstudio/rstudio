@@ -303,7 +303,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     checkErrors();
 
     Set<String> externalClasses = revertRenamingOfExternalClasses(cssTreeResult.tree,
-        renamingResult.mapping);
+        renamingResult);
 
     checkErrors();
 
@@ -582,15 +582,20 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
    * because some external at-rule could be located inside a conditional block and could be
    * removed when these blocks are evaluated.
    */
-  private Set<String> revertRenamingOfExternalClasses(CssTree cssTree, Map<String,
-      String> styleClassesMapping) {
+  private Set<String> revertRenamingOfExternalClasses(CssTree cssTree, RenamingResult renamingResult) {
     ExternalClassesCollector externalClassesCollector = new ExternalClassesCollector(cssTree
         .getMutatingVisitController(), errorManager);
 
     externalClassesCollector.runPass();
 
-    Set<String> styleClassSet = styleClassesMapping.keySet();
-    Set<String> externalClasses = externalClassesCollector.getExternalClassNames(styleClassSet);
+    Map<String, String> styleClassesMapping = renamingResult.mapping;
+
+    // set containing all the style classes before the renaming.
+    Set<String> allStyleClassSet = Sets.newHashSet(styleClassesMapping.keySet());
+    // add the style classes that aren't associated to a method
+    allStyleClassSet.addAll(renamingResult.externalClassCandidate);
+
+    Set<String> externalClasses = externalClassesCollector.getExternalClassNames(allStyleClassSet);
 
     final Map<String, String> revertMap = new HashMap<String, String>(externalClasses.size());
 
