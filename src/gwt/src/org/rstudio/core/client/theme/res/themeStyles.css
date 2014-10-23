@@ -195,7 +195,7 @@ iframe {
 }
 
 button {
-   cursor: pointer;
+   cursor: default;
 }
 
 textarea {
@@ -452,7 +452,7 @@ pre {
 .windowframe .maximize {
    background-image: MAXIMIZE;
    z-index: 50;
-   cursor: pointer;
+   cursor: default;
 }
 .windowframe-maximized .maximize,
 .windowframe-exclusive .maximize {
@@ -462,7 +462,7 @@ pre {
 .windowframe .minimize {
    background-image: MINIMIZE;
    z-index: 50;
-   cursor: pointer;
+   cursor: default;
 }
 .windowframe .maximize:hover {
    background-image: MAXIMIZESELECTED;
@@ -514,14 +514,14 @@ pre {
    height: 14px;
    background: RESTORE center no-repeat;
    margin: 4px 4px 0 0;
-   cursor: pointer;
+   cursor: default;
 }
 .minimizedWindow .maximize {
    width: 14px;
    height: 14px;
    background: MAXIMIZE center no-repeat;
    margin: 4px 3px 0 0;
-   cursor: pointer;
+   cursor: default;
 }
 .minimizedWindow .maximize:hover {
    background-image: MAXIMIZESELECTED;
@@ -620,7 +620,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 .closeTabButton:hover {
    filter: literal("alpha(opacity = 100)") !important;
    opacity: 1.0;
-   cursor: pointer;
+   cursor: default;
 }
 .tabLayout {
 }
@@ -777,7 +777,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    vertical-align: top;
    height: 21px;
    overflow: hidden;
-   cursor: pointer;
+   cursor: default;
 }
 .toolbarButton.noLabel {
    margin-right: 4px;
@@ -1010,7 +1010,7 @@ body.ubuntu_mono .searchBox {
 }
 
 .linkDownArrow {
-   cursor: pointer;
+   cursor: default;
 }
 
 @sprite td.environmentDataFrameCol {
@@ -1067,7 +1067,7 @@ body.ubuntu_mono .searchBox {
 }
 
 .fileList .parentDirIcon {
-   cursor: pointer;
+   cursor: default;
 }
 
 .locatorPanel {
