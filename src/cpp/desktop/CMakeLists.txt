@@ -413,6 +413,10 @@ if(RSTUDIO_BUNDLE_QT)
               DESTINATION ${QTPLUGINS_DEST_DIR}/plugins
               PATTERN "*_debug.*" EXCLUDE
               PATTERN "*.a" EXCLUDE)
+      install(DIRECTORY "${Qt5Core_DIR}/../../../plugins/platformthemes"
+              DESTINATION ${QTPLUGINS_DEST_DIR}/plugins
+              PATTERN "*_debug.*" EXCLUDE
+              PATTERN "*.a" EXCLUDE)
    endif()
 
    # fixup bundle on osx
