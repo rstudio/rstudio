@@ -39,15 +39,24 @@ public abstract class RenamingClassNameTest extends GWTTestCase {
   public void testExternalClasses() {
     ExternalClasses externalClasses = res().externalClasses();
 
-    // external at-rule shouldn't be printed
-    assertFalse(externalClasses.getText().contains("@external"));
-
     assertNotSame("obfuscatedClass", externalClasses.obfuscatedClass());
 
     assertEquals("externalClass", externalClasses.externalClass());
     assertEquals("externalClass2", externalClasses.externalClass2());
     assertEquals("unobfuscated", externalClasses.unobfuscated());
     assertEquals("unobfuscated2", externalClasses.unobfuscated2());
+
+    String css = externalClasses.getText();
+
+    // external at-rule shouldn't be printed
+    assertFalse(css.contains("@external"));
+    String expectedCss = "." +  externalClasses.obfuscatedClass() + "{width:100%}" +
+        ".externalClass,.externalClass2,.unobfuscated{height:50px}" +
+        ".unobfuscated-with-prefix-without-method{width:15px}" +
+        ".unobfuscated2{height:50px}" +
+        ".externalWithoutMethod{color:white}";
+
+    assertEquals(expectedCss, css);
   }
 
   public void testObfuscationScope() {

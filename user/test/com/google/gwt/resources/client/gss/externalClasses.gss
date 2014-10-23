@@ -23,6 +23,10 @@
     height: 50px;
 }
 
+.unobfuscated-with-prefix-without-method {
+  width:15px;
+}
+
 .unobfuscated2 {
     height: 50px;
 }
