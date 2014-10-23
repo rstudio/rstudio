@@ -79,7 +79,7 @@
 
 @sprite div.disclosure {
    gwt-image: 'searchResultsContextButton2';
-   cursor: pointer;
+   cursor: default;
    margin-top: 1px;
 }
 @sprite .selected div.disclosure {

@@ -1,5 +1,5 @@
 .button {
-   cursor: pointer;
+   cursor: default;
    display: inline-table;
    border: none;
    outline: none;

@@ -76,7 +76,7 @@ td.valueCol
 
 .clickableCol
 {
-   cursor: pointer;
+   cursor: default;
 }
 
 td.dataFrameValueCol
