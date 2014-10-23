@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
    
    // create our app delegate
    AppDelegate* appDelegate = [[[AppDelegate alloc] init] autorelease];
-   [NSApp setDelegate: appDelegate];
+   [NSApp setDelegate: (id) appDelegate];
    
    // run the event loop
    [NSApp run];
