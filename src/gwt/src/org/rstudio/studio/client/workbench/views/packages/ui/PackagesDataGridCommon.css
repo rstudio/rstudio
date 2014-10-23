@@ -1,5 +1,7 @@
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 
+@external ubuntu_mono;
+
 /* Styles here are applied to every DataGrid involved in the Packrat/Packages
    workflow, including the Packages pane itself and the actions/conflict 
    resolution dialogs. */
@@ -52,4 +54,9 @@
 {
 	border: none;
 	border-bottom: 1px solid #e0e0e0;
+}
+
+body.ubuntu_mono .dataGridCell input[type=checkbox] {
+   margin-top: 0;
+   margin-bottom: 0;
 }
