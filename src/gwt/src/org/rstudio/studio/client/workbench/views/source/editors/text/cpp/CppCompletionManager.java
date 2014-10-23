@@ -112,8 +112,9 @@ public class CppCompletionManager implements CompletionManager
       }
       else
       {
-         // TODO: go to help
-         
+         // no implementation here yet since we don't have access
+         // to C/C++ help (we could implement this via using libclang
+         // to parse doxygen though)
       }
    }
 
