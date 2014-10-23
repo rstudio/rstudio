@@ -346,18 +346,18 @@ public class JdtCompiler {
       } catch (AbortCompilation e) {
         abortCount++;
         String filename = new String(cud.getFileName());
-        logger.log(TreeLogger.Type.ERROR,
-            "JDT aborted: " + filename + ": " + e.problem.getMessage());
+        logger.log(TreeLogger.WARN, "JDT aborted: " + filename + ": " + e.problem.getMessage());
         if (abortCount >= ABORT_COUNT_MAX) {
+          logger.log(TreeLogger.ERROR, "JDT threw too many exceptions.");
           throw e;
         }
         return; // continue without it; it might be a server-side class.
       } catch (RuntimeException e) {
         abortCount++;
         String filename = new String(cud.getFileName());
-        logger.log(TreeLogger.Type.ERROR,
-            "JDT threw an exception: " + filename + ": " + e);
+        logger.log(TreeLogger.WARN, "JDT threw an exception: " + filename + ": " + e);
         if (abortCount >= ABORT_COUNT_MAX) {
+          logger.log(TreeLogger.ERROR, "JDT threw too many exceptions.");
           throw new AbortCompilation(cud.compilationResult, e);
         }
         return; // continue without it; it might be a server-side class.
