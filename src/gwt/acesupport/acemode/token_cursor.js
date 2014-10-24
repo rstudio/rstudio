@@ -599,9 +599,15 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
          if (value === ",") {
             return this.doBwdOverInitializationList(clonedCursor, tokenCursor);
          } else if (value === ":") {
-            tokenCursor.$row = clonedCursor.$row;
-            tokenCursor.$offset = clonedCursor.$offset;
-            return true;
+            var prevValue = clonedCursor.peekBack().currentValue();
+            if (!["public", "private", "protected"].some(function(x) {
+               return x === prevValue;
+            }))
+            {
+               tokenCursor.$row = clonedCursor.$row;
+               tokenCursor.$offset = clonedCursor.$offset;
+               return true;
+            }
          }
       }
 
