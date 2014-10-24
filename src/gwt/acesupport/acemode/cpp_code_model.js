@@ -380,12 +380,14 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
             // function and lambdas
             else if (
+               localCursor.bwdOverConstNoexcept() &&
                (localCursor.bwdOverInitializationList() &&
                 localCursor.moveBackwardOverMatchingParens()) ||
                   localCursor.moveBackwardOverMatchingParens()) {
 
                if (localCursor.peekBack().currentType() === "identifier" ||
-                   localCursor.peekBack().currentValue() === "]") {
+                   localCursor.peekBack().currentValue() === "]" ||
+                   /^operator/.test(localCursor.peekBack().currentValue())) {
                   
                   var functionName = localCursor.peekBack().currentValue();
                   if (functionName === "]") {
@@ -409,7 +411,13 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
                      // Check if this is a constructor (the function name matches the
                      // enclosing scope class name)
-                     var fnType = "function";
+                     var fnType = "function ";
+
+                     // If we're defining a function for e.g. 'operator()', then
+                     // prepending 'function' is redundant
+                     if (/^operator/.test(localCursor.peekBack().currentValue()))
+                        fnType = ""; // 'operator' is descriptive enough
+                     
                      var enclosingScopes = this.$scopes.getActiveScopes(localCursor.currentPosition());
                      if (enclosingScopes != null) {
                         var parentScope = enclosingScopes[enclosingScopes.length - 1];
@@ -417,10 +425,10 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                            // If the previous token is a '~', it's a destructor
                            // rather than a constructor
                            if (localCursor.peekBack(2).currentValue() === "~") {
-                              fnType = "destructor";
+                              fnType = "destructor ";
                               name = "~" + name;
                            } else {
-                              fnType = "constructor";
+                              fnType = "constructor ";
                            }
                         }
                      }
@@ -431,7 +439,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                            args = enclosingText;
                      }
                      
-                     this.$scopes.onFunctionScopeStart(fnType + " " + name + args,
+                     this.$scopes.onFunctionScopeStart(fnType + name + args,
                                                        localCursor.peekBack().currentPosition(),
                                                        tokenCursor.currentPosition());
                   }
