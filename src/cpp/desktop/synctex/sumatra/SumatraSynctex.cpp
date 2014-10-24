@@ -57,8 +57,7 @@ QStringList inverseSearchArgs(WId mainWindowId)
    cmdFormat.append(space);
 
    // main window handle
-   unsigned int hwnd = reinterpret_cast<unsigned int>(mainWindowId);
-   std::string hwndStr = safe_convert::numberToString(hwnd);
+   std::string hwndStr = safe_convert::numberToString(mainWindowId);
    cmdFormat.append(QString::fromStdString(hwndStr));
    cmdFormat.append(space);
 
@@ -115,7 +114,7 @@ void SumatraSynctex::view(const QString& pdfFile, int pdfPage)
    QStringList args = standardSumatraArgs();
    if (pdfPage != -1)
    {
-      args.append(QString::fromAscii("-page"));
+      args.append(QString::fromUtf8("-page"));
       args.append(QString::fromStdString(safe_convert::numberToString(pdfPage)));
    }
    args.append(pdfFile);

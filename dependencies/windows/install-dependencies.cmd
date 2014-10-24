@@ -8,8 +8,9 @@ set WGET_ARGS=--no-check-certificate
 set UNZIP_ARGS=-q
 
 set BASEURL=https://s3.amazonaws.com/rstudio-buildtools/
-set BOOST_FILE=boost-1.50-win-gcc48.zip
-set MINGW_FILE=mingw64-gcc48.zip
+set BOOST_FILE=boost-1.50-win.zip
+set BOOST_GCC482_FILE=boost-1.50-win-gcc482.zip
+set MINGW_FILE=mingw64-2010-10-03.zip
 set GIN_FILE=gin-1.5.zip
 set GWT_FILE=gwt-2.6.0.zip
 set JUNIT_FILE=junit-4.9b3.jar
@@ -22,19 +23,24 @@ set PANDOC_VERSION=1.12.4.2
 set PANDOC_NAME=pandoc-%PANDOC_VERSION%
 set PANDOC_FILE=%PANDOC_NAME%.zip
 
-if not exist boost-1.50-win-gcc48 (
+if not exist boost-1.50-win-gcc482 (
+  wget %WGET_ARGS% "%BASEURL%%BOOST_GCC482_FILE%"
+  echo Unzipping %BOOST_GCC482_FILE%
+  unzip %UNZIP_ARGS% "%BOOST_GCC482_FILE%"
+  del "%BOOST_GCC482_FILE%"
+)
+
+if not exist boost-1.50-win (
   wget %WGET_ARGS% "%BASEURL%%BOOST_FILE%"
-  mkdir boost-1.50-win-gcc48
   echo Unzipping %BOOST_FILE%
-  unzip %UNZIP_ARGS% "%BOOST_FILE%" -d boost-1.50-win-gcc48
+  unzip %UNZIP_ARGS% "%BOOST_FILE%"
   del "%BOOST_FILE%"
 )
 
-if not exist mingw64-gcc48 (
+if not exist mingw64 (
   wget %WGET_ARGS% "%BASEURL%%MINGW_FILE%"
-  mkdir mingw64-gcc48
   echo Unzipping %MINGW_FILE%
-  unzip %UNZIP_ARGS% "%MINGW_FILE%" -d mingw64-gcc48
+  unzip %UNZIP_ARGS% "%MINGW_FILE%"
   del "%MINGW_FILE%"
 )
 
