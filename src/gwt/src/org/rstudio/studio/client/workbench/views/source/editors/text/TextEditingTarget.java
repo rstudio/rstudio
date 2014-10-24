@@ -1287,9 +1287,9 @@ public class TextEditingTarget implements
    private void updateStatusBarLanguage()
    {
       statusBar_.getLanguage().setValue(fileType_.getLabel());
-      boolean isR = fileType_.canShowScopeTree();
-      statusBar_.setScopeVisible(isR);
-      if (isR)
+      boolean canShowScope = fileType_.canShowScopeTree();
+      statusBar_.setScopeVisible(canShowScope);
+      if (canShowScope)
          updateCurrentScope();
    }
 
@@ -1311,7 +1311,7 @@ public class TextEditingTarget implements
                public void execute()
                {
                   // special handing for presentations since we extract
-                  // the slide structure in a differerent manner than 
+                  // the slide structure in a different manner than 
                   // the editor scope trees
                   if (fileType_.isRpres())
                   {
@@ -1322,22 +1322,28 @@ public class TextEditingTarget implements
                   }
                   else
                   {
-                     Scope function = docDisplay_.getCurrentScope();
-                     String label = function != null
-                                   ? function.getLabel()
+                     Scope scope = docDisplay_.getCurrentScope();
+                     String label = scope != null
+                                   ? scope.getLabel()
                                    : null;
                      statusBar_.getScope().setValue(label);
                      
-                     if (function != null)
+                     if (scope != null)
                      {
                         boolean useChunk = 
-                                 function.isChunk() || 
-                                 (fileType_.isRnw() && function.isTopLevel());
-                        if (useChunk)
+                                 scope.isChunk() || 
+                                 (fileType_.isRnw() && scope.isTopLevel());
+                             if (useChunk)
                            statusBar_.setScopeType(StatusBar.SCOPE_CHUNK);
-                        else if (function.isSection())
+                        else if (scope.isNamespace())
+                          statusBar_.setScopeType(StatusBar.SCOPE_NAMESPACE);
+                        else if (scope.isClass())
+                           statusBar_.setScopeType(StatusBar.SCOPE_CLASS);
+                        else if (scope.isSection())
                            statusBar_.setScopeType(StatusBar.SCOPE_SECTION);
-                        else
+                        else if (scope.isTopLevel())
+                           statusBar_.setScopeType(StatusBar.SCOPE_TOP_LEVEL);
+                        else if (scope.isFunction())
                            statusBar_.setScopeType(StatusBar.SCOPE_FUNCTION);
                      }
                   }

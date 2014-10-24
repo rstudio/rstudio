@@ -40,7 +40,7 @@ var $fillinDoWhile = true;
 
 var CStyleBehaviour = function(codeModel) {
 
-   var $codeModel = codeModel;
+   var codeModel = codeModel;
    var $complements = codeModel.$complements;
 
    var autoPairInsertion = function(text, input, editor, session) {
@@ -132,7 +132,7 @@ var CStyleBehaviour = function(codeModel) {
          var cursor = editor.getCursorPosition();
          var line = session.doc.getLine(cursor.row);
 
-         if (this.$codeModel.inMacro(session.getDocument().$lines, row - 1)) {
+         if (this.codeModel.inMacro(session.getDocument().$lines, row - 1)) {
             return;
          }
 
@@ -227,7 +227,7 @@ var CStyleBehaviour = function(codeModel) {
             }
 
             // Use heuristic indentation if possible
-            var heuristicRow = $codeModel.getRowForOpenBraceIndent(
+            var heuristicRow = codeModel.getRowForOpenBraceIndent(
                session, row
             );
 
@@ -278,13 +278,13 @@ var CStyleBehaviour = function(codeModel) {
             var row = editor.selection.getCursor().row;
             var col = editor.selection.getCursor().column;
             var doc = session.getDocument();
-            var line = this.$codeModel.getLineSansComments(doc, row, true);
+            var line = this.codeModel.getLineSansComments(doc, row, true);
             var prevLine = "";
             if (row > 0) {
-               prevLine = this.$codeModel.getLineSansComments(doc, row - 1, true);
+               prevLine = this.codeModel.getLineSansComments(doc, row - 1, true);
                for (var i = row - 1; i >= 0; i--) {
                   if (!/^\s*$/.test(prevLine)) break;
-                  prevLine = this.$codeModel.getLineSansComments(doc, i, true);
+                  prevLine = this.codeModel.getLineSansComments(doc, i, true);
                }
             }
             
@@ -361,7 +361,7 @@ var CStyleBehaviour = function(codeModel) {
 
             // If class-style indentation can produce an appropriate indentation for
             // the brace, then insert a closing brace with a semi-colon.
-            var heuristicRow = $codeModel.getRowForOpenBraceIndent(
+            var heuristicRow = codeModel.getRowForOpenBraceIndent(
                session, row, true
             );
 
@@ -375,9 +375,12 @@ var CStyleBehaviour = function(codeModel) {
             // if it looks like we're using a initializor eg 'obj {', then
             // include a closing ;
             // Avoid doing this if there's an 'else' token on the same line
-            if (line.match(/\S+\s*$/) &&
-                !line.match(/\belse\b/) &&
-                line.indexOf(";") === -1) {
+            if (/\S+\s*$/.test(line) &&
+                !/^\s*if\s*$/.test(line) &&
+                !/^\s*else\s*$/.test(line) &&
+                !/^\s*else\s+if\s*$/.test(line) &&
+                line.indexOf(";") === -1)
+            {
                return {
                   text: '{};',
                   selection: [1, 1]
@@ -575,7 +578,7 @@ var CStyleBehaviour = function(codeModel) {
       }
 
       // Special rules for 'macro mode'.
-      if (/^\s*#\s*define/.test(line) || this.$codeModel.inMacro(lines, row - 1)) {
+      if (/^\s*#\s*define/.test(line) || this.codeModel.inMacro(lines, row - 1)) {
 
          // Handle insertion of a '\'.
          //

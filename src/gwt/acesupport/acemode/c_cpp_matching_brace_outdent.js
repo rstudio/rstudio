@@ -4,7 +4,7 @@ var Range = require("ace/range").Range;
 
 var CppTokenCursor = require("mode/token_cursor").CppTokenCursor;
 var MatchingBraceOutdent = function(codeModel) {
-   this.$codeModel = codeModel;
+   this.codeModel = codeModel;
 };
 
 // Allow the user to control various levels of outdenting if desired
@@ -147,9 +147,9 @@ var $alignCase                 = true; // case 'a':
           /^\s*:/.test(doc.getLine(row)) &&
           !/^\s*::/.test(doc.getLine(row))) {
 
-         if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row)) {
+         if (this.codeModel.$tokenUtils.$tokenizeUpToRow(row)) {
 
-            var tokenCursor = new CppTokenCursor(this.$codeModel.$tokens, row, 0);
+            var tokenCursor = new CppTokenCursor(this.codeModel.$tokens, row, 0);
             var rowToUse = -1;
 
             // First, handle constructors. Note that we need to first walk
@@ -217,7 +217,7 @@ var $alignCase                 = true; // case 'a':
           /^\s*>/.test(line) &&
           !/^\s*>>/.test(line)) {
 
-         var rowToUse = this.$codeModel.getRowForMatchingEOLArrows(session, doc, row);
+         var rowToUse = this.codeModel.getRowForMatchingEOLArrows(session, doc, row);
          if (rowToUse >= 0) {
             this.setIndent(session, row, rowToUse);
             return;
@@ -226,8 +226,8 @@ var $alignCase                 = true; // case 'a':
          // TODO: Renable this block if we get better tokenization
          // (need to discover whether '<', '>' are operators or not)
          //
-         // if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row)) {
-         //    var tokenCursor = new CppTokenCursor(this.$codeModel.$tokens, row, 0);
+         // if (this.codeModel.$tokenUtils.$tokenizeUpToRow(row)) {
+         //    var tokenCursor = new CppTokenCursor(this.codeModel.$tokens, row, 0);
          //    if (tokenCursor.bwdToMatchingArrow()) {
          //       this.setIndent(session, row, tokenCursor.$row);
          //    }
@@ -267,7 +267,7 @@ var $alignCase                 = true; // case 'a':
             }
 
             // Otherwise, try looking upwards to get an appropriate indentation
-            var heuristicRow = this.$codeModel.getRowForOpenBraceIndent(
+            var heuristicRow = this.codeModel.getRowForOpenBraceIndent(
                session,
                openBracketPos.row
             );
@@ -330,7 +330,7 @@ var $alignCase                 = true; // case 'a':
             // If this open brace is already associated with a class or struct,
             // step over all of those rows.
             var heuristicRow =
-                   this.$codeModel.getRowForOpenBraceIndent(session, openBracePos.row);
+                   this.codeModel.getRowForOpenBraceIndent(session, openBracePos.row);
 
             if (heuristicRow >= 0) {
                this.setIndent(session, row, heuristicRow);
@@ -357,7 +357,7 @@ var $alignCase                 = true; // case 'a':
 
          if (openBracePos) {
             var heuristicRow =
-                   this.$codeModel.getRowForOpenBraceIndent(session, openBracePos.row);
+                   this.codeModel.getRowForOpenBraceIndent(session, openBracePos.row);
 
             if (heuristicRow >= 0) {
                this.setIndent(session, row, heuristicRow);
@@ -398,9 +398,9 @@ var $alignCase                 = true; // case 'a':
          // Don't outdent if the previous line ends with a semicolon
          if (!/;\s*$/.test(prevLine)) {
 
-            if (this.$codeModel.$tokenUtils.$tokenizeUpToRow(row)) {
+            if (this.codeModel.$tokenUtils.$tokenizeUpToRow(row)) {
 
-               var tokenCursor = new CppTokenCursor(this.$codeModel.$tokens);
+               var tokenCursor = new CppTokenCursor(this.codeModel.$tokens);
                tokenCursor.$row = row,
                tokenCursor.$offset = 0;
 
@@ -411,7 +411,7 @@ var $alignCase                 = true; // case 'a':
                }
             }
 
-            var scopeRow = this.$codeModel.getRowForOpenBraceIndent(
+            var scopeRow = this.codeModel.getRowForOpenBraceIndent(
                session,
                row
             );

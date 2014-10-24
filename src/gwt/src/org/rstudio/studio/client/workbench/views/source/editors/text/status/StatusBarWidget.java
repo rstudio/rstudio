@@ -80,7 +80,20 @@ public class StatusBarWidget extends Composite
    
    public void setScopeType(int type)
    {
-      if (type == StatusBar.SCOPE_FUNCTION)
+      if (type == StatusBar.SCOPE_TOP_LEVEL)
+         scopeIcon_.setVisible(false);
+      else
+         scopeIcon_.setVisible(true);
+         
+           if (type == StatusBar.SCOPE_CLASS)
+         scopeIcon_.setResource(StandardIcons.INSTANCE.clazz());
+      else if (type == StatusBar.SCOPE_NAMESPACE)
+         scopeIcon_.setResource(StandardIcons.INSTANCE.namespace());
+      else if (type == StatusBar.SCOPE_LAMBDA)
+         scopeIcon_.setResource(StandardIcons.INSTANCE.lambda());
+      else if (type == StatusBar.SCOPE_ANON)
+         scopeIcon_.setResource(StandardIcons.INSTANCE.anon());
+      else if (type == StatusBar.SCOPE_FUNCTION)
          scopeIcon_.setResource(StandardIcons.INSTANCE.function());
       else if (type == StatusBar.SCOPE_CHUNK)
          scopeIcon_.setResource(RES.chunk());
@@ -88,6 +101,8 @@ public class StatusBarWidget extends Composite
          scopeIcon_.setResource(RES.section());
       else if (type == StatusBar.SCOPE_SLIDE)
          scopeIcon_.setResource(RES.slide());
+      else
+         scopeIcon_.setResource(StandardIcons.INSTANCE.function());
    }
 
    @UiField
