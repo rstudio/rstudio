@@ -414,7 +414,14 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                      if (enclosingScopes != null) {
                         var parentScope = enclosingScopes[enclosingScopes.length - 1];
                         if (parentScope.isClass() && parentScope.label === "class " + name) {
-                           fnType = "constructor";
+                           // If the previous token is a '~', it's a destructor
+                           // rather than a constructor
+                           if (localCursor.peekBack(2).currentValue() === "~") {
+                              fnType = "destructor";
+                              name = "~" + name;
+                           } else {
+                              fnType = "constructor";
+                           }
                         }
                      }
                      
