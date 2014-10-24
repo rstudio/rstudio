@@ -390,7 +390,7 @@ public class ClosureJsRunner {
     options.foldConstants = true;
     options.coalesceVariableNames = true;
     options.deadAssignmentElimination = true;
-    options.extractPrototypeMemberDeclarations = true;
+    options.setExtractPrototypeMemberDeclarations(true);
     options.collapseVariableDeclarations = true;
     options.convertToDottedProperties = true;
     options.rewriteFunctionExpressions = true;
