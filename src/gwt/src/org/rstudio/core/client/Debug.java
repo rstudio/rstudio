@@ -31,6 +31,13 @@ public class Debug
       };
       $wnd['$Debug'] = $Debug;
    }-*/;
+   
+   public static native void logObject(Object object) /*-{
+      if (typeof(console) != "undefined")
+      {
+         console.log(object);
+      }
+   }-*/;
 
    public static void log(String message)
    {
