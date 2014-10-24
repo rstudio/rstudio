@@ -72,8 +72,8 @@ public abstract class AnimationScheduler {
       AnimationSupportDetector supportDetector = GWT.create(AnimationSupportDetector.class);
       instance = (supportDetector != null && supportDetector.isNativelySupported())
              ? new AnimationSchedulerImplStandard() : new AnimationSchedulerImplTimer();
-   }
-   return instance;
+    }
+    return instance;
   }
 
   /**
