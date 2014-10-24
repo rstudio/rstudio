@@ -360,12 +360,7 @@ java_library(
             "src/com/google/web/bindery/requestfactory/server/RequestFactoryJarExtractor.java",
         ],
     ),
-    javacopts = [
-        "-source 5",
-        "-target 5",
-    ],
     deps = [
-        "//third_party/java/json",
         "//third_party/java/servlet/servlet_api",
         "//third_party/java_src/gwt/svn/tools:servlet_deps",
         "//third_party/java_src/gwt/svn/trunk/dev:compiler.standalone.super",
@@ -397,35 +392,26 @@ java_library(
         "public",
     ],
     gwtxml = "Gwt-dto-serializers.gwt.xml",
-    javacopts = [
-        "-source 5",
-        "-target 5",
-    ],
 )
 
 # GWT JsInterop annotations in a separate library used by hybrid app projects
 java_library(
     name = "gwt-jsinterop-annotations",
     srcs = [
-        "src/com/google/gwt/core/client/js/JsNamespace.java",
-        "src/com/google/gwt/core/client/js/JsType.java",
         "src/com/google/gwt/core/client/js/JsExport.java",
+        "src/com/google/gwt/core/client/js/JsNamespace.java",
         "src/com/google/gwt/core/client/js/JsNoExport.java",
         "src/com/google/gwt/core/client/js/JsProperty.java",
+        "src/com/google/gwt/core/client/js/JsType.java",
         "src/com/google/gwt/core/client/js/impl/PrototypeOfJsType.java",
     ],
     constraints = [
+        "android",
         "gwt",
         "public",
-        "android",
     ],
     gwtxml = "Gwt-jsinterop-annotations.gwt.xml",
-    javacopts = [
-        "-source 5",
-        "-target 5",
-    ],
 )
-
 
 # (This is a genrule so that it won't be mirrored to svn and git.)
 genrule(

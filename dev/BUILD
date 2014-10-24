@@ -205,10 +205,6 @@ java_library(
             "**/testing/**",
         ],
     ),
-    javacopts = [
-        "-source 5",
-        "-target 5",
-    ],
     deps = [
         ":compiler.standalone.super",
         "//third_party/java_src/gwt/svn/tools:compiler_deps",
@@ -228,10 +224,6 @@ java_library(
         ],
     ),
     constraints = ["android"],
-    javacopts = [
-        "-source 5",
-        "-target 5",
-    ],
 )
 
 # Resource files in core/super (including Java source)
@@ -266,10 +258,6 @@ java_library(
         "public",
     ],
     gwtxml = ":interop-annotations-gwtxml",
-    javacopts = [
-        "-source 5",
-        "-target 5",
-    ],
 )
 
 # (This is a genrule so that it won't be mirrored to svn and git.)

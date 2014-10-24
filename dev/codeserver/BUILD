@@ -95,8 +95,6 @@ AugmentedJar(
         "//third_party/java_src/gwt:gwt-dev-private",
         # The codeserver needs servlet_api_3. Be careful about adding dependencies.
         "//third_party/java_src/gwt/svn/tools:servlet_api_3",
-        # Undeclared dependency of SourceMapConsumer. TODO: fix
-        "//third_party/java/json",
     ],
     visibility = ["//java/com/google/gwt/dev/codeserver:__pkg__"],
 )

@@ -70,11 +70,12 @@ genrule(
     cmd = " && ".join([
         "mkdir -p $@.tmp",
         "export CC=$(CC)",
-        "export JAR=$(JAR)",
+        "export JAR=$(location //third_party/java/jdk/jar)",
         "idl/buildsrcjar $@.tmp $@",
     ]),
     tools = [
         "//third_party/crosstool",
+        "//third_party/java/jdk/jar",
         "//tools/defaults:jdk",
         "//tools/defaults:python_runtime",
     ],
