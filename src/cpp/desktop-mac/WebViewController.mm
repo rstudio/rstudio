@@ -1,3 +1,9 @@
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 #import <Cocoa/Cocoa.h>
 
 #import <WebKit/WebFrame.h>
@@ -699,5 +705,8 @@ decidePolicyForMIMEType: (NSDictionary *) actionInformation
 
 @end
 
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 
