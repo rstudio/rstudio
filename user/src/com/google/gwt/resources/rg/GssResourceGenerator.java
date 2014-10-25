@@ -554,7 +554,8 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     // add the style classes that aren't associated to a method
     allStyleClassSet.addAll(renamingResult.externalClassCandidate);
 
-    Set<String> externalClasses = externalClassesCollector.getExternalClassNames(allStyleClassSet);
+    Set<String> externalClasses = externalClassesCollector.getExternalClassNames(allStyleClassSet,
+        renamingResult.externalClassCandidate);
 
     final Map<String, String> revertMap = new HashMap<String, String>(externalClasses.size());
 

@@ -16,6 +16,7 @@
 package com.google.gwt.resources.gss;
 
 import com.google.gwt.thirdparty.common.css.SourceCodeLocation;
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssClassSelectorNode;
 import com.google.gwt.thirdparty.common.css.compiler.ast.CssCompilerPass;
 import com.google.gwt.thirdparty.common.css.compiler.ast.CssCompositeValueNode;
 import com.google.gwt.thirdparty.common.css.compiler.ast.CssLiteralNode;
@@ -49,6 +50,7 @@ public class ExternalClassesCollector extends DefaultTreeVisitor implements CssC
   private final ErrorManager errorManager;
 
   private Set<String> externalClassNames;
+  private Set<String> remainingStyleClassNames;
   private List<String> externalClassPrefixes;
   private boolean matchAll;
 
@@ -61,9 +63,16 @@ public class ExternalClassesCollector extends DefaultTreeVisitor implements CssC
   @Override
   public void runPass() {
     externalClassNames = new HashSet<String>();
+    remainingStyleClassNames = new HashSet<String>();
     externalClassPrefixes = new ArrayList<String>();
 
     visitController.startVisit(this);
+  }
+
+  @Override
+  public boolean enterClassSelector(CssClassSelectorNode classSelector) {
+    remainingStyleClassNames.add(classSelector.getRefinerName());
+    return true;
   }
 
   @Override
@@ -82,13 +91,32 @@ public class ExternalClassesCollector extends DefaultTreeVisitor implements CssC
    * {@code @external} as well as all of the class names from
    * {@code styleClassesSet} that match prefixes defined with {@code @external}.
    *
+   * <p>The set will contain also the class names that are not in the AST anymore (defined in a
+   * conditional node that has been evaluated to false) and are not associated to a java method.
+   * That doesn't make sense to rename these class names because they are not in the final css
+   * and javascript. Moreover we handle the case where an {@code @external} related to these
+   * style classes has been removed from the AST (because it was also defined in a conditional
+   * node evaluated to false) and the compiler doesn't have to throw and error for this case.
+   * <pre>
+   *   /{@literal *} conditional node evaluated to false at compile time {@literal *}/
+   *   @if (is("property", "true")) {
+   *     @external foo;
+   *     .foo {
+   *       width: 100%;
+   *     }
+   *   }
+   * </pre>
+   *
    * @param styleClassesSet a set of class names that should be filtered to
    *     return those matching external prefixes. Note that the passed-in set is not
    *     modified.
+   * @param orphanClassName a set of class names that aren't associated to a java method of the
+   *                        CssResource interface.
    * @return an immutable set of class names. Note that the returned names are
    *     not prefixed with "."; they are the raw name.
    */
-  public ImmutableSet<String> getExternalClassNames(Set<String> styleClassesSet) {
+  public ImmutableSet<String> getExternalClassNames(Set<String> styleClassesSet,
+      Set<String> orphanClassName) {
     if (matchAll) {
       return ImmutableSet.copyOf(styleClassesSet);
     }
@@ -107,6 +135,16 @@ public class ExternalClassesCollector extends DefaultTreeVisitor implements CssC
         }
       }
     }
+
+    // all style classes that are not in the AST anymore (mean they were part of a conditional
+    // node that has been evaluated to false) and that aren't associated to a method should be
+    // considered as external. See javadoc above
+    for (String className : orphanClassName) {
+      if (!remainingStyleClassNames.contains(className)) {
+        externalClassesSetBuilder.add(className);
+      }
+    }
+
     return externalClassesSetBuilder.build();
   }
 

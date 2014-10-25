@@ -8,29 +8,38 @@
 }
 
 .obfuscatedClass {
-    width: 100%;
+  width: 100%;
 }
 
 .externalClass {
-    height: 50px;
+  height: 50px;
 }
 
 .externalClass2 {
-    height: 50px;
+  height: 50px;
 }
 
 .unobfuscated {
-    height: 50px;
+  height: 50px;
 }
 
 .unobfuscated-with-prefix-without-method {
-  width:15px;
+  width: 15px;
 }
 
 .unobfuscated2 {
-    height: 50px;
+  height: 50px;
 }
 
 .externalWithoutMethod {
   color: white;
 }
+
+/* will be evaluated to false, shouldn't throw an error*/
+@if (!is("test.property", "true")) {
+  @external class-without-method;
+  .class-without-method{
+    display: inline-block;
+  }
+}
+

@@ -21,6 +21,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.gwt.thirdparty.common.css.compiler.ast.CssClassSelectorNode;
 import com.google.gwt.thirdparty.common.css.compiler.ast.CssCompositeValueNode;
 import com.google.gwt.thirdparty.common.css.compiler.ast.CssLiteralNode;
 import com.google.gwt.thirdparty.common.css.compiler.ast.CssStringNode;
@@ -76,6 +77,7 @@ public class ExternalClassesCollectorTest  extends TestCase {
   public void testLeaveUnknownAtRule_simpleExternalAtRule_classesReturnByGetExternalClass() {
     // Given
     HashSet<String> styleClassSet = Sets.newHashSet();
+    HashSet<String> orphanClassName = Sets.newHashSet();
     ExternalClassesCollector externalClassesCollector = createAndInitExternalClassesCollector();
     when(atRuleNameNode.getValue()).thenReturn("external");
 
@@ -91,7 +93,8 @@ public class ExternalClassesCollectorTest  extends TestCase {
     verify(atRuleParameters).getValues();
     verify(mutatingVisitController).removeCurrentNode();
 
-    Set<String> externalClasses = externalClassesCollector.getExternalClassNames(styleClassSet);
+    Set<String> externalClasses = externalClassesCollector.getExternalClassNames(styleClassSet,
+        orphanClassName);
     assertEquals(2, externalClasses.size());
     assertTrue(externalClasses.contains("externalClass"));
     assertTrue(externalClasses.contains("externalClass2"));
@@ -100,6 +103,7 @@ public class ExternalClassesCollectorTest  extends TestCase {
   public void testLeaveUnknownAtRule_externalAtRuleWithMatchAllPrefix_allClassesAreExternals() {
     // Given
     HashSet<String> styleClassSet = Sets.newHashSet("class1", "class2", "class3");
+    HashSet<String> orphanClassName = Sets.newHashSet();
     ExternalClassesCollector externalClassesCollector = createAndInitExternalClassesCollector();
     when(atRuleNameNode.getValue()).thenReturn("external");
     List<CssValueNode> parameters = Lists.newArrayList(stringNode("*"));
@@ -113,11 +117,33 @@ public class ExternalClassesCollectorTest  extends TestCase {
     verify(atRuleParameters).getValues();
     verify(mutatingVisitController).removeCurrentNode();
 
-    Set<String> externalClasses = externalClassesCollector.getExternalClassNames(styleClassSet);
+    Set<String> externalClasses = externalClassesCollector.getExternalClassNames(styleClassSet,
+        orphanClassName);
     assertEquals(3, externalClasses.size());
     assertTrue(externalClasses.contains("class1"));
     assertTrue(externalClasses.contains("class2"));
     assertTrue(externalClasses.contains("class3"));
+  }
+
+  public void
+  testLeaveUnknownAtRule_styleClassWithoutMethodAndRemovedFromAST_consideredAsExternal() {
+    // Given
+    HashSet<String> styleClassSet = Sets.newHashSet("foo", "bar");
+    ExternalClassesCollector externalClassesCollector = createAndInitExternalClassesCollector();
+    // AST contains only one style class named foo, bar is not in the AST anymore
+    CssClassSelectorNode classSelectorNode = mock(CssClassSelectorNode.class);
+    when(classSelectorNode.getRefinerName()).thenReturn("foo");
+    externalClassesCollector.enterClassSelector(classSelectorNode);
+    // The style class bar is not associated to a java method
+    HashSet<String> orphanClassName = Sets.newHashSet("bar");
+
+    // When
+    Set<String> externalClasses = externalClassesCollector.getExternalClassNames(styleClassSet,
+        orphanClassName);
+
+    // Then
+    assertEquals(1, externalClasses.size());
+    assertTrue(externalClasses.contains("bar"));
   }
 
   public void testLeaveUnknownAtRule_externalAtRuleWithMatchAllPrefixThenAnotherExternalAtRule_anotherAtRuleNotProcessed() {
@@ -145,6 +171,7 @@ public class ExternalClassesCollectorTest  extends TestCase {
     // Given
     HashSet<String> styleClassSet = Sets.newHashSet("prefix", "prefix-class1",
         "prefi-notexternal","external");
+    HashSet<String> orphanClassName = Sets.newHashSet();
     ExternalClassesCollector externalClassesCollector = createAndInitExternalClassesCollector();
     when(atRuleNameNode.getValue()).thenReturn("external");
     List<CssValueNode> parameters = Lists.newArrayList(literalNode("external"),
@@ -159,7 +186,8 @@ public class ExternalClassesCollectorTest  extends TestCase {
     verify(atRuleParameters).getValues();
     verify(mutatingVisitController).removeCurrentNode();
 
-    Set<String> externalClasses = externalClassesCollector.getExternalClassNames(styleClassSet);
+    Set<String> externalClasses = externalClassesCollector.getExternalClassNames(styleClassSet,
+        orphanClassName);
     assertEquals(3, externalClasses.size());
     assertTrue(externalClasses.contains("prefix"));
     assertTrue(externalClasses.contains("prefix-class1"));
