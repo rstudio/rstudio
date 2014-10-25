@@ -14,16 +14,13 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.event.dom.client.DomEvent;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 
 
@@ -86,13 +83,6 @@ public class NewPackagePage extends NewDirectoryPage
    public void focus()
    {
       super.focus();
-      
-      // workaround qt crash on mac desktop
-      if (BrowseCap.isMacintoshDesktop())
-      {
-         DomEvent.fireNativeEvent(Document.get().createChangeEvent(), 
-                                  listProjectType_.getListBox());
-      }
    }
    
    @Override
