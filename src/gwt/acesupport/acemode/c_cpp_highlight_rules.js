@@ -69,8 +69,8 @@ var c_cppHighlightRules = function() {
    );
 
    var operatorTokens = [
-      
-      ">>=", "<<=", "new",
+
+      ">>=", "<<=", "new", "delete",
       
       "<<", ">>", "&&", "||", "==", "!=", "<=", ">=", "::",
       "*=", "+=", "-=", "/=", "++", "--", "<>", "&=", "^=",
@@ -84,9 +84,15 @@ var c_cppHighlightRules = function() {
       return escapeRegExp(x);
    }).join("|");
 
-   var reOperator = operatorTokens.map(function(x) {
-      return "operator\\s*" + escapeRegExp(x);
-   }).join("|");
+   var reOperator =
+      [",", "()", "[]", "->*", "->"]
+      .concat(operatorTokens)
+      .map(function(x) {
+         return escapeRegExp(x);
+      });
+
+   reOperator = ["new\\s*\\[\\]", "delete\\s*\\[\\]"].concat(reOperator);
+   reOperator = "operator\\s*(?:" + reOperator.join("|") + ")|operator\\s+[\\w_]+";
 
    // regexp must not have capturing parentheses. Use (?:) instead.
    // regexps are ordered -> the first match is used
