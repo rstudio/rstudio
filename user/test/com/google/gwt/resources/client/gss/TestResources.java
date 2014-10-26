@@ -124,6 +124,11 @@ public interface TestResources extends ClientBundle {
     String className1();
 
     String conflictConstantClass();
+
+    int overrideConstantInt();
+
+    @ClassName("overrideConstantInt")
+    String overrideConstantIntClass();
   }
 
   /**

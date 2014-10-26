@@ -113,6 +113,9 @@ public class GssResourceTest extends RenamingClassNameTest {
     assertEquals("black", res().cssWithConstant().CONSTANT_THREE());
 
     assertNotSame("white", res().cssWithConstant().conflictConstantClass());
+
+    assertEquals(15, res().cssWithConstant().overrideConstantInt());
+    assertNotSame("15px", res().cssWithConstant().overrideConstantIntClass());
   }
 
   public void testNotStrict() {
