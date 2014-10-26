@@ -2,6 +2,7 @@
 @def CONSTANT_TWO 5px;
 @def CONSTANT_THREE black;
 @def CONFLICT_CONSTANT_CLASS white;
+@def OVERRIDE_CONSTANT_INT 15px;
 
 .className1 {
     padding-right: CONSTANT_ONE;
@@ -11,4 +12,8 @@
 
 .conflictConstantClass{
     color: CONFLICT_CONSTANT_CLASS;
+}
+
+.overrideConstantInt {
+  width: 15px;
 }

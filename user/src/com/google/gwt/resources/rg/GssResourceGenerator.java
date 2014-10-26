@@ -736,7 +736,8 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
       ConversionResult result = convertToGss(concatenatedCss, logger);
 
       String gss = result.gss;
-      sourceCodes.add(new SourceCode("[auto-converted gss files]", gss));
+      String name = "[auto-converted gss files from : " + resources + "]";
+      sourceCodes.add(new SourceCode(name, gss));
 
       constantNameMappingBuilder.putAll(result.defNameMapping);
     } else {
@@ -858,12 +859,6 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
       Map<String, String> substitutionMap, SourceWriter sw) throws
       UnableToCompleteException {
 
-    if (!isReturnTypeString(userMethod.getReturnType().isClass())) {
-      logger.log(Type.ERROR, "The return type of the method [" + userMethod.getName() + "] must " +
-          "be java.lang.String.");
-      throw new UnableToCompleteException();
-    }
-
     if (userMethod.getParameters().length > 0) {
       logger.log(Type.ERROR, "The method [" + userMethod.getName() + "] shouldn't contain any " +
           "parameters");
@@ -981,8 +976,10 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
       throws UnableToCompleteException {
 
     String className = getClassName(userMethod);
+
     // method to access style class ?
-    if (substitutionMap.containsKey(className)) {
+    if (substitutionMap.containsKey(className) &&
+        isReturnTypeString(userMethod.getReturnType().isClass())) {
       return writeClassMethod(logger, userMethod, substitutionMap, sw);
     }
 
@@ -1007,11 +1004,19 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
       return writeDefMethod(definitionNode, logger, userMethod, sw);
     }
 
+    if (substitutionMap.containsKey(className)) {
+      // method matched a class name but not a constant and the return type is not a string
+      logger.log(Type.ERROR, "The return type of the method [" + userMethod.getName() + "] must " +
+          "be java.lang.String.");
+      throw new UnableToCompleteException();
+    }
+
     // the method doesn't match a style class nor a constant
     logger.log(Type.ERROR,
         "The following method [" + userMethod.getName() + "()] doesn't match a constant" +
             " nor a style class. You could fix that by adding ." + className + " {}"
     );
+
     return false;
   }
 
