@@ -37,7 +37,7 @@
   </target>
 
   <target name="gwtc" depends="javac" description="GWT compile to JavaScript (production mode)">
-    <java failonerror="true" fork="true" classname="@compileClass">
+    <java failonerror="true" fork="true" classname="@compileClass" maxmemory="256m">
       <classpath>
         <pathelement location="@srcFolder"/>
         <path refid="project.class.path"/>
@@ -51,7 +51,7 @@
   </target>
 
   <target name="devmode" depends="javac" description="Run development mode (pass -Dgwt.args=-nosuperDevMode to fallback to classic DevMode)">
-    <java failonerror="true" fork="true" classname="@shellClass">
+    <java failonerror="true" fork="true" classname="@shellClass" maxmemory="1g">
       <classpath>
         <pathelement location="@srcFolder"/>
         <path refid="project.class.path"/>
@@ -80,7 +80,7 @@
   
   <target name="test.dev" depends="javac.tests" description="Run development mode tests">
     <mkdir dir="reports/htmlunit.dev" />
-    <junit fork="yes" printsummary="yes" haltonfailure="yes">
+    <junit fork="yes" printsummary="yes" haltonfailure="yes" maxmemory="256m">
       <sysproperty key="gwt.args" value="-logLevel WARN -war www-test" />
       <sysproperty key="java.awt.headless" value="true" />
       <classpath>
@@ -103,7 +103,7 @@
 
   <target name="test.prod" depends="javac.tests" description="Run production mode tests">
     <mkdir dir="reports/htmlunit.prod" />
-    <junit fork="yes" printsummary="yes" haltonfailure="yes">
+    <junit fork="yes" printsummary="yes" haltonfailure="yes" maxmemory="256m">
       <sysproperty key="gwt.args" value="-prod -logLevel WARN -war www-test" />
       <sysproperty key="java.awt.headless" value="true" />
       <classpath>
