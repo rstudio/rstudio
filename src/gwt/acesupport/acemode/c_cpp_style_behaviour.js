@@ -359,6 +359,16 @@ var CStyleBehaviour = function(codeModel) {
                };
             }
 
+            // Short-circuit for some special cases
+            if (/^\s*if\s*$/.test(line) ||
+                /^\s*else\s*$/.test(line) ||
+                /^\s*else\s+if\s*$/.test(line)) {
+               return {
+                  text: '{}',
+                  selection: [1, 1]
+               };
+            }
+
             // If class-style indentation can produce an appropriate indentation for
             // the brace, then insert a closing brace with a semi-colon.
             var heuristicRow = codeModel.getRowForOpenBraceIndent(
@@ -374,13 +384,7 @@ var CStyleBehaviour = function(codeModel) {
 
             // if it looks like we're using a initializor eg 'obj {', then
             // include a closing ;
-            // Avoid doing this if there's an 'else' token on the same line
-            if (/\S+\s*$/.test(line) &&
-                !/^\s*if\s*$/.test(line) &&
-                !/^\s*else\s*$/.test(line) &&
-                !/^\s*else\s+if\s*$/.test(line) &&
-                line.indexOf(";") === -1)
-            {
+            if (/\S+\s*$/.test(line) && line.indexOf(";") === -1) {
                return {
                   text: '{};',
                   selection: [1, 1]
