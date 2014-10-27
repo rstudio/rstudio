@@ -7,16 +7,47 @@
 
 #import <AppKit/NSApplication.h>
 #import <Foundation/NSAutoreleasePool.h>
+#import <set>
+#import <string>
 
 #import "AppDelegate.h"
 #import "Utils.hpp"
 
+#include <crt_externs.h>
+
 using namespace core;
+
+std::string varname(const char* line) {
+   size_t nameLen = strcspn(line, "=");
+   if (nameLen == strlen(line)) {
+      return std::string();
+   } else {
+      return std::string(line, nameLen);
+   }
+}
 
 int main(int argc, char* argv[])
 {
    // initialize autorelease pool
    NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
+   
+   std::set<std::string> seen;
+   char **read = *_NSGetEnviron(), **write = *_NSGetEnviron();
+   
+   for (; *read; read++) {
+      std::string name = varname(*read);
+      if (name.size() == 0 || seen.find(name) == seen.end()) {
+         // Not a dupe
+         *write = *read;
+         write++;
+         if (name.size() > 0) {
+            seen.insert(name);
+         }
+      } else {
+         NSLog(@"Ignoring duplicate environment variable: %s", *read);
+      }
+   }
+   *write = NULL;
    
    // initialize language environment variables
    desktop::utils::initializeLang();
