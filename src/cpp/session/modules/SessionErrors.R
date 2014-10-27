@@ -99,7 +99,7 @@
 .rs.addFunction("breakOnError", function(userOnly)
 {
    calls <- sys.calls()
-   if (length(calls) < 5)
+   if (length(calls) < 4)
       return()
 
    foundUserCode <- FALSE
@@ -134,13 +134,23 @@
    }
    if (foundUserCode || !userOnly)
    {
-      # The magic values 3 and 9 here are derived from the position in the
+      # The magic value 2 here is derived from the position in the
       # stack where this error handler resides relative to where we expect
       # the user code that raised the error to be. These will need to be
       # adjusted if evaluation layers are added or removed between the
       # root error handler (set in options(error=...)) and this function.
-      frame <- length(sys.frames()) - 3
-      eval(substitute(browser(skipCalls = pos), list(pos = 9 - frame)),
+      errorFrameOffset <- 2
+
+      # move the frame backwards if it's on stop or stopifnot
+      if (identical(deparse(sys.call(errorFrameOffset)[[1]]), "stop"))
+         errorFrameOffset <- errorFrameOffset + 1
+      if (identical(deparse(sys.call(errorFrameOffset)[[1]]), "stopifnot"))
+         errorFrameOffset <- errorFrameOffset + 1
+
+      frame <- length(sys.frames()) - errorFrameOffset
+
+      eval(substitute(browser(skipCalls = pos), 
+                      list(pos = errorFrameOffset + 2)),
            envir = sys.frame(frame))
    }
 },
