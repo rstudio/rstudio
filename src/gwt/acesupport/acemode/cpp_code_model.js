@@ -354,7 +354,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
             // function and lambdas
             else if (
-               localCursor.bwdOverConstNoexcept() &&
+               localCursor.bwdOverConstNoexceptDecltype() &&
                (localCursor.bwdOverInitializationList() &&
                 localCursor.moveBackwardOverMatchingParens()) ||
                   localCursor.moveBackwardOverMatchingParens()) {
@@ -363,21 +363,21 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                    localCursor.peekBwd().currentValue() === "]" ||
                    /^operator/.test(localCursor.peekBwd().currentValue())) {
                   
-                  var functionName = localCursor.peekBwd().currentValue();
-                  if (functionName === "]") {
+                  var valueBeforeParen = localCursor.peekBwd().currentValue();
+                  if (valueBeforeParen === "]") {
 
-                     var lambdaArgs = "";
+                     var lambdaStartPos = localCursor.currentPosition();
+                     var lambdaText = this.$session.getTextRange(new Range(
+                        lambdaStartPos.row, lambdaStartPos.column,
+                        startPos.row, startPos.column - 1
+                     ));
 
-                     if (localCursor.currentValue() === "(") {
-                        
-                        var enclosingText = this.$getEnclosingText(
-                           localCursor.currentPosition());
-                        
-                        if (enclosingText != null)
-                           lambdaArgs = enclosingText;
-                     }
-
-                     this.$scopes.onLambdaScopeStart("lambda " + lambdaArgs,
+                     lambdaText = "lambda " + lambdaText;
+                     
+                     if (lambdaText.length > 80)
+                        lambdaText = lambdaText.substring(0, 80) + "...";
+                     
+                     this.$scopes.onLambdaScopeStart(lambdaText,
                                                      startPos,
                                                      tokenCursor.currentPosition());
                      
@@ -405,29 +405,35 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                               // backwards until we hit a ';', '{',
                               // '}'.
                               var fnTypeCursor = localCursor.cloneCursor();
-                              fnTypeCursor.bwdUntil(function(cursor) {
+                              while (true) {
                                  
-                                 var value = cursor.currentValue();
-                                 
-                                 if (cursor.$row === 0 && cursor.$offset === 0) {
-                                    return true;
-                                 }
+                                 var value = fnTypeCursor.currentValue();
+                                 var line = this.$doc.getLine(fnTypeCursor.$row);
 
-                                 else if (["{", "}", ";"].some(function(x) {
+                                 // Bail on some specific tokens not found in
+                                 // function type specifiers
+                                 if (["{", "}", ";"].some(function(x) {
                                     return x === value;
-                                 })) {
-                                    return true;
-                                 }
-                                 
-                                 else if (value === ":") {
-                                    var prevValue = cursor.peekBwd().currentValue();
+                                 }))
+                                    break;
+
+                                 // Bail on 'public:' etc.
+                                 if (value === ":") {
+                                    var prevValue = fnTypeCursor.peekBwd().currentValue();
                                     if (["public", "private", "protected"].some(function(x) {
                                        return x === prevValue;
                                     }))
-                                       return true;
+                                       break;
                                  }
+
+                                 // Bail on lines intended for the preprocessor
+                                 if (/^\s*#/.test(line))
+                                    break;
+
+                                 if (!fnTypeCursor.moveToPreviousToken())
+                                    break;
                                  
-                              });
+                              }
 
                               // Move back up one token
                               fnTypeCursor.moveToNextToken();
@@ -461,7 +467,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                            if (fnArgsCursor.currentValue() === "noexcept" &&
                                fnArgsCursor.peekFwd().currentValue() === "(") {
                               fnArgsCursor.moveToNextToken();
-                              fnArgsCursor.findMatchingBracket();
+                              fnArgsCursor.fwdToMatchingToken();
                            }
 
                            var fnArgsEndPos = fnArgsCursor.peekFwd().currentPosition();

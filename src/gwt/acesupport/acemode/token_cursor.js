@@ -448,7 +448,7 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
    //                    ^~~~~~~~~~~~~~~~~~~~^
    //
    // Places the token cursor on the first token following a closing paren.
-   this.bwdOverConstNoexcept = function() {
+   this.bwdOverConstNoexceptDecltype = function() {
 
       var clone = this.cloneCursor();
       if (clone.currentValue() !== "{") {
@@ -458,15 +458,31 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
       // Move off of the open brace
       if (!clone.moveToPreviousToken())
          return false;
+
+      // Try moving over a '-> decltype()'
+      var cloneDecltype = clone.cloneCursor();
+      if (cloneDecltype.currentValue() === ")") {
+         if (cloneDecltype.bwdToMatchingToken()) {
+            if (cloneDecltype.moveToPreviousToken()) {
+               if (cloneDecltype.currentValue() === "decltype") {
+                  if (cloneDecltype.moveToPreviousToken()) {
+                     console.log(cloneDecltype.currentToken());
+                     clone.$row = cloneDecltype.$row;
+                     clone.$offset = cloneDecltype.$offset;
+                  }
+               }
+            }
+         }
+      }
       
       // Try moving over a 'noexcept()'.
-      var cloneTwo = clone.cloneCursor();
-      if (cloneTwo.currentValue() === ")") {
-         if (cloneTwo.bwdToMatchingToken()) {
-            if (cloneTwo.moveToPreviousToken()) {
-               if (cloneTwo.currentValue() === "noexcept") {
-                  clone.$row = cloneTwo.$row;
-                  clone.$offset = cloneTwo.$offset;
+      var cloneNoexcept = clone.cloneCursor();
+      if (cloneNoexcept.currentValue() === ")") {
+         if (cloneNoexcept.bwdToMatchingToken()) {
+            if (cloneNoexcept.moveToPreviousToken()) {
+               if (cloneNoexcept.currentValue() === "noexcept") {
+                  clone.$row = cloneNoexcept.$row;
+                  clone.$offset = cloneNoexcept.$offset;
                }
             }
          }
