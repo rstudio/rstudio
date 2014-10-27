@@ -21,6 +21,8 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource.Import;
 import com.google.gwt.resources.client.DataResource;
+import com.google.gwt.resources.client.DataResource.DoNotEmbed;
+import com.google.gwt.resources.client.DataResource.MimeType;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
@@ -45,6 +47,8 @@ public class BundleWriter {
 
   private final JClassType clientBundleType;
   private final JClassType dataResourceType;
+  private final JClassType doNotEmbedType;
+  private final JClassType dataMimeTypeType;
   private final JClassType imageOptionType;
   private final JClassType imageResourceType;
   private final JClassType repeatStyleType;
@@ -61,6 +65,8 @@ public class BundleWriter {
 
     clientBundleType = types.findType(ClientBundle.class.getName());
     dataResourceType = types.findType(DataResource.class.getCanonicalName());
+    doNotEmbedType = types.findType(DoNotEmbed.class.getCanonicalName());
+    dataMimeTypeType = types.findType(MimeType.class.getCanonicalName());
     imageOptionType = types.findType(ImageOptions.class.getCanonicalName());
     imageResourceType = types.findType(ImageResource.class.getCanonicalName());
     repeatStyleType = types.findType(RepeatStyle.class.getCanonicalName());
@@ -87,6 +93,8 @@ public class BundleWriter {
     // Imports
     writer.write("import %s;", clientBundleType.getQualifiedSourceName());
     writer.write("import %s;", dataResourceType.getQualifiedSourceName());
+    writer.write("import %s;", doNotEmbedType.getQualifiedSourceName());
+    writer.write("import %s;", dataMimeTypeType.getQualifiedSourceName());
     writer.write("import %s;", imageResourceType.getQualifiedSourceName());
     writer.write("import %s;", imageOptionType.getQualifiedSourceName());
     writer.write("import %s;", importAnnotationType.getQualifiedSourceName());
@@ -108,6 +116,15 @@ public class BundleWriter {
     // Write data methods
     for (ImplicitDataResource data : bundleClass.getDataMethods()) {
       writer.write("@Source(\"%s\")", data.getSource());
+      writer.newline();
+      if (data.getDoNotEmbed() == Boolean.TRUE) {
+        writer.write("@DoNotEmbed");
+        writer.newline();
+      }
+      if (data.getMimeType() != null) {
+        writer.write("@MimeType(\"%s\")", data.getMimeType());
+        writer.newline();
+      }
       writer.write("%s %s();", dataResourceType.getName(), data.getName());
       writer.newline();
     }

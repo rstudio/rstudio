@@ -93,6 +93,8 @@ public class UiBinderParser {
   private static final String SOURCE_ATTRIBUTE = "src";
   private static final String TYPE_ATTRIBUTE = "type";
   private static final String GSS_ATTRIBUTE = "gss";
+  private static final String DO_NOT_EMBED_ATTRIBUTE = "doNotEmbed";
+  private static final String MIME_TYPE_ATTRIBUTE = "mimeType";
 
   // TODO(rjrjr) Make all the ElementParsers receive their dependencies via
   // constructor like this one does, and make this an ElementParser. I want
@@ -182,8 +184,12 @@ public class UiBinderParser {
   private void createData(XMLElement elem) throws UnableToCompleteException {
     String name = elem.consumeRequiredRawAttribute(FIELD_ATTRIBUTE);
     String source = elem.consumeRequiredRawAttribute(SOURCE_ATTRIBUTE);
-    ImplicitDataResource dataMethod = bundleClass.createDataResource(name,
-        source);
+    // doNotEmbed is optional on DataResource
+    Boolean doNotEmbed = elem.consumeBooleanConstantAttribute(DO_NOT_EMBED_ATTRIBUTE);
+    // mimeType is optional on DataResource
+    String mimeType = elem.consumeRawAttribute(MIME_TYPE_ATTRIBUTE);
+    ImplicitDataResource dataMethod = bundleClass.createDataResource(
+        name, source, mimeType, doNotEmbed);
     FieldWriter field = fieldManager.registerField(dataResourceType,
         dataMethod.getName());
     field.setInitializer(String.format("%s.%s()",
