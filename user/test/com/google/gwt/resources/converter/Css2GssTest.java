@@ -89,6 +89,10 @@ public class Css2GssTest extends TestCase {
         "invalidConstantName.css", "invalidConstantName.gss", true);
   }
 
+  public void testEscaping() throws IOException, UnableToCompleteException {
+    assertFileContentEqualsAfterConversion("escape.css", "escape.gss", true);
+  }
+
   private void assertFileContentEqualsAfterConversion(String inputCssFile, String expectedGssFile)
       throws IOException, UnableToCompleteException {
     assertFileContentEqualsAfterConversion(inputCssFile, expectedGssFile, false);

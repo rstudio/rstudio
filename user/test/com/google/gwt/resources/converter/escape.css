@@ -1,0 +1,11 @@
+.replacement:after {
+  content: "Hello\\\" world";
+}
+
+div {
+  \-some-wacky-extension: \-bar;
+}
+
+p:nth-child\(2\) {
+  width: 10px;
+}

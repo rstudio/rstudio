@@ -29,6 +29,7 @@ import com.google.gwt.resources.css.ast.CssNoFlip;
 import com.google.gwt.resources.css.ast.CssPageRule;
 import com.google.gwt.resources.css.ast.CssProperty;
 import com.google.gwt.resources.css.ast.CssProperty.DotPathValue;
+import com.google.gwt.resources.css.ast.CssProperty.StringValue;
 import com.google.gwt.resources.css.ast.CssProperty.Value;
 import com.google.gwt.resources.css.ast.CssRule;
 import com.google.gwt.resources.css.ast.CssSelector;
@@ -596,7 +597,11 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
         }
       }
 
-      builder.append(unescape(expression));
+      if (value instanceof StringValue) {
+        builder.append(expression);
+      } else {
+        builder.append(unescape(expression));
+      }
     }
 
     return builder.toString();
