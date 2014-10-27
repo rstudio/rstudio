@@ -3,3 +3,7 @@
   color: JFK_MY_STUFF;
   background-color: JFK_123_ASD;
 }
+
+.cellTableHeader {
+  padding: HEADER_VERTICAL_PADDING HEADER_HORIZONTAL_PADDING;
+}

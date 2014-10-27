@@ -79,7 +79,6 @@ public class UndefinedConstantVisitor extends CssVisitor {
                 + cssProperty.getName() + "' from rule '" + x.getSelectors().toString()
                 + "' undefined constant: " + upperCaseString);
           }
-          break;
         }
       }
 
