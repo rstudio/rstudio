@@ -110,7 +110,7 @@ define("mode/auto_brace_insert", function(require, exports, module)
       // in the mode subclass
       this.smartAllowAutoInsert = function(session, pos, text)
       {
-         if (text !== "'" && text !== '"')
+         if (text !== "'" && text !== '"' && text !== "`")
             return true;
 
          // Only allow auto-insertion of a quote char if the actual character
@@ -121,7 +121,7 @@ define("mode/auto_brace_insert", function(require, exports, module)
 
          var token = this.codeModel.getTokenForPos(pos, false, true);
          return token &&
-                token.type === 'string' &&
+                (token.type === 'string' || token.type == 'symbol') &&
                 token.column === pos.column-1;
       };
 
