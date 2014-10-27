@@ -1612,6 +1612,9 @@ public class AceEditor implements DocDisplay,
                          boolean addToHistory,
                          boolean highlightLine)
    {  
+      // get existing cursor position
+      Position previousCursorPos = getCursorPosition();
+      
       // set cursor to function line
       Position position = Position.create(srcPosition.getRow(), 
                                           srcPosition.getColumn());
@@ -1630,7 +1633,7 @@ public class AceEditor implements DocDisplay,
       // scroll as necessary
       if (srcPosition.getScrollPosition() != -1)
          scrollToY(srcPosition.getScrollPosition());
-      else
+      else if (position.getRow() != previousCursorPos.getRow())
          moveCursorNearTop();
       
       // set focus
