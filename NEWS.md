@@ -22,4 +22,4 @@
 ### Packages
 
 * Improved checking for supported protocol with packrat package
-
+* Escape backslashes in library names when loading packages
