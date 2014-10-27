@@ -788,6 +788,10 @@ well as menu structures (for main menu and popup menus).
         buttonLabel="Run"
         menuLabel="Run _Line(s)"
         desc="Run the current line or selection"/>
+   <cmd id="executeCodeWithoutMovingCursor"
+        buttonLabel="Run"
+        menuLabel="Run _Line(s) without moving cursor"
+        desc="Run the current line or selection without moving the cursor"/>
    <cmd id="executeCodeWithoutFocus"/>
    <cmd id="executeToCurrentLine"
         menuLabel="Run From _Beginning To Line"
