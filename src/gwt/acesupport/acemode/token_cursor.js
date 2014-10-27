@@ -71,9 +71,7 @@ var TokenCursor = function(tokens, row, offset) {
       return true;
    };
 
-   this.bwd = this.moveToPreviousToken;
-
-   this.peekBack = function(n) {
+   this.peekBwd = function(n) {
       
       if (typeof n === "undefined") {
          n = 1;
@@ -653,7 +651,7 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
          if (value === ",") {
             return this.doBwdOverInitializationList(clonedCursor, tokenCursor);
          } else if (value === ":") {
-            var prevValue = clonedCursor.peekBack().currentValue();
+            var prevValue = clonedCursor.peekBwd().currentValue();
             if (!["public", "private", "protected"].some(function(x) {
                return x === prevValue;
             }))

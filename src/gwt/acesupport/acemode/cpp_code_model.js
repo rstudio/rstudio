@@ -217,32 +217,6 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
       }
    };
 
-   this.$getEnclosingText = function(position, trim) {
-
-      var text = null;
-
-      var matchingPos = this.$session.findMatchingBracket({
-         row: position.row,
-         column: position.column + 1
-      });
-
-      if (matchingPos) {
-         
-         text = this.$session.getTextRange(new Range(
-            position.row, position.column, matchingPos.row, matchingPos.column + 1
-         ));
-
-         if (trim) {
-            text = text.replace(/[\n\s]+/g, " ");
-            if (text.length > 80)
-               text = text.substring(0, 80) + "...";
-         }
-      }
-
-      return text;
-      
-   };
-
    this.$buildScopeTreeUpToRow = function(maxrow) {
 
       function maybeEvaluateLiteralString(value) {
@@ -349,7 +323,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                startPos.column = 0;
 
             // namespace
-            if (localCursor.peekBack().peekBack().currentValue() === "namespace") {
+            if (localCursor.peekBwd(2).currentValue() === "namespace") {
 
                // named namespace
                localCursor.moveToPreviousToken();
@@ -361,15 +335,15 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
             }
 
             // anonymous namespace
-            else if (localCursor.peekBack().currentValue() === "namespace") {
+            else if (localCursor.peekBwd().currentValue() === "namespace") {
                this.$scopes.onNamespaceScopeStart("anonymous namespace",
                                                   startPos,
                                                   tokenCursor.currentPosition());
             }
 
             // class (struct)
-            else if (localCursor.peekBack(2).currentValue() === "class" ||
-                     localCursor.peekBack(2).currentValue() === "struct" ||
+            else if (localCursor.peekBwd(2).currentValue() === "class" ||
+                     localCursor.peekBwd(2).currentValue() === "struct" ||
                      localCursor.bwdOverClassInheritance()) {
                localCursor.moveToPreviousToken();
                var className = localCursor.currentValue();
@@ -385,63 +359,130 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                 localCursor.moveBackwardOverMatchingParens()) ||
                   localCursor.moveBackwardOverMatchingParens()) {
 
-               if (localCursor.peekBack().currentType() === "identifier" ||
-                   localCursor.peekBack().currentValue() === "]" ||
-                   /^operator/.test(localCursor.peekBack().currentValue())) {
+               if (localCursor.peekBwd().currentType() === "identifier" ||
+                   localCursor.peekBwd().currentValue() === "]" ||
+                   /^operator/.test(localCursor.peekBwd().currentValue())) {
                   
-                  var functionName = localCursor.peekBack().currentValue();
+                  var functionName = localCursor.peekBwd().currentValue();
                   if (functionName === "]") {
 
-                     var args = "";
+                     var lambdaArgs = "";
 
                      if (localCursor.currentValue() === "(") {
-                        var enclosingText = this.$getEnclosingText(localCursor.currentPosition(), true);
+                        
+                        var enclosingText = this.$getEnclosingText(
+                           localCursor.currentPosition());
+                        
                         if (enclosingText != null)
-                           args = enclosingText;
+                           lambdaArgs = enclosingText;
                      }
 
-                     this.$scopes.onLambdaScopeStart("lambda " + args,
+                     this.$scopes.onLambdaScopeStart("lambda " + lambdaArgs,
                                                      startPos,
                                                      tokenCursor.currentPosition());
                      
                   } else {
-                     
-                     var name = functionName;
-                     var args = "";
 
-                     // Check if this is a constructor (the function name matches the
-                     // enclosing scope class name)
-                     var fnType = "function ";
+                     if (localCursor.moveToPreviousToken()) {
 
-                     // If we're defining a function for e.g. 'operator()', then
-                     // prepending 'function' is redundant
-                     if (/^operator/.test(localCursor.peekBack().currentValue()))
-                        fnType = ""; // 'operator' is descriptive enough
-                     
-                     var enclosingScopes = this.$scopes.getActiveScopes(localCursor.currentPosition());
-                     if (enclosingScopes != null) {
-                        var parentScope = enclosingScopes[enclosingScopes.length - 1];
-                        if (parentScope.isClass() && parentScope.label === "class " + name) {
-                           // If the previous token is a '~', it's a destructor
-                           // rather than a constructor
-                           if (localCursor.peekBack(2).currentValue() === "~") {
-                              fnType = "destructor ";
-                              name = "~" + name;
+                        var fnType = "";
+                        var fnName = localCursor.currentValue();
+                        var fnArgs = "";
+
+                        var enclosingScopes = this.$scopes.getActiveScopes(
+                           localCursor.currentPosition());
+                        
+                        if (enclosingScopes != null) {
+                           var parentScope = enclosingScopes[enclosingScopes.length - 1];
+                           if (parentScope.isClass() &&
+                               parentScope.label === "class " + fnName) {
+                              if (localCursor.peekBwd().currentValue() === "~") {
+                                 fnName = "~" + fnName;
+                              }
                            } else {
-                              fnType = "constructor ";
+                              // Clone the cursor and look back to get
+                              // the return type. Do this by walking
+                              // backwards until we hit a ';', '{',
+                              // '}'.
+                              var fnTypeCursor = localCursor.cloneCursor();
+                              fnTypeCursor.bwdUntil(function(cursor) {
+                                 
+                                 var value = cursor.currentValue();
+                                 
+                                 if (cursor.$row === 0 && cursor.$offset === 0) {
+                                    return true;
+                                 }
+
+                                 else if (["{", "}", ";"].some(function(x) {
+                                    return x === value;
+                                 })) {
+                                    return true;
+                                 }
+                                 
+                                 else if (value === ":") {
+                                    var prevValue = cursor.peekBwd().currentValue();
+                                    if (["public", "private", "protected"].some(function(x) {
+                                       return x === prevValue;
+                                    }))
+                                       return true;
+                                 }
+                                 
+                              });
+
+                              // Move back up one token
+                              fnTypeCursor.moveToNextToken();
+
+                              // Get the type from the text range
+                              var fnTypeStartPos = fnTypeCursor.currentPosition();
+                              var fnTypeEndPos = localCursor.currentPosition();
+                              fnType = this.$session.getTextRange(new Range(
+                                 fnTypeStartPos.row, fnTypeStartPos.column,
+                                 fnTypeEndPos.row, fnTypeEndPos.column
+                              ));
                            }
+                           
                         }
+
+                        // Get the position of the opening paren
+                        var fnArgsCursor = localCursor.peekFwd();
+                        var fnArgsStartPos = fnArgsCursor.currentPosition();
+
+                        if (fnArgsCursor.fwdToMatchingToken()) {
+
+                           // Move over 'const'
+                           if (fnArgsCursor.peekFwd().currentValue() === "const")
+                              fnArgsCursor.moveToNextToken();
+
+                           // Move over 'noexcept'
+                           if (fnArgsCursor.peekFwd().currentValue() === "noexcept")
+                              fnArgsCursor.moveToNextToken();
+
+                           // Move over parens
+                           if (fnArgsCursor.currentValue() === "noexcept" &&
+                               fnArgsCursor.peekFwd().currentValue() === "(") {
+                              fnArgsCursor.moveToNextToken();
+                              fnArgsCursor.findMatchingBracket();
+                           }
+
+                           var fnArgsEndPos = fnArgsCursor.peekFwd().currentPosition();
+                           if (fnArgsEndPos)
+                              fnArgs = this.$session.getTextRange(new Range(
+                                 fnArgsStartPos.row, fnArgsStartPos.column,
+                                 fnArgsEndPos.row, fnArgsEndPos.column
+                              ));
+                           
+                        }
+                        
+                        var fullFnName = fnType + fnName + fnArgs;
+                        fullFnName = fullFnName.replace(/[\n\s]+/g, " ");
+                        if (fullFnName.length > 80)
+                           fullFnName = fullFnName.substring(0, 80) + "...";
+                        
+                        this.$scopes.onFunctionScopeStart(
+                           fullFnName,
+                           localCursor.currentPosition(),
+                           tokenCursor.currentPosition());
                      }
-                     
-                     if (localCursor.currentValue() === "(") {
-                        var enclosingText = this.$getEnclosingText(localCursor.currentPosition(), true);
-                        if (enclosingText != null)
-                           args = enclosingText;
-                     }
-                     
-                     this.$scopes.onFunctionScopeStart(fnType + name + args,
-                                                       localCursor.peekBack().currentPosition(),
-                                                       tokenCursor.currentPosition());
                   }
                }
 
@@ -558,7 +599,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                }
             }
 
-            if (tokenCursor.peekBack().currentValue() === "{" ||
+            if (tokenCursor.peekBwd().currentValue() === "{" ||
                 tokenCursor.currentValue() === ";") {
                return -1;
             }
@@ -616,7 +657,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
             // e.g. public, then we went too far -- go back up one token.
             if (tokenCursor.currentValue() === ":") {
 
-               var prevValue = tokenCursor.peekBack().currentValue();
+               var prevValue = tokenCursor.peekBwd().currentValue();
                if (["public", "private", "protected"].some(function(x) {
                   return x === prevValue;
                }))
@@ -639,7 +680,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
                   if (tokenCursor.bwdToMatchingToken()) {
 
-                     if (tokenCursor.peekBack().currentType() === "keyword") {
+                     if (tokenCursor.peekBwd().currentType() === "keyword") {
                         continue;
                      } else {
                         break;
@@ -1227,7 +1268,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
                   // ... and the previous character is a ']', find its match for indentation.
                   if ($verticallyAlignFunctionArgs) {
-                     var peekOne = tokenCursor.peekBack();
+                     var peekOne = tokenCursor.peekBwd();
                      if (peekOne.currentValue() === "]") {
                         if (peekOne.bwdToMatchingToken()) {
                            return new Array(peekOne.currentPosition().column + 1).join(" ");
@@ -1293,7 +1334,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                   }
 
                   // We hit a colon ':'...
-                  var peekOne = tokenCursor.peekBack();
+                  var peekOne = tokenCursor.peekBwd();
                   if (tokenCursor.currentValue() === ":") {
 
                      // ... preceeded by a class access modifier
@@ -1316,8 +1357,8 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                         var clone = peekOne.cloneCursor();
                         if (clone.bwdToMatchingToken()) {
 
-                           var peek1 = clone.peekBack(1);
-                           var peek2 = clone.peekBack(2);
+                           var peek1 = clone.peekBwd(1);
+                           var peek2 = clone.peekBwd(2);
 
                            if (
                               (peek1 !== null && peek1.currentType() === "identifier") &&
@@ -1325,7 +1366,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                            )
                            {
                               
-                              return this.$getIndent(lines[clone.peekBack().$row]) + additionalIndent;
+                              return this.$getIndent(lines[clone.peekBwd().$row]) + additionalIndent;
                            }
                         }
                      }
@@ -1422,7 +1463,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                   {
                      var clone = tokenCursor.cloneCursor();
                      if (clone.bwdToMatchingArrow()) {
-                        if (clone.peekBack().currentValue() === "template") {
+                        if (clone.peekBwd().currentValue() === "template") {
                            if (startValue === ">") additionalIndent = "";
                            return this.$getIndent(lines[clone.$row]) + additionalIndent;
                         }
