@@ -11,4 +11,5 @@
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-war @warFolder -startupUrl @startupUrl @moduleName"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="@moduleShortName"/>
 <booleanAttribute key="org.eclipse.debug.core.appendEnvironmentVariables" value="true"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xmx1g"/>
 </launchConfiguration>
