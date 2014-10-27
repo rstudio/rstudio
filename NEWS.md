@@ -27,5 +27,7 @@
 ### Miscellaneous
 
 * When evaluating R strings ensure 'try' is called from base package
+* Add Clear Recent Projects menu item to toolbar project menu
+
 
 
