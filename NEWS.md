@@ -12,9 +12,14 @@
 
 ### Workspace
 
-* Improved handling of objects containing or consisting of NULL `externalptr`.
+* Improved handling of objects containing or consisting of NULL `externalptr`
 
 ### Debugging
 
 * Allow 'debugSource' to be executed in user-specified environment
 * Improved heuristics for locating the stack frame where errors originated
+
+### Packages
+
+* Improved checking for supported protocol with packrat package
+
