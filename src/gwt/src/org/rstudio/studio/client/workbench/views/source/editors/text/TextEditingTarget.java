@@ -1345,6 +1345,10 @@ public class TextEditingTarget implements
                            statusBar_.setScopeType(StatusBar.SCOPE_TOP_LEVEL);
                         else if (scope.isFunction())
                            statusBar_.setScopeType(StatusBar.SCOPE_FUNCTION);
+                        else if (scope.isLambda())
+                           statusBar_.setScopeType(StatusBar.SCOPE_LAMBDA);
+                        else if (scope.isAnon())
+                           statusBar_.setScopeType(StatusBar.SCOPE_ANON);
                      }
                   }
                }

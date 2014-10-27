@@ -67,6 +67,27 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
       "catch", "switch"
    ];
 
+   var $normalizeWhitespace = function(text) {
+      text = text.trim();
+      text = text.replace(/[\n\s]+/g, " ");
+      return text;
+   };
+
+   var $truncate = function(text, width) {
+      
+      if (typeof width === "undefined")
+         width = 80;
+      
+      if (text.length > width)
+         text = text.substring(0, width) + "...";
+      
+      return text;
+   };
+
+   var $normalizeAndTruncate = function(text, width) {
+      return $truncate($normalizeWhitespace(text), width);
+   };
+
    this.$complements = {
       "<" : ">",
       ">" : "<",
@@ -372,10 +393,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                         startPos.row, startPos.column - 1
                      ));
 
-                     lambdaText = "lambda " + lambdaText;
-                     
-                     if (lambdaText.length > 80)
-                        lambdaText = lambdaText.substring(0, 80) + "...";
+                     lambdaText = $normalizeAndTruncate("lambda " + lambdaText);
                      
                      this.$scopes.onLambdaScopeStart(lambdaText,
                                                      startPos,
@@ -479,10 +497,9 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                            
                         }
                         
-                        var fullFnName = fnType + fnName + fnArgs;
-                        fullFnName = fullFnName.replace(/[\n\s]+/g, " ");
-                        if (fullFnName.length > 80)
-                           fullFnName = fullFnName.substring(0, 80) + "...";
+                        var fullFnName = $normalizeAndTruncate(
+                           fnType + fnName + fnArgs
+                        );
                         
                         this.$scopes.onFunctionScopeStart(
                            fullFnName,
