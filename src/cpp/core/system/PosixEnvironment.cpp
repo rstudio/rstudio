@@ -54,12 +54,15 @@ std::string getenv(const std::string& name)
 
 void setenv(const std::string& name, const std::string& value)
 {
+   while (::getenv(name.c_str()))
+      ::unsetenv(name.c_str());
    ::setenv(name.c_str(), value.c_str(), 1);
 }
 
 void unsetenv(const std::string& name)
 {
-   ::unsetenv(name.c_str());
+   while (::getenv(name.c_str()))
+      ::unsetenv(name.c_str());
 }
 
 
