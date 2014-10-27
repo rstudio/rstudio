@@ -27,7 +27,7 @@ public final class Coercions {
    * {@see com.google.gwt.lang.Cast#narrow_int}
    */
   public static int ensureInt(int value) {
-    return ~~value;
+    return value | 0;
   }
 
   private Coercions() { }

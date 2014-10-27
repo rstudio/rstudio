@@ -241,7 +241,7 @@ public class BigInteger extends Number implements Comparable<BigInteger>,
    * @return val as an unsigned int
    */
   private static native int toUnsignedInt(double val) /*-{
-    return ~~val;
+    return val | 0;
   }-*/;
 
   /**
@@ -506,7 +506,6 @@ public class BigInteger extends Number implements Comparable<BigInteger>,
    */
   private BigInteger(int sign, double val) {
     // PRE: (val >= 0) && (sign >= -1) && (sign <= 1)
-    // ~~ forces coercion to 32 bits
     this.sign = sign;
     if (val < POW32) {
       // It fits in one 'int'

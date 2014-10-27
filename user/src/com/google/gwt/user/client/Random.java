@@ -46,8 +46,8 @@ public final class Random {
    * implementation is used.
    */
   public static native int nextInt() /*-{
-    // "~~" forces the value to a 32 bit integer.
-    return ~~(Math.floor(Math.random() * 4294967296) - 2147483648);
+    // "|0" forces the value to a 32 bit integer.
+    return (Math.floor(Math.random() * 4294967296) - 2147483648) | 0;
   }-*/;
 
   /**
@@ -57,8 +57,8 @@ public final class Random {
    * browser's random implementation is used.
    */
   public static native int nextInt(int upperBound) /*-{
-    // "~~" forces the value to a 32 bit integer.
-    return ~~(Math.floor(Math.random() * upperBound));
+    // "|0" forces the value to a 32 bit integer.
+    return (Math.floor(Math.random() * upperBound)) | 0;
   }-*/;
 
   /**

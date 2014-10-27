@@ -228,7 +228,7 @@ final class Cast {
    * See JLS 5.1.3.
    */
   static native int narrow_int(double x) /*-{
-    return ~~x;
+    return x | 0;
   }-*/;
 
   /**
@@ -259,7 +259,7 @@ final class Cast {
    */
   static native int round_int(double x) /*-{
     // TODO: reference java.lang.Integer::MAX_VALUE when we get clinits fixed
-    return ~~Math.max(Math.min(x, 2147483647), -2147483648);
+    return Math.max(Math.min(x, 2147483647), -2147483648) | 0;
   }-*/;
 
   /**
