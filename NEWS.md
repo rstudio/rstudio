@@ -10,3 +10,6 @@
     
 * Fuzzy matching for go to file/function
 
+### Workspace
+
+* Improved handling of objects containing or consisting of NULL `externalptr`.
