@@ -14,7 +14,6 @@
 
 * Improved handling of objects containing or consisting of NULL `externalptr`.
 
-
 ### Debugging
 
 * Improved heuristics for locating the stack frame where errors originated
