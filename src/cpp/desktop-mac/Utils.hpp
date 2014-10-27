@@ -47,6 +47,8 @@ float titleBarHeight();
    
 NSData *base64Decode(NSString *input);
    
+void cleanDuplicateEnvVars();
+   
 } // namespace utils
 } // namespace desktop
 
