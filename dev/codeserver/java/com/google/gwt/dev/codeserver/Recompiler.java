@@ -158,13 +158,16 @@ class Recompiler {
     int compileId = ++compilesDone;
     CompileDir compileDir = outboxDir.makeCompileDir(job.getLogger());
     TreeLogger compileLogger = makeCompileLogger(compileDir, job.getLogger());
-
-    job.onStarted(compileId, compileDir);
-
-    boolean success = doCompile(compileLogger, compileDir, job);
-    if (!success) {
-      compileLogger.log(TreeLogger.Type.ERROR, "Compiler returned false");
-      throw new UnableToCompleteException();
+    try {
+      job.onStarted(compileId, compileDir);
+      boolean success = doCompile(compileLogger, compileDir, job);
+      if (!success) {
+        compileLogger.log(TreeLogger.Type.ERROR, "Compiler returned false");
+        throw new UnableToCompleteException();
+      }
+    } finally {
+      // Make the error log available no matter what happens
+      lastBuild.set(compileDir);
     }
 
     long elapsedTime = System.currentTimeMillis() - startTime;
@@ -184,26 +187,30 @@ class Recompiler {
     long startTime = System.currentTimeMillis();
     CompileDir compileDir = outboxDir.makeCompileDir(logger);
     TreeLogger compileLogger = makeCompileLogger(compileDir, logger);
+    ModuleDef module;
+    try {
+      module = loadModule(Sets.<String>newHashSet(), compileLogger);
 
-    ModuleDef module = loadModule(Sets.<String>newHashSet(), compileLogger);
+      logger.log(TreeLogger.INFO, "Loading Java files in " + inputModuleName + ".");
+      CompilerOptions loadOptions = new CompilerOptionsImpl(compileDir, inputModuleName, options);
+      compilerContext = compilerContextBuilder.options(loadOptions).unitCache(
+          Compiler.getOrCreateUnitCache(logger, loadOptions)).build();
 
-    logger.log(TreeLogger.INFO, "Loading Java files in " + inputModuleName + ".");
-    CompilerOptions loadOptions = new CompilerOptionsImpl(compileDir, inputModuleName, options);
-    compilerContext = compilerContextBuilder.options(loadOptions).unitCache(
-        Compiler.getOrCreateUnitCache(logger, loadOptions)).build();
+      // Loads and parses all the Java files in the GWT application using the JDT.
+      // (This is warmup to make compiling faster later; we stop at this point to avoid
+      // needing to know the binding properties.)
+      module.getCompilationState(compileLogger, compilerContext);
 
-    // Loads and parses all the Java files in the GWT application using the JDT.
-    // (This is warmup to make compiling faster later; we stop at this point to avoid
-    // needing to know the binding properties.)
-    module.getCompilationState(compileLogger, compilerContext);
+      setUpCompileDir(compileDir, module, compileLogger);
+      if (launcherDir != null) {
+        launcherDir.update(module, compileDir, compileLogger);
+      }
 
-    setUpCompileDir(compileDir, module, compileLogger);
-    if (launcherDir != null) {
-      launcherDir.update(module, compileDir, compileLogger);
+      outputModuleName.set(module.getName());
+    } finally {
+      // Make the compile log available no matter what happens.
+      lastBuild.set(compileDir);
     }
-
-    outputModuleName.set(module.getName());
-    lastBuild.set(compileDir);
 
     long elapsedTime = System.currentTimeMillis() - startTime;
     compileLogger.log(TreeLogger.Type.INFO, "Module setup completed in " + elapsedTime + " ms");
@@ -303,7 +310,8 @@ class Recompiler {
       job.setCompileStrategy(CompileStrategy.SKIPPED);
       return true;
     }
-
+    // Force a recompile if we don't succeed.
+    lastBuildInput = null;
 
     job.onProgress("Compiling");
     // TODO: use speed tracer to get more compiler events?
@@ -332,11 +340,7 @@ class Recompiler {
       if (launcherDir != null) {
         launcherDir.update(module, compileDir, compileLogger);
       }
-    } else {
-      // always recompile after an error
-      lastBuildInput = null;
     }
-    lastBuild.set(compileDir); // makes compile log available over HTTP
 
     return success;
   }
