@@ -142,6 +142,7 @@
     cursor:cursor,pointer;
   }
 </ui:style>
+
 <ui:data field='heartCursorResource' src='heart.cur'/>
 
 <ui:style field='mySpritelyStyle'>
@@ -164,10 +165,14 @@
       font-size: 1.5em;
     }
 </ui:style>
+
 <ui:image field='prettyImage' />
 <ui:image field='prettyTilingImage' src='prettyImage.png' flipRtl='true' repeatStyle='Both'/>
 <ui:image field='right'/>
 <ui:image field='down'/>
+
+<ui:data field="embeddedSvgData" src="background.svg" mimeType="image/svg+xml" />
+<ui:data field="linkedSvgData" src="background.svg" doNotEmbed="true" />
 
 <gwt:DockPanel ui:field="root" width="100%" verticalAlignment="ALIGN_TOP">
   <gwt:Dock direction='NORTH'>
@@ -186,7 +191,7 @@
   <gwt:Dock direction='WEST'>
     <gwt:HTML ui:field='sideBarWidget' pixelSize="100, 150">
       <div ui:field="sideBar"
-      style='border: 4px solid gray; padding: 4px; margin: 4px;'
+          style='border: 4px solid gray; padding: 4px; margin: 4px;'
       >This could<br/>
         be a<br/>
         side bar<br/>

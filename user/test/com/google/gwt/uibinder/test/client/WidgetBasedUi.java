@@ -217,6 +217,8 @@ public class WidgetBasedUi extends Composite {
   @UiField Label labelWithComputedText;
   @UiField FlowPanel flowPanelWithTag;
   @UiField Element myElementWithTagName;
+  @UiField DataResource embeddedSvgData;
+  @UiField DataResource linkedSvgData;
 
   ValueChangeEvent<Double> doubleValueChangeEvent;
 

@@ -196,6 +196,14 @@
             name="src"
             type="xs:string"
             use="required" />
+        <xs:attribute
+            name="doNotEmbed"
+            type="xs:boolean"
+            use="optional" />
+        <xs:attribute
+            name="mimeType"
+            type="xs:string"
+            use="optional" />
 
         <xs:anyAttribute
             processContents="lax" />
