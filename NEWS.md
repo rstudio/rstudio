@@ -16,4 +16,5 @@
 
 ### Debugging
 
+* Allow 'debugSource' to be executed in user-specified environment
 * Improved heuristics for locating the stack frame where errors originated
