@@ -163,6 +163,12 @@ public class Projects implements OpenProjectFileHandler,
       });
    }
    
+   @Handler
+   public void onClearRecentProjects()
+   {  
+      // Clear the contents of the most rencently used list of projects
+      pMRUList_.get().clear();
+   }
    
    @Handler
    public void onNewProject()

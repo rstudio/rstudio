@@ -37,6 +37,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       addSeparator();
       addItem(commands.openProject().createMenuItem(false));
       addItem(commands.openProjectInNewWindow().createMenuItem(false));
+      addItem(commands.closeProject().createMenuItem(false));
       addSeparator();
       addItem(commands.projectMru0().createMenuItem(false));
       addItem(commands.projectMru1().createMenuItem(false));
@@ -49,7 +50,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       addItem(commands.projectMru8().createMenuItem(false));
       addItem(commands.projectMru9().createMenuItem(false));
       addSeparator();
-      addItem(commands.closeProject().createMenuItem(false));
+      addItem(commands.clearRecentProjects().createMenuItem(false));
       addSeparator();
       addItem(commands.projectOptions().createMenuItem(false));
       
