@@ -160,6 +160,19 @@ core::system::ProcessOptions procOptions()
    return procOptions(s_isSvnSshRepository);
 }
 
+void initEnvironment()
+{
+#ifdef _WIN32
+   r::exec::RFunction sysSetenv("Sys.setenv");
+   sysSetenv.addParam("RSTUDIO_MSYS_SSH",
+                      session::options().msysSshPath().absolutePath());
+   Error error = sysSetenv.call();
+   if (error)
+      LOG_ERROR(error);
+#endif
+}
+
+
 void maybeAttachPasswordManager(boost::shared_ptr<ConsoleProcess> pCP)
 {
    if (s_isSvnSshRepository)
@@ -1784,6 +1797,8 @@ Error augmentSvnIgnore()
 
 Error initialize()
 {
+   initEnvironment();
+
    initSvnBin();
 
    // initialize password manager
