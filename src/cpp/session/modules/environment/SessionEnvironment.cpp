@@ -140,6 +140,36 @@ Error getFileNameFromContext(const RCNTXT* pContext,
    }
 }
 
+// call objects can't be passed as primary values through our R interface
+// (early evaluation can be triggered) so we wrap them in an attribute attached
+// to a dummy value when we need to pass them through
+Error invokeFunctionOnCall(const char* rFunction,
+                           SEXP call, std::string* pResult)
+{
+   SEXP result;
+   r::sexp::Protect protect;
+   SEXP val = r::sexp::create("_rs_callval", &protect);
+   r::sexp::setAttrib(val, "_rs_call", call);
+   Error error = r::exec::RFunction(rFunction, val)
+                            .call(&result, &protect);
+   if (!error && r::sexp::length(result) > 0)
+   {
+      error = r::sexp::extract(result, pResult);
+   }
+   else
+   {
+      pResult->clear();
+   }
+   return error;
+}
+
+Error functionNameFromContext(const RCNTXT* pContext,
+                              std::string* pFunctionName)
+{
+   return invokeFunctionOnCall(".rs.functionNameFromCall", pContext->call,
+                               pFunctionName);
+}
+
 // Construct a simulated source reference from a context containing a
 // function being debugged, and either the context containing the current
 // invocation or a string containing the last debug ouput from R.
@@ -208,6 +238,31 @@ bool isErrorHandlerContext(RCNTXT* pContext)
    return TYPEOF(errFlag) == INTSXP;
 }
 
+// Given a context at which an error handler was found, return the context at
+// which we should presume the error originated. 
+RCNTXT* errorOriginatorContext(RCNTXT* handlerCtx, int* dist) 
+{
+   (*dist)++;
+   RCNTXT* originator = firstFunctionContext(handlerCtx->nextcontext);
+   std::string functionName;
+
+   // skip "stop" if present
+   Error err = functionNameFromContext(originator, &functionName);
+   if (!err && functionName == "stop")
+   {
+      (*dist)++;
+      originator = firstFunctionContext(originator->nextcontext);
+   }
+   // skip "stopifnot" if present
+   err = functionNameFromContext(originator, &functionName);
+   if (!err && functionName == "stopifnot")
+   {
+      (*dist)++;
+      originator = firstFunctionContext(originator->nextcontext);
+   }
+   return originator;
+}
+
 // return the function context at the given depth
 RCNTXT* getFunctionContext(const int depth,
                            bool findUserCode = false,
@@ -246,11 +301,11 @@ RCNTXT* getFunctionContext(const int depth,
          }
          // Record the depth at which the error handler was found (if at all);
          // we will default to reporting code at the function that invoked
-         // the handler, which is two functions down.
+         // the handler
          if (findUserCode && isErrorHandlerContext(pRContext))
          {
-            pErrContext = getFunctionContext(currentDepth + 2, false,
-                                             &errorDepth);
+            errorDepth = currentDepth;
+            pErrContext = errorOriginatorContext(pRContext, &errorDepth);
          }
       }
       pRContext = pRContext->nextcontext;
@@ -341,36 +396,6 @@ bool insideDebugHiddenFunction()
       pRContext = pRContext->nextcontext;
    }
    return false;
-}
-
-// call objects can't be passed as primary values through our R interface
-// (early evaluation can be triggered) so we wrap them in an attribute attached
-// to a dummy value when we need to pass them through
-Error invokeFunctionOnCall(const char* rFunction,
-                           SEXP call, std::string* pResult)
-{
-   SEXP result;
-   r::sexp::Protect protect;
-   SEXP val = r::sexp::create("_rs_callval", &protect);
-   r::sexp::setAttrib(val, "_rs_call", call);
-   Error error = r::exec::RFunction(rFunction, val)
-                            .call(&result, &protect);
-   if (!error && r::sexp::length(result) > 0)
-   {
-      error = r::sexp::extract(result, pResult);
-   }
-   else
-   {
-      pResult->clear();
-   }
-   return error;
-}
-
-Error functionNameFromContext(const RCNTXT* pContext,
-                              std::string* pFunctionName)
-{
-   return invokeFunctionOnCall(".rs.functionNameFromCall", pContext->call,
-                               pFunctionName);
 }
 
 // Return the call frames and debug information as a JSON object.

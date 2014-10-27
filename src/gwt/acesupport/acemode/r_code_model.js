@@ -28,6 +28,7 @@ function comparePoints(pos1, pos2)
 }
 
 var ScopeManager = require("mode/r_scope_tree").ScopeManager;
+var ScopeNode = require("mode/r_scope_tree").ScopeNode;
 
 var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    this.$doc = doc;
@@ -36,7 +37,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    this.$endStates = new Array(doc.getLength());
    this.$statePattern = statePattern;
    this.$codeBeginPattern = codeBeginPattern;
-   this.$scopes = new ScopeManager();
+   this.$scopes = new ScopeManager(ScopeNode);
 
    var that = this;
    this.$doc.on('change', function(evt) {

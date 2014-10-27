@@ -623,6 +623,93 @@ public class StringUtil
    }
    
    
+   public static boolean isSubsequence(String self,
+         String other,
+         boolean caseInsensitive)
+   {
+      return caseInsensitive ?
+            isSubsequence(self.toLowerCase(), other.toLowerCase()) :
+            isSubsequence(self, other)
+      ;
+   }
+   
+   public static boolean isSubsequence(String self,
+         String other)
+   {
+
+      final int self_n = self.length();
+      final int other_n = other.length();
+
+      if (other_n > self_n)
+         return false;
+
+      int self_idx = 0;
+      int other_idx = 0;
+         
+      while (self_idx < self_n)
+      {
+         char selfChar = self.charAt(self_idx);
+         char otherChar = other.charAt(other_idx);
+         
+         if (otherChar == selfChar)
+         {
+            ++other_idx;
+            if (other_idx == other_n)
+            {
+               return true;
+            }
+         }
+         ++self_idx;
+      }
+      return false;
+   }
+   
+   public static int[] subsequenceIndices(
+         String sequence, String query)
+   {
+      int query_n = query.length();
+      int sequence_n = sequence.length();
+      int[] result = new int[query.length()];
+      
+      int prevMatchIndex = 0;
+      for (int i = 0; i < query_n; i++)
+      {
+         result[i] = sequence.indexOf(query.charAt(i), prevMatchIndex);
+         prevMatchIndex = result[i];
+      }
+      return result;
+      
+   }
+   
+   public static String getExtension(String string, int dots)
+   {
+      assert dots > 0;
+      int lastDotIndex = -1;
+      
+      if (dots == 1)
+      {
+         lastDotIndex = string.lastIndexOf('.');
+      }
+      else
+      {
+         String reversed = new StringBuilder(string).reverse().toString();
+         for (int i = 0; i < dots; i++)
+         {
+            lastDotIndex = reversed.indexOf('.', lastDotIndex);
+         }
+         lastDotIndex = string.length() - lastDotIndex;
+      }
+      
+      return lastDotIndex == -1 || lastDotIndex == string.length() - 1 ?
+            "" :
+            string.substring(lastDotIndex + 1, string.length());
+   }
+   
+   public static String getExtension(String string)
+   {
+      return getExtension(string, 1);
+   }
+   
    private static final String[] LABELS = {
          "B",
          "KB",

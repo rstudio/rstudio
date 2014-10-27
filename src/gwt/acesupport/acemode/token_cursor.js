@@ -132,13 +132,13 @@ var TokenCursor = function(tokens, row, offset) {
          clone.$offset = 0;
       }
 
-      if (clone.$tokens[clone.$row] === null)
+      if (clone.$tokens[clone.$row] == null || clone.$tokens[clone.$row].length === 0)
          return false;
 
       if (clone.$row >= clone.$tokens.length)
          return false;
 
-      if (clone.$offset > clone.$tokens[clone.$row].length)
+      if (clone.$offset >= clone.$tokens[clone.$row].length)
          return false;
 
       this.$row = clone.$row;
@@ -152,6 +152,7 @@ var TokenCursor = function(tokens, row, offset) {
    {
       if (position.row > maxRow)
          return false;
+
       this.$row = position.row;
       var rowTokens = this.$tokens[this.$row] || [];
       for (this.$offset = 0; this.$offset < rowTokens.length; this.$offset++)
@@ -440,6 +441,60 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
 
 (function() {
 
+   // Move the tokne cursor backwards from an open brace over const, noexcept,
+   // for function definitions.
+   //
+   // E.g.
+   //
+   //     int foo(int a) const noexcept(...) {
+   //                    ^~~~~~~~~~~~~~~~~~~~^
+   //
+   // Places the token cursor on the first token following a closing paren.
+   this.bwdOverConstNoexcept = function() {
+
+      var clone = this.cloneCursor();
+      if (clone.currentValue() !== "{") {
+         return false;
+      }
+
+      // Move off of the open brace
+      if (!clone.moveToPreviousToken())
+         return false;
+      
+      // Try moving over a 'noexcept()'.
+      var cloneTwo = clone.cloneCursor();
+      if (cloneTwo.currentValue() === ")") {
+         if (cloneTwo.bwdToMatchingToken()) {
+            if (cloneTwo.moveToPreviousToken()) {
+               if (cloneTwo.currentValue() === "noexcept") {
+                  clone.$row = cloneTwo.$row;
+                  clone.$offset = cloneTwo.$offset;
+               }
+            }
+         }
+      }
+
+      // Try moving over a 'noexcept'.
+      if (clone.currentValue() === "noexcept")
+         if (!clone.moveToPreviousToken())
+            return false;
+
+      // Try moving over the 'const'
+      if (clone.currentValue() === "const")
+         if (!clone.moveToPreviousToken())
+            return false;
+
+      // Move back up one if we landed on the closing paren
+      if (clone.currentValue() === ")")
+         if (!clone.moveToNextToken())
+            return false;
+
+      this.$row = clone.$row;
+      this.$offset = clone.$offset;
+      return true;
+
+   };
+
    this.bwdToMatchingArrow = function() {
 
       var thisValue = ">";
@@ -598,9 +653,15 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
          if (value === ",") {
             return this.doBwdOverInitializationList(clonedCursor, tokenCursor);
          } else if (value === ":") {
-            tokenCursor.$row = clonedCursor.$row;
-            tokenCursor.$offset = clonedCursor.$offset;
-            return true;
+            var prevValue = clonedCursor.peekBack().currentValue();
+            if (!["public", "private", "protected"].some(function(x) {
+               return x === prevValue;
+            }))
+            {
+               tokenCursor.$row = clonedCursor.$row;
+               tokenCursor.$offset = clonedCursor.$offset;
+               return true;
+            }
          }
       }
 

@@ -483,7 +483,17 @@ pre {
    -webkit-font-smoothing: subpixel-antialiased;
 }
 
-.ace_editor > textarea {
+/* on the Mac specifically, keeping the ACE input textarea on the same z-index
+ * as the text causes rendering problems in Safari (see case 4093), and lifting
+ * it above the text causes it to intercept unwanted events (e.g. clicks for
+ * double-click), so send it beneath the text. */
+.macintosh #rstudio_source_text_editor.ace_editor > textarea {
+   z-index: -5;
+}
+
+/* the opposite must be done for the console due to the z-indices of the
+ * elements it contains */
+.macintosh #rstudio_console_input.ace_editor > textarea {
    z-index: 5;
 }
 

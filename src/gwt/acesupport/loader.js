@@ -103,7 +103,7 @@ oop.inherits(RStudioEditSession, EditSession);
       }
 
       // optional outdenting (currently hard-wired for C++ modes)
-      var codeModel = mode.$codeModel;
+      var codeModel = mode.codeModel;
       if (typeof codeModel !== "undefined") {
          var align = codeModel.alignContinuationSlashes;
          if (typeof align !== "undefined") {

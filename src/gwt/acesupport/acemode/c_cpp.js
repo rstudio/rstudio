@@ -67,10 +67,10 @@ var Mode = function(suppressHighlighting, doc, session) {
    this.$r_codeModel = new RCodeModel(doc, this.$tokenizer, /^r-/, /^\s*\/\*{3,}\s+[Rr]\s*$/);
 
    // C/C++ related tokenization
-   this.$codeModel = new CppCodeModel(session, this.$tokenizer);
+   this.codeModel = new CppCodeModel(session, this.$tokenizer);
    
-   this.$behaviour = new CStyleBehaviour(this.$codeModel);
-   this.$outdent = new MatchingBraceOutdent(this.$codeModel);
+   this.$behaviour = new CStyleBehaviour(this.codeModel);
+   this.$outdent = new MatchingBraceOutdent(this.codeModel);
    
    this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
       session,
@@ -82,8 +82,8 @@ var Mode = function(suppressHighlighting, doc, session) {
    if (!window.NodeWebkit)     
       this.foldingRules = new CppStyleFoldMode();
 
-   this.$tokens = this.$codeModel.$tokens;
-   this.getLineSansComments = this.$codeModel.getLineSansComments;
+   this.$tokens = this.codeModel.$tokens;
+   this.getLineSansComments = this.codeModel.getLineSansComments;
 
 };
 oop.inherits(Mode, TextMode);
@@ -165,7 +165,7 @@ oop.inherits(Mode, TextMode);
       if (this.inRLanguageMode(state))
          return this.$r_codeModel.getNextLineIndent(row, line, state, tab, tabSize);
       else
-         return this.$codeModel.getNextLineIndent(row, line, state, tab, tabSize, dontSubset);
+         return this.codeModel.getNextLineIndent(row, line, state, tab, tabSize, dontSubset);
 
    };
 

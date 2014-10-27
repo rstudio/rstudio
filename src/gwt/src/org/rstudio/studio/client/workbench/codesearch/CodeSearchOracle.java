@@ -15,10 +15,12 @@
 package org.rstudio.studio.client.workbench.codesearch;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.DuplicateHelper;
 import org.rstudio.core.client.Invalidation;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Match;
@@ -43,6 +45,47 @@ public class CodeSearchOracle extends SuggestOracle
       workbenchContext_ = workbenchContext;
    }
    
+   private int score(String suggestion, String query)
+   {
+      int query_n = query.length();
+      int suggestion_n = suggestion.length();
+      
+      int result = 0;
+      
+      // Get query matches in suggestion (ordered)
+      // Note: we have already guaranteed this to be a subsequence so
+      // this will succeed
+      int[] matches = StringUtil.subsequenceIndices(suggestion, query);
+      
+      // Loop over the matches and assign a score
+      for (int j = 0; j < query_n; j++)
+      {
+         int matchPos = matches[j];
+         
+         // Less penalty if character follows special delim
+         if (matchPos >= 1)
+         {
+            char prevChar = suggestion.charAt(matchPos - 1);
+            if (prevChar == '_' || prevChar == '-' || 
+                  (prevChar == '.' && (matchPos + 3 < suggestion_n)))
+            {
+               matchPos = j;
+            }
+         }
+         
+         // More penalty for 'uninteresting' files (e.g. .Rd)
+         String extension = StringUtil.getExtension(suggestion);
+         if (extension.toLowerCase() == "rd")
+         {
+            matchPos += 3;
+         }
+         
+         result += matchPos;
+      }
+      
+      // Debug.logToConsole("Score for suggestion '" + suggestion + "' against query '" + query + "': " + result);
+      return result;
+   }
    
    @Override
    public void requestSuggestions(final Request request, 
@@ -71,7 +114,7 @@ public class CodeSearchOracle extends SuggestOracle
              request.getQuery().startsWith(res.getQuery()))
          {
             Pattern pattern = null;
-            String queryLower = request.getQuery().toLowerCase();
+            final String queryLower = request.getQuery().toLowerCase();
             if (queryLower.indexOf('*') != -1)
                pattern = patternForTerm(queryLower);
             
@@ -90,13 +133,11 @@ public class CodeSearchOracle extends SuggestOracle
                }
                else
                {
-                  if (name.startsWith(queryLower))
+                  if (StringUtil.isSubsequence(name, queryLower))
                      suggestions.add(sugg);
                }
             }
             
-            
-
             // process and cache suggestions. note that this adds an item to
             // the end of the resultCache_ (which we are currently iterating
             // over) no biggie because we are about to return from the loop
@@ -204,6 +245,36 @@ public class CodeSearchOracle extends SuggestOracle
               suggestions = processSuggestions(request_, 
                                                suggestions,
                                                response.getMoreAvailable());
+              
+              // sort the suggestions -- we want suggestions for which
+              // the query matches the start to come first
+              final String queryLower = request_.getQuery().toLowerCase();
+              java.util.Collections.sort(suggestions,
+                    new Comparator<CodeSearchSuggestion>() {
+                 
+                 @Override
+                 public int compare(CodeSearchSuggestion lhs,
+                       CodeSearchSuggestion rhs)
+                 {
+                    int lhsScore = score(
+                          lhs.getMatchedString().toLowerCase(),
+                          queryLower);
+                    
+                    int rhsScore = score(
+                          rhs.getMatchedString().toLowerCase(),
+                          queryLower);
+                    
+                    if (lhsScore == rhsScore)
+                    {
+                       return 0;
+                    }
+                    else
+                    {
+                       return lhsScore < rhsScore ? -1 : 1;
+                    }
+                 }
+                 
+              });
                
                // return suggestions
                if (!invalidationToken_.isInvalid())
