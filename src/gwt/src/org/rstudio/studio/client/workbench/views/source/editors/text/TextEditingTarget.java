@@ -2723,11 +2723,17 @@ public class TextEditingTarget implements
          }
       }
    }
-
+   
    @Handler
    void onExecuteCodeWithoutFocus()
    {
       codeExecution_.executeSelection(false);
+   }
+   
+   @Handler
+   void onExecuteCodeWithoutMovingCursor()
+   {
+      codeExecution_.executeSelection(true, false);
    }
    
    @Handler
