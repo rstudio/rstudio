@@ -231,8 +231,6 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          return false;
       if (!tokenCursor.moveToPreviousToken())
          return false;
-      if (!pIdentifier(tokenCursor.currentToken()))
-         return false;
 
       return true;
    }
@@ -280,7 +278,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       // on the identifier of a function whose open brace is a few tokens later.
       // Seems like it would be rare indeed for this distance to be more than 30
       // rows.
-      maxRow = Math.min(maxrow + 30, this.$doc.getLength() - 1);
+      var maxRow = Math.min(maxrow + 30, this.$doc.getLength() - 1);
       this.$tokenizeUpToRow(maxRow);
 
       //console.log("Seeking to " + this.$scopes.parsePos.row + "x"+ this.$scopes.parsePos.column);
