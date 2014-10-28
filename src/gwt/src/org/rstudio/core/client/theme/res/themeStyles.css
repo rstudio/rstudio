@@ -105,6 +105,8 @@
 @url PENDINGBREAKPOINT pendingBreakpoint;
 @url EXECUTINGLINE executingLine;
 
+@url MACCHECK macCheck;
+
 body.windows, body.macintosh, body.linux {}
 
 body {
@@ -1140,5 +1142,41 @@ body.ubuntu_mono .searchBox {
 }
 
 .notResizable {
-	resize: none;
+  resize: none;
 }
+
+.macintosh .gwt-CheckBox input[type="checkbox"] {
+  -webkit-appearance: none;
+  -webkit-border-radius: 3px;
+  outline: none;
+  width: 13px;
+  height: 13px;
+  border: 1px solid #b0b0b0;
+  background: #ffffff;
+  vertical-align: middle;
+  margin: 3px;
+}
+
+.macintosh .gwt-CheckBox input[type="checkbox"]:focus,
+.macintosh .gwt-CheckBox input[type="checkbox"]:active {
+  border-color: #707070;
+}
+
+.macintosh .gwt-CheckBox input[type="checkbox"]:checked {
+  position: relative;
+}
+
+.macintosh .gwt-CheckBox input[type="checkbox"]:checked:before {
+  content: '';
+  display: block;
+  position: absolute;
+  top: 0px; 
+  left: 0px;
+  width: 13px;
+  height: 13px;
+  background: MACCHECK;
+  background-repeat: no-repeat;
+  background-position-x: 1px;
+  background-position-y: 1px;
+}
+
