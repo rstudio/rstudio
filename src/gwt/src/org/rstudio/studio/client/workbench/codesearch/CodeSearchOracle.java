@@ -75,8 +75,8 @@ public class CodeSearchOracle extends SuggestOracle
          if (matchPos >= 1)
          {
             char prevChar = string.charAt(matchPos - 1);
-            if (prevChar == '_' || prevChar == '-' || 
-                  (prevChar == '.' && (matchPos + 3 < string_n)))
+            if (prevChar == '_' || prevChar == '-' ||
+                  (!suggestion.isFileTarget() && prevChar == '.'))
             {
                matchPos = j + 1;
             }

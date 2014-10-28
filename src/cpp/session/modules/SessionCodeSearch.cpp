@@ -810,7 +810,8 @@ json::Array signaturesToJsonArray(
 // changes are made to the client side scoreMatch function as well
 // (See: CodeSearchOracle.java)
 int scoreMatch(std::string const& suggestion,
-               std::string const& query)
+               std::string const& query,
+               bool isFile)
 {
    // No penalty for perfect matches
    if (suggestion == query)
@@ -837,8 +838,7 @@ int scoreMatch(std::string const& suggestion,
       if (matchPos >= 1)
       {
          char prevChar = suggestion[matchPos - 1];
-         if (prevChar == '_' || prevChar == '-' ||
-             (prevChar == '.' && (matchPos + 3 < suggestion_n)))
+         if (prevChar == '_' || prevChar == '-' || (!isFile && prevChar == '.'))
          {
             matchPos = j + 1;
          }
@@ -851,6 +851,10 @@ int scoreMatch(std::string const& suggestion,
 
       result += matchPos;
    }
+   
+   // Penalize files
+   if (isFile)
+      ++result;
 
    return result;
 }
@@ -945,7 +949,7 @@ Error searchCode(const json::JsonRpcRequest& request,
    std::vector<PairIntInt> fileScores;
    for (int i = 0; i < paths.size(); ++i)
    {
-      fileScores.push_back(std::make_pair(i, scoreMatch(names[i], term)));
+      fileScores.push_back(std::make_pair(i, scoreMatch(names[i], term, true)));
    }
 
    // sort by score (lower is better)
@@ -954,7 +958,7 @@ Error searchCode(const json::JsonRpcRequest& request,
    std::vector<PairIntInt> srcItemScores;
    for (int i = 0; i < srcItems.size(); ++i)
    {
-      srcItemScores.push_back(std::make_pair(i, scoreMatch(srcItems[i].name(), term)));
+      srcItemScores.push_back(std::make_pair(i, scoreMatch(srcItems[i].name(), term, false)));
    }
    std::sort(srcItemScores.begin(), srcItemScores.end(), ScorePairComparator());
 
