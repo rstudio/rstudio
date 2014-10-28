@@ -612,7 +612,7 @@ public class RCompletionManager implements CompletionManager
       // early escaping rules: if we're in Roxygen, or we have text immediately
       // preceding the cursor (as that signals we're completing a variable name)
       if (firstLine.matches("\\s*#+'.*") ||
-          firstLine.matches(".*[a-zA-Z0-9._:$@]$"))
+          firstLine.matches(".*[$@]$"))
          return new AutoCompletionContext(firstLine, false);
       
       // if the line is currently within a comment, bail -- this ensures
