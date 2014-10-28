@@ -16,13 +16,10 @@
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionModuleContext.hpp>
 
-#include <core/FilePath.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
 
 #include <session/SessionAsyncRProcess.hpp>
-
-using namespace core;
 
 namespace session {
 namespace async_r {
@@ -47,22 +44,8 @@ void AsyncRProcess::start(const char* rCommand,
       return;
    }
 
-   // program path and args
-   core::FilePath programPath;
-   std::vector<std::string> args;
-
-   // call R through a login shell on OSX so that it can pickup
-   // the /etc/paths variables which are stripped by OSX Yosemite
-#ifdef __APPLE__
-   programPath = FilePath("/bin/bash");
-   args.push_back("--login");
-   args.push_back(rProgramPath.absolutePath());
-   // call R directly on other platforms
-#else
-   programPath = rProgramPath;
-#endif
-
    // args
+   std::vector<std::string> args;
    args.push_back("--slave");
    if (rOptions & R_PROCESS_VANILLA)
       args.push_back("--vanilla");
@@ -106,7 +89,7 @@ void AsyncRProcess::start(const char* rCommand,
                              AsyncRProcess::shared_from_this(),
                              _1);
    error = module_context::processSupervisor().runProgram(
-            programPath.absolutePath(),
+            rProgramPath.absolutePath(),
             args,
             options,
             cb);
