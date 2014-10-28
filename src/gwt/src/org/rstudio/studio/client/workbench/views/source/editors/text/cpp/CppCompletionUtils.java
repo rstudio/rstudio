@@ -52,13 +52,26 @@ public class CppCompletionUtils
                c == '_');
    }
    
-   public static Position getCompletionPosition(DocDisplay docDisplay)
+   public static Position getCompletionPosition(DocDisplay docDisplay,
+                                                boolean explicit)
    {
       // get the current line of code
       String line = docDisplay.getCurrentLine();
       
-      // determine the column right before this one
+      // get the cursor position
       Position position = docDisplay.getCursorPosition();
+      
+      // is there already a C++ identifier character at this position? 
+      // if so then bail
+      if ((position.getColumn() < line.length()) &&
+          CppCompletionUtils.isCppIdentifierChar(
+                                        line.charAt(position.getColumn()))) 
+      {
+         return null;
+      }
+      
+      
+      // determine the column right before this one
       int inputCol = position.getColumn() - 1;
                
       // walk backwards across C++ identifer symbols 
@@ -86,8 +99,8 @@ public class CppCompletionUtils
          return Position.create(position.getRow(), col + 1);
       }
       
-      // at least 5 characters
-      else if ((inputCol - col) >= 5)
+      // minimum character threshold
+      else if ((inputCol - col) >= (explicit ? 1 : 5))
       {
          return Position.create(position.getRow(), col + 1);
       }

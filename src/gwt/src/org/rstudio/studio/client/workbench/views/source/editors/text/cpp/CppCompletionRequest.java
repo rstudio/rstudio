@@ -68,6 +68,11 @@ public class CppCompletionRequest
       server_ = server;
    }
    
+   public boolean isExplicit()
+   {
+      return explicit_;
+   }
+   
    public Position getCompletionPosition()
    {
       return completionPosition_;
