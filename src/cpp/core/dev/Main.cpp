@@ -51,7 +51,13 @@ int test_main(int argc, char * argv[])
 
       // load libclang
       using namespace libclang;
-      clang().load();
+      std::string diagnostics;
+      clang().load(EmbeddedLibrary(), LibraryVersion(3,4,0), &diagnostics);
+      if (!clang().isLoaded())
+      {
+         std::cerr << diagnostics << std::endl;
+         return EXIT_FAILURE;
+      }
 
       // create a source index and get a translation unit for it
       SourceIndex sourceIndex;
