@@ -41,9 +41,13 @@ int test_main(int argc, char * argv[])
       // write a C++ file
       std::string cpp =
         "#include <string>\n"
+        "class X { public:\n"
+        "   void test(int y, int x = 10);\n"
+        "}\n"
+        "void X::test(int y, int x) {}\n"
         "void foobar() {\n"
-        "   std::string str;\n"
-        "   str.\n"
+        "   X x;\n"
+        "   x."
         "}";
       std::ofstream ostr("foo.cpp");
       ostr << cpp;
@@ -69,9 +73,11 @@ int test_main(int argc, char * argv[])
       }
 
       // code complete
-      CodeCompleteResults results = tu.codeCompleteAt("foo.cpp", 4, 8);
-      for (unsigned i = 0; i<results.getNumResults(); i++)
-        std::cout << results.getResult(i).getText() << std::endl;
+      CodeCompleteResults results = tu.codeCompleteAt("foo.cpp", 8, 6);
+      for (unsigned i = 0; i<results.getNumResults(); i++) {
+        std::cout << results.getResult(i).getTypedText() << std::endl;
+        std::cout << "   " << results.getResult(i).getText() << std::endl;
+      }
 
       return EXIT_SUCCESS;
    }
