@@ -55,13 +55,18 @@ int test_main(int argc, char * argv[])
       clang().load(EmbeddedLibrary(), LibraryVersion(3,4,0), &diagnostics);
       if (!clang().isLoaded())
       {
-         std::cerr << diagnostics << std::endl;
+         std::cerr << "Failed to load libclang: " << diagnostics << std::endl;
          return EXIT_FAILURE;
       }
 
       // create a source index and get a translation unit for it
       SourceIndex sourceIndex;
       TranslationUnit tu = sourceIndex.getTranslationUnit("foo.cpp");
+      if (tu.empty())
+      {
+         std::cerr << "No translation unit foo.cpp" << std::endl;
+         return EXIT_FAILURE;
+      }
 
       // code complete
       CodeCompleteResults results = tu.codeCompleteAt("foo.cpp", 4, 8);
