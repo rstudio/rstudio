@@ -443,6 +443,7 @@ private:
                ext == ".rhtml" || ext == ".rd" ||
                ext == ".h" || ext == ".hpp" ||
                ext == ".c" || ext == ".cpp" ||
+               ext == ".json" ||
                filename == "DESCRIPTION" ||
                filename == "NAMESPACE" ||
                filename == "README" ||
@@ -805,9 +806,17 @@ json::Array signaturesToJsonArray(
    return sigCol;
 }
 
+// NOTE: When modifying this code, you should ensure that corresponding
+// changes are made to the client side scoreMatch function as well
+// (See: CodeSearchOracle.java)
 int scoreMatch(std::string const& suggestion,
-               std::string const& query)
+               std::string const& query,
+               bool isFile)
 {
+   // No penalty for perfect matches
+   if (suggestion == query)
+      return 0;
+   
    int query_n = query.length();
    int suggestion_n = suggestion.length();
 
@@ -829,15 +838,23 @@ int scoreMatch(std::string const& suggestion,
       if (matchPos >= 1)
       {
          char prevChar = suggestion[matchPos - 1];
-         if (prevChar == '_' || prevChar == '-' ||
-             (prevChar == '.' && (matchPos + 3 < suggestion_n)))
+         if (prevChar == '_' || prevChar == '-' || (!isFile && prevChar == '.'))
          {
-            matchPos = j;
+            matchPos = j + 1;
          }
       }
+      
+      // More penalty for 'uninteresting' files (e.g. .Rd)
+      std::string extension = string_utils::getExtension(suggestion);
+      if (boost::algorithm::to_lower_copy(extension) == ".rd")
+         matchPos += 3;
 
-      result += (1 << j) + matchPos;
+      result += matchPos;
    }
+   
+   // Penalize files
+   if (isFile)
+      ++result;
 
    return result;
 }
@@ -932,7 +949,7 @@ Error searchCode(const json::JsonRpcRequest& request,
    std::vector<PairIntInt> fileScores;
    for (int i = 0; i < paths.size(); ++i)
    {
-      fileScores.push_back(std::make_pair(i, scoreMatch(names[i], term)));
+      fileScores.push_back(std::make_pair(i, scoreMatch(names[i], term, true)));
    }
 
    // sort by score (lower is better)
@@ -941,7 +958,7 @@ Error searchCode(const json::JsonRpcRequest& request,
    std::vector<PairIntInt> srcItemScores;
    for (int i = 0; i < srcItems.size(); ++i)
    {
-      srcItemScores.push_back(std::make_pair(i, scoreMatch(srcItems[i].name(), term)));
+      srcItemScores.push_back(std::make_pair(i, scoreMatch(srcItems[i].name(), term, false)));
    }
    std::sort(srcItemScores.begin(), srcItemScores.end(), ScorePairComparator());
 

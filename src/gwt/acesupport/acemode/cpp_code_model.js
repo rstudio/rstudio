@@ -417,7 +417,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                   startPos.row, startPos.column
                ));
                
-               classText = $normalizeAndTruncate(classText);
+               classText = $normalizeWhitespace(classText);
                
                this.$scopes.onClassScopeStart(classText,
                                               localCursor.currentPosition(),
@@ -444,7 +444,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                         startPos.row, startPos.column - 1
                      ));
 
-                     lambdaText = $normalizeAndTruncate("lambda " + lambdaText);
+                     lambdaText = $normalizeWhitespace("lambda " + lambdaText);
                      
                      this.$scopes.onLambdaScopeStart(lambdaText,
                                                      startPos,

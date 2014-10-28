@@ -341,6 +341,8 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "md",       "text/x-markdown" );
       MIME_TYPES.put( "mdtxt",    "text/x-markdown" );
       MIME_TYPES.put( "markdown", "text/x-markdown" );
+      MIME_TYPES.put( "yaml",     "text/x-yaml" );
+      MIME_TYPES.put( "yml",      "text/x-yaml" );
 
       // programming languages
       MIME_TYPES.put( "f",         "text/x-fortran" );
@@ -357,6 +359,7 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "bz2",   "application/x-bzip2");
       MIME_TYPES.put( "gz",    "application/x-gzip");
       MIME_TYPES.put( "tar",   "application/x-tar");
+      MIME_TYPES.put( "json",  "application/json");
 
       // yet more types...
 
@@ -370,6 +373,8 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "out",   "text/plain");
       MIME_TYPES.put( "csl",   "text/x-csl");
       MIME_TYPES.put( "r",     "text/x-r-source");
+      MIME_TYPES.put( "s",     "text/x-r-source");
+      MIME_TYPES.put( "q",     "text/x-r-source");
       MIME_TYPES.put( "rd",    "text/x-r-doc");
       MIME_TYPES.put( "rnw",   "text/x-r-sweave");
       MIME_TYPES.put( "rmd",   "text/x-r-markdown");

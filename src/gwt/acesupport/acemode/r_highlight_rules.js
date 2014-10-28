@@ -60,12 +60,22 @@ define("mode/r_highlight_rules", function(require, exports, module)
                regex : "#.*$"
             },
             {
+               token : "string", // single line
+               regex : '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
+            },
+            {
+               token : "string", // single line
+               regex : "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
+            },
+            {
                token : "string", // multi line string start
+               merge : true,
                regex : '["]',
                next : "qqstring"
             },
             {
                token : "string", // multi line string start
+               merge : true,
                regex : "[']",
                next : "qstring"
             },
@@ -138,7 +148,8 @@ define("mode/r_highlight_rules", function(require, exports, module)
             },
             {
                token : "string",
-               regex : '.+'
+               regex : '.+',
+               merge : true
             }
          ],
          "qstring" : [
@@ -149,7 +160,8 @@ define("mode/r_highlight_rules", function(require, exports, module)
             },
             {
                token : "string",
-               regex : '.+'
+               regex : '.+',
+               merge : true
             }
          ]
       };
