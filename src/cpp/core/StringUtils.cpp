@@ -94,6 +94,15 @@ std::vector<int> subsequenceIndices(std::string const& sequence,
    return result;
 }
 
+std::string getExtension(std::string const& x)
+{
+   std::size_t lastDotIndex = x.find('.');
+   if (lastDotIndex != std::string::npos)
+      return x.substr(lastDotIndex + 1, x.length() - lastDotIndex);
+   else
+      return std::string();
+}
+
 void convertLineEndings(std::string* pStr, LineEnding type)
 {
    std::string replacement;

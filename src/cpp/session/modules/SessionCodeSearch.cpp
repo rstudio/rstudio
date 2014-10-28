@@ -805,9 +805,16 @@ json::Array signaturesToJsonArray(
    return sigCol;
 }
 
+// NOTE: When modifying this code, you should ensure that corresponding
+// changes are made to the client side scoreMatch function as well
+// (See: CodeSearchOracle.java)
 int scoreMatch(std::string const& suggestion,
                std::string const& query)
 {
+   // No penalty for perfect matches
+   if (suggestion == query)
+      return 0;
+   
    int query_n = query.length();
    int suggestion_n = suggestion.length();
 
@@ -832,11 +839,16 @@ int scoreMatch(std::string const& suggestion,
          if (prevChar == '_' || prevChar == '-' ||
              (prevChar == '.' && (matchPos + 3 < suggestion_n)))
          {
-            matchPos = j;
+            matchPos = j + 1;
          }
       }
+      
+      // More penalty for 'uninteresting' files (e.g. .Rd)
+      std::string extension = string_utils::getExtension(suggestion);
+      if (boost::algorithm::to_lower_copy(extension) == "rd")
+         matchPos += 3;
 
-      result += (1 << j) + matchPos;
+      result += matchPos;
    }
 
    return result;
