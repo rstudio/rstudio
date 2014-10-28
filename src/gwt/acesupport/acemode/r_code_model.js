@@ -381,7 +381,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                   bracePos.row, bracePos.column
                ));
 
-               var functionLabel = $normalizeAndTruncate(functionName + functionArgs);
+               var functionLabel = $normalizeWhitespace(functionName + functionArgs);
                
                this.$scopes.onFunctionScopeStart(functionLabel,
                                                  startPos,
