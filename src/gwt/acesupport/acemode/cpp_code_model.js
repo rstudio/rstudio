@@ -520,9 +520,13 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                            
                         }
                         
-                        var fullFnName = $normalizeAndTruncate(
-                           fnType + fnName + fnArgs
-                        );
+                        var fullFnName;
+                        if (fnType.length > 0)
+                           fullFnName = $normalizeAndTruncate(
+                              fnName.trim() + fnArgs.trim() + ": " + fnType.trim());
+                        else
+                           fullFnName = $normalizeAndTruncate(
+                              fnName.trim() + fnArgs.trim());
                         
                         this.$scopes.onFunctionScopeStart(
                            fullFnName,
