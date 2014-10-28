@@ -162,7 +162,6 @@ oop.inherits(RStudioUndoManager, UndoManager);
    };
 }).call(RStudioUndoManager.prototype);
 
-
 function loadEditor(container) {
    var env = {};
 
@@ -189,7 +188,7 @@ function loadEditor(container) {
    squelch("foldall");
    squelch("unfoldall");
    squelch("touppercase");
-   squelch("tolowercase")
+   squelch("tolowercase");
    return env.editor;
 }
 
