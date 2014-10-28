@@ -36,7 +36,7 @@ namespace {
 core::json::Object toJson(const CodeCompleteResult& result)
 {
    json::Object resultJson;
-   resultJson["text"] = result.getText();
+   resultJson["text"] = result.getTypedText();
    return resultJson;
 }
 

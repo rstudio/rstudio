@@ -23,27 +23,109 @@
 namespace core {
 namespace libclang {
 
-// NOTE: this is a toy version of inspecting completion chunks just
-// to see if we can get completion working -- we need to decompose
-// and analyze at a much higher fidelity to do "real" completion
+namespace  {
 
-std::string CodeCompleteResult::getText() const
+std::string completionText(CXCompletionString cs, unsigned i)
 {
    std::string text;
 
-   unsigned chunks = clang().getNumCompletionChunks(result_.CompletionString);
-   for (unsigned i = 0; i < chunks; i++)
+   CXCompletionChunkKind kind = clang().getCompletionChunkKind(cs, i);
+   switch(kind)
    {
-      CXCompletionString cs = result_.CompletionString;
-      if (clang().getCompletionChunkKind(cs, i) != CXCompletionChunk_TypedText)
-         continue;
+      case CXCompletionChunk_Optional:
+         {
+         CXCompletionString optCS = clang().getCompletionChunkCompletionString(
+                                                                         cs, i);
+         unsigned chunks = clang().getNumCompletionChunks(optCS);
+         for (unsigned c = 0; c < chunks; c++)
+            text += completionText(optCS, c);
+         }
+         break;
 
-      std::string chunk = toStdString(clang().getCompletionChunkText(cs, i));
-
-      text += chunk;
+      case CXCompletionChunk_Text:
+      case CXCompletionChunk_Placeholder:
+      case CXCompletionChunk_Informative:
+         text += toStdString(clang().getCompletionChunkText(cs, i));
+         break;
+      case CXCompletionChunk_CurrentParameter:
+         // (not currently doing anything with CurrentParameter)
+         break;
+      case CXCompletionChunk_LeftParen:
+         text += "(";
+         break;
+      case CXCompletionChunk_RightParen:
+         text += ")";
+         break;
+      case CXCompletionChunk_LeftBracket:
+         text += "]";
+         break;
+      case CXCompletionChunk_RightBracket:
+         text += "]";
+         break;
+      case CXCompletionChunk_LeftBrace:
+         text += "{";
+         break;
+      case CXCompletionChunk_RightBrace:
+         text += "}";
+         break;
+      case CXCompletionChunk_LeftAngle:
+         text += "<";
+         break;
+      case CXCompletionChunk_RightAngle:
+         text += ">";
+         break;
+      case CXCompletionChunk_Comma:
+         text += ", ";
+         break;
+      case CXCompletionChunk_Colon:
+         text += ":";
+         break;
+      case CXCompletionChunk_SemiColon:
+         text += ";";
+         break;
+      case CXCompletionChunk_Equal:
+         text += "=";
+         break;
+      case CXCompletionChunk_HorizontalSpace:
+         text += " ";
+         break;
+      case CXCompletionChunk_VerticalSpace:
+         text += "\n";
+         break;
+      default:
+         break;
    }
 
    return text;
+}
+
+} // anonymous namespace
+
+CodeCompleteResult::CodeCompleteResult(CXCompletionResult result)
+{
+   std::string resultType;
+
+   CXCompletionString cs = result.CompletionString;
+   unsigned chunks = clang().getNumCompletionChunks(cs);
+   for (unsigned i = 0; i < chunks; i++)
+   {
+      CXCompletionChunkKind kind = clang().getCompletionChunkKind(cs, i);
+      switch(kind)
+      {
+         case CXCompletionChunk_TypedText:
+            typedText_ = toStdString(clang().getCompletionChunkText(cs, i));
+            text_ += typedText_;
+            break;
+         case CXCompletionChunk_ResultType:
+            resultType = toStdString(clang().getCompletionChunkText(cs, i));
+            break;
+         default:
+            text_ += completionText(cs, i);
+      }
+   }
+
+   if (!resultType.empty())
+      text_ = resultType + " " + text_;
 }
 
 CodeCompleteResults:: ~CodeCompleteResults()

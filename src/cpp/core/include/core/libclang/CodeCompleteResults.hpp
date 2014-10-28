@@ -28,15 +28,15 @@ namespace libclang {
 class CodeCompleteResult
 {
 public:
-   explicit CodeCompleteResult(CXCompletionResult result)
-      : result_(result)
-   {
-   }
+   explicit CodeCompleteResult(CXCompletionResult result);
 
-   std::string getText() const;
+   std::string getTypedText() const { return typedText_; }
+
+   std::string getText() const { return text_; }
 
 private:
-   CXCompletionResult result_;
+   std::string text_;
+   std::string typedText_;
 };
 
 
