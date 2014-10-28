@@ -53,6 +53,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.EditSession;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
@@ -603,21 +605,21 @@ public class RCompletionManager implements CompletionManager
       // trim to cursor position
       firstLine = firstLine.substring(0, input_.getCursorPosition().getColumn());
       
+      // if we're on the first row, don't bother looking back
+      if (row == 0)
+         return new AutoCompletionContext(firstLine, false);
+      
       // early escaping rules: if we're in Roxygen, or we have text immediately
       // preceding the cursor (as that signals we're completing a variable name)
       if (firstLine.matches("\\s*#+'.*") ||
           firstLine.matches(".*[a-zA-Z0-9._:$@]$"))
-      {
          return new AutoCompletionContext(firstLine, false);
-      }
       
       // if the line is currently within a comment, bail -- this ensures
       // that we can auto-complete within a comment line (but we only
       // need context from that line)
       if (!firstLine.equals(StringUtil.stripRComment(firstLine)))
-      {
          return new AutoCompletionContext(firstLine, false);
-      }
       
       // if we're within a string, bail -- do this by stripping
       // balanced quotes and seeing if any quote characters left over
@@ -633,9 +635,22 @@ public class RCompletionManager implements CompletionManager
       }
       
       // access to the R Code model
-      // TODO: Don't force reliance on Ace
-      AceEditor editor = (AceEditor)docDisplay_;
-      CodeModel codeModel = editor.getSession().getMode().getCodeModel();
+      AceEditor editor = (AceEditor) docDisplay_;
+      if (editor == null)
+         return new AutoCompletionContext(firstLine, false);
+      
+      EditSession session = editor.getSession();
+      if (session == null)
+         return new AutoCompletionContext(firstLine, false);
+      
+      Mode mode = session.getMode();
+      if (mode == null)
+         return new AutoCompletionContext(firstLine, false);
+      
+      CodeModel codeModel = mode.getCodeModel();
+      if (codeModel == null)
+         return new AutoCompletionContext(firstLine, false);
+      
       codeModel.tokenizeUpToRow(row);
       
       // Make a token cursor and put it at the end of the line

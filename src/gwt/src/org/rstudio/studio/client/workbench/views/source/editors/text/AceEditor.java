@@ -109,8 +109,20 @@ public class AceEditor implements DocDisplay,
          Range range = getSession().getSelection().getRange();
          if (!range.isEmpty())
             return false;
-
-         return true;
+         
+         // Don't consider Tab to be a completion if we're at the start of a
+         // line (e.g. only zero or more whitespace characters between the
+         // beginning of the line and the cursor)
+         
+         if (event != null && event.getKeyCode() != KeyCodes.KEY_TAB)
+            return true;
+         
+         int col = range.getStart().getColumn();
+         if (col == 0)
+            return false;
+         
+         String line = getSession().getLine(range.getStart().getRow());
+         return line.substring(0, col).trim().length() != 0;      
 
       }
    }
