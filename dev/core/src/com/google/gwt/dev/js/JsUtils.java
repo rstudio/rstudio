@@ -20,6 +20,7 @@ import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsInvocation;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNode;
+import com.google.gwt.dev.util.StringInterner;
 
 /**
  * Utils for JS AST.
@@ -49,7 +50,7 @@ public class JsUtils {
     JsNameRef ref = (JsNameRef) e;
 
     // Unravel foo.call(...).
-    if (!ref.getName().isObfuscatable() && "call".equals(ref.getIdent())) {
+    if (!ref.getName().isObfuscatable() && CALL_STRING.equals(ref.getIdent())) {
       if (ref.getQualifier() instanceof JsNameRef) {
         ref = (JsNameRef) ref.getQualifier();
       }
@@ -62,6 +63,7 @@ public class JsUtils {
     return null;
   }
 
+  private static final String CALL_STRING = StringInterner.get().intern("call");
   private JsUtils() {
   }
 }

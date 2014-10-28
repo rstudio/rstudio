@@ -101,7 +101,6 @@ import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.jjs.ast.js.JsonArray;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.TypeMapper;
-import com.google.gwt.dev.js.JsInliner;
 import com.google.gwt.dev.js.JsStackEmulator;
 import com.google.gwt.dev.js.ast.JsArrayAccess;
 import com.google.gwt.dev.js.ast.JsArrayLiteral;
@@ -3085,6 +3084,7 @@ public class GenerateJavaScriptAST {
     @Override
     public void endVisit(JMethod x, Context ctx) {
       if (x.isNative()) {
+        // These are methods that were not considered by the Java method inliner.
         methodsForJsInlining.add(x);
       }
 
@@ -3093,11 +3093,11 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
-      if (x.getTarget().isNative()
-          && ((JsniMethodBody) x.getTarget().getBody()).getFunc().getBody().getStatements().size()
-          <= JsInliner.MAX_INLINE_FN_SIZE) {
-        // currentMethod calls a jsni method, currentMethod
-        // will be consider for JavaScript inlining
+      JMethod target = x.getTarget();
+      if (program.isInliningAllowed(target) && (target.isNative()
+          || program.getIndexedTypes().contains(target.getEnclosingType()))) {
+        // the currentMethod calls a method that was not considered by the Java MethodInliner; these
+        // include JSNI methods and methods whose calls were inserted by normalization passes.
         methodsForJsInlining.add(currentMethod);
       }
     }
