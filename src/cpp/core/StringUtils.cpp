@@ -96,7 +96,7 @@ std::vector<int> subsequenceIndices(std::string const& sequence,
 
 std::string getExtension(std::string const& x)
 {
-   std::size_t lastDotIndex = x.find('.');
+   std::size_t lastDotIndex = x.rfind('.');
    if (lastDotIndex != std::string::npos)
       return x.substr(lastDotIndex + 1, x.length() - lastDotIndex);
    else
