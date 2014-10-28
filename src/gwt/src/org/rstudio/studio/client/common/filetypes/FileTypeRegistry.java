@@ -114,6 +114,13 @@ public class FileTypeRegistry
                           ICONS.iconJavascript(),
                           true,
                           false, false, false, false, false, false, false, false, false, false, false);
+   
+   public static final TextFileType JSON =
+         new TextFileType("json", "JSON", EditorLanguage.LANG_JAVASCRIPT, ".json",
+                          ICONS.iconJavascript(),
+                          true,
+                          false, false, false, false, false, false, false, false, false, false, false);
+   
 
    public static final TextFileType PYTHON = new ScriptFileType(
      "python", "Python", EditorLanguage.LANG_PYTHON, ".py",ICONS.iconPython(),
@@ -127,7 +134,7 @@ public class FileTypeRegistry
    public static final TextFileType SH = new ScriptFileType(
          "sh", "Shell", EditorLanguage.LANG_SH, ".sh", ICONS.iconSh(),
          null, false);
-
+   
    public static final TextFileType YAML =
          new TextFileType("yaml", "YAML", EditorLanguage.LANG_YAML, ".yaml",
                           ICONS.iconYaml(), false, false, false, false, false,
@@ -137,11 +144,7 @@ public class FileTypeRegistry
          new TextFileType("xml", "XML", EditorLanguage.LANG_XML, ".xml",
                           ICONS.iconXml(), false, false, false, false, false,
                           false, false, false, false, false, false, false);
-
-
-
-
-
+   
    public static final TextFileType H = new CppFileType("h", ".h", ICONS.iconH(), false);
    public static final TextFileType C = new CppFileType("c", ".c", ICONS.iconC(), false);
    public static final TextFileType HPP = new CppFileType("hpp", ".hpp", ICONS.iconHpp(), true);
@@ -191,7 +194,11 @@ public class FileTypeRegistry
       register("Rprofile.site", R, icons.iconRprofile());
       register("DESCRIPTION", DCF, icons.iconText());
       register("configure", SH, icons.iconSh());
+      register("configure.win", SH, icons.iconSh());
       register("cleanup", SH, icons.iconSh());
+      register("cleanup.win", SH, icons.iconSh());
+      register("Makevars", SH, icons.iconSh());
+      register("Makevars.win", SH, icons.iconSh());
       register("TUTORIAL", DCF, icons.iconText());
       register("NAMESPACE", NAMESPACE, icons.iconText());
       register("*.rhistory", RHISTORY, icons.iconRhistory());
@@ -211,6 +218,7 @@ public class FileTypeRegistry
       register("*.html", HTML, icons.iconHTML());
       register("*.css", CSS, icons.iconCss());
       register("*.js", JS, icons.iconJavascript());
+      register("*.json", JSON, icons.iconJavascript());
       register("*.rmd", RMARKDOWN, icons.iconRmarkdown());
       register("*.rmarkdown", RMARKDOWN, icons.iconRmarkdown());
       register("*.rpres", RPRESENTATION, icons.iconRpresentation());
@@ -232,6 +240,7 @@ public class FileTypeRegistry
       register("*.py", PYTHON, icons.iconPython());
       register("*.sql", SQL, icons.iconSql());
       register("*.sh", SH, icons.iconSh());
+      register("*.yml", YAML, icons.iconYaml());
       register("*.yaml", YAML, icons.iconYaml());
       register("*.xml", XML, icons.iconXml());
 
