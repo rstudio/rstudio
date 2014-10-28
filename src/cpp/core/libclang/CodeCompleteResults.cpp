@@ -46,13 +46,6 @@ std::string CodeCompleteResult::getText() const
    return text;
 }
 
-std::string CodeCompleteResult::getBriefComment() const
-{
-   std::string comment = toStdString(clang().getCompletionBriefComment(
-                                                   result_.CompletionString));
-   return comment;
-}
-
 CodeCompleteResults:: ~CodeCompleteResults()
 {
    try

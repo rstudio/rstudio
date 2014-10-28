@@ -35,8 +35,6 @@ public:
 
    std::string getText() const;
 
-   std::string getBriefComment() const;
-
 private:
    CXCompletionResult result_;
 };
