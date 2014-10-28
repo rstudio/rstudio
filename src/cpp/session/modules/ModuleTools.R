@@ -74,18 +74,6 @@
 })
 
 
-.rs.addFunction("posixSysWhich", function(program) {
-  res <- suppressWarnings({
-    system(paste("PATH=", Sys.getenv("PATH"), " /usr/bin/which ",
-                 program, sep=""),
-           intern = TRUE)
-  })
-  if (length(res) == 0)
-    ""
-  else
-    res
-})
-
 .rs.addFunction("isRtoolsOnPath", function()
 {
    return (nzchar(Sys.which("ls.exe")) && nzchar(Sys.which("gcc.exe")))
