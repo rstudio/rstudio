@@ -54,19 +54,11 @@ public class CppCompletionUtils
    
    public static Position getCompletionPosition(DocDisplay docDisplay)
    {
-      // get the current line and cursor position
+      // get the current line of code
       String line = docDisplay.getCurrentLine();
-      Position position = docDisplay.getCursorPosition();
-      
-      // is there already a C++ identifier character at this position? 
-      // if so then bail
-      if ((position.getColumn() < line.length()) &&
-          CppCompletionUtils.isCppIdentifierChar(line.charAt(position.getColumn())))
-      {
-         return null;
-      }
       
       // determine the column right before this one
+      Position position = docDisplay.getCursorPosition();
       int inputCol = position.getColumn() - 1;
                
       // walk backwards across C++ identifer symbols 
