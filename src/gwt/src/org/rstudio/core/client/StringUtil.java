@@ -508,9 +508,9 @@ public class StringUtil
       return input.substring(0, 1).toUpperCase() + input.substring(1); 
    }
    
-   public static int countMatches(String line, String match)
+   public static int countMatches(String line, char chr)
    {
-      return line.length() - line.replace(match, "").length();
+      return line.length() - line.replace(String.valueOf(chr), "").length();
    }
    
    public static String stripRComment(String string)

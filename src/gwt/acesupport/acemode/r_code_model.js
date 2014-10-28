@@ -117,7 +117,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          for (; this.$offset >= 0; this.$offset--)
          {
             var token = rowTokens[this.$offset];
-            if (token !== undefined && (token.column <= position.column))
+            if (typeof token !== "undefined" && (token.column <= position.column))
             {
                return true;
             }

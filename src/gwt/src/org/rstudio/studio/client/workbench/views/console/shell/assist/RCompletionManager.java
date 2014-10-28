@@ -627,8 +627,8 @@ public class RCompletionManager implements CompletionManager
       String stripped = StringUtil.stripBalancedQuotes(firstLine);
       if (!firstLine.equals(stripped))
       {
-         boolean oddSingleQuotes = StringUtil.countMatches(stripped, "'") % 2 == 1;
-         boolean oddDoubleQuotes = StringUtil.countMatches(stripped, "\"") % 2 == 1;
+         boolean oddSingleQuotes = StringUtil.countMatches(stripped, '\'') % 2 == 1;
+         boolean oddDoubleQuotes = StringUtil.countMatches(stripped, '"') % 2 == 1;
          if (oddSingleQuotes || oddDoubleQuotes) {
             return new AutoCompletionContext(firstLine, false);
          }
