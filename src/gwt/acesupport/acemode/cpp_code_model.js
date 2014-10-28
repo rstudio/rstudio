@@ -56,6 +56,40 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
 (function() {
 
+   var $walkBackForScope = function(cursor, that) {
+      
+      while (true) {
+         
+         var value = cursor.currentValue();
+         var line = that.$doc.getLine(cursor.$row);
+
+         // Bail on some specific tokens not found in
+         // function type specifiers
+         if (["{", "}", ";"].some(function(x) {
+            return x === value;
+         }))
+            break;
+
+         // Bail on 'public:' etc.
+         if (value === ":") {
+            var prevValue = cursor.peekBwd().currentValue();
+            if (["public", "private", "protected"].some(function(x) {
+               return x === prevValue;
+            }))
+               break;
+         }
+
+         // Bail on lines intended for the preprocessor
+         if (/^\s*#/.test(line))
+            break;
+
+         if (!cursor.moveToPreviousToken())
+            break;
+         
+      }
+      
+   };
+
    var debugCursor = function(message, cursor) {
       // console.log(message);
       // console.log(cursor);
@@ -366,9 +400,26 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
             else if (localCursor.peekBwd(2).currentValue() === "class" ||
                      localCursor.peekBwd(2).currentValue() === "struct" ||
                      localCursor.bwdOverClassInheritance()) {
+               
                localCursor.moveToPreviousToken();
-               var className = localCursor.currentValue();
-               this.$scopes.onClassScopeStart("class " + className,
+               
+               
+               // Clone the cursor and look back to get
+               // the return type. Do this by walking
+               // backwards until we hit a ';', '{',
+               // '}'.
+               var classCursor = localCursor.cloneCursor();
+               $walkBackForScope(classCursor, this);
+
+               var classStartPos = classCursor.peekFwd().currentPosition();
+               var classText = this.$session.getTextRange(new Range(
+                  classStartPos.row, classStartPos.column,
+                  startPos.row, startPos.column
+               ));
+               
+               classText = $normalizeAndTruncate(classText);
+               
+               this.$scopes.onClassScopeStart(classText,
                                               localCursor.currentPosition(),
                                               tokenCursor.currentPosition());
             }
@@ -423,36 +474,8 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                               // backwards until we hit a ';', '{',
                               // '}'.
                               var fnTypeCursor = localCursor.cloneCursor();
-                              while (true) {
-                                 
-                                 var value = fnTypeCursor.currentValue();
-                                 var line = this.$doc.getLine(fnTypeCursor.$row);
-
-                                 // Bail on some specific tokens not found in
-                                 // function type specifiers
-                                 if (["{", "}", ";"].some(function(x) {
-                                    return x === value;
-                                 }))
-                                    break;
-
-                                 // Bail on 'public:' etc.
-                                 if (value === ":") {
-                                    var prevValue = fnTypeCursor.peekBwd().currentValue();
-                                    if (["public", "private", "protected"].some(function(x) {
-                                       return x === prevValue;
-                                    }))
-                                       break;
-                                 }
-
-                                 // Bail on lines intended for the preprocessor
-                                 if (/^\s*#/.test(line))
-                                    break;
-
-                                 if (!fnTypeCursor.moveToPreviousToken())
-                                    break;
-                                 
-                              }
-
+                              $walkBackForScope(fnTypeCursor, this);
+                              
                               // Move back up one token
                               fnTypeCursor.moveToNextToken();
 
