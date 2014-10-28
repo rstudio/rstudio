@@ -18,6 +18,9 @@ int main(int argc, char* argv[])
    // initialize autorelease pool
    NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
    
+   // clean duplicate environment variables (work around Yosemite bug)
+   desktop::utils::cleanDuplicateEnvVars();
+   
    // initialize language environment variables
    desktop::utils::initializeLang();
  
