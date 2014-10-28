@@ -38,6 +38,8 @@ bool isSubsequence(std::string const& self,
 std::vector<int> subsequenceIndices(std::string const& sequence,
                                     std::string const& query);
 
+std::string getExtension(std::string const& str);
+
 std::string utf8ToSystem(const std::string& str,
                          bool escapeInvalidChars=false);
 std::string systemToUtf8(const std::string& str);

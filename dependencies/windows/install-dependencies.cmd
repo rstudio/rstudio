@@ -15,7 +15,7 @@ set GWT_FILE=gwt-2.6.0.zip
 set JUNIT_FILE=junit-4.9b3.jar
 set GNUDIFF_FILE=gnudiff.zip
 set GNUGREP_FILE=gnugrep-2.5.4.zip
-set MSYS_SSH_FILE=msys_ssh.zip
+set MSYS_SSH_FILE=msys-ssh-1000-18.zip
 set SUMATRA_PDF_FILE=SumatraPDF-2.4.zip
 
 set PANDOC_VERSION=1.12.4.2
@@ -58,11 +58,11 @@ if not exist gnugrep (
   del "%GNUGREP_FILE%"
 )
 
-if not exist msys_ssh (
+if not exist msys-ssh-1000-18 (
   wget %WGET_ARGS% "%BASEURL%%MSYS_SSH_FILE%"
-  mkdir msys_ssh
+  mkdir msys-ssh-1000-18
   echo Unzipping %MSYS_SSH_FILE%
-  unzip %UNZIP_ARGS% "%MSYS_SSH_FILE%" -d msys_ssh
+  unzip %UNZIP_ARGS% "%MSYS_SSH_FILE%" -d msys-ssh-1000-18
   del "%MSYS_SSH_FILE%"
 )
 

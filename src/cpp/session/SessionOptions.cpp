@@ -266,7 +266,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
        value<std::string>(&gnugrepPath_)->default_value("bin/gnugrep"),
        "Path to gnugrep utilities (windows-only)")
       ("external-msysssh-path",
-       value<std::string>(&msysSshPath_)->default_value("bin/msys_ssh"),
+       value<std::string>(&msysSshPath_)->default_value("bin/msys-ssh-1000-18"),
        "Path to msys_ssh utilities (windows-only)")
       ("external-sumatra-path",
        value<std::string>(&sumatraPath_)->default_value("bin/sumatra"),

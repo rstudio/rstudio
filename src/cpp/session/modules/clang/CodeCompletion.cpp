@@ -36,7 +36,7 @@ namespace {
 core::json::Object toJson(const CodeCompleteResult& result)
 {
    json::Object resultJson;
-   resultJson["text"] = result.getText();
+   resultJson["text"] = result.getTypedText();
    return resultJson;
 }
 
@@ -72,7 +72,7 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
       {
          for (unsigned i = 0; i<results.getNumResults(); i++)
          {
-            std::string completionText = results.getResult(i).getText();
+            std::string completionText = results.getResult(i).getTypedText();
 
             // de-dup (works because we know the completions have been sorted)
             if (completionText != lastCompletionText)

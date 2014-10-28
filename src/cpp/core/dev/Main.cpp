@@ -41,9 +41,13 @@ int test_main(int argc, char * argv[])
       // write a C++ file
       std::string cpp =
         "#include <string>\n"
+        "class X { public:\n"
+        "   void test(int y, int x = 10);\n"
+        "}\n"
+        "void X::test(int y, int x) {}\n"
         "void foobar() {\n"
-        "   std::string str;\n"
-        "   str.\n"
+        "   X x;\n"
+        "   x."
         "}";
       std::ofstream ostr("foo.cpp");
       ostr << cpp;
@@ -51,16 +55,29 @@ int test_main(int argc, char * argv[])
 
       // load libclang
       using namespace libclang;
-      clang().load();
+      std::string diagnostics;
+      clang().load(EmbeddedLibrary(), LibraryVersion(3,4,0), &diagnostics);
+      if (!clang().isLoaded())
+      {
+         std::cerr << "Failed to load libclang: " << diagnostics << std::endl;
+         return EXIT_FAILURE;
+      }
 
       // create a source index and get a translation unit for it
       SourceIndex sourceIndex;
       TranslationUnit tu = sourceIndex.getTranslationUnit("foo.cpp");
+      if (tu.empty())
+      {
+         std::cerr << "No translation unit foo.cpp" << std::endl;
+         return EXIT_FAILURE;
+      }
 
       // code complete
-      CodeCompleteResults results = tu.codeCompleteAt("foo.cpp", 4, 8);
-      for (unsigned i = 0; i<results.getNumResults(); i++)
-        std::cout << results.getResult(i).getText() << std::endl;
+      CodeCompleteResults results = tu.codeCompleteAt("foo.cpp", 8, 6);
+      for (unsigned i = 0; i<results.getNumResults(); i++) {
+        std::cout << results.getResult(i).getTypedText() << std::endl;
+        std::cout << "   " << results.getResult(i).getText() << std::endl;
+      }
 
       return EXIT_SUCCESS;
    }

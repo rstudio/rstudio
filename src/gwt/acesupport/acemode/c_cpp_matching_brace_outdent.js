@@ -159,8 +159,8 @@ var $alignCase                 = true; // case 'a':
             //         :
             //
             var clone = tokenCursor.cloneCursor();
-            if (clone.peekBack().currentValue() === ")" ||
-                clone.peekBack().currentType() === "keyword")
+            if (clone.peekBwd().currentValue() === ")" ||
+                clone.peekBwd().currentType() === "keyword")
             {
                do {
                   

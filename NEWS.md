@@ -7,8 +7,8 @@
     - Code completion
     - F2 code navigation (go to definition)
     - Scope tree for quick intra-file navigation
-    
 * Fuzzy matching for go to file/function
+* Alt+Enter to run code while retaining cursor position
 
 ### Workspace
 
@@ -28,6 +28,7 @@
 
 * When evaluating R strings ensure 'try' is called from base package
 * Add Clear Recent Projects menu item to toolbar project menu
+* Update to MSYS SSH 1000.18
 
 
 

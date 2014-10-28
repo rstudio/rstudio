@@ -217,6 +217,28 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       '}': '{'
    };
 
+   var $normalizeWhitespace = function(text) {
+      text = text.trim();
+      text = text.replace(/[\n\s]+/g, " ");
+      return text;
+   };
+
+   var $truncate = function(text, width) {
+      
+      if (typeof width === "undefined")
+         width = 80;
+      
+      if (text.length > width)
+         text = text.substring(0, width) + "...";
+      
+      return text;
+   };
+
+   var $normalizeAndTruncate = function(text, width) {
+      return $truncate($normalizeWhitespace(text), width);
+   };
+   
+
    function pFunction(t)
    {
       return t.type == 'keyword' && t.value == 'function';
@@ -247,8 +269,6 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       if (!pAssign(tokenCursor.currentToken()))
          return false;
       if (!tokenCursor.moveToPreviousToken())
-         return false;
-      if (!pIdentifier(tokenCursor.currentToken()))
          return false;
 
       return true;
@@ -297,7 +317,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       // on the identifier of a function whose open brace is a few tokens later.
       // Seems like it would be rare indeed for this distance to be more than 30
       // rows.
-      maxRow = Math.min(maxrow + 30, this.$doc.getLength() - 1);
+      var maxRow = Math.min(maxrow + 30, this.$doc.getLength() - 1);
       this.$tokenizeUpToRow(maxRow);
 
       //console.log("Seeking to " + this.$scopes.parsePos.row + "x"+ this.$scopes.parsePos.column);
@@ -355,13 +375,32 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          else if (tokenCursor.currentValue() === "{")
          {
             var localCursor = tokenCursor.cloneCursor();
+            var bracePos = localCursor.currentPosition();
+            
             var startPos;
             if (findAssocFuncToken(localCursor))
             {
                startPos = localCursor.currentPosition();
                if (localCursor.isFirstSignificantTokenOnLine())
                   startPos.column = 0;
-               this.$scopes.onFunctionScopeStart(localCursor.currentValue(),
+
+               var functionName = localCursor.currentValue();
+               var argsCursor = localCursor.cloneCursor();
+
+               argsCursor.moveToNextToken(); // assign (<-, =)
+               argsCursor.moveToNextToken(); // function
+               argsCursor.moveToNextToken(); // (
+
+               var argsStartPos = argsCursor.currentPosition();
+               
+               var functionArgs = this.$doc.getTextRange(new Range(
+                  argsStartPos.row, argsStartPos.column,
+                  bracePos.row, bracePos.column
+               ));
+
+               var functionLabel = $normalizeWhitespace(functionName + functionArgs);
+               
+               this.$scopes.onFunctionScopeStart(functionLabel,
                                                  startPos,
                                                  tokenCursor.currentPosition());
             }

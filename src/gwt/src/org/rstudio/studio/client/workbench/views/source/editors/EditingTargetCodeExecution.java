@@ -60,7 +60,8 @@ public class EditingTargetCodeExecution
       prefs_ = prefs;
    }
    
-   public void executeSelection(boolean consoleExecuteWhenNotFocused)
+   public void executeSelection(boolean consoleExecuteWhenNotFocused,
+         boolean moveCursorAfter)
    {  
       // allow console a chance to execute code if we aren't focused
       if (consoleExecuteWhenNotFocused && !docDisplay_.isFocused())
@@ -83,11 +84,16 @@ public class EditingTargetCodeExecution
       executeRange(selectionRange);
       
       // advance if there is no current selection
-      if (noSelection)
+      if (noSelection && moveCursorAfter)
       {
          if (!docDisplay_.moveSelectionToNextLine(true))
             docDisplay_.moveSelectionToBlankLine();
       }
+   }
+   
+   public void executeSelection(boolean consoleExecuteWhenNotFocused)
+   {
+      executeSelection(consoleExecuteWhenNotFocused, true);
    }
    
    public void executeRange(Range range)
