@@ -846,7 +846,7 @@ int scoreMatch(std::string const& suggestion,
       
       // More penalty for 'uninteresting' files (e.g. .Rd)
       std::string extension = string_utils::getExtension(suggestion);
-      if (boost::algorithm::to_lower_copy(extension) == "rd")
+      if (boost::algorithm::to_lower_copy(extension) == ".rd")
          matchPos += 3;
 
       result += matchPos;

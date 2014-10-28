@@ -98,7 +98,7 @@ std::string getExtension(std::string const& x)
 {
    std::size_t lastDotIndex = x.rfind('.');
    if (lastDotIndex != std::string::npos)
-      return x.substr(lastDotIndex + 1, x.length() - lastDotIndex);
+      return x.substr(lastDotIndex);
    else
       return std::string();
 }

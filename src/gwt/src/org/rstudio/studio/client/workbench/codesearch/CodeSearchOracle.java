@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 
 import org.rstudio.core.client.CodeNavigationTarget;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DuplicateHelper;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.StringUtil;
@@ -97,7 +96,7 @@ public class CodeSearchOracle extends SuggestOracle
       if (suggestion.isFileTarget())
          result++;
       
-      Debug.logToConsole("Score for string '" + string + "' against query '" + query + "': " + result);
+      // Debug.logToConsole("Score for string '" + string + "' against query '" + query + "': " + result);
       return result;
    }
    
