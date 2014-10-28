@@ -15,6 +15,7 @@
  */
 package com.google.gwt.sample.json.client;
 
+import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -50,7 +51,7 @@ import java.util.Set;
  * servlet with this example and simply have it hit the yahoo service and return
  * the results.
  */
-public class JSON {
+public class JSON implements EntryPoint {
   /**
    * Class for handling the response text associated with a request for a JSON
    * object.
