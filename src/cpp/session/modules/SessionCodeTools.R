@@ -205,7 +205,7 @@
    .Call("rs_getPendingInput")
 })
 
-utils:::rc.settings(files=T)
+utils:::rc.settings(files = TRUE)
 .rs.addJsonRpcHandler("get_completions", function(line, cursorPos)
 {
    roxygen <- .rs.attemptRoxygenTagCompletion(line, cursorPos)
@@ -220,6 +220,15 @@ utils:::rc.settings(files=T)
    status = utils:::rc.status()
    
    packages = sub('^package:', '', .rs.which(results))
+
+   # prefer completions for function arguments
+   if (length(results) > 0) {
+      n <- nchar(results)
+      isFunctionArg <- substring(results, n, n) == "="
+      idx <- c(which(isFunctionArg), which(!isFunctionArg))
+      results <- results[idx]
+      packages <- packages[idx]
+   }
 
    # ensure spaces around =
    results <- sub("=$", " = ", results)
