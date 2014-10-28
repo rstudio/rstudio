@@ -72,7 +72,7 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
       {
          for (unsigned i = 0; i<results.getNumResults(); i++)
          {
-            std::string completionText = results.getResult(i).getText();
+            std::string completionText = results.getResult(i).getTypedText();
 
             // de-dup (works because we know the completions have been sorted)
             if (completionText != lastCompletionText)
