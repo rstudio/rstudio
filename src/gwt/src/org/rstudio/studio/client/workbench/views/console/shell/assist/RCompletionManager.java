@@ -849,7 +849,7 @@ public class RCompletionManager implements CompletionManager
       {
          if (string.matches("[a-zA-Z_.][a-zA-Z0-9_.]*\\" + chr + ".*"))
          {
-            int ind = string.indexOf(chr);
+            int ind = string.lastIndexOf(chr);
             String before = string.substring(0, ind + 1);
             String after = string.substring(ind + 1, string.length());
             if (after.length() > 0)
