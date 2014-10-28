@@ -174,8 +174,7 @@ public class CppCompletionManager implements CompletionManager
          if (CompletionUtils.isCompletionRequest(event, modifier) &&
              shouldComplete(event)) 
          {
-            suggestCompletions(true);
-            return true;  
+            return suggestCompletions(true);  
          }
          else if (event.getKeyCode() == 112 // F1
                   && modifier == KeyboardShortcut.NONE)
@@ -216,17 +215,19 @@ public class CppCompletionManager implements CompletionManager
             return false ; 
          }
          
+        
+         // backspace triggers completion
+         if (keyCode == KeyCodes.KEY_BACKSPACE)
+         {
+            delayedSuggestCompletions(false);
+            return false;
+         }
+         
          // get the popup -- if there is no popup then bail
          CompletionListPopupPanel popup = getCompletionPopup();
          if (popup == null)
             return false;
-         
-         // backspace triggers completion if the popup is visible
-         if (keyCode == KeyCodes.KEY_BACKSPACE)
-         {
-            suggestCompletions();
-            return false;
-         }
+       
          
          // escape and left keys terminate the request
          if (event.getKeyCode() == KeyCodes.KEY_ESCAPE ||
@@ -289,41 +290,38 @@ public class CppCompletionManager implements CompletionManager
       }
       else
       {
-         suggestCompletions();
+         delayedSuggestCompletions(false);
          return false;
       }
    }
    
-   private void suggestCompletions()
-   {
-      suggestCompletions(false);
-   }
+
    
-   private void suggestCompletions(final boolean explicit)
+   private void delayedSuggestCompletions(final boolean explicit)
    {
       Scheduler.get().scheduleDeferred(new ScheduledCommand() {
          @Override
          public void execute()
          {
-            doSuggestCompletions(explicit);  
+            suggestCompletions(explicit);  
          }
       });
    }
-   
-   private void doSuggestCompletions(final boolean explicit)
+  
+   private boolean suggestCompletions(final boolean explicit)
    {
       // check for completions disabled
       if (!completionContext_.isCompletionEnabled())
-         return;
+         return false;
       
       // check for no selection
       InputEditorSelection selection = docDisplay_.getSelection() ;
       if (selection == null)
-         return;
+         return false;
       
       // check for contiguous selection
       if (!docDisplay_.isSelectionCollapsed())
-         return;    
+         return false;    
   
       // see if we even have a completion position
       final Position completionPosition = 
@@ -331,7 +329,7 @@ public class CppCompletionManager implements CompletionManager
       if (completionPosition == null)
       {
          terminateCompletionRequest();
-         return;
+         return false;
       }
       
       if ((request_ != null) &&
@@ -359,6 +357,8 @@ public class CppCompletionManager implements CompletionManager
          });
          
       }
+      
+      return true;
    }
      
    private CompletionListPopupPanel getCompletionPopup()
