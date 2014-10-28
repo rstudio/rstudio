@@ -324,6 +324,12 @@ public class HistoryTest extends GWTTestCase {
     History.newItem(historyToken1);
   }
 
+  /*
+   * HtmlUnit tends to fire events after adding a new item with fireEvent set
+   * to false. This makes 'testEmptyHistoryTokens' randomly fail after running
+   * this test.
+   */
+  @DoNotRunWith(Platform.HtmlUnitBug)
   public void testReplaceItemNoEvent() {
     /*
      * Sentinel token which should only be seen if tokens are lost during the rest of the test.
@@ -493,11 +499,6 @@ public class HistoryTest extends GWTTestCase {
       timer.cancel();
       timer = null;
     }
-
-    // HtmlUnit tends to fire events after adding a new item with fireEvent set
-    // to false. This makes 'testEmptyHistoryTokens' randomly fail after running
-    // 'testReplaceItemNoEvent'. Reseting the hash fragment here fixes the issue.
-    History.newItem("");
   }
 
   private void addHistoryListenerImpl(ValueChangeHandler<String> handler) {
