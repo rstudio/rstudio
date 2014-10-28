@@ -57,7 +57,6 @@ public class CodeSearchOracle extends SuggestOracle
          return 0;
       
       int query_n = query.length();
-      int string_n = string.length();
       
       int result = 0;
       
@@ -299,7 +298,8 @@ public class CodeSearchOracle extends SuggestOracle
 
             if (lhsScore == rhsScore)
             {
-               return 0;
+               return lhs.getMatchedString().length() -
+                     rhs.getMatchedString().length();
             }
             else
             {
