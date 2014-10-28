@@ -375,7 +375,7 @@ class PersistentUnitCache extends MemoryUnitCache {
       File[] cacheFiles = getCacheFiles(cacheDirectory, true);
       if (cacheFiles.length < CACHE_FILE_THRESHOLD) {
         if (shouldRotate) {
-          backgroundService.execute(rotateCacheFilesTask);
+          startRotating();
         }
         return;
       }
@@ -417,6 +417,11 @@ class PersistentUnitCache extends MemoryUnitCache {
     }
   }
 
+  @VisibleForTesting
+  Future<Void> startRotating() {
+    return backgroundService.submit(rotateCacheFilesTask, null);
+  }
+
   @Override
   public CompilationUnit find(ContentId contentId) {
     awaitUnitCacheMapLoad();
@@ -429,7 +434,7 @@ class PersistentUnitCache extends MemoryUnitCache {
     return super.find(resourcePath);
   }
 
-  public void rotateCurrentCacheFile() throws UnableToCompleteException {
+  private void rotateCurrentCacheFile() throws UnableToCompleteException {
     if (logger.isLoggable(TreeLogger.TRACE)) {
       logger.log(TreeLogger.TRACE, "Wrote " + unitsWritten + " units to persistent cache.");
     }
