@@ -7,6 +7,7 @@
     - Code completion
     - F2 code navigation (go to definition)
     - Scope tree for quick intra-file navigation
+* R code completion for statements spanning multiple lines
 * Fuzzy matching for go to file/function
 * Alt+Enter to run code while retaining cursor position
 
