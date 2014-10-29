@@ -256,21 +256,36 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
    function findAssocFuncToken(tokenCursor)
    {
-      if (tokenCursor.currentValue() !== "{")
+      var clonedCursor = tokenCursor.cloneCursor();
+      if (clonedCursor.currentValue() !== "{")
          return false;
-      if (!tokenCursor.moveBackwardOverMatchingParens())
+      if (!clonedCursor.moveBackwardOverMatchingParens())
          return false;
-      if (!tokenCursor.moveToPreviousToken())
+      if (!clonedCursor.moveToPreviousToken())
          return false;
-      if (!pFunction(tokenCursor.currentToken()))
-         return false;
-      if (!tokenCursor.moveToPreviousToken())
-         return false;
-      if (!pAssign(tokenCursor.currentToken()))
-         return false;
-      if (!tokenCursor.moveToPreviousToken())
+      if (!pFunction(clonedCursor.currentToken()))
          return false;
 
+      tokenCursor.$row = clonedCursor.$row;
+      tokenCursor.$offset = clonedCursor.$offset;
+      return true;
+
+   };
+
+   function moveFromFunctionTokenToFunctionName(tokenCursor)
+   {
+      var clonedCursor = tokenCursor.cloneCursor();
+      if (!pFunction(clonedCursor.currentToken()))
+         return false;
+      if (!clonedCursor.moveToPreviousToken())
+         return false;
+      if (!pAssign(clonedCursor.currentToken()))
+         return false;
+      if (!clonedCursor.moveToPreviousToken())
+         return false;
+
+      tokenCursor.$row = clonedCursor.$row;
+      tokenCursor.$offset = clonedCursor.$offset;
       return true;
    }
 
@@ -385,19 +400,18 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             var startPos;
             if (findAssocFuncToken(localCursor))
             {
+               var argsCursor = localCursor.cloneCursor();
+               argsCursor.moveToNextToken();
+               var argsStartPos = argsCursor.currentPosition();
+
+               var functionName = null;
+               if (moveFromFunctionTokenToFunctionName(localCursor))
+                  functionName = localCursor.currentValue();
+               
                startPos = localCursor.currentPosition();
                if (localCursor.isFirstSignificantTokenOnLine())
                   startPos.column = 0;
 
-               var functionName = localCursor.currentValue();
-               var argsCursor = localCursor.cloneCursor();
-
-               argsCursor.moveToNextToken(); // assign (<-, =)
-               argsCursor.moveToNextToken(); // function
-               argsCursor.moveToNextToken(); // (
-
-               var argsStartPos = argsCursor.currentPosition();
-               
                var functionArgsString = this.$doc.getTextRange(new Range(
                   argsStartPos.row, argsStartPos.column,
                   bracePos.row, bracePos.column
@@ -406,7 +420,11 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                // Strip out leading parens
                functionArgsString = functionArgsString.replace(/^\s*\(?\s*(.*?)\s*\)?\s*$/, "$1");
 
-               var functionLabel = $normalizeWhitespace(functionName + "(" + functionArgsString + ")");
+               var functionLabel;
+               if (functionName === null)
+                  functionLabel = $normalizeWhitespace("<function>(" + functionArgsString + ")");
+               else
+                  functionLabel = $normalizeWhitespace(functionName + "(" + functionArgsString + ")");
 
                // Parse the function arguments from the string
                var functionArgs = [];
