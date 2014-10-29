@@ -13,7 +13,17 @@
     <delete file="${project.dist}" failonerror="false" />
   </target>
 
-  <target name="build" depends="filter" description="Packages the distro">
+  <target name="merge_codeserver">
+    <echo message="Merge gwt-dev.jar and gwt-codeserver.jar" />
+    <gwt.jar destfile="${gwt.build.out}/gwt-dev-merged.jar">
+      <zipfileset src="${gwt.build.lib}/gwt-dev.jar"/>
+      <zipfileset src="${gwt.build.lib}/gwt-codeserver.jar"/>
+    </gwt.jar>
+    <echo message="Overwriting gwt-dev.jar with merged gwt-dev.jar" />
+    <move file="${gwt.build.out}/gwt-dev-merged.jar" tofile="${gwt.build.lib}/gwt-dev.jar"/>
+  </target>
+
+  <target name="build" depends="filter, merge_codeserver" description="Packages the distro">
     <!-- TODO: figure out how to share most of this across platforms -->
     <mkdir dir="${gwt.build.dist}" />
     <mkdir dir="${gwt.build.out}/samples-scripts"/>
