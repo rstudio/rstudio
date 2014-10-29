@@ -257,6 +257,11 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       return true;
    }
 
+   this.getArgumentsFromFunctionsInScope = function(pos) {
+      this.$buildScopeTreeUpToRow(pos.row);
+      return this.$scopes.getArgumentsFromFunctionsInScope(pos, this.$tokenizer);
+   };
+
    this.$buildScopeTreeUpToRow = function(maxrow)
    {
       function maybeEvaluateLiteralString(value) {
@@ -559,7 +564,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    this.getCurrentScope = function(position, filter)
    {
       if (!filter)
-         filter = function(scope) { return true; }
+         filter = function(scope) { return true; };
 
       if (!position)
          return "";

@@ -16,7 +16,9 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
 
 public class CodeModel extends JavaScriptObject
 {
@@ -79,5 +81,9 @@ public class CodeModel extends JavaScriptObject
          return this.findNextSignificantToken(pos);
       else
          return pos;
+   }-*/;
+   
+   public native final JsArray<ScopeFunction> getArgumentsFromFunctionsInScope(Position position) /*-{
+      return this.getArgumentsFromFunctionsInScope(position) || [];
    }-*/;
 }

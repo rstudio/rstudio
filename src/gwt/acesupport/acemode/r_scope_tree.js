@@ -112,6 +112,10 @@ define('mode/r_scope_tree', function(require, exports, module) {
                                                            functionName);
       };
 
+      this.getArgumentsFromFunctionsInScope = function(pos, tokenizer) {
+         return this.$root.getArgumentsFromFunctionsInScope(pos, tokenizer);
+      };
+
       this.invalidateFrom = function(pos) {
          pos = {row: Math.max(0, pos.row-1), column: 0};
          debuglog("Invalidate from " + pos.row + ", " + pos.column);
@@ -216,7 +220,7 @@ define('mode/r_scope_tree', function(require, exports, module) {
          if (this.$children.length == 0)
             return null;
 
-         var lastNode = this.$children[this.$children.length-1]
+         var lastNode = this.$children[this.$children.length-1];
 
          // Last child is already closed
          if (lastNode.end)
@@ -249,7 +253,7 @@ define('mode/r_scope_tree', function(require, exports, module) {
             return;
          lastNode.$forceDescendantsClosed(pos);
          lastNode.end = pos;
-      }
+      };
 
       // Returns array of nodes that contain the position, from outermost to
       // innermost; or null if no nodes contain it.
@@ -294,6 +298,59 @@ define('mode/r_scope_tree', function(require, exports, module) {
          }
 
          return null;
+      };
+
+      // Get arguments for functions in scope. This returns an array of objects,
+      // one object for each function, of the form:
+      //
+      // [{"name": fn, "args": ["arg1", "arg2", ...]}]
+      //
+      this.getArgumentsFromFunctionsInScope = function(pos, tokenizer) {
+         var stack = this.$getFunctionStack(pos);
+         var parsedFunctions = [];
+         for (var i = 0; i < stack.length - 1; i++)
+         {
+            var object = {
+               "name": "",
+               "args": []
+            };
+            
+            var thisLabel = stack[i].label;
+            
+            var functionName = thisLabel.substring(
+               0, thisLabel.indexOf("(")
+            );
+            object.name = functionName;
+            
+            var argsString = thisLabel.substring(
+               thisLabel.indexOf("(") + 1,
+               thisLabel.lastIndexOf(")")
+            );
+            
+            if (/^\s*$/.test(argsString)) {
+               parsedFunctions.push(object);
+               continue;
+            }
+            
+            var tokenizedLine = tokenizer.getLineTokens(argsString, "start");
+            var tokens = tokenizedLine.tokens;
+            
+            var n = tokens.length;
+            if (n < 1) continue;
+
+            // Always take the first argument
+            object.args.push(tokens[0].value);
+
+            // Look for commas
+            // TODO: commas aren't actually properly tokenized.
+            for (var tokenIndex = 1; tokenIndex < n - 1; ++tokenIndex)
+               if (/^\s*,\s*$/.test(tokens[tokenIndex].value))
+                  object.args.push(tokens[tokenIndex + 1].value);
+            
+            parsedFunctions.push(object);
+
+         }
+         return parsedFunctions;
       };
 
       // Invalidates everything after pos, and possibly some stuff before.
