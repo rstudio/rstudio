@@ -75,10 +75,22 @@ define('mode/r_scope_tree', function(require, exports, module) {
          return closed;
       };
 
-      this.onFunctionScopeStart = function(label, functionStartPos, scopePos) {
+      this.onFunctionScopeStart = function(label, functionStartPos, scopePos, name, args) {
+         
          debuglog("adding function brace-scope " + label);
-         this.$root.addNode(new this.$ScopeNodeFactory(label, scopePos, functionStartPos,
-                                          ScopeNode.TYPE_BRACE));
+         this.$root.addNode(
+            new this.$ScopeNodeFactory(
+               label,
+               scopePos,
+               functionStartPos,
+               ScopeNode.TYPE_BRACE,
+               {
+                  "name": name,
+                  "args": args
+               }
+            )
+         );
+         
          this.printScopeTree();
       };
 
@@ -136,7 +148,7 @@ define('mode/r_scope_tree', function(require, exports, module) {
 
 
 
-   var ScopeNode = function(label, start, preamble, scopeType) {
+   var ScopeNode = function(label, start, preamble, scopeType, attributes) {
       this.label = label;
 
       // The position of the open brace
@@ -154,6 +166,9 @@ define('mode/r_scope_tree', function(require, exports, module) {
       
       // A pointer to the parent scope (if any) 
       this.parentScope = null;
+
+      // Generalized attributes (an object with names)
+      this.attributes = attributes;
 
       this.$children = [];
    };
@@ -307,50 +322,15 @@ define('mode/r_scope_tree', function(require, exports, module) {
       //
       this.getArgumentsFromFunctionsInScope = function(pos, tokenizer) {
          var stack = this.$getFunctionStack(pos);
-         var parsedFunctions = [];
+         var objects = [];
          for (var i = 0; i < stack.length - 1; i++)
          {
-            var object = {
-               "name": "",
-               "args": []
-            };
-            
-            var thisLabel = stack[i].label;
-            
-            var functionName = thisLabel.substring(
-               0, thisLabel.indexOf("(")
-            );
-            object.name = functionName;
-            
-            var argsString = thisLabel.substring(
-               thisLabel.indexOf("(") + 1,
-               thisLabel.lastIndexOf(")")
-            );
-            
-            if (/^\s*$/.test(argsString)) {
-               parsedFunctions.push(object);
-               continue;
-            }
-            
-            var tokenizedLine = tokenizer.getLineTokens(argsString, "start");
-            var tokens = tokenizedLine.tokens;
-            
-            var n = tokens.length;
-            if (n < 1) continue;
-
-            // Always take the first argument
-            object.args.push(tokens[0].value);
-
-            // Look for commas
-            // TODO: commas aren't actually properly tokenized.
-            for (var tokenIndex = 1; tokenIndex < n - 1; ++tokenIndex)
-               if (/^\s*,\s*$/.test(tokens[tokenIndex].value))
-                  object.args.push(tokens[tokenIndex + 1].value);
-            
-            parsedFunctions.push(object);
-
+            objects.push({
+               "name": stack[i].attributes.name,
+               "args": stack[i].attributes.args.slice()
+            });
          }
-         return parsedFunctions;
+         return objects;
       };
 
       // Invalidates everything after pos, and possibly some stuff before.

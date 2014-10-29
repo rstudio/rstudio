@@ -23,13 +23,14 @@ var ScopeTree = require('mode/r_scope_tree');
 var ScopeManager = ScopeTree.ScopeManager;
 var ScopeNode = ScopeTree.ScopeNode;
 
-var CppScopeNode = function(label, start, preamble, scopeType, scopeCategory) {
+var CppScopeNode = function(label, start, preamble, scopeType, scopeCategory, attributes) {
    this.label = label;
    this.start = start;
    this.preamble = preamble || start;
    this.end = null;
    this.scopeType = scopeType;
    this.scopeCategory = scopeCategory;
+   this.attributes = attributes;
    this.parentScope = null;
    this.$children = [];
 };
