@@ -109,20 +109,21 @@ public class AceEditor implements DocDisplay,
          Range range = getSession().getSelection().getRange();
          if (!range.isEmpty())
             return false;
-
+         
          // Don't consider Tab to be a completion if we're at the start of a
          // line (e.g. only zero or more whitespace characters between the
          // beginning of the line and the cursor)
-
+         
          if (event != null && event.getKeyCode() != KeyCodes.KEY_TAB)
             return true;
-
+         
          int col = range.getStart().getColumn();
          if (col == 0)
             return false;
+         
+         String line = getSession().getLine(range.getStart().getRow());
+         return line.substring(0, col).trim().length() != 0;      
 
-         String row = getSession().getLine(range.getStart().getRow());
-         return row.substring(0, col).trim().length() != 0;
       }
    }
 
@@ -416,7 +417,8 @@ public class AceEditor implements DocDisplay,
                   new CompletionPopupPanel(),
                   server_,
                   new Filter(),
-                  fileType_.canExecuteChunks() ? rnwContext_ : null);
+                  fileType_.canExecuteChunks() ? rnwContext_ : null,
+                  this);
             
             // if this is cpp then we use our own completion manager
             // that can optionally delegate to the R completion manager

@@ -58,7 +58,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
       this.moveToPreviousToken = function()
       {
-         while (this.$offset == 0 && this.$row > 0)
+         while (this.$offset <= 0 && this.$row > 0)
          {
             this.$row--;
             this.$offset = that.$tokens[this.$row].length;
@@ -75,7 +75,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       this.moveToNextToken = function(maxRow)
       {
          if (this.$row > maxRow)
-            return;
+            return false;
 
          this.$offset++;
 
@@ -106,6 +106,23 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             }
          }
          return this.moveToNextToken(maxRow);
+      };
+
+      this.bwdToNearestToken = function(position)
+      {
+         this.$row = position.row;
+         this.$offset = position.column;
+         
+         var rowTokens = that.$tokens[this.$row] || [];
+         for (; this.$offset >= 0; this.$offset--)
+         {
+            var token = rowTokens[this.$offset];
+            if (typeof token !== "undefined" && (token.column <= position.column))
+            {
+               return true;
+            }
+         }
+         return this.moveToPreviousToken();
       };
 
       this.moveBackwardOverMatchingParens = function()
