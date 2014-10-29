@@ -38,8 +38,8 @@ rstudio-server force-suspend-all
 # static pandoc binaries for RHEL7 and SLES
 if test -f /etc/SuSE-release || grep -q -i -s "release 7" /etc/redhat-release
 then
-  mv ${CMAKE_INSTALL_PREFIX}/bin/pandoc/pandoc-static ${CMAKE_INSTALL_PREFIX}/bin/pandoc/pandoc
-  mv ${CMAKE_INSTALL_PREFIX}/bin/pandoc/pandoc-citeproc-static ${CMAKE_INSTALL_PREFIX}/bin/pandoc/pandoc-citeproc
+  cp ${CMAKE_INSTALL_PREFIX}/bin/pandoc/pandoc-static ${CMAKE_INSTALL_PREFIX}/bin/pandoc/pandoc
+  cp ${CMAKE_INSTALL_PREFIX}/bin/pandoc/pandoc-citeproc-static ${CMAKE_INSTALL_PREFIX}/bin/pandoc/pandoc-citeproc
 fi
 
 # add upstart profile or init.d script and start the server
