@@ -294,7 +294,7 @@ define('mode/r_scope_tree', function(require, exports, module) {
          var index = this.$binarySearch(pos);
          var stack = index >= 0 ? this.$children[index].$getFunctionStack(pos)
                                 : [];
-         if (this.label) {
+         if (this.isFunction()) {
             stack.push(this);
          }
          return stack;
@@ -323,7 +323,7 @@ define('mode/r_scope_tree', function(require, exports, module) {
       this.getArgumentsFromFunctionsInScope = function(pos, tokenizer) {
          var stack = this.$getFunctionStack(pos);
          var objects = [];
-         for (var i = 0; i < stack.length - 1; i++)
+         for (var i = 0; i < stack.length; i++)
          {
             objects.push({
                "name": stack[i].attributes.name,
