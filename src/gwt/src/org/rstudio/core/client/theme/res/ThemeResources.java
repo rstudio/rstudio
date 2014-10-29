@@ -192,5 +192,8 @@ public interface ThemeResources extends ClientBundle
    @Source("executingLine.png")
    DataResource executingLine();
    
+   @Source("macCheck.png")
+   DataResource macCheck();
+   
    ImageResource menuCheck();
 }
