@@ -393,18 +393,19 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
                // Parse the function arguments from the string
                var functionArgs = [];
-               var tokenizedLine = this.$tokenizer.getLineTokens(functionArgsString, "start");
-               var tokens = tokenizedLine.tokens;
-               var n = tokens.length;
-               
-               // Always take the first argument
-               functionArgs.push(tokens[0].value);
+               if (functionArgsString.length > 0 && !/^\s*$/.test(functionArgsString)) {
+                  var tokenizedLine = this.$tokenizer.getLineTokens(functionArgsString, "start");
+                  var tokens = tokenizedLine.tokens;
+                  var n = tokens.length;
+                  
+                  functionArgs.push(tokens[0].value);
 
-               // Look for commas
-               // TODO: commas aren't actually properly tokenized.
-               for (var tokenIndex = 1; tokenIndex < n - 1; ++tokenIndex)
-                  if (/^\s*,\s*$/.test(tokens[tokenIndex].value))
-                     functionArgs.push(tokens[tokenIndex + 1].value);
+                  // Look for commas
+                  // TODO: commas aren't actually properly tokenized.
+                  for (var tokenIndex = 1; tokenIndex < n - 1; ++tokenIndex)
+                     if (/^\s*,\s*$/.test(tokens[tokenIndex].value))
+                        functionArgs.push(tokens[tokenIndex + 1].value);
+               }
 
                this.$scopes.onFunctionScopeStart(functionLabel,
                                                  startPos,
