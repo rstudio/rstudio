@@ -129,30 +129,33 @@ public class CppCompletionManager implements CompletionManager
       }
       else
       {
-         completionContext_.withUpdatedDoc(new CommandWithArg<String>() {
-            @Override
-            public void execute(final String docPath)
-            {
-               Position pos = docDisplay_.getCursorPosition();
-               
-               server_.goToCppDefinition(
-                   docPath, 
-                   pos.getRow() + 1, 
-                   pos.getColumn() + 1, 
-                   new SimpleRequestCallback<CppSourceLocation>() {
-                      @Override
-                      public void onResponseReceived(CppSourceLocation loc)
-                      {
-                         if (loc != null)
+         if (completionContext_.isCompletionEnabled())
+         {
+            completionContext_.withUpdatedDoc(new CommandWithArg<String>() {
+               @Override
+               public void execute(final String docPath)
+               {
+                  Position pos = docDisplay_.getCursorPosition();
+                  
+                  server_.goToCppDefinition(
+                      docPath, 
+                      pos.getRow() + 1, 
+                      pos.getColumn() + 1, 
+                      new SimpleRequestCallback<CppSourceLocation>() {
+                         @Override
+                         public void onResponseReceived(CppSourceLocation loc)
                          {
-                            fileTypeRegistry_.editFile(loc.getFile(), 
-                                                       loc.getPosition());  
+                            if (loc != null)
+                            {
+                               fileTypeRegistry_.editFile(loc.getFile(), 
+                                                          loc.getPosition());  
+                            }
                          }
-                      }
-                   });
-               
-            }
-         });
+                      });
+                  
+               }
+            });
+         }
       }
    }
    
