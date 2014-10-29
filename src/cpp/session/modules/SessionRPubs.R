@@ -188,34 +188,68 @@ rpubsUpload <- function(title,
       return (tarfile)
    }
    
-   readResponse <- function(conn) {
+   # Use skipDecoding=TRUE if transfer-encoding: chunked but the
+   # chunk decoding has already been performed on conn
+   readResponse <- function(conn, skipDecoding) {
       # read status code
       resp <- readLines(conn, 1)
       statusCode <- parseHttpStatusCode(resp[1])
-      
+
       # read response headers
       contentLength <- NULL
       location <- NULL
+      transferEncoding <- NULL
       repeat {
          resp <- readLines(conn, 1)
          if (nzchar(resp) == 0)
-            break()
-         
+            break
+
          header <- parseHeader(resp)
-         if (!is.null(header))
-         {
-            if (identical(header$name, "Content-Type"))
+         # Case insensitive header name comparison
+         headerName <- tolower(header$name)
+         if (!is.null(header)) {
+            if (identical(headerName, "content-type"))
                contentType <- header$value
-            if (identical(header$name, "Content-Length"))
+            if (identical(headerName, "content-length"))
                contentLength <- as.integer(header$value)
-            if (identical(header$name, "Location"))
+            if (identical(headerName, "location"))
                location <- header$value
+            if (identical(headerName, "transfer-encoding"))
+               transferEncoding <- tolower(header$value)
          }
       }
-      
+
       # read the response content
-      content <- rawToChar(readBin(conn, what = 'raw', n=contentLength))
-      
+      content <- if (is.null(transferEncoding) || skipDecoding) {
+         if (!is.null(contentLength)) {
+            rawToChar(readBin(conn, what = 'raw', n=contentLength))
+         }
+         else {
+            paste(readLines(conn, warn = FALSE), collapse = "\r\n")
+         }
+      } else if (identical(transferEncoding, "chunked")) {
+         accum <- ""
+         repeat {
+            resp <- readLines(conn, 1)
+            resp <- sub(";.*", "", resp) # Ignore chunk extensions
+            chunkLen <- as.integer(paste("0x", resp, sep = ""))
+            if (is.na(chunkLen)) {
+               stop("Unexpected chunk length")
+            }
+            if (identical(chunkLen, 0L)) {
+               break
+            }
+            accum <- paste0(accum, rawToChar(readBin(conn, what = 'raw', n=chunkLen)))
+            # Eat CRLF
+            if (!identical("\r\n", rawToChar(readBin(conn, what = 'raw', n=2)))) {
+               stop("Invalid chunk encoding: missing CRLF")
+            }
+         }
+         accum
+      } else {
+         stop("Unexpected transfer encoding")
+      }
+
       # return list
       list(status = statusCode,
            location = location,
@@ -266,7 +300,7 @@ rpubsUpload <- function(title,
       writeBin(fileContents, conn, size=1)
       
       # read the response
-      readResponse(conn)      
+      readResponse(conn, skipDecoding = FALSE)
    }
    
    
@@ -352,7 +386,7 @@ rpubsUpload <- function(title,
       if (result == 0) {
         fileConn <- file(outputFile, "rb")
         on.exit(close(fileConn))
-        readResponse(fileConn)
+        readResponse(fileConn, skipDecoding = TRUE)
       } else {
         stop(paste("Upload failed (curl error", result, "occurred)"))
       }

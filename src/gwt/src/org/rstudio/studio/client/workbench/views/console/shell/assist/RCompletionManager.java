@@ -49,7 +49,14 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorLineWithCursorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.EditSession;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
@@ -86,7 +93,8 @@ public class RCompletionManager implements CompletionManager
                              CompletionPopupDisplay popup,
                              CodeToolsServerOperations server,
                              InitCompletionFilter initFilter,
-                             RnwCompletionContext rnwContext)
+                             RnwCompletionContext rnwContext,
+                             DocDisplay docDisplay)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -97,6 +105,7 @@ public class RCompletionManager implements CompletionManager
       requester_ = new CompletionRequester(server_, rnwContext, navigableSourceEditor);
       initFilter_ = initFilter ;
       rnwContext_ = rnwContext;
+      docDisplay_ = docDisplay;
       
       input_.addBlurHandler(new BlurHandler() {
          public void onBlur(BlurEvent event)
@@ -260,6 +269,8 @@ public class RCompletionManager implements CompletionManager
        * [identifier] - narrow suggestions--or if we're lame, just dismiss
        * All others - dismiss popup
        */
+      
+      nativeEvent_ = event;
 
       int modifier = KeyboardShortcut.getModifierValue(event);
 
@@ -269,7 +280,7 @@ public class RCompletionManager implements CompletionManager
          {
             if (initFilter_ == null || initFilter_.shouldComplete(event))
             {
-               return beginSuggest(true, false) ;
+               return beginSuggest(true, false);
             }
          }
          else if (event.getKeyCode() == 112 // F1
@@ -371,7 +382,7 @@ public class RCompletionManager implements CompletionManager
                @Override
                public void execute()
                {
-                  beginSuggest(false, false) ;
+                  beginSuggest(false, false);
                }
             });
          }
@@ -385,7 +396,7 @@ public class RCompletionManager implements CompletionManager
                @Override
                public void execute()
                {
-                  beginSuggest(true, true) ;
+                  beginSuggest(true, true);
                }
             });
          }
@@ -472,6 +483,31 @@ public class RCompletionManager implements CompletionManager
       if (flushCache)
          requester_.flushCache() ;
    }
+   
+   // Simple inner class that packages together a string (context) and
+   // bool (did we look back to build context?)
+   class AutoCompletionContext {
+      
+      public AutoCompletionContext(String context, boolean lookedBack)
+      {
+         context_ = context;
+         lookedBack_ = lookedBack;
+      }
+      
+      public String getContext()
+      {
+         return context_;
+      }
+      
+      public boolean getLookedBack()
+      {
+         return lookedBack_;
+      }
+      
+      private String context_;
+      private boolean lookedBack_;
+      
+   }
 
    /**
     * If false, the suggest operation was aborted
@@ -481,17 +517,36 @@ public class RCompletionManager implements CompletionManager
       if (!input_.isSelectionCollapsed())
          return false ;
       
-      invalidatePendingRequests(flushCache) ;
-
-      String line = input_.getText() ;
+      invalidatePendingRequests(flushCache);
+      
+      InputEditorSelection selection = input_.getSelection() ;
+      if (selection == null)
+         return false;
+      
+      int cursorCol = selection.getStart().getPosition();
+      String firstLine = input_.getText().substring(0, cursorCol);
+      
+      // don't auto-complete at the start of comments
+      if (firstLine.matches(".*#+\\s*$"))
+      {
+         return false;
+      }
+      
+      // don't auto-complete with tab on lines with only whitespace,
+      // if the insertion character was a tab
+      if (nativeEvent_ != null &&
+            nativeEvent_.getKeyCode() == KeyCodes.KEY_TAB)
+         if (firstLine.matches("^\\s*$"))
+            return false;
+      
+      AutoCompletionContext context = getAutocompletionContext();
+      String line = context.getContext();
+      
       if (!input_.hasSelection())
       {
          Debug.log("Cursor wasn't in input box or was in subelement");
          return false ;
       }
-      InputEditorSelection selection = input_.getSelection() ;
-      if (selection == null)
-         return false;
 
       String linePart = line.substring(0, selection.getStart().getPosition());
 
@@ -507,14 +562,140 @@ public class RCompletionManager implements CompletionManager
       context_ = new CompletionRequestContext(invalidation_.getInvalidationToken(),
                                               selection,
                                               canAutoAccept) ;
+      
       requester_.getCompletions(line,
-                                selection.getStart().getPosition(),
+                                line.length(),
                                 implicit,
                                 context_);
 
       return true ;
    }
+   
+   
+   
+   private boolean findOpeningParen(TokenCursor tokenCursor)
+   {
+      boolean success = false;
+      int parenCount = 0;
+      while (tokenCursor.moveToPreviousToken())
+      {
+         if (tokenCursor.currentToken().getValue() == "(")
+         {
+            if (parenCount == 0)
+            {
+               success = true;
+               break;
+            }
+            --parenCount;
+         }
+         else if (tokenCursor.currentToken().getValue() == ")")
+         {
+            parenCount++;
+         }
+      }
+      return success;
+   }
+   
+   private AutoCompletionContext getAutocompletionContext()
+   {
+      
+      String firstLine = input_.getText();
+      int row = input_.getCursorPosition().getRow();
+      
+      // trim to cursor position
+      firstLine = firstLine.substring(0, input_.getCursorPosition().getColumn());
+      
+      // if we're on the first row, don't bother looking back
+      if (row == 0)
+         return new AutoCompletionContext(firstLine, false);
+      
+      // early escaping rules: if we're in Roxygen, or we have text immediately
+      // preceding the cursor (as that signals we're completing a variable name)
+      if (firstLine.matches("\\s*#+'.*") ||
+          firstLine.matches(".*[$@]$"))
+         return new AutoCompletionContext(firstLine, false);
+      
+      // if the line is currently within a comment, bail -- this ensures
+      // that we can auto-complete within a comment line (but we only
+      // need context from that line)
+      if (!firstLine.equals(StringUtil.stripRComment(firstLine)))
+         return new AutoCompletionContext(firstLine, false);
+      
+      // if we're within a string, bail -- do this by stripping
+      // balanced quotes and seeing if any quote characters left over
+      // TODO: use code model so this survives multiline strings
+      String stripped = StringUtil.stripBalancedQuotes(firstLine);
+      if (!firstLine.equals(stripped))
+      {
+         boolean oddSingleQuotes = StringUtil.countMatches(stripped, '\'') % 2 == 1;
+         boolean oddDoubleQuotes = StringUtil.countMatches(stripped, '"') % 2 == 1;
+         if (oddSingleQuotes || oddDoubleQuotes) {
+            return new AutoCompletionContext(firstLine, false);
+         }
+      }
+      
+      // access to the R Code model
+      AceEditor editor = (AceEditor) docDisplay_;
+      if (editor == null)
+         return new AutoCompletionContext(firstLine, false);
+      
+      EditSession session = editor.getSession();
+      if (session == null)
+         return new AutoCompletionContext(firstLine, false);
+      
+      Mode mode = session.getMode();
+      if (mode == null)
+         return new AutoCompletionContext(firstLine, false);
+      
+      CodeModel codeModel = mode.getCodeModel();
+      if (codeModel == null)
+         return new AutoCompletionContext(firstLine, false);
+      
+      codeModel.tokenizeUpToRow(row);
+      
+      // Make a token cursor and put it at the end of the line
+      TokenCursor tokenCursor = codeModel.getTokenCursor();
+      tokenCursor.bwdToNearestToken(Position.create(row, firstLine.length()));
 
+      // Walk tokens backwards until we have one more '(' than we do
+      // ')' with an empty 'block' token stack -- but only if we didn't
+      // already hit a '(' as the first token
+      if (tokenCursor.currentToken().getValue() != "(")
+      {
+         boolean success = findOpeningParen(tokenCursor);
+         if (!success)
+         {
+            return new AutoCompletionContext(firstLine, false);
+         }
+      }
+      
+      // Take the inferred row up to current position and return
+      int startRow = tokenCursor.currentPosition().getRow();
+      
+      StringBuilder resultBuilder = new StringBuilder();
+      for (int i = startRow; i < row; i++)
+      {
+         resultBuilder.append(StringUtil.stripRComment(docDisplay_.getLine(i)));
+      }
+      resultBuilder.append(firstLine.substring(0,
+                  input_.getCursorPosition().getColumn()));
+            
+      String result = resultBuilder.toString();
+      
+      result = StringUtil.stripBalancedQuotes(result);
+      
+      // Cheap trick -- convert all instances of '{', '}' to '(', ')' so
+      // they get treated as non-named function calls. This fixes an
+      // undesired behaviour whereby e.g.
+      //
+      // lapply(X, function(x) { |
+      //
+      // would produce auto-completions for lapply.
+      result = result.replace('{', '(').replace('}', ')');
+      
+      return new AutoCompletionContext(result, startRow < row);
+   }
+   
    /**
     * It's important that we create a new instance of this each time.
     * It maintains state that is associated with a completion request.
@@ -565,9 +746,16 @@ public class RCompletionManager implements CompletionManager
          
          if (results.length == 0)
          {
-            popup_.showErrorMessage(
-                  "(No matches)", 
-                  new PopupPositioner(input_.getCursorBounds(), popup_)) ;
+            if (docDisplay_ == null ||
+                  (nativeEvent_ != null && nativeEvent_.getKeyCode() != KeyCodes.KEY_TAB)) {
+               popup_.showErrorMessage(
+                     "(No matches)", 
+                     new PopupPositioner(input_.getCursorBounds(), popup_));
+            }
+            else
+            {
+               docDisplay_.insertCode("\t");
+            }
             return ;
          }
 
@@ -653,9 +841,37 @@ public class RCompletionManager implements CompletionManager
             });
          }
       }
-
-      private void applyValue(final String value)
+      
+      // For input of the form 'something$foo' or 'something@bar', quote the
+      // element following '@' if it's a non-syntactic R symbol; otherwise
+      // return as is
+      private String quoteIfNotSyntacticNameCompletion(String string, char chr)
       {
+         if (string.matches("[a-zA-Z_.][a-zA-Z0-9_.]*\\" + chr + ".*"))
+         {
+            int ind = string.lastIndexOf(chr);
+            String before = string.substring(0, ind + 1);
+            String after = string.substring(ind + 1, string.length());
+            if (after.length() > 0)
+            {
+               return before + StringUtil.toRSymbolName(after);
+            }
+         }
+         return string;
+      }
+
+      private void applyValue(final String fValue)
+      {
+         
+         String value = fValue;
+         
+         // If the autocompletion is inserting something following an
+         // @ or a $, e.g. for completion of an entry in object 'x'
+         // named 'Some Value' as x$Some Value, surround it with
+         // "`" -- do this for all names with non-alphanumeric elements
+         value = quoteIfNotSyntacticNameCompletion(value, '@');
+         value = quoteIfNotSyntacticNameCompletion(value, '$');
+         
          // Move range to beginning of token
          input_.setFocus(true) ;
          input_.setSelection(new InputEditorSelection(
@@ -697,8 +913,12 @@ public class RCompletionManager implements CompletionManager
    // click on it to scroll.
    private boolean ignoreNextInputBlur_ = false;
    private String token_ ;
+   
+   private final DocDisplay docDisplay_;
 
    private final Invalidation invalidation_ = new Invalidation();
    private CompletionRequestContext context_ ;
    private final RnwCompletionContext rnwContext_;
+   
+   private NativeEvent nativeEvent_;
 }

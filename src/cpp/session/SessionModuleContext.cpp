@@ -801,15 +801,8 @@ FilePath tempDir()
 
 FilePath findProgram(const std::string& name)
 {
-   // determine function to call for sys which
-#ifdef __APPLE__
-   std::string sysWhich = ".rs.posixSysWhich";
-#else
-   std::string sysWhich = "Sys.which";
-#endif
-
    std::string which;
-   Error error = r::exec::RFunction(sysWhich, name).call(&which);
+   Error error = r::exec::RFunction("Sys.which", name).call(&which);
    if (error)
    {
       LOG_ERROR(error);
@@ -820,6 +813,7 @@ FilePath findProgram(const std::string& name)
       return FilePath(which);
    }
 }
+
 
 bool isPdfLatexInstalled()
 {

@@ -150,45 +150,46 @@
    
    # All known Roxygen2 tags, in alphabetical order
    tags <- c(
-      "@aliases",
-      "@author",
-      "@concept",
-      "@describeIn",
-      "@description",
-      "@details",
-      "@docType",
-      "@example",
-      "@examples",
+      "@aliases ",
+      "@author ",
+      "@concepts ",
+      "@describeIn ",
+      "@description ",
+      "@details ",
+      "@docType ",
+      "@example ",
+      "@examples ",
       "@export",
-      "@exportClass",
-      "@exportMethod",
-      "@family",
-      "@field",
-      "@format",
-      "@import",
-      "@importClassesFrom",
-      "@importFrom",
-      "@importMethodsFrom",
-      "@include",
-      "@inheritParams",
-      "@keywords",
-      "@method",
-      "@name",
-      "@note",
-      "@param",
-      "@rdname",
-      "@references",
-      "@return",
-      "@S3method",
-      "@section",
-      "@seealso",
-      "@slot",
-      "@source",
-      "@template",
-      "@templateVar",
-      "@title",
-      "@usage",
-      "@useDynLib"
+      "@exportClass ",
+      "@exportMethod ",
+      "@family ",
+      "@field ",
+      "@format ",
+      "@import ",
+      "@importClassesFrom ",
+      "@importFrom ",
+      "@importMethodsFrom ",
+      "@include ",
+      "@inheritParams ",
+      "@keywords ",
+      "@method ",
+      "@name ",
+      "@note ",
+      "@noRd",
+      "@param ",
+      "@rdname ",
+      "@references ",
+      "@return ",
+      "@S3method ",
+      "@section ",
+      "@seealso ",
+      "@slot ",
+      "@source ",
+      "@template ",
+      "@templateVar ",
+      "@title ",
+      "@usage ",
+      "@useDynLib "
       );
    
    matchingTags <- grep(paste("^", tag, sep=""), tags, value=T)
@@ -204,7 +205,7 @@
    .Call("rs_getPendingInput")
 })
 
-utils:::rc.settings(files=T)
+utils:::rc.settings(files = TRUE)
 .rs.addJsonRpcHandler("get_completions", function(line, cursorPos)
 {
    roxygen <- .rs.attemptRoxygenTagCompletion(line, cursorPos)
@@ -219,6 +220,15 @@ utils:::rc.settings(files=T)
    status = utils:::rc.status()
    
    packages = sub('^package:', '', .rs.which(results))
+
+   # prefer completions for function arguments
+   if (length(results) > 0) {
+      n <- nchar(results)
+      isFunctionArg <- substring(results, n, n) == "="
+      idx <- c(which(isFunctionArg), which(!isFunctionArg))
+      results <- results[idx]
+      packages <- packages[idx]
+   }
 
    # ensure spaces around =
    results <- sub("=$", " = ", results)
