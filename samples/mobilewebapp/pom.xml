@@ -210,6 +210,7 @@
           <runTarget>MobileWebApp.html</runTarget>
           <!-- Ask GWT to create the Story of Your Compile (SOYC) (gwt:compile) -->
           <compileReport>true</compileReport>
+          <compilerMetrics>true</compilerMetrics>
           <modules>
             <module>com.google.gwt.sample.mobilewebapp.MobileWebApp</module>
           </modules>

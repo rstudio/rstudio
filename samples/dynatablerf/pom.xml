@@ -139,6 +139,7 @@
           <runTarget>DynaTableRf.html</runTarget>
           <!-- Ask GWT to create the Story of Your Compile (SOYC) (gwt:compile) -->
           <compileReport>true</compileReport>
+          <compilerMetrics>true</compilerMetrics>
           <module>com.google.gwt.sample.dynatablerf.DynaTableRf</module>
           <logLevel>INFO</logLevel>
           <style>${gwt.style}</style>
