@@ -818,7 +818,6 @@ int scoreMatch(std::string const& suggestion,
       return 0;
    
    int query_n = query.length();
-   int suggestion_n = suggestion.length();
 
    int result = 0;
 
@@ -947,7 +946,7 @@ Error searchCode(const json::JsonRpcRequest& request,
 
    // score matches -- returned as a pair, mapping index to score
    std::vector<PairIntInt> fileScores;
-   for (int i = 0; i < paths.size(); ++i)
+   for (std::size_t i = 0; i < paths.size(); ++i)
    {
       fileScores.push_back(std::make_pair(i, scoreMatch(names[i], term, true)));
    }
@@ -956,7 +955,7 @@ Error searchCode(const json::JsonRpcRequest& request,
    std::sort(fileScores.begin(), fileScores.end(), ScorePairComparator());
 
    std::vector<PairIntInt> srcItemScores;
-   for (int i = 0; i < srcItems.size(); ++i)
+   for (std::size_t i = 0; i < srcItems.size(); ++i)
    {
       srcItemScores.push_back(std::make_pair(i, scoreMatch(srcItems[i].name(), term, false)));
    }
@@ -964,8 +963,8 @@ Error searchCode(const json::JsonRpcRequest& request,
 
    // filter so we keep only the top n results -- and proactively
    // update whether there are other entries we didn't report back
-   int srcItemScoresSizeBefore = srcItemScores.size();
-   int fileScoresSizeBefore = fileScores.size();
+   std::size_t srcItemScoresSizeBefore = srcItemScores.size();
+   std::size_t fileScoresSizeBefore = fileScores.size();
 
    filterScores(&fileScores, &srcItemScores, maxResults);
 
