@@ -91,7 +91,8 @@ git merge \
     origin/bugfix/outdent-newline \
     origin/bugfix/safari-fractional-cursor \
     origin/feature/scrolling-compensation \
-    origin/bugfix/ie10-clipboard
+    origin/bugfix/ie10-clipboard \
+    origin/bugfix/safari-8-copy
 
 
 node ./Makefile.dryice.js normal
