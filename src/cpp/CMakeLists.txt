@@ -38,6 +38,10 @@ if(UNIX)
    # compiler flags
    add_definitions(-Wall -pthread)
 
+   if(APPLE)
+      add_definitions(-Wsign-compare)
+   endif()
+
    # workaround boost bug (https://svn.boost.org/trac/boost/ticket/4568)
    # by disabling kqueue support. note that this bug was fixed in boost 1.45
    add_definitions(-DBOOST_ASIO_DISABLE_KQUEUE)
