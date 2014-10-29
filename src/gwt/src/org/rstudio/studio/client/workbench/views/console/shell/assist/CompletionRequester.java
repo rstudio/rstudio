@@ -134,18 +134,20 @@ public class CompletionRequester
                      String argName = argNames.get(j);
                      if (argName.startsWith(token))
                      {
+                        // TODO: Include function name if we can resolve docs
                         newComp.add(new QualifiedName(
                               argName,
-                              functionName
+                              ""
                         ));
                      }
                   }
                   // We might also want to auto-complete functions names
                   if (functionName.startsWith(token))
                   {
+                     // TODO: Include function name if we can resolve docs
                      newComp.add(new QualifiedName(
                            functionName,
-                           "function"
+                           ""
                      ));
                   }
                }
