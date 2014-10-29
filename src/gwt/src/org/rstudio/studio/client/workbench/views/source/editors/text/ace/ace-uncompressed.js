@@ -2111,6 +2111,9 @@ exports.isAIR = ua.indexOf("AdobeAIR") >= 0;
 exports.isIPad = ua.indexOf("iPad") >= 0;
 
 exports.isTouchPad = ua.indexOf("TouchPad") >= 0;
+
+exports.isSafariWebKit = navigator.userAgent.indexOf("Qt/") < 0 &&
+  (navigator.userAgent.indexOf("Safari") > 0 || navigator.userAgent.indexOf("AppleWebKit") > 0);
 exports.OS = {
     LINUX: "LINUX",
     MAC: "MAC",
@@ -7627,11 +7630,26 @@ var TextInput = function(parentNode, host) {
         host.onCompositionEnd();
     };
 
-    var onCopy = function(e) {
+    var performCopy = function(e, forCut) {
         copied = true;
         var copyText = host.getCopyText();
-        if(copyText)
-            text.value = copyText;
+        if (copyText) {
+            // if we have text to copy on Safari, push the text to the
+            // clipboard directly instead of letting the browser copy it 
+            // (Safari copies an extra line from the TEXTAREA on linewise 
+            // selection)
+            if (e.clipboardData && useragent.isSafariWebKit) {
+                e.clipboardData.setData("Text", copyText);
+                e.preventDefault();
+            } else {
+                text.value = copyText;
+            }
+
+            // cut selection if needed
+            if (forCut) {
+                host.onCut();
+            }
+        }
         else
             e.preventDefault();
         reset();
@@ -7640,18 +7658,12 @@ var TextInput = function(parentNode, host) {
         }, 0);
     };
 
+    var onCopy = function(e) {
+        performCopy(e, false);
+    };
+
     var onCut = function(e) {
-        copied = true;
-        var copyText = host.getCopyText();
-        if(copyText) {
-            text.value = copyText;
-            host.onCut();
-        } else
-            e.preventDefault();
-        reset();
-        setTimeout(function () {
-            sendText();
-        }, 0);
+        performCopy(e, true);
     };
 
     event.addCommandKeyListener(text, host.onCommandKey.bind(host));
