@@ -27,11 +27,14 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
       {
          public void onSelection(SelectionEvent<MenuItem> event)
          {
-            int index = menuBar_.getItemIndex(event.getSelectedItem());
-            if (index != -1)
+            if (selectable_)
             {
-               CppCompletion completion = completions_.get(index);
-               Debug.logToConsole(completion.getText());
+               int index = menuBar_.getItemIndex(event.getSelectedItem());
+               if (index != -1)
+               {
+                  CppCompletion completion = completions_.get(index);
+                  Debug.logToConsole(completion.getText());
+               }
             }
          }
       });
@@ -39,10 +42,24 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
       addStyleName(ThemeStyles.INSTANCE.statusBarMenu());
    }
    
+   public void setText(String text)
+   {
+      JsArray<CppCompletion> completions = JsArray.createArray().cast();
+      completions.push(CppCompletion.create(text));
+      setCompletions(completions, false);
+   }
+   
    public void setCompletions(JsArray<CppCompletion> completions)
    {
-      // save completions
+      setCompletions(completions, true);
+   }
+   
+   private void setCompletions(JsArray<CppCompletion> completions, 
+                               boolean selectable)
+   {
+      // save completions and selectable state
       completions_ = completions;
+      selectable_ = selectable;
       
       // clear existing items
       menuBar_.clearItems();
@@ -58,9 +75,12 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
             public void execute()
             {
                docDisplay_.setFocus(true); 
-               docDisplay_.setSelection(docDisplay_.createSelection(
+               if (selectable_)
+               {
+                  docDisplay_.setSelection(docDisplay_.createSelection(
                      completionPosition_, docDisplay_.getCursorPosition()));
-               docDisplay_.replaceSelection(completion.getText(), true) ; 
+                  docDisplay_.replaceSelection(completion.getText(), true) ; 
+               }
 
             }
          });
@@ -72,7 +92,7 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
       }
       
       // select first item
-      if (firstItem != null)
+      if (selectable && (firstItem != null))
          selectItem(firstItem);
       
       // ensure the menu is visible
@@ -109,4 +129,5 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
    private final DocDisplay docDisplay_;
    private final Position completionPosition_;
    private JsArray<CppCompletion> completions_;
+   private boolean selectable_ = false;
 }
