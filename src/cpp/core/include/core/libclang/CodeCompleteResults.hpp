@@ -30,13 +30,16 @@ class CodeCompleteResult
 public:
    explicit CodeCompleteResult(CXCompletionResult result);
 
+   CXCursorKind getKind() const { return kind_; }
+
    std::string getTypedText() const { return typedText_; }
 
    std::string getText() const { return text_; }
 
 private:
-   std::string text_;
+   CXCursorKind kind_;
    std::string typedText_;
+   std::string text_;
 };
 
 

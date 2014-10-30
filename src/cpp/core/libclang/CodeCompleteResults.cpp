@@ -103,6 +103,8 @@ std::string completionText(CXCompletionString cs, unsigned i)
 
 CodeCompleteResult::CodeCompleteResult(CXCompletionResult result)
 {
+   kind_ = result.CursorKind;
+
    std::string resultType;
 
    CXCompletionString cs = result.CompletionString;
