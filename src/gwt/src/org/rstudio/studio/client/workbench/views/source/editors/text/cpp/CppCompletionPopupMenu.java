@@ -64,7 +64,7 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
       for (int i = 0; i<completions.length(); i++)
       {
          final CppCompletion completion = completions.get(i);
-         MenuItem menuItem = new MenuItem(completion.getText(), 
+         MenuItem menuItem = new MenuItem(completion.getTypedText(), 
                new ScheduledCommand() {
             @Override
             public void execute()

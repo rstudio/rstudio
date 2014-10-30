@@ -92,7 +92,7 @@ public class CppCompletionRequest
          JsArray<CppCompletion> filtered = JsArray.createArray().cast();
          for (int i = 0; i < completions_.length(); i++)
          {
-            String completion = completions_.get(i).getText();
+            String completion = completions_.get(i).getTypedText();
             if ((entered.length() == 0) || completion.startsWith(entered))
                filtered.push(completions_.get(i));
          }
@@ -104,7 +104,7 @@ public class CppCompletionRequest
          }
          // check for one completion that's already present
          else if (filtered.length() == 1 && 
-                  filtered.get(0).getText() == getReplacementToken())
+                  filtered.get(0).getTypedText() == getReplacementToken())
          {
             terminate();
          }
@@ -219,7 +219,7 @@ public class CppCompletionRequest
      
       docDisplay_.setFocus(true); 
       docDisplay_.setSelection(getReplacementSelection());
-      docDisplay_.replaceSelection(completion.getText(), true) ; 
+      docDisplay_.replaceSelection(completion.getTypedText(), true) ; 
    }
    
    private InputEditorSelection getReplacementSelection()
