@@ -1,5 +1,5 @@
 /*
- * CppCompletion.java
+ * CppCompletionResources.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,28 +12,28 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.source.model;
+package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
-import com.google.gwt.core.client.JavaScriptObject;
 
-public class CppCompletion extends JavaScriptObject
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
+
+
+public interface CppCompletionResources extends ClientBundle
 {
-   protected CppCompletion()
+   public static interface Styles extends CssResource
    {
+      String toolTip();
    }
+
+  
+   @Source("CppCompletion.css")
+   Styles styles();
    
-   public static native final CppCompletion create(String typedText) /*-{
-      return {
-         typed_text: typedText,
-         text: null
-      };
-   }-*/;
+  
    
-   public native final String getTypedText() /*-{
-      return this.typed_text;
-   }-*/;
-   
-   public native final String getText() /*-{
-      return this.text;
-   }-*/;
+   public static CppCompletionResources INSTANCE = 
+      (CppCompletionResources)GWT.create(CppCompletionResources.class) ;
+  
 }
