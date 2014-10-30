@@ -146,7 +146,7 @@ public class CompletionRequester
                         {
                            newComp.add(new QualifiedName(
                                  argName,
-                                 "<" + functionName + ">"
+                                 "[" + functionName + "]"
                            ));
                         }
                      }
