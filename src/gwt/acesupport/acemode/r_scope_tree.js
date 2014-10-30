@@ -124,8 +124,8 @@ define('mode/r_scope_tree', function(require, exports, module) {
                                                            functionName);
       };
 
-      this.getArgumentsFromFunctionsInScope = function(pos, tokenizer) {
-         return this.$root.getArgumentsFromFunctionsInScope(pos, tokenizer);
+      this.getFunctionsInScope = function(pos, tokenizer) {
+         return this.$root.getFunctionsInScope(pos, tokenizer);
       };
 
       this.invalidateFrom = function(pos) {
@@ -320,7 +320,7 @@ define('mode/r_scope_tree', function(require, exports, module) {
       //
       // [{"name": fn, "args": ["arg1", "arg2", ...]}]
       //
-      this.getArgumentsFromFunctionsInScope = function(pos, tokenizer) {
+      this.getFunctionsInScope = function(pos, tokenizer) {
          var stack = this.$getFunctionStack(pos);
          var objects = [];
          for (var i = 0; i < stack.length; i++)

@@ -1,5 +1,4 @@
-/*
- * ScopeFunction.java
+/* RFunction.java
  *
  * Copyright (C) 2014 by RStudio, Inc.
  *
@@ -14,19 +13,20 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 
-public class ScopeFunction extends Scope
+public class RFunction extends JavaScriptObject
 {
-   protected ScopeFunction()
+   protected RFunction()
    {}
    
    public final native String getFunctionName() /*-{
-      return this.attributes.name;
+      return this.name;
    }-*/;
    
    public final native JsArrayString getFunctionArgs() /*-{
-      return this.attributes.args;
+      return this.args;
    }-*/;
 
 }

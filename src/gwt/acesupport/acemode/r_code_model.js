@@ -383,9 +383,9 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       return true;
    }
 
-   this.getArgumentsFromFunctionsInScope = function(pos) {
+   this.getFunctionsInScope = function(pos) {
       this.$buildScopeTreeUpToRow(pos.row);
-      return this.$scopes.getArgumentsFromFunctionsInScope(pos, this.$tokenizer);
+      return this.$scopes.getFunctionsInScope(pos, this.$tokenizer);
    };
 
    function tokenAtCursorEndsWithComma(cursor) {
