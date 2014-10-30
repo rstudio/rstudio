@@ -105,17 +105,31 @@ public class CompletionRequester
             cachedLinePrefix_ = line.substring(0, pos);
             String token = response.getToken();
 
+            JsArrayString comp = response.getCompletions();
+            JsArrayString pkgs = response.getPackages();
             ArrayList<QualifiedName> newComp = new ArrayList<QualifiedName>();
+            
+            // Get function argument completions
+            for (int i = 0; i < comp.length(); i++)
+            {
+               if (comp.get(i).matches(".*=\\s*$"))
+               {
+                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i)));
+               }
+            }
 
             // Get completions from the current scope
             addScopedCompletions(token, newComp);
             
             // Get other completions
-            JsArrayString comp = response.getCompletions();
-            JsArrayString pkgs = response.getPackages();
             for (int i = 0; i < comp.length(); i++)
-               newComp.add(new QualifiedName(comp.get(i), pkgs.get(i)));
-
+            {
+               if (!comp.get(i).matches(".*=\\s*$"))
+               {
+                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i)));
+               }
+            }
+            
             CompletionResult result = new CompletionResult(
                   response.getToken(),
                   newComp,
@@ -160,14 +174,14 @@ public class CompletionRequester
                      completions.add(new QualifiedName(
                            argName,
                            "<anonymous function>"
-                           ));
+                     ));
                   }
                   else
                   {
                      completions.add(new QualifiedName(
                            argName,
                            "[" + functionName + "]"
-                           ));
+                     ));
                   }
                }
             }
