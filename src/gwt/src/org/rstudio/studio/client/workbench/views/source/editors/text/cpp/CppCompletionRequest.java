@@ -98,7 +98,7 @@ public class CppCompletionRequest
          }
          
          // check for auto-accept
-         if ((filtered.length() == 1) && autoAccept)
+         if ((filtered.length() == 1) && autoAccept && explicit_)
          {
             applyValue(filtered.get(0));
          }
