@@ -831,7 +831,7 @@ public class TextEditingTarget implements
                         Position.create(event.getLineNumber() - 1, 1);
                   
                   // if we're not in function scope, set a top-level breakpoint
-                  Scope innerFunction = 
+                  ScopeFunction innerFunction = 
                         docDisplay_.getFunctionAtPosition(breakpointPosition);
                   if (innerFunction == null || !innerFunction.isFunction())
                   {
@@ -849,18 +849,10 @@ public class TextEditingTarget implements
                      while (innerFunction.getParentScope() != null &&
                             innerFunction.getParentScope().isFunction()) 
                      {
-                        innerFunction = innerFunction.getParentScope();
+                        innerFunction = (ScopeFunction) innerFunction.getParentScope();
                      }
 
-                     // the function's label may include its signature (e.g.
-                     // foo(bar, baz)); we want just its name, so discard 
-                     // characters after '(' if there are any
-                     String functionName = innerFunction.getLabel();
-                     int idx = functionName.indexOf('(');
-                     if (idx > 0) 
-                     {
-                        functionName = functionName.substring(0, idx);
-                     }
+                     String functionName = innerFunction.getFunctionName();
                      
                      breakpoint = breakpointManager_.setBreakpoint(
                            getPath(),

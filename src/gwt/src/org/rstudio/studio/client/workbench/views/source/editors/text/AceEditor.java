@@ -1370,7 +1370,7 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
-   public Scope getFunctionAtPosition(Position position)
+   public ScopeFunction getFunctionAtPosition(Position position)
    {
       return getSession().getMode().getCodeModel().getCurrentFunction(
             position);

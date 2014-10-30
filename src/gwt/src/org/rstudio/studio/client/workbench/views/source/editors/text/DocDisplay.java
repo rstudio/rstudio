@@ -167,7 +167,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    Scope getCurrentChunk(Position position);
    Scope getCurrentFunction();
    Scope getCurrentSection();
-   Scope getFunctionAtPosition(Position position);
+   ScopeFunction getFunctionAtPosition(Position position);
    Scope getSectionAtPosition(Position position);
    boolean hasScopeTree();
    JsArray<Scope> getScopeTree();

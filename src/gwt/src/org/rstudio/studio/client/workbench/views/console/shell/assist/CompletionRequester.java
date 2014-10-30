@@ -27,7 +27,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
+import org.rstudio.studio.client.workbench.views.source.editors.text.RFunction;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
@@ -112,68 +112,8 @@ public class CompletionRequester
             for (int i = 0; i < comp.length(); i++)
                newComp.add(new QualifiedName(comp.get(i), pkgs.get(i)));
 
-            // Get completions from the current scope as well
-            AceEditor editor = (AceEditor) editor_;
-            
-            // NOTE: this will be null in the console, so protect against that
-            if (editor != null)
-            {
-               Position cursorPosition =
-                     editor.getSession().getSelection().getCursor();
-               CodeModel codeModel = editor.getSession().getMode().getCodeModel();
-               JsArray<ScopeFunction> scopedFunctions =
-                     codeModel.getArgumentsFromFunctionsInScope(cursorPosition);
-
-               for (int i = 0; i < scopedFunctions.length(); i++)
-               {
-                  ScopeFunction scopedFunction = scopedFunctions.get(i);
-                  String functionName = scopedFunction.getFunctionName();
-                  
-                  JsArrayString argNames = scopedFunction.getFunctionArgs();
-                  for (int j = 0; j < argNames.length(); j++)
-                  {
-                     String argName = argNames.get(j);
-                     if (argName.startsWith(token))
-                     {
-                        if (functionName == null || functionName == "")
-                        {
-                           newComp.add(new QualifiedName(
-                                 argName,
-                                 "<anonymous function>"
-                           ));
-                        }
-                        else
-                        {
-                           newComp.add(new QualifiedName(
-                                 argName,
-                                 "[" + functionName + "]"
-                           ));
-                        }
-                     }
-                  }
-                  // We might also want to auto-complete functions names
-                  if (functionName != null && functionName != "" && functionName.startsWith(token))
-                  {
-                     newComp.add(new QualifiedName(
-                           functionName,
-                           "<user-defined function>" // TODO: better name?
-                     ));
-                  }
-               }
-               
-               // Get context-specific completions as well.
-               JsArrayString contextVariables = 
-                     codeModel.getVariablesInScope(cursorPosition);
-               
-               for (int j = 0; j < contextVariables.length(); j++)
-               {
-                  newComp.add(new QualifiedName(
-                        contextVariables.get(j),
-                        "<context>"
-                  ));
-               }
-
-            }
+            // Get completions from the current scope as well.
+            addScopedCompletions(token, newComp);
 
             CompletionResult result = new CompletionResult(
                   response.getToken(),
@@ -187,6 +127,61 @@ public class CompletionRequester
                callback.onResponseReceived(result);
          }
       }) ;
+   }
+   
+   private void addScopedCompletions(String token,
+                                     ArrayList<QualifiedName> completions)
+   {
+      AceEditor editor = (AceEditor) editor_;
+
+      // NOTE: this will be null in the console, so protect against that
+      if (editor != null)
+      {
+         Position cursorPosition =
+               editor.getSession().getSelection().getCursor();
+         CodeModel codeModel = editor.getSession().getMode().getCodeModel();
+         JsArray<RFunction> scopedFunctions =
+               codeModel.getFunctionsInScope(cursorPosition);
+
+         for (int i = 0; i < scopedFunctions.length(); i++)
+         {
+            RFunction scopedFunction = scopedFunctions.get(i);
+            String functionName = scopedFunction.getFunctionName();
+
+            JsArrayString argNames = scopedFunction.getFunctionArgs();
+            for (int j = 0; j < argNames.length(); j++)
+            {
+               String argName = argNames.get(j);
+               if (argName.startsWith(token))
+               {
+                  if (functionName == null || functionName == "")
+                  {
+                     completions.add(new QualifiedName(
+                           argName,
+                           "<anonymous function>"
+                           ));
+                  }
+                  else
+                  {
+                     completions.add(new QualifiedName(
+                           argName,
+                           "[" + functionName + "]"
+                           ));
+                  }
+               }
+            }
+            // We might also want to auto-complete functions names
+            if (functionName != null && functionName != "" && functionName.startsWith(token))
+            {
+               completions.add(new QualifiedName(
+                     functionName,
+                     "<user-defined function>" // TODO: better name?
+               ));
+            }
+         }
+
+      }
+
    }
 
    private void doGetCompletions(
