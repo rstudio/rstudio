@@ -432,11 +432,11 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          return [];
 
       var scopedVariables = [];
-      while (tokenCursor.moveToPreviousToken())
+      do
       {
          if (tokenCursor.bwdToMatchingToken())
             continue;
-         
+
          if (pAssign(tokenCursor.currentToken()))
          {
             var clone = tokenCursor.cloneCursor();
@@ -471,7 +471,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             }
             
          }
-      }
+      } while (tokenCursor.moveToPreviousToken());
       return scopedVariables;
       
    };
