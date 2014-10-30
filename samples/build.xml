@@ -22,10 +22,6 @@
     <gwt.ant dir="json" />
   </target>
 
-  <target name="logexample" description="Build logexample">
-    <gwt.ant dir="logexample" />
-  </target>
-
   <target name="mail" description="Build mail">
     <gwt.ant dir="mail" />
   </target>
@@ -51,7 +47,6 @@
     <antcall target="dynatablerf" />
     <antcall target="hello" />
     <antcall target="json" />
-    <antcall target="logexample" />
     <antcall target="mail" />
     <antcall target="mobilewebapp" />
     <antcall target="showcase" />
