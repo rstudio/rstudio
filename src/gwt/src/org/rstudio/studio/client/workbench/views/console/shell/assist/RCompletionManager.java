@@ -577,9 +577,25 @@ public class RCompletionManager implements CompletionManager
    {
       boolean success = false;
       int parenCount = 0;
-      while (tokenCursor.moveToPreviousToken())
+      int braceCount = 0;
+      do
       {
-         if (tokenCursor.currentToken().getValue() == "(")
+         if (tokenCursor.currentValue() == "{")
+         {
+            if (braceCount == 0)
+            {
+               success = false;
+               break;
+            }
+            --braceCount;
+         }
+         
+         if (tokenCursor.currentValue() == "}")
+         {
+            ++braceCount;
+         }
+         
+         if (tokenCursor.currentValue() == "(")
          {
             if (parenCount == 0)
             {
@@ -588,11 +604,12 @@ public class RCompletionManager implements CompletionManager
             }
             --parenCount;
          }
-         else if (tokenCursor.currentToken().getValue() == ")")
+         else if (tokenCursor.currentValue() == ")")
          {
             parenCount++;
          }
-      }
+         
+      } while (tokenCursor.moveToPreviousToken());
       return success;
    }
    
