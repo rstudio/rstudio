@@ -64,5 +64,9 @@ public class TokenCursor extends JavaScriptObject
       return !! this.moveBackwardOverMatchingParens();
    }-*/;
    
+   public native final boolean moveToPosition(Position position) /*-{
+      return this.moveToPosition(position);
+   }-*/;
+   
 }
 

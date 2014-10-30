@@ -255,7 +255,46 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          return false;
          
       };
-      
+
+      this.moveToPosition = function(pos) {
+
+         var rowTokens = that.$tokens[pos.row];
+
+         // If there's no tokens on this line, walk back until we find
+         // a line with tokens
+         var row = pos.row;
+         while (row >= 0 && (rowTokens == null || rowTokens.length === 0)) {
+            row--;
+            rowTokens = that.$tokens[row];
+         }
+
+         if (row < 0)
+            return false;
+
+         // If we walked back, we can use the last token on the row we found
+         if (row !== pos.row) {
+            this.$row = row;
+            this.$offset = that.$tokens[row].length - 1;
+            return true;
+         }
+
+         // Otherwise, walk over this row's tokens
+         for (var i = 0; i < rowTokens.length; i++) {
+            if (rowTokens[i].column >= pos.column) {
+               break;
+            }
+         }
+
+         this.$row = pos.row;
+         this.$offset = i - 1;
+         if (i === 0) {
+            this.$offset = 0;
+            return this.moveToPreviousToken();
+         } else {
+            return true;
+         }
+         
+      };
 
    }).call(this.$TokenCursor.prototype);
 

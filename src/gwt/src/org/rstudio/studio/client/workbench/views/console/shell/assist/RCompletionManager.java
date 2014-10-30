@@ -55,7 +55,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSo
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.EditSession;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
@@ -679,14 +678,16 @@ public class RCompletionManager implements CompletionManager
       
       codeModel.tokenizeUpToRow(row);
       
-      // Make a token cursor and put it at the end of the line
+      // Make a token cursor and place it at the first token previous
+      // to the cursor.
       TokenCursor tokenCursor = codeModel.getTokenCursor();
-      tokenCursor.bwdToNearestToken(Position.create(row, firstLine.length()));
-
+      if (!tokenCursor.moveToPosition(input_.getCursorPosition()))
+         return new AutoCompletionContext(firstLine, false);
+      
       // Walk tokens backwards until we have one more '(' than we do
       // ')' with an empty 'block' token stack -- but only if we didn't
       // already hit a '(' as the first token
-      if (tokenCursor.currentToken().getValue() != "(")
+      if (tokenCursor.currentValue() != "(")
       {
          boolean success = findOpeningParen(tokenCursor);
          if (!success)
