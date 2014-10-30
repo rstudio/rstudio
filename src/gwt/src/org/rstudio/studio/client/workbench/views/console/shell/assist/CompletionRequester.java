@@ -105,15 +105,16 @@ public class CompletionRequester
             cachedLinePrefix_ = line.substring(0, pos);
             String token = response.getToken();
 
-            JsArrayString comp = response.getCompletions();
-            JsArrayString pkgs = response.getPackages();
             ArrayList<QualifiedName> newComp = new ArrayList<QualifiedName>();
 
+            // Get completions from the current scope
+            addScopedCompletions(token, newComp);
+            
+            // Get other completions
+            JsArrayString comp = response.getCompletions();
+            JsArrayString pkgs = response.getPackages();
             for (int i = 0; i < comp.length(); i++)
                newComp.add(new QualifiedName(comp.get(i), pkgs.get(i)));
-
-            // Get completions from the current scope as well.
-            addScopedCompletions(token, newComp);
 
             CompletionResult result = new CompletionResult(
                   response.getToken(),
@@ -179,9 +180,19 @@ public class CompletionRequester
                ));
             }
          }
-
+         
+         // Variables in the current scope.
+         JsArrayString scopeVariables = codeModel.getVariablesInScope(cursorPosition);
+         for (int i = 0; i < scopeVariables.length(); i++)
+         {
+            String variable = scopeVariables.get(i);
+            if (variable.startsWith(token))
+               completions.add(new QualifiedName(
+                     scopeVariables.get(i),
+                     "<context>"
+               ));
+         }
       }
-
    }
 
    private void doGetCompletions(
