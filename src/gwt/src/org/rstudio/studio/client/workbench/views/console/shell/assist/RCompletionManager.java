@@ -542,6 +542,15 @@ public class RCompletionManager implements CompletionManager
       AutoCompletionContext context = getAutocompletionContext();
       String line = context.getContext();
       
+      // Cheap trick -- convert all instances of '{', '}' to '(', ')' so
+      // they get treated as non-named function calls. This fixes an
+      // undesired behaviour whereby e.g.
+      //
+      // lapply(X, function(x) { |
+      //
+      // would produce auto-completions for lapply.
+      line = line.replace('{', '(').replace('}', ')');
+      
       if (!input_.hasSelection())
       {
          Debug.log("Cursor wasn't in input box or was in subelement");
@@ -700,15 +709,6 @@ public class RCompletionManager implements CompletionManager
       String result = resultBuilder.toString();
       
       result = StringUtil.stripBalancedQuotes(result);
-      
-      // Cheap trick -- convert all instances of '{', '}' to '(', ')' so
-      // they get treated as non-named function calls. This fixes an
-      // undesired behaviour whereby e.g.
-      //
-      // lapply(X, function(x) { |
-      //
-      // would produce auto-completions for lapply.
-      result = result.replace('{', '(').replace('}', ')');
       
       return new AutoCompletionContext(result, startRow < row);
    }
