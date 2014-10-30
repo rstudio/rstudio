@@ -96,7 +96,7 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
          selectItem(firstItem);
       
       // ensure the menu is visible
-      if (!isAttached())
+      if (!isShowing())
          showMenu();
       else if (!isVisible())
          setVisible(true);
