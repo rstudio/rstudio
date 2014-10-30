@@ -291,11 +291,17 @@ public class CompletionRequester
 
       private String getFormattedPackageName()
       {
-         return pkgName == null || pkgName.length() == 0
-               ? ""
-               : " <span class=\"packageName\">{"
-                  + DomUtils.textToHtml(pkgName)
-                  + "}</span>";
+         if (pkgName == null || pkgName.length() == 0)
+            return "";
+         
+         StringBuilder result = new StringBuilder();
+         result.append(" <span class=\"packageName\">");
+         if (pkgName.matches("^([\\{\\[\\(\\<]).*\\1$"))
+            result.append(DomUtils.textToHtml(pkgName));
+         else
+            result.append("{").append(DomUtils.textToHtml(pkgName)).append("}");
+         result.append("</span>");
+         return result.toString();
       }
 
       public static QualifiedName parseFromText(String val)
