@@ -128,8 +128,6 @@ public class CompletionRequester
                {
                   ScopeFunction scopedFunction = scopedFunctions.get(i);
                   String functionName = scopedFunction.getFunctionName();
-                  if (functionName == null)
-                     functionName = "";
                   
                   JsArrayString argNames = scopedFunction.getFunctionArgs();
                   for (int j = 0; j < argNames.length(); j++)
@@ -137,18 +135,28 @@ public class CompletionRequester
                      String argName = argNames.get(j);
                      if (argName.startsWith(token))
                      {
-                        newComp.add(new QualifiedName(
-                              argName,
-                              functionName
-                        ));
+                        if (functionName == null || functionName == "")
+                        {
+                           newComp.add(new QualifiedName(
+                                 argName,
+                                 "<anonymous function>"
+                           ));
+                        }
+                        else
+                        {
+                           newComp.add(new QualifiedName(
+                                 argName,
+                                 "<" + functionName + ">"
+                           ));
+                        }
                      }
                   }
                   // We might also want to auto-complete functions names
-                  if (functionName.startsWith(token))
+                  if (functionName != null && functionName != "" && functionName.startsWith(token))
                   {
                      newComp.add(new QualifiedName(
                            functionName,
-                           "user-defined function" // TODO: better name?
+                           "<user-defined function>" // TODO: better name?
                      ));
                   }
                }
