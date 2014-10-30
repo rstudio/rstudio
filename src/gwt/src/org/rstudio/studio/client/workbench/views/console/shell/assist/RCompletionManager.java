@@ -628,11 +628,11 @@ public class RCompletionManager implements CompletionManager
       String firstLine = input_.getText();
       int row = input_.getCursorPosition().getRow();
       
-      // Default case for failure modes
-      AutoCompletionContext defaultContext = new AutoCompletionContext(firstLine, false);
-      
       // trim to cursor position
       firstLine = firstLine.substring(0, input_.getCursorPosition().getColumn());
+      
+      // Default case for failure modes
+      AutoCompletionContext defaultContext = new AutoCompletionContext(firstLine, false);
       
       // if we're on the first row, don't bother looking back
       if (row == 0)
