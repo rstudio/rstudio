@@ -624,27 +624,31 @@ public class RCompletionManager implements CompletionManager
    private AutoCompletionContext getAutocompletionContext()
    {
       
+      
       String firstLine = input_.getText();
       int row = input_.getCursorPosition().getRow();
+      
+      // Default case for failure modes
+      AutoCompletionContext defaultContext = new AutoCompletionContext(firstLine, false);
       
       // trim to cursor position
       firstLine = firstLine.substring(0, input_.getCursorPosition().getColumn());
       
       // if we're on the first row, don't bother looking back
       if (row == 0)
-         return new AutoCompletionContext(firstLine, false);
+         return defaultContext;
       
       // early escaping rules: if we're in Roxygen, or we have text immediately
       // preceding the cursor (as that signals we're completing a variable name)
       if (firstLine.matches("\\s*#+'.*") ||
           firstLine.matches(".*[$@]$"))
-         return new AutoCompletionContext(firstLine, false);
+         return defaultContext;
       
       // if the line is currently within a comment, bail -- this ensures
       // that we can auto-complete within a comment line (but we only
       // need context from that line)
       if (!firstLine.equals(StringUtil.stripRComment(firstLine)))
-         return new AutoCompletionContext(firstLine, false);
+         return defaultContext;
       
       // if we're within a string, bail -- do this by stripping
       // balanced quotes and seeing if any quote characters left over
@@ -654,27 +658,28 @@ public class RCompletionManager implements CompletionManager
       {
          boolean oddSingleQuotes = StringUtil.countMatches(stripped, '\'') % 2 == 1;
          boolean oddDoubleQuotes = StringUtil.countMatches(stripped, '"') % 2 == 1;
-         if (oddSingleQuotes || oddDoubleQuotes) {
-            return new AutoCompletionContext(firstLine, false);
+         if (oddSingleQuotes || oddDoubleQuotes)
+         {
+            return defaultContext;
          }
       }
       
       // access to the R Code model
       AceEditor editor = (AceEditor) docDisplay_;
       if (editor == null)
-         return new AutoCompletionContext(firstLine, false);
+         return defaultContext;
       
       EditSession session = editor.getSession();
       if (session == null)
-         return new AutoCompletionContext(firstLine, false);
+         return defaultContext;
       
       Mode mode = session.getMode();
       if (mode == null)
-         return new AutoCompletionContext(firstLine, false);
+         return defaultContext;
       
       CodeModel codeModel = mode.getCodeModel();
       if (codeModel == null)
-         return new AutoCompletionContext(firstLine, false);
+         return defaultContext;
       
       codeModel.tokenizeUpToRow(row);
       
@@ -682,7 +687,7 @@ public class RCompletionManager implements CompletionManager
       // to the cursor.
       TokenCursor tokenCursor = codeModel.getTokenCursor();
       if (!tokenCursor.moveToPosition(input_.getCursorPosition()))
-         return new AutoCompletionContext(firstLine, false);
+         return defaultContext;
       
       // Walk tokens backwards until we have one more '(' than we do
       // ')' with an empty 'block' token stack -- but only if we didn't
@@ -691,10 +696,12 @@ public class RCompletionManager implements CompletionManager
       {
          boolean success = findOpeningParen(tokenCursor);
          if (!success)
-         {
-            return new AutoCompletionContext(firstLine, false);
-         }
+            return defaultContext;
       }
+      
+      // Move off of the open paren to the function name
+      if (!tokenCursor.moveToPreviousToken())
+         return defaultContext;
       
       // Take the inferred row up to current position and return
       int startRow = tokenCursor.currentPosition().getRow();
