@@ -423,6 +423,32 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       return this.$scopes.getFunctionsInScope(pos, this.$tokenizer);
    };
 
+   function addForInToken(tokenCursor, scopedVariables)
+   {
+      var clone = tokenCursor.cloneCursor();
+      if (clone.currentValue() !== "for")
+         return false;
+
+      if (!clone.moveToNextToken())
+         return false;
+
+      if (clone.currentValue() !== "(")
+         return false;
+
+      if (!clone.moveToNextToken())
+         return false;
+
+      var maybeForInVariable = clone.currentValue();
+      if (!clone.moveToNextToken())
+         return false;
+
+      if (clone.currentValue() !== "in")
+         return false;
+
+      scopedVariables.push(maybeForInVariable);
+      return true;
+   }
+
    this.getVariablesInScope = function(pos) {
       
       this.$tokenizeUpToRow(pos.row);
@@ -437,6 +463,10 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          if (tokenCursor.bwdToMatchingToken())
             continue;
 
+         // Handle 'for (x in bar)'
+         addForInToken(tokenCursor, scopedVariables);
+         
+         // Default -- assignment case
          if (pAssign(tokenCursor.currentToken()))
          {
             var clone = tokenCursor.cloneCursor();
@@ -452,16 +482,6 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                
                if (!clone.moveToPreviousToken()) continue;
 
-               // Special case for 'for ('
-               var forCursor = clone.cloneCursor();
-               if (forCursor.currentValue() === "(")
-                  if (forCursor.moveToPreviousToken())
-                     if (forCursor.currentValue() === "for")
-               {
-                  scopedVariables.push(arg);
-                  continue;
-               }
-                  
                var currentValue = clone.currentValue();
                if (["(", ",", "[", "[[", "{"].some(function(x) {
                   return x === currentValue;
@@ -472,6 +492,8 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             
          }
       } while (tokenCursor.moveToPreviousToken());
+
+      scopedVariables.sort();
       return scopedVariables;
       
    };
