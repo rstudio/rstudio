@@ -91,7 +91,26 @@ options(help_type = "html")
 
 .rs.addJsonRpcHandler("get_help", function(topic, package, options)
 {
-   helpfiles = help(topic, help_type="html")
+   helpfiles <- NULL
+   if (is.null(package)) {
+      helpfiles <- help(topic, help_type = "html")
+   } else {
+      # NOTE: this can fail if there is no such package 'package'
+      helpfiles <- tryCatch(
+         
+         expr = {
+            # NOTE: help does lazy evaluation on 'package',
+            # so we have to manually construct the call
+            call <- call("help", topic, package = package, help_type = "html")
+            eval(call)
+         },
+         
+         error = function(e) {
+            return(NULL)
+         }
+      )
+   }
+  
    if (length(helpfiles) <= 0)
       return ()
 
@@ -136,7 +155,7 @@ options(help_type = "html")
    }
    
    list('html' = html, 'signature' = sig, 'pkgname' = pkgname)
-});
+})
 
 .rs.addJsonRpcHandler("show_help_topic", function(topic, package)
 {
