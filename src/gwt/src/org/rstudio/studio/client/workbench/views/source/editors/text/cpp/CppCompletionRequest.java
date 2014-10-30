@@ -86,8 +86,7 @@ public class CppCompletionRequest
       if (completions_ != null)
       {  
          // discover text already entered
-         String entered = docDisplay_.getCode(
-            completionPosition_.getPosition(), docDisplay_.getCursorPosition());
+         String userTypedText = getUserTypedText();
          
          // build list of entries (filter on text already entered)
          JsArray<CppCompletion> filtered = JsArray.createArray().cast();
@@ -95,7 +94,8 @@ public class CppCompletionRequest
          {
             CppCompletion completion = completions_.get(i);
             String typedText = completion.getTypedText();
-            if ((entered.length() == 0) || typedText.startsWith(entered))
+            if ((userTypedText.length() == 0) || 
+                 typedText.startsWith(userTypedText))
             {
                // be more picky for member scope completions because clang
                // returns a bunch of noise like constructors, destructors, 
@@ -124,7 +124,7 @@ public class CppCompletionRequest
          }
          // check for one completion that's already present
          else if (filtered.length() == 1 && 
-                  filtered.get(0).getTypedText() == getReplacementToken())
+                  filtered.get(0).getTypedText() == getUserTypedText())
          {
             terminate();
          }
@@ -259,11 +259,10 @@ public class CppCompletionRequest
                                          docDisplay_.getCursorPosition());
    }
    
-   private String getReplacementToken()
+   private String getUserTypedText()
    {
-      return docDisplay_.getTextForRange(
-                  Range.fromPoints(completionPosition_.getPosition(), 
-                                   docDisplay_.getCursorPosition()));
+      return docDisplay_.getCode(
+        completionPosition_.getPosition(), docDisplay_.getCursorPosition());
    }
    
    private CppServerOperations server_;
