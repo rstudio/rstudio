@@ -29,9 +29,11 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.CppSourceLocation;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
@@ -115,6 +117,30 @@ public class CppCompletionManager implements CompletionManager
          // no implementation here yet since we don't have access
          // to C/C++ help (we could implement this via using libclang
          // to parse doxygen though)
+         
+         /*
+         final Position completionPosition = 
+               CppCompletionUtils.getCompletionPosition(docDisplay_,true);
+         if (completionPosition != null)
+         {
+            CppCompletionPopupMenu popup = 
+               new CppCompletionPopupMenu(docDisplay_, completionPosition);
+            
+            
+            JsArray<CppCompletion> completions = JsArray.createArray().cast();
+            
+            completions.push(CppCompletion.create("Orange"));
+            completions.push(CppCompletion.create("Apple"));
+            completions.push(CppCompletion.create("Peach"));
+            completions.push(CppCompletion.create("Melon"));
+            completions.push(CppCompletion.create("Grape"));
+            
+
+            //popup.setCompletions(completions);
+            popup.setText("(No matches)");
+         }
+         */
+        
       }
    }
 
