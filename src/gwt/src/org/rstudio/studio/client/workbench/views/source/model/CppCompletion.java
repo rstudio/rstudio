@@ -75,7 +75,16 @@ public class CppCompletion extends JavaScriptObject
       int kind = getKind();
       return kind == FUNCTION_DECL ||
              kind == CXX_METHOD ||
-             kind == FUNCTION_TEMPLATE;
+             kind == FUNCTION_TEMPLATE ||
+             kind == CONSTRUCTOR ||
+             kind == DESTRUCTOR;
+   }
+   
+   public final boolean isVariable()
+   {
+      int kind = getKind();
+      return kind == FIELD_DECL ||
+             kind == VAR_DECL;
    }
    
    public native final String getTypedText() /*-{

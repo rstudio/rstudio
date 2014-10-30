@@ -177,6 +177,13 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
                return;
             }
             
+            // only do tooltips for functions and variables
+            if (!completion.isFunction() && !completion.isVariable())
+            {
+               toolTip_.setVisible(false);
+               return;
+            }
+            
             // set the tooltip text
             toolTip_.setText(text);
            
