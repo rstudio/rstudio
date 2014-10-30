@@ -160,9 +160,12 @@
         <pathelement location="${project.build}/bin/com/google/gwt/core/Core.gwtar"/>
         <pathelement location="${project.build}/bin/com/google/gwt/json/JSON.gwtar"/>
         <pathelement location="${project.build}/bin/com/google/gwt/regexp/RegExp.gwtar"/>
+        <pathelement location="${project.build}/bin/com/google/gwt/user/UserAgent.gwtar"/>
+        <pathelement location="${project.build}/bin/com/google/gwt/user/RemoteService.gwtar"/>
+        <pathelement location="${project.build}/bin/com/google/gwt/user/DOM.gwtar"/>
+        <pathelement location="${project.build}/bin/com/google/gwt/user/Ui.gwtar"/>
         <pathelement location="${project.build}/bin/com/google/gwt/user/User.gwtar"/>
         <pathelement location="${project.build}/bin/com/google/gwt/xml/XML.gwtar"/>
-        <pathelement location="${project.build}/bin/com/google/gwt/debug/Debug.gwtar"/>
         <pathelement location="${project.build}/bin/com/google/gwt/place/Place.gwtar"/>
         <pathelement location="${project.build}/bin/com/google/gwt/activity/Activity.gwtar"/>
         <pathelement location="${project.build}/bin/com/google/web/bindery/event/Event.gwtar"/>
@@ -170,28 +173,35 @@
             location="${project.build}/bin/com/google/web/bindery/autobean/AutoBean.gwtar"/>
         <pathelement
             location="${project.build}/bin/com/google/web/bindery/requestfactory/RequestFactory.gwtar"/>
-        <pathelement location="${project.build}/bin/com/google/gwt/logging/Logging.gwtar"/>
+        <pathelement location="${project.build}/bin/com/google/gwt/logging/LoggingDisabled.gwtar"/>
       </targetfiles>
       <sequential>
         <compileModule>
           <module>
-            <!-- Order is important!  Modules that inherit from  -->
-            <!-- others should come later in the list.           -->
-            <!-- All modules depend on Core                      -->
+            <!-- Order is important!  Modules that inherit from  others should come later in the
+                 list.
+
+                 NOTE: only modules that are DIRECTLY inherited are checked to filter the actual
+                 units written to disk. TO avoid duplication, if a module is referenced by more
+                 than one module for which there is a .gwtar then that module should have its own
+                 .gwtar too.                                                                     -->
             <arg value="com.google.gwt.core.Core"/>
             <arg value="com.google.gwt.json.JSON"/>
             <arg value="com.google.gwt.regexp.RegExp"/>
+            <arg value="com.google.gwt.user.UserAgent"/>
+            <arg value="com.google.gwt.user.RemoteService"/>
+            <arg value="com.google.gwt.user.DOM"/>
+            <arg value="com.google.gwt.user.UI"/>
             <arg value="com.google.gwt.user.User"/>
 
             <!-- Below are modules that depend on User           -->
             <arg value="com.google.gwt.xml.XML"/>
-            <arg value="com.google.gwt.debug.Debug"/>
-            <arg value="com.google.gwt.logging.Logging"/>
+            <arg value="com.google.gwt.logging.LoggingDisabled"/>
 
+            <arg value="com.google.web.bindery.event.Event"/>
             <arg value="com.google.gwt.place.Place"/>
             <arg value="com.google.gwt.activity.Activity"/>
 
-            <arg value="com.google.web.bindery.event.Event"/>
             <arg value="com.google.web.bindery.autobean.AutoBean"/>
             <arg value="com.google.web.bindery.requestfactory.RequestFactory"/>
           </module>
@@ -669,7 +679,7 @@
           <pathelement location="${gwt.root}/build/out/user/bin"/>
           <pathelement location="${gwt.dev.jar}"/>
         </classpath>
-        <jvmarg value="-Xmx512M"/>
+        <jvmarg value="-Xmx768M"/>
         <module/>
         <arg value="-strict"/>
         <arg value="-sourceLevel"/>
