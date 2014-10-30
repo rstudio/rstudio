@@ -74,6 +74,9 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
       this.moveToNextToken = function(maxRow)
       {
+         if (typeof maxRow === "undefined")
+            maxRow = Infinity;
+         
          if (this.$row > maxRow)
             return false;
 
@@ -175,6 +178,11 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          return this.currentToken().value;
       };
 
+      this.currentType = function()
+      {
+         return this.currentToken().type;
+      };
+
       this.currentPosition = function()
       {
          var token = this.currentToken();
@@ -201,6 +209,53 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       {
          return this.$offset == (that.$tokens[this.$row] || []).length - 1;
       };
+
+      var $complements = {
+         "(" : ")",
+         "{" : "}",
+         "<" : ">",
+         "[" : "]",
+         ")" : "(",
+         "}" : "{",
+         ">" : "<",
+         "]" : "["
+      };
+
+      this.fwdToMatchingToken = function() {
+
+         var thisValue = this.currentValue();
+         var compValue = $complements[thisValue];
+
+         var isOpener = ["(", "{", "["].some(function(x) {
+            return x === thisValue;
+         });
+
+         if (!isOpener) {
+            return false;
+         }
+
+         var success = false;
+         var parenCount = 0;
+         while (this.moveToNextToken())
+         {
+            if (this.currentValue() === compValue)
+            {
+               if (parenCount === 0)
+               {
+                  return true;
+               }
+               parenCount--;
+            }
+            else if (this.currentValue() === thisValue)
+            {
+               parenCount++;
+            }
+         }
+
+         return false;
+         
+      };
+      
 
    }).call(this.$TokenCursor.prototype);
 
@@ -293,6 +348,55 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       this.$buildScopeTreeUpToRow(pos.row);
       return this.$scopes.getArgumentsFromFunctionsInScope(pos, this.$tokenizer);
    };
+
+   function tokenAtCursorEndsWithComma(cursor) {
+      return /,\s*$/.test(cursor.currentValue()) && cursor.currentType() === "text";
+   }
+
+   // Get function arguments, starting at the start of a function definition, e.g.
+   //
+   // x <- function(a = 1, b = 2, c = list(a = 1, b = 2), ...)
+   //      ?~~~~~~~?^~~~~~~^~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~^~~|
+   function $getFunctionArgs(tokenCursor)
+   {
+      if (pFunction(tokenCursor.currentToken()))
+         tokenCursor.moveToNextToken();
+
+      if (tokenCursor.currentValue() === "(")
+         tokenCursor.moveToNextToken();
+
+      if (tokenCursor.currentValue() === ")")
+         return [];
+
+      var functionArgs = [];
+      if (pIdentifier(tokenCursor.currentToken()))
+         functionArgs.push(tokenCursor.currentValue());
+      
+      while (tokenCursor.moveToNextToken())
+      {
+         if (tokenCursor.fwdToMatchingToken())
+            continue;
+
+         if (tokenCursor.currentValue() === ")")
+            break;
+
+         // Yuck: '...' and ',' can get tokenized together as
+         // text. All we can really do is ask if a particular token is
+         // type 'text' and ends with a comma.
+         // Once we encounter such a token, we look ahead to find an
+         // identifier (it signifies an argument name)
+         if (tokenAtCursorEndsWithComma(tokenCursor))
+         {
+            while (tokenAtCursorEndsWithComma(tokenCursor))
+               tokenCursor.moveToNextToken();
+            
+            if (pIdentifier(tokenCursor.currentToken()))
+               functionArgs.push(tokenCursor.currentValue());
+         }
+      }
+      return functionArgs;
+      
+   }
 
    this.$buildScopeTreeUpToRow = function(maxrow)
    {
@@ -417,30 +521,14 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                   bracePos.row, bracePos.column
                ));
 
-               // Strip out leading parens
-               functionArgsString = functionArgsString.replace(/^\s*\(?\s*(.*?)\s*\)?\s*$/, "$1");
-
                var functionLabel;
                if (functionName === null)
-                  functionLabel = $normalizeWhitespace("<function>(" + functionArgsString + ")");
+                  functionLabel = $normalizeWhitespace("<function>" + functionArgsString);
                else
-                  functionLabel = $normalizeWhitespace(functionName + "(" + functionArgsString + ")");
+                  functionLabel = $normalizeWhitespace(functionName + functionArgsString);
 
-               // Parse the function arguments from the string
-               var functionArgs = [];
-               if (functionArgsString.length > 0 && !/^\s*$/.test(functionArgsString)) {
-                  var tokenizedLine = this.$tokenizer.getLineTokens(functionArgsString, "start");
-                  var tokens = tokenizedLine.tokens;
-                  var n = tokens.length;
-                  
-                  functionArgs.push(tokens[0].value);
-
-                  // Look for commas
-                  // TODO: commas aren't actually properly tokenized.
-                  for (var tokenIndex = 1; tokenIndex < n - 1; ++tokenIndex)
-                     if (/^\s*,\s*$/.test(tokens[tokenIndex].value))
-                        functionArgs.push(tokens[tokenIndex + 1].value);
-               }
+               // Obtain the function arguments by walking through the tokens
+               var functionArgs = $getFunctionArgs(argsCursor);
 
                this.$scopes.onFunctionScopeStart(functionLabel,
                                                  startPos,
