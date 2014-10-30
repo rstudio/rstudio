@@ -39,6 +39,12 @@ public class ScrollableToolbarPopupMenu extends ToolbarPopupMenu
       });
       return menuBar;
    }
+   
+   public HandlerRegistration addSelectionHandler(SelectionHandler<MenuItem> handler)
+   {
+      return ((ScrollableToolbarMenuBar)menuBar_).addSelectionHandler(handler);
+   }
+
 
    public void ensureSelectedIsVisible()
    {
