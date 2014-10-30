@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
@@ -91,9 +92,12 @@ public class CodeModel extends JavaScriptObject
       this.$tokenizeUpToRow(row);
    }-*/;
    
-   
-   
    public native final JsArray<ScopeFunction> getArgumentsFromFunctionsInScope(Position position) /*-{
       return this.getArgumentsFromFunctionsInScope(position) || [];
    }-*/;
+   
+   public native final JsArrayString getVariablesInScope(Position position) /*-{
+      return this.getVariablesInScope(position) || [];
+   }-*/;
+   
 }

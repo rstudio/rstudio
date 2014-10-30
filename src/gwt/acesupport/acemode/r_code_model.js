@@ -221,6 +221,41 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          "]" : "["
       };
 
+      this.bwdToMatchingToken = function() {
+
+         var thisValue = this.currentValue();
+         var compValue = $complements[thisValue];
+
+         var isCloser = [")", "}", "]"].some(function(x) {
+            return x === thisValue;
+         });
+
+         if (!isCloser) {
+            return false;
+         }
+
+         var success = false;
+         var parenCount = 0;
+         while (this.moveToPreviousToken())
+         {
+            if (this.currentValue() === compValue)
+            {
+               if (parenCount === 0)
+               {
+                  return true;
+               }
+               parenCount--;
+            }
+            else if (this.currentValue() === thisValue)
+            {
+               parenCount++;
+            }
+         }
+
+         return false;
+         
+      };
+
       this.fwdToMatchingToken = function() {
 
          var thisValue = this.currentValue();
@@ -386,6 +421,59 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    this.getArgumentsFromFunctionsInScope = function(pos) {
       this.$buildScopeTreeUpToRow(pos.row);
       return this.$scopes.getArgumentsFromFunctionsInScope(pos, this.$tokenizer);
+   };
+
+   this.getVariablesInScope = function(pos) {
+      
+      this.$tokenizeUpToRow(pos.row);
+      
+      var tokenCursor = new this.$TokenCursor();
+      if (!tokenCursor.moveToPosition(pos))
+         return [];
+
+      var scopedVariables = [];
+      while (tokenCursor.moveToPreviousToken())
+      {
+         if (tokenCursor.bwdToMatchingToken())
+            continue;
+         
+         if (pAssign(tokenCursor.currentToken()))
+         {
+            var clone = tokenCursor.cloneCursor();
+            if (!clone.moveToPreviousToken()) continue;
+            if (pIdentifier(clone.currentToken()))
+            {
+               var arg = clone.currentValue();
+               if (clone.isFirstSignificantTokenOnLine())
+               {
+                  scopedVariables.push(arg);
+                  continue;
+               }
+               
+               if (!clone.moveToPreviousToken()) continue;
+
+               // Special case for 'for ('
+               var forCursor = clone.cloneCursor();
+               if (forCursor.currentValue() === "(")
+                  if (forCursor.moveToPreviousToken())
+                     if (forCursor.currentValue() === "for")
+               {
+                  scopedVariables.push(arg);
+                  continue;
+               }
+                  
+               var currentValue = clone.currentValue();
+               if (["(", ",", "[", "[[", "{"].some(function(x) {
+                  return x === currentValue;
+               }))
+                  continue;
+               scopedVariables.push(arg);
+            }
+            
+         }
+      }
+      return scopedVariables;
+      
    };
 
    function tokenAtCursorEndsWithComma(cursor) {

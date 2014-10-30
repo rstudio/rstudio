@@ -112,7 +112,7 @@ public class CompletionRequester
             for (int i = 0; i < comp.length(); i++)
                newComp.add(new QualifiedName(comp.get(i), pkgs.get(i)));
 
-            // Get completions from the current scope as well.
+            // Get completions from the current scope as well
             AceEditor editor = (AceEditor) editor_;
             
             // NOTE: this will be null in the console, so protect against that
@@ -159,6 +159,18 @@ public class CompletionRequester
                            "<user-defined function>" // TODO: better name?
                      ));
                   }
+               }
+               
+               // Get context-specific completions as well.
+               JsArrayString contextVariables = 
+                     codeModel.getVariablesInScope(cursorPosition);
+               
+               for (int j = 0; j < contextVariables.length(); j++)
+               {
+                  newComp.add(new QualifiedName(
+                        contextVariables.get(j),
+                        "<context>"
+                  ));
                }
 
             }
