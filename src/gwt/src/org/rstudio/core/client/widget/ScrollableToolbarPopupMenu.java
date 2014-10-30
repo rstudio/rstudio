@@ -55,6 +55,11 @@ public class ScrollableToolbarPopupMenu extends ToolbarPopupMenu
                                     0);
       }
    }
+   
+   public int getSelectedIndex()
+   {
+      return menuBar_.getSelectedIndex();
+   }
 
    @Override
    protected Widget wrapMenuBar(ToolbarMenuBar menuBar)

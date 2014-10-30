@@ -15,19 +15,15 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
-import java.util.ArrayList;
-
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Invalidation;
-import org.rstudio.core.client.Rectangle;
-import org.rstudio.core.client.events.SelectionCommitEvent;
-import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionListPopupPanel;
-import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResult;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
@@ -35,9 +31,7 @@ import org.rstudio.studio.client.workbench.views.source.model.CppServerOperation
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.inject.Inject;
 
 public class CppCompletionRequest 
@@ -78,12 +72,12 @@ public class CppCompletionRequest
       return completionPosition_;
    }
    
-   public CompletionListPopupPanel getCompletionPopup()
+   public CppCompletionPopupMenu getCompletionPopup()
    {
       return popup_;
    }
      
-   public void updateUI()
+   public void updateUI(boolean autoAccept)
    {
       // if we don't have the completion list back from the server yet
       // then just ignore this (this function will get called again when
@@ -95,16 +89,29 @@ public class CppCompletionRequest
              completionPosition_, docDisplay_.getCursorPosition());
          
          // build list of entries (filter on text already entered)
-         ArrayList<String> entries = new ArrayList<String>();
+         JsArray<CppCompletion> filtered = JsArray.createArray().cast();
          for (int i = 0; i < completions_.length(); i++)
          {
             String completion = completions_.get(i).getText();
             if ((entered.length() == 0) || completion.startsWith(entered))
-               entries.add(completion);
+               filtered.push(completions_.get(i));
          }
          
-         // create the popup
-         createCompletionPopup(entries.toArray(new String[0]));
+         // check for auto-accept
+         if ((filtered.length() == 1) && autoAccept)
+         {
+            applyValue(filtered.get(0));
+         }
+         // check for one completion that's already present
+         else if (filtered.length() == 1 && 
+                  filtered.get(0).getText() == getReplacementToken())
+         {
+            terminate();
+         }
+         else
+         {
+            showCompletionPopup(filtered);
+         }
       }
    }
    
@@ -132,74 +139,46 @@ public class CppCompletionRequest
       // get the completions
       completions_ = result.getCompletions();
       
-      // check for auto-accept
-      if ((completions_.length() == 1) && explicit_)
-      {
-         applyValue(completions_.get(0).getText());
-      }
       // check for none found condition on explicit completion
-      else if ((completions_.length() == 0) && explicit_)
+      if ((completions_.length() == 0) && explicit_)
       {
-         createCompletionPopup("(No matches)");
+         showCompletionPopup("(No matches)");
       }
       // otherwise just update the ui (apply filter, etc.)
       else
       {
-         updateUI();
+         updateUI(true);
       }
    }
    
-   private void createCompletionPopup(String message)
+   private void showCompletionPopup(String message)
    {
-      closeCompletionPopup();
-      popup_ = new CompletionListPopupPanel(new String[0]);
+      if (popup_ == null)
+         popup_ = createCompletionPopup();
       popup_.setText(message);
-      showCompletionPopup();
+     
    }
    
-   private void createCompletionPopup(String[] entries)
+   private void showCompletionPopup(JsArray<CppCompletion> completions)
    {
-      closeCompletionPopup();
-      if (entries.length > 0)
-      {
-         popup_ = new CompletionListPopupPanel(entries);
-         showCompletionPopup();
-      }
+      if (popup_ == null)
+         popup_ = createCompletionPopup();
+      popup_.setCompletions(completions, new CommandWithArg<CppCompletion>() {
+         @Override
+         public void execute(CppCompletion completion)
+         {
+            applyValue(completion);
+         } 
+      });
    }
-   
-   private void showCompletionPopup()
-   {
-      popup_.setMaxWidth(docDisplay_.getBounds().getWidth());
-      popup_.setPopupPositionAndShow(new PositionCallback()
-      {
-         public void setPosition(int offsetWidth, int offsetHeight)
-         {
-            popup_.selectFirst();
-            
-            InputEditorPosition position = 
-                  docDisplay_.createInputEditorPosition(completionPosition_);  
-            Rectangle bounds = docDisplay_.getPositionBounds(position);
-            
-            int windowBottom = Window.getScrollTop() + Window.getClientHeight() ;
-            int cursorBottom = bounds.getBottom() ;
-            
-            if (windowBottom - cursorBottom >= offsetHeight)
-               popup_.setPopupPosition(bounds.getLeft(), cursorBottom) ;
-            else
-               popup_.setPopupPosition(bounds.getLeft(), 
-                                       bounds.getTop() - offsetHeight) ;
-         }
-      });
-
-      popup_.addSelectionCommitHandler(new SelectionCommitHandler<String>()
-      {
-         public void onSelectionCommit(SelectionCommitEvent<String> e)
-         {
-            applyValue(e.getSelectedItem());
-         }
-      });
       
-      popup_.addCloseHandler(new CloseHandler<PopupPanel>() {
+   
+   private CppCompletionPopupMenu createCompletionPopup()
+   {
+      CppCompletionPopupMenu popup = new CppCompletionPopupMenu(
+          docDisplay_, completionPosition_);
+      
+      popup.addCloseHandler(new CloseHandler<PopupPanel>() {
 
          @Override
          public void onClose(CloseEvent<PopupPanel> event)
@@ -209,13 +188,14 @@ public class CppCompletionRequest
          } 
       });
       
+      return popup;
    }
    
    private void closeCompletionPopup()
    {
       if (popup_ != null)
       {
-         popup_.removeFromParent();
+         popup_.hide();
          popup_ = null;
       }
    }
@@ -227,10 +207,10 @@ public class CppCompletionRequest
          return;
       
       if (explicit_)
-         createCompletionPopup(error.getUserMessage());
+         showCompletionPopup(error.getUserMessage());
    }
    
-   public void applyValue(String completion)
+   private void applyValue(CppCompletion completion)
    {
       if (invalidationToken_.isInvalid())
          return;
@@ -238,9 +218,21 @@ public class CppCompletionRequest
       terminate();
      
       docDisplay_.setFocus(true); 
-      docDisplay_.setSelection(docDisplay_.createSelection(
-            completionPosition_, docDisplay_.getCursorPosition()));
-      docDisplay_.replaceSelection(completion, true) ; 
+      docDisplay_.setSelection(getReplacementSelection());
+      docDisplay_.replaceSelection(completion.getText(), true) ; 
+   }
+   
+   private InputEditorSelection getReplacementSelection()
+   {
+      return docDisplay_.createSelection(
+            completionPosition_, docDisplay_.getCursorPosition());
+   }
+   
+   private String getReplacementToken()
+   {
+      return docDisplay_.getTextForRange(
+                  Range.fromPoints(completionPosition_, 
+                                   docDisplay_.getCursorPosition()));
    }
    
    private CppServerOperations server_;
@@ -251,7 +243,7 @@ public class CppCompletionRequest
    
    private final Position completionPosition_;
    
-   private CompletionListPopupPanel popup_;
+   private CppCompletionPopupMenu popup_;
    private JsArray<CppCompletion> completions_;
    
    private boolean terminated_ = false;

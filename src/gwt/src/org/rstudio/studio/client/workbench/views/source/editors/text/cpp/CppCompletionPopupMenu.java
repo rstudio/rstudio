@@ -1,6 +1,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
-import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
@@ -27,13 +27,13 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
       {
          public void onSelection(SelectionEvent<MenuItem> event)
          {
-            if (selectable_)
+            if (isSelectable())
             {
                int index = menuBar_.getItemIndex(event.getSelectedItem());
                if (index != -1)
                {
                   CppCompletion completion = completions_.get(index);
-                  Debug.logToConsole(completion.getText());
+                 
                }
             }
          }
@@ -46,20 +46,15 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
    {
       JsArray<CppCompletion> completions = JsArray.createArray().cast();
       completions.push(CppCompletion.create(text));
-      setCompletions(completions, false);
+      setCompletions(completions, null);
    }
-   
-   public void setCompletions(JsArray<CppCompletion> completions)
-   {
-      setCompletions(completions, true);
-   }
-   
-   private void setCompletions(JsArray<CppCompletion> completions, 
-                               boolean selectable)
+     
+   public void setCompletions(JsArray<CppCompletion> completions, 
+                              CommandWithArg<CppCompletion> onSelected)
    {
       // save completions and selectable state
       completions_ = completions;
-      selectable_ = selectable;
+      onSelected_ = onSelected;
       
       // clear existing items
       menuBar_.clearItems();
@@ -75,13 +70,8 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
             public void execute()
             {
                docDisplay_.setFocus(true); 
-               if (selectable_)
-               {
-                  docDisplay_.setSelection(docDisplay_.createSelection(
-                     completionPosition_, docDisplay_.getCursorPosition()));
-                  docDisplay_.replaceSelection(completion.getText(), true) ; 
-               }
-
+               if (isSelectable())
+                  onSelected_.execute(completion);
             }
          });
          
@@ -92,14 +82,24 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
       }
       
       // select first item
-      if (selectable && (firstItem != null))
+      if (isSelectable() && (firstItem != null))
          selectItem(firstItem);
       
-      // ensure the menu is visible
-      if (!isShowing())
+      if (completions.length() > 0)
          showMenu();
-      else if (!isVisible())
-         setVisible(true);
+      else
+         setVisible(false);
+   }
+   
+   public void acceptSelected()
+   {
+      int index = getSelectedIndex();
+      if (index != -1)
+      {
+         if (isSelectable())
+            onSelected_.execute(completions_.get(index));
+      }
+      hide();
    }
    
    private void showMenu()
@@ -116,8 +116,14 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
                                Window.getClientHeight() ;
             int cursorBottom = bounds.getBottom() ;
             
+            // figure out whether we should show below (do this 
+            // only once so that we maintain the menu orientation
+            // while filtering)
+            if (showBelow_ == null)
+               showBelow_ = windowBottom - cursorBottom >= offsetHeight;
+            
             final int PAD = 3;
-            if (windowBottom - cursorBottom >= offsetHeight)
+            if (showBelow_)
                setPopupPosition(bounds.getLeft(), cursorBottom + PAD) ;
             else
                setPopupPosition(bounds.getLeft(), 
@@ -126,8 +132,20 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
       });
    }
    
+   private boolean isSelectable()
+   {
+      return onSelected_ != null;
+   }
+   
+   @Override
+   protected int getMaxHeight()
+   {
+      return 180;
+   }
+   
    private final DocDisplay docDisplay_;
    private final Position completionPosition_;
    private JsArray<CppCompletion> completions_;
-   private boolean selectable_ = false;
+   private CommandWithArg<CppCompletion> onSelected_ = null;
+   private Boolean showBelow_ = null;
 }

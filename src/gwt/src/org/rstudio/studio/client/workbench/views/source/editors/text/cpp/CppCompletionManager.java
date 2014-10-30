@@ -23,17 +23,14 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
-import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionListPopupPanel;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionUtils;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
-import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.CppSourceLocation;
 
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
@@ -116,31 +113,7 @@ public class CppCompletionManager implements CompletionManager
       {
          // no implementation here yet since we don't have access
          // to C/C++ help (we could implement this via using libclang
-         // to parse doxygen though)
-         
-         /*
-         final Position completionPosition = 
-               CppCompletionUtils.getCompletionPosition(docDisplay_,true);
-         if (completionPosition != null)
-         {
-            CppCompletionPopupMenu popup = 
-               new CppCompletionPopupMenu(docDisplay_, completionPosition);
-            
-            
-            JsArray<CppCompletion> completions = JsArray.createArray().cast();
-            
-            completions.push(CppCompletion.create("Orange"));
-            completions.push(CppCompletion.create("Apple"));
-            completions.push(CppCompletion.create("Peach"));
-            completions.push(CppCompletion.create("Melon"));
-            completions.push(CppCompletion.create("Grape"));
-            
-
-            //popup.setCompletions(completions);
-            popup.setText("(No matches)");
-         }
-         */
-        
+         // to parse doxygen though)   
       }
    }
 
@@ -197,8 +170,8 @@ public class CppCompletionManager implements CompletionManager
       // check for a key-combo that triggers completion or 
       // navigation / help
       int modifier = KeyboardShortcut.getModifierValue(event);
-      if (request_ == null)
-      { 
+      if ((request_ == null) || request_.isTerminated())
+      {  
          // check for user completion key combo 
          if (CompletionUtils.isCompletionRequest(event, modifier) &&
              shouldComplete(event)) 
@@ -244,8 +217,8 @@ public class CppCompletionManager implements CompletionManager
             return false ; 
          }
          
-         // get the popup -- if there is no popup then bail
-         CompletionListPopupPanel popup = getCompletionPopup();
+         // if there is no popup then bail
+         CppCompletionPopupMenu popup = getCompletionPopup();
          if (popup == null)
             return false;
          
@@ -256,36 +229,20 @@ public class CppCompletionManager implements CompletionManager
             return false;
          }
          
-         // escape and left keys terminate the request
-         if (event.getKeyCode() == KeyCodes.KEY_ESCAPE ||
-             event.getKeyCode() == KeyCodes.KEY_LEFT)
+         // left key terminates the request (popup handles Esc)
+         if (event.getKeyCode() == KeyCodes.KEY_LEFT)
          {
             terminateCompletionRequest();
             return true;
          }
           
-         // enter/tab/right accept the current selection
-         else if (event.getKeyCode() == KeyCodes.KEY_ENTER ||
-                  event.getKeyCode() == KeyCodes.KEY_TAB ||
+         // tab/right accept the current selection (popup handles Enter)
+         else if (event.getKeyCode() == KeyCodes.KEY_TAB ||
                   event.getKeyCode() == KeyCodes.KEY_RIGHT)
          {
-            request_.applyValue(popup.getSelectedValue());
+            popup.acceptSelected();
             return true;
          }
-         
-         // basic navigation keys
-         else if (event.getKeyCode() == KeyCodes.KEY_UP)
-            return popup.selectPrev();
-         else if (event.getKeyCode() == KeyCodes.KEY_DOWN)
-            return popup.selectNext();
-         else if (event.getKeyCode() == KeyCodes.KEY_PAGEUP)
-            return popup.selectPrevPage() ;
-         else if (event.getKeyCode() == KeyCodes.KEY_PAGEDOWN)
-            return popup.selectNextPage() ;
-         else if (event.getKeyCode() == KeyCodes.KEY_HOME)
-            return popup.selectFirst() ;
-         else if (event.getKeyCode() == KeyCodes.KEY_END)
-            return popup.selectLast() ;
          
          // non c++ identifier keys (that aren't navigational) close the popup
          else if (!CppCompletionUtils.isCppIdentifierKey(event))
@@ -367,7 +324,7 @@ public class CppCompletionManager implements CompletionManager
           !request_.isTerminated() &&
           (request_.getCompletionPosition().compareTo(completionPosition) == 0))
       {
-         request_.updateUI();
+         request_.updateUI(false);
       }
       else
       {
@@ -392,9 +349,9 @@ public class CppCompletionManager implements CompletionManager
       return true;
    }
      
-   private CompletionListPopupPanel getCompletionPopup()
+   private CppCompletionPopupMenu getCompletionPopup()
    {
-      CompletionListPopupPanel popup = request_ != null ?
+      CppCompletionPopupMenu popup = request_ != null ?
             request_.getCompletionPopup() : null;
       return popup;
    }
