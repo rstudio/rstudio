@@ -66,6 +66,9 @@ public class CppCompletion extends JavaScriptObject
    /* 37-38 are for Objective C */
    public static final int CXX_ACCESS_SPECIFIER = 39;
    
+   public static final int FIRST_INVALID = 70;
+   public static final int LAST_INVALID = 73;
+   
    public native final int getKind() /*-{
        return this.kind;
    }-*/;    
@@ -85,6 +88,12 @@ public class CppCompletion extends JavaScriptObject
       int kind = getKind();
       return kind == FIELD_DECL ||
              kind == VAR_DECL;
+   }
+   
+   public final boolean isValid()
+   {
+      int kind = getKind();
+      return kind < FIRST_INVALID && kind > LAST_INVALID;
    }
    
    public native final String getTypedText() /*-{

@@ -6,7 +6,6 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
 
 import com.google.gwt.core.client.JsArray;
@@ -22,7 +21,8 @@ import com.google.gwt.user.client.ui.PopupPanel;
 
 public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
 {
-   CppCompletionPopupMenu(DocDisplay docDisplay, Position completionPosition)
+   CppCompletionPopupMenu(DocDisplay docDisplay, 
+                          CompletionPosition completionPosition)
    {  
       docDisplay_ = docDisplay;
       completionPosition_ = completionPosition;
@@ -108,7 +108,8 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
          public void setPosition(int offsetWidth, int offsetHeight)
          {
             InputEditorPosition position = 
-               docDisplay_.createInputEditorPosition(completionPosition_);  
+               docDisplay_.createInputEditorPosition(
+                                    completionPosition_.getPosition());  
             Rectangle bounds = docDisplay_.getPositionBounds(position);
             
             int windowBottom = Window.getScrollTop() + 
@@ -259,7 +260,7 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
    }
    
    private final DocDisplay docDisplay_;
-   private final Position completionPosition_;
+   private final CompletionPosition completionPosition_;
    private JsArray<CppCompletion> completions_;
    private CommandWithArg<CppCompletion> onSelected_ = null;
    private Boolean showBelow_ = null;

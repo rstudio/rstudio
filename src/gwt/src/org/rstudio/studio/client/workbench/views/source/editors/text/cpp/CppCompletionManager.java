@@ -311,7 +311,7 @@ public class CppCompletionManager implements CompletionManager
                                  ((request_ != null) && request_.isExplicit());
       
       // see if we even have a completion position
-      final Position completionPosition = 
+      final CompletionPosition completionPosition = 
             CppCompletionUtils.getCompletionPosition(docDisplay_,
                                                      positionExplicit);
       if (completionPosition == null)

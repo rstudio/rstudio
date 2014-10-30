@@ -38,7 +38,7 @@ public class CppCompletionRequest
                            extends ServerRequestCallback<CppCompletionResult>
 {
    public CppCompletionRequest(String docPath,
-                               Position completionPosition,
+                               CompletionPosition completionPosition,
                                DocDisplay docDisplay, 
                                Invalidation.Token token,
                                boolean explicit)
@@ -50,9 +50,10 @@ public class CppCompletionRequest
       invalidationToken_ = token;
       explicit_ = explicit;
       
+      Position pos = completionPosition_.getPosition();
       server_.getCppCompletions(docPath, 
-                                completionPosition.getRow() + 1, 
-                                completionPosition.getColumn() + 1, 
+                                pos.getRow() + 1, 
+                                pos.getColumn() + 1, 
                                 this);
    }
 
@@ -67,7 +68,7 @@ public class CppCompletionRequest
       return explicit_;
    }
    
-   public Position getCompletionPosition()
+   public CompletionPosition getCompletionPosition()
    {
       return completionPosition_;
    }
@@ -86,15 +87,34 @@ public class CppCompletionRequest
       {  
          // discover text already entered
          String entered = docDisplay_.getCode(
-             completionPosition_, docDisplay_.getCursorPosition());
+            completionPosition_.getPosition(), docDisplay_.getCursorPosition());
          
          // build list of entries (filter on text already entered)
          JsArray<CppCompletion> filtered = JsArray.createArray().cast();
          for (int i = 0; i < completions_.length(); i++)
          {
-            String completion = completions_.get(i).getTypedText();
-            if ((entered.length() == 0) || completion.startsWith(entered))
-               filtered.push(completions_.get(i));
+            CppCompletion completion = completions_.get(i);
+            String typedText = completion.getTypedText();
+            if ((entered.length() == 0) || typedText.startsWith(entered))
+            {
+               // be more picky for member scope completions because clang
+               // returns a bunch of noise like constructors, destructors, 
+               // compiler generated assignments, etc.
+               if (completionPosition_.isMemberScope())
+               {
+                  if (completion.getKind() == CppCompletion.FIELD_DECL ||
+                      (completion.getKind() == CppCompletion.CXX_METHOD &&
+                       !typedText.startsWith("operator=")))
+                  {
+                     filtered.push(completion);
+                  }
+                 
+               }
+               else
+               {
+                  filtered.push(completion);
+               }
+            }
          }
          
          // check for auto-accept
@@ -235,14 +255,14 @@ public class CppCompletionRequest
    
    private InputEditorSelection getReplacementSelection()
    {
-      return docDisplay_.createSelection(
-            completionPosition_, docDisplay_.getCursorPosition());
+      return docDisplay_.createSelection(completionPosition_.getPosition(), 
+                                         docDisplay_.getCursorPosition());
    }
    
    private String getReplacementToken()
    {
       return docDisplay_.getTextForRange(
-                  Range.fromPoints(completionPosition_, 
+                  Range.fromPoints(completionPosition_.getPosition(), 
                                    docDisplay_.getCursorPosition()));
    }
    
@@ -252,7 +272,7 @@ public class CppCompletionRequest
    private final boolean explicit_;
    private final Invalidation.Token invalidationToken_;
    
-   private final Position completionPosition_;
+   private final CompletionPosition completionPosition_;
    
    private CppCompletionPopupMenu popup_;
    private JsArray<CppCompletion> completions_;

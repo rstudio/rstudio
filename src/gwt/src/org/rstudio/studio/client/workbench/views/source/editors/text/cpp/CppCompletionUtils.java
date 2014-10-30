@@ -52,8 +52,8 @@ public class CppCompletionUtils
                c == '_');
    }
    
-   public static Position getCompletionPosition(DocDisplay docDisplay,
-                                                boolean explicit)
+   public static CompletionPosition getCompletionPosition(DocDisplay docDisplay,
+                                                          boolean explicit)
    {
       // get the current line of code
       String line = docDisplay.getCurrentLine();
@@ -82,27 +82,29 @@ public class CppCompletionUtils
          col--;
       }
      
+      // record source position
+      Position startPos = Position.create(position.getRow(), col + 1);
+      
       // check for a completion triggering sequence
       char ch = line.charAt(col);   
       char prefixCh = line.charAt(col - 1);
       
       // member
-      if (ch == '.')
+      if (ch == '.' || (prefixCh == '-' && ch == '>'))
       {
-         return Position.create(position.getRow(), col + 1);
+         return new CompletionPosition(startPos, true);
       }
       
-      // scope or pointer to member
-      else if ((prefixCh == ':' && ch == ':') || 
-                prefixCh == '-' && ch == '>')
+      // scope
+      else if (prefixCh == ':' && ch == ':') 
       {
-         return Position.create(position.getRow(), col + 1);
+         return new CompletionPosition(startPos);
       }
       
       // minimum character threshold
       else if ((inputCol - col) >= (explicit ? 1 : 5))
       {
-         return Position.create(position.getRow(), col + 1);
+         return new CompletionPosition(startPos);
       }
       else
       {
