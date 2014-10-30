@@ -14,10 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 
-public class ScopeFunction extends JavaScriptObject
+public class ScopeFunction extends Scope
 {
    protected ScopeFunction()
    {}
