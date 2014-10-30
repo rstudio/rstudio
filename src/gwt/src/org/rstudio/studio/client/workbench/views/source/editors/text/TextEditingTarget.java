@@ -851,9 +851,20 @@ public class TextEditingTarget implements
                      {
                         innerFunction = innerFunction.getParentScope();
                      }
+
+                     // the function's label may include its signature (e.g.
+                     // foo(bar, baz)); we want just its name, so discard 
+                     // characters after '(' if there are any
+                     String functionName = innerFunction.getLabel();
+                     int idx = functionName.indexOf('(');
+                     if (idx > 0) 
+                     {
+                        functionName = functionName.substring(0, idx);
+                     }
+                     
                      breakpoint = breakpointManager_.setBreakpoint(
                            getPath(),
-                           innerFunction.getLabel(),
+                           functionName,
                            event.getLineNumber(),
                            dirtyState().getValue() == false);
                   }

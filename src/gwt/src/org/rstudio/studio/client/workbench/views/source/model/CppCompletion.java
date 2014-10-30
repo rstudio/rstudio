@@ -22,7 +22,13 @@ public class CppCompletion extends JavaScriptObject
    {
    }
    
-   public native final String getText() /*-{
-      return this.text;
+   public static native final CppCompletion create(String typedText) /*-{
+      return {
+         typed_text: typedText
+      };
+   }-*/;
+   
+   public native final String getTypedText() /*-{
+      return this.typed_text;
    }-*/;
 }

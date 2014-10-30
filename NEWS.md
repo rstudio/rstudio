@@ -8,6 +8,8 @@
     - F2 code navigation (go to definition)
     - Scope tree for quick intra-file navigation
 * Fuzzy matching for go to file/function
+* R code completion for statements spanning multiple lines
+* Include parameters in function navigation menu
 * Alt+Enter to run code while retaining cursor position
 
 ### Workspace

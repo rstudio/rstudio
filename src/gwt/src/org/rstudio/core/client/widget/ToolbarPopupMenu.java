@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.widget;
 
+import java.util.List;
+
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
@@ -201,6 +203,18 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       public int getItemCount()
       {
          return getItems().size() ;
+      }
+      
+      public int getSelectedIndex()
+      {
+         MenuItem selectedMenuItem = getSelectedItem();
+         List<MenuItem> menuItems = getItems();
+         for (int i = 0; i<menuItems.size(); i++)
+         {
+            if (menuItems.get(i).equals(selectedMenuItem))
+               return i;
+         }
+         return -1;
       }
 
       private HandlerRegistration nativePreviewReg_;
