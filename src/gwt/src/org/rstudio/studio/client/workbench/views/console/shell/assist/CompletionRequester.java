@@ -148,7 +148,7 @@ public class CompletionRequester
                   {
                      newComp.add(new QualifiedName(
                            functionName,
-                           ""
+                           "user-defined function" // TODO: better name?
                      ));
                   }
                }
