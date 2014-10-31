@@ -65,6 +65,7 @@ public class CompletionRequester
    public void getCompletions(
                      final String line, 
                      final int pos,
+                     final String objectName,
                      final boolean implicit,
                      final ServerRequestCallback<CompletionResult> callback)
    {
@@ -97,7 +98,7 @@ public class CompletionRequester
          }
       }
       
-      doGetCompletions(line, pos, new ServerRequestCallback<Completions>()
+      doGetCompletions(line, pos, objectName, new ServerRequestCallback<Completions>()
       {
          @Override
          public void onError(ServerError error)
@@ -326,6 +327,7 @@ public class CompletionRequester
    private void doGetCompletions(
          String line,
          int pos,
+         String objectName,
          ServerRequestCallback<Completions> requestCallback)
    {
       int optionsStartOffset;
@@ -336,7 +338,7 @@ public class CompletionRequester
       }
       else
       {
-         server_.getCompletions(line, pos, requestCallback);
+         server_.getCompletions(line, pos, objectName, requestCallback);
       }
    }
 

@@ -569,10 +569,23 @@ public class RCompletionManager implements CompletionManager
       boolean canAutoAccept = flushCache;
       context_ = new CompletionRequestContext(invalidation_.getInvalidationToken(),
                                               selection,
-                                              canAutoAccept) ;
+                                              canAutoAccept);
+      
+      // Try to see if there's an object name we should use to supplement
+      // completions
+      String objectName = null;
+      AceEditor editor = (AceEditor) docDisplay_;
+      if (editor != null)
+      {
+         CodeModel codeModel = editor.getSession().getMode().getCodeModel();
+         TokenCursor cursor = codeModel.getTokenCursor();
+         if (cursor.moveToPosition(input_.getCursorPosition()))
+            objectName = codeModel.getDataNameFromInfixChain(cursor);
+      }
       
       requester_.getCompletions(line,
                                 line.length(),
+                                objectName,
                                 implicit,
                                 context_);
 

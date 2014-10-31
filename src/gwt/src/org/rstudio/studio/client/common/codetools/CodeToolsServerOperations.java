@@ -23,7 +23,10 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
                                                    CodeSearchServerOperations,
                                                    CppServerOperations
 {
-   void getCompletions(String line, int cursorPos, 
+   void getCompletions(
+         String line,
+         int cursorPos,
+         String objectName,
          ServerRequestCallback<Completions> completions);
 
    void getHelpAtCursor(

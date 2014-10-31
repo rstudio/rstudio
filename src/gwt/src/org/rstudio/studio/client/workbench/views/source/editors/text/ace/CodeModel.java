@@ -107,4 +107,8 @@ public class CodeModel extends JavaScriptObject
       return this.getVariablesInScope(position) || [];
    }-*/;
    
+   public native final String getDataNameFromInfixChain(TokenCursor tokenCursor) /*-{
+      return this.getDataNameFromInfixChain(tokenCursor);
+   }-*/;
+   
 }

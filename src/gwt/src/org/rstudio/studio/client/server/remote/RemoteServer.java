@@ -565,12 +565,16 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "print_cpp_completions", params, requestCallback);
    }
    
-   public void getCompletions(String line, int cursorPos,
-                          ServerRequestCallback<Completions> requestCallback)
+   public void getCompletions(
+         String line,
+         int cursorPos,
+         String objectName,
+         ServerRequestCallback<Completions> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(line));
       params.set(1, new JSONNumber(cursorPos));
+      params.set(2, new JSONString(objectName));
       sendRequest(RPC_SCOPE, 
                   GET_COMPLETIONS, 
                   params, 

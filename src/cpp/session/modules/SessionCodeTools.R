@@ -206,11 +206,30 @@
 })
 
 utils:::rc.settings(files = TRUE)
-.rs.addJsonRpcHandler("get_completions", function(line, cursorPos)
+.rs.addJsonRpcHandler("get_completions", function(line, cursorPos, objectName)
 {
    roxygen <- .rs.attemptRoxygenTagCompletion(line, cursorPos)
    if (!is.null(roxygen))
-      return(roxygen);
+      return(roxygen)
+   
+   ## If objName has been provided, try to get completions from that as well.
+   objCompletions <- NULL
+   if (!is.null(objectName) && objectName != "")
+   {
+     objects <- getAnywhere(objectName) ## TODO: better lookup
+     if (length(objects$objs))
+     {
+       object <- objects$objs[[1]]
+       nm <- names(object)
+       if (length(nm))
+       {
+         objCompletions <- list(
+           results = nm,
+           packages = character(length(nm))
+         )
+       }
+     }
+   }
    
    utils:::.assignLinebuffer(line)
    utils:::.assignEnd(cursorPos)
@@ -239,10 +258,18 @@ utils:::rc.settings(files = TRUE)
    
    packages.sorted = sub('^\\.GlobalEnv$', '', packages.sorted)
    
-   list(token=token, 
-        results=results.sorted, 
-        packages=packages.sorted, 
-        fguess=status$fguess)
+   result <- list(token=token, 
+                  results=results.sorted, 
+                  packages=packages.sorted, 
+                  fguess=status$fguess)
+   
+   if (!is.null(objCompletions))
+   {
+     result$results <- c(objCompletions$results, result$results)
+     result$packages <- c(objCompletions$packages, result$packages)
+   }
+   
+   result
 })
 
 .rs.addJsonRpcHandler("get_help_at_cursor", function(line, cursorPos)

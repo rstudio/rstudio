@@ -135,25 +135,29 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
       this.moveBackwardOverMatchingParens = function()
       {
-         if (!this.moveToPreviousToken())
+         var clone = this.cloneCursor();
+         
+         if (!clone.moveToPreviousToken())
             return false;
-         if (this.currentValue() !== ")")
+         if (clone.currentValue() !== ")")
             return false;
 
          var success = false;
          var parenCount = 0;
-         while (this.moveToPreviousToken())
+         while (clone.moveToPreviousToken())
          {
-            if (this.currentValue() === "(")
+            if (clone.currentValue() === "(")
             {
                if (parenCount == 0)
                {
+                  this.$row = clone.$row;
+                  this.$offset = clone.$offset;
                   success = true;
                   break;
                }
                parenCount--;
             }
-            else if (this.currentValue() === ")")
+            else if (clone.currentValue() === ")")
             {
                parenCount++;
             }
@@ -485,17 +489,25 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       return /\binfix\b/.test(token.type);
    }
 
-   // Determine whether the token cursor lies within an infix chained expression
-   // E.g.
+   this.getDataNameFromInfixChain = function(tokenCursor)
+   {
+      if (this.moveToDataObjectFromInfixChain(tokenCursor))
+         return tokenCursor.currentValue();
+      return "";
+   };
+
+   // Attempt to move a token cursor from a function call within
+   // a chain back to the starting data object.
    //
    //     df %.% foo %>>% bar() %>% baz(foo,
    //     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
-   function moveToDataObjectFromInfixChain(tokenCursor)
+   this.moveToDataObjectFromInfixChain = function(tokenCursor)
    {
       // Move to an opening paren
       var clone = tokenCursor.cloneCursor();
-      if (!clone.findOpeningParen())
-         return false;
+      if (clone.currentValue() !== "(")
+         if (!clone.findOpeningParen())
+            return false;
 
       // Move off of opening paren
       if (!clone.moveToPreviousToken())
@@ -509,13 +521,52 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       if (!pInfix(clone.currentToken()))
          return false;
       
-      // Repeat the magrittr walk -- keep walking as we can find '%%'
+      // Repeat the walk -- keep walking as we can find '%%'
       while (true)
       {
+         if (clone.$row === 0 && clone.$offset === 0)
+         {
+            tokenCursor.$row = 0;
+            tokenCursor.$offset = 0;
+            return true;
+         }
+
+         // Move over parens to identifier if necessary
+         //
+         //    foo(bar, baz)
+         //    ^~~~~~~~~~~~^
+         clone.moveBackwardOverMatchingParens();
+
+         // Move off of '%>%' (or '(') onto identifier
+         if (!clone.moveToPreviousToken())
+            return false;
          
+         // Move off of identifier, on to new infix operator.
+         // Note that we may already be at the start of the document,
+         // so check for that.
+         if (!clone.moveToPreviousToken())
+         {
+            if (clone.$row === 0 && clone.$offset === 0)
+            {
+               tokenCursor.$row = 0;
+               tokenCursor.$offset = 0;
+               return true;
+            }
+            return false;
+         }
+
+         // We should be on an infix operator now. If we are, keep walking;
+         // if not, then the identifier we care about is the next token.
+         if (!pInfix(clone.currentToken()))
+            break;
       }
 
-      // Ensure that the symbol previous is
+      if (!clone.moveToNextToken())
+         return false;
+
+      tokenCursor.$row = clone.$row;
+      tokenCursor.$offset = clone.$offset;
+      return true;
    };
 
    function addForInToken(tokenCursor, scopedVariables)
