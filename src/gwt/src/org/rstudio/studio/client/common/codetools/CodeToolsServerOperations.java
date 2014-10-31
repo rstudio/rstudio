@@ -30,6 +30,7 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
          int cursorPos,
          String objectName,
          JsArrayString additionalArgs,
+         JsArrayString excludeArgs,
          ServerRequestCallback<Completions> completions);
 
    void getHelpAtCursor(

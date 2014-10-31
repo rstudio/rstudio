@@ -570,6 +570,7 @@ public class RemoteServer implements Server
          int cursorPos,
          String objectName,
          JsArrayString additionalArgs,
+         JsArrayString excludeArgs,
          ServerRequestCallback<Completions> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -577,11 +578,16 @@ public class RemoteServer implements Server
       params.set(1, new JSONNumber(cursorPos));
       params.set(2, new JSONString(objectName));
       
-      JSONArray args = new JSONArray();
+      JSONArray additionalArgsJson = new JSONArray();
       for (int i = 0; i < additionalArgs.length(); i++)
-         args.set(i, new JSONString(additionalArgs.get(i)));
+         additionalArgsJson.set(i, new JSONString(additionalArgs.get(i)));
+      params.set(3, additionalArgsJson);
       
-      params.set(3, args);
+      JSONArray excludeArgsJson = new JSONArray();
+      for (int i = 0; i < excludeArgs.length(); i++)
+         excludeArgsJson.set(i, new JSONString(excludeArgs.get(i)));
+      params.set(4, excludeArgsJson);
+      
       sendRequest(RPC_SCOPE, 
                   GET_COMPLETIONS, 
                   params, 

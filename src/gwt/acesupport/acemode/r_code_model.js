@@ -494,20 +494,22 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    // 2. Any custom variable names (e.g. set through 'mutate', 'summarise')
    this.getDataFromInfixChain = function(tokenCursor)
    {
-      var args = this.moveToDataObjectFromInfixChain(tokenCursor);
+      var data = this.moveToDataObjectFromInfixChain(tokenCursor);
+      
+      var additionalArgs = [];
+      var excludeArgs = [];
       var name = "";
-      if (args !== false)
+      if (data !== false)
       {
          name = tokenCursor.currentValue();
-      }
-      else
-      {
-         args = [];
+         additionalArgs = data.additionalArgs;
+         excludeArgs = data.excludeArgs;
       }
 
       return {
          "name": name,
-         "args": args
+         "additionalArgs": additionalArgs,
+         "excludeArgs": excludeArgs
       };
       
    };
@@ -516,7 +518,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       "mutate", "summarise", "summarize", "rename", "transmute"
    ];
 
-   var addDplyrArguments = function(cursor, args, limit)
+   var addDplyrArguments = function(cursor, data, limit, fnName)
    {
       if (!cursor.moveToNextToken())
          return false;
@@ -532,7 +534,14 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          return false;
 
       if (cursor.currentValue() === "=")
-         args.push(maybeAdd);
+         data.additionalArgs.push(maybeAdd);
+
+      if (fnName === "rename")
+      {
+         if (!cursor.moveToNextToken())
+            return false;
+         data.excludeArgs.push(cursor.currentValue());
+      }
 
       do
       {
@@ -560,7 +569,18 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                return false;
 
             if (cursor.currentValue() === "=")
-               args.push(maybeAdd);
+            {
+               data.additionalArgs.push(maybeAdd);
+
+               if (fnName === "rename")
+               {
+                  if (!cursor.moveToNextToken())
+                     return false;
+                  data.excludeArgs.push(cursor.currentValue());
+               }
+
+            }
+            
 
          }
          
@@ -596,7 +616,10 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          return false;
 
       // Fill custom args
-      var args = [];
+      var data = {
+         additionalArgs: [],
+         excludeArgs: []
+      };
       
       // Repeat the walk -- keep walking as we can find '%%'
       while (true)
@@ -605,7 +628,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          {
             tokenCursor.$row = 0;
             tokenCursor.$offset = 0;
-            return args;
+            return data;
          }
 
          // Move over parens to identifier if necessary
@@ -625,7 +648,21 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             return x === value;
          }))
          {
-            addDplyrArguments(clone.cloneCursor(), args, tokenCursor);
+            addDplyrArguments(clone.cloneCursor(), data, tokenCursor, value);
+         }
+
+         // Move off of identifier, on to new infix operator.
+         // Note that we may already be at the start of the document,
+         // so check for that.
+         if (!clone.moveToPreviousToken())
+         {
+            if (clone.$row === 0 && clone.$offset === 0)
+            {
+               tokenCursor.$row = 0;
+               tokenCursor.$offset = 0;
+               return data;
+            }
+            return false;
          }
 
          // Move over '::' qualifiers
@@ -636,20 +673,6 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
             if (!clone.moveToPreviousToken())
                return false;
-         }
-         
-         // Move off of identifier, on to new infix operator.
-         // Note that we may already be at the start of the document,
-         // so check for that.
-         if (!clone.moveToPreviousToken())
-         {
-            if (clone.$row === 0 && clone.$offset === 0)
-            {
-               tokenCursor.$row = 0;
-               tokenCursor.$offset = 0;
-               return args;
-            }
-            return false;
          }
 
          // We should be on an infix operator now. If we are, keep walking;
@@ -663,7 +686,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
       tokenCursor.$row = clone.$row;
       tokenCursor.$offset = clone.$offset;
-      return args;
+      return data;
    };
 
    function addForInToken(tokenCursor, scopedVariables)

@@ -206,11 +206,18 @@
 })
 
 utils:::rc.settings(files = TRUE)
-.rs.addJsonRpcHandler("get_completions", function(line, cursorPos, objectName, additionalArgs)
+.rs.addJsonRpcHandler("get_completions", function(line,
+                                                  cursorPos,
+                                                  objectName,
+                                                  additionalArgs,
+                                                  excludeArgs)
 {
    roxygen <- .rs.attemptRoxygenTagCompletion(line, cursorPos)
    if (!is.null(roxygen))
       return(roxygen)
+   
+   additionalArgs <- unlist(additionalArgs)
+   excludeArgs <- unlist(excludeArgs)
    
    ## If objName has been provided, try to get completions from that as well.
    objCompletions <- NULL
@@ -273,6 +280,13 @@ utils:::rc.settings(files = TRUE)
    {
      result$results <- c(additionalArgs, result$results)
      result$packages <- c(character(length(additionalArgs)), result$packages)
+   }
+   
+   if (length(excludeArgs))
+   {
+      keep <- which(!(result$results %in% excludeArgs))
+      result$results <- result$results[keep]
+      result$packages <- result$packages[keep]
    }
    
    result

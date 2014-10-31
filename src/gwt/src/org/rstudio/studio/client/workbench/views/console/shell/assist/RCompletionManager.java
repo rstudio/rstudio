@@ -588,6 +588,7 @@ public class RCompletionManager implements CompletionManager
                                 line.length(),
                                 infixData.getDataName(),
                                 infixData.getAdditionalArgs(),
+                                infixData.getExcludeArgs(),
                                 implicit,
                                 context_);
 
