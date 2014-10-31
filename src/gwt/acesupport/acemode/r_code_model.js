@@ -627,6 +627,16 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          {
             addDplyrArguments(clone.cloneCursor(), args, tokenCursor);
          }
+
+         // Move over '::' qualifiers
+         while (clone.currentValue() === "::")
+         {
+            if (!clone.moveToPreviousToken())
+               return false;
+
+            if (!clone.moveToPreviousToken())
+               return false;
+         }
          
          // Move off of identifier, on to new infix operator.
          // Note that we may already be at the start of the document,
