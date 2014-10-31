@@ -119,7 +119,7 @@ public class CompletionRequester
             boolean lineEndsWithComma = line.matches(".*,\\s*$");
             boolean lineEndsWithOpenParen = line.matches(".*\\(\\s*$");
             
-            // Try getting our own function argument completions
+            // Resolve some useful state
             boolean inString = false;
             String stripped = StringUtil.stripBalancedQuotes(line);
             if (!line.equals(stripped))
@@ -132,6 +132,7 @@ public class CompletionRequester
                }
             }
             
+            // Try getting our own function argument completions
             if (!inString && (lineEndsWithComma || lineEndsWithOpenParen))
             {
                addFunctionArgumentCompletions(token, newComp);
@@ -149,10 +150,11 @@ public class CompletionRequester
                }
             }
             
-            // Get completions from the current scope
+            // Get variable completions from the current scope
             if (!inString)
             {
-               addScopedCompletions(token, newComp);
+               addScopedCompletions(token, newComp, "variable");
+               addScopedArgumentCompletions(token, newComp);
             }
             
             // Get other completions
@@ -164,6 +166,13 @@ public class CompletionRequester
                }
             }
             
+            // Get function completions from the current scope
+            if (!inString)
+            {
+               addScopedCompletions(token, newComp, "function");
+            }
+            
+            // Resolve duplicates
             newComp = withoutDupes(newComp);
             
             CompletionResult result = new CompletionResult(
@@ -196,8 +205,9 @@ public class CompletionRequester
       return noDupes;
    }
    
-   private void addScopedCompletions(String token,
-                                     ArrayList<QualifiedName> completions)
+   private void addScopedArgumentCompletions(
+         String token,
+         ArrayList<QualifiedName> completions)
    {
       AceEditor editor = (AceEditor) editor_;
 
@@ -237,14 +247,29 @@ public class CompletionRequester
                   }
                }
             }
-         }
-         
-         // Variables in the current scope.
+         } 
+      }
+   }
+      
+   private void addScopedCompletions(
+         String token,
+         ArrayList<QualifiedName> completions,
+         String type)
+   {
+      AceEditor editor = (AceEditor) editor_;
+
+      // NOTE: this will be null in the console, so protect against that
+      if (editor != null)
+      {
+         Position cursorPosition =
+               editor.getSession().getSelection().getCursor();
+         CodeModel codeModel = editor.getSession().getMode().getCodeModel();
+      
          JsArray<RScopeObject> scopeVariables = codeModel.getVariablesInScope(cursorPosition);
          for (int i = 0; i < scopeVariables.length(); i++)
          {
             RScopeObject variable = scopeVariables.get(i);
-            if (variable.getToken().startsWith(token))
+            if (variable.getToken().startsWith(token) && variable.getType() == type)
                completions.add(new QualifiedName(
                      variable.getToken(),
                      "<" + variable.getType() + ">"
