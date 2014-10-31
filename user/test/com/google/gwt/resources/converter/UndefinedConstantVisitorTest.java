@@ -24,6 +24,8 @@ import static org.mockito.Mockito.when;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.resources.css.ast.CssProperty;
+import com.google.gwt.resources.css.ast.CssProperty.FunctionValue;
+import com.google.gwt.resources.css.ast.CssProperty.IdentValue;
 import com.google.gwt.resources.css.ast.CssProperty.ListValue;
 import com.google.gwt.resources.css.ast.CssProperty.Value;
 import com.google.gwt.resources.css.ast.CssRule;
@@ -53,7 +55,7 @@ public class UndefinedConstantVisitorTest extends TestCase {
 
   public void testVisit_filterMsFilterFontFamily_shouldBeSkipped() {
     // given
-    List<CssProperty> properties = createPropertiesWithNameAndValue(
+    List<CssProperty> properties = createPropertiesWithNameAndIdentValue(
         Lists.newArrayList("filter", "-ms-filter", "font-family"),
         Lists.newArrayList("UPPERCASE", "UPPERCASE", "UPPERCASE"));
     when(cssRule.getProperties()).thenReturn(properties);
@@ -71,7 +73,7 @@ public class UndefinedConstantVisitorTest extends TestCase {
 
   public void testVisit_notLenientAndUnknownVariable_throwsException() {
     // given
-    List<CssProperty> properties = createPropertiesWithNameAndValue(
+    List<CssProperty> properties = createPropertiesWithNameAndIdentValue(
         Lists.newArrayList("name"),
         Lists.newArrayList("UPPERCASE"));
     when(cssRule.getProperties()).thenReturn(properties);
@@ -91,7 +93,7 @@ public class UndefinedConstantVisitorTest extends TestCase {
 
   public void testVisit_lenientAndUnknownVariable_propertyUpdated() {
     // given
-    List<CssProperty> properties = createPropertiesWithNameAndValue(
+    List<CssProperty> properties = createPropertiesWithNameAndIdentValue(
         Lists.newArrayList("name"),
         Lists.newArrayList("UPPERCASE"));
     when(cssRule.getProperties()).thenReturn(properties);
@@ -102,14 +104,12 @@ public class UndefinedConstantVisitorTest extends TestCase {
     undefinedConstantVisitor.visit(cssRule, null);
 
     // then
-    ArgumentCaptor<Value> valueCaptor = ArgumentCaptor.forClass(Value.class);
-    verify(properties.get(0)).setValue(valueCaptor.capture());
-    assertEquals("uppercase", valueCaptor.getValue().toCss());
+    verifyPropertyValueIs(properties.get(0), "uppercase");
   }
 
   public void testVisit_knownVariable_propertyNotUpdated() {
     // given
-    List<CssProperty> properties = createPropertiesWithNameAndValue(
+    List<CssProperty> properties = createPropertiesWithNameAndIdentValue(
         Lists.newArrayList("name"),
         Lists.newArrayList("UPPERCASE"));
     when(cssRule.getProperties()).thenReturn(properties);
@@ -120,64 +120,36 @@ public class UndefinedConstantVisitorTest extends TestCase {
     undefinedConstantVisitor.visit(cssRule, null);
 
     // then
-    verify(properties.get(0), never()).setValue(any(Value.class));
+    verifyPropertyValueIs(properties.get(0), "UPPERCASE");
   }
 
-  public void testVisit_notLenientAndValueWithUnknownVariable_throwsException() {
+  public void testVisit_functionWithUnknownConstant_propertyUpdated() {
     // given
-    List<CssProperty> properties = createPropertiesWithNameAndValue(
-        Lists.newArrayList("name"),
-        Lists.newArrayList("this is an UNKNOWN constant"));
-    when(cssRule.getProperties()).thenReturn(properties);
+    CssProperty property = mock(CssProperty.class);
+    when(property.getName()).thenReturn("name");
 
-    // when
-    UndefinedConstantVisitor undefinedConstantVisitor = new UndefinedConstantVisitor(
-        Sets.<String>newHashSet(), false, treeLogger);
-
-    try {
-      undefinedConstantVisitor.visit(cssRule, null);
-    } catch (Css2GssConversionException expected) {
-      return;
+    List<Value> arguments = new ArrayList<Value>(5);
+    for (int i = 0; i < 5; i++) {
+      arguments.add(new IdentValue("ARGUMENT" + i));
     }
 
-    fail("An Css2GssConversionException should have been thrown");
-  }
+    ListValue listValue = new ListValue(arguments);
+    FunctionValue function = new FunctionValue("fct", listValue);
 
-  public void testVisit_lenientAndValueWithUnknownVariable_propertyUpdated() {
-    // given
-    List<CssProperty> properties = createPropertiesWithNameAndValue(
-        Lists.newArrayList("name"),
-        Lists.newArrayList("this is an UNKNOWN constant"));
-    when(cssRule.getProperties()).thenReturn(properties);
+    when(property.getValues()).thenReturn(new ListValue(Lists.<Value>newArrayList(function)));
+
+    when(cssRule.getProperties()).thenReturn(Lists.newArrayList(property));
 
     // when
     UndefinedConstantVisitor undefinedConstantVisitor = new UndefinedConstantVisitor(
-        Sets.<String>newHashSet(), true, treeLogger);
+        Sets.newHashSet("ARGUMENT1", "ARGUMENT3"), true, treeLogger);
     undefinedConstantVisitor.visit(cssRule, null);
 
     // then
-    ArgumentCaptor<Value> valueCaptor = ArgumentCaptor.forClass(Value.class);
-    verify(properties.get(0)).setValue(valueCaptor.capture());
-    assertEquals("this is an unknown constant", valueCaptor.getValue().toCss());
+    verifyPropertyValueIs(property, "fct(argument0 ARGUMENT1 argument2 ARGUMENT3 argument4)");
   }
 
-  public void testVisit_valueWithKnownVariable_propertyNotUpdated() {
-    // given
-    List<CssProperty> properties = createPropertiesWithNameAndValue(
-        Lists.newArrayList("name"),
-        Lists.newArrayList("this is an KNOWN constant"));
-    when(cssRule.getProperties()).thenReturn(properties);
-
-    // when
-    UndefinedConstantVisitor undefinedConstantVisitor = new UndefinedConstantVisitor(
-        Sets.newHashSet("KNOWN"), false, treeLogger);
-    undefinedConstantVisitor.visit(cssRule, null);
-
-    // then
-    verify(properties.get(0), never()).setValue(any(Value.class));
-  }
-
-  private List<CssProperty> createPropertiesWithNameAndValue(List<String> names,
+  private List<CssProperty> createPropertiesWithNameAndIdentValue(List<String> names,
       List<String> values) {
     assert names.size() == values.size();
 
@@ -189,13 +161,20 @@ public class UndefinedConstantVisitorTest extends TestCase {
       when(property.getName()).thenReturn(name);
 
       String value = values.get(i);
-      ListValue listValue = mock(ListValue.class);
-      when(listValue.toCss()).thenReturn(value);
+      IdentValue identValue = new IdentValue(value);
+
+      ListValue listValue = new ListValue(Lists.<Value>newArrayList(identValue));
       when(property.getValues()).thenReturn(listValue);
 
       properties.add(property);
     }
 
     return properties;
+  }
+
+  private void verifyPropertyValueIs(CssProperty property, String value) {
+    ArgumentCaptor<Value> valueCaptor = ArgumentCaptor.forClass(Value.class);
+    verify(property).setValue(valueCaptor.capture());
+    assertEquals(value, valueCaptor.getValue().toCss());
   }
 }

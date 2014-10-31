@@ -19,10 +19,16 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.resources.css.ast.Context;
 import com.google.gwt.resources.css.ast.CssProperty;
+import com.google.gwt.resources.css.ast.CssProperty.FunctionValue;
+import com.google.gwt.resources.css.ast.CssProperty.IdentValue;
+import com.google.gwt.resources.css.ast.CssProperty.ListValue;
+import com.google.gwt.resources.css.ast.CssProperty.Value;
 import com.google.gwt.resources.css.ast.CssRule;
 import com.google.gwt.resources.css.ast.CssVisitor;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -35,7 +41,7 @@ import java.util.regex.Pattern;
 public class UndefinedConstantVisitor extends CssVisitor {
 
   private final Set<String> gssContantNames;
-  private final Pattern pattern = Pattern.compile("[A-Z][A-Z_0-9]+");
+  private final Pattern pattern = Pattern.compile("^[A-Z_][A-Z_0-9]+$");
   private final Set<String> propertyNamesToSkip =
       Sets.newHashSet("filter", "-ms-filter", "font-family");
   private final boolean lenient;
@@ -52,40 +58,71 @@ public class UndefinedConstantVisitor extends CssVisitor {
   public boolean visit(CssRule x, Context ctx) {
     List<CssProperty> properties = x.getProperties();
     for (CssProperty cssProperty : properties) {
-      if (propertyNamesToSkip.contains(cssProperty.getName())) {
+      String cssPropertyName = cssProperty.getName();
+      if (propertyNamesToSkip.contains(cssPropertyName)) {
         continue;
       }
 
-      String cssPropertyString = cssProperty.getValues().toCss();
-      Matcher matcher = pattern.matcher(cssPropertyString);
+      // for logging purpose
+      String selector = x.getSelectors().toString();
 
-      boolean needsUpdate = false;
+      ListValue listValue = visitListValue(cssProperty.getValues(), cssPropertyName, selector);
 
-      while (matcher.find()) {
-        String upperCaseString = matcher.group();
-        if (!gssContantNames.contains(upperCaseString)) {
-          treeLogger.log(Type.WARN, "Property '" + cssProperty.getName() + "' from rule '"
-              + x.getSelectors().toString() + "' uses an undefined constant: "
-              + upperCaseString);
-          if (lenient) {
-            treeLogger.log(Type.WARN, "turning '" + upperCaseString +
-                    "' to lower case. This is probably not what you wanted here in the " +
-                    "first place!");
-            cssPropertyString =
-                cssPropertyString.replace(upperCaseString, upperCaseString.toLowerCase());
-            needsUpdate = true;
-          } else {
-            throw new Css2GssConversionException("Found undefined constant in input. "
-                + cssProperty.getName() + "' from rule '" + x.getSelectors().toString()
-                + "' undefined constant: " + upperCaseString);
-          }
-        }
-      }
+      cssProperty.setValue(listValue);
+    }
 
-      if (needsUpdate) {
-        cssProperty.setValue(new SimpleValue(cssPropertyString));
+    return false;
+  }
+
+  private ListValue visitListValue(ListValue values, String cssPropertyName, String selector) {
+    Preconditions.checkNotNull(values, "values cannot be null");
+
+    List<Value> cssPropertyValues = values.getValues();
+    List<Value> newValues = new ArrayList<Value>(cssPropertyValues.size());
+
+    for (Value value : cssPropertyValues) {
+      if (value.isListValue() != null) {
+        newValues.add(visitListValue(value.isListValue(), cssPropertyName, selector));
+
+      } else if (value.isFunctionValue() != null) {
+        FunctionValue functionValue = value.isFunctionValue();
+        ListValue listValue = visitListValue(functionValue.getValues(), cssPropertyName,
+            selector);
+
+        newValues.add(new FunctionValue(functionValue.getName(), listValue));
+
+      } else if (value.isIdentValue() != null) {
+        newValues.add(visitIdentValue(value.isIdentValue(), cssPropertyName, selector));
+
+      } else {
+        newValues.add(value);
       }
     }
-    return false;
+
+    return new ListValue(newValues);
+  }
+
+  private Value visitIdentValue(IdentValue identValue, String cssPropertyName, String selector) {
+    Matcher matcher = pattern.matcher(identValue.getIdent());
+
+    if (matcher.matches()) {
+      String upperCaseString = matcher.group();
+      if (!gssContantNames.contains(upperCaseString)) {
+        treeLogger.log(Type.WARN, "Property '" + cssPropertyName + "' from rule '"
+            + selector + "' uses an undefined constant: " + upperCaseString);
+        if (lenient) {
+          treeLogger.log(Type.WARN, "turning '" + upperCaseString +
+              "' to lower case. This is probably not what you wanted here in the " +
+              "first place!");
+          return new IdentValue(upperCaseString.toLowerCase());
+        } else {
+          throw new Css2GssConversionException("Found undefined constant in input. "
+              + cssPropertyName + "' from rule '" + selector + "' undefined constant: " +
+              upperCaseString);
+        }
+      }
+    }
+
+    return identValue;
   }
 }

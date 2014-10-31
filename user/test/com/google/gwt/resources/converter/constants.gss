@@ -62,3 +62,14 @@
 @def MY_CONSTANT7 15px;
 @def MY_EVAL7 eval('com.foo.bar.foo()');
 @def MY_URL7 resourceUrl("imageName");
+@def WIDTH 15px;
+@def COLOR 255;
+@def WHITE #fff;
+@def _LEFT left;
+@def _RIGHT right;
+
+.foo {
+  width: WIDTH;
+  background: MY_URL7;
+  background-image: -webkit-gradient(linear, _LEFT top, _RIGHT top, from(rgba(COLOR, COLOR, COLOR, 0)), to(WHITE));
+}
