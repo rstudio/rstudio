@@ -227,6 +227,39 @@ public class CodeServerGwtTest extends GWTTestCase {
         baseUrlProvider.getBaseUrl());
   }-*/;
 
+  // Issue #8973
+  public native void testBaseUrlProvider_nocache_relative_with_querystring () /*-{
+    var assertStringEquals = @CodeServerGwtTest::assertEquals(Ljava/lang/String;Ljava/lang/String;);
+    var BaseUrlProvider = $wnd.namespace.lib.BaseUrlProvider;
+    var baseUrlProvider = new BaseUrlProvider('testModule');
+
+    // have other sources return null
+    baseUrlProvider.__getBaseUrlFromMetaTag = function() {
+      return null;
+    };
+
+    // have other sources return nothing
+    baseUrlProvider.__getBaseElements = function() {
+      return [];
+    };
+
+    var moduleRelativePath = '/ModulePath/testModule.nocache.js?abc#def?ghi#jkl';
+    var loc = $wnd.location;
+    // getBaseUrl() should return an absolute path without filename, QS, or hash
+    var expectedModulePath = loc.protocol + '//' + loc.hostname + ':' + loc.port + '/ModulePath/';
+
+    baseUrlProvider.__getScriptTags = function() {
+      return [
+        {src: 'http://localhost:9876/testModule.recompile.nocache.js'},
+        {src: 'http://localhost:8888/foo.js'},
+        {src: moduleRelativePath},
+        {src: 'http://localhost:9876/foo/bar.js'}
+      ];
+    };
+
+    assertStringEquals(expectedModulePath, baseUrlProvider.getBaseUrl());
+  }-*/;
+
   public native void testBaseUrlProvider_metatag() /*-{
     var assertStringEquals = @CodeServerGwtTest::assertEquals(Ljava/lang/String;Ljava/lang/String;);
     var BaseUrlProvider = $wnd.namespace.lib.BaseUrlProvider;
