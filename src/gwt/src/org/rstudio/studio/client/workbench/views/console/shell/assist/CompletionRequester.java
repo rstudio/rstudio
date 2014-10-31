@@ -116,9 +116,8 @@ public class CompletionRequester
             JsArrayString pkgs = response.getPackages();
             ArrayList<QualifiedName> newComp = new ArrayList<QualifiedName>();
             
-            boolean lineEndsWithEquals = false;
-            if (line != null && line.length() > 0)
-               lineEndsWithEquals = line.matches(".*=\\s*$");
+            boolean lineEndsWithComma = line.matches(".*,\\s*$");
+            boolean lineEndsWithOpenParen = line.matches(".*\\(\\s*$");
             
             // Try getting our own function argument completions
             boolean inString = false;
@@ -133,13 +132,13 @@ public class CompletionRequester
                }
             }
             
-            if (!inString && !lineEndsWithEquals)
+            if (!inString && (lineEndsWithComma || lineEndsWithOpenParen))
             {
                addFunctionArgumentCompletions(token, newComp);
             }
             
             // Get function argument completions from R
-            if (!lineEndsWithEquals)
+            if (!inString && (lineEndsWithComma || lineEndsWithOpenParen))
             {
                for (int i = 0; i < comp.length(); i++)
                {
