@@ -480,6 +480,44 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       return this.$scopes.getAllFunctionScopes();
    };
 
+   function pInfix(token)
+   {
+      return /\binfix\b/.test(token.type);
+   }
+
+   // Determine whether the token cursor lies within an infix chained expression
+   // E.g.
+   //
+   //     df %.% foo %>>% bar() %>% baz(foo,
+   //     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+   function moveToDataObjectFromInfixChain(tokenCursor)
+   {
+      // Move to an opening paren
+      var clone = tokenCursor.cloneCursor();
+      if (!clone.findOpeningParen())
+         return false;
+
+      // Move off of opening paren
+      if (!clone.moveToPreviousToken())
+         return false;
+
+      // Move onto '%%'
+      if (!clone.moveToPreviousToken())
+         return false;
+
+      // Ensure it's a '%%' operator (allow for other pipes)
+      if (!pInfix(clone.currentToken()))
+         return false;
+      
+      // Repeat the magrittr walk -- keep walking as we can find '%%'
+      while (true)
+      {
+         
+      }
+
+      // Ensure that the symbol previous is
+   };
+
    function addForInToken(tokenCursor, scopedVariables)
    {
       var clone = tokenCursor.cloneCursor();
