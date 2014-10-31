@@ -11,6 +11,8 @@ import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Event;
@@ -55,9 +57,32 @@ public class CppCompletionSignatureTip extends CppCompletionToolTip
    {
       HorizontalPanel panel = new HorizontalPanel();
       panel.setStyleName(RES.styles().pagingWidget());
-      pagingLabel_ = new Label();
       
+      Image upImage = new Image(RES.upArrow());
+      upImage.addClickHandler(new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            setTextIndex(currentTextIndex_ - 1);  
+            docDisplay_.setFocus(true);
+         }
+      });
+      panel.add(upImage);
+      
+      pagingLabel_ = new Label();
       panel.add(pagingLabel_);
+      
+      Image downImage = new Image(RES.downArrow());
+      downImage.addClickHandler(new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            setTextIndex(currentTextIndex_ + 1);  
+            docDisplay_.setFocus(true);
+         }
+      });
+      panel.add(downImage);
+      panel.add(downImage);
    
       addLeftWidget(panel);
    }
@@ -70,8 +95,8 @@ public class CppCompletionSignatureTip extends CppCompletionToolTip
          
          if (pagingLabel_ != null)
          {
-            pagingLabel_.setText("(" + (index+1) + " of " + 
-                                 completion_.getText().length() + ")");
+            pagingLabel_.setText((index+1) + " of " + 
+                                 completion_.getText().length());
          }
          
          setText(completion_.getText().get(currentTextIndex_));

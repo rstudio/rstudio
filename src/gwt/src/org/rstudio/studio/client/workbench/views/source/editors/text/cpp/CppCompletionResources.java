@@ -32,6 +32,9 @@ public interface CppCompletionResources extends ClientBundle
   
    @Source("CppCompletion.css")
    Styles styles();
+  
+   ImageResource upArrow();
+   ImageResource downArrow();
    
    public static CppCompletionResources INSTANCE = 
       (CppCompletionResources)GWT.create(CppCompletionResources.class) ;
