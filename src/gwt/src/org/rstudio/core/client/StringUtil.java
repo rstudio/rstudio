@@ -569,6 +569,12 @@ public class StringUtil
    
    public static String stripBalancedQuotes(String string)
    {
+      if (string == null)
+         return null;
+      
+      if (string == "")
+         return "";
+      
       boolean inSingleQuotes = false;
       boolean inDoubleQuotes = false;
       boolean inQuotes = false;

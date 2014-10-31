@@ -82,11 +82,16 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
          this.$offset++;
 
-         while (this.$offset >= that.$tokens[this.$row].length && this.$row < maxRow)
+         while (that.$tokens[this.$row] != null &&
+                this.$offset >= that.$tokens[this.$row].length &&
+                this.$row < maxRow)
          {
             this.$row++;
             this.$offset = 0;
          }
+
+         if (that.$tokens[this.$row] == null)
+            return false;
 
          if (this.$offset >= that.$tokens[this.$row].length)
             return false;

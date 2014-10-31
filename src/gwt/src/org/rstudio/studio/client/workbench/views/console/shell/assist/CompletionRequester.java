@@ -40,6 +40,8 @@ import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions.Rn
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 
 public class CompletionRequester
@@ -114,14 +116,9 @@ public class CompletionRequester
             JsArrayString pkgs = response.getPackages();
             ArrayList<QualifiedName> newComp = new ArrayList<QualifiedName>();
             
-            // Get function argument completions from R
-            for (int i = 0; i < comp.length(); i++)
-            {
-               if (comp.get(i).matches(".*=\\s*$"))
-               {
-                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i)));
-               }
-            }
+            boolean lineEndsWithEquals = false;
+            if (line != null && line.length() > 0)
+               lineEndsWithEquals = line.matches(".*=\\s*$");
             
             // Try getting our own function argument completions
             boolean inString = false;
@@ -136,11 +133,26 @@ public class CompletionRequester
                }
             }
             
-            if (!inString)
+            if (!inString && !lineEndsWithEquals)
             {
                addFunctionArgumentCompletions(token, newComp);
-
-               // Get completions from the current scope
+            }
+            
+            // Get function argument completions from R
+            if (!lineEndsWithEquals)
+            {
+               for (int i = 0; i < comp.length(); i++)
+               {
+                  if (comp.get(i).matches(".*=\\s*$"))
+                  {
+                     newComp.add(new QualifiedName(comp.get(i), pkgs.get(i)));
+                  }
+               }
+            }
+            
+            // Get completions from the current scope
+            if (!inString)
+            {
                addScopedCompletions(token, newComp);
             }
             
@@ -152,6 +164,8 @@ public class CompletionRequester
                   newComp.add(new QualifiedName(comp.get(i), pkgs.get(i)));
                }
             }
+            
+            newComp = withoutDupes(newComp);
             
             CompletionResult result = new CompletionResult(
                   response.getToken(),
@@ -165,6 +179,22 @@ public class CompletionRequester
                callback.onResponseReceived(result);
          }
       }) ;
+   }
+   
+   private ArrayList<QualifiedName> withoutDupes(ArrayList<QualifiedName> completions)
+   {
+      Set<String> names = new HashSet<String>();
+      
+      ArrayList<QualifiedName> noDupes = new ArrayList<QualifiedName>();
+      for (int i = 0; i < completions.size(); i++)
+      {
+         if (!names.contains(completions.get(i).name))
+         {
+            noDupes.add(completions.get(i));
+            names.add(completions.get(i).name);
+         }
+      }
+      return noDupes;
    }
    
    private void addScopedCompletions(String token,
