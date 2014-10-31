@@ -69,20 +69,30 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
    TranslationUnit tu = rSourceIndex().getTranslationUnit(filename);
    if (!tu.empty())
    {
-      std::string lastCompletionText;
+      std::string lastTypedText;
       json::Array completionsJson;
       CodeCompleteResults results = tu.codeCompleteAt(filename, line, column);
       if (!results.empty())
       {
          for (unsigned i = 0; i<results.getNumResults(); i++)
          {
-            std::string completionText = results.getResult(i).getTypedText();
+            CodeCompleteResult result = results.getResult(i);
 
-            // de-dup (works because we know the completions have been sorted)
-            if (completionText != lastCompletionText)
-               completionsJson.push_back(toJson(results.getResult(i)));
+            std::string typedText = result.getTypedText();
 
-            lastCompletionText = completionText;
+            // if we have the same typed text then just ammend previous result
+            if ((typedText == lastTypedText) && !completionsJson.empty())
+            {
+               json::Object& res = completionsJson.back().get_obj();
+               json::Array& text = res["text"].get_array();
+               text.push_back(result.getText());
+            }
+            else
+            {
+               completionsJson.push_back(toJson(result));
+            }
+
+            lastTypedText = typedText;
          }
 
       }
