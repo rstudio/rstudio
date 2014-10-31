@@ -68,5 +68,10 @@ public class TokenCursor extends JavaScriptObject
       return this.moveToPosition(position);
    }-*/;
    
+   public native final boolean findOpeningParen() /*-{
+      return this.findOpeningParen();
+   }-*/;
+   
+   
 }
 

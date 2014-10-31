@@ -579,48 +579,6 @@ public class RCompletionManager implements CompletionManager
       return true ;
    }
    
-   
-   
-   private boolean findOpeningParen(TokenCursor tokenCursor)
-   {
-      boolean success = false;
-      int parenCount = 0;
-      int braceCount = 0;
-      do
-      {
-         if (tokenCursor.currentValue() == "{")
-         {
-            if (braceCount == 0)
-            {
-               success = false;
-               break;
-            }
-            --braceCount;
-         }
-         
-         if (tokenCursor.currentValue() == "}")
-         {
-            ++braceCount;
-         }
-         
-         if (tokenCursor.currentValue() == "(")
-         {
-            if (parenCount == 0)
-            {
-               success = true;
-               break;
-            }
-            --parenCount;
-         }
-         else if (tokenCursor.currentValue() == ")")
-         {
-            parenCount++;
-         }
-         
-      } while (tokenCursor.moveToPreviousToken());
-      return success;
-   }
-   
    private AutoCompletionContext getAutocompletionContext()
    {
       
@@ -694,7 +652,7 @@ public class RCompletionManager implements CompletionManager
       // already hit a '(' as the first token
       if (tokenCursor.currentValue() != "(")
       {
-         boolean success = findOpeningParen(tokenCursor);
+         boolean success = tokenCursor.findOpeningParen();
          if (!success)
             return defaultContext;
       }

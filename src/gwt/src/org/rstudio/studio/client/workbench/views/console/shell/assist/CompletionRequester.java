@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
@@ -28,8 +29,11 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.RFunction;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RScopeObject;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions.RnwOptionCompletionResult;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
@@ -109,7 +113,7 @@ public class CompletionRequester
             JsArrayString pkgs = response.getPackages();
             ArrayList<QualifiedName> newComp = new ArrayList<QualifiedName>();
             
-            // Get function argument completions
+            // Get function argument completions from R
             for (int i = 0; i < comp.length(); i++)
             {
                if (comp.get(i).matches(".*=\\s*$"))
@@ -117,6 +121,9 @@ public class CompletionRequester
                   newComp.add(new QualifiedName(comp.get(i), pkgs.get(i)));
                }
             }
+            
+            // Try getting our own function argument completions
+            addFunctionArgumentCompletions(token, newComp);
 
             // Get completions from the current scope
             addScopedCompletions(token, newComp);
@@ -185,26 +192,65 @@ public class CompletionRequester
                   }
                }
             }
-            // We might also want to auto-complete functions names
-            if (functionName != null && functionName != "" && functionName.startsWith(token))
-            {
-               completions.add(new QualifiedName(
-                     functionName,
-                     "<user-defined function>" // TODO: better name?
-               ));
-            }
          }
          
          // Variables in the current scope.
-         JsArrayString scopeVariables = codeModel.getVariablesInScope(cursorPosition);
+         JsArray<RScopeObject> scopeVariables = codeModel.getVariablesInScope(cursorPosition);
          for (int i = 0; i < scopeVariables.length(); i++)
          {
-            String variable = scopeVariables.get(i);
-            if (variable.startsWith(token))
+            RScopeObject variable = scopeVariables.get(i);
+            if (variable.getToken().startsWith(token))
                completions.add(new QualifiedName(
-                     scopeVariables.get(i),
-                     "<context>"
+                     variable.getToken(),
+                     "<" + variable.getType() + ">"
                ));
+         }
+      }
+   }
+   
+   private void addFunctionArgumentCompletions(
+         String token,
+         ArrayList<QualifiedName> completions)
+   {
+      AceEditor editor = (AceEditor) editor_;
+
+      // NOTE: this will be null in the console, so protect against that
+      if (editor != null)
+      {
+         Position cursorPosition =
+               editor.getSession().getSelection().getCursor();
+         CodeModel codeModel = editor.getSession().getMode().getCodeModel();
+         
+         // Try to see if we can find a function name
+         TokenCursor cursor = codeModel.getTokenCursor();
+         cursor.moveToPosition(cursorPosition);
+         if (cursor.currentValue() == "(" || cursor.findOpeningParen())
+         {
+            if (cursor.moveToPreviousToken())
+            {
+               // Check to see if this really is the name of a function
+               JsArray<ScopeFunction> functionsInScope =
+                     codeModel.getAllFunctionScopes();
+               
+               String tokenName = cursor.currentValue();
+               Debug.logObject(functionsInScope);
+               for (int i = 0; i < functionsInScope.length(); i++)
+               {
+                  ScopeFunction rFunction = functionsInScope.get(i);
+                  String fnName = rFunction.getFunctionName();
+                  if (tokenName == fnName)
+                  {
+                     JsArrayString args = rFunction.getFunctionArgs();
+                     for (int j = 0; j < args.length(); j++)
+                     {
+                        completions.add(new QualifiedName(
+                              args.get(j) + " = ",
+                              "[" + fnName + "]"
+                        ));
+                     }
+                  }
+               }
+            }
          }
       }
    }

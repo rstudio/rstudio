@@ -144,6 +144,26 @@ define('mode/r_scope_tree', function(require, exports, module) {
          this.$root.printDebug();
       };
 
+      this.getAllFunctionScopes = function() {
+         var array = [];
+         var node = this.$root;
+         doGetAllFunctionScopes(node, array);
+         return array;
+      };
+
+      var doGetAllFunctionScopes = function(node, array) {
+         if (node.isFunction())
+         {
+            array.push(node);
+         }
+         var children = node.$children;
+         for (var i = 0; i < children.length; i++)
+         {
+            doGetAllFunctionScopes(children[i], array);
+         }
+         
+      };
+
    }).call(ScopeManager.prototype);
 
 
@@ -315,12 +335,12 @@ define('mode/r_scope_tree', function(require, exports, module) {
          return null;
       };
 
-      // Get arguments for functions in scope. This returns an array of objects,
+      // Get functions in scope. This returns an array of objects,
       // one object for each function, of the form:
       //
       // [{"name": fn, "args": ["arg1", "arg2", ...]}]
       //
-      this.getFunctionsInScope = function(pos, tokenizer) {
+      this.getFunctionsInScope = function(pos) {
          var stack = this.$getFunctionStack(pos);
          var objects = [];
          for (var i = 0; i < stack.length; i++)

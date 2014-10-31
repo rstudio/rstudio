@@ -331,6 +331,51 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          
       };
 
+      this.findOpeningParen = function()
+      {
+         var clone = this.cloneCursor();
+         
+         var success = false;
+         var parenCount = 0;
+         var braceCount = 0;
+         
+         do
+         {
+            if (clone.currentValue() == "{")
+            {
+               if (braceCount == 0)
+               {
+                  success = false;
+                  break;
+               }
+               --braceCount;
+            }
+            
+            if (clone.currentValue() == "}")
+            {
+               ++braceCount;
+            }
+            
+            if (clone.currentValue() == "(")
+            {
+               if (parenCount == 0)
+               {
+                  this.$row = clone.$row;
+                  this.$offset = clone.$offset;
+                  success = true;
+                  break;
+               }
+               --parenCount;
+            }
+            else if (clone.currentValue() == ")")
+            {
+               parenCount++;
+            }
+            
+         } while (clone.moveToPreviousToken());
+         return success;
+      };
+
    }).call(this.$TokenCursor.prototype);
 
 };
@@ -420,7 +465,14 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
    this.getFunctionsInScope = function(pos) {
       this.$buildScopeTreeUpToRow(pos.row);
-      return this.$scopes.getFunctionsInScope(pos, this.$tokenizer);
+      return this.$scopes.getFunctionsInScope(pos);
+   };
+
+   this.getAllFunctionScopes = function(row) {
+      if (typeof row === "undefined")
+         row = this.$doc.getLength();
+      this.$buildScopeTreeUpToRow(row);
+      return this.$scopes.getAllFunctionScopes();
    };
 
    function addForInToken(tokenCursor, scopedVariables)
@@ -445,7 +497,10 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       if (clone.currentValue() !== "in")
          return false;
 
-      scopedVariables.push(maybeForInVariable);
+      scopedVariables.push({
+         token: maybeForInVariable,
+         type: "variable"
+      });
       return true;
    }
 
@@ -469,6 +524,17 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          // Default -- assignment case
          if (pAssign(tokenCursor.currentToken()))
          {
+            // Check to see if this is a function (simple check)
+            var type = "variable";
+            var functionCursor = tokenCursor.cloneCursor();
+            if (functionCursor.moveToNextToken())
+            {
+               if (functionCursor.currentValue() === "function")
+               {
+                  type = "function";
+               }
+            }
+            
             var clone = tokenCursor.cloneCursor();
             if (!clone.moveToPreviousToken()) continue;
             if (pIdentifier(clone.currentToken()))
@@ -476,7 +542,10 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                var arg = clone.currentValue();
                if (clone.isFirstSignificantTokenOnLine())
                {
-                  scopedVariables.push(arg);
+                  scopedVariables.push({
+                     token: arg,
+                     type: type
+                  });
                   continue;
                }
                
@@ -487,7 +556,11 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                   return x === currentValue;
                }))
                   continue;
-               scopedVariables.push(arg);
+               
+               scopedVariables.push({
+                  token: arg,
+                  type: type
+               });
             }
             
          }
