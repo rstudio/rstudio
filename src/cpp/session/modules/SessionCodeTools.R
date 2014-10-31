@@ -223,19 +223,19 @@ utils:::rc.settings(files = TRUE)
    objCompletions <- NULL
    if (!is.null(objectName) && objectName != "")
    {
-     objects <- getAnywhere(objectName) ## TODO: better lookup
-     if (length(objects$objs))
-     {
-       object <- objects$objs[[1]]
-       nm <- names(object)
-       if (length(nm))
-       {
-         objCompletions <- list(
-           results = nm,
-           packages = character(length(nm))
-         )
-       }
-     }
+      objects <- getAnywhere(objectName) ## TODO: better lookup
+      if (length(objects$objs))
+      {
+         object <- objects$objs[[1]]
+         nm <- names(object)
+         if (length(nm))
+         {
+            objCompletions <- list(
+               results = nm,
+               packages = character(length(nm))
+            )
+         }
+      }
    }
    
    utils:::.assignLinebuffer(line)
@@ -246,7 +246,7 @@ utils:::rc.settings(files = TRUE)
    status = utils:::rc.status()
    
    packages = sub('^package:', '', .rs.which(results))
-
+   
    # prefer completions for function arguments
    if (length(results) > 0) {
       n <- nchar(results)
@@ -255,10 +255,10 @@ utils:::rc.settings(files = TRUE)
       results <- results[idx]
       packages <- packages[idx]
    }
-
+   
    # ensure spaces around =
    results <- sub("=$", " = ", results)
-
+   
    choose = packages == '.GlobalEnv'
    results.sorted = c(results[choose], results[!choose])
    packages.sorted = c(packages[choose], packages[!choose])
@@ -270,16 +270,19 @@ utils:::rc.settings(files = TRUE)
                   packages=packages.sorted, 
                   fguess=status$fguess)
    
+   n <- nchar(token)
    if (!is.null(objCompletions))
    {
-     result$results <- c(objCompletions$results, result$results)
-     result$packages <- c(objCompletions$packages, result$packages)
+      keep <- .rs.startsWith(objCompletions$results, token)
+      result$results <- c(objCompletions$results[keep], result$results)
+      result$packages <- c(objCompletions$packages[keep], result$packages)
    }
    
    if (length(additionalArgs))
    {
-     result$results <- c(additionalArgs, result$results)
-     result$packages <- c(character(length(additionalArgs)), result$packages)
+      keep <- .rs.startsWith(additionalArgs, token)
+      result$results <- c(additionalArgs[keep], result$results)
+      result$packages <- c(character(sum(keep)), result$packages)
    }
    
    if (length(excludeArgs))
@@ -304,4 +307,10 @@ utils:::rc.settings(files = TRUE)
       print(help(pieces[2], package=pieces[1], help_type='html'))
    else
       print(help(pieces[1], help_type='html', try.all.packages=T))
+})
+
+.rs.addFunction("startsWith", function(strings, string)
+{
+   n <- nchar(string)
+   (nchar(strings) >= n) & (substring(strings, 1, n) == string)
 })
