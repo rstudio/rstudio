@@ -200,6 +200,10 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
                @Override
                public void execute()
                { 
+                  // bail if there is no longer a tooltip
+                  if (toolTip_ == null)
+                     return;
+                  
                   // some constants
                   final int H_PAD = 12;
                   final int V_PAD = -3;
