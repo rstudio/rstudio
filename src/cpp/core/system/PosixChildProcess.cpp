@@ -808,7 +808,7 @@ void AsyncChildProcess::poll()
       // if this is an error that isn't ECHILD then log it (we never
       // expect this to occur as the only documented error codes are
       // EINTR and ECHILD, and EINTR is handled internally by posixCall)
-      if (result == -1 && errno != ECHILD)
+      if (result == -1 && errno != ECHILD && errno != ENOENT)
          LOG_ERROR(systemError(errno, ERROR_LOCATION));
    }
 }
