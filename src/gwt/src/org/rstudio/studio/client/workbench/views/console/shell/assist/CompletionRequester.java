@@ -18,6 +18,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
@@ -123,10 +124,25 @@ public class CompletionRequester
             }
             
             // Try getting our own function argument completions
-            addFunctionArgumentCompletions(token, newComp);
+            boolean inString = false;
+            String stripped = StringUtil.stripBalancedQuotes(line);
+            if (!line.equals(stripped))
+            {
+               boolean oddSingleQuotes = StringUtil.countMatches(stripped, '\'') % 2 == 1;
+               boolean oddDoubleQuotes = StringUtil.countMatches(stripped, '"') % 2 == 1;
+               if (oddSingleQuotes || oddDoubleQuotes)
+               {
+                  inString = true;
+               }
+            }
+            
+            if (!inString)
+            {
+               addFunctionArgumentCompletions(token, newComp);
 
-            // Get completions from the current scope
-            addScopedCompletions(token, newComp);
+               // Get completions from the current scope
+               addScopedCompletions(token, newComp);
+            }
             
             // Get other completions
             for (int i = 0; i < comp.length(); i++)
@@ -233,7 +249,6 @@ public class CompletionRequester
                      codeModel.getAllFunctionScopes();
                
                String tokenName = cursor.currentValue();
-               Debug.logObject(functionsInScope);
                for (int i = 0; i < functionsInScope.length(); i++)
                {
                   ScopeFunction rFunction = functionsInScope.get(i);
