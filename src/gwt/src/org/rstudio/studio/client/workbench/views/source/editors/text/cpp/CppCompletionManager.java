@@ -330,16 +330,22 @@ public class CppCompletionManager implements CompletionManager
       {
          terminateCompletionRequest();
          
+         final Invalidation.Token invalidationToken = 
+               completionRequestInvalidation_.getInvalidationToken();
+         
          completionContext_.withUpdatedDoc(new CommandWithArg<String>() {
 
             @Override
             public void execute(String docPath)
             {
+               if (invalidationToken.isInvalid())
+                  return;
+               
                request_ = new CppCompletionRequest(
                   docPath,
                   completionPosition,
                   docDisplay_,
-                  completionRequestInvalidation_.getInvalidationToken(),
+                  invalidationToken,
                   explicit);
             }
          });

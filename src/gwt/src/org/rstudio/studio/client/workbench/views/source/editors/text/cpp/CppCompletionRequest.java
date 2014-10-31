@@ -80,6 +80,9 @@ public class CppCompletionRequest
      
    public void updateUI(boolean autoAccept)
    {
+      if (invalidationToken_.isInvalid())
+         return;
+      
       // if we don't have the completion list back from the server yet
       // then just ignore this (this function will get called again when
       // the request completes)
