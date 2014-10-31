@@ -1411,10 +1411,10 @@ public class UnifyAst {
     if (!instantiatedTypes.contains(type)) {
       instantiatedTypes.add(type);
       if (type.getSuperClass() != null) {
-        instantiate(type.getSuperClass());
+        instantiate(translate(type.getSuperClass()));
       }
       for (JInterfaceType intf : type.getImplements()) {
-        instantiate(intf);
+        instantiate(translate(intf));
       }
       staticInitialize(type);
       boolean isJsType = isJsType(type);
@@ -1636,7 +1636,7 @@ public class UnifyAst {
     if (!liveFieldsAndMethods.contains(clinit)) {
       flowInto(clinit);
       if (type.getSuperClass() != null) {
-        staticInitialize(type.getSuperClass());
+        staticInitialize(translate(type.getSuperClass()));
       }
     }
   }
