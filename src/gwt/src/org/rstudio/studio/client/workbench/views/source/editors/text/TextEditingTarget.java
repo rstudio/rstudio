@@ -833,7 +833,8 @@ public class TextEditingTarget implements
                   // if we're not in function scope, set a top-level breakpoint
                   ScopeFunction innerFunction = 
                         docDisplay_.getFunctionAtPosition(breakpointPosition);
-                  if (innerFunction == null || !innerFunction.isFunction())
+                  if (innerFunction == null || !innerFunction.isFunction() ||
+                      StringUtil.isNullOrEmpty(innerFunction.getFunctionName()))
                   {
                      breakpoint = breakpointManager_.setTopLevelBreakpoint(
                            getPath(),
