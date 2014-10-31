@@ -14,7 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
+
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
@@ -23,6 +25,11 @@ import org.rstudio.studio.client.common.r.RToken;
 import org.rstudio.studio.client.common.r.RTokenizer;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.RFunction;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions.RnwOptionCompletionResult;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
@@ -33,16 +40,20 @@ import java.util.ArrayList;
 public class CompletionRequester
 {
    private final CodeToolsServerOperations server_ ;
+   private final NavigableSourceEditor editor_;
 
    private String cachedLinePrefix_ ;
    private CompletionResult cachedResult_ ;
    private RnwCompletionContext rnwContext_ ;
    
    public CompletionRequester(CodeToolsServerOperations server,
-                              RnwCompletionContext rnwContext)
+                              RnwCompletionContext rnwContext,
+                              NavigableSourceEditor editor)
    {
       server_ = server ;
       rnwContext_ = rnwContext;
+      editor_ = editor;
+      
    }
    
    public void getCompletions(
@@ -92,6 +103,7 @@ public class CompletionRequester
          public void onResponseReceived(Completions response)
          {
             cachedLinePrefix_ = line.substring(0, pos);
+            String token = response.getToken();
 
             JsArrayString comp = response.getCompletions();
             JsArrayString pkgs = response.getPackages();
@@ -99,6 +111,9 @@ public class CompletionRequester
 
             for (int i = 0; i < comp.length(); i++)
                newComp.add(new QualifiedName(comp.get(i), pkgs.get(i)));
+
+            // Get completions from the current scope as well.
+            addScopedCompletions(token, newComp);
 
             CompletionResult result = new CompletionResult(
                   response.getToken(),
@@ -112,6 +127,61 @@ public class CompletionRequester
                callback.onResponseReceived(result);
          }
       }) ;
+   }
+   
+   private void addScopedCompletions(String token,
+                                     ArrayList<QualifiedName> completions)
+   {
+      AceEditor editor = (AceEditor) editor_;
+
+      // NOTE: this will be null in the console, so protect against that
+      if (editor != null)
+      {
+         Position cursorPosition =
+               editor.getSession().getSelection().getCursor();
+         CodeModel codeModel = editor.getSession().getMode().getCodeModel();
+         JsArray<RFunction> scopedFunctions =
+               codeModel.getFunctionsInScope(cursorPosition);
+
+         for (int i = 0; i < scopedFunctions.length(); i++)
+         {
+            RFunction scopedFunction = scopedFunctions.get(i);
+            String functionName = scopedFunction.getFunctionName();
+
+            JsArrayString argNames = scopedFunction.getFunctionArgs();
+            for (int j = 0; j < argNames.length(); j++)
+            {
+               String argName = argNames.get(j);
+               if (argName.startsWith(token))
+               {
+                  if (functionName == null || functionName == "")
+                  {
+                     completions.add(new QualifiedName(
+                           argName,
+                           "<anonymous function>"
+                           ));
+                  }
+                  else
+                  {
+                     completions.add(new QualifiedName(
+                           argName,
+                           "[" + functionName + "]"
+                           ));
+                  }
+               }
+            }
+            // We might also want to auto-complete functions names
+            if (functionName != null && functionName != "" && functionName.startsWith(token))
+            {
+               completions.add(new QualifiedName(
+                     functionName,
+                     "<user-defined function>" // TODO: better name?
+               ));
+            }
+         }
+
+      }
+
    }
 
    private void doGetCompletions(
@@ -228,11 +298,17 @@ public class CompletionRequester
 
       private String getFormattedPackageName()
       {
-         return pkgName == null || pkgName.length() == 0
-               ? ""
-               : " <span class=\"packageName\">{"
-                  + DomUtils.textToHtml(pkgName)
-                  + "}</span>";
+         if (pkgName == null || pkgName.length() == 0)
+            return "";
+         
+         StringBuilder result = new StringBuilder();
+         result.append(" <span class=\"packageName\">");
+         if (pkgName.matches("^([\\{\\[\\(\\<]).*\\1$"))
+            result.append(DomUtils.textToHtml(pkgName));
+         else
+            result.append("{").append(DomUtils.textToHtml(pkgName)).append("}");
+         result.append("</span>");
+         return result.toString();
       }
 
       public static QualifiedName parseFromText(String val)

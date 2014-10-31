@@ -55,7 +55,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSo
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.EditSession;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
@@ -102,7 +101,7 @@ public class RCompletionManager implements CompletionManager
       navigableSourceEditor_ = navigableSourceEditor;
       popup_ = popup ;
       server_ = server ;
-      requester_ = new CompletionRequester(server_, rnwContext);
+      requester_ = new CompletionRequester(server_, rnwContext, navigableSourceEditor);
       initFilter_ = initFilter ;
       rnwContext_ = rnwContext;
       docDisplay_ = docDisplay;
@@ -542,6 +541,15 @@ public class RCompletionManager implements CompletionManager
       AutoCompletionContext context = getAutocompletionContext();
       String line = context.getContext();
       
+      // Cheap trick -- convert all instances of '{', '}' to '(', ')' so
+      // they get treated as non-named function calls. This fixes an
+      // undesired behaviour whereby e.g.
+      //
+      // lapply(X, function(x) { |
+      //
+      // would produce auto-completions for lapply.
+      line = line.replace('{', '(').replace('}', ')');
+      
       if (!input_.hasSelection())
       {
          Debug.log("Cursor wasn't in input box or was in subelement");
@@ -577,9 +585,25 @@ public class RCompletionManager implements CompletionManager
    {
       boolean success = false;
       int parenCount = 0;
-      while (tokenCursor.moveToPreviousToken())
+      int braceCount = 0;
+      do
       {
-         if (tokenCursor.currentToken().getValue() == "(")
+         if (tokenCursor.currentValue() == "{")
+         {
+            if (braceCount == 0)
+            {
+               success = false;
+               break;
+            }
+            --braceCount;
+         }
+         
+         if (tokenCursor.currentValue() == "}")
+         {
+            ++braceCount;
+         }
+         
+         if (tokenCursor.currentValue() == "(")
          {
             if (parenCount == 0)
             {
@@ -588,16 +612,18 @@ public class RCompletionManager implements CompletionManager
             }
             --parenCount;
          }
-         else if (tokenCursor.currentToken().getValue() == ")")
+         else if (tokenCursor.currentValue() == ")")
          {
             parenCount++;
          }
-      }
+         
+      } while (tokenCursor.moveToPreviousToken());
       return success;
    }
    
    private AutoCompletionContext getAutocompletionContext()
    {
+      
       
       String firstLine = input_.getText();
       int row = input_.getCursorPosition().getRow();
@@ -605,21 +631,24 @@ public class RCompletionManager implements CompletionManager
       // trim to cursor position
       firstLine = firstLine.substring(0, input_.getCursorPosition().getColumn());
       
+      // Default case for failure modes
+      AutoCompletionContext defaultContext = new AutoCompletionContext(firstLine, false);
+      
       // if we're on the first row, don't bother looking back
       if (row == 0)
-         return new AutoCompletionContext(firstLine, false);
+         return defaultContext;
       
       // early escaping rules: if we're in Roxygen, or we have text immediately
       // preceding the cursor (as that signals we're completing a variable name)
       if (firstLine.matches("\\s*#+'.*") ||
           firstLine.matches(".*[$@]$"))
-         return new AutoCompletionContext(firstLine, false);
+         return defaultContext;
       
       // if the line is currently within a comment, bail -- this ensures
       // that we can auto-complete within a comment line (but we only
       // need context from that line)
       if (!firstLine.equals(StringUtil.stripRComment(firstLine)))
-         return new AutoCompletionContext(firstLine, false);
+         return defaultContext;
       
       // if we're within a string, bail -- do this by stripping
       // balanced quotes and seeing if any quote characters left over
@@ -629,45 +658,50 @@ public class RCompletionManager implements CompletionManager
       {
          boolean oddSingleQuotes = StringUtil.countMatches(stripped, '\'') % 2 == 1;
          boolean oddDoubleQuotes = StringUtil.countMatches(stripped, '"') % 2 == 1;
-         if (oddSingleQuotes || oddDoubleQuotes) {
-            return new AutoCompletionContext(firstLine, false);
+         if (oddSingleQuotes || oddDoubleQuotes)
+         {
+            return defaultContext;
          }
       }
       
       // access to the R Code model
       AceEditor editor = (AceEditor) docDisplay_;
       if (editor == null)
-         return new AutoCompletionContext(firstLine, false);
+         return defaultContext;
       
       EditSession session = editor.getSession();
       if (session == null)
-         return new AutoCompletionContext(firstLine, false);
+         return defaultContext;
       
       Mode mode = session.getMode();
       if (mode == null)
-         return new AutoCompletionContext(firstLine, false);
+         return defaultContext;
       
       CodeModel codeModel = mode.getCodeModel();
       if (codeModel == null)
-         return new AutoCompletionContext(firstLine, false);
+         return defaultContext;
       
       codeModel.tokenizeUpToRow(row);
       
-      // Make a token cursor and put it at the end of the line
+      // Make a token cursor and place it at the first token previous
+      // to the cursor.
       TokenCursor tokenCursor = codeModel.getTokenCursor();
-      tokenCursor.bwdToNearestToken(Position.create(row, firstLine.length()));
-
+      if (!tokenCursor.moveToPosition(input_.getCursorPosition()))
+         return defaultContext;
+      
       // Walk tokens backwards until we have one more '(' than we do
       // ')' with an empty 'block' token stack -- but only if we didn't
       // already hit a '(' as the first token
-      if (tokenCursor.currentToken().getValue() != "(")
+      if (tokenCursor.currentValue() != "(")
       {
          boolean success = findOpeningParen(tokenCursor);
          if (!success)
-         {
-            return new AutoCompletionContext(firstLine, false);
-         }
+            return defaultContext;
       }
+      
+      // Move off of the open paren to the function name
+      if (!tokenCursor.moveToPreviousToken())
+         return defaultContext;
       
       // Take the inferred row up to current position and return
       int startRow = tokenCursor.currentPosition().getRow();
@@ -683,15 +717,6 @@ public class RCompletionManager implements CompletionManager
       String result = resultBuilder.toString();
       
       result = StringUtil.stripBalancedQuotes(result);
-      
-      // Cheap trick -- convert all instances of '{', '}' to '(', ')' so
-      // they get treated as non-named function calls. This fixes an
-      // undesired behaviour whereby e.g.
-      //
-      // lapply(X, function(x) { |
-      //
-      // would produce auto-completions for lapply.
-      result = result.replace('{', '(').replace('}', ')');
       
       return new AutoCompletionContext(result, startRow < row);
    }

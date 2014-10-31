@@ -74,6 +74,9 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
       this.moveToNextToken = function(maxRow)
       {
+         if (typeof maxRow === "undefined")
+            maxRow = Infinity;
+         
          if (this.$row > maxRow)
             return false;
 
@@ -175,6 +178,11 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          return this.currentToken().value;
       };
 
+      this.currentType = function()
+      {
+         return this.currentToken().type;
+      };
+
       this.currentPosition = function()
       {
          var token = this.currentToken();
@@ -200,6 +208,92 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       this.isLastSignificantTokenOnLine = function()
       {
          return this.$offset == (that.$tokens[this.$row] || []).length - 1;
+      };
+
+      var $complements = {
+         "(" : ")",
+         "{" : "}",
+         "<" : ">",
+         "[" : "]",
+         ")" : "(",
+         "}" : "{",
+         ">" : "<",
+         "]" : "["
+      };
+
+      this.fwdToMatchingToken = function() {
+
+         var thisValue = this.currentValue();
+         var compValue = $complements[thisValue];
+
+         var isOpener = ["(", "{", "["].some(function(x) {
+            return x === thisValue;
+         });
+
+         if (!isOpener) {
+            return false;
+         }
+
+         var success = false;
+         var parenCount = 0;
+         while (this.moveToNextToken())
+         {
+            if (this.currentValue() === compValue)
+            {
+               if (parenCount === 0)
+               {
+                  return true;
+               }
+               parenCount--;
+            }
+            else if (this.currentValue() === thisValue)
+            {
+               parenCount++;
+            }
+         }
+
+         return false;
+         
+      };
+
+      this.moveToPosition = function(pos) {
+
+         var rowTokens = that.$tokens[pos.row];
+
+         // If there's no tokens on this line, walk back until we find
+         // a line with tokens
+         var row = pos.row;
+         while (row >= 0 && (rowTokens == null || rowTokens.length === 0)) {
+            row--;
+            rowTokens = that.$tokens[row];
+         }
+
+         if (row < 0)
+            return false;
+
+         // If we walked back, we can use the last token on the row we found
+         if (row !== pos.row) {
+            this.$row = row;
+            this.$offset = that.$tokens[row].length - 1;
+            return true;
+         }
+
+         // Otherwise, walk over this row's tokens
+         for (var i = 0; i < rowTokens.length; i++) {
+            if (rowTokens[i].column >= pos.column) {
+               break;
+            }
+         }
+
+         this.$row = pos.row;
+         this.$offset = i - 1;
+         if (i === 0) {
+            this.$offset = 0;
+            return this.moveToPreviousToken();
+         } else {
+            return true;
+         }
+         
       };
 
    }).call(this.$TokenCursor.prototype);
@@ -256,22 +350,91 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
    function findAssocFuncToken(tokenCursor)
    {
-      if (tokenCursor.currentValue() !== "{")
+      var clonedCursor = tokenCursor.cloneCursor();
+      if (clonedCursor.currentValue() !== "{")
          return false;
-      if (!tokenCursor.moveBackwardOverMatchingParens())
+      if (!clonedCursor.moveBackwardOverMatchingParens())
          return false;
-      if (!tokenCursor.moveToPreviousToken())
+      if (!clonedCursor.moveToPreviousToken())
          return false;
-      if (!pFunction(tokenCursor.currentToken()))
-         return false;
-      if (!tokenCursor.moveToPreviousToken())
-         return false;
-      if (!pAssign(tokenCursor.currentToken()))
-         return false;
-      if (!tokenCursor.moveToPreviousToken())
+      if (!pFunction(clonedCursor.currentToken()))
          return false;
 
+      tokenCursor.$row = clonedCursor.$row;
+      tokenCursor.$offset = clonedCursor.$offset;
       return true;
+
+   };
+
+   function moveFromFunctionTokenToFunctionName(tokenCursor)
+   {
+      var clonedCursor = tokenCursor.cloneCursor();
+      if (!pFunction(clonedCursor.currentToken()))
+         return false;
+      if (!clonedCursor.moveToPreviousToken())
+         return false;
+      if (!pAssign(clonedCursor.currentToken()))
+         return false;
+      if (!clonedCursor.moveToPreviousToken())
+         return false;
+
+      tokenCursor.$row = clonedCursor.$row;
+      tokenCursor.$offset = clonedCursor.$offset;
+      return true;
+   }
+
+   this.getFunctionsInScope = function(pos) {
+      this.$buildScopeTreeUpToRow(pos.row);
+      return this.$scopes.getFunctionsInScope(pos, this.$tokenizer);
+   };
+
+   function tokenAtCursorEndsWithComma(cursor) {
+      return /,\s*$/.test(cursor.currentValue()) && cursor.currentType() === "text";
+   }
+
+   // Get function arguments, starting at the start of a function definition, e.g.
+   //
+   // x <- function(a = 1, b = 2, c = list(a = 1, b = 2), ...)
+   //      ?~~~~~~~?^~~~~~~^~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~^~~|
+   function $getFunctionArgs(tokenCursor)
+   {
+      if (pFunction(tokenCursor.currentToken()))
+         tokenCursor.moveToNextToken();
+
+      if (tokenCursor.currentValue() === "(")
+         tokenCursor.moveToNextToken();
+
+      if (tokenCursor.currentValue() === ")")
+         return [];
+
+      var functionArgs = [];
+      if (pIdentifier(tokenCursor.currentToken()))
+         functionArgs.push(tokenCursor.currentValue());
+      
+      while (tokenCursor.moveToNextToken())
+      {
+         if (tokenCursor.fwdToMatchingToken())
+            continue;
+
+         if (tokenCursor.currentValue() === ")")
+            break;
+
+         // Yuck: '...' and ',' can get tokenized together as
+         // text. All we can really do is ask if a particular token is
+         // type 'text' and ends with a comma.
+         // Once we encounter such a token, we look ahead to find an
+         // identifier (it signifies an argument name)
+         if (tokenAtCursorEndsWithComma(tokenCursor))
+         {
+            while (tokenAtCursorEndsWithComma(tokenCursor))
+               tokenCursor.moveToNextToken();
+            
+            if (pIdentifier(tokenCursor.currentToken()))
+               functionArgs.push(tokenCursor.currentValue());
+         }
+      }
+      return functionArgs;
+      
    }
 
    this.$buildScopeTreeUpToRow = function(maxrow)
@@ -380,29 +543,37 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             var startPos;
             if (findAssocFuncToken(localCursor))
             {
+               var argsCursor = localCursor.cloneCursor();
+               argsCursor.moveToNextToken();
+               var argsStartPos = argsCursor.currentPosition();
+
+               var functionName = null;
+               if (moveFromFunctionTokenToFunctionName(localCursor))
+                  functionName = localCursor.currentValue();
+               
                startPos = localCursor.currentPosition();
                if (localCursor.isFirstSignificantTokenOnLine())
                   startPos.column = 0;
 
-               var functionName = localCursor.currentValue();
-               var argsCursor = localCursor.cloneCursor();
-
-               argsCursor.moveToNextToken(); // assign (<-, =)
-               argsCursor.moveToNextToken(); // function
-               argsCursor.moveToNextToken(); // (
-
-               var argsStartPos = argsCursor.currentPosition();
-               
-               var functionArgs = this.$doc.getTextRange(new Range(
+               var functionArgsString = this.$doc.getTextRange(new Range(
                   argsStartPos.row, argsStartPos.column,
                   bracePos.row, bracePos.column
                ));
 
-               var functionLabel = $normalizeWhitespace(functionName + functionArgs);
-               
+               var functionLabel;
+               if (functionName === null)
+                  functionLabel = $normalizeWhitespace("<function>" + functionArgsString);
+               else
+                  functionLabel = $normalizeWhitespace(functionName + functionArgsString);
+
+               // Obtain the function arguments by walking through the tokens
+               var functionArgs = $getFunctionArgs(argsCursor);
+
                this.$scopes.onFunctionScopeStart(functionLabel,
                                                  startPos,
-                                                 tokenCursor.currentPosition());
+                                                 tokenCursor.currentPosition(),
+                                                 functionName,
+                                                 functionArgs);
             }
             else
             {
@@ -576,7 +747,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    this.getCurrentScope = function(position, filter)
    {
       if (!filter)
-         filter = function(scope) { return true; }
+         filter = function(scope) { return true; };
 
       if (!position)
          return "";

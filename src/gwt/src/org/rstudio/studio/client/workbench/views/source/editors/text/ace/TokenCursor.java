@@ -32,6 +32,14 @@ public class TokenCursor extends JavaScriptObject
       return this.currentToken();
    }-*/;
    
+   public native final String currentValue() /*-{
+      return this.currentValue();
+   }-*/;
+   
+   public native final String currentType() /*-{
+      return this.currentType();
+   }-*/;
+   
    public native final boolean moveToNextToken() /*-{
       return !! this.moveToNextToken();
    }-*/;
@@ -54,6 +62,10 @@ public class TokenCursor extends JavaScriptObject
    
    public native final boolean moveBackwardOverMatchingParens() /*-{
       return !! this.moveBackwardOverMatchingParens();
+   }-*/;
+   
+   public native final boolean moveToPosition(Position position) /*-{
+      return this.moveToPosition(position);
    }-*/;
    
 }

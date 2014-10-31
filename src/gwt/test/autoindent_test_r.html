@@ -323,6 +323,11 @@ if (test)
 document.getElementById('passed').innerText = passed;
 document.getElementById('failed').innerText = failed;
 
+session = editor.getSession();
+mode = session.getMode();
+model = mode.codeModel;
+scopes = model.$scopes;
+
 </script>
 </body>
 </html>

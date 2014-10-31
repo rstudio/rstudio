@@ -75,10 +75,22 @@ define('mode/r_scope_tree', function(require, exports, module) {
          return closed;
       };
 
-      this.onFunctionScopeStart = function(label, functionStartPos, scopePos) {
+      this.onFunctionScopeStart = function(label, functionStartPos, scopePos, name, args) {
+         
          debuglog("adding function brace-scope " + label);
-         this.$root.addNode(new this.$ScopeNodeFactory(label, scopePos, functionStartPos,
-                                          ScopeNode.TYPE_BRACE));
+         this.$root.addNode(
+            new this.$ScopeNodeFactory(
+               label,
+               scopePos,
+               functionStartPos,
+               ScopeNode.TYPE_BRACE,
+               {
+                  "name": name,
+                  "args": args
+               }
+            )
+         );
+         
          this.printScopeTree();
       };
 
@@ -112,6 +124,10 @@ define('mode/r_scope_tree', function(require, exports, module) {
                                                            functionName);
       };
 
+      this.getFunctionsInScope = function(pos, tokenizer) {
+         return this.$root.getFunctionsInScope(pos, tokenizer);
+      };
+
       this.invalidateFrom = function(pos) {
          pos = {row: Math.max(0, pos.row-1), column: 0};
          debuglog("Invalidate from " + pos.row + ", " + pos.column);
@@ -132,7 +148,7 @@ define('mode/r_scope_tree', function(require, exports, module) {
 
 
 
-   var ScopeNode = function(label, start, preamble, scopeType) {
+   var ScopeNode = function(label, start, preamble, scopeType, attributes) {
       this.label = label;
 
       // The position of the open brace
@@ -150,6 +166,9 @@ define('mode/r_scope_tree', function(require, exports, module) {
       
       // A pointer to the parent scope (if any) 
       this.parentScope = null;
+
+      // Generalized attributes (an object with names)
+      this.attributes = attributes;
 
       this.$children = [];
    };
@@ -216,7 +235,7 @@ define('mode/r_scope_tree', function(require, exports, module) {
          if (this.$children.length == 0)
             return null;
 
-         var lastNode = this.$children[this.$children.length-1]
+         var lastNode = this.$children[this.$children.length-1];
 
          // Last child is already closed
          if (lastNode.end)
@@ -249,7 +268,7 @@ define('mode/r_scope_tree', function(require, exports, module) {
             return;
          lastNode.$forceDescendantsClosed(pos);
          lastNode.end = pos;
-      }
+      };
 
       // Returns array of nodes that contain the position, from outermost to
       // innermost; or null if no nodes contain it.
@@ -275,7 +294,7 @@ define('mode/r_scope_tree', function(require, exports, module) {
          var index = this.$binarySearch(pos);
          var stack = index >= 0 ? this.$children[index].$getFunctionStack(pos)
                                 : [];
-         if (this.label) {
+         if (this.isFunction()) {
             stack.push(this);
          }
          return stack;
@@ -294,6 +313,24 @@ define('mode/r_scope_tree', function(require, exports, module) {
          }
 
          return null;
+      };
+
+      // Get arguments for functions in scope. This returns an array of objects,
+      // one object for each function, of the form:
+      //
+      // [{"name": fn, "args": ["arg1", "arg2", ...]}]
+      //
+      this.getFunctionsInScope = function(pos, tokenizer) {
+         var stack = this.$getFunctionStack(pos);
+         var objects = [];
+         for (var i = 0; i < stack.length; i++)
+         {
+            objects.push({
+               "name": stack[i].attributes.name,
+               "args": stack[i].attributes.args.slice()
+            });
+         }
+         return objects;
       };
 
       // Invalidates everything after pos, and possibly some stuff before.
