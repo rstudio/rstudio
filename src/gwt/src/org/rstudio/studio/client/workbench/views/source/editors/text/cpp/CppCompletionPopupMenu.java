@@ -204,13 +204,11 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
                   final int left = selectedItem.getAbsoluteLeft() 
                              + selectedItem.getOffsetWidth() + H_PAD;
                   final int top = selectedItem.getAbsoluteTop() + V_PAD;
-      
-                  // 
                   
                   // do we have enough room to the right? if not then
                   int roomRight = Window.getClientWidth() - left;
                   int maxWidth = roomRight - H_BUFFER;
-                  final boolean showLeft = roomRight <= MIN_WIDTH;
+                  final boolean showLeft = maxWidth < MIN_WIDTH;
                   if (showLeft)
                      maxWidth = selectedItem.getAbsoluteLeft() - H_BUFFER;
                   
