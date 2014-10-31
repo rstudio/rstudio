@@ -653,8 +653,8 @@ public class CompilerTest extends ArgProcessorTestBase {
       JavaResourceBase.createMockResource(
           "com/foo/SuperFromStaleInnerModule.gwt.xml",
           "<module>",
-          "<source path=''/>",
-          "<entry-point class='com.foo.SuperFromStaleInnerEntryPoint'/>",
+          "  <source path=''/>",
+          "  <entry-point class='com.foo.SuperFromStaleInnerEntryPoint'/>",
           "</module>");
 
   private MockJavaResource superFromStaleInnerEntryPointResource =
@@ -685,6 +685,37 @@ public class CompilerTest extends ArgProcessorTestBase {
           "package com.foo;",
           "interface InterfaceOne {",
           "  int m();",
+          "}");
+
+  private MockResource helloModuleResource =
+      JavaResourceBase.createMockResource(
+          "com/foo/Hello.gwt.xml",
+          "<module>",
+          "  <inherits name='com.google.gwt.user.User'/>",
+          "  <source path=''/>",
+          "  <set-property name='user.agent' value='safari'/>",
+          "  <entry-point class='com.foo.HelloEntryPoint'/>",
+          "</module>");
+
+  private MockJavaResource helloEntryPointResource =
+      JavaResourceBase.createMockJavaResource(
+          "com.foo.HelloEntryPoint",
+          "package com.foo;",
+          "import com.google.gwt.core.client.EntryPoint;",
+          "import com.google.gwt.event.dom.client.ClickEvent;",
+          "import com.google.gwt.event.dom.client.ClickHandler;",
+          "import com.google.gwt.user.client.Window;",
+          "import com.google.gwt.user.client.ui.Button;",
+          "import com.google.gwt.user.client.ui.RootPanel;",
+          "public class HelloEntryPoint implements EntryPoint {",
+          "  public void onModuleLoad() {",
+          "    Button b = new Button(\"Click me\", new ClickHandler() {",
+          "        public void onClick(ClickEvent event) {",
+          "          Window.alert(\"Hello, AJAX\");",
+          "        }",
+          "      });",
+          "    RootPanel.get().add(b);" ,
+          "  }",
           "}");
 
   private Set<String> emptySet = stringSet();
@@ -1117,6 +1148,24 @@ public class CompilerTest extends ArgProcessorTestBase {
     barFile = new File(relinkApplicationDir.getPath() + File.separator + "com.foo.SimpleModule"
         + File.separator + "bar.txt");
     assertTrue(barFile.exists());
+  }
+
+  /**
+   * Regression test for UnifyAST assertion failure problem in incremental SDM.
+   */
+  public void testIncrementalRecompile_unifyASTAssertionRegression()
+      throws UnableToCompleteException, IOException, InterruptedException {
+
+    CompilerOptions compilerOptions = new CompilerOptionsImpl();
+    List<MockResource> originalResources = Lists.newArrayList(helloEntryPointResource,
+        helloModuleResource);
+    JsOutputOption output = JsOutputOption.PRETTY;
+
+    // Compile the app with original files.
+    MinimalRebuildCache relinkMinimalRebuildCache = new MinimalRebuildCache();
+    File relinkApplicationDir = Files.createTempDir();
+    compileToJs(compilerOptions, relinkApplicationDir, "com.foo.Hello",
+        originalResources, relinkMinimalRebuildCache, emptySet, output);
   }
 
   private void checkIncrementalRecompile_noop(JsOutputOption output) throws UnableToCompleteException,
