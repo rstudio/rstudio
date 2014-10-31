@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsUtil;
@@ -153,8 +152,8 @@ public class CompletionRequester
             // Get variable completions from the current scope
             if (!inString)
             {
-               addScopedCompletions(token, newComp, "variable");
                addScopedArgumentCompletions(token, newComp);
+               addScopedCompletions(token, newComp, "variable");
             }
             
             // Get other completions
