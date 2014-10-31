@@ -1132,9 +1132,15 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
         switch (event.getNativeKeyCode()) {
           case KeyCodes.KEY_DOWN:
             display.moveSelectionDown();
+            if (isSuggestionListShowing()) {
+              event.preventDefault();
+            }
             break;
           case KeyCodes.KEY_UP:
             display.moveSelectionUp();
+            if (isSuggestionListShowing()) {
+              event.preventDefault();
+            }
             break;
           case KeyCodes.KEY_ENTER:
           case KeyCodes.KEY_TAB:
