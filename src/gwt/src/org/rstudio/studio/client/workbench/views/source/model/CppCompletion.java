@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 
 public class CppCompletion extends JavaScriptObject
 {
@@ -100,7 +101,7 @@ public class CppCompletion extends JavaScriptObject
       return this.typed_text;
    }-*/;
    
-   public native final String getText() /*-{
+   public native final JsArrayString getText() /*-{
       return this.text;
    }-*/;
 }

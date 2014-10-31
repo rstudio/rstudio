@@ -169,14 +169,14 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
                return;
             }
             
-            // screen no completion ext
+            // screen no completion text
             CppCompletion completion = completions_.get(index);
-            String text = completion.getText();
-            if (text == null)
+            if (completion.getText() == null)
             {
                toolTip_.setVisible(false);
                return;
             }
+            String text = completion.getText().get(0);
             
             // only do tooltips for functions and variables
             if (!completion.isFunction() && !completion.isVariable())
