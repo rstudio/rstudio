@@ -873,9 +873,19 @@ public class RCompletionManager implements CompletionManager
          
          // Move range to beginning of token
          input_.setFocus(true) ;
+         if (token_.endsWith("["))
+         {
+            input_.setSelection(new InputEditorSelection(
+                  selection_.getStart(),
+                  input_.getSelection().getEnd()
+            ));
+         }
+         else
+         {
          input_.setSelection(new InputEditorSelection(
                selection_.getStart().movePosition(-token_.length(), true),
                input_.getSelection().getEnd()));
+         }
 
          // Replace the token with the full completion
          input_.replaceSelection(value, true) ;

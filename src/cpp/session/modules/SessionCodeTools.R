@@ -205,45 +205,56 @@
    .Call("rs_getPendingInput")
 })
 
-utils:::rc.settings(files = TRUE)
-.rs.addJsonRpcHandler("get_completions", function(line,
-                                                  cursorPos,
-                                                  objectName,
-                                                  additionalArgs,
-                                                  excludeArgs)
+.rs.addFunction("getAnywhere", function(name)
 {
-   roxygen <- .rs.attemptRoxygenTagCompletion(line, cursorPos)
-   if (!is.null(roxygen))
-      return(roxygen)
-   
-   additionalArgs <- unlist(additionalArgs)
-   excludeArgs <- unlist(excludeArgs)
-   
-   ## If objName has been provided, try to get completions from that as well.
-   objCompletions <- NULL
-   if (!is.null(objectName) && objectName != "")
+   objects <- getAnywhere(name)
+   if (length(objects$objs))
    {
-      objects <- getAnywhere(objectName) ## TODO: better lookup
-      if (length(objects$objs))
+      objects$objs[[1]]
+   }
+   else
+   {
+      NULL
+   }
+})
+
+.rs.addFunction("getBracketCompletions", function(line,
+                                                  cursorPos)
+{
+   ## Try getting completions manually for `x[`, `x[[`
+   result <- list(
+      token = "",
+      results = character(),
+      packages = character(),
+      fguess = character()
+   )
+   
+   variable <- sub("^\\s*([a-zA-Z0-9.])\\[+\\s*$", "\\1", line, perl = TRUE)
+   object <- .rs.getAnywhere(variable)
+   if (!is.null(object))
+   {
+      names <- names(object)
+      if (length(names))
       {
-         object <- objects$objs[[1]]
-         nm <- names(object)
-         if (length(nm))
-         {
-            objCompletions <- list(
-               results = nm,
-               packages = character(length(nm))
-            )
-         }
+         quotedNames <- paste('"', names, '"', sep = "")
+         result$results <- quotedNames
+         result$packages <- setNames(
+            character(length(quotedNames)),
+            quotedNames
+         )
       }
    }
-   
+   result
+})
+
+.rs.addFunction("getInternalRCompletions", function(line, cursorPos)
+{
    utils:::.assignLinebuffer(line)
    utils:::.assignEnd(cursorPos)
-   token = utils:::.guessTokenFromLine()
+   token <- utils:::.guessTokenFromLine()
    utils:::.completeToken()
-   results = utils:::.retrieveCompletions()
-   status = utils:::rc.status()
+   results <- utils:::.retrieveCompletions()
+   status <- utils:::rc.status()
    
    packages = sub('^package:', '', .rs.which(results))
    
@@ -265,12 +276,104 @@ utils:::rc.settings(files = TRUE)
    
    packages.sorted = sub('^\\.GlobalEnv$', '', packages.sorted)
    
-   result <- list(token=token, 
-                  results=results.sorted, 
-                  packages=packages.sorted, 
-                  fguess=status$fguess)
+   list(token=token, 
+        results=results.sorted, 
+        packages=packages.sorted, 
+        fguess=status$fguess)
+})
+
+.rs.addFunction("getCompletionsFromObject", function(object, name)
+{
+   if (missing(name))
+      name <- ""
    
+   if (is.function(object))
+   {
+      list(
+         results = paste(names(formals(object)), "= "),
+         packages = rep.int(name, length(formals(object)))
+      )
+   }
+   else
+   {
+      list(
+         results = names(object),
+         packages = rep.int(name, length(names(object)))
+      )
+   }
+})
+
+.rs.addFunction("getQuotedCompletion", function(line)
+{
+   name <- gsub("^\\s*([`'\"])(.*?)\\1.*", "\\2", line, perl = TRUE)
+   object <- .rs.getAnywhere(name)
+   .rs.getCompletionsFromObject(object, name)
+})
+
+utils:::rc.settings(files = TRUE)
+.rs.addJsonRpcHandler("get_completions", function(line,
+                                                  cursorPos,
+                                                  objectName,
+                                                  additionalArgs,
+                                                  excludeArgs)
+{
+   roxygen <- .rs.attemptRoxygenTagCompletion(line, cursorPos)
+   if (!is.null(roxygen))
+      return(roxygen)
+   
+   if (missing(objectName))
+      objectName <- NULL
+   
+   if (missing(additionalArgs))
+      additionalArgs <- NULL
+   
+   if (missing(excludeArgs))
+      excludeArgs <- NULL
+   
+   additionalArgs <- unlist(additionalArgs)
+   excludeArgs <- unlist(excludeArgs)
+   
+   ## If objName has been provided, try to get completions from that as well.
+   objCompletions <- NULL
+   if (!is.null(objectName) && objectName != "")
+   {
+      object <- .rs.getAnywhere(objectName)
+      if (length(object))
+      {
+         object <- objects$objs[[1]]
+         nm <- names(object)
+         if (length(nm))
+         {
+            objCompletions <- list(
+               results = nm,
+               packages = character(length(nm))
+            )
+         }
+      }
+   }
+   
+   if (grepl("\\[\\s*$", line, perl = TRUE))
+   {
+      result <- .rs.getBracketCompletions(line, cursorPos)
+   }
+   else if (grepl("^\\s*([`'\"]).*?\\1.*$", line, perl = TRUE))
+   {
+      result <- .rs.getQuotedCompletion(line)
+   }
+   else
+   {
+      result <- .rs.getInternalRCompletions(line, cursorPos)
+   }
+   
+   if (is.null(result$fguess))
+   {
+      result$fguess <- character()
+   }
+   
+   token <- gsub(".*[\\s\\[\\(\\{]", "", line, perl = TRUE)
    n <- nchar(token)
+   result$token <- token
+   
    if (!is.null(objCompletions))
    {
       keep <- .rs.startsWith(objCompletions$results, token)
