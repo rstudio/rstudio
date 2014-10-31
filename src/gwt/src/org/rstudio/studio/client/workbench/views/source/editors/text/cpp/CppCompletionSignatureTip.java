@@ -27,48 +27,61 @@ public class CppCompletionSignatureTip extends CppCompletionToolTip
       completion_ = completion;
       docDisplay_ = docDisplay;
       
-      // set initial text
-      setText(completion.getText().get(0));
-      
+      // save cursor bounds
+      cursorBounds_ = docDisplay_.getCursorBounds();
+  
       // create an anchored selection to track editing
       Position start = docDisplay_.getSelectionStart();
       start = Position.create(start.getRow(), start.getColumn() - 1);
       Position end = docDisplay_.getSelectionEnd();
       end = Position.create(end.getRow(), end.getColumn() + 1);
       anchor_ = docDisplay_.createAnchoredSelection(start, end);
-      
-      // get the cursor position  
-      final Rectangle cBounds = docDisplay_.getCursorBounds();
-      
+     
       // set the max width
-      setMaxWidth(Window.getClientWidth() - 100);
+      setMaxWidth(Window.getClientWidth() - 200);
       
-      setPopupPositionAndShow(new PositionCallback() {
-         @Override
-         public void setPosition(int offsetWidth, int offsetHeight)
-         {
-            // determine left and top
-            final int H_PAD = 3;
-            final int V_PAD = 5;
-            final int MARGIN = 50;
-            int left = cBounds.getLeft() + H_PAD;
-            int top = cBounds.getTop() - offsetHeight - V_PAD;
-            
-            // do we have enough horizontal space? if not then shift left
-            int spaceRight = Window.getClientWidth() - 
-                             offsetWidth - left - MARGIN;
-            if (spaceRight < 0)
-               left += spaceRight;
-            
-            // do we have enough vertical space? if not then show at bottom
-            int spaceTop = top - offsetHeight - MARGIN;
-            if (spaceTop < 0)
-               top = cBounds.getTop() + cBounds.getHeight() + (V_PAD * 2);
-            
-            setPopupPosition(left, top);
-            
-         }
-      });
+      // set initial text
+      setTextIndex(0);
+   }
+   
+   private void setTextIndex(int index)
+   {
+      if (index >= 0 && index < completion_.getText().length())
+      {
+         currentTextIndex_ = index;
+         
+         setText(completion_.getText().get(currentTextIndex_));
+         
+         setPopupPositionAndShow(new PositionCallback() {
+            @Override
+            public void setPosition(int offsetWidth, int offsetHeight)
+            {
+               // determine left and top
+               final int H_PAD = 3;
+               final int V_PAD = 5;
+               final int MARGIN = 50;
+               int left = cursorBounds_.getLeft() + H_PAD;
+               int top = cursorBounds_.getTop() - offsetHeight - V_PAD;
+               
+               // do we have enough horizontal space? if not then shift left
+               int spaceRight = Window.getClientWidth() - 
+                                offsetWidth - left - (3*MARGIN);
+               if (spaceRight < 0)
+                  left += spaceRight;
+               
+               // do we have enough vertical space? if not then show at bottom
+               int spaceTop = top - offsetHeight - MARGIN;
+               if (spaceTop < 0)
+               {
+                  top = cursorBounds_.getTop() + 
+                        cursorBounds_.getHeight() 
+                        + (V_PAD * 2);
+               }
+               
+               setPopupPosition(left, top); 
+            }
+         }); 
+      }
    }
    
    public static void hideAll()
@@ -110,11 +123,11 @@ public class CppCompletionSignatureTip extends CppCompletionToolTip
                      break;
                   case KeyCodes.KEY_DOWN:
                      e.cancel();
-                     //moveSelectionDown();
+                     setTextIndex(currentTextIndex_ + 1);
                      break;
                   case KeyCodes.KEY_UP:
                      e.cancel();
-                     //moveSelectionUp();
+                     setTextIndex(currentTextIndex_ - 1);
                      break;
                }
                
@@ -140,8 +153,9 @@ public class CppCompletionSignatureTip extends CppCompletionToolTip
       });
    }
    
-   @SuppressWarnings("unused")
    private final CppCompletion completion_;
+   private int currentTextIndex_;
+   private final Rectangle cursorBounds_;
    private final AnchoredSelection anchor_;
    private final DocDisplay docDisplay_;
    private HandlerRegistration nativePreviewReg_;
