@@ -29,7 +29,7 @@ import com.google.gwt.resources.css.ast.CssNoFlip;
 import com.google.gwt.resources.css.ast.CssPageRule;
 import com.google.gwt.resources.css.ast.CssProperty;
 import com.google.gwt.resources.css.ast.CssProperty.DotPathValue;
-import com.google.gwt.resources.css.ast.CssProperty.StringValue;
+import com.google.gwt.resources.css.ast.CssProperty.FunctionValue;
 import com.google.gwt.resources.css.ast.CssProperty.Value;
 import com.google.gwt.resources.css.ast.CssRule;
 import com.google.gwt.resources.css.ast.CssSelector;
@@ -595,9 +595,18 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
                 String.format(VALUE_WITH_SUFFIX, dotPathValue.getPath(), dotPathValue.getSuffix());
           }
         }
+      } else if (value.isFunctionValue() != null) {
+        FunctionValue functionValue = value.isFunctionValue();
+
+        // process the argument list values
+        String arguments = printValuesList(functionValue.getValues().getValues(), insideUrlNode);
+
+        expression = unescape(functionValue.getName()) + "(" + arguments + ")";
       }
 
-      if (value instanceof StringValue) {
+      // don't escape content of quoted string and don't escape isFunctionValue because the
+      // arguments and the name of the functions are already unescaped if needed.
+      if (value.isStringValue() != null || value.isFunctionValue() != null) {
         builder.append(expression);
       } else {
         builder.append(unescape(expression));

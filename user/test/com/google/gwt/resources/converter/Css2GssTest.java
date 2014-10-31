@@ -16,6 +16,9 @@
 package com.google.gwt.resources.converter;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.thirdparty.common.css.SourceCode;
+import com.google.gwt.thirdparty.common.css.compiler.ast.GssParser;
+import com.google.gwt.thirdparty.common.css.compiler.ast.GssParserException;
 
 import junit.framework.TestCase;
 
@@ -45,11 +48,12 @@ public class Css2GssTest extends TestCase {
   }
 
   public void testLenientFlag() throws Exception {
-    assertFileContentEqualsAfterConversion("badRule.css", "badRule.gss", true);
+    assertFileContentEqualsAfterConversionAndIsGssCompatible("badRule.css", "badRule.gss", true);
   }
 
   public void testExternalMissingComma() throws Exception {
-    assertFileContentEqualsAfterConversion("external-bug.css", "external-bug.gss", true);
+    assertFileContentEqualsAfterConversionAndIsGssCompatible("external-bug.css", "external-bug.gss",
+        true);
   }
 
   public void testSprite() throws Exception {
@@ -61,11 +65,12 @@ public class Css2GssTest extends TestCase {
   }
 
   public void testExternalBug() throws Exception {
-    assertFileContentEqualsAfterConversion("external-bug.css", "external-bug.gss", true);
+    assertFileContentEqualsAfterConversionAndIsGssCompatible("external-bug.css", "external-bug.gss",
+        true);
   }
 
   public void testUndefinedConstant() throws Exception {
-    assertFileContentEqualsAfterConversion(
+    assertFileContentEqualsAfterConversionAndIsGssCompatible(
         "undefined-constants.css", "undefined-constants.gss", true);
   }
 
@@ -80,30 +85,38 @@ public class Css2GssTest extends TestCase {
   }
 
   public void testConstants() throws Exception {
-    assertFileContentEqualsAfterConversion(
+    assertFileContentEqualsAfterConversionAndIsGssCompatible(
         "constants.css", "constants.gss", true);
   }
 
   public void testInvalidConstantName() throws IOException, UnableToCompleteException {
-    assertFileContentEqualsAfterConversion(
+    assertFileContentEqualsAfterConversionAndIsGssCompatible(
         "invalidConstantName.css", "invalidConstantName.gss", true);
   }
 
   public void testEscaping() throws IOException, UnableToCompleteException {
-    assertFileContentEqualsAfterConversion("escape.css", "escape.gss", true);
+    assertFileContentEqualsAfterConversionAndIsGssCompatible("escape.css", "escape.gss", true);
   }
 
   private void assertFileContentEqualsAfterConversion(String inputCssFile, String expectedGssFile)
       throws IOException, UnableToCompleteException {
-    assertFileContentEqualsAfterConversion(inputCssFile, expectedGssFile, false);
+    assertFileContentEqualsAfterConversionAndIsGssCompatible(inputCssFile, expectedGssFile, false);
   }
 
-  private void assertFileContentEqualsAfterConversion(String inputCssFile,
+  private void assertFileContentEqualsAfterConversionAndIsGssCompatible(String inputCssFile,
       String expectedGssFile, boolean lenient) throws IOException, UnableToCompleteException {
     URL resource = Css2GssTest.class.getResource(inputCssFile);
     InputStream stream = Css2GssTest.class.getResourceAsStream(expectedGssFile);
     String convertedGss = new Css2Gss(resource, lenient).toGss();
     String gss = IOUtils.toString(stream, "UTF-8");
     Assert.assertEquals(gss, convertedGss);
+
+    // assert the convertedGss is compatible with GSS
+    try {
+      new GssParser(new SourceCode("[conversion of " + inputCssFile + "]", convertedGss)).parse();
+    } catch (GssParserException e) {
+      e.printStackTrace();
+      fail("The conversion produces invalid GSS code.");
+    }
   }
 }

@@ -7,3 +7,11 @@
 .cellTableHeader {
   padding: HEADER_VERTICAL_PADDING HEADER_HORIZONTAL_PADDING;
 }
+
+@def TOP top;
+
+.foo {
+  /* PD94 should not be converted to lower case) */
+  background-image: url("data:image/svg+xml;base64,PD94basdfasdfasdf");
+  background: -webkit-gradient(LINEAR, LEFT TOP, RIGHT TOP,from(rgba(255,255,255,0)),to(#fff));
+}

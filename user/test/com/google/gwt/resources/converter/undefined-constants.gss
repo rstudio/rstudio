@@ -8,3 +8,9 @@
 .cellTableHeader {
   padding: header_vertical_padding header_horizontal_padding;
 }
+@def TOP top;
+
+.foo {
+  background-image: url(data:image/svg+xml;base64,PD94basdfasdfasdf);
+  background: -webkit-gradient(linear, left TOP, right TOP, from(rgba(255, 255, 255, 0)), to(#fff));
+}

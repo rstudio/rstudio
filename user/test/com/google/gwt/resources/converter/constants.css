@@ -65,3 +65,16 @@
 @def myConstant7 15px;
 @eval myEval7 com.foo.bar.foo();
 @url myUrl7 imageName;
+
+/* test contant replacement inside rules */
+@def width 15px;
+@def color 255;
+@def white #fff;
+@def _left left;
+@def _right right;
+
+.foo {
+  width: width;
+  background: myUrl7;
+  background-image: \-webkit-gradient(linear, _left top, _right top, from(rgba(color, color, color, 0)), to(white));
+}
