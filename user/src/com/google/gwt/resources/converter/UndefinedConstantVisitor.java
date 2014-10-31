@@ -30,6 +30,7 @@ import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -114,7 +115,7 @@ public class UndefinedConstantVisitor extends CssVisitor {
           treeLogger.log(Type.WARN, "turning '" + upperCaseString +
               "' to lower case. This is probably not what you wanted here in the " +
               "first place!");
-          return new IdentValue(upperCaseString.toLowerCase());
+          return new IdentValue(upperCaseString.toLowerCase(Locale.US));
         } else {
           throw new Css2GssConversionException("Found undefined constant in input. "
               + cssPropertyName + "' from rule '" + selector + "' undefined constant: " +

@@ -132,7 +132,7 @@ public class DefCollectorVisitor extends CssVisitor {
 
     String validName = INVALID_CHAR.matcher(output).replaceAll("_");
 
-    if (validName.length() > output.length()) {
+    if (!validName.equals(output)) {
       treeLogger.log(Type.WARN, "Invalid characters detected in [" + camelCase + "]. They have " +
           "been replaced [" + validName + "]");
     }
