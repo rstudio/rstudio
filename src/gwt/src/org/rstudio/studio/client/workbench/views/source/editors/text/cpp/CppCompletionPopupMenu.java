@@ -160,8 +160,14 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
                return;
             }
                
-            // screen unable to find menu
+            // screen unable to find menu or selected item
             final MenuItem selectedItem = event.getSelectedItem();
+            if (selectedItem == null)
+            {
+               toolTip_.setVisible(false);
+               return;
+            }
+            
             int index = menuBar_.getItemIndex(selectedItem);
             if (index == -1)
             {
