@@ -60,16 +60,27 @@ public class CppCompletionSignatureTip extends CppCompletionToolTip
                final int H_PAD = 3;
                final int V_PAD = 5;
                final int MARGIN = 50;
-               int left = cursorBounds_.getLeft() + H_PAD;
-               int top = cursorBounds_.getTop() - offsetHeight - V_PAD;
                
-               // do we have enough horizontal space? if not then shift left
-               int spaceRight = Window.getClientWidth() - 
-                                offsetWidth - left - (3*MARGIN);
-               if (spaceRight < 0)
-                  left += spaceRight;
+               // we only calculate left one time
+               if (left_ == null)
+               {
+                  int left = cursorBounds_.getLeft() + H_PAD;
+                  
+                  // do we have enough horizontal space? if not then shift left
+                  int spaceRight = Window.getClientWidth() - 
+                                   offsetWidth - left - (3*MARGIN);
+                  if (spaceRight < 0)
+                     left += spaceRight;
+                  
+                  left_ = left;
+                  
+                  // update max width
+                  setMaxWidth(Window.getClientWidth() - left_ - MARGIN);
+                  
+               }
                
                // do we have enough vertical space? if not then show at bottom
+               int top = cursorBounds_.getTop() - offsetHeight - V_PAD;
                int spaceTop = top - offsetHeight - MARGIN;
                if (spaceTop < 0)
                {
@@ -78,7 +89,8 @@ public class CppCompletionSignatureTip extends CppCompletionToolTip
                         + (V_PAD * 2);
                }
                
-               setPopupPosition(left, top); 
+               
+               setPopupPosition(left_, top); 
             }
          }); 
       }
@@ -155,6 +167,7 @@ public class CppCompletionSignatureTip extends CppCompletionToolTip
    
    private final CppCompletion completion_;
    private int currentTextIndex_;
+   private Integer left_ = null;
    private final Rectangle cursorBounds_;
    private final AnchoredSelection anchor_;
    private final DocDisplay docDisplay_;
