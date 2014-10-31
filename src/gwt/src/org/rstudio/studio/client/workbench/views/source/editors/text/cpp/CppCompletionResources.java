@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.ImageResource;
 
 
 public interface CppCompletionResources extends ClientBundle
@@ -25,13 +26,12 @@ public interface CppCompletionResources extends ClientBundle
    public static interface Styles extends CssResource
    {
       String toolTip();
+      String pagingWidget();
    }
 
   
    @Source("CppCompletion.css")
    Styles styles();
-   
-  
    
    public static CppCompletionResources INSTANCE = 
       (CppCompletionResources)GWT.create(CppCompletionResources.class) ;

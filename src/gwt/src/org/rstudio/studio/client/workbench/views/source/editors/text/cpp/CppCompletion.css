@@ -1,4 +1,7 @@
 
+
+@external gwt-Image, gwt-Label;
+
 .toolTip {
    font-size: 11px;
    color: #000023;
@@ -7,4 +10,13 @@
    border: 1px solid #ccc;
    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
    -webkit-box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.pagingWidget {
+   margin-right: 8px;
+}
+
+.pagingWidget .gwt-Label {
+   font-style: italic;
+   white-space: nowrap;
 }

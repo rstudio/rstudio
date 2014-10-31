@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 public class CppCompletionToolTip extends PopupPanel
 {
@@ -40,6 +41,11 @@ public class CppCompletionToolTip extends PopupPanel
    {
       if (!text.equals(label_.getText()))
          label_.setText(text);
+   }
+   
+   public void addLeftWidget(Widget widget)
+   {
+      panel_.insert(widget, 0);
    }
    
    public void setMaxWidth(int maxWidth)

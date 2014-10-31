@@ -17,6 +17,9 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Label;
 
 public class CppCompletionSignatureTip extends CppCompletionToolTip
 {
@@ -40,8 +43,23 @@ public class CppCompletionSignatureTip extends CppCompletionToolTip
       // set the max width
       setMaxWidth(Window.getClientWidth() - 200);
       
+      // add paging widget if necessary
+      if (completion.getText().length() > 1)
+         addPagingWidget();
+      
       // set initial text
       setTextIndex(0);
+   }
+   
+   private void addPagingWidget()
+   {
+      HorizontalPanel panel = new HorizontalPanel();
+      panel.setStyleName(RES.styles().pagingWidget());
+      pagingLabel_ = new Label();
+      
+      panel.add(pagingLabel_);
+   
+      addLeftWidget(panel);
    }
    
    private void setTextIndex(int index)
@@ -49,6 +67,12 @@ public class CppCompletionSignatureTip extends CppCompletionToolTip
       if (index >= 0 && index < completion_.getText().length())
       {
          currentTextIndex_ = index;
+         
+         if (pagingLabel_ != null)
+         {
+            pagingLabel_.setText("(" + (index+1) + " of " + 
+                                 completion_.getText().length() + ")");
+         }
          
          setText(completion_.getText().get(currentTextIndex_));
          
@@ -167,6 +191,7 @@ public class CppCompletionSignatureTip extends CppCompletionToolTip
    
    private final CppCompletion completion_;
    private int currentTextIndex_;
+   private Label pagingLabel_;
    private Integer left_ = null;
    private final Rectangle cursorBounds_;
    private final AnchoredSelection anchor_;
@@ -175,4 +200,7 @@ public class CppCompletionSignatureTip extends CppCompletionToolTip
    
    private static ArrayList<CppCompletionSignatureTip> allTips_ = 
          new ArrayList<CppCompletionSignatureTip>();
+   
+   private static final CppCompletionResources RES = 
+                                       CppCompletionResources.INSTANCE;
 }
