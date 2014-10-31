@@ -66,6 +66,7 @@ public class CompletionRequester
                      final String line, 
                      final int pos,
                      final String objectName,
+                     final JsArrayString additionalArgs,
                      final boolean implicit,
                      final ServerRequestCallback<CompletionResult> callback)
    {
@@ -98,7 +99,7 @@ public class CompletionRequester
          }
       }
       
-      doGetCompletions(line, pos, objectName, new ServerRequestCallback<Completions>()
+      doGetCompletions(line, pos, objectName, additionalArgs, new ServerRequestCallback<Completions>()
       {
          @Override
          public void onError(ServerError error)
@@ -328,6 +329,7 @@ public class CompletionRequester
          String line,
          int pos,
          String objectName,
+         JsArrayString additionalArgs,
          ServerRequestCallback<Completions> requestCallback)
    {
       int optionsStartOffset;
@@ -338,7 +340,7 @@ public class CompletionRequester
       }
       else
       {
-         server_.getCompletions(line, pos, objectName, requestCallback);
+         server_.getCompletions(line, pos, objectName, additionalArgs, requestCallback);
       }
    }
 

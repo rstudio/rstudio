@@ -55,6 +55,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSo
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.EditSession;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RInfixData;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
@@ -573,19 +574,20 @@ public class RCompletionManager implements CompletionManager
       
       // Try to see if there's an object name we should use to supplement
       // completions
-      String objectName = null;
+      RInfixData infixData = RInfixData.create();
       AceEditor editor = (AceEditor) docDisplay_;
       if (editor != null)
       {
          CodeModel codeModel = editor.getSession().getMode().getCodeModel();
          TokenCursor cursor = codeModel.getTokenCursor();
          if (cursor.moveToPosition(input_.getCursorPosition()))
-            objectName = codeModel.getDataNameFromInfixChain(cursor);
+            infixData = codeModel.getDataFromInfixChain(cursor);
       }
       
       requester_.getCompletions(line,
                                 line.length(),
-                                objectName,
+                                infixData.getDataName(),
+                                infixData.getAdditionalArgs(),
                                 implicit,
                                 context_);
 

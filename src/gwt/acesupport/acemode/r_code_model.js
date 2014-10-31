@@ -489,11 +489,85 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       return /\binfix\b/.test(token.type);
    }
 
-   this.getDataNameFromInfixChain = function(tokenCursor)
+   // If the token cursor lies within an infix chain, try to retrieve:
+   // 1. The data object name, and
+   // 2. Any custom variable names (e.g. set through 'mutate', 'summarise')
+   this.getDataFromInfixChain = function(tokenCursor)
    {
-      if (this.moveToDataObjectFromInfixChain(tokenCursor))
-         return tokenCursor.currentValue();
-      return "";
+      var args = this.moveToDataObjectFromInfixChain(tokenCursor);
+      var name = "";
+      if (args !== false)
+      {
+         name = tokenCursor.currentValue();
+      }
+      else
+      {
+         args = [];
+      }
+
+      return {
+         "name": name,
+         "args": args
+      };
+      
+   };
+
+   var $dplyrMutaterVerbs = [
+      "mutate", "summarise", "summarize", "rename", "transmute"
+   ];
+
+   var addDplyrArguments = function(cursor, args, limit)
+   {
+      if (!cursor.moveToNextToken())
+         return false;
+
+      if (cursor.currentValue() !== "(")
+         return false;
+
+      if (!cursor.moveToNextToken())
+         return false;
+
+      var maybeAdd = cursor.currentValue();
+      if (!cursor.moveToNextToken())
+         return false;
+
+      if (cursor.currentValue() === "=")
+         args.push(maybeAdd);
+
+      do
+      {
+         if (cursor.currentValue() === ")")
+            break;
+         
+         if ((cursor.$row > limit.$row) ||
+             (cursor.$row === limit.$row && cursor.$offset >= limit.$offset))
+            break;
+         
+         if (cursor.fwdToMatchingToken())
+         {
+            if (!cursor.moveToNextToken())
+               break;
+            continue;
+         }
+
+         if (tokenAtCursorEndsWithComma(cursor))
+         {
+            if (!cursor.moveToNextToken())
+               return false;
+
+            maybeAdd = cursor.currentValue();
+            if (!cursor.moveToNextToken())
+               return false;
+
+            if (cursor.currentValue() === "=")
+               args.push(maybeAdd);
+
+         }
+         
+      } while (cursor.moveToNextToken());
+
+      return true;
+      
    };
 
    // Attempt to move a token cursor from a function call within
@@ -520,6 +594,9 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       // Ensure it's a '%%' operator (allow for other pipes)
       if (!pInfix(clone.currentToken()))
          return false;
+
+      // Fill custom args
+      var args = [];
       
       // Repeat the walk -- keep walking as we can find '%%'
       while (true)
@@ -528,7 +605,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          {
             tokenCursor.$row = 0;
             tokenCursor.$offset = 0;
-            return true;
+            return args;
          }
 
          // Move over parens to identifier if necessary
@@ -540,6 +617,16 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          // Move off of '%>%' (or '(') onto identifier
          if (!clone.moveToPreviousToken())
             return false;
+
+         // If this identifier is a dplyr 'mutate'r, then parse
+         // those variables.
+         var value = clone.currentValue();
+         if ($dplyrMutaterVerbs.some(function(x) {
+            return x === value;
+         }))
+         {
+            addDplyrArguments(clone.cloneCursor(), args, tokenCursor);
+         }
          
          // Move off of identifier, on to new infix operator.
          // Note that we may already be at the start of the document,
@@ -550,7 +637,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             {
                tokenCursor.$row = 0;
                tokenCursor.$offset = 0;
-               return true;
+               return args;
             }
             return false;
          }
@@ -566,7 +653,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
       tokenCursor.$row = clone.$row;
       tokenCursor.$offset = clone.$offset;
-      return true;
+      return args;
    };
 
    function addForInToken(tokenCursor, scopedVariables)
