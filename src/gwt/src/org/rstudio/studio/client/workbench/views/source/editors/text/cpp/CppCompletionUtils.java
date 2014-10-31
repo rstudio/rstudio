@@ -102,7 +102,7 @@ public class CppCompletionUtils
       }
       
       // minimum character threshold
-      else if ((inputCol - col) >= (explicit ? 1 : 5))
+      else if ((inputCol - col) >= (explicit ? 1 : 5) && ch != '"')
       {
          return new CompletionPosition(startPos);
       }

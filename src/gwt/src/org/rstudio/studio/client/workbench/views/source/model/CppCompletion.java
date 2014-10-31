@@ -97,6 +97,23 @@ public class CppCompletion extends JavaScriptObject
       return kind < FIRST_INVALID && kind > LAST_INVALID;
    }
    
+   
+   public final boolean hasParameters()
+   {
+      if (isFunction())
+      {
+         JsArrayString textEntries = getText();
+         for (int i = 0; i < textEntries.length(); i++)
+         {
+            String text = textEntries.get(i);
+            if (!text.endsWith("()") && !text.endsWith("() const"))
+               return true;
+         }
+      }
+      
+      return false;
+   }
+   
    public native final String getTypedText() /*-{
       return this.typed_text;
    }-*/;

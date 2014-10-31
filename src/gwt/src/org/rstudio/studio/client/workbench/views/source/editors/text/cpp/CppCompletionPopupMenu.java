@@ -205,38 +205,43 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
                              + selectedItem.getOffsetWidth() + H_PAD;
                   final int top = selectedItem.getAbsoluteTop() + V_PAD;
       
-                  // do we have enough room to the right?
+                  // 
+                  
+                  // do we have enough room to the right? if not then
                   int roomRight = Window.getClientWidth() - left;
-                  if (roomRight >= MIN_WIDTH)
+                  int maxWidth = roomRight - H_BUFFER;
+                  final boolean showLeft = roomRight <= MIN_WIDTH;
+                  if (showLeft)
+                     maxWidth = selectedItem.getAbsoluteLeft() - H_BUFFER;
+                  
+                  if (toolTip_.getAbsoluteLeft() != left ||
+                      toolTip_.getAbsoluteTop() != top)
                   {
-                     if (toolTip_.getAbsoluteLeft() != left ||
-                         toolTip_.getAbsoluteTop() != top)
-                     {
-                        // cap the width such that there are still H_BUFFER pixels
-                        // of whitespace remaining
-                        toolTip_.setMaxWidth(roomRight - H_BUFFER);
-                        
-                        toolTip_.setPopupPositionAndShow(new PositionCallback(){
-   
-                           @Override
-                           public void setPosition(int offsetWidth,
-                                                   int offsetHeight)
-                           {
-                              toolTip_.setPopupPosition(left, top);
-                           }
-                        });
-                     }
-                     else
-                     {
-                        if (!toolTip_.isVisible())
-                           toolTip_.setVisible(true);
-                     }
+                     toolTip_.setMaxWidth(maxWidth);  
+                     toolTip_.setPopupPositionAndShow(new PositionCallback(){
 
+                        @Override
+                        public void setPosition(int offsetWidth,
+                                                int offsetHeight)
+                        {
+                           // if we are showing left then adjust
+                           int adjustedLeft = left;
+                           if (showLeft)
+                           {
+                              adjustedLeft = selectedItem.getAbsoluteLeft() -
+                                             offsetWidth - H_PAD;
+                           }
+                           toolTip_.setPopupPosition(adjustedLeft, top);
+                        }
+                     });
                   }
                   else
                   {
-                     toolTip_.setVisible(false);
+                     if (!toolTip_.isVisible())
+                        toolTip_.setVisible(true);
                   }
+
+                  
                }
             });
          }
