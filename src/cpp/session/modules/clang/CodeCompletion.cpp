@@ -33,13 +33,24 @@ namespace clang {
 
 namespace {
 
+
+std::string friendlyCompletionText(std::string text)
+{
+   boost::algorithm::replace_all(
+     text,
+     "std::basic_string<char, std::char_traits<char>, std::allocator<char> >",
+     "std::string");
+
+   return text;
+}
+
 core::json::Object toJson(const CodeCompleteResult& result)
 {
    json::Object resultJson;
    resultJson["kind"] = result.getKind();
    resultJson["typed_text"] = result.getTypedText();
    json::Array textJson;
-   textJson.push_back(result.getText());
+   textJson.push_back(friendlyCompletionText(result.getText()));
    resultJson["text"] = textJson;
    return resultJson;
 }
@@ -85,7 +96,7 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
             {
                json::Object& res = completionsJson.back().get_obj();
                json::Array& text = res["text"].get_array();
-               text.push_back(result.getText());
+               text.push_back(friendlyCompletionText(result.getText()));
             }
             else
             {
