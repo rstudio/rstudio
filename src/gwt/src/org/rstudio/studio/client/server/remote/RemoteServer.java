@@ -565,28 +565,45 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "print_cpp_completions", params, requestCallback);
    }
    
+   public void isFunction(
+         String functionString,
+         String envString,
+         ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(functionString));
+      params.set(1, new JSONString(envString));
+      sendRequest(RPC_SCOPE, IS_FUNCTION, params, requestCallback);
+   }
+   
    public void getCompletions(
-         String line,
-         int cursorPos,
-         String objectName,
+         String content,
+         String token,
+         String assocData,
+         int dataType,
+         int numCommas,
+         String chainObjectName,
          JsArrayString additionalArgs,
          JsArrayString excludeArgs,
          ServerRequestCallback<Completions> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(line));
-      params.set(1, new JSONNumber(cursorPos));
-      params.set(2, new JSONString(objectName));
+      params.set(0, new JSONString(content));
+      params.set(1, new JSONString(token));
+      params.set(2, new JSONString(assocData));
+      params.set(3, new JSONNumber(dataType));
+      params.set(4, new JSONNumber(numCommas));
+      params.set(5, new JSONString(chainObjectName));
       
       JSONArray additionalArgsJson = new JSONArray();
       for (int i = 0; i < additionalArgs.length(); i++)
          additionalArgsJson.set(i, new JSONString(additionalArgs.get(i)));
-      params.set(3, additionalArgsJson);
+      params.set(6, additionalArgsJson);
       
       JSONArray excludeArgsJson = new JSONArray();
       for (int i = 0; i < excludeArgs.length(); i++)
          excludeArgsJson.set(i, new JSONString(excludeArgs.get(i)));
-      params.set(4, excludeArgsJson);
+      params.set(7, excludeArgsJson);
       
       sendRequest(RPC_SCOPE, 
                   GET_COMPLETIONS, 
@@ -3720,6 +3737,7 @@ public class RemoteServer implements Server
    private static final String INTERRUPT = "interrupt";
    private static final String ABORT = "abort";
    private static final String GET_COMPLETIONS = "get_completions";
+   private static final String IS_FUNCTION = "is_function";
    private static final String GET_HELP_AT_CURSOR = "get_help_at_cursor";
 
    private static final String PROCESS_START = "process_start";

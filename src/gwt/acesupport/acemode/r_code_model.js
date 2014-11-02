@@ -663,19 +663,30 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    //     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
    this.moveToDataObjectFromInfixChain = function(tokenCursor)
    {
-      // Move to an opening paren
+      // Find the outermost opening paren
       var clone = tokenCursor.cloneCursor();
-      if (clone.currentValue() !== "(")
-         if (!clone.findOpeningParen())
+
+      while (clone.findOpeningParen())
+      {
+         if (!clone.moveToPreviousToken())
             return false;
+      }
 
-      // Move off of opening paren
+      // Move off of identifier
       if (!clone.moveToPreviousToken())
          return false;
 
-      // Move onto '%%'
-      if (!clone.moveToPreviousToken())
-         return false;
+      // Move over '::' qualifiers
+      if (clone.currentValue() === ":")
+      {
+         while (clone.currentValue() === ":")
+            if (!clone.moveToPreviousToken())
+               return false;
+
+         // Move off of identifier
+         if (!clone.moveToPreviousToken())
+            return false;
+      }
 
       // Ensure it's a '%%' operator (allow for other pipes)
       if (!pInfix(clone.currentToken()))
@@ -732,11 +743,13 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          }
 
          // Move over '::' qualifiers
-         while (clone.currentValue() === "::")
+         if (clone.currentValue() === ":")
          {
-            if (!clone.moveToPreviousToken())
-               return false;
+            while (clone.currentValue() === ":")
+               if (!clone.moveToPreviousToken())
+                  return false;
 
+            // Move off of identifier
             if (!clone.moveToPreviousToken())
                return false;
          }

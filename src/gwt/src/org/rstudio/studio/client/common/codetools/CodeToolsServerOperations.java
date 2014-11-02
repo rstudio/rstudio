@@ -25,12 +25,20 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
                                                    CodeSearchServerOperations,
                                                    CppServerOperations
 {
+   void isFunction(
+         String functionName,
+         String envName,
+         ServerRequestCallback<Boolean> result);
+   
    void getCompletions(
-         String line,
-         int cursorPos,
-         String objectName,
-         JsArrayString additionalArgs,
-         JsArrayString excludeArgs,
+         String content,
+         String token,
+         String assocData,
+         int dataType,
+         int numCommas,
+         String chainObjectName,
+         JsArrayString chainAdditionalArgs,
+         JsArrayString chainExcludeArgs,
          ServerRequestCallback<Completions> completions);
 
    void getHelpAtCursor(

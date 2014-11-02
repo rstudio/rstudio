@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayBoolean;
 import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.core.client.StringUtil;
@@ -46,7 +47,7 @@ import java.util.Set;
 public class CompletionRequester
 {
    private final CodeToolsServerOperations server_ ;
-   private final NavigableSourceEditor editor_;
+   private final NavigableSourceEditor editor_ ;
 
    private String cachedLinePrefix_ ;
    private CompletionResult cachedResult_ ;
@@ -63,19 +64,22 @@ public class CompletionRequester
    }
    
    public void getCompletions(
-                     final String line, 
-                     final int pos,
-                     final String objectName,
-                     final JsArrayString additionalArgs,
-                     final JsArrayString excludeArgs,
-                     final boolean implicit,
-                     final ServerRequestCallback<CompletionResult> callback)
+         final String content,
+         final String token,
+         final String assocData,
+         int dataType,
+         int numCommas,
+         final String chainDataName,
+         final JsArrayString chainAdditionalArgs,
+         final JsArrayString chainExcludeArgs,
+         final boolean implicit,
+         final ServerRequestCallback<CompletionResult> callback)
    {
-      if (cachedResult_ != null && cachedResult_.guessedFunctionName == null)
+      if (token != null && cachedResult_ != null && cachedResult_.guessedFunctionName == null)
       {
-         if (line.substring(0, pos).startsWith(cachedLinePrefix_))
+         if (token.startsWith(cachedLinePrefix_))
          {
-            String diff = line.substring(cachedLinePrefix_.length(), pos) ;
+            String diff = token.substring(cachedLinePrefix_.length(), token.length());
             if (diff.length() > 0)
             {
                ArrayList<RToken> tokens = RTokenizer.asTokens("a" + diff) ;
@@ -100,7 +104,16 @@ public class CompletionRequester
          }
       }
       
-      doGetCompletions(line, pos, objectName, additionalArgs, excludeArgs, new ServerRequestCallback<Completions>()
+      doGetCompletions(
+            content,
+            token,
+            assocData,
+            dataType,
+            numCommas,
+            chainDataName,
+            chainAdditionalArgs,
+            chainExcludeArgs,
+            new ServerRequestCallback<Completions>()
       {
          @Override
          public void onError(ServerError error)
@@ -111,53 +124,28 @@ public class CompletionRequester
          @Override
          public void onResponseReceived(Completions response)
          {
-            cachedLinePrefix_ = line.substring(0, pos);
+            cachedLinePrefix_ = token;
             String token = response.getToken();
 
             JsArrayString comp = response.getCompletions();
             JsArrayString pkgs = response.getPackages();
             ArrayList<QualifiedName> newComp = new ArrayList<QualifiedName>();
             
-            boolean lineEndsWithComma = line.matches(".*,\\s*$");
-            boolean lineEndsWithOpenParen = line.matches(".*\\(\\s*$");
-            
-            // Resolve some useful state
-            boolean inString = false;
-            String stripped = StringUtil.stripBalancedQuotes(line);
-            if (!line.equals(stripped))
-            {
-               boolean oddSingleQuotes = StringUtil.countMatches(stripped, '\'') % 2 == 1;
-               boolean oddDoubleQuotes = StringUtil.countMatches(stripped, '"') % 2 == 1;
-               if (oddSingleQuotes || oddDoubleQuotes)
-               {
-                  inString = true;
-               }
-            }
-            
             // Try getting our own function argument completions
-            if (!inString && (lineEndsWithComma || lineEndsWithOpenParen))
-            {
-               addFunctionArgumentCompletions(token, newComp);
-            }
+            addFunctionArgumentCompletions(token, newComp);
             
             // Get function argument completions from R
-            if (!inString && (lineEndsWithComma || lineEndsWithOpenParen))
+            for (int i = 0; i < comp.length(); i++)
             {
-               for (int i = 0; i < comp.length(); i++)
+               if (comp.get(i).matches(".*=\\s*$"))
                {
-                  if (comp.get(i).matches(".*=\\s*$"))
-                  {
-                     newComp.add(new QualifiedName(comp.get(i), pkgs.get(i)));
-                  }
+                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i)));
                }
             }
             
             // Get variable completions from the current scope
-            if (!inString)
-            {
-               addScopedArgumentCompletions(token, newComp);
-               addScopedCompletions(token, newComp, "variable");
-            }
+            addScopedArgumentCompletions(token, newComp);
+            addScopedCompletions(token, newComp, "variable");
             
             // Get other completions
             for (int i = 0; i < comp.length(); i++)
@@ -169,10 +157,7 @@ public class CompletionRequester
             }
             
             // Get function completions from the current scope
-            if (!inString)
-            {
-               addScopedCompletions(token, newComp, "function");
-            }
+            addScopedCompletions(token, newComp, "function");
             
             // Resolve duplicates
             newComp = withoutDupes(newComp);
@@ -327,22 +312,34 @@ public class CompletionRequester
    }
 
    private void doGetCompletions(
-         String line,
-         int pos,
-         String objectName,
-         JsArrayString additionalArgs,
-         JsArrayString excludeArgs,
+         String content,
+         String token,
+         String assocData,
+         int dataType,
+         int numCommas,
+         String chainObjectName,
+         JsArrayString chainAdditionalArgs,
+         JsArrayString chainExcludeArgs,
          ServerRequestCallback<Completions> requestCallback)
    {
       int optionsStartOffset;
       if (rnwContext_ != null &&
-          (optionsStartOffset = rnwContext_.getRnwOptionsStart(line, pos)) >= 0)
+          (optionsStartOffset = rnwContext_.getRnwOptionsStart(token, token.length())) >= 0)
       {
-         doGetSweaveCompletions(line, optionsStartOffset, pos, requestCallback);
+         doGetSweaveCompletions(token, optionsStartOffset, token.length(), requestCallback);
       }
       else
       {
-         server_.getCompletions(line, pos, objectName, additionalArgs, excludeArgs, requestCallback);
+         server_.getCompletions(
+               content,
+               token,
+               assocData,
+               dataType,
+               numCommas,
+               chainObjectName,
+               chainAdditionalArgs,
+               chainExcludeArgs,
+               requestCallback);
       }
    }
 
@@ -411,7 +408,8 @@ public class CompletionRequester
 
    public static class CompletionResult
    {
-      public CompletionResult(String token, ArrayList<QualifiedName> completions,
+      public CompletionResult(String token,
+                              ArrayList<QualifiedName> completions,
                               String guessedFunctionName,
                               boolean suggestOnAccept)
       {
@@ -431,8 +429,8 @@ public class CompletionRequester
    {
       public QualifiedName(String name, String pkgName)
       {
-         this.name = name ;
-         this.pkgName = pkgName ;
+         this.name = name;
+         this.pkgName = pkgName;
       }
       
       @Override

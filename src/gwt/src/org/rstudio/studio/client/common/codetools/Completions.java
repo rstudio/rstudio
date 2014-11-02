@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.common.codetools;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayBoolean;
 import com.google.gwt.core.client.JsArrayString;
 
 public class Completions extends JavaScriptObject

@@ -13,6 +13,12 @@
 #
 #
 
+.rs.addFunction("startsWith", function(strings, string)
+{
+   n <- nchar(string)
+   (nchar(strings) >= n) & (substring(strings, 1, n) == string)
+})
+
 # Return the scope names in which the given names exist
 .rs.addFunction("which", function(names) {
    scopes = search()
@@ -139,14 +145,13 @@
   }
 })
 
-.rs.addFunction("attemptRoxygenTagCompletion", function(line, cursorPos)
+.rs.addFunction("attemptRoxygenTagCompletion", function(token)
 {
-   line <- substr(line, 0, cursorPos)
-   match <- grepl("^\\s*#+'\\s*@[a-zA-Z0-9]*$", line, perl=T)
+   match <- grepl("@[a-zA-Z0-9]*$", token, perl = TRUE)
    if (!match)
       return(NULL)
    
-   tag <- sub(".*(?=@)", '', line, perl=T)
+   tag <- sub(".*(?=@)", '', token, perl = TRUE)
    
    # All known Roxygen2 tags, in alphabetical order
    tags <- c(
@@ -190,9 +195,9 @@
       "@title ",
       "@usage ",
       "@useDynLib "
-      );
+   )
    
-   matchingTags <- grep(paste("^", tag, sep=""), tags, value=T)
+   matchingTags <- grep(paste("^", tag, sep=""), tags, value = TRUE)
    
    list(token=tag,
         results=matchingTags,
@@ -247,16 +252,21 @@
    result
 })
 
-.rs.addFunction("getInternalRCompletions", function(line, cursorPos)
+.rs.addFunction("getInternalRCompletions", function(token)
 {
-   utils:::.assignLinebuffer(line)
-   utils:::.assignEnd(cursorPos)
+   utils:::.assignLinebuffer(token)
+   utils:::.assignEnd(nchar(token))
    token <- utils:::.guessTokenFromLine()
    utils:::.completeToken()
    results <- utils:::.retrieveCompletions()
    status <- utils:::rc.status()
    
    packages = sub('^package:', '', .rs.which(results))
+   
+   ## Fix up qualified 'packages', so that e.g. 'stats::rnorm'
+   ## is parsed as 'rnorm'
+   whichQualified <- grep(":{2,3}", results, perl = TRUE)
+   packages[whichQualified] <- gsub(":.*", "", packages[whichQualified], perl = TRUE)
    
    # prefer completions for function arguments
    if (length(results) > 0) {
@@ -278,29 +288,85 @@
    
    list(token=token, 
         results=results.sorted, 
-        packages=packages.sorted, 
+        packages=packages.sorted,
         fguess=status$fguess)
 })
 
-.rs.addFunction("getCompletionsFromObject", function(object, name)
+.rs.addFunction("namedCharacterVector", function(names)
 {
-   if (missing(name))
-      name <- ""
+   output <- character(length(names))
+   names(output) <- names
+   output
+})
+
+.rs.addFunction("getCompletionsFunction", function(token, string, discardFirst)
+{
+   result <- list(
+      results = character(),
+      packages = character(),
+      fguess = ""
+   )
    
-   if (is.function(object))
+   splat <- strsplit(string, ":{2,3}", perl = TRUE)[[1]]
+   if (length(splat) == 1)
    {
-      list(
-         results = paste(names(formals(object)), "= "),
-         packages = rep.int(name, length(formals(object)))
-      )
+      object <- .rs.getAnywhere(string)
+      if (!is.null(object) && is.function(object))
+      {
+         formals <- names(formals(object))
+         keep <- .rs.startsWith(formals, token)
+         formals <- formals[keep]
+         formals <- setdiff(formals, "...")
+         
+         result$results <- paste(formals, "= ")
+         result$packages <- .rs.namedCharacterVector(
+            rep.int(string, length(formals))
+         )
+         result$fguess <- string
+      }
    }
-   else
+   else if (length(splat) == 2)
    {
-      list(
-         results = names(object),
-         packages = rep.int(name, length(names(object)))
-      )
+      namespaceString <- splat[[1]]
+      functionString <- splat[[2]]
+      
+      if (namespaceString %in% loadedNamespaces())
+      {
+         object <- tryCatch(
+            expr = {
+               get(
+                  functionString,
+                  envir = asNamespace(namespaceString)
+               )
+            },
+            error = function(e) {
+               NULL
+            }
+         )
+         
+         if (!is.null(object) && is.function(object))
+         {
+            formals <- names(formals(object))
+            keep <- .rs.startsWith(formals, token)
+            formals <- formals[keep]
+            formals <- setdiff(formals, "...")
+            
+            result$results <- paste(formals, "= ")
+            result$packages <- .rs.namedCharacterVector(
+               rep.int(string, length(formals))
+            )
+            result$fguess <- functionString
+         }
+      }
    }
+   
+   if (discardFirst)
+   {
+      result$results <- tail(result$results, length(result$results) - 1)
+      result$packages <- tail(result$packages, length(result$packages) - 1)
+   }
+   result
+   
 })
 
 .rs.addFunction("getQuotedCompletion", function(line)
@@ -310,37 +376,125 @@
    .rs.getCompletionsFromObject(object, name)
 })
 
+.rs.addFunction("getCompletionsNamespace", function(token, string)
+{
+   if (!(string %in% loadedNamespaces()))
+   {
+      tryCatch(
+         suppressPackageStartupMessages(requireNamespace(string, quietly = TRUE)),
+         error = function(e) NULL
+      )
+   }
+   
+   if (string %in% loadedNamespaces())
+   {
+      objects <- objects(asNamespace(string))
+      keep <- .rs.startsWith(objects, token)
+      completions <- objects[keep]
+      
+      list(
+         token = token,
+         results = completions,
+         packages = rep.int(string, length(completions)),
+         fguess = ""
+      )
+   }
+   else
+   {
+      list(
+         token = token,
+         results = character(),
+         packages = character(),
+         fguess = ""
+      )
+   }
+})
+
+.rs.addFunction("subsetCompletions", function(completions, indices)
+{
+   completions$results <- completions$results[indices]
+   completions$packages <- completions$packages[indices]
+   completions
+})
+
+.rs.addFunction("appendCompletions", function(old, new)
+{
+   old$results <- c(old$results, new$results)
+   old$packages <- c(old$packages, new$packages)
+   if (!is.null(new$fguess))
+      old$fguess <- new$fguess
+   old
+})
+
+.rs.addFunction("getCompletionsDollar", function(token, string, envir)
+{
+   
+   evaled <- tryCatch(
+      suppressWarnings(eval(parse(text = string), envir = envir)),
+      error = function(e) NULL
+   )
+   
+   if (!is.null(evaled) & !is.null(names(evaled)))
+   {
+      names <- names(evaled)
+      completions <- names[.rs.startsWith(names, token)]
+      list(
+         token = token,
+         results = completions,
+         packages = character(length(completions)),
+         fguess = ""
+      )
+   }
+   else
+   {
+      list(token = token,
+           results = character(),
+           packages = character(),
+           fguess = "")
+   }
+})
+
 utils:::rc.settings(files = TRUE)
-.rs.addJsonRpcHandler("get_completions", function(line,
-                                                  cursorPos,
-                                                  objectName,
+.rs.addJsonRpcHandler("get_completions", function(content,
+                                                  token,
+                                                  string,
+                                                  type,
+                                                  numCommas,
+                                                  chainObjectName,
                                                   additionalArgs,
                                                   excludeArgs)
 {
-   roxygen <- .rs.attemptRoxygenTagCompletion(line, cursorPos)
+   roxygen <- .rs.attemptRoxygenTagCompletion(token)
    if (!is.null(roxygen))
       return(roxygen)
    
-   if (missing(objectName))
-      objectName <- NULL
+   ## Different completion types (sync with RCompletionManager.java)
+   TYPE_UNKNOWN <- 0
+   TYPE_FUNCTION <- 1
+   TYPE_SINGLE_BRACKET <- 2
+   TYPE_DOUBLE_BRACKET <- 3
+   TYPE_NAMESPACE <- 4
+   TYPE_DOLLAR <- 5
    
-   if (missing(additionalArgs))
-      additionalArgs <- NULL
-   
-   if (missing(excludeArgs))
-      excludeArgs <- NULL
+   ## If we're completing after a '$' or an '@', then
+   ## we don't need any other completions
+   if (type == TYPE_DOLLAR)
+      return(.rs.getCompletionsDollar(token, string, parent.frame()))
+   else if (type == TYPE_NAMESPACE)
+      return(.rs.getCompletionsNamespace(token, string))
    
    additionalArgs <- unlist(additionalArgs)
    excludeArgs <- unlist(excludeArgs)
    
-   ## If objName has been provided, try to get completions from that as well.
+   ## chainObjectName will be provided if the client detected
+   ## that we were performing completions within an e.g. 
+   ## `%>%` chain -- use completions from the associated data object.
    objCompletions <- NULL
-   if (!is.null(objectName) && objectName != "")
+   if (!is.null(chainObjectName) && chainObjectName != "")
    {
-      object <- .rs.getAnywhere(objectName)
+      object <- .rs.getAnywhere(chainObjectName)
       if (length(object))
       {
-         object <- objects$objs[[1]]
          nm <- names(object)
          if (length(nm))
          {
@@ -352,33 +506,34 @@ utils:::rc.settings(files = TRUE)
       }
    }
    
-   if (grepl("\\[\\s*$", line, perl = TRUE))
-   {
-      result <- .rs.getBracketCompletions(line, cursorPos)
-   }
-   else if (grepl("^\\s*([`'\"]).*?\\1.*$", line, perl = TRUE))
-   {
-      result <- .rs.getQuotedCompletion(line)
-   }
-   else
-   {
-      result <- .rs.getInternalRCompletions(line, cursorPos)
-   }
+   
+   result <- .rs.appendCompletions(
+      .rs.getInternalRCompletions(token),
+      if (type == TYPE_FUNCTION)
+         .rs.getCompletionsFunction(token, string, chainObjectName != "")
+      else if (type == TYPE_SINGLE_BRACKET)
+         .rs.getCompletionsSingleBracket(token, string)
+      else if (type == TYPE_DOUBLE_BRACKET)
+         .rs.getCompletionsDoubleBracket(token, string)
+   )
    
    if (is.null(result$fguess))
    {
       result$fguess <- character()
    }
    
-   token <- gsub(".*[\\s\\[\\(\\{]", "", line, perl = TRUE)
    n <- nchar(token)
    result$token <- token
    
    if (!is.null(objCompletions))
    {
-      keep <- .rs.startsWith(objCompletions$results, token)
-      result$results <- c(objCompletions$results[keep], result$results)
-      result$packages <- c(objCompletions$packages[keep], result$packages)
+      result <- .rs.appendCompletions(
+         result,
+         .rs.subsetCompletions(
+            objCompletions,
+            .rs.startsWith(objCompletions$results, token)
+         )
+      )
    }
    
    if (length(additionalArgs))
@@ -395,7 +550,8 @@ utils:::rc.settings(files = TRUE)
       result$packages <- result$packages[keep]
    }
    
-   result
+   result[c("token", "results", "packages", "fguess")]
+   
 })
 
 .rs.addJsonRpcHandler("get_help_at_cursor", function(line, cursorPos)
@@ -412,8 +568,22 @@ utils:::rc.settings(files = TRUE)
       print(help(pieces[1], help_type='html', try.all.packages=T))
 })
 
-.rs.addFunction("startsWith", function(strings, string)
+.rs.addJsonRpcHandler("is_function", function(nameString, envString)
 {
-   n <- nchar(string)
-   (nchar(strings) >= n) & (substring(strings, 1, n) == string)
+   object <- NULL
+   if (envString == "")
+   {
+      object <- .rs.getAnywhere(nameString)
+   }
+   else
+   {
+      if (envString %in% loadedNamespaces())
+      {
+         object <- tryCatch(
+            get(nameString, envir = asNamespace(envString)),
+            error = function(e) NULL
+         )
+      }
+   }
+   .rs.scalar(!is.null(object) && is.function(object))
 })
