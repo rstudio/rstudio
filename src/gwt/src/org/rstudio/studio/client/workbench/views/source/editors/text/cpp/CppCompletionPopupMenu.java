@@ -269,7 +269,7 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
    @Override
    protected int getMaxHeight()
    {
-      return 180;
+      return 190;
    }
    
    private final DocDisplay docDisplay_;
