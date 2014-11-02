@@ -53,6 +53,12 @@ public class CppCompletionSignatureTip extends CppCompletionToolTip
       setTextIndex(0);
    }
    
+   @Override
+   public void setMaxWidth(int width)
+   {
+      super.setMaxWidth(Math.min(width, 600));
+   }
+   
    private void addPagingWidget()
    {
       HorizontalPanel panel = new HorizontalPanel();
