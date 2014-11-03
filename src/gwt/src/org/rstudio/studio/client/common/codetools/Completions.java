@@ -24,13 +24,15 @@ public class Completions extends JavaScriptObject
                                                       JsArrayString completions,
                                                       JsArrayString packages,
                                                       String fguess,
-                                                      boolean excludeContext) /*-{
+                                                      boolean excludeContext,
+                                                      boolean dontInsertParens) /*-{
       return {
          token: [token],
          results: completions,
          packages: packages,
          fguess: fguess ? [fguess] : null,
-         excludeContext: excludeContext
+         excludeContext: excludeContext,
+         dontInsertParens: dontInsertParens
       };
    }-*/;
 
@@ -83,5 +85,10 @@ public class Completions extends JavaScriptObject
    public final native boolean getExcludeContext() /*-{
       return this.excludeContext;
    }-*/;
+   
+   public final native boolean getDontInsertParens() /*-{
+      return this.dontInsertParens;
+   }-*/;
+   
    
 }

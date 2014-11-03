@@ -404,32 +404,41 @@
 
 .rs.addFunction("getCompletionsDollar", function(token, string, envir)
 {
-   
-   evaled <- tryCatch(
-      suppressWarnings(eval(parse(text = string), envir = envir)),
-      error = function(e) NULL
+   setTimeLimit(elapsed = 0.15, transient = TRUE)
+   on.exit(setTimeLimit(), add = TRUE)
+   tryCatch(
+      expr = {
+         evaled <- suppressWarnings(eval(parse(text = string), envir = envir))
+         if (!is.null(evaled) & !is.null(names(evaled)))
+         {
+            names <- names(evaled)
+            completions <- names[.rs.startsWith(names, token)]
+            list(
+               token = token,
+               results = completions,
+               packages = character(length(completions)),
+               fguess = "",
+               excludeContext = .rs.scalar(TRUE)
+            )
+         }
+         else
+         {
+            list(token = token,
+                 results = character(),
+                 packages = character(),
+                 fguess = "",
+                 excludeContext = .rs.scalar(TRUE))
+         }
+      },
+      
+      error = function(e) {
+         list(token = token,
+              results = character(),
+              packages = character(),
+              fguess = "",
+              excludeContext = .rs.scalar(TRUE))
+      }
    )
-   
-   if (!is.null(evaled) & !is.null(names(evaled)))
-   {
-      names <- names(evaled)
-      completions <- names[.rs.startsWith(names, token)]
-      list(
-         token = token,
-         results = completions,
-         packages = character(length(completions)),
-         fguess = "",
-         excludeContext = .rs.scalar(TRUE)
-      )
-   }
-   else
-   {
-      list(token = token,
-           results = character(),
-           packages = character(),
-           fguess = "",
-           excludeContext = .rs.scalar(TRUE))
-   }
 })
 
 .rs.addFunction("getCompletionsDoubleBracket", function(token, string)
@@ -465,6 +474,9 @@ utils:::rc.settings(ipck = TRUE)
                                                   additionalArgs,
                                                   excludeArgs)
 {
+   print(token)
+   print(string)
+   
    roxygen <- .rs.attemptRoxygenTagCompletion(token)
    if (!is.null(roxygen))
       return(roxygen)
@@ -570,7 +582,22 @@ utils:::rc.settings(ipck = TRUE)
    if (is.null(result$excludeContext))
       result$excludeContext <- .rs.scalar(FALSE)
    
-   result[c("token", "results", "packages", "fguess", "excludeContext")]
+   ## Override param insertion if the function was 'debug' or 'trace'
+   ## NOTE: This logic should be synced in 'RCompletionManager.java'.
+   result$dontInsertParens <- FALSE
+   if (string == "debug" || string == "trace")
+      result$dontInsertParens <- TRUE
+   
+   result[
+      c(
+         "token",
+         "results", 
+         "packages", 
+         "fguess", 
+         "excludeContext", 
+         "dontInsertParens"
+      )
+   ]
    
 })
 

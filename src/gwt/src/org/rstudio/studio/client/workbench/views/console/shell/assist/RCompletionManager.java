@@ -590,9 +590,18 @@ public class RCompletionManager implements CompletionManager
       }
 
       boolean canAutoAccept = flushCache;
+      
+      // NOTE: This logic should be synced in 'SessionCodeTools.R'.
+      boolean dontInsertParens = false;
+      if (context.getDataType() == AutoCompletionContext.TYPE_FUNCTION &&
+          (context.getAssocData() == "debug" ||
+           context.getAssocData() == "trace"))
+         dontInsertParens = true;
+      
       context_ = new CompletionRequestContext(invalidation_.getInvalidationToken(),
                                               selection,
-                                              canAutoAccept);
+                                              canAutoAccept,
+                                              dontInsertParens);
       
       // Try to see if there's an object name we should use to supplement
       // completions
@@ -619,6 +628,94 @@ public class RCompletionManager implements CompletionManager
             context_);
 
       return true ;
+   }
+   
+   private AutoCompletionContext getAutocompletionContextForDollar(String token)
+   {
+      // Failure mode context
+      AutoCompletionContext defaultContext = new AutoCompletionContext(
+            "",
+            token,
+            "",
+            AutoCompletionContext.TYPE_UNKNOWN,
+            0);
+      
+      int dollarIndex = Math.max(token.lastIndexOf('$'), token.lastIndexOf('@'));
+      String tokenToUse = token.substring(dollarIndex + 1);
+      
+      // Establish an evaluation context by looking backwards
+      AceEditor editor = (AceEditor) docDisplay_;
+      if (editor == null)
+         return defaultContext;
+      
+      CodeModel codeModel = editor.getSession().getMode().getCodeModel();
+      codeModel.tokenizeUpToRow(input_.getCursorPosition().getRow());
+      
+      TokenCursor cursor = codeModel.getTokenCursor();
+         
+      if (!cursor.moveToPosition(input_.getCursorPosition()))
+         return defaultContext;
+      
+      // Move back to the '$'
+      while (cursor.currentValue() != "$" && cursor.currentValue() != "@")
+         if (!cursor.moveToPreviousToken())
+            return defaultContext;
+      
+      // Put a cursor here
+      TokenCursor contextEndCursor = cursor.cloneCursor();
+      Debug.logObject(cursor.currentToken());
+      
+      // We allow for arbitrary elements previous, so we want to get e.g.
+      //
+      //     env::foo()$bar()[1]$baz
+      
+      while (cursor.currentValue() == "$" || cursor.currentValue() == "@") {
+         
+         if (!cursor.moveToPreviousToken())
+            return defaultContext;
+
+         while (cursor.bwdToMatchingToken())
+            if (!cursor.moveToPreviousToken())
+               return defaultContext;
+
+         String type = cursor.currentType();
+         if (type == "identifier" ||
+             type == "string" ||
+             type == "symbol")
+         {
+            if (!cursor.moveToPreviousToken())
+               return defaultContext;
+            
+            if (cursor.currentValue() == ":")
+            {
+               while (cursor.currentValue() == ":")
+                  if (!cursor.moveToPreviousToken())
+                     return defaultContext;
+               
+               if (!cursor.moveToPreviousToken())
+                  return defaultContext;
+            }
+         }
+         
+      }
+      
+      // Correct for the off-by-one above
+      if (!cursor.moveToNextToken())
+         return defaultContext;
+      
+      // Get the string forming the context
+      String context = editor.getTextForRange(Range.fromPoints(
+            cursor.currentPosition(),
+            contextEndCursor.currentPosition()));
+      
+      // and return!
+      return new AutoCompletionContext(
+            "",
+            tokenToUse,
+            context,
+            AutoCompletionContext.TYPE_DOLLAR,
+            0);
+      
    }
    
    
@@ -677,13 +774,7 @@ public class RCompletionManager implements CompletionManager
       // either from names or an overloaded `$` method
       if (token.contains("$") || token.contains("@"))
       {
-         int index = Math.max(token.lastIndexOf('$'), token.lastIndexOf('@'));
-         return new AutoCompletionContext(
-               "",
-               token.substring(index + 1),
-               token.substring(0, index),
-               AutoCompletionContext.TYPE_DOLLAR,
-               0);
+         return getAutocompletionContextForDollar(token);
       }
       
       // Default case for failure modes
@@ -824,11 +915,13 @@ public class RCompletionManager implements CompletionManager
    {
       public CompletionRequestContext(Invalidation.Token token,
                                       InputEditorSelection selection,
-                                      boolean canAutoAccept)
+                                      boolean canAutoAccept,
+                                      boolean dontInsertParens)
       {
          invalidationToken_ = token ;
          selection_ = selection ;
          canAutoAccept_ = canAutoAccept;
+         dontInsertParens_ = dontInsertParens;
       }
       
       public void showHelp(QualifiedName selectedItem)
@@ -898,7 +991,7 @@ public class RCompletionManager implements CompletionManager
          else
          {
             if (results.length == 1 && canAutoAccept_)
-               applyValue(results[0]);
+               applyValue(results[0], completions.dontInsertParens);
             
             popup_.showCompletionValues(
                   results,
@@ -946,7 +1039,7 @@ public class RCompletionManager implements CompletionManager
             return ;
          }
 
-         applyValue(qname);
+         applyValue(qname, dontInsertParens_);
 
          if (suggestOnAccept_)
          {
@@ -969,7 +1062,7 @@ public class RCompletionManager implements CompletionManager
          return StringUtil.toRSymbolName(string);
       }
 
-      private void applyValue(QualifiedName name)
+      private void applyValue(QualifiedName name, final boolean dontInsertParens)
       {
          
          final String functionName = name.name;
@@ -998,7 +1091,7 @@ public class RCompletionManager implements CompletionManager
                 * selection.
                 */
          
-               if (isFunction.booleanValue())
+               if (isFunction.booleanValue() && !dontInsertParens)
                {
                   // Don't replace the selection if the token ends with a ')'
                   // (implies an earlier replacement handled this)
@@ -1045,6 +1138,8 @@ public class RCompletionManager implements CompletionManager
       private final boolean canAutoAccept_;
       private HelpStrategy helpStrategy_ ;
       private boolean suggestOnAccept_;
+      private boolean dontInsertParens_;
+      
    }
    
    private GlobalDisplay globalDisplay_;

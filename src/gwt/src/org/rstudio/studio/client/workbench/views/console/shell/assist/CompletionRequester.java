@@ -170,7 +170,8 @@ public class CompletionRequester
                   response.getToken(),
                   newComp,
                   response.getGuessedFunctionName(),
-                  response.getSuggestOnAccept());
+                  response.getSuggestOnAccept(),
+                  response.getDontInsertParens());
 
             cachedResult_ = response.isCacheable() ? result : null;
 
@@ -370,6 +371,7 @@ public class CompletionRequester
                   JsUtil.createEmptyArray(result.completions.length())
                         .<JsArrayString>cast(),
                   null,
+                  false,
                   false);
             // Unlike other completion types, Sweave completions are not
             // guaranteed to narrow the candidate list (in particular
@@ -407,8 +409,12 @@ public class CompletionRequester
          if (qname.name.startsWith(token))
             newCompletions.add(qname) ;
       
-      return new CompletionResult(token, newCompletions, null,
-                                  cachedResult_.suggestOnAccept) ;
+      return new CompletionResult(
+            token,
+            newCompletions,
+            null,
+            cachedResult_.suggestOnAccept,
+            cachedResult_.dontInsertParens) ;
    }
 
    public static class CompletionResult
@@ -416,18 +422,21 @@ public class CompletionRequester
       public CompletionResult(String token,
                               ArrayList<QualifiedName> completions,
                               String guessedFunctionName,
-                              boolean suggestOnAccept)
+                              boolean suggestOnAccept,
+                              boolean dontInsertParens)
       {
          this.token = token ;
          this.completions = completions ;
          this.guessedFunctionName = guessedFunctionName ;
          this.suggestOnAccept = suggestOnAccept ;
+         this.dontInsertParens = dontInsertParens ;
       }
       
       public final String token ;
       public final ArrayList<QualifiedName> completions ;
       public final String guessedFunctionName ;
       public final boolean suggestOnAccept ;
+      public final boolean dontInsertParens ;
    }
    
    public static class QualifiedName implements Comparable<QualifiedName>
