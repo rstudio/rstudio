@@ -38,31 +38,34 @@ public class JsonRpcRequestFactoryTest extends GWTTestCase {
   }
 
   public void testEnumsUsedAsTypeParameter() {
-    String expectedPayloadRegex =
-        ".*\"method\":\"simple.foo\".*\"params\":\\{\"enums\":\\[\"VALUE\"\\]\\}.*";
+    String[] expectedPayloadRegexes = new String[] {
+        ".*\"method\":\"simple.foo\".*",
+        ".*\"params\":\\{\"enums\":\\[\"VALUE\"\\]\\}.*" };
     List<FooRequest.FooEnum> list =
         Arrays.asList(new FooRequest.FooEnum[] {FooRequest.FooEnum.VALUE});
-    createFactory(expectedPayloadRegex).simple().foo().setEnums(list).fire();
+    createFactory(expectedPayloadRegexes).simple().foo().setEnums(list).fire();
   }
 
   protected SimpleJsonRpcRequestFactory createFactory() {
     return GWT.create(SimpleJsonRpcRequestFactory.class);
   }
 
-  private SimpleJsonRpcRequestFactory createFactory(final String expectedPayloadRegex) {
+  private SimpleJsonRpcRequestFactory createFactory(final String[] expectedPayloadRegexes) {
     SimpleJsonRpcRequestFactory req = createFactory();
     req.initialize(new SimpleEventBus(), new RequestTransport() {
       @Override
       public void send(String payload, TransportReceiver receiver) {
-        stringMatchesRegex(payload, expectedPayloadRegex);
+        stringMatchesRegexes(payload, expectedPayloadRegexes);
       }
     });
     return req;
   }
 
-  private static void stringMatchesRegex(String string, String regex) {
-    assertTrue("String \"" + string + "\" did not match \"" + regex + "\"",
-        string.matches(regex));
+  private static void stringMatchesRegexes(String string, String[] regexes) {
+    for (String regex : regexes) {
+      assertTrue("String \"" + string + "\" did not match \"" + regex + "\"",
+          string.matches(regex));
+    }
   }
 }
 
