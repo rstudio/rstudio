@@ -364,7 +364,8 @@
          token = token,
          results = completions,
          packages = rep.int(string, length(completions)),
-         fguess = ""
+         fguess = "",
+         excludeContext = .rs.scalar(TRUE)
       )
    }
    else
@@ -373,7 +374,8 @@
          token = token,
          results = character(),
          packages = character(),
-         fguess = ""
+         fguess = "",
+         excludeContext = .rs.scalar(TRUE)
       )
    }
 })
@@ -391,6 +393,8 @@
    old$packages <- c(old$packages, new$packages)
    if (!is.null(new$fguess))
       old$fguess <- new$fguess
+   if (!is.null(new$excludeContext))
+      old$excludeContext <- new$excludeContext
    old
 })
 
@@ -410,7 +414,8 @@
          token = token,
          results = completions,
          packages = character(length(completions)),
-         fguess = ""
+         fguess = "",
+         excludeContext = .rs.scalar(TRUE)
       )
    }
    else
@@ -418,7 +423,8 @@
       list(token = token,
            results = character(),
            packages = character(),
-           fguess = "")
+           fguess = "",
+           excludeContext = .rs.scalar(TRUE))
    }
 })
 
@@ -557,7 +563,10 @@ utils:::rc.settings(ipck = TRUE)
       result$packages <- result$packages[keep]
    }
    
-   result[c("token", "results", "packages", "fguess")]
+   if (is.null(result$excludeContext))
+      result$excludeContext <- .rs.scalar(FALSE)
+   
+   result[c("token", "results", "packages", "fguess", "excludeContext")]
    
 })
 

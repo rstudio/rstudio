@@ -23,12 +23,14 @@ public class Completions extends JavaScriptObject
    public static native Completions createCompletions(String token,
                                                       JsArrayString completions,
                                                       JsArrayString packages,
-                                                      String fguess) /*-{
+                                                      String fguess,
+                                                      boolean excludeContext) /*-{
       return {
          token: [token],
          results: completions,
          packages: packages,
-         fguess: fguess ? [fguess] : null
+         fguess: fguess ? [fguess] : null,
+         excludeContext: excludeContext
       };
    }-*/;
 
@@ -77,4 +79,9 @@ public class Completions extends JavaScriptObject
    public final native boolean getSuggestOnAccept() /*-{
       return !!this.suggestOnAccept;
    }-*/;
+   
+   public final native boolean getExcludeContext() /*-{
+      return this.excludeContext;
+   }-*/;
+   
 }

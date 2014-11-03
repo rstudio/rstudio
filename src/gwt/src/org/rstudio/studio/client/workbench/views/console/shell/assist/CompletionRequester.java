@@ -144,8 +144,11 @@ public class CompletionRequester
             }
             
             // Get variable completions from the current scope
-            addScopedArgumentCompletions(token, newComp);
-            addScopedCompletions(token, newComp, "variable");
+            if (!response.getExcludeContext())
+            {
+               addScopedArgumentCompletions(token, newComp);
+               addScopedCompletions(token, newComp, "variable");
+            }
             
             // Get other completions
             for (int i = 0; i < comp.length(); i++)
@@ -157,7 +160,8 @@ public class CompletionRequester
             }
             
             // Get function completions from the current scope
-            addScopedCompletions(token, newComp, "function");
+            if (!response.getExcludeContext())
+               addScopedCompletions(token, newComp, "function");
             
             // Resolve duplicates
             newComp = withoutDupes(newComp);
@@ -365,7 +369,8 @@ public class CompletionRequester
                   result.completions,
                   JsUtil.createEmptyArray(result.completions.length())
                         .<JsArrayString>cast(),
-                  null);
+                  null,
+                  false);
             // Unlike other completion types, Sweave completions are not
             // guaranteed to narrow the candidate list (in particular
             // true/false).
