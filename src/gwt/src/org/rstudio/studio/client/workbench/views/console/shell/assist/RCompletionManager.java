@@ -664,6 +664,51 @@ public class RCompletionManager implements CompletionManager
                0);
    }
    
+   private boolean findStartOfEvaluationContextForDollar(TokenCursor cursor)
+   {
+      TokenCursor clone = cursor.cloneCursor();
+      while (clone.currentValue() == "$" || clone.currentValue() == "@") {
+         
+         if (!clone.moveToPreviousToken())
+            break;
+
+         while (clone.bwdToMatchingToken())
+            if (!clone.moveToPreviousToken())
+               break;
+
+         String type = clone.currentType();
+         if (type == "identifier" ||
+             type == "string" ||
+             type == "symbol")
+         {
+            if (!clone.moveToPreviousToken())
+               break;
+            
+            if (clone.currentValue() == ":")
+            {
+               while (clone.currentValue() == ":")
+                  if (!clone.moveToPreviousToken())
+                     break;
+               
+               if (!clone.moveToPreviousToken())
+                  break;
+            }
+         }
+         
+      }
+      
+      // Correct for the off-by-one above if necessary
+      Position pos = clone.currentPosition();
+      if (!(pos.getRow() == 0 && pos.getColumn() == 0))
+         if (!clone.moveToNextToken())
+            return false;
+      
+      cursor.setRow(clone.getRow());
+      cursor.setOffset(clone.getOffset());
+      return true;
+      
+   }
+   
    private AutoCompletionContext getAutocompletionContextForDollar(String token)
    {
       // Failure mode context
@@ -697,48 +742,12 @@ public class RCompletionManager implements CompletionManager
       
       // Put a cursor here
       TokenCursor contextEndCursor = cursor.cloneCursor();
-      Debug.logObject(cursor.currentToken());
+      if (!findStartOfEvaluationContextForDollar(cursor))
+         return defaultContext;
       
       // We allow for arbitrary elements previous, so we want to get e.g.
       //
       //     env::foo()$bar()[1]$baz
-      
-      while (cursor.currentValue() == "$" || cursor.currentValue() == "@") {
-         
-         if (!cursor.moveToPreviousToken())
-            break;
-
-         while (cursor.bwdToMatchingToken())
-            if (!cursor.moveToPreviousToken())
-               break;
-
-         String type = cursor.currentType();
-         if (type == "identifier" ||
-             type == "string" ||
-             type == "symbol")
-         {
-            if (!cursor.moveToPreviousToken())
-               break;
-            
-            if (cursor.currentValue() == ":")
-            {
-               while (cursor.currentValue() == ":")
-                  if (!cursor.moveToPreviousToken())
-                     break;
-               
-               if (!cursor.moveToPreviousToken())
-                  break;
-            }
-         }
-         
-      }
-      
-      // Correct for the off-by-one above if necessary
-      Position pos = cursor.currentPosition();
-      if (!(pos.getRow() == 0 && pos.getColumn() == 0))
-         if (!cursor.moveToNextToken())
-            return defaultContext;
-      
       // Get the string forming the context
       String context = editor.getTextForRange(Range.fromPoints(
             cursor.currentPosition(),
@@ -838,6 +847,10 @@ public class RCompletionManager implements CompletionManager
                startCursor.moveToNextToken();
             }
       
+      Debug.logToConsole("Cursor started at:");
+      Debug.logObject(tokenCursor.currentPosition());
+      Debug.logObject(tokenCursor.currentToken());
+      
       // Find an opening '(' or '[' -- this provides the function or object
       // for completion
       if (tokenCursor.currentValue() != "(" && tokenCursor.currentValue() != "[")
@@ -889,8 +902,14 @@ public class RCompletionManager implements CompletionManager
          String value = tokenCursor.currentValue();
          String type = tokenCursor.currentType();
          
-         if (type == "identifier" || type == "keyword" || value == ":" || value == "$" || value == "@")
+         if (type == "identifier" || type == "keyword" || value == ":")
             continue;
+         
+         if (value == "$" || value == "@")
+         {
+            findStartOfEvaluationContextForDollar(tokenCursor);
+            break;
+         }
          
          break;
          

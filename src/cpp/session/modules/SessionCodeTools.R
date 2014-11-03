@@ -233,9 +233,31 @@
    .Call("rs_getPendingInput")
 })
 
-.rs.addFunction("getAnywhere", function(name)
+.rs.addFunction("getAnywhere", function(name, envir = parent.frame())
 {
-   name <- gsub("^\\s*([`'\"])(.*?)\\1.*", "\\2", name, perl = TRUE)
+   result <- NULL
+   
+   if (is.character(name)) {
+      name <- gsub("^\\s*([`'\"])(.*?)\\1.*", "\\2", name, perl = TRUE)
+      result <- tryCatch({
+         suppressWarnings(eval(parse(text = name), envir = envir))
+      }, error = function(e) NULL
+      )
+   }
+   
+   if (is.language(name))
+   {
+      result <- tryCatch({
+         suppressWarnings(eval(name, envir = envir))
+      }, error = function(e) NULL
+      )
+   }
+   
+   if (!is.null(result))
+   {
+      return(result)
+   }
+   
    objects <- getAnywhere(name)
    if (length(objects$objs))
    {
@@ -303,7 +325,10 @@
    output
 })
 
-.rs.addFunction("getCompletionsFunction", function(token, string, discardFirst)
+.rs.addFunction("getCompletionsFunction", function(token,
+                                                   string,
+                                                   discardFirst,
+                                                   envir = parent.frame())
 {
    if (string == "library" || string == "require")
       return(
@@ -321,7 +346,7 @@
    splat <- strsplit(string, ":{2,3}", perl = TRUE)[[1]]
    if (length(splat) == 1)
    {
-      object <- .rs.getAnywhere(string)
+      object <- .rs.getAnywhere(string, envir = envir)
       if (!is.null(object) && is.function(object))
       {
          formals <- names(formals(object))
@@ -331,9 +356,7 @@
          if (length(formals))
             result$results <- paste(formals, "= ")
          
-         result$packages <- .rs.namedCharacterVector(
-            rep.int(string, length(formals))
-         )
+         result$packages <- rep.int(string, length(formals))
          result$fguess <- string
       }
    }
@@ -365,9 +388,7 @@
             if (length(formals))
                result$results <- paste(formals, "= ")
             
-            result$packages <- .rs.namedCharacterVector(
-               rep.int(string, length(formals))
-            )
+            result$packages <- rep.int(string, length(formals))
             result$fguess <- functionString
          }
       }
@@ -439,6 +460,71 @@
    old
 })
 
+.rs.addFunction("blackListEvaluationDataTable", function(token, string, envir)
+{
+   tryCatch({
+      parsed <- suppressWarnings(parse(text = string))
+      if (is.expression(parsed))
+      {
+         call <- parsed[[1]][[1]]
+         if (as.character(call) == "[")
+         {
+            objectName <- parsed[[1]][[2]]
+            object <- .rs.getAnywhere(objectName, envir = envir)
+            if (inherits(object, "data.table"))
+            {
+               list(
+                  token = token,
+                  results = names(object),
+                  packages = rep.int(
+                     paste("[", string, "]", sep = ""), length(object)
+                  ),
+                  fguess = "",
+                  excludeContext = .rs.scalar(TRUE)
+               )
+            }
+         }
+      }
+      else
+      {
+         NULL
+      }
+   }, error = function(e) NULL
+   )
+   
+})
+
+.rs.addFunction("blackListEvaluation", function(token, string, envir)
+{
+   if (!is.null(result <- .rs.blackListEvaluationDataTable(token, string, envir)))
+      return(result)
+   
+   NULL
+   
+})
+
+.rs.addFunction("getCompletionsDollarR6", function(token, string, envir)
+{
+   tryCatch({
+      object <- eval(parse(text = string), envir = envir)
+      if (inherits(object, "R6") || inherits(object, "R6ClassGenerator"))
+      {
+         candidates <- ls(object)
+         completions <- candidates[.rs.startsWith(candidates, token)]
+         list(token = token,
+              results = completions,
+              packages = rep.int(
+                 string,
+                 length(completions)
+              ),
+              fguess = "",
+              excludeContext = .rs.scalar(TRUE))
+      }
+   },
+   error = function(e) NULL
+   )
+})
+
 .rs.addFunction("getCompletionsDollar", function(token, string, envir)
 {
    
@@ -451,26 +537,14 @@
    .rs.withTimeLimit(0.15, fail = default, {
       
       ## Blacklist certain evaluations
-      parsed <- suppressWarnings(parse(text = string))
-      symbol <- gsub("^([a-zA-Z0-9._]*).*", "\\1", string, perl = TRUE)
-      if (symbol != "")
-      {
-         object <- get(symbol, envir = envir)
-         if (inherits(object, "data.table"))
-         {
-            return(list(
-               token = token,
-               results = names(object),
-               packages = rep.int(
-                  paste("[", string, "]", sep = ""),
-                  length(object)
-               ),
-               fguess = "",
-               excludeContext = .rs.scalar(TRUE)
-            ))
-         }
-      }
+      if (!is.null(result <- .rs.blackListEvaluation(token, string, envir)))
+         return(result)
       
+      ## Get completions for R6 objects
+      if (!is.null(result <- .rs.getCompletionsDollarR6(token, string, envir)))
+         return(result)
+      
+      parsed <- suppressWarnings(parse(text = string))
       evaled <- suppressWarnings(eval(parse(text = string), envir = envir))
       if (!is.null(evaled) & !is.null(names(evaled)))
       {
@@ -494,7 +568,9 @@
    })
 })
 
-.rs.addFunction("getCompletionsDoubleBracket", function(token, string)
+.rs.addFunction("getCompletionsDoubleBracket", function(token,
+                                                        string,
+                                                        envir = parent.frame())
 {
    result <- list(
       token = token,
@@ -503,7 +579,7 @@
       fguess = ""
    )
    
-   object <- .rs.getAnywhere(string)
+   object <- .rs.getAnywhere(string, envir)
    if (!is.null(object) && !is.null(names(object)))
    {
       completions <- names(object)
@@ -595,11 +671,11 @@ utils:::rc.settings(ipck = TRUE)
    result <- .rs.appendCompletions(
       .rs.getInternalRCompletions(token, type == TYPE_FILE),
       if (type == TYPE_FUNCTION)
-         .rs.getCompletionsFunction(token, string, discardFirst)
+         .rs.getCompletionsFunction(token, string, discardFirst, parent.frame())
       else if (type == TYPE_SINGLE_BRACKET)
-         .rs.getCompletionsSingleBracket(token, string)
+         .rs.getCompletionsSingleBracket(token, string, parent.frame())
       else if (type == TYPE_DOUBLE_BRACKET)
-         .rs.getCompletionsDoubleBracket(token, string)
+         .rs.getCompletionsDoubleBracket(token, string, parent.frame())
    )
    
    if (is.null(result$fguess))
@@ -643,7 +719,11 @@ utils:::rc.settings(ipck = TRUE)
    
    ## Override param insertion if the function was 'debug' or 'trace'
    ## NOTE: This logic should be synced in 'RCompletionManager.java'.
-   if (string %in% c("debug", "debugonce", "undebug", "isdebugged") ||
+   functionBlacklist <- c(
+      "debug", "debugonce", "undebug", "isdebugged", "library", "require"
+   )
+   
+   if (string %in% functionBlacklist ||
        .rs.endsWith(string, "ply"))
       result$dontInsertParens <- .rs.scalar(TRUE)
    

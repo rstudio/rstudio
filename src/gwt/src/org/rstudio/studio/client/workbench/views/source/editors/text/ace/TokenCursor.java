@@ -88,5 +88,22 @@ public class TokenCursor extends JavaScriptObject
       return this.isFirstSignificantTokenOnLine();
    }-*/;
    
+   public native final int getRow() /*-{
+      return this.$row;
+   }-*/;
+   
+   public native final int getOffset() /*-{
+      return this.$offset;
+   }-*/;
+   
+   
+   public native final void setRow(int row) /*-{
+      this.$row = row;
+   }-*/;
+   
+   public native final void setOffset(int offset) /*-{
+      this.$offset = offset;
+   }-*/;
+   
 }
 
