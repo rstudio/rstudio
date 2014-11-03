@@ -34,6 +34,14 @@
    (nchar(strings) >= n) & (substring(strings, 1, n) == string)
 })
 
+.rs.addFunction("endsWith", function(strings, string)
+{
+   nstrings <- nchar(strings)
+   nstring <- nchar(string)
+   (nstrings >= nstring) & 
+      (substring(strings, nstrings - nstring + 1, nstrings) == string)
+})
+
 # Return the scope names in which the given names exist
 .rs.addFunction("which", function(names) {
    scopes = search()
@@ -497,6 +505,10 @@ utils:::rc.settings(ipck = TRUE)
                                                   additionalArgs,
                                                   excludeArgs)
 {
+   print(token)
+   print(string)
+   print(type)
+   
    roxygen <- .rs.attemptRoxygenTagCompletion(token)
    if (!is.null(roxygen))
       return(roxygen)
@@ -603,11 +615,14 @@ utils:::rc.settings(ipck = TRUE)
    if (is.null(result$excludeContext))
       result$excludeContext <- .rs.scalar(FALSE)
    
+   if (is.null(result$dontInsertParens))
+      result$dontInsertParens <- .rs.scalar(FALSE)
+   
    ## Override param insertion if the function was 'debug' or 'trace'
    ## NOTE: This logic should be synced in 'RCompletionManager.java'.
-   result$dontInsertParens <- FALSE
-   if (string == "debug" || string == "trace")
-      result$dontInsertParens <- TRUE
+   if (string %in% c("debug", "debugonce", "undebug", "isdebugged") ||
+       .rs.endsWith(string, "ply"))
+      result$dontInsertParens <- .rs.scalar(TRUE)
    
    result[
       c(

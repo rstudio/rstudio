@@ -47,15 +47,12 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorLineWithCursorPosition;
-import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.EditSession;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RInfixData;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -592,17 +589,9 @@ public class RCompletionManager implements CompletionManager
 
       boolean canAutoAccept = flushCache;
       
-      // NOTE: This logic should be synced in 'SessionCodeTools.R'.
-      boolean dontInsertParens = false;
-      if (context.getDataType() == AutoCompletionContext.TYPE_FUNCTION &&
-          (context.getAssocData() == "debug" ||
-           context.getAssocData() == "trace"))
-         dontInsertParens = true;
-      
       context_ = new CompletionRequestContext(invalidation_.getInvalidationToken(),
                                               selection,
-                                              canAutoAccept,
-                                              dontInsertParens);
+                                              canAutoAccept);
       
       // Try to see if there's an object name we should use to supplement
       // completions
@@ -931,13 +920,11 @@ public class RCompletionManager implements CompletionManager
    {
       public CompletionRequestContext(Invalidation.Token token,
                                       InputEditorSelection selection,
-                                      boolean canAutoAccept,
-                                      boolean dontInsertParens)
+                                      boolean canAutoAccept)
       {
          invalidationToken_ = token ;
          selection_ = selection ;
          canAutoAccept_ = canAutoAccept;
-         dontInsertParens_ = dontInsertParens;
       }
       
       public void showHelp(QualifiedName selectedItem)
@@ -997,6 +984,7 @@ public class RCompletionManager implements CompletionManager
 
          token_ = token ;
          suggestOnAccept_ = completions.suggestOnAccept;
+         dontInsertParens_ = completions.dontInsertParens;
 
          if (results.length == 1
              && canAutoAccept_
@@ -1007,7 +995,7 @@ public class RCompletionManager implements CompletionManager
          else
          {
             if (results.length == 1 && canAutoAccept_)
-               applyValue(results[0], completions.dontInsertParens);
+               applyValue(results[0]);
             
             popup_.showCompletionValues(
                   results,
@@ -1055,7 +1043,7 @@ public class RCompletionManager implements CompletionManager
             return ;
          }
 
-         applyValue(qname, dontInsertParens_);
+         applyValue(qname);
 
          if (suggestOnAccept_)
          {
@@ -1078,7 +1066,7 @@ public class RCompletionManager implements CompletionManager
          return StringUtil.toRSymbolName(string);
       }
 
-      private void applyValue(QualifiedName name, final boolean dontInsertParens)
+      private void applyValue(QualifiedName name)
       {
          
          final String functionName = name.name;
@@ -1108,7 +1096,7 @@ public class RCompletionManager implements CompletionManager
                      selection_.getStart().movePosition(-token_.length(), true),
                      input_.getSelection().getEnd()));
          
-               if (isFunction.booleanValue() && !dontInsertParens)
+               if (isFunction && !dontInsertParens_)
                {
                   // Don't replace the selection if the token ends with a ')'
                   // (implies an earlier replacement handled this)
