@@ -15,10 +15,9 @@
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayBoolean;
 import com.google.gwt.core.client.JsArrayString;
 
-import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
@@ -40,6 +39,7 @@ import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions.Rn
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -331,6 +331,8 @@ public class CompletionRequester
       if (rnwContext_ != null &&
           (optionsStartOffset = rnwContext_.getRnwOptionsStart(token, token.length())) >= 0)
       {
+         Debug.logToConsole("About to request sweave completions");
+         Debug.logToConsole("Token: '" + token + "'");
          doGetSweaveCompletions(token, optionsStartOffset, token.length(), requestCallback);
       }
       else
@@ -364,15 +366,18 @@ public class CompletionRequester
                   optionsStartOffset,
                   cursorPos,
                   rnwContext_ == null ? null : rnwContext_.getActiveRnwWeave());
+            
+            String[] pkgNames = new String[result.completions.length()];
+            Arrays.fill(pkgNames, "`chunk-option`");
 
             Completions response = Completions.createCompletions(
                   result.token,
                   result.completions,
-                  JsUtil.createEmptyArray(result.completions.length())
-                        .<JsArrayString>cast(),
-                  null,
+                  JsUtil.toJsArrayString(pkgNames),
+                  "",
                   false,
                   false);
+            
             // Unlike other completion types, Sweave completions are not
             // guaranteed to narrow the candidate list (in particular
             // true/false).
@@ -460,7 +465,7 @@ public class CompletionRequester
          
          StringBuilder result = new StringBuilder();
          result.append(" <span class=\"packageName\">");
-         if (pkgName.matches("^([\\{\\[\\(\\<]).*\\1$"))
+         if (pkgName.matches("^([\\{\\[\\(\\<`'\"]).*\\1$"))
             result.append(DomUtils.textToHtml(pkgName));
          else
             result.append("{").append(DomUtils.textToHtml(pkgName)).append("}");
@@ -470,7 +475,7 @@ public class CompletionRequester
 
       public static QualifiedName parseFromText(String val)
       {
-         String name, pkgName = null;
+         String name, pkgName = "";
          int idx = val.indexOf('{') ;
          if (idx < 0)
          {

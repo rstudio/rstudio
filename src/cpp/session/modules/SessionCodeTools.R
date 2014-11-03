@@ -397,7 +397,7 @@
       objects <- if (exportsOnly)
          getNamespaceExports(asNamespace(string))
       else
-         objects(asNamespace(string))
+         objects(asNamespace(string), all.names = TRUE)
       keep <- .rs.startsWith(objects, token)
       completions <- objects[keep]
       
@@ -449,6 +449,28 @@
                    excludeContext = .rs.scalar(TRUE))
    
    .rs.withTimeLimit(0.15, fail = default, {
+      
+      ## Blacklist certain evaluations
+      parsed <- suppressWarnings(parse(text = string))
+      symbol <- gsub("^([a-zA-Z0-9._]*).*", "\\1", string, perl = TRUE)
+      if (symbol != "")
+      {
+         object <- get(symbol, envir = envir)
+         if (inherits(object, "data.table"))
+         {
+            return(list(
+               token = token,
+               results = names(object),
+               packages = rep.int(
+                  paste("[", string, "]", sep = ""),
+                  length(object)
+               ),
+               fguess = "",
+               excludeContext = .rs.scalar(TRUE)
+            ))
+         }
+      }
+      
       evaled <- suppressWarnings(eval(parse(text = string), envir = envir))
       if (!is.null(evaled) & !is.null(names(evaled)))
       {
@@ -522,6 +544,7 @@ utils:::rc.settings(ipck = TRUE)
    TYPE_NAMESPACE_ALL <- 5L
    TYPE_DOLLAR <- 6L
    TYPE_FILE <- 7L
+   TYPE_CHUNK <- 8L
    
    # Discard the first argument for function completions if we're
    # in a chain

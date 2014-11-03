@@ -126,6 +126,14 @@ public class JsUtil
          result.push(s);
       return result;
    }
+   
+   public static JsArrayString toJsArrayString(String[] strings)
+   {
+      JsArrayString result = JsArrayString.createArray().cast();
+      for (String s : strings)
+         result.push(s);
+      return result;
+   }
 
    public native static JavaScriptObject createEmptyArray(int length) /*-{
       return new Array(length);

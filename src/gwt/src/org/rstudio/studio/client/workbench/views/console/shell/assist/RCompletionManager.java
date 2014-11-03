@@ -501,6 +501,7 @@ public class RCompletionManager implements CompletionManager
       public static final int TYPE_NAMESPACE_ALL = 5;
       public static final int TYPE_DOLLAR = 6;
       public static final int TYPE_FILE = 7;
+      public static final int TYPE_CHUNK = 8;
       
       public AutoCompletionContext(
             String content,
@@ -768,6 +769,12 @@ public class RCompletionManager implements CompletionManager
       
       // trim to cursor position
       firstLine = firstLine.substring(0, input_.getCursorPosition().getColumn());
+      
+      // If this line starts with '```{', then we're completing chunk options
+      // pass the whole line as a token
+      if (firstLine.startsWith("```{") || firstLine.startsWith("<<"))
+         return new AutoCompletionContext("", firstLine, "", AutoCompletionContext.TYPE_CHUNK, 0);
+      
       
       // Get the token at the cursor position
       token = firstLine.replaceAll(".*[\\s\\(\\[\\{,]", "");
@@ -1065,12 +1072,28 @@ public class RCompletionManager implements CompletionManager
       {
          return StringUtil.toRSymbolName(string);
       }
+      
+      private void applyValueRmdOption(final String value)
+      {
+         input_.setSelection(new InputEditorSelection(
+               selection_.getStart().movePosition(-token_.length(), true),
+               input_.getSelection().getEnd()));
+
+         input_.replaceSelection(value, true);
+         token_ = value;
+         selection_ = input_.getSelection();
+      }
 
       private void applyValue(QualifiedName name)
       {
+         final String functionName = name.name == null ? "" : name.name;
+         final String pkgName = name.pkgName == null ? "" : name.pkgName;
          
-         final String functionName = name.name;
-         final String pkgName = name.pkgName;
+         if (pkgName == "`chunk-option`")
+         {
+            applyValueRmdOption(functionName);
+            return;
+         }
          
          server_.isFunction(functionName, pkgName, new ServerRequestCallback<Boolean>()
          {
@@ -1081,7 +1104,9 @@ public class RCompletionManager implements CompletionManager
                String value = functionName;
                if (!value.matches(".*[=:]\\s*$") && 
                    !value.matches("^\\s*([`'\"]).*\\1\\s*$") &&
-                   pkgName != "<file>")
+                   pkgName != "<file>" &&
+                   pkgName != "`chunk-option`" &&
+                   !value.startsWith("@"))
                   value = quoteIfNotSyntacticNameCompletion(value);
                
                /* In some cases, applyValue can be called more than once
