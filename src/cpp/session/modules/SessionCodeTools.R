@@ -244,6 +244,9 @@
    if (isFileCompletion)
       token <- paste("\"", token, sep = "")
    
+   if (token == "library" || token == "require")
+      token <- paste(token, "(", sep = "")
+   
    utils:::.assignLinebuffer(token)
    utils:::.assignEnd(nchar(token))
    token <- utils:::.guessTokenFromLine()
@@ -294,6 +297,13 @@
 
 .rs.addFunction("getCompletionsFunction", function(token, string, discardFirst)
 {
+   if (string == "library" || string == "require")
+      return(
+         .rs.getInternalRCompletions(
+            paste(string, "(", token, sep = ""), FALSE
+         )
+      )
+   
    result <- list(
       results = character(),
       packages = character(),
@@ -309,7 +319,6 @@
          formals <- names(formals(object))
          keep <- .rs.startsWith(formals, token)
          formals <- formals[keep]
-         formals <- setdiff(formals, "...")
          
          if (length(formals))
             result$results <- paste(formals, "= ")
@@ -344,7 +353,6 @@
             formals <- names(formals(object))
             keep <- .rs.startsWith(formals, token)
             formals <- formals[keep]
-            formals <- setdiff(formals, "...")
             
             if (length(formals))
                result$results <- paste(formals, "= ")
@@ -470,7 +478,7 @@
    {
       completions <- names(object)
       completions <- completions[.rs.startsWith(completions, token)]
-      result$completions <- completions
+      result$results <- completions
       result$packages <- character(length(completions))
    }
    
@@ -489,9 +497,6 @@ utils:::rc.settings(ipck = TRUE)
                                                   additionalArgs,
                                                   excludeArgs)
 {
-   print(token)
-   print(string)
-   
    roxygen <- .rs.attemptRoxygenTagCompletion(token)
    if (!is.null(roxygen))
       return(roxygen)

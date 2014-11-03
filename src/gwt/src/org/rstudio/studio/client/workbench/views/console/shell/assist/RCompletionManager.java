@@ -893,7 +893,7 @@ public class RCompletionManager implements CompletionManager
          String value = tokenCursor.currentValue();
          String type = tokenCursor.currentType();
          
-         if (type == "identifier" || value == ":" || value == "$" || value == "@")
+         if (type == "identifier" || type == "keyword" || value == ":" || value == "$" || value == "@")
             continue;
          
          break;
@@ -901,7 +901,7 @@ public class RCompletionManager implements CompletionManager
       } while (tokenCursor.moveToPreviousToken());
       
       // We might have to move back up one if we failed on a non-associated token
-      if (tokenCursor.currentType() != "identifier")
+      if (tokenCursor.currentType() != "identifier" && tokenCursor.currentType() != "keyword")
          if (!tokenCursor.moveToNextToken())
             return defaultContext;
       

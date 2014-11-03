@@ -861,6 +861,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             
             var clone = tokenCursor.cloneCursor();
             if (!clone.moveToPreviousToken()) continue;
+            
             if (pIdentifier(clone.currentToken()))
             {
                var arg = clone.currentValue();
