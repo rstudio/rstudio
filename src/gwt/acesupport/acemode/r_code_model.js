@@ -567,7 +567,8 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       var name = "";
       if (data !== false)
       {
-         name = tokenCursor.currentValue();
+         if (!data.excludeOtherNames)
+            name = tokenCursor.currentValue();
          additionalArgs = data.additionalArgs;
          excludeArgs = data.excludeArgs;
       }
@@ -581,9 +582,14 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    };
 
    var $dplyrMutaterVerbs = [
-      "mutate", "summarise", "summarize", "rename", "transmute"
+      "mutate", "summarise", "summarize", "rename", "transmute",
+      "select", "rename_vars"
    ];
 
+   // Add arguments from a function call in a chain.
+   //
+   //     select(x, y = 1)
+   //     ^~~~~~~|~~|~~~~x
    var addDplyrArguments = function(cursor, data, limit, fnName)
    {
       if (!cursor.moveToNextToken())
@@ -595,18 +601,22 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       if (!cursor.moveToNextToken())
          return false;
 
-      var maybeAdd = cursor.currentValue();
-      if (!cursor.moveToNextToken())
+      if (cursor.currentValue() === ")")
          return false;
 
-      if (cursor.currentValue() === "=")
-         data.additionalArgs.push(maybeAdd);
-
+      if (cursor.currentType() === "identifier")
+         data.additionalArgs.push(cursor.currentValue());
+      
       if (fnName === "rename")
       {
          if (!cursor.moveToNextToken())
             return false;
          data.excludeArgs.push(cursor.currentValue());
+      }
+
+      if (fnName === "select")
+      {
+         data.excludeOtherNames = true;
       }
 
       do
@@ -630,19 +640,20 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             if (!cursor.moveToNextToken())
                return false;
 
-            maybeAdd = cursor.currentValue();
+            if (cursor.currentType() === "identifier")
+               data.additionalArgs.push(cursor.currentValue());
+            
             if (!cursor.moveToNextToken())
                return false;
 
             if (cursor.currentValue() === "=")
             {
-               data.additionalArgs.push(maybeAdd);
-
-               if (fnName === "rename")
+               if (fnName === "rename" || fnName === "rename_vars")
                {
                   if (!cursor.moveToNextToken())
                      return false;
-                  data.excludeArgs.push(cursor.currentValue());
+                  if (cursor.currentType() === "identifier")
+                     data.excludeArgs.push(cursor.currentValue());
                }
 
             }
