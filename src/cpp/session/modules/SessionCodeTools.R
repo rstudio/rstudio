@@ -376,7 +376,7 @@
    .rs.getCompletionsFromObject(object, name)
 })
 
-.rs.addFunction("getCompletionsNamespace", function(token, string)
+.rs.addFunction("getCompletionsNamespace", function(token, string, exportsOnly)
 {
    if (!(string %in% loadedNamespaces()))
    {
@@ -388,7 +388,10 @@
    
    if (string %in% loadedNamespaces())
    {
-      objects <- objects(asNamespace(string))
+      objects <- if (exportsOnly)
+         getNamespaceExports(asNamespace(string))
+      else
+         objects(asNamespace(string))
       keep <- .rs.startsWith(objects, token)
       completions <- objects[keep]
       
@@ -473,15 +476,16 @@ utils:::rc.settings(files = TRUE)
    TYPE_FUNCTION <- 1
    TYPE_SINGLE_BRACKET <- 2
    TYPE_DOUBLE_BRACKET <- 3
-   TYPE_NAMESPACE <- 4
-   TYPE_DOLLAR <- 5
+   TYPE_NAMESPACE_EXPORTED <- 4
+   TYPE_NAMESPACE_ALL <- 5
+   TYPE_DOLLAR <- 6
    
    ## If we're completing after a '$' or an '@', then
    ## we don't need any other completions
    if (type == TYPE_DOLLAR)
       return(.rs.getCompletionsDollar(token, string, parent.frame()))
-   else if (type == TYPE_NAMESPACE)
-      return(.rs.getCompletionsNamespace(token, string))
+   else if (type %in% c(TYPE_NAMESPACE_EXPORTED, TYPE_NAMESPACE_ALL))
+      return(.rs.getCompletionsNamespace(token, string, type == TYPE_NAMESPACE_EXPORTED))
    
    additionalArgs <- unlist(additionalArgs)
    excludeArgs <- unlist(excludeArgs)
@@ -505,7 +509,6 @@ utils:::rc.settings(files = TRUE)
          }
       }
    }
-   
    
    result <- .rs.appendCompletions(
       .rs.getInternalRCompletions(token),

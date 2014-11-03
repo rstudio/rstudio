@@ -495,12 +495,14 @@ public class RCompletionManager implements CompletionManager
    // 4. The associated data for a `[[` call (if any -- completions from data object)
    class AutoCompletionContext {
       
+      // Be sure to sync these with 'SessionCodeTools.R'!
       public static final int TYPE_UNKNOWN = 0;
       public static final int TYPE_FUNCTION = 1;
       public static final int TYPE_SINGLE_BRACKET = 2;
       public static final int TYPE_DOUBLE_BRACKET = 3;
-      public static final int TYPE_NAMESPACE = 4;
-      public static final int TYPE_DOLLAR = 5;
+      public static final int TYPE_NAMESPACE_EXPORTED = 4;
+      public static final int TYPE_NAMESPACE_ALL = 5;
+      public static final int TYPE_DOLLAR = 6;
       
       public AutoCompletionContext(
             String content,
@@ -665,7 +667,9 @@ public class RCompletionManager implements CompletionManager
                "",
                right,
                left,
-               AutoCompletionContext.TYPE_NAMESPACE,
+               token.contains(":::") ?
+                     AutoCompletionContext.TYPE_NAMESPACE_ALL :
+                     AutoCompletionContext.TYPE_NAMESPACE_EXPORTED,
                0);
       }
       
