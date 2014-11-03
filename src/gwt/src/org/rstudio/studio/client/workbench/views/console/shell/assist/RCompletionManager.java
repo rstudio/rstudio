@@ -672,11 +672,11 @@ public class RCompletionManager implements CompletionManager
       while (cursor.currentValue() == "$" || cursor.currentValue() == "@") {
          
          if (!cursor.moveToPreviousToken())
-            return defaultContext;
+            break;
 
          while (cursor.bwdToMatchingToken())
             if (!cursor.moveToPreviousToken())
-               return defaultContext;
+               break;
 
          String type = cursor.currentType();
          if (type == "identifier" ||
@@ -684,24 +684,26 @@ public class RCompletionManager implements CompletionManager
              type == "symbol")
          {
             if (!cursor.moveToPreviousToken())
-               return defaultContext;
+               break;
             
             if (cursor.currentValue() == ":")
             {
                while (cursor.currentValue() == ":")
                   if (!cursor.moveToPreviousToken())
-                     return defaultContext;
+                     break;
                
                if (!cursor.moveToPreviousToken())
-                  return defaultContext;
+                  break;
             }
          }
          
       }
       
-      // Correct for the off-by-one above
-      if (!cursor.moveToNextToken())
-         return defaultContext;
+      // Correct for the off-by-one above if necessary
+      Position pos = cursor.currentPosition();
+      if (!(pos.getRow() == 0 && pos.getColumn() == 0))
+         if (!cursor.moveToNextToken())
+            return defaultContext;
       
       // Get the string forming the context
       String context = editor.getTextForRange(Range.fromPoints(
