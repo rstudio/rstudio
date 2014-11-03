@@ -130,6 +130,7 @@ CodeCompleteResult::CodeCompleteResult(CXCompletionResult result)
       text_ = resultType + " " + text_;
 
    availability_ = clang().getCompletionAvailability(cs);
+   priority_ = clang().getCompletionPriority(cs);
 }
 
 CodeCompleteResults:: ~CodeCompleteResults()

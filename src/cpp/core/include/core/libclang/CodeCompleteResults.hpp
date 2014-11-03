@@ -34,6 +34,8 @@ public:
 
    CXAvailabilityKind getAvailability() const { return availability_; }
 
+   unsigned getPriority() const { return priority_; }
+
    std::string getTypedText() const { return typedText_; }
 
    std::string getText() const { return text_; }
@@ -41,6 +43,7 @@ public:
 private:
    CXCursorKind kind_;
    CXAvailabilityKind availability_;
+   unsigned priority_;
    std::string typedText_;
    std::string text_;
 };
