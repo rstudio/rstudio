@@ -212,6 +212,7 @@
 
 .rs.addFunction("getAnywhere", function(name)
 {
+   name <- gsub("^\\s*([`'\"])(.*?)\\1.*", "\\2", name, perl = TRUE)
    objects <- getAnywhere(name)
    if (length(objects$objs))
    {
@@ -221,35 +222,6 @@
    {
       NULL
    }
-})
-
-.rs.addFunction("getBracketCompletions", function(line,
-                                                  cursorPos)
-{
-   ## Try getting completions manually for `x[`, `x[[`
-   result <- list(
-      token = "",
-      results = character(),
-      packages = character(),
-      fguess = character()
-   )
-   
-   variable <- sub("^\\s*([a-zA-Z0-9.])\\[+\\s*$", "\\1", line, perl = TRUE)
-   object <- .rs.getAnywhere(variable)
-   if (!is.null(object))
-   {
-      names <- names(object)
-      if (length(names))
-      {
-         quotedNames <- paste('"', names, '"', sep = "")
-         result$results <- quotedNames
-         result$packages <- setNames(
-            character(length(quotedNames)),
-            quotedNames
-         )
-      }
-   }
-   result
 })
 
 .rs.addFunction("getInternalRCompletions", function(token)
@@ -369,13 +341,6 @@
    
 })
 
-.rs.addFunction("getQuotedCompletion", function(line)
-{
-   name <- gsub("^\\s*([`'\"])(.*?)\\1.*", "\\2", line, perl = TRUE)
-   object <- .rs.getAnywhere(name)
-   .rs.getCompletionsFromObject(object, name)
-})
-
 .rs.addFunction("getCompletionsNamespace", function(token, string, exportsOnly)
 {
    if (!(string %in% loadedNamespaces()))
@@ -457,7 +422,30 @@
    }
 })
 
+.rs.addFunction("getCompletionsDoubleBracket", function(token, string)
+{
+   result <- list(
+      token = token,
+      results = character(),
+      packages = character(),
+      fguess = ""
+   )
+   
+   object <- .rs.getAnywhere(string)
+   if (!is.null(object) && !is.null(names(object)))
+   {
+      completions <- names(object)
+      completions <- completions[.rs.startsWith(completions, token)]
+      result$completions <- completions
+      result$packages <- character(length(completions))
+   }
+   
+   result
+   
+})
+
 utils:::rc.settings(files = TRUE)
+utils:::rc.settings(ipck = TRUE)
 .rs.addJsonRpcHandler("get_completions", function(content,
                                                   token,
                                                   string,
@@ -479,6 +467,22 @@ utils:::rc.settings(files = TRUE)
    TYPE_NAMESPACE_EXPORTED <- 4
    TYPE_NAMESPACE_ALL <- 5
    TYPE_DOLLAR <- 6
+   
+   # Discard the first argument for function completions if we're
+   # in a chain
+   
+   ## TODO: The caller should really pass in whether we want to discard
+   ## the first argument.
+   discardFirst <-
+      string %in% c(
+         "mutate", "summarise", "summarize", "rename", "transmute",
+         "select", "rename_vars"
+      ) &&
+      (
+         chainObjectName != "" || 
+         length(additionalArgs) ||
+         length(excludeArgs)
+      )
    
    ## If we're completing after a '$' or an '@', then
    ## we don't need any other completions
@@ -513,7 +517,7 @@ utils:::rc.settings(files = TRUE)
    result <- .rs.appendCompletions(
       .rs.getInternalRCompletions(token),
       if (type == TYPE_FUNCTION)
-         .rs.getCompletionsFunction(token, string, chainObjectName != "")
+         .rs.getCompletionsFunction(token, string, discardFirst)
       else if (type == TYPE_SINGLE_BRACKET)
          .rs.getCompletionsSingleBracket(token, string)
       else if (type == TYPE_DOUBLE_BRACKET)

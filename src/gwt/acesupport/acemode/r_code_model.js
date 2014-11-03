@@ -667,6 +667,49 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       
    };
 
+   var findChainScope = function(cursor)
+   {
+      var clone = cursor.cloneCursor();
+      while (clone.findOpeningParen())
+      {
+         // Move off of the opening paren
+         if (!clone.moveToPreviousToken())
+            return false;
+
+         // Move off of identifier
+         if (!clone.moveToPreviousToken())
+            return false;
+
+         // Move over '::' qualifiers
+         if (clone.currentValue() === ":")
+         {
+            while (clone.currentValue() === ":")
+               if (!clone.moveToPreviousToken())
+                  return false;
+
+            // Move off of identifier
+            if (!clone.moveToPreviousToken())
+               return false;
+         }
+
+         // If it's an infix operator, we use this scope
+         // Ensure it's a '%%' operator (allow for other pipes)
+         if (pInfix(clone.currentToken()))
+         {
+            cursor.$row = clone.$row;
+            cursor.$offset = clone.$offset;
+            return true;
+         }
+
+         // keep trying!
+         
+      }
+
+      // give up
+      return false;
+      
+   };
+
    // Attempt to move a token cursor from a function call within
    // a chain back to the starting data object.
    //
@@ -674,33 +717,10 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    //     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
    this.moveToDataObjectFromInfixChain = function(tokenCursor)
    {
+      // Find an opening paren associated with the nearest chain,
       // Find the outermost opening paren
       var clone = tokenCursor.cloneCursor();
-
-      while (clone.findOpeningParen())
-      {
-         if (!clone.moveToPreviousToken())
-            return false;
-      }
-
-      // Move off of identifier
-      if (!clone.moveToPreviousToken())
-         return false;
-
-      // Move over '::' qualifiers
-      if (clone.currentValue() === ":")
-      {
-         while (clone.currentValue() === ":")
-            if (!clone.moveToPreviousToken())
-               return false;
-
-         // Move off of identifier
-         if (!clone.moveToPreviousToken())
-            return false;
-      }
-
-      // Ensure it's a '%%' operator (allow for other pipes)
-      if (!pInfix(clone.currentToken()))
+      if (!findChainScope(clone))
          return false;
 
       // Fill custom args
