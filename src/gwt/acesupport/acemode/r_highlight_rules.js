@@ -111,7 +111,7 @@ define("mode/r_highlight_rules", function(require, exports, module)
                   else
                      return "identifier";
                },
-               regex : "[a-zA-Z.][a-zA-Z0-9._]*\\b"
+               regex : "[a-zA-Z.][a-zA-Z0-9._]*"
             },
             {
                token : "keyword.operator",
