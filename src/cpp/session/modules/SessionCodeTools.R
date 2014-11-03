@@ -13,6 +13,21 @@
 #
 #
 
+.rs.addFunction("withTimeLimit", function(time,
+                                          expr,
+                                          envir = parent.frame(),
+                                          fail = NULL)
+{
+   setTimeLimit(elapsed = time, transient = TRUE)
+   on.exit(setTimeLimit(), add = TRUE)
+   tryCatch(
+      eval(expr, envir = envir),
+      error = function(e) {
+         fail
+      }
+   )
+})
+
 .rs.addFunction("startsWith", function(strings, string)
 {
    n <- nchar(string)
@@ -404,41 +419,35 @@
 
 .rs.addFunction("getCompletionsDollar", function(token, string, envir)
 {
-   setTimeLimit(elapsed = 0.15, transient = TRUE)
-   on.exit(setTimeLimit(), add = TRUE)
-   tryCatch(
-      expr = {
-         evaled <- suppressWarnings(eval(parse(text = string), envir = envir))
-         if (!is.null(evaled) & !is.null(names(evaled)))
-         {
-            names <- names(evaled)
-            completions <- names[.rs.startsWith(names, token)]
-            list(
-               token = token,
-               results = completions,
-               packages = character(length(completions)),
-               fguess = "",
-               excludeContext = .rs.scalar(TRUE)
-            )
-         }
-         else
-         {
-            list(token = token,
-                 results = character(),
-                 packages = character(),
-                 fguess = "",
-                 excludeContext = .rs.scalar(TRUE))
-         }
-      },
-      
-      error = function(e) {
-         list(token = token,
-              results = character(),
-              packages = character(),
-              fguess = "",
-              excludeContext = .rs.scalar(TRUE))
+   
+   default <- list(token = token,
+                   results = character(),
+                   packages = character(),
+                   fguess = "",
+                   excludeContext = .rs.scalar(TRUE))
+   
+   .rs.withTimeLimit(0.15, fail = default, {
+      evaled <- suppressWarnings(eval(parse(text = string), envir = envir))
+      if (!is.null(evaled) & !is.null(names(evaled)))
+      {
+         names <- names(evaled)
+         completions <- names[.rs.startsWith(names, token)]
+         list(
+            token = token,
+            results = completions,
+            packages = rep.int(
+               paste("[", string, "]", sep = ""),
+               length(completions)
+            ),
+            fguess = "",
+            excludeContext = .rs.scalar(TRUE)
+         )
       }
-   )
+      else
+      {
+         default
+      }
+   })
 })
 
 .rs.addFunction("getCompletionsDoubleBracket", function(token, string)
@@ -638,6 +647,14 @@ utils:::rc.settings(ipck = TRUE)
             error = function(e) NULL
          )
       }
+      else if (!is.null(container <- .rs.getAnywhere(envString)))
+      {
+         object <- tryCatch(
+            container[[nameString]],
+            error = function(e) NULL
+         )
+      }
    }
    .rs.scalar(!is.null(object) && is.function(object))
 })
+
