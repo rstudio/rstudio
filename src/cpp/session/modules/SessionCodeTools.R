@@ -584,7 +584,7 @@
    {
       completions <- names(object)
       completions <- completions[.rs.startsWith(completions, token)]
-      result$results <- completions
+      result$results <- paste('"', completions, '"', sep = "")
       result$packages <- character(length(completions))
    }
    

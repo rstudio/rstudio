@@ -664,44 +664,73 @@ public class RCompletionManager implements CompletionManager
                0);
    }
    
-   private boolean findStartOfEvaluationContextForDollar(TokenCursor cursor)
+   private boolean isValidAsIdentifier(TokenCursor cursor)
+   {
+      String type = cursor.currentType();
+      return type == "identifier" ||
+             type == "symbol" ||
+             type == "keyword" ||
+             type == "string";
+   }
+   
+   private boolean isLookingAtClosingBracket(TokenCursor cursor)
+   {
+      String value = cursor.currentValue();
+      return value == ")" ||
+             value == "]";
+   }
+   
+   private boolean isLookingAtInfixySymbol(TokenCursor cursor)
+   {
+      String value = cursor.currentValue();
+      if (value == "$" ||
+          value == "@" ||
+          value == ":")
+         return true;
+      
+      if (cursor.currentType().contains("infix"))
+         return true;
+      
+      return false;
+   }
+   
+   // Find the start of the evaluation context for a generic expression,
+   // e.g.
+   //
+   //     x[[1]]$foo[[1]][, 2]@bar[[1]]()
+   private boolean findStartOfEvaluationContext(TokenCursor cursor)
    {
       TokenCursor clone = cursor.cloneCursor();
-      while (clone.currentValue() == "$" || clone.currentValue() == "@") {
+      
+//       Debug.logToConsole("Starting search at:");
+//       Debug.logObject(clone.currentToken());
+      
+      do
+      {
+         if (clone.bwdToMatchingToken())
+            continue;
          
-         if (!clone.moveToPreviousToken())
-            break;
-
-         while (clone.bwdToMatchingToken())
-            if (!clone.moveToPreviousToken())
-               break;
-
-         String type = clone.currentType();
-         if (type == "identifier" ||
-             type == "string" ||
-             type == "symbol")
+         // If we land on an identifier, we keep going if the token previous is
+         // 'infix-y', and bail otherwise.
+         if (isValidAsIdentifier(clone))
          {
             if (!clone.moveToPreviousToken())
                break;
             
-            if (clone.currentValue() == ":")
-            {
-               while (clone.currentValue() == ":")
-                  if (!clone.moveToPreviousToken())
-                     break;
+            if (isLookingAtInfixySymbol(clone))
+               continue;
+            
+            if (!clone.moveToNextToken())
+               return false;
+            
+            break;
                
-               if (!clone.moveToPreviousToken())
-                  break;
-            }
          }
          
-      }
+      } while (clone.moveToPreviousToken());
       
-      // Correct for the off-by-one above if necessary
-      Position pos = clone.currentPosition();
-      if (!(pos.getRow() == 0 && pos.getColumn() == 0))
-         if (!clone.moveToNextToken())
-            return false;
+//      Debug.logToConsole("Stopping search at:");
+//      Debug.logObject(clone.currentToken());
       
       cursor.setRow(clone.getRow());
       cursor.setOffset(clone.getOffset());
@@ -742,13 +771,14 @@ public class RCompletionManager implements CompletionManager
       
       // Put a cursor here
       TokenCursor contextEndCursor = cursor.cloneCursor();
-      if (!findStartOfEvaluationContextForDollar(cursor))
-         return defaultContext;
       
       // We allow for arbitrary elements previous, so we want to get e.g.
       //
       //     env::foo()$bar()[1]$baz
       // Get the string forming the context
+      if (!findStartOfEvaluationContext(cursor))
+         return defaultContext;
+      
       String context = editor.getTextForRange(Range.fromPoints(
             cursor.currentPosition(),
             contextEndCursor.currentPosition()));
@@ -847,10 +877,6 @@ public class RCompletionManager implements CompletionManager
                startCursor.moveToNextToken();
             }
       
-      Debug.logToConsole("Cursor started at:");
-      Debug.logObject(tokenCursor.currentPosition());
-      Debug.logObject(tokenCursor.currentToken());
-      
       // Find an opening '(' or '[' -- this provides the function or object
       // for completion
       if (tokenCursor.currentValue() != "(" && tokenCursor.currentValue() != "[")
@@ -897,28 +923,8 @@ public class RCompletionManager implements CompletionManager
       }
       
       // Get the string marking the function or data
-      do
-      {
-         String value = tokenCursor.currentValue();
-         String type = tokenCursor.currentType();
-         
-         if (type == "identifier" || type == "keyword" || value == ":")
-            continue;
-         
-         if (value == "$" || value == "@")
-         {
-            findStartOfEvaluationContextForDollar(tokenCursor);
-            break;
-         }
-         
-         break;
-         
-      } while (tokenCursor.moveToPreviousToken());
-      
-      // We might have to move back up one if we failed on a non-associated token
-      if (tokenCursor.currentType() != "identifier" && tokenCursor.currentType() != "keyword")
-         if (!tokenCursor.moveToNextToken())
-            return defaultContext;
+      if (!findStartOfEvaluationContext(tokenCursor))
+         return defaultContext;
       
       assocData = docDisplay_.getTextForRange(Range.fromPoints(
             tokenCursor.currentPosition(),
