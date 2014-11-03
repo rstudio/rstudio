@@ -239,8 +239,11 @@
    }
 })
 
-.rs.addFunction("getInternalRCompletions", function(token)
+.rs.addFunction("getInternalRCompletions", function(token, isFileCompletion)
 {
+   if (isFileCompletion)
+      token <- paste("\"", token, sep = "")
+   
    utils:::.assignLinebuffer(token)
    utils:::.assignEnd(nchar(token))
    token <- utils:::.guessTokenFromLine()
@@ -248,7 +251,10 @@
    results <- utils:::.retrieveCompletions()
    status <- utils:::rc.status()
    
-   packages = sub('^package:', '', .rs.which(results))
+   if (isFileCompletion)
+      packages <- rep.int("<file>", length(results))
+   else
+      packages <- sub('^package:', '', .rs.which(results))
    
    ## Fix up qualified 'packages', so that e.g. 'stats::rnorm'
    ## is parsed as 'rnorm'
@@ -491,13 +497,14 @@ utils:::rc.settings(ipck = TRUE)
       return(roxygen)
    
    ## Different completion types (sync with RCompletionManager.java)
-   TYPE_UNKNOWN <- 0
-   TYPE_FUNCTION <- 1
-   TYPE_SINGLE_BRACKET <- 2
-   TYPE_DOUBLE_BRACKET <- 3
-   TYPE_NAMESPACE_EXPORTED <- 4
-   TYPE_NAMESPACE_ALL <- 5
-   TYPE_DOLLAR <- 6
+   TYPE_UNKNOWN <- 0L
+   TYPE_FUNCTION <- 1L
+   TYPE_SINGLE_BRACKET <- 2L
+   TYPE_DOUBLE_BRACKET <- 3L
+   TYPE_NAMESPACE_EXPORTED <- 4L
+   TYPE_NAMESPACE_ALL <- 5L
+   TYPE_DOLLAR <- 6L
+   TYPE_FILE <- 7L
    
    # Discard the first argument for function completions if we're
    # in a chain
@@ -546,7 +553,7 @@ utils:::rc.settings(ipck = TRUE)
    }
    
    result <- .rs.appendCompletions(
-      .rs.getInternalRCompletions(token),
+      .rs.getInternalRCompletions(token, type == TYPE_FILE),
       if (type == TYPE_FUNCTION)
          .rs.getCompletionsFunction(token, string, discardFirst)
       else if (type == TYPE_SINGLE_BRACKET)

@@ -503,6 +503,7 @@ public class RCompletionManager implements CompletionManager
       public static final int TYPE_NAMESPACE_EXPORTED = 4;
       public static final int TYPE_NAMESPACE_ALL = 5;
       public static final int TYPE_DOLLAR = 6;
+      public static final int TYPE_FILE = 7;
       
       public AutoCompletionContext(
             String content,
@@ -630,6 +631,49 @@ public class RCompletionManager implements CompletionManager
       return true ;
    }
    
+   private AutoCompletionContext getAutocompletionContextForFile(
+         String token)
+   {
+      return new AutoCompletionContext(
+            "",
+            token.substring(1),
+            "",
+            AutoCompletionContext.TYPE_FILE,
+            0);
+   }
+   
+   private AutoCompletionContext getAutocompletionContextForNamespace(
+         String token)
+   {
+         String[] splat = token.split(":{2,3}");
+         String right = "";
+         String left;
+         if (splat.length <= 0)
+         {
+            right = "";
+            left = "";
+         }
+         if (splat.length == 1)
+         {
+            right = "";
+            left = splat[0];
+         }
+         else
+         {
+            right = splat[1];
+            left = splat[0];
+         }
+            
+         return new AutoCompletionContext(
+               "",
+               right,
+               left,
+               token.contains(":::") ?
+                     AutoCompletionContext.TYPE_NAMESPACE_ALL :
+                     AutoCompletionContext.TYPE_NAMESPACE_EXPORTED,
+               0);
+   }
+   
    private AutoCompletionContext getAutocompletionContextForDollar(String token)
    {
       // Failure mode context
@@ -742,42 +786,17 @@ public class RCompletionManager implements CompletionManager
       // If the token has '::' or ':::', escape early as we'll be completing
       // something from a namespace
       if (token.contains("::"))
-      {
-         String[] splat = token.split(":{2,3}");
-         String right = "";
-         String left;
-         if (splat.length <= 0)
-         {
-            right = "";
-            left = "";
-         }
-         if (splat.length == 1)
-         {
-            right = "";
-            left = splat[0];
-         }
-         else
-         {
-            right = splat[1];
-            left = splat[0];
-         }
-            
-         return new AutoCompletionContext(
-               "",
-               right,
-               left,
-               token.contains(":::") ?
-                     AutoCompletionContext.TYPE_NAMESPACE_ALL :
-                     AutoCompletionContext.TYPE_NAMESPACE_EXPORTED,
-               0);
-      }
+         return getAutocompletionContextForNamespace(token);
       
       // If the token has '$' or '@', escape early as we'll be completing
       // either from names or an overloaded `$` method
       if (token.contains("$") || token.contains("@"))
-      {
          return getAutocompletionContextForDollar(token);
-      }
+      
+      // If we're completing an object within a string, assume it's a
+      // file-system completion
+      if (token.indexOf('\'') != -1 || token.indexOf('"') != -1)
+         return getAutocompletionContextForFile(token);
       
       // Default case for failure modes
       AutoCompletionContext defaultContext = new AutoCompletionContext(
@@ -797,11 +816,6 @@ public class RCompletionManager implements CompletionManager
       // that we can auto-complete within a comment line (but we only
       // need context from that line)
       if (!firstLine.equals(StringUtil.stripRComment(firstLine)))
-         return defaultContext;
-      
-      // If we're completing an object within a string, bail
-      if (token.indexOf('\'') != -1 || 
-          token.indexOf('"') != -1)
          return defaultContext;
       
       // access to the R Code model
@@ -1077,14 +1091,11 @@ public class RCompletionManager implements CompletionManager
             public void onResponseReceived(Boolean isFunction)
             {
                String value = functionName;
-               if (!value.matches(".*[=:]\\s*$"))
+               if (!value.matches(".*[=:]\\s*$") && 
+                   !value.matches("^\\s*([`'\"]).*\\1\\s*$") &&
+                   pkgName != "<file>")
                   value = quoteIfNotSyntacticNameCompletion(value);
                
-               // Move range to beginning of token
-               input_.setSelection(new InputEditorSelection(
-                     selection_.getStart().movePosition(-token_.length(), true),
-                     input_.getSelection().getEnd()));
-
                /* In some cases, applyValue can be called more than once
                 * as part of the same completion instance--specifically,
                 * if there's only one completion candidate and it is in
@@ -1092,6 +1103,10 @@ public class RCompletionManager implements CompletionManager
                 * logic works the second time, we need to reset the
                 * selection.
                 */
+               // Move range to beginning of token
+               input_.setSelection(new InputEditorSelection(
+                     selection_.getStart().movePosition(-token_.length(), true),
+                     input_.getSelection().getEnd()));
          
                if (isFunction.booleanValue() && !dontInsertParens)
                {
