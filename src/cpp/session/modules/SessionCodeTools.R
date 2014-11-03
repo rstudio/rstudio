@@ -290,7 +290,9 @@
          formals <- formals[keep]
          formals <- setdiff(formals, "...")
          
-         result$results <- paste(formals, "= ")
+         if (length(formals))
+            result$results <- paste(formals, "= ")
+         
          result$packages <- .rs.namedCharacterVector(
             rep.int(string, length(formals))
          )
@@ -323,7 +325,9 @@
             formals <- formals[keep]
             formals <- setdiff(formals, "...")
             
-            result$results <- paste(formals, "= ")
+            if (length(formals))
+               result$results <- paste(formals, "= ")
+            
             result$packages <- .rs.namedCharacterVector(
                rep.int(string, length(formals))
             )
@@ -593,7 +597,14 @@ utils:::rc.settings(ipck = TRUE)
    }
    else
    {
-      if (envString %in% loadedNamespaces())
+      if (envString %in% search())
+      {
+         object <- tryCatch(
+            get(nameString, pos = which(envString == search())),
+            error = function(e) NULL
+         )
+      }
+      else if (envString %in% loadedNamespaces())
       {
          object <- tryCatch(
             get(nameString, envir = asNamespace(envString)),
