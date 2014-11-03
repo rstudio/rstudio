@@ -32,12 +32,15 @@ public:
 
    CXCursorKind getKind() const { return kind_; }
 
+   CXAvailabilityKind getAvailability() const { return availability_; }
+
    std::string getTypedText() const { return typedText_; }
 
    std::string getText() const { return text_; }
 
 private:
    CXCursorKind kind_;
+   CXAvailabilityKind availability_;
    std::string typedText_;
    std::string text_;
 };

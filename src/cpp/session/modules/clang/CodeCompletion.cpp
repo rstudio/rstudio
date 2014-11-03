@@ -89,6 +89,13 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
          {
             CodeCompleteResult result = results.getResult(i);
 
+            // check whether this completion is valid and bail if not
+            if (result.getAvailability() != CXAvailability_Available &&
+                result.getAvailability() != CXAvailability_Deprecated)
+            {
+               continue;
+            }
+
             std::string typedText = result.getTypedText();
 
             // if we have the same typed text then just ammend previous result

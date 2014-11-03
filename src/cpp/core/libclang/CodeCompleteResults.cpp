@@ -128,6 +128,8 @@ CodeCompleteResult::CodeCompleteResult(CXCompletionResult result)
 
    if (!resultType.empty())
       text_ = resultType + " " + text_;
+
+   availability_ = clang().getCompletionAvailability(cs);
 }
 
 CodeCompleteResults:: ~CodeCompleteResults()
