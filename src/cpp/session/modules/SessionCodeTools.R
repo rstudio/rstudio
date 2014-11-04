@@ -270,9 +270,10 @@
 .rs.addFunction("getAnywhere", function(name, envir = parent.frame())
 {
    result <- NULL
-   
+ 
+   ## First, attempt to evaluate 'name' in 'envir'
    if (is.character(name)) {
-      name <- gsub("^\\s*([`'\"])(.*?)\\1.*", "\\2", name, perl = TRUE)
+      name <- .rs.stripSurrounding(name)
       result <- tryCatch({
          suppressWarnings(eval(parse(text = name), envir = envir))
       }, error = function(e) NULL
@@ -287,14 +288,17 @@
       )
    }
    
+   ## Return on success
    if (!is.null(result))
    {
       return(result)
    }
    
+   ## Otherwise, rely on 'getAnywhere'
    objects <- getAnywhere(name, envir)
    if (length(objects$objs))
    {
+      ## TODO: What if we have multiple completions?
       objects$objs[[1]]
    }
    else
@@ -350,13 +354,6 @@
         results=results.sorted, 
         packages=packages.sorted,
         fguess=status$fguess)
-})
-
-.rs.addFunction("namedCharacterVector", function(names)
-{
-   output <- character(length(names))
-   names(output) <- names
-   output
 })
 
 .rs.addFunction("getCompletionsFunction", function(token,
