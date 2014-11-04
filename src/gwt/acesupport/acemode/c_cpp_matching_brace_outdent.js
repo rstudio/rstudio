@@ -13,8 +13,10 @@ var $outdentRightParen         = true; // )
 var $outdentLeftBrace          = true; // {
 var $outdentRightBrace         = true; // }
 var $outdentRightBracket       = true; // ]
-var $outdentRightArrow            = true; // >
+var $outdentRightArrow         = true; // >
 var $alignDots                 = true; // .
+var $alignEquals               = true; // int x = 1,
+                                       //     y = 2;
 var $alignStreamIn             = true; // >>
 var $alignStreamOut            = true; // <<
 var $alignClassAccessModifiers = true; // public: etc.
@@ -66,6 +68,10 @@ var $alignCase                 = true; // case 'a':
             return true;
          }
 
+         // outdenting for '='
+         if (input === "=")
+            return true;
+
       }
 
       // check for nudging of '/' to the left (?)
@@ -108,6 +114,42 @@ var $alignCase                 = true; // case 'a':
       return false;
    };
 
+   this.alignEquals = function(session, row, line, prevLine) {
+
+      if (prevLine === null || line === null) return false;
+      var equalsIndex = line.indexOf("=");
+
+      // Bail if there is more than one '=' on the line
+      if (equalsIndex !== line.lastIndexOf("="))
+         return false;
+      
+      var prevLineEqualsIndex = prevLine.indexOf("=");
+      if (equalsIndex !== -1 && prevLineEqualsIndex !== -1 && /,\s*$/.test(prevLine))
+      {
+         var doc = session.getDocument();
+         var oldIndent = this.$getIndent(line);
+         if (oldIndent.length >= prevLineEqualsIndex)
+            return false;
+
+         var diff = prevLineEqualsIndex - equalsIndex;
+         if (diff <= 0)
+            return false;
+
+         var newIndent = new Array(oldIndent.length + diff + 1).join(" ");
+
+         doc.replace(
+            new Range(row, 0, row, oldIndent.length),
+            newIndent
+         );
+
+         return true;
+         
+      }
+
+      return false;
+      
+   };
+
    this.autoOutdent = function(state, session, row) {
 
       var doc = session.doc;
@@ -118,17 +160,17 @@ var $alignCase                 = true; // case 'a':
       var indent = this.$getIndent(line);
 
       // Check for '<<', '.'alignment
-      if ($alignStreamOut && this.alignStartToken("<<", session, row, line, prevLine)) {
+      if ($alignStreamOut && this.alignStartToken("<<", session, row, line, prevLine))
          return;
-      }
 
-      if ($alignStreamIn && this.alignStartToken(">>", session, row, line, prevLine)) {
+      if ($alignStreamIn && this.alignStartToken(">>", session, row, line, prevLine))
          return;
-      }
 
-      if ($alignDots && this.alignStartToken(".", session, row, line, prevLine)) {
+      if ($alignDots && this.alignStartToken(".", session, row, line, prevLine))
          return;
-      }
+
+      if ($alignEquals && this.alignEquals(session, row, line, prevLine))
+         return;
 
       // Outdent for a ':' places on its own line if it appears the
       // user is creating an initialization list for
@@ -461,6 +503,9 @@ exports.setOutdentRightArrow = function(x) { $outdentRightArrow = x; };
 
 exports.getAlignDots = function() { return $alignDots; };
 exports.setAlignDots = function(x) { $alignDots = x; };
+
+exports.getAlignEquals = function() { return $alignEquals; };
+exports.setAlignEquals = function(x) { $alignEquals = x; };
 
 exports.getAlignStreamIn = function() { return $alignStreamIn; };
 exports.setAlignStreamIn = function(x) { $alignStreamIn = x; };
