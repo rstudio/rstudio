@@ -865,27 +865,11 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             if (pIdentifier(clone.currentToken()))
             {
                var arg = clone.currentValue();
-               if (clone.isFirstSignificantTokenOnLine())
-               {
-                  scopedVariables.push({
-                     token: arg,
-                     type: type
-                  });
-                  continue;
-               }
-               
-               if (!clone.moveToPreviousToken()) continue;
-
-               var currentValue = clone.currentValue();
-               if (["(", ",", "[", "[[", "{"].some(function(x) {
-                  return x === currentValue;
-               }))
-                  continue;
-               
                scopedVariables.push({
                   token: arg,
                   type: type
                });
+               continue;
             }
             
          }

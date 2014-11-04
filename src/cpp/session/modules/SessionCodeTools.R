@@ -233,6 +233,40 @@
    .Call("rs_getPendingInput")
 })
 
+.rs.addFunction("doStripSurrounding", function(string, complements)
+{
+   result <- gsub("^\\s*([`'\"])(.*?)\\1.*", "\\2", string, perl = TRUE)
+   for (item in complements)
+   {
+      result <- sub(
+         paste("^\\", item[[1]], "(.*)\\", item[[2]], "$", sep = ""),
+         "\\1",
+         result,
+         perl = TRUE
+      )
+   }
+   result
+   
+})
+
+.rs.addFunction("stripSurrounding", function(string)
+{
+   complements <- list(
+      c("(", ")"),
+      c("{", "}"),
+      c("[", "]"),
+      c("<", ">")
+   )
+   
+   result <- .rs.doStripSurrounding(string, complements)
+   while (result != string)
+   {
+      string <- result
+      result <- .rs.doStripSurrounding(string, complements)
+   }
+   result
+})
+
 .rs.addFunction("getAnywhere", function(name, envir = parent.frame())
 {
    result <- NULL
@@ -258,7 +292,7 @@
       return(result)
    }
    
-   objects <- getAnywhere(name)
+   objects <- getAnywhere(name, envir)
    if (length(objects$objs))
    {
       objects$objs[[1]]
@@ -654,7 +688,7 @@ utils:::rc.settings(ipck = TRUE)
    objCompletions <- NULL
    if (!is.null(chainObjectName) && chainObjectName != "")
    {
-      object <- .rs.getAnywhere(chainObjectName)
+      object <- .rs.getAnywhere(chainObjectName, parent.frame())
       if (length(object))
       {
          nm <- names(object)
@@ -759,10 +793,11 @@ utils:::rc.settings(ipck = TRUE)
    object <- NULL
    if (envString == "")
    {
-      object <- .rs.getAnywhere(nameString)
+      object <- .rs.getAnywhere(nameString, parent.frame())
    }
    else
    {
+      envString <- .rs.stripSurrounding(envString)
       if (envString %in% search())
       {
          object <- tryCatch(
@@ -777,10 +812,10 @@ utils:::rc.settings(ipck = TRUE)
             error = function(e) NULL
          )
       }
-      else if (!is.null(container <- .rs.getAnywhere(envString)))
+      else if (!is.null(container <- .rs.getAnywhere(envString, parent.frame())))
       {
          object <- tryCatch(
-            container[[nameString]],
+            eval(call("$", container, nameString)),
             error = function(e) NULL
          )
       }
