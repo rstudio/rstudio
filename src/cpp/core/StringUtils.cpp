@@ -132,8 +132,11 @@ void convertLineEndings(std::string* pStr, LineEnding type)
 std::string utf8ToSystem(const std::string& str,
                          bool escapeInvalidChars)
 {
+   
    if (str.empty())
       return std::string();
+   
+   
 
 #ifdef _WIN32
    wchar_t wide[str.length() + 1];

@@ -245,6 +245,8 @@ utils:::rc.settings(files = TRUE)
         fguess=status$fguess)
 })
 
+<<<<<<< Updated upstream
+=======
 .rs.addFunction("getCompletionsFunction", function(token,
                                                    string,
                                                    discardFirst,
@@ -710,6 +712,7 @@ utils:::rc.settings(ipck = TRUE)
    
 })
 
+>>>>>>> Stashed changes
 .rs.addJsonRpcHandler("get_help_at_cursor", function(line, cursorPos)
 {
    token <- .rs.guessToken(line, cursorPos)

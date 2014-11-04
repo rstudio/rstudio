@@ -87,6 +87,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionAuthoring.cpp
    modules/SessionBreakpoints.cpp
    modules/SessionCodeSearch.cpp
+   modules/SessionCodeTools.cpp
    modules/SessionConsole.cpp
    modules/SessionDependencies.cpp
    modules/SessionDirty.cpp
