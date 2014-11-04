@@ -1143,7 +1143,9 @@ public class RCompletionManager implements CompletionManager
                }
                
                String value = functionName;
-               if (!value.matches(".*[=:]\\s*$") && 
+               if (value == ":=")
+                  value = quoteIfNotSyntacticNameCompletion(value);
+               else if (!value.matches(".*[=:]\\s*$") && 
                    !value.matches("^\\s*([`'\"]).*\\1\\s*$") &&
                    pkgName != "<file>" &&
                    pkgName != "`chunk-option`" &&
