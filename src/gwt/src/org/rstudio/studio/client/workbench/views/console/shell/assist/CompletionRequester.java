@@ -18,6 +18,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
@@ -75,7 +76,9 @@ public class CompletionRequester
          final boolean implicit,
          final ServerRequestCallback<CompletionResult> callback)
    {
-      if (token != null && cachedResult_ != null && cachedResult_.guessedFunctionName == null)
+      if (!StringUtil.isNullOrEmpty(token) &&
+           cachedResult_ != null &&
+           StringUtil.isNullOrEmpty(cachedResult_.guessedFunctionName))
       {
          if (token.startsWith(cachedLinePrefix_))
          {
@@ -276,7 +279,6 @@ public class CompletionRequester
    {
       AceEditor editor = (AceEditor) editor_;
 
-      // NOTE: this will be null in the console, so protect against that
       if (editor != null)
       {
          Position cursorPosition =
@@ -410,7 +412,7 @@ public class CompletionRequester
    
    private CompletionResult narrow(String diff)
    {
-      assert cachedResult_.guessedFunctionName == null ;
+      assert StringUtil.isNullOrEmpty(cachedResult_.guessedFunctionName);
       
       String token = cachedResult_.token + diff ;
       ArrayList<QualifiedName> newCompletions = new ArrayList<QualifiedName>() ;
