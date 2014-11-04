@@ -285,7 +285,11 @@ public class CompletionRequester
          
          // Try to see if we can find a function name
          TokenCursor cursor = codeModel.getTokenCursor();
-         cursor.moveToPosition(cursorPosition);
+         
+         // NOTE: This can fail if the document is empty
+         if (!cursor.moveToPosition(cursorPosition))
+            return;
+         
          if (cursor.currentValue() == "(" || cursor.findOpeningParen())
          {
             if (cursor.moveToPreviousToken())
