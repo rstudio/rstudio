@@ -1126,6 +1126,22 @@ public class RCompletionManager implements CompletionManager
             @Override
             public void onResponseReceived(Boolean isFunction)
             {
+               // Don't insert a paren if there is already a '(' following
+               // the cursor
+               AceEditor editor = (AceEditor) input_;
+               boolean overrideDontInsertParens = false;
+               if (editor != null)
+               {
+                  Position cursorPos = editor.getCursorPosition();
+                  Range range = Range.fromPoints(
+                        Position.create(cursorPos.getRow(), cursorPos.getColumn()),
+                        Position.create(cursorPos.getRow(), cursorPos.getColumn() + 1));
+                  
+                  String text = editor.getTextForRange(range);
+                  if (text == "(")
+                     overrideDontInsertParens = true;
+               }
+               
                String value = functionName;
                if (!value.matches(".*[=:]\\s*$") && 
                    !value.matches("^\\s*([`'\"]).*\\1\\s*$") &&
@@ -1133,6 +1149,7 @@ public class RCompletionManager implements CompletionManager
                    pkgName != "`chunk-option`" &&
                    !value.startsWith("@"))
                   value = quoteIfNotSyntacticNameCompletion(value);
+               
                
                /* In some cases, applyValue can be called more than once
                 * as part of the same completion instance--specifically,
@@ -1145,8 +1162,9 @@ public class RCompletionManager implements CompletionManager
                input_.setSelection(new InputEditorSelection(
                      selection_.getStart().movePosition(-token_.length(), true),
                      input_.getSelection().getEnd()));
+               
          
-               if (isFunction && !dontInsertParens_)
+               if (isFunction && !dontInsertParens_ && !overrideDontInsertParens)
                {
                   // Don't replace the selection if the token ends with a ')'
                   // (implies an earlier replacement handled this)
