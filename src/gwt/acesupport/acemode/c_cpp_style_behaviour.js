@@ -361,8 +361,7 @@ var CStyleBehaviour = function(codeModel) {
 
             // Short-circuit for some special cases
             if (/^\s*if\s*$/.test(line) ||
-                /^\s*else\s*$/.test(line) ||
-                /^\s*else\s+if\s*$/.test(line)) {
+                /else\s*$/.test(line)) {
                return {
                   text: '{}',
                   selection: [1, 1]

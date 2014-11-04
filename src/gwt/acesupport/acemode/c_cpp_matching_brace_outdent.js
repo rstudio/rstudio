@@ -393,7 +393,7 @@ var $alignCase                 = true; // case 'a':
             "}",
             {
                row: row,
-               column: line.length
+               column: /(\S)/.exec(line).index + 1
             }
          );
 
