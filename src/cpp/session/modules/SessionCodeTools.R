@@ -295,7 +295,7 @@
    }
    
    ## Otherwise, rely on 'getAnywhere'
-   objects <- getAnywhere(name, envir)
+   objects <- getAnywhere(name)
    if (length(objects$objs))
    {
       ## TODO: What if we have multiple completions?
@@ -693,7 +693,10 @@ utils:::rc.settings(ipck = TRUE)
          {
             objCompletions <- list(
                results = nm,
-               packages = character(length(nm))
+               packages = rep.int(
+                  paste("[", chainObjectName, "]", sep = ""),
+                  length(nm)
+               )
             )
          }
       }
