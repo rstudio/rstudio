@@ -340,8 +340,11 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          
       };
 
-      this.findOpeningParen = function()
+      this.findOpeningParen = function(countBraces)
       {
+         if (typeof countBraces === "undefined")
+            countBraces = true;
+         
          var clone = this.cloneCursor();
          
          var success = false;
@@ -350,24 +353,27 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          
          do
          {
-            if (clone.currentValue() == "{")
+            if (countBraces)
             {
-               if (braceCount == 0)
+               if (clone.currentValue() == "{")
                {
-                  success = false;
-                  break;
+                  if (braceCount === 0)
+                  {
+                     success = false;
+                     break;
+                  }
+                  --braceCount;
                }
-               --braceCount;
-            }
-            
-            if (clone.currentValue() == "}")
-            {
-               ++braceCount;
+               
+               if (clone.currentValue() == "}")
+               {
+                  ++braceCount;
+               }
             }
             
             if (clone.currentValue() == "(")
             {
-               if (parenCount == 0)
+               if (parenCount === 0)
                {
                   this.$row = clone.$row;
                   this.$offset = clone.$offset;
@@ -670,7 +676,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    var findChainScope = function(cursor)
    {
       var clone = cursor.cloneCursor();
-      while (clone.findOpeningParen())
+      while (clone.findOpeningParen(false))
       {
          // Move off of the opening paren
          if (!clone.moveToPreviousToken())
