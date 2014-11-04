@@ -248,6 +248,10 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
          reEndsWithContinuationToken.test(x);
    };
 
+   var endsWithComma = function(x) {
+      return /,\s*$/.test(x);
+   };
+
    var charCount = function(string, character) {
       return string.split(character).length - 1;
    };
@@ -1232,9 +1236,8 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
             i--;
          }
 
-         if (reContinuation(line) && reContinuation(prevLineNotWhitespace)) {
+         if (reContinuation(line) && reContinuation(prevLineNotWhitespace))
             return this.$getIndent(line);
-         }
 
          // Try token walking
          if (this.$tokenUtils.$tokenizeUpToRow(row + 2)) {
@@ -1338,8 +1341,23 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                      }
                   }
 
+                  // ... and this is a continuation of multiple commas, e.g.
+                  //
+                  //     int x = foo,
+                  //       y = bar,
+                  //       z = baz;
+                  //
+                  // then return that indent
+                  if (endsWithComma(line) &&
+                      endsWithComma(prevLineNotWhitespace))
+                     return this.$getIndent(line);
+
+                  // ... and there is an '=' on the line, then indent
+                  if (line.indexOf("=") !== -1)
+                     return this.$getIndent(line) + tab;
+
                   // ... just return the indent of the current line
-                  return this.$getIndent(lines[row]);
+                  return this.$getIndent(line);
                }
 
                // If the token cursor is on an operator, ident if the previous
