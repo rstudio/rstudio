@@ -356,6 +356,26 @@
         fguess=status$fguess)
 })
 
+.rs.addFunction("getFunctionArgumentNames", function(object)
+{
+   
+   if (is.primitive(object))
+   {
+      ## Only closures have formals, not primitive functions.
+      result <- tryCatch({
+         parsed <- suppressWarnings(parse(text = capture.output(print(object)))[[1L]])
+         names(parsed[[2]])
+      }, error = function(e) {
+         character()
+      })
+   }
+   else
+   {
+      result <- names(formals(object))
+   }
+   result
+})
+
 .rs.addFunction("getCompletionsFunction", function(token,
                                                    string,
                                                    discardFirst,
@@ -380,7 +400,7 @@
       object <- .rs.getAnywhere(string, envir = envir)
       if (!is.null(object) && is.function(object))
       {
-         formals <- names(formals(object))
+         formals <- .rs.getFunctionArgumentNames(object)
          keep <- .rs.startsWith(formals, token)
          formals <- formals[keep]
          
@@ -412,7 +432,7 @@
          
          if (!is.null(object) && is.function(object))
          {
-            formals <- names(formals(object))
+            formals <- .rs.getFunctionArgumentNames(object)
             keep <- .rs.startsWith(formals, token)
             formals <- formals[keep]
             
@@ -434,7 +454,7 @@
    
 })
 
-.rs.addFunction("getCompletionsNamespace", function(token, string, exportsOnly)
+.rs.addFunction("getCompletionsNamespace", function(token, string, exportsOnly, envir)
 {
    if (!(string %in% loadedNamespaces()))
    {
@@ -484,10 +504,6 @@
 {
    old$results <- c(old$results, new$results)
    old$packages <- c(old$packages, new$packages)
-   if (!is.null(new$fguess))
-      old$fguess <- new$fguess
-   if (!is.null(new$excludeContext))
-      old$excludeContext <- new$excludeContext
    old
 })
 
@@ -599,25 +615,80 @@
    })
 })
 
+.rs.addFunction("getCompletionsSingleBracket", function(token,
+                                                        string,
+                                                        numCommas,
+                                                        envir)
+{
+   result <- list(
+      results = character(),
+      packages = character()
+   )
+   
+   object <- .rs.getAnywhere(string, envir)
+   if (is.null(object))
+      return(result)
+   
+   completions <- character()
+   if (isS4(object))
+   {
+      completions <- slotNames(object)
+   }
+   else if (is.array(object) && !is.null(dn <- dimnames(object)))
+   {
+      if (!is.null(dn[[numCommas + 1]]))
+         completions <- dimnames(object)[[numCommas + 1]]
+   }
+   else if (inherits(object, "data.table"))
+   {
+      completions <- names(object)
+   }
+   
+   completions <- completions[.rs.startsWith(completions, token)]
+   result$results <- if (inherits(object, "data.table"))
+      completions
+   else
+      paste('"', completions, '"', sep = "")
+   
+   result$packages <- rep.int(
+      paste("[", string, "]", sep = ""),
+      length(completions)
+   )
+   
+   result
+   
+})
+
 .rs.addFunction("getCompletionsDoubleBracket", function(token,
                                                         string,
                                                         envir = parent.frame())
 {
    result <- list(
-      token = token,
       results = character(),
-      packages = character(),
-      fguess = ""
+      packages = character()
    )
    
    object <- .rs.getAnywhere(string, envir)
-   if (!is.null(object) && !is.null(names(object)))
+   if (is.null(object))
+      return(result)
+   
+   completions <- character()
+   completions <- if (isS4(object))
+   {
+      completions <- slotNames(object)
+   }
+   else if (!is.null(names(object)))
    {
       completions <- names(object)
-      completions <- completions[.rs.startsWith(completions, token)]
-      result$results <- paste('"', completions, '"', sep = "")
-      result$packages <- character(length(completions))
    }
+   
+   completions <- completions[.rs.startsWith(completions, token)]
+   result$results <- paste('"', completions, '"', sep = "")
+   
+   result$packages <- rep.int(
+      paste("[[", string, "]]", sep = ""),
+      length(completions)
+   )
    
    result
    
@@ -625,8 +696,7 @@
 
 utils:::rc.settings(files = TRUE)
 utils:::rc.settings(ipck = TRUE)
-.rs.addJsonRpcHandler("get_completions", function(content,
-                                                  token,
+.rs.addJsonRpcHandler("get_completions", function(token,
                                                   string,
                                                   type,
                                                   numCommas,
@@ -634,58 +704,121 @@ utils:::rc.settings(ipck = TRUE)
                                                   additionalArgs,
                                                   excludeArgs)
 {
-   print(token)
+   
+   cat("Token: '", token, "'\n", sep = "")
+   cat("String:\n")
    print(string)
+   cat("Type:\n")
    print(type)
+   
+   ## Different completion types (sync with RCompletionManager.java)
+   TYPES <- list(
+      UNKNOWN = 0L,
+      FUNCTION = 1L,
+      SINGLE_BRACKET = 2L,
+      DOUBLE_BRACKET = 3L,
+      NAMESPACE_EXPORTED = 4L,
+      NAMESPACE_ALL = 5L,
+      DOLLAR = 6L,
+      AT = 7L,
+      FILE = 8L,
+      CHUNK = 9L
+   )
    
    roxygen <- .rs.attemptRoxygenTagCompletion(token)
    if (!is.null(roxygen))
       return(roxygen)
    
-   ## Different completion types (sync with RCompletionManager.java)
-   TYPE_UNKNOWN <- 0L
-   TYPE_FUNCTION <- 1L
-   TYPE_SINGLE_BRACKET <- 2L
-   TYPE_DOUBLE_BRACKET <- 3L
-   TYPE_NAMESPACE_EXPORTED <- 4L
-   TYPE_NAMESPACE_ALL <- 5L
-   TYPE_DOLLAR <- 6L
-   TYPE_FILE <- 7L
-   TYPE_CHUNK <- 8L
-   
-   # Discard the first argument for function completions if we're
-   # in a chain
-   
-   ## TODO: The caller should really pass in whether we want to discard
-   ## the first argument.
-   discardFirst <-
-      string %in% c(
-         "mutate", "summarise", "summarize", "rename", "transmute",
-         "select", "rename_vars"
-      ) &&
-      (
-         chainObjectName != "" || 
-         length(additionalArgs) ||
-         length(excludeArgs)
+   completions <- list(
+      results = character(),
+      packages = character()
+   )
+      
+   for (i in seq_along(string))
+   {
+      discardFirst <- type[[i]] == TYPES$FUNCTION && chainObjectName != ""
+      completions <- .rs.appendCompletions(
+         completions,
+         .rs.getRCompletions(token,
+                             string[[i]],
+                             type[[i]],
+                             numCommas[[i]],
+                             discardFirst,
+                             parent.frame(),
+                             TYPES)
       )
+   }
    
-   ## If we're completing after a '$' or an '@', then
-   ## we don't need any other completions
-   if (type == TYPE_DOLLAR)
-      return(.rs.getCompletionsDollar(token, string, parent.frame()))
-   else if (type %in% c(TYPE_NAMESPACE_EXPORTED, TYPE_NAMESPACE_ALL))
-      return(.rs.getCompletionsNamespace(token, string, type == TYPE_NAMESPACE_EXPORTED))
+   cat("After getting R completions:\n")
+   print(completions)
    
-   additionalArgs <- unlist(additionalArgs)
-   excludeArgs <- unlist(excludeArgs)
+   ## If the caller has supplied information about chain completions (e.g.
+   ## for completions from
+   ##
+   ##    x %>% foo() %>% bar()
+   ##
+   ## then retrieve those completions.
+   completions <- .rs.appendCompletions(
+      completions,
+      .rs.getRChainCompletions(token,
+                               chainObjectName,
+                               additionalArgs,
+                               excludeArgs,
+                               discardFirst,
+                               parent.frame())
+   )
    
+   cat("After getting chain completions:\n")
+   print(completions)
+   
+   ## Override param insertion if the function was 'debug' or 'trace'
+   if (type[[1]] == TYPES$FUNCTION)
+   {
+      functionBlacklist <- c(
+         "debug", "debugonce", "undebug", "isdebugged", "library", "require"
+      )
+      
+      if (string[[1]] %in% functionBlacklist ||
+             .rs.endsWith(string[[1]], "ply"))
+      {
+         completions$dontInsertParens <- .rs.scalar(TRUE)
+      }
+   }
+   
+   completions$token <- token
+   if (is.null(completions$fguess))
+      completions$fguess <- ""
+   
+   if (is.null(completions$dontInsertParens))
+      completions$dontInsertParens <- .rs.scalar(FALSE)
+      
+   completions$excludeContext <- .rs.scalar(type[[1]] %in% c(
+      TYPES$DOLLAR,
+      TYPES$NAMESPACE_EXPORTED,
+      TYPES$NAMESPACE_ALL
+   ))
+   
+   cat("Completions:\n")
+   print(completions)
+   
+   completions
+   
+})
+
+.rs.addFunction("getRChainCompletions", function(token,
+                                                 chainObjectName,
+                                                 additionalArgs,
+                                                 excludeArgs,
+                                                 discardFirst,
+                                                 envir)
+{
    ## chainObjectName will be provided if the client detected
    ## that we were performing completions within an e.g. 
    ## `%>%` chain -- use completions from the associated data object.
    objCompletions <- NULL
    if (!is.null(chainObjectName) && chainObjectName != "")
    {
-      object <- .rs.getAnywhere(chainObjectName, parent.frame())
+      object <- .rs.getAnywhere(chainObjectName, envir = envir)
       if (length(object))
       {
          nm <- names(object)
@@ -702,32 +835,12 @@ utils:::rc.settings(ipck = TRUE)
       }
    }
    
-   result <- .rs.appendCompletions(
-      .rs.getInternalRCompletions(token, type == TYPE_FILE),
-      if (type == TYPE_FUNCTION)
-         .rs.getCompletionsFunction(token, string, discardFirst, parent.frame())
-      else if (type == TYPE_SINGLE_BRACKET)
-         .rs.getCompletionsSingleBracket(token, string, parent.frame())
-      else if (type == TYPE_DOUBLE_BRACKET)
-         .rs.getCompletionsDoubleBracket(token, string, parent.frame())
-   )
-   
-   if (is.null(result$fguess))
-   {
-      result$fguess <- character()
-   }
-   
-   n <- nchar(token)
-   result$token <- token
-   
+   result <- NULL
    if (!is.null(objCompletions))
    {
-      result <- .rs.appendCompletions(
-         result,
-         .rs.subsetCompletions(
-            objCompletions,
-            .rs.startsWith(objCompletions$results, token)
-         )
+      result <- .rs.subsetCompletions(
+         objCompletions,
+         .rs.startsWith(objCompletions$results, token)
       )
    }
    
@@ -745,32 +858,37 @@ utils:::rc.settings(ipck = TRUE)
       result$packages <- result$packages[keep]
    }
    
-   if (is.null(result$excludeContext))
-      result$excludeContext <- .rs.scalar(FALSE)
+   result
    
-   if (is.null(result$dontInsertParens))
-      result$dontInsertParens <- .rs.scalar(FALSE)
+})
+
+.rs.addFunction("getRCompletions", function(token,
+                                            string,
+                                            type,
+                                            numCommas,
+                                            discardFirst,
+                                            envir,
+                                            TYPES)
+{   
    
-   ## Override param insertion if the function was 'debug' or 'trace'
-   ## NOTE: This logic should be synced in 'RCompletionManager.java'.
-   functionBlacklist <- c(
-      "debug", "debugonce", "undebug", "isdebugged", "library", "require"
+   if (type == TYPES$DOLLAR)
+      return(.rs.getCompletionsDollar(token, string, envir))
+   else if (type == TYPES$AT)
+      return(.rs.getCompletionsAt(token, string, envir))
+   else if (type %in% c(TYPES$NAMESPACE_EXPORTED, TYPES$NAMESPACE_ALL))
+      return(.rs.getCompletionsNamespace(token, string, type == TYPES$NAMESPACE_EXPORTED, envir))
+   
+   result <- .rs.appendCompletions(
+      .rs.getInternalRCompletions(token, type == TYPES$FILE),
+      if (type == TYPES$FUNCTION)
+         .rs.getCompletionsFunction(token, string, discardFirst, envir)
+      else if (type == TYPES$SINGLE_BRACKET)
+         .rs.getCompletionsSingleBracket(token, string, numCommas, envir)
+      else if (type == TYPES$DOUBLE_BRACKET)
+         .rs.getCompletionsDoubleBracket(token, string, envir)
    )
    
-   if (string %in% functionBlacklist ||
-       .rs.endsWith(string, "ply"))
-      result$dontInsertParens <- .rs.scalar(TRUE)
-   
-   result[
-      c(
-         "token",
-         "results", 
-         "packages", 
-         "fguess", 
-         "excludeContext", 
-         "dontInsertParens"
-      )
-   ]
+   result
    
 })
 

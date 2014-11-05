@@ -259,6 +259,27 @@ public class RemoteServer implements Server
       });
    }
    
+   private void setArrayString(JSONArray params, int index, List<String> what) {
+      JSONArray array = new JSONArray();
+      for (int i = 0; i < what.size(); i++)
+         array.set(i, new JSONString(what.get(i)));
+      params.set(index, array);
+   }
+   
+   private void setArrayString(JSONArray params, int index, JsArrayString what) {
+      JSONArray array = new JSONArray();
+      for (int i = 0; i < what.length(); i++)
+         array.set(i, new JSONString(what.get(i)));
+      params.set(index, array);
+   }
+   
+   private void setArrayNumber(JSONArray params, int index, ArrayList<Integer> what) {
+      JSONArray array = new JSONArray();
+      for (int i = 0; i < what.size(); i++)
+         array.set(i, new JSONNumber(what.get(i)));
+      params.set(index, array);
+   }
+   
    // accept application agreement
    public void acceptAgreement(Agreement agreement, 
                                ServerRequestCallback<Void> requestCallback)
@@ -576,34 +597,25 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, IS_FUNCTION, params, requestCallback);
    }
    
+   
    public void getCompletions(
-         String content,
          String token,
-         String assocData,
-         int dataType,
-         int numCommas,
+         ArrayList<String> assocData,
+         ArrayList<Integer> dataType,
+         ArrayList<Integer> numCommas,
          String chainObjectName,
          JsArrayString additionalArgs,
          JsArrayString excludeArgs,
          ServerRequestCallback<Completions> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(content));
-      params.set(1, new JSONString(token));
-      params.set(2, new JSONString(assocData));
-      params.set(3, new JSONNumber(dataType));
-      params.set(4, new JSONNumber(numCommas));
-      params.set(5, new JSONString(chainObjectName));
-      
-      JSONArray additionalArgsJson = new JSONArray();
-      for (int i = 0; i < additionalArgs.length(); i++)
-         additionalArgsJson.set(i, new JSONString(additionalArgs.get(i)));
-      params.set(6, additionalArgsJson);
-      
-      JSONArray excludeArgsJson = new JSONArray();
-      for (int i = 0; i < excludeArgs.length(); i++)
-         excludeArgsJson.set(i, new JSONString(excludeArgs.get(i)));
-      params.set(7, excludeArgsJson);
+      params.set(0, new JSONString(token));
+      setArrayString(params, 1, assocData);
+      setArrayNumber(params, 2, dataType);
+      setArrayNumber(params, 3, numCommas);
+      params.set(4, new JSONString(chainObjectName));
+      setArrayString(params, 5, additionalArgs);
+      setArrayString(params, 6, excludeArgs);
       
       sendRequest(RPC_SCOPE, 
                   GET_COMPLETIONS, 

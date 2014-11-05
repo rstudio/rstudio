@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.common.codetools;
 
+import java.util.ArrayList;
+
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
@@ -31,11 +33,10 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
          ServerRequestCallback<Boolean> result);
    
    void getCompletions(
-         String content,
          String token,
-         String assocData,
-         int dataType,
-         int numCommas,
+         ArrayList<String> assocData,
+         ArrayList<Integer> dataType,
+         ArrayList<Integer> numCommas,
          String chainObjectName,
          JsArrayString chainAdditionalArgs,
          JsArrayString chainExcludeArgs,

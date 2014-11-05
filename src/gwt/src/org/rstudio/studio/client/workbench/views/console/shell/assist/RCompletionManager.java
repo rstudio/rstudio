@@ -500,26 +500,53 @@ public class RCompletionManager implements CompletionManager
       public static final int TYPE_NAMESPACE_EXPORTED = 4;
       public static final int TYPE_NAMESPACE_ALL = 5;
       public static final int TYPE_DOLLAR = 6;
-      public static final int TYPE_FILE = 7;
-      public static final int TYPE_CHUNK = 8;
+      public static final int TYPE_AT = 7;
+      public static final int TYPE_FILE = 8;
+      public static final int TYPE_CHUNK = 9;
       
       public AutoCompletionContext(
-            String content,
             String token,
-            String assocData,
-            int dataType,
-            int numCommas)
+            ArrayList<String> assocData,
+            ArrayList<Integer> dataType,
+            ArrayList<Integer> numCommas)
       {
-         content_ = content;
          token_ = token;
          assocData_ = assocData;
          dataType_ = dataType;
          numCommas_ = numCommas;
       }
       
-      public String getContent()
+      public AutoCompletionContext(
+            String token,
+            ArrayList<String> assocData,
+            ArrayList<Integer> dataType)
       {
-         return content_;
+         token_ = token;
+         assocData_ = assocData;
+         dataType_ = dataType;
+         numCommas_.add(0);
+      }
+      
+      public AutoCompletionContext(
+            String token,
+            String assocData,
+            int dataType)
+      {
+         token_ = token;
+         assocData_.add(assocData);
+         dataType_.add(dataType);
+         numCommas_.add(0);
+      }
+      
+      
+      public AutoCompletionContext(
+            String token,
+            int dataType)
+      {
+         token_ = token;
+         assocData_.add("");
+         dataType_.add(dataType);
+         numCommas_.add(0);
       }
       
       public String getToken()
@@ -527,26 +554,25 @@ public class RCompletionManager implements CompletionManager
          return token_;
       }
       
-      public String getAssocData()
+      public ArrayList<String> getAssocData()
       {
          return assocData_;
       }
       
-      public int getDataType()
+      public ArrayList<Integer> getDataType()
       {
          return dataType_;
       }
       
-      public int getNumCommas()
+      public ArrayList<Integer> getNumCommas()
       {
          return numCommas_;
       }
 
-      private String content_;
       private String token_;
-      private String assocData_;
-      private int dataType_;
-      private int numCommas_;
+      private ArrayList<String> assocData_ = new ArrayList<String>();
+      private ArrayList<Integer> dataType_ = new ArrayList<Integer>();
+      private ArrayList<Integer> numCommas_ = new ArrayList<Integer>();
       
    }
 
@@ -607,7 +633,6 @@ public class RCompletionManager implements CompletionManager
       }
       
       requester_.getCompletions(
-            context.getContent(),
             context.getToken(),
             context.getAssocData(),
             context.getDataType(),
@@ -625,11 +650,8 @@ public class RCompletionManager implements CompletionManager
          String token)
    {
       return new AutoCompletionContext(
-            "",
             token.substring(1),
-            "",
-            AutoCompletionContext.TYPE_FILE,
-            0);
+            AutoCompletionContext.TYPE_FILE);
    }
    
    private AutoCompletionContext getAutocompletionContextForNamespace(
@@ -655,13 +677,11 @@ public class RCompletionManager implements CompletionManager
          }
             
          return new AutoCompletionContext(
-               "",
                right,
                left,
                token.contains(":::") ?
                      AutoCompletionContext.TYPE_NAMESPACE_ALL :
-                     AutoCompletionContext.TYPE_NAMESPACE_EXPORTED,
-               0);
+                     AutoCompletionContext.TYPE_NAMESPACE_EXPORTED);
    }
    
    private boolean isValidAsIdentifier(TokenCursor cursor)
@@ -671,13 +691,6 @@ public class RCompletionManager implements CompletionManager
              type == "symbol" ||
              type == "keyword" ||
              type == "string";
-   }
-   
-   private boolean isLookingAtClosingBracket(TokenCursor cursor)
-   {
-      String value = cursor.currentValue();
-      return value == ")" ||
-             value == "]";
    }
    
    private boolean isLookingAtInfixySymbol(TokenCursor cursor)
@@ -742,11 +755,8 @@ public class RCompletionManager implements CompletionManager
    {
       // Failure mode context
       AutoCompletionContext defaultContext = new AutoCompletionContext(
-            "",
             token,
-            "",
-            AutoCompletionContext.TYPE_UNKNOWN,
-            0);
+            AutoCompletionContext.TYPE_UNKNOWN);
       
       int dollarIndex = Math.max(token.lastIndexOf('$'), token.lastIndexOf('@'));
       String tokenToUse = token.substring(dollarIndex + 1);
@@ -785,11 +795,9 @@ public class RCompletionManager implements CompletionManager
       
       // and return!
       return new AutoCompletionContext(
-            "",
             tokenToUse,
             context,
-            AutoCompletionContext.TYPE_DOLLAR,
-            0);
+            AutoCompletionContext.TYPE_DOLLAR);
       
    }
    
@@ -799,9 +807,9 @@ public class RCompletionManager implements CompletionManager
       // Objects filled by this function and later returned
       String content = "";
       String token = "";
-      String assocData = "";
-      int dataType = 0;
-      int numCommas = 0;
+      ArrayList<String> assocData = new ArrayList<String>();
+      ArrayList<Integer> dataType = new ArrayList<Integer>();
+      ArrayList<Integer> numCommas = new ArrayList<Integer>();
       
       String firstLine = input_.getText();
       int row = input_.getCursorPosition().getRow();
@@ -812,7 +820,7 @@ public class RCompletionManager implements CompletionManager
       // If this line starts with '```{', then we're completing chunk options
       // pass the whole line as a token
       if (firstLine.startsWith("```{") || firstLine.startsWith("<<"))
-         return new AutoCompletionContext("", firstLine, "", AutoCompletionContext.TYPE_CHUNK, 0);
+         return new AutoCompletionContext(firstLine, AutoCompletionContext.TYPE_CHUNK);
       
       
       // Get the token at the cursor position
@@ -835,11 +843,8 @@ public class RCompletionManager implements CompletionManager
       
       // Default case for failure modes
       AutoCompletionContext defaultContext = new AutoCompletionContext(
-            firstLine,
             token,
-            "", 
-            AutoCompletionContext.TYPE_UNKNOWN, 
-            0);
+            AutoCompletionContext.TYPE_UNKNOWN);
       
       // early escaping rules: if we're in Roxygen, or we have text immediately
       // preceding the cursor (as that signals we're completing a variable name)
@@ -895,9 +900,9 @@ public class RCompletionManager implements CompletionManager
          // Don't produce function argument completions
          // if the cursor is on, or after, an '='
          if (!startedOnEquals)
-            dataType = AutoCompletionContext.TYPE_FUNCTION;
+            dataType.add(AutoCompletionContext.TYPE_FUNCTION);
          else
-            dataType = AutoCompletionContext.TYPE_UNKNOWN;
+            dataType.add(AutoCompletionContext.TYPE_UNKNOWN);
          
          if (!tokenCursor.moveToPreviousToken())
             return defaultContext;
@@ -912,13 +917,13 @@ public class RCompletionManager implements CompletionManager
             if (!endOfDecl.moveToPreviousToken())
                return defaultContext;
             
-            dataType = AutoCompletionContext.TYPE_DOUBLE_BRACKET;
+            dataType.add(AutoCompletionContext.TYPE_DOUBLE_BRACKET);
             if (!tokenCursor.moveToPreviousToken())
                return defaultContext;
          }
          else
          {
-            dataType = AutoCompletionContext.TYPE_SINGLE_BRACKET;
+            dataType.add(AutoCompletionContext.TYPE_SINGLE_BRACKET);
          }
       }
       
@@ -926,20 +931,44 @@ public class RCompletionManager implements CompletionManager
       if (!findStartOfEvaluationContext(tokenCursor))
          return defaultContext;
       
-      assocData = docDisplay_.getTextForRange(Range.fromPoints(
-            tokenCursor.currentPosition(),
-            endOfDecl.currentPosition()));
+      assocData.add(
+            docDisplay_.getTextForRange(Range.fromPoints(
+                  tokenCursor.currentPosition(),
+                  endOfDecl.currentPosition())));
       
-      content = docDisplay_.getTextForRange(Range.fromPoints(
-            Position.create(0, 0),
-            startCursor.currentPosition()));
+      // Get the rest of the single-bracket contexts for completions as well
+      while (tokenCursor.findOpeningBracket(false))
+      {
+         TokenCursor declEnd = tokenCursor.cloneCursor();
+         if (!tokenCursor.moveToPreviousToken())
+            return defaultContext;
+         
+         if (tokenCursor.currentValue() == "[")
+         {
+            if (!declEnd.moveToPreviousToken())
+               return defaultContext;
+            
+            dataType.add(AutoCompletionContext.TYPE_DOUBLE_BRACKET);
+            if (!tokenCursor.moveToPreviousToken())
+               return defaultContext;
+         }
+         else
+         {
+            dataType.add(AutoCompletionContext.TYPE_SINGLE_BRACKET);
+         }
+         
+      assocData.add(
+            docDisplay_.getTextForRange(Range.fromPoints(
+                  tokenCursor.currentPosition(),
+                  declEnd.currentPosition())));
+      }
+      
+      content = docDisplay_.getText();
       
       return new AutoCompletionContext(
-            content,
             token,
             assocData,
-            dataType,
-            numCommas);
+            dataType);
       
    }
    

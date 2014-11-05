@@ -65,11 +65,10 @@ public class CompletionRequester
    }
    
    public void getCompletions(
-         final String content,
          final String token,
-         final String assocData,
-         int dataType,
-         int numCommas,
+         final ArrayList<String> assocData,
+         ArrayList<Integer> dataType,
+         ArrayList<Integer> numCommas,
          final String chainDataName,
          final JsArrayString chainAdditionalArgs,
          final JsArrayString chainExcludeArgs,
@@ -108,7 +107,6 @@ public class CompletionRequester
       }
       
       doGetCompletions(
-            content,
             token,
             assocData,
             dataType,
@@ -323,11 +321,10 @@ public class CompletionRequester
    }
 
    private void doGetCompletions(
-         String content,
          String token,
-         String assocData,
-         int dataType,
-         int numCommas,
+         ArrayList<String> assocData,
+         ArrayList<Integer> dataType,
+         ArrayList<Integer> numCommas,
          String chainObjectName,
          JsArrayString chainAdditionalArgs,
          JsArrayString chainExcludeArgs,
@@ -344,7 +341,6 @@ public class CompletionRequester
       else
       {
          server_.getCompletions(
-               content,
                token,
                assocData,
                dataType,

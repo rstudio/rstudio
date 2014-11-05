@@ -76,6 +76,14 @@ public class TokenCursor extends JavaScriptObject
       return this.findOpeningParenOrBracket();
    }-*/;
    
+   public native final boolean findOpeningBracket() /*-{
+      return this.findOpeningParenOrBracket();
+   }-*/;
+   
+   public native final boolean findOpeningBracket(boolean countBraces) /*-{
+      return this.findOpeningParenOrBracket(countBraces);
+   }-*/;
+   
    public native final boolean bwdToMatchingToken() /*-{
       return this.bwdToMatchingToken();
    }-*/;

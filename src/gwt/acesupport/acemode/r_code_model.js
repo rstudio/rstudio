@@ -391,6 +391,58 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          return success;
       };
 
+      this.findOpeningBracket = function(countBraces)
+      {
+         if (typeof countBraces === "undefined")
+            countBraces = true;
+         
+         var clone = this.cloneCursor();
+         
+         var success = false;
+         var parenCount = 0;
+         var braceCount = 0;
+         
+         do
+         {
+            if (countBraces)
+            {
+               if (clone.currentValue() == "{")
+               {
+                  if (braceCount === 0)
+                  {
+                     success = false;
+                     break;
+                  }
+                  --braceCount;
+               }
+               
+               if (clone.currentValue() == "}")
+               {
+                  ++braceCount;
+               }
+            }
+            
+            if (clone.currentValue() == "(")
+            {
+               if (parenCount === 0)
+               {
+                  this.$row = clone.$row;
+                  this.$offset = clone.$offset;
+                  success = true;
+                  break;
+               }
+               --parenCount;
+            }
+            else if (clone.currentValue() == ")")
+            {
+               parenCount++;
+            }
+            
+         } while (clone.moveToPreviousToken());
+         return success;
+      };
+      
+
       this.findOpeningParenOrBracket = function()
       {
          var clone = this.cloneCursor();
