@@ -16,11 +16,11 @@
 package com.google.gwt.safehtml.shared;
 
 import com.google.gwt.core.shared.GWT;
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.regexp.shared.RegExp;
 
 import java.io.UnsupportedEncodingException;
+import java.util.Locale;
 
 /**
  * Utility class containing static methods for validating and sanitizing URIs.
@@ -79,7 +79,7 @@ public final class UriUtils {
             || DONT_NEED_ENCODING.indexOf(c) != -1) {
           sb.append((char) c);
         } else {
-          String hexByte = StringCase.toUpper(Integer.toHexString(c));
+          String hexByte = Integer.toHexString(c).toUpperCase(Locale.ROOT);
           if (hexByte.length() == 1) {
             hexByte = "0" + hexByte;
           }
@@ -228,12 +228,12 @@ public final class UriUtils {
      * For this reason there are two checks for mailto: "mailto" and "MAILTO"
      * For details, see: http://www.i18nguy.com/unicode/turkish-i18n.html
      */
-    String schemeLc = StringCase.toLower(scheme);
+    String schemeLc = scheme.toLowerCase(Locale.ROOT);
     return ("http".equals(schemeLc)
         || "https".equals(schemeLc)
         || "ftp".equals(schemeLc)
         || "mailto".equals(schemeLc)
-        || "MAILTO".equals(StringCase.toUpper(scheme)));
+        || "MAILTO".equals(scheme.toUpperCase(Locale.ROOT)));
   }
 
   /**

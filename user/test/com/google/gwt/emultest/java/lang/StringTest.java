@@ -17,7 +17,6 @@ package com.google.gwt.emultest.java.lang;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.testing.TestUtils;
 
@@ -517,7 +516,7 @@ public class StringTest extends GWTTestCase {
     assertFalse(test.regionMatches(true, 1, "bCdx", 0, 4));
     assertFalse(test.regionMatches(true, 1, "bCdx", 1, 3));
     assertTrue(test.regionMatches(true, 0, "xaBcd", 1, 4));
-    test = StringCase.toUpper(test);
+    test = test.toUpperCase(Locale.ROOT);
     assertTrue(test.regionMatches(true, 0, "XAbCd", 1, 4));
     assertTrue(test.regionMatches(true, 1, "BcD", 0, 3));
     assertTrue(test.regionMatches(true, 1, "bCdx", 0, 3));

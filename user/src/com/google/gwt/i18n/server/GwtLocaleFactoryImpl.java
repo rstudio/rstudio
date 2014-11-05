@@ -64,10 +64,10 @@ public class GwtLocaleFactoryImpl implements GwtLocaleFactory {
 
   private static String titleCase(String str) {
     if (str.length() < 2) {
-      return str.toUpperCase(Locale.ENGLISH);
+      return str.toUpperCase(Locale.ROOT);
     }
     return String.valueOf(Character.toTitleCase(str.charAt(0))) +
-        str.substring(1).toLowerCase(Locale.ENGLISH);
+        str.substring(1).toLowerCase(Locale.ROOT);
   }
 
   private final Object instanceCacheLock = new Object[0];
@@ -96,7 +96,7 @@ public class GwtLocaleFactoryImpl implements GwtLocaleFactory {
       language = null;
     }
     if (language != null) {
-      language = language.toLowerCase(Locale.ENGLISH);
+      language = language.toLowerCase(Locale.ROOT);
     }
     if (script != null && script.length() == 0) {
       script = null;
@@ -108,13 +108,13 @@ public class GwtLocaleFactoryImpl implements GwtLocaleFactory {
       region = null;
     }
     if (region != null) {
-      region = region.toUpperCase(Locale.ENGLISH);
+      region = region.toUpperCase(Locale.ROOT);
     }
     if (variant != null && variant.length() == 0) {
       variant = null;
     }
     if (variant != null) {
-      variant = variant.toUpperCase(Locale.ENGLISH);
+      variant = variant.toUpperCase(Locale.ROOT);
     }
     GwtLocaleImpl locale = new GwtLocaleImpl(this, language, region, script,
         variant);

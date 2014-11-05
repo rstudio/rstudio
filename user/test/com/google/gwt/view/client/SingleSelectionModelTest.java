@@ -15,7 +15,7 @@
  */
 package com.google.gwt.view.client;
 
-import com.google.gwt.core.shared.impl.StringCase;
+import java.util.Locale;
 
 /**
  * Tests for {@link SingleSelectionModel}.
@@ -134,7 +134,7 @@ public class SingleSelectionModelTest extends AbstractSelectionModelTest {
     ProvidesKey<String> keyProvider = new ProvidesKey<String>() {
       @Override
       public Object getKey(String item) {
-        return StringCase.toUpper(item);
+        return item.toUpperCase(Locale.ROOT);
       }
     };
     SingleSelectionModel<String> model = createSelectionModel(keyProvider);

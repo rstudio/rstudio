@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.rpc.IsSerializable;
@@ -27,6 +26,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -485,7 +485,7 @@ public class MultiWordSuggestOracle extends SuggestOracle {
     // can skip that step.
 
     // Lower case suggestion.
-    formattedSuggestion = StringCase.toLower(formattedSuggestion);
+    formattedSuggestion = formattedSuggestion.toLowerCase(Locale.ROOT);
 
     // Apply whitespace.
     if (whitespaceChars != null) {

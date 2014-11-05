@@ -16,11 +16,11 @@
 package com.google.gwt.uibinder.attributeparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.rebind.MortalLogger;
 import com.google.gwt.uibinder.rebind.XMLElement;
 
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -65,7 +65,7 @@ public class LengthAttributeParser implements AttributeParser {
         if ("%".equals(unitStr)) {
           unitStr = "PCT";
         }
-        unitStr = StringCase.toUpper(unitStr);
+        unitStr = unitStr.toUpperCase(Locale.ROOT);
       }
 
       // Now let the default enum parser handle it.

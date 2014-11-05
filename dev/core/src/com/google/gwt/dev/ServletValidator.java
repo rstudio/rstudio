@@ -243,7 +243,7 @@ class ServletValidator {
   static String suggestServletName(String servletClass) {
     int pos = servletClass.lastIndexOf('.');
     String suggest = (pos < 0) ? servletClass : servletClass.substring(pos + 1);
-    String firstChar = suggest.substring(0, 1).toLowerCase(Locale.ENGLISH);
+    String firstChar = suggest.substring(0, 1).toLowerCase(Locale.ROOT);
     suggest = firstChar + suggest.substring(1);
     return suggest;
   }

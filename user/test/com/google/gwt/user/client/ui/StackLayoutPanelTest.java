@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.BeforeSelectionEvent;
 import com.google.gwt.event.logical.shared.BeforeSelectionHandler;
@@ -26,6 +25,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Tests for {@link StackLayoutPanel}.
@@ -126,7 +126,7 @@ public class StackLayoutPanelTest extends WidgetTestBase {
 
     assertEquals(1, panel.getWidgetCount());
     assertEquals(html,
-        StringCase.toLower(panel.getHeaderWidget(0).getElement().getInnerHTML()));
+        panel.getHeaderWidget(0).getElement().getInnerHTML().toLowerCase(Locale.ROOT));
   }
 
   public void testAttachDetachOrder() {
@@ -184,7 +184,7 @@ public class StackLayoutPanelTest extends WidgetTestBase {
 
     assertEquals(1, panel.getWidgetCount());
     assertEquals(html,
-        StringCase.toLower(panel.getHeaderWidget(0).getElement().getInnerHTML()));
+        panel.getHeaderWidget(0).getElement().getInnerHTML().toLowerCase(Locale.ROOT));
   }
 
   public void testInsertWithHTML() {
@@ -325,7 +325,7 @@ public class StackLayoutPanelTest extends WidgetTestBase {
     panel.setHeaderHTML(0, SafeHtmlUtils.fromSafeConstant(html));
     Widget header = panel.getHeaderWidget(0);
 
-    assertEquals(html, StringCase.toLower(header.getElement().getInnerHTML()));
+    assertEquals(html, header.getElement().getInnerHTML().toLowerCase(Locale.ROOT));
   }
 
   /**

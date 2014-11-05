@@ -15,8 +15,9 @@
  */
 package com.google.gwt.emultest.java.lang;
 
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.junit.client.GWTTestCase;
+
+import java.util.Locale;
 
 /**
  * This class tests classes StringBuffer and StringBuilder.
@@ -230,9 +231,9 @@ public class StringBufferTest extends GWTTestCase {
    * This method tests <code>toLowerCase</code>.
    */
   public void testLowerCase() {
-    assertEquals("abc", StringCase.toLower("AbC"));
-    assertEquals("abc", StringCase.toLower("abc"));
-    assertEquals("", StringCase.toLower(""));
+    assertEquals("abc", "AbC".toLowerCase(Locale.ROOT));
+    assertEquals("abc", "abc".toLowerCase(Locale.ROOT));
+    assertEquals("", "".toLowerCase(Locale.ROOT));
   }
 
   /**

@@ -21,7 +21,6 @@ import static com.google.gwt.dom.client.BrowserEvents.KEYDOWN;
 import static com.google.gwt.dom.client.BrowserEvents.KEYUP;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.InputElement;
@@ -32,6 +31,8 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.text.shared.SafeHtmlRenderer;
 import com.google.gwt.text.shared.SimpleSafeHtmlRenderer;
+
+import java.util.Locale;
 
 /**
  * An editable text cell. Click to edit, escape to cancel, return to commit.
@@ -332,7 +333,7 @@ public class EditTextCell extends
       EventTarget eventTarget = event.getEventTarget();
       if (Element.is(eventTarget)) {
         Element target = Element.as(eventTarget);
-        if ("input".equals(StringCase.toLower(target.getTagName()))) {
+        if ("input".equals(target.getTagName().toLowerCase(Locale.ROOT))) {
           commit(context, parent, viewData, valueUpdater);
         }
       }

@@ -17,10 +17,11 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.debug.client.DebugInfo;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
+
+import java.util.Locale;
 
 /**
  * The superclass for all user-interface objects. It simply wraps a DOM element,
@@ -653,7 +654,7 @@ public abstract class UIObject implements HasVisibility {
   public void setHeight(String height) {
     // This exists to deal with an inconsistency in IE's implementation where
     // it won't accept negative numbers in length measurements
-    assert extractLengthValue(StringCase.toLower(height.trim())) >= 0 : "CSS heights should not be negative";
+    assert extractLengthValue(height.trim().toLowerCase(Locale.ROOT)) >= 0 : "CSS heights should not be negative";
     getElement().getStyle().setProperty("height", height);
   }
 
@@ -771,7 +772,7 @@ public abstract class UIObject implements HasVisibility {
   public void setWidth(String width) {
     // This exists to deal with an inconsistency in IE's implementation where
     // it won't accept negative numbers in length measurements
-    assert extractLengthValue(StringCase.toLower(width.trim())) >= 0 : "CSS widths should not be negative";
+    assert extractLengthValue(width.trim().toLowerCase(Locale.ROOT)) >= 0 : "CSS widths should not be negative";
     getElement().getStyle().setProperty("width", width);
   }
 

@@ -16,12 +16,13 @@
 package com.google.gwt.uibinder.test.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+
+import java.util.Locale;
 
 /**
  * Test the use of SafeHtml objects as UiBinder components. E.g.
@@ -54,8 +55,8 @@ public class SafeHtmlAsComponentsTest extends GWTTestCase {
   public void testSafeHtml() {
     Ui domUi = new Ui();
     assertNotNull(domUi.safeObject);
-    assertEquals(StringCase.toLower(domUi.safeObject.asString()),
-                 StringCase.toLower(domUi.div.getInnerHTML()));
-    assertEquals(StringCase.toLower("Hello <b>Bob</b>"), StringCase.toLower(domUi.div.getInnerHTML()));
+    assertEquals(domUi.safeObject.asString().toLowerCase(Locale.ROOT),
+                 domUi.div.getInnerHTML().toLowerCase(Locale.ROOT));
+    assertEquals("Hello <b>Bob</b>".toLowerCase(Locale.ROOT), domUi.div.getInnerHTML().toLowerCase(Locale.ROOT));
   }
 }

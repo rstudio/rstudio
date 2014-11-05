@@ -16,13 +16,13 @@
 package com.google.gwt.resources.css.ast;
 
 import com.google.gwt.core.ext.Generator;
-import com.google.gwt.core.shared.impl.StringCase;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Maps a named property to a Value.
@@ -343,7 +343,7 @@ public class CssProperty extends CssNode implements CssSubstitution {
       StringBuilder b = new StringBuilder();
       for (char c : s.toCharArray()) {
         if (Character.isISOControl(c)) {
-          b.append('\\').append(StringCase.toUpper(Integer.toHexString(c))).append(
+          b.append('\\').append(Integer.toHexString(c).toUpperCase(Locale.ROOT)).append(
               " ");
         } else {
           switch (c) {

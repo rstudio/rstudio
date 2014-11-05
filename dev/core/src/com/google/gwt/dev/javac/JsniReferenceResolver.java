@@ -774,7 +774,7 @@ public class JsniReferenceResolver {
         if (valueExpr instanceof StringLiteral) {
           // @SuppressWarnings("Foo")
           return ImmutableSet.of(((StringLiteral) valueExpr).constant.stringValue().toLowerCase(
-              Locale.ENGLISH));
+              Locale.ROOT));
         } else if (valueExpr instanceof ArrayInitializer) {
           // @SuppressWarnings({ "Foo", "Bar"})
           ArrayInitializer ai = (ArrayInitializer) valueExpr;
@@ -782,7 +782,7 @@ public class JsniReferenceResolver {
           for (int i = 0, j = ai.expressions.length; i < j; i++) {
             if ((ai.expressions[i]) instanceof StringLiteral) {
               StringLiteral expression = (StringLiteral) ai.expressions[i];
-              valuesSetBuilder.add(expression.constant.stringValue().toLowerCase(Locale.ENGLISH));
+              valuesSetBuilder.add(expression.constant.stringValue().toLowerCase(Locale.ROOT));
             } else {
               suppressionAnnotationWarning(a,
                   "Unable to analyze SuppressWarnings annotation, " +

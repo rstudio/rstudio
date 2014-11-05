@@ -21,11 +21,12 @@ import com.google.gwt.canvas.dom.client.Context2d.LineCap;
 import com.google.gwt.canvas.dom.client.Context2d.LineJoin;
 import com.google.gwt.canvas.dom.client.Context2d.TextAlign;
 import com.google.gwt.canvas.dom.client.Context2d.TextBaseline;
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.ui.RootPanel;
+
+import java.util.Locale;
 
 /**
  * Tests {@link Context2d}.
@@ -455,7 +456,7 @@ public class Context2dTest extends GWTTestCase {
     context.setShadowOffsetY(4);
     context.lineTo(60, 40);
     assertEquals(3.0, context.getShadowBlur());
-    assertEquals("#ff00ff", StringCase.toLower(context.getShadowColor()));
+    assertEquals("#ff00ff", context.getShadowColor().toLowerCase(Locale.ROOT));
     assertEquals(3.0, context.getShadowOffsetX());
     assertEquals(4.0, context.getShadowOffsetY());
   }

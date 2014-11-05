@@ -17,7 +17,6 @@ package com.google.gwt.junit;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.shared.impl.StringCase;
 
 import com.thoughtworks.selenium.DefaultSelenium;
 import com.thoughtworks.selenium.Selenium;
@@ -25,6 +24,7 @@ import com.thoughtworks.selenium.Selenium;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -447,7 +447,7 @@ public class RunStyleSelenium extends RunStyle {
             // loading, IE will throw a permission denied exception.
             String message = e.getMessage();
             if (message == null
-                || !StringCase.toLower(message).contains("permission denied")) {
+                || !message.toLowerCase(Locale.ROOT).contains("permission denied")) {
               if (interruptedHosts == null) {
                 interruptedHosts = new HashSet<String>();
               }

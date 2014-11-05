@@ -19,7 +19,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -33,6 +32,7 @@ import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -154,7 +154,7 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
     String type = event.getType();
     if (BrowserEvents.FOCUSIN.equals(type)) {
       // If this is an input element, remember that we focused it.
-      String tagName = StringCase.toLower(target.getTagName());
+      String tagName = target.getTagName().toLowerCase(Locale.ROOT);
       if (inputTypes.contains(tagName)) {
         focusedInput = target;
         focusedInputValue = getInputValue(target);
@@ -188,7 +188,7 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
     if (elem == null || !"input".equalsIgnoreCase(elem.getTagName())) {
       return false;
     }
-    String inputType = StringCase.toLower(InputElement.as(elem).getType());
+    String inputType = InputElement.as(elem).getType().toLowerCase(Locale.ROOT);
     return "checkbox".equals(inputType) || "radio".equals(inputType);
   }
 
@@ -242,7 +242,7 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
 
   @Override
   public boolean isFocusable(Element elem) {
-    return focusableTypes.contains(StringCase.toLower(elem.getTagName()))
+    return focusableTypes.contains(elem.getTagName().toLowerCase(Locale.ROOT))
         || getTabIndexIfSpecified(elem) >= 0;
   }
 
@@ -250,7 +250,7 @@ class CellBasedWidgetImplTrident extends CellBasedWidgetImpl {
   public void onBrowserEvent(final Widget widget, Event event) {
     // We need to remove the event listener from the cell now that the event
     // has fired.
-    String type = StringCase.toLower(event.getType());
+    String type = event.getType().toLowerCase(Locale.ROOT);
     if (BrowserEvents.FOCUS.equals(type) || BrowserEvents.BLUR.equals(type) || BrowserEvents.CHANGE.equals(type)) {
       EventTarget eventTarget = event.getEventTarget();
       if (Element.is(eventTarget)) {

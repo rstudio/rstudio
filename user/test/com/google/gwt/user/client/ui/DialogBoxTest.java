@@ -17,7 +17,6 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -33,6 +32,8 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.DOM;
+
+import java.util.Locale;
 
 /**
  * Unit test for {@link DialogBox}.
@@ -237,7 +238,7 @@ public class DialogBoxTest extends PopupTest {
     DialogBox box = new DialogBox();
     box.setHTML(SafeHtmlUtils.fromSafeConstant(html));
 
-    assertEquals(html, StringCase.toLower(box.getHTML()));
+    assertEquals(html, box.getHTML().toLowerCase(Locale.ROOT));
   }
 
   /**
@@ -250,7 +251,7 @@ public class DialogBoxTest extends PopupTest {
     Element td = dialogBox.getCellElement(0, 1);
     assertEquals(dialogBox.getText(), "text");
     caption.setHTML("<b>text</b>");
-    assertEquals("<b>text</b>", StringCase.toLower(dialogBox.getHTML()));
+    assertEquals("<b>text</b>", dialogBox.getHTML().toLowerCase(Locale.ROOT));
     dialogBox.show();
     assertTrue(dialogBox.getCaption() == caption);
     assertTrue(caption.asWidget().getElement() == DOM.getChild(td, 0));

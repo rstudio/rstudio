@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.i18n.client.BidiUtils;
@@ -23,6 +22,8 @@ import com.google.gwt.i18n.client.HasDirection.Direction;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.i18n.shared.AnyRtlDirectionEstimator;
 import com.google.gwt.junit.client.GWTTestCase;
+
+import java.util.Locale;
 
 /**
  * Tests {@link DirectionalTextHelper}.
@@ -188,7 +189,7 @@ public class DirectionalTextHelperTest extends GWTTestCase {
       // assertEquals(id + "retreived html is incorrect", iwContent,
       //     directionalTextHelper.getTextOrHtml(true).toLowerCase());
       assertEquals(id + "retreived text is incorrect", IW_TEXT,
-          StringCase.toLower(directionalTextHelper.getTextOrHtml(false)));
+          directionalTextHelper.getTextOrHtml(false).toLowerCase(Locale.ROOT));
     }
   }
 }

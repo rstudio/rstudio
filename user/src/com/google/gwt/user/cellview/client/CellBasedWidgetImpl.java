@@ -17,13 +17,13 @@ package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -71,7 +71,7 @@ abstract class CellBasedWidgetImpl {
    * @return true if the element is focusable, false if not
    */
   public boolean isFocusable(Element elem) {
-    return focusableTypes.contains(StringCase.toLower(elem.getTagName()))
+    return focusableTypes.contains(elem.getTagName().toLowerCase(Locale.ROOT))
         || elem.getTabIndex() >= 0;
   }
 

@@ -27,11 +27,11 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
 import java.io.PrintWriter;
+import java.util.Locale;
 
 /**
  * Generator for {@link com.google.gwt.useragent.client.UserAgent}.
@@ -73,7 +73,7 @@ public class UserAgentGenerator extends Generator {
       throw new UnableToCompleteException();
     }
 
-    String userAgentValueInitialCap = StringCase.toUpper(userAgentValue.substring(0, 1))
+    String userAgentValueInitialCap = userAgentValue.substring(0, 1).toUpperCase(Locale.ROOT)
         + userAgentValue.substring(1);
     className = className + "Impl" + userAgentValueInitialCap;
 

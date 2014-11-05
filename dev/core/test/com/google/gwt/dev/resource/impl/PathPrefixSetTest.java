@@ -131,7 +131,7 @@ public class PathPrefixSetTest extends TestCase {
     ResourceFilter allowsGifs = new ResourceFilter() {
       @Override
       public boolean allows(String path) {
-        return path.toLowerCase(Locale.ENGLISH).endsWith(".gif");
+        return path.toLowerCase(Locale.ROOT).endsWith(".gif");
       }
     };
 

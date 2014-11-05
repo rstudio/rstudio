@@ -15,11 +15,12 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.HasWidgetsTester.WidgetAdder;
+
+import java.util.Locale;
 
 /**
  * Tests {@link CaptionPanel}.
@@ -166,8 +167,8 @@ public class CaptionPanelTest extends GWTTestCase {
   }
 
   private void assertEqualsIgnoreCase(String expected, String actual) {
-    String expectedLc = expected != null ? StringCase.toLower(expected) : null;
-    String actualLc = actual != null ? StringCase.toLower(actual) : null;
+    String expectedLc = expected != null ? expected.toLowerCase(Locale.ROOT) : null;
+    String actualLc = actual != null ? actual.toLowerCase(Locale.ROOT) : null;
     assertEquals(expectedLc, actualLc);
   }
 
@@ -275,7 +276,7 @@ public class CaptionPanelTest extends GWTTestCase {
       assertSame(widget, panel.getContentWidget());
       Element panelFirstChild = panel.getElement().getFirstChildElement();
       // The legend element ought to be removed from the DOM at this point.
-      assertNotEquals("legend", StringCase.toLower(panelFirstChild.getTagName()));
+      assertNotEquals("legend", panelFirstChild.getTagName().toLowerCase(Locale.ROOT));
       // (Perhaps redundantly) check that the one child is the content widget.
       assertSame(panelFirstChild, widget.getElement());
       assertNull(panelFirstChild.getNextSibling());
@@ -328,14 +329,14 @@ public class CaptionPanelTest extends GWTTestCase {
   public void testSafeHtmlConstructor() {
     CaptionPanel panel = new CaptionPanel(SafeHtmlUtils.fromSafeConstant(html));
 
-    assertEquals(html, StringCase.toLower(panel.getCaptionHTML()));
+    assertEquals(html, panel.getCaptionHTML().toLowerCase(Locale.ROOT));
   }
 
   public void testSetCaptionSafeHtml() {
     CaptionPanel panel = new CaptionPanel("hiworld");
     panel.setCaptionHTML(SafeHtmlUtils.fromSafeConstant(html));
 
-    assertEquals(html, StringCase.toLower(panel.getCaptionHTML()));
+    assertEquals(html, panel.getCaptionHTML().toLowerCase(Locale.ROOT));
   }
 
   private CaptionPanel createEmptyCaptionPanel() {

@@ -962,7 +962,7 @@ public class JsStackEmulator {
 
   public static StackMode getStackMode(PermProps props) {
     String value = props.mustGetString("compiler.stackMode");
-    return StackMode.valueOf(value.toUpperCase(Locale.ENGLISH));
+    return StackMode.valueOf(value.toUpperCase(Locale.ROOT));
   }
 
   private JsFunction wrapFunction;

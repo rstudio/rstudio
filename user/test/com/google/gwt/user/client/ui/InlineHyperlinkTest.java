@@ -15,9 +15,10 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+
+import java.util.Locale;
 
 /**
  * Tests {@link InlineHyperlinkTest}.
@@ -36,7 +37,7 @@ public class InlineHyperlinkTest extends GWTTestCase {
     InlineHyperlink link = 
       new InlineHyperlink(SafeHtmlUtils.fromSafeConstant(html), token);
     
-    assertEquals(html, StringCase.toLower(link.getHTML()));
+    assertEquals(html, link.getHTML().toLowerCase(Locale.ROOT));
   }
 
   public void testSetSafeHtml() {
@@ -44,6 +45,6 @@ public class InlineHyperlinkTest extends GWTTestCase {
     InlineHyperlink link = new InlineHyperlink("foobar", token);
     link.setHTML(SafeHtmlUtils.fromSafeConstant(html));
     
-    assertEquals(html, StringCase.toLower(link.getHTML()));
+    assertEquals(html, link.getHTML().toLowerCase(Locale.ROOT));
   }
 }

@@ -15,7 +15,6 @@
  */
 package com.google.gwt.emultest.java.util;
 
-import com.google.gwt.core.shared.impl.StringCase;
 
 import org.apache.commons.collections.TestMap;
 
@@ -24,6 +23,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -559,7 +559,7 @@ public class HashMapTest extends TestMap {
     assertTrue(keySet.size() == SIZE_ONE);
     assertTrue(keySet.contains(KEY_TEST_KEY_SET));
     assertFalse(keySet.contains(VALUE_TEST_KEY_SET));
-    assertFalse(keySet.contains(StringCase.toUpper(KEY_TEST_KEY_SET)));
+    assertFalse(keySet.contains(KEY_TEST_KEY_SET.toUpperCase(Locale.ROOT)));
   }
 
   /*
@@ -621,18 +621,18 @@ public class HashMapTest extends TestMap {
     assertEquals(srcMap.size(), dstMap.size());
     assertTrue(dstMap.containsKey(KEY_1));
     assertTrue(dstMap.containsValue(VALUE_1));
-    assertFalse(dstMap.containsKey(StringCase.toUpper(KEY_1)));
-    assertFalse(dstMap.containsValue(StringCase.toUpper(VALUE_1)));
+    assertFalse(dstMap.containsKey(KEY_1.toUpperCase(Locale.ROOT)));
+    assertFalse(dstMap.containsValue(VALUE_1.toUpperCase(Locale.ROOT)));
 
     assertTrue(dstMap.containsKey(KEY_2));
     assertTrue(dstMap.containsValue(VALUE_2));
-    assertFalse(dstMap.containsKey(StringCase.toUpper(KEY_2)));
-    assertFalse(dstMap.containsValue(StringCase.toUpper(VALUE_2)));
+    assertFalse(dstMap.containsKey(KEY_2.toUpperCase(Locale.ROOT)));
+    assertFalse(dstMap.containsValue(VALUE_2.toUpperCase(Locale.ROOT)));
 
     assertTrue(dstMap.containsKey(KEY_3));
     assertTrue(dstMap.containsValue(VALUE_3));
-    assertFalse(dstMap.containsKey(StringCase.toUpper(KEY_3)));
-    assertFalse(dstMap.containsValue(StringCase.toUpper(VALUE_3)));
+    assertFalse(dstMap.containsKey(KEY_3.toUpperCase(Locale.ROOT)));
+    assertFalse(dstMap.containsValue(VALUE_3.toUpperCase(Locale.ROOT)));
 
     // Check that an empty map does not blow away the contents of the
     // destination map

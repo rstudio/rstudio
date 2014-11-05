@@ -183,7 +183,7 @@ public class ResourceOracleImpl extends AbstractResourceOracle {
       throws URISyntaxException, IOException {
     if (url.getProtocol().equals("file")) {
       File f = new File(url.toURI());
-      String lowerCaseFileName = f.getName().toLowerCase(Locale.ENGLISH);
+      String lowerCaseFileName = f.getName().toLowerCase(Locale.ROOT);
       if (f.isDirectory()) {
         return new DirectoryClassPathEntry(f);
       } else if (f.isFile() && lowerCaseFileName.endsWith(".jar")) {

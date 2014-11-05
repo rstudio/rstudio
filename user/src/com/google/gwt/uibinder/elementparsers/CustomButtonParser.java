@@ -17,13 +17,13 @@ package com.google.gwt.uibinder.elementparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.uibinder.rebind.XMLElement.Interpreter;
 import com.google.gwt.user.client.ui.Image;
 
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -85,7 +85,7 @@ public class CustomButtonParser implements ElementParser {
   }
 
   private String faceNameGetter(String faceName) {
-    return "get" + StringCase.toUpper(faceName.substring(0, 1))
+    return "get" + faceName.substring(0, 1).toUpperCase(Locale.ROOT)
         + faceName.substring(1);
   }
 }

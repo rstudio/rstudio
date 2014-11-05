@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.tools;
 
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dev.About;
 import com.google.gwt.dev.ArgProcessorBase;
 import com.google.gwt.dev.Compiler;
@@ -43,6 +42,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -614,7 +614,7 @@ public final class WebAppCreator {
     replacements.put("@shellClass", DevMode.class.getName());
     replacements.put("@compileClass", Compiler.class.getName());
     replacements.put("@startupUrl", moduleShortName + ".html");
-    replacements.put("@renameTo", StringCase.toLower(moduleShortName));
+    replacements.put("@renameTo", moduleShortName.toLowerCase(Locale.ROOT));
     replacements.put("@moduleNameJUnit", theModuleName + "JUnit");
 
     // Add command to copy gwt-servlet-deps.jar into libs, unless this is a
@@ -629,7 +629,7 @@ public final class WebAppCreator {
     StringBuilder serverLibs = new StringBuilder();
     if (libDirectory.exists()) {
       for (File file : libDirectory.listFiles()) {
-        if (StringCase.toLower(file.getName()).endsWith(".jar")) {
+        if (file.getName().toLowerCase(Locale.ROOT).endsWith(".jar")) {
           serverLibs.append("   <classpathentry kind=\"lib\" path=\"" + warFolder + "/WEB-INF/lib/");
           serverLibs.append(file.getName());
           serverLibs.append("\"/>\n");

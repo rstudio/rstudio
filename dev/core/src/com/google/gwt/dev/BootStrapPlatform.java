@@ -53,7 +53,7 @@ public class BootStrapPlatform {
    * Return true if we are running on a Mac.
    */
   public static boolean isMac() {
-    String lcOSName = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
+    String lcOSName = System.getProperty("os.name").toLowerCase(Locale.ROOT);
     return lcOSName.startsWith("mac ");
   }
 

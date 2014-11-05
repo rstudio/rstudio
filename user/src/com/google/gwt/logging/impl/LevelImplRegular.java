@@ -16,8 +16,8 @@
 
 package com.google.gwt.logging.impl;
 
-import com.google.gwt.core.shared.impl.StringCase;
 
+import java.util.Locale;
 import java.util.logging.Level;
 
 /**
@@ -26,7 +26,7 @@ import java.util.logging.Level;
 public class LevelImplRegular implements LevelImpl {
   @Override
   public Level parse(String name) {
-    name = StringCase.toUpper(name);
+    name = name.toUpperCase(Locale.ROOT);
     if (name.equals("ALL")) {
       return Level.ALL;
     } else if (name.equals("CONFIG")) {

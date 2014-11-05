@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.tools.util;
 
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 
 import java.io.File;
@@ -27,6 +26,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Utility methods used by ApplicationCreator.
@@ -78,7 +78,7 @@ public class CreatorUtilities {
             + "Must be present before .launch file can be created");
       }
 
-      String lcPath = StringCase.toLower(path);
+      String lcPath = path.toLowerCase(Locale.ROOT);
 
       if (f.isDirectory()) {
         // For a directory, we assume it contains compiled class files

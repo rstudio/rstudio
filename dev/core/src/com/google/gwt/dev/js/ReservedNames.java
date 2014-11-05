@@ -52,9 +52,9 @@ class ReservedNames {
     if (!JsProtectedNames.isLegalName(newIdent)) {
       return false;
     }
-    String lcIdent = newIdent.toLowerCase(Locale.ENGLISH);
+    String lcIdent = newIdent.toLowerCase(Locale.ROOT);
     for (String suffix : blacklistedSuffixes) {
-      if (lcIdent.endsWith(suffix.toLowerCase(Locale.ENGLISH))) {
+      if (lcIdent.endsWith(suffix.toLowerCase(Locale.ROOT))) {
         return false;
       }
     }

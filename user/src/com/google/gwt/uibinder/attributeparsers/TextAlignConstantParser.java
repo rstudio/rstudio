@@ -17,12 +17,12 @@ package com.google.gwt.uibinder.attributeparsers;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JType;
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.uibinder.rebind.MortalLogger;
 import com.google.gwt.uibinder.rebind.XMLElement;
 import com.google.gwt.user.client.ui.TextBoxBase;
 
 import java.util.HashMap;
+import java.util.Locale;
 
 /**
  * Parses a {@link com.google.gwt.user.client.ui.TextBoxBase.TextAlignConstant}.
@@ -51,7 +51,7 @@ class TextAlignConstantParser extends StrictAttributeParser {
 
   @Override
   public String parse(XMLElement source, String value) throws UnableToCompleteException {
-    String translated = values.get(StringCase.toUpper(value));
+    String translated = values.get(value.toUpperCase(Locale.ROOT));
     if (translated != null) {
       return translated;
     }

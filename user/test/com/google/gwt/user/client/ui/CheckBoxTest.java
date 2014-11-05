@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
@@ -28,6 +27,8 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.DOM;
+
+import java.util.Locale;
 
 /**
  * Tests the CheckBox Widget.
@@ -231,14 +232,14 @@ public class CheckBoxTest extends GWTTestCase {
   public void testSafeHtmlConstructor() {
     CheckBox box = new CheckBox(SafeHtmlUtils.fromSafeConstant(html));
     
-    assertEquals(html, StringCase.toLower(box.getHTML()));
+    assertEquals(html, box.getHTML().toLowerCase(Locale.ROOT));
   }
 
   public void testSetSafeHtml() {
     CheckBox box = new CheckBox("hello");
     box.setHTML(SafeHtmlUtils.fromSafeConstant(html));
     
-    assertEquals(html, StringCase.toLower(box.getHTML()));
+    assertEquals(html, box.getHTML().toLowerCase(Locale.ROOT));
   }
 
   @SuppressWarnings("deprecation")

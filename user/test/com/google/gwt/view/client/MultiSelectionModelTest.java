@@ -15,9 +15,9 @@
  */
 package com.google.gwt.view.client;
 
-import com.google.gwt.core.shared.impl.StringCase;
 
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -161,7 +161,7 @@ public class MultiSelectionModelTest extends AbstractSelectionModelTest {
     ProvidesKey<String> keyProvider = new ProvidesKey<String>() {
         @Override
       public Object getKey(String item) {
-        return StringCase.toUpper(item);
+        return item.toUpperCase(Locale.ROOT);
       }
     };
     MultiSelectionModel<String> model = createSelectionModel(keyProvider);
@@ -208,7 +208,7 @@ public class MultiSelectionModelTest extends AbstractSelectionModelTest {
     ProvidesKey<String> keyProvider = new ProvidesKey<String>() {
         @Override
       public Object getKey(String item) {
-        return StringCase.toUpper(item);
+        return item.toUpperCase(Locale.ROOT);
       }
     };
     MultiSelectionModel<String> model = createSelectionModel(keyProvider);
@@ -230,7 +230,7 @@ public class MultiSelectionModelTest extends AbstractSelectionModelTest {
     ProvidesKey<String> keyProvider = new ProvidesKey<String>() {
         @Override
       public Object getKey(String item) {
-        return StringCase.toUpper(item);
+        return item.toUpperCase(Locale.ROOT);
       }
     };
     MultiSelectionModel<String> model = createSelectionModel(keyProvider);

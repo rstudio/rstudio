@@ -16,9 +16,10 @@
 package com.google.gwt.emultest.java.lang;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.testing.TestUtils;
+
+import java.util.Locale;
 
 /**
  * This test verifies that the static evaluation performed by the compiler
@@ -174,9 +175,9 @@ public class CompilerConstantStringTest extends GWTTestCase {
   }
 
   public void testLowerCase() {
-    assertEquals("abc", StringCase.toLower("AbC"));
-    assertEquals("abc", StringCase.toLower("abc"));
-    assertEquals("", StringCase.toLower(""));
+    assertEquals("abc", "AbC".toLowerCase(Locale.ROOT));
+    assertEquals("abc", "abc".toLowerCase(Locale.ROOT));
+    assertEquals("", "".toLowerCase(Locale.ROOT));
   }
 
   public void testMatch() {
@@ -292,9 +293,9 @@ public class CompilerConstantStringTest extends GWTTestCase {
   }
 
   public void testUpperCase() {
-    assertEquals("abc", StringCase.toLower("AbC"));
-    assertEquals("abc", StringCase.toLower("abc"));
-    assertEquals("", StringCase.toLower(""));
+    assertEquals("abc", "AbC".toLowerCase(Locale.ROOT));
+    assertEquals("abc", "abc".toLowerCase(Locale.ROOT));
+    assertEquals("", "".toLowerCase(Locale.ROOT));
   }
 
   public void testValueOf() {

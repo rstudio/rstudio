@@ -16,12 +16,13 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
+
+import java.util.Locale;
 
 /**
  * Tests the HTMLPanel widget.
@@ -345,17 +346,17 @@ public class HTMLPanelTest extends GWTTestCase {
     hp.addAndReplaceElement(label, "labelHere");
 
     Element parent = label.getElement().getParentElement();
-    assertEquals("td", StringCase.toLower(parent.getTagName()));
+    assertEquals("td", parent.getTagName().toLowerCase(Locale.ROOT));
 
     parent = parent.getParentElement();
-    assertEquals("tr", StringCase.toLower(parent.getTagName()));
+    assertEquals("tr", parent.getTagName().toLowerCase(Locale.ROOT));
 
     while (parent != null && parent != hp.getElement()) {
       parent = parent.getParentElement();
     }
 
     assertNotNull(parent);
-    assertEquals("table", StringCase.toLower(parent.getTagName()));
+    assertEquals("table", parent.getTagName().toLowerCase(Locale.ROOT));
   }
 
   /**
@@ -365,7 +366,7 @@ public class HTMLPanelTest extends GWTTestCase {
     HTMLPanel hp = new HTMLPanel("h3", "");
 
     Element element = hp.getElement();
-    assertEquals("h3", StringCase.toLower(element.getTagName()));
+    assertEquals("h3", element.getTagName().toLowerCase(Locale.ROOT));
     assertEquals("", element.getInnerText());
   }
 
@@ -420,10 +421,10 @@ public class HTMLPanelTest extends GWTTestCase {
     hp.addAndReplaceElement(label, "labelHere");
 
     Element parent = label.getElement().getParentElement();
-    assertEquals("td", StringCase.toLower(parent.getTagName()));
+    assertEquals("td", parent.getTagName().toLowerCase(Locale.ROOT));
 
     parent = parent.getParentElement();
-    assertEquals("tr", StringCase.toLower(parent.getTagName()));
+    assertEquals("tr", parent.getTagName().toLowerCase(Locale.ROOT));
 
     // Look for the table in the main panel div
     Element firstChild = null;
@@ -433,8 +434,8 @@ public class HTMLPanelTest extends GWTTestCase {
     }
 
     assertNotNull(parent);
-    assertEquals("div", StringCase.toLower(parent.getTagName()));
-    assertEquals("table", StringCase.toLower(firstChild.getTagName()));
+    assertEquals("div", parent.getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("table", firstChild.getTagName().toLowerCase(Locale.ROOT));
   }
 
   /**

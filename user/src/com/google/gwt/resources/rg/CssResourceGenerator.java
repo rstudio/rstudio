@@ -28,7 +28,6 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.i18n.client.LocaleInfo;
@@ -88,6 +87,7 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
@@ -386,7 +386,7 @@ public class CssResourceGenerator extends AbstractCssResourceGenerator
      * so we want to append a trailing character to the end of the search in
      * case the obfuscated class name is exactly equal to one of the prefixes.
      */
-    String search = StringCase.toLower(target.toString()) + " ";
+    String search = target.toString().toLowerCase(Locale.ROOT) + " ";
     SortedSet<String> headSet = prefixes.headSet(search);
     if (!headSet.isEmpty()) {
       String prefix = headSet.last();
@@ -952,7 +952,7 @@ public class CssResourceGenerator extends AbstractCssResourceGenerator
           if (value.startsWith(".")) {
             value = value.substring(1);
           }
-          reservedPrefixes.add(StringCase.toLower(value));
+          reservedPrefixes.add(value.toLowerCase(Locale.ROOT));
         }
       } catch (BadPropertyValueException e) {
         // Do nothing. Unexpected, but we can live with it.

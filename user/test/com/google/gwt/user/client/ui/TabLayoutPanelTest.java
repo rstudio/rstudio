@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.BeforeSelectionEvent;
 import com.google.gwt.event.logical.shared.BeforeSelectionHandler;
@@ -30,6 +29,7 @@ import com.google.gwt.user.client.DeferredCommand;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Tests for {@link TabLayoutPanel}.
@@ -278,9 +278,9 @@ public class TabLayoutPanelTest extends GWTTestCase {
     assertEquals("added text",
         p.getTabWidget(addText).getElement().getInnerHTML());
     assertEquals("<b>inserted html</b>",
-        StringCase.toLower(p.getTabWidget(insHtml).getElement().getInnerHTML()));
+        p.getTabWidget(insHtml).getElement().getInnerHTML().toLowerCase(Locale.ROOT));
     assertEquals("<b>added html</b>",
-        StringCase.toLower(p.getTabWidget(addHtml).getElement().getInnerHTML()));
+        p.getTabWidget(addHtml).getElement().getInnerHTML().toLowerCase(Locale.ROOT));
     assertEquals(inserted.w, p.getTabWidget(insWidget));
     assertEquals(added.w, p.getTabWidget(addWidget));
 

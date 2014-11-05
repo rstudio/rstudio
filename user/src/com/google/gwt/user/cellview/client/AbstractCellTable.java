@@ -22,7 +22,6 @@ import com.google.gwt.cell.client.HasCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.builder.shared.HtmlTableSectionBuilder;
 import com.google.gwt.dom.builder.shared.TableSectionBuilder;
 import com.google.gwt.dom.client.BrowserEvents;
@@ -59,6 +58,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -474,7 +474,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
        * generate the entire table. We do the same for all browsers to avoid any
        * future bugs, since setting innerHTML on a table section seems brittle.
        */
-      sectionTag = StringCase.toLower(sectionTag);
+      sectionTag = sectionTag.toLowerCase(Locale.ROOT);
       if ("tbody".equals(sectionTag)) {
         tmpElem.setInnerSafeHtml(template.tbody(rowHtml));
       } else if ("thead".equals(sectionTag)) {
@@ -741,7 +741,7 @@ public abstract class AbstractCellTable<T> extends AbstractHasData<T> {
      */
     private void replaceTableSection(AbstractCellTable<?> table, TableSectionElement section,
         SafeHtml html) {
-      String sectionName = StringCase.toLower(section.getTagName());
+      String sectionName = section.getTagName().toLowerCase(Locale.ROOT);
       TableSectionElement newSection = convertToSectionElement(table, sectionName, html);
       TableElement tableElement = table.getElement().cast();
       tableElement.replaceChild(newSection, section);

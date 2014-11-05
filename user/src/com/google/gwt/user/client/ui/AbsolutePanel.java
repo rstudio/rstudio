@@ -16,9 +16,10 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
+
+import java.util.Locale;
 
 /**
  * An absolute panel positions all of its children absolutely, allowing them to
@@ -276,7 +277,7 @@ public class AbsolutePanel extends ComplexPanel implements
      * the offsetParent, for elements whose parent is the document BODY, is the
      * HTML element, not the BODY element.
      */
-    if ("body".equals(StringCase.toLower(getElement().getNodeName()))) {
+    if ("body".equals(getElement().getNodeName().toLowerCase(Locale.ROOT))) {
       return;
     }
 

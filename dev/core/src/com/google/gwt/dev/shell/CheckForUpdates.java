@@ -159,7 +159,7 @@ public class CheckForUpdates {
   public static CheckForUpdates createUpdateChecker(TreeLogger logger,
       String entryPoint) {
     // Windows has a custom implementation to handle proxies.
-    if (System.getProperty("os.name").toLowerCase(Locale.ENGLISH).contains("win")) {
+    if (System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win")) {
       return new CheckForUpdatesIE6(logger, entryPoint);
     } else {
       return new CheckForUpdates(logger, entryPoint);

@@ -15,12 +15,12 @@
  */
 package com.google.gwt.view.client;
 
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -166,7 +166,7 @@ public class AbstractDataProviderTest extends GWTTestCase {
     ProvidesKey<String> keyProvider = new ProvidesKey<String>() {
       @Override
       public Object getKey(String item) {
-        return item == null ? item : StringCase.toUpper(item);
+        return item == null ? item : item.toUpperCase(Locale.ROOT);
       }
     };
     provider = createDataProvider(keyProvider);

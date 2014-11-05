@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.logical.shared.BeforeSelectionEvent;
 import com.google.gwt.event.logical.shared.BeforeSelectionHandler;
@@ -24,6 +23,8 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.DOM;
+
+import java.util.Locale;
 
 /**
  * Tests the {@link TabBar} widget.
@@ -70,7 +71,7 @@ public class TabBarTest extends GWTTestCase {
     TabBar bar = createTabBar();
     bar.addTab(SafeHtmlUtils.fromSafeConstant(html));
     
-    assertEquals(html, StringCase.toLower(bar.getTabHTML(0)));
+    assertEquals(html, bar.getTabHTML(0).toLowerCase(Locale.ROOT));
   }
 
   public void testDebugId() {
@@ -113,7 +114,7 @@ public class TabBarTest extends GWTTestCase {
     TabBar bar = createTabBar();
     bar.insertTab(SafeHtmlUtils.fromSafeConstant(html), 0);
     
-    assertEquals(html, StringCase.toLower(bar.getTabHTML(0)));
+    assertEquals(html, bar.getTabHTML(0).toLowerCase(Locale.ROOT));
   }
 
   public void testSelect() {
@@ -197,7 +198,7 @@ public class TabBarTest extends GWTTestCase {
     bar.insertTab("foo", 0);
     bar.setTabHTML(0, SafeHtmlUtils.fromSafeConstant(html));
     
-    assertEquals(html, StringCase.toLower(bar.getTabHTML(0)));
+    assertEquals(html, bar.getTabHTML(0).toLowerCase(Locale.ROOT));
   }
 
   public void testGetHTML() {
@@ -224,12 +225,12 @@ public class TabBarTest extends GWTTestCase {
     // toLowerCase() is necessary in these assertions because IE capitalizes
     // HTML tags read from innerHTML.
     bar.setTabHTML(1, "<i>w00t!</i>");
-    assertEquals("<i>w00t!</i>", StringCase.toLower(bar.getTabHTML(1)));
+    assertEquals("<i>w00t!</i>", bar.getTabHTML(1).toLowerCase(Locale.ROOT));
 
     // Set the text knowing that we currently have an HTML. This should replace
     // the HTML with a Label.
     bar.setTabText(1, "<b>w00t</b>");
-    assertEquals("<b>w00t</b>", StringCase.toLower(bar.getTabHTML(1)));
+    assertEquals("<b>w00t</b>", bar.getTabHTML(1).toLowerCase(Locale.ROOT));
 
     // Set the text knowing that we currently have a Grid. This should replace
     // the Grid with a Label.

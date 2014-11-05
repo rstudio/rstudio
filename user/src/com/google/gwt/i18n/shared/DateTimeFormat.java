@@ -15,13 +15,13 @@
  */
 package com.google.gwt.i18n.shared;
 
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.i18n.shared.impl.DateRecord;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -1396,13 +1396,13 @@ public class DateTimeFormat {
     // We keep track of the longest match, and return that. Note that this
     // unfortunately requires us to test all array elements.
     int bestMatchLength = 0, bestMatch = -1;
-    String textInLowerCase = StringCase.toLower(text.substring(start));
+    String textInLowerCase = text.substring(start).toLowerCase(Locale.ROOT);
     for (int i = 0; i < count; ++i) {
       int length = data[i].length();
       // Always compare if we have no match yet; otherwise only compare
       // against potentially better matches (longer strings).
       if (length > bestMatchLength
-          && textInLowerCase.startsWith(StringCase.toLower(data[i]))) {
+          && textInLowerCase.startsWith(data[i].toLowerCase(Locale.ROOT))) {
         bestMatch = i;
         bestMatchLength = length;
       }

@@ -16,7 +16,6 @@
 package com.google.gwt.dom.builder.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.builder.shared.StylesBuilder;
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.dom.client.Style.Cursor;
@@ -40,6 +39,8 @@ import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.safehtml.shared.SafeUri;
+
+import java.util.Locale;
 
 /**
  * Builds the style object.
@@ -108,7 +109,7 @@ class DomStylesBuilder implements StylesBuilder {
           camelCase += word;
         } else {
           // Remove hyphen and uppercase next letter.
-          camelCase += StringCase.toUpper(matches.getGroup(2));
+          camelCase += matches.getGroup(2).toUpperCase(Locale.ROOT);
           if (matches.getGroupCount() > 2) {
             camelCase += matches.getGroup(3);
           }

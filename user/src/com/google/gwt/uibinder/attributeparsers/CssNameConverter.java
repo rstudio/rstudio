@@ -15,9 +15,9 @@
  */
 package com.google.gwt.uibinder.attributeparsers;
 
-import com.google.gwt.core.shared.impl.StringCase;
 
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -45,7 +45,7 @@ public class CssNameConverter {
       if (b.length() == 0) {
         b.append(bit);
       } else {
-        b.append(StringCase.toUpper(bit.substring(0, 1)));
+        b.append(bit.substring(0, 1).toUpperCase(Locale.ROOT));
         if (bit.length() > 1) {
           b.append(bit.substring(1));
         }

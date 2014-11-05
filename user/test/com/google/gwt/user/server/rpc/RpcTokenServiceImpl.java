@@ -15,9 +15,10 @@
  */
 package com.google.gwt.user.server.rpc;
 
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.user.client.rpc.RpcToken;
 import com.google.gwt.user.client.rpc.RpcTokenTestService;
+
+import java.util.Locale;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -32,7 +33,7 @@ public class RpcTokenServiceImpl extends RpcTokenAwareRemoteService
   
   @Override
   public String capitalize(String input) {
-    return StringCase.toUpper(input);
+    return input.toUpperCase(Locale.ROOT);
   }
   
   @Override

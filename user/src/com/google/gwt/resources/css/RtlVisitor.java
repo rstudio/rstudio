@@ -15,7 +15,6 @@
  */
 package com.google.gwt.resources.css;
 
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.resources.css.ast.Context;
 import com.google.gwt.resources.css.ast.CssCompilerException;
 import com.google.gwt.resources.css.ast.CssModVisitor;
@@ -32,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Locale;
 
 /**
  * Applies RTL transforms to a stylesheet.
@@ -146,7 +146,7 @@ public class RtlVisitor extends CssModVisitor {
       return v;
     }
 
-    String ident = StringCase.toLower(identValue.getIdent());
+    String ident = identValue.getIdent().toLowerCase(Locale.ROOT);
     if (!ident.endsWith("-resize")) {
       return v;
     }
@@ -233,7 +233,7 @@ public class RtlVisitor extends CssModVisitor {
   private void invokePropertyHandler(String name, List<Value> values) {
     // See if we have a property-handler function
     try {
-      String[] parts = StringCase.toLower(name).split("-");
+      String[] parts = name.toLowerCase(Locale.ROOT).split("-");
       StringBuffer methodName = new StringBuffer("propertyHandler");
       for (String part : parts) {
         if (part.length() > 0) {

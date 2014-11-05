@@ -37,7 +37,7 @@ public class BrowserInfo {
    * @return short name of user agent
    */
   public static String getShortName(String userAgent) {
-    String lcAgent = userAgent.toLowerCase(Locale.ENGLISH);
+    String lcAgent = userAgent.toLowerCase(Locale.ROOT);
     if (lcAgent.contains("msie")) {
       return IE;
     } else if (lcAgent.contains("opr")) {

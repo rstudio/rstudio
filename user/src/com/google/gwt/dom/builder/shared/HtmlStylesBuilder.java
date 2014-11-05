@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dom.builder.shared;
 
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Display;
@@ -41,6 +40,7 @@ import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.shared.SafeUri;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -107,7 +107,7 @@ class HtmlStylesBuilder implements StylesBuilder {
           hyphenated += word;
         } else {
           // Hyphenate the first letter.
-          hyphenated += "-" + StringCase.toLower(matches.getGroup(1));
+          hyphenated += "-" + matches.getGroup(1).toLowerCase(Locale.ROOT);
           if (matches.getGroupCount() > 1) {
             hyphenated += matches.getGroup(2);
           }

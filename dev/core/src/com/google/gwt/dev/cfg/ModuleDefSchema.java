@@ -1455,7 +1455,7 @@ public class ModuleDefSchema extends Schema {
   @SuppressWarnings("unused")
   protected Schema __module_begin(NullableName renameTo, String type)
       throws UnableToCompleteException {
-    ModuleType moduleType = ModuleType.valueOf(type.toUpperCase(Locale.ENGLISH));
+    ModuleType moduleType = ModuleType.valueOf(type.toUpperCase(Locale.ROOT));
     moduleDef.enterModule(moduleType, moduleName);
 
     // All modules implicitly depend on com.google.gwt.core.Core. Processing of this dependency

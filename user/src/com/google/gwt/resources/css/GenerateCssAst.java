@@ -17,7 +17,6 @@ package com.google.gwt.resources.css;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.resources.css.ast.CssDef;
 import com.google.gwt.resources.css.ast.CssEval;
 import com.google.gwt.resources.css.ast.CssExternalSelectors;
@@ -85,6 +84,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Stack;
 import java.util.regex.Matcher;
@@ -250,7 +250,7 @@ public class GenerateCssAst {
       }
       String ruleName = atRule.substring(1, idx);
       String methodName = "parse" + (Character.toUpperCase(ruleName.charAt(0)))
-          + StringCase.toLower(ruleName.substring(1));
+          + ruleName.substring(1).toLowerCase(Locale.ROOT);
       try {
         Method parseMethod = getClass().getDeclaredMethod(methodName,
             String.class);

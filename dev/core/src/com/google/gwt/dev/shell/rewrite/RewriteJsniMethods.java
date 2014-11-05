@@ -120,7 +120,7 @@ public class RewriteJsniMethods extends ClassVisitor {
       for (Class<?> c : primitives) {
         Type type = Type.getType(c);
         String typeName = type.getClassName();
-        String firstChar = typeName.substring(0, 1).toUpperCase(Locale.ENGLISH);
+        String firstChar = typeName.substring(0, 1).toUpperCase(Locale.ROOT);
         typeName = firstChar + typeName.substring(1);
         SORT_MAP[type.getSort()] = new JavaScriptHostInfo(type, "invokeNative"
             + typeName);

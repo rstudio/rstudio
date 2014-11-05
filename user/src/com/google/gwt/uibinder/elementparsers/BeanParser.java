@@ -21,7 +21,6 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JType;
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.uibinder.rebind.UiBinderContext;
 import com.google.gwt.uibinder.rebind.UiBinderWriter;
 import com.google.gwt.uibinder.rebind.XMLAttribute;
@@ -32,6 +31,7 @@ import com.google.gwt.uibinder.rebind.model.OwnerFieldClass;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -235,7 +235,7 @@ public class BeanParser implements ElementParser {
   }
 
   private String initialCap(String propertyName) {
-    return StringCase.toUpper(propertyName.substring(0, 1))
+    return propertyName.substring(0, 1).toUpperCase(Locale.ROOT)
         + propertyName.substring(1);
   }
 

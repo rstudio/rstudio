@@ -15,7 +15,6 @@
  */
 package com.google.web.bindery.requestfactory.vm.testing;
 
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.web.bindery.requestfactory.shared.RequestFactory;
 import com.google.web.bindery.requestfactory.shared.RequestTransport;
 import com.google.web.bindery.requestfactory.shared.ServerFailure;
@@ -29,6 +28,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
@@ -61,7 +61,7 @@ public class UrlRequestTransport implements RequestTransport {
    */
   public UrlRequestTransport(URL url) {
     this.url = url;
-    String proto = StringCase.toLower(url.getProtocol());
+    String proto = url.getProtocol().toLowerCase(Locale.ROOT);
     if (!proto.equals("http") && !proto.equals("https")) {
       throw new IllegalArgumentException("Only http and https URLs supported");
     }

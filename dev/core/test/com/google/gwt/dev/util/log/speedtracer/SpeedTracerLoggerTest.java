@@ -248,7 +248,7 @@ public class SpeedTracerLoggerTest extends TestCase {
   private BufferedReader extractJsonFromWriter(Writer writer)
       throws IOException {
     String jsonString = writer.toString();
-    assertTrue(jsonString.substring(0,5).toLowerCase(Locale.ENGLISH).startsWith("<html"));
+    assertTrue(jsonString.substring(0,5).toLowerCase(Locale.ROOT).startsWith("<html"));
     BufferedReader jsonReader = new BufferedReader(new StringReader(jsonString));
     // Skip ahead to start of JSON
     while (true) {

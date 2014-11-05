@@ -18,7 +18,6 @@ package com.google.gwt.user.rebind.ui;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -35,6 +34,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
@@ -399,7 +399,7 @@ class ImageBundleBuilder {
       try {
         image = ImageIO.read(imageUrl);
       } catch (IllegalArgumentException iex) {
-        if (StringCase.toLower(imageName).endsWith("png")
+        if (imageName.toLowerCase(Locale.ROOT).endsWith("png")
             && iex.getMessage() != null
             && iex.getStackTrace()[0].getClassName().equals(
                 "javax.imageio.ImageTypeSpecifier$Indexed")) {

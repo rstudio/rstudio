@@ -15,7 +15,6 @@
  */
 package com.google.gwt.view.client;
 
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
@@ -24,6 +23,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -151,9 +151,9 @@ public class DefaultSelectionEventManager<T> implements
 
         // Determine if we clicked on a checkbox.
         Element target = nativeEvent.getEventTarget().cast();
-        if ("input".equals(StringCase.toLower(target.getTagName()))) {
+        if ("input".equals(target.getTagName().toLowerCase(Locale.ROOT))) {
           final InputElement input = target.cast();
-          if ("checkbox".equals(StringCase.toLower(input.getType()))) {
+          if ("checkbox".equals(input.getType().toLowerCase(Locale.ROOT))) {
             // Synchronize the checkbox with the current selection state.
             input.setChecked(event.getDisplay().getSelectionModel().isSelected(
                 event.getValue()));

@@ -23,7 +23,6 @@ import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.DataResource;
@@ -39,6 +38,7 @@ import com.google.gwt.uibinder.rebind.model.ImplicitImageResource;
 import com.google.gwt.uibinder.rebind.model.OwnerField;
 
 import java.util.LinkedHashSet;
+import java.util.Locale;
 
 /**
  * Parses the root UiBinder element, and kicks of the parsing of the rest of the
@@ -513,7 +513,7 @@ public class UiBinderParser {
 
         if (writer.isBinderElement(elem)) {
           try {
-            Resource.valueOf(StringCase.toUpper(elem.getLocalName())).create(
+            Resource.valueOf(elem.getLocalName().toUpperCase(Locale.ROOT)).create(
                 UiBinderParser.this, elem);
           } catch (IllegalArgumentException e) {
             writer.die(elem,

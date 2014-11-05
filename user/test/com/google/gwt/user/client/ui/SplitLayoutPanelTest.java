@@ -15,11 +15,12 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
+
+import java.util.Locale;
 
 /**
  * Tests for {@link SplitLayoutPanel}.
@@ -103,7 +104,7 @@ public class SplitLayoutPanelTest extends DockLayoutPanelTest {
 
     p.addWest(new Label("foo"), 64);
     assertEquals("5px",
-        StringCase.toLower(children.get(1).getElement().getStyle().getWidth()));
+        children.get(1).getElement().getStyle().getWidth().toLowerCase(Locale.ROOT));
   }
 
   public void testRemoveInsert() {

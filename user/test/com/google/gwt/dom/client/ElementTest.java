@@ -18,12 +18,13 @@ package com.google.gwt.dom.client;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
+
+import java.util.Locale;
 
 /**
  * Element tests (many stolen from DOMTest).
@@ -426,7 +427,7 @@ public class ElementTest extends GWTTestCase {
 
     Node div = Document.get().createDivElement();
     assertTrue(Element.is(div));
-    assertEquals("div", StringCase.toLower(Element.as(div).getTagName()));
+    assertEquals("div", Element.as(div).getTagName().toLowerCase(Locale.ROOT));
 
     // Element.is(null) is allowed and should return false.
     assertFalse(Element.is(null));
@@ -434,7 +435,7 @@ public class ElementTest extends GWTTestCase {
     // Element sub-classes like DivElement have is(...) and as(...) too
     assertFalse(DivElement.is(Document.get()));
     assertTrue(DivElement.is(div));
-    assertEquals("div", StringCase.toLower(DivElement.as(div).getTagName()));
+    assertEquals("div", DivElement.as(div).getTagName().toLowerCase(Locale.ROOT));
     assertFalse(DivElement.is(null));
   }
 
@@ -443,7 +444,7 @@ public class ElementTest extends GWTTestCase {
    */
   public void testNamespaces() {
     Element elem = Document.get().createElement("myns:elem");
-    assertEquals("myns:elem", StringCase.toLower(elem.getTagName()));
+    assertEquals("myns:elem", elem.getTagName().toLowerCase(Locale.ROOT));
   }
 
   /**
@@ -452,7 +453,7 @@ public class ElementTest extends GWTTestCase {
   public void testNativeProperties() {
     DivElement div = Document.get().createDivElement();
 
-    assertEquals("div", StringCase.toLower(div.getTagName()));
+    assertEquals("div", div.getTagName().toLowerCase(Locale.ROOT));
 
     div.setClassName("myClass");
     assertEquals(div.getClassName(), "myClass");
@@ -650,8 +651,8 @@ public class ElementTest extends GWTTestCase {
     Element button = div.getFirstChildElement();
     Element img = button.getFirstChildElement();
 
-    assertEquals("button", StringCase.toLower(button.getTagName()));
-    assertEquals("img", StringCase.toLower(img.getTagName()));
+    assertEquals("button", button.getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("img", img.getTagName().toLowerCase(Locale.ROOT));
     assertTrue(((ImageElement) img).getSrc().endsWith("foo.gif"));
   }
 

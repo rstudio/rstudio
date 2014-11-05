@@ -15,10 +15,11 @@
  */
 package com.google.gwt.dom.client;
 
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.junit.DoNotRunWith;
 import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
+
+import java.util.Locale;
 
 /**
  * Tests the {@link Document} class.
@@ -34,110 +35,110 @@ public class DocumentTest extends GWTTestCase {
   public void testElementCreators() {
     Document doc = Document.get();
 
-    assertEquals("a", StringCase.toLower(doc.createAnchorElement().getTagName()));
-    assertEquals("area", StringCase.toLower(doc.createAreaElement().getTagName()));
-    assertEquals("base", StringCase.toLower(doc.createBaseElement().getTagName()));
+    assertEquals("a", doc.createAnchorElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("area", doc.createAreaElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("base", doc.createBaseElement().getTagName().toLowerCase(Locale.ROOT));
     assertEquals("blockquote",
-        StringCase.toLower(doc.createBlockQuoteElement().getTagName()));
-    assertEquals("br", StringCase.toLower(doc.createBRElement().getTagName()));
+        doc.createBlockQuoteElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("br", doc.createBRElement().getTagName().toLowerCase(Locale.ROOT));
     assertEquals("caption",
-        StringCase.toLower(doc.createCaptionElement().getTagName()));
-    assertEquals("col", StringCase.toLower(doc.createColElement().getTagName()));
+        doc.createCaptionElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("col", doc.createColElement().getTagName().toLowerCase(Locale.ROOT));
     assertEquals("colgroup",
-        StringCase.toLower(doc.createColGroupElement().getTagName()));
-    assertEquals("del", StringCase.toLower(doc.createDelElement().getTagName()));
-    assertEquals("div", StringCase.toLower(doc.createDivElement().getTagName()));
-    assertEquals("dl", StringCase.toLower(doc.createDLElement().getTagName()));
+        doc.createColGroupElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("del", doc.createDelElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("div", doc.createDivElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("dl", doc.createDLElement().getTagName().toLowerCase(Locale.ROOT));
     assertEquals("fieldset",
-        StringCase.toLower(doc.createFieldSetElement().getTagName()));
-    assertEquals("form", StringCase.toLower(doc.createFormElement().getTagName()));
-    assertEquals("frame", StringCase.toLower(doc.createFrameElement().getTagName()));
+        doc.createFieldSetElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("form", doc.createFormElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("frame", doc.createFrameElement().getTagName().toLowerCase(Locale.ROOT));
     assertEquals("frameset",
-        StringCase.toLower(doc.createFrameSetElement().getTagName()));
-    assertEquals("head", StringCase.toLower(doc.createHeadElement().getTagName()));
-    assertEquals("h1", StringCase.toLower(doc.createHElement(1).getTagName()));
-    assertEquals("hr", StringCase.toLower(doc.createHRElement().getTagName()));
-    assertEquals("iframe", StringCase.toLower(doc.createIFrameElement().getTagName()));
-    assertEquals("img", StringCase.toLower(doc.createImageElement().getTagName()));
-    assertEquals("ins", StringCase.toLower(doc.createInsElement().getTagName()));
-    assertEquals("label", StringCase.toLower(doc.createLabelElement().getTagName()));
-    assertEquals("legend", StringCase.toLower(doc.createLegendElement().getTagName()));
-    assertEquals("li", StringCase.toLower(doc.createLIElement().getTagName()));
-    assertEquals("link", StringCase.toLower(doc.createLinkElement().getTagName()));
-    assertEquals("map", StringCase.toLower(doc.createMapElement().getTagName()));
-    assertEquals("meta", StringCase.toLower(doc.createMetaElement().getTagName()));
-    assertEquals("object", StringCase.toLower(doc.createObjectElement().getTagName()));
-    assertEquals("ol", StringCase.toLower(doc.createOLElement().getTagName()));
+        doc.createFrameSetElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("head", doc.createHeadElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("h1", doc.createHElement(1).getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("hr", doc.createHRElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("iframe", doc.createIFrameElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("img", doc.createImageElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("ins", doc.createInsElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("label", doc.createLabelElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("legend", doc.createLegendElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("li", doc.createLIElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("link", doc.createLinkElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("map", doc.createMapElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("meta", doc.createMetaElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("object", doc.createObjectElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("ol", doc.createOLElement().getTagName().toLowerCase(Locale.ROOT));
     assertEquals("optgroup",
-        StringCase.toLower(doc.createOptGroupElement().getTagName()));
-    assertEquals("option", StringCase.toLower(doc.createOptionElement().getTagName()));
-    assertEquals("param", StringCase.toLower(doc.createParamElement().getTagName()));
-    assertEquals("p", StringCase.toLower(doc.createPElement().getTagName()));
-    assertEquals("pre", StringCase.toLower(doc.createPreElement().getTagName()));
-    assertEquals("q", StringCase.toLower(doc.createQElement().getTagName()));
-    assertEquals("script", StringCase.toLower(doc.createScriptElement().getTagName()));
-    assertEquals("select", StringCase.toLower(doc.createSelectElement().getTagName()));
+        doc.createOptGroupElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("option", doc.createOptionElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("param", doc.createParamElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("p", doc.createPElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("pre", doc.createPreElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("q", doc.createQElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("script", doc.createScriptElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("select", doc.createSelectElement().getTagName().toLowerCase(Locale.ROOT));
     assertEquals("select",
-        StringCase.toLower(doc.createSelectElement(false).getTagName()));
-    assertEquals("span", StringCase.toLower(doc.createSpanElement().getTagName()));
-    assertEquals("style", StringCase.toLower(doc.createStyleElement().getTagName()));
-    assertEquals("table", StringCase.toLower(doc.createTableElement().getTagName()));
-    assertEquals("tbody", StringCase.toLower(doc.createTBodyElement().getTagName()));
-    assertEquals("td", StringCase.toLower(doc.createTDElement().getTagName()));
+        doc.createSelectElement(false).getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("span", doc.createSpanElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("style", doc.createStyleElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("table", doc.createTableElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("tbody", doc.createTBodyElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("td", doc.createTDElement().getTagName().toLowerCase(Locale.ROOT));
     assertEquals("textarea",
-        StringCase.toLower(doc.createTextAreaElement().getTagName()));
-    assertEquals("tfoot", StringCase.toLower(doc.createTFootElement().getTagName()));
-    assertEquals("thead", StringCase.toLower(doc.createTHeadElement().getTagName()));
-    assertEquals("th", StringCase.toLower(doc.createTHElement().getTagName()));
-    assertEquals("title", StringCase.toLower(doc.createTitleElement().getTagName()));
-    assertEquals("tr", StringCase.toLower(doc.createTRElement().getTagName()));
-    assertEquals("ul", StringCase.toLower(doc.createULElement().getTagName()));
+        doc.createTextAreaElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("tfoot", doc.createTFootElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("thead", doc.createTHeadElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("th", doc.createTHElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("title", doc.createTitleElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("tr", doc.createTRElement().getTagName().toLowerCase(Locale.ROOT));
+    assertEquals("ul", doc.createULElement().getTagName().toLowerCase(Locale.ROOT));
 
     assertEquals("button",
-        StringCase.toLower(doc.createPushButtonElement().getTagName()));
+        doc.createPushButtonElement().getTagName().toLowerCase(Locale.ROOT));
     assertEquals("button",
-        StringCase.toLower(doc.createResetButtonElement().getTagName()));
+        doc.createResetButtonElement().getTagName().toLowerCase(Locale.ROOT));
     assertEquals("button",
-        StringCase.toLower(doc.createSubmitButtonElement().getTagName()));
+        doc.createSubmitButtonElement().getTagName().toLowerCase(Locale.ROOT));
 
     assertEquals("button",
-        StringCase.toLower(doc.createPushButtonElement().getType()));
+        doc.createPushButtonElement().getType().toLowerCase(Locale.ROOT));
     assertEquals("reset",
-        StringCase.toLower(doc.createResetButtonElement().getType()));
+        doc.createResetButtonElement().getType().toLowerCase(Locale.ROOT));
     assertEquals("submit",
-        StringCase.toLower(doc.createSubmitButtonElement().getType()));
+        doc.createSubmitButtonElement().getType().toLowerCase(Locale.ROOT));
 
     assertEquals("input",
-        StringCase.toLower(doc.createCheckInputElement().getTagName()));
+        doc.createCheckInputElement().getTagName().toLowerCase(Locale.ROOT));
     assertEquals("input",
-        StringCase.toLower(doc.createFileInputElement().getTagName()));
+        doc.createFileInputElement().getTagName().toLowerCase(Locale.ROOT));
     assertEquals("input",
-        StringCase.toLower(doc.createHiddenInputElement().getTagName()));
+        doc.createHiddenInputElement().getTagName().toLowerCase(Locale.ROOT));
     assertEquals("input",
-        StringCase.toLower(doc.createImageInputElement().getTagName()));
+        doc.createImageInputElement().getTagName().toLowerCase(Locale.ROOT));
     assertEquals("input",
-        StringCase.toLower(doc.createPasswordInputElement().getTagName()));
+        doc.createPasswordInputElement().getTagName().toLowerCase(Locale.ROOT));
     assertEquals("input",
-        StringCase.toLower(doc.createRadioInputElement("foo").getTagName()));
+        doc.createRadioInputElement("foo").getTagName().toLowerCase(Locale.ROOT));
     assertEquals("input",
-        StringCase.toLower(doc.createTextInputElement().getTagName()));
+        doc.createTextInputElement().getTagName().toLowerCase(Locale.ROOT));
 
     assertEquals("button",
-        StringCase.toLower(doc.createButtonInputElement().getType()));
+        doc.createButtonInputElement().getType().toLowerCase(Locale.ROOT));
     assertEquals("checkbox",
-        StringCase.toLower(doc.createCheckInputElement().getType()));
-    assertEquals("file", StringCase.toLower(doc.createFileInputElement().getType()));
+        doc.createCheckInputElement().getType().toLowerCase(Locale.ROOT));
+    assertEquals("file", doc.createFileInputElement().getType().toLowerCase(Locale.ROOT));
     assertEquals("hidden",
-        StringCase.toLower(doc.createHiddenInputElement().getType()));
-    assertEquals("image", StringCase.toLower(doc.createImageInputElement().getType()));
+        doc.createHiddenInputElement().getType().toLowerCase(Locale.ROOT));
+    assertEquals("image", doc.createImageInputElement().getType().toLowerCase(Locale.ROOT));
     assertEquals("password",
-        StringCase.toLower(doc.createPasswordInputElement().getType()));
+        doc.createPasswordInputElement().getType().toLowerCase(Locale.ROOT));
     assertEquals("radio",
-        StringCase.toLower(doc.createRadioInputElement("foo").getType()));
-    assertEquals("reset", StringCase.toLower(doc.createResetInputElement().getType()));
+        doc.createRadioInputElement("foo").getType().toLowerCase(Locale.ROOT));
+    assertEquals("reset", doc.createResetInputElement().getType().toLowerCase(Locale.ROOT));
     assertEquals("submit",
-        StringCase.toLower(doc.createSubmitInputElement().getType()));
-    assertEquals("text", StringCase.toLower(doc.createTextInputElement().getType()));
+        doc.createSubmitInputElement().getType().toLowerCase(Locale.ROOT));
+    assertEquals("text", doc.createTextInputElement().getType().toLowerCase(Locale.ROOT));
   }
 
   /**

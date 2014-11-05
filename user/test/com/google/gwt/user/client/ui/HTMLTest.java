@@ -15,9 +15,10 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.i18n.client.HasDirection.Direction;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+
+import java.util.Locale;
 
 /**
  * Tests {@link HTML}.
@@ -43,7 +44,7 @@ public class HTMLTest extends LabelTest {
   public void testSafeHtmlConstructor() {
     HTML htmlElement = new HTML(SafeHtmlUtils.fromSafeConstant(html));
     
-    assertEquals(html, StringCase.toLower(htmlElement.getHTML()));
+    assertEquals(html, htmlElement.getHTML().toLowerCase(Locale.ROOT));
   }
 
   // test that the SafeHtml constructor creates the wordwrapped'ed HTML.
@@ -53,8 +54,8 @@ public class HTMLTest extends LabelTest {
     HTML htmlElementRTL = new HTML(
         SafeHtmlUtils.fromSafeConstant(html), Direction.RTL);
     
-    assertEquals(html, StringCase.toLower(htmlElementRTL.getHTML()));
-    assertEquals(html, StringCase.toLower(htmlElementLTR.getHTML()));
+    assertEquals(html, htmlElementRTL.getHTML().toLowerCase(Locale.ROOT));
+    assertEquals(html, htmlElementLTR.getHTML().toLowerCase(Locale.ROOT));
     
     assertEquals(Direction.LTR, htmlElementLTR.getTextDirection());
     assertEquals(Direction.RTL, htmlElementRTL.getTextDirection());
@@ -64,7 +65,7 @@ public class HTMLTest extends LabelTest {
     HTML htmlElement = new HTML("<b>foo</b>");
     htmlElement.setHTML(SafeHtmlUtils.fromSafeConstant(html));
     
-    assertEquals(html, StringCase.toLower(htmlElement.getHTML()));
+    assertEquals(html, htmlElement.getHTML().toLowerCase(Locale.ROOT));
   }
 
   @SuppressWarnings("deprecation")
@@ -72,7 +73,7 @@ public class HTMLTest extends LabelTest {
     HTML htmlElement = new HTML("<b>foo</b>");
     htmlElement.setHTML(SafeHtmlUtils.fromSafeConstant(html), Direction.LTR);
     
-    assertEquals(html, StringCase.toLower(htmlElement.getHTML()));
+    assertEquals(html, htmlElement.getHTML().toLowerCase(Locale.ROOT));
     assertEquals(Direction.LTR, htmlElement.getDirection());
   }
 

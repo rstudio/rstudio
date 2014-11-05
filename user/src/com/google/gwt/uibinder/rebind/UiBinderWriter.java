@@ -24,7 +24,6 @@ import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.JTypeParameter;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.TagName;
@@ -180,7 +179,7 @@ public class UiBinderWriter implements Statements {
   }
 
   private static String capitalizePropName(String propName) {
-    return StringCase.toUpper(propName.substring(0, 1)) + propName.substring(1);
+    return propName.substring(0, 1).toUpperCase(Locale.ROOT) + propName.substring(1);
   }
 
   /**

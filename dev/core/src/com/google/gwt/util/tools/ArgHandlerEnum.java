@@ -71,7 +71,7 @@ public abstract class ArgHandlerEnum<T extends Enum<T>> extends ArgHandler {
   @Override
   public final int handle(String[] args, int startIndex) {
     if (startIndex + 1 < args.length) {
-      String value = args[startIndex + 1].trim().toUpperCase(Locale.ENGLISH);
+      String value = args[startIndex + 1].trim().toUpperCase(Locale.ROOT);
       T mode = matchOption(value);
       if (mode == null) {
         System.err.println(value + " is not a valid option for " + getTag());

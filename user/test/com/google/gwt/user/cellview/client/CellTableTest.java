@@ -17,7 +17,6 @@ package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.shared.impl.StringCase;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableCellElement;
@@ -30,6 +29,8 @@ import com.google.gwt.user.cellview.client.CellTable.Style;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
+
+import java.util.Locale;
 
 /**
  * Tests for {@link CellTable}.
@@ -295,13 +296,13 @@ public class CellTableTest extends AbstractCellTableTestBase<CellTable<String>> 
     table.setColumnWidth(column1, "100px");
     Element col0 = table.colgroup.getFirstChildElement();
     Element col1 = col0.getNextSiblingElement();
-    assertEquals("100px", StringCase.toLower(col1.getStyle().getWidth()));
+    assertEquals("100px", col1.getStyle().getWidth().toLowerCase(Locale.ROOT));
 
     // Remove column 1.
     table.removeColumn(column1);
     table.getPresenter().flush();
     assertEquals("0px", col1.getStyle().getWidth());
-    assertEquals("none", StringCase.toLower(col1.getStyle().getDisplay()));
+    assertEquals("none", col1.getStyle().getDisplay().toLowerCase(Locale.ROOT));
   }
 
   public void testEmptyTableWidgetAttachDetach() {
@@ -346,7 +347,7 @@ public class CellTableTest extends AbstractCellTableTestBase<CellTable<String>> 
     Element col0 = table.colgroup.getFirstChildElement();
     Element col1 = col0.getNextSiblingElement();
     assertEquals("", col0.getStyle().getWidth());
-    assertEquals("100px", StringCase.toLower(col1.getStyle().getWidth()));
+    assertEquals("100px", col1.getStyle().getWidth().toLowerCase(Locale.ROOT));
 
     // Clear the width.
     table.clearColumnWidth(column1);
@@ -355,7 +356,7 @@ public class CellTableTest extends AbstractCellTableTestBase<CellTable<String>> 
 
     // Set the width again.
     table.setColumnWidth(column0, 30.1, Unit.PCT);
-    assertEquals("30.1%", StringCase.toLower(col0.getStyle().getWidth()));
+    assertEquals("30.1%", col0.getStyle().getWidth().toLowerCase(Locale.ROOT));
     assertEquals("", col1.getStyle().getWidth());
   }
 
