@@ -27,6 +27,14 @@ function comparePoints(pos1, pos2)
    return pos1.column - pos2.column;
 }
 
+function isOneOf(object, array)
+{
+   for (var i = 0; i < array.length; i++)
+      if (object === array[i])
+         return true;
+   return false;
+}
+
 var ScopeManager = require("mode/r_scope_tree").ScopeManager;
 var ScopeNode = require("mode/r_scope_tree").ScopeNode;
 
@@ -559,7 +567,9 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
    var $dplyrMutaterVerbs = [
       "mutate", "summarise", "summarize", "rename", "transmute",
-      "select", "rename_vars"
+      "select", "rename_vars",
+      "inner_join", "left_join", "right_join", "semi_join", "anti_join",
+      "outer_join", "full_join"
    ];
 
    // Add arguments from a function call in a chain.
@@ -624,7 +634,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
             if (cursor.currentValue() === "=")
             {
-               if (fnName === "rename" || fnName === "rename_vars")
+               if (isOneOf(fnName, ["rename", "rename_vars"]))
                {
                   if (!cursor.moveToNextToken())
                      return false;
