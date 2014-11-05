@@ -388,11 +388,7 @@
          )
       )
    
-   result <- list(
-      results = character(),
-      packages = character(),
-      fguess = ""
-   )
+   result <- .rs.emptyCompletions()
    
    splat <- strsplit(string, ":{2,3}", perl = TRUE)[[1]]
    if (length(splat) == 1)
@@ -408,6 +404,7 @@
             result$results <- paste(formals, "= ")
          
          result$packages <- rep.int(string, length(formals))
+         result$quote <- logical(length(formals))
          result$fguess <- string
       }
    }
@@ -440,6 +437,7 @@
                result$results <- paste(formals, "= ")
             
             result$packages <- rep.int(string, length(formals))
+            result$quote <- logical(length(formals))
             result$fguess <- functionString
          }
       }
@@ -449,13 +447,17 @@
    {
       result$results <- tail(result$results, length(result$results) - 1)
       result$packages <- tail(result$packages, length(result$packages) - 1)
+      result$quote <- tail(result$quote, length(result$quote) - 1)
    }
+   
    result
    
 })
 
 .rs.addFunction("getCompletionsNamespace", function(token, string, exportsOnly, envir)
 {
+   result <- .rs.emptyCompletions()
+   
    if (!(string %in% loadedNamespaces()))
    {
       tryCatch(
@@ -473,30 +475,40 @@
       keep <- .rs.startsWith(objects, token)
       completions <- objects[keep]
       
-      list(
-         token = token,
-         results = completions,
-         packages = rep.int(string, length(completions)),
-         fguess = "",
-         excludeContext = .rs.scalar(TRUE)
+      result <- .rs.makeCompletions(
+         completions,
+         rep.int(string, length(completions)),
+         logical(length(completions))
       )
    }
-   else
-   {
-      list(
-         token = token,
-         results = character(),
-         packages = character(),
-         fguess = "",
-         excludeContext = .rs.scalar(TRUE)
-      )
-   }
+   
+   result
+   
+})
+
+
+.rs.addFunction("emptyCompletions", function()
+{
+   list(
+      results = character(),
+      packages = character(),
+      quote = logical()
+   )
+})
+
+.rs.addFunction("makeCompletions", function(results, packages, quote)
+{
+   list(results = results,
+        packages = packages,
+        quote = quote)
 })
 
 .rs.addFunction("subsetCompletions", function(completions, indices)
 {
    completions$results <- completions$results[indices]
    completions$packages <- completions$packages[indices]
+   completions$quote <- completions$quote[indices]
+   
    completions
 })
 
@@ -504,6 +516,7 @@
 {
    old$results <- c(old$results, new$results)
    old$packages <- c(old$packages, new$packages)
+   old$quote <- c(old$quote, new$quote)
    old
 })
 
@@ -520,14 +533,12 @@
             object <- .rs.getAnywhere(objectName, envir = envir)
             if (inherits(object, "data.table"))
             {
-               list(
-                  token = token,
-                  results = names(object),
-                  packages = rep.int(
+               .rs.makeCompletions(
+                  names(object),
+                  rep.int(
                      paste("[", string, "]", sep = ""), length(object)
                   ),
-                  fguess = "",
-                  excludeContext = .rs.scalar(TRUE)
+                  logical(length(object))
                )
             }
          }
@@ -558,14 +569,11 @@
       {
          candidates <- ls(object)
          completions <- candidates[.rs.startsWith(candidates, token)]
-         list(token = token,
-              results = completions,
-              packages = rep.int(
-                 string,
-                 length(completions)
-              ),
-              fguess = "",
-              excludeContext = .rs.scalar(TRUE))
+         .rs.makeCompletions(
+            completions,
+            rep.int(string, length(completions)),
+            logical(length(completions))
+         )
       }
    },
    error = function(e) NULL
@@ -575,48 +583,39 @@
 .rs.addFunction("getCompletionsDollar", function(token, string, envir, S4)
 {
    
-   default <- list(
-      results = character(),
-      packages = character()
-   )
+   result <- .rs.emptyCompletions()
    
-   .rs.withTimeLimit(0.15, fail = default, {
+   ## Blacklist certain evaluations
+   if (!is.null(result <- .rs.blackListEvaluation(token, string, envir)))
+      return(result)
+   
+   ## Get completions for R6 objects
+   if (!is.null(result <- .rs.getCompletionsDollarR6(token, string, envir)))
+      return(result)
+   
+   parsed <- suppressWarnings(parse(text = string))
+   evaled <- suppressWarnings(eval(parsed, envir = envir))
+   if (!is.null(evaled))
+   {
+      names <- character()
+      if (S4)
+         names <- slotNames(evaled)
+      else if (!is.null(names(evaled)))
+         names <- names(evaled)
       
-      ## Blacklist certain evaluations
-      if (!is.null(result <- .rs.blackListEvaluation(token, string, envir)))
-         return(result)
-      
-      ## Get completions for R6 objects
-      if (!is.null(result <- .rs.getCompletionsDollarR6(token, string, envir)))
-         return(result)
-      
-      parsed <- suppressWarnings(parse(text = string))
-      evaled <- suppressWarnings(eval(parsed, envir = envir))
-      if (!is.null(evaled))
-      {
-         names <- character()
-         if (S4)
-            names <- slotNames(evaled)
-         else if (!is.null(names(evaled)))
-            names <- names(evaled)
-         
-         completions <- names[.rs.startsWith(names, token)]
-         list(
-            token = token,
-            results = completions,
-            packages = rep.int(
-               paste("[", string, "]", sep = ""),
-               length(completions)
-            ),
-            fguess = "",
-            excludeContext = .rs.scalar(TRUE)
-         )
-      }
-      else
-      {
-         default
-      }
-   })
+      completions <- names[.rs.startsWith(names, token)]
+      result <- .rs.makeCompletions(
+         completions,
+         rep.int(
+            paste("[", string, "]", sep = ""),
+            length(completions)
+         ),
+         logical(length(completions))
+      )
+   }
+   
+   result
+   
 })
 
 .rs.addFunction("getCompletionsSingleBracket", function(token,
@@ -624,10 +623,7 @@
                                                         numCommas,
                                                         envir)
 {
-   result <- list(
-      results = character(),
-      packages = character()
-   )
+   result <- .rs.emptyCompletions()
    
    object <- .rs.getAnywhere(string, envir)
    if (is.null(object))
@@ -655,14 +651,10 @@
    completions <- completions[.rs.startsWith(completions, token)]
    if (length(completions))
    {
-      result$results <- if (inherits(object, "data.table"))
-         completions
-      else
-         paste('"', completions, '"', sep = "")
-      
-      result$packages <- rep.int(
-         paste("[", string, "]", sep = ""),
-         length(completions)
+      result <- .rs.makeCompletions(
+         completions,
+         rep.int(paste("[", string, "]", sep = ""), length(completions)),
+         rep.int(!inherits(object, "data.table"), length(completions))
       )
    }
    
@@ -674,11 +666,7 @@
                                                         string,
                                                         envir = parent.frame())
 {
-   result <- list(
-      results = character(),
-      packages = character()
-   )
-   
+   result <- .rs.emptyCompletions()
    object <- .rs.getAnywhere(string, envir)
    if (is.null(object))
       return(result)
@@ -695,12 +683,11 @@
    
    completions <- completions[.rs.startsWith(completions, token)]
    if (length(completions))
-   {   
-      result$results <- paste('"', completions, '"', sep = "")
-      
-      result$packages <- rep.int(
-         paste("[[", string, "]]", sep = ""),
-         length(completions)
+   {
+      result <- .rs.makeCompletions(
+         completions,
+         rep.int(paste("[[", string, "]]", sep = "")),
+         rep.int(TRUE, length(completions))
       )
    }
    
@@ -724,6 +711,10 @@ utils:::rc.settings(ipck = TRUE)
    print(string)
    cat("Type:\n")
    print(type)
+   
+   ## NOTE: these are passed in as lists of strings; convert to character
+   additionalArgs <- as.character(additionalArgs)
+   excludeArgs <- as.character(excludeArgs)
    
    ## Different completion types (sync with RCompletionManager.java)
    TYPES <- list(
@@ -786,6 +777,7 @@ utils:::rc.settings(ipck = TRUE)
    print(completions)
    
    ## Override param insertion if the function was 'debug' or 'trace'
+   completions$insertParens <- .rs.scalar(type[[1]] == TYPES$FUNCTION)
    if (type[[1]] == TYPES$FUNCTION)
    {
       functionBlacklist <- c(
@@ -795,27 +787,28 @@ utils:::rc.settings(ipck = TRUE)
       if (string[[1]] %in% functionBlacklist ||
              .rs.endsWith(string[[1]], "ply"))
       {
-         completions$dontInsertParens <- .rs.scalar(TRUE)
+         completions$insertParens <- .rs.scalar(FALSE)
       }
    }
    
    completions$token <- token
    if (is.null(completions$fguess))
       completions$fguess <- ""
-   
-   if (is.null(completions$dontInsertParens))
-      completions$dontInsertParens <- .rs.scalar(FALSE)
       
-   completions$excludeContext <- .rs.scalar(type[[1]] %in% c(
+   completions$includeContext <- .rs.scalar(!(type[[1]] %in% c(
       TYPES$DOLLAR,
       TYPES$NAMESPACE_EXPORTED,
       TYPES$NAMESPACE_ALL
-   ))
+   )))
+   
+   if (is.null(completions$quote))
+      completions$quote <- logical(length(completions$results))
    
    cat("Completions:\n")
    print(completions)
    
-   completions
+   completions[c("token", "results", "packages", "quote", "fguess", 
+                 "includeContext", "insertParens")]
    
 })
 
@@ -829,7 +822,11 @@ utils:::rc.settings(ipck = TRUE)
    ## chainObjectName will be provided if the client detected
    ## that we were performing completions within an e.g. 
    ## `%>%` chain -- use completions from the associated data object.
-   objCompletions <- NULL
+   result <- list(
+      results = character(),
+      packages = character()
+   )
+   
    if (!is.null(chainObjectName) && chainObjectName != "")
    {
       object <- .rs.getAnywhere(chainObjectName, envir = envir)
@@ -838,7 +835,7 @@ utils:::rc.settings(ipck = TRUE)
          nm <- names(object)
          if (length(nm))
          {
-            objCompletions <- list(
+            result <- list(
                results = nm,
                packages = rep.int(
                   paste("[", chainObjectName, "]", sep = ""),
@@ -847,15 +844,6 @@ utils:::rc.settings(ipck = TRUE)
             )
          }
       }
-   }
-   
-   result <- NULL
-   if (!is.null(objCompletions))
-   {
-      result <- .rs.subsetCompletions(
-         objCompletions,
-         .rs.startsWith(objCompletions$results, token)
-      )
    }
    
    if (length(additionalArgs))

@@ -23,16 +23,18 @@ public class Completions extends JavaScriptObject
    public static native Completions createCompletions(String token,
                                                       JsArrayString completions,
                                                       JsArrayString packages,
+                                                      JsArrayBoolean quote,
                                                       String fguess,
-                                                      boolean excludeContext,
-                                                      boolean dontInsertParens) /*-{
+                                                      boolean includeContext,
+                                                      boolean insertParens) /*-{
       return {
          token: [token],
          results: completions,
          packages: packages,
+         quote: quote,
          fguess: fguess ? [fguess] : null,
-         excludeContext: excludeContext,
-         dontInsertParens: dontInsertParens
+         includeContext: includeContext,
+         insertParens: insertParens
       };
    }-*/;
 
@@ -77,17 +79,25 @@ public class Completions extends JavaScriptObject
    public final native void setSuggestOnAccept(boolean suggestOnAccept) /*-{
       this.suggestOnAccept = suggestOnAccept;
    }-*/;
+   
+   public final native boolean shouldInsertParens() /*-{
+      return this.insertParens;
+   }-*/;
+   
+   public final native JsArrayBoolean getQuote() /*-{
+      return this.quote;
+   }-*/;
 
    public final native boolean getSuggestOnAccept() /*-{
       return !!this.suggestOnAccept;
    }-*/;
    
-   public final native boolean getExcludeContext() /*-{
-      return this.excludeContext;
+   public final native boolean getIncludeContext() /*-{
+      return this.includeContext;
    }-*/;
    
-   public final native boolean getDontInsertParens() /*-{
-      return this.dontInsertParens;
+   public final native boolean getInsertParens() /*-{
+      return this.insertParens;
    }-*/;
    
    

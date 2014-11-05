@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayBoolean;
 import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.core.client.Debug;
@@ -130,6 +131,7 @@ public class CompletionRequester
 
             JsArrayString comp = response.getCompletions();
             JsArrayString pkgs = response.getPackages();
+            JsArrayBoolean quote = response.getQuote();
             ArrayList<QualifiedName> newComp = new ArrayList<QualifiedName>();
             
             // Try getting our own function argument completions
@@ -140,12 +142,12 @@ public class CompletionRequester
             {
                if (comp.get(i).matches(".*=\\s*$"))
                {
-                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i)));
+                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i)));
                }
             }
             
             // Get variable completions from the current scope
-            if (!response.getExcludeContext())
+            if (response.getIncludeContext())
             {
                addScopedArgumentCompletions(token, newComp);
                addScopedCompletions(token, newComp, "variable");
@@ -156,12 +158,12 @@ public class CompletionRequester
             {
                if (!comp.get(i).matches(".*=\\s*$"))
                {
-                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i)));
+                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i)));
                }
             }
             
             // Get function completions from the current scope
-            if (!response.getExcludeContext())
+            if (response.getIncludeContext())
                addScopedCompletions(token, newComp, "function");
             
             // Resolve duplicates
@@ -172,7 +174,7 @@ public class CompletionRequester
                   newComp,
                   response.getGuessedFunctionName(),
                   response.getSuggestOnAccept(),
-                  response.getDontInsertParens());
+                  response.getInsertParens());
 
             cachedResult_ = response.isCacheable() ? result : null;
 
@@ -376,6 +378,7 @@ public class CompletionRequester
                   result.token,
                   result.completions,
                   JsUtil.toJsArrayString(pkgNames),
+                  JsUtil.toJsArrayBoolean(new ArrayList<Boolean>(result.completions.length())),
                   "",
                   false,
                   false);
@@ -448,10 +451,18 @@ public class CompletionRequester
    
    public static class QualifiedName implements Comparable<QualifiedName>
    {
+      public QualifiedName(String name, String pkgName, boolean shouldQuote)
+      {
+         this.name = name;
+         this.pkgName = pkgName;
+         this.shouldQuote = shouldQuote;
+      }
+      
       public QualifiedName(String name, String pkgName)
       {
          this.name = name;
          this.pkgName = pkgName;
+         this.shouldQuote = false;
       }
       
       @Override
@@ -508,5 +519,6 @@ public class CompletionRequester
 
       public final String name ;
       public final String pkgName ;
+      public final boolean shouldQuote ;
    }
 }

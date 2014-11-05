@@ -16,6 +16,7 @@ package org.rstudio.core.client.js;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayBoolean;
 import com.google.gwt.core.client.JsArrayString;
 
 import java.util.Iterator;
@@ -134,6 +135,23 @@ public class JsUtil
          result.push(s);
       return result;
    }
+   
+   public static JsArrayBoolean toJsArrayBoolean(Iterable<Boolean> strings)
+   {
+      JsArrayBoolean result = JsArrayBoolean.createArray().cast();
+      for (Boolean s : strings)
+         result.push(s);
+      return result;
+   }
+   
+   public static JsArrayBoolean toJsArrayBoolean(Boolean[] strings)
+   {
+      JsArrayBoolean result = JsArrayBoolean.createArray().cast();
+      for (Boolean s : strings)
+         result.push(s);
+      return result;
+   }
+   
 
    public native static JavaScriptObject createEmptyArray(int length) /*-{
       return new Array(length);

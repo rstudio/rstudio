@@ -1145,6 +1145,7 @@ public class RCompletionManager implements CompletionManager
       {
          final String functionName = name.name == null ? "" : name.name;
          final String pkgName = name.pkgName == null ? "" : name.pkgName;
+         final boolean shouldQuote = name.shouldQuote;
          
          if (pkgName == "`chunk-option`")
          {
@@ -1181,9 +1182,9 @@ public class RCompletionManager implements CompletionManager
                    !value.matches("^\\s*([`'\"]).*\\1\\s*$") &&
                    pkgName != "<file>" &&
                    pkgName != "`chunk-option`" &&
-                   !value.startsWith("@"))
+                   !value.startsWith("@") &&
+                   !shouldQuote)
                   value = quoteIfNotSyntacticNameCompletion(value);
-               
                
                /* In some cases, applyValue can be called more than once
                 * as part of the same completion instance--specifically,
@@ -1224,7 +1225,10 @@ public class RCompletionManager implements CompletionManager
                }
                else
                {
-                  input_.replaceSelection(value, true);
+                  if (shouldQuote)
+                     input_.replaceSelection("\"" + value + "\"", true);
+                  else
+                     input_.replaceSelection(value, true);
                   token_ = value;
                   selection_ = input_.getSelection();
                }
