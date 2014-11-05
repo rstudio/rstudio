@@ -322,7 +322,7 @@ public class CppCompletionManager implements CompletionManager
       
       if ((request_ != null) &&
           !request_.isTerminated() &&
-          (request_.getCompletionPosition().compareTo(completionPosition) == 0))
+          request_.getCompletionPosition().isSupersetOf(completionPosition))
       {
          request_.updateUI(false);
       }

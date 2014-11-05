@@ -38,9 +38,9 @@ public class CompletionPosition
       return scope_;
    }
    
-   public final int compareTo(CompletionPosition other)
+   public final boolean isSupersetOf(CompletionPosition other)
    {
-      return getPosition().compareTo(other.getPosition());
+      return getPosition().compareTo(other.getPosition()) == 0;
    }
    
    private final Position position_;
