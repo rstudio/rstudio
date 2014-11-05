@@ -890,10 +890,10 @@ public class RCompletionManager implements CompletionManager
       int initialNumCommas = 0;
       if (tokenCursor.currentValue() != "(" && tokenCursor.currentValue() != "[")
       {
-         int commaCount = tokenCursor.findOpeningParenOrBracketCountCommas(true);
+         int commaCount = tokenCursor.findOpeningBracketCountCommas(new String[]{ "[", "(" }, true);
          if (commaCount == -1)
          {
-            commaCount = tokenCursor.findOpeningBracketCountCommas(false);
+            commaCount = tokenCursor.findOpeningBracketCountCommas("[", false);
             if (commaCount == -1)
                return defaultContext;
             else
@@ -954,7 +954,7 @@ public class RCompletionManager implements CompletionManager
       // Get the rest of the single-bracket contexts for completions as well
       while (true)
       {
-         int commaCount = tokenCursor.findOpeningBracketCountCommas(false);
+         int commaCount = tokenCursor.findOpeningBracketCountCommas("[", false);
          if (commaCount == -1)
             break;
          

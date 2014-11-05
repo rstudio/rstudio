@@ -68,28 +68,20 @@ public class TokenCursor extends JavaScriptObject
       return this.moveToPosition(position);
    }-*/;
    
-   public native final boolean findOpeningParen() /*-{
-      return this.findOpeningParen();
+   public native final boolean findOpeningBracket(String token, boolean failOnOpenBrace) /*-{
+      return this.findOpeningBracket(token, failOnOpenBrace);
    }-*/;
    
-   public native final boolean findOpeningBracket() /*-{
-      return this.findOpeningBracket();
+   public native final int findOpeningBracketCountCommas(String token, boolean failOnOpenBrace) /*-{
+      return this.findOpeningBracketCountCommas(token, failOnOpenBrace);
    }-*/;
    
-   public native final boolean findOpeningParenOrBracket() /*-{
-      return this.findOpeningParenOrBracket();
+   public native final boolean findOpeningBracket(String[] tokens, boolean failOnOpenBrace) /*-{
+      return this.findOpeningBracket(tokens, failOnOpenBrace);
    }-*/;
    
-   public native final int findOpeningParenCountCommas(boolean countBraces) /*-{
-      return this.findOpeningParenCountCommas(countBraces);
-   }-*/;
-   
-   public native final int findOpeningBracketCountCommas(boolean countBraces) /*-{
-      return this.findOpeningBracketCountCommas(countBraces);
-   }-*/;
-   
-   public native final int findOpeningParenOrBracketCountCommas(boolean countBraces) /*-{
-      return this.findOpeningParenOrBracketCountCommas(countBraces);
+   public native final int findOpeningBracketCountCommas(String[] tokens, boolean failOnOpenBrace) /*-{
+      return this.findOpeningBracketCountCommas(tokens, failOnOpenBrace);
    }-*/;
    
    public native final boolean bwdToMatchingToken() /*-{

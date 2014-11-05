@@ -292,7 +292,7 @@ public class CompletionRequester
          if (!cursor.moveToPosition(cursorPosition))
             return;
          
-         if (cursor.currentValue() == "(" || cursor.findOpeningParen())
+         if (cursor.currentValue() == "(" || cursor.findOpeningBracket("(", false))
          {
             if (cursor.moveToPreviousToken())
             {
