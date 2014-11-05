@@ -66,10 +66,6 @@ public class BrowserListener implements CodeServerListener {
 
   /**
    * Listens for new connections from browsers.
-   *
-   * @param logger
-   * @param port
-   * @param handler
    */
   public BrowserListener(TreeLogger treeLogger, HostedModeOptions options,
       final SessionHandlerServer handler) {
@@ -213,5 +209,10 @@ public class BrowserListener implements CodeServerListener {
     if (listenThread != null) {
       listenThread.start();
     }
+  }
+
+  @Override
+  public void waitUntilReady(TreeLogger logger) throws UnableToCompleteException {
+    // already ready when constructor returns.
   }
 }
