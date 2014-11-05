@@ -91,8 +91,15 @@ options(help_type = "html")
 
 .rs.addJsonRpcHandler("get_help", function(topic, package, options)
 {
+   if (is.null(package) && any(grepl(":{2,3}", topic, perl = TRUE)))
+   {
+      splat <- strsplit(topic, ":{2,3}", perl = TRUE)[[1]]
+      topic <- splat[[2]]
+      package <- splat[[1]]
+   }
+   
    helpfiles <- NULL
-   if (is.null(package)) {
+   if (is.null(package) || package == "") {
       helpfiles <- help(topic, help_type = "html")
    } else {
       # NOTE: this can fail if there is no such package 'package'

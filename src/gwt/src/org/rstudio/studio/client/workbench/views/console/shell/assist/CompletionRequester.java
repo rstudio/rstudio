@@ -18,7 +18,6 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayBoolean;
 import com.google.gwt.core.client.JsArrayString;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsUtil;
@@ -33,6 +32,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSo
 import org.rstudio.studio.client.workbench.views.source.editors.text.RFunction;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DplyrJoinContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RScopeObject;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
@@ -65,15 +65,8 @@ public class CompletionRequester
       
    }
    
-   public void getCompletions(
+   private boolean usingCache(
          final String token,
-         final ArrayList<String> assocData,
-         ArrayList<Integer> dataType,
-         ArrayList<Integer> numCommas,
-         final String chainDataName,
-         final JsArrayString chainAdditionalArgs,
-         final JsArrayString chainExcludeArgs,
-         final boolean implicit,
          final ServerRequestCallback<CompletionResult> callback)
    {
       if (!StringUtil.isNullOrEmpty(token) &&
@@ -100,12 +93,125 @@ public class CompletionRequester
                         && tokens.get(0).getTokenType() == RToken.ID)
                   {
                      callback.onResponseReceived(narrow(diff)) ;
-                     return ;
+                     return true;
                   }
                }
             }
          }
       }
+      
+      return false;
+      
+   }
+   
+   public void getDplyrJoinCompletionsString(
+         final String token,
+         final String string,
+         final String cursorPos,
+         final boolean implicit,
+         final ServerRequestCallback<CompletionResult> callback)
+   {
+      if (usingCache(token, callback))
+         return;
+      
+      server_.getDplyrJoinCompletionsString(
+            token,
+            string,
+            cursorPos,
+            new ServerRequestCallback<Completions>() {
+               
+               @Override
+               public void onResponseReceived(Completions response)
+               {
+                  cachedLinePrefix_ = token;
+                  fillCompletionResult(response, implicit, callback);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  callback.onError(error);
+               }
+
+            });
+      
+      
+   }
+   
+   public void getDplyrJoinCompletions(
+         final DplyrJoinContext joinContext,
+         final boolean implicit,
+         final ServerRequestCallback<CompletionResult> callback)
+   {
+      final String token = joinContext.getToken();
+      if (usingCache(token, callback))
+         return;
+      
+      server_.getDplyrJoinCompletions(
+            joinContext.getToken(),
+            joinContext.getLeftData(),
+            joinContext.getRightData(),
+            joinContext.getVerb(),
+            joinContext.getCursorPos(),
+            new ServerRequestCallback<Completions>() {
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  callback.onError(error);
+               }
+               
+               @Override
+               public void onResponseReceived(Completions response)
+               {
+                  cachedLinePrefix_ = token;
+                  fillCompletionResult(response, implicit, callback);
+               }
+               
+            });
+   }
+   
+   private void fillCompletionResult(
+         Completions response,
+         boolean implicit,
+         ServerRequestCallback<CompletionResult> callback)
+   {
+      JsArrayString comp = response.getCompletions();
+      JsArrayString pkgs = response.getPackages();
+      JsArrayBoolean quote = response.getQuote();
+      ArrayList<QualifiedName> newComp = new ArrayList<QualifiedName>();
+      for (int i = 0; i < comp.length(); i++)
+      {
+         newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i)));
+      }
+
+      CompletionResult result = new CompletionResult(
+            response.getToken(),
+            newComp,
+            response.getGuessedFunctionName(),
+            response.getSuggestOnAccept(),
+            response.getOverrideInsertParens());
+
+      cachedResult_ = response.isCacheable() ? result : null;
+
+      if (!implicit || result.completions.size() != 0)
+         callback.onResponseReceived(result);
+
+   }
+   
+   public void getCompletions(
+         final String token,
+         final ArrayList<String> assocData,
+         ArrayList<Integer> dataType,
+         ArrayList<Integer> numCommas,
+         final String chainDataName,
+         final JsArrayString chainAdditionalArgs,
+         final JsArrayString chainExcludeArgs,
+         final boolean implicit,
+         final ServerRequestCallback<CompletionResult> callback)
+   {
+      if (usingCache(token, callback))
+         return;
       
       doGetCompletions(
             token,
@@ -174,7 +280,7 @@ public class CompletionRequester
                   newComp,
                   response.getGuessedFunctionName(),
                   response.getSuggestOnAccept(),
-                  response.getInsertParens());
+                  response.getOverrideInsertParens());
 
             cachedResult_ = response.isCacheable() ? result : null;
 
@@ -336,8 +442,6 @@ public class CompletionRequester
       if (rnwContext_ != null &&
           (optionsStartOffset = rnwContext_.getRnwOptionsStart(token, token.length())) >= 0)
       {
-         Debug.logToConsole("About to request sweave completions");
-         Debug.logToConsole("Token: '" + token + "'");
          doGetSweaveCompletions(token, optionsStartOffset, token.length(), requestCallback);
       }
       else

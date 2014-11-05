@@ -53,6 +53,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DplyrJoinContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RInfixData;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -484,6 +485,7 @@ public class RCompletionManager implements CompletionManager
          requester_.flushCache() ;
    }
    
+   
    // Things we need to form an appropriate autocompletion:
    //
    // 1. The token to the left of the cursor,
@@ -620,16 +622,65 @@ public class RCompletionManager implements CompletionManager
                                               selection,
                                               canAutoAccept);
       
-      // Try to see if there's an object name we should use to supplement
-      // completions
       RInfixData infixData = RInfixData.create();
       AceEditor editor = (AceEditor) docDisplay_;
       if (editor != null)
       {
          CodeModel codeModel = editor.getSession().getMode().getCodeModel();
          TokenCursor cursor = codeModel.getTokenCursor();
+         
          if (cursor.moveToPosition(input_.getCursorPosition()))
-            infixData = codeModel.getDataFromInfixChain(cursor);
+         {
+            String token = "";
+            if (cursor.currentType() == "identifier")
+               token = cursor.currentValue();
+            
+            String cursorPos = "left";
+            if (cursor.currentValue() == "=")
+               cursorPos = "right";
+            
+            TokenCursor clone = cursor.cloneCursor();
+            if (clone.moveToPreviousToken())
+               if (clone.currentValue() == "=")
+                  cursorPos = "right";
+            
+            // Try to get a dplyr join completion
+            DplyrJoinContext joinContext =
+                  codeModel.getDplyrJoinContextFromInfixChain(cursor);
+            
+            // If that failed, try a non-infix lookup
+            if (joinContext == null)
+            {
+               String joinString =
+                     getDplyrJoinString(editor, cursor);
+               
+               if (!StringUtil.isNullOrEmpty(joinString))
+               {
+                  requester_.getDplyrJoinCompletionsString(
+                        token,
+                        joinString,
+                        cursorPos,
+                        implicit,
+                        context_);
+
+                  return true;
+               }
+            }
+            else
+            {
+               requester_.getDplyrJoinCompletions(
+                     joinContext,
+                     implicit,
+                     context_);
+               return true;
+               
+            }
+            
+            // Try to see if there's an object name we should use to supplement
+            // completions
+            if (cursor.moveToPosition(input_.getCursorPosition()))
+               infixData = codeModel.getDataFromInfixChain(cursor);
+         }
       }
       
       requester_.getCompletions(
@@ -645,6 +696,36 @@ public class RCompletionManager implements CompletionManager
 
       return true ;
    }
+   
+   private String getDplyrJoinString(
+         AceEditor editor,
+         TokenCursor cursor)
+   {
+         while (cursor.findOpeningBracket("(", true))
+         {
+            if (!cursor.moveToPreviousToken())
+               return "";
+            
+            if (!cursor.currentValue().matches(".*join$"))
+               continue;
+            
+            Position start = cursor.currentPosition();
+            if (!cursor.moveToNextToken())
+               return "";
+
+            if (!cursor.fwdToMatchingToken())
+               return "";
+            
+            Position end = cursor.currentPosition();
+            end.setColumn(end.getColumn() + 1);
+            
+            return editor.getTextForRange(Range.fromPoints(
+                  start, end));
+         }
+
+         return "";
+   }
+   
    
    private AutoCompletionContext getAutocompletionContextForFile(
          String token)
@@ -808,7 +889,6 @@ public class RCompletionManager implements CompletionManager
    private AutoCompletionContext getAutocompletionContext()
    {
       // Objects filled by this function and later returned
-      String content = "";
       String token = "";
       ArrayList<String> assocData = new ArrayList<String>();
       ArrayList<Integer> dataType = new ArrayList<Integer>();
@@ -984,8 +1064,6 @@ public class RCompletionManager implements CompletionManager
                   declEnd.currentPosition())));
       }
       
-      content = docDisplay_.getText();
-      
       return new AutoCompletionContext(
             token,
             assocData,
@@ -1067,7 +1145,7 @@ public class RCompletionManager implements CompletionManager
 
          token_ = token ;
          suggestOnAccept_ = completions.suggestOnAccept;
-         dontInsertParens_ = completions.dontInsertParens;
+         overrideInsertParens_ = completions.dontInsertParens;
 
          if (results.length == 1
              && canAutoAccept_
@@ -1181,17 +1259,15 @@ public class RCompletionManager implements CompletionManager
                // Don't insert a paren if there is already a '(' following
                // the cursor
                AceEditor editor = (AceEditor) input_;
-               boolean overrideDontInsertParens = false;
+               boolean textFollowingCursorHasOpenParen = false;
                if (editor != null)
                {
-                  Position cursorPos = editor.getCursorPosition();
-                  Range range = Range.fromPoints(
-                        Position.create(cursorPos.getRow(), cursorPos.getColumn()),
-                        Position.create(cursorPos.getRow(), cursorPos.getColumn() + 1));
-                  
-                  String text = editor.getTextForRange(range);
-                  if (text == "(")
-                     overrideDontInsertParens = true;
+                  TokenCursor cursor = 
+                        editor.getSession().getMode().getCodeModel().getTokenCursor();
+                  cursor.moveToPosition(editor.getCursorPosition());
+                  if (cursor.moveToNextToken())
+                     textFollowingCursorHasOpenParen =
+                        cursor.currentValue() == "(";
                }
                
                String value = functionName;
@@ -1212,13 +1288,13 @@ public class RCompletionManager implements CompletionManager
                 * logic works the second time, we need to reset the
                 * selection.
                 */
+               
                // Move range to beginning of token
                input_.setSelection(new InputEditorSelection(
                      selection_.getStart().movePosition(-token_.length(), true),
                      input_.getSelection().getEnd()));
-               
          
-               if (isFunction && !dontInsertParens_ && !overrideDontInsertParens)
+               if (isFunction && !overrideInsertParens_ && !textFollowingCursorHasOpenParen)
                {
                   // Don't replace the selection if the token ends with a ')'
                   // (implies an earlier replacement handled this)
@@ -1245,9 +1321,9 @@ public class RCompletionManager implements CompletionManager
                else
                {
                   if (shouldQuote)
-                     input_.replaceSelection("\"" + value + "\"", true);
-                  else
-                     input_.replaceSelection(value, true);
+                     value = "\"" + value + "\"";
+                  
+                  input_.replaceSelection(value, true);
                   token_ = value;
                   selection_ = input_.getSelection();
                }
@@ -1262,13 +1338,15 @@ public class RCompletionManager implements CompletionManager
          
 
       }
+      
+      
 
       private final Invalidation.Token invalidationToken_ ;
       private InputEditorSelection selection_ ;
       private final boolean canAutoAccept_;
       private HelpStrategy helpStrategy_ ;
       private boolean suggestOnAccept_;
-      private boolean dontInsertParens_;
+      private boolean overrideInsertParens_;
       
    }
    

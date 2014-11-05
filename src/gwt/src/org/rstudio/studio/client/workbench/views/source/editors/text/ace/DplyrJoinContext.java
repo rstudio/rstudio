@@ -1,5 +1,5 @@
 /*
- * RInfixData.java
+ * DplyrJoinContext.java
  *
  * Copyright (C) 2014 by RStudio, Inc.
  *
@@ -15,31 +15,40 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArrayString;
 
-public class RInfixData extends JavaScriptObject
+public class DplyrJoinContext extends JavaScriptObject
 {
-   protected RInfixData() {}
+   protected DplyrJoinContext() {}
    
-   public static native final RInfixData create() /*-{
+   public static native final DplyrJoinContext create() /*-{
       return {
-         "name": "",
-         "additionalArgs": [],
-         "excludeArgs": []
+         "token": "",
+         "leftData": "",
+         "rightData": "",
+         "verb": "",
+         "cursorPos": ""
       };
    }-*/;
    
-   public native final String getDataName() /*-{
-      return this.name;
+   public native final String getToken() /*-{
+      return this.token;
    }-*/;
    
-   public native final JsArrayString getAdditionalArgs() /*-{
-      return this.additionalArgs;
+   public native final String getLeftData() /*-{
+      return this.leftData;
    }-*/;
    
-   public native final JsArrayString getExcludeArgs() /*-{
-      return this.excludeArgs;
+   public native final String getRightData() /*-{
+      return this.rightData;
+   }-*/; 
+   
+   public native final String getVerb() /*-{
+      return this.verb;
    }-*/;
+   
+   public native final String getCursorPos() /*-{
+      return this.cursorPos;
+   }-*/;  
    
 
 }

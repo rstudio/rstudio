@@ -26,7 +26,7 @@ public class Completions extends JavaScriptObject
                                                       JsArrayBoolean quote,
                                                       String fguess,
                                                       boolean includeContext,
-                                                      boolean insertParens) /*-{
+                                                      boolean overrideInsertParens) /*-{
       return {
          token: [token],
          results: completions,
@@ -34,7 +34,7 @@ public class Completions extends JavaScriptObject
          quote: quote,
          fguess: fguess ? [fguess] : null,
          includeContext: includeContext,
-         insertParens: insertParens
+         overrideInsertParens: overrideInsertParens
       };
    }-*/;
 
@@ -96,8 +96,8 @@ public class Completions extends JavaScriptObject
       return this.includeContext;
    }-*/;
    
-   public final native boolean getInsertParens() /*-{
-      return this.insertParens;
+   public final native boolean getOverrideInsertParens() /*-{
+      return this.overrideInsertParens;
    }-*/;
    
    

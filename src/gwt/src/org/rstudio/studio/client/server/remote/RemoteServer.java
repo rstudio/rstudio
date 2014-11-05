@@ -597,6 +597,43 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, IS_FUNCTION, params, requestCallback);
    }
    
+   public void getDplyrJoinCompletionsString(
+         String token,
+         String string,
+         String cursorPos,
+         ServerRequestCallback<Completions> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(token));
+      params.set(1, new JSONString(string));
+      params.set(2, new JSONString(cursorPos));
+      sendRequest(
+            RPC_SCOPE,
+            GET_DPLYR_JOIN_COMPLETIONS_STRING,
+            params,
+            requestCallback);
+   }
+   
+   public void getDplyrJoinCompletions(
+         String token,
+         String leftDataName,
+         String rightDataName,
+         String verb,
+         String cursorPos,
+         ServerRequestCallback<Completions> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(token));
+      params.set(1, new JSONString(leftDataName));
+      params.set(2, new JSONString(rightDataName));
+      params.set(3, new JSONString(verb));
+      params.set(4, new JSONString(cursorPos));
+      sendRequest(
+            RPC_SCOPE,
+            GET_DPLYR_JOIN_COMPLETIONS,
+            params,
+            requestCallback);
+   }
    
    public void getCompletions(
          String token,
@@ -3748,6 +3785,9 @@ public class RemoteServer implements Server
    private static final String RESET_CONSOLE_ACTIONS = "reset_console_actions";
    private static final String INTERRUPT = "interrupt";
    private static final String ABORT = "abort";
+   private static final String GET_DPLYR_JOIN_COMPLETIONS_STRING = 
+         "get_dplyr_join_completions_string";
+   private static final String GET_DPLYR_JOIN_COMPLETIONS = "get_dplyr_join_completions";
    private static final String GET_COMPLETIONS = "get_completions";
    private static final String IS_FUNCTION = "is_function";
    private static final String GET_HELP_AT_CURSOR = "get_help_at_cursor";
