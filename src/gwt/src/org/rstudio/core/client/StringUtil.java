@@ -664,6 +664,7 @@ public class StringUtil
       return false;
    }
    
+   @SuppressWarnings("unused")
    public static int[] subsequenceIndices(
          String sequence, String query)
    {
