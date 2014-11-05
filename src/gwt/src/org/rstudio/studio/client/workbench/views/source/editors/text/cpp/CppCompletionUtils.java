@@ -92,19 +92,22 @@ public class CppCompletionUtils
       // member
       if (ch == '.' || (prefixCh == '-' && ch == '>'))
       {
-         return new CompletionPosition(startPos, true);
+         return new CompletionPosition(startPos, 
+                                       CompletionPosition.Scope.Member);
       }
       
       // scope
       else if (prefixCh == ':' && ch == ':') 
       {
-         return new CompletionPosition(startPos);
+         return new CompletionPosition(startPos,
+                                       CompletionPosition.Scope.Namespace);
       }
       
       // minimum character threshold
       else if ((inputCol - col) >= (explicit ? 1 : 5) && ch != '"')
       {
-         return new CompletionPosition(startPos);
+         return new CompletionPosition(startPos,
+                                       CompletionPosition.Scope.Global);
       }
       else
       {

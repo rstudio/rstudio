@@ -20,15 +20,12 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 
 public class CompletionPosition
 {
-   public CompletionPosition(Position position)
-   {
-      this(position, false);
-   }
-   
-   public CompletionPosition(Position position, boolean memberScope)
+   public enum Scope { Global, Namespace, Member }
+    
+   public CompletionPosition(Position position, Scope scope)
    {
       position_ = position;
-      memberScope_ = memberScope;
+      scope_ = scope;
    }
    
    public Position getPosition()
@@ -36,9 +33,9 @@ public class CompletionPosition
       return position_;
    }
    
-   public boolean isMemberScope()
+   public Scope getScope()
    {
-      return memberScope_;
+      return scope_;
    }
    
    public final int compareTo(CompletionPosition other)
@@ -47,6 +44,6 @@ public class CompletionPosition
    }
    
    private final Position position_;
-   private final boolean memberScope_;
+   private final Scope scope_;
    
 }

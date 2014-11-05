@@ -103,7 +103,8 @@ public class CppCompletionRequest
                // be more picky for member scope completions because clang
                // returns a bunch of noise like constructors, destructors, 
                // compiler generated assignments, etc.
-               if (completionPosition_.isMemberScope())
+               if (completionPosition_.getScope() == 
+                                 CompletionPosition.Scope.Member)
                {
                   if (completion.getKind() == CppCompletion.FIELD_DECL ||
                       (completion.getKind() == CppCompletion.CXX_METHOD &&
