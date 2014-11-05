@@ -572,14 +572,13 @@
    )
 })
 
-.rs.addFunction("getCompletionsDollar", function(token, string, envir)
+.rs.addFunction("getCompletionsDollar", function(token, string, envir, S4)
 {
    
-   default <- list(token = token,
-                   results = character(),
-                   packages = character(),
-                   fguess = "",
-                   excludeContext = .rs.scalar(TRUE))
+   default <- list(
+      results = character(),
+      packages = character()
+   )
    
    .rs.withTimeLimit(0.15, fail = default, {
       
@@ -592,10 +591,15 @@
          return(result)
       
       parsed <- suppressWarnings(parse(text = string))
-      evaled <- suppressWarnings(eval(parse(text = string), envir = envir))
-      if (!is.null(evaled) & !is.null(names(evaled)))
+      evaled <- suppressWarnings(eval(parsed, envir = envir))
+      if (!is.null(evaled))
       {
-         names <- names(evaled)
+         names <- character()
+         if (S4)
+            names <- slotNames(evaled)
+         else if (!is.null(names(evaled)))
+            names <- names(evaled)
+         
          completions <- names[.rs.startsWith(names, token)]
          list(
             token = token,
@@ -871,10 +875,8 @@ utils:::rc.settings(ipck = TRUE)
                                             TYPES)
 {   
    
-   if (type == TYPES$DOLLAR)
-      return(.rs.getCompletionsDollar(token, string, envir))
-   else if (type == TYPES$AT)
-      return(.rs.getCompletionsAt(token, string, envir))
+   if (type == TYPES$DOLLAR || type == TYPES$AT)
+      return(.rs.getCompletionsDollar(token, string, envir, type == TYPES$AT))
    else if (type %in% c(TYPES$NAMESPACE_EXPORTED, TYPES$NAMESPACE_ALL))
       return(.rs.getCompletionsNamespace(token, string, type == TYPES$NAMESPACE_EXPORTED, envir))
    
@@ -909,6 +911,7 @@ utils:::rc.settings(ipck = TRUE)
 .rs.addJsonRpcHandler("is_function", function(nameString, envString)
 {
    object <- NULL
+   
    if (envString == "")
    {
       object <- .rs.getAnywhere(nameString, parent.frame())
@@ -932,10 +935,20 @@ utils:::rc.settings(ipck = TRUE)
       }
       else if (!is.null(container <- .rs.getAnywhere(envString, parent.frame())))
       {
-         object <- tryCatch(
-            eval(call("$", container, nameString)),
-            error = function(e) NULL
-         )
+         if (isS4(container))
+         {
+            object <- tryCatch(
+               eval(call("@", container, nameString)),
+               error = function(e) NULL
+            )
+         }
+         else
+         {
+            object <- tryCatch(
+               eval(call("$", container, nameString)),
+               error = function(e) NULL
+            )
+         }
       }
    }
    .rs.scalar(!is.null(object) && is.function(object))

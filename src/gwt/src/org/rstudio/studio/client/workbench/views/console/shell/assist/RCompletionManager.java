@@ -779,6 +779,10 @@ public class RCompletionManager implements CompletionManager
          if (!cursor.moveToPreviousToken())
             return defaultContext;
       
+      int type = cursor.currentValue() == "$" ?
+            AutoCompletionContext.TYPE_DOLLAR :
+            AutoCompletionContext.TYPE_AT;
+      
       // Put a cursor here
       TokenCursor contextEndCursor = cursor.cloneCursor();
       
@@ -797,8 +801,7 @@ public class RCompletionManager implements CompletionManager
       return new AutoCompletionContext(
             tokenToUse,
             context,
-            AutoCompletionContext.TYPE_DOLLAR);
-      
+            type);
    }
    
    
