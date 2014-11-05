@@ -647,17 +647,24 @@
    {
       completions <- names(object)
    }
+   else if (!is.null(names(object)))
+   {
+      completions <- names(object)
+   }
    
    completions <- completions[.rs.startsWith(completions, token)]
-   result$results <- if (inherits(object, "data.table"))
-      completions
-   else
-      paste('"', completions, '"', sep = "")
-   
-   result$packages <- rep.int(
-      paste("[", string, "]", sep = ""),
-      length(completions)
-   )
+   if (length(completions))
+   {
+      result$results <- if (inherits(object, "data.table"))
+         completions
+      else
+         paste('"', completions, '"', sep = "")
+      
+      result$packages <- rep.int(
+         paste("[", string, "]", sep = ""),
+         length(completions)
+      )
+   }
    
    result
    
@@ -687,12 +694,15 @@
    }
    
    completions <- completions[.rs.startsWith(completions, token)]
-   result$results <- paste('"', completions, '"', sep = "")
-   
-   result$packages <- rep.int(
-      paste("[[", string, "]]", sep = ""),
-      length(completions)
-   )
+   if (length(completions))
+   {   
+      result$results <- paste('"', completions, '"', sep = "")
+      
+      result$packages <- rep.int(
+         paste("[[", string, "]]", sep = ""),
+         length(completions)
+      )
+   }
    
    result
    
