@@ -72,16 +72,24 @@ public class TokenCursor extends JavaScriptObject
       return this.findOpeningParen();
    }-*/;
    
+   public native final boolean findOpeningBracket() /*-{
+      return this.findOpeningBracket();
+   }-*/;
+   
    public native final boolean findOpeningParenOrBracket() /*-{
       return this.findOpeningParenOrBracket();
    }-*/;
    
-   public native final boolean findOpeningBracket() /*-{
-      return this.findOpeningParenOrBracket();
+   public native final int findOpeningParenCountCommas(boolean countBraces) /*-{
+      return this.findOpeningParenCountCommas(countBraces);
    }-*/;
    
-   public native final boolean findOpeningBracket(boolean countBraces) /*-{
-      return this.findOpeningParenOrBracket(countBraces);
+   public native final int findOpeningBracketCountCommas(boolean countBraces) /*-{
+      return this.findOpeningBracketCountCommas(countBraces);
+   }-*/;
+   
+   public native final int findOpeningParenOrBracketCountCommas(boolean countBraces) /*-{
+      return this.findOpeningParenOrBracketCountCommas(countBraces);
    }-*/;
    
    public native final boolean bwdToMatchingToken() /*-{

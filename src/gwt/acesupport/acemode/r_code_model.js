@@ -49,7 +49,13 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       this.$row = row || 0;
       this.$offset = offset || 0;
    };
+   
    (function() {
+
+      function lookingAtComma(cursor) {
+         return /,\s*$/.test(cursor.currentValue()) && cursor.currentType() === "text";
+      }
+      
       this.moveToStartOfRow = function(row)
       {
          this.$row = row;
@@ -148,7 +154,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          {
             if (clone.currentValue() === "(")
             {
-               if (parenCount == 0)
+               if (parenCount === 0)
                {
                   this.$row = clone.$row;
                   this.$offset = clone.$offset;
@@ -211,7 +217,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
       this.isFirstSignificantTokenOnLine = function()
       {
-         return this.$offset == 0;
+         return this.$offset === 0;
       };
 
       this.isLastSignificantTokenOnLine = function()
@@ -353,9 +359,10 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          
          do
          {
+            var currentValue = clone.currentValue();
             if (countBraces)
             {
-               if (clone.currentValue() == "{")
+               if (currentValue === "{")
                {
                   if (braceCount === 0)
                   {
@@ -365,13 +372,13 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                   --braceCount;
                }
                
-               if (clone.currentValue() == "}")
+               if (currentValue === "}")
                {
                   ++braceCount;
                }
             }
             
-            if (clone.currentValue() == "(")
+            if (currentValue === "(")
             {
                if (parenCount === 0)
                {
@@ -382,7 +389,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                }
                --parenCount;
             }
-            else if (clone.currentValue() == ")")
+            else if (currentValue === ")")
             {
                parenCount++;
             }
@@ -390,6 +397,114 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          } while (clone.moveToPreviousToken());
          return success;
       };
+
+      this.findOpeningParenCountCommas = function(countBraces)
+      {
+         if (typeof countBraces === "undefined")
+            countBraces = true;
+         
+         var clone = this.cloneCursor();
+         
+         var parenCount = 0;
+         var braceCount = 0;
+         var commaCount = 0;
+         
+         do
+         {
+            var currentValue = clone.currentValue();
+            if (lookingAtComma(this))
+               commaCount += currentValue.length - currentValue.replace(/,/g, "").length;
+            
+            if (countBraces)
+            {
+               if (currentValue === "{")
+               {
+                  if (braceCount === 0)
+                  {
+                     return -1;
+                  }
+                  --braceCount;
+               }
+               
+               if (currentValue === "}")
+               {
+                  ++braceCount;
+               }
+            }
+            
+            if (currentValue === "(")
+            {
+               if (parenCount === 0)
+               {
+                  this.$row = clone.$row;
+                  this.$offset = clone.$offset;
+                  return commaCount;
+               }
+               --parenCount;
+            }
+            else if (currentValue === ")")
+            {
+               parenCount++;
+            }
+            
+         } while (clone.moveToPreviousToken());
+         return -1;
+      };
+      
+
+      this.findOpeningBracketCountCommas = function(countBraces)
+      {
+         if (typeof countBraces === "undefined")
+            countBraces = true;
+         
+         var clone = this.cloneCursor();
+         
+         var parenCount = 0;
+         var braceCount = 0;
+         var commaCount = 0;
+         
+         do
+         {
+            var currentValue = clone.currentValue();
+            if (lookingAtComma(this))
+               commaCount += currentValue.length - currentValue.replace(/,/g, "").length;
+            
+            if (countBraces)
+            {
+               if (currentValue === "{")
+               {
+                  if (braceCount === 0)
+                  {
+                     return -1;
+                  }
+                  --braceCount;
+               }
+               
+               if (currentValue === "}")
+               {
+                  ++braceCount;
+               }
+            }
+            
+            if (currentValue === "[")
+            {
+               if (parenCount === 0)
+               {
+                  this.$row = clone.$row;
+                  this.$offset = clone.$offset;
+                  return commaCount;
+               }
+               --parenCount;
+            }
+            else if (currentValue === "]")
+            {
+               parenCount++;
+            }
+            
+         } while (clone.moveToPreviousToken());
+         return -1;
+      };
+      
 
       this.findOpeningBracket = function(countBraces)
       {
@@ -404,9 +519,10 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          
          do
          {
+            var currentValue = clone.currentValue();
             if (countBraces)
             {
-               if (clone.currentValue() == "{")
+               if (currentValue == "{")
                {
                   if (braceCount === 0)
                   {
@@ -416,13 +532,13 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                   --braceCount;
                }
                
-               if (clone.currentValue() == "}")
+               if (currentValue == "}")
                {
                   ++braceCount;
                }
             }
             
-            if (clone.currentValue() == "(")
+            if (currentValue == "[")
             {
                if (parenCount === 0)
                {
@@ -433,7 +549,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                }
                --parenCount;
             }
-            else if (clone.currentValue() == ")")
+            else if (currentValue == "]")
             {
                parenCount++;
             }
@@ -442,8 +558,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          return success;
       };
       
-
-      this.findOpeningParenOrBracket = function()
+      this.findOpeningParenOrBracket = function(countBraces)
       {
          var clone = this.cloneCursor();
          
@@ -455,22 +570,25 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          do
          {
             var currentValue = clone.currentValue();
-            if (currentValue === "{")
+            if (countBraces)
             {
-               if (braceCount === 0)
+               if (currentValue === "{")
                {
-                  success = false;
-                  break;
+                  if (braceCount === 0)
+                  {
+                     success = false;
+                     break;
+                  }
+                  --braceCount;
                }
-               --braceCount;
+               
+               else if (currentValue === "}")
+               {
+                  ++braceCount;
+               }
             }
             
-            else if (currentValue === "}")
-            {
-               ++braceCount;
-            }
-            
-            else if (currentValue === "(")
+            if (currentValue === "(")
             {
                if (parenCount === 0)
                {
@@ -507,6 +625,75 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          } while (clone.moveToPreviousToken());
          return success;
       };
+
+      this.findOpeningParenOrBracketCountCommas = function(countBraces)
+      {
+         var clone = this.cloneCursor();
+         
+         var parenCount = 0;
+         var braceCount = 0;
+         var bracketCount = 0;
+         var commaCount = 0;
+         
+         do
+         {
+            var currentValue = clone.currentValue();
+            if (lookingAtComma(this))
+               commaCount += currentValue.length - currentValue.replace(/,/g, "").length;
+            
+            if (countBraces)
+            {
+               if (currentValue === "{")
+               {
+                  if (braceCount === 0)
+                  {
+                     return -1;
+                  }
+                  --braceCount;
+               }
+               
+               else if (currentValue === "}")
+               {
+                  ++braceCount;
+               }
+            }
+            
+            if (currentValue === "(")
+            {
+               if (parenCount === 0)
+               {
+                  this.$row = clone.$row;
+                  this.$offset = clone.$offset;
+                  return commaCount;
+               }
+               --parenCount;
+            }
+
+            else if (currentValue === ")")
+            {
+               parenCount++;
+            }
+
+            else if (currentValue === "[")
+            {
+               if (bracketCount === 0)
+               {
+                  this.$row = clone.$row;
+                  this.$offset = clone.$offset;
+                  return commaCount;
+               }
+               --bracketCount;
+            }
+
+            else if (currentValue === "]")
+            {
+               ++bracketCount;
+            }
+            
+         } while (clone.moveToPreviousToken());
+         return -1;
+      };
+      
       
 
    }).call(this.$TokenCursor.prototype);
@@ -693,7 +880,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             continue;
          }
 
-         if (tokenAtCursorEndsWithComma(cursor))
+         if (lookingAtComma(cursor))
          {
             if (!cursor.moveToNextToken())
                return false;
@@ -938,7 +1125,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       
    };
 
-   function tokenAtCursorEndsWithComma(cursor) {
+   function lookingAtComma(cursor) {
       return /,\s*$/.test(cursor.currentValue()) && cursor.currentType() === "text";
    }
 
@@ -974,9 +1161,9 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          // type 'text' and ends with a comma.
          // Once we encounter such a token, we look ahead to find an
          // identifier (it signifies an argument name)
-         if (tokenAtCursorEndsWithComma(tokenCursor))
+         if (lookingAtComma(tokenCursor))
          {
-            while (tokenAtCursorEndsWithComma(tokenCursor))
+            while (lookingAtComma(tokenCursor))
                tokenCursor.moveToNextToken();
             
             if (pIdentifier(tokenCursor.currentToken()))

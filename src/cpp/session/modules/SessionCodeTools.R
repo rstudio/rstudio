@@ -636,7 +636,7 @@
    }
    else if (is.array(object) && !is.null(dn <- dimnames(object)))
    {
-      if (!is.null(dn[[numCommas + 1]]))
+      if (numCommas + 1 <= length(dn))
          completions <- dimnames(object)[[numCommas + 1]]
    }
    else if (inherits(object, "data.table"))
@@ -711,6 +711,8 @@ utils:::rc.settings(ipck = TRUE)
    print(string)
    cat("Type:\n")
    print(type)
+   cat("Number of commas:\n")
+   print(numCommas)
    
    ## NOTE: these are passed in as lists of strings; convert to character
    additionalArgs <- as.character(additionalArgs)

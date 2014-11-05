@@ -887,12 +887,24 @@ public class RCompletionManager implements CompletionManager
       
       // Find an opening '(' or '[' -- this provides the function or object
       // for completion
+      int initialNumCommas = 0;
       if (tokenCursor.currentValue() != "(" && tokenCursor.currentValue() != "[")
       {
-         boolean success = tokenCursor.findOpeningParenOrBracket();
-         if (!success)
-            return defaultContext;
+         int commaCount = tokenCursor.findOpeningParenOrBracketCountCommas(true);
+         if (commaCount == -1)
+         {
+            commaCount = tokenCursor.findOpeningBracketCountCommas(false);
+            if (commaCount == -1)
+               return defaultContext;
+            else
+               initialNumCommas = commaCount;
+         }
+         else
+         {
+            initialNumCommas = commaCount;
+         }
       }
+      numCommas.add(initialNumCommas);
       
       // Figure out whether we're looking at '(', '[', or '[[',
       // and place the token cursor on the first token preceding.
@@ -940,8 +952,14 @@ public class RCompletionManager implements CompletionManager
                   endOfDecl.currentPosition())));
       
       // Get the rest of the single-bracket contexts for completions as well
-      while (tokenCursor.findOpeningBracket(false))
+      while (true)
       {
+         int commaCount = tokenCursor.findOpeningBracketCountCommas(false);
+         if (commaCount == -1)
+            break;
+         
+         numCommas.add(commaCount);
+         
          TokenCursor declEnd = tokenCursor.cloneCursor();
          if (!tokenCursor.moveToPreviousToken())
             return defaultContext;
@@ -971,7 +989,8 @@ public class RCompletionManager implements CompletionManager
       return new AutoCompletionContext(
             token,
             assocData,
-            dataType);
+            dataType,
+            numCommas);
       
    }
    
