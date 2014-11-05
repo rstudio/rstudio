@@ -600,6 +600,8 @@
       names <- character()
       if (S4)
          names <- slotNames(evaled)
+      else if (inherits(evaled, "tbl") && "dplyr" %in% loadedNamespaces())
+         names <- dplyr::tbl_vars(evaled)
       else if (!is.null(names(evaled)))
          names <- names(evaled)
       
@@ -642,6 +644,10 @@
    else if (inherits(object, "data.table"))
    {
       completions <- names(object)
+   }
+   else if (inherits(object, "tbl") && "dplyr" %in% loadedNamespaces())
+   {
+      completions <- dplyr::tbl_vars(object)
    }
    else if (!is.null(names(object)))
    {
