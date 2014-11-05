@@ -63,12 +63,13 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
                         core::json::JsonRpcResponse* pResponse)
 {
    // get params
-   std::string docPath;
+   std::string docPath, userText;
    int line, column;
    Error error = json::readParams(request.params,
                                   &docPath,
                                   &line,
-                                  &column);
+                                  &column,
+                                  &userText);
    if (error)
       return error;
 
@@ -88,6 +89,13 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
          for (unsigned i = 0; i<results.getNumResults(); i++)
          {
             CodeCompleteResult result = results.getResult(i);
+
+            // filter on user text if we have it
+            if (!userText.empty() &&
+                !boost::algorithm::starts_with(result.getTypedText(), userText))
+            {
+               continue;
+            }
 
             // check whether this completion is valid and bail if not
             if (result.getAvailability() != CXAvailability_Available &&

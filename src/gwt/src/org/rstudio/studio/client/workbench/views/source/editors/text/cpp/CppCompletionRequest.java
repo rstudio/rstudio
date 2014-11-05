@@ -51,9 +51,11 @@ public class CppCompletionRequest
       explicit_ = explicit;
       
       Position pos = completionPosition_.getPosition();
+      
       server_.getCppCompletions(docPath, 
                                 pos.getRow() + 1, 
                                 pos.getColumn() + 1, 
+                                completionPosition_.getUserText(),
                                 this);
    }
 

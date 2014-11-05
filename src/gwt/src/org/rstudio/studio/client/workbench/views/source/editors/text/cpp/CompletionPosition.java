@@ -22,15 +22,21 @@ public class CompletionPosition
 {
    public enum Scope { Global, Namespace, Member }
     
-   public CompletionPosition(Position position, Scope scope)
+   public CompletionPosition(Position position, String userText, Scope scope)
    {
       position_ = position;
+      userText_ = userText;
       scope_ = scope;
    }
    
    public Position getPosition()
    {
       return position_;
+   }
+   
+   public String getUserText()
+   {
+      return userText_;
    }
    
    public Scope getScope()
@@ -40,10 +46,13 @@ public class CompletionPosition
    
    public final boolean isSupersetOf(CompletionPosition other)
    {
-      return getPosition().compareTo(other.getPosition()) == 0;
+      return (getPosition().compareTo(other.getPosition()) == 0) &&
+             (getScope() == other.getScope()) &&
+             other.getUserText().startsWith(getUserText());
    }
    
    private final Position position_;
+   private final String userText_;
    private final Scope scope_;
    
 }

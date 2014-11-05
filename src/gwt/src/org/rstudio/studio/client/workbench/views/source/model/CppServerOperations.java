@@ -28,5 +28,6 @@ public interface CppServerOperations
                 String docPath, 
                 int line, 
                 int column,
+                String userText,
                 ServerRequestCallback<CppCompletionResult> requestCallback);
 }

@@ -93,6 +93,7 @@ public class CppCompletionUtils
       if (ch == '.' || (prefixCh == '-' && ch == '>'))
       {
          return new CompletionPosition(startPos, 
+                                       "", // no user text (get all completions)
                                        CompletionPosition.Scope.Member);
       }
       
@@ -100,13 +101,20 @@ public class CppCompletionUtils
       else if (prefixCh == ':' && ch == ':') 
       {
          return new CompletionPosition(startPos,
+                                       "", // no user text (get all completions)
                                        CompletionPosition.Scope.Namespace);
       }
       
       // minimum character threshold
       else if ((inputCol - col) >= (explicit ? 1 : 5) && ch != '"')
       {
+         // calculate user text (up to two characters of additional
+         // server side filter)
+         String userText = line.substring(
+               col + 1, Math.min(col + 3, position.getColumn()));
+           
          return new CompletionPosition(startPos,
+                                       userText,
                                        CompletionPosition.Scope.Global);
       }
       else

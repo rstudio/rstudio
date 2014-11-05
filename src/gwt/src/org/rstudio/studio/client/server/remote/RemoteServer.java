@@ -538,12 +538,14 @@ public class RemoteServer implements Server
                   String docPath,
                   int line, 
                   int column,
+                  String userText,
                   ServerRequestCallback<CppCompletionResult> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(docPath));
       params.set(1, new JSONNumber(line));
       params.set(2, new JSONNumber(column));
+      params.set(3,  new JSONString(userText));
       sendRequest(RPC_SCOPE, "get_cpp_completions", params, requestCallback);
    }
    
