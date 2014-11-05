@@ -6,6 +6,7 @@
 * Improvements to C/C++ editing mode:
     - Code completion
     - F2 code navigation (go to definition)
+    - Intelligent auto-indentation
     - Scope tree for quick intra-file navigation
 * Fuzzy matching for go to file/function
 * R code completion for statements spanning multiple lines
