@@ -1128,16 +1128,18 @@ public class RCompletionManager implements CompletionManager
          
          if (results.length == 0)
          {
-            if (docDisplay_ == null ||
-                  (nativeEvent_ != null && nativeEvent_.getKeyCode() != KeyCodes.KEY_TAB)) {
+            boolean lastInputWasTab =
+                  (nativeEvent_ != null && nativeEvent_.getKeyCode() != KeyCodes.KEY_TAB);
+            
+            boolean lineIsWhitespace = docDisplay_.getCurrentLine().matches("^\\s*$");
+            
+            if (lastInputWasTab && lineIsWhitespace)
+               docDisplay_.insertCode("\t");
+            else
                popup_.showErrorMessage(
                      "(No matches)", 
                      new PopupPositioner(input_.getCursorBounds(), popup_));
-            }
-            else
-            {
-               docDisplay_.insertCode("\t");
-            }
+            
             return ;
          }
 

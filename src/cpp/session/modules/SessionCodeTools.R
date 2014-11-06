@@ -836,9 +836,14 @@ utils:::rc.settings(ipck = TRUE)
    ## Override param insertion if the function was 'debug' or 'trace'
    if (type[[1]] %in% c(TYPES$FUNCTION, TYPES$UNKNOWN))
    {
-      functionBlacklist <- c(
-         "debug", "debugonce", "undebug", "isdebugged", "library", "require"
-      )
+      ## Try getting the function
+      object <- .rs.getAnywhere(string[[1]], parent.frame())
+      if (is.function(object))
+      {
+         argNames <- .rs.getFunctionArgumentNames(object)
+         if (any(c("f", "fun", "func") %in% tolower(gsub("[^a-zA-Z]", "", argNames))))
+            completions$overrideParens <- .rs.scalar(TRUE)
+      }
       
       if (string[[1]] %in% functionBlacklist ||
              .rs.endsWith(string[[1]], "ply"))
