@@ -932,10 +932,8 @@ public class RCompletionManager implements CompletionManager
             token,
             AutoCompletionContext.TYPE_UNKNOWN);
       
-      // early escaping rules: if we're in Roxygen, or we have text immediately
-      // preceding the cursor (as that signals we're completing a variable name)
-      if (firstLine.matches("\\s*#+'.*") ||
-          firstLine.matches(".*[$@]$"))
+      // escape early for roxygen
+      if (firstLine.matches("\\s*#+'.*"))
          return defaultContext;
       
       // if the line is currently within a comment, bail -- this ensures

@@ -135,10 +135,12 @@
    deparse(func, width.cutoff = 59, control = control)
 })
 
-.rs.addFunction("getS3MethodsForFunction", function(func)
+.rs.addFunction("getS3MethodsForFunction", function(func, envir = parent.frame())
 {
-  tryCatch(as.character(suppressWarnings(methods(func))),
-           error = function(e) character())
+  tryCatch({
+     call <- call("methods", func)
+     as.character(suppressWarnings(eval(call, envir = envir)))
+  }, error = function(e) character())
 })
 
 

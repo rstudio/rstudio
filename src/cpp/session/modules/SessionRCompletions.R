@@ -124,15 +124,85 @@
 
 .rs.addFunction("resolveFormals", function(token,
                                            object,
-                                           functionCall)
+                                           functionCall,
+                                           matchedCall,
+                                           envir)
 {
    tryCatch({
-      setdiff(.rs.selectStartsWith(
-         .rs.getFunctionArgumentNames(object),
-         token
-      ), names(functionCall))
+      
+      parent <- functionCall
+      node <- functionCall[[1]]
+      while (!is.symbol(node))
+      {
+         parent <- node
+         node <- parent[[1]]
+      }
+      
+      if (as.character(node) %in% c("::", ":::"))
+         functionName <- as.character(functionCall[[1]][[3]])
+      else
+         functionName <- as.character(functionCall[[1]])
+      
+      s3methods <- .rs.getS3MethodsForFunction(functionName, envir)
+      if (length(s3methods) && length(functionCall) > 1)
+      {
+         objectForDispatch <- .rs.getAnywhere(matchedCall[[2]], envir)
+         classes <- class(objectForDispatch)
+         
+         for (class in c(classes, "default"))
+         {
+            methodName <- paste(functionName, class, sep = ".")
+            method <- .rs.getAnywhere(methodName)
+            if (!is.null(method))
+            {
+               formals <- .rs.getFunctionArgumentNames(method)
+               methods <- rep.int(methodName, length(formals))
+               if (length(parent) > 1)
+               {
+                  formals <- formals[-1]
+                  methods <- methods[-1]
+               }
+               break
+            }
+         }
+      }
+      else
+      {
+         formals <- .rs.getFunctionArgumentNames(object)
+         methods <- rep.int(functionName, length(formals))
+      }
+      
+      keep <- .rs.startsWith(formals, token) & 
+         !duplicated(formals) &
+         !(formals %in% names(functionCall))
+      
+      list(
+         formals = formals[keep],
+         methods = methods[keep]
+      )
+      
    }, error = function(e) NULL
    )
+})
+
+.rs.addFunction("matchCall", function(func,
+                                      call)
+{
+   ## NOTE: the ugliness here is necessary to handle missingness in calls
+   ## e.g. `x <- call[[i]]` fails to assign to `x` if `call[[i]]` is missing
+   i <- 1
+   while (TRUE)
+   {
+      if (i > length(call))
+         break
+      
+      if (length(call[[i]]) == 1 && is.symbol(call[[i]]) && as.character(call[[i]]) == "...")
+         call <- call[-i]
+      else
+         i <- i + 1
+   }
+   
+   match.call(func, call)
 })
 
 .rs.addFunction("getCompletionsFunction", function(token,
@@ -144,23 +214,10 @@
    result <- .rs.emptyCompletions()
    
    splat <- strsplit(string, ":{2,3}", perl = TRUE)[[1]]
+   object <- NULL
    if (length(splat) == 1)
    {
       object <- .rs.getAnywhere(string, envir = envir)
-      if (!is.null(object) && is.function(object))
-      {
-         formals <- .rs.resolveFormals(token, object, functionCall)
-         
-         if (length(formals))
-            formals <- paste(formals, "= ")
-         
-         result <- .rs.makeCompletions(
-            token,
-            formals,
-            string,
-            fguess = string
-         )
-      }
    }
    else if (length(splat) == 2)
    {
@@ -180,25 +237,28 @@
                NULL
             }
          )
-         
-         if (is.null(object))
-            object <- .rs.getAnywhere(namespaceString)
-         
-         if (!is.null(object) && is.function(object))
-         {
-            formals <- .rs.resolveFormals(token, object, functionCall)
-            
-            if (length(formals))
-               formals <- paste(formals, "= ")
-            
-            result <- .rs.makeCompletions(
-               token,
-               formals,
-               string,
-               fguess = string
-            )
-         }
       }
+   }
+   
+   if (!is.null(object) && is.function(object))
+   {
+      matchedCall <- .rs.matchCall(object, functionCall)
+      formals <- .rs.resolveFormals(token, object, functionCall, matchedCall, envir)
+      
+      if (length(formals$formals))
+         formals$formals <- paste(formals$formals, "= ")
+      
+      fguess <- if (length(formals$methods))
+         formals$methods[[1]]
+      else
+         ""
+      
+      result <- .rs.makeCompletions(
+         token,
+         formals$formals,
+         formals$methods,
+         fguess = fguess
+      )
    }
    
    if (discardFirst)
@@ -537,7 +597,7 @@
 {
    result <- tryCatch({
       wrapper <- function(x, which, exact = FALSE) {}
-      matched <- match.call(wrapper, functionCall)
+      matched <- .rs.matchCall(wrapper, functionCall)
       if (is.null(matched[["x"]]) || !is.null(matched[["which"]]))
          return(.rs.emptyCompletions())
       objectName <- as.character(matched[["x"]])
@@ -716,7 +776,7 @@ utils:::rc.settings(files = TRUE)
          parsed <- parse(text = string)[[1]]
          verb <- as.character(parsed[[1]])
          func <- get(verb, envir = asNamespace("dplyr"))
-         matched <- match.call(func, parsed)
+         matched <- .rs.matchCall(func, parsed)
          leftName <- as.character(matched[["x"]])
          rightName <- as.character(matched[["y"]])
          .rs.getDplyrJoinCompletions(
