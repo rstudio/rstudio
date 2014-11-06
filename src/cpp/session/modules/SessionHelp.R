@@ -187,3 +187,35 @@ options(help_type = "html")
             sep = "")
    }
 })
+
+.rs.addJsonRpcHandler("get_help_function_expr", function(expr)
+{
+   object <- .rs.getAnywhere(expr, envir = parent.frame())
+   if (!is.function(object))
+      return(NULL)
+   
+   env <- environment(object)
+   srcName <- sub("<environment: (.*)>", "\\1", capture.output(print(env)))
+   
+   src <- NULL
+   if (grepl("^namespace:", srcName))
+   {
+      srcName <- sub("namespace:", "", srcName, fixed = TRUE)
+      src <- asNamespace(srcName)
+   }
+   
+   objects <- ls(src)
+   for (i in seq_along(objects))
+   {
+      if (identical(object, get(objects[[i]], envir = src)))
+      {
+         item <- get(objects[[i]], envir = src)
+         
+         return(.rs.rpc.get_help(
+            topic = objects[[i]],
+            package = srcName
+         ))
+      }
+   }
+   
+})

@@ -1110,4 +1110,3 @@ utils:::rc.settings(ipck = TRUE)
    }
    .rs.scalar(!is.null(object) && is.function(object))
 })
-
