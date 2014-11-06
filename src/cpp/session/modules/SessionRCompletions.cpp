@@ -51,31 +51,37 @@ std::string finishExpression(const std::string& expression)
 
    char top = '\0';
    terminators.push_back(top);
+   
    bool in_string = false;
    bool in_escape = false;
 
    for (int i = 0; i < n; i++) {
+      
       char cur = expression[i];
-
+      
       if (in_string) {
+         
          if (in_escape) {
             in_escape = false;
             continue;
          }
+         
          if (cur == '\\') {
             in_escape = true;
             continue;
          }
+         
          if (cur != top) {
             continue;
          }
 
-         // String terminates
          in_string = false;
          terminators.pop_back();
          top = terminators.back();
+         continue;
+         
       }
-
+      
       if (cur == top) {
          terminators.pop_back();
          top = terminators.back();
@@ -88,6 +94,7 @@ std::string finishExpression(const std::string& expression)
          in_string = true;
          terminators.push_back(top);
       }
+         
    }
 
    // append to the output
