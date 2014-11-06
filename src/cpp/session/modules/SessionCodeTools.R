@@ -280,7 +280,13 @@
 .rs.addFunction("getAnywhere", function(name, envir = parent.frame())
 {
    result <- NULL
- 
+   
+   if (!length(name))
+      return(NULL)
+   
+   if (name == "")
+      return(NULL)
+    
    ## First, attempt to evaluate 'name' in 'envir'
    if (is.character(name)) {
       name <- .rs.stripSurrounding(name)
@@ -842,13 +848,7 @@ utils:::rc.settings(ipck = TRUE)
       {
          argNames <- .rs.getFunctionArgumentNames(object)
          if (any(c("f", "fun", "func") %in% tolower(gsub("[^a-zA-Z]", "", argNames))))
-            completions$overrideParens <- .rs.scalar(TRUE)
-      }
-      
-      if (string[[1]] %in% functionBlacklist ||
-             .rs.endsWith(string[[1]], "ply"))
-      {
-         completions$overrideInsertParens <- .rs.scalar(TRUE)
+            completions$overrideInsertParens <- .rs.scalar(TRUE)
       }
    }
    

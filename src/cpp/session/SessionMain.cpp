@@ -1637,6 +1637,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
 
       // R code
       (bind(sourceModuleRFile, "SessionCodeTools.R"))
+      (bind(sourceModuleRFile, "SessionCompletionHooks.R"))
    
       // unsupported functions
       (bind(r::function_hook::registerUnsupported, "bug.report", "utils"))
