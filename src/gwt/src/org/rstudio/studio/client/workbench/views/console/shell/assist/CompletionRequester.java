@@ -253,7 +253,7 @@ public class CompletionRequester
             }
             
             // Get variable completions from the current scope
-            if (response.getIncludeContext())
+            if (!response.getExcludeOtherCompletions())
             {
                addScopedArgumentCompletions(token, newComp);
                addScopedCompletions(token, newComp, "variable");
@@ -269,7 +269,7 @@ public class CompletionRequester
             }
             
             // Get function completions from the current scope
-            if (response.getIncludeContext())
+            if (!response.getExcludeOtherCompletions())
                addScopedCompletions(token, newComp, "function");
             
             // Resolve duplicates

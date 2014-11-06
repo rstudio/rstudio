@@ -328,9 +328,6 @@
    if (isFileCompletion)
       token <- paste("\"", token, sep = "")
    
-   if (token == "library" || token == "require")
-      token <- paste(token, "(", sep = "")
-   
    utils:::.assignLinebuffer(token)
    utils:::.assignEnd(nchar(token))
    token <- utils:::.guessTokenFromLine()
@@ -400,13 +397,6 @@
                                                    discardFirst,
                                                    envir = parent.frame())
 {
-   if (string == "library" || string == "require")
-      return(
-         .rs.getInternalRCompletions(
-            paste(string, "(", token, sep = ""), FALSE
-         )
-      )
-   
    result <- .rs.emptyCompletions()
    
    splat <- strsplit(string, ":{2,3}", perl = TRUE)[[1]]
@@ -522,7 +512,7 @@
       packages = character(),
       quote = logical(),
       fguess = "",
-      includeContext = .rs.scalar(TRUE),
+      excludeOtherCompletions = .rs.scalar(FALSE),
       overrideInsertParens = .rs.scalar(FALSE)
    )
 })
@@ -532,7 +522,7 @@
                                             packages = "",
                                             quote = FALSE,
                                             fguess = "",
-                                            includeContext = TRUE,
+                                            excludeOtherCompletions = FALSE,
                                             overrideInsertParens = FALSE)
 {
    if (length(packages) <= 1)
@@ -546,7 +536,7 @@
         packages = packages,
         quote = quote,
         fguess = fguess,
-        includeContext = .rs.scalar(includeContext),
+        excludeOtherCompletions = .rs.scalar(excludeOtherCompletions),
         overrideInsertParens = .rs.scalar(overrideInsertParens))
 })
 
@@ -568,8 +558,8 @@
    if (length(new$fguess) && new$fguess != "")
       old$fguess <- new$fguess
    
-   if (length(new$includeContext) && new$includeContext)
-      old$includeContext <- new$includeContext
+   if (length(new$excludeOtherCompletions) && new$excludeOtherCompletions)
+      old$excludeOtherCompletions <- new$excludeOtherCompletions
    
    if (length(new$overrideInsertParens) && new$overrideInsertParens)
       old$overrideInsertParens <- new$overrideInsertParens
@@ -759,8 +749,38 @@
    
 })
 
+.rs.addFunction("getCompletionsPackages", function(token)
+{
+   allPackages <- Reduce(union, lapply(.libPaths(), list.files))
+   completions <- .rs.selectStartsWith(allPackages, token)
+   .rs.makeCompletions(token,
+                       completions,
+                       quote = TRUE,
+                       excludeOtherCompletions = TRUE)
+})
+
+.rs.addFunction("getCompletionsGetOption", function(token)
+{
+   allOptions <- names(options())
+   .rs.makeCompletions(token,
+                       .rs.selectStartsWith(allOptions, token),
+                       quote = TRUE,
+                       excludeOtherCompletions = FALSE)   
+})
+
+.rs.addFunction("getCompletionsOptions", function(token)
+{
+   allOptions <- names(options())
+   completions <- .rs.selectStartsWith(allOptions, token)
+   if (length(completions))
+      completions <- paste(completions, "= ")
+   
+   .rs.makeCompletions(token,
+                       completions,
+                       excludeOtherCompletions = TRUE)
+})
+
 utils:::rc.settings(files = TRUE)
-utils:::rc.settings(ipck = TRUE)
 .rs.addJsonRpcHandler("get_completions", function(token,
                                                   string,
                                                   type,
@@ -796,9 +816,36 @@ utils:::rc.settings(ipck = TRUE)
       CHUNK = 9L
    )
    
+   ## Handle some special cases early
+   
+   # Roxygen
    roxygen <- .rs.attemptRoxygenTagCompletion(token)
    if (!is.null(roxygen))
       return(roxygen)
+   
+   # library, require, requireNamespace, loadNamespace
+   if (string[[1]] %in% c("library", "require", "requireNamespaces") &&
+       numCommas[[1]] == 0)
+   {
+      return(.rs.getCompletionsPackages(token))
+   }
+   
+   ## attr
+   if (string[[1]] == "attr")
+   {
+      return(.rs.getCompletionsAttributes(token, object))
+   }
+   
+   ## options
+   if (string[[1]] == "getOption" && numCommas[[1]] == 0)
+   {
+      return(.rs.getCompletionsGetOption(token))
+   }
+   
+   if (string[[1]] == "options" && type == TYPES$FUNCTION)
+   {
+      return(.rs.getCompletionsOptions(token))
+   }
    
    completions <- .rs.emptyCompletions()
       
@@ -856,11 +903,11 @@ utils:::rc.settings(ipck = TRUE)
    if (is.null(completions$fguess))
       completions$fguess <- ""
       
-   completions$includeContext <- .rs.scalar(!(type[[1]] %in% c(
+   completions$excludeOtherCompletions <- .rs.scalar(type[[1]] %in% c(
       TYPES$DOLLAR,
       TYPES$NAMESPACE_EXPORTED,
       TYPES$NAMESPACE_ALL
-   )))
+   ))
    
    if (is.null(completions$quote))
       completions$quote <- logical(length(completions$results))
@@ -951,7 +998,7 @@ utils:::rc.settings(ipck = TRUE)
          completions,
          leftDataName,
          TRUE,
-         includeContext = FALSE
+         excludeOtherCompletions = TRUE
       )
    }
    else if (cursorPos == "right" && !is.null(rightData))
@@ -965,7 +1012,7 @@ utils:::rc.settings(ipck = TRUE)
          completions,
          rightDataName,
          TRUE,
-         includeContext = FALSE
+         excludeOtherCompletions = TRUE
       )
    }
    
