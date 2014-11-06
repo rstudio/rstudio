@@ -561,7 +561,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       if (clone.currentType() === "identifier")
       {
          if (!clone.moveToPreviousToken())
-            return false;
+            return null;
          
          if (clone.currentValue() === "=")
             cursorPos = "right";

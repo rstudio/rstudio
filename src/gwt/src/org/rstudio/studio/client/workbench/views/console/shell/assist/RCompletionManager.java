@@ -701,29 +701,35 @@ public class RCompletionManager implements CompletionManager
          AceEditor editor,
          TokenCursor cursor)
    {
-         while (cursor.findOpeningBracket("(", true))
-         {
-            if (!cursor.moveToPreviousToken())
-               return "";
-            
-            if (!cursor.currentValue().matches(".*join$"))
-               continue;
-            
-            Position start = cursor.currentPosition();
-            if (!cursor.moveToNextToken())
-               return "";
+      while (true)
+      {
+         int commaCount = cursor.findOpeningBracketCountCommas("(", true);
+         if (commaCount == -1)
+            break;
+         
+         if (!cursor.moveToPreviousToken())
+            return "";
 
-            if (!cursor.fwdToMatchingToken())
-               return "";
-            
-            Position end = cursor.currentPosition();
-            end.setColumn(end.getColumn() + 1);
-            
-            return editor.getTextForRange(Range.fromPoints(
-                  start, end));
-         }
+         if (!cursor.currentValue().matches(".*join$"))
+            continue;
+         
+         if (commaCount < 2)
+            return "";
 
-         return "";
+         Position start = cursor.currentPosition();
+         if (!cursor.moveToNextToken())
+            return "";
+
+         if (!cursor.fwdToMatchingToken())
+            return "";
+
+         Position end = cursor.currentPosition();
+         end.setColumn(end.getColumn() + 1);
+
+         return editor.getTextForRange(Range.fromPoints(
+               start, end));
+      }
+      return "";
    }
    
    
