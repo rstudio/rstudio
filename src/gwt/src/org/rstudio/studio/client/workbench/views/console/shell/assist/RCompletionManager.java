@@ -1129,7 +1129,7 @@ public class RCompletionManager implements CompletionManager
          if (results.length == 0)
          {
             boolean lastInputWasTab =
-                  (nativeEvent_ != null && nativeEvent_.getKeyCode() != KeyCodes.KEY_TAB);
+                  (nativeEvent_ != null && nativeEvent_.getKeyCode() == KeyCodes.KEY_TAB);
             
             boolean lineIsWhitespace = docDisplay_.getCurrentLine().matches("^\\s*$");
             
