@@ -202,8 +202,9 @@ public class CompletionRequester
    public void getCompletions(
          final String token,
          final ArrayList<String> assocData,
-         ArrayList<Integer> dataType,
-         ArrayList<Integer> numCommas,
+         final ArrayList<Integer> dataType,
+         final ArrayList<Integer> numCommas,
+         final String functionCallString,
          final String chainDataName,
          final JsArrayString chainAdditionalArgs,
          final JsArrayString chainExcludeArgs,
@@ -218,6 +219,7 @@ public class CompletionRequester
             assocData,
             dataType,
             numCommas,
+            functionCallString,
             chainDataName,
             chainAdditionalArgs,
             chainExcludeArgs,
@@ -429,14 +431,15 @@ public class CompletionRequester
    }
 
    private void doGetCompletions(
-         String token,
-         ArrayList<String> assocData,
-         ArrayList<Integer> dataType,
-         ArrayList<Integer> numCommas,
-         String chainObjectName,
-         JsArrayString chainAdditionalArgs,
-         JsArrayString chainExcludeArgs,
-         ServerRequestCallback<Completions> requestCallback)
+         final String token,
+         final ArrayList<String> assocData,
+         final ArrayList<Integer> dataType,
+         final ArrayList<Integer> numCommas,
+         final String functionCallString,
+         final String chainObjectName,
+         final JsArrayString chainAdditionalArgs,
+         final JsArrayString chainExcludeArgs,
+         final ServerRequestCallback<Completions> requestCallback)
    {
       int optionsStartOffset;
       if (rnwContext_ != null &&
@@ -451,6 +454,7 @@ public class CompletionRequester
                assocData,
                dataType,
                numCommas,
+               functionCallString,
                chainObjectName,
                chainAdditionalArgs,
                chainExcludeArgs,

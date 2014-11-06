@@ -510,12 +510,14 @@ public class RCompletionManager implements CompletionManager
             String token,
             ArrayList<String> assocData,
             ArrayList<Integer> dataType,
-            ArrayList<Integer> numCommas)
+            ArrayList<Integer> numCommas,
+            String functionCallString)
       {
          token_ = token;
          assocData_ = assocData;
          dataType_ = dataType;
          numCommas_ = numCommas;
+         functionCallString_ = functionCallString;
       }
       
       public AutoCompletionContext(
@@ -570,11 +572,17 @@ public class RCompletionManager implements CompletionManager
       {
          return numCommas_;
       }
+      
+      public String getFunctionCallString()
+      {
+         return functionCallString_;
+      }
 
-      private String token_;
+      private String token_ = "";
       private ArrayList<String> assocData_ = new ArrayList<String>();
       private ArrayList<Integer> dataType_ = new ArrayList<Integer>();
       private ArrayList<Integer> numCommas_ = new ArrayList<Integer>();
+      private String functionCallString_ = "";
       
    }
 
@@ -688,6 +696,7 @@ public class RCompletionManager implements CompletionManager
             context.getAssocData(),
             context.getDataType(),
             context.getNumCommas(),
+            context.getFunctionCallString(),
             infixData.getDataName(),
             infixData.getAdditionalArgs(),
             infixData.getExcludeArgs(),
@@ -900,6 +909,9 @@ public class RCompletionManager implements CompletionManager
       ArrayList<Integer> dataType = new ArrayList<Integer>();
       ArrayList<Integer> numCommas = new ArrayList<Integer>();
       
+      // Some information re: the function call, if appropriate.
+      String functionCallString = "";
+      
       String firstLine = input_.getText();
       int row = input_.getCursorPosition().getRow();
       
@@ -953,7 +965,10 @@ public class RCompletionManager implements CompletionManager
          return defaultContext;
       
       CodeModel codeModel = editor.getSession().getMode().getCodeModel();
-      codeModel.tokenizeUpToRow(row);
+      
+      // We might need to grab content from further up in the document than
+      // the current cursor position -- so tokenize ahead.
+      codeModel.tokenizeUpToRow(row + 100);
       
       // Make a token cursor and place it at the first token previous
       // to the cursor.
@@ -972,7 +987,7 @@ public class RCompletionManager implements CompletionManager
             }
       
       // Find an opening '(' or '[' -- this provides the function or object
-      // for completion
+      // for completion.
       int initialNumCommas = 0;
       if (tokenCursor.currentValue() != "(" && tokenCursor.currentValue() != "[")
       {
@@ -995,7 +1010,6 @@ public class RCompletionManager implements CompletionManager
       // Figure out whether we're looking at '(', '[', or '[[',
       // and place the token cursor on the first token preceding.
       TokenCursor endOfDecl = tokenCursor.cloneCursor();
-      
       if (tokenCursor.currentValue() == "(")
       {
          // Don't produce function argument completions
@@ -1031,6 +1045,9 @@ public class RCompletionManager implements CompletionManager
       // Get the string marking the function or data
       if (!findStartOfEvaluationContext(tokenCursor))
          return defaultContext;
+      
+      functionCallString = editor.getTextForRange(Range.fromPoints(
+            tokenCursor.currentPosition(), startCursor.currentPosition()));
       
       assocData.add(
             docDisplay_.getTextForRange(Range.fromPoints(
@@ -1074,7 +1091,8 @@ public class RCompletionManager implements CompletionManager
             token,
             assocData,
             dataType,
-            numCommas);
+            numCommas,
+            functionCallString);
       
    }
    

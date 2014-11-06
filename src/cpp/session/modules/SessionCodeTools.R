@@ -517,6 +517,11 @@
    )
 })
 
+.rs.addFunction("isEmptyCompletion", function(completions)
+{
+   length(completions$results) == 0
+})
+
 .rs.addFunction("makeCompletions", function(token,
                                             results,
                                             packages = "",
@@ -781,11 +786,38 @@
                        excludeOtherCompletions = TRUE)
 })
 
+.rs.addFunction("completeExpression", function(string)
+{
+   paste(string, ")") ## TODO
+})
+
+.rs.addFunction("getCompletionsAttr", function(token,
+                                               functionCallString)
+{
+   result <- tryCatch({
+      parsed <- parse(text = .rs.completeExpression(functionCallString))[[1]]
+      objectName <- as.character(parsed[[2L]])
+      object <- .rs.getAnywhere(objectName)
+      completions <- .rs.selectStartsWith(
+         names(attributes(object)),
+         token
+      )
+      .rs.makeCompletions(token,
+                          completions,
+                          paste("attributes(", objectName, ")", sep = ""),
+                          quote = TRUE,
+                          excludeOtherCompletions = TRUE)
+   }, error = function(e) .rs.emptyCompletions())
+   result
+})
+
+
 utils:::rc.settings(files = TRUE)
 .rs.addJsonRpcHandler("get_completions", function(token,
                                                   string,
                                                   type,
                                                   numCommas,
+                                                  functionCallString,
                                                   chainObjectName,
                                                   additionalArgs,
                                                   excludeArgs)
@@ -834,15 +866,18 @@ utils:::rc.settings(files = TRUE)
    ## attr
    if (string[[1]] == "attr")
    {
-      return(.rs.getCompletionsAttributes(token, object))
+      result <- .rs.getCompletionsAttr(token, functionCallString)
+      if (!.rs.isEmptyCompletion(result))
+         return(result)
    }
    
-   ## options
+   # getOption
    if (string[[1]] == "getOption" && numCommas[[1]] == 0)
    {
       return(.rs.getCompletionsGetOption(token))
    }
    
+   # options
    if (string[[1]] == "options" && type == TYPES$FUNCTION)
    {
       return(.rs.getCompletionsOptions(token))

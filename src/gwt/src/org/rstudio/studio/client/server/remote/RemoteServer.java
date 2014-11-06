@@ -641,6 +641,7 @@ public class RemoteServer implements Server
          ArrayList<Integer> dataType,
          ArrayList<Integer> numCommas,
          String chainObjectName,
+         String functionCallString,
          JsArrayString additionalArgs,
          JsArrayString excludeArgs,
          ServerRequestCallback<Completions> requestCallback)
@@ -651,13 +652,14 @@ public class RemoteServer implements Server
       setArrayNumber(params, 2, dataType);
       setArrayNumber(params, 3, numCommas);
       params.set(4, new JSONString(chainObjectName));
-      setArrayString(params, 5, additionalArgs);
-      setArrayString(params, 6, excludeArgs);
+      params.set(5, new JSONString(functionCallString));
+      setArrayString(params, 6, additionalArgs);
+      setArrayString(params, 7, excludeArgs);
       
-      sendRequest(RPC_SCOPE, 
-                  GET_COMPLETIONS, 
-                  params, 
-                  requestCallback) ;
+      sendRequest(RPC_SCOPE,
+                  GET_COMPLETIONS,
+                  params,
+                  requestCallback);
    }
 
    public void getHelpAtCursor(String line, int cursorPos,

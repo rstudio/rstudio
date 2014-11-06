@@ -38,6 +38,7 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
          ArrayList<Integer> dataType,
          ArrayList<Integer> numCommas,
          String chainObjectName,
+         String functionCallString,
          JsArrayString chainAdditionalArgs,
          JsArrayString chainExcludeArgs,
          ServerRequestCallback<Completions> completions);
