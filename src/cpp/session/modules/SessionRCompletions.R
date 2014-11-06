@@ -516,9 +516,9 @@
                        excludeOtherCompletions = TRUE)
 })
 
-.rs.addFunction("completeExpression", function(string)
+.rs.addFunction("finishExpression", function(string)
 {
-   .Call("rs_completeExpression", string)
+   .Call("rs_finishExpression", as.character(string))
 })
 
 .rs.addFunction("getCompletionsAttr", function(token,

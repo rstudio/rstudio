@@ -25,6 +25,9 @@ namespace routines {
 
 void addCMethod(const R_CMethodDef method);
 void addCallMethod(const R_CallMethodDef method);
+void registerCallMethod(const char* name,
+                        DL_FUNC fun,
+                        int numArgs);
 
 void registerAll();
    
