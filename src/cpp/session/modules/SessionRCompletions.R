@@ -122,8 +122,22 @@
    
 })
 
+.rs.addFunction("resolveFormals", function(token,
+                                           object,
+                                           functionCall)
+{
+   tryCatch({
+      setdiff(.rs.selectStartsWith(
+         .rs.getFunctionArgumentNames(object),
+         token
+      ), names(functionCall))
+   }, error = function(e) NULL
+   )
+})
+
 .rs.addFunction("getCompletionsFunction", function(token,
                                                    string,
+                                                   functionCall,
                                                    discardFirst,
                                                    envir = parent.frame())
 {
@@ -135,10 +149,7 @@
       object <- .rs.getAnywhere(string, envir = envir)
       if (!is.null(object) && is.function(object))
       {
-         formals <- .rs.selectStartsWith(
-            .rs.getFunctionArgumentNames(object),
-            token
-         )
+         formals <- .rs.resolveFormals(token, object, functionCall)
          
          if (length(formals))
             formals <- paste(formals, "= ")
@@ -170,12 +181,12 @@
             }
          )
          
+         if (is.null(object))
+            object <- .rs.getAnywhere(namespaceString)
+         
          if (!is.null(object) && is.function(object))
          {
-            formals <- .rs.selectStartsWith(
-               .rs.getFunctionArgumentNames(object),
-               token
-            )
+            formals <- .rs.resolveFormals(token, object, functionCall)
             
             if (length(formals))
                formals <- paste(formals, "= ")
@@ -625,6 +636,7 @@ utils:::rc.settings(files = TRUE)
                              string[[i]],
                              type[[i]],
                              numCommas[[i]],
+                             functionCall,
                              discardFirst,
                              parent.frame(),
                              TYPES)
@@ -826,6 +838,7 @@ utils:::rc.settings(files = TRUE)
                                             string,
                                             type,
                                             numCommas,
+                                            functionCall,
                                             discardFirst,
                                             envir,
                                             TYPES)
@@ -838,7 +851,7 @@ utils:::rc.settings(files = TRUE)
    
    ourCompletions <-
       if (type == TYPES$FUNCTION)
-         .rs.getCompletionsFunction(token, string, discardFirst, envir)
+         .rs.getCompletionsFunction(token, string, functionCall, discardFirst, envir)
    else if (type == TYPES$SINGLE_BRACKET)
       .rs.getCompletionsSingleBracket(token, string, numCommas, envir)
    else if (type == TYPES$DOUBLE_BRACKET)

@@ -927,21 +927,6 @@ public class RCompletionManager implements CompletionManager
       // Get the token at the cursor position
       token = firstLine.replaceAll(".*[\\s\\(\\[\\{,]", "");
       
-      // If the token has '::' or ':::', escape early as we'll be completing
-      // something from a namespace
-      if (token.contains("::"))
-         return getAutocompletionContextForNamespace(token);
-      
-      // If the token has '$' or '@', escape early as we'll be completing
-      // either from names or an overloaded `$` method
-      if (token.contains("$") || token.contains("@"))
-         return getAutocompletionContextForDollar(token);
-      
-      // If we're completing an object within a string, assume it's a
-      // file-system completion
-      if (token.indexOf('\'') != -1 || token.indexOf('"') != -1)
-         return getAutocompletionContextForFile(token);
-      
       // Default case for failure modes
       AutoCompletionContext defaultContext = new AutoCompletionContext(
             token,
@@ -958,6 +943,21 @@ public class RCompletionManager implements CompletionManager
       // need context from that line)
       if (!firstLine.equals(StringUtil.stripRComment(firstLine)))
          return defaultContext;
+      
+      // If the token has '::' or ':::', escape early as we'll be completing
+      // something from a namespace
+      if (token.contains("::"))
+         return getAutocompletionContextForNamespace(token);
+      
+      // If the token has '$' or '@', escape early as we'll be completing
+      // either from names or an overloaded `$` method
+      if (token.contains("$") || token.contains("@"))
+         return getAutocompletionContextForDollar(token);
+      
+      // If we're completing an object within a string, assume it's a
+      // file-system completion
+      if (token.indexOf('\'') != -1 || token.indexOf('"') != -1)
+         return getAutocompletionContextForFile(token);
       
       // access to the R Code model
       AceEditor editor = (AceEditor) docDisplay_;
@@ -1046,8 +1046,11 @@ public class RCompletionManager implements CompletionManager
       if (!findStartOfEvaluationContext(tokenCursor))
          return defaultContext;
       
+      Position endPos = startCursor.currentPosition();
+      endPos.setColumn(endPos.getColumn() + startCursor.currentValue().length());
+      
       functionCallString = editor.getTextForRange(Range.fromPoints(
-            tokenCursor.currentPosition(), startCursor.currentPosition()));
+            tokenCursor.currentPosition(), endPos));
       
       assocData.add(
             docDisplay_.getTextForRange(Range.fromPoints(
