@@ -755,6 +755,7 @@
    completions <- .rs.selectStartsWith(allPackages, token)
    .rs.makeCompletions(token,
                        completions,
+                       completions,
                        quote = TRUE,
                        excludeOtherCompletions = TRUE)
 })
