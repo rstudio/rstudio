@@ -119,8 +119,7 @@ public abstract class AbstractResource {
   /**
    * Encapsulates an ordered set of resources to search for translations.
    */
-  public static class ResourceList extends AbstractList<AbstractResource>
-      implements Set<AbstractResource> {
+  public static class ResourceList extends AbstractList<AbstractResource> {
 
     private List<AbstractResource> list = new ArrayList<AbstractResource>();
 
