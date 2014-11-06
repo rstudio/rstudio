@@ -522,12 +522,11 @@
 })
 
 .rs.addFunction("getCompletionsAttr", function(token,
-                                               functionCallString)
+                                               functionCall)
 {
    result <- tryCatch({
-      parsed <- parse(text = .rs.completeExpression(functionCallString))[[1]]
       wrapper <- function(x, which, exact = FALSE) {}
-      matched <- match.call(wrapper, parsed)
+      matched <- match.call(wrapper, functionCall)
       if (is.null(matched[["x"]]) || !is.null(matched[["which"]]))
          return(.rs.emptyCompletions())
       objectName <- as.character(matched[["x"]])
@@ -556,15 +555,6 @@ utils:::rc.settings(files = TRUE)
                                                   additionalArgs,
                                                   excludeArgs)
 {
-   
-   cat("Token: '", token, "'\n", sep = "")
-   cat("String:\n")
-   print(string)
-   cat("Type:\n")
-   print(type)
-   cat("Number of commas:\n")
-   print(numCommas)
-   
    ## NOTE: these are passed in as lists of strings; convert to character
    additionalArgs <- as.character(additionalArgs)
    excludeArgs <- as.character(excludeArgs)
@@ -581,6 +571,13 @@ utils:::rc.settings(files = TRUE)
       AT = 7L,
       FILE = 8L,
       CHUNK = 9L
+   )
+   
+   ## Try to parse the function call string
+   functionCall <- tryCatch({
+      parse(text = .rs.finishExpression(functionCallString))[[1]]
+   }, error = function(e) 
+      NULL
    )
    
    ## Handle some special cases early
@@ -600,7 +597,7 @@ utils:::rc.settings(files = TRUE)
    ## attr
    if (string[[1]] == "attr")
    {
-      result <- .rs.getCompletionsAttr(token, functionCallString)
+      result <- .rs.getCompletionsAttr(token, functionCall)
       if (!.rs.isEmptyCompletion(result))
          return(result)
    }
@@ -634,9 +631,6 @@ utils:::rc.settings(files = TRUE)
       )
    }
    
-   cat("After getting R completions:\n")
-   print(completions)
-   
    ## If the caller has supplied information about chain completions (e.g.
    ## for completions from
    ##
@@ -652,9 +646,6 @@ utils:::rc.settings(files = TRUE)
                                discardFirst,
                                parent.frame())
    )
-   
-   cat("After getting chain completions:\n")
-   print(completions)
    
    ## Override param insertion if the function was 'debug' or 'trace'
    if (type[[1]] %in% c(TYPES$FUNCTION, TYPES$UNKNOWN))
@@ -681,9 +672,6 @@ utils:::rc.settings(files = TRUE)
    
    if (is.null(completions$quote))
       completions$quote <- logical(length(completions$results))
-   
-   cat("Completions:\n")
-   print(completions)
    
    completions
    

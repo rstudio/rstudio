@@ -62,7 +62,6 @@ public class CompletionRequester
       server_ = server ;
       rnwContext_ = rnwContext;
       editor_ = editor;
-      
    }
    
    private boolean usingCache(
@@ -70,8 +69,7 @@ public class CompletionRequester
          final ServerRequestCallback<CompletionResult> callback)
    {
       if (!StringUtil.isNullOrEmpty(token) &&
-           cachedResult_ != null &&
-           StringUtil.isNullOrEmpty(cachedResult_.guessedFunctionName))
+           cachedResult_ != null)
       {
          if (token.startsWith(cachedLinePrefix_))
          {
@@ -519,8 +517,6 @@ public class CompletionRequester
    
    private CompletionResult narrow(String diff)
    {
-      assert StringUtil.isNullOrEmpty(cachedResult_.guessedFunctionName);
-      
       String token = cachedResult_.token + diff ;
       ArrayList<QualifiedName> newCompletions = new ArrayList<QualifiedName>() ;
       for (QualifiedName qname : cachedResult_.completions)
