@@ -505,6 +505,7 @@ public class RCompletionManager implements CompletionManager
       public static final int TYPE_AT = 7;
       public static final int TYPE_FILE = 8;
       public static final int TYPE_CHUNK = 9;
+      public static final int TYPE_ROXYGEN = 10;
       
       public AutoCompletionContext(
             String token,
@@ -700,6 +701,7 @@ public class RCompletionManager implements CompletionManager
             infixData.getDataName(),
             infixData.getAdditionalArgs(),
             infixData.getExcludeArgs(),
+            infixData.getExcludeArgsFromObject(),
             implicit,
             context_);
 
@@ -886,11 +888,8 @@ public class RCompletionManager implements CompletionManager
       //
       //     env::foo()$bar()[1]$baz
       // Get the string forming the context
-      Debug.logObject(cursor);
       if (!findStartOfEvaluationContext(cursor))
          return defaultContext;
-      
-      Debug.logObject(cursor);
       
       String context = editor.getTextForRange(Range.fromPoints(
             cursor.currentPosition(),
@@ -921,11 +920,18 @@ public class RCompletionManager implements CompletionManager
       // trim to cursor position
       firstLine = firstLine.substring(0, input_.getCursorPosition().getColumn());
       
+      // If we're completing an object within a string, assume it's a
+      // file-system completion
+      String firstLineStripped = StringUtil.stripBalancedQuotes(
+            StringUtil.stripRComment(firstLine));
+      if (firstLineStripped.indexOf('\'') != -1 || 
+          firstLineStripped.indexOf('"') != -1)
+         return getAutocompletionContextForFile(firstLine);
+      
       // If this line starts with '```{', then we're completing chunk options
       // pass the whole line as a token
       if (firstLine.startsWith("```{") || firstLine.startsWith("<<"))
          return new AutoCompletionContext(firstLine, AutoCompletionContext.TYPE_CHUNK);
-      
       
       // Get the token at the cursor position
       token = firstLine.replaceAll(".*[^a-zA-Z0-9._:$@]", "");
@@ -937,7 +943,8 @@ public class RCompletionManager implements CompletionManager
       
       // escape early for roxygen
       if (firstLine.matches("\\s*#+'.*"))
-         return defaultContext;
+         return new AutoCompletionContext(
+               token, AutoCompletionContext.TYPE_ROXYGEN);
       
       // if the line is currently within a comment, bail -- this ensures
       // that we can auto-complete within a comment line (but we only
@@ -955,15 +962,9 @@ public class RCompletionManager implements CompletionManager
       if (token.contains("::"))
          return getAutocompletionContextForNamespace(token);
       
-      
       // Now strip the '$' and '@' post-hoc since they're not really part
       // of the identifier
       token = token.replaceAll(".*[$@]", "");
-      
-      // If we're completing an object within a string, assume it's a
-      // file-system completion
-      if (token.indexOf('\'') != -1 || token.indexOf('"') != -1)
-         return getAutocompletionContextForFile(token);
       
       // access to the R Code model
       AceEditor editor = (AceEditor) docDisplay_;

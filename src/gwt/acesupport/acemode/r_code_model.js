@@ -629,10 +629,13 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       var additionalArgs = [];
       var excludeArgs = [];
       var name = "";
+      var excludeArgsFromObject = false;
       if (data !== false)
       {
-         if (!data.excludeOtherNames)
-            name = tokenCursor.currentValue();
+         if (data.excludeArgsFromObject)
+            excludeArgsFromObject = data.excludeArgsFromObject;
+         
+         name = tokenCursor.currentValue();
          additionalArgs = data.additionalArgs;
          excludeArgs = data.excludeArgs;
       }
@@ -640,7 +643,8 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       return {
          "name": name,
          "additionalArgs": additionalArgs,
-         "excludeArgs": excludeArgs
+         "excludeArgs": excludeArgs,
+         "excludeArgsFromObject": excludeArgsFromObject
       };
       
    };
@@ -682,7 +686,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
       if (fnName === "select")
       {
-         data.excludeOtherNames = true;
+         data.excludeArgsFromObject = true;
       }
 
       do

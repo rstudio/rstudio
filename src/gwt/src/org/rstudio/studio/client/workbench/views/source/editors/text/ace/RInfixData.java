@@ -25,7 +25,8 @@ public class RInfixData extends JavaScriptObject
       return {
          "name": "",
          "additionalArgs": [],
-         "excludeArgs": []
+         "excludeArgs": [],
+         "excludeArgsFromObject": false
       };
    }-*/;
    
@@ -41,5 +42,8 @@ public class RInfixData extends JavaScriptObject
       return this.excludeArgs;
    }-*/;
    
+   public native final boolean getExcludeArgsFromObject() /*-{
+      return this.excludeArgsFromObject;
+   }-*/;
 
 }

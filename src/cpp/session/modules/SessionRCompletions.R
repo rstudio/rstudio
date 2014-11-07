@@ -67,59 +67,42 @@
    
    matchingTags <- grep(paste("^", tag, sep=""), tags, value = TRUE)
    
-   list(token=tag,
-        results=matchingTags,
-        packages=vector(mode='character', length=length(matchingTags)),
-        fguess=c())
+   .rs.makeCompletions(tag,
+                       matchingTags)
 })
 
-.rs.addFunction("getInternalRCompletions", function(token, isFileCompletion)
+.rs.addFunction("getCompletionsFile", function(token)
 {
-   if (isFileCompletion)
-      token <- paste("\"", token, sep = "")
+   token <- gsub("\\\\", "/", token)
+   slashIndices <- gregexpr("/", token, fixed = TRUE)[[1]]
+   lastSlashIndex <- slashIndices[length(slashIndices)]
    
-   utils:::.assignLinebuffer(token)
-   utils:::.assignEnd(nchar(token))
-   token <- utils:::.guessTokenFromLine()
-   utils:::.completeToken()
-   results <- utils:::.retrieveCompletions()
-   status <- utils:::rc.status()
-   
-   if (isFileCompletion)
-      packages <- rep.int("<file>", length(results))
+   if (lastSlashIndex == -1)
+   {
+      files <- list.files(all.files = TRUE,
+                          pattern = paste("^", token, sep = ""),
+                          no.. =  TRUE)
+   }
    else
-      packages <- sub('^package:', '', .rs.which(results))
-   
-   ## Fix up qualified 'packages', so that e.g. 'stats::rnorm'
-   ## is parsed as 'rnorm'
-   whichQualified <- grep(":{2,3}", results, perl = TRUE)
-   packages[whichQualified] <- gsub(":.*", "", packages[whichQualified], perl = TRUE)
-   
-   # prefer completions for function arguments
-   if (length(results) > 0) {
-      n <- nchar(results)
-      isFunctionArg <- substring(results, n, n) == "="
-      idx <- c(which(isFunctionArg), which(!isFunctionArg))
-      results <- results[idx]
-      packages <- packages[idx]
+   {
+      directory <- substring(token, 1, lastSlashIndex - 1)
+      file <- substring(token, lastSlashIndex + 1, nchar(token))
+      files <- file.path(
+         directory,
+         list.files(directory,
+                    all.files = TRUE,
+                    pattern = paste("^", file, sep = ""),
+                    no.. =  TRUE)
+      )
    }
    
-   # ensure spaces around =
-   results <- sub("=$", " = ", results)
-   
-   choose = packages == '.GlobalEnv'
-   results.sorted = c(results[choose], results[!choose])
-   packages.sorted = c(packages[choose], packages[!choose])
-   
-   packages.sorted = sub('^\\.GlobalEnv$', '', packages.sorted)
-   
-   .rs.makeCompletions(
-      token,
-      results.sorted,
-      packages.sorted,
-      fguess = status$fguess
-   )
-   
+   isDir <- file.info(files)[, "isdir"] %in% TRUE ## protect against NA
+   files[isDir] <- paste(files[isDir], "/", sep = "")
+   .rs.makeCompletions(token,
+                       files,
+                       "<file>",
+                       quote = FALSE,
+                       excludeOtherCompletions = TRUE)
 })
 
 .rs.addFunction("resolveFormals", function(token,
@@ -644,18 +627,15 @@ utils:::rc.settings(files = TRUE)
                                                   functionCallString,
                                                   chainObjectName,
                                                   additionalArgs,
-                                                  excludeArgs)
+                                                  excludeArgs,
+                                                  excludeArgsFromObject)
 {
-   print(token)
-   print(string)
-   print(type)
-   
    ## NOTE: these are passed in as lists of strings; convert to character
    additionalArgs <- as.character(additionalArgs)
    excludeArgs <- as.character(excludeArgs)
    
    ## Different completion types (sync with RCompletionManager.java)
-   TYPES <- list(
+   TYPE <- list(
       UNKNOWN = 0L,
       FUNCTION = 1L,
       SINGLE_BRACKET = 2L,
@@ -665,7 +645,8 @@ utils:::rc.settings(files = TRUE)
       DOLLAR = 6L,
       AT = 7L,
       FILE = 8L,
-      CHUNK = 9L
+      CHUNK = 9L,
+      ROXYGEN = 10L
    )
    
    ## Try to parse the function call string
@@ -678,9 +659,8 @@ utils:::rc.settings(files = TRUE)
    ## Handle some special cases early
    
    # Roxygen
-   roxygen <- .rs.attemptRoxygenTagCompletion(token)
-   if (!is.null(roxygen))
-      return(roxygen)
+   if (TYPE$ROXYGEN %in% type)
+      return(.rs.attemptRoxygenTagCompletion(token))
    
    # library, require, requireNamespace, loadNamespace
    if (string[[1]] %in% c("library", "require", "requireNamespaces") &&
@@ -704,7 +684,7 @@ utils:::rc.settings(files = TRUE)
    }
    
    # options
-   if (string[[1]] == "options" && type == TYPES$FUNCTION)
+   if (string[[1]] == "options" && type == TYPE$FUNCTION)
    {
       return(.rs.getCompletionsOptions(token))
    }
@@ -713,7 +693,7 @@ utils:::rc.settings(files = TRUE)
    
    for (i in seq_along(string))
    {
-      discardFirst <- type[[i]] == TYPES$FUNCTION && chainObjectName != ""
+      discardFirst <- type[[i]] == TYPE$FUNCTION && chainObjectName != ""
       completions <- .rs.appendCompletions(
          completions,
          .rs.getRCompletions(token,
@@ -723,12 +703,12 @@ utils:::rc.settings(files = TRUE)
                              functionCall,
                              discardFirst,
                              parent.frame(),
-                             TYPES)
+                             TYPE)
       )
    }
    
    ## Completions for objects on the search path
-   TYPES <- list(
+   TYPE <- list(
       UNKNOWN = 0L,
       FUNCTION = 1L,
       SINGLE_BRACKET = 2L,
@@ -738,26 +718,27 @@ utils:::rc.settings(files = TRUE)
       DOLLAR = 6L,
       AT = 7L,
       FILE = 8L,
-      CHUNK = 9L
+      CHUNK = 9L,
+      ROXYGEN = 10L
    )
    
    if (token != "" && 
-          type[[1]] %in% c(TYPES$UNKNOWN, TYPES$FUNCTION,
-                           TYPES$SINGLE_BRACKET, TYPES$DOUBLE_BRACKET))
+          type[[1]] %in% c(TYPE$UNKNOWN, TYPE$FUNCTION,
+                           TYPE$SINGLE_BRACKET, TYPE$DOUBLE_BRACKET))
       completions <- .rs.appendCompletions(
          completions,
          .rs.getCompletionsSearchPath(token)
       )
    
    ## File-based completions
-   if (TYPES$FILE %in% type)
+   if (TYPE$FILE %in% type)
       completions <- .rs.appendCompletions(
          completions,
-         .rs.getInternalRCompletions(token, TRUE)
+         .rs.getCompletionsFile(token)
       )
    
    ## Package completions (e.g. `stats::`)
-   if (length(type) == 1 && type == TYPES$UNKNOWN)
+   if (length(type) == 1 && type == TYPE$UNKNOWN)
       completions <- .rs.appendCompletions(
          completions,
          .rs.getCompletionsPackages(token, TRUE)
@@ -775,12 +756,13 @@ utils:::rc.settings(files = TRUE)
                                chainObjectName,
                                additionalArgs,
                                excludeArgs,
+                               excludeArgsFromObject,
                                discardFirst,
                                parent.frame())
    )
    
    ## Override param insertion if the function was 'debug' or 'trace'
-   if (type[[1]] %in% c(TYPES$FUNCTION, TYPES$UNKNOWN))
+   if (type[[1]] %in% c(TYPE$FUNCTION, TYPE$UNKNOWN))
    {
       ## Try getting the function
       object <- .rs.getAnywhere(string[[1]], parent.frame())
@@ -797,10 +779,10 @@ utils:::rc.settings(files = TRUE)
       completions$fguess <- ""
    
    completions$excludeOtherCompletions <- .rs.scalar(type[[1]] %in% c(
-      TYPES$DOLLAR,
-      TYPES$AT,
-      TYPES$NAMESPACE_EXPORTED,
-      TYPES$NAMESPACE_ALL
+      TYPE$DOLLAR,
+      TYPE$AT,
+      TYPE$NAMESPACE_EXPORTED,
+      TYPE$NAMESPACE_ALL
    ))
    
    if (is.null(completions$quote))
@@ -907,6 +889,7 @@ utils:::rc.settings(files = TRUE)
                                                  chainObjectName,
                                                  additionalArgs,
                                                  excludeArgs,
+                                                 excludeArgsFromObject,
                                                  discardFirst,
                                                  envir)
 {
@@ -915,7 +898,7 @@ utils:::rc.settings(files = TRUE)
    ## `%>%` chain -- use completions from the associated data object.
    result <- .rs.emptyCompletions()
    
-   if (!is.null(chainObjectName) && chainObjectName != "")
+   if (!is.null(chainObjectName) && !excludeArgsFromObject)
    {
       object <- .rs.getAnywhere(chainObjectName, envir = envir)
       if (length(object))
@@ -940,7 +923,8 @@ utils:::rc.settings(files = TRUE)
          result, 
          .rs.makeCompletions(
             token,
-            argsToAdd
+            argsToAdd,
+            paste("*", chainObjectName, "*", sep = "")
          )
       )
    }
@@ -962,18 +946,18 @@ utils:::rc.settings(files = TRUE)
                                             functionCall,
                                             discardFirst,
                                             envir,
-                                            TYPES)
+                                            TYPE)
 {   
    
-   if (type %in% c(TYPES$DOLLAR, TYPES$AT))
-      .rs.getCompletionsDollar(token, string, envir, type == TYPES$AT)
-   else if (type %in% c(TYPES$NAMESPACE_EXPORTED, TYPES$NAMESPACE_ALL))
-      .rs.getCompletionsNamespace(token, string, type == TYPES$NAMESPACE_EXPORTED, envir)
-   else if (type == TYPES$FUNCTION)
+   if (type %in% c(TYPE$DOLLAR, TYPE$AT))
+      .rs.getCompletionsDollar(token, string, envir, type == TYPE$AT)
+   else if (type %in% c(TYPE$NAMESPACE_EXPORTED, TYPE$NAMESPACE_ALL))
+      .rs.getCompletionsNamespace(token, string, type == TYPE$NAMESPACE_EXPORTED, envir)
+   else if (type == TYPE$FUNCTION)
       .rs.getCompletionsFunction(token, string, functionCall, discardFirst, envir)
-   else if (type == TYPES$SINGLE_BRACKET)
+   else if (type == TYPE$SINGLE_BRACKET)
       .rs.getCompletionsSingleBracket(token, string, numCommas, envir)
-   else if (type == TYPES$DOUBLE_BRACKET)
+   else if (type == TYPE$DOUBLE_BRACKET)
       .rs.getCompletionsDoubleBracket(token, string, envir)
    else
       .rs.emptyCompletions()
