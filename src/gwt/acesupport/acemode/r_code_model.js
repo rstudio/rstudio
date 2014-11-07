@@ -76,17 +76,20 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
       this.moveToPreviousToken = function()
       {
-         while (this.$offset <= 0 && this.$row > 0)
+         var clone = this.cloneCursor();
+         while (clone.$offset <= 0 && clone.$row > 0)
          {
-            this.$row--;
-            this.$offset = that.$tokens[this.$row].length;
+            clone.$row--;
+            clone.$offset = that.$tokens[clone.$row].length;
          }
 
-         if (this.$offset == 0)
+         if (clone.$offset == 0)
             return false;
 
-         this.$offset--;
+         clone.$offset--;
 
+         this.$row = clone.$row;
+         this.$offset = clone.$offset;
          return true;
       };
 
@@ -94,26 +97,29 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       {
          if (typeof maxRow === "undefined")
             maxRow = Infinity;
-         
-         if (this.$row > maxRow)
+
+         var clone = this.cloneCursor();
+         if (clone.$row > maxRow)
             return false;
 
-         this.$offset++;
+         clone.$offset++;
 
-         while (that.$tokens[this.$row] != null &&
-                this.$offset >= that.$tokens[this.$row].length &&
-                this.$row < maxRow)
+         while (that.$tokens[clone.$row] != null &&
+                clone.$offset >= that.$tokens[clone.$row].length &&
+                clone.$row < maxRow)
          {
-            this.$row++;
-            this.$offset = 0;
+            clone.$row++;
+            clone.$offset = 0;
          }
 
-         if (that.$tokens[this.$row] == null)
+         if (that.$tokens[clone.$row] == null)
             return false;
 
-         if (this.$offset >= that.$tokens[this.$row].length)
+         if (clone.$offset >= that.$tokens[clone.$row].length)
             return false;
 
+         this.$row = clone.$row;
+         this.$offset = clone.$offset;
          return true;
       };
 

@@ -456,14 +456,7 @@
    evaled <- suppressWarnings(eval(parsed, envir = envir))
    if (!is.null(evaled))
    {
-      names <- character()
-      if (S4)
-         names <- slotNames(evaled)
-      else if (inherits(evaled, "tbl") && "dplyr" %in% loadedNamespaces())
-         names <- dplyr::tbl_vars(evaled)
-      else if (!is.null(names(evaled)))
-         names <- names(evaled)
-      
+      names <- .rs.getNames(evaled)
       completions <- .rs.selectStartsWith(names, token)
       result <- .rs.makeCompletions(
          token,
@@ -544,16 +537,7 @@
    if (is.null(object))
       return(result)
    
-   completions <- character()
-   completions <- if (isS4(object))
-   {
-      completions <- slotNames(object)
-   }
-   else if (!is.null(names(object)))
-   {
-      completions <- names(object)
-   }
-   
+   completions <- .rs.getNames(object)
    completions <- .rs.selectStartsWith(completions, token)
    
    if (length(completions))
@@ -562,7 +546,8 @@
          token,
          completions,
          paste("[[", string, "]]", sep = ""),
-         TRUE
+         quote = TRUE,
+         overrideInsertParens = TRUE
       )
    }
    
@@ -605,6 +590,22 @@
                        excludeOtherCompletions = TRUE)
 })
 
+.rs.addFunction("getCompletionsSearchPath", function(token)
+{
+   objects <- .rs.objectsOnSearchPath(token)
+   names <- names(objects)
+   results <- unlist(objects, use.names = FALSE)
+   packages <- unlist(lapply(1:length(objects), function(i) {
+      rep.int(names[i], length(objects[[i]]))
+   }))
+   packages <- gsub("\\.GlobalEnv", "", packages)
+   
+   .rs.makeCompletions(token,
+                       results,
+                       packages)
+   
+})
+
 .rs.addFunction("finishExpression", function(string)
 {
    .Call("rs_finishExpression", as.character(string))
@@ -644,6 +645,10 @@ utils:::rc.settings(files = TRUE)
                                                   additionalArgs,
                                                   excludeArgs)
 {
+   print(token)
+   print(string)
+   print(type)
+   
    ## NOTE: these are passed in as lists of strings; convert to character
    additionalArgs <- as.character(additionalArgs)
    excludeArgs <- as.character(excludeArgs)
@@ -721,11 +726,36 @@ utils:::rc.settings(files = TRUE)
       )
    }
    
-   completions <- .rs.appendCompletions(
-      completions,
-      .rs.getInternalRCompletions(token, TYPES$FILE %in% type)
+   ## Completions for objects on the search path
+   TYPES <- list(
+      UNKNOWN = 0L,
+      FUNCTION = 1L,
+      SINGLE_BRACKET = 2L,
+      DOUBLE_BRACKET = 3L,
+      NAMESPACE_EXPORTED = 4L,
+      NAMESPACE_ALL = 5L,
+      DOLLAR = 6L,
+      AT = 7L,
+      FILE = 8L,
+      CHUNK = 9L
    )
    
+   if (token != "" && 
+          type[[1]] %in% c(TYPES$UNKNOWN, TYPES$FUNCTION,
+                           TYPES$SINGLE_BRACKET, TYPES$DOUBLE_BRACKET))
+      completions <- .rs.appendCompletions(
+         completions,
+         .rs.getCompletionsSearchPath(token)
+      )
+   
+   ## File-based completions
+   if (TYPES$FILE %in% type)
+      completions <- .rs.appendCompletions(
+         completions,
+         .rs.getInternalRCompletions(token, TRUE)
+      )
+   
+   ## Package completions (e.g. `stats::`)
    if (length(type) == 1 && type == TYPES$UNKNOWN)
       completions <- .rs.appendCompletions(
          completions,
@@ -774,7 +804,6 @@ utils:::rc.settings(files = TRUE)
    if (is.null(completions$quote))
       completions$quote <- logical(length(completions$results))
    
-   print(completions)
    completions
    
 })

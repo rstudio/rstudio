@@ -886,8 +886,11 @@ public class RCompletionManager implements CompletionManager
       //
       //     env::foo()$bar()[1]$baz
       // Get the string forming the context
+      Debug.logObject(cursor);
       if (!findStartOfEvaluationContext(cursor))
          return defaultContext;
+      
+      Debug.logObject(cursor);
       
       String context = editor.getTextForRange(Range.fromPoints(
             cursor.currentPosition(),
@@ -925,7 +928,7 @@ public class RCompletionManager implements CompletionManager
       
       
       // Get the token at the cursor position
-      token = firstLine.replaceAll(".*[^a-zA-Z0-9._:]", "");
+      token = firstLine.replaceAll(".*[^a-zA-Z0-9._:$@]", "");
       
       // Default case for failure modes
       AutoCompletionContext defaultContext = new AutoCompletionContext(
@@ -951,6 +954,10 @@ public class RCompletionManager implements CompletionManager
       // either from names or an overloaded `$` method
       if (token.contains("$") || token.contains("@"))
          return getAutocompletionContextForDollar(token);
+      
+      // Now strip the '$' and '@' post-hoc since they're not really part
+      // of the identifier
+      token = token.replaceAll(".*[$@]", "");
       
       // If we're completing an object within a string, assume it's a
       // file-system completion

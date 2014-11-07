@@ -30,6 +30,9 @@
 
 .rs.addFunction("startsWith", function(strings, string)
 {
+   if (!length(string))
+      string <- ""
+   
    n <- nchar(string)
    (nchar(strings) >= n) & (substring(strings, 1, n) == string)
 })
@@ -41,6 +44,9 @@
 
 .rs.addFunction("endsWith", function(strings, string)
 {
+   if (!length(string))
+      string <- ""
+   
    nstrings <- nchar(strings)
    nstring <- nchar(string)
    (nstrings >= nstring) & 
@@ -337,7 +343,11 @@
 
 .rs.addFunction("getNames", function(object)
 {
-   if (inherits(object, "tbl") && "dplyr" %in% loadedNamespaces())
+   if (isS4(object))
+      methods::slotNames(object)
+   else if (is.environment(object))
+      ls(object, all.names = TRUE)
+   else if (inherits(object, "tbl") && "dplyr" %in% loadedNamespaces())
       dplyr::tbl_vars(object)
    else
       names(object)
@@ -406,7 +416,9 @@
 .rs.addFunction("objectsOnSearchPath", function(token)
 {
    search <- search()
-   setNames(lapply(1:length(search()), function(i) {
+   objects <- lapply(1:length(search()), function(i) {
       ls(pos = i, all.names = TRUE, pattern = paste("^", token, sep = ""))
-   }), search)
+   })
+   names(objects) <- gsub("package:", "", search)
+   objects
 })

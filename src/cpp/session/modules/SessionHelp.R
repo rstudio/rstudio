@@ -124,7 +124,7 @@ options(help_type = "html")
       object <- .rs.getAnywhere(topic, parent.frame())
       if (!is.null(object))
       {
-         envString <- capture.output(print(environment(object)))
+         envString <- capture.output(print(environment(object)))[[1]]
          if (grepl("namespace:", envString))
          {
             package <- sub("<environment: namespace:(.*)>", "\\1", envString, perl = TRUE)
