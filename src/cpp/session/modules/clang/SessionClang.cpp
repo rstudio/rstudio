@@ -31,6 +31,7 @@
 
 #include <core/libclang/LibClang.hpp>
 
+#include "Definitions.hpp"
 #include "GoToDefinition.hpp"
 #include "CodeCompletion.hpp"
 #include "RSourceIndex.hpp"
@@ -255,6 +256,11 @@ Error initialize()
    // attempt to load libclang
    if (!libclang::clang().load(embeddedLibClang(), LibraryVersion(3,4,0)))
       return Success();
+
+   // initialize definitions
+   error = definitions::initialize();
+   if (error)
+      return error;
 
    // keep a map of id to filename for source database event forwarding
    boost::shared_ptr<IdToFile> pIdToFile = boost::make_shared<IdToFile>();
