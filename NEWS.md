@@ -11,6 +11,9 @@
 * R code completion for statements spanning multiple lines
 * Include parameters in function navigation menu
 * Alt+Enter to run code while retaining cursor position
+* Functions and arguments within the current scope are made available
+  as auto-completions
+* Autocompletions now available in more contexts
 
 ### Workspace
 
@@ -31,8 +34,6 @@
 * When evaluating R strings ensure 'try' is called from base package
 * Add Clear Recent Projects menu item to toolbar project menu
 * Update to MSYS SSH 1000.18
-* Functions and arguments within the current scope are made available
-  as auto-completions
 
 
 
