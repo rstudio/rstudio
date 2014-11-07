@@ -22,7 +22,9 @@ import com.google.gwt.thirdparty.guava.common.io.Files;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.net.URISyntaxException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,10 +47,6 @@ public class ClassPathEntryTest extends AbstractResourceOrientedTestBase {
     File javaFile = new File(nestedHiddenDir, "ShouldNotBeFound.java");
     javaFile.createNewFile();
 
-    // Prepare a filter that will match all examined files.
-    PathPrefixSet pathPrefixes = new PathPrefixSet();
-    pathPrefixes.add(PathPrefix.ALL);
-
     // Prepare a place to record findings.
     List<Map<AbstractResource, ResourceResolution>> foundFiles =
         Lists.<Map<AbstractResource, ResourceResolution>> newArrayList();
@@ -56,12 +54,158 @@ public class ClassPathEntryTest extends AbstractResourceOrientedTestBase {
 
     // Perform a class path directory inspection.
     DirectoryClassPathEntry cpe = new DirectoryClassPathEntry(tempDir);
-    cpe.descendToFindResources(TreeLogger.NULL, Lists.newArrayList(pathPrefixes), foundFiles,
-        tempDir, "");
+    cpe.descendToFindResources(TreeLogger.NULL, Lists.newArrayList(createInclusivePathPrefixSet()),
+        foundFiles, tempDir, "");
 
     // Verify that even though we're using an ALL filter, we still didn't find any files inside the
     // .svn dir, because we never even enumerate its contents.
     assertTrue(foundFiles.get(0).isEmpty());
+  }
+
+  public void testResourceCreated() throws IOException, InterruptedException {
+    // With just 1 filter definition.
+    testResourceCreated(Lists.newArrayList(createInclusivePathPrefixSet()));
+    // With multiple filter definitions.
+    testResourceCreated(Lists.newArrayList(createInclusivePathPrefixSet(),
+        createInclusivePathPrefixSet(), createInclusivePathPrefixSet()));
+  }
+
+  public void testForResourceListenerLeaks() throws IOException, InterruptedException {
+    // Create a folder an initially empty folder.
+    PathPrefixSet pathPrefixSet = createInclusivePathPrefixSet();
+    DirectoryClassPathEntry classPathEntry = new DirectoryClassPathEntry(Files.createTempDir());
+
+    // Show that the WeakDirectoryNotifier is not listening for any updates.
+    awaitFullGc();
+    assertEquals(0, DirectoryPathPrefixChangeManager.getActiveListenerCount());
+
+    // Start listening for updates.
+    DirectoryPathPrefixChangeManager.ensureListening(classPathEntry, pathPrefixSet);
+
+    // Show that the WeakDirectoryNotifier is now listening for updates.
+    awaitFullGc();
+    assertEquals(1, DirectoryPathPrefixChangeManager.getActiveListenerCount());
+
+    // Dereference the classpath entry and pathprefixset and give the garbage collector an
+    // opportunity to clear any weak references.
+    pathPrefixSet = null;
+    classPathEntry = null;
+
+    // Show that the WeakDirectoryNotifier is no longer listening for updates.
+    awaitFullGc();
+    assertEquals(0, DirectoryPathPrefixChangeManager.getActiveListenerCount());
+  }
+
+  public void testResourceCreated(Collection<PathPrefixSet> pathPrefixSets) throws IOException,
+      InterruptedException {
+    // Create a folder an initially empty folder.
+    File tempDir = Files.createTempDir();
+    DirectoryClassPathEntry cpe = new DirectoryClassPathEntry(tempDir);
+
+    // Perform a class path directory inspection.
+    for (PathPrefixSet pathPrefixSet : pathPrefixSets) {
+      Map<AbstractResource, ResourceResolution> foundResources =
+          cpe.findApplicableResources(TreeLogger.NULL, pathPrefixSet);
+
+      // Verify the directory is initially empty.
+      assertTrue(foundResources.isEmpty());
+    }
+
+    // Create a file and give file events time to fire.
+    File createdFile = new File(tempDir, "Created.java");
+    createdFile.createNewFile();
+    Thread.sleep(10);
+
+    // Perform a class path directory inspection.
+    for (PathPrefixSet pathPrefixSet : pathPrefixSets) {
+      Map<AbstractResource, ResourceResolution> foundResources =
+          cpe.findApplicableResources(TreeLogger.NULL, pathPrefixSet);
+
+      // Verify the directory is no longer empty.
+      assertEquals(1, foundResources.size());
+      assertEquals("Created.java", foundResources.keySet().iterator().next().getPath());
+    }
+  }
+
+  public void testResourceDeleted() throws IOException, InterruptedException {
+    // With just 1 filter definition.
+    testResourceDeleted(Lists.newArrayList(createInclusivePathPrefixSet()));
+    // With multiple filter definitions.
+    testResourceDeleted(Lists.newArrayList(createInclusivePathPrefixSet(),
+        createInclusivePathPrefixSet(), createInclusivePathPrefixSet()));
+  }
+
+  private void testResourceDeleted(Collection<PathPrefixSet> pathPrefixSets) throws IOException,
+      InterruptedException {
+    // Create a folder with one initial file, that can be deleted.
+    File tempDir = Files.createTempDir();
+    File fileToDelete = new File(tempDir, "ToDelete.java");
+    fileToDelete.createNewFile();
+    DirectoryClassPathEntry cpe = new DirectoryClassPathEntry(tempDir);
+
+    // Perform a class path directory inspection.
+    for (PathPrefixSet pathPrefixSet : pathPrefixSets) {
+      Map<AbstractResource, ResourceResolution> foundResources =
+          cpe.findApplicableResources(TreeLogger.NULL, pathPrefixSet);
+
+      // Verify the directory is not initially empty.
+      assertEquals(1, foundResources.size());
+      assertEquals("ToDelete.java", foundResources.keySet().iterator().next().getPath());
+    }
+
+    // Delete the file and give file events time to fire.
+    fileToDelete.delete();
+    Thread.sleep(10);
+
+    // Perform a class path directory inspection.
+    for (PathPrefixSet pathPrefixSet : pathPrefixSets) {
+      Map<AbstractResource, ResourceResolution> foundResources =
+          cpe.findApplicableResources(TreeLogger.NULL, pathPrefixSet);
+
+      // Verify the directory is now empty.
+      assertTrue(foundResources.isEmpty());
+    }
+  }
+
+  public void testResourceRenamed() throws IOException, InterruptedException {
+    // With just 1 filter definition.
+    testResourceRenamed(Lists.newArrayList(createInclusivePathPrefixSet()));
+    // With multiple filter definitions.
+    testResourceRenamed(Lists.newArrayList(createInclusivePathPrefixSet(),
+        createInclusivePathPrefixSet(), createInclusivePathPrefixSet()));
+  }
+
+  private void testResourceRenamed(Collection<PathPrefixSet> pathPrefixSets) throws IOException,
+      InterruptedException {
+    // Create a folder with one initial file, that can be renamed.
+    File tempDir = Files.createTempDir();
+    File fileToRename = new File(tempDir, "ToRename.java");
+    fileToRename.createNewFile();
+    DirectoryClassPathEntry cpe = new DirectoryClassPathEntry(tempDir);
+
+    // Perform class path directory inspections.
+    for (PathPrefixSet pathPrefixSet : pathPrefixSets) {
+      Map<AbstractResource, ResourceResolution> foundResources =
+          cpe.findApplicableResources(TreeLogger.NULL, pathPrefixSet);
+
+      // Verify the directory is not initially empty.
+      assertEquals(1, foundResources.size());
+      assertEquals("ToRename.java", foundResources.keySet().iterator().next().getPath());
+    }
+
+    // Rename the file and give file events time to fire.
+    fileToRename.renameTo(new File(tempDir, "Renamed.java"));
+    Thread.sleep(10);
+
+    for (PathPrefixSet pathPrefixSet : pathPrefixSets) {
+      // Perform a class path directory inspection.
+      Map<AbstractResource, ResourceResolution> foundResources =
+          cpe.findApplicableResources(TreeLogger.NULL, pathPrefixSet);
+
+      // Verify the file is seen as renamed.
+      assertEquals(1, foundResources.size());
+      assertEquals("Renamed.java", foundResources.keySet().iterator().next().getPath());
+    }
   }
 
   public void testAllCpe1FilesFound() throws URISyntaxException, IOException {
@@ -170,6 +314,18 @@ public class ClassPathEntryTest extends AbstractResourceOrientedTestBase {
     }
   }
 
+  private static void awaitFullGc() throws InterruptedException {
+    Object object = new Object();
+    WeakReference<Object> objectReference = new WeakReference<Object>(object);
+    object = null;
+    System.gc();
+
+    while (objectReference.get() != null) {
+      Thread.sleep(10);
+      System.gc();
+    }
+  }
+
   // NOTE: if this test fails, ensure that the source root containing this very
   // source file is *FIRST* on the classpath
   private void testAllCpe1FilesFound(ClassPathEntry cpe1) {
@@ -197,8 +353,7 @@ public class ClassPathEntryTest extends AbstractResourceOrientedTestBase {
   private void testAllCpe2FilesFound(ClassPathEntry cpe2) {
     TreeLogger logger = createTestTreeLogger();
 
-    PathPrefixSet pps = new PathPrefixSet();
-    pps.add(new PathPrefix("", null));
+    PathPrefixSet pps = createInclusivePathPrefixSet();
     Set<AbstractResource> r = cpe2.findApplicableResources(logger, pps).keySet();
 
     assertEquals(6, r.size());
@@ -335,4 +490,9 @@ public class ClassPathEntryTest extends AbstractResourceOrientedTestBase {
     }
   }
 
+  private static PathPrefixSet createInclusivePathPrefixSet() {
+    PathPrefixSet pathPrefixes = new PathPrefixSet();
+    pathPrefixes.add(new PathPrefix("", null));
+    return pathPrefixes;
+  }
 }

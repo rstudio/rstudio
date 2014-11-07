@@ -63,8 +63,6 @@ public final class PathPrefix {
     }
   }
 
-  public static final PathPrefix ALL = new PathPrefix("", null);
-
   private final Set<String> exclusions;
   private ZipScanner exclusionScanner;
   private final List<ResourceFilter> filters;

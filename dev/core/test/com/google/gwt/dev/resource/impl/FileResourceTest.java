@@ -41,7 +41,7 @@ public class FileResourceTest extends TestCase {
 
     File dir = f.getParentFile();
     DirectoryClassPathEntry cpe = new DirectoryClassPathEntry(dir);
-    FileResource r = new FileResource(cpe, f.getName(), f);
+    FileResource r = FileResource.create(cpe, f.getName(), f);
     assertEquals(f.getAbsoluteFile().toURI().toString(), r.getLocation());
 
     /*
@@ -64,7 +64,7 @@ public class FileResourceTest extends TestCase {
 
     File dir = f.getParentFile();
     DirectoryClassPathEntry cpe = new DirectoryClassPathEntry(dir);
-    FileResource r = new FileResource(cpe, f.getName(), f);
+    FileResource r = FileResource.create(cpe, f.getName(), f);
     assertEquals(f.getAbsoluteFile().toURI().toString(), r.getLocation());
 
     /*

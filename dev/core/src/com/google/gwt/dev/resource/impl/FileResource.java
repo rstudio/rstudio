@@ -15,29 +15,54 @@
  */
 package com.google.gwt.dev.resource.impl;
 
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.WeakReference;
+import java.util.Map;
 
 /**
- * Represents a resource contained in directory on a file system.
+ * Represents a resource contained in a directory on a file system.
+ * <p>
+ * The class is immutable and automatically interned.
  */
 public class FileResource extends AbstractResource {
 
+  private static Map<String, FileResource> fileResourceByKey = Maps.newHashMap();
+
+  public static FileResource create(DirectoryClassPathEntry classPathEntry, String abstractPathName,
+      File file) {
+    // Intern the file resource.
+    String classPathLocation = classPathEntry != null ? classPathEntry.getLocation() : "null";
+    String key = classPathLocation + File.pathSeparator + abstractPathName + File.pathSeparator
+        + file.getAbsolutePath();
+    FileResource fileResource = fileResourceByKey.get(key);
+    if (fileResource == null) {
+      fileResource = new FileResource(classPathEntry, abstractPathName, file);
+      fileResourceByKey.put(key, fileResource);
+    }
+
+    return fileResource;
+  }
+
   private final String abstractPathName;
-  private final DirectoryClassPathEntry classPathEntry;
+  private final WeakReference<DirectoryClassPathEntry> classPathEntryReference;
   private final File file;
 
-  public FileResource(DirectoryClassPathEntry classPathEntry, String abstractPathName, File file) {
+  private FileResource(DirectoryClassPathEntry classPathEntry, String abstractPathName, File file) {
     assert (file.isFile()) : file + " is not a file.";
-    this.classPathEntry = classPathEntry;
+    this.classPathEntryReference = new WeakReference<DirectoryClassPathEntry>(classPathEntry);
     this.abstractPathName = abstractPathName;
     this.file = file;
   }
 
   @Override
   public DirectoryClassPathEntry getClassPathEntry() {
+    DirectoryClassPathEntry classPathEntry = classPathEntryReference.get();
+    assert classPathEntry != null;
     return classPathEntry;
   }
 
