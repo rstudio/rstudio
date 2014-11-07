@@ -143,7 +143,7 @@
       else
          functionName <- as.character(functionCall[[1]])
       
-      if (length(functionCall) > 1 && .rs.isS3Generic(object))
+      if (length(functionCall) > 1 && .rs.isS3Generic(functionName, envir))
       {
          s3methods <- .rs.getS3MethodsForFunction(functionName, envir)
          objectForDispatch <- .rs.getAnywhere(matchedCall[[2]], envir)
