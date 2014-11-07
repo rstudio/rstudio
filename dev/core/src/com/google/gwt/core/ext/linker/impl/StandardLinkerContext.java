@@ -18,6 +18,7 @@ package com.google.gwt.core.ext.linker.impl;
 import com.google.gwt.core.ext.Linker;
 import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.ConfigurationProperty;
@@ -150,7 +151,10 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     // Get all the pre-linkers first.
     for (Class<? extends Linker> linkerClass : module.getActiveLinkers()) {
       Order order = linkerClass.getAnnotation(LinkerOrder.class).value();
-      assert (order != null);
+      if (order == null) {
+        logger.log(Type.ERROR, linkerClass.getName() + " has no @LinkerOrder annotation");
+        throw new UnableToCompleteException();
+      }
       if (order == Order.PRE) {
         linkerClasses.add(linkerClass);
       }
