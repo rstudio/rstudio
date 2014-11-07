@@ -332,6 +332,16 @@
          quote <- rep.int(quote, length(results))
    }
    
+   # Favor completions starting with a letter
+   startsWithLetter <- grepl("^[a-zA-Z]", results, perl = TRUE)
+   first <- which(startsWithLetter)
+   last <- which(!startsWithLetter)
+   order <- c(first, last)
+   
+   results <- results[order]
+   packages <- packages[order]
+   quote <- quote[order]
+   
    list(token = token,
         results = results,
         packages = packages,
