@@ -135,6 +135,56 @@
    deparse(func, width.cutoff = 59, control = control)
 })
 
+.rs.addFunction("isS3Generic", function(name, env = parent.frame())
+{
+   if (name == "")
+      return(FALSE)
+   
+   if (!exists(name, envir = env))
+      return(FALSE)
+   
+   object <- get(name, envir = env)
+   
+   if (!is.function(object))
+      return(FALSE)
+   
+   if (inherits(object, "groupGenericFunction"))
+      return(TRUE)
+   
+   if (is.primitive(object))
+   {
+      knownGenerics <- c(
+         names(.knownS3Generics),
+         tools:::.get_internal_S3_generics()
+      )
+      return(name %in% known_generics)
+   }
+   
+   .rs.callsUseMethod(body(object))
+   
+})
+
+.rs.addFunction("callsUseMethod", function(x)
+{
+   if (missing(x))
+      return(FALSE)
+   
+   if (!is.call(x))
+      return(FALSE)
+   
+   if (identical(x[[1]], quote(UseMethod)))
+      return(TRUE)
+   
+   if (length(x) == 1)
+      return(FALSE)
+   
+   for (arg in as.list(x[-1]))
+      if (.rs.callsUseMethod(arg))
+         return(TRUE)
+   
+   FALSE
+})
+
 .rs.addFunction("getS3MethodsForFunction", function(func, envir = parent.frame())
 {
   tryCatch({

@@ -143,9 +143,9 @@
       else
          functionName <- as.character(functionCall[[1]])
       
-      s3methods <- .rs.getS3MethodsForFunction(functionName, envir)
-      if (length(s3methods) && length(functionCall) > 1)
+      if (length(functionCall) > 1 && .rs.isS3Generic(object))
       {
+         s3methods <- .rs.getS3MethodsForFunction(functionName, envir)
          objectForDispatch <- .rs.getAnywhere(matchedCall[[2]], envir)
          classes <- class(objectForDispatch)
          
@@ -331,10 +331,10 @@
                                             excludeOtherCompletions = FALSE,
                                             overrideInsertParens = FALSE)
 {
-   if (length(packages) <= 1)
+   if (length(packages) <= 1 && length(results) > 1)
       packages <- rep.int(packages, length(results))
    
-   if (length(quote) <= 1)
+   if (length(quote) <= 1 && length(results) > 1)
       quote <- rep.int(quote, length(results))
    
    list(token = token,
