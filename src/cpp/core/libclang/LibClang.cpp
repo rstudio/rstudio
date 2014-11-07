@@ -55,12 +55,8 @@ std::vector<std::string> systemClangVersions()
 #else
    clangVersions.push_back("/usr/lib/llvm/libclang.so");
    clangVersions.push_back("/usr/lib64/llvm/libclang.so");
-   clangVersions.push_back("/usr/lib/x86_64-linux-gnu/libclang-3.5.so.1");
-   clangVersions.push_back("/usr/lib/x86_64-linux-gnu/libclang-3.4.so.1");
-   clangVersions.push_back("/usr/lib/x86_64-linux-gnu/libclang.so.1");
-   clangVersions.push_back("/usr/lib/i386-linux-gnu/libclang-3.5.so.1");
-   clangVersions.push_back("/usr/lib/i386-linux-gnu/libclang-3.4.so.1");
-   clangVersions.push_back("/usr/lib/i386-linux-gnu/libclang.so.1");
+   clangVersions.push_back("/usr/lib/llvm-3.5/lib/libclang.so.1");
+   clangVersions.push_back("/usr/lib/llvm-3.4/lib/libclang.so.1");
 #endif
 #endif
 
