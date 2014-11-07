@@ -806,6 +806,22 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
    return args;
 }
 
+core::libclang::CompilationDatabase rCompilationDatabase()
+{
+   static RCompilationDatabase instance;
+
+   CompilationDatabase compilationDatabase;
+   compilationDatabase.compileArgsForTranslationUnit =
+      boost::bind(&RCompilationDatabase::compileArgsForTranslationUnit,
+                  &instance, _1);
+   compilationDatabase.translationUnits =
+      boost::bind(&RCompilationDatabase::translationUnits,
+                  &instance);
+
+   return compilationDatabase;
+}
+
+
 } // namespace clang
 } // namespace modules
 } // namesapce session

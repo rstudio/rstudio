@@ -46,6 +46,8 @@ public:
 
    Cursor getCannonical() const;
 
+   std::string getUSR() const;
+
    SourceLocation getSourceLocation() const;
 
    bool isNull() const;

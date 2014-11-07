@@ -48,6 +48,11 @@ Cursor Cursor::getCannonical() const
    return Cursor(clang().getCanonicalCursor(cursor()));
 }
 
+std::string Cursor::getUSR() const
+{
+   return toStdString(clang().getCursorUSR(cursor()));
+}
+
 SourceLocation Cursor::getSourceLocation() const
 {
    return SourceLocation(clang().getCursorLocation(cursor()));

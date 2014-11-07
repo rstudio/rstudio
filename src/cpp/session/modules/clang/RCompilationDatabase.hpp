@@ -28,6 +28,8 @@
 #include <core/system/Process.hpp>
 #include <core/system/Environment.hpp>
 
+#include <core/libclang/LibClang.hpp>
+
 namespace session {
 namespace modules {      
 namespace clang {
@@ -95,6 +97,8 @@ private:
    CompilationConfig packageCompilationConfig_;
    bool usePrecompiledHeaders_;
 };
+
+core::libclang::CompilationDatabase rCompilationDatabase();
 
 
 } // namespace clang
