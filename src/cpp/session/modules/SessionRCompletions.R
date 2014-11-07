@@ -325,17 +325,24 @@
 
 .rs.addFunction("makeCompletions", function(token,
                                             results,
-                                            packages = "",
-                                            quote = FALSE,
+                                            packages = character(),
+                                            quote = logical(),
                                             fguess = "",
                                             excludeOtherCompletions = FALSE,
                                             overrideInsertParens = FALSE)
 {
-   if (length(packages) <= 1 && length(results) > 1)
-      packages <- rep.int(packages, length(results))
-   
-   if (length(quote) <= 1 && length(results) > 1)
-      quote <- rep.int(quote, length(results))
+   if (length(results) > 0)
+   {
+      if (length(packages) == 0)
+         packages <- rep.int("", length(results))
+      else if (length(packages) == 1)
+         packages <- rep.int(packages, length(results))
+      
+      if (length(quote) == 0)
+         quote <- rep.int(FALSE, length(results))
+      else if (length(quote) == 1)
+         quote <- rep.int(packages, length(results))
+   }
    
    list(token = token,
         results = results,
@@ -745,6 +752,7 @@ utils:::rc.settings(files = TRUE)
    if (is.null(completions$quote))
       completions$quote <- logical(length(completions$results))
    
+   print(completions)
    completions
    
 })
