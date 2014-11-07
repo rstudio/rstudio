@@ -341,7 +341,7 @@
       if (length(quote) == 0)
          quote <- rep.int(FALSE, length(results))
       else if (length(quote) == 1)
-         quote <- rep.int(packages, length(results))
+         quote <- rep.int(quote, length(results))
    }
    
    list(token = token,
@@ -497,6 +497,14 @@
    {
       if (numCommas + 1 <= length(dn))
          completions <- dimnames(object)[[numCommas + 1]]
+      
+      string <- if (numCommas == 0)
+         paste("rownames(", string, ")", sep = "")
+      else if (numCommas == 1)
+         paste("colnames(", string, ")", sep = "")
+      else
+         paste("dimnames(", string, ")[", numCommas + 1, "]", sep = "")
+      
    }
    else if (inherits(object, "data.table"))
    {
@@ -562,14 +570,17 @@
    
 })
 
-.rs.addFunction("getCompletionsPackages", function(token)
+.rs.addFunction("getCompletionsPackages", function(token, appendColons = FALSE)
 {
    allPackages <- Reduce(union, lapply(.libPaths(), list.files))
    completions <- .rs.selectStartsWith(allPackages, token)
    .rs.makeCompletions(token,
+                       if (appendColons && length(completions))
+                          paste(completions, "::", sep = "")
+                       else
+                          completions,
                        completions,
-                       completions,
-                       quote = TRUE,
+                       quote = !appendColons,
                        excludeOtherCompletions = TRUE)
 })
 
@@ -714,6 +725,12 @@ utils:::rc.settings(files = TRUE)
       completions,
       .rs.getInternalRCompletions(token, TYPES$FILE %in% type)
    )
+   
+   if (length(type) == 1 && type == TYPES$UNKNOWN)
+      completions <- .rs.appendCompletions(
+         completions,
+         .rs.getCompletionsPackages(token, TRUE)
+      )
    
    ## If the caller has supplied information about chain completions (e.g.
    ## for completions from

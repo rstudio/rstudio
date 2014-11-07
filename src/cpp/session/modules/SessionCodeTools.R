@@ -402,3 +402,11 @@
    }
    .rs.scalar(!is.null(object) && is.function(object))
 })
+
+.rs.addFunction("objectsOnSearchPath", function(token)
+{
+   search <- search()
+   setNames(lapply(1:length(search()), function(i) {
+      ls(pos = i, all.names = TRUE, pattern = paste("^", token, sep = ""))
+   }), search)
+})
