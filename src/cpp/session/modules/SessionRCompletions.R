@@ -124,26 +124,14 @@
 
 .rs.addFunction("resolveFormals", function(token,
                                            object,
+                                           functionName,
                                            functionCall,
                                            matchedCall,
                                            envir)
 {
    tryCatch({
       
-      parent <- functionCall
-      node <- functionCall[[1]]
-      while (!is.symbol(node))
-      {
-         parent <- node
-         node <- parent[[1]]
-      }
-      
-      if (as.character(node) %in% c("::", ":::"))
-         functionName <- as.character(functionCall[[1]][[3]])
-      else
-         functionName <- as.character(functionCall[[1]])
-      
-      if (length(functionCall) > 1 && .rs.isS3Generic(functionName, envir))
+      if (length(functionCall) > 1 && .rs.isS3Generic(object))
       {
          s3methods <- .rs.getS3MethodsForFunction(functionName, envir)
          objectForDispatch <- .rs.getAnywhere(matchedCall[[2]], envir)
@@ -157,11 +145,6 @@
             {
                formals <- .rs.getFunctionArgumentNames(method)
                methods <- rep.int(methodName, length(formals))
-               if (length(parent) > 1)
-               {
-                  formals <- formals[-1]
-                  methods <- methods[-1]
-               }
                break
             }
          }
@@ -243,7 +226,12 @@
    if (!is.null(object) && is.function(object))
    {
       matchedCall <- .rs.matchCall(object, functionCall)
-      formals <- .rs.resolveFormals(token, object, functionCall, matchedCall, envir)
+      formals <- .rs.resolveFormals(token,
+                                    object,
+                                    string,
+                                    functionCall,
+                                    matchedCall,
+                                    envir)
       
       if (length(formals$formals))
          formals$formals <- paste(formals$formals, "= ")
@@ -456,7 +444,11 @@
    evaled <- suppressWarnings(eval(parsed, envir = envir))
    if (!is.null(evaled))
    {
-      names <- .rs.getNames(evaled)
+      names <- if (S4)
+         slotNames(evaled)
+      else
+         .rs.getNames(evaled)
+      
       completions <- .rs.selectStartsWith(names, token)
       result <- .rs.makeCompletions(
          token,
@@ -598,7 +590,6 @@
    packages <- unlist(lapply(1:length(objects), function(i) {
       rep.int(names[i], length(objects[[i]]))
    }))
-   packages <- gsub("\\.GlobalEnv", "", packages)
    
    .rs.makeCompletions(token,
                        results,
@@ -797,6 +788,7 @@ utils:::rc.settings(files = TRUE)
    
    completions$excludeOtherCompletions <- .rs.scalar(type[[1]] %in% c(
       TYPES$DOLLAR,
+      TYPES$AT,
       TYPES$NAMESPACE_EXPORTED,
       TYPES$NAMESPACE_ALL
    ))
@@ -963,12 +955,11 @@ utils:::rc.settings(files = TRUE)
                                             TYPES)
 {   
    
-   if (type == TYPES$DOLLAR || type == TYPES$AT)
-      return(.rs.getCompletionsDollar(token, string, envir, type == TYPES$AT))
+   if (type %in% c(TYPES$DOLLAR, TYPES$AT))
+      .rs.getCompletionsDollar(token, string, envir, type == TYPES$AT)
    else if (type %in% c(TYPES$NAMESPACE_EXPORTED, TYPES$NAMESPACE_ALL))
-      return(.rs.getCompletionsNamespace(token, string, type == TYPES$NAMESPACE_EXPORTED, envir))
-   
-   if (type == TYPES$FUNCTION)
+      .rs.getCompletionsNamespace(token, string, type == TYPES$NAMESPACE_EXPORTED, envir)
+   else if (type == TYPES$FUNCTION)
       .rs.getCompletionsFunction(token, string, functionCall, discardFirst, envir)
    else if (type == TYPES$SINGLE_BRACKET)
       .rs.getCompletionsSingleBracket(token, string, numCommas, envir)

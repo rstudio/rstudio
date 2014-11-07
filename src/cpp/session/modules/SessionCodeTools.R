@@ -141,30 +141,13 @@
    deparse(func, width.cutoff = 59, control = control)
 })
 
-.rs.addFunction("isS3Generic", function(name, env = parent.frame())
+.rs.addFunction("isS3Generic", function(object)
 {
-   if (name == "")
-      return(FALSE)
-   
-   if (!exists(name, envir = env))
-      return(FALSE)
-   
-   object <- get(name, envir = env)
-   
    if (!is.function(object))
       return(FALSE)
    
    if (inherits(object, "groupGenericFunction"))
       return(TRUE)
-   
-   if (is.primitive(object))
-   {
-      knownGenerics <- c(
-         names(.knownS3Generics),
-         tools:::.get_internal_S3_generics()
-      )
-      return(name %in% known_generics)
-   }
    
    .rs.callsUseMethod(body(object))
    
