@@ -710,6 +710,11 @@ utils:::rc.settings(files = TRUE)
       )
    }
    
+   completions <- .rs.appendCompletions(
+      completions,
+      .rs.getInternalRCompletions(token, TYPES$FILE %in% type)
+   )
+   
    ## If the caller has supplied information about chain completions (e.g.
    ## for completions from
    ##
@@ -917,19 +922,13 @@ utils:::rc.settings(files = TRUE)
    else if (type %in% c(TYPES$NAMESPACE_EXPORTED, TYPES$NAMESPACE_ALL))
       return(.rs.getCompletionsNamespace(token, string, type == TYPES$NAMESPACE_EXPORTED, envir))
    
-   ourCompletions <-
-      if (type == TYPES$FUNCTION)
-         .rs.getCompletionsFunction(token, string, functionCall, discardFirst, envir)
+   if (type == TYPES$FUNCTION)
+      .rs.getCompletionsFunction(token, string, functionCall, discardFirst, envir)
    else if (type == TYPES$SINGLE_BRACKET)
       .rs.getCompletionsSingleBracket(token, string, numCommas, envir)
    else if (type == TYPES$DOUBLE_BRACKET)
       .rs.getCompletionsDoubleBracket(token, string, envir)
    else
       .rs.emptyCompletions()
-   
-   internalRCompletions <- .rs.getInternalRCompletions(token, type == TYPES$FILE)
-   
-   .rs.appendCompletions(ourCompletions,
-                         internalRCompletions)
    
 })
