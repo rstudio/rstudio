@@ -8,6 +8,6 @@ using namespace Rcpp;
 // For more on using Rcpp click the Help button on the editor toolbar
 
 // [[Rcpp::export]]
-int timesTwo(int x) {
-   return x * 2;
+NumericVector timesTwo(NumericVector x) {
+  return x * 2;
 }
