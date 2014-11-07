@@ -63,6 +63,8 @@ import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionConte
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 
 public class RCompletionManager implements CompletionManager
@@ -509,9 +511,9 @@ public class RCompletionManager implements CompletionManager
       
       public AutoCompletionContext(
             String token,
-            ArrayList<String> assocData,
-            ArrayList<Integer> dataType,
-            ArrayList<Integer> numCommas,
+            List<String> assocData,
+            List<Integer> dataType,
+            List<Integer> numCommas,
             String functionCallString)
       {
          token_ = token;
@@ -529,7 +531,8 @@ public class RCompletionManager implements CompletionManager
          token_ = token;
          assocData_ = assocData;
          dataType_ = dataType;
-         numCommas_.add(0);
+         numCommas_ = Arrays.asList(0);
+         functionCallString_ = "";
       }
       
       public AutoCompletionContext(
@@ -538,9 +541,10 @@ public class RCompletionManager implements CompletionManager
             int dataType)
       {
          token_ = token;
-         assocData_.add(assocData);
-         dataType_.add(dataType);
-         numCommas_.add(0);
+         assocData_ = Arrays.asList(assocData);
+         dataType_ = Arrays.asList(dataType);
+         numCommas_ = Arrays.asList(0);
+         functionCallString_ = "";
       }
       
       
@@ -549,9 +553,10 @@ public class RCompletionManager implements CompletionManager
             int dataType)
       {
          token_ = token;
-         assocData_.add("");
-         dataType_.add(dataType);
-         numCommas_.add(0);
+         assocData_ = Arrays.asList("");
+         dataType_ = Arrays.asList(dataType);
+         numCommas_ = Arrays.asList(0);
+         functionCallString_ = "";
       }
       
       public String getToken()
@@ -559,17 +564,17 @@ public class RCompletionManager implements CompletionManager
          return token_;
       }
       
-      public ArrayList<String> getAssocData()
+      public List<String> getAssocData()
       {
          return assocData_;
       }
       
-      public ArrayList<Integer> getDataType()
+      public List<Integer> getDataType()
       {
          return dataType_;
       }
       
-      public ArrayList<Integer> getNumCommas()
+      public List<Integer> getNumCommas()
       {
          return numCommas_;
       }
@@ -579,11 +584,11 @@ public class RCompletionManager implements CompletionManager
          return functionCallString_;
       }
 
-      private String token_ = "";
-      private ArrayList<String> assocData_ = new ArrayList<String>();
-      private ArrayList<Integer> dataType_ = new ArrayList<Integer>();
-      private ArrayList<Integer> numCommas_ = new ArrayList<Integer>();
-      private String functionCallString_ = "";
+      private final String token_;
+      private final List<String> assocData_;
+      private final List<Integer> dataType_;
+      private final List<Integer> numCommas_;
+      private final String functionCallString_;
       
    }
 

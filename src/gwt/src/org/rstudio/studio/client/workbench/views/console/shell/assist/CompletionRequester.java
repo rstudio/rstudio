@@ -43,6 +43,7 @@ import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionConte
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 
@@ -199,9 +200,9 @@ public class CompletionRequester
    
    public void getCompletions(
          final String token,
-         final ArrayList<String> assocData,
-         final ArrayList<Integer> dataType,
-         final ArrayList<Integer> numCommas,
+         final List<String> assocData,
+         final List<Integer> dataType,
+         final List<Integer> numCommas,
          final String functionCallString,
          final String chainDataName,
          final JsArrayString chainAdditionalArgs,
@@ -418,9 +419,9 @@ public class CompletionRequester
 
    private void doGetCompletions(
          final String token,
-         final ArrayList<String> assocData,
-         final ArrayList<Integer> dataType,
-         final ArrayList<Integer> numCommas,
+         final List<String> assocData,
+         final List<Integer> dataType,
+         final List<Integer> numCommas,
          final String functionCallString,
          final String chainObjectName,
          final JsArrayString chainAdditionalArgs,

@@ -14,7 +14,7 @@
  */
 package org.rstudio.studio.client.common.codetools;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
@@ -34,9 +34,9 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
    
    void getCompletions(
          String token,
-         ArrayList<String> assocData,
-         ArrayList<Integer> dataType,
-         ArrayList<Integer> numCommas,
+         List<String> assocData,
+         List<Integer> dataType,
+         List<Integer> numCommas,
          String chainObjectName,
          String functionCallString,
          JsArrayString chainAdditionalArgs,

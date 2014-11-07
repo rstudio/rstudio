@@ -273,7 +273,7 @@ public class RemoteServer implements Server
       params.set(index, array);
    }
    
-   private void setArrayNumber(JSONArray params, int index, ArrayList<Integer> what) {
+   private void setArrayNumber(JSONArray params, int index, List<Integer> what) {
       JSONArray array = new JSONArray();
       for (int i = 0; i < what.size(); i++)
          array.set(i, new JSONNumber(what.get(i)));
@@ -637,9 +637,9 @@ public class RemoteServer implements Server
    
    public void getCompletions(
          String token,
-         ArrayList<String> assocData,
-         ArrayList<Integer> dataType,
-         ArrayList<Integer> numCommas,
+         List<String> assocData,
+         List<Integer> dataType,
+         List<Integer> numCommas,
          String chainObjectName,
          String functionCallString,
          JsArrayString additionalArgs,
