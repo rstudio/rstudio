@@ -19,16 +19,15 @@ cmake_policy(SET CMP0020 OLD)
 
 project(DESKTOP)
 
-# require Qt 5.3.2
-set(QT_VERSION "5.3.2")
-set(QT_VERSION_SUBDIR "5.3")
+# require Qt 5.4
+set(QT_VERSION "5.4.0")
+set(QT_VERSION_SUBDIR "5.4")
 
 # on unix prefer qtsdk installs over system-level libraries. note this
 # can be overriden by defining QT_QMAKE_EXECUTABLE when invoking cmake
 if(NOT WIN32)
    # prefer rstudio qtsdk install then home qtsdk install
    if(NOT QT_QMAKE_EXECUTABLE)
-      set(QT_VERSION "5.3.2")
       if(APPLE)
          set(QT_COMPILER "clang_64")
       else()
@@ -472,12 +471,12 @@ if(RSTUDIO_BUNDLE_QT)
                        ${QT_LIBRARY_DIR}/libQt5Sql.so.${QT_FULL_VERSION}
                        ${QT_LIBRARY_DIR}/libQt5OpenGL.so.5
                        ${QT_LIBRARY_DIR}/libQt5OpenGL.so.${QT_FULL_VERSION}
-                       ${QT_LIBRARY_DIR}/libicui18n.so.52
-                       ${QT_LIBRARY_DIR}/libicui18n.so.52.1
-                       ${QT_LIBRARY_DIR}/libicuuc.so.52
-                       ${QT_LIBRARY_DIR}/libicuuc.so.52.1
-                       ${QT_LIBRARY_DIR}/libicudata.so.52
-                       ${QT_LIBRARY_DIR}/libicudata.so.52.1
+                       ${QT_LIBRARY_DIR}/libicui18n.so.53
+                       ${QT_LIBRARY_DIR}/libicui18n.so.53.1
+                       ${QT_LIBRARY_DIR}/libicuuc.so.53
+                       ${QT_LIBRARY_DIR}/libicuuc.so.53.1
+                       ${QT_LIBRARY_DIR}/libicudata.so.53
+                       ${QT_LIBRARY_DIR}/libicudata.so.53.1
               DESTINATION ${RSTUDIO_INSTALL_BIN})
    # copy qt dlls directly to bin on win32
    elseif(WIN32)
