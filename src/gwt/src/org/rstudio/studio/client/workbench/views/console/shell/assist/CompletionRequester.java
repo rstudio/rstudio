@@ -240,17 +240,14 @@ public class CompletionRequester
             JsArrayBoolean quote = response.getQuote();
             ArrayList<QualifiedName> newComp = new ArrayList<QualifiedName>();
             
-            // Try getting our own function argument completions
-            addFunctionArgumentCompletions(token, newComp);
-            
             // Get function argument completions from R
             for (int i = 0; i < comp.length(); i++)
             {
-               if (comp.get(i).matches(".*=\\s*$"))
-               {
-                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i)));
-               }
+               newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i)));
             }
+            
+            // Try getting our own function argument completions
+            addFunctionArgumentCompletions(token, newComp);
             
             // Get variable completions from the current scope
             if (!response.getExcludeOtherCompletions())
@@ -259,21 +256,9 @@ public class CompletionRequester
                addScopedCompletions(token, newComp, "variable");
             }
             
-            // Get other completions
-            for (int i = 0; i < comp.length(); i++)
-            {
-               if (!comp.get(i).matches(".*=\\s*$"))
-               {
-                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i)));
-               }
-            }
-            
             // Get function completions from the current scope
             if (!response.getExcludeOtherCompletions())
                addScopedCompletions(token, newComp, "function");
-            
-            // Resolve duplicates
-            newComp = withoutDupes(newComp);
             
             CompletionResult result = new CompletionResult(
                   response.getToken(),
@@ -290,6 +275,7 @@ public class CompletionRequester
       }) ;
    }
    
+   @SuppressWarnings("unused")
    private ArrayList<QualifiedName> withoutDupes(ArrayList<QualifiedName> completions)
    {
       Set<String> names = new HashSet<String>();
