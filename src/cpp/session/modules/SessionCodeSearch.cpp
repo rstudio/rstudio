@@ -45,6 +45,7 @@
 #include <session/projects/SessionProjects.hpp>
 
 #include "SessionSource.hpp"
+#include "clang/DefinitionIndex.hpp"
 
 using namespace core ;
 
@@ -63,20 +64,11 @@ bool isGlobalFunctionNamed(const r_util::RSourceItem& sourceItem,
           sourceItem.name() == name;
 }
 
-boost::regex regexFromTerm(const std::string& term)
-{
-   // create wildcard pattern if the search has a '*'
-   bool hasWildcard = term.find('*') != std::string::npos;
-   boost::regex pattern;
-   if (hasWildcard)
-      pattern = regex_utils::wildcardPatternToRegex(term);
-   return pattern;
-}
-
 // return if we are past max results
+template <typename T>
 bool enforceMaxResults(std::size_t maxResults,
-                        json::Array* pNames,
-                        json::Array* pPaths,
+                        T* pNames,
+                        T* pPaths,
                         bool* pMoreAvailable)
 {
    if (pNames->size() > maxResults)
@@ -230,18 +222,19 @@ public:
       }
    }
 
+   template <typename T>
    void searchFiles(const std::string& term,
                     std::size_t maxResults,
                     bool prefixOnly,
-                    json::Array* pNames,
-                    json::Array* pPaths,
+                    T* pNames,
+                    T* pPaths,
                     bool* pMoreAvailable)
    {
       // default to no more available
       *pMoreAvailable = false;
 
       // create wildcard pattern if the search has a '*'
-      boost::regex pattern = regexFromTerm(term);
+      boost::regex pattern = regex_utils::regexIfWildcardPattern(term);
 
       // iterate over the files
       BOOST_FOREACH(const Entry& entry, entries_)
@@ -264,7 +257,7 @@ public:
             if (prefixOnly)
                matches = boost::algorithm::istarts_with(name, term);
             else
-               matches = boost::algorithm::icontains(name, term);
+               matches = string_utils::isSubsequence(name, term, true);
          }
 
          // add the file if we found a match
@@ -429,24 +422,8 @@ private:
       FilePath filePath(fileInfo.absolutePath());
 
       // screen directories
-      if (projects::projectContext().hasProject())
-      {
-         // if we are in a package project then screen our src- files
-         if (projects::projectContext().config().buildType ==
-                                                 r_util::kBuildTypePackage)
-         {
-             FilePath pkgPath = projects::projectContext().buildTargetPath();
-             std::string pkgRelative = filePath.relativePath(pkgPath);
-             if (boost::algorithm::starts_with(pkgRelative, "src-"))
-                return false;
-         }
-
-         // screen the packrat directory
-         FilePath projPath = projects::projectContext().directory();
-         std::string pkgRelative = filePath.relativePath(projPath);
-         if (boost::algorithm::starts_with(pkgRelative, "packrat/"))
-            return false;
-      }
+      if (!module_context::isUserFile(filePath))
+         return false;
 
       // filter files by name and extension
       std::string ext = filePath.extensionLowerCase();
@@ -457,6 +434,7 @@ private:
                ext == ".rhtml" || ext == ".rd" ||
                ext == ".h" || ext == ".hpp" ||
                ext == ".c" || ext == ".cpp" ||
+               ext == ".json" ||
                filename == "DESCRIPTION" ||
                filename == "NAMESPACE" ||
                filename == "README" ||
@@ -488,6 +466,77 @@ private:
 SourceFileIndex s_projectIndex;
 
 
+// maintain an in-memory list of R source document indexes (for fast
+// code searching)
+class RSourceIndexes : boost::noncopyable
+{
+public:
+   RSourceIndexes() {}
+   virtual ~RSourceIndexes() {}
+
+   // COPYING: boost::noncopyable
+
+   void initialize()
+   {
+      source_database::events().onDocUpdated.connect(
+                              boost::bind(&RSourceIndexes::update, this, _1));
+      source_database::events().onDocRemoved.connect(
+                              boost::bind(&RSourceIndexes::remove, this, _1));
+      source_database::events().onRemoveAll.connect(
+                              boost::bind(&RSourceIndexes::removeAll, this));
+   }
+
+   void update(boost::shared_ptr<session::source_database::SourceDocument> pDoc)
+   {
+      // is this indexable? if not then bail
+      if ( pDoc->path().empty() ||
+           (FilePath(pDoc->path()).extensionLowerCase() != ".r") )
+      {
+         return;
+      }
+
+      // index the source
+      boost::shared_ptr<r_util::RSourceIndex> pIndex(
+                 new r_util::RSourceIndex(pDoc->path(), pDoc->contents()));
+
+      // insert it
+      indexes_[pDoc->id()] = pIndex;
+   }
+
+   void remove(const std::string& id)
+   {
+      indexes_.erase(id);
+   }
+
+   void removeAll()
+   {
+      indexes_.clear();
+   }
+
+   std::vector<boost::shared_ptr<r_util::RSourceIndex> > indexes()
+   {
+      std::vector<boost::shared_ptr<r_util::RSourceIndex> > indexes;
+      BOOST_FOREACH(const IndexMap::value_type& index, indexes_)
+      {
+         indexes.push_back(index.second);
+      }
+      return indexes;
+   }
+
+private:
+   typedef std::map<std::string, boost::shared_ptr<r_util::RSourceIndex> >
+                                                                    IndexMap;
+   IndexMap indexes_;
+};
+
+RSourceIndexes& rSourceIndex()
+{
+   static RSourceIndexes instance;
+   return instance;
+}
+
+
+
 // if we have a project active then restrict results to the project
 bool sourceDatabaseFilter(const r_util::RSourceIndex& index)
 {
@@ -509,11 +558,11 @@ bool findGlobalFunctionInSourceDatabase(
                         std::set<std::string>* pContextsSearched)
 {
    // get all of the source indexes
-   std::vector<boost::shared_ptr<r_util::RSourceIndex> > rIndexes =
-                                             modules::source::rIndexes();
+   std::vector<boost::shared_ptr<r_util::RSourceIndex> > indexes =
+                                                   rSourceIndex().indexes();
 
    std::vector<r_util::RSourceItem> sourceItems;
-   BOOST_FOREACH(boost::shared_ptr<r_util::RSourceIndex>& pIndex, rIndexes)
+   BOOST_FOREACH(boost::shared_ptr<r_util::RSourceIndex>& pIndex, indexes)
    {
       // apply the filter
       if (!sourceDatabaseFilter(*pIndex))
@@ -547,10 +596,10 @@ void searchSourceDatabase(const std::string& term,
                           std::set<std::string>* pContextsSearched)
 {
    // get all of the source indexes
-   std::vector<boost::shared_ptr<r_util::RSourceIndex> > rIndexes =
-                                             modules::source::rIndexes();
+   std::vector<boost::shared_ptr<r_util::RSourceIndex> > indexes
+                                                = rSourceIndex().indexes();
 
-   BOOST_FOREACH(boost::shared_ptr<r_util::RSourceIndex>& pIndex, rIndexes)
+   BOOST_FOREACH(boost::shared_ptr<r_util::RSourceIndex>& pIndex, indexes)
    {
       // apply the filter
       if (!sourceDatabaseFilter(*pIndex))
@@ -573,6 +622,8 @@ void searchSourceDatabase(const std::string& term,
       }
    }
 }
+
+} // end anonymous namespace
 
 void searchSource(const std::string& term,
                   std::size_t maxResults,
@@ -622,23 +673,26 @@ void searchSource(const std::string& term,
    }
 }
 
+namespace {
+
+template <typename T>
 void searchSourceDatabaseFiles(const std::string& term,
                                std::size_t maxResults,
-                               json::Array* pNames,
-                               json::Array* pPaths,
+                               T* pNames,
+                               T* pPaths,
                                bool* pMoreAvailable)
 {
    // default to no more available
    *pMoreAvailable = false;
 
    // create wildcard pattern if the search has a '*'
-   boost::regex pattern = regexFromTerm(term);
+   boost::regex pattern = regex_utils::regexIfWildcardPattern(term);
 
    // get all of the source indexes
-   std::vector<boost::shared_ptr<r_util::RSourceIndex> > rIndexes =
-                                             modules::source::rIndexes();
+   std::vector<boost::shared_ptr<r_util::RSourceIndex> > indexes =
+                                                   rSourceIndex().indexes();
 
-   BOOST_FOREACH(boost::shared_ptr<r_util::RSourceIndex>& pIndex, rIndexes)
+   BOOST_FOREACH(boost::shared_ptr<r_util::RSourceIndex>& pIndex, indexes)
    {
       // bail if there is no path
       std::string context = pIndex->context();
@@ -660,7 +714,7 @@ void searchSourceDatabaseFiles(const std::string& term,
       }
       else
       {
-         matches = boost::algorithm::istarts_with(filename, term);
+         matches = string_utils::isSubsequence(filename, term);
       }
 
       // add the file if we found a match
@@ -678,10 +732,11 @@ void searchSourceDatabaseFiles(const std::string& term,
    }
 }
 
+template <typename T>
 void searchFiles(const std::string& term,
                  std::size_t maxResults,
-                 json::Array* pNames,
-                 json::Array* pPaths,
+                 T* pNames,
+                 T* pPaths,
                  bool* pMoreAvailable)
 {
    // if we have a file monitor then search the project index
@@ -689,7 +744,7 @@ void searchFiles(const std::string& term,
    {
       s_projectIndex.searchFiles(term,
                                  maxResults,
-                                 true,
+                                 false,
                                  pNames,
                                  pPaths,
                                  pMoreAvailable);
@@ -705,9 +760,253 @@ void searchFiles(const std::string& term,
 }
 
 
+// NOTE: When modifying this code, you should ensure that corresponding
+// changes are made to the client side scoreMatch function as well
+// (See: CodeSearchOracle.java)
+int scoreMatch(std::string const& suggestion,
+               std::string const& query,
+               bool isFile)
+{
+   // No penalty for perfect matches
+   if (suggestion == query)
+      return 0;
+   
+   int query_n = query.length();
+
+   int result = 0;
+
+   // Get query matches in suggestion (ordered)
+   // Note: we have already guaranteed this to be a subsequence so
+   // this will succeed
+   std::vector<int> matches = string_utils::subsequenceIndices(
+            boost::algorithm::to_lower_copy(suggestion),
+            boost::algorithm::to_lower_copy(query));
+
+   // Loop over the matches and assign a score
+   for (int j = 0; j < query_n; j++)
+   {
+      int matchPos = matches[j];
+
+      // Less penalty if character follows special delim
+      if (matchPos >= 1)
+      {
+         char prevChar = suggestion[matchPos - 1];
+         if (prevChar == '_' || prevChar == '-' || (!isFile && prevChar == '.'))
+         {
+            matchPos = j + 1;
+         }
+      }
+      
+      // More penalty for 'uninteresting' files (e.g. .Rd)
+      std::string extension = string_utils::getExtension(suggestion);
+      if (boost::algorithm::to_lower_copy(extension) == ".rd")
+         matchPos += 3;
+
+      result += matchPos;
+   }
+   
+   // Penalize files
+   if (isFile)
+      ++result;
+
+   return result;
+}
+
+struct ScorePairComparator
+{
+   inline bool operator()(const std::pair<int, int> lhs,
+                          const std::pair<int, int> rhs)
+   {
+      return lhs.second < rhs.second;
+   }
+};
+
+void filterScores(std::vector< std::pair<int, int> >* pScore1,
+                  std::vector< std::pair<int, int> >* pScore2,
+                  int maxAmount)
+{
+   int s1_n = pScore1->size();
+   int s2_n = pScore2->size();
+
+   int s1Count = 0;
+   int s2Count = 0;
+
+   for (int i = 0; i < maxAmount; ++i)
+   {
+      if (s1Count == s1_n)
+      {
+         if (s2Count < s2_n)
+         {
+            ++s2Count;
+         }
+         continue;
+      }
+      if (s2Count == s2_n)
+      {
+         if (s1Count < s1_n)
+         {
+            ++s1Count;
+         }
+         continue;
+      }
+
+      if ((*pScore1)[s1Count].second <= (*pScore2)[s2Count].second)
+      {
+         ++s1Count;
+      }
+      else
+      {
+         ++s2Count;
+      }
+   }
+
+   pScore1->resize(s1Count);
+   pScore2->resize(s2Count);
+
+}
+
+// uniform representation of source items (spans R and C++, maps to
+// SourceItem class on the client side)
+class SourceItem
+{
+public:
+   enum Type
+   {
+      None = 0,
+      Function = 1,
+      Method = 2,
+      Class = 3,
+      Enum = 4,
+      Namespace = 5
+   };
+
+   SourceItem()
+      : type_(None), line_(-1), column_(-1)
+   {
+   }
+
+   SourceItem(Type type,
+              const std::string& name,
+              const std::string& extraInfo,
+              const std::string& context,
+              int line,
+              int column)
+      : type_(type),
+        name_(name),
+        extraInfo_(extraInfo),
+        context_(context),
+        line_(line),
+        column_(column)
+   {
+   }
+
+   bool empty() const { return type_ == None; }
+
+   Type type() const { return type_; }
+   const std::string& name() const { return name_; }
+   const std::string& extraInfo() const { return extraInfo_; }
+   const std::string& context() const { return context_; }
+   int line() const { return line_; }
+   int column() const { return column_; }
+
+private:
+   Type type_;
+   std::string name_;
+   std::string extraInfo_;
+   std::string context_;
+   int line_;
+   int column_;
+};
+
+SourceItem fromRSourceItem(const r_util::RSourceItem& rSourceItem)
+{
+   // calculate type
+   using namespace r_util;
+   SourceItem::Type type = SourceItem::None;
+   switch(rSourceItem.type())
+   {
+   case RSourceItem::Function:
+      type = SourceItem::Function;
+      break;
+   case RSourceItem::Method:
+      type = SourceItem::Method;
+      break;
+   case RSourceItem::Class:
+      type = SourceItem::Class;
+      break;
+   case RSourceItem::None:
+   default:
+      type = SourceItem::None;
+      break;
+   }
+
+   // calcluate extra info
+   std::string extraInfo;
+   if (rSourceItem.signature().size() > 0)
+   {
+      extraInfo.append("{");
+      for (std::size_t i = 0; i<rSourceItem.signature().size(); i++)
+      {
+         if (i > 0)
+            extraInfo.append(", ");
+         extraInfo.append(rSourceItem.signature()[i].type());
+      }
+
+      extraInfo.append("}");
+   }
+
+   // return source item
+   return SourceItem(type,
+                     rSourceItem.name(),
+                     extraInfo,
+                     rSourceItem.context(),
+                     rSourceItem.line(),
+                     rSourceItem.column());
+}
+
+SourceItem fromCppDefinition(const clang::CppDefinition& cppDefinition)
+{
+   // determine type
+   using namespace clang;
+   SourceItem::Type type = SourceItem::None;
+   switch(cppDefinition.kind)
+   {
+   case CppInvalidDefinition:
+      type = SourceItem::None;
+      break;
+   case CppNamespaceDefinition:
+      type = SourceItem::Namespace;
+      break;
+   case CppClassDefinition:
+   case CppStructDefinition:
+      type = SourceItem::Class;
+      break;
+   case CppEnumDefinition:
+      type = SourceItem::Enum;
+      break;
+   case CppFunctionDefinition:
+      type = SourceItem::Function;
+      break;
+   case CppMemberFunctionDefinition:
+      type = SourceItem::Method;
+      break;
+   default:
+      type = SourceItem::None;
+   }
+
+   // return source item
+   return SourceItem(
+      type,
+      cppDefinition.name,
+      "",
+      module_context::createAliasedPath(cppDefinition.location.filePath),
+      safe_convert::numberTo<int>(cppDefinition.location.line, 1),
+      safe_convert::numberTo<int>(cppDefinition.location.column, 1));
+}
+
 template <typename TValue, typename TFunc>
 json::Array toJsonArray(
-      const std::vector<r_util::RSourceItem> &items,
+      const std::vector<SourceItem> &items,
       TFunc memberFunc)
 {
    json::Array col;
@@ -719,37 +1018,6 @@ json::Array toJsonArray(
    return col;
 }
 
-
-json::Array signatureToJson(const std::vector<r_util::RS4MethodParam>& sig)
-{
-   json::Array sigJson;
-   BOOST_FOREACH(const r_util::RS4MethodParam& param, sig)
-   {
-      json::Object paramJson;
-      paramJson["name"] = param.name();
-      paramJson["type"] = param.type();
-      sigJson.push_back(paramJson);
-   }
-   return sigJson;
-}
-
-json::Array signaturesToJsonArray(
-                        const std::vector<r_util::RSourceItem> &items)
-{
-   json::Array sigCol;
-   std::transform(items.begin(),
-                  items.end(),
-                  std::back_inserter(sigCol),
-                  boost::bind(
-                        signatureToJson,
-                        boost::bind(&r_util::RSourceItem::signature, _1)));
-   return sigCol;
-}
-
-bool compareItems(const r_util::RSourceItem& i1, const r_util::RSourceItem& i2)
-{
-   return i1.name() < i2.name();
-}
 
 
 Error searchCode(const json::JsonRpcRequest& request,
@@ -768,44 +1036,97 @@ Error searchCode(const json::JsonRpcRequest& request,
    json::Object result;
 
    // search files
-   json::Array names;
-   json::Array paths;
+   std::vector<std::string> names;
+   std::vector<std::string> paths;
    bool moreFilesAvailable = false;
-   searchFiles(term, maxResults, &names, &paths, &moreFilesAvailable);
-   json::Object files;
-   files["filename"] = names;
-   files["path"] = paths;
-   result["file_items"] = files;
 
-   // search source (sort results by name)
-   std::vector<r_util::RSourceItem> items;
+   // TODO: Refactor searchFiles, searchSource to no longer take maximum number
+   // of results (since we want to grab everything possible then filter before
+   // sending over the wire). Simiarly with the 'more*Available' bools
+   searchFiles(term, 1E2, &names, &paths, &moreFilesAvailable);
+
+   // search source and convert to source items
+   std::vector<SourceItem> srcItems;
+   std::vector<r_util::RSourceItem> rSrcItems;
    bool moreSourceItemsAvailable = false;
-   searchSource(term, maxResults, true, &items, &moreSourceItemsAvailable);
-   std::sort(items.begin(), items.end(), compareItems);
+   searchSource(term, 1E2, false, &rSrcItems, &moreSourceItemsAvailable);
+   std::transform(rSrcItems.begin(),
+                  rSrcItems.end(),
+                  std::back_inserter(srcItems),
+                  fromRSourceItem);
 
-   // see if we need to do src truncation
-   bool truncated = false;
-   if ( (names.size() + items.size()) > maxResults )
+   // search cpp source and convert to source items
+   std::vector<clang::CppDefinition> cppDefinitions;
+   clang::searchDefinitions(term, &cppDefinitions);
+   std::transform(cppDefinitions.begin(),
+                  cppDefinitions.end(),
+                  std::back_inserter(srcItems),
+                  fromCppDefinition);
+
+   // typedef necessary for BOOST_FOREACH to work with pairs
+   typedef std::pair<int, int> PairIntInt;
+
+   // score matches -- returned as a pair, mapping index to score
+   std::vector<PairIntInt> fileScores;
+   for (std::size_t i = 0; i < paths.size(); ++i)
    {
-      // truncate source items
-      std::size_t srcItems = maxResults - names.size();
-      items.resize(srcItems);
-      truncated = true;
+      fileScores.push_back(std::make_pair(i, scoreMatch(names[i], term, true)));
    }
+
+   // sort by score (lower is better)
+   std::sort(fileScores.begin(), fileScores.end(), ScorePairComparator());
+
+   std::vector<PairIntInt> srcItemScores;
+   for (std::size_t i = 0; i < srcItems.size(); ++i)
+   {
+      srcItemScores.push_back(std::make_pair(i, scoreMatch(srcItems[i].name(), term, false)));
+   }
+   std::sort(srcItemScores.begin(), srcItemScores.end(), ScorePairComparator());
+
+   // filter so we keep only the top n results -- and proactively
+   // update whether there are other entries we didn't report back
+   std::size_t srcItemScoresSizeBefore = srcItemScores.size();
+   std::size_t fileScoresSizeBefore = fileScores.size();
+
+   filterScores(&fileScores, &srcItemScores, maxResults);
+
+   moreFilesAvailable = fileScoresSizeBefore > fileScores.size();
+   moreSourceItemsAvailable = srcItemScoresSizeBefore > srcItemScores.size();
+
+   // get filtered results
+   std::vector<std::string> namesFiltered;
+   std::vector<std::string> pathsFiltered;
+   BOOST_FOREACH(PairIntInt const& pair, fileScores)
+   {
+      namesFiltered.push_back(names[pair.first]);
+      pathsFiltered.push_back(paths[pair.first]);
+   }
+
+   std::vector<SourceItem> srcItemsFiltered;
+   BOOST_FOREACH(PairIntInt const& pair, srcItemScores)
+   {
+      srcItemsFiltered.push_back(srcItems[pair.first]);
+   }
+
+   // fill result
+   json::Object files;
+   files["filename"] = json::toJsonArray(namesFiltered);
+   files["path"] = json::toJsonArray(pathsFiltered);
+   result["file_items"] = files;
 
    // return rpc array list (wire efficiency)
    json::Object src;
-   src["type"] = toJsonArray<int>(items, &r_util::RSourceItem::type);
-   src["name"] = toJsonArray<std::string>(items, &r_util::RSourceItem::name);
-   src["signature"] = signaturesToJsonArray(items);
-   src["context"] = toJsonArray<std::string>(items, &r_util::RSourceItem::context);
-   src["line"] = toJsonArray<int>(items, &r_util::RSourceItem::line);
-   src["column"] = toJsonArray<int>(items, &r_util::RSourceItem::column);
+   src["type"] = toJsonArray<int>(srcItemsFiltered, &SourceItem::type);
+   src["name"] = toJsonArray<std::string>(srcItemsFiltered, &SourceItem::name);
+   src["extra_info"] = toJsonArray<std::string>(srcItemsFiltered, &SourceItem::extraInfo);
+   src["context"] = toJsonArray<std::string>(srcItemsFiltered, &SourceItem::context);
+   src["line"] = toJsonArray<int>(srcItemsFiltered, &SourceItem::line);
+   src["column"] = toJsonArray<int>(srcItemsFiltered, &SourceItem::column);
    result["source_items"] = src;
 
    // set more available bit
    result["more_available"] =
-         moreFilesAvailable || moreSourceItemsAvailable || truncated;
+         moreFilesAvailable || moreSourceItemsAvailable;
 
    pResponse->setResult(result);
 
@@ -1434,6 +1755,9 @@ Error initialize()
    cb.onMonitoringDisabled = onFileMonitorDisabled;
    projects::projectContext().subscribeToFileMonitor("R source file indexing",
                                                      cb);
+
+   // initialize r source indexes
+   rSourceIndex().initialize();
 
    using boost::bind;
    using namespace module_context;

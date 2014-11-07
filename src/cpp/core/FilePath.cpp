@@ -403,6 +403,8 @@ MimeType s_mimeTypes[] =
    { "md",       "text/x-markdown" },
    { "mdtxt",    "text/x-markdown" },
    { "markdown", "text/x-markdown" },
+   { "yaml",     "text/x-yaml" },
+   { "yml",      "text/x-yaml" },
 
    // programming language types
    { "f",        "text/x-fortran" },
@@ -419,6 +421,7 @@ MimeType s_mimeTypes[] =
    { "bz2",   "application/x-bzip2" },
    { "gz",    "application/x-gzip" },
    { "tar",   "application/x-tar" },
+   { "json",  "application/json" },
 
    // yet more types...
 
@@ -432,6 +435,8 @@ MimeType s_mimeTypes[] =
    { "out",   "text/plain" },
    { "csl",   "text/x-csl" },
    { "R",     "text/x-r-source"},
+   { "S",     "text/x-r-source"},
+   { "q",     "text/x-r-source"},
    { "Rd",    "text/x-r-doc"},
    { "Rnw",   "text/x-r-sweave"},
    { "Rmd",   "text/x-r-markdown"},

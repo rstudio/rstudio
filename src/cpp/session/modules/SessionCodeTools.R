@@ -13,6 +13,51 @@
 #
 #
 
+.rs.addFunction("withTimeLimit", function(time,
+                                          expr,
+                                          envir = parent.frame(),
+                                          fail = NULL)
+{
+   setTimeLimit(elapsed = time, transient = TRUE)
+   on.exit(setTimeLimit(), add = TRUE)
+   tryCatch(
+      eval(expr, envir = envir),
+      error = function(e) {
+         fail
+      }
+   )
+})
+
+.rs.addFunction("startsWith", function(strings, string)
+{
+   if (!length(string))
+      string <- ""
+   
+   n <- nchar(string)
+   (nchar(strings) >= n) & (substring(strings, 1, n) == string)
+})
+
+.rs.addFunction("selectStartsWith", function(strings, string)
+{
+   strings[.rs.startsWith(strings, string)]
+})
+
+.rs.addFunction("endsWith", function(strings, string)
+{
+   if (!length(string))
+      string <- ""
+   
+   nstrings <- nchar(strings)
+   nstring <- nchar(string)
+   (nstrings >= nstring) & 
+      (substring(strings, nstrings - nstring + 1, nstrings) == string)
+})
+
+.rs.addFunction("selectEndsWith", function(strings, string)
+{
+   strings[.rs.endsWith(strings, string)]
+})
+
 # Return the scope names in which the given names exist
 .rs.addFunction("which", function(names) {
    scopes = search()
@@ -96,10 +141,45 @@
    deparse(func, width.cutoff = 59, control = control)
 })
 
-.rs.addFunction("getS3MethodsForFunction", function(func)
+.rs.addFunction("isS3Generic", function(object)
 {
-  tryCatch(as.character(suppressWarnings(methods(func))),
-           error = function(e) character())
+   if (!is.function(object))
+      return(FALSE)
+   
+   if (inherits(object, "groupGenericFunction"))
+      return(TRUE)
+   
+   .rs.callsUseMethod(body(object))
+   
+})
+
+.rs.addFunction("callsUseMethod", function(x)
+{
+   if (missing(x))
+      return(FALSE)
+   
+   if (!is.call(x))
+      return(FALSE)
+   
+   if (identical(x[[1]], quote(UseMethod)))
+      return(TRUE)
+   
+   if (length(x) == 1)
+      return(FALSE)
+   
+   for (arg in as.list(x[-1]))
+      if (.rs.callsUseMethod(arg))
+         return(TRUE)
+   
+   FALSE
+})
+
+.rs.addFunction("getS3MethodsForFunction", function(func, envir = parent.frame())
+{
+  tryCatch({
+     call <- call("methods", func)
+     as.character(suppressWarnings(eval(call, envir = envir)))
+  }, error = function(e) character())
 })
 
 
@@ -139,100 +219,120 @@
   }
 })
 
-.rs.addFunction("attemptRoxygenTagCompletion", function(line, cursorPos)
-{
-   line <- substr(line, 0, cursorPos)
-   match <- grepl("^\\s*#+'\\s*@[a-zA-Z0-9]*$", line, perl=T)
-   if (!match)
-      return(NULL)
-   
-   tag <- sub(".*(?=@)", '', line, perl=T)
-   
-   # All known Roxygen2 tags, in alphabetical order
-   tags <- c(
-      "@aliases",
-      "@author",
-      "@concept",
-      "@describeIn",
-      "@description",
-      "@details",
-      "@docType",
-      "@example",
-      "@examples",
-      "@export",
-      "@exportClass",
-      "@exportMethod",
-      "@family",
-      "@field",
-      "@format",
-      "@import",
-      "@importClassesFrom",
-      "@importFrom",
-      "@importMethodsFrom",
-      "@include",
-      "@inheritParams",
-      "@keywords",
-      "@method",
-      "@name",
-      "@note",
-      "@param",
-      "@rdname",
-      "@references",
-      "@return",
-      "@S3method",
-      "@section",
-      "@seealso",
-      "@slot",
-      "@source",
-      "@template",
-      "@templateVar",
-      "@title",
-      "@usage",
-      "@useDynLib"
-      );
-   
-   matchingTags <- grep(paste("^", tag, sep=""), tags, value=T)
-   
-   list(token=tag,
-        results=matchingTags,
-        packages=vector(mode='character', length=length(matchingTags)),
-        fguess=c())
-})
-
 .rs.addFunction("getPendingInput", function()
 {
    .Call("rs_getPendingInput")
 })
 
-utils:::rc.settings(files=T)
-.rs.addJsonRpcHandler("get_completions", function(line, cursorPos)
+.rs.addFunction("doStripSurrounding", function(string, complements)
 {
-   roxygen <- .rs.attemptRoxygenTagCompletion(line, cursorPos)
-   if (!is.null(roxygen))
-      return(roxygen);
+   result <- gsub("^\\s*([`'\"])(.*?)\\1.*", "\\2", string, perl = TRUE)
+   for (item in complements)
+   {
+      result <- sub(
+         paste("^\\", item[[1]], "(.*)\\", item[[2]], "$", sep = ""),
+         "\\1",
+         result,
+         perl = TRUE
+      )
+   }
+   result
    
-   utils:::.assignLinebuffer(line)
-   utils:::.assignEnd(cursorPos)
-   token = utils:::.guessTokenFromLine()
-   utils:::.completeToken()
-   results = utils:::.retrieveCompletions()
-   status = utils:::rc.status()
-   
-   packages = sub('^package:', '', .rs.which(results))
+})
 
-   # ensure spaces around =
-   results <- sub("=$", " = ", results)
+.rs.addFunction("stripSurrounding", function(string)
+{
+   complements <- list(
+      c("(", ")"),
+      c("{", "}"),
+      c("[", "]"),
+      c("<", ">")
+   )
+   
+   result <- .rs.doStripSurrounding(string, complements)
+   while (result != string)
+   {
+      string <- result
+      result <- .rs.doStripSurrounding(string, complements)
+   }
+   result
+})
 
-   choose = packages == '.GlobalEnv'
-   results.sorted = c(results[choose], results[!choose])
-   packages.sorted = c(packages[choose], packages[!choose])
+.rs.addFunction("getAnywhere", function(name, envir = parent.frame())
+{
+   result <- NULL
    
-   packages.sorted = sub('^\\.GlobalEnv$', '', packages.sorted)
+   if (!length(name))
+      return(NULL)
    
-   list(token=token, 
-        results=results.sorted, 
-        packages=packages.sorted, 
-        fguess=status$fguess)
+   if (name == "")
+      return(NULL)
+    
+   ## First, attempt to evaluate 'name' in 'envir'
+   ## NOTE: This could trigger active bindings, evaluation of promises --
+   ## we may need to avoid / blacklist their evaluation to avoid side effects
+   if (is.character(name)) {
+      name <- .rs.stripSurrounding(name)
+      result <- tryCatch({
+         suppressWarnings(eval(parse(text = name), envir = envir))
+      }, error = function(e) NULL
+      )
+   }
+   
+   if (is.language(name))
+   {
+      result <- tryCatch({
+         suppressWarnings(eval(name, envir = envir))
+      }, error = function(e) NULL
+      )
+   }
+   
+   ## Return on success
+   if (!is.null(result))
+   {
+      return(result)
+   }
+   
+   ## Otherwise, rely on 'getAnywhere'
+   objects <- getAnywhere(name)
+   if (length(objects$objs))
+   {
+      ## TODO: What if we have multiple completions?
+      objects$objs[[1]]
+   }
+   else
+   {
+      NULL
+   }
+})
+
+.rs.addFunction("getFunctionArgumentNames", function(object)
+{
+   if (is.primitive(object))
+   {
+      ## Only closures have formals, not primitive functions.
+      result <- tryCatch({
+         parsed <- suppressWarnings(parse(text = capture.output(print(object)))[[1L]])
+         names(parsed[[2]])
+      }, error = function(e) {
+         character()
+      })
+   }
+   else
+   {
+      result <- names(formals(object))
+   }
+   result
+})
+
+.rs.addFunction("getNames", function(object)
+{
+   if (is.environment(object))
+      ls(object, all.names = TRUE)
+   else if (inherits(object, "tbl") && "dplyr" %in% loadedNamespaces())
+      dplyr::tbl_vars(object)
+   else
+      names(object)
 })
 
 .rs.addJsonRpcHandler("get_help_at_cursor", function(line, cursorPos)
@@ -247,4 +347,144 @@ utils:::rc.settings(files=T)
       print(help(pieces[2], package=pieces[1], help_type='html'))
    else
       print(help(pieces[1], help_type='html', try.all.packages=T))
+})
+
+.rs.addJsonRpcHandler("is_function", function(nameString, envString)
+{
+   object <- NULL
+   
+   if (envString == "")
+   {
+      object <- .rs.getAnywhere(nameString, parent.frame())
+   }
+   else
+   {
+      envString <- .rs.stripSurrounding(envString)
+      if (envString %in% search())
+      {
+         object <- tryCatch(
+            get(nameString, pos = which(envString == search())),
+            error = function(e) NULL
+         )
+      }
+      else if (envString %in% loadedNamespaces())
+      {
+         object <- tryCatch(
+            get(nameString, envir = asNamespace(envString)),
+            error = function(e) NULL
+         )
+      }
+      else if (!is.null(container <- .rs.getAnywhere(envString, parent.frame())))
+      {
+         if (isS4(container))
+         {
+            object <- tryCatch(
+               eval(call("@", container, nameString)),
+               error = function(e) NULL
+            )
+         }
+         else
+         {
+            object <- tryCatch(
+               eval(call("$", container, nameString)),
+               error = function(e) NULL
+            )
+         }
+      }
+   }
+   .rs.scalar(!is.null(object) && is.function(object))
+})
+
+.rs.addFunction("asCaseInsensitiveRegex", function(string)
+{
+   if (string == "")
+      return(string)
+   
+   splat <- strsplit(string, "", fixed = TRUE)[[1]]
+   lowerSplat <- tolower(splat)
+   upperSplat <- toupper(splat)
+   result <- vapply(1:length(splat), FUN.VALUE = character(1), USE.NAMES = FALSE, function(i) {
+      if (lowerSplat[i] == upperSplat[i])
+         splat[i]
+      else
+         paste("[", lowerSplat[i], upperSplat[i], "]", sep = "")
+   })
+   paste(result, collapse = "")
+})
+
+.rs.addFunction("escapeForRegex", function(regex)
+{
+   gsub("([\\-\\[\\]\\{\\}\\(\\)\\*\\+\\?\\.\\,\\\\\\^\\$\\|\\#\\s])", "\\\\\\1", regex, perl = TRUE)
+})
+
+.rs.addFunction("objectsOnSearchPath", function(token, caseInsensitive = FALSE)
+{
+   token <- .rs.escapeForRegex(token)
+   if (caseInsensitive)
+      token <- .rs.asCaseInsensitiveRegex(token)
+   
+   search <- search()
+   objects <- lapply(1:length(search()), function(i) {
+      ls(pos = i, all.names = TRUE, pattern = paste("^", token, sep = ""))
+   })
+   
+   names(objects) <- search
+   
+   objects
+})
+
+.rs.addFunction("assign", function(x, value)
+{
+   pos <- which(search() == "tools:rstudio")
+   if (length(pos))
+      assign(paste(".rs.cache.", x, sep = ""), value, pos = pos)
+})
+
+.rs.addFunction("get", function(x)
+{
+   pos <- which(search() == "tools:rstudio")
+   if (length(pos))
+      tryCatch(
+         get(paste(".rs.cache.", x, sep = ""), pos = pos),
+         error = function(e) NULL
+      )
+})
+
+.rs.addFunction("mget", function(x = NULL)
+{
+   pos <- which(search() == "tools:rstudio")
+   if (length(pos))
+      tryCatch({
+         
+         objects <- if (is.null(x))
+            .rs.selectStartsWith(objects(pos = pos, all.names = TRUE), ".rs.cache")
+         else
+            paste(".rs.cache.", x, sep = "")
+         
+         mget(objects, envir = as.environment(pos))
+      },
+         error = function(e) NULL
+      )
+})
+
+.rs.addFunction("packageNameForSourceFile", function(filePath)
+{
+   .Call("rs_packageNameForSourceFile", filePath)
+})
+
+.rs.addFunction("isRScriptInPackageBuildTarget", function(filePath)
+{
+   .Call("rs_isRScriptInPackageBuildTarget", filePath)
+})
+
+.rs.addFunction("namedVectorAsList", function(vector)
+{
+   values <- unlist(vector, use.names = FALSE)
+   vectorNames <- names(vector)
+   names <- unlist(lapply(1:length(vector), function(i) {
+      rep.int(vectorNames[i], length(vector[[i]]))
+   }))
+   
+   list(values = values,
+        names = names)
 })

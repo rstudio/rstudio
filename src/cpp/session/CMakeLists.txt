@@ -39,6 +39,22 @@ if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/shinyapps")
 endif()
 
 
+# verify libclang is installed
+if(WIN32)
+   set(LIBCLANG_VERSION "3.4")
+else()
+   set(LIBCLANG_VERSION "3.5")
+endif()
+set(LIBCLANG_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/${LIBCLANG_VERSION}")
+if(NOT EXISTS "${LIBCLANG_DIR}")
+  message(FATAL_ERROR "liblang ${LIBCLANG_VERSION} not found  (re-run install-dependencies script to install)")
+endif()
+set(LIBCLANG_HEADERS_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/builtin-headers")
+if(NOT EXISTS "${LIBCLANG_HEADERS_DIR}")
+  message(FATAL_ERROR "liblang builtin-headers not found  (re-run install-dependencies script to install)")
+endif()
+
+
 # include files
 file(GLOB_RECURSE SESSION_HEADER_FILES "*.h*")
 
@@ -91,6 +107,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionPath.cpp
    modules/SessionPlots.cpp
    modules/SessionProfiler.cpp
+   modules/SessionRCompletions.cpp
    modules/SessionRHooks.cpp
    modules/SessionRPubs.cpp
    modules/SessionShinyApps.cpp
@@ -105,6 +122,12 @@ set (SESSION_SOURCE_FILES
    modules/build/SessionBuildEnvironment.cpp
    modules/build/SessionBuildErrors.cpp
    modules/build/SessionSourceCpp.cpp
+   modules/clang/CodeCompletion.cpp
+   modules/clang/DefinitionIndex.cpp
+   modules/clang/GoToDefinition.cpp
+   modules/clang/RCompilationDatabase.cpp
+   modules/clang/RSourceIndex.cpp
+   modules/clang/SessionClang.cpp
    modules/data/SessionData.cpp
    modules/data/DataViewer.cpp
    modules/environment/EnvironmentMonitor.cpp
@@ -289,6 +312,7 @@ target_link_libraries(rsession
    rstudio-session-workers
    ${SESSION_SYSTEM_LIBRARIES}
    ${LIBR_LIBRARIES}
+   ${CMAKE_DL_LIBS}
 )
 
 # configure and install r-ldpaths script
@@ -344,7 +368,7 @@ if (NOT RSTUDIO_SESSION_WIN64)
            DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
 
    # install pandoc
-   set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/1.12.4.2")
+   set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/1.13.1")
    file(GLOB PANDOC_FILES "${PANDOC_BIN}/pandoc*")
    install(FILES ${PANDOC_FILES}
            PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
@@ -369,6 +393,24 @@ if (NOT RSTUDIO_SESSION_WIN64)
    install(DIRECTORY "resources/pdfjs"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
+   # install libclang
+   if(WIN32)
+      file(GLOB LIBCLANG_32_FILES "${LIBCLANG_DIR}/x86/libclang.*")
+      install(PROGRAMS ${LIBCLANG_32_FILES}
+              DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang/x86)
+      file(GLOB LIBCLANG_64_FILES "${LIBCLANG_DIR}/x86_64/libclang.*")
+      install(PROGRAMS ${LIBCLANG_64_FILES}
+              DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang/x86_64)
+   else()
+      file(GLOB_RECURSE LIBCLANG_FILES "${LIBCLANG_DIR}/libclang.*")
+      install(PROGRAMS ${LIBCLANG_FILES}
+              DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang)
+   endif()
+
+   # install libclang builtin-headers
+   install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/builtin-headers"
+           DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources/libclang")
+
    # install 64 bit binaries if we are on win64
    if(WIN32)
       if(NOT ("$ENV{PROGRAMW6432}" STREQUAL ""))
@@ -387,7 +429,7 @@ if (NOT RSTUDIO_SESSION_WIN64)
       install(DIRECTORY "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/gnugrep"
               USE_SOURCE_PERMISSIONS
               DESTINATION  ${RSTUDIO_INSTALL_BIN})
-      install(DIRECTORY "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/msys_ssh"
+      install(DIRECTORY "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/msys-ssh-1000-18"
               USE_SOURCE_PERMISSIONS
               DESTINATION  ${RSTUDIO_INSTALL_BIN})
 

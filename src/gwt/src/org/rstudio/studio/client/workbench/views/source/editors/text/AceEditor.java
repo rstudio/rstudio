@@ -54,6 +54,7 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.EventBasedChangeTracker;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager.InitCompletionFilter;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupPanel;
@@ -70,6 +71,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Rendere
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.WordIterable;
+import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
@@ -108,20 +110,24 @@ public class AceEditor implements DocDisplay,
          Range range = getSession().getSelection().getRange();
          if (!range.isEmpty())
             return false;
-
+         
          // Don't consider Tab to be a completion if we're at the start of a
          // line (e.g. only zero or more whitespace characters between the
          // beginning of the line and the cursor)
-
          if (event != null && event.getKeyCode() != KeyCodes.KEY_TAB)
             return true;
-
+         
+         // Short-circuit if the user has explicitly opted in
+         if (uiPrefs_.allowTabMultilineCompletion().getValue())
+            return true;
+         
          int col = range.getStart().getColumn();
          if (col == 0)
             return false;
+         
+         String line = getSession().getLine(range.getStart().getRow());
+         return line.substring(0, col).trim().length() != 0;
 
-         String row = getSession().getLine(range.getStart().getRow());
-         return row.substring(0, col).trim().length() != 0;
       }
    }
 
@@ -359,9 +365,11 @@ public class AceEditor implements DocDisplay,
    }
 
    @Inject
-   void initialize(CodeToolsServerOperations server)
+   void initialize(CodeToolsServerOperations server,
+                   UIPrefs uiPrefs)
    {
       server_ = server;
+      uiPrefs_ = uiPrefs;
    }
 
    public TextFileType getFileType()
@@ -392,6 +400,18 @@ public class AceEditor implements DocDisplay,
    {
       rnwContext_ = rnwContext;
    }
+   
+   @Override
+   public void setCppCompletionContext(CppCompletionContext cppContext)
+   {
+      cppContext_ = cppContext;
+   }
+   
+   @Override
+   public void setRCompletionContext(RCompletionContext rContext)
+   {
+      rContext_ = rContext;
+   }
 
    private void updateLanguage(boolean suppressCompletion)
    {
@@ -409,16 +429,20 @@ public class AceEditor implements DocDisplay,
                   new CompletionPopupPanel(),
                   server_,
                   new Filter(),
-                  fileType_.canExecuteChunks() ? rnwContext_ : null);
+                  rContext_,
+                  fileType_.canExecuteChunks() ? rnwContext_ : null,
+                  this,
+                  true);
             
             // if this is cpp then we use our own completion manager
             // that can optionally delegate to the R completion manager
-            if (fileType_.isCpp() || fileType_.isRmd())
+            if (fileType_.isC() || fileType_.isRmd())
             {
-               completionManager = new CppCompletionManager(this,
-                                                            this,
-                                                            new Filter(),
-                                                            completionManager);
+               completionManager = new CppCompletionManager(
+                                                     this,
+                                                     new Filter(),
+                                                     cppContext_,
+                                                     completionManager);
             }
          }
          else
@@ -821,6 +845,12 @@ public class AceEditor implements DocDisplay,
       // HACK: This cast is gross, InputEditorPosition should just become
       // AceInputEditorPosition
       return Position.create((Integer) pos.getLine(), pos.getPosition());
+   }
+   
+   @Override
+   public InputEditorPosition createInputEditorPosition(Position pos)
+   {
+      return new AceInputEditorPosition(getSession(), pos);
    }
 
    @Override
@@ -1335,6 +1365,28 @@ public class AceEditor implements DocDisplay,
       return getSession().getMode().getCodeModel().getCurrentScope(
             getCursorPosition());
    }
+   
+   @Override
+   public String getNextLineIndent()
+   {
+      EditSession session = getSession();
+      
+      Position cursorPosition = getCursorPosition();
+      int row = cursorPosition.getRow();
+      String state = getSession().getState(row);
+      
+      String line = getCurrentLine().substring(
+            0, cursorPosition.getColumn());
+      String tab = session.getTabString();
+      int tabSize = session.getTabSize();
+      
+      return session.getMode().getNextLineIndent(
+            state,
+            line,
+            tab,
+            tabSize,
+            row);
+   }
 
    public Scope getCurrentChunk()
    {
@@ -1354,7 +1406,7 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
-   public Scope getFunctionAtPosition(Position position)
+   public ScopeFunction getFunctionAtPosition(Position position)
    {
       return getSession().getMode().getCodeModel().getCurrentFunction(
             position);
@@ -1598,6 +1650,9 @@ public class AceEditor implements DocDisplay,
                          boolean addToHistory,
                          boolean highlightLine)
    {  
+      // get existing cursor position
+      Position previousCursorPos = getCursorPosition();
+      
       // set cursor to function line
       Position position = Position.create(srcPosition.getRow(), 
                                           srcPosition.getColumn());
@@ -1616,7 +1671,7 @@ public class AceEditor implements DocDisplay,
       // scroll as necessary
       if (srcPosition.getScrollPosition() != -1)
          scrollToY(srcPosition.getScrollPosition());
-      else
+      else if (position.getRow() != previousCursorPos.getRow())
          moveCursorNearTop();
       
       // set focus
@@ -1894,10 +1949,13 @@ public class AceEditor implements DocDisplay,
    private final AceEditorWidget widget_;
    private CompletionManager completionManager_;
    private CodeToolsServerOperations server_;
+   private UIPrefs uiPrefs_;
    private TextFileType fileType_;
    private boolean passwordMode_;
    private boolean useVimMode_ = false;
    private RnwCompletionContext rnwContext_;
+   private CppCompletionContext cppContext_;
+   private RCompletionContext rContext_;
    private Integer lineHighlightMarkerId_ = null;
    private Integer lineDebugMarkerId_ = null;
    private Integer executionLine_ = null;

@@ -92,5 +92,22 @@ public class Scope extends JavaScriptObject
    public native final String getChunkLabel() /*-{
       return this.chunkLabel;
    }-*/;
+   
+   public native final boolean isClass() /*-{
+      return typeof this.isClass !== "undefined" && this.isClass();
+   }-*/;
+   
+   public native final boolean isNamespace() /*-{
+      return typeof this.isNamespace !== "undefined" && this.isNamespace();
+   }-*/;
+   
+   public native final boolean isLambda() /*-{
+      return typeof this.isLambda !== "undefined" && this.isLambda();
+   }-*/;
+   
+   public native final boolean isAnon() /*-{
+      return typeof this.isAnon !== "undefined" && this.isAnon();
+   }-*/;
+   
 
 }

@@ -1,0 +1,871 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <!script type="text/javascript" src="../tools/ace/build_support/mini_require.js"></script>
+  <script type="text/javascript" src="../tools/ace/build/src/ace.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/auto_brace_insert.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/doc_comment_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/tex_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/token_cursor.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/token_utils.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_matching_brace_outdent.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_scope_tree.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_code_model.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/sweave_background_highlighter.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/cpp_scope_tree.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/cpp_code_model.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/c_cpp_fold_mode.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/c_cpp_style_behaviour.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/c_cpp_matching_brace_outdent.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/c_cpp_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/c_cpp.js"></script>
+  <style type="text/css">
+  pre {
+    margin-bottom: 30px;
+    padding: 3px;
+    border: 1px solid #999;
+  }
+  </style>
+</head>
+<body>
+
+<h2>Interactive Tester</h2>
+<div id="editor" style="width: 600px; height: 200px; border: 1px solid #999" onkeypress="doIndent()"></div>
+<div id="testEditor" style="display: none;"></div>
+
+<div style="height: 200px;"></div>
+
+<h2>Configure Editor</h2>
+<button id="setBehavioursEnabled" onclick="editor.setBehavioursEnabled(!editor.getBehavioursEnabled())">Toggle Behaviour</button>
+<button onclick="require('mode/r_code_model').setVerticallyAlignFunctionArgs(!require('mode/r_code_model').getVerticallyAlignFunctionArgs())">Toggle Vertical Alignment</button>
+<button onclick="editor.getSession().reindent()">Reindent</button>
+<button onclick="codeModel.alignContinuationSlashes(doc)">Align Slashes</button>
+
+<h2>Automated Tests</h2>
+<p>Passed: <span id="passed"></span>, Failed: <span id="failed"></span></p>
+<ol id="testcontainer" style="display: none;">
+
+<li><pre data-expected="0">
+#define foo
+</pre></li>
+
+<li><pre data-expected="0">
+#ifndef foo
+</pre></li>
+  
+<li><pre data-expected="0">
+class foo;
+</pre></li>
+
+<li><pre data-expected="4">
+class foo    {
+</pre></li>
+
+<li><pre data-expected="4">
+struct  bar{
+</pre></li>
+
+<li><pre data-expected="0">
+template <>
+</pre></li>
+
+<li><pre data-expected="0">
+    
+template <
+>
+</pre></li>
+
+<li><pre data-expected="8" open-brace-skip>
+template <
+    template <
+</pre></li>
+
+<li><pre data-expected="4" data-expected-vertical-args="10" open-brace-skip>
+template &lt;int RTYPE,
+</pre></li>
+
+<li><pre data-expected="0" open-brace-skip>
+template &lt;int RTYPE,
+          template &lt;class&gt; class StoragePolicy&gt;
+</pre></li>
+
+<li><pre data-expected="4" open-brace-skip>
+template &lt;int RTYPE, template &lt;class&gt; class StoragePolicy = PreserveStorage &gt;
+class Vector :
+</pre></li>
+
+<li><pre data-expected="0">
+            /*
+            */
+struct some_tag_struct_with_block_comment_above{} ;
+</pre></li>
+
+<li><pre data-expected="0">
+template <
+    int RTYPE
+> class
+foo;
+</pre></li>
+
+<li><pre data-expected="4">
+    inline void foo() { return foo_; }
+</pre></li>
+
+<li><pre data-expected="8">
+void SomeFunction(
+</pre></li>
+
+
+<li><pre data-expected="0">
+a +
+    b;
+</pre></li>
+
+<li><pre data-expected="4" open-brace-skip>
+int foo = bar,
+</pre></li>
+
+<li><pre data-expected="0">
+int foo =
+    bar();
+</pre></li>
+
+<li><pre data-expected="4" data-expected-open-brace="0">
+foo::bar
+    // some weird comment
+    (arguments on own line)
+</pre></li>
+
+<li><pre data-expected="0">
+class Foo{};
+class Foo{};
+</pre></li>
+
+<li><pre data-expected="4" data-expected-open-brace="0">
+foo
+    ()
+    : a_(a)
+</pre></li>
+
+<li><pre data-expected="4" data-expected-open-brace="4">
+foo
+    ()
+    : a_(a)
+{
+</pre></li>
+
+<li><pre data-expected="4" data-expected-open-brace="4">
+foo
+    ()
+    : a_(a) {
+</pre></li>
+
+<li><pre data-expected="4" data-expected-open-brace="0">
+foo
+    () :
+    a_(a)
+</pre></li>
+
+<li><pre data-expected="4">
+int foo
+    (int a) {
+</pre></li>
+
+<li><pre data-expected="4">
+{
+</pre></li>
+
+<li><pre data-expected="4">
+{
+    bar;
+</pre></li>
+
+<li><pre data-expected="0">
+struct bar{};
+</pre></li>
+
+<li><pre data-expected="2" open-brace-skip="true">
+class foo :
+  A,
+</pre></li>
+
+<li><pre data-expected="4" data-expected-vertical-args="12" open-brace-skip="true">
+class foo : A,
+</pre></li>
+
+<li><pre data-expected="4">
+class foo : bar&lt;T&gt; {
+</pre></li>
+
+<li><pre data-expected="0">
+template &lt;typename T&gt;
+</pre></li>
+
+<li><pre data-expected="4">
+class foo : public bar::baz<bam, bat> {
+</pre></li>
+
+<li><pre data-expected="8">
+    class foo
+
+    :
+
+public ::bar::baz<bam, bat>,
+public ::bat::man<robin> {
+</pre></li>
+
+<li><pre data-expected="4" data-expected-open-brace="4">
+class foo:
+  public A {
+</pre></li>
+
+<li><pre data-expected="4">
+if (1 == 2) {
+</pre></li>
+
+<li><pre data-expected="4" data-expected-open-brace="0">
+if (1 >
+    2)
+</pre></li>
+
+<li><pre data-expected="0">
+if (1 >
+              2)
+    return true;
+</pre></li>
+
+<li><pre data-expected="4" data-expected-open-brace="0">
+if (()
+    a())
+</pre></li>
+
+<li><pre data-expected="0">
+if (1 == 2) { return 1 }
+</pre></li>
+
+<li><pre data-expected="4" data-expected-open-brace="0">
+if (1 == 2)
+</pre></li>
+
+<li><pre data-expected="8" data-expected-open-brace="4">
+if (a)
+    if (b)
+</pre></li>
+
+<li><pre data-expected="4" data-expected-open-brace="0">
+else if (bar)
+</pre></li>
+
+<li><pre data-expected="0">
+while (a)
+    while (b)
+        c++;
+</pre></li>
+
+<li><pre data-expected="4">
+    for(a; b;
+        c)
+        ;
+</pre></li>
+
+<li><pre data-expected="0">
+#include &lt;foo&gt;
+</foo></pre>
+
+<li><pre data-expected="4" data-expected-vertical-args="6" open-brace-skip>
+for ( something that could kindly be vertically aligned;
+</pre></li>
+
+<li><pre data-expected="4" data-expected-vertical-args="6" open-brace-skip>
+for ( tricky to
+          vertically align;
+</pre></li>
+
+<li><pre data-expected="4">
+for () {
+    foo;
+</pre></li>
+
+<li><pre data-expected="4" data-expected-open-brace="0">
+else
+</pre></li>
+
+<li><pre data-expected="8" data-expected-open-brace="4">
+for ()
+    while ()
+</pre></li>
+
+<li><pre data-expected="0">
+for ()
+    while ()
+        ;
+</pre></li>
+
+<li><pre data-expected="4">
+for () {
+    x > 0;
+</pre></li>
+
+<li><pre data-expected="4" data-expected-open-brace="0">
+else
+</pre></li>
+
+
+<li><pre data-expected="4">
+public:
+    int x;
+</pre></li>
+
+<li><pre data-expected="4" open-brace-skip>
+public: 
+</pre></li>
+
+<li><pre data-expected="4" open-brace-skip>
+private: 
+</pre></li>
+
+<li><pre data-expected="4" open-brace-skip>
+protected: 
+</pre></li>
+
+<li><pre data-expected="4" open-brace-skip>
+case:
+</pre></li>
+
+<li><pre data-expected="0">
+namespace r {
+</pre></li>
+
+<li><pre data-expected="0">
+namespace r {
+
+</pre></li>
+
+<li><pre data-expected="4" open-brace-skip>
+namespace {
+class Foo:
+</pre></li>
+
+
+<li><pre data-expected="4" open-brace-skip>
+int z = 4;
+int x = 1 +
+</pre></li>
+
+<li><pre data-expected="4">
+    int q = 4;
+</pre></li>
+
+<li><pre data-expected="8">
+    void myFunction() {
+</pre></li>
+
+<li><pre data-expected="8">
+    void myFunction() { // This function will be amazing
+</pre></li>
+
+<li><pre data-expected="8" open-brace-skip>
+int foo(
+</pre></li>
+
+<li><pre data-expected="0">
+switch (x) {
+</pre></li>
+
+<li><pre data-expected="4" data-expected-open-brace="0">
+case foo:
+</pre></li>
+
+<li><pre data-expected="4">
+case foo: bar;
+</pre></li>
+
+<li><pre data-expected="4">
+case foo:
+    bar;
+</pre></li>
+
+<li><pre data-expected="4">
+std::find_if(x.begin(), x.end(), [](int x) {
+</pre></li>
+
+<li><pre data-expected="0">
+/***
+ *
+ */
+</pre></li>
+
+<li><pre data-expected="4">
+    /***
+     *
+     */
+</pre></li>
+
+<li><pre data-expected="8">
+std::string msg =
+        "A multi-line message"
+</pre></li>
+
+<li><pre data-expected="4">
+static void namespace_reader() {
+</pre></li>
+
+<li><pre data-expected="4" data-expected-open-brace="0">
+class Foo
+</pre></li>
+
+<li><pre data-expected="8" data-expected-open-brace="8">
+class Foo {
+public:
+    struct Entry {
+        std::string file;
+</pre></li>
+
+<li><pre data-expected="4">
+Foo(const int a,
+    const int b)
+    : a_(a),
+      b_(b),
+      c_(c) {
+</pre></li>
+
+<li><pre data-expected="4" open-brace-skip>
+class Foo :
+    public A,
+</pre></li>
+
+<li><pre data-expected="4" open-brace-skip>
+class Foo:
+</pre></li>
+
+<li><pre data-expected="4" open-brace-skip>
+class Foo :
+    public A,
+    public B,
+    public C {
+</pre></li>
+
+<li><pre data-expected="4" data-expected-open-brace="0">
+class Foo :
+    public TemplateClass&lt;Params&gt;
+</pre></li>
+
+<li><pre data-expected="4" data-expected-open-brace="0">
+class Foo :
+    public TemplateClass&lt;Many, Template, Parameters&gt;
+</pre></li>
+
+
+<li><pre data-expected="4" data-expected-vertical-args="12" open-brace-skip>
+class Foo : public A,
+</pre></li>
+
+<li><pre data-expected="4">
+class Foo : public A,
+            public B {
+</pre></li>
+
+<li><pre data-expected="12" open-brace-skip>
+class Foo : public A,
+            public B,
+</pre></li>
+
+<li><pre data-expected="0">
+class Foo : public A,
+            public B {
+
+};
+</pre></li>
+
+<li><pre data-expected="4" open-brace-skip>
+Foo(int a, int b):
+    a_(a),
+</pre></li>
+
+<li><pre data-expected="8">
+    Foo(const int a, int b, int c,
+        const int d, int e, int f)
+        : a_(a), b_(b), c_(c),
+          d_(d), e_(e), f_(f)
+    {
+</pre></li>
+
+<li><pre data-expected="4" data-expected-vertical-args="13">
+std::find_if(x.begin(),
+</pre></li>
+
+<li><pre data-expected="17">
+std::find_if(x.begin(),
+             x.end(),
+             [](x) {
+</pre></li>
+
+<li><pre data-expected="4" data-expected-vertical-args="5" open-brace-skip>
+foo( int a,
+</pre></li>
+
+<li><pre data-expected="4" data-expected-vertical-args="10" data-expected-open-brace="0">
+class Foo : public A
+</pre></li>
+
+<li><pre data-expected="4" data-expected-vertical-args="1" open-brace-skip>
+[1, 2, 3,
+</pre></li>
+
+<li><pre data-expected="4" data-expected-vertical-args="3" open-brace-skip>
+[[[1, 2, 3,
+</pre></li>
+
+<li><pre data-expected="3" data-expected-vertical-args="2" open-brace-skip>
+[[[1, 2, 3,
+   4, 5, 6,
+   7, 8, 9],
+</pre></li>
+
+
+<li><pre data-expected="4">
+[]() noexcept {
+</pre></li>
+
+<li><pre data-expected="4">
+    SomeBigFunction(
+            a
+    );
+</pre></li>
+
+<li><pre data-expected="4">
+int foo(const int a,
+        const int b,
+        const unsigned int c) const {
+</pre></li>
+
+<li><pre data-expected="4" data-expected-open-brace="0">
+int foo(const unsigned int a,
+        const unsigned int b,
+        const unsigned int c) const noexcept
+    : a_(a),
+      b_(b),
+      c_(c)
+</pre></li>
+
+<li><pre data-expected="4">
+int foo(const unsigned int a,
+        const unsigned int b,
+        const unsigned int c) const noexcept {
+</pre></li>
+
+<li><pre data-expected="4" data-expected-open-brace="0">
+int foo(const unsigned int a,
+        const unsigned int b,
+        const unsigned int c) const noexcept
+</pre></li>
+
+<li><pre data-expected="4" open-brace-skip>
+int foo(const unsigned int a,
+        const unsigned int b,
+        const unsigned int c) noexcept :
+</pre></li>
+
+<li><pre data-expected="0">
+void doSomething(
+        ) = 0;
+</pre></li>
+
+<li><pre data-expected="4">
+try {
+</pre></li>
+
+<li><pre data-expected="4" data-expected-open-brace="0">
+try
+</pre></li>
+
+<li><pre data-expected="8">
+try {
+    try {
+</pre></li>
+
+<li><pre data-expected="4">
+try {
+} catch(Exception& e) {
+</pre></li>
+
+<li><pre data-expected="4" data-expected-open-brace="0">
+try {
+} catch(Exception& e)
+</pre></li>
+
+<li><pre data-expected="0">
+std::string msg =
+    "This is a"
+    "long message";
+</pre></li>
+
+<li><pre data-expected="0">
+return someStatementReturningTrue() ?
+    truthyValue() :
+    falsyValue();
+</pre></li>
+
+<li><pre data-expected="0">
+x = 1
+    + 2;
+</pre></li>
+
+<li><pre data-expected="0">
+foo(bar,
+    "// annoying comment with \"in-line quotes\"", "with // another string",
+    baz);
+</pre></li>
+
+<li><pre data-expected="0">
+else if (bar)
+    baz;
+</pre></li>
+
+<li><pre data-expected="4">
+if () {
+    ;
+}
+else {
+</pre></li>
+
+<li><pre data-expected="4" data-expected-open-brace="0">
+Param::Param(const std::string& paramText)
+</pre></li>
+
+<li><pre data-expected="8" data-expected-open-brace="4">
+class Foo {
+public:
+    int foo(int a,
+            int b)
+</pre></li>
+
+</ol>
+
+<script type="text/javascript">
+ 
+var Document = require('ace/document').Document;
+var CppMode = require('mode/c_cpp').Mode;
+var EditSession = require("ace/edit_session").EditSession;
+var Range = require("ace/range").Range;
+
+require('mode/auto_brace_insert').setInsertMatching(true);
+
+var editor = ace.edit('editor');
+editor.renderer.setHScrollBarAlwaysVisible(false);
+editor.setHighlightActiveLine(false);
+editor.getSession().setMode(new CppMode(false, editor.getSession().getDocument(), editor.getSession()));
+editor.setBehavioursEnabled(false);
+
+var session = editor.getSession();
+
+(function() {
+  
+  this.reindent = function(start, end) {
+    var mode = this.getMode();
+    if (!mode.getNextLineIndent)
+      return;
+    
+    if (typeof start === "undefined") {
+      start = 0;
+    }
+
+    if (typeof end === "undefined") {
+      end = this.getDocument().$lines.length - 1;
+    }
+    
+    for (var i = start; i <= end; i++) {
+
+      // First line is always unindented
+      if (i == 0) {
+        this.applyIndent(i, "");
+      }
+      else {
+        var state = this.getState(i-1);
+        if (state == 'qstring' || state == 'qqstring')
+          continue;
+
+        var line = this.getLine(i-1);
+        var newline = this.getLine(i);
+
+        var newIndent = mode.getNextLineIndent(state,
+                                               line,
+                                               this.getTabString(),
+                                               this.getTabSize(),
+                                               i-1,
+                                               true);
+
+        this.applyIndent(i, newIndent);
+        mode.autoOutdent(state, this, i);
+            var codeModel = mode.codeModel;
+            if (typeof codeModel !== "undefined") {
+               var align = codeModel.alignContinuationSlashes;
+               if (typeof align !== "undefined") {
+                  align(this.getDocument(), { start: start, end: end });
+               }
+            }
+        
+      }
+    }
+  };
+  
+  this.applyIndent = function(lineNum, indent) {
+    var line = this.getLine(lineNum);
+    var matchLen = line.match(/^\s*/g)[0].length;
+    this.replace(new Range(lineNum, 0, lineNum, matchLen), indent);
+  };
+
+}).call(EditSession.prototype);
+
+var testEditor = ace.edit('testEditor');
+
+// need to disable behaviours because they fudge with the test indentation
+testEditor.setBehavioursEnabled(false);
+
+testEditor.getSession().setMode(
+  new CppMode(false,
+              testEditor.getSession().getDocument(),
+              testEditor.getSession()));
+
+function doIndentTest(el, state) {
+
+  // Clean out document, tokens from the test editor
+  var doc = testEditor.session.getDocument();
+  doc.$lines = new Array(1);
+
+  var codeModel = testEditor.getSession().getMode().codeModel;
+  codeModel.$tokenUtils.$removeRows(
+    0,
+    codeModel.$tokens.length
+  );
+
+  // Insert text + a newline (the editor will auto-insert after the newline)
+
+  testEditor.insert((el.innerText || el.textContext).trimRight());
+  testEditor.insert("\n");
+
+  // Insert an open-brace after the newline for those tests
+  // The editor will auto-outdent the open brace
+  if (state === "open-brace") {
+    testEditor.insert("{");
+  }
+
+  var line = doc.$lines[doc.getLength() - 1];
+  var indent = line.match(/^(\s*)/)[1];
+
+  var symbol = state === "open-brace" ? "{" : "|";
+
+  el.appendChild(document.createTextNode(indent + symbol));
+  var attrName = "data-expected"; 
+  if (state.length > 0 && 
+      el.getAttribute(attrName + "-" + state)) 
+  {
+    attrName += ("-" + state);
+  }
+
+  var skip = el.getAttribute(state + "-skip") !== null;
+  if (skip) {
+    el.style.backgroundColor = "#DDD";
+    return true;
+  } else {
+    
+    var expected = el.getAttribute(attrName);
+    if (expected == indent.length + "")
+    {
+      el.style.backgroundColor = '#BFB';
+      return true;
+    }
+    else
+    {
+      el.style.backgroundColor = 'pink';
+      return false;
+    }
+
+  }
+}
+
+var test = document.getElementById("runme");
+var container = document.getElementById("testcontainer");
+var passed = 0, failed = 0;
+var states = [ "", "vertical-args" , "open-brace"];
+for (var i = 0; i < states.length; i++) 
+{
+
+  // Set vertical alignment
+  require('mode/r_code_model').setVerticallyAlignFunctionArgs(
+    states[i] === "vertical-args");
+  
+  // Clone the tests for the new state
+  var testnode = container.cloneNode(true);
+  var header = document.createElement("h2");
+  header.innerText = "Test " + (i + 1) + (
+    states[i].length > 0 ? 
+                                          ": " + states[i] : 
+                                          "");
+  container.parentNode.appendChild(header);
+  container.parentNode.appendChild(testnode);
+  testnode.style.display = "block";
+  pres = testnode.getElementsByTagName("pre");
+  for (var j = 0; j < pres.length; j++)
+  {
+    if (!test)
+    {
+      if (doIndentTest(pres[j], states[i], session))
+        passed++;
+      else
+        failed++;
+    }
+    else
+    {
+      if (pres[j] != test)
+        pres[j].style.display = 'none';
+    }
+  }
+}
+
+// turn vertical alignment back on now that we're done
+require('mode/r_code_model').setVerticallyAlignFunctionArgs(true);
+
+if (test)
+{
+  if (doIndentTest(test))
+    passed++;
+  else
+    failed++;
+}
+
+document.getElementById('passed').innerText = passed;
+document.getElementById('failed').innerText = failed;
+
+function doIndent() {
+
+  var e = window.event;
+  if (e.metaKey && e.which === 105) {
+    var selection = editor.getSelection();
+    if (selection.$isEmpty) {
+      var cursor = editor.getCursorPosition();
+      editor.getSession().reindent(cursor.row, cursor.row);
+      editor.moveCursorToPosition({
+        row: cursor.row + 1,
+        column: cursor.column
+      });
+    } else {
+      var selectionRange = editor.getSelectionRange();
+      editor.getSession().reindent(
+        selectionRange.start.row,
+        selectionRange.end.row
+      );
+    }
+  }
+}
+
+var session = editor.getSession();
+var doc = session.getDocument();
+var mode = session.getMode();
+var codeModel = mode.codeModel;
+
+
+</script>
+</body>
+</html>

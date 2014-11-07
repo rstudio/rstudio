@@ -38,6 +38,10 @@ if(UNIX)
    # compiler flags
    add_definitions(-Wall -pthread)
 
+   if(APPLE)
+      add_definitions(-Wsign-compare)
+   endif()
+
    # workaround boost bug (https://svn.boost.org/trac/boost/ticket/4568)
    # by disabling kqueue support. note that this bug was fixed in boost 1.45
    add_definitions(-DBOOST_ASIO_DISABLE_KQUEUE)
@@ -74,15 +78,6 @@ if(UNIX)
       add_definitions(-fstack-protector --param ssp-buffer-size=4)
       add_definitions(-pie -fPIE)
       set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-z,relro,-z,now")
-   endif()
-
-   # static link to gcc runtime libraries on linux
-   if(NOT APPLE)
-      execute_process(COMMAND g++ -print-file-name=libstdc++.a
-                      OUTPUT_VARIABLE RSTUDIO_STATIC_LIBSTDCPP
-                      OUTPUT_STRIP_TRAILING_WHITESPACE)
-      execute_process(COMMAND ln -fs "${RSTUDIO_STATIC_LIBSTDCPP}" "${CMAKE_CURRENT_BINARY_DIR}/libstdc++.a")
-      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -L${CMAKE_CURRENT_BINARY_DIR}")
    endif()
 
 # Win32 specific global directives

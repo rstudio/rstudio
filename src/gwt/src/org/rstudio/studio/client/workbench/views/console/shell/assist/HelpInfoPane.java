@@ -43,6 +43,7 @@ public class HelpInfoPane extends Composite
          public void run()
          {
             scrollPanel_.setVisible(false) ;
+            f1prompt_.setVisible(false) ;
             vpanel_.clear() ;
          }
       };
@@ -53,8 +54,6 @@ public class HelpInfoPane extends Composite
       timer_.cancel() ;
       vpanel_.clear() ;
 
-      f1prompt_.setVisible(true);
-      
       if (help.getFunctionSignature() != null)
       {
          Label lblSig = new Label(help.getFunctionSignature()) ;
@@ -66,7 +65,9 @@ public class HelpInfoPane extends Composite
       htmlDesc.setStylePrimaryName(styles_.functionInfoSummary()) ;
       vpanel_.add(htmlDesc) ;
 
+      f1prompt_.setVisible(true);
       scrollPanel_.setVisible(true) ;
+      
    }
    
    public void displayParameterHelp(HelpInfo.ParsedInfo help, String paramName)
@@ -81,8 +82,6 @@ public class HelpInfoPane extends Composite
       timer_.cancel() ;
       vpanel_.clear() ;
 
-      f1prompt_.setVisible(true);
-
       if (paramName != null)
       {
          Label lblSig = new Label(paramName) ;
@@ -94,6 +93,28 @@ public class HelpInfoPane extends Composite
       htmlDesc.setStylePrimaryName(styles_.paramInfoDesc()) ;
       vpanel_.add(htmlDesc) ;
       
+      f1prompt_.setVisible(true);
+      scrollPanel_.setVisible(true) ;
+   }
+   
+   public void displayPackageHelp(HelpInfo.ParsedInfo help)
+   {
+      timer_.cancel() ;
+      vpanel_.clear() ;
+
+      String title = help.getTitle();
+      if (title != null)
+      {
+         Label label = new Label(title);
+         label.setStylePrimaryName(styles_.packageName());
+         vpanel_.add(label);
+      }
+      
+      HTML htmlDesc = new HTML(help.getDescription()) ;
+      htmlDesc.setStylePrimaryName(styles_.packageDescription()) ;
+      vpanel_.add(htmlDesc) ;
+
+      f1prompt_.setVisible(true);
       scrollPanel_.setVisible(true) ;
    }
 

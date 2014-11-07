@@ -24,9 +24,9 @@ import org.rstudio.studio.client.workbench.views.source.model.CppCapabilities;
 
 public class TextEditingTargetCppHelper
 {
-   public TextEditingTargetCppHelper(BuildServerOperations server)
+   public TextEditingTargetCppHelper(BuildServerOperations buildServer)
    {
-      server_ = server;
+      buildServer_ = buildServer;
    }
    
    public void checkBuildCppDependencies(
@@ -38,7 +38,7 @@ public class TextEditingTargetCppHelper
       if (!fileType.isC() || capabilities_.hasAllCapabiliites())
          return;
       
-      server_.getCppCapabilities(
+      buildServer_.getCppCapabilities(
                      new ServerRequestCallback<CppCapabilities>() {
          
          @Override
@@ -57,7 +57,7 @@ public class TextEditingTargetCppHelper
                      "are not currently installed");
                   
                   // do a prompted install of the build tools
-                  server_.installBuildTools(
+                  buildServer_.installBuildTools(
                            "Compiling C/C++ code for R",
                            new SimpleRequestCallback<Boolean>() {
                               @Override
@@ -88,10 +88,9 @@ public class TextEditingTargetCppHelper
          }
       });
    }
-      
+   
   
-   private BuildServerOperations server_;
-  
+   private final BuildServerOperations buildServer_;
    
    // cache the value statically -- once we get an affirmative response
    // we never check again

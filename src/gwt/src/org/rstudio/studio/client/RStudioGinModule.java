@@ -109,6 +109,7 @@ import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.console.shell.Shell;
 import org.rstudio.studio.client.workbench.views.console.shell.ShellPane;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpStrategy;
 import org.rstudio.studio.client.workbench.views.data.Data;
 import org.rstudio.studio.client.workbench.views.data.DataPane;
 import org.rstudio.studio.client.workbench.views.data.DataTab;
@@ -166,6 +167,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.profiler.Profile
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.TexServerOperations;
 import org.rstudio.studio.client.workbench.views.vcs.VCSTab;
@@ -223,6 +225,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ShortcutViewer.class).asEagerSingleton();
       bind(ShinyApps.class).asEagerSingleton();
       bind(RmdOutput.class).in(Singleton.class);
+      bind(HelpStrategy.class).in(Singleton.class);
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;
@@ -335,6 +338,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(RMarkdownServerOperations.class).to(RemoteServer.class);
       bind(DependencyServerOperations.class).to(RemoteServer.class);
       bind(PackratServerOperations.class).to(RemoteServer.class);
+      bind(CppServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 

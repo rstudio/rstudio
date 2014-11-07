@@ -16,6 +16,9 @@
 # target environment for rstudio supplemental tools
 .rs.Env <- attach(NULL,name="tools:rstudio")
 
+# environment for completion hooks
+assign(".rs.RCompletionHooksEnv", new.env(parent = emptyenv()), envir = .rs.Env)
+
 # add a function to the tools:rstudio environment
 assign( envir = .rs.Env, ".rs.addFunction", function(
    name, FN, attrs = list())

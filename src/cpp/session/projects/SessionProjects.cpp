@@ -335,11 +335,10 @@ json::Object projectVcsContextJson()
 
 json::Object projectBuildContextJson()
 {
+   using namespace module_context;
    json::Object contextJson;
-   contextJson["roxygen2_installed"] =
-                        module_context::isPackageInstalled("roxygen2");
-   contextJson["devtools_installed"] =
-                           module_context::isPackageInstalled("devtools");
+   contextJson["roxygen2_installed"] = isMinimumRoxygenInstalled();
+   contextJson["devtools_installed"] = isMinimumDevtoolsInstalled();
    return contextJson;
 }
 

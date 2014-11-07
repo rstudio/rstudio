@@ -126,6 +126,8 @@ import org.rstudio.studio.client.workbench.views.presentation.model.Presentation
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
 import org.rstudio.studio.client.workbench.views.source.model.CppCapabilities;
+import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResult;
+import org.rstudio.studio.client.workbench.views.source.model.CppSourceLocation;
 import org.rstudio.studio.client.workbench.views.source.model.RdShellResult;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -255,6 +257,27 @@ public class RemoteServer implements Server
             requestCallback.onError(error);
          }
       });
+   }
+   
+   private void setArrayString(JSONArray params, int index, List<String> what) {
+      JSONArray array = new JSONArray();
+      for (int i = 0; i < what.size(); i++)
+         array.set(i, new JSONString(what.get(i)));
+      params.set(index, array);
+   }
+   
+   private void setArrayString(JSONArray params, int index, JsArrayString what) {
+      JSONArray array = new JSONArray();
+      for (int i = 0; i < what.length(); i++)
+         array.set(i, new JSONString(what.get(i)));
+      params.set(index, array);
+   }
+   
+   private void setArrayNumber(JSONArray params, int index, List<Integer> what) {
+      JSONArray array = new JSONArray();
+      for (int i = 0; i < what.size(); i++)
+         array.set(i, new JSONNumber(what.get(i)));
+      params.set(index, array);
    }
    
    // accept application agreement
@@ -519,16 +542,130 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, ABORT, params, requestCallback);
    }
    
-   public void getCompletions(String line, int cursorPos,
-                          ServerRequestCallback<Completions> requestCallback)
+   public void goToCppDefinition(
+                  String docPath, 
+                  int line, 
+                  int column,
+                  ServerRequestCallback<CppSourceLocation> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(line));
-      params.set(1, new JSONNumber(cursorPos));
-      sendRequest(RPC_SCOPE, 
-                  GET_COMPLETIONS, 
-                  params, 
-                  requestCallback) ;
+      params.set(0, new JSONString(docPath));
+      params.set(1, new JSONNumber(line));
+      params.set(2, new JSONNumber(column));
+      sendRequest(RPC_SCOPE, "go_to_cpp_definition", params, requestCallback);
+   }
+   
+   public void getCppCompletions(
+                  String docPath,
+                  int line, 
+                  int column,
+                  String userText,
+                  ServerRequestCallback<CppCompletionResult> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(docPath));
+      params.set(1, new JSONNumber(line));
+      params.set(2, new JSONNumber(column));
+      params.set(3,  new JSONString(userText));
+      sendRequest(RPC_SCOPE, "get_cpp_completions", params, requestCallback);
+   }
+   
+   public void printCppCompletions(String docId, 
+                                   String docPath, 
+                                   String docContents,
+                                   boolean docDirty,
+                                   int line, 
+                                   int column,
+                                   ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(docId));
+      params.set(1, new JSONString(docPath));
+      params.set(2, new JSONString(docContents));
+      params.set(3,  JSONBoolean.getInstance(docDirty));
+      params.set(4, new JSONNumber(line));
+      params.set(5, new JSONNumber(column));
+      sendRequest(RPC_SCOPE, "print_cpp_completions", params, requestCallback);
+   }
+   
+   public void isFunction(
+         String functionString,
+         String envString,
+         ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(functionString));
+      params.set(1, new JSONString(envString));
+      sendRequest(RPC_SCOPE, IS_FUNCTION, params, requestCallback);
+   }
+   
+   public void getDplyrJoinCompletionsString(
+         String token,
+         String string,
+         String cursorPos,
+         ServerRequestCallback<Completions> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(token));
+      params.set(1, new JSONString(string));
+      params.set(2, new JSONString(cursorPos));
+      sendRequest(
+            RPC_SCOPE,
+            GET_DPLYR_JOIN_COMPLETIONS_STRING,
+            params,
+            requestCallback);
+   }
+   
+   public void getDplyrJoinCompletions(
+         String token,
+         String leftDataName,
+         String rightDataName,
+         String verb,
+         String cursorPos,
+         ServerRequestCallback<Completions> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(token));
+      params.set(1, new JSONString(leftDataName));
+      params.set(2, new JSONString(rightDataName));
+      params.set(3, new JSONString(verb));
+      params.set(4, new JSONString(cursorPos));
+      sendRequest(
+            RPC_SCOPE,
+            GET_DPLYR_JOIN_COMPLETIONS,
+            params,
+            requestCallback);
+   }
+   
+   public void getCompletions(
+         String token,
+         List<String> assocData,
+         List<Integer> dataType,
+         List<Integer> numCommas,
+         String chainObjectName,
+         String functionCallString,
+         JsArrayString additionalArgs,
+         JsArrayString excludeArgs,
+         boolean excludeArgsFromObject,
+         String filePath,
+         ServerRequestCallback<Completions> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(token));
+      setArrayString(params, 1, assocData);
+      setArrayNumber(params, 2, dataType);
+      setArrayNumber(params, 3, numCommas);
+      params.set(4, new JSONString(chainObjectName));
+      params.set(5, new JSONString(functionCallString));
+      setArrayString(params, 6, additionalArgs);
+      setArrayString(params, 7, excludeArgs);
+      params.set(8, JSONBoolean.getInstance(excludeArgsFromObject));
+      params.set(9, new JSONString(filePath));
+      
+      sendRequest(RPC_SCOPE,
+                  GET_COMPLETIONS,
+                  params,
+                  requestCallback);
    }
 
    public void getHelpAtCursor(String line, int cursorPos,
@@ -713,13 +850,14 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_HELP, params, requestCallback);
    }
    
-   public void showHelpTopic(String topic, String pkgName)
+   public void showHelpTopic(String what, String from, int type)
    {
       JSONArray params = new JSONArray() ;
-      params.set(0, new JSONString(topic)) ;
-      params.set(1, pkgName != null 
-                       ? new JSONString(pkgName)
+      params.set(0, new JSONString(what)) ;
+      params.set(1, from != null 
+                       ? new JSONString(from)
                        : JSONNull.getInstance()) ;
+      params.set(2, new JSONNumber(type));
       
       sendRequest(RPC_SCOPE,
                   SHOW_HELP_TOPIC,
@@ -1239,6 +1377,18 @@ public class RemoteServer implements Server
                   requestCallback);
    }
    
+   public void setDocOrder(List<String> ids, 
+                           ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      
+      params.set(0, JSONUtils.toJSONStringArray(ids));
+      sendRequest(RPC_SCOPE, 
+                  SET_DOC_ORDER, 
+                  params,
+                  requestCallback);
+   }
+
    public void getTexCapabilities(
                   ServerRequestCallback<TexCapabilities> requestCallback)
    {
@@ -3656,7 +3806,11 @@ public class RemoteServer implements Server
    private static final String RESET_CONSOLE_ACTIONS = "reset_console_actions";
    private static final String INTERRUPT = "interrupt";
    private static final String ABORT = "abort";
+   private static final String GET_DPLYR_JOIN_COMPLETIONS_STRING = 
+         "get_dplyr_join_completions_string";
+   private static final String GET_DPLYR_JOIN_COMPLETIONS = "get_dplyr_join_completions";
    private static final String GET_COMPLETIONS = "get_completions";
+   private static final String IS_FUNCTION = "is_function";
    private static final String GET_HELP_AT_CURSOR = "get_help_at_cursor";
 
    private static final String PROCESS_START = "process_start";
@@ -3740,6 +3894,7 @@ public class RemoteServer implements Server
    private static final String ICONVLIST = "iconvlist";
    private static final String GET_TEX_CAPABILITIES = "get_tex_capabilities";
    private static final String GET_CHUNK_OPTIONS = "get_chunk_options";
+   private static final String SET_DOC_ORDER = "set_doc_order";
 
    private static final String GET_RECENT_HISTORY = "get_recent_history";
    private static final String GET_HISTORY_ITEMS = "get_history_items";

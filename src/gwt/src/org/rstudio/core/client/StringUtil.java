@@ -192,7 +192,6 @@ public class StringUtil
    public static String toRSymbolName(String name)
    {
       if (!name.matches("^[a-zA-Z_.][a-zA-Z0-9_.]*$")
-          || name.matches("^.[0-9].*$")
           || isRKeyword(name))
       {
          return "`" + name + "`";
@@ -506,6 +505,215 @@ public class StringUtil
       if (input == null || input.length() < 1)
          return input;
       return input.substring(0, 1).toUpperCase() + input.substring(1); 
+   }
+   
+   public static int countMatches(String line, char chr)
+   {
+      return line.length() - line.replace(String.valueOf(chr), "").length();
+   }
+   
+   public static String stripRComment(String string)
+   {
+      boolean inSingleQuotes = false;
+      boolean inDoubleQuotes = false;
+      boolean inQuotes = false;
+      
+      char currentChar = '\0';
+      char previousChar = '\0';
+      
+      int commentIndex = string.length();
+      
+      for (int i = 0; i < string.length(); i++)
+      {
+         currentChar = string.charAt(i);
+         inQuotes = inSingleQuotes || inDoubleQuotes;
+         
+         if (i > 0)
+         {
+            previousChar = string.charAt(i - 1);
+         }
+         
+         if (currentChar == '#' && !inQuotes)
+         {
+            commentIndex = i;
+            break;
+         }
+         
+         if (currentChar == '\'' && !inQuotes)
+         {
+            inSingleQuotes = true;
+            continue;
+         }
+         
+         if (currentChar == '\'' && previousChar != '\\' && inSingleQuotes)
+         {
+            inSingleQuotes = false;
+            continue;
+         }
+         
+         if (currentChar == '"' && !inQuotes)
+         {
+            inDoubleQuotes = true;
+            continue;
+         }
+         
+         if (currentChar == '"' && previousChar != '\\' && inDoubleQuotes)
+         {
+            inDoubleQuotes = false;
+            continue;
+         }
+      }
+      return string.substring(0, commentIndex);
+   }
+   
+   public static String stripBalancedQuotes(String string)
+   {
+      if (string == null)
+         return null;
+      
+      if (string == "")
+         return "";
+      
+      boolean inSingleQuotes = false;
+      boolean inDoubleQuotes = false;
+      boolean inQuotes = false;
+
+      int stringStart = 0;
+
+      char currentChar = '\0';
+      char previousChar = '\0';
+
+      StringBuilder result = new StringBuilder();
+
+      for (int i = 0; i < string.length(); i++)
+      {
+         currentChar = string.charAt(i);
+         inQuotes = inSingleQuotes || inDoubleQuotes;
+
+         if (i > 0)
+         {
+            previousChar = string.charAt(i - 1);
+         }
+
+         if (currentChar == '\'' && !inQuotes)
+         {
+            inSingleQuotes = true;
+            result.append(string.substring(stringStart, i));
+            continue;
+         }
+
+         if (currentChar == '\'' && previousChar != '\\' && inSingleQuotes)
+         {
+            inSingleQuotes = false;
+            stringStart = i + 1;
+            continue;
+         }
+
+         if (currentChar == '"' && !inQuotes)
+         {
+            inDoubleQuotes = true;
+            result.append(string.substring(stringStart, i));
+            continue;
+         }
+
+         if (currentChar == '"' && previousChar != '\\' && inDoubleQuotes)
+         {
+            inDoubleQuotes = false;
+            stringStart = i + 1;
+            continue;
+         }
+      }
+      result.append(string.substring(stringStart, string.length()));
+      return result.toString();
+   }
+   
+   
+   public static boolean isSubsequence(String self,
+         String other,
+         boolean caseInsensitive)
+   {
+      return caseInsensitive ?
+            isSubsequence(self.toLowerCase(), other.toLowerCase()) :
+            isSubsequence(self, other)
+      ;
+   }
+   
+   public static boolean isSubsequence(String self,
+         String other)
+   {
+
+      final int self_n = self.length();
+      final int other_n = other.length();
+
+      if (other_n > self_n)
+         return false;
+
+      int self_idx = 0;
+      int other_idx = 0;
+         
+      while (self_idx < self_n)
+      {
+         char selfChar = self.charAt(self_idx);
+         char otherChar = other.charAt(other_idx);
+         
+         if (otherChar == selfChar)
+         {
+            ++other_idx;
+            if (other_idx == other_n)
+            {
+               return true;
+            }
+         }
+         ++self_idx;
+      }
+      return false;
+   }
+   
+   @SuppressWarnings("unused")
+   public static int[] subsequenceIndices(
+         String sequence, String query)
+   {
+      int query_n = query.length();
+      int sequence_n = sequence.length();
+      int[] result = new int[query.length()];
+      
+      int prevMatchIndex = 0;
+      for (int i = 0; i < query_n; i++)
+      {
+         result[i] = sequence.indexOf(query.charAt(i), prevMatchIndex);
+         prevMatchIndex = result[i];
+      }
+      return result;
+      
+   }
+   
+   public static String getExtension(String string, int dots)
+   {
+      assert dots > 0;
+      int lastDotIndex = -1;
+      
+      if (dots == 1)
+      {
+         lastDotIndex = string.lastIndexOf('.');
+      }
+      else
+      {
+         String reversed = new StringBuilder(string).reverse().toString();
+         for (int i = 0; i < dots; i++)
+         {
+            lastDotIndex = reversed.indexOf('.', lastDotIndex);
+         }
+         lastDotIndex = string.length() - lastDotIndex;
+      }
+      
+      return lastDotIndex == -1 || lastDotIndex == string.length() - 1 ?
+            "" :
+            string.substring(lastDotIndex + 1, string.length());
+   }
+   
+   public static String getExtension(String string)
+   {
+      return getExtension(string, 1);
    }
    
    private static final String[] LABELS = {

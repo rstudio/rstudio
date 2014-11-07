@@ -74,18 +74,6 @@
 })
 
 
-.rs.addFunction("posixSysWhich", function(program) {
-  res <- suppressWarnings({
-    system(paste("PATH=", Sys.getenv("PATH"), " /usr/bin/which ",
-                 program, sep=""),
-           intern = TRUE)
-  })
-  if (length(res) == 0)
-    ""
-  else
-    res
-})
-
 .rs.addFunction("isRtoolsOnPath", function()
 {
    return (nzchar(Sys.which("ls.exe")) && nzchar(Sys.which("gcc.exe")))
@@ -97,6 +85,22 @@
             error = function(e) NULL)
 })
 
+.rs.addFunction("libPathsString", function()
+{
+   paste(.libPaths(), collapse = .Platform$path.sep)
+})
+
+.rs.addFunction("parseLinkingTo", function(linkingTo)
+{
+   if (is.null(linkingTo))
+      return (character())
+
+   linkingTo <- strsplit(linkingTo, "\\s*\\,")[[1]]
+   result <- gsub("\\s", "", linkingTo)
+   gsub("\\(.*", "", result)
+})
+
+
 .rs.addFunction("isPackageInstalled", function(name, libLoc = NULL)
 {
   name %in% .packages(all.available = TRUE, lib.loc = libLoc)
@@ -104,6 +108,10 @@
 
 .rs.addFunction("isPackageVersionInstalled", function(name, version) {  
   .rs.isPackageInstalled(name) && (.rs.getPackageVersion(name) >= version)
+})
+
+.rs.addFunction("packageVersionString", function(pkg) {
+   as.character(packageVersion(pkg))
 })
 
 .rs.addFunction("getPackageCompatStatus", 
@@ -120,15 +128,31 @@
 )
 
 .rs.addFunction("getPackageRStudioProtocol", function(name) {
+
+   ## First check to see if the package has a 'rstudio-protocol' file
+   path <- system.file("rstudio/rstudio-protocol", package = name)
+   if (path != "") {
+      tryCatch(
+         expr = {
+            return(as.integer(read.dcf(path, all = TRUE)$Version))
+         },
+         warning = function(e) {},
+         error = function(e) {}
+      )
+   }
+
+   ## Otherwise, check the namespace
    needsUnloadAfter <- !(name %in% loadedNamespaces())
-   result <- if (exists(".RStudio_protocol_version", envir = asNamespace(name),
-              mode = "integer")) 
-      get(".RStudio_protocol_version", envir = asNamespace(name))
-   else 
-      0
+   rpv <- ".RStudio_protocol_version"
+   env <- asNamespace(name)
+   if (exists(rpv, envir = env, mode = "integer")) {
+      version <- get(rpv, envir = env)
+   } else {
+      version <- 0L
+   }
    if (needsUnloadAfter)
       unloadNamespace(name)
-   result
+   version
 })
 
 .rs.addFunction("rstudioIDEPackageRequiresUpdate", function(name, sha1) {

@@ -17,11 +17,9 @@
 
 .enableCodeIndexing {
    margin-left: 5px;
+   margin-bottom: 13px;
 }
 
-.enableCodeIndexing input[type=checkbox] {
-   margin-bottom: 13px; 
-}
 
 .useSpacesForTab {
    margin-left: 5px;

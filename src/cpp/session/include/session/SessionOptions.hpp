@@ -256,6 +256,16 @@ public:
       return core::FilePath(pandocPath_.c_str());
    }
 
+   core::FilePath libclangPath() const
+   {
+      return core::FilePath(libclangPath_.c_str());
+   }
+
+   core::FilePath libclangHeadersPath() const
+   {
+      return core::FilePath(libclangHeadersPath_.c_str());
+   }
+
    bool allowFileDownloads() const
    {
       return allowOverlay() || allowFileDownloads_;
@@ -392,6 +402,8 @@ private:
                             std::string* pPath);
    void resolvePandocPath(const core::FilePath& resourcePath, std::string* pPath);
 
+   void resolveRsclangPath(const core::FilePath& resourcePath, std::string* pPath);
+
    void addOverlayOptions(boost::program_options::options_description* pOpt);
    bool validateOverlayOptions(std::string* pErrMsg);
    void resolveOverlayOptions();
@@ -462,6 +474,8 @@ private:
    std::string hunspellDictionariesPath_;
    std::string mathjaxPath_;
    std::string pandocPath_;
+   std::string libclangPath_;
+   std::string libclangHeadersPath_;
 
    bool allowFileDownloads_;
    bool allowShell_;

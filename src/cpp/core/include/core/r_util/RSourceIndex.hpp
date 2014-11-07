@@ -116,6 +116,9 @@ private:
 public:
    // accessors
    int type() const { return type_; }
+   bool isFunction() const { return type_ == Function; }
+   bool isMethod() const { return type_ == Method; }
+   bool isClass() const { return type_ == Class; }
    const std::string& context() const { return context_; }
    const std::string& name() const { return name_; }
    const std::vector<RS4MethodParam>& signature() const { return signature_; }
@@ -131,6 +134,11 @@ public:
          return boost::algorithm::starts_with(name_, term);
       else
          return boost::algorithm::istarts_with(name_, term);
+   }
+
+   bool nameIsSubsequence(const std::string& term, bool caseSensitive) const
+   {
+      return string_utils::isSubsequence(name_, term, !caseSensitive);
    }
 
    bool nameContains(const std::string& term, bool caseSensitive) const
@@ -240,7 +248,7 @@ public:
             predicate = boost::bind(&RSourceItem::nameStartsWith,
                                        _1, term, caseSensitive);
          else
-            predicate = boost::bind(&RSourceItem::nameContains,
+            predicate = boost::bind(&RSourceItem::nameIsSubsequence,
                                        _1, term, caseSensitive);
       }
 

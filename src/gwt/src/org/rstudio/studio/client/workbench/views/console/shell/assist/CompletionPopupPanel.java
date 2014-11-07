@@ -15,12 +15,15 @@
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.PopupPanel;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Rectangle;
@@ -38,7 +41,18 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    {
       super() ;
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
+      help_ = new HelpInfoPane();
+      help_.setWidth("400px");
       setStylePrimaryName(styles_.completionPopup()) ;
+      addCloseHandler(new CloseHandler<PopupPanel>() {
+         
+         @Override
+         public void onClose(CloseEvent<PopupPanel> event)
+         {
+            help_.clearHelp(false);
+            help_.setVisible(false);
+         }
+      });
    }
 
    public void showProgress(String progress, PositionCallback callback)
@@ -53,9 +67,9 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       show(callback) ;
    }
 
+   @Override
    public void showCompletionValues(QualifiedName[] values, 
-                                    PositionCallback callback,
-                                    boolean showHelpPane)
+                                    PositionCallback callback)
    {
       CompletionList<QualifiedName> list = new CompletionList<QualifiedName>(
                                        values,
@@ -79,14 +93,10 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       }) ;
       list_ = list ;
       
-      help_ = new HelpInfoPane() ;
-      help_.setWidth("400px") ;
-
       HorizontalPanelWithMouseEvents horiz 
                                  = new HorizontalPanelWithMouseEvents() ;
       horiz.add(list_) ;
-      if (showHelpPane)
-         horiz.add(help_) ;
+      horiz.add(help_) ;
       
       setWidget(horiz) ;
       ElementIds.assignElementId(horiz.getElement(), 
@@ -145,16 +155,33 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    {
       return list_.selectLast() ;
    }
+   
+   public void setHelpVisible(boolean visible)
+   {
+      help_.setVisible(visible);
+   }
 
+   @Override
    public void displayFunctionHelp(ParsedInfo help)
    {
+      help_.setVisible(help.hasInfo());
       help_.displayFunctionHelp(help) ;
       help_.setHeight(list_.getOffsetHeight() + "px") ;
    }
    
+   @Override
    public void displayParameterHelp(ParsedInfo help, String parameterName)
    {
+      help_.setVisible(help.hasInfo());
       help_.displayParameterHelp(help, parameterName) ;
+      help_.setHeight(list_.getOffsetHeight() + "px") ;
+   }
+   
+   @Override
+   public void displayPackageHelp(ParsedInfo help)
+   {
+      help_.setVisible(help.hasInfo());
+      help_.displayPackageHelp(help) ;
       help_.setHeight(list_.getOffsetHeight() + "px") ;
    }
 

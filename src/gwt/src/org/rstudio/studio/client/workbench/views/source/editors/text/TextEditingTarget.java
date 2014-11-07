@@ -119,6 +119,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupMenu;
@@ -373,6 +374,8 @@ public class TextEditingTarget implements
       presentationHelper_ = new TextEditingTargetPresentationHelper(
                                                                   docDisplay_);
       docDisplay_.setRnwCompletionContext(compilePdfHelper_);
+      docDisplay_.setCppCompletionContext(cppCompletionContext_);
+      docDisplay_.setRCompletionContext(rContext_);
       scopeHelper_ = new TextEditingTargetScopeHelper(docDisplay_);
       
       addRecordNavigationPositionHandler(releaseOnDismiss_, 
@@ -430,7 +433,8 @@ public class TextEditingTarget implements
             {
                event.preventDefault();
                event.stopPropagation();
-               commands_.interruptR().execute();
+               if (commands_.interruptR().isEnabled())
+                  commands_.interruptR().execute();
             }
             else if (ne.getKeyCode() == KeyCodes.KEY_M && (
                   (BrowseCap.hasMetaKey() &&
@@ -828,9 +832,10 @@ public class TextEditingTarget implements
                         Position.create(event.getLineNumber() - 1, 1);
                   
                   // if we're not in function scope, set a top-level breakpoint
-                  Scope innerFunction = 
+                  ScopeFunction innerFunction = 
                         docDisplay_.getFunctionAtPosition(breakpointPosition);
-                  if (innerFunction == null || !innerFunction.isFunction())
+                  if (innerFunction == null || !innerFunction.isFunction() ||
+                      StringUtil.isNullOrEmpty(innerFunction.getFunctionName()))
                   {
                      breakpoint = breakpointManager_.setTopLevelBreakpoint(
                            getPath(),
@@ -846,11 +851,14 @@ public class TextEditingTarget implements
                      while (innerFunction.getParentScope() != null &&
                             innerFunction.getParentScope().isFunction()) 
                      {
-                        innerFunction = innerFunction.getParentScope();
+                        innerFunction = (ScopeFunction) innerFunction.getParentScope();
                      }
+
+                     String functionName = innerFunction.getFunctionName();
+                     
                      breakpoint = breakpointManager_.setBreakpoint(
                            getPath(),
-                           innerFunction.getLabel(),
+                           functionName,
                            event.getLineNumber(),
                            dirtyState().getValue() == false);
                   }
@@ -1284,9 +1292,9 @@ public class TextEditingTarget implements
    private void updateStatusBarLanguage()
    {
       statusBar_.getLanguage().setValue(fileType_.getLabel());
-      boolean isR = fileType_.canShowScopeTree();
-      statusBar_.setScopeVisible(isR);
-      if (isR)
+      boolean canShowScope = fileType_.canShowScopeTree();
+      statusBar_.setScopeVisible(canShowScope);
+      if (canShowScope)
          updateCurrentScope();
    }
 
@@ -1308,7 +1316,7 @@ public class TextEditingTarget implements
                public void execute()
                {
                   // special handing for presentations since we extract
-                  // the slide structure in a differerent manner than 
+                  // the slide structure in a different manner than 
                   // the editor scope trees
                   if (fileType_.isRpres())
                   {
@@ -1319,23 +1327,33 @@ public class TextEditingTarget implements
                   }
                   else
                   {
-                     Scope function = docDisplay_.getCurrentScope();
-                     String label = function != null
-                                   ? function.getLabel()
+                     Scope scope = docDisplay_.getCurrentScope();
+                     String label = scope != null
+                                   ? scope.getLabel()
                                    : null;
                      statusBar_.getScope().setValue(label);
                      
-                     if (function != null)
+                     if (scope != null)
                      {
                         boolean useChunk = 
-                                 function.isChunk() || 
-                                 (fileType_.isRnw() && function.isTopLevel());
-                        if (useChunk)
+                                 scope.isChunk() || 
+                                 (fileType_.isRnw() && scope.isTopLevel());
+                             if (useChunk)
                            statusBar_.setScopeType(StatusBar.SCOPE_CHUNK);
-                        else if (function.isSection())
+                        else if (scope.isNamespace())
+                          statusBar_.setScopeType(StatusBar.SCOPE_NAMESPACE);
+                        else if (scope.isClass())
+                           statusBar_.setScopeType(StatusBar.SCOPE_CLASS);
+                        else if (scope.isSection())
                            statusBar_.setScopeType(StatusBar.SCOPE_SECTION);
-                        else
+                        else if (scope.isTopLevel())
+                           statusBar_.setScopeType(StatusBar.SCOPE_TOP_LEVEL);
+                        else if (scope.isFunction())
                            statusBar_.setScopeType(StatusBar.SCOPE_FUNCTION);
+                        else if (scope.isLambda())
+                           statusBar_.setScopeType(StatusBar.SCOPE_LAMBDA);
+                        else if (scope.isAnon())
+                           statusBar_.setScopeType(StatusBar.SCOPE_ANON);
                      }
                   }
                }
@@ -2237,12 +2255,13 @@ public class TextEditingTarget implements
    @Handler
    void onCommentUncomment()
    {
-      if (fileType_.isCpp())
-         docDisplay_.toggleCommentLines();
-      else if (isCursorInTexMode())
+      if (isCursorInTexMode())
          doCommentUncomment("%");
       else if (isCursorInRMode())
          doCommentUncomment("#");
+      else if (fileType_.isCpp())
+         doCommentUncomment("//");
+      
    }
    
    private void doCommentUncomment(String c)
@@ -2271,7 +2290,7 @@ public class TextEditingTarget implements
          // to comment out that line. This enables Shift+DownArrow to select
          // one line at a time.
          if (selection.endsWith("\n" + c + " "))
-            selection = selection.substring(0, selection.length() - 2);
+            selection = selection.substring(0, selection.length() - 1 - c.length());
       }
 
       docDisplay_.replaceSelection(selection);
@@ -2713,11 +2732,17 @@ public class TextEditingTarget implements
          }
       }
    }
-
+   
    @Handler
    void onExecuteCodeWithoutFocus()
    {
       codeExecution_.executeSelection(false);
+   }
+   
+   @Handler
+   void onExecuteCodeWithoutMovingCursor()
+   {
+      codeExecution_.executeSelection(true, false);
    }
    
    @Handler
@@ -3291,7 +3316,7 @@ public class TextEditingTarget implements
    {
       globalDisplay_.openRStudioLink("rcpp_help");
    }
-
+   
    @Handler
    void onDebugHelp()
    {
@@ -4136,6 +4161,38 @@ public class TextEditingTarget implements
    {
       return docUpdateSentinel_.getPath() == null;
    }
+   
+   private CppCompletionContext cppCompletionContext_ = 
+                                          new CppCompletionContext() {
+      @Override
+      public boolean isCompletionEnabled()
+      {
+         return session_.getSessionInfo().getClangAvailable() &&
+                (docUpdateSentinel_.getPath() != null);
+      }
+
+      @Override
+      public void withUpdatedDoc(final CommandWithArg<String> onUpdated)
+      {
+         docUpdateSentinel_.withSavedDoc(new Command() {
+            @Override
+            public void execute()
+            {
+               onUpdated.execute(docUpdateSentinel_.getPath());
+            }
+         });
+
+      }   
+   };
+   
+   private RCompletionContext rContext_ = new RCompletionContext() {
+
+      @Override
+      public String getPath()
+      {
+         return docUpdateSentinel_.getPath();
+      }
+   };
    
    // these methods are public static so that other editing targets which
    // display source code (but don't inherit from TextEditingTarget) can share

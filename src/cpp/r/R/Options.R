@@ -46,7 +46,9 @@ options(pager = .rs.pager)
 options(menu.graphics = FALSE)
 
 # set max print so that the DOM won't go haywire showing large datasets
-options(max.print = 10000)
+if (getOption("max.print", 10000) > 10000) {
+   options(max.print = 10000)
+}
 
 # set RStudio as the GUI
 local({

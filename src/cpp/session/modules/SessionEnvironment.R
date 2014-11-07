@@ -393,10 +393,23 @@
 .rs.addFunction("describeObject", function(env, objName)
 {
    obj <- get(objName, env)
-   val <- "(unknown)"
-   desc <- ""
-   size <- object.size(obj)
-   len <- length(obj)
+   # objects containing null external pointers can crash when
+   # evaluated--display generically (see case 4092)
+   hasNullPtr <- .rs.hasNullExternalPointer(obj)
+   if (hasNullPtr) 
+   {
+      val <- "<Object with null pointer>"
+      desc <- "An R object containing a null external pointer"
+      size <- 0
+      len <- 0
+   }
+   else 
+   {
+      val <- "(unknown)"
+      desc <- ""
+      size <- object.size(obj)
+      len <- length(obj)
+   }
    class <- .rs.getSingleClass(obj)
    contents <- list()
    contents_deferred <- FALSE
@@ -405,7 +418,7 @@
    {
       val <- deparse(obj)
    }
-   else
+   else if (!hasNullPtr)
    {
       # for large objects (> half MB), don't try to get the value, just show
       # the size. Some functions (e.g. str()) can cause the object to be
@@ -453,7 +466,7 @@
       value = .rs.scalar(val),
       description = .rs.scalar(desc),
       size = .rs.scalar(size),
-      length = .rs.scalar(length(obj)),
+      length = .rs.scalar(len),
       contents = contents,
       contents_deferred = .rs.scalar(contents_deferred))
 })
@@ -572,5 +585,23 @@
 .rs.addFunction("getObjectContents", function(objName, env)
 {
    .rs.valueContents(get(objName, env));
+})
+
+# attempt to determine whether the given object contains a null external
+# pointer
+.rs.addFunction("hasNullExternalPointer", function(obj)
+{
+   if (isS4(obj)) 
+   {
+      # this is an S4 object; recursively cheeck its slots for null pointers
+      any(sapply(slotNames(obj), function(name) {
+         .rs.hasNullExternalPointer(slot(obj, name))
+      }))
+   } 
+   else
+   {
+      # check the object itself for a null pointer
+      is(obj, "externalptr") && capture.output(print(obj)) == "<pointer: 0x0>"
+   }
 })
 

@@ -28,6 +28,7 @@
 #include <core/system/FileChangeEvent.hpp>
 #include <core/http/UriHandler.hpp>
 #include <core/json/JsonRpc.hpp>
+#include <core/r_util/RToolsInfo.hpp>
 #include <core/Thread.hpp>
 
 #include <session/SessionOptions.hpp>
@@ -111,6 +112,14 @@ bool isPackageInstalled(const std::string& packageName);
 // check if a package is installed with a specific version
 bool isPackageVersionInstalled(const std::string& packageName,
                                const std::string& version);
+
+// check if the required versions of various packages are installed
+bool isMinimumDevtoolsInstalled();
+bool isMinimumRoxygenInstalled();
+
+std::string packageVersion(const std::string& packageName);
+
+bool hasMinimumRVersion(const std::string& version);
 
 // check if a package is installed with a specific version and RStudio protocol
 // version (used to allow packages to disable compatibility with older RStudio
@@ -413,6 +422,11 @@ std::string libPathsString();
 bool canBuildCpp();
 bool installRBuildTools(const std::string& action);
 bool haveRcppAttributes();
+bool isRtoolsCompatible(const core::r_util::RToolsInfo& rTools);
+bool addRtoolsToPathIfNecessary(std::string* pPath,
+                                std::string* pWarningMessage);
+bool addRtoolsToPathIfNecessary(core::system::Options* pEnvironment,
+                                std::string* pWarningMessage);
 
 #ifdef __APPLE__
 bool isOSXMavericks();
@@ -685,6 +699,8 @@ core::json::Object plotExportFormat(const std::string& name,
 
 core::Error createSelfContainedHtml(const core::FilePath& sourceFilePath,
                                     const core::FilePath& targetFilePath);
+
+bool isUserFile(const core::FilePath& filePath);
 
 } // namespace module_context
 } // namespace session

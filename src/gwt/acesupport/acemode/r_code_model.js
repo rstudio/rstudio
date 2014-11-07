@@ -27,7 +27,16 @@ function comparePoints(pos1, pos2)
    return pos1.column - pos2.column;
 }
 
+function isOneOf(object, array)
+{
+   for (var i = 0; i < array.length; i++)
+      if (object === array[i])
+         return true;
+   return false;
+}
+
 var ScopeManager = require("mode/r_scope_tree").ScopeManager;
+var ScopeNode = require("mode/r_scope_tree").ScopeNode;
 
 var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    this.$doc = doc;
@@ -36,7 +45,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    this.$endStates = new Array(doc.getLength());
    this.$statePattern = statePattern;
    this.$codeBeginPattern = codeBeginPattern;
-   this.$scopes = new ScopeManager();
+   this.$scopes = new ScopeManager(ScopeNode);
 
    var that = this;
    this.$doc.on('change', function(evt) {
@@ -48,7 +57,93 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       this.$row = row || 0;
       this.$offset = offset || 0;
    };
+   
    (function() {
+
+      function lookingAtComma(cursor) {
+         return /,\s*$/.test(cursor.currentValue()) && cursor.currentType() === "text";
+      }
+
+      function isArray(o) {
+         return Object.prototype.toString.call(o) === '[object Array]';
+      }
+
+      this.isValidAsIdentifier = function() {
+         var type = this.currentType();
+         return type === "identifier" ||
+            type === "symbol" ||
+            type === "keyword" ||
+            type === "string";
+      };
+
+      this.isLookingAtInfixySymbol = function() {
+         
+         var value = this.currentValue();
+         if (value === "$" ||
+             value === "@" ||
+             value === ":")
+            return true;
+         
+         if (this.currentType().indexOf("infix") !== -1)
+            return true;
+         
+         return false;
+      };
+      
+      // Find the start of the evaluation context for a generic expression,
+      // e.g.
+      //
+      //     x[[1]]$foo[[1]][, 2]@bar[[1]]()
+      this.findStartOfEvaluationContext = function() {
+         
+         var clone = this.cloneCursor();
+         
+         do
+         {
+            if (clone.bwdToMatchingToken())
+               continue;
+            
+            // If we land on an identifier, we keep going if the token previous is
+            // 'infix-y', and bail otherwise.
+            if (clone.isValidAsIdentifier())
+            {
+               if (!clone.moveToPreviousToken())
+                  break;
+
+               // TODO: explicitly tokenize '::', ':::' so we don't have to do this hack
+               if (clone.isLookingAtInfixySymbol())
+               {
+                  while (clone.isLookingAtInfixySymbol())
+                     if (!clone.moveToPreviousToken())
+                        return false;
+
+                  // Move back up one because the loop condition will take us back again
+                  if (!clone.moveToNextToken())
+                     return false;
+
+                  continue;
+               }
+               
+               if (!clone.moveToNextToken())
+                  return false;
+               
+               break;
+               
+            }
+
+            // Fail if we get here as it implies we hit something not permissible
+            // for the evaluation context
+            return false;
+            
+         } while (clone.moveToPreviousToken());
+
+         this.$row = clone.$row;
+         this.$offset = clone.$offset;
+         return true;
+         
+      };
+
+      
       this.moveToStartOfRow = function(row)
       {
          this.$row = row;
@@ -57,36 +152,50 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
       this.moveToPreviousToken = function()
       {
-         while (this.$offset == 0 && this.$row > 0)
+         var clone = this.cloneCursor();
+         while (clone.$offset <= 0 && clone.$row > 0)
          {
-            this.$row--;
-            this.$offset = that.$tokens[this.$row].length;
+            clone.$row--;
+            clone.$offset = that.$tokens[clone.$row].length;
          }
 
-         if (this.$offset == 0)
+         if (clone.$offset === 0)
             return false;
 
-         this.$offset--;
+         clone.$offset--;
 
+         this.$row = clone.$row;
+         this.$offset = clone.$offset;
          return true;
       };
 
       this.moveToNextToken = function(maxRow)
       {
-         if (this.$row > maxRow)
-            return;
+         if (typeof maxRow === "undefined")
+            maxRow = Infinity;
 
-         this.$offset++;
-
-         while (this.$offset >= that.$tokens[this.$row].length && this.$row < maxRow)
-         {
-            this.$row++;
-            this.$offset = 0;
-         }
-
-         if (this.$offset >= that.$tokens[this.$row].length)
+         var clone = this.cloneCursor();
+         if (clone.$row > maxRow)
             return false;
 
+         clone.$offset++;
+
+         while (that.$tokens[clone.$row] != null &&
+                clone.$offset >= that.$tokens[clone.$row].length &&
+                clone.$row < maxRow)
+         {
+            clone.$row++;
+            clone.$offset = 0;
+         }
+
+         if (that.$tokens[clone.$row] == null)
+            return false;
+
+         if (clone.$offset >= that.$tokens[clone.$row].length)
+            return false;
+
+         this.$row = clone.$row;
+         this.$offset = clone.$offset;
          return true;
       };
 
@@ -107,27 +216,48 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          return this.moveToNextToken(maxRow);
       };
 
+      this.bwdToNearestToken = function(position)
+      {
+         this.$row = position.row;
+         this.$offset = position.column;
+         
+         var rowTokens = that.$tokens[this.$row] || [];
+         for (; this.$offset >= 0; this.$offset--)
+         {
+            var token = rowTokens[this.$offset];
+            if (typeof token !== "undefined" && (token.column <= position.column))
+            {
+               return true;
+            }
+         }
+         return this.moveToPreviousToken();
+      };
+
       this.moveBackwardOverMatchingParens = function()
       {
-         if (!this.moveToPreviousToken())
+         var clone = this.cloneCursor();
+         
+         if (!clone.moveToPreviousToken())
             return false;
-         if (this.currentValue() !== ")")
+         if (clone.currentValue() !== ")")
             return false;
 
          var success = false;
          var parenCount = 0;
-         while (this.moveToPreviousToken())
+         while (clone.moveToPreviousToken())
          {
-            if (this.currentValue() === "(")
+            if (clone.currentValue() === "(")
             {
-               if (parenCount == 0)
+               if (parenCount === 0)
                {
+                  this.$row = clone.$row;
+                  this.$offset = clone.$offset;
                   success = true;
                   break;
                }
                parenCount--;
             }
-            else if (this.currentValue() === ")")
+            else if (clone.currentValue() === ")")
             {
                parenCount++;
             }
@@ -157,6 +287,11 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          return this.currentToken().value;
       };
 
+      this.currentType = function()
+      {
+         return this.currentToken().type;
+      };
+
       this.currentPosition = function()
       {
          var token = this.currentToken();
@@ -176,12 +311,210 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
       this.isFirstSignificantTokenOnLine = function()
       {
-         return this.$offset == 0;
+         return this.$offset === 0;
       };
 
       this.isLastSignificantTokenOnLine = function()
       {
          return this.$offset == (that.$tokens[this.$row] || []).length - 1;
+      };
+
+      var $complements = {
+         "(" : ")",
+         "{" : "}",
+         "<" : ">",
+         "[" : "]",
+         ")" : "(",
+         "}" : "{",
+         ">" : "<",
+         "]" : "["
+      };
+
+      this.bwdToMatchingToken = function() {
+
+         var thisValue = this.currentValue();
+         var compValue = $complements[thisValue];
+
+         var isCloser = [")", "}", "]"].some(function(x) {
+            return x === thisValue;
+         });
+
+         if (!isCloser) {
+            return false;
+         }
+
+         var success = false;
+         var parenCount = 0;
+         while (this.moveToPreviousToken())
+         {
+            if (this.currentValue() === compValue)
+            {
+               if (parenCount === 0)
+               {
+                  return true;
+               }
+               parenCount--;
+            }
+            else if (this.currentValue() === thisValue)
+            {
+               parenCount++;
+            }
+         }
+
+         return false;
+         
+      };
+
+      this.fwdToMatchingToken = function() {
+
+         var thisValue = this.currentValue();
+         var compValue = $complements[thisValue];
+
+         var isOpener = ["(", "{", "["].some(function(x) {
+            return x === thisValue;
+         });
+
+         if (!isOpener) {
+            return false;
+         }
+
+         var success = false;
+         var parenCount = 0;
+         while (this.moveToNextToken())
+         {
+            if (this.currentValue() === compValue)
+            {
+               if (parenCount === 0)
+               {
+                  return true;
+               }
+               parenCount--;
+            }
+            else if (this.currentValue() === thisValue)
+            {
+               parenCount++;
+            }
+         }
+
+         return false;
+         
+      };
+
+      this.moveToPosition = function(pos) {
+
+         var rowTokens = that.$tokens[pos.row];
+
+         // If there's no tokens on this line, walk back until we find
+         // a line with tokens
+         var row = pos.row;
+         while (row >= 0 && (rowTokens == null || rowTokens.length === 0)) {
+            row--;
+            rowTokens = that.$tokens[row];
+         }
+
+         if (row < 0)
+            return false;
+
+         // If we walked back, we can use the last token on the row we found
+         if (row !== pos.row) {
+            this.$row = row;
+            this.$offset = that.$tokens[row].length - 1;
+            return true;
+         }
+
+         // Otherwise, walk over this row's tokens
+         for (var i = 0; i < rowTokens.length; i++) {
+            if (rowTokens[i].column >= pos.column) {
+               break;
+            }
+         }
+
+         this.$row = pos.row;
+         this.$offset = i - 1;
+         if (i === 0) {
+            this.$offset = 0;
+            return this.moveToPreviousToken();
+         } else {
+            return true;
+         }
+         
+      };
+
+      this.findOpeningBracket = function(tokens, failOnOpenBrace)
+      {
+         if (!isArray(tokens))
+            tokens = [tokens];
+         
+         var clone = this.cloneCursor();
+
+         do
+         {
+            var currentValue = clone.currentValue();
+            if (failOnOpenBrace)
+            {
+               if (currentValue === "{")
+               {
+                  return false;
+               }
+            }
+
+            for (var i = 0; i < tokens.length; i++)
+            {
+               if (currentValue === tokens[i])
+               {
+                  this.$row = clone.$row;
+                  this.$offset = clone.$offset;
+                  return true;
+               }
+            }
+
+            if (clone.bwdToMatchingToken())
+               continue;
+            
+         } while (clone.moveToPreviousToken());
+
+         return false;
+         
+      };
+
+      this.findOpeningBracketCountCommas = function(tokens, failOnOpenBrace)
+      {
+         if (!isArray(tokens))
+            tokens = [tokens];
+         
+         var clone = this.cloneCursor();
+         var commaCount = 0;
+         
+         do
+         {
+            var currentValue = clone.currentValue();
+            if (lookingAtComma(clone))
+               commaCount += currentValue.length - currentValue.replace(/,/g, "").length;
+
+            if (failOnOpenBrace)
+            {
+               if (currentValue === "{")
+               {
+                  return -1;
+               }
+            }
+
+            for (var i = 0; i < tokens.length; i++)
+            {
+               if (currentValue === tokens[i])
+               {
+                  this.$row = clone.$row;
+                  this.$offset = clone.$offset;
+                  return commaCount;
+               }
+            }
+            
+            if (clone.bwdToMatchingToken())
+               continue;
+            
+         } while (clone.moveToPreviousToken());
+         
+         return -1;
       };
 
    }).call(this.$TokenCursor.prototype);
@@ -198,6 +531,28 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       '{': '}',
       '}': '{'
    };
+
+   var $normalizeWhitespace = function(text) {
+      text = text.trim();
+      text = text.replace(/[\n\s]+/g, " ");
+      return text;
+   };
+
+   var $truncate = function(text, width) {
+      
+      if (typeof width === "undefined")
+         width = 80;
+      
+      if (text.length > width)
+         text = text.substring(0, width) + "...";
+      
+      return text;
+   };
+
+   var $normalizeAndTruncate = function(text, width) {
+      return $truncate($normalizeWhitespace(text), width);
+   };
+   
 
    function pFunction(t)
    {
@@ -216,24 +571,509 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
    function findAssocFuncToken(tokenCursor)
    {
-      if (tokenCursor.currentValue() !== "{")
+      var clonedCursor = tokenCursor.cloneCursor();
+      if (clonedCursor.currentValue() !== "{")
          return false;
-      if (!tokenCursor.moveBackwardOverMatchingParens())
+      if (!clonedCursor.moveBackwardOverMatchingParens())
          return false;
-      if (!tokenCursor.moveToPreviousToken())
+      if (!clonedCursor.moveToPreviousToken())
          return false;
-      if (!pFunction(tokenCursor.currentToken()))
-         return false;
-      if (!tokenCursor.moveToPreviousToken())
-         return false;
-      if (!pAssign(tokenCursor.currentToken()))
-         return false;
-      if (!tokenCursor.moveToPreviousToken())
-         return false;
-      if (!pIdentifier(tokenCursor.currentToken()))
+      if (!pFunction(clonedCursor.currentToken()))
          return false;
 
+      tokenCursor.$row = clonedCursor.$row;
+      tokenCursor.$offset = clonedCursor.$offset;
       return true;
+
+   };
+
+   function moveFromFunctionTokenToEndOfFunctionName(tokenCursor)
+   {
+      var clonedCursor = tokenCursor.cloneCursor();
+      if (!pFunction(clonedCursor.currentToken()))
+         return false;
+      if (!clonedCursor.moveToPreviousToken())
+         return false;
+      if (!pAssign(clonedCursor.currentToken()))
+         return false;
+      if (!clonedCursor.moveToPreviousToken())
+         return false;
+
+      tokenCursor.$row = clonedCursor.$row;
+      tokenCursor.$offset = clonedCursor.$offset;
+      return true;
+   }
+
+   this.getFunctionsInScope = function(pos) {
+      this.$buildScopeTreeUpToRow(pos.row);
+      return this.$scopes.getFunctionsInScope(pos);
+   };
+
+   this.getAllFunctionScopes = function(row) {
+      if (typeof row === "undefined")
+         row = this.$doc.getLength();
+      this.$buildScopeTreeUpToRow(row);
+      return this.$scopes.getAllFunctionScopes();
+   };
+
+   function pInfix(token)
+   {
+      return /\binfix\b/.test(token.type);
+   }
+
+   this.getDplyrJoinContextFromInfixChain = function(cursor)
+   {
+      var clone = cursor.cloneCursor();
+      
+      var token = "";
+      if (clone.currentType() === "identifier")
+         token = clone.currentValue();
+      
+      // We're expecting to be within e.g.
+      //
+      //    mtcars %>% semi_join(foo, by = c("a" =
+      //                                           ^
+      // Here, we get:
+      // 1. The name of the 'right table' (foo), and
+      // 2. The cursor position (left or right of '=')
+      var cursorPos = "left";
+      if (clone.currentValue() === "=")
+         cursorPos = "right";
+
+      if (clone.currentType() === "identifier")
+      {
+         if (!clone.moveToPreviousToken())
+            return null;
+         
+         if (clone.currentValue() === "=")
+            cursorPos = "right";
+      }
+
+      // Move to the first opening paren
+      if (!clone.findOpeningBracket("(", true))
+         return null;
+
+      if (!clone.moveToPreviousToken())
+         return null;
+
+      // Look back until we find a 'join' verb
+      while (clone.findOpeningBracket("(", true))
+      {
+         if (!clone.moveToPreviousToken())
+            return null;
+
+         if (!/_join$/.test(clone.currentValue()))
+            continue;
+
+         // If we get here, it looks like a dplyr join in a magrittr chain
+         // get the data name and the join verb
+         var verb = clone.currentValue();
+
+         if (!clone.moveToNextToken())
+            return null;
+
+         if (!clone.moveToNextToken())
+            return null;
+
+         var rightData = clone.currentValue();
+
+         var leftData = "";
+         var data = this.moveToDataObjectFromInfixChain(clone);
+         if (data === false)
+            return null;
+         
+         leftData = clone.currentValue();
+         
+         return {
+            "token": token,
+            "leftData": leftData,
+            "rightData": rightData,
+            "verb": verb,
+            "cursorPos": cursorPos
+         };
+      }
+      return null;
+   };
+
+   // If the token cursor lies within an infix chain, try to retrieve:
+   // 1. The data object name, and
+   // 2. Any custom variable names (e.g. set through 'mutate', 'summarise')
+   this.getDataFromInfixChain = function(tokenCursor)
+   {
+      var data = this.moveToDataObjectFromInfixChain(tokenCursor);
+      
+      var additionalArgs = [];
+      var excludeArgs = [];
+      var name = "";
+      var excludeArgsFromObject = false;
+      if (data !== false)
+      {
+         if (data.excludeArgsFromObject)
+            excludeArgsFromObject = data.excludeArgsFromObject;
+         
+         name = tokenCursor.currentValue();
+         additionalArgs = data.additionalArgs;
+         excludeArgs = data.excludeArgs;
+      }
+
+      return {
+         "name": name,
+         "additionalArgs": additionalArgs,
+         "excludeArgs": excludeArgs,
+         "excludeArgsFromObject": excludeArgsFromObject
+      };
+      
+   };
+
+   var $dplyrMutaterVerbs = [
+      "mutate", "summarise", "summarize", "rename", "transmute",
+      "select", "rename_vars",
+      "inner_join", "left_join", "right_join", "semi_join", "anti_join",
+      "outer_join", "full_join"
+   ];
+
+   // Add arguments from a function call in a chain.
+   //
+   //     select(x, y = 1)
+   //     ^~~~~~~|~~|~~~~x
+   var addDplyrArguments = function(cursor, data, limit, fnName)
+   {
+      if (!cursor.moveToNextToken())
+         return false;
+
+      if (cursor.currentValue() !== "(")
+         return false;
+
+      if (!cursor.moveToNextToken())
+         return false;
+
+      if (cursor.currentValue() === ")")
+         return false;
+
+      if (cursor.currentType() === "identifier")
+         data.additionalArgs.push(cursor.currentValue());
+      
+      if (fnName === "rename")
+      {
+         if (!cursor.moveToNextToken())
+            return false;
+         data.excludeArgs.push(cursor.currentValue());
+      }
+
+      if (fnName === "select")
+      {
+         data.excludeArgsFromObject = true;
+      }
+
+      do
+      {
+         if (cursor.currentValue() === ")")
+            break;
+         
+         if ((cursor.$row > limit.$row) ||
+             (cursor.$row === limit.$row && cursor.$offset >= limit.$offset))
+            break;
+         
+         if (cursor.fwdToMatchingToken())
+         {
+            if (!cursor.moveToNextToken())
+               break;
+            continue;
+         }
+
+         if (lookingAtComma(cursor))
+         {
+            if (!cursor.moveToNextToken())
+               return false;
+
+            if (cursor.currentType() === "identifier")
+               data.additionalArgs.push(cursor.currentValue());
+            
+            if (!cursor.moveToNextToken())
+               return false;
+
+            if (cursor.currentValue() === "=")
+            {
+               if (isOneOf(fnName, ["rename", "rename_vars"]))
+               {
+                  if (!cursor.moveToNextToken())
+                     return false;
+                  if (cursor.currentType() === "identifier")
+                     data.excludeArgs.push(cursor.currentValue());
+               }
+
+            }
+            
+
+         }
+         
+      } while (cursor.moveToNextToken());
+
+      return true;
+      
+   };
+
+   var findChainScope = function(cursor)
+   {
+      var clone = cursor.cloneCursor();
+      while (clone.findOpeningBracket("(", false))
+      {
+         // Move off of the opening paren
+         if (!clone.moveToPreviousToken())
+            return false;
+
+         // Move off of identifier
+         if (!clone.moveToPreviousToken())
+            return false;
+
+         // Move over '::' qualifiers
+         if (clone.currentValue() === ":")
+         {
+            while (clone.currentValue() === ":")
+               if (!clone.moveToPreviousToken())
+                  return false;
+
+            // Move off of identifier
+            if (!clone.moveToPreviousToken())
+               return false;
+         }
+
+         // If it's an infix operator, we use this scope
+         // Ensure it's a '%%' operator (allow for other pipes)
+         if (pInfix(clone.currentToken()))
+         {
+            cursor.$row = clone.$row;
+            cursor.$offset = clone.$offset;
+            return true;
+         }
+
+         // keep trying!
+         
+      }
+
+      // give up
+      return false;
+      
+   };
+
+   // Attempt to move a token cursor from a function call within
+   // a chain back to the starting data object.
+   //
+   //     df %.% foo %>>% bar() %>% baz(foo,
+   //     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+   this.moveToDataObjectFromInfixChain = function(tokenCursor)
+   {
+      // Find an opening paren associated with the nearest chain,
+      // Find the outermost opening paren
+      var clone = tokenCursor.cloneCursor();
+      if (!findChainScope(clone))
+         return false;
+
+      // Fill custom args
+      var data = {
+         additionalArgs: [],
+         excludeArgs: []
+      };
+      
+      // Repeat the walk -- keep walking as we can find '%%'
+      while (true)
+      {
+         if (clone.$row === 0 && clone.$offset === 0)
+         {
+            tokenCursor.$row = 0;
+            tokenCursor.$offset = 0;
+            return data;
+         }
+
+         // Move over parens to identifier if necessary
+         //
+         //    foo(bar, baz)
+         //    ^~~~~~~~~~~~^
+         clone.moveBackwardOverMatchingParens();
+
+         // Move off of '%>%' (or '(') onto identifier
+         if (!clone.moveToPreviousToken())
+            return false;
+
+         // If this identifier is a dplyr 'mutate'r, then parse
+         // those variables.
+         var value = clone.currentValue();
+         if ($dplyrMutaterVerbs.some(function(x) {
+            return x === value;
+         }))
+         {
+            addDplyrArguments(clone.cloneCursor(), data, tokenCursor, value);
+         }
+
+         // Move off of identifier, on to new infix operator.
+         // Note that we may already be at the start of the document,
+         // so check for that.
+         if (!clone.moveToPreviousToken())
+         {
+            if (clone.$row === 0 && clone.$offset === 0)
+            {
+               tokenCursor.$row = 0;
+               tokenCursor.$offset = 0;
+               return data;
+            }
+            return false;
+         }
+
+         // Move over '::' qualifiers
+         if (clone.currentValue() === ":")
+         {
+            while (clone.currentValue() === ":")
+               if (!clone.moveToPreviousToken())
+                  return false;
+
+            // Move off of identifier
+            if (!clone.moveToPreviousToken())
+               return false;
+         }
+
+         // We should be on an infix operator now. If we are, keep walking;
+         // if not, then the identifier we care about is the next token.
+         if (!pInfix(clone.currentToken()))
+            break;
+      }
+
+      if (!clone.moveToNextToken())
+         return false;
+
+      tokenCursor.$row = clone.$row;
+      tokenCursor.$offset = clone.$offset;
+      return data;
+   };
+
+   function addForInToken(tokenCursor, scopedVariables)
+   {
+      var clone = tokenCursor.cloneCursor();
+      if (clone.currentValue() !== "for")
+         return false;
+
+      if (!clone.moveToNextToken())
+         return false;
+
+      if (clone.currentValue() !== "(")
+         return false;
+
+      if (!clone.moveToNextToken())
+         return false;
+
+      var maybeForInVariable = clone.currentValue();
+      if (!clone.moveToNextToken())
+         return false;
+
+      if (clone.currentValue() !== "in")
+         return false;
+
+      scopedVariables[maybeForInVariable] = "variable";
+      return true;
+   }
+
+   this.getVariablesInScope = function(pos) {
+      
+      this.$tokenizeUpToRow(pos.row);
+      
+      var tokenCursor = new this.$TokenCursor();
+      if (!tokenCursor.moveToPosition(pos))
+         return [];
+
+      var scopedVariables = {};
+      do
+      {
+         if (tokenCursor.bwdToMatchingToken())
+            continue;
+
+         // Handle 'for (x in bar)'
+         addForInToken(tokenCursor, scopedVariables);
+         
+         // Default -- assignment case
+         if (pAssign(tokenCursor.currentToken()))
+         {
+            // Check to see if this is a function (simple check)
+            var type = "variable";
+            var functionCursor = tokenCursor.cloneCursor();
+            if (functionCursor.moveToNextToken())
+            {
+               if (functionCursor.currentValue() === "function")
+               {
+                  type = "function";
+               }
+            }
+            
+            var clone = tokenCursor.cloneCursor();
+            if (!clone.moveToPreviousToken()) continue;
+            
+            if (pIdentifier(clone.currentToken()))
+            {
+               var arg = clone.currentValue();
+               scopedVariables[arg] = type;
+               continue;
+            }
+            
+         }
+      } while (tokenCursor.moveToPreviousToken());
+
+      var result = [];
+      for (var key in scopedVariables)
+         result.push({
+            "token": key,
+            "type": scopedVariables[key]
+         });
+      
+      result.sort();
+      return result;
+      
+   };
+
+   function lookingAtComma(cursor) {
+      return /,\s*$/.test(cursor.currentValue()) && cursor.currentType() === "text";
+   }
+
+   // Get function arguments, starting at the start of a function definition, e.g.
+   //
+   // x <- function(a = 1, b = 2, c = list(a = 1, b = 2), ...)
+   //      ?~~~~~~~?^~~~~~~^~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~^~~|
+   function $getFunctionArgs(tokenCursor)
+   {
+      if (pFunction(tokenCursor.currentToken()))
+         tokenCursor.moveToNextToken();
+
+      if (tokenCursor.currentValue() === "(")
+         tokenCursor.moveToNextToken();
+
+      if (tokenCursor.currentValue() === ")")
+         return [];
+
+      var functionArgs = [];
+      if (pIdentifier(tokenCursor.currentToken()))
+         functionArgs.push(tokenCursor.currentValue());
+      
+      while (tokenCursor.moveToNextToken())
+      {
+         if (tokenCursor.fwdToMatchingToken())
+            continue;
+
+         if (tokenCursor.currentValue() === ")")
+            break;
+
+         // Yuck: '...' and ',' can get tokenized together as
+         // text. All we can really do is ask if a particular token is
+         // type 'text' and ends with a comma.
+         // Once we encounter such a token, we look ahead to find an
+         // identifier (it signifies an argument name)
+         if (lookingAtComma(tokenCursor))
+         {
+            while (lookingAtComma(tokenCursor))
+               tokenCursor.moveToNextToken();
+            
+            if (pIdentifier(tokenCursor.currentToken()))
+               functionArgs.push(tokenCursor.currentValue());
+         }
+      }
+      return functionArgs;
+      
    }
 
    this.$buildScopeTreeUpToRow = function(maxrow)
@@ -279,7 +1119,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       // on the identifier of a function whose open brace is a few tokens later.
       // Seems like it would be rare indeed for this distance to be more than 30
       // rows.
-      maxRow = Math.min(maxrow + 30, this.$doc.getLength() - 1);
+      var maxRow = Math.min(maxrow + 30, this.$doc.getLength() - 1);
       this.$tokenizeUpToRow(maxRow);
 
       //console.log("Seeking to " + this.$scopes.parsePos.row + "x"+ this.$scopes.parsePos.column);
@@ -337,15 +1177,55 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          else if (tokenCursor.currentValue() === "{")
          {
             var localCursor = tokenCursor.cloneCursor();
+            var bracePos = localCursor.currentPosition();
+            
             var startPos;
             if (findAssocFuncToken(localCursor))
             {
+               var argsCursor = localCursor.cloneCursor();
+               argsCursor.moveToNextToken();
+               var argsStartPos = argsCursor.currentPosition();
+
+               var functionName = null;
+               if (moveFromFunctionTokenToEndOfFunctionName(localCursor))
+               {
+                  var functionEndCursor = localCursor.cloneCursor();
+                  if (localCursor.findStartOfEvaluationContext())
+                  {
+                     var functionStartPos = localCursor.currentPosition();
+                     var functionEndPos = functionEndCursor.currentPosition();
+                     functionName = this.$doc.getTextRange(new Range(
+                        functionStartPos.row,
+                        functionStartPos.column,
+                        functionEndPos.row,
+                        functionEndPos.column + functionEndCursor.currentValue().length
+                     ));
+                  }
+               }
+               
                startPos = localCursor.currentPosition();
                if (localCursor.isFirstSignificantTokenOnLine())
                   startPos.column = 0;
-               this.$scopes.onFunctionScopeStart(localCursor.currentValue(),
+
+               var functionArgsString = this.$doc.getTextRange(new Range(
+                  argsStartPos.row, argsStartPos.column,
+                  bracePos.row, bracePos.column
+               ));
+
+               var functionLabel;
+               if (functionName === null)
+                  functionLabel = $normalizeWhitespace("<function>" + functionArgsString);
+               else
+                  functionLabel = $normalizeWhitespace(functionName + functionArgsString);
+
+               // Obtain the function arguments by walking through the tokens
+               var functionArgs = $getFunctionArgs(argsCursor);
+
+               this.$scopes.onFunctionScopeStart(functionLabel,
                                                  startPos,
-                                                 tokenCursor.currentPosition());
+                                                 tokenCursor.currentPosition(),
+                                                 functionName,
+                                                 functionArgs);
             }
             else
             {
@@ -519,7 +1399,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    this.getCurrentScope = function(position, filter)
    {
       if (!filter)
-         filter = function(scope) { return true; }
+         filter = function(scope) { return true; };
 
       if (!position)
          return "";
@@ -878,6 +1758,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
    this.$tokenizeUpToRow = function(lastRow)
    {
+
       // Don't let lastRow be past the end of the document
       lastRow = Math.min(lastRow, this.$endStates.length - 1);
 
@@ -1210,5 +2091,8 @@ exports.setVerticallyAlignFunctionArgs = function(verticallyAlign) {
    $verticallyAlignFunctionArgs = verticallyAlign;
 };
 
+exports.getVerticallyAlignFunctionArgs = function() {
+   return $verticallyAlignFunctionArgs;
+};
 
 });

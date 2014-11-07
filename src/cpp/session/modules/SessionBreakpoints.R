@@ -347,11 +347,24 @@
 })
 
 # Parses and executes a file for debugging
-.rs.addFunction("executeDebugSource", function(fileName, encoding, breaklines)
+.rs.addFunction("executeDebugSource", function(fileName, encoding, breaklines, local)
 {
+   envir <-
+      if (isTRUE(local)) {
+         # If local is TRUE, we take the first frame as it's what was artificially
+         # constructed in earlier code
+         sys.frames()[[1]]
+      } else if (identical(local, FALSE)) {
+         .GlobalEnv
+      } else if (is.environment(local)) {
+         local
+      } else {
+         stop("'local' must be TRUE, FALSE or an environment")
+      }
+
    # Create a function containing the parsed contents of the file
    env <- new.env(parent = emptyenv())
-   env$fun <- .rs.makeSourceEquivFunction(fileName, encoding)
+   env$fun <- .rs.makeSourceEquivFunction(fileName, encoding, envir)
    breakSteps <- character()
 
    # Inject the breakpoints
@@ -418,14 +431,14 @@
 
 # Given a filename, creates a source-equivalent function: a function that,
 # when executed, has the same effect as sourcing the file.
-.rs.addFunction("makeSourceEquivFunction", function(filename, encoding)
-{ 
+.rs.addFunction("makeSourceEquivFunction", function(filename, encoding, envir = globalenv())
+{
    content <- suppressWarnings(parse(filename, encoding))
 
    # Create an empty function to host the expressions in the file
    fun <- function() 
    {
-      evalq({ 1 }, envir = globalenv())
+      evalq({ 1 }, envir = envir)
    }
 
    # Copy each statement from the file into the eval body of the function
@@ -457,13 +470,15 @@
    return(fun)
 })
 
-.rs.addGlobalFunction("debugSource", function(fileName, echo=FALSE, 
-                                              encoding="unknown")
+.rs.addGlobalFunction("debugSource", function(fileName,
+                                              echo = FALSE,
+                                              encoding = "unknown",
+                                              local = FALSE)
 {
    # NYI: Consider whether we need to implement source with echo for debugging.
    # This would likely involve injecting print statements into the generated
    # source-equivalent function.
-   invisible(.Call("rs_debugSourceFile", fileName, encoding))
+   invisible(.Call("rs_debugSourceFile", fileName, encoding, local))
 })
 
 # Parameters expected to be in environment:

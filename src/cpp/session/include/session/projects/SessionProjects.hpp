@@ -38,7 +38,7 @@
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RSourceIndex.hpp>
 #include <core/r_util/RPackageInfo.hpp>
- 
+
 namespace session {
 namespace projects {
 

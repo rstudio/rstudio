@@ -121,6 +121,8 @@ SEXP create(const std::vector<std::pair<std::string,std::string> >& value,
 SEXP create(const core::json::Array& value, Protect* pProtect);
 SEXP create(const core::json::Object& value, Protect* pProtect);
 
+// Create a named list
+SEXP createList(std::vector<std::string> names, Protect* pProtect);
 
 inline int indexOfElementNamed(SEXP listSEXP, const std::string& name)
 {

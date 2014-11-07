@@ -1,4 +1,9 @@
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 #include <iostream>
 
 #include <boost/algorithm/string/predicate.hpp>
@@ -1098,4 +1103,8 @@ enum RS_NSActivityOptions : uint64_t
 }
 
 @end
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 

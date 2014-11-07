@@ -37,185 +37,250 @@ var RHighlightRules = require("mode/r_highlight_rules").RHighlightRules;
 
 var c_cppHighlightRules = function() {
 
-    var keywords = lang.arrayToMap(
-        ("alignas|alignof|and|and_eq|asm|auto|bitand|bitor|bool|break|" +
-        "case|catch|char|char16_t|char32_t|class|compl|const|" +
-        "constexpr|const_cast|continue|decltype|default|delete|do|" +
-        "double|dynamic_cast|else|enum|explicit|export|extern|false|" +
-        "float|for|friend|goto|if|inline|int|long|mutable|namespace|" +
-        "new|noexcept|not|not_eq|nullptr|operator|or|or_eq|private|" +
-        "protected|public|register|reinterpret_cast|return|short|" +
-        "signed|sizeof|static|static_assert|static_cast|struct|" +
-        "switch|template|this|thread_local|throw|true|try|typedef|" +
-        "typeid|typename|union|unsigned|using|virtual|void|volatile|" +
-        "wchar_t|while|xor|xor_eq").split("|")
-    );
+   function escapeRegExp(str) {
+      return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+   }
 
-    var buildinConstants = lang.arrayToMap(
-        ("NULL").split("|")
-    );
+   var keywords = lang.arrayToMap([
+      "alignas", "alignof", "and", "and_eq", "asm", "auto", "bitand",
+       "bitor", "bool", "break", "case", "catch", "char", "char16_t",
+       "char32_t", "class", "compl", "const", "constexpr",
+       "const_cast", "continue", "decltype", "default", "delete",
+       "do", "double", "dynamic_cast", "else", "enum", "explicit",
+       "export", "extern", "false", "float", "for", "friend", "goto",
+       "if", "inline", "int", "in", "long", "mutable", "namespace",
+       "new", "noexcept", "not", "not_eq", "nullptr", "or", "or_eq",
+       "private", "protected", "public", "register",
+       "reinterpret_cast", "return", "short", "signed", "sizeof",
+       "static", "static_assert", "static_cast", "struct", "switch",
+       "template", "this", "thread_local", "throw", "true", "try",
+       "typedef", "typeid", "typeof", "typename", "union", "unsigned",
+       "using", "virtual", "void", "volatile", "wchar_t", "while",
+       "xor", "xor_eq"
+   ]);
 
-    // regexp must not have capturing parentheses. Use (?:) instead.
-    // regexps are ordered -> the first match is used
+   var preProcTokens = [
+      "include", "pragma", "line", "define", "undef", "ifdef", "ifndef",
+      "if", "else", "elif", "endif", "warning", "error"
+   ];
 
-    this.$rules = {
-        "start" : [
-            {
-                // Attributes
-                token: "comment.doc.tag",
-                regex: "\\/\\/\\s*\\[\\[.*\\]\\].*$"
-            }, {
-                // Roxygen
-                token : "comment",
-                regex : "\\/\\/'",
-                next : "rd-start"
-            }, {
-                // Standard comment
-                token : "comment",
-                regex : "\\/\\/.*$"
+   var buildinConstants = lang.arrayToMap(
+      ("NULL").split("|")
+   );
+
+   var operatorTokens = [
+
+      ">>=", "<<=", "new", "delete",
+      
+      "<<", ">>", "&&", "||", "==", "!=", "<=", ">=", "::",
+      "*=", "+=", "-=", "/=", "++", "--", "<>", "&=", "^=",
+      "%=", "->",
+      
+      "!", "$", "&", "|", "*", "-", "+", "~", "="
+      
+   ];
+
+   var reOperatorTokens = operatorTokens.map(function(x) {
+      return escapeRegExp(x);
+   }).join("|");
+
+   var reOperator =
+      [",", "()", "[]", "->*", "->"]
+      .concat(operatorTokens)
+      .map(function(x) {
+         return escapeRegExp(x);
+      });
+
+   reOperator = ["new\\s*\\[\\]", "delete\\s*\\[\\]"].concat(reOperator);
+   reOperator = "operator\\s*(?:" + reOperator.join("|") + ")|operator\\s+[\\w_]+";
+
+   // regexp must not have capturing parentheses. Use (?:) instead.
+   // regexps are ordered -> the first match is used
+
+   this.$rules = {
+      "start" : [
+         {
+            // Attributes
+            token: "comment.doc.tag",
+            regex: "\\/\\/\\s*\\[\\[.*\\]\\].*$"
+         }, {
+            // Roxygen
+            token : "comment",
+            regex : "\\/\\/'",
+            next : "rd-start"
+         }, {
+            // Standard comment
+            token : "comment",
+            regex : "\\/\\/.*$"
+         },
+         DocCommentHighlightRules.getStartRule("doc-start"),
+         {
+            token : "comment", // multi line comment
+            merge : true,
+            regex : "\\/\\*",
+            next : "comment"
+         }, {
+            token : "string", // single line
+            regex : '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
+         }, {
+            token : "string", // multi line string start
+            merge : true,
+            regex : '["].*\\\\$',
+            next : "qqstring"
+         }, {
+            token : "string", // single line
+            regex : "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
+         }, {
+            token : "string", // multi line string start
+            merge : true,
+            regex : "['].*\\\\$",
+            next : "qstring"
+         }, {
+            token : "constant.numeric", // hex
+            regex : "0[xX][0-9a-fA-F]+\\b"
+         }, {
+            token : "constant.numeric", // float
+            regex : "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
+         }, {
+            token : "keyword.preproc",
+            regex : "#\\s*include\\b",
+            next : "include"
+         }, {
+            token : "keyword.preproc", // pre-compiler directives
+            regex : "(?:" + preProcTokens.map(function(x) { return "#\\s*" + x + "\\b"; }).join("|") + ")"
+         }, {
+            token : "variable.language", // compiler-specific constructs
+            regex : "\\b__\\S+__\\b"
+         }, {
+            token: "keyword",
+            regex: reOperator
+         }, {
+            token : function(value) {
+               if (value == "this")
+                  return "variable.language";
+               else if (keywords.hasOwnProperty(value))
+                  return "keyword";
+               else if (buildinConstants.hasOwnProperty(value))
+                  return "constant.language";
+               else
+                  return "identifier";
             },
-            DocCommentHighlightRules.getStartRule("doc-start"),
-            {
-                token : "comment", // multi line comment
-                merge : true,
-                regex : "\\/\\*",
-                next : "comment"
-            }, {
-                token : "string", // single line
-                regex : '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
-            }, {
-                token : "string", // multi line string start
-                merge : true,
-                regex : '["].*\\\\$',
-                next : "qqstring"
-            }, {
-                token : "string", // single line
-                regex : "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
-            }, {
-                token : "string", // multi line string start
-                merge : true,
-                regex : "['].*\\\\$",
-                next : "qstring"
-            }, {
-                token : "constant.numeric", // hex
-                regex : "0[xX][0-9a-fA-F]+\\b"
-            }, {
-                token : "constant.numeric", // float
-                regex : "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
-            }, {
-              token : "constant", // <CONSTANT>
-              regex : "<[a-zA-Z0-9.]+>"
-            }, {
-              token : "keyword", // pre-compiler directivs
-              regex : "(?:#include|#pragma|#line|#define|#undef|#ifdef|#else|#elif|#endif|#ifndef)"
-          }, {
-                token : function(value) {
-                    if (value == "this")
-                        return "variable.language";
-                    else if (keywords.hasOwnProperty(value))
-                        return "keyword";
-                    else if (buildinConstants.hasOwnProperty(value))
-                        return "constant.language";
-                    else
-                        return "identifier";
-                },
-                regex : "[a-zA-Z_$][a-zA-Z0-9_$]*\\b"
-            }, {
-                token : "keyword.operator",
-                regex : "!|\\$|%|&|\\*|\\-\\-|\\-|\\+\\+|\\+|~|==|=|!=|<=|>=|<<=|>>=|>>>=|<>|<|>|!|&&|\\|\\||\\?\\:|\\*=|%=|\\+=|\\-=|&=|\\^=|\\b(?:in|new|delete|typeof|void)"
-            }, {
-              token : "punctuation.operator",
-              regex : "\\?|\\:|\\,|\\;|\\."
-            }, {
-                token : "paren.lparen",
-                regex : "[[({]"
-            }, {
-                token : "paren.rparen",
-                regex : "[\\])}]"
-            }, {
-                token : "text",
-                regex : "\\s+"
-            }
-        ],
-        "comment" : [
-            {
-                token : "comment", // closing comment
-                regex : ".*?\\*\\/",
-                next : "start"
-            }, {
-                token : "comment", // comment spanning whole line
-                merge : true,
-                regex : ".+"
-            }
-        ],
-        "qqstring" : [
-            {
-                token : "string",
-                regex : '(?:(?:\\\\.)|(?:[^"\\\\]))*?"',
-                next : "start"
-            }, {
-                token : "string",
-                merge : true,
-                regex : '.+'
-            }
-        ],
-        "qstring" : [
-            {
-                token : "string",
-                regex : "(?:(?:\\\\.)|(?:[^'\\\\]))*?'",
-                next : "start"
-            }, {
-                token : "string",
-                merge : true,
-                regex : '.+'
-            }
-        ]
-    };
-    
-    var rdRules = new TexHighlightRules("comment").getRules();
+            regex : "[a-zA-Z_$][a-zA-Z0-9_$]*\\b"
+         }, {
+            token : "keyword.operator",
+            regex : reOperatorTokens
+         }, {
+            token : "punctuation.operator",
+            regex : "\\?|\\:|\\,|\\;|\\.|\\\\"
+         }, {
+            // Obviously these are neither keywords nor operators, but
+            // labelling them as such was the easiest way to get them
+            // to be colored distinctly from regular text
+            token : "paren.keyword.operator",
+            regex : "[[({<]"
+         }, {
+            // Obviously these are neither keywords nor operators, but
+            // labelling them as such was the easiest way to get them
+            // to be colored distinctly from regular text
+            token : "paren.keyword.operator",
+            regex : "[\\])}>]"
+         }, {
+            token : "text",
+            regex : "\\s+"
+         }
+      ],
+      "comment" : [
+         {
+            token : "comment", // closing comment
+            regex : ".*?\\*\\/",
+            next : "start"
+         }, {
+            token : "comment", // comment spanning whole line
+            merge : true,
+            regex : ".+"
+         }
+      ],
+      "qqstring" : [
+         {
+            token : "string",
+            regex : '(?:(?:\\\\.)|(?:[^"\\\\]))*?"',
+            next : "start"
+         }, {
+            token : "string",
+            merge : true,
+            regex : '.+'
+         }
+      ],
+      "qstring" : [
+         {
+            token : "string",
+            regex : "(?:(?:\\\\.)|(?:[^'\\\\]))*?'",
+            next : "start"
+         }, {
+            token : "string",
+            merge : true,
+            regex : '.+'
+         }
+      ],
+      "include" : [
+         {
+            token : "string", // <CONSTANT>
+            regex : /<.+>/,
+            next : "start"
+         },
+         {
+            token : "string",
+            regex : /\".+\"/,
+            next : "start"
+         }
+      ]
+      
+   };
 
-    // Make all embedded TeX virtual-comment so they don't interfere with
-    // auto-indent.
-    for (var i = 0; i < rdRules["start"].length; i++) {
-       rdRules["start"][i].token += ".virtual-comment";
-    }
+   var rdRules = new TexHighlightRules("comment").getRules();
 
-    this.addRules(rdRules, "rd-");
-    this.$rules["rd-start"].unshift({
-       token: "text",
-       regex: "^",
-       next: "start"
-    });
-    this.$rules["rd-start"].unshift({
-       token : "keyword",
-       regex : "@(?!@)[^ ]*"
-    });
-    this.$rules["rd-start"].unshift({
-       token : "comment",
-       regex : "@@"
-    });
-    this.$rules["rd-start"].push({
-       token : "comment",
-       regex : "[^%\\\\[({\\])}]+"
-    });
-    
-    this.embedRules(DocCommentHighlightRules, "doc-",
-        [ DocCommentHighlightRules.getEndRule("start") ]);
+   // Make all embedded TeX virtual-comment so they don't interfere with
+   // auto-indent.
+   for (var i = 0; i < rdRules["start"].length; i++) {
+      rdRules["start"][i].token += ".virtual-comment";
+   }
 
-    // Embed R syntax highlighting
-    this.$rules["start"].unshift({
-        token: "support.function.codebegin",
-        regex: "^\\s*\\/\\*{3,}\\s+[Rr]\\s*$",
-        next: "r-start"
-    });
+   this.addRules(rdRules, "rd-");
+   this.$rules["rd-start"].unshift({
+      token: "text",
+      regex: "^",
+      next: "start"
+   });
+   this.$rules["rd-start"].unshift({
+      token : "keyword",
+      regex : "@(?!@)[^ ]*"
+   });
+   this.$rules["rd-start"].unshift({
+      token : "comment",
+      regex : "@@"
+   });
+   this.$rules["rd-start"].push({
+      token : "comment",
+      regex : "[^%\\\\[({\\])}]+"
+   });
 
-    var rRules = new RHighlightRules().getRules();
-    this.addRules(rRules, "r-");
-    this.$rules["r-start"].unshift({
-        token: "support.function.codeend",
-        regex: "\\*\\/",
-        next: "start"
-    });
+   this.embedRules(DocCommentHighlightRules, "doc-",
+                   [ DocCommentHighlightRules.getEndRule("start") ]);
+
+   // Embed R syntax highlighting
+   this.$rules["start"].unshift({
+      token: "support.function.codebegin",
+      regex: "^\\s*\\/\\*{3,}\\s+[Rr]\\s*$",
+      next: "r-start"
+   });
+
+   var rRules = new RHighlightRules().getRules();
+   this.addRules(rRules, "r-");
+   this.$rules["r-start"].unshift({
+      token: "support.function.codeend",
+      regex: "\\*\\/",
+      next: "start"
+   });
 
 
 };

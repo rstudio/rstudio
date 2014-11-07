@@ -18,6 +18,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONString;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.common.r.RToken;
 import org.rstudio.studio.client.common.r.RTokenizer;
@@ -59,7 +60,20 @@ public class RnwChunkOptions extends JavaScriptObject
       JSONArray arr = new JSONArray(getOptionTypeNative(name));
       ArrayList<String> values = new ArrayList<String>();
       for (int i=0; i<arr.size(); i++)
-         values.add(arr.get(i).isArray().get(0).isString().stringValue());
+      {
+         JSONArray array = arr.get(i).isArray();
+         if (array == null)
+            break;
+
+         if (array.size() == 0)
+            break;
+
+         JSONString string = array.get(0).isString();
+         if (string == null)
+            break;
+
+         values.add(string.stringValue());
+      }
       return values;
    }
    

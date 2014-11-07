@@ -16,6 +16,8 @@
 #ifndef SESSION_CODE_SEARCH_HPP
 #define SESSION_CODE_SEARCH_HPP
 
+#include <core/r_util/RSourceIndex.hpp>
+
 namespace core {
    class Error;
 }
@@ -23,6 +25,12 @@ namespace core {
 namespace session {
 namespace modules {
 namespace code_search {
+
+void searchSource(const std::string& term,
+                  std::size_t maxResults,
+                  bool prefixOnly,
+                  std::vector<core::r_util::RSourceItem>* pItems,
+                  bool* pMoreAvailable);
 
 core::Error initialize();
    

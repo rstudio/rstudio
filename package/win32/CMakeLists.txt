@@ -53,6 +53,10 @@ set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
    WriteRegStr HKCR '.html\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.css\\\\OpenWithList\\\\rstudio.exe' '' ''
    WriteRegStr HKCR '.js\\\\OpenWithList\\\\rstudio.exe' '' ''
+   WriteRegStr HKCR '.c\\\\OpenWithList\\\\rstudio.exe' '' ''
+   WriteRegStr HKCR '.cpp\\\\OpenWithList\\\\rstudio.exe' '' ''
+   WriteRegStr HKCR '.h\\\\OpenWithList\\\\rstudio.exe' '' ''
+   WriteRegStr HKCR '.hpp\\\\OpenWithList\\\\rstudio.exe' '' ''
    
    WriteRegStr HKCR '.Rproj' '' 'RStudio.Rproj'
    WriteRegStr HKCR 'RStudio.Rproj' '' 'R Project'
@@ -83,6 +87,10 @@ set(CPACK_NSIS_EXTRA_UNINSTALL_COMMANDS "
    DeleteRegKey HKCR '.html\\\\OpenWithList\\\\rstudio.exe'
    DeleteRegKey HKCR '.css\\\\OpenWithList\\\\rstudio.exe'
    DeleteRegKey HKCR '.js\\\\OpenWithList\\\\rstudio.exe'
+   DeleteRegKey HKCR '.c\\\\OpenWithList\\\\rstudio.exe'
+   DeleteRegKey HKCR '.cpp\\\\OpenWithList\\\\rstudio.exe'
+   DeleteRegKey HKCR '.h\\\\OpenWithList\\\\rstudio.exe'
+   DeleteRegKey HKCR '.hpp\\\\OpenWithList\\\\rstudio.exe'
    DeleteRegKey HKCR 'RStudio.Rproj'
 #")
 

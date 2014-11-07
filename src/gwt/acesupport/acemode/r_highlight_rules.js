@@ -30,7 +30,7 @@ define("mode/r_highlight_rules", function(require, exports, module)
    {
 
       var keywords = lang.arrayToMap(
-            ("function|if|in|break|next|repeat|else|for|return|switch|while|try|tryCatch|stop|warning|require|library|attach|detach|source|setMethod|setGeneric|setGroupGeneric|setClass|setRefClass|new")
+            ("function|if|in|break|next|repeat|else|for|return|switch|while|try|tryCatch|stop|warning|require|library|attach|detach|source|setMethod|setGeneric|setGroupGeneric|setClass|setRefClass")
                   .split("|")
             );
 
@@ -60,12 +60,22 @@ define("mode/r_highlight_rules", function(require, exports, module)
                regex : "#.*$"
             },
             {
+               token : "string", // single line
+               regex : '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
+            },
+            {
+               token : "string", // single line
+               regex : "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
+            },
+            {
                token : "string", // multi line string start
+               merge : true,
                regex : '["]',
                next : "qqstring"
             },
             {
                token : "string", // multi line string start
+               merge : true,
                regex : "[']",
                next : "qstring"
             },
@@ -96,19 +106,19 @@ define("mode/r_highlight_rules", function(require, exports, module)
                      return "keyword";
                   else if (buildinConstants[value])
                      return "constant.language";
-                  else if (value == '...' || value.match(/^\.\.\d+$/))
+                  else if (value.match(/^\.\.\d+$/))
                      return "variable.language";
                   else
                      return "identifier";
                },
-               regex : "[a-zA-Z.][a-zA-Z0-9._]*\\b"
+               regex : "[a-zA-Z.][a-zA-Z0-9._]*"
             },
             {
                token : "keyword.operator",
                regex : "%%|>=|<=|==|!=|\\->|<\\-|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||~|\\$|:|@"
             },
             {
-               token : "keyword.operator", // infix operators
+               token : "keyword.operator.infix", // infix operators
                regex : "%.*?%"
             },
             {
@@ -138,7 +148,8 @@ define("mode/r_highlight_rules", function(require, exports, module)
             },
             {
                token : "string",
-               regex : '.+'
+               regex : '.+',
+               merge : true
             }
          ],
          "qstring" : [
@@ -149,7 +160,8 @@ define("mode/r_highlight_rules", function(require, exports, module)
             },
             {
                token : "string",
-               regex : '.+'
+               regex : '.+',
+               merge : true
             }
          ]
       };

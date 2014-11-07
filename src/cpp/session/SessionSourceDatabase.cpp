@@ -211,6 +211,7 @@ SourceDocument::SourceDocument(const std::string& type)
    dirty_ = false;
    created_ = date_time::millisecondsSinceEpoch();
    sourceOnSave_ = false;
+   relativeOrder_ = 0;
 }
    
 
@@ -389,6 +390,9 @@ Error SourceDocument::readFromJson(json::Object* pDocJson)
       json::Value folds = docJson["folds"];
       folds_ = !folds.is_null() ? folds.get_str() : std::string();
 
+      json::Value order = docJson["relative_order"];
+      relativeOrder_ = !order.is_null() ? order.get_int() : 0;
+
       return Success();
    }
    catch(const std::exception& e)
@@ -411,6 +415,7 @@ void SourceDocument::writeToJson(json::Object* pDocJson) const
    jsonDoc["dirty"] = dirty();
    jsonDoc["created"] = created();
    jsonDoc["source_on_save"] = sourceOnSave();
+   jsonDoc["relative_order"] = relativeOrder();
    jsonDoc["properties"] = properties();
    jsonDoc["folds"] = folds();
    jsonDoc["lastKnownWriteTime"] = json::Value(
@@ -446,6 +451,22 @@ bool sortByCreated(const boost::shared_ptr<SourceDocument>& pDoc1,
                    const boost::shared_ptr<SourceDocument>& pDoc2)
 {
    return pDoc1->created() < pDoc2->created();
+}
+
+bool sortByRelativeOrder(const boost::shared_ptr<SourceDocument>& pDoc1,
+                         const boost::shared_ptr<SourceDocument>& pDoc2)
+{
+   // if both documents are unordered, sort by creation time
+   if (pDoc1->relativeOrder() == 0 && pDoc2->relativeOrder() == 0)
+   {
+      return sortByCreated(pDoc1, pDoc2);
+   }
+   // unordered documents go at the end 
+   if (pDoc1->relativeOrder() == 0) 
+   {
+      return false;
+   }
+   return pDoc1->relativeOrder() < pDoc2->relativeOrder();
 }
 
 namespace {
@@ -654,6 +675,12 @@ void onShutdown(bool)
 }
 
 } // anonymous namespace
+
+Events& events()
+{
+   static Events instance;
+   return instance;
+}
 
 Error initialize()
 {

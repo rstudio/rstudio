@@ -119,6 +119,7 @@ public class Source implements InsertSourceHandler,
                              OpenSourceFileHandler,
                              TabClosingHandler,
                              TabCloseHandler,
+                             TabReorderHandler,
                              SelectionHandler<Integer>,
                              TabClosedHandler,
                              FileEditHandler,
@@ -134,6 +135,7 @@ public class Source implements InsertSourceHandler,
                                     HasTabClosingHandlers,
                                     HasTabCloseHandlers,
                                     HasTabClosedHandlers,
+                                    HasTabReorderHandlers,
                                     HasBeforeSelectionHandlers<Integer>,
                                     HasSelectionHandlers<Integer>
    {
@@ -212,6 +214,7 @@ public class Source implements InsertSourceHandler,
       view_.addTabClosingHandler(this);
       view_.addTabCloseHandler(this);
       view_.addTabClosedHandler(this);
+      view_.addTabReorderHandler(this);
       view_.addSelectionHandler(this);
       view_.addBeforeShowHandler(this);
 
@@ -344,7 +347,7 @@ public class Source implements InsertSourceHandler,
          public void onSwitchToDoc(SwitchToDocEvent event)
          {
             ensureVisible(false);
-            view_.selectTab(event.getSelectedIndex());
+            setPhysicalTabIndex(event.getSelectedIndex());
          }
       });
 
@@ -415,7 +418,7 @@ public class Source implements InsertSourceHandler,
          @Override
          protected Integer getValue()
          {
-            return view_.getActiveTabIndex();
+            return getPhysicalTabIndex();
          }
       };
 
@@ -1116,7 +1119,7 @@ public class Source implements InsertSourceHandler,
 
       ensureVisible(false);
       if (view_.getTabCount() > 0)
-         view_.selectTab(0);
+         setPhysicalTabIndex(0);
    }
 
    @Handler
@@ -1126,9 +1129,9 @@ public class Source implements InsertSourceHandler,
          return;
 
       ensureVisible(false);
-      int index = view_.getActiveTabIndex();
+      int index = getPhysicalTabIndex();
       if (index >= 1)
-         view_.selectTab(index - 1);
+         setPhysicalTabIndex(index - 1);
    }
 
    @Handler
@@ -1138,9 +1141,9 @@ public class Source implements InsertSourceHandler,
          return;
 
       ensureVisible(false);
-      int index = view_.getActiveTabIndex();
+      int index = getPhysicalTabIndex();
       if (index < view_.getTabCount() - 1)
-         view_.selectTab(index + 1);
+         setPhysicalTabIndex(index + 1);
    }
 
    @Handler
@@ -1151,7 +1154,7 @@ public class Source implements InsertSourceHandler,
 
       ensureVisible(false);
       if (view_.getTabCount() > 0)
-         view_.selectTab(view_.getTabCount() - 1);
+         setPhysicalTabIndex(view_.getTabCount() - 1);
    }
 
    @Handler
@@ -2033,6 +2036,16 @@ public class Source implements InsertSourceHandler,
    public void onTabClosed(TabClosedEvent event)
    {
       EditingTarget target = editors_.remove(event.getTabIndex());
+
+      tabOrder_.remove(new Integer(event.getTabIndex()));
+      for (int i = 0; i < tabOrder_.size(); i++)
+      {
+         if (tabOrder_.get(i) > event.getTabIndex())
+         {
+            tabOrder_.set(i, tabOrder_.get(i) - 1);
+         }
+      }
+
       target.onDismiss();
       if (activeEditor_ == target)
       {
@@ -2052,10 +2065,58 @@ public class Source implements InsertSourceHandler,
       }
    }
 
+   
+   @Override
+   public void onTabReorder(TabReorderEvent event)
+   {
+      syncTabOrder();
+
+      // sanity check: make sure we're moving from a valid location
+      if (event.getOldPos() < 0 || event.getOldPos() >= tabOrder_.size())
+      {
+         return;
+      }
+      
+      // remove the tab from its old position
+      int idx = tabOrder_.get(event.getOldPos());
+      tabOrder_.remove(new Integer(idx));  // force type box 
+
+      // add it to its new position (less one if that position was shifted left
+      // by removal above)
+      tabOrder_.add(event.getNewPos() - 
+            (event.getOldPos() < event.getNewPos() ? 1 : 0), idx);
+      
+      // sort the document IDs and send to the server
+      ArrayList<String> ids = new ArrayList<String>();
+      for (int i = 0; i < tabOrder_.size(); i++)
+      {
+         ids.add(editors_.get(tabOrder_.get(i)).getId());
+      }
+      server_.setDocOrder(ids, new VoidServerRequestCallback());
+      fireDocTabsChanged();
+   }
+
+   private void syncTabOrder()
+   {
+      // ensure the tab order is synced to the list of editors
+      for (int i = tabOrder_.size(); i < editors_.size(); i++)
+      {
+         tabOrder_.add(i);
+      }
+      for (int i = editors_.size(); i < tabOrder_.size(); i++)
+      {
+         tabOrder_.remove(i);
+      }
+   }
+
    private void fireDocTabsChanged()
    {
       if (!initialized_)
          return;
+      
+      // ensure we have a tab order (we want the popup list to match the order
+      // of the tabs)
+      syncTabOrder();
 
       String[] ids = new String[editors_.size()];
       ImageResource[] icons = new ImageResource[editors_.size()];
@@ -2063,7 +2124,7 @@ public class Source implements InsertSourceHandler,
       String[] paths = new String[editors_.size()];
       for (int i = 0; i < ids.length; i++)
       {
-         EditingTarget target = editors_.get(i);
+         EditingTarget target = editors_.get(tabOrder_.get(i));
          ids[i] = target.getId();
          icons[i] = target.getIcon();
          names[i] = target.getName().getValue();
@@ -2624,8 +2685,31 @@ public class Source implements InsertSourceHandler,
          }
       }
    }
+   
+   // when tabs have been reordered in the session, the physical layout of the
+   // tabs doesn't match the logical order of editors_. it's occasionally
+   // necessary to get or set the tabs by their physical order.
+   public int getPhysicalTabIndex()
+   {
+      int idx = view_.getActiveTabIndex();
+      if (idx < tabOrder_.size())
+      {
+         idx = tabOrder_.indexOf(idx);
+      }
+      return idx;
+   }
+   
+   public void setPhysicalTabIndex(int idx)
+   {
+      if (idx < tabOrder_.size())
+      {
+         idx = tabOrder_.get(idx);
+      }
+      view_.selectTab(idx);
+   }
 
    ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();
+   ArrayList<Integer> tabOrder_ = new ArrayList<Integer>();
    private EditingTarget activeEditor_;
    private final Commands commands_;
    private final Display view_;

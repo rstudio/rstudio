@@ -16,7 +16,9 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import org.rstudio.studio.client.workbench.views.source.editors.text.RFunction;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
 
 public class CodeModel extends JavaScriptObject
 {
@@ -43,7 +45,7 @@ public class CodeModel extends JavaScriptObject
       });
    }-*/;
 
-   public native final Scope getCurrentFunction(Position position) /*-{
+   public native final ScopeFunction getCurrentFunction(Position position) /*-{
       if (!this.getCurrentScope)
          return null;
       return this.getCurrentScope(position, function(scope) {
@@ -80,4 +82,37 @@ public class CodeModel extends JavaScriptObject
       else
          return pos;
    }-*/;
+   
+   public native final TokenCursor getTokenCursor() /*-{
+      return new this.$TokenCursor();
+   }-*/;
+   
+   public native final boolean tokenizeUpToRow(int row) /*-{
+      this.$tokenizeUpToRow(row);
+   }-*/;
+   
+   public native final JsArray<ScopeFunction> getAllFunctionScopes() /*-{
+      return this.getAllFunctionScopes() || [];
+   }-*/;
+   
+   public native final JsArray<ScopeFunction> getAllFunctionScopes(int row) /*-{
+      return this.getAllFunctionScopes(row) || [];
+   }-*/;
+   
+   public native final JsArray<RFunction> getFunctionsInScope(Position position) /*-{
+      return this.getFunctionsInScope(position) || [];
+   }-*/;
+   
+   public native final JsArray<RScopeObject> getVariablesInScope(Position position) /*-{
+      return this.getVariablesInScope(position) || [];
+   }-*/;
+   
+   public native final RInfixData getDataFromInfixChain(TokenCursor tokenCursor) /*-{
+      return this.getDataFromInfixChain(tokenCursor);
+   }-*/;
+   
+   public native final DplyrJoinContext getDplyrJoinContextFromInfixChain(TokenCursor tokenCursor) /*-{
+      return this.getDplyrJoinContextFromInfixChain(tokenCursor);
+   }-*/;
+   
 }

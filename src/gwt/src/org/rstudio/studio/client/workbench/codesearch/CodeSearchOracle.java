@@ -15,10 +15,12 @@
 package org.rstudio.studio.client.workbench.codesearch;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.DuplicateHelper;
 import org.rstudio.core.client.Invalidation;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Match;
@@ -26,8 +28,8 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
-import org.rstudio.studio.client.workbench.codesearch.model.RFileItem;
-import org.rstudio.studio.client.workbench.codesearch.model.RSourceItem;
+import org.rstudio.studio.client.workbench.codesearch.model.FileItem;
+import org.rstudio.studio.client.workbench.codesearch.model.SourceItem;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 
 import com.google.gwt.user.client.ui.SuggestOracle;
@@ -43,6 +45,59 @@ public class CodeSearchOracle extends SuggestOracle
       workbenchContext_ = workbenchContext;
    }
    
+   // NOTE: When modifying this function, you should ensure that the associated
+   // code on the server side is modified to include the same logic as well!
+   // (see: SessionCodeSearch.cpp)
+   private int scoreMatch(CodeSearchSuggestion suggestion, String query)
+   {
+      String string = suggestion.getMatchedString().toLowerCase();
+      
+      // No penalty for identical results
+      if (string == query)
+         return 0;
+      
+      int query_n = query.length();
+      
+      int result = 0;
+      
+      // Get query matches in string (ordered)
+      // Note: we have already guaranteed this to be a subsequence so
+      // this will succeed
+      int[] matches = StringUtil.subsequenceIndices(string, query);
+      
+      // Loop over the matches and assign a score
+      for (int j = 0; j < query_n; j++)
+      {
+         int matchPos = matches[j];
+         
+         // Less penalty if character follows special delim
+         if (matchPos >= 1)
+         {
+            char prevChar = string.charAt(matchPos - 1);
+            if (prevChar == '_' || prevChar == '-' ||
+                  (!suggestion.isFileTarget() && prevChar == '.'))
+            {
+               matchPos = j + 1;
+            }
+         }
+         
+         // More penalty for 'uninteresting' files (e.g. .Rd)
+         String extension = StringUtil.getExtension(string);
+         if (extension.toLowerCase() == "rd")
+         {
+            matchPos += 3;
+         }
+         
+         result += matchPos;
+      }
+      
+      // Penalize file targets
+      if (suggestion.isFileTarget())
+         result++;
+      
+      // Debug.logToConsole("Score for string '" + string + "' against query '" + query + "': " + result);
+      return result;
+   }
    
    @Override
    public void requestSuggestions(final Request request, 
@@ -71,7 +126,7 @@ public class CodeSearchOracle extends SuggestOracle
              request.getQuery().startsWith(res.getQuery()))
          {
             Pattern pattern = null;
-            String queryLower = request.getQuery().toLowerCase();
+            final String queryLower = request.getQuery().toLowerCase();
             if (queryLower.indexOf('*') != -1)
                pattern = patternForTerm(queryLower);
             
@@ -90,17 +145,18 @@ public class CodeSearchOracle extends SuggestOracle
                }
                else
                {
-                  if (name.startsWith(queryLower))
+                  if (StringUtil.isSubsequence(name, queryLower))
                      suggestions.add(sugg);
                }
             }
             
-            
-
             // process and cache suggestions. note that this adds an item to
             // the end of the resultCache_ (which we are currently iterating
             // over) no biggie because we are about to return from the loop
             suggestions = processSuggestions(request, suggestions, false);
+            
+            // sort suggestions
+            sortSuggestions(suggestions, queryLower);
             
             // return suggestions
             callback.onSuggestionsReady(request, new Response(suggestions));
@@ -184,16 +240,16 @@ public class CodeSearchOracle extends SuggestOracle
                                        new ArrayList<CodeSearchSuggestion>();
                
                // file results
-               ArrayList<RFileItem> fileResults = 
-                                    response.getRFileItems().toArrayList();
+               ArrayList<FileItem> fileResults = 
+                                    response.getFileItems().toArrayList();
                for (int i = 0; i<fileResults.size(); i++) 
                   suggestions.add(new CodeSearchSuggestion(fileResults.get(i)));  
                
                
                // src results
                FileSystemItem context = workbenchContext_.getActiveProjectDir();
-               ArrayList<RSourceItem> srcResults = 
-                                    response.getRSourceItems().toArrayList();
+               ArrayList<SourceItem> srcResults = 
+                                    response.getSourceItems().toArrayList();
                for (int i = 0; i<srcResults.size(); i++)
                {
                   suggestions.add(
@@ -204,6 +260,9 @@ public class CodeSearchOracle extends SuggestOracle
               suggestions = processSuggestions(request_, 
                                                suggestions,
                                                response.getMoreAvailable());
+              
+              // sort suggestions
+              sortSuggestions(suggestions, request_.getQuery());
                
                // return suggestions
                if (!invalidationToken_.isInvalid())
@@ -220,6 +279,37 @@ public class CodeSearchOracle extends SuggestOracle
       private Callback callback_;
       private Invalidation.Token invalidationToken_;
    };
+   
+   private void sortSuggestions(ArrayList<CodeSearchSuggestion> suggestions,
+                                String query)
+   {
+      // sort the suggestions -- we want suggestions for which
+      // the query matches the start to come first
+      final String queryLower = query.toLowerCase();
+      java.util.Collections.sort(suggestions,
+            new Comparator<CodeSearchSuggestion>() {
+
+         @Override
+         public int compare(CodeSearchSuggestion lhs,
+               CodeSearchSuggestion rhs)
+         {
+            int lhsScore = scoreMatch(lhs, queryLower);
+            int rhsScore = scoreMatch(rhs, queryLower);
+
+            if (lhsScore == rhsScore)
+            {
+               return lhs.getMatchedString().length() -
+                     rhs.getMatchedString().length();
+            }
+            else
+            {
+               return lhsScore < rhsScore ? -1 : 1;
+            }
+         }
+
+      });
+      
+   }
    
    
    private ArrayList<CodeSearchSuggestion> processSuggestions(
@@ -245,6 +335,7 @@ public class CodeSearchOracle extends SuggestOracle
       for (int i=0; i<displayLabels.size(); i++)
          newSuggestions.get(i).setFileDisplayString(filePaths.get(i),
                                                     displayLabels.get(i));
+      
       
       // cache the suggestions (up to 15 active result sets cached)
       // NOTE: the cache is cleared on gain focus, lost focus, and 

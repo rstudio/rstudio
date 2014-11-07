@@ -19,6 +19,7 @@
 #include <ostream>
 
 #include <algorithm>
+#include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -34,7 +35,73 @@
 #endif
 
 namespace core {
-namespace string_utils {   
+namespace string_utils {
+
+bool isSubsequence(std::string const& self,
+                   std::string const& other,
+                   bool caseInsensitive)
+{
+   return caseInsensitive ?
+            isSubsequence(boost::algorithm::to_lower_copy(self),
+                          boost::algorithm::to_lower_copy(other)) :
+            isSubsequence(self, other)
+            ;
+}
+
+bool isSubsequence(std::string const& self,
+                   std::string const& other)
+{
+   const int self_n = self.length();
+   const int other_n = other.length();
+
+   if (other_n > self_n)
+      return false;
+
+   int self_idx = 0;
+   int other_idx = 0;
+
+   while (self_idx < self_n)
+   {
+      char selfChar = self[self_idx];
+      char otherChar = other[other_idx];
+
+      if (otherChar == selfChar)
+      {
+         ++other_idx;
+         if (other_idx == other_n)
+         {
+            return true;
+         }
+      }
+      ++self_idx;
+   }
+   return false;
+}
+
+std::vector<int> subsequenceIndices(std::string const& sequence,
+                                    std::string const& query)
+{
+   int query_n = query.length();
+   std::vector<int> result;
+   result.reserve(query.length());
+
+   int prevMatchIndex = 0;
+   for (int i = 0; i < query_n; i++)
+   {
+      result[i] = sequence.find(query[i], prevMatchIndex);
+      prevMatchIndex = result[i];
+   }
+   return result;
+}
+
+std::string getExtension(std::string const& x)
+{
+   std::size_t lastDotIndex = x.rfind('.');
+   if (lastDotIndex != std::string::npos)
+      return x.substr(lastDotIndex);
+   else
+      return std::string();
+}
 
 void convertLineEndings(std::string* pStr, LineEnding type)
 {

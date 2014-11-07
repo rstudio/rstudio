@@ -82,6 +82,7 @@ import org.rstudio.studio.client.workbench.views.packages.ui.actions.ActionCente
 import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.ManipulatorResources;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTargetWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionResources;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTableView;
@@ -252,6 +253,7 @@ public class RStudio implements EntryPoint
       PackratResolveConflictDialog.ensureStylesInjected();
       PackratActionDialog.ensureStylesInjected();
       LocalRepositoriesWidget.ensureStylesInjected();
+      CppCompletionResources.INSTANCE.styles().ensureInjected();
       
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");

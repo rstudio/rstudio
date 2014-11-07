@@ -166,7 +166,11 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
             if (event.getValue())
             {
                if (!roxygenOptions_.hasActiveRoclet())
+               {
                   roxygenOptions_.setRocletRd(true);
+                  roxygenOptions_.setRocletCollate(true);
+                  roxygenOptions_.setRocletNamespace(true);
+               }
                btnConfigureRoxygen_.click();
             }
             else

@@ -115,6 +115,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionPackages.hpp"
 #include "modules/SessionPackrat.hpp"
 #include "modules/SessionProfiler.hpp"
+#include "modules/SessionRCompletions.hpp"
 #include "modules/SessionRPubs.hpp"
 #include "modules/SessionRHooks.hpp"
 #include "modules/SessionShinyApps.hpp"
@@ -127,6 +128,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionLimits.hpp"
 #include "modules/SessionLists.hpp"
 #include "modules/build/SessionBuild.hpp"
+#include "modules/clang/SessionClang.hpp"
 #include "modules/data/SessionData.hpp"
 #include "modules/environment/SessionEnvironment.hpp"
 #include "modules/overlay/SessionOverlay.hpp"
@@ -583,8 +585,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["presentation_state"] = modules::presentation::presentationStateAsJson();
 
    sessionInfo["build_state"] = modules::build::buildStateAsJson();
-   sessionInfo["devtools_installed"] = module_context::isPackageInstalled(
-                                                                  "devtools");   
+   sessionInfo["devtools_installed"] = module_context::isMinimumDevtoolsInstalled();
    sessionInfo["have_cairo_pdf"] = modules::plots::haveCairoPdf();
 
    sessionInfo["have_srcref_attribute"] =
@@ -628,6 +629,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["shinyapps_available"] = session::options().allowRpubsPublish();
    sessionInfo["rmarkdown_available"] =
          modules::rmarkdown::rmarkdownPackageAvailable();
+
+   sessionInfo["clang_available"] = modules::clang::isAvailable();
 
    // send response  (we always set kEventsPending to false so that the client
    // won't poll for events until it is ready)
@@ -1595,6 +1598,8 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
 #ifdef RSTUDIO_SERVER
       (modules::crypto::initialize)
 #endif
+      (modules::code_search::initialize)
+      (modules::clang::initialize)
       (modules::files::initialize)
       (modules::find::initialize)
       (modules::environment::initialize)
@@ -1616,7 +1621,6 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::authoring::initialize)
       (modules::html_preview::initialize)
       (modules::history::initialize)
-      (modules::code_search::initialize)
       (modules::build::initialize)
       (modules::overlay::initialize)
       (modules::breakpoints::initialize)
@@ -1627,12 +1631,14 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::shiny_apps::initialize)
       (modules::packrat::initialize)
       (modules::rhooks::initialize)
+      (modules::r_completions::initialize)
 
       // workers
       (workers::web_request::initialize)
 
       // R code
       (bind(sourceModuleRFile, "SessionCodeTools.R"))
+      (bind(sourceModuleRFile, "SessionCompletionHooks.R"))
    
       // unsupported functions
       (bind(r::function_hook::registerUnsupported, "bug.report", "utils"))

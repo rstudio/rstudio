@@ -1,5 +1,5 @@
 /*
- * RFileItem.java
+ * CppSourceLocation.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,25 +12,25 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.codesearch.model;
+package org.rstudio.studio.client.workbench.views.source.model;
+
+import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.files.FileSystemItem;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-
-public class RFileItem extends JavaScriptObject
+public class CppSourceLocation extends JavaScriptObject
 {
-   protected RFileItem()
+   protected CppSourceLocation()
    {
+      
    }
-   
-  
-   public final native String getFilename() /*-{
-      return this.filename;
+
+   public final native FileSystemItem getFile() /*-{
+      return this.file;
    }-*/;
    
-  
-   public final native String getPath() /*-{
-      return this.path;
+   public final native FilePosition getPosition()/*-{
+      return this.position;
    }-*/;
-   
 }

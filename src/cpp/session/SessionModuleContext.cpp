@@ -404,108 +404,6 @@ FilePath registerMonitoredUserScratchDir(const std::string& dirName,
 }
 
 
-
-Error initialize()
-{
-   // register rs_enqueClientEvent with R 
-   R_CallMethodDef methodDef ;
-   methodDef.name = "rs_enqueClientEvent" ;
-   methodDef.fun = (DL_FUNC) rs_enqueClientEvent ;
-   methodDef.numArgs = 2;
-   r::routines::addCallMethod(methodDef);
-      
-   // register rs_showErrorMessage with R 
-   R_CallMethodDef methodDef3 ;
-   methodDef3.name = "rs_showErrorMessage" ;
-   methodDef3.fun = (DL_FUNC) rs_showErrorMessage ;
-   methodDef3.numArgs = 2;
-   r::routines::addCallMethod(methodDef3);
-   
-   // register rs_logErrorMessage with R 
-   R_CallMethodDef methodDef4 ;
-   methodDef4.name = "rs_logErrorMessage" ;
-   methodDef4.fun = (DL_FUNC) rs_logErrorMessage ;
-   methodDef4.numArgs = 1;
-   r::routines::addCallMethod(methodDef4);
-   
-   // register rs_logWarningMessage with R 
-   R_CallMethodDef methodDef5 ;
-   methodDef5.name = "rs_logWarningMessage" ;
-   methodDef5.fun = (DL_FUNC) rs_logWarningMessage ;
-   methodDef5.numArgs = 1;
-   r::routines::addCallMethod(methodDef5);
-
-   // register rs_threadSleep with R (debugging function used to test rpc/abort)
-   R_CallMethodDef methodDef6 ;
-   methodDef6.name = "rs_threadSleep" ;
-   methodDef6.fun = (DL_FUNC) rs_threadSleep ;
-   methodDef6.numArgs = 1;
-   r::routines::addCallMethod(methodDef6);
-
-   // register rs_rstudioProgramMode with R
-   R_CallMethodDef methodDef7 ;
-   methodDef7.name = "rs_rstudioProgramMode" ;
-   methodDef7.fun = (DL_FUNC) rs_rstudioProgramMode ;
-   methodDef7.numArgs = 0;
-   r::routines::addCallMethod(methodDef7);
-
-   // register rs_ensureFileHidden with R
-   R_CallMethodDef methodDef8;
-   methodDef8.name = "rs_ensureFileHidden" ;
-   methodDef8.fun = (DL_FUNC) rs_ensureFileHidden ;
-   methodDef8.numArgs = 1;
-   r::routines::addCallMethod(methodDef8);
-
-   // register rs_sourceDiagnostics
-   R_CallMethodDef methodDef9;
-   methodDef9.name = "rs_sourceDiagnostics" ;
-   methodDef9.fun = (DL_FUNC) rs_sourceDiagnostics;
-   methodDef9.numArgs = 0;
-   r::routines::addCallMethod(methodDef9);
-
-   // register rs_activatePane
-   R_CallMethodDef methodDef10;
-   methodDef10.name = "rs_activatePane" ;
-   methodDef10.fun = (DL_FUNC) rs_activatePane;
-   methodDef10.numArgs = 1;
-   r::routines::addCallMethod(methodDef10);
-
-   // register rs_packageLoaded
-   R_CallMethodDef methodDef11;
-   methodDef11.name = "rs_packageLoaded" ;
-   methodDef11.fun = (DL_FUNC) rs_packageLoaded;
-   methodDef11.numArgs = 1;
-   r::routines::addCallMethod(methodDef11);
-
-   // register rs_packageUnloaded
-   R_CallMethodDef methodDef12;
-   methodDef12.name = "rs_packageUnloaded" ;
-   methodDef12.fun = (DL_FUNC) rs_packageUnloaded;
-   methodDef12.numArgs = 1;
-   r::routines::addCallMethod(methodDef12);
-
-   // register rs_userPrompt
-   R_CallMethodDef methodDef13;
-   methodDef13.name = "rs_userPrompt" ;
-   methodDef13.fun = (DL_FUNC) rs_userPrompt;
-   methodDef13.numArgs = 7;
-   r::routines::addCallMethod(methodDef13);
-
-   // register rs_restartR
-   R_CallMethodDef methodDef14;
-   methodDef14.name = "rs_restartR" ;
-   methodDef14.fun = (DL_FUNC) rs_restartR;
-   methodDef14.numArgs = 1;
-   r::routines::addCallMethod(methodDef14);
-
-   // initialize monitored scratch dir
-   initializeMonitoredUserScratchDir();
-
-   // source the ModuleTools.R file
-   FilePath modulesPath = session::options().modulesRSourcePath();
-   return r::sourceManager().sourceTools(modulesPath.complete("ModuleTools.R"));
-}
-
 namespace {
    
 // manage signals used for custom save and restore
@@ -801,15 +699,8 @@ FilePath tempDir()
 
 FilePath findProgram(const std::string& name)
 {
-   // determine function to call for sys which
-#ifdef __APPLE__
-   std::string sysWhich = ".rs.posixSysWhich";
-#else
-   std::string sysWhich = "Sys.which";
-#endif
-
    std::string which;
-   Error error = r::exec::RFunction(sysWhich, name).call(&which);
+   Error error = r::exec::RFunction("Sys.which", name).call(&which);
    if (error)
    {
       LOG_ERROR(error);
@@ -820,6 +711,7 @@ FilePath findProgram(const std::string& name)
       return FilePath(which);
    }
 }
+
 
 bool isPdfLatexInstalled()
 {
@@ -987,6 +879,43 @@ bool isPackageVersionInstalled(const std::string& packageName,
    return !error ? installed : false;
 }
 
+bool isMinimumDevtoolsInstalled()
+{
+   return isPackageVersionInstalled("devtools", "1.4.1");
+}
+
+bool isMinimumRoxygenInstalled()
+{
+   return isPackageVersionInstalled("roxygen2", "4.0");
+}
+
+std::string packageVersion(const std::string& packageName)
+{
+   std::string version;
+   Error error = r::exec::RFunction(".rs.packageVersionString", packageName)
+                                                               .call(&version);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return "(Unknown)";
+   }
+   else
+   {
+      return version;
+   }
+}
+
+bool hasMinimumRVersion(const std::string &version)
+{
+   bool hasVersion = false;
+   boost::format fmt("getRversion() >= '%1%'");
+   std::string versionTest = boost::str(fmt % version);
+   Error error = r::exec::evaluateString(versionTest, &hasVersion);
+   if (error)
+      LOG_ERROR(error);
+   return hasVersion;
+}
+
 PackageCompatStatus getPackageCompatStatus(
       const std::string& packageName,
       const std::string& packageVersion,
@@ -1094,6 +1023,13 @@ std::string packageNameForSourceFile(const core::FilePath& sourceFilePath)
    {
       return std::string();
    }
+}
+
+SEXP rs_packageNameForSourceFile(SEXP sourceFilePathSEXP)
+{
+   r::sexp::Protect protect;
+   FilePath sourceFilePath = module_context::resolveAliasedPath(r::sexp::asString(sourceFilePathSEXP));
+   return r::sexp::create(packageNameForSourceFile(sourceFilePath), &protect);
 }
 
 json::Object createFileSystemItem(const FileInfo& fileInfo)
@@ -1225,6 +1161,13 @@ bool isRScriptInPackageBuildTarget(const FilePath &filePath)
    {
       return false;
    }
+}
+
+SEXP rs_isRScriptInPackageBuildTarget(SEXP filePathSEXP)
+{
+   r::sexp::Protect protect;
+   FilePath filePath = module_context::resolveAliasedPath(r::sexp::asString(filePathSEXP));
+   return r::sexp::create(isRScriptInPackageBuildTarget(filePath), &protect);
 }
 
 bool fileListingFilter(const core::FileInfo& fileInfo)
@@ -1714,6 +1657,144 @@ Error createSelfContainedHtml(const FilePath& sourceFilePath,
    func.addParam(string_utils::utf8ToSystem(targetFilePath.absolutePath()));
    return func.call();
 }
+
+bool isUserFile(const FilePath& filePath)
+{
+   if (projects::projectContext().hasProject())
+   {
+      // if we are in a package project then screen our src- files
+      if (projects::projectContext().config().buildType ==
+                                              r_util::kBuildTypePackage)
+      {
+          FilePath pkgPath = projects::projectContext().buildTargetPath();
+          std::string pkgRelative = filePath.relativePath(pkgPath);
+          if (boost::algorithm::starts_with(pkgRelative, "src-"))
+             return false;
+      }
+
+      // screen the packrat directory
+      FilePath projPath = projects::projectContext().directory();
+      std::string pkgRelative = filePath.relativePath(projPath);
+      if (boost::algorithm::starts_with(pkgRelative, "packrat/"))
+         return false;
+   }
+
+   return true;
+}
+
+Error initialize()
+{
+   // register rs_enqueClientEvent with R 
+   R_CallMethodDef methodDef ;
+   methodDef.name = "rs_enqueClientEvent" ;
+   methodDef.fun = (DL_FUNC) rs_enqueClientEvent ;
+   methodDef.numArgs = 2;
+   r::routines::addCallMethod(methodDef);
+      
+   // register rs_showErrorMessage with R 
+   R_CallMethodDef methodDef3 ;
+   methodDef3.name = "rs_showErrorMessage" ;
+   methodDef3.fun = (DL_FUNC) rs_showErrorMessage ;
+   methodDef3.numArgs = 2;
+   r::routines::addCallMethod(methodDef3);
+   
+   // register rs_logErrorMessage with R 
+   R_CallMethodDef methodDef4 ;
+   methodDef4.name = "rs_logErrorMessage" ;
+   methodDef4.fun = (DL_FUNC) rs_logErrorMessage ;
+   methodDef4.numArgs = 1;
+   r::routines::addCallMethod(methodDef4);
+   
+   // register rs_logWarningMessage with R 
+   R_CallMethodDef methodDef5 ;
+   methodDef5.name = "rs_logWarningMessage" ;
+   methodDef5.fun = (DL_FUNC) rs_logWarningMessage ;
+   methodDef5.numArgs = 1;
+   r::routines::addCallMethod(methodDef5);
+
+   // register rs_threadSleep with R (debugging function used to test rpc/abort)
+   R_CallMethodDef methodDef6 ;
+   methodDef6.name = "rs_threadSleep" ;
+   methodDef6.fun = (DL_FUNC) rs_threadSleep ;
+   methodDef6.numArgs = 1;
+   r::routines::addCallMethod(methodDef6);
+
+   // register rs_rstudioProgramMode with R
+   R_CallMethodDef methodDef7 ;
+   methodDef7.name = "rs_rstudioProgramMode" ;
+   methodDef7.fun = (DL_FUNC) rs_rstudioProgramMode ;
+   methodDef7.numArgs = 0;
+   r::routines::addCallMethod(methodDef7);
+
+   // register rs_ensureFileHidden with R
+   R_CallMethodDef methodDef8;
+   methodDef8.name = "rs_ensureFileHidden" ;
+   methodDef8.fun = (DL_FUNC) rs_ensureFileHidden ;
+   methodDef8.numArgs = 1;
+   r::routines::addCallMethod(methodDef8);
+
+   // register rs_sourceDiagnostics
+   R_CallMethodDef methodDef9;
+   methodDef9.name = "rs_sourceDiagnostics" ;
+   methodDef9.fun = (DL_FUNC) rs_sourceDiagnostics;
+   methodDef9.numArgs = 0;
+   r::routines::addCallMethod(methodDef9);
+
+   // register rs_activatePane
+   R_CallMethodDef methodDef10;
+   methodDef10.name = "rs_activatePane" ;
+   methodDef10.fun = (DL_FUNC) rs_activatePane;
+   methodDef10.numArgs = 1;
+   r::routines::addCallMethod(methodDef10);
+
+   // register rs_packageLoaded
+   R_CallMethodDef methodDef11;
+   methodDef11.name = "rs_packageLoaded" ;
+   methodDef11.fun = (DL_FUNC) rs_packageLoaded;
+   methodDef11.numArgs = 1;
+   r::routines::addCallMethod(methodDef11);
+
+   // register rs_packageUnloaded
+   R_CallMethodDef methodDef12;
+   methodDef12.name = "rs_packageUnloaded" ;
+   methodDef12.fun = (DL_FUNC) rs_packageUnloaded;
+   methodDef12.numArgs = 1;
+   r::routines::addCallMethod(methodDef12);
+
+   // register rs_userPrompt
+   R_CallMethodDef methodDef13;
+   methodDef13.name = "rs_userPrompt" ;
+   methodDef13.fun = (DL_FUNC) rs_userPrompt;
+   methodDef13.numArgs = 7;
+   r::routines::addCallMethod(methodDef13);
+
+   // register rs_restartR
+   R_CallMethodDef methodDef14;
+   methodDef14.name = "rs_restartR" ;
+   methodDef14.fun = (DL_FUNC) rs_restartR;
+   methodDef14.numArgs = 1;
+   r::routines::addCallMethod(methodDef14);
+   
+   // register rs_isRScriptInPackageBuildTarget
+   r::routines::registerCallMethod(
+            "rs_isRScriptInPackageBuildTarget",
+            (DL_FUNC) rs_isRScriptInPackageBuildTarget,
+            1);
+   
+   // register rs_packageNameForSourceFile
+   r::routines::registerCallMethod(
+            "rs_packageNameForSourceFile",
+            (DL_FUNC) rs_packageNameForSourceFile,
+            1);
+   
+   // initialize monitored scratch dir
+   initializeMonitoredUserScratchDir();
+
+   // source the ModuleTools.R file
+   FilePath modulesPath = session::options().modulesRSourcePath();
+   return r::sourceManager().sourceTools(modulesPath.complete("ModuleTools.R"));
+}
+
 
 } // namespace module_context         
 } // namespace session

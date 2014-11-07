@@ -30,6 +30,16 @@ enum LineEnding {
    LineEndingPassthrough
 };
 
+bool isSubsequence(std::string const& self,
+                   std::string const& other);
+bool isSubsequence(std::string const& self,
+                   std::string const& other,
+                   bool caseInsensitive);
+std::vector<int> subsequenceIndices(std::string const& sequence,
+                                    std::string const& query);
+
+std::string getExtension(std::string const& str);
+
 std::string utf8ToSystem(const std::string& str,
                          bool escapeInvalidChars=false);
 std::string systemToUtf8(const std::string& str);

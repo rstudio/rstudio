@@ -458,8 +458,8 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="findInFiles" value="Cmd+Shift+F"/>
       </shortcutgroup>
       <shortcutgroup name="Build">
-         <shortcut refid="compilePDF" value="Cmd+Shift+I"/>
-         <shortcut refid="previewHTML" value="Cmd+Shift+Y" />
+         <shortcut refid="compilePDF" value="Cmd+Shift+K"/>
+         <shortcut refid="previewHTML" value="Cmd+Shift+K" />
          <shortcut refid="knitDocument" value="Cmd+Shift+K" />
          <shortcut refid="buildAll" value="Cmd+Shift+B"/>
          <shortcut refid="devtoolsLoadAll" value="Cmd+Shift+L"/>
@@ -475,6 +475,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="executeLastCode" value="Cmd+Shift+P"/>
          <shortcut refid="executeCode" value="Cmd+R" if="org.rstudio.core.client.BrowseCap.isWindowsDesktop()"/>
          <shortcut refid="executeCode" value="Cmd+Enter"/>
+         <shortcut refid="executeCodeWithoutMovingCursor" value="Alt+Enter"/>
          <shortcut refid="executeAllCode" value="Cmd+Alt+R"/>
          <shortcut refid="executeToCurrentLine" value="Cmd+Alt+B"/>
          <shortcut refid="executeFromCurrentLine" value="Cmd+Alt+E"/>
@@ -570,6 +571,9 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="rcppHelp"
         desc="Help on using Rcpp"/>         
+              
+   <cmd id="printCppCompletions"
+        desc="Print C++ Completions"/>           
               
    <cmd id="newSweaveDoc"
         menuLabel="R _Sweave"
@@ -677,7 +681,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="projectMru7" visible="false"/>
    <cmd id="projectMru8" visible="false"/>
    <cmd id="projectMru9" visible="false"/>
-   <cmd id="clearRecentProjects" menuLabel="Clear List"/>     
+   <cmd id="clearRecentProjects" menuLabel="Clear Project List"/>     
 
    <cmd id="closeProject"
         menuLabel="Close Projec_t"
@@ -784,6 +788,10 @@ well as menu structures (for main menu and popup menus).
         buttonLabel="Run"
         menuLabel="Run _Line(s)"
         desc="Run the current line or selection"/>
+   <cmd id="executeCodeWithoutMovingCursor"
+        buttonLabel="Run"
+        menuLabel="Run _Line(s) without moving cursor"
+        desc="Run the current line or selection without moving the cursor"/>
    <cmd id="executeCodeWithoutFocus"/>
    <cmd id="executeToCurrentLine"
         menuLabel="Run From _Beginning To Line"

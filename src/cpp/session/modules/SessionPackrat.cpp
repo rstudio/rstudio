@@ -627,7 +627,7 @@ void onConsoleInput(const std::string& input)
    // if there is about to be a devtools not found error then print
    // a message indicating that packrat::devtools should be used
    if (boost::algorithm::starts_with(input, "devtools::install_github") &&
-       !module_context::isPackageInstalled("devtools"))
+       !module_context::isMinimumDevtoolsInstalled())
    {
       module_context::scheduleDelayedWork(boost::posix_time::milliseconds(50),
                                           printDevtoolsMessage);

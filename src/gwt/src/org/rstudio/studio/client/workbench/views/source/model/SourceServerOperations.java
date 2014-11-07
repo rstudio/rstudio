@@ -30,6 +30,7 @@ import org.rstudio.studio.client.workbench.views.presentation.model.Presentation
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * The server manages a "working list" of documents that are being edited by
@@ -40,6 +41,7 @@ import java.util.HashMap;
 public interface SourceServerOperations extends FilesServerOperations, 
                                                 CodeToolsServerOperations,
                                                 CodeSearchServerOperations,
+                                                CppServerOperations,
                                                 TexServerOperations,
                                                 HTMLPreviewServerOperations,
                                                 BuildServerOperations,
@@ -186,4 +188,7 @@ public interface SourceServerOperations extends FilesServerOperations,
    void getScriptRunCommand(String interpreter,
                             String path,
                             ServerRequestCallback<String> requestCallback);
+   
+   void setDocOrder(
+         List<String> order, ServerRequestCallback<Void> requestCallback); 
 }

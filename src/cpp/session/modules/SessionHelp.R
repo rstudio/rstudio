@@ -73,11 +73,11 @@ options(help_type = "html")
 .rs.addFunction( "handlerLookupError", function(path, query=NULL, ...)
 {
    payload = paste(
-         "<h3>R Custom HTTP Handler Not Found</h3>",
-         "<p>Unable to locate custom HTTP handler for",
-          "<i>", path, "</i>",
-         "<p>Is the package which implements this HTTP handler loaded?</p>")
-
+      "<h3>R Custom HTTP Handler Not Found</h3>",
+      "<p>Unable to locate custom HTTP handler for",
+      "<i>", path, "</i>",
+      "<p>Is the package which implements this HTTP handler loaded?</p>")
+   
    list(payload, "text/html", character(), 404)
 });
 
@@ -89,12 +89,90 @@ options(help_type = "html")
       sort(utils:::matchAvailableTopics(prefix))
 });
 
-.rs.addJsonRpcHandler("get_help", function(topic, package, options)
+.rs.addJsonRpcHandler("get_help", function(what, from, type)
 {
-   helpfiles = help(topic, help_type="html")
+   if (type == .rs.acCompletionTypes$FUNCTION)
+      return(.rs.getHelpFunction(what, from))
+   else if (type == .rs.acCompletionTypes$ARGUMENTS)
+      return(.rs.getHelpArguments(what, from))
+   else if (type == .rs.acCompletionTypes$PACKAGE)
+      return(.rs.getHelpPackage(what))
+   else
+      return()
+})
+
+.rs.addFunction("getHelpFunction", function(name, package)
+{
+   .rs.getHelp(name, package)
+})
+
+.rs.addFunction("getHelpPackage", function(pkgName)
+{
+   # We might be getting the completion with colons appended, so strip those out.
+   pkgName <- sub(":*$", "", pkgName, perl = TRUE)
+   topic <- paste(pkgName, "-package", sep = "")
+   .rs.getHelp(topic, pkgName)
+})
+
+.rs.addFunction("getHelpArguments", function(functionName, pkgName)
+{
+   .rs.getHelp(functionName, pkgName)
+})
+
+.rs.addFunction("makeHelpCall", function(topic, package = NULL, help_type = "html")
+{
+   substitute(utils::help(TOPIC, package = PACKAGE, help_type = "html"),
+              list(TOPIC = topic,
+                   PACKAGE = package))
+})
+
+.rs.addFunction("getHelp", function(topic, package)
+{
+   # Completions from the search path might have the 'package:' prefix, so
+   # lets strip that out.
+   package <- sub("package:", "", package, fixed = TRUE)
+   
+   # Ensure topic is not zero-length
+   if (!length(topic))
+      topic <- ""
+   
+   # If the topic is not provided, but we're getting help on e.g.
+   # 'stats::rnorm', then split up the topic into the appropriate pieces.
+   if (!length(package) && any(grepl(":{2,3}", topic, perl = TRUE)))
+   {
+      splat <- strsplit(topic, ":{2,3}", perl = TRUE)[[1]]
+      topic <- splat[[2]]
+      package <- splat[[1]]
+   }
+   
+   helpfiles <- NULL
+   if (!length(package) || package == "") {
+      helpfiles <- utils::help(topic, help_type = "html")
+   } else {
+      # NOTE: this can fail if there is no such package 'package'
+      helpfiles <- tryCatch(
+         
+         expr = {
+            # NOTE: help does lazy evaluation on 'package',
+            # so we have to manually construct the call
+            call <- .rs.makeHelpCall(topic, package)
+            eval(call)
+         },
+         
+         error = function(e) {
+            return(NULL)
+         }
+      )
+   }
+   
+   .rs.processHelpFileHTML(helpfiles)
+})
+
+.rs.addFunction("processHelpFileHTML", function(helpfiles)
+{
    if (length(helpfiles) <= 0)
       return ()
-
+   
    file = helpfiles[[1]]
    path <- dirname(file)
    dirpath <- dirname(path)
@@ -107,7 +185,7 @@ options(help_type = "html")
                               ".html", sep=""),
                         NULL,
                         NULL)$payload
-
+   
    match = suppressWarnings(regexpr('<body>.*</body>', html))
    if (match < 0)
    {
@@ -116,12 +194,12 @@ options(help_type = "html")
    else
    {
       html = substring(html, match + 6, match + attr(match, 'match.length') - 1 - 7)
-
+      
       match = suppressWarnings(regexpr('<h3>Details</h3>', html))
       if (match >= 0)
          html = substring(html, 1, match - 1)
    }
-
+   
    obj = tryCatch(get(topic, pos=globalenv()),
                   error = function(e) NULL)
    
@@ -136,13 +214,59 @@ options(help_type = "html")
    }
    
    list('html' = html, 'signature' = sig, 'pkgname' = pkgname)
-});
+})
 
-.rs.addJsonRpcHandler("show_help_topic", function(topic, package)
+.rs.addJsonRpcHandler("show_help_topic", function(what, from, type)
 {
+   if (type == .rs.acCompletionTypes$FUNCTION)
+      .rs.showHelpTopicFunction(what, from)
+   else if (type == .rs.acCompletionTypes$ARGUMENTS)
+      .rs.showHelpTopicArguments(from)
+   else if (type == .rs.acCompletionTypes$PACKAGE)
+      .rs.showHelpTopicPackage(what)
+})
+
+.rs.addFunction("showHelpTopicFunction", function(topic, package)
+{
+   # Package may actually be a name from the search path, so strip that off.
+   package <- sub("^package:", "", package, perl = TRUE)
+   
+   if (is.null(package) && grepl(":{2,3}", topic, perl = TRUE))
+   {
+      splat <- strsplit(topic, ":{2,3}", perl = TRUE)[[1]]
+      topic <- splat[[2]]
+      package <- splat[[1]]
+   }
+   
    if (!is.null(package))
-      require(package, character.only = TRUE)
-   print(help(topic, help_type="html"))
+      requireNamespace(package, quietly = TRUE)
+   
+   call <- .rs.makeHelpCall(topic, package)
+   print(eval(call))
+})
+
+.rs.addFunction("showHelpTopicArguments", function(functionName)
+{
+   topic <- functionName
+   pkgName <- NULL
+   
+   if (grepl(":{2,3}", functionName, perl = TRUE))
+   {
+      splat <- strsplit(functionName, ":{2,3}", perl = TRUE)[[1]]
+      topic <- splat[[2]]
+      pkgName <- splat[[1]]
+   }
+   
+   call <- .rs.makeHelpCall(topic, pkgName)
+   print(eval(call))
+})
+
+.rs.addFunction("showHelpTopicPackage", function(pkgName)
+{
+   pkgName <- sub(":*$", "", pkgName)
+   topic <- paste(pkgName, "-package", sep = "")
+   call <- .rs.makeHelpCall(topic, pkgName)
+   print(eval(call))
 })
 
 .rs.addJsonRpcHandler("search", function(query)
@@ -160,4 +284,36 @@ options(help_type = "html")
             "&title=1&keyword=1&alias=1",
             sep = "")
    }
+})
+
+.rs.addJsonRpcHandler("get_help_function_expr", function(expr)
+{
+   object <- .rs.getAnywhere(expr, envir = parent.frame())
+   if (!is.function(object))
+      return(NULL)
+   
+   env <- environment(object)
+   srcName <- sub("<environment: (.*)>", "\\1", capture.output(print(env)))
+   
+   src <- NULL
+   if (grepl("^namespace:", srcName))
+   {
+      srcName <- sub("namespace:", "", srcName, fixed = TRUE)
+      src <- asNamespace(srcName)
+   }
+   
+   objects <- ls(src)
+   for (i in seq_along(objects))
+   {
+      if (identical(object, get(objects[[i]], envir = src)))
+      {
+         item <- get(objects[[i]], envir = src)
+         
+         return(.rs.rpc.get_help(
+            topic = objects[[i]],
+            package = srcName
+         ))
+      }
+   }
+   
 })

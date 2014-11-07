@@ -15,6 +15,8 @@
 package org.rstudio.studio.client.common.codetools;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayBoolean;
+import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayString;
 
 public class Completions extends JavaScriptObject
@@ -22,12 +24,20 @@ public class Completions extends JavaScriptObject
    public static native Completions createCompletions(String token,
                                                       JsArrayString completions,
                                                       JsArrayString packages,
-                                                      String fguess) /*-{
+                                                      JsArrayBoolean quote,
+                                                      JsArrayInteger type,
+                                                      String fguess,
+                                                      boolean excludeOtherCompletions,
+                                                      boolean overrideInsertParens) /*-{
       return {
          token: [token],
          results: completions,
          packages: packages,
-         fguess: fguess ? [fguess] : null
+         quote: quote,
+         type: type,
+         fguess: fguess ? [fguess] : null,
+         excludeOtherCompletions: excludeOtherCompletions,
+         overrideInsertParens: overrideInsertParens
       };
    }-*/;
 
@@ -72,8 +82,31 @@ public class Completions extends JavaScriptObject
    public final native void setSuggestOnAccept(boolean suggestOnAccept) /*-{
       this.suggestOnAccept = suggestOnAccept;
    }-*/;
+   
+   public final native boolean shouldInsertParens() /*-{
+      return this.insertParens;
+   }-*/;
+   
+   public final native JsArrayBoolean getQuote() /*-{
+      return this.quote;
+   }-*/;
+   
+   public final native JsArrayInteger getType() /*-{
+      return this.type;
+   }-*/;
+   
 
    public final native boolean getSuggestOnAccept() /*-{
       return !!this.suggestOnAccept;
    }-*/;
+   
+   public final native boolean getExcludeOtherCompletions() /*-{
+      return this.excludeOtherCompletions;
+   }-*/;
+   
+   public final native boolean getOverrideInsertParens() /*-{
+      return this.overrideInsertParens;
+   }-*/;
+   
+   
 }
