@@ -945,15 +945,16 @@ public class RCompletionManager implements CompletionManager
       if (!firstLine.equals(StringUtil.stripRComment(firstLine)))
          return defaultContext;
       
+      // If the token has '$' or '@', escape early as we'll be completing
+      // either from names or an overloaded `$` method
+      if (token.contains("$") || token.contains("@"))
+         return getAutocompletionContextForDollar(token);
+      
       // If the token has '::' or ':::', escape early as we'll be completing
       // something from a namespace
       if (token.contains("::"))
          return getAutocompletionContextForNamespace(token);
       
-      // If the token has '$' or '@', escape early as we'll be completing
-      // either from names or an overloaded `$` method
-      if (token.contains("$") || token.contains("@"))
-         return getAutocompletionContextForDollar(token);
       
       // Now strip the '$' and '@' post-hoc since they're not really part
       // of the identifier

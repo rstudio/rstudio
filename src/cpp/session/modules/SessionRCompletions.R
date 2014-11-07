@@ -15,7 +15,7 @@
 
 .rs.addFunction("attemptRoxygenTagCompletion", function(token)
 {
-   match <- grepl("@[a-zA-Z0-9]*$", token, perl = TRUE)
+   match <- grepl("^@[a-zA-Z0-9]*$", token, perl = TRUE)
    if (!match)
       return(NULL)
    
@@ -441,13 +441,13 @@
       return(result)
    
    parsed <- suppressWarnings(parse(text = string))
-   evaled <- suppressWarnings(eval(parsed, envir = envir))
-   if (!is.null(evaled))
+   object <- suppressWarnings(eval(parsed, envir = envir))
+   if (!is.null(object))
    {
-      names <- if (S4)
-         slotNames(evaled)
+      names <- if (S4 && !inherits(object, "classRepresentation"))
+         slotNames(object)
       else
-         .rs.getNames(evaled)
+         .rs.getNames(object)
       
       completions <- .rs.selectStartsWith(names, token)
       result <- .rs.makeCompletions(
