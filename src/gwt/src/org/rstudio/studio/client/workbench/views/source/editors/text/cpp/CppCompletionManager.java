@@ -219,7 +219,7 @@ public class CppCompletionManager implements CompletionManager
          
          // if there is no popup then bail
          CppCompletionPopupMenu popup = getCompletionPopup();
-         if (popup == null)
+         if ((popup == null) || !popup.isVisible())
             return false;
          
          // backspace triggers completion if the popup is visible
