@@ -265,7 +265,7 @@ void RCompilationDatabase::updateForCurrentPackage()
    // Run R CMD SHLIB
    FilePath srcDir = pkgPath.childPath("src");
    FilePath tempSrcFile = srcDir.childPath(
-                                 core::system::generateUuid() + ".cpp");
+          kCompilationDbPrefix + core::system::generateUuid() + ".cpp");
    std::vector<std::string> compileArgs = argsForRCmdSHLIB(env, tempSrcFile);
 
    if (!compileArgs.empty())
@@ -434,9 +434,12 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
    // if this is a package source file then return the package args
    using namespace projects;
    CompilationConfig config;
-   FilePath srcDirPath = projectContext().buildTargetPath().childPath("src");
+   FilePath pkgPath = projectContext().buildTargetPath();
+   FilePath srcDirPath = pkgPath.childPath("src");
+   FilePath includePath = pkgPath.childPath("inst/include");
    if ((projectContext().config().buildType == r_util::kBuildTypePackage) &&
-       !filePath.relativePath(srcDirPath).empty())
+       (!filePath.relativePath(srcDirPath).empty() ||
+        !filePath.relativePath(includePath).empty()))
    {
       // (re-)create on demand
       updateForCurrentPackage();

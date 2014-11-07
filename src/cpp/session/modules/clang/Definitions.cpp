@@ -69,9 +69,29 @@ typedef std::map<std::string,Definition> Definitions;
 std::map<std::string,Definitions> s_definitionsByFile;
 
 
-bool isTranslationUnit(const FileInfo& fileInfo)
+bool isTranslationUnit(const FileInfo& fileInfo,
+                       const FilePath& pkgSrcDir,
+                       const FilePath& pkgIncludeDir)
 {
-   return SourceIndex::isTranslationUnit(fileInfo.absolutePath());
+   FilePath filePath(fileInfo.absolutePath());
+
+   if (pkgSrcDir.exists() &&
+       filePath.isWithin(pkgSrcDir) &&
+       SourceIndex::isSourceFile(filePath) &&
+       !boost::algorithm::starts_with(filePath.stem(), kCompilationDbPrefix))
+   {
+      return true;
+   }
+   else if (pkgIncludeDir.exists() &&
+            filePath.isWithin(pkgIncludeDir) &&
+            SourceIndex::isSourceFile(filePath))
+   {
+      return true;
+   }
+   else
+   {
+      return false;
+   }
 }
 
 CXChildVisitResult cursorVisitor(CXCursor cxCursor,
@@ -92,11 +112,8 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
    if (file != filename)
       return CXChildVisit_Continue;
 
-   // if it's a definition then note it
-   if (cursor.isDefinition())
-   {
-      std::cerr << cursor.getUSR() << std::endl;
-   }
+   if (cursor.getKind() == CXCursor_FunctionDecl)
+      std::cerr << "   " << cursor.displayName() << std::endl;
 
    // keep recursing through cursors
    return CXChildVisit_Recurse;
@@ -121,7 +138,7 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
       if (!compileArgs.empty())
       {
          // insert an entry for this file
-
+         std::cerr << file << std::endl;
 
          // create index
          CXIndex index = libclang::clang().createIndex(
@@ -139,6 +156,7 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
                                argsArray.argCount(),
                                NULL, 0, // no unsaved files
                                CXTranslationUnit_None |
+                               CXTranslationUnit_Incomplete |
                                CXTranslationUnit_SkipFunctionBodies);
 
          // visit all of the cursors
@@ -160,19 +178,26 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
 Error initialize()
 {
    using namespace projects;
-   if (projectContext().config().buildType == r_util::kBuildTypePackage)
+   //if (projectContext().config().buildType == r_util::kBuildTypePackage)
+   if (false)
    {
-      /*
-      // create an incremental file change handler (on the heap so that it
-      // survives the call to this function and is never deleted)
-      IncrementalFileChangeHandler* pFileChangeHandler =
-        new IncrementalFileChangeHandler(isTranslationUnit,
-                                         fileChangeHandler,
-                                         boost::posix_time::milliseconds(1000),
-                                         boost::posix_time::milliseconds(500),
-                                         true);
-      pFileChangeHandler->subscribeToFileMonitor("Go to C/C++ Definition");
-      */
+      // check for src and inst/include dirs
+      FilePath pkgPath = projects::projectContext().buildTargetPath();
+      FilePath srcPath = pkgPath.childPath("src");
+      FilePath includePath = pkgPath.childPath("inst/include");
+      if (srcPath.exists() || includePath.exists())
+      {
+         // create an incremental file change handler (on the heap so that it
+         // survives the call to this function and is never deleted)
+         IncrementalFileChangeHandler* pFileChangeHandler =
+           new IncrementalFileChangeHandler(
+                  boost::bind(isTranslationUnit, _1, srcPath, includePath),
+                  fileChangeHandler,
+                  boost::posix_time::milliseconds(1000),
+                  boost::posix_time::milliseconds(500),
+                  true);
+         pFileChangeHandler->subscribeToFileMonitor("Go to C/C++ Definition");
+      }
    }
 
    return Success();

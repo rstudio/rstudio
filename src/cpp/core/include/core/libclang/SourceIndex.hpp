@@ -28,6 +28,9 @@
 #include "TranslationUnit.hpp"
 
 namespace core {
+
+class FilePath;
+
 namespace libclang {
 
 struct CompilationDatabase
@@ -41,7 +44,9 @@ class SourceIndex : boost::noncopyable
 {   
 public:
    static bool isSourceFile(const std::string& filename);
+   static bool isSourceFile(const core::FilePath& filePath);
    static bool isTranslationUnit(const std::string& filename);
+   static bool isTranslationUnit(const core::FilePath& filePath);
 
 public:
    explicit SourceIndex(

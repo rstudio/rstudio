@@ -40,11 +40,17 @@ public:
 
 public:
 
+   std::string displayName() const;
+
+   CXCursorKind getKind() const;
+
    bool isDefinition() const;
 
    Cursor getDefinition() const;
 
    Cursor getCannonical() const;
+
+   CXLinkageKind getLinkageKind() const;
 
    std::string getUSR() const;
 

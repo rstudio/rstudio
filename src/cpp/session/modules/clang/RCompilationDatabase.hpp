@@ -30,6 +30,8 @@
 
 #include <core/libclang/LibClang.hpp>
 
+#define kCompilationDbPrefix "clang-compilation-db-"
+
 namespace session {
 namespace modules {      
 namespace clang {

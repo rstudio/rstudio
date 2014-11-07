@@ -32,6 +32,15 @@ Cursor::~Cursor()
    }
 }
 
+std::string Cursor::displayName() const
+{
+   return toStdString(clang().getCursorDisplayName(cursor()));
+}
+
+CXCursorKind Cursor::getKind() const
+{
+   return clang().getCursorKind(cursor());
+}
 
 bool Cursor::isDefinition() const
 {
@@ -46,6 +55,11 @@ Cursor Cursor::getDefinition() const
 Cursor Cursor::getCannonical() const
 {
    return Cursor(clang().getCanonicalCursor(cursor()));
+}
+
+CXLinkageKind Cursor::getLinkageKind() const
+{
+   return clang().getCursorLinkage(cursor());
 }
 
 std::string Cursor::getUSR() const

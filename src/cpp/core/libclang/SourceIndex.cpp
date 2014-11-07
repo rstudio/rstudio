@@ -28,24 +28,36 @@
 namespace core {
 namespace libclang {
 
-bool SourceIndex::isSourceFile(const std::string& filename)
+
+bool SourceIndex::isSourceFile(const FilePath& filePath)
 {
-   if (isTranslationUnit(filename))
+   if (isTranslationUnit(filePath))
    {
       return true;
    }
    else
    {
-      std::string ex = FilePath(filename).extensionLowerCase();
+      std::string ex = filePath.extensionLowerCase();
       return (ex == ".h" || ex == ".hh" || ex == ".hpp");
    }
 }
 
-bool SourceIndex::isTranslationUnit(const std::string& filename)
+bool SourceIndex::isSourceFile(const std::string& filename)
 {
-   std::string ex = FilePath(filename).extensionLowerCase();
+   return isSourceFile(FilePath(filename));
+}
+
+bool SourceIndex::isTranslationUnit(const FilePath& filePath)
+{
+   std::string ex = filePath.extensionLowerCase();
    return (ex == ".c" || ex == ".cc" || ex == ".cpp" ||
            ex == ".m" || ex == ".mm");
+}
+
+
+bool SourceIndex::isTranslationUnit(const std::string& filename)
+{
+   return isTranslationUnit(FilePath(filename));
 }
 
 SourceIndex::SourceIndex(CompilationDatabase compilationDB, int verbose)
