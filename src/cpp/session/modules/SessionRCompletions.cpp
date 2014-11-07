@@ -44,9 +44,38 @@ char ends(char begins) {
    return '\0';
 }
 
+bool isBinaryOp(char character)
+{
+   return character == '~' ||
+          character == '!' ||
+          character == '@' ||
+          character == '$' ||
+          character == '%' ||
+          character == '^' ||
+          character == '&' ||
+          character == '*' ||
+          character == '-' ||
+          character == '+' ||
+          character == '*' ||
+          character == '/' ||
+          character == '=' ||
+          character == '|' ||
+          character == '<' ||
+          character == '>' ||
+          character == '?';
+   
+}
+
 std::string finishExpression(const std::string& expression)
 {
+   std::string result = expression;
+   
+   // If the last character of the expression is a binary op, then we
+   // place a '.' after it
    int n = expression.length();
+   if (isBinaryOp(expression[n - 1]))
+      result.append(".");
+   
    std::vector<char> terminators;
 
    char top = '\0';
@@ -98,7 +127,6 @@ std::string finishExpression(const std::string& expression)
    }
 
    // append to the output
-   std::string result = expression;
    for (std::size_t i = terminators.size() - 1; i > 0; --i)
       result.push_back(terminators[i]);
 

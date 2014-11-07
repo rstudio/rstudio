@@ -925,7 +925,7 @@ public class RCompletionManager implements CompletionManager
       
       
       // Get the token at the cursor position
-      token = firstLine.replaceAll(".*[\\s\\(\\[\\{,]", "");
+      token = firstLine.replaceAll(".*[^a-zA-Z0-9._:]", "");
       
       // Default case for failure modes
       AutoCompletionContext defaultContext = new AutoCompletionContext(

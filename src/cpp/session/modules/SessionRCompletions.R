@@ -202,7 +202,7 @@
          i <- i + 1
    }
    
-   match.call(func, call)
+   tryCatch(match.call(func, call), error = function(e) call)
 })
 
 .rs.addFunction("getCompletionsFunction", function(token,
