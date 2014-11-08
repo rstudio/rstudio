@@ -567,6 +567,10 @@
       rep.int(names[i], length(objects[[i]]))
    }))
    
+   order <- order(results)
+   results <- results[order]
+   packages <- packages[order]
+   
    .rs.makeCompletions(token,
                        results,
                        packages)
