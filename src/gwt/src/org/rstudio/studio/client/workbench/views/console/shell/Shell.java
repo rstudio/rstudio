@@ -56,6 +56,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.HistoryCom
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 
 import java.util.ArrayList;
@@ -142,7 +143,7 @@ public class Shell implements ConsoleInputHandler,
                                           server, 
                                           null,
                                           null,
-                                          null) ;
+                                          (DocDisplay) view_.getInputEditorDisplay());
       addKeyDownPreviewHandler(completionManager) ;
       addKeyPressPreviewHandler(completionManager) ;
       

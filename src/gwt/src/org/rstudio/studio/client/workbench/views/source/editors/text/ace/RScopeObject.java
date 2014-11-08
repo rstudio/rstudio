@@ -1,5 +1,5 @@
 /*
- * RRoutines.hpp
+ * RScopeObject.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,28 +12,20 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
-#ifndef R_ROUTINES_HPP
-#define R_ROUTINES_HPP
+import com.google.gwt.core.client.JavaScriptObject;
 
-#include <vector>
-
-#include <R_ext/Rdynload.h>
-
-namespace r {
-namespace routines {
-
-void addCMethod(const R_CMethodDef method);
-void addCallMethod(const R_CallMethodDef method);
-void registerCallMethod(const char* name,
-                        DL_FUNC fun,
-                        int numArgs);
-
-void registerAll();
+public class RScopeObject extends JavaScriptObject
+{
+   protected RScopeObject() {}
    
-} // namespace routines   
-} // namespace r
+   public final native String getToken() /*-{
+      return this.token;
+   }-*/;
+   
+   public final native String getType() /*-{
+      return this.type;
+   }-*/;
 
-
-#endif // R_ROUTINES_HPP 
-
+}

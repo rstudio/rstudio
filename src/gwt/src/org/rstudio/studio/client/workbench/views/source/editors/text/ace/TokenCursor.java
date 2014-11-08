@@ -32,6 +32,14 @@ public class TokenCursor extends JavaScriptObject
       return this.currentToken();
    }-*/;
    
+   public native final String currentValue() /*-{
+      return this.currentValue();
+   }-*/;
+   
+   public native final String currentType() /*-{
+      return this.currentType();
+   }-*/;
+   
    public native final boolean moveToNextToken() /*-{
       return !! this.moveToNextToken();
    }-*/;
@@ -54,6 +62,55 @@ public class TokenCursor extends JavaScriptObject
    
    public native final boolean moveBackwardOverMatchingParens() /*-{
       return !! this.moveBackwardOverMatchingParens();
+   }-*/;
+   
+   public native final boolean moveToPosition(Position position) /*-{
+      return this.moveToPosition(position);
+   }-*/;
+   
+   public native final boolean findOpeningBracket(String token, boolean failOnOpenBrace) /*-{
+      return this.findOpeningBracket(token, failOnOpenBrace);
+   }-*/;
+   
+   public native final int findOpeningBracketCountCommas(String token, boolean failOnOpenBrace) /*-{
+      return this.findOpeningBracketCountCommas(token, failOnOpenBrace);
+   }-*/;
+   
+   public native final boolean findOpeningBracket(String[] tokens, boolean failOnOpenBrace) /*-{
+      return this.findOpeningBracket(tokens, failOnOpenBrace);
+   }-*/;
+   
+   public native final int findOpeningBracketCountCommas(String[] tokens, boolean failOnOpenBrace) /*-{
+      return this.findOpeningBracketCountCommas(tokens, failOnOpenBrace);
+   }-*/;
+   
+   public native final boolean bwdToMatchingToken() /*-{
+      return this.bwdToMatchingToken();
+   }-*/;
+   
+   public native final boolean fwdToMatchingToken() /*-{
+      return this.fwdToMatchingToken();
+   }-*/;
+   
+   public native final boolean isFirstSignificantTokenOnLine() /*-{
+      return this.isFirstSignificantTokenOnLine();
+   }-*/;
+   
+   public native final int getRow() /*-{
+      return this.$row;
+   }-*/;
+   
+   public native final int getOffset() /*-{
+      return this.$offset;
+   }-*/;
+   
+   
+   public native final void setRow(int row) /*-{
+      this.$row = row;
+   }-*/;
+   
+   public native final void setOffset(int offset) /*-{
+      this.$offset = offset;
    }-*/;
    
 }

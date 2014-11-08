@@ -53,15 +53,18 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.EditSession;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DplyrJoinContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RInfixData;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 
 public class RCompletionManager implements CompletionManager
@@ -102,7 +105,7 @@ public class RCompletionManager implements CompletionManager
       navigableSourceEditor_ = navigableSourceEditor;
       popup_ = popup ;
       server_ = server ;
-      requester_ = new CompletionRequester(server_, rnwContext);
+      requester_ = new CompletionRequester(server_, rnwContext, navigableSourceEditor);
       initFilter_ = initFilter ;
       rnwContext_ = rnwContext;
       docDisplay_ = docDisplay;
@@ -484,28 +487,109 @@ public class RCompletionManager implements CompletionManager
          requester_.flushCache() ;
    }
    
-   // Simple inner class that packages together a string (context) and
-   // bool (did we look back to build context?)
+   
+   // Things we need to form an appropriate autocompletion:
+   //
+   // 1. The token to the left of the cursor,
+   // 2. The associated function call (if any -- for arguments),
+   // 3. The associated data for a `[` call (if any -- completions from data object),
+   // 4. The associated data for a `[[` call (if any -- completions from data object)
    class AutoCompletionContext {
       
-      public AutoCompletionContext(String context, boolean lookedBack)
+      // Be sure to sync these with 'SessionCodeTools.R'!
+      public static final int TYPE_UNKNOWN = 0;
+      public static final int TYPE_FUNCTION = 1;
+      public static final int TYPE_SINGLE_BRACKET = 2;
+      public static final int TYPE_DOUBLE_BRACKET = 3;
+      public static final int TYPE_NAMESPACE_EXPORTED = 4;
+      public static final int TYPE_NAMESPACE_ALL = 5;
+      public static final int TYPE_DOLLAR = 6;
+      public static final int TYPE_AT = 7;
+      public static final int TYPE_FILE = 8;
+      public static final int TYPE_CHUNK = 9;
+      public static final int TYPE_ROXYGEN = 10;
+      public static final int TYPE_HELP = 11;
+      
+      public AutoCompletionContext(
+            String token,
+            List<String> assocData,
+            List<Integer> dataType,
+            List<Integer> numCommas,
+            String functionCallString)
       {
-         context_ = context;
-         lookedBack_ = lookedBack;
+         token_ = token;
+         assocData_ = assocData;
+         dataType_ = dataType;
+         numCommas_ = numCommas;
+         functionCallString_ = functionCallString;
       }
       
-      public String getContext()
+      public AutoCompletionContext(
+            String token,
+            ArrayList<String> assocData,
+            ArrayList<Integer> dataType)
       {
-         return context_;
+         token_ = token;
+         assocData_ = assocData;
+         dataType_ = dataType;
+         numCommas_ = Arrays.asList(0);
+         functionCallString_ = "";
       }
       
-      public boolean getLookedBack()
+      public AutoCompletionContext(
+            String token,
+            String assocData,
+            int dataType)
       {
-         return lookedBack_;
+         token_ = token;
+         assocData_ = Arrays.asList(assocData);
+         dataType_ = Arrays.asList(dataType);
+         numCommas_ = Arrays.asList(0);
+         functionCallString_ = "";
       }
       
-      private String context_;
-      private boolean lookedBack_;
+      
+      public AutoCompletionContext(
+            String token,
+            int dataType)
+      {
+         token_ = token;
+         assocData_ = Arrays.asList("");
+         dataType_ = Arrays.asList(dataType);
+         numCommas_ = Arrays.asList(0);
+         functionCallString_ = "";
+      }
+      
+      public String getToken()
+      {
+         return token_;
+      }
+      
+      public List<String> getAssocData()
+      {
+         return assocData_;
+      }
+      
+      public List<Integer> getDataType()
+      {
+         return dataType_;
+      }
+      
+      public List<Integer> getNumCommas()
+      {
+         return numCommas_;
+      }
+      
+      public String getFunctionCallString()
+      {
+         return functionCallString_;
+      }
+
+      private final String token_;
+      private final List<String> assocData_;
+      private final List<Integer> dataType_;
+      private final List<Integer> numCommas_;
+      private final String functionCallString_;
       
    }
 
@@ -540,7 +624,6 @@ public class RCompletionManager implements CompletionManager
             return false;
       
       AutoCompletionContext context = getAutocompletionContext();
-      String line = context.getContext();
       
       if (!input_.hasSelection())
       {
@@ -548,56 +631,296 @@ public class RCompletionManager implements CompletionManager
          return false ;
       }
 
-      String linePart = line.substring(0, selection.getStart().getPosition());
-
-      if (line.matches("\\s*#.*") && !linePart.matches("\\s*#+'\\s*[^\\s].*"))
-      {
-         // No completion inside comments (except Roxygen). For the Roxygen
-         // case, only do completion if we're past the first non-whitespace
-         // character (to allow for easy indenting).
-         return false;
-      }
-
       boolean canAutoAccept = flushCache;
+      
       context_ = new CompletionRequestContext(invalidation_.getInvalidationToken(),
                                               selection,
-                                              canAutoAccept) ;
+                                              canAutoAccept);
       
-      requester_.getCompletions(line,
-                                line.length(),
-                                implicit,
-                                context_);
+      RInfixData infixData = RInfixData.create();
+      AceEditor editor = (AceEditor) docDisplay_;
+      if (editor != null)
+      {
+         CodeModel codeModel = editor.getSession().getMode().getCodeModel();
+         TokenCursor cursor = codeModel.getTokenCursor();
+         
+         if (cursor.moveToPosition(input_.getCursorPosition()))
+         {
+            String token = "";
+            if (cursor.currentType() == "identifier")
+               token = cursor.currentValue();
+            
+            String cursorPos = "left";
+            if (cursor.currentValue() == "=")
+               cursorPos = "right";
+            
+            TokenCursor clone = cursor.cloneCursor();
+            if (clone.moveToPreviousToken())
+               if (clone.currentValue() == "=")
+                  cursorPos = "right";
+            
+            // Try to get a dplyr join completion
+            DplyrJoinContext joinContext =
+                  codeModel.getDplyrJoinContextFromInfixChain(cursor);
+            
+            // If that failed, try a non-infix lookup
+            if (joinContext == null)
+            {
+               String joinString =
+                     getDplyrJoinString(editor, cursor);
+               
+               if (!StringUtil.isNullOrEmpty(joinString))
+               {
+                  requester_.getDplyrJoinCompletionsString(
+                        token,
+                        joinString,
+                        cursorPos,
+                        implicit,
+                        context_);
+
+                  return true;
+               }
+            }
+            else
+            {
+               requester_.getDplyrJoinCompletions(
+                     joinContext,
+                     implicit,
+                     context_);
+               return true;
+               
+            }
+            
+            // Try to see if there's an object name we should use to supplement
+            // completions
+            if (cursor.moveToPosition(input_.getCursorPosition()))
+               infixData = codeModel.getDataFromInfixChain(cursor);
+         }
+      }
+      
+      requester_.getCompletions(
+            context.getToken(),
+            context.getAssocData(),
+            context.getDataType(),
+            context.getNumCommas(),
+            context.getFunctionCallString(),
+            infixData.getDataName(),
+            infixData.getAdditionalArgs(),
+            infixData.getExcludeArgs(),
+            infixData.getExcludeArgsFromObject(),
+            implicit,
+            context_);
 
       return true ;
    }
    
-   
-   
-   private boolean findOpeningParen(TokenCursor tokenCursor)
+   private String getDplyrJoinString(
+         AceEditor editor,
+         TokenCursor cursor)
    {
-      boolean success = false;
-      int parenCount = 0;
-      while (tokenCursor.moveToPreviousToken())
+      while (true)
       {
-         if (tokenCursor.currentToken().getValue() == "(")
-         {
-            if (parenCount == 0)
-            {
-               success = true;
-               break;
-            }
-            --parenCount;
-         }
-         else if (tokenCursor.currentToken().getValue() == ")")
-         {
-            parenCount++;
-         }
+         int commaCount = cursor.findOpeningBracketCountCommas("(", true);
+         if (commaCount == -1)
+            break;
+         
+         if (!cursor.moveToPreviousToken())
+            return "";
+
+         if (!cursor.currentValue().matches(".*join$"))
+            continue;
+         
+         if (commaCount < 2)
+            return "";
+
+         Position start = cursor.currentPosition();
+         if (!cursor.moveToNextToken())
+            return "";
+
+         if (!cursor.fwdToMatchingToken())
+            return "";
+
+         Position end = cursor.currentPosition();
+         end.setColumn(end.getColumn() + 1);
+
+         return editor.getTextForRange(Range.fromPoints(
+               start, end));
       }
-      return success;
+      return "";
    }
+   
+   
+   private AutoCompletionContext getAutocompletionContextForFile(
+         String line)
+   {
+      int index = Math.max(line.lastIndexOf('"'), line.lastIndexOf('\''));
+      return new AutoCompletionContext(
+            line.substring(index + 1),
+            AutoCompletionContext.TYPE_FILE);
+   }
+   
+   private AutoCompletionContext getAutocompletionContextForNamespace(
+         String token)
+   {
+         String[] splat = token.split(":{2,3}");
+         String right = "";
+         String left = "";
+         
+         if (splat.length <= 0)
+         {
+            right = "";
+            left = "";
+         }
+         else if (splat.length == 1)
+         {
+            right = "";
+            left = splat[0];
+         }
+         else
+         {
+            right = splat[1];
+            left = splat[0];
+         }
+            
+         return new AutoCompletionContext(
+               right,
+               left,
+               token.contains(":::") ?
+                     AutoCompletionContext.TYPE_NAMESPACE_ALL :
+                     AutoCompletionContext.TYPE_NAMESPACE_EXPORTED);
+   }
+   
+   private boolean isValidAsIdentifier(TokenCursor cursor)
+   {
+      String type = cursor.currentType();
+      return type == "identifier" ||
+             type == "symbol" ||
+             type == "keyword" ||
+             type == "string";
+   }
+   
+   private boolean isLookingAtInfixySymbol(TokenCursor cursor)
+   {
+      String value = cursor.currentValue();
+      if (value == "$" ||
+          value == "@" ||
+          value == ":")
+         return true;
+      
+      if (cursor.currentType().contains("infix"))
+         return true;
+      
+      return false;
+   }
+   
+   // Find the start of the evaluation context for a generic expression,
+   // e.g.
+   //
+   //     x[[1]]$foo[[1]][, 2]@bar[[1]]()
+   private boolean findStartOfEvaluationContext(TokenCursor cursor)
+   {
+      TokenCursor clone = cursor.cloneCursor();
+      
+//       Debug.logToConsole("Starting search at:");
+//       Debug.logObject(clone.currentToken());
+      
+      do
+      {
+         if (clone.bwdToMatchingToken())
+            continue;
+         
+         // If we land on an identifier, we keep going if the token previous is
+         // 'infix-y', and bail otherwise.
+         if (isValidAsIdentifier(clone))
+         {
+            if (!clone.moveToPreviousToken())
+               break;
+            
+            if (isLookingAtInfixySymbol(clone))
+               continue;
+            
+            if (!clone.moveToNextToken())
+               return false;
+            
+            break;
+               
+         }
+         
+      } while (clone.moveToPreviousToken());
+      
+//      Debug.logToConsole("Stopping search at:");
+//      Debug.logObject(clone.currentToken());
+      
+      cursor.setRow(clone.getRow());
+      cursor.setOffset(clone.getOffset());
+      return true;
+      
+   }
+   
+   private AutoCompletionContext getAutocompletionContextForDollar(String token)
+   {
+      // Failure mode context
+      AutoCompletionContext defaultContext = new AutoCompletionContext(
+            token,
+            AutoCompletionContext.TYPE_UNKNOWN);
+      
+      int dollarIndex = Math.max(token.lastIndexOf('$'), token.lastIndexOf('@'));
+      String tokenToUse = token.substring(dollarIndex + 1);
+      
+      // Establish an evaluation context by looking backwards
+      AceEditor editor = (AceEditor) docDisplay_;
+      if (editor == null)
+         return defaultContext;
+      
+      CodeModel codeModel = editor.getSession().getMode().getCodeModel();
+      codeModel.tokenizeUpToRow(input_.getCursorPosition().getRow());
+      
+      TokenCursor cursor = codeModel.getTokenCursor();
+         
+      if (!cursor.moveToPosition(input_.getCursorPosition()))
+         return defaultContext;
+      
+      // Move back to the '$'
+      while (cursor.currentValue() != "$" && cursor.currentValue() != "@")
+         if (!cursor.moveToPreviousToken())
+            return defaultContext;
+      
+      int type = cursor.currentValue() == "$" ?
+            AutoCompletionContext.TYPE_DOLLAR :
+            AutoCompletionContext.TYPE_AT;
+      
+      // Put a cursor here
+      TokenCursor contextEndCursor = cursor.cloneCursor();
+      
+      // We allow for arbitrary elements previous, so we want to get e.g.
+      //
+      //     env::foo()$bar()[1]$baz
+      // Get the string forming the context
+      if (!findStartOfEvaluationContext(cursor))
+         return defaultContext;
+      
+      String context = editor.getTextForRange(Range.fromPoints(
+            cursor.currentPosition(),
+            contextEndCursor.currentPosition()));
+      
+      // and return!
+      return new AutoCompletionContext(
+            tokenToUse,
+            context,
+            type);
+   }
+   
    
    private AutoCompletionContext getAutocompletionContext()
    {
+      // Objects filled by this function and later returned
+      String token = "";
+      ArrayList<String> assocData = new ArrayList<String>();
+      ArrayList<Integer> dataType = new ArrayList<Integer>();
+      ArrayList<Integer> numCommas = new ArrayList<Integer>();
+      
+      // Some information re: the function call, if appropriate.
+      String functionCallString = "";
       
       String firstLine = input_.getText();
       int row = input_.getCursorPosition().getRow();
@@ -605,95 +928,211 @@ public class RCompletionManager implements CompletionManager
       // trim to cursor position
       firstLine = firstLine.substring(0, input_.getCursorPosition().getColumn());
       
-      // if we're on the first row, don't bother looking back
-      if (row == 0)
-         return new AutoCompletionContext(firstLine, false);
+      // Get the token at the cursor position
+      token = firstLine.replaceAll(".*[^a-zA-Z0-9._:$@]", "");
       
-      // early escaping rules: if we're in Roxygen, or we have text immediately
-      // preceding the cursor (as that signals we're completing a variable name)
-      if (firstLine.matches("\\s*#+'.*") ||
-          firstLine.matches(".*[$@]$"))
-         return new AutoCompletionContext(firstLine, false);
+      // If we're completing an object within a string, assume it's a
+      // file-system completion
+      String firstLineStripped = StringUtil.stripBalancedQuotes(
+            StringUtil.stripRComment(firstLine));
+      
+      if (firstLineStripped.indexOf('\'') != -1 || 
+          firstLineStripped.indexOf('"') != -1)
+         return getAutocompletionContextForFile(firstLine);
+      
+      // If this line starts with '```{', then we're completing chunk options
+      // pass the whole line as a token
+      if (firstLine.startsWith("```{") || firstLine.startsWith("<<"))
+         return new AutoCompletionContext(firstLine, AutoCompletionContext.TYPE_CHUNK);
+      
+      // If this line starts with a '?', assume it's a help query
+      if (firstLine.matches("^\\s*[?].*"))
+         return new AutoCompletionContext(token, AutoCompletionContext.TYPE_HELP);
+      
+      // Default case for failure modes
+      AutoCompletionContext defaultContext = new AutoCompletionContext(
+            token,
+            AutoCompletionContext.TYPE_UNKNOWN);
+      
+      // escape early for roxygen
+      if (firstLine.matches("\\s*#+'.*"))
+         return new AutoCompletionContext(
+               token, AutoCompletionContext.TYPE_ROXYGEN);
       
       // if the line is currently within a comment, bail -- this ensures
       // that we can auto-complete within a comment line (but we only
       // need context from that line)
       if (!firstLine.equals(StringUtil.stripRComment(firstLine)))
-         return new AutoCompletionContext(firstLine, false);
+         return defaultContext;
       
-      // if we're within a string, bail -- do this by stripping
-      // balanced quotes and seeing if any quote characters left over
-      // TODO: use code model so this survives multiline strings
-      String stripped = StringUtil.stripBalancedQuotes(firstLine);
-      if (!firstLine.equals(stripped))
-      {
-         boolean oddSingleQuotes = StringUtil.countMatches(stripped, '\'') % 2 == 1;
-         boolean oddDoubleQuotes = StringUtil.countMatches(stripped, '"') % 2 == 1;
-         if (oddSingleQuotes || oddDoubleQuotes) {
-            return new AutoCompletionContext(firstLine, false);
-         }
-      }
+      // If the token has '$' or '@', escape early as we'll be completing
+      // either from names or an overloaded `$` method
+      if (token.contains("$") || token.contains("@"))
+         return getAutocompletionContextForDollar(token);
+      
+      // If the token has '::' or ':::', escape early as we'll be completing
+      // something from a namespace
+      if (token.contains("::"))
+         return getAutocompletionContextForNamespace(token);
+      
+      // Now strip the '$' and '@' post-hoc since they're not really part
+      // of the identifier
+      token = token.replaceAll(".*[$@]", ""); // TODO: strip colon?
       
       // access to the R Code model
       AceEditor editor = (AceEditor) docDisplay_;
       if (editor == null)
-         return new AutoCompletionContext(firstLine, false);
+         return defaultContext;
       
-      EditSession session = editor.getSession();
-      if (session == null)
-         return new AutoCompletionContext(firstLine, false);
+      CodeModel codeModel = editor.getSession().getMode().getCodeModel();
       
-      Mode mode = session.getMode();
-      if (mode == null)
-         return new AutoCompletionContext(firstLine, false);
+      // We might need to grab content from further up in the document than
+      // the current cursor position -- so tokenize ahead.
+      codeModel.tokenizeUpToRow(row + 100);
       
-      CodeModel codeModel = mode.getCodeModel();
-      if (codeModel == null)
-         return new AutoCompletionContext(firstLine, false);
-      
-      codeModel.tokenizeUpToRow(row);
-      
-      // Make a token cursor and put it at the end of the line
+      // Make a token cursor and place it at the first token previous
+      // to the cursor.
       TokenCursor tokenCursor = codeModel.getTokenCursor();
-      tokenCursor.bwdToNearestToken(Position.create(row, firstLine.length()));
-
-      // Walk tokens backwards until we have one more '(' than we do
-      // ')' with an empty 'block' token stack -- but only if we didn't
-      // already hit a '(' as the first token
-      if (tokenCursor.currentToken().getValue() != "(")
+      if (!tokenCursor.moveToPosition(input_.getCursorPosition()))
+         return defaultContext;
+      
+      TokenCursor startCursor = tokenCursor.cloneCursor();
+      boolean startedOnEquals = tokenCursor.currentValue() == "=";
+      if (startCursor.currentType() == "identifier")
+         if (startCursor.moveToPreviousToken())
+            if (startCursor.currentValue() == "=")
+            {
+               startedOnEquals = true;
+               startCursor.moveToNextToken();
+            }
+      
+      // Find an opening '(' or '[' -- this provides the function or object
+      // for completion.
+      int initialNumCommas = 0;
+      if (tokenCursor.currentValue() != "(" && tokenCursor.currentValue() != "[")
       {
-         boolean success = findOpeningParen(tokenCursor);
-         if (!success)
+         int commaCount = tokenCursor.findOpeningBracketCountCommas(new String[]{ "[", "(" }, true);
+         if (commaCount == -1)
          {
-            return new AutoCompletionContext(firstLine, false);
+            commaCount = tokenCursor.findOpeningBracketCountCommas("[", false);
+            if (commaCount == -1)
+               return defaultContext;
+            else
+               initialNumCommas = commaCount;
+         }
+         else
+         {
+            initialNumCommas = commaCount;
+         }
+      }
+      numCommas.add(initialNumCommas);
+      
+      // Figure out whether we're looking at '(', '[', or '[[',
+      // and place the token cursor on the first token preceding.
+      TokenCursor endOfDecl = tokenCursor.cloneCursor();
+      if (tokenCursor.currentValue() == "(")
+      {
+         // Don't produce function argument completions
+         // if the cursor is on, or after, an '='
+         if (!startedOnEquals)
+            dataType.add(AutoCompletionContext.TYPE_FUNCTION);
+         else
+            dataType.add(AutoCompletionContext.TYPE_UNKNOWN);
+         
+         if (!tokenCursor.moveToPreviousToken())
+            return defaultContext;
+      }
+      else if (tokenCursor.currentValue() == "[")
+      {
+         if (!tokenCursor.moveToPreviousToken())
+            return defaultContext;
+         
+         if (tokenCursor.currentValue() == "[")
+         {
+            if (!endOfDecl.moveToPreviousToken())
+               return defaultContext;
+            
+            dataType.add(AutoCompletionContext.TYPE_DOUBLE_BRACKET);
+            if (!tokenCursor.moveToPreviousToken())
+               return defaultContext;
+         }
+         else
+         {
+            dataType.add(AutoCompletionContext.TYPE_SINGLE_BRACKET);
          }
       }
       
-      // Take the inferred row up to current position and return
-      int startRow = tokenCursor.currentPosition().getRow();
+      // Get the string marking the function or data
+      if (!findStartOfEvaluationContext(tokenCursor))
+         return defaultContext;
       
-      StringBuilder resultBuilder = new StringBuilder();
-      for (int i = startRow; i < row; i++)
+      // Try to get the function call string -- either there's
+      // an associated closing paren we can use, or we should just go up
+      // to the current cursor position
+      
+      // default case: use start cursor
+      Position endPos = startCursor.currentPosition();
+      endPos.setColumn(endPos.getColumn() + startCursor.currentValue().length());
+      
+      // try to look forward for closing paren
+      if (endOfDecl.currentValue() == "(")
       {
-         resultBuilder.append(StringUtil.stripRComment(docDisplay_.getLine(i)));
+         TokenCursor closingParenCursor = endOfDecl.cloneCursor();
+         if (closingParenCursor.fwdToMatchingToken())
+         {
+            endPos = closingParenCursor.currentPosition();
+            endPos.setColumn(endPos.getColumn() + 1);
+         }
       }
-      resultBuilder.append(firstLine.substring(0,
-                  input_.getCursorPosition().getColumn()));
+      
+      functionCallString = editor.getTextForRange(Range.fromPoints(
+            tokenCursor.currentPosition(), endPos));
+      
+      assocData.add(
+            docDisplay_.getTextForRange(Range.fromPoints(
+                  tokenCursor.currentPosition(),
+                  endOfDecl.currentPosition())));
+      
+      // Get the rest of the single-bracket contexts for completions as well
+      while (true)
+      {
+         int commaCount = tokenCursor.findOpeningBracketCountCommas("[", false);
+         if (commaCount == -1)
+            break;
+         
+         numCommas.add(commaCount);
+         
+         TokenCursor declEnd = tokenCursor.cloneCursor();
+         if (!tokenCursor.moveToPreviousToken())
+            return defaultContext;
+         
+         if (tokenCursor.currentValue() == "[")
+         {
+            if (!declEnd.moveToPreviousToken())
+               return defaultContext;
             
-      String result = resultBuilder.toString();
+            dataType.add(AutoCompletionContext.TYPE_DOUBLE_BRACKET);
+            if (!tokenCursor.moveToPreviousToken())
+               return defaultContext;
+         }
+         else
+         {
+            dataType.add(AutoCompletionContext.TYPE_SINGLE_BRACKET);
+         }
+         
+      assocData.add(
+            docDisplay_.getTextForRange(Range.fromPoints(
+                  tokenCursor.currentPosition(),
+                  declEnd.currentPosition())));
+      }
       
-      result = StringUtil.stripBalancedQuotes(result);
+      return new AutoCompletionContext(
+            token,
+            assocData,
+            dataType,
+            numCommas,
+            functionCallString);
       
-      // Cheap trick -- convert all instances of '{', '}' to '(', ')' so
-      // they get treated as non-named function calls. This fixes an
-      // undesired behaviour whereby e.g.
-      //
-      // lapply(X, function(x) { |
-      //
-      // would produce auto-completions for lapply.
-      result = result.replace('{', '(').replace('}', ')');
-      
-      return new AutoCompletionContext(result, startRow < row);
    }
    
    /**
@@ -746,16 +1185,18 @@ public class RCompletionManager implements CompletionManager
          
          if (results.length == 0)
          {
-            if (docDisplay_ == null ||
-                  (nativeEvent_ != null && nativeEvent_.getKeyCode() != KeyCodes.KEY_TAB)) {
+            boolean lastInputWasTab =
+                  (nativeEvent_ != null && nativeEvent_.getKeyCode() == KeyCodes.KEY_TAB);
+            
+            boolean lineIsWhitespace = docDisplay_.getCurrentLine().matches("^\\s*$");
+            
+            if (lastInputWasTab && lineIsWhitespace)
+               docDisplay_.insertCode("\t");
+            else
                popup_.showErrorMessage(
                      "(No matches)", 
                      new PopupPositioner(input_.getCursorBounds(), popup_));
-            }
-            else
-            {
-               docDisplay_.insertCode("\t");
-            }
+            
             return ;
          }
 
@@ -769,6 +1210,7 @@ public class RCompletionManager implements CompletionManager
 
          token_ = token ;
          suggestOnAccept_ = completions.suggestOnAccept;
+         overrideInsertParens_ = completions.dontInsertParens;
 
          if (results.length == 1
              && canAutoAccept_
@@ -779,8 +1221,8 @@ public class RCompletionManager implements CompletionManager
          else
          {
             if (results.length == 1 && canAutoAccept_)
-               applyValue(results[0].name);
-
+               applyValue(results[0]);
+            
             popup_.showCompletionValues(
                   results,
                   new PopupPositioner(rect, popup_),
@@ -827,7 +1269,7 @@ public class RCompletionManager implements CompletionManager
             return ;
          }
 
-         applyValue(value);
+         applyValue(qname);
 
          if (suggestOnAccept_)
          {
@@ -845,58 +1287,136 @@ public class RCompletionManager implements CompletionManager
       // For input of the form 'something$foo' or 'something@bar', quote the
       // element following '@' if it's a non-syntactic R symbol; otherwise
       // return as is
-      private String quoteIfNotSyntacticNameCompletion(String string, char chr)
+      private String quoteIfNotSyntacticNameCompletion(String string)
       {
-         if (string.matches("[a-zA-Z_.][a-zA-Z0-9_.]*\\" + chr + ".*"))
-         {
-            int ind = string.lastIndexOf(chr);
-            String before = string.substring(0, ind + 1);
-            String after = string.substring(ind + 1, string.length());
-            if (after.length() > 0)
-            {
-               return before + StringUtil.toRSymbolName(after);
-            }
-         }
-         return string;
+         if (!string.matches("^[a-zA-Z_.][a-zA-Z0-9_.]*$"))
+               return "`" + string + "`";
+         else
+            return string;
       }
-
-      private void applyValue(final String fValue)
+      
+      private void applyValueRmdOption(final String value)
       {
-         
-         String value = fValue;
-         
-         // If the autocompletion is inserting something following an
-         // @ or a $, e.g. for completion of an entry in object 'x'
-         // named 'Some Value' as x$Some Value, surround it with
-         // "`" -- do this for all names with non-alphanumeric elements
-         value = quoteIfNotSyntacticNameCompletion(value, '@');
-         value = quoteIfNotSyntacticNameCompletion(value, '$');
-         
-         // Move range to beginning of token
-         input_.setFocus(true) ;
          input_.setSelection(new InputEditorSelection(
                selection_.getStart().movePosition(-token_.length(), true),
                input_.getSelection().getEnd()));
 
-         // Replace the token with the full completion
-         input_.replaceSelection(value, true) ;
-
-         /* In some cases, applyValue can be called more than once
-          * as part of the same completion instance--specifically,
-          * if there's only one completion candidate and it is in
-          * a package. To make sure that the selection movement
-          * logic works the second time, we need to reset the
-          * selection.
-          */
+         input_.replaceSelection(value, true);
          token_ = value;
          selection_ = input_.getSelection();
       }
+
+      private void applyValue(QualifiedName name)
+      {
+         final String functionName = name.name == null ? "" : name.name;
+         final String pkgName = name.pkgName == null ? "" : name.pkgName;
+         final boolean shouldQuote = name.shouldQuote;
+         
+         if (pkgName == "`chunk-option`")
+         {
+            applyValueRmdOption(functionName);
+            return;
+         }
+         
+         server_.isFunction(functionName, pkgName, new ServerRequestCallback<Boolean>()
+         {
+            
+            @Override
+            public void onResponseReceived(Boolean isFunction)
+            {
+               // Don't insert a paren if there is already a '(' following
+               // the cursor
+               AceEditor editor = (AceEditor) input_;
+               boolean textFollowingCursorHasOpenParen = false;
+               if (editor != null)
+               {
+                  TokenCursor cursor = 
+                        editor.getSession().getMode().getCodeModel().getTokenCursor();
+                  cursor.moveToPosition(editor.getCursorPosition());
+                  if (cursor.moveToNextToken())
+                     textFollowingCursorHasOpenParen =
+                        cursor.currentValue() == "(";
+               }
+               
+               String value = functionName;
+               if (value == ":=")
+                  value = quoteIfNotSyntacticNameCompletion(value);
+               else if (!value.matches(".*[=:]\\s*$") && 
+                   !value.matches("^\\s*([`'\"]).*\\1\\s*$") &&
+                   pkgName != "<file>" &&
+                   pkgName != "<directory>" &&
+                   pkgName != "`chunk-option`" &&
+                   !value.startsWith("@") &&
+                   !shouldQuote)
+                  value = quoteIfNotSyntacticNameCompletion(value);
+               
+               /* In some cases, applyValue can be called more than once
+                * as part of the same completion instance--specifically,
+                * if there's only one completion candidate and it is in
+                * a package. To make sure that the selection movement
+                * logic works the second time, we need to reset the
+                * selection.
+                */
+               
+               // Move range to beginning of token
+               input_.setSelection(new InputEditorSelection(
+                     selection_.getStart().movePosition(-token_.length(), true),
+                     input_.getSelection().getEnd()));
+         
+               if (isFunction && !overrideInsertParens_ && !textFollowingCursorHasOpenParen)
+               {
+                  // Don't replace the selection if the token ends with a ')'
+                  // (implies an earlier replacement handled this)
+                  if (token_.endsWith("("))
+                  {
+                     input_.setSelection(new InputEditorSelection(
+                           input_.getSelection().getEnd(),
+                           input_.getSelection().getEnd()));
+                  }
+                  else
+                  {
+                     input_.replaceSelection(value + "()", true);
+                     InputEditorSelection newSelection = new InputEditorSelection(
+                           input_.getSelection().getEnd().movePosition(-1, true));
+                     token_ = value + "(";
+                     selection_ = new InputEditorSelection(
+                           input_.getSelection().getStart().movePosition(-2, true),
+                           newSelection.getStart());
+
+                     input_.setSelection(newSelection);
+
+                  }
+               }
+               else
+               {
+                  if (shouldQuote)
+                     value = "\"" + value + "\"";
+                  
+                  input_.replaceSelection(value, true);
+                  token_ = value;
+                  selection_ = input_.getSelection();
+               }
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+            }
+            
+         });
+         
+
+      }
+      
+      
 
       private final Invalidation.Token invalidationToken_ ;
       private InputEditorSelection selection_ ;
       private final boolean canAutoAccept_;
       private HelpStrategy helpStrategy_ ;
       private boolean suggestOnAccept_;
+      private boolean overrideInsertParens_;
+      
    }
    
    private GlobalDisplay globalDisplay_;

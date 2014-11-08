@@ -1,7 +1,6 @@
-/*
- * RRoutines.hpp
+/* RFunction.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2014 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,28 +11,22 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-#ifndef R_ROUTINES_HPP
-#define R_ROUTINES_HPP
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 
-#include <vector>
-
-#include <R_ext/Rdynload.h>
-
-namespace r {
-namespace routines {
-
-void addCMethod(const R_CMethodDef method);
-void addCallMethod(const R_CallMethodDef method);
-void registerCallMethod(const char* name,
-                        DL_FUNC fun,
-                        int numArgs);
-
-void registerAll();
+public class RFunction extends JavaScriptObject
+{
+   protected RFunction()
+   {}
    
-} // namespace routines   
-} // namespace r
+   public final native String getFunctionName() /*-{
+      return this.name;
+   }-*/;
+   
+   public final native JsArrayString getFunctionArgs() /*-{
+      return this.args;
+   }-*/;
 
-
-#endif // R_ROUTINES_HPP 
-
+}

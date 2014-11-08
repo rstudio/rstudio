@@ -107,6 +107,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionPath.cpp
    modules/SessionPlots.cpp
    modules/SessionProfiler.cpp
+   modules/SessionRCompletions.cpp
    modules/SessionRHooks.cpp
    modules/SessionRPubs.cpp
    modules/SessionShinyApps.cpp

@@ -73,11 +73,11 @@ options(help_type = "html")
 .rs.addFunction( "handlerLookupError", function(path, query=NULL, ...)
 {
    payload = paste(
-         "<h3>R Custom HTTP Handler Not Found</h3>",
-         "<p>Unable to locate custom HTTP handler for",
-          "<i>", path, "</i>",
-         "<p>Is the package which implements this HTTP handler loaded?</p>")
-
+      "<h3>R Custom HTTP Handler Not Found</h3>",
+      "<p>Unable to locate custom HTTP handler for",
+      "<i>", path, "</i>",
+      "<p>Is the package which implements this HTTP handler loaded?</p>")
+   
    list(payload, "text/html", character(), 404)
 });
 
@@ -91,10 +91,64 @@ options(help_type = "html")
 
 .rs.addJsonRpcHandler("get_help", function(topic, package, options)
 {
-   helpfiles = help(topic, help_type="html")
+   if (is.null(package) && any(grepl(":{2,3}", topic, perl = TRUE)))
+   {
+      splat <- strsplit(topic, ":{2,3}", perl = TRUE)[[1]]
+      topic <- splat[[2]]
+      package <- splat[[1]]
+   }
+   
+   helpfiles <- NULL
+   if (is.null(package) || package == "") {
+      helpfiles <- help(topic, help_type = "html")
+   } else {
+      # NOTE: this can fail if there is no such package 'package'
+      helpfiles <- tryCatch(
+         
+         expr = {
+            # NOTE: help does lazy evaluation on 'package',
+            # so we have to manually construct the call
+            call <- call("help", topic, package = package, help_type = "html")
+            eval(call)
+         },
+         
+         error = function(e) {
+            return(NULL)
+         }
+      )
+   }
+   
+   if (length(helpfiles) <= 0)
+   {
+      # Let's try again!
+      object <- .rs.getAnywhere(topic, parent.frame())
+      if (!is.null(object))
+      {
+         envString <- capture.output(print(environment(object)))[[1]]
+         if (grepl("namespace:", envString))
+         {
+            package <- sub("<environment: namespace:(.*)>", "\\1", envString, perl = TRUE)
+            helpfiles <- tryCatch({
+               call <- call("help", topic, package = package, help_type = "html")
+               eval(call)
+            }, error = function(e) NULL
+            )
+            
+            if (!length(helpfiles))
+            {
+               helpfiles <- tryCatch({
+                  call <- call("help", gsub("\\..*", "", topic), package = package, help_type = "html")
+                  eval(call)
+               }, error = function(e) NULL)
+            }
+            
+         }
+      }
+   }
+   
    if (length(helpfiles) <= 0)
       return ()
-
+   
    file = helpfiles[[1]]
    path <- dirname(file)
    dirpath <- dirname(path)
@@ -107,7 +161,7 @@ options(help_type = "html")
                               ".html", sep=""),
                         NULL,
                         NULL)$payload
-
+   
    match = suppressWarnings(regexpr('<body>.*</body>', html))
    if (match < 0)
    {
@@ -116,12 +170,12 @@ options(help_type = "html")
    else
    {
       html = substring(html, match + 6, match + attr(match, 'match.length') - 1 - 7)
-
+      
       match = suppressWarnings(regexpr('<h3>Details</h3>', html))
       if (match >= 0)
          html = substring(html, 1, match - 1)
    }
-
+   
    obj = tryCatch(get(topic, pos=globalenv()),
                   error = function(e) NULL)
    
@@ -136,7 +190,7 @@ options(help_type = "html")
    }
    
    list('html' = html, 'signature' = sig, 'pkgname' = pkgname)
-});
+})
 
 .rs.addJsonRpcHandler("show_help_topic", function(topic, package)
 {
@@ -160,4 +214,36 @@ options(help_type = "html")
             "&title=1&keyword=1&alias=1",
             sep = "")
    }
+})
+
+.rs.addJsonRpcHandler("get_help_function_expr", function(expr)
+{
+   object <- .rs.getAnywhere(expr, envir = parent.frame())
+   if (!is.function(object))
+      return(NULL)
+   
+   env <- environment(object)
+   srcName <- sub("<environment: (.*)>", "\\1", capture.output(print(env)))
+   
+   src <- NULL
+   if (grepl("^namespace:", srcName))
+   {
+      srcName <- sub("namespace:", "", srcName, fixed = TRUE)
+      src <- asNamespace(srcName)
+   }
+   
+   objects <- ls(src)
+   for (i in seq_along(objects))
+   {
+      if (identical(object, get(objects[[i]], envir = src)))
+      {
+         item <- get(objects[[i]], envir = src)
+         
+         return(.rs.rpc.get_help(
+            topic = objects[[i]],
+            package = srcName
+         ))
+      }
+   }
+   
 })

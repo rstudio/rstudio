@@ -106,19 +106,19 @@ define("mode/r_highlight_rules", function(require, exports, module)
                      return "keyword";
                   else if (buildinConstants[value])
                      return "constant.language";
-                  else if (value == '...' || value.match(/^\.\.\d+$/))
+                  else if (value.match(/^\.\.\d+$/))
                      return "variable.language";
                   else
                      return "identifier";
                },
-               regex : "[a-zA-Z.][a-zA-Z0-9._]*\\b"
+               regex : "[a-zA-Z.][a-zA-Z0-9._]*"
             },
             {
                token : "keyword.operator",
                regex : "%%|>=|<=|==|!=|\\->|<\\-|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||~|\\$|:|@"
             },
             {
-               token : "keyword.operator", // infix operators
+               token : "keyword.operator.infix", // infix operators
                regex : "%.*?%"
             },
             {

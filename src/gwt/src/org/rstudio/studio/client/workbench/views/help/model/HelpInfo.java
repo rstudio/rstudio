@@ -58,9 +58,9 @@ public class HelpInfo extends JavaScriptObject
          NodeList<Element> h2headings = div.getElementsByTagName("h2") ;
          NodeList<Element> h3headings = div.getElementsByTagName("h3") ;
          ArrayList<Element> headings = new ArrayList<Element>();
-         for (int i = 0; i<h2headings.getLength(); i++)
+         for (int i = 0; i < h2headings.getLength(); i++)
             headings.add(h2headings.getItem(i));
-         for (int i = 0; i<h3headings.getLength(); i++)
+         for (int i = 0; i < h3headings.getLength(); i++)
             headings.add(h3headings.getItem(i));
          
          // iterate through them
@@ -121,13 +121,19 @@ public class HelpInfo extends JavaScriptObject
       {
          TableRowElement row = rows.getItem(i) ;
          NodeList<TableCellElement> cells = row.getCells() ;
+         
          TableCellElement argNameCell = cells.getItem(0) ;
          TableCellElement argValueCell = cells.getItem(1) ;
          
          String argNameText = argNameCell.getInnerText() ;
          String argValueHtml = argValueCell.getInnerHTML() ;
          
-         result.put(argNameText, argValueHtml) ;
+         // argNameCell may be multiple comma-delimited arguments;
+         // split them up if necessary (duplicate the help across args)
+         String[] argNameTextSplat = argNameText.split("\\s*,\\s*");
+         for (int j = 0; j < argNameTextSplat.length; j++)
+            result.put(argNameTextSplat[j], argValueHtml);
+         
       }
       
       return result ;

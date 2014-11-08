@@ -192,7 +192,6 @@ public class StringUtil
    public static String toRSymbolName(String name)
    {
       if (!name.matches("^[a-zA-Z_.][a-zA-Z0-9_.]*$")
-          || name.matches("^.[0-9].*$")
           || isRKeyword(name))
       {
          return "`" + name + "`";
@@ -569,6 +568,12 @@ public class StringUtil
    
    public static String stripBalancedQuotes(String string)
    {
+      if (string == null)
+         return null;
+      
+      if (string == "")
+         return "";
+      
       boolean inSingleQuotes = false;
       boolean inDoubleQuotes = false;
       boolean inQuotes = false;

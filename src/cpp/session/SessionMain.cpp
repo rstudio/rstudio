@@ -115,6 +115,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionPackages.hpp"
 #include "modules/SessionPackrat.hpp"
 #include "modules/SessionProfiler.hpp"
+#include "modules/SessionRCompletions.hpp"
 #include "modules/SessionRPubs.hpp"
 #include "modules/SessionRHooks.hpp"
 #include "modules/SessionShinyApps.hpp"
@@ -1631,12 +1632,14 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::shiny_apps::initialize)
       (modules::packrat::initialize)
       (modules::rhooks::initialize)
+      (modules::r_completions::initialize)
 
       // workers
       (workers::web_request::initialize)
 
       // R code
       (bind(sourceModuleRFile, "SessionCodeTools.R"))
+      (bind(sourceModuleRFile, "SessionCompletionHooks.R"))
    
       // unsupported functions
       (bind(r::function_hook::registerUnsupported, "bug.report", "utils"))

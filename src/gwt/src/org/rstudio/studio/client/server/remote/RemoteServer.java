@@ -259,6 +259,27 @@ public class RemoteServer implements Server
       });
    }
    
+   private void setArrayString(JSONArray params, int index, List<String> what) {
+      JSONArray array = new JSONArray();
+      for (int i = 0; i < what.size(); i++)
+         array.set(i, new JSONString(what.get(i)));
+      params.set(index, array);
+   }
+   
+   private void setArrayString(JSONArray params, int index, JsArrayString what) {
+      JSONArray array = new JSONArray();
+      for (int i = 0; i < what.length(); i++)
+         array.set(i, new JSONString(what.get(i)));
+      params.set(index, array);
+   }
+   
+   private void setArrayNumber(JSONArray params, int index, List<Integer> what) {
+      JSONArray array = new JSONArray();
+      for (int i = 0; i < what.size(); i++)
+         array.set(i, new JSONNumber(what.get(i)));
+      params.set(index, array);
+   }
+   
    // accept application agreement
    public void acceptAgreement(Agreement agreement, 
                                ServerRequestCallback<Void> requestCallback)
@@ -567,16 +588,82 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "print_cpp_completions", params, requestCallback);
    }
    
-   public void getCompletions(String line, int cursorPos,
-                          ServerRequestCallback<Completions> requestCallback)
+   public void isFunction(
+         String functionString,
+         String envString,
+         ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(line));
-      params.set(1, new JSONNumber(cursorPos));
-      sendRequest(RPC_SCOPE, 
-                  GET_COMPLETIONS, 
-                  params, 
-                  requestCallback) ;
+      params.set(0, new JSONString(functionString));
+      params.set(1, new JSONString(envString));
+      sendRequest(RPC_SCOPE, IS_FUNCTION, params, requestCallback);
+   }
+   
+   public void getDplyrJoinCompletionsString(
+         String token,
+         String string,
+         String cursorPos,
+         ServerRequestCallback<Completions> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(token));
+      params.set(1, new JSONString(string));
+      params.set(2, new JSONString(cursorPos));
+      sendRequest(
+            RPC_SCOPE,
+            GET_DPLYR_JOIN_COMPLETIONS_STRING,
+            params,
+            requestCallback);
+   }
+   
+   public void getDplyrJoinCompletions(
+         String token,
+         String leftDataName,
+         String rightDataName,
+         String verb,
+         String cursorPos,
+         ServerRequestCallback<Completions> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(token));
+      params.set(1, new JSONString(leftDataName));
+      params.set(2, new JSONString(rightDataName));
+      params.set(3, new JSONString(verb));
+      params.set(4, new JSONString(cursorPos));
+      sendRequest(
+            RPC_SCOPE,
+            GET_DPLYR_JOIN_COMPLETIONS,
+            params,
+            requestCallback);
+   }
+   
+   public void getCompletions(
+         String token,
+         List<String> assocData,
+         List<Integer> dataType,
+         List<Integer> numCommas,
+         String chainObjectName,
+         String functionCallString,
+         JsArrayString additionalArgs,
+         JsArrayString excludeArgs,
+         boolean excludeArgsFromObject,
+         ServerRequestCallback<Completions> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(token));
+      setArrayString(params, 1, assocData);
+      setArrayNumber(params, 2, dataType);
+      setArrayNumber(params, 3, numCommas);
+      params.set(4, new JSONString(chainObjectName));
+      params.set(5, new JSONString(functionCallString));
+      setArrayString(params, 6, additionalArgs);
+      setArrayString(params, 7, excludeArgs);
+      params.set(8, JSONBoolean.getInstance(excludeArgsFromObject));
+      
+      sendRequest(RPC_SCOPE,
+                  GET_COMPLETIONS,
+                  params,
+                  requestCallback);
    }
 
    public void getHelpAtCursor(String line, int cursorPos,
@@ -3704,7 +3791,11 @@ public class RemoteServer implements Server
    private static final String RESET_CONSOLE_ACTIONS = "reset_console_actions";
    private static final String INTERRUPT = "interrupt";
    private static final String ABORT = "abort";
+   private static final String GET_DPLYR_JOIN_COMPLETIONS_STRING = 
+         "get_dplyr_join_completions_string";
+   private static final String GET_DPLYR_JOIN_COMPLETIONS = "get_dplyr_join_completions";
    private static final String GET_COMPLETIONS = "get_completions";
+   private static final String IS_FUNCTION = "is_function";
    private static final String GET_HELP_AT_CURSOR = "get_help_at_cursor";
 
    private static final String PROCESS_START = "process_start";

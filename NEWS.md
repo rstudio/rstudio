@@ -12,6 +12,9 @@
 * R code completion for statements spanning multiple lines
 * Include parameters in function navigation menu
 * Alt+Enter to run code while retaining cursor position
+* Functions and arguments within the current scope are made available
+  as auto-completions
+* Autocompletions now available in more contexts
 
 ### Workspace
 

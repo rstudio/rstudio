@@ -1,7 +1,7 @@
 /*
- * RRoutines.hpp
+ * SessionRCompletions.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2014 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,27 +13,22 @@
  *
  */
 
-#ifndef R_ROUTINES_HPP
-#define R_ROUTINES_HPP
+#ifndef SESSION_R_COMPLETIONS_HPP
+#define SESSION_R_COMPLETIONS_HPP
 
-#include <vector>
+namespace core {
+class Error;
+}
 
-#include <R_ext/Rdynload.h>
+namespace session {
+namespace modules {
+namespace r_completions {
 
-namespace r {
-namespace routines {
+core::Error initialize();
 
-void addCMethod(const R_CMethodDef method);
-void addCallMethod(const R_CallMethodDef method);
-void registerCallMethod(const char* name,
-                        DL_FUNC fun,
-                        int numArgs);
+} // namespace r_completions
+} // namespace modules
+} // namespace session
 
-void registerAll();
-   
-} // namespace routines   
-} // namespace r
-
-
-#endif // R_ROUTINES_HPP 
+#endif // SESSION_R_COMPLETIONS_HPP
 
