@@ -641,7 +641,7 @@ utils:::rc.settings(files = TRUE)
       return(.rs.attemptRoxygenTagCompletion(token))
    
    # library, require, requireNamespace, loadNamespace
-   if (string[[1]] %in% c("library", "require", "requireNamespaces") &&
+   if (string[[1]] %in% c("library", "require", "requireNamespace") &&
           numCommas[[1]] == 0)
    {
       return(.rs.getCompletionsPackages(token))
