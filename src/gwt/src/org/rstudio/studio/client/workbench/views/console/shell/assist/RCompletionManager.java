@@ -508,6 +508,7 @@ public class RCompletionManager implements CompletionManager
       public static final int TYPE_FILE = 8;
       public static final int TYPE_CHUNK = 9;
       public static final int TYPE_ROXYGEN = 10;
+      public static final int TYPE_HELP = 11;
       
       public AutoCompletionContext(
             String token,
@@ -943,6 +944,10 @@ public class RCompletionManager implements CompletionManager
       // pass the whole line as a token
       if (firstLine.startsWith("```{") || firstLine.startsWith("<<"))
          return new AutoCompletionContext(firstLine, AutoCompletionContext.TYPE_CHUNK);
+      
+      // If this line starts with a '?', assume it's a help query
+      if (firstLine.matches("^\\s*[?].*"))
+         return new AutoCompletionContext(token, AutoCompletionContext.TYPE_HELP);
       
       // Default case for failure modes
       AutoCompletionContext defaultContext = new AutoCompletionContext(

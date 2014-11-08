@@ -568,7 +568,7 @@
                        excludeOtherCompletions = TRUE)
 })
 
-.rs.addFunction("getCompletionsSearchPath", function(token)
+.rs.addFunction("getCompletionsSearchPath", function(token, overrideInsertParens = FALSE)
 {
    objects <- .rs.objectsOnSearchPath(token, TRUE)
    names <- names(objects)
@@ -583,7 +583,8 @@
    
    .rs.makeCompletions(token,
                        results,
-                       packages)
+                       packages,
+                       overrideInsertParens = overrideInsertParens)
    
 })
 
@@ -643,7 +644,8 @@ utils:::rc.settings(files = TRUE)
       AT = 7L,
       FILE = 8L,
       CHUNK = 9L,
-      ROXYGEN = 10L
+      ROXYGEN = 10L,
+      HELP = 11L
    )
    
    ## Try to parse the function call string
@@ -654,6 +656,10 @@ utils:::rc.settings(files = TRUE)
    )
    
    ## Handle some special cases early
+   
+   # help
+   if (TYPE$HELP %in% type)
+      return(.rs.getCompletionsSearchPath(token, TRUE))
    
    # Roxygen
    if (TYPE$ROXYGEN %in% type)
@@ -747,7 +753,7 @@ utils:::rc.settings(files = TRUE)
    if (type[[1]] %in% c(TYPE$FUNCTION, TYPE$UNKNOWN))
    {
       ## Blacklist certain functions
-      if (string[[1]] %in% "str")
+      if (string[[1]] %in% c("help", "str"))
       {
          completions$overrideInsertParens <- .rs.scalar(TRUE)
       }
