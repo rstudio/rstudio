@@ -742,13 +742,21 @@ utils:::rc.settings(files = TRUE)
    ## Override param insertion if the function was 'debug' or 'trace'
    if (type[[1]] %in% c(TYPE$FUNCTION, TYPE$UNKNOWN))
    {
-      ## Try getting the function
-      object <- .rs.getAnywhere(string[[1]], parent.frame())
-      if (is.function(object))
+      ## Blacklist certain functions
+      if (string[[1]] %in% "str")
       {
-         argNames <- .rs.getFunctionArgumentNames(object)
-         if (any(c("f", "fun", "func") %in% tolower(gsub("[^a-zA-Z]", "", argNames))))
-            completions$overrideInsertParens <- .rs.scalar(TRUE)
+         completions$overrideInsertParens <- .rs.scalar(TRUE)
+      }
+      else
+      {
+         ## Blacklist based on formals of the function
+         object <- .rs.getAnywhere(string[[1]], parent.frame())
+         if (is.function(object))
+         {
+            argNames <- .rs.getFunctionArgumentNames(object)
+            if (any(c("f", "fun", "func") %in% tolower(gsub("[^a-zA-Z]", "", argNames))))
+               completions$overrideInsertParens <- .rs.scalar(TRUE)
+         }
       }
    }
    
