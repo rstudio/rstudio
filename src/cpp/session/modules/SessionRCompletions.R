@@ -146,7 +146,7 @@
       }
       
       keep <- .rs.fuzzyMatches(formals, token) & 
-         !(formals %in% names(matchedCall)) ## leave out formals already in call
+         !(formals %in% names(functionCall)) ## leave out formals already in call
       
       list(
          formals = formals[keep],
