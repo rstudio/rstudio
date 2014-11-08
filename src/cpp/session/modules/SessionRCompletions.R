@@ -234,7 +234,8 @@
          token,
          formals$formals,
          formals$methods,
-         fguess = fguess
+         fguess = fguess,
+         orderStartsWithAlnumFirst = FALSE
       )
    }
    
@@ -306,7 +307,8 @@
                                             quote = logical(),
                                             fguess = "",
                                             excludeOtherCompletions = FALSE,
-                                            overrideInsertParens = FALSE)
+                                            overrideInsertParens = FALSE,
+                                            orderStartsWithAlnumFirst = TRUE)
 {
    if (length(results) > 0)
    {
@@ -322,14 +324,17 @@
    }
    
    # Favor completions starting with a letter
-   startsWithLetter <- grepl("^[a-zA-Z]", results, perl = TRUE)
-   first <- which(startsWithLetter)
-   last <- which(!startsWithLetter)
-   order <- c(first, last)
-   
-   results <- results[order]
-   packages <- packages[order]
-   quote <- quote[order]
+   if (orderStartsWithAlnumFirst)
+   {
+      startsWithLetter <- grepl("^[a-zA-Z0-9]", results, perl = TRUE)
+      first <- which(startsWithLetter)
+      last <- which(!startsWithLetter)
+      order <- c(first, last)
+      
+      results <- results[order]
+      packages <- packages[order]
+      quote <- quote[order]
+   }
    
    list(token = token,
         results = results,
@@ -684,21 +689,6 @@ utils:::rc.settings(files = TRUE)
                              TYPE)
       )
    }
-   
-   ## Completions for objects on the search path
-   TYPE <- list(
-      UNKNOWN = 0L,
-      FUNCTION = 1L,
-      SINGLE_BRACKET = 2L,
-      DOUBLE_BRACKET = 3L,
-      NAMESPACE_EXPORTED = 4L,
-      NAMESPACE_ALL = 5L,
-      DOLLAR = 6L,
-      AT = 7L,
-      FILE = 8L,
-      CHUNK = 9L,
-      ROXYGEN = 10L
-   )
    
    if (token != "" && 
           type[[1]] %in% c(TYPE$UNKNOWN, TYPE$FUNCTION,
