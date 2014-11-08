@@ -661,7 +661,7 @@ utils:::rc.settings(files = TRUE)
    
    # help
    if (TYPE$HELP %in% type)
-      return(.rs.getCompletionsSearchPath(token, TRUE))
+      return(.rs.getCompletionsHelp(token))
    
    # Roxygen
    if (TYPE$ROXYGEN %in% type)
@@ -962,7 +962,45 @@ utils:::rc.settings(files = TRUE)
    
 })
 
+## NOTE: This is a modified version of 'matchAvailableTopics'
+## in 'completions.R' of the R sources.
 .rs.addFunction("getCompletionsHelp", function(token)
 {
+   pkgCacheName <- ".completions.attachedPackagesCache"
+   helpTopicsName <- ".completions.helpTopics"
+   rsEnvPos <- which(search() == "tools:rstudio")
+   
+   attachedPackagesCache <- tryCatch(
+      get(pkgCacheName, pos = rsEnvPos),
+      error = function(e) character()
+   )
+   
    paths <- searchpaths()[substring(search(), 1, 8) == "package:"]
+   if (!identical(basename(paths), attachedPackagesCache))
+   {
+      assign(pkgCacheName,
+             basename(paths),
+             pos = rsEnvPos)
+      
+      assign(helpTopicsName,
+             unique(unlist(lapply(paths, .rs.readAliases))),
+             pos = rsEnvPos)
+   }
+   
+   aliases <- get(helpTopicsName, pos = rsEnvPos)
+   completions <- .rs.selectFuzzyMatches(aliases, token)
+   
+   .rs.makeCompletions(token,
+                       completions,
+                       "<help>",
+                       quote = grepl("[^a-zA-Z0-9._]", completions, perl = TRUE))
+   
+})
+
+.rs.addFunction("readAliases", function(path)
+{
+   if (file.exists(f <- file.path(path, "help", "aliases.rds")))
+      names(readRDS(f))
+   else
+      character()
 })
