@@ -573,11 +573,20 @@
 .rs.addFunction("getCompletionsSearchPath", function(token, overrideInsertParens = FALSE)
 {
    objects <- .rs.objectsOnSearchPath(token, TRUE)
+   objects[["keywords"]] <- c(
+      "NULL", "NA", "TRUE", "FALSE", "T", "F", "Inf", "NaN",
+      "NA_integer_", "NA_real_", "NA_character_", "NA_complex_"
+   )
+   
    names <- names(objects)
    results <- unlist(objects, use.names = FALSE)
    packages <- unlist(lapply(1:length(objects), function(i) {
       rep.int(names[i], length(objects[[i]]))
    }))
+   
+   keep <- .rs.fuzzyMatches(results, token)
+   results <- results[keep]
+   packages <- packages[keep]
    
    order <- order(results)
    results <- results[order]

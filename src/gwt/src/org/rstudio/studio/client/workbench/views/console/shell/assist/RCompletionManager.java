@@ -1289,7 +1289,10 @@ public class RCompletionManager implements CompletionManager
       // return as is
       private String quoteIfNotSyntacticNameCompletion(String string)
       {
-         return StringUtil.toRSymbolName(string);
+         if (!string.matches("^[a-zA-Z_.][a-zA-Z0-9_.]*$"))
+               return "`" + string + "`";
+         else
+            return string;
       }
       
       private void applyValueRmdOption(final String value)
