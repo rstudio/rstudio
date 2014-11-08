@@ -73,7 +73,6 @@
 
 .rs.addFunction("getCompletionsFile", function(token)
 {
-   token <- gsub("\\\\", "/", token)
    slashIndices <- gregexpr("/", token, fixed = TRUE)[[1]]
    lastSlashIndex <- slashIndices[length(slashIndices)]
    
@@ -87,12 +86,20 @@
    {
       directory <- substring(token, 1, lastSlashIndex - 1)
       file <- substring(token, lastSlashIndex + 1, nchar(token))
+      listed <- list.files(directory,
+                           all.files = TRUE,
+                           pattern = paste("^", file, sep = ""),
+                           no.. = TRUE)
+      
+      startsWithLetter <- grepl("^[a-zA-Z0-9]", listed, perl = TRUE)
+      first <- which(startsWithLetter)
+      last <- which(!startsWithLetter)
+      order <- c(first, last)
+      listed <- listed[order]
+      
       files <- file.path(
          directory,
-         list.files(directory,
-                    all.files = TRUE,
-                    pattern = paste("^", file, sep = ""),
-                    no.. =  TRUE)
+         listed
       )
    }
    
@@ -401,40 +408,15 @@
    
 })
 
-.rs.addFunction("getCompletionsDollarR6", function(token, string, envir)
-{
-   tryCatch({
-      object <- eval(parse(text = string), envir = envir)
-      if (inherits(object, "R6") || inherits(object, "R6ClassGenerator"))
-      {
-         completions <- .rs.selectStartsWith(ls(object), token)
-         .rs.makeCompletions(
-            token,
-            completions,
-            string,
-            FALSE
-         )
-      }
-   },
-   error = function(e) NULL
-   )
-})
-
 .rs.addFunction("getCompletionsDollar", function(token, string, envir, S4)
 {
-   
    result <- .rs.emptyCompletions()
    
    ## Blacklist certain evaluations
    if (!is.null(result <- .rs.blackListEvaluation(token, string, envir)))
       return(result)
    
-   ## Get completions for R6 objects
-   if (!is.null(result <- .rs.getCompletionsDollarR6(token, string, envir)))
-      return(result)
-   
-   parsed <- suppressWarnings(parse(text = string))
-   object <- suppressWarnings(eval(parsed, envir = envir))
+   object <- .rs.getAnywhere(string, envir)
    if (!is.null(object))
    {
       names <- if (S4 && !inherits(object, "classRepresentation"))
