@@ -78,17 +78,19 @@
    
    if (lastSlashIndex == -1)
    {
+      pattern <- paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeRegex(token)), sep = "")
       files <- list.files(all.files = TRUE,
-                          pattern = paste("^", .rs.asCaseInsensitiveRegex(token), sep = ""),
+                          pattern = pattern,
                           no.. =  TRUE)
    }
    else
    {
       directory <- substring(token, 1, lastSlashIndex - 1)
       file <- substring(token, lastSlashIndex + 1, nchar(token))
+      pattern <- paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeRegex(file)), sep = "")
       listed <- list.files(directory,
                            all.files = TRUE,
-                           pattern = paste("^", .rs.asCaseInsensitiveRegex(file), sep = ""),
+                           pattern = pattern,
                            no.. = TRUE)
       
       startsWithLetter <- grepl("^[a-zA-Z0-9]", listed, perl = TRUE)
