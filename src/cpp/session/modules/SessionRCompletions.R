@@ -444,6 +444,10 @@
 {
    result <- .rs.emptyCompletions()
    
+   ## Blacklist certain evaluations
+   if (!is.null(result <- .rs.blackListEvaluation(token, string, envir)))
+      return(result)
+   
    object <- .rs.getAnywhere(string, envir)
    if (is.null(object))
       return(result)
@@ -496,6 +500,11 @@
                                                         envir = parent.frame())
 {
    result <- .rs.emptyCompletions()
+   
+   ## Blacklist certain evaluations
+   if (!is.null(result <- .rs.blackListEvaluation(token, string, envir)))
+      return(result)
+   
    object <- .rs.getAnywhere(string, envir)
    if (is.null(object))
       return(result)
