@@ -959,3 +959,8 @@ utils:::rc.settings(files = TRUE)
       .rs.emptyCompletions()
    
 })
+
+.rs.addFunction("getCompletionsHelp", function(token)
+{
+   paths <- searchpaths()[substring(search(), 1, 8) == "package:"]
+})

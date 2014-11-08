@@ -412,8 +412,14 @@
    paste(result, collapse = "")
 })
 
+.rs.addFunction("escapeForRegex", function(regex)
+{
+   gsub("([\\-\\[\\]\\{\\}\\(\\)\\*\\+\\?\\.\\,\\\\\\^\\$\\|\\#\\s])", "\\\\\\1", regex, perl = TRUE)
+})
+
 .rs.addFunction("objectsOnSearchPath", function(token, caseInsensitive = FALSE)
 {
+   token <- .rs.escapeForRegex(token)
    if (caseInsensitive)
       token <- .rs.asCaseInsensitiveRegex(token)
    
