@@ -243,25 +243,25 @@ public class CompletionRequester
             JsArrayBoolean quote = response.getQuote();
             ArrayList<QualifiedName> newComp = new ArrayList<QualifiedName>();
             
-            // Get function argument completions from R
+            // Try getting our own function argument completions
+            if (!response.getExcludeOtherCompletions())
+            {
+               addFunctionArgumentCompletions(token, newComp);
+               addScopedArgumentCompletions(token, newComp);
+            }
+            
+            // Get server completions
             for (int i = 0; i < comp.length(); i++)
             {
                newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i)));
             }
             
-            // Try getting our own function argument completions
-            addFunctionArgumentCompletions(token, newComp);
-            
             // Get variable completions from the current scope
             if (!response.getExcludeOtherCompletions())
             {
-               addScopedArgumentCompletions(token, newComp);
                addScopedCompletions(token, newComp, "variable");
-            }
-            
-            // Get function completions from the current scope
-            if (!response.getExcludeOtherCompletions())
                addScopedCompletions(token, newComp, "function");
+            }
             
             CompletionResult result = new CompletionResult(
                   response.getToken(),
