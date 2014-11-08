@@ -100,7 +100,7 @@
    files[isDir] <- paste(files[isDir], "/", sep = "")
    .rs.makeCompletions(token,
                        files,
-                       "<file>",
+                       ifelse(isDir, "<directory>", "<file>"),
                        quote = FALSE,
                        excludeOtherCompletions = TRUE)
 })
@@ -123,7 +123,7 @@
          for (class in c(classes, "default"))
          {
             methodName <- paste(functionName, class, sep = ".")
-            method <- .rs.getAnywhere(methodName)
+            method <- .rs.getAnywhere(methodName, envir)
             if (!is.null(method))
             {
                formals <- .rs.getFunctionArgumentNames(method)
@@ -140,7 +140,7 @@
       
       keep <- .rs.startsWith(formals, token) & 
          !duplicated(formals) &
-         !(formals %in% names(functionCall))
+         !(formals %in% names(functionCall)) ## leave out formals already in call
       
       list(
          formals = formals[keep],
@@ -467,11 +467,7 @@
       return(result)
    
    completions <- character()
-   if (isS4(object))
-   {
-      completions <- slotNames(object)
-   }
-   else if (is.array(object) && !is.null(dn <- dimnames(object)))
+   if (is.array(object) && !is.null(dn <- dimnames(object)))
    {
       if (numCommas + 1 <= length(dn))
          completions <- dimnames(object)[[numCommas + 1]]

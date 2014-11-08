@@ -269,6 +269,8 @@
       return(NULL)
     
    ## First, attempt to evaluate 'name' in 'envir'
+   ## NOTE: This could trigger active bindings, evaluation of promises --
+   ## we may need to avoid / blacklist their evaluation to avoid side effects
    if (is.character(name)) {
       name <- .rs.stripSurrounding(name)
       result <- tryCatch({
@@ -306,7 +308,6 @@
 
 .rs.addFunction("getFunctionArgumentNames", function(object)
 {
-   
    if (is.primitive(object))
    {
       ## Only closures have formals, not primitive functions.
@@ -326,9 +327,7 @@
 
 .rs.addFunction("getNames", function(object)
 {
-   if (isS4(object))
-      methods::slotNames(object)
-   else if (is.environment(object))
+   if (is.environment(object))
       ls(object, all.names = TRUE)
    else if (inherits(object, "tbl") && "dplyr" %in% loadedNamespaces())
       dplyr::tbl_vars(object)

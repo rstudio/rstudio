@@ -750,10 +750,11 @@ public class RCompletionManager implements CompletionManager
    
    
    private AutoCompletionContext getAutocompletionContextForFile(
-         String token)
+         String line)
    {
+      int index = Math.max(line.lastIndexOf('"'), line.lastIndexOf('\''));
       return new AutoCompletionContext(
-            token.substring(1),
+            line.substring(index + 1),
             AutoCompletionContext.TYPE_FILE);
    }
    
@@ -762,13 +763,14 @@ public class RCompletionManager implements CompletionManager
    {
          String[] splat = token.split(":{2,3}");
          String right = "";
-         String left;
+         String left = "";
+         
          if (splat.length <= 0)
          {
             right = "";
             left = "";
          }
-         if (splat.length == 1)
+         else if (splat.length == 1)
          {
             right = "";
             left = splat[0];
@@ -925,10 +927,14 @@ public class RCompletionManager implements CompletionManager
       // trim to cursor position
       firstLine = firstLine.substring(0, input_.getCursorPosition().getColumn());
       
+      // Get the token at the cursor position
+      token = firstLine.replaceAll(".*[^a-zA-Z0-9._:$@]", "");
+      
       // If we're completing an object within a string, assume it's a
       // file-system completion
       String firstLineStripped = StringUtil.stripBalancedQuotes(
             StringUtil.stripRComment(firstLine));
+      
       if (firstLineStripped.indexOf('\'') != -1 || 
           firstLineStripped.indexOf('"') != -1)
          return getAutocompletionContextForFile(firstLine);
@@ -937,9 +943,6 @@ public class RCompletionManager implements CompletionManager
       // pass the whole line as a token
       if (firstLine.startsWith("```{") || firstLine.startsWith("<<"))
          return new AutoCompletionContext(firstLine, AutoCompletionContext.TYPE_CHUNK);
-      
-      // Get the token at the cursor position
-      token = firstLine.replaceAll(".*[^a-zA-Z0-9._:$@]", "");
       
       // Default case for failure modes
       AutoCompletionContext defaultContext = new AutoCompletionContext(
@@ -969,7 +972,7 @@ public class RCompletionManager implements CompletionManager
       
       // Now strip the '$' and '@' post-hoc since they're not really part
       // of the identifier
-      token = token.replaceAll(".*[$@]", "");
+      token = token.replaceAll(".*[$@]", ""); // TODO: strip colon?
       
       // access to the R Code model
       AceEditor editor = (AceEditor) docDisplay_;
@@ -1058,8 +1061,24 @@ public class RCompletionManager implements CompletionManager
       if (!findStartOfEvaluationContext(tokenCursor))
          return defaultContext;
       
+      // Try to get the function call string -- either there's
+      // an associated closing paren we can use, or we should just go up
+      // to the current cursor position
+      
+      // default case: use start cursor
       Position endPos = startCursor.currentPosition();
       endPos.setColumn(endPos.getColumn() + startCursor.currentValue().length());
+      
+      // try to look forward for closing paren
+      if (endOfDecl.currentValue() == "(")
+      {
+         TokenCursor closingParenCursor = endOfDecl.cloneCursor();
+         if (closingParenCursor.fwdToMatchingToken())
+         {
+            endPos = closingParenCursor.currentPosition();
+            endPos.setColumn(endPos.getColumn() + 1);
+         }
+      }
       
       functionCallString = editor.getTextForRange(Range.fromPoints(
             tokenCursor.currentPosition(), endPos));
@@ -1317,6 +1336,7 @@ public class RCompletionManager implements CompletionManager
                else if (!value.matches(".*[=:]\\s*$") && 
                    !value.matches("^\\s*([`'\"]).*\\1\\s*$") &&
                    pkgName != "<file>" &&
+                   pkgName != "<directory>" &&
                    pkgName != "`chunk-option`" &&
                    !value.startsWith("@") &&
                    !shouldQuote)
