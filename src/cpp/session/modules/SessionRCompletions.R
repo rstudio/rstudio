@@ -1001,7 +1001,8 @@ utils:::rc.settings(files = TRUE)
    
    .rs.makeCompletions(token,
                        completions,
-                       quote = grepl("[^a-zA-Z0-9._]", completions, perl = TRUE))
+                       quote = grepl("[^a-zA-Z0-9._]", completions, perl = TRUE),
+                       overrideInsertParens = TRUE)
    
 })
 
