@@ -67,6 +67,67 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       function isArray(o) {
          return Object.prototype.toString.call(o) === '[object Array]';
       }
+
+      this.isValidAsIdentifier = function() {
+         var type = this.currentType();
+         return type === "identifier" ||
+            type === "symbol" ||
+            type === "keyword" ||
+            type === "string";
+      };
+
+      this.isLookingAtInfixySymbol = function() {
+         
+         var value = this.currentValue();
+         if (value === "$" ||
+             value === "@" ||
+             value === ":")
+            return true;
+         
+         if (this.currentType().indexOf("infix") !== -1)
+            return true;
+         
+         return false;
+      };
+      
+      // Find the start of the evaluation context for a generic expression,
+      // e.g.
+      //
+      //     x[[1]]$foo[[1]][, 2]@bar[[1]]()
+      this.findStartOfEvaluationContext = function() {
+         
+         var clone = this.cloneCursor();
+         
+         do
+         {
+            if (clone.bwdToMatchingToken())
+               continue;
+            
+            // If we land on an identifier, we keep going if the token previous is
+            // 'infix-y', and bail otherwise.
+            if (clone.isValidAsIdentifier())
+            {
+               if (!clone.moveToPreviousToken())
+                  break;
+               
+               if (clone.isLookingAtInfixySymbol())
+                  continue;
+               
+               if (!clone.moveToNextToken())
+                  return false;
+               
+               break;
+               
+            }
+            
+         } while (clone.moveToPreviousToken());
+
+         this.$row = clone.$row;
+         this.$offset = clone.$offset;
+         return true;
+         
+      };
+
       
       this.moveToStartOfRow = function(row)
       {
@@ -83,7 +144,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             clone.$offset = that.$tokens[clone.$row].length;
          }
 
-         if (clone.$offset == 0)
+         if (clone.$offset === 0)
             return false;
 
          clone.$offset--;
@@ -511,7 +572,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
    };
 
-   function moveFromFunctionTokenToFunctionName(tokenCursor)
+   function moveFromFunctionTokenToEndOfFunctionName(tokenCursor)
    {
       var clonedCursor = tokenCursor.cloneCursor();
       if (!pFunction(clonedCursor.currentToken()))
@@ -1110,8 +1171,21 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                var argsStartPos = argsCursor.currentPosition();
 
                var functionName = null;
-               if (moveFromFunctionTokenToFunctionName(localCursor))
-                  functionName = localCursor.currentValue();
+               if (moveFromFunctionTokenToEndOfFunctionName(localCursor))
+               {
+                  var functionEndCursor = localCursor.cloneCursor();
+                  if (localCursor.findStartOfEvaluationContext())
+                  {
+                     var functionStartPos = localCursor.currentPosition();
+                     var functionEndPos = functionEndCursor.currentPosition();
+                     functionName = this.$doc.getTextRange(new Range(
+                        functionStartPos.row,
+                        functionStartPos.column + functionEndCursor.currentValue().length,
+                        functionEndPos.row,
+                        functionEndPos.column
+                     ));
+                  }
+               }
                
                startPos = localCursor.currentPosition();
                if (localCursor.isFirstSignificantTokenOnLine())
@@ -1127,6 +1201,8 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                   functionLabel = $normalizeWhitespace("<function>" + functionArgsString);
                else
                   functionLabel = $normalizeWhitespace(functionName + functionArgsString);
+
+               console.log(functionLabel);
 
                // Obtain the function arguments by walking through the tokens
                var functionArgs = $getFunctionArgs(argsCursor);

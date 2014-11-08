@@ -790,72 +790,6 @@ public class RCompletionManager implements CompletionManager
                      AutoCompletionContext.TYPE_NAMESPACE_EXPORTED);
    }
    
-   private boolean isValidAsIdentifier(TokenCursor cursor)
-   {
-      String type = cursor.currentType();
-      return type == "identifier" ||
-             type == "symbol" ||
-             type == "keyword" ||
-             type == "string";
-   }
-   
-   private boolean isLookingAtInfixySymbol(TokenCursor cursor)
-   {
-      String value = cursor.currentValue();
-      if (value == "$" ||
-          value == "@" ||
-          value == ":")
-         return true;
-      
-      if (cursor.currentType().contains("infix"))
-         return true;
-      
-      return false;
-   }
-   
-   // Find the start of the evaluation context for a generic expression,
-   // e.g.
-   //
-   //     x[[1]]$foo[[1]][, 2]@bar[[1]]()
-   private boolean findStartOfEvaluationContext(TokenCursor cursor)
-   {
-      TokenCursor clone = cursor.cloneCursor();
-      
-//       Debug.logToConsole("Starting search at:");
-//       Debug.logObject(clone.currentToken());
-      
-      do
-      {
-         if (clone.bwdToMatchingToken())
-            continue;
-         
-         // If we land on an identifier, we keep going if the token previous is
-         // 'infix-y', and bail otherwise.
-         if (isValidAsIdentifier(clone))
-         {
-            if (!clone.moveToPreviousToken())
-               break;
-            
-            if (isLookingAtInfixySymbol(clone))
-               continue;
-            
-            if (!clone.moveToNextToken())
-               return false;
-            
-            break;
-               
-         }
-         
-      } while (clone.moveToPreviousToken());
-      
-//      Debug.logToConsole("Stopping search at:");
-//      Debug.logObject(clone.currentToken());
-      
-      cursor.setRow(clone.getRow());
-      cursor.setOffset(clone.getOffset());
-      return true;
-      
-   }
    
    private AutoCompletionContext getAutocompletionContextForDollar(String token)
    {
@@ -896,7 +830,7 @@ public class RCompletionManager implements CompletionManager
       //
       //     env::foo()$bar()[1]$baz
       // Get the string forming the context
-      if (!findStartOfEvaluationContext(cursor))
+      if (!cursor.findStartOfEvaluationContext())
          return defaultContext;
       
       String context = editor.getTextForRange(Range.fromPoints(
@@ -1063,7 +997,7 @@ public class RCompletionManager implements CompletionManager
       }
       
       // Get the string marking the function or data
-      if (!findStartOfEvaluationContext(tokenCursor))
+      if (!tokenCursor.findStartOfEvaluationContext())
          return defaultContext;
       
       // Try to get the function call string -- either there's

@@ -113,5 +113,9 @@ public class TokenCursor extends JavaScriptObject
       this.$offset = offset;
    }-*/;
    
+   public native final boolean findStartOfEvaluationContext() /*-{
+      return this.findStartOfEvaluationContext();
+   }-*/;
+   
 }
 
