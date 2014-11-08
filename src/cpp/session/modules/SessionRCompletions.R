@@ -146,8 +146,7 @@
       }
       
       keep <- .rs.startsWith(formals, token) & 
-         !duplicated(formals) &
-         !(formals %in% names(functionCall)) ## leave out formals already in call
+         !(formals %in% names(matchedCall)) ## leave out formals already in call
       
       list(
          formals = formals[keep],
