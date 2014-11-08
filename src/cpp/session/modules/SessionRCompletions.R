@@ -1001,7 +1001,6 @@ utils:::rc.settings(files = TRUE)
    
    .rs.makeCompletions(token,
                        completions,
-                       "<help>",
                        quote = grepl("[^a-zA-Z0-9._]", completions, perl = TRUE))
    
 })
