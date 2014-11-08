@@ -734,7 +734,7 @@ utils:::rc.settings(files = TRUE)
       )
    
    ## Package completions (e.g. `stats::`)
-   if (length(type) == 1 && type == TYPE$UNKNOWN)
+   if (token != "" && length(type) == 1 && type == TYPE$UNKNOWN)
       completions <- .rs.appendCompletions(
          completions,
          .rs.getCompletionsPackages(token, TRUE)
