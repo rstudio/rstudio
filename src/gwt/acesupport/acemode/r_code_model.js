@@ -952,10 +952,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       if (clone.currentValue() !== "in")
          return false;
 
-      scopedVariables.push({
-         token: maybeForInVariable,
-         type: "variable"
-      });
+      scopedVariables[maybeForInVariable] = "variable";
       return true;
    }
 
@@ -967,7 +964,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       if (!tokenCursor.moveToPosition(pos))
          return [];
 
-      var scopedVariables = [];
+      var scopedVariables = {};
       do
       {
          if (tokenCursor.bwdToMatchingToken())
@@ -996,18 +993,22 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             if (pIdentifier(clone.currentToken()))
             {
                var arg = clone.currentValue();
-               scopedVariables.push({
-                  token: arg,
-                  type: type
-               });
+               scopedVariables[arg] = type;
                continue;
             }
             
          }
       } while (tokenCursor.moveToPreviousToken());
 
-      scopedVariables.sort();
-      return scopedVariables;
+      var result = [];
+      for (var key in scopedVariables)
+         result.push({
+            "token": key,
+            "type": scopedVariables[key]
+         });
+      
+      result.sort();
+      return result;
       
    };
 
