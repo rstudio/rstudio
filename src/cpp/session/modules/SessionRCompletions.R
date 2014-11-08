@@ -79,7 +79,7 @@
    if (lastSlashIndex == -1)
    {
       files <- list.files(all.files = TRUE,
-                          pattern = paste("^", token, sep = ""),
+                          pattern = paste("^", .rs.asCaseInsensitiveRegex(token), sep = ""),
                           no.. =  TRUE)
    }
    else
@@ -88,7 +88,7 @@
       file <- substring(token, lastSlashIndex + 1, nchar(token))
       listed <- list.files(directory,
                            all.files = TRUE,
-                           pattern = paste("^", file, sep = ""),
+                           pattern = paste("^", .rs.asCaseInsensitiveRegex(file), sep = ""),
                            no.. = TRUE)
       
       startsWithLetter <- grepl("^[a-zA-Z0-9]", listed, perl = TRUE)
@@ -145,7 +145,7 @@
          methods <- rep.int(functionName, length(formals))
       }
       
-      keep <- .rs.startsWith(formals, token) & 
+      keep <- .rs.fuzzyMatches(formals, token) & 
          !(formals %in% names(matchedCall)) ## leave out formals already in call
       
       list(
@@ -268,7 +268,7 @@
          getNamespaceExports(asNamespace(string))
       else
          objects(asNamespace(string), all.names = TRUE)
-      completions <- .rs.selectStartsWith(objects, token)
+      completions <- .rs.selectFuzzyMatches(objects, token)
       
       result <- .rs.makeCompletions(
          token,
@@ -299,6 +299,16 @@
 .rs.addFunction("isEmptyCompletion", function(completions)
 {
    length(completions$results) == 0
+})
+
+.rs.addFunction("fuzzyMatches", function(completions, token)
+{
+   .rs.startsWith(tolower(completions), tolower(token))
+})
+
+.rs.addFunction("selectFuzzyMatches", function(completions, token)
+{
+   completions[.rs.fuzzyMatches(completions, token)]
 })
 
 .rs.addFunction("makeCompletions", function(token,
@@ -428,7 +438,7 @@
       else
          .rs.getNames(object)
       
-      completions <- .rs.selectStartsWith(names, token)
+      completions <- .rs.selectFuzzyMatches(names, token)
       result <- .rs.makeCompletions(
          token,
          completions,
@@ -475,7 +485,7 @@
       completions <- .rs.getNames(object)
    }
    
-   completions <- .rs.selectStartsWith(completions, token)
+   completions <- .rs.selectFuzzyMatches(completions, token)
    
    if (length(completions))
    {
@@ -506,7 +516,7 @@
       return(result)
    
    completions <- .rs.getNames(object)
-   completions <- .rs.selectStartsWith(completions, token)
+   completions <- .rs.selectFuzzyMatches(completions, token)
    
    if (length(completions))
    {
@@ -526,7 +536,7 @@
 .rs.addFunction("getCompletionsPackages", function(token, appendColons = FALSE)
 {
    allPackages <- Reduce(union, lapply(.libPaths(), list.files))
-   completions <- .rs.selectStartsWith(allPackages, token)
+   completions <- .rs.selectFuzzyMatches(allPackages, token)
    .rs.makeCompletions(token,
                        if (appendColons && length(completions))
                           paste(completions, "::", sep = "")
@@ -541,7 +551,7 @@
 {
    allOptions <- names(options())
    .rs.makeCompletions(token,
-                       .rs.selectStartsWith(allOptions, token),
+                       .rs.selectFuzzyMatches(allOptions, token),
                        quote = TRUE,
                        excludeOtherCompletions = FALSE)   
 })
@@ -549,7 +559,7 @@
 .rs.addFunction("getCompletionsOptions", function(token)
 {
    allOptions <- names(options())
-   completions <- .rs.selectStartsWith(allOptions, token)
+   completions <- .rs.selectFuzzyMatches(allOptions, token)
    if (length(completions))
       completions <- paste(completions, "= ")
    
@@ -560,7 +570,7 @@
 
 .rs.addFunction("getCompletionsSearchPath", function(token)
 {
-   objects <- .rs.objectsOnSearchPath(token)
+   objects <- .rs.objectsOnSearchPath(token, TRUE)
    names <- names(objects)
    results <- unlist(objects, use.names = FALSE)
    packages <- unlist(lapply(1:length(objects), function(i) {
@@ -592,7 +602,7 @@
          return(.rs.emptyCompletions())
       objectName <- as.character(matched[["x"]])
       object <- .rs.getAnywhere(objectName)
-      completions <- .rs.selectStartsWith(
+      completions <- .rs.selectFuzzyMatches(
          names(attributes(object)),
          token
       )
@@ -834,7 +844,7 @@ utils:::rc.settings(files = TRUE)
    
    if (cursorPos == "left" && !is.null(leftData))
    {
-      completions <- .rs.selectStartsWith(
+      completions <- .rs.selectFuzzyMatches(
          .rs.getNames(leftData),
          token
       )
@@ -848,7 +858,7 @@ utils:::rc.settings(files = TRUE)
    }
    else if (cursorPos == "right" && !is.null(rightData))
    {
-      completions <- .rs.selectStartsWith(
+      completions <- .rs.selectFuzzyMatches(
          .rs.getNames(rightData),
          token
       )
@@ -898,7 +908,7 @@ utils:::rc.settings(files = TRUE)
    
    if (length(additionalArgs))
    {
-      argsToAdd <- .rs.selectStartsWith(additionalArgs, token)
+      argsToAdd <- .rs.selectFuzzyMatches(additionalArgs, token)
       result <- .rs.appendCompletions(
          result, 
          .rs.makeCompletions(

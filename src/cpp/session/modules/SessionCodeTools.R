@@ -395,8 +395,28 @@
    .rs.scalar(!is.null(object) && is.function(object))
 })
 
-.rs.addFunction("objectsOnSearchPath", function(token)
+.rs.addFunction("asCaseInsensitiveRegex", function(string)
 {
+   if (string == "")
+      return(string)
+   
+   splat <- strsplit(string, "", fixed = TRUE)[[1]]
+   lowerSplat <- tolower(splat)
+   upperSplat <- toupper(splat)
+   result <- vapply(1:length(splat), FUN.VALUE = character(1), USE.NAMES = FALSE, function(i) {
+      if (lowerSplat[i] == upperSplat[i])
+         splat[i]
+      else
+         paste("[", lowerSplat[i], upperSplat[i], "]", sep = "")
+   })
+   paste(result, collapse = "")
+})
+
+.rs.addFunction("objectsOnSearchPath", function(token, caseInsensitive = FALSE)
+{
+   if (caseInsensitive)
+      token <- .rs.asCaseInsensitiveRegex(token)
+   
    search <- search()
    objects <- lapply(1:length(search()), function(i) {
       ls(pos = i, all.names = TRUE, pattern = paste("^", token, sep = ""))

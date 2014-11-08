@@ -72,7 +72,7 @@ public class CompletionRequester
       if (!StringUtil.isNullOrEmpty(token) &&
            cachedResult_ != null)
       {
-         if (token.startsWith(cachedLinePrefix_))
+         if (token.toLowerCase().startsWith(cachedLinePrefix_.toLowerCase()))
          {
             String diff = token.substring(cachedLinePrefix_.length(), token.length());
             if (diff.length() > 0)
@@ -508,10 +508,10 @@ public class CompletionRequester
    
    private CompletionResult narrow(String diff)
    {
-      String token = cachedResult_.token + diff ;
+      String token = cachedResult_.token.toLowerCase() + diff ;
       ArrayList<QualifiedName> newCompletions = new ArrayList<QualifiedName>() ;
       for (QualifiedName qname : cachedResult_.completions)
-         if (qname.name.startsWith(token))
+         if (qname.name.toLowerCase().startsWith(token.toLowerCase()))
             newCompletions.add(qname) ;
       
       return new CompletionResult(
