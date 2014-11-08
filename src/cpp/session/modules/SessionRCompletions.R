@@ -78,7 +78,7 @@
    
    if (lastSlashIndex == -1)
    {
-      pattern <- paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeRegex(token)), sep = "")
+      pattern <- paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeForRegex(token)), sep = "")
       files <- list.files(all.files = TRUE,
                           pattern = pattern,
                           no.. =  TRUE)
@@ -87,7 +87,7 @@
    {
       directory <- substring(token, 1, lastSlashIndex - 1)
       file <- substring(token, lastSlashIndex + 1, nchar(token))
-      pattern <- paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeRegex(file)), sep = "")
+      pattern <- paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeForRegex(file)), sep = "")
       listed <- list.files(directory,
                            all.files = TRUE,
                            pattern = pattern,
