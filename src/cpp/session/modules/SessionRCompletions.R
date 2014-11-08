@@ -466,17 +466,9 @@
          paste("dimnames(", string, ")[", numCommas + 1, "]", sep = "")
       
    }
-   else if (inherits(object, "data.table"))
+   else
    {
-      completions <- names(object)
-   }
-   else if (inherits(object, "tbl") && "dplyr" %in% loadedNamespaces())
-   {
-      completions <- dplyr::tbl_vars(object)
-   }
-   else if (!is.null(names(object)))
-   {
-      completions <- names(object)
+      completions <- .rs.getNames(object)
    }
    
    completions <- .rs.selectStartsWith(completions, token)
