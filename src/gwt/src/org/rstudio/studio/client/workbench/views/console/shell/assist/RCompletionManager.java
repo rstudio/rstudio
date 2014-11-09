@@ -47,6 +47,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorLineWithCursorPosition;
+import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
@@ -57,6 +58,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DplyrJo
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RInfixData;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
@@ -365,13 +367,35 @@ public class RCompletionManager implements CompletionManager
          if (canContinueCompletions(event))
             return false;
          
+         // if we insert a '/', we're probably forming a directory --
+         // pop up completions
+         if (event.getKeyCode() == 191 && modifier == KeyboardShortcut.NONE)
+         {
+            input_.insertCode("/");
+            invalidatePendingRequests();
+            return beginSuggest(true, false, false);
+         }
+         
+         // If we insert a '(', we probably want function arguments
+         if (event.getKeyCode() == KeyCodes.KEY_NINE && modifier == KeyboardShortcut.SHIFT)
+         {
+            input_.insertCode("()");
+            input_.setSelection(new InputEditorSelection(
+                  input_.getSelection().getStart().movePosition(-1, true)));
+            return beginSuggest(true, false, false);
+         }
+         
          // continue showing completions on backspace
-         if (event.getKeyCode() == KeyCodes.KEY_BACKSPACE)
+         if (event.getKeyCode() == KeyCodes.KEY_BACKSPACE && modifier == KeyboardShortcut.NONE)
          {
             // manually remove the previous character
-            input_.setSelection(new InputEditorSelection(
-                  input_.getSelection().getStart().movePosition(-1, true),
-                  input_.getSelection().getStart()));
+            InputEditorSelection selection = input_.getSelection();
+            InputEditorPosition start = selection.getStart().movePosition(-1, true);
+            InputEditorPosition end = selection.getStart();
+            if (docDisplay_.getCurrentLine().charAt(input_.getCursorPosition().getColumn()) == ')')
+               end = selection.getStart().movePosition(1, true);
+            
+            input_.setSelection(new InputEditorSelection(start, end));
             input_.replaceSelection("", false);
             
             // only suggest if the character previous to the cursor is an R identifier
@@ -520,7 +544,7 @@ public class RCompletionManager implements CompletionManager
          return true ;
       if (keyCode == ' ')
          return true ;
-      if (keyCode == '-')
+      if (keyCode == 189) // dash
          return true ;
       if (keyCode == 189 && event.getShiftKey()) // underscore
          return true ;
@@ -926,7 +950,7 @@ public class RCompletionManager implements CompletionManager
       firstLine = firstLine.substring(0, input_.getCursorPosition().getColumn());
       
       // Get the token at the cursor position
-      token = firstLine.replaceAll(".*[^a-zA-Z0-9._:$@]", "");
+      token = firstLine.replaceAll(".*[^a-zA-Z0-9._:$@-]", "");
       
       // If we're completing an object within a string, assume it's a
       // file-system completion
@@ -1218,7 +1242,7 @@ public class RCompletionManager implements CompletionManager
          else
          {
             if (results.length == 1 && canAutoAccept_)
-               applyValue(results[0]);
+               applyValue(results[0], false);
             
             popup_.showCompletionValues(
                   results,
@@ -1266,10 +1290,9 @@ public class RCompletionManager implements CompletionManager
             return ;
          }
 
-         applyValue(qname);
-
-         if (suggestOnAccept_)
+         if (suggestOnAccept_ || qname.name.endsWith("/") || qname.name.endsWith(":"))
          {
+            applyValue(qname, false);
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
                @Override
@@ -1279,6 +1302,11 @@ public class RCompletionManager implements CompletionManager
                }
             });
          }
+         else
+         {
+            applyValue(qname, true);
+         }
+         
       }
       
       // For input of the form 'something$foo' or 'something@bar', quote the
@@ -1303,109 +1331,122 @@ public class RCompletionManager implements CompletionManager
          selection_ = input_.getSelection();
       }
 
-      private void applyValue(QualifiedName name)
+      private void applyValue(
+            final QualifiedName qualifiedName,
+            final boolean checkIsFunction)
       {
-         final String functionName = name.name == null ? "" : name.name;
-         final String pkgName = name.pkgName == null ? "" : name.pkgName;
-         final boolean shouldQuote = name.shouldQuote;
-         
-         if (pkgName == "`chunk-option`")
+         if (qualifiedName.pkgName == "`chunk-option`")
          {
-            applyValueRmdOption(functionName);
+            applyValueRmdOption(qualifiedName.name);
             return;
          }
          
-         server_.isFunction(functionName, pkgName, new ServerRequestCallback<Boolean>()
+         if (checkIsFunction)
          {
-            
-            @Override
-            public void onResponseReceived(Boolean isFunction)
+            final String functionName = qualifiedName.name == null ? "" : qualifiedName.name;
+            final String pkgName = qualifiedName.pkgName == null ? "" : qualifiedName.pkgName;
+            server_.isFunction(functionName, pkgName, new ServerRequestCallback<Boolean>()
             {
-               // Don't insert a paren if there is already a '(' following
-               // the cursor
-               AceEditor editor = (AceEditor) input_;
-               boolean textFollowingCursorHasOpenParen = false;
-               if (editor != null)
+               @Override
+               public void onResponseReceived(Boolean isFunction)
                {
-                  TokenCursor cursor = 
-                        editor.getSession().getMode().getCodeModel().getTokenCursor();
-                  cursor.moveToPosition(editor.getCursorPosition());
-                  if (cursor.moveToNextToken())
-                     textFollowingCursorHasOpenParen =
-                        cursor.currentValue() == "(";
+                  doApplyValue(qualifiedName, isFunction);
                }
-               
-               String value = functionName;
-               if (value == ":=")
-                  value = quoteIfNotSyntacticNameCompletion(value);
-               else if (!value.matches(".*[=:]\\s*$") && 
-                   !value.matches("^\\s*([`'\"]).*\\1\\s*$") &&
-                   pkgName != "<file>" &&
-                   pkgName != "<directory>" &&
-                   pkgName != "`chunk-option`" &&
-                   !value.startsWith("@") &&
-                   !shouldQuote)
-                  value = quoteIfNotSyntacticNameCompletion(value);
-               
-               /* In some cases, applyValue can be called more than once
-                * as part of the same completion instance--specifically,
-                * if there's only one completion candidate and it is in
-                * a package. To make sure that the selection movement
-                * logic works the second time, we need to reset the
-                * selection.
-                */
-               
-               // Move range to beginning of token
-               input_.setSelection(new InputEditorSelection(
-                     selection_.getStart().movePosition(-token_.length(), true),
-                     input_.getSelection().getEnd()));
-         
-               if (isFunction && !overrideInsertParens_ && !textFollowingCursorHasOpenParen)
-               {
-                  // Don't replace the selection if the token ends with a ')'
-                  // (implies an earlier replacement handled this)
-                  if (token_.endsWith("("))
-                  {
-                     input_.setSelection(new InputEditorSelection(
-                           input_.getSelection().getEnd(),
-                           input_.getSelection().getEnd()));
-                  }
-                  else
-                  {
-                     input_.replaceSelection(value + "()", true);
-                     InputEditorSelection newSelection = new InputEditorSelection(
-                           input_.getSelection().getEnd().movePosition(-1, true));
-                     token_ = value + "(";
-                     selection_ = new InputEditorSelection(
-                           input_.getSelection().getStart().movePosition(-2, true),
-                           newSelection.getStart());
 
-                     input_.setSelection(newSelection);
-
-                  }
-               }
-               else
+               @Override
+               public void onError(ServerError error)
                {
-                  if (shouldQuote)
-                     value = "\"" + value + "\"";
+                  // TODO Auto-generated method stub
                   
-                  input_.replaceSelection(value, true);
-                  token_ = value;
-                  selection_ = input_.getSelection();
                }
-            }
-
-            @Override
-            public void onError(ServerError error)
-            {
-            }
-            
-         });
+               
+            });
+         }
          
-
+         doApplyValue(qualifiedName, false);
+         
       }
       
-      
+      private void doApplyValue(QualifiedName qualifiedName, boolean insertParen)
+      {
+         // Don't insert a paren if there is already a '(' following
+         // the cursor
+         AceEditor editor = (AceEditor) input_;
+         boolean textFollowingCursorHasOpenParen = false;
+         if (editor != null)
+         {
+            TokenCursor cursor = 
+                  editor.getSession().getMode().getCodeModel().getTokenCursor();
+            cursor.moveToPosition(editor.getCursorPosition());
+            if (cursor.moveToNextToken())
+               textFollowingCursorHasOpenParen =
+               cursor.currentValue() == "(";
+         }
+
+         String value = qualifiedName.name;
+         String pkgName = qualifiedName.pkgName;
+         boolean shouldQuote = qualifiedName.shouldQuote;
+         
+         if (value == ":=")
+            value = quoteIfNotSyntacticNameCompletion(value);
+         else if (!value.matches(".*[=:]\\s*$") && 
+               !value.matches("^\\s*([`'\"]).*\\1\\s*$") &&
+               pkgName != "<file>" &&
+               pkgName != "<directory>" &&
+               pkgName != "`chunk-option`" &&
+               !value.startsWith("@") &&
+               !shouldQuote)
+            value = quoteIfNotSyntacticNameCompletion(value);
+
+         /* In some cases, applyValue can be called more than once
+          * as part of the same completion instance--specifically,
+          * if there's only one completion candidate and it is in
+          * a package. To make sure that the selection movement
+          * logic works the second time, we need to reset the
+          * selection.
+          */
+
+         // Move range to beginning of token
+         input_.setSelection(new InputEditorSelection(
+               selection_.getStart().movePosition(-token_.length(), true),
+               input_.getSelection().getEnd()));
+
+         if (insertParen && !overrideInsertParens_ && !textFollowingCursorHasOpenParen)
+         {
+            // Don't replace the selection if the token ends with a ')'
+            // (implies an earlier replacement handled this)
+            if (token_.endsWith("("))
+            {
+               input_.setSelection(new InputEditorSelection(
+                     input_.getSelection().getEnd(),
+                     input_.getSelection().getEnd()));
+            }
+            else
+            {
+               input_.replaceSelection(value + "()", true);
+               InputEditorSelection newSelection = new InputEditorSelection(
+                     input_.getSelection().getEnd().movePosition(-1, true));
+               token_ = value + "(";
+               selection_ = new InputEditorSelection(
+                     input_.getSelection().getStart().movePosition(-2, true),
+                     newSelection.getStart());
+
+               input_.setSelection(newSelection);
+            }
+            
+            // Begin suggestions (for arguments)
+            beginSuggest(true, false, false);
+         }
+         else
+         {
+            if (shouldQuote)
+               value = "\"" + value + "\"";
+
+            input_.replaceSelection(value, true);
+            token_ = value;
+            selection_ = input_.getSelection();
+         }
+      }
 
       private final Invalidation.Token invalidationToken_ ;
       private InputEditorSelection selection_ ;
