@@ -610,7 +610,7 @@
    result <- tryCatch({
       wrapper <- function(x, which, exact = FALSE) {}
       matched <- .rs.matchCall(wrapper, functionCall)
-      if (is.null(matched[["x"]]) || !is.null(matched[["which"]]))
+      if (is.null(matched[["x"]]))
          return(.rs.emptyCompletions())
       objectName <- as.character(matched[["x"]])
       object <- .rs.getAnywhere(objectName)

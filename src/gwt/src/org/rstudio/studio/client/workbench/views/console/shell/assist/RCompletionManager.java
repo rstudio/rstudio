@@ -370,15 +370,18 @@ public class RCompletionManager implements CompletionManager
       return false ;
    }
    
+   private boolean isValidForRIdentifier(char c) {
+      return (c >= 'a' && c <= 'z') ||
+             (c >= 'A' && c <= 'Z') ||
+             (c == '.') ||
+             (c == '_');
+   }
+   
    public boolean previewKeyPress(char c)
    {
       if (popup_.isShowing())
       {
-         if ((c >= 'a' && c <= 'z')
-               || (c >= 'A' && c <= 'Z')
-               || (c >= '0' && c <= '9')
-               || c == '.' || c == '_'
-               || c == ':')
+         if (isValidForRIdentifier(c) || c == ':')
          {
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
@@ -392,7 +395,12 @@ public class RCompletionManager implements CompletionManager
       }
       else
       {
-         if ((c == '@' && isRoxygenTagValidHere()) || isSweaveCompletion(c))
+         char prevChar = docDisplay_.getCurrentLine().charAt(input_.getCursorPosition().getColumn() - 1);
+         if (
+               (c == ':' && prevChar == ':') ||
+               (c == '$') ||
+               (c == '@') ||
+               isSweaveCompletion(c))
          {
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {

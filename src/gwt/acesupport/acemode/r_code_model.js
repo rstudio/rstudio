@@ -1203,8 +1203,6 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                else
                   functionLabel = $normalizeWhitespace(functionName + functionArgsString);
 
-               console.log(functionLabel);
-
                // Obtain the function arguments by walking through the tokens
                var functionArgs = $getFunctionArgs(argsCursor);
 
