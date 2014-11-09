@@ -17,6 +17,7 @@
 #define CORE_LIBCLANG_SOURCE_LOCATION_HPP
 
 #include <string>
+#include <iosfwd>
 
 #include "clang-c/Index.h"
 
@@ -38,15 +39,23 @@ public:
 
    bool empty() const;
 
+   bool isFromMainFile() const;
+
+   bool isInSystemHeader() const;
+
    void getExpansionLocation(std::string* pFile,
                              unsigned* pLine,
                              unsigned* pColumn,
                              unsigned* pOffset = NULL) const;
 
+   void printExpansionLocation(std::ostream& ostr);
+
    void getSpellingLocation(std::string* pFile,
                             unsigned* pLine,
                             unsigned* pColumn,
                             unsigned* pOffset = NULL) const;
+
+   void printSpellingLocation(std::ostream& ostr);
 
    bool operator==(const SourceLocation& other) const ;
    bool operator!=(const SourceLocation& other) const ;

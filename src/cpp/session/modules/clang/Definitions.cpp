@@ -78,13 +78,15 @@ bool isTranslationUnit(const FileInfo& fileInfo,
    if (pkgSrcDir.exists() &&
        filePath.isWithin(pkgSrcDir) &&
        SourceIndex::isSourceFile(filePath) &&
-       !boost::algorithm::starts_with(filePath.stem(), kCompilationDbPrefix))
+       !boost::algorithm::starts_with(filePath.stem(), kCompilationDbPrefix) &&
+       (filePath.filename() != "RcppExports.cpp"))
    {
       return true;
    }
    else if (pkgIncludeDir.exists() &&
             filePath.isWithin(pkgIncludeDir) &&
-            SourceIndex::isSourceFile(filePath))
+            SourceIndex::isSourceFile(filePath) &&
+            !boost::algorithm::ends_with(filePath.stem(), "_RcppExports"))
    {
       return true;
    }
@@ -104,16 +106,9 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
    // get the cursor and check if it's in the right file
    Cursor cursor(cxCursor);
    SourceLocation location = cursor.getSourceLocation();
-   std::string filename;
-   unsigned line, column;
-   location.getSpellingLocation(&filename, &line, &column);
-
-   // if it isn't in the right file then bail
-   if (file != filename)
+   if (!location.isFromMainFile())
       return CXChildVisit_Continue;
 
-   if (cursor.getKind() == CXCursor_FunctionDecl)
-      std::cerr << "   " << cursor.displayName() << std::endl;
 
    // keep recursing through cursors
    return CXChildVisit_Recurse;
@@ -138,7 +133,7 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
       if (!compileArgs.empty())
       {
          // insert an entry for this file
-         std::cerr << file << std::endl;
+         std::cout << file << std::endl;
 
          // create index
          CXIndex index = libclang::clang().createIndex(

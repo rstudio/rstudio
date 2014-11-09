@@ -44,6 +44,17 @@ public:
 
    CXCursorKind getKind() const;
 
+   bool isDeclaration() const;
+   bool isReference() const;
+   bool isExpression() const;
+   bool isStatement() const;
+   bool isAttribute() const;
+   bool isInvalid() const;
+   bool isTranslationUnit() const;
+   bool isPreprocessing() const;
+   bool isUnexposed() const;
+
+
    bool isDefinition() const;
 
    Cursor getDefinition() const;
@@ -57,6 +68,13 @@ public:
    SourceLocation getSourceLocation() const;
 
    bool isNull() const;
+
+   bool operator==(const Cursor& other) const;
+   bool operator!=(const Cursor& other) const
+   {
+      return !(other == *this);
+   }
+
 
 private:
    CXCursor cursor() const { return *pCursor_; }

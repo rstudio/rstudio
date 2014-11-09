@@ -42,6 +42,51 @@ CXCursorKind Cursor::getKind() const
    return clang().getCursorKind(cursor());
 }
 
+bool Cursor::isDeclaration() const
+{
+   return clang().isDeclaration(getKind());
+}
+
+bool Cursor::isReference() const
+{
+   return clang().isReference(getKind());
+}
+
+bool Cursor::isExpression() const
+{
+   return clang().isExpression(getKind());
+}
+
+bool Cursor::isStatement() const
+{
+   return clang().isStatement(getKind());
+}
+
+bool Cursor::isAttribute() const
+{
+   return clang().isAttribute(getKind());
+}
+
+bool Cursor::isInvalid() const
+{
+   return clang().isInvalid(getKind());
+}
+
+bool Cursor::isTranslationUnit() const
+{
+   return clang().isTranslationUnit(getKind());
+}
+
+bool Cursor::isPreprocessing() const
+{
+   return clang().isPreprocessing(getKind());
+}
+
+bool Cursor::isUnexposed() const
+{
+   return clang().isUnexposed(getKind());
+}
+
 bool Cursor::isDefinition() const
 {
    return clang().isCursorDefinition(cursor()) != 0;
@@ -79,6 +124,12 @@ bool Cursor::isNull() const
    else
       return (clang().equalCursors(cursor(), clang().getNullCursor()));
 }
+
+bool Cursor::operator==(const Cursor& other) const
+{
+   return clang().equalCursors(cursor(), other.cursor());
+}
+
 
 } // namespace libclang
 } // namespace core

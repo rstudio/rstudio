@@ -30,6 +30,16 @@ bool SourceLocation::empty() const
    return clang().equalLocations(location_, clang().getNullLocation());
 }
 
+bool SourceLocation::isFromMainFile() const
+{
+   return clang().Location_isFromMainFile(location_);
+}
+
+bool SourceLocation::isInSystemHeader() const
+{
+   return clang().Location_isInSystemHeader(location_);
+}
+
 void SourceLocation::getExpansionLocation(std::string* pFile,
                                           unsigned* pLine,
                                           unsigned* pColumn,
@@ -40,6 +50,14 @@ void SourceLocation::getExpansionLocation(std::string* pFile,
 
    CXString filename = clang().getFileName(file);
    *pFile = toStdString(filename);
+}
+
+void SourceLocation::printExpansionLocation(std::ostream& ostr)
+{
+   std::string file;
+   unsigned line, offset;
+   getExpansionLocation(&file, &line, &offset, NULL);
+   ostr << file << " [line: " << line << ", col: " << offset << "]";
 }
 
 
@@ -53,6 +71,14 @@ void SourceLocation::getSpellingLocation(std::string* pFile,
 
    CXString filename = clang().getFileName(file);
    *pFile = toStdString(filename);
+}
+
+void SourceLocation::printSpellingLocation(std::ostream& ostr)
+{
+   std::string file;
+   unsigned line, offset;
+   getSpellingLocation(&file, &line, &offset, NULL);
+   ostr << file << " [line: " << line << ", col: " << offset << "]";
 }
 
 bool SourceLocation::operator==(const SourceLocation& other) const
