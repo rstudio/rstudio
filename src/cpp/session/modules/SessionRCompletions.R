@@ -683,27 +683,32 @@ utils:::rc.settings(files = TRUE)
       return(.rs.getCompletionsPackages(token))
    }
    
-   ## attr
-   if (string[[1]] == "attr")
+   ## Other special cases (but we may still want completions from
+   ## other contexts)
+   
+   # attr
+   completions <- if (string[[1]] == "attr")
    {
-      result <- .rs.getCompletionsAttr(token, functionCall)
-      if (!.rs.isEmptyCompletion(result))
-         return(result)
+      .rs.getCompletionsAttr(token, functionCall)
    }
    
    # getOption
-   if (string[[1]] == "getOption" && numCommas[[1]] == 0)
+   else if (string[[1]] == "getOption" && numCommas[[1]] == 0)
    {
-      return(.rs.getCompletionsGetOption(token))
+      .rs.getCompletionsGetOption(token)
    }
    
    # options
-   if (string[[1]] == "options" && type == TYPE$FUNCTION)
+   else if (string[[1]] == "options" && type == TYPE$FUNCTION)
    {
-      return(.rs.getCompletionsOptions(token))
+      .rs.getCompletionsOptions(token)
    }
    
-   completions <- .rs.emptyCompletions()
+   # no special case (start with empty completions)
+   else
+   {
+      completions <- .rs.emptyCompletions()
+   }
    
    for (i in seq_along(string))
    {
