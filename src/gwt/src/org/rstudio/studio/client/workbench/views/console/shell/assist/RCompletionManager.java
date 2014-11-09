@@ -452,31 +452,10 @@ public class RCompletionManager implements CompletionManager
       }
       else
       {
-         // Pop up suggestions if there is more than 3 characters on the line,
-         // but never automatically insert the completion in that case
-         String currentLine = docDisplay_.getCurrentLine();
-         Position cursorPos = input_.getCursorPosition();
-         int cursorColumn = cursorPos.getColumn();
-         
-         int lookbackLength = 4;
-         boolean canAutocomplete = currentLine.length() > lookbackLength && isValidForRIdentifier(c);
-         if (canAutocomplete)
-         {
-            for (int i = 0; i < lookbackLength; i++)
-            {
-               if (!isValidForRIdentifier(currentLine.charAt(cursorColumn - i - 1)))
-               {
-                  canAutocomplete = false;
-                  break;
-               }
-            }
-         }
-         
-         final boolean fCanAutocomplete = canAutocomplete;
-         char prevChar = currentLine.charAt(cursorColumn - 1);
+         char prevChar = docDisplay_.getCurrentLine().charAt(
+               input_.getCursorPosition().getColumn() - 1);
          
          if (
-               (fCanAutocomplete) ||
                (c == ':' && prevChar == ':') ||
                (c == '$') ||
                (c == '@') ||
@@ -487,7 +466,7 @@ public class RCompletionManager implements CompletionManager
                @Override
                public void execute()
                {
-                  beginSuggest(true, true, !fCanAutocomplete);
+                  beginSuggest(true, true, false);
                }
             });
          }
