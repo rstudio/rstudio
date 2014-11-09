@@ -170,7 +170,7 @@ public class RCompletionManager implements CompletionManager
    public void codeCompletion()
    {
       if (initFilter_ == null || initFilter_.shouldComplete(null))
-         beginSuggest(true, false);
+         beginSuggest(true, false, true);
    }
    
    public void goToHelp()
@@ -283,7 +283,7 @@ public class RCompletionManager implements CompletionManager
          {
             if (initFilter_ == null || initFilter_.shouldComplete(event))
             {
-               return beginSuggest(true, false);
+               return beginSuggest(true, false, true);
             }
          }
          else if (event.getKeyCode() == 112 // F1
@@ -310,6 +310,8 @@ public class RCompletionManager implements CompletionManager
          case KeyCodes.KEY_SHIFT:
          case KeyCodes.KEY_CTRL:
          case KeyCodes.KEY_ALT:
+         case KeyCodes.KEY_MAC_FF_META:
+         case KeyCodes.KEY_WIN_KEY_LEFT_META:
             return false ; // bare modifiers should do nothing
          }
          
@@ -360,10 +362,38 @@ public class RCompletionManager implements CompletionManager
             }
          }
          
-         if (isIdentifierKey(event))
-            return false ;
+         if (canContinueCompletions(event))
+            return false;
          
-         invalidatePendingRequests() ;
+         // continue showing completions on backspace
+         if (event.getKeyCode() == KeyCodes.KEY_BACKSPACE)
+         {
+            // manually remove the previous character
+            input_.setSelection(new InputEditorSelection(
+                  input_.getSelection().getStart().movePosition(-1, true),
+                  input_.getSelection().getStart()));
+            input_.replaceSelection("", false);
+            
+            // only suggest if the character previous to the cursor is an R identifier
+            // also halt suggestions if we're about to remove the only character on the line
+            String currentLine = docDisplay_.getCurrentLine();
+            int cursorCol = input_.getCursorPosition().getColumn();
+            char ch = currentLine.charAt(cursorCol - 1);
+            if (currentLine.length() > 0 &&
+                cursorCol > 0 &&
+                (isValidForRIdentifier(ch) || ch == ':' || ch == '$' || ch == '@'))
+            {
+               invalidatePendingRequests();
+               return beginSuggest(true, false, false);
+            }
+            else
+            {
+               invalidatePendingRequests();
+               return true;
+            }
+         }
+         
+         invalidatePendingRequests();
          return false ;
       }
       
@@ -388,15 +418,37 @@ public class RCompletionManager implements CompletionManager
                @Override
                public void execute()
                {
-                  beginSuggest(false, false);
+                  beginSuggest(false, true, false);
                }
             });
          }
       }
       else
       {
-         char prevChar = docDisplay_.getCurrentLine().charAt(input_.getCursorPosition().getColumn() - 1);
+         // Pop up suggestions if there is more than 3 characters on the line,
+         // but never automatically insert the completion in that case
+         String currentLine = docDisplay_.getCurrentLine();
+         Position cursorPos = input_.getCursorPosition();
+         int cursorColumn = cursorPos.getColumn();
+         
+         boolean canAutocomplete = currentLine.length() > 2 && isValidForRIdentifier(c);
+         if (canAutocomplete)
+         {
+            for (int i = 0; i < 2; i++)
+            {
+               if (!isValidForRIdentifier(currentLine.charAt(cursorColumn - i - 1)))
+               {
+                  canAutocomplete = false;
+                  break;
+               }
+            }
+         }
+         
+         final boolean fCanAutocomplete = canAutocomplete;
+         char prevChar = currentLine.charAt(cursorColumn - 1);
+         
          if (
+               (fCanAutocomplete) ||
                (c == ':' && prevChar == ':') ||
                (c == '$') ||
                (c == '@') ||
@@ -407,7 +459,7 @@ public class RCompletionManager implements CompletionManager
                @Override
                public void execute()
                {
-                  beginSuggest(true, true);
+                  beginSuggest(true, true, !fCanAutocomplete);
                }
             });
          }
@@ -419,6 +471,7 @@ public class RCompletionManager implements CompletionManager
       return false ;
    }
    
+   @SuppressWarnings("unused")
    private boolean isRoxygenTagValidHere()
    {
       if (input_.getText().matches("\\s*#+'.*"))
@@ -451,7 +504,7 @@ public class RCompletionManager implements CompletionManager
       return c != ' ' || linePart.matches(".*,\\s*");
    }
 
-   private static boolean isIdentifierKey(NativeEvent event)
+   private static boolean canContinueCompletions(NativeEvent event)
    {
       if (event.getAltKey()
             || event.getCtrlKey()
@@ -464,6 +517,10 @@ public class RCompletionManager implements CompletionManager
       if (keyCode >= 'a' && keyCode <= 'z')
          return true ;
       if (keyCode >= 'A' && keyCode <= 'Z')
+         return true ;
+      if (keyCode == ' ')
+         return true ;
+      if (keyCode == '-')
          return true ;
       if (keyCode == 189 && event.getShiftKey()) // underscore
          return true ;
@@ -604,7 +661,7 @@ public class RCompletionManager implements CompletionManager
    /**
     * If false, the suggest operation was aborted
     */
-   private boolean beginSuggest(boolean flushCache, boolean implicit)
+   private boolean beginSuggest(boolean flushCache, boolean implicit, final boolean canAutoInsert)
    {
       if (!input_.isSelectionCollapsed())
          return false ;
@@ -639,11 +696,9 @@ public class RCompletionManager implements CompletionManager
          return false ;
       }
 
-      boolean canAutoAccept = flushCache;
-      
       context_ = new CompletionRequestContext(invalidation_.getInvalidationToken(),
                                               selection,
-                                              canAutoAccept);
+                                              canAutoInsert);
       
       RInfixData infixData = RInfixData.create();
       AceEditor editor = (AceEditor) docDisplay_;
@@ -1220,7 +1275,7 @@ public class RCompletionManager implements CompletionManager
                @Override
                public void execute()
                {
-                  beginSuggest(true, true);
+                  beginSuggest(true, true, canAutoAccept_);
                }
             });
          }
