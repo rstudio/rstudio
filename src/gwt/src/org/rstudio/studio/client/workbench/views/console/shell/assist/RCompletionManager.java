@@ -43,6 +43,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.FunctionDefinition;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.CompletionResult;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
@@ -277,6 +278,7 @@ public class RCompletionManager implements CompletionManager
       
       nativeEvent_ = event;
 
+      int keycode = event.getKeyCode();
       int modifier = KeyboardShortcut.getModifierValue(event);
 
       if (!popup_.isShowing())
@@ -288,12 +290,12 @@ public class RCompletionManager implements CompletionManager
                return beginSuggest(true, false, true);
             }
          }
-         else if (event.getKeyCode() == 112 // F1
+         else if (keycode == 112 // F1
                   && modifier == KeyboardShortcut.NONE)
          {
             goToHelp();
          }
-         else if (event.getKeyCode() == 113 // F2
+         else if (keycode == 113 // F2
                   && modifier == KeyboardShortcut.NONE)
          {
             goToFunctionDefinition();
@@ -301,7 +303,7 @@ public class RCompletionManager implements CompletionManager
       }
       else
       {
-         switch (event.getKeyCode())
+         switch (keycode)
          {
          // chrome on ubuntu now sends this before every keydown
          // so we need to explicitly ignore it. see:
@@ -319,14 +321,14 @@ public class RCompletionManager implements CompletionManager
          
          if (modifier == KeyboardShortcut.NONE)
          {
-            if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
+            if (keycode == KeyCodes.KEY_ESCAPE)
             {
                invalidatePendingRequests() ;
                return true ;
             }
-            else if (event.getKeyCode() == KeyCodes.KEY_TAB
-                  || event.getKeyCode() == KeyCodes.KEY_ENTER
-                  || event.getKeyCode() == KeyCodes.KEY_RIGHT)
+            else if (keycode == KeyCodes.KEY_TAB
+                  || keycode == KeyCodes.KEY_ENTER
+                  || keycode == KeyCodes.KEY_RIGHT)
             {
                QualifiedName value = popup_.getSelectedValue() ;
                if (value != null)
@@ -335,29 +337,29 @@ public class RCompletionManager implements CompletionManager
                   return true ;
                }
             }
-            else if (event.getKeyCode() == KeyCodes.KEY_UP)
+            else if (keycode == KeyCodes.KEY_UP)
                return popup_.selectPrev() ;
-            else if (event.getKeyCode() == KeyCodes.KEY_DOWN)
+            else if (keycode == KeyCodes.KEY_DOWN)
                return popup_.selectNext() ;
-            else if (event.getKeyCode() == KeyCodes.KEY_PAGEUP)
+            else if (keycode == KeyCodes.KEY_PAGEUP)
                return popup_.selectPrevPage() ;
-            else if (event.getKeyCode() == KeyCodes.KEY_PAGEDOWN)
+            else if (keycode == KeyCodes.KEY_PAGEDOWN)
                return popup_.selectNextPage() ;
-            else if (event.getKeyCode() == KeyCodes.KEY_HOME)
+            else if (keycode == KeyCodes.KEY_HOME)
                return popup_.selectFirst() ;
-            else if (event.getKeyCode() == KeyCodes.KEY_END)
+            else if (keycode == KeyCodes.KEY_END)
                return popup_.selectLast() ;
-            else if (event.getKeyCode() == KeyCodes.KEY_LEFT)
+            else if (keycode == KeyCodes.KEY_LEFT)
             {
                invalidatePendingRequests() ;
                return true ;
             }
-            else if (event.getKeyCode() == 112) // F1
+            else if (keycode == 112) // F1
             {
                context_.showHelpTopic() ;
                return true ;
             }
-            else if (event.getKeyCode() == 113) // F2
+            else if (keycode == 113) // F2
             {
                goToFunctionDefinition();
                return true;
@@ -369,30 +371,33 @@ public class RCompletionManager implements CompletionManager
          
          // if we insert a '/', we're probably forming a directory --
          // pop up completions
-         if (event.getKeyCode() == 191 && modifier == KeyboardShortcut.NONE)
+         if (keycode == 191 && modifier == KeyboardShortcut.NONE)
          {
             input_.insertCode("/");
             invalidatePendingRequests();
-            return beginSuggest(true, false, false);
+            return beginSuggest(true, true, false);
          }
          
          // If we insert a '(', we probably want function arguments
-         if (event.getKeyCode() == KeyCodes.KEY_NINE && modifier == KeyboardShortcut.SHIFT)
+         if (keycode == KeyCodes.KEY_NINE && modifier == KeyboardShortcut.SHIFT)
          {
             input_.insertCode("()");
             input_.setSelection(new InputEditorSelection(
                   input_.getSelection().getStart().movePosition(-1, true)));
-            return beginSuggest(true, false, false);
+            return beginSuggest(true, true, false);
          }
          
          // continue showing completions on backspace
-         if (event.getKeyCode() == KeyCodes.KEY_BACKSPACE && modifier == KeyboardShortcut.NONE)
+         if (keycode == KeyCodes.KEY_BACKSPACE && modifier == KeyboardShortcut.NONE)
          {
             // manually remove the previous character
             InputEditorSelection selection = input_.getSelection();
             InputEditorPosition start = selection.getStart().movePosition(-1, true);
             InputEditorPosition end = selection.getStart();
-            if (docDisplay_.getCurrentLine().charAt(input_.getCursorPosition().getColumn()) == ')')
+            
+            String currentLine = docDisplay_.getCurrentLine();
+            int cursorColumn = input_.getCursorPosition().getColumn();
+            if (currentLine.charAt(cursorColumn) == ')' && currentLine.charAt(cursorColumn - 1) == '(')
                end = selection.getStart().movePosition(1, true);
             
             input_.setSelection(new InputEditorSelection(start, end));
@@ -400,11 +405,9 @@ public class RCompletionManager implements CompletionManager
             
             // only suggest if the character previous to the cursor is an R identifier
             // also halt suggestions if we're about to remove the only character on the line
-            String currentLine = docDisplay_.getCurrentLine();
-            int cursorCol = input_.getCursorPosition().getColumn();
-            char ch = currentLine.charAt(cursorCol - 1);
+            char ch = currentLine.charAt(cursorColumn - 1);
             if (currentLine.length() > 0 &&
-                cursorCol > 0 &&
+                cursorColumn > 0 &&
                 (isValidForRIdentifier(ch) || ch == ':' || ch == '$' || ch == '@'))
             {
                invalidatePendingRequests();
@@ -455,10 +458,11 @@ public class RCompletionManager implements CompletionManager
          Position cursorPos = input_.getCursorPosition();
          int cursorColumn = cursorPos.getColumn();
          
-         boolean canAutocomplete = currentLine.length() > 2 && isValidForRIdentifier(c);
+         int lookbackLength = 4;
+         boolean canAutocomplete = currentLine.length() > lookbackLength && isValidForRIdentifier(c);
          if (canAutocomplete)
          {
-            for (int i = 0; i < 2; i++)
+            for (int i = 0; i < lookbackLength; i++)
             {
                if (!isValidForRIdentifier(currentLine.charAt(cursorColumn - i - 1)))
                {
@@ -1212,11 +1216,16 @@ public class RCompletionManager implements CompletionManager
             boolean lineIsWhitespace = docDisplay_.getCurrentLine().matches("^\\s*$");
             
             if (lastInputWasTab && lineIsWhitespace)
+            {
                docDisplay_.insertCode("\t");
-            else
+               return;
+            }
+            
+            if (canAutoAccept_) {
                popup_.showErrorMessage(
                      "(No matches)", 
                      new PopupPositioner(input_.getCursorBounds(), popup_));
+            }
             
             return ;
          }
