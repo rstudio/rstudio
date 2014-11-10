@@ -43,7 +43,6 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.FunctionDefinition;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.CompletionResult;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
@@ -59,7 +58,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DplyrJo
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RInfixData;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
@@ -681,7 +679,7 @@ public class RCompletionManager implements CompletionManager
 
       public void setNumCommas(List<Integer> numCommas)
       {
-         this.numCommas_ = numCommas_;
+         this.numCommas_ = numCommas;
       }
 
       public String getFunctionCallString()
@@ -888,22 +886,18 @@ public class RCompletionManager implements CompletionManager
          AutocompletionContext context)
    {
          String[] splat = token.split(":{2,3}");
-         String right = "";
          String left = "";
          
          if (splat.length <= 0)
          {
-            right = "";
             left = "";
          }
          else if (splat.length == 1)
          {
-            right = "";
             left = splat[0];
          }
          else
          {
-            right = splat[1];
             left = splat[0];
          }
          
