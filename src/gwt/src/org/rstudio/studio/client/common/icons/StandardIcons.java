@@ -37,6 +37,8 @@ public interface StandardIcons extends ClientBundle
    ImageResource lambda();
    ImageResource clazz();
    ImageResource anon();
+   ImageResource struct();
+   ImageResource enumeratedType();
    ImageResource git();
    ImageResource svn();
    ImageResource viewer_window();
