@@ -390,28 +390,33 @@ public class RCompletionManager implements CompletionManager
          // continue showing completions on backspace
          if (keycode == KeyCodes.KEY_BACKSPACE && modifier == KeyboardShortcut.NONE)
          {
-            // manually remove the previous character
-            InputEditorSelection selection = input_.getSelection();
-            InputEditorPosition start = selection.getStart().movePosition(-1, true);
-            InputEditorPosition end = selection.getStart();
-            
-            String currentLine = docDisplay_.getCurrentLine();
             int cursorColumn = input_.getCursorPosition().getColumn();
-            if (currentLine.charAt(cursorColumn) == ')' && currentLine.charAt(cursorColumn - 1) == '(')
-               end = selection.getStart().movePosition(1, true);
-            
-            input_.setSelection(new InputEditorSelection(start, end));
-            input_.replaceSelection("", false);
+            String currentLine = docDisplay_.getCurrentLine();
             
             // only suggest if the character previous to the cursor is an R identifier
             // also halt suggestions if we're about to remove the only character on the line
-            char ch = currentLine.charAt(cursorColumn - 1);
-            if (currentLine.length() > 0 &&
-                cursorColumn > 0 &&
-                (isValidForRIdentifier(ch) || ch == ':' || ch == '$' || ch == '@'))
+            if (cursorColumn > 0)
             {
-               invalidatePendingRequests();
-               return beginSuggest(true, false, false);
+               char ch = currentLine.charAt(cursorColumn - 2);
+               if (currentLine.length() > 0 &&
+                     cursorColumn > 0 &&
+                     (isValidForRIdentifier(ch) || ch == ':' || ch == '$' || ch == '@'))
+               {
+                  // manually remove the previous character
+                  InputEditorSelection selection = input_.getSelection();
+                  InputEditorPosition start = selection.getStart().movePosition(-1, true);
+                  InputEditorPosition end = selection.getStart();
+
+                  if (currentLine.charAt(cursorColumn) == ')' && currentLine.charAt(cursorColumn - 1) == '(')
+                     end = selection.getStart().movePosition(1, true);
+
+                  input_.setSelection(new InputEditorSelection(start, end));
+                  input_.replaceSelection("", false);
+
+
+                  invalidatePendingRequests();
+                  return beginSuggest(true, false, false);
+               }
             }
             else
             {
@@ -1241,7 +1246,7 @@ public class RCompletionManager implements CompletionManager
 
       private void initializeHelpStrategy(CompletionResult completions)
       {
-         if (completions.guessedFunctionName != null)
+         if (!StringUtil.isNullOrEmpty(completions.guessedFunctionName))
          {
             helpStrategy_ = HelpStrategy.createParameterStrategy(
                               server_, completions.guessedFunctionName) ;
