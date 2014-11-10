@@ -1,5 +1,5 @@
 /*
- * Definitions.hpp
+ * DefinitionIndex.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_MODULES_CLANG_DEFINITIONS_HPP
-#define SESSION_MODULES_CLANG_DEFINITIONS_HPP
+#ifndef SESSION_MODULES_CLANG_DEFINITION_INDEX_HPP
+#define SESSION_MODULES_CLANG_DEFINITION_INDEX_HPP
 
 #include <string>
 #include <iosfwd>
@@ -28,7 +28,6 @@ namespace core {
 namespace session {
 namespace modules {      
 namespace clang {
-namespace definitions {
 
 // definition type
 enum DefinitionKind
@@ -79,11 +78,10 @@ struct Definition
 
 std::ostream& operator<<(std::ostream& os, const Definition& definition);
 
-core::Error initialize();
+core::Error initializeDefinitionIndex();
 
-}
 } // namespace clang
 } // namepace modules
 } // namesapce session
 
-#endif // SESSION_MODULES_CLANG_DEFINITIONS_HPP
+#endif // SESSION_MODULES_CLANG_DEFINITION_INDEX_HPP

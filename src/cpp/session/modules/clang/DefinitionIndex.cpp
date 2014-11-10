@@ -1,5 +1,5 @@
 /*
- * Definitions.cpp
+ * DefinitionIndex.cpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,7 +13,7 @@
  *
  */
 
-#include "Definitions.hpp"
+#include "DefinitionIndex.hpp"
 
 #include <core/FilePath.hpp>
 #include <core/libclang/LibClang.hpp>
@@ -30,7 +30,6 @@ using namespace core::libclang;
 namespace session {
 namespace modules { 
 namespace clang {
-namespace definitions {
 
 namespace {
 
@@ -268,11 +267,10 @@ std::ostream& operator<<(std::ostream& os, const Definition& definition)
    return os;
 }
 
-Error initialize()
+Error initializeDefinitionIndex()
 {
    using namespace projects;
-   //if (projectContext().config().buildType == r_util::kBuildTypePackage)
-   if (false)
+   if (projectContext().config().buildType == r_util::kBuildTypePackage)
    {
       // check for src and inst/include dirs
       FilePath pkgPath = projects::projectContext().buildTargetPath();
@@ -296,7 +294,6 @@ Error initialize()
    return Success();
 }
 
-} // namespace definitions
 } // namespace clang
 } // namespace modules
 } // namesapce session

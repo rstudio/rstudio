@@ -31,7 +31,7 @@
 
 #include <core/libclang/LibClang.hpp>
 
-#include "Definitions.hpp"
+#include "DefinitionIndex.hpp"
 #include "GoToDefinition.hpp"
 #include "CodeCompletion.hpp"
 #include "RSourceIndex.hpp"
@@ -257,8 +257,8 @@ Error initialize()
    if (!libclang::clang().load(embeddedLibClang(), LibraryVersion(3,4,0)))
       return Success();
 
-   // initialize definitions
-   error = definitions::initialize();
+   // initialize definition index
+   error = initializeDefinitionIndex();
    if (error)
       return error;
 
