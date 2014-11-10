@@ -536,8 +536,6 @@ public class RCompletionManager implements CompletionManager
          return true ;
       if (keyCode == 189 && event.getShiftKey()) // underscore
          return true ;
-      if (keyCode == 186 && event.getShiftKey()) // colon
-         return true ;
       
       if (event.getShiftKey())
          return false ;

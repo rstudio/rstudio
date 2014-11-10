@@ -678,7 +678,17 @@ utils:::rc.settings(files = TRUE)
    
    # No information on completions other than token
    if (!length(string))
-      return(.rs.getCompletionsSearchPath(token))
+   {
+      # If there was no token, give up
+      if (token == "")
+         return(.rs.emptyCompletions())
+      
+      # Otherwise, complete from the seach path + available packages
+      return(.rs.appendCompletions(
+         .rs.getCompletionsSearchPath(token),
+         .rs.getCompletionsPackages(token, TRUE)
+      ))
+   }
    
    # library, require, requireNamespace, loadNamespace
    if (string[[1]] %in% c("library", "require", "requireNamespace") &&
