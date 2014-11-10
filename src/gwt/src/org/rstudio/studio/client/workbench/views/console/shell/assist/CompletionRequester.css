@@ -1,0 +1,14 @@
+.completionIcon {
+	padding-top: 6px;
+	padding-left: 2px;
+	padding-right: 6px;
+}
+
+.completion {
+	
+}
+
+.packageName {
+	float: right;
+	color: #999;
+}

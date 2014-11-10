@@ -18,13 +18,16 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayBoolean;
 import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
+import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
+import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.r.RToken;
 import org.rstudio.studio.client.common.r.RTokenizer;
 import org.rstudio.studio.client.server.ServerError;
@@ -549,7 +552,9 @@ public class CompletionRequester
    
    public static class QualifiedName implements Comparable<QualifiedName>
    {
-      public QualifiedName(String name, String pkgName, boolean shouldQuote, int type)
+      
+      public QualifiedName(
+            String name, String pkgName, boolean shouldQuote, int type)
       {
          this.name = name;
          this.pkgName = pkgName;
@@ -568,22 +573,42 @@ public class CompletionRequester
       @Override
       public String toString()
       {
-         return DomUtils.textToHtml(name) + getFormattedPackageName();
-      }
-
-      private String getFormattedPackageName()
-      {
-         if (pkgName == null || pkgName.length() == 0)
-            return "";
+         SafeHtmlBuilder sb = new SafeHtmlBuilder();
          
-         StringBuilder result = new StringBuilder();
-         result.append(" <span class=\"packageName\">");
-         if (pkgName.matches("^([\\{\\[\\(\\<`'\"]).*\\1$"))
-            result.append(DomUtils.textToHtml(pkgName));
-         else
-            result.append("{").append(DomUtils.textToHtml(pkgName)).append("}");
-         result.append("</span>");
-         return result.toString();
+         // Get an icon for the completion
+         SafeHtmlUtil.appendImage(
+               sb,
+               RES.styles().completionIcon(),
+               getIcon());
+         
+         // Get the name for the completion
+         SafeHtmlUtil.appendSpan(
+               sb,
+               RES.styles().completion(),
+               name);
+         
+         // Get the associated package for functions
+         if (type == RCompletionType.FUNCTION)
+         {
+            SafeHtmlUtil.appendSpan(
+                  sb,
+                  RES.styles().packageName(),
+                  pkgName);
+         }
+         
+         return sb.toSafeHtml().asString();
+      }
+      
+      private ImageResource getIcon()
+      {
+         StandardIcons icons = StandardIcons.INSTANCE;
+         if (type == RCompletionType.FUNCTION)
+            return icons.method();
+         else if (type == RCompletionType.DATAFRAME)
+            return icons.struct();
+         
+         return icons.method();
+         
       }
 
       public static QualifiedName parseFromText(String val)
@@ -622,4 +647,12 @@ public class CompletionRequester
       public final boolean shouldQuote ;
       public final int type ;
    }
+   
+   private static final CompletionRequesterResources RES =
+         CompletionRequesterResources.INSTANCE;
+   
+   static {
+      RES.styles().ensureInjected();
+   }
+   
 }
