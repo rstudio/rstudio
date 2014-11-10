@@ -418,7 +418,8 @@ public class AceEditor implements DocDisplay,
                   server_,
                   new Filter(),
                   fileType_.canExecuteChunks() ? rnwContext_ : null,
-                  this);
+                  this,
+                  true);
             
             // if this is cpp then we use our own completion manager
             // that can optionally delegate to the R completion manager
