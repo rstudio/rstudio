@@ -68,6 +68,8 @@ bool isTranslationUnit(const FileInfo& fileInfo,
    }
 }
 
+typedef boost::function<void(const Definition&)> DefinitionVisitor;
+
 CXChildVisitResult cursorVisitor(CXCursor cxCursor,
                                  CXCursor,
                                  CXClientData clientData)
@@ -146,8 +148,9 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
                          line,
                          column);
 
-   // print the definition
-   std::cout << "   " << definition << std::endl;
+   // yield the definition
+   DefinitionVisitor& visitor = *((DefinitionVisitor*)clientData);
+   visitor(definition);
 
    // recurse if necessary
    if (kind == NamespaceDefinition ||
@@ -162,6 +165,10 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
    }
 }
 
+void printDefinition(const Definition& definition)
+{
+   std::cout << "   " << definition << std::endl;
+}
 
 void fileChangeHandler(const core::system::FileChangeEvent& event)
 {
@@ -202,10 +209,11 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
                                CXTranslationUnit_Incomplete);
 
          // visit all of the cursors
+         DefinitionVisitor visitor = printDefinition;
          libclang::clang().visitChildren(
               libclang::clang().getTranslationUnitCursor(tu),
               cursorVisitor,
-              NULL);
+              (CXClientData)&visitor);
 
          // dispose translation unit and index
          libclang::clang().disposeTranslationUnit(tu);
