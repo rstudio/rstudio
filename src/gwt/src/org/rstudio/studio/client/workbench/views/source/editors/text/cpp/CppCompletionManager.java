@@ -212,7 +212,9 @@ public class CppCompletionManager implements CompletionManager
          // modifier keys always no-op
          if (keyCode == KeyCodes.KEY_SHIFT ||
              keyCode == KeyCodes.KEY_CTRL ||
-             keyCode == KeyCodes.KEY_ALT)
+             keyCode == KeyCodes.KEY_ALT ||
+             keyCode == KeyCodes.KEY_MAC_FF_META ||
+             keyCode == KeyCodes.KEY_WIN_KEY_LEFT_META)
          {          
             return false ; 
          }
