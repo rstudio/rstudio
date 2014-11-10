@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayBoolean;
+import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.core.client.StringUtil;
@@ -23,6 +24,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
+import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.common.r.RToken;
 import org.rstudio.studio.client.common.r.RTokenizer;
 import org.rstudio.studio.client.server.ServerError;
@@ -178,10 +180,11 @@ public class CompletionRequester
       JsArrayString comp = response.getCompletions();
       JsArrayString pkgs = response.getPackages();
       JsArrayBoolean quote = response.getQuote();
+      JsArrayInteger type = response.getType();
       ArrayList<QualifiedName> newComp = new ArrayList<QualifiedName>();
       for (int i = 0; i < comp.length(); i++)
       {
-         newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i)));
+         newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
       }
 
       CompletionResult result = new CompletionResult(
@@ -241,6 +244,7 @@ public class CompletionRequester
             JsArrayString comp = response.getCompletions();
             JsArrayString pkgs = response.getPackages();
             JsArrayBoolean quote = response.getQuote();
+            JsArrayInteger type = response.getType();
             ArrayList<QualifiedName> newComp = new ArrayList<QualifiedName>();
             
             // Try getting our own function argument completions
@@ -253,7 +257,7 @@ public class CompletionRequester
             // Get server completions
             for (int i = 0; i < comp.length(); i++)
             {
-               newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i)));
+               newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
             }
             
             // Get variable completions from the current scope
@@ -476,6 +480,7 @@ public class CompletionRequester
                   result.completions,
                   JsUtil.toJsArrayString(pkgNames),
                   JsUtil.toJsArrayBoolean(new ArrayList<Boolean>(result.completions.length())),
+                  JsUtil.toJsArrayInteger(new ArrayList<Integer>(result.completions.length())),
                   "",
                   false,
                   false);
@@ -546,11 +551,12 @@ public class CompletionRequester
    
    public static class QualifiedName implements Comparable<QualifiedName>
    {
-      public QualifiedName(String name, String pkgName, boolean shouldQuote)
+      public QualifiedName(String name, String pkgName, boolean shouldQuote, int type)
       {
          this.name = name;
          this.pkgName = pkgName;
          this.shouldQuote = shouldQuote;
+         this.type = type;
       }
       
       public QualifiedName(String name, String pkgName)
@@ -558,6 +564,7 @@ public class CompletionRequester
          this.name = name;
          this.pkgName = pkgName;
          this.shouldQuote = false;
+         this.type = RCompletionType.UNKNOWN;
       }
       
       @Override
@@ -615,5 +622,6 @@ public class CompletionRequester
       public final String name ;
       public final String pkgName ;
       public final boolean shouldQuote ;
+      public final int type ;
    }
 }

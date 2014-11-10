@@ -16,6 +16,7 @@ package org.rstudio.studio.client.common.codetools;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayBoolean;
+import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayString;
 
 public class Completions extends JavaScriptObject
@@ -24,6 +25,7 @@ public class Completions extends JavaScriptObject
                                                       JsArrayString completions,
                                                       JsArrayString packages,
                                                       JsArrayBoolean quote,
+                                                      JsArrayInteger type,
                                                       String fguess,
                                                       boolean excludeOtherCompletions,
                                                       boolean overrideInsertParens) /*-{
@@ -32,6 +34,7 @@ public class Completions extends JavaScriptObject
          results: completions,
          packages: packages,
          quote: quote,
+         type: type,
          fguess: fguess ? [fguess] : null,
          excludeOtherCompletions: excludeOtherCompletions,
          overrideInsertParens: overrideInsertParens
@@ -87,6 +90,11 @@ public class Completions extends JavaScriptObject
    public final native JsArrayBoolean getQuote() /*-{
       return this.quote;
    }-*/;
+   
+   public final native JsArrayInteger getType() /*-{
+      return this.type;
+   }-*/;
+   
 
    public final native boolean getSuggestOnAccept() /*-{
       return !!this.suggestOnAccept;

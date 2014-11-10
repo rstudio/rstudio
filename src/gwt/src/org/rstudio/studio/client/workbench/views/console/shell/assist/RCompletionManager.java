@@ -38,6 +38,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
+import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -1289,7 +1290,7 @@ public class RCompletionManager implements CompletionManager
          else
          {
             if (results.length == 1 && canAutoAccept_)
-               applyValue(results[0], false);
+               applyValue(results[0]);
             
             popup_.showCompletionValues(
                   results,
@@ -1337,9 +1338,9 @@ public class RCompletionManager implements CompletionManager
             return ;
          }
 
+         applyValue(qname);
          if (suggestOnAccept_ || qname.name.endsWith("/") || qname.name.endsWith(":"))
          {
-            applyValue(qname, false);
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
                @Override
@@ -1348,10 +1349,6 @@ public class RCompletionManager implements CompletionManager
                   beginSuggest(true, true, canAutoAccept_);
                }
             });
-         }
-         else
-         {
-            applyValue(qname, true);
          }
          
       }
@@ -1378,9 +1375,7 @@ public class RCompletionManager implements CompletionManager
          selection_ = input_.getSelection();
       }
 
-      private void applyValue(
-            final QualifiedName qualifiedName,
-            final boolean checkIsFunction)
+      private void applyValue(final QualifiedName qualifiedName)
       {
          if (qualifiedName.pkgName == "`chunk-option`")
          {
@@ -1388,34 +1383,8 @@ public class RCompletionManager implements CompletionManager
             return;
          }
          
-         if (checkIsFunction)
-         {
-            final String functionName = qualifiedName.name == null ? "" : qualifiedName.name;
-            final String pkgName = qualifiedName.pkgName == null ? "" : qualifiedName.pkgName;
-            server_.isFunction(functionName, pkgName, new ServerRequestCallback<Boolean>()
-            {
-               @Override
-               public void onResponseReceived(Boolean isFunction)
-               {
-                  doApplyValue(qualifiedName, isFunction);
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  // TODO Auto-generated method stub
-                  
-               }
-               
-            });
-         }
+         boolean insertParen = qualifiedName.type == RCompletionType.FUNCTION;
          
-         doApplyValue(qualifiedName, false);
-         
-      }
-      
-      private void doApplyValue(QualifiedName qualifiedName, boolean insertParen)
-      {
          // Don't insert a paren if there is already a '(' following
          // the cursor
          AceEditor editor = (AceEditor) input_;

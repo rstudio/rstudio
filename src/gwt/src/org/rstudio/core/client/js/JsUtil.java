@@ -17,6 +17,7 @@ package org.rstudio.core.client.js;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayBoolean;
+import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayString;
 
 import java.util.Iterator;
@@ -152,7 +153,14 @@ public class JsUtil
       return result;
    }
    
-
+   public static JsArrayInteger toJsArrayInteger(Iterable<Integer> integers)
+   {
+      JsArrayInteger result = JsArrayInteger.createArray().cast();
+      for (Integer i : integers)
+         result.push(i);
+      return result;
+   }
+   
    public native static JavaScriptObject createEmptyArray(int length) /*-{
       return new Array(length);
    }-*/;

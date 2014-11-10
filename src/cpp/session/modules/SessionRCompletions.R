@@ -33,6 +33,7 @@ assign(x = ".rs.acContextTypes",
        )
 )
 
+# Sync with RCompletionTypes.java
 assign(x = ".rs.acCompletionTypes",
        pos = which(search() == "tools:rstudio"),
        value = list(
@@ -43,16 +44,15 @@ assign(x = ".rs.acCompletionTypes",
           DATAFRAME = 4,
           LIST = 5,
           ENVIRONMENT = 6,
-          VECTOR = 7,
-          S4 = 8,
-          REFERENCE_CLASS = 9,
-          FILE = 10,
-          CHUNK = 11,
-          ROXYGEN = 12,
-          HELP = 13,
-          STRING = 14,
-          PACKAGE = 15,
-          KEYWORD = 16
+          S4 = 7,
+          REFERENCE_CLASS = 8,
+          FILE = 9,
+          CHUNK = 10,
+          ROXYGEN = 11,
+          HELP = 12,
+          STRING = 13,
+          PACKAGE = 14,
+          KEYWORD = 15
        )
 )
 
