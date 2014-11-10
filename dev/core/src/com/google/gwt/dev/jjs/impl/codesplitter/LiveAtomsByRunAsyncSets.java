@@ -21,7 +21,7 @@ import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JRunAsync;
 import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
-import com.google.gwt.thirdparty.guava.common.collect.HashMultiset;
+import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultiset;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multiset;
@@ -119,12 +119,12 @@ class LiveAtomsByRunAsyncSets {
   }
 
   private final Map<JRunAsync, Integer> idForRunAsync = Maps.newHashMap();
-  private Map<JField, BitSet> liveSubsetForField = Maps.newHashMap();
-  private Map<JMethod, BitSet> liveSubsetForMethod = Maps.newHashMap();
-  private Map<String, BitSet> liveSubsetForString = Maps.newHashMap();
-  private Map<JDeclaredType, BitSet> liveSubsetForType = Maps.newHashMap();
+  private Map<JField, BitSet> liveSubsetForField = Maps.newLinkedHashMap();
+  private Map<JMethod, BitSet> liveSubsetForMethod = Maps.newLinkedHashMap();
+  private Map<String, BitSet> liveSubsetForString = Maps.newLinkedHashMap();
+  private Map<JDeclaredType, BitSet> liveSubsetForType = Maps.newLinkedHashMap();
   private int nextRunAsyncId = 0;
-  private final Multiset<BitSet> payloadSizeBySubset = HashMultiset.create();
+  private final Multiset<BitSet> payloadSizeBySubset = LinkedHashMultiset.create();
   private final Map<Integer, JRunAsync> runAsyncForId = Maps.newHashMap();
   private final TreeLogger logger;
   private Collection<Collection<JRunAsync>> groupedRunAsyncs;
