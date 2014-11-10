@@ -34,34 +34,6 @@ namespace definitions {
 
 namespace {
 
-// C++ symbol definition
-struct Definition
-{
-   Definition()
-      : kind(CXCursor_InvalidFile),
-        line(0),
-        column(0)
-   {
-   }
-
-   Definition(CXCursorKind kind,
-              const std::string& name,
-              const FilePath& filePath,
-              unsigned line,
-              unsigned column)
-      : kind(kind), name(name), filePath(filePath), line(line), column(column)
-   {
-   }
-
-   bool empty() const { return name.empty(); }
-
-   const CXCursorKind kind;
-   const std::string name;
-   const FilePath filePath;
-   const unsigned line;
-   const unsigned column;
-};
-
 // lookup definition by USR
 typedef std::map<std::string,Definition> Definitions;
 
@@ -100,18 +72,94 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
                                  CXCursor,
                                  CXClientData clientData)
 {
-   // file we are examining
-   std::string file = *(std::string*)clientData;
-
    // get the cursor and check if it's in the right file
    Cursor cursor(cxCursor);
    SourceLocation location = cursor.getSourceLocation();
    if (!location.isFromMainFile())
       return CXChildVisit_Continue;
 
+   // ensure it's a definition with external linkage
+   if (!cursor.isDefinition() || !cursor.hasExternalLinkage())
+      return CXChildVisit_Continue;
 
-   // keep recursing through cursors
-   return CXChildVisit_Recurse;
+   // determine kind
+   DefinitionKind kind = InvalidDefinition;
+   switch (cursor.getKind())
+   {
+      case CXCursor_Namespace:
+         kind = NamespaceDefinition;
+         break;
+      case CXCursor_ClassDecl:
+      case CXCursor_ClassTemplate:
+         kind = ClassDefinition;
+         break;
+      case CXCursor_StructDecl:
+         kind = StructDefinition;
+         break;
+      case CXCursor_EnumDecl:
+         kind = EnumDefinition;
+         break;
+      case CXCursor_FunctionDecl:
+      case CXCursor_FunctionTemplate:
+         kind = FunctionDefinition;
+         break;
+      case CXCursor_CXXMethod:
+         kind = MemberFunctionDefinition;
+         break;
+      default:
+         kind = InvalidDefinition;
+         break;
+   }
+
+   // continue if this isn't a definition of interest
+   if (kind == InvalidDefinition)
+      return CXChildVisit_Continue;
+
+   // build display name (strip trailing parens)
+   std::string displayName = cursor.displayName();
+   boost::algorithm::replace_last(displayName, "()", "");
+
+   // empty display name for a namespace === anonymous
+   if ((kind == NamespaceDefinition) && displayName.empty())
+   {
+      displayName = "<anonymous>";
+   }
+
+   // qualify class members
+   if (kind == MemberFunctionDefinition)
+   {
+      Cursor parent = cursor.getSemanticParent();
+      displayName = parent.displayName() + "::" + displayName;
+   }
+
+   // get the source location
+   SourceLocation loc = cursor.getSourceLocation();
+   std::string file;
+   unsigned line, column;
+   loc.getSpellingLocation(&file, &line, &column);
+
+   // create the definition
+   Definition definition(cursor.getUSR(),
+                         kind,
+                         displayName,
+                         FilePath(file),
+                         line,
+                         column);
+
+   // print the definition
+   std::cout << "   " << definition << std::endl;
+
+   // recurse if necessary
+   if (kind == NamespaceDefinition ||
+       kind == ClassDefinition ||
+       kind == StructDefinition)
+   {
+      return CXChildVisit_Recurse;
+   }
+   else
+   {
+      return CXChildVisit_Continue;
+   }
 }
 
 
@@ -151,14 +199,13 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
                                argsArray.argCount(),
                                NULL, 0, // no unsaved files
                                CXTranslationUnit_None |
-                               CXTranslationUnit_Incomplete |
-                               CXTranslationUnit_SkipFunctionBodies);
+                               CXTranslationUnit_Incomplete);
 
          // visit all of the cursors
          libclang::clang().visitChildren(
               libclang::clang().getTranslationUnitCursor(tu),
               cursorVisitor,
-              (CXClientData)&file);
+              NULL);
 
          // dispose translation unit and index
          libclang::clang().disposeTranslationUnit(tu);
@@ -169,6 +216,49 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
 
 } // anonymous namespace
 
+
+std::ostream& operator<<(std::ostream& os, const Definition& definition)
+{
+   // kind
+   std::string kindStr;
+   switch (definition.kind)
+   {
+      case NamespaceDefinition:
+         kindStr = "N";
+         break;
+      case ClassDefinition:
+         kindStr = "C";
+         break;
+      case StructDefinition:
+         kindStr = "S";
+         break;
+      case EnumDefinition:
+         kindStr = "E";
+         break;
+      case FunctionDefinition:
+         kindStr = "F";
+         break;
+      case MemberFunctionDefinition:
+         kindStr = "M";
+         break;
+      default:
+         kindStr = " ";
+         break;
+   }
+   os << "[" << kindStr << "] ";
+
+   // display name
+   os << definition.displayName << " ";
+
+   // file location
+   os << "(" << definition.filePath.filename() << ":"
+      << definition.line << ":" << definition.column << ") ";
+
+   // USR
+   os << definition.USR;
+
+   return os;
+}
 
 Error initialize()
 {

@@ -102,9 +102,20 @@ Cursor Cursor::getCannonical() const
    return Cursor(clang().getCanonicalCursor(cursor()));
 }
 
+Cursor Cursor::getSemanticParent() const
+{
+   return Cursor(clang().getCursorSemanticParent(cursor()));
+}
+
 CXLinkageKind Cursor::getLinkageKind() const
 {
    return clang().getCursorLinkage(cursor());
+}
+
+bool Cursor::hasExternalLinkage() const
+{
+   CXLinkageKind kind = getLinkageKind();
+   return kind == CXLinkage_External || kind == CXLinkage_UniqueExternal;
 }
 
 std::string Cursor::getUSR() const

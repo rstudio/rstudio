@@ -54,14 +54,16 @@ public:
    bool isPreprocessing() const;
    bool isUnexposed() const;
 
-
    bool isDefinition() const;
 
    Cursor getDefinition() const;
 
    Cursor getCannonical() const;
 
+   Cursor getSemanticParent() const;
+
    CXLinkageKind getLinkageKind() const;
+   bool hasExternalLinkage() const;
 
    std::string getUSR() const;
 

@@ -16,12 +16,68 @@
 #ifndef SESSION_MODULES_CLANG_DEFINITIONS_HPP
 #define SESSION_MODULES_CLANG_DEFINITIONS_HPP
 
-#include <core/Error.hpp>
+#include <string>
+#include <iosfwd>
+
+#include <core/FilePath.hpp>
+
+namespace core {
+   class Error;
+}
 
 namespace session {
 namespace modules {      
 namespace clang {
 namespace definitions {
+
+// definition type
+enum DefinitionKind
+{
+   InvalidDefinition = 0,
+   NamespaceDefinition = 1,
+   ClassDefinition = 2,
+   StructDefinition = 3,
+   EnumDefinition = 4,
+   FunctionDefinition = 5,
+   MemberFunctionDefinition = 6
+};
+
+// C++ symbol definition
+struct Definition
+{
+   Definition()
+      : kind(InvalidDefinition),
+        line(0),
+        column(0)
+   {
+   }
+
+   Definition(const std::string& USR,
+              DefinitionKind kind,
+              const std::string& displayName,
+              const core::FilePath& filePath,
+              unsigned line,
+              unsigned column)
+      : USR(USR),
+        kind(kind),
+        displayName(displayName),
+        filePath(filePath),
+        line(line),
+        column(column)
+   {
+   }
+
+   bool empty() const { return USR.empty(); }
+
+   const std::string USR;
+   const DefinitionKind kind;
+   const std::string displayName;
+   const core::FilePath filePath;
+   const unsigned line;
+   const unsigned column;
+};
+
+std::ostream& operator<<(std::ostream& os, const Definition& definition);
 
 core::Error initialize();
 

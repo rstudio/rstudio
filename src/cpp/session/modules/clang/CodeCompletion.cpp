@@ -98,8 +98,7 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
             }
 
             // check whether this completion is valid and bail if not
-            if (result.getAvailability() != CXAvailability_Available &&
-                result.getAvailability() != CXAvailability_Deprecated)
+            if (result.getAvailability() != CXAvailability_Available)
             {
                continue;
             }
