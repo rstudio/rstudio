@@ -676,6 +676,10 @@ utils:::rc.settings(files = TRUE)
    if (TYPE$ROXYGEN %in% type)
       return(.rs.attemptRoxygenTagCompletion(token))
    
+   # No information on completions other than token
+   if (!length(string))
+      return(.rs.getCompletionsSearchPath(token))
+   
    # library, require, requireNamespace, loadNamespace
    if (string[[1]] %in% c("library", "require", "requireNamespace") &&
           numCommas[[1]] == 0)

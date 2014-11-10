@@ -571,7 +571,7 @@ public class RCompletionManager implements CompletionManager
    // 2. The associated function call (if any -- for arguments),
    // 3. The associated data for a `[` call (if any -- completions from data object),
    // 4. The associated data for a `[[` call (if any -- completions from data object)
-   class AutoCompletionContext {
+   class AutocompletionContext {
       
       // Be sure to sync these with 'SessionCodeTools.R'!
       public static final int TYPE_UNKNOWN = 0;
@@ -587,7 +587,7 @@ public class RCompletionManager implements CompletionManager
       public static final int TYPE_ROXYGEN = 10;
       public static final int TYPE_HELP = 11;
       
-      public AutoCompletionContext(
+      public AutocompletionContext(
             String token,
             List<String> assocData,
             List<Integer> dataType,
@@ -601,7 +601,7 @@ public class RCompletionManager implements CompletionManager
          functionCallString_ = functionCallString;
       }
       
-      public AutoCompletionContext(
+      public AutocompletionContext(
             String token,
             ArrayList<String> assocData,
             ArrayList<Integer> dataType)
@@ -613,7 +613,7 @@ public class RCompletionManager implements CompletionManager
          functionCallString_ = "";
       }
       
-      public AutoCompletionContext(
+      public AutocompletionContext(
             String token,
             String assocData,
             int dataType)
@@ -626,7 +626,7 @@ public class RCompletionManager implements CompletionManager
       }
       
       
-      public AutoCompletionContext(
+      public AutocompletionContext(
             String token,
             int dataType)
       {
@@ -637,36 +637,87 @@ public class RCompletionManager implements CompletionManager
          functionCallString_ = "";
       }
       
+      public AutocompletionContext()
+      {
+         token_ = "";
+         assocData_ = new ArrayList<String>();
+         dataType_ = new ArrayList<Integer>();
+         numCommas_ = new ArrayList<Integer>();
+         functionCallString_ = "";
+      }
+
       public String getToken()
       {
          return token_;
       }
-      
+
+      public void setToken(String token)
+      {
+         this.token_ = token;
+      }
+
       public List<String> getAssocData()
       {
          return assocData_;
       }
-      
+
+      public void setAssocData(List<String> assocData)
+      {
+         this.assocData_ = assocData;
+      }
+
       public List<Integer> getDataType()
       {
          return dataType_;
       }
-      
+
+      public void setDataType(List<Integer> dataType)
+      {
+         this.dataType_ = dataType;
+      }
+
       public List<Integer> getNumCommas()
       {
          return numCommas_;
       }
-      
+
+      public void setNumCommas(List<Integer> numCommas)
+      {
+         this.numCommas_ = numCommas_;
+      }
+
       public String getFunctionCallString()
       {
          return functionCallString_;
       }
 
-      private final String token_;
-      private final List<String> assocData_;
-      private final List<Integer> dataType_;
-      private final List<Integer> numCommas_;
-      private final String functionCallString_;
+      public void setFunctionCallString(String functionCallString)
+      {
+         this.functionCallString_ = functionCallString;
+      }
+      
+      public void add(String assocData, Integer dataType, Integer numCommas)
+      {
+         assocData_.add(assocData);
+         dataType_.add(dataType);
+         numCommas_.add(numCommas);
+      }
+      
+      public void add(String assocData, Integer dataType)
+      {
+         add(assocData, dataType, 0);
+      }
+      
+      public void add(String assocData)
+      {
+         add(assocData, AutocompletionContext.TYPE_UNKNOWN, 0);
+      }
+
+      private String token_;
+      private List<String> assocData_;
+      private List<Integer> dataType_;
+      private List<Integer> numCommas_;
+      private String functionCallString_;
       
    }
 
@@ -700,7 +751,7 @@ public class RCompletionManager implements CompletionManager
          if (firstLine.matches("^\\s*$"))
             return false;
       
-      AutoCompletionContext context = getAutocompletionContext();
+      AutocompletionContext context = getAutocompletionContext();
       
       if (!input_.hasSelection())
       {
@@ -825,20 +876,18 @@ public class RCompletionManager implements CompletionManager
    }
    
    
-   private AutoCompletionContext getAutocompletionContextForFile(
+   private AutocompletionContext getAutocompletionContextForFile(
          String line)
    {
       int index = Math.max(line.lastIndexOf('"'), line.lastIndexOf('\''));
-      return new AutoCompletionContext(
+      return new AutocompletionContext(
             line.substring(index + 1),
-            AutoCompletionContext.TYPE_FILE);
+            AutocompletionContext.TYPE_FILE);
    }
    
    private void addAutocompletionContextForNamespace(
          String token,
-         List<String> assocData,
-         List<Integer> dataType,
-         List<Integer> numCommas)
+         AutocompletionContext context)
    {
          String[] splat = token.split(":{2,3}");
          String right = "";
@@ -860,28 +909,20 @@ public class RCompletionManager implements CompletionManager
             left = splat[0];
          }
          
-         assocData.add(left);
-         dataType.add(token.contains(":::") ?
-                     AutoCompletionContext.TYPE_NAMESPACE_ALL :
-                     AutoCompletionContext.TYPE_NAMESPACE_EXPORTED);
-         numCommas.add(0);
+         int type = token.contains(":::") ?
+               AutocompletionContext.TYPE_NAMESPACE_ALL :
+                  AutocompletionContext.TYPE_NAMESPACE_EXPORTED;
+               
+         context.add(left, type);
    }
    
    
-   private AutoCompletionContext getAutocompletionContextForDollar(String token)
+   private boolean addAutocompletionContextForDollar(AutocompletionContext context)
    {
-      // Failure mode context
-      AutoCompletionContext defaultContext = new AutoCompletionContext(
-            token,
-            AutoCompletionContext.TYPE_UNKNOWN);
-      
-      int dollarIndex = Math.max(token.lastIndexOf('$'), token.lastIndexOf('@'));
-      String tokenToUse = token.substring(dollarIndex + 1);
-      
       // Establish an evaluation context by looking backwards
       AceEditor editor = (AceEditor) docDisplay_;
       if (editor == null)
-         return defaultContext;
+         return false;
       
       CodeModel codeModel = editor.getSession().getMode().getCodeModel();
       codeModel.tokenizeUpToRow(input_.getCursorPosition().getRow());
@@ -889,16 +930,16 @@ public class RCompletionManager implements CompletionManager
       TokenCursor cursor = codeModel.getTokenCursor();
          
       if (!cursor.moveToPosition(input_.getCursorPosition()))
-         return defaultContext;
+         return false;
       
       // Move back to the '$'
       while (cursor.currentValue() != "$" && cursor.currentValue() != "@")
          if (!cursor.moveToPreviousToken())
-            return defaultContext;
+            return false;
       
       int type = cursor.currentValue() == "$" ?
-            AutoCompletionContext.TYPE_DOLLAR :
-            AutoCompletionContext.TYPE_AT;
+            AutocompletionContext.TYPE_DOLLAR :
+            AutocompletionContext.TYPE_AT;
       
       // Put a cursor here
       TokenCursor contextEndCursor = cursor.cloneCursor();
@@ -908,30 +949,20 @@ public class RCompletionManager implements CompletionManager
       //     env::foo()$bar()[1]$baz
       // Get the string forming the context
       if (!cursor.findStartOfEvaluationContext())
-         return defaultContext;
+         return false;
       
-      String context = editor.getTextForRange(Range.fromPoints(
+      String data = editor.getTextForRange(Range.fromPoints(
             cursor.currentPosition(),
             contextEndCursor.currentPosition()));
       
-      // and return!
-      return new AutoCompletionContext(
-            tokenToUse,
-            context,
-            type);
+      context.add(data, type);
+      return true;
    }
    
    
-   private AutoCompletionContext getAutocompletionContext()
+   private AutocompletionContext getAutocompletionContext()
    {
-      // Objects filled by this function and later returned
-      String token = "";
-      ArrayList<String> assocData = new ArrayList<String>();
-      ArrayList<Integer> dataType = new ArrayList<Integer>();
-      ArrayList<Integer> numCommas = new ArrayList<Integer>();
-      
-      // Some information re: the function call, if appropriate.
-      String functionCallString = "";
+      AutocompletionContext context = new AutocompletionContext();
       
       String firstLine = input_.getText();
       int row = input_.getCursorPosition().getRow();
@@ -940,7 +971,7 @@ public class RCompletionManager implements CompletionManager
       firstLine = firstLine.substring(0, input_.getCursorPosition().getColumn());
       
       // Get the token at the cursor position
-      token = firstLine.replaceAll(".*[^a-zA-Z0-9._:$@-]", "");
+      String token = firstLine.replaceAll(".*[^a-zA-Z0-9._:$@-]", "");
       
       // If we're completing an object within a string, assume it's a
       // file-system completion
@@ -954,50 +985,42 @@ public class RCompletionManager implements CompletionManager
       // If this line starts with '```{', then we're completing chunk options
       // pass the whole line as a token
       if (firstLine.startsWith("```{") || firstLine.startsWith("<<"))
-         return new AutoCompletionContext(firstLine, AutoCompletionContext.TYPE_CHUNK);
+         return new AutocompletionContext(firstLine, AutocompletionContext.TYPE_CHUNK);
       
       // If this line starts with a '?', assume it's a help query
       if (firstLine.matches("^\\s*[?].*"))
-         return new AutoCompletionContext(token, AutoCompletionContext.TYPE_HELP);
-      
-      // Default case for failure modes
-      AutoCompletionContext defaultContext = new AutoCompletionContext(
-            token,
-            AutoCompletionContext.TYPE_UNKNOWN);
+         return new AutocompletionContext(token, AutocompletionContext.TYPE_HELP);
       
       // escape early for roxygen
       if (firstLine.matches("\\s*#+'.*"))
-         return new AutoCompletionContext(
-               token, AutoCompletionContext.TYPE_ROXYGEN);
+         return new AutocompletionContext(
+               token, AutocompletionContext.TYPE_ROXYGEN);
       
       // if the line is currently within a comment, bail -- this ensures
       // that we can auto-complete within a comment line (but we only
       // need context from that line)
       if (!firstLine.equals(StringUtil.stripRComment(firstLine)))
-         return defaultContext;
+         return new AutocompletionContext("", AutocompletionContext.TYPE_UNKNOWN);
       
       // If the token has '$' or '@', escape early as we'll be completing
       // either from names or an overloaded `$` method
       if (token.contains("$") || token.contains("@"))
-         return getAutocompletionContextForDollar(token);
+         addAutocompletionContextForDollar(context);
       
       // If the token has '::' or ':::', escape early as we'll be completing
       // something from a namespace
       if (token.contains("::"))
-         addAutocompletionContextForNamespace(
-               token,
-               assocData,
-               dataType,
-               numCommas);
+         addAutocompletionContextForNamespace(token, context);
       
       // Now strip the '$' and '@' post-hoc since they're not really part
       // of the identifier
       token = token.replaceAll(".*[$@:]", "");
+      context.setToken(token);
       
       // access to the R Code model
       AceEditor editor = (AceEditor) docDisplay_;
       if (editor == null)
-         return defaultContext;
+         return context;
       
       CodeModel codeModel = editor.getSession().getMode().getCodeModel();
       
@@ -1009,7 +1032,7 @@ public class RCompletionManager implements CompletionManager
       // to the cursor.
       TokenCursor tokenCursor = codeModel.getTokenCursor();
       if (!tokenCursor.moveToPosition(input_.getCursorPosition()))
-         return defaultContext;
+         return context;
       
       TokenCursor startCursor = tokenCursor.cloneCursor();
       boolean startedOnEquals = tokenCursor.currentValue() == "=";
@@ -1031,7 +1054,7 @@ public class RCompletionManager implements CompletionManager
          {
             commaCount = tokenCursor.findOpeningBracketCountCommas("[", false);
             if (commaCount == -1)
-               return defaultContext;
+               return context;
             else
                initialNumCommas = commaCount;
          }
@@ -1040,46 +1063,46 @@ public class RCompletionManager implements CompletionManager
             initialNumCommas = commaCount;
          }
       }
-      numCommas.add(initialNumCommas);
       
       // Figure out whether we're looking at '(', '[', or '[[',
       // and place the token cursor on the first token preceding.
       TokenCursor endOfDecl = tokenCursor.cloneCursor();
+      int initialDataType = AutocompletionContext.TYPE_UNKNOWN;
       if (tokenCursor.currentValue() == "(")
       {
          // Don't produce function argument completions
          // if the cursor is on, or after, an '='
          if (!startedOnEquals)
-            dataType.add(AutoCompletionContext.TYPE_FUNCTION);
+            initialDataType = AutocompletionContext.TYPE_FUNCTION;
          else
-            dataType.add(AutoCompletionContext.TYPE_UNKNOWN);
+            initialDataType = AutocompletionContext.TYPE_UNKNOWN;
          
          if (!tokenCursor.moveToPreviousToken())
-            return defaultContext;
+            return context;
       }
       else if (tokenCursor.currentValue() == "[")
       {
          if (!tokenCursor.moveToPreviousToken())
-            return defaultContext;
+            return context;
          
          if (tokenCursor.currentValue() == "[")
          {
             if (!endOfDecl.moveToPreviousToken())
-               return defaultContext;
+               return context;
             
-            dataType.add(AutoCompletionContext.TYPE_DOUBLE_BRACKET);
+            initialDataType = AutocompletionContext.TYPE_DOUBLE_BRACKET;
             if (!tokenCursor.moveToPreviousToken())
-               return defaultContext;
+               return context;
          }
          else
          {
-            dataType.add(AutoCompletionContext.TYPE_SINGLE_BRACKET);
+            initialDataType = AutocompletionContext.TYPE_SINGLE_BRACKET;
          }
       }
       
       // Get the string marking the function or data
       if (!tokenCursor.findStartOfEvaluationContext())
-         return defaultContext;
+         return context;
       
       // Try to get the function call string -- either there's
       // an associated closing paren we can use, or we should just go up
@@ -1100,53 +1123,58 @@ public class RCompletionManager implements CompletionManager
          }
       }
       
-      functionCallString = editor.getTextForRange(Range.fromPoints(
-            tokenCursor.currentPosition(), endPos));
+      // We can now set the function call string
+      context.setFunctionCallString(
+            editor.getTextForRange(Range.fromPoints(
+                  tokenCursor.currentPosition(), endPos)));
       
-      assocData.add(
+      String initialData = 
             docDisplay_.getTextForRange(Range.fromPoints(
                   tokenCursor.currentPosition(),
-                  endOfDecl.currentPosition())));
+                  endOfDecl.currentPosition()));
       
+      // And the first context
+      context.add(initialData, initialDataType, initialNumCommas);
+
       // Get the rest of the single-bracket contexts for completions as well
+      String assocData;
+      int dataType;
+      int numCommas;
       while (true)
       {
          int commaCount = tokenCursor.findOpeningBracketCountCommas("[", false);
          if (commaCount == -1)
             break;
          
-         numCommas.add(commaCount);
+         numCommas = commaCount;
          
          TokenCursor declEnd = tokenCursor.cloneCursor();
          if (!tokenCursor.moveToPreviousToken())
-            return defaultContext;
+            return context;
          
          if (tokenCursor.currentValue() == "[")
          {
             if (!declEnd.moveToPreviousToken())
-               return defaultContext;
+               return context;
             
-            dataType.add(AutoCompletionContext.TYPE_DOUBLE_BRACKET);
+            dataType = AutocompletionContext.TYPE_DOUBLE_BRACKET;
             if (!tokenCursor.moveToPreviousToken())
-               return defaultContext;
+               return context;
          }
          else
          {
-            dataType.add(AutoCompletionContext.TYPE_SINGLE_BRACKET);
+            dataType = AutocompletionContext.TYPE_SINGLE_BRACKET;
          }
          
-      assocData.add(
+         assocData =
             docDisplay_.getTextForRange(Range.fromPoints(
                   tokenCursor.currentPosition(),
-                  declEnd.currentPosition())));
+                  declEnd.currentPosition()));
+         
+         context.add(assocData, dataType, numCommas);
       }
       
-      return new AutoCompletionContext(
-            token,
-            assocData,
-            dataType,
-            numCommas,
-            functionCallString);
+      return context;
       
    }
    
