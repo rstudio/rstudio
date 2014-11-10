@@ -517,7 +517,7 @@ public class CompletionRequester
       return new CompletionResult(
             token,
             newCompletions,
-            "",
+            cachedResult_.guessedFunctionName,
             cachedResult_.suggestOnAccept,
             cachedResult_.dontInsertParens) ;
    }
