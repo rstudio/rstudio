@@ -610,7 +610,7 @@
    result <- tryCatch({
       wrapper <- function(x, which, exact = FALSE) {}
       matched <- .rs.matchCall(wrapper, functionCall)
-      if (is.null(matched[["x"]]) || !is.null(matched[["which"]]))
+      if (is.null(matched[["x"]]))
          return(.rs.emptyCompletions())
       objectName <- as.character(matched[["x"]])
       object <- .rs.getAnywhere(objectName)
@@ -676,6 +676,20 @@ utils:::rc.settings(files = TRUE)
    if (TYPE$ROXYGEN %in% type)
       return(.rs.attemptRoxygenTagCompletion(token))
    
+   # No information on completions other than token
+   if (!length(string))
+   {
+      # If there was no token, give up
+      if (token == "")
+         return(.rs.emptyCompletions())
+      
+      # Otherwise, complete from the seach path + available packages
+      return(.rs.appendCompletions(
+         .rs.getCompletionsSearchPath(token),
+         .rs.getCompletionsPackages(token, TRUE)
+      ))
+   }
+   
    # library, require, requireNamespace, loadNamespace
    if (string[[1]] %in% c("library", "require", "requireNamespace") &&
           numCommas[[1]] == 0)
@@ -683,27 +697,32 @@ utils:::rc.settings(files = TRUE)
       return(.rs.getCompletionsPackages(token))
    }
    
-   ## attr
-   if (string[[1]] == "attr")
+   ## Other special cases (but we may still want completions from
+   ## other contexts)
+   
+   # attr
+   completions <- if (string[[1]] == "attr")
    {
-      result <- .rs.getCompletionsAttr(token, functionCall)
-      if (!.rs.isEmptyCompletion(result))
-         return(result)
+      .rs.getCompletionsAttr(token, functionCall)
    }
    
    # getOption
-   if (string[[1]] == "getOption" && numCommas[[1]] == 0)
+   else if (string[[1]] == "getOption" && numCommas[[1]] == 0)
    {
-      return(.rs.getCompletionsGetOption(token))
+      .rs.getCompletionsGetOption(token)
    }
    
    # options
-   if (string[[1]] == "options" && type == TYPE$FUNCTION)
+   else if (string[[1]] == "options" && type == TYPE$FUNCTION)
    {
-      return(.rs.getCompletionsOptions(token))
+      .rs.getCompletionsOptions(token)
    }
    
-   completions <- .rs.emptyCompletions()
+   # no special case (start with empty completions)
+   else
+   {
+      completions <- .rs.emptyCompletions()
+   }
    
    for (i in seq_along(string))
    {
@@ -761,22 +780,25 @@ utils:::rc.settings(files = TRUE)
    )
    
    ## Override param insertion if the function was 'debug' or 'trace'
-   if (type[[1]] %in% c(TYPE$FUNCTION, TYPE$UNKNOWN))
+   for (i in seq_along(type))
    {
-      ## Blacklist certain functions
-      if (string[[1]] %in% c("help", "str"))
+      if (type[[i]] %in% c(TYPE$FUNCTION, TYPE$UNKNOWN))
       {
-         completions$overrideInsertParens <- .rs.scalar(TRUE)
-      }
-      else
-      {
-         ## Blacklist based on formals of the function
-         object <- .rs.getAnywhere(string[[1]], parent.frame())
-         if (is.function(object))
+         ## Blacklist certain functions
+         if (string[[i]] %in% c("help", "str"))
          {
-            argNames <- .rs.getFunctionArgumentNames(object)
-            if (any(c("f", "fun", "func") %in% tolower(gsub("[^a-zA-Z]", "", argNames))))
-               completions$overrideInsertParens <- .rs.scalar(TRUE)
+            completions$overrideInsertParens <- .rs.scalar(TRUE)
+         }
+         else
+         {
+            ## Blacklist based on formals of the function
+            object <- .rs.getAnywhere(string[[i]], parent.frame())
+            if (is.function(object))
+            {
+               argNames <- .rs.getFunctionArgumentNames(object)
+               if (any(c("f", "fun", "func") %in% tolower(gsub("[^a-zA-Z]", "", argNames))))
+                  completions$overrideInsertParens <- .rs.scalar(TRUE)
+            }
          }
       }
    }

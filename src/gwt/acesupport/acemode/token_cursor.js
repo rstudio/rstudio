@@ -466,7 +466,6 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
             if (cloneDecltype.moveToPreviousToken()) {
                if (cloneDecltype.currentValue() === "decltype") {
                   if (cloneDecltype.moveToPreviousToken()) {
-                     console.log(cloneDecltype.currentToken());
                      clone.$row = cloneDecltype.$row;
                      clone.$offset = cloneDecltype.$offset;
                   }

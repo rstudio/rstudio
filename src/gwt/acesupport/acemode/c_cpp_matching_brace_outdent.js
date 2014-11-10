@@ -59,7 +59,7 @@ var $alignCase                 = true; // case 'a':
 
          // private: / public: / protected
          // also class initializer lists
-         if (input == ":") {
+         if (input === ":") {
             return true;
          }
 
@@ -365,9 +365,10 @@ var $alignCase                 = true; // case 'a':
             {
                row: row,
                column: line.length
-            }
+            },
+            new RegExp(/paren\.keyword\.operator/)
          );
-         
+
          if (openBracePos) {
             // If this open brace is already associated with a class or struct,
             // step over all of those rows.
