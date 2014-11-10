@@ -13,6 +13,26 @@
 #
 #
 
+# Put the autocompletion types in the .rs.Env environment so they're accessible
+# everywhere (sync with RCompletionManager.java)
+assign(x = ".rs.acTypes",
+       pos = which(search() == "tools:rstudio"),
+       value = list(
+          UNKNOWN = 0L,
+          FUNCTION = 1L,
+          SINGLE_BRACKET = 2L,
+          DOUBLE_BRACKET = 3L,
+          NAMESPACE_EXPORTED = 4L,
+          NAMESPACE_ALL = 5L,
+          DOLLAR = 6L,
+          AT = 7L,
+          FILE = 8L,
+          CHUNK = 9L,
+          ROXYGEN = 10L,
+          HELP = 11L
+       )
+)
+
 .rs.addFunction("attemptRoxygenTagCompletion", function(token)
 {
    match <- grepl("^@[a-zA-Z0-9]*$", token, perl = TRUE)
@@ -643,22 +663,6 @@ utils:::rc.settings(files = TRUE)
    additionalArgs <- as.character(additionalArgs)
    excludeArgs <- as.character(excludeArgs)
    
-   ## Different completion types (sync with RCompletionManager.java)
-   TYPE <- list(
-      UNKNOWN = 0L,
-      FUNCTION = 1L,
-      SINGLE_BRACKET = 2L,
-      DOUBLE_BRACKET = 3L,
-      NAMESPACE_EXPORTED = 4L,
-      NAMESPACE_ALL = 5L,
-      DOLLAR = 6L,
-      AT = 7L,
-      FILE = 8L,
-      CHUNK = 9L,
-      ROXYGEN = 10L,
-      HELP = 11L
-   )
-   
    ## Try to parse the function call string
    functionCall <- tryCatch({
       parse(text = .rs.finishExpression(functionCallString))[[1]]
@@ -669,11 +673,11 @@ utils:::rc.settings(files = TRUE)
    ## Handle some special cases early
    
    # help
-   if (TYPE$HELP %in% type)
+   if (.rs.acTypes$HELP %in% type)
       return(.rs.getCompletionsHelp(token))
    
    # Roxygen
-   if (TYPE$ROXYGEN %in% type)
+   if (.rs.acTypes$ROXYGEN %in% type)
       return(.rs.attemptRoxygenTagCompletion(token))
    
    # No information on completions other than token
@@ -713,7 +717,7 @@ utils:::rc.settings(files = TRUE)
    }
    
    # options
-   else if (string[[1]] == "options" && type == TYPE$FUNCTION)
+   else if (string[[1]] == "options" && type == .rs.acTypes$FUNCTION)
    {
       .rs.getCompletionsOptions(token)
    }
@@ -726,7 +730,7 @@ utils:::rc.settings(files = TRUE)
    
    for (i in seq_along(string))
    {
-      discardFirst <- type[[i]] == TYPE$FUNCTION && chainObjectName != ""
+      discardFirst <- type[[i]] == .rs.acTypes$FUNCTION && chainObjectName != ""
       completions <- .rs.appendCompletions(
          completions,
          .rs.getRCompletions(token,
@@ -735,28 +739,27 @@ utils:::rc.settings(files = TRUE)
                              numCommas[[i]],
                              functionCall,
                              discardFirst,
-                             parent.frame(),
-                             TYPE)
+                             parent.frame())
       )
    }
    
    if (token != "" && 
-          type[[1]] %in% c(TYPE$UNKNOWN, TYPE$FUNCTION,
-                           TYPE$SINGLE_BRACKET, TYPE$DOUBLE_BRACKET))
+          type[[1]] %in% c(.rs.acTypes$UNKNOWN, .rs.acTypes$FUNCTION,
+                           .rs.acTypes$SINGLE_BRACKET, .rs.acTypes$DOUBLE_BRACKET))
       completions <- .rs.appendCompletions(
          completions,
          .rs.getCompletionsSearchPath(token)
       )
    
    ## File-based completions
-   if (TYPE$FILE %in% type)
+   if (.rs.acTypes$FILE %in% type)
       completions <- .rs.appendCompletions(
          completions,
          .rs.getCompletionsFile(token)
       )
    
    ## Package completions (e.g. `stats::`)
-   if (token != "" && length(type) == 1 && type == TYPE$UNKNOWN)
+   if (token != "" && length(type) == 1 && type == .rs.acTypes$UNKNOWN)
       completions <- .rs.appendCompletions(
          completions,
          .rs.getCompletionsPackages(token, TRUE)
@@ -782,7 +785,7 @@ utils:::rc.settings(files = TRUE)
    ## Override param insertion if the function was 'debug' or 'trace'
    for (i in seq_along(type))
    {
-      if (type[[i]] %in% c(TYPE$FUNCTION, TYPE$UNKNOWN))
+      if (type[[i]] %in% c(.rs.acTypes$FUNCTION, .rs.acTypes$UNKNOWN))
       {
          ## Blacklist certain functions
          if (string[[i]] %in% c("help", "str"))
@@ -808,10 +811,10 @@ utils:::rc.settings(files = TRUE)
       completions$fguess <- ""
    
    completions$excludeOtherCompletions <- .rs.scalar(type[[1]] %in% c(
-      TYPE$DOLLAR,
-      TYPE$AT,
-      TYPE$NAMESPACE_EXPORTED,
-      TYPE$NAMESPACE_ALL
+      .rs.acTypes$DOLLAR,
+      .rs.acTypes$AT,
+      .rs.acTypes$NAMESPACE_EXPORTED,
+      .rs.acTypes$NAMESPACE_ALL
    ))
    
    if (is.null(completions$quote))
@@ -974,19 +977,17 @@ utils:::rc.settings(files = TRUE)
                                             numCommas,
                                             functionCall,
                                             discardFirst,
-                                            envir,
-                                            TYPE)
-{   
-   
-   if (type %in% c(TYPE$DOLLAR, TYPE$AT))
-      .rs.getCompletionsDollar(token, string, envir, type == TYPE$AT)
-   else if (type %in% c(TYPE$NAMESPACE_EXPORTED, TYPE$NAMESPACE_ALL))
-      .rs.getCompletionsNamespace(token, string, type == TYPE$NAMESPACE_EXPORTED, envir)
-   else if (type == TYPE$FUNCTION)
+                                            envir)
+{
+   if (type %in% c(.rs.acTypes$DOLLAR, .rs.acTypes$AT))
+      .rs.getCompletionsDollar(token, string, envir, type == .rs.acTypes$AT)
+   else if (type %in% c(.rs.acTypes$NAMESPACE_EXPORTED, .rs.acTypes$NAMESPACE_ALL))
+      .rs.getCompletionsNamespace(token, string, type == .rs.acTypes$NAMESPACE_EXPORTED, envir)
+   else if (type == .rs.acTypes$FUNCTION)
       .rs.getCompletionsFunction(token, string, functionCall, discardFirst, envir)
-   else if (type == TYPE$SINGLE_BRACKET)
+   else if (type == .rs.acTypes$SINGLE_BRACKET)
       .rs.getCompletionsSingleBracket(token, string, numCommas, envir)
-   else if (type == TYPE$DOUBLE_BRACKET)
+   else if (type == .rs.acTypes$DOUBLE_BRACKET)
       .rs.getCompletionsDoubleBracket(token, string, envir)
    else
       .rs.emptyCompletions()
