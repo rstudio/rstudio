@@ -194,8 +194,16 @@ options(help_type = "html")
 
 .rs.addJsonRpcHandler("show_help_topic", function(topic, package)
 {
+   if (is.null(package) && grepl(":{2,3}", topic, perl = TRUE))
+   {
+      splat <- strsplit(topic, ":{2,3}", perl = TRUE)[[1]]
+      topic <- splat[[2]]
+      package <- splat[[1]]
+   }
+   
    if (!is.null(package))
-      require(package, character.only = TRUE)
+      requireNamespace(package, quietly = TRUE)
+   
    print(help(topic, help_type="html"))
 })
 
