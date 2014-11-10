@@ -384,6 +384,7 @@ public class RCompletionManager implements CompletionManager
             input_.insertCode("()");
             input_.setSelection(new InputEditorSelection(
                   input_.getSelection().getStart().movePosition(-1, true)));
+            invalidatePendingRequests();
             return beginSuggest(true, true, false);
          }
          
@@ -412,7 +413,6 @@ public class RCompletionManager implements CompletionManager
 
                   input_.setSelection(new InputEditorSelection(start, end));
                   input_.replaceSelection("", false);
-
 
                   invalidatePendingRequests();
                   return beginSuggest(true, false, false);
