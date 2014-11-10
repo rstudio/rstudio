@@ -924,10 +924,6 @@ public class RCompletionManager implements CompletionManager
          {
             left = "";
          }
-         else if (splat.length == 1)
-         {
-            left = splat[0];
-         }
          else
          {
             left = splat[0];
