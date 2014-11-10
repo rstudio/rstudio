@@ -834,8 +834,11 @@ public class RCompletionManager implements CompletionManager
             AutoCompletionContext.TYPE_FILE);
    }
    
-   private AutoCompletionContext getAutocompletionContextForNamespace(
-         String token)
+   private void addAutocompletionContextForNamespace(
+         String token,
+         List<String> assocData,
+         List<Integer> dataType,
+         List<Integer> numCommas)
    {
          String[] splat = token.split(":{2,3}");
          String right = "";
@@ -856,13 +859,12 @@ public class RCompletionManager implements CompletionManager
             right = splat[1];
             left = splat[0];
          }
-            
-         return new AutoCompletionContext(
-               right,
-               left,
-               token.contains(":::") ?
+         
+         assocData.add(left);
+         dataType.add(token.contains(":::") ?
                      AutoCompletionContext.TYPE_NAMESPACE_ALL :
                      AutoCompletionContext.TYPE_NAMESPACE_EXPORTED);
+         numCommas.add(0);
    }
    
    
@@ -982,11 +984,15 @@ public class RCompletionManager implements CompletionManager
       // If the token has '::' or ':::', escape early as we'll be completing
       // something from a namespace
       if (token.contains("::"))
-         return getAutocompletionContextForNamespace(token);
+         addAutocompletionContextForNamespace(
+               token,
+               assocData,
+               dataType,
+               numCommas);
       
       // Now strip the '$' and '@' post-hoc since they're not really part
       // of the identifier
-      token = token.replaceAll(".*[$@]", ""); // TODO: strip colon?
+      token = token.replaceAll(".*[$@:]", "");
       
       // access to the R Code model
       AceEditor editor = (AceEditor) docDisplay_;
