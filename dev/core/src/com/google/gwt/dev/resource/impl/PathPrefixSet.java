@@ -29,6 +29,8 @@ import java.util.Map;
 /**
  * Combines the information conveyed about a set of path prefixes to quickly
  * answer questions regarding an entire set of path prefixes.
+ * <p>
+ * Is effectively immutable and should not be modified after initial use.
  */
 public class PathPrefixSet {
   /*

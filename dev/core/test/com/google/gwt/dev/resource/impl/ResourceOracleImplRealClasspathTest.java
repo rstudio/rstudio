@@ -100,12 +100,20 @@ public class ResourceOracleImplRealClasspathTest extends
     assertResourcesEqual(resourceMap, resourceOracle.getResourceMap());
 
     // Setting identical result should have no effect.
+    pathPrefixSet = new PathPrefixSet();
     pathPrefixSet.add(makeJunitPrefix());
+    pathPrefixSet.add(makeThisClassPrefix());
+    pathPrefixSet.add(makeJunitPrefix());
+    resourceOracle.setPathPrefixes(pathPrefixSet);
     resourceOracle.scanResources(logger);
     assertResourcesEqual(resourceMap, resourceOracle.getResourceMap());
 
     // Actually change the working set.
+    pathPrefixSet = new PathPrefixSet();
+    pathPrefixSet.add(makeJunitPrefix());
+    pathPrefixSet.add(makeThisClassPrefix());
     pathPrefixSet.add(makeThisClassPrefixPlus());
+    resourceOracle.setPathPrefixes(pathPrefixSet);
     resourceOracle.scanResources(logger);
     assertEquals(3, resourceOracle.getResourceMap().size());
   }
