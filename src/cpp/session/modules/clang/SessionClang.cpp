@@ -258,11 +258,9 @@ Error initialize()
       return Success();
 
    // initialize definition index
-   /*
    error = initializeDefinitionIndex();
    if (error)
       return error;
-   */
 
    // keep a map of id to filename for source database event forwarding
    boost::shared_ptr<IdToFile> pIdToFile = boost::make_shared<IdToFile>();

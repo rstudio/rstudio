@@ -15,13 +15,17 @@
 
 #include "DefinitionIndex.hpp"
 
+#include <deque>
+
 #include <core/FilePath.hpp>
+#include <core/PerformanceTimer.hpp>
 #include <core/libclang/LibClang.hpp>
 #include <core/system/ProcessArgs.hpp>
 #include <session/IncrementalFileChangeHandler.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 
+#include "RSourceIndex.hpp"
 #include "RCompilationDatabase.hpp"
 
 using namespace core;
@@ -33,12 +37,17 @@ namespace clang {
 
 namespace {
 
-// lookup definition by USR
-typedef std::map<std::string,Definition> Definitions;
+// store definitions by file
+typedef std::map<std::string,std::deque<Definition> > DefinitionsByFile;
+DefinitionsByFile s_definitionsByFile;
 
-// definitions by file
-std::map<std::string,Definitions> s_definitionsByFile;
-
+// visitor used to populate deque
+bool insertDefinition(const Definition& definition,
+                      std::deque<Definition>* pDefinitions)
+{
+   pDefinitions->push_back(definition);
+   return true;
+}
 
 bool isTranslationUnit(const FileInfo& fileInfo,
                        const FilePath& pkgSrcDir,
@@ -67,7 +76,7 @@ bool isTranslationUnit(const FileInfo& fileInfo,
    }
 }
 
-typedef boost::function<void(const Definition&)> DefinitionVisitor;
+typedef boost::function<bool(const Definition&)> DefinitionVisitor;
 
 CXChildVisitResult cursorVisitor(CXCursor cxCursor,
                                  CXCursor,
@@ -143,13 +152,14 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
    Definition definition(cursor.getUSR(),
                          kind,
                          displayName,
-                         FilePath(file),
-                         line,
-                         column);
+                         Location(FilePath(file),
+                                  line,
+                                  column));
 
-   // yield the definition
+   // yield the definition (break if requested)
    DefinitionVisitor& visitor = *((DefinitionVisitor*)clientData);
-   visitor(definition);
+   if (!visitor(definition))
+      return CXChildVisit_Break;
 
    // recurse if necessary
    if (kind == NamespaceDefinition ||
@@ -164,11 +174,6 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
    }
 }
 
-void printDefinition(const Definition& definition)
-{
-   std::cout << "   " << definition << std::endl;
-}
-
 void fileChangeHandler(const core::system::FileChangeEvent& event)
 {
    // always remove existing definitions
@@ -178,7 +183,7 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
    // if this is an add or an update then re-index
    if (event.type() == core::system::FileChangeEvent::FileAdded ||
        event.type() == core::system::FileChangeEvent::FileModified)
-   {
+   {    
       // get the compilation arguments for this file and use them to
       // create a translation unit
       std::vector<std::string> compileArgs =
@@ -186,9 +191,6 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
 
       if (!compileArgs.empty())
       {
-         // insert an entry for this file
-         std::cout << file << std::endl;
-
          // create index
          CXIndex index = libclang::clang().createIndex(
                                              1 /* Exclude PCH */,
@@ -207,8 +209,13 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
                                CXTranslationUnit_None |
                                CXTranslationUnit_Incomplete);
 
-         // visit all of the cursors
-         DefinitionVisitor visitor = printDefinition;
+
+         // create deque of definitions and wire visitor to it
+         s_definitionsByFile[file] = std::deque<Definition>();
+         DefinitionVisitor visitor =
+            boost::bind(insertDefinition, _1, &s_definitionsByFile[file]);
+
+         // visit the cursors
          libclang::clang().visitChildren(
               libclang::clang().getTranslationUnitCursor(tu),
               cursorVisitor,
@@ -258,13 +265,107 @@ std::ostream& operator<<(std::ostream& os, const Definition& definition)
    os << definition.displayName << " ";
 
    // file location
-   os << "(" << definition.filePath.filename() << ":"
-      << definition.line << ":" << definition.column << ") ";
+   os << "(" << definition.location.filePath.filename() << ":"
+      << definition.location.line << ":" << definition.location.column << ") ";
 
    // USR
    os << definition.USR;
 
    return os;
+}
+
+namespace {
+
+bool findUSR(const std::string& USR,
+             const Definition& definition,
+             Definition* pFoundDefinition)
+{
+   if (definition.USR == USR)
+   {
+      *pFoundDefinition = definition;
+      return false;
+   }
+   else
+   {
+      return true;
+   }
+}
+
+} // anonymous namespace
+
+Location findDefinitionLocation(const Location& location)
+{
+   // get the translation unit
+   std::string filename = location.filePath.absolutePath();
+   TranslationUnit tu = rSourceIndex().getTranslationUnit(filename, true);
+   if (tu.empty())
+      return Location();
+
+   // get the cursor
+   Cursor cursor = tu.getCursor(filename, location.line, location.column);
+   if (cursor.isNull())
+      return Location();
+
+   // follow reference if we need to
+   if (cursor.isReference() || cursor.isExpression())
+   {
+      cursor = cursor.getReferenced();
+      if (cursor.isNull())
+         return Location();
+   }
+
+   // get the USR for the cursor and search for it
+   std::string USR = cursor.getUSR();
+   if (!USR.empty())
+   {
+      // first inspect translation units we have an in-memory index for
+      typedef std::map<std::string,CXTranslationUnit> TranslationUnits;
+      TranslationUnits units = rSourceIndex().getIndexedTranslationUnits();
+      BOOST_FOREACH(const TranslationUnits::value_type& unit, units)
+      {
+         // search for the definition
+         Definition def;
+         DefinitionVisitor visitor = boost::bind(findUSR, USR, _1, &def);
+
+         // visit the cursors
+         libclang::clang().visitChildren(
+              libclang::clang().getTranslationUnitCursor(unit.second),
+              cursorVisitor,
+              (CXClientData)&visitor);
+
+         // return the definition if we found it
+         if (!def.empty())
+            return def.location;
+      }
+
+      // if we didn't find it there then look for it in our index
+      // of all saved files
+      BOOST_FOREACH(const DefinitionsByFile::value_type& defs,
+                    s_definitionsByFile)
+      {
+         BOOST_FOREACH(const Definition& def, defs.second)
+         {
+            if (def.USR == USR)
+               return def.location;
+         }
+      }
+   }
+
+   // unable to find the cursor by searching USRs so we just ask the
+   // cursor for it's definition (will likely point to either a source
+   // file local declaration or a declaration in a a header file)
+   if (!cursor.isDefinition())
+   {
+      cursor = cursor.getDefinition();
+      if (cursor.isNull())
+         return Location();
+   }
+
+   // return the location
+   SourceLocation loc = cursor.getSourceLocation();
+   unsigned line, column;
+   loc.getSpellingLocation(&filename, &line, &column);
+   return Location(FilePath(filename), line, column);
 }
 
 Error initializeDefinitionIndex()

@@ -20,6 +20,7 @@
 #include <iosfwd>
 
 #include <core/FilePath.hpp>
+#include <core/libclang/LibClang.hpp>
 
 namespace core {
    class Error;
@@ -41,42 +42,56 @@ enum DefinitionKind
    MemberFunctionDefinition = 6
 };
 
+// source location
+struct Location
+{
+   Location()
+      : line(0), column(0)
+   {
+   }
+
+   Location(const core::FilePath& filePath, unsigned line, unsigned column)
+      : filePath(filePath), line(line), column(column)
+   {
+   }
+
+   bool empty() const { return filePath.empty(); }
+
+   core::FilePath filePath;
+   unsigned line;
+   unsigned column;
+};
+
 // C++ symbol definition
 struct Definition
 {
    Definition()
-      : kind(InvalidDefinition),
-        line(0),
-        column(0)
+      : kind(InvalidDefinition)
    {
    }
 
    Definition(const std::string& USR,
               DefinitionKind kind,
               const std::string& displayName,
-              const core::FilePath& filePath,
-              unsigned line,
-              unsigned column)
+              const Location& location)
       : USR(USR),
         kind(kind),
         displayName(displayName),
-        filePath(filePath),
-        line(line),
-        column(column)
+        location(location)
    {
    }
 
-   bool empty() const { return USR.empty(); }
+   bool empty() const { return kind == InvalidDefinition; }
 
-   const std::string USR;
-   const DefinitionKind kind;
-   const std::string displayName;
-   const core::FilePath filePath;
-   const unsigned line;
-   const unsigned column;
+   std::string USR;
+   DefinitionKind kind;
+   std::string displayName;
+   Location location;
 };
 
 std::ostream& operator<<(std::ostream& os, const Definition& definition);
+
+Location findDefinitionLocation(const Location& location);
 
 core::Error initializeDefinitionIndex();
 

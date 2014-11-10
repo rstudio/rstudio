@@ -68,6 +68,9 @@ public:
    void removeTranslationUnit(const std::string& filename);
    void removeAllTranslationUnits();
 
+   // get all indexed translation units
+   std::map<std::string,CXTranslationUnit> getIndexedTranslationUnits() const;
+
    // get the translation unit for the passed file (can be a c/cpp file
    // or a header file)
    TranslationUnit getTranslationUnit(const std::string& filename,

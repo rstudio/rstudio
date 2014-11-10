@@ -92,6 +92,11 @@ bool Cursor::isDefinition() const
    return clang().isCursorDefinition(cursor()) != 0;
 }
 
+Cursor Cursor::getReferenced() const
+{
+   return Cursor(clang().getCursorReferenced(cursor()));
+}
+
 Cursor Cursor::getDefinition() const
 {
    return Cursor(clang().getCursorDefinition(cursor()));

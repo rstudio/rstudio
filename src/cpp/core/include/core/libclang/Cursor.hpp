@@ -56,6 +56,8 @@ public:
 
    bool isDefinition() const;
 
+   Cursor getReferenced() const;
+
    Cursor getDefinition() const;
 
    Cursor getCannonical() const;
