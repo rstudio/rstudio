@@ -351,14 +351,13 @@ Location findDefinitionLocation(const Location& location)
       }
    }
 
-   // unable to find the cursor by searching USRs so we just ask the
-   // cursor for it's definition (will likely point to either a source
-   // file local declaration or a declaration in a a header file)
+   // see if we can resolve the cursor to a definition (if we can't
+   // that's okay)
    if (!cursor.isDefinition())
    {
-      cursor = cursor.getDefinition();
-      if (cursor.isNull())
-         return Location();
+      Cursor cursorDef = cursor.getDefinition();
+      if (!cursorDef.isNull())
+         cursor = cursorDef;
    }
 
    // return the location
