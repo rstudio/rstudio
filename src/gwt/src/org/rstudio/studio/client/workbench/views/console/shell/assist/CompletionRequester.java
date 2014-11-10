@@ -256,9 +256,7 @@ public class CompletionRequester
             
             // Get server completions
             for (int i = 0; i < comp.length(); i++)
-            {
                newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
-            }
             
             // Get variable completions from the current scope
             if (!response.getExcludeOtherCompletions())

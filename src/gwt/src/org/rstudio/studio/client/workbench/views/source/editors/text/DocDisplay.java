@@ -90,6 +90,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    boolean moveSelectionToBlankLine(); 
    void reindent();
    void reindent(Range range);
+   void reindentCurrentRow();
    ChangeTracker getChangeTracker();
 
    String getCode(Position start, Position end);

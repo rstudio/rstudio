@@ -1108,6 +1108,13 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
+   public void reindentCurrentRow()
+   {
+      getSession().reindent(Range.fromPoints(
+            getCursorPosition(), getCursorPosition()));
+   }
+   
+   @Override
    public void toggleCommentLines()
    {
       widget_.getEditor().toggleCommentLines();

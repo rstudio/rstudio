@@ -301,6 +301,19 @@ public class RCompletionManager implements CompletionManager
          {
             goToFunctionDefinition();
          }
+         
+         // Also pop up completions if the user hits enter when calling a fn
+         if (keycode == KeyCodes.KEY_ENTER && modifier == KeyboardShortcut.NONE)
+         {
+            String currentLine = docDisplay_.getCurrentLine().substring(
+                  0, input_.getCursorPosition().getColumn());
+            if (currentLine.matches(".*[,(]\\s*$"))
+            {
+               docDisplay_.insertCode("\n");
+               docDisplay_.reindentCurrentRow();
+               return beginSuggest(true, false, false);
+            }
+         }
       }
       else
       {
