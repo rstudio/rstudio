@@ -33,6 +33,7 @@ public interface StandardIcons extends ClientBundle
    ImageResource help();
    ImageResource function();
    ImageResource namespace();
+   ImageResource method();
    ImageResource lambda();
    ImageResource clazz();
    ImageResource anon();

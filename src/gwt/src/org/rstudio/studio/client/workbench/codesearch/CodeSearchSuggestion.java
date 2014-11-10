@@ -56,11 +56,12 @@ class CodeSearchSuggestion implements Suggestion
       matchedString_ = sourceItem.getFunctionName();
       
       // compute display string
-      ImageResource image = StandardIcons.INSTANCE.function();
+      StandardIcons icons = StandardIcons.INSTANCE;
+      ImageResource image = icons.function();
       if (sourceItem.getType() == RSourceItem.METHOD)
-         image = RES.method();
+         image = icons.method();
       else if (sourceItem.getType() == RSourceItem.CLASS)
-         image = RES.cls();
+         image = icons.clazz();
       
       // adjust context for parent context
       String context = sourceItem.getContext();

@@ -36,9 +36,7 @@ public interface CodeSearchResources extends ClientBundle
   
    @Source("CodeSearch.css")
    Styles styles();
-   
-   ImageResource method();
-   ImageResource cls();
+ 
    ImageResource gotoFunction();
    
    public static CodeSearchResources INSTANCE = 
