@@ -195,7 +195,13 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
       else if (args == stored.compileArgs)
       {
          if (verbose_ > 0)
-            std::cerr << "  (File changed on disk, reparsing)" << std::endl;
+         {
+            std::string reason = alwaysReparse ?
+                                       "(Forced reparse)" :
+                                       "(File changed on disk, reparsing)";
+
+            std::cerr << "  " << reason << std::endl;
+         }
 
          int ret = clang().reparseTranslationUnit(
                                 stored.tu,
