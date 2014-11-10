@@ -1181,9 +1181,9 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                      var functionEndPos = functionEndCursor.currentPosition();
                      functionName = this.$doc.getTextRange(new Range(
                         functionStartPos.row,
-                        functionStartPos.column + functionEndCursor.currentValue().length,
+                        functionStartPos.column,
                         functionEndPos.row,
-                        functionEndPos.column
+                        functionEndPos.column + functionEndCursor.currentValue().length
                      ));
                   }
                }
