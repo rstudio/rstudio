@@ -56,4 +56,13 @@ public class Mode extends JavaScriptObject
    public native final InsertChunkInfo getInsertChunkInfo() /*-{
       return this.insertChunkInfo || null;
    }-*/;
+   
+   public native final String getNextLineIndent(
+         String state,
+         String line,
+         String tab,
+         int tabSize,
+         int row) /*-{
+      return this.getNextLineIndent(state, line, tab, tabSize, row);
+   }-*/;
 }

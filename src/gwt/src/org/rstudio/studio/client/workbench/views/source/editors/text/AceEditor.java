@@ -1108,13 +1108,6 @@ public class AceEditor implements DocDisplay,
    }
    
    @Override
-   public void reindentCurrentRow()
-   {
-      getSession().reindent(Range.fromPoints(
-            getCursorPosition(), getCursorPosition()));
-   }
-   
-   @Override
    public void toggleCommentLines()
    {
       widget_.getEditor().toggleCommentLines();
@@ -1358,6 +1351,28 @@ public class AceEditor implements DocDisplay,
    {
       return getSession().getMode().getCodeModel().getCurrentScope(
             getCursorPosition());
+   }
+   
+   @Override
+   public String getNextLineIndent()
+   {
+      EditSession session = getSession();
+      
+      Position cursorPosition = getCursorPosition();
+      int row = cursorPosition.getRow();
+      String state = getSession().getState(row);
+      
+      String line = getCurrentLine().substring(
+            0, cursorPosition.getColumn());
+      String tab = session.getTabString();
+      int tabSize = session.getTabSize();
+      
+      return session.getMode().getNextLineIndent(
+            state,
+            line,
+            tab,
+            tabSize,
+            row);
    }
 
    public Scope getCurrentChunk()

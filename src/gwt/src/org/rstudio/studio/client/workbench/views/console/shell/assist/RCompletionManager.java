@@ -310,7 +310,8 @@ public class RCompletionManager implements CompletionManager
             if (currentLine.matches(".*[,(]\\s*$"))
             {
                docDisplay_.insertCode("\n");
-               docDisplay_.reindentCurrentRow();
+               String nextLineIndent = docDisplay_.getNextLineIndent();
+               docDisplay_.insertCode(nextLineIndent);
                return beginSuggest(true, false, false);
             }
          }
