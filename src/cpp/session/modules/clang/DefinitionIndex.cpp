@@ -125,21 +125,22 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
    if (kind == CppInvalidDefinition)
       return CXChildVisit_Continue;
 
-   // build display name (strip trailing parens)
-   std::string displayName = cursor.displayName();
-   boost::algorithm::replace_last(displayName, "()", "");
+   // build name (strip trailing parens)
+   std::string name = cursor.displayName();
+   boost::algorithm::replace_last(name, "()", "");
 
    // empty display name for a namespace === anonymous
-   if ((kind == CppNamespaceDefinition) && displayName.empty())
+   if ((kind == CppNamespaceDefinition) && name.empty())
    {
-      displayName = "<anonymous>";
+      name = "<anonymous>";
    }
 
    // qualify class members
+   std::string parentName;
    if (kind == CppMemberFunctionDefinition)
    {
       Cursor parent = cursor.getSemanticParent();
-      displayName = parent.displayName() + "::" + displayName;
+      parentName = parent.displayName();
    }
 
    // get the source location
@@ -151,7 +152,8 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
    // create the definition
    CppDefinition definition(cursor.getUSR(),
                             kind,
-                            displayName,
+                            parentName,
+                            name,
                             FileLocation(FilePath(file), line, column));
 
    // yield the definition (break if requested)
@@ -260,7 +262,9 @@ std::ostream& operator<<(std::ostream& os, const CppDefinition& definition)
    os << "[" << kindStr << "] ";
 
    // display name
-   os << definition.displayName << " ";
+   if (!definition.parentName.empty())
+      os << definition.parentName << "::";
+   os << definition.name << " ";
 
    // file location
    os << "(" << definition.location.filePath.filename() << ":"

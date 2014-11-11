@@ -72,20 +72,23 @@ struct CppDefinition
 
    CppDefinition(const std::string& USR,
                  CppDefinitionKind kind,
-                 const std::string& displayName,
+                 const std::string& parentName,
+                 const std::string& name,
                  const FileLocation& location)
       : USR(USR),
         kind(kind),
-        displayName(displayName),
+        parentName(parentName),
+        name(name),
         location(location)
    {
    }
 
-   bool empty() const { return displayName.empty(); }
+   bool empty() const { return name.empty(); }
 
    std::string USR;
    CppDefinitionKind kind;
-   std::string displayName;
+   std::string parentName; // e.g. containing C++ class
+   std::string name;
    FileLocation location;
 };
 
