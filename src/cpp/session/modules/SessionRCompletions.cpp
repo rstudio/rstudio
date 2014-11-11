@@ -23,6 +23,7 @@
 #include <r/RJson.hpp>
 #include <r/RRoutines.hpp>
 #include <r/ROptions.hpp>
+#include <r/session/RClientState.hpp>
 #include <r/session/RSessionUtils.hpp>
 
 #include <core/r_util/RProjectFile.hpp>
@@ -154,48 +155,19 @@ SEXP rs_finishExpression(SEXP stringSEXP)
    return r::sexp::create(output, &rProtect);
 }
 
-bool isPackageProject()
-{
-   return r_util::isPackageDirectory(projects::projectContext().directory());
-}
-
-SEXP rs_isPackageProject()
-{
-   r::sexp::Protect protect;
-   const core::FilePath projectPath = projects::projectContext().directory();
-   bool isPackageProject = r_util::isPackageDirectory(projectPath);
-   return r::sexp::create(isPackageProject, &protect);
-}
-
-std::string projectName()
-{
-   if (!projects::projectContext().hasProject())
-      return std::string();
-
-   std::string projectFileName =
-         projects::projectContext().file().filename();
-
-   // Trim .Rproj extension
-   return projectFileName.substr(0, projectFileName.length() - 6);
-}
-
-SEXP rs_projectName()
-{
-   r::sexp::Protect protect;
-   return r::sexp::create(projectName(), &protect);
-}
-
-struct PackageCompletions {
+struct SourceIndexCompletions {
    std::vector<std::string> completions;
    std::vector<bool> isFunction;
    bool moreAvailable;
 };
 
-PackageCompletions getPackageCompletions(const std::string& token)
+SourceIndexCompletions getSourceIndexCompletions(const std::string& token,
+                                                 const std::string& path)
 {
-   // bail if we're not in a project
-   if (!isPackageProject())
-      return PackageCompletions();
+   // Ensure that the path provided lies in build target
+   FilePath filePath(path);
+   if (!module_context::isRScriptInPackageBuildTarget(filePath))
+      return SourceIndexCompletions();
 
    // get functions from the source index
    std::vector<core::r_util::RSourceItem> items;
@@ -208,31 +180,32 @@ PackageCompletions getPackageCompletions(const std::string& token)
                                       &items,
                                       &moreAvailable);
 
-   PackageCompletions pkgCompletions;
+   SourceIndexCompletions srcCompletions;
    BOOST_FOREACH(const core::r_util::RSourceItem& item, items)
    {
       if (item.braceLevel() == 0)
       {
-         pkgCompletions.completions.push_back(item.name());
-         pkgCompletions.isFunction.push_back(item.isFunction() || item.isMethod());
+         srcCompletions.completions.push_back(item.name());
+         srcCompletions.isFunction.push_back(item.isFunction() || item.isMethod());
       }
    }
 
-   pkgCompletions.moreAvailable = moreAvailable;
-   return pkgCompletions;
+   srcCompletions.moreAvailable = moreAvailable;
+   return srcCompletions;
 
 }
 
-SEXP rs_getPackageCompletions(SEXP tokenSEXP)
+SEXP rs_getSourceIndexCompletions(SEXP tokenSEXP, SEXP fileSEXP)
 {
    r::sexp::Protect protect;
    std::string token = r::sexp::asString(tokenSEXP);
-   PackageCompletions pkgCompletions = getPackageCompletions(token);
+   std::string file = r::sexp::asString(fileSEXP);
+   SourceIndexCompletions srcCompletions = getSourceIndexCompletions(token, file);
 
    json::Object object;
-   object["completions"] = json::toJsonArray(pkgCompletions.completions);
-   object["isFunction"] = json::toJsonArray(pkgCompletions.isFunction);
-   object["moreAvailable"] = pkgCompletions.moreAvailable;
+   object["completions"] = json::toJsonArray(srcCompletions.completions);
+   object["isFunction"] = json::toJsonArray(srcCompletions.isFunction);
+   object["moreAvailable"] = srcCompletions.moreAvailable;
 
    return r::sexp::create(object, &protect);
 }
@@ -247,19 +220,9 @@ Error initialize() {
             1);
 
    r::routines::registerCallMethod(
-            "rs_getPackageCompletions",
-            (DL_FUNC) r_completions::rs_getPackageCompletions,
-            1);
-
-   r::routines::registerCallMethod(
-            "rs_isPackageProject",
-            (DL_FUNC) r_completions::rs_isPackageProject,
-            0);
-
-   r::routines::registerCallMethod(
-            "rs_projectName",
-            (DL_FUNC) r_completions::rs_projectName,
-            0);
+            "rs_getSourceIndexCompletions",
+            (DL_FUNC) r_completions::rs_getSourceIndexCompletions,
+            2);
 
    using boost::bind;
    using namespace module_context;

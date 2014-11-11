@@ -319,27 +319,14 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
-.rs.addFunction("getPackageCompletions", function(token)
+.rs.addFunction("getSourceIndexCompletions", function(token, path)
 {
-   .Call("rs_getPackageCompletions", token)
+   .Call("rs_getSourceIndexCompletions", token, path)
 })
 
 .rs.addFunction("getCompletionsNamespace", function(token, string, exportsOnly, envir)
 {
    result <- .rs.emptyCompletions()
-   
-   ## Suppose a package author is working on a package 'foo' and writes
-   ## 'foo::' -- we should then attempt to get completions from the
-   ## source index for them.
-   if (.rs.isPackageProject() && .rs.projectName() == string)
-   {
-      completions <- .rs.getPackageCompletions(token)
-      return(.rs.makeCompletions(
-         token = token,
-         results = completions,
-         excludeOtherCompletions = TRUE
-      ))
-   }
    
    if (!(string %in% loadedNamespaces()))
    {
@@ -852,10 +839,12 @@ utils:::rc.settings(files = TRUE)
    if (token != "" && 
           type[[1]] %in% c(.rs.acContextTypes$UNKNOWN, .rs.acContextTypes$FUNCTION,
                            .rs.acContextTypes$SINGLE_BRACKET, .rs.acContextTypes$DOUBLE_BRACKET))
+   {
       completions <- .rs.appendCompletions(
          completions,
          .rs.getCompletionsSearchPath(token)
       )
+   }
    
    ## File-based completions
    if (.rs.acContextTypes$FILE %in% type)
@@ -1149,4 +1138,24 @@ utils:::rc.settings(files = TRUE)
       names(readRDS(f))
    else
       character()
+})
+
+.rs.addFunction("getCompletionsSourceIndex", function(token, path)
+{
+   completions <- .rs.getSourceIndexCompletions(token, path)
+   if (!length(completions$completions))
+      return(.rs.emptyCompletions())
+   
+   results <- completions$completions
+   package <- .rs.getProjectPackageName()
+   type <- ifelse(completions$isFunction,
+                  .rs.acCompletionTypes$FUNCTION,
+                  .rs.acCompletionTypes$UNKNOWN)
+   
+   .rs.makeCompletions(token = token,
+                       results = results,
+                       packages = package,
+                       quote = FALSE,
+                       type = type)
+   
 })
