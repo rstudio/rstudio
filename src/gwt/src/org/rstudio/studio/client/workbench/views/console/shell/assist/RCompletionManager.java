@@ -301,20 +301,6 @@ public class RCompletionManager implements CompletionManager
          {
             goToFunctionDefinition();
          }
-         
-         // Also pop up completions if the user hits enter when calling a fn
-         if (keycode == KeyCodes.KEY_ENTER && modifier == KeyboardShortcut.NONE)
-         {
-            String currentLine = docDisplay_.getCurrentLine().substring(
-                  0, input_.getCursorPosition().getColumn());
-            if (currentLine.matches(".*[,(]\\s*$"))
-            {
-               docDisplay_.insertCode("\n");
-               String nextLineIndent = docDisplay_.getNextLineIndent();
-               docDisplay_.insertCode(nextLineIndent);
-               return beginSuggest(true, false, false);
-            }
-         }
       }
       else
       {
@@ -389,16 +375,6 @@ public class RCompletionManager implements CompletionManager
          if (keycode == 191 && modifier == KeyboardShortcut.NONE)
          {
             input_.insertCode("/");
-            invalidatePendingRequests();
-            return beginSuggest(true, true, false);
-         }
-         
-         // If we insert a '(', we probably want function arguments
-         if (keycode == KeyCodes.KEY_NINE && modifier == KeyboardShortcut.SHIFT)
-         {
-            input_.insertCode("()");
-            input_.setSelection(new InputEditorSelection(
-                  input_.getSelection().getStart().movePosition(-1, true)));
             invalidatePendingRequests();
             return beginSuggest(true, true, false);
          }
