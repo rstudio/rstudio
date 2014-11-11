@@ -27,7 +27,7 @@ import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
-import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.common.icons.code.CodeIcons;
 import org.rstudio.studio.client.common.r.RToken;
 import org.rstudio.studio.client.common.r.RTokenizer;
 import org.rstudio.studio.client.server.ServerError;
@@ -645,7 +645,7 @@ public class CompletionRequester
    private static final CompletionRequesterResources RES =
          CompletionRequesterResources.INSTANCE;
    
-   private static final StandardIcons ICONS = StandardIcons.INSTANCE;
+   private static final CodeIcons ICONS = CodeIcons.INSTANCE;
    
    static {
       RES.styles().ensureInjected();

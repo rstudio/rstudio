@@ -22,7 +22,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.widget.IsWidgetWithHeight;
-import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.common.icons.code.CodeIcons;
 
 public class StatusBarWidget extends Composite
       implements StatusBar, IsWidgetWithHeight
@@ -86,15 +86,15 @@ public class StatusBarWidget extends Composite
          scopeIcon_.setVisible(true);
          
            if (type == StatusBar.SCOPE_CLASS)
-         scopeIcon_.setResource(StandardIcons.INSTANCE.clazz());
+         scopeIcon_.setResource(CodeIcons.INSTANCE.clazz());
       else if (type == StatusBar.SCOPE_NAMESPACE)
-         scopeIcon_.setResource(StandardIcons.INSTANCE.namespace());
+         scopeIcon_.setResource(CodeIcons.INSTANCE.namespace());
       else if (type == StatusBar.SCOPE_LAMBDA)
-         scopeIcon_.setResource(StandardIcons.INSTANCE.lambda());
+         scopeIcon_.setResource(CodeIcons.INSTANCE.function());
       else if (type == StatusBar.SCOPE_ANON)
-         scopeIcon_.setResource(StandardIcons.INSTANCE.anon());
+         scopeIcon_.setResource(CodeIcons.INSTANCE.function());
       else if (type == StatusBar.SCOPE_FUNCTION)
-         scopeIcon_.setResource(StandardIcons.INSTANCE.function());
+         scopeIcon_.setResource(CodeIcons.INSTANCE.function());
       else if (type == StatusBar.SCOPE_CHUNK)
          scopeIcon_.setResource(RES.chunk());
       else if (type == StatusBar.SCOPE_SECTION)
@@ -102,7 +102,7 @@ public class StatusBarWidget extends Composite
       else if (type == StatusBar.SCOPE_SLIDE)
          scopeIcon_.setResource(RES.slide());
       else
-         scopeIcon_.setResource(StandardIcons.INSTANCE.function());
+         scopeIcon_.setResource(CodeIcons.INSTANCE.function());
    }
 
    @UiField

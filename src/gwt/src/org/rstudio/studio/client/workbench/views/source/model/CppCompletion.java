@@ -14,7 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.model;
 
-import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.common.icons.code.CodeIcons;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
@@ -53,7 +53,7 @@ public class CppCompletion extends JavaScriptObject
    
    public final ImageResource getIcon()
    {
-      StandardIcons icons = StandardIcons.INSTANCE;
+      CodeIcons icons = CodeIcons.INSTANCE;
       switch(getType())
       {
       case UNKNOWN:
@@ -65,9 +65,8 @@ public class CppCompletion extends JavaScriptObject
       case DESTRUCTOR:
          return icons.function();
       case CLASS:
-         return icons.clazz();
       case STRUCT:
-         return icons.struct();
+         return icons.clazz();
       case NAMESPACE:
          return icons.namespace();
       case ENUM:

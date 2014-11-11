@@ -1,5 +1,5 @@
 /*
- * StandardIcons.java
+ * CodeIcons.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,28 +12,24 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.icons;
+package org.rstudio.studio.client.common.icons.code;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 
-public interface StandardIcons extends ClientBundle
+public interface CodeIcons extends ClientBundle
 {
-   public static final StandardIcons INSTANCE = GWT.create(StandardIcons.class);
-   ImageResource stock_new();
-   ImageResource chunk_menu();
-   ImageResource go_up();
-   ImageResource right_arrow();
-   ImageResource click_feedback();
-   ImageResource more_actions();
-   ImageResource import_dataset();
-   ImageResource empty_command();
-   ImageResource show_log();
+   public static final CodeIcons INSTANCE = GWT.create(CodeIcons.class);
+   
+   ImageResource variable();
+   ImageResource function();
+   ImageResource clazz();
+   ImageResource namespace();
+   ImageResource enumType();
+   ImageResource enumValue();
+   ImageResource keyword();
+   ImageResource dataFrame();
    ImageResource help();
-   ImageResource git();
-   ImageResource svn();
-   ImageResource viewer_window();
-   ImageResource run();
-   ImageResource export_menu();
+   ImageResource rPackage();
 }
