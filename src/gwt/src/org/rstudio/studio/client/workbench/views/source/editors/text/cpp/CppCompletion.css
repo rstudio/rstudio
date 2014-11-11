@@ -25,3 +25,22 @@
    margin-right: 4px;
 }
 
+.itemMenu {
+   padding: 2px;
+   font-size: 11px;
+}
+
+.itemImage {
+   position: relative;
+   top: 2px;
+   margin-left: 1px;
+   margin-right: 6px;
+   padding-top: 1px;
+   padding-bottom: 2px;
+   
+}
+
+.itemName {
+   position: relative;
+   top: -1px;
+}

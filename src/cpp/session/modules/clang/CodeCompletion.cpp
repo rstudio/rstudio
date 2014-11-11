@@ -44,10 +44,93 @@ std::string friendlyCompletionText(std::string text)
    return text;
 }
 
+const int kCompletionUnknown = 0;
+const int kCompletionVariable = 1;
+const int kCompletionFunction = 2;
+const int kCompletionConstructor = 3;
+const int kCompletionDestructor = 4;
+const int kCompletionClass = 4;
+const int kCompletionStruct = 5;
+const int kCompletionNamespace = 6;
+const int kCompletionEnum = 7;
+const int kCompletionEnumValue = 8;
+const int kCompletionKeyword = 9;
+
+int completionType(CXCursorKind kind)
+{
+   switch(kind)
+   {
+   case CXCursor_UnexposedDecl:
+      return kCompletionVariable;
+   case CXCursor_StructDecl:
+   case CXCursor_UnionDecl:
+      return kCompletionStruct;
+   case CXCursor_ClassDecl:
+      return kCompletionClass;
+   case CXCursor_EnumDecl:
+      return kCompletionEnum;
+   case CXCursor_FieldDecl:
+      return kCompletionVariable;
+   case CXCursor_EnumConstantDecl:
+      return kCompletionEnumValue;
+   case CXCursor_FunctionDecl:
+      return kCompletionFunction;
+   case CXCursor_VarDecl:
+   case CXCursor_ParmDecl:
+      return kCompletionVariable;
+   case CXCursor_ObjCInterfaceDecl:
+   case CXCursor_ObjCCategoryDecl:
+   case CXCursor_ObjCProtocolDecl:
+      return kCompletionClass;
+   case CXCursor_ObjCPropertyDecl:
+   case CXCursor_ObjCIvarDecl:
+      return kCompletionVariable;
+   case CXCursor_ObjCInstanceMethodDecl:
+   case CXCursor_ObjCClassMethodDecl:
+      return kCompletionFunction;
+   case CXCursor_ObjCImplementationDecl:
+   case CXCursor_ObjCCategoryImplDecl:
+      return kCompletionClass;
+   case CXCursor_TypedefDecl:
+      return kCompletionVariable;
+   case CXCursor_CXXMethod:
+      return kCompletionFunction;
+   case CXCursor_Namespace:
+      return kCompletionNamespace;
+   case CXCursor_LinkageSpec:
+      return kCompletionKeyword;
+   case CXCursor_Constructor:
+      return kCompletionConstructor;
+   case CXCursor_Destructor:
+      return kCompletionDestructor;
+   case CXCursor_ConversionFunction:
+      return kCompletionFunction;
+   case CXCursor_TemplateTypeParameter:
+   case CXCursor_NonTypeTemplateParameter:
+      return kCompletionVariable;
+   case CXCursor_FunctionTemplate:
+      return kCompletionFunction;
+   case CXCursor_ClassTemplate:
+   case CXCursor_ClassTemplatePartialSpecialization:
+      return kCompletionClass;
+   case CXCursor_NamespaceAlias:
+   case CXCursor_UsingDirective:
+   case CXCursor_UsingDeclaration:
+   case CXCursor_TypeAliasDecl:
+      return kCompletionVariable;
+   case CXCursor_ObjCSynthesizeDecl:
+   case CXCursor_ObjCDynamicDecl:
+   case CXCursor_CXXAccessSpecifier:
+      return kCompletionKeyword;
+   default:
+      return kCompletionUnknown;
+   }
+}
+
 core::json::Object toJson(const CodeCompleteResult& result)
 {
    json::Object resultJson;
-   resultJson["kind"] = result.getKind();
+   resultJson["type"] = completionType(result.getKind());
    resultJson["typed_text"] = result.getTypedText();
    json::Array textJson;
    textJson.push_back(friendlyCompletionText(result.getText()));

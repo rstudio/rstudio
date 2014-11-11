@@ -108,8 +108,8 @@ public class CppCompletionRequest
                if (completionPosition_.getScope() == 
                                  CompletionPosition.Scope.Member)
                {
-                  if (completion.getKind() == CppCompletion.FIELD_DECL ||
-                      (completion.getKind() == CppCompletion.CXX_METHOD &&
+                  if (completion.getType() == CppCompletion.VARIABLE ||
+                      (completion.getType() == CppCompletion.FUNCTION &&
                        !typedText.startsWith("operator=")))
                   {
                      filtered.push(completion);
@@ -247,7 +247,7 @@ public class CppCompletionRequest
       terminate();
      
       String insertText = completion.getTypedText();
-      if (completion.isFunction())
+      if (completion.getType() == CppCompletion.FUNCTION)
          insertText = insertText + "()";
       
       docDisplay_.setFocus(true); 

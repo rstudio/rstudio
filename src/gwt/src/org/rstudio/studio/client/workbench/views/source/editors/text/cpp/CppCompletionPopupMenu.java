@@ -2,6 +2,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
@@ -15,6 +16,7 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -55,7 +57,17 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
       for (int i = 0; i<completions.length(); i++)
       {
          final CppCompletion completion = completions.get(i);
-         MenuItem menuItem = new MenuItem(completion.getTypedText(), 
+         
+         SafeHtmlBuilder sb = new SafeHtmlBuilder();
+         SafeHtmlUtil.appendImage(sb, 
+                                  RES.styles().itemImage(), 
+                                  completion.getIcon());
+         SafeHtmlUtil.appendSpan(sb, 
+                                 RES.styles().itemName(), 
+                                 completion.getTypedText());   
+         
+         
+         MenuItem menuItem = new MenuItem(sb.toSafeHtml(), 
                new ScheduledCommand() {
             @Override
             public void execute()
@@ -65,6 +77,7 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
                   onSelected_.execute(completion);
             }
          });
+         menuItem.addStyleName(RES.styles().itemMenu());
          
          addItem(menuItem);
          
@@ -185,7 +198,8 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
             String text = completion.getText().get(0);
             
             // only do tooltips for functions and variables
-            if (!completion.isFunction() && !completion.isVariable())
+            if (completion.getType() != CppCompletion.FUNCTION && 
+                completion.getType() != CppCompletion.VARIABLE)
             {
                toolTip_.setVisible(false);
                return;
@@ -279,5 +293,7 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
    private Boolean showBelow_ = null;
    private boolean updatingMenu_ = false;
    private CppCompletionToolTip toolTip_;
+   
+   private static CppCompletionResources RES = CppCompletionResources.INSTANCE;
    
 }

@@ -27,6 +27,9 @@ public interface CppCompletionResources extends ClientBundle
    {
       String toolTip();
       String pagingWidget();
+      String itemMenu();
+      String itemImage();
+      String itemName();
    }
 
   

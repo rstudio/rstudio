@@ -14,8 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.views.source.model;
 
+import org.rstudio.studio.client.common.icons.StandardIcons;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.resources.client.ImageResource;
 
 public class CppCompletion extends JavaScriptObject
 {
@@ -25,82 +28,62 @@ public class CppCompletion extends JavaScriptObject
    
    public static native final CppCompletion create(String typedText) /*-{
       return {
-         kind: 1,
+         type: 0,
          typed_text: typedText,
          text: null
       };
    }-*/;
    
-   //
-   // Declaration kinds (note there are additional cursor kinds
-   // but they don't apply to declarations)
-   //
+   // completion types
+   public static final int UNKNOWN = 0;
+   public static final int VARIABLE = 1;
+   public static final int FUNCTION = 2;
+   public static final int CONSTRUCTOR = 3;
+   public static final int DESTRUCTOR = 4;
+   public static final int CLASS = 5;
+   public static final int STRUCT = 6;
+   public static final int NAMESPACE = 7;
+   public static final int ENUM = 8;
+   public static final int ENUM_VALUE = 9;
+   public static final int KEYWORD = 10;
    
-   public static final int UNEXPOSED_DECL = 1;
-   public static final int STRUCT_DECL = 2;
-   public static final int UNION_DECL = 3;
-   public static final int CLASS_DECL = 4;
-   public static final int ENUM_DECL = 5;
-   public static final int FIELD_DECL = 6;
-   public static final int ENUM_CONSTANT_DECL = 7;
-   public static final int FUNCTION_DECL = 8;
-   public static final int VAR_DECL = 9;
-   public static final int PARM_DECL = 10;
-   /* 11-19 are for Objective C */
-   public static final int TYPEDEF_DECL = 20;
-   public static final int CXX_METHOD = 21;
-   public static final int NAMESPACE = 22;
-   public static final int LINKAGE_SPEC = 23;
-   public static final int CONSTRUCTOR = 24;
-   public static final int DESTRUCTOR = 25;
-   public static final int CONVERSION_FUNCTION = 26;
-   public static final int TEMPLATE_TYPE_PARAM = 27;
-   public static final int NON_TEMPLATE_TYPE_PARAM = 28;
-   public static final int TEMPLATE_TEMPLATE_PARAM = 28;
-   public static final int FUNCTION_TEMPLATE = 30;
-   public static final int CLASS_TEMPLATE = 31;
-   public static final int CLASS_TEMPLATE_PARTIAL_SPECIALIZATION = 32;
-   public static final int NAMESPACE_ALIAS = 33;
-   public static final int USING_DIRECTIVE = 34;
-   public static final int USING_DECLARATION = 35;
-   public static final int TYPE_ALIAS_DECL = 36;
-   /* 37-38 are for Objective C */
-   public static final int CXX_ACCESS_SPECIFIER = 39;
-   
-   public static final int FIRST_INVALID = 70;
-   public static final int LAST_INVALID = 73;
-   
-   public native final int getKind() /*-{
-       return this.kind;
+   public native final int getType() /*-{
+       return this.type;
    }-*/;    
    
-   public final boolean isFunction()
+   public final ImageResource getIcon()
    {
-      int kind = getKind();
-      return kind == FUNCTION_DECL ||
-             kind == CXX_METHOD ||
-             kind == FUNCTION_TEMPLATE ||
-             kind == CONSTRUCTOR ||
-             kind == DESTRUCTOR;
+      StandardIcons icons = StandardIcons.INSTANCE;
+      switch(getType())
+      {
+      case UNKNOWN:
+         return icons.keyword();
+      case VARIABLE:
+         return icons.variable();
+      case FUNCTION:
+      case CONSTRUCTOR:
+      case DESTRUCTOR:
+         return icons.function();
+      case CLASS:
+         return icons.clazz();
+      case STRUCT:
+         return icons.struct();
+      case NAMESPACE:
+         return icons.namespace();
+      case ENUM:
+         return icons.enumType();
+      case ENUM_VALUE:
+         return icons.enumValue();
+      case KEYWORD:
+         return icons.keyword();
+      default:
+         return icons.keyword();
+      }
    }
-   
-   public final boolean isVariable()
-   {
-      int kind = getKind();
-      return kind == FIELD_DECL ||
-             kind == VAR_DECL;
-   }
-   
-   public final boolean isValid()
-   {
-      int kind = getKind();
-      return kind < FIRST_INVALID && kind > LAST_INVALID;
-   }
-   
-   
+    
    public final boolean hasParameters()
    {
-      if (isFunction())
+      if (getType() == FUNCTION)
       {
          JsArrayString textEntries = getText();
          for (int i = 0; i < textEntries.length(); i++)
