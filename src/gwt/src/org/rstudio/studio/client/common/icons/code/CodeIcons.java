@@ -32,4 +32,5 @@ public interface CodeIcons extends ClientBundle
    ImageResource dataFrame();
    ImageResource help();
    ImageResource rPackage();
+   ImageResource file();
 }
