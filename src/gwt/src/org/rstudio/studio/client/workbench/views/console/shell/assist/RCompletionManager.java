@@ -1442,9 +1442,6 @@ public class RCompletionManager implements CompletionManager
 
                input_.setSelection(newSelection);
             }
-            
-            // Begin suggestions (for arguments)
-            beginSuggest(true, false, false);
          }
          else
          {
