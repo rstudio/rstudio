@@ -602,12 +602,12 @@ public class CompletionRequester
       private ImageResource getIcon()
       {
          StandardIcons icons = StandardIcons.INSTANCE;
-         if (type == RCompletionType.FUNCTION)
-            return icons.method();
-         else if (type == RCompletionType.DATAFRAME)
-            return icons.struct();
          
-         return icons.method();
+         // TODO: fill in for other types
+         if (type == RCompletionType.FUNCTION)
+            return icons.function();
+         
+         return icons.help();
          
       }
 
