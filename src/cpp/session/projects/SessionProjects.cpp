@@ -339,7 +339,7 @@ json::Object projectBuildContextJson()
    contextJson["roxygen2_installed"] =
                         module_context::isPackageInstalled("roxygen2");
    contextJson["devtools_installed"] =
-                           module_context::isPackageInstalled("devtools");
+          module_context::isMinimumDevtoolsInstalled();
    return contextJson;
 }
 

@@ -585,8 +585,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["presentation_state"] = modules::presentation::presentationStateAsJson();
 
    sessionInfo["build_state"] = modules::build::buildStateAsJson();
-   sessionInfo["devtools_installed"] = module_context::isPackageInstalled(
-                                                                  "devtools");   
+   sessionInfo["devtools_installed"] = module_context::isMinimumDevtoolsInstalled();
    sessionInfo["have_cairo_pdf"] = modules::plots::haveCairoPdf();
 
    sessionInfo["have_srcref_attribute"] =

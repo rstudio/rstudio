@@ -981,6 +981,11 @@ bool isPackageVersionInstalled(const std::string& packageName,
    return !error ? installed : false;
 }
 
+bool isMinimumDevtoolsInstalled()
+{
+   return isPackageVersionInstalled("devtools", "1.4.1");
+}
+
 std::string packageVersion(const std::string& packageName)
 {
    std::string version;
