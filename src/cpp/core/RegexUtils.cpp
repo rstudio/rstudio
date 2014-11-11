@@ -49,6 +49,16 @@ boost::regex wildcardPatternToRegex(const std::string& pattern)
    return boost::regex(regex);
 }
 
+boost::regex regexIfWildcardPattern(const std::string& term)
+{
+   // create wildcard pattern if the search has a '*'
+   bool hasWildcard = term.find('*') != std::string::npos;
+   boost::regex pattern;
+   if (hasWildcard)
+      pattern = regex_utils::wildcardPatternToRegex(term);
+   return pattern;
+}
+
 bool textMatches(const std::string& text,
                  const boost::regex& regex,
                  bool prefixOnly,

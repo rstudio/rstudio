@@ -96,6 +96,9 @@ std::ostream& operator<<(std::ostream& os, const CppDefinition& definition);
 
 FileLocation findDefinitionLocation(const FileLocation& location);
 
+void searchDefinitions(const std::string& term,
+                       std::vector<CppDefinition>* pDefinitions);
+
 core::Error initializeDefinitionIndex();
 
 } // namespace clang

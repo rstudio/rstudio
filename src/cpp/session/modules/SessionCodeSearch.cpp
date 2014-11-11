@@ -45,6 +45,7 @@
 #include <session/projects/SessionProjects.hpp>
 
 #include "SessionSource.hpp"
+#include "clang/DefinitionIndex.hpp"
 
 using namespace core ;
 
@@ -61,16 +62,6 @@ bool isGlobalFunctionNamed(const r_util::RSourceItem& sourceItem,
           (sourceItem.type() == r_util::RSourceItem::Function ||
            sourceItem.type() == r_util::RSourceItem::Method) &&
           sourceItem.name() == name;
-}
-
-boost::regex regexFromTerm(const std::string& term)
-{
-   // create wildcard pattern if the search has a '*'
-   bool hasWildcard = term.find('*') != std::string::npos;
-   boost::regex pattern;
-   if (hasWildcard)
-      pattern = regex_utils::wildcardPatternToRegex(term);
-   return pattern;
 }
 
 // return if we are past max results
@@ -243,7 +234,7 @@ public:
       *pMoreAvailable = false;
 
       // create wildcard pattern if the search has a '*'
-      boost::regex pattern = regexFromTerm(term);
+      boost::regex pattern = regex_utils::regexIfWildcardPattern(term);
 
       // iterate over the files
       BOOST_FOREACH(const Entry& entry, entries_)
@@ -691,7 +682,7 @@ void searchSourceDatabaseFiles(const std::string& term,
    *pMoreAvailable = false;
 
    // create wildcard pattern if the search has a '*'
-   boost::regex pattern = regexFromTerm(term);
+   boost::regex pattern = regex_utils::regexIfWildcardPattern(term);
 
    // get all of the source indexes
    std::vector<boost::shared_ptr<r_util::RSourceIndex> > indexes =
@@ -940,6 +931,10 @@ Error searchCode(const json::JsonRpcRequest& request,
    std::vector<r_util::RSourceItem> srcItems;
    bool moreSourceItemsAvailable = false;
    searchSource(term, 1E2, false, &srcItems, &moreSourceItemsAvailable);
+
+   // search cpp source (TODO: do something with these results!)
+   std::vector<clang::CppDefinition> cppDefinitions;
+   clang::searchDefinitions(term, &cppDefinitions);
 
    // typedef necessary for BOOST_FOREACH to work with pairs
    typedef std::pair<int, int> PairIntInt;

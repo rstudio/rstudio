@@ -293,6 +293,8 @@ bool findUSR(const std::string& USR,
    }
 }
 
+typedef std::map<std::string,CXTranslationUnit> TranslationUnits;
+
 } // anonymous namespace
 
 FileLocation findDefinitionLocation(const FileLocation& location)
@@ -321,7 +323,6 @@ FileLocation findDefinitionLocation(const FileLocation& location)
    if (!USR.empty())
    {
       // first inspect translation units we have an in-memory index for
-      typedef std::map<std::string,CXTranslationUnit> TranslationUnits;
       TranslationUnits units = rSourceIndex().getIndexedTranslationUnits();
       BOOST_FOREACH(const TranslationUnits::value_type& unit, units)
       {
@@ -367,6 +368,70 @@ FileLocation findDefinitionLocation(const FileLocation& location)
    unsigned line, column;
    loc.getSpellingLocation(&filename, &line, &column);
    return FileLocation(FilePath(filename), line, column);
+}
+
+namespace {
+
+bool matches(const std::string& term,
+             const boost::regex& pattern,
+             const CppDefinition& definition)
+{
+   if (!pattern.empty())
+      return regex_utils::textMatches(definition.name, pattern, false, false);
+   else
+      return string_utils::isSubsequence(definition.name, term, true);
+}
+
+bool insertMatching(const std::string& term,
+                    const boost::regex& pattern,
+                    const CppDefinition& definition,
+                    std::vector<CppDefinition>* pDefinitions)
+{
+   if (matches(term, pattern, definition))
+      pDefinitions->push_back(definition);
+   return true;
+}
+
+} // anonymous namespace
+
+void searchDefinitions(const std::string& term,
+                       std::vector<CppDefinition>* pDefinitions)
+{
+   // get a pattern for the term (if it includes a wildcard '*')
+   boost::regex pattern = regex_utils::regexIfWildcardPattern(term);
+
+   // first search translation units we have an in-memory index for
+   // (this will reflect unsaved changes in editor buffers)
+   TranslationUnits units = rSourceIndex().getIndexedTranslationUnits();
+   BOOST_FOREACH(const TranslationUnits::value_type& unit, units)
+   {
+      // search for matching definitions
+      DefinitionVisitor visitor =
+         boost::bind(insertMatching, term, pattern, _1, pDefinitions);
+
+      // visit the cursors
+      libclang::clang().visitChildren(
+           libclang::clang().getTranslationUnitCursor(unit.second),
+           cursorVisitor,
+           (CXClientData)&visitor);
+   }
+
+   // now search the project index (excluding files we already searched
+   // for within the in-memory index)
+   // if we didn't find it there then look for it in our index
+   // of all saved files
+   BOOST_FOREACH(const DefinitionsByFile::value_type& defs, s_definitionsByFile)
+   {
+      // skip files we've already searched
+      if (units.find(defs.first) != units.end())
+         continue;
+
+      BOOST_FOREACH(const CppDefinition& def, defs.second)
+      {
+         if (matches(term, pattern, def))
+            pDefinitions->push_back(def);
+      }
+   }
 }
 
 Error initializeDefinitionIndex()

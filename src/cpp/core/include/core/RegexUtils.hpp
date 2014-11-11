@@ -34,6 +34,10 @@ namespace regex_utils {
 boost::regex wildcardPatternToRegex(const std::string& pattern);
 
 
+// returns a regex if the passed term contains a wildcard (otherwise
+// returns an empty regex)
+boost::regex regexIfWildcardPattern(const std::string& term);
+
 bool textMatches(const std::string& text,
                  const boost::regex& regex,
                  bool prefixOnly,
