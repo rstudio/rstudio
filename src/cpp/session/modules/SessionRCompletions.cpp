@@ -211,8 +211,11 @@ PackageCompletions getPackageCompletions(const std::string& token)
    PackageCompletions pkgCompletions;
    BOOST_FOREACH(const core::r_util::RSourceItem& item, items)
    {
-      pkgCompletions.completions.push_back(item.name());
-      pkgCompletions.isFunction.push_back(item.isFunction() || item.isMethod());
+      if (item.braceLevel() == 0)
+      {
+         pkgCompletions.completions.push_back(item.name());
+         pkgCompletions.isFunction.push_back(item.isFunction() || item.isMethod());
+      }
    }
 
    pkgCompletions.moreAvailable = moreAvailable;
