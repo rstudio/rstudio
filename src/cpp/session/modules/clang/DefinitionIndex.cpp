@@ -38,12 +38,12 @@ namespace clang {
 namespace {
 
 // store definitions by file
-typedef std::map<std::string,std::deque<Definition> > DefinitionsByFile;
+typedef std::map<std::string,std::deque<CppDefinition> > DefinitionsByFile;
 DefinitionsByFile s_definitionsByFile;
 
 // visitor used to populate deque
-bool insertDefinition(const Definition& definition,
-                      std::deque<Definition>* pDefinitions)
+bool insertDefinition(const CppDefinition& definition,
+                      std::deque<CppDefinition>* pDefinitions)
 {
    pDefinitions->push_back(definition);
    return true;
@@ -76,7 +76,7 @@ bool isTranslationUnit(const FileInfo& fileInfo,
    }
 }
 
-typedef boost::function<bool(const Definition&)> DefinitionVisitor;
+typedef boost::function<bool(const CppDefinition&)> DefinitionVisitor;
 
 CXChildVisitResult cursorVisitor(CXCursor cxCursor,
                                  CXCursor,
@@ -93,36 +93,36 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
       return CXChildVisit_Continue;
 
    // determine kind
-   DefinitionKind kind = InvalidDefinition;
+   CppDefinitionKind kind = CppInvalidDefinition;
    switch (cursor.getKind())
    {
       case CXCursor_Namespace:
-         kind = NamespaceDefinition;
+         kind = CppNamespaceDefinition;
          break;
       case CXCursor_ClassDecl:
       case CXCursor_ClassTemplate:
-         kind = ClassDefinition;
+         kind = CppClassDefinition;
          break;
       case CXCursor_StructDecl:
-         kind = StructDefinition;
+         kind = CppStructDefinition;
          break;
       case CXCursor_EnumDecl:
-         kind = EnumDefinition;
+         kind = CppEnumDefinition;
          break;
       case CXCursor_FunctionDecl:
       case CXCursor_FunctionTemplate:
-         kind = FunctionDefinition;
+         kind = CppFunctionDefinition;
          break;
       case CXCursor_CXXMethod:
-         kind = MemberFunctionDefinition;
+         kind = CppMemberFunctionDefinition;
          break;
       default:
-         kind = InvalidDefinition;
+         kind = CppInvalidDefinition;
          break;
    }
 
    // continue if this isn't a definition of interest
-   if (kind == InvalidDefinition)
+   if (kind == CppInvalidDefinition)
       return CXChildVisit_Continue;
 
    // build display name (strip trailing parens)
@@ -130,13 +130,13 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
    boost::algorithm::replace_last(displayName, "()", "");
 
    // empty display name for a namespace === anonymous
-   if ((kind == NamespaceDefinition) && displayName.empty())
+   if ((kind == CppNamespaceDefinition) && displayName.empty())
    {
       displayName = "<anonymous>";
    }
 
    // qualify class members
-   if (kind == MemberFunctionDefinition)
+   if (kind == CppMemberFunctionDefinition)
    {
       Cursor parent = cursor.getSemanticParent();
       displayName = parent.displayName() + "::" + displayName;
@@ -149,12 +149,10 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
    loc.getSpellingLocation(&file, &line, &column);
 
    // create the definition
-   Definition definition(cursor.getUSR(),
-                         kind,
-                         displayName,
-                         Location(FilePath(file),
-                                  line,
-                                  column));
+   CppDefinition definition(cursor.getUSR(),
+                            kind,
+                            displayName,
+                            FileLocation(FilePath(file), line, column));
 
    // yield the definition (break if requested)
    DefinitionVisitor& visitor = *((DefinitionVisitor*)clientData);
@@ -162,9 +160,9 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
       return CXChildVisit_Break;
 
    // recurse if necessary
-   if (kind == NamespaceDefinition ||
-       kind == ClassDefinition ||
-       kind == StructDefinition)
+   if (kind == CppNamespaceDefinition ||
+       kind == CppClassDefinition ||
+       kind == CppStructDefinition)
    {
       return CXChildVisit_Recurse;
    }
@@ -211,7 +209,7 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
 
 
          // create deque of definitions and wire visitor to it
-         s_definitionsByFile[file] = std::deque<Definition>();
+         s_definitionsByFile[file] = std::deque<CppDefinition>();
          DefinitionVisitor visitor =
             boost::bind(insertDefinition, _1, &s_definitionsByFile[file]);
 
@@ -231,28 +229,28 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
 } // anonymous namespace
 
 
-std::ostream& operator<<(std::ostream& os, const Definition& definition)
+std::ostream& operator<<(std::ostream& os, const CppDefinition& definition)
 {
    // kind
    std::string kindStr;
    switch (definition.kind)
    {
-      case NamespaceDefinition:
+      case CppNamespaceDefinition:
          kindStr = "N";
          break;
-      case ClassDefinition:
+      case CppClassDefinition:
          kindStr = "C";
          break;
-      case StructDefinition:
+      case CppStructDefinition:
          kindStr = "S";
          break;
-      case EnumDefinition:
+      case CppEnumDefinition:
          kindStr = "E";
          break;
-      case FunctionDefinition:
+      case CppFunctionDefinition:
          kindStr = "F";
          break;
-      case MemberFunctionDefinition:
+      case CppMemberFunctionDefinition:
          kindStr = "M";
          break;
       default:
@@ -277,8 +275,8 @@ std::ostream& operator<<(std::ostream& os, const Definition& definition)
 namespace {
 
 bool findUSR(const std::string& USR,
-             const Definition& definition,
-             Definition* pFoundDefinition)
+             const CppDefinition& definition,
+             CppDefinition* pFoundDefinition)
 {
    if (definition.USR == USR)
    {
@@ -293,25 +291,25 @@ bool findUSR(const std::string& USR,
 
 } // anonymous namespace
 
-Location findDefinitionLocation(const Location& location)
+FileLocation findDefinitionLocation(const FileLocation& location)
 {
    // get the translation unit
    std::string filename = location.filePath.absolutePath();
    TranslationUnit tu = rSourceIndex().getTranslationUnit(filename, true);
    if (tu.empty())
-      return Location();
+      return FileLocation();
 
    // get the cursor
    Cursor cursor = tu.getCursor(filename, location.line, location.column);
    if (cursor.isNull())
-      return Location();
+      return FileLocation();
 
    // follow reference if we need to
    if (cursor.isReference() || cursor.isExpression())
    {
       cursor = cursor.getReferenced();
       if (cursor.isNull())
-         return Location();
+         return FileLocation();
    }
 
    // get the USR for the cursor and search for it
@@ -324,7 +322,7 @@ Location findDefinitionLocation(const Location& location)
       BOOST_FOREACH(const TranslationUnits::value_type& unit, units)
       {
          // search for the definition
-         Definition def;
+         CppDefinition def;
          DefinitionVisitor visitor = boost::bind(findUSR, USR, _1, &def);
 
          // visit the cursors
@@ -343,7 +341,7 @@ Location findDefinitionLocation(const Location& location)
       BOOST_FOREACH(const DefinitionsByFile::value_type& defs,
                     s_definitionsByFile)
       {
-         BOOST_FOREACH(const Definition& def, defs.second)
+         BOOST_FOREACH(const CppDefinition& def, defs.second)
          {
             if (def.USR == USR)
                return def.location;
@@ -364,7 +362,7 @@ Location findDefinitionLocation(const Location& location)
    SourceLocation loc = cursor.getSourceLocation();
    unsigned line, column;
    loc.getSpellingLocation(&filename, &line, &column);
-   return Location(FilePath(filename), line, column);
+   return FileLocation(FilePath(filename), line, column);
 }
 
 Error initializeDefinitionIndex()

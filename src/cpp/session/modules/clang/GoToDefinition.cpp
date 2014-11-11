@@ -47,7 +47,7 @@ Error goToCppDefinition(const json::JsonRpcRequest& request,
    FilePath filePath = module_context::resolveAliasedPath(docPath);
 
    // try to find the location
-   Location loc = findDefinitionLocation(Location(filePath, line, column));
+   FileLocation loc = findDefinitionLocation(FileLocation(filePath, line, column));
    if (!loc.empty())
    {
       using namespace module_context;

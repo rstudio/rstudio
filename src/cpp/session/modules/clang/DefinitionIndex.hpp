@@ -31,26 +31,26 @@ namespace modules {
 namespace clang {
 
 // definition type
-enum DefinitionKind
+enum CppDefinitionKind
 {
-   InvalidDefinition = 0,
-   NamespaceDefinition = 1,
-   ClassDefinition = 2,
-   StructDefinition = 3,
-   EnumDefinition = 4,
-   FunctionDefinition = 5,
-   MemberFunctionDefinition = 6
+   CppInvalidDefinition = 0,
+   CppNamespaceDefinition = 1,
+   CppClassDefinition = 2,
+   CppStructDefinition = 3,
+   CppEnumDefinition = 4,
+   CppFunctionDefinition = 5,
+   CppMemberFunctionDefinition = 6
 };
 
 // source location
-struct Location
+struct FileLocation
 {
-   Location()
+   FileLocation()
       : line(0), column(0)
    {
    }
 
-   Location(const core::FilePath& filePath, unsigned line, unsigned column)
+   FileLocation(const core::FilePath& filePath, unsigned line, unsigned column)
       : filePath(filePath), line(line), column(column)
    {
    }
@@ -63,17 +63,17 @@ struct Location
 };
 
 // C++ symbol definition
-struct Definition
+struct CppDefinition
 {
-   Definition()
-      : kind(InvalidDefinition)
+   CppDefinition()
+      : kind(CppInvalidDefinition)
    {
    }
 
-   Definition(const std::string& USR,
-              DefinitionKind kind,
-              const std::string& displayName,
-              const Location& location)
+   CppDefinition(const std::string& USR,
+                 CppDefinitionKind kind,
+                 const std::string& displayName,
+                 const FileLocation& location)
       : USR(USR),
         kind(kind),
         displayName(displayName),
@@ -81,17 +81,17 @@ struct Definition
    {
    }
 
-   bool empty() const { return kind == InvalidDefinition; }
+   bool empty() const { return displayName.empty(); }
 
    std::string USR;
-   DefinitionKind kind;
+   CppDefinitionKind kind;
    std::string displayName;
-   Location location;
+   FileLocation location;
 };
 
-std::ostream& operator<<(std::ostream& os, const Definition& definition);
+std::ostream& operator<<(std::ostream& os, const CppDefinition& definition);
 
-Location findDefinitionLocation(const Location& location);
+FileLocation findDefinitionLocation(const FileLocation& location);
 
 core::Error initializeDefinitionIndex();
 
