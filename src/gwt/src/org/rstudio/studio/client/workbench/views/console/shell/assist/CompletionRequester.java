@@ -601,8 +601,39 @@ public class CompletionRequester
       
       private ImageResource getIcon()
       {
-         // TODO: fill in for other types
-         return ICONS.function();
+         switch(type)
+         {
+         case RCompletionType.UNKNOWN:
+            return ICONS.keyword();
+         case RCompletionType.VECTOR:
+            return ICONS.variable();
+         case RCompletionType.FUNCTION:
+            return ICONS.function();
+         case RCompletionType.ARGUMENTS:
+            return ICONS.variable();
+         case RCompletionType.DATAFRAME:
+            return ICONS.dataFrame();
+         case RCompletionType.LIST:
+         case RCompletionType.ENVIRONMENT:
+         case RCompletionType.S4:
+         case RCompletionType.REFERENCE_CLASS:
+            return ICONS.clazz();
+         case RCompletionType.FILE:
+            return ICONS.file();
+         case RCompletionType.CHUNK:
+         case RCompletionType.ROXYGEN:
+            return ICONS.keyword();
+         case RCompletionType.HELP:
+            return ICONS.help();
+         case RCompletionType.STRING:
+            return ICONS.variable();
+         case RCompletionType.PACKAGE:
+            return ICONS.rPackage();
+         case RCompletionType.KEYWORD:
+            return ICONS.keyword();
+         default:
+            return ICONS.keyword();
+         }
       }
 
       public static QualifiedName parseFromText(String val)
