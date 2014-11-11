@@ -601,14 +601,8 @@ public class CompletionRequester
       
       private ImageResource getIcon()
       {
-         StandardIcons icons = StandardIcons.INSTANCE;
-         
          // TODO: fill in for other types
-         if (type == RCompletionType.FUNCTION)
-            return icons.function();
-         
-         return icons.help();
-         
+         return ICONS.function();
       }
 
       public static QualifiedName parseFromText(String val)
@@ -650,6 +644,8 @@ public class CompletionRequester
    
    private static final CompletionRequesterResources RES =
          CompletionRequesterResources.INSTANCE;
+   
+   private static final StandardIcons ICONS = StandardIcons.INSTANCE;
    
    static {
       RES.styles().ensureInjected();
