@@ -418,7 +418,8 @@ public class AceEditor implements DocDisplay,
                   server_,
                   new Filter(),
                   fileType_.canExecuteChunks() ? rnwContext_ : null,
-                  this);
+                  this,
+                  true);
             
             // if this is cpp then we use our own completion manager
             // that can optionally delegate to the R completion manager
@@ -1350,6 +1351,28 @@ public class AceEditor implements DocDisplay,
    {
       return getSession().getMode().getCodeModel().getCurrentScope(
             getCursorPosition());
+   }
+   
+   @Override
+   public String getNextLineIndent()
+   {
+      EditSession session = getSession();
+      
+      Position cursorPosition = getCursorPosition();
+      int row = cursorPosition.getRow();
+      String state = getSession().getState(row);
+      
+      String line = getCurrentLine().substring(
+            0, cursorPosition.getColumn());
+      String tab = session.getTabString();
+      int tabSize = session.getTabSize();
+      
+      return session.getMode().getNextLineIndent(
+            state,
+            line,
+            tab,
+            tabSize,
+            row);
    }
 
    public Scope getCurrentChunk()

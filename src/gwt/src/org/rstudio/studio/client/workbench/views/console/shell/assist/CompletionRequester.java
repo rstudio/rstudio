@@ -16,13 +16,18 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayBoolean;
+import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
+import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
+import org.rstudio.studio.client.common.codetools.RCompletionType;
+import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.r.RToken;
 import org.rstudio.studio.client.common.r.RTokenizer;
 import org.rstudio.studio.client.server.ServerError;
@@ -178,10 +183,11 @@ public class CompletionRequester
       JsArrayString comp = response.getCompletions();
       JsArrayString pkgs = response.getPackages();
       JsArrayBoolean quote = response.getQuote();
+      JsArrayInteger type = response.getType();
       ArrayList<QualifiedName> newComp = new ArrayList<QualifiedName>();
       for (int i = 0; i < comp.length(); i++)
       {
-         newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i)));
+         newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
       }
 
       CompletionResult result = new CompletionResult(
@@ -241,6 +247,7 @@ public class CompletionRequester
             JsArrayString comp = response.getCompletions();
             JsArrayString pkgs = response.getPackages();
             JsArrayBoolean quote = response.getQuote();
+            JsArrayInteger type = response.getType();
             ArrayList<QualifiedName> newComp = new ArrayList<QualifiedName>();
             
             // Try getting our own function argument completions
@@ -252,9 +259,7 @@ public class CompletionRequester
             
             // Get server completions
             for (int i = 0; i < comp.length(); i++)
-            {
-               newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i)));
-            }
+               newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
             
             // Get variable completions from the current scope
             if (!response.getExcludeOtherCompletions())
@@ -476,6 +481,7 @@ public class CompletionRequester
                   result.completions,
                   JsUtil.toJsArrayString(pkgNames),
                   JsUtil.toJsArrayBoolean(new ArrayList<Boolean>(result.completions.length())),
+                  JsUtil.toJsArrayInteger(new ArrayList<Integer>(result.completions.length())),
                   "",
                   false,
                   false);
@@ -546,11 +552,14 @@ public class CompletionRequester
    
    public static class QualifiedName implements Comparable<QualifiedName>
    {
-      public QualifiedName(String name, String pkgName, boolean shouldQuote)
+      
+      public QualifiedName(
+            String name, String pkgName, boolean shouldQuote, int type)
       {
          this.name = name;
          this.pkgName = pkgName;
          this.shouldQuote = shouldQuote;
+         this.type = type;
       }
       
       public QualifiedName(String name, String pkgName)
@@ -558,27 +567,42 @@ public class CompletionRequester
          this.name = name;
          this.pkgName = pkgName;
          this.shouldQuote = false;
+         this.type = RCompletionType.UNKNOWN;
       }
       
       @Override
       public String toString()
       {
-         return DomUtils.textToHtml(name) + getFormattedPackageName();
-      }
-
-      private String getFormattedPackageName()
-      {
-         if (pkgName == null || pkgName.length() == 0)
-            return "";
+         SafeHtmlBuilder sb = new SafeHtmlBuilder();
          
-         StringBuilder result = new StringBuilder();
-         result.append(" <span class=\"packageName\">");
-         if (pkgName.matches("^([\\{\\[\\(\\<`'\"]).*\\1$"))
-            result.append(DomUtils.textToHtml(pkgName));
-         else
-            result.append("{").append(DomUtils.textToHtml(pkgName)).append("}");
-         result.append("</span>");
-         return result.toString();
+         // Get an icon for the completion
+         SafeHtmlUtil.appendImage(
+               sb,
+               RES.styles().completionIcon(),
+               getIcon());
+         
+         // Get the name for the completion
+         SafeHtmlUtil.appendSpan(
+               sb,
+               RES.styles().completion(),
+               name);
+         
+         // Get the associated package for functions
+         if (type == RCompletionType.FUNCTION)
+         {
+            SafeHtmlUtil.appendSpan(
+                  sb,
+                  RES.styles().packageName(),
+                  "{" + pkgName.replaceAll("package:", "") + "}");
+         }
+         
+         return sb.toSafeHtml().asString();
+      }
+      
+      private ImageResource getIcon()
+      {
+         // TODO: fill in for other types
+         return ICONS.function();
       }
 
       public static QualifiedName parseFromText(String val)
@@ -615,5 +639,16 @@ public class CompletionRequester
       public final String name ;
       public final String pkgName ;
       public final boolean shouldQuote ;
+      public final int type ;
    }
+   
+   private static final CompletionRequesterResources RES =
+         CompletionRequesterResources.INSTANCE;
+   
+   private static final StandardIcons ICONS = StandardIcons.INSTANCE;
+   
+   static {
+      RES.styles().ensureInjected();
+   }
+   
 }

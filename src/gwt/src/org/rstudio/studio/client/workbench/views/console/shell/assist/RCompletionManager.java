@@ -38,6 +38,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
+import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -98,7 +99,8 @@ public class RCompletionManager implements CompletionManager
                              CodeToolsServerOperations server,
                              InitCompletionFilter initFilter,
                              RnwCompletionContext rnwContext,
-                             DocDisplay docDisplay)
+                             DocDisplay docDisplay,
+                             boolean canAutoPopup)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -110,6 +112,7 @@ public class RCompletionManager implements CompletionManager
       initFilter_ = initFilter ;
       rnwContext_ = rnwContext;
       docDisplay_ = docDisplay;
+      canAutoPopup_ = canAutoPopup;
       
       input_.addBlurHandler(new BlurHandler() {
          public void onBlur(BlurEvent event)
@@ -298,6 +301,20 @@ public class RCompletionManager implements CompletionManager
          {
             goToFunctionDefinition();
          }
+         
+         // Also pop up completions if the user hits enter when calling a fn
+         if (keycode == KeyCodes.KEY_ENTER && modifier == KeyboardShortcut.NONE)
+         {
+            String currentLine = docDisplay_.getCurrentLine().substring(
+                  0, input_.getCursorPosition().getColumn());
+            if (currentLine.matches(".*[,(]\\s*$"))
+            {
+               docDisplay_.insertCode("\n");
+               String nextLineIndent = docDisplay_.getNextLineIndent();
+               docDisplay_.insertCode(nextLineIndent);
+               return beginSuggest(true, false, false);
+            }
+         }
       }
       else
       {
@@ -437,6 +454,31 @@ public class RCompletionManager implements CompletionManager
              (c == '_');
    }
    
+   private boolean checkCanAutoPopup(char c, int lookbackLimit)
+   {
+      String currentLine = docDisplay_.getCurrentLine();
+      Position cursorPos = input_.getCursorPosition();
+      int cursorColumn = cursorPos.getColumn();
+
+      boolean canAutocomplete = canAutoPopup_ && 
+            (currentLine.length() > lookbackLimit - 1 && isValidForRIdentifier(c));
+
+      if (canAutocomplete)
+      {
+         for (int i = 0; i < lookbackLimit; i++)
+         {
+            if (!isValidForRIdentifier(currentLine.charAt(cursorColumn - i - 1)))
+            {
+               canAutocomplete = false;
+               break;
+            }
+         }
+      }
+
+      return canAutocomplete;
+      
+   }
+   
    public boolean previewKeyPress(char c)
    {
       if (popup_.isShowing())
@@ -455,10 +497,15 @@ public class RCompletionManager implements CompletionManager
       }
       else
       {
+         
+         // Perform an auto-popup if a set number of R identifier characters
+         // have been inserted
+         final boolean canAutoPopup = checkCanAutoPopup(c, 4);
          char prevChar = docDisplay_.getCurrentLine().charAt(
-               input_.getCursorPosition().getColumn() - 1);
+               input_.getCursorPosition().getColumn() - 1); 
          
          if (
+               (canAutoPopup) ||
                (c == ':' && prevChar == ':') ||
                (c == '$') ||
                (c == '@') ||
@@ -469,7 +516,7 @@ public class RCompletionManager implements CompletionManager
                @Override
                public void execute()
                {
-                  beginSuggest(true, true, false);
+                  beginSuggest(true, true, !canAutoPopup);
                }
             });
          }
@@ -892,10 +939,6 @@ public class RCompletionManager implements CompletionManager
          {
             left = "";
          }
-         else if (splat.length == 1)
-         {
-            left = splat[0];
-         }
          else
          {
             left = splat[0];
@@ -1261,7 +1304,7 @@ public class RCompletionManager implements CompletionManager
          else
          {
             if (results.length == 1 && canAutoAccept_)
-               applyValue(results[0], false);
+               applyValue(results[0]);
             
             popup_.showCompletionValues(
                   results,
@@ -1309,9 +1352,9 @@ public class RCompletionManager implements CompletionManager
             return ;
          }
 
+         applyValue(qname);
          if (suggestOnAccept_ || qname.name.endsWith("/") || qname.name.endsWith(":"))
          {
-            applyValue(qname, false);
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
                @Override
@@ -1320,10 +1363,6 @@ public class RCompletionManager implements CompletionManager
                   beginSuggest(true, true, canAutoAccept_);
                }
             });
-         }
-         else
-         {
-            applyValue(qname, true);
          }
          
       }
@@ -1350,9 +1389,7 @@ public class RCompletionManager implements CompletionManager
          selection_ = input_.getSelection();
       }
 
-      private void applyValue(
-            final QualifiedName qualifiedName,
-            final boolean checkIsFunction)
+      private void applyValue(final QualifiedName qualifiedName)
       {
          if (qualifiedName.pkgName == "`chunk-option`")
          {
@@ -1360,34 +1397,8 @@ public class RCompletionManager implements CompletionManager
             return;
          }
          
-         if (checkIsFunction)
-         {
-            final String functionName = qualifiedName.name == null ? "" : qualifiedName.name;
-            final String pkgName = qualifiedName.pkgName == null ? "" : qualifiedName.pkgName;
-            server_.isFunction(functionName, pkgName, new ServerRequestCallback<Boolean>()
-            {
-               @Override
-               public void onResponseReceived(Boolean isFunction)
-               {
-                  doApplyValue(qualifiedName, isFunction);
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  // TODO Auto-generated method stub
-                  
-               }
-               
-            });
-         }
+         boolean insertParen = qualifiedName.type == RCompletionType.FUNCTION;
          
-         doApplyValue(qualifiedName, false);
-         
-      }
-      
-      private void doApplyValue(QualifiedName qualifiedName, boolean insertParen)
-      {
          // Don't insert a paren if there is already a '(' following
          // the cursor
          AceEditor editor = (AceEditor) input_;
@@ -1492,6 +1503,7 @@ public class RCompletionManager implements CompletionManager
    private String token_ ;
    
    private final DocDisplay docDisplay_;
+   private final boolean canAutoPopup_;
 
    private final Invalidation invalidation_ = new Invalidation();
    private CompletionRequestContext context_ ;

@@ -427,6 +427,7 @@
    objects <- lapply(1:length(search()), function(i) {
       ls(pos = i, all.names = TRUE, pattern = paste("^", token, sep = ""))
    })
-   names(objects) <- gsub("package:", "", search)
+   
+   names(objects) <- search
    objects
 })

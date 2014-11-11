@@ -143,7 +143,8 @@ public class Shell implements ConsoleInputHandler,
                                           server, 
                                           null,
                                           null,
-                                          (DocDisplay) view_.getInputEditorDisplay());
+                                          (DocDisplay) view_.getInputEditorDisplay(),
+                                          false);
       addKeyDownPreviewHandler(completionManager) ;
       addKeyPressPreviewHandler(completionManager) ;
       
