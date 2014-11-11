@@ -429,5 +429,16 @@
    })
    
    names(objects) <- search
+   
    objects
+})
+
+.rs.addFunction("isPackageProject", function()
+{
+   .Call("rs_isPackageProject")
+})
+
+.rs.addFunction("projectName", function()
+{
+   .Call("rs_projectName")
 })

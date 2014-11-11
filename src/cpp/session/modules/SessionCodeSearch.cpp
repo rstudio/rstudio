@@ -623,6 +623,8 @@ void searchSourceDatabase(const std::string& term,
    }
 }
 
+} // end anonymous namespace
+
 void searchSource(const std::string& term,
                   std::size_t maxResults,
                   bool prefixOnly,
@@ -670,6 +672,8 @@ void searchSource(const std::string& term,
       }
    }
 }
+
+namespace {
 
 template <typename T>
 void searchSourceDatabaseFiles(const std::string& term,

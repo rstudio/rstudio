@@ -319,9 +319,27 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
+.rs.addFunction("getPackageCompletions", function(token)
+{
+   .Call("rs_getPackageCompletions", token)
+})
+
 .rs.addFunction("getCompletionsNamespace", function(token, string, exportsOnly, envir)
 {
    result <- .rs.emptyCompletions()
+   
+   ## Suppose a package author is working on a package 'foo' and writes
+   ## 'foo::' -- we should then attempt to get completions from the
+   ## source index for them.
+   if (.rs.isPackageProject() && .rs.projectName() == string)
+   {
+      completions <- .rs.getPackageCompletions(token)
+      return(.rs.makeCompletions(
+         token = token,
+         results = completions,
+         excludeOtherCompletions = TRUE
+      ))
+   }
    
    if (!(string %in% loadedNamespaces()))
    {
