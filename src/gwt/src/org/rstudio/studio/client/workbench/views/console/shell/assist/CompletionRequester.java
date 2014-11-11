@@ -593,7 +593,7 @@ public class CompletionRequester
             SafeHtmlUtil.appendSpan(
                   sb,
                   RES.styles().packageName(),
-                  "{" + pkgName + "}");
+                  "{" + pkgName.replaceAll("package:", "") + "}");
          }
          
          return sb.toSafeHtml().asString();
