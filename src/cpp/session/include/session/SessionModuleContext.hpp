@@ -113,8 +113,9 @@ bool isPackageInstalled(const std::string& packageName);
 bool isPackageVersionInstalled(const std::string& packageName,
                                const std::string& version);
 
-// check if the required version of devtools is installed
+// check if the required versions of various packages are installed
 bool isMinimumDevtoolsInstalled();
+bool isMinimumRoxygenInstalled();
 
 std::string packageVersion(const std::string& packageName);
 

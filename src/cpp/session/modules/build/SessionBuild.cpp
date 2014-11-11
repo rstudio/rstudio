@@ -403,6 +403,13 @@ private:
          return;
       }
 
+      // check for required version of roxygen
+      if (!module_context::isMinimumRoxygenInstalled())
+      {
+         terminateWithError("roxygen2 v4.0 (or later) required to "
+                            "generate documentation");
+      }
+
       // build the roxygenize command
       shell_utils::ShellCommand cmd(rScriptPath);
       cmd << "--slave";

@@ -986,6 +986,11 @@ bool isMinimumDevtoolsInstalled()
    return isPackageVersionInstalled("devtools", "1.4.1");
 }
 
+bool isMinimumRoxygenInstalled()
+{
+   return isPackageVersionInstalled("roxygen2", "4.0");
+}
+
 std::string packageVersion(const std::string& packageName)
 {
    std::string version;
