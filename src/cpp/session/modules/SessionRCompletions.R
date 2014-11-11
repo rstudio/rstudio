@@ -643,8 +643,7 @@ assign(x = ".rs.acCompletionTypes",
                           completions,
                        packages = completions,
                        quote = !appendColons,
-                       type = .rs.acCompletionTypes$PACKAGE,
-                       excludeOtherCompletions = TRUE)
+                       type = .rs.acCompletionTypes$PACKAGE)
 })
 
 .rs.addFunction("getCompletionsGetOption", function(token)
