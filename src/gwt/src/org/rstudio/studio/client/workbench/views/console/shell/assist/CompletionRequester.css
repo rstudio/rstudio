@@ -9,6 +9,7 @@
 }
 
 .packageName {
+	padding-right: 8px;
 	float: right;
 	color: #999;
 }
