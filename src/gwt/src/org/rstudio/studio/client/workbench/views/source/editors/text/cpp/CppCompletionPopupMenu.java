@@ -4,6 +4,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -78,6 +79,8 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
             }
          });
          menuItem.addStyleName(RES.styles().itemMenu());
+           
+         FontSizer.applyNormalFontSize(menuItem);
          
          addItem(menuItem);
          
@@ -283,7 +286,7 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
    @Override
    protected int getMaxHeight()
    {
-      return 190;
+      return 180;
    }
    
    private final DocDisplay docDisplay_;
