@@ -1231,8 +1231,9 @@ assign(x = ".rs.acCompletionTypes",
       importCompletionsList <- .rs.namedVectorAsList(importCompletions)
       
       # filter completions
+      indices <- .rs.fuzzyMatches(importCompletionsList$values, token)
       importCompletionsList <- lapply(importCompletionsList, function(x) {
-         .rs.selectFuzzyMatches(x, token)
+         x[indices]
       })
       
       completions <- .rs.appendCompletions(
