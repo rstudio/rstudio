@@ -306,14 +306,14 @@ var CStyleBehaviour = function(codeModel) {
 
                if (namedNamespace) {
                   return {
-                     text: '{} // end namespace ' + namedNamespace[1],
+                     text: '{} // namespace ' + namedNamespace[1],
                      selection: [1, 1]
                   };
                }
 
                if (anonNamespace) {
                   return {
-                     text: '{} // end anonymous namespace',
+                     text: '{} // anonymous namespace',
                      selection: [1, 1]
                   };
                }
