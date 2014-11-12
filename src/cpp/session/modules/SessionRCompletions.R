@@ -443,20 +443,16 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("subsetCompletions", function(completions, indices)
 {
-   completions$results <- completions$results[indices]
-   completions$packages <- completions$packages[indices]
-   completions$quote <- completions$quote[indices]
-   completions$type <- completions$type[indices]
+   for (name in c("results", "packages", "quote", "type"))
+      completions[[name]] <- completions[[name]][indices]
    
    completions
 })
 
 .rs.addFunction("appendCompletions", function(old, new)
 {
-   old$results <- c(old$results, new$results)
-   old$packages <- c(old$packages, new$packages)
-   old$quote <- c(old$quote, new$quote)
-   old$type <- c(old$type, new$type)
+   for (name in c("results", "packages", "quote", "type"))
+      old[[name]] <- c(old[[name]], new[[name]])
    
    if (length(new$fguess) && new$fguess != "")
       old$fguess <- new$fguess
