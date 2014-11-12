@@ -203,6 +203,33 @@ std::string packagePCH(const std::string& linkingTo)
    return pch;
 }
 
+bool packageIsCpp(const std::string& linkingTo, const FilePath& srcDir)
+{
+   if (boost::algorithm::contains(linkingTo, "Rcpp"))
+   {
+      return true;
+   }
+   else
+   {
+      std::vector<FilePath> allSrcFiles;
+      Error error = srcDir.children(&allSrcFiles);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return false;
+      }
+
+      BOOST_FOREACH(const FilePath& srcFile, allSrcFiles)
+      {
+         std::string ext = srcFile.extensionLowerCase();
+         if (ext == ".cpp" || ext == ".cc")
+            return true;
+      }
+
+      return false;
+   }
+}
+
 std::vector<std::string> includesForLinkingTo(const std::string& linkingTo)
 {
    std::vector<std::string> includes;
@@ -289,6 +316,8 @@ void RCompilationDatabase::updateForCurrentPackage()
       // set the args and build file hash (to avoid recomputation)
       packageCompilationConfig_.args = args;
       packageCompilationConfig_.PCH = packagePCH(pkgInfo.linkingTo());
+      packageCompilationConfig_.isCpp = packageIsCpp(pkgInfo.linkingTo(),
+                                                     srcDir);
       packageBuildFileHash_ = buildFileHash;
    }
 
@@ -468,57 +497,29 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
    std::copy(config.args.begin(), config.args.end(), std::back_inserter(args));
 
    // add precompiled headers if necessary
-   if (usePrecompiledHeaders_ && !config.PCH.empty())
+   if (usePrecompiledHeaders_ && !config.PCH.empty() && config.isCpp)
    {
-      std::string ext = filePath.extensionLowerCase();
-      bool isCppFile = (ext == ".cc") || (ext == ".cpp");
-      if (isCppFile)
-      {
-         // extract any -std= argument
-         std::string stdArg = extractStdArg(args);
+      // extract any -std= argument
+      std::string stdArg = extractStdArg(args);
 
-         std::vector<std::string> pchArgs = precompiledHeaderArgs(config.PCH,
-                                                                  stdArg);
-         std::copy(pchArgs.begin(),
-                   pchArgs.end(),
-                   std::back_inserter(args));
-      }
+      std::vector<std::string> pchArgs = precompiledHeaderArgs(config.PCH,
+                                                               stdArg);
+      std::copy(pchArgs.begin(),
+                pchArgs.end(),
+                std::back_inserter(args));
+   }
+
+   // if this is a .h file and it's a C++ config then force C++ for
+   // libclang (this is necessary because many C++ header files in
+   // the R ecosystem use .h
+   if ((filePath.extensionLowerCase() == ".h") && config.isCpp)
+   {
+      args.push_back("-x");
+      args.push_back("c++");
    }
 
    // return args
    return args;
-}
-
-std::vector<std::string> RCompilationDatabase::translationUnits()
-{
-   using namespace projects;
-   std::vector<FilePath> allSrcFiles;
-   if (projectContext().config().buildType == r_util::kBuildTypePackage)
-   {
-      FilePath srcPath = projectContext().buildTargetPath().childPath("src");
-      if (srcPath.exists())
-      {
-         Error error = srcPath.children(&allSrcFiles);
-         if (!error)
-         {
-            std::vector<std::string> srcFiles;
-            BOOST_FOREACH(const FilePath& srcFile, allSrcFiles)
-            {
-               std::string filename = srcFile.absolutePath();
-               if (SourceIndex::isTranslationUnit(filename))
-                  srcFiles.push_back(filename);
-            }
-            return srcFiles;
-         }
-         else
-         {
-            LOG_ERROR(error);
-         }
-      }
-   }
-
-   // no love
-   return std::vector<std::string>();
 }
 
 RCompilationDatabase::CompilationConfig
@@ -554,6 +555,7 @@ RCompilationDatabase::CompilationConfig
    CompilationConfig config;
    config.args = args;
    config.PCH = rcppPkg;
+   config.isCpp = true;
    return config;
 
 }
@@ -817,10 +819,6 @@ core::libclang::CompilationDatabase rCompilationDatabase()
    compilationDatabase.compileArgsForTranslationUnit =
       boost::bind(&RCompilationDatabase::compileArgsForTranslationUnit,
                   &instance, _1);
-   compilationDatabase.translationUnits =
-      boost::bind(&RCompilationDatabase::translationUnits,
-                  &instance);
-
    return compilationDatabase;
 }
 

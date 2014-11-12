@@ -49,9 +49,9 @@ bool insertDefinition(const CppDefinition& definition,
    return true;
 }
 
-bool isTranslationUnit(const FileInfo& fileInfo,
-                       const FilePath& pkgSrcDir,
-                       const FilePath& pkgIncludeDir)
+bool isIndexableFile(const FileInfo& fileInfo,
+                     const FilePath& pkgSrcDir,
+                     const FilePath& pkgIncludeDir)
 {
    FilePath filePath(fileInfo.absolutePath());
 
@@ -449,7 +449,7 @@ Error initializeDefinitionIndex()
          // survives the call to this function and is never deleted)
          IncrementalFileChangeHandler* pFileChangeHandler =
            new IncrementalFileChangeHandler(
-                  boost::bind(isTranslationUnit, _1, srcPath, includePath),
+                  boost::bind(isIndexableFile, _1, srcPath, includePath),
                   fileChangeHandler,
                   boost::posix_time::milliseconds(200),
                   boost::posix_time::milliseconds(20),

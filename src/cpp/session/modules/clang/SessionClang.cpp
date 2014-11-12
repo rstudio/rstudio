@@ -118,33 +118,28 @@ void onSourceDocUpdated(boost::shared_ptr<IdToFile> pIdToFile,
                                         pDoc->contents(),
                                         pDoc->dirty());
 
-
-   // for full translation units we do some index priming
-   if (SourceIndex::isTranslationUnit(filename))
+   // dirty files indicate active user editing, prime if necessary
+   if (pDoc->dirty())
    {
-      // dirty files indicate active user editing, prime if necessary
-      if (pDoc->dirty())
-      {
-         module_context::scheduleDelayedWork(
-               boost::posix_time::milliseconds(100),
-               boost::bind(&SourceIndex::primeEditorTranslationUnit,
-                           &(rSourceIndex()), filename),
-               true); // require idle
-      }
+      module_context::scheduleDelayedWork(
+            boost::posix_time::milliseconds(100),
+            boost::bind(&SourceIndex::primeEditorTranslationUnit,
+                        &(rSourceIndex()), filename),
+            true); // require idle
+   }
 
-      // non dirty-files may be eligible for re-priming (i.e. process them again
-      // only if they are already in the source index). the reason we don't do
-      // this for all source doc updates is that it would expose us to an
-      // unbounded number of update operations at IDE startup (based on how
-      // many C++ files are open in the source editing pane)
-      else
-      {
-         module_context::scheduleDelayedWork(
-               boost::posix_time::milliseconds(100),
-               boost::bind(&SourceIndex::reprimeEditorTranslationUnit,
-                           &(rSourceIndex()), filename),
-               true); // require idle
-      }
+   // non dirty-files may be eligible for re-priming (i.e. process them again
+   // only if they are already in the source index). the reason we don't do
+   // this for all source doc updates is that it would expose us to an
+   // unbounded number of update operations at IDE startup (based on how
+   // many C++ files are open in the source editing pane)
+   else
+   {
+      module_context::scheduleDelayedWork(
+            boost::posix_time::milliseconds(100),
+            boost::bind(&SourceIndex::reprimeEditorTranslationUnit,
+                        &(rSourceIndex()), filename),
+            true); // require idle
    }
 }
 

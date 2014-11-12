@@ -31,33 +31,15 @@ namespace libclang {
 
 bool SourceIndex::isSourceFile(const FilePath& filePath)
 {
-   if (isTranslationUnit(filePath))
-   {
-      return true;
-   }
-   else
-   {
-      std::string ex = filePath.extensionLowerCase();
-      return (ex == ".h" || ex == ".hh" || ex == ".hpp");
-   }
+   std::string ex = filePath.extensionLowerCase();
+   return (ex == ".h" || ex == ".hh" || ex == ".hpp" ||
+           ex == ".c" || ex == ".cc" || ex == ".cpp" ||
+           ex == ".m" || ex == ".mm");
 }
 
 bool SourceIndex::isSourceFile(const std::string& filename)
 {
    return isSourceFile(FilePath(filename));
-}
-
-bool SourceIndex::isTranslationUnit(const FilePath& filePath)
-{
-   std::string ex = filePath.extensionLowerCase();
-   return (ex == ".c" || ex == ".cc" || ex == ".cpp" ||
-           ex == ".m" || ex == ".mm");
-}
-
-
-bool SourceIndex::isTranslationUnit(const std::string& filename)
-{
-   return isTranslationUnit(FilePath(filename));
 }
 
 SourceIndex::SourceIndex(CompilationDatabase compilationDB, int verbose)
@@ -149,10 +131,6 @@ std::map<std::string,CXTranslationUnit>
 TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
                                                 bool alwaysReparse)
 {
-   // header files get their own codepath
-   if (!SourceIndex::isTranslationUnit(filename))
-      return getHeaderTranslationUnit(filename);
-
    FilePath filePath(filename);
 
    boost::scoped_ptr<core::PerformanceTimer> pTimer;
@@ -267,44 +245,6 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
       LOG_ERROR_MESSAGE("Error parsing translation unit " + filename);
       return TranslationUnit();
    }
-}
-
-TranslationUnit SourceIndex::getHeaderTranslationUnit(
-                                             const std::string& filename)
-{
-   // scan through our existing translation units for this file
-   for(TranslationUnits::const_iterator it = translationUnits_.begin();
-       it != translationUnits_.end(); ++it)
-   {
-      TranslationUnit tu(it->first, it->second.tu, &unsavedFiles_);
-      if (tu.includesFile(filename))
-         return tu;
-   }
-
-   // drats we don't have it! we can still try to index other src files
-   // in search of one that includes this header
-   std::vector<std::string> srcFiles;
-   if (compilationDB_.translationUnits)
-      srcFiles = compilationDB_.translationUnits();
-   BOOST_FOREACH(const std::string& filename, srcFiles)
-   {
-      TranslationUnit tu = getTranslationUnit(filename);
-      if (!tu.empty())
-      {
-         // found it! (keep it in case we need it again)
-         if (tu.includesFile(filename))
-         {
-            return tu;
-         }
-         // didn't find it (dispose it to free memory)
-         else
-         {
-            removeTranslationUnit(filename);
-         }
-      }
-   }
-
-   return TranslationUnit();
 }
 
 } // namespace libclang

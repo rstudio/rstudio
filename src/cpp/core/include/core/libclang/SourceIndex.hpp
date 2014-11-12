@@ -37,7 +37,6 @@ struct CompilationDatabase
 {
    boost::function<std::vector<std::string>(const std::string&)>
                                             compileArgsForTranslationUnit;
-   boost::function<std::vector<std::string>()> translationUnits;
 };
 
 class SourceIndex : boost::noncopyable
@@ -45,8 +44,6 @@ class SourceIndex : boost::noncopyable
 public:
    static bool isSourceFile(const std::string& filename);
    static bool isSourceFile(const core::FilePath& filePath);
-   static bool isTranslationUnit(const std::string& filename);
-   static bool isTranslationUnit(const core::FilePath& filePath);
 
 public:
    explicit SourceIndex(
@@ -75,11 +72,6 @@ public:
    // or a header file)
    TranslationUnit getTranslationUnit(const std::string& filename,
                                       bool alwaysReparse = false);
-
-private:
-
-   // get a translation unit for a header file
-   TranslationUnit getHeaderTranslationUnit(const std::string& filename);
 
 private:
 

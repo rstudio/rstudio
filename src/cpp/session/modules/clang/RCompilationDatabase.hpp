@@ -44,7 +44,6 @@ public:
 
    std::vector<std::string> compileArgsForTranslationUnit(
                                              const std::string& filename);
-   std::vector<std::string> translationUnits();
 
 private:
 
@@ -66,6 +65,7 @@ private:
       bool empty() const { return args.empty(); }
       std::vector<std::string> args;
       std::string PCH;
+      bool isCpp;
    };
    CompilationConfig configForSourceCpp(const std::string& rcppPkg,
                                         core::FilePath srcFile);
