@@ -440,6 +440,9 @@
 
 .rs.addFunction("isPackageDirectory", function(path)
 {
+   if (!is.null(.rs.get("packageName")))
+      return(TRUE)
+   
    if (!file.exists(path))
       return(FALSE)
    
@@ -448,4 +451,49 @@
    
    DESCRIPTION <- readLines(file.path(path, "DESCRIPTION"))
    any(grepl("^Type:\\s*Package", DESCRIPTION, perl = TRUE))
+})
+
+.rs.addFunction("getProjectPackageName", function()
+{
+   projectPath <- .rs.getProjectPath()
+   if (identical(projectPath, .rs.get("projectPath")))
+      if (!is.null(value <- .rs.get("packageName")))
+         return(value)
+   
+   .rs.assign("projectPath", projectPath)
+   if (.rs.isPackageDirectory(projectPath))
+   {
+      DESCRIPTION <- readLines(file.path(projectPath, "DESCRIPTION"))
+      pkgLine <- grep("^Package:", DESCRIPTION, value = TRUE, perl = TRUE)
+      result <- sub("^Package:\\s*(.*)$", "\\1", pkgLine, perl = TRUE)
+      .rs.assign("packageName", result)
+      result
+   }
+})
+
+.rs.addFunction("assign", function(x, value)
+{
+   pos <- which(search() == "tools:rstudio")
+   if (length(pos))
+      assign(paste(".rs.cache.", x, sep = ""), value, pos = pos)
+})
+
+.rs.addFunction("get", function(x, value)
+{
+   pos <- which(search() == "tools:rstudio")
+   if (length(pos))
+      tryCatch(
+         get(paste(".rs.cache.", x, sep = ""), pos = pos),
+         error = function(e) NULL
+      )
+})
+
+.rs.addFunction("mget", function(x, value)
+{
+   pos <- which(search() == "tools:rstudio")
+   if (length(pos))
+      tryCatch(
+         mget(paste(".rs.cache.", x, sep = ""), envir = as.environment(pos)),
+         error = function(e) NULL
+      )
 })

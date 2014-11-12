@@ -353,7 +353,8 @@ assign(x = ".rs.acCompletionTypes",
          results = completions,
          packages = string,
          quote = FALSE,
-         type = type
+         type = type,
+         excludeOtherCompletions = TRUE
       )
    }
    
@@ -485,7 +486,7 @@ assign(x = ".rs.acCompletionTypes",
                .rs.makeCompletions(
                   token = token,
                   results = names(object),
-                  packages = paste("[", string, "]", sep = ""),
+                  packages = string,
                   quote = FALSE,
                   type = vapply(object, FUN.VALUE = numeric(1), USE.NAMES = FALSE, .rs.getCompletionType)
                )
@@ -544,9 +545,10 @@ assign(x = ".rs.acCompletionTypes",
       result <- .rs.makeCompletions(
          token = token,
          results = completions,
-         packages = paste("[", string, "]", sep = ""),
+         packages = string,
          quote = FALSE,
-         type = type
+         type = type,
+         excludeOtherCompletions = TRUE
       )
    }
    
@@ -594,7 +596,7 @@ assign(x = ".rs.acCompletionTypes",
       result <- .rs.makeCompletions(
          token = token,
          results = completions,
-         packages = paste("[", string, "]", sep = ""),
+         packages = string,
          quote = !inherits(object, "data.table"),
          type = .rs.acCompletionTypes$STRING
       )
@@ -626,7 +628,7 @@ assign(x = ".rs.acCompletionTypes",
       result <- .rs.makeCompletions(
          token = token,
          results = completions,
-         packages = paste("[[", string, "]]", sep = ""),
+         packages = string,
          quote = TRUE,
          type = .rs.acCompletionTypes$STRING,
          overrideInsertParens = TRUE
@@ -640,6 +642,10 @@ assign(x = ".rs.acCompletionTypes",
 .rs.addFunction("getCompletionsPackages", function(token, appendColons = FALSE)
 {
    allPackages <- Reduce(union, lapply(.libPaths(), list.files))
+   
+   # Not sure why 'DESCRIPTION' might show up here, but let's take it out
+   allPackages <- setdiff(allPackages, "DESCRIPTION")
+   
    completions <- .rs.selectFuzzyMatches(allPackages, token)
    .rs.makeCompletions(token = token,
                        results = if (appendColons && length(completions))
@@ -657,8 +663,7 @@ assign(x = ".rs.acCompletionTypes",
    .rs.makeCompletions(token = token,
                        results = .rs.selectFuzzyMatches(allOptions, token),
                        quote = TRUE,
-                       type = .rs.acCompletionTypes$STRING,
-                       excludeOtherCompletions = FALSE)
+                       type = .rs.acCompletionTypes$STRING)
 })
 
 .rs.addFunction("getCompletionsOptions", function(token)
@@ -670,8 +675,7 @@ assign(x = ".rs.acCompletionTypes",
    
    .rs.makeCompletions(token,
                        completions,
-                       type = .rs.acCompletionTypes$STRING,
-                       excludeOtherCompletions = TRUE)
+                       type = .rs.acCompletionTypes$STRING)
 })
 
 .rs.addFunction("getCompletionsSearchPath", function(token, overrideInsertParens = FALSE)
@@ -700,7 +704,10 @@ assign(x = ".rs.acCompletionTypes",
       if (packages[[i]] == "keywords")
          .rs.acCompletionTypes$KEYWORD
       else
-         .rs.getCompletionType(get(results[[i]], pos = which(search() == packages[[i]])))
+         tryCatch(
+            .rs.getCompletionType(get(results[[i]], pos = which(search() == packages[[i]]))),
+            error = function(e) .rs.acCompletionTypes$UNKNOWN
+         )
    }, FUN.VALUE = numeric(1), USE.NAMES = FALSE)
    
    .rs.makeCompletions(token = token,
@@ -789,6 +796,7 @@ utils:::rc.settings(files = TRUE)
          .rs.getCompletionsPackages(token, TRUE)
       )
       
+      # Try completing from the source index if we're in an R package
       pkgPath <- .rs.getProjectPath()
       if (.rs.isPackageDirectory(pkgPath) && .rs.startsWith(filePath, pkgPath))
       {
@@ -806,6 +814,12 @@ utils:::rc.settings(files = TRUE)
    {
       return(.rs.getCompletionsPackages(token))
    }
+   
+   # '$', '@', '::', ':::' all ask for completions from one single context
+   if (type %in% c(.rs.acContextTypes$DOLLAR, .rs.acContextTypes$AT))
+      return(.rs.getCompletionsDollar(token, string, envir, type == .rs.acContextTypes$AT))
+   else if (type %in% c(.rs.acContextTypes$NAMESPACE_EXPORTED, .rs.acContextTypes$NAMESPACE_ALL))
+      return(.rs.getCompletionsNamespace(token, string, type == .rs.acContextTypes$NAMESPACE_EXPORTED, envir))
    
    ## Other special cases (but we may still want completions from
    ## other contexts)
@@ -922,20 +936,6 @@ utils:::rc.settings(files = TRUE)
          }
       }
    }
-   
-   completions$token <- token
-   if (is.null(completions$fguess))
-      completions$fguess <- ""
-   
-   completions$excludeOtherCompletions <- .rs.scalar(type[[1]] %in% c(
-      .rs.acContextTypes$DOLLAR,
-      .rs.acContextTypes$AT,
-      .rs.acContextTypes$NAMESPACE_EXPORTED,
-      .rs.acContextTypes$NAMESPACE_ALL
-   ))
-   
-   if (is.null(completions$quote))
-      completions$quote <- logical(length(completions$results))
    
    completions
    
@@ -1101,11 +1101,7 @@ utils:::rc.settings(files = TRUE)
                                             discardFirst,
                                             envir)
 {
-   if (type %in% c(.rs.acContextTypes$DOLLAR, .rs.acContextTypes$AT))
-      .rs.getCompletionsDollar(token, string, envir, type == .rs.acContextTypes$AT)
-   else if (type %in% c(.rs.acContextTypes$NAMESPACE_EXPORTED, .rs.acContextTypes$NAMESPACE_ALL))
-      .rs.getCompletionsNamespace(token, string, type == .rs.acContextTypes$NAMESPACE_EXPORTED, envir)
-   else if (type == .rs.acContextTypes$FUNCTION)
+   if (type == .rs.acContextTypes$FUNCTION)
       .rs.getCompletionsFunction(token, string, functionCall, discardFirst, envir)
    else if (type == .rs.acContextTypes$SINGLE_BRACKET)
       .rs.getCompletionsSingleBracket(token, string, numCommas, envir)
@@ -1170,6 +1166,7 @@ utils:::rc.settings(files = TRUE)
    
    results <- completions$completions
    package <- .rs.getProjectPackageName()
+   
    type <- ifelse(completions$isFunction,
                   .rs.acCompletionTypes$FUNCTION,
                   .rs.acCompletionTypes$UNKNOWN)
