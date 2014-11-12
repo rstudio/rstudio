@@ -16,24 +16,23 @@ package org.rstudio.studio.client.workbench.codesearch;
 
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.SafeHtmlUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.icons.code.CodeIcons;
-import org.rstudio.studio.client.workbench.codesearch.model.RFileItem;
-import org.rstudio.studio.client.workbench.codesearch.model.RS4MethodParam;
-import org.rstudio.studio.client.workbench.codesearch.model.RSourceItem;
+import org.rstudio.studio.client.workbench.codesearch.model.FileItem;
+import org.rstudio.studio.client.workbench.codesearch.model.SourceItem;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchResources;
 
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 
 class CodeSearchSuggestion implements Suggestion
 {
-   public CodeSearchSuggestion(RFileItem fileItem)
+   public CodeSearchSuggestion(FileItem fileItem)
    {
       isFileTarget_ = true;
       navigationTarget_ = new CodeNavigationTarget(fileItem.getPath());
@@ -50,17 +49,17 @@ class CodeSearchSuggestion implements Suggestion
                                            null);   
    }
    
-   public CodeSearchSuggestion(RSourceItem sourceItem, FileSystemItem fsContext)
+   public CodeSearchSuggestion(SourceItem sourceItem, FileSystemItem fsContext)
    {
       isFileTarget_ = false;
       navigationTarget_ = sourceItem.toCodeNavigationTarget();
-      matchedString_ = sourceItem.getFunctionName();
+      matchedString_ = sourceItem.getName();
       
       // compute display string
       ImageResource image = StandardIcons.INSTANCE.functionLetter();
-      if (sourceItem.getType() == RSourceItem.METHOD)
+      if (sourceItem.getType() == SourceItem.METHOD)
          image = StandardIcons.INSTANCE.functionLetter();
-      else if (sourceItem.getType() == RSourceItem.CLASS)
+      else if (sourceItem.getType() == SourceItem.CLASS)
          image = CodeIcons.INSTANCE.clazz();
       
       // adjust context for parent context
@@ -81,8 +80,8 @@ class CodeSearchSuggestion implements Suggestion
       // create display string
       displayString_ = createDisplayString(image, 
                                            RES.styles().itemImage(),
-                                           sourceItem.getFunctionName(),
-                                           sourceItem.getSignature(),
+                                           sourceItem.getName(),
+                                           sourceItem.getExtraInfo(),
                                            context);
    }
    
@@ -128,28 +127,19 @@ class CodeSearchSuggestion implements Suggestion
    private String createDisplayString(ImageResource image, 
                                       String imageStyle,
                                       String name, 
-                                      JsArray<RS4MethodParam> signature,
+                                      String extraInfo,
                                       String context)
    {    
       SafeHtmlBuilder sb = new SafeHtmlBuilder();
       SafeHtmlUtil.appendImage(sb, imageStyle, image);
       SafeHtmlUtil.appendSpan(sb, RES.styles().itemName(), name);    
       
-      // check for signature
-      if (signature != null && signature.length() > 0)
+      // check for extra info
+      if (!StringUtil.isNullOrEmpty(extraInfo))
       {
-         StringBuilder sigBuilder = new StringBuilder();
-         sigBuilder.append("{");
-         for (int i=0; i<signature.length(); i++)
-         {
-            if (i>0)
-               sigBuilder.append(", ");
-            sigBuilder.append(signature.get(i).getType());
-         }
-         sigBuilder.append("}");
          SafeHtmlUtil.appendSpan(sb, 
                                  RES.styles().itemName(), 
-                                 sigBuilder.toString());
+                                 extraInfo);
       }
       
       // check for context

@@ -771,17 +771,22 @@ json::Array toJsonArray(
 }
 
 
-json::Array signatureToJson(const std::vector<r_util::RS4MethodParam>& sig)
+json::Value signatureToJson(const std::vector<r_util::RS4MethodParam>& sig)
 {
-   json::Array sigJson;
-   BOOST_FOREACH(const r_util::RS4MethodParam& param, sig)
+   std::string str;
+   if (sig.size() > 0)
    {
-      json::Object paramJson;
-      paramJson["name"] = param.name();
-      paramJson["type"] = param.type();
-      sigJson.push_back(paramJson);
+      str.append("{");
+      for (std::size_t i = 0; i<sig.size(); i++)
+      {
+         if (i > 0)
+            str.append(", ");
+         str.append(sig[i].type());
+      }
+
+      str.append("}");
    }
-   return sigJson;
+   return json::Value(str);
 }
 
 json::Array signaturesToJsonArray(
@@ -991,7 +996,7 @@ Error searchCode(const json::JsonRpcRequest& request,
    json::Object src;
    src["type"] = toJsonArray<int>(srcItemsFiltered, &r_util::RSourceItem::type);
    src["name"] = toJsonArray<std::string>(srcItemsFiltered, &r_util::RSourceItem::name);
-   src["signature"] = signaturesToJsonArray(srcItemsFiltered);
+   src["extra_info"] = signaturesToJsonArray(srcItemsFiltered);
    src["context"] = toJsonArray<std::string>(srcItemsFiltered, &r_util::RSourceItem::context);
    src["line"] = toJsonArray<int>(srcItemsFiltered, &r_util::RSourceItem::line);
    src["column"] = toJsonArray<int>(srcItemsFiltered, &r_util::RSourceItem::column);

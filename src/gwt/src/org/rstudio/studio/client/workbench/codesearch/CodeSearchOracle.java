@@ -28,8 +28,8 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
-import org.rstudio.studio.client.workbench.codesearch.model.RFileItem;
-import org.rstudio.studio.client.workbench.codesearch.model.RSourceItem;
+import org.rstudio.studio.client.workbench.codesearch.model.FileItem;
+import org.rstudio.studio.client.workbench.codesearch.model.SourceItem;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 
 import com.google.gwt.user.client.ui.SuggestOracle;
@@ -240,16 +240,16 @@ public class CodeSearchOracle extends SuggestOracle
                                        new ArrayList<CodeSearchSuggestion>();
                
                // file results
-               ArrayList<RFileItem> fileResults = 
-                                    response.getRFileItems().toArrayList();
+               ArrayList<FileItem> fileResults = 
+                                    response.getFileItems().toArrayList();
                for (int i = 0; i<fileResults.size(); i++) 
                   suggestions.add(new CodeSearchSuggestion(fileResults.get(i)));  
                
                
                // src results
                FileSystemItem context = workbenchContext_.getActiveProjectDir();
-               ArrayList<RSourceItem> srcResults = 
-                                    response.getRSourceItems().toArrayList();
+               ArrayList<SourceItem> srcResults = 
+                                    response.getSourceItems().toArrayList();
                for (int i = 0; i<srcResults.size(); i++)
                {
                   suggestions.add(

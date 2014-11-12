@@ -1,5 +1,5 @@
 /*
- * RSourceItem.java
+ * SourceItem.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -15,14 +15,13 @@
 package org.rstudio.studio.client.workbench.codesearch.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.FilePosition;
 
 
-public class RSourceItem extends JavaScriptObject
+public class SourceItem extends JavaScriptObject
 {
-   protected RSourceItem()
+   protected SourceItem()
    {
    }
    
@@ -35,12 +34,12 @@ public class RSourceItem extends JavaScriptObject
       return this.type;
    }-*/;
    
-   public final native String getFunctionName() /*-{
+   public final native String getName() /*-{
       return this.name;
    }-*/;
 
-   public final native JsArray<RS4MethodParam> getSignature() /*-{
-      return this.signature;
+   public final native String getExtraInfo() /*-{
+      return this.extra_info;
    }-*/;
 
    // project-relative filename

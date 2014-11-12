@@ -25,11 +25,11 @@ public class CodeSearchResults extends JavaScriptObject
       
    }
 
-   public final native RpcObjectList<RFileItem> getRFileItems() /*-{
+   public final native RpcObjectList<FileItem> getFileItems() /*-{
       return this.file_items;
    }-*/;
    
-   public final native RpcObjectList<RSourceItem> getRSourceItems() /*-{
+   public final native RpcObjectList<SourceItem> getSourceItems() /*-{
       return this.source_items;
    }-*/;
 

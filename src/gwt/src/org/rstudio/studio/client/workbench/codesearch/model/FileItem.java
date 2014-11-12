@@ -1,5 +1,5 @@
 /*
- * RFileItem.java
+ * FileItem.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -17,9 +17,9 @@ package org.rstudio.studio.client.workbench.codesearch.model;
 import com.google.gwt.core.client.JavaScriptObject;
 
 
-public class RFileItem extends JavaScriptObject
+public class FileItem extends JavaScriptObject
 {
-   protected RFileItem()
+   protected FileItem()
    {
    }
    
