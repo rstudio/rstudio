@@ -817,9 +817,9 @@ utils:::rc.settings(files = TRUE)
    
    # '$', '@', '::', ':::' all ask for completions from one single context
    if (type %in% c(.rs.acContextTypes$DOLLAR, .rs.acContextTypes$AT))
-      return(.rs.getCompletionsDollar(token, string, envir, type == .rs.acContextTypes$AT))
+      return(.rs.getCompletionsDollar(token, string[[1]], envir, type[[1]] == .rs.acContextTypes$AT))
    else if (type %in% c(.rs.acContextTypes$NAMESPACE_EXPORTED, .rs.acContextTypes$NAMESPACE_ALL))
-      return(.rs.getCompletionsNamespace(token, string, type == .rs.acContextTypes$NAMESPACE_EXPORTED, envir))
+      return(.rs.getCompletionsNamespace(token, string[[1]], type[[1]] == .rs.acContextTypes$NAMESPACE_EXPORTED, envir))
    
    ## Other special cases (but we may still want completions from
    ## other contexts)
@@ -937,6 +937,7 @@ utils:::rc.settings(files = TRUE)
       }
    }
    
+   completions$token <- token
    completions
    
 })

@@ -252,6 +252,11 @@ public class CompletionRequester
             JsArrayInteger type = response.getType();
             ArrayList<QualifiedName> newComp = new ArrayList<QualifiedName>();
             
+            // Get function completions from the server
+            for (int i = 0; i < comp.length(); i++)
+               if (comp.get(i).endsWith(" = "))
+                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
+            
             // Try getting our own function argument completions
             if (!response.getExcludeOtherCompletions())
             {
@@ -259,9 +264,10 @@ public class CompletionRequester
                addScopedArgumentCompletions(token, newComp);
             }
             
-            // Get server completions
+            // Get other server completions
             for (int i = 0; i < comp.length(); i++)
-               newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
+               if (!comp.get(i).endsWith(" = "))
+                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
             
             // Get variable completions from the current scope
             if (!response.getExcludeOtherCompletions())
