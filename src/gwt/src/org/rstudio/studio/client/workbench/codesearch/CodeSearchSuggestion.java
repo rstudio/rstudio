@@ -19,6 +19,7 @@ import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.icons.code.CodeIcons;
 import org.rstudio.studio.client.workbench.codesearch.model.RFileItem;
 import org.rstudio.studio.client.workbench.codesearch.model.RS4MethodParam;
@@ -56,10 +57,11 @@ class CodeSearchSuggestion implements Suggestion
       matchedString_ = sourceItem.getFunctionName();
       
       // compute display string
-      CodeIcons icons = CodeIcons.INSTANCE;
-      ImageResource image = icons.function();
-      if (sourceItem.getType() == RSourceItem.CLASS)
-         image = icons.clazz();
+      ImageResource image = StandardIcons.INSTANCE.functionLetter();
+      if (sourceItem.getType() == RSourceItem.METHOD)
+         image = StandardIcons.INSTANCE.functionLetter();
+      else if (sourceItem.getType() == RSourceItem.CLASS)
+         image = CodeIcons.INSTANCE.clazz();
       
       // adjust context for parent context
       String context = sourceItem.getContext();

@@ -22,6 +22,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.widget.IsWidgetWithHeight;
+import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.icons.code.CodeIcons;
 
 public class StatusBarWidget extends Composite
@@ -90,11 +91,11 @@ public class StatusBarWidget extends Composite
       else if (type == StatusBar.SCOPE_NAMESPACE)
          scopeIcon_.setResource(CodeIcons.INSTANCE.namespace());
       else if (type == StatusBar.SCOPE_LAMBDA)
-         scopeIcon_.setResource(CodeIcons.INSTANCE.function());
+         scopeIcon_.setResource(StandardIcons.INSTANCE.lambdaLetter());
       else if (type == StatusBar.SCOPE_ANON)
-         scopeIcon_.setResource(CodeIcons.INSTANCE.function());
+         scopeIcon_.setResource(StandardIcons.INSTANCE.functionLetter());
       else if (type == StatusBar.SCOPE_FUNCTION)
-         scopeIcon_.setResource(CodeIcons.INSTANCE.function());
+         scopeIcon_.setResource(StandardIcons.INSTANCE.functionLetter());
       else if (type == StatusBar.SCOPE_CHUNK)
          scopeIcon_.setResource(RES.chunk());
       else if (type == StatusBar.SCOPE_SECTION)

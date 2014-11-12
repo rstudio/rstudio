@@ -36,4 +36,7 @@ public interface StandardIcons extends ClientBundle
    ImageResource viewer_window();
    ImageResource run();
    ImageResource export_menu();
+   ImageResource functionLetter();
+   ImageResource methodLetter();
+   ImageResource lambdaLetter();
 }
