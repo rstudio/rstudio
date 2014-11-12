@@ -49,12 +49,13 @@ const int kCompletionVariable = 1;
 const int kCompletionFunction = 2;
 const int kCompletionConstructor = 3;
 const int kCompletionDestructor = 4;
-const int kCompletionClass = 4;
-const int kCompletionStruct = 5;
-const int kCompletionNamespace = 6;
-const int kCompletionEnum = 7;
-const int kCompletionEnumValue = 8;
-const int kCompletionKeyword = 9;
+const int kCompletionClass = 5;
+const int kCompletionStruct = 6;
+const int kCompletionNamespace = 7;
+const int kCompletionEnum = 8;
+const int kCompletionEnumValue = 9;
+const int kCompletionKeyword = 10;
+const int kCompletionMacro = 11;
 
 int completionType(CXCursorKind kind)
 {
@@ -91,8 +92,12 @@ int completionType(CXCursorKind kind)
    case CXCursor_ObjCImplementationDecl:
    case CXCursor_ObjCCategoryImplDecl:
       return kCompletionClass;
-   case CXCursor_TypedefDecl:
-      return kCompletionVariable;
+   case CXCursor_TypedefDecl: // while these are typically classes, we don't
+                              // have access to the underlying cursor for the
+                              // completion (just a CXCursorKind) so there is
+                              // no way to know for sure
+
+      return kCompletionClass;
    case CXCursor_CXXMethod:
       return kCompletionFunction;
    case CXCursor_Namespace:
@@ -122,6 +127,8 @@ int completionType(CXCursorKind kind)
    case CXCursor_ObjCDynamicDecl:
    case CXCursor_CXXAccessSpecifier:
       return kCompletionKeyword;
+   case CXCursor_MacroDefinition:
+      return kCompletionMacro;
    default:
       return kCompletionUnknown;
    }

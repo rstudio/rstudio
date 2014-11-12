@@ -46,6 +46,7 @@ public class CppCompletion extends JavaScriptObject
    public static final int ENUM = 8;
    public static final int ENUM_VALUE = 9;
    public static final int KEYWORD = 10;
+   public static final int MACRO = 11;
    
    public native final int getType() /*-{
        return this.type;
@@ -75,6 +76,8 @@ public class CppCompletion extends JavaScriptObject
          return icons.enumValue();
       case KEYWORD:
          return icons.keyword();
+      case MACRO:
+         return icons.macro();
       default:
          return icons.keyword();
       }
