@@ -378,7 +378,6 @@ public class RCompletionManager implements CompletionManager
          if (keycode == 191 && modifier == KeyboardShortcut.NONE)
          {
             input_.insertCode("/");
-            invalidatePendingRequests();
             return beginSuggest(true, true, false);
          }
          
@@ -408,8 +407,7 @@ public class RCompletionManager implements CompletionManager
                   input_.setSelection(new InputEditorSelection(start, end));
                   input_.replaceSelection("", false);
 
-                  invalidatePendingRequests();
-                  return beginSuggest(true, false, false);
+                  return beginSuggest(false, false, false);
                }
             }
             else
