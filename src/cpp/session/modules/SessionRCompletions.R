@@ -794,13 +794,15 @@ assign(x = ".rs.acCompletionTypes",
          .rs.getCompletionsPackages(token, TRUE)
       )
       
-      # Try completing from the source index if we're in an R package
-      pkgPath <- .rs.getProjectPath()
-      if (.rs.isPackageDirectory(pkgPath) && .rs.startsWith(filePath, pkgPath))
+      # try completing from the source index if this is an
+      # R file within a package
+      if (.rs.isRScriptInPackageBuildTarget(filePath))
       {
+         # get the active package
+         pkgName <- .rs.packageNameForSourceFile(filePath)
          completions <- .rs.appendCompletions(
             completions,
-            .rs.getCompletionsSourceIndex(token)
+            .rs.getCompletionsActivePackage(token, pkgName)
          )
       }
       return(completions)
@@ -904,12 +906,12 @@ assign(x = ".rs.acCompletionTypes",
          .rs.getCompletionsSearchPath(token)
       )
       
-      pkgPath <- .rs.getProjectPath()
-      if (.rs.isPackageDirectory(pkgPath) && .rs.startsWith(filePath, pkgPath))
+      if (.rs.isRScriptInPackageBuildTarget(filePath))
       {
+         pkgName <- .rs.packageNameForSourceFile(filePath)
          completions <- .rs.appendCompletions(
             completions,
-            .rs.getCompletionsSourceIndex(token)
+            .rs.getCompletionsActivePackage(token, pkgName)
          )
       }
    }
@@ -1191,23 +1193,51 @@ assign(x = ".rs.acCompletionTypes",
       character()
 })
 
-.rs.addFunction("getCompletionsSourceIndex", function(token)
+.rs.addFunction("getCompletionsActivePackage", function(token, pkgName)
 {
-   completions <- .rs.getSourceIndexCompletions(token)
-   if (!length(completions$completions))
-      return(.rs.emptyCompletions())
+   # Get completions from the source index
+   sourceIndexCompletions <- .rs.getSourceIndexCompletions(token)
    
-   results <- completions$completions
-   package <- .rs.getProjectPackageName()
+   # format completions for return to R
+   if (!length(sourceIndexCompletions$completions))
+   {
+      completions <- .rs.emptyCompletions()
+   }
+   else
+   {
+      results <- sourceIndexCompletions$completions
+      package <- .rs.getProjectPackageName()
+      
+      # TODO: more granular lookup on the object type for source index completions
+      type <- ifelse(sourceIndexCompletions$isFunction,
+                     .rs.acCompletionTypes$FUNCTION,
+                     .rs.acCompletionTypes$UNKNOWN)
+      
+      completions <- .rs.makeCompletions(token = token,
+                                         results = results,
+                                         packages = package,
+                                         quote = FALSE,
+                                         type = type)
+   }
    
-   type <- ifelse(completions$isFunction,
-                  .rs.acCompletionTypes$FUNCTION,
-                  .rs.acCompletionTypes$UNKNOWN)
+   # get completions from the imports of the package
+   importCompletions <- tryCatch(
+      getNamespaceImports(asNamespace(pkgName)),
+      error = function(e) NULL
+   )
    
-   .rs.makeCompletions(token = token,
-                       results = results,
-                       packages = package,
-                       quote = FALSE,
-                       type = type)
+   if (length(importCompletions))
+   {
+      importCompletionsList <- .rs.namedVectorAsList(importCompletions)
+      
+      completions <- .rs.appendCompletions(
+         completions,
+         .rs.makeCompletions(token = token,
+                             results = importCompletionsList$values,
+                             packages = importCompletionsList$names)
+      )
+   }
+   
+   completions
    
 })

@@ -514,3 +514,15 @@
 {
    .Call("rs_isRScriptInPackageBuildTarget", filePath)
 })
+
+.rs.addFunction("namedVectorAsList", function(vector)
+{
+   values <- unlist(vector, use.names = FALSE)
+   vectorNames <- names(vector)
+   names <- unlist(lapply(1:length(vector), function(i) {
+      rep.int(vectorNames[i], length(vector[[i]]))
+   }))
+   
+   list(values = values,
+        names = names)
+})
