@@ -1230,6 +1230,11 @@ assign(x = ".rs.acCompletionTypes",
    {
       importCompletionsList <- .rs.namedVectorAsList(importCompletions)
       
+      # filter completions
+      importCompletionsList <- lapply(importCompletionsList, function(x) {
+         .rs.selectFuzzyMatches(x, token)
+      })
+      
       completions <- .rs.appendCompletions(
          completions,
          .rs.makeCompletions(token = token,
