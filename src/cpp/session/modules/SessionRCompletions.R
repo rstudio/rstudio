@@ -747,8 +747,6 @@ assign(x = ".rs.acCompletionTypes",
    result
 })
 
-
-utils:::rc.settings(files = TRUE)
 .rs.addJsonRpcHandler("get_completions", function(token,
                                                   string,
                                                   type,
@@ -836,49 +834,67 @@ utils:::rc.settings(files = TRUE)
       .rs.getCompletionsOptions(token)
    }
    
-   # dollar context
-   else if (length(type) && type[[1]] %in% c(.rs.acContextTypes$DOLLAR, .rs.acContextTypes$AT))
-   {
-      completions <- .rs.getCompletionsDollar(
-         token,
-         string[[1]],
-         parent.frame(),
-         type[[1]] == .rs.acContextTypes$AT
-      )
-   }
-   
-   # namespace context
-   else if (length(type) && type[[1]] %in% c(.rs.acContextTypes$NAMESPACE_EXPORTED, .rs.acContextTypes$NAMESPACE_ALL))
-   {
-      completions <- .rs.getCompletionsNamespace(
-         token,
-         string[[1]],
-         type[[1]] == .rs.acContextTypes$NAMESPACE_EXPORTED,
-         parent.frame()
-      )
-   }
-   
    # no special case (start with empty completions)
    else
    {
-      completions <- .rs.emptyCompletions()
+      .rs.emptyCompletions()
    }
    
-   for (i in seq_along(string))
+   ## If we are getting completions from a '$', '@', '::' or ':::' then we do not
+   ## want to look for completions in other contexts
+   # dollar context
+   dontLookBack <- length(type) && type[[1]] %in% c(
+      .rs.acContextTypes$DOLLAR, .rs.acContextTypes$AT,
+      .rs.acContextTypes$NAMESPACE_EXPORTED,
+      .rs.acContextTypes$NAMESPACE_ALL
+   )
+   
+   if (dontLookBack)
    {
-      discardFirst <- type[[i]] == .rs.acContextTypes$FUNCTION && chainObjectName != ""
-      completions <- .rs.appendCompletions(
-         completions,
-         .rs.getRCompletions(token,
-                             string[[i]],
-                             type[[i]],
-                             numCommas[[i]],
-                             functionCall,
-                             discardFirst,
-                             parent.frame())
-      )
+      # dollar context
+      if (type[[1]] %in% c(.rs.acContextTypes$DOLLAR, .rs.acContextTypes$AT))
+      {
+         completions <- .rs.getCompletionsDollar(
+            token,
+            string[[1]],
+            parent.frame(),
+            type[[1]] == .rs.acContextTypes$AT
+         )
+      }
+      
+      # namespace context
+      else if (type[[1]] %in% c(.rs.acContextTypes$NAMESPACE_EXPORTED,
+                                .rs.acContextTypes$NAMESPACE_ALL))
+      {
+         completions <- .rs.getCompletionsNamespace(
+            token,
+            string[[1]],
+            type[[1]] == .rs.acContextTypes$NAMESPACE_EXPORTED,
+            parent.frame()
+         )
+      }
    }
    
+   # otherwise, look through the contexts and pick up completions
+   else
+   {
+      for (i in seq_along(string))
+      {
+         discardFirst <- type[[i]] == .rs.acContextTypes$FUNCTION && chainObjectName != ""
+         completions <- .rs.appendCompletions(
+            completions,
+            .rs.getRCompletions(token,
+                                string[[i]],
+                                type[[i]],
+                                numCommas[[i]],
+                                functionCall,
+                                discardFirst,
+                                parent.frame())
+         )
+      }
+   }
+   
+   # get completions from the search path for the 'generic' contexts
    if (token != "" && 
           type[[1]] %in% c(.rs.acContextTypes$UNKNOWN, .rs.acContextTypes$FUNCTION,
                            .rs.acContextTypes$SINGLE_BRACKET, .rs.acContextTypes$DOUBLE_BRACKET))
