@@ -210,8 +210,13 @@ SEXP rs_getSourceIndexCompletions(SEXP tokenSEXP)
 SEXP rs_getProjectPath()
 {
    r::sexp::Protect protect;
-   FilePath projectPath = projects::projectContext().directory();
-   return r::sexp::create(projectPath.absolutePath(), &protect);
+   std::string pathToReturn = "";
+   if (projects::projectContext().hasProject())
+   {
+      FilePath projectPath = projects::projectContext().directory();
+      pathToReturn = projects::projectContext().directory().absolutePath();
+   }
+   return r::sexp::create(pathToReturn, &protect);
 }
 
 } // end anonymous namespace
