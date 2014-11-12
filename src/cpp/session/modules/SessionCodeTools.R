@@ -432,3 +432,20 @@
    
    objects
 })
+
+.rs.addFunction("getProjectPath", function()
+{
+   .Call("rs_getProjectPath")
+})
+
+.rs.addFunction("isPackageDirectory", function(path)
+{
+   if (!file.exists(path))
+      return(FALSE)
+   
+   if (!file.exists(file.path(path, "DESCRIPTION")))
+      return(FALSE)
+   
+   DESCRIPTION <- readLines(file.path(path, "DESCRIPTION"))
+   any(grepl("^Type:\\s*Package", DESCRIPTION, perl = TRUE))
+})

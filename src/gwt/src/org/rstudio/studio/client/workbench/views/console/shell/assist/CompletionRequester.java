@@ -214,6 +214,7 @@ public class CompletionRequester
          final JsArrayString chainAdditionalArgs,
          final JsArrayString chainExcludeArgs,
          final boolean chainExcludeArgsFromObject,
+         final String filePath,
          final boolean implicit,
          final ServerRequestCallback<CompletionResult> callback)
    {
@@ -230,6 +231,7 @@ public class CompletionRequester
             chainAdditionalArgs,
             chainExcludeArgs,
             chainExcludeArgsFromObject,
+            filePath,
             new ServerRequestCallback<Completions>()
       {
          @Override
@@ -432,6 +434,7 @@ public class CompletionRequester
          final JsArrayString chainAdditionalArgs,
          final JsArrayString chainExcludeArgs,
          final boolean chainExcludeArgsFromObject,
+         final String filePath,
          final ServerRequestCallback<Completions> requestCallback)
    {
       int optionsStartOffset;
@@ -452,6 +455,7 @@ public class CompletionRequester
                chainAdditionalArgs,
                chainExcludeArgs,
                chainExcludeArgsFromObject,
+               filePath,
                requestCallback);
       }
    }

@@ -319,9 +319,9 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
-.rs.addFunction("getSourceIndexCompletions", function(token, path)
+.rs.addFunction("getSourceIndexCompletions", function(token)
 {
-   .Call("rs_getSourceIndexCompletions", token, path)
+   .Call("rs_getSourceIndexCompletions", token)
 })
 
 .rs.addFunction("getCompletionsNamespace", function(token, string, exportsOnly, envir)
@@ -750,8 +750,11 @@ utils:::rc.settings(files = TRUE)
                                                   chainObjectName,
                                                   additionalArgs,
                                                   excludeArgs,
-                                                  excludeArgsFromObject)
+                                                  excludeArgsFromObject,
+                                                  filePath)
 {
+   filePath <- suppressWarnings(normalizePath(filePath, mustWork = FALSE))
+   
    ## NOTE: these are passed in as lists of strings; convert to character
    additionalArgs <- as.character(additionalArgs)
    excludeArgs <- as.character(excludeArgs)
@@ -781,10 +784,20 @@ utils:::rc.settings(files = TRUE)
          return(.rs.emptyCompletions())
       
       # Otherwise, complete from the seach path + available packages
-      return(.rs.appendCompletions(
+      completions <- .rs.appendCompletions(
          .rs.getCompletionsSearchPath(token),
          .rs.getCompletionsPackages(token, TRUE)
-      ))
+      )
+      
+      pkgPath <- .rs.getProjectPath()
+      if (.rs.isPackageDirectory(pkgPath) && .rs.startsWith(filePath, pkgPath))
+      {
+         completions <- .rs.appendCompletions(
+            completions,
+            .rs.getCompletionsSourceIndex(token)
+         )
+      }
+      return(completions)
    }
    
    # library, require, requireNamespace, loadNamespace
@@ -844,6 +857,15 @@ utils:::rc.settings(files = TRUE)
          completions,
          .rs.getCompletionsSearchPath(token)
       )
+      
+      pkgPath <- .rs.getProjectPath()
+      if (.rs.isPackageDirectory(pkgPath) && .rs.startsWith(filePath, pkgPath))
+      {
+         completions <- .rs.appendCompletions(
+            completions,
+            .rs.getCompletionsSourceIndex(token)
+         )
+      }
    }
    
    ## File-based completions
@@ -1140,9 +1162,9 @@ utils:::rc.settings(files = TRUE)
       character()
 })
 
-.rs.addFunction("getCompletionsSourceIndex", function(token, path)
+.rs.addFunction("getCompletionsSourceIndex", function(token)
 {
-   completions <- .rs.getSourceIndexCompletions(token, path)
+   completions <- .rs.getSourceIndexCompletions(token)
    if (!length(completions$completions))
       return(.rs.emptyCompletions())
    

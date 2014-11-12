@@ -746,7 +746,7 @@ public class RCompletionManager implements CompletionManager
    /**
     * If false, the suggest operation was aborted
     */
-   private boolean beginSuggest(boolean flushCache, boolean implicit, final boolean canAutoInsert)
+   private boolean beginSuggest(boolean flushCache, boolean implicit, boolean canAutoInsert)
    {
       if (!input_.isSelectionCollapsed())
          return false ;
@@ -764,6 +764,12 @@ public class RCompletionManager implements CompletionManager
       if (firstLine.matches(".*#+\\s*$"))
       {
          return false;
+      }
+      
+      // don't auto-insert if we're within a comment
+      if (!StringUtil.stripRComment(firstLine).equals(firstLine))
+      {
+         canAutoInsert = false;
       }
       
       // don't auto-complete with tab on lines with only whitespace,
@@ -846,6 +852,10 @@ public class RCompletionManager implements CompletionManager
          }
       }
       
+      String filePath = getSourceDocumentPath();
+      if (filePath == null)
+         filePath = "";
+      
       requester_.getCompletions(
             context.getToken(),
             context.getAssocData(),
@@ -856,6 +866,7 @@ public class RCompletionManager implements CompletionManager
             infixData.getAdditionalArgs(),
             infixData.getExcludeArgs(),
             infixData.getExcludeArgsFromObject(),
+            filePath,
             implicit,
             context_);
 

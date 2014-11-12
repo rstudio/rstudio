@@ -161,14 +161,8 @@ struct SourceIndexCompletions {
    bool moreAvailable;
 };
 
-SourceIndexCompletions getSourceIndexCompletions(const std::string& token,
-                                                 const std::string& path)
+SourceIndexCompletions getSourceIndexCompletions(const std::string& token)
 {
-   // Ensure that the path provided lies in build target
-   FilePath filePath(path);
-   if (!module_context::isRScriptInPackageBuildTarget(filePath))
-      return SourceIndexCompletions();
-
    // get functions from the source index
    std::vector<core::r_util::RSourceItem> items;
    bool moreAvailable = false;
@@ -192,15 +186,13 @@ SourceIndexCompletions getSourceIndexCompletions(const std::string& token,
 
    srcCompletions.moreAvailable = moreAvailable;
    return srcCompletions;
-
 }
 
-SEXP rs_getSourceIndexCompletions(SEXP tokenSEXP, SEXP fileSEXP)
+SEXP rs_getSourceIndexCompletions(SEXP tokenSEXP)
 {
    r::sexp::Protect protect;
    std::string token = r::sexp::asString(tokenSEXP);
-   std::string file = r::sexp::asString(fileSEXP);
-   SourceIndexCompletions srcCompletions = getSourceIndexCompletions(token, file);
+   SourceIndexCompletions srcCompletions = getSourceIndexCompletions(token);
 
    std::vector<std::string> names;
    names.push_back("completions");
@@ -215,6 +207,13 @@ SEXP rs_getSourceIndexCompletions(SEXP tokenSEXP, SEXP fileSEXP)
    return resultSEXP;
 }
 
+SEXP rs_getProjectPath()
+{
+   r::sexp::Protect protect;
+   FilePath projectPath = projects::projectContext().directory();
+   return r::sexp::create(projectPath.absolutePath(), &protect);
+}
+
 } // end anonymous namespace
 
 Error initialize() {
@@ -227,7 +226,12 @@ Error initialize() {
    r::routines::registerCallMethod(
             "rs_getSourceIndexCompletions",
             (DL_FUNC) r_completions::rs_getSourceIndexCompletions,
-            2);
+            1);
+
+   r::routines::registerCallMethod(
+            "rs_getProjectPath",
+            (DL_FUNC) r_completions::rs_getProjectPath,
+            0);
 
    using boost::bind;
    using namespace module_context;
