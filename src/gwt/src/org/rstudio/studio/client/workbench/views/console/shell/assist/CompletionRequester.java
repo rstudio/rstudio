@@ -264,17 +264,17 @@ public class CompletionRequester
                addScopedArgumentCompletions(token, newComp);
             }
             
-            // Get other server completions
-            for (int i = 0; i < comp.length(); i++)
-               if (!comp.get(i).endsWith(" = "))
-                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
-            
             // Get variable completions from the current scope
             if (!response.getExcludeOtherCompletions())
             {
                addScopedCompletions(token, newComp, "variable");
                addScopedCompletions(token, newComp, "function");
             }
+            
+            // Get other server completions
+            for (int i = 0; i < comp.length(); i++)
+               if (!comp.get(i).endsWith(" = "))
+                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
             
             CompletionResult result = new CompletionResult(
                   response.getToken(),

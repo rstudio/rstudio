@@ -495,7 +495,7 @@ public class RCompletionManager implements CompletionManager
                @Override
                public void execute()
                {
-                  beginSuggest(true, true, !canAutoPopup);
+                  beginSuggest(true, true, false);
                }
             });
          }

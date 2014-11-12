@@ -815,20 +815,6 @@ utils:::rc.settings(files = TRUE)
       return(.rs.getCompletionsPackages(token))
    }
    
-   # '$', '@', '::', ':::' all ask for completions from one single context
-   if (type %in% c(.rs.acContextTypes$DOLLAR, .rs.acContextTypes$AT))
-      return(.rs.getCompletionsDollar(
-         token,
-         string[[1]],
-         parent.frame(),
-         type[[1]] == .rs.acContextTypes$AT))
-   else if (type %in% c(.rs.acContextTypes$NAMESPACE_EXPORTED, .rs.acContextTypes$NAMESPACE_ALL))
-      return(.rs.getCompletionsNamespace(
-         token,
-         string[[1]],
-         type[[1]] == .rs.acContextTypes$NAMESPACE_EXPORTED,
-         parent.frame()))
-   
    ## Other special cases (but we may still want completions from
    ## other contexts)
    
@@ -848,6 +834,28 @@ utils:::rc.settings(files = TRUE)
    else if (string[[1]] == "options" && type == .rs.acContextTypes$FUNCTION)
    {
       .rs.getCompletionsOptions(token)
+   }
+   
+   # dollar context
+   else if (length(type) && type[[1]] %in% c(.rs.acContextTypes$DOLLAR, .rs.acContextTypes$AT))
+   {
+      completions <- .rs.getCompletionsDollar(
+         token,
+         string[[1]],
+         parent.frame(),
+         type[[1]] == .rs.acContextTypes$AT
+      )
+   }
+   
+   # namespace context
+   else if (length(type) && type[[1]] %in% c(.rs.acContextTypes$NAMESPACE_EXPORTED, .rs.acContextTypes$NAMESPACE_ALL))
+   {
+      completions <- .rs.getCompletionsNamespace(
+         token,
+         string[[1]],
+         type[[1]] == .rs.acContextTypes$NAMESPACE_EXPORTED,
+         parent.frame()
+      )
    }
    
    # no special case (start with empty completions)
@@ -898,7 +906,7 @@ utils:::rc.settings(files = TRUE)
       )
    
    ## Package completions (e.g. `stats::`)
-   if (token != "" && length(type) == 1 && type == .rs.acContextTypes$UNKNOWN)
+   if (token != "" && .rs.acContextTypes$UNKNOWN %in% type)
       completions <- .rs.appendCompletions(
          completions,
          .rs.getCompletionsPackages(token, TRUE)

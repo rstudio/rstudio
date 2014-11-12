@@ -478,7 +478,7 @@
       assign(paste(".rs.cache.", x, sep = ""), value, pos = pos)
 })
 
-.rs.addFunction("get", function(x, value)
+.rs.addFunction("get", function(x)
 {
    pos <- which(search() == "tools:rstudio")
    if (length(pos))
@@ -488,12 +488,19 @@
       )
 })
 
-.rs.addFunction("mget", function(x, value)
+.rs.addFunction("mget", function(x = NULL)
 {
    pos <- which(search() == "tools:rstudio")
    if (length(pos))
-      tryCatch(
-         mget(paste(".rs.cache.", x, sep = ""), envir = as.environment(pos)),
+      tryCatch({
+         
+         objects <- if (is.null(x))
+            .rs.selectStartsWith(objects(pos = pos, all.names = TRUE), ".rs.cache")
+         else
+            paste(".rs.cache.", x, sep = "")
+         
+         mget(objects, envir = as.environment(pos))
+      },
          error = function(e) NULL
       )
 })
