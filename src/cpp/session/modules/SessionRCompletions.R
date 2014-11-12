@@ -454,6 +454,19 @@ assign(x = ".rs.acCompletionTypes",
    for (name in c("results", "packages", "quote", "type"))
       old[[name]] <- c(old[[name]], new[[name]])
    
+   # resolve duplicates -- a completion is duplicated if its result
+   # and package are identical (if 'type' or 'quote' differs, it's probably a bug?)
+   drop <- intersect(
+      which(duplicated(old$results)),
+      which(duplicated(old$packages))
+   )
+   
+   if (length(drop))
+   {
+      for (name in c("results", "packages", "quote", "type"))
+         old[[name]] <- old[[name]][-c(drop)]
+   }
+   
    if (length(new$fguess) && new$fguess != "")
       old$fguess <- new$fguess
    
@@ -1251,7 +1264,7 @@ assign(x = ".rs.acCompletionTypes",
          completions,
          .rs.makeCompletions(token = token,
                              results = importCompletionsList$values,
-                             packages = importCompletionsList$names,
+                             packages = paste("package:", importCompletionsList$names, sep = ""),
                              type = type)
       )
    }
