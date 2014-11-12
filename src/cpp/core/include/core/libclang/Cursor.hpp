@@ -72,6 +72,7 @@ public:
    SourceLocation getSourceLocation() const;
 
    bool isNull() const;
+   bool isValid() const;
 
    bool operator==(const Cursor& other) const;
    bool operator!=(const Cursor& other) const

@@ -141,6 +141,11 @@ bool Cursor::isNull() const
       return (clang().equalCursors(cursor(), clang().getNullCursor()));
 }
 
+bool Cursor::isValid() const
+{
+   return (!isNull() && !isInvalid());
+}
+
 bool Cursor::operator==(const Cursor& other) const
 {
    return clang().equalCursors(cursor(), other.cursor());

@@ -307,14 +307,14 @@ FileLocation findDefinitionLocation(const FileLocation& location)
 
    // get the cursor
    Cursor cursor = tu.getCursor(filename, location.line, location.column);
-   if (cursor.isNull())
+   if (!cursor.isValid())
       return FileLocation();
 
    // follow reference if we need to
    if (cursor.isReference() || cursor.isExpression())
    {
       cursor = cursor.getReferenced();
-      if (cursor.isNull())
+      if (!cursor.isValid())
          return FileLocation();
    }
 
@@ -359,7 +359,7 @@ FileLocation findDefinitionLocation(const FileLocation& location)
    if (!cursor.isDefinition())
    {
       Cursor cursorDef = cursor.getDefinition();
-      if (!cursorDef.isNull())
+      if (cursorDef.isValid())
          cursor = cursorDef;
    }
 
