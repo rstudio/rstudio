@@ -46,14 +46,12 @@ import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.thirdparty.guava.common.base.Objects;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
 import com.google.gwt.thirdparty.guava.common.io.Files;
 import com.google.gwt.thirdparty.guava.common.io.Resources;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -189,7 +187,7 @@ class Recompiler {
     TreeLogger compileLogger = makeCompileLogger(compileDir, logger);
     ModuleDef module;
     try {
-      module = loadModule(Sets.<String>newHashSet(), compileLogger);
+      module = loadModule(compileLogger);
 
       logger.log(TreeLogger.INFO, "Loading Java files in " + inputModuleName + ".");
       CompilerOptions loadOptions = new CompilerOptionsImpl(compileDir, inputModuleName, options);
@@ -277,10 +275,14 @@ class Recompiler {
       return templateJs;
 
     } catch (IOException e) {
-      compileLogger.log(Type.ERROR, "Can not generate + " + outputModuleName
-          + " + .recompile.nocache.js", e);
+      compileLogger.log(Type.ERROR, "Can not generate + " + outputModuleName + " recompile js", e);
       throw new UnableToCompleteException();
     }
+  }
+
+  synchronized String getRecompileJs(TreeLogger logger) throws UnableToCompleteException {
+    ModuleDef loadModule = loadModule(logger);
+    return generateModuleRecompileJs(loadModule, logger);
   }
 
   private boolean doCompile(TreeLogger compileLogger, CompileDir compileDir, Job job)
@@ -291,7 +293,7 @@ class Recompiler {
     CompilerOptions loadOptions = new CompilerOptionsImpl(compileDir, inputModuleName, options);
     compilerContext = compilerContextBuilder.options(loadOptions).build();
 
-    ModuleDef module = loadModule(job.getBindingProperties().keySet(), compileLogger);
+    ModuleDef module = loadModule(compileLogger);
 
     // We need to generate the stub before restricting permutations
     String recompileJs = generateModuleRecompileJs(module, compileLogger);
@@ -422,7 +424,7 @@ class Recompiler {
   /**
    * Loads the module and configures it for SuperDevMode. (Does not restrict permutations.)
    */
-  private ModuleDef loadModule(Set<String> propertyNames, TreeLogger logger) throws UnableToCompleteException {
+  private ModuleDef loadModule(TreeLogger logger) throws UnableToCompleteException {
 
     // make sure we get the latest version of any modified jar
     ZipFileClassPathEntry.clearCache();
@@ -436,6 +438,12 @@ class Recompiler {
     ModuleDef moduleDef = ModuleDefLoader.loadFromResources(
         logger, compilerContext, inputModuleName, resources, true);
     compilerContext = compilerContextBuilder.module(moduleDef).build();
+
+    // Undo all permutation restriction customizations from previous compiles.
+    for (BindingProperty bindingProperty : moduleDef.getProperties().getBindingProperties()) {
+      String[] allowedValues = bindingProperty.getAllowedValues(bindingProperty.getRootCondition());
+      bindingProperty.setRootGeneratedValues(allowedValues);
+    }
 
     // A snapshot of the module's configuration before we modified it.
     ConfigProps config = new ConfigProps(moduleDef);
@@ -508,11 +516,6 @@ class Recompiler {
     overrideBinding(moduleDef, "compiler.useSymbolMaps", "false");
     overrideBinding(moduleDef, "superdevmode", "on");
 
-    // Unrestrict permutations so we can properly generate property providers
-    for (String propertyName : propertyNames) {
-      BindingProperty bindingProp = moduleDef.getProperties().findBindingProp(propertyName);
-      bindingProp.setRootGeneratedValues(bindingProp.getDefinedValues());
-    }
     return moduleDef;
   }
 

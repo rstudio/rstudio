@@ -104,6 +104,25 @@ public class Responses {
   }
 
   /**
+   * Sends an entire Js script.
+   */
+  static Response newJavascriptResponse(final String jsScript) {
+    return new Response() {
+      @Override
+      public void send(HttpServletRequest request, HttpServletResponse response, TreeLogger logger)
+          throws IOException {
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.setContentType("application/javascript");
+
+        ServletOutputStream outBytes = response.getOutputStream();
+        Writer out = new OutputStreamWriter(outBytes, "UTF-8");
+        out.write(jsScript);
+        out.close();
+      }
+    };
+  }
+
+  /**
    * Sends a JavaScript file with some JSON data prepended to it.
    * @param variableName the global variable where the JSON should be stored.
    * @param json the data to include.
