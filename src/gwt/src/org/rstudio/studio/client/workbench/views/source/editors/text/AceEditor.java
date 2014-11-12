@@ -400,6 +400,12 @@ public class AceEditor implements DocDisplay,
    {
       cppContext_ = cppContext;
    }
+   
+   @Override
+   public void setRCompletionContext(RCompletionContext rContext)
+   {
+      rContext_ = rContext;
+   }
 
    private void updateLanguage(boolean suppressCompletion)
    {
@@ -417,6 +423,7 @@ public class AceEditor implements DocDisplay,
                   new CompletionPopupPanel(),
                   server_,
                   new Filter(),
+                  rContext_,
                   fileType_.canExecuteChunks() ? rnwContext_ : null,
                   this,
                   true);
@@ -1941,6 +1948,7 @@ public class AceEditor implements DocDisplay,
    private boolean useVimMode_ = false;
    private RnwCompletionContext rnwContext_;
    private CppCompletionContext cppContext_;
+   private RCompletionContext rContext_;
    private Integer lineHighlightMarkerId_ = null;
    private Integer lineDebugMarkerId_ = null;
    private Integer executionLine_ = null;

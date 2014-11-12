@@ -54,6 +54,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.RCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DplyrJoinContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -98,6 +99,7 @@ public class RCompletionManager implements CompletionManager
                              CompletionPopupDisplay popup,
                              CodeToolsServerOperations server,
                              InitCompletionFilter initFilter,
+                             RCompletionContext rContext,
                              RnwCompletionContext rnwContext,
                              DocDisplay docDisplay,
                              boolean canAutoPopup)
@@ -110,6 +112,7 @@ public class RCompletionManager implements CompletionManager
       server_ = server ;
       requester_ = new CompletionRequester(server_, rnwContext, navigableSourceEditor);
       initFilter_ = initFilter ;
+      rContext_ = rContext;
       rnwContext_ = rnwContext;
       docDisplay_ = docDisplay;
       canAutoPopup_ = canAutoPopup;
@@ -1463,6 +1466,14 @@ public class RCompletionManager implements CompletionManager
       
    }
    
+   private String getSourceDocumentPath()
+   {
+      if (rContext_ != null)
+         return rContext_.getPath();
+      else
+         return null;
+   }
+   
    private GlobalDisplay globalDisplay_;
    private FileTypeRegistry fileTypeRegistry_;
    private EventBus eventBus_;
@@ -1483,6 +1494,7 @@ public class RCompletionManager implements CompletionManager
 
    private final Invalidation invalidation_ = new Invalidation();
    private CompletionRequestContext context_ ;
+   private final RCompletionContext rContext_;
    private final RnwCompletionContext rnwContext_;
    
    private NativeEvent nativeEvent_;

@@ -375,6 +375,7 @@ public class TextEditingTarget implements
                                                                   docDisplay_);
       docDisplay_.setRnwCompletionContext(compilePdfHelper_);
       docDisplay_.setCppCompletionContext(cppCompletionContext_);
+      docDisplay_.setRCompletionContext(rContext_);
       scopeHelper_ = new TextEditingTargetScopeHelper(docDisplay_);
       
       addRecordNavigationPositionHandler(releaseOnDismiss_, 
@@ -4182,6 +4183,15 @@ public class TextEditingTarget implements
          });
 
       }   
+   };
+   
+   private RCompletionContext rContext_ = new RCompletionContext() {
+
+      @Override
+      public String getPath()
+      {
+         return docUpdateSentinel_.getPath();
+      }
    };
    
    // these methods are public static so that other editing targets which

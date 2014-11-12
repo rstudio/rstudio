@@ -71,6 +71,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setFileType(TextFileType fileType, CompletionManager completionManager);
    void setRnwCompletionContext(RnwCompletionContext rnwContext);
    void setCppCompletionContext(CppCompletionContext cppContext);
+   void setRCompletionContext(RCompletionContext rContext);
    String getCode();
    void setCode(String code, boolean preserveCursorPosition);
    void insertCode(String code, boolean blockMode);
