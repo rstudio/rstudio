@@ -1228,6 +1228,10 @@ assign(x = ".rs.acCompletionTypes",
    
    if (length(importCompletions))
    {
+      # remove 'base' element if it's just TRUE
+      if (isTRUE(importCompletions$base))
+         importCompletions$base <- NULL
+      
       importCompletionsList <- .rs.namedVectorAsList(importCompletions)
       
       # filter completions
@@ -1236,11 +1240,23 @@ assign(x = ".rs.acCompletionTypes",
          x[indices]
       })
       
+      objects <- lapply(seq_along(importCompletionsList$values), function(i) {
+         
+         tryCatch(
+            expr = get(importCompletionsList$values[[i]],
+                       envir = asNamespace(importCompletionsList$names[[i]])),
+            error = function(e) NULL
+         )
+      })
+      
+      type <- vapply(objects, FUN.VALUE = numeric(1), USE.NAMES = FALSE, .rs.getCompletionType)
+      
       completions <- .rs.appendCompletions(
          completions,
          .rs.makeCompletions(token = token,
                              results = importCompletionsList$values,
-                             packages = importCompletionsList$names)
+                             packages = importCompletionsList$names,
+                             type = type)
       )
    }
    
