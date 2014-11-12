@@ -188,7 +188,8 @@ public class CppCompletionRequest
    private void showCompletionPopup(JsArray<CppCompletion> completions)
    {
       // clear any existing signature tips
-      CppCompletionSignatureTip.hideAll();
+      if (completions.length() > 0)
+         CppCompletionSignatureTip.hideAll();
         
       if (popup_ == null)
          popup_ = createCompletionPopup();
