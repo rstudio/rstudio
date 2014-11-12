@@ -504,3 +504,13 @@
          error = function(e) NULL
       )
 })
+
+.rs.addFunction("packageNameForSourceFile", function(filePath)
+{
+   .Call("rs_packageNameForSourceFile", filePath)
+})
+
+.rs.addFunction("isRScriptInPackageBuildTarget", function(filePath)
+{
+   .Call("rs_isRScriptInPackageBuildTarget", filePath)
+})
