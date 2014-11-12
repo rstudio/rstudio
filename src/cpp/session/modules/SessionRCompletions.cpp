@@ -202,12 +202,17 @@ SEXP rs_getSourceIndexCompletions(SEXP tokenSEXP, SEXP fileSEXP)
    std::string file = r::sexp::asString(fileSEXP);
    SourceIndexCompletions srcCompletions = getSourceIndexCompletions(token, file);
 
-   json::Object object;
-   object["completions"] = json::toJsonArray(srcCompletions.completions);
-   object["isFunction"] = json::toJsonArray(srcCompletions.isFunction);
-   object["moreAvailable"] = srcCompletions.moreAvailable;
+   std::vector<std::string> names;
+   names.push_back("completions");
+   names.push_back("isFunction");
+   names.push_back("moreAvailable");
 
-   return r::sexp::create(object, &protect);
+   SEXP resultSEXP = r::sexp::createList(names, &protect);
+   r::sexp::setNamedListElement(resultSEXP, "completions", srcCompletions.completions);
+   r::sexp::setNamedListElement(resultSEXP, "isFunction", srcCompletions.isFunction);
+   r::sexp::setNamedListElement(resultSEXP, "moreAvailable", srcCompletions.moreAvailable);
+
+   return resultSEXP;
 }
 
 } // end anonymous namespace

@@ -600,6 +600,22 @@ SEXP create(const std::vector<std::pair<std::string,std::string> >& value,
    // return the vector
    return charSEXP;   
 }
+
+SEXP createList(std::vector<std::string> names, Protect* pProtect)
+{
+   std::size_t n = names.size();
+   SEXP listSEXP;
+   pProtect->add(listSEXP = Rf_allocVector(VECSXP, n));
+
+   SEXP namesSEXP;
+   pProtect->add(namesSEXP = Rf_allocVector(STRSXP, n));
+   for (std::size_t i = 0; i < n; ++i)
+      SET_STRING_ELT(namesSEXP, i, Rf_mkChar(names[i].c_str()));
+
+   Rf_setAttrib(listSEXP, R_NamesSymbol, namesSEXP);
+
+   return listSEXP;
+}
    
 Protect::~Protect()
 {
