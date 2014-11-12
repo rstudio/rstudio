@@ -345,7 +345,7 @@ assign(x = ".rs.acCompletionTypes",
          objects(namespace, all.names = TRUE)
       
       completions <- .rs.selectFuzzyMatches(objectNames, token)
-      objects <- mget(completions, envir = namespace)
+      objects <- mget(completions, envir = namespace, inherits = TRUE)
       type <- vapply(objects, FUN.VALUE = numeric(1), USE.NAMES = FALSE, .rs.getCompletionType)
       
       result <- .rs.makeCompletions(
