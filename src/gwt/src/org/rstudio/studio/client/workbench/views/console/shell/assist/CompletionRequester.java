@@ -614,7 +614,9 @@ public class CompletionRequester
          case RCompletionType.DATAFRAME:
             return ICONS.dataFrame();
          case RCompletionType.LIST:
+            return ICONS.clazz();
          case RCompletionType.ENVIRONMENT:
+            return ICONS.environment();
          case RCompletionType.S4:
          case RCompletionType.REFERENCE_CLASS:
             return ICONS.clazz();
