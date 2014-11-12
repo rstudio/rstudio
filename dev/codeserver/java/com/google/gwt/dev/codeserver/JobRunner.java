@@ -15,8 +15,11 @@
  */
 package com.google.gwt.dev.codeserver;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -36,6 +39,24 @@ public class JobRunner {
   JobRunner(JobEventTable table, OutboxTable outboxes) {
     this.table = table;
     this.outboxes = outboxes;
+  }
+
+  /**
+   * Return fresh Js that knows how to request the specific permutation recompile for the given box.
+   */
+  public String getRecompileJs(final TreeLogger logger, final Outbox box)
+      throws ExecutionException {
+    try {
+      return executor.submit(new Callable<String>() {
+        @Override
+        public String call() throws Exception {
+          return box.getRecompileJs(logger);
+        }
+      }).get();
+    } catch (InterruptedException e) {
+      // Allow the JVM to shutdown.
+      return null;
+    }
   }
 
   /**

@@ -281,14 +281,14 @@ Recompiler.prototype.__getBaseUrl = function(url) {
  */
 Recompiler.prototype.getCodeServerBaseUrl = function() {
   var scriptTagsToSearch = $doc.getElementsByTagName('script');
-  var expectedSuffix = '/' + this.__moduleName + '.recompile.nocache.js';
+  var expectedSuffix = '/recompile-requester/' + this.__moduleName;
   for (var i = 0; i < scriptTagsToSearch.length; i++) {
     var candidate = StringHelper.removeQueryString(scriptTagsToSearch[i].src);
     if (StringHelper.endsWith(candidate, expectedSuffix)) {
       return this.__getBaseUrl(candidate);
     }
   }
-  throw "unable to find the script tag that includes " + moduleName + ".recompile.nocache.js";
+  throw "unable to find the script tag that includes /recompile-requester/" + moduleName ;
 };
 
 /**

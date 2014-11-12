@@ -280,6 +280,13 @@ class Outbox {
   }
 
   /**
+   * Return fresh Js that knows how to request the specific permutation recompile.
+   */
+  public String getRecompileJs(TreeLogger logger) throws UnableToCompleteException {
+    return recompiler.getRecompileJs(logger);
+  }
+
+  /**
    * Reads the GWT-RPC serialization policy manifest in this outbox.
    * If it's not there, returns the empty list.
    * @return a PolicyFile record for each entry in the policy file.
