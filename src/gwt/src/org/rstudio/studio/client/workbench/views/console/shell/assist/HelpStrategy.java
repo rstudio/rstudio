@@ -119,14 +119,14 @@ public class HelpStrategy
    private void showParameterHelp(final QualifiedName selectedItem,
                                   final CompletionPopupDisplay display)
    {
+      
+      final String name = selectedItem.name.replaceAll("\\s*=\\s*$", "");
       ParsedInfo cachedHelp = cache_.get(selectedItem);
       if (cachedHelp != null)
       {
-         doShowParameterHelp(cachedHelp, selectedItem.name, display);
+         doShowParameterHelp(cachedHelp, name, display);
          return;
       }
-      
-      final String name = selectedItem.name.replaceAll("\\s*=\\s*$", "");
 
          server_.getHelp(selectedItem.pkgName, null, 0,
                          new ServerRequestCallback<HelpInfo>() {
