@@ -22,8 +22,10 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.widget.NumericValueWidget;
+import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 
 public class EditingPreferencesPane extends PreferencesPane
 {
@@ -57,7 +59,26 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));
       
       VerticalPanel completionPanel = new VerticalPanel();
-      completionPanel.add(checkboxPref("Show tooltip after function completions", prefs.showSignatureTooltips()));    
+      showCompletions_ = new SelectWidget(
+            "Show code completions:",
+            new String[] {
+                  "Always",
+                  "When Triggered",
+                  "Manually (Tab)"
+            },
+            new String[] {
+                  UIPrefsAccessor.COMPLETION_ALWAYS,
+                  UIPrefsAccessor.COMPLETION_WHEN_TRIGGERED,
+                  UIPrefsAccessor.COMPLETION_MANUAL
+            },
+            false, 
+            true, 
+            false);
+      
+      spaced(showCompletions_);
+      completionPanel.add(showCompletions_);
+      
+      completionPanel.add(checkboxPref("Show help tooltip after function completions", prefs.showSignatureTooltips()));    
       completionPanel.add(checkboxPref("Insert spaces around equals for argument completions", prefs.insertSpacesAroundEquals()));
       
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel();
@@ -69,6 +90,22 @@ public class EditingPreferencesPane extends PreferencesPane
       add(tabPanel);
    }
 
+
+   @Override
+   protected void initialize(RPrefs prefs)
+   {
+      showCompletions_.setValue(prefs_.codeComplete().getValue());
+   }
+   
+   @Override
+   public boolean onApply(RPrefs prefs)
+   {
+      prefs_.codeComplete().setGlobalValue(showCompletions_.getValue());
+      
+      return false;
+   }
+   
+   
  
    @Override
    public ImageResource getIcon()
@@ -89,16 +126,11 @@ public class EditingPreferencesPane extends PreferencesPane
       return "Code";
    }
 
-   @Override
-   protected void initialize(RPrefs prefs)
-   {
-   }
-   
-
    private final UIPrefs prefs_;
    private final NumericValueWidget tabWidth_;
    private final NumericValueWidget marginCol_;
    private final CheckBox spacesForTab_;
    private final CheckBox showMargin_;
+   private final SelectWidget showCompletions_;
    
 }
