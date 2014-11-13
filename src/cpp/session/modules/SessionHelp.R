@@ -110,7 +110,7 @@ options(help_type = "html")
    
    helpfiles <- NULL
    if (!length(package) || package == "") {
-      helpfiles <- help(topic, help_type = "html")
+      helpfiles <- utils::help(topic, help_type = "html")
    } else {
       # NOTE: this can fail if there is no such package 'package'
       helpfiles <- tryCatch(
@@ -118,7 +118,9 @@ options(help_type = "html")
          expr = {
             # NOTE: help does lazy evaluation on 'package',
             # so we have to manually construct the call
-            call <- call("help", topic, package = package, help_type = "html")
+            call <- substitute(utils::help(TOPIC, package = PACKAGE, help_type = "html"),
+                               list(TOPIC = topic,
+                                    PACKAGE = package))
             eval(call)
          },
          
@@ -139,7 +141,9 @@ options(help_type = "html")
          {
             package <- sub("<environment: namespace:(.*)>", "\\1", envString, perl = TRUE)
             helpfiles <- tryCatch({
-               call <- call("help", topic, package = package, help_type = "html")
+               call <- substitute(utils::help(TOPIC, package = PACKAGE, help_type = "html"),
+                                  list(TOPIC = topic,
+                                       PACKAGE = package))
                eval(call)
             }, error = function(e) NULL
             )
