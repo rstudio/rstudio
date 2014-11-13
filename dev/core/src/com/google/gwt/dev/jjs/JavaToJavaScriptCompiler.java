@@ -75,6 +75,7 @@ import com.google.gwt.dev.jjs.impl.JsAbstractTextTransformer;
 import com.google.gwt.dev.jjs.impl.JsFunctionClusterer;
 import com.google.gwt.dev.jjs.impl.JsNoopTransformer;
 import com.google.gwt.dev.jjs.impl.JsTypeLinker;
+import com.google.gwt.dev.jjs.impl.JsniRestrictionChecker;
 import com.google.gwt.dev.jjs.impl.MakeCallsStatic;
 import com.google.gwt.dev.jjs.impl.MethodCallSpecializer;
 import com.google.gwt.dev.jjs.impl.MethodCallTightener;
@@ -953,6 +954,7 @@ public abstract class JavaToJavaScriptCompiler {
         CompilationState compilationState = constructJavaAst(additionalRootTypes);
 
         // TODO(stalcup): hide metrics gathering in a callback or subclass
+        JsniRestrictionChecker.exec(logger, jprogram);
         TypeRefDepsChecker.exec(logger, jprogram, module, options.warnMissingDeps(),
             options.getMissingDepsFile());
         logTypeOracleMetrics(precompilationMetrics, compilationState);

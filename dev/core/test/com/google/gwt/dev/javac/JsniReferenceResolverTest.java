@@ -481,62 +481,7 @@ public class JsniReferenceResolverTest extends CheckerTestCase {
     shouldGenerateNoWarning(buggy);
   }
 
-  public void testJsoInstanceMethod() {
-    MockJavaResource buggy = JavaResourceBase.createMockJavaResource("Buggy",
-       "class Buggy {",
-       "  native void jsniMeth(Object o) /*-{",
-       "    new Object().@com.google.gwt.core.client.JavaScriptObject::toString()();",
-       "  }-*/;",
-       "}");
-    shouldGenerateError(
-        buggy,
-        3,
-        "Referencing method 'com.google.gwt.core.client.JavaScriptObject.toString()': "
-            + "references to instance methods in overlay types are illegal");
-  }
-
-  public void testJsoInterfaceMethod() {
-    MockJavaResource buggy = JavaResourceBase.createMockJavaResource("Buggy",
-       "import com.google.gwt.core.client.JavaScriptObject;",
-       "class Buggy {",
-       "  interface IFoo {",
-       "    void foo();",
-       "  }",
-       "  static final class Foo extends JavaScriptObject implements IFoo {",
-       "    protected Foo() { };",
-       "    public void foo() { };",
-       "  }",
-       "  native void jsniMeth(Object o) /*-{",
-       "    new Object().@Buggy.IFoo::foo()();",
-       "  }-*/;",
-       "}");
-    shouldGenerateError(
-        buggy,
-        11,
-        "Referencing interface method 'Buggy.IFoo.foo()': implemented by 'Buggy$Foo'; "
-            + "references to instance methods in overlay types are illegal;"
-            + " use a stronger type or a Java trampoline method");
-  }
-
-  public void testJsoSubclassInstanceMethod() {
-    MockJavaResource buggy = JavaResourceBase.createMockJavaResource("Buggy",
-       "class Buggy {",
-       "  static final class Foo extends com.google.gwt.core.client.JavaScriptObject {",
-       "    protected Foo() { };",
-       "    void foo() { };",
-       "  }",
-       "  native void jsniMeth(Object o) /*-{",
-       "    new Object().@Buggy.Foo::foo()();",
-       "  }-*/;",
-       "}");
-    shouldGenerateError(
-        buggy,
-        7,
-        "Referencing method 'Buggy.Foo.foo()': "
-            + "references to instance methods in overlay types are illegal");
-  }
-
-  public void testJsoSubclassStaticMethod() {
+  public void testAllowsJsoSubclassStaticMethod() {
     MockJavaResource buggy = JavaResourceBase.createMockJavaResource("Buggy",
        "class Buggy {",
        "  static final class Foo extends com.google.gwt.core.client.JavaScriptObject {",

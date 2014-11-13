@@ -100,7 +100,7 @@ public class CompilationStateBuilder {
 
             // JSNI check + collect dependencies.
             JsniReferenceResolver
-                .resolve(cud, cudOriginaImports, jsoState, jsniMethods, jsniRefs,
+                .resolve(cud, cudOriginaImports, jsniMethods, jsniRefs,
                     new JsniReferenceResolver.TypeResolver() {
                       @Override
                       public ReferenceBinding resolveType(String sourceOrBinaryName) {
