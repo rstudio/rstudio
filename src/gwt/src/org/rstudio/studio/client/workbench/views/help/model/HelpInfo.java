@@ -63,8 +63,16 @@ public class HelpInfo extends JavaScriptObject
          for (int i = 0; i < h3headings.getLength(); i++)
             headings.add(h3headings.getItem(i));
          
+         // the first h2 heading is the title -- handle that specially
+         if (headings.size() > 0)
+         {
+            Element titleElement = headings.get(0);
+            String title = titleElement.getInnerText();
+            values.put("Title", title);
+         }
+         
          // iterate through them
-         for (int i = 0; i < headings.size(); i++)
+         for (int i = 1; i < headings.size(); i++)
          {
             Element heading = headings.get(i) ;
             String name = heading.getInnerText() ;
@@ -171,6 +179,11 @@ public class HelpInfo extends JavaScriptObject
       public String getPackageName()
       {
          return pkgName ;
+      }
+      
+      public String getTitle()
+      {
+         return values.get("Title") ;
       }
       
       public String getFunctionSignature()

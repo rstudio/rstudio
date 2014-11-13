@@ -103,10 +103,10 @@ public class HelpInfoPane extends Composite
       vpanel_.clear() ;
 
       f1prompt_.setVisible(true);
-      String packageName = help.getPackageName();
-      if (packageName != null)
+      String title = help.getTitle();
+      if (title != null)
       {
-         Label label = new Label(packageName);
+         Label label = new Label(title);
          label.setStylePrimaryName(styles_.packageName());
          vpanel_.add(label);
       }
