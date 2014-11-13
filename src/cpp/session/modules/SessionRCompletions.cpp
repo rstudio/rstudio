@@ -207,18 +207,6 @@ SEXP rs_getSourceIndexCompletions(SEXP tokenSEXP)
    return resultSEXP;
 }
 
-SEXP rs_getProjectPath()
-{
-   r::sexp::Protect protect;
-   std::string pathToReturn = "";
-   if (projects::projectContext().hasProject())
-   {
-      FilePath projectPath = projects::projectContext().directory();
-      pathToReturn = projects::projectContext().directory().absolutePath();
-   }
-   return r::sexp::create(pathToReturn, &protect);
-}
-
 } // end anonymous namespace
 
 Error initialize() {
@@ -232,11 +220,6 @@ Error initialize() {
             "rs_getSourceIndexCompletions",
             (DL_FUNC) r_completions::rs_getSourceIndexCompletions,
             1);
-
-   r::routines::registerCallMethod(
-            "rs_getProjectPath",
-            (DL_FUNC) r_completions::rs_getProjectPath,
-            0);
 
    using boost::bind;
    using namespace module_context;
