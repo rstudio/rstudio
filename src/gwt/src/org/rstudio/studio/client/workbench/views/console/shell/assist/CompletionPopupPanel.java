@@ -38,6 +38,8 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    {
       super() ;
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
+      help_ = new HelpInfoPane();
+      help_.setWidth("400px");
       setStylePrimaryName(styles_.completionPopup()) ;
    }
 
@@ -82,12 +84,6 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       HorizontalPanelWithMouseEvents horiz 
                                  = new HorizontalPanelWithMouseEvents() ;
       horiz.add(list_) ;
-      
-      if (help_ == null)
-      {
-         help_ = new HelpInfoPane() ;
-         help_.setWidth("400px") ;
-      }
       horiz.add(help_) ;
       
       setWidget(horiz) ;
