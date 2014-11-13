@@ -357,8 +357,10 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    repos = getOption("repos")
    cranMirrorConfigured <- !is.null(repos) && repos != "@CRAN@"
    
-   # selected repository names
+   # selected repository names (assume an unnamed repo == CRAN)
    selectedRepositoryNames <- names(repos)
+   if (is.null(selectedRepositoryNames))
+     selectedRepositoryNames <- "CRAN"
 
    # package archive extension
    if (identical(.Platform$OS.type, "windows"))
