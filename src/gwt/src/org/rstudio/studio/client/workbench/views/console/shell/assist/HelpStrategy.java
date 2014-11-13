@@ -151,6 +151,7 @@ public class HelpStrategy
                }
                else
                {
+                  display.setHelpVisible(false);
                   display.clearHelp(false);
                }
             }
@@ -203,6 +204,7 @@ public class HelpStrategy
             }
             else
             {
+               display.setHelpVisible(false);
                display.clearHelp(false);
             }
          }
@@ -212,7 +214,15 @@ public class HelpStrategy
    private void doShowPackageHelp(final ParsedInfo info,
                                   final CompletionPopupDisplay display)
    {
-      display.displayPackageHelp(info) ;
+      if (info.hasInfo())
+      {
+         display.displayPackageHelp(info) ;
+      }
+      else
+      {
+         display.setHelpVisible(false);
+         display.clearHelp(false) ;
+      }
    }
    
    HashMap<QualifiedName, ParsedInfo> cache_;
