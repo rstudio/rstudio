@@ -100,9 +100,11 @@ public class EditingPreferencesPane extends PreferencesPane
    @Override
    public boolean onApply(RPrefs prefs)
    {
+      boolean reload = super.onApply(prefs);
+      
       prefs_.codeComplete().setGlobalValue(showCompletions_.getValue());
       
-      return false;
+      return reload;
    }
    
    
