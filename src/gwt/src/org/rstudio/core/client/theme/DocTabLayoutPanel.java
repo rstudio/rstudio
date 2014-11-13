@@ -15,6 +15,7 @@
 package org.rstudio.core.client.theme;
 
 import com.google.gwt.animation.client.Animation;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.*;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Float;
@@ -23,6 +24,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.DomEvent;
+import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
@@ -296,8 +298,7 @@ public class DocTabLayoutPanel
 
          initWidget(layoutPanel);
 
-         DOM.sinkEvents(getElement(), 
-                        Event.ONMOUSEDOWN | 
+         this.sinkEvents(Event.ONMOUSEDOWN | 
                         Event.ONMOUSEMOVE | 
                         Event.ONMOUSEUP |
                         Event.ONLOSECAPTURE);
@@ -345,10 +346,9 @@ public class DocTabLayoutPanel
             {
                if (event.getButton() == Event.BUTTON_LEFT)
                {
-                  if (!dragging_)
-                  {
-                     beginDrag(event);
-                  }
+                  beginDrag(event);
+                  event.preventDefault();
+                  event.stopPropagation();
                }
                break;
             }
@@ -358,23 +358,22 @@ public class DocTabLayoutPanel
                if (dragging_) 
                {
                   drag(event);
+                  event.preventDefault();
+                  event.stopPropagation();
                }
                break;
             }
            
             case Event.ONMOUSEUP:
+            case Event.ONLOSECAPTURE: 
             {
                if (dragging_)
                {
-                  endDrag();
+                  endDrag(event);
+                  event.preventDefault();
+                  event.stopPropagation();
                }
                break;   
-            }
-            
-            case Event.ONLOSECAPTURE: 
-            {
-               endDrag();
-               break;
             }
          }
          super.onBrowserEvent(event);
@@ -383,9 +382,11 @@ public class DocTabLayoutPanel
       private void beginDrag(Event evt)
       {
          // set drag element state
+         mouseDown_ = evt;
          dragging_ = true;
          dragElement_ = getElement().getParentElement().getParentElement();
          dragParent_ = dragElement_.getParentElement();
+         outOfBounds_ = 0;
 
          // find the current position of this tab among its siblings--we'll use
          // this later to determine whether to shift siblings left or right
@@ -404,7 +405,6 @@ public class DocTabLayoutPanel
                      + ((Element)node).getClientWidth() + 10;
             }
          }
-         outOfBounds_ = 0;
 
          // snap the element out of the tabset
          lastElementX_ = DomUtils.leftRelativeTo(dragParent_, dragElement_);
@@ -426,16 +426,30 @@ public class DocTabLayoutPanel
          dragParent_.insertAfter(dragPlaceholder_, dragElement_);
       }
       
-      private void endDrag()
+      private void endDrag(final Event evt)
       {
-         dragging_ = false;
+         // remove the properties used to position for dragging
          dragElement_.getStyle().clearLeft();
          dragElement_.getStyle().clearPosition();
          dragElement_.getStyle().clearZIndex();
+         
+         // insert this tab where the placeholder landed
          dragParent_.removeChild(dragElement_);
          dragParent_.insertAfter(dragElement_, dragPlaceholder_);
          dragParent_.removeChild(dragPlaceholder_);
+
+         // finish dragging
          DOM.releaseCapture(getElement());
+         dragging_ = false;
+         
+         // unsink mousedown/mouseup and simulate a click to activate the tab
+         this.unsinkEvents(Event.ONMOUSEDOWN | Event.ONMOUSEUP);
+         DomEvent.fireNativeEvent(Document.get().createClickEvent(0,
+               evt.getScreenX(), evt.getScreenY(), 
+               evt.getClientX(), evt.getClientY(), 
+               evt.getCtrlKey(), evt.getAltKey(), 
+               evt.getShiftKey(), evt.getMetaKey()), this.getParent());
+         this.sinkEvents(Event.ONMOUSEDOWN | Event.ONMOUSEUP);
       }
       
       private void drag(Event evt) 
@@ -475,7 +489,10 @@ public class DocTabLayoutPanel
          {
             lastElementX_ += offset;
          }
+         
+         // move element to its new position
          dragElement_.getStyle().setLeft(lastElementX_, Unit.PX);
+
          // check to see if we're overlapping with another tab 
          for (int i = 0; i < dragParent_.getChildCount(); i++)
          {
@@ -496,6 +513,7 @@ public class DocTabLayoutPanel
             int right = left + ele.getClientWidth();
             int minOverlap = Math.min(dragElement_.getClientWidth() / 2, 
                   ele.getClientWidth() / 2);
+
             // a little complicated: compute the number of overlapping pixels
             // with this element; if the overlap is more than half of our width
             // (or the width of the candidate), it's swapping time
@@ -517,11 +535,12 @@ public class DocTabLayoutPanel
       }
       
       private boolean dragging_ = false;
-      private int lastCursorX_;
-      private int lastElementX_;
-      private int candidatePos_;
-      private int dragMax_;
-      private int outOfBounds_;
+      private Event mouseDown_;
+      private int lastCursorX_ = 0;
+      private int lastElementX_ = 0;
+      private int candidatePos_ = 0;
+      private int dragMax_ = 0;
+      private int outOfBounds_ = 0;
       private Element dragElement_;
       private Element dragParent_;
       private Element dragPlaceholder_;
