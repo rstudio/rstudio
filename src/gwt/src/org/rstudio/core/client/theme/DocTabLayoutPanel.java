@@ -16,12 +16,27 @@ package org.rstudio.core.client.theme;
 
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.dom.client.*;
+import com.google.gwt.dom.client.Style.Position;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.dom.client.MouseMoveEvent;
+import com.google.gwt.event.dom.client.MouseMoveHandler;
+import com.google.gwt.event.dom.client.MouseUpEvent;
+import com.google.gwt.event.dom.client.MouseUpHandler;
+import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.*;
+
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NodePredicate;
 import org.rstudio.core.client.events.*;
@@ -49,21 +64,97 @@ public class DocTabLayoutPanel
       addStyleName(styles_.docTabPanel());
       addStyleName(styles_.moduleTabPanel());
    }
-
+   
    @Override
    public void add(final Widget child, String text)
    {
       add(child, null, text, null);
    }
+   
+   private class TabDragHandler
+   {
+      public TabDragHandler(final DocTab tab)
+      {
+         tab_ = tab;
+         tab.addMouseDownHandler(new MouseDownHandler()
+         {
+            @Override
+            public void onMouseDown(MouseDownEvent arg0)
+            {
+               if (!dragging_)
+               {
+                  beginDrag(arg0);
+                  arg0.preventDefault();
+               }
+            }
+         });
+      }
+      
+      private void beginDrag(MouseDownEvent move)
+      {
+         dragging_ = true;
+         dragElement_ = tab_.getElement().getParentElement().getParentElement();
+
+         dragStartX_ = DomUtils.leftRelativeTo(dragElement_.getParentElement(),
+               dragElement_);
+         dragElementDelta_ = move.getRelativeX(dragElement_);
+         dragElement_.getStyle().setPosition(Position.ABSOLUTE);
+         dragElement_.getStyle().setLeft(dragStartX_ - dragElementDelta_, Unit.PX);
+         handlerReg_.add(RootPanel.get().addDomHandler(new MouseMoveHandler() 
+         {
+            @Override
+            public void onMouseMove(MouseMoveEvent arg0)
+            {
+               if (dragging_)
+               {
+                  drag(arg0);
+                  arg0.preventDefault();
+               }
+            }
+         }, MouseMoveEvent.getType()));
+         handlerReg_.add(Event.addNativePreviewHandler(new NativePreviewHandler() 
+         {
+            @Override
+            public void onPreviewNativeEvent(NativePreviewEvent arg0)
+            {
+               if (arg0.getTypeInt() == Event.ONMOUSEUP)
+               {
+                  endDrag();
+               }
+            }
+         }));
+      }
+      private void endDrag()
+      {
+         dragging_ = false;
+         dragElement_.getStyle().clearLeft();
+         dragElement_.getStyle().clearPosition();
+         handlerReg_.removeHandler();
+      }
+      
+      private void drag(MouseMoveEvent move) 
+      {
+         dragElement_.getStyle().setLeft(
+               move.getRelativeX(dragElement_.getParentElement()) - 
+               dragElementDelta_, Unit.PX);
+      }
+      
+      private boolean dragging_ = false;
+      private int dragStartX_ = 0;
+      private int dragElementDelta_ = 0;
+      private Element dragElement_;
+      private DocTab tab_;
+      private HandlerRegistrations handlerReg_;
+   }
 
    public void add(final Widget child,
                    ImageResource icon,
-                   String text,
+                   final String text,
                    String tooltip)
    {
       if (closeableTabs_)
       {
-         super.add(child, new DocTab(icon, text, tooltip, new ClickHandler()
+         DocTab tab = new DocTab(icon, text, tooltip, new ClickHandler()
          {
             public void onClick(ClickEvent event)
             {
@@ -73,7 +164,9 @@ public class DocTabLayoutPanel
                   tryCloseTab(index, null);
                }
             }
-         }));
+         });
+         super.add(child, tab);
+         new TabDragHandler(tab);
       }
       else
       {
@@ -311,6 +404,12 @@ public class DocTabLayoutPanel
          if (contentPanel_.getWidget(0) instanceof Image)
             contentPanel_.remove(0);
          contentPanel_.insert(imageForIcon(icon), 0);
+      }
+      
+      public void addMouseDownHandler(MouseDownHandler handler)
+      {
+         if (handler != null)
+            contentPanel_.addDomHandler(handler, MouseDownEvent.getType());
       }
 
       private Image imageForIcon(ImageResource icon)
