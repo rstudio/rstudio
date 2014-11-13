@@ -15,16 +15,12 @@
 package org.rstudio.core.client.theme;
 
 import com.google.gwt.animation.client.Animation;
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.*;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Float;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.DomEvent;
-import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
@@ -39,6 +35,7 @@ import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
+
 /**
  * A tab panel that is styled for document tabs.
  */
@@ -48,6 +45,11 @@ public class DocTabLayoutPanel
                  HasTabCloseHandlers,
                  HasTabClosedHandlers
 {
+   public interface TabCloseObserver
+   {
+      public void onTabClose();
+   }
+
    public DocTabLayoutPanel(boolean closeableTabs,
                             int padding,
                             int rightMargin)
@@ -60,7 +62,7 @@ public class DocTabLayoutPanel
       addStyleName(styles_.docTabPanel());
       addStyleName(styles_.moduleTabPanel());
    }
-   
+
    @Override
    public void add(final Widget child, String text)
    {
@@ -74,9 +76,9 @@ public class DocTabLayoutPanel
    {
       if (closeableTabs_)
       {
-         DocTab tab = new DocTab(icon, text, tooltip, new ClickHandler()
+         DocTab tab = new DocTab(icon, text, tooltip, new TabCloseObserver()
          {
-            public void onClick(ClickEvent event)
+            public void onTabClose()
             {
                int index = getWidgetIndex(child);
                if (index >= 0)
@@ -263,7 +265,7 @@ public class DocTabLayoutPanel
       private DocTab(ImageResource icon,
                      String title,
                      String tooltip,
-                     ClickHandler clickHandler)
+                     TabCloseObserver closeHandler)
       {
          HorizontalPanel layoutPanel = new HorizontalPanel();
          layoutPanel.setStylePrimaryName(styles_.tabLayout());
@@ -287,7 +289,6 @@ public class DocTabLayoutPanel
 
          Image img = new Image(ThemeResources.INSTANCE.closeTab());
          img.setStylePrimaryName(styles_.closeTabButton());
-         img.addClickHandler(clickHandler);
          contentPanel_.add(img);
 
          layoutPanel.add(contentPanel_);
@@ -302,6 +303,8 @@ public class DocTabLayoutPanel
                         Event.ONMOUSEMOVE | 
                         Event.ONMOUSEUP |
                         Event.ONLOSECAPTURE);
+         closeHandler_ = closeHandler;
+         closeElement_ = img.getElement();
       }
       
       private void appendDirtyMarker()
@@ -344,7 +347,8 @@ public class DocTabLayoutPanel
          {
             case Event.ONMOUSEDOWN: 
             {
-               if (event.getButton() == Event.BUTTON_LEFT)
+               if (event.getButton() == Event.BUTTON_LEFT && 
+                     Element.as(event.getEventTarget()) != closeElement_)
                {
                   beginDrag(event);
                   event.preventDefault();
@@ -367,7 +371,11 @@ public class DocTabLayoutPanel
             case Event.ONMOUSEUP:
             case Event.ONLOSECAPTURE: 
             {
-               if (dragging_)
+               if (Element.as(event.getEventTarget()) == closeElement_)
+               {
+                  closeHandler_.onTabClose();
+               }
+               else if (dragging_)
                {
                   endDrag(event);
                   event.preventDefault();
@@ -382,7 +390,6 @@ public class DocTabLayoutPanel
       private void beginDrag(Event evt)
       {
          // set drag element state
-         mouseDown_ = evt;
          dragging_ = true;
          dragElement_ = getElement().getParentElement().getParentElement();
          dragParent_ = dragElement_.getParentElement();
@@ -534,6 +541,8 @@ public class DocTabLayoutPanel
          }
       }
       
+      private TabCloseObserver closeHandler_;
+      private Element closeElement_;
       private boolean dragging_ = false;
       private Event mouseDown_;
       private int lastCursorX_ = 0;
