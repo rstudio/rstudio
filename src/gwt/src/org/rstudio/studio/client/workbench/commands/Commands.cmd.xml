@@ -458,8 +458,8 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="findInFiles" value="Cmd+Shift+F"/>
       </shortcutgroup>
       <shortcutgroup name="Build">
-         <shortcut refid="compilePDF" value="Cmd+Shift+I"/>
-         <shortcut refid="previewHTML" value="Cmd+Shift+Y" />
+         <shortcut refid="compilePDF" value="Cmd+Shift+K"/>
+         <shortcut refid="previewHTML" value="Cmd+Shift+K" />
          <shortcut refid="knitDocument" value="Cmd+Shift+K" />
          <shortcut refid="buildAll" value="Cmd+Shift+B"/>
          <shortcut refid="devtoolsLoadAll" value="Cmd+Shift+L"/>
