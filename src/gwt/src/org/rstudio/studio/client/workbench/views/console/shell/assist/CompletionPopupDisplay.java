@@ -51,6 +51,7 @@ public interface CompletionPopupDisplay
    boolean selectFirst() ;
    boolean selectLast() ;
    
+   void setHelpVisible(boolean visible) ;
    void displayFunctionHelp(HelpInfo.ParsedInfo help) ;
    void displayParameterHelp(ParsedInfo helpInfo, String parameter) ;
    /**

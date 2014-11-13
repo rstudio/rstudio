@@ -56,6 +56,7 @@ public abstract class HelpStrategy
       @Override
       public void showHelp(QualifiedName selectedItem, CompletionPopupDisplay display)
       {
+         display.setHelpVisible(false);
       }
       
       @Override
@@ -104,7 +105,7 @@ public abstract class HelpStrategy
                      return;
                   }
                }
-
+               display.setHelpVisible(false);
                display.clearHelp(false) ;
             }
          }) ;
@@ -193,6 +194,7 @@ public abstract class HelpStrategy
          String desc = helpInfo_.getArgs().get(parameter_) ;
          if (desc == null)
          {
+            display.setHelpVisible(false);
             display.clearHelp(false) ;
          }
          else

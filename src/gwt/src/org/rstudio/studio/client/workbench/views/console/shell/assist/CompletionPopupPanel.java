@@ -79,12 +79,12 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       }) ;
       list_ = list ;
       
-      help_ = new HelpInfoPane() ;
-      help_.setWidth("400px") ;
-
       HorizontalPanelWithMouseEvents horiz 
                                  = new HorizontalPanelWithMouseEvents() ;
       horiz.add(list_) ;
+      help_ = new HelpInfoPane() ;
+      help_.setWidth("400px") ;
+      help_.setVisible(false);
       if (showHelpPane)
          horiz.add(help_) ;
       
@@ -145,15 +145,22 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    {
       return list_.selectLast() ;
    }
+   
+   public void setHelpVisible(boolean visible)
+   {
+      help_.setVisible(visible);
+   }
 
    public void displayFunctionHelp(ParsedInfo help)
    {
+      help_.setVisible(help.hasInfo());
       help_.displayFunctionHelp(help) ;
       help_.setHeight(list_.getOffsetHeight() + "px") ;
    }
    
    public void displayParameterHelp(ParsedInfo help, String parameterName)
    {
+      help_.setVisible(help.hasInfo());
       help_.displayParameterHelp(help, parameterName) ;
       help_.setHeight(list_.getOffsetHeight() + "px") ;
    }
