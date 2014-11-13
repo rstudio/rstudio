@@ -1322,6 +1322,7 @@ public class RCompletionManager implements CompletionManager
             return ;
          
          popup_.hide() ;
+         popup_.clearHelp(false);
          requester_.flushCache() ;
          helpStrategy_.clearCache();
          
