@@ -55,12 +55,30 @@ class CodeSearchSuggestion implements Suggestion
       navigationTarget_ = sourceItem.toCodeNavigationTarget();
       matchedString_ = sourceItem.getName();
       
-      // compute display string
-      ImageResource image = StandardIcons.INSTANCE.functionLetter();
-      if (sourceItem.getType() == SourceItem.METHOD)
+      // compute image
+      ImageResource image = null;
+      switch(sourceItem.getType())
+      {
+      case SourceItem.FUNCTION:
          image = StandardIcons.INSTANCE.functionLetter();
-      else if (sourceItem.getType() == SourceItem.CLASS)
+         break;
+      case SourceItem.METHOD:
+         image = StandardIcons.INSTANCE.methodLetter();
+         break;
+      case SourceItem.CLASS:
          image = CodeIcons.INSTANCE.clazz();
+         break;
+      case SourceItem.ENUM:
+         image = CodeIcons.INSTANCE.enumType();
+         break;
+      case SourceItem.NAMESPACE:
+         image = CodeIcons.INSTANCE.namespace();
+         break;
+      case SourceItem.NONE:
+      default:
+         image = CodeIcons.INSTANCE.keyword();
+         break;
+      }
       
       // adjust context for parent context
       String context = sourceItem.getContext();
