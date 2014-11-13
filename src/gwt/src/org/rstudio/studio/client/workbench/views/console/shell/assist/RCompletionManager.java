@@ -102,7 +102,6 @@ public class RCompletionManager implements CompletionManager
                              RCompletionContext rContext,
                              RnwCompletionContext rnwContext,
                              DocDisplay docDisplay,
-                             HelpStrategy helpStrategy,
                              boolean canAutoPopup)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -117,7 +116,6 @@ public class RCompletionManager implements CompletionManager
       rnwContext_ = rnwContext;
       docDisplay_ = docDisplay;
       canAutoPopup_ = canAutoPopup;
-      helpStrategy_ = helpStrategy;
       
       input_.addBlurHandler(new BlurHandler() {
          public void onBlur(BlurEvent event)
@@ -163,11 +161,13 @@ public class RCompletionManager implements CompletionManager
    @Inject
    public void initialize(GlobalDisplay globalDisplay,
                           FileTypeRegistry fileTypeRegistry,
-                          EventBus eventBus)
+                          EventBus eventBus,
+                          HelpStrategy helpStrategy)
    {
       globalDisplay_ = globalDisplay;
       fileTypeRegistry_ = fileTypeRegistry;
       eventBus_ = eventBus;
+      helpStrategy_ = helpStrategy;
    }
 
    public void close()
@@ -1474,7 +1474,8 @@ public class RCompletionManager implements CompletionManager
    private GlobalDisplay globalDisplay_;
    private FileTypeRegistry fileTypeRegistry_;
    private EventBus eventBus_;
-      
+   private HelpStrategy helpStrategy_;
+   
    private final CodeToolsServerOperations server_;
    private final InputEditorDisplay input_ ;
    private final NavigableSourceEditor navigableSourceEditor_;
@@ -1487,7 +1488,6 @@ public class RCompletionManager implements CompletionManager
    private String token_ ;
    
    private final DocDisplay docDisplay_;
-   private final HelpStrategy helpStrategy_;
    private final boolean canAutoPopup_;
 
    private final Invalidation invalidation_ = new Invalidation();

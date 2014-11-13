@@ -426,7 +426,6 @@ public class AceEditor implements DocDisplay,
                   rContext_,
                   fileType_.canExecuteChunks() ? rnwContext_ : null,
                   this,
-                  RStudioGinjector.INSTANCE.getHelpStrategy(),
                   true);
             
             // if this is cpp then we use our own completion manager

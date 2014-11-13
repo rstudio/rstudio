@@ -30,7 +30,6 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.CommandLineHistory;
 import org.rstudio.studio.client.common.debugging.ErrorManager;
@@ -53,6 +52,7 @@ import org.rstudio.studio.client.workbench.views.console.events.*;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupPanel;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpStrategy;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HistoryCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
@@ -94,7 +94,8 @@ public class Shell implements ConsoleInputHandler,
                 Session session,
                 Commands commands,
                 UIPrefs uiPrefs, 
-                ErrorManager errorManager)
+                ErrorManager errorManager,
+                HelpStrategy helpStrategy)
    {
       super() ;
 
@@ -109,6 +110,7 @@ public class Shell implements ConsoleInputHandler,
       historyManager_ = new CommandLineHistory(input_);
       browseHistoryManager_ = new CommandLineHistory(input_);
       prefs_ = uiPrefs;
+      helpStrategy_ = helpStrategy;
 
       inputAnimator_ = new ShellInputAnimator(view_.getInputEditorDisplay());
       
@@ -146,7 +148,6 @@ public class Shell implements ConsoleInputHandler,
                                           null,
                                           null,
                                           (DocDisplay) view_.getInputEditorDisplay(),
-                                          RStudioGinjector.INSTANCE.getHelpStrategy(),
                                           false);
       addKeyDownPreviewHandler(completionManager) ;
       addKeyPressPreviewHandler(completionManager) ;
@@ -641,6 +642,7 @@ public class Shell implements ConsoleInputHandler,
    private boolean addToHistory_ ;
    private String lastPromptText_ ;
    private final UIPrefs prefs_;
+   private final HelpStrategy helpStrategy_;
 
    private final CommandLineHistory historyManager_;
    private final CommandLineHistory browseHistoryManager_;
