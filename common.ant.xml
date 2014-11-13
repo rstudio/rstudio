@@ -308,7 +308,7 @@
     <element name="sourcepath" implicit="yes" optional="true"/>
     <sequential>
       <taskdef resource="checkstyletask.properties"
-               classpath="${gwt.tools.antlib}/checkstyle-5.7-all.jar"/>
+               classpath="${gwt.tools.antlib}/checkstyle-6.0-all.jar"/>
       <mkdir dir="@{outputdirectory}"/>
       <checkstyle config="${gwt.root}/eclipse/settings/code-style/gwt-checkstyle.xml" maxErrors="0"
                   failOnViolation="false" failureProperty="gwt.checkstyle.failed">
@@ -328,7 +328,7 @@
     <element name="sourcepath" implicit="yes" optional="true"/>
     <sequential>
       <taskdef resource="checkstyletask.properties"
-               classpath="${gwt.tools.antlib}/checkstyle-5.7-all.jar"/>
+               classpath="${gwt.tools.antlib}/checkstyle-6.0-all.jar"/>
       <mkdir dir="@{outputdirectory}"/>
       <checkstyle config="${gwt.root}/eclipse/settings/code-style/gwt-checkstyle-tests.xml"
                   maxErrors="0" failOnViolation="false"
