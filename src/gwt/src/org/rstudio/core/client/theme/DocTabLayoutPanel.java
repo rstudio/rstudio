@@ -16,6 +16,8 @@ package org.rstudio.core.client.theme;
 
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.dom.client.*;
+import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.dom.client.Style.Float;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -30,11 +32,13 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.*;
 
+import org.apache.tools.ant.util.DOMUtils;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.dom.DomUtils;
@@ -71,82 +75,6 @@ public class DocTabLayoutPanel
       add(child, null, text, null);
    }
    
-   private class TabDragHandler
-   {
-      public TabDragHandler(final DocTab tab)
-      {
-         tab_ = tab;
-         tab.addMouseDownHandler(new MouseDownHandler()
-         {
-            @Override
-            public void onMouseDown(MouseDownEvent arg0)
-            {
-               if (!dragging_)
-               {
-                  beginDrag(arg0);
-                  arg0.preventDefault();
-               }
-            }
-         });
-      }
-      
-      private void beginDrag(MouseDownEvent move)
-      {
-         dragging_ = true;
-         dragElement_ = tab_.getElement().getParentElement().getParentElement();
-
-         dragStartX_ = DomUtils.leftRelativeTo(dragElement_.getParentElement(),
-               dragElement_);
-         dragElementDelta_ = move.getRelativeX(dragElement_);
-         dragElement_.getStyle().setPosition(Position.ABSOLUTE);
-         dragElement_.getStyle().setLeft(dragStartX_ - dragElementDelta_, Unit.PX);
-         handlerReg_.add(RootPanel.get().addDomHandler(new MouseMoveHandler() 
-         {
-            @Override
-            public void onMouseMove(MouseMoveEvent arg0)
-            {
-               if (dragging_)
-               {
-                  drag(arg0);
-                  arg0.preventDefault();
-               }
-            }
-         }, MouseMoveEvent.getType()));
-         handlerReg_.add(Event.addNativePreviewHandler(new NativePreviewHandler() 
-         {
-            @Override
-            public void onPreviewNativeEvent(NativePreviewEvent arg0)
-            {
-               if (arg0.getTypeInt() == Event.ONMOUSEUP)
-               {
-                  endDrag();
-               }
-            }
-         }));
-      }
-      private void endDrag()
-      {
-         dragging_ = false;
-         dragElement_.getStyle().clearLeft();
-         dragElement_.getStyle().clearPosition();
-         handlerReg_.removeHandler();
-      }
-      
-      private void drag(MouseMoveEvent move) 
-      {
-         dragElement_.getStyle().setLeft(
-               move.getRelativeX(dragElement_.getParentElement()) - 
-               dragElementDelta_, Unit.PX);
-      }
-      
-      private boolean dragging_ = false;
-      private int dragStartX_ = 0;
-      private int dragElementDelta_ = 0;
-      private Element dragElement_;
-      private DocTab tab_;
-      private HandlerRegistrations handlerReg_;
-   }
-
    public void add(final Widget child,
                    ImageResource icon,
                    final String text,
@@ -166,7 +94,6 @@ public class DocTabLayoutPanel
             }
          });
          super.add(child, tab);
-         new TabDragHandler(tab);
       }
       else
       {
@@ -378,6 +305,12 @@ public class DocTabLayoutPanel
          layoutPanel.add(right);
 
          initWidget(layoutPanel);
+
+         DOM.sinkEvents(getElement(), 
+                        Event.ONMOUSEDOWN | 
+                        Event.ONMOUSEMOVE | 
+                        Event.ONMOUSEUP |
+                        Event.ONLOSECAPTURE);
       }
       
       private void appendDirtyMarker()
@@ -406,12 +339,6 @@ public class DocTabLayoutPanel
          contentPanel_.insert(imageForIcon(icon), 0);
       }
       
-      public void addMouseDownHandler(MouseDownHandler handler)
-      {
-         if (handler != null)
-            contentPanel_.addDomHandler(handler, MouseDownEvent.getType());
-      }
-
       private Image imageForIcon(ImageResource icon)
       {
          Image image = new Image(icon);
@@ -419,10 +346,151 @@ public class DocTabLayoutPanel
          return image;
       }
 
+      @Override
+      public void onBrowserEvent(Event event) 
+      {  
+         switch(DOM.eventGetType(event))
+         {
+            case Event.ONMOUSEDOWN: 
+            {
+               if (event.getButton() == Event.BUTTON_LEFT)
+               {
+                  beginDrag(event);
+                  event.preventDefault();
+                  event.stopPropagation();
+               }
+               break;
+            }
+           
+            case Event.ONMOUSEMOVE: 
+            {
+               if (dragging_) 
+               {
+                  drag(event);
+                  event.preventDefault();
+                  event.stopPropagation();
+               }
+               break;
+            }
+           
+            case Event.ONMOUSEUP:
+            {
+               if (dragging_)
+               {
+                  endDrag();
+                  DOM.releaseCapture(getElement());
+                  event.preventDefault();
+                  event.stopPropagation();
+               }
+               break;   
+            }
+            
+            case Event.ONLOSECAPTURE: 
+            {
+               endDrag();
+               break;
+            }
+         }
+      }
+
+      private void beginDrag(Event evt)
+      {
+         dragging_ = true;
+         dragElement_ = getElement().getParentElement().getParentElement();
+         dragParent_ = dragElement_.getParentElement();
+         lastElementX_ = DomUtils.leftRelativeTo(dragParent_, dragElement_);
+         lastCursorX_= evt.getClientX();
+         dragElement_.getStyle().setPosition(Position.ABSOLUTE);
+         dragElement_.getStyle().setLeft(lastElementX_, Unit.PX);
+         dragElement_.getStyle().setZIndex(100);
+         // find the current position of this tab among its siblings
+         for (int i = 0; i < dragParent_.getChildCount(); i++)
+         {
+            if (dragParent_.getChild(i) == dragElement_)
+            {
+               candidatePos_ = i;
+            }
+         }
+
+         dragPlaceholder_ = Document.get().createDivElement();
+         dragPlaceholder_.getStyle().setWidth(dragElement_.getClientWidth(), 
+               Unit.PX);
+         dragPlaceholder_.getStyle().setHeight(2, Unit.PX);
+         dragPlaceholder_.getStyle().setDisplay(Display.INLINE_BLOCK);
+         dragPlaceholder_.getStyle().setPosition(Position.RELATIVE);
+         dragPlaceholder_.getStyle().setFloat(Float.LEFT);
+         dragParent_.insertAfter(dragPlaceholder_, dragElement_);
+      }
+      
+      private void endDrag()
+      {
+         dragging_ = false;
+         dragElement_.getStyle().clearLeft();
+         dragElement_.getStyle().clearPosition();
+         dragElement_.getStyle().clearZIndex();
+         dragParent_.removeChild(dragElement_);
+         dragParent_.insertAfter(dragElement_, dragPlaceholder_);
+         dragParent_.removeChild(dragPlaceholder_);
+      }
+      
+      private void drag(Event evt) 
+      {
+         lastElementX_ += evt.getClientX() - lastCursorX_;
+         lastCursorX_ = evt.getClientX();
+         dragElement_.getStyle().setLeft(lastElementX_, Unit.PX);
+         // check to see if we're overlapping with another tab by at least 50%
+         // of our width
+         for (int i = 0; i < dragParent_.getChildCount(); i++)
+         {
+            // skip non-element DOM nodes
+            Node node = dragParent_.getChild(i);
+            if (node.getNodeType() != Node.ELEMENT_NODE)
+            {
+               continue;
+            }
+            // skip the element we're dragging and elements that are not tabs
+            Element ele = (Element)node;
+            if (ele == dragElement_ || 
+                ele.getClassName().indexOf("gwt-TabLayoutPanelTab") < 0 )
+            {
+               continue;
+            }
+            int left = DomUtils.leftRelativeTo(dragParent_, ele);
+            int right = left + ele.getClientWidth();
+            int minOverlap = Math.min(dragElement_.getClientWidth() / 2, 
+                  ele.getClientWidth() / 2);
+            // a little complicated: compute the number of overlapping pixels
+            // with this element; if the overlap is more than half of our width,
+            // it's swapping time
+            if (Math.min(lastElementX_ + dragElement_.getClientWidth(), right) - 
+                Math.max(lastElementX_, left) >= minOverlap)
+            {
+               dragParent_.removeChild(dragPlaceholder_);
+               if (candidatePos_ > i)
+               {
+                  dragParent_.insertBefore(dragPlaceholder_, ele);
+               }
+               else
+               {
+                  dragParent_.insertAfter(dragPlaceholder_, ele);
+               }
+               candidatePos_ = i;
+            }
+         }
+      }
+      
+      private boolean dragging_ = false;
+      private int lastCursorX_;
+      private int lastElementX_;
+      private int candidatePos_;
+      private Element dragElement_;
+      private Element dragParent_;
+      private Element dragPlaceholder_;
       private final Label label_;
 
       private final HorizontalPanel contentPanel_;
    }
+
    public void replaceDocName(int index,
                               ImageResource icon,
                               String title,
