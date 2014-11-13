@@ -1274,6 +1274,16 @@ public class RCompletionManager implements CompletionManager
                      "(No matches)", 
                      new PopupPositioner(input_.getCursorBounds(), popup_));
             }
+            else
+            {
+               // Show an empty popup message offscreen -- this is a hack to
+               // ensure that we can get completion results on backspace after a
+               // failed completion, e.g. 'stats::rna' -> 'stats::rn'
+               Rectangle offScreen = new Rectangle(-100, -100, 0, 0);
+               popup_.showErrorMessage(
+                     "",
+                     new PopupPositioner(offScreen, popup_));
+            }
             
             return ;
          }
