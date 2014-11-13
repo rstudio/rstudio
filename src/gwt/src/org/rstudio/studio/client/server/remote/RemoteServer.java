@@ -647,6 +647,7 @@ public class RemoteServer implements Server
          JsArrayString additionalArgs,
          JsArrayString excludeArgs,
          boolean excludeArgsFromObject,
+         String filePath,
          ServerRequestCallback<Completions> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -659,6 +660,7 @@ public class RemoteServer implements Server
       setArrayString(params, 6, additionalArgs);
       setArrayString(params, 7, excludeArgs);
       params.set(8, JSONBoolean.getInstance(excludeArgsFromObject));
+      params.set(9, new JSONString(filePath));
       
       sendRequest(RPC_SCOPE,
                   GET_COMPLETIONS,

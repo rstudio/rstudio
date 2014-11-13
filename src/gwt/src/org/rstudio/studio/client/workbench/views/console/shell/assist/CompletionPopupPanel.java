@@ -38,6 +38,8 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    {
       super() ;
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
+      help_ = new HelpInfoPane();
+      help_.setWidth("400px");
       setStylePrimaryName(styles_.completionPopup()) ;
    }
 
@@ -53,9 +55,9 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       show(callback) ;
    }
 
+   @Override
    public void showCompletionValues(QualifiedName[] values, 
-                                    PositionCallback callback,
-                                    boolean showHelpPane)
+                                    PositionCallback callback)
    {
       CompletionList<QualifiedName> list = new CompletionList<QualifiedName>(
                                        values,
@@ -79,14 +81,10 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       }) ;
       list_ = list ;
       
-      help_ = new HelpInfoPane() ;
-      help_.setWidth("400px") ;
-
       HorizontalPanelWithMouseEvents horiz 
                                  = new HorizontalPanelWithMouseEvents() ;
       horiz.add(list_) ;
-      if (showHelpPane)
-         horiz.add(help_) ;
+      horiz.add(help_) ;
       
       setWidget(horiz) ;
       ElementIds.assignElementId(horiz.getElement(), 
@@ -145,16 +143,33 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    {
       return list_.selectLast() ;
    }
+   
+   public void setHelpVisible(boolean visible)
+   {
+      help_.setVisible(visible);
+   }
 
+   @Override
    public void displayFunctionHelp(ParsedInfo help)
    {
+      help_.setVisible(help.hasInfo());
       help_.displayFunctionHelp(help) ;
       help_.setHeight(list_.getOffsetHeight() + "px") ;
    }
    
+   @Override
    public void displayParameterHelp(ParsedInfo help, String parameterName)
    {
+      help_.setVisible(help.hasInfo());
       help_.displayParameterHelp(help, parameterName) ;
+      help_.setHeight(list_.getOffsetHeight() + "px") ;
+   }
+   
+   @Override
+   public void displayPackageHelp(ParsedInfo help)
+   {
+      help_.setVisible(help.hasInfo());
+      help_.displayPackageHelp(help) ;
       help_.setHeight(list_.getOffsetHeight() + "px") ;
    }
 

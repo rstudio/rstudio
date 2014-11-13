@@ -116,6 +116,9 @@ private:
 public:
    // accessors
    int type() const { return type_; }
+   bool isFunction() const { return type_ == Function; }
+   bool isMethod() const { return type_ == Method; }
+   bool isClass() const { return type_ == Class; }
    const std::string& context() const { return context_; }
    const std::string& name() const { return name_; }
    const std::vector<RS4MethodParam>& signature() const { return signature_; }

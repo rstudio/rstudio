@@ -109,6 +109,7 @@ import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.console.shell.Shell;
 import org.rstudio.studio.client.workbench.views.console.shell.ShellPane;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpStrategy;
 import org.rstudio.studio.client.workbench.views.data.Data;
 import org.rstudio.studio.client.workbench.views.data.DataPane;
 import org.rstudio.studio.client.workbench.views.data.DataTab;
@@ -224,6 +225,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ShortcutViewer.class).asEagerSingleton();
       bind(ShinyApps.class).asEagerSingleton();
       bind(RmdOutput.class).in(Singleton.class);
+      bind(HelpStrategy.class).in(Singleton.class);
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;

@@ -109,6 +109,15 @@
    color: black;
 }
 
+.packageName {
+	font-weight: bold;
+	font-size: 14px;
+}
+
+.packageDescription {
+	color: black;
+}
+
 .promptFullHelp {
    height: 16px;
    background: #f0f0f4;

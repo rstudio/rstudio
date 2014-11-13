@@ -23,7 +23,6 @@ import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
-import org.rstudio.studio.client.workbench.views.help.model.HelpInfo.ParsedInfo;
 
 public interface CompletionPopupDisplay 
                      extends HasSelectionCommitHandlers<QualifiedName>,
@@ -32,8 +31,7 @@ public interface CompletionPopupDisplay
                              HasMouseDownHandlers
 {
    void showCompletionValues(QualifiedName[] results,
-                             PositionCallback callback,
-                             boolean showHelpPane) ;
+                             PositionCallback callback) ;
    void showErrorMessage(String userMessage, PositionCallback callback) ;
    void hide() ;
    boolean isShowing() ;
@@ -51,8 +49,10 @@ public interface CompletionPopupDisplay
    boolean selectFirst() ;
    boolean selectLast() ;
    
+   void setHelpVisible(boolean visible) ;
    void displayFunctionHelp(HelpInfo.ParsedInfo help) ;
-   void displayParameterHelp(ParsedInfo helpInfo, String parameter) ;
+   void displayParameterHelp(HelpInfo.ParsedInfo helpInfo, String parameter) ;
+   void displayPackageHelp(HelpInfo.ParsedInfo helpInfo) ;
    /**
     * Clear out the current help info
     * @param downloadOperationPending If true, the current value is being

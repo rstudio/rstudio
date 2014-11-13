@@ -22,7 +22,6 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 import org.rstudio.core.client.SafeHtmlUtil;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
@@ -47,6 +46,7 @@ import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionConte
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -58,7 +58,8 @@ public class CompletionRequester
    private final NavigableSourceEditor editor_ ;
 
    private String cachedLinePrefix_ ;
-   private CompletionResult cachedResult_ ;
+   private HashMap<String, CompletionResult> cachedCompletions_ =
+         new HashMap<String, CompletionResult>();
    private RnwCompletionContext rnwContext_ ;
    
    public CompletionRequester(CodeToolsServerOperations server,
@@ -74,31 +75,40 @@ public class CompletionRequester
          final String token,
          final ServerRequestCallback<CompletionResult> callback)
    {
-      if (!StringUtil.isNullOrEmpty(token) &&
-           cachedResult_ != null)
+      if (cachedLinePrefix_ == null)
+         return false;
+      
+      if (token.toLowerCase().startsWith(cachedLinePrefix_.toLowerCase()))
       {
-         if (token.toLowerCase().startsWith(cachedLinePrefix_.toLowerCase()))
+         String diff = token.substring(cachedLinePrefix_.length(), token.length());
+
+         // if we already have a cached result for this diff, use it
+         CompletionResult cached = cachedCompletions_.get(diff);
+         if (cached != null)
          {
-            String diff = token.substring(cachedLinePrefix_.length(), token.length());
-            if (diff.length() > 0)
+            callback.onResponseReceived(cached);
+            return true;
+         }
+
+         // otherwise, produce a new completion list
+         if (diff.length() > 0)
+         {
+            ArrayList<RToken> tokens = RTokenizer.asTokens("a" + diff) ;
+
+            // when we cross a :: the list may actually grow, not shrink
+            if (!diff.endsWith("::"))
             {
-               ArrayList<RToken> tokens = RTokenizer.asTokens("a" + diff) ;
-               
-               // when we cross a :: the list may actually grow, not shrink
-               if (!diff.endsWith("::"))
+               while (tokens.size() > 0 
+                     && tokens.get(tokens.size()-1).getContent().equals(":"))
                {
-                  while (tokens.size() > 0 
-                        && tokens.get(tokens.size()-1).getContent().equals(":"))
-                  {
-                     tokens.remove(tokens.size()-1) ;
-                  }
-               
-                  if (tokens.size() == 1
-                        && tokens.get(0).getTokenType() == RToken.ID)
-                  {
-                     callback.onResponseReceived(narrow(diff)) ;
-                     return true;
-                  }
+                  tokens.remove(tokens.size()-1) ;
+               }
+
+               if (tokens.size() == 1
+                     && tokens.get(0).getTokenType() == RToken.ID)
+               {
+                  callback.onResponseReceived(narrow(diff)) ;
+                  return true;
                }
             }
          }
@@ -197,7 +207,10 @@ public class CompletionRequester
             response.getSuggestOnAccept(),
             response.getOverrideInsertParens());
 
-      cachedResult_ = response.isCacheable() ? result : null;
+      if (response.isCacheable())
+      {
+         cachedCompletions_.put("", result);
+      }
 
       if (!implicit || result.completions.size() != 0)
          callback.onResponseReceived(result);
@@ -214,6 +227,7 @@ public class CompletionRequester
          final JsArrayString chainAdditionalArgs,
          final JsArrayString chainExcludeArgs,
          final boolean chainExcludeArgsFromObject,
+         final String filePath,
          final boolean implicit,
          final ServerRequestCallback<CompletionResult> callback)
    {
@@ -230,6 +244,7 @@ public class CompletionRequester
             chainAdditionalArgs,
             chainExcludeArgs,
             chainExcludeArgsFromObject,
+            filePath,
             new ServerRequestCallback<Completions>()
       {
          @Override
@@ -250,16 +265,17 @@ public class CompletionRequester
             JsArrayInteger type = response.getType();
             ArrayList<QualifiedName> newComp = new ArrayList<QualifiedName>();
             
+            // Get function completions from the server
+            for (int i = 0; i < comp.length(); i++)
+               if (comp.get(i).endsWith(" = "))
+                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
+            
             // Try getting our own function argument completions
             if (!response.getExcludeOtherCompletions())
             {
                addFunctionArgumentCompletions(token, newComp);
                addScopedArgumentCompletions(token, newComp);
             }
-            
-            // Get server completions
-            for (int i = 0; i < comp.length(); i++)
-               newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
             
             // Get variable completions from the current scope
             if (!response.getExcludeOtherCompletions())
@@ -268,6 +284,11 @@ public class CompletionRequester
                addScopedCompletions(token, newComp, "function");
             }
             
+            // Get other server completions
+            for (int i = 0; i < comp.length(); i++)
+               if (!comp.get(i).endsWith(" = "))
+                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
+            
             CompletionResult result = new CompletionResult(
                   response.getToken(),
                   newComp,
@@ -275,7 +296,10 @@ public class CompletionRequester
                   response.getSuggestOnAccept(),
                   response.getOverrideInsertParens());
 
-            cachedResult_ = response.isCacheable() ? result : null;
+            if (response.isCacheable())
+            {
+               cachedCompletions_.put("", result);
+            }
 
             if (!implicit || result.completions.size() != 0)
                callback.onResponseReceived(result);
@@ -432,6 +456,7 @@ public class CompletionRequester
          final JsArrayString chainAdditionalArgs,
          final JsArrayString chainExcludeArgs,
          final boolean chainExcludeArgsFromObject,
+         final String filePath,
          final ServerRequestCallback<Completions> requestCallback)
    {
       int optionsStartOffset;
@@ -452,6 +477,7 @@ public class CompletionRequester
                chainAdditionalArgs,
                chainExcludeArgs,
                chainExcludeArgsFromObject,
+               filePath,
                requestCallback);
       }
    }
@@ -509,23 +535,27 @@ public class CompletionRequester
    public void flushCache()
    {
       cachedLinePrefix_ = null ;
-      cachedResult_ = null ;
+      cachedCompletions_.clear();
    }
    
    private CompletionResult narrow(String diff)
    {
-      String token = cachedResult_.token.toLowerCase() + diff ;
+      CompletionResult cachedResult = cachedCompletions_.get("");
+      String token = cachedResult.token.toLowerCase() + diff ;
       ArrayList<QualifiedName> newCompletions = new ArrayList<QualifiedName>() ;
-      for (QualifiedName qname : cachedResult_.completions)
+      for (QualifiedName qname : cachedResult.completions)
          if (qname.name.toLowerCase().startsWith(token.toLowerCase()))
             newCompletions.add(qname) ;
       
-      return new CompletionResult(
+      CompletionResult result = new CompletionResult(
             token,
             newCompletions,
-            cachedResult_.guessedFunctionName,
-            cachedResult_.suggestOnAccept,
-            cachedResult_.dontInsertParens) ;
+            cachedResult.guessedFunctionName,
+            cachedResult.suggestOnAccept,
+            cachedResult.dontInsertParens) ;
+      
+      cachedCompletions_.put(diff, result);
+      return result;
    }
 
    public static class CompletionResult

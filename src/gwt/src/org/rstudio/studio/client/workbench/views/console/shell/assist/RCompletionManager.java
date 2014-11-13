@@ -147,7 +147,6 @@ public class RCompletionManager implements CompletionManager
       popup_.addSelectionHandler(new SelectionHandler<QualifiedName>() {
          public void onSelection(SelectionEvent<QualifiedName> event)
          {
-            popup_.clearHelp(true) ;
             context_.showHelp(event.getSelectedItem()) ;
          }
       }) ;
@@ -164,11 +163,13 @@ public class RCompletionManager implements CompletionManager
    public void initialize(GlobalDisplay globalDisplay,
                           FileTypeRegistry fileTypeRegistry,
                           EventBus eventBus,
+                          HelpStrategy helpStrategy,
                           UIPrefs uiPrefs)
    {
       globalDisplay_ = globalDisplay;
       fileTypeRegistry_ = fileTypeRegistry;
       eventBus_ = eventBus;
+      helpStrategy_ = helpStrategy;
       uiPrefs_ = uiPrefs;
    }
 
@@ -381,7 +382,6 @@ public class RCompletionManager implements CompletionManager
          if (keycode == 191 && modifier == KeyboardShortcut.NONE)
          {
             input_.insertCode("/");
-            invalidatePendingRequests();
             return beginSuggest(true, true, false);
          }
          
@@ -396,9 +396,16 @@ public class RCompletionManager implements CompletionManager
             if (cursorColumn > 0)
             {
                char ch = currentLine.charAt(cursorColumn - 2);
+               char prevCh = currentLine.charAt(cursorColumn - 3);
+               
+               boolean isAcceptableCharSequence = isValidForRIdentifier(ch) ||
+                     (ch == ':' && prevCh == ':') ||
+                     ch == '$' ||
+                     ch == '@';
+               
                if (currentLine.length() > 0 &&
                      cursorColumn > 0 &&
-                     (isValidForRIdentifier(ch) || ch == ':' || ch == '$' || ch == '@'))
+                     isAcceptableCharSequence)
                {
                   // manually remove the previous character
                   InputEditorSelection selection = input_.getSelection();
@@ -410,9 +417,8 @@ public class RCompletionManager implements CompletionManager
 
                   input_.setSelection(new InputEditorSelection(start, end));
                   input_.replaceSelection("", false);
-
-                  invalidatePendingRequests();
-                  return beginSuggest(true, false, false);
+                  
+                  return beginSuggest(false, false, false);
                }
             }
             else
@@ -498,7 +504,7 @@ public class RCompletionManager implements CompletionManager
                @Override
                public void execute()
                {
-                  beginSuggest(true, true, !canAutoPopup);
+                  beginSuggest(true, true, false);
                }
             });
          }
@@ -749,7 +755,7 @@ public class RCompletionManager implements CompletionManager
    /**
     * If false, the suggest operation was aborted
     */
-   private boolean beginSuggest(boolean flushCache, boolean implicit, final boolean canAutoInsert)
+   private boolean beginSuggest(boolean flushCache, boolean implicit, boolean canAutoInsert)
    {
       if (!input_.isSelectionCollapsed())
          return false ;
@@ -767,6 +773,12 @@ public class RCompletionManager implements CompletionManager
       if (firstLine.matches(".*#+\\s*$"))
       {
          return false;
+      }
+      
+      // don't auto-insert if we're within a comment
+      if (!StringUtil.stripRComment(firstLine).equals(firstLine))
+      {
+         canAutoInsert = false;
       }
       
       // don't auto-complete with tab on lines with only whitespace,
@@ -849,6 +861,10 @@ public class RCompletionManager implements CompletionManager
          }
       }
       
+      String filePath = getSourceDocumentPath();
+      if (filePath == null)
+         filePath = "";
+      
       requester_.getCompletions(
             context.getToken(),
             context.getAssocData(),
@@ -859,6 +875,7 @@ public class RCompletionManager implements CompletionManager
             infixData.getAdditionalArgs(),
             infixData.getExcludeArgs(),
             infixData.getExcludeArgsFromObject(),
+            filePath,
             implicit,
             context_);
 
@@ -1213,14 +1230,12 @@ public class RCompletionManager implements CompletionManager
       
       public void showHelp(QualifiedName selectedItem)
       {
-         if (helpStrategy_ != null)
-            helpStrategy_.showHelp(selectedItem, popup_) ;
+         helpStrategy_.showHelp(selectedItem, popup_);
       }
-
+      
       public void showHelpTopic()
       {
-         if (helpStrategy_ != null)
-            helpStrategy_.showHelpTopic(popup_.getSelectedValue()) ;
+         helpStrategy_.showHelpTopic(popup_.getSelectedValue());
       }
 
       @Override
@@ -1261,12 +1276,20 @@ public class RCompletionManager implements CompletionManager
                      "(No matches)", 
                      new PopupPositioner(input_.getCursorBounds(), popup_));
             }
+            else
+            {
+               // Show an empty popup message offscreen -- this is a hack to
+               // ensure that we can get completion results on backspace after a
+               // failed completion, e.g. 'stats::rna' -> 'stats::rn'
+               Rectangle offScreen = new Rectangle(-100, -100, 0, 0);
+               popup_.showErrorMessage(
+                     "",
+                     new PopupPositioner(offScreen, popup_));
+            }
             
             return ;
          }
 
-         initializeHelpStrategy(completions) ;
-         
          // Move range to beginning of token; we want to place the popup there.
          final String token = completions.token ;
 
@@ -1290,34 +1313,10 @@ public class RCompletionManager implements CompletionManager
             
             popup_.showCompletionValues(
                   results,
-                  new PopupPositioner(rect, popup_),
-                  !helpStrategy_.isNull()) ;
+                  new PopupPositioner(rect, popup_));
          }
       }
 
-      private void initializeHelpStrategy(CompletionResult completions)
-      {
-         if (!StringUtil.isNullOrEmpty(completions.guessedFunctionName))
-         {
-            helpStrategy_ = HelpStrategy.createParameterStrategy(
-                              server_, completions.guessedFunctionName) ;
-            return;
-         }
-
-         boolean anyPackages = false;
-         ArrayList<QualifiedName> qnames = completions.completions;
-         for (QualifiedName qname : qnames)
-         {
-            if (!StringUtil.isNullOrEmpty(qname.pkgName))
-               anyPackages = true;
-         }
-
-         if (anyPackages)
-            helpStrategy_ = HelpStrategy.createFunctionStrategy(server_) ;
-         else
-            helpStrategy_ = HelpStrategy.createNullStrategy();
-      }
-      
       private void onSelection(QualifiedName qname)
       {
          final String value = qname.name ;
@@ -1326,7 +1325,9 @@ public class RCompletionManager implements CompletionManager
             return ;
          
          popup_.hide() ;
+         popup_.clearHelp(false);
          requester_.flushCache() ;
+         helpStrategy_.clearCache();
          
          if (value == null)
          {
@@ -1342,7 +1343,7 @@ public class RCompletionManager implements CompletionManager
                @Override
                public void execute()
                {
-                  beginSuggest(true, true, canAutoAccept_);
+                  beginSuggest(true, true, false);
                }
             });
          }
@@ -1445,9 +1446,6 @@ public class RCompletionManager implements CompletionManager
 
                input_.setSelection(newSelection);
             }
-            
-            // Begin suggestions (for arguments)
-            beginSuggest(true, false, false);
          }
          else
          {
@@ -1472,7 +1470,6 @@ public class RCompletionManager implements CompletionManager
       private final Invalidation.Token invalidationToken_ ;
       private InputEditorSelection selection_ ;
       private final boolean canAutoAccept_;
-      private HelpStrategy helpStrategy_ ;
       private boolean suggestOnAccept_;
       private boolean overrideInsertParens_;
       
@@ -1489,8 +1486,9 @@ public class RCompletionManager implements CompletionManager
    private GlobalDisplay globalDisplay_;
    private FileTypeRegistry fileTypeRegistry_;
    private EventBus eventBus_;
+   private HelpStrategy helpStrategy_;
    private UIPrefs uiPrefs_;
-      
+
    private final CodeToolsServerOperations server_;
    private final InputEditorDisplay input_ ;
    private final NavigableSourceEditor navigableSourceEditor_;

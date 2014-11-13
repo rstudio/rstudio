@@ -429,5 +429,62 @@
    })
    
    names(objects) <- search
+   
    objects
+})
+
+.rs.addFunction("assign", function(x, value)
+{
+   pos <- which(search() == "tools:rstudio")
+   if (length(pos))
+      assign(paste(".rs.cache.", x, sep = ""), value, pos = pos)
+})
+
+.rs.addFunction("get", function(x)
+{
+   pos <- which(search() == "tools:rstudio")
+   if (length(pos))
+      tryCatch(
+         get(paste(".rs.cache.", x, sep = ""), pos = pos),
+         error = function(e) NULL
+      )
+})
+
+.rs.addFunction("mget", function(x = NULL)
+{
+   pos <- which(search() == "tools:rstudio")
+   if (length(pos))
+      tryCatch({
+         
+         objects <- if (is.null(x))
+            .rs.selectStartsWith(objects(pos = pos, all.names = TRUE), ".rs.cache")
+         else
+            paste(".rs.cache.", x, sep = "")
+         
+         mget(objects, envir = as.environment(pos))
+      },
+         error = function(e) NULL
+      )
+})
+
+.rs.addFunction("packageNameForSourceFile", function(filePath)
+{
+   .Call("rs_packageNameForSourceFile", filePath)
+})
+
+.rs.addFunction("isRScriptInPackageBuildTarget", function(filePath)
+{
+   .Call("rs_isRScriptInPackageBuildTarget", filePath)
+})
+
+.rs.addFunction("namedVectorAsList", function(vector)
+{
+   values <- unlist(vector, use.names = FALSE)
+   vectorNames <- names(vector)
+   names <- unlist(lapply(1:length(vector), function(i) {
+      rep.int(vectorNames[i], length(vector[[i]]))
+   }))
+   
+   list(values = values,
+        names = names)
 })

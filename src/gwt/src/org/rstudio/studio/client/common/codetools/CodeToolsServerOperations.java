@@ -42,6 +42,7 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
          JsArrayString chainAdditionalArgs,
          JsArrayString chainExcludeArgs,
          boolean chainExcludeArgsFromObject,
+         String filePath,
          ServerRequestCallback<Completions> completions);
    
    void getDplyrJoinCompletions(
