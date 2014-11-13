@@ -16,7 +16,6 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.client.UnsafeNativeLong;
-import com.google.gwt.dev.javac.JSORestrictionsChecker.CheckerState;
 import com.google.gwt.dev.jdt.SafeASTVisitor;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
@@ -422,13 +421,6 @@ public class JsniReferenceResolver {
       } else if (needsQualifer && !hasQualifier) {
         emitError(ERR_MISSING_QUALIFIER_INSTANCE_METHOD, errorInfo, jsniRef);
       }
-      if (!target.isStatic() && JSORestrictionsChecker.isJso(clazz)) {
-        emitError(ERR_REFERENCE_TO_JSO_INSTANCE_METHOD, errorInfo, jsniRef);
-      }
-      if (checkerState.isJsoInterface(clazz)) {
-        String implementor = checkerState.getJsoImplementor(clazz);
-        emitError(ERR_REFERENCE_TO_JSO_INTERFACE_METHOD, errorInfo, jsniRef, implementor);
-      }
 
       if (hasUnsafeLongsAnnotation) {
         return target;
@@ -528,21 +520,10 @@ public class JsniReferenceResolver {
         "Referencing class '%2$s': unable to resolve class";
     private static final String ERR_ILLEGAL_ANONYMOUS_INNER_CLASS =
         "Referencing class '%2$s': JSNI references to anonymous classes are illegal";
-    private static final String ERR_ILLEGAL_FIELD_ACCESS_ON_NULL =
-        "Referencing field '%2$s.%3$s': 'nullField' is the only legal field reference for 'null'";
-    private static final String ERR_ILLEGAL_METHOD_ACCESS_ON_NULL =
-        "Referencing method '%2$s.%4$s': 'nullMethod()' is the only legal method for 'null'";
     private static final String ERR_ILLEGAL_PARAMETER =
         "Parameter %8$d of method '%2$s.%3$s': type '%9$s' may not be passed out of JSNI code";
     private static final String ERR_ILLEGAL_RETURN_TYPE =
         "Referencing method '%2$s.%3$s': return type '%8$s' is not safe to access in JSNI code";
-    private static final String ERR_REFERENCE_TO_JSO_INTERFACE_METHOD =
-        "Referencing interface method '%2$s.%4$s': implemented by '%8$s';" +
-        " references to instance methods in overlay types are illegal;" +
-        " use a stronger type or a Java trampoline method";
-    private static final String ERR_REFERENCE_TO_JSO_INSTANCE_METHOD =
-        "Referencing method '%2$s.%4$s': " +
-         "references to instance methods in overlay types are illegal";
     private static final String ERR_MISSING_QUALIFIER_INSTANCE_METHOD =
         "Missing qualifier on instance method '%2$s.%3$s'";
     private static final String ERR_UNNECESSARY_QUALIFIER_STATIC_METHOD =
@@ -766,14 +747,13 @@ public class JsniReferenceResolver {
   /**
    * Resolve JSNI references in an entire
    * {@link org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration}.
-   *
    */
   public static void resolve(CompilationUnitDeclaration cud,
       List<ImportReference> cudOriginalImports,
-      CheckerState checkerState,
       Map<MethodDeclaration, JsniMethod> jsniMethods,
       Map<String, Binding> jsniRefs, TypeResolver typeResolver) {
-    new JsniReferenceResolver(cud, cudOriginalImports, checkerState, typeResolver, jsniMethods, jsniRefs).resolve();
+    new JsniReferenceResolver(cud, cudOriginalImports, typeResolver, jsniMethods, jsniRefs)
+        .resolve();
   }
 
   Set<String> getSuppressedWarnings(Annotation[] annotations) {
@@ -819,7 +799,6 @@ public class JsniReferenceResolver {
     return ImmutableSet.of();
   }
 
-  private final CheckerState checkerState;
   private final CompilationUnitDeclaration cud;
   private final List<ImportReference> cudImports;
   private final Map<MethodDeclaration, JsniMethod> jsniMethods;
@@ -828,10 +807,8 @@ public class JsniReferenceResolver {
   private final TypeResolver typeResolver;
 
   private JsniReferenceResolver(CompilationUnitDeclaration cud, List<ImportReference> cudImports,
-      CheckerState checkerState, TypeResolver typeResolver,
-      Map<MethodDeclaration, JsniMethod> jsniMethods,
+      TypeResolver typeResolver, Map<MethodDeclaration, JsniMethod> jsniMethods,
       Map<String, Binding> jsniRefs) {
-    this.checkerState = checkerState;
     this.cud = cud;
     this.cudImports = cudImports;
     this.typeResolver = typeResolver;
