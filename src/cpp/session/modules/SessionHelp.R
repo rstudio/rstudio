@@ -89,9 +89,9 @@ options(help_type = "html")
       sort(utils:::matchAvailableTopics(prefix))
 });
 
-.rs.addJsonRpcHandler("get_help", function(topic, package, options)
+.rs.addJsonRpcHandler("get_help", function(topic, package, type)
 {
-   if (length(topic) && grepl(":{2,3}$", topic, perl = TRUE))
+   if (type %in% .rs.acCompletionTypes$PACKAGE)
    {
       package <- sub(":*$", "", topic, perl = TRUE)
       topic <- paste(package, "-package", sep = "")
@@ -151,7 +151,9 @@ options(help_type = "html")
             if (!length(helpfiles))
             {
                helpfiles <- tryCatch({
-                  call <- call("help", gsub("\\..*", "", topic), package = package, help_type = "html")
+                  call <- substitute(utils::help(TOPIC, package = PACKAGE, help_type = "html"),
+                                     list(TOPIC = gsub("\\..*", "", topic),
+                                          PACAKGE = package))
                   eval(call)
                }, error = function(e) NULL)
             }
