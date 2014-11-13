@@ -86,7 +86,9 @@ public class HelpStrategy
          return;
       }
       
-      server_.getHelp(selectedItem.name, selectedItem.pkgName, 0, 
+      server_.getHelp(selectedItem.name,
+                      selectedItem.pkgName,
+                      RCompletionType.FUNCTION,
                       new ServerRequestCallback<HelpInfo>() {
          @Override
          public void onError(ServerError error)
@@ -128,7 +130,9 @@ public class HelpStrategy
          return;
       }
 
-         server_.getHelp(selectedItem.pkgName, null, 0,
+         server_.getHelp(selectedItem.pkgName,
+                         null,
+                         RCompletionType.ARGUMENTS,
                          new ServerRequestCallback<HelpInfo>() {
             @Override
             public void onError(ServerError error)
@@ -180,7 +184,7 @@ public class HelpStrategy
       }
       
       final String packageName = selectedItem.name;
-      server_.getHelp(packageName, null, 0,
+      server_.getHelp(packageName, null, RCompletionType.PACKAGE,
                       new ServerRequestCallback<HelpInfo>() {
          @Override
          public void onError(ServerError error)
