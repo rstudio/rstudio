@@ -1215,7 +1215,6 @@ assign(x = ".rs.acCompletionTypes",
    else
    {
       results <- sourceIndexCompletions$completions
-      package <- .rs.getProjectPackageName()
       
       # TODO: more granular lookup on the object type for source index completions
       type <- ifelse(sourceIndexCompletions$isFunction,
@@ -1224,7 +1223,7 @@ assign(x = ".rs.acCompletionTypes",
       
       completions <- .rs.makeCompletions(token = token,
                                          results = results,
-                                         packages = package,
+                                         packages = pkgName,
                                          quote = FALSE,
                                          type = type)
    }
