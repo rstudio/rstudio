@@ -36,6 +36,10 @@ import java.util.concurrent.ExecutionException;
  */
 public class DirectoryClassPathEntry extends ClassPathEntry {
 
+  private static final String GWT_WATCH_FILE_CHANGES_PROPERTY = "gwt.watchFileChanges";
+  private static final boolean WATCH_FILE_CHANGES =
+      Boolean.parseBoolean(System.getProperty(GWT_WATCH_FILE_CHANGES_PROPERTY, "true"));
+
   private static class Messages {
     static final Message1String DESCENDING_INTO_DIR = new Message1String(
         TreeLogger.SPAM, "Descending into dir: $0");
@@ -91,6 +95,10 @@ public class DirectoryClassPathEntry extends ClassPathEntry {
   @Override
   public Map<AbstractResource, ResourceResolution> findApplicableResources(TreeLogger logger,
       PathPrefixSet pathPrefixSet) {
+    if (!WATCH_FILE_CHANGES) {
+      return scanRecursiveDirectory(logger, pathPrefixSet);
+    }
+
     ensureListening(logger, pathPrefixSet);
 
     if (listeningFailed) {
