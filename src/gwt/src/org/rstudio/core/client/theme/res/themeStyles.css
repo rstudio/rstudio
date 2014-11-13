@@ -18,8 +18,10 @@
 @external gwt-MenuBar, gwt-MenuBar-vertical;
 @external gwt-SplitLayoutPanel-HDragger, gwt-SplitLayoutPanel-VDragger;
 @external gwt-SuggestBoxPopup, item-selected;
-@external gwt-TabLayoutPanel-Workbench;
 @external gwt-TabLayoutPanelTab, gwt-TabLayoutPanelTab-selected;
+@external gwt-TabLayoutPanelContentContainer, gwt-TabLayoutPanelTabs;
+@external gwt-TabLayoutPanelContent;
+@external gwt-TabLayoutPanel-Workbench;
 @external gwt-TabLayoutPanelTabs;
 @external gwt-DecoratedPopupPanel;
 
@@ -1179,4 +1181,71 @@ body.ubuntu_mono .searchBox {
   background-position-x: 1px;
   background-position-y: 1px;
 }
+
+
+.dialogTabPanel .gwt-TabLayoutPanelTab
+{
+  background: #f5f5f5 -moz-linear-gradient(top, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.9) 17%, rgba(255,255,255,0) 50%); 
+  background: #f5f5f5 -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(255,255,255,0.9)), color-stop(17%,rgba(255,255,255,0.9)), color-stop(50%,rgba(255,255,255,0)));
+  background: #f5f5f5 -webkit-linear-gradient(top, rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.9) 17%,rgba(255,255,255,0) 50%);
+  background: #f5f5f5 linear-gradient(to bottom, rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.9) 17%,rgba(255,255,255,0) 50%); 
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 12px;
+  padding-right: 12px;
+  border: 1px solid #c0c0c0;
+  border-left: none;
+  float: none;
+}
+
+.dialogTabPanel .gwt-TabLayoutPanelTabs
+{
+  text-align: center;
+  z-index: 10; 
+  margin-bottom: -12px;
+}
+
+.dialogTabPanel .gwt-TabLayoutPanelTab-selected
+{
+  background: #9c9c9c -moz-linear-gradient(top, rgba(0,0,0,0.1) 0%, rgba(255,255,255,0) 20%, rgba(0,0,0,0.01) 85%, rgba(0,0,0,0.1) 100%); 
+  background: #9c9c9c -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(0,0,0,0.1)), color-stop(20%,rgba(255,255,255,0)), color-stop(85%,rgba(0,0,0,0.01)), color-stop(100%,rgba(0,0,0,0.1))); 
+  background: #9c9c9c -webkit-linear-gradient(top, rgba(0,0,0,0.1) 0%,rgba(255,255,255,0) 20%,rgba(0,0,0,0.01) 85%,rgba(0,0,0,0.1) 100%); 
+  background: #9c9c9c linear-gradient(to bottom, rgba(0,0,0,0.1) 0%,rgba(255,255,255,0) 20%,rgba(0,0,0,0.01) 85%,rgba(0,0,0,0.1) 100%); 
+  color: #ffffff; 
+}
+
+.dialogTabPanel .gwt-TabLayoutPanelContentContainer
+{
+  border: 1px solid #c0c0c0;
+}
+
+.dialogTabPanel .gwt-TabLayoutPanelContent
+{
+  padding-top: 20px;
+  padding-right: 10px;
+  padding-left: 10px;
+  padding-bottom : 5px;
+}
+
+.dialogTabPanel .gwt-TabLayoutPanelTab:first-child
+{
+  -webkit-border-top-left-radius: 4px;
+  -webkit-border-bottom-left-radius: 4px;
+  -moz-border-radius-topleft: 4px;
+  -moz-border-radius-bottomleft: 4px;
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+  border-left: 1px solid #c0c0c0;
+}
+
+.dialogTabPanel .gwt-TabLayoutPanelTab:last-child
+{
+  -webkit-border-top-right-radius: 4px;
+  -webkit-border-bottom-right-radius: 4px;
+  -moz-border-radius-topright: 4px;
+  -moz-border-radius-bottomright: 4px;
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
 
