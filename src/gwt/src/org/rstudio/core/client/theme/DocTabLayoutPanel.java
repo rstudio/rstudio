@@ -22,25 +22,15 @@ import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.MouseDownEvent;
-import com.google.gwt.event.dom.client.MouseDownHandler;
-import com.google.gwt.event.dom.client.MouseMoveEvent;
-import com.google.gwt.event.dom.client.MouseMoveHandler;
-import com.google.gwt.event.dom.client.MouseUpEvent;
-import com.google.gwt.event.dom.client.MouseUpHandler;
-import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.dom.client.DomEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Event.NativePreviewEvent;
-import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.*;
 
-import org.apache.tools.ant.util.DOMUtils;
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NodePredicate;
 import org.rstudio.core.client.events.*;
@@ -355,9 +345,10 @@ public class DocTabLayoutPanel
             {
                if (event.getButton() == Event.BUTTON_LEFT)
                {
-                  beginDrag(event);
-                  event.preventDefault();
-                  event.stopPropagation();
+                  if (!dragging_)
+                  {
+                     beginDrag(event);
+                  }
                }
                break;
             }
@@ -367,8 +358,6 @@ public class DocTabLayoutPanel
                if (dragging_) 
                {
                   drag(event);
-                  event.preventDefault();
-                  event.stopPropagation();
                }
                break;
             }
@@ -378,9 +367,6 @@ public class DocTabLayoutPanel
                if (dragging_)
                {
                   endDrag();
-                  DOM.releaseCapture(getElement());
-                  event.preventDefault();
-                  event.stopPropagation();
                }
                break;   
             }
@@ -391,27 +377,45 @@ public class DocTabLayoutPanel
                break;
             }
          }
+         super.onBrowserEvent(event);
       }
 
       private void beginDrag(Event evt)
       {
+         // set drag element state
          dragging_ = true;
          dragElement_ = getElement().getParentElement().getParentElement();
          dragParent_ = dragElement_.getParentElement();
+
+         // find the current position of this tab among its siblings--we'll use
+         // this later to determine whether to shift siblings left or right
+         for (int i = 0; i < dragParent_.getChildCount(); i++)
+         {
+            Node node = dragParent_.getChild(i);
+            if (node == dragElement_)
+            {
+               candidatePos_ = i;
+            }
+            if (node.getNodeType() == Node.ELEMENT_NODE)
+            {
+               // the relative position of the last node determines how far we
+               // can drag--add 10px so it stretches a little
+               dragMax_ = DomUtils.leftRelativeTo(dragParent_, (Element)node) 
+                     + ((Element)node).getClientWidth() + 10;
+            }
+         }
+         outOfBounds_ = 0;
+
+         // snap the element out of the tabset
          lastElementX_ = DomUtils.leftRelativeTo(dragParent_, dragElement_);
          lastCursorX_= evt.getClientX();
          dragElement_.getStyle().setPosition(Position.ABSOLUTE);
          dragElement_.getStyle().setLeft(lastElementX_, Unit.PX);
          dragElement_.getStyle().setZIndex(100);
-         // find the current position of this tab among its siblings
-         for (int i = 0; i < dragParent_.getChildCount(); i++)
-         {
-            if (dragParent_.getChild(i) == dragElement_)
-            {
-               candidatePos_ = i;
-            }
-         }
+         DOM.setCapture(getElement());
 
+         // create the placeholder that shows where this tab will go when the
+         // mouse is released
          dragPlaceholder_ = Document.get().createDivElement();
          dragPlaceholder_.getStyle().setWidth(dragElement_.getClientWidth(), 
                Unit.PX);
@@ -431,15 +435,48 @@ public class DocTabLayoutPanel
          dragParent_.removeChild(dragElement_);
          dragParent_.insertAfter(dragElement_, dragPlaceholder_);
          dragParent_.removeChild(dragPlaceholder_);
+         DOM.releaseCapture(getElement());
       }
       
       private void drag(Event evt) 
       {
-         lastElementX_ += evt.getClientX() - lastCursorX_;
+         int offset = evt.getClientX() - lastCursorX_;
          lastCursorX_ = evt.getClientX();
+         Debug.devlog("moved " + offset + ": " + outOfBounds_);
+         // cursor is outside the tab area
+         if (outOfBounds_ != 0)
+         {
+            // did the cursor move back in bounds? 
+            if (outOfBounds_ + offset > 0 != outOfBounds_ > 0)
+            {
+               outOfBounds_ = 0;
+               offset = outOfBounds_ + offset;
+            }
+            else 
+            {
+               // cursor is still out of bounds
+               outOfBounds_ += offset;
+               return;
+            }
+         }
+         if (lastElementX_ + offset < 0)
+         {
+            // dragged past the beginning - lock to beginning
+            lastElementX_ = 0;
+            outOfBounds_ += offset;
+         }
+         else if (lastElementX_ + dragElement_.getClientWidth() + offset > dragMax_)
+         {
+            // dragged past the end - lock to the end
+            lastElementX_ = dragMax_ - dragElement_.getClientWidth();
+            outOfBounds_ += offset;
+         }
+         else 
+         {
+            lastElementX_ += offset;
+         }
          dragElement_.getStyle().setLeft(lastElementX_, Unit.PX);
-         // check to see if we're overlapping with another tab by at least 50%
-         // of our width
+         // check to see if we're overlapping with another tab 
          for (int i = 0; i < dragParent_.getChildCount(); i++)
          {
             // skip non-element DOM nodes
@@ -460,8 +497,8 @@ public class DocTabLayoutPanel
             int minOverlap = Math.min(dragElement_.getClientWidth() / 2, 
                   ele.getClientWidth() / 2);
             // a little complicated: compute the number of overlapping pixels
-            // with this element; if the overlap is more than half of our width,
-            // it's swapping time
+            // with this element; if the overlap is more than half of our width
+            // (or the width of the candidate), it's swapping time
             if (Math.min(lastElementX_ + dragElement_.getClientWidth(), right) - 
                 Math.max(lastElementX_, left) >= minOverlap)
             {
@@ -483,6 +520,8 @@ public class DocTabLayoutPanel
       private int lastCursorX_;
       private int lastElementX_;
       private int candidatePos_;
+      private int dragMax_;
+      private int outOfBounds_;
       private Element dragElement_;
       private Element dragParent_;
       private Element dragPlaceholder_;

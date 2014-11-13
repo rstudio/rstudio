@@ -611,6 +611,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 .docTabPanel .gwt-TabLayoutPanelTab {
    cursor: default;
    margin-right: 2px;
+   background: inherit;
 }
 .docTabPanel .gwt-TabLayoutPanelTab-selected {
 }
@@ -705,6 +706,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 }
 .moduleTabPanel .gwt-TabLayoutPanelTab {
    font-size: 11px;
+   background: inherit;
 }
 .moduleTabPanel.minimized .gwt-TabLayoutPanelTab {
    margin-top: -1px;
