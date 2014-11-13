@@ -36,6 +36,7 @@ as auto-completions
 
 ### Miscellaneous
 
+* Bind Cmd+Shift+K shortcut to Compile PDF and Preview HTML
 * When evaluating R strings ensure 'try' is called from base package
 * Add Clear Recent Projects menu item to toolbar project menu
 * Update to MSYS SSH 1000.18
