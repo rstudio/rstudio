@@ -56,10 +56,15 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref("Blinking cursor", prefs_.blinkingCursor()));
       displayPanel.add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));
       
+      VerticalPanel completionPanel = new VerticalPanel();
+      completionPanel.add(checkboxPref("Show tooltip after function completions", prefs.showSignatureTooltips()));    
+      completionPanel.add(checkboxPref("Insert spaces around equals for argument completions", prefs.insertSpacesAroundEquals()));
+      
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel();
       tabPanel.setSize("435px", "460px");     
       tabPanel.add(editingPanel, "Editing");
       tabPanel.add(displayPanel, "Display");
+      tabPanel.add(completionPanel, "Completion");
       tabPanel.selectTab(0);
       add(tabPanel);
    }
