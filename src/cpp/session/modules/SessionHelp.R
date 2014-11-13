@@ -91,7 +91,16 @@ options(help_type = "html")
 
 .rs.addJsonRpcHandler("get_help", function(topic, package, options)
 {
-   package <- gsub("package:", "", package, fixed = TRUE)
+   if (length(topic) && grepl(":{2,3}$", topic, perl = TRUE))
+   {
+      package <- sub(":*$", "", topic, perl = TRUE)
+      topic <- paste(package, "-package", sep = "")
+   }
+   
+   package <- sub("package:", "", package, fixed = TRUE)
+   if (!length(topic))
+      topic <- ""
+   
    if (!length(package) && any(grepl(":{2,3}", topic, perl = TRUE)))
    {
       splat <- strsplit(topic, ":{2,3}", perl = TRUE)[[1]]
