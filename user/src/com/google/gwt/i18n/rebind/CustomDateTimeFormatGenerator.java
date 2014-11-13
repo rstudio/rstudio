@@ -96,7 +96,7 @@ public class CustomDateTimeFormatGenerator extends Generator {
     }
     // TODO(jat): runtime locales support
     GwtLocale gwtLocale = localeUtils.getCompileLocale();
-    DateTimePatternGenerator dtpg = new DateTimePatternGenerator(gwtLocale);
+    DateTimePatternGenerator dtpg = getDateTimePatternGenerator(gwtLocale);
     String packageName = targetClass.getPackage().getName();
     String className = targetClass.getName().replace('.', '_') + "_"
         + gwtLocale.getAsString();
@@ -140,5 +140,9 @@ public class CustomDateTimeFormatGenerator extends Generator {
       writer.commit(logger);
     }
     return packageName + "." + className;
+  }
+
+  protected DateTimePatternGenerator getDateTimePatternGenerator(GwtLocale gwtLocale) {
+    return new DateTimePatternGenerator(gwtLocale);
   }
 }
