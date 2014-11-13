@@ -83,8 +83,11 @@ public class CompletionPopupPanel extends ThemedPopupPanel
                                  = new HorizontalPanelWithMouseEvents() ;
       horiz.add(list_) ;
       
-      help_ = new HelpInfoPane() ;
-      help_.setWidth("400px") ;
+      if (help_ == null)
+      {
+         help_ = new HelpInfoPane() ;
+         help_.setWidth("400px") ;
+      }
       horiz.add(help_) ;
       
       setWidget(horiz) ;

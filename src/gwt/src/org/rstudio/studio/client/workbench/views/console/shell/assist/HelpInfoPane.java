@@ -43,6 +43,7 @@ public class HelpInfoPane extends Composite
          public void run()
          {
             scrollPanel_.setVisible(false) ;
+            f1prompt_.setVisible(false) ;
             vpanel_.clear() ;
          }
       };
