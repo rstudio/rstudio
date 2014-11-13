@@ -392,9 +392,16 @@ public class RCompletionManager implements CompletionManager
             if (cursorColumn > 0)
             {
                char ch = currentLine.charAt(cursorColumn - 2);
+               char prevCh = currentLine.charAt(cursorColumn - 3);
+               
+               boolean isAcceptableCharSequence = isValidForRIdentifier(ch) ||
+                     (ch == ':' && prevCh == ':') ||
+                     ch == '$' ||
+                     ch == '@';
+               
                if (currentLine.length() > 0 &&
                      cursorColumn > 0 &&
-                     (isValidForRIdentifier(ch) || ch == ':' || ch == '$' || ch == '@'))
+                     isAcceptableCharSequence)
                {
                   // manually remove the previous character
                   InputEditorSelection selection = input_.getSelection();
@@ -406,7 +413,7 @@ public class RCompletionManager implements CompletionManager
 
                   input_.setSelection(new InputEditorSelection(start, end));
                   input_.replaceSelection("", false);
-
+                  
                   return beginSuggest(false, false, false);
                }
             }
