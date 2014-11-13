@@ -148,7 +148,6 @@ public class RCompletionManager implements CompletionManager
       popup_.addSelectionHandler(new SelectionHandler<QualifiedName>() {
          public void onSelection(SelectionEvent<QualifiedName> event)
          {
-            popup_.clearHelp(true) ;
             context_.showHelp(event.getSelectedItem()) ;
          }
       }) ;
@@ -1324,6 +1323,7 @@ public class RCompletionManager implements CompletionManager
          
          popup_.hide() ;
          requester_.flushCache() ;
+         helpStrategy_.clearCache();
          
          if (value == null)
          {

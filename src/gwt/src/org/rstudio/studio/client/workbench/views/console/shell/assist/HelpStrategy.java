@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import java.util.HashMap;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
@@ -36,13 +38,21 @@ public class HelpStrategy
    public HelpStrategy(CodeToolsServerOperations server)
    {
       server_ = server;
+      cache_ = new HashMap<QualifiedName, ParsedInfo>();
    }
    
    public void showHelpTopic(final QualifiedName selectedItem)
    {
-      server_.showHelpTopic(selectedItem.pkgName, null) ;
+      switch (selectedItem.type)
+      {
+         case RCompletionType.PACKAGE:
+            server_.showHelpTopic(selectedItem.pkgName + "-package", null);
+            break;
+         default:
+            server_.showHelpTopic(selectedItem.pkgName, null);
+            break;
+      }
    }
-   
    
    public void showHelp(final QualifiedName item,
                         final CompletionPopupDisplay display)
@@ -50,7 +60,7 @@ public class HelpStrategy
       switch (item.type)
       {
          case RCompletionType.PACKAGE:
-            showPackageHelp(item.name, display);
+            showPackageHelp(item, display);
             break;
          case RCompletionType.ARGUMENTS:
             showParameterHelp(item, display);
@@ -61,9 +71,21 @@ public class HelpStrategy
       }
    }
    
+   public void clearCache()
+   {
+      cache_.clear();
+   }
+   
    private void showFunctionHelp(final QualifiedName selectedItem,
                                  final CompletionPopupDisplay display)
    {
+      ParsedInfo cachedHelp = cache_.get(selectedItem);
+      if (cachedHelp != null)
+      {
+         display.displayFunctionHelp(cachedHelp);
+         return;
+      }
+      
       server_.getHelp(selectedItem.name, selectedItem.pkgName, 0, 
                       new ServerRequestCallback<HelpInfo>() {
          @Override
@@ -82,6 +104,7 @@ public class HelpStrategy
                HelpInfo.ParsedInfo help = result.parse(selectedItem.name) ;
                if (help.hasInfo())
                {
+                  cache_.put(selectedItem, help);
                   display.displayFunctionHelp(help) ;
                   return;
                }
@@ -93,12 +116,19 @@ public class HelpStrategy
 
    }
    
-   private void showParameterHelp(final QualifiedName qname,
+   private void showParameterHelp(final QualifiedName selectedItem,
                                   final CompletionPopupDisplay display)
    {
-      final String selectedItem = qname.name.replaceAll("\\s*=\\s*$", "");
+      ParsedInfo cachedHelp = cache_.get(selectedItem);
+      if (cachedHelp != null)
+      {
+         doShowParameterHelp(cachedHelp, selectedItem.name, display);
+         return;
+      }
+      
+      final String name = selectedItem.name.replaceAll("\\s*=\\s*$", "");
 
-         server_.getHelp(qname.pkgName, null, 0,
+         server_.getHelp(selectedItem.pkgName, null, 0,
                          new ServerRequestCallback<HelpInfo>() {
             @Override
             public void onError(ServerError error)
@@ -111,8 +141,9 @@ public class HelpStrategy
             {
                if (response != null)
                {
-                  ParsedInfo info = response.parse(qname.pkgName);
-                  doShowParameterHelp(info, selectedItem, display);
+                  ParsedInfo info = response.parse(selectedItem.pkgName);
+                  cache_.put(selectedItem, info);
+                  doShowParameterHelp(info, name, display);
                }
                else
                {
@@ -138,9 +169,17 @@ public class HelpStrategy
       }
    }
    
-   private void showPackageHelp(final String packageName,
+   private void showPackageHelp(final QualifiedName selectedItem,
                                 final CompletionPopupDisplay display)
    {
+      ParsedInfo cachedHelp = cache_.get(selectedItem);
+      if (cachedHelp != null)
+      {
+         doShowPackageHelp(cachedHelp, display);
+         return;
+      }
+      
+      final String packageName = selectedItem.name;
       server_.getHelp(packageName, null, 0,
                       new ServerRequestCallback<HelpInfo>() {
          @Override
@@ -155,6 +194,7 @@ public class HelpStrategy
             if (response != null)
             {
                ParsedInfo info = response.parse(packageName);
+               cache_.put(selectedItem, info);
                doShowPackageHelp(info, display);
             }
             else
@@ -170,4 +210,7 @@ public class HelpStrategy
    {
       display.displayPackageHelp(info) ;
    }
+   
+   HashMap<QualifiedName, ParsedInfo> cache_;
+   
 }

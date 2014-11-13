@@ -83,11 +83,8 @@ public class CompletionPopupPanel extends ThemedPopupPanel
                                  = new HorizontalPanelWithMouseEvents() ;
       horiz.add(list_) ;
       
-      // add the help pane but leave invisible for now (make visible if we
-      // have completions)
       help_ = new HelpInfoPane() ;
       help_.setWidth("400px") ;
-      help_.setVisible(false);
       horiz.add(help_) ;
       
       setWidget(horiz) ;
