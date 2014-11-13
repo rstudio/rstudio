@@ -433,44 +433,6 @@
    objects
 })
 
-.rs.addFunction("getProjectPath", function()
-{
-   .Call("rs_getProjectPath")
-})
-
-.rs.addFunction("isPackageDirectory", function(path)
-{
-   if (!is.null(.rs.get("packageName")))
-      return(TRUE)
-   
-   if (!file.exists(path))
-      return(FALSE)
-   
-   if (!file.exists(file.path(path, "DESCRIPTION")))
-      return(FALSE)
-   
-   DESCRIPTION <- readLines(file.path(path, "DESCRIPTION"))
-   any(grepl("^Type:\\s*Package", DESCRIPTION, perl = TRUE))
-})
-
-.rs.addFunction("getProjectPackageName", function()
-{
-   projectPath <- .rs.getProjectPath()
-   if (identical(projectPath, .rs.get("projectPath")))
-      if (!is.null(value <- .rs.get("packageName")))
-         return(value)
-   
-   .rs.assign("projectPath", projectPath)
-   if (.rs.isPackageDirectory(projectPath))
-   {
-      DESCRIPTION <- readLines(file.path(projectPath, "DESCRIPTION"))
-      pkgLine <- grep("^Package:", DESCRIPTION, value = TRUE, perl = TRUE)
-      result <- sub("^Package:\\s*(.*)$", "\\1", pkgLine, perl = TRUE)
-      .rs.assign("packageName", result)
-      result
-   }
-})
-
 .rs.addFunction("assign", function(x, value)
 {
    pos <- which(search() == "tools:rstudio")
