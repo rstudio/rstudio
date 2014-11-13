@@ -44,7 +44,7 @@ public class SourceItem extends JavaScriptObject
       return this.extra_info;
    }-*/;
 
-   // project-relative filename
+   // aliased path
    public final native String getContext() /*-{
       return this.context;
    }-*/;
