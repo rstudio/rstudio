@@ -175,10 +175,7 @@ public class HelpInfo extends JavaScriptObject
       
       public String getFunctionSignature()
       {
-         // TODO: temporary workaround while we lack a 'packageHelpStrategy'
-         // this allows help popups for e.g. `stats::` to produce 'stats' as
-         // the header name
-         return signature.replaceAll(":*$", "");
+         return signature;
       }
 
       public String getDescription()

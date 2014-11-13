@@ -96,6 +96,27 @@ public class HelpInfoPane extends Composite
       
       scrollPanel_.setVisible(true) ;
    }
+   
+   public void displayPackageHelp(HelpInfo.ParsedInfo help)
+   {
+      timer_.cancel() ;
+      vpanel_.clear() ;
+
+      f1prompt_.setVisible(true);
+      String packageName = help.getPackageName();
+      if (packageName != null)
+      {
+         Label label = new Label(packageName);
+         label.setStylePrimaryName(styles_.packageName());
+         vpanel_.add(label);
+      }
+      
+      HTML htmlDesc = new HTML(help.getDescription()) ;
+      htmlDesc.setStylePrimaryName(styles_.packageDescription()) ;
+      vpanel_.add(htmlDesc) ;
+
+      scrollPanel_.setVisible(true) ;
+   }
 
    public void clearHelp(boolean downloadOperationPending)
    {

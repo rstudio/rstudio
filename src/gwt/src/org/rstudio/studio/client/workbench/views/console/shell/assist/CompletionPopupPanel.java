@@ -53,9 +53,9 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       show(callback) ;
    }
 
+   @Override
    public void showCompletionValues(QualifiedName[] values, 
-                                    PositionCallback callback,
-                                    boolean showHelpPane)
+                                    PositionCallback callback)
    {
       CompletionList<QualifiedName> list = new CompletionList<QualifiedName>(
                                        values,
@@ -82,11 +82,13 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       HorizontalPanelWithMouseEvents horiz 
                                  = new HorizontalPanelWithMouseEvents() ;
       horiz.add(list_) ;
+      
+      // add the help pane but leave invisible for now (make visible if we
+      // have completions)
       help_ = new HelpInfoPane() ;
       help_.setWidth("400px") ;
       help_.setVisible(false);
-      if (showHelpPane)
-         horiz.add(help_) ;
+      horiz.add(help_) ;
       
       setWidget(horiz) ;
       ElementIds.assignElementId(horiz.getElement(), 
@@ -151,6 +153,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       help_.setVisible(visible);
    }
 
+   @Override
    public void displayFunctionHelp(ParsedInfo help)
    {
       help_.setVisible(help.hasInfo());
@@ -158,10 +161,19 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       help_.setHeight(list_.getOffsetHeight() + "px") ;
    }
    
+   @Override
    public void displayParameterHelp(ParsedInfo help, String parameterName)
    {
       help_.setVisible(help.hasInfo());
       help_.displayParameterHelp(help, parameterName) ;
+      help_.setHeight(list_.getOffsetHeight() + "px") ;
+   }
+   
+   @Override
+   public void displayPackageHelp(ParsedInfo help)
+   {
+      help_.setVisible(help.hasInfo());
+      help_.displayPackageHelp(help) ;
       help_.setHeight(list_.getOffsetHeight() + "px") ;
    }
 

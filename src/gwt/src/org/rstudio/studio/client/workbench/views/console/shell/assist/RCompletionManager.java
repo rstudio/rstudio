@@ -102,6 +102,7 @@ public class RCompletionManager implements CompletionManager
                              RCompletionContext rContext,
                              RnwCompletionContext rnwContext,
                              DocDisplay docDisplay,
+                             HelpStrategy helpStrategy,
                              boolean canAutoPopup)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -116,6 +117,7 @@ public class RCompletionManager implements CompletionManager
       rnwContext_ = rnwContext;
       docDisplay_ = docDisplay;
       canAutoPopup_ = canAutoPopup;
+      helpStrategy_ = helpStrategy;
       
       input_.addBlurHandler(new BlurHandler() {
          public void onBlur(BlurEvent event)
@@ -1226,14 +1228,12 @@ public class RCompletionManager implements CompletionManager
       
       public void showHelp(QualifiedName selectedItem)
       {
-         if (helpStrategy_ != null)
-            helpStrategy_.showHelp(selectedItem, popup_) ;
+         helpStrategy_.showHelp(selectedItem, popup_);
       }
-
+      
       public void showHelpTopic()
       {
-         if (helpStrategy_ != null)
-            helpStrategy_.showHelpTopic(popup_.getSelectedValue()) ;
+         helpStrategy_.showHelpTopic(popup_.getSelectedValue());
       }
 
       @Override
@@ -1288,8 +1288,6 @@ public class RCompletionManager implements CompletionManager
             return ;
          }
 
-         initializeHelpStrategy(completions) ;
-         
          // Move range to beginning of token; we want to place the popup there.
          final String token = completions.token ;
 
@@ -1313,34 +1311,10 @@ public class RCompletionManager implements CompletionManager
             
             popup_.showCompletionValues(
                   results,
-                  new PopupPositioner(rect, popup_),
-                  !helpStrategy_.isNull()) ;
+                  new PopupPositioner(rect, popup_));
          }
       }
 
-      private void initializeHelpStrategy(CompletionResult completions)
-      {
-         if (!StringUtil.isNullOrEmpty(completions.guessedFunctionName))
-         {
-            helpStrategy_ = HelpStrategy.createParameterStrategy(
-                              server_, completions.guessedFunctionName) ;
-            return;
-         }
-
-         boolean anyPackages = false;
-         ArrayList<QualifiedName> qnames = completions.completions;
-         for (QualifiedName qname : qnames)
-         {
-            if (!StringUtil.isNullOrEmpty(qname.pkgName))
-               anyPackages = true;
-         }
-
-         if (anyPackages)
-            helpStrategy_ = HelpStrategy.createFunctionStrategy(server_) ;
-         else
-            helpStrategy_ = HelpStrategy.createNullStrategy();
-      }
-      
       private void onSelection(QualifiedName qname)
       {
          final String value = qname.name ;
@@ -1483,7 +1457,6 @@ public class RCompletionManager implements CompletionManager
       private final Invalidation.Token invalidationToken_ ;
       private InputEditorSelection selection_ ;
       private final boolean canAutoAccept_;
-      private HelpStrategy helpStrategy_ ;
       private boolean suggestOnAccept_;
       private boolean overrideInsertParens_;
       
@@ -1513,6 +1486,7 @@ public class RCompletionManager implements CompletionManager
    private String token_ ;
    
    private final DocDisplay docDisplay_;
+   private final HelpStrategy helpStrategy_;
    private final boolean canAutoPopup_;
 
    private final Invalidation invalidation_ = new Invalidation();
