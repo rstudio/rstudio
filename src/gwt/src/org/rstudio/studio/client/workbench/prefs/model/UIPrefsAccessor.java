@@ -103,6 +103,25 @@ public class UIPrefsAccessor extends Prefs
       return bool("insert_matching", true);
    }
    
+   public static final String COMPLETION_ALWAYS = "always";
+   public static final String COMPLETION_WHEN_TRIGGERED = "triggered";
+   public static final String COMPLETION_MANUAL = "manual";
+ 
+   public PrefValue<String> codeComplete()
+   {
+      return string("code_complete", COMPLETION_ALWAYS);
+   }
+   
+   public PrefValue<Boolean> insertSpacesAroundEquals()
+   {
+      return bool("insert_spaces_around_equals", true);
+   }
+   
+   public PrefValue<Boolean> showSignatureTooltips()
+   {
+      return bool("show_signature_tooltips", true);
+   }
+   
    public PrefValue<Boolean> autoAppendNewline()
    {
       return bool("auto_append_newline", false);

@@ -95,7 +95,20 @@ public class ShortcutManager implements NativePreviewHandler,
       }
       else
       {
-         commands_.put(shortcut, command);
+         ArrayList<AppCommand> commands;
+         if (commands_.containsKey(shortcut)) 
+         {
+            // already have a command for this shortcut; add this one
+            commands = commands_.get(shortcut);
+         }
+         else 
+         {
+            // no commands yet, make a new list
+            commands = new ArrayList<AppCommand>();
+            commands_.put(shortcut, commands);
+         }
+         commands.add(command);
+
          command.setShortcut(shortcut);
       }
    }
@@ -139,7 +152,7 @@ public class ShortcutManager implements NativePreviewHandler,
       // shortcut bindings)
       for (KeyboardShortcut shortcut: shortcuts)
       {
-         AppCommand command = commands_.get(shortcut);
+         AppCommand command = commands_.get(shortcut).get(0);
          if (infoMap.containsKey(command))
          {
             infoMap.get(command).addShortcut(shortcut);
@@ -170,28 +183,41 @@ public class ShortcutManager implements NativePreviewHandler,
 
       KeyboardShortcut shortcut = new KeyboardShortcut(modifiers,
                                                        e.getKeyCode());
-      AppCommand command = commands_.get(shortcut);
-      if (command != null)
+      if (!commands_.containsKey(shortcut) || commands_.get(shortcut) == null) 
       {
-         boolean enabled = isEnabled() && command.isEnabled();
-         
-         // some commands want their keyboard shortcut to pass through 
-         // to the browser when they are disabled (e.g. Cmd+W)
-         if (!enabled && !command.preventShortcutWhenDisabled())
-            return false;
-         
-         e.preventDefault();
+         return false;
+      }
 
-         if (enabled)
-            command.executeFromShortcut();
+      AppCommand command = null;
+      for (int i = 0; i < commands_.get(shortcut).size(); i++) 
+      {
+         command = commands_.get(shortcut).get(i);
+         if (command != null)
+         {
+            boolean enabled = isEnabled() && command.isEnabled();
+            
+            // some commands want their keyboard shortcut to pass through 
+            // to the browser when they are disabled (e.g. Cmd+W)
+            if (!enabled && !command.preventShortcutWhenDisabled())
+               return false;
+            
+            e.preventDefault();
+
+            // if this command is enabled, execute it and stop looking  
+            if (enabled) 
+            {
+               command.executeFromShortcut();
+               break;
+            }
+         }
       }
 
       return command != null;
    }
 
    private int disableCount_ = 0;
-   private final HashMap<KeyboardShortcut, AppCommand> commands_
-                                  = new HashMap<KeyboardShortcut, AppCommand>();
+   private final HashMap<KeyboardShortcut, ArrayList<AppCommand> > commands_
+                                  = new HashMap<KeyboardShortcut, ArrayList<AppCommand> >();
    private ArrayList<KeyboardShortcut> unboundShortcuts_
                                   = new ArrayList<KeyboardShortcut>();
 

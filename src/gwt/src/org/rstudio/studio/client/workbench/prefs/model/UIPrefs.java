@@ -119,6 +119,15 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // insert matching
          insertMatching().setGlobalValue(
                                  newUiPrefs.insertMatching().getGlobalValue());
+              
+         codeComplete().setGlobalValue(
+                                 newUiPrefs.codeComplete().getGlobalValue());
+         
+         insertSpacesAroundEquals().setGlobalValue(
+                                 newUiPrefs.insertSpacesAroundEquals().getGlobalValue());
+         
+         showSignatureTooltips().setGlobalValue(
+                                 newUiPrefs.showSignatureTooltips().getGlobalValue());
          
          autoAppendNewline().setGlobalValue(
                                  newUiPrefs.autoAppendNewline().getGlobalValue());

@@ -156,4 +156,6 @@ public interface ThemeStyles extends CssResource
    String presentationNavigatorLabel();
    
    String notResizable();
+   
+   String dialogTabPanel();
 }

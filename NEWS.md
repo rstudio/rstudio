@@ -12,6 +12,7 @@ as auto-completions
 * Improvements to C/C++ editing mode:
     - Code completion
     - F2 code navigation (go to definition)
+    - Go to file/function for C/C++
     - Intelligent auto-indentation
     - Scope tree for quick intra-file navigation
 * Fuzzy matching for go to file/function
@@ -35,9 +36,15 @@ as auto-completions
 
 ### Miscellaneous
 
+* Bind Cmd+Shift+K shortcut to Compile PDF and Preview HTML
 * When evaluating R strings ensure 'try' is called from base package
 * Add Clear Recent Projects menu item to toolbar project menu
 * Update to MSYS SSH 1000.18
+
+### Bug Fixes
+
+* Prevent error dialog when getOption("repos") is an unnamed vector
+
 
 
 

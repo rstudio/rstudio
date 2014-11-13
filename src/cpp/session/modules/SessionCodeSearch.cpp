@@ -760,52 +760,6 @@ void searchFiles(const std::string& term,
 }
 
 
-template <typename TValue, typename TFunc>
-json::Array toJsonArray(
-      const std::vector<r_util::RSourceItem> &items,
-      TFunc memberFunc)
-{
-   json::Array col;
-   std::transform(items.begin(),
-                  items.end(),
-                  std::back_inserter(col),
-                  boost::bind(json::toJsonValue<TValue>,
-                                 boost::bind(memberFunc, _1)));
-   return col;
-}
-
-
-json::Value signatureToJson(const std::vector<r_util::RS4MethodParam>& sig)
-{
-   std::string str;
-   if (sig.size() > 0)
-   {
-      str.append("{");
-      for (std::size_t i = 0; i<sig.size(); i++)
-      {
-         if (i > 0)
-            str.append(", ");
-         str.append(sig[i].type());
-      }
-
-      str.append("}");
-   }
-   return json::Value(str);
-}
-
-json::Array signaturesToJsonArray(
-                        const std::vector<r_util::RSourceItem> &items)
-{
-   json::Array sigCol;
-   std::transform(items.begin(),
-                  items.end(),
-                  std::back_inserter(sigCol),
-                  boost::bind(
-                        signatureToJson,
-                        boost::bind(&r_util::RSourceItem::signature, _1)));
-   return sigCol;
-}
-
 // NOTE: When modifying this code, you should ensure that corresponding
 // changes are made to the client side scoreMatch function as well
 // (See: CodeSearchOracle.java)
@@ -911,6 +865,161 @@ void filterScores(std::vector< std::pair<int, int> >* pScore1,
 
 }
 
+// uniform representation of source items (spans R and C++, maps to
+// SourceItem class on the client side)
+class SourceItem
+{
+public:
+   enum Type
+   {
+      None = 0,
+      Function = 1,
+      Method = 2,
+      Class = 3,
+      Enum = 4,
+      Namespace = 5
+   };
+
+   SourceItem()
+      : type_(None), line_(-1), column_(-1)
+   {
+   }
+
+   SourceItem(Type type,
+              const std::string& name,
+              const std::string& extraInfo,
+              const std::string& context,
+              int line,
+              int column)
+      : type_(type),
+        name_(name),
+        extraInfo_(extraInfo),
+        context_(context),
+        line_(line),
+        column_(column)
+   {
+   }
+
+   bool empty() const { return type_ == None; }
+
+   Type type() const { return type_; }
+   const std::string& name() const { return name_; }
+   const std::string& extraInfo() const { return extraInfo_; }
+   const std::string& context() const { return context_; }
+   int line() const { return line_; }
+   int column() const { return column_; }
+
+private:
+   Type type_;
+   std::string name_;
+   std::string extraInfo_;
+   std::string context_;
+   int line_;
+   int column_;
+};
+
+SourceItem fromRSourceItem(const r_util::RSourceItem& rSourceItem)
+{
+   // calculate type
+   using namespace r_util;
+   SourceItem::Type type = SourceItem::None;
+   switch(rSourceItem.type())
+   {
+   case RSourceItem::Function:
+      type = SourceItem::Function;
+      break;
+   case RSourceItem::Method:
+      type = SourceItem::Method;
+      break;
+   case RSourceItem::Class:
+      type = SourceItem::Class;
+      break;
+   case RSourceItem::None:
+   default:
+      type = SourceItem::None;
+      break;
+   }
+
+   // calcluate extra info
+   std::string extraInfo;
+   if (rSourceItem.signature().size() > 0)
+   {
+      extraInfo.append("{");
+      for (std::size_t i = 0; i<rSourceItem.signature().size(); i++)
+      {
+         if (i > 0)
+            extraInfo.append(", ");
+         extraInfo.append(rSourceItem.signature()[i].type());
+      }
+
+      extraInfo.append("}");
+   }
+
+   // return source item
+   return SourceItem(type,
+                     rSourceItem.name(),
+                     extraInfo,
+                     rSourceItem.context(),
+                     rSourceItem.line(),
+                     rSourceItem.column());
+}
+
+SourceItem fromCppDefinition(const clang::CppDefinition& cppDefinition)
+{
+   // determine type
+   using namespace clang;
+   SourceItem::Type type = SourceItem::None;
+   switch(cppDefinition.kind)
+   {
+   case CppInvalidDefinition:
+      type = SourceItem::None;
+      break;
+   case CppNamespaceDefinition:
+      type = SourceItem::Namespace;
+      break;
+   case CppClassDefinition:
+   case CppStructDefinition:
+      type = SourceItem::Class;
+      break;
+   case CppEnumDefinition:
+      type = SourceItem::Enum;
+      break;
+   case CppFunctionDefinition:
+      type = SourceItem::Function;
+      break;
+   case CppMemberFunctionDefinition:
+      type = SourceItem::Method;
+      break;
+   default:
+      type = SourceItem::None;
+   }
+
+   // return source item
+   return SourceItem(
+      type,
+      cppDefinition.name,
+      "",
+      module_context::createAliasedPath(cppDefinition.location.filePath),
+      safe_convert::numberTo<int>(cppDefinition.location.line, 1),
+      safe_convert::numberTo<int>(cppDefinition.location.column, 1));
+}
+
+template <typename TValue, typename TFunc>
+json::Array toJsonArray(
+      const std::vector<SourceItem> &items,
+      TFunc memberFunc)
+{
+   json::Array col;
+   std::transform(items.begin(),
+                  items.end(),
+                  std::back_inserter(col),
+                  boost::bind(json::toJsonValue<TValue>,
+                                 boost::bind(memberFunc, _1)));
+   return col;
+}
+
+
+
 Error searchCode(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
@@ -936,14 +1045,23 @@ Error searchCode(const json::JsonRpcRequest& request,
    // sending over the wire). Simiarly with the 'more*Available' bools
    searchFiles(term, 1E2, &names, &paths, &moreFilesAvailable);
 
-   // search source
-   std::vector<r_util::RSourceItem> srcItems;
+   // search source and convert to source items
+   std::vector<SourceItem> srcItems;
+   std::vector<r_util::RSourceItem> rSrcItems;
    bool moreSourceItemsAvailable = false;
-   searchSource(term, 1E2, false, &srcItems, &moreSourceItemsAvailable);
+   searchSource(term, 1E2, false, &rSrcItems, &moreSourceItemsAvailable);
+   std::transform(rSrcItems.begin(),
+                  rSrcItems.end(),
+                  std::back_inserter(srcItems),
+                  fromRSourceItem);
 
-   // search cpp source (TODO: do something with these results!)
+   // search cpp source and convert to source items
    std::vector<clang::CppDefinition> cppDefinitions;
    clang::searchDefinitions(term, &cppDefinitions);
+   std::transform(cppDefinitions.begin(),
+                  cppDefinitions.end(),
+                  std::back_inserter(srcItems),
+                  fromCppDefinition);
 
    // typedef necessary for BOOST_FOREACH to work with pairs
    typedef std::pair<int, int> PairIntInt;
@@ -984,7 +1102,7 @@ Error searchCode(const json::JsonRpcRequest& request,
       pathsFiltered.push_back(paths[pair.first]);
    }
 
-   std::vector<r_util::RSourceItem> srcItemsFiltered;
+   std::vector<SourceItem> srcItemsFiltered;
    BOOST_FOREACH(PairIntInt const& pair, srcItemScores)
    {
       srcItemsFiltered.push_back(srcItems[pair.first]);
@@ -998,12 +1116,12 @@ Error searchCode(const json::JsonRpcRequest& request,
 
    // return rpc array list (wire efficiency)
    json::Object src;
-   src["type"] = toJsonArray<int>(srcItemsFiltered, &r_util::RSourceItem::type);
-   src["name"] = toJsonArray<std::string>(srcItemsFiltered, &r_util::RSourceItem::name);
-   src["extra_info"] = signaturesToJsonArray(srcItemsFiltered);
-   src["context"] = toJsonArray<std::string>(srcItemsFiltered, &r_util::RSourceItem::context);
-   src["line"] = toJsonArray<int>(srcItemsFiltered, &r_util::RSourceItem::line);
-   src["column"] = toJsonArray<int>(srcItemsFiltered, &r_util::RSourceItem::column);
+   src["type"] = toJsonArray<int>(srcItemsFiltered, &SourceItem::type);
+   src["name"] = toJsonArray<std::string>(srcItemsFiltered, &SourceItem::name);
+   src["extra_info"] = toJsonArray<std::string>(srcItemsFiltered, &SourceItem::extraInfo);
+   src["context"] = toJsonArray<std::string>(srcItemsFiltered, &SourceItem::context);
+   src["line"] = toJsonArray<int>(srcItemsFiltered, &SourceItem::line);
+   src["column"] = toJsonArray<int>(srcItemsFiltered, &SourceItem::column);
    result["source_items"] = src;
 
    // set more available bit

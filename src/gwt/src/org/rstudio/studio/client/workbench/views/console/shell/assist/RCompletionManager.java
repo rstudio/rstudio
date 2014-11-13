@@ -44,6 +44,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.FunctionDefinition;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.CompletionResult;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
@@ -162,12 +163,14 @@ public class RCompletionManager implements CompletionManager
    public void initialize(GlobalDisplay globalDisplay,
                           FileTypeRegistry fileTypeRegistry,
                           EventBus eventBus,
-                          HelpStrategy helpStrategy)
+                          HelpStrategy helpStrategy,
+                          UIPrefs uiPrefs)
    {
       globalDisplay_ = globalDisplay;
       fileTypeRegistry_ = fileTypeRegistry;
       eventBus_ = eventBus;
       helpStrategy_ = helpStrategy;
+      uiPrefs_ = uiPrefs;
    }
 
    public void close()
@@ -1448,6 +1451,15 @@ public class RCompletionManager implements CompletionManager
          {
             if (shouldQuote)
                value = "\"" + value + "\"";
+            
+            // don't add spaces around equals if requested
+            final String kSpaceEquals = " = ";
+            if (!uiPrefs_.insertSpacesAroundEquals().getValue() &&
+                value.endsWith(kSpaceEquals))
+            {
+               value = value.substring(0, value.length() - kSpaceEquals.length()) + "=";
+            }
+               
 
             input_.replaceSelection(value, true);
             token_ = value;
@@ -1475,7 +1487,8 @@ public class RCompletionManager implements CompletionManager
    private FileTypeRegistry fileTypeRegistry_;
    private EventBus eventBus_;
    private HelpStrategy helpStrategy_;
-   
+   private UIPrefs uiPrefs_;
+
    private final CodeToolsServerOperations server_;
    private final InputEditorDisplay input_ ;
    private final NavigableSourceEditor navigableSourceEditor_;

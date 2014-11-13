@@ -29,6 +29,8 @@ public class SourceItem extends JavaScriptObject
    public static final int FUNCTION = 1;
    public static final int METHOD = 2;
    public static final int CLASS = 3;
+   public static final int ENUM = 4;
+   public static final int NAMESPACE = 5;   
 
    public final native int getType() /*-{
       return this.type;
@@ -42,7 +44,7 @@ public class SourceItem extends JavaScriptObject
       return this.extra_info;
    }-*/;
 
-   // project-relative filename
+   // aliased path
    public final native String getContext() /*-{
       return this.context;
    }-*/;

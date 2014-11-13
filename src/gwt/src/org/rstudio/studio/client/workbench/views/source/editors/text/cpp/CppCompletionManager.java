@@ -23,6 +23,8 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionUtils;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
@@ -62,10 +64,12 @@ public class CppCompletionManager implements CompletionManager
  
    @Inject
    void initialize(CppServerOperations server, 
-                   FileTypeRegistry fileTypeRegistry)
+                   FileTypeRegistry fileTypeRegistry,
+                   UIPrefs uiPrefs)
    {
       server_ = server;
       fileTypeRegistry_ = fileTypeRegistry;
+      uiPrefs_ = uiPrefs;
    }
    
    // close the completion popup (if any)
@@ -276,7 +280,14 @@ public class CppCompletionManager implements CompletionManager
       }
       else
       {
-         delayedSuggestCompletions(false);
+         // don't do implicit completions if the user has set completion to manual
+         // (but always do them if the completion popup is visible)
+         if (!uiPrefs_.codeComplete().getValue().equals(UIPrefsAccessor.COMPLETION_MANUAL) ||
+             isCompletionPopupVisible())
+         {
+            delayedSuggestCompletions(false);
+         }
+         
          return false;
       }
    }
@@ -313,9 +324,12 @@ public class CppCompletionManager implements CompletionManager
                                  ((request_ != null) && request_.isExplicit());
       
       // see if we even have a completion position
+      boolean alwaysComplete = uiPrefs_.codeComplete().getValue().equals(
+                                            UIPrefsAccessor.COMPLETION_ALWAYS);
       final CompletionPosition completionPosition = 
             CppCompletionUtils.getCompletionPosition(docDisplay_,
-                                                     positionExplicit);
+                                                     positionExplicit,
+                                                     alwaysComplete);
       if (completionPosition == null)
       {
          terminateCompletionRequest();
@@ -364,6 +378,12 @@ public class CppCompletionManager implements CompletionManager
       return popup;
    }
    
+   private boolean isCompletionPopupVisible()
+   {
+      CppCompletionPopupMenu popup = getCompletionPopup();
+      return (popup != null) && popup.isVisible();
+   }
+   
    private void terminateCompletionRequest()
    {
       completionRequestInvalidation_.invalidate();
@@ -390,6 +410,7 @@ public class CppCompletionManager implements CompletionManager
    }
    
    private CppServerOperations server_;
+   private UIPrefs uiPrefs_;
    private FileTypeRegistry fileTypeRegistry_;
    private final DocDisplay docDisplay_;
    private final CppCompletionContext completionContext_;

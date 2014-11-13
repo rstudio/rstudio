@@ -53,7 +53,8 @@ public class CppCompletionUtils
    }
    
    public static CompletionPosition getCompletionPosition(DocDisplay docDisplay,
-                                                          boolean explicit)
+                                                          boolean explicit,
+                                                          boolean alwaysComplete)
    {
       // get the current line of code
       String line = docDisplay.getCurrentLine();
@@ -106,7 +107,9 @@ public class CppCompletionUtils
       }
       
       // minimum character threshold
-      else if ((inputCol - col) >= (explicit ? 1 : 5) && ch != '"')
+      else if ((alwaysComplete || explicit) &&             // either always completing or explicit
+               ((inputCol - col) >= (explicit ? 1 : 5)) && // meets the character threshold
+               (ch != '"'))                                // not a quote character
       {
          // calculate user text (up to two characters of additional
          // server side filter)

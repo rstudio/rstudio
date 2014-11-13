@@ -20,6 +20,7 @@ import org.rstudio.core.client.Invalidation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -60,9 +61,10 @@ public class CppCompletionRequest
    }
 
    @Inject
-   void initialize(CppServerOperations server)
+   void initialize(CppServerOperations server, UIPrefs uiPrefs)
    {
       server_ = server;
+      uiPrefs_ = uiPrefs;
    }
    
    public boolean isExplicit()
@@ -255,7 +257,8 @@ public class CppCompletionRequest
       docDisplay_.setSelection(getReplacementSelection());
       docDisplay_.replaceSelection(insertText, true);
       
-      if (completion.hasParameters())
+      if (completion.hasParameters() && 
+          uiPrefs_.showSignatureTooltips().getValue())
       {
          Position pos = docDisplay_.getCursorPosition();
          pos = Position.create(pos.getRow(), pos.getColumn() - 1);
@@ -277,6 +280,7 @@ public class CppCompletionRequest
    }
    
    private CppServerOperations server_;
+   private UIPrefs uiPrefs_;
   
    private final DocDisplay docDisplay_; 
    private final boolean explicit_;
