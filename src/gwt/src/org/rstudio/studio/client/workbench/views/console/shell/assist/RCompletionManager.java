@@ -1337,8 +1337,6 @@ public class RCompletionManager implements CompletionManager
          if (invalidationToken_.isInvalid())
             return ;
          
-         popup_.hide() ;
-         popup_.clearHelp(false);
          requester_.flushCache() ;
          helpStrategy_.clearCache();
          
@@ -1359,6 +1357,12 @@ public class RCompletionManager implements CompletionManager
                   beginSuggest(true, true, false);
                }
             });
+         }
+         else
+         {
+            popup_.hide() ;
+            popup_.clearHelp(false);
+            popup_.setHelpVisible(false);
          }
          
       }
