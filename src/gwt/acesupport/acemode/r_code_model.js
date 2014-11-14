@@ -109,9 +109,16 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             {
                if (!clone.moveToPreviousToken())
                   break;
-               
+
+               // TODO: explicitly tokenize '::', ':::' so we don't have to do this hack
                if (clone.isLookingAtInfixySymbol())
+               {
+                  while (clone.isLookingAtInfixySymbol())
+                     if (!clone.moveToPreviousToken())
+                        return false;
+                  
                   continue;
+               }
                
                if (!clone.moveToNextToken())
                   return false;
@@ -119,6 +126,10 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                break;
                
             }
+
+            // Fail if we get here as it implies we hit something not permissible
+            // for the evaluation context
+            return false;
             
          } while (clone.moveToPreviousToken());
 
