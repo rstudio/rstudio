@@ -583,14 +583,17 @@ public class RCompletionManager implements CompletionManager
 
    private void invalidatePendingRequests()
    {
-      invalidatePendingRequests(true) ;
+      invalidatePendingRequests(true, true);
    }
 
-   private void invalidatePendingRequests(boolean flushCache)
+   private void invalidatePendingRequests(boolean flushCache,
+                                          boolean hidePopup)
    {
       invalidation_.invalidate();
-      if (popup_.isShowing())
-         popup_.hide() ;
+      
+      if (hidePopup && popup_.isShowing())
+         popup_.hide();
+      
       if (flushCache)
          requester_.flushCache() ;
    }
@@ -770,7 +773,7 @@ public class RCompletionManager implements CompletionManager
       if (!input_.isSelectionCollapsed())
          return false ;
       
-      invalidatePendingRequests(flushCache);
+      invalidatePendingRequests(flushCache, false);
       
       InputEditorSelection selection = input_.getSelection() ;
       if (selection == null)
