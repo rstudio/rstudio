@@ -70,7 +70,7 @@ assign(x = ".rs.acCompletionTypes",
       .rs.acCompletionTypes$VECTOR
    else if (isS4(object))
       .rs.acCompletionTypes$S4
-   else if (methods::is(object, "refClass"))
+   else if ("methods" %in% loadedNamespaces() && methods::is(object, "refClass"))
       .rs.acCompletionTypes$REFERENCE_CLASS
    else
       .rs.acCompletionTypes$UNKNOWN
