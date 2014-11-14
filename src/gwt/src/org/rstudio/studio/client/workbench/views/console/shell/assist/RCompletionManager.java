@@ -782,11 +782,14 @@ public class RCompletionManager implements CompletionManager
       }
       
       // don't auto-complete with tab on lines with only whitespace,
-      // if the insertion character was a tab
-      if (nativeEvent_ != null &&
-            nativeEvent_.getKeyCode() == KeyCodes.KEY_TAB)
-         if (firstLine.matches("^\\s*$"))
-            return false;
+      // if the insertion character was a tab (unless the user has opted in)
+      if (!uiPrefs_.allowTabMultilineCompletion().getValue())
+      {
+         if (nativeEvent_ != null &&
+               nativeEvent_.getKeyCode() == KeyCodes.KEY_TAB)
+            if (firstLine.matches("^\\s*$"))
+               return false;
+      }
       
       AutocompletionContext context = getAutocompletionContext();
       
