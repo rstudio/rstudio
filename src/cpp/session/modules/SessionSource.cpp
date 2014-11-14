@@ -904,19 +904,6 @@ Error setDocOrder(const json::JsonRpcRequest& request,
       }
    }
 
-   std::cerr << "new order ---- " << std::endl;
-   for (unsigned i = 1; i <= ids.size(); i++) 
-   {
-      BOOST_FOREACH( boost::shared_ptr<SourceDocument>& pDoc, docs )
-      {
-         if (pDoc->relativeOrder() == static_cast<int>(i)) 
-         {
-            std::cerr << i << ": " << pDoc->path() << std::endl;
-         }
-      }
-
-   }
-   
    return Success();
 }
 

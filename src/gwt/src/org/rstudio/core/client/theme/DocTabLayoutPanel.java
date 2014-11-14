@@ -147,10 +147,26 @@ public class DocTabLayoutPanel
          currentAnimation_ = null;
       }
 
-      int index = getSelectedIndex();
-      if (index < 0)
+      Element selectedTab = (Element) DomUtils.findNode(
+            getElement(),
+            true,
+            false,
+            new NodePredicate()
+            {
+               public boolean test(Node n)
+               {
+                  if (n.getNodeType() != Node.ELEMENT_NODE)
+                     return false;
+                  return ((Element) n).getClassName()
+                        .contains("gwt-TabLayoutPanelTab-selected");
+               }
+            });
+      if (selectedTab == null)
+      {
          return;
-      Widget tabWidget = getTabWidget(index);
+      }
+      selectedTab = selectedTab.getFirstChildElement()
+                               .getFirstChildElement();
 
       Element tabBar = (Element) DomUtils.findNode(
             getElement(),
@@ -174,17 +190,20 @@ public class DocTabLayoutPanel
 
       final int start = tabBarParent.getScrollLeft();
       int end = DomUtils.ensureVisibleHoriz(tabBarParent,
-                                                  tabWidget.getElement(),
+                                                  selectedTab,
                                                   padding_,
                                                   padding_ + rightMargin_,
                                                   true);
 
       // When tabs are closed, the overall width shrinks, and this can lead
       // to cases where there's too much empty space on the screen
-      Widget lastTab = getTabWidget(getWidgetCount() - 1);
-      int edge = DomUtils.getRelativePosition(tabBarParent,
-                                              lastTab.getElement()).x;
-      edge += lastTab.getOffsetWidth();
+      Node lastTab = tabBarParent.getLastChild();
+      while (lastTab.getNodeType() != Node.ELEMENT_NODE)
+         lastTab = lastTab.getPreviousSibling();
+      if (lastTab == null || lastTab.getNodeType() != Node.ELEMENT_NODE)
+         return;
+      int edge = DomUtils.getRelativePosition(tabBarParent, Element.as(lastTab)).x 
+            + Element.as(lastTab).getOffsetWidth();
       end = Math.min(end,
                      Math.max(0,
                               edge - (tabBarParent.getOffsetWidth() - rightMargin_)));
@@ -366,8 +385,8 @@ public class DocTabLayoutPanel
          {
             case Event.ONMOUSEDOWN: 
             {
-               // handle mousedowns as drag initiations (unless the click is
-               // targeted for the close button)
+               // handle mousedowns as drag initiations (unless user is reaching
+               // for the close button)
                if (event.getButton() == Event.BUTTON_LEFT && 
                      Element.as(event.getEventTarget()) != closeElement_)
                {
@@ -401,9 +420,9 @@ public class DocTabLayoutPanel
                {
                   // complete dragging
                   endDrag(event);
-                  event.preventDefault();
-                  event.stopPropagation();
                }
+               event.preventDefault();
+               event.stopPropagation();
                break;   
             }
          }
@@ -433,7 +452,9 @@ public class DocTabLayoutPanel
                }
                // the relative position of the last node determines how far we
                // can drag--add 10px so it stretches a little
-               dragMax_ = DomUtils.leftRelativeTo(dragTabsHost_, (Element)node) + 10;
+               dragMax_ = DomUtils.leftRelativeTo(dragTabsHost_, Element.as(node)) 
+                     + (Element.as(node).getClientWidth() - dragElement_.getClientWidth())
+                     + 10;
             }
          }
          startPos_ = candidatePos_;
@@ -475,13 +496,7 @@ public class DocTabLayoutPanel
          dragging_ = false;
          
          // unsink mousedown/mouseup and simulate a click to activate the tab
-         this.unsinkEvents(Event.ONMOUSEDOWN | Event.ONMOUSEUP);
-         DomEvent.fireNativeEvent(Document.get().createClickEvent(0,
-               evt.getScreenX(), evt.getScreenY(), 
-               evt.getClientX(), evt.getClientY(), 
-               evt.getCtrlKey(), evt.getAltKey(), 
-               evt.getShiftKey(), evt.getMetaKey()), this.getParent());
-         this.sinkEvents(Event.ONMOUSEDOWN | Event.ONMOUSEUP);
+         simulateClick(evt);
          
          // let observer know we moved
          if (startPos_ != candidatePos_)
@@ -490,10 +505,22 @@ public class DocTabLayoutPanel
          }
       }
       
+      private void simulateClick(Event evt)
+      {
+         this.unsinkEvents(Event.ONMOUSEDOWN | Event.ONMOUSEUP);
+         DomEvent.fireNativeEvent(Document.get().createClickEvent(0,
+               evt.getScreenX(), evt.getScreenY(), 
+               evt.getClientX(), evt.getClientY(), 
+               evt.getCtrlKey(), evt.getAltKey(), 
+               evt.getShiftKey(), evt.getMetaKey()), this.getParent());
+         this.sinkEvents(Event.ONMOUSEDOWN | Event.ONMOUSEUP);
+         
+      }
+      
       private boolean autoScroll(int dir)
       {
          // move while the mouse is still out of bounds 
-         if (outOfBounds_ != 0)
+         if (dragging_ && outOfBounds_ != 0)
          {
             // if mouse is far out of bounds, use it to accelerate movement
             if (Math.abs(outOfBounds_) > 100)
