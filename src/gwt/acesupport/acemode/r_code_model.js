@@ -116,7 +116,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                   while (clone.isLookingAtInfixySymbol())
                      if (!clone.moveToPreviousToken())
                         return false;
-                  
+
                   continue;
                }
                

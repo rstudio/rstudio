@@ -78,9 +78,10 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("attemptRoxygenTagCompletion", function(token)
 {
-   match <- grepl("^@[a-zA-Z0-9]*$", token, perl = TRUE)
+   # Allow for roxygen completions when no token is available
+   match <- token == "" || grepl("^@[a-zA-Z0-9]*$", token, perl = TRUE)
    if (!match)
-      return(.rs.emptyCompletions())
+      return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
    
    tag <- sub(".*(?=@)", '', token, perl = TRUE)
    
@@ -132,7 +133,8 @@ assign(x = ".rs.acCompletionTypes",
    
    .rs.makeCompletions(tag,
                        matchingTags,
-                       type = .rs.acCompletionTypes$ROXYGEN)
+                       type = .rs.acCompletionTypes$ROXYGEN,
+                       excludeOtherCompletions = TRUE)
 })
 
 .rs.addFunction("getCompletionsFile", function(token)
@@ -326,7 +328,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getCompletionsNamespace", function(token, string, exportsOnly, envir)
 {
-   result <- .rs.emptyCompletions()
+   result <- .rs.emptyCompletions(excludeOtherCompletions = TRUE)
    
    if (!(string %in% loadedNamespaces()))
    {
@@ -363,7 +365,9 @@ assign(x = ".rs.acCompletionTypes",
 })
 
 
-.rs.addFunction("emptyCompletions", function()
+.rs.addFunction("emptyCompletions", function(excludeOtherCompletions = FALSE,
+                                             overrideInsertParens = FALSE,
+                                             orderStartsWithAlnumFirst = TRUE)
 {
    .rs.makeCompletions(
       token = "",
@@ -372,9 +376,9 @@ assign(x = ".rs.acCompletionTypes",
       quote = logical(),
       type = numeric(),
       fguess = "",
-      excludeOtherCompletions = .rs.scalar(FALSE),
-      overrideInsertParens = .rs.scalar(FALSE),
-      orderStartsWithAlnumFirst = .rs.scalar(TRUE)
+      excludeOtherCompletions = .rs.scalar(excludeOtherCompletions),
+      overrideInsertParens = .rs.scalar(overrideInsertParens),
+      orderStartsWithAlnumFirst = .rs.scalar(orderStartsWithAlnumFirst)
    )
 })
 
@@ -523,7 +527,7 @@ assign(x = ".rs.acCompletionTypes",
 ## NOTE: for '@' as well (set with S4 bit)
 .rs.addFunction("getCompletionsDollar", function(token, string, envir, isS4)
 {
-   result <- .rs.emptyCompletions()
+   result <- .rs.emptyCompletions(excludeOtherCompletions = TRUE)
    
    ## Blacklist certain evaluations
    if (!is.null(result <- .rs.blackListEvaluation(token, string, envir)))
