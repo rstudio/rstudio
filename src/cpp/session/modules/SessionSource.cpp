@@ -866,6 +866,46 @@ Error getScriptRunCommand(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error setDocOrder(const json::JsonRpcRequest& request,
+                  json::JsonRpcResponse* pResponse)
+{
+   json::Array ids;
+   std::vector<boost::shared_ptr<SourceDocument> > docs;
+   Error error = json::readParams(request.params, &ids);
+   if (error)
+      return error;
+   source_database::list(&docs);
+
+   BOOST_FOREACH( boost::shared_ptr<SourceDocument>& pDoc, docs )
+   {
+      for (unsigned i = 0; i < ids.size(); i++) 
+      {
+         // docs are ordered starting at 1; the special value 0 indicates a
+         // document with no order
+         if (pDoc->id() == ids[i].get_str() && 
+             pDoc->relativeOrder() != static_cast<int>(i + 1))
+         {
+            pDoc->setRelativeOrder(i + 1);
+            source_database::put(pDoc);
+         }
+      }
+   }
+
+   std::cerr << "new order ---- " << std::endl;
+   for (unsigned i = 1; i <= ids.size(); i++) 
+   {
+      BOOST_FOREACH( boost::shared_ptr<SourceDocument>& pDoc, docs )
+      {
+         if (pDoc->relativeOrder() == static_cast<int>(i)) 
+         {
+            std::cerr << i << ": " << pDoc->path() << std::endl;
+         }
+      }
+
+   }
+   
+   return Success();
+}
 
 
 void enqueFileEditEvent(const std::string& file)
@@ -973,12 +1013,12 @@ Error clientInitDocuments(core::json::Array* pJsonDocs)
 {
    source_database::events().onRemoveAll();
 
-   // get the docs and sort them by created
+   // get the docs and sort them by relative order
    std::vector<boost::shared_ptr<SourceDocument> > docs ;
    Error error = source_database::list(&docs);
    if (error)
       return error ;
-   std::sort(docs.begin(), docs.end(), sortByCreated);
+   std::sort(docs.begin(), docs.end(), sortByRelativeOrder);
 
    // populate the array
    pJsonDocs->clear();
@@ -1046,6 +1086,7 @@ Error initialize()
       (bind(registerRpcMethod, "create_rd_shell", createRdShell))
       (bind(registerRpcMethod, "is_read_only_file", isReadOnlyFile))
       (bind(registerRpcMethod, "get_script_run_command", getScriptRunCommand))
+      (bind(registerRpcMethod, "set_doc_order", setDocOrder))
       (bind(sourceModuleRFile, "SessionSource.R"));
    Error error = initBlock.execute();
    if (error)

@@ -29,6 +29,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
+
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.theme.DocTabLayoutPanel;
@@ -210,6 +211,12 @@ public class SourcePane extends Composite implements Display,
       return tabPanel_.addTabClosedHandler(handler);
    }
 
+   @Override
+   public HandlerRegistration addTabReorderHandler(TabReorderHandler handler)
+   {
+      return tabPanel_.addTabReorderHandler(handler);
+   }
+ 
    public HandlerRegistration addSelectionHandler(SelectionHandler<Integer> handler)
    {
       return tabPanel_.addSelectionHandler(handler);
@@ -300,5 +307,4 @@ public class SourcePane extends Composite implements Display,
    private Image chevron_;
    private LayoutPanel panel_;
    private PopupPanel tabOverflowPopup_;
-  
 }

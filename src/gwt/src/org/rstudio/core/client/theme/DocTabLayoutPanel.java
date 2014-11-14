@@ -43,11 +43,17 @@ public class DocTabLayoutPanel
       extends TabLayoutPanel
       implements HasTabClosingHandlers,
                  HasTabCloseHandlers,
-                 HasTabClosedHandlers
+                 HasTabClosedHandlers,
+                 HasTabReorderHandlers
 {
    public interface TabCloseObserver
    {
       public void onTabClose();
+   }
+   
+   public interface TabMoveObserver
+   {
+      public void onTabMove(Widget tab, int oldPos, int newPos);
    }
 
    public DocTabLayoutPanel(boolean closeableTabs,
@@ -76,7 +82,8 @@ public class DocTabLayoutPanel
    {
       if (closeableTabs_)
       {
-         DocTab tab = new DocTab(icon, text, tooltip, new TabCloseObserver()
+         DocTab tab = new DocTab(icon, text, tooltip, 
+         new TabCloseObserver()
          {
             public void onTabClose()
             {
@@ -85,6 +92,15 @@ public class DocTabLayoutPanel
                {
                   tryCloseTab(index, null);
                }
+            }
+         }, 
+         new TabMoveObserver()
+         {
+            @Override
+            public void onTabMove(Widget tab, int oldPos, int newPos)
+            {
+               TabReorderEvent event = new TabReorderEvent(oldPos, newPos);
+               fireEvent(event);
             }
          });
          super.add(child, tab);
@@ -258,14 +274,15 @@ public class DocTabLayoutPanel
    {
       throw new UnsupportedOperationException("Not supported");
    }
-
+   
    private class DocTab extends Composite
    {
 
       private DocTab(ImageResource icon,
                      String title,
                      String tooltip,
-                     TabCloseObserver closeHandler)
+                     TabCloseObserver closeHandler,
+                     TabMoveObserver moveHandler)
       {
          HorizontalPanel layoutPanel = new HorizontalPanel();
          layoutPanel.setStylePrimaryName(styles_.tabLayout());
@@ -304,6 +321,7 @@ public class DocTabLayoutPanel
                         Event.ONMOUSEUP |
                         Event.ONLOSECAPTURE);
          closeHandler_ = closeHandler;
+         moveHandler_ = moveHandler;
          closeElement_ = img.getElement();
       }
       
@@ -347,6 +365,8 @@ public class DocTabLayoutPanel
          {
             case Event.ONMOUSEDOWN: 
             {
+               // handle mousedowns as drag initiations (unless the click is
+               // targeted for the close button)
                if (event.getButton() == Event.BUTTON_LEFT && 
                      Element.as(event.getEventTarget()) != closeElement_)
                {
@@ -373,10 +393,12 @@ public class DocTabLayoutPanel
             {
                if (Element.as(event.getEventTarget()) == closeElement_)
                {
+                  // handle click on close button
                   closeHandler_.onTabClose();
                }
                else if (dragging_)
                {
+                  // complete dragging
                   endDrag(event);
                   event.preventDefault();
                   event.stopPropagation();
@@ -394,24 +416,26 @@ public class DocTabLayoutPanel
          dragElement_ = getElement().getParentElement().getParentElement();
          dragParent_ = dragElement_.getParentElement();
          outOfBounds_ = 0;
+         candidatePos_ = 0;
 
          // find the current position of this tab among its siblings--we'll use
          // this later to determine whether to shift siblings left or right
          for (int i = 0; i < dragParent_.getChildCount(); i++)
          {
             Node node = dragParent_.getChild(i);
-            if (node == dragElement_)
-            {
-               candidatePos_ = i;
-            }
             if (node.getNodeType() == Node.ELEMENT_NODE)
             {
+               if (Element.as(node) == dragElement_)
+               {
+                  candidatePos_ = i;
+               }
                // the relative position of the last node determines how far we
                // can drag--add 10px so it stretches a little
                dragMax_ = DomUtils.leftRelativeTo(dragParent_, (Element)node) 
                      + ((Element)node).getClientWidth() + 10;
             }
          }
+         startPos_ = candidatePos_;
 
          // snap the element out of the tabset
          lastElementX_ = DomUtils.leftRelativeTo(dragParent_, dragElement_);
@@ -457,13 +481,18 @@ public class DocTabLayoutPanel
                evt.getCtrlKey(), evt.getAltKey(), 
                evt.getShiftKey(), evt.getMetaKey()), this.getParent());
          this.sinkEvents(Event.ONMOUSEDOWN | Event.ONMOUSEUP);
+         
+         // let observer know we moved
+         if (startPos_ != candidatePos_)
+         {
+            moveHandler_.onTabMove(this, startPos_, candidatePos_);
+         }
       }
       
       private void drag(Event evt) 
       {
          int offset = evt.getClientX() - lastCursorX_;
          lastCursorX_ = evt.getClientX();
-         Debug.devlog("moved " + offset + ": " + outOfBounds_);
          // cursor is outside the tab area
          if (outOfBounds_ != 0)
          {
@@ -542,11 +571,12 @@ public class DocTabLayoutPanel
       }
       
       private TabCloseObserver closeHandler_;
+      private TabMoveObserver moveHandler_;
       private Element closeElement_;
       private boolean dragging_ = false;
-      private Event mouseDown_;
       private int lastCursorX_ = 0;
       private int lastElementX_ = 0;
+      private int startPos_ = 0;
       private int candidatePos_ = 0;
       private int dragMax_ = 0;
       private int outOfBounds_ = 0;
@@ -584,6 +614,12 @@ public class DocTabLayoutPanel
    public HandlerRegistration addTabClosedHandler(TabClosedHandler handler)
    {
       return addHandler(handler, TabClosedEvent.TYPE);
+   }
+
+   @Override
+   public HandlerRegistration addTabReorderHandler(TabReorderHandler handler)
+   {
+      return addHandler(handler, TabReorderEvent.TYPE);
    }
 
    public int getTabsEffectiveWidth()

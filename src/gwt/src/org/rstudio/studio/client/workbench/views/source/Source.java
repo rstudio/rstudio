@@ -119,6 +119,7 @@ public class Source implements InsertSourceHandler,
                              OpenSourceFileHandler,
                              TabClosingHandler,
                              TabCloseHandler,
+                             TabReorderHandler,
                              SelectionHandler<Integer>,
                              TabClosedHandler,
                              FileEditHandler,
@@ -134,6 +135,7 @@ public class Source implements InsertSourceHandler,
                                     HasTabClosingHandlers,
                                     HasTabCloseHandlers,
                                     HasTabClosedHandlers,
+                                    HasTabReorderHandlers,
                                     HasBeforeSelectionHandlers<Integer>,
                                     HasSelectionHandlers<Integer>
    {
@@ -212,6 +214,7 @@ public class Source implements InsertSourceHandler,
       view_.addTabClosingHandler(this);
       view_.addTabCloseHandler(this);
       view_.addTabClosedHandler(this);
+      view_.addTabReorderHandler(this);
       view_.addSelectionHandler(this);
       view_.addBeforeShowHandler(this);
 
@@ -415,7 +418,13 @@ public class Source implements InsertSourceHandler,
          @Override
          protected Integer getValue()
          {
-            return view_.getActiveTabIndex();
+            int idx = view_.getActiveTabIndex();
+            // if the tabs have been shuffled, unshuffle the index
+            if (idx < tabOrder_.size())
+            {
+               idx = tabOrder_.indexOf(idx);
+            }
+            return idx;
          }
       };
 
@@ -471,6 +480,7 @@ public class Source implements InsertSourceHandler,
       for (int i = 0; i < docs.length(); i++)
       {
          addTab(docs.get(i));
+         Debug.devlog("restoring document: " + i + ": "  + docs.get(i).getPath());
       }
    }
    
@@ -490,6 +500,7 @@ public class Source implements InsertSourceHandler,
             String doc = openDocs.get(i);
             final FileSystemItem fsi = FileSystemItem.createFile(doc);
               
+            Debug.devlog("adding project document: " + i + ": " + openDocs.get(i));
             openCommands.addCommand(new SerializedCommand() {
 
                @Override
@@ -2052,6 +2063,44 @@ public class Source implements InsertSourceHandler,
       }
    }
 
+
+   @Override
+   public void onTabReorder(TabReorderEvent event)
+   {
+      // ensure the tab order is synced to the list of editors
+      for (int i = tabOrder_.size(); i < editors_.size(); i++)
+      {
+         tabOrder_.add(i);
+      }
+      for (int i = editors_.size(); i < tabOrder_.size(); i++)
+      {
+         tabOrder_.remove(i);
+      }
+      
+      // sanity check: make sure we're moving from a valid location
+      if (event.getOldPos() < 0 || event.getOldPos() >= tabOrder_.size())
+      {
+         return;
+      }
+      
+      // remove the tab from its old position
+      int idx = tabOrder_.get(event.getOldPos());
+      tabOrder_.remove(new Integer(idx));  // force type box 
+
+      // add it to its new position (less one if that position was shifted left
+      // by removal above)
+      tabOrder_.add(event.getNewPos() - 
+            (event.getOldPos() < event.getNewPos() ? 1 : 0), idx);
+      
+      // sort the document IDs and send to the server
+      ArrayList<String> ids = new ArrayList<String>();
+      for (int i = 0; i < tabOrder_.size(); i++)
+      {
+         ids.add(editors_.get(tabOrder_.get(i)).getId());
+      }
+      server_.setDocOrder(ids, new VoidServerRequestCallback());
+   }
+
    private void fireDocTabsChanged()
    {
       if (!initialized_)
@@ -2626,6 +2675,7 @@ public class Source implements InsertSourceHandler,
    }
 
    ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();
+   ArrayList<Integer> tabOrder_ = new ArrayList<Integer>();
    private EditingTarget activeEditor_;
    private final Commands commands_;
    private final Display view_;

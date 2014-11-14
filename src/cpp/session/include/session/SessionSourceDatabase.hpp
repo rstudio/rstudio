@@ -51,6 +51,7 @@ public:
    bool dirty() const { return dirty_; }
    double created() const { return created_; }
    bool sourceOnSave() const { return sourceOnSave_; }
+   int relativeOrder() const { return relativeOrder_; } 
    const core::json::Object& properties() const { return properties_; }
    const std::string& folds() const { return folds_; }
    std::string getProperty(const std::string& name) const;
@@ -89,6 +90,11 @@ public:
       folds_ = folds;
    }
 
+   void setRelativeOrder(int order) 
+   {
+      relativeOrder_ = order;
+   }
+
    void checkForExternalEdit(std::time_t* pTime);
 
    void updateLastKnownWriteTime();
@@ -125,11 +131,15 @@ private:
    bool dirty_;
    double created_;
    bool sourceOnSave_;
+   int relativeOrder_;
    core::json::Object properties_;
 };
 
 bool sortByCreated(const boost::shared_ptr<SourceDocument>& pDoc1,
                    const boost::shared_ptr<SourceDocument>& pDoc2);
+bool sortByRelativeOrder(const boost::shared_ptr<SourceDocument>& pDoc1,
+                         const boost::shared_ptr<SourceDocument>& pDoc2);
+
 
 core::FilePath path();
 core::Error get(const std::string& id, boost::shared_ptr<SourceDocument> pDoc);
