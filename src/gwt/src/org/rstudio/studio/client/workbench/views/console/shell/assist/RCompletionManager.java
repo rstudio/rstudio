@@ -1026,7 +1026,7 @@ public class RCompletionManager implements CompletionManager
          return new AutocompletionContext(token, AutocompletionContext.TYPE_HELP);
       
       // escape early for roxygen
-      if (firstLine.matches("\\s*#+'.*"))
+      if (firstLine.matches("\\s*#+'.*@"))
          return new AutocompletionContext(
                token, AutocompletionContext.TYPE_ROXYGEN);
       
