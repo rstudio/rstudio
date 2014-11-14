@@ -1315,7 +1315,7 @@ public class RCompletionManager implements CompletionManager
 
          if (results.length == 1
              && canAutoAccept_
-             && StringUtil.isNullOrEmpty(results[0].pkgName))
+             && StringUtil.isNullOrEmpty(results[0].source))
          {
             onSelection(results[0]);
          }
@@ -1391,7 +1391,7 @@ public class RCompletionManager implements CompletionManager
 
       private void applyValue(final QualifiedName qualifiedName)
       {
-         if (qualifiedName.pkgName == "`chunk-option`")
+         if (qualifiedName.source == "`chunk-option`")
          {
             applyValueRmdOption(qualifiedName.name);
             return;
@@ -1414,16 +1414,16 @@ public class RCompletionManager implements CompletionManager
          }
 
          String value = qualifiedName.name;
-         String pkgName = qualifiedName.pkgName;
+         String source = qualifiedName.source;
          boolean shouldQuote = qualifiedName.shouldQuote;
          
          if (value == ":=")
             value = quoteIfNotSyntacticNameCompletion(value);
          else if (!value.matches(".*[=:]\\s*$") && 
                !value.matches("^\\s*([`'\"]).*\\1\\s*$") &&
-               pkgName != "<file>" &&
-               pkgName != "<directory>" &&
-               pkgName != "`chunk-option`" &&
+               source != "<file>" &&
+               source != "<directory>" &&
+               source != "`chunk-option`" &&
                !value.startsWith("@") &&
                !shouldQuote)
             value = quoteIfNotSyntacticNameCompletion(value);

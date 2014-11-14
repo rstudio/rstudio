@@ -46,10 +46,10 @@ public class HelpStrategy
       switch (selectedItem.type)
       {
          case RCompletionType.PACKAGE:
-            server_.showHelpTopic(selectedItem.pkgName + "-package", null);
+            server_.showHelpTopic(selectedItem.source + "-package", null);
             break;
          default:
-            server_.showHelpTopic(selectedItem.pkgName, null);
+            server_.showHelpTopic(selectedItem.source, null);
             break;
       }
    }
@@ -87,7 +87,7 @@ public class HelpStrategy
       }
       
       server_.getHelp(selectedItem.name,
-                      selectedItem.pkgName,
+                      selectedItem.source,
                       RCompletionType.FUNCTION,
                       new ServerRequestCallback<HelpInfo>() {
          @Override
@@ -130,7 +130,7 @@ public class HelpStrategy
          return;
       }
 
-         server_.getHelp(selectedItem.pkgName,
+         server_.getHelp(selectedItem.source,
                          null,
                          RCompletionType.ARGUMENTS,
                          new ServerRequestCallback<HelpInfo>() {
@@ -145,7 +145,7 @@ public class HelpStrategy
             {
                if (response != null)
                {
-                  ParsedInfo info = response.parse(selectedItem.pkgName);
+                  ParsedInfo info = response.parse(selectedItem.source);
                   cache_.put(selectedItem, info);
                   doShowParameterHelp(info, name, display);
                }

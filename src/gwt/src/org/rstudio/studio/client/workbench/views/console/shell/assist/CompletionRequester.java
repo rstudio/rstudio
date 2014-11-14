@@ -588,18 +588,18 @@ public class CompletionRequester
    {
       
       public QualifiedName(
-            String name, String pkgName, boolean shouldQuote, int type)
+            String name, String source, boolean shouldQuote, int type)
       {
          this.name = name;
-         this.pkgName = pkgName;
+         this.source = source;
          this.shouldQuote = shouldQuote;
          this.type = type;
       }
       
-      public QualifiedName(String name, String pkgName)
+      public QualifiedName(String name, String source)
       {
          this.name = name;
-         this.pkgName = pkgName;
+         this.source = source;
          this.shouldQuote = false;
          this.type = RCompletionType.UNKNOWN;
       }
@@ -627,7 +627,7 @@ public class CompletionRequester
             SafeHtmlUtil.appendSpan(
                   sb,
                   RES.styles().packageName(),
-                  "{" + pkgName.replaceAll("package:", "") + "}");
+                  "{" + source.replaceAll("package:", "") + "}");
          }
          
          return sb.toSafeHtml().asString();
@@ -698,13 +698,13 @@ public class CompletionRequester
          if (result != 0)
             return result ;
          
-         String pkg = pkgName == null ? "" : pkgName ;
-         String opkg = o.pkgName == null ? "" : o.pkgName ;
+         String pkg = source == null ? "" : source ;
+         String opkg = o.source == null ? "" : o.source ;
          return pkg.compareTo(opkg) ;
       }
 
       public final String name ;
-      public final String pkgName ;
+      public final String source ;
       public final boolean shouldQuote ;
       public final int type ;
    }
