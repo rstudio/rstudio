@@ -751,6 +751,16 @@ public class RCompletionManager implements CompletionManager
       private String functionCallString_;
       
    }
+   
+   private boolean isLineInRoxygenComment(String line)
+   {
+      return line.matches("^\\s*#+'.*");
+   }
+   
+   private boolean isLineInComment(String line)
+   {
+      return StringUtil.stripBalancedQuotes(line).contains("#");
+   }
 
    /**
     * If false, the suggest operation was aborted
@@ -769,11 +779,9 @@ public class RCompletionManager implements CompletionManager
       int cursorCol = selection.getStart().getPosition();
       String firstLine = input_.getText().substring(0, cursorCol);
       
-      // don't auto-complete at the start of comments
-      if (firstLine.matches(".*#+\\s*$"))
-      {
+      // never autocomplete in (non-roxygen) comments
+      if (isLineInComment(firstLine) && !isLineInRoxygenComment(firstLine))
          return false;
-      }
       
       // don't auto-insert if we're within a comment
       if (!StringUtil.stripRComment(firstLine).equals(firstLine))
@@ -1034,15 +1042,9 @@ public class RCompletionManager implements CompletionManager
          return new AutocompletionContext(token, AutocompletionContext.TYPE_HELP);
       
       // escape early for roxygen
-      if (firstLine.matches("\\s*#+'.*@.*"))
+      if (firstLine.matches("\\s*#+'.*"))
          return new AutocompletionContext(
                token, AutocompletionContext.TYPE_ROXYGEN);
-      
-      // if the line is currently within a comment, bail -- this ensures
-      // that we can auto-complete within a comment line (but we only
-      // need context from that line)
-      if (!firstLine.equals(StringUtil.stripRComment(firstLine)))
-         return new AutocompletionContext("", AutocompletionContext.TYPE_UNKNOWN);
       
       // If the token has '$' or '@', escape early as we'll be completing
       // either from names or an overloaded `$` method
