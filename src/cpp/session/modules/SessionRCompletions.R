@@ -80,7 +80,7 @@ assign(x = ".rs.acCompletionTypes",
 {
    match <- grepl("^@[a-zA-Z0-9]*$", token, perl = TRUE)
    if (!match)
-      return(NULL)
+      return(.rs.emptyCompletions())
    
    tag <- sub(".*(?=@)", '', token, perl = TRUE)
    
