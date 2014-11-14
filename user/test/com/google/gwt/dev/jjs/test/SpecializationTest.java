@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2014 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,20 +21,17 @@ import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * Tests for @SpecializeMethod and
- * {@link com.google.gwt.dev.jjs.impl.MethodCallSpecializer}.
+ * Tests for {@link SpecializeMethod}.
  */
 @DoNotRunWith(Platform.Devel)
 public class SpecializationTest extends GWTTestCase {
 
-  public static final String KEY = "key";
-  public static final String VALUE = "value";
-  public static final String MSG =
-      "Shouldn't be called due to specialization";
+  private static final String KEY = "key";
+  private static final String VALUE = "value";
+  private static final String MSG = "Shouldn't be called due to specialization";
 
-  static class TestImpl<K,V> {
-    @SpecializeMethod(params = {String.class, Object.class},
-      target = "putString")
+  static class TestImpl<K, V> {
+    @SpecializeMethod(params = {String.class, Object.class}, target = "putString")
     public void put(K k, V v) {
       if (k instanceof String) {
         putString((String) k, v); // keeps putString from being pruned
@@ -42,7 +39,7 @@ public class SpecializationTest extends GWTTestCase {
       throw new RuntimeException(MSG);
     }
 
-    public void putString(String k, V v) {
+    private void putString(String k, V v) {
       assertEquals(KEY, k);
       assertEquals(VALUE, v);
     }

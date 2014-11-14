@@ -240,7 +240,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
    * Returns the value for the given key in the stringMap. Returns
    * <code>null</code> if the specified key does not exist.
    */
-  protected V getStringValue(String key) {
+  private V getStringValue(String key) {
     return key == null ? getHashValue(null) : stringMap.get(key);
   }
 
@@ -256,7 +256,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
   /**
    * Returns true if the given key exists in the stringMap.
    */
-  protected boolean hasStringValue(String key) {
+  private boolean hasStringValue(String key) {
     return key == null ? hasHashValue(null) : stringMap.contains(key);
   }
 
@@ -274,7 +274,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
    * value previously at that key. Returns <code>null</code> if the specified
    * key did not exist.
    */
-  protected V putStringValue(String key, V value) {
+  private V putStringValue(String key, V value) {
     return key == null ? putHashValue(null, value) : stringMap.put(key, value);
   }
 
@@ -293,12 +293,12 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
    * previously there. Returns <code>null</code> if the specified key does not
    * exist.
    */
-  protected V removeStringValue(String key) {
+  private V removeStringValue(String key) {
     return key == null ? removeHashValue(null) : stringMap.remove(key);
   }
 
   // TODO(goktug): replace unsafeCast with a real cast when the compiler can optimize it.
-  static native String unsafeCast(Object string) /*-{
+  private static native String unsafeCast(Object string) /*-{
     return string;
   }-*/;
 }

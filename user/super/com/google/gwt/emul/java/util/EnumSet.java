@@ -135,7 +135,7 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
       return (o instanceof Enum) && containsEnum((Enum) o);
     }
 
-    boolean containsEnum(Enum e) {
+    private boolean containsEnum(Enum e) {
       return e != null && set[e.ordinal()] == e;
     }
 
@@ -150,7 +150,7 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
       return (o instanceof Enum) && removeEnum((Enum) o);
     }
 
-    boolean removeEnum(Enum e) {
+    private boolean removeEnum(Enum e) {
       if (e != null && set[e.ordinal()] == e) {
         set[e.ordinal()] = null;
         --size;
