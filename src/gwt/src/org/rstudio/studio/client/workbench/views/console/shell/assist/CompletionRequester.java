@@ -78,6 +78,10 @@ public class CompletionRequester
       if (cachedLinePrefix_ == null)
          return false;
       
+      CompletionResult cachedResult = cachedCompletions_.get("");
+      if (cachedResult == null)
+         return false;
+      
       if (token.toLowerCase().startsWith(cachedLinePrefix_.toLowerCase()))
       {
          String diff = token.substring(cachedLinePrefix_.length(), token.length());
@@ -107,7 +111,7 @@ public class CompletionRequester
                if (tokens.size() == 1
                      && tokens.get(0).getTokenType() == RToken.ID)
                {
-                  callback.onResponseReceived(narrow(diff)) ;
+                  callback.onResponseReceived(narrow(diff, cachedResult)) ;
                   return true;
                }
             }
@@ -116,6 +120,26 @@ public class CompletionRequester
       
       return false;
       
+   }
+   
+   private CompletionResult narrow(String diff,
+                                   CompletionResult cachedResult)
+   {
+      String token = cachedResult.token.toLowerCase() + diff ;
+      ArrayList<QualifiedName> newCompletions = new ArrayList<QualifiedName>() ;
+      for (QualifiedName qname : cachedResult.completions)
+         if (qname.name.toLowerCase().startsWith(token.toLowerCase()))
+            newCompletions.add(qname) ;
+      
+      CompletionResult result = new CompletionResult(
+            token,
+            newCompletions,
+            cachedResult.guessedFunctionName,
+            cachedResult.suggestOnAccept,
+            cachedResult.dontInsertParens) ;
+      
+      cachedCompletions_.put(diff, result);
+      return result;
    }
    
    public void getDplyrJoinCompletionsString(
@@ -538,26 +562,6 @@ public class CompletionRequester
       cachedCompletions_.clear();
    }
    
-   private CompletionResult narrow(String diff)
-   {
-      CompletionResult cachedResult = cachedCompletions_.get("");
-      String token = cachedResult.token.toLowerCase() + diff ;
-      ArrayList<QualifiedName> newCompletions = new ArrayList<QualifiedName>() ;
-      for (QualifiedName qname : cachedResult.completions)
-         if (qname.name.toLowerCase().startsWith(token.toLowerCase()))
-            newCompletions.add(qname) ;
-      
-      CompletionResult result = new CompletionResult(
-            token,
-            newCompletions,
-            cachedResult.guessedFunctionName,
-            cachedResult.suggestOnAccept,
-            cachedResult.dontInsertParens) ;
-      
-      cachedCompletions_.put(diff, result);
-      return result;
-   }
-
    public static class CompletionResult
    {
       public CompletionResult(String token,
