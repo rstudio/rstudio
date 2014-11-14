@@ -889,6 +889,7 @@ private:
 
       pkgOptions.workingDir = testsPath;
       enqueCommandString("Sourcing R files in 'tests' directory");
+      successMessage_ = "\nTests complete";
       module_context::processSupervisor().runCommand(cmd,
                                                      pkgOptions,
                                                      cb);
