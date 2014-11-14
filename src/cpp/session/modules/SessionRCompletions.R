@@ -943,12 +943,24 @@ assign(x = ".rs.acCompletionTypes",
       return(.rs.getCompletionsPackages(token))
    }
    
-   # Completions for Shiny (server.R, ui.R)
+   # Shiny completions
+   
+   ## Completions for server.r (from ui.r)
    if (type[[1]] == .rs.acContextTypes$DOLLAR &&
-       tolower(basename(filePath)) %in% c("server.r", "ui.r") &&
-       string[[1]] %in% c("input", "output"))
+          tolower(basename(filePath)) == "server.r" &&
+          string[[1]] %in% c("input", "output"))
    {
-      completions <- .rs.getCompletionsShiny(token, filePath)
+      completions <- .rs.getCompletionsFromShinyUI(token, filePath, string[[1]], type[[1]])
+      if (!is.null(completions))
+         return(completions)
+   }
+   
+   ## completions fro ui.r (from server.r)
+   if (type[[1]] == .rs.acContextTypes$FUNCTION &&
+          tolower(basename(filePath)) == "ui.r" &&
+          (.rs.endsWith(string[[1]], "Input") || .rs.endsWith(string[[1]], "Output")))
+   {
+      completions <- .rs.getCompletionsFromShinyServer(token, filePath, string[[1]], type[[1]])
       if (!is.null(completions))
          return(completions)
    }
@@ -1405,46 +1417,52 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
-.rs.addFunction("getCompletionsShiny", function(token, filePath, string, type)
+.rs.addFunction("getCompletionsFromShinyServer", function(token, filePath, string, type)
 {
    dir <- dirname(filePath)
    serverPath <- file.path(dir, "server.R")
    uiPath <- file.path(dir, "ui.R")
    name <- tolower(basename(filePath))
    
-   if (name == "server.r" && file.exists(uiPath))
-   {
-      completions <- .rs.shinyUICompletions(token, uiPath)
-      results <- if (string == "input")
-         completions$input
-      else
-         completions$output
-      
-      return(.rs.makeCompletions(token = token,
-                                 results = results,
-                                 packages = uiPath,
-                                 quote = FALSE,
-                                 type = .rs.acCompletionTypes$STRING,
-                                 excludeOtherCompletions = TRUE))
-      
-   }
+   if (!file.exists(serverPath))
+      return(NULL)
    
-   if (name == "ui.R" && file.exists(serverPath))
-   {
-      completions <- .rs.shinyServerCompletions(token, serverPath)
-      results <- if (string == "input")
-         completions$input
-      else
-         completions$output
-      
-      return(.rs.makeCompletions(token = token,
-                                 results = results,
-                                 packages = serverPath,
-                                 quote = FALSE,
-                                 type = .rs.acCompletionTypes$STRING,
-                                 excludeOtherCompletions = TRUE))
-   }
+   completions <- .rs.shinyServerCompletions(serverPath)
+   results <- if (.rs.endsWith(string, "Input"))
+      .rs.selectFuzzyMatches(completions$input, token)
+   else
+      .rs.selectFuzzyMatches(completions$output, token)
    
+   return(.rs.makeCompletions(token = token,
+                              results = results,
+                              packages = serverPath,
+                              quote = TRUE,
+                              type = .rs.acCompletionTypes$STRING,
+                              excludeOtherCompletions = TRUE))
+})
+
+.rs.addFunction("getCompletionsFromShinyUI", function(token, filePath, string, type)
+{
+   dir <- dirname(filePath)
+   serverPath <- file.path(dir, "server.R")
+   uiPath <- file.path(dir, "ui.R")
+   name <- tolower(basename(filePath))
+   
+   if (!file.exists(uiPath))
+      return(NULL)
+   
+   completions <- .rs.shinyUICompletions(uiPath)
+   results <- if (string == "input")
+      .rs.selectFuzzyMatches(completions$input, token)
+   else
+      .rs.selectFuzzyMatches(completions$output, token)
+   
+   return(.rs.makeCompletions(token = token,
+                              results = results,
+                              packages = uiPath,
+                              quote = FALSE,
+                              type = .rs.acCompletionTypes$STRING,
+                              excludeOtherCompletions = TRUE))   
 })
 
 .rs.addFunction("shinyUICompletions", function(file)
@@ -1456,7 +1474,7 @@ assign(x = ".rs.acCompletionTypes",
    info <- file.info(file)
    mtime <- info[1, "mtime"]
    if (identical(mtime, .rs.get(fileCacheName)) &&
-       !is.null(.rs.get(completionsCacheName)))
+          !is.null(.rs.get(completionsCacheName)))
    {
       .rs.get(completionsCacheName)
    }
@@ -1468,7 +1486,7 @@ assign(x = ".rs.acCompletionTypes",
    )
    
    if (is.null(parsed))
-      return(list())
+      return(NULL)
    
    # We fill environments (since these can grow efficiently / by reference)
    inputEnv <- new.env(parent = emptyenv())
@@ -1513,11 +1531,11 @@ assign(x = ".rs.acCompletionTypes",
       {
          if (is.call(object[[j]]))
          {
-            .rs.doShinyUICompletions(object[[j]],
-                                     inputs,
-                                     outputs,
-                                     nInputs,
-                                     nOutputs)
+            .rs.doShinyServerCompletions(object[[j]],
+                                         inputs,
+                                         outputs,
+                                         nInputs,
+                                         nOutputs)
          }
       }
    }
@@ -1545,7 +1563,7 @@ assign(x = ".rs.acCompletionTypes",
    )
    
    if (is.null(parsed))
-      return(list())
+      return(NULL)
    
    # We fill environments (since these can grow efficiently / by reference)
    inputEnv <- new.env(parent = emptyenv())
@@ -1573,19 +1591,21 @@ assign(x = ".rs.acCompletionTypes",
 {
    if (is.call(object))
    {
-      name <- as.character(object[[1]])
-      if (name == "$")
+      operator <- as.character(object[[1]])
+      if (operator == "$")
       {
-         if (object[[2]] == "output")
+         name <- as.character(object[[2]])
+         value <- as.character(object[[3]])
+         if (name == "output")
          {
             nOutputs <- nOutputs + 1
-            outputs[[as.character(nOutputs)]] <- as.character(object[[3]])
+            outputs[[as.character(nOutputs)]] <- value
          }
          
-         if (output[[2]] == "input")
+         if (name == "input")
          {
             nInputs <- nInputs + 1
-            inputs[[as.character(nInputs)]] <- as.character(object[[3]])
+            inputs[[as.character(nInputs)]] <- value
          }
       }
       
