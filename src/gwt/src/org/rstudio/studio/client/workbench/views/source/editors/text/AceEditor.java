@@ -54,6 +54,7 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.EventBasedChangeTracker;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager.InitCompletionFilter;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupPanel;
@@ -113,8 +114,11 @@ public class AceEditor implements DocDisplay,
          // Don't consider Tab to be a completion if we're at the start of a
          // line (e.g. only zero or more whitespace characters between the
          // beginning of the line and the cursor)
-         
          if (event != null && event.getKeyCode() != KeyCodes.KEY_TAB)
+            return true;
+         
+         // Short-circuit if the user has explicitly opted in
+         if (uiPrefs_.allowTabMultilineCompletion().getValue())
             return true;
          
          int col = range.getStart().getColumn();
@@ -122,7 +126,7 @@ public class AceEditor implements DocDisplay,
             return false;
          
          String line = getSession().getLine(range.getStart().getRow());
-         return line.substring(0, col).trim().length() != 0;      
+         return line.substring(0, col).trim().length() != 0;
 
       }
    }
@@ -361,9 +365,11 @@ public class AceEditor implements DocDisplay,
    }
 
    @Inject
-   void initialize(CodeToolsServerOperations server)
+   void initialize(CodeToolsServerOperations server,
+                   UIPrefs uiPrefs)
    {
-      server_ = server;  
+      server_ = server;
+      uiPrefs_ = uiPrefs;
    }
 
    public TextFileType getFileType()
@@ -1943,6 +1949,7 @@ public class AceEditor implements DocDisplay,
    private final AceEditorWidget widget_;
    private CompletionManager completionManager_;
    private CodeToolsServerOperations server_;
+   private UIPrefs uiPrefs_;
    private TextFileType fileType_;
    private boolean passwordMode_;
    private boolean useVimMode_ = false;

@@ -123,6 +123,9 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          codeComplete().setGlobalValue(
                                  newUiPrefs.codeComplete().getGlobalValue());
          
+         allowTabMultilineCompletion().setGlobalValue(
+                                 newUiPrefs.allowTabMultilineCompletion().getGlobalValue());
+         
          insertSpacesAroundEquals().setGlobalValue(
                                  newUiPrefs.insertSpacesAroundEquals().getGlobalValue());
          

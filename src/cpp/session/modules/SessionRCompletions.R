@@ -70,7 +70,7 @@ assign(x = ".rs.acCompletionTypes",
       .rs.acCompletionTypes$VECTOR
    else if (isS4(object))
       .rs.acCompletionTypes$S4
-   else if (methods::is(object, "refClass"))
+   else if ("methods" %in% loadedNamespaces() && methods::is(object, "refClass"))
       .rs.acCompletionTypes$REFERENCE_CLASS
    else
       .rs.acCompletionTypes$UNKNOWN
@@ -80,7 +80,7 @@ assign(x = ".rs.acCompletionTypes",
 {
    match <- grepl("^@[a-zA-Z0-9]*$", token, perl = TRUE)
    if (!match)
-      return(NULL)
+      return(.rs.emptyCompletions())
    
    tag <- sub(".*(?=@)", '', token, perl = TRUE)
    
@@ -767,7 +767,7 @@ assign(x = ".rs.acCompletionTypes",
                                                   excludeArgsFromObject,
                                                   filePath)
 {
-   filePath <- suppressWarnings(normalizePath(filePath, mustWork = FALSE))
+   filePath <- suppressWarnings(.rs.normalizePath(filePath))
    
    ## NOTE: these are passed in as lists of strings; convert to character
    additionalArgs <- as.character(additionalArgs)
