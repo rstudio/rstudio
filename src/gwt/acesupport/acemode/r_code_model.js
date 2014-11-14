@@ -117,6 +117,10 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                      if (!clone.moveToPreviousToken())
                         return false;
 
+                  // Move back up one because the loop condition will take us back again
+                  if (!clone.moveToNextToken())
+                     return false;
+
                   continue;
                }
                
