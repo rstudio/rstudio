@@ -514,6 +514,13 @@ public class DocTabLayoutPanel
             // dragged past the beginning - lock to beginning
             lastElementX_ = 0;
             outOfBounds_ += offset;
+            
+            // scroll left if needed
+            if (dragParent_.getScrollLeft() > 0)
+            {
+               dragParent_.setScrollLeft(
+                     Math.min(dragParent_.getScrollLeft() + offset, 0));
+            }
          }
          else if (lastElementX_ + dragElement_.getClientWidth() + offset > dragMax_)
          {

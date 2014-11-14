@@ -88,6 +88,13 @@ void detectExtendedType(boost::shared_ptr<SourceDocument> pDoc)
    module_context::enqueClientEvent(event);
 }
 
+int numSourceDocuments()
+{
+   std::vector<boost::shared_ptr<SourceDocument> > docs;
+   source_database::list(&docs);
+   return docs.size();
+}
+
 // wrap source_database::put for situations where there are new contents
 // (so we can index the contents)
 Error sourceDatabasePutWithUpdatedContents(
@@ -124,6 +131,9 @@ Error newDocument(const json::JsonRpcRequest& request,
       pDoc->setContents(jsonContents.get_str());
 
    pDoc->editProperties(properties);
+
+   // set relative order (client will receive docs in relative order on init)
+   pDoc->setRelativeOrder(numSourceDocuments() + 1);
 
    error = source_database::put(pDoc);
    if (error)
@@ -200,6 +210,9 @@ Error openDocument(const json::JsonRpcRequest& request,
    else
       LOG_ERROR(error);
    
+   // set relative order (client will receive docs in relative order on init)
+   pDoc->setRelativeOrder(numSourceDocuments() + 1);
+
    // write to the source_database
    error = sourceDatabasePutWithUpdatedContents(pDoc);
    if (error)

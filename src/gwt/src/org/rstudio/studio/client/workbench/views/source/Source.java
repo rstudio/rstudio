@@ -2044,6 +2044,16 @@ public class Source implements InsertSourceHandler,
    public void onTabClosed(TabClosedEvent event)
    {
       EditingTarget target = editors_.remove(event.getTabIndex());
+
+      tabOrder_.remove(new Integer(event.getTabIndex()));
+      for (int i = 0; i < tabOrder_.size(); i++)
+      {
+         if (tabOrder_.get(i) > event.getTabIndex())
+         {
+            tabOrder_.set(i, tabOrder_.get(i) - 1);
+         }
+      }
+
       target.onDismiss();
       if (activeEditor_ == target)
       {
