@@ -850,13 +850,14 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_HELP, params, requestCallback);
    }
    
-   public void showHelpTopic(String topic, String pkgName)
+   public void showHelpTopic(String what, String from, int type)
    {
       JSONArray params = new JSONArray() ;
-      params.set(0, new JSONString(topic)) ;
-      params.set(1, pkgName != null 
-                       ? new JSONString(pkgName)
+      params.set(0, new JSONString(what)) ;
+      params.set(1, from != null 
+                       ? new JSONString(from)
                        : JSONNull.getInstance()) ;
+      params.set(2, new JSONNumber(type));
       
       sendRequest(RPC_SCOPE,
                   SHOW_HELP_TOPIC,

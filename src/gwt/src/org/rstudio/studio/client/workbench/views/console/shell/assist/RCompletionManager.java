@@ -997,10 +997,12 @@ public class RCompletionManager implements CompletionManager
       //     env::foo()$bar()[1]$baz
       // Get the string forming the context
       //
+      //
       // If this fails, we still want to report an empty evaluation context
       // (the completion is still occurring in a '$' context, so we do want
       // to exclude completions from other scopes)
       String data = "";
+      
       if (cursor.moveToPreviousToken() && cursor.findStartOfEvaluationContext())
       {
          data = editor.getTextForRange(Range.fromPoints(

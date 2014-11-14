@@ -43,15 +43,10 @@ public class HelpStrategy
    
    public void showHelpTopic(final QualifiedName selectedItem)
    {
-      switch (selectedItem.type)
-      {
-         case RCompletionType.PACKAGE:
-            server_.showHelpTopic(selectedItem.source + "-package", null);
-            break;
-         default:
-            server_.showHelpTopic(selectedItem.source, null);
-            break;
-      }
+      server_.showHelpTopic(
+            selectedItem.name,
+            selectedItem.source,
+            selectedItem.type);
    }
    
    public void showHelp(final QualifiedName item,
@@ -88,7 +83,7 @@ public class HelpStrategy
       
       server_.getHelp(selectedItem.name,
                       selectedItem.source,
-                      RCompletionType.FUNCTION,
+                      selectedItem.type,
                       new ServerRequestCallback<HelpInfo>() {
          @Override
          public void onError(ServerError error)
@@ -132,7 +127,7 @@ public class HelpStrategy
 
          server_.getHelp(selectedItem.source,
                          null,
-                         RCompletionType.ARGUMENTS,
+                         selectedItem.type,
                          new ServerRequestCallback<HelpInfo>() {
             @Override
             public void onError(ServerError error)
@@ -185,8 +180,12 @@ public class HelpStrategy
       }
       
       final String packageName = selectedItem.name;
-      server_.getHelp(packageName, null, RCompletionType.PACKAGE,
-                      new ServerRequestCallback<HelpInfo>() {
+      server_.getHelp(
+            packageName,
+            null,
+            selectedItem.type,
+            new ServerRequestCallback<HelpInfo>() {
+         
          @Override
          public void onError(ServerError error)
          {
