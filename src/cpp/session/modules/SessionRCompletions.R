@@ -767,7 +767,7 @@ assign(x = ".rs.acCompletionTypes",
                                                   excludeArgsFromObject,
                                                   filePath)
 {
-   filePath <- suppressWarnings(.rs.normalizePath(filePath, mustWork = FALSE))
+   filePath <- suppressWarnings(.rs.normalizePath(filePath))
    
    ## NOTE: these are passed in as lists of strings; convert to character
    additionalArgs <- as.character(additionalArgs)
