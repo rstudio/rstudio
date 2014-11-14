@@ -40,6 +40,7 @@ as auto-completions
 * When evaluating R strings ensure 'try' is called from base package
 * Add Clear Recent Projects menu item to toolbar project menu
 * Update to MSYS SSH 1000.18
+* Update to pandoc 1.13.1
 
 ### Bug Fixes
 
