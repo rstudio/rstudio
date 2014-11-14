@@ -19,7 +19,6 @@ import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
-import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JRunAsync;
@@ -52,7 +51,11 @@ public class MethodCallTightener {
    * Updates polymorphic method calls to tighter bindings based on the type of
    * the qualifier.
    */
-  public class MethodCallTighteningVisitor extends JModVisitor {
+  public class MethodCallTighteningVisitor extends JChangeTrackingVisitor {
+
+    public MethodCallTighteningVisitor(OptimizerContext optimizerCtx) {
+      super(optimizerCtx);
+    }
 
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
@@ -114,9 +117,18 @@ public class MethodCallTightener {
 
   public static final String NAME = MethodCallTightener.class.getSimpleName();
 
+  // TODO(leafwang): remove this entry point when it is no longer needed.
   public static OptimizerStats exec(JProgram program) {
     Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
-    OptimizerStats stats = new MethodCallTightener(program).execImpl();
+    OptimizerStats stats = new MethodCallTightener(program).execImpl(new OptimizerContext(program));
+    optimizeEvent.end("didChange", "" + stats.didChange());
+    return stats;
+  }
+
+  public static OptimizerStats exec(JProgram program, OptimizerContext optimizerCtx) {
+    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
+    OptimizerStats stats = new MethodCallTightener(program).execImpl(optimizerCtx);
+    optimizerCtx.incOptimizationStep();
     optimizeEvent.end("didChange", "" + stats.didChange());
     return stats;
   }
@@ -127,8 +139,8 @@ public class MethodCallTightener {
     this.program = program;
   }
 
-  private OptimizerStats execImpl() {
-    MethodCallTighteningVisitor tightener = new MethodCallTighteningVisitor();
+  private OptimizerStats execImpl(OptimizerContext optimizerCtx) {
+    MethodCallTighteningVisitor tightener = new MethodCallTighteningVisitor(optimizerCtx);
     tightener.accept(program);
     return new OptimizerStats(NAME).recordModified(tightener.getNumMods());
   }

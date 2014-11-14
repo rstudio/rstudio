@@ -35,7 +35,6 @@ import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
-import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JParameter;
@@ -125,7 +124,11 @@ public class TypeTightener {
   /**
    * Replaces dangling null references with dummy calls.
    */
-  public class FixDanglingRefsVisitor extends JModVisitor {
+  public class FixDanglingRefsVisitor extends JChangeTrackingVisitor {
+
+    public FixDanglingRefsVisitor(OptimizerContext optimizerCtx) {
+      super(optimizerCtx);
+    }
 
     @Override
     public void endVisit(JFieldRef x, Context ctx) {
@@ -370,7 +373,11 @@ public class TypeTightener {
    *
    * Also optimize dynamic casts and instanceof operations where possible.
    */
-  public class TightenTypesVisitor extends JModVisitor {
+  public class TightenTypesVisitor extends JChangeTrackingVisitor {
+
+    public TightenTypesVisitor(OptimizerContext optimizerCtx) {
+      super(optimizerCtx);
+    }
 
     /**
      * Tries to determine a specific concrete type for the cast, then either
@@ -443,7 +450,7 @@ public class TypeTightener {
     }
 
     @Override
-    public void endVisit(JField x, Context ctx) {
+    public void exitField(JField x, Context ctx) {
       if (!x.isVolatile()) {
         tighten(x);
       }
@@ -523,7 +530,7 @@ public class TypeTightener {
      * Tighten based on return types and overrides.
      */
     @Override
-    public void endVisit(JMethod x, Context ctx) {
+    public void exitMethod(JMethod x, Context ctx) {
       if (!(x.getType() instanceof JReferenceType)) {
         return;
       }
@@ -650,7 +657,7 @@ public class TypeTightener {
     }
 
     @Override
-    public boolean visit(JMethod x, Context ctx) {
+    public boolean enterMethod(JMethod x, Context ctx) {
       /*
        * Explicitly NOT visiting native methods since we can't infer further
        * type information.
@@ -781,9 +788,18 @@ public class TypeTightener {
 
   private static final String NAME = TypeTightener.class.getSimpleName();
 
+  public static OptimizerStats exec(JProgram program, OptimizerContext optimizerCtx) {
+    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
+    OptimizerStats stats = new TypeTightener(program).execImpl(optimizerCtx);
+    optimizerCtx.incOptimizationStep();
+    optimizeEvent.end("didChange", "" + stats.didChange());
+    return stats;
+  }
+
+  // TODO(leafwang): remove this entry point when it is no longer needed.
   public static OptimizerStats exec(JProgram program) {
     Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
-    OptimizerStats stats = new TypeTightener(program).execImpl();
+    OptimizerStats stats = new TypeTightener(program).execImpl(new OptimizerContext(program));
     optimizeEvent.end("didChange", "" + stats.didChange());
     return stats;
   }
@@ -864,7 +880,7 @@ public class TypeTightener {
     typeNull = program.getTypeNull();
   }
 
-  private OptimizerStats execImpl() {
+  private OptimizerStats execImpl(OptimizerContext optimizerCtx) {
     OptimizerStats stats = new OptimizerStats(NAME);
     RecordVisitor recorder = new RecordVisitor();
     recorder.record(program);
@@ -879,7 +895,7 @@ public class TypeTightener {
      * output.
      */
     while (true) {
-      TightenTypesVisitor tightener = new TightenTypesVisitor();
+      TightenTypesVisitor tightener = new TightenTypesVisitor(optimizerCtx);
       tightener.accept(program);
       stats.recordModified(tightener.getNumMods());
       if (!tightener.didChange()) {
@@ -888,7 +904,7 @@ public class TypeTightener {
     }
 
     if (stats.didChange()) {
-      FixDanglingRefsVisitor fixer = new FixDanglingRefsVisitor();
+      FixDanglingRefsVisitor fixer = new FixDanglingRefsVisitor(optimizerCtx);
       fixer.accept(program);
     }
 

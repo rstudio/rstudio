@@ -80,6 +80,7 @@ import com.google.gwt.dev.jjs.impl.MakeCallsStatic;
 import com.google.gwt.dev.jjs.impl.MethodCallSpecializer;
 import com.google.gwt.dev.jjs.impl.MethodCallTightener;
 import com.google.gwt.dev.jjs.impl.MethodInliner;
+import com.google.gwt.dev.jjs.impl.OptimizerContext;
 import com.google.gwt.dev.jjs.impl.OptimizerStats;
 import com.google.gwt.dev.jjs.impl.Pruner;
 import com.google.gwt.dev.jjs.impl.RecordRebinds;
@@ -357,7 +358,6 @@ public abstract class JavaToJavaScriptCompiler {
         addSyntheticArtifacts(unifiedAst, permutation, startTimeMs, permutationId, jjsmap,
             dependenciesAndRecorder, internedLiteralByVariableName, isSourceMapsEnabled, jsFragments,
             sizeBreakdowns, sourceInfoMaps, permutationResult);
-
         return permutationResult;
       } catch (Throwable e) {
         throw CompilationProblemReporter.logAndTranslateException(logger, e);
@@ -1132,7 +1132,8 @@ public abstract class JavaToJavaScriptCompiler {
            * compiles, so let's avoid doing potentially superlinear optimizations on the unified
            * AST.
            */
-          optimizeJavaOneTime("Early Optimization", jprogram.getNodeCount());
+          optimizeJavaOneTime("Early Optimization", jprogram.getNodeCount(),
+              new OptimizerContext(jprogram));
         }
       }
     }
@@ -1450,6 +1451,7 @@ public abstract class JavaToJavaScriptCompiler {
     boolean atMaxLevel = options.getOptimizationLevel() == OptionOptimize.OPTIMIZE_LEVEL_MAX;
     int passLimit = atMaxLevel ? MAX_PASSES : options.getOptimizationLevel();
     float minChangeRate = atMaxLevel ? FIXED_POINT_CHANGE_RATE : EFFICIENT_CHANGE_RATE;
+    OptimizerContext optimizerCtx = new OptimizerContext(jprogram);
     while (true) {
       passCount++;
       if (passCount > passLimit) {
@@ -1460,7 +1462,7 @@ public abstract class JavaToJavaScriptCompiler {
         throw new InterruptedException();
       }
       AstDumper.maybeDumpAST(jprogram);
-      OptimizerStats stats = optimizeJavaOneTime("Pass " + passCount, nodeCount);
+      OptimizerStats stats = optimizeJavaOneTime("Pass " + passCount, nodeCount, optimizerCtx);
       allOptimizerStats.add(stats);
       lastNodeCount = nodeCount;
       nodeCount = jprogram.getNodeCount();
@@ -1493,23 +1495,24 @@ public abstract class JavaToJavaScriptCompiler {
     }
   }
 
-  private OptimizerStats optimizeJavaOneTime(String passName, int numNodes) {
+  private OptimizerStats optimizeJavaOneTime(String passName, int numNodes,
+      OptimizerContext optimizerCtx) {
     Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "phase", "loop");
     // Clinits might have become empty become empty.
     jprogram.typeOracle.recomputeAfterOptimizations(jprogram.getDeclaredTypes());
     OptimizerStats stats = new OptimizerStats(passName);
-    stats.add(Pruner.exec(jprogram, true).recordVisits(numNodes));
-    stats.add(Finalizer.exec(jprogram).recordVisits(numNodes));
-    stats.add(MakeCallsStatic.exec(jprogram, options.shouldAddRuntimeChecks())
+    stats.add(Pruner.exec(jprogram, true, optimizerCtx).recordVisits(numNodes));
+    stats.add(Finalizer.exec(jprogram, optimizerCtx).recordVisits(numNodes));
+    stats.add(MakeCallsStatic.exec(jprogram, options.shouldAddRuntimeChecks(), optimizerCtx)
         .recordVisits(numNodes));
-    stats.add(TypeTightener.exec(jprogram).recordVisits(numNodes));
-    stats.add(MethodCallTightener.exec(jprogram).recordVisits(numNodes));
+    stats.add(TypeTightener.exec(jprogram, optimizerCtx).recordVisits(numNodes));
+    stats.add(MethodCallTightener.exec(jprogram, optimizerCtx).recordVisits(numNodes));
     // Note: Specialization should be done before inlining.
-    stats.add(MethodCallSpecializer.exec(jprogram).recordVisits(numNodes));
-    stats.add(DeadCodeElimination.exec(jprogram).recordVisits(numNodes));
-    stats.add(MethodInliner.exec(jprogram).recordVisits(numNodes));
+    stats.add(MethodCallSpecializer.exec(jprogram, optimizerCtx).recordVisits(numNodes));
+    stats.add(DeadCodeElimination.exec(jprogram, optimizerCtx).recordVisits(numNodes));
+    stats.add(MethodInliner.exec(jprogram, optimizerCtx).recordVisits(numNodes));
     if (options.shouldInlineLiteralParameters()) {
-      stats.add(SameParameterValueOptimizer.exec(jprogram).recordVisits(numNodes));
+      stats.add(SameParameterValueOptimizer.exec(jprogram, optimizerCtx).recordVisits(numNodes));
     }
     if (options.shouldOrdinalizeEnums()) {
       stats.add(EnumOrdinalizer.exec(jprogram).recordVisits(numNodes));

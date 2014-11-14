@@ -27,7 +27,6 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethod.Specialization;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
-import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -105,12 +104,14 @@ public class MakeCallsStatic {
      * thisRefs must be replaced with paramRefs to the synthetic this param.
      * ParameterRefs also need to be targeted to the params in the new method.
      */
-    private class RewriteMethodBody extends JModVisitor {
+    private class RewriteMethodBody extends JChangeTrackingVisitor {
 
       private final JParameter thisParam;
       private final Map<JParameter, JParameter> varMap;
 
-      public RewriteMethodBody(JParameter thisParam, Map<JParameter, JParameter> varMap) {
+      public RewriteMethodBody(JParameter thisParam, Map<JParameter, JParameter> varMap,
+          OptimizerContext optimizerCtx) {
+        super(optimizerCtx);
         this.thisParam = thisParam;
         this.varMap = varMap;
       }
@@ -130,9 +131,16 @@ public class MakeCallsStatic {
     }
 
     private final JProgram program;
+    private final OptimizerContext optimizerCtx;
+
+    private CreateStaticImplsVisitor(JProgram program, OptimizerContext optimizerCtx) {
+      this.program = program;
+      this.optimizerCtx = optimizerCtx;
+    }
 
     CreateStaticImplsVisitor(JProgram program) {
       this.program = program;
+      this.optimizerCtx = null;
     }
 
     @Override
@@ -217,13 +225,18 @@ public class MakeCallsStatic {
         // Accept the body to avoid the recursion blocker.
         rewriter.accept(jsFunc.getBody());
       } else {
-        RewriteMethodBody rewriter = new RewriteMethodBody(thisParam, varMap);
+        RewriteMethodBody rewriter = new RewriteMethodBody(thisParam, varMap, optimizerCtx);
         rewriter.accept(movedBody);
       }
 
       // Add the new method as a static impl of the old method
       program.putStaticImpl(x, newMethod);
       enclosingType.getMethods().add(myIndexInClass + 1, newMethod);
+
+      if (optimizerCtx != null) {
+        optimizerCtx.markModifiedMethod(x);
+        optimizerCtx.markModifiedMethod(newMethod);
+      }
       return false;
     }
   }
@@ -299,9 +312,14 @@ public class MakeCallsStatic {
    * CreateStaticMethodVisitor, go and rewrite the call sites to call the static
    * method instead.
    */
-  private class RewriteCallSites extends JModVisitor {
+  private class RewriteCallSites extends JChangeTrackingVisitor {
+
     private boolean currentMethodIsInitiallyLive;
     private ControlFlowAnalyzer initiallyLive;
+
+    public RewriteCallSites(OptimizerContext optimizerCtx) {
+      super(optimizerCtx);
+    }
 
     /**
      * In cases where callers are directly referencing (effectively) final
@@ -332,7 +350,7 @@ public class MakeCallsStatic {
     }
 
     @Override
-    public boolean visit(JMethod x, Context ctx) {
+    public boolean enterMethod(JMethod x, Context ctx) {
       currentMethodIsInitiallyLive = initiallyLive.getLiveFieldsAndMethods().contains(x);
       return true;
     }
@@ -420,14 +438,23 @@ public class MakeCallsStatic {
 
   private static final String NAME = MakeCallsStatic.class.getSimpleName();
 
-  public static OptimizerStats exec(JProgram program, boolean addRuntimeChecks) {
+  public static OptimizerStats exec(JProgram program, boolean addRuntimeChecks,
+      OptimizerContext optimizerCtx) {
     Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
-    OptimizerStats stats = new MakeCallsStatic(program, addRuntimeChecks).execImpl();
+    OptimizerStats stats = new MakeCallsStatic(program, addRuntimeChecks).execImpl(optimizerCtx);
+    optimizerCtx.incOptimizationStep();
     optimizeEvent.end("didChange", "" + stats.didChange());
     return stats;
   }
 
-
+  // TODO(leafwang): remove this entry point when it is no longer needed.
+  public static OptimizerStats exec(JProgram program, boolean addRuntimeChecks) {
+    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
+    OptimizerStats stats =
+        new MakeCallsStatic(program, addRuntimeChecks).execImpl(new OptimizerContext(program));
+    optimizeEvent.end("didChange", "" + stats.didChange());
+    return stats;
+  }
 
   protected Set<JMethod> toBeMadeStatic = new HashSet<JMethod>();
 
@@ -439,12 +466,12 @@ public class MakeCallsStatic {
     this.converter = new StaticCallConverter(program, addRuntimeChecks);
   }
 
-  private OptimizerStats execImpl() {
+  private OptimizerStats execImpl(OptimizerContext optimizerCtx) {
     OptimizerStats stats = new OptimizerStats(NAME);
     FindStaticDispatchSitesVisitor finder = new FindStaticDispatchSitesVisitor();
     finder.accept(program);
 
-    CreateStaticImplsVisitor creator = new CreateStaticImplsVisitor(program);
+    CreateStaticImplsVisitor creator = new CreateStaticImplsVisitor(program, optimizerCtx);
     for (JMethod method : toBeMadeStatic) {
       creator.accept(method);
     }
@@ -468,7 +495,7 @@ public class MakeCallsStatic {
      * optimizations can unlock devirtualizations even if no more static impls
      * are created.
      */
-    RewriteCallSites rewriter = new RewriteCallSites();
+    RewriteCallSites rewriter = new RewriteCallSites(optimizerCtx);
     rewriter.accept(program);
     stats.recordModified(rewriter.getNumMods());
     assert (rewriter.didChange() || toBeMadeStatic.isEmpty());

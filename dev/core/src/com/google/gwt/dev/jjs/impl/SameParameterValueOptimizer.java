@@ -21,7 +21,6 @@ import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
-import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
@@ -163,12 +162,14 @@ public class SameParameterValueOptimizer {
   /**
    * Substitute all parameter references with expression.
    */
-  private class SubstituteParameterVisitor extends JModVisitor {
+  private class SubstituteParameterVisitor extends JChangeTrackingVisitor {
     private final CloneExpressionVisitor cloner;
     private final JExpression expression;
     private final JParameter parameter;
 
-    public SubstituteParameterVisitor(JParameter parameter, JExpression expression) {
+    public SubstituteParameterVisitor(JParameter parameter, JExpression expression,
+        OptimizerContext optimizerCtx) {
+      super(optimizerCtx);
       this.parameter = parameter;
       this.expression = expression;
       cloner = new CloneExpressionVisitor();
@@ -186,7 +187,16 @@ public class SameParameterValueOptimizer {
 
   public static OptimizerStats exec(JProgram program) {
     Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
-    OptimizerStats stats = new SameParameterValueOptimizer(program).execImpl(program);
+    OptimizerStats stats =
+        new SameParameterValueOptimizer(program).execImpl(program, new OptimizerContext(program));
+    optimizeEvent.end("didChange", "" + stats.didChange());
+    return stats;
+  }
+
+  public static OptimizerStats exec(JProgram program, OptimizerContext optimizerCtx) {
+    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
+    OptimizerStats stats = new SameParameterValueOptimizer(program).execImpl(program, optimizerCtx);
+    optimizerCtx.incOptimizationStep();
     optimizeEvent.end("didChange", "" + stats.didChange());
     return stats;
   }
@@ -215,7 +225,7 @@ public class SameParameterValueOptimizer {
     this.program = program;
   }
 
-  private OptimizerStats execImpl(JNode node) {
+  private OptimizerStats execImpl(JNode node, OptimizerContext optimizerCtx) {
     OptimizerStats stats = new OptimizerStats(NAME);
     AnalysisVisitor analysisVisitor = new AnalysisVisitor();
     analysisVisitor.accept(node);
@@ -228,7 +238,7 @@ public class SameParameterValueOptimizer {
       if (valueLiteral != null) {
         SubstituteParameterVisitor substituteParameterVisitor =
             new SubstituteParameterVisitor(parameter, Simplifier.cast(parameter.getType(),
-                valueLiteral));
+                valueLiteral), optimizerCtx);
         substituteParameterVisitor.accept(parameter.getEnclosingMethod());
         stats.recordModified(substituteParameterVisitor.getNumMods());
       }

@@ -47,7 +47,6 @@ import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
-import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
@@ -110,8 +109,11 @@ public class DeadCodeElimination {
    * {@link #cast(JExpression, SourceInfo, JType, JExpression) simplifyCast}, so
    * that more simplifications can be made on a single pass through a tree.
    */
-  public class DeadCodeVisitor extends JModVisitor {
-    private JMethod currentMethod = null;
+  public class DeadCodeVisitor extends JChangeTrackingVisitor {
+
+    public DeadCodeVisitor(OptimizerContext optimizerCtx) {
+      super(optimizerCtx);
+    }
 
     /**
      * Expressions whose result does not matter. A parent node should add any
@@ -421,7 +423,7 @@ public class DeadCodeElimination {
      */
     @Override
     public void endVisit(JIfStatement x, Context ctx) {
-      maybeReplaceMe(x, Simplifier.ifStatement(x, currentMethod), ctx);
+      maybeReplaceMe(x, Simplifier.ifStatement(x, getCurrentMethod()), ctx);
     }
 
     /**
@@ -442,11 +444,6 @@ public class DeadCodeElimination {
         assert (!x.hasSideEffects());
         ctx.replaceMe(literal);
       }
-    }
-
-    @Override
-    public void endVisit(JMethod x, Context ctx) {
-      currentMethod = null;
     }
 
     /**
@@ -752,12 +749,6 @@ public class DeadCodeElimination {
     @Override
     public boolean visit(JExpressionStatement x, Context ctx) {
       ignoringExpressionOutput.add(x.getExpr());
-      return true;
-    }
-
-    @Override
-    public boolean visit(JMethod x, Context ctx) {
-      currentMethod = x;
       return true;
     }
 
@@ -1980,12 +1971,34 @@ public class DeadCodeElimination {
 
   public static final String NAME = DeadCodeElimination.class.getSimpleName();
 
+  // TODO(leafwang): remove this entry point when it is no longer needed.
   public static OptimizerStats exec(JProgram program) {
-    return new DeadCodeElimination(program).execImpl(program);
+    return new DeadCodeElimination(program).execImpl(program, new OptimizerContext(program));
   }
 
+  // TODO(leafwang): remove this entry point when it is no longer needed.
   public static OptimizerStats exec(JProgram program, JNode node) {
-    return new DeadCodeElimination(program).execImpl(node);
+    return new DeadCodeElimination(program).execImpl(node, new OptimizerContext(program));
+  }
+
+  public static OptimizerStats exec(JProgram program, OptimizerContext optimizerCtx) {
+    OptimizerStats stats = new DeadCodeElimination(program).execImpl(program, optimizerCtx);
+    optimizerCtx.incOptimizationStep();
+    return stats;
+  }
+
+  /**
+   * Apply DeadCodeElimination on a set of methods, mark the modifications in a single step.
+   */
+  public static OptimizerStats exec(JProgram program, Set<JMethod> methods,
+      OptimizerContext optimizerCtx) {
+    OptimizerStats stats = new OptimizerStats(NAME);
+    for (JMethod method : methods) {
+      OptimizerStats innerStats = new DeadCodeElimination(program).execImpl(method, optimizerCtx);
+      stats.recordModified(innerStats.getNumMods());
+    }
+    optimizerCtx.incOptimizationStep();
+    return stats;
   }
 
   private final JProgram program;
@@ -2006,11 +2019,11 @@ public class DeadCodeElimination {
     typeClassMap.put(program.getTypePrimitiveShort(), short.class);
   }
 
-  private OptimizerStats execImpl(JNode node) {
+  private OptimizerStats execImpl(JNode node, OptimizerContext optimizerCtx) {
     OptimizerStats stats = new OptimizerStats(NAME);
     Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
 
-    DeadCodeVisitor deadCodeVisitor = new DeadCodeVisitor();
+    DeadCodeVisitor deadCodeVisitor = new DeadCodeVisitor(optimizerCtx);
     deadCodeVisitor.accept(node);
     stats.recordModified(deadCodeVisitor.getNumMods());
     optimizeEvent.end("didChange", "" + stats.didChange());
