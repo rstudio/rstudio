@@ -480,7 +480,6 @@ public class Source implements InsertSourceHandler,
       for (int i = 0; i < docs.length(); i++)
       {
          addTab(docs.get(i));
-         Debug.devlog("restoring document: " + i + ": "  + docs.get(i).getPath());
       }
    }
    
@@ -500,7 +499,6 @@ public class Source implements InsertSourceHandler,
             String doc = openDocs.get(i);
             final FileSystemItem fsi = FileSystemItem.createFile(doc);
               
-            Debug.devlog("adding project document: " + i + ": " + openDocs.get(i));
             openCommands.addCommand(new SerializedCommand() {
 
                @Override
