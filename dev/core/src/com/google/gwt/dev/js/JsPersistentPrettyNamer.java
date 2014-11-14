@@ -18,11 +18,13 @@ import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
+import com.google.gwt.thirdparty.guava.common.base.Objects;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultiset;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multiset;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,12 +37,10 @@ public class JsPersistentPrettyNamer extends JsNamer {
   /**
    * Encapsulates the complete state of this namer so that state can be persisted and reused.
    */
-  public static class PersistentPrettyNamerState {
+  public static class PersistentPrettyNamerState implements Serializable {
 
     private Multiset<String> shortIdentCollisionCounts = HashMultiset.create();
-
     private Map<String, String> prettyIdentByOriginalIdent = Maps.newHashMap();
-
     private Set<String> usedPrettyIdents = Sets.newHashSet();
 
     public void copyFrom(PersistentPrettyNamerState that) {
@@ -51,6 +51,13 @@ public class JsPersistentPrettyNamer extends JsNamer {
       this.shortIdentCollisionCounts.addAll(that.shortIdentCollisionCounts);
       this.prettyIdentByOriginalIdent.putAll(that.prettyIdentByOriginalIdent);
       this.usedPrettyIdents.addAll(that.usedPrettyIdents);
+    }
+
+    @VisibleForTesting
+    public boolean hasSameContent(PersistentPrettyNamerState that) {
+      return Objects.equal(this.shortIdentCollisionCounts, that.shortIdentCollisionCounts)
+          && Objects.equal(this.prettyIdentByOriginalIdent, that.prettyIdentByOriginalIdent)
+          && Objects.equal(this.usedPrettyIdents, that.usedPrettyIdents);
     }
   }
 

@@ -26,12 +26,15 @@ import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JRuntimeTypeReference;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
+import com.google.gwt.thirdparty.guava.common.base.Objects;
 import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultiset;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multiset;
 import com.google.gwt.thirdparty.guava.common.collect.Multisets;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -63,7 +66,7 @@ public class ResolveRuntimeTypeReferences {
   /**
    * Sequentially creates int type ids for types.
    */
-  public static class IntTypeMapper implements TypeMapper<Integer> {
+  public static class IntTypeMapper implements Serializable, TypeMapper<Integer> {
 
     // NOTE: DO NOT STORE ANY AST REFERENCE. Objects of this type persist across compiles.
     private final Map<String, Integer> typeIdByTypeName = Maps.newHashMap();
@@ -79,6 +82,12 @@ public class ResolveRuntimeTypeReferences {
       this.nextAvailableId = from.nextAvailableId;
       this.typeIdByTypeName.clear();
       this.typeIdByTypeName.putAll(from.typeIdByTypeName);
+    }
+
+    @VisibleForTesting
+    public boolean hasSameContent(IntTypeMapper that) {
+      return Objects.equal(this.typeIdByTypeName, that.typeIdByTypeName)
+          && Objects.equal(this.nextAvailableId, that.nextAvailableId);
     }
 
     @Override

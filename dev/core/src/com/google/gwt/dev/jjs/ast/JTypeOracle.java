@@ -20,6 +20,7 @@ import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.base.Function;
+import com.google.gwt.thirdparty.guava.common.base.Objects;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.base.Strings;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
@@ -86,6 +87,15 @@ public class JTypeOracle implements Serializable {
       this.immediateImplementedInterfacesByClass.putAll(that.immediateImplementedInterfacesByClass);
       this.immediateSuperclassesByClass.putAll(that.immediateSuperclassesByClass);
       this.immediateSuperInterfacesByInterface.putAll(that.immediateSuperInterfacesByInterface);
+    }
+
+    @VisibleForTesting
+    public boolean hasSameContent(ImmediateTypeRelations that) {
+      return Objects.equal(this.immediateImplementedInterfacesByClass,
+          that.immediateImplementedInterfacesByClass)
+          && Objects.equal(this.immediateSuperclassesByClass, that.immediateSuperclassesByClass)
+          && Objects.equal(this.immediateSuperInterfacesByInterface,
+              that.immediateSuperInterfacesByInterface);
     }
 
     @VisibleForTesting

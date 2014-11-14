@@ -318,10 +318,10 @@ public class MinimalRebuildCache implements Serializable {
     }
 
     /*
-     * Filter for just those stale types that are actually reachable. Since if they're not
-     * reachable we don't want to artificially traverse them and unnecessarily reveal dependency
-     * problems. And if they have become reachable, since they're missing JS, they will already be
-     * fully traversed when seen in Unify.
+     * Filter for just those stale types that are actually reachable. Since if they're not reachable
+     * we don't want to artificially traverse them and unnecessarily reveal dependency problems. And
+     * if they have become reachable, since they're missing JS, they will already be fully traversed
+     * when seen in Unify.
      */
     copyCollection(filterUnreachableTypeNames(staleTypeNames), staleTypeNames);
 
@@ -443,6 +443,50 @@ public class MinimalRebuildCache implements Serializable {
     copyCollection(that.staleTypeNames, this.staleTypeNames);
   }
 
+  @VisibleForTesting
+  boolean hasSameContent(MinimalRebuildCache that) {
+    // Ignoring processedStaleTypeNames since it is transient.
+    return
+        this.immediateTypeRelations.hasSameContent(that.immediateTypeRelations) && Objects.equal(
+            this.compilationUnitTypeNameByNestedTypeName,
+            that.compilationUnitTypeNameByNestedTypeName)
+        && Objects.equal(this.contentHashByGeneratedTypeName, that.contentHashByGeneratedTypeName)
+        && Objects.equal(this.deletedCompilationUnitNames, that.deletedCompilationUnitNames)
+        && Objects.equal(this.deletedDiskSourcePaths, that.deletedDiskSourcePaths)
+        && Objects.equal(this.deletedResourcePaths, that.deletedResourcePaths)
+        && Objects.equal(this.dualJsoImplInterfaceNames, that.dualJsoImplInterfaceNames)
+        && Objects.equal(this.generatedArtifacts, that.generatedArtifacts) && Objects.equal(
+            this.generatedCompilationUnitNamesByReboundTypeNames,
+            that.generatedCompilationUnitNamesByReboundTypeNames)
+        && this.intTypeMapper.hasSameContent(that.intTypeMapper)
+        && Objects.equal(this.jsByTypeName, that.jsByTypeName)
+        && Objects.equal(this.jsoStatusChangedTypeNames, that.jsoStatusChangedTypeNames)
+        && Objects.equal(this.jsoTypeNames, that.jsoTypeNames)
+        && Objects.equal(this.lastLinkedJsBytes, that.lastLinkedJsBytes)
+        && Objects.equal(this.lastModifiedByDiskSourcePath, that.lastModifiedByDiskSourcePath)
+        && Objects.equal(this.lastModifiedByResourcePath, that.lastModifiedByResourcePath)
+        && Objects.equal(this.lastReachableTypeNames, that.lastReachableTypeNames)
+        && Objects.equal(this.modifiedCompilationUnitNames, that.modifiedCompilationUnitNames)
+        && Objects.equal(this.modifiedDiskSourcePaths, that.modifiedDiskSourcePaths)
+        && Objects.equal(this.modifiedResourcePaths, that.modifiedResourcePaths)
+        && Objects.equal(this.nestedTypeNamesByUnitTypeName, that.nestedTypeNamesByUnitTypeName)
+        && this.persistentPrettyNamerState.hasSameContent(that.persistentPrettyNamerState)
+        && Objects.equal(this.preambleTypeNames, that.preambleTypeNames) && Objects.equal(
+            this.rebinderTypeNamesByReboundTypeName, that.rebinderTypeNamesByReboundTypeName)
+        && Objects.equal(this.reboundTypeNamesByGeneratedCompilationUnitNames,
+            that.reboundTypeNamesByGeneratedCompilationUnitNames) && Objects.equal(
+            this.reboundTypeNamesByInputResource, that.reboundTypeNamesByInputResource)
+        && Objects.equal(this.referencedTypeNamesByTypeName, that.referencedTypeNamesByTypeName)
+        && Objects.equal(this.rootTypeNames, that.rootTypeNames)
+        && Objects.equal(this.singleJsoImplInterfaceNames, that.singleJsoImplInterfaceNames)
+        && Objects.equal(this.sourceCompilationUnitNames, that.sourceCompilationUnitNames)
+        && Objects.equal(this.sourceMapsByTypeName, that.sourceMapsByTypeName)
+        && Objects.equal(this.staleTypeNames, that.staleTypeNames)
+        && Objects.equal(this.statementRangesByTypeName, that.statementRangesByTypeName)
+        && Objects.equal(this.typeNamesByReferencingTypeName,
+            that.typeNamesByReferencingTypeName);
+  }
+
   /**
    * Return the set of provided typeNames with unreachable types filtered out.
    */
@@ -456,10 +500,6 @@ public class MinimalRebuildCache implements Serializable {
 
   public ImmediateTypeRelations getImmediateTypeRelations() {
     return immediateTypeRelations;
-  }
-
-  public IntTypeMapper getTypeMapper() {
-    return intTypeMapper;
   }
 
   public String getJs(String typeName) {
@@ -503,6 +543,10 @@ public class MinimalRebuildCache implements Serializable {
 
   public StatementRanges getStatementRanges(String typeName) {
     return statementRangesByTypeName.get(typeName);
+  }
+
+  public IntTypeMapper getTypeMapper() {
+    return intTypeMapper;
   }
 
   public boolean hasJs(String typeName) {

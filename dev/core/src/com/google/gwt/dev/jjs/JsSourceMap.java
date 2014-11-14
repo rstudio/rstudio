@@ -18,21 +18,26 @@ package com.google.gwt.dev.jjs;
 import com.google.gwt.core.ext.linker.impl.JsSourceMapExtractor;
 import com.google.gwt.core.ext.soyc.Range;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * An unmodifiable container of Ranges that map from JavaScript to the Java it came from.
  */
-public class JsSourceMap {
+public class JsSourceMap implements Serializable {
 
-  private final int bytes;
-  private final int lines;
+  private int bytes;
+  private int lines;
 
   /**
    * Maps JS ranges to Java ranges. The mapping is sparse thus the need for separately tracking
    * total bytes and lines.
    */
-  private final List<Range> ranges;
+  private List<Range> ranges;
 
   public JsSourceMap(List<Range> ranges, int bytes, int lines) {
     this.ranges = ranges;
@@ -48,15 +53,50 @@ public class JsSourceMap {
     return bytes;
   }
 
-  public List<Range> getRanges() {
-    return ranges;
-  }
-
   public int getLines() {
     return lines;
   }
 
+  public List<Range> getRanges() {
+    return ranges;
+  }
+
   public int size() {
     return ranges.size();
+  }
+
+  private void readObject(ObjectInputStream inStream) throws IOException, ClassNotFoundException {
+    bytes = inStream.readInt();
+    lines = inStream.readInt();
+
+    int rangeCount = inStream.readInt();
+    ranges = new ArrayList<Range>(rangeCount);
+    for (int i = 0; i < rangeCount; i++) {
+      int start = inStream.readInt();
+      int end = inStream.readInt();
+      int startLine = inStream.readInt();
+      int startColumn = inStream.readInt();
+      int endLine = inStream.readInt();
+      int endColumn = inStream.readInt();
+      SourceInfo sourceInfo = (SourceInfo) inStream.readObject();
+
+      ranges.add(new Range(start, end, startLine, startColumn, endLine, endColumn, sourceInfo));
+    }
+  }
+
+  private void writeObject(ObjectOutputStream outStream) throws IOException {
+    outStream.writeInt(bytes);
+    outStream.writeInt(lines);
+
+    outStream.writeInt(ranges.size());
+    for (Range range : ranges) {
+      outStream.writeInt(range.getStart());
+      outStream.writeInt(range.getEnd());
+      outStream.writeInt(range.getStartLine());
+      outStream.writeInt(range.getStartColumn());
+      outStream.writeInt(range.getEndLine());
+      outStream.writeInt(range.getEndColumn());
+      outStream.writeObject(range.getSourceInfo());
+    }
   }
 }
