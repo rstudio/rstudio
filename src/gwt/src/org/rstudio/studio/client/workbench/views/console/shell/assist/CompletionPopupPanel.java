@@ -59,9 +59,10 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    public void showCompletionValues(QualifiedName[] values, 
                                     PositionCallback callback)
    {
+      int numRows = Math.min(6, values.length);
       CompletionList<QualifiedName> list = new CompletionList<QualifiedName>(
                                        values,
-                                       7,
+                                       numRows,
                                        true,
                                        false) ;
 
