@@ -209,7 +209,7 @@ public abstract class StackTraceDeobfuscator {
   public final StackTraceElement resymbolize(StackTraceElement ste, String strongName) {
     String declaringClass = null;
     String methodName = null;
-    String filename = null;
+    String fileName = null;
     int lineNumber = -1;
     int fragmentId = -1;
 
@@ -248,9 +248,17 @@ public abstract class StackTraceDeobfuscator {
           methodName = ste.getMethodName();
         }
 
-        // parts[3] contains the source file URI or "Unknown"
-        filename = "Unknown".equals(parts[3]) ? null
-            : parts[3].substring(parts[3].lastIndexOf('/') + 1);
+        fileName = ste.getFileName();
+
+        /*
+         * We should trust the file name if it is a java file name as that means compiler.stackMode
+         * is enabled and stack emulation has always the correct file name.
+         */
+        if (fileName == null || !fileName.endsWith(".java")) {
+          // parts[3] contains the source file URI or "Unknown"
+          fileName = "Unknown".equals(parts[3]) ? null
+              : parts[3].substring(parts[3].lastIndexOf('/') + 1);
+        }
 
         lineNumber = ste.getLineNumber();
 
@@ -299,14 +307,14 @@ public abstract class StackTraceDeobfuscator {
             declaringClass = mappingForLine.getOriginalFile();
             methodName = mappingForLine.getIdentifier();
           }
-          filename = mappingForLine.getOriginalFile();
+          fileName = mappingForLine.getOriginalFile();
           lineNumber = mappingForLine.getLineNumber();
         }
       }
     }
 
     if (declaringClass != null) {
-      return new StackTraceElement(declaringClass, methodName, filename, lineNumber);
+      return new StackTraceElement(declaringClass, methodName, fileName, lineNumber);
     }
 
     // If anything goes wrong, just return the unobfuscated element
