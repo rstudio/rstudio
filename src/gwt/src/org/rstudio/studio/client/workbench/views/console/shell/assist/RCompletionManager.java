@@ -1001,7 +1001,7 @@ public class RCompletionManager implements CompletionManager
       // (the completion is still occurring in a '$' context, so we do want
       // to exclude completions from other scopes)
       String data = "";
-      if (cursor.findStartOfEvaluationContext())
+      if (cursor.moveToPreviousToken() && cursor.findStartOfEvaluationContext())
       {
          data = editor.getTextForRange(Range.fromPoints(
                cursor.currentPosition(),
