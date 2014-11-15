@@ -413,7 +413,11 @@ public class RCompletionManager implements CompletionManager
                   InputEditorPosition end = selection.getStart();
 
                   if (currentLine.charAt(cursorColumn) == ')' && currentLine.charAt(cursorColumn - 1) == '(')
+                  {
+                     // flush cache as old completions no longer relevant
+                     requester_.flushCache();
                      end = selection.getStart().movePosition(1, true);
+                  }
 
                   input_.setSelection(new InputEditorSelection(start, end));
                   input_.replaceSelection("", false);
@@ -592,7 +596,10 @@ public class RCompletionManager implements CompletionManager
       invalidation_.invalidate();
       
       if (hidePopup && popup_.isShowing())
+      {
          popup_.hide();
+         popup_.clearHelp(false);
+      }
       
       if (flushCache)
          requester_.flushCache() ;
@@ -997,10 +1004,12 @@ public class RCompletionManager implements CompletionManager
       //     env::foo()$bar()[1]$baz
       // Get the string forming the context
       //
+      //
       // If this fails, we still want to report an empty evaluation context
       // (the completion is still occurring in a '$' context, so we do want
       // to exclude completions from other scopes)
       String data = "";
+      
       if (cursor.moveToPreviousToken() && cursor.findStartOfEvaluationContext())
       {
          data = editor.getTextForRange(Range.fromPoints(
@@ -1315,7 +1324,7 @@ public class RCompletionManager implements CompletionManager
 
          if (results.length == 1
              && canAutoAccept_
-             && StringUtil.isNullOrEmpty(results[0].pkgName))
+             && StringUtil.isNullOrEmpty(results[0].source))
          {
             onSelection(results[0]);
          }
@@ -1391,7 +1400,7 @@ public class RCompletionManager implements CompletionManager
 
       private void applyValue(final QualifiedName qualifiedName)
       {
-         if (qualifiedName.pkgName == "`chunk-option`")
+         if (qualifiedName.source == "`chunk-option`")
          {
             applyValueRmdOption(qualifiedName.name);
             return;
@@ -1414,16 +1423,16 @@ public class RCompletionManager implements CompletionManager
          }
 
          String value = qualifiedName.name;
-         String pkgName = qualifiedName.pkgName;
+         String source = qualifiedName.source;
          boolean shouldQuote = qualifiedName.shouldQuote;
          
          if (value == ":=")
             value = quoteIfNotSyntacticNameCompletion(value);
          else if (!value.matches(".*[=:]\\s*$") && 
                !value.matches("^\\s*([`'\"]).*\\1\\s*$") &&
-               pkgName != "<file>" &&
-               pkgName != "<directory>" &&
-               pkgName != "`chunk-option`" &&
+               source != "<file>" &&
+               source != "<directory>" &&
+               source != "`chunk-option`" &&
                !value.startsWith("@") &&
                !shouldQuote)
             value = quoteIfNotSyntacticNameCompletion(value);

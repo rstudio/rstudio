@@ -89,18 +89,55 @@ options(help_type = "html")
       sort(utils:::matchAvailableTopics(prefix))
 });
 
-.rs.addJsonRpcHandler("get_help", function(topic, package, type)
+.rs.addJsonRpcHandler("get_help", function(what, from, type)
 {
-   if (type %in% .rs.acCompletionTypes$PACKAGE)
-   {
-      package <- sub(":*$", "", topic, perl = TRUE)
-      topic <- paste(package, "-package", sep = "")
-   }
-   
+   if (type == .rs.acCompletionTypes$FUNCTION)
+      return(.rs.getHelpFunction(what, from))
+   else if (type == .rs.acCompletionTypes$ARGUMENTS)
+      return(.rs.getHelpArguments(what, from))
+   else if (type == .rs.acCompletionTypes$PACKAGE)
+      return(.rs.getHelpPackage(what))
+   else
+      return()
+})
+
+.rs.addFunction("getHelpFunction", function(name, package)
+{
+   .rs.getHelp(name, package)
+})
+
+.rs.addFunction("getHelpPackage", function(pkgName)
+{
+   # We might be getting the completion with colons appended, so strip those out.
+   pkgName <- sub(":*$", "", pkgName, perl = TRUE)
+   topic <- paste(pkgName, "-package", sep = "")
+   .rs.getHelp(topic, pkgName)
+})
+
+.rs.addFunction("getHelpArguments", function(functionName, pkgName)
+{
+   .rs.getHelp(functionName, pkgName)
+})
+
+.rs.addFunction("makeHelpCall", function(topic, package = NULL, help_type = "html")
+{
+   substitute(utils::help(TOPIC, package = PACKAGE, help_type = "html"),
+              list(TOPIC = topic,
+                   PACKAGE = package))
+})
+
+.rs.addFunction("getHelp", function(topic, package)
+{
+   # Completions from the search path might have the 'package:' prefix, so
+   # lets strip that out.
    package <- sub("package:", "", package, fixed = TRUE)
+   
+   # Ensure topic is not zero-length
    if (!length(topic))
       topic <- ""
    
+   # If the topic is not provided, but we're getting help on e.g.
+   # 'stats::rnorm', then split up the topic into the appropriate pieces.
    if (!length(package) && any(grepl(":{2,3}", topic, perl = TRUE)))
    {
       splat <- strsplit(topic, ":{2,3}", perl = TRUE)[[1]]
@@ -118,9 +155,7 @@ options(help_type = "html")
          expr = {
             # NOTE: help does lazy evaluation on 'package',
             # so we have to manually construct the call
-            call <- substitute(utils::help(TOPIC, package = PACKAGE, help_type = "html"),
-                               list(TOPIC = topic,
-                                    PACKAGE = package))
+            call <- .rs.makeHelpCall(topic, package)
             eval(call)
          },
          
@@ -130,38 +165,11 @@ options(help_type = "html")
       )
    }
    
-   if (length(helpfiles) <= 0)
-   {
-      # Let's try again!
-      object <- .rs.getAnywhere(topic, parent.frame())
-      if (!is.null(object))
-      {
-         envString <- capture.output(print(environment(object)))[[1]]
-         if (grepl("namespace:", envString))
-         {
-            package <- sub("<environment: namespace:(.*)>", "\\1", envString, perl = TRUE)
-            helpfiles <- tryCatch({
-               call <- substitute(utils::help(TOPIC, package = PACKAGE, help_type = "html"),
-                                  list(TOPIC = topic,
-                                       PACKAGE = package))
-               eval(call)
-            }, error = function(e) NULL
-            )
-            
-            if (!length(helpfiles))
-            {
-               helpfiles <- tryCatch({
-                  call <- substitute(utils::help(TOPIC, package = PACKAGE, help_type = "html"),
-                                     list(TOPIC = gsub("\\..*", "", topic),
-                                          PACAKGE = package))
-                  eval(call)
-               }, error = function(e) NULL)
-            }
-            
-         }
-      }
-   }
-   
+   .rs.processHelpFileHTML(helpfiles)
+})
+
+.rs.addFunction("processHelpFileHTML", function(helpfiles)
+{
    if (length(helpfiles) <= 0)
       return ()
    
@@ -208,8 +216,21 @@ options(help_type = "html")
    list('html' = html, 'signature' = sig, 'pkgname' = pkgname)
 })
 
-.rs.addJsonRpcHandler("show_help_topic", function(topic, package)
+.rs.addJsonRpcHandler("show_help_topic", function(what, from, type)
 {
+   if (type == .rs.acCompletionTypes$FUNCTION)
+      .rs.showHelpTopicFunction(what, from)
+   else if (type == .rs.acCompletionTypes$ARGUMENTS)
+      .rs.showHelpTopicArguments(from)
+   else if (type == .rs.acCompletionTypes$PACKAGE)
+      .rs.showHelpTopicPackage(what)
+})
+
+.rs.addFunction("showHelpTopicFunction", function(topic, package)
+{
+   # Package may actually be a name from the search path, so strip that off.
+   package <- sub("^package:", "", package, perl = TRUE)
+   
    if (is.null(package) && grepl(":{2,3}", topic, perl = TRUE))
    {
       splat <- strsplit(topic, ":{2,3}", perl = TRUE)[[1]]
@@ -220,7 +241,32 @@ options(help_type = "html")
    if (!is.null(package))
       requireNamespace(package, quietly = TRUE)
    
-   print(help(topic, help_type="html"))
+   call <- .rs.makeHelpCall(topic, package)
+   print(eval(call))
+})
+
+.rs.addFunction("showHelpTopicArguments", function(functionName)
+{
+   topic <- functionName
+   pkgName <- NULL
+   
+   if (grepl(":{2,3}", functionName, perl = TRUE))
+   {
+      splat <- strsplit(functionName, ":{2,3}", perl = TRUE)[[1]]
+      topic <- splat[[2]]
+      pkgName <- splat[[1]]
+   }
+   
+   call <- .rs.makeHelpCall(topic, pkgName)
+   print(eval(call))
+})
+
+.rs.addFunction("showHelpTopicPackage", function(pkgName)
+{
+   pkgName <- sub(":*$", "", pkgName)
+   topic <- paste(pkgName, "-package", sep = "")
+   call <- .rs.makeHelpCall(topic, pkgName)
+   print(eval(call))
 })
 
 .rs.addJsonRpcHandler("search", function(query)

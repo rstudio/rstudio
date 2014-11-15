@@ -29,7 +29,7 @@ public interface HelpServerOperations
    
    String getApplicationURL(String topicURI);
 
-   void showHelpTopic(String topic, String pkgName) ;
+   void showHelpTopic(String topic, String pkgName, int type);
 
    void search(String query, 
                ServerRequestCallback<JsArrayString> requestCallback) ;
