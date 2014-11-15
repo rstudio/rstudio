@@ -15,12 +15,15 @@
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.PopupPanel;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Rectangle;
@@ -41,6 +44,15 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       help_ = new HelpInfoPane();
       help_.setWidth("400px");
       setStylePrimaryName(styles_.completionPopup()) ;
+      addCloseHandler(new CloseHandler<PopupPanel>() {
+         
+         @Override
+         public void onClose(CloseEvent<PopupPanel> event)
+         {
+            help_.clearHelp(false);
+            help_.setVisible(false);
+         }
+      });
    }
 
    public void showProgress(String progress, PositionCallback callback)
