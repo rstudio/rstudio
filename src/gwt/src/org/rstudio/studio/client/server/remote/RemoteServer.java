@@ -1376,6 +1376,18 @@ public class RemoteServer implements Server
                   requestCallback);
    }
    
+   public void setDocOrder(List<String> ids, 
+                           ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      
+      params.set(0, JSONUtils.toJSONStringArray(ids));
+      sendRequest(RPC_SCOPE, 
+                  SET_DOC_ORDER, 
+                  params,
+                  requestCallback);
+   }
+
    public void getTexCapabilities(
                   ServerRequestCallback<TexCapabilities> requestCallback)
    {
@@ -3881,6 +3893,7 @@ public class RemoteServer implements Server
    private static final String ICONVLIST = "iconvlist";
    private static final String GET_TEX_CAPABILITIES = "get_tex_capabilities";
    private static final String GET_CHUNK_OPTIONS = "get_chunk_options";
+   private static final String SET_DOC_ORDER = "set_doc_order";
 
    private static final String GET_RECENT_HISTORY = "get_recent_history";
    private static final String GET_HISTORY_ITEMS = "get_history_items";
