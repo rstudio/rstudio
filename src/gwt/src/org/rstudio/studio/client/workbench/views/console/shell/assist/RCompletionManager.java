@@ -596,7 +596,10 @@ public class RCompletionManager implements CompletionManager
       invalidation_.invalidate();
       
       if (hidePopup && popup_.isShowing())
+      {
          popup_.hide();
+         popup_.clearHelp(false);
+      }
       
       if (flushCache)
          requester_.flushCache() ;
