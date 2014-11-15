@@ -91,15 +91,27 @@ options(help_type = "html")
 
 .rs.addJsonRpcHandler("get_help", function(what, from, type)
 {
+   if (type %in% c(.rs.acCompletionTypes$S4_GENERIC,
+                   .rs.acCompletionTypes$S4_METHOD))
+   {
+      # Try getting methods for the method from the associated package
+      if (!is.null(help <- .rs.getHelp(paste(what, "-methods"), from)))
+         return(help)
+      
+      # Try getting help from anywhere
+      if (!is.null(help <- .rs.getHelp(what)))
+         return(help)
+      
+      # Give up
+      return()
+   }
+   
    if (type == .rs.acCompletionTypes$FUNCTION)
       return(.rs.getHelpFunction(what, from))
    else if (type == .rs.acCompletionTypes$ARGUMENT)
       return(.rs.getHelpArgument(what, from))
    else if (type == .rs.acCompletionTypes$PACKAGE)
       return(.rs.getHelpPackage(what))
-   else if (type %in% c(.rs.acCompletionTypes$S4_GENERIC,
-                        .rs.acCompletionTypes$S4_METHOD))
-      return(.rs.getHelp(paste(what, "-methods", sep = ""), from))
    else if (length(from) && length(what))
       return(.rs.getHelp(what, from))
    else
@@ -131,7 +143,7 @@ options(help_type = "html")
                    PACKAGE = package))
 })
 
-.rs.addFunction("getHelp", function(topic, package)
+.rs.addFunction("getHelp", function(topic, package = "")
 {
    # Completions from the search path might have the 'package:' prefix, so
    # lets strip that out.
@@ -200,7 +212,10 @@ options(help_type = "html")
    {
       html = substring(html, match + 6, match + attr(match, 'match.length') - 1 - 7)
       
-      match = suppressWarnings(regexpr('<h3>Details</h3>', html))
+      slotsMatch <- suppressWarnings(regexpr('<h3>Slots</h3>', html))
+      detailsMatch <- suppressWarnings(regexpr('<h3>Details</h3>', html))
+      
+      match <- if (slotsMatch > detailsMatch) slotsMatch else detailsMatch
       if (match >= 0)
          html = substring(html, 1, match - 1)
    }
@@ -229,6 +244,8 @@ options(help_type = "html")
       .rs.showHelpTopicArgument(from)
    else if (type == .rs.acCompletionTypes$PACKAGE)
       .rs.showHelpTopicPackage(what)
+   else
+      .rs.showHelpTopic(what, from)
 })
 
 .rs.addFunction("showHelpTopicFunction", function(topic, package)
@@ -247,7 +264,7 @@ options(help_type = "html")
       requireNamespace(package, quietly = TRUE)
    
    call <- .rs.makeHelpCall(topic, package)
-   print(eval(call))
+   print(eval(call, envir = parent.frame()))
 })
 
 .rs.addFunction("showHelpTopicArgument", function(functionName)
@@ -263,7 +280,7 @@ options(help_type = "html")
    }
    
    call <- .rs.makeHelpCall(topic, pkgName)
-   print(eval(call))
+   print(eval(call, envir = parent.frame()))
 })
 
 .rs.addFunction("showHelpTopicPackage", function(pkgName)
@@ -271,7 +288,13 @@ options(help_type = "html")
    pkgName <- sub(":*$", "", pkgName)
    topic <- paste(pkgName, "-package", sep = "")
    call <- .rs.makeHelpCall(topic, pkgName)
-   print(eval(call))
+   print(eval(call, envir = parent.frame()))
+})
+
+.rs.addFunction("showHelpTopic", function(topic, package)
+{
+   call <- .rs.makeHelpCall(topic, package)
+   print(eval(call, envir = parent.frame()))
 })
 
 .rs.addJsonRpcHandler("search", function(query)
@@ -289,36 +312,4 @@ options(help_type = "html")
             "&title=1&keyword=1&alias=1",
             sep = "")
    }
-})
-
-.rs.addJsonRpcHandler("get_help_function_expr", function(expr)
-{
-   object <- .rs.getAnywhere(expr, envir = parent.frame())
-   if (!is.function(object))
-      return(NULL)
-   
-   env <- environment(object)
-   srcName <- sub("<environment: (.*)>", "\\1", capture.output(print(env)))
-   
-   src <- NULL
-   if (grepl("^namespace:", srcName))
-   {
-      srcName <- sub("namespace:", "", srcName, fixed = TRUE)
-      src <- asNamespace(srcName)
-   }
-   
-   objects <- ls(src)
-   for (i in seq_along(objects))
-   {
-      if (identical(object, get(objects[[i]], envir = src)))
-      {
-         item <- get(objects[[i]], envir = src)
-         
-         return(.rs.rpc.get_help(
-            topic = objects[[i]],
-            package = srcName
-         ))
-      }
-   }
-   
 })
