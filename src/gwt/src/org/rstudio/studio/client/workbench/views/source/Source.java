@@ -347,7 +347,12 @@ public class Source implements InsertSourceHandler,
          public void onSwitchToDoc(SwitchToDocEvent event)
          {
             ensureVisible(false);
-            view_.selectTab(event.getSelectedIndex());
+            int idx = event.getSelectedIndex();
+            if (idx < tabOrder_.size())
+            {
+               idx = tabOrder_.get(idx);
+            }
+            view_.selectTab(idx);
          }
       });
 
@@ -2071,20 +2076,12 @@ public class Source implements InsertSourceHandler,
       }
    }
 
-
+   
    @Override
    public void onTabReorder(TabReorderEvent event)
    {
-      // ensure the tab order is synced to the list of editors
-      for (int i = tabOrder_.size(); i < editors_.size(); i++)
-      {
-         tabOrder_.add(i);
-      }
-      for (int i = editors_.size(); i < tabOrder_.size(); i++)
-      {
-         tabOrder_.remove(i);
-      }
-      
+      syncTabOrder();
+
       // sanity check: make sure we're moving from a valid location
       if (event.getOldPos() < 0 || event.getOldPos() >= tabOrder_.size())
       {
@@ -2107,12 +2104,30 @@ public class Source implements InsertSourceHandler,
          ids.add(editors_.get(tabOrder_.get(i)).getId());
       }
       server_.setDocOrder(ids, new VoidServerRequestCallback());
+      fireDocTabsChanged();
+   }
+
+   private void syncTabOrder()
+   {
+      // ensure the tab order is synced to the list of editors
+      for (int i = tabOrder_.size(); i < editors_.size(); i++)
+      {
+         tabOrder_.add(i);
+      }
+      for (int i = editors_.size(); i < tabOrder_.size(); i++)
+      {
+         tabOrder_.remove(i);
+      }
    }
 
    private void fireDocTabsChanged()
    {
       if (!initialized_)
          return;
+      
+      // ensure we have a tab order (we want the popup list to match the order
+      // of the tabs)
+      syncTabOrder();
 
       String[] ids = new String[editors_.size()];
       ImageResource[] icons = new ImageResource[editors_.size()];
@@ -2120,7 +2135,7 @@ public class Source implements InsertSourceHandler,
       String[] paths = new String[editors_.size()];
       for (int i = 0; i < ids.length; i++)
       {
-         EditingTarget target = editors_.get(i);
+         EditingTarget target = editors_.get(tabOrder_.get(i));
          ids[i] = target.getId();
          icons[i] = target.getIcon();
          names[i] = target.getName().getValue();

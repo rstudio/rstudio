@@ -168,20 +168,7 @@ public class DocTabLayoutPanel
       selectedTab = selectedTab.getFirstChildElement()
                                .getFirstChildElement();
 
-      Element tabBar = (Element) DomUtils.findNode(
-            getElement(),
-            true,
-            false,
-            new NodePredicate()
-            {
-               public boolean test(Node n)
-               {
-                  if (n.getNodeType() != Node.ELEMENT_NODE)
-                     return false;
-                  return ((Element) n).getClassName()
-                        .contains("gwt-TabLayoutPanelTabs");
-               }
-            });
+      Element tabBar = getTabBarElement();
 
       if (!isVisible() || !isAttached() || tabBar.getOffsetWidth() == 0)
          return; // not yet loaded
@@ -197,9 +184,7 @@ public class DocTabLayoutPanel
 
       // When tabs are closed, the overall width shrinks, and this can lead
       // to cases where there's too much empty space on the screen
-      Node lastTab = tabBarParent.getLastChild();
-      while (lastTab.getNodeType() != Node.ELEMENT_NODE)
-         lastTab = lastTab.getPreviousSibling();
+      Node lastTab = getLastChildElement(tabBarParent);
       if (lastTab == null || lastTab.getNodeType() != Node.ELEMENT_NODE)
          return;
       int edge = DomUtils.getRelativePosition(tabBarParent, Element.as(lastTab)).x 
@@ -727,10 +712,46 @@ public class DocTabLayoutPanel
       if (getWidgetCount() == 0)
          return 0;
 
-      Widget leftTabWidget = getTabWidget(0);
-      Widget rightTabWidget = getTabWidget(getWidgetCount()-1);
-      return (rightTabWidget.getAbsoluteLeft() + rightTabWidget.getOffsetWidth())
-            - leftTabWidget.getAbsoluteLeft();
+      Element parent = getTabBarElement();
+      if (parent == null)
+      {
+         return 0;
+      }
+      Element lastChild = getLastChildElement(parent);
+      if (lastChild == null)
+      {
+         return 0;
+      }
+      return lastChild.getOffsetLeft() + lastChild.getOffsetWidth();
+   }
+   
+   
+   private Element getTabBarElement()
+   {
+      return (Element) DomUtils.findNode(
+            getElement(),
+            true,
+            false,
+            new NodePredicate()
+            {
+               public boolean test(Node n)
+               {
+                  if (n.getNodeType() != Node.ELEMENT_NODE)
+                     return false;
+                  return ((Element) n).getClassName()
+                        .contains("gwt-TabLayoutPanelTabs");
+               }
+            });
+   }
+   
+   private Element getLastChildElement(Element parent)
+   {
+      Node lastTab = parent.getLastChild();
+      while (lastTab.getNodeType() != Node.ELEMENT_NODE)
+      {
+         lastTab = lastTab.getPreviousSibling();
+      }
+      return Element.as(lastTab);
    }
 
    public static final int BAR_HEIGHT = 24;
