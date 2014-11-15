@@ -413,7 +413,11 @@ public class RCompletionManager implements CompletionManager
                   InputEditorPosition end = selection.getStart();
 
                   if (currentLine.charAt(cursorColumn) == ')' && currentLine.charAt(cursorColumn - 1) == '(')
+                  {
+                     // flush cache as old completions no longer relevant
+                     requester_.flushCache();
                      end = selection.getStart().movePosition(1, true);
+                  }
 
                   input_.setSelection(new InputEditorSelection(start, end));
                   input_.replaceSelection("", false);
