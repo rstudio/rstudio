@@ -14,9 +14,13 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import java.util.Map;
+
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
+
+import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 
@@ -70,9 +74,9 @@ public class HelpInfoPane extends Composite
       
    }
    
-   public void displayParameterHelp(HelpInfo.ParsedInfo help, String paramName)
+   public void displayParameterHelp(Map<String, String> help, String paramName)
    {
-      String desc = help.getArgs().get(paramName) ;
+      String desc = help.get(paramName) ;
       if (desc == null)
       {
          clearHelp(false) ;

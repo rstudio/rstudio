@@ -14,11 +14,14 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import java.util.Map;
+
 import com.google.gwt.event.dom.client.HasMouseDownHandlers;
 import com.google.gwt.event.logical.shared.HasCloseHandlers;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
+
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
@@ -51,7 +54,7 @@ public interface CompletionPopupDisplay
    
    void setHelpVisible(boolean visible) ;
    void displayFunctionHelp(HelpInfo.ParsedInfo help) ;
-   void displayParameterHelp(HelpInfo.ParsedInfo helpInfo, String parameter) ;
+   void displayParameterHelp(Map<String, String> map, String parameter) ;
    void displayPackageHelp(HelpInfo.ParsedInfo helpInfo) ;
    /**
     * Clear out the current help info

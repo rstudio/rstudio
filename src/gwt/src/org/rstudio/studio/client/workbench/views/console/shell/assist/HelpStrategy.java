@@ -157,7 +157,23 @@ public class HelpStrategy
                                     final String parameter,
                                     final CompletionPopupDisplay display)
    {
-      String desc = info.getArgs().get(parameter) ;
+      String desc = null;
+      
+      HashMap<String, String> mapToUse = info.getArgs();
+      if (mapToUse != null)
+      {
+         desc = mapToUse.get(parameter) ;
+      }
+      
+      if (desc == null)
+      {
+         mapToUse = info.getSlots();
+         if (mapToUse != null)
+         {
+            desc = mapToUse.get(parameter);
+         }
+      }
+      
       if (desc == null)
       {
          display.setHelpVisible(false);
@@ -165,7 +181,7 @@ public class HelpStrategy
       }
       else
       {
-         display.displayParameterHelp(info, parameter) ;
+         display.displayParameterHelp(mapToUse, parameter) ;
       }
    }
    

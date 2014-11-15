@@ -16,6 +16,8 @@ package org.rstudio.studio.client.workbench.views.help.model ;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.*;
+
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NodePredicate;
 
@@ -33,6 +35,7 @@ public class HelpInfo extends JavaScriptObject
    {
       HashMap<String, String> values = new HashMap<String, String>() ;
       HashMap<String, String> args = null ;
+      HashMap<String, String> slots = null ;
 
       String html = getHTML() ;
       if (html != null)
@@ -80,6 +83,10 @@ public class HelpInfo extends JavaScriptObject
             {
                args = parseArguments(heading) ;
             }
+            if (name.equals("Slots"))
+            {
+               slots = parseSlots(heading);
+            }
             StringBuffer value = new StringBuffer() ;
             Node sibling = heading.getNextSibling() ;
             while (sibling != null
@@ -96,7 +103,49 @@ public class HelpInfo extends JavaScriptObject
       String signature = getSignature();
       if (signature == null)
          signature = defaultSignature;
-      return new ParsedInfo(getPackageName(), signature, values, args) ;
+      return new ParsedInfo(getPackageName(), signature, values, args, slots) ;
+   }
+   
+   private HashMap<String, String> parseSlots(Element heading)
+   {
+      Element table = (Element) DomUtils.findNode(heading, true, true, new NodePredicate() {
+         
+         public boolean test(Node n)
+         {
+            if (n.getNodeType() != Node.ELEMENT_NODE)
+               return false;
+            
+            Element el = (Element) n;
+            
+            return el.getTagName().toUpperCase().equals("DL");
+         }
+      });
+      
+      if (table == null)
+      {
+         assert false : "Unexpected slots format: no <dl> entry found";
+         return null;
+      }
+      
+      HashMap<String, String> results = new HashMap<String, String>();
+      NodeList<Node> children = table.getChildNodes();
+      int nChildren = children.getLength();
+      for (int i = 0; i < nChildren; i++)
+      {
+         Element child = (Element) children.getItem(i);
+         if (child.getNodeName().toUpperCase().equals("DT"))
+         {
+            String argName = child.getInnerText().replaceAll(":", "");
+            Element nextChild = (Element) children.getItem(i + 1);
+            if (nextChild.getNodeName().toUpperCase().equals("DD"))
+            {
+               String value = nextChild.getInnerHTML();
+               results.put(argName, value);
+            }
+         }
+      }
+      
+      return results;
    }
 
    private HashMap<String, String> parseArguments(Element heading)
@@ -165,15 +214,17 @@ public class HelpInfo extends JavaScriptObject
       private String signature ;
       private HashMap<String, String> values ;
       private HashMap<String, String> args ;
+      private HashMap<String, String> slots ;
 
       public ParsedInfo(String pkgName, String signature, HashMap<String, String> values,
-            HashMap<String, String> args)
+            HashMap<String, String> args, HashMap<String, String> slots)
       {
          super() ;
          this.pkgName = pkgName ;
          this.signature = signature ;
          this.values = values != null ? values : new HashMap<String, String>();
          this.args = args ;
+         this.slots = slots ;
       }
       
       public String getPackageName()
@@ -212,6 +263,11 @@ public class HelpInfo extends JavaScriptObject
       public HashMap<String, String> getArgs()
       {
          return args ;
+      }
+      
+      public HashMap<String, String> getSlots()
+      {
+         return slots ;
       }
 
       public boolean hasInfo()
