@@ -93,10 +93,15 @@ options(help_type = "html")
 {
    if (type == .rs.acCompletionTypes$FUNCTION)
       return(.rs.getHelpFunction(what, from))
-   else if (type == .rs.acCompletionTypes$ARGUMENTS)
-      return(.rs.getHelpArguments(what, from))
+   else if (type == .rs.acCompletionTypes$ARGUMENT)
+      return(.rs.getHelpArgument(what, from))
    else if (type == .rs.acCompletionTypes$PACKAGE)
       return(.rs.getHelpPackage(what))
+   else if (type %in% c(.rs.acCompletionTypes$S4_GENERIC,
+                        .rs.acCompletionTypes$S4_METHOD))
+      return(.rs.getHelp(paste(what, "-methods", sep = ""), from))
+   else if (length(from) && length(what))
+      return(.rs.getHelp(what, from))
    else
       return()
 })
@@ -114,7 +119,7 @@ options(help_type = "html")
    .rs.getHelp(topic, pkgName)
 })
 
-.rs.addFunction("getHelpArguments", function(functionName, pkgName)
+.rs.addFunction("getHelpArgument", function(functionName, pkgName)
 {
    .rs.getHelp(functionName, pkgName)
 })
@@ -220,8 +225,8 @@ options(help_type = "html")
 {
    if (type == .rs.acCompletionTypes$FUNCTION)
       .rs.showHelpTopicFunction(what, from)
-   else if (type == .rs.acCompletionTypes$ARGUMENTS)
-      .rs.showHelpTopicArguments(from)
+   else if (type == .rs.acCompletionTypes$ARGUMENT)
+      .rs.showHelpTopicArgument(from)
    else if (type == .rs.acCompletionTypes$PACKAGE)
       .rs.showHelpTopicPackage(what)
 })
@@ -245,7 +250,7 @@ options(help_type = "html")
    print(eval(call))
 })
 
-.rs.addFunction("showHelpTopicArguments", function(functionName)
+.rs.addFunction("showHelpTopicArgument", function(functionName)
 {
    topic <- functionName
    pkgName <- NULL

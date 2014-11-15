@@ -57,7 +57,7 @@ public class HelpStrategy
          case RCompletionType.PACKAGE:
             showPackageHelp(item, display);
             break;
-         case RCompletionType.ARGUMENTS:
+         case RCompletionType.ARGUMENT:
             showParameterHelp(item, display);
             break;
          default:

@@ -401,7 +401,8 @@ public class RCompletionManager implements CompletionManager
                boolean isAcceptableCharSequence = isValidForRIdentifier(ch) ||
                      (ch == ':' && prevCh == ':') ||
                      ch == '$' ||
-                     ch == '@';
+                     ch == '@' ||
+                     ch == '/'; // for file completions
                
                if (currentLine.length() > 0 &&
                      cursorColumn > 0 &&
@@ -442,6 +443,7 @@ public class RCompletionManager implements CompletionManager
    private boolean isValidForRIdentifier(char c) {
       return (c >= 'a' && c <= 'z') ||
              (c >= 'A' && c <= 'Z') ||
+             (c >= '0' && c <= '9') ||
              (c == '.') ||
              (c == '_');
    }
@@ -1406,7 +1408,7 @@ public class RCompletionManager implements CompletionManager
             return;
          }
          
-         boolean insertParen = qualifiedName.type == RCompletionType.FUNCTION;
+         boolean insertParen = qualifiedName.isFunctionType();
          
          // Don't insert a paren if there is already a '(' following
          // the cursor

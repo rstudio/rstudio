@@ -39,27 +39,52 @@ assign(x = ".rs.acCompletionTypes",
        value = list(
           UNKNOWN = 0,
           VECTOR = 1,
-          FUNCTION = 2,
-          ARGUMENTS = 3,
-          DATAFRAME = 4,
-          LIST = 5,
-          ENVIRONMENT = 6,
-          S4 = 7,
-          REFERENCE_CLASS = 8,
-          FILE = 9,
-          CHUNK = 10,
-          ROXYGEN = 11,
-          HELP = 12,
-          STRING = 13,
-          PACKAGE = 14,
-          KEYWORD = 15
+          ARRAY = 2,
+          DATAFRAME = 3,
+          LIST = 4,
+          ENVIRONMENT = 5,
+          FUNCTION = 6,
+          ARGUMENT = 7,
+          S4_CLASS = 8,
+          S4_OBJECT = 9,
+          S4_GENERIC = 10,
+          S4_METHOD = 11,
+          R5_CLASS = 12,
+          R5_OBJECT = 13,
+          FILE = 14,
+          CHUNK = 15,
+          ROXYGEN = 16,
+          HELP = 17,
+          STRING = 18,
+          PACKAGE = 19,
+          KEYWORD = 20
        )
 )
 
 .rs.addFunction("getCompletionType", function(object)
 {
-   if (is.function(object))
+   # Reference classes
+   if (inherits(object, "refObjectGenerator"))
+      .rs.acCompletionTypes$R5_CLASS
+   else if (inherits(object, "refClass"))
+      .rs.acCompletionTypes$R5_OBJECT
+      
+   # S4
+   else if (isS4(object))
+   {
+      if (inherits(object, "standardGeneric"))
+         .rs.acCompletionTypes$S4_GENERIC
+      else if (inherits(object, "MethodDefinition"))
+         .rs.acCompletionTypes$S4_METHOD
+      else
+         .rs.acCompletionTypes$S4_OBJECT
+   }
+   
+   # Base
+   else if (is.function(object))
       .rs.acCompletionTypes$FUNCTION
+   else if (is.array(object))
+      .rs.acCompletionTypes$ARRAY
    else if (inherits(object, "data.frame"))
       .rs.acCompletionTypes$DATAFRAME
    else if (is.list(object))
@@ -68,10 +93,6 @@ assign(x = ".rs.acCompletionTypes",
       .rs.acCompletionTypes$ENVIRONMENT
    else if (is.vector(object))
       .rs.acCompletionTypes$VECTOR
-   else if (isS4(object))
-      .rs.acCompletionTypes$S4
-   else if ("methods" %in% loadedNamespaces() && methods::is(object, "refClass"))
-      .rs.acCompletionTypes$REFERENCE_CLASS
    else
       .rs.acCompletionTypes$UNKNOWN
 })
@@ -303,7 +324,7 @@ assign(x = ".rs.acCompletionTypes",
          token = token,
          results = formals$formals,
          packages = formals$methods,
-         type = .rs.acCompletionTypes$ARGUMENTS,
+         type = .rs.acCompletionTypes$ARGUMENT,
          fguess = fguess,
          orderStartsWithAlnumFirst = FALSE
       )

@@ -21,6 +21,7 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
@@ -604,6 +605,13 @@ public class CompletionRequester
          this.type = RCompletionType.UNKNOWN;
       }
       
+      public boolean isFunctionType()
+      {
+         return this.type == RCompletionType.FUNCTION ||
+                this.type == RCompletionType.S4_GENERIC ||
+                this.type == RCompletionType.S4_METHOD;
+      }
+      
       @Override
       public String toString()
       {
@@ -642,17 +650,22 @@ public class CompletionRequester
          case RCompletionType.VECTOR:
             return ICONS.variable();
          case RCompletionType.FUNCTION:
+         case RCompletionType.S4_GENERIC:
+         case RCompletionType.S4_METHOD:
             return ICONS.function();
-         case RCompletionType.ARGUMENTS:
+         case RCompletionType.ARGUMENT:
             return ICONS.variable();
+         case RCompletionType.ARRAY:
          case RCompletionType.DATAFRAME:
             return ICONS.dataFrame();
          case RCompletionType.LIST:
             return ICONS.clazz();
          case RCompletionType.ENVIRONMENT:
             return ICONS.environment();
-         case RCompletionType.S4:
-         case RCompletionType.REFERENCE_CLASS:
+         case RCompletionType.S4_CLASS:
+         case RCompletionType.S4_OBJECT:
+         case RCompletionType.R5_CLASS:
+         case RCompletionType.R5_OBJECT:
             return ICONS.clazz();
          case RCompletionType.FILE:
             return ICONS.file();
