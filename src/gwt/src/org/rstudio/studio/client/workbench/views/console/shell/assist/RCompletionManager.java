@@ -45,6 +45,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.FunctionDefinition;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.CompletionResult;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
@@ -453,7 +454,7 @@ public class RCompletionManager implements CompletionManager
       String currentLine = docDisplay_.getCurrentLine();
       Position cursorPos = input_.getCursorPosition();
       int cursorColumn = cursorPos.getColumn();
-
+      
       boolean canAutocomplete = canAutoPopup_ && 
             (currentLine.length() > lookbackLimit - 1 && isValidForRIdentifier(c));
 
@@ -493,7 +494,13 @@ public class RCompletionManager implements CompletionManager
       {
          
          // Perform an auto-popup if a set number of R identifier characters
-         // have been inserted
+         // have been inserted (but only if the user has allowed it in prefs)
+         boolean autoPopupEnabled = uiPrefs_.codeComplete().getValue().equals(
+               UIPrefsAccessor.COMPLETION_ALWAYS);
+
+         if (!autoPopupEnabled)
+            return false;
+         
          final boolean canAutoPopup = checkCanAutoPopup(c, 4);
          char prevChar = docDisplay_.getCurrentLine().charAt(
                input_.getCursorPosition().getColumn() - 1); 
