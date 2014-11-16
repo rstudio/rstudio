@@ -95,11 +95,22 @@ options(help_type = "html")
    namespace <- NULL
    if (is.primitive(object))
       namespace <- "base"
-   if (is.function(object))
-      namespace <- sub("<environment: namespace:(.*)>", "\\1", perl = TRUE,
-                       capture.output(environment(object)))
-   if (isS4(object))
-      namespace <- attr(class(frame), "package")
+   else if (is.function(object))
+   {
+      envString <- capture.output(environment(object))[1]
+      match <- regexpr("<environment: namespace:(.*)>", envString, perl = TRUE)
+      if (match == -1L)
+         return()
+      
+      start <- attr(match, "capture.start")[1]
+      end <- start + attr(match, "capture.length")[1]
+      namespace <- substring(envString, start, end - 1)
+   }
+   else if (isS4(object))
+      namespace <- attr(class(object), "package")
+   
+   if (is.null(namespace))
+      return()
    
    # Get objects from that namespace
    ns <- asNamespace(namespace)
@@ -152,9 +163,30 @@ options(help_type = "html")
       return()
 })
 
-.rs.addFunction("getHelpFunction", function(name, package)
+.rs.addFunction("getHelpFunction", function(name, src, envir = parent.frame())
 {
-   .rs.getHelp(name, package)
+   # If 'src' is the name of something on the searchpath, get that object
+   # from the seach path, then attempt to get help based on that object
+   pos <- match(src, search(), nomatch = -1L)
+   if (pos > 0)
+   {
+      object <- tryCatch(get(name, pos = pos), error = function(e) NULL)
+      if (!is.null(object))
+         return(.rs.getHelpFromObject(object))
+   }
+   
+   # Otherwise, check to see if there is an object 'src' in the global env
+   # from which we can pull the object
+   container <- tryCatch(eval(parse(text = src), envir = .GlobalEnv), error = function(e) NULL)
+   if (!is.null(container))
+   {
+      object <- tryCatch(eval(call("$", container, name)), error = function(e) NULL)
+      if (!is.null(object))
+         return(.rs.getHelpFromObject(object))
+   }
+   
+   # Otherwise, try to get help in the vanilla way
+   .rs.getHelp(name, src)
 })
 
 .rs.addFunction("getHelpPackage", function(pkgName)
@@ -165,9 +197,23 @@ options(help_type = "html")
    .rs.getHelp(topic, pkgName)
 })
 
-.rs.addFunction("getHelpArgument", function(functionName, pkgName)
+.rs.addFunction("getHelpArgument", function(functionName, src)
 {
-   .rs.getHelp(functionName, pkgName)
+   # If 'src' is NULL, assume that we're trying to get something in the global env
+   # (this implies we're getting arguments from a user defined function)
+   if (is.null(src))
+      pos <- 1
+   else
+      pos <- match(src, search(), nomatch = -1L)
+   
+   if (pos > 0)
+   {
+      object <- tryCatch(get(functionName, pos = pos), error = function(e) NULL)
+      if (!is.null(object))
+         return(.rs.getHelpFromObject(object))
+   }
+   
+   .rs.getHelp(functionName, src)
 })
 
 .rs.addFunction("makeHelpCall", function(topic, package = NULL, help_type = "html")
