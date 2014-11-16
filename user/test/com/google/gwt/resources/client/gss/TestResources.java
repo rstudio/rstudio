@@ -154,6 +154,12 @@ public interface TestResources extends ClientBundle {
     String foo();
   }
 
+  /**
+   * Used to test charset at-rule.
+   */
+  interface Charset extends CssResource {
+  }
+
   ClassNameAnnotation classNameAnnotation();
 
   SomeGssResource mixin();
@@ -194,4 +200,6 @@ public interface TestResources extends ClientBundle {
   NonStandardAtRules nonStandardAtRules();
 
   NonStandardFunctions nonStandardFunctions();
+
+  Charset charset();
 }

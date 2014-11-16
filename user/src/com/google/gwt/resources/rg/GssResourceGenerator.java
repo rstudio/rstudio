@@ -102,12 +102,14 @@ import com.google.gwt.thirdparty.guava.common.base.CaseFormat;
 import com.google.gwt.thirdparty.guava.common.base.Charsets;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.thirdparty.guava.common.base.Predicates;
+import com.google.gwt.thirdparty.guava.common.base.Strings;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet.Builder;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
+import com.google.gwt.thirdparty.guava.common.io.ByteSource;
 import com.google.gwt.thirdparty.guava.common.io.Resources;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.user.rebind.StringSourceWriter;
@@ -118,6 +120,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -128,6 +132,8 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.Adler32;
 
 /**
@@ -233,6 +239,14 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
       'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
       'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', '0', '1',
       '2', '3', '4', '5', '6'};
+  // We follow CSS specification to detect the charset:
+  // - Authors using an @charset rule must place the rule at the very beginning of the style sheet,
+  // preceded by no characters.
+  // - @charset must be written literally, i.e., the 10 characters '@charset "' (lowercase, no
+  // backslash escapes), followed by the encoding name, followed by '";'.
+  // see: http://www.w3.org/TR/CSS2/syndata.html#charset
+  private static final Pattern CHARSET = Pattern.compile("^@charset \"([^\"]*)\";");
+  private static final int CHARSET_MIN_LENGTH = "@charset \"\";".length();
 
   /**
    * Returns the import prefix for a type, including the trailing hyphen.
@@ -745,9 +759,32 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
         TreeLogger branchLogger = logger.branch(TreeLogger.DEBUG,
             "Parsing GSS stylesheet " + stylesheet.toExternalForm());
         try {
-          // TODO : always use UTF-8 to read the file ?
-          String fileContent =
-              Resources.asByteSource(stylesheet).asCharSource(Charsets.UTF_8).read();
+          ByteSource byteSource = Resources.asByteSource(stylesheet);
+          // default charset
+          Charset charset = Charsets.UTF_8;
+
+          // check if the stylesheet doesn't include a @charset at-rule
+          String styleSheetCharset = extractCharset(byteSource, logger);
+          if (styleSheetCharset != null) {
+            try {
+              charset = Charset.forName(styleSheetCharset);
+            } catch (UnsupportedCharsetException e) {
+              logger.log(Type.ERROR, "Unsupported charset found: " + styleSheetCharset);
+              throw new UnableToCompleteException();
+            }
+          }
+
+          String fileContent = byteSource.asCharSource(charset).read();
+          // If the stylesheet specified a charset, we have to remove the at-rule otherwise the GSS
+          // compiler will fail.
+          if (styleSheetCharset != null) {
+            int charsetAtRuleLength = CHARSET_MIN_LENGTH + styleSheetCharset.length();
+            // replace charset at-rule by blanks to keep correct source location of the rest of
+            // the stylesheet.
+            fileContent = Strings.repeat(" ", charsetAtRuleLength) +
+                fileContent.substring(charsetAtRuleLength);
+          }
+
           sourceCodes.add(new SourceCode(stylesheet.getFile(), fileContent));
           continue;
 
@@ -772,6 +809,17 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     checkErrors();
 
     return new CssParsingResult(tree, permutationAxes, constantNameMappingBuilder.build());
+  }
+
+  private String extractCharset(ByteSource byteSource, TreeLogger logger) throws IOException {
+    String firstLine = byteSource.asCharSource(Charsets.UTF_8).readFirstLine();
+    Matcher matcher = CHARSET.matcher(firstLine);
+
+    if (matcher.matches()) {
+      return matcher.group(1);
+    }
+
+    return null;
   }
 
   private ConversionResult convertToGss(String concatenatedCss, TreeLogger logger)

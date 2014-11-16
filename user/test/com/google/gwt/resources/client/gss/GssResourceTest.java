@@ -16,6 +16,7 @@
 
 package com.google.gwt.resources.client.gss;
 
+import com.google.gwt.resources.client.gss.TestResources.Charset;
 import com.google.gwt.resources.client.gss.TestResources.ClassNameAnnotation;
 import com.google.gwt.resources.client.gss.TestResources.EmptyClass;
 import com.google.gwt.resources.client.gss.TestResources.NonStandardAtRules;
@@ -170,6 +171,12 @@ public class GssResourceTest extends RenamingClassNameTest {
     String css = nonStandardFunctions.getText();
     assertTrue(css.contains("expression("));
     assertTrue(css.contains("progid:DXImageTransform.Microsoft.gradient("));
+  }
+
+  public void testCharset() {
+    Charset charset = res().charset();
+
+    assertEquals("div{content:\"\\008305\\008306\\008307\"}", charset.getText());
   }
 
   private String runtimeExpectedCss(String color, String padding, String foo) {

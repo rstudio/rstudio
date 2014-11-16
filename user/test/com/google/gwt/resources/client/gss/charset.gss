@@ -1,0 +1,5 @@
+@charset "GB18030";
+
+div {
+  content: "Γ©άβάΨ";
+}
