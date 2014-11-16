@@ -285,7 +285,7 @@ assign(x = ".rs.acCompletionTypes",
    else if (length(splat) == 2)
    {
       namespaceString <- splat[[1]]
-      functionString <- splat[[2]]
+      functionString <- string <- splat[[2]]
       
       if (namespaceString %in% loadedNamespaces())
       {

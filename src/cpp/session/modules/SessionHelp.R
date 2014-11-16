@@ -89,7 +89,7 @@ options(help_type = "html")
       sort(utils:::matchAvailableTopics(prefix))
 })
 
-.rs.addFunction("getHelpFromObject", function(object)
+.rs.addFunction("getHelpFromObject", function(object, envir)
 {
    # Try to find the associated namespace of the object
    namespace <- NULL
@@ -130,27 +130,37 @@ options(help_type = "html")
    
    # Use that name for the help lookup
    objectName <- objectNames[[i]]
-   .rs.getHelp(topic = objectName, package = namespace)
+   result <- .rs.getHelp(topic = objectName, package = namespace)
+   if (length(result))
+      return(result)
    
+   # If the previous lookup failed, perhaps it was an S3 method for which no
+   # documentation was available. Fall back to generic documentation.
+   dotPos <- gregexpr(".", objectName, fixed = TRUE)[[1]]
+   for (i in seq_along(dotPos))
+   {
+      maybeGeneric <- substring(objectName, 1, dotPos[[i]] - 1)
+      methods <- suppressWarnings(
+         tryCatch(
+            eval(substitute(methods(x), list(x = maybeGeneric)), envir = envir),
+            error = function(e) NULL
+         )
+      )
+      
+      if (objectName %in% methods)
+      {
+         result <- .rs.getHelp(maybeGeneric)
+         if (length(result))
+            return(result)
+      }
+   }
+   
+   # Fail -- return NULL
+   NULL
 })
 
 .rs.addJsonRpcHandler("get_help", function(what, from, type)
 {
-   if (type == .rs.acCompletionTypes$OPTION)
-      return(.rs.getHelp("options", "base", subset = FALSE))
-   
-   # If 'what' looks like an expression, evaluate it and get its help
-   if (regexpr("[$@:]", what, perl = TRUE) > 0)
-   {
-      object <- tryCatch(
-         eval(parse(text = what), envir = parent.frame()),
-         error = function(e) NULL
-      )
-      
-      if (!is.null(object))
-         return(.rs.getHelpFromObject(object))
-   }
-   
    if (type %in% c(.rs.acCompletionTypes$S4_GENERIC,
                    .rs.acCompletionTypes$S4_METHOD))
    {
@@ -169,7 +179,7 @@ options(help_type = "html")
    if (type == .rs.acCompletionTypes$FUNCTION)
       return(.rs.getHelpFunction(what, from))
    else if (type == .rs.acCompletionTypes$ARGUMENT)
-      return(.rs.getHelpArgument(what, from))
+      return(.rs.getHelpArgument(what, from, parent.frame()))
    else if (type == .rs.acCompletionTypes$PACKAGE)
       return(.rs.getHelpPackage(what))
    else if (length(from) && length(what))
@@ -187,7 +197,7 @@ options(help_type = "html")
    {
       object <- tryCatch(get(name, pos = pos), error = function(e) NULL)
       if (!is.null(object))
-         return(.rs.getHelpFromObject(object))
+         return(.rs.getHelpFromObject(object, envir))
    }
    
    # Otherwise, check to see if there is an object 'src' in the global env
@@ -197,7 +207,7 @@ options(help_type = "html")
    {
       object <- tryCatch(eval(call("$", container, name)), error = function(e) NULL)
       if (!is.null(object))
-         return(.rs.getHelpFromObject(object))
+         return(.rs.getHelpFromObject(object, envir))
    }
    
    # Otherwise, try to get help in the vanilla way
@@ -212,20 +222,24 @@ options(help_type = "html")
    .rs.getHelp(topic, pkgName)
 })
 
-.rs.addFunction("getHelpArgument", function(functionName, src)
+.rs.addFunction("getHelpArgument", function(functionName, src, envir)
 {
-   # If 'src' is NULL, assume that we're trying to get something in the global env
-   # (this implies we're getting arguments from a user defined function)
    if (is.null(src))
-      pos <- 1
-   else
-      pos <- match(src, search(), nomatch = -1L)
-   
-   if (pos > 0)
    {
-      object <- tryCatch(get(functionName, pos = pos), error = function(e) NULL)
+      object <- .rs.getAnywhere(functionName, envir)
       if (!is.null(object))
-         return(.rs.getHelpFromObject(object))
+         return(.rs.getHelpFromObject(object, envir))
+   }
+   else
+   {
+      pos <- match(src, search(), nomatch = -1L)
+      
+      if (pos > 0)
+      {
+         object <- tryCatch(get(functionName, pos = pos), error = function(e) NULL)
+         if (!is.null(object))
+            return(.rs.getHelpFromObject(object, envir))
+      }
    }
    
    .rs.getHelp(functionName, src)
@@ -238,7 +252,7 @@ options(help_type = "html")
                    PACKAGE = package))
 })
 
-.rs.addFunction("getHelp", function(topic, package = "", subset = TRUE)
+.rs.addFunction("getHelp", function(topic, package = "")
 {
    # Completions from the search path might have the 'package:' prefix, so
    # lets strip that out.
@@ -277,10 +291,10 @@ options(help_type = "html")
       )
    }
    
-   .rs.processHelpFileHTML(helpfiles, subset = subset)
+   .rs.processHelpFileHTML(helpfiles)
 })
 
-.rs.addFunction("processHelpFileHTML", function(helpfiles, subset = TRUE)
+.rs.addFunction("processHelpFileHTML", function(helpfiles)
 {
    if (length(helpfiles) <= 0)
       return ()
@@ -305,17 +319,14 @@ options(help_type = "html")
    }
    else
    {
-      html <- substring(html, match + 6, match + attr(match, 'match.length') - 1 - 7)
+      html = substring(html, match + 6, match + attr(match, 'match.length') - 1 - 7)
       
-      if (subset)
-      {
-         slotsMatch <- suppressWarnings(regexpr('<h3>Slots</h3>', html))
-         detailsMatch <- suppressWarnings(regexpr('<h3>Details</h3>', html))
-         
-         match <- if (slotsMatch > detailsMatch) slotsMatch else detailsMatch
-         if (match >= 0)
-            html = substring(html, 1, match - 1)
-      }
+      slotsMatch <- suppressWarnings(regexpr('<h3>Slots</h3>', html))
+      detailsMatch <- suppressWarnings(regexpr('<h3>Details</h3>', html))
+      
+      match <- if (slotsMatch > detailsMatch) slotsMatch else detailsMatch
+      if (match >= 0)
+         html = substring(html, 1, match - 1)
    }
    
    obj = tryCatch(get(topic, pos=globalenv()),
