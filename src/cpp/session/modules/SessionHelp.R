@@ -87,7 +87,41 @@ options(help_type = "html")
       sort(utils:::matchAvailableTopics("", prefix))
    else
       sort(utils:::matchAvailableTopics(prefix))
-});
+})
+
+.rs.addFunction("getHelpFromObject", function(object)
+{
+   # Try to find the associated namespace of the object
+   namespace <- NULL
+   if (is.primitive(object))
+      namespace <- "base"
+   if (is.function(object))
+      namespace <- sub("<environment: namespace:(.*)>", "\\1", perl = TRUE,
+                       capture.output(environment(object)))
+   if (isS4(object))
+      namespace <- attr(class(frame), "package")
+   
+   # Get objects from that namespace
+   ns <- asNamespace(namespace)
+   objectNames <- objects(ns)
+   objects <- mget(objectNames, envir = ns)
+   
+   # Find which object is actually identical to the one we have
+   success <- FALSE
+   for (i in seq_along(objects))
+   {
+      if (identical(object, objects[[i]], ignore.environment = TRUE))
+      {
+         success <- TRUE
+         break
+      }
+   }
+   
+   # Use that name for the help lookup
+   objectName <- objectNames[[i]]
+   .rs.getHelp(topic = objectName, package = namespace)
+   
+})
 
 .rs.addJsonRpcHandler("get_help", function(what, from, type)
 {
