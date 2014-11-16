@@ -68,7 +68,7 @@ assign(x = ".rs.acCompletionTypes",
       .rs.acCompletionTypes$R5_CLASS
    else if (inherits(object, "refClass"))
       .rs.acCompletionTypes$R5_OBJECT
-      
+   
    # S4
    else if (isS4(object))
    {
@@ -511,7 +511,7 @@ assign(x = ".rs.acCompletionTypes",
       if (is.expression(parsed))
       {
          call <- parsed[[1]][[1]]
-         if (as.character(call) == "[")
+         if (as.character(call[[1]]) == "[")
          {
             objectName <- parsed[[1]][[2]]
             object <- .rs.getAnywhere(objectName, envir = envir)
@@ -546,7 +546,7 @@ assign(x = ".rs.acCompletionTypes",
 })
 
 ## NOTE: for '@' as well (set with S4 bit)
-.rs.addFunction("getCompletionsDollar", function(token, string, envir, isS4)
+.rs.addFunction("getCompletionsDollar", function(token, string, envir, isAt)
 {
    result <- .rs.emptyCompletions(excludeOtherCompletions = TRUE)
    
@@ -557,13 +557,20 @@ assign(x = ".rs.acCompletionTypes",
    object <- .rs.getAnywhere(string, envir)
    if (!is.null(object))
    {
-      if (isS4 && !inherits(object, "classRepresentation"))
+      names <- character()
+      type <- numeric()
+      
+      if (isAt)
       {
-         names <- slotNames(object)
-         type <- numeric(length(names))
-         for (i in seq_along(names))
+         if (isS4(object) && !inherits(object, "classRepresentation"))
          {
-            type[[i]] <- .rs.getCompletionType(eval(call("@", object, names[[i]])))
+            tryCatch({
+               names <- slotNames(object)
+               type <- numeric(length(names))
+               for (i in seq_along(names))
+                  type[[i]] <- .rs.getCompletionType(eval(call("@", object, names[[i]])))
+            }, error = function(e) NULL
+            )
          }
       }
       else
@@ -759,24 +766,31 @@ assign(x = ".rs.acCompletionTypes",
 })
 
 .rs.addFunction("getCompletionsAttr", function(token,
-                                               functionCall)
+                                               functionCall,
+                                               envir)
 {
    result <- tryCatch({
       wrapper <- function(x, which, exact = FALSE) {}
       matched <- .rs.matchCall(wrapper, functionCall)
       if (is.null(matched[["x"]]))
          return(.rs.emptyCompletions())
-      objectName <- as.character(matched[["x"]])
-      object <- .rs.getAnywhere(objectName)
+      objectExpr <- matched[["x"]]
+      objectName <- capture.output(print(objectExpr))
+      object <- eval(objectExpr, envir = envir)
+      
       completions <- .rs.selectFuzzyMatches(
          names(attributes(object)),
          token
       )
-      .rs.makeCompletions(token,
-                          completions,
-                          paste("attributes(", objectName, ")", sep = ""),
-                          quote = TRUE,
-                          type = .rs.acCompletionTypes$STRING)
+      
+      result <- .rs.makeCompletions(
+         token,
+         completions,
+         paste("attributes(", objectName, ")", sep = ""),
+         quote = TRUE,
+         type = .rs.acCompletionTypes$STRING
+      )
+      
    }, error = function(e) .rs.emptyCompletions())
    result
 })
@@ -855,7 +869,7 @@ assign(x = ".rs.acCompletionTypes",
    # attr
    completions <- if (string[[1]] == "attr")
    {
-      .rs.getCompletionsAttr(token, functionCall)
+      .rs.getCompletionsAttr(token, functionCall, parent.frame())
    }
    
    # getOption
