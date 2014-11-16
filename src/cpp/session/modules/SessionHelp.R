@@ -139,6 +139,18 @@ options(help_type = "html")
    if (type == .rs.acCompletionTypes$OPTION)
       return(.rs.getHelp("options", "base", subset = FALSE))
    
+   # If 'what' looks like an expression, evaluate it and get its help
+   if (regexpr("[$@:]", what, perl = TRUE) > 0)
+   {
+      object <- tryCatch(
+         eval(parse(text = what), envir = parent.frame()),
+         error = function(e) NULL
+      )
+      
+      if (!is.null(object))
+         return(.rs.getHelpFromObject(object))
+   }
+   
    if (type %in% c(.rs.acCompletionTypes$S4_GENERIC,
                    .rs.acCompletionTypes$S4_METHOD))
    {
