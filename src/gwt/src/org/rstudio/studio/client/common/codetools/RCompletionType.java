@@ -37,4 +37,5 @@ public class RCompletionType
         public static final int STRING = 18;
         public static final int PACKAGE = 19;
         public static final int KEYWORD = 20; 
+        public static final int OPTION = 21;
 }

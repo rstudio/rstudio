@@ -57,7 +57,8 @@ assign(x = ".rs.acCompletionTypes",
           HELP = 17,
           STRING = 18,
           PACKAGE = 19,
-          KEYWORD = 20
+          KEYWORD = 20,
+          OPTION = 21
        )
 )
 
@@ -698,13 +699,27 @@ assign(x = ".rs.acCompletionTypes",
                        type = .rs.acCompletionTypes$PACKAGE)
 })
 
+.rs.addFunction("getCompletionsData", function(token)
+{
+   availableData <- data()$results[, "Item"]
+   # Don't include aliases
+   availableData <- grep(" ", availableData, perl = TRUE, value = TRUE, invert = TRUE)
+   completions <- .rs.selectFuzzyMatches(availableData, token)
+   .rs.makeCompletions(token,
+                       completions,
+                       "datasets",
+                       quote = TRUE,
+                       type = .rs.acCompletionTypes$STRING)
+})
+
 .rs.addFunction("getCompletionsGetOption", function(token)
 {
    allOptions <- names(options())
    .rs.makeCompletions(token = token,
                        results = .rs.selectFuzzyMatches(allOptions, token),
+                       package = "options",
                        quote = TRUE,
-                       type = .rs.acCompletionTypes$STRING)
+                       type = .rs.acCompletionTypes$OPTION)
 })
 
 .rs.addFunction("getCompletionsOptions", function(token)
@@ -716,7 +731,7 @@ assign(x = ".rs.acCompletionTypes",
    
    .rs.makeCompletions(token,
                        completions,
-                       type = .rs.acCompletionTypes$STRING)
+                       type = .rs.acCompletionTypes$OPTION)
 })
 
 .rs.addFunction("getCompletionsSearchPath", function(token, overrideInsertParens = FALSE)
@@ -828,6 +843,11 @@ assign(x = ".rs.acCompletionTypes",
    # Roxygen
    if (.rs.acContextTypes$ROXYGEN %in% type)
       return(.rs.attemptRoxygenTagCompletion(token))
+   
+   if (.rs.acContextTypes$FUNCTION %in% type &&
+       string[[1]] == "data" &&
+       numCommas[[1]] == 0)
+      return(.rs.getCompletionsData(token))
    
    # No information on completions other than token
    if (!length(string))

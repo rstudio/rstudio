@@ -34,8 +34,8 @@ public class HelpInfo extends JavaScriptObject
    public final ParsedInfo parse(String defaultSignature)
    {
       HashMap<String, String> values = new HashMap<String, String>() ;
-      HashMap<String, String> args = null ;
-      HashMap<String, String> slots = null ;
+      HashMap<String, String> args = new HashMap<String, String>();
+      HashMap<String, String> slots = new HashMap<String, String>();
 
       String html = getHTML() ;
       if (html != null)
@@ -56,7 +56,12 @@ public class HelpInfo extends JavaScriptObject
                child = child.getNextSibling() ;
             }
          }
-   
+         
+         // parse all description lists
+         NodeList<Element> descriptionLists = div.getElementsByTagName("dl");
+         for (int i = 0; i < descriptionLists.getLength(); i++)
+            parseDescriptionList(args, descriptionLists.getItem(i));
+         
          // get all h2 and h3 headings
          NodeList<Element> h2headings = div.getElementsByTagName("h2") ;
          NodeList<Element> h3headings = div.getElementsByTagName("h3") ;
@@ -81,11 +86,11 @@ public class HelpInfo extends JavaScriptObject
             String name = heading.getInnerText() ;
             if (name.equals("Arguments"))
             {
-               args = parseArguments(heading) ;
+               parseArguments(args, heading);
             }
             if (name.equals("Slots"))
             {
-               slots = parseSlots(heading);
+               parseDescriptionList(slots, heading);
             }
             StringBuffer value = new StringBuffer() ;
             Node sibling = heading.getNextSibling() ;
@@ -106,7 +111,8 @@ public class HelpInfo extends JavaScriptObject
       return new ParsedInfo(getPackageName(), signature, values, args, slots) ;
    }
    
-   private HashMap<String, String> parseSlots(Element heading)
+   private void parseDescriptionList(HashMap<String, String> args,
+                                     Element heading)
    {
       Element table = (Element) DomUtils.findNode(heading, true, true, new NodePredicate() {
          
@@ -124,10 +130,9 @@ public class HelpInfo extends JavaScriptObject
       if (table == null)
       {
          assert false : "Unexpected slots format: no <dl> entry found";
-         return null;
+         return ;
       }
       
-      HashMap<String, String> results = new HashMap<String, String>();
       NodeList<Node> children = table.getChildNodes();
       int nChildren = children.getLength();
       for (int i = 0; i < nChildren; i++)
@@ -140,15 +145,14 @@ public class HelpInfo extends JavaScriptObject
             if (nextChild.getNodeName().toUpperCase().equals("DD"))
             {
                String value = nextChild.getInnerHTML();
-               results.put(argName, value);
+               args.put(argName, value);
             }
          }
       }
-      
-      return results;
    }
 
-   private HashMap<String, String> parseArguments(Element heading)
+   private void parseArguments(HashMap<String, String> args,
+                               Element heading)
    {
       Element table = (Element) DomUtils.findNode(heading, true, true, 
                                                   new NodePredicate() {
@@ -167,11 +171,9 @@ public class HelpInfo extends JavaScriptObject
       if (table == null)
       {
          assert false : "Unexpected help format, no argblock table found" ; 
-         return null ;
+         return;
       }
 
-      HashMap<String, String> result = new HashMap<String, String>() ;
-      
       TableElement t = (TableElement) table ;
       NodeList<TableRowElement> rows = t.getRows() ;
       for (int i = 0; i < rows.getLength(); i++)
@@ -189,11 +191,9 @@ public class HelpInfo extends JavaScriptObject
          // split them up if necessary (duplicate the help across args)
          String[] argNameTextSplat = argNameText.split("\\s*,\\s*");
          for (int j = 0; j < argNameTextSplat.length; j++)
-            result.put(argNameTextSplat[j], argValueHtml);
+            args.put(argNameTextSplat[j], argValueHtml);
          
       }
-      
-      return result ;
    }
 
    private final native String getHTML() /*-{
