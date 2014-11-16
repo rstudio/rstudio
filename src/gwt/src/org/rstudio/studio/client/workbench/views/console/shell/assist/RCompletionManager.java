@@ -795,12 +795,6 @@ public class RCompletionManager implements CompletionManager
       if (isLineInComment(firstLine) && !isLineInRoxygenComment(firstLine))
          return false;
       
-      // don't auto-insert if we're within a comment
-      if (!StringUtil.stripRComment(firstLine).equals(firstLine))
-      {
-         canAutoInsert = false;
-      }
-      
       // don't auto-complete with tab on lines with only whitespace,
       // if the insertion character was a tab (unless the user has opted in)
       if (!uiPrefs_.allowTabMultilineCompletion().getValue())
