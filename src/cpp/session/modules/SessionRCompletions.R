@@ -701,13 +701,20 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getCompletionsData", function(token)
 {
-   availableData <- data()$results[, "Item"]
+   availableData <- data()$results
+   
    # Don't include aliases
-   availableData <- grep(" ", availableData, perl = TRUE, value = TRUE, invert = TRUE)
-   completions <- .rs.selectFuzzyMatches(availableData, token)
+   indices <- intersect(
+      which(.rs.fuzzyMatches(availableData[, "Item"], token)),
+      grep(" ", availableData[, "Item"], fixed = TRUE, invert = TRUE)
+   )
+   
+   results <- availableData[indices, "Item"]
+   packages <- availableData[indices, "Package"]
+   
    .rs.makeCompletions(token,
-                       completions,
-                       "datasets",
+                       results,
+                       packages,
                        quote = TRUE,
                        type = .rs.acCompletionTypes$STRING)
 })
