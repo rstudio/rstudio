@@ -503,9 +503,9 @@ if(RSTUDIO_BUNDLE_QT)
                        ${QT_BINARY_DIR}/Qt5OpenGL${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5Multimedia${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5MultimediaWidgets${LIB_SUFFIX}.dll
-                       ${QT_BINARY_DIR}/icudt51.dll
-                       ${QT_BINARY_DIR}/icuin51.dll
-                       ${QT_BINARY_DIR}/icuuc51.dll
+                       ${QT_BINARY_DIR}/icudt53.dll
+                       ${QT_BINARY_DIR}/icuin53.dll
+                       ${QT_BINARY_DIR}/icuuc53.dll
                        ${QT_BINARY_DIR}/libwinpthread-1.dll
                        ${QT_BINARY_DIR}/libstdc++-6.dll
                        ${QT_BINARY_DIR}/libgcc_s_dw2-1.dll
