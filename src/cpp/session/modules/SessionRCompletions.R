@@ -239,10 +239,10 @@ assign(x = ".rs.acCompletionTypes",
       keep <- .rs.fuzzyMatches(formals, token) & 
          !(formals %in% names(functionCall)) ## leave out formals already in call
       
-      list(
+      return(list(
          formals = formals[keep],
          methods = methods[keep]
-      )
+      ))
       
    }, error = function(e) NULL
    )

@@ -261,13 +261,9 @@
 .rs.addFunction("safeEval", function(call, envir)
 {
    if (.rs.isSafeCall(call, envir))
-   {
-      return(eval(call, envir = envir))
-   }
+      return(tryCatch(eval(call, envir = envir), error = function(e) NULL))
    else
-   {
       return(NULL)
-   }
 })
 
 .rs.addFunction("isSafeCall", function(call, envir)
@@ -323,6 +319,9 @@
          }
       }
    }
+   
+   TRUE
+   
 })
 
 .rs.addFunction("resolveObjectSource", function(object, envir)
