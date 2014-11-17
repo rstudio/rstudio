@@ -124,7 +124,7 @@ options(help_type = "html")
    
    objectNames <- c(
       objects(ns, all.names = TRUE),
-      unname(datasets$results[, "Item"])
+      unname(grep(" ", datasets$results[, "Item"], fixed = TRUE, value = TRUE, invert = TRUE))
    )
    objects <- mget(objectNames, envir = ns, inherits = TRUE)
    
