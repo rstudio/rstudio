@@ -599,3 +599,15 @@
    list(values = values,
         names = names)
 })
+
+.rs.addFunction("getDollarNamesMethod", function(object)
+{
+   classes <- class(object)
+   for (class in classes)
+   {
+      method <- .rs.getAnywhere(paste(".DollarNames", class, sep = "."))
+      if (!is.null(method))
+         return(method)
+   }
+   NULL
+})

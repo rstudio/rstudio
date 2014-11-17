@@ -581,23 +581,22 @@ assign(x = ".rs.acCompletionTypes",
       }
       else
       {
-         if (isS4(object) && !inherits(object, "classRepresentation"))
+         names <- character()
+         
+         # Check to see if an overloadd .DollarNames method has been provided,
+         # and use that to resolve names if possible.
+         dollarNamesMethod <- .rs.getDollarNamesMethod(object)
+         if (!is.null(dollarNamesMethod))
          {
-            # Check to see if an overloaded .DollarNames method has been provided,
-            # and use that to resolve names if possible.
-            .DollarNamesMethods <- evalq(methods(".DollarNames"), envir = envir)
-            classes <- class(object)
-            for (class in classes)
-            {
-               if (paste(".DollarNames", class, sep = ".") %in% .DollarNamesMethods)
-               {
-                  names <- .DollarNames(object)
-               }
-            }
+            names <-  dollarNamesMethod(object)
          }
          else
          {
-            names <- .rs.getNames(object)
+            # Don't allow S4 objects for dollar name resolution
+            if (!isS4(object))
+            {
+               names <- .rs.getNames(object)
+            }
          }
          
          type <- numeric(length(names))
