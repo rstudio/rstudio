@@ -1342,8 +1342,10 @@ public class GwtAstBuilder {
 
     private void replaceLambdaWithInnerClassAllocation(LambdaExpression x, SourceInfo info,
         JClassType innerLambdaClass, JConstructor ctor, SyntheticArgumentBinding[] synthArgs) {
-      // Finally, we replace the LambdaExpression with new InnerLambdaClass(this, local1, local2, ...);
-      JNewInstance allocLambda = new JNewInstance(info, ctor, innerLambdaClass);
+      // Finally, we replace the LambdaExpression with
+      // new InnerLambdaClass(this, local1, local2, ...);
+      assert ctor.getEnclosingType() == innerLambdaClass;
+      JNewInstance allocLambda = new JNewInstance(info, ctor);
       // only pass 'this' if lambda refers to fields on outer class
       if (x.shouldCaptureInstance) {
         allocLambda.addArg(new JThisRef(info, innerLambdaClass.getEnclosingType()));
@@ -1392,21 +1394,23 @@ public class GwtAstBuilder {
       return outerParam;
     }
 
-    private JClassType createInnerClass(String name, FunctionalExpression x, JInterfaceType funcType, SourceInfo info) {
+    private JClassType createInnerClass(String name, FunctionalExpression x,
+        JInterfaceType funcType, SourceInfo info) {
       JClassType innerLambdaClass = new JClassType(info, name + "$Type", false, true);
       innerLambdaClass.setEnclosingType((JDeclaredType) typeMap.get(x.binding.declaringClass));
       innerLambdaClass.addImplements(funcType);
       innerLambdaClass.setSuperClass(javaLangObject);
 
-      createSyntheticMethod(info, CLINIT_NAME, innerLambdaClass, JPrimitiveType.VOID, false, true, true,
-          AccessModifier.PRIVATE);
+      createSyntheticMethod(info, CLINIT_NAME, innerLambdaClass, JPrimitiveType.VOID, false, true,
+          true, AccessModifier.PRIVATE);
 
-      createSyntheticMethod(info, INIT_NAME, innerLambdaClass, JPrimitiveType.VOID, false, false, true,
-          AccessModifier.PRIVATE);
+      createSyntheticMethod(info, INIT_NAME, innerLambdaClass, JPrimitiveType.VOID, false, false,
+          true, AccessModifier.PRIVATE);
 
       // Add a getClass() implementation for all non-Object classes.
       createSyntheticMethod(info, "getClass", innerLambdaClass, javaLangClass, false, false, false,
-          AccessModifier.PUBLIC, new JReturnStatement(info, new JClassLiteral(info, innerLambdaClass)));
+          AccessModifier.PUBLIC,
+          new JReturnStatement(info, new JClassLiteral(info, innerLambdaClass)));
 
       return innerLambdaClass;
     }
@@ -1755,9 +1759,10 @@ public class GwtAstBuilder {
 
         Iterator<JParameter> paramIt = samMethod.getParams().iterator();
         // here's where it gets tricky. A method can have an implicit qualifier, e.g.
-        // String::compareToIgnoreCase, it's non-static, it only has one argument, but it binds to Comparator<T>
-        // The first argument serves as the qualifier, so for example, the method dispatch looks like this
-        // int compare(T a, T b) { a.compareTo(b); }
+        // String::compareToIgnoreCase, it's non-static, it only has one argument, but it binds to
+        // Comparator<T>.
+        // The first argument serves as the qualifier, so for example, the method dispatch looks
+        // like this: int compare(T a, T b) { a.compareTo(b); }
         if (!haveReceiver && !referredMethod.isStatic() && instance == null &&
             samMethod.getParams().size() == referredMethod.getParams().size() + 1) {
           // the instance qualifier is the first parameter in this case.
@@ -1767,8 +1772,7 @@ public class GwtAstBuilder {
 
         if (referredMethod.isConstructor()) {
           // Constructors must be invoked with JNewInstance
-          samCall = new JNewInstance(info, (JConstructor) referredMethod,
-              referredMethod.getEnclosingType());
+          samCall = new JNewInstance(info, (JConstructor) referredMethod);
           for (JField enclosingInstance : enclosingInstanceFields) {
             samCall.addArg(new JFieldRef(enclosingInstance.getSourceInfo(), thisRef,
                 enclosingInstance, innerLambdaClass));
@@ -1820,13 +1824,16 @@ public class GwtAstBuilder {
 
         // add trailing new T[] { initializers } var-arg array
         if (varArgInitializers != null) {
-          JArrayType lastParamType = (JArrayType) typeMap.get(x.binding.parameters[x.binding.parameters.length - 1]);
-          JNewArray newArray = JNewArray.createInitializers(info, lastParamType, varArgInitializers);
+          JArrayType lastParamType =
+              (JArrayType) typeMap.get(x.binding.parameters[x.binding.parameters.length - 1]);
+          JNewArray newArray =
+              JNewArray.createInitializers(info, lastParamType, varArgInitializers);
           samCall.addArg(newArray);
         }
 
         if (samMethod.getType() != JPrimitiveType.VOID) {
-          JExpression samExpression = boxOrUnboxExpression(samCall, x.binding.returnType, samBinding.returnType);
+          JExpression samExpression = boxOrUnboxExpression(samCall, x.binding.returnType,
+              samBinding.returnType);
           samMethodBody.getBlock().addStmt(new JReturnStatement(info, simplify(samExpression, x)));
         } else {
           samMethodBody.getBlock().addStmt(samCall.makeStatement());
@@ -1848,7 +1855,8 @@ public class GwtAstBuilder {
       assert lambdaCtor != null;
 
       // Replace the ReferenceExpression qualifier::method with new lambdaType(qualifier)
-      JNewInstance allocLambda = new JNewInstance(info, lambdaCtor, innerLambdaClass);
+      assert lambdaCtor.getEnclosingType() == innerLambdaClass;
+      JNewInstance allocLambda = new JNewInstance(info, lambdaCtor);
       JExpression qualifier = (JExpression) pop();
       if (haveReceiver) {
         // pop qualifier from stack
@@ -2859,7 +2867,8 @@ public class GwtAstBuilder {
       block.addStmt(new JReturnStatement(info, returnValue));
     }
 
-    private JDeclarationStatement makeDeclaration(SourceInfo info, JLocal local, JExpression value) {
+    private JDeclarationStatement makeDeclaration(SourceInfo info, JLocal local,
+        JExpression value) {
       return new JDeclarationStatement(info, new JLocalRef(info, local), value);
     }
 
@@ -3151,7 +3160,7 @@ public class GwtAstBuilder {
       MethodBinding b = x.binding;
       assert b.isConstructor();
       JConstructor ctor = (JConstructor) typeMap.get(b);
-      JMethodCall call = new JNewInstance(info, ctor, curClass.type);
+      JMethodCall call = new JNewInstance(info, ctor);
       JExpression qualExpr = pop(qualifier);
 
       // Enums: hidden arguments for the name and id.
@@ -3947,7 +3956,8 @@ public class GwtAstBuilder {
   }
 
   private JMethod createSyntheticMethod(SourceInfo info, String name, JDeclaredType enclosingType,
-      JType returnType, boolean isAbstract, boolean isStatic, boolean isFinal, AccessModifier access, JStatement ... statements) {
+      JType returnType, boolean isAbstract, boolean isStatic, boolean isFinal,
+      AccessModifier access, JStatement ... statements) {
     JMethod method =
         new JMethod(info, name, enclosingType, returnType, isAbstract, isStatic, isFinal, access);
     method.freezeParamTypes();

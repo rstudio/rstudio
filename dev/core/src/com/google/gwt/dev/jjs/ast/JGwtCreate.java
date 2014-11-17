@@ -30,8 +30,7 @@ import java.util.List;
  */
 public class JGwtCreate extends JExpression {
 
-  public static JExpression createInstantiationExpression(SourceInfo info, JClassType classType,
-      JDeclaredType enclosingType) {
+  public static JExpression createInstantiationExpression(SourceInfo info, JClassType classType) {
     /*
      * Find the appropriate (noArg) constructor. In our AST, constructors are
      * instance methods that should be qualified with a new expression.
@@ -49,7 +48,7 @@ public class JGwtCreate extends JExpression {
       return null;
     }
     // Call it, using a new expression as a qualifier
-    return new JNewInstance(info, noArgCtor, enclosingType);
+    return new JNewInstance(info, noArgCtor);
   }
 
   static List<String> nameOf(Collection<? extends JType> types) {
@@ -58,17 +57,6 @@ public class JGwtCreate extends JExpression {
       result = Lists.add(result, BinaryName.toSourceName(type.getName()));
     }
     return Lists.normalizeUnmodifiable(result);
-  }
-
-  private static ArrayList<JExpression> createInstantiationExpressions(SourceInfo info,
-      Collection<JClassType> classTypes, JDeclaredType enclosingType) {
-    ArrayList<JExpression> exprs = new ArrayList<JExpression>();
-    for (JClassType classType : classTypes) {
-      JExpression expr = createInstantiationExpression(info, classType, enclosingType);
-      assert expr != null;
-      exprs.add(expr);
-    }
-    return exprs;
   }
 
   private final ArrayList<JExpression> instantiationExpressions;

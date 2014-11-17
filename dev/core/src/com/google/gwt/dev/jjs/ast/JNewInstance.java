@@ -23,32 +23,21 @@ import com.google.gwt.dev.jjs.SourceInfo;
 public class JNewInstance extends JMethodCall {
 
   /**
-   * The enclosing type of this new operation, used to compute clinit.
-   */
-  private final JDeclaredType enclosingType;
-
-  /**
    * Initialize a new instance operation equivalent to another one. The new
    * object has no arguments on initialization. This forces the caller to
    * potentially deal with cloning objects if needed.
    */
   public JNewInstance(JNewInstance other) {
     super(other, null);
-    this.enclosingType = other.enclosingType;
   }
 
-  public JNewInstance(SourceInfo info, JConstructor ctor, JDeclaredType enclosingType) {
+  public JNewInstance(SourceInfo info, JConstructor ctor) {
     super(info, null, ctor);
-    this.enclosingType = enclosingType;
     setStaticDispatchOnly();
   }
 
   public JClassType getClassType() {
     return getTarget().getEnclosingType();
-  }
-
-  public JDeclaredType getEnclosingType() {
-    return enclosingType;
   }
 
   @Override
@@ -61,13 +50,9 @@ public class JNewInstance extends JMethodCall {
     return getTarget().getNewType();
   }
 
-  public boolean hasClinit() {
-    return getEnclosingType().checkClinitTo(getTarget().getEnclosingType());
-  }
-
   @Override
   public boolean hasSideEffects() {
-    if (hasClinit()) {
+    if (getTarget().getEnclosingType().hasClinit()) {
       return true;
     }
     for (JExpression arg : getArgs()) {

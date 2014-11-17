@@ -526,7 +526,7 @@ public class UnifyAst {
           return null;
         }
         JExpression result = JGwtCreate.createInstantiationExpression(gwtCreateCall.getSourceInfo(),
-            (JClassType) answerType, currentMethod.getEnclosingType());
+            (JClassType) answerType);
         if (result == null) {
           error(gwtCreateCall,
               "Rebind result '" + answer + "' has no default (zero argument) constructors");

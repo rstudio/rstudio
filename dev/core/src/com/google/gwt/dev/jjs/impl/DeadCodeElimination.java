@@ -561,7 +561,8 @@ public class DeadCodeElimination {
         }
         JMultiExpression multi = new JMultiExpression(x.getSourceInfo());
         multi.addExpressions(x.getArgs());
-        if (x.hasClinit()) {
+        // Determine whether a new Blah() in this method needs a clinit.
+        if (getCurrentMethod().getEnclosingType().checkClinitTo(x.getTarget().getEnclosingType())) {
           multi.addExpressions(
               createClinitCall(x.getSourceInfo(), x.getTarget().getEnclosingType()));
         }
