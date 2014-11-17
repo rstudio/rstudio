@@ -258,70 +258,6 @@
    result
 })
 
-.rs.addFunction("safeEval", function(call, envir)
-{
-   if (.rs.isSafeCall(call, envir))
-      return(tryCatch(eval(call, envir = envir), error = function(e) NULL))
-})
-
-.rs.addFunction("isSafeCall", function(call, envir)
-{
-   if (is.expression(call))
-      return(all(unlist(lapply(call, .rs.isSafeCall, envir))))
-   
-   if (is.call(call))
-   {
-      callName <- call[[1]]
-      object <- eval(callName, envir = envir)
-      from <- .rs.resolveObjectSource(object, envir)
-      if (from$package == "base")
-      {
-         if (from$name %in% c("file.create",
-                              "file.remove",
-                              "file.rename",
-                              "file.append",
-                              "file.copy",
-                              "file.symlink",
-                              "file.link",
-                              "system",
-                              "system2",
-                              "cat",
-                              "print",
-                              "save",
-                              "save.image",
-                              "load",
-                              "attach",
-                              "data",
-                              "help",
-                              "Sys.setenv",
-                              "sys.save.image",
-                              "dput",
-                              "dump",
-                              "source"))
-         {
-            return(FALSE)
-         }
-         
-         if (.rs.startsWith(from$name, "write"))
-            return(FALSE)
-      }
-      
-      if (length(call) > 1)
-      {
-         for (i in 2:length(call))
-         {
-            if (is.call(call[[i]]))
-            {
-               return(.rs.isSafeCall(call[[i]], envir))
-            }
-         }
-      }
-   }
-   
-   TRUE
-   
-})
-
 .rs.addFunction("resolveObjectSource", function(object, envir)
 {
    # Try to find the associated namespace of the object
@@ -380,9 +316,10 @@
    if (name == "")
       return(NULL)
     
-   ## First, attempt to evaluate 'name' in 'envir'
-   ## NOTE: This could trigger active bindings, evaluation of promises --
-   ## we may need to avoid / blacklist their evaluation to avoid side effects
+   # Don't evaluate any functions -- blacklist any 'name' that contains a paren
+   if (regexpr("(", name, fixed = TRUE) > 0)
+      return(FALSE)
+   
    if (is.character(name))
    {
       name <- .rs.stripSurrounding(name)
@@ -396,7 +333,7 @@
    }
    
    if (is.language(name))
-      result <- .rs.safeEval(name, envir = envir)
+      result <- eval(name, envir = envir)
    
    ## Return on success
    if (!is.null(result))
