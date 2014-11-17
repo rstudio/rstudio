@@ -56,6 +56,7 @@ public interface CompletionPopupDisplay
    void displayFunctionHelp(HelpInfo.ParsedInfo help) ;
    void displayParameterHelp(Map<String, String> map, String parameter) ;
    void displayPackageHelp(HelpInfo.ParsedInfo helpInfo) ;
+   void displayDataHelp(HelpInfo.ParsedInfo helpInfo) ;
    /**
     * Clear out the current help info
     * @param downloadOperationPending If true, the current value is being

@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import com.google.gwt.event.dom.client.*;
@@ -28,7 +27,6 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.PopupPanel;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.events.SelectionCommitEvent;
@@ -189,6 +187,12 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       help_.setVisible(help.hasInfo());
       help_.displayPackageHelp(help) ;
       help_.setHeight(list_.getOffsetHeight() + "px") ;
+   }
+   
+   @Override
+   public void displayDataHelp(ParsedInfo help)
+   {
+      displayPackageHelp(help);
    }
 
    public void clearHelp(boolean downloadOperationPending)

@@ -129,10 +129,20 @@ options(help_type = "html")
    }
    
    # Use that name for the help lookup
-   objectName <- objectNames[[i]]
-   result <- .rs.getHelp(topic = objectName, package = namespace)
-   if (length(result))
-      return(result)
+   if (success)
+   {
+      object <- objects[[i]]
+      objectName <- objectNames[[i]]
+      
+      # Get the associated signature for functions
+      signature <- NULL
+      if (is.function(object))
+         signature <- sub("function ", objectName, .rs.getSignature(object))
+      
+      result <- .rs.getHelp(topic = objectName, package = namespace, sig = signature)
+      if (length(result))
+         return(result)
+   }
    
    # If the previous lookup failed, perhaps it was an S3 method for which no
    # documentation was available. Fall back to generic documentation.
@@ -249,14 +259,19 @@ options(help_type = "html")
    .rs.getHelp(functionName, src)
 })
 
-.rs.addFunction("makeHelpCall", function(topic, package = NULL, help_type = "html")
+.rs.addFunction("makeHelpCall", function(topic,
+                                         package = NULL,
+                                         help_type = "html")
 {
    substitute(utils::help(TOPIC, package = PACKAGE, help_type = "html"),
               list(TOPIC = topic,
                    PACKAGE = package))
 })
 
-.rs.addFunction("getHelp", function(topic, package = "", subset = TRUE)
+.rs.addFunction("getHelp", function(topic,
+                                    package = "",
+                                    sig = NULL,
+                                    subset = TRUE)
 {
    # Completions from the search path might have the 'package:' prefix, so
    # lets strip that out.
@@ -279,12 +294,9 @@ options(help_type = "html")
    if (!length(package) || package == "") {
       helpfiles <- utils::help(topic, help_type = "html")
    } else {
-      # NOTE: this can fail if there is no such package 'package'
       helpfiles <- tryCatch(
          
          expr = {
-            # NOTE: help does lazy evaluation on 'package',
-            # so we have to manually construct the call
             call <- .rs.makeHelpCall(topic, package)
             eval(call)
          },
@@ -331,31 +343,28 @@ options(help_type = "html")
       }
    }
    
-   object <- NULL
-   if (length(package) && package != "")
+   # Try to resolve function signatures for help
+   if (is.null(sig))
    {
-      object <- tryCatch(
-         get(topic, envir = asNamespace(package)),
-         error = function(e) NULL
-      )
-   }
-   
-   if (!length(object))
-   {
-      object <- tryCatch(
-         get(topic, pos = globalenv()),
-         error = function(e) NULL
-      )
-   }
-   
-   if (is.function(object))
-   {
-      sig = .rs.getSignature(object)
-      sig = gsub('^function ', topic, sig)
-   }
-   else
-   {
-      sig = NULL
+      object <- NULL
+      if (length(package) && package != "")
+      {
+         object <- tryCatch(
+            get(topic, envir = asNamespace(package)),
+            error = function(e) NULL
+         )
+      }
+      
+      if (!length(object))
+      {
+         object <- tryCatch(
+            get(topic, pos = globalenv()),
+            error = function(e) NULL
+         )
+      }
+      
+      sig <- .rs.getSignature(object)
+      sig <- gsub('^function ', topic, sig)
    }
    
    list('html' = html, 'signature' = sig, 'pkgname' = pkgname)

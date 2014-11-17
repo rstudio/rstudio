@@ -52,6 +52,14 @@ public class HelpStrategy
    public void showHelp(final QualifiedName item,
                         final CompletionPopupDisplay display)
    {
+      // For completions from the datasets package, make sure we show the title.
+      // The package help dispatch does this so we use that.
+      if (item.source == "package:datasets")
+      {
+         showDataHelp(item, display);
+         return;
+      }
+      
       switch (item.type)
       {
          case RCompletionType.PACKAGE:
@@ -185,6 +193,62 @@ public class HelpStrategy
          display.displayParameterHelp(mapToUse, parameter) ;
       }
    }
+   
+   private void showDataHelp(final QualifiedName selectedItem,
+                             final CompletionPopupDisplay display)
+   {
+      ParsedInfo cachedHelp = cache_.get(selectedItem);
+      if (cachedHelp != null)
+      {
+         doShowDataHelp(cachedHelp, display);
+         return;
+      }
+      
+      server_.getHelp(
+            selectedItem.name,
+            selectedItem.source,
+            selectedItem.type,
+            new ServerRequestCallback<HelpInfo>() {
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            display.clearHelp(false) ;
+         }
+
+         @Override
+         public void onResponseReceived(HelpInfo response)
+         {
+            if (response != null)
+            {
+               ParsedInfo info = response.parse(selectedItem.name);
+               cache_.put(selectedItem, info);
+               doShowDataHelp(info, display);
+            }
+            else
+            {
+               display.setHelpVisible(false);
+               display.clearHelp(false);
+            }
+         }
+      }) ;
+   }
+   
+   private void doShowDataHelp(final ParsedInfo info,
+                               final CompletionPopupDisplay display)
+   {
+      if (info.hasInfo())
+      {
+         display.displayDataHelp(info) ;
+      }
+      else
+      {
+         display.setHelpVisible(false);
+         display.clearHelp(false) ;
+      }
+   }
+   
+   
    
    private void showPackageHelp(final QualifiedName selectedItem,
                                 final CompletionPopupDisplay display)
