@@ -45,12 +45,17 @@ public class CodeSearchOracle extends SuggestOracle
       workbenchContext_ = workbenchContext;
    }
    
+   private static int scoreMatch(CodeSearchSuggestion suggestion, String query)
+   {
+      return scoreMatch(suggestion.getMatchedString(), query, suggestion.isFileTarget());
+   }
+   
    // NOTE: When modifying this function, you should ensure that the associated
    // code on the server side is modified to include the same logic as well!
    // (see: SessionCodeSearch.cpp)
-   private int scoreMatch(CodeSearchSuggestion suggestion, String query)
+   public static int scoreMatch(String suggestion, String query, boolean isFile)
    {
-      String string = suggestion.getMatchedString().toLowerCase();
+      String string = suggestion.toLowerCase();
       
       // No penalty for identical results
       if (string == query)
@@ -75,7 +80,7 @@ public class CodeSearchOracle extends SuggestOracle
          {
             char prevChar = string.charAt(matchPos - 1);
             if (prevChar == '_' || prevChar == '-' ||
-                  (!suggestion.isFileTarget() && prevChar == '.'))
+                  (!isFile && prevChar == '.'))
             {
                matchPos = j + 1;
             }
@@ -92,7 +97,7 @@ public class CodeSearchOracle extends SuggestOracle
       }
       
       // Penalize file targets
-      if (suggestion.isFileTarget())
+      if (isFile)
          result++;
       
       // Debug.logToConsole("Score for string '" + string + "' against query '" + query + "': " + result);

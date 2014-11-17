@@ -21,7 +21,9 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.SafeHtmlUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
@@ -31,6 +33,7 @@ import org.rstudio.studio.client.common.r.RToken;
 import org.rstudio.studio.client.common.r.RTokenizer;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.codesearch.CodeSearchOracle;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.RFunction;
@@ -46,6 +49,7 @@ import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionConte
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -95,26 +99,10 @@ public class CompletionRequester
          }
 
          // otherwise, produce a new completion list
-         if (diff.length() > 0)
+         if (diff.length() > 0 && !diff.endsWith("::"))
          {
-            ArrayList<RToken> tokens = RTokenizer.asTokens("a" + diff) ;
-
-            // when we cross a :: the list may actually grow, not shrink
-            if (!diff.endsWith("::"))
-            {
-               while (tokens.size() > 0 
-                     && tokens.get(tokens.size()-1).getContent().equals(":"))
-               {
-                  tokens.remove(tokens.size()-1) ;
-               }
-
-               if (tokens.size() == 1
-                     && tokens.get(0).getTokenType() == RToken.ID)
-               {
-                  callback.onResponseReceived(narrow(diff, cachedResult)) ;
-                  return true;
-               }
-            }
+            callback.onResponseReceived(narrow(token, diff, cachedResult)) ;
+            return true;
          }
       }
       
@@ -122,14 +110,31 @@ public class CompletionRequester
       
    }
    
-   private CompletionResult narrow(String diff,
+   private CompletionResult narrow(String token,
+                                   String diff,
                                    CompletionResult cachedResult)
    {
-      String token = cachedResult.token.toLowerCase() + diff ;
       ArrayList<QualifiedName> newCompletions = new ArrayList<QualifiedName>() ;
       for (QualifiedName qname : cachedResult.completions)
-         if (qname.name.toLowerCase().startsWith(token.toLowerCase()))
+         if (StringUtil.isSubsequence(qname.name, token, true))
             newCompletions.add(qname) ;
+      
+      final String tokenLower = token.toLowerCase();
+      java.util.Collections.sort(newCompletions, new Comparator<QualifiedName>() {
+         
+         @Override
+         public int compare(QualifiedName lhs,
+                            QualifiedName rhs)
+         {
+            int lhsScore = CodeSearchOracle.scoreMatch(lhs.name, tokenLower, false);
+            int rhsScore = CodeSearchOracle.scoreMatch(rhs.name, tokenLower, false);
+            
+            if (lhsScore == rhsScore)
+               return lhs.name.length() - rhs.name.length();
+            else
+               return lhsScore < rhsScore ? -1 : 1;
+         }
+      });
       
       CompletionResult result = new CompletionResult(
             token,
