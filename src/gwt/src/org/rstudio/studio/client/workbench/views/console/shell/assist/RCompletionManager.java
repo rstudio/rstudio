@@ -38,7 +38,6 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
-import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -1296,7 +1295,8 @@ public class RCompletionManager implements CompletionManager
                return;
             }
             
-            if (canAutoAccept_) {
+            if (canAutoAccept_)
+            {
                popup_.showErrorMessage(
                      "(No matches)", 
                      new PopupPositioner(input_.getCursorBounds(), popup_));
@@ -1335,10 +1335,10 @@ public class RCompletionManager implements CompletionManager
          {
             if (results.length == 1 && canAutoAccept_)
                applyValue(results[0]);
-            
-            popup_.showCompletionValues(
-                  results,
-                  new PopupPositioner(rect, popup_));
+            else
+               popup_.showCompletionValues(
+                     results,
+                     new PopupPositioner(rect, popup_));
          }
       }
 
