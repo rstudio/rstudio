@@ -116,7 +116,11 @@ options(help_type = "html")
    ns <- asNamespace(namespace)
    
    # Datasets don't live in the namespace -- ennumerate them separately
-   datasets <- data(package = namespace)
+   # We have to avoid the 'base' package, though.
+   datasets <- NULL
+   if (namespace != "base")   
+      datasets <- data(package = namespace)
+   
    objectNames <- c(
       objects(ns, all.names = TRUE),
       unname(datasets$results[, "Item"])
