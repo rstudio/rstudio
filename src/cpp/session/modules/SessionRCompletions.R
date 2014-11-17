@@ -58,7 +58,8 @@ assign(x = ".rs.acCompletionTypes",
           STRING = 18,
           PACKAGE = 19,
           KEYWORD = 20,
-          OPTION = 21
+          OPTION = 21,
+          DATASET = 22
        )
 )
 
@@ -717,7 +718,7 @@ assign(x = ".rs.acCompletionTypes",
                        results,
                        packages,
                        quote = TRUE,
-                       type = .rs.acCompletionTypes$STRING)
+                       type = .rs.acCompletionTypes$DATASET)
 })
 
 .rs.addFunction("getCompletionsGetOption", function(token)
@@ -755,6 +756,9 @@ assign(x = ".rs.acCompletionTypes",
    packages <- unlist(lapply(1:length(objects), function(i) {
       rep.int(names[i], length(objects[[i]]))
    }))
+   
+   # Keywords are really from the base package
+   packages[packages == "keywords"] <- "base"
    
    keep <- .rs.fuzzyMatches(results, token)
    results <- results[keep]

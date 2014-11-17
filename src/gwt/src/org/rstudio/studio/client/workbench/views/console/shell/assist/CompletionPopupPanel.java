@@ -166,10 +166,10 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    }
 
    @Override
-   public void displayFunctionHelp(ParsedInfo help)
+   public void displayHelp(ParsedInfo help)
    {
       help_.setVisible(help.hasInfo());
-      help_.displayFunctionHelp(help) ;
+      help_.displayHelp(help) ;
       help_.setHeight(list_.getOffsetHeight() + "px") ;
    }
    

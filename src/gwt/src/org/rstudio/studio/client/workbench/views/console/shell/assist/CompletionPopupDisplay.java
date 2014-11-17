@@ -53,7 +53,7 @@ public interface CompletionPopupDisplay
    boolean selectLast() ;
    
    void setHelpVisible(boolean visible) ;
-   void displayFunctionHelp(HelpInfo.ParsedInfo help) ;
+   void displayHelp(HelpInfo.ParsedInfo help) ;
    void displayParameterHelp(Map<String, String> map, String parameter) ;
    void displayPackageHelp(HelpInfo.ParsedInfo helpInfo) ;
    void displayDataHelp(HelpInfo.ParsedInfo helpInfo) ;

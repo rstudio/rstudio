@@ -52,14 +52,6 @@ public class HelpStrategy
    public void showHelp(final QualifiedName item,
                         final CompletionPopupDisplay display)
    {
-      // For completions from the datasets package, make sure we show the title.
-      // The package help dispatch does this so we use that.
-      if (item.source == "package:datasets")
-      {
-         showDataHelp(item, display);
-         return;
-      }
-      
       switch (item.type)
       {
          case RCompletionType.PACKAGE:
@@ -70,7 +62,7 @@ public class HelpStrategy
             showParameterHelp(item, display);
             break;
          default:
-            showFunctionHelp(item, display);
+            showDefaultHelp(item, display);
             break;
       }
    }
@@ -80,13 +72,13 @@ public class HelpStrategy
       cache_.clear();
    }
    
-   private void showFunctionHelp(final QualifiedName selectedItem,
-                                 final CompletionPopupDisplay display)
+   private void showDefaultHelp(final QualifiedName selectedItem,
+                                final CompletionPopupDisplay display)
    {
       ParsedInfo cachedHelp = cache_.get(selectedItem);
       if (cachedHelp != null)
       {
-         display.displayFunctionHelp(cachedHelp);
+         display.displayHelp(cachedHelp);
          return;
       }
       
@@ -111,7 +103,7 @@ public class HelpStrategy
                if (help.hasInfo())
                {
                   cache_.put(selectedItem, help);
-                  display.displayFunctionHelp(help) ;
+                  display.displayHelp(help) ;
                   return;
                }
             }

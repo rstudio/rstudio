@@ -20,7 +20,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 
-import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 
@@ -53,17 +53,23 @@ public class HelpInfoPane extends Composite
       };
    }
 
-   public void displayFunctionHelp(HelpInfo.ParsedInfo help)
+   public void displayHelp(HelpInfo.ParsedInfo help)
    {
       timer_.cancel() ;
       vpanel_.clear() ;
 
-      if (help.getFunctionSignature() != null)
+      Label lblSig;
+      if (StringUtil.isNullOrEmpty(help.getFunctionSignature()))
       {
-         Label lblSig = new Label(help.getFunctionSignature()) ;
-         lblSig.setStylePrimaryName(styles_.functionInfoSignature()) ;
-         vpanel_.add(lblSig);
+         lblSig = new Label(help.getTitle());
+         lblSig.setStylePrimaryName(styles_.packageName());
       }
+      else
+      {
+         lblSig = new Label(help.getFunctionSignature()) ;
+         lblSig.setStylePrimaryName(styles_.functionInfoSignature()) ;
+      }
+      vpanel_.add(lblSig);
       
       HTML htmlDesc = new HTML(help.getDescription()) ;
       htmlDesc.setStylePrimaryName(styles_.functionInfoSummary()) ;
