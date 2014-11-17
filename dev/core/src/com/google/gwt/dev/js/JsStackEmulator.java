@@ -577,7 +577,7 @@ public class JsStackEmulator {
       }
 
       if (recordLineNumbers) {
-        (new LocationVisitor(x)).instrumentBody(x);
+        (new LocationVisitor(x)).accept(x.getBody());
       } else {
         (new EntryExitVisitor(x)).accept(x.getBody());
       }
@@ -601,7 +601,6 @@ public class JsStackEmulator {
    */
   private class LocationVisitor extends EntryExitVisitor {
     private String lastFile;
-    private String mainFile;
     private int lastLine;
 
     /**
@@ -651,7 +650,7 @@ public class JsStackEmulator {
       // (Doing it after evaluating .bar causes lots of tests to fail.)
 
       SourceInfo locationToRecord = x.getSourceInfo();
-      if (sameAsLastLocation(locationToRecord) || !inSameFile(locationToRecord)) {
+      if (sameAsLastLocation(locationToRecord)) {
         return;
       }
 
@@ -766,14 +765,6 @@ public class JsStackEmulator {
     }
 
     /**
-     * Instruments of the body of {@code fn} to keep track of source locations.
-     */
-    public void instrumentBody(JsFunction fn) {
-      mainFile = fn.getSourceInfo().getFileName();
-      accept(fn.getBody());
-    }
-
-    /**
      * If the invocation might be a method call, return its NameRef.
      * Otherwise, return null.
      */
@@ -829,11 +820,8 @@ public class JsStackEmulator {
       }
 
       SourceInfo locationToRecord = x.getSourceInfo();
-      if (sameAsLastLocation(locationToRecord) || !inSameFile(locationToRecord)) {
-        // Do not record inlined code from a different file as the error reporting might
-        // get the filename from the function appearing in the stack frame resulting in an unrelated
-        // and often non existing source location.
-        return;
+      if (sameAsLastLocation(locationToRecord)) {
+        return; // no change
       }
 
       JsBinaryOperation comma = new JsBinaryOperation(locationToRecord, JsBinaryOperator.COMMA,
@@ -851,7 +839,7 @@ public class JsStackEmulator {
      */
     private <T extends JsExpression & HasArguments> void recordAfterLastArg(T x) {
       SourceInfo locationToRecord = x.getSourceInfo();
-      if (sameAsLastLocation(locationToRecord) || !inSameFile(locationToRecord)) {
+      if (sameAsLastLocation(locationToRecord)) {
         return; // no change
       }
       List<JsExpression> args = x.getArguments();
@@ -883,10 +871,6 @@ public class JsStackEmulator {
     private boolean sameAsLastLocation(SourceInfo info) {
       return info.getStartLine() == lastLine
           && (!recordFileNames || info.getFileName().equals(lastFile));
-    }
-
-    private boolean inSameFile(SourceInfo info) {
-      return info.getFileName().equals(mainFile);
     }
 
     /**

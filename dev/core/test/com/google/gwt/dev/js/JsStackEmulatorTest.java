@@ -54,7 +54,6 @@ import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.dev.js.ast.JsVisitor;
-import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.TextOutput;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
@@ -110,38 +109,6 @@ public class JsStackEmulatorTest extends FullCompileTestBase {
         "var stackIndex;$stack[stackIndex=++$stackDepth]=onModuleLoad;" +
         "$location[stackIndex]='EntryPoint.java:'+'4',$clinit_EntryPoint();" +
         "$location[stackIndex]='EntryPoint.java:'+'5',foo();" +
-        "$stackDepth=stackIndex-1}");
-  }
-
-  public void testInlineAccrossFiles() throws Exception {
-    recordFileNamesProp.setValue("true");
-    recordLineNumbersProp.setValue("true");
-    inline = true;
-
-    Resource someClassJavaResource = new MockJavaResource("test.SomeClass") {
-      @Override
-      public CharSequence getContent() {
-        return Joiner.on('\n').join(
-            "package test;",
-            "public class SomeClass {",
-            "  public static String inlineable() { return Object.class.getName(); }",
-            "}");
-      }
-    };
-
-    JsProgram program = compileClass(new Resource[]{someClassJavaResource},
-        "package test;",
-        "public class EntryPoint {",
-        "  public static void onModuleLoad() {",
-        "    String b = SomeClass.inlineable();",
-        "  }",
-        "}");
-
-    checkOnModuleLoad(program, "function onModuleLoad(){" +
-        "var stackIndex;$stack[stackIndex=++$stackDepth]=onModuleLoad;" +
-        "$location[stackIndex]='EntryPoint.java:'+'3',$clinit_EntryPoint();" +
-        "var b;" +
-        "$location[stackIndex]='EntryPoint.java:'+'4',b=Ljava_lang_Object_2_classLit.getName();" +
         "$stackDepth=stackIndex-1}");
   }
 
@@ -276,15 +243,6 @@ public class JsStackEmulatorTest extends FullCompileTestBase {
    * compiles it with emulated stack traces turned on and returns the JavaScript.
    */
   private JsProgram compileClass(String... lines) throws UnableToCompleteException {
-    return compileClass(new Resource[0], lines);
-  }
-
-  /**
-   * Given the source code to a Java class named <code>test.EntryPoint</code>,
-   * compiles it with emulated stack traces turned on and returns the JavaScript.
-   */
-  private JsProgram compileClass(Resource[] additionalResources, String... lines)
-      throws UnableToCompleteException {
 
     // Gather the Java source code to compile.
 
@@ -298,7 +256,6 @@ public class JsStackEmulatorTest extends FullCompileTestBase {
       }
     });
     sourceOracle.add(JavaAstConstructor.getCompilerTypes());
-    sourceOracle.add(additionalResources);
 
     PrecompileTaskOptions options = new PrecompileTaskOptionsImpl();
     options.setOutput(JsOutputOption.PRETTY);
