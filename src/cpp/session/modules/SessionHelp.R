@@ -117,9 +117,10 @@ options(help_type = "html")
    
    # Datasets don't live in the namespace -- ennumerate them separately
    # We have to avoid the 'base' package, though.
-   datasets <- NULL
-   if (namespace != "base")   
-      datasets <- data(package = namespace)
+   datasets <- tryCatch(
+      suppressWarnings(data(package = namespace)),
+      error = function(e) NULL
+   )
    
    objectNames <- c(
       objects(ns, all.names = TRUE),
