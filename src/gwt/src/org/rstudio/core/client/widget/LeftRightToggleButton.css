@@ -5,7 +5,7 @@
 }
 
 .container td {
-   cursor: default;
+   cursor: pointer;
 }
 
 @sprite .leftLeft {

@@ -47,7 +47,7 @@
   width: 13px;
   height: 18px;
   z-index: 1;
-  cursor: default;
+  cursor: pointer;
 }
 
 .slider .gwt-SliderBar-shell .gwt-SliderBar-tick {
@@ -68,7 +68,7 @@
 }
 
 .slider .gwt-SliderBar-shell .gwt-SliderBar-line-sliding {
-  cursor: default;
+  cursor: pointer;
 }
 
 .picker {

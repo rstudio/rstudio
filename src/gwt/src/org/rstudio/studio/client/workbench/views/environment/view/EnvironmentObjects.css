@@ -55,7 +55,7 @@
 
 .objectGrid td.clickableCol
 {
-   cursor: default;
+   cursor: pointer;
 }
 
 .objectGrid td.dataFrameValueCol

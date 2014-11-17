@@ -34,6 +34,6 @@
 }
 
 .dismiss {
-   cursor: default;
+   cursor: pointer;
    margin-right: 2px;
 }

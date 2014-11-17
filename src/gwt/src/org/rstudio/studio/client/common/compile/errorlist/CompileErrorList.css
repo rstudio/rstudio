@@ -58,7 +58,7 @@
 }
 
 div.disclosure {
-   cursor: default;
+   cursor: pointer;
    margin-top: 1px;
    margin-right: 3px;
 }
