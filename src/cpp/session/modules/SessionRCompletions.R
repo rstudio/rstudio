@@ -760,6 +760,20 @@ assign(x = ".rs.acCompletionTypes",
    packages <- packages[keep]
    
    order <- order(results)
+   
+   # If the token is 'T' or 'F', prefer 'TRUE' and 'FALSE' completions
+   if (token == "T")
+   {
+      TRUEpos <- which(results == "TRUE")
+      order <- c(TRUEpos, order[-c(TRUEpos)])
+   }
+   
+   if (token == "F")
+   {
+      FALSEpos <- which(results == "FALSE")
+      order <- c(FALSEpos, order[-c(FALSEpos)])
+   }
+   
    results <- results[order]
    packages <- packages[order]
    

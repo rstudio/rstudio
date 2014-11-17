@@ -262,8 +262,6 @@
 {
    if (.rs.isSafeCall(call, envir))
       return(tryCatch(eval(call, envir = envir), error = function(e) NULL))
-   else
-      return(NULL)
 })
 
 .rs.addFunction("isSafeCall", function(call, envir)
