@@ -1054,7 +1054,15 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
          // We prefer inserting two tabs here, reflecting the rules of
          // the Google C++ style guide:
          // http://google-styleguide.googlecode.com/svn/trunk/cppguide.html#Function_Declarations_and_Definitions
+         //
+         // We take a slightly different approach -- indentation for
+         // function declarations gets two indents, while indentation
+         // for function calls gets a single indent.
          if (line.match(/\(\s*$/)) {
+
+            // Check for a function call.
+            if (line.indexOf("=") !== -1 || /^\s*(return\s+)?[a-zA-Z0-9_.->:]+\(\s*$/.test(line))
+               return indent + tab;
             return indent + tab + tab;
          }
 
