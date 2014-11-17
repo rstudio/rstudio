@@ -161,6 +161,10 @@ options(help_type = "html")
 
 .rs.addJsonRpcHandler("get_help", function(what, from, type)
 {
+   # Help for options
+   if (type == .rs.acCompletionTypes$OPTION)
+      return(.rs.getHelp("options", "base", subset = FALSE))
+   
    if (type %in% c(.rs.acCompletionTypes$S4_GENERIC,
                    .rs.acCompletionTypes$S4_METHOD))
    {
@@ -252,7 +256,7 @@ options(help_type = "html")
                    PACKAGE = package))
 })
 
-.rs.addFunction("getHelp", function(topic, package = "")
+.rs.addFunction("getHelp", function(topic, package = "", subset = TRUE)
 {
    # Completions from the search path might have the 'package:' prefix, so
    # lets strip that out.
@@ -291,11 +295,6 @@ options(help_type = "html")
       )
    }
    
-   .rs.processHelpFileHTML(helpfiles)
-})
-
-.rs.addFunction("processHelpFileHTML", function(helpfiles)
-{
    if (length(helpfiles) <= 0)
       return ()
    
@@ -321,12 +320,15 @@ options(help_type = "html")
    {
       html = substring(html, match + 6, match + attr(match, 'match.length') - 1 - 7)
       
-      slotsMatch <- suppressWarnings(regexpr('<h3>Slots</h3>', html))
-      detailsMatch <- suppressWarnings(regexpr('<h3>Details</h3>', html))
-      
-      match <- if (slotsMatch > detailsMatch) slotsMatch else detailsMatch
-      if (match >= 0)
-         html = substring(html, 1, match - 1)
+      if (subset)
+      {   
+         slotsMatch <- suppressWarnings(regexpr('<h3>Slots</h3>', html))
+         detailsMatch <- suppressWarnings(regexpr('<h3>Details</h3>', html))
+         
+         match <- if (slotsMatch > detailsMatch) slotsMatch else detailsMatch
+         if (match >= 0)
+            html = substring(html, 1, match - 1)
+      }
    }
    
    obj = tryCatch(get(topic, pos=globalenv()),
