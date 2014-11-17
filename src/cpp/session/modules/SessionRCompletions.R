@@ -73,7 +73,8 @@ assign(x = ".rs.acCompletionTypes",
    # S4
    else if (isS4(object))
    {
-      if (inherits(object, "standardGeneric"))
+      if (inherits(object, "standardGeneric") || 
+          inherits(object, "nonstandardGenericFunction"))
          .rs.acCompletionTypes$S4_GENERIC
       else if (inherits(object, "MethodDefinition"))
          .rs.acCompletionTypes$S4_METHOD
