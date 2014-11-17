@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
+import com.google.gwt.dev.javac.testing.impl.MockJavaResource;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JMethod;
@@ -24,14 +25,16 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.util.arg.SourceLevel;
 
 /**
- * Tests that {@link com.google.gwt.dev.jjs.impl.GwtAstBuilder} correctly builds the AST for features introduced in Java 8.
+ * Tests that {@link com.google.gwt.dev.jjs.impl.GwtAstBuilder} correctly builds the AST for
+ * features introduced in Java 8.
  */
 public class Java8AstTest extends JJSTestBase {
 
   @Override
   public void setUp() {
     sourceLevel = SourceLevel.JAVA8;
-    addAll(JavaResourceBase.FUNCTIONALINTERFACE);
+    addAll(LAMBDA_METAFACTORY);
+
     addAll(JavaResourceBase.createMockJavaResource("test.Runnable",
         "package test;",
         "public interface Runnable {",
@@ -134,7 +137,8 @@ public class Java8AstTest extends JJSTestBase {
     // should implement run method and invoke lambda as static function
     JMethod samMethod = findMethod(lambdaInnerClass, "run");
     assertEquals(
-        "public final Object run(int arg0,int arg1){return EntryPoint.lambda$0(this.x_0,arg0,arg1);}",
+        "public final Object run(int arg0,int arg1){" +
+            "return EntryPoint.lambda$0(this.x_0,arg0,arg1);}",
         formatSource(samMethod.toSource()));
   }
 
@@ -163,18 +167,21 @@ public class Java8AstTest extends JJSTestBase {
 
     // should have 2 field to store the outer and local
     assertEquals(2, lambdaInnerClass.getFields().size());
-    assertEquals(lambdaInnerClass.getEnclosingType(), lambdaInnerClass.getFields().get(0).getType());
+    assertEquals(lambdaInnerClass.getEnclosingType(),
+        lambdaInnerClass.getFields().get(0).getType());
     assertEquals(JPrimitiveType.INT, lambdaInnerClass.getFields().get(1).getType());
 
     // should contain assignment statement of ctor params to field
-    assertEquals("{this.$$outer_0=$$outer_0;this.x_1=x_1;}", formatSource(ctor.getBody().toSource()));
+    assertEquals("{this.$$outer_0=$$outer_0;this.x_1=x_1;}",
+        formatSource(ctor.getBody().toSource()));
     // should extends test.Lambda
     assertTrue(lambdaInnerClass.getImplements().contains(program.getFromTypeMap("test.Lambda")));
 
     // should implement run method and invoke lambda via captured instance
     JMethod samMethod = findMethod(lambdaInnerClass, "run");
     assertEquals(
-        "public final Object run(int arg0,int arg1){return this.$$outer_0.lambda$0(this.x_1,arg0,arg1);}",
+        "public final Object run(int arg0,int arg1){" +
+            "return this.$$outer_0.lambda$0(this.x_1,arg0,arg1);}",
         formatSource(samMethod.toSource()));
   }
 
@@ -183,7 +190,8 @@ public class Java8AstTest extends JJSTestBase {
     addSnippetClassDecl("private int y = 22;");
     addSnippetClassDecl("class Foo { " +
           "int y = 42;" +
-          "void m() { new AcceptsLambda<Integer>().accept((a,b) -> EntryPoint.this.y + y + a + b); }" +
+          "void m() {" +
+          "new AcceptsLambda<Integer>().accept((a,b) -> EntryPoint.this.y + y + a + b); }" +
         " }");
     String lambda = "new Foo().m();";
     assertEqualBlock(
@@ -194,7 +202,8 @@ public class Java8AstTest extends JJSTestBase {
     // created by JDT, should exist
     JMethod lambdaMethod = findMethod(program.getFromTypeMap("test.EntryPoint$Foo"), "lambda$0");
     assertNotNull(lambdaMethod);
-    assertEquals("{return Integer.valueOf(this.this$0.y+this.y+a_0+b_1);}", formatSource(lambdaMethod.getBody().toSource()));
+    assertEquals("{return Integer.valueOf(this.this$01.y+this.y+a_0+b_1);}",
+        formatSource(lambdaMethod.getBody().toSource()));
     // created by GwtAstBuilder
     JClassType lambdaInnerClass = (JClassType) getType(program, "test.EntryPoint$Foo$lambda$0$Type");
     assertNotNull(lambdaInnerClass);
@@ -207,7 +216,8 @@ public class Java8AstTest extends JJSTestBase {
 
     // should have 1 field to store the outer
     assertEquals(1, lambdaInnerClass.getFields().size());
-    assertEquals(lambdaInnerClass.getEnclosingType(), lambdaInnerClass.getFields().get(0).getType());
+    assertEquals(lambdaInnerClass.getEnclosingType(),
+        lambdaInnerClass.getFields().get(0).getType());
 
     // should contain assignment statement of ctor params to field
     assertEquals("{this.$$outer_0=$$outer_0;}", formatSource(ctor.getBody().toSource()));
@@ -233,7 +243,8 @@ public class Java8AstTest extends JJSTestBase {
     assertNotNull(getMethod(program, "foo"));
 
     // created by GwtAstBuilder
-    JClassType lambdaInnerClass = (JClassType) getType(program, "test.Lambda$$foo__IILjava_lang_Integer_2$Type");
+    JClassType lambdaInnerClass = (JClassType) getType(program,
+        "test.Lambda$$foo__IILjava_lang_Integer_2$Type");
     assertNotNull(lambdaInnerClass);
 
     // should have constructor taking this and x
@@ -267,7 +278,8 @@ public class Java8AstTest extends JJSTestBase {
     assertNotNull(getMethod(program, "foo"));
 
     // created by GwtAstBuilder
-    JClassType lambdaInnerClass = (JClassType) getType(program, "test.Lambda$foo__IILjava_lang_Integer_2$Type");
+    JClassType lambdaInnerClass = (JClassType) getType(program,
+        "test.Lambda$foo__IILjava_lang_Integer_2$Type");
     assertNotNull(lambdaInnerClass);
 
     // should have constructor taking this and x
@@ -279,7 +291,8 @@ public class Java8AstTest extends JJSTestBase {
 
     // should have 1 field to store the captured instance
     assertEquals(1, lambdaInnerClass.getFields().size());
-    assertEquals(lambdaInnerClass.getEnclosingType(), lambdaInnerClass.getFields().get(0).getType());
+    assertEquals(lambdaInnerClass.getEnclosingType(),
+        lambdaInnerClass.getFields().get(0).getType());
 
     // should extends test.Lambda
     assertTrue(lambdaInnerClass.getImplements().contains(program.getFromTypeMap("test.Lambda")));
@@ -294,17 +307,20 @@ public class Java8AstTest extends JJSTestBase {
   public void testCompileImplicitQualifierReferenceBinding() throws Exception {
     String lambda = "new AcceptsLambda<String>().accept2(String::equalsIgnoreCase);";
     assertEqualBlock(
-        "(new AcceptsLambda()).accept2(new Lambda2$$equalsIgnoreCase__Ljava_lang_String_2Z$Type());",
+        "(new AcceptsLambda()).accept2("
+            + "new Lambda2$$equalsIgnoreCase__Ljava_lang_String_2Z$Type());",
         lambda
     );
     JProgram program = compileSnippet("void", lambda, false);
 
     // created by GwtAstBuilder
-    JClassType lambdaInnerClass = (JClassType) getType(program, "test.Lambda2$$equalsIgnoreCase__Ljava_lang_String_2Z$Type");
+    JClassType lambdaInnerClass = (JClassType) getType(program,
+        "test.Lambda2$$equalsIgnoreCase__Ljava_lang_String_2Z$Type");
     assertNotNull(lambdaInnerClass);
 
     // should have constructor taking this and x
-    JMethod ctor = findMethod(lambdaInnerClass, "Lambda2$$equalsIgnoreCase__Ljava_lang_String_2Z$Type");
+    JMethod ctor = findMethod(lambdaInnerClass,
+        "Lambda2$$equalsIgnoreCase__Ljava_lang_String_2Z$Type");
     assertTrue(ctor instanceof JConstructor);
     // no instance capture
     assertEquals(0, ctor.getParams().size());
@@ -353,7 +369,8 @@ public class Java8AstTest extends JJSTestBase {
         formatSource(samMethod.toSource()));
   }
 
-  public void testCompileConstructorReferenceBindingWithEnclosingInstanceCapture() throws Exception {
+  public void testCompileConstructorReferenceBindingWithEnclosingInstanceCapture()
+      throws Exception {
     addSnippetClassDecl("int field1, field2;");
     addSnippetClassDecl(
         "class Pojo2 {",
@@ -367,17 +384,20 @@ public class Java8AstTest extends JJSTestBase {
 
     String lambda = "new AcceptsLambda<Pojo2>().accept(Pojo2::new);";
     assertEqualBlock(
-        "(new AcceptsLambda()).accept(new Lambda$$EntryPoint$Pojo2__Ltest_EntryPoint_2IIV$Type(this));",
+        "(new AcceptsLambda()).accept("
+            + "new Lambda$$EntryPoint$Pojo2__Ltest_EntryPoint_2IIV$Type(this));",
         lambda
     );
     JProgram program = compileSnippet("void", lambda, false);
 
     // created by GwtAstBuilder
-    JClassType lambdaInnerClass = (JClassType) getType(program, "test.Lambda$$EntryPoint$Pojo2__Ltest_EntryPoint_2IIV$Type");
+    JClassType lambdaInnerClass = (JClassType) getType(program,
+        "test.Lambda$$EntryPoint$Pojo2__Ltest_EntryPoint_2IIV$Type");
     assertNotNull(lambdaInnerClass);
 
     // should have constructor taking this and x
-    JMethod ctor = findMethod(lambdaInnerClass, "Lambda$$EntryPoint$Pojo2__Ltest_EntryPoint_2IIV$Type");
+    JMethod ctor = findMethod(lambdaInnerClass,
+        "Lambda$$EntryPoint$Pojo2__Ltest_EntryPoint_2IIV$Type");
     assertTrue(ctor instanceof JConstructor);
     // one instance capture
     assertEquals(1, ctor.getParams().size());
@@ -391,8 +411,14 @@ public class Java8AstTest extends JJSTestBase {
     // should implement run method and invoke lambda via captured instance
     JMethod samMethod = findMethod(lambdaInnerClass, "run");
     assertEquals(
-        "public final Object run(int arg0,int arg1){return new EntryPoint$Pojo2(this.test.EntryPoint,arg0,arg1);}",
+        "public final Object run(int arg0,int arg1){"
+            + "return new EntryPoint$Pojo2(this.test_EntryPoint,arg0,arg1);}",
         formatSource(samMethod.toSource()));
   }
 
+  private static final MockJavaResource LAMBDA_METAFACTORY =
+      JavaResourceBase.createMockJavaResource("java.lang.invoke.LambdaMetafactory",
+          "package java.lang.invoke;",
+          "public class LambdaMetafactory {",
+          "}");
 }

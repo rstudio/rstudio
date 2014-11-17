@@ -342,8 +342,12 @@ public class UnifyAst {
 
     @Override
     public void endVisit(JNewInstance x, Context ctx) {
-      flowInto(x.getTarget());
-      assert !x.getEnclosingType().isExternal();
+      JConstructor target = x.getTarget();
+      if (target.isExternal()) {
+        assert errorsFound;
+        return;
+      }
+      flowInto(target);
     }
 
     @Override

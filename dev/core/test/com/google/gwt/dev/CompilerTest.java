@@ -819,7 +819,8 @@ public class CompilerTest extends ArgProcessorTestBase {
     assertEquals(SourceLevel.JAVA6, SourceLevel.getBestMatchingVersion("1.6"));
     assertEquals(SourceLevel.JAVA6, SourceLevel.getBestMatchingVersion("1.6_26"));
     assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.7"));
-    assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.8"));
+    assertEquals(SourceLevel.JAVA8, SourceLevel.getBestMatchingVersion("1.8"));
+    assertEquals(SourceLevel.JAVA8, SourceLevel.getBestMatchingVersion("1.9"));
 
     // not proper version strings => default to JAVA7.
     assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.6u3"));
