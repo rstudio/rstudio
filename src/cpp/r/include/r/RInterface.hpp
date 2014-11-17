@@ -50,6 +50,8 @@ typedef struct SEXPREC *SEXP;
 // on Windows platforms, use a manual definition of sigjmp_buf that corresponds
 // to how R lays out the structure in memory
 
+namespace {
+
 typedef struct
 {
   jmp_buf buf;
@@ -98,6 +100,8 @@ enum {
     CTXT_RESTART  = 32,
     CTXT_BUILTIN  = 64
 };
+
+} // anonymous namespace
 
 namespace r {
 
