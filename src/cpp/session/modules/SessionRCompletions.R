@@ -571,15 +571,41 @@ assign(x = ".rs.acCompletionTypes",
                names <- slotNames(object)
                type <- numeric(length(names))
                for (i in seq_along(names))
-                  type[[i]] <- .rs.getCompletionType(eval(call("@", object, names[[i]])))
+                  type[[i]] <- tryCatch(
+                     .rs.getCompletionType(eval(call("@", object, names[[i]]), envir = envir)),
+                     error = function(e) .rs.acCompletionTypes$UNKNOWN
+                  )
             }, error = function(e) NULL
             )
          }
       }
       else
       {
-         names <- .rs.getNames(object)
-         type <- vapply(object, FUN.VALUE = numeric(1), USE.NAMES = FALSE, .rs.getCompletionType)
+         if (isS4(object) && !inherits(object, "classRepresentation"))
+         {
+            # Check to see if an overloaded .DollarNames method has been provided,
+            # and use that to resolve names if possible.
+            .DollarNamesMethods <- evalq(methods(".DollarNames"), envir = envir)
+            classes <- class(object)
+            for (class in classes)
+            {
+               if (paste(".DollarNames", class, sep = ".") %in% .DollarNamesMethods)
+               {
+                  names <- .DollarNames(object)
+               }
+            }
+         }
+         else
+         {
+            names <- .rs.getNames(object)
+         }
+         
+         type <- numeric(length(names))
+         for (i in seq_along(names))
+            type[[i]] <- tryCatch(
+               .rs.getCompletionType(eval(call("$", object, names[[i]]), envir = envir)),
+               error = function(e) .rs.acCompletionTypes$UNKNOWN
+            )
       }
       
       keep <- .rs.fuzzyMatches(names, token)
