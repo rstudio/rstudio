@@ -310,6 +310,7 @@ if(NOT APPLE)
 
    # add rpath for linux so we can find qt libraries in our bin dir
    if(UNIX AND RSTUDIO_BUNDLE_QT)
+      set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
       set_target_properties(rstudio PROPERTIES
                             INSTALL_RPATH \$ORIGIN)
    endif()
