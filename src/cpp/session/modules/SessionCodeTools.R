@@ -258,6 +258,54 @@
    result
 })
 
+.rs.addFunction("resolveObjectSource", function(object, envir)
+{
+   # Try to find the associated namespace of the object
+   namespace <- NULL
+   if (is.primitive(object))
+      namespace <- "base"
+   else if (is.function(object))
+   {
+      envString <- capture.output(environment(object))[1]
+      match <- regexpr("<environment: namespace:(.*)>", envString, perl = TRUE)
+      if (match == -1L)
+         return()
+      
+      start <- attr(match, "capture.start")[1]
+      end <- start + attr(match, "capture.length")[1]
+      namespace <- substring(envString, start, end - 1)
+   }
+   else if (isS4(object))
+      namespace <- attr(class(object), "package")
+   
+   if (is.null(namespace))
+      return()
+   
+   # Get objects from that namespace
+   ns <- asNamespace(namespace)
+   objectNames <- objects(ns)
+   objects <- mget(objectNames, envir = ns)
+   
+   # Find which object is actually identical to the one we have
+   success <- FALSE
+   for (i in seq_along(objects))
+   {
+      if (identical(object, objects[[i]], ignore.environment = TRUE))
+      {
+         success <- TRUE
+         break
+      }
+   }
+   
+   # Use that name for the help lookup
+   if (success)
+      return(list(
+         name = objectNames[[i]],
+         package = namespace
+      ))
+   
+})
+
 .rs.addFunction("getAnywhere", function(name, envir = parent.frame())
 {
    result <- NULL
@@ -268,22 +316,27 @@
    if (name == "")
       return(NULL)
     
-   ## First, attempt to evaluate 'name' in 'envir'
-   ## NOTE: This could trigger active bindings, evaluation of promises --
-   ## we may need to avoid / blacklist their evaluation to avoid side effects
-   if (is.character(name)) {
+   # Don't evaluate any functions -- blacklist any 'name' that contains a paren
+   if (regexpr("(", name, fixed = TRUE) > 0)
+      return(FALSE)
+   
+   if (is.character(name))
+   {
       name <- .rs.stripSurrounding(name)
-      result <- tryCatch({
-         suppressWarnings(eval(parse(text = name), envir = envir))
-      }, error = function(e) NULL
+      name <- tryCatch(
+         suppressWarnings(parse(text = name)),
+         error = function(e) NULL
       )
+      
+      if (is.null(name))
+         return(NULL)
    }
    
    if (is.language(name))
    {
-      result <- tryCatch({
-         suppressWarnings(eval(name, envir = envir))
-      }, error = function(e) NULL
+      result <- tryCatch(
+         eval(name, envir = envir),
+         error = function(e) NULL
       )
    }
    
@@ -487,4 +540,16 @@
    
    list(values = values,
         names = names)
+})
+
+.rs.addFunction("getDollarNamesMethod", function(object)
+{
+   classes <- class(object)
+   for (class in classes)
+   {
+      method <- .rs.getAnywhere(paste(".DollarNames", class, sep = "."))
+      if (!is.null(method))
+         return(method)
+   }
+   NULL
 })

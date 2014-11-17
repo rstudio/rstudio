@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import java.util.Map;
+
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
@@ -43,6 +45,8 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
       help_ = new HelpInfoPane();
       help_.setWidth("400px");
+      help_.clearHelp(false);
+      help_.setVisible(false);
       setStylePrimaryName(styles_.completionPopup()) ;
       addCloseHandler(new CloseHandler<PopupPanel>() {
          
@@ -162,18 +166,18 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    }
 
    @Override
-   public void displayFunctionHelp(ParsedInfo help)
+   public void displayHelp(ParsedInfo help)
    {
       help_.setVisible(help.hasInfo());
-      help_.displayFunctionHelp(help) ;
+      help_.displayHelp(help) ;
       help_.setHeight(list_.getOffsetHeight() + "px") ;
    }
    
    @Override
-   public void displayParameterHelp(ParsedInfo help, String parameterName)
+   public void displayParameterHelp(Map<String, String> map, String parameterName)
    {
-      help_.setVisible(help.hasInfo());
-      help_.displayParameterHelp(help, parameterName) ;
+      help_.setVisible(map.get(parameterName) != null);
+      help_.displayParameterHelp(map, parameterName) ;
       help_.setHeight(list_.getOffsetHeight() + "px") ;
    }
    
@@ -183,6 +187,12 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       help_.setVisible(help.hasInfo());
       help_.displayPackageHelp(help) ;
       help_.setHeight(list_.getOffsetHeight() + "px") ;
+   }
+   
+   @Override
+   public void displayDataHelp(ParsedInfo help)
+   {
+      displayPackageHelp(help);
    }
 
    public void clearHelp(boolean downloadOperationPending)

@@ -59,7 +59,7 @@ assign( envir = .rs.Env, ".rs.clearVar", function(name)
 .rs.addFunction( "saveOptions", function(filename)
 {
    opt = options();
-   save(opt, file=filename)
+   suppressWarnings(save(opt, file=filename))
 })
 
 # restore options() from file
