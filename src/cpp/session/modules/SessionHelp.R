@@ -331,12 +331,26 @@ options(help_type = "html")
       }
    }
    
-   obj = tryCatch(get(topic, pos=globalenv()),
-                  error = function(e) NULL)
-   
-   if (is.function(obj))
+   object <- NULL
+   if (length(package) && package != "")
    {
-      sig = .rs.getSignature(obj)
+      object <- tryCatch(
+         get(topic, envir = asNamespace(package)),
+         error = function(e) NULL
+      )
+   }
+   
+   if (!length(object))
+   {
+      object <- tryCatch(
+         get(topic, pos = globalenv()),
+         error = function(e) NULL
+      )
+   }
+   
+   if (is.function(object))
+   {
+      sig = .rs.getSignature(object)
       sig = gsub('^function ', topic, sig)
    }
    else
