@@ -386,7 +386,13 @@
    if (is.character(name))
    {
       name <- .rs.stripSurrounding(name)
-      name <- suppressWarnings(parse(text = name))
+      name <- tryCatch(
+         suppressWarnings(parse(text = name)),
+         error = function(e) NULL
+      )
+      
+      if (is.null(name))
+         return(NULL)
    }
    
    if (is.language(name))
