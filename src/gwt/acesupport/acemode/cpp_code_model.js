@@ -248,8 +248,8 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
          reEndsWithContinuationToken.test(x);
    };
 
-   var endsWithComma = function(x) {
-      return /,\s*$/.test(x);
+   var endsWithCommaOrOpenParen = function(x) {
+      return /[,(]\s*$/.test(x);
    };
 
    var charCount = function(string, character) {
@@ -1348,8 +1348,8 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                   //       z = baz;
                   //
                   // then return that indent
-                  if (endsWithComma(line) &&
-                      endsWithComma(prevLineNotWhitespace))
+                  if (endsWithCommaOrOpenParen(line) &&
+                      endsWithCommaOrOpenParen(prevLineNotWhitespace))
                      return this.$getIndent(line);
 
                   // ... and there is an '=' on the line, then indent
