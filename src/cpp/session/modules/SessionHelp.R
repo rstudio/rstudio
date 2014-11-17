@@ -114,8 +114,14 @@ options(help_type = "html")
    
    # Get objects from that namespace
    ns <- asNamespace(namespace)
-   objectNames <- objects(ns)
-   objects <- mget(objectNames, envir = ns)
+   
+   # Datasets don't live in the namespace -- ennumerate them separately
+   datasets <- data(package = namespace)
+   objectNames <- c(
+      objects(ns, all.names = TRUE),
+      unname(datasets$results[, "Item"])
+   )
+   objects <- mget(objectNames, envir = ns, inherits = TRUE)
    
    # Find which object is actually identical to the one we have
    success <- FALSE
@@ -128,9 +134,9 @@ options(help_type = "html")
       }
    }
    
-   # Use that name for the help lookup
    if (success)
    {
+      # Use that name for the help lookup
       object <- objects[[i]]
       objectName <- objectNames[[i]]
       
@@ -142,26 +148,26 @@ options(help_type = "html")
       result <- .rs.getHelp(topic = objectName, package = namespace, sig = signature)
       if (length(result))
          return(result)
-   }
-   
-   # If the previous lookup failed, perhaps it was an S3 method for which no
-   # documentation was available. Fall back to generic documentation.
-   dotPos <- gregexpr(".", objectName, fixed = TRUE)[[1]]
-   for (i in seq_along(dotPos))
-   {
-      maybeGeneric <- substring(objectName, 1, dotPos[[i]] - 1)
-      methods <- suppressWarnings(
-         tryCatch(
-            eval(substitute(methods(x), list(x = maybeGeneric)), envir = envir),
-            error = function(e) NULL
-         )
-      )
       
-      if (objectName %in% methods)
+      # If the previous lookup failed, perhaps it was an S3 method for which no
+      # documentation was available. Fall back to generic documentation.
+      dotPos <- gregexpr(".", objectName, fixed = TRUE)[[1]]
+      for (i in seq_along(dotPos))
       {
-         result <- .rs.getHelp(maybeGeneric)
-         if (length(result))
-            return(result)
+         maybeGeneric <- substring(objectName, 1, dotPos[[i]] - 1)
+         methods <- suppressWarnings(
+            tryCatch(
+               eval(substitute(methods(x), list(x = maybeGeneric)), envir = envir),
+               error = function(e) NULL
+            )
+         )
+         
+         if (objectName %in% methods)
+         {
+            result <- .rs.getHelp(maybeGeneric)
+            if (length(result))
+               return(result)
+         }
       }
    }
    
@@ -288,6 +294,17 @@ options(help_type = "html")
       splat <- strsplit(topic, ":{2,3}", perl = TRUE)[[1]]
       topic <- splat[[2]]
       package <- splat[[1]]
+   }
+   
+   # If 'package' is the name of something on the search path, then we
+   # attempt to resolve the object and get its help.
+   pos <- match(package, search(), nomatch = -1L)
+   if (pos > 0)
+   {
+      object <- tryCatch(get(topic, pos = pos), error = function(e) NULL)
+      if (is.null(object))
+         return(NULL)
+      return(.rs.getHelpFromObject(object, envir))
    }
    
    helpfiles <- NULL
