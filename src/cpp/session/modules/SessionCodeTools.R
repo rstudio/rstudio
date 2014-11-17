@@ -333,7 +333,12 @@
    }
    
    if (is.language(name))
-      result <- eval(name, envir = envir)
+   {
+      result <- tryCatch(
+         eval(name, envir = envir),
+         error = function(e) NULL
+      )
+   }
    
    ## Return on success
    if (!is.null(result))
