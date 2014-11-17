@@ -452,6 +452,8 @@ if(RSTUDIO_BUNDLE_QT)
                        ${QT_LIBRARY_DIR}/libQt5WebKit.so.${QT_FULL_VERSION}
                        ${QT_LIBRARY_DIR}/libQt5WebKitWidgets.so.5
                        ${QT_LIBRARY_DIR}/libQt5WebKitWidgets.so.${QT_FULL_VERSION}
+                       ${QT_LIBRARY_DIR}/libQt5WebChannel.so.5
+                       ${QT_LIBRARY_DIR}/libQt5WebChannel.so.${QT_FULL_VERSION}
                        ${QT_LIBRARY_DIR}/libQt5Positioning.so.5
                        ${QT_LIBRARY_DIR}/libQt5Positioning.so.${QT_FULL_VERSION}
                        ${QT_LIBRARY_DIR}/libQt5PrintSupport.so.5
@@ -488,6 +490,7 @@ if(RSTUDIO_BUNDLE_QT)
                        ${QT_BINARY_DIR}/Qt5Widgets${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5WebKit${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5WebKitWidgets${LIB_SUFFIX}.dll
+                       ${QT_BINARY_DIR}/Qt5WebChannel${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5Positioning${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5PrintSupport${LIB_SUFFIX}.dll
                        ${QT_BINARY_DIR}/Qt5Sensors${LIB_SUFFIX}.dll
