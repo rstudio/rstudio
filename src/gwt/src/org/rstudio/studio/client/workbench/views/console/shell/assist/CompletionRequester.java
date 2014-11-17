@@ -21,7 +21,6 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
@@ -29,8 +28,6 @@ import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.common.icons.code.CodeIcons;
-import org.rstudio.studio.client.common.r.RToken;
-import org.rstudio.studio.client.common.r.RTokenizer;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearchOracle;
@@ -650,7 +647,7 @@ public class CompletionRequester
          switch(type)
          {
          case RCompletionType.UNKNOWN:
-            return ICONS.keyword();
+            return ICONS.variable();
          case RCompletionType.VECTOR:
             return ICONS.variable();
          case RCompletionType.FUNCTION:
@@ -685,7 +682,7 @@ public class CompletionRequester
          case RCompletionType.KEYWORD:
             return ICONS.keyword();
          default:
-            return ICONS.keyword();
+            return ICONS.variable();
          }
       }
 
