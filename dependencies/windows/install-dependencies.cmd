@@ -9,7 +9,7 @@ set UNZIP_ARGS=-q
 
 set BASEURL=https://s3.amazonaws.com/rstudio-buildtools/
 set BOOST_FILE=boost-1.50-win.zip
-set BOOST_GCC482_FILE=boost-1.50-win-gcc482.zip
+set BOOST_GCC491_FILE=boost-1.50-win-gcc491.zip
 set MINGW_FILE=mingw64-2010-10-03.zip
 set GIN_FILE=gin-1.5.zip
 set GWT_FILE=gwt-2.6.0.zip
@@ -29,11 +29,11 @@ set LIBCLANG_FILE=%LIBCLANG_NAME%.zip
 set LIBCLANG_HEADERS=builtin-headers
 set LIBCLANG_HEADERS_FILE=libclang-%LIBCLANG_HEADERS%.zip
 
-if not exist boost-1.50-win-gcc482 (
-  wget %WGET_ARGS% "%BASEURL%%BOOST_GCC482_FILE%"
-  echo Unzipping %BOOST_GCC482_FILE%
-  unzip %UNZIP_ARGS% "%BOOST_GCC482_FILE%"
-  del "%BOOST_GCC482_FILE%"
+if not exist boost-1.50-win-gcc491 (
+  wget %WGET_ARGS% "%BASEURL%%BOOST_GCC491_FILE%"
+  echo Unzipping %BOOST_GCC491_FILE%
+  unzip %UNZIP_ARGS% "%BOOST_GCC491_FILE%"
+  del "%BOOST_GCC491_FILE%"
 )
 
 if not exist boost-1.50-win (
