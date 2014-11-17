@@ -47,6 +47,8 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
       help_ = new HelpInfoPane();
       help_.setWidth("400px");
+      help_.clearHelp(false);
+      help_.setVisible(false);
       setStylePrimaryName(styles_.completionPopup()) ;
       addCloseHandler(new CloseHandler<PopupPanel>() {
          
