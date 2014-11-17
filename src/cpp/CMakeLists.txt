@@ -102,7 +102,8 @@ else()
 
       add_definitions(-D_WIN32_WINNT=0x0501
                       -D_WIN32_IE=0x600
-                      -DWIN32_LEAN_AND_MEAN)
+                      -DWIN32_LEAN_AND_MEAN
+                      -DBOOST_USE_WINDOWS_H)
    endif()
 
 endif()
@@ -155,8 +156,8 @@ else()
         set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.50-win/boost64")
         set(Boost_COMPILER "-mgw44")
      else()
-        set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.50-win-gcc482/boost32")
-        set(Boost_COMPILER "-mgw48")
+        set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.50-win-gcc491/boost32")
+        set(Boost_COMPILER "-mgw49")
      endif()
      set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-1_50")
      find_package(Boost ${BOOST_VERSION} REQUIRED)
