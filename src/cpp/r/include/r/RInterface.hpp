@@ -59,6 +59,8 @@ typedef struct
   int savedmask;
 }
 sigjmp_buf[1];
+
+} // anonymous namespace
 #endif
 
 typedef struct RCNTXT {
@@ -100,8 +102,6 @@ enum {
     CTXT_RESTART  = 32,
     CTXT_BUILTIN  = 64
 };
-
-} // anonymous namespace
 
 namespace r {
 
