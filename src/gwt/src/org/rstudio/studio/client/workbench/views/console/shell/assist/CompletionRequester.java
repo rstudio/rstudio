@@ -631,7 +631,7 @@ public class CompletionRequester
                name);
          
          // Get the associated package for functions
-         if (type == RCompletionType.FUNCTION)
+         if (RCompletionType.isFunctionType(type))
          {
             SafeHtmlUtil.appendSpan(
                   sb,
