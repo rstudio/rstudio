@@ -347,12 +347,7 @@ public class Source implements InsertSourceHandler,
          public void onSwitchToDoc(SwitchToDocEvent event)
          {
             ensureVisible(false);
-            int idx = event.getSelectedIndex();
-            if (idx < tabOrder_.size())
-            {
-               idx = tabOrder_.get(idx);
-            }
-            view_.selectTab(idx);
+            setPhysicalTabIndex(event.getSelectedIndex());
          }
       });
 
@@ -423,13 +418,7 @@ public class Source implements InsertSourceHandler,
          @Override
          protected Integer getValue()
          {
-            int idx = view_.getActiveTabIndex();
-            // if the tabs have been shuffled, unshuffle the index
-            if (idx < tabOrder_.size())
-            {
-               idx = tabOrder_.indexOf(idx);
-            }
-            return idx;
+            return getPhysicalTabIndex();
          }
       };
 
@@ -1130,7 +1119,7 @@ public class Source implements InsertSourceHandler,
 
       ensureVisible(false);
       if (view_.getTabCount() > 0)
-         view_.selectTab(0);
+         setPhysicalTabIndex(0);
    }
 
    @Handler
@@ -1140,9 +1129,9 @@ public class Source implements InsertSourceHandler,
          return;
 
       ensureVisible(false);
-      int index = view_.getActiveTabIndex();
+      int index = getPhysicalTabIndex();
       if (index >= 1)
-         view_.selectTab(index - 1);
+         setPhysicalTabIndex(index - 1);
    }
 
    @Handler
@@ -1152,9 +1141,9 @@ public class Source implements InsertSourceHandler,
          return;
 
       ensureVisible(false);
-      int index = view_.getActiveTabIndex();
+      int index = getPhysicalTabIndex();
       if (index < view_.getTabCount() - 1)
-         view_.selectTab(index + 1);
+         setPhysicalTabIndex(index + 1);
    }
 
    @Handler
@@ -1165,7 +1154,7 @@ public class Source implements InsertSourceHandler,
 
       ensureVisible(false);
       if (view_.getTabCount() > 0)
-         view_.selectTab(view_.getTabCount() - 1);
+         setPhysicalTabIndex(view_.getTabCount() - 1);
    }
 
    @Handler
@@ -2695,6 +2684,28 @@ public class Source implements InsertSourceHandler,
             break;
          }
       }
+   }
+   
+   // when tabs have been reordered in the session, the physical layout of the
+   // tabs doesn't match the logical order of editors_. it's occasionally
+   // necessary to get or set the tabs by their physical order.
+   public int getPhysicalTabIndex()
+   {
+      int idx = view_.getActiveTabIndex();
+      if (idx < tabOrder_.size())
+      {
+         idx = tabOrder_.indexOf(idx);
+      }
+      return idx;
+   }
+   
+   public void setPhysicalTabIndex(int idx)
+   {
+      if (idx < tabOrder_.size())
+      {
+         idx = tabOrder_.get(idx);
+      }
+      view_.selectTab(idx);
    }
 
    ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();
