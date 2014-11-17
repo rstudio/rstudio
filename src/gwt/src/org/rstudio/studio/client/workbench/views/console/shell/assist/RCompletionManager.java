@@ -1224,6 +1224,8 @@ public class RCompletionManager implements CompletionManager
             dataType = AutocompletionContext.TYPE_SINGLE_BRACKET;
          }
          
+         tokenCursor.findStartOfEvaluationContext();
+         
          assocData =
             docDisplay_.getTextForRange(Range.fromPoints(
                   tokenCursor.currentPosition(),
