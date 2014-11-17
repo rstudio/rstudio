@@ -1416,15 +1416,21 @@ public class RCompletionManager implements CompletionManager
          // Don't insert a paren if there is already a '(' following
          // the cursor
          AceEditor editor = (AceEditor) input_;
-         boolean textFollowingCursorHasOpenParen = false;
+         boolean textFollowingCursorIsOpenParen = false;
+         boolean textFollowingCursorIsClosingParen = false;
          if (editor != null)
          {
-            TokenCursor cursor = 
+            TokenCursor cursor =
                   editor.getSession().getMode().getCodeModel().getTokenCursor();
             cursor.moveToPosition(editor.getCursorPosition());
             if (cursor.moveToNextToken())
-               textFollowingCursorHasOpenParen =
-               cursor.currentValue() == "(";
+            {
+               textFollowingCursorIsOpenParen =
+                     cursor.currentValue() == "(";
+               textFollowingCursorIsClosingParen =
+                     cursor.currentValue() == ")" && !cursor.bwdToMatchingToken();
+            }
+            
          }
 
          String value = qualifiedName.name;
@@ -1455,7 +1461,7 @@ public class RCompletionManager implements CompletionManager
                selection_.getStart().movePosition(-token_.length(), true),
                input_.getSelection().getEnd()));
 
-         if (insertParen && !overrideInsertParens_ && !textFollowingCursorHasOpenParen)
+         if (insertParen && !overrideInsertParens_ && !textFollowingCursorIsOpenParen)
          {
             // Don't replace the selection if the token ends with a ')'
             // (implies an earlier replacement handled this)
@@ -1467,12 +1473,28 @@ public class RCompletionManager implements CompletionManager
             }
             else
             {
-               input_.replaceSelection(value + "()", true);
+               // If the token after the cursor is already a ')', don't insert
+               // a closing paren
+               int relMovement = 0;
+               if (textFollowingCursorIsClosingParen)
+               {
+                  input_.replaceSelection(value + "(", true);
+               }
+               else
+               {
+                  input_.replaceSelection(value + "()", true);
+                  relMovement = -1;
+               }
+               
+               // Move the cursor into the newly inserted parens
                InputEditorSelection newSelection = new InputEditorSelection(
-                     input_.getSelection().getEnd().movePosition(-1, true));
+                     input_.getSelection().getEnd().movePosition(
+                           relMovement, true));
+               
                token_ = value + "(";
                selection_ = new InputEditorSelection(
-                     input_.getSelection().getStart().movePosition(-2, true),
+                     input_.getSelection().getStart().movePosition(
+                           relMovement - 1, true),
                      newSelection.getStart());
 
                input_.setSelection(newSelection);
