@@ -70,7 +70,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-
 public class RCompletionManager implements CompletionManager
 {  
    // globally suppress F1 and F2 so no default browser behavior takes those
@@ -453,6 +452,14 @@ public class RCompletionManager implements CompletionManager
       String currentLine = docDisplay_.getCurrentLine();
       Position cursorPos = input_.getCursorPosition();
       int cursorColumn = cursorPos.getColumn();
+      
+      // Grab the current token on the line
+      String currentToken = StringUtil.getToken(
+            currentLine, cursorColumn, "^[a-zA-Z0-9._'\"`]$", false);
+      
+      // Don't auto-popup for tokens starting with 'function'
+      if ("function".substring(0, currentToken.length()).equals(currentToken))
+         return false;
       
       boolean canAutocomplete = canAutoPopup_ && 
             (currentLine.length() > lookbackLimit - 1 && isValidForRIdentifier(c));
