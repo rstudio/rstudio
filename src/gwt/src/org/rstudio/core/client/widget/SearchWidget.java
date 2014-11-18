@@ -316,6 +316,11 @@ public class SearchWidget extends Composite implements SearchDisplay
       lastValueSent_ = value;
       close_.setVisible(lastValueSent_.length() > 0);
    }
+   
+   public String getLastValue()
+   {
+      return lastValueSent_;
+   }
 
    @UiField(provided=true)
    FocusSuggestBox suggestBox_;

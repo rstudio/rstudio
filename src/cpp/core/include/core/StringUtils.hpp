@@ -32,9 +32,20 @@ enum LineEnding {
 
 bool isSubsequence(std::string const& self,
                    std::string const& other);
+
 bool isSubsequence(std::string const& self,
                    std::string const& other,
                    bool caseInsensitive);
+
+bool isSubsequence(std::string const& self,
+                   std::string const& other,
+                   std::string::size_type other_n,
+                   bool caseInsensitive);
+
+bool isSubsequence(std::string const& self,
+                   std::string const& other,
+                   std::string::size_type other_n);
+
 std::vector<int> subsequenceIndices(std::string const& sequence,
                                     std::string const& query);
 
