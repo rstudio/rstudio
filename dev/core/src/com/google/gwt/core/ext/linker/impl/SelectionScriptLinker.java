@@ -295,18 +295,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   protected EmittedArtifact emitSelectionScript(TreeLogger logger,
       LinkerContext context, ArtifactSet artifacts)
       throws UnableToCompleteException {
-    /*
-     * Last modified is important to keep Development Mode refreses from
-     * clobbering Production Mode compiles. We set the timestamp on the
-     * Development Mode selection script to the same mod time as the module (to
-     * allow updates). For Production Mode, we just set it to now.
-     */
-    long lastModified;
-    if (permutationsUtil.getPermutationsMap().isEmpty()) {
-      lastModified = context.getModuleLastModified();
-    } else {
-      lastModified = System.currentTimeMillis();
-    }
+    long lastModified = context.getModuleLastModified();
     String ss = generateSelectionScript(logger, context, artifacts);
     return emitString(logger, ss, context.getModuleName()
         + ".nocache.js", lastModified);
