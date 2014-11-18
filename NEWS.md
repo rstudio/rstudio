@@ -18,7 +18,8 @@ as auto-completions
 * Fuzzy matching for go to file/function
 * Include parameters in function navigation menu
 * Alt+Enter to run code while retaining cursor position
-* Editor tabs in the source pane can now be rearranged 
+* Editor tabs in the source pane can now be rearranged
+* Comment/uncomment respects indent level when appropriate
 
 
 ### Workspace
