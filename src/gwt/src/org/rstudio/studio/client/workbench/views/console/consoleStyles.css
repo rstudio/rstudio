@@ -60,6 +60,11 @@
    padding: 0;
 }
 
+.helpPopup {
+   background: white;
+   z-index: 1003;
+}
+
 .completionGrid td {
    font-family: fixedWidthFont;
    font-size: 12px;
