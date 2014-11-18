@@ -728,7 +728,15 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getCompletionsData", function(token)
 {
-   availableData <- data()$results
+   # Suppress warnings e.g.
+   #
+   #    Warning messages:
+   #       1: In data(package = .packages(all.available = TRUE)) :
+   #       datasets have been moved from package 'base' to package 'datasets'
+   #    2: In data(package = .packages(all.available = TRUE)) :
+   #       datasets have been moved from package 'stats' to package 'datasets'
+   #
+   availableData <- suppressWarnings(data()$results)
    
    # Don't include aliases
    indices <- intersect(

@@ -719,8 +719,13 @@ public class StringUtil
    public static String getToken(String string,
                                  int pos,
                                  String tokenRegex,
-                                 boolean expandForward)
+                                 boolean expandForward,
+                                 boolean backOverWhitespace)
    {
+      if (backOverWhitespace)
+         while (string.substring(pos - 1, pos).matches("\\s"))
+            --pos;
+      
       int startPos = Math.max(0, pos - 1);
       int endPos = Math.min(pos, string.length());
       

@@ -455,7 +455,7 @@ public class RCompletionManager implements CompletionManager
       
       // Grab the current token on the line
       String currentToken = StringUtil.getToken(
-            currentLine, cursorColumn, "^[a-zA-Z0-9._'\"`]$", false);
+            currentLine, cursorColumn, "^[a-zA-Z0-9._'\"`]$", false, false);
       
       // Don't auto-popup for common keywords
       String[] keywords = {
@@ -502,7 +502,6 @@ public class RCompletionManager implements CompletionManager
       }
       else
       {
-         
          // Perform an auto-popup if a set number of R identifier characters
          // have been inserted (but only if the user has allowed it in prefs)
          boolean autoPopupEnabled = uiPrefs_.codeComplete().getValue().equals(
@@ -511,9 +510,25 @@ public class RCompletionManager implements CompletionManager
          if (!autoPopupEnabled)
             return false;
          
-         final boolean canAutoPopup = checkCanAutoPopup(c, 4);
+         
+         // Check for a valid number of R identifier characters for autopopup
+         boolean canAutoPopup = checkCanAutoPopup(c, 4);
          char prevChar = docDisplay_.getCurrentLine().charAt(
                input_.getCursorPosition().getColumn() - 1); 
+         
+         // Automatically popup completions after certain function calls
+         if (c == '(')
+         {
+            String token = StringUtil.getToken(
+                  docDisplay_.getCurrentLine(),
+                  input_.getCursorPosition().getColumn(),
+                  "[a-z]",
+                  false,
+                  true);
+            
+            if (token.matches("^(library|require|requireNamespace|data)\\s*$"))
+               canAutoPopup = true;
+         }
          
          if (
                (canAutoPopup) ||
@@ -1195,12 +1210,12 @@ public class RCompletionManager implements CompletionManager
       // We can now set the function call string
       context.setFunctionCallString(
             editor.getTextForRange(Range.fromPoints(
-                  tokenCursor.currentPosition(), endPos)));
+                  tokenCursor.currentPosition(), endPos)).trim());
       
-      String initialData = 
+      String initialData =
             docDisplay_.getTextForRange(Range.fromPoints(
                   tokenCursor.currentPosition(),
-                  endOfDecl.currentPosition()));
+                  endOfDecl.currentPosition())).trim();
       
       // And the first context
       context.add(initialData, initialDataType, initialNumCommas);
@@ -1240,7 +1255,7 @@ public class RCompletionManager implements CompletionManager
          assocData =
             docDisplay_.getTextForRange(Range.fromPoints(
                   tokenCursor.currentPosition(),
-                  declEnd.currentPosition()));
+                  declEnd.currentPosition())).trim();
          
          context.add(assocData, dataType, numCommas);
       }
