@@ -457,9 +457,13 @@ public class RCompletionManager implements CompletionManager
       String currentToken = StringUtil.getToken(
             currentLine, cursorColumn, "^[a-zA-Z0-9._'\"`]$", false);
       
-      // Don't auto-popup for tokens starting with 'function'
-      if ("function".substring(0, currentToken.length()).equals(currentToken))
-         return false;
+      // Don't auto-popup for common keywords
+      String[] keywords = {
+            "for", "if", "in", "function", "while", "repeat",
+            "break", "switch", "return", "library", "require"};
+      for (String keyword : keywords)
+         if (keyword.substring(0, currentToken.length()).equals(currentToken))
+            return false;
       
       boolean canAutocomplete = canAutoPopup_ && 
             (currentLine.length() > lookbackLimit - 1 && isValidForRIdentifier(c));
