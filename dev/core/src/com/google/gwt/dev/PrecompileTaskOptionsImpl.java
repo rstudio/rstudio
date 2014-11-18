@@ -498,4 +498,14 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   public boolean warnOverlappingSource() {
     return warnOverlappingSource;
   }
+
+  @Override
+  public boolean isClosureCompilerFormatEnabled() {
+    return jjsOptions.isClosureCompilerFormatEnabled();
+  }
+
+  @Override
+  public void setClosureCompilerFormatEnabled(boolean enabled) {
+    jjsOptions.setClosureCompilerFormatEnabled(enabled);
+  }
 }

@@ -18,7 +18,8 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.JCastMap;
-import com.google.gwt.dev.jjs.ast.JLiteral;
+import com.google.gwt.dev.jjs.ast.JExpression;
+import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -132,6 +133,38 @@ public class ResolveRuntimeTypeReferences {
   }
 
   /**
+   * Predictably creates String type id literals for castable and instantiable types
+   * by using closure uniqueid generation in JsInterop CLOSURE mode.
+   */
+  public static class ClosureUniqueIdTypeMapper implements TypeMapper<JMethodCall> {
+
+    private JProgram program;
+
+    public ClosureUniqueIdTypeMapper(JProgram program) {
+      this.program = program;
+    }
+
+    @Override
+    public void copyFrom(TypeMapper<JMethodCall> that) {
+      if (!(that instanceof ClosureUniqueIdTypeMapper)) {
+        throw new IllegalArgumentException("Can only copy from ClosureUniqueIdTypeMapper");
+      }
+    }
+
+    @Override
+    public JMethodCall getOrCreateTypeId(JType type) {
+      return get(type);
+    }
+
+    @Override
+    public JMethodCall get(JType type) {
+      JMethod getUniqueId = program.getIndexedMethod("JavaClassHierarchySetupUtil.uniqueId");
+     return new JMethodCall(type.getSourceInfo(), null,
+          getUniqueId, program.getStringLiteral(type.getSourceInfo(), type.getName()));
+    }
+  }
+
+  /**
    * Collects all types that need an id at runtime.
    */
   // TODO(rluble): Maybe this pass should insert the defineClass in Java.
@@ -206,7 +239,7 @@ public class ResolveRuntimeTypeReferences {
         break;
     }
 
-    for (JType type :types) {
+    for (JType type : types) {
       typeMapper.getOrCreateTypeId(type);
     }
   }
@@ -239,8 +272,9 @@ public class ResolveRuntimeTypeReferences {
     }
   }
 
-  private JLiteral getTypeIdLiteral(JType type) {
-    return program.getLiteral(typeMapper.getOrCreateTypeId(type));
+  private JExpression getTypeIdLiteral(JType type) {
+    Object typeId = typeMapper.getOrCreateTypeId(type);
+    return typeId instanceof JMethodCall ? (JExpression) typeId : program.getLiteral(typeId);
   }
 
   public static void exec(JProgram program, TypeMapper<?> typeMapper, TypeOrder typeOrder) {

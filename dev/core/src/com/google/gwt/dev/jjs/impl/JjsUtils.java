@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.PrecompileTaskOptions;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.JBooleanLiteral;
@@ -36,6 +37,7 @@ import com.google.gwt.dev.js.ast.JsNullLiteral;
 import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
+import com.google.gwt.dev.util.arg.OptionJsInteropMode.Mode;
 import com.google.gwt.lang.LongLib;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.base.Predicates;
@@ -105,6 +107,16 @@ public class JjsUtils {
    */
   public static JsLiteral translateLiteral(JLiteral literal) {
     return translatorByLiteralClass.get(literal.getClass()).translate(literal);
+  }
+
+  public static boolean closureStyleLiteralsNeeded(PrecompileTaskOptions options) {
+    return closureStyleLiteralsNeeded(options.isIncrementalCompileEnabled(),
+        options.getJsInteropMode(), options.isClosureCompilerFormatEnabled());
+  }
+
+  public static boolean closureStyleLiteralsNeeded(boolean incremental, Mode jsInteropMode,
+      boolean closureOutputFormat) {
+    return !incremental && jsInteropMode == Mode.JS && closureOutputFormat;
   }
 
   private static Map<Class<? extends JLiteral>, LiteralTranslators> translatorByLiteralClass =

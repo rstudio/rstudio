@@ -304,4 +304,10 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   public void setPropertyValues(String name, Iterable<String> value) {
     throw new UnsupportedOperationException();
   }
+
+
+  @Override
+  public void setClosureCompilerFormatEnabled(boolean enabled) {
+    throw new UnsupportedOperationException();
+  }
 }
