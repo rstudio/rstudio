@@ -258,13 +258,16 @@ public:
                matches = boost::algorithm::istarts_with(name, term);
             else
             {
-               // Strip everything following a ':'
-               std::size_t colonIndex = term.find(":");
-               if (colonIndex == std::string::npos)
-                  colonIndex = term.length();
+               // We allow the user to submit queries of the form e.g.
+               // <query>:<row><column>; make sure we only take items
+               // on the query up to ':'
+               std::string::size_type queryEnd = term.find(":");
+               if (queryEnd == std::string::npos)
+                  queryEnd = term.length();
 
                matches = string_utils::isSubsequence(name,
-                                                     term.substr(0, colonIndex),
+                                                     term,
+                                                     queryEnd,
                                                      true);
             }
          }
@@ -724,12 +727,13 @@ void searchSourceDatabaseFiles(const std::string& term,
       else
       {
          // Strip everything following a ':'
-         std::size_t colonIndex = term.find(":");
-         if (colonIndex == std::string::npos)
-            colonIndex = term.length();
+         std::string::size_type queryEnd = term.find(":");
+         if (queryEnd == std::string::npos)
+            queryEnd = term.length();
 
          matches = string_utils::isSubsequence(filename,
-                                               term.substr(0, colonIndex));
+                                               term,
+                                               queryEnd);
       }
 
       // add the file if we found a match
