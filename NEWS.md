@@ -4,21 +4,23 @@
 ### Source Editing
 
 * Improvements to R code completion:
-    - All objects available within the current scope are now included in completions
-    - Completions now supported in more contexts including S3 and S4 methods and dplyr pipelines
+    - Completions provided automatically without an explicit gesture
+    - All objects visible from the current scope are now included in completions
+    - Completions available in more contexts including S3 and S4 methods and dplyr pipelines
     - Automatic insertion of closing parens when appropriate
     - Completion for statements spanning multiple lines
-as auto-completions
 * Improvements to C/C++ editing mode:
     - Code completion
     - F2 code navigation (go to definition)
     - Go to file/function for C/C++
     - Intelligent auto-indentation
     - Scope tree for quick intra-file navigation
-* Fuzzy matching for go to file/function
-* Include parameters in function navigation menu
-* Alt+Enter to run code while retaining cursor position
+* Improvements in file/function navigation:
+    - Fuzzy matching on search terms
+    - Navigate to file posititions using file:line:col
+    - Include parameters in function navigation menu
 * Editor tabs in the source pane can now be rearranged
+* Alt+Enter to run code while retaining cursor position
 * Comment/uncomment respects indent level when appropriate
 
 
