@@ -532,6 +532,15 @@
 
 .rs.addFunction("namedVectorAsList", function(vector)
 {
+   # Early escape for zero-length vectors
+   if (!length(vector))
+   {
+      return(list(
+         values = NULL,
+         names = NULL
+      ))
+   }
+   
    values <- unlist(vector, use.names = FALSE)
    vectorNames <- names(vector)
    names <- unlist(lapply(1:length(vector), function(i) {

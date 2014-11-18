@@ -1352,12 +1352,16 @@ assign(x = ".rs.acCompletionTypes",
       error = function(e) NULL
    )
    
+   # remove 'base' element if it's just TRUE
    if (length(importCompletions))
    {
-      # remove 'base' element if it's just TRUE
       if (isTRUE(importCompletions$base))
          importCompletions$base <- NULL
-      
+   }
+   
+   # if we have import completions, use them
+   if (length(importCompletions))
+   {
       importCompletionsList <- .rs.namedVectorAsList(importCompletions)
       
       # filter completions
