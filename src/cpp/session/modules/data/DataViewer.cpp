@@ -41,6 +41,9 @@
 
 #include <session/SessionContentUrls.hpp>
 
+#define kGridResource "grid_resource"
+#define kGridResourceLocation "/" kGridResource "/"
+
 using namespace core;
 
 namespace session {
@@ -49,34 +52,110 @@ namespace data {
 namespace viewer {
 
 namespace {   
-     
-void appendTag(std::string* pHTML,
-               const std::string& text,
-               const std::string& tag,
-               const std::string& className = std::string())
-{
-   std::string classAttrib;
-   if (!className.empty())
-      classAttrib = " class=\"" + className + "\"";
 
-   boost::format fmt("<%1%%2%>%3%</%1%>");
-   pHTML->append(boost::str(fmt % tag %
-                                  classAttrib %
-                                  string_utils::textToHtml(text)));
+class CachedFrame 
+{
+public:
+   CachedFrame(SEXP dataSEXP);
+   json::Value getColumns();
+   json::Value getData(int data, int start, int length);
+private:
+   std::vector<std::string> cols_;
+   std::vector<std::vector<std::string> > data_;
+};
+
+CachedFrame::CachedFrame(SEXP dataSEXP)
+{
+   SEXP namesSEXP = Rf_getAttrib(dataSEXP, R_NamesSymbol);
+   if (TYPEOF(namesSEXP) != STRSXP || 
+       Rf_length(namesSEXP) != Rf_length(dataSEXP))
+   {
+      throw r::exec::RErrorException(
+                           "invalid data argument (names not specified)");
+   }
+   Error error = r::sexp::extract(namesSEXP, &cols_);
+
+   unsigned rowCount = 0;
+   std::vector<unsigned> columnLengths;
+   for (unsigned i = 0; i < cols_.size(); i++)
+   {
+       SEXP columnSEXP = VECTOR_ELT(dataSEXP, i);
+       unsigned columnLength = r::sexp::length(columnSEXP);
+       columnLengths.push_back(columnLength);
+       rowCount = std::max(columnLength, rowCount);
+   }
+
+   // consider: for very large data we should only format/extract the page of
+   // the data frame being requested, instead of doing everything up front
+   r::sexp::Protect rProtect;
+   SEXP formattedDataSEXP = Rf_allocVector(VECSXP, cols_.size());
+   rProtect.add(formattedDataSEXP);
+   for (unsigned i = 0; i < cols_.size(); i++)
+   {
+      SEXP columnSEXP = VECTOR_ELT(dataSEXP, i);
+      SEXP formattedColumnSEXP;
+      r::exec::RFunction formatFx(".rs.formatDataColumn");
+      formatFx.addParam(columnSEXP);
+      formatFx.addParam(static_cast<int>(rowCount));
+      Error error = formatFx.call(&formattedColumnSEXP, &rProtect);
+      if (error)
+         throw r::exec::RErrorException(error.summary());
+      SET_VECTOR_ELT(formattedDataSEXP, i, formattedColumnSEXP);
+    }
+
+   for (unsigned row = 0; row < rowCount; row++)
+   {
+      data_.push_back(std::vector<std::string>());
+      for (int col = 0; col<Rf_length(formattedDataSEXP); col++)
+      {
+         if (columnLengths[col] > row)
+         {
+            SEXP columnSEXP = VECTOR_ELT(formattedDataSEXP, col);
+            SEXP stringSEXP = STRING_ELT(columnSEXP, row);
+            if (stringSEXP != NULL &&
+                stringSEXP != NA_STRING &&
+                r::sexp::length(stringSEXP) > 0)
+            {
+               data_[row].push_back(Rf_translateChar(stringSEXP));
+            }
+            else
+            {
+               data_[row].push_back("");
+            }
+         }
+         else
+         {
+            data_[row].push_back("");
+         }
+      }
+   }
 }
 
-void appendTD(std::string* pHTML,
-              const std::string& text,
-              const std::string& className = std::string())
+json::Value CachedFrame::getColumns() 
 {
-   appendTag(pHTML, text, "td", className);
+   return json::toJsonArray(cols_);
 }
 
-void appendTH(std::string* pHTML, const std::string& text)
+json::Value CachedFrame::getData(int draw, int start, int length)
 {
-   appendTag(pHTML, text, "th");
+   json::Object result;
+   // set basic parameters
+   result["draw"] = draw;
+   result["recordsTotal"] = json::toJsonValue(static_cast<int>(data_.size()));
+   result["recordsFiltered"] = json::toJsonValue(static_cast<int>(data_.size()));
+
+   // add results
+   json::Array rows;
+   int max = std::min(start + length, static_cast<int>(data_.size()));
+   for (int i = start; i < max; i++) 
+   {
+      rows.push_back(json::toJsonArray(data_[i]));
+   }
+   result["data"] = rows;
+   return result;
 }
 
+std::vector<boost::shared_ptr<CachedFrame> > s_frames;
 
 SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP)
 {    
@@ -89,147 +168,15 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP)
       // validate data
       if (TYPEOF(dataSEXP) != VECSXP)
          throw r::exec::RErrorException("invalid data argument (not a list)");
-      
-      // validate names (View ensures that length(names) == length(data))
-      SEXP namesSEXP = Rf_getAttrib(dataSEXP, R_NamesSymbol);
-      if (TYPEOF(namesSEXP) != STRSXP || 
-          Rf_length(namesSEXP) != Rf_length(dataSEXP))
-      {
-         throw r::exec::RErrorException(
-                              "invalid data argument (names not specified)");
-      }
 
-      // get column count
-      int columnCount = r::sexp::length(dataSEXP);
-
-      // calculate columns to display
-      const int kMaxColumns = 100;
-      int displayedColumns = std::min(columnCount, kMaxColumns);
-
-      // extract caption and column names
-      std::string caption = r::sexp::asString(captionSEXP);
-      std::vector<std::string> columnNames;
-      Error error = r::sexp::extract(namesSEXP, &columnNames);
-      if (error)
-         throw r::exec::RErrorException("invalid names: " +
-                                        error.code().message());
-
-      // truncate columns names to displayedColumns
-      columnNames.resize(displayedColumns);
-
-      // get column lenghts and then calculate # of rows based on the maximum #
-      // of elements in single column (technically R can pass columns which have
-      // a disparate # of rows to this method)
-      int rowCount = 0;
-      std::vector<int> columnLengths;
-      for (int i=0; i<displayedColumns; i++)
-      {
-          // get the column and record its length (updating rowCount)
-          SEXP columnSEXP = VECTOR_ELT(dataSEXP, i);
-          int columnLength = r::sexp::length(columnSEXP);
-          columnLengths.push_back(columnLength);
-          rowCount = std::max(columnLength, rowCount);
-      }
-
-      // calculate rows to display
-      const int kMaxRows = 1000;
-      int displayedRows = std::min(rowCount, kMaxRows);
-
-      // format the data for presentation
-      r::sexp::Protect rProtect;
-      SEXP formattedDataSEXP = Rf_allocVector(VECSXP, displayedColumns);
-      rProtect.add(formattedDataSEXP);
-      for (int i=0; i<displayedColumns; i++)
-      {
-         SEXP columnSEXP = VECTOR_ELT(dataSEXP, i);
-         SEXP formattedColumnSEXP;
-         r::exec::RFunction formatFx(".rs.formatDataColumn");
-         formatFx.addParam(columnSEXP);
-         formatFx.addParam(displayedRows);
-         Error error = formatFx.call(&formattedColumnSEXP, &rProtect);
-         if (error)
-            throw r::exec::RErrorException(error.summary());
-         SET_VECTOR_ELT(formattedDataSEXP, i, formattedColumnSEXP);
-       }
-
-      // write html header
-      boost::format headerFmt(
-         "<html>\n"
-         "  <head>\n"
-         "     <title>%1%</title>\n"
-         "     <meta charset=\"utf-8\"/>\n"
-         "     <link rel=\"stylesheet\" type=\"text/css\" href=\"css/data.css\"/>\n"
-         "  </head>\n"
-         "  <body>\n");
-      std::string html = boost::str(headerFmt % caption);
-
-      // output begin table & header
-      html += "<table>\n";
-      html += "<thead><tr>\n";
-      html += "<td id=\"origin\">&nbsp;</td>"; // above row numbers
-      std::for_each(columnNames.begin(),
-                    columnNames.end(),
-                    boost::bind(appendTH, &html, _1));
-      html += "\n</tr></thead>\n";
-
-      html += "<tbody>\n";
-      // output rows
-      for (int row=0; row<displayedRows; row++)
-      {
-         html += "<tr>\n";
-
-         // row number
-         appendTD(&html, safe_convert::numberToString(row+1), "rn");
-
-         // output a data element from each column where this row is available
-         for (int col=0; col<Rf_length(formattedDataSEXP); col++)
-         {
-            if (columnLengths[col] > row)
-            {
-               SEXP columnSEXP = VECTOR_ELT(formattedDataSEXP, col);
-               SEXP stringSEXP = STRING_ELT(columnSEXP, row);
-               if (stringSEXP != NULL &&
-                   stringSEXP != NA_STRING &&
-                   r::sexp::length(stringSEXP) > 0)
-               {
-                  std::string text(Rf_translateChar(stringSEXP));
-                  appendTD(&html, text);
-               }
-               else
-               {
-                  html += "<td>&nbsp;</td>";
-               }
-            }
-            else
-            {
-               html += "<td>&nbsp;</td>";
-            }
-         }
-
-         html += "\n</tr>\n";
-      }
-      html += "</tbody>\n";
-
-      // append table footer
-      html += "\n</table>\n";
-
-      // append document footer
-      html += "</body></html>\n";
-
-
-      // compute variables based on presence of row.names
-      int variables = columnCount;
-      if (columnNames.size() > 0 && columnNames[0] == "row.names")
-         variables--;
+      // create the cached frame
+      s_frames.push_back(boost::make_shared<CachedFrame>(dataSEXP));
 
       // fire show data event
       json::Object dataItem;
-      dataItem["caption"] = caption;
-      dataItem["totalObservations"] = rowCount;
-      dataItem["displayedObservations"] = displayedRows;
-      dataItem["variables"] = variables;
-      dataItem["displayedVariables"] = displayedColumns;
-      dataItem["contentUrl"] = content_urls::provision(caption, html, ".htm");
+      dataItem["caption"] = r::sexp::asString(captionSEXP);
+      dataItem["contentUrl"] = kGridResource "/index.html?" +
+         boost::lexical_cast<std::string>(s_frames.size() - 1);
       ClientEvent event(client_events::kShowData, dataItem);
       module_context::enqueClientEvent(event);
 
@@ -246,6 +193,81 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP)
    return R_NilValue;
 }
   
+void handleGridResReq(const http::Request& request,
+                            http::Response* pResponse)
+{
+   std::string path("grid/");
+   path.append(http::util::pathAfterPrefix(request, kGridResourceLocation));
+
+   core::FilePath gridResource = options().rResourcesPath().childPath(path);
+   if (gridResource.exists())
+   {
+      pResponse->setCacheableFile(gridResource, request);
+      return;
+   }
+}
+
+Error getGridShape(const http::Request& request,
+                   http::Response* pResponse)
+{
+   // extract the query string
+   std::string::size_type pos = request.uri().find('?');
+   if (pos == std::string::npos)
+   {
+      return Success();
+   }
+
+   // find the data frame we're going to be pulling data from
+   std::string queryString = request.uri().substr(pos+1);
+   http::Fields fields;
+   http::util::parseQueryString(queryString, &fields);
+   int frameId = http::util::fieldValue<int>(fields, "frame_id", -1);
+   if (frameId < 0)
+   {
+      return Success();
+   }
+
+   json::Value result = s_frames[frameId]->getColumns();
+   
+   std::ostringstream ostr;
+   json::write(result, ostr);
+   pResponse->setStatusCode(http::status::Ok);
+   pResponse->setBody(ostr.str());
+   return Success();
+}
+
+Error getGridData(const http::Request& request,
+                  http::Response* pResponse)
+{
+   // extract the query string
+   std::string::size_type pos = request.uri().find('?');
+   if (pos == std::string::npos)
+   {
+      return Success();
+   }
+
+   // find the data frame we're going to be pulling data from
+   std::string queryString = request.uri().substr(pos+1);
+   http::Fields fields;
+   http::util::parseQueryString(queryString, &fields);
+   int frameId = http::util::fieldValue<int>(fields, "frame_id", -1);
+   if (frameId < 0) 
+   {
+      return Success();
+   }
+   
+   json::Value result = s_frames[frameId]->getData(
+         http::util::fieldValue<int>(fields, "draw", 0),
+         http::util::fieldValue<int>(fields, "start", 0),
+         http::util::fieldValue<int>(fields, "length", 10));
+   
+   std::ostringstream ostr;
+   json::write(result, ostr);
+   pResponse->setStatusCode(http::status::Ok);
+   pResponse->setBody(ostr.str());
+   return Success();
+}
+
 
 } // anonymous namespace
    
@@ -263,7 +285,10 @@ Error initialize()
    using namespace session::module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
-      (bind(sourceModuleRFile, "SessionDataViewer.R"));
+      (bind(sourceModuleRFile, "SessionDataViewer.R"))
+      (bind(registerUriHandler, "/grid_shape", getGridShape))
+      (bind(registerUriHandler, "/grid_data", getGridData))
+      (bind(registerUriHandler, kGridResourceLocation, handleGridResReq));
 
    Error error = initBlock.execute();
    if (error)

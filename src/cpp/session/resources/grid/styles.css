@@ -1,0 +1,38 @@
+
+body {
+    height: 100%;
+    margin: 0px;
+}
+
+thead {
+    background-color: #e7edf0;
+}
+
+th {
+    text-align: left; 
+    font-size: 12px;
+    font-family: 'Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', Verdana, Helvetica, sans-serif;
+}
+
+td {
+    font-family: monospace;
+    font-size: 12px;
+    border: 1px solid #f0f0f0;
+}
+
+#data {
+    margin: 0px;
+}
+
+#data_paginate {
+    position: fixed;
+    bottom: 0px;
+    text-align: left;
+    background-color: #e7edf0;
+    width: 100%;
+    text-align: left;
+}
+
+div.datatables_paginate {
+    text-align: left;
+}
