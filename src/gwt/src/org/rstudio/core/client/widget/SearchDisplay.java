@@ -38,6 +38,7 @@ public interface SearchDisplay extends
 {
    void setAutoSelectEnabled(boolean selectsFirstItem);
    void clear();
+   String getLastValue();
    
    // NOTE: only works if you are using the default display!
    DefaultSuggestionDisplay getSuggestionDisplay();

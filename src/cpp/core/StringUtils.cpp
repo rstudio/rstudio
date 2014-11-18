@@ -39,26 +39,18 @@ namespace string_utils {
 
 bool isSubsequence(std::string const& self,
                    std::string const& other,
-                   bool caseInsensitive)
+                   std::string::size_type other_n)
 {
-   return caseInsensitive ?
-            isSubsequence(boost::algorithm::to_lower_copy(self),
-                          boost::algorithm::to_lower_copy(other)) :
-            isSubsequence(self, other)
-            ;
-}
+   std::string::size_type self_n = self.length();
 
-bool isSubsequence(std::string const& self,
-                   std::string const& other)
-{
-   const int self_n = self.length();
-   const int other_n = other.length();
+   if (other_n > other.length())
+      other_n = other.length();
 
    if (other_n > self_n)
       return false;
 
-   int self_idx = 0;
-   int other_idx = 0;
+   std::string::size_type self_idx = 0;
+   std::string::size_type other_idx = 0;
 
    while (self_idx < self_n)
    {
@@ -76,6 +68,33 @@ bool isSubsequence(std::string const& self,
       ++self_idx;
    }
    return false;
+}
+
+
+bool isSubsequence(std::string const& self,
+                   std::string const& other,
+                   std::string::size_type other_n,
+                   bool caseInsensitive)
+{
+   return caseInsensitive ?
+            isSubsequence(boost::algorithm::to_lower_copy(self),
+                          boost::algorithm::to_lower_copy(other),
+                          other_n) :
+            isSubsequence(self, other, other_n)
+            ;
+}
+
+bool isSubsequence(std::string const& self,
+                   std::string const& other)
+{
+   return isSubsequence(self, other, other.length());
+}
+
+bool isSubsequence(std::string const& self,
+                   std::string const& other,
+                   bool caseInsensitive)
+{
+   return isSubsequence(self, other, other.length(), caseInsensitive);
 }
 
 std::vector<int> subsequenceIndices(std::string const& sequence,
