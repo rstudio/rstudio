@@ -182,6 +182,10 @@ options(help_type = "html")
 
 .rs.addJsonRpcHandler("get_help", function(what, from, type)
 {
+   # Protect against missing type
+   if (!length(type))
+      return()
+   
    # Help for options
    if (type == .rs.acCompletionTypes$OPTION)
       return(.rs.getHelp("options", "base", subset = FALSE))

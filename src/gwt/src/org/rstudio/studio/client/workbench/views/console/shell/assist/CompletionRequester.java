@@ -327,8 +327,7 @@ public class CompletionRequester
                cachedCompletions_.put("", result);
             }
 
-            if (!implicit || result.completions.size() != 0)
-               callback.onResponseReceived(result);
+            callback.onResponseReceived(result);
          }
       }) ;
    }
@@ -547,6 +546,7 @@ public class CompletionRequester
             {
                response.setSuggestOnAccept(true);
             }
+            
             requestCallback.onResponseReceived(response);
          }
 

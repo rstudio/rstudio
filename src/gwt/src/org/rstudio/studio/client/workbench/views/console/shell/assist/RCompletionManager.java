@@ -1323,7 +1323,7 @@ public class RCompletionManager implements CompletionManager
          Rectangle rect = input_.getPositionBounds(
                selection_.getStart().movePosition(-token.length(), true));
 
-         token_ = token ;
+         token_ = token;
          suggestOnAccept_ = completions.suggestOnAccept;
          overrideInsertParens_ = completions.dontInsertParens;
 
@@ -1394,10 +1394,36 @@ public class RCompletionManager implements CompletionManager
       
       private void applyValueRmdOption(final String value)
       {
-         input_.setSelection(new InputEditorSelection(
-               selection_.getStart().movePosition(-token_.length(), true),
-               input_.getSelection().getEnd()));
-
+         // If there is no token but spaces have been inserted, then compensate
+         // for that. This is necessary as we allow for spaces in the completion,
+         // and completions auto-popup after ',' so e.g. on
+         //
+         // ```{r, |}
+         //      ^        -- automatically triggered completion
+         //       ^       -- user inserted spaces
+         //
+         // if we accept a completion in that position, we should keep the
+         // spaces the user inserted. (After the user has inserted a character,
+         // it becomes part of the token and hence this is unnecessary.
+         if (token_ == "")
+         {
+            int startPos = selection_.getStart().getPosition();
+            String currentLine = docDisplay_.getCurrentLine();
+            while (startPos < currentLine.length() &&
+                  currentLine.charAt(startPos) == ' ')
+               ++startPos;
+            
+            input_.setSelection(new InputEditorSelection(
+                  selection_.getStart().movePosition(startPos, false),
+                  input_.getSelection().getEnd()));
+         }
+         else
+         {
+            input_.setSelection(new InputEditorSelection(
+                  selection_.getStart().movePosition(-token_.length(), true),
+                  input_.getSelection().getEnd()));
+         }
+         
          input_.replaceSelection(value, true);
          token_ = value;
          selection_ = input_.getSelection();
@@ -1455,7 +1481,7 @@ public class RCompletionManager implements CompletionManager
           * logic works the second time, we need to reset the
           * selection.
           */
-
+         
          // Move range to beginning of token
          input_.setSelection(new InputEditorSelection(
                selection_.getStart().movePosition(-token_.length(), true),
