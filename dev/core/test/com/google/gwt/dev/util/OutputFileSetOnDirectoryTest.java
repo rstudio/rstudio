@@ -18,10 +18,12 @@ import com.google.gwt.util.tools.Utility;
 import junit.framework.TestCase;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 
 /**
- * Tests for {@link OutputFileSetOnDirectory}
+ * Tests for {@link OutputFileSetOnDirectory}.
  */
 public class OutputFileSetOnDirectoryTest extends TestCase {
 
@@ -46,4 +48,37 @@ public class OutputFileSetOnDirectoryTest extends TestCase {
     }
   }
 
+  public void testNewFileEqualTimestampOverwrites() throws IOException {
+    File work = Utility.makeTemporaryDirectory(null, "outputfileset");
+    try {
+      OutputFileSetOnDirectory output = new OutputFileSetOnDirectory(work, "test/");
+
+      OutputStream firstStream = output.createNewOutputStream("path/to/file", 1000);
+      assertTrue(firstStream instanceof FileOutputStream);
+      firstStream.close();
+
+      OutputStream secondStream = output.createNewOutputStream("path/to/file", 1000);
+      assertTrue(secondStream instanceof FileOutputStream);
+      secondStream.close();
+    } finally {
+      Util.recursiveDelete(work, false);
+    }
+  }
+
+  public void testNewFileOlderTimestampDies() throws IOException {
+    File work = Utility.makeTemporaryDirectory(null, "outputfileset");
+    try {
+      OutputFileSetOnDirectory output = new OutputFileSetOnDirectory(work, "test/");
+
+      OutputStream firstStream = output.createNewOutputStream("path/to/file", 2000);
+      assertTrue(firstStream instanceof FileOutputStream);
+      firstStream.close();
+
+      OutputStream secondStream = output.createNewOutputStream("path/to/file", 1000);
+      assertFalse(secondStream instanceof FileOutputStream);
+      secondStream.close();
+    } finally {
+      Util.recursiveDelete(work, false);
+    }
+  }
 }

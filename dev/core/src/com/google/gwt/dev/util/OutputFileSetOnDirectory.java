@@ -47,7 +47,7 @@ public class OutputFileSetOnDirectory extends OutputFileSet {
       final long timeStampMillis) throws IOException {
     final File file = pathToFile(path);
     if (file.exists() && timeStampMillis != TIMESTAMP_UNAVAILABLE &&
-        file.lastModified() >= timeStampMillis) {
+        file.lastModified() > timeStampMillis) {
       return new NullOutputStream();
     }
 
