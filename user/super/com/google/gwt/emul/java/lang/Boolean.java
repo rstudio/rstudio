@@ -37,6 +37,23 @@ public final class Boolean implements Comparable<Boolean>, Serializable {
     return (x == y) ? 0 : (x ? 1 : -1);
   }
 
+  public static int hashCode(boolean value) {
+    // The Java API doc defines these magic numbers.
+    return value ? 1231 : 1237;
+  }
+
+  public static boolean logicalAnd(boolean a, boolean b) {
+    return a && b;
+  }
+
+  public static boolean logicalOr(boolean a, boolean b) {
+    return a || b;
+  }
+
+  public static boolean logicalXor(boolean a, boolean b) {
+    return a ^ b;
+  }
+
   public static boolean parseBoolean(String s) {
     return "true".equalsIgnoreCase(s);
   }
@@ -78,8 +95,7 @@ public final class Boolean implements Comparable<Boolean>, Serializable {
 
   @Override
   public int hashCode() {
-    // The Java API doc defines these magic numbers.
-    return value ? 1231 : 1237;
+    return hashCode(value);
   }
 
   @Override

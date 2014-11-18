@@ -869,7 +869,7 @@ public class Arrays {
     }
     int hashCode = 1;
     for (boolean e : a) {
-      hashCode = 31 * hashCode + (Boolean.valueOf(e).hashCode());
+      hashCode = 31 * hashCode + Boolean.hashCode(e);
       hashCode = ensureInt(hashCode); // make sure we don't overflow
     }
     return hashCode;
