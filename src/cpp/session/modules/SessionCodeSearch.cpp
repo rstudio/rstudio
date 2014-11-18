@@ -257,7 +257,16 @@ public:
             if (prefixOnly)
                matches = boost::algorithm::istarts_with(name, term);
             else
-               matches = string_utils::isSubsequence(name, term, true);
+            {
+               // Strip everything following a ':'
+               std::size_t colonIndex = term.find(":");
+               if (colonIndex == std::string::npos)
+                  colonIndex = term.length();
+
+               matches = string_utils::isSubsequence(name,
+                                                     term.substr(0, colonIndex),
+                                                     true);
+            }
          }
 
          // add the file if we found a match
@@ -714,7 +723,13 @@ void searchSourceDatabaseFiles(const std::string& term,
       }
       else
       {
-         matches = string_utils::isSubsequence(filename, term);
+         // Strip everything following a ':'
+         std::size_t colonIndex = term.find(":");
+         if (colonIndex == std::string::npos)
+            colonIndex = term.length();
+
+         matches = string_utils::isSubsequence(filename,
+                                               term.substr(0, colonIndex));
       }
 
       // add the file if we found a match

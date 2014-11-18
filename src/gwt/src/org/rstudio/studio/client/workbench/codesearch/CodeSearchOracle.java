@@ -19,6 +19,7 @@ import java.util.Comparator;
 
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.DuplicateHelper;
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
@@ -131,7 +132,7 @@ public class CodeSearchOracle extends SuggestOracle
              request.getQuery().startsWith(res.getQuery()))
          {
             Pattern pattern = null;
-            final String queryLower = request.getQuery().toLowerCase();
+            String queryLower = request.getQuery().toLowerCase();
             if (queryLower.indexOf('*') != -1)
                pattern = patternForTerm(queryLower);
             
@@ -150,7 +151,11 @@ public class CodeSearchOracle extends SuggestOracle
                }
                else
                {
-                  if (StringUtil.isSubsequence(name, queryLower))
+                  int colonIndex = queryLower.indexOf(":");
+                  if (colonIndex == -1)
+                     colonIndex = queryLower.length();
+                  
+                  if (StringUtil.isSubsequence(name, queryLower.substring(0, colonIndex)))
                      suggestions.add(sugg);
                }
             }
@@ -174,10 +179,53 @@ public class CodeSearchOracle extends SuggestOracle
       codeSearch_.enqueRequest(request, callback); 
    }
      
-   public CodeNavigationTarget navigationTargetFromSuggestion(Suggestion sugg)
+   public CodeNavigationTarget navigationTarget(String query,
+                                                Suggestion suggestion)
    {
-      return ((CodeSearchSuggestion)sugg).getNavigationTarget();
+      CodeSearchSuggestion codeSearchSuggestion = (CodeSearchSuggestion) suggestion;
+      
+      // Allow queries of the form e.g. 'foo:15' to go to line '15' of a file.
+      // We parse the integer following the ':' if possible.
+      FilePosition filePos = codeSearchSuggestion.getNavigationTarget().getPosition();
+      if (codeSearchSuggestion.isFileTarget())
+      {
+         int colonIndex = query.indexOf(":");
+         if (colonIndex > 0)
+         {
+            String[] splat = query.split(":");
+            if (splat.length > 1)
+            {
+               int rowToNavigateTo = 0;
+               try
+               {
+                  rowToNavigateTo = Integer.parseInt(splat[1]);
+               }
+               catch (Exception e)
+               {}
+               
+               int colToNavigateTo = 0;
+               if (splat.length > 2)
+               {
+                  try
+                  {
+                     colToNavigateTo = Integer.parseInt(splat[2]);
+                  }
+                  catch (Exception e)
+                  {}
+               }
+               filePos = FilePosition.create(rowToNavigateTo, colToNavigateTo);
+            }
+            
+         }
+      }
+      
+      String fileName = codeSearchSuggestion.getNavigationTarget().getFile();
+      CodeNavigationTarget target = new CodeNavigationTarget(fileName, filePos);
+      
+      return target;
    }
+            
+
    
    public void invalidateSearches()
    {
@@ -290,7 +338,11 @@ public class CodeSearchOracle extends SuggestOracle
    {
       // sort the suggestions -- we want suggestions for which
       // the query matches the start to come first
-      final String queryLower = query.toLowerCase();
+      int colonIndex = query.indexOf(":");
+      final String queryLower = colonIndex > 0 ?
+            query.substring(0, colonIndex).toLowerCase() :
+            query.toLowerCase();
+            
       java.util.Collections.sort(suggestions,
             new Comparator<CodeSearchSuggestion>() {
 
