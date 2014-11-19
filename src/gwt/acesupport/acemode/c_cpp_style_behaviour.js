@@ -146,7 +146,6 @@ var CStyleBehaviour = function(codeModel) {
          // Comment indentation rules
          if (state == "comment" || state == "doc-start") {
          
-
             // Choose indentation for the current line based on the position
             // of the cursor -- but make sure we only apply this if the
             // cursor is on the same row as the line being indented
@@ -442,14 +441,78 @@ var CStyleBehaviour = function(codeModel) {
       }
    });
 
+   // If we're making a function call and inserting a '(', then
+   // append a semi-colon following.
+   var parenSemicolonInsertion = function(editor, session)
+   {
+      // Insert a semi-colon if this looks like a function call
+      var cursor = editor.getCursorPosition();
+      var line = session.doc.getLine(cursor.row).substring(0, cursor.column);
+
+      var tokenCursor = new CppTokenCursor(codeModel.$tokens);
+      codeModel.$tokenUtils.$tokenizeUpToRow(cursor.row);
+      
+      if (!tokenCursor.moveToPosition(cursor))
+         return null;
+
+      if (tokenCursor.currentValue() === "return")
+         return {
+            text: "();",
+            selection: [1, 1]
+         };
+
+      if (!(tokenCursor.currentType() === "identifier" ||
+            tokenCursor.currentValue() === ">"))
+         return null;
+
+      if (!tokenCursor.bwdOverQualifiedIdentifier())
+         return null;
+
+      if (tokenCursor.currentValue() === ";" ||
+          tokenCursor.currentValue() === "{" ||
+          tokenCursor.currentValue() === "return")
+      {
+         return {
+            text: "();",
+            selection: [1, 1]
+         };
+      }
+      
+   };
+
    this.add("parens", "insertion", function (state, action, editor, session, text) {
       if (!this.insertMatching) return;
+
+      if (text === "(")
+      {
+         var parenInsertion = parenSemicolonInsertion(editor, session);
+         if (parenInsertion)
+            return parenInsertion;
+      }
       return autoPairInsertion("(", text, editor, session);
    });
 
    this.add("parens", "deletion", function (state, action, editor, session, range) {
       if (!this.insertMatching) return;
-      return autoPairDeletion("(", range, session);
+
+      var selected = session.doc.getTextRange(range);
+      if (!range.isMultiLine() && selected === "(")
+      {
+
+         var cursor = editor.getCursorPosition();
+         var line = session.doc.getLine(cursor.row);
+         var rightChar = line.substring(range.end.column, range.end.column + 1);
+         var rightRightChar =
+                line.substring(range.end.column + 1, range.end.column + 2);
+         if (rightChar == ')') {
+            range.end.column++;
+            if (rightRightChar == ';') {
+               range.end.column++;
+            }
+         }
+      }
+      
+      return range;
    });
    
    this.add("brackets", "insertion", function (state, action, editor, session, text) {
