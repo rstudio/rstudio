@@ -506,7 +506,8 @@ public class TextEditingTarget implements
             {
                event.preventDefault();
                event.stopPropagation();
-               docDisplay_.insertCode("\n");
+               String indent = docDisplay_.getNextLineIndent();
+               docDisplay_.insertCode("\n" + indent);
             }
          }
 
