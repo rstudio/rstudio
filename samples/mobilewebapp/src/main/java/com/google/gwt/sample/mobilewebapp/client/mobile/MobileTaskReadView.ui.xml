@@ -2,7 +2,6 @@
 <ui:UiBinder
   xmlns:ui="urn:ui:com.google.gwt.uibinder"
   xmlns:g="urn:import:com.google.gwt.user.client.ui"
-  xmlns:w="urn:import:com.google.gwt.widget.client"
   xmlns:app="urn:import:com.google.gwt.sample.mobilewebapp.client.ui">
 
   <ui:style>
