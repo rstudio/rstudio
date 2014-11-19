@@ -471,6 +471,7 @@ public class TextEditingTarget implements
             }
             else if (
                   prefs_.continueCommentsOnNewline().getValue() && 
+                  !docDisplay_.isPopupVisible() &&
                   ne.getKeyCode() == KeyCodes.KEY_ENTER && mod == 0 &&
                     (fileType_.isC() || isCursorInRMode() || isCursorInTexMode()))
             {
@@ -501,6 +502,7 @@ public class TextEditingTarget implements
             }
             else if (
                   prefs_.continueCommentsOnNewline().getValue() &&
+                  !docDisplay_.isPopupVisible() &&
                   ne.getKeyCode() == KeyCodes.KEY_ENTER &&
                   mod == KeyboardShortcut.SHIFT)
             {
