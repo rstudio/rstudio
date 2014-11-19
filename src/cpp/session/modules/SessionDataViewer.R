@@ -28,6 +28,21 @@
    format(col, trim = TRUE, justify = "none", ...)
 })
 
+.rs.addFunction( "formatRowNames", function(x, start, len) 
+{
+  rownames <- row.names(x)
+  rownames[start:min(length(rownames), start+len)]
+})
+
+.rs.addFunction( "applySort", function(x, col, dir) 
+{
+  if (identical(dir, "desc")) {
+    x[order(-x[,col]),]
+  } else {
+    x[order(x[,col]),]
+  }
+})
+
 .rs.registerReplaceHook("View", "utils", function(original, x, title) {
    
    # generate title if necessary

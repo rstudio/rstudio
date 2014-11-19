@@ -196,15 +196,28 @@ Error getGridData(const http::Request& request,
    int draw = http::util::fieldValue<int>(fields, "draw", 0);
    int start = http::util::fieldValue<int>(fields, "start", 0);
    int length = http::util::fieldValue<int>(fields, "length", 0);
+   int ordercol = http::util::fieldValue<int>(fields, "order[0][column]", -1);
+   std::string orderdir = http::util::fieldValue<std::string>(fields, "order[0][dir]", "asc");
+
    int nrow = 0, ncol = 0;
    r::sexp::Protect protect;
    std::vector<std::string> cols;
    SEXP dataSEXP = r::sexp::findVar(objName, envName);
 
+   // apply sort if needed
+   if (ordercol > 0) 
+   {
+      r::exec::RFunction(".rs.applySort", dataSEXP, ordercol, orderdir)
+         .call(&dataSEXP, &protect);
+   }
+
    // TODO: internal?
    r::exec::RFunction("nrow", dataSEXP).call(&nrow);
    r::exec::RFunction("ncol", dataSEXP).call(&ncol);
    length = std::min(length, nrow - start);
+
+   // DataTables uses 0-based indexing, but R uses 1-based indexing
+   start ++;
 
    // truncate and format columns 
    SEXP formattedDataSEXP = Rf_allocVector(VECSXP, ncol);
@@ -222,15 +235,27 @@ Error getGridData(const http::Request& request,
          throw r::exec::RErrorException(error.summary());
       SET_VECTOR_ELT(formattedDataSEXP, i, formattedColumnSEXP);
     }
+
+   SEXP rownamesSEXP;
+   r::exec::RFunction(".rs.formatRowNames", dataSEXP, start, length)
+      .call(&rownamesSEXP, &protect);
    
    // add results
    json::Array data;
    for (int row = 0; row < length; row++)
    {
       json::Array rowData;
-      // add the row number/id
-      rowData.insert(rowData.begin(), 
-            boost::lexical_cast<std::string>(row + 1 + start));
+      SEXP nameSEXP = STRING_ELT(rownamesSEXP, row);
+      if (nameSEXP != NULL &&
+          nameSEXP != NA_STRING &&
+          r::sexp::length(nameSEXP) > 0)
+      {
+         rowData.push_back(Rf_translateChar(nameSEXP));
+      }
+      else
+      {
+         rowData.push_back(row + start);
+      }
 
       for (int col = 0; col<Rf_length(formattedDataSEXP); col++)
       {
