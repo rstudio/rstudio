@@ -311,6 +311,7 @@ public class DocTabLayoutPanel
 
          Image img = new Image(ThemeResources.INSTANCE.closeTab());
          img.setStylePrimaryName(styles_.closeTabButton());
+         img.addStyleName(ThemeStyles.INSTANCE.handCursor());
          contentPanel_.add(img);
 
          layoutPanel.add(contentPanel_);

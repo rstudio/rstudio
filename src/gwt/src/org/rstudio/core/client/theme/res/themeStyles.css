@@ -201,7 +201,20 @@ iframe {
 }
 
 button {
+   cursor: pointer;
+}
+.handCursor {
+	cursor: pointer;
+}
+
+@if rstudio.desktop true {
+.linux button {
    cursor: HANDCURSOR, pointer;
+}
+
+.linux .handCursor {
+   cursor: HANDCURSOR, pointer;
+}
 }
 
 textarea {
@@ -454,14 +467,9 @@ pre {
    height: 3px;
 }
 
-.handCursor {
-   cursor: HANDCURSOR, pointer;
-}
-
 .windowframe .maximize {
    background-image: MAXIMIZE;
    z-index: 50;
-   cursor: HANDCURSOR, pointer;
 }
 .windowframe-maximized .maximize,
 .windowframe-exclusive .maximize {
@@ -471,7 +479,6 @@ pre {
 .windowframe .minimize {
    background-image: MINIMIZE;
    z-index: 50;
-   cursor: HANDCURSOR, pointer;
 }
 .windowframe .maximize:hover {
    background-image: MAXIMIZESELECTED;
@@ -533,14 +540,12 @@ pre {
    height: 14px;
    background: RESTORE center no-repeat;
    margin: 4px 4px 0 0;
-   cursor: HANDCURSOR, pointer;
 }
 .minimizedWindow .maximize {
    width: 14px;
    height: 14px;
    background: MAXIMIZE center no-repeat;
    margin: 4px 3px 0 0;
-   cursor: HANDCURSOR, pointer;
 }
 .minimizedWindow .maximize:hover {
    background-image: MAXIMIZESELECTED;
@@ -640,7 +645,6 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
 .closeTabButton:hover {
    filter: literal("alpha(opacity = 100)") !important;
    opacity: 1.0;
-   cursor: HANDCURSOR, pointer;
 }
 .tabLayout {
 }
@@ -798,7 +802,6 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    vertical-align: top;
    height: 21px;
    overflow: hidden;
-   cursor: HANDCURSOR, pointer;
 }
 .toolbarButton.noLabel {
    margin-right: 4px;
@@ -1030,10 +1033,6 @@ body.ubuntu_mono .searchBox {
    font-weight: bold;
 }
 
-.linkDownArrow {
-   cursor: HANDCURSOR, pointer;
-}
-
 @sprite td.environmentDataFrameCol {
    gwt-image: 'zoomDataset';
    background-position: right center; 
@@ -1085,10 +1084,6 @@ body.ubuntu_mono .searchBox {
 .fileList input[type=checkbox] {
    margin-top: 0;
    margin-bottom: 0;
-}
-
-.fileList .parentDirIcon {
-   cursor: HANDCURSOR, pointer;
 }
 
 .locatorPanel {
