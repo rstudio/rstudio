@@ -44,8 +44,11 @@ public class EditingPreferencesPane extends PreferencesPane
       editingPanel.add(checkboxPref("Ensure that source files end with newline", prefs_.autoAppendNewline()));
       editingPanel.add(checkboxPref("Strip trailing horizontal whitespace when saving", prefs_.stripTrailingWhitespace()));
       editingPanel.add(checkboxPref("Focus console after executing from source", prefs_.focusConsoleAfterExec()));
-      editingPanel.add(checkboxPref("Enable vim editing mode", prefs_.useVimMode())); 
-      editingPanel.add(checkboxPref("Continue comment when inserting new line", prefs_.continueCommentsOnNewline()));
+      editingPanel.add(checkboxPref("Enable vim editing mode", prefs_.useVimMode()));
+      editingPanel.add(checkboxPref(
+            "Continue comment when inserting new line",
+            prefs_.continueCommentsOnNewline(),
+            "When enabled, pressing enter will continue comments on new lines. Press Shift + Enter to exit a comment."));
       
       VerticalPanel displayPanel = new VerticalPanel();
       displayPanel.add(checkboxPref("Highlight selected word", prefs.highlightSelectedWord()));

@@ -472,7 +472,7 @@ public class TextEditingTarget implements
             else if (
                   prefs_.continueCommentsOnNewline().getValue() && 
                   ne.getKeyCode() == KeyCodes.KEY_ENTER && mod == 0 &&
-                    (isCFamilyFiletype() || isCursorInRMode() || isCursorInTexMode()))
+                    (fileType_.isC() || isCursorInRMode() || isCursorInTexMode()))
             {
                String line = docDisplay_.getCurrentLine();
                Pattern pattern = null;
@@ -481,7 +481,7 @@ public class TextEditingTarget implements
                   pattern = Pattern.create("^(\\s*#+'?\\s*)");
                else if (isCursorInTexMode())
                   pattern = Pattern.create("^(\\s*%+'?\\s*)");
-               else if (isCFamilyFiletype())
+               else if (fileType_.isC())
                {
                   // bail on attributes
                   if (!line.matches("^\\s*//\\s*\\[\\[.*\\]\\].*"))
@@ -501,10 +501,6 @@ public class TextEditingTarget implements
             }
          }
 
-         private boolean isCFamilyFiletype()
-         {
-            return fileType_.isC() || fileType_.isCpp();
-         }
       });
       
       docDisplay_.addCommandClickHandler(new CommandClickEvent.Handler()
