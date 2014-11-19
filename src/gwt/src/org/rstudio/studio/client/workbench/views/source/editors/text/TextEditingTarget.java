@@ -2297,13 +2297,18 @@ public class TextEditingTarget implements
       boolean uncomment = match == null && selection.trim().length() != 0;
       if (uncomment)
       {
-         String prefix = c;
-         if (prefix.equals("#"))
-            prefix = "#'?";
+         String prefix = c + "'?";
          selection = selection.replaceAll("((^|\\n)\\s*)" + prefix + " ?", "$1");
       }
       else
       {
+         // Check to see if we're commenting something that looks like Roxygen
+         Pattern pattern = Pattern.create("(^\\s*@)|(\\n\\s*@)");
+         boolean isRoxygen = pattern.match(selection, 0) != null;
+         
+         if (isRoxygen)
+            c = c + "'";
+         
          if (singleLineAction)
             selection = indent + c + " " + selection.replaceAll("^\\s*", "");
          else
