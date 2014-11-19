@@ -363,6 +363,8 @@ public class CompletionRequester
          CodeModel codeModel = editor.getSession().getMode().getCodeModel();
          JsArray<RFunction> scopedFunctions =
                codeModel.getFunctionsInScope(cursorPosition);
+         if (scopedFunctions.length() == 0)
+            return;
          
          // We might ignore the first scope if we're within the argument list
          // for that function, e.g.
@@ -371,16 +373,20 @@ public class CompletionRequester
          //
          // The cursor is seen as within the scope of 'foo', but we don't
          // actually want those completions.
+         int start = 0;
+         
          JsArray<ScopeFunction> scopeFunctions =
                codeModel.getAllFunctionScopes(cursorPosition.getRow());
          
-         ScopeFunction currentFunction = scopeFunctions.get(
-               scopeFunctions.length() - 1);
-         
-         Position bracePos = currentFunction.getBodyStart();
-         int start = 0;
-         if (cursorPosition.isBefore((bracePos)))
-            start = 1;
+         if (scopeFunctions.length() > 0)
+         {
+            ScopeFunction currentFunction = scopeFunctions.get(
+                  scopeFunctions.length() - 1);
+
+            Position bracePos = currentFunction.getBodyStart();
+            if (cursorPosition.isBefore((bracePos)))
+               start = 1;
+         }
             
          for (int i = start; i < scopedFunctions.length(); i++)
          {
