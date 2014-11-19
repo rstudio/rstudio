@@ -240,6 +240,8 @@ public class Finalizer {
     FinalizeVisitor finalizer = new FinalizeVisitor(optimizerCtx);
     finalizer.accept(program);
 
+    JavaAstVerifier.assertProgramIsConsistent(program);
+
     return new OptimizerStats(NAME).recordModified(finalizer.getNumMods());
   }
 }

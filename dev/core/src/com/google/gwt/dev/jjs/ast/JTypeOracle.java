@@ -284,6 +284,12 @@ public class JTypeOracle implements Serializable {
    *
    * This is used to remove "dead clinit cycles" where self-referential cycles
    * of empty clinits can keep each other alive.
+   * <p>
+   * IMPORTANT: do not optimize clinit visitor to do a better job in determining if the clinit
+   * contains useful code (like by doing implicit DeadCodeEliminination). Passes like
+   * ControlFlowAnalyzer and Pruner will produce inconsistent ASTs.
+   *
+   * @see ControlFlowAnalyzer.visit(JClassType class, Context ctx)
    */
   private static final class CheckClinitVisitor extends JVisitor {
 
@@ -294,8 +300,8 @@ public class JTypeOracle implements Serializable {
      * because we explicitly visit all AST structures that might contain
      * non-clinit-calling code.
      *
-     * @see #mightBeDeadCode(JExpression)
-     * @see #mightBeDeadCode(JStatement)
+     * @see #mightContainOnlyClinitCalls(JExpression)
+     * @see #mightContainOnlyClinitCallsOrDeclarationStatements(JStatement)
      */
     private boolean hasLiveCode = false;
 
@@ -310,7 +316,7 @@ public class JTypeOracle implements Serializable {
     @Override
     public boolean visit(JBlock x, Context ctx) {
       for (JStatement stmt : x.getStatements()) {
-        if (mightBeDeadCode(stmt)) {
+        if (mightContainOnlyClinitCallsOrDeclarationStatements(stmt)) {
           accept(stmt);
         } else {
           hasLiveCode = true;
@@ -324,8 +330,11 @@ public class JTypeOracle implements Serializable {
       JVariable target = x.getVariableRef().getTarget();
       if (target instanceof JField) {
         JField field = (JField) target;
-        if (field.getLiteralInitializer() != null) {
-          // Top level initializations generate no code.
+        // {@See ControlFlowAnalizer.rescue(JVariable var)
+        if (field.getLiteralInitializer() != null && field.isStatic()) {
+          // Literal initializers for static fields, even though they appear in the clinit they are
+          // not considered part of it; instead they are normally considered part of the fields they
+          // initialize.
           return false;
         }
       }
@@ -336,7 +345,7 @@ public class JTypeOracle implements Serializable {
     @Override
     public boolean visit(JExpressionStatement x, Context ctx) {
       JExpression expr = x.getExpr();
-      if (mightBeDeadCode(expr)) {
+      if (mightContainOnlyClinitCalls(expr)) {
         accept(expr);
       } else {
         hasLiveCode = true;
@@ -359,7 +368,7 @@ public class JTypeOracle implements Serializable {
     public boolean visit(JMultiExpression x, Context ctx) {
       for (JExpression expr : x.getExpressions()) {
         // Only a JMultiExpression or JMethodCall can contain clinit calls.
-        if (mightBeDeadCode(expr)) {
+        if (mightContainOnlyClinitCalls(expr)) {
           accept(expr);
         } else {
           hasLiveCode = true;
@@ -368,22 +377,13 @@ public class JTypeOracle implements Serializable {
       return false;
     }
 
-    @Override
-    public boolean visit(JNewInstance x, Context ctx) {
-      if (x.hasSideEffects()) {
-        hasLiveCode = true;
-      }
-      return false;
+    private boolean mightContainOnlyClinitCalls(JExpression expr) {
+      // Must have a visit method for every subtype that might answer yes!
+      return expr instanceof JMultiExpression || expr instanceof JMethodCall;
     }
 
-    private boolean mightBeDeadCode(JExpression expr) {
-      // Must have a visit method for every subtype that answers yes!
-      return expr instanceof JMultiExpression || expr instanceof JMethodCall
-          || expr instanceof JNewInstance;
-    }
-
-    private boolean mightBeDeadCode(JStatement stmt) {
-      // Must have a visit method for every subtype that answers yes!
+    private boolean mightContainOnlyClinitCallsOrDeclarationStatements(JStatement stmt) {
+      // Must have a visit method for every subtype that might answer yes!
       return stmt instanceof JBlock || stmt instanceof JExpressionStatement
           || stmt instanceof JDeclarationStatement;
     }

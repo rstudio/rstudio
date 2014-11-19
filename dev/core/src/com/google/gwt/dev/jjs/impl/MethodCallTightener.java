@@ -130,6 +130,7 @@ public class MethodCallTightener {
     OptimizerStats stats = new MethodCallTightener(program).execImpl(optimizerCtx);
     optimizerCtx.incOptimizationStep();
     optimizeEvent.end("didChange", "" + stats.didChange());
+    JavaAstVerifier.assertProgramIsConsistent(program);
     return stats;
   }
 

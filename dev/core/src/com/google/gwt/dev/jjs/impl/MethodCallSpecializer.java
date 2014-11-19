@@ -111,6 +111,7 @@ public class MethodCallSpecializer {
   private OptimizerStats execImpl(OptimizerContext optimizerCtx) {
     MethodCallSpecializingVisitor specializer = new MethodCallSpecializingVisitor(optimizerCtx);
     specializer.accept(program);
+    JavaAstVerifier.assertProgramIsConsistent(program);
     return new OptimizerStats(NAME).recordModified(specializer.getNumMods());
   }
 }

@@ -70,6 +70,7 @@ import com.google.gwt.dev.jjs.impl.Finalizer;
 import com.google.gwt.dev.jjs.impl.FixAssignmentsToUnboxOrCast;
 import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
 import com.google.gwt.dev.jjs.impl.ImplementClassLiteralsAsFields;
+import com.google.gwt.dev.jjs.impl.JavaAstVerifier;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.jjs.impl.JsAbstractTextTransformer;
 import com.google.gwt.dev.jjs.impl.JsFunctionClusterer;
@@ -1501,6 +1502,7 @@ public abstract class JavaToJavaScriptCompiler {
     // Clinits might have become empty become empty.
     jprogram.typeOracle.recomputeAfterOptimizations(jprogram.getDeclaredTypes());
     OptimizerStats stats = new OptimizerStats(passName);
+    JavaAstVerifier.assertProgramIsConsistent(jprogram);
     stats.add(Pruner.exec(jprogram, true, optimizerCtx).recordVisits(numNodes));
     stats.add(Finalizer.exec(jprogram, optimizerCtx).recordVisits(numNodes));
     stats.add(MakeCallsStatic.exec(jprogram, options.shouldAddRuntimeChecks(), optimizerCtx)

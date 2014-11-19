@@ -835,6 +835,7 @@ public class EnumOrdinalizer {
         type.setOrdinalized();
       }
     }
+    JavaAstVerifier.assertProgramIsConsistent(program);
     return stats;
   }
 

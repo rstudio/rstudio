@@ -741,6 +741,8 @@ public class ControlFlowAnalyzer {
          * the static initializer runs. This allows fields initialized to
          * string literals to only need the string literals when the field
          * itself becomes live.
+         *
+         * NOTE: needs to be in sync with {@link JTypeOracle.CheckClinitVistior}.
          */
         accept(((JField) var).getLiteralInitializer());
       } else if (var instanceof JField

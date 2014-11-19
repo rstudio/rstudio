@@ -55,6 +55,8 @@ import com.google.gwt.dev.util.collect.Stack;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.base.Predicate;
+import com.google.gwt.thirdparty.guava.common.base.Predicates;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -356,31 +358,12 @@ public class Pruner {
     @Override
     public boolean visit(JClassType type, Context ctx) {
       assert (referencedTypes.contains(type));
-      for (int i = 0; i < type.getFields().size(); ++i) {
-        JField field = type.getFields().get(i);
-        if (!referencedNonTypes.contains(field)) {
-          fieldWasRemoved(field);
-          type.removeField(i);
-          madeChanges();
-          --i;
-        }
-      }
+      Predicate<JNode> notReferenced = Predicates.not(Predicates.in(referencedNonTypes));
+      removeFields(notReferenced, type);
+      removeMethods(notReferenced, type);
 
-      for (int i = 0; i < type.getMethods().size(); ++i) {
-        JMethod method = type.getMethods().get(i);
-        if (!referencedNonTypes.contains(method)) {
-          // Never prune clinit directly out of the class.
-          if (i > 0) {
-            methodWasRemoved(method);
-            type.removeMethod(i);
-            methodWasRemoved(program.getStaticImpl(method));
-            program.removeStaticImplMapping(method);
-            madeChanges();
-            --i;
-          }
-        } else {
-          accept(method);
-        }
+      for (JMethod method : type.getMethods()) {
+        accept(method);
       }
 
       return false;
@@ -388,32 +371,16 @@ public class Pruner {
 
     @Override
     public boolean visit(JInterfaceType type, Context ctx) {
-      boolean isReferenced = referencedTypes.contains(type);
-      boolean isInstantiated = program.typeOracle.isInstantiatedType(type);
+      Predicate<JNode> notReferenced = Predicates.not(Predicates.in(referencedNonTypes));
+      boolean typeReferenced = referencedTypes.contains(type);
+      boolean typeInstantiated = program.typeOracle.isInstantiatedType(type);
 
-      for (int i = 0; i < type.getFields().size(); ++i) {
-        JField field = type.getFields().get(i);
-        // all interface fields are static and final
-        if (!isReferenced || !referencedNonTypes.contains(field)) {
-          fieldWasRemoved(field);
-          type.removeField(i);
-          madeChanges();
-          --i;
-        }
-      }
-
-      // Start at index 1; never prune clinit directly out of the interface.
-      for (int i = 1; i < type.getMethods().size(); ++i) {
-        JMethod method = type.getMethods().get(i);
-        // all other interface methods are instance and abstract
-        if (!isInstantiated || !referencedNonTypes.contains(method)) {
-          methodWasRemoved(method);
-          type.removeMethod(i);
-          program.removeStaticImplMapping(method);
-          madeChanges();
-          --i;
-        }
-      }
+      Predicate<JNode> notReferencedField =
+          typeReferenced ? notReferenced : Predicates.<JNode>alwaysTrue();
+      Predicate<JNode> notReferencedMethod =
+          typeInstantiated ? notReferenced : Predicates.<JNode>alwaysTrue();
+      removeFields(notReferencedField, type);
+      removeMethods(notReferencedMethod, type);
 
       return false;
     }
@@ -499,6 +466,35 @@ public class Pruner {
         }
       }
       return false;
+    }
+
+    private void removeFields(Predicate<JNode> shouldRemove, JDeclaredType type) {
+      for (int i = 0; i < type.getFields().size(); ++i) {
+        JField field = type.getFields().get(i);
+        if (!shouldRemove.apply(field)) {
+          continue;
+        }
+        fieldWasRemoved(field);
+        type.removeField(i);
+        madeChanges();
+        --i;
+      }
+    }
+
+    private void removeMethods(Predicate<JNode> shouldRemove, JDeclaredType type) {
+      // Skip method 0 which is clinit and is assumed to exist.
+      assert type.getMethods().get(0) == type.getClinitMethod();
+      for (int i = 1; i < type.getMethods().size(); ++i) {
+        JMethod method = type.getMethods().get(i);
+        if (!shouldRemove.apply(method)) {
+          continue;
+        }
+        methodWasRemoved(method);
+        type.removeMethod(i);
+        program.removeStaticImplMapping(method);
+        madeChanges();
+        --i;
+      }
     }
   }
 
@@ -667,6 +663,8 @@ public class Pruner {
         new CleanupRefsVisitor(livenessAnalyzer.getLiveFieldsAndMethods(), pruner
             .getMethodToOriginalParamsMap(), optimizerCtx);
     cleaner.accept(program.getDeclaredTypes());
+
+    JavaAstVerifier.assertProgramIsConsistent(program);
     return stats;
   }
 
@@ -685,5 +683,4 @@ public class Pruner {
       }
     }
   }
-
 }
