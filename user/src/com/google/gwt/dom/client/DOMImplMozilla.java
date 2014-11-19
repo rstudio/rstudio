@@ -224,9 +224,17 @@ class DOMImplMozilla extends DOMImplStandard {
   private native NativeEvent createKeyEventImpl(Document doc, String type,
       boolean canBubble, boolean cancelable, boolean ctrlKey, boolean altKey,
       boolean shiftKey, boolean metaKey, int keyCode, int charCode) /*-{
-    var evt = doc.createEvent('KeyEvents');
-    evt.initKeyEvent(type, canBubble, cancelable, null, ctrlKey, altKey,
-      shiftKey, metaKey, keyCode, charCode);
+    var evt = doc.createEvent('KeyboardEvent');
+    if (evt.initKeyEvent) {
+      // Gecko
+      evt.initKeyEvent(type, canBubble, cancelable, null, ctrlKey, altKey,
+        shiftKey, metaKey, keyCode, charCode);
+    } else {
+      // This happens to be IE11+ as of today
+      if ($wnd.console) {
+        $wnd.console.error("Synthetic keyboard events are not supported in this browser");
+      }
+    }
     return evt;
   }-*/;
 
