@@ -18,11 +18,14 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.Debug;
@@ -155,7 +158,32 @@ public class RCompletionManager implements CompletionManager
          {
             ignoreNextInputBlur_ = true ;
          }
-      }) ;
+      });
+      
+      popup_.addSelectionHandler(new SelectionHandler<QualifiedName>() {
+         
+         @Override
+         public void onSelection(SelectionEvent<QualifiedName> event)
+         {
+            docDisplay_.setPopupVisible(true);
+         }
+      });
+      
+      popup_.addCloseHandler(new CloseHandler<PopupPanel>()
+      {
+         @Override
+         public void onClose(CloseEvent<PopupPanel> event)
+         {
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  docDisplay_.setPopupVisible(false);
+               }
+            });
+         }
+      });
    }
    
    @Inject
@@ -798,7 +826,7 @@ public class RCompletionManager implements CompletionManager
    
    private boolean isLineInRoxygenComment(String line)
    {
-      return line.matches("^\\s*#+'.*");
+      return line.matches("^\\s*#+'\\s*[^\\s].*");
    }
    
    private boolean isLineInComment(String line)
@@ -823,7 +851,8 @@ public class RCompletionManager implements CompletionManager
       int cursorCol = selection.getStart().getPosition();
       String firstLine = input_.getText().substring(0, cursorCol);
       
-      // never autocomplete in (non-roxygen) comments
+      // never autocomplete in (non-roxygen) comments, or at the start
+      // of roxygen comments (e.g. at "#' |")
       if (isLineInComment(firstLine) && !isLineInRoxygenComment(firstLine))
          return false;
       

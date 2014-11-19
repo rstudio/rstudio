@@ -229,4 +229,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void removeAllBreakpoints();
    void toggleBreakpointAtCursor();
    boolean hasBreakpoints();
+   
+   void setPopupVisible(boolean visible);
+   boolean isPopupVisible();
 }

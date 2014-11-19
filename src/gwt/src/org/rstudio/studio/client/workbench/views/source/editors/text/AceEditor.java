@@ -1943,6 +1943,16 @@ public class AceEditor implements DocDisplay,
          executionLine_ = null;
       }
    }
+   
+   public void setPopupVisible(boolean visible)
+   {
+      popupVisible_ = visible;
+   }
+   
+   public boolean isPopupVisible()
+   {
+      return popupVisible_;
+   }
 
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
@@ -1963,4 +1973,5 @@ public class AceEditor implements DocDisplay,
          new ExternalJavaScriptLoader(AceResources.INSTANCE.acejs().getSafeUri().asString());
    private static final ExternalJavaScriptLoader aceSupportLoader_ =
          new ExternalJavaScriptLoader(AceResources.INSTANCE.acesupportjs().getSafeUri().asString());
+   private boolean popupVisible_;
 }

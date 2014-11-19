@@ -30,6 +30,8 @@ import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResul
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -217,6 +219,14 @@ public class CppCompletionRequest
          {
             popup_ = null; 
             terminated_ = true;
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  docDisplay_.setPopupVisible(false);
+               }
+            });
          } 
       });
       
