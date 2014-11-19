@@ -151,10 +151,10 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
             {
                event.preventDefault();
                event.stopPropagation();
-               if (defaultForward_)
-                  btnFindNext_.click();
-               else
+               if (event.isShiftKeyDown() && defaultForward_)
                   btnFindPrev_.click();
+               else
+                  btnFindNext_.click();
                focusFindField(false);
             }
          }

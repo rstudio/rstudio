@@ -22,6 +22,7 @@
 * Editor tabs in the source pane can now be rearranged
 * Alt+Enter to run code while retaining cursor position
 * Comment/uncomment respects indent level when appropriate
+* Shift+Enter now searches backwards in Find/Replace
 
 
 ### Workspace
