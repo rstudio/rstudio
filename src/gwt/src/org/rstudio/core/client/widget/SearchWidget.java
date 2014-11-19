@@ -224,11 +224,8 @@ public class SearchWidget extends Composite implements SearchDisplay
       {
          public void onKeyDown(KeyDownEvent event)
          {
-            if (ignore_ = !ignore_)
-               handler.onKeyDown(event);
+            handler.onKeyDown(event);
          }
-
-         private boolean ignore_ = false;
       });
    }
 
