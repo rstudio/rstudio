@@ -66,6 +66,7 @@ public class JMethodCall extends JExpression {
   private JMethod method;
   private final JType overrideReturnType;
   private Polymorphism polymorphism = Polymorphism.NORMAL;
+  private boolean methodHasSideEffects;
 
   /**
    * Initialize a new method call equivalent to another one. A new instance must
@@ -78,16 +79,11 @@ public class JMethodCall extends JExpression {
     this.method = other.method;
     this.overrideReturnType = other.overrideReturnType;
     this.polymorphism = other.polymorphism;
+    this.methodHasSideEffects = other.methodHasSideEffects;
   }
 
   public JMethodCall(SourceInfo info, JExpression instance, JMethod method, JExpression... args) {
-    super(info);
-    assert (method != null);
-    assert (instance != null || method.isStatic() || this instanceof JNewInstance);
-    this.instance = instance;
-    this.method = method;
-    this.overrideReturnType = null;
-    addArgs(args);
+    this(info, instance, method, null, args);
   }
 
   /**
@@ -105,11 +101,11 @@ public class JMethodCall extends JExpression {
       JType overrideReturnType, JExpression... args) {
     super(info);
     assert (method != null);
-    assert (instance != null || method.isStatic());
+    assert (instance != null || method.isStatic() || this instanceof JNewInstance);
     this.instance = instance;
     this.method = method;
-    assert (overrideReturnType != null);
     this.overrideReturnType = overrideReturnType;
+    this.methodHasSideEffects = method.hasSideEffects();
     addArgs(args);
   }
 
@@ -173,10 +169,14 @@ public class JMethodCall extends JExpression {
     }
   }
 
+  public void setMethodHasSideEffects(boolean methodHasSideEffects) {
+    this.methodHasSideEffects = methodHasSideEffects;
+  }
+
   @Override
   public boolean hasSideEffects() {
     // TODO(later): optimize? Be sure to check for clinit when we do.
-    return true;
+    return isStaticDispatchOnly() || method.isStatic() ? methodHasSideEffects : true;
   }
 
   /**

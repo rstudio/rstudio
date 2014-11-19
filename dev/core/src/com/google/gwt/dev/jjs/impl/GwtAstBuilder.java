@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.client.impl.DoNotInline;
+import com.google.gwt.core.client.impl.HasNoSideEffects;
 import com.google.gwt.core.client.impl.SpecializeMethod;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.javac.JSORestrictionsChecker;
@@ -3896,12 +3897,20 @@ public class GwtAstBuilder {
       JMethod method) {
     maybeAddMethodSpecialization(x, method);
     maybeSetDoNotInline(x, method);
+    maybeSetHasNoSideEffects(x, method);
   }
 
   private void maybeSetDoNotInline(AbstractMethodDeclaration x,
       JMethod method) {
     if (JdtUtil.getAnnotation(x.binding, DoNotInline.class.getName()) != null) {
       method.setInliningAllowed(false);
+    }
+  }
+
+  private void maybeSetHasNoSideEffects(AbstractMethodDeclaration x,
+      JMethod method) {
+    if (JdtUtil.getAnnotation(x.binding, HasNoSideEffects.class.getName()) != null) {
+      method.setHasSideEffects(false);
     }
   }
 

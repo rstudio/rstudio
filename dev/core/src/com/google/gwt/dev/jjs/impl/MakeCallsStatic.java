@@ -167,6 +167,7 @@ public class MakeCallsStatic {
           new JMethod(sourceInfo, newName, enclosingType, returnType, false, true, true, x
               .getAccess());
       newMethod.setInliningAllowed(x.isInliningAllowed());
+      newMethod.setHasSideEffects(x.hasSideEffects());
       newMethod.setSynthetic();
       newMethod.addThrownExceptions(x.getThrownExceptions());
 

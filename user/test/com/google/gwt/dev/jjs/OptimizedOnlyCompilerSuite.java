@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs;
 
+import com.google.gwt.dev.jjs.test.HasNoSideEffecstTest;
 import com.google.gwt.dev.jjs.test.SpecializationTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
@@ -30,6 +31,7 @@ public class OptimizedOnlyCompilerSuite {
 
     // $JUnit-BEGIN$
     suite.addTestSuite(SpecializationTest.class);
+    suite.addTestSuite(HasNoSideEffecstTest.class);
     // $JUnit-END$
 
     return suite;

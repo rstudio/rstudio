@@ -48,6 +48,7 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
   private Specialization specialization;
   private boolean noExport = false;
   private boolean inliningAllowed = true;
+  private boolean hasSideEffects = true;
 
   public boolean isNoExport() {
     return noExport;
@@ -106,6 +107,14 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
 
   public void setInliningAllowed(boolean inliningAllowed) {
     this.inliningAllowed = inliningAllowed;
+  }
+
+  public boolean hasSideEffects() {
+    return hasSideEffects;
+  }
+
+  public void setHasSideEffects(boolean hasSideEffects) {
+    this.hasSideEffects = hasSideEffects;
   }
 
   /**
