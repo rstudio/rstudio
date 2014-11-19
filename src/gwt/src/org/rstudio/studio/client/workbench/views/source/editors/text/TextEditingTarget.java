@@ -499,6 +499,15 @@ public class TextEditingTarget implements
                   }
                }
             }
+            else if (
+                  prefs_.continueCommentsOnNewline().getValue() &&
+                  ne.getKeyCode() == KeyCodes.KEY_ENTER &&
+                  mod == KeyboardShortcut.SHIFT)
+            {
+               event.preventDefault();
+               event.stopPropagation();
+               docDisplay_.insertCode("\n");
+            }
          }
 
       });
