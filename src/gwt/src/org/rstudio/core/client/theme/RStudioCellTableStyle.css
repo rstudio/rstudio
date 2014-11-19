@@ -75,7 +75,7 @@
 }
 
 .cellTableSortableHeader {
-  cursor: pointer;
+  cursor: default;
 }
 
 .cellTableSortableHeader:hover {

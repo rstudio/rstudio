@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.application.ui;
 
+import org.rstudio.core.client.theme.res.ThemeResources;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -68,6 +70,7 @@ public class WarningBar extends Composite
    public WarningBar()
    {
       initWidget(binder.createAndBindUi(this));
+      dismiss_.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
       dismiss_.addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)

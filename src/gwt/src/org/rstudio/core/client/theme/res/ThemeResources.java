@@ -195,5 +195,8 @@ public interface ThemeResources extends ClientBundle
    @Source("macCheck.png")
    DataResource macCheck();
    
+   @Source("handCursor.png")
+   DataResource handCursor();
+   
    ImageResource menuCheck();
 }

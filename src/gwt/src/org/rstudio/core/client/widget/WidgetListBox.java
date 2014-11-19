@@ -17,6 +17,8 @@ package org.rstudio.core.client.widget;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.theme.res.ThemeResources;
+
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style;
@@ -153,6 +155,7 @@ public class WidgetListBox<T extends Widget>
                                                itemPaddingUnit_);
       
       panel.addStyleName(style_.anyItem());
+      panel.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
 
       // if it's the first item, select it
       if (options_.size() == 1)

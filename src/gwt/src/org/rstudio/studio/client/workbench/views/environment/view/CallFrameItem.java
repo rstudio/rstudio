@@ -25,6 +25,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
@@ -52,6 +53,7 @@ public class CallFrameItem extends Composite
       observer_ = observer;
       frame_ = frame;
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
+      functionName.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
       functionName.addClickHandler(this);
       if (!frame.isNavigable() || hidden)
       {

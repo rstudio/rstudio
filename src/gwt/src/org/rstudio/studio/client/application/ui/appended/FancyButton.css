@@ -3,7 +3,6 @@ button.fancy {
    border: 0 none;
    margin: 0 0 0 -3px;
    outline: none;
-   cursor: pointer;
    background-color: #f3f3f4;
 }
 button.fancy:focus {

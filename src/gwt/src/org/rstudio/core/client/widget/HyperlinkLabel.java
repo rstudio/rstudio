@@ -16,7 +16,9 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.user.client.ui.Label;
+
 import org.rstudio.core.client.HandlerRegistrations;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 
 public class HyperlinkLabel extends Label 
 {
@@ -31,6 +33,7 @@ public class HyperlinkLabel extends Label
       super(caption); 
       clickHandler_ = clickHandler ;
       this.setStyleName("rstudio-HyperlinkLabel");
+      this.addStyleName(ThemeStyles.INSTANCE.handCursor());
    }
    
    public HyperlinkLabel(String caption)

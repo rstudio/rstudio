@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.common;
 
+import org.rstudio.core.client.theme.res.ThemeStyles;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.cellview.client.SimplePager;
