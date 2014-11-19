@@ -1,4 +1,10 @@
 (function(){
+// called when the window size changes--adjust the grid size accordingly
+var sizeDataTable = function() {
+  $(".dataTables_scrollBody").css("height", 
+    window.innerHeight - ($("thead").height() + 2));
+};
+
 var initDataTable = function() {
   // look up the query parameters
   var env = "", obj = "";
@@ -44,13 +50,24 @@ var initDataTable = function() {
         }
       }
     });
+
+    // listen for size changes
+    window.addEventListener("resize", sizeDataTable);
   });
 };
 
 $(document).ready(function() {
-  window.setTimeout(function() {
+  // RStudio animates the window opening, so wait for window height to stop
+  // changing for 10ms before drawing
+  var height = window.innerHeight;
+  var interval = window.setInterval(function() {
+    if (height === window.innerHeight) {
+      window.clearInterval(interval);
       initDataTable();
-  },200);
+    } else {
+      height = window.innerHeight;
+    }
+  }, 10);
 });
 
 })();
