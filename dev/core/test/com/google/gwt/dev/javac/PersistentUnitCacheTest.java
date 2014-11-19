@@ -16,8 +16,10 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.thirdparty.guava.common.util.concurrent.Futures;
 
 import junit.framework.TestCase;
@@ -29,6 +31,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -51,14 +54,23 @@ public class PersistentUnitCacheTest extends TestCase {
     }
   }
 
-  File lastCacheDir = null;
+  private TreeLogger logger;
+  private File lastParentDir = null;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+//    logger = TreeLogger.NULL; // Change to PrintWriterTreeLogger to debug tests
+    logger = new PrintWriterTreeLogger();
+    logger.log(Type.INFO, "\n\n*** Running " + getName());
+  }
 
   @Override
   public void tearDown() {
-    if (lastCacheDir != null) {
-      Util.recursiveDelete(lastCacheDir, false);
+    if (lastParentDir != null) {
+      Util.recursiveDelete(lastParentDir, false);
     }
-    lastCacheDir = null;
+    lastParentDir = null;
   }
 
   /**
@@ -75,7 +87,6 @@ public class PersistentUnitCacheTest extends TestCase {
    * in.
    */
   public void testFileInTheWay() throws IOException {
-    TreeLogger logger = TreeLogger.NULL;
     File fileInTheWay = File.createTempFile("PersistentUnitTest-inTheWay", "");
     assertNotNull(fileInTheWay);
     assertTrue(fileInTheWay.exists());
@@ -101,24 +112,22 @@ public class PersistentUnitCacheTest extends TestCase {
    * The cache should recursively create the directories it needs.
    */
   public void testNewDir() throws IOException, UnableToCompleteException {
-    TreeLogger logger = TreeLogger.NULL;
     File baseDir = File.createTempFile("PersistentUnitTest-newDir", "");
     assertNotNull(baseDir);
     assertTrue(baseDir.exists());
     assertTrue(baseDir.delete());
-    File newDir = lastCacheDir = new File(baseDir, "sHoUlDnOtExi57");
-    new PersistentUnitCache(logger, newDir);
-    assertTrue(newDir.isDirectory());
+    File parentDir = lastParentDir = new File(baseDir, "sHoUlDnOtExi57");
+    new PersistentUnitCache(logger, parentDir);
+    assertTrue(parentDir.isDirectory());
   }
 
   public void testPersistentCache() throws IOException, InterruptedException,
       UnableToCompleteException, ExecutionException {
-    TreeLogger logger = TreeLogger.NULL;
 
-    File cacheDir = lastCacheDir = File.createTempFile("persistentCacheTest", "");
-    File unitCacheDir = mkCacheDir(cacheDir);
+    File parentDir = lastParentDir = File.createTempFile("persistentCacheTest", "");
+    File unitCacheDir = mkCacheDir(parentDir);
 
-    PersistentUnitCache cache = makeUnitCache(cacheDir);
+    PersistentUnitCache cache = makeUnitCache(parentDir);
 
     MockCompilationUnit foo1 = new MockCompilationUnit("com.example.Foo", "Foo: source1");
     cache.add(foo1);
@@ -164,7 +173,7 @@ public class PersistentUnitCacheTest extends TestCase {
 
     // Fire up the cache again. It should be pre-populated.
     // Search by type name
-    cache = makeUnitCache(cacheDir);
+    cache = makeUnitCache(parentDir);
     result = cache.find("com/example/Foo.java");
     assertNotNull(result);
     assertEquals("com.example.Foo", result.getTypeName());
@@ -195,15 +204,14 @@ public class PersistentUnitCacheTest extends TestCase {
     assertNumCacheFiles(unitCacheDir, 1);
 
     // Fire up the cache again. (Creates a second file in the background.)
-    cache = makeUnitCache(cacheDir);
+    cache = makeUnitCache(parentDir);
 
     // keep making more files
     MockCompilationUnit lastUnit = null;
     assertTrue(PersistentUnitCache.CACHE_FILE_THRESHOLD > 3);
-    for (int i = 2; i <= PersistentUnitCache.CACHE_FILE_THRESHOLD - 3; i++) {
+    for (int i = 2; i <= PersistentUnitCache.CACHE_FILE_THRESHOLD - 2; i++) {
       lastUnit = new MockCompilationUnit("com.example.Foo", "Foo Source" + i);
-      Future<Void> addFuture = cache.internalAdd(lastUnit);
-      addFuture.get();
+      cache.internalAdd(lastUnit).get();
       assertNumCacheFiles(unitCacheDir, i);
       // force rotation to a new file
       // (Normally async but we overrode it.)
@@ -212,7 +220,7 @@ public class PersistentUnitCacheTest extends TestCase {
     }
 
     // One last check, we should load the last unit added to the cache.
-    cache = makeUnitCache(cacheDir);
+    cache = makeUnitCache(parentDir);
     result = cache.find(lastUnit.getContentId());
     assertNotNull(result);
     assertEquals("com.example.Foo", result.getTypeName());
@@ -237,11 +245,13 @@ public class PersistentUnitCacheTest extends TestCase {
     cache.add(lastUnit);
     cache.cleanup(logger);
 
-    // This time, the cleanup logic should coalesce the logs into one file
-    // again.
+    // Add one more to put us over the top.
     lastUnit = new MockCompilationUnit("com.example.Qux", "Qux Source");
-    Future<Void> addFuture = cache.internalAdd(lastUnit);
-    addFuture.get();
+    Futures.getUnchecked(cache.internalAdd(lastUnit));
+
+    // The currently open file isn't included in this count.
+    assertNumCacheFiles(unitCacheDir, PersistentUnitCache.CACHE_FILE_THRESHOLD + 1);
+
     cache.cleanup(logger);
     cache.shutdown();
 
@@ -249,7 +259,7 @@ public class PersistentUnitCacheTest extends TestCase {
     assertNumCacheFiles(unitCacheDir, 1);
 
     // Fire up the cache on this one coalesced file.
-    cache = makeUnitCache(cacheDir);
+    cache = makeUnitCache(parentDir);
 
     // Verify that we can still find the content that was coalesced.
     assertNotNull(cache.find("com/example/Foo.java"));
@@ -259,7 +269,7 @@ public class PersistentUnitCacheTest extends TestCase {
   }
 
   private PersistentUnitCache makeUnitCache(File cacheDir) throws UnableToCompleteException {
-    return new PersistentUnitCache(TreeLogger.NULL, cacheDir) {
+    return new PersistentUnitCache(logger, cacheDir) {
       @Override
       Future<Void> startRotating() {
         // wait for rotation to finish to avoid flakiness
@@ -276,6 +286,7 @@ public class PersistentUnitCacheTest extends TestCase {
     }
 
     // list the files
+    Arrays.sort(actualFiles);
     System.out.println("\nCache file dump (exected " + expected + ")");
     for (String file : actualFiles) {
       System.out.println(file);
@@ -288,23 +299,22 @@ public class PersistentUnitCacheTest extends TestCase {
 
   private void checkInvalidObjectInCache(Object toSerialize) throws IOException,
       FileNotFoundException, UnableToCompleteException, InterruptedException, ExecutionException {
-    TreeLogger logger = TreeLogger.NULL;
-    File cacheDir = lastCacheDir = File.createTempFile("PersistentUnitTest-CNF", "");
-    File unitCacheDir = mkCacheDir(cacheDir);
+    File parentDir = lastParentDir = File.createTempFile("PersistentUnitTest-CNF", "");
+    File unitCacheDir = mkCacheDir(parentDir);
 
     /*
      * Create a cache file that has the right filename, but the wrong kind of
      * object in it.
      */
     File errorFile = new File(unitCacheDir,
-        PersistentUnitCache.CURRENT_VERSION_CACHE_FILE_PREFIX + "12345");
+        PersistentUnitCacheDir.CURRENT_VERSION_CACHE_FILE_PREFIX + "12345");
     ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(errorFile));
     os.writeObject(toSerialize);
     os.close();
 
     assertNumCacheFiles(unitCacheDir, 1);
 
-    PersistentUnitCache cache = new PersistentUnitCache(logger, cacheDir);
+    PersistentUnitCache cache = new PersistentUnitCache(logger, parentDir);
     cache.cleanup(logger);
     cache.shutdown();
 
@@ -312,11 +322,11 @@ public class PersistentUnitCacheTest extends TestCase {
     assertNumCacheFiles(unitCacheDir, 0);
   }
 
-  private File mkCacheDir(File cacheDir) {
-    assertNotNull(cacheDir);
-    assertTrue(cacheDir.exists());
-    cacheDir.delete();
-    File unitCacheDir = new File(cacheDir, PersistentUnitCache.UNIT_CACHE_PREFIX);
+  private File mkCacheDir(File parentDir) {
+    assertNotNull(parentDir);
+    assertTrue(parentDir.exists());
+    parentDir.delete();
+    File unitCacheDir = PersistentUnitCacheDir.chooseCacheDir(parentDir);
     unitCacheDir.mkdirs();
     return unitCacheDir;
   }
