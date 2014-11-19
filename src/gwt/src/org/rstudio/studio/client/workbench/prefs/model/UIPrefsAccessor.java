@@ -93,6 +93,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("show_indent_guides", false);
    }
    
+   public PrefValue<Boolean> continueCommentsOnNewline()
+   {
+      return bool("continue_comments_on_newline", false);
+   }
+   
    public PrefValue<Boolean> useVimMode()
    {
       return bool("use_vim_mode", false);

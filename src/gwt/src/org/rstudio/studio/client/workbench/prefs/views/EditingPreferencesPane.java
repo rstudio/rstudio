@@ -45,7 +45,7 @@ public class EditingPreferencesPane extends PreferencesPane
       editingPanel.add(checkboxPref("Strip trailing horizontal whitespace when saving", prefs_.stripTrailingWhitespace()));
       editingPanel.add(checkboxPref("Focus console after executing from source", prefs_.focusConsoleAfterExec()));
       editingPanel.add(checkboxPref("Enable vim editing mode", prefs_.useVimMode())); 
-     
+      editingPanel.add(checkboxPref("Continue comment when inserting new line", prefs_.continueCommentsOnNewline()));
       
       VerticalPanel displayPanel = new VerticalPanel();
       displayPanel.add(checkboxPref("Highlight selected word", prefs.highlightSelectedWord()));

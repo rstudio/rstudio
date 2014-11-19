@@ -469,7 +469,41 @@ public class TextEditingTarget implements
                }
                
             }
- 
+            else if (
+                  prefs_.continueCommentsOnNewline().getValue() && 
+                  ne.getKeyCode() == KeyCodes.KEY_ENTER && mod == 0 &&
+                    (isCFamilyFiletype() || isCursorInRMode() || isCursorInTexMode()))
+            {
+               String line = docDisplay_.getCurrentLine();
+               Pattern pattern = null;
+               
+               if (isCursorInRMode())
+                  pattern = Pattern.create("^(\\s*#+'?\\s*)");
+               else if (isCursorInTexMode())
+                  pattern = Pattern.create("^(\\s*%+'?\\s*)");
+               else if (isCFamilyFiletype())
+               {
+                  // bail on attributes
+                  if (!line.matches("^\\s*//\\s*\\[\\[.*\\]\\].*"))
+                     pattern = Pattern.create("^(\\s*//'?\\s*)");
+               }
+               
+               if (pattern != null)
+               {
+                  Match match = pattern.match(line, 0);
+                  if (match != null)
+                  {
+                     event.preventDefault();
+                     event.stopPropagation();
+                     docDisplay_.insertCode("\n" + match.getGroup(1));
+                  }
+               }
+            }
+         }
+
+         private boolean isCFamilyFiletype()
+         {
+            return fileType_.isC() || fileType_.isCpp();
          }
       });
       
