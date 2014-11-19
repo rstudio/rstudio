@@ -23,6 +23,7 @@
 * Alt+Enter to run code while retaining cursor position
 * Comment/uncomment respects indent level when appropriate
 * Shift+Enter now searches backwards in Find/Replace
+* New option to control comment continuation on insertion of new lines
 
 
 ### Workspace

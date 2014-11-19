@@ -116,6 +116,9 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          useVimMode().setGlobalValue(
                               newUiPrefs.useVimMode().getGlobalValue());
          
+         continueCommentsOnNewline().setGlobalValue(
+                              newUiPrefs.continueCommentsOnNewline().getGlobalValue());
+         
          // insert matching
          insertMatching().setGlobalValue(
                                  newUiPrefs.insertMatching().getGlobalValue());
