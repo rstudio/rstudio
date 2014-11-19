@@ -136,8 +136,16 @@ var CStyleBehaviour = function(codeModel) {
             return;
          }
 
+         // If this line is an roxygen-style comment, continue that comment
+         var match = /^(\s*\/\/'\s*)/.exec(line);
+         if (match && col >= match[1].length)
+            return {
+               text: "\n" + match[1]
+            };
+
          // Comment indentation rules
          if (state == "comment" || state == "doc-start") {
+         
 
             // Choose indentation for the current line based on the position
             // of the cursor -- but make sure we only apply this if the
