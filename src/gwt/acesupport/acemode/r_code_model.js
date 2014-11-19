@@ -1013,7 +1013,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       if (moveOutOfArgList(tokenCursor))
          if (moveFromFunctionTokenToEndOfFunctionName(tokenCursor))
             if (tokenCursor.findStartOfEvaluationContext())
-               ; // previous statements will move the cursor as necessary
+               {} // previous statements will move the cursor as necessary
 
       var scopedVariables = {};
       do
