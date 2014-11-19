@@ -363,8 +363,26 @@ public class CompletionRequester
          CodeModel codeModel = editor.getSession().getMode().getCodeModel();
          JsArray<RFunction> scopedFunctions =
                codeModel.getFunctionsInScope(cursorPosition);
-
-         for (int i = 0; i < scopedFunctions.length(); i++)
+         
+         // We might ignore the first scope if we're within the argument list
+         // for that function, e.g.
+         //
+         //    foo <- function(apple, banana, |
+         //
+         // The cursor is seen as within the scope of 'foo', but we don't
+         // actually want those completions.
+         JsArray<ScopeFunction> scopeFunctions =
+               codeModel.getAllFunctionScopes(cursorPosition.getRow());
+         
+         ScopeFunction currentFunction = scopeFunctions.get(
+               scopeFunctions.length() - 1);
+         
+         Position bracePos = currentFunction.getBodyStart();
+         int start = 0;
+         if (cursorPosition.isBefore((bracePos)))
+            start = 1;
+            
+         for (int i = start; i < scopedFunctions.length(); i++)
          {
             RFunction scopedFunction = scopedFunctions.get(i);
             String functionName = scopedFunction.getFunctionName();
@@ -379,14 +397,18 @@ public class CompletionRequester
                   {
                      completions.add(new QualifiedName(
                            argName,
-                           "<anonymous function>"
+                           "<anonymous function>",
+                           false,
+                           RCompletionType.CONTEXT
                      ));
                   }
                   else
                   {
                      completions.add(new QualifiedName(
                            argName,
-                           "[" + functionName + "]"
+                           functionName,
+                           false,
+                           RCompletionType.CONTEXT
                      ));
                   }
                }
@@ -416,7 +438,9 @@ public class CompletionRequester
             if (variable.getToken().startsWith(token) && variable.getType() == type)
                completions.add(new QualifiedName(
                      variable.getToken(),
-                     "<" + variable.getType() + ">"
+                     variable.getType(),
+                     false,
+                     RCompletionType.CONTEXT
                ));
          }
       }
@@ -461,7 +485,9 @@ public class CompletionRequester
                      {
                         completions.add(new QualifiedName(
                               args.get(j) + " = ",
-                              "[" + fnName + "]"
+                              fnName,
+                              false,
+                              RCompletionType.CONTEXT
                         ));
                      }
                   }
@@ -681,6 +707,8 @@ public class CompletionRequester
             return ICONS.rPackage();
          case RCompletionType.KEYWORD:
             return ICONS.keyword();
+         case RCompletionType.CONTEXT:
+            return ICONS.context();
          default:
             return ICONS.variable();
          }

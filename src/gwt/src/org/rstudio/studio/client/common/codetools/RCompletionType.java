@@ -40,6 +40,8 @@ public class RCompletionType
    public static final int OPTION = 21;
    public static final int DATASET = 22;
    
+   public static final int CONTEXT = 99;
+   
    public static boolean isFunctionType(int type)
    {
       return type == FUNCTION ||

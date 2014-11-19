@@ -59,7 +59,8 @@ assign(x = ".rs.acCompletionTypes",
           PACKAGE = 19,
           KEYWORD = 20,
           OPTION = 21,
-          DATASET = 22
+          DATASET = 22,
+          CONTEXT = 99
        )
 )
 

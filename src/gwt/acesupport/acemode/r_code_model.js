@@ -971,6 +971,30 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       return true;
    }
 
+   // Moves out of an argument list for a function, e.g.
+   //
+   //     x <- function(a, b|
+   //          ^~~~~~~~~~~~~^
+   //
+   // The cursor will be placed on the associated 'function' token
+   // on success, and unmoved on failure.
+   var moveOutOfArgList = function(tokenCursor)
+   {
+      var clone = tokenCursor.cloneCursor();
+      if (!clone.findOpeningBracket("(", true))
+         return false;
+
+      if (!clone.moveToPreviousToken())
+         return false;
+      
+      if (clone.currentValue() !== "function")
+         return false;
+
+      tokenCursor.$row = clone.$row;
+      tokenCursor.$offset = clone.$offset;
+      return true;
+   };
+
    this.getVariablesInScope = function(pos) {
       
       this.$tokenizeUpToRow(pos.row);
@@ -978,6 +1002,18 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       var tokenCursor = new this.$TokenCursor();
       if (!tokenCursor.moveToPosition(pos))
          return [];
+
+      // If we're in a function call, avoid grabbing the parameters and
+      // function name itself within the call. This is so that in e.g.
+      //
+      //     func <- foo(x = 1, y = 2, |
+      //
+      // we don't pick up 'func', 'x', and 'y' as potential completions
+      // since they will not be valid in all contexts
+      if (moveOutOfArgList(tokenCursor))
+         if (moveFromFunctionTokenToEndOfFunctionName(tokenCursor))
+            if (tokenCursor.findStartOfEvaluationContext())
+               ; // previous statements will move the cursor as necessary
 
       var scopedVariables = {};
       do
