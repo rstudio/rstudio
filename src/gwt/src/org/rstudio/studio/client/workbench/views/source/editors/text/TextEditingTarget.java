@@ -1959,6 +1959,21 @@ public class TextEditingTarget implements
    {
       return fileType_;
    }
+   
+   @Handler
+   void onMoveCursorToStartOfDocument()
+   {
+      docDisplay_.setCursorPosition(Position.create(0, 0));
+   }
+   
+   @Handler
+   void onMoveCursorToEndOfDocument()
+   {
+      int row = docDisplay_.getRowCount();
+      int column = docDisplay_.getLength(row - 1);
+      docDisplay_.setCursorPosition(
+            Position.create(row, column));
+   }
 
    @Handler
    void onCheckSpelling()
