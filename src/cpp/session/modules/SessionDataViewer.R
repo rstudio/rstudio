@@ -13,14 +13,19 @@
 #
 #
 
-.rs.addFunction( "formatDataColumn", function(x, len, ...)
+.rs.addFunction( "formatDataColumn", function(x, start, len, ...)
 {
-   # first truncate if necessary
-   if ( length(x) > len )
-      length(x) <- len
+   # extract the visible part of the column
+   col <- x[start:min(length(x), start+len)]
 
-   # now format
-   format(x, trim = TRUE, justify = "none", ...)
+   if (is.numeric(col)) {
+     # show numbers as doubles
+     storage.mode(col) <- "double"
+   } else {
+     # show everything else as characters
+     col <- as.character(col)
+   }
+   format(col, trim = TRUE, justify = "none", ...)
 })
 
 .rs.registerReplaceHook("View", "utils", function(original, x, title) {
@@ -29,31 +34,8 @@
    if (missing(title))
       title <- deparse(substitute(x))[1]
    
-   # make sure we are dealing with a data frame (cast explicity both
-   # for the case of it not being a data frame or for the case of
-   # more than one class)
-   if (!is.data.frame(x) || (length(class(x)) > 1))
-      x <- as.data.frame(x)
-
-   # add a column for custom row names if necessary
-   rowNames <- row.names(x)
-   if (!identical(rowNames,as.character(1:length(rowNames)))) {
-      colNames <- names(x)
-      x$row.names <- rowNames
-      x <- x[c("row.names", colNames, recursive=TRUE)]
-   }
-     
    # call viewData (prepare columns so they are either double or character)   
-   invisible(.Call("rs_viewData", 
-                   lapply(x, function(col) {
-                      if (is.numeric(col)) {
-                         storage.mode(col) <- "double"
-                         col  
-                      }
-                      else 
-                         as.character(col)
-                   }), 
-                   title))
+   invisible(.Call("rs_viewData", x, title))
 })
 
 .rs.addFunction("initializeDataViewer", function(server) {

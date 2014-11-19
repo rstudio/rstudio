@@ -5,23 +5,12 @@ body {
 }
 
 thead {
+    color: #555555;
     background-color: #e7edf0;
 }
 
-th {
-    text-align: left; 
-    font-size: 12px;
-    font-family: 'Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', Verdana, Helvetica, sans-serif;
-}
-
-td {
-    font-family: monospace;
-    font-size: 12px;
-    border: 1px solid #f0f0f0;
-}
-
 #data {
-    margin: 0px;
+    margin: 0px 0px 36px 0px;
 }
 
 #data_paginate {
@@ -35,4 +24,24 @@ td {
 
 div.datatables_paginate {
     text-align: left;
+}
+
+table.dataTable tbody td {
+    padding: 4px 5px;
+    font-family: Consolas, Lucida Console, Monaco, monospace;
+    border: 1px solid #dddddd;
+    font-size: 12px;
+}
+
+th, table.dataTable tbody td:first-child {
+    text-align: left; 
+    font-size: 12px;
+    font-family: 'Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', Verdana, Helvetica, sans-serif;
+    color: #555555;
+    background-color: #e7edf0;
+}
+
+.dataTables_wrapper.no-footer .dataTables_scrollBody
+{
+    border: none;
 }

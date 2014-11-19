@@ -53,112 +53,35 @@ namespace viewer {
 
 namespace {   
 
-class CachedFrame 
-{
-public:
-   CachedFrame(SEXP dataSEXP);
-   json::Value getColumns();
-   json::Value getData(int data, int start, int length);
-private:
-   std::vector<std::string> cols_;
-   std::vector<std::vector<std::string> > data_;
-};
-
-CachedFrame::CachedFrame(SEXP dataSEXP)
-{
-   SEXP namesSEXP = Rf_getAttrib(dataSEXP, R_NamesSymbol);
-   if (TYPEOF(namesSEXP) != STRSXP || 
-       Rf_length(namesSEXP) != Rf_length(dataSEXP))
-   {
-      throw r::exec::RErrorException(
-                           "invalid data argument (names not specified)");
-   }
-   Error error = r::sexp::extract(namesSEXP, &cols_);
-
-   unsigned rowCount = 0;
-   std::vector<unsigned> columnLengths;
-   for (unsigned i = 0; i < cols_.size(); i++)
-   {
-       SEXP columnSEXP = VECTOR_ELT(dataSEXP, i);
-       unsigned columnLength = r::sexp::length(columnSEXP);
-       columnLengths.push_back(columnLength);
-       rowCount = std::max(columnLength, rowCount);
-   }
-
-   // consider: for very large data we should only format/extract the page of
-   // the data frame being requested, instead of doing everything up front
-   r::sexp::Protect rProtect;
-   SEXP formattedDataSEXP = Rf_allocVector(VECSXP, cols_.size());
-   rProtect.add(formattedDataSEXP);
-   for (unsigned i = 0; i < cols_.size(); i++)
-   {
-      SEXP columnSEXP = VECTOR_ELT(dataSEXP, i);
-      SEXP formattedColumnSEXP;
-      r::exec::RFunction formatFx(".rs.formatDataColumn");
-      formatFx.addParam(columnSEXP);
-      formatFx.addParam(static_cast<int>(rowCount));
-      Error error = formatFx.call(&formattedColumnSEXP, &rProtect);
-      if (error)
-         throw r::exec::RErrorException(error.summary());
-      SET_VECTOR_ELT(formattedDataSEXP, i, formattedColumnSEXP);
-    }
-
-   for (unsigned row = 0; row < rowCount; row++)
-   {
-      data_.push_back(std::vector<std::string>());
-      for (int col = 0; col<Rf_length(formattedDataSEXP); col++)
-      {
-         if (columnLengths[col] > row)
-         {
-            SEXP columnSEXP = VECTOR_ELT(formattedDataSEXP, col);
-            SEXP stringSEXP = STRING_ELT(columnSEXP, row);
-            if (stringSEXP != NULL &&
-                stringSEXP != NA_STRING &&
-                r::sexp::length(stringSEXP) > 0)
-            {
-               data_[row].push_back(Rf_translateChar(stringSEXP));
-            }
-            else
-            {
-               data_[row].push_back("");
-            }
-         }
-         else
-         {
-            data_[row].push_back("");
-         }
-      }
-   }
-}
-
-json::Value CachedFrame::getColumns() 
-{
-   return json::toJsonArray(cols_);
-}
-
-json::Value CachedFrame::getData(int draw, int start, int length)
-{
-   json::Object result;
-   // set basic parameters
-   result["draw"] = draw;
-   result["recordsTotal"] = json::toJsonValue(static_cast<int>(data_.size()));
-   result["recordsFiltered"] = json::toJsonValue(static_cast<int>(data_.size()));
-
-   // add results
-   json::Array rows;
-   int max = std::min(start + length, static_cast<int>(data_.size()));
-   for (int i = start; i < max; i++) 
-   {
-      rows.push_back(json::toJsonArray(data_[i]));
-   }
-   result["data"] = rows;
-   return result;
-}
-
-std::vector<boost::shared_ptr<CachedFrame> > s_frames;
-
 SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP)
 {    
+   // attempt to reverse engineer the location of the data
+   // TODO: dataSEXP seems to be a copy for non-global environments; fall back
+   // on deparse for non-global?
+   std::string dataName, envName;
+   SEXP env = R_GlobalEnv;
+   r::sexp::Protect protect;
+   while (dataName.empty() && env != R_EmptyEnv) 
+   {
+      std::vector<r::sexp::Variable> variables;
+      r::sexp::listEnvironment(env, false, &protect, &variables);
+      for (std::vector<r::sexp::Variable>::iterator var = variables.begin();
+           var != variables.end();
+           var++)
+      {
+         if (var->second == dataSEXP) 
+         {
+            dataName = var->first;
+            // don't record the name of the global environment--the string
+            // "R_GlobalEnv" doesn't translate back to an environment 
+            if (env != R_GlobalEnv)
+               r::exec::RFunction("environmentName", env).call(&envName);
+            break;
+         }
+      }
+      env = ENCLOS(env);
+   }
+
    try
    {
       // validate title
@@ -169,14 +92,12 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP)
       if (TYPEOF(dataSEXP) != VECSXP)
          throw r::exec::RErrorException("invalid data argument (not a list)");
 
-      // create the cached frame
-      s_frames.push_back(boost::make_shared<CachedFrame>(dataSEXP));
-
       // fire show data event
       json::Object dataItem;
       dataItem["caption"] = r::sexp::asString(captionSEXP);
-      dataItem["contentUrl"] = kGridResource "/index.html?" +
-         boost::lexical_cast<std::string>(s_frames.size() - 1);
+      dataItem["contentUrl"] = kGridResource "/gridviewer.html?env=" +
+         http::util::urlEncode(envName, true) + "&obj=" + 
+         http::util::urlEncode(dataName, true);
       ClientEvent event(client_events::kShowData, dataItem);
       module_context::enqueClientEvent(event);
 
@@ -221,16 +142,30 @@ Error getGridShape(const http::Request& request,
    std::string queryString = request.uri().substr(pos+1);
    http::Fields fields;
    http::util::parseQueryString(queryString, &fields);
-   int frameId = http::util::fieldValue<int>(fields, "frame_id", -1);
-   if (frameId < 0)
-   {
+   std::string envName = http::util::fieldValue<std::string>(fields, "env", "");
+   std::string objName = http::util::fieldValue<std::string>(fields, "obj", "");
+   if (objName.empty())
+   { 
       return Success();
    }
+   r::sexp::Protect protect;
+   std::vector<std::string> cols;
+   SEXP dataSEXP = r::sexp::findVar(objName, envName);
 
-   json::Value result = s_frames[frameId]->getColumns();
-   
+   SEXP namesSEXP = Rf_getAttrib(dataSEXP, R_NamesSymbol);
+   if (TYPEOF(namesSEXP) != STRSXP || 
+       Rf_length(namesSEXP) != Rf_length(dataSEXP))
+   {
+      throw r::exec::RErrorException(
+                           "invalid data argument (names not specified)");
+   }
+   Error error = r::sexp::extract(namesSEXP, &cols);
+
+   // add row ID column
+   cols.insert(cols.begin(), "");
+
    std::ostringstream ostr;
-   json::write(result, ostr);
+   json::write(json::toJsonArray(cols), ostr);
    pResponse->setStatusCode(http::status::Ok);
    pResponse->setBody(ostr.str());
    return Success();
@@ -250,17 +185,77 @@ Error getGridData(const http::Request& request,
    std::string queryString = request.uri().substr(pos+1);
    http::Fields fields;
    http::util::parseQueryString(queryString, &fields);
-   int frameId = http::util::fieldValue<int>(fields, "frame_id", -1);
-   if (frameId < 0) 
+   std::string envName = http::util::fieldValue<std::string>(fields, "env", "");
+   std::string objName = http::util::fieldValue<std::string>(fields, "obj", "");
+   if (objName.empty()) 
    {
       return Success();
    }
+
+   // get the draw parameters
+   int draw = http::util::fieldValue<int>(fields, "draw", 0);
+   int start = http::util::fieldValue<int>(fields, "start", 0);
+   int length = http::util::fieldValue<int>(fields, "length", 0);
+   int nrow = 0, ncol = 0;
+   r::sexp::Protect protect;
+   std::vector<std::string> cols;
+   SEXP dataSEXP = r::sexp::findVar(objName, envName);
+
+   // TODO: internal?
+   r::exec::RFunction("nrow", dataSEXP).call(&nrow);
+   r::exec::RFunction("ncol", dataSEXP).call(&ncol);
+   length = std::min(length, nrow - start);
+
+   // truncate and format columns 
+   SEXP formattedDataSEXP = Rf_allocVector(VECSXP, ncol);
+   protect.add(formattedDataSEXP);
+   for (unsigned i = 0; i < static_cast<unsigned>(ncol); i++)
+   {
+      SEXP columnSEXP = VECTOR_ELT(dataSEXP, i);
+      SEXP formattedColumnSEXP;
+      r::exec::RFunction formatFx(".rs.formatDataColumn");
+      formatFx.addParam(columnSEXP);
+      formatFx.addParam(static_cast<int>(start));
+      formatFx.addParam(static_cast<int>(length));
+      Error error = formatFx.call(&formattedColumnSEXP, &protect);
+      if (error)
+         throw r::exec::RErrorException(error.summary());
+      SET_VECTOR_ELT(formattedDataSEXP, i, formattedColumnSEXP);
+    }
    
-   json::Value result = s_frames[frameId]->getData(
-         http::util::fieldValue<int>(fields, "draw", 0),
-         http::util::fieldValue<int>(fields, "start", 0),
-         http::util::fieldValue<int>(fields, "length", 10));
-   
+   // add results
+   json::Array data;
+   for (int row = 0; row < length; row++)
+   {
+      json::Array rowData;
+      // add the row number/id
+      rowData.insert(rowData.begin(), 
+            boost::lexical_cast<std::string>(row + 1 + start));
+
+      for (int col = 0; col<Rf_length(formattedDataSEXP); col++)
+      {
+         SEXP columnSEXP = VECTOR_ELT(formattedDataSEXP, col);
+         SEXP stringSEXP = STRING_ELT(columnSEXP, row);
+         if (stringSEXP != NULL &&
+             stringSEXP != NA_STRING &&
+             r::sexp::length(stringSEXP) > 0)
+         {
+            rowData.push_back(Rf_translateChar(stringSEXP));
+         }
+         else
+         {
+            rowData.push_back("");
+         }
+      }
+      data.push_back(rowData);
+   }
+
+   json::Object result;
+   result["draw"] = draw;
+   result["recordsTotal"] = nrow;
+   result["recordsFiltered"] = nrow;
+   result["data"] = data;
+
    std::ostringstream ostr;
    json::write(result, ostr);
    pResponse->setStatusCode(http::status::Ok);
