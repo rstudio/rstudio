@@ -361,44 +361,56 @@ public class RCompletionManager implements CompletionManager
                invalidatePendingRequests() ;
                return true ;
             }
-            else if (keycode == KeyCodes.KEY_TAB
-                  || keycode == KeyCodes.KEY_ENTER
-                  || keycode == KeyCodes.KEY_RIGHT)
+            
+            // NOTE: It is possible for the popup to still be showing, but
+            // showing offscreen with no values. We only grab these keys
+            // when the popup is both showing, and has completions.
+            // This functionality is here to ensure backspace works properly;
+            // e.g "stats::rna" -> "stats::rn" brings completions if the user
+            // had originally requested completions at e.g. "stats::".
+            if (popup_.hasCompletions())
             {
-               QualifiedName value = popup_.getSelectedValue() ;
-               if (value != null)
+               if (keycode == KeyCodes.KEY_TAB
+                     || keycode == KeyCodes.KEY_ENTER
+                     || keycode == KeyCodes.KEY_RIGHT)
                {
-                  context_.onSelection(value) ;
+                  QualifiedName value = popup_.getSelectedValue() ;
+                  if (value != null)
+                  {
+                     context_.onSelection(value) ;
+                     return true ;
+                  }
+               }
+               
+               else if (keycode == KeyCodes.KEY_UP)
+                  return popup_.selectPrev() ;
+               else if (keycode == KeyCodes.KEY_DOWN)
+                  return popup_.selectNext() ;
+               else if (keycode == KeyCodes.KEY_PAGEUP)
+                  return popup_.selectPrevPage() ;
+               else if (keycode == KeyCodes.KEY_PAGEDOWN)
+                  return popup_.selectNextPage() ;
+               else if (keycode == KeyCodes.KEY_HOME)
+                  return popup_.selectFirst() ;
+               else if (keycode == KeyCodes.KEY_END)
+                  return popup_.selectLast() ;
+               else if (keycode == KeyCodes.KEY_LEFT)
+               {
+                  invalidatePendingRequests() ;
                   return true ;
                }
+               if (keycode == 112) // F1
+               {
+                  context_.showHelpTopic() ;
+                  return true ;
+               }
+               else if (keycode == 113) // F2
+               {
+                  goToFunctionDefinition();
+                  return true;
+               }
             }
-            else if (keycode == KeyCodes.KEY_UP)
-               return popup_.selectPrev() ;
-            else if (keycode == KeyCodes.KEY_DOWN)
-               return popup_.selectNext() ;
-            else if (keycode == KeyCodes.KEY_PAGEUP)
-               return popup_.selectPrevPage() ;
-            else if (keycode == KeyCodes.KEY_PAGEDOWN)
-               return popup_.selectNextPage() ;
-            else if (keycode == KeyCodes.KEY_HOME)
-               return popup_.selectFirst() ;
-            else if (keycode == KeyCodes.KEY_END)
-               return popup_.selectLast() ;
-            else if (keycode == KeyCodes.KEY_LEFT)
-            {
-               invalidatePendingRequests() ;
-               return true ;
-            }
-            else if (keycode == 112) // F1
-            {
-               context_.showHelpTopic() ;
-               return true ;
-            }
-            else if (keycode == 113) // F2
-            {
-               goToFunctionDefinition();
-               return true;
-            }
+            
          }
          
          if (canContinueCompletions(event))
@@ -1341,6 +1353,7 @@ public class RCompletionManager implements CompletionManager
          
          if (results.length == 0)
          {
+            popup_.clearCompletions();
             boolean lastInputWasTab =
                   (nativeEvent_ != null && nativeEvent_.getKeyCode() == KeyCodes.KEY_TAB);
             

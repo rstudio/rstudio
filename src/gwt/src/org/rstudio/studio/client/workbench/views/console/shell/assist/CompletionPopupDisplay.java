@@ -33,6 +33,7 @@ public interface CompletionPopupDisplay
                              HasCloseHandlers<PopupPanel>,
                              HasMouseDownHandlers
 {
+   void clearCompletions();
    void showCompletionValues(QualifiedName[] results,
                              PositionCallback callback) ;
    void showErrorMessage(String userMessage, PositionCallback callback) ;
@@ -64,4 +65,5 @@ public interface CompletionPopupDisplay
     *    Implementations may choose to show a progress indicator in this case.
     */
    void clearHelp(boolean downloadOperationPending) ;
+   boolean hasCompletions();
 }
