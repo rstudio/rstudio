@@ -515,7 +515,7 @@ void PlotManager::clear()
 
 
 
-boost::signal<void ()>& PlotManager::onShowManipulator()
+boost::signals2::signal<void ()>& PlotManager::onShowManipulator()
 {
    return plotManipulatorManager().onShowManipulator();
 }

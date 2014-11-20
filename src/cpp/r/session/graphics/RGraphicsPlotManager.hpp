@@ -22,7 +22,7 @@
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
-#include <boost/signal.hpp>
+#include <boost/signals2/signal.hpp>
 #include <boost/regex.hpp>
 #include <boost/circular_buffer.hpp>
 
@@ -44,10 +44,10 @@ PlotManager& plotManager();
 
 struct GraphicsDeviceEvents
 {
-   boost::signal<void (SEXP)> onNewPage; 
-   boost::signal<void ()> onDrawing;
-   boost::signal<void ()> onResized;
-   boost::signal<void ()> onClosed;
+   boost::signals2::signal<void (SEXP)> onNewPage;
+   boost::signals2::signal<void ()> onDrawing;
+   boost::signals2::signal<void ()> onResized;
+   boost::signals2::signal<void ()> onClosed;
 };
 
 class PlotManipulatorManager;
@@ -102,7 +102,7 @@ public:
    
    virtual void clear();
 
-   virtual boost::signal<void ()>& onShowManipulator() ;
+   virtual boost::signals2::signal<void ()>& onShowManipulator() ;
    virtual void setPlotManipulatorValues(const rscore::json::Object& values);
    virtual void manipulatorPlotClicked(int x, int y);
 

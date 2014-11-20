@@ -20,7 +20,7 @@
 
 #include <boost/utility.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <boost/signal.hpp>
+#include <boost/signals2/signal.hpp>
 
 #include <core/Settings.hpp>
 #include <core/FilePath.hpp>
@@ -56,7 +56,7 @@ private:
    friend UserSettings& userSettings();
 
 public:
-   boost::signal<void()> onChanged;
+   boost::signals2::signal<void()> onChanged;
 
 public:
    // COPYING: boost::noncopyable

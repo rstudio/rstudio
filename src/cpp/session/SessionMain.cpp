@@ -32,7 +32,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
 
-#include <boost/signals.hpp>
+#include <boost/signals2.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/join.hpp>

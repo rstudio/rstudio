@@ -19,7 +19,7 @@
 
 #include <boost/assert.hpp>
 #include <boost/utility.hpp>
-#include <boost/signal.hpp>
+#include <boost/signals2/signal.hpp>
 #include <boost/format.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 
@@ -439,13 +439,13 @@ private:
    
    int nextGroup_; 
    
-   boost::signal<void(const r::session::RSuspendOptions&,Settings*),
-                 boost::last_value<void>,
+   boost::signals2::signal<void(const r::session::RSuspendOptions&,Settings*),
+                 boost::signals2::last_value<void>,
                  int,
                  std::less<int> > suspendSignal_;
                   
-   boost::signal<void(const Settings&),
-                 boost::last_value<void>,
+   boost::signals2::signal<void(const Settings&),
+                 boost::signals2::last_value<void>,
                  int,
                  std::greater<int> > resumeSignal_;
 };

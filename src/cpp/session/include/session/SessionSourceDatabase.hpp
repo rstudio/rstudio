@@ -21,7 +21,7 @@
 
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/signals.hpp>
+#include <boost/signals2.hpp>
 
 #include <core/FilePath.hpp>
 #include <core/json/Json.hpp>
@@ -153,9 +153,9 @@ rscore::Error removeAll();
 // source database events
 struct Events : boost::noncopyable
 {
-   boost::signal<void(boost::shared_ptr<SourceDocument>)> onDocUpdated;
-   boost::signal<void(const std::string&)>                onDocRemoved;
-   boost::signal<void()>                                  onRemoveAll;
+   boost::signals2::signal<void(boost::shared_ptr<SourceDocument>)> onDocUpdated;
+   boost::signals2::signal<void(const std::string&)>                onDocRemoved;
+   boost::signals2::signal<void()>                                  onRemoveAll;
 };
 
 Events& events();

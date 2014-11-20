@@ -20,7 +20,7 @@
 #include <vector>
 #include <map>
 
-#include <boost/signals.hpp>
+#include <boost/signals2.hpp>
 
 #include <core/Thread.hpp>
 

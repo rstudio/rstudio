@@ -54,7 +54,7 @@ struct is_error_code_enum<r::session::graphics::errc::errc_t>
 #include <vector>
 
 #include <boost/function.hpp>
-#include <boost/signal.hpp>
+#include <boost/signals2/signal.hpp>
 
 #include <core/Error.hpp>
 #include <core/json/Json.hpp>
@@ -144,7 +144,7 @@ public:
    virtual void clear() = 0;
 
    // subscribe to showManipulator event
-   virtual boost::signal<void ()>& onShowManipulator() = 0;
+   virtual boost::signals2::signal<void ()>& onShowManipulator() = 0;
 
    // set manipulator values
    virtual void setPlotManipulatorValues(const rscore::json::Object& values) = 0;

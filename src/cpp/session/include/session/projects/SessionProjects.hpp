@@ -22,7 +22,7 @@
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/foreach.hpp>
-#include <boost/signals.hpp>
+#include <boost/signals2.hpp>
 
 #include <core/FileInfo.hpp>
 #include <core/FilePath.hpp>
@@ -206,10 +206,10 @@ private:
 
    bool hasFileMonitor_;
    std::vector<std::string> monitorSubscribers_;
-   boost::signal<void(const tree<rscore::FileInfo>&)> onMonitoringEnabled_;
-   boost::signal<void(const std::vector<rscore::system::FileChangeEvent>&)>
+   boost::signals2::signal<void(const tree<rscore::FileInfo>&)> onMonitoringEnabled_;
+   boost::signals2::signal<void(const std::vector<rscore::system::FileChangeEvent>&)>
                                                             onFilesChanged_;
-   boost::signal<void()> onMonitoringDisabled_;
+   boost::signals2::signal<void()> onMonitoringDisabled_;
 };
 
 ProjectContext& projectContext();

@@ -183,7 +183,7 @@ Error PlotManipulatorManager::initialize(
 }
 
 
-boost::signal<void ()>& PlotManipulatorManager::onShowManipulator()
+boost::signals2::signal<void ()>& PlotManipulatorManager::onShowManipulator()
 {
    return onShowManipulator_;
 }

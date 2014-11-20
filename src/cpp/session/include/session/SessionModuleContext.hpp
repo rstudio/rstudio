@@ -20,7 +20,7 @@
 
 #include <boost/utility.hpp>
 #include <boost/function.hpp>
-#include <boost/signals.hpp>
+#include <boost/signals2.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <core/system/System.hpp>
@@ -280,23 +280,23 @@ struct firstNonEmpty
 // session events
 struct Events : boost::noncopyable
 {
-   boost::signal<void ()>                    onClientInit;
-   boost::signal<void ()>                    onBeforeExecute;
-   boost::signal<void(const std::string&)>   onConsolePrompt;
-   boost::signal<void(const std::string&)>   onConsoleInput;
-   boost::signal<void (ConsoleOutputType, const std::string&)>
+   boost::signals2::signal<void ()>                    onClientInit;
+   boost::signals2::signal<void ()>                    onBeforeExecute;
+   boost::signals2::signal<void(const std::string&)>   onConsolePrompt;
+   boost::signals2::signal<void(const std::string&)>   onConsoleInput;
+   boost::signals2::signal<void (ConsoleOutputType, const std::string&)>
                                              onConsoleOutput;
-   boost::signal<void (ChangeSource)>        onDetectChanges;
-   boost::signal<void (rscore::FilePath)>      onSourceEditorFileSaved;
-   boost::signal<void(bool)>                 onDeferredInit;
-   boost::signal<void(bool)>                 onBackgroundProcessing;
-   boost::signal<void(bool)>                 onShutdown;
-   boost::signal<void ()>                    onQuit;
-   boost::signal<void (const std::string&)>  onPackageLoaded;
-   boost::signal<void ()>                    onPackageLibraryMutated;
+   boost::signals2::signal<void (ChangeSource)>        onDetectChanges;
+   boost::signals2::signal<void (rscore::FilePath)>      onSourceEditorFileSaved;
+   boost::signals2::signal<void(bool)>                 onDeferredInit;
+   boost::signals2::signal<void(bool)>                 onBackgroundProcessing;
+   boost::signals2::signal<void(bool)>                 onShutdown;
+   boost::signals2::signal<void ()>                    onQuit;
+   boost::signals2::signal<void (const std::string&)>  onPackageLoaded;
+   boost::signals2::signal<void ()>                    onPackageLibraryMutated;
 
    // signal for detecting extended type of documents
-   boost::signal<std::string(boost::shared_ptr<source_database::SourceDocument>),
+   boost::signals2::signal<std::string(boost::shared_ptr<source_database::SourceDocument>),
                  firstNonEmpty<std::string> > onDetectSourceExtendedType;
 };
 
