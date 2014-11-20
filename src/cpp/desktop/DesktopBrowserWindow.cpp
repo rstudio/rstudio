@@ -101,8 +101,7 @@ void BrowserWindow::adjustTitle()
 
 void BrowserWindow::setProgress(int p)
 {
-   progress_ = p
-;
+   progress_ = p;
    adjustTitle();
 }
 

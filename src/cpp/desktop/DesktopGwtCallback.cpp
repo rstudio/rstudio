@@ -445,10 +445,7 @@ void GwtCallback::activateMinimalWindow(QString name)
    if (!named)
       return;
 
-   // look for the window with the given name; if we find it, activate it
-   BrowserWindow* browser = s_windowTracker.getWindow(name);
-   if (browser)
-      desktop::raiseAndActivateWindow(browser);
+   pOwner_->webPage()->activateWindow(name);
 }
 
 void GwtCallback::prepareForSatelliteWindow(QString name,
