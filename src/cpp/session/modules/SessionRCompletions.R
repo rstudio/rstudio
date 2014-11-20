@@ -76,7 +76,7 @@ assign(x = ".rs.acCompletionTypes",
    else if (isS4(object))
    {
       if (inherits(object, "standardGeneric") || 
-          inherits(object, "nonstandardGenericFunction"))
+             inherits(object, "nonstandardGenericFunction"))
          .rs.acCompletionTypes$S4_GENERIC
       else if (inherits(object, "MethodDefinition"))
          .rs.acCompletionTypes$S4_METHOD
@@ -440,6 +440,9 @@ assign(x = ".rs.acCompletionTypes",
                                             overrideInsertParens = FALSE,
                                             orderStartsWithAlnumFirst = TRUE)
 {
+   if (is.null(results))
+      results <- character()
+   
    # Ensure other 'vector' completions are of the same length as 'results'
    n <- length(results)
    packages <- .rs.formCompletionVector(packages, "", n)
@@ -882,7 +885,7 @@ assign(x = ".rs.acCompletionTypes",
                                                   filePath)
 {
    filePath <- suppressWarnings(.rs.normalizePath(filePath))
-   
+
    ## NOTE: these are passed in as lists of strings; convert to character
    additionalArgs <- as.character(additionalArgs)
    excludeArgs <- as.character(excludeArgs)
@@ -905,8 +908,8 @@ assign(x = ".rs.acCompletionTypes",
       return(.rs.attemptRoxygenTagCompletion(token))
    
    if (.rs.acContextTypes$FUNCTION %in% type &&
-       string[[1]] == "data" &&
-       numCommas[[1]] == 0)
+          string[[1]] == "data" &&
+          numCommas[[1]] == 0)
       return(.rs.getCompletionsData(token))
    
    # No information on completions other than token
@@ -941,6 +944,40 @@ assign(x = ".rs.acCompletionTypes",
           numCommas[[1]] == 0)
    {
       return(.rs.getCompletionsPackages(token))
+   }
+   
+   # Shiny completions
+   
+   ## Completions for server.r (from ui.r)
+   if (type[[1]] %in% c(.rs.acContextTypes$DOLLAR,
+                        .rs.acContextTypes$DOUBLE_BRACKET) &&
+          tolower(basename(filePath)) == "server.r" &&
+          string[[1]] %in% c("input", "output"))
+   {
+      completions <- .rs.getCompletionsFromShinyUI(token, filePath, string[[1]], type[[1]])
+      if (!is.null(completions))
+         return(completions)
+   }
+   
+   ## Completions for server.r, on session
+   if (type[[1]] == .rs.acContextTypes$DOLLAR &&
+          tolower(basename(filePath)) == "server.r" &&
+          string[[1]] == "session")
+   {
+      completions <- rs.getCompletionsShinySession(token)
+      if (!is.null(completions))
+         return(completions)
+   }
+   
+   ## Completions for ui.r (from server.r)
+   if (type[[1]] == .rs.acContextTypes$FUNCTION &&
+          tolower(basename(filePath)) == "ui.r" &&
+          numCommas[[1]] == 0 &&
+          (.rs.endsWith(string[[1]], "Input") || .rs.endsWith(string[[1]], "Output")))
+   {
+      completions <- .rs.getCompletionsFromShinyServer(token, filePath, string[[1]], type[[1]])
+      if (!is.null(completions))
+         return(completions)
    }
    
    ## Other special cases (but we may still want completions from
@@ -1392,5 +1429,286 @@ assign(x = ".rs.acCompletionTypes",
    }
    
    completions
+   
+})
+
+.rs.addFunction("getCompletionsFromShinyServer", function(token, filePath, string, type)
+{
+   dir <- dirname(filePath)
+   serverPath <- file.path(dir, "server.R")
+   uiPath <- file.path(dir, "ui.R")
+   name <- tolower(basename(filePath))
+   
+   if (!file.exists(serverPath))
+      return(NULL)
+   
+   completions <- .rs.shinyServerCompletions(serverPath)
+   results <- if (.rs.endsWith(string, "Input"))
+      .rs.selectFuzzyMatches(completions$input, token)
+   else
+      .rs.selectFuzzyMatches(completions$output, token)
+   
+   return(.rs.makeCompletions(token = token,
+                              results = results,
+                              packages = serverPath,
+                              quote = TRUE,
+                              type = .rs.acCompletionTypes$CONTEXT,
+                              excludeOtherCompletions = TRUE))
+})
+
+.rs.addFunction("getCompletionsFromShinyUI", function(token, filePath, string, type)
+{
+   dir <- dirname(filePath)
+   serverPath <- file.path(dir, "server.R")
+   uiPath <- file.path(dir, "ui.R")
+   name <- tolower(basename(filePath))
+   
+   if (!file.exists(uiPath))
+      return(NULL)
+   
+   completions <- .rs.shinyUICompletions(uiPath)
+   results <- if (string == "input")
+      .rs.selectFuzzyMatches(completions$input, token)
+   else
+      .rs.selectFuzzyMatches(completions$output, token)
+   
+   return(.rs.makeCompletions(token = token,
+                              results = results,
+                              packages = uiPath,
+                              quote = type == .rs.acContextTypes$DOUBLE_BRACKET,
+                              type = .rs.acCompletionTypes$CONTEXT,
+                              excludeOtherCompletions = type == .rs.acContextTypes$DOLLAR))
+})
+
+.rs.addFunction("shinyUICompletions", function(file)
+{
+   # Check to see if we can re-use cached completions
+   fileCacheName <- paste(file, "shinyUILastModifiedTime", sep = "-")
+   completionsCacheName <- paste(file, "shinyUICompletions", sep = "-")
+   
+   info <- file.info(file)
+   mtime <- info[1, "mtime"]
+   if (identical(mtime, .rs.get(fileCacheName)) &&
+          !is.null(.rs.get(completionsCacheName)))
+   {
+      return(.rs.get(completionsCacheName))
+   }
+   
+   # Otherwise, get the completions
+   parsed <- tryCatch(
+      suppressWarnings(parse(file)),
+      error = function(e) NULL
+   )
+   
+   if (is.null(parsed))
+      return(NULL)
+   
+   # We fill environments (since these can grow efficiently / by reference)
+   inputEnv <- new.env(parent = emptyenv())
+   outputEnv <- new.env(parent = emptyenv())
+   
+   inputCount <- new.env(parent = emptyenv())
+   inputCount$count <- 1
+   
+   outputCount <- new.env(parent = emptyenv())
+   outputCount$count <- 1
+   
+   lapply(parsed, function(object) {
+      .rs.doShinyUICompletions(object, inputEnv, outputEnv, inputCount, outputCount)
+   })
+   
+   completions <- list(input = unlist(mget(objects(inputEnv), envir = inputEnv), use.names = FALSE),
+                       output = unlist(mget(objects(outputEnv), envir = outputEnv), use.names = FALSE))
+   
+   .rs.assign(fileCacheName, mtime)
+   .rs.assign(completionsCacheName, completions)
+   
+   completions
+   
+})
+
+.rs.addFunction("doShinyUICompletions", function(object,
+                                                 inputs,
+                                                 outputs,
+                                                 inputCount,
+                                                 outputCount)
+{
+   if (is.call(object))
+   {
+      name <- if (is.symbol(object[[2]]))
+         as.character(object[[2]])
+      else if (is.character(object[[2]]) && length(object[[2]]) == 1)
+         object[[2]]
+      else
+         ""
+      
+      if (.rs.endsWith(name, "Output"))
+      {
+         outputCount$count <- outputCount$count + 1
+         outputs[[as.character(outputCount$count)]] <- as.character(object[[2]])
+      }
+      
+      if (.rs.endsWith(name, "Input"))
+      {
+         inputCount$count <- inputCount$count + 1
+         inputs[[as.character(inputCount$count)]] <- as.character(object[[2]])
+      }
+      
+      if (length(object) > 1)
+         for (j in 2:length(object))
+         {
+            if (is.call(object[[j]]))
+            {
+               .rs.doShinyUICompletions(object[[j]],
+                                        inputs,
+                                        outputs,
+                                        inputCount,
+                                        outputCount)
+            }
+         }
+   }
+   
+})
+
+.rs.addFunction("shinyServerCompletions", function(file)
+{
+   # Check to see if we can re-use cached completions
+   fileCacheName <- paste(file, "shinyServerLastModifiedTime", sep = "-")
+   completionsCacheName <- paste(file, "shinyServerCompletions", sep = "-")
+   
+   info <- file.info(file)
+   mtime <- info[1, "mtime"]
+   if (identical(mtime, .rs.get(fileCacheName)) &&
+          !is.null(.rs.get(completionsCacheName)))
+   {
+      return(.rs.get(completionsCacheName))
+   }
+   
+   # Otherwise, get the completions
+   parsed <- tryCatch(
+      suppressWarnings(parse(file)),
+      error = function(e) NULL
+   )
+   
+   if (is.null(parsed))
+      return(NULL)
+   
+   # We fill environments (since these can grow efficiently / by reference)
+   inputEnv <- new.env(parent = emptyenv())
+   outputEnv <- new.env(parent = emptyenv())
+   
+   inputCount <- new.env(parent = emptyenv())
+   inputCount$count <- 1
+   
+   outputCount <- new.env(parent = emptyenv())
+   outputCount$count <- 1
+   
+   lapply(parsed, function(object) {
+      .rs.doShinyServerCompletions(object, inputEnv, outputEnv, inputCount, outputCount)
+   })
+   
+   completions <- list(input = unlist(mget(objects(inputEnv), envir = inputEnv), use.names = FALSE),
+                       output = unlist(mget(objects(outputEnv), envir = outputEnv), use.names = FALSE))
+   
+   .rs.assign(fileCacheName, mtime)
+   .rs.assign(completionsCacheName, completions)
+   
+   completions
+   
+})
+
+.rs.addFunction("doShinyServerCompletions", function(object,
+                                                     inputs,
+                                                     outputs,
+                                                     inputCount,
+                                                     outputCount)
+{
+   if (is.call(object))
+   {
+      operator <- as.character(object[[1]])
+      if (operator == "$" || operator == "[[")
+      {
+         name <- if (is.symbol(object[[2]]))
+            as.character(object[[2]])
+         else if (is.character(object[[2]]) && length(object[[2]]) == 1)
+            object[[2]]
+         else
+            ""
+         
+         value <- as.character(object[[3]])
+         if (name == "output")
+         {
+            outputCount$count <- outputCount$count + 1
+            outputs[[as.character(outputCount$count)]] <- .rs.stripSurrounding(value)
+         }
+         
+         if (name == "input")
+         {
+            inputCount$count <- inputCount$count + 1
+            inputs[[as.character(inputCount$count)]] <- .rs.stripSurrounding(value)
+         }
+      }
+      
+      if (length(object) > 1)
+         for (j in 2:length(object))
+         {
+            if (is.call(object[[j]]))
+            {
+               .rs.doShinyServerCompletions(object[[j]],
+                                            inputs,
+                                            outputs,
+                                            inputCount,
+                                            outputCount)
+            }
+         }
+   }
+   
+})
+
+.rs.addFunction("getCompletionsShinySession", function(token)
+{
+   # Use cached completions if possible
+   if (!is.null(results <- .rs.get("shinySessionCompletions")))
+      return(results)
+   
+   # Get completions from shiny if available
+   if (!("shiny" %in% loadedNamespaces()))
+      return(NULL)
+   
+   # Check to see if this version of Shiny has a completions
+   # function we can use
+   completionGetter <- tryCatch(
+      eval(call(":::", "shiny", "session_completions")),
+      error = function(e) NULL
+   )
+   
+   if (is.null(completionGetter))
+      return(NULL)
+   
+   # Get the completions from Shiny
+   completions <- tryCatch(
+      completionGetter(),
+      error = function(e) NULL
+   )
+   
+   if (is.null(completions))
+      return(NULL)
+   
+   # Ensure that this is a character vector
+   if (!is.character(completions))
+      return(NULL)
+   
+   # Return completions
+   results <- .rs.selectFuzzyMatches(completions, token)
+   output <- .rs.makeCompletions(token = token,
+                                 results = results,
+                                 type = .rs.acCompletionTypes$CONTEXT,
+                                 excludeOtherCompletions = TRUE)
+   
+   # Cache for later use
+   .rs.assign("shinySessionCompletions", output)
+   
+   output
+   
    
 })
