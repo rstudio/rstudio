@@ -1535,7 +1535,13 @@ assign(x = ".rs.acCompletionTypes",
 {
    if (is.call(object))
    {
-      name <- as.character(object[[1]])
+      name <- if (is.symbol(object[[2]]))
+         as.character(object[[2]])
+      else if (is.character(object[[2]]) && length(object[[2]]) == 1)
+         object[[2]]
+      else
+         ""
+      
       if (.rs.endsWith(name, "Output"))
       {
          outputCount$count <- outputCount$count + 1
@@ -1622,7 +1628,13 @@ assign(x = ".rs.acCompletionTypes",
       operator <- as.character(object[[1]])
       if (operator == "$" || operator == "[[")
       {
-         name <- as.character(object[[2]])
+         name <- if (is.symbol(object[[2]]))
+            as.character(object[[2]])
+         else if (is.character(object[[2]]) && length(object[[2]]) == 1)
+            object[[2]]
+         else
+            ""
+         
          value <- as.character(object[[3]])
          if (name == "output")
          {
