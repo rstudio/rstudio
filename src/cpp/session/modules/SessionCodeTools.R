@@ -283,8 +283,14 @@
    
    # Get objects from that namespace
    ns <- asNamespace(namespace)
-   objectNames <- objects(ns)
-   objects <- mget(objectNames, envir = ns)
+   objectNames <- objects(ns, all.names = TRUE)
+   objects <- tryCatch(
+      mget(objectNames, envir = ns),
+      error = function(e) NULL
+   )
+   
+   if (is.null(objects))
+      return()
    
    # Find which object is actually identical to the one we have
    success <- FALSE
