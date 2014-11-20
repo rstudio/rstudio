@@ -22,7 +22,7 @@
 #include <core/Error.hpp>
 #include <core/system/System.hpp>
 
-namespace core {
+namespace rscore {
 namespace log {
 
 namespace {   
@@ -166,7 +166,7 @@ std::string errorAsLogEntry(const Error& error)
    
 
 } // namespace log
-} // namespace core 
+} // namespace rscore
 
 
 

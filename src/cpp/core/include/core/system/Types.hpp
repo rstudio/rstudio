@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-namespace core {
+namespace rscore {
 namespace system {
 
 typedef std::pair<std::string,std::string> Option;

@@ -64,7 +64,7 @@ std::string classOf(SEXP objectSEXP);
 int length(SEXP object);
    
 SEXP getNames(SEXP sexp);
-core::Error getNames(SEXP sexp, std::vector<std::string>* pNames);  
+rscore::Error getNames(SEXP sexp, std::vector<std::string>* pNames);
 bool isActiveBinding(const std::string&, const SEXP);
 
 // type checking
@@ -95,15 +95,15 @@ void* getExternalPtrAddr(SEXP extptr);
 void clearExternalPtr(SEXP extptr);
 
 // extract c++ type from R SEXP
-core::Error extract(SEXP valueSEXP, int* pInt);
-core::Error extract(SEXP valueSEXP, bool* pBool);
-core::Error extract(SEXP valueSEXP, double* pDouble);
-core::Error extract(SEXP valueSEXP, std::vector<int>* pVector);   
-core::Error extract(SEXP valueSEXP, std::string* pString);
-core::Error extract(SEXP valueSEXP, std::vector<std::string>* pVector);
+rscore::Error extract(SEXP valueSEXP, int* pInt);
+rscore::Error extract(SEXP valueSEXP, bool* pBool);
+rscore::Error extract(SEXP valueSEXP, double* pDouble);
+rscore::Error extract(SEXP valueSEXP, std::vector<int>* pVector);
+rscore::Error extract(SEXP valueSEXP, std::string* pString);
+rscore::Error extract(SEXP valueSEXP, std::vector<std::string>* pVector);
       
 // create SEXP from c++ type
-SEXP create(const core::json::Value& value, Protect* pProtect);
+SEXP create(const rscore::json::Value& value, Protect* pProtect);
 SEXP create(const char* value, Protect* pProtect);
 SEXP create(const std::string& value, Protect* pProtect);
 SEXP create(int value, Protect* pProtect);
@@ -118,8 +118,8 @@ SEXP create(const std::vector<boost::posix_time::ptime>& value,
 
 SEXP create(const std::vector<std::pair<std::string,std::string> >& value, 
             Protect* pProtect);
-SEXP create(const core::json::Array& value, Protect* pProtect);
-SEXP create(const core::json::Object& value, Protect* pProtect);
+SEXP create(const rscore::json::Array& value, Protect* pProtect);
+SEXP create(const rscore::json::Object& value, Protect* pProtect);
 
 // Create a named list
 SEXP createList(std::vector<std::string> names, Protect* pProtect);
@@ -128,7 +128,7 @@ inline int indexOfElementNamed(SEXP listSEXP, const std::string& name)
 {
    // get the names so we can determine which slot the element is in are in
    std::vector<std::string> names;
-   core::Error error = r::sexp::getNames(listSEXP, &names);
+   rscore::Error error = r::sexp::getNames(listSEXP, &names);
    if (error)
       return -1;
 
@@ -148,16 +148,16 @@ inline int indexOfElementNamed(SEXP listSEXP, const std::string& name)
 
 }
 
-core::Error getNamedListSEXP(SEXP listSEXP, const std::string& name,
+rscore::Error getNamedListSEXP(SEXP listSEXP, const std::string& name,
                              SEXP* pValueSEXP);
 
 template <typename T>
-core::Error getNamedListElement(SEXP listSEXP,
+rscore::Error getNamedListElement(SEXP listSEXP,
                                 const std::string& name,
                                 T* pValue)
 {
    SEXP valueSEXP;
-   core::Error error = getNamedListSEXP(listSEXP, name, &valueSEXP);
+   rscore::Error error = getNamedListSEXP(listSEXP, name, &valueSEXP);
    if (error)
       return error;
    else
@@ -165,18 +165,18 @@ core::Error getNamedListElement(SEXP listSEXP,
 }
 
 template <typename T>
-core::Error getNamedListElement(SEXP listSEXP,
+rscore::Error getNamedListElement(SEXP listSEXP,
                                 const std::string& name,
                                 T* pValue,
                                 const T& defaultValue)
 {
-  core:: Error error = getNamedListElement(listSEXP, name, pValue);
+  rscore:: Error error = getNamedListElement(listSEXP, name, pValue);
   if (error)
   {
      if (error.code() == r::errc::ListElementNotFoundError)
      {
         *pValue = defaultValue;
-        return core::Success();
+        return rscore::Success();
      }
      else
      {
@@ -185,7 +185,7 @@ core::Error getNamedListElement(SEXP listSEXP,
    }
    else
    {
-      return core::Success();
+      return rscore::Success();
    }
 }
 
@@ -219,7 +219,7 @@ private:
 // set list element by name. note that the specified element MUST already
 // exist before the call
 template <typename T>
-core::Error setNamedListElement(SEXP listSEXP,
+rscore::Error setNamedListElement(SEXP listSEXP,
                                 const std::string& name,
                                 const T& value)
 {
@@ -234,12 +234,12 @@ core::Error setNamedListElement(SEXP listSEXP,
    {
       // set the appropriate value and return success
       SET_VECTOR_ELT(listSEXP, valueIndex, valueSEXP);
-      return core::Success();
+      return rscore::Success();
    }
    else
    {
       // otherwise an error
-      core::Error error(r::errc::ListElementNotFoundError, ERROR_LOCATION);
+      rscore::Error error(r::errc::ListElementNotFoundError, ERROR_LOCATION);
       error.addProperty("element", name);
       return error;
    }

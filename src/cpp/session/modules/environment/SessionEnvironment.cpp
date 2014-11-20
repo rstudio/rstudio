@@ -36,7 +36,7 @@
 
 #define TOP_FUNCTION 1
 
-using namespace core;
+using namespace rscore;
 
 namespace session {
 namespace modules { 
@@ -85,7 +85,7 @@ bool isValidSrcref(SEXP srcref)
    return srcref && TYPEOF(srcref) != NILSXP;
 }
 
-bool handleRBrowseEnv(const core::FilePath& filePath)
+bool handleRBrowseEnv(const rscore::FilePath& filePath)
 {
    if (filePath.filename() == "wsbrowser.html")
    {

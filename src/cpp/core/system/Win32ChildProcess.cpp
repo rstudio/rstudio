@@ -31,7 +31,7 @@
 
 #include "CriticalSection.hpp"
 
-namespace core {
+namespace rscore {
 namespace system {
 
 namespace {
@@ -642,6 +642,6 @@ bool AsyncChildProcess::exited()
 }
 
 } // namespace system
-} // namespace core
+} // namespace rscore
 
 

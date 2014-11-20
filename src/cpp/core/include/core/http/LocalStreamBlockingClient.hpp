@@ -21,7 +21,7 @@
 
 #include <core/http/LocalStreamAsyncClient.hpp>
 
-namespace core {
+namespace rscore {
 namespace http {  
 
 inline Error sendRequest(const FilePath& localStreamPath,
@@ -41,6 +41,6 @@ inline Error sendRequest(const FilePath& localStreamPath,
 }
    
 } // namespace http
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_HTTP_LOCAL_STREAM_BLOCKING_CLIENT_HPP

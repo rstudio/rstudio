@@ -23,7 +23,7 @@
 #include <core/FilePath.hpp>
 #include <core/json/Json.hpp>
 
-namespace core {
+namespace rscore {
 	class Error;
 } 
 
@@ -52,41 +52,41 @@ public:
    
    void putTemporary(const std::string& scope, 
                      const std::string& name,
-                     const core::json::Value& value);
+                     const rscore::json::Value& value);
    
-   void putTemporary(const core::json::Object& temporaryState);
+   void putTemporary(const rscore::json::Object& temporaryState);
    
    void putPersistent(const std::string& scope, 
                       const std::string& name,
-                      const core::json::Value& value);
+                      const rscore::json::Value& value);
    
-   void putPersistent(const core::json::Object& persistentState); 
+   void putPersistent(const rscore::json::Object& persistentState);
 
    void putProjectPersistent(const std::string& scope,
                              const std::string& name,
-                             const core::json::Value& value);
+                             const rscore::json::Value& value);
 
-   void putProjectPersistent(const core::json::Object& projectPersistentState);
-   core::json::Value getProjectPersistent(std::string scope,
+   void putProjectPersistent(const rscore::json::Object& projectPersistentState);
+   rscore::json::Value getProjectPersistent(std::string scope,
                                           std::string name);
 
-   core::Error commit(ClientStateCommitType commitType,
-                      const core::FilePath& stateDir,
-                      const core::FilePath& projectStateDir);
+   rscore::Error commit(ClientStateCommitType commitType,
+                      const rscore::FilePath& stateDir,
+                      const rscore::FilePath& projectStateDir);
    
-   core::Error restore(const core::FilePath& stateDir,
-                       const core::FilePath& projectStateDir);
+   rscore::Error restore(const rscore::FilePath& stateDir,
+                       const rscore::FilePath& projectStateDir);
    
-   void currentState(core::json::Object* pCurrentState) const;
+   void currentState(rscore::json::Object* pCurrentState) const;
    
 private:
-   void restoreGlobalState(const core::FilePath& stateFile);
-   void restoreProjectState(const core::FilePath& stateFile);
+   void restoreGlobalState(const rscore::FilePath& stateFile);
+   void restoreProjectState(const rscore::FilePath& stateFile);
 
 private:
-   core::json::Object temporaryState_ ;
-   core::json::Object persistentState_ ;
-   core::json::Object projectPersistentState_;
+   rscore::json::Object temporaryState_ ;
+   rscore::json::Object persistentState_ ;
+   rscore::json::Object projectPersistentState_;
 };
       
 } // namespace session

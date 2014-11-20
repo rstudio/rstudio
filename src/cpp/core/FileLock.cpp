@@ -33,7 +33,7 @@
 #endif
 #include <boost/interprocess/sync/file_lock.hpp>
 
-namespace core {
+namespace rscore {
 
 bool FileLock::isLocked(const FilePath& lockFilePath)
 {
@@ -90,7 +90,7 @@ Error FileLock::acquire(const FilePath& lockFilePath)
    // make sure the lock file exists
    if (!lockFilePath.exists())
    {
-      Error error = core::writeStringToFile(lockFilePath, "");
+      Error error = rscore::writeStringToFile(lockFilePath, "");
       if (error)
          return error;
    }
@@ -169,7 +169,7 @@ FilePath FileLock::lockFilePath() const
 }
 
 
-} // namespace core
+} // namespace rscore
 
 
 

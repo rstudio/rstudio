@@ -24,7 +24,7 @@
 
 #include "DesktopUtils.hpp"
 
-using namespace core;
+using namespace rscore;
 
 namespace desktop {
 
@@ -81,7 +81,7 @@ QString Options::portNumber() const
    {
       // Use a random-ish port number to avoid collisions between different
       // instances of rdesktop-launched rsessions
-      int base = std::abs(core::random::uniformRandomInteger<int>());
+      int base = std::abs(rscore::random::uniformRandomInteger<int>());
       portNumber_ = QString::number((base % 40000) + 8080);
 
       // recalculate the local peer and set RS_LOCAL_PEER so that
@@ -95,7 +95,7 @@ QString Options::portNumber() const
                           QString::fromAscii("-rsession");
 #endif
       localPeer_ = localPeer.toUtf8().constData();
-      core::system::setenv("RS_LOCAL_PEER", localPeer_);
+      rscore::system::setenv("RS_LOCAL_PEER", localPeer_);
    }
 
    return portNumber_;
@@ -246,7 +246,7 @@ void Options::setRBinDir(QString path)
 
 bool Options::preferR64() const
 {
-   if (!core::system::isWin64())
+   if (!rscore::system::isWin64())
       return false;
 
    if (!settings_.contains(QString::fromAscii("PreferR64")))
@@ -275,7 +275,7 @@ FilePath Options::executablePath() const
 {
    if (executablePath_.empty())
    {
-      Error error = core::system::executablePath(QApplication::arguments().at(0).toUtf8(),
+      Error error = rscore::system::executablePath(QApplication::arguments().at(0).toUtf8(),
                                                  &executablePath_);
       if (error)
          LOG_ERROR(error);
@@ -288,7 +288,7 @@ FilePath Options::supportingFilePath() const
    if (supportingFilePath_.empty())
    {
       // default to install path
-      core::system::installPath("..",
+      rscore::system::installPath("..",
                                 QApplication::arguments().at(0).toUtf8(),
                                 &supportingFilePath_);
 
@@ -350,14 +350,14 @@ void Options::setIgnoredUpdateVersions(const QStringList& ignoredVersions)
    settings_.setValue(QString::fromAscii("ignoredUpdateVersions"), ignoredVersions);
 }
 
-core::FilePath Options::scratchTempDir(core::FilePath defaultPath)
+rscore::FilePath Options::scratchTempDir(rscore::FilePath defaultPath)
 {
-   core::FilePath dir(scratchPath.toUtf8().constData());
+   rscore::FilePath dir(scratchPath.toUtf8().constData());
 
    if (!dir.empty() && dir.exists())
    {
       dir = dir.childPath("tmp");
-      core::Error error = dir.ensureDirectory();
+      rscore::Error error = dir.ensureDirectory();
       if (!error)
          return dir;
    }
@@ -366,7 +366,7 @@ core::FilePath Options::scratchTempDir(core::FilePath defaultPath)
 
 void Options::cleanUpScratchTempDir()
 {
-   core::FilePath temp = scratchTempDir(core::FilePath());
+   rscore::FilePath temp = scratchTempDir(rscore::FilePath());
    if (!temp.empty())
       temp.removeIfExists();
 }

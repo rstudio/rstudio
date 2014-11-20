@@ -29,20 +29,20 @@
 namespace session {
 namespace local_streams {
 
-inline core::Error ensureStreamsDir()
+inline rscore::Error ensureStreamsDir()
 {
-   core::FilePath sessionStreamsPath(kSessionLocalStreamsDir);
-   return core::http::initializeStreamDir(sessionStreamsPath);
+   rscore::FilePath sessionStreamsPath(kSessionLocalStreamsDir);
+   return rscore::http::initializeStreamDir(sessionStreamsPath);
 }
    
-inline core::FilePath streamPath(const std::string& user)
+inline rscore::FilePath streamPath(const std::string& user)
 {
-   return core::FilePath(kSessionLocalStreamsDir).complete(user);
+   return rscore::FilePath(kSessionLocalStreamsDir).complete(user);
 }
 
 inline void removeStreams(const std::string& user)
 {
-   core::Error error = streamPath(user).removeIfExists();
+   rscore::Error error = streamPath(user).removeIfExists();
    if (error)
       LOG_ERROR(error);
 }

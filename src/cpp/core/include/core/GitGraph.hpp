@@ -20,7 +20,7 @@
 
 #include <boost/noncopyable.hpp>
 
-namespace core {
+namespace rscore {
 namespace gitgraph {
 
 struct Column
@@ -82,6 +82,6 @@ private:
 };
 
 } // namespace gitgraph
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_GITGRAPH_HPP

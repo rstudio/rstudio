@@ -151,7 +151,7 @@ extern "C" const char *locale2charset(const char *);
 
 #include "session-config.h"
 
-using namespace core; 
+using namespace rscore;
 using namespace session;
 using namespace session::client_events;
 
@@ -169,7 +169,7 @@ http::UriHandlers s_uriHandlers;
 http::UriHandlerFunction s_defaultUriHandler;
 
 // json rpc methods
-core::json::JsonRpcAsyncMethods s_jsonRpcMethods;
+rscore::json::JsonRpcAsyncMethods s_jsonRpcMethods;
    
 // R browseUrl handlers
 std::vector<module_context::RBrowseUrlHandler> s_rBrowseUrlHandlers;
@@ -425,7 +425,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    if (options.programMode() == kSessionProgramModeServer)
    {
       std::string referer = ptrConnection->request().headerValue("referer");
-      core::system::setenv("RSTUDIO_HTTP_REFERER", referer);
+      rscore::system::setenv("RSTUDIO_HTTP_REFERER", referer);
    }
 
    // prepare session info 
@@ -600,10 +600,10 @@ void handleClientInit(const boost::function<void()>& initFunction,
                               r::session::consoleHistory().capacity();
 
    sessionInfo["disable_packages"] =
-           !core::system::getenv("RSTUDIO_DISABLE_PACKAGES").empty();
+           !rscore::system::getenv("RSTUDIO_DISABLE_PACKAGES").empty();
 
    sessionInfo["disable_check_for_updates"] =
-          !core::system::getenv("RSTUDIO_DISABLE_CHECK_FOR_UPDATES").empty();
+          !rscore::system::getenv("RSTUDIO_DISABLE_CHECK_FOR_UPDATES").empty();
 
    sessionInfo["allow_vcs_exe_edit"] = options.allowVcsExecutableEdit();
    sessionInfo["allow_cran_repos_edit"] = options.allowCRANReposEdit();
@@ -657,7 +657,7 @@ enum ConnectionType
 
 void endHandleRpcRequestDirect(boost::shared_ptr<HttpConnection> ptrConnection,
                          boost::posix_time::ptime executeStartTime,
-                         const core::Error& executeError,
+                         const rscore::Error& executeError,
                          json::JsonRpcResponse* pJsonRpcResponse)
 {
    // return error or result then continue waiting for requests
@@ -694,7 +694,7 @@ void endHandleRpcRequestDirect(boost::shared_ptr<HttpConnection> ptrConnection,
 
 void endHandleRpcRequestIndirect(
       const std::string& asyncHandle,
-      const core::Error& executeError,
+      const rscore::Error& executeError,
       json::JsonRpcResponse* pJsonRpcResponse)
 {
    json::JsonRpcResponse temp;
@@ -713,7 +713,7 @@ void endHandleRpcRequestIndirect(
    module_context::enqueClientEvent(evt);
 }
 
-void handleRpcRequest(const core::json::JsonRpcRequest& request,
+void handleRpcRequest(const rscore::json::JsonRpcRequest& request,
                       boost::shared_ptr<HttpConnection> ptrConnection,
                       ConnectionType connectionType)
 {
@@ -743,7 +743,7 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
       else
       {
          // indirect return (asyncHandle style)
-         std::string handle = core::system::generateUuid(true);
+         std::string handle = rscore::system::generateUuid(true);
          json::JsonRpcResponse response;
          response.setAsyncHandle(handle);
          response.setField(kEventsPending, "false");
@@ -1213,7 +1213,7 @@ void processDesktopGuiEvents()
 bool waitForMethod(const std::string& method,
                    const boost::function<void()>& initFunction,
                    const boost::function<bool()>& allowSuspend,
-                   core::json::JsonRpcRequest* pRequest)
+                   rscore::json::JsonRpcRequest* pRequest)
 {
    if (s_wasForked)
    {
@@ -1326,7 +1326,7 @@ bool waitForMethod(const std::string& method,
 bool waitForMethod(const std::string& method,
                    const ClientEvent& initEvent,
                    const boost::function<bool()>& allowSuspend,
-                   core::json::JsonRpcRequest* pRequest)
+                   rscore::json::JsonRpcRequest* pRequest)
 {
    return waitForMethod(method,
                         boost::bind(module_context::enqueClientEvent,
@@ -1397,7 +1397,7 @@ Error extractConsoleInput(const json::JsonRpcRequest& request)
 // allow console_input requests to come in when we aren't explicitly waiting
 // on them (i.e. waitForMethod("console_input")). place them into into a buffer
 // which is then checked by rConsoleRead prior to it calling waitForMethod
-Error bufferConsoleInput(const core::json::JsonRpcRequest& request,
+Error bufferConsoleInput(const rscore::json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
    // extract the input
@@ -1412,7 +1412,7 @@ void doSuspendForRestart(const r::session::RSuspendOptions& options)
    r::session::suspendForRestart(options);
 }
 
-Error suspendForRestart(const core::json::JsonRpcRequest& request,
+Error suspendForRestart(const rscore::json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
    r::session::RSuspendOptions options;
@@ -1429,7 +1429,7 @@ Error suspendForRestart(const core::json::JsonRpcRequest& request,
 }
 
 
-Error ping(const core::json::JsonRpcRequest& request,
+Error ping(const rscore::json::JsonRpcRequest& request,
            json::JsonRpcResponse* pResponse)
 {
    return Success();
@@ -1474,7 +1474,7 @@ void registerGwtHandlers()
 Error registerSignalHandlers()
 {
    using boost::bind;
-   using namespace core::system;
+   using namespace rscore::system;
 
    // USR1 and USR2: perform suspend in server mode
    if (session::options().programMode() == kSessionProgramModeServer)
@@ -1513,9 +1513,9 @@ Error runPreflightScript()
             // run the script (ignore errors and continue no matter what
             // the outcome of the script is)
             std::string script = preflightScriptPath.absolutePath();
-            core::system::ProcessResult result;
+            rscore::system::ProcessResult result;
             Error error = runCommand(script,
-                                     core::system::ProcessOptions(),
+                                     rscore::system::ProcessOptions(),
                                      &result);
             if (error)
             {
@@ -1549,7 +1549,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
 
    // execute core initialization functions
    using boost::bind;
-   using namespace core::system;
+   using namespace rscore::system;
    using namespace session::module_context;
    ExecBlock initialize ;
    initialize.addFunctions()
@@ -1844,7 +1844,7 @@ int rEditFile(const std::string& file)
    // read file contents
    FilePath filePath(file);
    std::string fileContents;
-   Error readError = core::readStringFromFile(filePath, &fileContents);
+   Error readError = rscore::readStringFromFile(filePath, &fileContents);
    if (readError)
    {
       LOG_ERROR(readError);
@@ -1885,7 +1885,7 @@ int rEditFile(const std::string& file)
       
       // write the content back to the file (append newline expected by R) 
       editedFileContents += "\n";
-      Error writeError = core::writeStringToFile(filePath, editedFileContents);
+      Error writeError = rscore::writeStringToFile(filePath, editedFileContents);
       if (writeError)
       {
          LOG_ERROR(writeError);
@@ -2072,7 +2072,7 @@ void rBrowseURL(const std::string& url)
    session::clientEventQueue().add(browseUrlEvent(url));
 }
    
-void rBrowseFile(const core::FilePath& filePath)
+void rBrowseFile(const rscore::FilePath& filePath)
 {
    // see if any of our handlers want to take it
    for (std::vector<module_context::RBrowseFileHandler>::const_iterator 
@@ -2191,7 +2191,7 @@ void rSuicide(const std::string& message)
 
 // terminate all children of the provided process supervisor
 // and then wait a brief period to attempt to reap the child
-void terminateAllChildren(core::system::ProcessSupervisor* pSupervisor,
+void terminateAllChildren(rscore::system::ProcessSupervisor* pSupervisor,
                           const ErrorLocation& location)
 {
    // send kill signal
@@ -2201,7 +2201,7 @@ void terminateAllChildren(core::system::ProcessSupervisor* pSupervisor,
    if (!pSupervisor->wait(boost::posix_time::milliseconds(10),
                           boost::posix_time::milliseconds(1000)))
    {
-      core::log::logWarningMessage(
+      rscore::log::logWarningMessage(
             "Process supervisor did not terminate within 1 second",
             location);
    }
@@ -2341,7 +2341,7 @@ void ensurePublicFolder()
    }
 }
 
-void ensureRLibsUser(const core::FilePath& userHomePath,
+void ensureRLibsUser(const rscore::FilePath& userHomePath,
                      const std::string& rLibsUser)
 {
    FilePath rLibsUserPath = FilePath::resolveAliasedPath(rLibsUser,
@@ -2378,7 +2378,7 @@ void detectParentTermination()
    if (result == ParentTerminationAbnormal)
    {
       LOG_ERROR_MESSAGE("Parent terminated");
-      core::system::abort();
+      rscore::system::abort();
    }
    else if (result == ParentTerminationNormal)
    {
@@ -2573,7 +2573,7 @@ Error registerLocalUriHandler(const std::string& name,
 
 
 Error registerAsyncRpcMethod(const std::string& name,
-                             const core::json::JsonRpcAsyncFunction& function)
+                             const rscore::json::JsonRpcAsyncFunction& function)
 {
    s_jsonRpcMethods.insert(
          std::make_pair(name, std::make_pair(false, function)));
@@ -2581,7 +2581,7 @@ Error registerAsyncRpcMethod(const std::string& name,
 }
 
 Error registerRpcMethod(const std::string& name,
-                        const core::json::JsonRpcFunction& function)
+                        const rscore::json::JsonRpcFunction& function)
 {
    s_jsonRpcMethods.insert(
          std::make_pair(name,
@@ -2680,7 +2680,7 @@ namespace {
 
 bool registeredWaitForMethod(const std::string& method,
                              const ClientEvent& event,
-                             core::json::JsonRpcRequest* pRequest)
+                             rscore::json::JsonRpcRequest* pRequest)
 {
    // enque the event which notifies the client we want input
    module_context::enqueClientEvent(event);
@@ -2706,22 +2706,22 @@ WaitForMethodFunction registerWaitForMethod(const std::string& methodName)
 
 namespace {
 
-int sessionExitFailure(const core::Error& error,
-                       const core::ErrorLocation& location)
+int sessionExitFailure(const rscore::Error& error,
+                       const rscore::ErrorLocation& location)
 {
    if (!error.expected())
-      core::log::logError(error, location);
+      rscore::log::logError(error, location);
 
    return EXIT_FAILURE;
 }
 
 std::string ctypeEnvName()
 {
-   if (!core::system::getenv("LC_ALL").empty())
+   if (!rscore::system::getenv("LC_ALL").empty())
       return "LC_ALL";
-   if (!core::system::getenv("LC_CTYPE").empty())
+   if (!rscore::system::getenv("LC_CTYPE").empty())
       return "LC_CTYPE";
-   if (!core::system::getenv("LANG").empty())
+   if (!rscore::system::getenv("LANG").empty())
       return "LANG";
    return "LC_CTYPE";
 }
@@ -2747,7 +2747,7 @@ bool ensureUtf8Charset()
    return true;
 #else
    std::string name = ctypeEnvName();
-   std::string ctype = core::system::getenv(name);
+   std::string ctype = rscore::system::getenv(name);
 
    if (boost::regex_search(ctype, boost::regex("UTF-8$")))
       return true;
@@ -2779,7 +2779,7 @@ bool ensureUtf8Charset()
    {
       if (setlocale(LC_CTYPE, newCType.c_str()))
       {
-         core::system::setenv(name, newCType);
+         rscore::system::setenv(name, newCType);
          setlocale(LC_CTYPE, "");
          return true;
       }
@@ -2801,11 +2801,11 @@ int main (int argc, char * const argv[])
       // initialize log so we capture all errors including ones which occur
       // reading the config file (if we are in desktop mode then the log
       // will get re-initialized below)
-      initializeSystemLog("rsession-" + core::system::username(),
-                          core::system::kLogLevelWarning);
+      initializeSystemLog("rsession-" + rscore::system::username(),
+                          rscore::system::kLogLevelWarning);
 
       // ignore SIGPIPE
-      Error error = core::system::ignoreSignal(core::system::SigPipe);
+      Error error = rscore::system::ignoreSignal(rscore::system::SigPipe);
       if (error)
          LOG_ERROR(error);
 
@@ -2823,7 +2823,7 @@ int main (int argc, char * const argv[])
          return status.exitCode() ;
 
       // reflect stderr logging
-      core::system::setLogToStderr(options.logStderr());
+      rscore::system::setLogToStderr(options.logStderr());
 
       // initialize monitor
       monitor::initializeMonitorClient(kMonitorSocketPath,
@@ -2832,7 +2832,7 @@ int main (int argc, char * const argv[])
       // register monitor log writer (but not in standalone mode)
       if (!options.standalone())
       {
-         core::system::addLogWriter(monitor::client().createLogWriter(
+         rscore::system::addLogWriter(monitor::client().createLogWriter(
                                                 options.programIdentity()));
       }
 
@@ -2846,12 +2846,12 @@ int main (int argc, char * const argv[])
          if (options.verifyInstallation())
          {
             initializeStderrLog(options.programIdentity(),
-                                core::system::kLogLevelWarning);
+                                rscore::system::kLogLevelWarning);
          }
          else
          {
             initializeLog(options.programIdentity(),
-                          core::system::kLogLevelWarning,
+                          rscore::system::kLogLevelWarning,
                           options.userLogPath());
          }
       }
@@ -2866,27 +2866,27 @@ int main (int argc, char * const argv[])
 
       // set the rstudio environment variable so code can check for
       // whether rstudio is running
-      core::system::setenv("RSTUDIO", "1");
+      rscore::system::setenv("RSTUDIO", "1");
 
       // set the rstudio user identity environment variable (can differ from
       // username in debug configurations). this is provided so that 
       // rpostback knows what local stream to connect back to
-      core::system::setenv(kRStudioUserIdentity, options.userIdentity());
+      rscore::system::setenv(kRStudioUserIdentity, options.userIdentity());
       if (desktopMode)
       {
          // do the same for port number, for rpostback in rdesktop configs
-         core::system::setenv(kRSessionPortNumber, options.wwwPort());
+         rscore::system::setenv(kRSessionPortNumber, options.wwwPort());
       }
 
       // set the standalone port if we are running in standalone mode
       if (options.standalone())
       {
-         core::system::setenv(kRSessionStandalonePortNumber, options.wwwPort());
+         rscore::system::setenv(kRSessionStandalonePortNumber, options.wwwPort());
       }
            
       // ensure we aren't being started as a low (priviliged) account
       if (serverMode &&
-          core::system::currentUserIsPrivilleged(options.minimumUserId()))
+          rscore::system::currentUserIsPrivilleged(options.minimumUserId()))
       {
          Error error = systemError(boost::system::errc::permission_denied,
                                    ERROR_LOCATION);
@@ -2896,14 +2896,14 @@ int main (int argc, char * const argv[])
 #ifdef RSTUDIO_SERVER
       if (serverMode)
       {
-         Error error = core::system::crypto::rsaInit();
+         Error error = rscore::system::crypto::rsaInit();
          if (error)
             LOG_ERROR(error);
       }
 #endif
 
       // start the file monitor
-      core::system::file_monitor::initialize();
+      rscore::system::file_monitor::initialize();
 
       // initialize client event queue. this must be done very early
       // in main so that any other code which needs to enque an event
@@ -2912,13 +2912,13 @@ int main (int argc, char * const argv[])
 
       // detect parent termination
       if (desktopMode)
-         core::thread::safeLaunchThread(detectParentTermination);
+         rscore::thread::safeLaunchThread(detectParentTermination);
 
       // set the rpostback absolute path
       FilePath rpostback = options.rpostbackPath()
                            .parent().parent()
                            .childPath("rpostback");
-      core::system::setenv(
+      rscore::system::setenv(
             "RS_RPOSTBACK_PATH",
             string_utils::utf8ToSystem(rpostback.absolutePath()));
 
@@ -2980,9 +2980,9 @@ int main (int argc, char * const argv[])
 
       // install home and doc dir overrides if requested (for debugger mode)
       if (!options.rHomeDirOverride().empty())
-         core::system::setenv("R_HOME", options.rHomeDirOverride());
+         rscore::system::setenv("R_HOME", options.rHomeDirOverride());
       if (!options.rDocDirOverride().empty())
-         core::system::setenv("R_DOC_DIR", options.rDocDirOverride());
+         rscore::system::setenv("R_DOC_DIR", options.rDocDirOverride());
 
       // r options
       r::session::ROptions rOptions ;

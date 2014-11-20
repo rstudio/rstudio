@@ -17,7 +17,7 @@
 
 #include <core/libclang/LibClang.hpp>
 
-namespace core {
+namespace rscore {
 namespace libclang {
 
 SourceLocation::SourceLocation()
@@ -92,4 +92,4 @@ bool SourceLocation::operator!=(const SourceLocation& other) const
 }
 
 } // namespace libclang
-} // namespace core
+} // namespace rscore

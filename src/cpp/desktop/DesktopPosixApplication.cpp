@@ -23,7 +23,7 @@
 #include "DesktopOptions.hpp"
 #include "DesktopUtils.hpp"
 
-using namespace core;
+using namespace rscore;
 
 namespace desktop {
 

@@ -27,7 +27,7 @@
 
 #include "TranslationUnit.hpp"
 
-namespace core {
+namespace rscore {
 
 class FilePath;
 
@@ -43,7 +43,7 @@ class SourceIndex : boost::noncopyable
 {   
 public:
    static bool isSourceFile(const std::string& filename);
-   static bool isSourceFile(const core::FilePath& filePath);
+   static bool isSourceFile(const rscore::FilePath& filePath);
 
 public:
    explicit SourceIndex(
@@ -101,6 +101,6 @@ private:
 };
 
 } // namespace libclang
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_LIBCLANG_SOURCE_INDEX_HPP

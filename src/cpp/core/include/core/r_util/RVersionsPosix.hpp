@@ -25,7 +25,7 @@
 
 #include <core/r_util/RVersionInfo.hpp>
 
-namespace core {
+namespace rscore {
 namespace r_util {
 
 struct RVersion
@@ -33,11 +33,11 @@ struct RVersion
    RVersion() : isDefault(false) {}
    bool isDefault;
    std::string number;
-   core::system::Options environment;
+   rscore::system::Options environment;
 
    FilePath homeDir() const
    {
-      return FilePath(core::system::getenv(environment, "R_HOME"));
+      return FilePath(rscore::system::getenv(environment, "R_HOME"));
    }
 };
 
@@ -53,7 +53,7 @@ RVersion selectVersion(const RVersionInfo& matchVersion,
                        std::vector<RVersion> versions);
 
 } // namespace r_util
-} // namespace core 
+} // namespace rscore
 
 #endif // CORE_R_UTIL_R_VERSIONS_HPP
 

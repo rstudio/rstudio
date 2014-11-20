@@ -18,7 +18,7 @@
 
 #include <core/r_util/RSourceIndex.hpp>
 
-namespace core {
+namespace rscore {
    class Error;
 }
 
@@ -29,10 +29,10 @@ namespace code_search {
 void searchSource(const std::string& term,
                   std::size_t maxResults,
                   bool prefixOnly,
-                  std::vector<core::r_util::RSourceItem>* pItems,
+                  std::vector<rscore::r_util::RSourceItem>* pItems,
                   bool* pMoreAvailable);
 
-core::Error initialize();
+rscore::Error initialize();
    
 } // namespace code_search
 } // namespace modules

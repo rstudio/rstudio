@@ -24,7 +24,7 @@
 
 #include <core/FilePath.hpp>
 
-namespace core {
+namespace rscore {
 
 class Error ;
 

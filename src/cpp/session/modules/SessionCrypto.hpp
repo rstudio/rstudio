@@ -18,7 +18,7 @@
 
 #include <core/json/Json.hpp>
 
-namespace core {
+namespace rscore {
    class Error;
 }
  
@@ -26,9 +26,9 @@ namespace session {
 namespace modules { 
 namespace crypto {
    
-core::json::Object publicKeyInfoJson();
+rscore::json::Object publicKeyInfoJson();
 
-core::Error initialize();
+rscore::Error initialize();
                        
 } // namespace crypto
 } // namespace modules

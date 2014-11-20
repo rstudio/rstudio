@@ -39,7 +39,7 @@ struct CompileError
    };
 
    CompileError(Type type,
-                const core::FilePath& path,
+                const rscore::FilePath& path,
                 int line,
                 int column,
                 const std::string& message,
@@ -50,14 +50,14 @@ struct CompileError
    }
 
    Type type;
-   core::FilePath path;
+   rscore::FilePath path;
    int line;
    int column;
    std::string message;
    bool showErrorList;
 };
 
-core::json::Array compileErrorsAsJson(const std::vector<CompileError>& errors);
+rscore::json::Array compileErrorsAsJson(const std::vector<CompileError>& errors);
    
 typedef boost::function<std::vector<CompileError>(const std::string&)>
                                                          CompileErrorParser;
@@ -91,9 +91,9 @@ private:
    std::vector<CompileErrorParser> parsers_;
 };
 
-CompileErrorParser gccErrorParser(const core::FilePath& basePath);
+CompileErrorParser gccErrorParser(const rscore::FilePath& basePath);
 
-CompileErrorParser rErrorParser(const core::FilePath& basePath);
+CompileErrorParser rErrorParser(const rscore::FilePath& basePath);
 
 
 } // namespace build

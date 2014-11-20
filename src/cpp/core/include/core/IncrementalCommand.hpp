@@ -20,7 +20,7 @@
 
 #include <core/ScheduledCommand.hpp>
 
-namespace core {
+namespace rscore {
 
 class IncrementalCommand : public ScheduledCommand
 {
@@ -64,7 +64,7 @@ private:
 
 
 
-} // namespace core
+} // namespace rscore
 
 
 #endif // CORE_INCREMENTAL_COMMAND_HPP

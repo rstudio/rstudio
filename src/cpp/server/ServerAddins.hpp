@@ -16,14 +16,14 @@
 #ifndef SERVER_ADDINS_HPP
 #define SERVER_ADDINS_HPP
 
-namespace core {
+namespace rscore {
    class Error;
 }
 
 namespace server {
 namespace addins {
    
-core::Error initialize();
+rscore::Error initialize();
 
 } // namespace addins
 } // namespace server

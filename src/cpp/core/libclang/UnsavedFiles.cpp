@@ -17,7 +17,7 @@
 
 #include <core/StringUtils.hpp>
 
-namespace core {
+namespace rscore {
 namespace libclang {
 
 namespace {
@@ -105,6 +105,6 @@ std::ostream& operator << (std::ostream& ostr, UnsavedFiles& unsaved)
 
 
 } // namespace libclang
-} // namespace core
+} // namespace rscore
 
 

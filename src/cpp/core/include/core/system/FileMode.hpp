@@ -26,7 +26,7 @@
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 
-namespace core {
+namespace rscore {
 namespace system {
 
 enum FileMode
@@ -147,6 +147,6 @@ inline Error getFileMode(const FilePath& filePath, FileMode* pFileMode)
 
 
 } // namespace system
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_SYSTEM_FILE_MODE_HPP

@@ -22,7 +22,7 @@
 
 #include "Util.hpp"
 
-namespace core {
+namespace rscore {
 namespace http {
 
 class Request : public Message
@@ -155,6 +155,6 @@ private:
 std::ostream& operator << (std::ostream& stream, const Request& r) ;
 
 } // namespace http
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_HTTP_REQUEST_HPP

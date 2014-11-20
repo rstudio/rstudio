@@ -34,7 +34,7 @@
       therefore be sent on background threads.
 */
 
-namespace core {
+namespace rscore {
 
    class Error;
 
@@ -56,13 +56,13 @@ class HttpConnection
 public:
    virtual ~HttpConnection() {}
 
-   virtual const core::http::Request& request() = 0;
-   virtual void sendResponse(const core::http::Response& response) = 0;
+   virtual const rscore::http::Request& request() = 0;
+   virtual void sendResponse(const rscore::http::Response& response) = 0;
 
-   void sendJsonRpcError(const core::Error& error);
+   void sendJsonRpcError(const rscore::Error& error);
    void sendJsonRpcResponse();
    void sendJsonRpcResponse(
-                  const core::json::JsonRpcResponse& jsonRpcResponse);
+                  const rscore::json::JsonRpcResponse& jsonRpcResponse);
 
 
    // close (occurs automatically after writeResponse, here in case it

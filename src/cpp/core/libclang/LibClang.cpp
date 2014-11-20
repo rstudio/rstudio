@@ -28,7 +28,7 @@
 #include <core/system/LibraryLoader.hpp>
 
 #define LOAD_CLANG_SYMBOL(name) \
-   error = core::system::loadSymbol(pLib_, "clang_" #name, (void**)&name); \
+   error = rscore::system::loadSymbol(pLib_, "clang_" #name, (void**)&name); \
    if (error) \
    { \
       Error unloadError = unload(); \
@@ -37,7 +37,7 @@
       return error; \
    }
 
-namespace core {
+namespace rscore {
 namespace libclang {
 
 namespace {
@@ -141,7 +141,7 @@ Error LibClang::tryLoad(const std::string& libraryPath,
                              LibraryVersion requiredVersion)
 {
    // load the library
-   Error error = core::system::loadLibrary(libraryPath, &pLib_);
+   Error error = rscore::system::loadLibrary(libraryPath, &pLib_);
    if (error)
       return error;
 
@@ -479,7 +479,7 @@ Error LibClang::unload()
 {
    if (pLib_ != NULL)
    {
-      Error error = core::system::closeLibrary(pLib_);
+      Error error = rscore::system::closeLibrary(pLib_);
       if (error)
       {
          return error;
@@ -547,5 +547,5 @@ LibClang& clang()
 }
 
 } // namesapce libclang
-} // namespace core
+} // namespace rscore
 

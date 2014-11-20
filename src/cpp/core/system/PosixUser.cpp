@@ -34,7 +34,7 @@
 
 #include "config.h"
 
-namespace core {
+namespace rscore {
 namespace system {
 namespace user {
    
@@ -145,5 +145,5 @@ Error userFromId(uid_t uid, User* pUser)
 
 } // namespace user
 } // namespace system
-} // namespace core
+} // namespace rscore
 

@@ -21,7 +21,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-namespace core {
+namespace rscore {
    class Error;
 }
  
@@ -51,8 +51,8 @@ public:
    bool hasPrevious() const;
    module_context::ViewerHistoryEntry goBack();
 
-   void saveTo(const core::FilePath& serializationPath) const;
-   void restoreFrom(const core::FilePath& serializationPath);
+   void saveTo(const rscore::FilePath& serializationPath) const;
+   void restoreFrom(const rscore::FilePath& serializationPath);
 
 private:
    int currentIndex_;

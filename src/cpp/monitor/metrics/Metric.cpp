@@ -24,7 +24,7 @@
 
 #include <core/json/JsonRpc.hpp>
 
-using namespace core;
+using namespace rscore;
 
 namespace monitor {
 namespace metrics {

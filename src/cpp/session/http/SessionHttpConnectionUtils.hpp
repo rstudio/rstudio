@@ -22,7 +22,7 @@
 
 #include <boost/function.hpp>
 
-namespace core {
+namespace rscore {
 namespace http {
    class Request;
 }
@@ -31,7 +31,7 @@ namespace http {
 namespace session {
 namespace connection {
 
-std::string rstudioRequestIdFromRequest(const core::http::Request& request);
+std::string rstudioRequestIdFromRequest(const rscore::http::Request& request);
 
 bool isMethod(boost::shared_ptr<HttpConnection> ptrConnection,
               const std::string& method);

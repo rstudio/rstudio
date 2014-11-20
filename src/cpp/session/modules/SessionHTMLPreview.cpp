@@ -54,7 +54,7 @@
 #define kHTMLPreview "html_preview"
 #define kHTMLPreviewLocation "/" kHTMLPreview "/"
 
-using namespace core;
+using namespace rscore;
 
 namespace session {
 namespace modules { 
@@ -149,7 +149,7 @@ public:
          return std::string();
 
       std::string output;
-      Error error = core::readStringFromFile(outputFile_, &output);
+      Error error = rscore::readStringFromFile(outputFile_, &output);
       if (error)
          LOG_ERROR(error);
 
@@ -249,7 +249,7 @@ private:
          if (knitrOutputFile_.empty())
          {
             std::string outputFile;
-            Error error = core::readStringFromFile(outputPathTempFile,
+            Error error = rscore::readStringFromFile(outputPathTempFile,
                                                    &outputFile);
             if (error)
             {
@@ -358,7 +358,7 @@ private:
 
          // create an output file and write to it
          FilePath outputFile = createOutputFile();
-         error = core::writeStringToFile(outputFile, content);
+         error = rscore::writeStringToFile(outputFile, content);
          if (error)
             terminateWithError(error);
          else
@@ -788,7 +788,7 @@ Error readPreviewTemplate(const FilePath& resPath,
 {
 
    FilePath htmlPreviewFile = resPath.childPath("markdown.html");
-   return core::readStringFromFile(htmlPreviewFile, pPreviewTemplate);
+   return rscore::readStringFromFile(htmlPreviewFile, pPreviewTemplate);
 }
 
 void setVarFromHtmlResourceFile(const std::string& name,
@@ -858,7 +858,7 @@ void handleInternalMarkdownPreviewRequest(
 
       // write to output file
       std::string previewHtml = previewStrStream.str();
-      error = core::writeStringToFile(s_pCurrentPreview_->htmlPreviewFile(),
+      error = rscore::writeStringToFile(s_pCurrentPreview_->htmlPreviewFile(),
                                       previewHtml);
       if (error)
       {
@@ -972,7 +972,7 @@ void addFileSpecificHeaders(const FilePath& filePath, http::Response* pResponse)
    }
 }
 
-core::json::Object capabilitiesAsJson()
+rscore::json::Object capabilitiesAsJson()
 {
    // default to unsupported
    json::Object capsJson;
@@ -998,7 +998,7 @@ core::json::Object capabilitiesAsJson()
       error = r::json::jsonValueFromList(capsSEXP, &valJson);
       if (error)
          LOG_ERROR(error);
-      else if (core::json::isType<core::json::Object>(valJson))
+      else if (rscore::json::isType<rscore::json::Object>(valJson))
          capsJson = valJson.get_obj();
    }
 

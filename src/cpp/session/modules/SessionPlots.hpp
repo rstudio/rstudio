@@ -16,7 +16,7 @@
 #ifndef SESSION_PLOTS_HPP
 #define SESSION_PLOTS_HPP
 
-namespace core {
+namespace rscore {
    class Error;
 }
 
@@ -26,7 +26,7 @@ namespace plots {
       
 bool haveCairoPdf();
 
-core::Error initialize();
+rscore::Error initialize();
    
 } // namespace plots
 } // namespace modules   

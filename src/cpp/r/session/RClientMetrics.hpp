@@ -16,7 +16,7 @@
 #ifndef R_SESSION_CLIENT_METRICS_HPP
 #define R_SESSION_CLIENT_METRICS_HPP
 
-namespace core {
+namespace rscore {
    class Settings;
 }
 
@@ -29,8 +29,8 @@ namespace client_metrics {
 
 RClientMetrics get();
 void set(const RClientMetrics& metrics);
-void save(core::Settings* pSettings);
-void restore(const core::Settings& settings);
+void save(rscore::Settings* pSettings);
+void restore(const rscore::Settings& settings);
    
 } // namespace client_metrics
 } // namespace session

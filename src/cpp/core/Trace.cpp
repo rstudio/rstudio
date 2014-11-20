@@ -22,7 +22,7 @@
 
 #include <core/Thread.hpp>
 
-namespace core {
+namespace rscore {
 namespace trace {
 
 namespace {
@@ -42,4 +42,4 @@ void add(void* key, const std::string& functionName)
 }
 
 } // namespace trace
-} // namespace core
+} // namespace rscore

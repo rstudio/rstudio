@@ -22,7 +22,7 @@
 
 typedef struct SEXPREC *SEXP;
 
-namespace core {
+namespace rscore {
    class Error;
    class FilePath;
 }
@@ -63,9 +63,9 @@ struct GraphicsDeviceFunctions
    boost::function<bool()> isActive;
    boost::function<DisplaySize()> displaySize;
    UnitConversionFunctions convert;
-   boost::function<core::Error(const core::FilePath&,
-                               const core::FilePath&)> saveSnapshot;
-   boost::function<core::Error(const core::FilePath&)> restoreSnapshot;
+   boost::function<rscore::Error(const rscore::FilePath&,
+                               const rscore::FilePath&)> saveSnapshot;
+   boost::function<rscore::Error(const rscore::FilePath&)> restoreSnapshot;
    boost::function<void()> copyToActiveDevice;
    boost::function<std::string()> imageFileExtension;
    boost::function<void()> close;

@@ -28,7 +28,7 @@
 #include "SessionErrors.hpp"
 #include "SessionBreakpoints.hpp"
 
-using namespace core;
+using namespace rscore;
 
 namespace session {
 namespace modules {

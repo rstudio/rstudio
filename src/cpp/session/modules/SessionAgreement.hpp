@@ -18,7 +18,7 @@
 
 #include <core/json/JsonRpc.hpp>
 
-namespace core {
+namespace rscore {
    class Error;
 }
 
@@ -28,9 +28,9 @@ namespace agreement {
 
 bool hasAgreement();
 
-core::json::Value pendingAgreement();
+rscore::json::Value pendingAgreement();
    
-core::Error initialize();
+rscore::Error initialize();
    
 } // namespace agreeement
 } // namespace modules

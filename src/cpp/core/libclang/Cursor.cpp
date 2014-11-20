@@ -18,7 +18,7 @@
 
 #include <core/libclang/LibClang.hpp>
 
-namespace core {
+namespace rscore {
 namespace libclang {
 
 Cursor::~Cursor()
@@ -153,5 +153,5 @@ bool Cursor::operator==(const Cursor& other) const
 
 
 } // namespace libclang
-} // namespace core
+} // namespace rscore
 

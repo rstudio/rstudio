@@ -28,7 +28,7 @@
 
 using namespace boost::program_options ;
 
-namespace core {
+namespace rscore {
 
 namespace program_options {
  
@@ -60,19 +60,19 @@ bool validateOptionsProvided(const variables_map& vm,
   
 void reportError(const std::string& errorMessage, const ErrorLocation& location)
 {
-   if (core::system::stderrIsTerminal())
+   if (rscore::system::stderrIsTerminal())
       std::cerr << errorMessage << std::endl;
    else
-      core::log::logErrorMessage(errorMessage, location);
+      rscore::log::logErrorMessage(errorMessage, location);
 }
 
 void reportWarnings(const std::string& warningMessages,
                     const ErrorLocation& location)
 {
-   if (core::system::stderrIsTerminal())
+   if (rscore::system::stderrIsTerminal())
       std::cerr << "WARNINGS: " << warningMessages << std::endl;
    else
-      core::log::logWarningMessage(warningMessages, location);
+      rscore::log::logWarningMessage(warningMessages, location);
 }
 
 
@@ -190,4 +190,4 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
 
    
 } // namespace program_options
-} // namespace core
+} // namespace rscore

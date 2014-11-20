@@ -21,7 +21,7 @@
 
 using namespace boost::gregorian ;
 
-namespace core {
+namespace rscore {
 namespace http {
 
 Cookie::Cookie(const Request& request,
@@ -102,4 +102,4 @@ std::string Cookie::cookieHeaderValue() const
 }
 
 } // namespace http
-} // namespace core
+} // namespace rscore

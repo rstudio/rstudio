@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace core {
+namespace rscore {
    class Error;
 }
  
@@ -28,7 +28,7 @@ namespace workbench {
    
 std::string editFileCommand();
 
-core::Error initialize();
+rscore::Error initialize();
                        
 } // namespace workbench
 } // namespace modules

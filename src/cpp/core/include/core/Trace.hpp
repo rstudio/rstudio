@@ -21,16 +21,16 @@
 
 #include <boost/current_function.hpp>
 
-namespace core { 
+namespace rscore {
 namespace trace {
 
 void add(void* key, const std::string& functionName);
 
 } // namespace trace
-} // namespace core 
+} // namespace rscore
 
 #define TRACE_CURRENT_METHOD \
-   core::trace::add(this, BOOST_CURRENT_FUNCTION);
+   rscore::trace::add(this, BOOST_CURRENT_FUNCTION);
 
 #endif // CORE_PERFORMANCE_TIMER_HPP
 

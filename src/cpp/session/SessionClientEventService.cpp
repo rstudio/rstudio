@@ -34,7 +34,7 @@
 
 #include "SessionClientEventQueue.hpp"
 
-using namespace core;
+using namespace rscore;
 
 namespace session {
    
@@ -64,7 +64,7 @@ Error ClientEventService::start(const std::string& clientId)
    
    // block all signals for launch of background thread (will cause it
    // to never receive signals)
-   core::system::SignalBlocker signalBlocker;
+   rscore::system::SignalBlocker signalBlocker;
    Error error = signalBlocker.blockAll();
    if (error)
       return error ;
@@ -173,7 +173,7 @@ void ClientEventService::addClientEvent(const json::Object& eventObject)
 }
 
 void ClientEventService::setClientEventResult(
-                                       core::json::JsonRpcResponse* pResponse)
+                                       rscore::json::JsonRpcResponse* pResponse)
 {
    LOCK_MUTEX(mutex_)
    {

@@ -21,7 +21,7 @@
 
 #include <core/r_util/RTokenizer.hpp>
 
-namespace core {
+namespace rscore {
 namespace r_util {
 
 namespace {
@@ -372,6 +372,6 @@ RSourceIndex::RSourceIndex(const std::string& context,
 }
 
 } // namespace r_util
-} // namespace core 
+} // namespace rscore
 
 

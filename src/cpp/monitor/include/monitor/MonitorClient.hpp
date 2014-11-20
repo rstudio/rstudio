@@ -44,10 +44,10 @@ public:
    virtual ~Client() {}
 
    virtual void logMessage(const std::string& programIdentity,
-                           core::system::LogLevel level,
+                           rscore::system::LogLevel level,
                            const std::string& message) = 0;
 
-   boost::shared_ptr<core::LogWriter> createLogWriter(
+   boost::shared_ptr<rscore::LogWriter> createLogWriter(
                                        const std::string& programIdentity);
 
    virtual void sendMetrics(const std::vector<metrics::Metric>& metrics) = 0;

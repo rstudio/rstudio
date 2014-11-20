@@ -18,18 +18,18 @@
 
 #include <core/system/System.hpp>
 
-namespace core {
+namespace rscore {
 
 class LogWriter
 {
 public:
    virtual ~LogWriter() {}
 
-   virtual void log(core::system::LogLevel level,
+   virtual void log(rscore::system::LogLevel level,
                     const std::string& message) = 0;
 
    virtual void log(const std::string& programIdentity,
-                    core::system::LogLevel level,
+                    rscore::system::LogLevel level,
                     const std::string& message) = 0;
 
    // for subclasses that can do automatic chaining to stderr
@@ -47,10 +47,10 @@ namespace system {
 
 void setLogToStderr(bool logToStderr);
 
-void addLogWriter(boost::shared_ptr<core::LogWriter> pLogWriter);
+void addLogWriter(boost::shared_ptr<rscore::LogWriter> pLogWriter);
 
 } // namespace system
 
-} // namespace core
+} // namespace rscore
 
 #endif // LOG_WRITER_HPP

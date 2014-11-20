@@ -20,7 +20,7 @@
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 
-namespace core {
+namespace rscore {
 namespace string_utils {
 
 std::string wideToUtf8(const std::wstring& value)
@@ -76,7 +76,7 @@ std::wstring utf8ToWide(const std::string& value,
 
 
 } // namespace string_utils
-} // namespace core
+} // namespace rscore
 
 
 

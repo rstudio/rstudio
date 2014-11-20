@@ -19,7 +19,7 @@
 #include <boost/utility.hpp>
 #include <boost/scoped_ptr.hpp>
 
-namespace core {
+namespace rscore {
 
 class Error;
 class FilePath;
@@ -45,7 +45,7 @@ private:
    boost::scoped_ptr<Impl> pImpl_;
 };
 
-} // namespace core
+} // namespace rscore
 
 
 #endif // CORE_FILE_LOCK_HPP

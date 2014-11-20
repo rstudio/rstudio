@@ -21,7 +21,7 @@
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 
-namespace core {
+namespace rscore {
 
 class ErrorLocation;
 
@@ -231,6 +231,6 @@ private:
 };
 
 } // namespace system
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_SYSTEM_CHILD_PROCESS_HPP

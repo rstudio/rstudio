@@ -24,7 +24,7 @@
 
 #include <core/json/Json.hpp>
 
-namespace core {
+namespace rscore {
    class Error ;
    class FilePath;
 }
@@ -78,10 +78,10 @@ public:
                int endIndex,   // exclusive,
                std::vector<std::string>* pEntries) const;
 
-   void asJson(core::json::Array* pHistoryArray) const;
+   void asJson(rscore::json::Array* pHistoryArray) const;
    
-   core::Error loadFromFile(const core::FilePath& filePath, bool verifyFile);
-   core::Error saveToFile(const core::FilePath& filePath) const;
+   rscore::Error loadFromFile(const rscore::FilePath& filePath, bool verifyFile);
+   rscore::Error saveToFile(const rscore::FilePath& filePath) const;
    
    boost::signals::connection connectOnAdd(
                                  const AddSignal::slot_function_type& slot)

@@ -35,7 +35,7 @@
 #include <r/session/RSession.hpp>
 #include <r/session/RConsoleHistory.hpp>
 
-using namespace core ;
+using namespace rscore ;
 
 namespace session {  
    
@@ -114,13 +114,13 @@ Error UserSettings::initialize()
 
    // make sure we have a context id
    if (contextId().empty())
-      setContextId(core::system::generateShortenedUuid());
+      setContextId(rscore::system::generateShortenedUuid());
 
    return Success();
 }
 
 void UserSettings::onSettingsFileChanged(
-                     const core::system::FileChangeEvent& changeEvent)
+                     const rscore::system::FileChangeEvent& changeEvent)
 {
    // ensure this is for our target file
    if (settingsFilePath_.absolutePath() !=
@@ -193,18 +193,18 @@ void UserSettings::setAutoCreatedProfile(bool autoCreated)
    settings_.set(kAutoCreatedProfile, autoCreated);
 }
 
-core::json::Object UserSettings::uiPrefs() const
+rscore::json::Object UserSettings::uiPrefs() const
 {
    std::string value = settings_.get(kUiPrefs, "{}");
    json::Value jsonValue;
-   bool success = core::json::parse(value, &jsonValue);
+   bool success = rscore::json::parse(value, &jsonValue);
    if (success)
       return jsonValue.get_obj();
    else
       return json::Object();
 }
 
-void UserSettings::setUiPrefs(const core::json::Object& prefsObject)
+void UserSettings::setUiPrefs(const rscore::json::Object& prefsObject)
 {
    std::ostringstream output;
    json::writeFormatted(prefsObject, output);
@@ -266,7 +266,7 @@ void UserSettings::updatePrefsCache(const json::Object& prefs) const
    std::string spellingLanguage = readPref<std::string>(prefs, "spelling_dictionary_language", "en_US");
    pSpellingLanguage_.reset(new std::string(spellingLanguage));
 
-   json::Array spellingCustomDicts = readPref<core::json::Array>(prefs, "spelling_custom_dictionaries", core::json::Array());
+   json::Array spellingCustomDicts = readPref<rscore::json::Array>(prefs, "spelling_custom_dictionaries", rscore::json::Array());
    pSpellingCustomDicts_.reset(new json::Array(spellingCustomDicts));
 
    bool handleErrorsInUserCodeOnly = readPref<bool>(prefs, "handle_errors_in_user_code_only", true);
@@ -390,7 +390,7 @@ void UserSettings::setLoadRData(bool loadRData)
    settings_.set(kLoadRData, loadRData);
 }
 
-core::FilePath UserSettings::initialWorkingDirectory() const
+rscore::FilePath UserSettings::initialWorkingDirectory() const
 {
    return getWorkingDirectoryValue(kInitialWorkingDirectory);
 }

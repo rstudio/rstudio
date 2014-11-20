@@ -21,7 +21,7 @@
 #include <core/libclang/LibClang.hpp>
 #include <core/libclang/UnsavedFiles.hpp>
 
-namespace core {
+namespace rscore {
 namespace libclang {
 
 namespace  {
@@ -145,6 +145,6 @@ void TranslationUnit::printResourceUsage(std::ostream& ostr, bool detailed)
 
 
 } // namespace libclang
-} // namespace core
+} // namespace rscore
 
 

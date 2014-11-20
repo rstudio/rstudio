@@ -29,7 +29,7 @@
 #define KEY_WOW64_32KEY 0x0200
 #endif
 
-namespace core {
+namespace rscore {
 namespace r_util {
 
 namespace {
@@ -114,7 +114,7 @@ std::string RToolsInfo::url(const std::string& repos) const
 {
    // strip period from name
    std::string ver = boost::algorithm::replace_all_copy(name(), ".", "");
-   std::string url = core::http::URL::complete(
+   std::string url = rscore::http::URL::complete(
                         repos, "bin/windows/Rtools/Rtools" + ver + ".exe");
    return url;
 }
@@ -132,7 +132,7 @@ std::ostream& operator<<(std::ostream& os, const RToolsInfo& info)
 
 Error scanRegistryForRTools(std::vector<RToolsInfo>* pRTools)
 {
-   core::system::RegistryKey regKey;
+   rscore::system::RegistryKey regKey;
    Error error = regKey.open(HKEY_LOCAL_MACHINE,
                              "Software\\R-core\\Rtools",
                              KEY_READ | KEY_WOW64_32KEY);
@@ -148,7 +148,7 @@ Error scanRegistryForRTools(std::vector<RToolsInfo>* pRTools)
    for (int i = 0; i < keys.size(); i++)
    {
       std::string name = keys.at(i);
-      core::system::RegistryKey verKey;
+      rscore::system::RegistryKey verKey;
       error = verKey.open(regKey.handle(),
                           name,
                           KEY_READ | KEY_WOW64_32KEY);
@@ -178,7 +178,7 @@ Error scanRegistryForRTools(std::vector<RToolsInfo>* pRTools)
 
 
 } // namespace r_util
-} // namespace core 
+} // namespace rscore
 
 
 

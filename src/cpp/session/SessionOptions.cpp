@@ -37,7 +37,7 @@
 
 #include "session-config.h"
 
-using namespace core ;
+using namespace rscore ;
 
 namespace session {  
 
@@ -53,17 +53,17 @@ Options& options()
    return instance ;
 }
    
-core::ProgramStatus Options::read(int argc, char * const argv[])
+rscore::ProgramStatus Options::read(int argc, char * const argv[])
 {
    using namespace boost::program_options ;
    
    // get the shared secret
-   monitorSharedSecret_ = core::system::getenv(kMonitorSharedSecretEnvVar);
-   core::system::unsetenv(kMonitorSharedSecretEnvVar);
+   monitorSharedSecret_ = rscore::system::getenv(kMonitorSharedSecretEnvVar);
+   rscore::system::unsetenv(kMonitorSharedSecretEnvVar);
 
    // compute the resource path
    FilePath resourcePath;
-   Error error = core::system::installPath("..", argv[0], &resourcePath);
+   Error error = rscore::system::installPath("..", argv[0], &resourcePath);
    if (error)
    {
       LOG_ERROR_MESSAGE("Unable to determine install path: "+error.summary());
@@ -289,7 +289,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
         "Path to libclang builtin headers");
 
    // user options (default user identity to current username)
-   std::string currentUsername = core::system::username();
+   std::string currentUsername = rscore::system::username();
    options_description user("user") ;
    user.add_options()
       (kUserIdentitySessionOption "," kUserIdentitySessionOptionShort,
@@ -307,7 +307,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    FilePath defaultConfigPath("/etc/rstudio/rsession.conf");
    std::string configFile = defaultConfigPath.exists() ?
                                  defaultConfigPath.absolutePath() : "";
-   core::program_options::OptionsDescription optionsDesc("rsession",
+   rscore::program_options::OptionsDescription optionsDesc("rsession",
                                                          configFile);
 
    optionsDesc.commandLine.add(verify);
@@ -338,7 +338,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    optionsDesc.configFile.add(overlay);
 
    // read configuration
-   ProgramStatus status = core::program_options::read(optionsDesc, argc,argv);
+   ProgramStatus status = rscore::program_options::read(optionsDesc, argc,argv);
    if (status.exit())
       return status;
    
@@ -376,7 +376,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
             LOG_ERROR(error);
             return ProgramStatus::exitFailure();
          }
-         core::system::setenv("R_USER", verifyInstallationHomeDir_);
+         rscore::system::setenv("R_USER", verifyInstallationHomeDir_);
       }
    }
 
@@ -393,7 +393,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    // set HOME if we are in standalone mode (this enables us to reflect
    // R_USER back into HOME on Linux)
    if (standalone())
-      core::system::setenv("HOME", userHomePath_);
+      rscore::system::setenv("HOME", userHomePath_);
 
    // session timeout seconds is always -1 in desktop mode
    if (programMode_ == kSessionProgramModeDesktop)
@@ -450,7 +450,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    resolveRsclangPath(resourcePath, &libclangPath_);
 
    // shared secret with parent
-   secret_ = core::system::getenv("RS_SHARED_SECRET");
+   secret_ = rscore::system::getenv("RS_SHARED_SECRET");
    /* SECURITY: Need RS_SHARED_SECRET to be available to
       rpostback. However, we really ought to communicate
       it in a more secure manner than this, at least on
@@ -459,27 +459,27 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       levels) than others. For example, using a named pipe
       with proper SACL to retrieve the shared secret, where
       the name of the pipe is in an environment variable. */
-   //core::system::unsetenv("RS_SHARED_SECRET");
+   //rscore::system::unsetenv("RS_SHARED_SECRET");
 
    // initial working dir override
-   initialWorkingDirOverride_ = core::system::getenv(kRStudioInitialWorkingDir);
-   core::system::unsetenv(kRStudioInitialWorkingDir);
+   initialWorkingDirOverride_ = rscore::system::getenv(kRStudioInitialWorkingDir);
+   rscore::system::unsetenv(kRStudioInitialWorkingDir);
 
    // initial environment file override
-   initialEnvironmentFileOverride_ = core::system::getenv(kRStudioInitialEnvironment);
-   core::system::unsetenv(kRStudioInitialEnvironment);
+   initialEnvironmentFileOverride_ = rscore::system::getenv(kRStudioInitialEnvironment);
+   rscore::system::unsetenv(kRStudioInitialEnvironment);
 
    // initial project
-   initialProjectPath_ = core::system::getenv(kRStudioInitialProject);
-   core::system::unsetenv(kRStudioInitialProject);
+   initialProjectPath_ = rscore::system::getenv(kRStudioInitialProject);
+   rscore::system::unsetenv(kRStudioInitialProject);
 
    // limit rpc client uid
    limitRpcClientUid_ = -1;
-   std::string limitUid = core::system::getenv(kRStudioLimitRpcClientUid);
+   std::string limitUid = rscore::system::getenv(kRStudioLimitRpcClientUid);
    if (!limitUid.empty())
    {
-      limitRpcClientUid_ = core::safe_convert::stringTo<int>(limitUid, -1);
-      core::system::unsetenv(kRStudioLimitRpcClientUid);
+      limitRpcClientUid_ = rscore::safe_convert::stringTo<int>(limitUid, -1);
+      rscore::system::unsetenv(kRStudioLimitRpcClientUid);
    }
 
    // return status

@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace core {
+namespace rscore {
    class Error;
 }
  
@@ -38,11 +38,11 @@ struct PasswordInput
    bool remember;
 };
 
-core::Error askForPassword(const std::string& prompt,
+rscore::Error askForPassword(const std::string& prompt,
                            const std::string& rememberPrompt,
                            PasswordInput* pInput);
 
-core::Error initialize();
+rscore::Error initialize();
    
 } // namespace ask_pass
 } // namepace handlers

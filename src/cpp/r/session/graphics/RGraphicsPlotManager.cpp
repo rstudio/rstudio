@@ -37,7 +37,7 @@
 #include "RGraphicsDevice.hpp"
 #include "RGraphicsPlotManipulatorManager.hpp"
 
-using namespace core;
+using namespace rscore;
 
 namespace r {
 namespace session {  
@@ -374,7 +374,7 @@ Error PlotManager::savePlotAsPostscript(const FilePath& targetPath,
 }
 
 
-Error PlotManager::savePlotAsMetafile(const core::FilePath& filePath,
+Error PlotManager::savePlotAsMetafile(const rscore::FilePath& filePath,
                                       int widthPx,
                                       int heightPx)
 { 

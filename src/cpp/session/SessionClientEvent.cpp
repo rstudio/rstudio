@@ -24,7 +24,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 
-using namespace core ;
+using namespace rscore ;
 
 namespace session {
 
@@ -126,7 +126,7 @@ void ClientEvent::init(int type, const json::Value& data)
 {
    type_ = type;
    data_ = data;
-   id_ = core::system::generateUuid();
+   id_ = rscore::system::generateUuid();
 }
    
 void ClientEvent::asJsonObject(int id, json::Object* pObject) const

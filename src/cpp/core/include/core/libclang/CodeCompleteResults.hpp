@@ -22,7 +22,7 @@
 
 #include "Diagnostic.hpp"
 
-namespace core {
+namespace rscore {
 namespace libclang {
 
 class CodeCompleteResult
@@ -81,7 +81,7 @@ private:
 };
 
 } // namespace libclang
-} // namespace core
+} // namespace rscore
 
 
 #endif // CORE_LIBCLANG_HPP

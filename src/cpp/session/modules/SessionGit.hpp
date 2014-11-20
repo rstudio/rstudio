@@ -41,10 +41,10 @@ extern const char * const kVcsId;
 class GitFileDecorationContext : public source_control::FileDecorationContext
 {
 public:
-   GitFileDecorationContext(const core::FilePath& rootDir);
+   GitFileDecorationContext(const rscore::FilePath& rootDir);
    virtual ~GitFileDecorationContext();
-   virtual void decorateFile(const core::FilePath &filePath,
-                             core::json::Object *pFileObject);
+   virtual void decorateFile(const rscore::FilePath &filePath,
+                             rscore::json::Object *pFileObject);
 
 private:
    source_control::StatusResult vcsStatus_;
@@ -54,32 +54,32 @@ private:
 bool isGitInstalled();
 bool isGitEnabled();
 
-bool isGitDirectory(const core::FilePath& workingDir);
+bool isGitDirectory(const rscore::FilePath& workingDir);
 
-std::string remoteOriginUrl(const core::FilePath& workingDir);
+std::string remoteOriginUrl(const rscore::FilePath& workingDir);
 
 bool isGithubRepository();
 
-core::Error initializeGit(const core::FilePath& workingDir);
+rscore::Error initializeGit(const rscore::FilePath& workingDir);
 
-core::FilePath detectedGitExePath();
+rscore::FilePath detectedGitExePath();
 
 std::string nonPathGitBinDir();
 
-core::Error status(const core::FilePath& dir,
+rscore::Error status(const rscore::FilePath& dir,
                    source_control::StatusResult* pStatusResult);
-core::Error fileStatus(const core::FilePath& filePath,
+rscore::Error fileStatus(const rscore::FilePath& filePath,
                        source_control::VCSStatus* pStatus);
-core::Error statusToJson(const core::FilePath& path,
+rscore::Error statusToJson(const rscore::FilePath& path,
                          const source_control::VCSStatus& status,
-                         core::json::Object* pObject);
+                         rscore::json::Object* pObject);
 
-core::Error clone(const std::string& url,
+rscore::Error clone(const std::string& url,
                   const std::string dirName,
-                  const core::FilePath& parentPath,
+                  const rscore::FilePath& parentPath,
                   boost::shared_ptr<console_process::ConsoleProcess>* ppCP);
 
-core::Error initialize();
+rscore::Error initialize();
 
 } // namespace git
 } // namespace modules

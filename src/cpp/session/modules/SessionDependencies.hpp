@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace core {
+namespace rscore {
    class Error ;
 }
 
@@ -26,7 +26,7 @@ namespace session {
 namespace modules { 
 namespace dependencies {
 
-core::Error initialize();
+rscore::Error initialize();
 
 } // namespace dependencies
 } // namespace modules

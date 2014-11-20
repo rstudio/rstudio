@@ -23,7 +23,7 @@
 
 #include <core/FilePath.hpp>
 
-namespace core {
+namespace rscore {
 namespace html_utils {
    
 std::string defaultTitle(const std::string& htmlContent);
@@ -56,7 +56,7 @@ private:
 
 
 } // namespace regex_utils
-} // namespace core 
+} // namespace rscore
 
 
 #endif // CORE_HTML_UTILS_HPP

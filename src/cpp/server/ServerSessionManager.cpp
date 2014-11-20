@@ -39,19 +39,19 @@
 #include "ServerREnvironment.hpp"
 
 
-using namespace core;
+using namespace rscore;
 
 namespace server {
 
 namespace {
 
-core::system::ProcessConfig sessionProcessConfig(
+rscore::system::ProcessConfig sessionProcessConfig(
          const std::string& username,
-         const core::system::Options& extraArgs = core::system::Options())
+         const rscore::system::Options& extraArgs = rscore::system::Options())
 {
    // prepare command line arguments
    server::Options& options = server::options();
-   core::system::Options args ;
+   rscore::system::Options args ;
 
    // check for options-specified config file and add to command
    // line if specified
@@ -64,13 +64,13 @@ core::system::ProcessConfig sessionProcessConfig(
                                  username));
 
    // allow session timeout to be overridden via environment variable
-   std::string timeout = core::system::getenv("RSTUDIO_SESSION_TIMEOUT");
+   std::string timeout = rscore::system::getenv("RSTUDIO_SESSION_TIMEOUT");
    if (!timeout.empty())
       args.push_back(std::make_pair("--" kTimeoutSessionOption, timeout));
 
    // pass our uid to instruct rsession to limit rpc clients to us and itself
-   core::system::Options environment;
-   uid_t uid = core::system::user::currentUserIdentity().userId;
+   rscore::system::Options environment;
+   uid_t uid = rscore::system::user::currentUserIdentity().userId;
    environment.push_back(std::make_pair(
                            kRStudioLimitRpcClientUid,
                            safe_convert::numberToString(uid)));
@@ -79,7 +79,7 @@ core::system::ProcessConfig sessionProcessConfig(
    std::copy(extraArgs.begin(), extraArgs.end(), std::back_inserter(args));
 
    // append R environment variables
-   core::system::Options rEnvVars = r_environment::variables();
+   rscore::system::Options rEnvVars = r_environment::variables();
    environment.insert(environment.end(), rEnvVars.begin(), rEnvVars.end());
 
    // add monitor shared secret
@@ -87,10 +87,10 @@ core::system::ProcessConfig sessionProcessConfig(
                                         options.monitorSharedSecret()));
 
    // build the config object and return it
-   core::system::ProcessConfig config;
+   rscore::system::ProcessConfig config;
    config.args = args;
    config.environment = environment;
-   config.stdStreamBehavior = core::system::StdStreamInherit;
+   config.stdStreamBehavior = rscore::system::StdStreamInherit;
    return config;
 }
 
@@ -172,10 +172,10 @@ Error SessionManager::launchSession(const std::string& username)
 // default session launcher -- does the launch then tracks the pid
 // for later reaping
 Error SessionManager::launchAndTrackSession(
-                           const core::r_util::SessionLaunchProfile& profile)
+                           const rscore::r_util::SessionLaunchProfile& profile)
 {
    // if we are root then assume the identity of the user
-   using namespace core::system;
+   using namespace rscore::system;
    std::string runAsUser = realUserIsRoot() ? profile.username : "";
 
    // launch the session
@@ -224,17 +224,17 @@ void SessionManager::notifySIGCHLD()
 
 // helper function for verify-installation
 Error launchSession(const std::string& username,
-                    const core::system::Options& extraArgs,
+                    const rscore::system::Options& extraArgs,
                     PidType* pPid)
 {
    // launch the session
    std::string rsessionPath = server::options().rsessionPath();
-   std::string runAsUser = core::system::realUserIsRoot() ? username : "";
-   core::system::ProcessConfig config = sessionProcessConfig(username,
+   std::string runAsUser = rscore::system::realUserIsRoot() ? username : "";
+   rscore::system::ProcessConfig config = sessionProcessConfig(username,
                                                              extraArgs);
 
    *pPid = -1;
-   return core::system::launchChildProcess(rsessionPath,
+   return rscore::system::launchChildProcess(rsessionPath,
                                            runAsUser,
                                            config,
                                            pPid);

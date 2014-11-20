@@ -18,7 +18,7 @@
 
 #include <core/Error.hpp>
 
-namespace core {
+namespace rscore {
    class Error;
 }
  
@@ -28,7 +28,7 @@ namespace clang {
 
 bool isAvailable();
 
-core::Error initialize();
+rscore::Error initialize();
    
 } // namespace clang
 } // namepace handlers

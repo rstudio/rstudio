@@ -20,7 +20,7 @@
 #include <core/libclang/UnsavedFiles.hpp>
 #include <core/libclang/Utils.hpp>
 
-namespace core {
+namespace rscore {
 namespace libclang {
 
 namespace  {
@@ -174,6 +174,6 @@ unsigned long long CodeCompleteResults::getContexts() const
 
 
 } // namespace libclang
-} // namespace core
+} // namespace rscore
 
 

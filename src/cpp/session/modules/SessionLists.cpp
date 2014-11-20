@@ -28,7 +28,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace core;
+using namespace rscore;
 
 namespace session {
 namespace modules { 
@@ -115,10 +115,10 @@ json::Array listToJson(const std::list<std::string>& list)
    return jsonArray;
 }
 
-void onListsFileChanged(const core::system::FileChangeEvent& fileChange)
+void onListsFileChanged(const rscore::system::FileChangeEvent& fileChange)
 {
    // ignore if deleted
-   if (fileChange.type() == core::system::FileChangeEvent::FileRemoved)
+   if (fileChange.type() == rscore::system::FileChangeEvent::FileRemoved)
       return;
 
    // ignore if it is the lists directory

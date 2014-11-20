@@ -22,7 +22,7 @@
 #include <core/FilePath.hpp>
 #include <core/libclang/LibClang.hpp>
 
-namespace core {
+namespace rscore {
    class Error;
 }
 
@@ -50,14 +50,14 @@ struct FileLocation
    {
    }
 
-   FileLocation(const core::FilePath& filePath, unsigned line, unsigned column)
+   FileLocation(const rscore::FilePath& filePath, unsigned line, unsigned column)
       : filePath(filePath), line(line), column(column)
    {
    }
 
    bool empty() const { return filePath.empty(); }
 
-   core::FilePath filePath;
+   rscore::FilePath filePath;
    unsigned line;
    unsigned column;
 };
@@ -99,7 +99,7 @@ FileLocation findDefinitionLocation(const FileLocation& location);
 void searchDefinitions(const std::string& term,
                        std::vector<CppDefinition>* pDefinitions);
 
-core::Error initializeDefinitionIndex();
+rscore::Error initializeDefinitionIndex();
 
 } // namespace clang
 } // namepace modules

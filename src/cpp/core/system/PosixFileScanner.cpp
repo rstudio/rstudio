@@ -27,7 +27,7 @@
 
 #include "config.h"
 
-namespace core {
+namespace rscore {
 namespace system {
 
 namespace {
@@ -182,5 +182,5 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
 }
 
 } // namespace system
-} // namespace core
+} // namespace rscore
 

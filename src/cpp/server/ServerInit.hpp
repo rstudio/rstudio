@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace core {
+namespace rscore {
    class Error;
    namespace http {
       class AsyncServer;
@@ -27,8 +27,8 @@ namespace core {
 
 namespace server {
 
-core::http::AsyncServer* httpServerCreate();
-core::Error httpServerInit(core::http::AsyncServer* pAsyncServer);
+rscore::http::AsyncServer* httpServerCreate();
+rscore::Error httpServerInit(rscore::http::AsyncServer* pAsyncServer);
 
 
 } // namespace server

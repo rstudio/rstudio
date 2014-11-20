@@ -44,7 +44,7 @@ extern "C" void R_ProcessEvents(void);
 extern "C" void R_CleanUp(SA_TYPE, int, int);
 extern "C" UImode CharacterMode;
 
-using namespace core;
+using namespace rscore;
 
 namespace r {
 namespace session {
@@ -127,8 +127,8 @@ void setMemoryLimit()
 
 }
 
-void runEmbeddedR(const core::FilePath& rHome,
-                  const core::FilePath& userHome,
+void runEmbeddedR(const rscore::FilePath& rHome,
+                  const rscore::FilePath& userHome,
                   bool quiet,
                   bool loadInitFile,
                   SA_TYPE defaultSaveAction,

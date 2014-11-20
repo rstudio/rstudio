@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace core {
+namespace rscore {
 
 class Error;
 class FilePath;
@@ -102,7 +102,7 @@ Error markdownToHTML(const std::string& markdownInput,
 bool isMathJaxRequired(const std::string& htmlOutput);
 
 } // namespace markdown
-} // namespace core 
+} // namespace rscore
 
 #endif // CORE_MARKDOWN_MARKDOWN_HPP
 

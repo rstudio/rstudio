@@ -20,17 +20,17 @@
 
 
 
-namespace core {
+namespace rscore {
 
 class FilePath;
 
 namespace file_utils {
 
-FilePath uniqueFilePath(const core::FilePath& parent,
+FilePath uniqueFilePath(const rscore::FilePath& parent,
                         const std::string& prefix = "");
 
 
 } // namespace file_utils
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_FILEUTILS_HPP

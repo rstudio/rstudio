@@ -21,7 +21,7 @@
 
 #include <boost/utility.hpp>
 
-namespace core {
+namespace rscore {
 namespace http {
 
 class MultipartRelated : boost::noncopyable
@@ -44,7 +44,7 @@ private:
 };
 
 } // namespace http
-} // namespace core
+} // namespace rscore
 
 
 #endif // CORE_HTTP_MULTIPART_RELATED_HPP

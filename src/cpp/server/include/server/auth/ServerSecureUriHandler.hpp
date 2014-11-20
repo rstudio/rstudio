@@ -21,45 +21,45 @@
 #include <core/http/UriHandler.hpp>
 #include <core/http/AsyncUriHandler.hpp>
 
-namespace core {
+namespace rscore {
 namespace http { 
    class Request;
    class Response;
 } // namespace http
-} // namespace core
+} // namespace rscore
 
 namespace server {
 namespace auth {
    
 typedef boost::function<void(
                            const std::string& username,
-                           const core::http::Request&,
-                           core::http::Response*)> SecureUriHandlerFunction ;
+                           const rscore::http::Request&,
+                           rscore::http::Response*)> SecureUriHandlerFunction ;
 
 typedef boost::function<void(
                      const std::string& username,
-                     boost::shared_ptr<core::http::AsyncConnection>)>
+                     boost::shared_ptr<rscore::http::AsyncConnection>)>
                                           SecureAsyncUriHandlerFunction;
 
       
-core::http::UriHandlerFunction secureHttpHandler(
+rscore::http::UriHandlerFunction secureHttpHandler(
                                     SecureUriHandlerFunction handler,
                                     bool authenticate = false);
 
-core::http::UriHandlerFunction secureJsonRpcHandler(
+rscore::http::UriHandlerFunction secureJsonRpcHandler(
                                     SecureUriHandlerFunction handler);
 
-core::http::UriHandlerFunction secureUploadHandler(
+rscore::http::UriHandlerFunction secureUploadHandler(
                                     SecureUriHandlerFunction handler);
 
-core::http::AsyncUriHandlerFunction secureAsyncHttpHandler(
+rscore::http::AsyncUriHandlerFunction secureAsyncHttpHandler(
                                     SecureAsyncUriHandlerFunction handler,
                                     bool authenticate = false);
 
-core::http::AsyncUriHandlerFunction secureAsyncJsonRpcHandler(
+rscore::http::AsyncUriHandlerFunction secureAsyncJsonRpcHandler(
                                     SecureAsyncUriHandlerFunction handler);
 
-core::http::AsyncUriHandlerFunction secureAsyncUploadHandler(
+rscore::http::AsyncUriHandlerFunction secureAsyncUploadHandler(
                                     SecureAsyncUriHandlerFunction handler);
 
 } // namespace auth

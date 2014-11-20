@@ -59,7 +59,7 @@ struct is_error_code_enum<r::session::graphics::errc::errc_t>
 #include <core/Error.hpp>
 #include <core/json/Json.hpp>
 
-namespace core {
+namespace rscore {
    class FilePath;
 }
 
@@ -70,7 +70,7 @@ namespace graphics {
 struct DisplayState
 {
    DisplayState(const std::string& imageFilename, 
-                const core::json::Value& manipulatorJson,
+                const rscore::json::Value& manipulatorJson,
                 int width,
                 int height,
                 int activePlotIndex,
@@ -85,7 +85,7 @@ struct DisplayState
    }
    
    std::string imageFilename;
-   core::json::Value manipulatorJson;
+   rscore::json::Value manipulatorJson;
    int width;
    int height;
    int activePlotIndex;
@@ -107,24 +107,24 @@ public:
    
    // plot list
    virtual int plotCount() const = 0 ;
-   virtual core::Error plotImageFilename(int index, 
+   virtual rscore::Error plotImageFilename(int index,
                                          std::string* pImageFilename) const = 0;
    virtual int activePlotIndex() const = 0;
-   virtual core::Error setActivePlot(int index) = 0;
-   virtual core::Error removePlot(int index) = 0;
+   virtual rscore::Error setActivePlot(int index) = 0;
+   virtual rscore::Error removePlot(int index) = 0;
 
    // actions on active plot   
-   virtual core::Error savePlotAsImage(const core::FilePath& filePath,
+   virtual rscore::Error savePlotAsImage(const rscore::FilePath& filePath,
                                        const std::string& format,
                                        int widthPx,
                                        int heightPx) = 0;
 
-   virtual core::Error savePlotAsPdf(const core::FilePath& filePath,
+   virtual rscore::Error savePlotAsPdf(const rscore::FilePath& filePath,
                                      double widthInches,
                                      double heightInches,
                                      bool useCairoPdf) = 0;
 
-   virtual core::Error savePlotAsMetafile(const core::FilePath& filePath,
+   virtual rscore::Error savePlotAsMetafile(const rscore::FilePath& filePath,
                                           int widthPx,
                                           int heightPx) = 0;
       
@@ -138,7 +138,7 @@ public:
    virtual void refresh() = 0;
 
    // retrieve image path based on filename
-   virtual core::FilePath imagePath(const std::string& imageFilename) const = 0;
+   virtual rscore::FilePath imagePath(const std::string& imageFilename) const = 0;
    
    // clear the display (closes the device)
    virtual void clear() = 0;
@@ -147,7 +147,7 @@ public:
    virtual boost::signal<void ()>& onShowManipulator() = 0;
 
    // set manipulator values
-   virtual void setPlotManipulatorValues(const core::json::Object& values) = 0;
+   virtual void setPlotManipulatorValues(const rscore::json::Object& values) = 0;
    virtual void manipulatorPlotClicked(int x, int y) = 0;
 
    // notify that we are about to execute code

@@ -23,7 +23,7 @@
 #include <core/SafeConvert.hpp>
 #include <core/Log.hpp>
 
-namespace core {
+namespace rscore {
 namespace parent_process_monitor {
 
 namespace {
@@ -41,7 +41,7 @@ int getFdEnv(std::string name, int defaultVal)
    char* result = ::getenv(name.c_str());
    if (!result)
       return defaultVal;
-   return core::safe_convert::stringTo(result, defaultVal);
+   return rscore::safe_convert::stringTo(result, defaultVal);
 }
 
 void exitHandler()
@@ -105,4 +105,4 @@ ParentTermination waitForParentTermination()
 }
 
 } // namespace parent_process_monitor
-} // namespace core
+} // namespace rscore

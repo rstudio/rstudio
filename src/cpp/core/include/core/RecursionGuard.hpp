@@ -21,7 +21,7 @@
       return; \
    RecursionGuard rg(&recursionCount)
 
-namespace core {
+namespace rscore {
 
 // RecursionGuard is a simple class intended to prevent reentrancy for a 
 // single function or other scoped block.  Given a reference to an appropriately

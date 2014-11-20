@@ -23,7 +23,7 @@
 #include <core/http/SocketUtils.hpp>
 #include <core/http/AsyncConnectionImpl.hpp>
 
-namespace core {
+namespace rscore {
 namespace http {
 
 class NamedPipeProtocol
@@ -40,6 +40,6 @@ template<> Error closeSocket(
 template<> Error closeSocket(boost::asio::windows::stream_handle& socket);
 
 } // namespace http
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_HTTP_NAMED_PIPE_PROTOCOL_HPP

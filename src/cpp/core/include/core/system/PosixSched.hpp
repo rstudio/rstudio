@@ -18,7 +18,7 @@
 
 #include <vector>
 
-namespace core {
+namespace rscore {
 
 class Error;
 
@@ -33,7 +33,7 @@ Error getCpuAffinity(CpuAffinity* pCpus);
 Error setCpuAffinity(const CpuAffinity& cpus);
 
 } // namespace system
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_SYSTEM_POSIX_SCHED_HPP
 

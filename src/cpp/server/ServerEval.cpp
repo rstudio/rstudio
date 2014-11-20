@@ -27,13 +27,13 @@
 
 #include <server/ServerOptions.hpp>
 
-using namespace core;
+using namespace rscore;
 
 namespace server {
 namespace eval {
   
-bool expirationFilter(const core::http::Request& request,
-                      core::http::Response* pResponse)
+bool expirationFilter(const rscore::http::Request& request,
+                      rscore::http::Response* pResponse)
 {
    // read the expiration date
    std::string expires;

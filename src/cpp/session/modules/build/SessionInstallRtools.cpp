@@ -27,7 +27,7 @@
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionUserSettings.hpp>
 
-using namespace core ;
+using namespace rscore ;
 
 namespace session {  
 namespace modules {
@@ -35,7 +35,7 @@ namespace build {
 
 namespace {
 
-void onDownloadCompleted(const core::system::ProcessResult& result,
+void onDownloadCompleted(const rscore::system::ProcessResult& result,
                          const std::string& version,
                          const FilePath& installerPath)
 {
@@ -82,7 +82,7 @@ Error installRtools()
       }
    }
    if (version.empty())
-      return core::pathNotFoundError(ERROR_LOCATION);
+      return rscore::pathNotFoundError(ERROR_LOCATION);
 
    // R binary
    FilePath rProgramPath;
@@ -116,7 +116,7 @@ Error installRtools()
    args.push_back(cmd);
 
    // create and execute the process
-   core::system::ProcessOptions options;
+   rscore::system::ProcessOptions options;
    options.redirectStdErrToStdOut = true;
    options.terminateChildren = true;
    module_context::processSupervisor().runProgram(

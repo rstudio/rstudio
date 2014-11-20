@@ -16,7 +16,7 @@
 #ifndef SERVER_EVAL_HPP
 #define SERVER_EVAL_HPP
 
-namespace core {
+namespace rscore {
    namespace http {
       class Request;
       class Response;
@@ -26,8 +26,8 @@ namespace core {
 namespace server {
 namespace eval {
    
-bool expirationFilter(const core::http::Request& request,
-                      core::http::Response* pResponse);
+bool expirationFilter(const rscore::http::Request& request,
+                      rscore::http::Response* pResponse);
 
 } // namespace eval
 } // namespace server

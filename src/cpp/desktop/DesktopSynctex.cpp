@@ -33,7 +33,7 @@
 #include "synctex/evince/EvinceSynctex.hpp"
 #endif
 
-using namespace core;
+using namespace rscore;
 
 namespace desktop {
 
@@ -56,9 +56,9 @@ SynctexViewerInfo discoverViewer()
 SynctexViewerInfo discoverViewer()
 {
    // probe for evince version
-   core::system::ProcessResult result;
-   Error error = core::system::runCommand("evince --version",
-                                          core::system::ProcessOptions(),
+   rscore::system::ProcessResult result;
+   Error error = rscore::system::runCommand("evince --version",
+                                          rscore::system::ProcessOptions(),
                                           &result);
    if (error)
    {

@@ -39,7 +39,7 @@
 #include "RSearchPath.hpp"
 #include "graphics/RGraphicsPlotManager.hpp"
 
-using namespace core ;
+using namespace rscore ;
 
 namespace r {
    
@@ -90,16 +90,16 @@ Error saveEnvironmentVars(const FilePath& envFile)
    Error error = envFile.removeIfExists();
    if (error)
       return error;
-   core::Settings envSettings;
+   rscore::Settings envSettings;
    error = envSettings.initialize(envFile);
    if (error)
       return error;
 
    // get environment and write it to the file
-   core::system::Options env;
-   core::system::environment(&env);
+   rscore::system::Options env;
+   rscore::system::environment(&env);
    envSettings.beginUpdate();
-   BOOST_FOREACH(const core::system::Option& var, env)
+   BOOST_FOREACH(const rscore::system::Option& var, env)
    {
       envSettings.set(var.first, var.second);
    }
@@ -110,7 +110,7 @@ Error saveEnvironmentVars(const FilePath& envFile)
 
 void setEnvVar(const std::string& name, const std::string& value)
 {
-   core::system::setenv(name, value);
+   rscore::system::setenv(name, value);
 }
 
 Error restoreEnvironmentVars(const FilePath& envFile)
@@ -119,7 +119,7 @@ Error restoreEnvironmentVars(const FilePath& envFile)
       return Success();
 
    // read settings file
-   core::Settings envSettings;
+   rscore::Settings envSettings;
    Error error = envSettings.initialize(envFile);
    if (error)
       return error;
@@ -163,7 +163,7 @@ void reportError(const std::string& action,
    // add context to error and log it
    Error serializationError = error ;
    serializationError.addProperty("context", message);
-   core::log::logError(serializationError, location);
+   rscore::log::logError(serializationError, location);
    
    // notify end-user
    std::string report = message + ": " + error.code().message() + "\n";
@@ -370,7 +370,7 @@ bool save(const FilePath& statePath,
 }
 
 
-bool saveMinimal(const core::FilePath& statePath,
+bool saveMinimal(const rscore::FilePath& statePath,
                  bool saveGlobalEnvironment)
 {
    // initialize context
@@ -414,7 +414,7 @@ bool saveMinimal(const core::FilePath& statePath,
 
 namespace {
 
-bool getBoolSetting(const core::FilePath& statePath,
+bool getBoolSetting(const rscore::FilePath& statePath,
                     const std::string& name,
                     bool defaultValue)
 {
@@ -431,12 +431,12 @@ bool getBoolSetting(const core::FilePath& statePath,
 
 } // anonymous namespace
 
-bool rProfileOnRestore(const core::FilePath& statePath)
+bool rProfileOnRestore(const rscore::FilePath& statePath)
 {
    return getBoolSetting(statePath, kRProfileOnRestore, true);
 }
 
-bool packratModeEnabled(const core::FilePath& statePath)
+bool packratModeEnabled(const rscore::FilePath& statePath)
 {
    return getBoolSetting(statePath, kPackratModeOn, false);
 }

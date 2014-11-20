@@ -16,7 +16,7 @@
 
 #include <core/FilePath.hpp>
 
-using namespace core;
+using namespace rscore;
 
 namespace session {
 namespace modules {

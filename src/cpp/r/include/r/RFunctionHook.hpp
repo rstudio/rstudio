@@ -18,18 +18,18 @@
 
 #include <string>
 
-namespace core {
+namespace rscore {
    class Error;
 }
 
 namespace r {
 namespace function_hook {
 
-core::Error registerUnsupported(const std::string& name, 
+rscore::Error registerUnsupported(const std::string& name,
                                 const std::string& package);
 
 
-core::Error registerUnsupportedWithAlternative(const std::string& name,
+rscore::Error registerUnsupportedWithAlternative(const std::string& name,
                                                const std::string& package,
                                                const std::string& alternative);
 

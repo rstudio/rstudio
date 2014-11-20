@@ -34,7 +34,7 @@
 #include <core/FileSerializer.hpp>
 
 
-namespace core {
+namespace rscore {
 namespace text {
 
 const char * const kDcfFieldRegex = "([^\\s]+?)\\s*\\:\\s*(.*)$";
@@ -174,4 +174,4 @@ std::string dcfMultilineAsFolded(const std::string& line)
 
 
 } // namespace dcf
-} // namespace core
+} // namespace rscore

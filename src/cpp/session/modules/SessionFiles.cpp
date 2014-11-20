@@ -60,7 +60,7 @@
 #include "SessionFilesQuotas.hpp"
 #include "SessionFilesListingMonitor.hpp"
 
-using namespace core ;
+using namespace rscore ;
 
 namespace session {
 
@@ -133,7 +133,7 @@ Error extractFilePaths(const json::Array& files,
    return Success() ;
 }
 
-core::Error stat(const json::JsonRpcRequest& request,
+rscore::Error stat(const json::JsonRpcRequest& request,
                  json::JsonRpcResponse* pResponse)
 {
    std::string path;
@@ -147,7 +147,7 @@ core::Error stat(const json::JsonRpcRequest& request,
    return Success();
 }
 
-core::Error isTextFile(const json::JsonRpcRequest& request,
+rscore::Error isTextFile(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
    std::string path;
@@ -163,7 +163,7 @@ core::Error isTextFile(const json::JsonRpcRequest& request,
 }
 
 
-core::Error getFileContents(const json::JsonRpcRequest& request,
+rscore::Error getFileContents(const json::JsonRpcRequest& request,
                             json::JsonRpcResponse* pResponse)
 {
    std::string path, encoding;
@@ -197,7 +197,7 @@ Error listFiles(const json::JsonRpcRequest& request, json::JsonRpcResponse* pRes
    FilePath targetPath = module_context::resolveAliasedPath(path) ;
    
    // if this includes a request for monitoring
-   core::json::Array jsonFiles;
+   rscore::json::Array jsonFiles;
    if (monitor)
    {
       // always stop existing if we have one
@@ -230,7 +230,7 @@ Error listFiles(const json::JsonRpcRequest& request, json::JsonRpcResponse* pRes
 
 
 // IN: String path
-core::Error createFolder(const core::json::JsonRpcRequest& request,
+rscore::Error createFolder(const rscore::json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
    std::string path;
@@ -255,11 +255,11 @@ core::Error createFolder(const core::json::JsonRpcRequest& request,
 }
 
 
-core::Error deleteFile(const FilePath& filePath)
+rscore::Error deleteFile(const FilePath& filePath)
 {
    if (session::options().programMode() == kSessionProgramModeDesktop)
    {
-      Error error = core::system::recycle_bin::sendTo(filePath);
+      Error error = rscore::system::recycle_bin::sendTo(filePath);
       if (error)
       {
          LOG_ERROR(error);
@@ -277,7 +277,7 @@ core::Error deleteFile(const FilePath& filePath)
 }
 
 // IN: Array<String> paths
-core::Error deleteFiles(const core::json::JsonRpcRequest& request,
+rscore::Error deleteFiles(const rscore::json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
    json::Array files;
@@ -335,7 +335,7 @@ bool copySourceFile(const FilePath& sourceDir,
 }
    
 // IN: String sourcePath, String targetPath
-Error copyFile(const core::json::JsonRpcRequest& request,
+Error copyFile(const rscore::json::JsonRpcRequest& request,
                json::JsonRpcResponse* pResponse)
 {
    // read params
@@ -397,7 +397,7 @@ Error copyFile(const core::json::JsonRpcRequest& request,
       
 
 // IN: Array<String> paths, String targetPath
-Error moveFiles(const core::json::JsonRpcRequest& request,
+Error moveFiles(const rscore::json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
    json::Array files;
@@ -434,7 +434,7 @@ Error moveFiles(const core::json::JsonRpcRequest& request,
 }
 
 // IN: String path, String targetPath
-core::Error renameFile(const core::json::JsonRpcRequest& request,
+rscore::Error renameFile(const rscore::json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
    // read params
@@ -511,7 +511,7 @@ const char * const kUploadFilename = "filename";
 const char * const kUploadedTempFile = "uploadedTempFile";
 const char * const kUploadTargetDirectory = "targetDirectory";
    
-Error completeUpload(const core::json::JsonRpcRequest& request,
+Error completeUpload(const rscore::json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
    // read params
@@ -678,7 +678,7 @@ void handleFileUploadRequest(const http::Request& request,
                                                     isZip ? "zip" : "bin");
    
    // attempt to write the temp file
-   Error saveError = core::writeStringToFile(tempFilePath, file.contents);
+   Error saveError = rscore::writeStringToFile(tempFilePath, file.contents);
    if (saveError)
    {
       LOG_ERROR(saveError);

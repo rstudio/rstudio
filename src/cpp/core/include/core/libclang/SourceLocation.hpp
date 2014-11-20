@@ -21,7 +21,7 @@
 
 #include "clang-c/Index.h"
 
-namespace core {
+namespace rscore {
 namespace libclang {
 
 class SourceLocation
@@ -66,6 +66,6 @@ private:
 
 
 } // namespace libclang
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_LIBCLANG_SOURCE_LOCATION_HPP

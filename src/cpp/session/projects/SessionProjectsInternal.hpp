@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace core {
+namespace rscore {
    class Error;
    class FilePath;
 }
@@ -28,10 +28,10 @@ namespace projects {
 
 void startup();
 
-core::Error initialize();
+rscore::Error initialize();
 
-core::Error computeScratchPath(const core::FilePath& projectFile,
-                               core::FilePath* pScratchPath);
+rscore::Error computeScratchPath(const rscore::FilePath& projectFile,
+                               rscore::FilePath* pScratchPath);
 
 } // namespace projects
 } // namesapce session

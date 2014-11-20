@@ -22,7 +22,7 @@
 
 #include <core/Error.hpp>
 
-namespace core {
+namespace rscore {
    class FilePath;
 }
 
@@ -30,25 +30,25 @@ namespace r {
 namespace session {
 namespace state {
         
-bool save(const core::FilePath& statePath,
+bool save(const rscore::FilePath& statePath,
           bool serverMode,
           bool excludePackages,
           bool disableSaveCompression);
 
-bool saveMinimal(const core::FilePath& statePath,
+bool saveMinimal(const rscore::FilePath& statePath,
                  bool saveGlobalEnvironment);
    
 
-bool rProfileOnRestore(const core::FilePath& statePath);
+bool rProfileOnRestore(const rscore::FilePath& statePath);
 
-bool packratModeEnabled(const core::FilePath& statePath);
+bool packratModeEnabled(const rscore::FilePath& statePath);
 
-bool restore(const core::FilePath& statePath, 
+bool restore(const rscore::FilePath& statePath,
              bool serverMode,
-             boost::function<core::Error()>* pDeferredRestoreAction,
+             boost::function<rscore::Error()>* pDeferredRestoreAction,
              std::string* pErrorMessages); 
    
-bool destroy(const core::FilePath& statePath);
+bool destroy(const rscore::FilePath& statePath);
      
 } // namespace state
 } // namespace session

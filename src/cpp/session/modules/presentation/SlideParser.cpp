@@ -31,7 +31,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace core;
+using namespace rscore;
 
 namespace session {
 namespace modules { 
@@ -406,7 +406,7 @@ Error SlideDeck::readSlides(const std::string& slides, const FilePath& baseDir)
    }
 
    // loop through the header lines to capture the slides
-   boost::regex dcfFieldRegex(core::text::kDcfFieldRegex);
+   boost::regex dcfFieldRegex(rscore::text::kDcfFieldRegex);
    for (std::size_t i = 0; i<headerLines.size(); i++)
    {
       // line index

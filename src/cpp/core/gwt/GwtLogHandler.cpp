@@ -30,7 +30,7 @@
 
 #include <core/gwt/GwtSymbolMaps.hpp>
 
-namespace core {
+namespace rscore {
 namespace gwt {
 
 namespace {
@@ -172,7 +172,7 @@ void handleLogExceptionRequest(const std::string& username,
                             % log::cleanDelims(userAgent));
 
    // log it
-   core::system::log(core::system::kLogLevelError, logEntry);
+   rscore::system::log(rscore::system::kLogLevelError, logEntry);
 
 
    // set void result
@@ -196,7 +196,7 @@ void handleLogMessageRequest(const std::string& username,
    }
    
    // convert level to appropriate enum and str
-   using namespace core::system;
+   using namespace rscore::system;
    LogLevel logLevel;
    std::string logLevelStr;
    switch(level)
@@ -231,7 +231,7 @@ void handleLogMessageRequest(const std::string& username,
    
                                            userAgent);
    // log it
-   core::system::log(logLevel, logEntry);
+   rscore::system::log(logLevel, logEntry);
    
    // set void result
    json::setVoidJsonRpcResult(pResponse);
@@ -240,7 +240,7 @@ void handleLogMessageRequest(const std::string& username,
 
 } // anonymous namespace
 
-void initializeSymbolMaps(const core::FilePath& symbolMapsPath)
+void initializeSymbolMaps(const rscore::FilePath& symbolMapsPath)
 {
    // allocate this on the heap so that order of C++ static destruction
    // issues don't cause a crash during shutdown
@@ -291,6 +291,6 @@ void handleLogRequest(const std::string& username,
 
 
 } // namespace gwt
-} // namespace core
+} // namespace rscore
 
 

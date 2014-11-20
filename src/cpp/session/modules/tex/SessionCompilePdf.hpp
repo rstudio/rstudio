@@ -20,7 +20,7 @@
 
 #include <core/json/Json.hpp>
 
-namespace core {
+namespace rscore {
    class Error;
    class FilePath;
 }
@@ -30,9 +30,9 @@ namespace modules {
 namespace tex {
 namespace compile_pdf {
 
-bool startCompile(const core::FilePath& targetFilePath,
+bool startCompile(const rscore::FilePath& targetFilePath,
                   const std::string& encoding,
-                  const core::json::Object& sourceLocation,
+                  const rscore::json::Object& sourceLocation,
                   const boost::function<void()>& onCompleted);
 
 bool compileIsRunning();
@@ -41,9 +41,9 @@ bool terminateCompile();
 
 void notifyTabClosed();
 
-core::json::Object currentStateAsJson();
+rscore::json::Object currentStateAsJson();
 
-core::Error initialize();
+rscore::Error initialize();
 
 } // namespace compile_pdf
 } // namespace tex

@@ -20,7 +20,7 @@
 
 #include <core/json/Json.hpp>
 
-namespace core {
+namespace rscore {
    class FilePath;
 }
 
@@ -126,27 +126,27 @@ class ClientEvent
 public:
    explicit ClientEvent(int type)
    {
-      init(type, core::json::Value());
+      init(type, rscore::json::Value());
    }
    
-   ClientEvent(int type, const core::json::Value& data)
+   ClientEvent(int type, const rscore::json::Value& data)
    {
       init(type, data);
    }
    
    ClientEvent(int type, const char* data)
    {
-      init(type, core::json::Value(std::string(data)));
+      init(type, rscore::json::Value(std::string(data)));
    }
    
    ClientEvent(int type, const std::string& data)
    {
-      init(type, core::json::Value(data));
+      init(type, rscore::json::Value(data));
    }
    
    ClientEvent(int type, bool data)
    {
-      core::json::Object boolObject ;
+      rscore::json::Object boolObject ;
       boolObject["value"] = data;
       init(type, boolObject);
    }
@@ -156,17 +156,17 @@ public:
 public:
    int type() const { return type_; }
    std::string typeName() const;
-   const core::json::Value& data() const { return data_; }
+   const rscore::json::Value& data() const { return data_; }
    const std::string& id() const { return id_; }
    
-   void asJsonObject(int id, core::json::Object* pObject) const;
+   void asJsonObject(int id, rscore::json::Object* pObject) const;
      
 private:
-   void init(int type, const core::json::Value& data);
+   void init(int type, const rscore::json::Value& data);
   
 private:
    int type_ ;
-   core::json::Value data_ ;
+   rscore::json::Value data_ ;
    std::string id_;
 };
 

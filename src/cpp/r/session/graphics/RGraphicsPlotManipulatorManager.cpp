@@ -31,7 +31,7 @@
 #include "RGraphicsUtils.hpp"
 #include "RGraphicsPlotManager.hpp"
 
-using namespace core;
+using namespace rscore;
 
 namespace r {
 namespace session {  

@@ -29,16 +29,16 @@ class WordViewer : boost::noncopyable
 public:
    WordViewer();
    ~WordViewer();
-   core::Error showDocument(QString& path);
-   core::Error closeLastViewedDocument();
+   rscore::Error showDocument(QString& path);
+   rscore::Error closeLastViewedDocument();
 
 private:
-   core::Error openDocument(QString& path, IDispatch* idispDocs,
+   rscore::Error openDocument(QString& path, IDispatch* idispDocs,
                             IDispatch** pidispDoc);
-   core::Error showWord();
-   core::Error getDocumentPosition(IDispatch* idispPos, int* pxPos, int* pyPos);
-   core::Error setDocumentPosition(IDispatch* idispPos, int xPos, int yPos);
-   core::Error getDocumentByPath(QString& path, IDispatch** pidispDoc);
+   rscore::Error showWord();
+   rscore::Error getDocumentPosition(IDispatch* idispPos, int* pxPos, int* pyPos);
+   rscore::Error setDocumentPosition(IDispatch* idispPos, int xPos, int yPos);
+   rscore::Error getDocumentByPath(QString& path, IDispatch** pidispDoc);
    IDispatch* idispWord_;
    int docScrollX_;
    int docScrollY_;

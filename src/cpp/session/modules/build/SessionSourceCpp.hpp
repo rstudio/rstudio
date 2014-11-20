@@ -16,7 +16,7 @@
 #ifndef SESSION_BUILD_SOURCE_CPP_HPP
 #define SESSION_BUILD_SOURCE_CPP_HPP
 
-namespace core {
+namespace rscore {
    class Error;
 }
 
@@ -25,7 +25,7 @@ namespace modules {
 namespace build {
 namespace source_cpp {
 
-core::Error initialize();
+rscore::Error initialize();
 
 } // namespace source_cpp
 } // namespace build

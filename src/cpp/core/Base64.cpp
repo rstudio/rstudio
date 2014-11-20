@@ -25,7 +25,7 @@
 #include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
 
-namespace core {
+namespace rscore {
 namespace base64 {
 
 Error encode(const std::string& input, std::string* pOutput)
@@ -61,7 +61,7 @@ Error encode(const std::string& input, std::string* pOutput)
 Error encode(const FilePath& inputFile, std::string* pOutput)
 {
    std::string contents;
-   Error error = core::readStringFromFile(inputFile, &contents);
+   Error error = rscore::readStringFromFile(inputFile, &contents);
    if (error)
       return error;
 
@@ -70,7 +70,7 @@ Error encode(const FilePath& inputFile, std::string* pOutput)
 
 
 } // namespace base64
-} // namespace core
+} // namespace rscore
 
 
 

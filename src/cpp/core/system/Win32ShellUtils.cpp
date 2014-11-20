@@ -16,7 +16,7 @@
 #include <core/StringUtils.hpp>
 #include <core/system/ShellUtils.hpp>
 
-namespace core {
+namespace rscore {
 namespace shell_utils {
 
 std::string escape(const std::string& arg)
@@ -30,7 +30,7 @@ std::string escape(const std::string& arg)
    return "\"" + arg + "\"";
 }
 
-std::string escape(const core::FilePath& path)
+std::string escape(const rscore::FilePath& path)
 {
    return escape(string_utils::utf8ToSystem(path.absolutePath()));
 }

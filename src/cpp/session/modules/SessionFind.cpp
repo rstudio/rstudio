@@ -33,7 +33,7 @@
 #include <session/SessionUserSettings.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-using namespace core;
+using namespace rscore;
 
 namespace session {
 namespace modules {   
@@ -207,7 +207,7 @@ private:
                  const FilePath& tempFile)
       : firstDecodeError_(true), encoding_(encoding), tempFile_(tempFile)
    {
-      handle_ = core::system::generateUuid(false);
+      handle_ = rscore::system::generateUuid(false);
    }
 
 public:
@@ -216,9 +216,9 @@ public:
       return handle_;
    }
 
-   core::system::ProcessCallbacks createProcessCallbacks()
+   rscore::system::ProcessCallbacks createProcessCallbacks()
    {
-      core::system::ProcessCallbacks callbacks;
+      rscore::system::ProcessCallbacks callbacks;
       callbacks.onContinue = boost::bind(&GrepOperation::onContinue,
                                          shared_from_this(),
                                          _1);
@@ -235,7 +235,7 @@ public:
    }
 
 private:
-   bool onContinue(const core::system::ProcessOperations& ops) const
+   bool onContinue(const rscore::system::ProcessOperations& ops) const
    {
       return findResults().isRunning() && findResults().handle() == handle();
    }
@@ -304,7 +304,7 @@ private:
       *pContent = decodedLine;
    }
 
-   void onStdout(const core::system::ProcessOperations& ops, const std::string& data)
+   void onStdout(const rscore::system::ProcessOperations& ops, const std::string& data)
    {
       json::Array files;
       json::Array lineNums;
@@ -390,7 +390,7 @@ private:
          findResults().onFindEnd(handle());
    }
 
-   void onStderr(const core::system::ProcessOperations& ops, const std::string& data)
+   void onStderr(const rscore::system::ProcessOperations& ops, const std::string& data)
    {
       LOG_ERROR_MESSAGE("grep: " + data);
    }
@@ -413,7 +413,7 @@ private:
 
 } // namespace
 
-core::Error beginFind(const json::JsonRpcRequest& request,
+rscore::Error beginFind(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
    std::string searchString;
@@ -430,15 +430,15 @@ core::Error beginFind(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   core::system::ProcessOptions options;
+   rscore::system::ProcessOptions options;
 
-   core::system::Options childEnv;
-   core::system::environment(&childEnv);
-   core::system::setenv(&childEnv, "GREP_COLOR", "01");
-   core::system::setenv(&childEnv, "GREP_COLORS", "ne:fn=:ln=:se=:mt=01");
+   rscore::system::Options childEnv;
+   rscore::system::environment(&childEnv);
+   rscore::system::setenv(&childEnv, "GREP_COLOR", "01");
+   rscore::system::setenv(&childEnv, "GREP_COLORS", "ne:fn=:ln=:se=:mt=01");
 #ifdef _WIN32
    FilePath gnuGrepPath = session::options().gnugrepPath();
-   core::system::addToPath(
+   rscore::system::addToPath(
             &childEnv,
             string_utils::utf8ToSystem(gnuGrepPath.absolutePath()));
 #endif
@@ -470,7 +470,7 @@ core::Error beginFind(const json::JsonRpcRequest& request,
 
    boost::shared_ptr<GrepOperation> ptrGrepOp = GrepOperation::create(encoding,
                                                                       tempFile);
-   core::system::ProcessCallbacks callbacks =
+   rscore::system::ProcessCallbacks callbacks =
                                        ptrGrepOp->createProcessCallbacks();
 
 #ifdef _WIN32
@@ -519,7 +519,7 @@ core::Error beginFind(const json::JsonRpcRequest& request,
    return Success();
 }
 
-core::Error stopFind(const json::JsonRpcRequest& request,
+rscore::Error stopFind(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
    std::string handle;
@@ -532,21 +532,21 @@ core::Error stopFind(const json::JsonRpcRequest& request,
    return Success();
 }
 
-core::Error clearFindResults(const json::JsonRpcRequest& request,
+rscore::Error clearFindResults(const json::JsonRpcRequest& request,
                              json::JsonRpcResponse* pResponse)
 {
    findResults().clear();
    return Success();
 }
 
-void onSuspend(core::Settings* pSettings)
+void onSuspend(rscore::Settings* pSettings)
 {
    std::ostringstream os;
    json::write(findResults().asJson(), os);
    pSettings->set("find-in-files-state", os.str());
 }
 
-void onResume(const core::Settings& settings)
+void onResume(const rscore::Settings& settings)
 {
    std::string state = settings.get("find-in-files-state");
    if (!state.empty())
@@ -569,7 +569,7 @@ json::Object findInFilesStateAsJson()
    return findResults().asJson();
 }
 
-core::Error initialize()
+rscore::Error initialize()
 {
    using boost::bind;
    using namespace session::module_context;

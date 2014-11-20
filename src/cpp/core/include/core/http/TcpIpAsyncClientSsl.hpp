@@ -29,7 +29,7 @@
 #include <core/http/AsyncClient.hpp>
 #include <core/http/TcpIpAsyncConnector.hpp>
 
-namespace core {
+namespace rscore {
 namespace http {  
 
 class TcpIpAsyncClientSsl
@@ -151,6 +151,6 @@ private:
    
 
 } // namespace http
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_HTTP_TCP_IP_ASYNC_CLIENT_SSL_HPP

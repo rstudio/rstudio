@@ -28,7 +28,7 @@
 
 #include "SessionTexUtils.hpp"
 
-using namespace core;
+using namespace rscore;
 
 namespace session {
 namespace modules { 
@@ -104,9 +104,9 @@ const LatexProgramTypes& programTypes()
 }
 
 std::string latexProgramMagicComment(
-                     const core::tex::TexMagicComments& magicComments)
+                     const rscore::tex::TexMagicComments& magicComments)
 {
-   BOOST_FOREACH(const core::tex::TexMagicComment& mc, magicComments)
+   BOOST_FOREACH(const rscore::tex::TexMagicComment& mc, magicComments)
    {
       if (boost::algorithm::iequals(mc.scope(), "tex") &&
           (boost::algorithm::iequals(mc.variable(), "program") ||
@@ -199,7 +199,7 @@ shell_utils::ShellArgs shellArgs(const PdfLatexOptions& options)
 
 FilePath programPath(const std::string& name, const std::string& envOverride)
 {
-   std::string envProgram = core::system::getenv(envOverride);
+   std::string envProgram = rscore::system::getenv(envOverride);
    std::string program = envProgram.empty() ? name : envProgram;
    return module_context::findProgram(program);
 }
@@ -216,7 +216,7 @@ int countCitationMisses(const FilePath& logFilePath)
 {
    // read the log file
    std::vector<std::string> lines;
-   Error error = core::readStringVectorFromFile(logFilePath, &lines);
+   Error error = rscore::readStringVectorFromFile(logFilePath, &lines);
    if (error)
    {
       LOG_ERROR(error);
@@ -234,7 +234,7 @@ int countCitationMisses(const FilePath& logFilePath)
 bool logIncludesRerun(const FilePath& logFilePath)
 {
    std::string logContents;
-   Error error = core::readStringFromFile(logFilePath, &logContents);
+   Error error = rscore::readStringFromFile(logFilePath, &logContents);
    if (error)
    {
       LOG_ERROR(error);
@@ -258,19 +258,19 @@ bool isInstalled()
 }
 
 
-core::json::Array supportedTypes()
+rscore::json::Array supportedTypes()
 {
    return programTypes().allTypesAsJson();
 }
 
 
-bool latexProgramForFile(const core::tex::TexMagicComments& magicComments,
+bool latexProgramForFile(const rscore::tex::TexMagicComments& magicComments,
                          FilePath* pTexProgramPath,
                          std::string* pUserErrMsg)
 {
    // get (optional) magic comments and environment variable override
    std::string latexProgramMC = latexProgramMagicComment(magicComments);
-   std::string pdflatexEnv = core::system::getenv("RSTUDIO_PDFLATEX");
+   std::string pdflatexEnv = rscore::system::getenv("RSTUDIO_PDFLATEX");
 
    // magic comment always takes highest priority
    if (!latexProgramMC.empty())
@@ -349,10 +349,10 @@ bool latexProgramForFile(const core::tex::TexMagicComments& magicComments,
 // tools::texi2dvi function (but the regex for detecting citation
 // warnings was made a bit more liberal)
 //
-core::Error texToPdf(const core::FilePath& texProgramPath,
-                     const core::FilePath& texFilePath,
+rscore::Error texToPdf(const rscore::FilePath& texProgramPath,
+                     const rscore::FilePath& texFilePath,
                      const tex::pdflatex::PdfLatexOptions& options,
-                     core::system::ProcessResult* pResult)
+                     rscore::system::ProcessResult* pResult)
 {
    // input file paths
    FilePath baseFilePath = texFilePath.parent().complete(texFilePath.stem());
@@ -364,11 +364,11 @@ core::Error texToPdf(const core::FilePath& texProgramPath,
    FilePath makeindexProgramPath = programPath("makeindex", "MAKEINDEX");
 
    // args and process options for running bibtex and makeindex
-   core::shell_utils::ShellArgs bibtexArgs;
+   rscore::shell_utils::ShellArgs bibtexArgs;
    bibtexArgs << string_utils::utf8ToSystem(baseFilePath.filename());
-   core::shell_utils::ShellArgs makeindexArgs;
+   rscore::shell_utils::ShellArgs makeindexArgs;
    makeindexArgs << string_utils::utf8ToSystem(idxFilePath.filename());
-   core::system::ProcessOptions procOptions;
+   rscore::system::ProcessOptions procOptions;
    procOptions.environment = utils::rTexInputsEnvVars();
    procOptions.workingDir = texFilePath.parent();
 
@@ -391,8 +391,8 @@ core::Error texToPdf(const core::FilePath& texProgramPath,
       // run bibtex if necessary
       if (misses > 0 && !bibtexProgramPath.empty())
       {
-         core::system::ProcessResult result;
-         Error error = core::system::runProgram(
+         rscore::system::ProcessResult result;
+         Error error = rscore::system::runProgram(
                string_utils::utf8ToSystem(bibtexProgramPath.absolutePath()),
                bibtexArgs,
                "",
@@ -408,7 +408,7 @@ core::Error texToPdf(const core::FilePath& texProgramPath,
       // run makeindex if necessary
       if (idxFilePath.exists() && !makeindexProgramPath.empty())
       {
-         Error error = core::system::runProgram(
+         Error error = rscore::system::runProgram(
                string_utils::utf8ToSystem(makeindexProgramPath.absolutePath()),
                makeindexArgs,
                "",

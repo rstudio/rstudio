@@ -21,7 +21,7 @@
 
 #include <core/libclang/LibClang.hpp>
 
-namespace core {
+namespace rscore {
 namespace libclang {
 
 Diagnostic::~Diagnostic()
@@ -61,5 +61,5 @@ std::string Diagnostic::getSpelling() const
 }
 
 } // namespace libclang
-} // namespace core
+} // namespace rscore
 

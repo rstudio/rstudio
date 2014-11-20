@@ -22,7 +22,7 @@
 
 #include "SourceLocation.hpp"
 
-namespace core {
+namespace rscore {
 namespace libclang {
 
 class Diagnostic
@@ -50,6 +50,6 @@ private:
 };
 
 } // namespace libclang
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_LIBCLANG_DIAGNOSTIC_HPP

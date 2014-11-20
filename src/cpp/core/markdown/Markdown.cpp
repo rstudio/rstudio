@@ -34,7 +34,7 @@
 #include "sundown/markdown.h"
 #include "sundown/html.h"
 
-namespace core {
+namespace rscore {
 namespace markdown {
 
 namespace {
@@ -321,7 +321,7 @@ Error markdownToHTML(const FilePath& markdownFile,
    if (error)
       return error;
 
-   return core::writeStringToFile(htmlFile,
+   return rscore::writeStringToFile(htmlFile,
                                   markdownOutput,
                                   string_utils::LineEndingNative);
 }
@@ -333,7 +333,7 @@ Error markdownToHTML(const FilePath& markdownFile,
                      std::string* pHTMLOutput)
 {
    std::string markdownInput;
-   Error error = core::readStringFromFile(markdownFile,
+   Error error = rscore::readStringFromFile(markdownFile,
                                           &markdownInput,
                                           string_utils::LineEndingPosix);
    if (error)
@@ -454,7 +454,7 @@ bool isMathJaxRequired(const std::string& htmlOutput)
 }
 
 } // namespace markdown
-} // namespace core
+} // namespace rscore
    
 
 

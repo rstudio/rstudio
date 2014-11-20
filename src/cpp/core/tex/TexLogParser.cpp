@@ -26,7 +26,7 @@
 #include <core/SafeConvert.hpp>
 #include <core/system/System.hpp>
 
-namespace core {
+namespace rscore {
 namespace tex {
 
 namespace {
@@ -291,7 +291,7 @@ FilePath texFilePath(const std::string& logPath, const FilePath& compileDir)
 
    FilePath path = compileDir.complete(logPath);
    FilePath realPath;
-   Error error = core::system::realPath(path, &realPath);
+   Error error = rscore::system::realPath(path, &realPath);
    if (error)
    {
       // log any error which isn't no such file or directory
@@ -512,7 +512,7 @@ Error parseBibtexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
 
    // get the lines
    std::vector<std::string> lines;
-   Error error = core::readStringVectorFromFile(logFilePath, &lines, false);
+   Error error = rscore::readStringVectorFromFile(logFilePath, &lines, false);
    if (error)
       return error;
 
@@ -539,7 +539,7 @@ Error parseBibtexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
 }
 
 } // namespace tex
-} // namespace core 
+} // namespace rscore
 
 
 

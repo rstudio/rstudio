@@ -24,7 +24,7 @@
 
 #include <core/json/JsonRpc.hpp>
 
-namespace core {
+namespace rscore {
    class Error;
    class FilePath;
 }
@@ -44,7 +44,7 @@ private:
 public:
    // COPYING: boost::noncopyable
 
-   core::Error start(const std::string& clientId);
+   rscore::Error start(const std::string& clientId);
    void stop();
    
    void setClientId(const std::string& clientId, bool clearEvents);
@@ -57,8 +57,8 @@ private:
 
    void erasePreviouslyDeliveredEvents(int lastClientEventIdSeen);
    bool havePendingClientEvents();
-   void addClientEvent(const core::json::Object& eventObject);
-   void setClientEventResult(core::json::JsonRpcResponse* pResponse);
+   void addClientEvent(const rscore::json::Object& eventObject);
+   void setClientEventResult(rscore::json::JsonRpcResponse* pResponse);
 
   
 private:
@@ -66,7 +66,7 @@ private:
    boost::thread serviceThread_ ;
 
    std::string clientId_ ;
-   core::json::Array clientEvents_ ;
+   rscore::json::Array clientEvents_ ;
 };
    
   

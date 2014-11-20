@@ -70,7 +70,7 @@
 
 #include "SessionHttpConnectionQueue.hpp"
 
-namespace core {
+namespace rscore {
 	class Error;
 }
 
@@ -90,7 +90,7 @@ public:
 	virtual ~HttpConnectionListener() {}
 
 	// start and stop
-	virtual core::Error start() = 0;
+	virtual rscore::Error start() = 0;
    virtual void stop() = 0;
 
    // connection queues

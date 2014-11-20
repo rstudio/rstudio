@@ -28,7 +28,7 @@
 #include <core/Error.hpp>
 #include <core/http/Response.hpp>
 
-namespace core {
+namespace rscore {
 namespace http {
 
 // we use a class rather than a namespace so we can grant friendship
@@ -147,6 +147,6 @@ public:
 
 
 } // namespace http
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_HTTP_RESPONSE_PARSER_HPP

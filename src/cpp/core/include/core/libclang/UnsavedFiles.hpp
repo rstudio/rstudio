@@ -24,7 +24,7 @@
 
 #include "clang-c/Index.h"
 
-namespace core {
+namespace rscore {
 namespace libclang {
 
 class UnsavedFiles : boost::noncopyable
@@ -52,7 +52,7 @@ std::ostream& operator << (std::ostream& ostr, UnsavedFiles& unsaved);
 
 
 } // namespace libclang
-} // namespace core
+} // namespace rscore
 
 
 #endif // CORE_LIBCLANG_UNSAVED_FILES_HPP

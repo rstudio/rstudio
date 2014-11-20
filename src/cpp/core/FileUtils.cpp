@@ -18,7 +18,7 @@
 
 #include <core/system/System.hpp>
 
-namespace core {
+namespace rscore {
 namespace file_utils {
 
 FilePath uniqueFilePath(const FilePath& parent, const std::string& prefix)
@@ -27,7 +27,7 @@ FilePath uniqueFilePath(const FilePath& parent, const std::string& prefix)
    for (int i=0; i<100; i++)
    {
       // get a shortened uuid
-      std::string shortentedUuid = core::system::generateShortenedUuid();
+      std::string shortentedUuid = rscore::system::generateShortenedUuid();
 
       // form full path
       FilePath uniqueDir = parent.childPath(prefix + shortentedUuid);
@@ -38,8 +38,8 @@ FilePath uniqueFilePath(const FilePath& parent, const std::string& prefix)
    }
 
    // if we didn't succeed then return prefix + uuid
-   return parent.childPath(prefix + core::system::generateUuid(false));
+   return parent.childPath(prefix + rscore::system::generateUuid(false));
 }
 
 } // namespace file_utils
-} // namespace core
+} // namespace rscore

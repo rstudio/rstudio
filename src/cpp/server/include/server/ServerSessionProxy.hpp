@@ -20,38 +20,38 @@
 
 #include <core/http/AsyncConnection.hpp>
 
-namespace core {
+namespace rscore {
    class Error;
 } 
 
 namespace server {
 namespace session_proxy {
 
-core::Error initialize();
+rscore::Error initialize();
 
-core::Error runVerifyInstallationSession();
+rscore::Error runVerifyInstallationSession();
    
 void proxyContentRequest(
       const std::string& username,
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection) ;
+      boost::shared_ptr<rscore::http::AsyncConnection> ptrConnection) ;
 
 void proxyRpcRequest(
       const std::string& username,
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection) ;
+      boost::shared_ptr<rscore::http::AsyncConnection> ptrConnection) ;
 
 void proxyEventsRequest(
       const std::string& username,
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection);
+      boost::shared_ptr<rscore::http::AsyncConnection> ptrConnection);
 
 void proxyLocalhostRequest(
       const std::string& username,
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection);
+      boost::shared_ptr<rscore::http::AsyncConnection> ptrConnection);
    
-bool requiresSession(const core::http::Request& request);
+bool requiresSession(const rscore::http::Request& request);
 
 typedef boost::function<bool(
     const std::string&,
-    boost::shared_ptr<core::http::AsyncConnection>)> ProxyFilter;
+    boost::shared_ptr<rscore::http::AsyncConnection>)> ProxyFilter;
 void setProxyFilter(ProxyFilter filter);
 
 } // namespace session_proxy

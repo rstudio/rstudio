@@ -19,7 +19,7 @@
 #include <string>
 #include <map>
 
-namespace core {
+namespace rscore {
 
 class Error;
 class FilePath;
@@ -32,7 +32,7 @@ void extractVariables(const std::string& vars, Variables* pVariables);
 Error extractVariables(const FilePath& file, Variables* pVariables);
 
 } // namespace config_utils
-} // namespace core 
+} // namespace rscore
 
 
 #endif // CORE_CONFIG_UTILS_HPP

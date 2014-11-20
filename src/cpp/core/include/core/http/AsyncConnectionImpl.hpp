@@ -34,7 +34,7 @@
 #include <core/http/RequestParser.hpp>
 #include <core/http/AsyncConnection.hpp>
 
-namespace core {
+namespace rscore {
 namespace http {
    
 template <typename ProtocolType>
@@ -143,7 +143,7 @@ public:
    virtual void close()
    {
       Error error = closeSocket(socket_);
-      if (error && !core::http::isConnectionTerminatedError(error))
+      if (error && !rscore::http::isConnectionTerminatedError(error))
          LOG_ERROR(error);
    }
    
@@ -257,7 +257,7 @@ private:
    
 
 } // namespace http
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_HTTP_ASYNC_CONNECTION_IMPL_HPP
 

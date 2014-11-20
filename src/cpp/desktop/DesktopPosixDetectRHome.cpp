@@ -32,7 +32,7 @@
 #include "DesktopUtils.hpp"
 #include "DesktopOptions.hpp"
 
-using namespace core;
+using namespace rscore;
 
 namespace desktop {
 
@@ -52,7 +52,7 @@ bool prepareEnvironment(Options& options)
 {
    // check for which R override
    FilePath rWhichRPath;
-   std::string whichROverride = core::system::getenv("RSTUDIO_WHICH_R");
+   std::string whichROverride = rscore::system::getenv("RSTUDIO_WHICH_R");
    if (!whichROverride.empty())
       rWhichRPath = FilePath(whichROverride);
 

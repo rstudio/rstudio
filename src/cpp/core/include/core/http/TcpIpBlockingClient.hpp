@@ -21,7 +21,7 @@
 
 #include <core/http/TcpIpAsyncClient.hpp>
 
-namespace core {
+namespace rscore {
 namespace http {  
 
 inline Error sendRequest(const std::string& address,
@@ -43,6 +43,6 @@ inline Error sendRequest(const std::string& address,
 }
    
 } // namespace http
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_HTTP_TCP_IP_BLOCKING_CLIENT_HPP

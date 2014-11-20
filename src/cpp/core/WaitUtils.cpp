@@ -18,7 +18,7 @@
 
 #include <core/BoostThread.hpp>
 
-namespace core {
+namespace rscore {
 
 Error waitWithTimeout(const boost::function<WaitResult()>& waitFunction,
                       int initialWaitMs,
@@ -62,4 +62,4 @@ Error waitWithTimeout(const boost::function<WaitResult()>& waitFunction,
    return systemError(boost::system::errc::timed_out, ERROR_LOCATION);
 }
 
-} // namespace core
+} // namespace rscore

@@ -29,14 +29,14 @@
 
 #include "session-config.h"
 
-using namespace core;
+using namespace rscore;
 
 namespace session {
 namespace modules {
 namespace updates {
 namespace {
 
-json::Object jsonFromProcessResult(const core::system::ProcessResult& result)
+json::Object jsonFromProcessResult(const rscore::system::ProcessResult& result)
 {
    json::Object obj;
    std::stringstream output(result.stdOut);
@@ -57,7 +57,7 @@ json::Object jsonFromProcessResult(const core::system::ProcessResult& result)
 }
 
 void beginUpdateCheck(bool manual,
-   const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
+   const boost::function<void(const rscore::system::ProcessResult&)>& onCompleted)
 {
    // Find the path to R 
    FilePath rProgramPath;
@@ -69,7 +69,7 @@ void beginUpdateCheck(bool manual,
 
    // Find the path to the script we need to source
    FilePath modulesPath = session::options().modulesRSourcePath();;
-   std::string scriptPath = core::string_utils::utf8ToSystem(
+   std::string scriptPath = rscore::string_utils::utf8ToSystem(
                      modulesPath.complete("SessionUpdates.R").absolutePath());
 
    // Arguments
@@ -104,7 +104,7 @@ void beginUpdateCheck(bool manual,
    args.push_back(cmd);
    
    // Set options
-   core::system::ProcessOptions options;
+   rscore::system::ProcessOptions options;
    options.terminateChildren = true;
 
    module_context::processSupervisor().runProgram(rProgramPath.absolutePath(),
@@ -115,7 +115,7 @@ void beginUpdateCheck(bool manual,
 }
 
 void endRPCUpdateCheck(const json::JsonRpcFunctionContinuation& cont,
-                       const core::system::ProcessResult& result)
+                       const rscore::system::ProcessResult& result)
 {
    json::JsonRpcResponse response;
    response.setResult(jsonFromProcessResult(result));

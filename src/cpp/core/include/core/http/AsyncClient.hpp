@@ -52,11 +52,11 @@
       handleUnexpectedError("Unknown exception", ERROR_LOCATION); \
    }
 
-namespace core {
+namespace rscore {
 namespace http {
 
 typedef boost::function<void(const http::Response&)> ResponseHandler;
-typedef boost::function<void(const core::Error&)> ErrorHandler;
+typedef boost::function<void(const rscore::Error&)> ErrorHandler;
 
 
 template <typename SocketService>
@@ -136,7 +136,7 @@ public:
    void close()
    {
       Error error = closeSocket(socket().lowest_layer());
-      if (error && !core::http::isConnectionTerminatedError(error))
+      if (error && !rscore::http::isConnectionTerminatedError(error))
          logError(error);
    }
 
@@ -490,7 +490,7 @@ private:
    
 
 } // namespace http
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_HTTP_ASYNC_CLIENT_HPP
 

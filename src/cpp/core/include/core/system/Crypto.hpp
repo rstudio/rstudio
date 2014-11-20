@@ -21,40 +21,40 @@
 
 #include <core/Error.hpp>
 
-namespace core {
+namespace rscore {
 namespace system {
 namespace crypto {
       
 void initialize();   
 
-core::Error HMAC_SHA1(const std::string& data, 
+rscore::Error HMAC_SHA1(const std::string& data,
                       const std::string& key,
                       std::vector<unsigned char>* pHMAC);
 
-core::Error HMAC_SHA1(const std::string& data, 
+rscore::Error HMAC_SHA1(const std::string& data,
                       const std::vector<unsigned char>& key,
                       std::vector<unsigned char>* pHMAC);   
    
-core::Error base64Encode(const std::vector<unsigned char>& data, 
+rscore::Error base64Encode(const std::vector<unsigned char>& data,
                          std::string* pEncoded);   
    
-core::Error base64Encode(const unsigned char* pData, 
+rscore::Error base64Encode(const unsigned char* pData,
                          int len, 
                          std::string* pEncoded);
    
-core::Error base64Decode(const std::string& data, 
+rscore::Error base64Decode(const std::string& data,
                          std::vector<unsigned char>* pDecoded);
 
-core::Error rsaInit();
+rscore::Error rsaInit();
 
 void rsaPublicKey(std::string* pExponent, std::string* pModulo);
 
-core::Error rsaPrivateDecrypt(const std::string& pCipherText, std::string* pPlainText);
+rscore::Error rsaPrivateDecrypt(const std::string& pCipherText, std::string* pPlainText);
 
          
 } // namespace crypto
 } // namespace system
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_SYSTEM_CRYPTO_HPP
 

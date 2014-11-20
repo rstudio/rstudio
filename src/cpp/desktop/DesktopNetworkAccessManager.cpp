@@ -23,7 +23,7 @@
 #include "DesktopNetworkIOService.hpp"
 #include "DesktopOptions.hpp"
 
-using namespace core;
+using namespace rscore;
 
 using namespace desktop;
 

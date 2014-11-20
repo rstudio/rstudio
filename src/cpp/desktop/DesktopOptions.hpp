@@ -65,23 +65,23 @@ public:
    void setPreferR64(bool preferR64);
 #endif
 
-   core::FilePath scriptsPath() const;
-   void setScriptsPath(const core::FilePath& scriptsPath);
+   rscore::FilePath scriptsPath() const;
+   void setScriptsPath(const rscore::FilePath& scriptsPath);
 
-   core::FilePath executablePath() const;
-   core::FilePath supportingFilePath() const;
+   rscore::FilePath executablePath() const;
+   rscore::FilePath supportingFilePath() const;
 
-   core::FilePath wwwDocsPath() const;
+   rscore::FilePath wwwDocsPath() const;
 
 #ifdef _WIN32
-   core::FilePath urlopenerPath() const;
-   core::FilePath rsinversePath() const;
+   rscore::FilePath urlopenerPath() const;
+   rscore::FilePath rsinversePath() const;
 #endif
 
    QStringList ignoredUpdateVersions() const;
    void setIgnoredUpdateVersions(const QStringList& ignoredVersions);
 
-   core::FilePath scratchTempDir(core::FilePath defaultPath=core::FilePath());
+   rscore::FilePath scratchTempDir(rscore::FilePath defaultPath=rscore::FilePath());
    void cleanUpScratchTempDir();
 
    bool webkitDevTools();
@@ -98,9 +98,9 @@ private:
    friend Options& options();
 
    QSettings settings_;
-   core::FilePath scriptsPath_;
-   mutable core::FilePath executablePath_;
-   mutable core::FilePath supportingFilePath_;
+   rscore::FilePath scriptsPath_;
+   mutable rscore::FilePath executablePath_;
+   mutable rscore::FilePath supportingFilePath_;
    mutable QString portNumber_;
    mutable std::string localPeer_;
    bool runDiagnostics_;

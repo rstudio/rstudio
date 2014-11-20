@@ -34,7 +34,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace core;
+using namespace rscore;
 
 namespace session {
 namespace modules { 
@@ -118,8 +118,8 @@ Error Concordance::parse(const FilePath& sourceFile,
        return badFormatError(sourceFile, "sections", ERROR_LOCATION);
 
    // get input and output file names
-   outputFile_ = baseDir.complete(core::tex::normalizeSynctexName(sections[1]));
-   inputFile_ = baseDir.complete(core::tex::normalizeSynctexName(sections[2]));
+   outputFile_ = baseDir.complete(rscore::tex::normalizeSynctexName(sections[1]));
+   inputFile_ = baseDir.complete(rscore::tex::normalizeSynctexName(sections[2]));
 
    // get offset and values
    std::string valuesSection;
@@ -310,7 +310,7 @@ std::string fixup_formatter(const Concordances& concordances,
    {
       if (what[i].matched)
       {
-         int inputLine = core::safe_convert::stringTo<int>(what[i], 1);
+         int inputLine = rscore::safe_convert::stringTo<int>(what[i], 1);
          FileAndLine dest = concordances.rnwLine(
                                            FileAndLine(sourceFile, inputLine));
          if (!dest.empty())
@@ -325,7 +325,7 @@ std::string fixup_formatter(const Concordances& concordances,
    return result;
 }
 
-core::tex::LogEntry Concordances::fixup(const core::tex::LogEntry &entry,
+rscore::tex::LogEntry Concordances::fixup(const rscore::tex::LogEntry &entry,
                                         bool *pSuccess) const
 {
    // Error messages themselves can (and usually do) contain line numbers.
@@ -344,7 +344,7 @@ core::tex::LogEntry Concordances::fixup(const core::tex::LogEntry &entry,
       if (pSuccess)
          *pSuccess = true;
 
-      return core::tex::LogEntry(entry.logFilePath(),
+      return rscore::tex::LogEntry(entry.logFilePath(),
                                  entry.logLine(),
                                  entry.type(),
                                  mapped.filePath(),
@@ -359,7 +359,7 @@ core::tex::LogEntry Concordances::fixup(const core::tex::LogEntry &entry,
    }
 }
 
-void removePrevious(const core::FilePath& rnwFile)
+void removePrevious(const rscore::FilePath& rnwFile)
 {
    Error error = concordanceFilePath(rnwFile).removeIfExists();
    if (error)
@@ -367,7 +367,7 @@ void removePrevious(const core::FilePath& rnwFile)
 }
 
 
-Error readIfExists(const core::FilePath& srcFile, Concordances* pConcordances)
+Error readIfExists(const rscore::FilePath& srcFile, Concordances* pConcordances)
 {
    // return success if the file doesn't exist
    FilePath concordanceFile = concordanceFilePath(srcFile);
@@ -376,7 +376,7 @@ Error readIfExists(const core::FilePath& srcFile, Concordances* pConcordances)
 
    // read the file
    std::string contents;
-   Error error = core::readStringFromFile(concordanceFile,
+   Error error = rscore::readStringFromFile(concordanceFile,
                                           &contents,
                                           string_utils::LineEndingPosix);
    if (error)

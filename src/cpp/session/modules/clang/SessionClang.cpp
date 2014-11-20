@@ -36,8 +36,8 @@
 #include "CodeCompletion.hpp"
 #include "RSourceIndex.hpp"
 
-using namespace core ;
-using namespace core::libclang;
+using namespace rscore ;
+using namespace rscore::libclang;
 
 namespace session {
 namespace modules { 

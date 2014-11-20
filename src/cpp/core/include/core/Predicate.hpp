@@ -19,7 +19,7 @@
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 
-namespace core {
+namespace rscore {
 namespace predicate {
 
 template <typename T>
@@ -36,7 +36,7 @@ boost::function<bool(T)> range(const T& min, const T& max)
    
    
 } // namespace predicate
-} // namespace core
+} // namespace rscore
 
 
 #endif // CORE_PREDICATE_HPP

@@ -26,7 +26,7 @@
 
 #include "SlideParser.hpp"
 
-namespace core {
+namespace rscore {
    class Error;
    class FilePath;
 }
@@ -45,7 +45,7 @@ private:
    friend Log& log();
 
 public:
-   core::Error initialize();
+   rscore::Error initialize();
 
    void onSlideDeckChanged(const SlideDeck& slideDeck);
    void onSlideIndexChanged(int index);

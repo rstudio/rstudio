@@ -21,7 +21,7 @@
 
 extern char **environ;
 
-namespace core {
+namespace rscore {
 namespace system {
 
 namespace impl {
@@ -64,5 +64,5 @@ void unsetenv(const std::string& name)
 
 
 } // namespace sytem
-} // namespace core
+} // namespace rscore
 

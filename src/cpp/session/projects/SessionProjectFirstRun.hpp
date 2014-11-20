@@ -19,15 +19,15 @@
 #include <string>
 #include <vector>
 
-namespace core {
+namespace rscore {
    class FilePath;
 }
  
 namespace session {
 namespace projects {
 
-void addFirstRunDoc(const core::FilePath& projectFile, const std::string& doc);
-std::vector<std::string> collectFirstRunDocs(const core::FilePath& projectFile);
+void addFirstRunDoc(const rscore::FilePath& projectFile, const std::string& doc);
+std::vector<std::string> collectFirstRunDocs(const rscore::FilePath& projectFile);
 
 } // namespace projects
 } // namesapce session

@@ -17,7 +17,7 @@
 
 #include <core/system/System.hpp>
 
-namespace core {
+namespace rscore {
 namespace thread {
 
 void safeLaunchThread(boost::function<void()> threadMain,
@@ -27,7 +27,7 @@ void safeLaunchThread(boost::function<void()> threadMain,
    {
       // block all signals for launch of background thread (will cause it
       // to never receive signals)
-      core::system::SignalBlocker signalBlocker;
+      rscore::system::SignalBlocker signalBlocker;
       Error error = signalBlocker.blockAll();
       if (error)
          LOG_ERROR(error);
@@ -44,7 +44,7 @@ void safeLaunchThread(boost::function<void()> threadMain,
    }
 }
 
-} // namespace core
+} // namespace rscore
 } // namespace thread
 
 

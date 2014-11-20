@@ -20,7 +20,7 @@
 
 #include "SlideParser.hpp"
 
-using namespace core;
+using namespace rscore;
 
 namespace session {
 namespace modules { 

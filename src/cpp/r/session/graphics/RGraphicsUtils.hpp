@@ -18,7 +18,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-namespace core {
+namespace rscore {
    class Error;
    class ErrorLocation;
    class FilePath;
@@ -44,10 +44,10 @@ private:
    boost::shared_ptr<Impl> pImpl_;
 };
 
-void reportError(const core::Error& error);
+void reportError(const rscore::Error& error);
 
-void logAndReportError(const core::Error& error,
-                       const core::ErrorLocation& location);
+void logAndReportError(const rscore::Error& error,
+                       const rscore::ErrorLocation& location);
 
 } // namespace graphics
 } // namespace session

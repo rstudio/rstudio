@@ -17,7 +17,7 @@
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 
-namespace core {
+namespace rscore {
 namespace system {
 
 RegistryKey::RegistryKey()
@@ -199,4 +199,4 @@ std::vector<std::string> RegistryKey::keyNames()
 }
 
 } // namespace system
-} // namespace core
+} // namespace rscore

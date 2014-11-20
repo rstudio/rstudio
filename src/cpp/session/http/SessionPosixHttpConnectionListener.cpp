@@ -25,7 +25,7 @@
 #include "SessionTcpIpHttpConnectionListener.hpp"
 #include "SessionLocalStreamHttpConnectionListener.hpp"
 
-using namespace core ;
+using namespace rscore ;
 
 namespace session {
 
@@ -44,13 +44,13 @@ void initializeHttpConnectionListener()
 
    if (options.programMode() == kSessionProgramModeDesktop)
    {
-      std::string localPeer = core::system::getenv("RS_LOCAL_PEER");
+      std::string localPeer = rscore::system::getenv("RS_LOCAL_PEER");
       if (!localPeer.empty())
       {
          FilePath streamPath(localPeer);
          s_pHttpConnectionListener = new LocalStreamHttpConnectionListener(
                                            streamPath,
-                                           core::system::UserReadWriteMode,
+                                           rscore::system::UserReadWriteMode,
                                            options.sharedSecret(),
                                            -1);
       }
@@ -78,7 +78,7 @@ void initializeHttpConnectionListener()
          FilePath localStreamPath = local_streams::streamPath(userIdentity);
          s_pHttpConnectionListener = new LocalStreamHttpConnectionListener(
                                           localStreamPath,
-                                          core::system::EveryoneReadWriteMode,
+                                          rscore::system::EveryoneReadWriteMode,
                                           "", // no shared secret
                                           options.limitRpcClientUid());
       }

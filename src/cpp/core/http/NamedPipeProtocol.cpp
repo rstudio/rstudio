@@ -15,7 +15,7 @@
 
 #include <core/http/NamedPipeProtocol.hpp>
 
-namespace core {
+namespace rscore {
 namespace http {
 
 
@@ -44,5 +44,5 @@ template<> Error closeSocket(boost::asio::windows::stream_handle& socket)
 
    
 } // namespace http
-} // namespace core
+} // namespace rscore
 

@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-namespace core {
+namespace rscore {
 namespace text {
 
 /*
@@ -127,6 +127,6 @@ std::pair<std::vector<std::string>, InputIterator> parseCsvLine(InputIterator be
 }
 
 } // namespace text
-} // namespace core
+} // namespace rscore
 
 #endif // CSV_PARSER_HPP

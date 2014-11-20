@@ -31,7 +31,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
 
-using namespace core;
+using namespace rscore;
 
 namespace session {
 namespace modules { 

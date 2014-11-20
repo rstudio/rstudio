@@ -28,15 +28,15 @@
 // IMPORTANT NOTE: all code in r::options must provide "no jump" guarantee.
 // See comment in RInternal.hpp for more info on this
 
-namespace core {
+namespace rscore {
    class FilePath;
 }
 
 namespace r {
 namespace options {
    
-core::Error saveOptions(const core::FilePath& filePath);  
-core::Error restoreOptions(const core::FilePath& filePath);
+rscore::Error saveOptions(const rscore::FilePath& filePath);
+rscore::Error restoreOptions(const rscore::FilePath& filePath);
 
 // console width
 extern const int kDefaultWidth;
@@ -60,7 +60,7 @@ T getOption(const std::string& name,
    if (valueSEXP != R_NilValue)
    {
       T value;
-      core::Error error = sexp::extract(valueSEXP, &value);
+      rscore::Error error = sexp::extract(valueSEXP, &value);
       if (error)
       {
          error.addProperty("symbol (option)", name);
@@ -72,7 +72,7 @@ T getOption(const std::string& name,
    }
    else
    {
-      core::Error error(errc::SymbolNotFoundError, ERROR_LOCATION);
+      rscore::Error error(errc::SymbolNotFoundError, ERROR_LOCATION);
       error.addProperty("symbol (option)", name);
       if (logNotFound)
          LOG_ERROR(error);
@@ -81,11 +81,11 @@ T getOption(const std::string& name,
 }
    
 template <typename T>
-core::Error setOption(const std::string& name, const T& value)
+rscore::Error setOption(const std::string& name, const T& value)
 {
    r::exec::RFunction optionsFunction("options");
    optionsFunction.addParam(name, value);
-   core::Error error = optionsFunction.call();
+   rscore::Error error = optionsFunction.call();
    if (error)
    {
       error.addProperty("option-name", name);
@@ -93,7 +93,7 @@ core::Error setOption(const std::string& name, const T& value)
    }
    else
    {
-      return core::Success();
+      return rscore::Success();
    }
 }
 

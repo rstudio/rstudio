@@ -24,8 +24,8 @@
 
 #include "RSourceIndex.hpp"
 
-using namespace core ;
-using namespace core::libclang;
+using namespace rscore ;
+using namespace rscore::libclang;
 
 namespace session {
 namespace modules { 
@@ -134,7 +134,7 @@ int completionType(CXCursorKind kind)
    }
 }
 
-core::json::Object toJson(const CodeCompleteResult& result)
+rscore::json::Object toJson(const CodeCompleteResult& result)
 {
    json::Object resultJson;
    resultJson["type"] = completionType(result.getKind());
@@ -149,8 +149,8 @@ core::json::Object toJson(const CodeCompleteResult& result)
 } // anonymous namespace
 
 
-Error getCppCompletions(const core::json::JsonRpcRequest& request,
-                        core::json::JsonRpcResponse* pResponse)
+Error getCppCompletions(const rscore::json::JsonRpcRequest& request,
+                        rscore::json::JsonRpcResponse* pResponse)
 {
    // get params
    std::string docPath, userText;

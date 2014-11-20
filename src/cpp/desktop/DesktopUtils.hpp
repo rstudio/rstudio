@@ -21,7 +21,7 @@
 #include <QMainWindow>
 #include <QFileDialog>
 
-namespace core {
+namespace rscore {
    class FilePath;
 }
 
@@ -29,7 +29,7 @@ namespace desktop {
 
 void reattachConsoleIfNecessary();
 
-core::FilePath userLogPath();
+rscore::FilePath userLogPath();
 
 bool isRetina(QMainWindow* pMainWindow);
 

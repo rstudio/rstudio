@@ -24,7 +24,7 @@
 
 #include <core/FileInfo.hpp>
 
-namespace core {
+namespace rscore {
 
 class Error;
    
@@ -44,7 +44,7 @@ public:
    };
    
 public:
-   FileChangeEvent(Type type, const core::FileInfo& fileInfo)
+   FileChangeEvent(Type type, const rscore::FileInfo& fileInfo)
       : type_(type), fileInfo_(fileInfo)
    {
    }
@@ -67,7 +67,7 @@ public:
    
 private:
    Type type_;
-   core::FileInfo fileInfo_;
+   rscore::FileInfo fileInfo_;
 };
 
 inline std::ostream& operator << (std::ostream& ostr, 
@@ -172,7 +172,7 @@ void collectFileChangeEvents(PreviousIterator prevBegin,
 }
   
 } // namespace system
-} // namespace core 
+} // namespace rscore
 
 #endif // CORE_SYSTEM_FILE_CHANGE_EVENT_HPP
 

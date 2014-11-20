@@ -34,7 +34,7 @@
 #pragma clang diagnostic pop
 #endif
 
-namespace core {
+namespace rscore {
 namespace string_utils {
 
 std::string wideToUtf8(const std::wstring& value)
@@ -82,7 +82,7 @@ std::wstring utf8ToWide(const std::string& value, const std::string& context)
 }
 
 } // namespace string_utils
-} // namespace core
+} // namespace rscore
 
 
 

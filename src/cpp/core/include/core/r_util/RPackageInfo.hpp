@@ -20,7 +20,7 @@
 
 #include <core/FilePath.hpp>
 
-namespace core {
+namespace rscore {
 
 class Error;
 class FilePath;
@@ -66,7 +66,7 @@ private:
 bool isPackageDirectory(const FilePath& dir);
 
 } // namespace r_util
-} // namespace core 
+} // namespace rscore
 
 
 #endif // CORE_R_UTIL_R_PACKAGE_INFO_HPP

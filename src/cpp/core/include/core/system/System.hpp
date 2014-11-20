@@ -39,7 +39,7 @@ typedef pid_t PidType;
 
 #include <core/system/Types.hpp>
 
-namespace core {
+namespace rscore {
 
 class FileInfo;
 class FilePath;
@@ -213,11 +213,11 @@ private:
    boost::shared_ptr<Impl> pImpl_;
 };
    
-core::Error clearSignalMask();
+rscore::Error clearSignalMask();
 
-core::Error handleSignal(SignalType signal, void (*handler)(int));
-core::Error ignoreSignal(SignalType signal);   
-core::Error useDefaultSignalHandler(SignalType signal);
+rscore::Error handleSignal(SignalType signal, void (*handler)(int));
+rscore::Error ignoreSignal(SignalType signal);
+rscore::Error useDefaultSignalHandler(SignalType signal);
 
 void sendSignalToSelf(SignalType signal);
 
@@ -266,7 +266,7 @@ void abort();
 Error terminateProcess(PidType pid);
    
 } // namespace system
-} // namespace core 
+} // namespace rscore
 
 #endif // CORE_SYSTEM_SYSTEM_HPP
 

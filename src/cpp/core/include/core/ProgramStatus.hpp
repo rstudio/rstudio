@@ -18,7 +18,7 @@
 
 #include <cstdlib>
 
-namespace core {
+namespace rscore {
 
 class ProgramStatus
 {  
@@ -51,7 +51,7 @@ private:
    int exitCode_ ;
 };
    
-} // namespace core
+} // namespace rscore
 
 
 #endif // CORE_PROGRAM_STATUS_HPP

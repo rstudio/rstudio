@@ -26,7 +26,7 @@
 #include <core/system/Environment.hpp>
 #include <core/SafeConvert.hpp>
 
-using namespace core;
+using namespace rscore;
 
 namespace r {
 namespace session {   
@@ -50,7 +50,7 @@ void ConsoleHistory::setCapacity(int capacity)
 
 void ConsoleHistory::setCapacityFromRHistsize()
 {
-   std::string histSize = core::system::getenv("R_HISTSIZE");
+   std::string histSize = rscore::system::getenv("R_HISTSIZE");
    if (!histSize.empty())
    {
       setCapacity(
@@ -154,10 +154,10 @@ Error ConsoleHistory::loadFromFile(const FilePath& filePath,
    // tolerate file not found -- the user may not have any prior history
    if (filePath.exists())
    {
-      return core::readCollectionFromFile<boost::circular_buffer<std::string> >(
+      return rscore::readCollectionFromFile<boost::circular_buffer<std::string> >(
                                                       filePath,
                                                       &historyBuffer_,
-                                                      core::parseString);
+                                                      rscore::parseString);
    }
    else if (verifyFile)
    {
@@ -172,10 +172,10 @@ Error ConsoleHistory::loadFromFile(const FilePath& filePath,
    
 Error ConsoleHistory::saveToFile(const FilePath& filePath) const
 {
-   return core::writeCollectionToFile<boost::circular_buffer<std::string> >(
+   return rscore::writeCollectionToFile<boost::circular_buffer<std::string> >(
                                                       filePath,
                                                       historyBuffer_,
-                                                      core::stringifyString);
+                                                      rscore::stringifyString);
 }
 
 void ConsoleHistory::safeRemove(int index)
