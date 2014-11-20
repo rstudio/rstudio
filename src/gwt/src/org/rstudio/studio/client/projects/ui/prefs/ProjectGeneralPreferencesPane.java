@@ -64,16 +64,16 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
    @Override
    public String getName()
    {
-      return "General";
+      return "General2";
    }
 
    @Override
    protected void initialize(RProjectOptions options)
    {
       RProjectConfig config = options.getConfig();
-      restoreWorkspace_.setSelectedValue(config.getRestoreWorkspace());
-      saveWorkspace_.setSelectedValue(config.getSaveWorkspace());
-      alwaysSaveHistory_.setSelectedValue(config.getAlwaysSaveHistory());
+      restoreWorkspace_.setSelectedIndex(config.getRestoreWorkspace());
+      saveWorkspace_.setSelectedIndex(config.getSaveWorkspace());
+      alwaysSaveHistory_.setSelectedIndex(config.getAlwaysSaveHistory());
       tutorialPath_ = config.getTutorialPath();
       rVersion_ = config.getRVersion();
    }
@@ -82,9 +82,9 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
    public boolean onApply(RProjectOptions options)
    {
       RProjectConfig config = options.getConfig();
-      config.setRestoreWorkspace(restoreWorkspace_.getSelectedValue());
-      config.setSaveWorkspace(saveWorkspace_.getSelectedValue());
-      config.setAlwaysSaveHistory(alwaysSaveHistory_.getSelectedValue());
+      config.setRestoreWorkspace(restoreWorkspace_.getSelectedIndex());
+      config.setSaveWorkspace(saveWorkspace_.getSelectedIndex());
+      config.setAlwaysSaveHistory(alwaysSaveHistory_.getSelectedIndex());
       config.setTutorialPath(tutorialPath_);
       config.setRVersion(rVersion_);
       return false;
@@ -94,7 +94,8 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
    {
       public YesNoAskDefault(boolean includeAsk)
       {
-         super(false);
+         super();
+         setMultipleSelect(false);
          
          String[] items = includeAsk ? new String[] {USE_DEFAULT, YES, NO, ASK}:
                                        new String[] {USE_DEFAULT, YES, NO};
@@ -103,17 +104,13 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
             addItem(items[i]);
       }
       
-      public void setSelectedValue(int value)
+      @Override
+      public void setSelectedIndex(int value)
       {
          if (value < getItemCount())
-            setSelectedIndex(value);
+            super.setSelectedIndex(value);
          else
-            setSelectedIndex(0);
-      }
-      
-      public int getSelectedValue()
-      {
-         return getSelectedIndex();
+            super.setSelectedIndex(0);
       }
    }
    

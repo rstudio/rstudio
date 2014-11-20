@@ -51,7 +51,8 @@ public class CodeFilesList extends Composite
       panel.add(labelPanel);
       
       HorizontalPanel dictionariesPanel = new HorizontalPanel();
-      listBox_ = new ListBox(false);
+      listBox_ = new ListBox();
+      listBox_.setMultipleSelect(false);
       listBox_.addStyleName(RES.styles().codeFilesListBox());
       listBox_.getElement().<SelectElement>cast().setSize(3);
       dictionariesPanel.add(listBox_);
