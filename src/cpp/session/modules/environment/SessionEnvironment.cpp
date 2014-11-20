@@ -31,6 +31,7 @@
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <boost/foreach.hpp>
+#include <boost/make_shared.hpp>
 
 #include "EnvironmentUtils.hpp"
 

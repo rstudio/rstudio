@@ -23,6 +23,7 @@
 #include <r/ROptions.hpp>
 
 #include <boost/bind.hpp>
+#include <boost/make_shared.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
 #include "SessionErrors.hpp"

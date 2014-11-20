@@ -21,6 +21,7 @@
 #include <boost/format.hpp>
 #include <boost/utility.hpp>
 #include <boost/foreach.hpp>
+#include <boost/make_shared.hpp>
 
 #include <core/Error.hpp>
 #include <core/Log.hpp>
