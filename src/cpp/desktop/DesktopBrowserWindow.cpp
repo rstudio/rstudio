@@ -83,6 +83,13 @@ void BrowserWindow::printRequested(QWebFrame* frame)
 
 void BrowserWindow::onCloseRequested()
 {
+   QString cmd = QString::fromUtf8("if (window.opener && "
+      "window.opener.unregisterDesktopChildWindow))"
+      "   window.opener.unregisterDesktopChildWindow('");
+   cmd.append(name_);
+   cmd.append(QString::fromUtf8("');"));
+
+   webView()->page()->mainFrame()->evaluateJavaScript(cmd);
    close();
 }
 

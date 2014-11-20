@@ -268,8 +268,16 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
           });
           executeOnPdfJsLoad_ = loadPdf;
           
-          // always open as web window (we need window.opener to be hooked up)
-          display_.openWebMinimalWindow(viewerUrl, false, width, height, options);
+          if (Desktop.isDesktop() && Desktop.getFrame().isCocoa()) 
+          {
+             // on cocoa, we can open a native window
+             display_.openMinimalWindow(viewerUrl, false, width, height, options);
+          }
+          else
+          {
+             // on Qt, we need to open a web window so window.opener is wired
+             display_.openWebMinimalWindow(viewerUrl, false, width, height, options);
+          }
       }
       else
       {

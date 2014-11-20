@@ -136,7 +136,7 @@ QWebPage* WebPage::createWindow(QWebPage::WebWindowType)
    }
    else
    {
-      SecondaryWindow* pWindow = new SecondaryWindow(baseUrl_);
+      SecondaryWindow* pWindow = new SecondaryWindow(baseUrl_, true);
       pWindow->show();
       return pWindow->webView()->webPage();
    }

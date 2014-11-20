@@ -113,6 +113,12 @@ public class PdfJsWindow extends WindowEx
          
          // fire the load event
          @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::fireLoadEvent()();
+         
+         // wire unload event
+         var unloadEvt = forDesktop ? "unload" : "beforeunload";
+         win.addEventListener(unloadEvt, function() {
+            @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::fireWindowClosedEvent()();
+         });
       };
 
       // starts a timer that initializes the UI when the PDFView object appears
@@ -123,8 +129,8 @@ public class PdfJsWindow extends WindowEx
             n++;
             if (typeof(win.PDFView) === "object") {
                // PDFView is available now, initialize it
-               initUi();
                clearInterval(t);
+               initUi();
                return true;
             }
             else if (n > 100) {
@@ -146,11 +152,6 @@ public class PdfJsWindow extends WindowEx
          startInitUiTimer();
       else
          this.addEventListener("load", initUi);
-      
-      var unloadEvt = forDesktop ? "unload" : "beforeunload";
-      this.addEventListener(unloadEvt, function() {
-         @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::fireWindowClosedEvent()();
-      });
       
       this.addEventListener("click", function(evt) {
          @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::firePageClickEvent(Lorg/rstudio/studio/client/pdfviewer/model/PdfJsWindow;Lcom/google/gwt/dom/client/NativeEvent;Lcom/google/gwt/dom/client/Element;)(win, evt, evt.target);

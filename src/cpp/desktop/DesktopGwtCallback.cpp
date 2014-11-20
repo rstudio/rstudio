@@ -440,13 +440,15 @@ void GwtCallback::openMinimalWindow(QString name,
 
 void GwtCallback::activateMinimalWindow(QString name)
 {
-   // We currently only activate minimal windows on Cocoa, so this isn't
-   // implemented on Qt desktop, and we don't expect it to be called.
-   std::string message = "Could not activate window '" + name.toStdString() +
-                          "'.";
-   QMessageBox::warning(pOwner_->asWidget(),
-                        QString::fromUtf8("Window Activation Failed"),
-                        QString::fromUtf8(message.c_str()));
+   // we can only activate named windows
+   bool named = !name.isEmpty() && name != QString::fromUtf8("_blank");
+   if (!named)
+      return;
+
+   // look for the window with the given name; if we find it, activate it
+   BrowserWindow* browser = s_windowTracker.getWindow(name);
+   if (browser)
+      desktop::raiseAndActivateWindow(browser);
 }
 
 void GwtCallback::prepareForSatelliteWindow(QString name,

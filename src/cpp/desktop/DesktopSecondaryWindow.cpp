@@ -37,8 +37,8 @@ QIcon icon(const char* name)
 
 }
 
-SecondaryWindow::SecondaryWindow(QUrl baseUrl, QWidget* pParent) :
-    BrowserWindow(true, true, QString(), baseUrl, pParent)
+SecondaryWindow::SecondaryWindow(QUrl baseUrl, bool showToolbar, QWidget* pParent) :
+    BrowserWindow(showToolbar, true, QString(), baseUrl, pParent)
 {
    setAttribute(Qt::WA_QuitOnClose, false);
    setAttribute(Qt::WA_DeleteOnClose, true);
