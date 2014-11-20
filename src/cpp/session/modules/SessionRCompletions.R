@@ -955,7 +955,17 @@ assign(x = ".rs.acCompletionTypes",
          return(completions)
    }
    
-   ## completions fro ui.r (from server.r)
+   ## Completions for server.r, on session
+   if (type[[1]] == .rs.acContextTypes$DOLLAR &&
+          tolower(basename(filePath)) == "server.r" &&
+          string[[1]] == "session")
+   {
+      completions <- rs.getCompletionsShinySession(token)
+      if (!is.null(completions))
+         return(completions)
+   }
+   
+   ## Completions for ui.r (from server.r)
    if (type[[1]] == .rs.acContextTypes$FUNCTION &&
           tolower(basename(filePath)) == "ui.r" &&
           (.rs.endsWith(string[[1]], "Input") || .rs.endsWith(string[[1]], "Output")))
@@ -1621,5 +1631,53 @@ assign(x = ".rs.acCompletionTypes",
          }
       }
    }
+   
+})
+
+.rs.addFunction("getCompletionsShinySession", function(token)
+{
+   # Use cached completions if possible
+   if (!is.null(results <- .rs.get("shinySessionCompletions")))
+      return(results)
+   
+   # Get completions from shiny if available
+   if (!("shiny" %in% loadedNamespaces()))
+      return(NULL)
+   
+   # Check to see if this version of Shiny has a completions
+   # function we can use
+   completionGetter <- tryCatch(
+      eval(call(":::", "shiny", "session_completions")),
+      error = function(e) NULL
+   )
+   
+   if (is.null(completionGetter))
+      return(NULL)
+   
+   # Get the completions from Shiny
+   completions <- tryCatch(
+      completionGetter(),
+      error = function(e) NULL
+   )
+   
+   if (is.null(completions))
+      return(NULL)
+   
+   # Ensure that this is a character vector
+   if (!is.character(completions))
+      return(NULL)
+   
+   # Return completions
+   results <- .rs.selectFuzzyMatches(completions, token)
+   output <- .rs.makeCompletions(token = token,
+                                 results = results,
+                                 type = .rs.acCompletionTypes$CONTEXT,
+                                 excludeOtherCompletions = TRUE)
+   
+   # Cache for later use
+   .rs.assign("shinySessionCompletions", output)
+   
+   output
+   
    
 })
