@@ -459,9 +459,14 @@ void GwtCallback::prepareForSatelliteWindow(QString name,
                 PendingSatelliteWindow(name, pMainWindow_, width, height));
 }
 
+void GwtCallback::prepareForNamedWindow(QString name)
+{
+   pOwner_->webPage()->prepareForNamedWindow(name);
+}
+
 void GwtCallback::activateSatelliteWindow(QString name)
 {
-   pOwner_->webPage()->activateSatelliteWindow(name);
+   pOwner_->webPage()->activateWindow(name);
 }
 
 void GwtCallback::copyImageToClipboard(int left, int top, int width, int height)

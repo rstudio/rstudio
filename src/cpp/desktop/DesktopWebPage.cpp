@@ -59,17 +59,22 @@ void WebPage::setBaseUrl(const QUrl& baseUrl)
    baseUrl_ = baseUrl;
 }
 
-void WebPage::activateSatelliteWindow(QString name)
+void WebPage::activateWindow(QString name)
 {
-   BrowserWindow* pSatellite = s_windowTracker.getWindow(name);
-   if (pSatellite)
-      desktop::raiseAndActivateWindow(pSatellite);
+   BrowserWindow* pWindow = s_windowTracker.getWindow(name);
+   if (pWindow)
+      desktop::raiseAndActivateWindow(pWindow);
 }
 
 void WebPage::prepareForSatelliteWindow(
                               const PendingSatelliteWindow& pendingWnd)
 {
    pendingSatelliteWindow_ = pendingWnd;
+}
+
+void WebPage::prepareForNamedWindow(const QString name)
+{
+   pendingNamedWindow_ = name;
 }
 
 QWebPage* WebPage::createWindow(QWebPage::WebWindowType)
@@ -136,7 +141,15 @@ QWebPage* WebPage::createWindow(QWebPage::WebWindowType)
    }
    else
    {
-      SecondaryWindow* pWindow = new SecondaryWindow(baseUrl_, true);
+      // show toolbar unless this is the pdf.js window
+      bool showToolbar = true;
+      if (!pendingNamedWindow_.isEmpty())
+      {
+         if (pendingNamedWindow_ == QString::fromUtf8("rstudio_pdfjs"))
+            showToolbar = false;
+         pendingNamedWindow_.clear();
+      }
+      SecondaryWindow* pWindow = new SecondaryWindow(baseUrl_, showToolbar);
       pWindow->show();
       return pWindow->webView()->webPage();
    }
