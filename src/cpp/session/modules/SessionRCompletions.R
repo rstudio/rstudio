@@ -552,7 +552,7 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
-## NOTE: for '@' as well (set with S4 bit)
+## NOTE: for '@' as well (set in the 'isAt' parameter)
 .rs.addFunction("getCompletionsDollar", function(token, string, envir, isAt)
 {
    result <- .rs.emptyCompletions(excludeOtherCompletions = TRUE)
@@ -572,52 +572,64 @@ assign(x = ".rs.acCompletionTypes",
          if (isS4(object) && !inherits(object, "classRepresentation"))
          {
             tryCatch({
-               names <- slotNames(object)
-               type <- numeric(length(names))
-               for (i in seq_along(names))
-                  type[[i]] <- tryCatch(
-                     .rs.getCompletionType(eval(call("@", object, names[[i]]), envir = envir)),
-                     error = function(e) .rs.acCompletionTypes$UNKNOWN
-                  )
+               allNames <- slotNames(object)
+               names <- .rs.selectFuzzyMatches(allNames, token)
+               
+               # NOTE: Getting the types forces evaluation; we avoid that if
+               # there are too many names to evaluate.
+               if (length(names) > 2E2)
+                  type <- .rs.acCompletionTypes$UNKNOWN
+               else
+               {
+                  type <- numeric(length(names))
+                  for (i in seq_along(names))
+                     type[[i]] <- tryCatch(
+                        .rs.getCompletionType(eval(call("@", object, names[[i]]), envir = envir)),
+                        error = function(e) .rs.acCompletionTypes$UNKNOWN
+                     )
+               }
             }, error = function(e) NULL
             )
          }
       }
       else
       {
-         names <- character()
-         
-         # Check to see if an overloadd .DollarNames method has been provided,
+         # Check to see if an overloaded .DollarNames method has been provided,
          # and use that to resolve names if possible.
          dollarNamesMethod <- .rs.getDollarNamesMethod(object)
          if (!is.null(dollarNamesMethod))
          {
-            names <-  dollarNamesMethod(object)
+            allNames <- dollarNamesMethod(object)
          }
          else
          {
             # Don't allow S4 objects for dollar name resolution
             if (!isS4(object))
             {
-               names <- .rs.getNames(object)
+               allNames <- .rs.getNames(object)
             }
          }
          
-         type <- numeric(length(names))
-         for (i in seq_along(names))
-            type[[i]] <- tryCatch(
-               .rs.getCompletionType(eval(call("$", object, names[[i]]), envir = envir)),
-               error = function(e) .rs.acCompletionTypes$UNKNOWN
-            )
+         names <- .rs.selectFuzzyMatches(allNames, token)
+         
+         # NOTE: Getting the types forces evaluation; we avoid that if
+         # there are too many names to evaluate.
+         if (length(names) > 2E2)
+            type <- .rs.acCompletionTypes$UNKNOWN
+         else
+         {
+            type <- numeric(length(names))
+            for (i in seq_along(names))
+               type[[i]] <- tryCatch(
+                  .rs.getCompletionType(eval(call("$", object, names[[i]]), envir = envir)),
+                  error = function(e) .rs.acCompletionTypes$UNKNOWN
+               )
+         }
       }
-      
-      keep <- .rs.fuzzyMatches(names, token)
-      completions <- names[keep]
-      type <- type[keep]
       
       result <- .rs.makeCompletions(
          token = token,
-         results = completions,
+         results = names,
          packages = string,
          quote = FALSE,
          type = type,
@@ -885,7 +897,7 @@ assign(x = ".rs.acCompletionTypes",
                                                   filePath)
 {
    filePath <- suppressWarnings(.rs.normalizePath(filePath))
-
+   
    ## NOTE: these are passed in as lists of strings; convert to character
    additionalArgs <- as.character(additionalArgs)
    excludeArgs <- as.character(excludeArgs)
