@@ -468,15 +468,26 @@ var CStyleBehaviour = function(codeModel) {
       if (!tokenCursor.bwdOverQualifiedIdentifier())
          return null;
 
+      var success = false;
       if (tokenCursor.currentValue() === ";" ||
-          tokenCursor.currentValue() === "{" ||
           tokenCursor.currentValue() === "return")
-      {
+         success = true;
+
+      if (tokenCursor.currentValue() === "{")
+         if (tokenCursor.moveToPreviousToken())
+            if (tokenCursor.currentValue() === "const" ||
+                tokenCursor.currentValue() === "noexpect" ||
+                tokenCursor.currentValue() === ")" ||
+                tokenCursor.currentValue() === ";")
+               success = true;
+
+      if (success)
          return {
             text: "();",
             selection: [1, 1]
          };
-      }
+
+      return null;
       
    };
 
