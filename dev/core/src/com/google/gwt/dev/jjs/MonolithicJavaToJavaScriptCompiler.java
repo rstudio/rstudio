@@ -162,7 +162,7 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
         // Only perform the interning optimization when optimizations are enabled.
         internedTextByVariableName =
             JsLiteralInterner.exec(jprogram, jsProgram, (byte) (JsLiteralInterner.INTERN_ALL
-                & (byte) (jprogram.typeOracle.isInteropEnabled()
+                & (byte) (jprogram.typeOracle.isJsInteropEnabled()
                 ? ~JsLiteralInterner.INTERN_STRINGS : ~0)));
       }
       JsVerboseNamer.exec(jsProgram, config);

@@ -937,7 +937,7 @@ public class GenerateJavaScriptAST {
         globalStmts.add(vars);
       }
 
-      if (typeOracle.isInteropEnabled() &&
+      if (typeOracle.isJsInteropEnabled() &&
           typeOracle.isInstantiatedType(x) && !typeOracle.isJavaScriptObject(x) &&
         x !=  program.getTypeJavaLangString()) {
         // done after class setup because exports may rely on static vars
@@ -1190,7 +1190,7 @@ public class GenerateJavaScriptAST {
         globalStmts.add(vars);
       }
 
-      if (typeOracle.isInteropEnabled()) {
+      if (typeOracle.isJsInteropEnabled()) {
         generateExports(x, exportStmts);
       }
     }

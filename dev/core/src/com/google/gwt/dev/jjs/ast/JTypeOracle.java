@@ -165,7 +165,7 @@ public class JTypeOracle implements Serializable {
    * 3) the method returns or accepts JsAware/JsConvert types.
    */
   public boolean needsJsInteropBridgeMethod(JMethod x) {
-    if (!isInteropEnabled()) {
+    if (!isJsInteropEnabled()) {
       return false;
     }
 
@@ -255,14 +255,14 @@ public class JTypeOracle implements Serializable {
   }
 
   public boolean isExportedField(JField field) {
-    return isInteropEnabled() && field.getExportName() != null;
+    return isJsInteropEnabled() && field.getExportName() != null;
   }
 
   public boolean isExportedMethod(JMethod method) {
-    return isInteropEnabled() && method.getExportName() != null && !method.isNoExport();
+    return isJsInteropEnabled() && method.getExportName() != null && !method.isNoExport();
   }
 
-  public boolean isInteropEnabled() {
+  public boolean isJsInteropEnabled() {
     return jsInteropMode != OptionJsInteropMode.Mode.NONE;
   }
 
@@ -852,7 +852,7 @@ public class JTypeOracle implements Serializable {
    * Get the nearest JS type.
    */
   public JDeclaredType getNearestJsType(JType type, boolean mustHavePrototype) {
-    if (!isInteropEnabled()) {
+    if (!isJsInteropEnabled()) {
       return null;
     }
 
@@ -1094,7 +1094,7 @@ public class JTypeOracle implements Serializable {
   }
 
   public boolean isJsTypeMethod(JMethod x) {
-    if (!isInteropEnabled()) {
+    if (!isJsInteropEnabled()) {
       return false;
     }
 
@@ -1121,7 +1121,7 @@ public class JTypeOracle implements Serializable {
    * Whether the type is a JS interface (does not check supertypes).
    */
   public boolean isJsType(JType type) {
-    return isInteropEnabled()
+    return isJsInteropEnabled()
         && (type instanceof JDeclaredType && ((JDeclaredType) type).isJsType());
   }
 
@@ -1130,7 +1130,7 @@ public class JTypeOracle implements Serializable {
    * one of the types has a js prototype.
    */
   public boolean isOrExtendsJsType(JType type, boolean mustHavePrototype) {
-    if (isInteropEnabled()) {
+    if (isJsInteropEnabled()) {
       JDeclaredType dtype = getNearestJsType(type, mustHavePrototype);
       return dtype != null;
     } else {

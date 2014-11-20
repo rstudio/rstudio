@@ -852,7 +852,7 @@ public abstract class JavaToJavaScriptCompiler {
     private Map<JsName, JsLiteral> runObfuscateNamer(PermProps props) throws IllegalNameException {
       Map<JsName, JsLiteral> internedLiteralByVariableName =
           JsLiteralInterner.exec(jprogram, jsProgram, (byte) (JsLiteralInterner.INTERN_ALL
-              & (byte) (jprogram.typeOracle.isInteropEnabled()
+              & (byte) (jprogram.typeOracle.isJsInteropEnabled()
               ? ~JsLiteralInterner.INTERN_STRINGS : ~0)));
       FreshNameGenerator freshNameGenerator = JsObfuscateNamer.exec(jsProgram,
           props.getConfigProps());
@@ -1153,7 +1153,7 @@ public abstract class JavaToJavaScriptCompiler {
         allRootTypes.add(typeOracle.getSingleJsoImpl(singleJsoIntf).getQualifiedSourceName());
       }
 
-      if (jprogram.typeOracle.isInteropEnabled()) {
+      if (jprogram.typeOracle.isJsInteropEnabled()) {
         // find any types with @JsExport could be entry points as well
         nextType:
         for (com.google.gwt.dev.javac.typemodel.JClassType type :

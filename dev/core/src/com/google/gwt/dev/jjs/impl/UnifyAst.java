@@ -708,11 +708,14 @@ public class UnifyAst {
   private MinimalRebuildCache minimalRebuildCache;
   private boolean incrementalCompile;
   private boolean isLibraryCompile;
+  private boolean jsInteropEnabled;
+  private final List<String> rootTypeSourceNames = new ArrayList<String>();
 
   public UnifyAst(TreeLogger logger, CompilerContext compilerContext, JProgram program,
       JsProgram jsProgram, RebindPermutationOracle rpo) {
     this.incrementalCompile = compilerContext.getOptions().isIncrementalCompileEnabled();
     this.isLibraryCompile = !compilerContext.shouldCompileMonolithic();
+    this.jsInteropEnabled = program.typeOracle.isJsInteropEnabled();
 
     this.logger = logger;
     this.compilerContext = compilerContext;
@@ -731,28 +734,9 @@ public class UnifyAst {
     }
   }
 
-  public void addRootTypes(Collection<String> sourceTypeNames) throws UnableToCompleteException {
-    List<String> binaryTypeNames = new ArrayList<String>();
-    for (String sourceTypeName : sourceTypeNames) {
-      JDeclaredType type =
-          internalFindType(sourceTypeName, sourceNameBasedTypeLocator, true);
-      binaryTypeNames.add(type.getName());
-      if (type != null && program.typeOracle.isInteropEnabled() &&
-          (isJsType(type) || hasAnyExports(type))) {
-        instantiate(type);
-        for (JField field : type.getFields()) {
-          flowInto(field);
-        }
-        for (JMethod method : type.getMethods()) {
-          flowInto(method);
-        }
-      }
-    }
-    minimalRebuildCache.setRootTypeNames(binaryTypeNames);
-    if (errorsFound) {
-      // Already logged.
-      throw new UnableToCompleteException();
-    }
+  public void addRootTypes(Collection<String> rootTypeSourceNames) {
+    assert this.rootTypeSourceNames.isEmpty();
+    this.rootTypeSourceNames.addAll(rootTypeSourceNames);
   }
 
   /**
@@ -766,13 +750,7 @@ public class UnifyAst {
     }
 
     for (JDeclaredType type : program.getDeclaredTypes()) {
-      instantiate(type);
-      for (JField field : type.getFields()) {
-        flowInto(field);
-      }
-      for (JMethod method : type.getMethods()) {
-        flowInto(method);
-      }
+      fullFlowIntoType(type);
     }
 
     mainLoop();
@@ -797,6 +775,22 @@ public class UnifyAst {
     for (JMethod entryMethod : program.getEntryMethods()) {
       flowInto(entryMethod);
     }
+
+    // Ensure that root types are loaded and possibly (depending on mode) traversed.
+    List<String> rootTypeBinaryNames = new ArrayList<String>();
+    for (String rootTypeSourceName : rootTypeSourceNames) {
+      JDeclaredType rootType =
+          internalFindType(rootTypeSourceName, sourceNameBasedTypeLocator, true);
+      if (rootType == null) {
+        continue;
+      }
+
+      rootTypeBinaryNames.add(rootType.getName());
+      if (jsInteropEnabled && (isJsType(rootType) || hasAnyExports(rootType))) {
+        fullFlowIntoType(rootType);
+      }
+    }
+    minimalRebuildCache.setRootTypeNames(rootTypeBinaryNames);
 
     // Some fields and methods in codegen types might only become referenced as the result of
     // visitor execution after unification. Since we don't want those fields are methods to be
@@ -826,13 +820,7 @@ public class UnifyAst {
           continue;
         }
 
-        instantiate(type);
-        for (JField field : type.getFields()) {
-          flowInto(field);
-        }
-        for (JMethod method : type.getMethods()) {
-          flowInto(method);
-        }
+        fullFlowIntoType(type);
       }
     }
 
@@ -1041,7 +1029,7 @@ public class UnifyAst {
   }
 
   private boolean hasAnyExports(JDeclaredType t) {
-    if (!program.typeOracle.isInteropEnabled()) {
+    if (!jsInteropEnabled) {
       return false;
     }
 
@@ -1182,11 +1170,11 @@ public class UnifyAst {
       // The traversal of this type will accumulate rebinder type to rebound type associations, but
       // the accumulation should start from scratch, so clear any existing associations that might
       // have been collected in previous compiles.
-      minimalRebuildCache.clearRebinderTypeAssociations(type.getName());
-      fullFlowTypes.add(type.getName());
+      minimalRebuildCache.clearRebinderTypeAssociations(typeName);
+      fullFlowTypes.add(typeName);
       // Remove the type from the remaining stale types set so that the fullFlowIntoStaleTypes()
       // attempt is shorter.
-      processedStaleTypeNames.add(type.getName());
+      processedStaleTypeNames.add(typeName);
       instantiate(type);
       for (JField field : type.getFields()) {
         flowInto(field);
@@ -1484,7 +1472,7 @@ public class UnifyAst {
   }
 
   private boolean isJsType(JDeclaredType intf) {
-    if (!program.typeOracle.isInteropEnabled()) {
+    if (!jsInteropEnabled) {
       return false;
     }
 
