@@ -166,6 +166,23 @@ public class PdfJsWindow extends WindowEx
       {
          jumpToSource.style.display = synctex ? "inline-block" : "none";
       }
+
+      // set the initial view once the pages appear (on Qt this doesn't happen
+      // automatically)
+      var win = this;
+      var t = window.setInterval(function() 
+      {
+         if (typeof(win) === "undefined" || !win) 
+         {
+            clearInterval(t);
+            return;
+         }
+         if (!win.PDFView.loading) 
+         {
+            clearInterval(t);
+            win.PDFView.setInitialView();
+         }
+      }, 50);
    }-*/;
    
    public final native void goToPage(int page) /*-{

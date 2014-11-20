@@ -142,15 +142,17 @@ QWebPage* WebPage::createWindow(QWebPage::WebWindowType)
    else
    {
       // show toolbar unless this is the pdf.js window
-      bool showToolbar = true;
+      SecondaryWindow* pWindow = new SecondaryWindow(baseUrl_,
+         pendingNamedWindow_ != QString::fromUtf8("rstudio_pdfjs"));
+      pWindow->show();
+
+      // if we have a name set, start tracking this window
       if (!pendingNamedWindow_.isEmpty())
       {
-         if (pendingNamedWindow_ == QString::fromUtf8("rstudio_pdfjs"))
-            showToolbar = false;
+         s_windowTracker.addWindow(pendingNamedWindow_, pWindow);
          pendingNamedWindow_.clear();
       }
-      SecondaryWindow* pWindow = new SecondaryWindow(baseUrl_, showToolbar);
-      pWindow->show();
+
       return pWindow->webView()->webPage();
    }
 }
