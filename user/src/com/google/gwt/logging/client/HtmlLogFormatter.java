@@ -38,9 +38,10 @@ public class HtmlLogFormatter extends FormatterImpl {
   public String format(LogRecord event) {
     final StringBuilder html = new StringBuilder();
     html.append(getHtmlPrefix(event));
-    html.append(getRecordInfo(event, " "));
+    html.append(getRecordInfo(event, "<br>"));
     html.append(getEscaped(event.getMessage()));
     if (showStackTraces && event.getThrown() != null) {
+      html.append("<br>");
       event.getThrown().printStackTrace(new StackTracePrintStream(html) {
         @Override
         public void append(String str) {

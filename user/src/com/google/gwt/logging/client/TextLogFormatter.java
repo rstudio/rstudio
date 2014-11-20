@@ -37,6 +37,7 @@ public class TextLogFormatter extends FormatterImpl {
     message.append(getRecordInfo(event, "\n"));
     message.append(event.getMessage());
     if (showStackTraces && event.getThrown() != null) {
+      message.append("\n");
       event.getThrown().printStackTrace(new StackTracePrintStream(message));
     }
     return message.toString();
