@@ -41,7 +41,7 @@ using namespace core;
 namespace desktop {
 
 MainWindow::MainWindow(QUrl url) :
-      GwtWindow(false, false, url, NULL),
+      GwtWindow(false, false, QString(), url, NULL),
       menuCallback_(this),
       gwtCallback_(this, this),
       pSessionLauncher_(NULL),

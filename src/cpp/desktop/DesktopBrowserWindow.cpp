@@ -29,9 +29,11 @@ namespace desktop {
 
 BrowserWindow::BrowserWindow(bool showToolbar,
                              bool adjustTitle,
+                             QString name,
                              QUrl baseUrl,
                              QWidget* pParent) :
-   QMainWindow(pParent)
+   QMainWindow(pParent),
+   name_(name)
 {
    adjustTitle_ = adjustTitle;
    progress_ = 0;
@@ -133,6 +135,11 @@ void BrowserWindow::postWebViewEvent(QEvent *keyEvent)
 void BrowserWindow::triggerPageAction(QWebPage::WebAction action)
 {
    webView()->triggerPageAction(action);
+}
+
+void BrowserWindow::onJavaScriptWindowObjectCleared()
+{
+   qDebug() << "javascript window object cleared: " << name_;
 }
 
 } // namespace desktop

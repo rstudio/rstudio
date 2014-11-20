@@ -22,8 +22,8 @@
 namespace desktop {
 
 
-SatelliteWindow::SatelliteWindow(MainWindow* pMainWindow) :
-    GwtWindow(false, true),
+SatelliteWindow::SatelliteWindow(MainWindow* pMainWindow, QString name) :
+    GwtWindow(false, true, name),
     gwtCallback_(pMainWindow, this)
 {
    setAttribute(Qt::WA_QuitOnClose, false);

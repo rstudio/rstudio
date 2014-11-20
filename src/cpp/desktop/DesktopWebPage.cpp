@@ -101,7 +101,7 @@ QWebPage* WebPage::createWindow(QWebPage::WebWindowType)
       else
       {
          // create and size
-         pSatellite = new SatelliteWindow(pMainWindow);
+         pSatellite = new SatelliteWindow(pMainWindow, name);
          pSatellite->resize(width, height);
 
          // try to tile the window (but leave pdf window alone
