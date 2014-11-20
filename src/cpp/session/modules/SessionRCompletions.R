@@ -76,7 +76,7 @@ assign(x = ".rs.acCompletionTypes",
    else if (isS4(object))
    {
       if (inherits(object, "standardGeneric") || 
-          inherits(object, "nonstandardGenericFunction"))
+             inherits(object, "nonstandardGenericFunction"))
          .rs.acCompletionTypes$S4_GENERIC
       else if (inherits(object, "MethodDefinition"))
          .rs.acCompletionTypes$S4_METHOD
@@ -440,6 +440,9 @@ assign(x = ".rs.acCompletionTypes",
                                             overrideInsertParens = FALSE,
                                             orderStartsWithAlnumFirst = TRUE)
 {
+   if (is.null(results))
+      results <- character()
+   
    # Ensure other 'vector' completions are of the same length as 'results'
    n <- length(results)
    packages <- .rs.formCompletionVector(packages, "", n)
@@ -882,7 +885,7 @@ assign(x = ".rs.acCompletionTypes",
                                                   filePath)
 {
    filePath <- suppressWarnings(.rs.normalizePath(filePath))
-   
+
    ## NOTE: these are passed in as lists of strings; convert to character
    additionalArgs <- as.character(additionalArgs)
    excludeArgs <- as.character(excludeArgs)
@@ -905,8 +908,8 @@ assign(x = ".rs.acCompletionTypes",
       return(.rs.attemptRoxygenTagCompletion(token))
    
    if (.rs.acContextTypes$FUNCTION %in% type &&
-       string[[1]] == "data" &&
-       numCommas[[1]] == 0)
+          string[[1]] == "data" &&
+          numCommas[[1]] == 0)
       return(.rs.getCompletionsData(token))
    
    # No information on completions other than token
@@ -946,7 +949,8 @@ assign(x = ".rs.acCompletionTypes",
    # Shiny completions
    
    ## Completions for server.r (from ui.r)
-   if (type[[1]] == .rs.acContextTypes$DOLLAR &&
+   if (type[[1]] %in% c(.rs.acContextTypes$DOLLAR,
+                        .rs.acContextTypes$DOUBLE_BRACKET) &&
           tolower(basename(filePath)) == "server.r" &&
           string[[1]] %in% c("input", "output"))
    {
@@ -968,6 +972,7 @@ assign(x = ".rs.acCompletionTypes",
    ## Completions for ui.r (from server.r)
    if (type[[1]] == .rs.acContextTypes$FUNCTION &&
           tolower(basename(filePath)) == "ui.r" &&
+          numCommas[[1]] == 0 &&
           (.rs.endsWith(string[[1]], "Input") || .rs.endsWith(string[[1]], "Output")))
    {
       completions <- .rs.getCompletionsFromShinyServer(token, filePath, string[[1]], type[[1]])
@@ -1447,7 +1452,7 @@ assign(x = ".rs.acCompletionTypes",
                               results = results,
                               packages = serverPath,
                               quote = TRUE,
-                              type = .rs.acCompletionTypes$STRING,
+                              type = .rs.acCompletionTypes$CONTEXT,
                               excludeOtherCompletions = TRUE))
 })
 
@@ -1470,9 +1475,9 @@ assign(x = ".rs.acCompletionTypes",
    return(.rs.makeCompletions(token = token,
                               results = results,
                               packages = uiPath,
-                              quote = FALSE,
-                              type = .rs.acCompletionTypes$STRING,
-                              excludeOtherCompletions = TRUE))   
+                              quote = type == .rs.acContextTypes$DOUBLE_BRACKET,
+                              type = .rs.acCompletionTypes$CONTEXT,
+                              excludeOtherCompletions = type == .rs.acContextTypes$DOLLAR))
 })
 
 .rs.addFunction("shinyUICompletions", function(file)
@@ -1486,7 +1491,7 @@ assign(x = ".rs.acCompletionTypes",
    if (identical(mtime, .rs.get(fileCacheName)) &&
           !is.null(.rs.get(completionsCacheName)))
    {
-      .rs.get(completionsCacheName)
+      return(.rs.get(completionsCacheName))
    }
    
    # Otherwise, get the completions
@@ -1502,8 +1507,14 @@ assign(x = ".rs.acCompletionTypes",
    inputEnv <- new.env(parent = emptyenv())
    outputEnv <- new.env(parent = emptyenv())
    
+   inputCount <- new.env(parent = emptyenv())
+   inputCount$count <- 1
+   
+   outputCount <- new.env(parent = emptyenv())
+   outputCount$count <- 1
+   
    lapply(parsed, function(object) {
-      .rs.doShinyUICompletions(object, inputEnv, outputEnv, 0, 0)
+      .rs.doShinyUICompletions(object, inputEnv, outputEnv, inputCount, outputCount)
    })
    
    completions <- list(input = unlist(mget(objects(inputEnv), envir = inputEnv), use.names = FALSE),
@@ -1519,35 +1530,36 @@ assign(x = ".rs.acCompletionTypes",
 .rs.addFunction("doShinyUICompletions", function(object,
                                                  inputs,
                                                  outputs,
-                                                 nInputs,
-                                                 nOutputs)
+                                                 inputCount,
+                                                 outputCount)
 {
    if (is.call(object))
    {
       name <- as.character(object[[1]])
       if (.rs.endsWith(name, "Output"))
       {
-         nOutputs <- nOutputs + 1
-         outputs[[as.character(nOutputs)]] <- as.character(object[[2]])
+         outputCount$count <- outputCount$count + 1
+         outputs[[as.character(outputCount$count)]] <- as.character(object[[2]])
       }
       
       if (.rs.endsWith(name, "Input"))
       {
-         nInputs <- nInputs + 1
-         inputs[[as.character(nInputs)]] <- as.character(object[[2]])
+         inputCount$count <- inputCount$count + 1
+         inputs[[as.character(inputCount$count)]] <- as.character(object[[2]])
       }
       
-      for (j in 2:length(object))
-      {
-         if (is.call(object[[j]]))
+      if (length(object) > 1)
+         for (j in 2:length(object))
          {
-            .rs.doShinyServerCompletions(object[[j]],
-                                         inputs,
-                                         outputs,
-                                         nInputs,
-                                         nOutputs)
+            if (is.call(object[[j]]))
+            {
+               .rs.doShinyUICompletions(object[[j]],
+                                        inputs,
+                                        outputs,
+                                        inputCount,
+                                        outputCount)
+            }
          }
-      }
    }
    
 })
@@ -1563,7 +1575,7 @@ assign(x = ".rs.acCompletionTypes",
    if (identical(mtime, .rs.get(fileCacheName)) &&
           !is.null(.rs.get(completionsCacheName)))
    {
-      .rs.get(completionsCacheName)
+      return(.rs.get(completionsCacheName))
    }
    
    # Otherwise, get the completions
@@ -1579,8 +1591,14 @@ assign(x = ".rs.acCompletionTypes",
    inputEnv <- new.env(parent = emptyenv())
    outputEnv <- new.env(parent = emptyenv())
    
+   inputCount <- new.env(parent = emptyenv())
+   inputCount$count <- 1
+   
+   outputCount <- new.env(parent = emptyenv())
+   outputCount$count <- 1
+   
    lapply(parsed, function(object) {
-      .rs.doShinyServerCompletions(object, inputEnv, outputEnv, 0, 0)
+      .rs.doShinyServerCompletions(object, inputEnv, outputEnv, inputCount, outputCount)
    })
    
    completions <- list(input = unlist(mget(objects(inputEnv), envir = inputEnv), use.names = FALSE),
@@ -1596,40 +1614,41 @@ assign(x = ".rs.acCompletionTypes",
 .rs.addFunction("doShinyServerCompletions", function(object,
                                                      inputs,
                                                      outputs,
-                                                     nInputs,
-                                                     nOutputs)
+                                                     inputCount,
+                                                     outputCount)
 {
    if (is.call(object))
    {
       operator <- as.character(object[[1]])
-      if (operator == "$")
+      if (operator == "$" || operator == "[[")
       {
          name <- as.character(object[[2]])
          value <- as.character(object[[3]])
          if (name == "output")
          {
-            nOutputs <- nOutputs + 1
-            outputs[[as.character(nOutputs)]] <- value
+            outputCount$count <- outputCount$count + 1
+            outputs[[as.character(outputCount$count)]] <- .rs.stripSurrounding(value)
          }
          
          if (name == "input")
          {
-            nInputs <- nInputs + 1
-            inputs[[as.character(nInputs)]] <- value
+            inputCount$count <- inputCount$count + 1
+            inputs[[as.character(inputCount$count)]] <- .rs.stripSurrounding(value)
          }
       }
       
-      for (j in 2:length(object))
-      {
-         if (is.call(object[[j]]))
+      if (length(object) > 1)
+         for (j in 2:length(object))
          {
-            .rs.doShinyUICompletions(object[[j]],
-                                     inputs,
-                                     outputs,
-                                     nInputs,
-                                     nOutputs)
+            if (is.call(object[[j]]))
+            {
+               .rs.doShinyServerCompletions(object[[j]],
+                                            inputs,
+                                            outputs,
+                                            inputCount,
+                                            outputCount)
+            }
          }
-      }
    }
    
 })
