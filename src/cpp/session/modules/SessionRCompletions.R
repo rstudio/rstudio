@@ -51,15 +51,16 @@ assign(x = ".rs.acCompletionTypes",
           S4_METHOD = 11,
           R5_CLASS = 12,
           R5_OBJECT = 13,
-          FILE = 14,
-          CHUNK = 15,
-          ROXYGEN = 16,
-          HELP = 17,
-          STRING = 18,
-          PACKAGE = 19,
-          KEYWORD = 20,
-          OPTION = 21,
-          DATASET = 22,
+          R5_METHOD = 14,
+          FILE = 15,
+          CHUNK = 16,
+          ROXYGEN = 17,
+          HELP = 18,
+          STRING = 19,
+          PACKAGE = 20,
+          KEYWORD = 21,
+          OPTION = 22,
+          DATASET = 23,
           CONTEXT = 99
        )
 )
@@ -67,7 +68,9 @@ assign(x = ".rs.acCompletionTypes",
 .rs.addFunction("getCompletionType", function(object)
 {
    # Reference classes
-   if (inherits(object, "refObjectGenerator"))
+   if (inherits(object, "refMethodDef"))
+      .rs.acCompletionTypes$R5_METHOD
+   else if (inherits(object, "refObjectGenerator"))
       .rs.acCompletionTypes$R5_CLASS
    else if (inherits(object, "refClass"))
       .rs.acCompletionTypes$R5_OBJECT
@@ -564,6 +567,7 @@ assign(x = ".rs.acCompletionTypes",
    object <- .rs.getAnywhere(string, envir)
    if (!is.null(object))
    {
+      allNames <- character()
       names <- character()
       type <- numeric()
       
@@ -601,9 +605,29 @@ assign(x = ".rs.acCompletionTypes",
          {
             allNames <- dollarNamesMethod(object)
          }
+         
+         # Reference class generators / objects
+         else if (inherits(object, "refObjectGenerator"))
+         {
+            allNames <- Reduce(union, list(
+               objects(object@generator@.xData, all.names = TRUE),
+               objects(object$def@refMethods, all.names = TRUE),
+               c("new", "help", "methods", "fields", "lock", "accessors")
+            ))
+         }
+         
+         # Reference class objects
+         else if (inherits(object, "refClass"))
+         {
+            allNames <- ls(object, all.names = TRUE)
+         }
+         
+         # Other objects
          else
          {
             # Don't allow S4 objects for dollar name resolution
+            # They will need to have defined a .DollarNames method, which
+            # should have been resolved previously
             if (!isS4(object))
             {
                allNames <- .rs.getNames(object)
