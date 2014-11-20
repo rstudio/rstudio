@@ -267,7 +267,9 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
              }
           });
           executeOnPdfJsLoad_ = loadPdf;
-          display_.openMinimalWindow(viewerUrl, false, width, height, options);
+          
+          // always open as web window (we need window.opener to be hooked up)
+          display_.openWebMinimalWindow(viewerUrl, false, width, height, options);
       }
       else
       {

@@ -282,6 +282,21 @@ public class DefaultGlobalDisplay extends GlobalDisplay
                                       height,
                                       showLocation);
    }
+   
+   @Override
+   public void openWebMinimalWindow(String url,
+                                    boolean showLocation,
+                                    int width, 
+                                    int height, 
+                                    NewWindowOptions options)
+   {
+      windowOpener_.openWebMinimalWindow(this,
+                                         url,
+                                         options,
+                                         width,
+                                         height,
+                                         showLocation);
+   }
 
    @Override
    public void openSatelliteWindow(String name, int width, int height)

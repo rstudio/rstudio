@@ -94,7 +94,8 @@ void BrowserWindow::adjustTitle()
 
 void BrowserWindow::setProgress(int p)
 {
-   progress_ = p;
+   progress_ = p
+;
    adjustTitle();
 }
 
@@ -139,7 +140,13 @@ void BrowserWindow::triggerPageAction(QWebPage::WebAction action)
 
 void BrowserWindow::onJavaScriptWindowObjectCleared()
 {
-   qDebug() << "javascript window object cleared: " << name_;
+   QString cmd = QString::fromUtf8("if (window.opener && "
+      "window.opener.registerDesktopChildWindow))"
+      "   window.opener.registerDesktopChildWindow('");
+   cmd.append(name_);
+   cmd.append(QString::fromUtf8("', window);"));
+
+   webView()->page()->mainFrame()->evaluateJavaScript(cmd);
 }
 
 } // namespace desktop
