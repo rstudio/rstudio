@@ -1013,6 +1013,11 @@ public class AceEditor implements DocDisplay,
       int row = getSession().getSelection().getRange().getStart().getRow();
       return getSession().getLine(row);
    }
+   
+   public String getCurrentLineUpToCursor()
+   {
+      return getCurrentLine().substring(0, getCursorPosition().getColumn());
+   }
 
    public int getCurrentLineNum()
    {
