@@ -41,6 +41,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
+import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.ServerError;
@@ -1510,7 +1511,7 @@ public class RCompletionManager implements CompletionManager
             return;
          }
          
-         boolean insertParen = qualifiedName.isFunctionType();
+         boolean insertParen = RCompletionType.isFunctionType(qualifiedName.type);
          
          // Don't insert a paren if there is already a '(' following
          // the cursor
