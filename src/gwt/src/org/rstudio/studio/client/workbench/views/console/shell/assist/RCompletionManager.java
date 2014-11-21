@@ -157,11 +157,8 @@ public class RCompletionManager implements CompletionManager
             lastSelectedItem_ = event.getSelectedItem();
             if (popup_.isHelpVisible())
                context_.showHelp(lastSelectedItem_);
-            else if (!gettingDeferredHelp_)
-            {
-               gettingDeferredHelp_ = true;
+            else
                showHelpDeferred(context_, lastSelectedItem_, 1000);
-            }
          }
       }) ;
       
@@ -1724,18 +1721,19 @@ public class RCompletionManager implements CompletionManager
                                 final QualifiedName item,
                                 int milliseconds)
    {
-      new Timer()
-      {
+      if (helpRequest_ != null && helpRequest_.isRunning())
+         helpRequest_.cancel();
+      
+      helpRequest_ = new Timer() {
          @Override
          public void run()
          {
-            gettingDeferredHelp_ = false;
             if (item.equals(lastSelectedItem_) && popup_.isShowing())
                context.showHelp(item);
          }
-      }.schedule(milliseconds);
+      };
+      helpRequest_.schedule(milliseconds);
    }
-   
    
    private GlobalDisplay globalDisplay_;
    private FileTypeRegistry fileTypeRegistry_;
@@ -1765,6 +1763,6 @@ public class RCompletionManager implements CompletionManager
    private RCompletionToolTip sigTip_;
    private NativeEvent nativeEvent_;
    
-   private boolean gettingDeferredHelp_;
    private QualifiedName lastSelectedItem_;
+   private Timer helpRequest_;
 }
