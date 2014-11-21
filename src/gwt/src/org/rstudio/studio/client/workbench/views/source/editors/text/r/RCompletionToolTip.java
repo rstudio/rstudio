@@ -37,18 +37,9 @@ public class RCompletionToolTip extends CppCompletionToolTip
          return;
       }
       
-      if (c == '(')
-         ++parenBalance_;
-
-      if (c == ')')
-      {
-         if (parenBalance_ <= 0)
-         {
-            reset();
-            return;
-         }
-         --parenBalance_;
-      }
+      if (updateParenCount(c))
+         return;
+      
    }
    
    public void previewKeyDown(NativeEvent event)
@@ -62,24 +53,47 @@ public class RCompletionToolTip extends CppCompletionToolTip
          return;
       }
       
+      if (event.getKeyCode() == KeyCodes.KEY_RIGHT)
+      {
+         char ch = docDisplay_.getCharacterAtCursor();
+         updateParenCount(ch);
+      }
+      
       if (event.getKeyCode() == KeyCodes.KEY_BACKSPACE)
       {
          if (StringUtil.isNullOrEmpty(docDisplay_.getSelectionValue()))
          {
-            String ch = docDisplay_.getCharacterBeforeCursor();
-            if (ch == ")")
-               ++parenBalance_;
-            if (ch == "(")
-            {
-               if (parenBalance_ <= 0)
-               {
-                  reset();
-                  return;
-               }
-               --parenBalance_;
-            }
+            char ch = docDisplay_.getCharacterBeforeCursor();
+            updateParenCount(ch, true);
          }
       }
+   }
+   
+   // Returns true if the popup was reset
+   private boolean updateParenCount(char ch,
+                                    boolean reverse)
+   {
+      char open = reverse ? ')' : '(';
+      char close = reverse ? '(' : ')';
+      
+      if (ch == open)
+         ++parenBalance_;
+      
+      if (ch == close)
+      {
+         if (parenBalance_ <= 0)
+         {
+            reset();
+            return true;
+         }
+         --parenBalance_;
+      }
+      return false;
+   }
+   
+   private boolean updateParenCount(char ch)
+   {
+      return updateParenCount(ch, false);
    }
    
    public void reset()

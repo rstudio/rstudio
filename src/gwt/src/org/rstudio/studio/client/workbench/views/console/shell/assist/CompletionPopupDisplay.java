@@ -47,6 +47,7 @@ public interface CompletionPopupDisplay
    int getOffsetHeight() ;
 
    QualifiedName getSelectedValue() ;
+   QualifiedName getLastSelectedValue() ;
    Rectangle getSelectionRect() ;
 
    boolean selectPrev() ;

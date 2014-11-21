@@ -93,10 +93,11 @@ public class CompletionPopupPanel extends ThemedPopupPanel
                                        7,
                                        true,
                                        false) ;
-
+      
       list.addSelectionCommitHandler(new SelectionCommitHandler<QualifiedName>() {
          public void onSelectionCommit(SelectionCommitEvent<QualifiedName> event)
          {
+            lastSelectedValue_ = event.getSelectedItem();
             SelectionCommitEvent.fire(CompletionPopupPanel.this, 
                                       event.getSelectedItem()) ;
          }
@@ -104,6 +105,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       list.addSelectionHandler(new SelectionHandler<QualifiedName>() {
          public void onSelection(SelectionEvent<QualifiedName> event)
          {
+            lastSelectedValue_ = event.getSelectedItem();
             SelectionEvent.fire(CompletionPopupPanel.this, 
                                 event.getSelectedItem()) ;
          }
@@ -142,6 +144,11 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          return null ;
       
       return list_.getSelectedItem() ;
+   }
+   
+   public QualifiedName getLastSelectedValue()
+   {
+      return lastSelectedValue_;
    }
    
    public Rectangle getSelectionRect()
@@ -278,5 +285,6 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    
    private CompletionList<QualifiedName> list_ ;
    private HelpInfoPane help_ ;
+   private static QualifiedName lastSelectedValue_ ;
    private final ConsoleResources.ConsoleStyles styles_;
 }

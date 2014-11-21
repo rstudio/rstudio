@@ -576,9 +576,16 @@ public class RCompletionManager implements CompletionManager
             String token = StringUtil.getToken(
                   docDisplay_.getCurrentLine(),
                   input_.getCursorPosition().getColumn(),
-                  "[a-z]",
+                  "[a-zA-Z0-9._]",
                   false,
                   true);
+            
+            QualifiedName lastSelectedItem = popup_.getLastSelectedValue();
+            if (lastSelectedItem != null)
+            {
+               if (lastSelectedItem.name.equals(token))
+                  displaySignatureToolTip(lastSelectedItem);
+            }
             
             if (token.matches("^(library|require|requireNamespace|data)\\s*$"))
                canAutoPopup = true;
@@ -1629,48 +1636,55 @@ public class RCompletionManager implements CompletionManager
          
          // Show a signature popup if we just completed a function
          if (RCompletionType.isFunctionType(qualifiedName.type))
-         {
-            // We want to find the cursor position, and place the popup
-            // above the cursor.
-            server_.getArgs(
-                  qualifiedName.name,
-                  qualifiedName.source,
-                  new ServerRequestCallback<String>()
-                  {
-                     
-                     @Override
-                     public void onResponseReceived(String args)
-                     {
-                        if (!StringUtil.isNullOrEmpty(args))
-                           displaySignatureTip(qualifiedName.name + args);
-                     }
-
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        Debug.logError(error);
-                     }
-                  });
-         }
+            displaySignatureToolTip(qualifiedName);
       }
       
-      private void displaySignatureTip(String signature)
-      {
-         Rectangle cursorWindow = docDisplay_.getCursorBounds();
-         sigTip_.setText(signature);
-         sigTip_.resolvePositionRelativeTo(
-               cursorWindow.getLeft(),
-               cursorWindow.getTop());
-         sigTip_.show();
-         sigTip_.setVisible(true);
-      }
-
       private final Invalidation.Token invalidationToken_ ;
       private InputEditorSelection selection_ ;
       private final boolean canAutoAccept_;
       private boolean suggestOnAccept_;
       private boolean overrideInsertParens_;
       
+   }
+   
+   private void displaySignatureToolTip(final QualifiedName qualifiedName)
+   {
+      // We want to find the cursor position, and place the popup
+      // above the cursor.
+      server_.getArgs(
+            qualifiedName.name,
+            qualifiedName.source,
+            new ServerRequestCallback<String>()
+            {
+
+               @Override
+               public void onResponseReceived(String args)
+               {
+                  if (!StringUtil.isNullOrEmpty(args))
+                     doDisplaySignatureToolTip(qualifiedName.name + args);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
+   }
+   
+   
+   private void doDisplaySignatureToolTip(String signature)
+   {
+      if (sigTip_.isShowing())
+         sigTip_.hide();
+
+      Rectangle cursorWindow = docDisplay_.getCursorBounds();
+      sigTip_.setText(signature);
+      sigTip_.resolvePositionRelativeTo(
+            cursorWindow.getLeft(),
+            cursorWindow.getTop());
+      sigTip_.show();
+      sigTip_.setVisible(true);
    }
    
    private boolean isCursorInRMode()

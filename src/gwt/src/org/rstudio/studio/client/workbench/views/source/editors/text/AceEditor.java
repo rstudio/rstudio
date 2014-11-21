@@ -1014,23 +1014,26 @@ public class AceEditor implements DocDisplay,
       return getSession().getLine(row);
    }
    
-   public String getCharacterAtCursor()
+   public char getCharacterAtCursor()
    {
       Position cursorPos = getCursorPosition();
       int column = cursorPos.getColumn();
       String line = getLine(cursorPos.getRow());
       if (column == line.length())
-         return "";
+         return '\0';
       
-      return line.substring(column, column + 1);
+      return line.charAt(column);
    }
    
-   public String getCharacterBeforeCursor()
+   public char getCharacterBeforeCursor()
    {
       Position cursorPos = getCursorPosition();
       int column = cursorPos.getColumn();
+      if (column == 0)
+         return '\0';
+      
       String line = getLine(cursorPos.getRow());
-      return line.substring(column - 1, column);
+      return line.charAt(column - 1);
    }
    
    
