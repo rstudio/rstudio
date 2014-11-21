@@ -64,9 +64,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    private void hideAll()
    {
       // Throw everything off-screen to reduce flickering
-      help_.setPopupPosition(-1000, -1000);
-      setPopupPosition(-1000, -1000);
-      help_.clearHelp(false);
+      setVisible(false);
       help_.setVisible(false);
    }
 
@@ -254,7 +252,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    {
       return help_.isVisible() && help_.isShowing();
    }
-
+   
    private HTML setText(String text)
    {
       HTML contents = new HTML() ;
