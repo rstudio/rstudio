@@ -42,6 +42,7 @@ import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -526,6 +527,10 @@ public class RCompletionManager implements CompletionManager
    
    public boolean previewKeyPress(char c)
    {
+      // Bail if we're not in R mode
+      if (!isCursorInRMode())
+         return false;
+      
       if (popup_.isShowing())
       {
          if (isValidForRIdentifier(c) || c == ':')
@@ -1620,6 +1625,22 @@ public class RCompletionManager implements CompletionManager
       private boolean suggestOnAccept_;
       private boolean overrideInsertParens_;
       
+   }
+   
+   private boolean isCursorInRMode()
+   {
+      if (docDisplay_.getFileType().isR())
+         return true;
+      
+      String m = docDisplay_.getLanguageMode(docDisplay_.getCursorPosition());
+      
+      if (m == null)
+         return false;
+      
+      if (m.equals(TextFileType.R_LANG_MODE))
+         return true;
+      
+      return false;
    }
    
    private String getSourceDocumentPath()
