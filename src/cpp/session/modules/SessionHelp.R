@@ -122,11 +122,29 @@ options(help_type = "html")
       error = function(e) NULL
    )
    
-   objectNames <- c(
-      objects(ns, all.names = TRUE),
-      unname(grep(" ", datasets$results[, "Item"], fixed = TRUE, value = TRUE, invert = TRUE))
+   objectNames <- objects(ns, all.names = TRUE)
+   datasetNames <- unname(grep(" ", datasets$results[, "Item"], fixed = TRUE, value = TRUE, invert = TRUE))
+   
+   objects <- tryCatch(
+      mget(objectNames, envir = ns, inherits = TRUE),
+      error = function(e) NULL
    )
-   objects <- mget(objectNames, envir = ns, inherits = TRUE)
+   
+   # Try to get the datasets from the namespace. These will only exist if they have
+   # been explicitly loaded, so be careful to tryCatch here.
+   data <- lapply(datasetNames, function(x) {
+      tryCatch(
+         get(x, envir = ns),
+         error = function(e) NULL
+      )
+   })
+   
+   # Combine them together
+   if (length(data))
+   {
+      objects <- c(objects, data)
+      objectNames <- c(objectNames, datasetNames)
+   }
    
    # Find which object is actually identical to the one we have
    success <- FALSE
