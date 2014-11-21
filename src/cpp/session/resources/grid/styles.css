@@ -182,15 +182,15 @@ table.dataTable th div:first-child {
 }
 
 table.dataTable thead .sorting {
-    background: url("datatables/images/sort_both.png") no-repeat right 4px top 4px;
+    background: url("datatables/images/sort_both.png") no-repeat right top;
 }
 
 table.dataTable thead .sorting_desc {
-    background: url("datatables/images/sort_desc.png") no-repeat right 4px top 4px;
+    background: url("datatables/images/sort_desc.png") no-repeat right top;
 }
 
 table.dataTable thead .sorting_asc {
-    background: url("datatables/images/sort_asc.png") no-repeat right 4px top 4px;
+    background: url("datatables/images/sort_asc.png") no-repeat right top;
 }
 
 th:focus {

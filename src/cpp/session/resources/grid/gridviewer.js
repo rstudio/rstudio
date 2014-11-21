@@ -22,7 +22,7 @@ var table;
 var cols;
 
 // dismiss the active filter popup, if any
-var dismissActivePopup = function() { };
+var dismissActivePopup = null;
 
 // throttle to avoid redrawing the table too frequently (when filtering,
 // resizing, etc.)
@@ -55,7 +55,7 @@ var stepPrecision = function(str) {
 var showError = function(msg) {
   document.getElementById("errorWrapper").style.display = "block";
   document.getElementById("errorMask").style.display = "block";
-  document.getElementById("error").innerText = msg;
+  document.getElementById("error").textContent = msg;
   document.getElementById("data").style.display = "none";
 };
 
@@ -145,19 +145,19 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
       max = parseInt(val);
     }
     var minVal = document.createElement("div");
-    minVal.innerText = min;
+    minVal.textContent = min;
     minVal.className = "numMin selected";
     popup.appendChild(minVal);
     var maxVal = document.createElement("div");
-    maxVal.innerText = max;
+    maxVal.textContent = max;
     maxVal.className = "numMax selected";
     popup.appendChild(maxVal);
     var slider = document.createElement("div");
     slider.className = "numSlider";
     popup.appendChild(slider);
     var updateView = debounce(function() {
-      searchText = minVal.innerText === min && maxVal.innerText === max ? 
-        "" : minVal.innerText + "-" + maxVal.innerText;
+      searchText = minVal.textContent === min && maxVal.textContent === max ? 
+        "" : minVal.textContent + "-" + maxVal.textContent;
       table.columns(idx).search(searchText).draw();
     }, 200);
     $(slider).slider({
@@ -168,13 +168,13 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
                        stepPrecision(col.col_max.toString())),
       values: [min, max],
       slide:  function(event, ui) {
-        minVal.innerText = ui.values[0];
-        maxVal.innerText = ui.values[1];
+        minVal.textContent = ui.values[0];
+        maxVal.textContent = ui.values[1];
         updateView();
       }
     });
   }, onDismiss, false);
-  ele.innerText = "[...]";
+  ele.textContent = "[...]";
   return ele;
 };
 
@@ -187,7 +187,7 @@ var createFactorFilterUI = function(idx, col, onDismiss) {
   var setValHandler = function(factor, text) {
       return function(evt) {
         table.columns(idx).search(factor.toString()).draw();
-        display.innerText = text;
+        display.textContent = text;
       };
   };
   invokeFilterPopup(ele, function(popup) {
@@ -197,7 +197,7 @@ var createFactorFilterUI = function(idx, col, onDismiss) {
     var current = val.length > 0 ? parseInt(val) : 0;
     for (var i = 0; i < col.col_vals.length; i++) {
       var opt = document.createElement("div");
-      opt.innerText = col.col_vals[i];
+      opt.textContent = col.col_vals[i];
       opt.className = "factorListItem";
       opt.addEventListener("click", setValHandler(i + 1, col.col_vals[i]));
       list.appendChild(opt);
@@ -225,7 +225,8 @@ var createTextFilterUI = function(idx, col, onDismiss) {
     onDismiss();
   });
   input.addEventListener("focus", function(evt) {
-    dismissActivePopup();
+    if (dismissActivePopup)
+      dismissActivePopup();
   });
   ele.addEventListener("click", function(evt) {
     input.focus();
@@ -243,6 +244,7 @@ var invokeFilterPopup = function (ele, buildPopup, onDismiss, dismissOnClick) {
     if (popup) {
       document.body.removeChild(popup);
       document.body.removeEventListener(checkLightDismiss);
+      dismissActivePopup = null;
       popup = null;
       onDismiss();
       return true;
@@ -258,7 +260,7 @@ var invokeFilterPopup = function (ele, buildPopup, onDismiss, dismissOnClick) {
 
   ele.addEventListener("click", function(evt) {
     // dismiss any other popup
-    if (dismissActivePopup != dismissPopup) {
+    if (dismissActivePopup && dismissActivePopup != dismissPopup) {
       dismissActivePopup();
     }
     if (popup) {
@@ -312,7 +314,8 @@ var createFilterUI = function(idx, col) {
   clear.className = "clearFilter";
   clear.style.display = "none";
   clear.addEventListener("click", function(evt) {
-    dismissActivePopup();
+    if (dismissActivePopup)
+      dismissActivePopup();
     table.columns(idx).search("").draw();
     setUnfiltered();
     evt.preventDefault();
@@ -321,7 +324,7 @@ var createFilterUI = function(idx, col) {
   host.appendChild(clear);
 
   val = document.createElement("div");
-  val.innerText = "All";
+  val.textContent = "All";
   val.addEventListener("click", function(evt) {
     if (col.col_type === "numeric") {
       ui = createNumericFilterUI(idx, col, onDismiss);
@@ -335,7 +338,9 @@ var createFilterUI = function(idx, col) {
       host.replaceChild(ui, val);
       host.className = "colFilter filtered";
       clear.style.display = "block";
-      ui.click();
+      var click = document.createEvent("MouseEvents");
+      click.initEvent("click", true, false);
+      ui.dispatchEvent(click);
       evt.preventDefault();
       evt.stopPropagation();
     }
@@ -356,7 +361,7 @@ var createHeader = function(idx, col) {
 
   // add the title
   var title = document.createElement("div");
-  title.innerText = col.col_name;
+  title.textContent = col.col_name;
   th.appendChild(title);
   th.title = col.col_type;
   if (col.col_type === "numeric") {
@@ -541,3 +546,4 @@ window.applySizeChange = function() {
 };
 
 })();
+
