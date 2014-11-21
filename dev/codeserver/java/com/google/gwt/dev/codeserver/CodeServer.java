@@ -118,7 +118,7 @@ public class CodeServer {
     OutboxTable outboxes = makeOutboxes(options, startupLogger);
 
     JobEventTable eventTable = new JobEventTable();
-    JobRunner runner = new JobRunner(eventTable, outboxes);
+    JobRunner runner = new JobRunner(eventTable);
 
     JsonExporter exporter = new JsonExporter(options, outboxes);
 

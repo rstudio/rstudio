@@ -119,7 +119,7 @@ public class RecompilerTest extends TestCase {
     Outbox outbox = new Outbox("Transactional Cache", recompiler, options, logger);
     OutboxTable outboxes = new OutboxTable();
     outboxes.addOutbox(outbox);
-    JobRunner runner = new JobRunner(new JobEventTable(), outboxes);
+    JobRunner runner = new JobRunner(new JobEventTable());
 
     // Perform a first compile. This should pass since all resources are valid.
     Result result =

@@ -20,8 +20,10 @@ import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.codeserver.JobEvent.CompileStrategy;
 import com.google.gwt.dev.codeserver.JobEvent.Status;
+import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSortedMap;
 import com.google.gwt.thirdparty.guava.common.util.concurrent.Futures;
 import com.google.gwt.thirdparty.guava.common.util.concurrent.ListenableFuture;
@@ -291,7 +293,16 @@ class Job {
     out.setCompileStrategy(compileStrategy);
     out.setArguments(args);
     out.setTags(tags);
+    out.setMetricMap(getMetricMapSnapshot());
     return out.build();
+  }
+
+  private Map<String, Long> getMetricMapSnapshot() {
+    TreeLogger logger = getLogger();
+    if (logger instanceof AbstractTreeLogger) {
+      return ((AbstractTreeLogger)logger).getMetricMap().getSnapshot();
+    }
+    return ImmutableMap.of(); // not found
   }
 
   /**
@@ -331,6 +342,9 @@ class Job {
     synchronized TreeLogger get() {
       if (child == null) {
         child = parent.branch(Type.INFO, "Job " + jobId);
+        if (child instanceof AbstractTreeLogger) {
+          ((AbstractTreeLogger)child).resetMetricMap();
+        }
       }
       return child;
     }

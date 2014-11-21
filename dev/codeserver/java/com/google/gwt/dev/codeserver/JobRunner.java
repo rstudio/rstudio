@@ -33,12 +33,10 @@ import java.util.concurrent.Executors;
  */
 public class JobRunner {
   private final JobEventTable table;
-  private final OutboxTable outboxes;
   private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-  JobRunner(JobEventTable table, OutboxTable outboxes) {
+  JobRunner(JobEventTable table) {
     this.table = table;
-    this.outboxes = outboxes;
   }
 
   /**
@@ -70,13 +68,29 @@ public class JobRunner {
     executor.submit(new Runnable() {
       @Override
       public void run() {
-        recompile(job, outboxes);
+        try {
+          recompile(job);
+        } catch (Throwable t) {
+          // Try to release the job so the HTTP request will return an error.
+          // (But this might not work if the same exception is thrown while
+          // sending the finished event.)
+          if (!job.isDone()) {
+            try {
+              job.onFinished(new Job.Result(null, null, t));
+              return;
+            } catch (Throwable t2) {
+              // fall through and log original exception
+            }
+          }
+          // Assume everything is broken. Last-ditch attempt to report the error.
+          t.printStackTrace();
+        }
       }
     });
     job.getLogger().log(Type.TRACE, "added job to queue");
   }
 
-  private static void recompile(Job job, OutboxTable outboxes) {
+  private static void recompile(Job job) {
     job.getLogger().log(Type.INFO, "starting job: " + job.getId());
     job.getOutbox().recompile(job);
   }

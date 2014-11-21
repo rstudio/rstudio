@@ -17,6 +17,7 @@ package com.google.gwt.dev.codeserver;
 
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefSchema;
+import com.google.gwt.dev.util.log.MetricName;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
@@ -33,7 +34,7 @@ import java.util.regex.Pattern;
  * <p>JobEvent objects are deeply immutable, though they describe a Job that changes.
  */
 public final class JobEvent {
-  private static final Pattern VALID_TAG = Pattern.compile("\\S{1,100}");
+  private static final Pattern VALID_TAG = Pattern.compile("^\\S{1,100}$");
 
   private final String jobId;
 
@@ -47,6 +48,7 @@ public final class JobEvent {
   private final CompileStrategy compileStrategy;
   private final ImmutableList<String> arguments;
   private final ImmutableList<String> tags;
+  private final ImmutableSortedMap<String, Long> metricMap;
 
   private JobEvent(Builder builder) {
     this.jobId = Preconditions.checkNotNull(builder.jobId);
@@ -55,12 +57,14 @@ public final class JobEvent {
     this.status = Preconditions.checkNotNull(builder.status);
     this.message = builder.message == null ? status.defaultMessage : builder.message;
 
+    this.arguments = ImmutableList.copyOf(builder.args);
+    this.tags = ImmutableList.copyOf(builder.tags);
+    this.metricMap = ImmutableSortedMap.copyOf(builder.metricMap);
+
     // The following fields may be null.
     this.outputModuleName = builder.outputModuleName;
     this.compileDir = builder.compileDir;
     this.compileStrategy = builder.compileStrategy;
-    this.arguments = ImmutableList.copyOf(builder.args);
-    this.tags = ImmutableList.copyOf(builder.tags);
 
     // Any new fields added should allow nulls for backward compatibility.
   }
@@ -131,14 +135,23 @@ public final class JobEvent {
   /**
    * The arguments passed to Super Dev Mode at startup, or null if not available.
    */
-  public ImmutableList<String> getArguments() {
+  public List<String> getArguments() {
     return arguments;
   }
 
   /**
    * User-defined tags associated with this job. (Not null but may be empty.)
    */
-  public ImmutableList<String> getTags() { return tags; }
+  public List<String> getTags() { return tags; }
+
+  /**
+   * Returns the amounts of performance-related metrics. (Not null but may be empty.)
+   * The keys are subject to change.
+   */
+  public SortedMap<String, Long> getMetricMap() {
+    // can't return ImmutableSortedMap because it's repackaged
+    return metricMap;
+  }
 
   /**
    * If all the given tags are valid, returns a list containing the tags.
@@ -216,11 +229,14 @@ public final class JobEvent {
     private Map<String, String> bindings = ImmutableMap.of();
     private Status status;
     private String message;
-    private CompileDir compileDir;
-    private CompileStrategy compileStrategy;
+
     private List<String> args = ImmutableList.of();
     private List<String> tags = ImmutableList.of();
+    private Map<String, Long> metricMap = ImmutableMap.of();
+
     private String outputModuleName;
+    private CompileDir compileDir;
+    private CompileStrategy compileStrategy;
 
     /**
      * A unique id for this job. Required.
@@ -309,6 +325,21 @@ public final class JobEvent {
      */
     public void setTags(Iterable<String> tags) {
       this.tags = checkTags(tags);
+    }
+
+    /**
+     * Sets a map containing metrics used for understanding compiler performance.
+     * Optional but may not be null. If not set, defaults to the empty map.
+     * Each key must be a valid identifier beginning with a capital letter.
+     * (This constraint may be relaxed later.)
+     */
+    public void setMetricMap(Map<String, Long> nameToMetric) {
+      for (String key : nameToMetric.keySet()) {
+        // TODO: allow '.' in the key after making an API for that.
+        Preconditions.checkArgument(MetricName.isValidKey(key),
+            "invalid counter key: %s", key);
+      }
+      this.metricMap = nameToMetric;
     }
 
     public JobEvent build() {
