@@ -177,7 +177,6 @@ void httpServerAddHandlers()
    uri_handlers::add("/docs", secureAsyncHttpHandler(secureAsyncFileHandler(), true));
    uri_handlers::add("/html_preview", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/rmd_output", secureAsyncHttpHandler(proxyContentRequest, true));
-   uri_handlers::add("/grid_shape", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/grid_data", secureAsyncHttpHandler(proxyContentRequest, true));
    uri_handlers::add("/grid_resource", secureAsyncHttpHandler(proxyContentRequest, true));
 

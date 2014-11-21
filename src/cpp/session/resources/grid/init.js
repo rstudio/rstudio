@@ -1,8 +1,11 @@
 (function(){
+var table;
+
 // called when the window size changes--adjust the grid size accordingly
 var sizeDataTable = function() {
   $(".dataTables_scrollBody").css("height", 
     window.innerHeight - ($("thead").height() + 2));
+  $("#data").DataTable().columns.adjust().draw();
 };
 
 var initDataTable = function() {
@@ -19,7 +22,7 @@ var initDataTable = function() {
     }
   }
   $.ajax({
-      url: "../grid_shape" + window.location.search})
+      url: "../grid_data?show=cols&" + window.location.search.substring(1)})
   .done(function(cols){
     // parse result
     cols = $.parseJSON(cols);
@@ -34,7 +37,7 @@ var initDataTable = function() {
     var scrollHeight = window.innerHeight - (thead.clientHeight + 2);
 
     // activate the data table
-    var table = $("#data").dataTable({
+    table = $("#data").dataTable({
       "processing": true,
       "serverSide": true,
       "pagingType": "full_numbers",
@@ -47,6 +50,7 @@ var initDataTable = function() {
         "data": function(d) {
           d.env = env;
           d.obj = obj;
+          d.show = "data";
         }
       }
     });

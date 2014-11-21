@@ -92,9 +92,16 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP)
       if (TYPEOF(dataSEXP) != VECSXP)
          throw r::exec::RErrorException("invalid data argument (not a list)");
 
+      int nrow = 0, ncol = 0;
+      r::exec::RFunction("nrow", dataSEXP).call(&nrow);
+      r::exec::RFunction("ncol", dataSEXP).call(&ncol);
+
       // fire show data event
       json::Object dataItem;
       dataItem["caption"] = r::sexp::asString(captionSEXP);
+      dataItem["totalObservations"] = nrow;
+      dataItem["displayedObservations"] = nrow;
+      dataItem["variables"] = ncol;
       dataItem["contentUrl"] = kGridResource "/gridviewer.html?env=" +
          http::util::urlEncode(envName, true) + "&obj=" + 
          http::util::urlEncode(dataName, true);
@@ -128,30 +135,9 @@ void handleGridResReq(const http::Request& request,
    }
 }
 
-Error getGridShape(const http::Request& request,
-                   http::Response* pResponse)
+json::Value getCols(SEXP dataSEXP)
 {
-   // extract the query string
-   std::string::size_type pos = request.uri().find('?');
-   if (pos == std::string::npos)
-   {
-      return Success();
-   }
-
-   // find the data frame we're going to be pulling data from
-   std::string queryString = request.uri().substr(pos+1);
-   http::Fields fields;
-   http::util::parseQueryString(queryString, &fields);
-   std::string envName = http::util::fieldValue<std::string>(fields, "env", "");
-   std::string objName = http::util::fieldValue<std::string>(fields, "obj", "");
-   if (objName.empty())
-   { 
-      return Success();
-   }
-   r::sexp::Protect protect;
    std::vector<std::string> cols;
-   SEXP dataSEXP = r::sexp::findVar(objName, envName);
-
    SEXP namesSEXP = Rf_getAttrib(dataSEXP, R_NamesSymbol);
    if (TYPEOF(namesSEXP) != STRSXP || 
        Rf_length(namesSEXP) != Rf_length(dataSEXP))
@@ -159,50 +145,23 @@ Error getGridShape(const http::Request& request,
       throw r::exec::RErrorException(
                            "invalid data argument (names not specified)");
    }
-   Error error = r::sexp::extract(namesSEXP, &cols);
+   r::sexp::extract(namesSEXP, &cols);
 
    // add row ID column
    cols.insert(cols.begin(), "");
-
-   std::ostringstream ostr;
-   json::write(json::toJsonArray(cols), ostr);
-   pResponse->setStatusCode(http::status::Ok);
-   pResponse->setBody(ostr.str());
-   return Success();
+   return json::toJsonArray(cols);
 }
 
-Error getGridData(const http::Request& request,
-                  http::Response* pResponse)
+json::Value getData(SEXP dataSEXP, const http::Fields& fields)
 {
-   // extract the query string
-   std::string::size_type pos = request.uri().find('?');
-   if (pos == std::string::npos)
-   {
-      return Success();
-   }
+   r::sexp::Protect protect;
 
-   // find the data frame we're going to be pulling data from
-   std::string queryString = request.uri().substr(pos+1);
-   http::Fields fields;
-   http::util::parseQueryString(queryString, &fields);
-   std::string envName = http::util::fieldValue<std::string>(fields, "env", "");
-   std::string objName = http::util::fieldValue<std::string>(fields, "obj", "");
-   if (objName.empty()) 
-   {
-      return Success();
-   }
-
-   // get the draw parameters
+   // read draw parameters from DataTables
    int draw = http::util::fieldValue<int>(fields, "draw", 0);
    int start = http::util::fieldValue<int>(fields, "start", 0);
    int length = http::util::fieldValue<int>(fields, "length", 0);
    int ordercol = http::util::fieldValue<int>(fields, "order[0][column]", -1);
    std::string orderdir = http::util::fieldValue<std::string>(fields, "order[0][dir]", "asc");
-
-   int nrow = 0, ncol = 0;
-   r::sexp::Protect protect;
-   std::vector<std::string> cols;
-   SEXP dataSEXP = r::sexp::findVar(objName, envName);
 
    // apply sort if needed
    if (ordercol > 0) 
@@ -211,7 +170,8 @@ Error getGridData(const http::Request& request,
          .call(&dataSEXP, &protect);
    }
 
-   // TODO: internal?
+   // unfortunately Rf_nrow and Rf_ncol aren't applicable here
+   int nrow = 0, ncol = 0;
    r::exec::RFunction("nrow", dataSEXP).call(&nrow);
    r::exec::RFunction("ncol", dataSEXP).call(&ncol);
    length = std::min(length, nrow - start);
@@ -219,7 +179,7 @@ Error getGridData(const http::Request& request,
    // DataTables uses 0-based indexing, but R uses 1-based indexing
    start ++;
 
-   // truncate and format columns 
+   // extract the portion of the column vector requested by the client
    SEXP formattedDataSEXP = Rf_allocVector(VECSXP, ncol);
    protect.add(formattedDataSEXP);
    for (unsigned i = 0; i < static_cast<unsigned>(ncol); i++)
@@ -236,11 +196,12 @@ Error getGridData(const http::Request& request,
       SET_VECTOR_ELT(formattedDataSEXP, i, formattedColumnSEXP);
     }
 
+   // format the row names 
    SEXP rownamesSEXP;
    r::exec::RFunction(".rs.formatRowNames", dataSEXP, start, length)
       .call(&rownamesSEXP, &protect);
    
-   // add results
+   // create the result grid as JSON
    json::Array data;
    for (int row = 0; row < length; row++)
    {
@@ -280,6 +241,42 @@ Error getGridData(const http::Request& request,
    result["recordsTotal"] = nrow;
    result["recordsFiltered"] = nrow;
    result["data"] = data;
+   return result;
+}
+
+Error getGridData(const http::Request& request,
+                  http::Response* pResponse)
+{
+   // extract the query string
+   std::string::size_type pos = request.uri().find('?');
+   if (pos == std::string::npos)
+   {
+      return Success();
+   }
+
+   // find the data frame we're going to be pulling data from
+   std::string queryString = request.uri().substr(pos+1);
+   http::Fields fields;
+   http::util::parseQueryString(queryString, &fields);
+   std::string envName = http::util::fieldValue<std::string>(fields, "env", "");
+   std::string objName = http::util::fieldValue<std::string>(fields, "obj", "");
+   std::string show = http::util::fieldValue<std::string>(fields, "show", "data");
+   if (objName.empty()) 
+   {
+      return Success();
+   }
+
+   SEXP dataSEXP = r::sexp::findVar(objName, envName);
+
+   json::Value result;
+   if (show == "cols")
+   {
+      result = getCols(dataSEXP);
+   }
+   else if (show == "data")
+   {
+      result = getData(dataSEXP, fields);
+   }
 
    std::ostringstream ostr;
    json::write(result, ostr);
@@ -306,7 +303,6 @@ Error initialize()
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionDataViewer.R"))
-      (bind(registerUriHandler, "/grid_shape", getGridShape))
       (bind(registerUriHandler, "/grid_data", getGridData))
       (bind(registerUriHandler, kGridResourceLocation, handleGridResReq));
 

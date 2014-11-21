@@ -52,19 +52,16 @@ public class DataItem extends JavaScriptObject
    
    public native final int getTotalObservations() /*-{
       // This will sometimes be a number, sometimes a string. Ugh
-      return 0;
       return this.totalObservations - 0;
    }-*/;
    
    public native final int getDisplayedObservations() /*-{
       // This will sometimes be a number, sometimes a string. Ugh
-      return 0;
       return this.displayedObservations - 0;
    }-*/;
    
    public native final int getVariables() /*-{
       // This will sometimes be a number, sometimes a string. Ugh
-      return 0;
       return this.variables - 0;
    }-*/;
    
