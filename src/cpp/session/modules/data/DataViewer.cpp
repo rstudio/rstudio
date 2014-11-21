@@ -42,6 +42,7 @@
 #include <session/SessionContentUrls.hpp>
 
 #define kGridResource "grid_resource"
+#define kViewerCacheDir "viewer-cache"
 #define kGridResourceLocation "/" kGridResource "/"
 
 using namespace core;
@@ -52,6 +53,12 @@ namespace data {
 namespace viewer {
 
 namespace {   
+
+std::string viewerCacheDir() 
+{
+   return module_context::userScratchPath().childPath(kViewerCacheDir)
+      .absolutePath();
+}
 
 SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP, 
                  SEXP cacheKeySEXP)
@@ -104,6 +111,7 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP,
       dataItem["totalObservations"] = nrow;
       dataItem["displayedObservations"] = nrow;
       dataItem["variables"] = ncol;
+      dataItem["cacheKey"] = cacheKey;
       dataItem["contentUrl"] = kGridResource "/gridviewer.html?env=" +
          http::util::urlEncode(envName, true) + "&obj=" + 
          http::util::urlEncode(dataName, true) + "&cache_key=" +
@@ -278,7 +286,7 @@ Error getGridData(const http::Request& request,
       // attempt to find the original copy of the object
       SEXP dataSEXP = NULL;
       Error error = r::exec::RFunction(".rs.findDataFrame", envName, objName, 
-            cacheKey).call(&dataSEXP, &protect);
+            cacheKey, viewerCacheDir()).call(&dataSEXP, &protect);
       if (error) 
       {
          LOG_ERROR(error);
@@ -322,11 +330,48 @@ Error getGridData(const http::Request& request,
    return Success();
 }
 
+// called by the client to expire data cached by an associated viewer tab
+Error removeCachedData(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse*)
+{
+   std::string cacheKey;
+   Error error = json::readParam(request.params, 0, &cacheKey);
+   if (error)
+      return error;
+   
+   error = r::exec::RFunction(".rs.removeCachedData", cacheKey, 
+         viewerCacheDir()).call();
+   if (error)
+      return error;
+
+   return Success();
+}
+
+void onShutdown(bool terminatedNormally)
+{
+   // when R suspends or shuts down, write out the contents of the cache
+   // environment to disk so we can load them again if we need to
+   Error error = r::exec::RFunction(".rs.saveCachedData", viewerCacheDir())
+      .call();
+   if (error)
+      LOG_ERROR(error);
+}
+
+void onSuspend(const r::session::RSuspendOptions&, core::Settings*)
+{
+   onShutdown(true);
+}
+
+void onResume(const Settings&)
+{
+}
 
 } // anonymous namespace
    
 Error initialize()
 {
+   using namespace module_context;
+
    // register viewData method
    R_CallMethodDef methodDef ;
    methodDef.name = "rs_viewData" ;
@@ -334,12 +379,16 @@ Error initialize()
    methodDef.numArgs = 5;
    r::routines::addCallMethod(methodDef);
 
+   module_context::events().onShutdown.connect(onShutdown);
+   addSuspendHandler(SuspendHandler(onSuspend, onResume));
+
    using boost::bind;
    using namespace r::function_hook ;
    using namespace session::module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionDataViewer.R"))
+      (bind(registerRpcMethod, "remove_cached_data", removeCachedData))
       (bind(registerUriHandler, "/grid_data", getGridData))
       (bind(registerUriHandler, kGridResourceLocation, handleGridResReq));
 

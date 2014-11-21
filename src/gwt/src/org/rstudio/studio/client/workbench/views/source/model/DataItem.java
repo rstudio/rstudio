@@ -68,6 +68,10 @@ public class DataItem extends JavaScriptObject
    public native final String getContentUrl() /*-{
       return this.contentUrl;
    }-*/;
+   
+   public native final String getCacheKey() /*-{
+      return this.cacheKey;
+   }-*/;
 
    public final void fillProperties(HashMap<String, String> properties)
    {
@@ -80,6 +84,7 @@ public class DataItem extends JavaScriptObject
       properties.put("displayedObservations", getDisplayedObservations() + "");
       properties.put("variables", getVariables() + "");
       properties.put("contentUrl", getContentUrl());
+      properties.put("cacheKey", getCacheKey());
    }
 
    public final void fillProperties(JsObject properties)
@@ -89,5 +94,6 @@ public class DataItem extends JavaScriptObject
       properties.setInteger("displayedObservations", getDisplayedObservations());
       properties.setInteger("variables", getVariables());
       properties.setString("contentUrl", getContentUrl());
+      properties.setString("cacheKey", getCacheKey());
    }
 }

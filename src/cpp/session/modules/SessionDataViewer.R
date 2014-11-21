@@ -16,7 +16,7 @@
 # host environment for data 
 .rs.setVar("CachedDataEnv", new.env(parent = emptyenv()))
 
-.rs.addFunction( "formatDataColumn", function(x, start, len, ...)
+.rs.addFunction("formatDataColumn", function(x, start, len, ...)
 {
    # extract the visible part of the column
    col <- x[start:min(length(x), start+len)]
@@ -31,7 +31,7 @@
    format(col, trim = TRUE, justify = "none", ...)
 })
 
-.rs.addFunction( "formatRowNames", function(x, start, len) 
+.rs.addFunction("formatRowNames", function(x, start, len) 
 {
   rownames <- row.names(x)
   rownames[start:min(length(rownames), start+len)]
@@ -47,7 +47,8 @@
 })
 
 
-.rs.addFunction("findDataFrame", function(envName, objName, cacheKey) {
+.rs.addFunction("findDataFrame", function(envName, objName, cacheKey, cacheDir) 
+{
   env <- NULL
   if (is.null(envName) || identical(envName, "R_GlobalEnv") || 
       nchar(envName) == 0)
@@ -60,7 +61,7 @@
     # some other environment
     tryCatch(
     {
-      env <<- as.environment(envName)
+      env <- as.environment(envName)
     }, 
     error = function(e)
     {
@@ -79,11 +80,22 @@
   if (exists(cacheKey, where = .rs.CachedDataEnv, inherits = FALSE))
     return(get(cacheKey, envir = .rs.CachedDataEnv, inherits = FALSE))
 
+  # perhaps the object has been saved? attempt to load it into the
+  # cached environment
+  cacheFile <- file.path(cacheDir, paste(cacheKey, "Rdata", sep = "."))
+  if (file.exists(cacheFile))
+  { 
+    load(cacheFile, envir = .rs.CachedDataEnv)
+    if (exists(cacheKey, where = .rs.CachedDataEnv, inherits = FALSE))
+      return(get(cacheKey, envir = .rs.CachedDataEnv, inherits = FALSE))
+  }
+  
   # failure
   return(NULL)
 })
 
-.rs.addFunction("findOwningEnv", function(name, env = parent.frame()) {
+.rs.addFunction("findOwningEnv", function(name, env = parent.frame()) 
+{
    while (environmentName(env) != "R_EmptyEnv" && 
           !exists(name, where = env, inherits = FALSE)) 
    {
@@ -92,8 +104,9 @@
    env
 })
 
-.rs.registerReplaceHook("View", "utils", function(original, x, title) {
 
+.rs.registerReplaceHook("View", "utils", function(original, x, title) 
+{
    # generate title if necessary
    if (missing(title))
       title <- deparse(substitute(x))[1]
@@ -128,4 +141,33 @@
     }
 })
 
+
+.rs.addFunction("removeCachedData", function(cacheKey, cacheDir)
+{
+  # remove data from the cache environment
+  if (exists(cacheKey, where = .rs.CachedDataEnv, inherits = FALSE))
+    rm(list = cacheKey, envir = .rs.CachedDataEnv, inherits = FALSE)
+
+  # remove data from the cache directory
+  cacheFile <- file.path(cacheDir, paste(cacheKey, "Rdata", sep = "."))
+  if (file.exists(cacheFile))
+    file.remove(cacheFile)
+ 
+  invisible(NULL)
+})
+
+.rs.addFunction("saveCachedData", function(cacheDir)
+{
+  # create the cache directory if it doesn't already exist
+  dir.create(cacheDir, recursive = TRUE, showWarnings = FALSE, mode = "0700")
+
+  # save each active cache file from the cache environment
+  lapply(ls(.rs.CachedDataEnv), function(cacheKey) {
+    save(list = cacheKey, 
+         file = file.path(cacheDir, paste(cacheKey, "Rdata", sep = ".")),
+         envir = .rs.CachedDataEnv)
+  })
+
+  invisible(NULL)
+})
 

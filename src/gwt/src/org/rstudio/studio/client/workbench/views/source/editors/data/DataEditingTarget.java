@@ -107,13 +107,18 @@ public class DataEditingTarget extends UrlContentEditingTarget
       return getDataItem().getContentUrl();
    }
 
+   protected String getCacheKey()
+   {
+      return getDataItem().getCacheKey();
+   }
+
    public void updateData(final DataItem data)
    {
       final Widget originalWidget = progressPanel_.getWidget();
 
       clearDisplay();
       
-      final String oldContentUrl = getContentUrl();
+      final String oldCacheKey = getCacheKey();
 
       HashMap<String, String> props = new HashMap<String, String>();
       data.fillProperties(props);
@@ -125,8 +130,8 @@ public class DataEditingTarget extends UrlContentEditingTarget
                @Override
                public void onResponseReceived(Void response)
                {
-                  server_.removeContentUrl(
-                        oldContentUrl,
+                  server_.removeCachedData(
+                        oldCacheKey,
                         new ServerRequestCallback<Void>() {
 
                            @Override
@@ -149,5 +154,18 @@ public class DataEditingTarget extends UrlContentEditingTarget
             });
    }
 
+   @Override
+   public void onDismiss()
+   {
+      server_.removeCachedData(getCacheKey(),
+                               new ServerRequestCallback<org.rstudio.studio.client.server.Void>()
+                               {
+                                  @Override
+                                  public void onError(ServerError error)
+                                  {
+                                     Debug.logError(error);
+                                  }
+                               });
+   }
    private SimplePanelWithProgress progressPanel_;
 }

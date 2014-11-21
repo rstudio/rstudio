@@ -1474,6 +1474,12 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, REMOVE_CONTENT_URL, contentUrl, requestCallback);
    }
 
+   public void removeCachedData(String cacheKey,
+                                ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, REMOVE_CACHED_DATA, cacheKey, requestCallback);
+   }
+
    public void detectFreeVars(String code,
                               ServerRequestCallback<JsArrayString> requestCallback)
    {
@@ -3895,6 +3901,7 @@ public class RemoteServer implements Server
    private static final String GET_TEX_CAPABILITIES = "get_tex_capabilities";
    private static final String GET_CHUNK_OPTIONS = "get_chunk_options";
    private static final String SET_DOC_ORDER = "set_doc_order";
+   private static final String REMOVE_CACHED_DATA = "remove_cached_data";
 
    private static final String GET_RECENT_HISTORY = "get_recent_history";
    private static final String GET_HISTORY_ITEMS = "get_history_items";
