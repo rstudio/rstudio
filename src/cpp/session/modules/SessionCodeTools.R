@@ -326,14 +326,27 @@
    if (regexpr("(", name, fixed = TRUE) > 0)
       return(FALSE)
    
-   # If envir is the name of something on the search path, get it from there
    if (is.character(name) && is.character(envir))
    {
+      
+      # If envir is the name of something on the search path, get it from there
       pos <- match(envir, search(), nomatch = -1L)
       if (pos > 0)
       {
          object <- tryCatch(
             get(name, pos = pos),
+            error = function(e) NULL
+         )
+         
+         if (!is.null(object))
+            return(object)
+      }
+      
+      # Otherwise, maybe envir is the name of a package -- search there
+      if (envir %in% loadedNamespaces())
+      {
+         object <- tryCatch(
+            get(name, envir = asNamespace(envir)),
             error = function(e) NULL
          )
          

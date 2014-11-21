@@ -121,6 +121,7 @@ public class RCompletionManager implements CompletionManager
       rnwContext_ = rnwContext;
       docDisplay_ = docDisplay;
       canAutoPopup_ = canAutoPopup;
+      sigTip_ = new RCompletionToolTip(docDisplay_);
       
       input_.addBlurHandler(new BlurHandler() {
          public void onBlur(BlurEvent event)
@@ -298,6 +299,9 @@ public class RCompletionManager implements CompletionManager
    
    public boolean previewKeyDown(NativeEvent event)
    {
+      if (sigTip_ != null)
+         sigTip_.previewKeyDown(event);
+      
       /**
        * KEYS THAT MATTER
        *
@@ -528,6 +532,9 @@ public class RCompletionManager implements CompletionManager
    
    public boolean previewKeyPress(char c)
    {
+      if (sigTip_ != null)
+         sigTip_.previewKeyPress(c);
+      
       if (popup_.isShowing())
       {
          if (isValidForRIdentifier(c) || c == ':')
@@ -1629,14 +1636,8 @@ public class RCompletionManager implements CompletionManager
                      @Override
                      public void onResponseReceived(String args)
                      {
-                        Rectangle cursorWindow = docDisplay_.getCursorBounds();
-                        RCompletionToolTip sigTip = new RCompletionToolTip();
-                        sigTip.setText(qualifiedName.name + args);
-                        sigTip.resolvePositionRelativeTo(
-                              cursorWindow.getLeft(),
-                              cursorWindow.getTop());
-                        sigTip.show();
-                        sigTip.setVisible(true);
+                        if (!StringUtil.isNullOrEmpty(args))
+                           displaySignatureTip(qualifiedName.name + args);
                      }
 
                      @Override
@@ -1646,6 +1647,17 @@ public class RCompletionManager implements CompletionManager
                      }
                   });
          }
+      }
+      
+      private void displaySignatureTip(String signature)
+      {
+         Rectangle cursorWindow = docDisplay_.getCursorBounds();
+         sigTip_.setText(signature);
+         sigTip_.resolvePositionRelativeTo(
+               cursorWindow.getLeft(),
+               cursorWindow.getTop());
+         sigTip_.show();
+         sigTip_.setVisible(true);
       }
 
       private final Invalidation.Token invalidationToken_ ;
@@ -1689,5 +1701,6 @@ public class RCompletionManager implements CompletionManager
    private final RCompletionContext rContext_;
    private final RnwCompletionContext rnwContext_;
    
+   private RCompletionToolTip sigTip_;
    private NativeEvent nativeEvent_;
 }

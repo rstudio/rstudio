@@ -35,7 +35,6 @@ import org.rstudio.core.client.widget.ThemedPopupPanel;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo.ParsedInfo;
-import org.rstudio.studio.client.workbench.views.source.editors.text.r.RCompletionToolTip;
 
 public class CompletionPopupPanel extends ThemedPopupPanel
       implements CompletionPopupDisplay
@@ -47,7 +46,6 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       setStylePrimaryName(styles_.completionPopup()) ;
       
       addHelp();
-      addSignatureToolTip();
       
       addCloseHandler(new CloseHandler<PopupPanel>() {
          
@@ -56,7 +54,6 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          {
             help_.clearHelp(false);
             help_.setVisible(false);
-            toolTip_.setVisible(false);
          }
       });
    }
@@ -69,11 +66,6 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       help_.setVisible(false);
    }
    
-   private void addSignatureToolTip()
-   {
-      toolTip_ = new RCompletionToolTip();
-   }
-
    public void showProgress(String progress, PositionCallback callback)
    {
       setText(progress) ;
@@ -286,6 +278,5 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    
    private CompletionList<QualifiedName> list_ ;
    private HelpInfoPane help_ ;
-   private RCompletionToolTip toolTip_;
    private final ConsoleResources.ConsoleStyles styles_;
 }

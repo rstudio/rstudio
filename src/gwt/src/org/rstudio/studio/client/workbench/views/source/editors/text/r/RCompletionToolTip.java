@@ -1,15 +1,93 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.r;
 
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionToolTip;
 
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.PopupPanel;
 
 public class RCompletionToolTip extends CppCompletionToolTip
 {
-   public RCompletionToolTip()
+   public RCompletionToolTip(DocDisplay docDisplay)
    {
+      addCloseHandler(new CloseHandler<PopupPanel>()
+      {
+         @Override
+         public void onClose(CloseEvent<PopupPanel> event)
+         {
+            reset();
+         }
+      });
+      docDisplay_ = docDisplay;
    }
+   
+   public void previewKeyPress(char c)
+   {
+      if (!isShowing())
+         return;
+      
+      if (c == '{')
+      {
+         reset();
+         return;
+      }
+      
+      if (c == '(')
+         ++parenBalance_;
 
+      if (c == ')')
+      {
+         if (parenBalance_ <= 0)
+         {
+            reset();
+            return;
+         }
+         --parenBalance_;
+      }
+   }
+   
+   public void previewKeyDown(NativeEvent event)
+   {
+      if (!isShowing())
+         return;
+      
+      if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
+      {
+         reset();
+         return;
+      }
+      
+      if (event.getKeyCode() == KeyCodes.KEY_BACKSPACE)
+      {
+         if (StringUtil.isNullOrEmpty(docDisplay_.getSelectionValue()))
+         {
+            String ch = docDisplay_.getCharacterBeforeCursor();
+            if (ch == ")")
+               ++parenBalance_;
+            if (ch == "(")
+            {
+               if (parenBalance_ <= 0)
+               {
+                  reset();
+                  return;
+               }
+               --parenBalance_;
+            }
+         }
+      }
+   }
+   
+   public void reset()
+   {
+      parenBalance_ = 0;
+      hide();
+   }
+   
    public void resolvePositionRelativeTo(final int left, final int top)
    {
       // some constants
@@ -45,5 +123,8 @@ public class RCompletionToolTip extends CppCompletionToolTip
       });
 
    }
+   
+   private int parenBalance_ = 0;
+   private final DocDisplay docDisplay_;
 
 }
