@@ -11,7 +11,6 @@ thead {
 
 #data {
     margin: 0px 0px 36px 0px;
-    border-collapse: collapse;
 }
 
 #data_paginate {
@@ -30,7 +29,8 @@ div.datatables_paginate {
 table.dataTable tbody td {
     padding: 4px 5px;
     font-family: Consolas, Lucida Console, Monaco, monospace;
-    border: 1px solid #dddddd;
+    border-bottom: 1px solid #dddddd;
+    border-right: 1px solid #dddddd;
     font-size: 11px;
 }
 
@@ -60,3 +60,4 @@ table.dataTable thead th:first-child
 {
     border: none;
 }
+

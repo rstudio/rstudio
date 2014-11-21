@@ -43,6 +43,7 @@ var initDataTable = function() {
       "pagingType": "full_numbers",
       "pageLength": 25,
       "scrollY": scrollHeight + "px",
+      "scrollX": true,
       "dom": "tS", 
       "deferRender": true,
       "ajax": {
