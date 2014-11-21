@@ -214,6 +214,12 @@ public class HeaderPanelTest extends PanelTestBase<HeaderPanel> {
     panel.setContentWidget(widget);
     assertEquals(widget, panel.getContentWidget());
 
+    // Test for issue 7037
+    widget = new Label("hello world 2");
+    panel.setContentWidget(widget);
+    assertTrue("Issue 7037", UIObject.isVisible(
+        panel.getContentWidget().getElement().getParentElement()));
+
     panel.remove(widget);
     assertNull(panel.getContentWidget());
   }

@@ -216,7 +216,6 @@ public class HeaderPanel extends Panel implements RequiresResize {
    * @param w the widget to use as the content
    */
   public void setContentWidget(Widget w) {
-    contentContainer.getStyle().clearDisplay();
     add(w, content, contentContainer);
 
     // Logical attach.
@@ -230,7 +229,6 @@ public class HeaderPanel extends Panel implements RequiresResize {
    * @param w the widget to use as the footer
    */
   public void setFooterWidget(Widget w) {
-    footerContainer.getStyle().clearDisplay();
     add(w, footer, footerContainer);
 
     // Logical attach.
@@ -244,7 +242,6 @@ public class HeaderPanel extends Panel implements RequiresResize {
    * @param w the widget to use as the header
    */
   public void setHeaderWidget(Widget w) {
-    headerContainer.getStyle().clearDisplay();
     add(w, header, headerContainer);
 
     // Logical attach.
@@ -279,6 +276,7 @@ public class HeaderPanel extends Panel implements RequiresResize {
     if (w != null) {
       // Physical attach.
       container.appendChild(w.getElement());
+      container.getStyle().clearDisplay();
 
       adopt(w);
     }
