@@ -43,14 +43,35 @@
   }
 })
 
+
+.rs.addFunction("findOwningEnv", function(name, env = parent.frame()) {
+   while (environmentName(env) != "R_EmptyEnv" && 
+          !exists(name, where = env, inherits = FALSE)) 
+   {
+     env <- parent.env(env)
+   }
+   env
+})
+
 .rs.registerReplaceHook("View", "utils", function(original, x, title) {
-   
+
    # generate title if necessary
    if (missing(title))
       title <- deparse(substitute(x))[1]
+
+   name <- ""
+   env <- emptyenv()
+
+   # if the argument is the name of a variable, we can monitor it in its
+   # environment, and don't need to make a copy for viewing
+   if (is(substitute(x), "name"))
+   {
+     name <- deparse(substitute(x))
+     env <- .rs.findOwningEnv(name)
+   }
    
-   # call viewData (prepare columns so they are either double or character)   
-   invisible(.Call("rs_viewData", x, title))
+   # call viewData 
+   invisible(.Call("rs_viewData", force(x), title, name, env))
 })
 
 .rs.addFunction("initializeDataViewer", function(server) {

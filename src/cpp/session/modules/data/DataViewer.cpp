@@ -53,34 +53,34 @@ namespace viewer {
 
 namespace {   
 
-SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP)
+SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP)
 {    
-   // attempt to reverse engineer the location of the data
-   // TODO: dataSEXP seems to be a copy for non-global environments; fall back
-   // on deparse for non-global?
-   std::string dataName, envName;
-   SEXP env = R_GlobalEnv;
-   r::sexp::Protect protect;
-   while (dataName.empty() && env != R_EmptyEnv) 
+   // validate that we're looking at an object with names
+   SEXP namesSEXP = Rf_getAttrib(dataSEXP, R_NamesSymbol);
+   if (TYPEOF(namesSEXP) != STRSXP || 
+       Rf_length(namesSEXP) != Rf_length(dataSEXP))
    {
-      std::vector<r::sexp::Variable> variables;
-      r::sexp::listEnvironment(env, false, &protect, &variables);
-      for (std::vector<r::sexp::Variable>::iterator var = variables.begin();
-           var != variables.end();
-           var++)
-      {
-         if (var->second == dataSEXP) 
-         {
-            dataName = var->first;
-            // don't record the name of the global environment--the string
-            // "R_GlobalEnv" doesn't translate back to an environment 
-            if (env != R_GlobalEnv)
-               r::exec::RFunction("environmentName", env).call(&envName);
-            break;
-         }
-      }
-      env = ENCLOS(env);
+      throw r::exec::RErrorException(
+                           "invalid data argument (names not specified)");
    }
+
+   // attempt to reverse engineer the location of the data
+   std::string envName, dataName;
+   r::sexp::Protect protect;
+   
+   r::exec::RFunction("environmentName", envSEXP).call(&envName);
+   if (envName == "R_GlobalEnv")
+   {
+      // the global environment doesn't need to be named
+      envName.clear();
+   }
+   else if (envName == "R_EmptyEnv" || envName == "") 
+   {
+      // TODO: for empty or unnamed environments, we need to create temporary
+      // storage for the object
+      envName = "none";
+   }
+   dataName = r::sexp::asString(nameSEXP);
 
    try
    {
@@ -138,13 +138,9 @@ void handleGridResReq(const http::Request& request,
 json::Value getCols(SEXP dataSEXP)
 {
    std::vector<std::string> cols;
+
+   // extract column names (these were validated earlier)
    SEXP namesSEXP = Rf_getAttrib(dataSEXP, R_NamesSymbol);
-   if (TYPEOF(namesSEXP) != STRSXP || 
-       Rf_length(namesSEXP) != Rf_length(dataSEXP))
-   {
-      throw r::exec::RErrorException(
-                           "invalid data argument (names not specified)");
-   }
    r::sexp::extract(namesSEXP, &cols);
 
    // add row ID column
@@ -247,41 +243,69 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
 Error getGridData(const http::Request& request,
                   http::Response* pResponse)
 {
-   // extract the query string
-   std::string::size_type pos = request.uri().find('?');
-   if (pos == std::string::npos)
+   try
    {
-      return Success();
+      // extract the query string
+      std::string::size_type pos = request.uri().find('?');
+      if (pos == std::string::npos)
+      {
+         return Success();
+      }
+
+      // find the data frame we're going to be pulling data from
+      std::string queryString = request.uri().substr(pos+1);
+      http::Fields fields;
+      http::util::parseQueryString(queryString, &fields);
+      std::string envName = http::util::urlDecode(
+            http::util::fieldValue<std::string>(fields, "env", ""), true);
+      std::string objName = http::util::urlDecode(
+            http::util::fieldValue<std::string>(fields, "obj", ""), true);
+      std::string show = http::util::fieldValue<std::string>(fields, "show", "data");
+      if (objName.empty()) 
+      {
+         return Success();
+      }
+
+      r::sexp::Protect protect;
+      SEXP envSEXP; 
+      if (envName == "" || envName == "R_GlobalEnv")
+      {
+         envSEXP = R_GlobalEnv;
+      }
+      else 
+      {
+         r::exec::RFunction("as.environment", envName).call(&envSEXP, &protect);
+      }
+      if (envSEXP == NULL)
+      {
+         return Success();
+      }
+      SEXP dataSEXP = r::sexp::findVar(objName, envSEXP);
+      if (TYPEOF(dataSEXP) == PROMSXP) 
+      {
+         dataSEXP = PRVALUE(dataSEXP);
+      }
+
+      // TODO: handle missing data
+
+      json::Value result;
+      if (show == "cols")
+      {
+         result = getCols(dataSEXP);
+      }
+      else if (show == "data")
+      {
+         result = getData(dataSEXP, fields);
+      }
+
+      std::ostringstream ostr;
+      json::write(result, ostr);
+      pResponse->setStatusCode(http::status::Ok);
+      pResponse->setBody(ostr.str());
    }
 
-   // find the data frame we're going to be pulling data from
-   std::string queryString = request.uri().substr(pos+1);
-   http::Fields fields;
-   http::util::parseQueryString(queryString, &fields);
-   std::string envName = http::util::fieldValue<std::string>(fields, "env", "");
-   std::string objName = http::util::fieldValue<std::string>(fields, "obj", "");
-   std::string show = http::util::fieldValue<std::string>(fields, "show", "data");
-   if (objName.empty()) 
-   {
-      return Success();
-   }
+   CATCH_UNEXPECTED_EXCEPTION
 
-   SEXP dataSEXP = r::sexp::findVar(objName, envName);
-
-   json::Value result;
-   if (show == "cols")
-   {
-      result = getCols(dataSEXP);
-   }
-   else if (show == "data")
-   {
-      result = getData(dataSEXP, fields);
-   }
-
-   std::ostringstream ostr;
-   json::write(result, ostr);
-   pResponse->setStatusCode(http::status::Ok);
-   pResponse->setBody(ostr.str());
    return Success();
 }
 
@@ -294,7 +318,7 @@ Error initialize()
    R_CallMethodDef methodDef ;
    methodDef.name = "rs_viewData" ;
    methodDef.fun = (DL_FUNC) rs_viewData ;
-   methodDef.numArgs = 2;
+   methodDef.numArgs = 4;
    r::routines::addCallMethod(methodDef);
 
    using boost::bind;
