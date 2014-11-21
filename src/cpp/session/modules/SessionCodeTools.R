@@ -323,15 +323,14 @@
       return(NULL)
     
    # Don't evaluate any functions -- blacklist any 'name' that contains a paren
-   if (regexpr("(", name, fixed = TRUE) > 0)
+   if (is.character(name) && regexpr("(", name, fixed = TRUE) > 0)
       return(FALSE)
    
    if (is.character(name) && is.character(envir))
    {
-      
       # If envir is the name of something on the search path, get it from there
       pos <- match(envir, search(), nomatch = -1L)
-      if (pos > 0)
+      if (pos >= 0)
       {
          object <- tryCatch(
             get(name, pos = pos),

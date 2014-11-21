@@ -225,7 +225,7 @@ options(help_type = "html")
    # If 'src' is the name of something on the searchpath, get that object
    # from the seach path, then attempt to get help based on that object
    pos <- match(src, search(), nomatch = -1L)
-   if (pos > 0)
+   if (pos >= 0)
    {
       object <- tryCatch(get(name, pos = pos), error = function(e) NULL)
       if (!is.null(object))
@@ -266,7 +266,7 @@ options(help_type = "html")
    {
       pos <- match(src, search(), nomatch = -1L)
       
-      if (pos > 0)
+      if (pos >= 0)
       {
          object <- tryCatch(get(functionName, pos = pos), error = function(e) NULL)
          if (!is.null(object))
@@ -312,7 +312,7 @@ options(help_type = "html")
    # If 'package' is the name of something on the search path, then we
    # attempt to resolve the object and get its help.
    pos <- match(package, search(), nomatch = -1L)
-   if (pos > 0)
+   if (pos >= 0)
    {
       object <- tryCatch(get(topic, pos = pos), error = function(e) NULL)
       if (is.null(object))
