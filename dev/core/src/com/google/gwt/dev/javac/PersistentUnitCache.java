@@ -200,7 +200,7 @@ class PersistentUnitCache extends MemoryUnitCache {
    */
   @Override
   public void cleanup(TreeLogger logger) {
-    logger.log(Type.INFO, "Cleanup called");
+    logger.log(Type.TRACE, "Cleanup called");
     awaitUnitCacheMapLoad();
 
     if (backgroundService.isShutdown()) {
@@ -234,7 +234,7 @@ class PersistentUnitCache extends MemoryUnitCache {
         }
       }
 
-      logger.log(Type.INFO, "Cleaning up persistent unit cache files");
+      logger.log(Type.TRACE, "Cleaning up persistent unit cache files");
       /*
        * Resend all units read in from the in-memory cache to the background
        * thread. They will be re-written out and the old cache files removed.
