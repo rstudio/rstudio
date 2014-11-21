@@ -47,7 +47,7 @@ var TokenCursor = function(tokens, row, offset) {
    {
       if (this.$row < 0) return false;
       
-      if (this.$row === 0 && this.$offset === 0)
+      if (this.$row === 0 && this.$offset <= 0)
          return false;
       
       if (this.$row >= this.$tokens.length) {
@@ -400,7 +400,7 @@ var TokenCursor = function(tokens, row, offset) {
       // If there's no tokens on this line, walk back until we find
       // a line with tokens
       var row = pos.row;
-      while (rowTokens == null || rowTokens.length === 0) {
+      while (row >= 0 && (rowTokens == null || rowTokens.length === 0)) {
          row--;
          rowTokens = this.$tokens[row];
       }
@@ -586,6 +586,58 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
 
       return false;
 
+   };
+
+   this.bwdOverQualifiedIdentifier = function() {
+
+      var clone = this.cloneCursor();
+
+      // Move over initial '<>' if necessary
+      if (clone.bwdToMatchingArrow())
+         clone.moveToPreviousToken();
+
+      // Ensure we started on an identifier
+      if (clone.currentType() !== "identifier")
+         return false;
+
+      // Move to the previous token
+      if (!clone.moveToPreviousToken())
+         return false;
+
+      // Move over template or typename
+      if (clone.currentValue() === "template" ||
+          clone.currentValue() === "typename")
+         if (!clone.moveToPreviousToken())
+            return false;
+
+      // If we're on a '::', then repeat the previous steps
+      while (clone.currentValue() === "::")
+      {
+         if (!clone.moveToPreviousToken())
+            return false;
+
+         if (clone.bwdToMatchingArrow())
+            clone.moveToPreviousToken();
+
+         // Ensure we started on an identifier
+         if (clone.currentType() !== "identifier")
+            break;
+
+         // Move to the previous token
+         if (!clone.moveToPreviousToken())
+            return false;
+
+         // Move over template or typename
+         if (clone.currentValue() === "template" ||
+             clone.currentValue() === "typename")
+            if (!clone.moveToPreviousToken())
+               return false;
+      }
+
+      this.$row = clone.$row;
+      this.$offset = clone.$offset;
+      return true;
+      
    };
 
    // Move backwards over class inheritance.
