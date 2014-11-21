@@ -42,6 +42,7 @@ public class HelpInfoPopupPanel extends PopupPanel
       outer.add(f1prompt_);
 
       setWidget(outer) ;
+      setVisible(true);
       show();
       
       timer_ = new Timer() {
@@ -50,6 +51,7 @@ public class HelpInfoPopupPanel extends PopupPanel
             scrollPanel_.setVisible(false) ;
             f1prompt_.setVisible(false) ;
             vpanel_.clear() ;
+            setVisible(false);
          }
       };
    }
@@ -129,7 +131,6 @@ public class HelpInfoPopupPanel extends PopupPanel
    public void clearHelp(boolean downloadOperationPending)
    {
       f1prompt_.setVisible(false);
-
       timer_.cancel() ;
       if (downloadOperationPending)
          timer_.schedule(170) ;

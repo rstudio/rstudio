@@ -23,6 +23,7 @@ import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -153,7 +154,14 @@ public class RCompletionManager implements CompletionManager
       popup_.addSelectionHandler(new SelectionHandler<QualifiedName>() {
          public void onSelection(SelectionEvent<QualifiedName> event)
          {
-            context_.showHelp(event.getSelectedItem()) ;
+            lastSelectedItem_ = event.getSelectedItem();
+            if (popup_.isHelpVisible())
+               context_.showHelp(lastSelectedItem_);
+            else if (!gettingDeferredHelp_)
+            {
+               gettingDeferredHelp_ = true;
+               showHelpDeferred(context_, lastSelectedItem_, 1000);
+            }
          }
       }) ;
       
@@ -188,6 +196,7 @@ public class RCompletionManager implements CompletionManager
             });
          }
       });
+      
    }
    
    @Inject
@@ -1711,6 +1720,23 @@ public class RCompletionManager implements CompletionManager
          return null;
    }
    
+   public void showHelpDeferred(final CompletionRequestContext context,
+                                final QualifiedName item,
+                                int milliseconds)
+   {
+      new Timer()
+      {
+         @Override
+         public void run()
+         {
+            gettingDeferredHelp_ = false;
+            if (item.equals(lastSelectedItem_) && popup_.isShowing())
+               context.showHelp(item);
+         }
+      }.schedule(milliseconds);
+   }
+   
+   
    private GlobalDisplay globalDisplay_;
    private FileTypeRegistry fileTypeRegistry_;
    private EventBus eventBus_;
@@ -1738,4 +1764,7 @@ public class RCompletionManager implements CompletionManager
    
    private RCompletionToolTip sigTip_;
    private NativeEvent nativeEvent_;
+   
+   private boolean gettingDeferredHelp_;
+   private QualifiedName lastSelectedItem_;
 }

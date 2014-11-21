@@ -119,8 +119,6 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       list_ = list ;
       setWidget(list_);
       
-      help_.setVisible(values.length > 0);
-      
       ElementIds.assignElementId(list_.getElement(), 
             ElementIds.POPUP_COMPLETIONS);
       
@@ -250,6 +248,11 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    public HandlerRegistration addMouseDownHandler(MouseDownHandler handler)
    {
       return addDomHandler(handler, MouseDownEvent.getType()) ;
+   }
+   
+   public boolean isHelpVisible()
+   {
+      return help_.isVisible() && help_.isShowing();
    }
 
    private HTML setText(String text)

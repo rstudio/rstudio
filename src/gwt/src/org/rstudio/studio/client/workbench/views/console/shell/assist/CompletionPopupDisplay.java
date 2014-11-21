@@ -69,5 +69,7 @@ public interface CompletionPopupDisplay
     *    Implementations may choose to show a progress indicator in this case.
     */
    void clearHelp(boolean downloadOperationPending) ;
+   boolean isHelpVisible() ;
+   
    boolean hasCompletions();
 }
