@@ -100,9 +100,6 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
    CppDefinitionKind kind = CppInvalidDefinition;
    switch (cursor.getKind())
    {
-      case CXCursor_Namespace:
-         kind = CppNamespaceDefinition;
-         break;
       case CXCursor_ClassDecl:
       case CXCursor_ClassTemplate:
          kind = CppClassDefinition;

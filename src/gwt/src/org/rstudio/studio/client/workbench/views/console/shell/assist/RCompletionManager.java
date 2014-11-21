@@ -18,11 +18,14 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.Debug;
@@ -40,11 +43,13 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.FunctionDefinition;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.CompletionResult;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
@@ -69,7 +74,6 @@ import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
 
 public class RCompletionManager implements CompletionManager
 {  
@@ -156,7 +160,32 @@ public class RCompletionManager implements CompletionManager
          {
             ignoreNextInputBlur_ = true ;
          }
-      }) ;
+      });
+      
+      popup_.addSelectionHandler(new SelectionHandler<QualifiedName>() {
+         
+         @Override
+         public void onSelection(SelectionEvent<QualifiedName> event)
+         {
+            docDisplay_.setPopupVisible(true);
+         }
+      });
+      
+      popup_.addCloseHandler(new CloseHandler<PopupPanel>()
+      {
+         @Override
+         public void onClose(CloseEvent<PopupPanel> event)
+         {
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  docDisplay_.setPopupVisible(false);
+               }
+            });
+         }
+      });
    }
    
    @Inject
@@ -334,44 +363,56 @@ public class RCompletionManager implements CompletionManager
                invalidatePendingRequests() ;
                return true ;
             }
-            else if (keycode == KeyCodes.KEY_TAB
-                  || keycode == KeyCodes.KEY_ENTER
-                  || keycode == KeyCodes.KEY_RIGHT)
+            
+            // NOTE: It is possible for the popup to still be showing, but
+            // showing offscreen with no values. We only grab these keys
+            // when the popup is both showing, and has completions.
+            // This functionality is here to ensure backspace works properly;
+            // e.g "stats::rna" -> "stats::rn" brings completions if the user
+            // had originally requested completions at e.g. "stats::".
+            if (popup_.hasCompletions())
             {
-               QualifiedName value = popup_.getSelectedValue() ;
-               if (value != null)
+               if (keycode == KeyCodes.KEY_TAB
+                     || keycode == KeyCodes.KEY_ENTER
+                     || keycode == KeyCodes.KEY_RIGHT)
                {
-                  context_.onSelection(value) ;
+                  QualifiedName value = popup_.getSelectedValue() ;
+                  if (value != null)
+                  {
+                     context_.onSelection(value) ;
+                     return true ;
+                  }
+               }
+               
+               else if (keycode == KeyCodes.KEY_UP)
+                  return popup_.selectPrev() ;
+               else if (keycode == KeyCodes.KEY_DOWN)
+                  return popup_.selectNext() ;
+               else if (keycode == KeyCodes.KEY_PAGEUP)
+                  return popup_.selectPrevPage() ;
+               else if (keycode == KeyCodes.KEY_PAGEDOWN)
+                  return popup_.selectNextPage() ;
+               else if (keycode == KeyCodes.KEY_HOME)
+                  return popup_.selectFirst() ;
+               else if (keycode == KeyCodes.KEY_END)
+                  return popup_.selectLast() ;
+               else if (keycode == KeyCodes.KEY_LEFT)
+               {
+                  invalidatePendingRequests() ;
                   return true ;
                }
+               if (keycode == 112) // F1
+               {
+                  context_.showHelpTopic() ;
+                  return true ;
+               }
+               else if (keycode == 113) // F2
+               {
+                  goToFunctionDefinition();
+                  return true;
+               }
             }
-            else if (keycode == KeyCodes.KEY_UP)
-               return popup_.selectPrev() ;
-            else if (keycode == KeyCodes.KEY_DOWN)
-               return popup_.selectNext() ;
-            else if (keycode == KeyCodes.KEY_PAGEUP)
-               return popup_.selectPrevPage() ;
-            else if (keycode == KeyCodes.KEY_PAGEDOWN)
-               return popup_.selectNextPage() ;
-            else if (keycode == KeyCodes.KEY_HOME)
-               return popup_.selectFirst() ;
-            else if (keycode == KeyCodes.KEY_END)
-               return popup_.selectLast() ;
-            else if (keycode == KeyCodes.KEY_LEFT)
-            {
-               invalidatePendingRequests() ;
-               return true ;
-            }
-            else if (keycode == 112) // F1
-            {
-               context_.showHelpTopic() ;
-               return true ;
-            }
-            else if (keycode == 113) // F2
-            {
-               goToFunctionDefinition();
-               return true;
-            }
+            
          }
          
          if (canContinueCompletions(event))
@@ -401,7 +442,8 @@ public class RCompletionManager implements CompletionManager
                boolean isAcceptableCharSequence = isValidForRIdentifier(ch) ||
                      (ch == ':' && prevCh == ':') ||
                      ch == '$' ||
-                     ch == '@';
+                     ch == '@' ||
+                     ch == '/'; // for file completions
                
                if (currentLine.length() > 0 &&
                      cursorColumn > 0 &&
@@ -442,6 +484,7 @@ public class RCompletionManager implements CompletionManager
    private boolean isValidForRIdentifier(char c) {
       return (c >= 'a' && c <= 'z') ||
              (c >= 'A' && c <= 'Z') ||
+             (c >= '0' && c <= '9') ||
              (c == '.') ||
              (c == '_');
    }
@@ -451,7 +494,19 @@ public class RCompletionManager implements CompletionManager
       String currentLine = docDisplay_.getCurrentLine();
       Position cursorPos = input_.getCursorPosition();
       int cursorColumn = cursorPos.getColumn();
-
+      
+      // Grab the current token on the line
+      String currentToken = StringUtil.getToken(
+            currentLine, cursorColumn, "^[a-zA-Z0-9._'\"`]$", false, false);
+      
+      // Don't auto-popup for common keywords
+      String[] keywords = {
+            "for", "if", "in", "function", "while", "repeat",
+            "break", "switch", "return", "library", "require"};
+      for (String keyword : keywords)
+         if (keyword.substring(0, currentToken.length()).equals(currentToken))
+            return false;
+      
       boolean canAutocomplete = canAutoPopup_ && 
             (currentLine.length() > lookbackLimit - 1 && isValidForRIdentifier(c));
 
@@ -473,6 +528,10 @@ public class RCompletionManager implements CompletionManager
    
    public boolean previewKeyPress(char c)
    {
+      // Bail if we're not in R mode
+      if (!isCursorInRMode())
+         return false;
+      
       if (popup_.isShowing())
       {
          if (isValidForRIdentifier(c) || c == ':')
@@ -489,12 +548,33 @@ public class RCompletionManager implements CompletionManager
       }
       else
       {
-         
          // Perform an auto-popup if a set number of R identifier characters
-         // have been inserted
-         final boolean canAutoPopup = checkCanAutoPopup(c, 4);
+         // have been inserted (but only if the user has allowed it in prefs)
+         boolean autoPopupEnabled = uiPrefs_.codeComplete().getValue().equals(
+               UIPrefsAccessor.COMPLETION_ALWAYS);
+
+         if (!autoPopupEnabled)
+            return false;
+         
+         
+         // Check for a valid number of R identifier characters for autopopup
+         boolean canAutoPopup = checkCanAutoPopup(c, 4);
          char prevChar = docDisplay_.getCurrentLine().charAt(
                input_.getCursorPosition().getColumn() - 1); 
+         
+         // Automatically popup completions after certain function calls
+         if (c == '(')
+         {
+            String token = StringUtil.getToken(
+                  docDisplay_.getCurrentLine(),
+                  input_.getCursorPosition().getColumn(),
+                  "[a-z]",
+                  false,
+                  true);
+            
+            if (token.matches("^(library|require|requireNamespace|data)\\s*$"))
+               canAutoPopup = true;
+         }
          
          if (
                (canAutoPopup) ||
@@ -764,7 +844,7 @@ public class RCompletionManager implements CompletionManager
    
    private boolean isLineInRoxygenComment(String line)
    {
-      return line.matches("^\\s*#+'.*");
+      return line.matches("^\\s*#+'\\s*[^\\s].*");
    }
    
    private boolean isLineInComment(String line)
@@ -789,15 +869,10 @@ public class RCompletionManager implements CompletionManager
       int cursorCol = selection.getStart().getPosition();
       String firstLine = input_.getText().substring(0, cursorCol);
       
-      // never autocomplete in (non-roxygen) comments
+      // never autocomplete in (non-roxygen) comments, or at the start
+      // of roxygen comments (e.g. at "#' |")
       if (isLineInComment(firstLine) && !isLineInRoxygenComment(firstLine))
          return false;
-      
-      // don't auto-insert if we're within a comment
-      if (!StringUtil.stripRComment(firstLine).equals(firstLine))
-      {
-         canAutoInsert = false;
-      }
       
       // don't auto-complete with tab on lines with only whitespace,
       // if the insertion character was a tab (unless the user has opted in)
@@ -1182,12 +1257,12 @@ public class RCompletionManager implements CompletionManager
       // We can now set the function call string
       context.setFunctionCallString(
             editor.getTextForRange(Range.fromPoints(
-                  tokenCursor.currentPosition(), endPos)));
+                  tokenCursor.currentPosition(), endPos)).trim());
       
-      String initialData = 
+      String initialData =
             docDisplay_.getTextForRange(Range.fromPoints(
                   tokenCursor.currentPosition(),
-                  endOfDecl.currentPosition()));
+                  endOfDecl.currentPosition())).trim();
       
       // And the first context
       context.add(initialData, initialDataType, initialNumCommas);
@@ -1222,10 +1297,12 @@ public class RCompletionManager implements CompletionManager
             dataType = AutocompletionContext.TYPE_SINGLE_BRACKET;
          }
          
+         tokenCursor.findStartOfEvaluationContext();
+         
          assocData =
             docDisplay_.getTextForRange(Range.fromPoints(
                   tokenCursor.currentPosition(),
-                  declEnd.currentPosition()));
+                  declEnd.currentPosition())).trim();
          
          context.add(assocData, dataType, numCommas);
       }
@@ -1282,6 +1359,7 @@ public class RCompletionManager implements CompletionManager
          
          if (results.length == 0)
          {
+            popup_.clearCompletions();
             boolean lastInputWasTab =
                   (nativeEvent_ != null && nativeEvent_.getKeyCode() == KeyCodes.KEY_TAB);
             
@@ -1293,7 +1371,8 @@ public class RCompletionManager implements CompletionManager
                return;
             }
             
-            if (canAutoAccept_) {
+            if (canAutoAccept_)
+            {
                popup_.showErrorMessage(
                      "(No matches)", 
                      new PopupPositioner(input_.getCursorBounds(), popup_));
@@ -1318,7 +1397,7 @@ public class RCompletionManager implements CompletionManager
          Rectangle rect = input_.getPositionBounds(
                selection_.getStart().movePosition(-token.length(), true));
 
-         token_ = token ;
+         token_ = token;
          suggestOnAccept_ = completions.suggestOnAccept;
          overrideInsertParens_ = completions.dontInsertParens;
 
@@ -1332,10 +1411,10 @@ public class RCompletionManager implements CompletionManager
          {
             if (results.length == 1 && canAutoAccept_)
                applyValue(results[0]);
-            
-            popup_.showCompletionValues(
-                  results,
-                  new PopupPositioner(rect, popup_));
+            else
+               popup_.showCompletionValues(
+                     results,
+                     new PopupPositioner(rect, popup_));
          }
       }
 
@@ -1389,10 +1468,36 @@ public class RCompletionManager implements CompletionManager
       
       private void applyValueRmdOption(final String value)
       {
-         input_.setSelection(new InputEditorSelection(
-               selection_.getStart().movePosition(-token_.length(), true),
-               input_.getSelection().getEnd()));
-
+         // If there is no token but spaces have been inserted, then compensate
+         // for that. This is necessary as we allow for spaces in the completion,
+         // and completions auto-popup after ',' so e.g. on
+         //
+         // ```{r, |}
+         //      ^        -- automatically triggered completion
+         //       ^       -- user inserted spaces
+         //
+         // if we accept a completion in that position, we should keep the
+         // spaces the user inserted. (After the user has inserted a character,
+         // it becomes part of the token and hence this is unnecessary.
+         if (token_ == "")
+         {
+            int startPos = selection_.getStart().getPosition();
+            String currentLine = docDisplay_.getCurrentLine();
+            while (startPos < currentLine.length() &&
+                  currentLine.charAt(startPos) == ' ')
+               ++startPos;
+            
+            input_.setSelection(new InputEditorSelection(
+                  selection_.getStart().movePosition(startPos, false),
+                  input_.getSelection().getEnd()));
+         }
+         else
+         {
+            input_.setSelection(new InputEditorSelection(
+                  selection_.getStart().movePosition(-token_.length(), true),
+                  input_.getSelection().getEnd()));
+         }
+         
          input_.replaceSelection(value, true);
          token_ = value;
          selection_ = input_.getSelection();
@@ -1406,20 +1511,26 @@ public class RCompletionManager implements CompletionManager
             return;
          }
          
-         boolean insertParen = qualifiedName.type == RCompletionType.FUNCTION;
+         boolean insertParen = RCompletionType.isFunctionType(qualifiedName.type);
          
          // Don't insert a paren if there is already a '(' following
          // the cursor
          AceEditor editor = (AceEditor) input_;
-         boolean textFollowingCursorHasOpenParen = false;
+         boolean textFollowingCursorIsOpenParen = false;
+         boolean textFollowingCursorIsClosingParen = false;
          if (editor != null)
          {
-            TokenCursor cursor = 
+            TokenCursor cursor =
                   editor.getSession().getMode().getCodeModel().getTokenCursor();
             cursor.moveToPosition(editor.getCursorPosition());
             if (cursor.moveToNextToken())
-               textFollowingCursorHasOpenParen =
-               cursor.currentValue() == "(";
+            {
+               textFollowingCursorIsOpenParen =
+                     cursor.currentValue() == "(";
+               textFollowingCursorIsClosingParen =
+                     cursor.currentValue() == ")" && !cursor.bwdToMatchingToken();
+            }
+            
          }
 
          String value = qualifiedName.name;
@@ -1444,13 +1555,13 @@ public class RCompletionManager implements CompletionManager
           * logic works the second time, we need to reset the
           * selection.
           */
-
+         
          // Move range to beginning of token
          input_.setSelection(new InputEditorSelection(
                selection_.getStart().movePosition(-token_.length(), true),
                input_.getSelection().getEnd()));
 
-         if (insertParen && !overrideInsertParens_ && !textFollowingCursorHasOpenParen)
+         if (insertParen && !overrideInsertParens_ && !textFollowingCursorIsOpenParen)
          {
             // Don't replace the selection if the token ends with a ')'
             // (implies an earlier replacement handled this)
@@ -1462,12 +1573,28 @@ public class RCompletionManager implements CompletionManager
             }
             else
             {
-               input_.replaceSelection(value + "()", true);
+               // If the token after the cursor is already a ')', don't insert
+               // a closing paren
+               int relMovement = 0;
+               if (textFollowingCursorIsClosingParen)
+               {
+                  input_.replaceSelection(value + "(", true);
+               }
+               else
+               {
+                  input_.replaceSelection(value + "()", true);
+                  relMovement = -1;
+               }
+               
+               // Move the cursor into the newly inserted parens
                InputEditorSelection newSelection = new InputEditorSelection(
-                     input_.getSelection().getEnd().movePosition(-1, true));
+                     input_.getSelection().getEnd().movePosition(
+                           relMovement, true));
+               
                token_ = value + "(";
                selection_ = new InputEditorSelection(
-                     input_.getSelection().getStart().movePosition(-2, true),
+                     input_.getSelection().getStart().movePosition(
+                           relMovement - 1, true),
                      newSelection.getStart());
 
                input_.setSelection(newSelection);
@@ -1499,6 +1626,22 @@ public class RCompletionManager implements CompletionManager
       private boolean suggestOnAccept_;
       private boolean overrideInsertParens_;
       
+   }
+   
+   private boolean isCursorInRMode()
+   {
+      if (docDisplay_.getFileType().isR())
+         return true;
+      
+      String m = docDisplay_.getLanguageMode(docDisplay_.getCursorPosition());
+      
+      if (m == null)
+         return false;
+      
+      if (m.equals(TextFileType.R_LANG_MODE))
+         return true;
+      
+      return false;
    }
    
    private String getSourceDocumentPath()

@@ -469,8 +469,50 @@ public class TextEditingTarget implements
                }
                
             }
- 
+            else if (
+                  prefs_.continueCommentsOnNewline().getValue() && 
+                  !docDisplay_.isPopupVisible() &&
+                  ne.getKeyCode() == KeyCodes.KEY_ENTER && mod == 0 &&
+                    (fileType_.isC() || isCursorInRMode() || isCursorInTexMode()))
+            {
+               String line = docDisplay_.getCurrentLineUpToCursor();
+               Pattern pattern = null;
+               
+               if (isCursorInRMode())
+                  pattern = Pattern.create("^(\\s*#+'?\\s*)");
+               else if (isCursorInTexMode())
+                  pattern = Pattern.create("^(\\s*%+'?\\s*)");
+               else if (fileType_.isC())
+               {
+                  // bail on attributes
+                  if (!line.matches("^\\s*//\\s*\\[\\[.*\\]\\].*"))
+                     pattern = Pattern.create("^(\\s*//'?\\s*)");
+               }
+               
+               if (pattern != null)
+               {
+                  Match match = pattern.match(line, 0);
+                  if (match != null)
+                  {
+                     event.preventDefault();
+                     event.stopPropagation();
+                     docDisplay_.insertCode("\n" + match.getGroup(1));
+                  }
+               }
+            }
+            else if (
+                  prefs_.continueCommentsOnNewline().getValue() &&
+                  !docDisplay_.isPopupVisible() &&
+                  ne.getKeyCode() == KeyCodes.KEY_ENTER &&
+                  mod == KeyboardShortcut.SHIFT)
+            {
+               event.preventDefault();
+               event.stopPropagation();
+               String indent = docDisplay_.getNextLineIndent();
+               docDisplay_.insertCode("\n" + indent);
+            }
          }
+
       });
       
       docDisplay_.addCommandClickHandler(new CommandClickEvent.Handler()
@@ -2266,6 +2308,26 @@ public class TextEditingTarget implements
    
    private void doCommentUncomment(String c)
    {
+      InputEditorSelection initialSelection = docDisplay_.getSelection();
+      String indent = "";
+      boolean singleLineAction = initialSelection.isEmpty() ||
+            initialSelection.getStart().getLine().equals(
+                  initialSelection.getEnd().getLine());
+            
+      if (singleLineAction)
+      {
+         String currentLine = docDisplay_.getCurrentLine();
+         Match firstCharMatch = Pattern.create("([^\\s])").match(currentLine, 0);
+         if (firstCharMatch != null)
+         {
+            indent = currentLine.substring(0, firstCharMatch.getIndex());
+         }
+         else
+         {
+            indent = currentLine;
+         }
+      }
+      
       boolean selectionCollapsed = docDisplay_.isSelectionCollapsed();
       docDisplay_.fitSelectionToLines(true);
       String selection = docDisplay_.getSelectionValue();
@@ -2277,26 +2339,76 @@ public class TextEditingTarget implements
       boolean uncomment = match == null && selection.trim().length() != 0;
       if (uncomment)
       {
-         String prefix = c;
-         if (prefix.equals("#"))
-            prefix = "#'?";
+         String prefix = c + "'?";
          selection = selection.replaceAll("((^|\\n)\\s*)" + prefix + " ?", "$1");
       }
       else
       {
-         selection = c + " " + selection.replaceAll("\\n", "\n" + c + " ");
+         // Check to see if we're commenting something that looks like Roxygen
+         Pattern pattern = Pattern.create("(^\\s*@)|(\\n\\s*@)");
+         boolean isRoxygen = pattern.match(selection, 0) != null;
+         
+         if (isRoxygen)
+            c = c + "'";
+         
+         if (singleLineAction)
+            selection = indent + c + " " + selection.replaceAll("^\\s*", "");
+         else
+         {
+            selection = c + " " + selection.replaceAll("\\n", "\n" + c + " ");
 
-         // If the selection ends at the very start of a line, we don't want
-         // to comment out that line. This enables Shift+DownArrow to select
-         // one line at a time.
-         if (selection.endsWith("\n" + c + " "))
-            selection = selection.substring(0, selection.length() - 1 - c.length());
+            // If the selection ends at the very start of a line, we don't want
+            // to comment out that line. This enables Shift+DownArrow to select
+            // one line at a time.
+            if (selection.endsWith("\n" + c + " "))
+               selection = selection.substring(0, selection.length() - 1 - c.length());
+         }
       }
 
       docDisplay_.replaceSelection(selection);
       
       if (selectionCollapsed)
          docDisplay_.collapseSelection(true);
+      
+      if (singleLineAction)
+      {
+         int offset = c.length() + 1;
+         String line = docDisplay_.getCurrentLine();
+         Match matchPos = Pattern.create("([^\\s])").match(line, 0);
+         
+         InputEditorSelection newSelection;
+         if (uncomment)
+         {
+            if (initialSelection.isEmpty())
+            {
+               newSelection = new InputEditorSelection(
+                     initialSelection.getStart().movePosition(-offset, true),
+                     initialSelection.getStart().movePosition(-offset, true));
+            }
+            else
+            {
+               newSelection = new InputEditorSelection(
+                     initialSelection.getStart().movePosition(matchPos.getIndex(), false),
+                     initialSelection.getEnd().movePosition(-offset, true));
+            }
+         }
+         else
+         {
+            if (initialSelection.isEmpty())
+            {
+               newSelection = new InputEditorSelection(
+                     initialSelection.getStart().movePosition(offset, true),
+                     initialSelection.getStart().movePosition(offset, true));
+            }
+            else
+            {
+               newSelection = new InputEditorSelection(
+                     initialSelection.getStart().movePosition(matchPos.getIndex() + offset, false),
+                     initialSelection.getEnd().movePosition(offset, true));
+            }
+         }
+         docDisplay_.setSelection(newSelection);
+      }
       
       docDisplay_.focus();
    }

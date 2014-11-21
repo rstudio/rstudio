@@ -184,7 +184,7 @@ public class DocTabLayoutPanel
 
       // When tabs are closed, the overall width shrinks, and this can lead
       // to cases where there's too much empty space on the screen
-      Node lastTab = getLastChildElement(tabBarParent);
+      Node lastTab = getLastChildElement(tabBar);
       if (lastTab == null || lastTab.getNodeType() != Node.ELEMENT_NODE)
          return;
       int edge = DomUtils.getRelativePosition(tabBarParent, Element.as(lastTab)).x 

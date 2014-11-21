@@ -48,6 +48,15 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<RPrefs>
       });
       return checkBox;
    }
+   
+   protected CheckBox checkboxPref(String label,
+                                   final PrefValue<Boolean> prefValue,
+                                   String title)
+   {
+      CheckBox result = checkboxPref(label, prefValue);
+      result.setTitle(title);
+      return result;
+   }
 
   
    protected NumericValueWidget numericPref(String label,

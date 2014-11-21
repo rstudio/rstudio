@@ -228,6 +228,9 @@ public class CppCompletionManager implements CompletionManager
          if ((popup == null) || !popup.isVisible())
             return false;
          
+         // let the document know that a popup is showing
+         docDisplay_.setPopupVisible(true);
+         
          // backspace triggers completion if the popup is visible
          if (keyCode == KeyCodes.KEY_BACKSPACE)
          {

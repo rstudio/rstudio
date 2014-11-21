@@ -716,6 +716,34 @@ public class StringUtil
       return getExtension(string, 1);
    }
    
+   public static String getToken(String string,
+                                 int pos,
+                                 String tokenRegex,
+                                 boolean expandForward,
+                                 boolean backOverWhitespace)
+   {
+      if (backOverWhitespace)
+         while (pos > 0 && string.substring(pos - 1, pos).matches("\\s"))
+            --pos;
+      
+      int startPos = Math.max(0, pos - 1);
+      int endPos = Math.min(pos, string.length());
+      
+      while (startPos >= 0 &&
+            string.substring(startPos, startPos + 1).matches(tokenRegex))
+         --startPos;
+      
+      if (expandForward)
+         while (endPos < string.length() &&
+               string.substring(endPos, endPos + 1).matches(tokenRegex))
+            ++endPos;
+      
+      if (startPos >= endPos)
+         return "";
+      
+      return string.substring(startPos + 1, endPos);
+   }
+   
    private static final String[] LABELS = {
          "B",
          "KB",

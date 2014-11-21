@@ -224,11 +224,8 @@ public class SearchWidget extends Composite implements SearchDisplay
       {
          public void onKeyDown(KeyDownEvent event)
          {
-            if (ignore_ = !ignore_)
-               handler.onKeyDown(event);
+            handler.onKeyDown(event);
          }
-
-         private boolean ignore_ = false;
       });
    }
 
@@ -315,6 +312,11 @@ public class SearchWidget extends Composite implements SearchDisplay
    {
       lastValueSent_ = value;
       close_.setVisible(lastValueSent_.length() > 0);
+   }
+   
+   public String getLastValue()
+   {
+      return lastValueSent_;
    }
 
    @UiField(provided=true)
