@@ -568,3 +568,10 @@
    }
    NULL
 })
+
+.rs.addJsonRpcHandler("get_args", function(name, src)
+{
+   result <- .rs.getSignature(.rs.getAnywhere(name, src))
+   result <- sub("function ", "", result)
+   .rs.scalar(result)
+})

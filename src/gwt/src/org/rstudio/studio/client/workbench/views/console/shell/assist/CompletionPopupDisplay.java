@@ -41,6 +41,9 @@ public interface CompletionPopupDisplay
    boolean isShowing() ;
 
    void setPopupPosition(int x, int y) ;
+   int getPopupLeft();
+   int getPopupTop();
+   
    int getOffsetHeight() ;
 
    QualifiedName getSelectedValue() ;

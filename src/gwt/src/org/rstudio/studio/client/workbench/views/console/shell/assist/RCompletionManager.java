@@ -41,6 +41,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
+import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -65,6 +66,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RInfixData;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.r.RCompletionToolTip;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
@@ -1611,6 +1613,38 @@ public class RCompletionManager implements CompletionManager
             input_.replaceSelection(value, true);
             token_ = value;
             selection_ = input_.getSelection();
+         }
+         
+         // Show a signature popup if we just completed a function
+         if (RCompletionType.isFunctionType(qualifiedName.type))
+         {
+            // We want to find the cursor position, and place the popup
+            // above the cursor.
+            server_.getArgs(
+                  qualifiedName.name,
+                  qualifiedName.source,
+                  new ServerRequestCallback<String>()
+                  {
+                     
+                     @Override
+                     public void onResponseReceived(String args)
+                     {
+                        Rectangle cursorWindow = docDisplay_.getCursorBounds();
+                        RCompletionToolTip sigTip = new RCompletionToolTip();
+                        sigTip.setText(qualifiedName.name + args);
+                        sigTip.resolvePositionRelativeTo(
+                              cursorWindow.getLeft(),
+                              cursorWindow.getTop());
+                        sigTip.show();
+                        sigTip.setVisible(true);
+                     }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        Debug.logError(error);
+                     }
+                  });
          }
       }
 
