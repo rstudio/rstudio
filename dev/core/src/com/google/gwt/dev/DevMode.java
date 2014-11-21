@@ -635,7 +635,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
       return server.getPort();
     } catch (BindException e) {
       System.err.println("Port " + options.getBindAddress() + ':' + getPort()
-          + " is already is use; you probably still have another session active");
+          + " is already in use; you probably still have another session active");
     } catch (Exception e) {
       System.err.println("Unable to start embedded HTTP server");
       e.printStackTrace();
