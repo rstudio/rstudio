@@ -34,6 +34,7 @@ public interface ConsoleResources extends ClientBundle
       String command();
       String completionPopup();
       String completionGrid();
+      String helpPopup();
       String functionInfo();
       String functionInfoSignature();
       String functionInfoSummary();

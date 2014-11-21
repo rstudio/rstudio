@@ -24,10 +24,11 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 
-public class HelpInfoPane extends Composite
+public class HelpInfoPopupPanel extends PopupPanel
 {
-   public HelpInfoPane()
+   public HelpInfoPopupPanel()
    {
+      super();
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
 
       DockLayoutPanel outer = new DockLayoutPanel(Unit.PX);
@@ -41,7 +42,8 @@ public class HelpInfoPane extends Composite
       vpanel_.setWidth("100%") ;
       outer.add(scrollPanel_);
 
-      initWidget(outer) ;
+      setWidget(outer) ;
+      show();
       
       timer_ = new Timer() {
          public void run()
@@ -75,8 +77,10 @@ public class HelpInfoPane extends Composite
       htmlDesc.setStylePrimaryName(styles_.functionInfoSummary()) ;
       vpanel_.add(htmlDesc) ;
 
+      vpanel_.setVisible(true);
       f1prompt_.setVisible(true);
-      scrollPanel_.setVisible(true) ;
+      scrollPanel_.setVisible(true);
+      setVisible(true);
       
    }
    
