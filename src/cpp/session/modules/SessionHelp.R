@@ -205,7 +205,10 @@ options(help_type = "html")
       return()
    }
    
-   if (type == .rs.acCompletionTypes$FUNCTION)
+   if (type %in% c(.rs.acCompletionTypes$FUNCTION,
+                   .rs.acCompletionTypes$S4_GENERIC,
+                   .rs.acCompletionTypes$S4_METHOD,
+                   .rs.acCompletionTypes$R5_METHOD))
       return(.rs.getHelpFunction(what, from))
    else if (type == .rs.acCompletionTypes$ARGUMENT)
       return(.rs.getHelpArgument(what, from, parent.frame()))
@@ -240,7 +243,7 @@ options(help_type = "html")
    }
    
    # Otherwise, try to get help in the vanilla way
-   .rs.getHelp(name, src)
+   .rs.getHelp(name, src, getSignature = TRUE)
 })
 
 .rs.addFunction("getHelpPackage", function(pkgName)
@@ -286,7 +289,8 @@ options(help_type = "html")
 .rs.addFunction("getHelp", function(topic,
                                     package = "",
                                     sig = NULL,
-                                    subset = TRUE)
+                                    subset = TRUE,
+                                    getSignature = FALSE)
 {
    # Completions from the search path might have the 'package:' prefix, so
    # lets strip that out.
@@ -370,10 +374,12 @@ options(help_type = "html")
    }
    
    # Try to resolve function signatures for help
-   if (is.null(sig))
+   if (is.null(sig) && getSignature)
    {
       object <- NULL
-      if (length(package) && package != "")
+      if (length(package) &&
+             package != "" &&
+             package %in% loadedNamespaces())
       {
          object <- tryCatch(
             get(topic, envir = asNamespace(package)),
