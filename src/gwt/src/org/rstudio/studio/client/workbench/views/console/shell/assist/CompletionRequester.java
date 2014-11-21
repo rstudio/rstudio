@@ -616,13 +616,6 @@ public class CompletionRequester
          this.type = RCompletionType.UNKNOWN;
       }
       
-      public boolean isFunctionType()
-      {
-         return this.type == RCompletionType.FUNCTION ||
-                this.type == RCompletionType.S4_GENERIC ||
-                this.type == RCompletionType.S4_METHOD;
-      }
-      
       @Override
       public String toString()
       {
@@ -654,16 +647,15 @@ public class CompletionRequester
       
       private ImageResource getIcon()
       {
+         if (RCompletionType.isFunctionType(type))
+            return ICONS.function();
+         
          switch(type)
          {
          case RCompletionType.UNKNOWN:
             return ICONS.variable();
          case RCompletionType.VECTOR:
             return ICONS.variable();
-         case RCompletionType.FUNCTION:
-         case RCompletionType.S4_GENERIC:
-         case RCompletionType.S4_METHOD:
-            return ICONS.function();
          case RCompletionType.ARGUMENT:
             return ICONS.variable();
          case RCompletionType.ARRAY:
