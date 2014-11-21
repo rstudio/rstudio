@@ -33,6 +33,7 @@ import org.rstudio.core.client.widget.ThemedPopupPanel;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo.ParsedInfo;
+import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionResources;
 
 public class CompletionPopupPanel extends ThemedPopupPanel
       implements CompletionPopupDisplay
@@ -43,8 +44,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
       help_ = new HelpInfoPopupPanel();
       help_.setWidth("400px");
-      help_.setHeight("200px");
-      help_.setStylePrimaryName(styles_.helpPopup());
+      help_.setStylePrimaryName(CppCompletionResources.INSTANCE.styles().toolTip());
       help_.show();
       
       setStylePrimaryName(styles_.completionPopup()) ;
@@ -220,7 +220,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       int top = getAbsoluteTop();
       int left = getAbsoluteLeft();
       int width = getOffsetWidth();
-      help_.setPopupPosition(left + width - 6, top + 3);
+      help_.setPopupPosition(left + width - 4, top + 3);
       help_.setVisible(setVisible);
    }
    
@@ -263,4 +263,5 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    private CompletionList<QualifiedName> list_ ;
    private HelpInfoPopupPanel help_ ;
    private final ConsoleResources.ConsoleStyles styles_;
+   private static QualifiedName lastSelectedValue_;
 }

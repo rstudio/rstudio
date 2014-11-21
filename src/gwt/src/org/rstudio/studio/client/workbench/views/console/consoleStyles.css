@@ -84,7 +84,6 @@
 }
 
 .functionInfo, .paramInfoName {
-   background-color: #fff;
    padding: 2px 2px 2px 3px;
 
 }
@@ -124,8 +123,8 @@
 }
 
 .promptFullHelp {
-   height: 16px;
-   background: #f0f0f4;
+   height: 11px;
+   background: #eaeaca;
    font-size: 9px;
    padding: 3px;
 }

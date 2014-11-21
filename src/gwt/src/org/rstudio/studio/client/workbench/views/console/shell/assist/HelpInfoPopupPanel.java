@@ -16,7 +16,6 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import java.util.Map;
 
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 
@@ -29,18 +28,18 @@ public class HelpInfoPopupPanel extends PopupPanel
    public HelpInfoPopupPanel()
    {
       super();
-      styles_ = ConsoleResources.INSTANCE.consoleStyles();
+      consoleStyles_ = ConsoleResources.INSTANCE.consoleStyles();
 
-      DockLayoutPanel outer = new DockLayoutPanel(Unit.PX);
-
-      f1prompt_ = new Label("Press F1 for additional help");
-      f1prompt_.setStylePrimaryName(styles_.promptFullHelp());
-      outer.addSouth(f1prompt_, 16);
+      FlowPanel outer = new FlowPanel();
 
       scrollPanel_.add(vpanel_) ;
-      vpanel_.setStylePrimaryName(styles_.functionInfo()) ;
+      vpanel_.setStylePrimaryName(consoleStyles_.functionInfo()) ;
       vpanel_.setWidth("100%") ;
       outer.add(scrollPanel_);
+      
+      f1prompt_ = new Label("Press F1 for additional help");
+      f1prompt_.setStylePrimaryName(consoleStyles_.promptFullHelp());
+      outer.add(f1prompt_);
 
       setWidget(outer) ;
       show();
@@ -64,24 +63,21 @@ public class HelpInfoPopupPanel extends PopupPanel
       if (StringUtil.isNullOrEmpty(help.getFunctionSignature()))
       {
          lblSig = new Label(help.getTitle());
-         lblSig.setStylePrimaryName(styles_.packageName());
+         lblSig.setStylePrimaryName(consoleStyles_.packageName());
       }
       else
       {
          lblSig = new Label(help.getFunctionSignature()) ;
-         lblSig.setStylePrimaryName(styles_.functionInfoSignature()) ;
+         lblSig.setStylePrimaryName(consoleStyles_.functionInfoSignature()) ;
       }
       vpanel_.add(lblSig);
       
       HTML htmlDesc = new HTML(help.getDescription()) ;
-      htmlDesc.setStylePrimaryName(styles_.functionInfoSummary()) ;
-      vpanel_.add(htmlDesc) ;
-
-      vpanel_.setVisible(true);
-      f1prompt_.setVisible(true);
-      scrollPanel_.setVisible(true);
-      setVisible(true);
+      htmlDesc.setStylePrimaryName(consoleStyles_.functionInfoSummary()) ;
+      vpanel_.add(htmlDesc);
       
+      doDisplay();
+
    }
    
    public void displayParameterHelp(Map<String, String> help, String paramName)
@@ -99,16 +95,15 @@ public class HelpInfoPopupPanel extends PopupPanel
       if (paramName != null)
       {
          Label lblSig = new Label(paramName) ;
-         lblSig.setStylePrimaryName(styles_.paramInfoName()) ;
+         lblSig.setStylePrimaryName(consoleStyles_.paramInfoName()) ;
          vpanel_.add(lblSig);
       }
       
       HTML htmlDesc = new HTML(desc) ;
-      htmlDesc.setStylePrimaryName(styles_.paramInfoDesc()) ;
+      htmlDesc.setStylePrimaryName(consoleStyles_.paramInfoDesc()) ;
       vpanel_.add(htmlDesc) ;
       
-      f1prompt_.setVisible(true);
-      scrollPanel_.setVisible(true) ;
+      doDisplay();
    }
    
    public void displayPackageHelp(HelpInfo.ParsedInfo help)
@@ -120,16 +115,15 @@ public class HelpInfoPopupPanel extends PopupPanel
       if (title != null)
       {
          Label label = new Label(title);
-         label.setStylePrimaryName(styles_.packageName());
+         label.setStylePrimaryName(consoleStyles_.packageName());
          vpanel_.add(label);
       }
       
       HTML htmlDesc = new HTML(help.getDescription()) ;
-      htmlDesc.setStylePrimaryName(styles_.packageDescription()) ;
+      htmlDesc.setStylePrimaryName(consoleStyles_.packageDescription()) ;
       vpanel_.add(htmlDesc) ;
 
-      f1prompt_.setVisible(true);
-      scrollPanel_.setVisible(true) ;
+      doDisplay();
    }
 
    public void clearHelp(boolean downloadOperationPending)
@@ -143,9 +137,20 @@ public class HelpInfoPopupPanel extends PopupPanel
          timer_.run() ;
    }
    
+   private void doDisplay()
+   {
+      vpanel_.setVisible(true);
+      f1prompt_.setVisible(true);
+      scrollPanel_.setVisible(true);
+      
+      String newHeight = Math.min(200, vpanel_.getOffsetHeight()) + "px";
+      scrollPanel_.setHeight(newHeight);
+      setVisible(true);
+   }
+   
    private final ScrollPanel scrollPanel_ = new ScrollPanel() ;
    private final VerticalPanel vpanel_ = new VerticalPanel() ;
    private final Timer timer_;
-   private final ConsoleResources.ConsoleStyles styles_;
+   private final ConsoleResources.ConsoleStyles consoleStyles_;
    private Label f1prompt_;
 }
