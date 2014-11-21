@@ -326,6 +326,22 @@
    if (regexpr("(", name, fixed = TRUE) > 0)
       return(FALSE)
    
+   # If envir is the name of something on the search path, get it from there
+   if (is.character(name) && is.character(envir))
+   {
+      pos <- match(envir, search(), nomatch = -1L)
+      if (pos > 0)
+      {
+         object <- tryCatch(
+            get(name, pos = pos),
+            error = function(e) NULL
+         )
+         
+         if (!is.null(object))
+            return(object)
+      }
+   }
+   
    if (is.character(name))
    {
       name <- .rs.stripSurrounding(name)
