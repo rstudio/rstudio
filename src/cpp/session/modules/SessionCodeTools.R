@@ -346,23 +346,7 @@
       )
    }
    
-   ## Return on success
-   if (!is.null(result))
-   {
-      return(result)
-   }
-   
-   ## Otherwise, rely on 'getAnywhere'
-   objects <- getAnywhere(name)
-   if (length(objects$objs))
-   {
-      ## TODO: What if we have multiple completions?
-      objects$objs[[1]]
-   }
-   else
-   {
-      NULL
-   }
+   result
 })
 
 .rs.addFunction("getFunctionArgumentNames", function(object)
