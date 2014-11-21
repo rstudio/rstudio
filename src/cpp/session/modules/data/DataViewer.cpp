@@ -53,7 +53,8 @@ namespace viewer {
 
 namespace {   
 
-SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP)
+SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP, 
+                 SEXP cacheKeySEXP)
 {    
    // validate that we're looking at an object with names
    SEXP namesSEXP = Rf_getAttrib(dataSEXP, R_NamesSymbol);
@@ -65,7 +66,7 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP)
    }
 
    // attempt to reverse engineer the location of the data
-   std::string envName, dataName;
+   std::string envName, dataName, cacheKey;
    r::sexp::Protect protect;
    
    r::exec::RFunction("environmentName", envSEXP).call(&envName);
@@ -81,6 +82,7 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP)
       envName = "none";
    }
    dataName = r::sexp::asString(nameSEXP);
+   cacheKey = r::sexp::asString(cacheKeySEXP);
 
    try
    {
@@ -104,7 +106,8 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP)
       dataItem["variables"] = ncol;
       dataItem["contentUrl"] = kGridResource "/gridviewer.html?env=" +
          http::util::urlEncode(envName, true) + "&obj=" + 
-         http::util::urlEncode(dataName, true);
+         http::util::urlEncode(dataName, true) + "&cache_key=" +
+         http::util::urlEncode(cacheKey, true);
       ClientEvent event(client_events::kShowData, dataItem);
       module_context::enqueClientEvent(event);
 
@@ -260,27 +263,37 @@ Error getGridData(const http::Request& request,
             http::util::fieldValue<std::string>(fields, "env", ""), true);
       std::string objName = http::util::urlDecode(
             http::util::fieldValue<std::string>(fields, "obj", ""), true);
-      std::string show = http::util::fieldValue<std::string>(fields, "show", "data");
-      if (objName.empty()) 
+      std::string cacheKey = http::util::urlDecode(
+            http::util::fieldValue<std::string>(fields, "cache_key", ""), 
+            true);
+      std::string show = http::util::fieldValue<std::string>(
+            fields, "show", "data");
+      if (objName.empty() && cacheKey.empty()) 
       {
          return Success();
       }
 
       r::sexp::Protect protect;
-      SEXP envSEXP; 
-      if (envName == "" || envName == "R_GlobalEnv")
+
+      // attempt to find the original copy of the object
+      SEXP dataSEXP = NULL;
+      Error error = r::exec::RFunction(".rs.findDataFrame", envName, objName, 
+            cacheKey).call(&dataSEXP, &protect);
+      if (error) 
       {
-         envSEXP = R_GlobalEnv;
+         LOG_ERROR(error);
       }
-      else 
+      
+      // couldn't find the original object--look it up from the cache
+      if (dataSEXP == NULL || Rf_isNull(dataSEXP) || 
+          TYPEOF(dataSEXP) == NILSXP)
       {
-         r::exec::RFunction("as.environment", envName).call(&envSEXP, &protect);
-      }
-      if (envSEXP == NULL)
-      {
+         // handle missing data here
          return Success();
       }
-      SEXP dataSEXP = r::sexp::findVar(objName, envSEXP);
+
+      // if the data is a promise (happens for built-in data), the value is
+      // what we're looking for
       if (TYPEOF(dataSEXP) == PROMSXP) 
       {
          dataSEXP = PRVALUE(dataSEXP);
@@ -318,7 +331,7 @@ Error initialize()
    R_CallMethodDef methodDef ;
    methodDef.name = "rs_viewData" ;
    methodDef.fun = (DL_FUNC) rs_viewData ;
-   methodDef.numArgs = 4;
+   methodDef.numArgs = 5;
    r::routines::addCallMethod(methodDef);
 
    using boost::bind;

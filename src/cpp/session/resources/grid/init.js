@@ -10,7 +10,7 @@ var sizeDataTable = function() {
 
 var initDataTable = function() {
   // look up the query parameters
-  var env = "", obj = "";
+  var env = "", obj = "", cacheKey = "";
   var query = window.location.search.substring(1);
   var queryVars = query.split("&");
   for (var i = 0; i < queryVars.length; i++) {
@@ -19,6 +19,8 @@ var initDataTable = function() {
       env = queryVar[1];
     } else if (queryVar[0] == "obj") {
       obj = queryVar[1];
+    } else if (queryVar[0] == "cache_key") {
+      cacheKey = queryVar[1];
     }
   }
   $.ajax({
@@ -51,6 +53,7 @@ var initDataTable = function() {
         "data": function(d) {
           d.env = env;
           d.obj = obj;
+          d.cache_key = cacheKey;
           d.show = "data";
         }
       }

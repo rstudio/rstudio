@@ -13,6 +13,9 @@
 #
 #
 
+# host environment for data 
+.rs.setVar("CachedDataEnv", new.env(parent = emptyenv()))
+
 .rs.addFunction( "formatDataColumn", function(x, start, len, ...)
 {
    # extract the visible part of the column
@@ -44,6 +47,42 @@
 })
 
 
+.rs.addFunction("findDataFrame", function(envName, objName, cacheKey) {
+  env <- NULL
+  if (is.null(envName) || identical(envName, "R_GlobalEnv") || 
+      nchar(envName) == 0)
+  {
+    # global environment
+    env <- globalenv()
+  }
+  else 
+  {
+    # some other environment
+    tryCatch(
+    {
+      env <<- as.environment(envName)
+    }, 
+    error = function(e)
+    {
+      # if we couldn't find the environment any more, try the cache right away
+      objName <<- cacheKey
+      env <<- .rs.CachedDataEnv
+    })
+  }
+
+  # if the object exists in this environment, return it (avoid creating a
+  # temporary here)
+  if (exists(objName, where = env, inherits = FALSE))
+    return(get(objName, envir = env, inherits = FALSE))
+
+  # if the object exists in the cache environment, return it
+  if (exists(cacheKey, where = .rs.CachedDataEnv, inherits = FALSE))
+    return(get(cacheKey, envir = .rs.CachedDataEnv, inherits = FALSE))
+
+  # failure
+  return(NULL)
+})
+
 .rs.addFunction("findOwningEnv", function(name, env = parent.frame()) {
    while (environmentName(env) != "R_EmptyEnv" && 
           !exists(name, where = env, inherits = FALSE)) 
@@ -69,9 +108,13 @@
      name <- deparse(substitute(x))
      env <- .rs.findOwningEnv(name)
    }
+
+   # save a copy into the cached environment
+   cached = paste(sample(c(letters, 0:9), 10, replace = TRUE), collapse = "")
+   assign(cached, force(x), .rs.CachedDataEnv)
    
    # call viewData 
-   invisible(.Call("rs_viewData", force(x), title, name, env))
+   invisible(.Call("rs_viewData", x, title, name, env, cached))
 })
 
 .rs.addFunction("initializeDataViewer", function(server) {
