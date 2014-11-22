@@ -324,15 +324,27 @@ assign(x = ".rs.acCompletionTypes",
    
    # Special casing for variants of read.table which hide additional
    # arguments in ...
-   readers <- list(
-      utils::read.csv,
-      utils::read.csv2,
-      utils::read.delim,
-      utils::read.delim2
-   )
-   
-   if (any(sapply(readers, identical, object)))
-      object <- utils::read.table
+   if ("utils" %in% loadedNamespaces())
+   {
+      readers <- list(
+         utils::read.csv,
+         utils::read.csv2,
+         utils::read.delim,
+         utils::read.delim2
+      )
+      
+      if (any(sapply(readers, identical, object)))
+         object <- utils::read.table
+      
+      # Similarily for write.csv
+      writers <- list(
+         utils::write.csv,
+         utils::write.csv2
+      )
+      
+      if (any(sapply(writers, identical, object)))
+         object <- utils::write.table
+   }
    
    if (!is.null(object) && is.function(object))
    {
