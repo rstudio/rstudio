@@ -287,6 +287,32 @@ assign(x = ".rs.acCompletionTypes",
    tryCatch(match.call(func, call), error = function(e) call)
 })
 
+.rs.addFunction("getCompletionsInstallPackages", function(token)
+{
+   cachedRepos <- .rs.get("repos")
+   cachedAvailablePackages <- .rs.get("available.packages")
+   
+   if (identical(cachedRepos, getOption('repos')) &&
+          !is.null(cachedAvailablePackages))
+   {
+      packages <- cachedAvailablePackages
+   }
+   else
+   {
+      available.packages <- available.packages()
+      packages <- rownames(available.packages)
+      .rs.assign("available.packages", packages)
+      .rs.assign("repos", getOption('repos'))
+   }
+   
+   .rs.makeCompletions(token = token,
+                       results = .rs.selectFuzzyMatches(packages, token),
+                       quote = TRUE,
+                       type = .rs.acCompletionTypes$PACKAGE,
+                       excludeOtherCompletions = TRUE)
+   
+})
+
 .rs.addFunction("getCompletionsFunction", function(token,
                                                    string,
                                                    functionCall,
@@ -980,6 +1006,10 @@ assign(x = ".rs.acCompletionTypes",
    if (.rs.acContextTypes$ROXYGEN %in% type)
       return(.rs.attemptRoxygenTagCompletion(token))
    
+   # install.packages
+   if (length(string) && string[[1]] == "install.packages" && numCommas[[1]] == 0)
+      return(.rs.getCompletionsInstallPackages(token))
+   
    if (.rs.acContextTypes$FUNCTION %in% type &&
           string[[1]] == "data" &&
           numCommas[[1]] == 0)
@@ -1010,6 +1040,17 @@ assign(x = ".rs.acCompletionTypes",
          )
       }
       return(completions)
+   }
+   
+   # transform 'install.packages' to 'utils::install.packages' to avoid
+   # getting arguments from the RStudio hook
+   if ("install.packages" %in% string[[1]])
+   {
+      fn <- .rs.getAnywhere("install.packages", parent.frame())
+      if (is.function(fn) && identical(names(formals(fn)), "..."))
+      {
+         string[[1]] <- "utils::install.packages"
+      }
    }
    
    # library, require, requireNamespace, loadNamespace

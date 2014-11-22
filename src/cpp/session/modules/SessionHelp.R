@@ -204,6 +204,12 @@ options(help_type = "html")
    if (!length(type))
       return()
    
+   # Avoid install.packages hook
+   if (what == "install.packages" &&
+       type == .rs.acCompletionTypes$ARGUMENT &&
+       is.null(from))
+      return(.rs.getHelp("install.packages", "utils"))
+   
    # Help for options
    if (type == .rs.acCompletionTypes$OPTION)
       return(.rs.getHelp("options", "base", subset = FALSE))
