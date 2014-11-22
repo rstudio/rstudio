@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.thirdparty.guava.common.util.concurrent.Futures;
 
 import junit.framework.TestCase;
@@ -32,6 +33,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  * Unit test for {@link PersistentUnitCache}.
@@ -58,8 +60,8 @@ public class PersistentUnitCacheTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    logger = TreeLogger.NULL;
-    // logger = new PrintWriterTreeLogger(); // uncomment for debugging
+//    logger = TreeLogger.NULL; // Change to PrintWriterTreeLogger to debug tests
+    logger = new PrintWriterTreeLogger();
     logger.log(Type.INFO, "\n\n*** Running " + getName());
   }
 
@@ -125,7 +127,7 @@ public class PersistentUnitCacheTest extends TestCase {
     File parentDir = lastParentDir = File.createTempFile("persistentCacheTest", "");
     File unitCacheDir = mkCacheDir(parentDir);
 
-    PersistentUnitCache cache = new PersistentUnitCache(logger, parentDir);
+    PersistentUnitCache cache = makeUnitCache(parentDir);
 
     MockCompilationUnit foo1 = new MockCompilationUnit("com.example.Foo", "Foo: source1");
     cache.add(foo1);
@@ -162,7 +164,6 @@ public class PersistentUnitCacheTest extends TestCase {
     assertEquals("com.example.Foo", result.getTypeName());
     assertEquals(foo2.getContentId(), result.getContentId());
     cache.cleanup(logger);
-    cache.waitForCleanup();
 
     // Shutdown the cache and re -load it
     cache.shutdown();
@@ -172,7 +173,7 @@ public class PersistentUnitCacheTest extends TestCase {
 
     // Fire up the cache again. It should be pre-populated.
     // Search by type name
-    cache = new PersistentUnitCache(logger, parentDir);
+    cache = makeUnitCache(parentDir);
     result = cache.find("com/example/Foo.java");
     assertNotNull(result);
     assertEquals("com.example.Foo", result.getTypeName());
@@ -195,7 +196,6 @@ public class PersistentUnitCacheTest extends TestCase {
     assertEquals(foo2.getTypeName(), result.getTypeName());
     assertEquals(foo2.getContentId(), result.getContentId());
     cache.cleanup(logger);
-    cache.waitForCleanup();
 
     // We didn't write anything, still 1 file.
     cache.shutdown();
@@ -204,7 +204,7 @@ public class PersistentUnitCacheTest extends TestCase {
     assertNumCacheFiles(unitCacheDir, 1);
 
     // Fire up the cache again. (Creates a second file in the background.)
-    cache = new PersistentUnitCache(logger, parentDir);
+    cache = makeUnitCache(parentDir);
 
     // keep making more files
     MockCompilationUnit lastUnit = null;
@@ -216,12 +216,11 @@ public class PersistentUnitCacheTest extends TestCase {
       // force rotation to a new file
       // (Normally async but we overrode it.)
       cache.cleanup(logger);
-      cache.waitForCleanup();
       assertNumCacheFiles(unitCacheDir, i + 1);
     }
 
     // One last check, we should load the last unit added to the cache.
-    cache = new PersistentUnitCache(logger, parentDir);
+    cache = makeUnitCache(parentDir);
     result = cache.find(lastUnit.getContentId());
     assertNotNull(result);
     assertEquals("com.example.Foo", result.getTypeName());
@@ -245,7 +244,6 @@ public class PersistentUnitCacheTest extends TestCase {
     lastUnit = new MockCompilationUnit("com.example.Baz", "Baz Source");
     cache.add(lastUnit);
     cache.cleanup(logger);
-    cache.waitForCleanup();
 
     // Add one more to put us over the top.
     lastUnit = new MockCompilationUnit("com.example.Qux", "Qux Source");
@@ -255,20 +253,30 @@ public class PersistentUnitCacheTest extends TestCase {
     assertNumCacheFiles(unitCacheDir, PersistentUnitCache.CACHE_FILE_THRESHOLD + 1);
 
     cache.cleanup(logger);
-    cache.waitForCleanup();
     cache.shutdown();
 
     // There should be a single file in the cache dir.
     assertNumCacheFiles(unitCacheDir, 1);
 
     // Fire up the cache on this one coalesced file.
-    cache = new PersistentUnitCache(logger, parentDir);
+    cache = makeUnitCache(parentDir);
 
     // Verify that we can still find the content that was coalesced.
     assertNotNull(cache.find("com/example/Foo.java"));
     assertNotNull(cache.find("com/example/Bar.java"));
     assertNotNull(cache.find("com/example/Baz.java"));
     assertNotNull(cache.find("com/example/Qux.java"));
+  }
+
+  private PersistentUnitCache makeUnitCache(File cacheDir) throws UnableToCompleteException {
+    return new PersistentUnitCache(logger, cacheDir) {
+      @Override
+      Future<Void> startRotating() {
+        // wait for rotation to finish to avoid flakiness
+        Futures.getUnchecked(super.startRotating());
+        return Futures.immediateFuture(null);
+      }
+    };
   }
 
   private void assertNumCacheFiles(File unitCacheDir, int expected) {
