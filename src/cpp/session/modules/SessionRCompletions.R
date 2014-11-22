@@ -224,8 +224,17 @@ assign(x = ".rs.acCompletionTypes",
          classes <- class(objectForDispatch)
          for (class in c(classes, "default"))
          {
-            method <- tryCatch(
+            # It is possible that which S3 method will be used may depend on where
+            # the generic f is called from: getS3method returns the method found if
+            # f were called from the same environment.
+            call <- substitute(
                utils::getS3method(functionName, class),
+               list(functionName = functionName,
+                    class = class)
+            )
+            
+            method <- tryCatch(
+               eval(call, envir = envir),
                error = function(e) NULL
             )
             
