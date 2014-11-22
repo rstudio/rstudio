@@ -220,18 +220,22 @@ assign(x = ".rs.acCompletionTypes",
       
       if (length(functionCall) > 1 && .rs.isS3Generic(object))
       {
-         s3methods <- .rs.getS3MethodsForFunction(functionName, envir)
          objectForDispatch <- .rs.getAnywhere(matchedCall[[2]], envir)
          classes <- class(objectForDispatch)
-         
          for (class in c(classes, "default"))
          {
-            methodName <- paste(functionName, class, sep = ".")
-            method <- .rs.getAnywhere(methodName, envir)
+            method <- tryCatch(
+               utils::getS3method(functionName, class),
+               error = function(e) NULL
+            )
+            
             if (!is.null(method))
             {
                formals <- .rs.getFunctionArgumentNames(method)
-               methods <- rep.int(methodName, length(formals))
+               methods <- rep.int(
+                  paste(functionName, class, sep = "."),
+                  length(formals)
+               )
                break
             }
          }
