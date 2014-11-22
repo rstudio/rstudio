@@ -77,7 +77,7 @@ public class CppCompletionManager implements CompletionManager
    public void close()
    {
       // delegate to R mode if necessary
-      if (isCursorInRMode())
+      if (isCursorInRMode() || isCursorInMarkdownMode())
       {
          rCompletionManager_.close();
       }
@@ -93,7 +93,7 @@ public class CppCompletionManager implements CompletionManager
    public void codeCompletion()
    {
       // delegate to R mode if necessary
-      if (isCursorInRMode())
+      if (isCursorInRMode() || isCursorInMarkdownMode())
       {
          rCompletionManager_.codeCompletion();
       }
@@ -167,7 +167,7 @@ public class CppCompletionManager implements CompletionManager
    public boolean previewKeyDown(NativeEvent event)
    {
       // delegate to R mode if appropriate
-      if (isCursorInRMode())
+      if (isCursorInRMode() || isCursorInMarkdownMode())
          return rCompletionManager_.previewKeyDown(event);
       
       // if there is no completion request active then 
@@ -273,7 +273,7 @@ public class CppCompletionManager implements CompletionManager
    public boolean previewKeyPress(char c)
    {
       // delegate to R mode if necessary
-      if (isCursorInRMode())
+      if (isCursorInRMode() || isCursorInMarkdownMode())
       {
          return rCompletionManager_.previewKeyPress(c);
       }
@@ -400,6 +400,14 @@ public class CppCompletionManager implements CompletionManager
    private boolean shouldComplete(NativeEvent event)
    {
       return initFilter_ == null || initFilter_.shouldComplete(event);
+   }
+   
+   private boolean isCursorInMarkdownMode()
+   {
+      String m = docDisplay_.getLanguageMode(
+            docDisplay_.getCursorPosition());
+      
+      return m != null && m.equals(TextFileType.MARKDOWN_LANG_MODE);
    }
 
    private boolean isCursorInRMode()

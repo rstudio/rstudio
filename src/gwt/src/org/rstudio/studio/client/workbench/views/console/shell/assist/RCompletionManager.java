@@ -1023,6 +1023,24 @@ public class RCompletionManager implements CompletionManager
             AutocompletionContext.TYPE_FILE);
    }
    
+   private AutocompletionContext getAutocompletionContextForFileMarkdownLink(
+         String line)
+   {
+      int index = line.lastIndexOf('(');
+      AutocompletionContext result = new AutocompletionContext(
+            line.substring(index + 1),
+            AutocompletionContext.TYPE_FILE);
+      
+      // NOTE: we overload the meaning of the function call string for file
+      // completions, to signal whether we should generate files relative to
+      // the current working directory, or to the file being used for
+      // completions
+      result.setFunctionCallString("useFile");
+      return result;
+      
+   }
+   
+   
    private void addAutocompletionContextForNamespace(
          String token,
          AutocompletionContext context)
@@ -1109,6 +1127,11 @@ public class RCompletionManager implements CompletionManager
       
       // Get the token at the cursor position
       String token = firstLine.replaceAll(".*[^a-zA-Z0-9._:$@-]", "");
+      
+      // If we're in Markdown mode and have an appropriate string, try to get
+      // file completions
+      if (isCursorInMarkdownMode() && firstLine.matches(".*\\[.*\\]\\(.*"))
+         return getAutocompletionContextForFileMarkdownLink(firstLine);
       
       // If we're completing an object within a string, assume it's a
       // file-system completion
@@ -1626,6 +1649,16 @@ public class RCompletionManager implements CompletionManager
       private boolean suggestOnAccept_;
       private boolean overrideInsertParens_;
       
+   }
+   
+   private boolean isCursorInMarkdownMode()
+   {
+      if (docDisplay_.getFileType().isMarkdown())
+         return true;
+      
+      String m = docDisplay_.getLanguageMode(
+            docDisplay_.getCursorPosition());
+      return m != null && m.equals(TextFileType.MARKDOWN_LANG_MODE);
    }
    
    private boolean isCursorInRMode()

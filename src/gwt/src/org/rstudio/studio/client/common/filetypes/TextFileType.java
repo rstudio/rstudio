@@ -35,6 +35,7 @@ import java.util.HashSet;
 public class TextFileType extends EditableFileType
 {
    public static final String R_LANG_MODE = "R";
+   public static final String MARKDOWN_LANG_MODE = "Markdown";
 
    TextFileType(String id,
                 String label,

@@ -165,7 +165,7 @@ assign(x = ".rs.acCompletionTypes",
                        excludeOtherCompletions = TRUE)
 })
 
-.rs.addFunction("getCompletionsFile", function(token)
+.rs.addFunction("getCompletionsFile", function(token, path = getwd())
 {
    slashIndices <- gregexpr("/", token, fixed = TRUE)[[1]]
    lastSlashIndex <- slashIndices[length(slashIndices)]
@@ -173,7 +173,8 @@ assign(x = ".rs.acCompletionTypes",
    if (lastSlashIndex == -1)
    {
       pattern <- paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeForRegex(token)), sep = "")
-      files <- list.files(all.files = TRUE,
+      files <- list.files(path = path,
+                          all.files = TRUE,
                           pattern = pattern,
                           no.. =  TRUE)
    }
@@ -182,7 +183,7 @@ assign(x = ".rs.acCompletionTypes",
       directory <- substring(token, 1, lastSlashIndex - 1)
       file <- substring(token, lastSlashIndex + 1, nchar(token))
       pattern <- paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeForRegex(file)), sep = "")
-      listed <- list.files(directory,
+      listed <- list.files(file.path(path, directory),
                            all.files = TRUE,
                            pattern = pattern,
                            no.. = TRUE)
@@ -1119,10 +1120,21 @@ assign(x = ".rs.acCompletionTypes",
    
    ## File-based completions
    if (.rs.acContextTypes$FILE %in% type)
+   {
+      # NOTE: For Markdown link completions, we overload the meaning of the
+      # function call string here, and use it as a signal to generate paths
+      # relative to the R markdown path.
+      path <- if (length(functionCallString) &&
+                     functionCallString == "useFile")
+         dirname(filePath)
+      else
+         getwd()
+      
       completions <- .rs.appendCompletions(
          completions,
-         .rs.getCompletionsFile(token)
+         .rs.getCompletionsFile(token, path)
       )
+   }
    
    ## Package completions (e.g. `stats::`)
    if (token != "" && .rs.acContextTypes$UNKNOWN %in% type)
