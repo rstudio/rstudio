@@ -180,6 +180,9 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    @Override
    public void displayHelp(ParsedInfo help)
    {
+      if (list_ == null || !list_.isAttached())
+         return;
+      
       help_.setVisible(help.hasInfo());
       help_.displayHelp(help) ;
       help_.setHeight(list_.getOffsetHeight() + "px") ;
@@ -188,6 +191,9 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    @Override
    public void displayParameterHelp(Map<String, String> map, String parameterName)
    {
+      if (list_ == null || !list_.isAttached())
+         return;
+      
       help_.setVisible(map.get(parameterName) != null);
       help_.displayParameterHelp(map, parameterName) ;
       help_.setHeight(list_.getOffsetHeight() + "px") ;
@@ -196,6 +202,9 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    @Override
    public void displayPackageHelp(ParsedInfo help)
    {
+      if (list_ == null || !list_.isAttached())
+         return;
+      
       help_.setVisible(help.hasInfo());
       help_.displayPackageHelp(help) ;
       help_.setHeight(list_.getOffsetHeight() + "px") ;
