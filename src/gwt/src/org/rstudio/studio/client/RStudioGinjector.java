@@ -22,6 +22,7 @@ import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.LocalRepositoriesWidget;
 import org.rstudio.studio.client.application.Application;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.ui.GlobalToolbar;
 import org.rstudio.studio.client.application.ui.ProjectPopupMenu;
 import org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader;
 import org.rstudio.studio.client.application.ui.impl.WebApplicationHeader;
@@ -99,6 +100,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(LocalRepositoriesWidget localRepositoriesWidget);
    void injectMembers(CppCompletionRequest request);
    void injectMembers(CppCompletionManager completionManager);
+   void injectMembers(GlobalToolbar toolBar);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

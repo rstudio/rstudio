@@ -697,6 +697,11 @@ well as menu structures (for main menu and popup menus).
         menuLabel=""
         buttonLabel=""
         desc=""/>
+        
+   <cmd id="setWorkingDirAsProjectDir"
+        buttonLabel = ""
+        menuLabel="Set Working Directory as Project Directory"
+        desc="Set the Working Directory as the Project Directory"/>
 
    <cmd id="showToolbar"
         menuLabel="Show _Toolbar"/>

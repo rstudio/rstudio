@@ -118,6 +118,7 @@ public abstract class
    public abstract AppCommand closeProject();
    public abstract AppCommand projectOptions();
    public abstract AppCommand projectSweaveOptions();
+   public abstract AppCommand setWorkingDirAsProjectDir();
 
    // Console
    public abstract AppCommand consoleClear();

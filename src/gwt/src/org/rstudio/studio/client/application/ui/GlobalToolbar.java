@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.application.ui;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FocusContext;
@@ -21,15 +22,18 @@ import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 
@@ -40,6 +44,7 @@ public class GlobalToolbar extends Toolbar
                         Provider<CodeSearch> pCodeSearch)
    {
       super();
+      RStudioGinjector.INSTANCE.injectMembers(this);
       commands_ = commands;
       pCodeSearch_ = pCodeSearch;
       ThemeResources res = ThemeResources.INSTANCE;
@@ -123,6 +128,12 @@ public class GlobalToolbar extends Toolbar
       addLeftWidget(searchWidget_); 
    }
    
+   @Inject
+   void initialize(Session session)
+   {
+      session_ = session;
+   }
+   
    public void completeInitialization(SessionInfo sessionInfo)
    { 
       StandardIcons icons = StandardIcons.INSTANCE;
@@ -172,6 +183,11 @@ public class GlobalToolbar extends Toolbar
          addLeftWidget(deployButton);
       }
       
+      // go to project dir button
+      if (!StringUtil.isNullOrEmpty(
+            session_.getSessionInfo().getActiveProjectFile()))
+         addRightWidget(commands_.setWorkingDirAsProjectDir().createToolbarButton());
+      
       // project popup menu
       ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo,
                                                           commands_);
@@ -195,5 +211,6 @@ public class GlobalToolbar extends Toolbar
    private final Provider<CodeSearch> pCodeSearch_;
    private final Widget searchWidget_;
    private final FocusContext codeSearchFocusContext_ = new FocusContext();
+   private Session session_;
 
 }
