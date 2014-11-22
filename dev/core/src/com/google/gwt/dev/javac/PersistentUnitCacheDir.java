@@ -18,21 +18,26 @@ package com.google.gwt.dev.javac;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.javac.MemoryUnitCache.UnitCacheEntry;
 import com.google.gwt.dev.jjs.ast.JNode;
+import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
+import com.google.gwt.dev.util.StringInterningObjectInputStream;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
+import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
-import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.hash.Hashing;
 import com.google.gwt.thirdparty.guava.common.io.Files;
 import com.google.gwt.util.tools.Utility;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.EOFException;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.JarURLConnection;
 import java.net.URLConnection;
@@ -106,6 +111,33 @@ class PersistentUnitCacheDir {
   }
 
   /**
+   * Returns the number of files written to the cache directory and closed.
+   */
+  synchronized int getClosedCacheFileCount() {
+    return selectClosedFiles(listFiles(CURRENT_VERSION_CACHE_FILE_PREFIX)).size();
+  }
+
+  /**
+   * Load everything cached on disk into memory.
+   */
+  synchronized void loadUnitMap(PersistentUnitCache destination) {
+    Event loadPersistentUnitEvent =
+        SpeedTracerLogger.start(DevModeEventType.LOAD_PERSISTENT_UNIT_CACHE);
+    if (logger.isLoggable(TreeLogger.TRACE)) {
+      logger.log(TreeLogger.TRACE, "Looking for previously cached Compilation Units in "
+          + getPath());
+    }
+    try {
+      List<File> files = selectClosedFiles(listFiles(CURRENT_VERSION_CACHE_FILE_PREFIX));
+      for (File cacheFile : files) {
+        loadOrDeleteCacheFile(cacheFile, destination);
+      }
+    } finally {
+      loadPersistentUnitEvent.end();
+    }
+  }
+
+  /**
    * Delete all cache files in the directory except for the currently open file.
    */
   synchronized void deleteClosedCacheFiles() {
@@ -138,13 +170,6 @@ class PersistentUnitCacheDir {
   }
 
   /**
-   * Returns the files that should be loaded at startup to refill the cache.
-   */
-  synchronized List<File> listCacheFilesToLoad() {
-    return selectClosedFiles(listFiles(CURRENT_VERSION_CACHE_FILE_PREFIX));
-  }
-
-  /**
    * Deletes the given file unless it's currently open for writing.
    */
   synchronized boolean deleteUnlessOpen(File cacheFile) {
@@ -160,14 +185,14 @@ class PersistentUnitCacheDir {
   }
 
   /**
-   * Writes an entry to the cache.
+   * Writes a compilation unit to the disk cache.
    */
-  synchronized void writeObject(UnitCacheEntry entry) throws UnableToCompleteException {
+  synchronized void writeUnit(CompilationUnit unit) throws UnableToCompleteException {
     if (openFile == null) {
       logger.log(Type.TRACE, "Skipped writing compilation unit to cache because no file is open");
       return;
     }
-    openFile.writeObject(logger, entry);
+    openFile.writeUnit(logger, unit);
   }
 
   /**
@@ -188,6 +213,66 @@ class PersistentUnitCacheDir {
 
   private boolean isOpen(File f) {
     return openFile != null && openFile.file.equals(f);
+  }
+
+  /**
+   * Loads all the units in a cache file into the given cache.
+   * Delete it if unable to read it.
+   */
+  private void loadOrDeleteCacheFile(File cacheFile, PersistentUnitCache destination) {
+    FileInputStream fis = null;
+    BufferedInputStream bis = null;
+    ObjectInputStream inputStream = null;
+
+    boolean ok = false;
+    int unitsLoaded = 0;
+    try {
+      fis = new FileInputStream(cacheFile);
+      bis = new BufferedInputStream(fis);
+      /*
+       * It is possible for the next call to throw an exception, leaving
+       * inputStream null and fis still live.
+       */
+      inputStream = new StringInterningObjectInputStream(bis);
+
+      // Read objects until we get an EOF exception.
+      while (true) {
+        CachedCompilationUnit unit = (CachedCompilationUnit) inputStream.readObject();
+        if (unit == null) {
+          // Won't normally get here. Not sure why this check was here before.
+          logger.log(Type.WARN, "unexpected null in cache file: " + cacheFile);
+          break;
+        }
+        if (unit.getTypesSerializedVersion() != GwtAstBuilder.getSerializationVersion()) {
+          continue;
+        }
+        destination.maybeAddLoadedUnit(unit);
+        unitsLoaded++;
+      }
+
+    } catch (EOFException ignored) {
+      // This is a normal exit. Go on to the next file.
+      ok = true;
+    } catch (IOException e) {
+      logger.log(TreeLogger.TRACE, "Ignoring and deleting cache log "
+          + cacheFile.getAbsolutePath() + " due to read error.", e);
+    } catch (ClassNotFoundException e) {
+      logger.log(TreeLogger.TRACE, "Ignoring and deleting cache log "
+          + cacheFile.getAbsolutePath() + " due to deserialization error.", e);
+    } finally {
+      Utility.close(inputStream);
+      Utility.close(bis);
+      Utility.close(fis);
+    }
+
+    if (ok) {
+      logger.log(TreeLogger.TRACE, "Loaded " + unitsLoaded +
+          " units from cache file: " + cacheFile.getName());
+    } else {
+      deleteUnlessOpen(cacheFile);
+      logger.log(TreeLogger.TRACE, "Loaded " + unitsLoaded +
+          " units from invalid cache file before deleting it: " + cacheFile.getName());
+    }
   }
 
   /**
@@ -301,13 +386,12 @@ class PersistentUnitCacheDir {
     }
 
     /**
-     * Writes an entry to the currently open file, if any.
+     * Writes a compilation unit to the currently open file, if any.
      * @return true if written
      * @throws UnableToCompleteException if the file was open but we can't append.
      */
-    boolean writeObject(TreeLogger logger, UnitCacheEntry entry)
+    boolean writeUnit(TreeLogger logger, CompilationUnit unit)
         throws UnableToCompleteException {
-      CompilationUnit unit = Preconditions.checkNotNull(entry.getUnit());
       try {
         stream.writeObject(unit);
         unitsWritten++;
