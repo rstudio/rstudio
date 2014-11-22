@@ -37,12 +37,20 @@
   rownames[start:min(length(rownames), start+len)]
 })
 
-.rs.addFunction( "applySort", function(x, col, dir) 
+.rs.addFunction("toDataFrame", function(x, name) {
+  if (is.data.frame(x))
+    return(x)
+  frame <- as.data.frame(x)
+  names(frame)[names(frame) == "x"] <- name
+  frame
+})
+
+.rs.addFunction("applySort", function(x, col, dir) 
 {
   if (identical(dir, "desc")) {
-    x[order(-x[,col]),]
+    as.data.frame(x[order(-x[,col]),])
   } else {
-    x[order(x[,col]),]
+    as.data.frame(x[order(x[,col]),])
   }
 })
 
@@ -50,35 +58,39 @@
 .rs.addFunction("findDataFrame", function(envName, objName, cacheKey, cacheDir) 
 {
   env <- NULL
-  if (is.null(envName) || identical(envName, "R_GlobalEnv") || 
-      nchar(envName) == 0)
-  {
-    # global environment
-    env <- globalenv()
-  }
-  else 
-  {
-    # some other environment
-    tryCatch(
-    {
-      env <- as.environment(envName)
-    }, 
-    error = function(e)
-    {
-      # if we couldn't find the environment any more, try the cache right away
-      objName <<- cacheKey
-      env <<- .rs.CachedDataEnv
-    })
-  }
 
-  # if the object exists in this environment, return it (avoid creating a
-  # temporary here)
-  if (exists(objName, where = env, inherits = FALSE))
-    return(get(objName, envir = env, inherits = FALSE))
+  # do we have an object name? if so, check in a named environment
+  if (!is.null(objName) && nchar(objName) > 0) 
+  {
+    if (is.null(envName) || identical(envName, "R_GlobalEnv") || 
+        nchar(envName) == 0)
+    {
+      # global environment
+      env <- globalenv()
+    }
+    else 
+    {
+      # some other environment
+      tryCatch(
+      {
+        env <- as.environment(envName)
+      }, 
+      error = function(e)
+      {
+        # if we couldn't find the environment any more, use the empty one
+        env <<- emptyenv()
+      })
+    }
+
+    # if the object exists in this environment, return it (avoid creating a
+    # temporary here)
+    if (exists(objName, where = env, inherits = FALSE))
+      return(.rs.toDataFrame(get(objName, envir = env, inherits = FALSE), objName))
+  }
 
   # if the object exists in the cache environment, return it
   if (exists(cacheKey, where = .rs.CachedDataEnv, inherits = FALSE))
-    return(get(cacheKey, envir = .rs.CachedDataEnv, inherits = FALSE))
+    return(.rs.toDataFrame(get(cacheKey, envir = .rs.CachedDataEnv, inherits = FALSE), objName))
 
   # perhaps the object has been saved? attempt to load it into the
   # cached environment
@@ -87,7 +99,7 @@
   { 
     load(cacheFile, envir = .rs.CachedDataEnv)
     if (exists(cacheKey, where = .rs.CachedDataEnv, inherits = FALSE))
-      return(get(cacheKey, envir = .rs.CachedDataEnv, inherits = FALSE))
+      return(.rs.toDataFrame(get(cacheKey, envir = .rs.CachedDataEnv, inherits = FALSE), objName))
   }
   
   # failure
@@ -116,7 +128,7 @@
 
    # if the argument is the name of a variable, we can monitor it in its
    # environment, and don't need to make a copy for viewing
-   if (is(substitute(x), "name"))
+   if (is.name(substitute(x)))
    {
      name <- deparse(substitute(x))
      env <- .rs.findOwningEnv(name)

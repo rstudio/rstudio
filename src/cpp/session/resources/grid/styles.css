@@ -13,19 +13,6 @@ thead {
     margin: 0px 0px 36px 0px;
 }
 
-#data_paginate {
-    position: fixed;
-    bottom: 0px;
-    text-align: left;
-    background-color: #e7edf0;
-    width: 100%;
-    text-align: left;
-}
-
-div.datatables_paginate {
-    text-align: left;
-}
-
 table.dataTable tbody td {
     padding: 4px 5px;
     font-family: Consolas, Lucida Console, Monaco, monospace;

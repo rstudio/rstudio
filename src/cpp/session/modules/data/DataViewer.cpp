@@ -63,15 +63,6 @@ std::string viewerCacheDir()
 SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP, 
                  SEXP cacheKeySEXP)
 {    
-   // validate that we're looking at an object with names
-   SEXP namesSEXP = Rf_getAttrib(dataSEXP, R_NamesSymbol);
-   if (TYPEOF(namesSEXP) != STRSXP || 
-       Rf_length(namesSEXP) != Rf_length(dataSEXP))
-   {
-      throw r::exec::RErrorException(
-                           "invalid data argument (names not specified)");
-   }
-
    // attempt to reverse engineer the location of the data
    std::string envName, dataName, cacheKey;
    r::sexp::Protect protect;
@@ -84,9 +75,7 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP,
    }
    else if (envName == "R_EmptyEnv" || envName == "") 
    {
-      // TODO: for empty or unnamed environments, we need to create temporary
-      // storage for the object
-      envName = "none";
+      envName = "_rs_no_env";
    }
    dataName = r::sexp::asString(nameSEXP);
    cacheKey = r::sexp::asString(cacheKeySEXP);
@@ -96,11 +85,14 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP,
       // validate title
       if (!Rf_isString(captionSEXP) || Rf_length(captionSEXP) != 1)
          throw r::exec::RErrorException("invalid caption argument");
+      
+      // attempt to cast to a data frame
+      SEXP dataFrameSEXP = NULL;
+      r::exec::RFunction("as.data.frame", dataSEXP).call(
+            &dataFrameSEXP, &protect);
+      if (dataFrameSEXP != NULL)
+         dataSEXP = dataFrameSEXP;
            
-      // validate data
-      if (TYPEOF(dataSEXP) != VECSXP)
-         throw r::exec::RErrorException("invalid data argument (not a list)");
-
       int nrow = 0, ncol = 0;
       r::exec::RFunction("nrow", dataSEXP).call(&nrow);
       r::exec::RFunction("ncol", dataSEXP).call(&ncol);
@@ -150,9 +142,21 @@ json::Value getCols(SEXP dataSEXP)
 {
    std::vector<std::string> cols;
 
-   // extract column names (these were validated earlier)
    SEXP namesSEXP = Rf_getAttrib(dataSEXP, R_NamesSymbol);
-   r::sexp::extract(namesSEXP, &cols);
+   if (TYPEOF(namesSEXP) != STRSXP || 
+       Rf_length(namesSEXP) != Rf_length(dataSEXP))
+   {
+      // fake them if we don't have them
+      for (int i = 0; i < Rf_length(dataSEXP); i++)
+      {
+         cols.push_back(boost::lexical_cast<std::string>(i + 1));
+      }
+   }
+   else
+   {
+      // extract column names 
+      r::sexp::extract(namesSEXP, &cols);
+   }
 
    // add row ID column
    cols.insert(cols.begin(), "");
