@@ -33,7 +33,6 @@ import org.rstudio.core.client.widget.ThemedPopupPanel;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo.ParsedInfo;
-import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionResources;
 
 public class CompletionPopupPanel extends ThemedPopupPanel
       implements CompletionPopupDisplay
@@ -44,7 +43,6 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
       help_ = new HelpInfoPopupPanel();
       help_.setWidth("400px");
-      help_.setStylePrimaryName(CppCompletionResources.INSTANCE.styles().toolTip());
       help_.show();
       
       setStylePrimaryName(styles_.completionPopup()) ;

@@ -44,6 +44,7 @@ public class HelpInfoPopupPanel extends PopupPanel
       setWidget(outer) ;
       setVisible(true);
       show();
+      setStylePrimaryName(RES.styles().helpPopup());
       
       timer_ = new Timer() {
          public void run()
@@ -144,7 +145,7 @@ public class HelpInfoPopupPanel extends PopupPanel
       f1prompt_.setVisible(true);
       scrollPanel_.setVisible(true);
       
-      String newHeight = Math.min(200, vpanel_.getOffsetHeight()) + "px";
+      String newHeight = Math.min(135, vpanel_.getOffsetHeight()) + "px";
       scrollPanel_.setHeight(newHeight);
       setVisible(true);
    }
@@ -154,4 +155,12 @@ public class HelpInfoPopupPanel extends PopupPanel
    private final Timer timer_;
    private final ConsoleResources.ConsoleStyles consoleStyles_;
    private Label f1prompt_;
+   
+   private static HelpInfoPopupPanelResources RES =
+         HelpInfoPopupPanelResources.INSTANCE;
+   
+   static {
+      RES.styles().ensureInjected();
+   }
+   
 }
