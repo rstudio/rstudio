@@ -304,6 +304,8 @@ Error getGridData(const http::Request& request,
       }
 
       r::sexp::Protect protect;
+      json::Value result;
+      http::status::Code statusCode = http::status::Ok;
 
       // attempt to find the original copy of the object
       SEXP dataSEXP = NULL;
@@ -318,32 +320,33 @@ Error getGridData(const http::Request& request,
       if (dataSEXP == NULL || Rf_isNull(dataSEXP) || 
           TYPEOF(dataSEXP) == NILSXP)
       {
-         // handle missing data here
-         return Success();
+         json::Object err;
+         err["error"] = "The object no longer exists.";
+         statusCode = http::status::NotFound;
+         result = err;
       }
-
-      // if the data is a promise (happens for built-in data), the value is
-      // what we're looking for
-      if (TYPEOF(dataSEXP) == PROMSXP) 
+      else 
       {
-         dataSEXP = PRVALUE(dataSEXP);
-      }
+         // if the data is a promise (happens for built-in data), the value is
+         // what we're looking for
+         if (TYPEOF(dataSEXP) == PROMSXP) 
+         {
+            dataSEXP = PRVALUE(dataSEXP);
+         }
 
-      // TODO: handle missing data
-
-      json::Value result;
-      if (show == "cols")
-      {
-         result = getCols(dataSEXP);
-      }
-      else if (show == "data")
-      {
-         result = getData(dataSEXP, fields);
+         if (show == "cols")
+         {
+            result = getCols(dataSEXP);
+         }
+         else if (show == "data")
+         {
+            result = getData(dataSEXP, fields);
+         }
       }
 
       std::ostringstream ostr;
       json::write(result, ostr);
-      pResponse->setStatusCode(http::status::Ok);
+      pResponse->setStatusCode(statusCode);
       pResponse->setBody(ostr.str());
    }
 

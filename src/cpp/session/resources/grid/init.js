@@ -8,6 +8,13 @@ var sizeDataTable = function() {
   $("#data").DataTable().columns.adjust().draw();
 };
 
+var showError = function(msg) {
+  document.getElementById("errorWrapper").style.display = "block";
+  document.getElementById("errorMask").style.display = "block";
+  document.getElementById("error").innerText = msg;
+  document.getElementById("data").style.display = "none";
+};
+
 var initDataTable = function() {
   // look up the query parameters
   var env = "", obj = "", cacheKey = "";
@@ -25,9 +32,14 @@ var initDataTable = function() {
   }
   $.ajax({
       url: "../grid_data?show=cols&" + window.location.search.substring(1)})
-  .done(function(cols){
+  .done(function(cols) {
     // parse result
     cols = $.parseJSON(cols);
+
+    if (cols.error) {
+      showError(cols.error);
+      return;
+    }
 
     // add each column
     var thead = document.getElementById("data_cols");
@@ -55,12 +67,30 @@ var initDataTable = function() {
           d.obj = obj;
           d.cache_key = cacheKey;
           d.show = "data";
-        }
-      }
+        },
+        "error": function(jqXHR) {
+          var result = $.parseJSON(jqXHR.responseText);
+          if (result.error) {
+            showError(result.error);
+          } else {
+            showError("The data could not be displayed.");
+          }
+        },
+       }
     });
 
     // listen for size changes
     window.addEventListener("resize", sizeDataTable);
+  })
+  .fail(function(jqXHR)
+  {
+    var result = $.parseJSON(jqXHR.responseText);
+
+    if (result.error) {
+      showError(result.error);
+    } else {
+      showError("The object could not be displayed.");
+    }
   });
 };
 
