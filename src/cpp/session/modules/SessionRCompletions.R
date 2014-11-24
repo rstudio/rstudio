@@ -220,18 +220,31 @@ assign(x = ".rs.acCompletionTypes",
       
       if (length(functionCall) > 1 && .rs.isS3Generic(object))
       {
-         s3methods <- .rs.getS3MethodsForFunction(functionName, envir)
          objectForDispatch <- .rs.getAnywhere(matchedCall[[2]], envir)
          classes <- class(objectForDispatch)
-         
          for (class in c(classes, "default"))
          {
-            methodName <- paste(functionName, class, sep = ".")
-            method <- .rs.getAnywhere(methodName, envir)
+            # It is possible that which S3 method will be used may depend on where
+            # the generic f is called from: getS3method returns the method found if
+            # f were called from the same environment.
+            call <- substitute(
+               utils::getS3method(functionName, class),
+               list(functionName = functionName,
+                    class = class)
+            )
+            
+            method <- tryCatch(
+               eval(call, envir = envir),
+               error = function(e) NULL
+            )
+            
             if (!is.null(method))
             {
                formals <- .rs.getFunctionArgumentNames(method)
-               methods <- rep.int(methodName, length(formals))
+               methods <- rep.int(
+                  paste(functionName, class, sep = "."),
+                  length(formals)
+               )
                break
             }
          }
@@ -274,6 +287,32 @@ assign(x = ".rs.acCompletionTypes",
    tryCatch(match.call(func, call), error = function(e) call)
 })
 
+.rs.addFunction("getCompletionsInstallPackages", function(token)
+{
+   cachedRepos <- .rs.get("repos")
+   cachedAvailablePackages <- .rs.get("available.packages")
+   
+   if (identical(cachedRepos, getOption('repos')) &&
+          !is.null(cachedAvailablePackages))
+   {
+      packages <- cachedAvailablePackages
+   }
+   else
+   {
+      available.packages <- available.packages()
+      packages <- rownames(available.packages)
+      .rs.assign("available.packages", packages)
+      .rs.assign("repos", getOption('repos'))
+   }
+   
+   .rs.makeCompletions(token = token,
+                       results = .rs.selectFuzzyMatches(packages, token),
+                       quote = TRUE,
+                       type = .rs.acCompletionTypes$PACKAGE,
+                       excludeOtherCompletions = TRUE)
+   
+})
+
 .rs.addFunction("getCompletionsFunction", function(token,
                                                    string,
                                                    functionCall,
@@ -307,6 +346,30 @@ assign(x = ".rs.acCompletionTypes",
             }
          )
       }
+   }
+   
+   # Special casing for variants of read.table which hide additional
+   # arguments in ...
+   if ("utils" %in% loadedNamespaces())
+   {
+      readers <- list(
+         utils::read.csv,
+         utils::read.csv2,
+         utils::read.delim,
+         utils::read.delim2
+      )
+      
+      if (any(sapply(readers, identical, object)))
+         object <- utils::read.table
+      
+      # Similarily for write.csv
+      writers <- list(
+         utils::write.csv,
+         utils::write.csv2
+      )
+      
+      if (any(sapply(writers, identical, object)))
+         object <- utils::write.table
    }
    
    if (!is.null(object) && is.function(object))
@@ -943,6 +1006,10 @@ assign(x = ".rs.acCompletionTypes",
    if (.rs.acContextTypes$ROXYGEN %in% type)
       return(.rs.attemptRoxygenTagCompletion(token))
    
+   # install.packages
+   if (length(string) && string[[1]] == "install.packages" && numCommas[[1]] == 0)
+      return(.rs.getCompletionsInstallPackages(token))
+   
    if (.rs.acContextTypes$FUNCTION %in% type &&
           string[[1]] == "data" &&
           numCommas[[1]] == 0)
@@ -973,6 +1040,17 @@ assign(x = ".rs.acCompletionTypes",
          )
       }
       return(completions)
+   }
+   
+   # transform 'install.packages' to 'utils::install.packages' to avoid
+   # getting arguments from the RStudio hook
+   if ("install.packages" %in% string[[1]])
+   {
+      fn <- .rs.getAnywhere("install.packages", parent.frame())
+      if (is.function(fn) && identical(names(formals(fn)), "..."))
+      {
+         string[[1]] <- "utils::install.packages"
+      }
    }
    
    # library, require, requireNamespace, loadNamespace

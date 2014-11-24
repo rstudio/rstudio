@@ -38,6 +38,10 @@
 .themedPopupPanel .popupMiddleCenter, .menuPopupMiddleCenter, .suggestPopupMiddleCenter {
    background-color: white;
 }
+
+.themedPopupPanel .popupMiddleLeft {
+	min-width: value('popupMiddleLeft.getWidth', 'px'); /* don't let the browser collapse the table cell if there's no space */
+}
 @sprite .themedPopupPanel .popupMiddleRight, .menuPopupMiddleRight, .suggestPopupMiddleRight {
    gwt-image: 'popupMiddleRight';
    width: value('popupMiddleRight.getWidth', 'px');

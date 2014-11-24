@@ -122,11 +122,29 @@ options(help_type = "html")
       error = function(e) NULL
    )
    
-   objectNames <- c(
-      objects(ns, all.names = TRUE),
-      unname(grep(" ", datasets$results[, "Item"], fixed = TRUE, value = TRUE, invert = TRUE))
+   objectNames <- objects(ns, all.names = TRUE)
+   datasetNames <- unname(grep(" ", datasets$results[, "Item"], fixed = TRUE, value = TRUE, invert = TRUE))
+   
+   objects <- tryCatch(
+      mget(objectNames, envir = ns, inherits = TRUE),
+      error = function(e) NULL
    )
-   objects <- mget(objectNames, envir = ns, inherits = TRUE)
+   
+   # Try to get the datasets from the namespace. These will only exist if they have
+   # been explicitly loaded, so be careful to tryCatch here.
+   data <- lapply(datasetNames, function(x) {
+      tryCatch(
+         get(x, envir = ns),
+         error = function(e) NULL
+      )
+   })
+   
+   # Combine them together
+   if (length(data))
+   {
+      objects <- c(objects, data)
+      objectNames <- c(objectNames, datasetNames)
+   }
    
    # Find which object is actually identical to the one we have
    success <- FALSE
@@ -185,6 +203,12 @@ options(help_type = "html")
    # Protect against missing type
    if (!length(type))
       return()
+   
+   # Avoid install.packages hook
+   if (what == "install.packages" &&
+       type == .rs.acCompletionTypes$ARGUMENT &&
+       is.null(from))
+      return(.rs.getHelp("install.packages", "utils"))
    
    # Help for options
    if (type == .rs.acCompletionTypes$OPTION)
@@ -311,13 +335,16 @@ options(help_type = "html")
    
    # If 'package' is the name of something on the search path, then we
    # attempt to resolve the object and get its help.
-   pos <- match(package, search(), nomatch = -1L)
-   if (pos >= 0)
+   if (length(package))
    {
-      object <- tryCatch(get(topic, pos = pos), error = function(e) NULL)
-      if (is.null(object))
-         return(NULL)
-      return(.rs.getHelpFromObject(object, envir))
+      pos <- match(package, search(), nomatch = -1L)
+      if (pos >= 0)
+      {
+         object <- tryCatch(get(topic, pos = pos), error = function(e) NULL)
+         if (is.null(object))
+            return(NULL)
+         return(.rs.getHelpFromObject(object, envir))
+      }
    }
    
    helpfiles <- NULL

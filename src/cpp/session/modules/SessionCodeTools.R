@@ -319,9 +319,9 @@
    if (!length(name))
       return(NULL)
    
-   if (name == "")
+   if (is.character(name) && (length(name) != 1 || name == ""))
       return(NULL)
-    
+   
    # Don't evaluate any functions -- blacklist any 'name' that contains a paren
    if (is.character(name) && regexpr("(", name, fixed = TRUE) > 0)
       return(FALSE)
