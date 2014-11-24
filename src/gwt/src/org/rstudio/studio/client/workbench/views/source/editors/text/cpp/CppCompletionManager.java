@@ -276,7 +276,7 @@ public class CppCompletionManager implements CompletionManager
    public boolean previewKeyPress(char c)
    {
       // delegate to R mode if necessary
-     if (DocumentMode.isCursorInRMode(docDisplay_) || 
+      if (DocumentMode.isCursorInRMode(docDisplay_) || 
             DocumentMode.isCursorInMarkdownMode(docDisplay_))
       {
          return rCompletionManager_.previewKeyPress(c);
