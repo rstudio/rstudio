@@ -165,25 +165,55 @@ assign(x = ".rs.acCompletionTypes",
                        excludeOtherCompletions = TRUE)
 })
 
-.rs.addFunction("getCompletionsFile", function(token, path = getwd())
+.rs.addFunction("getCompletionsFile", function(token, path = NULL)
 {
+   # If we might have wanted relative completions but the file path was actually
+   # qualified relative to home or root, then abort that
+   if (!is.null(path) && nzchar(token) && substring(token, 1, 1) %in% c("~", "/"))
+      path <- NULL
+   
+   if (identical(token, "~"))
+      token <- "~/"
+   
    slashIndices <- gregexpr("/", token, fixed = TRUE)[[1]]
    lastSlashIndex <- slashIndices[length(slashIndices)]
    
    if (lastSlashIndex == -1)
    {
-      pattern <- paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeForRegex(token)), sep = "")
+      pattern <- if (nzchar(token))
+         paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeForRegex(token)), sep = "")
+      
+      if (is.null(path))
+         path <- getwd()
       files <- list.files(path = path,
                           all.files = TRUE,
                           pattern = pattern,
                           no.. =  TRUE)
+      
+      qualifiedPaths <- file.path(path, files)
    }
    else
    {
-      directory <- substring(token, 1, lastSlashIndex - 1)
-      file <- substring(token, lastSlashIndex + 1, nchar(token))
-      pattern <- paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeForRegex(file)), sep = "")
-      listed <- list.files(file.path(path, directory),
+      if (identical(token, "/"))
+      {
+         directory <- "/"
+         file <- ""
+      }
+      else
+      {
+         directory <- substring(token, 1, lastSlashIndex - 1)
+         file <- substring(token, lastSlashIndex + 1, nchar(token))
+      }
+      
+      pattern <- if (nzchar(file))
+         paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeForRegex(file)), sep = "")
+      
+      listPath <- if (is.null(path))
+         directory
+      else
+         file.path(path, directory)
+      
+      listed <- list.files(path = listPath,
                            all.files = TRUE,
                            pattern = pattern,
                            no.. = TRUE)
@@ -194,13 +224,21 @@ assign(x = ".rs.acCompletionTypes",
       order <- c(first, last)
       listed <- listed[order]
       
+      if (identical(directory, "/"))
+         directory <- ""
+      
       files <- file.path(
          directory,
          listed
       )
+      
+      qualifiedPaths <- if (is.null(path))
+         files
+      else
+         file.path(path, files)
    }
    
-   isDir <- file.info(files)[, "isdir"] %in% TRUE ## protect against NA
+   isDir <- file.info(qualifiedPaths)[, "isdir"] %in% TRUE ## protect against NA
    files[isDir] <- paste(files[isDir], "/", sep = "")
    .rs.makeCompletions(token = token,
                        results = files,
@@ -1127,8 +1165,6 @@ assign(x = ".rs.acCompletionTypes",
       path <- if (length(functionCallString) &&
                      functionCallString == "useFile")
          dirname(filePath)
-      else
-         getwd()
       
       completions <- .rs.appendCompletions(
          completions,
