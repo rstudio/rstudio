@@ -53,9 +53,10 @@
       }
       else if (is.numeric(val))
       {
+        # ignore missing values when computing min/max
         col_type <- "numeric"
-        col_min <- min(x[,idx])
-        col_max <- max(x[,idx])
+        col_min <- min(x[,idx], na.rm = TRUE)
+        col_max <- max(x[,idx], na.rm = TRUE)
       }
       else if (is.character(val))
       {
@@ -93,13 +94,23 @@
   frame
 })
 
-.rs.addFunction("applySort", function(x, col, dir) 
+.rs.addFunction("applyTransform", function(x, filtered, col, dir) 
 {
-  if (identical(dir, "desc")) {
-    as.data.frame(x[order(-x[,col]),])
-  } else {
-    as.data.frame(x[order(x[,col]),])
+  for (i in seq_along(filtered)) {
+    if (nchar(filtered[i]) > 0) {
+      val <- as.numeric(filtered[i])
+      x <- x[as.numeric(x[,i]) == val,]
+    }
   }
+  if (col > 0)
+  {
+    if (identical(dir, "desc")) {
+      as.data.frame(x[order(-x[,col]),])
+    } else {
+      as.data.frame(x[order(x[,col]),])
+    }
+  }
+  return(x)
 })
 
 .rs.addFunction("findDataFrame", function(envName, objName, cacheKey, cacheDir) 

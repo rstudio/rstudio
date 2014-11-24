@@ -156,6 +156,7 @@ json::Value getCols(SEXP dataSEXP)
 
 json::Value getData(SEXP dataSEXP, const http::Fields& fields)
 {
+   Error error;
    r::sexp::Protect protect;
 
    // read draw parameters from DataTables
@@ -165,18 +166,43 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    int ordercol = http::util::fieldValue<int>(fields, "order[0][column]", -1);
    std::string orderdir = http::util::fieldValue<std::string>(fields, "order[0][dir]", "asc");
 
-   // apply sort if needed
-   if (ordercol > 0) 
-   {
-      r::exec::RFunction(".rs.applySort", dataSEXP, ordercol, orderdir)
-         .call(&dataSEXP, &protect);
-   }
-
    // unfortunately Rf_nrow and Rf_ncol aren't applicable here
    int nrow = 0, ncol = 0;
+   int filteredNRow = 0;
    r::exec::RFunction("nrow", dataSEXP).call(&nrow);
    r::exec::RFunction("ncol", dataSEXP).call(&ncol);
-   length = std::min(length, nrow - start);
+
+   // extract filters
+   std::vector<std::string> filters;
+   bool hasFilter = false;
+   for (int i = 1; i < ncol; i++) 
+   {
+      std::string filterVal = http::util::fieldValue<std::string>(fields,
+                  "columns[" + boost::lexical_cast<std::string>(i) + "]" 
+                  "[search][value]", "");
+      if (!filterVal.empty()) 
+      {
+         hasFilter = true;
+      }
+      filters.push_back(filterVal);
+   }
+
+   // apply transformations if needed, and compute new row count
+   if (ordercol > 0 || hasFilter) 
+   {
+      error = r::exec::RFunction(".rs.applyTransform", dataSEXP, filters, ordercol, orderdir)
+         .call(&dataSEXP, &protect);
+      if (error)
+         throw r::exec::RErrorException(error.summary());
+      r::exec::RFunction("nrow", dataSEXP).call(&filteredNRow);
+   }
+   else
+   {
+      filteredNRow = nrow;
+   }
+
+   // return the lesser of the rows available and rows requested
+   length = std::min(length, filteredNRow - start);
 
    // DataTables uses 0-based indexing, but R uses 1-based indexing
    start ++;
@@ -192,7 +218,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       formatFx.addParam(columnSEXP);
       formatFx.addParam(static_cast<int>(start));
       formatFx.addParam(static_cast<int>(length));
-      Error error = formatFx.call(&formattedColumnSEXP, &protect);
+      error = formatFx.call(&formattedColumnSEXP, &protect);
       if (error)
          throw r::exec::RErrorException(error.summary());
       SET_VECTOR_ELT(formattedDataSEXP, i, formattedColumnSEXP);
@@ -259,7 +285,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    json::Object result;
    result["draw"] = draw;
    result["recordsTotal"] = nrow;
-   result["recordsFiltered"] = nrow;
+   result["recordsFiltered"] = filteredNRow;
    result["data"] = data;
    return result;
 }
@@ -340,7 +366,15 @@ Error getGridData(const http::Request& request,
       pResponse->setStatusCode(statusCode);
       pResponse->setBody(ostr.str());
    }
-
+   catch(r::exec::RErrorException& e)
+   {
+      json::Object err;
+      err["error"] = e.message();
+      std::ostringstream ostr;
+      json::write(err, ostr);
+      pResponse->setStatusCode(http::status::InternalServerError);
+      pResponse->setBody(ostr.str());
+   }
    CATCH_UNEXPECTED_EXCEPTION
 
    return Success();

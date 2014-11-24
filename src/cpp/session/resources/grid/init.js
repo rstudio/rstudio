@@ -20,9 +20,10 @@ window.showFilterUi = function() {
   for (var i = 0; i < thead.children.length; i++) {
     thead.children[i].children[1].style.display = "block";
   }
+  sizeDataTable();
 };
 
-var createHeader = function(col) {
+var createHeader = function(idx, col) {
   var th = document.createElement("th");
 
   // add the title
@@ -46,17 +47,30 @@ var createHeader = function(col) {
     filter.appendChild(input);
   } else if (col.col_type === "factor") {
     var sel = document.createElement("select");
+    var all = document.createElement("option");
+    all.value = "";
+    all.innerText = "All";
+    sel.appendChild(all);
     for (var i = 0; i < col.col_vals.length; i++) {
       var opt = document.createElement("option");
-      opt.value = col.col_vals[i];
+      opt.value = i + 1;
       opt.innerText = col.col_vals[i];
       sel.appendChild(opt);
     }
+    sel.addEventListener("change", function(evt) {
+      $("#data").DataTable().columns(idx).search(
+        sel.children[sel.selectedIndex].value
+      ).draw();
+    });
+    sel.addEventListener("click", function(evt) {
+      evt.stopPropagation();
+    });
     filter.appendChild(sel);
   } else if (col.col_type === "numeric") {
     // TODO: slider
     filter.innerText = col.col_min + " - " + col.col_max;
   }
+
   th.appendChild(filter);
   return th;
 };
@@ -91,7 +105,7 @@ var initDataTable = function() {
     var thead = document.getElementById("data_cols");
     for (var i = 0; i < cols.length; i++) {
       // create table header
-      thead.appendChild(createHeader(cols[i]));
+      thead.appendChild(createHeader(i, cols[i]));
     }
     var scrollHeight = window.innerHeight - (thead.clientHeight + 2);
 
@@ -162,5 +176,4 @@ $(document).ready(function() {
     }
   }, 10);
 });
-
 })();
