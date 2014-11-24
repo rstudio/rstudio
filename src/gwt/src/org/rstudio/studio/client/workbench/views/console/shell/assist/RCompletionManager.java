@@ -35,6 +35,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -324,6 +325,25 @@ public class RCompletionManager implements CompletionManager
          {
             if (initFilter_ == null || initFilter_.shouldComplete(event))
             {
+               // If we're in markdown mode, only autocomplete in '```{r',
+               // '[](', or '`r |' contexts
+               if (DocumentMode.isCursorInMarkdownMode(docDisplay_))
+               {
+                  String currentLine = docDisplay_.getCurrentLineUpToCursor();
+                  if (!(Pattern.create("^```{[rR]").test(currentLine) ||
+                      Pattern.create(".*\\[.*\\]\\(").test(currentLine) ||
+                      (Pattern.create(".*`r").test(currentLine) &&
+                            StringUtil.countMatches(currentLine, '`') % 2 == 1)))
+                     return false;
+               }
+               
+               // If we're in tex mode, only provide completions in chunks
+               if (DocumentMode.isCursorInTexMode(docDisplay_))
+               {
+                  String currentLine = docDisplay_.getCurrentLineUpToCursor();
+                  if (!Pattern.create("^<<").test(currentLine))
+                     return false;
+               }
                return beginSuggest(true, false, true);
             }
          }
