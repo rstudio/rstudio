@@ -103,6 +103,8 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
       // parse the command line
       variables_map vm ;
       command_line_parser parser(argc, const_cast<char**>(argv));
+      if (optionsDescription.allowUnregistered)
+         parser.allow_unregistered();
       store(parser.options(commandLineOptions).
             positional(optionsDescription.positionalOptions).run(), vm);
       notify(vm) ;

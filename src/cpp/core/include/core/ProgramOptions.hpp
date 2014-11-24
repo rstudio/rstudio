@@ -39,6 +39,7 @@ struct OptionsDescription
       :  programName(programName),
          defaultConfigFilePath(defaultConfigFilePath),
          commandLine("command-line options"),
+         allowUnregistered(false),
          configFile("config-file options")
    {
    }
@@ -46,6 +47,7 @@ struct OptionsDescription
    std::string defaultConfigFilePath;
    boost::program_options::options_description commandLine;
    boost::program_options::positional_options_description positionalOptions;
+   bool allowUnregistered;
    boost::program_options::options_description configFile;
 };
 
