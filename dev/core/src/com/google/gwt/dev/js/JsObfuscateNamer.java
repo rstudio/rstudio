@@ -74,10 +74,6 @@ public class JsObfuscateNamer extends JsNamer implements FreshNameGenerator {
    * running the global renaming again.
    */
   private int maxId = -1;
-  /**
-   * A temp buffer big enough to hold at least 32 bits worth of base-64 chars.
-   */
-  private final char[] sIdentBuf = new char[6];
 
   public JsObfuscateNamer(JsProgram program, ConfigProps config) {
     super(program, config);
@@ -146,7 +142,9 @@ public class JsObfuscateNamer extends JsNamer implements FreshNameGenerator {
     return (scope.findExistingUnobfuscatableName(newIdent) == null);
   }
 
-  private String makeObfuscatedIdent(int id) {
+  public static String makeObfuscatedIdent(int id) {
+    char[] sIdentBuf = new char[6];
+
     // Use base-54 for the first character of the identifier,
     // so that we don't use any numbers (which are illegal at
     // the beginning of an identifier).

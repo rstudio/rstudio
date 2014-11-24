@@ -105,6 +105,7 @@ import com.google.gwt.dev.js.EvalFunctionsAtTopScope;
 import com.google.gwt.dev.js.FreshNameGenerator;
 import com.google.gwt.dev.js.JsBreakUpLargeVarStatements;
 import com.google.gwt.dev.js.JsDuplicateFunctionRemover;
+import com.google.gwt.dev.js.JsIncrementalNamer;
 import com.google.gwt.dev.js.JsInliner;
 import com.google.gwt.dev.js.JsLiteralInterner;
 import com.google.gwt.dev.js.JsNamer.IllegalNameException;
@@ -112,7 +113,6 @@ import com.google.gwt.dev.js.JsNamespaceChooser;
 import com.google.gwt.dev.js.JsNamespaceOption;
 import com.google.gwt.dev.js.JsNormalizer;
 import com.google.gwt.dev.js.JsObfuscateNamer;
-import com.google.gwt.dev.js.JsPersistentPrettyNamer;
 import com.google.gwt.dev.js.JsPrettyNamer;
 import com.google.gwt.dev.js.JsReportGenerationVisitor;
 import com.google.gwt.dev.js.JsStackEmulator;
@@ -334,7 +334,7 @@ public abstract class JavaToJavaScriptCompiler {
             splitJsIntoFragments(props, permutationId, jjsmap);
 
         // TODO(stalcup): move to optimize.
-        Map<JsName, JsLiteral> internedLiteralByVariableName = renameJsSymbols(props);
+        Map<JsName, JsLiteral> internedLiteralByVariableName = renameJsSymbols(props, jjsmap);
 
         // TODO(stalcup): move to normalization
         JsBreakUpLargeVarStatements.exec(jsProgram, props.getConfigProps());
@@ -825,7 +825,7 @@ public abstract class JavaToJavaScriptCompiler {
       }
     }
 
-    private Map<JsName, JsLiteral> renameJsSymbols(PermProps props)
+    private Map<JsName, JsLiteral> renameJsSymbols(PermProps props, JavaToJavaScriptMap jjsmap)
         throws UnableToCompleteException {
       Map<JsName, JsLiteral> internedLiteralByVariableName;
       try {
@@ -834,7 +834,7 @@ public abstract class JavaToJavaScriptCompiler {
             internedLiteralByVariableName = runObfuscateNamer(props);
             break;
           case PRETTY:
-            internedLiteralByVariableName = runPrettyNamer(props.getConfigProps());
+            internedLiteralByVariableName = runPrettyNamer(props.getConfigProps(), jjsmap);
             break;
           case DETAILED:
             internedLiteralByVariableName = runDetailedNamer(props.getConfigProps());
@@ -864,10 +864,11 @@ public abstract class JavaToJavaScriptCompiler {
       return internedLiteralByVariableName;
     }
 
-    private Map<JsName, JsLiteral> runPrettyNamer(ConfigProps config) throws IllegalNameException {
+    private Map<JsName, JsLiteral> runPrettyNamer(ConfigProps config, JavaToJavaScriptMap jjsmap)
+        throws IllegalNameException {
       if (compilerContext.getOptions().isIncrementalCompileEnabled()) {
-        JsPersistentPrettyNamer.exec(jsProgram, config,
-            compilerContext.getMinimalRebuildCache().getPersistentPrettyNamerState());
+        JsIncrementalNamer.exec(jsProgram, config,
+            compilerContext.getMinimalRebuildCache().getPersistentPrettyNamerState(), jjsmap);
         return null;
       }
 

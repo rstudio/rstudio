@@ -26,7 +26,7 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.dev.jjs.ast.JTypeOracle.ImmediateTypeRelations;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.IntTypeMapper;
-import com.google.gwt.dev.js.JsPersistentPrettyNamer.PersistentPrettyNamerState;
+import com.google.gwt.dev.js.JsIncrementalNamer.JsIncrementalNamerState;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Name.InternalName;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
@@ -174,8 +174,8 @@ public class MinimalRebuildCache implements Serializable {
   private final Set<String> modifiedDiskSourcePaths = Sets.newHashSet();
   private final Set<String> modifiedResourcePaths = Sets.newHashSet();
   private final Multimap<String, String> nestedTypeNamesByUnitTypeName = HashMultimap.create();
-  private final PersistentPrettyNamerState persistentPrettyNamerState =
-      new PersistentPrettyNamerState();
+  private final JsIncrementalNamerState jsIncrementalNamerState =
+      new JsIncrementalNamerState();
   private final Set<String> preambleTypeNames = Sets.newHashSet();
   private transient ImmutableSet<String> processedStaleTypeNames = ImmutableSet.<String> of();
   private final Multimap<String, String> rebinderTypeNamesByReboundTypeName = HashMultimap.create();
@@ -403,7 +403,7 @@ public class MinimalRebuildCache implements Serializable {
     this.lastLinkedJsBytes = that.lastLinkedJsBytes;
 
     this.intTypeMapper.copyFrom(that.intTypeMapper);
-    this.persistentPrettyNamerState.copyFrom(that.persistentPrettyNamerState);
+    this.jsIncrementalNamerState.copyFrom(that.jsIncrementalNamerState);
     this.immediateTypeRelations.copyFrom(that.immediateTypeRelations);
 
     copyMap(that.compilationUnitTypeNameByNestedTypeName,
@@ -470,7 +470,7 @@ public class MinimalRebuildCache implements Serializable {
         && Objects.equal(this.modifiedDiskSourcePaths, that.modifiedDiskSourcePaths)
         && Objects.equal(this.modifiedResourcePaths, that.modifiedResourcePaths)
         && Objects.equal(this.nestedTypeNamesByUnitTypeName, that.nestedTypeNamesByUnitTypeName)
-        && this.persistentPrettyNamerState.hasSameContent(that.persistentPrettyNamerState)
+        && this.jsIncrementalNamerState.hasSameContent(that.jsIncrementalNamerState)
         && Objects.equal(this.preambleTypeNames, that.preambleTypeNames) && Objects.equal(
             this.rebinderTypeNamesByReboundTypeName, that.rebinderTypeNamesByReboundTypeName)
         && Objects.equal(this.reboundTypeNamesByGeneratedCompilationUnitNames,
@@ -515,8 +515,8 @@ public class MinimalRebuildCache implements Serializable {
     return modifiedCompilationUnitNames;
   }
 
-  public PersistentPrettyNamerState getPersistentPrettyNamerState() {
-    return persistentPrettyNamerState;
+  public JsIncrementalNamerState getPersistentPrettyNamerState() {
+    return jsIncrementalNamerState;
   }
 
   public Set<String> getPreambleTypeNames() {

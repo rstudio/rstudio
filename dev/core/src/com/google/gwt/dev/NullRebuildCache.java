@@ -22,7 +22,7 @@ import com.google.gwt.dev.javac.GeneratedUnit;
 import com.google.gwt.dev.jjs.JsSourceMap;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.IntTypeMapper;
-import com.google.gwt.dev.js.JsPersistentPrettyNamer.PersistentPrettyNamerState;
+import com.google.gwt.dev.js.JsIncrementalNamer.JsIncrementalNamerState;
 
 import java.util.Collection;
 import java.util.Map;
@@ -116,7 +116,7 @@ public class NullRebuildCache extends MinimalRebuildCache {
   }
 
   @Override
-  public PersistentPrettyNamerState getPersistentPrettyNamerState() {
+  public JsIncrementalNamerState getPersistentPrettyNamerState() {
     throw new UnsupportedOperationException(failMessage);
   }
 

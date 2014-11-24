@@ -18,8 +18,8 @@ package com.google.gwt.dev.js;
 import com.google.gwt.dev.cfg.ConfigProps;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.dev.js.JsIncrementalNamer.JsIncrementalNamerState;
 import com.google.gwt.dev.js.JsNamer.IllegalNameException;
-import com.google.gwt.dev.js.JsPersistentPrettyNamer.PersistentPrettyNamerState;
 import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsFunction;
@@ -48,7 +48,7 @@ import java.util.Map;
 public class JsNamerTest extends TestCase {
 
   private BlacklistProps props;
-  private PersistentPrettyNamerState persistentPrettyNamerState;
+  private JsIncrementalNamerState jsIncrementalNamerState;
 
   @Override
   protected void setUp() throws Exception {
@@ -56,7 +56,7 @@ public class JsNamerTest extends TestCase {
     props = new BlacklistProps();
     props.blacklist = Arrays.asList("foo, bar", "baz");
     props.blacklistSuffixes = Arrays.asList("logger");
-    persistentPrettyNamerState = new PersistentPrettyNamerState();
+    jsIncrementalNamerState = new JsIncrementalNamerState();
   }
 
   public void testBannedIdent() throws Exception {
@@ -143,13 +143,13 @@ public class JsNamerTest extends TestCase {
 
     // Renaming with the reserved suffix is rejected.
     try {
-      String functionName = "foo" + JsPersistentPrettyNamer.RESERVED_IDENT_SUFFIX;
+      String functionName = "foo" + JsIncrementalNamer.RESERVED_IDENT_SUFFIX;
       JsProgram jsProgram = parseJs(
           "function " + functionName + "() { return 42; }");
       jsProgram.getScope().findExistingName(functionName).setObfuscatable(false);
       rename(jsProgram, JsOutputOption.PRETTY, true);
       fail("Naming an unobfuscatable identifier containing the reserved suffix should have "
-          + "thrown an exception in JsPersistentPrettyNamer.");
+          + "thrown an exception in JsIncrementalNamer.");
     } catch (IllegalNameException e) {
       // Expected path.
     }
@@ -174,7 +174,7 @@ public class JsNamerTest extends TestCase {
     switch (outputOption) {
       case PRETTY:
         if (persistent) {
-          JsPersistentPrettyNamer.exec(program, config, persistentPrettyNamerState);
+          JsIncrementalNamer.exec(program, config, jsIncrementalNamerState, null);
         } else {
           JsPrettyNamer.exec(program, config);
         }
