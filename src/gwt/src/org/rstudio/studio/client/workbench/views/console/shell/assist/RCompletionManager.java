@@ -1737,22 +1737,6 @@ public class RCompletionManager implements CompletionManager
       sigTip_.setVisible(true);
    }
    
-   private boolean isCursorInRMode()
-   {
-      if (docDisplay_.getFileType().isR())
-         return true;
-      
-      String m = docDisplay_.getLanguageMode(docDisplay_.getCursorPosition());
-      
-      if (m == null)
-         return false;
-      
-      if (m.equals(FileType.R_LANG_MODE))
-         return true;
-      
-      return false;
-   }
-   
    private String getSourceDocumentPath()
    {
       if (rContext_ != null)
