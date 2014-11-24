@@ -35,6 +35,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -42,8 +43,8 @@ import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
+import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
-import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -324,6 +325,25 @@ public class RCompletionManager implements CompletionManager
          {
             if (initFilter_ == null || initFilter_.shouldComplete(event))
             {
+               // If we're in markdown mode, only autocomplete in '```{r',
+               // '[](', or '`r |' contexts
+               if (DocumentMode.isCursorInMarkdownMode(docDisplay_))
+               {
+                  String currentLine = docDisplay_.getCurrentLineUpToCursor();
+                  if (!(Pattern.create("^```{[rR]").test(currentLine) ||
+                      Pattern.create(".*\\[.*\\]\\(").test(currentLine) ||
+                      (Pattern.create(".*`r").test(currentLine) &&
+                            StringUtil.countMatches(currentLine, '`') % 2 == 1)))
+                     return false;
+               }
+               
+               // If we're in tex mode, only provide completions in chunks
+               if (DocumentMode.isCursorInTexMode(docDisplay_))
+               {
+                  String currentLine = docDisplay_.getCurrentLineUpToCursor();
+                  if (!Pattern.create("^<<").test(currentLine))
+                     return false;
+               }
                return beginSuggest(true, false, true);
             }
          }
@@ -528,10 +548,6 @@ public class RCompletionManager implements CompletionManager
    
    public boolean previewKeyPress(char c)
    {
-      // Bail if we're not in R mode
-      if (!isCursorInRMode())
-         return false;
-      
       if (popup_.isShowing())
       {
          if (isValidForRIdentifier(c) || c == ':')
@@ -548,6 +564,10 @@ public class RCompletionManager implements CompletionManager
       }
       else
       {
+         // Bail if we're not in R mode
+         if (!DocumentMode.isCursorInRMode(docDisplay_))
+            return false;
+         
          // Perform an auto-popup if a set number of R identifier characters
          // have been inserted (but only if the user has allowed it in prefs)
          boolean autoPopupEnabled = uiPrefs_.codeComplete().getValue().equals(
@@ -1023,6 +1043,24 @@ public class RCompletionManager implements CompletionManager
             AutocompletionContext.TYPE_FILE);
    }
    
+   private AutocompletionContext getAutocompletionContextForFileMarkdownLink(
+         String line)
+   {
+      int index = line.lastIndexOf('(');
+      AutocompletionContext result = new AutocompletionContext(
+            line.substring(index + 1),
+            AutocompletionContext.TYPE_FILE);
+      
+      // NOTE: we overload the meaning of the function call string for file
+      // completions, to signal whether we should generate files relative to
+      // the current working directory, or to the file being used for
+      // completions
+      result.setFunctionCallString("useFile");
+      return result;
+      
+   }
+   
+   
    private void addAutocompletionContextForNamespace(
          String token,
          AutocompletionContext context)
@@ -1109,6 +1147,12 @@ public class RCompletionManager implements CompletionManager
       
       // Get the token at the cursor position
       String token = firstLine.replaceAll(".*[^a-zA-Z0-9._:$@-]", "");
+      
+      // If we're in Markdown mode and have an appropriate string, try to get
+      // file completions
+      if (DocumentMode.isCursorInMarkdownMode(docDisplay_) &&
+            firstLine.matches(".*\\[.*\\]\\(.*"))
+         return getAutocompletionContextForFileMarkdownLink(firstLine);
       
       // If we're completing an object within a string, assume it's a
       // file-system completion
@@ -1626,22 +1670,6 @@ public class RCompletionManager implements CompletionManager
       private boolean suggestOnAccept_;
       private boolean overrideInsertParens_;
       
-   }
-   
-   private boolean isCursorInRMode()
-   {
-      if (docDisplay_.getFileType().isR())
-         return true;
-      
-      String m = docDisplay_.getLanguageMode(docDisplay_.getCursorPosition());
-      
-      if (m == null)
-         return false;
-      
-      if (m.equals(TextFileType.R_LANG_MODE))
-         return true;
-      
-      return false;
    }
    
    private String getSourceDocumentPath()

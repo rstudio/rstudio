@@ -47,6 +47,10 @@ public class Pattern extends JavaScriptObject
          match: result
       } ;
    }-*/ ;
+   
+   public final native boolean test(String input) /*-{
+      return this.test(input);
+   }-*/;
 
    public static String escape(String str)
    {
