@@ -41,9 +41,13 @@ public interface CompletionPopupDisplay
    boolean isShowing() ;
 
    void setPopupPosition(int x, int y) ;
+   int getPopupLeft();
+   int getPopupTop();
+   
    int getOffsetHeight() ;
 
    QualifiedName getSelectedValue() ;
+   QualifiedName getLastSelectedValue() ;
    Rectangle getSelectionRect() ;
 
    boolean selectPrev() ;
@@ -65,5 +69,7 @@ public interface CompletionPopupDisplay
     *    Implementations may choose to show a progress indicator in this case.
     */
    void clearHelp(boolean downloadOperationPending) ;
+   boolean isHelpVisible() ;
+   
    boolean hasCompletions();
 }

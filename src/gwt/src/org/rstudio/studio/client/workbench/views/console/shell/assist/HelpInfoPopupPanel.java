@@ -16,7 +16,6 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import java.util.Map;
 
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 
@@ -24,24 +23,28 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 
-public class HelpInfoPane extends Composite
+public class HelpInfoPopupPanel extends PopupPanel
 {
-   public HelpInfoPane()
+   public HelpInfoPopupPanel()
    {
-      styles_ = ConsoleResources.INSTANCE.consoleStyles();
+      super();
+      consoleStyles_ = ConsoleResources.INSTANCE.consoleStyles();
 
-      DockLayoutPanel outer = new DockLayoutPanel(Unit.PX);
-
-      f1prompt_ = new Label("Press F1 for additional help");
-      f1prompt_.setStylePrimaryName(styles_.promptFullHelp());
-      outer.addSouth(f1prompt_, 16);
+      FlowPanel outer = new FlowPanel();
 
       scrollPanel_.add(vpanel_) ;
-      vpanel_.setStylePrimaryName(styles_.functionInfo()) ;
+      vpanel_.setStylePrimaryName(consoleStyles_.functionInfo()) ;
       vpanel_.setWidth("100%") ;
       outer.add(scrollPanel_);
+      
+      f1prompt_ = new Label("Press F1 for additional help");
+      f1prompt_.setStylePrimaryName(consoleStyles_.promptFullHelp());
+      outer.add(f1prompt_);
 
-      initWidget(outer) ;
+      setWidget(outer) ;
+      setVisible(true);
+      show();
+      setStylePrimaryName(RES.styles().helpPopup());
       
       timer_ = new Timer() {
          public void run()
@@ -49,6 +52,7 @@ public class HelpInfoPane extends Composite
             scrollPanel_.setVisible(false) ;
             f1prompt_.setVisible(false) ;
             vpanel_.clear() ;
+            setVisible(false);
          }
       };
    }
@@ -62,22 +66,21 @@ public class HelpInfoPane extends Composite
       if (StringUtil.isNullOrEmpty(help.getFunctionSignature()))
       {
          lblSig = new Label(help.getTitle());
-         lblSig.setStylePrimaryName(styles_.packageName());
+         lblSig.setStylePrimaryName(consoleStyles_.packageName());
       }
       else
       {
          lblSig = new Label(help.getFunctionSignature()) ;
-         lblSig.setStylePrimaryName(styles_.functionInfoSignature()) ;
+         lblSig.setStylePrimaryName(consoleStyles_.functionInfoSignature()) ;
       }
       vpanel_.add(lblSig);
       
       HTML htmlDesc = new HTML(help.getDescription()) ;
-      htmlDesc.setStylePrimaryName(styles_.functionInfoSummary()) ;
-      vpanel_.add(htmlDesc) ;
-
-      f1prompt_.setVisible(true);
-      scrollPanel_.setVisible(true) ;
+      htmlDesc.setStylePrimaryName(RES.styles().helpBodyText()) ;
+      vpanel_.add(htmlDesc);
       
+      doDisplay();
+
    }
    
    public void displayParameterHelp(Map<String, String> help, String paramName)
@@ -95,16 +98,15 @@ public class HelpInfoPane extends Composite
       if (paramName != null)
       {
          Label lblSig = new Label(paramName) ;
-         lblSig.setStylePrimaryName(styles_.paramInfoName()) ;
+         lblSig.setStylePrimaryName(consoleStyles_.paramInfoName()) ;
          vpanel_.add(lblSig);
       }
       
       HTML htmlDesc = new HTML(desc) ;
-      htmlDesc.setStylePrimaryName(styles_.paramInfoDesc()) ;
+      htmlDesc.setStylePrimaryName(RES.styles().helpBodyText()) ;
       vpanel_.add(htmlDesc) ;
       
-      f1prompt_.setVisible(true);
-      scrollPanel_.setVisible(true) ;
+      doDisplay();
    }
    
    public void displayPackageHelp(HelpInfo.ParsedInfo help)
@@ -116,22 +118,20 @@ public class HelpInfoPane extends Composite
       if (title != null)
       {
          Label label = new Label(title);
-         label.setStylePrimaryName(styles_.packageName());
+         label.setStylePrimaryName(consoleStyles_.packageName());
          vpanel_.add(label);
       }
       
       HTML htmlDesc = new HTML(help.getDescription()) ;
-      htmlDesc.setStylePrimaryName(styles_.packageDescription()) ;
+      htmlDesc.setStylePrimaryName(RES.styles().helpBodyText()) ;
       vpanel_.add(htmlDesc) ;
 
-      f1prompt_.setVisible(true);
-      scrollPanel_.setVisible(true) ;
+      doDisplay();
    }
 
    public void clearHelp(boolean downloadOperationPending)
    {
       f1prompt_.setVisible(false);
-
       timer_.cancel() ;
       if (downloadOperationPending)
          timer_.schedule(170) ;
@@ -139,9 +139,28 @@ public class HelpInfoPane extends Composite
          timer_.run() ;
    }
    
+   private void doDisplay()
+   {
+      vpanel_.setVisible(true);
+      f1prompt_.setVisible(true);
+      scrollPanel_.setVisible(true);
+      
+      String newHeight = Math.min(135, vpanel_.getOffsetHeight()) + "px";
+      scrollPanel_.setHeight(newHeight);
+      setVisible(true);
+   }
+   
    private final ScrollPanel scrollPanel_ = new ScrollPanel() ;
    private final VerticalPanel vpanel_ = new VerticalPanel() ;
    private final Timer timer_;
-   private final ConsoleResources.ConsoleStyles styles_;
+   private final ConsoleResources.ConsoleStyles consoleStyles_;
    private Label f1prompt_;
+   
+   private static HelpInfoPopupPanelResources RES =
+         HelpInfoPopupPanelResources.INSTANCE;
+   
+   static {
+      RES.styles().ensureInjected();
+   }
+   
 }

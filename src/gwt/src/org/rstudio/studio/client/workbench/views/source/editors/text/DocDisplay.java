@@ -195,6 +195,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
 
    String getLine(int row);
    
+   char getCharacterAtCursor();
+   char getCharacterBeforeCursor();
+   
    String debug_getDocumentDump();
    void debug_setSessionValueDirectly(String s);
 

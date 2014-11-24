@@ -22,9 +22,7 @@ import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.PopupPanel;
 
 import org.rstudio.core.client.ElementIds;
@@ -41,22 +39,31 @@ public class CompletionPopupPanel extends ThemedPopupPanel
 {
    public CompletionPopupPanel()
    {
-      super() ;
+      super();
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
-      help_ = new HelpInfoPane();
+      help_ = new HelpInfoPopupPanel();
       help_.setWidth("400px");
-      help_.clearHelp(false);
-      help_.setVisible(false);
+      help_.show();
+      
       setStylePrimaryName(styles_.completionPopup()) ;
+      
+      hideAll();
+      
       addCloseHandler(new CloseHandler<PopupPanel>() {
          
          @Override
          public void onClose(CloseEvent<PopupPanel> event)
          {
-            help_.clearHelp(false);
-            help_.setVisible(false);
+            hideAll();
          }
       });
+   }
+   
+   private void hideAll()
+   {
+      // Throw everything off-screen to reduce flickering
+      setVisible(false);
+      help_.setVisible(false);
    }
 
    public void showProgress(String progress, PositionCallback callback)
@@ -83,33 +90,32 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    {
       CompletionList<QualifiedName> list = new CompletionList<QualifiedName>(
                                        values,
-                                       7,
+                                       6,
                                        true,
-                                       false) ;
+                                       true) ;
 
       list.addSelectionCommitHandler(new SelectionCommitHandler<QualifiedName>() {
          public void onSelectionCommit(SelectionCommitEvent<QualifiedName> event)
          {
+            lastSelectedValue_ = event.getSelectedItem();
             SelectionCommitEvent.fire(CompletionPopupPanel.this, 
                                       event.getSelectedItem()) ;
          }
-      }) ;
+      });
+      
       list.addSelectionHandler(new SelectionHandler<QualifiedName>() {
          public void onSelection(SelectionEvent<QualifiedName> event)
          {
+            lastSelectedValue_ = event.getSelectedItem();
             SelectionEvent.fire(CompletionPopupPanel.this, 
                                 event.getSelectedItem()) ;
          }
-      }) ;
+      });
+      
       list_ = list ;
+      setWidget(list_);
       
-      HorizontalPanelWithMouseEvents horiz 
-                                 = new HorizontalPanelWithMouseEvents() ;
-      horiz.add(list_) ;
-      horiz.add(help_) ;
-      
-      setWidget(horiz) ;
-      ElementIds.assignElementId(horiz.getElement(), 
+      ElementIds.assignElementId(list_.getElement(), 
             ElementIds.POPUP_COMPLETIONS);
       
       show(callback) ;
@@ -135,6 +141,11 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          return null ;
       
       return list_.getSelectedItem() ;
+   }
+   
+   public QualifiedName getLastSelectedValue()
+   {
+      return lastSelectedValue_;
    }
    
    public Rectangle getSelectionRect()
@@ -183,9 +194,8 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       if (list_ == null || !list_.isAttached())
          return;
       
-      help_.setVisible(help.hasInfo());
+      resolveHelpPosition(help.hasInfo());
       help_.displayHelp(help) ;
-      help_.setHeight(list_.getOffsetHeight() + "px") ;
    }
    
    @Override
@@ -194,9 +204,8 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       if (list_ == null || !list_.isAttached())
          return;
       
-      help_.setVisible(map.get(parameterName) != null);
+      resolveHelpPosition(map.get(parameterName) != null);
       help_.displayParameterHelp(map, parameterName) ;
-      help_.setHeight(list_.getOffsetHeight() + "px") ;
    }
    
    @Override
@@ -205,9 +214,17 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       if (list_ == null || !list_.isAttached())
          return;
       
-      help_.setVisible(help.hasInfo());
+      resolveHelpPosition(help.hasInfo());
       help_.displayPackageHelp(help) ;
-      help_.setHeight(list_.getOffsetHeight() + "px") ;
+   }
+   
+   private void resolveHelpPosition(boolean setVisible)
+   {
+      int top = getAbsoluteTop();
+      int left = getAbsoluteLeft();
+      int width = getOffsetWidth();
+      help_.setPopupPosition(left + width - 4, top + 3);
+      help_.setVisible(setVisible);
    }
    
    @Override
@@ -237,7 +254,12 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    {
       return addDomHandler(handler, MouseDownEvent.getType()) ;
    }
-
+   
+   public boolean isHelpVisible()
+   {
+      return help_.isVisible() && help_.isShowing();
+   }
+   
    private HTML setText(String text)
    {
       HTML contents = new HTML() ;
@@ -246,39 +268,8 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       return contents ;
    }
    
-   private static class HorizontalPanelWithMouseEvents 
-         extends HorizontalPanel 
-         implements HasMouseOverHandlers, 
-                    HasMouseOutHandlers
-   {
-      public HorizontalPanelWithMouseEvents()
-      {
-         super() ;
-         sinkEvents(Event.ONMOUSEOVER 
-                  | Event.ONMOUSEOUT 
-                  | Event.ONMOUSEDOWN
-                  | Event.ONFOCUS
-                  | Event.ONBLUR) ;
-      }
-
-      public HandlerRegistration addMouseOverHandler(MouseOverHandler handler)
-      {
-         return addHandler(handler, MouseOverEvent.getType()) ;
-      }
-
-      public HandlerRegistration addMouseOutHandler(MouseOutHandler handler)
-      {
-         return addHandler(handler, MouseOutEvent.getType()) ;
-      }
-      
-      @SuppressWarnings("unused")
-      public HandlerRegistration addMouseDownHandler(MouseDownHandler handler)
-      {
-         return addHandler(handler, MouseDownEvent.getType()) ;
-      }
-   }
-   
    private CompletionList<QualifiedName> list_ ;
-   private HelpInfoPane help_ ;
+   private HelpInfoPopupPanel help_ ;
    private final ConsoleResources.ConsoleStyles styles_;
+   private static QualifiedName lastSelectedValue_;
 }
