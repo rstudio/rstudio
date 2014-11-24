@@ -39,7 +39,6 @@ struct OptionsDescription
       :  programName(programName),
          defaultConfigFilePath(defaultConfigFilePath),
          commandLine("command-line options"),
-         allowUnregistered(false),
          configFile("config-file options")
    {
    }
@@ -47,7 +46,6 @@ struct OptionsDescription
    std::string defaultConfigFilePath;
    boost::program_options::options_description commandLine;
    boost::program_options::positional_options_description positionalOptions;
-   bool allowUnregistered;
    boost::program_options::options_description configFile;
 };
 
@@ -55,7 +53,25 @@ struct OptionsDescription
 ProgramStatus read(const OptionsDescription& optionsDescription,
                    int argc,
                    char * const argv[],
+                   std::vector<std::string>* pUnrecognized,
                    bool* pHelp);
+
+inline ProgramStatus read(const OptionsDescription& optionsDescription,
+                          int argc,
+                          char * const argv[],
+                          bool* pHelp)
+{
+   return read(optionsDescription, argc, argv, NULL, pHelp);
+}
+
+inline ProgramStatus read(const OptionsDescription& optionsDescription,
+                          int argc,
+                          char * const argv[],
+                          std::vector<std::string>* pUnrecognized)
+{
+   bool help;
+   return read(optionsDescription, argc, argv, pUnrecognized, &help);
+}
 
 inline ProgramStatus read(const OptionsDescription& optionsDescription,
                           int argc,
