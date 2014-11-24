@@ -76,7 +76,7 @@ public class HelpInfoPopupPanel extends PopupPanel
       vpanel_.add(lblSig);
       
       HTML htmlDesc = new HTML(help.getDescription()) ;
-      htmlDesc.setStylePrimaryName(consoleStyles_.functionInfoSummary()) ;
+      htmlDesc.setStylePrimaryName(RES.styles().helpBodyText()) ;
       vpanel_.add(htmlDesc);
       
       doDisplay();
@@ -103,7 +103,7 @@ public class HelpInfoPopupPanel extends PopupPanel
       }
       
       HTML htmlDesc = new HTML(desc) ;
-      htmlDesc.setStylePrimaryName(consoleStyles_.paramInfoDesc()) ;
+      htmlDesc.setStylePrimaryName(RES.styles().helpBodyText()) ;
       vpanel_.add(htmlDesc) ;
       
       doDisplay();
@@ -123,7 +123,7 @@ public class HelpInfoPopupPanel extends PopupPanel
       }
       
       HTML htmlDesc = new HTML(help.getDescription()) ;
-      htmlDesc.setStylePrimaryName(consoleStyles_.packageDescription()) ;
+      htmlDesc.setStylePrimaryName(RES.styles().helpBodyText()) ;
       vpanel_.add(htmlDesc) ;
 
       doDisplay();

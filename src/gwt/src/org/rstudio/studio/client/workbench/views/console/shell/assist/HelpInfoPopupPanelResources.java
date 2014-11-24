@@ -24,6 +24,7 @@ public interface HelpInfoPopupPanelResources extends ClientBundle
    public static interface Styles extends CssResource
    {
       String helpPopup();
+      String helpBodyText();
    }
 
   
