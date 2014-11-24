@@ -191,6 +191,9 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    @Override
    public void displayHelp(ParsedInfo help)
    {
+      if (list_ == null || !list_.isAttached())
+         return;
+      
       resolveHelpPosition(help.hasInfo());
       help_.displayHelp(help) ;
    }
@@ -198,6 +201,9 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    @Override
    public void displayParameterHelp(Map<String, String> map, String parameterName)
    {
+      if (list_ == null || !list_.isAttached())
+         return;
+      
       resolveHelpPosition(map.get(parameterName) != null);
       help_.displayParameterHelp(map, parameterName) ;
    }
@@ -205,6 +211,9 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    @Override
    public void displayPackageHelp(ParsedInfo help)
    {
+      if (list_ == null || !list_.isAttached())
+         return;
+      
       resolveHelpPosition(help.hasInfo());
       help_.displayPackageHelp(help) ;
    }
