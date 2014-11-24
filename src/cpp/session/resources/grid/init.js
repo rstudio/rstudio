@@ -16,15 +16,49 @@ var showError = function(msg) {
 };
 
 window.showFilterUi = function() {
-  // clone column widths from the data
-  var tfilter = document.getElementById("filter_cols");
   var thead = document.getElementById("data_cols");
-  for (var i = 0; 
-       i < Math.min(thead.children.length, tfilter.children.length); 
-       i++) {
-    tfilter.children[i].style.width = thead.children[i].style.width;
+  for (var i = 0; i < thead.children.length; i++) {
+    thead.children[i].children[1].style.display = "block";
   }
-  document.getElementById("filterTable").style.display = "table";
+};
+
+var createHeader = function(col) {
+  var th = document.createElement("th");
+
+  // add the title
+  var title = document.createElement("div");
+  title.innerText = col.col_name;
+  th.appendChild(title);
+  th.title = col.col_type;
+  if (col.col_type === "numeric") {
+    th.title += " with range " + col.col_min + " - " + col.col_max;
+  } else if (col.col_type === "factor") {
+    th.title += " with " + col.col_vals.length + " levels";
+  }
+
+  // add the filter controls
+  var filter = document.createElement("div");
+  filter.className = "rowFilter";
+  filter.style.display = "none";
+  if (col.col_type === "character") {
+    var input = document.createElement("input");
+    input.type = "text";
+    filter.appendChild(input);
+  } else if (col.col_type === "factor") {
+    var sel = document.createElement("select");
+    for (var i = 0; i < col.col_vals.length; i++) {
+      var opt = document.createElement("option");
+      opt.value = col.col_vals[i];
+      opt.innerText = col.col_vals[i];
+      sel.appendChild(opt);
+    }
+    filter.appendChild(sel);
+  } else if (col.col_type === "numeric") {
+    // TODO: slider
+    filter.innerText = col.col_min + " - " + col.col_max;
+  }
+  th.appendChild(filter);
+  return th;
 };
 
 var initDataTable = function() {
@@ -54,23 +88,10 @@ var initDataTable = function() {
     }
 
     // add each column
-    var tfilter = document.getElementById("filter_cols");
     var thead = document.getElementById("data_cols");
     for (var i = 0; i < cols.length; i++) {
-      // create appropriate filter UI
-      var tf = document.createElement("td");
-      /*
-      var input = document.createElement("input");
-      input.type = "text";
-      tf.appendChild(input);
-      */
-      tfilter.appendChild(tf);
-
       // create table header
-      var th = document.createElement("th");
-      th.innerText = cols[i].col_name;
-      th.title = cols[i].col_type;
-      thead.appendChild(th);
+      thead.appendChild(createHeader(cols[i]));
     }
     var scrollHeight = window.innerHeight - (thead.clientHeight + 2);
 

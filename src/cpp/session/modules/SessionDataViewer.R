@@ -67,7 +67,7 @@
       col_type = .rs.scalar(col_type),
       col_min  = .rs.scalar(col_min),
       col_max  = .rs.scalar(col_max),
-      col_vals = .rs.scalar(col_vals)
+      col_vals = col_vals
     )
   })
   c(list(list(
@@ -75,7 +75,7 @@
       col_type = .rs.scalar("rownames"),
       col_min  = .rs.scalar(0),
       col_max  = .rs.scalar(0),
-      col_vals = .rs.scalar("")
+      col_vals = ""
     )), colAttrs)
 })
 

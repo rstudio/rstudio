@@ -84,7 +84,10 @@ table.dataTable thead th:first-child
     position: absolute;
 }
 
-#filterTable
+.rowFilter
 {
-    display: none;
+    border: 1px #e0e0e0;
+    border-radius: 1px;
+    width: 100%;
+    overflow: hidden;
 }
