@@ -217,12 +217,21 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    for (int row = 0; row < length; row++)
    {
       json::Array rowData;
-      SEXP nameSEXP = STRING_ELT(rownamesSEXP, row);
-      if (nameSEXP != NULL &&
-          nameSEXP != NA_STRING &&
-          r::sexp::length(nameSEXP) > 0)
+      if (rownamesSEXP != NULL &&
+          TYPEOF(rownamesSEXP) != NILSXP &&
+          !Rf_isNull(rownamesSEXP) )
       {
-         rowData.push_back(Rf_translateChar(nameSEXP));
+         SEXP nameSEXP = STRING_ELT(rownamesSEXP, row);
+         if (nameSEXP != NULL &&
+             nameSEXP != NA_STRING &&
+             r::sexp::length(nameSEXP) > 0)
+         {
+            rowData.push_back(Rf_translateChar(nameSEXP));
+         }
+         else
+         {
+            rowData.push_back(row + start);
+         }
       }
       else
       {
@@ -232,12 +241,21 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       for (int col = 0; col<Rf_length(formattedDataSEXP); col++)
       {
          SEXP columnSEXP = VECTOR_ELT(formattedDataSEXP, col);
-         SEXP stringSEXP = STRING_ELT(columnSEXP, row);
-         if (stringSEXP != NULL &&
-             stringSEXP != NA_STRING &&
-             r::sexp::length(stringSEXP) > 0)
+         if (columnSEXP != NULL && 
+             TYPEOF(columnSEXP) != NILSXP &&
+             !Rf_isNull(columnSEXP))
          {
-            rowData.push_back(Rf_translateChar(stringSEXP));
+            SEXP stringSEXP = STRING_ELT(columnSEXP, row);
+            if (stringSEXP != NULL &&
+                stringSEXP != NA_STRING &&
+                r::sexp::length(stringSEXP) > 0)
+            {
+               rowData.push_back(Rf_translateChar(stringSEXP));
+            }
+            else
+            {
+               rowData.push_back("");
+            }
          }
          else
          {
