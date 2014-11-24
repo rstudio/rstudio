@@ -21,8 +21,8 @@ import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
-import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
@@ -77,7 +77,8 @@ public class CppCompletionManager implements CompletionManager
    public void close()
    {
       // delegate to R mode if necessary
-      if (isCursorInRMode() || isCursorInMarkdownMode())
+      if (DocumentMode.isCursorInRMode(docDisplay_) ||
+            DocumentMode.isCursorInMarkdownMode(docDisplay_))
       {
          rCompletionManager_.close();
       }
@@ -93,7 +94,8 @@ public class CppCompletionManager implements CompletionManager
    public void codeCompletion()
    {
       // delegate to R mode if necessary
-      if (isCursorInRMode() || isCursorInMarkdownMode())
+      if (DocumentMode.isCursorInRMode(docDisplay_) ||
+            DocumentMode.isCursorInMarkdownMode(docDisplay_))
       {
          rCompletionManager_.codeCompletion();
       }
@@ -109,7 +111,7 @@ public class CppCompletionManager implements CompletionManager
    public void goToHelp()
    {
       // delegate to R mode if necessary
-      if (isCursorInRMode())
+      if (DocumentMode.isCursorInRMode(docDisplay_))
       {
          rCompletionManager_.goToHelp();
       }
@@ -126,7 +128,7 @@ public class CppCompletionManager implements CompletionManager
    public void goToFunctionDefinition()
    {  
       // delegate to R mode if necessary
-      if (isCursorInRMode())
+      if (DocumentMode.isCursorInRMode(docDisplay_))
       {
          rCompletionManager_.goToFunctionDefinition();
       }
@@ -167,7 +169,8 @@ public class CppCompletionManager implements CompletionManager
    public boolean previewKeyDown(NativeEvent event)
    {
       // delegate to R mode if appropriate
-      if (isCursorInRMode() || isCursorInMarkdownMode())
+      if (DocumentMode.isCursorInRMode(docDisplay_) ||
+            DocumentMode.isCursorInMarkdownMode(docDisplay_))
          return rCompletionManager_.previewKeyDown(event);
       
       // if there is no completion request active then 
@@ -273,7 +276,8 @@ public class CppCompletionManager implements CompletionManager
    public boolean previewKeyPress(char c)
    {
       // delegate to R mode if necessary
-      if (isCursorInRMode() || isCursorInMarkdownMode())
+     if (DocumentMode.isCursorInRMode(docDisplay_) || 
+            DocumentMode.isCursorInMarkdownMode(docDisplay_))
       {
          return rCompletionManager_.previewKeyPress(c);
       }
@@ -400,24 +404,6 @@ public class CppCompletionManager implements CompletionManager
    private boolean shouldComplete(NativeEvent event)
    {
       return initFilter_ == null || initFilter_.shouldComplete(event);
-   }
-   
-   private boolean isCursorInMarkdownMode()
-   {
-      String m = docDisplay_.getLanguageMode(
-            docDisplay_.getCursorPosition());
-      
-      return m != null && m.equals(TextFileType.MARKDOWN_LANG_MODE);
-   }
-
-   private boolean isCursorInRMode()
-   {
-      String m = docDisplay_.getLanguageMode(docDisplay_.getCursorPosition());
-      if (m == null)
-         return false;
-      if (m.equals(TextFileType.R_LANG_MODE))
-         return true;
-      return false;
    }
    
    private CppServerOperations server_;

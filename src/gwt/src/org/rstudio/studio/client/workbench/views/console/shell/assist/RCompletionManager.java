@@ -42,8 +42,8 @@ import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
+import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
-import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -529,7 +529,7 @@ public class RCompletionManager implements CompletionManager
    public boolean previewKeyPress(char c)
    {
       // Bail if we're not in R mode
-      if (!isCursorInRMode())
+      if (DocumentMode.isCursorInRMode(docDisplay_))
          return false;
       
       if (popup_.isShowing())
@@ -1130,7 +1130,8 @@ public class RCompletionManager implements CompletionManager
       
       // If we're in Markdown mode and have an appropriate string, try to get
       // file completions
-      if (isCursorInMarkdownMode() && firstLine.matches(".*\\[.*\\]\\(.*"))
+      if (DocumentMode.isCursorInMarkdownMode(docDisplay_) &&
+            firstLine.matches(".*\\[.*\\]\\(.*"))
          return getAutocompletionContextForFileMarkdownLink(firstLine);
       
       // If we're completing an object within a string, assume it's a
@@ -1649,32 +1650,6 @@ public class RCompletionManager implements CompletionManager
       private boolean suggestOnAccept_;
       private boolean overrideInsertParens_;
       
-   }
-   
-   private boolean isCursorInMarkdownMode()
-   {
-      if (docDisplay_.getFileType().isMarkdown())
-         return true;
-      
-      String m = docDisplay_.getLanguageMode(
-            docDisplay_.getCursorPosition());
-      return m != null && m.equals(TextFileType.MARKDOWN_LANG_MODE);
-   }
-   
-   private boolean isCursorInRMode()
-   {
-      if (docDisplay_.getFileType().isR())
-         return true;
-      
-      String m = docDisplay_.getLanguageMode(docDisplay_.getCursorPosition());
-      
-      if (m == null)
-         return false;
-      
-      if (m.equals(TextFileType.R_LANG_MODE))
-         return true;
-      
-      return false;
    }
    
    private String getSourceDocumentPath()
