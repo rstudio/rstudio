@@ -328,21 +328,23 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getCompletionsInstallPackages", function(token)
 {
-   cachedRepos <- .rs.get("repos")
-   cachedAvailablePackages <- .rs.get("available.packages")
+   contrib.url <- contrib.url(getOption("repos"), getOption("pkgType"))
    
-   if (identical(cachedRepos, getOption('repos')) &&
-          !is.null(cachedAvailablePackages))
-   {
-      packages <- cachedAvailablePackages
-   }
-   else
-   {
-      available.packages <- available.packages()
-      packages <- rownames(available.packages)
-      .rs.assign("available.packages", packages)
-      .rs.assign("repos", getOption('repos'))
-   }
+   packages <- Reduce(union, lapply(contrib.url, function(url) {
+      
+      # Try to get a package list from the cache
+      result <- .rs.getCachedAvailablePackages(url)
+      
+      # If it's null, there were no packages available
+      if (is.null(result))
+         .rs.downloadAvailablePackages(url)
+      
+      # Try again
+      result <- .rs.getCachedAvailablePackages(url)
+      
+      # And return
+      result
+   }))
    
    .rs.makeCompletions(token = token,
                        results = .rs.selectFuzzyMatches(packages, token),
