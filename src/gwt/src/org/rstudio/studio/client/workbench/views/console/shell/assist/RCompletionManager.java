@@ -529,7 +529,7 @@ public class RCompletionManager implements CompletionManager
    public boolean previewKeyPress(char c)
    {
       // Bail if we're not in R mode
-      if (DocumentMode.isCursorInRMode(docDisplay_))
+      if (!DocumentMode.isCursorInRMode(docDisplay_))
          return false;
       
       if (popup_.isShowing())
