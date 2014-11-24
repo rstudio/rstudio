@@ -15,6 +15,18 @@ var showError = function(msg) {
   document.getElementById("data").style.display = "none";
 };
 
+window.showFilterUi = function() {
+  // clone column widths from the data
+  var tfilter = document.getElementById("filter_cols");
+  var thead = document.getElementById("data_cols");
+  for (var i = 0; 
+       i < Math.min(thead.children.length, tfilter.children.length); 
+       i++) {
+    tfilter.children[i].style.width = thead.children[i].style.width;
+  }
+  document.getElementById("filterTable").style.display = "table";
+};
+
 var initDataTable = function() {
   // look up the query parameters
   var env = "", obj = "", cacheKey = "";
@@ -42,10 +54,22 @@ var initDataTable = function() {
     }
 
     // add each column
+    var tfilter = document.getElementById("filter_cols");
     var thead = document.getElementById("data_cols");
     for (var i = 0; i < cols.length; i++) {
+      // create appropriate filter UI
+      var tf = document.createElement("td");
+      /*
+      var input = document.createElement("input");
+      input.type = "text";
+      tf.appendChild(input);
+      */
+      tfilter.appendChild(tf);
+
+      // create table header
       var th = document.createElement("th");
-      th.innerText = cols[i];
+      th.innerText = cols[i].col_name;
+      th.title = cols[i].col_type;
       thead.appendChild(th);
     }
     var scrollHeight = window.innerHeight - (thead.clientHeight + 2);
@@ -69,11 +93,16 @@ var initDataTable = function() {
           d.show = "data";
         },
         "error": function(jqXHR) {
-          var result = $.parseJSON(jqXHR.responseText);
-          if (result.error) {
-            showError(result.error);
-          } else {
-            showError("The data could not be displayed.");
+          if (jqXHR.responseText[0] !== "{")
+            showError(jqXHR.responseText);
+          else
+          {
+            var result = $.parseJSON(jqXHR.responseText);
+            if (result.error) {
+              showError(result.error);
+            } else {
+              showError("The data could not be displayed.");
+            }
           }
         },
        }
@@ -84,12 +113,17 @@ var initDataTable = function() {
   })
   .fail(function(jqXHR)
   {
-    var result = $.parseJSON(jqXHR.responseText);
+    if (jqXHR.responseText[0] !== "{")
+      showError(jqXHR.responseText);
+    else
+    {
+      var result = $.parseJSON(jqXHR.responseText);
 
-    if (result.error) {
-      showError(result.error);
-    } else {
-      showError("The object could not be displayed.");
+      if (result.error) {
+        showError(result.error);
+      } else {
+        showError("The object could not be displayed.");
+      }
     }
   });
 };

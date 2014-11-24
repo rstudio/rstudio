@@ -140,27 +140,18 @@ void handleGridResReq(const http::Request& request,
 
 json::Value getCols(SEXP dataSEXP)
 {
-   std::vector<std::string> cols;
-
-   SEXP namesSEXP = Rf_getAttrib(dataSEXP, R_NamesSymbol);
-   if (TYPEOF(namesSEXP) != STRSXP || 
-       Rf_length(namesSEXP) != Rf_length(dataSEXP))
+   SEXP colsSEXP = NULL;
+   r::sexp::Protect protect;
+   json::Value result;
+   Error error = r::exec::RFunction(".rs.describeCols", dataSEXP)
+      .call(&colsSEXP, &protect);
+   if (error) 
    {
-      // fake them if we don't have them
-      for (int i = 0; i < Rf_length(dataSEXP); i++)
-      {
-         cols.push_back(boost::lexical_cast<std::string>(i + 1));
-      }
+      json::Object err;
+      err["error"] = error.summary();
    }
-   else
-   {
-      // extract column names 
-      r::sexp::extract(namesSEXP, &cols);
-   }
-
-   // add row ID column
-   cols.insert(cols.begin(), "");
-   return json::toJsonArray(cols);
+   r::json::jsonValueFromList(colsSEXP, &result);
+   return result;
 }
 
 json::Value getData(SEXP dataSEXP, const http::Fields& fields)

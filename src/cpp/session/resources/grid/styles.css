@@ -83,3 +83,8 @@ table.dataTable thead th:first-child
     display: none;
     position: absolute;
 }
+
+#filterTable
+{
+    display: none;
+}

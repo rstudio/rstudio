@@ -31,6 +31,54 @@
    format(col, trim = TRUE, justify = "none", ...)
 })
 
+.rs.addFunction("describeCols", function(x) 
+{
+  colNames <- names(x)
+  colAttrs <- lapply(seq_along(x), function(idx) {
+    col_name <- if (idx <= length(colNames)) 
+                  colNames[idx] 
+                else 
+                  as.character(idx)
+    col_type <- "unknown"
+    col_min <- 0
+    col_max <- 0
+    col_vals <- ""
+    if (length(x[,idx]) > 0)
+    {
+      val <- x[,idx][1]
+      if (is.factor(val))
+      {
+        col_type <- "factor"
+        col_vals <- levels(val)
+      }
+      else if (is.numeric(val))
+      {
+        col_type <- "numeric"
+        col_min <- min(x[,idx])
+        col_max <- max(x[,idx])
+      }
+      else if (is.character(val))
+      {
+        col_type <- "character"
+      }
+    }
+    list(
+      col_name = .rs.scalar(col_name),
+      col_type = .rs.scalar(col_type),
+      col_min  = .rs.scalar(col_min),
+      col_max  = .rs.scalar(col_max),
+      col_vals = .rs.scalar(col_vals)
+    )
+  })
+  c(list(list(
+      col_name = .rs.scalar(""),
+      col_type = .rs.scalar("rownames"),
+      col_min  = .rs.scalar(0),
+      col_max  = .rs.scalar(0),
+      col_vals = .rs.scalar("")
+    )), colAttrs)
+})
+
 .rs.addFunction("formatRowNames", function(x, start, len) 
 {
   rownames <- row.names(x)
@@ -53,7 +101,6 @@
     as.data.frame(x[order(x[,col]),])
   }
 })
-
 
 .rs.addFunction("findDataFrame", function(envName, objName, cacheKey, cacheDir) 
 {
