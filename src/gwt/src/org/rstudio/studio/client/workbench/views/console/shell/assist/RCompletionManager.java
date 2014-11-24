@@ -158,7 +158,7 @@ public class RCompletionManager implements CompletionManager
             if (popup_.isHelpVisible())
                context_.showHelp(lastSelectedItem_);
             else
-               showHelpDeferred(context_, lastSelectedItem_, 1000);
+               showHelpDeferred(context_, lastSelectedItem_, 600);
          }
       }) ;
       
