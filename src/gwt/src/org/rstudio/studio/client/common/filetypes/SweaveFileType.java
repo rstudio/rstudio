@@ -24,8 +24,6 @@ import java.util.HashSet;
 
 public class SweaveFileType extends TextFileType
 {
-   public static final String TEX_LANG_MODE = "TeX";
-
    SweaveFileType(String id,
                   String label,
                   EditorLanguage editorLanguage,
