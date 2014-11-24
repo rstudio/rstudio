@@ -3182,16 +3182,6 @@ public class TextEditingTarget implements
    }
    
    @Handler
-   void onSetWorkingDirAsProjectDir()
-   {
-      FileSystemItem projectDir = session_.getSessionInfo()
-            .getActiveProjectDir();
-      if (projectDir != null)
-         consoleDispatcher_.executeSetWd(projectDir, false);
-            
-   }
-   
-   @Handler
    void onCodeCompletion()
    {
       docDisplay_.codeCompletion();
