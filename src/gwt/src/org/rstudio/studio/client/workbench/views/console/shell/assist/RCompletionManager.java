@@ -528,10 +528,6 @@ public class RCompletionManager implements CompletionManager
    
    public boolean previewKeyPress(char c)
    {
-      // Bail if we're not in R mode
-      if (!DocumentMode.isCursorInRMode(docDisplay_))
-         return false;
-      
       if (popup_.isShowing())
       {
          if (isValidForRIdentifier(c) || c == ':')
@@ -548,6 +544,10 @@ public class RCompletionManager implements CompletionManager
       }
       else
       {
+         // Bail if we're not in R mode
+         if (!DocumentMode.isCursorInRMode(docDisplay_))
+            return false;
+         
          // Perform an auto-popup if a set number of R identifier characters
          // have been inserted (but only if the user has allowed it in prefs)
          boolean autoPopupEnabled = uiPrefs_.codeComplete().getValue().equals(
