@@ -58,13 +58,24 @@ Error availablePackagesBegin(const core::json::JsonRpcRequest& request,
          pContribUrls);
 }
 
-class AvailablePackagesCache
+class AvailablePackagesCache : public boost::noncopyable
 {
 public:
+   
+   static AvailablePackagesCache& get()
+   {
+      static AvailablePackagesCache instance;
+      return instance;
+   }
+   
+private:
+   
    AvailablePackagesCache()
       : pMutex_(new boost::mutex())
    {
    }
+   
+public:
 
    void insert(const std::string& contribUrl,
                const std::vector<std::string>& availablePackages)
@@ -111,7 +122,7 @@ void downloadAvailablePackages(const std::string& contribUrl,
                                std::vector<std::string>* pAvailablePackages)
 {
    // cache available packages to minimize http round trips
-   static AvailablePackagesCache s_availablePackagesCache;
+   AvailablePackagesCache& s_availablePackagesCache = AvailablePackagesCache::get();
 
    // check cache first
    std::vector<std::string> availablePackages;
@@ -160,6 +171,19 @@ void downloadAvailablePackages(const std::string& contribUrl,
       // add to cache
       s_availablePackagesCache.insert(contribUrl, results);
    }
+}
+
+SEXP rs_getCachedAvailablePackages(SEXP contribUrlSEXP)
+{
+   r::sexp::Protect protect;
+   std::string contribUrl = r::sexp::asString(contribUrlSEXP);
+   AvailablePackagesCache& s_availablePackagesCache = AvailablePackagesCache::get();
+   
+   std::vector<std::string> availablePackages;
+   if (s_availablePackagesCache.lookup(contribUrl, &availablePackages))
+      return r::sexp::create(availablePackages, &protect);
+   else
+      return R_NilValue;
 }
 
 Error availablePackagesEnd(const core::json::JsonRpcRequest& request,
@@ -376,6 +400,13 @@ Error initialize()
    methodDef3.fun = (DL_FUNC) rs_packageLibraryMutated ;
    methodDef3.numArgs = 0;
    r::routines::addCallMethod(methodDef3);
+   
+   R_CallMethodDef methodDef4 ;
+   methodDef4.name = "rs_getCachedAvailablePackages" ;
+   methodDef4.fun = (DL_FUNC) rs_getCachedAvailablePackages ;
+   methodDef4.numArgs = 1;
+   r::routines::addCallMethod(methodDef4);
+   
 
    using boost::bind;
    using namespace module_context;
