@@ -41,7 +41,9 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
+import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -361,44 +363,56 @@ public class RCompletionManager implements CompletionManager
                invalidatePendingRequests() ;
                return true ;
             }
-            else if (keycode == KeyCodes.KEY_TAB
-                  || keycode == KeyCodes.KEY_ENTER
-                  || keycode == KeyCodes.KEY_RIGHT)
+            
+            // NOTE: It is possible for the popup to still be showing, but
+            // showing offscreen with no values. We only grab these keys
+            // when the popup is both showing, and has completions.
+            // This functionality is here to ensure backspace works properly;
+            // e.g "stats::rna" -> "stats::rn" brings completions if the user
+            // had originally requested completions at e.g. "stats::".
+            if (popup_.hasCompletions())
             {
-               QualifiedName value = popup_.getSelectedValue() ;
-               if (value != null)
+               if (keycode == KeyCodes.KEY_TAB
+                     || keycode == KeyCodes.KEY_ENTER
+                     || keycode == KeyCodes.KEY_RIGHT)
                {
-                  context_.onSelection(value) ;
+                  QualifiedName value = popup_.getSelectedValue() ;
+                  if (value != null)
+                  {
+                     context_.onSelection(value) ;
+                     return true ;
+                  }
+               }
+               
+               else if (keycode == KeyCodes.KEY_UP)
+                  return popup_.selectPrev() ;
+               else if (keycode == KeyCodes.KEY_DOWN)
+                  return popup_.selectNext() ;
+               else if (keycode == KeyCodes.KEY_PAGEUP)
+                  return popup_.selectPrevPage() ;
+               else if (keycode == KeyCodes.KEY_PAGEDOWN)
+                  return popup_.selectNextPage() ;
+               else if (keycode == KeyCodes.KEY_HOME)
+                  return popup_.selectFirst() ;
+               else if (keycode == KeyCodes.KEY_END)
+                  return popup_.selectLast() ;
+               else if (keycode == KeyCodes.KEY_LEFT)
+               {
+                  invalidatePendingRequests() ;
                   return true ;
                }
+               if (keycode == 112) // F1
+               {
+                  context_.showHelpTopic() ;
+                  return true ;
+               }
+               else if (keycode == 113) // F2
+               {
+                  goToFunctionDefinition();
+                  return true;
+               }
             }
-            else if (keycode == KeyCodes.KEY_UP)
-               return popup_.selectPrev() ;
-            else if (keycode == KeyCodes.KEY_DOWN)
-               return popup_.selectNext() ;
-            else if (keycode == KeyCodes.KEY_PAGEUP)
-               return popup_.selectPrevPage() ;
-            else if (keycode == KeyCodes.KEY_PAGEDOWN)
-               return popup_.selectNextPage() ;
-            else if (keycode == KeyCodes.KEY_HOME)
-               return popup_.selectFirst() ;
-            else if (keycode == KeyCodes.KEY_END)
-               return popup_.selectLast() ;
-            else if (keycode == KeyCodes.KEY_LEFT)
-            {
-               invalidatePendingRequests() ;
-               return true ;
-            }
-            else if (keycode == 112) // F1
-            {
-               context_.showHelpTopic() ;
-               return true ;
-            }
-            else if (keycode == 113) // F2
-            {
-               goToFunctionDefinition();
-               return true;
-            }
+            
          }
          
          if (canContinueCompletions(event))
@@ -514,6 +528,10 @@ public class RCompletionManager implements CompletionManager
    
    public boolean previewKeyPress(char c)
    {
+      // Bail if we're not in R mode
+      if (!isCursorInRMode())
+         return false;
+      
       if (popup_.isShowing())
       {
          if (isValidForRIdentifier(c) || c == ':')
@@ -1341,6 +1359,7 @@ public class RCompletionManager implements CompletionManager
          
          if (results.length == 0)
          {
+            popup_.clearCompletions();
             boolean lastInputWasTab =
                   (nativeEvent_ != null && nativeEvent_.getKeyCode() == KeyCodes.KEY_TAB);
             
@@ -1492,7 +1511,7 @@ public class RCompletionManager implements CompletionManager
             return;
          }
          
-         boolean insertParen = qualifiedName.isFunctionType();
+         boolean insertParen = RCompletionType.isFunctionType(qualifiedName.type);
          
          // Don't insert a paren if there is already a '(' following
          // the cursor
@@ -1607,6 +1626,22 @@ public class RCompletionManager implements CompletionManager
       private boolean suggestOnAccept_;
       private boolean overrideInsertParens_;
       
+   }
+   
+   private boolean isCursorInRMode()
+   {
+      if (docDisplay_.getFileType().isR())
+         return true;
+      
+      String m = docDisplay_.getLanguageMode(docDisplay_.getCursorPosition());
+      
+      if (m == null)
+         return false;
+      
+      if (m.equals(TextFileType.R_LANG_MODE))
+         return true;
+      
+      return false;
    }
    
    private String getSourceDocumentPath()

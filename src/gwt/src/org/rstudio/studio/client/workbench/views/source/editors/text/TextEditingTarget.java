@@ -475,7 +475,7 @@ public class TextEditingTarget implements
                   ne.getKeyCode() == KeyCodes.KEY_ENTER && mod == 0 &&
                     (fileType_.isC() || isCursorInRMode() || isCursorInTexMode()))
             {
-               String line = docDisplay_.getCurrentLine();
+               String line = docDisplay_.getCurrentLineUpToCursor();
                Pattern pattern = null;
                
                if (isCursorInRMode())

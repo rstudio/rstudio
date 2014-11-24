@@ -283,8 +283,14 @@
    
    # Get objects from that namespace
    ns <- asNamespace(namespace)
-   objectNames <- objects(ns)
-   objects <- mget(objectNames, envir = ns)
+   objectNames <- objects(ns, all.names = TRUE)
+   objects <- tryCatch(
+      mget(objectNames, envir = ns),
+      error = function(e) NULL
+   )
+   
+   if (is.null(objects))
+      return()
    
    # Find which object is actually identical to the one we have
    success <- FALSE
@@ -313,11 +319,11 @@
    if (!length(name))
       return(NULL)
    
-   if (name == "")
+   if (is.character(name) && (length(name) != 1 || name == ""))
       return(NULL)
-    
+   
    # Don't evaluate any functions -- blacklist any 'name' that contains a paren
-   if (regexpr("(", name, fixed = TRUE) > 0)
+   if (is.character(name) && regexpr("(", name, fixed = TRUE) > 0)
       return(FALSE)
    
    if (is.character(name))
@@ -340,23 +346,7 @@
       )
    }
    
-   ## Return on success
-   if (!is.null(result))
-   {
-      return(result)
-   }
-   
-   ## Otherwise, rely on 'getAnywhere'
-   objects <- getAnywhere(name)
-   if (length(objects$objs))
-   {
-      ## TODO: What if we have multiple completions?
-      objects$objs[[1]]
-   }
-   else
-   {
-      NULL
-   }
+   result
 })
 
 .rs.addFunction("getFunctionArgumentNames", function(object)

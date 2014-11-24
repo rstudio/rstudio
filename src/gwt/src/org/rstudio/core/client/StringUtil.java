@@ -723,7 +723,7 @@ public class StringUtil
                                  boolean backOverWhitespace)
    {
       if (backOverWhitespace)
-         while (string.substring(pos - 1, pos).matches("\\s"))
+         while (pos > 0 && string.substring(pos - 1, pos).matches("\\s"))
             --pos;
       
       int startPos = Math.max(0, pos - 1);
@@ -737,6 +737,9 @@ public class StringUtil
          while (endPos < string.length() &&
                string.substring(endPos, endPos + 1).matches(tokenRegex))
             ++endPos;
+      
+      if (startPos >= endPos)
+         return "";
       
       return string.substring(startPos + 1, endPos);
    }

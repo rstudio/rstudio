@@ -70,6 +70,12 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       setText(error) ;
       show(callback) ;
    }
+   
+   @Override
+   public void clearCompletions()
+   {
+      list_ = null;
+   }
 
    @Override
    public void showCompletionValues(QualifiedName[] values, 
@@ -107,6 +113,12 @@ public class CompletionPopupPanel extends ThemedPopupPanel
             ElementIds.POPUP_COMPLETIONS);
       
       show(callback) ;
+   }
+   
+   public boolean hasCompletions() {
+      if (list_ == null)
+         return false;
+      return list_.getItemCount() > 0;
    }
 
    private void show(PositionCallback callback)
@@ -168,6 +180,9 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    @Override
    public void displayHelp(ParsedInfo help)
    {
+      if (list_ == null || !list_.isAttached())
+         return;
+      
       help_.setVisible(help.hasInfo());
       help_.displayHelp(help) ;
       help_.setHeight(list_.getOffsetHeight() + "px") ;
@@ -176,6 +191,9 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    @Override
    public void displayParameterHelp(Map<String, String> map, String parameterName)
    {
+      if (list_ == null || !list_.isAttached())
+         return;
+      
       help_.setVisible(map.get(parameterName) != null);
       help_.displayParameterHelp(map, parameterName) ;
       help_.setHeight(list_.getOffsetHeight() + "px") ;
@@ -184,6 +202,9 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    @Override
    public void displayPackageHelp(ParsedInfo help)
    {
+      if (list_ == null || !list_.isAttached())
+         return;
+      
       help_.setVisible(help.hasInfo());
       help_.displayPackageHelp(help) ;
       help_.setHeight(list_.getOffsetHeight() + "px") ;
