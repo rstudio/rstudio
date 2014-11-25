@@ -850,7 +850,9 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
-.rs.addFunction("getCompletionsPackages", function(token, appendColons = FALSE)
+.rs.addFunction("getCompletionsPackages", function(token,
+                                                   appendColons = FALSE,
+                                                   excludeOtherCompletions = FALSE)
 {
    allPackages <- Reduce(union, lapply(.libPaths(), list.files))
    
@@ -865,7 +867,8 @@ assign(x = ".rs.acCompletionTypes",
                           completions,
                        packages = completions,
                        quote = !appendColons,
-                       type = .rs.acCompletionTypes$PACKAGE)
+                       type = .rs.acCompletionTypes$PACKAGE,
+                       excludeOtherCompletions = excludeOtherCompletions)
 })
 
 .rs.addFunction("getCompletionsData", function(token)
@@ -1096,7 +1099,7 @@ assign(x = ".rs.acCompletionTypes",
    if (string[[1]] %in% c("library", "require", "requireNamespace") &&
           numCommas[[1]] == 0)
    {
-      return(.rs.getCompletionsPackages(token))
+      return(.rs.getCompletionsPackages(token, excludeOtherCompletions = TRUE))
    }
    
    # Shiny completions
