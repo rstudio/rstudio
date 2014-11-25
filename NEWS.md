@@ -6,12 +6,11 @@
 * Improvements to R code completion:
     - Completions provided automatically without an explicit gesture
     - All objects visible from the current scope are now included in completions
-    - Completions available in more contexts including S3 and S4 methods and dplyr pipelines
+    - Completions in more contexts including S3 and S4 methods and dplyr pipelines
     - Automatic insertion of closing parens when appropriate
+    - Inline help tooltip for signatures of completed functions
     - Completion for statements spanning multiple lines
     - Specialized autocompletions provided in `library`, `data`, `vignette`, `?` function calls
-    - New completion requests use case-insensitive prefix matching, while completion list
-      narrowing uses fuzzy matching
     - For Shiny applications, autocompletions for `ui.R` + `server.R` pairs
     - Completions for dimension names in `[`, `[[` calls
 * Improvements to C/C++ editing mode:
