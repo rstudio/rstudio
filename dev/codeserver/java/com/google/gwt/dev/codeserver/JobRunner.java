@@ -17,6 +17,9 @@ package com.google.gwt.dev.codeserver;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.MinimalRebuildCacheManager;
+import com.google.gwt.dev.javac.UnitCacheSingleton;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -32,15 +35,30 @@ import java.util.concurrent.Executors;
  * <p>JobRunners are thread-safe.
  */
 public class JobRunner {
+
   private final JobEventTable table;
+  private final MinimalRebuildCacheManager minimalRebuildCacheManager;
   private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
-  JobRunner(JobEventTable table) {
+  JobRunner(JobEventTable table, MinimalRebuildCacheManager minimalRebuildCacheManager) {
     this.table = table;
+    this.minimalRebuildCacheManager = minimalRebuildCacheManager;
   }
 
   /**
-   * Return fresh Js that knows how to request the specific permutation recompile for the given box.
+   * Submits a cleaner job to be executed. (Waits for completion.)
+   */
+  void clean(TreeLogger logger) throws ExecutionException {
+    try {
+      TreeLogger branch = logger.branch(TreeLogger.INFO, "Cleaning disk caches.");
+      executor.submit(new CleanerJob(branch)).get();
+    } catch (InterruptedException e) {
+      // Allow the JVM to shutdown.
+    }
+  }
+
+  /**
+   * Submits a recompile js creation job to be executed. (Waits for completion and returns JS.).
    */
   public String getRecompileJs(final TreeLogger logger, final Outbox box)
       throws ExecutionException {
@@ -93,5 +111,30 @@ public class JobRunner {
   private static void recompile(Job job) {
     job.getLogger().log(Type.INFO, "starting job: " + job.getId());
     job.getOutbox().recompile(job);
+  }
+
+  /**
+   * A callable for clearing both unit and minimalRebuild caches.
+   * <p>
+   * By packaging it as a callable and running it in the ExecutorService any danger of clearing
+   * caches at the same time as an active compile job is avoided.
+   */
+  private class CleanerJob implements Callable<Void> {
+
+    private TreeLogger logger;
+
+    public CleanerJob(TreeLogger logger) {
+      this.logger = logger;
+    }
+
+    @Override
+    public Void call() throws UnableToCompleteException {
+      long beforeMs = System.nanoTime() / 1000000L;
+      minimalRebuildCacheManager.deleteCaches();
+      UnitCacheSingleton.clearCache();
+      long afterMs = System.nanoTime() / 1000000L;
+      logger.log(TreeLogger.INFO, String.format("Cleaned in %sms.", (afterMs - beforeMs)));
+      return null;
+    }
   }
 }

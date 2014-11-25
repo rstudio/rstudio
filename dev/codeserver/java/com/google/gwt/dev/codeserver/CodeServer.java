@@ -19,6 +19,10 @@ package com.google.gwt.dev.codeserver;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.MinimalRebuildCacheManager;
+import com.google.gwt.dev.javac.UnitCache;
+import com.google.gwt.dev.javac.UnitCacheSingleton;
+import com.google.gwt.dev.util.DiskCachingUtil;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.util.tools.Utility;
 
@@ -61,7 +65,12 @@ public class CodeServer {
       OutboxTable outboxes;
 
       try {
-        outboxes = makeOutboxes(options, logger);
+        File baseCacheDir =
+            DiskCachingUtil.computePreferredCacheDir(options.getModuleNames(), logger);
+        UnitCache unitCache = UnitCacheSingleton.get(logger, null, baseCacheDir);
+        MinimalRebuildCacheManager minimalRebuildCacheManager =
+            new MinimalRebuildCacheManager(logger, baseCacheDir);
+        outboxes = makeOutboxes(options, logger, unitCache, minimalRebuildCacheManager);
       } catch (Throwable t) {
         t.printStackTrace();
         System.out.println("FAIL");
@@ -115,10 +124,16 @@ public class CodeServer {
     topLogger.setMaxDetail(options.getLogLevel());
 
     TreeLogger startupLogger = topLogger.branch(Type.INFO, "Super Dev Mode starting up");
-    OutboxTable outboxes = makeOutboxes(options, startupLogger);
+    File baseCacheDir =
+        DiskCachingUtil.computePreferredCacheDir(options.getModuleNames(), startupLogger);
+    UnitCache unitCache = UnitCacheSingleton.get(startupLogger, null, baseCacheDir);
+    MinimalRebuildCacheManager minimalRebuildCacheManager =
+        new MinimalRebuildCacheManager(topLogger, baseCacheDir);
+    OutboxTable outboxes =
+        makeOutboxes(options, startupLogger, unitCache, minimalRebuildCacheManager);
 
     JobEventTable eventTable = new JobEventTable();
-    JobRunner runner = new JobRunner(eventTable);
+    JobRunner runner = new JobRunner(eventTable, minimalRebuildCacheManager);
 
     JsonExporter exporter = new JsonExporter(options, outboxes);
 
@@ -133,7 +148,8 @@ public class CodeServer {
   /**
    * Configures and compiles all the modules (unless {@link Options#getNoPrecompile} is false).
    */
-  private static OutboxTable makeOutboxes(Options options, TreeLogger logger)
+  private static OutboxTable makeOutboxes(Options options, TreeLogger logger,
+      UnitCache unitCache, MinimalRebuildCacheManager minimalRebuildCacheManager)
       throws IOException, UnableToCompleteException {
 
     File workDir = ensureWorkDir(options);
@@ -146,7 +162,8 @@ public class CodeServer {
     for (String moduleName : options.getModuleNames()) {
       OutboxDir outboxDir = OutboxDir.create(new File(workDir, moduleName), logger);
 
-      Recompiler recompiler = new Recompiler(outboxDir, launcherDir, moduleName, options);
+      Recompiler recompiler = new Recompiler(outboxDir, launcherDir, moduleName,
+          options, unitCache, minimalRebuildCacheManager);
 
       // The id should be treated as an opaque string since we will change it again.
       // TODO: change outbox id to include binding properties.

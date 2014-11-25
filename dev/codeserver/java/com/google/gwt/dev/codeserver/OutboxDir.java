@@ -48,10 +48,6 @@ class OutboxDir {
     return new File(root, "speedtracer.html");
   }
 
-  File getUnitCacheDir() {
-    return new File(root, "gwt-unitcache");
-  }
-
   /**
    * Creates a fresh, empty compile directory.
    */

@@ -228,6 +228,17 @@ public class WebServer {
       return Responses.newJsonResponse(json);
     }
 
+    if (target.startsWith("/clean")) {
+      JsonObject json = null;
+      try {
+        runner.clean(logger);
+        json = jsonExporter.exportOk("Cleaned disk caches.");
+      } catch (ExecutionException e) {
+        json = jsonExporter.exportError(e.getMessage());
+      }
+      return Responses.newJsonResponse(json);
+    }
+
     // GET the Js that knows how to request the specific permutation recompile.
     if (target.startsWith("/recompile-requester/")) {
       String moduleName = target.substring("/recompile-requester/".length());
@@ -442,7 +453,7 @@ public class WebServer {
     };
   }
 
-  private Response makePolicyFilePage(String target) throws IOException {
+  private Response makePolicyFilePage(String target) {
 
     int secondSlash = target.indexOf('/', 1);
     if (secondSlash < 1) {
@@ -465,8 +476,7 @@ public class WebServer {
   /**
    * Sends the log file as html with errors highlighted in red.
    */
-  private Response makeLogPage(final Outbox box)
-       throws IOException {
+  private Response makeLogPage(final Outbox box) {
     final File file = box.getCompileLog();
     if (!file.isFile()) {
       return new ErrorPage("log file not found");

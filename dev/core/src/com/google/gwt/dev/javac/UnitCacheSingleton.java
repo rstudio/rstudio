@@ -26,6 +26,7 @@ import java.io.File;
 public class UnitCacheSingleton {
 
   public static final String GWT_PERSISTENTUNITCACHE = "gwt.persistentunitcache";
+  private static final String GWT_PERSISTENTUNITCACHEDIR = "gwt.persistentunitcachedir";
 
   /**
    * The API must be enabled explicitly for persistent caching to be live.
@@ -37,29 +38,64 @@ public class UnitCacheSingleton {
   private static UnitCache instance = null;
 
   /**
+   * If a cache exists, asks it to clear its contents.
+   */
+  public static synchronized void clearCache() throws UnableToCompleteException {
+    if (instance == null) {
+      return;
+    }
+    instance.clear();
+  }
+
+  /**
    * If the cache is enabled, instantiates the cache and begins loading units
    * into memory in a background thread. If the cache is not enabled, it clears
    * out any old cached files.
-   *
+   * <p>
    * Only one instance of the cache is instantiated. If a previously created
    * cache exists, the previous instance is returned.
+   * <p>
+   * The specified cache dir parameter is optional.
    */
-  public static synchronized UnitCache get(TreeLogger logger, File cacheDir) {
+  public static synchronized UnitCache get(TreeLogger logger, File specifiedCacheDir) {
+    return get(logger, specifiedCacheDir, null);
+  }
+
+  /**
+   * If the cache is enabled, instantiates the cache and begins loading units
+   * into memory in a background thread. If the cache is not enabled, it clears
+   * out any old cached files.
+   * <p>
+   * Only one instance of the cache is instantiated. If a previously created
+   * cache exists, the previous instance is returned.
+   * <p>
+   * Both specified and fallback cache dir parameters are optional.
+   */
+  public static synchronized UnitCache get(TreeLogger logger, File specifiedCacheDir,
+      File fallbackCacheDir) {
     assert logger != null;
     if (instance == null) {
+      String propertyCachePath = System.getProperty(GWT_PERSISTENTUNITCACHEDIR);
+      File propertyCacheDir = propertyCachePath != null ? new File(propertyCachePath) : null;
+
       if (usePersistent) {
-        String dirProp = "gwt.persistentunitcachedir";
-        String propertyCacheDir = System.getProperty(dirProp);
-        if (propertyCacheDir != null) {
-          cacheDir = new File(propertyCacheDir);
-        } else if (cacheDir == null) {
+        File actualCacheDir = null;
+
+        // Pick the highest priority cache dir that is available.
+        if (specifiedCacheDir != null) {
+          actualCacheDir = specifiedCacheDir;
+        } else if (propertyCacheDir != null) {
+          actualCacheDir = propertyCacheDir;
+        } else if (fallbackCacheDir != null) {
+          actualCacheDir = fallbackCacheDir;
+        } else {
           logger.log(TreeLogger.TRACE, "Persistent caching disabled - no directory specified.\n"
               + "To enable persistent unit caching use -Dgwt.persistentunitcachedir=<dir>");
         }
-        if (cacheDir != null) {
+
+        if (actualCacheDir != null) {
           try {
-            instance = new PersistentUnitCache(logger, cacheDir);
-            return instance;
+            return instance = new PersistentUnitCache(logger, actualCacheDir);
           } catch (UnableToCompleteException ignored) {
           }
         }

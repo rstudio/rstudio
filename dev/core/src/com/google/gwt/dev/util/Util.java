@@ -78,6 +78,7 @@ import java.util.TreeSet;
  * being moved to {@link com.google.gwt.util.tools.Utility} if they would be
  * generally useful to tool writers, and don't involve TreeLogger.
  */
+// TODO: remove stream functions and replace with Guava.
 public final class Util {
 
   public static String DEFAULT_ENCODING = "UTF-8";

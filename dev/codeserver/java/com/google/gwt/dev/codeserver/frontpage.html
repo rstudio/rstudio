@@ -105,6 +105,25 @@ if (window.addEventListener) {
 else if (window.attachEvent) {
   window.attachEvent("onload", onPageLoad);
 }
+
+function clean(config) {
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", "clean/" + config.moduleNames[0], true);
+  xhr.onload = function (e) {
+    if (xhr.readyState === 4) {
+      var responseData = JSON.parse(xhr.responseText);
+      window.alert(responseData.status);
+    }
+  };
+  xhr.onerror = function (e) {
+    var statusText = xhr.statusText;
+    if (!statusText) {
+      statusText = "The server did not respond.";
+    }
+    window.alert("Cache clean failed: " + statusText);
+  };
+  xhr.send(null);
+}
   </script>
 
   <style>
@@ -137,6 +156,22 @@ else if (window.attachEvent) {
       padding: 3pt;
       margin: 8pt;
     }
+
+    #clean {
+      background-color: #eee;
+      border: 1px solid #ccc;
+      padding: 8px;
+    }
+
+    #clean * {
+      color: #444;
+      font-size: 10pt;
+      font-family: arial;
+    }
+
+    #clean button {
+      margin: 8px 0px 0px 0px;
+    }
   </style>
 </head>
 <body>
@@ -157,5 +192,13 @@ else if (window.attachEvent) {
 <li>Click "Dev Mode On" to start development mode.</li>
 
 </ol>
+
+<br />
+<div id="clean">
+  <div>
+  Clears all compiler caches so the next compile will be a full compile.
+  </div>
+  <button onclick="clean(config)">Clean</button>
+</div>
 
 </body></html>

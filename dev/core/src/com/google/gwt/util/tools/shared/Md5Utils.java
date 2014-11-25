@@ -51,4 +51,11 @@ public class Md5Utils {
     md5.update(input);
     return md5.digest();
   }
+
+  /**
+   * Generate MD5 digest.
+   */
+  public static byte[] getMd5Digest(String string) {
+    return getMd5Digest(string.getBytes());
+  }
 }

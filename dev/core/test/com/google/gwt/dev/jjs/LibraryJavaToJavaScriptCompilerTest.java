@@ -223,7 +223,7 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
       }
 
       /**
-       * Overridden to avoid the complexity of mocking out a LibraryGroupUnitCache.
+       * Overridden to avoid the complexity of mocking out a UnitCache.
        */
       @Override
       protected JDeclaredType ensureFullTypeLoaded(JDeclaredType type) {

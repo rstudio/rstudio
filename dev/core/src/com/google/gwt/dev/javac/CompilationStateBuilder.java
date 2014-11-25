@@ -29,6 +29,7 @@ import com.google.gwt.dev.jjs.impl.GwtAstBuilder;
 import com.google.gwt.dev.js.ast.JsRootScope;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.StringInterner;
+import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -49,6 +50,9 @@ import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -531,6 +535,7 @@ public class CompilationStateBuilder {
       AdditionalTypeProviderDelegate compilerDelegate)
     throws UnableToCompleteException {
     UnitCache unitCache = compilerContext.getUnitCache();
+    assert unitCache != null : "CompilerContext should always contain a unit cache.";
 
     // Units we definitely want to build.
     List<CompilationUnitBuilder> builders = Lists.newArrayList();
@@ -546,6 +551,14 @@ public class CompilationStateBuilder {
       CompilationUnitBuilder builder = CompilationUnitBuilder.create(resource);
 
       CompilationUnit cachedUnit = unitCache.find(resource.getPathPrefix() + resource.getPath());
+
+      ContentId resourceContentId = getResourceContentId(resource);
+      if (cachedUnit != null && cachedUnit.getLastModified() == resource.getLastModified()
+          && !cachedUnit.getContentId().equals(resourceContentId)) {
+        logger.log(TreeLogger.WARN,
+            "Modification date hasn't changed but contentId has changed for "
+            + resource.getLocation());
+      }
 
       // Try to rescue cached units from previous sessions where a jar has been
       // recompiled.
@@ -597,6 +610,26 @@ public class CompilationStateBuilder {
     compilationState.incrementStaticSourceCount(sourceCount);
     compilationState.incrementCachedStaticSourceCount(cachedSourceCount);
     return compilationState;
+  }
+
+  private ContentId getResourceContentId(Resource resource) {
+    ByteArrayOutputStream out = new ByteArrayOutputStream(1024);
+    try {
+      InputStream in = resource.openContents();
+      /**
+       * In most cases openContents() will throw an exception, however in the case of a
+       * ZipFileResource it might return null causing an NPE in Util.copyNoClose(), see issue 4359.
+       */
+      if (in == null) {
+        throw new RuntimeException("Unexpected error reading resource '" + resource + "'");
+      }
+      // TODO: deprecate com.google.gwt.dev.util.Util and use Guava.
+      Util.copy(in, out);
+    } catch (IOException e) {
+      throw new RuntimeException("Unexpected error reading resource '" + resource + "'", e);
+    }
+    byte[] content = out.toByteArray();
+    return new ContentId(Shared.getTypeName(resource), Util.computeStrongName(content));
   }
 
   public CompilationState doBuildFrom(

@@ -88,6 +88,26 @@ class JsonExporter {
   }
 
   /**
+   * Exports the template variables for success.
+   */
+  JsonObject exportOk(String message) {
+    JsonObject out = JsonObject.create();
+    out.put("status", "ok");
+    out.put("message", message);
+    return out;
+  }
+
+  /**
+   * Exports the template variables for failure.
+   */
+  JsonObject exportError(String message) {
+    JsonObject out = JsonObject.create();
+    out.put("status", "error");
+    out.put("message", message);
+    return out;
+  }
+
+  /**
    * Returns a JSON representation of the directories containing at least one source file
    * in the source map.
    * (These directories are relative to a classpath entry or -sourceDir argument.)

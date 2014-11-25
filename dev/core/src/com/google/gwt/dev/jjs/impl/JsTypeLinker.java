@@ -76,8 +76,8 @@ public class JsTypeLinker extends JsAbstractTextTransformer {
 
   @Override
   public void exec() {
-    logger = logger.branch(TreeLogger.DEBUG,
-        "Linking per-type JS with " + typeRanges.size() + " new types.");
+    logger = logger.branch(TreeLogger.INFO,
+        "Linking per-type JS with " + typeRanges.size() + " new/changed types.");
     linkAll(computeReachableTypes());
   }
 
@@ -123,15 +123,15 @@ public class JsTypeLinker extends JsAbstractTextTransformer {
     }
     linkOne(FOOTER_NAME);
 
-    logger.log(TreeLogger.INFO, "prelink JS size = " + js.length());
-    logger.log(TreeLogger.INFO, "prelink sourcemap = " + sourceInfoMap.getBytes() + " bytes and "
+    logger.log(TreeLogger.TRACE, "prelink JS size = " + js.length());
+    logger.log(TreeLogger.TRACE, "prelink sourcemap = " + sourceInfoMap.getBytes() + " bytes and "
         + sourceInfoMap.getLines() + " lines");
     js = jsBuilder.toString();
     statementRanges = statementRangesBuilder.build();
     sourceInfoMap = jsSourceMapBuilder.build();
     minimalRebuildCache.setLastLinkedJsBytes(js.length());
-    logger.log(TreeLogger.INFO, "postlink JS size = " + js.length());
-    logger.log(TreeLogger.INFO, "postlink sourcemap = " + sourceInfoMap.getBytes() + " bytes and "
+    logger.log(TreeLogger.TRACE, "postlink JS size = " + js.length());
+    logger.log(TreeLogger.TRACE, "postlink sourcemap = " + sourceInfoMap.getBytes() + " bytes and "
         + sourceInfoMap.getLines() + " lines");
   }
 

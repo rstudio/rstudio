@@ -16,6 +16,7 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 
 /**
  * An interface for caching {@link CompilationUnit}s. Alternate implementations may cache only in
@@ -44,6 +45,11 @@ public interface UnitCache {
    * can be purged from a persistent cache.
    */
   void cleanup(TreeLogger logger);
+
+  /**
+   * Wipe the contents of the cache.
+   */
+  void clear() throws UnableToCompleteException;
 
   /**
    * Lookup a {@link CompilationUnit} by {@link ContentId}.
