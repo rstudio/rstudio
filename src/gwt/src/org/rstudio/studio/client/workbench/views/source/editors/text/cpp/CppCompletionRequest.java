@@ -267,13 +267,14 @@ public class CppCompletionRequest
       docDisplay_.setSelection(getReplacementSelection());
       docDisplay_.replaceSelection(insertText, true);
       
-      if (completion.hasParameters() && 
-          uiPrefs_.showSignatureTooltips().getValue())
+      if (completion.hasParameters())
       {
          Position pos = docDisplay_.getCursorPosition();
          pos = Position.create(pos.getRow(), pos.getColumn() - 1);
          docDisplay_.setSelectionRange(Range.fromPoints(pos, pos));
-         new CppCompletionSignatureTip(completion, docDisplay_);
+         
+         if (uiPrefs_.showSignatureTooltips().getValue())
+            new CppCompletionSignatureTip(completion, docDisplay_);
       }
    }
    
