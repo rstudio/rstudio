@@ -10,7 +10,7 @@
     - Automatic insertion of closing parens when appropriate
     - Inline help tooltip for signatures of completed functions
     - Completion for statements spanning multiple lines
-    - Specialized autocompletions provided in `library`, `data`, `vignette`, `?` function calls
+    - Specialized autocompletions provided for `library`, `data`, `vignette`, `?`
     - For Shiny applications, autocompletions for `ui.R` + `server.R` pairs
     - Completions for dimension names in `[`, `[[` calls
 * Improvements to C/C++ editing mode:
@@ -49,6 +49,7 @@
 * Bind Cmd+Shift+K shortcut to Compile PDF and Preview HTML
 * When evaluating R strings ensure 'try' is called from base package
 * Add Clear Recent Projects menu item to toolbar project menu
+* Command to sync current working directory and Files pane to project directory
 * Update to MSYS SSH 1000.18
 * Update to pandoc 1.13.1
 
