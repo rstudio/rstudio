@@ -132,7 +132,7 @@ public class RCompletionToolTip extends CppCompletionToolTip
                      offsetWidth - H_PAD;
             }
 
-            setPopupPosition(adjustedLeft, top - getOffsetHeight());
+            setPopupPosition(adjustedLeft, top - getOffsetHeight() + V_PAD);
          }
       });
 
