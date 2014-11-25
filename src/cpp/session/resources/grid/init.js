@@ -21,7 +21,7 @@ var showError = function(msg) {
 var showFilterUI = function(idx, col) {
   var filter = document.getElementById("filterValues");
   var currentColValue = 
-    $("#data").DataTable().columns(filterColIdx).search();
+    $("#data").DataTable().columns(idx).search()[0];
   filter.innerHTML = "";
   if (col.col_type === "character") {
     var input = document.createElement("input");
@@ -30,15 +30,18 @@ var showFilterUI = function(idx, col) {
     getFilterColValue = function() {
       return input.value;
     };
-    getFilterDisplayValue = getFilterColValue();
+    getFilterDisplayValue = function() {
+      return input.value === "" ? "All" : input.value;
+    };
     filter.appendChild(input);
+    input.focus();
   } else if (col.col_type === "factor") {
     var sel = document.createElement("select");
     var all = document.createElement("option");
     all.value = "";
     all.innerText = "All";
     sel.appendChild(all);
-    var current = currentColValue.length > 0 ? 0 : parseInt(currentColValue);
+    var current = currentColValue.length > 0 ? parseInt(currentColValue) : 0;
     for (var i = 0; i < col.col_vals.length; i++) {
       var opt = document.createElement("option");
       opt.value = i + 1;
@@ -52,7 +55,7 @@ var showFilterUI = function(idx, col) {
     };
     getFilterDisplayValue = function() {
       return sel.children[sel.selectedIndex].innerText;
-    }
+    };
     filter.appendChild(sel);
   } else if (col.col_type === "numeric") {
     // TODO: slider
@@ -110,7 +113,11 @@ var createHeader = function(idx, col) {
       if (document.getElementById("filterUI").style.display === "none")
         showFilterUI(idx, col);
       else
+      {
         hideFilterUI();
+        if (idx != filterColIdx) 
+          showFilterUI(idx, col);
+      }
       evt.stopPropagation();
     });
     th.appendChild(filter);

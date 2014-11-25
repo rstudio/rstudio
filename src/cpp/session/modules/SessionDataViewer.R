@@ -97,11 +97,21 @@
 .rs.addFunction("applyTransform", function(x, filtered, col, dir) 
 {
   for (i in seq_along(filtered)) {
-    if (nchar(filtered[i]) > 0) {
-      val <- as.numeric(filtered[i])
-      x <- x[as.numeric(x[,i]) == val,]
+    if (nchar(filtered[i]) > 0 && length(x[,i]) > 0) {
+      sampleval <- x[1,i] 
+      if (is.factor(sampleval)) 
+      {
+        filterval <- as.numeric(filtered[i])
+        x <- x[as.numeric(x[,i]) == filterval,]
+      }
+      else if (is.character(sampleval)) 
+      {
+        filterval <- tolower(filtered[i])
+        x <- x[tolower(substr(x[,i], 1, nchar(filterval))) == filterval,]
+      }
     }
   }
+
   if (col > 0)
   {
     if (identical(dir, "desc")) {
