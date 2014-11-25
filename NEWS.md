@@ -9,6 +9,11 @@
     - Completions available in more contexts including S3 and S4 methods and dplyr pipelines
     - Automatic insertion of closing parens when appropriate
     - Completion for statements spanning multiple lines
+    - Specialized autocompletions provided in `library`, `data`, `vignette`, `?` function calls
+    - New completion requests use case-insensitive prefix matching, while completion list
+      narrowing uses fuzzy matching
+    - For Shiny applications, autocompletions for `ui.R` + `server.R` pairs
+    - Completions for dimension names in `[`, `[[` calls
 * Improvements to C/C++ editing mode:
     - Code completion
     - F2 code navigation (go to definition)
