@@ -1,5 +1,8 @@
 (function(){
 var table;
+var filterColIdx = 0;
+var getFilterColValue = function() { return ""; };
+var getFilterDisplayValue = function() { return ""; };
 
 // called when the window size changes--adjust the grid size accordingly
 var sizeDataTable = function() {
@@ -17,10 +20,17 @@ var showError = function(msg) {
 
 var showFilterUI = function(idx, col) {
   var filter = document.getElementById("filterValues");
+  var currentColValue = 
+    $("#data").DataTable().columns(filterColIdx).search();
   filter.innerHTML = "";
   if (col.col_type === "character") {
     var input = document.createElement("input");
     input.type = "text";
+    input.value = currentColValue;
+    getFilterColValue = function() {
+      return input.value;
+    };
+    getFilterDisplayValue = getFilterColValue();
     filter.appendChild(input);
   } else if (col.col_type === "factor") {
     var sel = document.createElement("select");
@@ -28,26 +38,49 @@ var showFilterUI = function(idx, col) {
     all.value = "";
     all.innerText = "All";
     sel.appendChild(all);
+    var current = currentColValue.length > 0 ? 0 : parseInt(currentColValue);
     for (var i = 0; i < col.col_vals.length; i++) {
       var opt = document.createElement("option");
       opt.value = i + 1;
       opt.innerText = col.col_vals[i];
       sel.appendChild(opt);
     }
-    sel.addEventListener("change", function(evt) {
-    });
-    sel.addEventListener("click", function(evt) {
-      evt.stopPropagation();
-    });
+    if (current > 0)
+      sel.selectedIndex = current;
+    getFilterColValue = function() {
+      return sel.children[sel.selectedIndex].value;
+    };
+    getFilterDisplayValue = function() {
+      return sel.children[sel.selectedIndex].innerText;
+    }
     filter.appendChild(sel);
   } else if (col.col_type === "numeric") {
     // TODO: slider
     filter.innerText = col.col_min + " - " + col.col_max;
   }
 
+  // position the filter box by the column to filter
   var filterUI = document.getElementById("filterUI");
   var thead = document.getElementById("data_cols");
+
+  filterUI.style.left = thead.children[idx].offsetLeft + "px";
+  filterUI.style.top = thead.children[idx].offsetHeight + "px";
   filterUI.style.display = "block";
+
+  filterColIdx = idx;
+};
+
+var hideFilterUI = function() {
+  document.getElementById("filterUI").style.display = "none";
+  document.getElementById("filterValues").innerHTML = "";
+};
+
+var updateColFilterDisplay = function() {
+  var filterDisplay = document.getElementById("data_cols")
+                              .children[filterColIdx].children[1];
+  filterDisplay.innerText = getFilterDisplayValue();
+  filterDisplay.className = getFilterColValue().length > 0 ? 
+    "colFilter" : "colFilter unfiltered";
 };
 
 var createHeader = function(idx, col) {
@@ -74,7 +107,10 @@ var createHeader = function(idx, col) {
     filter.innerText = "All";
     filter.tabIndex = 0;
     filter.addEventListener("click", function(evt) {
-      showFilterUI(idx, col);
+      if (document.getElementById("filterUI").style.display === "none")
+        showFilterUI(idx, col);
+      else
+        hideFilterUI();
       evt.stopPropagation();
     });
     th.appendChild(filter);
@@ -182,7 +218,25 @@ $(document).ready(function() {
       height = window.innerHeight;
     }
   }, 10);
+
+
+  document.getElementById("filterForm")
+          .addEventListener("submit", function(evt) {
+    evt.stopPropagation();
+    evt.preventDefault();
+    hideFilterUI();
+    updateColFilterDisplay();
+    $("#data").DataTable().columns(filterColIdx).search(getFilterColValue()).draw();
+  }, false);
+
+  document.getElementById("clearFilter")
+          .addEventListener("click", function(evt) {
+    hideFilterUI();
+    updateColFilterDisplay();
+    $("#data").DataTable().columns(filterColIdx).search("").draw();
+  }, false);
 });
+
 
 // Exports -------------------------------------------------------------------
 

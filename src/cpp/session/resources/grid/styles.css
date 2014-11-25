@@ -93,6 +93,8 @@ table.dataTable thead th:first-child
     margin-top: 4px;
     background-color: #ffffff;
     border-radius: 3px;
+    white-space: nowrap;
+    padding: 3px;
 }
 
 .unfiltered
@@ -106,4 +108,15 @@ table.dataTable thead th:first-child
 {
     position: absolute;
     display: none;
+    overflow: hidden;
+    z-index: 25;
+    background-color: #e7edf0;
+    border: 1px solid #c0c0c0;
+    padding: 7px;
+}
+
+#filterActions
+{
+    margin-top: 3px;
+    text-align: right;
 }
