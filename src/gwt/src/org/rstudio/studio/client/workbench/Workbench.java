@@ -278,7 +278,7 @@ public class Workbench implements BusyHandler,
       if (projectDir != null)
       {
          consoleDispatcher_.executeSetWd(projectDir, false);
-         eventBus_.fireEvent(new DirectoryNavigateEvent(projectDir));
+         eventBus_.fireEvent(new DirectoryNavigateEvent(projectDir, true));
       }
    }
    
