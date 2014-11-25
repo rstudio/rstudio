@@ -16,17 +16,22 @@ package org.rstudio.studio.client.workbench.views.source.editors.data;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.IFrameElementEx;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
+import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlContentEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 
@@ -114,6 +119,20 @@ public class DataEditingTargetWidget extends Composite
 
       Toolbar toolbar = new EditingTargetToolbar(commands_);
       toolbar.addLeftWidget(commands_.popoutDoc().createToolbarButton());
+      toolbar.addLeftSeparator();
+      findButton_ = new ToolbarButton(
+              FindReplaceBar.getFindIcon(),
+              new ClickHandler() {
+                 public void onClick(ClickEvent event)
+                 {
+                    filtered_ = !filtered_;
+                    setFilterUIVisible(filtered_);
+                    findButton_.setLeftImage(filtered_ ? 
+                          FindReplaceBar.getFindLatchedIcon() :
+                          FindReplaceBar.getFindIcon());
+                 }
+              });
+      toolbar.addLeftWidget(findButton_);
       toolbar.addRightWidget(description);
       
       return toolbar;
@@ -124,6 +143,16 @@ public class DataEditingTargetWidget extends Composite
       IFrameElementEx frameEl = (IFrameElementEx) frame_.getElement().cast();
       frameEl.getContentWindow().print();
    }
+   
+   public void setFilterUIVisible(boolean visible)
+   {
+      IFrameElementEx frameEl = (IFrameElementEx) frame_.getElement().cast();
+      setFilterUIVisible(frameEl.getContentWindow(), visible);
+   }
+   
+   private static final native void setFilterUIVisible (WindowEx frame, boolean visible) /*-{
+      frame.setFilterUIVisible(visible);
+   }-*/;
 
    public Widget asWidget()
    {
@@ -132,4 +161,6 @@ public class DataEditingTargetWidget extends Composite
 
    private final Commands commands_;
    private RStudioFrame frame_;
+   private ToolbarButton findButton_;
+   private boolean filtered_ = false;
 }

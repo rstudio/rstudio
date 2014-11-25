@@ -105,9 +105,9 @@
   if (col > 0)
   {
     if (identical(dir, "desc")) {
-      as.data.frame(x[order(-x[,col]),])
+      x <- as.data.frame(x[order(-x[,col]),])
     } else {
-      as.data.frame(x[order(x[,col]),])
+      x <- as.data.frame(x[order(x[,col]),])
     }
   }
   return(x)

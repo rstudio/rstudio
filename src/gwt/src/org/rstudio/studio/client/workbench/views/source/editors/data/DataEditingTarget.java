@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.data;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -71,13 +72,13 @@ public class DataEditingTarget extends UrlContentEditingTarget
 
    private void reloadDisplay()
    {
-      DataEditingTargetWidget view = new DataEditingTargetWidget(
+      view_ = new DataEditingTargetWidget(
             commands_,
             getDataItem());
-      view.setSize("100%", "100%");
-      progressPanel_.setWidget(view);
+      view_.setSize("100%", "100%");
+      progressPanel_.setWidget(view_);
    }
-
+   
    @Override
    public String getPath()
    {
@@ -168,4 +169,5 @@ public class DataEditingTarget extends UrlContentEditingTarget
                                });
    }
    private SimplePanelWithProgress progressPanel_;
+   private DataEditingTargetWidget view_;
 }

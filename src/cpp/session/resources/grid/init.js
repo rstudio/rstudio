@@ -15,14 +15,6 @@ var showError = function(msg) {
   document.getElementById("data").style.display = "none";
 };
 
-window.showFilterUi = function() {
-  var thead = document.getElementById("data_cols");
-  for (var i = 0; i < thead.children.length; i++) {
-    thead.children[i].children[1].style.display = "block";
-  }
-  sizeDataTable();
-};
-
 var createHeader = function(idx, col) {
   var th = document.createElement("th");
 
@@ -176,4 +168,19 @@ $(document).ready(function() {
     }
   }, 10);
 });
+
+// Exports -------------------------------------------------------------------
+
+window.setFilterUIVisible = function(visible) {
+  var thead = document.getElementById("data_cols");
+  for (var i = 0; i < thead.children.length; i++) {
+    thead.children[i].children[1].style.display = visible ? "block" : "none";
+  }
+  if (!visible) {
+    // clear all the filter data
+    $("#data").DataTable().columns().search("");
+  }
+  sizeDataTable();
+};
+
 })();
