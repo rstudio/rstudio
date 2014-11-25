@@ -15,24 +15,9 @@ var showError = function(msg) {
   document.getElementById("data").style.display = "none";
 };
 
-var createHeader = function(idx, col) {
-  var th = document.createElement("th");
-
-  // add the title
-  var title = document.createElement("div");
-  title.innerText = col.col_name;
-  th.appendChild(title);
-  th.title = col.col_type;
-  if (col.col_type === "numeric") {
-    th.title += " with range " + col.col_min + " - " + col.col_max;
-  } else if (col.col_type === "factor") {
-    th.title += " with " + col.col_vals.length + " levels";
-  }
-
-  // add the filter controls
-  var filter = document.createElement("div");
-  filter.className = "rowFilter";
-  filter.style.display = "none";
+var showFilterUI = function(idx, col) {
+  var filter = document.getElementById("filterValues");
+  filter.innerHTML = "";
   if (col.col_type === "character") {
     var input = document.createElement("input");
     input.type = "text";
@@ -50,9 +35,6 @@ var createHeader = function(idx, col) {
       sel.appendChild(opt);
     }
     sel.addEventListener("change", function(evt) {
-      $("#data").DataTable().columns(idx).search(
-        sel.children[sel.selectedIndex].value
-      ).draw();
     });
     sel.addEventListener("click", function(evt) {
       evt.stopPropagation();
@@ -63,7 +45,40 @@ var createHeader = function(idx, col) {
     filter.innerText = col.col_min + " - " + col.col_max;
   }
 
-  th.appendChild(filter);
+  var filterUI = document.getElementById("filterUI");
+  var thead = document.getElementById("data_cols");
+  filterUI.style.display = "block";
+};
+
+var createHeader = function(idx, col) {
+  var th = document.createElement("th");
+
+  // add the title
+  var title = document.createElement("div");
+  title.innerText = col.col_name;
+  th.appendChild(title);
+  th.title = col.col_type;
+  if (col.col_type === "numeric") {
+    th.title += " with range " + col.col_min + " - " + col.col_max;
+  } else if (col.col_type === "factor") {
+    th.title += " with " + col.col_vals.length + " levels";
+  }
+
+  // add the filter controls
+  if (col.col_type === "numeric" ||
+      col.col_type === "factor" || 
+      col.col_type === "character") {
+    var filter = document.createElement("div");
+    filter.className = "colFilter unfiltered";
+    filter.style.display = "none";
+    filter.innerText = "All";
+    filter.tabIndex = 0;
+    filter.addEventListener("click", function(evt) {
+      showFilterUI(idx, col);
+      evt.stopPropagation();
+    });
+    th.appendChild(filter);
+  }
   return th;
 };
 
@@ -174,7 +189,9 @@ $(document).ready(function() {
 window.setFilterUIVisible = function(visible) {
   var thead = document.getElementById("data_cols");
   for (var i = 0; i < thead.children.length; i++) {
-    thead.children[i].children[1].style.display = visible ? "block" : "none";
+    if (thead.children[i].children.length > 1) {
+      thead.children[i].children[1].style.display = visible ? "block" : "none";
+    }
   }
   if (!visible) {
     // clear all the filter data
