@@ -165,6 +165,26 @@ assign(x = ".rs.acCompletionTypes",
                        excludeOtherCompletions = TRUE)
 })
 
+.rs.addFunction("getCompletionsVignettes", function(token)
+{
+   doGetCompletionsVignettes <- function(token, vignettes)
+   {
+      vignettes <- sort(vignettes)
+      .rs.makeCompletions(token = token,
+                          results = .rs.selectFuzzyMatches(vignettes, token),
+                          quote = TRUE,
+                          type = .rs.acCompletionTypes$VIGNETTE,
+                          excludeOtherCompletions = TRUE)
+   }
+   
+   if (!is.null(vignettes <- .rs.get("vignettes")))
+      return(doGetCompletionsVignettes(token, vignettes$results[, "Item"]))
+   
+   vignettes <- vignette()
+   .rs.assign("vignettes", vignettes)
+   doGetCompletionsVignettes(token, vignettes$results[, "Item"])
+})
+
 .rs.addFunction("getCompletionsFile", function(token, path = NULL)
 {
    # If we might have wanted relative completions but the file path was actually
@@ -1051,6 +1071,10 @@ assign(x = ".rs.acCompletionTypes",
    # install.packages
    if (length(string) && string[[1]] == "install.packages" && numCommas[[1]] == 0)
       return(.rs.getCompletionsInstallPackages(token))
+   
+   # vignettes
+   if (length(string) && string[[1]] == "vignette" && numCommas[[1]] == 0)
+      return(.rs.getCompletionsVignettes(token))
    
    if (.rs.acContextTypes$FUNCTION %in% type &&
           string[[1]] == "data" &&
