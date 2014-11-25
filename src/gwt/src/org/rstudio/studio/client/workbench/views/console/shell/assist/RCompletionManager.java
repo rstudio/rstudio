@@ -526,6 +526,10 @@ public class RCompletionManager implements CompletionManager
       Position cursorPos = input_.getCursorPosition();
       int cursorColumn = cursorPos.getColumn();
       
+      // Don't auto-popup when the cursor is within a string
+      if (docDisplay_.isCursorInSingleLineString())
+         return false;
+      
       // Grab the current token on the line
       String currentToken = StringUtil.getToken(
             currentLine, cursorColumn, "^[a-zA-Z0-9._'\"`]$", false, false);
