@@ -132,3 +132,36 @@ table.dataTable thead .sorting_desc {
 table.dataTable thead .sorting_asc {
     background: url("datatables/images/sort_asc.png") no-repeat top right;
 }
+
+.numSlider {
+    font-size: 11px;
+    width: 150px;
+    margin-right: 7px;
+    margin-left: 7px;
+    margin-top: 4px;
+    margin-bottom: 10px;
+}
+
+.numMin {
+    width: 75px;
+    padding-left: 4px;
+    text-align: left;
+    display: inline-block;
+    font-family: 'Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', Verdana, Helvetica, sans-serif;
+    font-size: 11px;
+}
+
+.numMax {
+    width: 75px;
+    text-align: right;
+    padding-right: 4px;
+    display: inline-block;
+    font-family: 'Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', Verdana, Helvetica, sans-serif;
+    font-size: 11px;
+}
+
+.numMin.selected, .numMax.selected {
+    font-weight: bold;    
+}
+
+

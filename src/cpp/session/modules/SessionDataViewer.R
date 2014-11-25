@@ -101,13 +101,26 @@
       sampleval <- x[1,i] 
       if (is.factor(sampleval)) 
       {
+        # apply factor filter: convert to numeric values 
         filterval <- as.numeric(filtered[i])
         x <- x[as.numeric(x[,i]) == filterval,]
       }
       else if (is.character(sampleval)) 
       {
+        # apply character filter: non-case-sensitive prefix
         filterval <- tolower(filtered[i])
         x <- x[tolower(substr(x[,i], 1, nchar(filterval))) == filterval,]
+      } 
+      else if (is.numeric(sampleval))
+      {
+        # apply numeric filter, range ("2-32") or equality ("15")
+        filterval <- as.numeric(strsplit(filtered[i], "-")[[1]])
+        if (length(filterval) > 1)
+          # range filter
+          x <- x[x[,i] >= filterval[1] & x[,i] <= filterval[2],]
+        else
+          # equality filter
+          x <- x[x[,i] == filterval,]
       }
     }
   }

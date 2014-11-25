@@ -368,6 +368,8 @@ Error getGridData(const http::Request& request,
    }
    catch(r::exec::RErrorException& e)
    {
+      // marshal R errors to the client in the format DataTables (and our own
+      // error handling code) expects
       json::Object err;
       err["error"] = e.message();
       std::ostringstream ostr;

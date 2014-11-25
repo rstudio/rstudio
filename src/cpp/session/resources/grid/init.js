@@ -4,6 +4,19 @@ var filterColIdx = 0;
 var getFilterColValue = function() { return ""; };
 var getFilterDisplayValue = function() { return ""; };
 
+
+// used to determine the step precision for a number--e.g.:
+// "10.4" has a step precision of 0.1
+// "12.44" has a step precision of 0.01
+// "2" has a step precision of 1
+var stepPrecision = function(str) {
+  var idx = str.indexOf(".");
+  if (idx < 0) {
+    return 1;
+  }
+  return Math.pow(10, (idx - str.length) + 1);
+};
+
 // called when the window size changes--adjust the grid size accordingly
 var sizeDataTable = function() {
   $(".dataTables_scrollBody").css("height", 
@@ -58,8 +71,61 @@ var showFilterUI = function(idx, col) {
     };
     filter.appendChild(sel);
   } else if (col.col_type === "numeric") {
-    // TODO: slider
-    filter.innerText = col.col_min + " - " + col.col_max;
+    var min = col.col_min.toString();
+    var max = col.col_max.toString();
+    if (currentColValue.indexOf("-") > 0) {
+      var range = currentColValue.split("-");
+      min = range[0];
+      max = range[1];
+    } else if (!isNaN(parseInt(currentColValue))) {
+      min = parseInt(currentColValue);
+      max = parseInt(currentColValue);
+    }
+    var minVal = document.createElement("div");
+    minVal.innerText = min;
+    minVal.className = "numMin selected";
+    filter.appendChild(minVal);
+    var maxVal = document.createElement("div");
+    maxVal.innerText = max;
+    maxVal.className = "numMax selected";
+    filter.appendChild(maxVal);
+
+    var slider = document.createElement("div");
+    slider.className = "numSlider";
+    $(slider).slider({
+      range:  true,
+      min:    col.col_min,
+      max:    col.col_max,
+      step:   Math.min(stepPrecision(col.col_min.toString()), 
+                       stepPrecision(col.col_max.toString())),
+      values: [min, max],
+      slide:  function(event, ui) {
+        minVal.innerText = ui.values[0];
+        maxVal.innerText = ui.values[1];
+      }
+    });
+    getFilterColValue = function() {
+      if (minVal.innerText === col.col_min.toString() &&
+          maxVal.innerText === col.col_max.toString())
+        // no restrictions
+        return "";
+      else if (minVal.innerText === maxVal.innerText)
+        // min and max are identical
+        return minVal.innerText;
+      else
+        // show a range
+        return minVal.innerText + "-" + maxVal.innerText;
+    };
+    getFilterDisplayValue = function() {
+      if (minVal.innerText === col.col_min.toString() &&
+          maxVal.innerText === col.col_max.toString())
+        return "All";
+      else if (minVal.innerText === maxVal.innerText)
+        return minVal.innerText;
+      else
+        return minVal.innerText + " - " + maxVal.innerText;
+    };
+    filter.appendChild(slider);
   }
 
   // position the filter box by the column to filter
@@ -239,6 +305,8 @@ $(document).ready(function() {
   document.getElementById("clearFilter")
           .addEventListener("click", function(evt) {
     hideFilterUI();
+    getFilterColValue = function() { return ""; };
+    getFilterDisplayValue = function() { return "All"; };
     updateColFilterDisplay();
     $("#data").DataTable().columns(filterColIdx).search("").draw();
   }, false);
@@ -251,7 +319,10 @@ window.setFilterUIVisible = function(visible) {
   var thead = document.getElementById("data_cols");
   for (var i = 0; i < thead.children.length; i++) {
     if (thead.children[i].children.length > 1) {
-      thead.children[i].children[1].style.display = visible ? "block" : "none";
+      var filter = thead.children[i].children[1];
+      filter.style.display = visible ? "block" : "none";
+      filter.className = "colFilter unfiltered";
+      filter.innerText = "All";
     }
   }
   if (!visible) {
