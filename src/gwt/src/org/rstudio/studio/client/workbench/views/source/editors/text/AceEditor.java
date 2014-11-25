@@ -1484,6 +1484,12 @@ public class AceEditor implements DocDisplay,
          moveCursorNearTop();
    }
    
+   @Override
+   public boolean isCursorInSingleLineString()
+   {
+      return StringUtil.isEndOfLineInRStringState(getCurrentLineUpToCursor());
+   }
+   
    public void scrollToBottom()
    { 
       SourcePosition pos = SourcePosition.create(getCurrentLineCount() - 1, 0);
