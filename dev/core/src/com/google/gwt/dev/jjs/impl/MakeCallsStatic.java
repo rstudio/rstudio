@@ -354,7 +354,7 @@ public class MakeCallsStatic {
     }
 
     @Override
-    public boolean enterMethod(JMethod x, Context ctx) {
+    public boolean enter(JMethod x, Context ctx) {
       currentMethodIsInitiallyLive = initiallyLive.getLiveFieldsAndMethods().contains(x);
       return true;
     }

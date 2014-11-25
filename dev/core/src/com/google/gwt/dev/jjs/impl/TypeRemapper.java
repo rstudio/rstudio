@@ -23,7 +23,6 @@ import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JGwtCreate;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVariable;
@@ -33,7 +32,10 @@ import com.google.gwt.dev.jjs.ast.JVariable;
  * {@link #remap(JType)} to replace all occurrences of one or more types with
  * different types.
  */
-public abstract class TypeRemapper extends JModVisitor {
+public abstract class TypeRemapper extends JChangeTrackingVisitor {
+  public TypeRemapper(OptimizerContext optimizerCtx) {
+    super(optimizerCtx);
+  }
 
   @Override
   public void endVisit(JBinaryOperation x, Context ctx) {
@@ -60,7 +62,7 @@ public abstract class TypeRemapper extends JModVisitor {
   }
 
   @Override
-  public void endVisit(JConstructor x, Context ctx) {
+  public void exit(JConstructor x, Context ctx) {
     x.setType(modRemap(x.getType()));
   }
 
@@ -70,7 +72,7 @@ public abstract class TypeRemapper extends JModVisitor {
   }
 
   @Override
-  public void endVisit(JMethod x, Context ctx) {
+  public void exit(JMethod x, Context ctx) {
     x.setType(modRemap(x.getType()));
   }
 
@@ -80,7 +82,7 @@ public abstract class TypeRemapper extends JModVisitor {
   }
 
   @Override
-  public void endVisit(JVariable x, Context ctx) {
+  public void exit(JVariable x, Context ctx) {
     x.setType(modRemap(x.getType()));
   }
 

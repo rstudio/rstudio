@@ -1993,11 +1993,7 @@ public class DeadCodeElimination {
    */
   public static OptimizerStats exec(JProgram program, Set<JMethod> methods,
       OptimizerContext optimizerCtx) {
-    OptimizerStats stats = new OptimizerStats(NAME);
-    for (JMethod method : methods) {
-      OptimizerStats innerStats = new DeadCodeElimination(program).execImpl(method, optimizerCtx);
-      stats.recordModified(innerStats.getNumMods());
-    }
+    OptimizerStats stats = new DeadCodeElimination(program).execImpl(methods, optimizerCtx);
     optimizerCtx.incOptimizationStep();
     return stats;
   }
@@ -2026,6 +2022,20 @@ public class DeadCodeElimination {
 
     DeadCodeVisitor deadCodeVisitor = new DeadCodeVisitor(optimizerCtx);
     deadCodeVisitor.accept(node);
+    stats.recordModified(deadCodeVisitor.getNumMods());
+    JavaAstVerifier.assertProgramIsConsistent(program);
+    optimizeEvent.end("didChange", "" + stats.didChange());
+    return stats;
+  }
+
+  private OptimizerStats execImpl(Set<JMethod> methods, OptimizerContext optimizerCtx) {
+    OptimizerStats stats = new OptimizerStats(NAME);
+    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
+
+    DeadCodeVisitor deadCodeVisitor = new DeadCodeVisitor(optimizerCtx);
+    for (JMethod method : methods) {
+      deadCodeVisitor.accept(method);
+    }
     stats.recordModified(deadCodeVisitor.getNumMods());
     JavaAstVerifier.assertProgramIsConsistent(program);
     optimizeEvent.end("didChange", "" + stats.didChange());

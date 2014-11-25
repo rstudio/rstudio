@@ -450,7 +450,7 @@ public class TypeTightener {
     }
 
     @Override
-    public void exitField(JField x, Context ctx) {
+    public void exit(JField x, Context ctx) {
       if (!x.isVolatile()) {
         tighten(x);
       }
@@ -530,7 +530,7 @@ public class TypeTightener {
      * Tighten based on return types and overrides.
      */
     @Override
-    public void exitMethod(JMethod x, Context ctx) {
+    public void exit(JMethod x, Context ctx) {
       if (!(x.getType() instanceof JReferenceType)) {
         return;
       }
@@ -657,7 +657,7 @@ public class TypeTightener {
     }
 
     @Override
-    public boolean enterMethod(JMethod x, Context ctx) {
+    public boolean enter(JMethod x, Context ctx) {
       /*
        * Explicitly NOT visiting native methods since we can't infer further
        * type information.

@@ -72,12 +72,12 @@ public class Finalizer {
     }
 
     @Override
-    public void endVisit(JConstructor x, Context ctx) {
+    public void exit(JConstructor x, Context ctx) {
       // Not applicable.
     }
 
     @Override
-    public void exitField(JField x, Context ctx) {
+    public void exit(JField x, Context ctx) {
       if (!x.isVolatile()) {
         maybeFinalize(x);
       }
@@ -89,7 +89,7 @@ public class Finalizer {
     }
 
     @Override
-    public void exitMethod(JMethod x, Context ctx) {
+    public void exit(JMethod x, Context ctx) {
       if (!x.isFinal() && !isOverridden.contains(x)) {
         setFinal(x);
       }

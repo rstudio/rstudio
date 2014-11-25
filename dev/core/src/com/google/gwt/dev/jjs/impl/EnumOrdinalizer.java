@@ -620,6 +620,9 @@ public class EnumOrdinalizer {
    * the ordinal() method with the corresponding int value.
    */
   private class ReplaceOrdinalizedEnumTypes extends TypeRemapper {
+    public ReplaceOrdinalizedEnumTypes(OptimizerContext optimizerCtx) {
+      super(optimizerCtx);
+    }
 
     @Override
     public boolean visit(JClassType x, Context ctx) {
@@ -743,11 +746,22 @@ public class EnumOrdinalizer {
     trackerEnabled = true;
   }
 
+  // TODO(leafwang): remove this entry point when it is no longer needed.
   public static OptimizerStats exec(JProgram program) {
     Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
 
     startTracker();
-    OptimizerStats stats = new EnumOrdinalizer(program).execImpl();
+    OptimizerStats stats = new EnumOrdinalizer(program).execImpl(new OptimizerContext(program));
+    optimizeEvent.end("didChange", "" + stats.didChange());
+    return stats;
+  }
+
+  public static OptimizerStats exec(JProgram program, OptimizerContext optimizerCtx) {
+    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
+
+    startTracker();
+    OptimizerStats stats = new EnumOrdinalizer(program).execImpl(optimizerCtx);
+    optimizerCtx.incOptimizationStep();
     optimizeEvent.end("didChange", "" + stats.didChange());
     return stats;
   }
@@ -791,7 +805,7 @@ public class EnumOrdinalizer {
     this.enumSuperConstructor = program.getIndexedMethod("Enum.Enum");
   }
 
-  private OptimizerStats execImpl() {
+  private OptimizerStats execImpl(OptimizerContext optimizerCtx) {
     OptimizerStats stats = new OptimizerStats(NAME);
 
     if (tracker != null) {
@@ -815,7 +829,7 @@ public class EnumOrdinalizer {
     }
 
     // Replace enum type refs
-    ReplaceOrdinalizedEnumTypes replaceEnums = new ReplaceOrdinalizedEnumTypes();
+    ReplaceOrdinalizedEnumTypes replaceEnums = new ReplaceOrdinalizedEnumTypes(optimizerCtx);
     replaceEnums.accept(program);
     stats.recordModified(replaceEnums.getNumMods());
 

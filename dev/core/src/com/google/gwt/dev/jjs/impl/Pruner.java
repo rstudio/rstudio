@@ -153,7 +153,7 @@ public class Pruner {
     }
 
     @Override
-    public void exitMethod(JMethod x, Context ctx) {
+    public void exit(JMethod x, Context ctx) {
       JType type = x.getType();
       if (type instanceof JReferenceType &&
           !program.typeOracle.isInstantiatedType((JReferenceType) type)) {
@@ -386,7 +386,7 @@ public class Pruner {
     }
 
     @Override
-    public boolean enterMethod(JMethod x, Context ctx) {
+    public boolean enter(JMethod x, Context ctx) {
       if (!x.canBePolymorphic()) {
         /*
          * Don't prune parameters on unreferenced methods. The methods might not
@@ -461,6 +461,8 @@ public class Pruner {
         if (referencedTypes.contains(type) || program.typeOracle.isInstantiatedType(type)) {
           accept(type);
         } else {
+          methodsWereRemoved(type.getMethods());
+          fieldsWereRemoved(type.getFields());
           it.remove();
           madeChanges();
         }
@@ -474,7 +476,7 @@ public class Pruner {
         if (!shouldRemove.apply(field)) {
           continue;
         }
-        fieldWasRemoved(field);
+        wasRemoved(field);
         type.removeField(i);
         madeChanges();
         --i;
@@ -489,7 +491,7 @@ public class Pruner {
         if (!shouldRemove.apply(method)) {
           continue;
         }
-        methodWasRemoved(method);
+        wasRemoved(method);
         type.removeMethod(i);
         program.removeStaticImplMapping(method);
         madeChanges();

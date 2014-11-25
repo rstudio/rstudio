@@ -22,6 +22,7 @@ import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Multiset;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -158,6 +159,12 @@ public class OptimizerContext {
     modificationStepByField.remove(field);
   }
 
+  public void removeFields(Collection<JField> fields) {
+    for (JField field : fields) {
+      removeField(field);
+    }
+  }
+
   /**
    * Remove method from both the dependence and modification information.
    */
@@ -165,6 +172,12 @@ public class OptimizerContext {
     methodsByModificationStep.get(modificationStepByMethod.count(method)).remove(method);
     modificationStepByMethod.remove(method);
     callGraph.removeMethod(method);
+  }
+
+  public void removeMethods(Collection<JMethod> methods) {
+    for (JMethod method : methods) {
+      removeMethod(method);
+    }
   }
 
   /**

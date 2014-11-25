@@ -177,7 +177,7 @@ public class MethodInliner {
     }
 
     @Override
-    public boolean enterMethod(JMethod x, Context ctx) {
+    public boolean enter(JMethod x, Context ctx) {
       if (program.getStaticImpl(x) != null) {
         /*
          * Never inline a static impl into the calling instance method. We used

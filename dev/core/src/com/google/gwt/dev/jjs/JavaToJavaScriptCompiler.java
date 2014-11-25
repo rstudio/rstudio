@@ -1518,7 +1518,7 @@ public abstract class JavaToJavaScriptCompiler {
       stats.add(SameParameterValueOptimizer.exec(jprogram, optimizerCtx).recordVisits(numNodes));
     }
     if (options.shouldOrdinalizeEnums()) {
-      stats.add(EnumOrdinalizer.exec(jprogram).recordVisits(numNodes));
+      stats.add(EnumOrdinalizer.exec(jprogram, optimizerCtx).recordVisits(numNodes));
     }
     optimizeEvent.end();
     return stats;

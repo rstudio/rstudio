@@ -14,12 +14,19 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
+import com.google.gwt.dev.jjs.ast.JVariable;
+
+import java.util.Collection;
 
 /**
  * A visitor for optimizing an AST.
+ * <p>
+ * Subclasses of JChangeTrackingVisitor should override enter/exit instead of visit/endVisit for
+ * JMethod, JConstructor, JVariable and JField
  */
 public abstract class JChangeTrackingVisitor extends JModVisitor {
 
@@ -33,12 +40,68 @@ public abstract class JChangeTrackingVisitor extends JModVisitor {
     this.optimizerCtx = optimizerCtx;
   }
 
-  public boolean enterField(JField f, Context ctx) {
+  @Override
+  public final void endVisit(JConstructor x, Context ctx) {
+    exit(x, ctx);
+    if (methodModified) {
+      optimizerCtx.markModifiedMethod(x);
+    }
+    currentMethod = null;
+  }
+
+  @Override
+  public final void endVisit(JField x, Context ctx) {
+    exit(x, ctx);
+    if (fieldModified) {
+      optimizerCtx.markModifiedField(x);
+    }
+    currentField = null;
+  }
+
+  @Override
+  public final void endVisit(JMethod x, Context ctx) {
+    exit(x, ctx);
+    if (methodModified) {
+      optimizerCtx.markModifiedMethod(x);
+    }
+    currentMethod = null;
+  }
+
+  @Override
+  public final void endVisit(JVariable x, Context ctx) {
+    exit(x, ctx);
+  }
+
+  public boolean enter(JConstructor x, Context ctx) {
+    return enter((JMethod) x, ctx);
+  }
+
+  public boolean enter(JField x, Context ctx) {
+    return enter((JVariable) x, ctx);
+  }
+
+  public boolean enter(JMethod x, Context ctx) {
     return true;
   }
 
-  public boolean enterMethod(JMethod x, Context ctx) {
+  public boolean enter(JVariable x, Context ctx) {
     return true;
+  }
+
+  public void exit(JConstructor x, Context ctx) {
+    exit((JMethod) x, ctx);
+  }
+
+  public void exit(JField x, Context ctx) {
+    exit((JVariable) x, ctx);
+  }
+
+  public void exit(JMethod x, Context ctx) {
+    return;
+  }
+
+  public void exit(JVariable x, Context ctx) {
+    return;
   }
 
   public JField getCurrentField() {
@@ -49,48 +112,50 @@ public abstract class JChangeTrackingVisitor extends JModVisitor {
     return currentMethod;
   }
 
-  public void exitField(JField f, Context ctx) {
-    return;
-  }
-
-  public void exitMethod(JMethod x, Context ctx) {
-    return;
-  }
-
   @Override
-  public final void endVisit(JField x, Context ctx) {
-    exitField(x, ctx);
-    if (fieldModified) {
-      optimizerCtx.markModifiedField(x);
-    }
-    currentField = null;
-  }
-
-  @Override
-  public final void endVisit(JMethod x, Context ctx) {
-    exitMethod(x, ctx);
-    if (methodModified) {
-      optimizerCtx.markModifiedMethod(x);
-    }
-    currentMethod = null;
+  public final boolean visit(JConstructor x, Context ctx) {
+    currentMethod = x;
+    methodModified = false;
+    return enter(x, ctx);
   }
 
   @Override
   public final boolean visit(JField x, Context ctx) {
     currentField = x;
     fieldModified = false;
-    return enterField(x, ctx);
+    return enter(x, ctx);
   }
 
   @Override
   public final boolean visit(JMethod x, Context ctx) {
     currentMethod = x;
     methodModified = false;
-    return enterMethod(x, ctx);
+    return enter(x, ctx);
   }
 
   @Override
-  protected void madeChanges() {
+  public final boolean visit(JVariable x, Context ctx) {
+    return enter(x, ctx);
+  }
+
+  public final void wasRemoved(JField field) {
+    optimizerCtx.removeField(field);
+  }
+
+  public final void wasRemoved(JMethod method) {
+    optimizerCtx.removeMethod(method);
+  }
+
+  public final void methodsWereRemoved(Collection<JMethod> methods) {
+    optimizerCtx.removeMethods(methods);
+  }
+
+  public final void fieldsWereRemoved(Collection<JField> fields) {
+    optimizerCtx.removeFields(fields);
+  }
+
+  @Override
+  protected final void madeChanges() {
     super.madeChanges();
     if (currentMethod != null) {
       methodModified = true;
@@ -98,13 +163,5 @@ public abstract class JChangeTrackingVisitor extends JModVisitor {
     if (currentField != null) {
       fieldModified = true;
     }
-  }
-
-  public void fieldWasRemoved(JField field) {
-    optimizerCtx.removeField(field);
-  }
-
-  public void methodWasRemoved(JMethod method) {
-    optimizerCtx.removeMethod(method);
   }
 }
