@@ -36,6 +36,11 @@ public class JNewInstance extends JMethodCall {
     setStaticDispatchOnly();
   }
 
+  @Override
+  public JNewInstance cloneWithoutParameters() {
+    return new JNewInstance(this);
+  }
+
   public JClassType getClassType() {
     return getTarget().getEnclosingType();
   }

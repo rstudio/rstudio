@@ -32,6 +32,8 @@ import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
+import com.google.gwt.dev.jjs.ast.JLocal;
+import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
@@ -48,21 +50,19 @@ import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
-import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
-import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.util.collect.Stack;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.base.Predicates;
+import com.google.gwt.thirdparty.guava.common.collect.ArrayListMultimap;
+import com.google.gwt.thirdparty.guava.common.collect.Iterables;
+import com.google.gwt.thirdparty.guava.common.collect.ListMultimap;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -90,9 +90,9 @@ public class Pruner {
    * references to pruned variables and methods by references to the null field
    * and null method, and drop assignments to pruned variables.
    */
-  private class CleanupRefsVisitor extends JChangeTrackingVisitor {
+  private class CleanupRefsVisitor extends JModVisitorWithTemporaryVariableCreation {
     private final Stack<JExpression> lValues = new Stack<JExpression>();
-    private final Map<JMethod, ArrayList<JParameter>> methodToOriginalParamsMap;
+    private final ListMultimap<JMethod, JParameter> priorParametersByMethod;
     private final Set<? extends JNode> referencedNonTypes;
     {
       // Initialize a sentinel value to avoid having to check for empty stack.
@@ -100,10 +100,11 @@ public class Pruner {
     }
 
     public CleanupRefsVisitor(Set<? extends JNode> referencedNodes,
-        Map<JMethod, ArrayList<JParameter>> methodToOriginalParamsMap, OptimizerContext optimizerCtx) {
+        ListMultimap<JMethod, JParameter> priorParametersByMethod,
+        OptimizerContext optimizerCtx) {
       super(optimizerCtx);
       this.referencedNonTypes = referencedNodes;
-      this.methodToOriginalParamsMap = methodToOriginalParamsMap;
+      this.priorParametersByMethod = priorParametersByMethod;
     }
 
     @Override
@@ -129,6 +130,7 @@ public class Pruner {
 
     @Override
     public void endVisit(JDeclarationStatement x, Context ctx) {
+      super.endVisit(x, ctx);
       lValues.pop();
       // The variable may have been pruned.
       if (isVariablePruned(x.getVariableRef().getTarget())) {
@@ -175,11 +177,7 @@ public class Pruner {
         return;
       }
 
-      // Did we prune the parameters of the method we're calling?
-      if (methodToOriginalParamsMap.containsKey(method)) {
-        JMethodCall newCall = new JMethodCall(x, x.getInstance());
-        replaceForPrunedParameters(x, newCall, ctx);
-      }
+      maybeReplaceForPrunedParameters(x, ctx);
     }
 
     @Override
@@ -203,11 +201,7 @@ public class Pruner {
 
     @Override
     public void endVisit(JNewInstance x, Context ctx) {
-      // Did we prune the parameters of the method we're calling?
-      if (methodToOriginalParamsMap.containsKey(x.getTarget())) {
-        JMethodCall newCall = new JNewInstance(x);
-        replaceForPrunedParameters(x, newCall, ctx);
-      }
+      maybeReplaceForPrunedParameters(x, ctx);
     }
 
     @Override
@@ -251,6 +245,7 @@ public class Pruner {
 
     @Override
     public boolean visit(JDeclarationStatement x, Context ctx) {
+      super.visit(x, ctx);
       lValues.push(x.getVariableRef());
       return true;
     }
@@ -296,41 +291,77 @@ public class Pruner {
       }
     }
 
-    private void replaceForPrunedParameters(JMethodCall x, JMethodCall newCall, Context ctx) {
+    // Arguments for pruned parameters will be pushed right into a multiexpression that will be
+    // evaluated with the next arg, e.g. m(arg1, (prunnedArg2, prunnedArg3, arg4)).
+    private void maybeReplaceForPrunedParameters(JMethodCall x, Context ctx) {
+      if (!priorParametersByMethod.containsKey(x.getTarget())) {
+        // No parameter was pruned.
+        return;
+      }
+
+      JMethodCall replacementCall = x.cloneWithoutParameters();
+
       assert !x.getTarget().canBePolymorphic();
-      List<JParameter> originalParams = methodToOriginalParamsMap.get(x.getTarget());
-      JMultiExpression currentMulti = null;
-      for (int i = 0, c = x.getArgs().size(); i < c; ++i) {
-        JExpression arg = x.getArgs().get(i);
-        JParameter param = null;
-        if (i < originalParams.size()) {
-          param = originalParams.get(i);
-        }
+      List<JParameter> originalParams = priorParametersByMethod.get(x.getTarget());
 
-        if (param != null && referencedNonTypes.contains(param)) {
-          // If there is an existing multi, terminate it.
-          if (currentMulti != null) {
-            currentMulti.addExpressions(arg);
-            newCall.addArg(currentMulti);
-            currentMulti = null;
-          } else {
-            newCall.addArg(arg);
-          }
+      // The method and the call agree in the number of parameters.
+      assert originalParams.size() == x.getArgs().size();
+
+      // Traverse the call arguments left to right.
+      SourceInfo sourceInfo = x.getSourceInfo();
+      JMultiExpression unevaluatedArgumentsForPrunedParameters =
+          new JMultiExpression(sourceInfo);
+      List<JExpression> args = x.getArgs();
+      for (int currentArgumentIndex = 0; currentArgumentIndex < args.size();
+          ++currentArgumentIndex) {
+        JExpression arg = args.get(currentArgumentIndex);
+
+        // If the parameter was not pruned .
+        if (referencedNonTypes.contains(originalParams.get(currentArgumentIndex))) {
+          // Add the current argument to the list of unevaluated arguments and pass the multi
+          // expression to the call.
+          unevaluatedArgumentsForPrunedParameters.addExpressions(arg);
+          replacementCall.addArg(unevaluatedArgumentsForPrunedParameters);
+          // Reset the accumulating multi expression.
+          unevaluatedArgumentsForPrunedParameters =  new JMultiExpression(sourceInfo);
         } else if (arg.hasSideEffects()) {
-          // The argument is only needed for side effects, add it to a multi.
-          if (currentMulti == null) {
-            currentMulti = new JMultiExpression(x.getSourceInfo());
-          }
-          currentMulti.addExpressions(arg);
+          // If the argument was pruned and has sideffects accumulate it; otherwise discard.
+          unevaluatedArgumentsForPrunedParameters.addExpressions(arg);
         }
       }
 
-      // Add any orphaned parameters on the end. Extra params are OK.
-      if (currentMulti != null) {
-        newCall.addArg(currentMulti);
+      if (unevaluatedArgumentsForPrunedParameters.isEmpty()) {
+        // We are done, all (side effectful) parameters have been evaluated.
+        ctx.replaceMe(replacementCall);
+        return;
       }
 
-      ctx.replaceMe(newCall);
+      // If the last few parameters where pruned, we need to evaluate the (side effectful) arguments
+      // for those parameters.
+      if (replacementCall.getArgs().isEmpty()) {
+        // All parameters have been pruned, replace by (prunedArg1, ..., prunedArgn, m()).
+        unevaluatedArgumentsForPrunedParameters.addExpressions(replacementCall);
+        ctx.replaceMe(unevaluatedArgumentsForPrunedParameters);
+        return;
+      }
+      // Some parameters have been pruned from the end, replace by
+      // m(arg1,..., (lastArg = lastUnprunedArg, remainingArgs, lastArg))
+      JExpression lastArg = Iterables.getLast(replacementCall.getArgs());
+      JLocal tempVar =
+          createTempLocal(sourceInfo, Iterables.getLast(
+              Iterables.filter(originalParams, Predicates.in(referencedNonTypes))).getType());
+      unevaluatedArgumentsForPrunedParameters.addExpressions(0, JProgram.createAssignment(
+          lastArg.getSourceInfo(), new JLocalRef(sourceInfo, tempVar), lastArg));
+      unevaluatedArgumentsForPrunedParameters.addExpressions(new JLocalRef(sourceInfo, tempVar));
+      replacementCall.setArg(replacementCall.getArgs().size() - 1, unevaluatedArgumentsForPrunedParameters);
+      ctx.replaceMe(replacementCall);
+    }
+
+    @Override
+    protected String newTemporaryLocalName(SourceInfo info, JType type, JMethodBody methodBody) {
+      // The name can be reused a later pass will make sure each instance of JLocal in a method
+      // has a different name.
+      return "lastArg";
     }
   }
 
@@ -339,8 +370,8 @@ public class Pruner {
    * unreferenced methods and fields from their containing classes.
    */
   private class PruneVisitor extends JChangeTrackingVisitor {
-    private final Map<JMethod, ArrayList<JParameter>> methodToOriginalParamsMap =
-        new HashMap<JMethod, ArrayList<JParameter>>();
+    private final ListMultimap<JMethod, JParameter> priorParametersByMethod =
+        ArrayListMultimap.create();
     private final Set<? extends JNode> referencedNonTypes;
     private final Set<? extends JReferenceType> referencedTypes;
 
@@ -351,8 +382,8 @@ public class Pruner {
       this.referencedNonTypes = referencedNodes;
     }
 
-    public Map<JMethod, ArrayList<JParameter>> getMethodToOriginalParamsMap() {
-      return methodToOriginalParamsMap;
+    public ListMultimap<JMethod, JParameter> getPriorParametersByMethod() {
+      return priorParametersByMethod;
     }
 
     @Override
@@ -418,21 +449,14 @@ public class Pruner {
           return true;
         }
 
-        JsFunction func = x.isNative() ? ((JsniMethodBody) x.getBody()).getFunc() : null;
-
-        ArrayList<JParameter> originalParams = new ArrayList<JParameter>(x.getParams());
+        priorParametersByMethod.putAll(x, x.getParams());
 
         for (int i = 0; i < x.getParams().size(); ++i) {
           JParameter param = x.getParams().get(i);
           if (!referencedNonTypes.contains(param)) {
             x.removeParam(i);
             madeChanges();
-            // Remove the associated JSNI parameter
-            if (func != null) {
-              func.getParameters().remove(i);
-            }
             --i;
-            methodToOriginalParamsMap.put(x, originalParams);
           }
         }
       }
@@ -659,7 +683,7 @@ public class Pruner {
     }
     CleanupRefsVisitor cleaner =
         new CleanupRefsVisitor(livenessAnalyzer.getLiveFieldsAndMethods(), pruner
-            .getMethodToOriginalParamsMap(), optimizerCtx);
+            .getPriorParametersByMethod(), optimizerCtx);
     cleaner.accept(program.getDeclaredTypes());
 
     JavaAstVerifier.assertProgramIsConsistent(program);

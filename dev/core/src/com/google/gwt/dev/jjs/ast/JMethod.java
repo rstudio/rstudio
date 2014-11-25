@@ -18,6 +18,7 @@ package com.google.gwt.dev.jjs.ast;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
+import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.util.StringInterner;
 import com.google.gwt.dev.util.collect.Lists;
 
@@ -499,6 +500,9 @@ public class JMethod extends JNode implements HasEnclosingType, HasName, HasType
    */
   public void removeParam(int index) {
     params = Lists.remove(params, index);
+    if (isNative()) {
+      ((JsniMethodBody) getBody()).getFunc().getParameters().remove(index);
+    }
   }
 
   /**

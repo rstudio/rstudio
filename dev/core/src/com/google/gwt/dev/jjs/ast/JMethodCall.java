@@ -145,6 +145,13 @@ public class JMethodCall extends JExpression {
   }
 
   /**
+   * Creates a new method call to the same method using the same instance but without parameters.
+   */
+  public JMethodCall cloneWithoutParameters() {
+    return new JMethodCall(this, instance);
+  }
+
+  /**
    * Returns the call arguments.
    */
   public List<JExpression> getArgs() {
@@ -194,13 +201,6 @@ public class JMethodCall extends JExpression {
    */
   public boolean isVolatile() {
     return polymorphism.isVolatile();
-  }
-
-  /**
-   * Removes the argument at the specified index.
-   */
-  public void removeArg(int index) {
-    args = Lists.remove(args, index);
   }
 
   /**

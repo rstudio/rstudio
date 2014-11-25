@@ -40,6 +40,10 @@ public class JModVisitorWithTemporaryVariableCreationTest extends JJSTestBase {
      */
     private JExpression dontBother;
 
+    public AlwaysReplacer() {
+      super(OptimizerContext.NULL_OPTIMIZATION_CONTEXT);
+    }
+
     @Override
     public boolean visit(JExpressionStatement x, Context ctx) {
       dontBother = x.getExpr();

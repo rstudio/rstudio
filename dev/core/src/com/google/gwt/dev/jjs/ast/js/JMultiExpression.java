@@ -66,6 +66,13 @@ public class JMultiExpression extends JExpression {
   }
 
   /**
+   * Adds {@code expressions} to the multi expression at position {@code index}.
+   */
+  public void addExpressions(int index, JExpression...expressions) {
+    this.expressions.addAll(index, Arrays.asList(expressions));
+  }
+
+  /**
    * Adds a list of expressions to the multi expression at position {@code index}.
    */
   public void addExpressions(int index, List<JExpression> expressions) {

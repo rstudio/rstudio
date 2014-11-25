@@ -61,6 +61,10 @@ public abstract class CompoundAssignmentNormalizer {
    */
   private class BreakupAssignOpsVisitor extends JModVisitorWithTemporaryVariableCreation {
 
+    public BreakupAssignOpsVisitor(OptimizerContext optimizerCtx) {
+      super(optimizerCtx);
+    }
+
     /**
      * Replaces side effects in lvalue.
      */
@@ -270,10 +274,10 @@ public abstract class CompoundAssignmentNormalizer {
   private final CloneExpressionVisitor cloner = new CloneExpressionVisitor();
 
   public void accept(JNode node) {
-    BreakupAssignOpsVisitor breaker = new BreakupAssignOpsVisitor();
+    BreakupAssignOpsVisitor breaker =
+        new BreakupAssignOpsVisitor(OptimizerContext.NULL_OPTIMIZATION_CONTEXT);
     breaker.accept(node);
   }
-
 
   // Name to assign to temporaries. All temporaries are created with the same name, which is
   // not a problem as they are referred to by reference.

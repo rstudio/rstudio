@@ -53,6 +53,9 @@ public class PrunerTest extends OptimizerTestBase {
         "  public void method2() { field2 = usedConstant; }",
         "  UsedClass(UninstantiatedClass c) { }",
         "  UsedClass(UninstantiatedClass c1, UninstantiatedClass c2) { }",
+        "  UsedClass(UninstantiatedClass c1, int i, UninstantiatedClass c2) { field2 = i; }",
+        "  UsedClass(UninstantiatedClass c1, int i, UninstantiatedClass c2, int j) " +
+            "{ field2 = i + j; }",
         "}");
     addSnippetClassDecl(
         "static native void usedNativeMethod(UninstantiatedClass c, UsedClass c2)",
@@ -107,6 +110,8 @@ public class PrunerTest extends OptimizerTestBase {
         "methodWithUninstantiatedParam(null);",
         "new UsedClass(null);",
         "new UsedClass(returnUninstantiatedClass(), returnUninstantiatedClass());",
+        "new UsedClass(returnUninstantiatedClass(), 3, returnUninstantiatedClass());",
+        "new UsedClass(returnUninstantiatedClass(), 3, returnUninstantiatedClass(), 4);",
         "UninstantiatedClass localUninstantiated = null;",
         "JsProtoImpl jsp = new JsProtoImpl();"
         )).intoString(
@@ -118,7 +123,12 @@ public class PrunerTest extends OptimizerTestBase {
             "null.nullMethod();",
             "EntryPoint.methodWithUninstantiatedParam();",
             "new EntryPoint$UsedClass();",
-            "new EntryPoint$UsedClass((EntryPoint.returnUninstantiatedClass(), EntryPoint.returnUninstantiatedClass()));",
+            "EntryPoint.returnUninstantiatedClass();",
+            "EntryPoint.returnUninstantiatedClass();",
+            "new EntryPoint$UsedClass();",
+            "int lastArg;",
+            "new EntryPoint$UsedClass((lastArg = (EntryPoint.returnUninstantiatedClass(), 3), EntryPoint.returnUninstantiatedClass(), lastArg));",
+            "new EntryPoint$UsedClass((EntryPoint.returnUninstantiatedClass(), 3), (EntryPoint.returnUninstantiatedClass(), 4));",
             "new EntryPoint$JsProtoImpl();"
             );
 

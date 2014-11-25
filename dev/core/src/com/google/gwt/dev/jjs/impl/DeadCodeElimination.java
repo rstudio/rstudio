@@ -71,6 +71,7 @@ import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
@@ -79,7 +80,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -460,16 +460,6 @@ public class DeadCodeElimination {
         ignoringExpressionOutput.remove(instance);
       }
 
-      int paramCount = target.getParams().size();
-      for (int i = paramCount; i < x.getArgs().size(); ++i) {
-        JExpression arg = x.getArgs().get(i);
-        ignoringExpressionOutput.remove(arg);
-        if (!arg.hasSideEffects()) {
-          x.removeArg(i--);
-          madeChanges();
-        }
-      }
-
       // Normal optimizations.
       JDeclaredType targetType = target.getEnclosingType();
       if (targetType == program.getTypeJavaLangString() ||
@@ -761,9 +751,6 @@ public class DeadCodeElimination {
       if (target.isStatic() && x.getInstance() != null) {
         ignoringExpressionOutput.add(x.getInstance());
       }
-      List<JExpression> args = x.getArgs();
-      List<JExpression> ignoredArgs = args.subList(target.getParams().size(), args.size());
-      ignoringExpressionOutput.addAll(ignoredArgs);
       return true;
     }
 
@@ -2003,20 +1990,22 @@ public class DeadCodeElimination {
 
   private final JProgram program;
 
-  private final Map<JType, Class<?>> typeClassMap = new IdentityHashMap<JType, Class<?>>();
+  private final Map<JType, Class<?>> typeClassMap;
 
   public DeadCodeElimination(JProgram program) {
     this.program = program;
-    typeClassMap.put(program.getTypeJavaLangObject(), Object.class);
-    typeClassMap.put(program.getTypeJavaLangString(), String.class);
-    typeClassMap.put(program.getTypePrimitiveBoolean(), boolean.class);
-    typeClassMap.put(program.getTypePrimitiveByte(), byte.class);
-    typeClassMap.put(program.getTypePrimitiveChar(), char.class);
-    typeClassMap.put(program.getTypePrimitiveDouble(), double.class);
-    typeClassMap.put(program.getTypePrimitiveFloat(), float.class);
-    typeClassMap.put(program.getTypePrimitiveInt(), int.class);
-    typeClassMap.put(program.getTypePrimitiveLong(), long.class);
-    typeClassMap.put(program.getTypePrimitiveShort(), short.class);
+    typeClassMap = new ImmutableMap.Builder()
+        .put(program.getTypeJavaLangObject(), Object.class)
+        .put(program.getTypeJavaLangString(), String.class)
+        .put(program.getTypePrimitiveBoolean(), boolean.class)
+        .put(program.getTypePrimitiveByte(), byte.class)
+        .put(program.getTypePrimitiveChar(), char.class)
+        .put(program.getTypePrimitiveDouble(), double.class)
+        .put(program.getTypePrimitiveFloat(), float.class)
+        .put(program.getTypePrimitiveInt(), int.class)
+        .put(program.getTypePrimitiveLong(), long.class)
+        .put(program.getTypePrimitiveShort(), short.class)
+        .build();
   }
 
   private OptimizerStats execImpl(Iterable<? extends JNode> nodes, OptimizerContext optimizerCtx) {

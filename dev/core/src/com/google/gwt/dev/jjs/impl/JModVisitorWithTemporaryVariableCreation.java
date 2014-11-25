@@ -21,7 +21,6 @@ import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
-import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JType;
@@ -33,19 +32,16 @@ import java.util.Deque;
  * A JModVisitor capable of creating temporary local variables and placing their declarations in an
  * appropriate preceding place.
  */
-public abstract class JModVisitorWithTemporaryVariableCreation extends JModVisitor {
+public abstract class JModVisitorWithTemporaryVariableCreation extends JChangeTrackingVisitor {
 
   /**
    * Stack to keep track of where to insert the new variable declaration.
    * The top of the stack is the statement where declarations will be inserted.
    */
   private final Deque<Context> currentDeclarationInsertionPoint = Queues.newArrayDeque();
-  private JMethodBody currentMethodBody = null;
 
-  @Override
-  public void endVisit(JMethodBody body, Context ctx) {
-    assert currentMethodBody == body;
-    currentMethodBody = null;
+  public JModVisitorWithTemporaryVariableCreation(OptimizerContext optimizerCtx) {
+    super(optimizerCtx);
   }
 
   @Override
@@ -58,13 +54,6 @@ public abstract class JModVisitorWithTemporaryVariableCreation extends JModVisit
   }
 
   @Override
-  public boolean visit(JMethodBody body, Context ctx) {
-    assert currentMethodBody == null;
-    currentMethodBody = body;
-    return true;
-  }
-
-  @Override
   public final boolean visit(JStatement x, Context ctx) {
     if (ctx.canInsert()) {
       currentDeclarationInsertionPoint.push(ctx);
@@ -73,7 +62,8 @@ public abstract class JModVisitorWithTemporaryVariableCreation extends JModVisit
   }
 
   protected JLocal createTempLocal(SourceInfo info, JType type) {
-    assert currentMethodBody != null;
+    assert !getCurrentMethod().isNative();
+    JMethodBody currentMethodBody = (JMethodBody) getCurrentMethod().getBody();
     String temporaryLocalName = newTemporaryLocalName(info, type, currentMethodBody);
     JLocal local = JProgram.createLocal(info, temporaryLocalName, type, false, currentMethodBody);
     JDeclarationStatement declarationStatement =

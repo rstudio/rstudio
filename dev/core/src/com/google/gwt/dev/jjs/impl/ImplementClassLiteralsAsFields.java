@@ -166,13 +166,8 @@ public class ImplementClassLiteralsAsFields {
       JMethodCall createCall(SourceInfo info, JProgram program, JType type,
           JLiteral superclassLiteral) {
 
-        // Class.createForClass(packageName, typeName, runtimeTypeReference, superclassliteral)
-        JMethodCall call = createBaseCall(info, program, type, "Class.createForInterface");
-
-        call.addArg(new JRuntimeTypeReference(info, program.getTypeJavaLangObject(),
-            (JReferenceType) type));
-        call.addArg(superclassLiteral);
-        return call;
+        // Class.createForInterface(packageName, typeName)
+        return createBaseCall(info, program, type, "Class.createForInterface");
       }
     };
 

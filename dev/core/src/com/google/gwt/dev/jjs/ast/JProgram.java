@@ -195,9 +195,12 @@ public class JProgram extends JNode implements ArrayTypeCreator {
    */
   public static JExpressionStatement createAssignmentStmt(SourceInfo info, JExpression lhs,
       JExpression rhs) {
-    JBinaryOperation assign =
-        new JBinaryOperation(info, lhs.getType(), JBinaryOperator.ASG, lhs, rhs);
-    return assign.makeStatement();
+    return createAssignment(info, lhs, rhs).makeStatement();
+  }
+
+  public static JBinaryOperation createAssignment(SourceInfo info, JExpression lhs,
+      JExpression rhs) {
+    return new JBinaryOperation(info, lhs.getType(), JBinaryOperator.ASG, lhs, rhs);
   }
 
   public static JLocal createLocal(SourceInfo info, String name, JType type, boolean isFinal,
