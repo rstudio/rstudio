@@ -81,10 +81,10 @@ public class EditingPreferencesPane extends PreferencesPane
       spaced(showCompletions_);
       completionPanel.add(showCompletions_);
       
+      completionPanel.add(checkboxPref("Insert parentheses after function completions", prefs.insertParensAfterFunctionCompletion()));
       completionPanel.add(checkboxPref("Show help tooltip after function completions", prefs.showSignatureTooltips()));    
       completionPanel.add(checkboxPref("Insert spaces around equals for argument completions", prefs.insertSpacesAroundEquals()));
       completionPanel.add(checkboxPref("Use tab for multiline autocompletions", prefs.allowTabMultilineCompletion()));
-      completionPanel.add(checkboxPref("Insert parentheses after function completions", prefs.insertParensAfterFunctionCompletion()));
       
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel();
       tabPanel.setSize("435px", "460px");     
