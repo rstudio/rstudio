@@ -563,9 +563,6 @@ public class RCompletionManager implements CompletionManager
    
    public boolean previewKeyPress(char c)
    {
-      if (sigTip_ != null)
-         sigTip_.previewKeyPress(c);
-      
       if (popup_.isShowing())
       {
          if (isValidForRIdentifier(c) || c == ':')
@@ -1756,13 +1753,7 @@ public class RCompletionManager implements CompletionManager
       if (sigTip_.isShowing())
          sigTip_.hide();
 
-      Rectangle cursorWindow = docDisplay_.getCursorBounds();
-      sigTip_.setText(signature);
-      sigTip_.resolvePositionRelativeTo(
-            cursorWindow.getLeft(),
-            cursorWindow.getTop());
-      sigTip_.show();
-      sigTip_.setVisible(true);
+      sigTip_.resolvePositionAndShow(signature);
    }
    
    private String getSourceDocumentPath()
