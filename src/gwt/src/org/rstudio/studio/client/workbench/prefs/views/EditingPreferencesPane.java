@@ -117,6 +117,7 @@ public class EditingPreferencesPane extends PreferencesPane
    
    private void enable(CheckBox checkBox)
    {
+      checkBox.setValue(true);
       checkBox.setEnabled(true);
    }
    
