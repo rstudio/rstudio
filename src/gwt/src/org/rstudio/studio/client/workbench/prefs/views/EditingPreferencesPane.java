@@ -96,7 +96,8 @@ public class EditingPreferencesPane extends PreferencesPane
             showSignatureTooltipsCheckbox);
       
       completionPanel.add(insertParensAfterFunctionCompletionsCheckbox);
-      completionPanel.add(showSignatureTooltipsCheckbox);
+      completionPanel.add(indent(showSignatureTooltipsCheckbox));
+      
       completionPanel.add(checkboxPref("Insert spaces around equals for argument completions", prefs.insertSpacesAroundEquals()));
       completionPanel.add(checkboxPref("Use tab for multiline autocompletions", prefs.allowTabMultilineCompletion()));
       
@@ -113,12 +114,14 @@ public class EditingPreferencesPane extends PreferencesPane
    {
       checkBox.setValue(false);
       checkBox.setEnabled(false);
+      checkBox.setVisible(false);
    }
    
    private void enable(CheckBox checkBox)
    {
       checkBox.setValue(true);
       checkBox.setEnabled(true);
+      checkBox.setVisible(true);
    }
    
    private void addEnabledDependency(final CheckBox speaker,
