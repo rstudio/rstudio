@@ -54,6 +54,18 @@ namespace viewer {
 
 namespace {   
 
+struct CachedFrame
+{
+   // The location of the frame (if we know it)
+   std::string envName;
+   std::string objName;
+
+   // NB: There's no protection on this SEXP and it may be a stale pointer!
+   SEXP observedSEXP;
+};
+
+std::map<std::string, CachedFrame> s_cachedFrames;
+
 std::string viewerCacheDir() 
 {
    return module_context::userScratchPath().childPath(kViewerCacheDir)
@@ -201,6 +213,13 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       filteredNRow = nrow;
    }
 
+   // check to see if we've accidentally transformed ourselves into nothing
+   // (this shouldn't generally happen without a specific error)
+   if (dataSEXP == NULL || TYPEOF(dataSEXP) == NILSXP || Rf_isNull(dataSEXP)) 
+   {
+      throw r::exec::RErrorException("Failure to sort or filter data");
+   }
+
    // return the lesser of the rows available and rows requested
    length = std::min(length, filteredNRow - start);
 
@@ -293,6 +312,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
 Error getGridData(const http::Request& request,
                   http::Response* pResponse)
 {
+   std::cerr << "data viewer getting grid data" << std::endl;
    try
    {
       // extract the query string
@@ -379,6 +399,7 @@ Error getGridData(const http::Request& request,
    }
    CATCH_UNEXPECTED_EXCEPTION
 
+   std::cerr << "data viewer done getting grid data" << std::endl;
    return Success();
 }
 
@@ -407,6 +428,7 @@ void onShutdown(bool terminatedNormally)
       .call();
    if (error)
       LOG_ERROR(error);
+   std::cerr << "data viewer suspending" << std::endl;
 }
 
 void onSuspend(const r::session::RSuspendOptions&, core::Settings*)
@@ -416,6 +438,30 @@ void onSuspend(const r::session::RSuspendOptions&, core::Settings*)
 
 void onResume(const Settings&)
 {
+   std::cerr << "data viewer resuming" << std::endl;
+}
+
+void onDetectChanges(module_context::ChangeSource source)
+{
+   std::cerr << "data viewer checking for changes" << std::endl;
+   r::sexp::Protect protect;
+   for (std::map<std::string, CachedFrame>::iterator i = s_cachedFrames.begin();
+        i != s_cachedFrames.end();
+        i++) 
+   {
+      SEXP env = R_GlobalEnv;
+      if (!i->second.envName.empty() && i->second.envName != "R_GlobalEnv") 
+      {
+         r::exec::RFunction("as.environment", i->second.envName)
+            .call(&env, &protect);
+      }  
+      SEXP sexp = r::sexp::findVar(i->second.envName, env); 
+      if (sexp != i->second.observedSEXP) 
+      {
+         // fire client event here
+         i->second.observedSEXP = sexp;
+      }
+   }
 }
 
 } // anonymous namespace
@@ -432,7 +478,10 @@ Error initialize()
    r::routines::addCallMethod(methodDef);
 
    module_context::events().onShutdown.connect(onShutdown);
+   module_context::events().onDetectChanges.connect(onDetectChanges);
    addSuspendHandler(SuspendHandler(onSuspend, onResume));
+
+   std::cerr << "data viewer initializing" << std::endl;
 
    using boost::bind;
    using namespace r::function_hook ;
@@ -454,6 +503,8 @@ Error initialize()
    error = r::exec::RFunction(".rs.initializeDataViewer", server).call();
    if (error)
        LOG_ERROR(error);
+
+   std::cerr << "data viewer done initializing" << std::endl;
 
    return Success();
 }

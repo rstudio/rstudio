@@ -263,7 +263,8 @@ var initDataTable = function() {
        }
     });
 
-    // listen for size changes
+    // perform initial sizing and listen for size changes
+    sizeDataTable();
     window.addEventListener("resize", sizeDataTable);
   })
   .fail(function(jqXHR)
@@ -334,6 +335,10 @@ window.setFilterUIVisible = function(visible) {
     $("#data").DataTable().columns().search("");
   }
   sizeDataTable();
+};
+
+window.refreshData = function() {
+  $("#data").DataTable().draw();
 };
 
 })();

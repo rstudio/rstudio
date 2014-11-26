@@ -28,6 +28,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectAssignedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlContentEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
@@ -35,6 +36,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 import java.util.HashMap;
 
 public class DataEditingTarget extends UrlContentEditingTarget
+                               implements EnvironmentObjectAssignedEvent.Handler
 {
    @Inject
    public DataEditingTarget(SourceServerOperations server,
@@ -43,6 +45,7 @@ public class DataEditingTarget extends UrlContentEditingTarget
                             EventBus events)
    {
       super(server, commands, globalDisplay, events);
+      events.addHandler(EnvironmentObjectAssignedEvent.TYPE, this);
    }
 
    @Override
@@ -168,6 +171,14 @@ public class DataEditingTarget extends UrlContentEditingTarget
                                   }
                                });
    }
+
+   @Override
+   public void onEnvironmentObjectAssigned(EnvironmentObjectAssignedEvent event)
+   {
+      // TODO Auto-generated method stub
+      
+   }
+
    private SimplePanelWithProgress progressPanel_;
    private DataEditingTargetWidget view_;
 }

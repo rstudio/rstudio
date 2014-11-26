@@ -173,4 +173,5 @@ table.dataTable thead .sorting_asc {
     box-sizing: border-box;
     border-top: 1px solid #c0c0c0;
     height: 25px;
+    text-align: left;
 }

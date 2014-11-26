@@ -184,6 +184,8 @@
   return(NULL)
 })
 
+# given a name, return the first environment on the search list that contains
+# an object bearing that name
 .rs.addFunction("findOwningEnv", function(name, env = parent.frame()) 
 {
    while (environmentName(env) != "R_EmptyEnv" && 
@@ -257,6 +259,9 @@
          file = file.path(cacheDir, paste(cacheKey, "Rdata", sep = ".")),
          envir = .rs.CachedDataEnv)
   })
+
+  # clean the cache environment
+  rm(list = ls(.rs.CachedDataEnv), where = .rs.CachedDataEnv)
 
   invisible(NULL)
 })
