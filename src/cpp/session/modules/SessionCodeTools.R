@@ -587,3 +587,12 @@
    result <- sub("function ", "", result)
    .rs.scalar(result)
 })
+
+.rs.addFunction("getActiveArgument", function(object,
+                                              matchedCall)
+{
+   allArgs <- .rs.getFunctionArgumentNames(object)
+   matchedArgs <- names(matchedCall)[-1L]
+   qualifiedArgsInCall <- setdiff(matchedArgs, "")
+   setdiff(allArgs, qualifiedArgsInCall)[1]
+})

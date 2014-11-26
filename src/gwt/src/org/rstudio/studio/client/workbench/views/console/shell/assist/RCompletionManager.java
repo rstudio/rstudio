@@ -752,6 +752,7 @@ public class RCompletionManager implements CompletionManager
       public static final int TYPE_CHUNK = 9;
       public static final int TYPE_ROXYGEN = 10;
       public static final int TYPE_HELP = 11;
+      public static final int TYPE_ARGUMENT = 12;
       
       public AutocompletionContext(
             String token,
@@ -1235,21 +1236,31 @@ public class RCompletionManager implements CompletionManager
          return context;
       
       TokenCursor startCursor = tokenCursor.cloneCursor();
-      boolean startedOnEquals = tokenCursor.currentValue() == "=";
-      if (startCursor.currentType() == "identifier")
-         if (startCursor.moveToPreviousToken())
-            if (startCursor.currentValue() == "=")
-            {
-               startedOnEquals = true;
-               startCursor.moveToNextToken();
-            }
+      
+      // If this is an argument, return auto-completions tuned to that argument
+      TokenCursor argsCursor = startCursor.cloneCursor();
+      if (argsCursor.currentType() == "identifier")
+         argsCursor.moveToPreviousToken();
+      
+      if (argsCursor.currentValue() == "=")
+      {
+         if (argsCursor.moveToPreviousToken())
+         {
+            return new AutocompletionContext(
+                  token,
+                  argsCursor.currentValue(),
+                  AutocompletionContext.TYPE_ARGUMENT);
+         }
+      }
       
       // Find an opening '(' or '[' -- this provides the function or object
       // for completion.
       int initialNumCommas = 0;
       if (tokenCursor.currentValue() != "(" && tokenCursor.currentValue() != "[")
       {
-         int commaCount = tokenCursor.findOpeningBracketCountCommas(new String[]{ "[", "(" }, true);
+         int commaCount = tokenCursor.findOpeningBracketCountCommas(
+               new String[]{ "[", "(" }, true);
+         
          if (commaCount == -1)
          {
             commaCount = tokenCursor.findOpeningBracketCountCommas("[", false);
@@ -1270,13 +1281,7 @@ public class RCompletionManager implements CompletionManager
       int initialDataType = AutocompletionContext.TYPE_UNKNOWN;
       if (tokenCursor.currentValue() == "(")
       {
-         // Don't produce function argument completions
-         // if the cursor is on, or after, an '='
-         if (!startedOnEquals)
-            initialDataType = AutocompletionContext.TYPE_FUNCTION;
-         else
-            initialDataType = AutocompletionContext.TYPE_UNKNOWN;
-         
+         initialDataType = AutocompletionContext.TYPE_FUNCTION;
          if (!tokenCursor.moveToPreviousToken())
             return context;
       }
@@ -1324,9 +1329,26 @@ public class RCompletionManager implements CompletionManager
       }
       
       // We can now set the function call string
+      // We strip the current token so that the matched.call work later on
+      // can properly resolve the current argument
+      Position startPosition = startCursor.currentPosition();
+      if (startCursor.currentValue() == "(")
+         startPosition.setColumn(startPosition.getColumn() + 1);
+      
+      String beforeText = editor.getTextForRange(Range.fromPoints(
+            tokenCursor.currentPosition(),
+            startPosition));
+      
+      Position afterTokenPos = startCursor.currentPosition();
+      if (startCursor.currentType() == "identifier")
+         afterTokenPos.setColumn(afterTokenPos.getColumn() +
+               startCursor.currentValue().length());
+      
+      String afterText = editor.getTextForRange(Range.fromPoints(
+            afterTokenPos, endPos));
+            
       context.setFunctionCallString(
-            editor.getTextForRange(Range.fromPoints(
-                  tokenCursor.currentPosition(), endPos)).trim());
+            (beforeText + afterText).trim());
       
       String initialData =
             docDisplay_.getTextForRange(Range.fromPoints(
