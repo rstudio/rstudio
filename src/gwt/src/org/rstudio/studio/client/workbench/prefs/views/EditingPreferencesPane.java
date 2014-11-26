@@ -113,15 +113,11 @@ public class EditingPreferencesPane extends PreferencesPane
    {
       checkBox.setValue(false);
       checkBox.setEnabled(false);
-      checkBox.addStyleName(
-            RES.styles().disabled());
    }
    
    private void enable(CheckBox checkBox)
    {
       checkBox.setEnabled(true);
-      checkBox.removeStyleName(
-            RES.styles().disabled());
    }
    
    private void addEnabledDependency(final CheckBox speaker,
@@ -188,11 +184,6 @@ public class EditingPreferencesPane extends PreferencesPane
    private final CheckBox showMargin_;
    private final SelectWidget showCompletions_;
    
-   private static EditingPreferencesPaneResources RES =
-         EditingPreferencesPaneResources.INSTANCE;
    
-   static {
-      RES.styles().ensureInjected();
-   }
    
 }
