@@ -338,7 +338,7 @@ public class AceEditor implements DocDisplay,
          }
       });
    }
-
+   
    private void indentPastedRange(Range range)
    {
       if (fileType_ == null ||
@@ -1841,7 +1841,7 @@ public class AceEditor implements DocDisplay,
       return widget_.addFocusHandler(handler);
    }
 
-   public Widget getWidget()
+   public AceEditorWidget getWidget()
    {
       return widget_;
    }

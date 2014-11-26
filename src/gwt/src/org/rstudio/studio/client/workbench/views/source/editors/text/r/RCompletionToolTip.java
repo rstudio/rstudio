@@ -1,10 +1,20 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.r;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer.ScreenCoordinates;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionToolTip;
 
 import com.google.gwt.core.client.Scheduler;
@@ -15,7 +25,9 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
+import com.google.inject.Inject;
 
 public class RCompletionToolTip extends CppCompletionToolTip
 {
@@ -26,6 +38,92 @@ public class RCompletionToolTip extends CppCompletionToolTip
 
       // set the max width
       setMaxWidth(Window.getClientWidth() - 200);
+      
+      // create an update timer
+      signatureUpdater_ = makeSignatureUpdater();
+      
+      RStudioGinjector.INSTANCE.injectMembers(this);
+   }
+   
+   private Timer makeSignatureUpdater()
+   {
+      return new Timer() {
+
+         @Override
+         public void run()
+         {
+            final AceEditor editor = (AceEditor) docDisplay_;
+            if (editor == null)
+               return;
+
+            CodeModel codeModel = editor.getSession().getMode().getCodeModel();
+            if (codeModel == null)
+               return;
+
+            TokenCursor cursor = codeModel.getTokenCursor();
+            if (!cursor.moveToPosition(docDisplay_.getCursorPosition()))
+               return;
+
+            if (!cursor.findOpeningBracket("(", false))
+               return;
+            
+            TokenCursor matchingParenCursor = cursor.cloneCursor();
+            if (!matchingParenCursor.fwdToMatchingToken())
+               return;
+            
+            setAnchor(
+                  cursor.currentPosition(),
+                  matchingParenCursor.currentPosition());
+            
+            final Position pos = cursor.currentPosition();
+
+            if (!cursor.moveToPreviousToken())
+               return;
+
+            final String functionName = cursor.currentValue();
+
+            server_.getArgs(
+                  functionName,
+                  "",
+                  new ServerRequestCallback<String>() {
+
+                     @Override
+                     public void onResponseReceived(String args)
+                     {
+                        if (!StringUtil.isNullOrEmpty(args))
+                        {
+                           ScreenCoordinates coordinates =
+                                 editor.getWidget()
+                                 .getEditor()
+                                 .getRenderer()
+                                 .textToScreenCoordinates(
+                                       pos.getRow(), pos.getColumn());
+
+                           resolvePositionAndShow(
+                                 functionName + args,
+                                 coordinates.getPageX(),
+                                 coordinates.getPageY());
+
+                        }
+                     }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        Debug.logError(error);
+                     }
+                  });
+
+         }
+
+      };
+
+   }
+   
+   @Inject
+   void initialize(CodeToolsServerOperations server)
+   {
+      server_ = server;
    }
    
    public void previewKeyDown(NativeEvent event)
@@ -40,20 +138,37 @@ public class RCompletionToolTip extends CppCompletionToolTip
       }
    }
    
-   public void resolvePositionAndShow(String signature)
+   public void resolvePositionAndShow(String signature,
+                                      Rectangle rectangle)
+   {
+      resolvePositionAndShow(
+            signature,
+            rectangle.getLeft(),
+            rectangle.getTop());
+   }
+   
+   public void resolvePositionAndShow(String signature,
+                                      int left,
+                                      int top)
    {
       if (signature != null)
          setText(signature);
       
-      setAnchor();
-      resolvePositionRelativeTo(
-            docDisplay_.getCursorBounds());
+      resolvePositionRelativeTo(left, top);
       
       setVisible(true);
       show();
+      
    }
    
-   private void resolvePositionRelativeTo(final Rectangle bounds)
+   public void resolvePositionAndShow(String signature)
+   {
+      setCursorAnchor();
+      resolvePositionAndShow(signature, docDisplay_.getCursorBounds());
+   }
+   
+   private void resolvePositionRelativeTo(final int left,
+                                          final int top)
    {
       // some constants
       final int H_PAD = 12;
@@ -61,9 +176,6 @@ public class RCompletionToolTip extends CppCompletionToolTip
       final int H_BUFFER = 100;
       final int MIN_WIDTH = 300;
       
-      final int left = bounds.getLeft();
-      final int top = bounds.getTop();
-
       // do we have enough room to the right? if not then
       int roomRight = Window.getClientWidth() - left;
       int maxWidth = Math.min(roomRight - H_BUFFER, 500);
@@ -92,7 +204,17 @@ public class RCompletionToolTip extends CppCompletionToolTip
 
    }
    
-   private void setAnchor()
+   private void setAnchor(Position start, Position end)
+   {
+      int startCol = start.getColumn();
+      if (startCol > 0)
+         start.setColumn(start.getColumn() - 1);
+      
+      end.setColumn(end.getColumn() + 1);
+      anchor_ = docDisplay_.createAnchoredSelection(start, end);
+   }
+   
+   private void setCursorAnchor()
    {
       cursorBounds_ = docDisplay_.getCursorBounds();
       Position start = docDisplay_.getSelectionStart();
@@ -129,19 +251,22 @@ public class RCompletionToolTip extends CppCompletionToolTip
                      {
                         hide();
                      }
+                     
+                     signatureUpdater_.schedule(700);
                   }
                });
             }
          }
       });
    }
-   
-   
+
    private final DocDisplay docDisplay_;
-   
-   private int parenBalance_ = 0;
+   private CodeToolsServerOperations server_;
+
    private Rectangle cursorBounds_;
    private AnchoredSelection anchor_;
    private HandlerRegistration nativePreviewReg_;
+
+   private final Timer signatureUpdater_;
 
 }
