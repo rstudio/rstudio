@@ -29,7 +29,8 @@ assign(x = ".rs.acContextTypes",
           FILE = 8,
           CHUNK = 9,
           ROXYGEN = 10,
-          HELP = 11
+          HELP = 11,
+          ARGUMENT = 12
        )
 )
 
@@ -78,7 +79,7 @@ assign(x = ".rs.acCompletionTypes",
    # S4
    else if (isS4(object))
    {
-      if (inherits(object, "standardGeneric") || 
+      if (inherits(object, "standardGeneric") ||
              inherits(object, "nonstandardGenericFunction"))
          .rs.acCompletionTypes$S4_GENERIC
       else if (inherits(object, "MethodDefinition"))
@@ -185,7 +186,7 @@ assign(x = ".rs.acCompletionTypes",
    doGetCompletionsVignettes(token, vignettes$results[, "Item"])
 })
 
-.rs.addFunction("getCompletionsFile", function(token, path = NULL)
+.rs.addFunction("getCompletionsFile", function(token, path = NULL, quote = FALSE)
 {
    # If we might have wanted relative completions but the file path was actually
    # qualified relative to home or root, then abort that
@@ -264,7 +265,7 @@ assign(x = ".rs.acCompletionTypes",
                        results = files,
                        packages = ifelse(isDir, "<directory>", "<file>"),
                        type = .rs.acCompletionTypes$FILE,
-                       quote = FALSE,
+                       quote = quote,
                        excludeOtherCompletions = TRUE)
 })
 
@@ -314,7 +315,7 @@ assign(x = ".rs.acCompletionTypes",
          methods <- rep.int(functionName, length(formals))
       }
       
-      keep <- .rs.fuzzyMatches(formals, token) & 
+      keep <- .rs.fuzzyMatches(formals, token) &
          !(formals %in% names(functionCall)) ## leave out formals already in call
       
       return(list(
@@ -377,6 +378,7 @@ assign(x = ".rs.acCompletionTypes",
 .rs.addFunction("getCompletionsFunction", function(token,
                                                    string,
                                                    functionCall,
+                                                   numCommas,
                                                    discardFirst,
                                                    envir = parent.frame())
 {
@@ -446,18 +448,39 @@ assign(x = ".rs.acCompletionTypes",
       if (length(formals$formals))
          formals$formals <- paste(formals$formals, "= ")
       
+      # Get the current argument -- we can resolve this based on
+      # 'numCommas' and the number of named formals. The idea is, e.g.
+      # in a function call
+      #
+      #     rnorm(|, n = 1, sd = 2)
+      #
+      # we should infer that the current argument name is 'mean'. We do this
+      # by looking at which arguments have yet to be matched, and using the
+      # first argument in that list.
+      activeArg <- .rs.getActiveArgument(object, matchedCall)
+      
+      if (!length(activeArg) || is.na(activeArg))
+         activeArg <- ""
+      
+      # Get completions for the current active argument
+      argCompletions <- .rs.getCompletionsArgument(token,
+                                                   activeArg)
+      
       fguess <- if (length(formals$methods))
          formals$methods[[1]]
       else
          ""
       
-      result <- .rs.makeCompletions(
-         token = token,
-         results = formals$formals,
-         packages = formals$methods,
-         type = .rs.acCompletionTypes$ARGUMENT,
-         fguess = fguess,
-         orderStartsWithAlnumFirst = FALSE
+      result <- .rs.appendCompletions(
+         argCompletions,
+         .rs.makeCompletions(
+            token = token,
+            results = formals$formals,
+            packages = formals$methods,
+            type = .rs.acCompletionTypes$ARGUMENT,
+            fguess = fguess,
+            orderStartsWithAlnumFirst = FALSE
+         )
       )
    }
    
@@ -1056,7 +1079,7 @@ assign(x = ".rs.acCompletionTypes",
    ## Try to parse the function call string
    functionCall <- tryCatch({
       parse(text = .rs.finishExpression(functionCallString))[[1]]
-   }, error = function(e) 
+   }, error = function(e)
       NULL
    )
    
@@ -1078,6 +1101,7 @@ assign(x = ".rs.acCompletionTypes",
    if (length(string) && string[[1]] == "vignette" && numCommas[[1]] == 0)
       return(.rs.getCompletionsVignettes(token))
    
+   # data
    if (.rs.acContextTypes$FUNCTION %in% type &&
           string[[1]] == "data" &&
           numCommas[[1]] == 0)
@@ -1244,9 +1268,12 @@ assign(x = ".rs.acCompletionTypes",
    }
    
    # get completions from the search path for the 'generic' contexts
-   if (token != "" && 
-          type[[1]] %in% c(.rs.acContextTypes$UNKNOWN, .rs.acContextTypes$FUNCTION,
-                           .rs.acContextTypes$SINGLE_BRACKET, .rs.acContextTypes$DOUBLE_BRACKET))
+   if (token != "" &&
+          type[[1]] %in% c(.rs.acContextTypes$UNKNOWN,
+                           .rs.acContextTypes$FUNCTION,
+                           .rs.acContextTypes$ARGUMENT,
+                           .rs.acContextTypes$SINGLE_BRACKET,
+                           .rs.acContextTypes$DOUBLE_BRACKET))
    {
       completions <- .rs.appendCompletions(
          completions,
@@ -1370,7 +1397,7 @@ assign(x = ".rs.acCompletionTypes",
             cursorPos,
             parent.frame()
          )
-      }, 
+      },
       
       error = function(e) {
          .rs.emptyCompletions()
@@ -1436,7 +1463,7 @@ assign(x = ".rs.acCompletionTypes",
                                                  envir)
 {
    ## chainObjectName will be provided if the client detected
-   ## that we were performing completions within an e.g. 
+   ## that we were performing completions within an e.g.
    ## `%>%` chain -- use completions from the associated data object.
    result <- .rs.emptyCompletions()
    
@@ -1464,7 +1491,7 @@ assign(x = ".rs.acCompletionTypes",
    {
       argsToAdd <- .rs.selectFuzzyMatches(additionalArgs, token)
       result <- .rs.appendCompletions(
-         result, 
+         result,
          .rs.makeCompletions(
             token = token,
             results = argsToAdd,
@@ -1493,7 +1520,9 @@ assign(x = ".rs.acCompletionTypes",
                                             envir)
 {
    if (type == .rs.acContextTypes$FUNCTION)
-      .rs.getCompletionsFunction(token, string, functionCall, discardFirst, envir)
+      .rs.getCompletionsFunction(token, string, functionCall, numCommas, discardFirst, envir)
+   else if (type == .rs.acContextTypes$ARGUMENT)
+      .rs.getCompletionsArgument(token, string)
    else if (type == .rs.acContextTypes$SINGLE_BRACKET)
       .rs.getCompletionsSingleBracket(token, string, numCommas, envir)
    else if (type == .rs.acContextTypes$DOUBLE_BRACKET)
@@ -1901,5 +1930,47 @@ assign(x = ".rs.acCompletionTypes",
    
    output
    
+})
+
+.rs.addFunction("getCompletionsArgument", function(token,
+                                                   activeArg)
+{
+   completions <- .rs.emptyCompletions()
    
+   if (activeArg %in% c("pkg", "package"))
+      completions <- .rs.appendCompletions(
+         completions,
+         .rs.getCompletionsPackages(token = token,
+                                    appendColons = FALSE,
+                                    excludeOtherCompletions = FALSE)
+      )
+   
+   if (activeArg %in% c("file", "files"))
+   {
+      completions <- .rs.appendCompletions(
+         completions,
+         .rs.getCompletionsAllFiles(token = token,
+                                    path = getwd())
+      )
+   }
+   
+   completions
+})
+
+.rs.addFunction("getCompletionsAllFiles", function(token,
+                                                   path = getwd())
+{
+   completions <- .rs.fuzzySearchFiles(token, path)
+   .rs.makeCompletions(token = token,
+                       results = completions,
+                       quote = TRUE,
+                       type = .rs.acCompletionTypes$FILE)
+})
+
+.rs.addFunction("fuzzySearchFiles", function(query = "",
+                                             path = getwd())
+{
+   path <- suppressWarnings(.rs.normalizePath(path))
+   completions <- .Call("rs_fuzzySearchFiles", as.character(query), as.character(path))
+   substring(completions, nchar(path) + 2, nchar(completions))
 })
