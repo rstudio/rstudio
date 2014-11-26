@@ -1945,32 +1945,7 @@ assign(x = ".rs.acCompletionTypes",
                                     excludeOtherCompletions = FALSE)
       )
    
-   if (activeArg %in% c("file", "files"))
-   {
-      completions <- .rs.appendCompletions(
-         completions,
-         .rs.getCompletionsAllFiles(token = token,
-                                    path = getwd())
-      )
-   }
+   # TODO: Wire up file completions (e.g. 'Ctrl + P'-like behaviour)
    
    completions
-})
-
-.rs.addFunction("getCompletionsAllFiles", function(token,
-                                                   path = getwd())
-{
-   completions <- .rs.fuzzySearchFiles(token, path)
-   .rs.makeCompletions(token = token,
-                       results = completions,
-                       quote = TRUE,
-                       type = .rs.acCompletionTypes$FILE)
-})
-
-.rs.addFunction("fuzzySearchFiles", function(query = "",
-                                             path = getwd())
-{
-   path <- suppressWarnings(.rs.normalizePath(path))
-   completions <- .Call("rs_fuzzySearchFiles", as.character(query), as.character(path))
-   substring(completions, nchar(path) + 2, nchar(completions))
 })
