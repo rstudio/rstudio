@@ -26,6 +26,7 @@
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/RecursionGuard.hpp>
 #include <core/StringUtils.hpp>
 
 #define R_INTERNAL_FUNCTIONS
@@ -38,7 +39,6 @@
 #include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
-
 #include <session/SessionContentUrls.hpp>
 
 #define kGridResource "grid_resource"
@@ -65,6 +65,9 @@ public:
       objName(obj),
       observedSEXP(sexp)
    {
+      if (sexp == NULL)
+         return;
+
       // cache list of column names
       r::sexp::Protect protect;
       SEXP namesSEXP;
@@ -76,7 +79,7 @@ public:
       }
 
       // cache number of columns
-      ncol = Rf_ncols(sexp);
+      r::exec::RFunction("ncol", sexp).call(&ncol);
    };
 
    CachedFrame() {};
@@ -124,8 +127,9 @@ SEXP findInNamedEnvir(const std::string& envir, const std::string& name)
    if (env == NULL || TYPEOF(env) == NILSXP || Rf_isNull(env))
       return NULL;
 
-   // find the SEXP directly in the environment
-   return r::sexp::findVar(name, env); 
+   // find the SEXP directly in the environment; return null if unbound
+   SEXP obj = r::sexp::findVar(name, env); 
+   return obj == R_UnboundValue ? NULL : obj;
 }
 
 SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP, 
@@ -368,7 +372,9 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
 Error getGridData(const http::Request& request,
                   http::Response* pResponse)
 {
-   std::cerr << "data viewer getting grid data" << std::endl;
+   json::Value result;
+   http::status::Code status = http::status::Ok;
+
    try
    {
       // extract the query string; if we don't find it, it's a no-op
@@ -397,14 +403,16 @@ Error getGridData(const http::Request& request,
       }
 
       r::sexp::Protect protect;
-      json::Value result;
       http::status::Code statusCode = http::status::Ok;
 
-      // update observed state of this object
+      // begin observing if we aren't already
       if (envName != kNoBoundEnv) 
       {
          SEXP objSEXP = findInNamedEnvir(envName, objName);
-         s_cachedFrames[cacheKey] = CachedFrame(envName, objName, objSEXP);
+         std::map<std::string, CachedFrame>::iterator it = 
+            s_cachedFrames.find(cacheKey);
+         if (it == s_cachedFrames.end())
+            s_cachedFrames[cacheKey] = CachedFrame(envName, objName, objSEXP);
       }
 
       // attempt to find the original copy of the object (loads from cache key
@@ -416,10 +424,17 @@ Error getGridData(const http::Request& request,
       {
          LOG_ERROR(error);
       }
+
+      // if the data is a promise (happens for built-in data), the value is
+      // what we're looking for
+      if (TYPEOF(dataSEXP) == PROMSXP) 
+      {
+         dataSEXP = PRVALUE(dataSEXP);
+      }
       
       // couldn't find the original object
-      if (dataSEXP == NULL || Rf_isNull(dataSEXP) || 
-          TYPEOF(dataSEXP) == NILSXP)
+      if (dataSEXP == NULL || dataSEXP == R_UnboundValue || 
+          Rf_isNull(dataSEXP) || TYPEOF(dataSEXP) == NILSXP)
       {
          json::Object err;
          err["error"] = "The object no longer exists.";
@@ -428,13 +443,6 @@ Error getGridData(const http::Request& request,
       }
       else 
       {
-         // if the data is a promise (happens for built-in data), the value is
-         // what we're looking for
-         if (TYPEOF(dataSEXP) == PROMSXP) 
-         {
-            dataSEXP = PRVALUE(dataSEXP);
-         }
-
          if (show == "cols")
          {
             result = getCols(dataSEXP);
@@ -445,10 +453,6 @@ Error getGridData(const http::Request& request,
          }
       }
 
-      std::ostringstream ostr;
-      json::write(result, ostr);
-      pResponse->setStatusCode(statusCode);
-      pResponse->setBody(ostr.str());
    }
    catch(r::exec::RErrorException& e)
    {
@@ -456,14 +460,16 @@ Error getGridData(const http::Request& request,
       // error handling code) expects
       json::Object err;
       err["error"] = e.message();
-      std::ostringstream ostr;
-      json::write(err, ostr);
-      pResponse->setStatusCode(http::status::InternalServerError);
-      pResponse->setBody(ostr.str());
+      result = err;
+      status = http::status::InternalServerError;
    }
    CATCH_UNEXPECTED_EXCEPTION
 
-   std::cerr << "data viewer done getting grid data" << std::endl;
+   std::ostringstream ostr;
+   json::write(result, ostr);
+   pResponse->setStatusCode(status);
+   pResponse->setBody(ostr.str());
+
    return Success();
 }
 
@@ -512,6 +518,8 @@ void onResume(const Settings&)
 
 void onDetectChanges(module_context::ChangeSource source)
 {
+   DROP_RECURSIVE_CALLS;
+
    r::sexp::Protect protect;
    for (std::map<std::string, CachedFrame>::iterator i = s_cachedFrames.begin();
         i != s_cachedFrames.end();
@@ -554,8 +562,6 @@ Error initialize()
    module_context::events().onDetectChanges.connect(onDetectChanges);
    addSuspendHandler(SuspendHandler(onSuspend, onResume));
 
-   std::cerr << "data viewer initializing" << std::endl;
-
    using boost::bind;
    using namespace r::function_hook ;
    using namespace session::module_context;
@@ -576,8 +582,6 @@ Error initialize()
    error = r::exec::RFunction(".rs.initializeDataViewer", server).call();
    if (error)
        LOG_ERROR(error);
-
-   std::cerr << "data viewer done initializing" << std::endl;
 
    return Success();
 }
