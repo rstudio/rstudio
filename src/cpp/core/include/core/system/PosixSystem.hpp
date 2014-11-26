@@ -145,6 +145,9 @@ struct ProcessLimits
    RLimitType filesLimit;
 };
 
+void setProcessLimits(ProcessLimits limits);
+
+
 struct ProcessConfig
 {
    ProcessConfig()
