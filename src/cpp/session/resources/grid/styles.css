@@ -164,4 +164,13 @@ table.dataTable thead .sorting_asc {
     font-weight: bold;    
 }
 
-
+#data_info {
+    background-color: #e7edf0;
+    font-family: 'Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', Verdana, Helvetica, sans-serif;
+    font-size: 11px;
+    padding: 5px;
+    width: 100%;
+    box-sizing: border-box;
+    border-top: 1px solid #c0c0c0;
+    height: 25px;
+}

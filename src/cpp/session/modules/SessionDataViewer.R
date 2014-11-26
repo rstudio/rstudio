@@ -125,14 +125,11 @@
     }
   }
 
-  if (col > 0)
+  if (col > 0 && length(x[,col]) > 0)
   {
-    if (identical(dir, "desc")) {
-      x <- as.data.frame(x[order(-x[,col]),])
-    } else {
-      x <- as.data.frame(x[order(x[,col]),])
-    }
+    x <- as.data.frame(x[order(x[,col], decreasing = identical(dir, "desc")),])
   }
+
   return(x)
 })
 

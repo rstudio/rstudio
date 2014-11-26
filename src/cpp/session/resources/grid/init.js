@@ -20,7 +20,7 @@ var stepPrecision = function(str) {
 // called when the window size changes--adjust the grid size accordingly
 var sizeDataTable = function() {
   $(".dataTables_scrollBody").css("height", 
-    window.innerHeight - ($("thead").height() + 2));
+    window.innerHeight - ($("thead").height() + 25));
   $("#data").DataTable().columns.adjust().draw();
 };
 
@@ -37,6 +37,7 @@ var showFilterUI = function(idx, col) {
     $("#data").DataTable().columns(idx).search()[0];
   filter.innerHTML = "";
   if (col.col_type === "character") {
+    // build filter UI for character fields 
     var input = document.createElement("input");
     input.type = "text";
     input.value = currentColValue;
@@ -49,6 +50,7 @@ var showFilterUI = function(idx, col) {
     filter.appendChild(input);
     input.focus();
   } else if (col.col_type === "factor") {
+    // build filter UI for factor fields
     var sel = document.createElement("select");
     var all = document.createElement("option");
     all.value = "";
@@ -71,6 +73,7 @@ var showFilterUI = function(idx, col) {
     };
     filter.appendChild(sel);
   } else if (col.col_type === "numeric") {
+    // build filter UI for numeric fields
     var min = col.col_min.toString();
     var max = col.col_max.toString();
     if (currentColValue.indexOf("-") > 0) {
@@ -131,8 +134,9 @@ var showFilterUI = function(idx, col) {
   // position the filter box by the column to filter
   var filterUI = document.getElementById("filterUI");
   var thead = document.getElementById("data_cols");
+  var scroll = document.getElementById("data").parentElement.scrollLeft;
 
-  filterUI.style.left = thead.children[idx].offsetLeft + "px";
+  filterUI.style.left = (thead.children[idx].offsetLeft - scroll) + "px";
   filterUI.style.top = thead.children[idx].offsetHeight + "px";
   filterUI.style.display = "block";
 
@@ -233,7 +237,7 @@ var initDataTable = function() {
       "pageLength": 25,
       "scrollY": scrollHeight + "px",
       "scrollX": true,
-      "dom": "tS", 
+      "dom": "tiS", 
       "deferRender": true,
       "ajax": {
         "url": "../grid_data", 
