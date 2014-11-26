@@ -260,22 +260,30 @@ public class CppCompletionRequest
       terminate();
      
       String insertText = completion.getTypedText();
-      if (completion.getType() == CppCompletion.FUNCTION)
-         insertText = insertText + "()";
+      if (completion.getType() == CppCompletion.FUNCTION &&
+            uiPrefs_.insertParensAfterFunctionCompletion().getValue())
+      {
+         if (uiPrefs_.insertMatching().getValue())
+            insertText = insertText + "()";
+         else
+            insertText = insertText + "(";
+      }
       
       docDisplay_.setFocus(true); 
       docDisplay_.setSelection(getReplacementSelection());
       docDisplay_.replaceSelection(insertText, true);
       
-      if (completion.hasParameters())
+      if (completion.hasParameters() &&
+            uiPrefs_.insertParensAfterFunctionCompletion().getValue() &&
+            uiPrefs_.insertMatching().getValue())
       {
          Position pos = docDisplay_.getCursorPosition();
          pos = Position.create(pos.getRow(), pos.getColumn() - 1);
          docDisplay_.setSelectionRange(Range.fromPoints(pos, pos));
-         
-         if (uiPrefs_.showSignatureTooltips().getValue())
-            new CppCompletionSignatureTip(completion, docDisplay_);
       }
+      
+      if (uiPrefs_.showSignatureTooltips().getValue())
+         new CppCompletionSignatureTip(completion, docDisplay_);
    }
    
    private InputEditorSelection getReplacementSelection()
