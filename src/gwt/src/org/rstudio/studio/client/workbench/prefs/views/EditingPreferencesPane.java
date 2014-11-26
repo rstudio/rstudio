@@ -91,21 +91,9 @@ public class EditingPreferencesPane extends PreferencesPane
            checkboxPref("Show help tooltip after function completions",
                  prefs.showSignatureTooltips());
       
-      if (insertParensAfterFunctionCompletionsCheckbox.getValue() == false)
-         disable(showSignatureTooltipsCheckbox);
-      
-      insertParensAfterFunctionCompletionsCheckbox.addValueChangeHandler(
-            new ValueChangeHandler<Boolean>()
-            {
-               @Override
-               public void onValueChange(ValueChangeEvent<Boolean> event)
-               {
-                  if (event.getValue() == false)
-                     disable(showSignatureTooltipsCheckbox);
-                  else
-                     enable(showSignatureTooltipsCheckbox);
-               }
-            });
+      addEnabledDependency(
+            insertParensAfterFunctionCompletionsCheckbox,
+            showSignatureTooltipsCheckbox);
       
       completionPanel.add(insertParensAfterFunctionCompletionsCheckbox);
       completionPanel.add(showSignatureTooltipsCheckbox);
@@ -134,6 +122,26 @@ public class EditingPreferencesPane extends PreferencesPane
       checkBox.setEnabled(true);
       checkBox.removeStyleName(
             RES.styles().disabled());
+   }
+   
+   private void addEnabledDependency(final CheckBox speaker,
+                                     final CheckBox listener)
+   {
+      if (speaker.getValue() == false)
+         disable(listener);
+      
+      speaker.addValueChangeHandler(
+            new ValueChangeHandler<Boolean>()
+            {
+               @Override
+               public void onValueChange(ValueChangeEvent<Boolean> event)
+               {
+                  if (event.getValue() == false)
+                     disable(listener);
+                  else
+                     enable(listener);
+               }
+            });
    }
 
    @Override
