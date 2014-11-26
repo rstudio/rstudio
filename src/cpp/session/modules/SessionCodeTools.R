@@ -326,6 +326,34 @@
    if (is.character(name) && regexpr("(", name, fixed = TRUE) > 0)
       return(FALSE)
    
+   if (is.character(name) && is.character(envir))
+   {
+      # If envir is the name of something on the search path, get it from there
+      pos <- match(envir, search(), nomatch = -1L)
+      if (pos >= 0)
+      {
+         object <- tryCatch(
+            get(name, pos = pos),
+            error = function(e) NULL
+         )
+         
+         if (!is.null(object))
+            return(object)
+      }
+      
+      # Otherwise, maybe envir is the name of a package -- search there
+      if (envir %in% loadedNamespaces())
+      {
+         object <- tryCatch(
+            get(name, envir = asNamespace(envir)),
+            error = function(e) NULL
+         )
+         
+         if (!is.null(object))
+            return(object)
+      }
+   }
+   
    if (is.character(name))
    {
       name <- .rs.stripSurrounding(name)
@@ -551,4 +579,23 @@
          return(method)
    }
    NULL
+})
+
+.rs.addJsonRpcHandler("get_args", function(name, src)
+{
+   if (identical(src, ""))
+      src <- NULL
+   
+   result <- .rs.getSignature(.rs.getAnywhere(name, src))
+   result <- sub("function ", "", result)
+   .rs.scalar(result)
+})
+
+.rs.addFunction("getActiveArgument", function(object,
+                                              matchedCall)
+{
+   allArgs <- .rs.getFunctionArgumentNames(object)
+   matchedArgs <- names(matchedCall)[-1L]
+   qualifiedArgsInCall <- setdiff(matchedArgs, "")
+   setdiff(allArgs, qualifiedArgsInCall)[1]
 })

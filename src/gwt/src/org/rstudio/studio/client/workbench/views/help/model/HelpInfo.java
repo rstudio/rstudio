@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.help.model ;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.*;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NodePredicate;
 

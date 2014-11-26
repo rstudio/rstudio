@@ -627,6 +627,60 @@ public class StringUtil
       return result.toString();
    }
    
+   public static boolean isEndOfLineInRStringState(String string)
+   {
+      if (string == null)
+         return false;
+      
+      if (string == "")
+         return false;
+      
+      boolean inSingleQuotes = false;
+      boolean inDoubleQuotes = false;
+      boolean inQuotes = false;
+
+      int stringStart = 0;
+
+      char currentChar = '\0';
+      char previousChar = '\0';
+
+      for (int i = 0; i < string.length(); i++)
+      {
+         currentChar = string.charAt(i);
+         inQuotes = inSingleQuotes || inDoubleQuotes;
+
+         if (i > 0)
+         {
+            previousChar = string.charAt(i - 1);
+         }
+
+         if (currentChar == '\'' && !inQuotes)
+         {
+            inSingleQuotes = true;
+            continue;
+         }
+
+         if (currentChar == '\'' && previousChar != '\\' && inSingleQuotes)
+         {
+            inSingleQuotes = false;
+            continue;
+         }
+
+         if (currentChar == '"' && !inQuotes)
+         {
+            inDoubleQuotes = true;
+            continue;
+         }
+
+         if (currentChar == '"' && previousChar != '\\' && inDoubleQuotes)
+         {
+            inDoubleQuotes = false;
+            continue;
+         }
+      }
+      
+      return inSingleQuotes || inDoubleQuotes;
+   }
    
    public static boolean isSubsequence(String self,
          String other,

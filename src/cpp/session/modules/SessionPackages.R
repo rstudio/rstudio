@@ -542,3 +542,12 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    return(NULL)
 })
 
+.rs.addFunction("getCachedAvailablePackages", function(contribUrl)
+{
+   .Call("rs_getCachedAvailablePackages", contribUrl)
+})
+
+.rs.addFunction("downloadAvailablePackages", function(contribUrl)
+{
+   .Call("rs_downloadAvailablePackages", contribUrl)
+})
