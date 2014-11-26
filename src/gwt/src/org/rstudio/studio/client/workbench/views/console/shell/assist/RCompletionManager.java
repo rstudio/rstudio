@@ -1580,7 +1580,9 @@ public class RCompletionManager implements CompletionManager
             return;
          }
          
-         boolean insertParen = RCompletionType.isFunctionType(qualifiedName.type);
+         boolean insertParen =
+               uiPrefs_.insertParensAfterFunctionCompletion().getValue() &&
+               RCompletionType.isFunctionType(qualifiedName.type);
          
          // Don't insert a paren if there is already a '(' following
          // the cursor
@@ -1645,7 +1647,7 @@ public class RCompletionManager implements CompletionManager
                // If the token after the cursor is already a ')', don't insert
                // a closing paren
                int relMovement = 0;
-               if (textFollowingCursorIsClosingParen)
+               if (textFollowingCursorIsClosingParen || !uiPrefs_.insertMatching().getValue())
                {
                   input_.replaceSelection(value + "(", true);
                }

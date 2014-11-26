@@ -122,6 +122,11 @@ public class UIPrefsAccessor extends Prefs
       return string("code_complete", COMPLETION_ALWAYS);
    }
    
+   public PrefValue<Boolean> insertParensAfterFunctionCompletion()
+   {
+      return bool("insert_parens_after_function_completion", true);
+   }
+   
    public PrefValue<Boolean> insertSpacesAroundEquals()
    {
       return bool("insert_spaces_around_equals", true);
