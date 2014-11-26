@@ -150,18 +150,18 @@ public class DataEditingTargetWidget extends Composite
       setFilterUIVisible(frameEl.getContentWindow(), visible);
    }
    
-   public void refreshData(boolean visible)
+   public void refreshData(boolean structureChanged)
    {
       IFrameElementEx frameEl = (IFrameElementEx) frame_.getElement().cast();
-      refreshData(frameEl.getContentWindow());
+      refreshData(frameEl.getContentWindow(), structureChanged);
    }
 
    private static final native void setFilterUIVisible (WindowEx frame, boolean visible) /*-{
       frame.setFilterUIVisible(visible);
    }-*/;
    
-   private static final native void refreshData(WindowEx farme) /*-{
-      frame.refreshData();
+   private static final native void refreshData(WindowEx frame, boolean structureChanged) /*-{
+      frame.refreshData(structureChanged);
    }-*/;
 
    public Widget asWidget()

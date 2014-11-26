@@ -44,6 +44,7 @@
 #define kGridResource "grid_resource"
 #define kViewerCacheDir "viewer-cache"
 #define kGridResourceLocation "/" kGridResource "/"
+#define kNoBoundEnv "_rs_no_env"
 
 using namespace core;
 
@@ -54,22 +55,77 @@ namespace viewer {
 
 namespace {   
 
-struct CachedFrame
+// CachedFrame represents an object that's currently active in a data viewer
+// window.
+class CachedFrame
 {
+public:
+   CachedFrame(const std::string& env, const std::string& obj, SEXP sexp):
+      envName(env),
+      objName(obj),
+      observedSEXP(sexp)
+   {
+      // cache list of column names
+      r::sexp::Protect protect;
+      SEXP namesSEXP;
+      r::exec::RFunction("names", sexp).call(&namesSEXP, &protect);
+      if (namesSEXP != NULL && TYPEOF(namesSEXP) != NILSXP 
+          && !Rf_isNull(namesSEXP))
+      {
+         r::sexp::extract(namesSEXP, &colNames);
+      }
+
+      // cache number of columns
+      ncol = Rf_ncols(sexp);
+   };
+
+   CachedFrame() {};
+
    // The location of the frame (if we know it)
    std::string envName;
    std::string objName;
 
+   // The frame's columns; used to determine whether the shape of the frame has
+   // changed (necessitating a full reload of any displayed version of the
+   // frame)
+   int ncol;
+   std::vector<std::string> colNames;
+
    // NB: There's no protection on this SEXP and it may be a stale pointer!
+   // Used only to test for changes.
    SEXP observedSEXP;
 };
 
+// The set of active frames. Used primarily to check each for changes.
 std::map<std::string, CachedFrame> s_cachedFrames;
 
 std::string viewerCacheDir() 
 {
    return module_context::userScratchPath().childPath(kViewerCacheDir)
       .absolutePath();
+}
+
+SEXP findInNamedEnvir(const std::string& envir, const std::string& name)
+{
+   SEXP env = NULL;
+   r::sexp::Protect protect;
+
+   // shortcut for unbound environment
+   if (envir == kNoBoundEnv)
+      return NULL;
+
+   // use the global environment or resolve environment name
+   if (envir.empty() || envir == "R_GlobalEnv")
+      env = R_GlobalEnv;
+   else 
+      r::exec::RFunction("as.environment", envir).call(&env, &protect);
+
+   // if we failed to find an environment by name, return a null SEXP
+   if (env == NULL || TYPEOF(env) == NILSXP || Rf_isNull(env))
+      return NULL;
+
+   // find the SEXP directly in the environment
+   return r::sexp::findVar(name, env); 
 }
 
 SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP, 
@@ -87,7 +143,7 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP,
    }
    else if (envName == "R_EmptyEnv" || envName == "") 
    {
-      envName = "_rs_no_env";
+      envName = kNoBoundEnv;
    }
    dataName = r::sexp::asString(nameSEXP);
    cacheKey = r::sexp::asString(cacheKeySEXP);
@@ -315,7 +371,7 @@ Error getGridData(const http::Request& request,
    std::cerr << "data viewer getting grid data" << std::endl;
    try
    {
-      // extract the query string
+      // extract the query string; if we don't find it, it's a no-op
       std::string::size_type pos = request.uri().find('?');
       if (pos == std::string::npos)
       {
@@ -344,7 +400,15 @@ Error getGridData(const http::Request& request,
       json::Value result;
       http::status::Code statusCode = http::status::Ok;
 
-      // attempt to find the original copy of the object
+      // update observed state of this object
+      if (envName != kNoBoundEnv) 
+      {
+         SEXP objSEXP = findInNamedEnvir(envName, objName);
+         s_cachedFrames[cacheKey] = CachedFrame(envName, objName, objSEXP);
+      }
+
+      // attempt to find the original copy of the object (loads from cache key
+      // if necessary)
       SEXP dataSEXP = NULL;
       Error error = r::exec::RFunction(".rs.findDataFrame", envName, objName, 
             cacheKey, viewerCacheDir()).call(&dataSEXP, &protect);
@@ -353,7 +417,7 @@ Error getGridData(const http::Request& request,
          LOG_ERROR(error);
       }
       
-      // couldn't find the original object--look it up from the cache
+      // couldn't find the original object
       if (dataSEXP == NULL || Rf_isNull(dataSEXP) || 
           TYPEOF(dataSEXP) == NILSXP)
       {
@@ -411,7 +475,14 @@ Error removeCachedData(const json::JsonRpcRequest& request,
    Error error = json::readParam(request.params, 0, &cacheKey);
    if (error)
       return error;
+
+   // remove from watchlist
+   std::map<std::string, CachedFrame>::iterator pos = 
+      s_cachedFrames.find(cacheKey);
+   if (pos != s_cachedFrames.end())
+      s_cachedFrames.erase(pos);
    
+   // remove cache env object and backing file
    error = r::exec::RFunction(".rs.removeCachedData", cacheKey, 
          viewerCacheDir()).call();
    if (error)
@@ -428,7 +499,6 @@ void onShutdown(bool terminatedNormally)
       .call();
    if (error)
       LOG_ERROR(error);
-   std::cerr << "data viewer suspending" << std::endl;
 }
 
 void onSuspend(const r::session::RSuspendOptions&, core::Settings*)
@@ -438,28 +508,31 @@ void onSuspend(const r::session::RSuspendOptions&, core::Settings*)
 
 void onResume(const Settings&)
 {
-   std::cerr << "data viewer resuming" << std::endl;
 }
 
 void onDetectChanges(module_context::ChangeSource source)
 {
-   std::cerr << "data viewer checking for changes" << std::endl;
    r::sexp::Protect protect;
    for (std::map<std::string, CachedFrame>::iterator i = s_cachedFrames.begin();
         i != s_cachedFrames.end();
         i++) 
    {
-      SEXP env = R_GlobalEnv;
-      if (!i->second.envName.empty() && i->second.envName != "R_GlobalEnv") 
-      {
-         r::exec::RFunction("as.environment", i->second.envName)
-            .call(&env, &protect);
-      }  
-      SEXP sexp = r::sexp::findVar(i->second.envName, env); 
+      SEXP sexp = findInNamedEnvir(i->second.envName, i->second.objName);
       if (sexp != i->second.observedSEXP) 
       {
-         // fire client event here
-         i->second.observedSEXP = sexp;
+         // create a new frame object to capture the new state of the frame
+         CachedFrame newFrame(i->second.envName, i->second.objName, sexp);
+
+         // emit client event
+         json::Object changed;
+         changed["cache_key"] = i->first;
+         changed["structure_changed"] = i->second.ncol != newFrame.ncol || 
+            i->second.colNames != newFrame.colNames;
+         ClientEvent event(client_events::kDataViewChanged, changed);
+         module_context::enqueClientEvent(event);
+
+         // replace old frame with new
+         s_cachedFrames[i->first] = newFrame;
       }
    }
 }

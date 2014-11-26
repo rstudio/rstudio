@@ -3,6 +3,7 @@ var table;
 var filterColIdx = 0;
 var getFilterColValue = function() { return ""; };
 var getFilterDisplayValue = function() { return ""; };
+var currentCols = [];
 
 
 // used to determine the step precision for a number--e.g.:
@@ -337,8 +338,22 @@ window.setFilterUIVisible = function(visible) {
   sizeDataTable();
 };
 
-window.refreshData = function() {
-  $("#data").DataTable().draw();
+window.refreshData = function(structureChanged) {
+  if (structureChanged) {
+    // structure changed--this necessitates a full refresh
+    window.location.reload();
+  } else {
+    // structure didn't change, so just reload data. 
+    var t = $("#data").DataTable();
+    var s = t.settings();
+    var pos = $(".dataTables_scrollBody").scrollTop();
+    var row = s.scroller().pixelsToRow(pos);
+
+    // reload data, then snap to that row
+    t.ajax.reload(function() {
+      s.scrollToRow(row, false);
+    },false);
+  }
 };
 
 })();
