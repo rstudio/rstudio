@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 import java.util.Map;
 
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.StringUtil;
@@ -147,7 +148,6 @@ public class HelpInfoPopupPanel extends PopupPanel
       
       String newHeight = Math.min(135, vpanel_.getOffsetHeight()) + "px";
       scrollPanel_.setHeight(newHeight);
-      setVisible(true);
    }
    
    private final ScrollPanel scrollPanel_ = new ScrollPanel() ;
