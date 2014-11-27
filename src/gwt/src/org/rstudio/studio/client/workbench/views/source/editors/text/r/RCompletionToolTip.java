@@ -29,16 +29,20 @@ public class RCompletionToolTip extends CppCompletionToolTip
       
    }
    
-   public void previewKeyDown(NativeEvent event)
+   public boolean previewKeyDown(NativeEvent event)
    {
       if (!isShowing())
-         return;
+         return false;
       
       if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
       {
+         event.stopPropagation();
+         event.preventDefault();
          hide();
-         return;
+         return true;
       }
+      
+      return false;
    }
    
    public void resolvePositionAndShow(String signature,
