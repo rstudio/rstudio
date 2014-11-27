@@ -134,6 +134,8 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          setPopupPositionAndShow(callback) ;
       else
          show() ;
+      if (help_ != null)
+         resolveHelpPosition(help_.isVisible());
    }
    
    public QualifiedName getSelectedValue()
@@ -238,7 +240,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       // 'if we align the top of help with the top of the completion list, will
       // it flow offscreen?'
       
-      if (top + help_.getOffsetHeight() > Window.getClientHeight())
+      if (top + help_.getOffsetHeight() + 20 > Window.getClientHeight())
          top = bottom - help_.getOffsetHeight()
                - 9; // fudge factor
       
