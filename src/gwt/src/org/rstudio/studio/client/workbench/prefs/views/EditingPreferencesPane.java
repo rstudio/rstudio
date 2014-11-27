@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
@@ -83,6 +85,22 @@ public class EditingPreferencesPane extends PreferencesPane
       spaced(showCompletions_);
       completionPanel.add(showCompletions_);
       
+      final CheckBox alwaysCompleteInConsole = checkboxPref(
+                       "Always show code completions in the console",
+                       prefs.alwaysCompleteInConsole());
+      completionPanel.add(alwaysCompleteInConsole);
+      showCompletions_.addChangeHandler(new ChangeHandler() {
+
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            alwaysCompleteInConsole.setVisible(
+                   showCompletions_.getValue().equals(
+                                        UIPrefsAccessor.COMPLETION_ALWAYS));
+            
+         }
+      });
+      
       final CheckBox insertParensAfterFunctionCompletionsCheckbox =
            checkboxPref("Insert parentheses after function completions",
                  prefs.insertParensAfterFunctionCompletion());
@@ -96,7 +114,7 @@ public class EditingPreferencesPane extends PreferencesPane
             showSignatureTooltipsCheckbox);
       
       completionPanel.add(insertParensAfterFunctionCompletionsCheckbox);
-      completionPanel.add(indent(showSignatureTooltipsCheckbox));
+      completionPanel.add(showSignatureTooltipsCheckbox);
       
       completionPanel.add(checkboxPref("Insert spaces around equals for argument completions", prefs.insertSpacesAroundEquals()));
       completionPanel.add(checkboxPref("Use tab for multiline autocompletions", prefs.allowTabMultilineCompletion()));

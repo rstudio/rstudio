@@ -541,6 +541,7 @@ public class RCompletionManager implements CompletionManager
             return false;
       
       boolean canAutocomplete =
+            uiPrefs_.alwaysCompleteInConsole().getValue() && 
             (currentLine.length() > lookbackLimit - 1 && isValidForRIdentifier(c));
 
       if (canAutocomplete)
