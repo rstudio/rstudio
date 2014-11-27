@@ -109,8 +109,7 @@ public class RCompletionManager implements CompletionManager
                              InitCompletionFilter initFilter,
                              RCompletionContext rContext,
                              RnwCompletionContext rnwContext,
-                             DocDisplay docDisplay,
-                             boolean canAutoPopup)
+                             DocDisplay docDisplay)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -123,7 +122,6 @@ public class RCompletionManager implements CompletionManager
       rContext_ = rContext;
       rnwContext_ = rnwContext;
       docDisplay_ = docDisplay;
-      canAutoPopup_ = canAutoPopup;
       sigTip_ = new RCompletionToolTip(docDisplay_);
       
       input_.addBlurHandler(new BlurHandler() {
@@ -542,7 +540,7 @@ public class RCompletionManager implements CompletionManager
          if (keyword.substring(0, currentToken.length()).equals(currentToken))
             return false;
       
-      boolean canAutocomplete = canAutoPopup_ && 
+      boolean canAutocomplete =
             (currentLine.length() > lookbackLimit - 1 && isValidForRIdentifier(c));
 
       if (canAutocomplete)
@@ -1809,7 +1807,6 @@ public class RCompletionManager implements CompletionManager
    private String token_ ;
    
    private final DocDisplay docDisplay_;
-   private final boolean canAutoPopup_;
 
    private final Invalidation invalidation_ = new Invalidation();
    private CompletionRequestContext context_ ;
