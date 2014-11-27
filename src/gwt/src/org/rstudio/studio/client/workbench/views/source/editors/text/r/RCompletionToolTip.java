@@ -75,7 +75,7 @@ public class RCompletionToolTip extends CppCompletionToolTip
    {
       // some constants
       final int H_PAD = 12;
-      final int V_PAD = -3;
+      final int V_PAD = -5;
       final int H_BUFFER = 100;
       final int MIN_WIDTH = 300;
       
