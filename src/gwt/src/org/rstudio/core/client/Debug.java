@@ -72,6 +72,11 @@ public class Debug
    {
       Debug.log(error.toString());
    }
+   
+   public static void logException(Exception e)
+   {
+      Debug.log(e.toString());
+   }
 
    /**
     * Same as log() but for short-term messages that should not be checked

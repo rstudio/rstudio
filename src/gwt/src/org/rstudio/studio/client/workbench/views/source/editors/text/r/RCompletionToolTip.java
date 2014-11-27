@@ -20,6 +20,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppComp
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Event;
@@ -43,6 +45,52 @@ public class RCompletionToolTip extends CppCompletionToolTip
       signatureUpdater_ = makeSignatureUpdater();
       
       RStudioGinjector.INSTANCE.injectMembers(this);
+      
+      docDisplay_.addBlurHandler(new BlurHandler()
+      {
+         
+         @Override
+         public void onBlur(BlurEvent arg0)
+         {
+            setVisible(false);
+            hide();
+         }
+      });
+      
+      nativePreviewReg_ = Event.addNativePreviewHandler(new NativePreviewHandler()
+      {
+         public void onPreviewNativeEvent(NativePreviewEvent e)
+         {
+            int eventType = e.getTypeInt();
+            if (eventType == Event.ONKEYDOWN ||
+                eventType == Event.ONMOUSEDOWN)
+            {
+               // dismiss if we've left our anchor zone
+               // (defer this so the current key has a chance to 
+               // enter the editor and affect the cursor)
+               Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+
+                  @Override
+                  public void execute()
+                  {
+                     Position cursorPos = docDisplay_.getCursorPosition();
+                     if (anchor_ != null)
+                     {
+                        Range anchorRange = anchor_.getRange();
+
+                        if (cursorPos.isBeforeOrEqualTo(anchorRange.getStart()) ||
+                              cursorPos.isAfterOrEqualTo(anchorRange.getEnd()))
+                        {
+                           hide();
+                        }
+                     }
+                     signatureUpdater_.schedule(700);
+                  }
+               });
+            }
+         }
+      });
+      
    }
    
    private Timer makeSignatureUpdater()
@@ -52,68 +100,78 @@ public class RCompletionToolTip extends CppCompletionToolTip
          @Override
          public void run()
          {
-            final AceEditor editor = (AceEditor) docDisplay_;
-            if (editor == null)
-               return;
-
-            CodeModel codeModel = editor.getSession().getMode().getCodeModel();
-            if (codeModel == null)
-               return;
-
-            TokenCursor cursor = codeModel.getTokenCursor();
-            if (!cursor.moveToPosition(docDisplay_.getCursorPosition()))
-               return;
-
-            if (!cursor.findOpeningBracket("(", false))
+            if (!docDisplay_.isFocused())
                return;
             
-            TokenCursor matchingParenCursor = cursor.cloneCursor();
-            if (!matchingParenCursor.fwdToMatchingToken())
-               return;
-            
-            setAnchor(
-                  cursor.currentPosition(),
-                  matchingParenCursor.currentPosition());
-            
-            final Position pos = cursor.currentPosition();
+            try {
+               
+               final AceEditor editor = (AceEditor) docDisplay_;
+               if (editor == null)
+                  return;
 
-            if (!cursor.moveToPreviousToken())
-               return;
+               CodeModel codeModel = editor.getSession().getMode().getCodeModel();
+               if (codeModel == null)
+                  return;
 
-            final String functionName = cursor.currentValue();
+               TokenCursor cursor = codeModel.getTokenCursor();
+               if (!cursor.moveToPosition(docDisplay_.getCursorPosition()))
+                  return;
 
-            server_.getArgs(
-                  functionName,
-                  "",
-                  new ServerRequestCallback<String>() {
+               if (!cursor.findOpeningBracket("(", false))
+                  return;
 
-                     @Override
-                     public void onResponseReceived(String args)
-                     {
-                        if (!StringUtil.isNullOrEmpty(args))
+               TokenCursor matchingParenCursor = cursor.cloneCursor();
+               if (!matchingParenCursor.fwdToMatchingToken())
+                  return;
+
+               setAnchor(
+                     cursor.currentPosition(),
+                     matchingParenCursor.currentPosition());
+
+               final Position pos = cursor.currentPosition();
+
+               if (!cursor.moveToPreviousToken())
+                  return;
+
+               final String functionName = cursor.currentValue();
+
+               server_.getArgs(
+                     functionName,
+                     "",
+                     new ServerRequestCallback<String>() {
+
+                        @Override
+                        public void onResponseReceived(String args)
                         {
-                           ScreenCoordinates coordinates =
-                                 editor.getWidget()
-                                 .getEditor()
-                                 .getRenderer()
-                                 .textToScreenCoordinates(
-                                       pos.getRow(), pos.getColumn());
+                           if (!StringUtil.isNullOrEmpty(args) &&
+                               docDisplay_.isFocused())
+                           {
+                              ScreenCoordinates coordinates =
+                                    editor.getWidget()
+                                    .getEditor()
+                                    .getRenderer()
+                                    .textToScreenCoordinates(
+                                          pos.getRow(), pos.getColumn());
 
-                           resolvePositionAndShow(
-                                 functionName + args,
-                                 coordinates.getPageX(),
-                                 coordinates.getPageY());
+                              resolvePositionAndShow(
+                                    functionName + args,
+                                    coordinates.getPageX(),
+                                    coordinates.getPageY());
 
+                           }
                         }
-                     }
 
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        Debug.logError(error);
-                     }
-                  });
-
+                        @Override
+                        public void onError(ServerError error)
+                        {
+                           Debug.logError(error);
+                        }
+                     });
+               
+            } catch (Exception e) {
+               Debug.logException(e);
+               hide();
+            }
          }
 
       };
@@ -223,48 +281,6 @@ public class RCompletionToolTip extends CppCompletionToolTip
       anchor_ = docDisplay_.createAnchoredSelection(start, end);
    }
    
-   @Override
-   protected void onUnload()
-   {
-      super.onUnload();
-      nativePreviewReg_.removeHandler();
-   }
-   
-   @Override
-   protected void onLoad()
-   {
-      super.onLoad();
-      nativePreviewReg_ = Event.addNativePreviewHandler(new NativePreviewHandler()
-      {
-         public void onPreviewNativeEvent(NativePreviewEvent e)
-         {
-            if (e.getTypeInt() == Event.ONKEYDOWN)
-            {
-               // dismiss if we've left our anchor zone
-               // (defer this so the current key has a chance to 
-               // enter the editor and affect the cursor)
-               Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-
-                  @Override
-                  public void execute()
-                  {
-                     Position cursorPos = docDisplay_.getCursorPosition();
-                     Range anchorRange = anchor_.getRange();
-                     
-                     if (cursorPos.isBeforeOrEqualTo(anchorRange.getStart()) ||
-                         cursorPos.isAfterOrEqualTo(anchorRange.getEnd()))
-                     {
-                        hide();
-                     }
-                     
-                     signatureUpdater_.schedule(700);
-                  }
-               });
-            }
-         }
-      });
-   }
-
    private final DocDisplay docDisplay_;
    private CodeToolsServerOperations server_;
 
