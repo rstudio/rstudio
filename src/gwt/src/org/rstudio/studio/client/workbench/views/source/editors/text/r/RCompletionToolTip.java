@@ -216,7 +216,6 @@ public class RCompletionToolTip extends CppCompletionToolTip
    
    private void setCursorAnchor()
    {
-      cursorBounds_ = docDisplay_.getCursorBounds();
       Position start = docDisplay_.getSelectionStart();
       start = Position.create(start.getRow(), start.getColumn() - 1);
       Position end = docDisplay_.getSelectionEnd();
@@ -224,7 +223,13 @@ public class RCompletionToolTip extends CppCompletionToolTip
       anchor_ = docDisplay_.createAnchoredSelection(start, end);
    }
    
-   // TODO: Refactor into common base class (e.g. AnchoredToolTip)
+   @Override
+   protected void onUnload()
+   {
+      super.onUnload();
+      nativePreviewReg_.removeHandler();
+   }
+   
    @Override
    protected void onLoad()
    {
@@ -263,7 +268,6 @@ public class RCompletionToolTip extends CppCompletionToolTip
    private final DocDisplay docDisplay_;
    private CodeToolsServerOperations server_;
 
-   private Rectangle cursorBounds_;
    private AnchoredSelection anchor_;
    private HandlerRegistration nativePreviewReg_;
 
