@@ -22,9 +22,14 @@ import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.UIObject;
+import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.events.SelectionCommitEvent;
@@ -194,8 +199,8 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       if (list_ == null || !list_.isAttached())
          return;
       
-      resolveHelpPosition(help.hasInfo());
       help_.displayHelp(help) ;
+      resolveHelpPosition(help.hasInfo());
    }
    
    @Override
@@ -204,8 +209,8 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       if (list_ == null || !list_.isAttached())
          return;
       
-      resolveHelpPosition(map.get(parameterName) != null);
       help_.displayParameterHelp(map, parameterName) ;
+      resolveHelpPosition(map.get(parameterName) != null);
    }
    
    @Override
@@ -214,15 +219,33 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       if (list_ == null || !list_.isAttached())
          return;
       
+      help_.displayPackageHelp(help);
       resolveHelpPosition(help.hasInfo());
-      help_.displayPackageHelp(help) ;
+      
    }
    
    private void resolveHelpPosition(boolean setVisible)
    {
       int top = getAbsoluteTop();
       int left = getAbsoluteLeft();
+      int bottom = top + getOffsetHeight();
       int width = getOffsetWidth();
+      
+      // If displaying the help with the top aligned to the completion list
+      // would place the help offscreen, then re-align it so that the bottom of the
+      // help is aligned with the completion popup.
+      
+      if (!help_.isShowing())
+         help_.show();
+      
+      // NOTE: Help has not been positioned yet so what we're really asking is,
+      // 'if we align the top of help with the top of the completion list, will
+      // it flow offscreen?'
+      
+      if (top + help_.getOffsetHeight() > Window.getClientHeight())
+         top = bottom - help_.getOffsetHeight()
+               - 8; // fudge factor
+      
       help_.setPopupPosition(left + width - 4, top + 3);
       help_.setVisible(setVisible);
    }
