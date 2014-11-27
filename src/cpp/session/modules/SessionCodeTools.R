@@ -583,6 +583,9 @@
 
 .rs.addJsonRpcHandler("get_args", function(name, src)
 {
+   if (identical(src, ""))
+      src <- NULL
+   
    result <- .rs.getSignature(.rs.getAnywhere(name, src))
    result <- sub("function ", "", result)
    .rs.scalar(result)
