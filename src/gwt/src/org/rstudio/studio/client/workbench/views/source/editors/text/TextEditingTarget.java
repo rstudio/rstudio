@@ -53,6 +53,7 @@ import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.*;
+import org.rstudio.studio.client.RStudioGinModule;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
@@ -94,6 +95,7 @@ import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.events.ShinyAppsActionEvent;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.filesearch.FileSearch;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -4015,6 +4017,12 @@ public class TextEditingTarget implements
       }
    }
    
+   @Handler
+   void onListAllFiles()
+   {
+      RStudioGinjector.INSTANCE.getFileSearch().listAllFiles(docDisplay_);
+   }
+   
    boolean useScopeTreeFolding()
    {
       return docDisplay_.hasScopeTree() && !fileType_.isRmd();
@@ -4504,6 +4512,7 @@ public class TextEditingTarget implements
    private final TextEditingTargetScopeHelper scopeHelper_;
    private TextEditingTargetSpelling spelling_;
    private BreakpointManager breakpointManager_;
+   
 
    // Allows external edit checks to supercede one another
    private final Invalidation externalEditCheckInvalidation_ =

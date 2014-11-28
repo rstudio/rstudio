@@ -3827,6 +3827,7 @@ public class RemoteServer implements Server
    private static final String GET_COMPLETIONS = "get_completions";
    private static final String IS_FUNCTION = "is_function";
    private static final String GET_HELP_AT_CURSOR = "get_help_at_cursor";
+   private static final String LIST_PROJECT_FILES = "list_project_files";
 
    private static final String PROCESS_START = "process_start";
    private static final String PROCESS_INTERRUPT = "process_interrupt";

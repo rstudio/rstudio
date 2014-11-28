@@ -15,19 +15,16 @@
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import com.google.gwt.event.dom.client.*;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLTable.Cell;
 import com.google.gwt.user.client.ui.HTMLTable.CellFormatter;
 import com.google.gwt.user.client.ui.ScrollPanel;
+
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.dom.DomUtils;
@@ -35,6 +32,7 @@ import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.core.client.widget.GridEx;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 
 class CompletionList<TItem> extends Composite 
@@ -260,34 +258,6 @@ class CompletionList<TItem> extends Composite
                       el.getOffsetHeight()) ;
    }
    
-   private class GridEx extends Grid implements HasMouseMoveHandlers
-   {
-      public GridEx(int rows, int cols)
-      {
-         super(rows, cols) ;
-         sinkEvents(Event.ONMOUSEMOVE) ;
-      }
-
-      public HandlerRegistration addMouseMoveHandler(MouseMoveHandler handler)
-      {
-         return addHandler(handler, MouseMoveEvent.getType()) ;
-      }
-      
-      public int getRowForEvent(MouseMoveEvent event)
-      {
-         Element td = getEventTargetCell(Event.as(event.getNativeEvent()));
-         if (td == null) {
-           return -1;
-         }
-
-         Element tr = DOM.getParent(td);
-         Element body = DOM.getParent(tr);
-         int row = DOM.getChildIndex(body, tr);
-
-         return row ;
-       }
-   }
-
    public void setMaxWidth(int maxWidthInPixels)
    {
       maxWidthInPixels_ = maxWidthInPixels;

@@ -52,6 +52,7 @@ import org.rstudio.studio.client.shiny.ShinyApplicationSatellite;
 import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
 import org.rstudio.studio.client.vcs.VCSApplication;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.filesearch.FileSearch;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -101,6 +102,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(CppCompletionRequest request);
    void injectMembers(CppCompletionManager completionManager);
    void injectMembers(RCompletionToolTip toolTip);
+   void injectMembers(FileSearch fileSearch);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
@@ -125,4 +127,5 @@ public interface RStudioGinjector extends Ginjector
    UIPrefs getUIPrefs();
    Session getSession();
    HelpStrategy getHelpStrategy();
+   FileSearch getFileSearch();
 }

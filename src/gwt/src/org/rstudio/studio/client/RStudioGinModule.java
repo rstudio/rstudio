@@ -92,6 +92,7 @@ import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchWidget;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.filesearch.FileSearch;
 import org.rstudio.studio.client.workbench.model.MetaServerOperations;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchListsServerOperations;
@@ -226,6 +227,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ShinyApps.class).asEagerSingleton();
       bind(RmdOutput.class).in(Singleton.class);
       bind(HelpStrategy.class).in(Singleton.class);
+      bind(FileSearch.class).in(Singleton.class);
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;
