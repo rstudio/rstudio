@@ -17,6 +17,9 @@ package com.google.gwt.dom.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
+import java.util.Locale;
+
+
 /**
  * Class representing DataTransfer interface.
  * 
@@ -114,4 +117,52 @@ public class DataTransfer extends JavaScriptObject {
       this.setDragImage(element, x, y);
     }
   }-*/;
+
+  /**
+   * Specify the drop effect to use on dragenter or dragover events.
+   *
+   * @param dropEffect the drop effect to display.
+   */
+  public final void setDropEffect(DropEffect dropEffect) {
+    this.setDropEffect(dropEffect.name().toLowerCase(Locale.ROOT));
+  }
+
+  /**
+   * Specify the drop effect to use on dragenter or dragover events.
+   *
+   * @param dropEffect the drop effect to display.
+   */
+  private native void setDropEffect(String dropEffect) /*-{
+    if (this.dropEffect) {
+      this.dropEffect = dropEffect;
+    }
+  }-*/;
+
+  /**
+   * Used to specify the drop effect to use on dragenter or dragover events.
+   *
+   * For dragstart, drag, and dragleave events, the dropEffect is initialized to "none".
+   * Any value assigned to the dropEffect will be set, but the value isn't used for anything.
+   */
+  public enum DropEffect {
+    /**
+     *  a copy of the source item is made at the new location.
+     */
+    COPY,
+
+    /**
+     * an item is moved to a new location.
+     */
+    MOVE,
+
+    /**
+     * a link is established to the source at the new location.
+     */
+    LINK,
+
+    /**
+     * the item may not be dropped.
+     */
+    NONE;
+  }
 }
