@@ -1753,39 +1753,40 @@ assign(x = ".rs.acCompletionTypes",
                                                  inputCount,
                                                  outputCount)
 {
-   if (is.call(object))
+   if (is.call(object) && length(object) > 1)
    {
-      name <- if (is.symbol(object[[2]]))
-         as.character(object[[2]])
-      else if (is.character(object[[2]]) && length(object[[2]]) == 1)
+      functionName <- as.character(object[[1]])
+      firstArgName <- if (is.character(object[[2]]) && length(object[[2]]) == 1)
          object[[2]]
       else
          ""
       
-      if (.rs.endsWith(name, "Output"))
+      if (nzchar(firstArgName))
       {
-         outputCount$count <- outputCount$count + 1
-         outputs[[as.character(outputCount$count)]] <- as.character(object[[2]])
-      }
-      
-      if (.rs.endsWith(name, "Input"))
-      {
-         inputCount$count <- inputCount$count + 1
-         inputs[[as.character(inputCount$count)]] <- as.character(object[[2]])
-      }
-      
-      if (length(object) > 1)
-         for (j in 2:length(object))
+         if (.rs.endsWith(functionName, "Output"))
          {
-            if (is.call(object[[j]]))
-            {
-               .rs.doShinyUICompletions(object[[j]],
-                                        inputs,
-                                        outputs,
-                                        inputCount,
-                                        outputCount)
-            }
+            outputCount$count <- outputCount$count + 1
+            outputs[[as.character(outputCount$count)]] <- firstArgName
          }
+         
+         if (.rs.endsWith(functionName, "Input"))
+         {
+            inputCount$count <- inputCount$count + 1
+            inputs[[as.character(inputCount$count)]] <- firstArgName
+         }
+      }
+      
+      for (j in 2:length(object))
+      {
+         if (is.call(object[[j]]))
+         {
+            .rs.doShinyUICompletions(object[[j]],
+                                     inputs,
+                                     outputs,
+                                     inputCount,
+                                     outputCount)
+         }
+      }
    }
    
 })
