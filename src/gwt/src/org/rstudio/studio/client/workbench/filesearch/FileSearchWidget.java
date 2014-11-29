@@ -44,6 +44,7 @@ public class FileSearchWidget extends ModalDialogBase
 {
    private TextBox textBox_;
    private GridWithMouseHandlers completionGrid_;
+   private ArrayList<String> currentCompletions_;
    private FlowPanel completionPanel_;
    private ArrayList<HandlerRegistration> handlers_;
    private Cell selectedCell_;
@@ -59,6 +60,7 @@ public class FileSearchWidget extends ModalDialogBase
       
       docDisplay_ = docDisplay;
       cachedFiles_ = new HashMap<String, ArrayList<String>>();
+      currentCompletions_ = new ArrayList<String>();
       
       VerticalPanel outer = new VerticalPanel();
       outer.setStylePrimaryName(RES.styles().outerPanel());
@@ -206,7 +208,9 @@ public class FileSearchWidget extends ModalDialogBase
    
    private void onSelection(Cell cell)
    {
-      docDisplay_.insertCode(cell.getElement().getInnerText());
+      docDisplay_.insertCode(
+            currentCompletions_.get(cell.getRowIndex()));
+      
       reset();
       setVisible(false);
       hide();
@@ -417,12 +421,27 @@ public class FileSearchWidget extends ModalDialogBase
       
       // Refresh current completions
       completionGrid_.clearColumn(0);
+      currentCompletions_.clear();
       for (int i = 0; i < completions.size(); i++)
       {
          if (i >= completionGrid_.getRowCount())
             break;
-         completionGrid_.setText(i, 0, completions.get(i));
+         completionGrid_.setText(i, 0, truncateIfNecessary(
+               completions.get(i)));
+         currentCompletions_.add(completions.get(i));
       }
+   }
+   
+   private String truncateIfNecessary(String string)
+   {
+      int n = string.length();
+      if (n < 80)
+         return string;
+      
+      return string.substring(0, 10)
+            + "..."
+            + string.substring(n - 67);
+         
    }
    
    public void setFocus(boolean focus)
