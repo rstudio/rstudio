@@ -108,6 +108,7 @@ public class FileSearchWidget extends ModalDialogBase
    {
       textBox_ = new TextBox();
       textBox_.setWidth((WIDGET_WIDTH - 2) + "px");
+      textBox_.setStylePrimaryName(RES.styles().textBox());
       textBox_.getElement().setPropertyString("placeholder",
             "Enter your search query");
       

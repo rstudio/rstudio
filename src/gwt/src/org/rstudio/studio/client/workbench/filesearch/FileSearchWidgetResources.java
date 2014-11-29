@@ -26,6 +26,7 @@ public interface FileSearchWidgetResources extends ClientBundle
       String selected();
       String completionGrid();
       String outerPanel();
+      String textBox();
    }
 
   

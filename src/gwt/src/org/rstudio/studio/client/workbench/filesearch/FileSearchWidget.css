@@ -28,3 +28,7 @@
 .outerPanel {
 	table-layout: fixed;
 }
+
+.textBox {
+	padding-left: 4px;
+}
