@@ -1,7 +1,6 @@
 package org.rstudio.studio.client.workbench.filesearch;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.PriorityQueue;
@@ -82,7 +81,6 @@ public class FileSearchWidget extends ModalDialogBase
       
       addCloseHandler(new CloseHandler<PopupPanel>()
       {
-         
          @Override
          public void onClose(CloseEvent<PopupPanel> event)
          {
@@ -109,7 +107,7 @@ public class FileSearchWidget extends ModalDialogBase
    private void initTextBox()
    {
       textBox_ = new TextBox();
-      textBox_.setWidth((WIDGET_WIDTH - 2) + "px");
+      textBox_.setWidth((WIDGET_WIDTH - 5) + "px");
       textBox_.setStylePrimaryName(RES.styles().textBox());
       textBox_.getElement().setPropertyString("placeholder",
             "Enter your search query");
@@ -341,9 +339,8 @@ public class FileSearchWidget extends ModalDialogBase
          ArrayList<String> files)
    {
       Comparator<String> fuzzyComparator =
-            Collections.reverseOrder(
                   CodeSearchOracle.createFuzzyComparator(
-                        query_, true));
+                        query_, true);
       
       // Use a priority queue to get the top completions
       PriorityQueue<String> queue =
@@ -426,10 +423,44 @@ public class FileSearchWidget extends ModalDialogBase
       {
          if (i >= completionGrid_.getRowCount())
             break;
-         completionGrid_.setText(i, 0, truncateIfNecessary(
-               completions.get(i)));
+         
+         String displayName = makeDisplayName(completions.get(i));
+         completionGrid_.setHTML(i, 0, displayName);
          currentCompletions_.add(completions.get(i));
       }
+   }
+   
+   private String makeDisplayName(String string)
+   {
+      int[] subsequenceIndices =
+            StringUtil.subsequenceIndices(
+                  string.toLowerCase(), query_.toLowerCase());
+      
+      if (subsequenceIndices.length == 0)
+         return string;
+      
+      StringBuilder result = new StringBuilder();
+      
+      int currentSubsequenceIndex = 0;
+      for (int i = 0; i < string.length(); i++)
+      {
+         if (i == subsequenceIndices[currentSubsequenceIndex])
+         {
+            result.append(
+                  "<span style='color: red;'>" + string.charAt(i) + "</span>");
+            
+            if (currentSubsequenceIndex < subsequenceIndices.length)
+               currentSubsequenceIndex += 1;
+            
+         }
+         else
+         {
+            result.append(string.charAt(i));
+         }
+      }
+      
+      return result.toString();
+      
    }
    
    private String truncateIfNecessary(String string)

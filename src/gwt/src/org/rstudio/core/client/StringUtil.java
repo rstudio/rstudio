@@ -14,9 +14,10 @@
  */
 package org.rstudio.core.client;
 
-import com.google.gwt.i18n.client.DateTimeFormat;
-import com.google.gwt.i18n.client.NumberFormat;
-import com.google.gwt.user.client.Window;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -24,10 +25,9 @@ import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.regex.Pattern.ReplaceOperation;
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
+import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.i18n.client.NumberFormat;
+import com.google.gwt.user.client.Window;
 
 public class StringUtil
 {
@@ -723,18 +723,16 @@ public class StringUtil
       return false;
    }
    
-   @SuppressWarnings("unused")
    public static int[] subsequenceIndices(
          String sequence, String query)
    {
       int query_n = query.length();
-      int sequence_n = sequence.length();
       int[] result = new int[query.length()];
       
-      int prevMatchIndex = 0;
+      int prevMatchIndex = -1;
       for (int i = 0; i < query_n; i++)
       {
-         result[i] = sequence.indexOf(query.charAt(i), prevMatchIndex);
+         result[i] = sequence.indexOf(query.charAt(i), prevMatchIndex + 1);
          prevMatchIndex = result[i];
       }
       return result;
