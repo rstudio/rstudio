@@ -27,6 +27,7 @@ public abstract class
    public abstract AppCommand setWorkingDir();
    
    // Source
+   public abstract AppCommand alignAssignment();
    public abstract AppCommand newSourceDoc();
    public abstract AppCommand newTextDoc();
    public abstract AppCommand newCppDoc();
