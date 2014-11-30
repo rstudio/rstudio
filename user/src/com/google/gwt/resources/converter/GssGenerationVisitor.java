@@ -39,6 +39,7 @@ import com.google.gwt.resources.css.ast.CssUrl;
 import com.google.gwt.thirdparty.common.css.SourceCode;
 import com.google.gwt.thirdparty.common.css.compiler.ast.GssParser;
 import com.google.gwt.thirdparty.common.css.compiler.ast.GssParserException;
+import com.google.gwt.thirdparty.guava.common.base.Splitter;
 import com.google.gwt.thirdparty.guava.common.base.Strings;
 
 import java.util.ArrayList;
@@ -69,6 +70,9 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
   private static final String URL = "resourceUrl(\"%s\")";
   private static final String VALUE = "value('%s')";
   private static final String VALUE_WITH_SUFFIX = "value('%s', '%s')";
+
+  // Used to quote font family name that contains white space(s) and aren't quoted yet.
+  private static Pattern NOT_QUOTED_WITH_WITHESPACE = Pattern.compile("^[^'\"].*\\s.*[^'\"]$");
 
   // GSS impose constant names to be in uppercase. This Map will contains the mapping between
   // the name of constants defined in the CSS and the corresponding name that will be used in GSS.
@@ -312,7 +316,14 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
     propertyBuilder.append(x.getName());
     propertyBuilder.append(": ");
 
-    propertyBuilder.append(printValuesList(x.getValues().getValues(), false));
+    String valueListCss = printValuesList(x.getValues().getValues(), false);
+
+    if ("font-family".equals(x.getName())) {
+      // Font family names containing whitespace should be quoted.
+      valueListCss = quoteFontFamilyWithWhiteSpace(valueListCss);
+    }
+
+    propertyBuilder.append(valueListCss);
 
     if (x.isImportant()) {
       propertyBuilder.append(IMPORTANT);
@@ -342,6 +353,55 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
     semiColon();
 
     return true;
+  }
+
+  /**
+   * Quotes the font family names that contains white space but aren't quoted yet. thus allowing
+   * usage of fonts that might be mistaken for constants. RTis is also recommended by the CSS
+   * specification: http://www.w3.org/TR/CSS2/fonts.html#propdef-font-family
+   * <p>It's important to notice that the converter doesn't manage the case where a constant is
+   * used inside a font family name with whitespace. The font family name will be quoted and
+   * won't be replaced.
+   * {@code
+   *   @def myFontFamily Comic;
+   *
+   *   .div {
+   *     font-family: Arial, myFontFamily sans MS;
+   *   }
+   * }
+   *
+   * will be converted to:
+   *
+   * {@code
+   *   @def MY_FONT_FAMILY Comic;
+   *
+   *   .div {
+   *    font-family: Arial, "MY_FONT_FAMILY sans MS";
+   *   }
+   * }
+   * @param cssProperty
+   * @return
+   */
+  private String quoteFontFamilyWithWhiteSpace(String cssProperty) {
+    StringBuilder valueBuilder = new StringBuilder();
+
+    boolean first = true;
+
+    for (String subProperty : Splitter.on(",").trimResults().omitEmptyStrings().split(cssProperty)) {
+      if (first) {
+        first = false;
+      } else {
+        valueBuilder.append(",");
+      }
+
+      if (NOT_QUOTED_WITH_WITHESPACE.matcher(subProperty).matches()) {
+        valueBuilder.append("'" + subProperty + "'");
+      } else {
+        valueBuilder.append(subProperty);
+      }
+    }
+
+    return valueBuilder.toString();
   }
 
   @Override

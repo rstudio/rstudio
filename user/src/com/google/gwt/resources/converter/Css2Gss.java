@@ -76,8 +76,6 @@ public class Css2Gss {
 
         new AlternateAnnotationCreatorVisitor().accept(sheet);
 
-        new FontFamilyVisitor().accept(sheet);
-
         GssGenerationVisitor gssGenerationVisitor = new GssGenerationVisitor(
             new DefaultTextOutput(false), defNameMapping, lenient, treeLogger);
         gssGenerationVisitor.accept(sheet);

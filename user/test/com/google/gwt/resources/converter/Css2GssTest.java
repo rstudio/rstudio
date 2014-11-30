@@ -61,7 +61,7 @@ public class Css2GssTest extends TestCase {
   }
 
   public void testFontFamily() throws Exception {
-    assertFileContentEqualsAfterConversion("font-bug.css", "font-bug.gss");
+    assertFileContentEqualsAfterConversion("font-family.css", "font-family.gss");
   }
 
   public void testExternalBug() throws Exception {

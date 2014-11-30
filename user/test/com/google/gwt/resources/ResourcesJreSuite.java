@@ -19,7 +19,6 @@ import com.google.gwt.resources.converter.AlternateAnnotationCreatorVisitorTest;
 import com.google.gwt.resources.converter.Css2GssTest;
 import com.google.gwt.resources.converter.DefCollectorVisitorTest;
 import com.google.gwt.resources.converter.ElseNodeCreatorTest;
-import com.google.gwt.resources.converter.FontFamilyVisitorTest;
 import com.google.gwt.resources.converter.UndefinedConstantVisitorTest;
 import com.google.gwt.resources.css.CssExternalTest;
 import com.google.gwt.resources.css.CssNodeClonerTest;
@@ -84,7 +83,6 @@ public class ResourcesJreSuite {
     suite.addTestSuite(DefCollectorVisitorTest.class);
     suite.addTestSuite(ElseNodeCreatorTest.class);
     suite.addTestSuite(AlternateAnnotationCreatorVisitorTest.class);
-    suite.addTestSuite(FontFamilyVisitorTest.class);
     suite.addTestSuite(UndefinedConstantVisitorTest.class);
 
     return suite;

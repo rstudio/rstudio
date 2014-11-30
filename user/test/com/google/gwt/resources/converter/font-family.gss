@@ -1,0 +1,13 @@
+@def DEFAULT_FONT_FAMILY Arial, Helvetica, sans-serif;
+
+div {
+  font-family: DEFAULT_FONT_FAMILY;
+}
+
+span {
+  font-family: Helvetica,'Comic sans MS',DEFAULT_FONT_FAMILY;
+}
+
+.someClass {
+  font-family: 'Arial Unicode MS',Arial,sans-serif !important;
+}
