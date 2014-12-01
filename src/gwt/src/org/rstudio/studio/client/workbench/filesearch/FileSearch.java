@@ -1,7 +1,6 @@
 package org.rstudio.studio.client.workbench.filesearch;
 
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
@@ -38,7 +37,7 @@ public class FileSearch
       session_ = session;
    }
    
-   public void listAllFiles(DocDisplay docDisplay)
+   public void listProjectFiles(DocDisplay docDisplay)
    {
       docDisplay_ = docDisplay;
       FileSystemItem projectDir = session_.getSessionInfo().getActiveProjectDir();
@@ -48,9 +47,7 @@ public class FileSearch
          return;
       
       // list files
-      server_.listAllFiles(
-            projectDir.getPath(),
-            "",
+      server_.listProjectFiles(
             new ServerRequestCallback<JsArrayString>()
             {
                @Override

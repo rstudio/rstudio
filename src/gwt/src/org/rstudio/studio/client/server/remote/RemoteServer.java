@@ -941,6 +941,14 @@ public class RemoteServer implements Server
                   params,
                   requestCallback);
    }
+   
+   public void listProjectFiles(ServerRequestCallback<JsArrayString> requestCallback)
+   {
+      sendRequest(
+            RPC_SCOPE,
+            LIST_PROJECT_FILES,
+            requestCallback);
+   }
 
    public void createFolder(FileSystemItem folder,
                             ServerRequestCallback<Void> requestCallback)

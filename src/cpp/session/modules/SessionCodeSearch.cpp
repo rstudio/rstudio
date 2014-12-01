@@ -285,6 +285,30 @@ public:
          }
       }
    }
+   
+   std::vector<std::string> listFiles(bool asRelativePath)
+   {
+      std::vector<std::string> filePaths;
+      filePaths.reserve(entries_.size());
+      if (asRelativePath)
+      {
+         FilePath projectDir = projects::projectContext().directory();
+         BOOST_FOREACH(const Entry& entry, entries_)
+         {
+            FilePath filePath(entry.fileInfo.absolutePath());
+            filePaths.push_back(
+                     filePath.relativePath(projectDir));
+         }
+      }
+      else
+      {
+         BOOST_FOREACH(const Entry& entry, entries_)
+         {
+            filePaths.push_back(entry.fileInfo.absolutePath());
+         }
+      }
+      return filePaths;
+   }
 
    void clear()
    {
@@ -1761,7 +1785,13 @@ void onFileMonitorDisabled()
    s_projectIndex.clear();
 }
 
-   
+Error listProjectFiles(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   pResponse->setResult(json::toJsonArray(s_projectIndex.listFiles(true)));
+   return Success();
+} 
+
 } // anonymous namespace
    
 Error initialize()
@@ -1786,7 +1816,8 @@ Error initialize()
       (bind(registerRpcMethod, "get_function_definition", getFunctionDefinition))
       (bind(registerRpcMethod, "get_search_path_function_definition", getSearchPathFunctionDefinition))
       (bind(registerRpcMethod, "get_method_definition", getMethodDefinition))
-      (bind(registerRpcMethod, "find_function_in_search_path", findFunctionInSearchPath));
+      (bind(registerRpcMethod, "find_function_in_search_path", findFunctionInSearchPath))
+      (bind(registerRpcMethod, "list_project_files", listProjectFiles));
 
    return initBlock.execute();
 }

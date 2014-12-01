@@ -35,30 +35,6 @@
 })
 
 .rs.addJsonRpcHandler("list_all_files", function(path, pattern) {
-   if ((ag <- Sys.which("ag")) != "")
-   {
-      if (!identical(path, getwd()))
-      {
-         owd <- getwd()
-         setwd(path)
-         on.exit(setwd(owd))
-      }
-      
-      if (pattern == "")
-         pattern <- "."
-         
-      command <- paste(
-         shQuote(ag),
-         "--nocolor",
-         "-g",
-         pattern
-      )
-      
-      files <- suppressWarnings(system(command, intern = TRUE))
-      attributes(files) <- NULL # drop status attr
-      return(files)
-   }
-   
    if (nzchar(pattern))
       list.files(path, pattern = pattern, recursive = TRUE)
    else

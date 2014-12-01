@@ -95,7 +95,6 @@ import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.events.ShinyAppsActionEvent;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.filesearch.FileSearch;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -4020,7 +4019,7 @@ public class TextEditingTarget implements
    @Handler
    void onListAllFiles()
    {
-      RStudioGinjector.INSTANCE.getFileSearch().listAllFiles(docDisplay_);
+      RStudioGinjector.INSTANCE.getFileSearch().listProjectFiles(docDisplay_);
    }
    
    boolean useScopeTreeFolding()
