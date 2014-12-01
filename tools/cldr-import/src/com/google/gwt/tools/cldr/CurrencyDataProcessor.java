@@ -78,8 +78,12 @@ public class CurrencyDataProcessor extends Processor {
 
   @Override
   protected void writeOutputFiles() throws IOException {
-    for (GwtLocale locale : localeData.getNonEmptyLocales()) {
-      String path = "client/impl/cldr/CurrencyData";
+    Set<GwtLocale> localesToWrite = localeData.getNonEmptyLocales();
+    String path = "client/impl/cldr/CurrencyData";
+
+    writeVersionFile(path + ".versions.txt", localesToWrite);
+
+    for (GwtLocale locale : localesToWrite) {
       PrintWriter pw = createOutputFile(path + Processor.localeSuffix(locale) + ".properties");
       printHeader(pw);
       printVersion(pw, locale, "# ");

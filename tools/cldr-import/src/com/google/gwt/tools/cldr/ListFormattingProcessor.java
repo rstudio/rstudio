@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Extract list formatting information from CLDR data.
@@ -48,11 +49,16 @@ public class ListFormattingProcessor extends Processor {
 
   @Override
   protected void writeOutputFiles() throws IOException {
-    for (GwtLocale locale : localeData.getNonEmptyLocales("list")) {
+    Set<GwtLocale> localesToPrint = localeData.getNonEmptyLocales("list");
+    String path = "rebind/cldr/ListPatterns";
+
+    writeVersionFile(path + ".versions.txt", localesToPrint);
+
+    for (GwtLocale locale : localesToPrint) {
       PrintWriter pw = null;
       for (Map.Entry<String, String> entry : localeData.getEntries("list", locale).entrySet()) {
         if (pw == null) {
-          pw = createOutputFile("rebind/cldr/ListPatterns_" + locale.getAsString() + ".properties");
+          pw = createOutputFile(path + "_" + locale.getAsString() + ".properties");
           printPropertiesHeader(pw);
           pw.println();
           printVersion(pw, locale, "# ");

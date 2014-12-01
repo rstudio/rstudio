@@ -30,8 +30,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.util.Calendar;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Base class for CLDR processors that generate GWT i18n resources.
@@ -139,25 +143,6 @@ public abstract class Processor {
     // do nothing by default
   }
 
-  /**
-   * Create an output file including any parent directories.
-   * 
-   * @param name name of file, which will be prefixed by
-   *          user/src/com/google/gwt/i18n/client/impl/cldr
-   * @param ext extension for file
-   * @param locale locale name or null if not localized
-   * @return a PrintWriter instance
-   * @throws IOException
-   */
-  protected PrintWriter createFile(String name, String ext, String locale) throws IOException {
-    if (locale == null || locale.length() == 0) {
-      locale = "";
-    } else {
-      locale = "_" + locale;
-    }
-    return createOutputFile("client/impl/cldr/" + name + locale + "." + ext);
-  }
-
   protected PrintWriter createOutputFile(String suffix) throws IOException, FileNotFoundException {
     return createOutputFile(I18N_PACKAGE_PATH, suffix);
   }
@@ -227,7 +212,7 @@ public abstract class Processor {
   }
 
   protected void printJavaHeader(PrintWriter pw) {
-    int year = Calendar.getInstance().get(Calendar.YEAR);
+    int year = 2012;
     pw.println("/*");
     pw.println(" * Copyright " + year + " Google Inc.");
     pw.println(" * ");
@@ -250,7 +235,7 @@ public abstract class Processor {
   }
 
   protected void printPropertiesHeader(PrintWriter pw) {
-    int year = Calendar.getInstance().get(Calendar.YEAR);
+    int year = 2012;
     pw.println("# Copyright " + year + " Google Inc.");
     pw.println("# ");
     pw.println("# Licensed under the Apache License, Version 2.0 (the "
@@ -271,12 +256,43 @@ public abstract class Processor {
   }
 
   protected void printVersion(PrintWriter pw, GwtLocale locale, String prefix) {
-    pw.println(prefix + "DO NOT EDIT - GENERATED FROM CLDR DATA:");
-    pw.println(prefix + " cldrVersion=" + CLDRFile.GEN_VERSION);
-    Map<String, String> map = localeData.getEntries("version", locale);
-    for (Map.Entry<String, String> entry : map.entrySet()) {
-      pw.println(prefix + " " + entry.getKey() + "=" + entry.getValue());
+    pw.println(prefix + "DO NOT EDIT - GENERATED FROM CLDR DATA");
+  }
+
+  /**
+   * Writes a file containing CLDR version information.
+   * @param path the filename, relative to {@link #I18N_PACKAGE_PATH}.
+   */
+  protected void writeVersionFile(String path, Set<GwtLocale> locales) throws IOException {
+    Map<String, GwtLocale> byName = new HashMap<String, GwtLocale>();
+    for (GwtLocale locale : locales) {
+      String name = locale.getAsString();
+      if (byName.containsKey(name)) {
+        throw new RuntimeException("more than one locale with name: " + name);
+      }
+      byName.put(name, locale);
     }
+
+    List<String> names = new ArrayList<String>(byName.keySet());
+    Collections.sort(names);
+
+    PrintWriter out = createOutputFile(path);
+    out.println("cldrVersion=" + CLDRFile.GEN_VERSION);
+    out.println();
+    for (String name : names) {
+      Map<String, String> props = localeData.getEntries("version", byName.get(name));
+      List<String> keys = new ArrayList<String>(props.keySet());
+      Collections.sort(keys);
+      for (String key : keys) {
+        String value = props.get(key);
+        if (!name.isEmpty()) {
+          key = name + "." + key;
+        }
+        out.println(key + "=" + value);
+      }
+      out.println();
+    }
+    out.close();
   }
 
   /**

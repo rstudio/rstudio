@@ -158,7 +158,11 @@ public class LocalizedNamesProcessor extends Processor {
 
   @Override
   protected void writeOutputFiles() throws IOException {
-    for (GwtLocale locale : localeData.getNonEmptyLocales("territory")) {
+    Set<GwtLocale> localesToPrint = localeData.getNonEmptyLocales("territory");
+    String cldrDir = "client/impl/cldr/";
+    writeVersionFile(cldrDir + "LocalizedNames.versions.txt", localesToPrint);
+
+    for (GwtLocale locale : localesToPrint) {
       Map<String, String> namesMap = localeData.getEntries("territory", locale);
       List<String> regionCodesWithNames = new ArrayList<String>();
       for (String regionCode : namesMap.keySet()) {
@@ -176,25 +180,29 @@ public class LocalizedNamesProcessor extends Processor {
       // sort for deterministic output
       Collections.sort(regionCodesWithNames);
       if (locale.isDefault()) {
-        generateDefaultLocale(locale, namesMap, regionCodesWithNames, sortOrder, likelyOrder);
+        generateDefaultLocale("client/DefaultLocalizedNames.java",
+            locale, namesMap, regionCodesWithNames, sortOrder, likelyOrder);
       }
-      generateLocale(locale, namesMap, regionCodesWithNames, sortOrder, likelyOrder);
+
+      // Choose filename
+      String localePart = locale.getAsString();
+      if (localePart == null || localePart.isEmpty()) {
+        localePart = "";
+      } else {
+        localePart = "_" + localePart;
+      }
+      String path = cldrDir + "LocalizedNamesImpl" + localePart + "." + "java";
+
+      generateLocale(path, locale, namesMap, regionCodesWithNames, sortOrder, likelyOrder);
     }
   }
 
-  /**
-   * @param locale
-   * @param namesMap
-   * @param regionCodesWithNames
-   * @param sortOrder
-   * @param likelyOrder
-   */
-  private void generateDefaultLocale(GwtLocale locale, Map<String, String> namesMap,
+  private void generateDefaultLocale(String path, GwtLocale locale, Map<String, String> namesMap,
       List<String> regionCodesWithNames, String[] sortOrder, String[] likelyOrder)
       throws IOException {
     PrintWriter pw = null;
     try {
-      pw = createOutputFile("client/DefaultLocalizedNames.java");
+      pw = createOutputFile(path);
       printHeader(pw);
       pw.println("package com.google.gwt.i18n.client;");
       pw.println();
@@ -229,19 +237,12 @@ public class LocalizedNamesProcessor extends Processor {
     }
   }
 
-  /**
-   * @param locale
-   * @param likelyOrder
-   * @param sortOrder
-   * @param regionCodesWithNames
-   * @param namesMap
-   */
-  private void generateLocale(GwtLocale locale, Map<String, String> namesMap,
+  private void generateLocale(String path, GwtLocale locale, Map<String, String> namesMap,
       List<String> regionCodesWithNames, String[] sortOrder, String[] likelyOrder)
       throws IOException {
     PrintWriter pw = null;
     try {
-      pw = createFile("LocalizedNamesImpl", "java", locale.getAsString());
+      pw = createOutputFile(path);
       printHeader(pw);
       pw.println("package com.google.gwt.i18n.client.impl.cldr;");
       pw.println();
