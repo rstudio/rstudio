@@ -98,12 +98,14 @@ class DirectoryPathPrefixChangeManager {
     DirectoryAndPathPrefix directoryAndPathPrefix =
         new DirectoryAndPathPrefix(directoryClassPathEntry, pathPrefixSet);
 
-    if (changedFileAccumulatorsByDirectoryAndPathPrefix.containsKey(directoryAndPathPrefix)) {
-      return;
-    }
+    synchronized (changedFileAccumulatorsByDirectoryAndPathPrefix) {
+      if (changedFileAccumulatorsByDirectoryAndPathPrefix.containsKey(directoryAndPathPrefix)) {
+        return;
+      }
 
-    changedFileAccumulatorsByDirectoryAndPathPrefix.put(directoryAndPathPrefix,
-        new ChangedFileAccumulator(directoryClassPathEntry.getDirectory().toPath()));
+      changedFileAccumulatorsByDirectoryAndPathPrefix.put(directoryAndPathPrefix,
+          new ChangedFileAccumulator(directoryClassPathEntry.getDirectory().toPath()));
+    }
   }
 
   /**
@@ -123,14 +125,18 @@ class DirectoryPathPrefixChangeManager {
   static int getActiveListenerCount() {
     clearOldListeners();
 
-    return changedFileAccumulatorsByDirectoryAndPathPrefix.size();
+    synchronized (changedFileAccumulatorsByDirectoryAndPathPrefix) {
+      return changedFileAccumulatorsByDirectoryAndPathPrefix.size();
+    }
   }
 
   @VisibleForTesting
   static boolean isListening(DirectoryClassPathEntry directoryClassPathEntry,
       PathPrefixSet pathPrefixSet) {
-    return changedFileAccumulatorsByDirectoryAndPathPrefix.containsKey(
-        new DirectoryAndPathPrefix(directoryClassPathEntry, pathPrefixSet));
+    synchronized (changedFileAccumulatorsByDirectoryAndPathPrefix) {
+      return changedFileAccumulatorsByDirectoryAndPathPrefix.containsKey(
+          new DirectoryAndPathPrefix(directoryClassPathEntry, pathPrefixSet));
+    }
   }
 
   /**
@@ -139,15 +145,17 @@ class DirectoryPathPrefixChangeManager {
    * accumulation.
    */
   private static void clearOldListeners() {
-    Iterator<Entry<DirectoryAndPathPrefix, ChangedFileAccumulator>> entriesIterator =
-        changedFileAccumulatorsByDirectoryAndPathPrefix.entrySet().iterator();
-    while (entriesIterator.hasNext()) {
-      Entry<DirectoryAndPathPrefix, ChangedFileAccumulator> entry = entriesIterator.next();
-      DirectoryAndPathPrefix directoryAndPathPrefix = entry.getKey();
-      ChangedFileAccumulator fileChangeAccumulator = entry.getValue();
-      if (directoryAndPathPrefix.isOld()) {
-        fileChangeAccumulator.shutdown();
-        entriesIterator.remove();
+    synchronized (changedFileAccumulatorsByDirectoryAndPathPrefix) {
+      Iterator<Entry<DirectoryAndPathPrefix, ChangedFileAccumulator>> entriesIterator =
+          changedFileAccumulatorsByDirectoryAndPathPrefix.entrySet().iterator();
+      while (entriesIterator.hasNext()) {
+        Entry<DirectoryAndPathPrefix, ChangedFileAccumulator> entry = entriesIterator.next();
+        DirectoryAndPathPrefix directoryAndPathPrefix = entry.getKey();
+        ChangedFileAccumulator fileChangeAccumulator = entry.getValue();
+        if (directoryAndPathPrefix.isOld()) {
+          fileChangeAccumulator.shutdown();
+          entriesIterator.remove();
+        }
       }
     }
   }
