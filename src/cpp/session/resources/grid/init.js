@@ -32,6 +32,26 @@ var showError = function(msg) {
   document.getElementById("data").style.display = "none";
 };
 
+var renderNumberCell = function(data, type, row, meta) {
+  // TODO: escaping
+  return '<div class="numberCell">' + data + '</div>';
+};
+
+var renderTextCell = function(data, type, row, meta) {
+  // TODO: escaping
+  var search = table.search();
+  if (search.length > 0) {
+    var idx = data.toLowerCase().indexOf(search.toLowerCase());
+    if (idx >= 0) {
+      return data.substring(0, idx) + '<span class="searchMatch">' + 
+             data.substring(idx, idx + search.length) + '</span>' + 
+             data.substring(idx + search.length, data.length);
+    }
+    return data;
+  }
+  return data;
+};
+
 var showFilterUI = function(idx, col) {
   var filter = document.getElementById("filterValues");
   var currentColValue = 
@@ -222,16 +242,26 @@ var initDataTable = function() {
       return;
     }
 
+    // keep track of which columns are numeric and which are text (we use
+    // different renderers for these types)
+    var numberCols = [];
+    var textCols = [];
+
     // add each column
     var thead = document.getElementById("data_cols");
     for (var i = 0; i < cols.length; i++) {
       // create table header
       thead.appendChild(createHeader(i, cols[i]));
+      if (cols[i].col_type === "numeric") {
+        numberCols.push(i);
+      } else {
+        textCols.push(i);
+      }
     }
     var scrollHeight = window.innerHeight - (thead.clientHeight + 2);
 
     // activate the data table
-    table = $("#data").dataTable({
+    $("#data").dataTable({
       "processing": true,
       "serverSide": true,
       "pagingType": "full_numbers",
@@ -240,6 +270,13 @@ var initDataTable = function() {
       "scrollX": true,
       "dom": "tiS", 
       "deferRender": true,
+      "columnDefs": [ {
+        "targets": numberCols,
+        "render": renderNumberCell
+        }, {
+        "targets": textCols,
+        "render": renderTextCell
+        }],
       "ajax": {
         "url": "../grid_data", 
         "data": function(d) {
@@ -263,6 +300,8 @@ var initDataTable = function() {
         },
        }
     });
+
+    table = $("#data").DataTable();
 
     // perform initial sizing and listen for size changes
     sizeDataTable();
@@ -353,6 +392,13 @@ window.refreshData = function(structureChanged) {
     t.ajax.reload(function() {
       s.scrollToRow(row, false);
     },false);
+  }
+};
+
+window.applySearch = function(text) {
+  var t = $("#data").DataTable();
+  if (text != t.search()) {
+    t.search(text).draw();
   }
 };
 

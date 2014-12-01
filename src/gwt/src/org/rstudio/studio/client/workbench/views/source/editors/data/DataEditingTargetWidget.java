@@ -18,13 +18,17 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.*;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.widget.FindTextBox;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -104,18 +108,10 @@ public class DataEditingTargetWidget extends Composite
                                                     mainWidget);
 
       initWidget(panel);
-
    }
 
    private Toolbar createToolbar(DataItem dataItem, Styles styles)
    {
-      Label description = new Label(
-            StringUtil.formatGeneralNumber(dataItem.getTotalObservations())
-            + " observations of " +
-            StringUtil.formatGeneralNumber(dataItem.getVariables())
-            + " variables",
-            false);
-      description.addStyleName(styles.description());
 
       Toolbar toolbar = new EditingTargetToolbar(commands_);
       toolbar.addLeftWidget(commands_.popoutDoc().createToolbarButton());
@@ -133,27 +129,42 @@ public class DataEditingTargetWidget extends Composite
                  }
               });
       toolbar.addLeftWidget(findButton_);
-      toolbar.addRightWidget(description);
+      find_ = new FindTextBox("Find in data");
+      find_.getElement().getStyle().setMarginBottom(2, Unit.PX);
+      find_.setIconVisible(true);
+      toolbar.addRightWidget(find_);
+      
+      find_.addValueChangeHandler(new ValueChangeHandler<String>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<String> arg0)
+         {
+            applySearch(getWindow(), arg0.getValue());
+         }
+      });
       
       return toolbar;
+   }
+   
+   private WindowEx getWindow()
+   {
+      IFrameElementEx frameEl = (IFrameElementEx) frame_.getElement().cast();
+      return frameEl.getContentWindow();
    }
 
    public void print()
    {
-      IFrameElementEx frameEl = (IFrameElementEx) frame_.getElement().cast();
-      frameEl.getContentWindow().print();
+      getWindow().print();
    }
    
    public void setFilterUIVisible(boolean visible)
    {
-      IFrameElementEx frameEl = (IFrameElementEx) frame_.getElement().cast();
-      setFilterUIVisible(frameEl.getContentWindow(), visible);
+      setFilterUIVisible(getWindow(), visible);
    }
    
    public void refreshData(boolean structureChanged)
    {
-      IFrameElementEx frameEl = (IFrameElementEx) frame_.getElement().cast();
-      refreshData(frameEl.getContentWindow(), structureChanged);
+      refreshData(getWindow(), structureChanged);
    }
 
    private static final native void setFilterUIVisible (WindowEx frame, boolean visible) /*-{
@@ -162,6 +173,10 @@ public class DataEditingTargetWidget extends Composite
    
    private static final native void refreshData(WindowEx frame, boolean structureChanged) /*-{
       frame.refreshData(structureChanged);
+   }-*/;
+
+   private static final native void applySearch(WindowEx frame, String text) /*-{
+      frame.applySearch(text);
    }-*/;
 
    public Widget asWidget()
@@ -173,4 +188,5 @@ public class DataEditingTargetWidget extends Composite
    private RStudioFrame frame_;
    private ToolbarButton findButton_;
    private boolean filtered_ = false;
+   private FindTextBox find_;
 }

@@ -237,9 +237,9 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    int length = http::util::fieldValue<int>(fields, "length", 0);
    int ordercol = http::util::fieldValue<int>(fields, "order[0][column]", -1);
    std::string orderdir = http::util::fieldValue<std::string>(fields, "order[0][dir]", "asc");
+   std::string search = http::util::fieldValue<std::string>(fields, "search[value]", "");
 
-   // unfortunately Rf_nrow and Rf_ncol aren't applicable here
-   int nrow = 0, ncol = 0;
+   int nrow = 1, ncol = 0;
    int filteredNRow = 0;
    r::exec::RFunction("nrow", dataSEXP).call(&nrow);
    r::exec::RFunction("ncol", dataSEXP).call(&ncol);
@@ -260,24 +260,31 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    }
 
    // apply transformations if needed, and compute new row count
-   if (ordercol > 0 || hasFilter) 
+   if (ordercol > 0 || hasFilter || !search.empty()) 
    {
-      error = r::exec::RFunction(".rs.applyTransform", dataSEXP, filters, ordercol, orderdir)
-         .call(&dataSEXP, &protect);
+      r::exec::RFunction transform(".rs.applyTransform");
+      transform.addParam("x", dataSEXP);       // data to transform
+      transform.addParam("filtered", filters); // which columns are filtered
+      transform.addParam("search", search);    // global search (across cols)
+      transform.addParam("col", ordercol);     // which column to order on
+      transform.addParam("dir", orderdir);     // order direction ("asc"/"desc")
+      transform.call(&dataSEXP, &protect);
       if (error)
          throw r::exec::RErrorException(error.summary());
+
+      // check to see if we've accidentally transformed ourselves into nothing
+      // (this shouldn't generally happen without a specific error)
+      if (dataSEXP == NULL || TYPEOF(dataSEXP) == NILSXP || 
+          Rf_isNull(dataSEXP)) 
+      {
+         throw r::exec::RErrorException("Failure to sort or filter data");
+      }
+
       r::exec::RFunction("nrow", dataSEXP).call(&filteredNRow);
    }
    else
    {
       filteredNRow = nrow;
-   }
-
-   // check to see if we've accidentally transformed ourselves into nothing
-   // (this shouldn't generally happen without a specific error)
-   if (dataSEXP == NULL || TYPEOF(dataSEXP) == NILSXP || Rf_isNull(dataSEXP)) 
-   {
-      throw r::exec::RErrorException("Failure to sort or filter data");
    }
 
    // return the lesser of the rows available and rows requested
@@ -292,6 +299,12 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    for (unsigned i = 0; i < static_cast<unsigned>(ncol); i++)
    {
       SEXP columnSEXP = VECTOR_ELT(dataSEXP, i);
+      if (columnSEXP == NULL || TYPEOF(columnSEXP) == NILSXP || 
+          Rf_isNull(columnSEXP))
+      {
+         throw r::exec::RErrorException("No data in column " + 
+               boost::lexical_cast<std::string>(i));
+      }
       SEXP formattedColumnSEXP;
       r::exec::RFunction formatFx(".rs.formatDataColumn");
       formatFx.addParam(columnSEXP);

@@ -94,8 +94,9 @@
   frame
 })
 
-.rs.addFunction("applyTransform", function(x, filtered, col, dir) 
+.rs.addFunction("applyTransform", function(x, filtered, search, col, dir) 
 {
+  # apply columnwise filters
   for (i in seq_along(filtered)) {
     if (nchar(filtered[i]) > 0 && length(x[,i]) > 0) {
       sampleval <- x[1,i] 
@@ -125,6 +126,15 @@
     }
   }
 
+  # apply global search
+  if (!is.null(search) && nchar(search) > 0)
+  {
+    x <- x[Reduce("|", lapply(x, function(column) { 
+             grepl(search, column, ignore.case = TRUE)
+           })),]
+  }
+
+  # apply sort
   if (col > 0 && length(x[,col]) > 0)
   {
     x <- as.data.frame(x[order(x[,col], decreasing = identical(dir, "desc")),])

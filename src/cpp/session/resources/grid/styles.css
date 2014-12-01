@@ -57,7 +57,7 @@ table.dataTable thead th:first-child
     margin-top: 10%;
     text-align: center;
     display: none;
-    padding: 50px;
+    padding: 30px;
     font-size: 12px;
     font-family: 'Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', Verdana, Helvetica, sans-serif;
     border: 2px solid #e0e0e0;
@@ -65,7 +65,13 @@ table.dataTable thead th:first-child
     border-radius: 4px;
     overflow: hidden;
     background-color: white;
-    position: relative;
+    position: absolute;
+    left: 25%;
+}
+
+.errorWrapper input
+{
+    margin-top: 30px;
 }
 
 #error
@@ -88,7 +94,6 @@ table.dataTable thead th:first-child
 {
     border: 1px solid #c0c0c0;
     border-radius: 1px;
-    width: 100%;
     overflow: hidden;
     margin-top: 4px;
     background-color: #ffffff;
@@ -175,3 +180,12 @@ table.dataTable thead .sorting_asc {
     height: 25px;
     text-align: left;
 }
+
+.numberCell {
+    text-align: right;
+}
+
+.searchMatch {
+    background-color: #e8e8ff;
+}
+
