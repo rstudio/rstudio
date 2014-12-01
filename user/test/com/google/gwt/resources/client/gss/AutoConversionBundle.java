@@ -53,9 +53,18 @@ public interface AutoConversionBundle extends ClientBundle {
     String obfuscated();
   }
 
+  /**
+   * For testing conversion of conditional.
+   */
+  interface Conditional extends CssResource {
+    String foo();
+  }
+
   ConstantRenaming constantRenaming();
 
   ConstantConditional constantConditional();
 
   LenientExternal lenientExternal();
+
+  Conditional conditional();
 }

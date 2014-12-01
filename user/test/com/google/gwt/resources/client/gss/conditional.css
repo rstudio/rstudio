@@ -1,0 +1,10 @@
+@if !customProperty2 foo bar {
+  .foo {
+    color: black;
+  }
+}
+@else {
+  .foo {
+    color: white;
+  }
+}

@@ -110,3 +110,9 @@
     }
   }
 }
+
+@if (!is("property3", "foo") && !is("property3", "bar") && !is("property3", "baz")) {
+  .foo8 {
+    color: black;
+  }
+}

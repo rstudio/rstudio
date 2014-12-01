@@ -18,6 +18,7 @@ package com.google.gwt.resources.client.gss;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.resources.client.gss.AutoConversionBundle.Conditional;
 import com.google.gwt.resources.client.gss.AutoConversionBundle.ConstantConditional;
 import com.google.gwt.resources.client.gss.AutoConversionBundle.ConstantRenaming;
 import com.google.gwt.resources.client.gss.AutoConversionBundle.LenientExternal;
@@ -57,6 +58,13 @@ public class AutoConversionTest extends GWTTestCase {
     assertEquals("nonObfuscated", lenientExternal.nonObfuscated());
     assertEquals("nonObfuscated2", lenientExternal.nonObfuscated2());
     assertEquals("nonObfuscated3", lenientExternal.nonObfuscated3());
+  }
+
+  public void testConditional() {
+    Conditional conditional = res().conditional();
+
+    String expectedCss = "." + conditional.foo() + "{color:white}";
+    assertEquals(expectedCss, conditional.getText());
   }
 
   private AutoConversionBundle res() {

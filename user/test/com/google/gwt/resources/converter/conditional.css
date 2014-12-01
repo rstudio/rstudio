@@ -106,3 +106,9 @@
     }
   }
 }
+
+@if !property3 foo bar baz {
+  .foo8 {
+    color: black;
+  }
+}

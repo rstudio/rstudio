@@ -8,4 +8,6 @@
   <set-configuration-property name="CssResource.conversionMode" value="lenient" />
   <define-configuration-property name="customProperty" is-multi-valued="false"/>
   <set-configuration-property name="customProperty" value="true"/>
+  <define-configuration-property name="customProperty2" is-multi-valued="false"/>
+  <set-configuration-property name="customProperty2" value="foo"/>
 </module>

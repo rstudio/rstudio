@@ -51,6 +51,7 @@ import java.util.regex.Pattern;
  */
 public class GssGenerationVisitor extends ExtendedCssVisitor {
   /* templates and tokens list */
+  private static final String AND = " && ";
   private static final String DEF = "@def ";
   private static final String ELSE = "@else ";
   private static final String ELSE_IF = "@elseif (%s)";
@@ -556,7 +557,11 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
 
     for (String propertyValue : x.getPropertyValues()) {
       if (builder.length() != 0) {
-        builder.append(OR);
+        if (x.isNegated()) {
+          builder.append(AND);
+        } else {
+          builder.append(OR);
+        }
       }
 
       if (x.isNegated()) {
