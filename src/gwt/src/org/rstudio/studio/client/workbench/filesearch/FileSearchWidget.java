@@ -492,6 +492,11 @@ public class FileSearchWidget extends ModalDialogBase
       selectedCell_ = null;
    }
    
+   public void setDocDisplay(DocDisplay docDisplay)
+   {
+      docDisplay_ = docDisplay;
+   }
+   
    private static final int MAX_GRID_SIZE = 20;
    private static final FileSearchWidgetResources RES =
          FileSearchWidgetResources.INSTANCE;

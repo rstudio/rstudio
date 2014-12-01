@@ -70,6 +70,8 @@ public class FileSearch
       // display 'find file' widget
       if (fileSearchWidget_ == null)
          fileSearchWidget_ = new FileSearchWidget(docDisplay_);
+      else
+         fileSearchWidget_.setDocDisplay(docDisplay_);
       
       fileSearchWidget_.setFilesAndShow(files);
    }
