@@ -18,13 +18,6 @@ var stepPrecision = function(str) {
   return Math.pow(10, (idx - str.length) + 1);
 };
 
-// called when the window size changes--adjust the grid size accordingly
-var sizeDataTable = function() {
-  $(".dataTables_scrollBody").css("height", 
-    window.innerHeight - ($("thead").height() + 25));
-  $("#data").DataTable().columns.adjust().draw();
-};
-
 var showError = function(msg) {
   document.getElementById("errorWrapper").style.display = "block";
   document.getElementById("errorMask").style.display = "block";
@@ -32,30 +25,69 @@ var showError = function(msg) {
   document.getElementById("data").style.display = "none";
 };
 
+var escapeHtml = function(html) {
+  var replacements = {
+    "<":  "&lt;",
+    ">":  "&gt;",
+    "&":  "&amp;" };
+  return html.replace(/[&<>]/g, function(ch) { return replacements[ch]; });
+};
+
 var renderNumberCell = function(data, type, row, meta) {
-  // TODO: escaping
   return '<div class="numberCell">' + data + '</div>';
 };
 
 var renderTextCell = function(data, type, row, meta) {
-  // TODO: escaping
   var search = table.search();
   if (search.length > 0) {
     var idx = data.toLowerCase().indexOf(search.toLowerCase());
     if (idx >= 0) {
-      return data.substring(0, idx) + '<span class="searchMatch">' + 
-             data.substring(idx, idx + search.length) + '</span>' + 
-             data.substring(idx + search.length, data.length);
+      return escapeHtml(data.substring(0, idx)) + '<span class="searchMatch">' + 
+             escapeHtml(data.substring(idx, idx + search.length)) + '</span>' + 
+             escapeHtml(data.substring(idx + search.length, data.length));
     }
-    return data;
+    return escapeHtml(data);
   }
-  return data;
+  return escapeHtml(data);
+};
+
+var sizeDataTable = function(recalc) {
+  // don't apply a zero height, or no height change
+  if (window.innerHeight < 1) {
+    return;
+  }
+
+  // recalculate rows at new size if needed
+  if (recalc) {
+    table.settings().scroller().measure(false);
+  }
+
+  // adjust scroll body height accordingly
+  var scrollBody = $(".dataTables_scrollBody");
+  if (scrollBody && scrollBody.length > 0) {
+    scrollBody.css("height", 
+      window.innerHeight - ($("thead").height() + 25));
+    $("#data").DataTable().columns.adjust().draw();
+  }
+};
+
+// run a function after window size stops changing
+var runAfterSizing = function(func) {
+  var height = window.innerHeight;
+  var interval = window.setInterval(function() {
+    if (height === window.innerHeight) {
+      window.clearInterval(interval);
+      func();
+    } else {
+      height = window.innerHeight;
+    }
+  }, 10);
 };
 
 var showFilterUI = function(idx, col) {
   var filter = document.getElementById("filterValues");
   var currentColValue = 
-    $("#data").DataTable().columns(idx).search()[0];
+    table.columns(idx).search()[0];
   filter.innerHTML = "";
   if (col.col_type === "character") {
     // build filter UI for character fields 
@@ -304,8 +336,8 @@ var initDataTable = function() {
     table = $("#data").DataTable();
 
     // perform initial sizing and listen for size changes
-    sizeDataTable();
-    window.addEventListener("resize", sizeDataTable);
+    sizeDataTable(false);
+    window.addEventListener("resize", function() { sizeDataTable(false); });
   })
   .fail(function(jqXHR)
   {
@@ -325,18 +357,7 @@ var initDataTable = function() {
 };
 
 $(document).ready(function() {
-  // RStudio animates the window opening, so wait for window height to stop
-  // changing for 10ms before drawing
-  var height = window.innerHeight;
-  var interval = window.setInterval(function() {
-    if (height === window.innerHeight) {
-      window.clearInterval(interval);
-      initDataTable();
-    } else {
-      height = window.innerHeight;
-    }
-  }, 10);
-
+  runAfterSizing(initDataTable);
 
   document.getElementById("filterForm")
           .addEventListener("submit", function(evt) {
@@ -344,7 +365,7 @@ $(document).ready(function() {
     evt.preventDefault();
     hideFilterUI();
     updateColFilterDisplay();
-    $("#data").DataTable().columns(filterColIdx).search(getFilterColValue()).draw();
+    table.columns(filterColIdx).search(getFilterColValue()).draw();
   }, false);
 
   document.getElementById("clearFilter")
@@ -353,7 +374,7 @@ $(document).ready(function() {
     getFilterColValue = function() { return ""; };
     getFilterDisplayValue = function() { return "All"; };
     updateColFilterDisplay();
-    $("#data").DataTable().columns(filterColIdx).search("").draw();
+    table.columns(filterColIdx).search("").draw();
   }, false);
 });
 
@@ -374,7 +395,7 @@ window.setFilterUIVisible = function(visible) {
     // clear all the filter data
     $("#data").DataTable().columns().search("");
   }
-  sizeDataTable();
+  sizeDataTable(false);
 };
 
 window.refreshData = function(structureChanged) {
@@ -400,6 +421,10 @@ window.applySearch = function(text) {
   if (text != t.search()) {
     t.search(text).draw();
   }
+};
+
+window.applySizeChange = function() {
+  runAfterSizing(function() { sizeDataTable(true); });
 };
 
 })();

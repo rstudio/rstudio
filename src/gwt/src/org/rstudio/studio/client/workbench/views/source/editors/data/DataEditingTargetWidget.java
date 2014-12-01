@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.data;
 
+import java.util.ArrayList;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -30,6 +32,7 @@ import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.FindTextBox;
 import org.rstudio.core.client.widget.RStudioFrame;
+import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -129,20 +132,27 @@ public class DataEditingTargetWidget extends Composite
                  }
               });
       toolbar.addLeftWidget(findButton_);
-      find_ = new FindTextBox("Find in data");
-      find_.getElement().getStyle().setMarginBottom(2, Unit.PX);
-      find_.setIconVisible(true);
-      toolbar.addRightWidget(find_);
-      
-      find_.addValueChangeHandler(new ValueChangeHandler<String>()
-      {
+
+      SearchWidget searchWidget = new SearchWidget(new SuggestOracle() {
          @Override
-         public void onValueChange(ValueChangeEvent<String> arg0)
+         public void requestSuggestions(Request request, Callback callback)
          {
-            applySearch(getWindow(), arg0.getValue());
+            // no suggestions
+            callback.onSuggestionsReady(
+                  request,
+                  new Response(new ArrayList<Suggestion>()));
          }
       });
-      
+      searchWidget.addValueChangeHandler(new ValueChangeHandler<String>() {
+         @Override
+         public void onValueChange(ValueChangeEvent<String> event)
+         {
+            applySearch(getWindow(), event.getValue());
+         }
+      });
+
+      toolbar.addRightWidget(searchWidget);
+
       return toolbar;
    }
    
@@ -166,17 +176,30 @@ public class DataEditingTargetWidget extends Composite
    {
       refreshData(getWindow(), structureChanged);
    }
+   
+   public void applySizeChange()
+   {
+      applySizeChange(getWindow());
+   }
 
    private static final native void setFilterUIVisible (WindowEx frame, boolean visible) /*-{
-      frame.setFilterUIVisible(visible);
+      if (frame && frame.setFilterUIVisible)
+         frame.setFilterUIVisible(visible);
    }-*/;
    
    private static final native void refreshData(WindowEx frame, boolean structureChanged) /*-{
-      frame.refreshData(structureChanged);
+      if (frame && frame.refreshData)
+         frame.refreshData(structureChanged);
    }-*/;
 
    private static final native void applySearch(WindowEx frame, String text) /*-{
-      frame.applySearch(text);
+      if (frame && frame.applySort)
+         frame.applySearch(text);
+   }-*/;
+   
+   private static final native void applySizeChange(WindowEx frame) /*-{
+      if (frame && frame.applySizeChange)
+         frame.applySizeChange();
    }-*/;
 
    public Widget asWidget()

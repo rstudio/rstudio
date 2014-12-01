@@ -77,6 +77,14 @@ public class DataEditingTarget extends UrlContentEditingTarget
       }
    }
 
+   @Override
+   public void onActivate()
+   {
+      super.onActivate();
+      if (view_ != null)
+         view_.applySizeChange();
+   }
+
    private void clearDisplay()
    {
       progressPanel_.showProgress(1);
