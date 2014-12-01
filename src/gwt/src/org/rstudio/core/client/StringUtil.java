@@ -638,7 +638,7 @@ public class StringUtil
       if (string == null)
          return null;
       
-      if (string == "")
+      if (string.length() == 0)
          return "";
       
       boolean inSingleQuotes = false;
