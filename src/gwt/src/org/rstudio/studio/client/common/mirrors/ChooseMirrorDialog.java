@@ -105,7 +105,8 @@ public class ChooseMirrorDialog<T extends JavaScriptObject> extends ModalDialog<
             mirrors_ = new ArrayList<T>(mirrors.length());
             
             // create list box and select default item
-            listBox_ = new ListBox(false);
+            listBox_ = new ListBox();
+            listBox_.setMultipleSelect(false);
             listBox_.setVisibleItemCount(18); // all
             listBox_.setWidth("100%");
             if (mirrors.length() > 0)

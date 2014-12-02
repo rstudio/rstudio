@@ -109,7 +109,8 @@ public class RCompletionManager implements CompletionManager
                              InitCompletionFilter initFilter,
                              RCompletionContext rContext,
                              RnwCompletionContext rnwContext,
-                             DocDisplay docDisplay)
+                             DocDisplay docDisplay,
+                             boolean isConsole)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -122,6 +123,7 @@ public class RCompletionManager implements CompletionManager
       rContext_ = rContext;
       rnwContext_ = rnwContext;
       docDisplay_ = docDisplay;
+      isConsole_ = isConsole;
       sigTip_ = new RCompletionToolTip(docDisplay_);
       
       input_.addBlurHandler(new BlurHandler() {
@@ -306,7 +308,8 @@ public class RCompletionManager implements CompletionManager
    public boolean previewKeyDown(NativeEvent event)
    {
       if (sigTip_ != null)
-         sigTip_.previewKeyDown(event);
+         if (sigTip_.previewKeyDown(event))
+            return true;
       
       /**
        * KEYS THAT MATTER
@@ -540,23 +543,25 @@ public class RCompletionManager implements CompletionManager
          if (keyword.substring(0, currentToken.length()).equals(currentToken))
             return false;
       
-      boolean canAutocomplete =
-            uiPrefs_.alwaysCompleteInConsole().getValue() && 
+      boolean canAutoPopup =
             (currentLine.length() > lookbackLimit - 1 && isValidForRIdentifier(c));
+      
+      if (isConsole_ && !uiPrefs_.alwaysCompleteInConsole().getValue())
+         canAutoPopup = false;
 
-      if (canAutocomplete)
+      if (canAutoPopup)
       {
          for (int i = 0; i < lookbackLimit; i++)
          {
             if (!isValidForRIdentifier(currentLine.charAt(cursorColumn - i - 1)))
             {
-               canAutocomplete = false;
+               canAutoPopup = false;
                break;
             }
          }
       }
 
-      return canAutocomplete;
+      return canAutoPopup;
       
    }
    
@@ -597,7 +602,7 @@ public class RCompletionManager implements CompletionManager
                input_.getCursorPosition().getColumn() - 1); 
          
          // Automatically popup completions after certain function calls
-         if (c == '(')
+         if (c == '(' && !isLineInComment(docDisplay_.getCurrentLine()))
          {
             String token = StringUtil.getToken(
                   docDisplay_.getCurrentLine(),
@@ -1723,6 +1728,10 @@ public class RCompletionManager implements CompletionManager
    
    private void displaySignatureToolTip(final QualifiedName qualifiedName)
    {
+      // Bail on lack of UI prefs
+      if (!uiPrefs_.showSignatureTooltips().getValue())
+         return;
+      
       // We want to find the cursor position, and place the popup
       // above the cursor.
       server_.getArgs(
@@ -1799,6 +1808,7 @@ public class RCompletionManager implements CompletionManager
    private String token_ ;
    
    private final DocDisplay docDisplay_;
+   private final boolean isConsole_;
 
    private final Invalidation invalidation_ = new Invalidation();
    private CompletionRequestContext context_ ;

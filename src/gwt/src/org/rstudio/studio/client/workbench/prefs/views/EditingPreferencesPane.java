@@ -86,7 +86,7 @@ public class EditingPreferencesPane extends PreferencesPane
       completionPanel.add(showCompletions_);
       
       final CheckBox alwaysCompleteInConsole = checkboxPref(
-                       "Always show code completions in the console",
+                       "Allow automatic completions in console",
                        prefs.alwaysCompleteInConsole());
       completionPanel.add(alwaysCompleteInConsole);
       showCompletions_.addChangeHandler(new ChangeHandler() {
