@@ -39,6 +39,8 @@ public class AutoConversionTest extends GWTTestCase {
     assertEquals("38px", constantRenaming.my_constant());
     assertEquals(0, constantRenaming.ie6());
     assertEquals(0, constantRenaming.gecko1_8());
+
+    assertEquals("div{box-shadow:inset 0 1px 1px rgba(0,0,0,0.2)}", constantRenaming.getText());
   }
 
   public void testConstantConditional() {

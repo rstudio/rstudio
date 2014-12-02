@@ -67,9 +67,11 @@
 @def WHITE #fff;
 @def _LEFT left;
 @def _RIGHT right;
+@def ACTIVE_SHADOW inset 0 1px 1px rgba(0, 0, 0, 0.2);
 
 .foo {
   width: WIDTH;
   background: MY_URL7;
   background-image: -webkit-gradient(linear, _LEFT top, _RIGHT top, from(rgba(COLOR, COLOR, COLOR, 0)), to(WHITE));
+  box-shadow: ACTIVE_SHADOW;
 }

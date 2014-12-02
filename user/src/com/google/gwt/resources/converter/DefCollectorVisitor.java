@@ -84,19 +84,26 @@ public class DefCollectorVisitor extends CssVisitor {
 
       String upperCaseName = toUpperCase(def.getKey());
 
-      if (defMapping.containsValue(upperCaseName)) {
+      String validName = INVALID_CHAR.matcher(upperCaseName).replaceAll("_");
+
+      if (!validName.equals(upperCaseName)) {
+        treeLogger.log(Type.WARN, "Invalid characters detected in [" + upperCaseName + "]. They have " +
+            "been replaced [" + validName + "]");
+      }
+
+      if (defMapping.containsValue(validName)) {
         if (lenient) {
-          treeLogger.log(Type.WARN, "Two constants have the same name [" + upperCaseName + "] " +
+          treeLogger.log(Type.WARN, "Two constants have the same name [" + validName + "] " +
               "after conversion. The second constant will be renamed automatically.");
-          upperCaseName = renameConstant(upperCaseName);
+          validName = renameConstant(validName);
         } else {
           throw new Css2GssConversionException(
-              "Two constants have the same name [" + upperCaseName +
+              "Two constants have the same name [" + validName +
                   "] after conversion.");
         }
       }
 
-      defMapping.forcePut(def.getKey(), upperCaseName);
+      defMapping.forcePut(def.getKey(), validName);
     }
     return false;
   }
@@ -130,14 +137,7 @@ public class DefCollectorVisitor extends CssVisitor {
       }
     }
 
-    String validName = INVALID_CHAR.matcher(output).replaceAll("_");
-
-    if (!validName.equals(output.toString())) {
-      treeLogger.log(Type.WARN, "Invalid characters detected in [" + camelCase + "]. They have " +
-          "been replaced [" + validName + "]");
-    }
-
-    return validName;
+    return output.toString();
   }
 
   private boolean isUpperCase(String camelCase) {
