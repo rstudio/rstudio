@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.common.filetypes;
 
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
@@ -91,14 +90,6 @@ public class DocumentMode
    {
       String m = docDisplay.getLanguageMode(position);
       
-      // the default mode is Cpp in C++ documents -- check that first. Note that
-      // because we embed other modes in C++ documents (R) we need to check
-      // this first
-      if (docDisplay.getFileType().isCpp() || docDisplay.getFileType().isC())
-         return StringUtil.isNullOrEmpty(m);
-      
-      // otherwise, C++ must be an embedded mode -- check to see if we got
-      // an actual mode at the cursor position
       return isPositionInMode(
             docDisplay,
             position,
