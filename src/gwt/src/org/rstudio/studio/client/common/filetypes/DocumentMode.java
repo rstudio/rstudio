@@ -16,34 +16,80 @@ package org.rstudio.studio.client.common.filetypes;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
 public class DocumentMode
 {
-   public static boolean isCursorInMarkdownMode(DocDisplay docDisplay)
+   private static boolean isPositionInMode(DocDisplay docDisplay,
+                                           Position position,
+                                           String modeString)
+   {
+      String m = docDisplay.getLanguageMode(position);
+      return m != null && m.equals(modeString);
+   }
+   
+   // Markdown Mode
+   private static boolean isPositionInMarkdownMode(DocDisplay docDisplay,
+                                                   Position position)
    {
       if (docDisplay.getFileType().isPlainMarkdown())
          return true;
       
-      String m = docDisplay.getLanguageMode(
-            docDisplay.getCursorPosition());
-      return m != null && m.equals(FileType.MARKDOWN_LANG_MODE);
+      return isPositionInMode(
+            docDisplay,
+            position,
+            FileType.MARKDOWN_LANG_MODE);
+      
    }
    
-   public static boolean isCursorInRMode(DocDisplay docDisplay)
+   public static boolean isCursorInMarkdownMode(DocDisplay docDisplay)
+   {
+      return isPositionInMarkdownMode(
+            docDisplay,
+            docDisplay.getCursorPosition());
+   }
+   
+   public static boolean isSelectionInMarkdownMode(DocDisplay docDisplay)
+   {
+      return isPositionInMarkdownMode(
+            docDisplay,
+            docDisplay.getSelectionStart()) &&
+            isPositionInMarkdownMode(
+                  docDisplay,
+                  docDisplay.getSelectionEnd());
+   }
+   
+   // R Mode
+   private static boolean isPositionInRMode(DocDisplay docDisplay,
+                                            Position position)
    {
       if (docDisplay.getFileType().isR())
-            return true;
+         return true;
       
-      String m = docDisplay.getLanguageMode(
+      return isPositionInMode(
+            docDisplay,
+            position,
+            FileType.R_LANG_MODE);
+      
+   }
+   public static boolean isCursorInRMode(DocDisplay docDisplay)
+   {
+      return isPositionInRMode(
+            docDisplay,
             docDisplay.getCursorPosition());
-      return m != null && m.equals(FileType.R_LANG_MODE);
    }
    
-   
-   public static boolean isCursorInCppMode(DocDisplay docDisplay)
+   public static boolean isSelectionInRMode(DocDisplay docDisplay)
    {
-      String m = docDisplay.getLanguageMode(
-            docDisplay.getCursorPosition());
+      return isPositionInRMode(docDisplay, docDisplay.getSelectionStart()) &&
+             isPositionInRMode(docDisplay, docDisplay.getSelectionEnd());
+   }
+   
+   // C++ Mode
+   private static boolean isPositionInCppMode(DocDisplay docDisplay,
+                                              Position position)
+   {
+      String m = docDisplay.getLanguageMode(position);
       
       // the default mode is Cpp in C++ documents -- check that first. Note that
       // because we embed other modes in C++ documents (R) we need to check
@@ -53,10 +99,26 @@ public class DocumentMode
       
       // otherwise, C++ must be an embedded mode -- check to see if we got
       // an actual mode at the cursor position
-      return m != null && m.equals(FileType.C_CPP_LANG_MODE);
+      return isPositionInMode(
+            docDisplay,
+            position,
+            FileType.C_CPP_LANG_MODE);
    }
    
-   public static boolean isCursorInTexMode(DocDisplay docDisplay)
+   public static boolean isCursorInCppMode(DocDisplay docDisplay)
+   {
+      return isPositionInCppMode(docDisplay, docDisplay.getCursorPosition());
+   }
+   
+   public static boolean isSelectionInCppMode(DocDisplay docDisplay)
+   {
+      return isPositionInCppMode(docDisplay, docDisplay.getSelectionStart()) &&
+             isPositionInCppMode(docDisplay, docDisplay.getSelectionEnd());
+   }
+   
+   // TeX Mode
+   private static boolean isPositionInTexMode(DocDisplay docDisplay,
+                                               Position position)
    {
       TextFileType fileType = docDisplay.getFileType();
       if (fileType.canCompilePDF())
@@ -64,7 +126,7 @@ public class DocumentMode
          if (fileType.isRnw())
          {
             return FileType.TEX_LANG_MODE.equals(
-               docDisplay.getLanguageMode(docDisplay.getCursorPosition()));
+               docDisplay.getLanguageMode(position));
          }
          else
          {
@@ -75,8 +137,18 @@ public class DocumentMode
       {
          return false;
       }
+      
    }
    
+   public static boolean isCursorInTexMode(DocDisplay docDisplay)
+   {
+      return isPositionInTexMode(docDisplay, docDisplay.getCursorPosition());
+   }
    
+   public static boolean isSelectionInTexMode(DocDisplay docDisplay)
+   {
+      return isPositionInTexMode(docDisplay, docDisplay.getSelectionStart()) &&
+             isPositionInTexMode(docDisplay, docDisplay.getSelectionEnd());
+   }
 
 }
