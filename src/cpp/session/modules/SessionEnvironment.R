@@ -425,7 +425,7 @@
       # copied, which is slow for large objects.
       if (size > 524288)
       {
-         len <- if (len > 1) 
+         len_desc <- if (len > 1) 
                    paste(len, " elements, ", sep="")
                 else 
                    ""
@@ -437,7 +437,7 @@
          }
          else
          {
-            val <- paste("Large ", class, " (", len, 
+            val <- paste("Large ", class, " (", len_desc, 
                          capture.output(print(size, units="auto")), ")", sep="")
          }
          contents_deferred <- TRUE
