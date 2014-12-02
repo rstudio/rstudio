@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,12 +14,7 @@
  * the License.
  */
 package com.google.gwt.i18n.shared.impl.cldr;
-
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=25
-//  date=$Date: 2013-08-31 00:35:54 +0200 (Sat, 31 Aug 2013) $
-//  number=$Revision: 9295 $
-//  type=LU
 
 /**
  * Implementation of DateTimeFormatInfo for the "fr_LU" locale.

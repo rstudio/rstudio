@@ -1,0 +1,1034 @@
+cldrVersion=25
+
+date=$Date: 2014-02-14 23:49:13 +0100 (Fri, 14 Feb 2014) $
+number=$Revision: 9737 Google $
+type=root
+
+aa.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+aa.number=$Revision: 9287 $
+aa.type=aa
+
+af.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+af.number=$Revision: 9852 $
+af.type=root
+
+agq.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+agq.number=$Revision: 9287 $
+agq.type=root
+
+ak.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+ak.number=$Revision: 9287 $
+ak.type=root
+
+am.date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
+am.number=$Revision: 9876 $
+am.type=am
+
+ar.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+ar.number=$Revision: 9852 $
+ar.type=ar
+
+as.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+as.number=$Revision: 9287 $
+as.type=as
+
+asa.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+asa.number=$Revision: 9287 $
+asa.type=asa
+
+ast.date=$Date: 2014-01-09 06:02:40 +0100 (Thu, 09 Jan 2014) $
+ast.number=$Revision: 9624 $
+ast.type=root
+
+az.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+az.number=$Revision: 9852 $
+az.type=az
+
+az_Cyrl.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+az_Cyrl.number=$Revision: 9287 $
+az_Cyrl.type=az
+
+az_Latn.date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+az_Latn.number=$Revision: 9061 $
+az_Latn.type=az
+
+bas.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+bas.number=$Revision: 9287 $
+bas.type=bas
+
+be.date=$Date: 2014-02-25 23:17:53 +0100 (Tue, 25 Feb 2014) $
+be.number=$Revision: 9792 $
+be.type=be
+
+bem.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+bem.number=$Revision: 9287 $
+bem.type=bem
+
+bez.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+bez.number=$Revision: 9287 $
+bez.type=bez
+
+bg.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+bg.number=$Revision: 9852 $
+bg.type=root
+
+bm.date=$Date: 2014-02-13 05:14:13 +0100 (Thu, 13 Feb 2014) $
+bm.number=$Revision: 9728 $
+bm.type=root
+
+bn.date=$Date: 2014-03-14 18:20:13 +0100 (Fri, 14 Mar 2014) $
+bn.number=$Revision: 9967 $
+bn.type=root
+
+bn_IN.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+bn_IN.number=$Revision: 9791 $
+bn_IN.type=IN
+
+bo.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+bo.number=$Revision: 9287 $
+bo.type=bo
+
+bo_IN.date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+bo_IN.number=$Revision: 9061 $
+bo_IN.type=bo
+
+br.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+br.number=$Revision: 9852 $
+br.type=br
+
+brx.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+brx.number=$Revision: 9852 $
+brx.type=brx
+
+bs.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+bs.number=$Revision: 9852 $
+bs.type=bs
+
+bs_Cyrl.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+bs_Cyrl.number=$Revision: 9852 $
+bs_Cyrl.type=bs
+
+bs_Latn.date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+bs_Latn.number=$Revision: 9061 $
+bs_Latn.type=bs
+
+byn.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+byn.number=$Revision: 9791 $
+byn.type=byn
+
+ca.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+ca.number=$Revision: 9852 $
+ca.type=ca
+
+cgg.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+cgg.number=$Revision: 9287 $
+cgg.type=root
+
+chr.date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
+chr.number=$Revision: 9876 $
+chr.type=chr
+
+cs.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+cs.number=$Revision: 9852 $
+cs.type=cs
+
+cy.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+cy.number=$Revision: 9852 $
+cy.type=cy
+
+da.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+da.number=$Revision: 9852 $
+da.type=da
+
+dav.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+dav.number=$Revision: 9287 $
+dav.type=dav
+
+de.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+de.number=$Revision: 9852 $
+de.type=de
+
+de_CH.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+de_CH.number=$Revision: 9287 $
+de_CH.type=de
+
+dje.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+dje.number=$Revision: 9287 $
+dje.type=root
+
+dua.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+dua.number=$Revision: 9287 $
+dua.type=dua
+
+dyo.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+dyo.number=$Revision: 9287 $
+dyo.type=dyo
+
+dz.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+dz.number=$Revision: 9852 $
+dz.type=dz
+
+ebu.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+ebu.number=$Revision: 9287 $
+ebu.type=ebu
+
+ee.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+ee.number=$Revision: 9852 $
+ee.type=ee
+
+el.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+el.number=$Revision: 9852 $
+el.type=root
+
+en.date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
+en.number=$Revision: 9876 $
+en.type=en
+
+en_150.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+en_150.number=$Revision: 9287 $
+en_150.type=001
+
+en_AU.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+en_AU.number=$Revision: 9287 $
+en_AU.type=001
+
+en_DG.date=$Date: 2013-08-27 20:07:13 +0200 (Tue, 27 Aug 2013) $
+en_DG.number=$Revision: 9280 $
+en_DG.type=001
+
+en_FK.date=$Date: 2013-08-23 01:59:54 +0200 (Fri, 23 Aug 2013) $
+en_FK.number=$Revision: 9258 $
+en_FK.type=001
+
+en_HK.date=$Date: 2013-08-27 20:07:13 +0200 (Tue, 27 Aug 2013) $
+en_HK.number=$Revision: 9280 $
+en_HK.type=001
+
+en_IN.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+en_IN.number=$Revision: 9287 $
+en_IN.type=001
+
+en_IO.date=$Date: 2013-08-27 20:07:13 +0200 (Tue, 27 Aug 2013) $
+en_IO.number=$Revision: 9280 $
+en_IO.type=001
+
+en_MO.date=$Date: 2013-08-19 06:26:52 +0200 (Mon, 19 Aug 2013) $
+en_MO.number=$Revision: 9229 $
+en_MO.type=MO
+
+en_NZ.date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+en_NZ.number=$Revision: 9061 $
+en_NZ.type=001
+
+en_PK.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+en_PK.number=$Revision: 9287 $
+en_PK.type=001
+
+en_SG.date=$Date: 2013-12-05 00:53:48 +0100 (Thu, 05 Dec 2013) $
+en_SG.number=$Revision: 9535 $
+en_SG.type=001
+
+en_SH.date=$Date: 2013-08-23 01:59:54 +0200 (Fri, 23 Aug 2013) $
+en_SH.number=$Revision: 9258 $
+en_SH.type=001
+
+en_VG.date=$Date: 2013-08-08 06:47:50 +0200 (Thu, 08 Aug 2013) $
+en_VG.number=$Revision: 9170 $
+en_VG.type=VG
+
+eo.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+eo.number=$Revision: 9791 $
+eo.type=eo
+
+es.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+es.number=$Revision: 9852 $
+es.type=root
+
+es_CL.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+es_CL.number=$Revision: 9791 $
+es_CL.type=419
+
+es_MX.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+es_MX.number=$Revision: 9852 $
+es_MX.type=MX
+
+et.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+et.number=$Revision: 9852 $
+et.type=root
+
+eu.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+eu.number=$Revision: 9791 $
+eu.type=root
+
+ewo.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+ewo.number=$Revision: 9287 $
+ewo.type=ewo
+
+fa.date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
+fa.number=$Revision: 9876 $
+fa.type=fa
+
+fa_AF.date=$Date: 2013-08-27 20:07:13 +0200 (Tue, 27 Aug 2013) $
+fa_AF.number=$Revision: 9280 $
+fa_AF.type=fa
+
+ff.date=$Date: 2014-02-13 05:14:13 +0100 (Thu, 13 Feb 2014) $
+ff.number=$Revision: 9728 $
+ff.type=ff
+
+fi.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+fi.number=$Revision: 9852 $
+fi.type=fi
+
+fil.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+fil.number=$Revision: 9791 $
+fil.type=fil
+
+fo.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+fo.number=$Revision: 9791 $
+fo.type=root
+
+fr.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+fr.number=$Revision: 9852 $
+fr.type=fr
+
+fr_CA.date=$Date: 2013-08-27 20:07:13 +0200 (Tue, 27 Aug 2013) $
+fr_CA.number=$Revision: 9280 $
+fr_CA.type=CA
+
+fr_CH.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+fr_CH.number=$Revision: 9287 $
+fr_CH.type=fr
+
+fur.date=$Date: 2014-02-25 23:17:53 +0100 (Tue, 25 Feb 2014) $
+fur.number=$Revision: 9792 $
+fur.type=root
+
+fy.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+fy.number=$Revision: 9852 $
+fy.type=root
+
+ga.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+ga.number=$Revision: 9791 $
+ga.type=ga
+
+gd.date=$Date: 2014-02-25 23:17:53 +0100 (Tue, 25 Feb 2014) $
+gd.number=$Revision: 9792 $
+gd.type=gd
+
+gl.date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
+gl.number=$Revision: 9876 $
+gl.type=gl
+
+gsw.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+gsw.number=$Revision: 9852 $
+gsw.type=gsw
+
+gu.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+gu.number=$Revision: 9852 $
+gu.type=gu
+
+guz.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+guz.number=$Revision: 9287 $
+guz.type=root
+
+gv.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+gv.number=$Revision: 9287 $
+gv.type=root
+
+ha.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+ha.number=$Revision: 9791 $
+ha.type=ha
+
+ha_Latn.date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+ha_Latn.number=$Revision: 9061 $
+ha_Latn.type=ha
+
+haw.date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
+haw.number=$Revision: 9876 $
+haw.type=root
+
+he.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+he.number=$Revision: 9852 $
+he.type=he
+
+hi.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+hi.number=$Revision: 9852 $
+hi.type=hi
+
+hr.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+hr.number=$Revision: 9852 $
+hr.type=hr
+
+hu.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+hu.number=$Revision: 9852 $
+hu.type=root
+
+hy.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+hy.number=$Revision: 9852 $
+hy.type=root
+
+ia.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+ia.number=$Revision: 9791 $
+ia.type=root
+
+id.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+id.number=$Revision: 9852 $
+id.type=id
+
+ig.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+ig.number=$Revision: 9287 $
+ig.type=ig
+
+ii.date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+ii.number=$Revision: 9061 $
+ii.type=ii
+
+is.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+is.number=$Revision: 9852 $
+is.type=is
+
+it.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+it.number=$Revision: 9852 $
+it.type=it
+
+ja.date=$Date: 2014-03-04 00:35:05 +0100 (Tue, 04 Mar 2014) $
+ja.number=$Revision: 9862 $
+ja.type=root
+
+jgo.date=$Date: 2014-02-24 18:09:08 +0100 (Mon, 24 Feb 2014) $
+jgo.number=$Revision: 9770 $
+jgo.type=jgo
+
+jmc.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+jmc.number=$Revision: 9287 $
+jmc.type=jmc
+
+ka.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+ka.number=$Revision: 9852 $
+ka.type=root
+
+kab.date=$Date: 2014-02-13 05:14:13 +0100 (Thu, 13 Feb 2014) $
+kab.number=$Revision: 9728 $
+kab.type=root
+
+kam.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+kam.number=$Revision: 9287 $
+kam.type=kam
+
+kde.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+kde.number=$Revision: 9287 $
+kde.type=kde
+
+kea.date=$Date: 2013-11-15 19:32:44 +0100 (Fri, 15 Nov 2013) $
+kea.number=$Revision: 9515 $
+kea.type=kea
+
+khq.date=$Date: 2014-02-13 05:14:13 +0100 (Thu, 13 Feb 2014) $
+khq.number=$Revision: 9728 $
+khq.type=khq
+
+ki.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+ki.number=$Revision: 9287 $
+ki.type=ki
+
+kk.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+kk.number=$Revision: 9852 $
+kk.type=kk
+
+kk_Cyrl.date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+kk_Cyrl.number=$Revision: 9061 $
+kk_Cyrl.type=kk
+
+kkj.date=$Date: 2014-01-09 06:53:23 +0100 (Thu, 09 Jan 2014) $
+kkj.number=$Revision: 9625 $
+kkj.type=kkj
+
+kl.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+kl.number=$Revision: 9287 $
+kl.type=kl
+
+kln.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+kln.number=$Revision: 9287 $
+kln.type=kln
+
+km.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+km.number=$Revision: 9852 $
+km.type=km
+
+kn.date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
+kn.number=$Revision: 9876 $
+kn.type=kn
+
+ko.date=$Date: 2014-03-14 18:20:13 +0100 (Fri, 14 Mar 2014) $
+ko.number=$Revision: 9967 $
+ko.type=ko
+
+kok.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+kok.number=$Revision: 9791 $
+kok.type=root
+
+ks.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+ks.number=$Revision: 9852 $
+ks.type=ks
+
+ks_Arab.date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+ks_Arab.number=$Revision: 9061 $
+ks_Arab.type=Arab
+
+ksb.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+ksb.number=$Revision: 9287 $
+ksb.type=ksb
+
+ksf.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+ksf.number=$Revision: 9287 $
+ksf.type=ksf
+
+ksh.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+ksh.number=$Revision: 9852 $
+ksh.type=ksh
+
+kw.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+kw.number=$Revision: 9287 $
+kw.type=kw
+
+ky.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+ky.number=$Revision: 9852 $
+ky.type=ky
+
+lag.date=$Date: 2013-08-26 05:28:21 +0200 (Mon, 26 Aug 2013) $
+lag.number=$Revision: 9275 $
+lag.type=lag
+
+lg.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+lg.number=$Revision: 9287 $
+lg.type=root
+
+lkt.date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
+lkt.number=$Revision: 9876 $
+lkt.type=lkt
+
+ln.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+ln.number=$Revision: 9287 $
+ln.type=ln
+
+lo.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+lo.number=$Revision: 9852 $
+lo.type=lo
+
+lt.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+lt.number=$Revision: 9852 $
+lt.type=lt
+
+lu.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+lu.number=$Revision: 9287 $
+lu.type=lu
+
+luo.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+luo.number=$Revision: 9287 $
+luo.type=root
+
+luy.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+luy.number=$Revision: 9287 $
+luy.type=root
+
+lv.date=$Date: 2014-03-14 18:20:13 +0100 (Fri, 14 Mar 2014) $
+lv.number=$Revision: 9967 $
+lv.type=lv
+
+mas.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+mas.number=$Revision: 9287 $
+mas.type=mas
+
+mer.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+mer.number=$Revision: 9287 $
+mer.type=mer
+
+mfe.date=$Date: 2014-02-13 05:14:13 +0100 (Thu, 13 Feb 2014) $
+mfe.number=$Revision: 9728 $
+mfe.type=root
+
+mg.date=$Date: 2014-02-13 05:14:13 +0100 (Thu, 13 Feb 2014) $
+mg.number=$Revision: 9728 $
+mg.type=root
+
+mgh.date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+mgh.number=$Revision: 9061 $
+mgh.type=root
+
+mgo.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+mgo.number=$Revision: 9287 $
+mgo.type=root
+
+mk.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+mk.number=$Revision: 9852 $
+mk.type=root
+
+ml.date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
+ml.number=$Revision: 9876 $
+ml.type=root
+
+mn.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+mn.number=$Revision: 9852 $
+mn.type=root
+
+mr.date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
+mr.number=$Revision: 9876 $
+mr.type=mr
+
+ms.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+ms.number=$Revision: 9791 $
+ms.type=ms
+
+ms_Latn.date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+ms_Latn.number=$Revision: 9061 $
+ms_Latn.type=ms
+
+mt.date=$Date: 2014-02-25 23:17:53 +0100 (Tue, 25 Feb 2014) $
+mt.number=$Revision: 9792 $
+mt.type=mt
+
+mua.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+mua.number=$Revision: 9287 $
+mua.type=mua
+
+my.date=$Date: 2014-03-04 00:35:05 +0100 (Tue, 04 Mar 2014) $
+my.number=$Revision: 9862 $
+my.type=my
+
+naq.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+naq.number=$Revision: 9287 $
+naq.type=root
+
+nb.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+nb.number=$Revision: 9852 $
+nb.type=nb
+
+nd.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+nd.number=$Revision: 9287 $
+nd.type=nd
+
+ne.date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
+ne.number=$Revision: 9876 $
+ne.type=root
+
+nl.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+nl.number=$Revision: 9852 $
+nl.type=root
+
+nl_BE.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+nl_BE.number=$Revision: 9791 $
+nl_BE.type=root
+
+nmg.date=$Date: 2014-03-04 00:35:05 +0100 (Tue, 04 Mar 2014) $
+nmg.number=$Revision: 9862 $
+nmg.type=nmg
+
+nn.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+nn.number=$Revision: 9852 $
+nn.type=root
+
+nnh.date=$Date: 2013-08-31 06:19:50 +0200 (Sat, 31 Aug 2013) $
+nnh.number=$Revision: 9297 $
+nnh.type=nnh
+
+nr.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+nr.number=$Revision: 9287 $
+nr.type=nr
+
+nso.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+nso.number=$Revision: 9287 $
+nso.type=nso
+
+nus.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+nus.number=$Revision: 9287 $
+nus.type=nus
+
+nyn.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+nyn.number=$Revision: 9287 $
+nyn.type=root
+
+om.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+om.number=$Revision: 9791 $
+om.type=root
+
+or.date=$Date: 2014-02-25 23:17:53 +0100 (Tue, 25 Feb 2014) $
+or.number=$Revision: 9792 $
+or.type=root
+
+os.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+os.number=$Revision: 9791 $
+os.type=root
+
+pa.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+pa.number=$Revision: 9852 $
+pa.type=pa
+
+pa_Arab.date=$Date: 2013-08-26 05:28:21 +0200 (Mon, 26 Aug 2013) $
+pa_Arab.number=$Revision: 9275 $
+pa_Arab.type=Arab
+
+pa_Guru.date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+pa_Guru.number=$Revision: 9061 $
+pa_Guru.type=pa
+
+pl.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+pl.number=$Revision: 9852 $
+pl.type=root
+
+ps.date=$Date: 2014-03-04 00:35:05 +0100 (Tue, 04 Mar 2014) $
+ps.number=$Revision: 9862 $
+ps.type=root
+
+pt.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+pt.number=$Revision: 9852 $
+pt.type=root
+
+pt_AO.date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+pt_AO.number=$Revision: 9061 $
+pt_AO.type=AO
+
+pt_CV.date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+pt_CV.number=$Revision: 9061 $
+pt_CV.type=PT
+
+pt_GW.date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+pt_GW.number=$Revision: 9061 $
+pt_GW.type=PT
+
+pt_MO.date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+pt_MO.number=$Revision: 9061 $
+pt_MO.type=MO
+
+pt_MZ.date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+pt_MZ.number=$Revision: 9061 $
+pt_MZ.type=PT
+
+pt_PT.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+pt_PT.number=$Revision: 9852 $
+pt_PT.type=PT
+
+pt_ST.date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+pt_ST.number=$Revision: 9061 $
+pt_ST.type=PT
+
+pt_TL.date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+pt_TL.number=$Revision: 9061 $
+pt_TL.type=PT
+
+rm.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+rm.number=$Revision: 9852 $
+rm.type=rm
+
+rn.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+rn.number=$Revision: 9287 $
+rn.type=rn
+
+ro.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+ro.number=$Revision: 9852 $
+ro.type=ro
+
+rof.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+rof.number=$Revision: 9287 $
+rof.type=root
+
+ru.date=$Date: 2014-03-04 00:35:05 +0100 (Tue, 04 Mar 2014) $
+ru.number=$Revision: 9862 $
+ru.type=ru
+
+rw.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+rw.number=$Revision: 9791 $
+rw.type=root
+
+rwk.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+rwk.number=$Revision: 9287 $
+rwk.type=rwk
+
+sah.date=$Date: 2013-08-10 08:39:57 +0200 (Sat, 10 Aug 2013) $
+sah.number=$Revision: 9196 $
+sah.type=sah
+
+saq.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+saq.number=$Revision: 9287 $
+saq.type=saq
+
+sbp.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+sbp.number=$Revision: 9287 $
+sbp.type=sbp
+
+se.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+se.number=$Revision: 9791 $
+se.type=se
+
+se_FI.date=$Date: 2013-08-27 20:07:13 +0200 (Tue, 27 Aug 2013) $
+se_FI.number=$Revision: 9280 $
+se_FI.type=se
+
+seh.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+seh.number=$Revision: 9287 $
+seh.type=seh
+
+ses.date=$Date: 2014-02-13 05:14:13 +0100 (Thu, 13 Feb 2014) $
+ses.number=$Revision: 9728 $
+ses.type=ses
+
+sg.date=$Date: 2014-02-13 05:14:13 +0100 (Thu, 13 Feb 2014) $
+sg.number=$Revision: 9728 $
+sg.type=sg
+
+shi.date=$Date: 2014-02-13 05:14:13 +0100 (Thu, 13 Feb 2014) $
+shi.number=$Revision: 9728 $
+shi.type=root
+
+shi_Latn.date=$Date: 2014-02-13 05:14:13 +0100 (Thu, 13 Feb 2014) $
+shi_Latn.number=$Revision: 9728 $
+shi_Latn.type=root
+
+si.date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
+si.number=$Revision: 9876 $
+si.type=si
+
+sk.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+sk.number=$Revision: 9852 $
+sk.type=sk
+
+sl.date=$Date: 2014-03-14 18:20:13 +0100 (Fri, 14 Mar 2014) $
+sl.number=$Revision: 9967 $
+sl.type=sl
+
+sn.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+sn.number=$Revision: 9287 $
+sn.type=sn
+
+so.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+so.number=$Revision: 9791 $
+so.type=so
+
+sq.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+sq.number=$Revision: 9852 $
+sq.type=sq
+
+sr.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+sr.number=$Revision: 9852 $
+sr.type=sr
+
+sr_Cyrl.date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+sr_Cyrl.number=$Revision: 9061 $
+sr_Cyrl.type=sr
+
+sr_Latn.date=$Date: 2014-03-04 00:35:05 +0100 (Tue, 04 Mar 2014) $
+sr_Latn.number=$Revision: 9862 $
+sr_Latn.type=sr
+
+ss.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+ss.number=$Revision: 9287 $
+ss.type=ss
+
+ssy.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+ssy.number=$Revision: 9287 $
+ssy.type=ssy
+
+st.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+st.number=$Revision: 9791 $
+st.type=st
+
+sv.date=$Date: 2014-03-10 22:39:54 +0100 (Mon, 10 Mar 2014) $
+sv.number=$Revision: 9920 $
+sv.type=sv
+
+sv_FI.date=$Date: 2014-02-26 22:19:38 +0100 (Wed, 26 Feb 2014) $
+sv_FI.number=$Revision: 9814 $
+sv_FI.type=FI
+
+sw.date=$Date: 2014-02-26 21:43:57 +0100 (Wed, 26 Feb 2014) $
+sw.number=$Revision: 9813 $
+sw.type=sw
+
+swc.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+swc.number=$Revision: 9287 $
+swc.type=swc
+
+ta.date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
+ta.number=$Revision: 9876 $
+ta.type=root
+
+te.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+te.number=$Revision: 9852 $
+te.type=te
+
+teo.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+teo.number=$Revision: 9287 $
+teo.type=teo
+
+tg.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+tg.number=$Revision: 9791 $
+tg.type=tg
+
+tg_Cyrl.date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+tg_Cyrl.number=$Revision: 9061 $
+tg_Cyrl.type=tg
+
+th.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+th.number=$Revision: 9852 $
+th.type=th
+
+ti.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+ti.number=$Revision: 9791 $
+ti.type=ti
+
+tig.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+tig.number=$Revision: 9791 $
+tig.type=root
+
+tn.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+tn.number=$Revision: 9791 $
+tn.type=tn
+
+to.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+to.number=$Revision: 9852 $
+to.type=to
+
+tr.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+tr.number=$Revision: 9852 $
+tr.type=tr
+
+ts.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+ts.number=$Revision: 9287 $
+ts.type=ts
+
+twq.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+twq.number=$Revision: 9287 $
+twq.type=root
+
+tzm.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+tzm.number=$Revision: 9287 $
+tzm.type=tzm
+
+ug.date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
+ug.number=$Revision: 9876 $
+ug.type=ug
+
+ug_Arab.date=$Date: 2014-02-27 20:38:13 +0100 (Thu, 27 Feb 2014) $
+ug_Arab.number=$Revision: 9840 $
+ug_Arab.type=Arab
+
+uk.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+uk.number=$Revision: 9852 $
+uk.type=uk
+
+ur.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+ur.number=$Revision: 9852 $
+ur.type=ur
+
+uz.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+uz.number=$Revision: 9287 $
+uz.type=uz
+
+uz_Arab.date=$Date: 2014-03-10 19:02:01 +0100 (Mon, 10 Mar 2014) $
+uz_Arab.number=$Revision: 9914 $
+uz_Arab.type=Arab
+
+uz_Cyrl.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+uz_Cyrl.number=$Revision: 9287 $
+uz_Cyrl.type=uz
+
+uz_Latn.date=$Date: 2013-08-06 00:45:59 +0200 (Tue, 06 Aug 2013) $
+uz_Latn.number=$Revision: 9129 $
+uz_Latn.type=uz
+
+vai.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+vai.number=$Revision: 9287 $
+vai.type=vai
+
+vai_Latn.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+vai_Latn.number=$Revision: 9287 $
+vai_Latn.type=vai
+
+ve.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+ve.number=$Revision: 9287 $
+ve.type=root
+
+vi.date=$Date: 2014-02-25 23:17:53 +0100 (Tue, 25 Feb 2014) $
+vi.number=$Revision: 9792 $
+vi.type=vi
+
+vo.date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+vo.number=$Revision: 9061 $
+vo.type=vo
+
+vun.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+vun.number=$Revision: 9287 $
+vun.type=vun
+
+wae.date=$Date: 2013-08-26 05:28:21 +0200 (Mon, 26 Aug 2013) $
+wae.number=$Revision: 9275 $
+wae.type=wae
+
+wal.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+wal.number=$Revision: 9287 $
+wal.type=wal
+
+xh.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+xh.number=$Revision: 9791 $
+xh.type=root
+
+xog.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+xog.number=$Revision: 9287 $
+xog.type=xog
+
+yav.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+yav.number=$Revision: 9287 $
+yav.type=root
+
+yo.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
+yo.number=$Revision: 9791 $
+yo.type=root
+
+yo_BJ.date=$Date: 2014-03-04 00:35:05 +0100 (Tue, 04 Mar 2014) $
+yo_BJ.number=$Revision: 9862 $
+yo_BJ.type=BJ
+
+zgh.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+zgh.number=$Revision: 9287 $
+zgh.type=zgh
+
+zh.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+zh.number=$Revision: 9852 $
+zh.type=root
+
+zh_Hans.date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+zh_Hans.number=$Revision: 9061 $
+zh_Hans.type=Hans
+
+zh_Hans_HK.date=$Date: 2014-01-09 06:53:23 +0100 (Thu, 09 Jan 2014) $
+zh_Hans_HK.number=$Revision: 9625 $
+zh_Hans_HK.type=Hans
+
+zh_Hans_MO.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+zh_Hans_MO.number=$Revision: 9287 $
+zh_Hans_MO.type=MO
+
+zh_Hans_SG.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+zh_Hans_SG.number=$Revision: 9287 $
+zh_Hans_SG.type=Hans
+
+zh_Hant.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
+zh_Hant.number=$Revision: 9852 $
+zh_Hant.type=Hant
+
+zh_Hant_HK.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
+zh_Hant_HK.number=$Revision: 9287 $
+zh_Hant_HK.type=Hant
+
+zh_Hant_MO.date=$Date: 2013-08-27 20:07:13 +0200 (Tue, 27 Aug 2013) $
+zh_Hant_MO.number=$Revision: 9280 $
+zh_Hant_MO.type=MO
+
+zh_Hant_TW.date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
+zh_Hant_TW.number=$Revision: 9061 $
+zh_Hant_TW.type=Hant
+
+zu.date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
+zu.number=$Revision: 9876 $
+zu.type=zu
+

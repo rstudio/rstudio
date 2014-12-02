@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,11 +15,7 @@
  */
 package com.google.gwt.i18n.client.impl.cldr;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=25
-//  date=$Date: 2013-08-06 00:45:59 +0200 (Tue, 06 Aug 2013) $
-//  number=$Revision: 9129 $
-//  type=uz
+// DO NOT EDIT - GENERATED FROM CLDR DATA
 
 /**
  * Localized names for the "uz_Latn" locale.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,12 +14,7 @@
  * the License.
  */
 package com.google.gwt.i18n.shared;
-
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=25
-//  date=$Date: 2014-02-14 23:49:13 +0100 (Fri, 14 Feb 2014) $
-//  number=$Revision: 9737 Google $
-//  type=root
 
 /**
  * Default implementation of DateTimeFormatInfo interface, using values from

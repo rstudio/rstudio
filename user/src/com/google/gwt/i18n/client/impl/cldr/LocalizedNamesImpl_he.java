@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,11 +17,7 @@ package com.google.gwt.i18n.client.impl.cldr;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-// DO NOT EDIT - GENERATED FROM CLDR DATA:
-//  cldrVersion=25
-//  date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
-//  number=$Revision: 9852 $
-//  type=he
+// DO NOT EDIT - GENERATED FROM CLDR DATA
 
 /**
  * Localized names for the "he" locale.

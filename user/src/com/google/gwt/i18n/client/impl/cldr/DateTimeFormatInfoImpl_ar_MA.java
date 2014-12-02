@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Google Inc.
+ * Copyright 2012 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,12 +14,7 @@
  * the License.
  */
 package com.google.gwt.i18n.client.impl.cldr;
-
 // DO NOT EDIT - GENERATED FROM CLDR AND ICU DATA
-//  cldrVersion=25
-//  date=$Date: 2014-01-09 06:53:23 +0100 (Thu, 09 Jan 2014) $
-//  number=$Revision: 9625 $
-//  type=ar
 
 /**
  * Implementation of DateTimeFormatInfo for the "ar_MA" locale.
