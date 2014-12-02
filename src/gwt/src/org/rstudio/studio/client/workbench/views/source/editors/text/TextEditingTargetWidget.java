@@ -279,6 +279,7 @@ public class TextEditingTargetWidget
          menu.addItem(commands_.reindent().createMenuItem(false));
          menu.addItem(commands_.reflowComment().createMenuItem(false));
          menu.addItem(commands_.commentUncomment().createMenuItem(false));
+         menu.addItem(commands_.alignAssignment().createMenuItem(false));
          codeTransform_ = new ToolbarButton("", icon, menu);
          codeTransform_.setTitle("Code Tools");
       }

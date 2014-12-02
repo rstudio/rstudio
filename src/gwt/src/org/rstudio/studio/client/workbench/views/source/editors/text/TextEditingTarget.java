@@ -62,6 +62,7 @@ import org.rstudio.studio.client.common.*;
 import org.rstudio.studio.client.common.debugging.BreakpointManager;
 import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
+import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -2000,6 +2001,159 @@ public class TextEditingTarget implements
    public TextFileType getTextFileType()
    {
       return fileType_;
+   }
+   
+   private static final Pattern ALIGN_DELIM_PATTERN =
+         Pattern.create("(<<-|<-|==|=)");
+   
+   private ArrayList<Pair<Integer, Integer>> getAlignmentRanges()
+   {
+      int selectionStart = docDisplay_.getSelectionStart().getRow();
+      int selectionEnd = docDisplay_.getSelectionEnd().getRow();
+      
+      ArrayList<Pair<Integer, Integer>> ranges =
+            new ArrayList<Pair<Integer, Integer>>();
+      
+      for (int i = selectionStart; i <= selectionEnd; i++)
+      {
+         if (ALIGN_DELIM_PATTERN.match(
+               StringUtil.maskStrings(
+                     docDisplay_.getLine(i)), 0) != null)
+         {
+            int rangeStart = i;
+            
+            while (i <= selectionEnd &&
+                  ALIGN_DELIM_PATTERN.match(
+                        StringUtil.maskStrings(
+                              docDisplay_.getLine(i)), 0) != null)
+               i++;
+            int rangeEnd = i - 1;
+            ranges.add(new Pair<Integer, Integer>(rangeStart, rangeEnd));
+         }
+      }
+      
+      return ranges;
+      
+   }
+   
+   private void doAlignAssignment(int startRow,
+                                  int endRow)
+   {
+      docDisplay_.setSelectionRange(Range.fromPoints(
+            Position.create(startRow, 0),
+            Position.create(endRow, docDisplay_.getLine(endRow).length())));
+      
+      String[] splat = docDisplay_.getSelectionValue().split("\\n");
+      
+      ArrayList<String> starts = new ArrayList<String>();
+      ArrayList<String> delimiters = new ArrayList<String>();
+      ArrayList<String> ends = new ArrayList<String>();
+      for (int i = 0; i < splat.length; i++)
+      {
+         Match match = ALIGN_DELIM_PATTERN.match(
+               StringUtil.maskStrings(splat[i]), 0);
+         
+         if (match == null)
+         {
+            starts.add(splat[i]);
+            delimiters.add("");
+            ends.add("");
+         }
+         else
+         {
+            String delimiter = match.getGroup(0);
+            int index = match.getIndex();
+            
+            starts.add(splat[i].substring(0, index).replaceAll("\\s*$", ""));
+            delimiters.add(delimiter);
+            ends.add(splat[i].substring(index + delimiter.length()).trim());
+         }
+      }
+      
+      // Transform the ends if they appear numeric-y
+      ArrayList<Integer> endPrefixes = new ArrayList<Integer>();
+      boolean success = true;
+      for (int i = 0; i < ends.size(); i++)
+      {
+         String current = ends.get(i).replaceAll("[\\s,\\);]*", "");
+         try
+         {
+            endPrefixes.add(("" + Integer.parseInt(current)).length());
+         }
+         catch (Exception e)
+         {
+            success = false;
+            break;
+         }
+         
+      }
+      
+      if (success)
+      {
+         int maxLength = 0;
+         for (int i = 0; i < endPrefixes.size(); i++)
+            maxLength = Math.max(maxLength, endPrefixes.get(i));
+         
+         for (int i = 0; i < ends.size(); i++)
+            ends.set(i, StringUtil.repeat(" ",
+                  maxLength - endPrefixes.get(i)) +
+                  ends.get(i).replaceAll("^\\s*", ""));  
+      }
+      
+      int maxLength = 0;
+      for (int i = 0; i < starts.size(); i++)
+         maxLength = Math.max(maxLength, starts.get(i).length());
+      
+      for (int i = 0; i < starts.size(); i++)
+         starts.set(i, starts.get(i) +
+               StringUtil.repeat(" ", maxLength - starts.get(i).length()));
+      
+      StringBuilder newSelectionBuilder = new StringBuilder();
+      int maxDelimiterLength = 0;
+      for (int i = 0; i < delimiters.size(); i++)
+         maxDelimiterLength = Math.max(maxDelimiterLength,
+               delimiters.get(i).length());
+      
+      for (int i = 0; i < starts.size(); i++)
+      {
+         newSelectionBuilder.append(starts.get(i));
+         newSelectionBuilder.append(
+               StringUtil.repeat(" ",
+                     maxDelimiterLength - delimiters.get(i).length() + 1) +
+               delimiters.get(i) +
+               " ");
+         newSelectionBuilder.append(ends.get(i));
+         if (i < starts.size() - 1)
+            newSelectionBuilder.append("\n");
+      }
+      
+      docDisplay_.replaceSelection(newSelectionBuilder.toString());
+      
+   }
+   
+   @Handler
+   void onAlignAssignment()
+   {
+      // Only allow if entire selection in R or C++ mode for now
+      if (!(DocumentMode.isSelectionInCppMode(docDisplay_) ||
+            DocumentMode.isSelectionInRMode(docDisplay_)))
+         return;
+      
+      InputEditorSelection initialSelection =
+            docDisplay_.getSelection();
+      
+      ArrayList<Pair<Integer, Integer>> ranges =
+            getAlignmentRanges();
+      
+      if (ranges.isEmpty())
+         return;
+      
+      for (Pair<Integer, Integer> range : ranges)
+         doAlignAssignment(range.first, range.second);
+      
+      docDisplay_.setSelection(
+            initialSelection.extendToLineStart().extendToLineEnd());
+      
    }
 
    @Handler

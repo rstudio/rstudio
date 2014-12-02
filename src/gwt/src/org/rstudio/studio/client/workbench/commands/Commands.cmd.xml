@@ -152,6 +152,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="reindent"/>
          <cmd refid="reflowComment"/>
          <cmd refid="commentUncomment"/>
+         <cmd refid="alignAssignment"/>
          <separator/>
          <cmd refid="executeCode"/>
          <cmd refid="executeLastCode"/>
@@ -389,6 +390,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="commentUncomment" value="Cmd+Shift+C"/>
          <shortcut refid="reindent" value="Cmd+I"/>
          <shortcut refid="reflowComment" value="Cmd+Shift+/"/>
+         <shortcut refid="alignAssignment" value="Cmd+Shift+A"/>
          <shortcut refid="fold" value="Alt+L" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" title="Collapse Fold"/>
          <shortcut refid="fold" value="Cmd+Alt+L" if="org.rstudio.core.client.BrowseCap.isMacintosh()" title="Collapse Fold"/>
          <shortcut refid="unfold" value="Shift+Alt+L" if="!org.rstudio.core.client.BrowseCap.isMacintosh()" title="Expand Fold"/>
@@ -866,6 +868,9 @@ well as menu structures (for main menu and popup menus).
    <cmd id="commentUncomment"
         menuLabel="_Comment/Uncomment Lines"
         desc="Comment or uncomment the current line/selection"/>
+   <cmd id="alignAssignment"
+        menuLabel="_Align Assignment"
+        desc="Vertically align assignment operators in the current selection"/>
    <cmd id="reindent"
         menuLabel="_Reindent Lines"
         desc="Reindent the current line/selection"/>
