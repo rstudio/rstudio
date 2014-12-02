@@ -54,7 +54,8 @@ public class SpellingCustomDictionariesWidget extends Composite
                                   "custom_dictionaries"));
       
       HorizontalPanel dictionariesPanel = new HorizontalPanel();
-      listBox_ = new ListBox(false);
+      listBox_ = new ListBox();
+      listBox_.setMultipleSelect(false);
       listBox_.addStyleName(RES.styles().listBox());
       listBox_.getElement().<SelectElement>cast().setSize(4);
       dictionariesPanel.add(listBox_);
