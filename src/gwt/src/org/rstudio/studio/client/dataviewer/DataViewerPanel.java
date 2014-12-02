@@ -15,7 +15,6 @@
 
 package org.rstudio.studio.client.dataviewer;
 
-import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.widget.RStudioFrame;
@@ -28,7 +27,8 @@ import org.rstudio.studio.client.application.events.EventBus;
 
 public class DataViewerPanel extends SatelliteFramePanel<RStudioFrame>
                              implements DataViewerPresenter.Display, 
-                                        DataViewChangedEvent.Handler 
+                                        DataViewChangedEvent.Handler,
+                                        DataTable.Host
 {
    @Inject
    public DataViewerPanel(Commands commands, EventBus events)
@@ -41,13 +41,13 @@ public class DataViewerPanel extends SatelliteFramePanel<RStudioFrame>
    @Override 
    protected void initToolbar(Toolbar toolbar, Commands commands)
    {
-      toolbar.addLeftWidget(new Label("Hello!"));
+      table_ = new DataTable(this);
+      table_.initToolbar(toolbar);
    }
    
    @Override
    public void showData(DataItem item)
    {
-      item_ = item;
       showUrl(item.getContentUrl());
    }
    
@@ -58,11 +58,18 @@ public class DataViewerPanel extends SatelliteFramePanel<RStudioFrame>
    }
 
    @Override
+   public RStudioFrame getDataTableFrame()
+   {
+      return getFrame();
+   }
+
+   @Override
    public void onDataViewChanged(DataViewChangedEvent event)
    {
       
    } 
 
-   private DataItem item_;
+
+   private DataTable table_;
    private final EventBus events_;
 }

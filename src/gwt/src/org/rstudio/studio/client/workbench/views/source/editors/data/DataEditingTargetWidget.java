@@ -14,36 +14,28 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.data;
 
-import java.util.ArrayList;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.*;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
-import org.rstudio.core.client.widget.FindTextBox;
 import org.rstudio.core.client.widget.RStudioFrame;
-import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.Toolbar;
-import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.studio.client.dataviewer.DataTable;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
-import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlContentEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 
 public class DataEditingTargetWidget extends Composite
-   implements UrlContentEditingTarget.Display
+   implements UrlContentEditingTarget.Display, 
+              DataTable.Host
 {
    interface Resources extends ClientBundle
    {
@@ -74,6 +66,8 @@ public class DataEditingTargetWidget extends Composite
 
       frame_ = new RStudioFrame(dataItem.getContentUrl());
       frame_.setSize("100%", "100%");
+
+      table_ = new DataTable(this);
 
       Widget mainWidget = frame_;
 
@@ -110,6 +104,7 @@ public class DataEditingTargetWidget extends Composite
                                                                   styles),
                                                     mainWidget);
 
+      table_ = new DataTable(this);
       initWidget(panel);
    }
 
@@ -118,40 +113,8 @@ public class DataEditingTargetWidget extends Composite
 
       Toolbar toolbar = new EditingTargetToolbar(commands_);
       toolbar.addLeftWidget(commands_.popoutDoc().createToolbarButton());
-      toolbar.addLeftSeparator();
-      findButton_ = new ToolbarButton(
-              FindReplaceBar.getFindIcon(),
-              new ClickHandler() {
-                 public void onClick(ClickEvent event)
-                 {
-                    filtered_ = !filtered_;
-                    setFilterUIVisible(filtered_);
-                    findButton_.setLeftImage(filtered_ ? 
-                          FindReplaceBar.getFindLatchedIcon() :
-                          FindReplaceBar.getFindIcon());
-                 }
-              });
-      toolbar.addLeftWidget(findButton_);
-
-      SearchWidget searchWidget = new SearchWidget(new SuggestOracle() {
-         @Override
-         public void requestSuggestions(Request request, Callback callback)
-         {
-            // no suggestions
-            callback.onSuggestionsReady(
-                  request,
-                  new Response(new ArrayList<Suggestion>()));
-         }
-      });
-      searchWidget.addValueChangeHandler(new ValueChangeHandler<String>() {
-         @Override
-         public void onValueChange(ValueChangeEvent<String> event)
-         {
-            applySearch(getWindow(), event.getValue());
-         }
-      });
-
-      toolbar.addRightWidget(searchWidget);
+      
+      table_.initToolbar(toolbar);
 
       return toolbar;
    }
@@ -169,38 +132,27 @@ public class DataEditingTargetWidget extends Composite
    
    public void setFilterUIVisible(boolean visible)
    {
-      setFilterUIVisible(getWindow(), visible);
+      if (table_ != null)
+         table_.setFilterUIVisible(visible);
    }
    
    public void refreshData(boolean structureChanged)
    {
-      refreshData(getWindow(), structureChanged);
+      if (table_ != null)
+         table_.refreshData(structureChanged);
    }
    
    public void applySizeChange()
    {
-      applySizeChange(getWindow());
+      if (table_ != null)
+         table_.applySizeChange();
    }
-
-   private static final native void setFilterUIVisible (WindowEx frame, boolean visible) /*-{
-      if (frame && frame.setFilterUIVisible)
-         frame.setFilterUIVisible(visible);
-   }-*/;
    
-   private static final native void refreshData(WindowEx frame, boolean structureChanged) /*-{
-      if (frame && frame.refreshData)
-         frame.refreshData(structureChanged);
-   }-*/;
-
-   private static final native void applySearch(WindowEx frame, String text) /*-{
-      if (frame && frame.applySearch)
-         frame.applySearch(text);
-   }-*/;
-   
-   private static final native void applySizeChange(WindowEx frame) /*-{
-      if (frame && frame.applySizeChange)
-         frame.applySizeChange();
-   }-*/;
+   @Override
+   public RStudioFrame getDataTableFrame()
+   {
+      return frame_;
+   }
 
    public Widget asWidget()
    {
@@ -209,6 +161,5 @@ public class DataEditingTargetWidget extends Composite
 
    private final Commands commands_;
    private RStudioFrame frame_;
-   private ToolbarButton findButton_;
-   private boolean filtered_ = false;
+   private DataTable table_;
 }
