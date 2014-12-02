@@ -33,10 +33,6 @@ var escapeHtml = function(html) {
   return html.replace(/[&<>]/g, function(ch) { return replacements[ch]; });
 };
 
-var renderNumberCell = function(data, type, row, meta) {
-  return '<div class="numberCell">' + data + '</div>';
-};
-
 var renderTextCell = function(data, type, row, meta) {
   var search = table.search();
   if (search.length > 0) {
@@ -49,6 +45,12 @@ var renderTextCell = function(data, type, row, meta) {
     return escapeHtml(data);
   }
   return escapeHtml(data);
+};
+
+var renderNumberCell = function(data, type, row, meta) {
+  return '<div class="numberCell">' + 
+         renderTextCell(data, type, row, meta) + 
+         '</div>';
 };
 
 var sizeDataTable = function(recalc) {

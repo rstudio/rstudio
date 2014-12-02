@@ -175,9 +175,14 @@ public class UrlContentEditingTarget implements EditingTarget
    @Handler
    void onPopoutDoc()
    {
-      globalDisplay_.openWindow(getContentUrl());
+      popoutDoc();
    }
 
+   public void popoutDoc()
+   {
+      globalDisplay_.openWindow(getContentUrl());
+   }
+   
    public void focus()
    {
    }

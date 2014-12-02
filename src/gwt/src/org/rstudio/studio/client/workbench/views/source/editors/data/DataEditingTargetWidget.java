@@ -193,7 +193,7 @@ public class DataEditingTargetWidget extends Composite
    }-*/;
 
    private static final native void applySearch(WindowEx frame, String text) /*-{
-      if (frame && frame.applySort)
+      if (frame && frame.applySearch)
          frame.applySearch(text);
    }-*/;
    
@@ -211,5 +211,4 @@ public class DataEditingTargetWidget extends Composite
    private RStudioFrame frame_;
    private ToolbarButton findButton_;
    private boolean filtered_ = false;
-   private FindTextBox find_;
 }

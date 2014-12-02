@@ -19,11 +19,14 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.Size;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
+import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.dataviewer.DataViewerSatellite;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -42,9 +45,11 @@ public class DataEditingTarget extends UrlContentEditingTarget
    public DataEditingTarget(SourceServerOperations server,
                             Commands commands,
                             GlobalDisplay globalDisplay,
-                            EventBus events)
+                            EventBus events,
+                            SatelliteManager satelliteManager)
    {
       super(server, commands, globalDisplay, events);
+      satelliteManager_ = satelliteManager;
       events.addHandler(DataViewChangedEvent.TYPE, this);
    }
 
@@ -128,6 +133,13 @@ public class DataEditingTarget extends UrlContentEditingTarget
       return getDataItem().getContentUrl();
    }
 
+   @Override
+   public void popoutDoc()
+   {
+      satelliteManager_.openSatellite(DataViewerSatellite.NAME, getDataItem(), 
+                                      new Size(500, 600));
+   }
+
    protected String getCacheKey()
    {
       return getDataItem().getCacheKey();
@@ -192,4 +204,5 @@ public class DataEditingTarget extends UrlContentEditingTarget
 
    private SimplePanelWithProgress progressPanel_;
    private DataEditingTargetWidget view_;
+   private final SatelliteManager satelliteManager_;
 }

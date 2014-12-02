@@ -58,6 +58,10 @@ import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSServerOperations;
 import org.rstudio.studio.client.common.vcs.ignore.Ignore;
 import org.rstudio.studio.client.common.vcs.ignore.IgnoreDialog;
+import org.rstudio.studio.client.dataviewer.DataTableView;
+import org.rstudio.studio.client.dataviewer.DataViewerPanel;
+import org.rstudio.studio.client.dataviewer.DataViewerPresenter;
+import org.rstudio.studio.client.dataviewer.DataViewerWindow;
 import org.rstudio.studio.client.htmlpreview.HTMLPreview;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewPresenter;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewServerOperations;
@@ -237,6 +241,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(HTMLPreviewApplicationView.class).to(HTMLPreviewApplicationWindow.class);
       bind(ShinyApplicationView.class).to(ShinyApplicationWindow.class);
       bind(RmdOutputView.class).to(RmdOutputWindow.class);
+      bind(DataTableView.class).to(DataViewerWindow.class);
       
       bind(Server.class).to(RemoteServer.class) ;
       bind(WorkbenchServerOperations.class).to(RemoteServer.class) ;
@@ -293,6 +298,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(HTMLPreviewPresenter.Display.class).to(HTMLPreviewPanel.class);
       bind(ShinyApplicationPresenter.Display.class).to(ShinyApplicationPanel.class);
       bind(RmdOutputPresenter.Display.class).to(RmdOutputPanel.class);
+      bind(DataViewerPresenter.Display.class).to(DataViewerPanel.class);
       
       bind(GlobalDisplay.class)
             .to(DefaultGlobalDisplay.class)

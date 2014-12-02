@@ -38,6 +38,7 @@ import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
 import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
 import org.rstudio.studio.client.common.spelling.SpellChecker;
 import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
+import org.rstudio.studio.client.dataviewer.DataViewerSatellite;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
 import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
 import org.rstudio.studio.client.projects.ui.newproject.CodeFilesList;
@@ -111,6 +112,7 @@ public interface RStudioGinjector extends Ginjector
    RmdOutputSatellite getRmdOutputSatellite();
    RmdOutputFramePane getRmdOutputFramePane();
    RmdOutputFrameSatellite getRmdOutputFrameSatellite();
+   DataViewerSatellite getDataViewerSatellite();
    EventBus getEventBus();
    GlobalDisplay getGlobalDisplay();
    RemoteFileSystemContext getRemoteFileSystemContext();
