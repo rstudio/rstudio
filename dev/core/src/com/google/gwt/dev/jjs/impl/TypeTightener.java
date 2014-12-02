@@ -56,6 +56,7 @@ import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
@@ -796,12 +797,9 @@ public class TypeTightener {
     return stats;
   }
 
-  // TODO(leafwang): remove this entry point when it is no longer needed.
-  public static OptimizerStats exec(JProgram program) {
-    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
-    OptimizerStats stats = new TypeTightener(program).execImpl(new OptimizerContext(program));
-    optimizeEvent.end("didChange", "" + stats.didChange());
-    return stats;
+  @VisibleForTesting
+  static OptimizerStats exec(JProgram program) {
+    return exec(program, OptimizerContext.NULL_OPTIMIZATION_CONTEXT);
   }
 
   private static <T, V> void add(T target, V value, Map<T, Collection<V>> map) {

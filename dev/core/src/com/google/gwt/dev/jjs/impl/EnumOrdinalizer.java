@@ -44,6 +44,7 @@ import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 import com.google.gwt.thirdparty.guava.common.collect.Ordering;
@@ -746,14 +747,9 @@ public class EnumOrdinalizer {
     trackerEnabled = true;
   }
 
-  // TODO(leafwang): remove this entry point when it is no longer needed.
-  public static OptimizerStats exec(JProgram program) {
-    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
-
-    startTracker();
-    OptimizerStats stats = new EnumOrdinalizer(program).execImpl(new OptimizerContext(program));
-    optimizeEvent.end("didChange", "" + stats.didChange());
-    return stats;
+  @VisibleForTesting
+  static OptimizerStats exec(JProgram program) {
+    return exec(program, OptimizerContext.NULL_OPTIMIZATION_CONTEXT);
   }
 
   public static OptimizerStats exec(JProgram program, OptimizerContext optimizerCtx) {

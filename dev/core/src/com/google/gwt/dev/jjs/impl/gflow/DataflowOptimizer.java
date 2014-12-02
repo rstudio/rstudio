@@ -102,7 +102,7 @@ public class DataflowOptimizer {
         if (madeChanges) {
           madeChanges();
 
-          DeadCodeElimination.exec(program, methodBody);
+          DeadCodeElimination.exec(program, methodBody.getMethod());
         }
       } catch (Throwable t) {
         throw new RuntimeException("Error optimizing: " + methodName, t);

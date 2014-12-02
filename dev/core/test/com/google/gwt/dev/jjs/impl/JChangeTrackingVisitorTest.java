@@ -304,7 +304,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
         "  public void fun () { for(int i = 3; i < 4; i++) i = 8; }", "}");
     JProgram program = compileSnippet("void", "");
     AddParamWhenEnterMethodVisitor addParamWhenEnterMethodVisitor =
-        new AddParamWhenEnterMethodVisitor(new OptimizerContext(program));
+        new AddParamWhenEnterMethodVisitor(new FullOptimizerContext(program));
     addParamWhenEnterMethodVisitor.accept(program);
     assertEquals("public void fun(int _newParam_enter);\n",
         findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun").toString());
@@ -318,7 +318,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
         "  public void fun () { for(int i = 3; i < 4; i++) i = 8; }", "}");
     JProgram program = compileSnippet("void", "");
     AddParamWhenExitMethodVisitor addParamWhenExitMethodVisitor =
-        new AddParamWhenExitMethodVisitor(new OptimizerContext(program));
+        new AddParamWhenExitMethodVisitor(new FullOptimizerContext(program));
     addParamWhenExitMethodVisitor.accept(program);
     assertEquals("public void fun(int _newParam_exit);\n",
         findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun").toString());
@@ -332,7 +332,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
         "  public void fun () { for(int i = 3; i < 4; i++) i = 8; }", "}");
     JProgram program = compileSnippet("void", "");
     AddParamsWhenEnterAndExitMethodVisitor addParamsWhenEnterAndExitMethodVisitor =
-        new AddParamsWhenEnterAndExitMethodVisitor(new OptimizerContext(program));
+        new AddParamsWhenEnterAndExitMethodVisitor(new FullOptimizerContext(program));
     addParamsWhenEnterAndExitMethodVisitor.accept(program);
     assertEquals("public void fun(int _newParam_enter, int _newParam_exit);\n",
         findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun").toString());
@@ -346,7 +346,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
         "  public void fun () { for(int i = 3; i < 4; i++) i = 8; }", "}");
     JProgram program = compileSnippet("void", "");
     AddParamWhenEnterNonConstructorMethodVisitor addParamsWhenEnterNonConstructorMethodVisitor =
-        new AddParamWhenEnterNonConstructorMethodVisitor(new OptimizerContext(program));
+        new AddParamWhenEnterNonConstructorMethodVisitor(new FullOptimizerContext(program));
     addParamsWhenEnterNonConstructorMethodVisitor.accept(program);
     assertEquals("public void fun(int _newParam_enter);\n",
         findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun").toString());
@@ -360,7 +360,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
         "  public void fun () { for(int i = 3; i < 4; i++) i = 8; }", "}");
     JProgram program = compileSnippet("void", "");
     AddParamWhenExitNonConstructorMethodVisitor addParamsWhenExitNonConstructorMethodVisitor =
-        new AddParamWhenExitNonConstructorMethodVisitor(new OptimizerContext(program));
+        new AddParamWhenExitNonConstructorMethodVisitor(new FullOptimizerContext(program));
     addParamsWhenExitNonConstructorMethodVisitor.accept(program);
     assertEquals("public void fun(int _newParam_exit);\n",
         findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun").toString());
@@ -373,7 +373,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
         "public void fun(int a) { a++; }", "}");
     JProgram program = compileSnippet("void", "");
     SetVariableOfIntToLongByEnterVisitor setVariableOfIntToLongByEnterVisitor =
-        new SetVariableOfIntToLongByEnterVisitor(new OptimizerContext(program));
+        new SetVariableOfIntToLongByEnterVisitor(new FullOptimizerContext(program));
     setVariableOfIntToLongByEnterVisitor.accept(program);
     assertEquals("long field1",
         findField(program.getFromTypeMap("test.EntryPoint$A"), "field1").toString());
@@ -388,7 +388,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
         "public void fun(int a) { a++; }", "}");
     JProgram program = compileSnippet("void", "");
     SetVariableOfIntToLongByExitVisitor setVariableOfIntToLongByExitVisitor =
-        new SetVariableOfIntToLongByExitVisitor(new OptimizerContext(program));
+        new SetVariableOfIntToLongByExitVisitor(new FullOptimizerContext(program));
     setVariableOfIntToLongByExitVisitor.accept(program);
     assertEquals("long field1",
         findField(program.getFromTypeMap("test.EntryPoint$A"), "field1").toString());
@@ -403,7 +403,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
         "public void fun(int a) { a++; }", "}");
     JProgram program = compileSnippet("void", "");
     SetNonFieldVariableOfIntToLongByEnterVisitor setNonFieldVariableOfIntToLongByEnterVisitor =
-        new SetNonFieldVariableOfIntToLongByEnterVisitor(new OptimizerContext(program));
+        new SetNonFieldVariableOfIntToLongByEnterVisitor(new FullOptimizerContext(program));
     setNonFieldVariableOfIntToLongByEnterVisitor.accept(program);
     assertEquals("int field1",
         findField(program.getFromTypeMap("test.EntryPoint$A"), "field1").toString());
@@ -418,7 +418,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
         "public void fun(int a) { a++; }", "}");
     JProgram program = compileSnippet("void", "");
     SetNonFieldVariableOfIntToLongByExitVisitor setNonFieldVariableOfIntToLongByExitVisitor =
-        new SetNonFieldVariableOfIntToLongByExitVisitor(new OptimizerContext(program));
+        new SetNonFieldVariableOfIntToLongByExitVisitor(new FullOptimizerContext(program));
     setNonFieldVariableOfIntToLongByExitVisitor.accept(program);
     assertEquals("int field1",
         findField(program.getFromTypeMap("test.EntryPoint$A"), "field1").toString());
@@ -433,7 +433,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
         "public void fun(int a) { a++; }", "}");
     JProgram program = compileSnippet("void", "");
     SetFieldOfIntToLongByEnterVisitor setFieldOfIntToLongByEnterVisitor =
-        new SetFieldOfIntToLongByEnterVisitor(new OptimizerContext(program));
+        new SetFieldOfIntToLongByEnterVisitor(new FullOptimizerContext(program));
     setFieldOfIntToLongByEnterVisitor.accept(program);
     assertEquals("long field1",
         findField(program.getFromTypeMap("test.EntryPoint$A"), "field1").toString());
@@ -448,7 +448,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
         "public void fun(int a) { a++; }", "}");
     JProgram program = compileSnippet("void", "");
     SetFieldOfIntToLongByExitVisitor setFieldOfIntToLongByExitVisitor =
-        new SetFieldOfIntToLongByExitVisitor(new OptimizerContext(program));
+        new SetFieldOfIntToLongByExitVisitor(new FullOptimizerContext(program));
     setFieldOfIntToLongByExitVisitor.accept(program);
     assertEquals("long field1",
         findField(program.getFromTypeMap("test.EntryPoint$A"), "field1").toString());
@@ -463,7 +463,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
         "  public A(int f) { field = f; }",
         "  public void fun () { for(int i = 3; i < 4; i++) i = 8; }", "}");
     JProgram program = compileSnippet("void", "");
-    OptimizerContext optimizerCtx = new OptimizerContext(program);
+    OptimizerContext optimizerCtx = new FullOptimizerContext(program);
     int countMethod = 0;
     int countField = 0;
     for (JDeclaredType type : program.getModuleDeclaredTypes()) {
@@ -497,7 +497,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
         "  public short field5;",
         "}");
     JProgram program = compileSnippet("void", "");
-    OptimizerContext optimizerCtx = new OptimizerContext(program);
+    OptimizerContext optimizerCtx = new FullOptimizerContext(program);
 
     int first = optimizerCtx.getOptimizationStep();
     ReplaceConditionalExprWithItsThenExprVisitor repalceConditionalExprVisitor =

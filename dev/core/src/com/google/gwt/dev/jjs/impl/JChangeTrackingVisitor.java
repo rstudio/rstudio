@@ -27,6 +27,26 @@ import java.util.Collection;
  * <p>
  * Subclasses of JChangeTrackingVisitor should override enter/exit instead of visit/endVisit for
  * JMethod, JConstructor, JVariable and JField
+ * <p>
+ * Passes that modify the Java AST while an OptimizerContext is in effect should subclass this
+ * class (JChangeTrackingVisitor) instead of {@link JModVisitor} or interact with
+ * {@link OptimizerContext} directly.
+ * <p>
+ * Passes that would like to act only on parts of the tree related to the modification that happened
+ * since the pass was last run should do something like:
+ *   {@code
+ *     String passName = "SomeUniqueNameForThisPass";
+ *     int lastSeenOptmizationStep = optimizerContext.getLastStepFor(passName);
+ *     Set<JMethod> modifiedMethods =
+ *       optimizerContext.getModifiedMethodsSince(lastSeenOptmizationStep)
+ *     Set<JField> modifiedFields =
+ *       optimizerContext.getModifiedFieldsSince(lastSeenOptmizationStep)
+ *     // compute potentially affected fields and methods and run the optimizer just on those
+ *     ....
+ *     //
+ *     optimizerContext.setLastStepFor(passName, optimizerContext.getCurrentOptimizationStep());
+ *     optimizerContext.incOptimizationStep;
+ *   }
  */
 public abstract class JChangeTrackingVisitor extends JModVisitor {
 
@@ -44,7 +64,7 @@ public abstract class JChangeTrackingVisitor extends JModVisitor {
   public final void endVisit(JConstructor x, Context ctx) {
     exit(x, ctx);
     if (methodModified) {
-      optimizerCtx.markModifiedMethod(x);
+      optimizerCtx.markModified(x);
     }
     currentMethod = null;
   }
@@ -53,7 +73,7 @@ public abstract class JChangeTrackingVisitor extends JModVisitor {
   public final void endVisit(JField x, Context ctx) {
     exit(x, ctx);
     if (fieldModified) {
-      optimizerCtx.markModifiedField(x);
+      optimizerCtx.markModified(x);
     }
     currentField = null;
   }
@@ -62,7 +82,7 @@ public abstract class JChangeTrackingVisitor extends JModVisitor {
   public final void endVisit(JMethod x, Context ctx) {
     exit(x, ctx);
     if (methodModified) {
-      optimizerCtx.markModifiedMethod(x);
+      optimizerCtx.markModified(x);
     }
     currentMethod = null;
   }
@@ -139,11 +159,11 @@ public abstract class JChangeTrackingVisitor extends JModVisitor {
   }
 
   public final void wasRemoved(JField field) {
-    optimizerCtx.removeField(field);
+    optimizerCtx.remove(field);
   }
 
   public final void wasRemoved(JMethod method) {
-    optimizerCtx.removeMethod(method);
+    optimizerCtx.remove(method);
   }
 
   public final void methodsWereRemoved(Collection<JMethod> methods) {

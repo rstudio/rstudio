@@ -38,6 +38,7 @@ import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -211,12 +212,9 @@ public class Finalizer {
 
   private static final String NAME = Finalizer.class.getSimpleName();
 
-  // TODO(leafwang): remove this entry point when it is no longer needed.
-  public static OptimizerStats exec(JProgram program) {
-    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
-    OptimizerStats stats = new Finalizer().execImpl(program, new OptimizerContext(program));
-    optimizeEvent.end("didChange", "" + stats.didChange());
-    return stats;
+  @VisibleForTesting
+  static OptimizerStats exec(JProgram program) {
+    return exec(program, OptimizerContext.NULL_OPTIMIZATION_CONTEXT);
   }
 
   public static OptimizerStats exec(JProgram program, OptimizerContext optimizerCtx) {

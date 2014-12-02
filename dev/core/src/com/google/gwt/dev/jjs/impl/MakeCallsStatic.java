@@ -46,6 +46,7 @@ import com.google.gwt.dev.js.ast.JsThisRef;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -234,8 +235,8 @@ public class MakeCallsStatic {
       enclosingType.getMethods().add(myIndexInClass + 1, newMethod);
 
       if (optimizerCtx != null) {
-        optimizerCtx.markModifiedMethod(x);
-        optimizerCtx.markModifiedMethod(newMethod);
+        optimizerCtx.markModified(x);
+        optimizerCtx.markModified(newMethod);
       }
       return false;
     }
@@ -451,13 +452,9 @@ public class MakeCallsStatic {
     return stats;
   }
 
-  // TODO(leafwang): remove this entry point when it is no longer needed.
-  public static OptimizerStats exec(JProgram program, boolean addRuntimeChecks) {
-    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
-    OptimizerStats stats =
-        new MakeCallsStatic(program, addRuntimeChecks).execImpl(new OptimizerContext(program));
-    optimizeEvent.end("didChange", "" + stats.didChange());
-    return stats;
+  @VisibleForTesting
+  static OptimizerStats exec(JProgram program,  boolean addRuntimeChecks) {
+    return exec(program, addRuntimeChecks, OptimizerContext.NULL_OPTIMIZATION_CONTEXT);
   }
 
   protected Set<JMethod> toBeMadeStatic = new HashSet<JMethod>();

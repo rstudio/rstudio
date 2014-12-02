@@ -511,12 +511,8 @@ public class Pruner {
     return stats;
   }
 
-  // TODO(leafwang): remove this entry point when it is no longer needed.
   public static OptimizerStats exec(JProgram program, boolean noSpecialTypes) {
-    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
-    OptimizerStats stats = new Pruner(program, noSpecialTypes).execImpl(new OptimizerContext(program));
-    optimizeEvent.end("didChange", "" + stats.didChange());
-    return stats;
+    return exec(program, noSpecialTypes, OptimizerContext.NULL_OPTIMIZATION_CONTEXT);
   }
 
   /**

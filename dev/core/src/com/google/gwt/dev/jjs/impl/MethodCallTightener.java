@@ -26,6 +26,7 @@ import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 
 /**
  * Update polymorphic method calls to tighter bindings based on the type of the
@@ -117,12 +118,9 @@ public class MethodCallTightener {
 
   public static final String NAME = MethodCallTightener.class.getSimpleName();
 
-  // TODO(leafwang): remove this entry point when it is no longer needed.
-  public static OptimizerStats exec(JProgram program) {
-    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
-    OptimizerStats stats = new MethodCallTightener(program).execImpl(new OptimizerContext(program));
-    optimizeEvent.end("didChange", "" + stats.didChange());
-    return stats;
+  @VisibleForTesting
+  static OptimizerStats exec(JProgram program) {
+    return exec(program, OptimizerContext.NULL_OPTIMIZATION_CONTEXT);
   }
 
   public static OptimizerStats exec(JProgram program, OptimizerContext optimizerCtx) {

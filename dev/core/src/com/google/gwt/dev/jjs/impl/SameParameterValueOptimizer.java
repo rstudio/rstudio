@@ -34,6 +34,7 @@ import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -185,12 +186,9 @@ public class SameParameterValueOptimizer {
 
   private static final String NAME = SameParameterValueOptimizer.class.getSimpleName();
 
-  public static OptimizerStats exec(JProgram program) {
-    Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
-    OptimizerStats stats =
-        new SameParameterValueOptimizer(program).execImpl(program, new OptimizerContext(program));
-    optimizeEvent.end("didChange", "" + stats.didChange());
-    return stats;
+  @VisibleForTesting
+  static OptimizerStats exec(JProgram program) {
+    return exec(program, OptimizerContext.NULL_OPTIMIZATION_CONTEXT);
   }
 
   public static OptimizerStats exec(JProgram program, OptimizerContext optimizerCtx) {

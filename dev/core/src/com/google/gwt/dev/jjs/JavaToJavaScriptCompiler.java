@@ -68,6 +68,7 @@ import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
 import com.google.gwt.dev.jjs.impl.EnumOrdinalizer;
 import com.google.gwt.dev.jjs.impl.Finalizer;
 import com.google.gwt.dev.jjs.impl.FixAssignmentsToUnboxOrCast;
+import com.google.gwt.dev.jjs.impl.FullOptimizerContext;
 import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
 import com.google.gwt.dev.jjs.impl.ImplementClassLiteralsAsFields;
 import com.google.gwt.dev.jjs.impl.JavaAstVerifier;
@@ -1135,7 +1136,7 @@ public abstract class JavaToJavaScriptCompiler {
            * AST.
            */
           optimizeJavaOneTime("Early Optimization", jprogram.getNodeCount(),
-              new OptimizerContext(jprogram));
+              new FullOptimizerContext(jprogram));
         }
       }
     }
@@ -1453,7 +1454,7 @@ public abstract class JavaToJavaScriptCompiler {
     boolean atMaxLevel = options.getOptimizationLevel() == OptionOptimize.OPTIMIZE_LEVEL_MAX;
     int passLimit = atMaxLevel ? MAX_PASSES : options.getOptimizationLevel();
     float minChangeRate = atMaxLevel ? FIXED_POINT_CHANGE_RATE : EFFICIENT_CHANGE_RATE;
-    OptimizerContext optimizerCtx = new OptimizerContext(jprogram);
+    OptimizerContext optimizerCtx = new FullOptimizerContext(jprogram);
     while (true) {
       passCount++;
       if (passCount > passLimit) {
