@@ -295,7 +295,10 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   protected EmittedArtifact emitSelectionScript(TreeLogger logger,
       LinkerContext context, ArtifactSet artifacts)
       throws UnableToCompleteException {
-    long lastModified = context.getModuleLastModified();
+    // nocache.js file content is a combination of module contents and compile args configuration,
+    // and as such it is potentially different on every compile. Select a modification time that
+    // reflects this possibility that contents have changed.
+    long lastModified = System.currentTimeMillis();
     String ss = generateSelectionScript(logger, context, artifacts);
     return emitString(logger, ss, context.getModuleName()
         + ".nocache.js", lastModified);
