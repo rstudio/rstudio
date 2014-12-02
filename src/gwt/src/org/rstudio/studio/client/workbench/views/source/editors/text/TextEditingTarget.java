@@ -2137,8 +2137,9 @@ public class TextEditingTarget implements
    @Handler
    void onAlignAssignment()
    {
-      // Only allow if entire selection in R mode
-      if (!DocumentMode.isCursorInRMode(docDisplay_))
+      // Only allow if entire selection in R or C++ mode for now
+      if (!(DocumentMode.isSelectionInCppMode(docDisplay_) ||
+            DocumentMode.isSelectionInRMode(docDisplay_)))
          return;
       
       InputEditorSelection initialSelection =
