@@ -21,7 +21,6 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.editor.rebind.model.ModelUtils;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.*;
 import com.google.gwt.event.shared.GwtEvent;
@@ -139,8 +138,6 @@ import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsViewOnGitH
 import org.rstudio.studio.client.workbench.views.vcs.common.model.GitHubViewRequest;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -2006,26 +2003,27 @@ public class TextEditingTarget implements
       return fileType_;
    }
    
+   private static final Pattern ALIGN_DELIM_PATTERN =
+         Pattern.create("(<<-|<-|==|=)");
+   
    private ArrayList<Pair<Integer, Integer>> getAlignmentRanges()
    {
       int selectionStart = docDisplay_.getSelectionStart().getRow();
       int selectionEnd = docDisplay_.getSelectionEnd().getRow();
-      
-      Pattern assignPattern = Pattern.create("(<<-|<-|=)");
       
       ArrayList<Pair<Integer, Integer>> ranges =
             new ArrayList<Pair<Integer, Integer>>();
       
       for (int i = selectionStart; i <= selectionEnd; i++)
       {
-         if (assignPattern.match(
+         if (ALIGN_DELIM_PATTERN.match(
                StringUtil.maskStrings(
                      docDisplay_.getLine(i)), 0) != null)
          {
             int rangeStart = i;
             
             while (i <= selectionEnd &&
-                  assignPattern.match(
+                  ALIGN_DELIM_PATTERN.match(
                         StringUtil.maskStrings(
                               docDisplay_.getLine(i)), 0) != null)
                i++;
@@ -2052,8 +2050,7 @@ public class TextEditingTarget implements
       ArrayList<String> ends = new ArrayList<String>();
       for (int i = 0; i < splat.length; i++)
       {
-         Pattern delimPattern = Pattern.create("(<<-|<-|=)");
-         Match match = delimPattern.match(
+         Match match = ALIGN_DELIM_PATTERN.match(
                StringUtil.maskStrings(splat[i]), 0);
          
          if (match == null)
@@ -2078,7 +2075,7 @@ public class TextEditingTarget implements
       boolean success = true;
       for (int i = 0; i < ends.size(); i++)
       {
-         String current = ends.get(i).replaceAll("[\\s,\\)]*", "");
+         String current = ends.get(i).replaceAll("[\\s,\\);]*", "");
          try
          {
             endPrefixes.add(("" + Integer.parseInt(current)).length());
