@@ -92,7 +92,7 @@ if not exist gwt\2.7.0 (
   echo Unzipping %GWT_FILE%
   unzip %UNZIP_ARGS% "%GWT_FILE%"
   mkdir gwt
-  move gwt-2.6.0 gwt\2.7.0
+  move gwt-2.7.0 gwt\2.7.0
   del "%GWT_FILE%"
 )
 
