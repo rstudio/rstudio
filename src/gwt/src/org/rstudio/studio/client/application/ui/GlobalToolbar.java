@@ -173,18 +173,20 @@ public class GlobalToolbar extends Toolbar
          addLeftWidget(deployButton);
       }
       
+      // go to project dir button
+      if (!StringUtil.isNullOrEmpty(
+            sessionInfo.getActiveProjectFile()))
+      {
+         addRightWidget(commands_.setWorkingDirToProjectDir().createToolbarButton());
+         addRightSeparator();
+      }
+      
       // project popup menu
       ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo,
                                                           commands_);
       addRightWidget(projectMenu.getToolbarButton());
       
-      // go to project dir button
-      if (!StringUtil.isNullOrEmpty(
-            sessionInfo.getActiveProjectFile()))
-      {
-         addRightSeparator();
-         addRightWidget(commands_.setWorkingDirToProjectDir().createToolbarButton());
-      }
+     
       
       
    }
