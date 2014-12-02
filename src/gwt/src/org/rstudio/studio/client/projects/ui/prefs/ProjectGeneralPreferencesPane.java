@@ -64,7 +64,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
    @Override
    public String getName()
    {
-      return "General2";
+      return "General";
    }
 
    @Override
