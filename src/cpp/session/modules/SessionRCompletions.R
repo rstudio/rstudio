@@ -29,7 +29,8 @@ assign(x = ".rs.acContextTypes",
           FILE = 8,
           CHUNK = 9,
           ROXYGEN = 10,
-          HELP = 11
+          HELP = 11,
+          ARGUMENT = 12
        )
 )
 
@@ -78,7 +79,7 @@ assign(x = ".rs.acCompletionTypes",
    # S4
    else if (isS4(object))
    {
-      if (inherits(object, "standardGeneric") || 
+      if (inherits(object, "standardGeneric") ||
              inherits(object, "nonstandardGenericFunction"))
          .rs.acCompletionTypes$S4_GENERIC
       else if (inherits(object, "MethodDefinition"))
@@ -165,24 +166,75 @@ assign(x = ".rs.acCompletionTypes",
                        excludeOtherCompletions = TRUE)
 })
 
-.rs.addFunction("getCompletionsFile", function(token)
+.rs.addFunction("getCompletionsVignettes", function(token)
 {
+   doGetCompletionsVignettes <- function(token, vignettes)
+   {
+      vignettes <- sort(vignettes)
+      .rs.makeCompletions(token = token,
+                          results = .rs.selectFuzzyMatches(vignettes, token),
+                          quote = TRUE,
+                          type = .rs.acCompletionTypes$VIGNETTE,
+                          excludeOtherCompletions = TRUE)
+   }
+   
+   if (!is.null(vignettes <- .rs.get("vignettes")))
+      return(doGetCompletionsVignettes(token, vignettes$results[, "Item"]))
+   
+   vignettes <- vignette()
+   .rs.assign("vignettes", vignettes)
+   doGetCompletionsVignettes(token, vignettes$results[, "Item"])
+})
+
+.rs.addFunction("getCompletionsFile", function(token, path = NULL, quote = FALSE)
+{
+   # If we might have wanted relative completions but the file path was actually
+   # qualified relative to home or root, then abort that
+   if (!is.null(path) && nzchar(token) && substring(token, 1, 1) %in% c("~", "/"))
+      path <- NULL
+   
+   if (identical(token, "~"))
+      token <- "~/"
+   
    slashIndices <- gregexpr("/", token, fixed = TRUE)[[1]]
    lastSlashIndex <- slashIndices[length(slashIndices)]
    
    if (lastSlashIndex == -1)
    {
-      pattern <- paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeForRegex(token)), sep = "")
-      files <- list.files(all.files = TRUE,
+      pattern <- if (nzchar(token))
+         paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeForRegex(token)), sep = "")
+      
+      if (is.null(path))
+         path <- getwd()
+      files <- list.files(path = path,
+                          all.files = TRUE,
                           pattern = pattern,
                           no.. =  TRUE)
+      
+      qualifiedPaths <- file.path(path, files)
    }
    else
    {
-      directory <- substring(token, 1, lastSlashIndex - 1)
-      file <- substring(token, lastSlashIndex + 1, nchar(token))
-      pattern <- paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeForRegex(file)), sep = "")
-      listed <- list.files(directory,
+      if (identical(token, "/"))
+      {
+         directory <- "/"
+         file <- ""
+      }
+      else
+      {
+         directory <- substring(token, 1, lastSlashIndex - 1)
+         file <- substring(token, lastSlashIndex + 1, nchar(token))
+      }
+      
+      pattern <- if (nzchar(file))
+         paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeForRegex(file)), sep = "")
+      
+      listPath <- if (is.null(path))
+         directory
+      else
+         file.path(path, directory)
+      
+      listed <- list.files(path = listPath,
                            all.files = TRUE,
                            pattern = pattern,
                            no.. = TRUE)
@@ -193,19 +245,27 @@ assign(x = ".rs.acCompletionTypes",
       order <- c(first, last)
       listed <- listed[order]
       
+      if (identical(directory, "/"))
+         directory <- ""
+      
       files <- file.path(
          directory,
          listed
       )
+      
+      qualifiedPaths <- if (is.null(path))
+         files
+      else
+         file.path(path, files)
    }
    
-   isDir <- file.info(files)[, "isdir"] %in% TRUE ## protect against NA
+   isDir <- file.info(qualifiedPaths)[, "isdir"] %in% TRUE ## protect against NA
    files[isDir] <- paste(files[isDir], "/", sep = "")
    .rs.makeCompletions(token = token,
                        results = files,
                        packages = ifelse(isDir, "<directory>", "<file>"),
                        type = .rs.acCompletionTypes$FILE,
-                       quote = FALSE,
+                       quote = quote,
                        excludeOtherCompletions = TRUE)
 })
 
@@ -220,18 +280,31 @@ assign(x = ".rs.acCompletionTypes",
       
       if (length(functionCall) > 1 && .rs.isS3Generic(object))
       {
-         s3methods <- .rs.getS3MethodsForFunction(functionName, envir)
          objectForDispatch <- .rs.getAnywhere(matchedCall[[2]], envir)
          classes <- class(objectForDispatch)
-         
          for (class in c(classes, "default"))
          {
-            methodName <- paste(functionName, class, sep = ".")
-            method <- .rs.getAnywhere(methodName, envir)
+            # It is possible that which S3 method will be used may depend on where
+            # the generic f is called from: getS3method returns the method found if
+            # f were called from the same environment.
+            call <- substitute(
+               utils::getS3method(functionName, class),
+               list(functionName = functionName,
+                    class = class)
+            )
+            
+            method <- tryCatch(
+               eval(call, envir = envir),
+               error = function(e) NULL
+            )
+            
             if (!is.null(method))
             {
                formals <- .rs.getFunctionArgumentNames(method)
-               methods <- rep.int(methodName, length(formals))
+               methods <- rep.int(
+                  paste(functionName, class, sep = "."),
+                  length(formals)
+               )
                break
             }
          }
@@ -242,7 +315,7 @@ assign(x = ".rs.acCompletionTypes",
          methods <- rep.int(functionName, length(formals))
       }
       
-      keep <- .rs.fuzzyMatches(formals, token) & 
+      keep <- .rs.fuzzyMatches(formals, token) &
          !(formals %in% names(functionCall)) ## leave out formals already in call
       
       return(list(
@@ -274,9 +347,38 @@ assign(x = ".rs.acCompletionTypes",
    tryCatch(match.call(func, call), error = function(e) call)
 })
 
+.rs.addFunction("getCompletionsInstallPackages", function(token)
+{
+   contrib.url <- contrib.url(getOption("repos"), getOption("pkgType"))
+   
+   packages <- Reduce(union, lapply(contrib.url, function(url) {
+      
+      # Try to get a package list from the cache
+      result <- .rs.getCachedAvailablePackages(url)
+      
+      # If it's null, there were no packages available
+      if (is.null(result))
+         .rs.downloadAvailablePackages(url)
+      
+      # Try again
+      result <- .rs.getCachedAvailablePackages(url)
+      
+      # And return
+      result
+   }))
+   
+   .rs.makeCompletions(token = token,
+                       results = .rs.selectFuzzyMatches(packages, token),
+                       quote = TRUE,
+                       type = .rs.acCompletionTypes$PACKAGE,
+                       excludeOtherCompletions = TRUE)
+   
+})
+
 .rs.addFunction("getCompletionsFunction", function(token,
                                                    string,
                                                    functionCall,
+                                                   numCommas,
                                                    discardFirst,
                                                    envir = parent.frame())
 {
@@ -309,6 +411,30 @@ assign(x = ".rs.acCompletionTypes",
       }
    }
    
+   # Special casing for variants of read.table which hide additional
+   # arguments in ...
+   if ("utils" %in% loadedNamespaces())
+   {
+      readers <- list(
+         utils::read.csv,
+         utils::read.csv2,
+         utils::read.delim,
+         utils::read.delim2
+      )
+      
+      if (any(sapply(readers, identical, object)))
+         object <- utils::read.table
+      
+      # Similarily for write.csv
+      writers <- list(
+         utils::write.csv,
+         utils::write.csv2
+      )
+      
+      if (any(sapply(writers, identical, object)))
+         object <- utils::write.table
+   }
+   
    if (!is.null(object) && is.function(object))
    {
       matchedCall <- .rs.matchCall(object, functionCall)
@@ -322,18 +448,39 @@ assign(x = ".rs.acCompletionTypes",
       if (length(formals$formals))
          formals$formals <- paste(formals$formals, "= ")
       
+      # Get the current argument -- we can resolve this based on
+      # 'numCommas' and the number of named formals. The idea is, e.g.
+      # in a function call
+      #
+      #     rnorm(|, n = 1, sd = 2)
+      #
+      # we should infer that the current argument name is 'mean'. We do this
+      # by looking at which arguments have yet to be matched, and using the
+      # first argument in that list.
+      activeArg <- .rs.getActiveArgument(object, matchedCall)
+      
+      if (!length(activeArg) || is.na(activeArg))
+         activeArg <- ""
+      
+      # Get completions for the current active argument
+      argCompletions <- .rs.getCompletionsArgument(token,
+                                                   activeArg)
+      
       fguess <- if (length(formals$methods))
          formals$methods[[1]]
       else
          ""
       
-      result <- .rs.makeCompletions(
-         token = token,
-         results = formals$formals,
-         packages = formals$methods,
-         type = .rs.acCompletionTypes$ARGUMENT,
-         fguess = fguess,
-         orderStartsWithAlnumFirst = FALSE
+      result <- .rs.appendCompletions(
+         argCompletions,
+         .rs.makeCompletions(
+            token = token,
+            results = formals$formals,
+            packages = formals$methods,
+            type = .rs.acCompletionTypes$ARGUMENT,
+            fguess = fguess,
+            orderStartsWithAlnumFirst = FALSE
+         )
       )
    }
    
@@ -748,7 +895,9 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
-.rs.addFunction("getCompletionsPackages", function(token, appendColons = FALSE)
+.rs.addFunction("getCompletionsPackages", function(token,
+                                                   appendColons = FALSE,
+                                                   excludeOtherCompletions = FALSE)
 {
    allPackages <- Reduce(union, lapply(.libPaths(), list.files))
    
@@ -763,7 +912,8 @@ assign(x = ".rs.acCompletionTypes",
                           completions,
                        packages = completions,
                        quote = !appendColons,
-                       type = .rs.acCompletionTypes$PACKAGE)
+                       type = .rs.acCompletionTypes$PACKAGE,
+                       excludeOtherCompletions = excludeOtherCompletions)
 })
 
 .rs.addFunction("getCompletionsData", function(token)
@@ -929,7 +1079,7 @@ assign(x = ".rs.acCompletionTypes",
    ## Try to parse the function call string
    functionCall <- tryCatch({
       parse(text = .rs.finishExpression(functionCallString))[[1]]
-   }, error = function(e) 
+   }, error = function(e)
       NULL
    )
    
@@ -943,6 +1093,15 @@ assign(x = ".rs.acCompletionTypes",
    if (.rs.acContextTypes$ROXYGEN %in% type)
       return(.rs.attemptRoxygenTagCompletion(token))
    
+   # install.packages
+   if (length(string) && string[[1]] == "install.packages" && numCommas[[1]] == 0)
+      return(.rs.getCompletionsInstallPackages(token))
+   
+   # vignettes
+   if (length(string) && string[[1]] == "vignette" && numCommas[[1]] == 0)
+      return(.rs.getCompletionsVignettes(token))
+   
+   # data
    if (.rs.acContextTypes$FUNCTION %in% type &&
           string[[1]] == "data" &&
           numCommas[[1]] == 0)
@@ -975,11 +1134,22 @@ assign(x = ".rs.acCompletionTypes",
       return(completions)
    }
    
+   # transform 'install.packages' to 'utils::install.packages' to avoid
+   # getting arguments from the RStudio hook
+   if ("install.packages" %in% string[[1]])
+   {
+      fn <- .rs.getAnywhere("install.packages", parent.frame())
+      if (is.function(fn) && identical(names(formals(fn)), "..."))
+      {
+         string[[1]] <- "utils::install.packages"
+      }
+   }
+   
    # library, require, requireNamespace, loadNamespace
    if (string[[1]] %in% c("library", "require", "requireNamespace") &&
           numCommas[[1]] == 0)
    {
-      return(.rs.getCompletionsPackages(token))
+      return(.rs.getCompletionsPackages(token, excludeOtherCompletions = TRUE))
    }
    
    # Shiny completions
@@ -1098,9 +1268,12 @@ assign(x = ".rs.acCompletionTypes",
    }
    
    # get completions from the search path for the 'generic' contexts
-   if (token != "" && 
-          type[[1]] %in% c(.rs.acContextTypes$UNKNOWN, .rs.acContextTypes$FUNCTION,
-                           .rs.acContextTypes$SINGLE_BRACKET, .rs.acContextTypes$DOUBLE_BRACKET))
+   if (token != "" &&
+          type[[1]] %in% c(.rs.acContextTypes$UNKNOWN,
+                           .rs.acContextTypes$FUNCTION,
+                           .rs.acContextTypes$ARGUMENT,
+                           .rs.acContextTypes$SINGLE_BRACKET,
+                           .rs.acContextTypes$DOUBLE_BRACKET))
    {
       completions <- .rs.appendCompletions(
          completions,
@@ -1119,10 +1292,19 @@ assign(x = ".rs.acCompletionTypes",
    
    ## File-based completions
    if (.rs.acContextTypes$FILE %in% type)
+   {
+      # NOTE: For Markdown link completions, we overload the meaning of the
+      # function call string here, and use it as a signal to generate paths
+      # relative to the R markdown path.
+      path <- if (length(functionCallString) &&
+                     functionCallString == "useFile")
+         dirname(filePath)
+      
       completions <- .rs.appendCompletions(
          completions,
-         .rs.getCompletionsFile(token)
+         .rs.getCompletionsFile(token, path)
       )
+   }
    
    ## Package completions (e.g. `stats::`)
    if (token != "" && .rs.acContextTypes$UNKNOWN %in% type)
@@ -1215,7 +1397,7 @@ assign(x = ".rs.acCompletionTypes",
             cursorPos,
             parent.frame()
          )
-      }, 
+      },
       
       error = function(e) {
          .rs.emptyCompletions()
@@ -1281,7 +1463,7 @@ assign(x = ".rs.acCompletionTypes",
                                                  envir)
 {
    ## chainObjectName will be provided if the client detected
-   ## that we were performing completions within an e.g. 
+   ## that we were performing completions within an e.g.
    ## `%>%` chain -- use completions from the associated data object.
    result <- .rs.emptyCompletions()
    
@@ -1309,7 +1491,7 @@ assign(x = ".rs.acCompletionTypes",
    {
       argsToAdd <- .rs.selectFuzzyMatches(additionalArgs, token)
       result <- .rs.appendCompletions(
-         result, 
+         result,
          .rs.makeCompletions(
             token = token,
             results = argsToAdd,
@@ -1338,7 +1520,9 @@ assign(x = ".rs.acCompletionTypes",
                                             envir)
 {
    if (type == .rs.acContextTypes$FUNCTION)
-      .rs.getCompletionsFunction(token, string, functionCall, discardFirst, envir)
+      .rs.getCompletionsFunction(token, string, functionCall, numCommas, discardFirst, envir)
+   else if (type == .rs.acContextTypes$ARGUMENT)
+      .rs.getCompletionsArgument(token, string)
    else if (type == .rs.acContextTypes$SINGLE_BRACKET)
       .rs.getCompletionsSingleBracket(token, string, numCommas, envir)
    else if (type == .rs.acContextTypes$DOUBLE_BRACKET)
@@ -1569,39 +1753,40 @@ assign(x = ".rs.acCompletionTypes",
                                                  inputCount,
                                                  outputCount)
 {
-   if (is.call(object))
+   if (is.call(object) && length(object) > 1)
    {
-      name <- if (is.symbol(object[[2]]))
-         as.character(object[[2]])
-      else if (is.character(object[[2]]) && length(object[[2]]) == 1)
+      functionName <- as.character(object[[1]])
+      firstArgName <- if (is.character(object[[2]]) && length(object[[2]]) == 1)
          object[[2]]
       else
          ""
       
-      if (.rs.endsWith(name, "Output"))
+      if (nzchar(firstArgName))
       {
-         outputCount$count <- outputCount$count + 1
-         outputs[[as.character(outputCount$count)]] <- as.character(object[[2]])
-      }
-      
-      if (.rs.endsWith(name, "Input"))
-      {
-         inputCount$count <- inputCount$count + 1
-         inputs[[as.character(inputCount$count)]] <- as.character(object[[2]])
-      }
-      
-      if (length(object) > 1)
-         for (j in 2:length(object))
+         if (.rs.endsWith(functionName, "Output"))
          {
-            if (is.call(object[[j]]))
-            {
-               .rs.doShinyUICompletions(object[[j]],
-                                        inputs,
-                                        outputs,
-                                        inputCount,
-                                        outputCount)
-            }
+            outputCount$count <- outputCount$count + 1
+            outputs[[as.character(outputCount$count)]] <- firstArgName
          }
+         
+         if (.rs.endsWith(functionName, "Input"))
+         {
+            inputCount$count <- inputCount$count + 1
+            inputs[[as.character(inputCount$count)]] <- firstArgName
+         }
+      }
+      
+      for (j in 2:length(object))
+      {
+         if (is.call(object[[j]]))
+         {
+            .rs.doShinyUICompletions(object[[j]],
+                                     inputs,
+                                     outputs,
+                                     inputCount,
+                                     outputCount)
+         }
+      }
    }
    
 })
@@ -1746,5 +1931,22 @@ assign(x = ".rs.acCompletionTypes",
    
    output
    
+})
+
+.rs.addFunction("getCompletionsArgument", function(token,
+                                                   activeArg)
+{
+   completions <- .rs.emptyCompletions()
    
+   if (activeArg %in% c("pkg", "package"))
+      completions <- .rs.appendCompletions(
+         completions,
+         .rs.getCompletionsPackages(token = token,
+                                    appendColons = FALSE,
+                                    excludeOtherCompletions = FALSE)
+      )
+   
+   # TODO: Wire up file completions (e.g. 'Ctrl + P'-like behaviour)
+   
+   completions
 })

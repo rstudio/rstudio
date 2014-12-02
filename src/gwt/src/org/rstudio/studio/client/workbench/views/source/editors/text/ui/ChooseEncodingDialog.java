@@ -86,7 +86,8 @@ public class ChooseEncodingDialog extends ModalDialog<String>
    @Override
    protected Widget createMainWidget()
    {
-      listBox_ = new ListBox(true);
+      listBox_ = new ListBox();
+      listBox_.setMultipleSelect(true);
       listBox_.setVisibleItemCount(15);
       listBox_.setWidth("350px");
 

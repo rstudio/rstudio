@@ -57,7 +57,8 @@ public class SelectWidget extends Composite
       if (values == null)
          values = options;
 
-      listBox_ = new ListBox(isMultipleSelect);
+      listBox_ = new ListBox();
+      listBox_.setMultipleSelect(isMultipleSelect);
       for (int i = 0; i < options.length; i++)
          listBox_.addItem(options[i], values[i]);
       
