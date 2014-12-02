@@ -602,7 +602,7 @@ public class RCompletionManager implements CompletionManager
                input_.getCursorPosition().getColumn() - 1); 
          
          // Automatically popup completions after certain function calls
-         if (c == '(')
+         if (c == '(' && !isLineInComment(docDisplay_.getCurrentLine()))
          {
             String token = StringUtil.getToken(
                   docDisplay_.getCurrentLine(),
