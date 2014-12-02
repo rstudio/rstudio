@@ -30,15 +30,16 @@ public class RCompletionType
    public static final int S4_METHOD = 11;
    public static final int R5_CLASS = 12;
    public static final int R5_OBJECT = 13;
-   public static final int FILE = 14;
-   public static final int CHUNK = 15;
-   public static final int ROXYGEN = 16;
-   public static final int HELP = 17;
-   public static final int STRING = 18;
-   public static final int PACKAGE = 19;
-   public static final int KEYWORD = 20;
-   public static final int OPTION = 21;
-   public static final int DATASET = 22;
+   public static final int R5_METHOD = 14;
+   public static final int FILE = 15;
+   public static final int CHUNK = 16;
+   public static final int ROXYGEN = 17;
+   public static final int HELP = 18;
+   public static final int STRING = 19;
+   public static final int PACKAGE = 20;
+   public static final int KEYWORD = 21;
+   public static final int OPTION = 22;
+   public static final int DATASET = 23;
    
    public static final int CONTEXT = 99;
    
@@ -46,6 +47,7 @@ public class RCompletionType
    {
       return type == FUNCTION ||
              type == S4_GENERIC ||
-             type == S4_METHOD;
+             type == S4_METHOD ||
+             type == R5_METHOD;
    }
 }

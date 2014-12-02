@@ -1121,9 +1121,6 @@ void printCoreDumpable(const std::string& context)
    std::cerr << ostr.str();
 }
 
-
-namespace {
-
 void setProcessLimits(ProcessLimits limits)
 {
    // memory limit
@@ -1192,6 +1189,11 @@ void setProcessLimits(ProcessLimits limits)
    }
 #endif
 }
+
+
+
+namespace {
+
 
 void copyEnvironmentVar(const std::string& name,
                         core::system::Options* pVars,

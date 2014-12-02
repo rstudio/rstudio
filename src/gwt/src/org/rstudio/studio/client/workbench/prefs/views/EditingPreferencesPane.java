@@ -14,6 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -81,7 +85,37 @@ public class EditingPreferencesPane extends PreferencesPane
       spaced(showCompletions_);
       completionPanel.add(showCompletions_);
       
-      completionPanel.add(checkboxPref("Show help tooltip after function completions", prefs.showSignatureTooltips()));    
+      final CheckBox alwaysCompleteInConsole = checkboxPref(
+                       "Allow automatic completions in console",
+                       prefs.alwaysCompleteInConsole());
+      completionPanel.add(alwaysCompleteInConsole);
+      showCompletions_.addChangeHandler(new ChangeHandler() {
+
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            alwaysCompleteInConsole.setVisible(
+                   showCompletions_.getValue().equals(
+                                        UIPrefsAccessor.COMPLETION_ALWAYS));
+            
+         }
+      });
+      
+      final CheckBox insertParensAfterFunctionCompletionsCheckbox =
+           checkboxPref("Insert parentheses after function completions",
+                 prefs.insertParensAfterFunctionCompletion());
+      
+      final CheckBox showSignatureTooltipsCheckbox =
+           checkboxPref("Show help tooltip after function completions",
+                 prefs.showSignatureTooltips());
+      
+      addEnabledDependency(
+            insertParensAfterFunctionCompletionsCheckbox,
+            showSignatureTooltipsCheckbox);
+      
+      completionPanel.add(insertParensAfterFunctionCompletionsCheckbox);
+      completionPanel.add(showSignatureTooltipsCheckbox);
+      
       completionPanel.add(checkboxPref("Insert spaces around equals for argument completions", prefs.insertSpacesAroundEquals()));
       completionPanel.add(checkboxPref("Use tab for multiline autocompletions", prefs.allowTabMultilineCompletion()));
       
@@ -93,7 +127,40 @@ public class EditingPreferencesPane extends PreferencesPane
       tabPanel.selectTab(0);
       add(tabPanel);
    }
-
+   
+   private void disable(CheckBox checkBox)
+   {
+      checkBox.setValue(false);
+      checkBox.setEnabled(false);
+      checkBox.setVisible(false);
+   }
+   
+   private void enable(CheckBox checkBox)
+   {
+      checkBox.setValue(true);
+      checkBox.setEnabled(true);
+      checkBox.setVisible(true);
+   }
+   
+   private void addEnabledDependency(final CheckBox speaker,
+                                     final CheckBox listener)
+   {
+      if (speaker.getValue() == false)
+         disable(listener);
+      
+      speaker.addValueChangeHandler(
+            new ValueChangeHandler<Boolean>()
+            {
+               @Override
+               public void onValueChange(ValueChangeEvent<Boolean> event)
+               {
+                  if (event.getValue() == false)
+                     disable(listener);
+                  else
+                     enable(listener);
+               }
+            });
+   }
 
    @Override
    protected void initialize(RPrefs prefs)
@@ -138,5 +205,7 @@ public class EditingPreferencesPane extends PreferencesPane
    private final CheckBox spacesForTab_;
    private final CheckBox showMargin_;
    private final SelectWidget showCompletions_;
+   
+   
    
 }

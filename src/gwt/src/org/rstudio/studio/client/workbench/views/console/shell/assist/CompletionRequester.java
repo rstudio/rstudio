@@ -366,29 +366,7 @@ public class CompletionRequester
          if (scopedFunctions.length() == 0)
             return;
          
-         // We might ignore the first scope if we're within the argument list
-         // for that function, e.g.
-         //
-         //    foo <- function(apple, banana, |
-         //
-         // The cursor is seen as within the scope of 'foo', but we don't
-         // actually want those completions.
-         int start = 0;
-         
-         JsArray<ScopeFunction> scopeFunctions =
-               codeModel.getAllFunctionScopes(cursorPosition.getRow());
-         
-         if (scopeFunctions.length() > 0)
-         {
-            ScopeFunction currentFunction = scopeFunctions.get(
-                  scopeFunctions.length() - 1);
-
-            Position bracePos = currentFunction.getBodyStart();
-            if (cursorPosition.isBefore((bracePos)))
-               start = 1;
-         }
-            
-         for (int i = start; i < scopedFunctions.length(); i++)
+         for (int i = 0; i < scopedFunctions.length(); i++)
          {
             RFunction scopedFunction = scopedFunctions.get(i);
             String functionName = scopedFunction.getFunctionName();
@@ -638,13 +616,6 @@ public class CompletionRequester
          this.type = RCompletionType.UNKNOWN;
       }
       
-      public boolean isFunctionType()
-      {
-         return this.type == RCompletionType.FUNCTION ||
-                this.type == RCompletionType.S4_GENERIC ||
-                this.type == RCompletionType.S4_METHOD;
-      }
-      
       @Override
       public String toString()
       {
@@ -676,16 +647,15 @@ public class CompletionRequester
       
       private ImageResource getIcon()
       {
+         if (RCompletionType.isFunctionType(type))
+            return ICONS.function();
+         
          switch(type)
          {
          case RCompletionType.UNKNOWN:
             return ICONS.variable();
          case RCompletionType.VECTOR:
             return ICONS.variable();
-         case RCompletionType.FUNCTION:
-         case RCompletionType.S4_GENERIC:
-         case RCompletionType.S4_METHOD:
-            return ICONS.function();
          case RCompletionType.ARGUMENT:
             return ICONS.variable();
          case RCompletionType.ARRAY:

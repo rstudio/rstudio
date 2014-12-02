@@ -122,11 +122,29 @@ options(help_type = "html")
       error = function(e) NULL
    )
    
-   objectNames <- c(
-      objects(ns, all.names = TRUE),
-      unname(grep(" ", datasets$results[, "Item"], fixed = TRUE, value = TRUE, invert = TRUE))
+   objectNames <- objects(ns, all.names = TRUE)
+   datasetNames <- unname(grep(" ", datasets$results[, "Item"], fixed = TRUE, value = TRUE, invert = TRUE))
+   
+   objects <- tryCatch(
+      mget(objectNames, envir = ns, inherits = TRUE),
+      error = function(e) NULL
    )
-   objects <- mget(objectNames, envir = ns, inherits = TRUE)
+   
+   # Try to get the datasets from the namespace. These will only exist if they have
+   # been explicitly loaded, so be careful to tryCatch here.
+   data <- lapply(datasetNames, function(x) {
+      tryCatch(
+         get(x, envir = ns),
+         error = function(e) NULL
+      )
+   })
+   
+   # Combine them together
+   if (length(data))
+   {
+      objects <- c(objects, data)
+      objectNames <- c(objectNames, datasetNames)
+   }
    
    # Find which object is actually identical to the one we have
    success <- FALSE
@@ -186,6 +204,12 @@ options(help_type = "html")
    if (!length(type))
       return()
    
+   # Avoid install.packages hook
+   if (what == "install.packages" &&
+       type == .rs.acCompletionTypes$ARGUMENT &&
+       is.null(from))
+      return(.rs.getHelp("install.packages", "utils"))
+   
    # Help for options
    if (type == .rs.acCompletionTypes$OPTION)
       return(.rs.getHelp("options", "base", subset = FALSE))
@@ -205,7 +229,10 @@ options(help_type = "html")
       return()
    }
    
-   if (type == .rs.acCompletionTypes$FUNCTION)
+   if (type %in% c(.rs.acCompletionTypes$FUNCTION,
+                   .rs.acCompletionTypes$S4_GENERIC,
+                   .rs.acCompletionTypes$S4_METHOD,
+                   .rs.acCompletionTypes$R5_METHOD))
       return(.rs.getHelpFunction(what, from))
    else if (type == .rs.acCompletionTypes$ARGUMENT)
       return(.rs.getHelpArgument(what, from, parent.frame()))
@@ -222,7 +249,7 @@ options(help_type = "html")
    # If 'src' is the name of something on the searchpath, get that object
    # from the seach path, then attempt to get help based on that object
    pos <- match(src, search(), nomatch = -1L)
-   if (pos > 0)
+   if (pos >= 0)
    {
       object <- tryCatch(get(name, pos = pos), error = function(e) NULL)
       if (!is.null(object))
@@ -240,7 +267,7 @@ options(help_type = "html")
    }
    
    # Otherwise, try to get help in the vanilla way
-   .rs.getHelp(name, src)
+   .rs.getHelp(name, src, getSignature = TRUE)
 })
 
 .rs.addFunction("getHelpPackage", function(pkgName)
@@ -263,7 +290,7 @@ options(help_type = "html")
    {
       pos <- match(src, search(), nomatch = -1L)
       
-      if (pos > 0)
+      if (pos >= 0)
       {
          object <- tryCatch(get(functionName, pos = pos), error = function(e) NULL)
          if (!is.null(object))
@@ -286,7 +313,8 @@ options(help_type = "html")
 .rs.addFunction("getHelp", function(topic,
                                     package = "",
                                     sig = NULL,
-                                    subset = TRUE)
+                                    subset = TRUE,
+                                    getSignature = FALSE)
 {
    # Completions from the search path might have the 'package:' prefix, so
    # lets strip that out.
@@ -307,13 +335,16 @@ options(help_type = "html")
    
    # If 'package' is the name of something on the search path, then we
    # attempt to resolve the object and get its help.
-   pos <- match(package, search(), nomatch = -1L)
-   if (pos > 0)
+   if (length(package))
    {
-      object <- tryCatch(get(topic, pos = pos), error = function(e) NULL)
-      if (is.null(object))
-         return(NULL)
-      return(.rs.getHelpFromObject(object, envir))
+      pos <- match(package, search(), nomatch = -1L)
+      if (pos >= 0)
+      {
+         object <- tryCatch(get(topic, pos = pos), error = function(e) NULL)
+         if (is.null(object))
+            return(NULL)
+         return(.rs.getHelpFromObject(object, envir))
+      }
    }
    
    helpfiles <- NULL
@@ -370,10 +401,12 @@ options(help_type = "html")
    }
    
    # Try to resolve function signatures for help
-   if (is.null(sig))
+   if (is.null(sig) && getSignature)
    {
       object <- NULL
-      if (length(package) && package != "")
+      if (length(package) &&
+             package != "" &&
+             package %in% loadedNamespaces())
       {
          object <- tryCatch(
             get(topic, envir = asNamespace(package)),

@@ -283,8 +283,14 @@
    
    # Get objects from that namespace
    ns <- asNamespace(namespace)
-   objectNames <- objects(ns)
-   objects <- mget(objectNames, envir = ns)
+   objectNames <- objects(ns, all.names = TRUE)
+   objects <- tryCatch(
+      mget(objectNames, envir = ns),
+      error = function(e) NULL
+   )
+   
+   if (is.null(objects))
+      return()
    
    # Find which object is actually identical to the one we have
    success <- FALSE
@@ -313,12 +319,40 @@
    if (!length(name))
       return(NULL)
    
-   if (name == "")
+   if (is.character(name) && (length(name) != 1 || name == ""))
       return(NULL)
-    
+   
    # Don't evaluate any functions -- blacklist any 'name' that contains a paren
-   if (regexpr("(", name, fixed = TRUE) > 0)
+   if (is.character(name) && regexpr("(", name, fixed = TRUE) > 0)
       return(FALSE)
+   
+   if (is.character(name) && is.character(envir))
+   {
+      # If envir is the name of something on the search path, get it from there
+      pos <- match(envir, search(), nomatch = -1L)
+      if (pos >= 0)
+      {
+         object <- tryCatch(
+            get(name, pos = pos),
+            error = function(e) NULL
+         )
+         
+         if (!is.null(object))
+            return(object)
+      }
+      
+      # Otherwise, maybe envir is the name of a package -- search there
+      if (envir %in% loadedNamespaces())
+      {
+         object <- tryCatch(
+            get(name, envir = asNamespace(envir)),
+            error = function(e) NULL
+         )
+         
+         if (!is.null(object))
+            return(object)
+      }
+   }
    
    if (is.character(name))
    {
@@ -340,23 +374,7 @@
       )
    }
    
-   ## Return on success
-   if (!is.null(result))
-   {
-      return(result)
-   }
-   
-   ## Otherwise, rely on 'getAnywhere'
-   objects <- getAnywhere(name)
-   if (length(objects$objs))
-   {
-      ## TODO: What if we have multiple completions?
-      objects$objs[[1]]
-   }
-   else
-   {
-      NULL
-   }
+   result
 })
 
 .rs.addFunction("getFunctionArgumentNames", function(object)
@@ -561,4 +579,23 @@
          return(method)
    }
    NULL
+})
+
+.rs.addJsonRpcHandler("get_args", function(name, src)
+{
+   if (identical(src, ""))
+      src <- NULL
+   
+   result <- .rs.getSignature(.rs.getAnywhere(name, src))
+   result <- sub("function ", "", result)
+   .rs.scalar(result)
+})
+
+.rs.addFunction("getActiveArgument", function(object,
+                                              matchedCall)
+{
+   allArgs <- .rs.getFunctionArgumentNames(object)
+   matchedArgs <- names(matchedCall)[-1L]
+   qualifiedArgsInCall <- setdiff(matchedArgs, "")
+   setdiff(allArgs, qualifiedArgsInCall)[1]
 })

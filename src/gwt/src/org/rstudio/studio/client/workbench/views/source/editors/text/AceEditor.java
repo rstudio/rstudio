@@ -338,7 +338,7 @@ public class AceEditor implements DocDisplay,
          }
       });
    }
-
+   
    private void indentPastedRange(Range range)
    {
       if (fileType_ == null ||
@@ -432,7 +432,7 @@ public class AceEditor implements DocDisplay,
                   rContext_,
                   fileType_.canExecuteChunks() ? rnwContext_ : null,
                   this,
-                  true);
+                  false);
             
             // if this is cpp then we use our own completion manager
             // that can optionally delegate to the R completion manager
@@ -1013,6 +1013,34 @@ public class AceEditor implements DocDisplay,
       int row = getSession().getSelection().getRange().getStart().getRow();
       return getSession().getLine(row);
    }
+   
+   public char getCharacterAtCursor()
+   {
+      Position cursorPos = getCursorPosition();
+      int column = cursorPos.getColumn();
+      String line = getLine(cursorPos.getRow());
+      if (column == line.length())
+         return '\0';
+      
+      return line.charAt(column);
+   }
+   
+   public char getCharacterBeforeCursor()
+   {
+      Position cursorPos = getCursorPosition();
+      int column = cursorPos.getColumn();
+      if (column == 0)
+         return '\0';
+      
+      String line = getLine(cursorPos.getRow());
+      return line.charAt(column - 1);
+   }
+   
+   
+   public String getCurrentLineUpToCursor()
+   {
+      return getCurrentLine().substring(0, getCursorPosition().getColumn());
+   }
 
    public int getCurrentLineNum()
    {
@@ -1456,6 +1484,12 @@ public class AceEditor implements DocDisplay,
          moveCursorNearTop();
    }
    
+   @Override
+   public boolean isCursorInSingleLineString()
+   {
+      return StringUtil.isEndOfLineInRStringState(getCurrentLineUpToCursor());
+   }
+   
    public void scrollToBottom()
    { 
       SourcePosition pos = SourcePosition.create(getCurrentLineCount() - 1, 0);
@@ -1807,7 +1841,7 @@ public class AceEditor implements DocDisplay,
       return widget_.addFocusHandler(handler);
    }
 
-   public Widget getWidget()
+   public AceEditorWidget getWidget()
    {
       return widget_;
    }

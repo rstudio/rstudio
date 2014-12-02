@@ -186,6 +186,7 @@ public class HelpStrategy
       }
    }
    
+   @SuppressWarnings("unused")
    private void showDataHelp(final QualifiedName selectedItem,
                              final CompletionPopupDisplay display)
    {
