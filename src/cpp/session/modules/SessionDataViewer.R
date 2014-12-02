@@ -13,8 +13,13 @@
 #
 #
 
-# host environment for data 
+# host environment for cached data; this allows us to continue to view data 
+# even if the original object is deleted
 .rs.setVar("CachedDataEnv", new.env(parent = emptyenv()))
+
+# host environment for working data; this allows us to sort/filter/page the
+# data without recomputing on the original object every time
+.rs.setVar("WorkingDataEnv", new.env(parent = emptyenv()))
 
 .rs.addFunction("formatDataColumn", function(x, start, len, ...)
 {
@@ -259,6 +264,9 @@
   cacheFile <- file.path(cacheDir, paste(cacheKey, "Rdata", sep = "."))
   if (file.exists(cacheFile))
     file.remove(cacheFile)
+
+  # remove any working data
+  .rs.removeWorkingData(cacheKey)
  
   invisible(NULL)
 })
@@ -279,5 +287,25 @@
   rm(list = ls(.rs.CachedDataEnv), where = .rs.CachedDataEnv)
 
   invisible(NULL)
+})
+
+.rs.addFunction("findWorkingData", function(cacheKey)
+{
+  if (exists(cacheKey, where = .rs.WorkingDataEnv, inherits = FALSE))
+    get(cacheKey, envir = .rs.WorkingDataEnv, inherits = FALSE)
+  else
+    NULL
+})
+
+.rs.addFunction("removeWorkingData", function(cacheKey)
+{
+  if (exists(cacheKey, where = .rs.WorkingDataEnv, inherits = FALSE))
+    rm(list = cacheKey, envir = .rs.WorkingDataEnv, inherits = FALSE)
+  invisible(NULL)
+})
+
+.rs.addFunction("saveWorkingData", function(cacheKey, obj)
+{
+  assign(cacheKey, obj, .rs.WorkingDataEnv)
 })
 

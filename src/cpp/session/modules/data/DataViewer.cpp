@@ -55,6 +55,17 @@ namespace viewer {
 
 namespace {   
 
+bool isFilterSubset(const std::string& outer, const std::string& inner) 
+{
+   if (inner.size() < outer.size()) 
+      return false;
+
+   if (inner.substr(0, outer.size()) != outer) 
+      return false;
+
+   return true;
+}
+
 // CachedFrame represents an object that's currently active in a data viewer
 // window.
 class CachedFrame
@@ -94,6 +105,31 @@ public:
    int ncol;
    std::vector<std::string> colNames;
 
+   // The current search string and filter set
+   std::string workingSearch;
+   std::vector<std::string> workingFilters;
+
+   bool isSupersetOf(const std::string& newSearch, 
+                     const std::vector<std::string> &newFilters)
+   {
+      if (!isFilterSubset(workingSearch, newSearch))
+         return false;
+
+      for (unsigned i = 0; 
+           i < std::min(newFilters.size(), workingFilters.size()); 
+           i++)
+      {
+         if (!isFilterSubset(workingFilters[i], newFilters[i]))
+            return false;
+      }
+
+      return true;
+   };
+
+   // The current order column and direction
+   int workingOrderCol;
+   std::string workingOrderDir;
+
    // NB: There's no protection on this SEXP and it may be a stale pointer!
    // Used only to test for changes.
    SEXP observedSEXP;
@@ -132,6 +168,9 @@ SEXP findInNamedEnvir(const std::string& envir, const std::string& name)
    return obj == R_UnboundValue ? NULL : obj;
 }
 
+// data items are used both as the payload for the client event that opens an
+// editor viewer tab and as a server response when duplicating that tab's
+// contents
 json::Value makeDataItem(SEXP dataSEXP, const std::string& caption, 
                          const std::string& objName, const std::string& envName, 
                          const std::string& cacheKey)
@@ -251,9 +290,15 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    int draw = http::util::fieldValue<int>(fields, "draw", 0);
    int start = http::util::fieldValue<int>(fields, "start", 0);
    int length = http::util::fieldValue<int>(fields, "length", 0);
-   int ordercol = http::util::fieldValue<int>(fields, "order[0][column]", -1);
-   std::string orderdir = http::util::fieldValue<std::string>(fields, "order[0][dir]", "asc");
-   std::string search = http::util::fieldValue<std::string>(fields, "search[value]", "");
+   int ordercol = http::util::fieldValue<int>(fields, "order[0][column]", 
+         -1);
+   std::string orderdir = http::util::fieldValue<std::string>(fields, 
+         "order[0][dir]", "asc");
+   std::string search = http::util::fieldValue<std::string>(fields, 
+         "search[value]", "");
+   std::string cacheKey = http::util::urlDecode(
+         http::util::fieldValue<std::string>(fields, "cache_key", ""), 
+         true);
 
    int nrow = 1, ncol = 0;
    int filteredNRow = 0;
@@ -275,9 +320,49 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       filters.push_back(filterVal);
    }
 
-   // apply transformations if needed, and compute new row count
-   if (ordercol > 0 || hasFilter || !search.empty()) 
+   bool needsTransform = ordercol > 0 || hasFilter || !search.empty();
+   bool hasTransform = false;
+
+   // check to see if we have an ordered/filtered view we can build from
+   std::map<std::string, CachedFrame>::iterator cachedFrame = 
+      s_cachedFrames.find(cacheKey);
+   if (needsTransform)
    {
+      if (cachedFrame != s_cachedFrames.end())
+      {
+         // do we have a previously ordered/filtered view?
+         SEXP workingDataSEXP = NULL;
+         r::exec::RFunction(".rs.findWorkingData", cacheKey)
+            .call(&workingDataSEXP, &protect);
+         if (workingDataSEXP != NULL && TYPEOF(workingDataSEXP) != NILSXP &&
+             !Rf_isNull(workingDataSEXP))
+         {
+            if (cachedFrame->second.workingSearch == search &&
+                cachedFrame->second.workingFilters == filters && 
+                cachedFrame->second.workingOrderDir == orderdir &&
+                cachedFrame->second.workingOrderCol == ordercol)
+            {
+               // we have one with exactly the same parameters as requested;
+               // use it exactly as is
+               dataSEXP = workingDataSEXP;
+               needsTransform = false;
+               hasTransform = true;
+            } 
+            else if (cachedFrame->second.isSupersetOf(search, filters))
+            {
+               // we have one that is a strict superset of the parameters
+               // requested; transform the filtered set instead of starting
+               // from scratch
+               dataSEXP = workingDataSEXP;
+            }
+         }
+      }
+   }
+
+   // apply transformations if needed, and compute new row count
+   if (needsTransform) 
+   {
+      // can we use a working copy? 
       r::exec::RFunction transform(".rs.applyTransform");
       transform.addParam("x", dataSEXP);       // data to transform
       transform.addParam("filtered", filters); // which columns are filtered
@@ -296,12 +381,22 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
          throw r::exec::RErrorException("Failure to sort or filter data");
       }
 
+      // save the working data state
+      r::exec::RFunction(".rs.saveWorkingData", cacheKey, dataSEXP).call();
+      if (cachedFrame != s_cachedFrames.end())
+      {
+         cachedFrame->second.workingSearch = search;
+         cachedFrame->second.workingFilters = filters;
+         cachedFrame->second.workingOrderDir = orderdir;
+         cachedFrame->second.workingOrderCol = ordercol;
+      }
+   }
+
+   // apply new row size
+   if (needsTransform || hasTransform) 
       r::exec::RFunction("nrow", dataSEXP).call(&filteredNRow);
-   }
    else
-   {
       filteredNRow = nrow;
-   }
 
    // return the lesser of the rows available and rows requested
    length = std::min(length, filteredNRow - start);
@@ -599,6 +694,9 @@ void onDetectChanges(module_context::ChangeSource source)
       {
          // create a new frame object to capture the new state of the frame
          CachedFrame newFrame(i->second.envName, i->second.objName, sexp);
+
+         // clear working data for the object
+         r::exec::RFunction(".rs.removeWorkingData", i->first).call();
 
          // emit client event
          json::Object changed;
