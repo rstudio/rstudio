@@ -1,9 +1,28 @@
+/*
+ * init.js
+ *
+ * Copyright (C) 2009-14 by RStudio, Inc.
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
 (function(){
-var table;
-var filterColIdx = 0;
+
+// the data table itself
+var table;   
+
+// which column we're constructing a filter for, and functions to extract the
+// value from the filter UI for that column
+var filterColIdx = 0; 
 var getFilterColValue = function() { return ""; };
 var getFilterDisplayValue = function() { return ""; };
-var currentCols = [];
 
 
 // used to determine the step precision for a number--e.g.:
@@ -18,6 +37,7 @@ var stepPrecision = function(str) {
   return Math.pow(10, (idx - str.length) + 1);
 };
 
+// show an error--not recoverable; user must click 'retry' to reload 
 var showError = function(msg) {
   document.getElementById("errorWrapper").style.display = "block";
   document.getElementById("errorMask").style.display = "block";
@@ -25,6 +45,7 @@ var showError = function(msg) {
   document.getElementById("data").style.display = "none";
 };
 
+// simple HTML escaping (avoid XSS in data)
 var escapeHtml = function(html) {
   var replacements = {
     "<":  "&lt;",
@@ -33,6 +54,9 @@ var escapeHtml = function(html) {
   return html.replace(/[&<>]/g, function(ch) { return replacements[ch]; });
 };
 
+// render a text cell--if no search is active, just renders the data literally;
+// when search is active, highlights the portion of the text that matches the
+// search
 var renderTextCell = function(data, type, row, meta) {
   var search = table.search();
   if (search.length > 0) {
@@ -47,19 +71,23 @@ var renderTextCell = function(data, type, row, meta) {
   return escapeHtml(data);
 };
 
+// render a number cell
 var renderNumberCell = function(data, type, row, meta) {
   return '<div class="numberCell">' + 
          renderTextCell(data, type, row, meta) + 
          '</div>';
 };
 
+// applies a new size to the table--called on init, on tab activate (from
+// RStudio), and when the window size changes
 var sizeDataTable = function(recalc) {
-  // don't apply a zero height, or no height change
+  // don't apply a zero height
   if (window.innerHeight < 1) {
     return;
   }
 
-  // recalculate rows at new size if needed
+  // recalculate rows at new size if needed (used when our initial init
+  // happened in a hidden tab)
   if (recalc) {
     table.settings().scroller().measure(false);
   }
@@ -383,6 +411,7 @@ $(document).ready(function() {
 
 // Exports -------------------------------------------------------------------
 
+// called from RStudio to toggle the filter UI 
 window.setFilterUIVisible = function(visible) {
   var thead = document.getElementById("data_cols");
   for (var i = 0; i < thead.children.length; i++) {
@@ -400,6 +429,7 @@ window.setFilterUIVisible = function(visible) {
   sizeDataTable(false);
 };
 
+// called from RStudio when the underlying object changes
 window.refreshData = function(structureChanged) {
   if (structureChanged) {
     // structure changed--this necessitates a full refresh
@@ -418,6 +448,8 @@ window.refreshData = function(structureChanged) {
   }
 };
 
+// called from RStudio to apply a column-wide search.
+// consider: called per keystroke; throttle?
 window.applySearch = function(text) {
   var t = $("#data").DataTable();
   if (text != t.search()) {

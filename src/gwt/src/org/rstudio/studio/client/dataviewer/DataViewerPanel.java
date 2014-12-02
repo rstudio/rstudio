@@ -48,6 +48,7 @@ public class DataViewerPanel extends SatelliteFramePanel<RStudioFrame>
    @Override
    public void showData(DataItem item)
    {
+      item_ = item;
       showUrl(item.getContentUrl());
    }
    
@@ -66,10 +67,14 @@ public class DataViewerPanel extends SatelliteFramePanel<RStudioFrame>
    @Override
    public void onDataViewChanged(DataViewChangedEvent event)
    {
-      
+      if (item_ != null && 
+          event.getData().getCacheKey().equals(item_.getCacheKey()))
+      {
+         table_.refreshData(event.getData().structureChanged());
+      }
    } 
 
-
+   private DataItem item_;
    private DataTable table_;
    private final EventBus events_;
 }

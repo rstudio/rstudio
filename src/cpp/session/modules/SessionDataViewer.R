@@ -225,8 +225,7 @@
    }
 
    # save a copy into the cached environment
-   cached = paste(sample(c(letters, 0:9), 10, replace = TRUE), collapse = "")
-   assign(cached, force(x), .rs.CachedDataEnv)
+   cached <- .rs.addCachedData(force(x))
    
    # call viewData 
    invisible(.Call("rs_viewData", x, title, name, env, cached))
@@ -243,6 +242,12 @@
     }
 })
 
+.rs.addFunction("addCachedData", function(obj) 
+{
+   cached = paste(sample(c(letters, 0:9), 10, replace = TRUE), collapse = "")
+   assign(cached, obj, .rs.CachedDataEnv)
+   cached
+})
 
 .rs.addFunction("removeCachedData", function(cacheKey, cacheDir)
 {

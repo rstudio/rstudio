@@ -73,6 +73,14 @@ public class DataItem extends JavaScriptObject
       return this.cacheKey;
    }-*/;
 
+   public native final String getObject() /*-{
+      return this.object;
+   }-*/;
+
+   public native final String getEnvironment() /*-{
+      return this.environment;
+   }-*/;
+
    public final void fillProperties(HashMap<String, String> properties)
    {
       // This has the unfortunate side-effect of converting the numeric values
@@ -85,6 +93,8 @@ public class DataItem extends JavaScriptObject
       properties.put("variables", getVariables() + "");
       properties.put("contentUrl", getContentUrl());
       properties.put("cacheKey", getCacheKey());
+      properties.put("object", getObject());
+      properties.put("environment", getEnvironment());
    }
 
    public final void fillProperties(JsObject properties)
@@ -95,5 +105,7 @@ public class DataItem extends JavaScriptObject
       properties.setInteger("variables", getVariables());
       properties.setString("contentUrl", getContentUrl());
       properties.setString("cacheKey", getCacheKey());
+      properties.setString("object", getObject());
+      properties.setString("environment", getEnvironment());
    }
 }

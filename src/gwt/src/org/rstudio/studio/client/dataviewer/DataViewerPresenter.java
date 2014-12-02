@@ -14,13 +14,9 @@
  */
 package org.rstudio.studio.client.dataviewer;
 
-import org.rstudio.core.client.command.CommandBinder;
-import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.satellite.Satellite;
-import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
@@ -30,10 +26,6 @@ public class DataViewerPresenter implements
       IsWidget
       
 {
-   public interface Binder 
-          extends CommandBinder<Commands, DataViewerPresenter>
-   {}
-
    public interface Display extends IsWidget
    {
       void showData(DataItem item);
@@ -41,20 +33,11 @@ public class DataViewerPresenter implements
    
    @Inject
    public DataViewerPresenter(Display view,
-                              GlobalDisplay globalDisplay,
-                              Binder binder,
-                              final Commands commands,
-                              EventBus eventBus,
-                              Satellite satellite,
-                              Session session)
+                              SourceServerOperations server)
    {
       view_ = view;
-      satellite_ = satellite;
-      events_ = eventBus;
-      globalDisplay_ = globalDisplay;
-      session_ = session;
-      
-      binder.bind(commands, this);  
+      server_ = server;
+      initializeEvents();
    }     
 
    @Override
@@ -65,12 +48,28 @@ public class DataViewerPresenter implements
    
    public void showData(DataItem item)
    {
+      item_ = item;
       view_.showData(item);
    }
    
+   private native void initializeEvents() /*-{  
+      var thiz = this;   
+      $wnd.addEventListener(
+            "unload",
+            $entry(function() {
+               thiz.@org.rstudio.studio.client.dataviewer.DataViewerPresenter::onClose()();
+            }),
+            true);
+   }-*/;
+   
+   private void onClose()
+   {
+      if (item_ != null)
+         server_.removeCachedData(item_.getCacheKey(), 
+                                  new VoidServerRequestCallback());
+   }
+   
+   private DataItem item_;
    private final Display view_;
-   private final Satellite satellite_;
-   private final EventBus events_;
-   private final GlobalDisplay globalDisplay_;
-   private final Session session_;
+   private final SourceServerOperations server_;
 }

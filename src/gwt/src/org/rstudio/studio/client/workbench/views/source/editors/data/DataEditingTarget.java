@@ -136,8 +136,24 @@ public class DataEditingTarget extends UrlContentEditingTarget
    @Override
    public void popoutDoc()
    {
-      satelliteManager_.openSatellite(DataViewerSatellite.NAME, getDataItem(), 
-                                      new Size(500, 600));
+      DataItem item = getDataItem();
+      server_.duplicateDataView(item.getCaption(), item.getEnvironment(), 
+                                item.getObject(), item.getCacheKey(), 
+            new ServerRequestCallback<DataItem>() {
+               @Override
+               public void onResponseReceived(DataItem item)
+               {
+                  satelliteManager_.openSatellite(DataViewerSatellite.NAME, item, 
+                                                  new Size(750, 850));
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  globalDisplay_.showErrorMessage("View Failed", 
+                        error.getMessage());
+               }
+      });
    }
 
    protected String getCacheKey()

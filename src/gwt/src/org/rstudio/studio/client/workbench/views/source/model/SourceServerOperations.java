@@ -194,4 +194,8 @@ public interface SourceServerOperations extends FilesServerOperations,
    
    void removeCachedData(String cacheKey, 
                          ServerRequestCallback<Void> requestCallback);
+   
+   void duplicateDataView(String caption, String envName, String objName, 
+                          String cacheKey,
+                          ServerRequestCallback<DataItem> requestCallback);
 }

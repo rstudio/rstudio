@@ -132,11 +132,36 @@ SEXP findInNamedEnvir(const std::string& envir, const std::string& name)
    return obj == R_UnboundValue ? NULL : obj;
 }
 
+json::Value makeDataItem(SEXP dataSEXP, const std::string& caption, 
+                         const std::string& objName, const std::string& envName, 
+                         const std::string& cacheKey)
+{
+   int nrow = 0, ncol = 0;
+   r::exec::RFunction("nrow", dataSEXP).call(&nrow);
+   r::exec::RFunction("ncol", dataSEXP).call(&ncol);
+
+   // fire show data event
+   json::Object dataItem;
+   dataItem["caption"] = caption;
+   dataItem["totalObservations"] = nrow;
+   dataItem["displayedObservations"] = nrow;
+   dataItem["variables"] = ncol;
+   dataItem["cacheKey"] = cacheKey;
+   dataItem["object"] = objName;
+   dataItem["environment"] = envName;
+   dataItem["contentUrl"] = kGridResource "/gridviewer.html?env=" +
+      http::util::urlEncode(envName, true) + "&obj=" + 
+      http::util::urlEncode(objName, true) + "&cache_key=" +
+      http::util::urlEncode(cacheKey, true);
+
+   return dataItem;
+}
+
 SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP, 
                  SEXP cacheKeySEXP)
 {    
    // attempt to reverse engineer the location of the data
-   std::string envName, dataName, cacheKey;
+   std::string envName, objName, cacheKey;
    r::sexp::Protect protect;
    
    r::exec::RFunction("environmentName", envSEXP).call(&envName);
@@ -149,7 +174,7 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP,
    {
       envName = kNoBoundEnv;
    }
-   dataName = r::sexp::asString(nameSEXP);
+   objName = r::sexp::asString(nameSEXP);
    cacheKey = r::sexp::asString(cacheKeySEXP);
 
    try
@@ -169,17 +194,8 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP,
       r::exec::RFunction("nrow", dataSEXP).call(&nrow);
       r::exec::RFunction("ncol", dataSEXP).call(&ncol);
 
-      // fire show data event
-      json::Object dataItem;
-      dataItem["caption"] = r::sexp::asString(captionSEXP);
-      dataItem["totalObservations"] = nrow;
-      dataItem["displayedObservations"] = nrow;
-      dataItem["variables"] = ncol;
-      dataItem["cacheKey"] = cacheKey;
-      dataItem["contentUrl"] = kGridResource "/gridviewer.html?env=" +
-         http::util::urlEncode(envName, true) + "&obj=" + 
-         http::util::urlEncode(dataName, true) + "&cache_key=" +
-         http::util::urlEncode(cacheKey, true);
+      json::Value dataItem = makeDataItem(dataSEXP, 
+            r::sexp::asString(captionSEXP), objName, envName, cacheKey);
       ClientEvent event(client_events::kShowData, dataItem);
       module_context::enqueClientEvent(event);
 
@@ -510,6 +526,46 @@ Error removeCachedData(const json::JsonRpcRequest& request,
    return Success();
 }
 
+// called by the client to create a second window into a data frame. this is
+// primarily needed because each view needs its own cache key so we can
+// filter/sort/search them independently.
+Error duplicateDataView(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   r::sexp::Protect protect;
+   std::string caption, envName, objName, cacheKey;
+   Error error = json::readParams(request.params, &caption, &envName, &objName, 
+                                  &cacheKey);
+   if (error)
+      return error;
+
+   // try to duplicate the original object, but clone the cached copy if needed
+   SEXP dataSEXP = findInNamedEnvir(envName, objName);
+   if (dataSEXP == NULL) 
+   {
+      error = r::exec::RFunction(".rs.findDataFrame", envName, objName, 
+            cacheKey, viewerCacheDir()).call(&dataSEXP, &protect);
+      if (error)
+         return error;
+      if (dataSEXP == NULL || TYPEOF(dataSEXP) == NILSXP || Rf_isNull(dataSEXP))
+      {
+         // TODO: meaningful error message
+         return Success();
+      }
+   }
+
+   // assign a new cache key
+   std::string newCacheKey;
+   error = r::exec::RFunction(".rs.addCachedData", dataSEXP).call(&newCacheKey);
+   if (error)
+      return error;
+
+   // return the result
+   pResponse->setResult(makeDataItem(dataSEXP, 
+         caption, objName, envName, newCacheKey));
+   return Success();
+}
+
 void onShutdown(bool terminatedNormally)
 {
    // when R suspends or shuts down, write out the contents of the cache
@@ -582,6 +638,7 @@ Error initialize()
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionDataViewer.R"))
       (bind(registerRpcMethod, "remove_cached_data", removeCachedData))
+      (bind(registerRpcMethod, "duplicate_data_view", duplicateDataView))
       (bind(registerUriHandler, "/grid_data", getGridData))
       (bind(registerUriHandler, kGridResourceLocation, handleGridResReq));
 

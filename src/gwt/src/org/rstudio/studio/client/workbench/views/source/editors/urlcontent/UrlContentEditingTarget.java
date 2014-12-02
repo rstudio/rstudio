@@ -402,7 +402,7 @@ public class UrlContentEditingTarget implements EditingTarget
 
    protected final SourceServerOperations server_;
    protected final Commands commands_;
-   private final GlobalDisplay globalDisplay_;
+   protected final GlobalDisplay globalDisplay_;
    private final EventBus events_;
    private Display view_;
    private HandlerRegistration commandReg_;
