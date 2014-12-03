@@ -483,6 +483,33 @@
    paste(result, collapse = "")
 })
 
+.rs.addFunction("asCaseInsensitiveSubsequenceRegex", function(string)
+{
+   if (string == "")
+      return(string)
+   
+   splat <- strsplit(string, "", fixed = TRUE)[[1]]
+   lowerSplat <- tolower(splat)
+   upperSplat <- toupper(splat)
+   
+   result <- vapply(1:length(splat), FUN.VALUE = character(1), USE.NAMES = FALSE, function(i) {
+      if (lowerSplat[i] == upperSplat[i])
+         splat[i]
+      else
+         paste("[", lowerSplat[i], upperSplat[i], "]", sep = "")
+   })
+   
+   negated <- vapply(1:length(splat), FUN.VALUE = character(1), USE.NAMES = FALSE, function(i) {
+      if (lowerSplat[i] == upperSplat[i])
+         paste("[^", splat[i], "]*", sep = "")
+      else
+         paste("[^", lowerSplat[i], upperSplat[i], "]*", sep = "")
+   })
+   
+   negated <- c(negated[-1L], "")
+   paste(result, negated, sep = "", collapse = "")
+})
+
 .rs.addFunction("escapeForRegex", function(regex)
 {
    gsub("([\\-\\[\\]\\{\\}\\(\\)\\*\\+\\?\\.\\,\\\\\\^\\$\\|\\#\\s])", "\\\\\\1", regex, perl = TRUE)

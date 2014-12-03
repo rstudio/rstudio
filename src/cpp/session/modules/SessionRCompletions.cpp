@@ -213,78 +213,34 @@ bool subsequenceFilter(const FileInfo& fileInfo,
                        const std::string& pattern,
                        int parentPathLength,
                        int maxCount,
+                       std::vector<std::string>* pPaths,
                        int* pCount,
                        bool* pMoreAvailable)
 {
-   if (*pCount > maxCount)
+   if (*pCount >= maxCount)
    {
       *pMoreAvailable = true;
       return false;
    }
+   
+   bool isSubsequence = string_utils::isSubsequence(
+            fileInfo.absolutePath().substr(parentPathLength),
+            pattern,
+            true);
+   
+   if (isSubsequence)
+   {
+      ++*pCount;
+      pPaths->push_back(fileInfo.absolutePath());
+   }
 
    // Always add subdirectories
    if (fileInfo.isDirectory())
-      return true;
-
-   // Add files if they match the pattern
-   if (string_utils::isSubsequence(
-          fileInfo.absolutePath().substr(parentPathLength),
-          pattern,
-          true))
    {
-       ++*pCount;
       return true;
    }
-
+   
    return false;
-}
-
-namespace internal {
-
-void populateAbsolutePaths(const FileInfo& fileInfo,
-                           const std::string& pattern,
-                           std::vector<std::string>* pPaths)
-{
-   std::string absolutePath = fileInfo.absolutePath();
-   if (string_utils::isSubsequence(absolutePath, pattern, true))
-      pPaths->push_back(absolutePath);
-}
-
-void populateRelativePaths(const FileInfo& fileInfo,
-                           const std::string& pattern,
-                           const FilePath& parentPath,
-                           std::vector<std::string>* pPaths)
-{
-   std::string relativePath =
-         core::toFilePath(fileInfo).relativePath(parentPath);
-
-   if (string_utils::isSubsequence(relativePath, pattern, true))
-      pPaths->push_back(relativePath);
-}
-
-} // end namespace internal
-
-void populate(const tree<FileInfo>& tree,
-              const FilePath& parentPath,
-              const std::string& pattern,
-              bool asRelativePath,
-              std::vector<std::string>* pPaths)
-{
-   if (asRelativePath)
-      std::for_each(tree.begin(),
-                    tree.end(),
-                    boost::bind(internal::populateRelativePaths,
-                                _1,
-                                pattern,
-                                parentPath,
-                                pPaths));
-   else
-      std::for_each(tree.begin(),
-                    tree.end(),
-                    boost::bind(internal::populateAbsolutePaths,
-                                _1,
-                                pattern,
-                                pPaths));
 }
 
 SEXP rs_scanFiles(SEXP pathSEXP,
@@ -306,6 +262,8 @@ SEXP rs_scanFiles(SEXP pathSEXP,
    options.yield = true;
 
    // Use a subsequence filter, and bail after too many files
+   std::vector<std::string> paths;
+   
    int count = 0;
    bool moreAvailable = false;
    options.filter = boost::bind(subsequenceFilter,
@@ -313,17 +271,13 @@ SEXP rs_scanFiles(SEXP pathSEXP,
                                 pattern,
                                 path.length(),
                                 maxCount,
+                                &paths,
                                 &count,
                                 &moreAvailable);
 
    Error error = scanFiles(fileInfo, options, &tree);
    if (error)
       return R_NilValue;
-
-   std::vector<std::string> paths;
-   paths.reserve(tree.size());
-
-   populate(tree, filePath, pattern, asRelativePath, &paths);
 
    r::sexp::Protect protect;
    r::sexp::ListBuilder builder(&protect);
