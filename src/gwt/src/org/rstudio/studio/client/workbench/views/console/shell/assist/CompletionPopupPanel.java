@@ -24,7 +24,9 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Rectangle;
@@ -42,9 +44,12 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    {
       super();
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
+      
       help_ = new HelpInfoPopupPanel();
       help_.setWidth("400px");
       help_.show();
+      
+      truncated_ = new Label("Completion list is truncated");
       
       setStylePrimaryName(styles_.completionPopup()) ;
       
@@ -62,7 +67,6 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    
    private void hideAll()
    {
-      // Throw everything off-screen to reduce flickering
       setVisible(false);
       help_.setVisible(false);
    }
@@ -87,7 +91,8 @@ public class CompletionPopupPanel extends ThemedPopupPanel
 
    @Override
    public void showCompletionValues(QualifiedName[] values, 
-                                    PositionCallback callback)
+                                    PositionCallback callback,
+                                    boolean truncated)
    {
       CompletionList<QualifiedName> list = new CompletionList<QualifiedName>(
                                        values,
@@ -113,8 +118,14 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          }
       });
       
-      list_ = list ;
-      setWidget(list_);
+      list_ = list;
+      
+      container_ = new VerticalPanel();
+      container_.add(list_);
+      if (truncated)
+         container_.add(truncated_);
+      
+      setWidget(container_);
       
       ElementIds.assignElementId(list_.getElement(), 
             ElementIds.POPUP_COMPLETIONS);
@@ -293,4 +304,6 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    private HelpInfoPopupPanel help_ ;
    private final ConsoleResources.ConsoleStyles styles_;
    private static QualifiedName lastSelectedValue_;
+   private VerticalPanel container_;
+   private final Label truncated_;
 }

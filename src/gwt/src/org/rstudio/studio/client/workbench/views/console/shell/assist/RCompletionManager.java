@@ -49,6 +49,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.codesearch.CodeSearchOracle;
 import org.rstudio.studio.client.workbench.codesearch.model.FunctionDefinition;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
@@ -76,7 +77,9 @@ import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
+import java.util.PriorityQueue;
 
 public class RCompletionManager implements CompletionManager
 {  
@@ -1403,6 +1406,39 @@ public class RCompletionManager implements CompletionManager
       
    }
    
+   public Comparator<QualifiedName> createFuzzyComparator(String query)
+   {
+      final String queryLower = query.toLowerCase();
+      return new Comparator<QualifiedName>() {
+
+         @Override
+         public int compare(final QualifiedName lhs,
+                            final QualifiedName rhs)
+         {
+            int lhsScore = CodeSearchOracle.scoreMatch(
+                  lhs.name,
+                  queryLower,
+                  false);
+            
+            int rhsScore = CodeSearchOracle.scoreMatch(
+                  rhs.name,
+                  queryLower,
+                  false);
+            
+            if (lhsScore == rhsScore)
+            {
+               return lhs.name.length() - rhs.name.length();
+            }
+            else
+            {
+               return lhsScore < rhsScore ? -1 : 1;
+            }
+            
+         }
+         
+      };
+   }
+   
    /**
     * It's important that we create a new instance of this each time.
     * It maintains state that is associated with a completion request.
@@ -1410,6 +1446,8 @@ public class RCompletionManager implements CompletionManager
    private final class CompletionRequestContext extends
          ServerRequestCallback<CompletionResult>
    {
+      private static final int MAX_COMPLETIONS_TO_SHOW = 100;
+      
       public CompletionRequestContext(Invalidation.Token token,
                                       InputEditorSelection selection,
                                       boolean canAutoAccept)
@@ -1446,8 +1484,36 @@ public class RCompletionManager implements CompletionManager
          if (invalidationToken_.isInvalid())
             return ;
          
-         final QualifiedName[] results
-                     = completions.completions.toArray(new QualifiedName[0]) ;
+         // Only display the top completions
+         int listSize = Math.min(
+               MAX_COMPLETIONS_TO_SHOW,
+               completions.completions.size());
+         
+         final QualifiedName[] results =
+               new QualifiedName[listSize];
+         
+         // If sorting completions would take too long, then just take the
+         // top completions
+         if (completions.completions.size() > 2000)
+         {
+            for (int i = 0; i < listSize; i++)
+               results[i] = completions.completions.get(i);
+         }
+         else
+         {
+            // Use a priority queue to partial sort
+            final Comparator<QualifiedName> fuzzyComparator =
+                  createFuzzyComparator(completions.token);
+
+            PriorityQueue<QualifiedName> queue =
+                  new PriorityQueue<QualifiedName>(
+                        completions.completions.size(), fuzzyComparator);
+
+            queue.addAll(completions.completions);
+
+            for (int i = 0; i < listSize; i++)
+               results[i] = queue.poll();
+         }
          
          if (results.length == 0)
          {
@@ -1506,7 +1572,8 @@ public class RCompletionManager implements CompletionManager
             else
                popup_.showCompletionValues(
                      results,
-                     new PopupPositioner(rect, popup_));
+                     new PopupPositioner(rect, popup_),
+                     completions.completions.size() > MAX_COMPLETIONS_TO_SHOW);
          }
       }
 
@@ -1631,16 +1698,19 @@ public class RCompletionManager implements CompletionManager
          String source = qualifiedName.source;
          boolean shouldQuote = qualifiedName.shouldQuote;
          
-         if (value == ":=")
-            value = quoteIfNotSyntacticNameCompletion(value);
-         else if (!value.matches(".*[=:]\\s*$") && 
-               !value.matches("^\\s*([`'\"]).*\\1\\s*$") &&
-               source != "<file>" &&
-               source != "<directory>" &&
-               source != "`chunk-option`" &&
-               !value.startsWith("@") &&
-               !shouldQuote)
-            value = quoteIfNotSyntacticNameCompletion(value);
+         if (qualifiedName.type != RCompletionType.FILE)
+         {
+            if (value == ":=")
+               value = quoteIfNotSyntacticNameCompletion(value);
+            else if (!value.matches(".*[=:]\\s*$") && 
+                  !value.matches("^\\s*([`'\"]).*\\1\\s*$") &&
+                  source != "<file>" &&
+                  source != "<directory>" &&
+                  source != "`chunk-option`" &&
+                  !value.startsWith("@") &&
+                  !shouldQuote)
+               value = quoteIfNotSyntacticNameCompletion(value);
+         }
 
          /* In some cases, applyValue can be called more than once
           * as part of the same completion instance--specifically,

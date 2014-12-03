@@ -188,6 +188,28 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getCompletionsFile", function(token, path = NULL, quote = FALSE)
 {
+   # If we're getting relative completions and the user has not yet entered
+   # a slash or path separator, then just return all files in PATH and let the
+   # UI manage the rest.
+   if (is.null(path))
+   {
+      match <- regexpr("[~/\\\\]", token, perl = TRUE)
+      if (match == -1)
+      {
+         
+         results <- list.files(pattern = .rs.asCaseInsensitiveRegex(token),
+                               recursive = TRUE,
+                               all.files = TRUE,
+                               include.dirs = TRUE)
+         
+         return(.rs.makeCompletions(token = token,
+                                    results = results,
+                                    quote = quote,
+                                    type = .rs.acCompletionTypes$FILE))
+         
+      }
+   }
+   
    # If we might have wanted relative completions but the file path was actually
    # qualified relative to home or root, then abort that
    if (!is.null(path) && nzchar(token) && substring(token, 1, 1) %in% c("~", "/"))

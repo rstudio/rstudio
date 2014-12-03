@@ -35,5 +35,5 @@
 })
 
 .rs.addJsonRpcHandler("list_all_files", function(path, pattern) {
-   list.files(path, pattern=pattern, recursive=T)
+   list.files(path, pattern = pattern, recursive = TRUE)
 })

@@ -30,7 +30,6 @@ import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.common.icons.code.CodeIcons;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.codesearch.CodeSearchOracle;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.RFunction;
@@ -46,7 +45,6 @@ import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionConte
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -111,27 +109,12 @@ public class CompletionRequester
                                    String diff,
                                    CompletionResult cachedResult)
    {
-      ArrayList<QualifiedName> newCompletions = new ArrayList<QualifiedName>() ;
+      ArrayList<QualifiedName> newCompletions = new ArrayList<QualifiedName>();
+      newCompletions.ensureCapacity(cachedResult.completions.size());
+      
       for (QualifiedName qname : cachedResult.completions)
          if (StringUtil.isSubsequence(qname.name, token, true))
             newCompletions.add(qname) ;
-      
-      final String tokenLower = token.toLowerCase();
-      java.util.Collections.sort(newCompletions, new Comparator<QualifiedName>() {
-         
-         @Override
-         public int compare(QualifiedName lhs,
-                            QualifiedName rhs)
-         {
-            int lhsScore = CodeSearchOracle.scoreMatch(lhs.name, tokenLower, false);
-            int rhsScore = CodeSearchOracle.scoreMatch(rhs.name, tokenLower, false);
-            
-            if (lhsScore == rhsScore)
-               return lhs.name.length() - rhs.name.length();
-            else
-               return lhsScore < rhsScore ? -1 : 1;
-         }
-      });
       
       CompletionResult result = new CompletionResult(
             token,
@@ -627,19 +610,63 @@ public class CompletionRequester
                RES.styles().completionIcon(),
                getIcon());
          
-         // Get the name for the completion
-         SafeHtmlUtil.appendSpan(
-               sb,
-               RES.styles().completion(),
-               name);
-         
-         // Get the associated package for functions
-         if (RCompletionType.isFunctionType(type))
+         // Handle files specially
+         if (type == RCompletionType.FILE)
          {
+            ArrayList<Integer> slashIndices =
+                  StringUtil.indicesOf(name, '/');
+            
+            if (slashIndices.size() < 2)
+               SafeHtmlUtil.appendSpan(
+                     sb,
+                     RES.styles().completion(),
+                     name);
+            else
+            {
+               int lastSlashIndex = slashIndices.get(
+                     slashIndices.size() - 1);
+               
+               int firstSlashIndex = 0;
+               if (slashIndices.size() > 3)
+                  firstSlashIndex = slashIndices.get(
+                        slashIndices.size() - 4);
+               
+               String endName = name.substring(lastSlashIndex + 1);
+               String startName = "";
+               if (slashIndices.size() > 3)
+                  startName += "...";
+               startName += name.substring(firstSlashIndex, lastSlashIndex);
+               
+               SafeHtmlUtil.appendSpan(
+                     sb,
+                     RES.styles().completion(),
+                     endName);
+
+               SafeHtmlUtil.appendSpan(
+                     sb,
+                     RES.styles().packageName(),
+                     startName);
+            }
+                     
+         }
+         
+         // Non-file completions
+         else
+         {
+            // Get the name for the completion
             SafeHtmlUtil.appendSpan(
                   sb,
-                  RES.styles().packageName(),
-                  "{" + source.replaceAll("package:", "") + "}");
+                  RES.styles().completion(),
+                  name);
+
+            // Get the associated package for functions
+            if (RCompletionType.isFunctionType(type))
+            {
+               SafeHtmlUtil.appendSpan(
+                     sb,
+                     RES.styles().packageName(),
+                     "{" + source.replaceAll("package:", "") + "}");
+            }
          }
          
          return sb.toSafeHtml().asString();
