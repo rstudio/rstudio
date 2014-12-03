@@ -616,7 +616,10 @@ public class CompletionRequester
             ArrayList<Integer> slashIndices =
                   StringUtil.indicesOf(name, '/');
             
-            if (slashIndices.size() < 2)
+            if (name.endsWith("/"))
+               slashIndices.remove(slashIndices.size() - 1);
+            
+            if (slashIndices.size() < 1)
                SafeHtmlUtil.appendSpan(
                      sb,
                      RES.styles().completion(),
@@ -627,13 +630,13 @@ public class CompletionRequester
                      slashIndices.size() - 1);
                
                int firstSlashIndex = 0;
-               if (slashIndices.size() > 3)
+               if (slashIndices.size() > 2)
                   firstSlashIndex = slashIndices.get(
-                        slashIndices.size() - 4);
+                        slashIndices.size() - 3);
                
                String endName = name.substring(lastSlashIndex + 1);
                String startName = "";
-               if (slashIndices.size() > 3)
+               if (slashIndices.size() > 2)
                   startName += "...";
                startName += name.substring(firstSlashIndex, lastSlashIndex);
                
