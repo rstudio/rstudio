@@ -359,7 +359,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       }
    }
 
-   // apply transformations if needed, and compute new row count
+   // apply transformations if needed
    if (needsTransform) 
    {
       // can we use a working copy? 
@@ -392,7 +392,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       }
    }
 
-   // apply new row size
+   // apply new row count
    if (needsTransform || hasTransform) 
       r::exec::RFunction("nrow", dataSEXP).call(&filteredNRow);
    else

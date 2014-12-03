@@ -31,15 +31,13 @@ public class DataTable
    public void initToolbar(Toolbar toolbar)
    {
       findButton_ = new ToolbarButton(
-              FindReplaceBar.getFindIcon(),
+              "Filter",
+              DataViewerResources.INSTANCE.filterIcon(),
               new ClickHandler() {
                  public void onClick(ClickEvent event)
                  {
                     filtered_ = !filtered_;
                     setFilterUIVisible(filtered_);
-                    findButton_.setLeftImage(filtered_ ? 
-                          FindReplaceBar.getFindLatchedIcon() :
-                          FindReplaceBar.getFindIcon());
                  }
               });
       toolbar.addLeftWidget(findButton_);

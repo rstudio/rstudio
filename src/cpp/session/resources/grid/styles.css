@@ -2,11 +2,12 @@
 body {
     height: 100%;
     margin: 0px;
+    font-family: 'Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', Verdana, Helvetica, sans-serif;
 }
 
 thead {
     color: #555555;
-    background-color: #e7edf0;
+    background-color: #f7f8f9;
 }
 
 #data {
@@ -15,27 +16,24 @@ thead {
 
 table.dataTable tbody td {
     padding: 4px 5px;
-    font-family: Consolas, Lucida Console, Monaco, monospace;
-    border-bottom: 1px solid #dddddd;
-    border-right: 1px solid #dddddd;
+    border-bottom: 1px solid #cfd4d8;
+    border-right: 1px solid #cfd4d8;
     font-size: 11px;
 }
 
 th, table.dataTable tbody td:first-child {
     text-align: left; 
     font-size: 11px;
-    font-family: 'Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', Verdana, Helvetica, sans-serif;
     color: #555555;
-    background-color: #e7edf0;
+    background-color: #f7f8f9;
+    font-weight: bold;
 }
 
 table.dataTable thead th,
 table.dataTable thead td {
     padding: 5px 9px;
-    border-bottom: 1px solid #bbc1c5;
-    border-right: 1px solid #bbc1c5;
-    border-left: 1px solid #ffffff;
-    border-top: 1px solid #ffffff;
+    border-bottom: 1px solid #cfd4d8;
+    border-right: 1px solid #cfd4d8;
 }
 
 table.dataTable thead th:first-child
@@ -59,7 +57,6 @@ table.dataTable thead th:first-child
     display: none;
     padding: 30px;
     font-size: 12px;
-    font-family: 'Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', Verdana, Helvetica, sans-serif;
     border: 2px solid #e0e0e0;
     z-index: 100;
     border-radius: 4px;
@@ -115,8 +112,8 @@ table.dataTable thead th:first-child
     display: none;
     overflow: hidden;
     z-index: 25;
-    background-color: #e7edf0;
-    border: 1px solid #c0c0c0;
+    background-color: #f7f8f9;
+    border: 1px solid #cfd4d8;
     padding: 7px;
 }
 
@@ -127,15 +124,15 @@ table.dataTable thead th:first-child
 }
 
 table.dataTable thead .sorting {
-    background: url("datatables/images/sort_both.png") no-repeat top right;
+    background: url("datatables/images/sort_both.png") no-repeat right 4px top 4px;
 }
 
 table.dataTable thead .sorting_desc {
-    background: url("datatables/images/sort_desc.png") no-repeat top right;
+    background: url("datatables/images/sort_desc.png") no-repeat right 4px top 4px;
 }
 
 table.dataTable thead .sorting_asc {
-    background: url("datatables/images/sort_asc.png") no-repeat top right;
+    background: url("datatables/images/sort_asc.png") no-repeat right 4px top 4px;
 }
 
 .numSlider {
@@ -152,7 +149,6 @@ table.dataTable thead .sorting_asc {
     padding-left: 4px;
     text-align: left;
     display: inline-block;
-    font-family: 'Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', Verdana, Helvetica, sans-serif;
     font-size: 11px;
 }
 
@@ -161,7 +157,6 @@ table.dataTable thead .sorting_asc {
     text-align: right;
     padding-right: 4px;
     display: inline-block;
-    font-family: 'Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', Verdana, Helvetica, sans-serif;
     font-size: 11px;
 }
 
@@ -170,13 +165,12 @@ table.dataTable thead .sorting_asc {
 }
 
 #data_info {
-    background-color: #e7edf0;
-    font-family: 'Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', Verdana, Helvetica, sans-serif;
+    background-color: #f7f8f9;
     font-size: 11px;
     padding: 5px;
     width: 100%;
     box-sizing: border-box;
-    border-top: 1px solid #c0c0c0;
+    border-top: 1px solid #cfd4d8;
     height: 25px;
     text-align: left;
 }

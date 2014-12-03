@@ -113,6 +113,7 @@ public class DataEditingTargetWidget extends Composite
 
       Toolbar toolbar = new EditingTargetToolbar(commands_);
       toolbar.addLeftWidget(commands_.popoutDoc().createToolbarButton());
+      toolbar.addLeftSeparator();
       
       table_.initToolbar(toolbar);
 
