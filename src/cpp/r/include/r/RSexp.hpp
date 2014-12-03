@@ -280,8 +280,8 @@ private:
 class ListBuilder : boost::noncopyable
 {
 public:
-   ListBuilder(Protect* pProtect)
-      : pProtect_(pProtect) {};
+   explicit ListBuilder(Protect* pProtect)
+      : pProtect_(pProtect) {}
 
    template <typename T>
    void add(std::string name, const T& object)
