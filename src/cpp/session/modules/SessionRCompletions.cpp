@@ -224,7 +224,7 @@ bool subsequenceFilter(const FileInfo& fileInfo,
    }
    
    bool isSubsequence = string_utils::isSubsequence(
-            fileInfo.absolutePath().substr(parentPathLength),
+            fileInfo.absolutePath().substr(parentPathLength + 2),
             pattern,
             true);
    

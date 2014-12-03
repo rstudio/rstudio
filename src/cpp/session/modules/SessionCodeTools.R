@@ -510,6 +510,24 @@
    paste(result, negated, sep = "", collapse = "")
 })
 
+.rs.addFunction("isSubsequence", function(strings, string)
+{
+   regex <- .rs.asCaseInsensitiveSubsequenceRegex(string)
+   grep(regex, string, perl = TRUE)
+})
+
+.rs.addFunction("whichIsSubsequence", function(strings, string)
+{
+   regex <- .rs.asCaseInsensitiveSubsequenceRegex(string)
+   grepl(regex, strings, perl = TRUE)
+})
+
+.rs.addFunction("selectIsSubsequence", function(strings, string)
+{
+   regex <- .rs.asCaseInsensitiveSubsequenceRegex(string)
+   grep(regex, strings, perl = TRUE, value = TRUE)
+})
+
 .rs.addFunction("escapeForRegex", function(regex)
 {
    gsub("([\\-\\[\\]\\{\\}\\(\\)\\*\\+\\?\\.\\,\\\\\\^\\$\\|\\#\\s])", "\\\\\\1", regex, perl = TRUE)
