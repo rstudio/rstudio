@@ -296,18 +296,18 @@ public:
 
       SEXP resultSEXP;
 
-      pProtect_->add(resultSEXP = (Rf_allocVector)(VECSXP, n));
+      pProtect_->add(resultSEXP = Rf_allocVector(VECSXP, n));
 
       SEXP namesSEXP;
-      pProtect_->add(namesSEXP = (Rf_allocVector)(STRSXP, n));
+      pProtect_->add(namesSEXP = Rf_allocVector(STRSXP, n));
 
       for (int i = 0; i < n; i++)
       {
          SET_VECTOR_ELT(resultSEXP, i, objects_[i]);
-         SET_STRING_ELT(namesSEXP, i, (Rf_mkChar)(names_[i].c_str()));
+         SET_STRING_ELT(namesSEXP, i, Rf_mkChar(names_[i].c_str()));
       }
 
-      (Rf_setAttrib)(resultSEXP, R_NamesSymbol, namesSEXP);
+      Rf_setAttrib(resultSEXP, R_NamesSymbol, namesSEXP);
       return resultSEXP;
    }
 
