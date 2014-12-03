@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.application.ui;
 
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FocusContext;
@@ -171,14 +170,6 @@ public class GlobalToolbar extends Toolbar
                commands_.shinyAppsDeploy().createToolbarButton();
          deployButton.setText("Publish");
          addLeftWidget(deployButton);
-      }
-      
-      // go to project dir button
-      if (!StringUtil.isNullOrEmpty(
-            sessionInfo.getActiveProjectFile()))
-      {
-         addRightWidget(commands_.setWorkingDirToProjectDir().createToolbarButton());
-         addRightSeparator();
       }
       
       // project popup menu

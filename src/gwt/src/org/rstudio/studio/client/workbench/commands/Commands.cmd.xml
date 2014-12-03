@@ -238,6 +238,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="terminateR"/>
          <separator/>
          <menu label="Set _Working Directory">
+            <cmd refid="setWorkingDirToProjectDir"/>
             <cmd refid="setWorkingDirToActiveDoc"/>
             <cmd refid="setWorkingDirToFilesPane"/>
             <separator/>
@@ -545,6 +546,10 @@ well as menu structures (for main menu and popup menus).
                    or hidden. Defaults to true.
    -->
 
+   <cmd id="setWorkingDirToProjectDir"
+        buttonLabel = ""
+        menuLabel="To Project Directory"
+        desc="Change working directory to project root directory"/>
    <cmd id="setWorkingDirToActiveDoc"
         buttonLabel=""
         menuLabel="To Source File Location"
@@ -700,11 +705,6 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         desc=""/>
         
-   <cmd id="setWorkingDirToProjectDir"
-        buttonLabel = ""
-        menuLabel="Set Working Directory to the Project Directory"
-        desc="Set the Working Directory to the Project Directory"/>
-
    <cmd id="showToolbar"
         menuLabel="Show _Toolbar"/>
    <cmd id="hideToolbar"
