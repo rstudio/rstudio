@@ -528,7 +528,8 @@ public class CompletionRequester
                   JsUtil.toJsArrayInteger(new ArrayList<Integer>(result.completions.length())),
                   "",
                   false,
-                  false);
+                  false,
+                  true);
             
             // Unlike other completion types, Sweave completions are not
             // guaranteed to narrow the candidate list (in particular

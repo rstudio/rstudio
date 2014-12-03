@@ -275,6 +275,8 @@ SEXP rs_scanFiles(SEXP pathSEXP,
       return R_NilValue;
 
    std::vector<std::string> absolutePaths;
+   absolutePaths.reserve(tree.size());
+
    std::for_each(tree.begin(),
                  tree.end(),
                  boost::bind(populate, _1, &absolutePaths));

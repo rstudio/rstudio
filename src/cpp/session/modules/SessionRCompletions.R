@@ -205,7 +205,6 @@ assign(x = ".rs.acCompletionTypes",
                                     quote = quote,
                                     type = .rs.acCompletionTypes$FILE,
                                     cacheable = !scannedFiles$more_available))
-         
       }
    }
    
@@ -609,13 +608,14 @@ assign(x = ".rs.acCompletionTypes",
                                             fguess = "",
                                             excludeOtherCompletions = FALSE,
                                             overrideInsertParens = FALSE,
-                                            orderStartsWithAlnumFirst = TRUE)
+                                            orderStartsWithAlnumFirst = TRUE,
+                                            cacheable = TRUE)
 {
    if (is.null(results))
       results <- character()
    
    # Ensure other 'vector' completions are of the same length as 'results'
-   n <- length(results)
+   n        <- length(results)
    packages <- .rs.formCompletionVector(packages, "", n)
    quote    <- .rs.formCompletionVector(quote, FALSE, n)
    type     <- .rs.formCompletionVector(type, .rs.acCompletionTypes$UNKNOWN, n)
@@ -624,14 +624,15 @@ assign(x = ".rs.acCompletionTypes",
    if (orderStartsWithAlnumFirst)
    {
       startsWithLetter <- grepl("^[a-zA-Z0-9]", results, perl = TRUE)
+      
       first <- which(startsWithLetter)
-      last <- which(!startsWithLetter)
+      last  <- which(!startsWithLetter)
       order <- c(first, last)
       
-      results <- results[order]
+      results  <- results[order]
       packages <- packages[order]
-      quote <- quote[order]
-      type <- type[order]
+      quote    <- quote[order]
+      type     <- type[order]
    }
    
    list(token = token,
@@ -641,7 +642,8 @@ assign(x = ".rs.acCompletionTypes",
         type = type,
         fguess = fguess,
         excludeOtherCompletions = .rs.scalar(excludeOtherCompletions),
-        overrideInsertParens = .rs.scalar(overrideInsertParens))
+        overrideInsertParens = .rs.scalar(overrideInsertParens),
+        cacheable = cacheable)
 })
 
 .rs.addFunction("subsetCompletions", function(completions, indices)
@@ -678,6 +680,9 @@ assign(x = ".rs.acCompletionTypes",
    
    if (length(new$overrideInsertParens) && new$overrideInsertParens)
       old$overrideInsertParens <- new$overrideInsertParens
+   
+   if (length(new$cacheable))
+      old$cacheable <- new$cacheable
    
    old
 })
