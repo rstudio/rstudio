@@ -64,6 +64,8 @@ std::string classOf(SEXP objectSEXP);
 int length(SEXP object);
    
 SEXP getNames(SEXP sexp);
+bool setNames(SEXP sexp, const std::vector<std::string>& names);
+
 core::Error getNames(SEXP sexp, std::vector<std::string>* pNames);  
 bool isActiveBinding(const std::string&, const SEXP);
 
@@ -120,6 +122,7 @@ SEXP create(const std::vector<std::pair<std::string,std::string> >& value,
             Protect* pProtect);
 SEXP create(const core::json::Array& value, Protect* pProtect);
 SEXP create(const core::json::Object& value, Protect* pProtect);
+
 
 // Create a named list
 SEXP createList(std::vector<std::string> names, Protect* pProtect);
@@ -272,6 +275,46 @@ public:
 
 private:
    SEXP sexp_;
+};
+
+class ListBuilder : boost::noncopyable
+{
+public:
+   ListBuilder(Protect* pProtect)
+      : pProtect_(pProtect) {};
+
+   template <typename T>
+   void add(std::string name, const T& object)
+   {
+      objects_.push_back(create(object, pProtect_));
+      names_.push_back(name);
+   }
+
+   operator SEXP() const
+   {
+      int n = names_.size();
+
+      SEXP resultSEXP;
+
+      pProtect_->add(resultSEXP = (Rf_allocVector)(VECSXP, n));
+
+      SEXP namesSEXP;
+      pProtect_->add(namesSEXP = (Rf_allocVector)(STRSXP, n));
+
+      for (int i = 0; i < n; i++)
+      {
+         SET_VECTOR_ELT(resultSEXP, i, objects_[i]);
+         SET_STRING_ELT(namesSEXP, i, (Rf_mkChar)(names_[i].c_str()));
+      }
+
+      (Rf_setAttrib)(resultSEXP, R_NamesSymbol, namesSEXP);
+      return resultSEXP;
+   }
+
+private:
+   std::vector<SEXP> objects_;
+   std::vector<std::string> names_;
+   Protect* pProtect_;
 };
 
 } // namespace sexp

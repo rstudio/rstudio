@@ -197,15 +197,14 @@ assign(x = ".rs.acCompletionTypes",
       if (match == -1)
       {
          
-         results <- list.files(pattern = .rs.asCaseInsensitiveRegex(token),
-                               recursive = TRUE,
-                               all.files = TRUE,
-                               include.dirs = TRUE)
+         scannedFiles <- .rs.scanFiles(path = getwd(),
+                                       pattern = token)
          
          return(.rs.makeCompletions(token = token,
-                                    results = results,
+                                    results = scannedFiles$absolute_paths,
                                     quote = quote,
-                                    type = .rs.acCompletionTypes$FILE))
+                                    type = .rs.acCompletionTypes$FILE,
+                                    cacheable = !scannedFiles$more_available))
          
       }
    }
