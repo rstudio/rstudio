@@ -196,14 +196,17 @@ assign(x = ".rs.acCompletionTypes",
       match <- regexpr("[~/\\\\]", token, perl = TRUE)
       if (match == -1)
       {
-         
          scannedFiles <- .rs.scanFiles(path = getwd(),
-                                       pattern = token)
+                                       pattern = token,
+                                       asRelativePath = TRUE)
+         
+         results <- scannedFiles$paths
          
          return(.rs.makeCompletions(token = token,
-                                    results = scannedFiles$absolute_paths,
+                                    results = results,
                                     quote = quote,
                                     type = .rs.acCompletionTypes$FILE,
+                                    excludeOtherCompletions = TRUE,
                                     cacheable = !scannedFiles$more_available))
       }
    }
@@ -681,7 +684,8 @@ assign(x = ".rs.acCompletionTypes",
    if (length(new$overrideInsertParens) && new$overrideInsertParens)
       old$overrideInsertParens <- new$overrideInsertParens
    
-   if (length(new$cacheable))
+   # If one completion states we are not cacheable, that setting is 'sticky'
+   if (length(new$cacheable) && !new$cacheable)
       old$cacheable <- new$cacheable
    
    old

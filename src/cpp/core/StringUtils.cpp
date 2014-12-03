@@ -43,6 +43,9 @@ bool isSubsequence(std::string const& self,
 {
    std::string::size_type self_n = self.length();
 
+   if (other_n == 0)
+      return true;
+
    if (other_n > other.length())
       other_n = other.length();
 

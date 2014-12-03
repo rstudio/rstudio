@@ -38,7 +38,14 @@
    list.files(path, pattern = pattern, recursive = TRUE)
 })
 
-.rs.addFunction("scanFiles", function(path, pattern)
+.rs.addFunction("scanFiles", function(path,
+                                      pattern,
+                                      asRelativePath = TRUE,
+                                      maxCount = 200L)
 {
-   .Call("rs_scanFiles", path, pattern)
+   .Call("rs_scanFiles",
+         as.character(path),
+         as.character(pattern),
+         as.logical(asRelativePath),
+         as.integer(maxCount))
 })

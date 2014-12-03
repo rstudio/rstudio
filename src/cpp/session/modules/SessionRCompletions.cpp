@@ -239,17 +239,63 @@ bool subsequenceFilter(const FileInfo& fileInfo,
    return false;
 }
 
-void populate(const FileInfo& fileInfo,
-              std::vector<std::string>* pAbsolutePaths)
+namespace internal {
+
+void populateAbsolutePaths(const FileInfo& fileInfo,
+                           const std::string& pattern,
+                           std::vector<std::string>* pPaths)
 {
-   pAbsolutePaths->push_back(fileInfo.absolutePath());
+   std::string absolutePath = fileInfo.absolutePath();
+   if (string_utils::isSubsequence(absolutePath, pattern, true))
+      pPaths->push_back(absolutePath);
+}
+
+void populateRelativePaths(const FileInfo& fileInfo,
+                           const std::string& pattern,
+                           const FilePath& parentPath,
+                           std::vector<std::string>* pPaths)
+{
+   std::string relativePath =
+         core::toFilePath(fileInfo).relativePath(parentPath);
+
+   if (string_utils::isSubsequence(relativePath, pattern, true))
+      pPaths->push_back(relativePath);
+}
+
+} // end namespace internal
+
+void populate(const tree<FileInfo>& tree,
+              const FilePath& parentPath,
+              const std::string& pattern,
+              bool asRelativePath,
+              std::vector<std::string>* pPaths)
+{
+   if (asRelativePath)
+      std::for_each(tree.begin(),
+                    tree.end(),
+                    boost::bind(internal::populateRelativePaths,
+                                _1,
+                                pattern,
+                                parentPath,
+                                pPaths));
+   else
+      std::for_each(tree.begin(),
+                    tree.end(),
+                    boost::bind(internal::populateAbsolutePaths,
+                                _1,
+                                pattern,
+                                pPaths));
 }
 
 SEXP rs_scanFiles(SEXP pathSEXP,
-                  SEXP patternSEXP)
+                  SEXP patternSEXP,
+                  SEXP asRelativePathSEXP,
+                  SEXP maxCountSEXP)
 {
    std::string path = r::sexp::asString(pathSEXP);
    std::string pattern = r::sexp::asString(patternSEXP);
+   int maxCount = r::sexp::asInteger(maxCountSEXP);
+   bool asRelativePath = r::sexp::asLogical(asRelativePathSEXP);
 
    FilePath filePath(path);
    FileInfo fileInfo(filePath);
@@ -266,7 +312,7 @@ SEXP rs_scanFiles(SEXP pathSEXP,
                                 _1,
                                 pattern,
                                 path.length(),
-                                10000,
+                                maxCount,
                                 &count,
                                 &moreAvailable);
 
@@ -274,18 +320,15 @@ SEXP rs_scanFiles(SEXP pathSEXP,
    if (error)
       return R_NilValue;
 
-   std::vector<std::string> absolutePaths;
-   absolutePaths.reserve(tree.size());
+   std::vector<std::string> paths;
+   paths.reserve(tree.size());
 
-   std::for_each(tree.begin(),
-                 tree.end(),
-                 boost::bind(populate, _1, &absolutePaths));
+   populate(tree, filePath, pattern, asRelativePath, &paths);
 
    r::sexp::Protect protect;
    r::sexp::ListBuilder builder(&protect);
 
-   builder.add("path", path);
-   builder.add("absolute_paths", absolutePaths);
+   builder.add("paths", paths);
    builder.add("more_available", moreAvailable);
 
    return builder;
@@ -308,7 +351,7 @@ Error initialize() {
    r::routines::registerCallMethod(
             "rs_scanFiles",
             (DL_FUNC) rs_scanFiles,
-            2);
+            4);
 
    using boost::bind;
    using namespace module_context;

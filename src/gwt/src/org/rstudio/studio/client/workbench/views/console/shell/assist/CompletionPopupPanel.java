@@ -49,7 +49,8 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       help_.setWidth("400px");
       help_.show();
       
-      truncated_ = new Label("Completion list is truncated");
+      truncated_ = new Label("... Not all items shown");
+      truncated_.setStylePrimaryName(styles_.truncatedLabel());
       
       setStylePrimaryName(styles_.completionPopup()) ;
       
