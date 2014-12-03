@@ -112,9 +112,12 @@ table.dataTable thead th:first-child
     display: none;
     overflow: hidden;
     z-index: 25;
-    background-color: #f7f8f9;
+    background-color: #ffffff;
     border: 1px solid #cfd4d8;
     padding: 7px;
+    -webkit-box-shadow: 0px 5px 5px 0px rgba(0,0,0,0.35);
+    -moz-box-shadow: 0px 5px 5px 0px rgba(0,0,0,0.35);
+    box-shadow: 0px 5px 5px 0px rgba(0,0,0,0.35);
 }
 
 #filterActions

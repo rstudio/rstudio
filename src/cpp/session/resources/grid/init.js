@@ -219,7 +219,7 @@ var showFilterUI = function(idx, col) {
   var thead = document.getElementById("data_cols");
   var scroll = document.getElementById("data").parentElement.scrollLeft;
 
-  filterUI.style.left = (thead.children[idx].offsetLeft - scroll) + "px";
+  filterUI.style.left = ((thead.children[idx].offsetLeft - scroll) + 7) + "px";
   filterUI.style.top = thead.children[idx].offsetHeight + "px";
   filterUI.style.display = "block";
 
