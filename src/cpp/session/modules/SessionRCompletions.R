@@ -643,7 +643,7 @@ assign(x = ".rs.acCompletionTypes",
         fguess = fguess,
         excludeOtherCompletions = .rs.scalar(excludeOtherCompletions),
         overrideInsertParens = .rs.scalar(overrideInsertParens),
-        cacheable = cacheable)
+        cacheable = .rs.scalar(cacheable))
 })
 
 .rs.addFunction("subsetCompletions", function(completions, indices)
