@@ -5,6 +5,13 @@
 	padding-right: 6px;
 }
 
+.fileIcon {
+	margin-top: -1px;
+	margin-bottom: -2px;
+	padding-left: 2px;
+	padding-right: 6px;
+}
+
 .completion {
 	
 }

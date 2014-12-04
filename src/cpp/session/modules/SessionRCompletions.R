@@ -187,116 +187,114 @@ assign(x = ".rs.acCompletionTypes",
    doGetCompletionsVignettes(token, vignettes$results[, "Item"])
 })
 
-.rs.addFunction("getCompletionsFile", function(token, path = NULL, quote = FALSE)
+.rs.addFunction("getCompletionsFile", function(token, path = getwd(), quote = FALSE)
 {
-   # If we're getting relative completions and the user has not yet entered
-   # a slash or path separator, then just return all files in PATH and let the
-   # UI manage the rest.
-   if (is.null(path))
+   projectPath <- .rs.getProjectDirectory()
+   hasFileMonitor <- .rs.hasFileMonitor()
+   path <- suppressWarnings(.rs.normalizePath(path))
+   
+   ## Separate the token into a 'directory' prefix, and a 'name' prefix. We need
+   ## to prefix the prefix as we will need to prepend it onto completions for
+   ## non-relative completions.
+   tokenPrefix <- ""
+   tokenName <- token
+   
+   tokenSlashIndices <- c(gregexpr("[/\\\\]", token, perl = TRUE)[[1]])
+   if (!identical(tokenSlashIndices, -1L))
    {
-      match <- regexpr("[~/\\\\]", token, perl = TRUE)
-      if (match == -1)
-      {
-         results <- list.files(pattern = .rs.asCaseInsensitiveSubsequenceRegex(token),
-                               path = getwd(),
-                               recursive = TRUE,
-                               all.files = TRUE,
-                               no.. = TRUE,
-                               include.dirs = TRUE)
-         
-         if (nzchar(token) && length(results))
-         {
-            scores <- .rs.scoreMatches(results, token)
-            results <- results[order(scores)]
-         }
-         
-         return(.rs.makeCompletions(token = token,
-                                    results = results,
-                                    quote = quote,
-                                    type = .rs.acCompletionTypes$FILE,
-                                    excludeOtherCompletions = TRUE))
-      }
+      maxIndex <- max(tokenSlashIndices)
+      tokenPrefix <- substring(token, 1, maxIndex)
+      tokenName <- substring(token, maxIndex + 1)
    }
    
-   # If we might have wanted relative completions but the file path was actually
-   # qualified relative to home or root, then abort that
-   if (!is.null(path) && nzchar(token) && substring(token, 1, 1) %in% c("~", "/"))
-      path <- NULL
+   ## Figure out the directory to list files in.
    
-   if (identical(token, "~"))
-      token <- "~/"
-   
-   slashIndices <- gregexpr("/", token, fixed = TRUE)[[1]]
-   lastSlashIndex <- slashIndices[length(slashIndices)]
-   
-   if (lastSlashIndex == -1)
+   # The token itself might dictate the directory we want to search in, e.g.
+   # if we see `~`, `/`, `[a-zA-Z]:`. In those cases, override the path argument.
+   regex <- "^[~/\\\\]|^[a-zA-Z]:[/\\\\]"
+   if (nzchar(token) && length(grep(regex, token, perl = TRUE)))
    {
-      pattern <- if (nzchar(token))
-         paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeForRegex(token)), sep = "")
-      
-      if (is.null(path))
-         path <- getwd()
-      files <- list.files(path = path,
-                          all.files = TRUE,
-                          pattern = pattern,
-                          no.. =  TRUE)
-      
-      qualifiedPaths <- file.path(path, files)
+      directory <- path <-
+         suppressWarnings(normalizePath(dirname(paste(token, ".", sep = ""))))
    }
+   
+   # Check to see if there are delimiters in the token. If there are, but it's
+   # a relative path, we need to further qualify the directory.
    else
    {
-      if (identical(token, "/"))
+      if (!identical(tokenSlashIndices, -1L))
       {
-         directory <- "/"
-         file <- ""
+         maxIndex <- max(tokenSlashIndices)
+         directory <- suppressWarnings(
+            .rs.normalizePath(file.path(path, substring(token, 1, maxIndex - 1)))
+         )
       }
       else
       {
-         directory <- substring(token, 1, lastSlashIndex - 1)
-         file <- substring(token, lastSlashIndex + 1, nchar(token))
+         directory <- path
       }
-      
-      pattern <- if (nzchar(file))
-         paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeForRegex(file)), sep = "")
-      
-      listPath <- if (is.null(path))
-         directory
-      else
-         file.path(path, directory)
-      
-      listed <- list.files(path = listPath,
-                           all.files = TRUE,
-                           pattern = pattern,
-                           no.. = TRUE)
-      
-      startsWithLetter <- grepl("^[a-zA-Z0-9]", listed, perl = TRUE)
-      first <- which(startsWithLetter)
-      last <- which(!startsWithLetter)
-      order <- c(first, last)
-      listed <- listed[order]
-      
-      if (identical(directory, "/"))
-         directory <- ""
-      
-      files <- file.path(
-         directory,
-         listed
-      )
-      
-      qualifiedPaths <- if (is.null(path))
-         files
-      else
-         file.path(path, files)
    }
    
-   isDir <- file.info(qualifiedPaths)[, "isdir"] %in% TRUE ## protect against NA
-   files[isDir] <- paste(files[isDir], "/", sep = "")
+   # If the directory lies within a folder that we're monitoring for indexing, use that.
+   cacheable <- TRUE
+   if (.rs.hasFileMonitor() &&
+       .rs.startsWith(directory, .rs.getProjectDirectory()))
+   {
+      index <- .rs.listIndexedFilesAndFolders(tokenName, directory)
+      cacheable <- !index$more_available
+      absolutePaths <- index$paths
+   }
+   
+   # Otherwise, result to a listing of just the current directory.
+   else
+   {
+      pattern <- if (nzchar(tokenName))
+         paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeForRegex(tokenName)), sep = "")
+      
+      absolutePaths <- gsub("/+", "/", list.files(path = directory,
+                                                  all.files = TRUE,
+                                                  pattern = pattern,
+                                                  no.. = TRUE,
+                                                  full.names = TRUE,
+                                                  include.dirs = TRUE))
+   }
+   
+   ## Because the completions returned will replace the whole token,
+   ## we need to be careful in how we construct the return result. In particular,
+   ## we need to preserve the way the directory has been specified.
+   relativePaths <- if (identical(directory, "/"))
+      substring(absolutePaths, 2)
+   else
+      substring(absolutePaths, nchar(directory) + 2L)
+      
+   
+   ## Order completions starting with alpha-numeric entries first if the
+   ## token name is blank
+   if (!nzchar(tokenName))
+   {
+      startsWithAlnum <- grepl("^[[:alnum:]]", relativePaths, perl = TRUE)
+      order <- c(
+         which(startsWithAlnum),
+         which(!startsWithAlnum)
+      )
+      
+      relativePaths <- relativePaths[order]
+      absolutePaths <- absolutePaths[order]
+   }
+   
+   paths <- paste(tokenPrefix, relativePaths, sep = "")
+   
+   isDir <- file.info(absolutePaths)[, "isdir"] %in% TRUE ## protect against NA
+   paths[isDir] <- paste(paths[isDir], "/", sep = "")
+   
    .rs.makeCompletions(token = token,
-                       results = files,
-                       packages = ifelse(isDir, "<directory>", "<file>"),
-                       type = .rs.acCompletionTypes$FILE,
+                       results = paths,
+                       type = ifelse(isDir,
+                                     .rs.acCompletionTypes$DIRECTORY,
+                                     .rs.acCompletionTypes$FILE),
                        quote = quote,
-                       excludeOtherCompletions = TRUE)
+                       excludeOtherCompletions = TRUE,
+                       cacheable = cacheable)
 })
 
 .rs.addFunction("resolveFormals", function(token,
@@ -1335,7 +1333,9 @@ assign(x = ".rs.acCompletionTypes",
       # relative to the R markdown path.
       path <- if (length(functionCallString) &&
                      functionCallString == "useFile")
-         dirname(filePath)
+         suppressWarnings(.rs.normalizePath(dirname(filePath)))
+      else
+         getwd()
       
       completions <- .rs.appendCompletions(
          completions,

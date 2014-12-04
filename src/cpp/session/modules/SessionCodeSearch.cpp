@@ -103,15 +103,12 @@ public:
    template <typename ForwardIterator>
    void enqueFiles(ForwardIterator begin, ForwardIterator end)
    {
-      // add all source files to the indexing queue
+      // add all files to the indexing queue
       using namespace core::system;
       for ( ; begin != end; ++begin)
       {
-         if (isSourceFile(*begin))
-         {
-            FileChangeEvent addEvent(FileChangeEvent::FileAdded, *begin);
-            indexingQueue_.push(addEvent);
-         }
+         FileChangeEvent addEvent(FileChangeEvent::FileAdded, *begin);
+         indexingQueue_.push(addEvent);
       }
 
       // schedule indexing if necessary. perform up to 200ms of work
@@ -131,10 +128,6 @@ public:
 
    void enqueFileChange(const core::system::FileChangeEvent& event)
    {
-      // screen out files which aren't source files
-      if (!isSourceFile(event.fileInfo()))
-         return;
-
       // add to the queue
       indexingQueue_.push(event);
 
@@ -222,11 +215,28 @@ public:
          }
       }
    }
+   
+   template <typename T>
+   void searchFiles(const std::string& term,
+                    std::size_t maxResults,
+                    bool prefixOnly,
+                    bool sourceFilesOnly,
+                    T* pNames,
+                    T* pPaths,
+                    bool* pMoreAvailable)
+   {
+      FilePath emptyFilePath;
+      return searchFiles(term, maxResults, prefixOnly, sourceFilesOnly,
+                         emptyFilePath, pNames, pPaths, pMoreAvailable);
+   }
+   
 
    template <typename T>
    void searchFiles(const std::string& term,
                     std::size_t maxResults,
                     bool prefixOnly,
+                    bool sourceFilesOnly,
+                    const FilePath& parentPath,
                     T* pNames,
                     T* pPaths,
                     bool* pMoreAvailable)
@@ -240,6 +250,18 @@ public:
       // iterate over the files
       BOOST_FOREACH(const Entry& entry, entries_)
       {
+         // skip if it's not a source file
+         if (sourceFilesOnly && !isSourceFile(entry.fileInfo))
+            continue;
+         
+         // skip if it's not in a path relative to provided path
+         if (parentPath.exists())
+         {
+            FilePath entryPath = core::toFilePath(entry.fileInfo);
+            if (!entryPath.isWithin(parentPath))
+               continue;
+         }
+         
          // get file and name
          FilePath filePath(entry.fileInfo.absolutePath());
          std::string name = filePath.filename();
@@ -755,6 +777,7 @@ void searchSourceDatabaseFiles(const std::string& term,
 template <typename T>
 void searchFiles(const std::string& term,
                  std::size_t maxResults,
+                 bool sourceFilesOnly,
                  T* pNames,
                  T* pPaths,
                  bool* pMoreAvailable)
@@ -765,6 +788,7 @@ void searchFiles(const std::string& term,
       s_projectIndex.searchFiles(term,
                                  maxResults,
                                  false,
+                                 sourceFilesOnly,
                                  pNames,
                                  pPaths,
                                  pMoreAvailable);
@@ -778,7 +802,6 @@ void searchFiles(const std::string& term,
                                 pMoreAvailable);
    }
 }
-
 
 // NOTE: When modifying this code, you should ensure that corresponding
 // changes are made to the client side scoreMatch function as well
@@ -1064,10 +1087,10 @@ Error searchCode(const json::JsonRpcRequest& request,
    std::vector<std::string> paths;
    bool moreFilesAvailable = false;
 
-   // TODO: Refactor searchFiles, searchSource to no longer take maximum number
+   // TODO: Refactor searchSourceFiles, searchSource to no longer take maximum number
    // of results (since we want to grab everything possible then filter before
    // sending over the wire). Simiarly with the 'more*Available' bools
-   searchFiles(term, 1E2, &names, &paths, &moreFilesAvailable);
+   searchFiles(term, 1E2, true, &names, &paths, &moreFilesAvailable);
 
    // search source and convert to source items
    std::vector<SourceItem> srcItems;
@@ -1786,6 +1809,33 @@ SEXP rs_scoreMatches(SEXP suggestionsSEXP,
    return r::sexp::create(scores, &protect);
 }
 
+SEXP rs_listIndexedFiles(SEXP termSEXP, SEXP absolutePathSEXP, SEXP maxCountSEXP)
+{
+   std::string term = r::sexp::asString(termSEXP);
+   std::string absolutePath = r::sexp::asString(absolutePathSEXP);
+   int maxCount = r::sexp::asInteger(maxCountSEXP);
+   
+   FilePath filePath(absolutePath);
+   
+   std::vector<std::string> names;
+   std::vector<std::string> paths;
+   bool moreAvailable = false;
+   
+   s_projectIndex.searchFiles(term,
+                              maxCount,
+                              false,
+                              false,
+                              filePath,
+                              &names,
+                              &paths,
+                              &moreAvailable);
+   
+   r::sexp::Protect protect;
+   r::sexp::ListBuilder builder(&protect);
+   builder.add("paths", paths);
+   builder.add("more_available", moreAvailable);
+   return builder;
+}
    
 } // anonymous namespace
    
@@ -1805,6 +1855,11 @@ Error initialize()
             "rs_scoreMatches",
             (DL_FUNC) rs_scoreMatches,
             2);
+   
+   r::routines::registerCallMethod(
+            "rs_listIndexedFiles",
+            (DL_FUNC) rs_listIndexedFiles,
+            3);
 
    // initialize r source indexes
    rSourceIndex().initialize();

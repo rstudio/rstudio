@@ -27,6 +27,7 @@
 #include <core/system/FileMonitor.hpp>
 
 #include <r/RExec.hpp>
+#include <R/RRoutines.hpp>
 
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -260,9 +261,36 @@ void ProjectContext::augmentRbuildignore()
    }
 }
 
+SEXP rs_getProjectDirectory()
+{
+   SEXP absolutePathSEXP = R_NilValue;
+   if (projectContext().hasProject())
+   {
+      r::sexp::Protect protect;
+      absolutePathSEXP = r::sexp::create(
+               projectContext().directory().absolutePath(), &protect);
+   }
+   return absolutePathSEXP;
+}
+
+SEXP rs_hasFileMonitor()
+{
+   r::sexp::Protect protect;
+   return r::sexp::create(projectContext().hasFileMonitor(), &protect);
+}
 
 Error ProjectContext::initialize()
 {
+   r::routines::registerCallMethod(
+            "rs_getProjectDirectory",
+            (DL_FUNC) rs_getProjectDirectory,
+            0);
+   
+   r::routines::registerCallMethod(
+            "rs_hasFileMonitor",
+            (DL_FUNC) rs_hasFileMonitor,
+            0);
+   
    if (hasProject())
    {
       // read build options for the side effect of updating buildOptions_

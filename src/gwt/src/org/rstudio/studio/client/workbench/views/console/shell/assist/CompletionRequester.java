@@ -24,9 +24,11 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.icons.code.CodeIcons;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -606,9 +608,15 @@ public class CompletionRequester
          SafeHtmlBuilder sb = new SafeHtmlBuilder();
          
          // Get an icon for the completion
+         // We use separate styles for file icons, so we can nudge them
+         // a bit differently
+         String style = RES.styles().completionIcon();
+         if (RCompletionType.isFileType(type))
+            style = RES.styles().fileIcon();
+            
          SafeHtmlUtil.appendImage(
                sb,
-               RES.styles().completionIcon(),
+               style,
                getIcon());
          
          // Handle files specially
@@ -702,7 +710,9 @@ public class CompletionRequester
          case RCompletionType.R5_OBJECT:
             return ICONS.clazz();
          case RCompletionType.FILE:
-            return ICONS.file();
+            return getIconForFilename(name);
+         case RCompletionType.DIRECTORY:
+            return ICONS.folder();
          case RCompletionType.CHUNK:
          case RCompletionType.ROXYGEN:
             return ICONS.keyword();
@@ -719,6 +729,11 @@ public class CompletionRequester
          default:
             return ICONS.variable();
          }
+      }
+      
+      private ImageResource getIconForFilename(String name)
+      {
+         return FILE_TYPE_REGISTRY.getIconForFilename(name);
       }
 
       public static QualifiedName parseFromText(String val)
@@ -756,6 +771,8 @@ public class CompletionRequester
       public final String source ;
       public final boolean shouldQuote ;
       public final int type ;
+      private static final FileTypeRegistry FILE_TYPE_REGISTRY =
+            RStudioGinjector.INSTANCE.getFileTypeRegistry();
    }
    
    private static final CompletionRequesterResources RES =
