@@ -109,11 +109,14 @@ var sizeDataTable = function(recalc) {
   // adjust scroll body height accordingly
   var scrollBody = $(".dataTables_scrollBody");
   if (scrollBody && scrollBody.length > 0) {
+    // apply the new height 
     scrollBody.css("height", 
       window.innerHeight - ($("thead").height() + 25));
     $("#data").DataTable().columns.adjust().draw();
   }
 };
+
+var debouncedDataTableSize = debounce(sizeDataTable, 100);
 
 // run a function after window size stops changing
 var runAfterSizing = function(func) {
@@ -488,7 +491,9 @@ var initDataTable = function() {
 
     // perform initial sizing and listen for size changes
     sizeDataTable(false);
-    window.addEventListener("resize", function() { sizeDataTable(false); });
+    window.addEventListener("resize", function() { 
+      debouncedDataTableSize(false); 
+    });
   })
   .fail(function(jqXHR)
   {

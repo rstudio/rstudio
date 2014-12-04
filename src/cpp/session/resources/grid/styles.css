@@ -249,6 +249,6 @@ div.DTS div.DTS_Loading {
 
 div.DTS div.DTS_Loading.showLoading {
     transition: color 0.5s ease;
-    color: #cacbcc;
+    color: #aaabac;
 } 
 
