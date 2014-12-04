@@ -134,8 +134,12 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          setPopupPositionAndShow(callback) ;
       else
          show() ;
+      
       if (help_ != null)
-         resolveHelpPosition(help_.isVisible());
+         if (completionListIsOnScreen())
+            resolveHelpPosition(help_.isVisible());
+         else
+            help_.hide();
    }
    
    public QualifiedName getSelectedValue()
@@ -190,11 +194,17 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    {
       help_.setVisible(visible);
    }
+   
+   private boolean completionListIsOnScreen()
+   {
+      return list_ != null && list_.isAttached() &&
+             getAbsoluteLeft() >= 0 && getAbsoluteTop() >= 0;
+   }
 
    @Override
    public void displayHelp(ParsedInfo help)
    {
-      if (list_ == null || !list_.isAttached())
+      if (!completionListIsOnScreen())
          return;
       
       help_.displayHelp(help) ;
@@ -204,7 +214,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    @Override
    public void displayParameterHelp(Map<String, String> map, String parameterName)
    {
-      if (list_ == null || !list_.isAttached())
+      if (!completionListIsOnScreen())
          return;
       
       help_.displayParameterHelp(map, parameterName) ;
@@ -214,7 +224,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    @Override
    public void displayPackageHelp(ParsedInfo help)
    {
-      if (list_ == null || !list_.isAttached())
+      if (!completionListIsOnScreen())
          return;
       
       help_.displayPackageHelp(help);
