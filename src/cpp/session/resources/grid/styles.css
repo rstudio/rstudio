@@ -36,9 +36,12 @@ table.dataTable thead td {
     border-right: 1px solid #cfd4d8;
 }
 
-table.dataTable thead th:first-child
-{
+table.dataTable thead th:first-child {
     background: none;
+}
+
+table.dataTable th div:first-child {
+    margin-right: 12px;
 }
 
 .dataTables_wrapper.no-footer .dataTables_scrollBody
