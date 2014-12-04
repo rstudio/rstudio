@@ -47,8 +47,7 @@ table.dataTable thead th:first-child
 }
 
 
-#errorWrapper
-{
+#errorWrapper {
     margin-left: auto;
     margin-right: auto;
     width: 33%;
@@ -66,8 +65,7 @@ table.dataTable thead th:first-child
     left: 25%;
 }
 
-.errorWrapper input
-{
+.errorWrapper input {
     margin-top: 30px;
 }
 
@@ -75,8 +73,7 @@ table.dataTable thead th:first-child
 {
 }
 
-#errorMask
-{
+#errorMask {
     background-color: rgba(0, 0, 0, 0.3);
     top: 0px;
     left: 0px;
@@ -94,14 +91,18 @@ table.dataTable thead th:first-child
     background-color: #ffffff;
     border-radius: 3px;
     white-space: nowrap;
-    padding: 3px;
+    padding-left: 3px;
+    padding-right: 3px;
+    padding-top: 2px; 
+    padding-bottom: 2px; 
     position: relative;
     font-weight: normal;
 }
 
 .unfiltered {
     font-style: italic;
-    color: #b0b0b0;
+    color: #abacad;
+    min-width: 35px;
 }
 
 .filterPopup {
@@ -117,7 +118,10 @@ table.dataTable thead th:first-child
 }
 
 .numericFilterPopup {
-    padding: 8px;
+    padding-left: 4px;
+    padding-right: 4px;
+    padding-top: 4px;
+    padding-bottom: 8px;
 }
 
 .factorList {
@@ -142,6 +146,11 @@ table.dataTable thead th:first-child
 
 .filterValue {
     margin-right: 14px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    box-sizing: border-box;
+    width: 100%;
 }
 
 .textFilterBox {
@@ -157,8 +166,8 @@ table.dataTable thead th:first-child
 
 .clearFilter {
     position: absolute;
-    top: 2px;
-    right: 2px;
+    top: 1px;
+    right: 1px;
     width: 11px;
     height: 11px;
     padding: 2px;
@@ -208,10 +217,6 @@ th:focus {
     padding-right: 4px;
     display: inline-block;
     font-size: 11px;
-}
-
-.numMin.selected, .numMax.selected {
-    font-weight: bold;    
 }
 
 #data_info {

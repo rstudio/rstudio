@@ -308,7 +308,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    // extract filters
    std::vector<std::string> filters;
    bool hasFilter = false;
-   for (int i = 1; i < ncol; i++) 
+   for (int i = 1; i <= ncol; i++) 
    {
       std::string filterVal = http::util::fieldValue<std::string>(fields,
                   "columns[" + boost::lexical_cast<std::string>(i) + "]" 

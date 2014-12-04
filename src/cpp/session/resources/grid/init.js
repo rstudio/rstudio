@@ -154,7 +154,7 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
     var updateView = debounce(function() {
       searchText = minVal.innerText === min && maxVal.innerText === max ? 
         "" : minVal.innerText + "-" + maxVal.innerText;
-        table.columns(idx).search(searchText).draw();
+      table.columns(idx).search(searchText).draw();
     }, 200);
     $(slider).slider({
       range:  true,
@@ -220,6 +220,9 @@ var createTextFilterUI = function(idx, col, onDismiss) {
   input.addEventListener("blur", function(evt) {
     onDismiss();
   });
+  input.addEventListener("focus", function(evt) {
+    dismissActivePopup();
+  });
   ele.addEventListener("click", function(evt) {
     input.focus();
     evt.preventDefault();
@@ -259,9 +262,19 @@ var invokeFilterPopup = function (ele, buildPopup, onDismiss, dismissOnClick) {
     } else {
       popup = createFilterPopup();
       buildPopup(popup);
-      popup.style.top = ($(ele).offset().top + 20) + "px";
-      popup.style.left = ($(ele).offset().left - 4)  + "px";
       document.body.appendChild(popup);
+
+      // compute position
+      var top = $(ele).offset().top + 20;
+      var left = $(ele).offset().left - 4;
+
+      // ensure we're not outside the body
+      if (popup.offsetWidth + left > document.body.offsetWidth) {
+        left = (document.body.offsetWidth - popup.offsetWidth);
+      }
+
+      popup.style.top =  top + "px";
+      popup.style.left = left  + "px";
       document.body.addEventListener("click", checkLightDismiss);
       dismissActivePopup = dismissPopup;
     }
@@ -333,131 +346,6 @@ var createFilterPopup = function() {
   var filterUI = document.createElement("div");
   filterUI.className = "filterPopup";
   return filterUI;
-};
-
-var showFilterUI = function(idx, col) {
-  var filter = document.getElementById("filterValues");
-  var currentColValue = 
-    table.columns(idx).search()[0];
-  filter.innerHTML = "";
-  if (col.col_type === "character") {
-    // build filter UI for character fields 
-    var input = document.createElement("input");
-    input.type = "text";
-    input.value = currentColValue;
-    getFilterColValue = function() {
-      return input.value;
-    };
-    getFilterDisplayValue = function() {
-      return input.value === "" ? "All" : input.value;
-    };
-    filter.appendChild(input);
-    input.focus();
-  } else if (col.col_type === "factor") {
-    // build filter UI for factor fields
-    var sel = document.createElement("select");
-    var all = document.createElement("option");
-    all.value = "";
-    all.innerText = "All";
-    sel.appendChild(all);
-    var current = currentColValue.length > 0 ? parseInt(currentColValue) : 0;
-    for (var i = 0; i < col.col_vals.length; i++) {
-      var opt = document.createElement("option");
-      opt.value = i + 1;
-      opt.innerText = col.col_vals[i];
-      sel.appendChild(opt);
-    }
-    if (current > 0)
-      sel.selectedIndex = current;
-    getFilterColValue = function() {
-      return sel.children[sel.selectedIndex].value;
-    };
-    getFilterDisplayValue = function() {
-      return sel.children[sel.selectedIndex].innerText;
-    };
-    filter.appendChild(sel);
-  } else if (col.col_type === "numeric") {
-    // build filter UI for numeric fields
-    var min = col.col_min.toString();
-    var max = col.col_max.toString();
-    if (currentColValue.indexOf("-") > 0) {
-      var range = currentColValue.split("-");
-      min = range[0];
-      max = range[1];
-    } else if (!isNaN(parseInt(currentColValue))) {
-      min = parseInt(currentColValue);
-      max = parseInt(currentColValue);
-    }
-    var minVal = document.createElement("div");
-    minVal.innerText = min;
-    minVal.className = "numMin selected";
-    filter.appendChild(minVal);
-    var maxVal = document.createElement("div");
-    maxVal.innerText = max;
-    maxVal.className = "numMax selected";
-    filter.appendChild(maxVal);
-
-    var slider = document.createElement("div");
-    slider.className = "numSlider";
-    $(slider).slider({
-      range:  true,
-      min:    col.col_min,
-      max:    col.col_max,
-      step:   Math.min(stepPrecision(col.col_min.toString()), 
-                       stepPrecision(col.col_max.toString())),
-      values: [min, max],
-      slide:  function(event, ui) {
-        minVal.innerText = ui.values[0];
-        maxVal.innerText = ui.values[1];
-      }
-    });
-    getFilterColValue = function() {
-      if (minVal.innerText === col.col_min.toString() &&
-          maxVal.innerText === col.col_max.toString())
-        // no restrictions
-        return "";
-      else if (minVal.innerText === maxVal.innerText)
-        // min and max are identical
-        return minVal.innerText;
-      else
-        // show a range
-        return minVal.innerText + "-" + maxVal.innerText;
-    };
-    getFilterDisplayValue = function() {
-      if (minVal.innerText === col.col_min.toString() &&
-          maxVal.innerText === col.col_max.toString())
-        return "All";
-      else if (minVal.innerText === maxVal.innerText)
-        return minVal.innerText;
-      else
-        return minVal.innerText + " - " + maxVal.innerText;
-    };
-    filter.appendChild(slider);
-  }
-
-  // position the filter box by the column to filter
-  var filterUI = document.getElementById("filterUI");
-  var thead = document.getElementById("data_cols");
-  var scroll = document.getElementById("data").parentElement.scrollLeft;
-
-  filterUI.style.left = ((thead.children[idx].offsetLeft - scroll) + 7) + "px";
-  filterUI.style.top = thead.children[idx].offsetHeight + "px";
-  filterUI.style.display = "block";
-
-  filterColIdx = idx;
-};
-
-var hideFilterUI = function() {
-  document.getElementById("filterUI").style.display = "none";
-  document.getElementById("filterValues").innerHTML = "";
-};
-
-var updateColFilterDisplay = function() {
-  var filterDisplay = document.getElementById("data_cols")
-                              .children[filterColIdx].children[1];
-  filterDisplay.innerText = getFilterDisplayValue();
-  filterDisplay.className = getFilterColValue().length > 0 ? 
-    "colFilter filtered" : "colFilter unfiltered";
 };
 
 var createHeader = function(idx, col) {
