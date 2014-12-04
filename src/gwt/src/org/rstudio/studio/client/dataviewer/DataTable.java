@@ -4,11 +4,11 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.widget.LatchingToolbarButton;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
-import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -30,7 +30,7 @@ public class DataTable
    
    public void initToolbar(Toolbar toolbar)
    {
-      findButton_ = new ToolbarButton(
+      findButton_ = new LatchingToolbarButton(
               "Filter",
               DataViewerResources.INSTANCE.filterIcon(),
               new ClickHandler() {
