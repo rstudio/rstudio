@@ -196,18 +196,24 @@ assign(x = ".rs.acCompletionTypes",
       match <- regexpr("[~/\\\\]", token, perl = TRUE)
       if (match == -1)
       {
-         scannedFiles <- .rs.scanFiles(path = getwd(),
-                                       pattern = token,
-                                       asRelativePath = TRUE)
+         results <- list.files(pattern = .rs.asCaseInsensitiveSubsequenceRegex(token),
+                               path = getwd(),
+                               recursive = TRUE,
+                               all.files = TRUE,
+                               no.. = TRUE,
+                               include.dirs = TRUE)
          
-         results <- scannedFiles$paths
+         if (nzchar(token) && length(results))
+         {
+            scores <- .rs.scoreMatches(results, token)
+            results <- results[order(scores)]
+         }
          
          return(.rs.makeCompletions(token = token,
                                     results = results,
                                     quote = quote,
                                     type = .rs.acCompletionTypes$FILE,
-                                    excludeOtherCompletions = TRUE,
-                                    cacheable = !scannedFiles$more_available))
+                                    excludeOtherCompletions = TRUE))
       }
    }
    

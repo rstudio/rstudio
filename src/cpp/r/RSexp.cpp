@@ -70,6 +70,20 @@ bool asLogical(SEXP object)
 {
    return Rf_asLogical(object) ? true : false;
 }
+
+bool fillVectorString(SEXP object, std::vector<std::string>* pVector)
+{
+   if (TYPEOF(object) != STRSXP)
+      return false;
+   
+   int n = Rf_length(object);
+   pVector->clear();
+   pVector->reserve(n);
+   for (int i = 0; i < n; i++)
+      pVector->push_back(std::string(CHAR(STRING_ELT(object, i))));
+   
+   return true;
+}
    
 SEXP findNamespace(const std::string& name)
 {

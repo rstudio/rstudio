@@ -85,6 +85,8 @@ int asInteger(SEXP object);
 double asReal(SEXP object);
 bool asLogical(SEXP object);
 
+bool fillVectorString(SEXP object, std::vector<std::string>* pVector);
+
 SEXP getAttrib(SEXP object, SEXP attrib);
 SEXP getAttrib(SEXP object, const std::string& attrib);
 SEXP setAttrib(SEXP object, const std::string& attrib, SEXP val);

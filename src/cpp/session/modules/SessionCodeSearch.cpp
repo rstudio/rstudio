@@ -38,6 +38,7 @@
 #include <core/system/FileMonitor.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RRoutines.hpp>
 
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -794,12 +795,16 @@ int scoreMatch(std::string const& suggestion,
 
    int result = 0;
 
-   // Get query matches in suggestion (ordered)
-   // Note: we have already guaranteed this to be a subsequence so
-   // this will succeed
-   std::vector<int> matches = string_utils::subsequenceIndices(
+   // Call a version of subsequence indices that returns false if the query is not
+   // actually a subsequence
+   std::vector<int> matches;
+   bool success = string_utils::subsequenceIndices(
             boost::algorithm::to_lower_copy(suggestion),
-            boost::algorithm::to_lower_copy(query));
+            boost::algorithm::to_lower_copy(query),
+            &matches);
+   
+   if (!success)
+      return -1;
 
    // Loop over the matches and assign a score
    for (int j = 0; j < query_n; j++)
@@ -1761,6 +1766,26 @@ void onFileMonitorDisabled()
    s_projectIndex.clear();
 }
 
+SEXP rs_scoreMatches(SEXP suggestionsSEXP,
+                     SEXP querySEXP)
+{
+   std::vector<std::string> suggestions;
+   if (!r::sexp::fillVectorString(suggestionsSEXP, &suggestions))
+      return R_NilValue;
+   
+   std::string query = r::sexp::asString(querySEXP);
+   
+   int n = suggestions.size();
+   std::vector<int> scores;
+   scores.reserve(n);
+   
+   for (int i = 0; i < n; i++)
+      scores.push_back(scoreMatch(suggestions[i], query, false));
+   
+   r::sexp::Protect protect;
+   return r::sexp::create(scores, &protect);
+}
+
    
 } // anonymous namespace
    
@@ -1774,6 +1799,12 @@ Error initialize()
    cb.onMonitoringDisabled = onFileMonitorDisabled;
    projects::projectContext().subscribeToFileMonitor("R source file indexing",
                                                      cb);
+   
+   // register call methods
+   r::routines::registerCallMethod(
+            "rs_scoreMatches",
+            (DL_FUNC) rs_scoreMatches,
+            2);
 
    // initialize r source indexes
    rSourceIndex().initialize();

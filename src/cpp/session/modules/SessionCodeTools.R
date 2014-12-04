@@ -644,3 +644,8 @@
    qualifiedArgsInCall <- setdiff(matchedArgs, "")
    setdiff(allArgs, qualifiedArgsInCall)[1]
 })
+
+.rs.addFunction("scoreMatches", function(strings, string)
+{
+   .Call("rs_scoreMatches", strings, string)
+})
