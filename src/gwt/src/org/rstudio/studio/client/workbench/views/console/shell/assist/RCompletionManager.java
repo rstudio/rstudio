@@ -1446,8 +1446,6 @@ public class RCompletionManager implements CompletionManager
    private final class CompletionRequestContext extends
          ServerRequestCallback<CompletionResult>
    {
-      private static final int MAX_COMPLETIONS_TO_SHOW = 100;
-      
       public CompletionRequestContext(Invalidation.Token token,
                                       InputEditorSelection selection,
                                       boolean canAutoAccept)
@@ -1485,35 +1483,8 @@ public class RCompletionManager implements CompletionManager
             return ;
          
          // Only display the top completions
-         int listSize = Math.min(
-               MAX_COMPLETIONS_TO_SHOW,
-               completions.completions.size());
-         
          final QualifiedName[] results =
-               new QualifiedName[listSize];
-         
-         // If sorting completions would take too long, then just take the
-         // top completions
-         if (completions.completions.size() > 2000)
-         {
-            for (int i = 0; i < listSize; i++)
-               results[i] = completions.completions.get(i);
-         }
-         else
-         {
-            // Use a priority queue to partial sort
-            final Comparator<QualifiedName> fuzzyComparator =
-                  createFuzzyComparator(completions.token);
-
-            PriorityQueue<QualifiedName> queue =
-                  new PriorityQueue<QualifiedName>(
-                        completions.completions.size(), fuzzyComparator);
-
-            queue.addAll(completions.completions);
-
-            for (int i = 0; i < listSize; i++)
-               results[i] = queue.poll();
-         }
+               completions.completions.toArray(new QualifiedName[0]);
          
          if (results.length == 0)
          {
@@ -1573,7 +1544,7 @@ public class RCompletionManager implements CompletionManager
                popup_.showCompletionValues(
                      results,
                      new PopupPositioner(rect, popup_),
-                     completions.completions.size() > MAX_COMPLETIONS_TO_SHOW);
+                     false);
          }
       }
 
