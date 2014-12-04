@@ -609,7 +609,6 @@ Error getGridData(const http::Request& request,
       }
 
       r::sexp::Protect protect;
-      http::status::Code statusCode = http::status::Ok;
 
       // begin observing if we aren't already
       if (envName != kNoBoundEnv) 

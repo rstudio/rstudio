@@ -3,6 +3,7 @@ body {
     height: 100%;
     margin: 0px;
     font-family: 'Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', Verdana, Helvetica, sans-serif;
+    background-color: #ffffff;
 }
 
 thead {
@@ -44,8 +45,7 @@ table.dataTable th div:first-child {
     margin-right: 12px;
 }
 
-.dataTables_wrapper.no-footer .dataTables_scrollBody
-{
+.dataTables_wrapper.no-footer .dataTables_scrollBody {
     border: none;
 }
 
@@ -65,7 +65,7 @@ table.dataTable th div:first-child {
     overflow: hidden;
     background-color: white;
     position: absolute;
-    left: 25%;
+    left: 29%;
 }
 
 .errorWrapper input {
@@ -240,4 +240,15 @@ th:focus {
 .searchMatch {
     background-color: #e8e8ff;
 }
+
+div.DTS div.DTS_Loading {
+    border: none;
+    background: none;
+    color: #ffffff;
+}
+
+div.DTS div.DTS_Loading.showLoading {
+    transition: color 0.5s ease;
+    color: #cacbcc;
+} 
 

@@ -128,6 +128,26 @@ var runAfterSizing = function(func) {
   }, 10);
 };
 
+// when the loading indicator is shown by the scroller, apply a style to
+// transition it smoothly into view after a few ms
+var loadingTimer = 0;
+var preDrawCallback = function() {
+  window.clearTimeout(loadingTimer);
+  loadingTimer = window.setTimeout(function() {
+    var indicator = $(".DTS_Loading");
+    if (indicator && !indicator.hasClass("showLoading")) {
+      indicator.addClass("showLoading"); 
+    }
+  }, 100);
+};
+
+var postDrawCallback = function() {
+  var indicator = $(".DTS_Loading");
+  if (indicator)  {
+      indicator.removeClass("showLoading");
+  }
+  window.clearTimeout(loadingTimer);
+};
 
 var createNumericFilterUI = function(idx, col, onDismiss) {
   var ele = document.createElement("div");
@@ -426,6 +446,11 @@ var initDataTable = function() {
       "pageLength": 25,
       "scrollY": scrollHeight + "px",
       "scrollX": true,
+      "scroller": {
+        "loadingIndicator": true
+      },
+      "preDrawCallback": preDrawCallback,
+      "drawCallback": postDrawCallback,
       "dom": "tiS", 
       "deferRender": true,
       "columnDefs": [ {
@@ -487,6 +512,13 @@ $(document).ready(function() {
 });
 
 
+var debouncedSearch = debounce(function(text) {
+  var t = $("#data").DataTable();
+  if (text != t.search()) {
+    t.search(text).draw();
+  }
+}, 100);
+
 // Exports -------------------------------------------------------------------
 
 // called from RStudio to toggle the filter UI 
@@ -533,12 +565,8 @@ window.refreshData = function(structureChanged) {
 };
 
 // called from RStudio to apply a column-wide search.
-// consider: called per keystroke; throttle?
 window.applySearch = function(text) {
-  var t = $("#data").DataTable();
-  if (text != t.search()) {
-    t.search(text).draw();
-  }
+  debouncedSearch(text);
 };
 
 window.applySizeChange = function() {
