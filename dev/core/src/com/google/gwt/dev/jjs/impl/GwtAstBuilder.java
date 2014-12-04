@@ -1136,8 +1136,12 @@ public class GwtAstBuilder {
         JMethod lambdaMethod) {
       Iterator<JParameter> it = lambdaMethod.getParams().iterator();
       if (synthArgs != null) {
+        MethodScope scope = x.getScope();
         for (SyntheticArgumentBinding sa : synthArgs) {
-          curMethod.locals.put(sa.actualOuterLocalVariable, it.next());
+          VariableBinding[] path = scope.getEmulationPath(sa.actualOuterLocalVariable);
+          assert path.length == 1 && path[0] instanceof LocalVariableBinding;
+          JParameter param = it.next();
+          curMethod.locals.put((LocalVariableBinding) path[0], param);
         }
         for (Argument a : x.arguments) {
           curMethod.locals.put(a.binding, it.next());
@@ -1226,7 +1230,7 @@ public class GwtAstBuilder {
       // that implements the target interface type that delegates to the target lambda method
       JMethod samMethod = new JMethod(info, interfaceMethod.getName(), innerLambdaClass, interfaceMethod.getType(),
           false, false, true, interfaceMethod.getAccess());
-      
+
       // implements the SAM, e.g. Callback.onCallback(), Runnable.run(), etc
       createLambdaSamMethod(x, interfaceMethod, info, innerLambdaClass, locals, outerField,
           lambdaMethod,
@@ -3280,7 +3284,7 @@ public class GwtAstBuilder {
       JExpression result = null;
       if (binding instanceof LocalVariableBinding) {
         LocalVariableBinding b = (LocalVariableBinding) binding;
-        if ((x.bits & ASTNode.DepthMASK) != 0) {
+        if ((x.bits & ASTNode.DepthMASK) != 0 || scope.isLambdaScope()) {
           VariableBinding[] path = scope.getEmulationPath(b);
           if (path == null) {
             /*

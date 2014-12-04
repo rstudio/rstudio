@@ -105,9 +105,32 @@ public class Java8Test extends GWTTestCase {
     assertEquals(40, new AcceptsLambda<Integer>().accept((a,b) -> x + a + b).intValue());
   }
 
+  public void testLambdaCaptureLocalWithInnerClass() {
+    int x = 10;
+    Lambda<Integer> l = (a,b) -> new Lambda<Integer>() {
+      @Override public Integer run(int a, int b) {
+        int t = x;
+        return t + a + b;
+      }
+    }.run(a,b);
+    assertEquals(40, new AcceptsLambda<Integer>().accept(l).intValue());
+  }
+
   public void testLambdaCaptureLocalAndField() {
     int x = 10;
     assertEquals(82, new AcceptsLambda<Integer>().accept((a,b) -> x + local + a + b).intValue());
+  }
+
+  public void testLambdaCaptureLocalAndFieldWithInnerClass() {
+    int x = 10;
+    Lambda<Integer> l = (a,b) -> new Lambda<Integer>() {
+      @Override public Integer run(int j, int k) {
+        int t = x;
+        int s = local;
+        return t + s + a + b;
+      }
+    }.run(a,b);
+    assertEquals(82, new AcceptsLambda<Integer>().accept(l).intValue());
   }
 
   public void testCompileLambdaCaptureOuterInnerField() throws Exception {

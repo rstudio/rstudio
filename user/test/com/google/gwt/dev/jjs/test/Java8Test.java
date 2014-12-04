@@ -53,7 +53,13 @@ public class Java8Test extends GWTTestCase {
   public void testLambdaCaptureLocal() {
   }
 
+  public void testLambdaCaptureLocalWithInnerClass() {
+  }
+
   public void testLambdaCaptureLocalAndField() {
+  }
+
+  public void testLambdaCaptureLocalAndFieldWithInnerClass() {
   }
 
   public void testCompileLambdaCaptureOuterInnerField() throws Exception {
