@@ -18,6 +18,10 @@
 // the data table itself
 var table;   
 
+// the column definitions from the server
+var cols;
+
+// dismiss the active filter popup, if any
 var dismissActivePopup = function() { };
 
 // throttle to avoid redrawing the table too frequently (when filtering,
@@ -338,7 +342,6 @@ var createFilterUI = function(idx, col) {
   });
 
   host.appendChild(val);
-  host.style.display = "none";
   return host;
 };
 
@@ -362,13 +365,6 @@ var createHeader = function(idx, col) {
     th.title += " with " + col.col_vals.length + " levels";
   }
 
-  if (col.col_type === "numeric" || 
-      col.col_type === "character" ||
-      col.col_type === "factor")  {
-    var filter = createFilterUI(idx, col);
-    th.appendChild(filter);
-  }
-
   return th;
 };
 
@@ -389,14 +385,15 @@ var initDataTable = function() {
   }
   $.ajax({
       url: "../grid_data?show=cols&" + window.location.search.substring(1)})
-  .done(function(cols) {
+  .done(function(result) {
     // parse result
-    cols = $.parseJSON(cols);
+    resCols = $.parseJSON(result);
 
-    if (cols.error) {
+    if (resCols.error) {
       showError(cols.error);
       return;
     }
+    cols = resCols;
 
     // keep track of which columns are numeric and which are text (we use
     // different renderers for these types)
@@ -494,10 +491,18 @@ window.setFilterUIVisible = function(visible) {
     // clear all the filter data
     $("#data").DataTable().columns().search("");
   }
-  for (var i = 0; i < thead.children.length; i++) {
-    if (thead.children[i].children.length > 1) {
-      var filter = thead.children[i].children[1];
-      filter.style.display = visible ? "block" : "none";
+  for (var i = 0; i < Math.min(thead.children.length, cols.length); i++) {
+    var col = cols[i];
+    var th = thead.children[i];
+    if (col.col_type === "numeric" || 
+        col.col_type === "character" ||
+        col.col_type === "factor")  {
+      if (visible) {
+        var filter = createFilterUI(i, col);
+        th.appendChild(filter);
+      } else if (th.children.length > 1) {
+        th.removeChild(th.lastChild);
+      }
     }
   }
   sizeDataTable(false);
