@@ -60,6 +60,11 @@
    padding: 0;
 }
 
+.helpPopup {
+   background: white;
+   z-index: 1003;
+}
+
 .completionGrid td {
    font-family: fixedWidthFont;
    font-size: 12px;
@@ -79,7 +84,6 @@
 }
 
 .functionInfo, .paramInfoName {
-   background-color: #fff;
    padding: 2px 2px 2px 3px;
 
 }
@@ -101,6 +105,7 @@
 }
 
 .functionInfoSummary {
+   font-size: 12px;
    color: black;
 }
 
@@ -119,8 +124,8 @@
 }
 
 .promptFullHelp {
-   height: 16px;
-   background: #f0f0f4;
+   height: 11px;
+   background: #eaeaca;
    font-size: 9px;
    padding: 3px;
 }

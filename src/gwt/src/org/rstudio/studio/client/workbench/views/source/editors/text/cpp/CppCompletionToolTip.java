@@ -29,7 +29,7 @@ public class CppCompletionToolTip extends PopupPanel
    
    public CppCompletionToolTip(String text)
    {
-      super(true);  
+      super(true);
       panel_ = new HorizontalPanel();
       panel_.addStyleName(CppCompletionResources.INSTANCE.styles().toolTip());
       panel_.add(label_ = new Label()); 

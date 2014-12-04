@@ -276,6 +276,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.vcsViewOnGitHub());
       dynamicCommands_.add(commands.vcsBlameOnGitHub());
       dynamicCommands_.add(commands.editRmdFormatOptions());
+      dynamicCommands_.add(commands.alignAssignment());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);

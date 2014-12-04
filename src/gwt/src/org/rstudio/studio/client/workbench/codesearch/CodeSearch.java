@@ -75,7 +75,7 @@ public class CodeSearch
    {
       display_ = display;
       
-      SearchDisplay searchDisplay = display_.getSearchDisplay();
+      final SearchDisplay searchDisplay = display_.getSearchDisplay();
       searchDisplay.setAutoSelectEnabled(true);
       
       searchDisplay.addSelectionHandler(new SelectionHandler<Suggestion>() {
@@ -83,10 +83,10 @@ public class CodeSearch
          @Override
          public void onSelection(SelectionEvent<Suggestion> event)
          {
-            // map back to a code search result
             CodeNavigationTarget target = 
-               display_.getSearchOracle().navigationTargetFromSuggestion(
-                                                event.getSelectedItem());
+               display_.getSearchOracle().navigationTarget(
+                     searchDisplay.getLastValue(),
+                     event.getSelectedItem());
               
             // create full file path and position
             String srcFile = target.getFile();

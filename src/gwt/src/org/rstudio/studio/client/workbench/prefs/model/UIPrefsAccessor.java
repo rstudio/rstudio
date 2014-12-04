@@ -92,6 +92,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("show_indent_guides", false);
    }
    
+   public PrefValue<Boolean> continueCommentsOnNewline()
+   {
+      return bool("continue_comments_on_newline", false);
+   }
+   
    public PrefValue<Boolean> useVimMode()
    {
       return bool("use_vim_mode", false);
@@ -114,6 +119,16 @@ public class UIPrefsAccessor extends Prefs
    public PrefValue<String> codeComplete()
    {
       return string("code_complete", COMPLETION_ALWAYS);
+   }
+   
+   public PrefValue<Boolean> alwaysCompleteInConsole()
+   {
+      return bool("always_complete_console", true);
+   }
+   
+   public PrefValue<Boolean> insertParensAfterFunctionCompletion()
+   {
+      return bool("insert_parens_after_function_completion", true);
    }
    
    public PrefValue<Boolean> insertSpacesAroundEquals()

@@ -176,6 +176,10 @@ public class GlobalToolbar extends Toolbar
       ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo,
                                                           commands_);
       addRightWidget(projectMenu.getToolbarButton());
+      
+     
+      
+      
    }
    
    @Override

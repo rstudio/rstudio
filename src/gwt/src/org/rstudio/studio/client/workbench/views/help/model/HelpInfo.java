@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.help.model ;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.*;
+
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NodePredicate;
 
@@ -32,7 +33,8 @@ public class HelpInfo extends JavaScriptObject
    public final ParsedInfo parse(String defaultSignature)
    {
       HashMap<String, String> values = new HashMap<String, String>() ;
-      HashMap<String, String> args = null ;
+      HashMap<String, String> args = new HashMap<String, String>();
+      HashMap<String, String> slots = new HashMap<String, String>();
 
       String html = getHTML() ;
       if (html != null)
@@ -53,7 +55,12 @@ public class HelpInfo extends JavaScriptObject
                child = child.getNextSibling() ;
             }
          }
-   
+         
+         // parse all description lists
+         NodeList<Element> descriptionLists = div.getElementsByTagName("dl");
+         for (int i = 0; i < descriptionLists.getLength(); i++)
+            parseDescriptionList(args, descriptionLists.getItem(i));
+         
          // get all h2 and h3 headings
          NodeList<Element> h2headings = div.getElementsByTagName("h2") ;
          NodeList<Element> h3headings = div.getElementsByTagName("h3") ;
@@ -78,7 +85,11 @@ public class HelpInfo extends JavaScriptObject
             String name = heading.getInnerText() ;
             if (name.equals("Arguments"))
             {
-               args = parseArguments(heading) ;
+               parseArguments(args, heading);
+            }
+            if (name.equals("Slots"))
+            {
+               parseDescriptionList(slots, heading);
             }
             StringBuffer value = new StringBuffer() ;
             Node sibling = heading.getNextSibling() ;
@@ -96,10 +107,51 @@ public class HelpInfo extends JavaScriptObject
       String signature = getSignature();
       if (signature == null)
          signature = defaultSignature;
-      return new ParsedInfo(getPackageName(), signature, values, args) ;
+      return new ParsedInfo(getPackageName(), signature, values, args, slots) ;
+   }
+   
+   private void parseDescriptionList(HashMap<String, String> args,
+                                     Element heading)
+   {
+      Element table = (Element) DomUtils.findNode(heading, true, true, new NodePredicate() {
+         
+         public boolean test(Node n)
+         {
+            if (n.getNodeType() != Node.ELEMENT_NODE)
+               return false;
+            
+            Element el = (Element) n;
+            
+            return el.getTagName().toUpperCase().equals("DL");
+         }
+      });
+      
+      if (table == null)
+      {
+         assert false : "Unexpected slots format: no <dl> entry found";
+         return ;
+      }
+      
+      NodeList<Node> children = table.getChildNodes();
+      int nChildren = children.getLength();
+      for (int i = 0; i < nChildren; i++)
+      {
+         Element child = (Element) children.getItem(i);
+         if (child.getNodeName().toUpperCase().equals("DT"))
+         {
+            String argName = child.getInnerText().replaceAll(":", "");
+            Element nextChild = (Element) children.getItem(i + 1);
+            if (nextChild.getNodeName().toUpperCase().equals("DD"))
+            {
+               String value = nextChild.getInnerHTML();
+               args.put(argName, value);
+            }
+         }
+      }
    }
 
-   private HashMap<String, String> parseArguments(Element heading)
+   private void parseArguments(HashMap<String, String> args,
+                               Element heading)
    {
       Element table = (Element) DomUtils.findNode(heading, true, true, 
                                                   new NodePredicate() {
@@ -118,11 +170,9 @@ public class HelpInfo extends JavaScriptObject
       if (table == null)
       {
          assert false : "Unexpected help format, no argblock table found" ; 
-         return null ;
+         return;
       }
 
-      HashMap<String, String> result = new HashMap<String, String>() ;
-      
       TableElement t = (TableElement) table ;
       NodeList<TableRowElement> rows = t.getRows() ;
       for (int i = 0; i < rows.getLength(); i++)
@@ -140,11 +190,9 @@ public class HelpInfo extends JavaScriptObject
          // split them up if necessary (duplicate the help across args)
          String[] argNameTextSplat = argNameText.split("\\s*,\\s*");
          for (int j = 0; j < argNameTextSplat.length; j++)
-            result.put(argNameTextSplat[j], argValueHtml);
+            args.put(argNameTextSplat[j], argValueHtml);
          
       }
-      
-      return result ;
    }
 
    private final native String getHTML() /*-{
@@ -165,15 +213,17 @@ public class HelpInfo extends JavaScriptObject
       private String signature ;
       private HashMap<String, String> values ;
       private HashMap<String, String> args ;
+      private HashMap<String, String> slots ;
 
       public ParsedInfo(String pkgName, String signature, HashMap<String, String> values,
-            HashMap<String, String> args)
+            HashMap<String, String> args, HashMap<String, String> slots)
       {
          super() ;
          this.pkgName = pkgName ;
          this.signature = signature ;
          this.values = values != null ? values : new HashMap<String, String>();
          this.args = args ;
+         this.slots = slots ;
       }
       
       public String getPackageName()
@@ -212,6 +262,11 @@ public class HelpInfo extends JavaScriptObject
       public HashMap<String, String> getArgs()
       {
          return args ;
+      }
+      
+      public HashMap<String, String> getSlots()
+      {
+         return slots ;
       }
 
       public boolean hasInfo()

@@ -14,11 +14,14 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import java.util.Map;
+
 import com.google.gwt.event.dom.client.HasMouseDownHandlers;
 import com.google.gwt.event.logical.shared.HasCloseHandlers;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
+
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
@@ -30,6 +33,7 @@ public interface CompletionPopupDisplay
                              HasCloseHandlers<PopupPanel>,
                              HasMouseDownHandlers
 {
+   void clearCompletions();
    void showCompletionValues(QualifiedName[] results,
                              PositionCallback callback) ;
    void showErrorMessage(String userMessage, PositionCallback callback) ;
@@ -37,9 +41,13 @@ public interface CompletionPopupDisplay
    boolean isShowing() ;
 
    void setPopupPosition(int x, int y) ;
+   int getPopupLeft();
+   int getPopupTop();
+   
    int getOffsetHeight() ;
 
    QualifiedName getSelectedValue() ;
+   QualifiedName getLastSelectedValue() ;
    Rectangle getSelectionRect() ;
 
    boolean selectPrev() ;
@@ -50,9 +58,10 @@ public interface CompletionPopupDisplay
    boolean selectLast() ;
    
    void setHelpVisible(boolean visible) ;
-   void displayFunctionHelp(HelpInfo.ParsedInfo help) ;
-   void displayParameterHelp(HelpInfo.ParsedInfo helpInfo, String parameter) ;
+   void displayHelp(HelpInfo.ParsedInfo help) ;
+   void displayParameterHelp(Map<String, String> map, String parameter) ;
    void displayPackageHelp(HelpInfo.ParsedInfo helpInfo) ;
+   void displayDataHelp(HelpInfo.ParsedInfo helpInfo) ;
    /**
     * Clear out the current help info
     * @param downloadOperationPending If true, the current value is being
@@ -60,4 +69,7 @@ public interface CompletionPopupDisplay
     *    Implementations may choose to show a progress indicator in this case.
     */
    void clearHelp(boolean downloadOperationPending) ;
+   boolean isHelpVisible() ;
+   
+   boolean hasCompletions();
 }

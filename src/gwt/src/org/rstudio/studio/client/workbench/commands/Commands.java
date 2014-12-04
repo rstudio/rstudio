@@ -27,6 +27,7 @@ public abstract class
    public abstract AppCommand setWorkingDir();
    
    // Source
+   public abstract AppCommand alignAssignment();
    public abstract AppCommand newSourceDoc();
    public abstract AppCommand newTextDoc();
    public abstract AppCommand newCppDoc();
@@ -118,6 +119,7 @@ public abstract class
    public abstract AppCommand closeProject();
    public abstract AppCommand projectOptions();
    public abstract AppCommand projectSweaveOptions();
+   public abstract AppCommand setWorkingDirToProjectDir();
 
    // Console
    public abstract AppCommand consoleClear();

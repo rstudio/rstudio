@@ -425,7 +425,7 @@
       # copied, which is slow for large objects.
       if (size > 524288)
       {
-         len <- if (len > 1) 
+         len_desc <- if (len > 1) 
                    paste(len, " elements, ", sep="")
                 else 
                    ""
@@ -437,7 +437,7 @@
          }
          else
          {
-            val <- paste("Large ", class, " (", len, 
+            val <- paste("Large ", class, " (", len_desc, 
                          capture.output(print(size, units="auto")), ")", sep="")
          }
          contents_deferred <- TRUE
@@ -593,9 +593,18 @@
 {
    if (isS4(obj)) 
    {
-      # this is an S4 object; recursively cheeck its slots for null pointers
+      # this is an S4 object; recursively check its slots for null pointers
       any(sapply(slotNames(obj), function(name) {
-         .rs.hasNullExternalPointer(slot(obj, name))
+         hasNullPtr <- FALSE
+         # it's possible to cheat the S4 object system and destroy the contents
+         # of a slot via attr<- assignments; in this case slotNames will
+         # contain slots that don't exist, and trying to access those slots 
+         # throws an error.
+         tryCatch({
+           hasNullPtr <- .rs.hasNullExternalPointer(slot(obj, name))
+           }, 
+           error = function(err) {})
+         hasNullPtr
       }))
    } 
    else

@@ -22,15 +22,15 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 import org.rstudio.core.client.SafeHtmlUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.common.icons.code.CodeIcons;
-import org.rstudio.studio.client.common.r.RToken;
-import org.rstudio.studio.client.common.r.RTokenizer;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.codesearch.CodeSearchOracle;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.RFunction;
@@ -46,6 +46,7 @@ import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionConte
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -95,26 +96,10 @@ public class CompletionRequester
          }
 
          // otherwise, produce a new completion list
-         if (diff.length() > 0)
+         if (diff.length() > 0 && !diff.endsWith("::"))
          {
-            ArrayList<RToken> tokens = RTokenizer.asTokens("a" + diff) ;
-
-            // when we cross a :: the list may actually grow, not shrink
-            if (!diff.endsWith("::"))
-            {
-               while (tokens.size() > 0 
-                     && tokens.get(tokens.size()-1).getContent().equals(":"))
-               {
-                  tokens.remove(tokens.size()-1) ;
-               }
-
-               if (tokens.size() == 1
-                     && tokens.get(0).getTokenType() == RToken.ID)
-               {
-                  callback.onResponseReceived(narrow(diff, cachedResult)) ;
-                  return true;
-               }
-            }
+            callback.onResponseReceived(narrow(token, diff, cachedResult)) ;
+            return true;
          }
       }
       
@@ -122,14 +107,31 @@ public class CompletionRequester
       
    }
    
-   private CompletionResult narrow(String diff,
+   private CompletionResult narrow(String token,
+                                   String diff,
                                    CompletionResult cachedResult)
    {
-      String token = cachedResult.token.toLowerCase() + diff ;
       ArrayList<QualifiedName> newCompletions = new ArrayList<QualifiedName>() ;
       for (QualifiedName qname : cachedResult.completions)
-         if (qname.name.toLowerCase().startsWith(token.toLowerCase()))
+         if (StringUtil.isSubsequence(qname.name, token, true))
             newCompletions.add(qname) ;
+      
+      final String tokenLower = token.toLowerCase();
+      java.util.Collections.sort(newCompletions, new Comparator<QualifiedName>() {
+         
+         @Override
+         public int compare(QualifiedName lhs,
+                            QualifiedName rhs)
+         {
+            int lhsScore = CodeSearchOracle.scoreMatch(lhs.name, tokenLower, false);
+            int rhsScore = CodeSearchOracle.scoreMatch(rhs.name, tokenLower, false);
+            
+            if (lhsScore == rhsScore)
+               return lhs.name.length() - rhs.name.length();
+            else
+               return lhsScore < rhsScore ? -1 : 1;
+         }
+      });
       
       CompletionResult result = new CompletionResult(
             token,
@@ -325,8 +327,7 @@ public class CompletionRequester
                cachedCompletions_.put("", result);
             }
 
-            if (!implicit || result.completions.size() != 0)
-               callback.onResponseReceived(result);
+            callback.onResponseReceived(result);
          }
       }) ;
    }
@@ -362,7 +363,9 @@ public class CompletionRequester
          CodeModel codeModel = editor.getSession().getMode().getCodeModel();
          JsArray<RFunction> scopedFunctions =
                codeModel.getFunctionsInScope(cursorPosition);
-
+         if (scopedFunctions.length() == 0)
+            return;
+         
          for (int i = 0; i < scopedFunctions.length(); i++)
          {
             RFunction scopedFunction = scopedFunctions.get(i);
@@ -378,14 +381,18 @@ public class CompletionRequester
                   {
                      completions.add(new QualifiedName(
                            argName,
-                           "<anonymous function>"
+                           "<anonymous function>",
+                           false,
+                           RCompletionType.CONTEXT
                      ));
                   }
                   else
                   {
                      completions.add(new QualifiedName(
                            argName,
-                           "[" + functionName + "]"
+                           functionName,
+                           false,
+                           RCompletionType.CONTEXT
                      ));
                   }
                }
@@ -415,7 +422,9 @@ public class CompletionRequester
             if (variable.getToken().startsWith(token) && variable.getType() == type)
                completions.add(new QualifiedName(
                      variable.getToken(),
-                     "<" + variable.getType() + ">"
+                     variable.getType(),
+                     false,
+                     RCompletionType.CONTEXT
                ));
          }
       }
@@ -460,7 +469,9 @@ public class CompletionRequester
                      {
                         completions.add(new QualifiedName(
                               args.get(j) + " = ",
-                              "[" + fnName + "]"
+                              fnName,
+                              false,
+                              RCompletionType.CONTEXT
                         ));
                      }
                   }
@@ -545,6 +556,7 @@ public class CompletionRequester
             {
                response.setSuggestOnAccept(true);
             }
+            
             requestCallback.onResponseReceived(response);
          }
 
@@ -622,7 +634,7 @@ public class CompletionRequester
                name);
          
          // Get the associated package for functions
-         if (type == RCompletionType.FUNCTION)
+         if (RCompletionType.isFunctionType(type))
          {
             SafeHtmlUtil.appendSpan(
                   sb,
@@ -635,24 +647,28 @@ public class CompletionRequester
       
       private ImageResource getIcon()
       {
+         if (RCompletionType.isFunctionType(type))
+            return ICONS.function();
+         
          switch(type)
          {
          case RCompletionType.UNKNOWN:
-            return ICONS.keyword();
+            return ICONS.variable();
          case RCompletionType.VECTOR:
             return ICONS.variable();
-         case RCompletionType.FUNCTION:
-            return ICONS.function();
-         case RCompletionType.ARGUMENTS:
+         case RCompletionType.ARGUMENT:
             return ICONS.variable();
+         case RCompletionType.ARRAY:
          case RCompletionType.DATAFRAME:
             return ICONS.dataFrame();
          case RCompletionType.LIST:
             return ICONS.clazz();
          case RCompletionType.ENVIRONMENT:
             return ICONS.environment();
-         case RCompletionType.S4:
-         case RCompletionType.REFERENCE_CLASS:
+         case RCompletionType.S4_CLASS:
+         case RCompletionType.S4_OBJECT:
+         case RCompletionType.R5_CLASS:
+         case RCompletionType.R5_OBJECT:
             return ICONS.clazz();
          case RCompletionType.FILE:
             return ICONS.file();
@@ -667,8 +683,10 @@ public class CompletionRequester
             return ICONS.rPackage();
          case RCompletionType.KEYWORD:
             return ICONS.keyword();
+         case RCompletionType.CONTEXT:
+            return ICONS.context();
          default:
-            return ICONS.keyword();
+            return ICONS.variable();
          }
       }
 

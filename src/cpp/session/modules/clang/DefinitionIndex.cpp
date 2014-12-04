@@ -23,6 +23,7 @@
 #include <core/system/ProcessArgs.hpp>
 #include <session/IncrementalFileChangeHandler.hpp>
 
+#include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
 #include "RSourceIndex.hpp"
@@ -36,6 +37,9 @@ namespace modules {
 namespace clang {
 
 namespace {
+
+// flag indicating whether we are initialized
+bool s_initialized = false;
 
 // store definitions by file
 typedef std::map<std::string,std::deque<CppDefinition> > DefinitionsByFile;
@@ -96,9 +100,6 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
    CppDefinitionKind kind = CppInvalidDefinition;
    switch (cursor.getKind())
    {
-      case CXCursor_Namespace:
-         kind = CppNamespaceDefinition;
-         break;
       case CXCursor_ClassDecl:
       case CXCursor_ClassTemplate:
          kind = CppClassDefinition;
@@ -299,6 +300,10 @@ typedef std::map<std::string,CXTranslationUnit> TranslationUnits;
 
 FileLocation findDefinitionLocation(const FileLocation& location)
 {
+   // bail if we aren't initialized
+   if (!s_initialized)
+      return FileLocation();
+
    // get the translation unit
    std::string filename = location.filePath.absolutePath();
    TranslationUnit tu = rSourceIndex().getTranslationUnit(filename, true);
@@ -397,6 +402,10 @@ bool insertMatching(const std::string& term,
 void searchDefinitions(const std::string& term,
                        std::vector<CppDefinition>* pDefinitions)
 {
+   // bail if we aren't initialized
+   if (!s_initialized)
+      return;
+
    // get a pattern for the term (if it includes a wildcard '*')
    boost::regex pattern = regex_utils::regexIfWildcardPattern(term);
 
@@ -456,6 +465,9 @@ Error initializeDefinitionIndex()
                   true);
          pFileChangeHandler->subscribeToFileMonitor("Go to C/C++ Definition");
       }
+
+      // set initialized flag
+      s_initialized = true;
    }
 
    return Success();

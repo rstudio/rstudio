@@ -30,6 +30,8 @@ import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResul
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -217,6 +219,14 @@ public class CppCompletionRequest
          {
             popup_ = null; 
             terminated_ = true;
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  docDisplay_.setPopupVisible(false);
+               }
+            });
          } 
       });
       
@@ -250,21 +260,30 @@ public class CppCompletionRequest
       terminate();
      
       String insertText = completion.getTypedText();
-      if (completion.getType() == CppCompletion.FUNCTION)
-         insertText = insertText + "()";
+      if (completion.getType() == CppCompletion.FUNCTION &&
+            uiPrefs_.insertParensAfterFunctionCompletion().getValue())
+      {
+         if (uiPrefs_.insertMatching().getValue())
+            insertText = insertText + "()";
+         else
+            insertText = insertText + "(";
+      }
       
       docDisplay_.setFocus(true); 
       docDisplay_.setSelection(getReplacementSelection());
       docDisplay_.replaceSelection(insertText, true);
       
-      if (completion.hasParameters() && 
-          uiPrefs_.showSignatureTooltips().getValue())
+      if (completion.hasParameters() &&
+            uiPrefs_.insertParensAfterFunctionCompletion().getValue() &&
+            uiPrefs_.insertMatching().getValue())
       {
          Position pos = docDisplay_.getCursorPosition();
          pos = Position.create(pos.getRow(), pos.getColumn() - 1);
          docDisplay_.setSelectionRange(Range.fromPoints(pos, pos));
-         new CppCompletionSignatureTip(completion, docDisplay_);
       }
+      
+      if (uiPrefs_.showSignatureTooltips().getValue())
+         new CppCompletionSignatureTip(completion, docDisplay_);
    }
    
    private InputEditorSelection getReplacementSelection()

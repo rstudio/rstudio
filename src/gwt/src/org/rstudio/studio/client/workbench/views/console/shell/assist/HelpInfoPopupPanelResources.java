@@ -1,5 +1,5 @@
 /*
- * CodeIcons.java
+ * HelpInfoPopupPanelResources.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,28 +12,27 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.icons.code;
+
+package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.resources.client.CssResource;
 
-public interface CodeIcons extends ClientBundle
+public interface HelpInfoPopupPanelResources extends ClientBundle
 {
-   public static final CodeIcons INSTANCE = GWT.create(CodeIcons.class);
+   public static interface Styles extends CssResource
+   {
+      String helpPopup();
+      String helpBodyText();
+   }
+
+  
+   @Source("HelpInfoPopupPanel.css")
+   Styles styles();
+  
+   public static HelpInfoPopupPanelResources INSTANCE = 
+      (HelpInfoPopupPanelResources)GWT.create(HelpInfoPopupPanelResources.class) ;
    
-   ImageResource variable();
-   ImageResource function();
-   ImageResource clazz();
-   ImageResource namespace();
-   ImageResource enumType();
-   ImageResource enumValue();
-   ImageResource keyword();
-   ImageResource dataFrame();
-   ImageResource help();
-   ImageResource rPackage();
-   ImageResource file();
-   ImageResource macro();
-   ImageResource environment();
-   ImageResource context();
+  
 }

@@ -271,6 +271,18 @@ public class Workbench implements BusyHandler,
    }
    
    @Handler
+   void onSetWorkingDirToProjectDir()
+   {
+      FileSystemItem projectDir = session_.getSessionInfo()
+            .getActiveProjectDir();
+      if (projectDir != null)
+      {
+         consoleDispatcher_.executeSetWd(projectDir, false);
+         eventBus_.fireEvent(new DirectoryNavigateEvent(projectDir, true));
+      }
+   }
+   
+   @Handler
    public void onSourceFile()
    {
       fileDialogs_.openFile(

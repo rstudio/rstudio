@@ -345,6 +345,8 @@ Error ChildProcess::terminate()
          // killed so we don't log an error
          if (pid < 0 && errno == EPERM)
             return Success();
+         else if (errno == ESRCH)
+            return Success();
          else
             return systemError(errno, ERROR_LOCATION);
       }

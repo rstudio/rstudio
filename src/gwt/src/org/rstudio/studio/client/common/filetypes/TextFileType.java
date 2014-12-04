@@ -34,8 +34,6 @@ import java.util.HashSet;
 
 public class TextFileType extends EditableFileType
 {
-   public static final String R_LANG_MODE = "R";
-
    TextFileType(String id,
                 String label,
                 EditorLanguage editorLanguage,
@@ -273,6 +271,7 @@ public class TextFileType extends EditableFileType
          results.add(commands.extractLocalVariable());
          results.add(commands.commentUncomment());
          results.add(commands.reflowComment());
+         results.add(commands.alignAssignment());
       }
       if (canExecuteAllCode())
       {

@@ -627,6 +627,129 @@ public class StringUtil
       return result.toString();
    }
    
+   public static String maskStrings(String string)
+   {
+      return maskStrings(string, 'x');
+   }
+   
+   public static String maskStrings(String string,
+                                    char ch)
+   {
+      if (string == null)
+         return null;
+      
+      if (string.length() == 0)
+         return "";
+      
+      boolean inSingleQuotes = false;
+      boolean inDoubleQuotes = false;
+      boolean inQuotes = false;
+
+      char currentChar = '\0';
+      char previousChar = '\0';
+
+      StringBuilder result = new StringBuilder();
+
+      for (int i = 0; i < string.length(); i++)
+      {
+         currentChar = string.charAt(i);
+         inQuotes = inSingleQuotes || inDoubleQuotes;
+         
+         if (i > 0)
+         {
+            previousChar = string.charAt(i - 1);
+         }
+
+         if (currentChar == '\'' && !inQuotes)
+         {
+            inSingleQuotes = true;
+            result.append(currentChar);
+            continue;
+         }
+         else if (currentChar == '\'' && previousChar != '\\' && inSingleQuotes)
+         {
+            inSingleQuotes = false;
+            result.append(currentChar);
+            continue;
+         }
+         else if (currentChar == '"' && !inQuotes)
+         {
+            inDoubleQuotes = true;
+            result.append(currentChar);
+            continue;
+         }
+         else if (currentChar == '"' && previousChar != '\\' && inDoubleQuotes)
+         {
+            inDoubleQuotes = false;
+            result.append(currentChar);
+            continue;
+         }
+         
+         if (inSingleQuotes || inDoubleQuotes)
+            result.append(ch);
+         else
+            result.append(currentChar);
+         
+      }
+      
+      return result.toString();
+   }
+   
+   
+   public static boolean isEndOfLineInRStringState(String string)
+   {
+      if (string == null)
+         return false;
+      
+      if (string == "")
+         return false;
+      
+      boolean inSingleQuotes = false;
+      boolean inDoubleQuotes = false;
+      boolean inQuotes = false;
+
+      int stringStart = 0;
+
+      char currentChar = '\0';
+      char previousChar = '\0';
+
+      for (int i = 0; i < string.length(); i++)
+      {
+         currentChar = string.charAt(i);
+         inQuotes = inSingleQuotes || inDoubleQuotes;
+
+         if (i > 0)
+         {
+            previousChar = string.charAt(i - 1);
+         }
+
+         if (currentChar == '\'' && !inQuotes)
+         {
+            inSingleQuotes = true;
+            continue;
+         }
+
+         if (currentChar == '\'' && previousChar != '\\' && inSingleQuotes)
+         {
+            inSingleQuotes = false;
+            continue;
+         }
+
+         if (currentChar == '"' && !inQuotes)
+         {
+            inDoubleQuotes = true;
+            continue;
+         }
+
+         if (currentChar == '"' && previousChar != '\\' && inDoubleQuotes)
+         {
+            inDoubleQuotes = false;
+            continue;
+         }
+      }
+      
+      return inSingleQuotes || inDoubleQuotes;
+   }
    
    public static boolean isSubsequence(String self,
          String other,
@@ -715,6 +838,43 @@ public class StringUtil
    {
       return getExtension(string, 1);
    }
+   
+   public static String getToken(String string,
+                                 int pos,
+                                 String tokenRegex,
+                                 boolean expandForward,
+                                 boolean backOverWhitespace)
+   {
+      if (backOverWhitespace)
+         while (pos > 0 && string.substring(pos - 1, pos).matches("\\s"))
+            --pos;
+      
+      int startPos = Math.max(0, pos - 1);
+      int endPos = Math.min(pos, string.length());
+      
+      while (startPos >= 0 &&
+            string.substring(startPos, startPos + 1).matches(tokenRegex))
+         --startPos;
+      
+      if (expandForward)
+         while (endPos < string.length() &&
+               string.substring(endPos, endPos + 1).matches(tokenRegex))
+            ++endPos;
+      
+      if (startPos >= endPos)
+         return "";
+      
+      return string.substring(startPos + 1, endPos);
+   }
+   
+   public static String repeat(String string, int times)
+   {
+      StringBuilder builder = new StringBuilder();
+      for (int i = 0; i < times; i++)
+         builder.append(string);
+      return builder.toString();
+   }
+   
    
    private static final String[] LABELS = {
          "B",

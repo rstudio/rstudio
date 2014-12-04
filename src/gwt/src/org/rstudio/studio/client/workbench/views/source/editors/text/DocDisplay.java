@@ -83,6 +83,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void goToFunctionDefinition();
    String getSelectionValue();
    String getCurrentLine();
+   String getCurrentLineUpToCursor();
    String getNextLineIndent();
    // This returns null for most file types, but for Sweave it returns "R" or
    // "TeX". Use SweaveFileType constants to test for these values.
@@ -145,7 +146,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void moveCursorNearTop();
    void moveCursorNearTop(int rowOffset);
    void ensureCursorVisible();
-
+   boolean isCursorInSingleLineString();
    
    InputEditorSelection search(String needle,
                                boolean backwards,
@@ -194,6 +195,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
 
    String getLine(int row);
    
+   char getCharacterAtCursor();
+   char getCharacterBeforeCursor();
+   
    String debug_getDocumentDump();
    void debug_setSessionValueDirectly(String s);
 
@@ -229,4 +233,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void removeAllBreakpoints();
    void toggleBreakpointAtCursor();
    boolean hasBreakpoints();
+   
+   void setPopupVisible(boolean visible);
+   boolean isPopupVisible();
 }

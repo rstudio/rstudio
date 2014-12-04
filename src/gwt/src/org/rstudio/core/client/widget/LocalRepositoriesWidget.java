@@ -30,7 +30,8 @@ public class LocalRepositoriesWidget extends Composite
             "packrat_local_repos"));
       
       HorizontalPanel hp = new HorizontalPanel();
-      listBox_ = new ListBox(true);
+      listBox_ = new ListBox();
+      listBox_.setMultipleSelect(true);
       listBox_.addStyleName(RES.styles().listBox());
       listBox_.getElement().<SelectElement>cast().setSize(3);
       hp.add(listBox_);

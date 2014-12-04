@@ -637,6 +637,20 @@ public class RemoteServer implements Server
             requestCallback);
    }
    
+   public void getArgs(String name,
+                       String source,
+                       ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(name));
+      params.set(1, new JSONString(source));
+      sendRequest(
+            RPC_SCOPE,
+            GET_ARGS,
+            params,
+            requestCallback);
+   }
+   
    public void getCompletions(
          String token,
          List<String> assocData,
@@ -3809,6 +3823,7 @@ public class RemoteServer implements Server
    private static final String GET_DPLYR_JOIN_COMPLETIONS_STRING = 
          "get_dplyr_join_completions_string";
    private static final String GET_DPLYR_JOIN_COMPLETIONS = "get_dplyr_join_completions";
+   private static final String GET_ARGS = "get_args";
    private static final String GET_COMPLETIONS = "get_completions";
    private static final String IS_FUNCTION = "is_function";
    private static final String GET_HELP_AT_CURSOR = "get_help_at_cursor";

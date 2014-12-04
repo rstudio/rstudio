@@ -57,11 +57,12 @@ public class HelpStrategy
          case RCompletionType.PACKAGE:
             showPackageHelp(item, display);
             break;
-         case RCompletionType.ARGUMENTS:
+         case RCompletionType.ARGUMENT:
+         case RCompletionType.OPTION:
             showParameterHelp(item, display);
             break;
          default:
-            showFunctionHelp(item, display);
+            showDefaultHelp(item, display);
             break;
       }
    }
@@ -71,13 +72,13 @@ public class HelpStrategy
       cache_.clear();
    }
    
-   private void showFunctionHelp(final QualifiedName selectedItem,
-                                 final CompletionPopupDisplay display)
+   private void showDefaultHelp(final QualifiedName selectedItem,
+                                final CompletionPopupDisplay display)
    {
       ParsedInfo cachedHelp = cache_.get(selectedItem);
       if (cachedHelp != null)
       {
-         display.displayFunctionHelp(cachedHelp);
+         display.displayHelp(cachedHelp);
          return;
       }
       
@@ -102,7 +103,7 @@ public class HelpStrategy
                if (help.hasInfo())
                {
                   cache_.put(selectedItem, help);
-                  display.displayFunctionHelp(help) ;
+                  display.displayHelp(help) ;
                   return;
                }
             }
@@ -157,7 +158,23 @@ public class HelpStrategy
                                     final String parameter,
                                     final CompletionPopupDisplay display)
    {
-      String desc = info.getArgs().get(parameter) ;
+      String desc = null;
+      
+      HashMap<String, String> mapToUse = info.getArgs();
+      if (mapToUse != null)
+      {
+         desc = mapToUse.get(parameter) ;
+      }
+      
+      if (desc == null)
+      {
+         mapToUse = info.getSlots();
+         if (mapToUse != null)
+         {
+            desc = mapToUse.get(parameter);
+         }
+      }
+      
       if (desc == null)
       {
          display.setHelpVisible(false);
@@ -165,9 +182,66 @@ public class HelpStrategy
       }
       else
       {
-         display.displayParameterHelp(info, parameter) ;
+         display.displayParameterHelp(mapToUse, parameter) ;
       }
    }
+   
+   @SuppressWarnings("unused")
+   private void showDataHelp(final QualifiedName selectedItem,
+                             final CompletionPopupDisplay display)
+   {
+      ParsedInfo cachedHelp = cache_.get(selectedItem);
+      if (cachedHelp != null)
+      {
+         doShowDataHelp(cachedHelp, display);
+         return;
+      }
+      
+      server_.getHelp(
+            selectedItem.name,
+            selectedItem.source,
+            selectedItem.type,
+            new ServerRequestCallback<HelpInfo>() {
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            display.clearHelp(false) ;
+         }
+
+         @Override
+         public void onResponseReceived(HelpInfo response)
+         {
+            if (response != null)
+            {
+               ParsedInfo info = response.parse(selectedItem.name);
+               cache_.put(selectedItem, info);
+               doShowDataHelp(info, display);
+            }
+            else
+            {
+               display.setHelpVisible(false);
+               display.clearHelp(false);
+            }
+         }
+      }) ;
+   }
+   
+   private void doShowDataHelp(final ParsedInfo info,
+                               final CompletionPopupDisplay display)
+   {
+      if (info.hasInfo())
+      {
+         display.displayDataHelp(info) ;
+      }
+      else
+      {
+         display.setHelpVisible(false);
+         display.clearHelp(false) ;
+      }
+   }
+   
+   
    
    private void showPackageHelp(final QualifiedName selectedItem,
                                 final CompletionPopupDisplay display)
