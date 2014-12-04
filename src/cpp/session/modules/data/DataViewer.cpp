@@ -21,6 +21,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Log.hpp>
 #include <core/Error.hpp>
@@ -28,6 +29,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/RecursionGuard.hpp>
 #include <core/StringUtils.hpp>
+#include <core/SafeConvert.hpp>
 
 #define R_INTERNAL_FUNCTIONS
 #include <r/RInternal.hpp>
@@ -57,6 +59,28 @@ namespace {
 
 bool isFilterSubset(const std::string& outer, const std::string& inner) 
 {
+   // shortcut for identical filters (the typical case)
+   if (inner == outer) 
+   {
+      return true;
+   }
+
+   // matches a numeric filter (i.e. "2.71-3.14") 
+   boost::regex numFilter("(\\d+\\.?\\d*)-(\\d+\\.?\\d*)");
+   boost::smatch innerMatch, outerMatch;
+   if (boost::regex_search(inner, innerMatch, numFilter) &&
+       boost::regex_search(outer, outerMatch, numFilter))
+   {
+      // for numeric filters, the inner is a subset if its lower bound (1) is 
+      // larger than the outer lower bound, and the upper bound (2) is smaller
+      // than the outer upper bound
+      return safe_convert::stringTo<double>(innerMatch[1], 0) >= 
+             safe_convert::stringTo<double>(outerMatch[1], 0) &&
+             safe_convert::stringTo<double>(innerMatch[2], 0) <= 
+             safe_convert::stringTo<double>(outerMatch[2], 0);
+   }
+
+   // non-numeric filters are just string prefix matches
    if (inner.size() < outer.size()) 
       return false;
 
