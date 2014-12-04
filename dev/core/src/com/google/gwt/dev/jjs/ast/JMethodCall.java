@@ -66,7 +66,7 @@ public class JMethodCall extends JExpression {
   private JMethod method;
   private final JType overrideReturnType;
   private Polymorphism polymorphism = Polymorphism.NORMAL;
-  private boolean methodHasSideEffects;
+  private boolean markedAsSideAffectFree;
 
   /**
    * Initialize a new method call equivalent to another one. A new instance must
@@ -79,7 +79,7 @@ public class JMethodCall extends JExpression {
     this.method = other.method;
     this.overrideReturnType = other.overrideReturnType;
     this.polymorphism = other.polymorphism;
-    this.methodHasSideEffects = other.methodHasSideEffects;
+    this.markedAsSideAffectFree = other.markedAsSideAffectFree;
   }
 
   public JMethodCall(SourceInfo info, JExpression instance, JMethod method, JExpression... args) {
@@ -105,7 +105,6 @@ public class JMethodCall extends JExpression {
     this.instance = instance;
     this.method = method;
     this.overrideReturnType = overrideReturnType;
-    this.methodHasSideEffects = method.hasSideEffects();
     addArgs(args);
   }
 
@@ -169,14 +168,17 @@ public class JMethodCall extends JExpression {
     }
   }
 
-  public void setMethodHasSideEffects(boolean methodHasSideEffects) {
-    this.methodHasSideEffects = methodHasSideEffects;
+  public void markSideEffectFree() {
+    markedAsSideAffectFree = true;
   }
 
   @Override
   public boolean hasSideEffects() {
+    if (markedAsSideAffectFree) {
+      return false;
+    }
     // TODO(later): optimize? Be sure to check for clinit when we do.
-    return isStaticDispatchOnly() || method.isStatic() ? methodHasSideEffects : true;
+    return isStaticDispatchOnly() || method.isStatic() ? method.hasSideEffects() : true;
   }
 
   /**

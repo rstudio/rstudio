@@ -385,11 +385,13 @@ public class MethodInliner {
       // We're safe to inline.
       boolean hasSideEffects = x.hasSideEffects();
       if (!hasSideEffects) {
-        for (JExpression expression : bodyAsExpressionList) {
-          if (expression instanceof JMethodCall) {
-            ((JMethodCall) expression).setMethodHasSideEffects(false);
+        new JModVisitor() {
+          @Override
+          public void endVisit(JMethodCall x, Context ctx) {
+            x.markSideEffectFree();
           }
-        }
+
+        }.accept(bodyAsExpressionList);
       }
 
       // Replace all params in the target expression with the actual arguments.
