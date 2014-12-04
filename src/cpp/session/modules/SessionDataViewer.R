@@ -230,10 +230,10 @@
    }
 
    # save a copy into the cached environment
-   cached <- .rs.addCachedData(force(x))
+   cacheKey <- .rs.addCachedData(force(x))
    
    # call viewData 
-   invisible(.Call("rs_viewData", x, title, name, env, cached))
+   invisible(.Call("rs_viewData", x, title, name, env, cacheKey))
 })
 
 .rs.addFunction("initializeDataViewer", function(server) {
@@ -249,9 +249,14 @@
 
 .rs.addFunction("addCachedData", function(obj) 
 {
-   cached = paste(sample(c(letters, 0:9), 10, replace = TRUE), collapse = "")
-   assign(cached, obj, .rs.CachedDataEnv)
-   cached
+   cacheKey <- paste(sample(c(letters, 0:9), 10, replace = TRUE), collapse = "")
+   .rs.assignCachedData(cacheKey, obj)
+   cacheKey
+})
+
+.rs.addFunction("assignCachedData", function(cacheKey, obj) 
+{
+   assign(cacheKey, obj, .rs.CachedDataEnv)
 })
 
 .rs.addFunction("removeCachedData", function(cacheKey, cacheDir)
@@ -304,7 +309,7 @@
   invisible(NULL)
 })
 
-.rs.addFunction("saveWorkingData", function(cacheKey, obj)
+.rs.addFunction("assignWorkingData", function(cacheKey, obj)
 {
   assign(cacheKey, obj, .rs.WorkingDataEnv)
 })

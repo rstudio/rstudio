@@ -48,6 +48,12 @@ public class DataViewerPresenter implements
    
    public void showData(DataItem item)
    {
+      // if data is already visible, clear the cache
+      if (item_ != null)
+      {
+         server_.removeCachedData(item_.getCacheKey(), 
+                                  new VoidServerRequestCallback());
+      }
       item_ = item;
       view_.showData(item);
    }

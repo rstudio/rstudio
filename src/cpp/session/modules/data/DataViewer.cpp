@@ -56,7 +56,64 @@ namespace data {
 namespace viewer {
 
 namespace {   
+/*
+ * Data Viewer caching overview
+ * ----------------------------
+ *
+ * For each object being viewed, there are three copies to consider:
+ * 
+ * ORIGINAL:
+ *    The original object on which the user invoked View(). This object may or
+ *    may not exist; for example, View(cars) binds a viewer to the 'cars' 
+ *    object in 'package:datasets', but View(rbind(cars,cars)) binds a viewer
+ *    to a temporary object that doesn't exist anywhere but in the viewer.
+ *
+ *    When the original object exists, and no sorting or filtering is applied,
+ *    requests for data are met by pulling data from the original object. We
+ *    also watch original objects; when they're replaced in their hosting
+ *    environments (assuming those environments are named), a client event is
+ *    emitted.
+ *
+ * CACHED:
+ *    Because the original object may be temporary (and, even if not, can be
+ *    deleted at any time), we always have a cached copy of the object 
+ *    available. 
+ *
+ *    The environment .rs.CachedDataEnv contains the cached objects. These
+ *    objects have randomly generated cache keys. 
+ *
+ *    When the session suspends/resumes, the contents of the cache environment
+ *    are written as individual .RData files to the user scratch folder. This
+ *    allows us to reload the data for viewing afterwards.
+ *
+ *    The client is responsible for letting the server know when the viewer has
+ *    closed; when this happens, the server removes the in-memory and disk 
+ *    cache entries.
+ *
+ * WORKING:
+ *    As the user orders, filters, and searches data, it's typical to follow a
+ *    narrowing approach--e.g. first show only "Housewares", then only
+ *    housewares between $10-$25, then only housewares between $10-25 and
+ *    matching the text "eggs".
+ *    
+ *    In order to avoid re-ordering and re-filtering the entire dataset every
+ *    time a new set of rows is requested, we keep a "working copy" of the
+ *    object in a second environment, .rs.WorkingDataEnv, using the same cache
+ *    keys.
+ *    
+ *    When a request for data arrives, we check to see if the data requested is
+ *    a subset of the data already in our working copy. If it is, we use the
+ *    working copy as a starting postion rather than the original or cached
+ *    object.
+ *
+ *    This allows us to efficiently perform operations on very large datasets
+ *    once they've been winnowed down to smaller objects using searches and
+ *    filters.
+ */    
 
+// indicates whether one filter string is a subset of another; e.g. if a column
+// is filtered for "abc" and then "abcd", the new state is a subset of the
+// previous state.
 bool isFilterSubset(const std::string& outer, const std::string& inner) 
 {
    // shortcut for identical filters (the typical case)
@@ -405,8 +462,9 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
          throw r::exec::RErrorException("Failure to sort or filter data");
       }
 
-      // save the working data state
-      r::exec::RFunction(".rs.saveWorkingData", cacheKey, dataSEXP).call();
+      // save the working data state (it's okay if this fails; it's a
+      // performance optimization)
+      r::exec::RFunction(".rs.assignWorkingData", cacheKey, dataSEXP).call();
       if (cachedFrame != s_cachedFrames.end())
       {
          cachedFrame->second.workingSearch = search;
@@ -721,6 +779,10 @@ void onDetectChanges(module_context::ChangeSource source)
 
          // clear working data for the object
          r::exec::RFunction(".rs.removeWorkingData", i->first).call();
+
+         // replace cached copy 
+         if (sexp != NULL)
+            r::exec::RFunction(".rs.assignCachedData", i->first, sexp).call();
 
          // emit client event
          json::Object changed;
