@@ -512,20 +512,17 @@
 
 .rs.addFunction("isSubsequence", function(strings, string)
 {
-   regex <- .rs.asCaseInsensitiveSubsequenceRegex(string)
-   grep(regex, string, perl = TRUE)
+   .Call("rs_isSubsequence", strings, string)
 })
 
 .rs.addFunction("whichIsSubsequence", function(strings, string)
 {
-   regex <- .rs.asCaseInsensitiveSubsequenceRegex(string)
-   grepl(regex, strings, perl = TRUE)
+   which(.rs.isSubsequence(strings, string))
 })
 
 .rs.addFunction("selectIsSubsequence", function(strings, string)
 {
-   regex <- .rs.asCaseInsensitiveSubsequenceRegex(string)
-   grep(regex, strings, perl = TRUE, value = TRUE)
+   .subset(strings, .rs.isSubsequence(strings))
 })
 
 .rs.addFunction("escapeForRegex", function(regex)

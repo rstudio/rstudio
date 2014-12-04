@@ -288,6 +288,29 @@ SEXP rs_scanFiles(SEXP pathSEXP,
    return builder;
 }
 
+SEXP rs_isSubsequence(SEXP stringsSEXP, SEXP querySEXP)
+{
+   std::vector<std::string> strings;
+   if (!r::sexp::fillVectorString(stringsSEXP, &strings))
+      return R_NilValue;
+
+   std::string query = r::sexp::asString(querySEXP);
+
+   std::vector<bool> result(strings.size());
+
+   std::transform(strings.begin(),
+                  strings.end(),
+                  result.begin(),
+                  boost::bind(
+                     string_utils::isSubsequence,
+                     _1,
+                     query));
+
+   r::sexp::Protect protect;
+   return r::sexp::create(result, &protect);
+
+}
+
 } // end anonymous namespace
 
 Error initialize() {
@@ -306,6 +329,11 @@ Error initialize() {
             "rs_scanFiles",
             (DL_FUNC) rs_scanFiles,
             4);
+
+   r::routines::registerCallMethod(
+            "rs_isSubsequence",
+            (DL_FUNC) rs_isSubsequence,
+            2);
 
    using boost::bind;
    using namespace module_context;
