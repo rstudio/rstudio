@@ -612,7 +612,7 @@ public class CompletionRequester
                getIcon());
          
          // Handle files specially
-         if (type == RCompletionType.FILE)
+         if (RCompletionType.isFileType(type))
          {
             ArrayList<Integer> slashIndices =
                   StringUtil.indicesOf(name, '/');

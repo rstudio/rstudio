@@ -79,7 +79,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.PriorityQueue;
 
 public class RCompletionManager implements CompletionManager
 {  
@@ -1669,7 +1668,7 @@ public class RCompletionManager implements CompletionManager
          String source = qualifiedName.source;
          boolean shouldQuote = qualifiedName.shouldQuote;
          
-         if (qualifiedName.type != RCompletionType.FILE)
+         if (!RCompletionType.isFileType(qualifiedName.type))
          {
             if (value == ":=")
                value = quoteIfNotSyntacticNameCompletion(value);
