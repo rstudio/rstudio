@@ -48,6 +48,12 @@
 #define kGridResourceLocation "/" kGridResource "/"
 #define kNoBoundEnv "_rs_no_env"
 
+// the largest number of columns we're willing to display
+#define MAX_COLS 100  
+
+// the largest number of factor values we're willing to display
+#define MAX_FACTORS 256
+
 using namespace core;
 
 namespace session {
@@ -315,10 +321,6 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP,
       if (dataFrameSEXP != NULL)
          dataSEXP = dataFrameSEXP;
            
-      int nrow = 0, ncol = 0;
-      r::exec::RFunction("nrow", dataSEXP).call(&nrow);
-      r::exec::RFunction("ncol", dataSEXP).call(&ncol);
-
       json::Value dataItem = makeDataItem(dataSEXP, 
             r::sexp::asString(captionSEXP), objName, envName, cacheKey);
       ClientEvent event(client_events::kShowData, dataItem);
@@ -354,7 +356,8 @@ json::Value getCols(SEXP dataSEXP)
    SEXP colsSEXP = NULL;
    r::sexp::Protect protect;
    json::Value result;
-   Error error = r::exec::RFunction(".rs.describeCols", dataSEXP)
+   Error error = r::exec::RFunction(".rs.describeCols", dataSEXP, MAX_COLS, 
+         MAX_FACTORS)
       .call(&colsSEXP, &protect);
    if (error) 
    {
@@ -402,6 +405,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    error = r::exec::RFunction("ncol", dataSEXP).call(&ncol);
    if (error) 
       LOG_ERROR(error);
+   ncol = std::min(ncol, MAX_COLS);
 
    // extract filters
    std::vector<std::string> filters;

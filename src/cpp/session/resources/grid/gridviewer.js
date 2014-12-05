@@ -94,11 +94,20 @@ var renderNumberCell = function(data, type, row, meta) {
 
 // applies a new size to the table--called on init, on tab activate (from
 // RStudio), and when the window size changes
+var lastHeight = 0;
 var sizeDataTable = function() {
   // don't apply a zero height
   if (window.innerHeight < 1) {
     return;
   }
+
+  if (lastHeight == window.innerHeight) {
+    console.log("ignoring size " + lastHeight);
+    return;
+  }
+  
+  lastHeight = window.innerHeight;
+  console.log("applying size " + lastHeight);
 
   // adjust scroll body height accordingly
   var scrollBody = $(".dataTables_scrollBody");
@@ -109,8 +118,8 @@ var sizeDataTable = function() {
   }
 
   // apply new size
-  table.columns.adjust();
-  table.settings().scroller().measure(true);
+  table.settings().scroller().measure(false);
+  table.columns.adjust().draw();
 };
 
 var debouncedDataTableSize = debounce(sizeDataTable, 75);

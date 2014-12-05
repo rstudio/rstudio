@@ -36,10 +36,15 @@
    format(col, trim = TRUE, justify = "none", ...)
 })
 
-.rs.addFunction("describeCols", function(x) 
+.rs.addFunction("describeCols", function(x, maxCols, maxFactors) 
 {
   colNames <- names(x)
-  colAttrs <- lapply(seq_along(x), function(idx) {
+
+  # truncate to maximum displayed number of columns
+  colNames <- colNames[1:min(length(colNames), maxCols)]
+
+  # get the attributes for each column
+  colAttrs <- lapply(seq_along(colNames), function(idx) {
     col_name <- if (idx <= length(colNames)) 
                   colNames[idx] 
                 else 
@@ -55,6 +60,7 @@
       {
         col_type <- "factor"
         col_vals <- levels(val)
+        col_vals <- col_vals[1:min(length(col_vals), maxFactors)]
       }
       else if (is.numeric(val))
       {
