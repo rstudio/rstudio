@@ -15,8 +15,11 @@
  */
 package com.google.gwt.lang;
 
+import static com.google.gwt.core.shared.impl.InternalPreconditions.checkArrayType;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.impl.DoNotInline;
+import com.google.gwt.core.client.impl.HasNoSideEffects;
 
 /**
  * This is an intrinsic class that contains the implementation details for Java arrays. <p>
@@ -232,40 +235,25 @@ public final class Array {
    * throws an {@link ArrayStoreException}.
    */
   public static Object setCheck(Object array, int index, Object value) {
-    if (value != null) {
-      switch (Array.getElementTypeCategory(array)) {
-        case TYPE_JAVA_LANG_STRING:
-          if (!Cast.isJavaString(value)) {
-            // value must be a string.
-            throw new ArrayStoreException();
-          }
-          break;
-        case TYPE_JAVA_OBJECT: {
-          JavaScriptObject elementTypeId = Array.getElementTypeId(array);
-          if (!Cast.canCast(value, elementTypeId)) {
-          // value must be castable to elementType.
-            throw new ArrayStoreException();
-          }
-          break;
-        }
-        case TYPE_JSO:
-          if (!Cast.isJavaScriptObject(value)) {
-            // value must be a JavaScriptObject
-            throw new ArrayStoreException();
-          }
-          break;
-        case TYPE_JAVA_OBJECT_OR_JSO: {
-          JavaScriptObject elementTypeId = Array.getElementTypeId(array);
-          if (!Cast.isJavaScriptObject(value)
-            && !Cast.canCast(value, elementTypeId)) {
-            // value must be a JavaScriptObject, or else castable to the elementType.
-            throw new ArrayStoreException();
-          }
-          break;
-        }
-      }
-    }
+    checkArrayType(value == null || canSet(array, value));
     return set(array, index, value);
+  }
+
+  @HasNoSideEffects
+  private static boolean canSet(Object array, Object value) {
+    switch (Array.getElementTypeCategory(array)) {
+      case TYPE_JAVA_LANG_STRING:
+        return Cast.isJavaString(value);
+      case TYPE_JAVA_OBJECT:
+        return Cast.canCast(value, Array.getElementTypeId(array));
+      case TYPE_JSO:
+        return Cast.isJavaScriptObject(value);
+      case TYPE_JAVA_OBJECT_OR_JSO:
+        return Cast.isJavaScriptObject(value)
+            || Cast.canCast(value, Array.getElementTypeId(array));
+      default:
+        return true;
+    }
   }
 
   private static native Object arraySlice(Object array, int fromIndex, int toIndex) /*-{

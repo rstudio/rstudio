@@ -24,6 +24,24 @@ public class InternalPreconditions {
   // Some parts adapted from Guava
 
   /**
+   * Ensures the truth of an expression that verifies type.
+   */
+  public static void checkType(boolean expression) {
+    if (!expression) {
+      throw new ClassCastException();
+    }
+  }
+
+  /**
+   * Ensures the truth of an expression that verifies array type.
+   */
+  public static void checkArrayType(boolean expression) {
+    if (!expression) {
+      throw new ArrayStoreException();
+    }
+  }
+
+  /**
    * Ensures the truth of an expression that verifies array type.
    */
   public static void checkArrayType(boolean expression, Object errorMessage) {
@@ -222,7 +240,7 @@ public class InternalPreconditions {
    * placeholders, the unmatched arguments will be appended to the end of the formatted message in
    * square braces.
    */
-  static String format(String template, Object... args) {
+  private static String format(String template, Object... args) {
     template = String.valueOf(template); // null -> "null"
 
     // start substituting the arguments into the '%s' placeholders
@@ -253,4 +271,7 @@ public class InternalPreconditions {
 
     return builder.toString();
   }
+
+  // Hides the constructor for this static utility class.
+  private InternalPreconditions() { }
 }
