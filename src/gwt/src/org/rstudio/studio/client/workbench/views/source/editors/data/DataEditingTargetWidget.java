@@ -26,6 +26,7 @@ import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.dataviewer.DataTable;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
@@ -69,7 +70,7 @@ public class DataEditingTargetWidget extends Composite
 
       table_ = new DataTable(this);
 
-      Widget mainWidget = frame_;
+      Widget mainWidget = new AutoGlassPanel(frame_);
 
       if (dataItem.getDisplayedObservations() != dataItem.getTotalObservations())
       {

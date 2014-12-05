@@ -125,7 +125,7 @@ var runAfterSizing = function(func) {
     } else {
       height = window.innerHeight;
     }
-  }, 10);
+  }, 25);
 };
 
 // when the loading indicator is shown by the scroller, apply a style to
@@ -393,7 +393,16 @@ var createHeader = function(idx, col) {
   return th;
 };
 
-var initDataTable = function() {
+var initDataTable = function(result) {
+  // parse result
+  resCols = $.parseJSON(result);
+
+  if (resCols.error) {
+    showError(cols.error);
+    return;
+  }
+  cols = resCols;
+
   // look up the query parameters
   var env = "", obj = "", cacheKey = "";
   var query = window.location.search.substring(1);
@@ -408,88 +417,102 @@ var initDataTable = function() {
       cacheKey = queryVar[1];
     }
   }
-  $.ajax({
+
+  // keep track of which columns are numeric and which are text (we use
+  // different renderers for these types)
+  var numberCols = [];
+  var textCols = [];
+
+  // add each column
+  var thead = document.getElementById("data_cols");
+  for (var j = 0; j < cols.length; j++) {
+    // create table header
+    thead.appendChild(createHeader(j, cols[j]));
+    if (cols[j].col_type === "numeric") {
+      numberCols.push(j);
+    } else {
+      textCols.push(j);
+    }
+  }
+  var scrollHeight = window.innerHeight - (thead.clientHeight + 2);
+
+  // activate the data table
+  $("#data").dataTable({
+    "processing": true,
+    "serverSide": true,
+    "pagingType": "full_numbers",
+    "pageLength": 25,
+    "scrollY": scrollHeight + "px",
+    "scrollX": true,
+    "scroller": {
+      "loadingIndicator": true
+    },
+    "preDrawCallback": preDrawCallback,
+    "drawCallback": postDrawCallback,
+    "dom": "tiS", 
+    "deferRender": true,
+    "columnDefs": [ {
+      "targets": numberCols,
+      "render": renderNumberCell
+      }, {
+      "targets": textCols,
+      "render": renderTextCell
+      }],
+    "ajax": {
+      "url": "../grid_data", 
+      "data": function(d) {
+        d.env = env;
+        d.obj = obj;
+        d.cache_key = cacheKey;
+        d.show = "data";
+      },
+      "error": function(jqXHR) {
+        if (jqXHR.responseText[0] !== "{")
+          showError(jqXHR.responseText);
+        else
+        {
+          var result = $.parseJSON(jqXHR.responseText);
+          if (result.error) {
+            showError(result.error);
+          } else {
+            showError("The data could not be displayed.");
+          }
+        }
+      },
+     }
+  });
+
+  table = $("#data").DataTable();
+
+  // listen for size changes
+  debouncedDataTableSize();
+  window.addEventListener("resize", function() { 
+    debouncedDataTableSize(); 
+  });
+};
+
+var debouncedSearch = debounce(function(text) {
+  var t = $("#data").DataTable();
+  if (text != t.search()) {
+    t.search(text).draw();
+  }
+}, 100);
+
+// bootstrapping: 
+// 1. make the request to get the shape of the data object to be viewed 
+//    (we want this to start as soon as possible so the shape can be prepared
+//    on the server while we wait for the geometry to finish initializing on
+//    the client)
+// 2. wait for the document to be ready
+// 3. wait for the window size to stop changing (RStudio animates tab opening)
+// 4. initialize the data table
+$.ajax({
       url: "../grid_data?show=cols&" + window.location.search.substring(1)})
   .done(function(result) {
-    // parse result
-    resCols = $.parseJSON(result);
-
-    if (resCols.error) {
-      showError(cols.error);
-      return;
-    }
-    cols = resCols;
-
-    // keep track of which columns are numeric and which are text (we use
-    // different renderers for these types)
-    var numberCols = [];
-    var textCols = [];
-
-    // add each column
-    var thead = document.getElementById("data_cols");
-    for (var i = 0; i < cols.length; i++) {
-      // create table header
-      thead.appendChild(createHeader(i, cols[i]));
-      if (cols[i].col_type === "numeric") {
-        numberCols.push(i);
-      } else {
-        textCols.push(i);
-      }
-    }
-    var scrollHeight = window.innerHeight - (thead.clientHeight + 2);
-
-    // activate the data table
-    $("#data").dataTable({
-      "processing": true,
-      "serverSide": true,
-      "pagingType": "full_numbers",
-      "pageLength": 25,
-      "scrollY": scrollHeight + "px",
-      "scrollX": true,
-      "scroller": {
-        "loadingIndicator": true
-      },
-      "preDrawCallback": preDrawCallback,
-      "drawCallback": postDrawCallback,
-      "dom": "tiS", 
-      "deferRender": true,
-      "columnDefs": [ {
-        "targets": numberCols,
-        "render": renderNumberCell
-        }, {
-        "targets": textCols,
-        "render": renderTextCell
-        }],
-      "ajax": {
-        "url": "../grid_data", 
-        "data": function(d) {
-          d.env = env;
-          d.obj = obj;
-          d.cache_key = cacheKey;
-          d.show = "data";
-        },
-        "error": function(jqXHR) {
-          if (jqXHR.responseText[0] !== "{")
-            showError(jqXHR.responseText);
-          else
-          {
-            var result = $.parseJSON(jqXHR.responseText);
-            if (result.error) {
-              showError(result.error);
-            } else {
-              showError("The data could not be displayed.");
-            }
-          }
-        },
-       }
-    });
-
-    table = $("#data").DataTable();
-
-    // listen for size changes
-    debouncedDataTableSize();
-    window.addEventListener("resize", function() { 
-      debouncedDataTableSize(); 
+    $(document).ready(function() {
+      runAfterSizing(function() {
+        initDataTable(result);
+      });
     });
   })
   .fail(function(jqXHR)
@@ -506,20 +529,7 @@ var initDataTable = function() {
         showError("The object could not be displayed.");
       }
     }
-  });
-};
-
-$(document).ready(function() {
-  runAfterSizing(initDataTable);
-});
-
-
-var debouncedSearch = debounce(function(text) {
-  var t = $("#data").DataTable();
-  if (text != t.search()) {
-    t.search(text).draw();
-  }
-}, 100);
+  });  
 
 // Exports -------------------------------------------------------------------
 

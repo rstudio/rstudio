@@ -149,9 +149,8 @@ bool isFilterSubset(const std::string& outer, const std::string& inner)
 
 // CachedFrame represents an object that's currently active in a data viewer
 // window.
-class CachedFrame
+struct CachedFrame
 {
-public:
    CachedFrame(const std::string& env, const std::string& obj, SEXP sexp):
       envName(env),
       objName(obj),
@@ -221,7 +220,7 @@ std::map<std::string, CachedFrame> s_cachedFrames;
 
 std::string viewerCacheDir() 
 {
-   return module_context::userScratchPath().childPath(kViewerCacheDir)
+   return module_context::scopedScratchPath().childPath(kViewerCacheDir)
       .absolutePath();
 }
 
@@ -257,8 +256,12 @@ json::Value makeDataItem(SEXP dataSEXP, const std::string& caption,
                          const std::string& cacheKey)
 {
    int nrow = 0, ncol = 0;
-   r::exec::RFunction("nrow", dataSEXP).call(&nrow);
-   r::exec::RFunction("ncol", dataSEXP).call(&ncol);
+   Error error = r::exec::RFunction("nrow", dataSEXP).call(&nrow);
+   if (error) 
+      LOG_ERROR(error);
+   error = r::exec::RFunction("ncol", dataSEXP).call(&ncol);
+   if (error) 
+      LOG_ERROR(error);
 
    // fire show data event
    json::Object dataItem;
@@ -280,25 +283,27 @@ json::Value makeDataItem(SEXP dataSEXP, const std::string& caption,
 SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP, 
                  SEXP cacheKeySEXP)
 {    
-   // attempt to reverse engineer the location of the data
-   std::string envName, objName, cacheKey;
-   r::sexp::Protect protect;
-   
-   r::exec::RFunction("environmentName", envSEXP).call(&envName);
-   if (envName == "R_GlobalEnv")
-   {
-      // the global environment doesn't need to be named
-      envName.clear();
-   }
-   else if (envName == "R_EmptyEnv" || envName == "") 
-   {
-      envName = kNoBoundEnv;
-   }
-   objName = r::sexp::asString(nameSEXP);
-   cacheKey = r::sexp::asString(cacheKeySEXP);
-
    try
    {
+      // attempt to reverse engineer the location of the data
+      std::string envName, objName, cacheKey;
+      r::sexp::Protect protect;
+      
+      // it's okay if this fails (and it might); we'll just treat the data as
+      // unbound to an environment
+      r::exec::RFunction("environmentName", envSEXP).call(&envName);
+      if (envName == "R_GlobalEnv")
+      {
+         // the global environment doesn't need to be named
+         envName.clear();
+      }
+      else if (envName == "R_EmptyEnv" || envName == "") 
+      {
+         envName = kNoBoundEnv;
+      }
+      objName = r::sexp::asString(nameSEXP);
+      cacheKey = r::sexp::asString(cacheKeySEXP);
+
       // validate title
       if (!Rf_isString(captionSEXP) || Rf_length(captionSEXP) != 1)
          throw r::exec::RErrorException("invalid caption argument");
@@ -338,12 +343,10 @@ void handleGridResReq(const http::Request& request,
    std::string path("grid/");
    path.append(http::util::pathAfterPrefix(request, kGridResourceLocation));
 
+   // setCacheableFile is responsible for emitting a 404 when the file doesn't
+   // exist.
    core::FilePath gridResource = options().rResourcesPath().childPath(path);
-   if (gridResource.exists())
-   {
-      pResponse->setCacheableFile(gridResource, request);
-      return;
-   }
+   pResponse->setCacheableFile(gridResource, request);
 }
 
 json::Value getCols(SEXP dataSEXP)
@@ -362,6 +365,16 @@ json::Value getCols(SEXP dataSEXP)
    return result;
 }
 
+// given an object from which to return data, and a description of the data to
+// return via URL-encoded paramters supplied by the DataTables API, returns the
+// data requested by the parameters. 
+//
+// the shape of the API is described here:
+// http://datatables.net/manual/server-side
+// 
+// NB: may throw exceptions! these are expected to be handled by the handlers
+// in getGridData, where they will be marshaled to JSON and displayed on the
+// client.
 json::Value getData(SEXP dataSEXP, const http::Fields& fields)
 {
    Error error;
@@ -383,8 +396,12 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
 
    int nrow = 1, ncol = 0;
    int filteredNRow = 0;
-   r::exec::RFunction("nrow", dataSEXP).call(&nrow);
-   r::exec::RFunction("ncol", dataSEXP).call(&ncol);
+   error = r::exec::RFunction("nrow", dataSEXP).call(&nrow);
+   if (error) 
+      LOG_ERROR(error);
+   error = r::exec::RFunction("ncol", dataSEXP).call(&ncol);
+   if (error) 
+      LOG_ERROR(error);
 
    // extract filters
    std::vector<std::string> filters;
@@ -440,7 +457,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       }
    }
 
-   // apply transformations if needed
+   // apply transformations if needed.    
    if (needsTransform) 
    {
       // can we use a working copy? 
@@ -643,7 +660,7 @@ Error getGridData(const http::Request& request,
       {
          json::Object err;
          err["error"] = "The object no longer exists.";
-         statusCode = http::status::NotFound;
+         status = http::status::NotFound;
          result = err;
       }
       else 
@@ -672,6 +689,7 @@ Error getGridData(const http::Request& request,
 
    std::ostringstream ostr;
    json::write(result, ostr);
+   pResponse->setNoCacheHeaders();    // don't cache data/grid shape
    pResponse->setStatusCode(status);
    pResponse->setBody(ostr.str());
 
@@ -744,12 +762,15 @@ Error duplicateDataView(const json::JsonRpcRequest& request,
 
 void onShutdown(bool terminatedNormally)
 {
-   // when R suspends or shuts down, write out the contents of the cache
-   // environment to disk so we can load them again if we need to
-   Error error = r::exec::RFunction(".rs.saveCachedData", viewerCacheDir())
-      .call();
-   if (error)
-      LOG_ERROR(error);
+   if (terminatedNormally) 
+   {
+      // when R suspends or shuts down, write out the contents of the cache
+      // environment to disk so we can load them again if we need to
+      Error error = r::exec::RFunction(".rs.saveCachedData", viewerCacheDir())
+         .call();
+      if (error)
+         LOG_ERROR(error);
+   }
 }
 
 void onSuspend(const r::session::RSuspendOptions&, core::Settings*)
@@ -765,6 +786,10 @@ void onDetectChanges(module_context::ChangeSource source)
 {
    DROP_RECURSIVE_CALLS;
 
+   // unlikely that data will change outside of a REPL
+   if (source != module_context::ChangeSourceREPL) 
+      return;
+
    r::sexp::Protect protect;
    for (std::map<std::string, CachedFrame>::iterator i = s_cachedFrames.begin();
         i != s_cachedFrames.end();
@@ -779,7 +804,7 @@ void onDetectChanges(module_context::ChangeSource source)
          // clear working data for the object
          r::exec::RFunction(".rs.removeWorkingData", i->first).call();
 
-         // replace cached copy 
+         // replace cached copy (if we have something to replace it with)
          if (sexp != NULL)
             r::exec::RFunction(".rs.assignCachedData", i->first, sexp).call();
 
