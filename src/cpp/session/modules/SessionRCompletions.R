@@ -259,6 +259,10 @@ assign(x = ".rs.acCompletionTypes",
                                                   include.dirs = TRUE))
    }
    
+   ## Bail out early if we didn't get any completions.
+   if (!length(absolutePaths))
+      return(.rs.emptyCompletions())
+   
    ## Because the completions returned will replace the whole token,
    ## we need to be careful in how we construct the return result. In particular,
    ## we need to preserve the way the directory has been specified.

@@ -2032,6 +2032,14 @@ SEXP rs_listIndexedFiles(SEXP termSEXP, SEXP absolutePathSEXP, SEXP maxCountSEXP
    std::vector<std::string> paths;
    bool moreAvailable = false;
    
+   // Bail if the file doesn't exist
+   if (!filePath.exists())
+      return R_NilValue;
+   
+   // Bail if it's not a monitored path
+   if (!projects::projectContext().isMonitoringDirectory(filePath))
+      return R_NilValue;
+   
    s_projectIndex.searchFiles(term,
                               maxCount,
                               false,
