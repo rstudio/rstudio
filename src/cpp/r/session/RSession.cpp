@@ -99,6 +99,9 @@ FilePath s_suspendedSessionPath ;
 // latent deserialization actions are taking place
 boost::function<void()> s_deferredDeserializationAction;
    
+// has the first read console occurred yet?
+bool s_firstRead = false;
+
 // have we completed our one-time initialization yet?
 bool s_initialized = false;
 
@@ -644,6 +647,16 @@ int RReadConsole (const char *pmt,
 {
    try
    {
+      // playback a newline on first read (works around
+      // an issue with interrupts crashing after restart
+      // on WIN64)
+      if (!s_firstRead)
+      {
+         s_firstRead = true;
+         ::strcpy(buf, "Sys.sleep(0)\n");
+         return 1;
+      }
+
       // capture the prompt for later manipulation
       std::string prompt(pmt);
 
