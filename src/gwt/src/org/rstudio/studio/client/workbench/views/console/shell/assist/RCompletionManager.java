@@ -535,12 +535,16 @@ public class RCompletionManager implements CompletionManager
       String currentToken = StringUtil.getToken(
             currentLine, cursorColumn, "^[a-zA-Z0-9._'\"`]$", false, false);
       
-      // Don't auto-popup for common keywords
+      // Don't auto-popup for common keywords + symbols
       String[] keywords = {
             "for", "if", "in", "function", "while", "repeat",
-            "break", "switch", "return", "library", "require"};
+            "break", "switch", "return", "library", "require",
+            "TRUE", "FALSE"
+      };
+      
       for (String keyword : keywords)
-         if (keyword.substring(0, currentToken.length()).equals(currentToken))
+         if (currentToken.length() <= keyword.length() &&
+             keyword.substring(0, currentToken.length()).equals(currentToken))
             return false;
       
       boolean canAutoPopup =
@@ -602,7 +606,7 @@ public class RCompletionManager implements CompletionManager
                input_.getCursorPosition().getColumn() - 1); 
          
          // Automatically popup completions after certain function calls
-         if (c == '(')
+         if (c == '(' && !isLineInComment(docDisplay_.getCurrentLine()))
          {
             String token = StringUtil.getToken(
                   docDisplay_.getCurrentLine(),
