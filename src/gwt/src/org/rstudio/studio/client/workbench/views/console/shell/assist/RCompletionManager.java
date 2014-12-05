@@ -1564,7 +1564,7 @@ public class RCompletionManager implements CompletionManager
          }
 
          applyValue(qname);
-         if (suggestOnAccept_ || qname.name.endsWith("/") || qname.name.endsWith(":"))
+         if (suggestOnAccept_ || qname.name.endsWith(":"))
          {
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
