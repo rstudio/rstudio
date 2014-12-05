@@ -95,19 +95,17 @@ var renderNumberCell = function(data, type, row, meta) {
 // applies a new size to the table--called on init, on tab activate (from
 // RStudio), and when the window size changes
 var lastHeight = 0;
-var sizeDataTable = function() {
+var sizeDataTable = function(force) {
   // don't apply a zero height
   if (window.innerHeight < 1) {
     return;
   }
 
-  if (lastHeight == window.innerHeight) {
-    console.log("ignoring size " + lastHeight);
+  if (lastHeight === window.innerHeight && !force) {
     return;
   }
   
   lastHeight = window.innerHeight;
-  console.log("applying size " + lastHeight);
 
   // adjust scroll body height accordingly
   var scrollBody = $(".dataTables_scrollBody");
@@ -563,7 +561,7 @@ window.setFilterUIVisible = function(visible) {
       }
     }
   }
-  sizeDataTable();
+  sizeDataTable(true);
 };
 
 // called from RStudio when the underlying object changes
