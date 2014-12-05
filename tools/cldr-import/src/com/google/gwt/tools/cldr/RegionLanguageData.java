@@ -15,13 +15,10 @@
  */
 package com.google.gwt.tools.cldr;
 
-import org.unicode.cldr.util.CLDRFile;
-import org.unicode.cldr.util.Factory;
 import org.unicode.cldr.util.XPathParts;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
@@ -152,12 +149,12 @@ public class RegionLanguageData {
     }
   }
 
-  private final Factory cldrFactory;
+  private final InputFactory cldrFactory;
 
   private Map<String, SortedSet<LanguagePopulation>> regionMap;
   private Map<String, SortedSet<RegionPopulation>> languageMap;
 
-  public RegionLanguageData(Factory cldrFactory) {
+  public RegionLanguageData(InputFactory cldrFactory) {
     this.cldrFactory = cldrFactory;
   }
 
@@ -185,11 +182,9 @@ public class RegionLanguageData {
     }
     regionMap = new HashMap<String, SortedSet<LanguagePopulation>>();
     languageMap = new HashMap<String, SortedSet<RegionPopulation>>();
-    CLDRFile supp = cldrFactory.getSupplementalData();
+    InputFile supp = cldrFactory.getSupplementalData();
     XPathParts parts = new XPathParts();
-    Iterator<String> iterator = supp.iterator("//supplementalData/territoryInfo/territory");
-    while (iterator.hasNext()) {
-      String path = iterator.next();
+    for (String path : supp.listPaths("//supplementalData/territoryInfo/territory")) {
       parts.set(supp.getFullXPath(path));
       String language = parts.findAttributeValue("languagePopulation", "type");
       if (language == null) {

@@ -18,10 +18,9 @@ package com.google.gwt.tools.cldr;
 import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.i18n.shared.GwtLocaleFactory;
 
-import org.unicode.cldr.util.CLDRFile;
-import org.unicode.cldr.util.Factory;
 import org.unicode.cldr.util.XPathParts;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -29,6 +28,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -343,10 +343,10 @@ public class LocaleData {
    * @param key
    * @param attribute
    */
-  public void addAttributeEntry(String category, GwtLocale locale, Factory cldrFactory,
+  void addAttributeEntry(String category, GwtLocale locale, InputFactory cldrFactory,
       String path, String tag, String key, String attribute, String defaultValue) {
     Map<String, String> map = getMap(category, locale);
-    CLDRFile cldr = cldrFactory.make(allLocales.get(locale), true);
+    InputFile cldr = cldrFactory.load(allLocales.get(locale));
     XPathParts parts = new XPathParts();
     String fullPath = cldr.getFullXPath(path);
 
@@ -371,15 +371,10 @@ public class LocaleData {
   /**
    * Add currency entries for all locales.
    * 
-   * @param category
-   * @param cldrFactory
    * @param currencyFractions map of currency fraction data extracted from
    *          locale-independent data
-   * @param defaultCurrencyFraction
-   * @param stillInUse
-   * @param rounding 
    */
-  public void addCurrencyEntries(String category, Factory cldrFactory,
+  void addCurrencyEntries(String category, InputFactory inputFactory,
       Map<String, Integer> currencyFractions, int defaultCurrencyFraction, Set<String> stillInUse,
       Map<String, Integer> rounding) {
     for (GwtLocale locale : allLocales.keySet()) {
@@ -387,16 +382,16 @@ public class LocaleData {
       if (locale.isDefault()) {
         continue;
       }
-      addCurrencyEntries(category, locale, cldrFactory, currencyFractions, defaultCurrencyFraction,
+      addCurrencyEntries(category, locale, inputFactory, currencyFractions, defaultCurrencyFraction,
           stillInUse, rounding);
     }
     // run the "default" locale last, to override inherited entries
     GwtLocale locale = localeFactory.getDefault();
-    addCurrencyEntries(category, locale, cldrFactory, currencyFractions, defaultCurrencyFraction,
+    addCurrencyEntries(category, locale, inputFactory, currencyFractions, defaultCurrencyFraction,
         stillInUse, rounding);
   }
 
-  public void addDateTimeFormatEntries(String group, Factory cldrFactory) {
+  void addDateTimeFormatEntries(String group, InputFactory cldrFactory) {
     addAttributeEntries(group, cldrFactory, "//ldml/dates/calendars/calendar[@type=\"gregorian\"]/"
         + group + "Formats/default", "default", "default", "choice", "medium");
     addDateTimeFormatEntries(group, "full", cldrFactory);
@@ -405,21 +400,19 @@ public class LocaleData {
     addDateTimeFormatEntries(group, "short", cldrFactory);
   }
 
-  public void addEntries(String category, Factory cldrFactory, String prefix, String tag,
+  void addEntries(String category, InputFactory cldrFactory, String prefix, String tag,
       String keyAttribute) {
     for (GwtLocale locale : allLocales.keySet()) {
       addEntries(category, locale, cldrFactory, prefix, tag, keyAttribute);
     }
   }
 
-  public void addEntries(String category, GwtLocale locale, Factory cldrFactory, String prefix,
+  void addEntries(String category, GwtLocale locale, InputFactory cldrFactory, String prefix,
       String tag, String keyAttribute) {
     Map<String, String> map = getMap(category, locale);
-    CLDRFile cldr = cldrFactory.make(allLocales.get(locale), true);
+    InputFile cldr = cldrFactory.load(allLocales.get(locale));
     XPathParts parts = new XPathParts();
-    Iterator<String> iterator = cldr.iterator(prefix);
-    while (iterator.hasNext()) {
-      String path = iterator.next();
+    for (String path : cldr.listPaths(prefix)) {
       String fullXPath = cldr.getFullXPath(path);
       if (fullXPath == null) {
         fullXPath = path;
@@ -449,9 +442,8 @@ public class LocaleData {
 
   /**
    * @param period "month", "day", "quarter", "dayPeriod",
-   * @param cldrFactory
    */
-  public void addNameEntries(String period, Factory cldrFactory) {
+  void addNameEntries(String period, InputFactory cldrFactory) {
     addEntries(period + "-abbrev", cldrFactory,
         "//ldml/dates/calendars/calendar[@type=\"gregorian\"]/" + period + "s/" + period
             + "Context[@type=\"format\"]/" + period + "Width[@type=\"abbreviated\"]", period,
@@ -485,14 +477,12 @@ public class LocaleData {
    * @param tag the tag to load
    * @param keyAttribute the attribute in the tag to use as the key
    */
-  public void addTerritoryEntries(String category, Factory cldrFactory,
+  public void addTerritoryEntries(String category, InputFactory cldrFactory,
       RegionLanguageData regionLanguageData, String prefix, String tag, String keyAttribute) {
-    CLDRFile supp = cldrFactory.getSupplementalData();
+    InputFile supp = cldrFactory.getSupplementalData();
     Map<String, String> map = new HashMap<String, String>();
     XPathParts parts = new XPathParts();
-    Iterator<String> iterator = supp.iterator(prefix);
-    while (iterator.hasNext()) {
-      String path = iterator.next();
+    for (String path : supp.listPaths(prefix)) {
       parts.set(supp.getFullXPath(path));
       Map<String, String> attr = parts.findAttributes(tag);
       if (attr == null || attr.get("alt") != null) {
@@ -515,15 +505,13 @@ public class LocaleData {
     }
   }
 
-  public void addVersions(Factory cldrFactory) {
+  void addVersions(InputFactory inputFactory) {
     for (GwtLocale locale : allLocales.keySet()) {
       Map<String, String> map = getMap("version", locale);
-      CLDRFile cldr = cldrFactory.make(allLocales.get(locale), true);
+      InputFile file = inputFactory.load(allLocales.get(locale));
       XPathParts parts = new XPathParts();
-      Iterator<String> iterator = cldr.iterator("//ldml/identity");
-      while (iterator.hasNext()) {
-        String path = iterator.next();
-        String fullXPath = cldr.getFullXPath(path);
+      for (String path : file.listPaths("//ldml/identity")) {
+        String fullXPath = file.getFullXPath(path);
         if (fullXPath == null) {
           fullXPath = path;
         }
@@ -612,6 +600,22 @@ public class LocaleData {
       return Collections.emptyMap();
     }
     return Collections.unmodifiableMap(map);
+  }
+
+  /**
+   * Returns the keys of all entries in a given cateogry and locale.
+   */
+  List<String> getKeys(String category, GwtLocale locale) {
+    MapKey mapKey = new MapKey(category, locale);
+
+    Map<String, String> map = maps.get(mapKey);
+    if (map == null) {
+      return new ArrayList<String>();
+    }
+
+    ArrayList<String> out = new ArrayList<String>(map.keySet());
+    Collections.sort(out);
+    return out;
   }
 
   /**
@@ -908,8 +912,8 @@ public class LocaleData {
     }
   }
 
-  private void addAttributeEntries(String category, Factory cldrFactory, String prefix, String tag,
-      String key, String attribute, String defaultValue) {
+  private void addAttributeEntries(String category, InputFactory cldrFactory, String prefix,
+      String tag, String key, String attribute, String defaultValue) {
     for (GwtLocale locale : allLocales.keySet()) {
       addAttributeEntry(category, locale, cldrFactory, prefix, tag, key, attribute, defaultValue);
     }
@@ -921,16 +925,10 @@ public class LocaleData {
    * sure it has entries for any currency present in any locale. Note that this
    * means that the default locale must be processed last.
    * 
-   * @param category
-   * @param locale
-   * @param cldrFactory
    * @param currencyFractions map of currency fraction data extracted from
    *          locale-independent data
-   * @param defaultCurrencyFraction
-   * @param stillInUse
-   * @param rounding 
    */
-  private void addCurrencyEntries(String category, GwtLocale locale, Factory cldrFactory,
+  private void addCurrencyEntries(String category, GwtLocale locale, InputFactory inputFactory,
       Map<String, Integer> currencyFractions, int defaultCurrencyFraction, Set<String> stillInUse,
       Map<String, Integer> rounding) {
     Map<String, String> outputMap = getMap(category, locale);
@@ -939,12 +937,10 @@ public class LocaleData {
       defaultMap = getMap(category, localeFactory.getDefault());
     }
     Map<String, Currency> tempMap = new HashMap<String, Currency>();
-    CLDRFile cldr = cldrFactory.make(allLocales.get(locale), true);
+    InputFile file = inputFactory.load(allLocales.get(locale));
     XPathParts parts = new XPathParts();
-    Iterator<String> iterator = cldr.iterator("//ldml/numbers/currencies");
-    while (iterator.hasNext()) {
-      String path = iterator.next();
-      String fullPath = cldr.getFullXPath(path);
+    for (String path : file.listPaths("//ldml/numbers/currencies")) {
+      String fullPath = file.getFullXPath(path);
       if (fullPath == null) {
         fullPath = path;
       }
@@ -970,7 +966,7 @@ public class LocaleData {
         }
       }
       String field = parts.getElement(4);
-      String value = cldr.getStringValue(fullPath);
+      String value = file.getStringValue(fullPath);
       attr = parts.findAttributes(field);
       if (attr == null) {
         attr = Collections.emptyMap();
@@ -1013,7 +1009,7 @@ public class LocaleData {
     }
   }
 
-  private void addDateTimeFormatEntries(String group, String length, Factory cldrFactory) {
+  private void addDateTimeFormatEntries(String group, String length, InputFactory cldrFactory) {
     addEntries(group, cldrFactory, "//ldml/dates/calendars/calendar[@type=\"gregorian\"]/" + group
         + "Formats/" + group + "FormatLength" + "[@type=\"" + length + "\"]/" + group
         + "Format[@type=\"standard\"]" + "/pattern[@type=\"standard\"]", group + "FormatLength",

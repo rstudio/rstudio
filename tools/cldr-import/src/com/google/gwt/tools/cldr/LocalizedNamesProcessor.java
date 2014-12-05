@@ -18,8 +18,6 @@ package com.google.gwt.tools.cldr;
 import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.tools.cldr.RegionLanguageData.RegionPopulation;
 
-import org.unicode.cldr.util.Factory;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -77,7 +75,7 @@ public class LocalizedNamesProcessor extends Processor {
 
   private final RegionLanguageData regionLanguageData;
 
-  public LocalizedNamesProcessor(File outputDir, Factory cldrFactory, LocaleData localeData) {
+  public LocalizedNamesProcessor(File outputDir, InputFactory cldrFactory, LocaleData localeData) {
     super(outputDir, cldrFactory, localeData);
     regionLanguageData = new RegionLanguageData(cldrFactory);
   }
@@ -117,7 +115,6 @@ public class LocalizedNamesProcessor extends Processor {
       }
       localeData.addEntry("territory", locale, "!sortorder", buf.toString());
     }
-    Set<String> locales = cldrFactory.getAvailableLanguages();
     for (GwtLocale locale : localeData.getAllLocales()) {
       Set<RegionPopulation> regions = getRegionsForLocale(locale);
       StringBuilder buf = new StringBuilder();

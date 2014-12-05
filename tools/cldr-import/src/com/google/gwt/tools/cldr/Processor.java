@@ -21,7 +21,6 @@ import com.google.gwt.codegen.server.LoggingCodeGenContext;
 import com.google.gwt.i18n.shared.GwtLocale;
 
 import org.unicode.cldr.util.CLDRFile;
-import org.unicode.cldr.util.Factory;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -95,7 +94,7 @@ public abstract class Processor {
     return value.replace("\"", "\\\"");
   }
 
-  protected final Factory cldrFactory;
+  protected final InputFactory cldrFactory;
 
   protected final LocaleData localeData;
 
@@ -110,7 +109,7 @@ public abstract class Processor {
    * @param cldrFactory CLDR factory used to create new CLDRFile instances
    * @param localeData LocaleData instance to collect data from CLDR files
    */
-  protected Processor(File outputDir, Factory cldrFactory, LocaleData localeData) {
+  protected Processor(File outputDir, InputFactory cldrFactory, LocaleData localeData) {
     this.outputDir = outputDir;
     this.cldrFactory = cldrFactory;
     this.localeData = localeData;
@@ -284,13 +283,19 @@ public abstract class Processor {
       List<String> keys = new ArrayList<String>(props.keySet());
       Collections.sort(keys);
       for (String key : keys) {
+        if (key.equals("date") || key.equals("type")) {
+          // The date comes from Subversion and depends on the local machine's timezone.
+          // Skip it to make the build deterministic.
+
+          // There is more than one "type" field and it's not obviously useful.
+          continue;
+        }
         String value = props.get(key);
         if (!name.isEmpty()) {
           key = name + "." + key;
         }
         out.println(key + "=" + value);
       }
-      out.println();
     }
     out.close();
   }

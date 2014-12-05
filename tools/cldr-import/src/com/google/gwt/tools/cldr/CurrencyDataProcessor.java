@@ -17,8 +17,6 @@ package com.google.gwt.tools.cldr;
 
 import com.google.gwt.i18n.shared.GwtLocale;
 
-import org.unicode.cldr.util.CLDRFile;
-import org.unicode.cldr.util.Factory;
 import org.unicode.cldr.util.XPathParts;
 
 import java.io.File;
@@ -27,7 +25,6 @@ import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -42,7 +39,7 @@ public class CurrencyDataProcessor extends Processor {
 
   private Set<String> stillInUse = new HashSet<String>();
 
-  public CurrencyDataProcessor(File outputDir, Factory cldrFactory, LocaleData localeData) {
+  public CurrencyDataProcessor(File outputDir, InputFactory cldrFactory, LocaleData localeData) {
     super(outputDir, cldrFactory, localeData);
   }
 
@@ -102,14 +99,12 @@ public class CurrencyDataProcessor extends Processor {
   }
 
   private void loadLocaleIndependentCurrencyData() {
-    CLDRFile supp = cldrFactory.getSupplementalData();
+    InputFile supp = cldrFactory.getSupplementalData();
 
     // load the table of default # of decimal places and rounding for each currency
     defaultCurrencyFraction = 0;
     XPathParts parts = new XPathParts();
-    Iterator<String> iterator = supp.iterator("//supplementalData/currencyData/fractions/info");
-    while (iterator.hasNext()) {
-      String path = iterator.next();
+    for (String path : supp.listPaths("//supplementalData/currencyData/fractions/info")) {
       parts.set(supp.getFullXPath(path));
       Map<String, String> attr = parts.findAttributes("info");
       if (attr == null) {
@@ -130,9 +125,7 @@ public class CurrencyDataProcessor extends Processor {
 
     // find which currencies are still in use in some region, everything else
     // should be marked as deprecated
-    iterator = supp.iterator("//supplementalData/currencyData/region");
-    while (iterator.hasNext()) {
-      String path = iterator.next();
+    for (String path : supp.listPaths("//supplementalData/currencyData/region")) {
       parts.set(supp.getFullXPath(path));
       Map<String, String> attr = parts.findAttributes("currency");
       if (attr == null) {

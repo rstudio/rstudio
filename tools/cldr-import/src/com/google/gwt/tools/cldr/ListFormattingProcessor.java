@@ -17,12 +17,9 @@ package com.google.gwt.tools.cldr;
 
 import com.google.gwt.i18n.shared.GwtLocale;
 
-import org.unicode.cldr.util.Factory;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -30,7 +27,7 @@ import java.util.Set;
  */
 public class ListFormattingProcessor extends Processor {
 
-  public ListFormattingProcessor(File outputDir, Factory cldrFactory, LocaleData localeData) {
+  public ListFormattingProcessor(File outputDir, InputFactory cldrFactory, LocaleData localeData) {
     super(outputDir, cldrFactory, localeData);
   }
 
@@ -56,14 +53,15 @@ public class ListFormattingProcessor extends Processor {
 
     for (GwtLocale locale : localesToPrint) {
       PrintWriter pw = null;
-      for (Map.Entry<String, String> entry : localeData.getEntries("list", locale).entrySet()) {
+
+      for (String key : localeData.getKeys("list", locale)) {
         if (pw == null) {
           pw = createOutputFile(path + "_" + locale.getAsString() + ".properties");
           printPropertiesHeader(pw);
           pw.println();
           printVersion(pw, locale, "# ");
         }
-        pw.println(entry.getKey() + "=" + entry.getValue());
+        pw.println(key + "=" + localeData.getEntry("list", locale, key));
       }
       if (pw != null) {
         pw.close();

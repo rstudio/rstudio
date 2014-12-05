@@ -27,8 +27,6 @@ import com.google.gwt.i18n.shared.DateTimeFormatInfo;
 import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.i18n.shared.impl.cldr.DateTimeFormatInfoImpl;
 
-import org.unicode.cldr.util.Factory;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -111,7 +109,8 @@ public class DateTimeFormatInfoProcessor extends Processor {
 
   private final RegionLanguageData regionLanguageData;
 
-  public DateTimeFormatInfoProcessor(File outputDir, Factory cldrFactory, LocaleData localeData) {
+  public DateTimeFormatInfoProcessor(File outputDir, InputFactory cldrFactory,
+      LocaleData localeData) {
     super(outputDir, cldrFactory, localeData);
     regionLanguageData = new RegionLanguageData(cldrFactory);
   }
