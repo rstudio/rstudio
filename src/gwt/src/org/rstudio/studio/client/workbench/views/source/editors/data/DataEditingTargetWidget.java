@@ -70,7 +70,7 @@ public class DataEditingTargetWidget extends Composite
 
       table_ = new DataTable(this);
 
-      Widget mainWidget = new AutoGlassPanel(frame_);
+      Widget mainWidget;
 
       if (dataItem.getDisplayedObservations() != dataItem.getTotalObservations())
       {
@@ -96,10 +96,15 @@ public class DataEditingTargetWidget extends Composite
 
          DockLayoutPanel dockPanel = new DockLayoutPanel(Unit.PX);
          dockPanel.addSouth(statusBar, 20);
-         dockPanel.add(frame_);
+         dockPanel.add(new AutoGlassPanel(frame_));
          dockPanel.setSize("100%", "100%");
          mainWidget = dockPanel;
       }
+      else
+      {
+         mainWidget = new AutoGlassPanel(frame_);
+      }
+      
 
       PanelWithToolbars panel = new PanelWithToolbars(createToolbar(dataItem,
                                                                   styles),
