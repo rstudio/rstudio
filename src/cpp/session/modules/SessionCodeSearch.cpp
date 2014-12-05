@@ -164,7 +164,7 @@ public:
       // the API change.
       //
       // We work around this by explicitly inserting a root node on construction.
-      Entry dummy(FileInfo("/", true));
+      Entry dummy(FileInfo("", true));
       insert(begin(), dummy);
    }
    
