@@ -1283,12 +1283,12 @@ Error searchCode(const json::JsonRpcRequest& request,
 {
    // get params
    std::string term;
-   int maxResultsInt = 20;
+   int maxResultsInt = 200;
    Error error = json::readParams(request.params, &term, &maxResultsInt);
    if (error)
       return error;
    std::size_t maxResults = safe_convert::numberTo<std::size_t>(maxResultsInt,
-                                                                20);
+                                                                200);
 
    // object to return
    json::Object result;
