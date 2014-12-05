@@ -17,31 +17,40 @@ package org.rstudio.studio.client.workbench.views.source.editors.data;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.Size;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
+import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.dataviewer.DataViewerSatellite;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlContentEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.events.DataViewChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import java.util.HashMap;
 
 public class DataEditingTarget extends UrlContentEditingTarget
+                               implements DataViewChangedEvent.Handler
 {
    @Inject
    public DataEditingTarget(SourceServerOperations server,
                             Commands commands,
                             GlobalDisplay globalDisplay,
-                            EventBus events)
+                            EventBus events,
+                            SatelliteManager satelliteManager)
    {
       super(server, commands, globalDisplay, events);
+      satelliteManager_ = satelliteManager;
+      events.addHandler(DataViewChangedEvent.TYPE, this);
    }
 
    @Override
@@ -64,6 +73,23 @@ public class DataEditingTarget extends UrlContentEditingTarget
       };
    }
 
+   @Override
+   public void onDataViewChanged(DataViewChangedEvent event)
+   {
+      if (event.getData().getCacheKey().equals(getDataItem().getCacheKey()))
+      {
+         view_.refreshData(event.getData().structureChanged());
+      }
+   }
+
+   @Override
+   public void onActivate()
+   {
+      super.onActivate();
+      if (view_ != null)
+         view_.applySizeChange();
+   }
+
    private void clearDisplay()
    {
       progressPanel_.showProgress(1);
@@ -71,13 +97,13 @@ public class DataEditingTarget extends UrlContentEditingTarget
 
    private void reloadDisplay()
    {
-      DataEditingTargetWidget view = new DataEditingTargetWidget(
+      view_ = new DataEditingTargetWidget(
             commands_,
             getDataItem());
-      view.setSize("100%", "100%");
-      progressPanel_.setWidget(view);
+      view_.setSize("100%", "100%");
+      progressPanel_.setWidget(view_);
    }
-
+   
    @Override
    public String getPath()
    {
@@ -107,13 +133,41 @@ public class DataEditingTarget extends UrlContentEditingTarget
       return getDataItem().getContentUrl();
    }
 
+   @Override
+   public void popoutDoc()
+   {
+      DataItem item = getDataItem();
+      server_.duplicateDataView(item.getCaption(), item.getEnvironment(), 
+                                item.getObject(), item.getCacheKey(), 
+            new ServerRequestCallback<DataItem>() {
+               @Override
+               public void onResponseReceived(DataItem item)
+               {
+                  satelliteManager_.openSatellite(DataViewerSatellite.NAME, item, 
+                                                  new Size(750, 850));
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  globalDisplay_.showErrorMessage("View Failed", 
+                        error.getMessage());
+               }
+      });
+   }
+
+   protected String getCacheKey()
+   {
+      return getDataItem().getCacheKey();
+   }
+
    public void updateData(final DataItem data)
    {
       final Widget originalWidget = progressPanel_.getWidget();
 
       clearDisplay();
       
-      final String oldContentUrl = getContentUrl();
+      final String oldCacheKey = getCacheKey();
 
       HashMap<String, String> props = new HashMap<String, String>();
       data.fillProperties(props);
@@ -125,8 +179,8 @@ public class DataEditingTarget extends UrlContentEditingTarget
                @Override
                public void onResponseReceived(Void response)
                {
-                  server_.removeContentUrl(
-                        oldContentUrl,
+                  server_.removeCachedData(
+                        oldCacheKey,
                         new ServerRequestCallback<Void>() {
 
                            @Override
@@ -149,5 +203,22 @@ public class DataEditingTarget extends UrlContentEditingTarget
             });
    }
 
+   @Override
+   public void onDismiss()
+   {
+      server_.removeCachedData(getCacheKey(),
+                               new ServerRequestCallback<org.rstudio.studio.client.server.Void>()
+                               {
+                                  @Override
+                                  public void onError(ServerError error)
+                                  {
+                                     Debug.logError(error);
+                                  }
+                               });
+   }
+
+
    private SimplePanelWithProgress progressPanel_;
+   private DataEditingTargetWidget view_;
+   private final SatelliteManager satelliteManager_;
 }

@@ -112,6 +112,7 @@ class ClientEvent extends JavaScriptObject
    public static final String InstallShiny = "install_shiny";
    public static final String SuspendAndRestart = "suspend_and_restart";
    public static final String PackratRestoreNeeded = "packrat_restore_needed";
+   public static final String DataViewChanged = "data_view_changed";
    
    protected ClientEvent()
    {

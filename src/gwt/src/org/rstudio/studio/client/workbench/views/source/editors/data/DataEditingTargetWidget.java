@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.data;
 
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ClientBundle;
@@ -22,8 +23,11 @@ import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.IFrameElementEx;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.common.AutoGlassPanel;
+import org.rstudio.studio.client.dataviewer.DataTable;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
@@ -31,7 +35,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlCo
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 
 public class DataEditingTargetWidget extends Composite
-   implements UrlContentEditingTarget.Display
+   implements UrlContentEditingTarget.Display, 
+              DataTable.Host
 {
    interface Resources extends ClientBundle
    {
@@ -63,7 +68,9 @@ public class DataEditingTargetWidget extends Composite
       frame_ = new RStudioFrame(dataItem.getContentUrl());
       frame_.setSize("100%", "100%");
 
-      Widget mainWidget = frame_;
+      table_ = new DataTable(this);
+
+      Widget mainWidget = new AutoGlassPanel(frame_);
 
       if (dataItem.getDisplayedObservations() != dataItem.getTotalObservations())
       {
@@ -98,31 +105,55 @@ public class DataEditingTargetWidget extends Composite
                                                                   styles),
                                                     mainWidget);
 
+      table_ = new DataTable(this);
       initWidget(panel);
-
    }
 
    private Toolbar createToolbar(DataItem dataItem, Styles styles)
    {
-      Label description = new Label(
-            StringUtil.formatGeneralNumber(dataItem.getTotalObservations())
-            + " observations of " +
-            StringUtil.formatGeneralNumber(dataItem.getVariables())
-            + " variables",
-            false);
-      description.addStyleName(styles.description());
 
       Toolbar toolbar = new EditingTargetToolbar(commands_);
       toolbar.addLeftWidget(commands_.popoutDoc().createToolbarButton());
-      toolbar.addRightWidget(description);
+      toolbar.addLeftSeparator();
       
+      table_.initToolbar(toolbar);
+
       return toolbar;
+   }
+   
+   private WindowEx getWindow()
+   {
+      IFrameElementEx frameEl = (IFrameElementEx) frame_.getElement().cast();
+      return frameEl.getContentWindow();
    }
 
    public void print()
    {
-      IFrameElementEx frameEl = (IFrameElementEx) frame_.getElement().cast();
-      frameEl.getContentWindow().print();
+      getWindow().print();
+   }
+   
+   public void setFilterUIVisible(boolean visible)
+   {
+      if (table_ != null)
+         table_.setFilterUIVisible(visible);
+   }
+   
+   public void refreshData(boolean structureChanged)
+   {
+      if (table_ != null)
+         table_.refreshData(structureChanged);
+   }
+   
+   public void applySizeChange()
+   {
+      if (table_ != null)
+         table_.applySizeChange();
+   }
+   
+   @Override
+   public RStudioFrame getDataTableFrame()
+   {
+      return frame_;
    }
 
    public Widget asWidget()
@@ -132,4 +163,5 @@ public class DataEditingTargetWidget extends Composite
 
    private final Commands commands_;
    private RStudioFrame frame_;
+   private DataTable table_;
 }
