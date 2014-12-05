@@ -155,8 +155,10 @@ import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import org.xml.sax.SAXException;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
@@ -765,9 +767,9 @@ public abstract class JavaToJavaScriptCompiler {
     /**
      * Open an emitted artifact and gunzip its contents.
      */
-    private GZIPInputStream openWithGunzip(EmittedArtifact artifact)
+    private InputStream openWithGunzip(EmittedArtifact artifact)
         throws IOException, UnableToCompleteException {
-      return new GZIPInputStream(artifact.getContents(TreeLogger.NULL));
+      return new BufferedInputStream(new GZIPInputStream(artifact.getContents(TreeLogger.NULL)));
     }
 
     protected void optimizeJsLoop(Collection<JsNode> toInline) throws InterruptedException {
