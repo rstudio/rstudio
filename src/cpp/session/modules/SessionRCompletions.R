@@ -240,7 +240,7 @@ assign(x = ".rs.acCompletionTypes",
    if (.rs.hasFileMonitor() &&
        .rs.startsWith(directory, .rs.getProjectDirectory()))
    {
-      index <- .rs.listIndexedFilesAndFolders(tokenName, directory)
+      index <- .rs.getIndexedFiles(tokenName, directory) ## NOTE: guaranteed to work with above check
       cacheable <- !index$more_available
       absolutePaths <- index$paths
    }
@@ -282,9 +282,9 @@ assign(x = ".rs.acCompletionTypes",
       absolutePaths <- absolutePaths[order]
    }
    
-   paths <- paste(tokenPrefix, relativePaths, sep = "")
-   
    isDir <- file.info(absolutePaths)[, "isdir"] %in% TRUE ## protect against NA
+   
+   paths <- paste(tokenPrefix, relativePaths, sep = "")
    paths[isDir] <- paste(paths[isDir], "/", sep = "")
    
    .rs.makeCompletions(token = token,

@@ -661,46 +661,32 @@
                                              inDirectory = .rs.getProjectDirectory(),
                                              maxCount = 2000L)
 {
+   if (is.null(.rs.getProjectDirectory()))
+      return(NULL)
+   
    .Call("rs_listIndexedFiles",
          term,
          suppressWarnings(.rs.normalizePath(inDirectory)),
          as.integer(maxCount))
 })
 
-.rs.addFunction("listIndexedFilesAndFolders", function(term,
-                                                       inDirectory = .rs.getProjectDirectory(),
-                                                       maxCount = 2000L)
+.rs.addFunction("getIndexedFiles", function(term,
+                                            inDirectory = .rs.getProjectDirectory(),
+                                            maxCount = 2000L)
 {
+   if (is.null(inDirectory))
+      return(NULL)
+   
    inDirectory <- suppressWarnings(
       .rs.normalizePath(inDirectory)
    )
    
-   projectDir <- .rs.getProjectDirectory()
    indexedFiles <- .rs.listIndexedFiles(term, inDirectory, maxCount)
    filePaths <- .rs.normalizePath(indexedFiles$paths)
    
-   relativePaths <- substring(
-      filePaths,
-      nchar(projectDir) + 2
-   )
-   
-   # TODO: Better way to enumerate monitored directories?
-   relativeDirPath <- substring(inDirectory, nchar(projectDir) + 2)
-   folderPaths <- lapply(relativePaths, function(relativePath) {
-      slashIndices <- gregexpr("/", relativePath, fixed = TRUE)[[1]]
-      directories <- substring(relativePath, 1, slashIndices - 1)
-      directories <- .rs.selectStartsWith(directories, relativeDirPath)
-      names <- basename(directories)
-      directories[
-         .rs.fuzzyMatches(names, term)
-      ]
-   })
-   folderPaths <- file.path(projectDir, unique(Reduce(union, folderPaths)))
-   
-   allPaths <- c(filePaths, folderPaths)
-   scores <- .rs.scoreMatches(allPaths, term)
+   scores <- .rs.scoreMatches(basename(filePaths), term)
    list(
-      paths = allPaths[order(scores)],
+      paths = filePaths[order(scores)],
       more_available = indexedFiles$more_available
    )
 })
