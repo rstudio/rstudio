@@ -21,7 +21,7 @@
 
 #include <core/r_util/REnvironment.hpp>
 
-namespace core {
+namespace rscore {
    class Error;
    class FilePath;
 }
@@ -33,8 +33,8 @@ bool initialize(std::string* pErrMsg);
 
 std::vector<std::pair<std::string,std::string> > variables();
 
-bool detectREnvironment(const core::FilePath& filePath,
-                        core::r_util::EnvironmentVars* pVars,
+bool detectREnvironment(const rscore::FilePath& filePath,
+                        rscore::r_util::EnvironmentVars* pVars,
                         std::string* pErrMsg);
 
 } // namespace r_environment

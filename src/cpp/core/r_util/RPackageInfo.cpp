@@ -21,7 +21,7 @@
 
 #include <core/text/DcfParser.hpp>
 
-namespace core {
+namespace rscore {
 namespace r_util {
 
 namespace {
@@ -46,7 +46,7 @@ Error RPackageInfo::read(const FilePath& packageDir)
    // parse DCF file
    FilePath descFilePath = packageDir.childPath("DESCRIPTION");
    if (!descFilePath.exists())
-      return core::fileNotFoundError(descFilePath, ERROR_LOCATION);
+      return rscore::fileNotFoundError(descFilePath, ERROR_LOCATION);
    std::string errMsg;
    std::map<std::string,std::string> fields;
    Error error = text::parseDcfFile(descFilePath, true, &fields, &errMsg);
@@ -122,7 +122,7 @@ bool isPackageDirectory(const FilePath& dir)
 
 
 } // namespace r_util
-} // namespace core 
+} // namespace rscore
 
 
 

@@ -26,7 +26,7 @@
 #include <core/http/AsyncClient.hpp>
 #include <core/http/LocalStreamSocketUtils.hpp>
 
-namespace core {
+namespace rscore {
 namespace http {  
 
 class LocalStreamAsyncClient
@@ -97,11 +97,11 @@ private:
 
 private:
    boost::asio::local::stream_protocol::socket socket_;
-   core::FilePath localStreamPath_;
+   rscore::FilePath localStreamPath_;
 };
    
    
 } // namespace http
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_HTTP_LOCAL_STREAM_ASYNC_CLIENT_HPP

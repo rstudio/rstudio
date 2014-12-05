@@ -28,7 +28,7 @@
 #include <core/Log.hpp>
 
 
-namespace core {
+namespace rscore {
 namespace http {
 
 typedef boost::function<void(const boost::system::error_code& ec)> 
@@ -101,6 +101,6 @@ private:
 
 
 } // namespace http
-} // namespace core 
+} // namespace rscore
 
 #endif // CORE_HTTP_SOCKET_ACCEPTOR_SERVICE_HPP

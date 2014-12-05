@@ -20,7 +20,7 @@
 
 #include <core/Error.hpp>
 
-namespace core {
+namespace rscore {
 
 
 enum WaitResultType {
@@ -45,6 +45,6 @@ Error waitWithTimeout(const boost::function<WaitResult()>& connectFunction,
                       int incrementWaitMs = 10,
                       int maxWaitSec = 10);
 
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_WAITUTILS_HPP

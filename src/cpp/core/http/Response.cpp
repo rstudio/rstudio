@@ -31,7 +31,7 @@
 
 #include <core/FileSerializer.hpp>
 
-namespace core {
+namespace rscore {
 namespace http {
 
 Response::Response() 
@@ -128,7 +128,7 @@ Error Response::setCacheableBody(const FilePath& filePath,
                                  const Request& request)
 {
    std::string content;
-   Error error = core::readStringFromFile(filePath, &content);
+   Error error = rscore::readStringFromFile(filePath, &content);
    if (error)
       return error;
 
@@ -155,7 +155,7 @@ void Response::setRangeableFile(const FilePath& filePath,
 {
    // read the file in from disk
    std::string contents;
-   Error error = core::readStringFromFile(filePath, &contents);
+   Error error = rscore::readStringFromFile(filePath, &contents);
    if (error)
    {
       setError(error);
@@ -299,7 +299,7 @@ void Response::removeCachingHeaders()
    
 std::string Response::eTagForContent(const std::string& content)
 {
-   return core::hash::crc32Hash(content);
+   return rscore::hash::crc32Hash(content);
 }   
 
 void Response::appendFirstLineBuffers(
@@ -454,5 +454,5 @@ std::ostream& operator << (std::ostream& stream, const Response& r)
 
 
 } // namespacc http
-} // namespace core
+} // namespace rscore
 

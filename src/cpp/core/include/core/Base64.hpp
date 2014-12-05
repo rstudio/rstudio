@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace core {
+namespace rscore {
 
 class Error;
 class FilePath;
@@ -31,7 +31,7 @@ Error encode(const FilePath& inputFile, std::string* pOutput);
 
          
 } // namespace base64
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_SYSTEM_BASE64_HPP
 

@@ -23,7 +23,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 
-namespace core {
+namespace rscore {
 
 StderrLogWriter::StderrLogWriter(const std::string& programIdentity,
                                  int logLevel)
@@ -41,14 +41,14 @@ StderrLogWriter::~StderrLogWriter()
    }
 }
 
-void StderrLogWriter::log(core::system::LogLevel logLevel,
+void StderrLogWriter::log(rscore::system::LogLevel logLevel,
                           const std::string& message)
 {
    log(programIdentity_, logLevel, message);
 }
 
 void StderrLogWriter::log(const std::string& programIdentity,
-                          core::system::LogLevel logLevel,
+                          rscore::system::LogLevel logLevel,
                           const std::string& message)
 {
    if (logLevel > logLevel_)
@@ -58,4 +58,4 @@ void StderrLogWriter::log(const std::string& programIdentity,
 }
 
 
-} // namespace core
+} // namespace rscore

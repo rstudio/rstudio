@@ -20,7 +20,7 @@
 #include <r/RSexp.hpp>
 #include <session/SessionModuleContext.hpp>
 
-namespace core {
+namespace rscore {
    class Error;
 }
 
@@ -28,19 +28,19 @@ namespace session {
 namespace modules { 
 namespace packrat {
 
-core::Error initialize();
+rscore::Error initialize();
 
 // return the current Packrat context
-core::json::Object contextAsJson();
+rscore::json::Object contextAsJson();
 
 // annotate a JSON object with pending Packrat actions
-void annotatePendingActions(core::json::Object *pJson, bool useCached);
+void annotatePendingActions(rscore::json::Object *pJson, bool useCached);
 
 // return the given Packrat context
-core::json::Object contextAsJson(const module_context::PackratContext& context);
+rscore::json::Object contextAsJson(const module_context::PackratContext& context);
 
 // get Packrat options (as an SEXP)
-core::Error getPackratOptions(SEXP* pOptionsSEXP, r::sexp::Protect* pRProtect);
+rscore::Error getPackratOptions(SEXP* pOptionsSEXP, r::sexp::Protect* pRProtect);
 
 } // namespace packrat
 } // namespace modules

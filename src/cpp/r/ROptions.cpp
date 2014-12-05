@@ -23,7 +23,7 @@
 
 #include <r/RExec.hpp>
 
-using namespace core ;
+using namespace rscore ;
 
 namespace r {
 namespace options {

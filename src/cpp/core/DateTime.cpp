@@ -15,7 +15,7 @@
 
 #include <core/DateTime.hpp>
 
-namespace core {
+namespace rscore {
 namespace date_time {   
 
 double secondsSinceEpoch()
@@ -89,7 +89,7 @@ std::string format(const boost::posix_time::ptime& datetime,
 }
    
 } // namespace date_time
-} // namespace core 
+} // namespace rscore
 
 
 

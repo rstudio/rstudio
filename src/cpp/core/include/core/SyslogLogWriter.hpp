@@ -18,17 +18,17 @@
 
 #include <core/LogWriter.hpp>
 
-namespace core {
+namespace rscore {
 
 class SyslogLogWriter : public LogWriter
 {
 public:
     SyslogLogWriter(const std::string& programIdentity, int logLevel);
     virtual ~SyslogLogWriter();
-    virtual void log(core::system::LogLevel level,
+    virtual void log(rscore::system::LogLevel level,
                      const std::string& message);
     virtual void log(const std::string& programIdentity,
-                     core::system::LogLevel level,
+                     rscore::system::LogLevel level,
                      const std::string& message);
 
     virtual void setLogToStderr(bool logToStderr)
@@ -41,6 +41,6 @@ private:
     bool logToStderr_;
 };
 
-} // namespace core
+} // namespace rscore
 
 #endif // SYSLOG_LOG_WRITER_HPP

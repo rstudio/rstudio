@@ -24,7 +24,7 @@
 
 #include <core/StringUtils.hpp>
 
-namespace core {
+namespace rscore {
 namespace system {
 
 namespace impl {
@@ -111,5 +111,5 @@ void unsetenv(const std::string& name)
 
 
 } // namespace system
-} // namespace core
+} // namespace rscore
 

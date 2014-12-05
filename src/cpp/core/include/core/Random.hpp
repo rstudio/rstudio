@@ -21,7 +21,7 @@
 
 #include <boost/random.hpp>
 
-namespace core {
+namespace rscore {
 namespace random {
 
 template <typename T>
@@ -43,7 +43,7 @@ T uniformRandomInteger()
 }
 
 } // namespace random
-} // namespace core
+} // namespace rscore
 
 
 #endif // CORE_RANDOM_HPP

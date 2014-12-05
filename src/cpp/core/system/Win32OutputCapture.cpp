@@ -27,7 +27,7 @@
 #include <core/BoostThread.hpp>
 #include <core/BoostErrors.hpp>
 
-namespace core {
+namespace rscore {
 namespace system {
 
 
@@ -143,5 +143,5 @@ Error captureStandardStreams(
 }
 
 } // namespace system
-} // namespace core
+} // namespace rscore
 

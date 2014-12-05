@@ -28,7 +28,7 @@
 #include <server/ServerOptions.hpp>
 #include <server/ServerUriHandlers.hpp>
 
-using namespace core;
+using namespace rscore;
 
 namespace server {
 namespace offline {

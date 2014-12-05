@@ -19,7 +19,7 @@
 
 #include <boost/assert.hpp>
 #include <boost/utility.hpp>
-#include <boost/signal.hpp>
+#include <boost/signals2/signal.hpp>
 #include <boost/format.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 
@@ -72,7 +72,7 @@
 
 #include "session-config.h"
 
-using namespace core ;
+using namespace rscore ;
 
 namespace session {   
 namespace module_context {
@@ -199,7 +199,7 @@ SEXP rs_ensureFileHidden(SEXP fileSEXP)
    if (!file.empty())
    {
       FilePath filePath = module_context::resolveAliasedPath(file);
-      Error error = core::system::makeFileHidden(filePath);
+      Error error = rscore::system::makeFileHidden(filePath);
       if (error)
          LOG_ERROR(error);
    }
@@ -298,9 +298,9 @@ bool monitoredScratchFilter(const FileInfo& fileInfo)
 }
 
 
-void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
+void onFilesChanged(const std::vector<rscore::system::FileChangeEvent>& changes)
 {
-   BOOST_FOREACH(const core::system::FileChangeEvent& fileChange, changes)
+   BOOST_FOREACH(const rscore::system::FileChangeEvent& fileChange, changes)
    {
       FilePath changedFilePath(fileChange.fileInfo().absolutePath());
       for (MonitoredScratchPaths::const_iterator
@@ -321,7 +321,7 @@ void onFilesChanged(const std::vector<core::system::FileChangeEvent>& changes)
 boost::shared_ptr<tree<FileInfo> > monitoredPathTree()
 {
    boost::shared_ptr<tree<FileInfo> > pMonitoredTree(new tree<FileInfo>());
-   core::system::FileScannerOptions options;
+   rscore::system::FileScannerOptions options;
    options.recursive = true;
    options.filter = monitoredScratchFilter;
    Error scanError = scanFiles(FileInfo(monitoredParentPath()),
@@ -336,9 +336,9 @@ boost::shared_ptr<tree<FileInfo> > monitoredPathTree()
 bool scanForMonitoredPathChanges(boost::shared_ptr<tree<FileInfo> > pPrevTree)
 {
    // check for changes
-   std::vector<core::system::FileChangeEvent> changes;
+   std::vector<rscore::system::FileChangeEvent> changes;
    boost::shared_ptr<tree<FileInfo> > pCurrentTree = monitoredPathTree();
-   core::system::collectFileChangeEvents(pPrevTree->begin(),
+   rscore::system::collectFileChangeEvents(pPrevTree->begin(),
                                          pPrevTree->end(),
                                          pCurrentTree->begin(),
                                          pCurrentTree->end(),
@@ -373,11 +373,11 @@ void onMonitoringError(const Error& error)
 void initializeMonitoredUserScratchDir()
 {
    // setup callbacks and register
-   core::system::file_monitor::Callbacks cb;
+   rscore::system::file_monitor::Callbacks cb;
    cb.onRegistrationError = onMonitoringError;
    cb.onMonitoringError = onMonitoringError;
    cb.onFilesChanged = onFilesChanged;
-   core::system::file_monitor::registerMonitor(
+   rscore::system::file_monitor::registerMonitor(
                                     monitoredParentPath(),
                                     true,
                                     monitoredScratchFilter,
@@ -439,13 +439,13 @@ private:
    
    int nextGroup_; 
    
-   boost::signal<void(const r::session::RSuspendOptions&,Settings*),
-                 boost::last_value<void>,
+   boost::signals2::signal<void(const r::session::RSuspendOptions&,Settings*),
+                 boost::signals2::last_value<void>,
                  int,
                  std::less<int> > suspendSignal_;
                   
-   boost::signal<void(const Settings&),
-                 boost::last_value<void>,
+   boost::signals2::signal<void(const Settings&),
+                 boost::signals2::last_value<void>,
                  int,
                  std::greater<int> > resumeSignal_;
 };
@@ -583,7 +583,7 @@ void onBackgroundProcessing(bool isIdle)
    processSupervisor().poll();
 
    // check for file monitor changes
-   core::system::file_monitor::checkForChanges();
+   rscore::system::file_monitor::checkForChanges();
 
    // fire event
    events().onBackgroundProcessing(isIdle);
@@ -761,14 +761,14 @@ bool isTextFile(const FilePath& targetPath)
       return true;
 
 #ifndef _WIN32
-   core::shell_utils::ShellCommand cmd("file");
+   rscore::shell_utils::ShellCommand cmd("file");
    cmd << "--dereference";
    cmd << "--mime";
    cmd << "--brief";
    cmd << targetPath;
-   core::system::ProcessResult result;
-   Error error = core::system::runCommand(cmd,
-                                          core::system::ProcessOptions(),
+   rscore::system::ProcessResult result;
+   Error error = rscore::system::runCommand(cmd,
+                                          rscore::system::ProcessOptions(),
                                           &result);
    if (error)
    {
@@ -790,7 +790,7 @@ bool isTextFile(const FilePath& targetPath)
 
    // read contents of file
    std::string contents;
-   Error error = core::readStringFromFile(targetPath, &contents);
+   Error error = rscore::readStringFromFile(targetPath, &contents);
    if (error)
    {
       LOG_ERROR(error);
@@ -807,7 +807,7 @@ bool isTextFile(const FilePath& targetPath)
 
 }
 
-Error rBinDir(core::FilePath* pRBinDirPath)
+Error rBinDir(rscore::FilePath* pRBinDirPath)
 {
    std::string rHomeBin;
    r::exec::RFunction rHomeBinFunc("R.home", "bin");
@@ -835,7 +835,7 @@ Error rScriptPath(FilePath* pRScriptPath)
    return Success();
 }
 
-shell_utils::ShellCommand rCmd(const core::FilePath& rBinDir)
+shell_utils::ShellCommand rCmd(const rscore::FilePath& rBinDir)
 {
 #ifdef _WIN32
       return shell_utils::ShellCommand(rBinDir.childPath("Rcmd.exe"));
@@ -943,14 +943,14 @@ Error installPackage(const std::string& pkgPath, const std::string& libPath)
       return error;
 
    // setup options and command
-   core::system::ProcessOptions options;
+   rscore::system::ProcessOptions options;
 #ifdef _WIN32
    shell_utils::ShellCommand installCommand(rBinDir.childPath("R.exe"));
 #else
    shell_utils::ShellCommand installCommand(rBinDir.childPath("R"));
 #endif
 
-   installCommand << core::shell_utils::EscapeFilesOnly;
+   installCommand << rscore::shell_utils::EscapeFilesOnly;
 
    // for packrat projects we execute the profile and set the working
    // directory to the project directory; for other contexts we just
@@ -962,11 +962,11 @@ Error installPackage(const std::string& pkgPath, const std::string& libPath)
    else
    {
       installCommand << "--vanilla";
-      core::system::Options env;
-      core::system::environment(&env);
+      rscore::system::Options env;
+      rscore::system::environment(&env);
       std::string libPaths = libPathsString();
       if (!libPaths.empty())
-         core::system::setenv(&env, "R_LIBS", libPathsString());
+         rscore::system::setenv(&env, "R_LIBS", libPathsString());
       options.environment = env;
    }
 
@@ -981,10 +981,10 @@ Error installPackage(const std::string& pkgPath, const std::string& libPath)
 
    // add pakage path
    installCommand << "\"" + pkgPath + "\"";
-   core::system::ProcessResult result;
+   rscore::system::ProcessResult result;
 
    // run the command
-   error = core::system::runCommand(installCommand,
+   error = rscore::system::runCommand(installCommand,
                                     options,
                                     &result);
 
@@ -1002,7 +1002,7 @@ Error installPackage(const std::string& pkgPath, const std::string& libPath)
 }
 
 
-std::string packageNameForSourceFile(const core::FilePath& sourceFilePath)
+std::string packageNameForSourceFile(const rscore::FilePath& sourceFilePath)
 {
    // check whether we are in a package
    FilePath sourceDir = sourceFilePath.parent();
@@ -1093,7 +1093,7 @@ Error sourceModuleRFile(const std::string& rSourceFile)
 
 Error sourceModuleRFileWithResult(const std::string& rSourceFile,
                                   const FilePath& workingDir,
-                                  core::system::ProcessResult* pResult)
+                                  rscore::system::ProcessResult* pResult)
 {
    // R binary
    FilePath rProgramPath;
@@ -1112,27 +1112,27 @@ Error sourceModuleRFileWithResult(const std::string& rSourceFile,
    boost::format fmt("source('%1%')");
    FilePath modulesPath = session::options().modulesRSourcePath();
    FilePath srcFilePath = modulesPath.complete(rSourceFile);
-   std::string srcPath = core::string_utils::utf8ToSystem(
+   std::string srcPath = rscore::string_utils::utf8ToSystem(
                                                 srcFilePath.absolutePath());
    std::string escapedSrcPath = string_utils::jsLiteralEscape(srcPath);
    std::string cmd = boost::str(fmt % escapedSrcPath);
    args.push_back(cmd);
 
    // options
-   core::system::ProcessOptions options;
+   rscore::system::ProcessOptions options;
    options.terminateChildren = true;
    options.workingDir = workingDir;
 
    // allow child process to inherit our R_LIBS
-   core::system::Options childEnv;
-   core::system::environment(&childEnv);
+   rscore::system::Options childEnv;
+   rscore::system::environment(&childEnv);
    std::string libPaths = libPathsString();
    if (!libPaths.empty())
-      core::system::setenv(&childEnv, "R_LIBS", libPaths);
+      rscore::system::setenv(&childEnv, "R_LIBS", libPaths);
    options.environment = childEnv;
 
    // run the child
-   return core::system::runProgram(rBin, args, "", options, pResult);
+   return rscore::system::runProgram(rBin, args, "", options, pResult);
 }
 
       
@@ -1170,10 +1170,10 @@ SEXP rs_isRScriptInPackageBuildTarget(SEXP filePathSEXP)
    return r::sexp::create(isRScriptInPackageBuildTarget(filePath), &protect);
 }
 
-bool fileListingFilter(const core::FileInfo& fileInfo)
+bool fileListingFilter(const rscore::FileInfo& fileInfo)
 {
    // check extension for special file types which are always visible
-   core::FilePath filePath(fileInfo.absolutePath());
+   rscore::FilePath filePath(fileInfo.absolutePath());
    std::string ext = filePath.extensionLowerCase();
    std::string name = filePath.filename();
    if (ext == ".rprofile" ||
@@ -1203,7 +1203,7 @@ bool fileListingFilter(const core::FileInfo& fileInfo)
 namespace {
 // enque file changed event
 void enqueFileChangedEvent(
-      const core::system::FileChangeEvent& event,
+      const rscore::system::FileChangeEvent& event,
       boost::shared_ptr<modules::source_control::FileDecorationContext> pCtx)
 {
    // create file change object
@@ -1222,7 +1222,7 @@ void enqueFileChangedEvent(
 }
 } // namespace
 
-void enqueFileChangedEvent(const core::system::FileChangeEvent &event)
+void enqueFileChangedEvent(const rscore::system::FileChangeEvent &event)
 {
    FilePath filePath = FilePath(event.fileInfo().absolutePath());
 
@@ -1233,8 +1233,8 @@ void enqueFileChangedEvent(const core::system::FileChangeEvent &event)
    enqueFileChangedEvent(event, pCtx);
 }
 
-void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
-                            const std::vector<core::system::FileChangeEvent>& events)
+void enqueFileChangedEvents(const rscore::FilePath& vcsStatusRoot,
+                            const std::vector<rscore::system::FileChangeEvent>& events)
 {
    using namespace modules::source_control;
 
@@ -1243,7 +1243,7 @@ void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
 
    // try to find the common parent of the events
    FilePath commonParentPath = FilePath(events.front().fileInfo().absolutePath()).parent();
-   BOOST_FOREACH(const core::system::FileChangeEvent& event, events)
+   BOOST_FOREACH(const rscore::system::FileChangeEvent& event, events)
    {
       // if not within the common parent then revert to the vcs status root
       if (!FilePath(event.fileInfo().absolutePath()).isWithin(commonParentPath))
@@ -1258,7 +1258,7 @@ void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
                                   fileDecorationContext(commonParentPath);
 
    // fire client events as necessary
-   BOOST_FOREACH(const core::system::FileChangeEvent& event, events)
+   BOOST_FOREACH(const rscore::system::FileChangeEvent& event, events)
    {
       enqueFileChangedEvent(event, pCtx);
    }
@@ -1348,7 +1348,7 @@ void showFile(const FilePath& filePath, const std::string& window)
    }
 }
 
-std::string createFileUrl(const core::FilePath& filePath)
+std::string createFileUrl(const rscore::FilePath& filePath)
 {
     // determine url based on whether this is in ~ or not
     std::string url ;
@@ -1367,7 +1367,7 @@ std::string createFileUrl(const core::FilePath& filePath)
 }
 
 
-void showContent(const std::string& title, const core::FilePath& filePath)
+void showContent(const std::string& title, const rscore::FilePath& filePath)
 {
    // first provision a content url
    std::string contentUrl = content_urls::provision(title, filePath);
@@ -1475,9 +1475,9 @@ Events& events()
 }
 
 
-core::system::ProcessSupervisor& processSupervisor()
+rscore::system::ProcessSupervisor& processSupervisor()
 {
-   static core::system::ProcessSupervisor instance;
+   static rscore::system::ProcessSupervisor instance;
    return instance;
 }
 
@@ -1527,7 +1527,7 @@ void beginRpcHandler(json::JsonRpcFunction function,
 }
 } // anonymous namespace
 
-core::Error executeAsync(const json::JsonRpcFunction& function,
+rscore::Error executeAsync(const json::JsonRpcFunction& function,
                          const json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
 {
@@ -1535,8 +1535,8 @@ core::Error executeAsync(const json::JsonRpcFunction& function,
    // identifies this invocation. In the meantime, kick off the actual
    // operation on a new thread.
 
-   std::string handle = core::system::generateUuid(true);
-   core::thread::safeLaunchThread(bind(beginRpcHandler,
+   std::string handle = rscore::system::generateUuid(true);
+   rscore::thread::safeLaunchThread(bind(beginRpcHandler,
                                        function,
                                        request,
                                        handle));
@@ -1544,7 +1544,7 @@ core::Error executeAsync(const json::JsonRpcFunction& function,
    return Success();
 }
 
-core::json::Object compileOutputAsJson(const CompileOutput& compileOutput)
+rscore::json::Object compileOutputAsJson(const CompileOutput& compileOutput)
 {
    json::Object compileOutputJson;
    compileOutputJson["type"] = compileOutput.type;
@@ -1561,7 +1561,7 @@ std::string CRANReposURL()
    return url;
 }
 
-shell_utils::ShellCommand RCommand::buildRCmd(const core::FilePath& rBinDir)
+shell_utils::ShellCommand RCommand::buildRCmd(const rscore::FilePath& rBinDir)
 {
 #if defined(_WIN32)
    shell_utils::ShellCommand rCmd(rBinDir.childPath("Rcmd.exe"));
@@ -1572,8 +1572,8 @@ shell_utils::ShellCommand RCommand::buildRCmd(const core::FilePath& rBinDir)
    return rCmd;
 }
 
-core::Error recursiveCopyDirectory(const core::FilePath& fromDir,
-                                   const core::FilePath& toDir)
+rscore::Error recursiveCopyDirectory(const rscore::FilePath& fromDir,
+                                   const rscore::FilePath& toDir)
 {
    using namespace string_utils;
    r::exec::RFunction fileCopy("file.copy");

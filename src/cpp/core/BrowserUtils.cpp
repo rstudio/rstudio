@@ -21,7 +21,7 @@
 
 using namespace boost::algorithm;
 
-namespace core {
+namespace rscore {
 namespace browser_utils {
 
 namespace {
@@ -144,7 +144,7 @@ bool hasRequiredBrowser(const std::string& userAgent)
 
 
 } // namespace browser_utils
-} // namespace core 
+} // namespace rscore
 
 
 

@@ -26,7 +26,7 @@
 
 #include <session/SessionHttpConnection.hpp>
 
-namespace core {
+namespace rscore {
    class Error;
 }
 

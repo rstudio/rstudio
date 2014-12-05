@@ -19,7 +19,7 @@
 
 #include <core/ScheduledCommand.hpp>
 
-namespace core {
+namespace rscore {
 
 class PeriodicCommand : public ScheduledCommand
 {
@@ -64,7 +64,7 @@ private:
 
 
 
-} // namespace core
+} // namespace rscore
 
 
 #endif // CORE_PERIODIC_COMMAND_HPP

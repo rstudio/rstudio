@@ -24,7 +24,7 @@
 
 #include "graphics/RGraphicsDevice.hpp"
 
-using namespace core ;
+using namespace rscore ;
 
 namespace r {
 namespace session {

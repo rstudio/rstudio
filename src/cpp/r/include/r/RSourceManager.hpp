@@ -26,7 +26,7 @@
 
 #include <core/FilePath.hpp>
 
-namespace core {
+namespace rscore {
    class Error ;
 }
 
@@ -48,10 +48,10 @@ public:
    bool autoReload() const { return autoReload_; }
    void setAutoReload(bool autoReload) { autoReload_ = autoReload; }
    
-   core::Error sourceTools(const core::FilePath& filePath);
+   rscore::Error sourceTools(const rscore::FilePath& filePath);
    void ensureToolsLoaded();
 
-   core::Error sourceLocal(const core::FilePath& filePath);
+   rscore::Error sourceLocal(const rscore::FilePath& filePath);
    
    void reloadIfNecessary();
    
@@ -71,15 +71,15 @@ private:
    typedef boost::unordered_map<std::string, SourcedFileInfo> SourcedFileMap;
    
    // helper functions
-   core::Error source(const core::FilePath& filePath, bool local);
-   void reSourceTools(const core::FilePath& filePath);
-   void recordSourcedFile(const core::FilePath& filePath, bool local);
+   rscore::Error source(const rscore::FilePath& filePath, bool local);
+   void reSourceTools(const rscore::FilePath& filePath);
+   void recordSourcedFile(const rscore::FilePath& filePath, bool local);
    void reloadSourceIfNecessary(const SourcedFileMap::value_type& value);
    
    // members
    bool autoReload_ ;
    SourcedFileMap sourcedFiles_ ;
-   std::vector<core::FilePath> toolsFilePaths_;
+   std::vector<rscore::FilePath> toolsFilePaths_;
 };
    
 } // namespace r

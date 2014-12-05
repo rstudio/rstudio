@@ -25,7 +25,7 @@
 
 #include "SessionRnwConcordance.hpp"
 
-namespace core {
+namespace rscore {
    class Error;
    class FilePath;
 }
@@ -36,10 +36,10 @@ namespace tex {
 
 namespace rnw_weave {
 
-core::json::Array supportedTypes();
-void getTypesInstalledStatus(core::json::Object* pObj);
+rscore::json::Array supportedTypes();
+void getTypesInstalledStatus(rscore::json::Object* pObj);
 
-core::json::Value chunkOptions(const std::string& weaveType);
+rscore::json::Value chunkOptions(const std::string& weaveType);
 
 struct Result
 {
@@ -51,7 +51,7 @@ struct Result
       return result;
    }
 
-   static Result error(const core::tex::LogEntries& logEntries)
+   static Result error(const rscore::tex::LogEntries& logEntries)
    {
       Result result;
       result.succeeded = false;
@@ -70,7 +70,7 @@ struct Result
 
    bool succeeded;
    std::string errorMessage;
-   core::tex::LogEntries errorLogEntries;
+   rscore::tex::LogEntries errorLogEntries;
    tex::rnw_concordance::Concordances concordances;
 };
 
@@ -78,9 +78,9 @@ typedef boost::function<void(const Result&)> CompletedFunction;
 
 void runTangle(const std::string& filePath, const std::string& rnwWeave);
 
-void runWeave(const core::FilePath& filePath,
+void runWeave(const rscore::FilePath& filePath,
               const std::string& encoding,
-              const core::tex::TexMagicComments& magicComments,
+              const rscore::tex::TexMagicComments& magicComments,
               const boost::function<void(const std::string&)>& onOutput,
               const CompletedFunction& onCompleted);
 

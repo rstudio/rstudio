@@ -25,7 +25,7 @@
 #include "DesktopUtils.hpp"
 #include "DesktopOptions.hpp"
 
-using namespace core;
+using namespace rscore;
 
 namespace desktop {
 namespace synctex {
@@ -68,7 +68,7 @@ QStringList inverseSearchArgs(WId mainWindowId)
 
    // shared secret
    cmdFormat.append(
-          QString::fromStdString(core::system::getenv("RS_SHARED_SECRET")));
+          QString::fromStdString(rscore::system::getenv("RS_SHARED_SECRET")));
    cmdFormat.append(space);
 
    // file and line placeholders

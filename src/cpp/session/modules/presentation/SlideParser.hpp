@@ -41,7 +41,7 @@ public:
    const std::string& name() const { return name_; }
    const std::string& params() const { return params_; }
 
-   core::json::Object asJson() const;
+   rscore::json::Object asJson() const;
 
 private:
    std::string name_;
@@ -58,7 +58,7 @@ public:
    int seconds() const { return seconds_; }
    const Command& command() const { return command_; }
 
-   core::json::Object asJson() const;
+   rscore::json::Object asJson() const;
 
 private:
    int seconds_;
@@ -149,8 +149,8 @@ public:
    {
    }
 
-   core::Error readSlides(const core::FilePath& filePath);
-   core::Error readSlides(const std::string& slides, const core::
+   rscore::Error readSlides(const rscore::FilePath& filePath);
+   rscore::Error readSlides(const std::string& slides, const rscore::
                           FilePath& baseDir);
 
    std::string title() const;
@@ -174,10 +174,10 @@ public:
 
    const std::vector<Slide>& slides() const { return slides_; }
 
-   core::FilePath baseDir() const { return baseDir_; }
+   rscore::FilePath baseDir() const { return baseDir_; }
 
 private:
-   core::FilePath baseDir_;
+   rscore::FilePath baseDir_;
    std::string preamble_;
    std::vector<Slide> slides_;
 };

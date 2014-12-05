@@ -19,7 +19,7 @@
 #include <boost/function.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-namespace core {
+namespace rscore {
 
 class Error;
 
@@ -55,6 +55,6 @@ struct ConnectionRetryProfile
 
 
 } // namespace http
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_HTTP_CONNECTION_RETRY_PROFILE_HPP

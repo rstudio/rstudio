@@ -23,7 +23,7 @@
 
 #include <server/ServerOptions.hpp>
 
-using namespace core;
+using namespace rscore;
 
 namespace server {
 namespace browser {

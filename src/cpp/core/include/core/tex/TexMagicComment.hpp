@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-namespace core {
+namespace rscore {
 
 class Error;
 class FilePath;
@@ -54,7 +54,7 @@ Error parseMagicComments(const FilePath& texFile, TexMagicComments* pComments);
 
 
 } // namespace tex
-} // namespace core 
+} // namespace rscore
 
 
 #endif // CORE_TEX_TEX_MAGIC_COMMENT_HPP

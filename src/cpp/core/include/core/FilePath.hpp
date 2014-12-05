@@ -32,7 +32,7 @@
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 
-namespace core {
+namespace rscore {
 
 class Error ;
 
@@ -49,7 +49,7 @@ public:
    
    static Error makeCurrent(const std::string& path);
 
-   static std::string createAliasedPath(const core::FilePath& path,
+   static std::string createAliasedPath(const rscore::FilePath& path,
                                         const FilePath& userHomePath);
    static FilePath resolveAliasedPath(const std::string& aliasedPath,
                                       const FilePath& userHomePath) ;

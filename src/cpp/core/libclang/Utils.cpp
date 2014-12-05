@@ -17,7 +17,7 @@
 
 #include <core/libclang/LibClang.hpp>
 
-namespace core {
+namespace rscore {
 namespace libclang {
 
 // note that this function disposes the underlying CXString so it
@@ -30,5 +30,5 @@ std::string toStdString(CXString cxStr)
 }
 
 } // namespace libclang
-} // namespace core
+} // namespace rscore
 

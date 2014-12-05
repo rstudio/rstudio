@@ -20,7 +20,7 @@
 
 #include <core/json/JsonRpc.hpp>
 
-using namespace core;
+using namespace rscore;
 
 namespace server {
 namespace meta {
@@ -36,8 +36,8 @@ void handleInitMessagesRequest(const json::JsonRpcRequest& request,
 } // anonymous namespace
 
 void handleMetaRequest(const std::string& username,
-                       const core::http::Request& request,
-                       core::http::Response* pResponse)
+                       const rscore::http::Request& request,
+                       rscore::http::Response* pResponse)
 {
    // parse request
    json::JsonRpcRequest jsonRpcRequest;

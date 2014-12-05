@@ -21,7 +21,7 @@
 
 #import <AppKit/NSAlert.h>
 
-namespace core {
+namespace rscore {
    class FilePath;
 }
 
@@ -31,13 +31,13 @@ namespace utils {
 
 void initializeLang();
 
-core::FilePath userLogPath();
+rscore::FilePath userLogPath();
    
 void showMessageBox(NSAlertStyle style, NSString* title, NSString* message);
    
 void browseURL(NSURL* url);
    
-core::system::ProcessSupervisor& processSupervisor();
+rscore::system::ProcessSupervisor& processSupervisor();
    
 bool supportsFullscreenMode(NSWindow* window);
 void enableFullscreenMode(NSWindow* window, bool primary);

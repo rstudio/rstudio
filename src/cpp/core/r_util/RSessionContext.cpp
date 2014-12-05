@@ -28,7 +28,7 @@
 
 #include <core/r_util/RProjectFile.hpp>
 
-namespace core {
+namespace rscore {
 namespace r_util {
 
 namespace {
@@ -44,7 +44,7 @@ UserDirectories userDirectories(SessionType sessionType,
    if (!homePath.empty())
       dirs.homePath = homePath;
    else
-      dirs.homePath = core::system::userHomePath("R_USER|HOME").absolutePath();
+      dirs.homePath = rscore::system::userHomePath("R_USER|HOME").absolutePath();
 
    // compute user scratch path
    std::string scratchPathName;
@@ -53,7 +53,7 @@ UserDirectories userDirectories(SessionType sessionType,
    else
       scratchPathName = "RStudio";
 
-   dirs.scratchPath = core::system::userSettingsPath(
+   dirs.scratchPath = rscore::system::userSettingsPath(
                                           FilePath(dirs.homePath),
                                           scratchPathName).absolutePath();
 
@@ -77,7 +77,7 @@ std::string readProjectsSetting(const FilePath& settingsPath,
    if (readPath.exists())
    {
       std::string value;
-      Error error = core::readStringFromFile(readPath, &value);
+      Error error = rscore::readStringFromFile(readPath, &value);
       if (error)
       {
          LOG_ERROR(error);
@@ -97,7 +97,7 @@ void writeProjectsSetting(const FilePath& settingsPath,
                           const std::string& value)
 {
    FilePath writePath = settingsPath.complete(settingName);
-   Error error = core::writeStringToFile(writePath, value);
+   Error error = rscore::writeStringToFile(writePath, value);
    if (error)
       LOG_ERROR(error);
 }
@@ -122,12 +122,12 @@ FilePath nextSessionProject(SessionType sessionType,
                                                      kLastProjectPath);
 
    // read environment variables derived from startup file associations
-   std::string initialProjPath = core::system::getenv(kRStudioInitialProject);
-   std::string initialWDPath = core::system::getenv(kRStudioInitialWorkingDir);
+   std::string initialProjPath = rscore::system::getenv(kRStudioInitialProject);
+   std::string initialWDPath = rscore::system::getenv(kRStudioInitialWorkingDir);
 
    // read the always restore last project user setting
    bool alwaysRestoreLastProject = false;
-   core::Settings uSettings;
+   rscore::Settings uSettings;
    FilePath userSettingsPath = userScratchPath.childPath(kUserSettings);
    Error error = uSettings.initialize(userSettingsPath);
    if (error)
@@ -193,7 +193,7 @@ RVersionInfo nextSessionRVersion(SessionType sessionType,
 }
 
 } // namespace r_util
-} // namespace core 
+} // namespace rscore
 
 
 

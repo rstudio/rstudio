@@ -26,7 +26,7 @@
 
 #include <boost/current_function.hpp>
 
-namespace core {
+namespace rscore {
 
 class FilePath;
 class ErrorLocation ;
@@ -170,9 +170,9 @@ private:
    
 std::ostream& operator<<(std::ostream& os, const ErrorLocation& location);
    
-} // namespace core 
+} // namespace rscore
 
-#define ERROR_LOCATION core::ErrorLocation( \
+#define ERROR_LOCATION rscore::ErrorLocation( \
       BOOST_CURRENT_FUNCTION,__FILE__,__LINE__)
 
 #define CATCH_UNEXPECTED_EXCEPTION \

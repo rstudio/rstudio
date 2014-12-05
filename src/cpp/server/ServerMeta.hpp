@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace core {
+namespace rscore {
    namespace http {
       class Request;
       class Response;
@@ -29,8 +29,8 @@ namespace server {
 namespace meta {
    
 void handleMetaRequest(const std::string& username,
-                       const core::http::Request& request,
-                       core::http::Response* pResponse);
+                       const rscore::http::Request& request,
+                       rscore::http::Response* pResponse);
 
 } // namespace meta
 } // namespace server

@@ -52,13 +52,13 @@ public:
    int zoomLevel() const;
    void setZoomLevel(int zoomLevel);
       
-   core::FilePath scriptsPath() const;
-   void setScriptsPath(const core::FilePath& scriptsPath);
+   rscore::FilePath scriptsPath() const;
+   void setScriptsPath(const rscore::FilePath& scriptsPath);
    
-   core::FilePath executablePath() const;
-   core::FilePath supportingFilePath() const;
+   rscore::FilePath executablePath() const;
+   rscore::FilePath supportingFilePath() const;
    
-   core::FilePath wwwDocsPath() const;
+   rscore::FilePath wwwDocsPath() const;
       
    std::vector<std::string> ignoredUpdateVersions() const;
    void setIgnoredUpdateVersions(const std::vector<std::string>& ignored);
@@ -67,9 +67,9 @@ public:
    
 private:
    std::string sharedSecret_;
-   core::FilePath scriptsPath_;
-   mutable core::FilePath executablePath_;
-   mutable core::FilePath supportingFilePath_;
+   rscore::FilePath scriptsPath_;
+   mutable rscore::FilePath executablePath_;
+   mutable rscore::FilePath supportingFilePath_;
    mutable std::string portNumber_;
    bool runDiagnostics_;
    

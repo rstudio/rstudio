@@ -16,7 +16,7 @@
 #ifndef SESSION_ABOUT_HPP
 #define SESSION_ABOUT_HPP
 
-namespace core {
+namespace rscore {
    class Error;
 }
 
@@ -24,7 +24,7 @@ namespace session {
 namespace modules {
 namespace about {
 
-core::Error initialize();
+rscore::Error initialize();
    
 } // namespace about
 } // namespace modules

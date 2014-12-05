@@ -29,7 +29,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace core ;
+using namespace rscore ;
 
 namespace session {  
 namespace modules {
@@ -76,7 +76,7 @@ FilePath scanForRSourceFile(const FilePath& basePath,
       if (isRSourceFile(child))
       {
          std::vector<std::string> lines;
-         Error error = core::readStringVectorFromFile(child, &lines, false);
+         Error error = rscore::readStringVectorFromFile(child, &lines, false);
          if (error)
          {
             LOG_ERROR(error);
@@ -113,7 +113,7 @@ std::vector<CompileError> parseRErrors(const FilePath& basePath,
 
       // we need to guess the file based on the contextual information
       // provided in the error message
-      int diagLine = core::safe_convert::stringTo<int>(match[4], -1);
+      int diagLine = rscore::safe_convert::stringTo<int>(match[4], -1);
       if (diagLine != -1)
       {
          FilePath rSrcFile = scanForRSourceFile(basePath,
@@ -125,8 +125,8 @@ std::vector<CompileError> parseRErrors(const FilePath& basePath,
             // create error and add it
             CompileError err(CompileError::Error,
                              rSrcFile,
-                             core::safe_convert::stringTo<int>(line, 1),
-                             core::safe_convert::stringTo<int>(column, 1),
+                             rscore::safe_convert::stringTo<int>(line, 1),
+                             rscore::safe_convert::stringTo<int>(column, 1),
                              message,
                              false);
             errors.push_back(err);
@@ -183,7 +183,7 @@ std::vector<CompileError> parseGccErrors(const FilePath& basePath,
       else
          filePath = basePath.complete(file);
       FilePath realPath;
-      Error error = core::system::realPath(filePath, &realPath);
+      Error error = rscore::system::realPath(filePath, &realPath);
       if (error)
          LOG_ERROR(error);
       else
@@ -200,8 +200,8 @@ std::vector<CompileError> parseGccErrors(const FilePath& basePath,
       // create error and add it
       CompileError err(errType,
                        filePath,
-                       core::safe_convert::stringTo<int>(line, 1),
-                       core::safe_convert::stringTo<int>(column, 1),
+                       rscore::safe_convert::stringTo<int>(line, 1),
+                       rscore::safe_convert::stringTo<int>(column, 1),
                        message,
                        true);
       errors.push_back(err);

@@ -24,7 +24,7 @@
 
 #include <core/system/Types.hpp>
 
-namespace core {
+namespace rscore {
    class Error;
    class FilePath;
    namespace system {
@@ -39,16 +39,16 @@ namespace compile_pdf_supervisor {
 
 
 bool hasRunningChildren();
-core::Error terminateAll(const boost::posix_time::time_duration& waitDuration);
+rscore::Error terminateAll(const boost::posix_time::time_duration& waitDuration);
 
-core::Error runProgram(const core::FilePath& programFilePath,
+rscore::Error runProgram(const rscore::FilePath& programFilePath,
                        const std::vector<std::string>& args,
-                       const core::system::Options& extraEnvVars,
-                       const core::FilePath& workingDir,
+                       const rscore::system::Options& extraEnvVars,
+                       const rscore::FilePath& workingDir,
                        const boost::function<void(const std::string&)>& onOutput,
                        const boost::function<void(int,const std::string&)>& onExited);
 
-core::Error initialize();
+rscore::Error initialize();
 
 } // namespace compile_pdf_supervisor
 } // namespace tex

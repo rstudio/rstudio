@@ -37,7 +37,7 @@ private:
 public:
    // COPYING: boost::noncopyable
    
-   core::Error initialize();
+   rscore::Error initialize();
    
    // active-client-id
    std::string activeClientId();
@@ -57,12 +57,12 @@ public:
                       const std::string& hashValue);
 
    // get underlying settings
-   core::Settings& settings() { return settings_; }
+   rscore::Settings& settings() { return settings_; }
 
 private:
    bool serverMode_;
    std::string desktopClientId_;
-   core::Settings settings_;
+   rscore::Settings settings_;
 };
    
 } // namespace session

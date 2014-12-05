@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace core {
+namespace rscore {
    class Error;
    class FilePath;
 }
@@ -35,14 +35,14 @@ bool isPackratModeOn();
 bool isDefaultPrompt(const std::string& prompt);
 
 // user home path
-const core::FilePath& userHomePath();  
+const rscore::FilePath& userHomePath();
 
-core::FilePath safeCurrentPath();
+rscore::FilePath safeCurrentPath();
    
-core::FilePath tempFile(const std::string& prefix, 
+rscore::FilePath tempFile(const std::string& prefix,
                         const std::string& extension);
 
-core::FilePath tempDir();
+rscore::FilePath tempDir();
 
      
 // suppress output in scope

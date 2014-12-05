@@ -29,7 +29,7 @@
 #include <core/http/AsyncConnection.hpp>
 
 
-namespace core {
+namespace rscore {
 namespace http {
 
 // AsyncUriHandlerFunction concept
@@ -104,7 +104,7 @@ private:
 };
 
 } // namespace http
-} // namespace core
+} // namespace rscore
 
 
 #endif // CORE_HTTP_ASYNC_URI_HANDLER_HPP

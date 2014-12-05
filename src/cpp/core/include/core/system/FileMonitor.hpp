@@ -34,7 +34,7 @@
 // both extremely large trees and or self-referential (and thus infinitely
 // recursive) trees.
 
-namespace core {   
+namespace rscore {
 namespace system {
 namespace file_monitor {
 
@@ -59,7 +59,7 @@ struct Handle
    }
 
    explicit Handle(void* pData)
-      : id(core::system::generateUuid()),
+      : id(rscore::system::generateUuid()),
         pData(pData)
    {
    }
@@ -89,11 +89,11 @@ struct Callbacks
    boost::function<void(Handle, const tree<FileInfo>&)> onRegistered;
 
    // callback which occurs if a registration error occurs
-   boost::function<void(const core::Error&)> onRegistrationError;
+   boost::function<void(const rscore::Error&)> onRegistrationError;
 
    // callback which occurs if an error occurs during monitoring (the
    // monitor is automatically unregistered if a monitoring error occurs)
-   boost::function<void(const core::Error&)> onMonitoringError;
+   boost::function<void(const rscore::Error&)> onMonitoringError;
 
    // callback which occurs when files change
    boost::function<void(const std::vector<FileChangeEvent>&)> onFilesChanged;
@@ -115,7 +115,7 @@ struct Callbacks
 // guarantee that the deletion of your shared_ptr object is invoked on the same
 // thread that called registerMonitor you should also bind a function to
 // onUnregistered (otherwise the delete will occur on the file monitoring thread)
-void registerMonitor(const core::FilePath& filePath,
+void registerMonitor(const rscore::FilePath& filePath,
                      bool recursive,
                      const boost::function<bool(const FileInfo&)>& filter,
                      const Callbacks& callbacks);
@@ -153,7 +153,7 @@ boost::function<bool(const FileInfo&)> excludeHiddenFilter();
 
 } // namespace file_monitor
 } // namespace system
-} // namespace core 
+} // namespace rscore
 
 #endif // CORE_SYSTEM_FILE_MONITOR_HPP
 

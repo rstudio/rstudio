@@ -52,7 +52,7 @@
 #include "SessionSourceCpp.hpp"
 #include "SessionInstallRtools.hpp"
 
-using namespace core;
+using namespace rscore;
 
 namespace session {
 
@@ -133,7 +133,7 @@ void onFileChanged(FilePath sourceFilePath)
    }
 }
 
-void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
+void onFilesChanged(const std::vector<rscore::system::FileChangeEvent>& events)
 {
    if (!s_forcePackageRebuild)
    {
@@ -201,7 +201,7 @@ private:
       }
 
       // callbacks
-      core::system::ProcessCallbacks cb;
+      rscore::system::ProcessCallbacks cb;
       cb.onContinue = boost::bind(&Build::onContinue,
                                   Build::shared_from_this());
       cb.onStdout = boost::bind(&Build::onStandardOutput,
@@ -218,14 +218,14 @@ private:
 
 
    void executeBuild(const std::string& type,
-                     const core::system::ProcessCallbacks& cb)
+                     const rscore::system::ProcessCallbacks& cb)
    {
       // options
-      core::system::ProcessOptions options;
+      rscore::system::ProcessOptions options;
       options.terminateChildren = true;
 
       FilePath buildTargetPath = projects::projectContext().buildTargetPath();
-      const core::r_util::RProjectConfig& config = projectConfig();
+      const rscore::r_util::RProjectConfig& config = projectConfig();
       if (config.buildType == r_util::kBuildTypePackage)
       {
          options.workingDir = buildTargetPath.parent();
@@ -249,8 +249,8 @@ private:
 
    void executePackageBuild(const std::string& type,
                             const FilePath& packagePath,
-                            const core::system::ProcessOptions& options,
-                            const core::system::ProcessCallbacks& cb)
+                            const rscore::system::ProcessOptions& options,
+                            const rscore::system::ProcessCallbacks& cb)
    {
       // validate that this is a package
       if (!r_util::isPackageDirectory(packagePath))
@@ -292,7 +292,7 @@ private:
          if (roxygenizeRequired(type))
          {
             // special callback for roxygenize result
-            core::system::ProcessCallbacks roxygenizeCb = cb;
+            rscore::system::ProcessCallbacks roxygenizeCb = cb;
             roxygenizeCb.onExit =  boost::bind(&Build::onRoxygenizeCompleted,
                                                Build::shared_from_this(),
                                                _1,
@@ -392,8 +392,8 @@ private:
 
 
    void roxygenize(const FilePath& packagePath,
-                   core::system::ProcessOptions options,
-                   const core::system::ProcessCallbacks& cb)
+                   rscore::system::ProcessOptions options,
+                   const rscore::system::ProcessCallbacks& cb)
    {
       FilePath rScriptPath;
       Error error = module_context::rScriptPath(&rScriptPath);
@@ -430,7 +430,7 @@ private:
    {
       if (module_context::haveRcppAttributes())
       {
-         core::system::ProcessResult result;
+         rscore::system::ProcessResult result;
          Error error = module_context::sourceModuleRFileWithResult(
                                              "SessionCompileAttributes.R",
                                              packagePath,
@@ -466,8 +466,8 @@ private:
 
    void buildPackage(const std::string& type,
                      const FilePath& packagePath,
-                     const core::system::ProcessOptions& options,
-                     const core::system::ProcessCallbacks& cb)
+                     const rscore::system::ProcessOptions& options,
+                     const rscore::system::ProcessCallbacks& cb)
    {      
 
       // if this action is going to INSTALL the package then on
@@ -491,22 +491,22 @@ private:
       initErrorParser(packagePath, parsers);
 
       // make a copy of options so we can customize the environment
-      core::system::ProcessOptions pkgOptions(options);
-      core::system::Options childEnv;
-      core::system::environment(&childEnv);
+      rscore::system::ProcessOptions pkgOptions(options);
+      rscore::system::Options childEnv;
+      rscore::system::environment(&childEnv);
 
       // allow child process to inherit our R_LIBS
       std::string libPaths = module_context::libPathsString();
       if (!libPaths.empty())
-         core::system::setenv(&childEnv, "R_LIBS", libPaths);
+         rscore::system::setenv(&childEnv, "R_LIBS", libPaths);
 
       // prevent spurious cygwin warnings on windows
 #ifdef _WIN32
-      core::system::setenv(&childEnv, "CYGWIN", "nodosfilewarning");
+      rscore::system::setenv(&childEnv, "CYGWIN", "nodosfilewarning");
 #endif
 
       // set the not cran env var
-      core::system::setenv(&childEnv, "NOT_CRAN", "true");
+      rscore::system::setenv(&childEnv, "NOT_CRAN", "true");
 
       // add r tools to path if necessary
       module_context::addRtoolsToPathIfNecessary(&childEnv, &buildToolsWarning_);
@@ -606,8 +606,8 @@ private:
 
    void buildSourcePackage(const FilePath& rBinDir,
                            const FilePath& packagePath,
-                           const core::system::ProcessOptions& pkgOptions,
-                           const core::system::ProcessCallbacks& cb)
+                           const rscore::system::ProcessOptions& pkgOptions,
+                           const rscore::system::ProcessCallbacks& cb)
    {
       // compose the build command
       module_context::RCommand rCmd(rBinDir);
@@ -636,8 +636,8 @@ private:
 
    void buildBinaryPackage(const FilePath& rBinDir,
                            const FilePath& packagePath,
-                           const core::system::ProcessOptions& pkgOptions,
-                           const core::system::ProcessCallbacks& cb)
+                           const rscore::system::ProcessOptions& pkgOptions,
+                           const rscore::system::ProcessCallbacks& cb)
    {
       // compose the INSTALL --binary
       module_context::RCommand rCmd(rBinDir);
@@ -666,8 +666,8 @@ private:
 
    void checkPackage(const FilePath& rBinDir,
                      const FilePath& packagePath,
-                     const core::system::ProcessOptions& pkgOptions,
-                     const core::system::ProcessCallbacks& cb)
+                     const rscore::system::ProcessOptions& pkgOptions,
+                     const rscore::system::ProcessCallbacks& cb)
    {
       // first build then check
 
@@ -701,7 +701,7 @@ private:
       rCheckCmd << FilePath(pkgInfo_.sourcePackageFilename());
 
       // special callback for build result
-      core::system::ProcessCallbacks buildCb = cb;
+      rscore::system::ProcessCallbacks buildCb = cb;
       buildCb.onExit =  boost::bind(&Build::onBuildForCheckCompleted,
                                     Build::shared_from_this(),
                                     _1,
@@ -739,8 +739,8 @@ private:
 
    bool devtoolsExecute(const std::string& command,
                         const FilePath& packagePath,
-                        core::system::ProcessOptions pkgOptions,
-                        const core::system::ProcessCallbacks& cb)
+                        rscore::system::ProcessOptions pkgOptions,
+                        const rscore::system::ProcessCallbacks& cb)
    {
       // Find the path to R
       FilePath rProgramPath;
@@ -774,8 +774,8 @@ private:
    }
 
    void devtoolsCheckPackage(const FilePath& packagePath,
-                             const core::system::ProcessOptions& pkgOptions,
-                             const core::system::ProcessCallbacks& cb)
+                             const rscore::system::ProcessOptions& pkgOptions,
+                             const rscore::system::ProcessCallbacks& cb)
    {
       // build the call to check
       std::ostringstream ostr;
@@ -845,8 +845,8 @@ private:
    }
 
    void devtoolsTestPackage(const FilePath& packagePath,
-                            const core::system::ProcessOptions& pkgOptions,
-                            const core::system::ProcessCallbacks& cb)
+                            const rscore::system::ProcessOptions& pkgOptions,
+                            const rscore::system::ProcessCallbacks& cb)
    {
       std::string command = "devtools::test()";
       enqueCommandString(command);
@@ -854,8 +854,8 @@ private:
    }
 
    void testPackage(const FilePath& packagePath,
-                    core::system::ProcessOptions pkgOptions,
-                    const core::system::ProcessCallbacks& cb)
+                    rscore::system::ProcessOptions pkgOptions,
+                    const rscore::system::ProcessCallbacks& cb)
    {
       FilePath rScriptPath;
       Error error = module_context::rScriptPath(&rScriptPath);
@@ -898,8 +898,8 @@ private:
 
    void devtoolsBuildPackage(const FilePath& packagePath,
                              bool binary,
-                             const core::system::ProcessOptions& pkgOptions,
-                             const core::system::ProcessCallbacks& cb)
+                             const rscore::system::ProcessOptions& pkgOptions,
+                             const rscore::system::ProcessCallbacks& cb)
    {
       // create the call to build
       std::ostringstream ostr;
@@ -937,8 +937,8 @@ private:
    void onBuildForCheckCompleted(
                          int exitStatus,
                          const module_context::RCommand& checkCmd,
-                         const core::system::ProcessOptions& checkOptions,
-                         const core::system::ProcessCallbacks& checkCb)
+                         const rscore::system::ProcessOptions& checkOptions,
+                         const rscore::system::ProcessCallbacks& checkCb)
    {
       if (exitStatus == EXIT_SUCCESS)
       {
@@ -992,8 +992,8 @@ private:
 
    void executeMakefileBuild(const std::string& type,
                              const FilePath& targetPath,
-                             const core::system::ProcessOptions& options,
-                             const core::system::ProcessCallbacks& cb)
+                             const rscore::system::ProcessOptions& options,
+                             const rscore::system::ProcessCallbacks& cb)
    {
       // validate that there is a Makefile file
       FilePath makefilePath = targetPath.childPath("Makefile");
@@ -1038,8 +1038,8 @@ private:
 
    void executeCustomBuild(const std::string& type,
                            const FilePath& customScriptPath,
-                           const core::system::ProcessOptions& options,
-                           const core::system::ProcessCallbacks& cb)
+                           const rscore::system::ProcessOptions& options,
+                           const rscore::system::ProcessCallbacks& cb)
    {
       module_context::processSupervisor().runCommand(
                            shell_utils::ShellCommand(customScriptPath),
@@ -1396,7 +1396,7 @@ BuildContext s_suspendBuildContext;
 
 
 void writeBuildContext(const BuildContext& buildContext,
-                       core::Settings* pSettings)
+                       rscore::Settings* pSettings)
 {
    std::ostringstream ostr;
    json::write(buildContext.outputs, ostr);
@@ -1409,7 +1409,7 @@ void writeBuildContext(const BuildContext& buildContext,
    pSettings->set("build-last-errors-base-dir", buildContext.errorsBaseDir);
 }
 
-void onSuspend(core::Settings* pSettings)
+void onSuspend(rscore::Settings* pSettings)
 {
    if (s_pBuild)
    {
@@ -1430,7 +1430,7 @@ void onSuspend(core::Settings* pSettings)
    }
 }
 
-void onResume(const core::Settings& settings)
+void onResume(const rscore::Settings& settings)
 {
    std::string buildLastOutputs = settings.get("build-last-outputs");
    if (!buildLastOutputs.empty())
@@ -1468,7 +1468,7 @@ SEXP rs_restorePreviousPath()
 {
 #ifdef _WIN32
     if (!s_previousPath.empty())
-        core::system::setenv("PATH", s_previousPath);
+        rscore::system::setenv("PATH", s_previousPath);
     s_previousPath.clear();
 #endif
     return R_NilValue;
@@ -1477,11 +1477,11 @@ SEXP rs_restorePreviousPath()
 SEXP rs_addRToolsToPath()
 {
 #ifdef _WIN32
-    s_previousPath = core::system::getenv("PATH");
+    s_previousPath = rscore::system::getenv("PATH");
     std::string newPath = s_previousPath;
     std::string warningMsg;
     module_context::addRtoolsToPathIfNecessary(&newPath, &warningMsg);
-    core::system::setenv("PATH", newPath);
+    rscore::system::setenv("PATH", newPath);
 
 #endif
     return R_NilValue;
@@ -1508,10 +1508,10 @@ SEXP rs_installBuildTools()
       {
          // on mavericks we just need to invoke clang and the user will be
          // prompted to install the command line tools
-         core::system::ProcessResult result;
-         Error error = core::system::runCommand("clang --version",
+         rscore::system::ProcessResult result;
+         Error error = rscore::system::runCommand("clang --version",
                                                 "",
-                                                core::system::ProcessOptions(),
+                                                rscore::system::ProcessOptions(),
                                                 &result);
          if (error)
             LOG_ERROR(error);
@@ -1595,7 +1595,7 @@ void onDeferredInit(bool newSession)
          if (!error)
          {
             std::string makevars = "CC=clang\nCXX=clang++\n";
-            error = core::writeStringToFile(makevarsPath, makevars);
+            error = rscore::writeStringToFile(makevarsPath, makevars);
             if (error)
                LOG_ERROR(error);
          }
@@ -1704,7 +1704,7 @@ bool canBuildCpp()
 
    // try to build a simple c file to test whether we have build tools available
    FilePath cppPath = module_context::tempFile("test", "c");
-   Error error = core::writeStringToFile(cppPath, "void test() {}\n");
+   Error error = rscore::writeStringToFile(cppPath, "void test() {}\n");
    if (error)
    {
       LOG_ERROR(error);
@@ -1725,16 +1725,16 @@ bool canBuildCpp()
    rCmd << "SHLIB";
    rCmd << cppPath.filename();
 
-   core::system::ProcessOptions options;
+   rscore::system::ProcessOptions options;
    options.workingDir = cppPath.parent();
-   core::system::Options childEnv;
-   core::system::environment(&childEnv);
+   rscore::system::Options childEnv;
+   rscore::system::environment(&childEnv);
    std::string warningMsg;
    module_context::addRtoolsToPathIfNecessary(&childEnv, &warningMsg);
    options.environment = childEnv;
 
-   core::system::ProcessResult result;
-   error = core::system::runCommand(rCmd.commandString(), options, &result);
+   rscore::system::ProcessResult result;
+   error = rscore::system::runCommand(rCmd.commandString(), options, &result);
    if (error)
    {
       LOG_ERROR(error);

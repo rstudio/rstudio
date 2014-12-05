@@ -19,7 +19,7 @@
 
 int main(int argc, char * const argv[]) 
 {
-   core::system::initializeLog("rserver", 2); 
+   rscore::system::initializeLog("rserver", 2);
  
    LOG_WARNING_MESSAGE("hello cmake!");
    

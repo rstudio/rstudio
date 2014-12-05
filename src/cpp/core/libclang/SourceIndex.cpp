@@ -25,7 +25,7 @@
 #include <core/libclang/LibClang.hpp>
 #include <core/libclang/UnsavedFiles.hpp>
 
-namespace core {
+namespace rscore {
 namespace libclang {
 
 
@@ -133,11 +133,11 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
 {
    FilePath filePath(filename);
 
-   boost::scoped_ptr<core::PerformanceTimer> pTimer;
+   boost::scoped_ptr<rscore::PerformanceTimer> pTimer;
    if (verbose_ > 0)
    {
       std::cerr << "CLANG INDEXING: " << filePath.absolutePath() << std::endl;
-      pTimer.reset(new core::PerformanceTimer(filePath.filename()));
+      pTimer.reset(new rscore::PerformanceTimer(filePath.filename()));
    }
 
    // get the arguments and last write time for this file
@@ -212,7 +212,7 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
      args.push_back("-v");
 
    // get the args in the fashion libclang expects (char**)
-   core::system::ProcessArgs argsArray(args);
+   rscore::system::ProcessArgs argsArray(args);
 
    if (verbose_ > 0)
       std::cerr << "  (Creating new index)" << std::endl;
@@ -248,6 +248,6 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
 }
 
 } // namespace libclang
-} // namespace core
+} // namespace rscore
 
 

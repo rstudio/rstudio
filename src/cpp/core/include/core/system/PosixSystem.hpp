@@ -26,11 +26,11 @@ typedef pid_t PidType;
 typedef rlim_t RLimitType;
 
 
-namespace core {
+namespace rscore {
    class Error;
 }
 
-namespace core {
+namespace rscore {
 namespace system {
 
 namespace user {
@@ -38,7 +38,7 @@ namespace user {
 }
 
 // daemonize the process
-core::Error daemonize();
+rscore::Error daemonize();
 
 // umask
 // file creation masks and file modes
@@ -65,13 +65,13 @@ enum ResourceLimit
 
 bool resourceIsUnlimited(RLimitType limitValue);
 
-core::Error getResourceLimit(ResourceLimit resourcelimit,
+rscore::Error getResourceLimit(ResourceLimit resourcelimit,
                              RLimitType* pSoft,
                              RLimitType* pHard);
 
-core::Error setResourceLimit(ResourceLimit resourceLimit, RLimitType limit);
+rscore::Error setResourceLimit(ResourceLimit resourceLimit, RLimitType limit);
 
-core::Error setResourceLimit(ResourceLimit resourceLimit,
+rscore::Error setResourceLimit(ResourceLimit resourceLimit,
                              RLimitType soft,
                              RLimitType hard);
 
@@ -85,9 +85,9 @@ struct SysInfo
    double load15;
 };
 
-core::Error systemInformation(SysInfo* pSysInfo);
+rscore::Error systemInformation(SysInfo* pSysInfo);
 
-core::Error pidof(const std::string& process, std::vector<PidType>* pPids);
+rscore::Error pidof(const std::string& process, std::vector<PidType>* pPids);
 
 struct ProcessInfo
 {
@@ -96,7 +96,7 @@ struct ProcessInfo
    std::string username;
 };
 
-core::Error processInfo(const std::string& process,
+rscore::Error processInfo(const std::string& process,
                         std::vector<ProcessInfo>* pInfo);
 
 std::ostream& operator<<(std::ostream& os, const ProcessInfo& info);
@@ -107,10 +107,10 @@ struct IpAddress
    std::string addr;
 };
 
-core::Error ipAddresses(std::vector<IpAddress>* pAddresses);
+rscore::Error ipAddresses(std::vector<IpAddress>* pAddresses);
 
 // core dump restriction
-core::Error restrictCoreDumps();
+rscore::Error restrictCoreDumps();
 void printCoreDumpable(const std::string& context);
 
 // launching child processes
@@ -154,23 +154,23 @@ struct ProcessConfig
       : stdStreamBehavior(StdStreamInherit)
    {
    }
-   core::system::Options args;
-   core::system::Options environment;
+   rscore::system::Options args;
+   rscore::system::Options environment;
    std::string stdInput;
    StdStreamBehavior stdStreamBehavior;
    ProcessLimits limits;
 };
 
-core::Error waitForProcessExit(PidType processId);
+rscore::Error waitForProcessExit(PidType processId);
 
-core::Error launchChildProcess(std::string path,
+rscore::Error launchChildProcess(std::string path,
                                std::string runAsUser,
                                ProcessConfig config,
                                PidType* pProcessId ) ;
 
-bool isUserNotFoundError(const core::Error& error);
+bool isUserNotFoundError(const rscore::Error& error);
 
-core::Error userBelongsToGroup(const user::User& user,
+rscore::Error userBelongsToGroup(const user::User& user,
                                const std::string& groupName,
                                bool* pBelongs);
 
@@ -180,13 +180,13 @@ bool effectiveUserIsRoot();
 
 // privillege management (not thread safe, call from main thread at app startup
 // or just after fork() prior to exec() for new processes)
-core::Error temporarilyDropPriv(const std::string& newUsername);
-core::Error permanentlyDropPriv(const std::string& newUsername);
-core::Error restorePriv();
+rscore::Error temporarilyDropPriv(const std::string& newUsername);
+rscore::Error permanentlyDropPriv(const std::string& newUsername);
+rscore::Error restorePriv();
 
 
 } // namespace system
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_SYSTEM_POSIX_SYSTEM_HPP
 

@@ -34,7 +34,7 @@
 #include "Request.hpp"
 #include "Util.hpp"
 
-namespace core {
+namespace rscore {
    
 class ErrorLocation;
    
@@ -357,6 +357,6 @@ private:
 std::ostream& operator << (std::ostream& stream, const Response& r) ;
 
 } // namespace http
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_HTTP_RESPONSE_HPP

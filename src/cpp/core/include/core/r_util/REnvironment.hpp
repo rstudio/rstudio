@@ -21,7 +21,7 @@
 
 #include <core/system/Types.hpp>
 
-namespace core {
+namespace rscore {
 
 class Error;
 class FilePath;
@@ -40,7 +40,7 @@ bool detectREnvironment(const FilePath& whichRScript,
 
 void setREnvironmentVars(const EnvironmentVars& vars);
 void setREnvironmentVars(const EnvironmentVars& vars,
-                         core::system::Options* pEnv);
+                         rscore::system::Options* pEnv);
 
 std::string rLibraryPath(const FilePath& rHomePath,
                          const FilePath& rLibPath,
@@ -52,7 +52,7 @@ Error rVersion(const FilePath& rHomePath,
                std::string* pVersion);
 
 } // namespace r_util
-} // namespace core 
+} // namespace rscore
 
 
 #endif // CORE_R_UTIL_R_ENVIRONMENT_HPP

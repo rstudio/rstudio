@@ -22,7 +22,7 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-namespace core {
+namespace rscore {
 
 // NOTE: execute function should return true if it has more work to do
 // or false to indicate all work is completed
@@ -57,7 +57,7 @@ protected:
 
 
 
-} // namespace core
+} // namespace rscore
 
 
 #endif // CORE_SCHEDULED_COMMAND_HPP

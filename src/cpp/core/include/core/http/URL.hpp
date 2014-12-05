@@ -21,7 +21,7 @@
 
 #include <core/SafeConvert.hpp>
 
-namespace core {
+namespace rscore {
 namespace http {
 
 // NOTE: The URL class is a part of shared endpoint and association caches
@@ -130,7 +130,7 @@ std::ostream& operator << (std::ostream& stream, const URL& url);
    
 
 } // namespace http
-} // namespace core
+} // namespace rscore
 
 
 #endif // CORE_HTTP_URL_HPP

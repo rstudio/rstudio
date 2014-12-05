@@ -24,7 +24,7 @@
 #include <core/FilePath.hpp>
 #include <core/StringUtils.hpp>
 
-namespace core {
+namespace rscore {
 
 namespace shell_utils {
 
@@ -53,7 +53,7 @@ enum EscapeMode
 class ShellCommand
 {
 public:
-   explicit ShellCommand(const core::FilePath& filePath)
+   explicit ShellCommand(const rscore::FilePath& filePath)
       : escapeMode_(EscapeAll)
    {
       output_ = escape(string_utils::utf8ToSystem(filePath.absolutePath()));

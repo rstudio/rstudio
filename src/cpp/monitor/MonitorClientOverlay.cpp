@@ -19,7 +19,7 @@
 namespace monitor {
 
 void SyncClient::logMessage(const std::string& programIdentity,
-                            core::system::LogLevel level,
+                            rscore::system::LogLevel level,
                             const std::string& message)
 {
 }
@@ -34,7 +34,7 @@ void SyncClient::sendMultiMetrics(
 }
 
 void AsyncClient::logMessage(const std::string& programIdentity,
-                             core::system::LogLevel level,
+                             rscore::system::LogLevel level,
                              const std::string& message)
 {
 }

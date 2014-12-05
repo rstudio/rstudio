@@ -33,7 +33,7 @@
 
 #define kMaxDeploymentSize 104857600
 
-using namespace core;
+using namespace rscore;
 
 namespace session {
 namespace modules { 

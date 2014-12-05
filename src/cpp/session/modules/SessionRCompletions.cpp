@@ -36,7 +36,7 @@
 
 #include "SessionCodeSearch.hpp"
 
-using namespace core;
+using namespace rscore;
 
 namespace session {
 namespace modules {
@@ -164,7 +164,7 @@ struct SourceIndexCompletions {
 SourceIndexCompletions getSourceIndexCompletions(const std::string& token)
 {
    // get functions from the source index
-   std::vector<core::r_util::RSourceItem> items;
+   std::vector<rscore::r_util::RSourceItem> items;
    bool moreAvailable = false;
 
    // TODO: wire up 'moreAvailable'
@@ -175,7 +175,7 @@ SourceIndexCompletions getSourceIndexCompletions(const std::string& token)
                                       &moreAvailable);
 
    SourceIndexCompletions srcCompletions;
-   BOOST_FOREACH(const core::r_util::RSourceItem& item, items)
+   BOOST_FOREACH(const rscore::r_util::RSourceItem& item, items)
    {
       if (item.braceLevel() == 0)
       {

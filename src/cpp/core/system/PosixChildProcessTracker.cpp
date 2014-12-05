@@ -19,7 +19,7 @@
 
 #include <boost/format.hpp>
 
-namespace core {
+namespace rscore {
 namespace system {
 
 namespace {
@@ -136,5 +136,5 @@ std::map<PidType,ChildProcessTracker::ExitHandler>
 }
 
 } // namespace system
-} // namespace core
+} // namespace rscore
 

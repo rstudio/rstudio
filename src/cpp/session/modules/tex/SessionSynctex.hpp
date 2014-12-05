@@ -18,7 +18,7 @@
 
 #include <core/json/Json.hpp>
 
-namespace core {
+namespace rscore {
    class Error;
    class FilePath;
 }
@@ -30,11 +30,11 @@ namespace synctex {
 
 // returns an object suitable for jnsi binding back into a PdfLocation
 // (or null if the search didn't succeed)
-core::Error forwardSearch(const core::FilePath& rootDocument,
-                          const core::json::Object& sourceLocation,
-                          core::json::Value* pPdfLocation);
+rscore::Error forwardSearch(const rscore::FilePath& rootDocument,
+                          const rscore::json::Object& sourceLocation,
+                          rscore::json::Value* pPdfLocation);
 
-core::Error initialize();
+rscore::Error initialize();
 
 } // namespace synctex
 } // namespace tex

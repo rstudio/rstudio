@@ -28,7 +28,7 @@
 
 #include "DesktopWordViewer.hpp"
 
-using namespace core;
+using namespace rscore;
 namespace desktop {
 namespace {
 

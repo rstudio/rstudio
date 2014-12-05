@@ -26,7 +26,7 @@
 
 #include <core/StringUtils.hpp>
 
-namespace core {
+namespace rscore {
 namespace regex_utils {
 
 boost::regex wildcardPatternToRegex(const std::string& pattern)
@@ -121,7 +121,7 @@ Error filterString(const std::string& input,
 
 
 } // namespace regex_utils
-} // namespace core 
+} // namespace rscore
 
 
 

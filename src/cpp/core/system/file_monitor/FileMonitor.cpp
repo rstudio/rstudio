@@ -37,7 +37,7 @@
 // practice we can't think of an easy way for the user to specify the
 // non case-sensitive variant of a file
 
-namespace core {
+namespace rscore {
 namespace system {
 namespace file_monitor {
 
@@ -86,7 +86,7 @@ std::string prefixString(const std::string& str, char ch)
 
 bool notHidden(const FileInfo& fileInfo)
 {
-   return !core::system::isHiddenFile(fileInfo);
+   return !rscore::system::isHiddenFile(fileInfo);
 }
 
 bool shouldTraverse(const FileInfo& fileInfo)
@@ -394,7 +394,7 @@ namespace detail {
 void run(const boost::function<void()>& checkForInput);
 
 // register a new file monitor
-Handle registerMonitor(const core::FilePath& filePath,
+Handle registerMonitor(const rscore::FilePath& filePath,
                        bool recursive,
                        const boost::function<bool(const FileInfo&)>& filter,
                        const Callbacks& callbacks);
@@ -422,7 +422,7 @@ public:
    {
    }
 
-   RegistrationCommand(const core::FilePath& filePath,
+   RegistrationCommand(const rscore::FilePath& filePath,
                        bool recursive,
                        const boost::function<bool(const FileInfo&)>& filter,
                        const Callbacks& callbacks)
@@ -441,7 +441,7 @@ public:
 
    Type type() const { return type_; }
 
-   const core::FilePath& filePath() const { return filePath_; }
+   const rscore::FilePath& filePath() const { return filePath_; }
    bool recursive() const { return recursive_; }
    const boost::function<bool(const FileInfo&)>& filter() const
    {
@@ -459,7 +459,7 @@ private:
    Type type_;
 
    // register command data
-   core::FilePath filePath_;
+   rscore::FilePath filePath_;
    bool recursive_;
    boost::function<bool(const FileInfo&)> filter_;
    Callbacks callbacks_;
@@ -468,18 +468,18 @@ private:
    Handle handle_;
 };
 
-typedef core::thread::ThreadsafeQueue<RegistrationCommand>
+typedef rscore::thread::ThreadsafeQueue<RegistrationCommand>
                                                       RegistrationCommandQueue;
 RegistrationCommandQueue& registrationCommandQueue()
 {
-   static core::thread::ThreadsafeQueue<RegistrationCommand> instance;
+   static rscore::thread::ThreadsafeQueue<RegistrationCommand> instance;
    return instance;
 }
 
-typedef core::thread::ThreadsafeQueue<boost::function<void()> > CallbackQueue;
+typedef rscore::thread::ThreadsafeQueue<boost::function<void()> > CallbackQueue;
 CallbackQueue& callbackQueue()
 {
-   static core::thread::ThreadsafeQueue<boost::function<void()> > instance;
+   static rscore::thread::ThreadsafeQueue<boost::function<void()> > instance;
    return instance;
 }
 
@@ -622,7 +622,7 @@ boost::thread s_fileMonitorThread;
 void initialize()
 {
    s_pActiveHandles = new std::list<Handle>();
-   core::thread::safeLaunchThread(fileMonitorThreadMain, &s_fileMonitorThread);
+   rscore::thread::safeLaunchThread(fileMonitorThreadMain, &s_fileMonitorThread);
 }
 
 void stop()
@@ -679,7 +679,7 @@ void checkForChanges()
 
 } // namespace file_monitor
 } // namespace system
-} // namespace core 
+} // namespace rscore
 
    
 

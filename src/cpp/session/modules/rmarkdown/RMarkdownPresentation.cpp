@@ -20,7 +20,7 @@
 
 #include <core/FileSerializer.hpp>
 
-using namespace core;
+using namespace rscore;
 
 namespace session {
 namespace modules { 
@@ -59,7 +59,7 @@ json::Value itemAsJson(const SlideNavigationItem& item)
 
 
 void ammendResults(const std::string& formatName,
-                   core::FilePath& targetFile,
+                   rscore::FilePath& targetFile,
                    int sourceLine,
                    json::Object* pResultJson)
 {
@@ -76,7 +76,7 @@ void ammendResults(const std::string& formatName,
 
    // read the input file
    std::vector<std::string> lines;
-   Error error = core::readStringVectorFromFile(targetFile, &lines, false);
+   Error error = rscore::readStringVectorFromFile(targetFile, &lines, false);
    if (error)
    {
       LOG_ERROR(error);

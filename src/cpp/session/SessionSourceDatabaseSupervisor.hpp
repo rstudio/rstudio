@@ -16,7 +16,7 @@
 #ifndef SESSION_SOURCE_DATABASE_SUPERVISOR_HPP
 #define SESSION_SOURCE_DATABASE_SUPERVISOR_HPP
 
-namespace core {
+namespace rscore {
    class Error;
    class FilePath;
 }
@@ -25,9 +25,9 @@ namespace session {
 namespace source_database {
 namespace supervisor {
 
-core::Error attachToSourceDatabase(core::FilePath* pSessionDir);
+rscore::Error attachToSourceDatabase(rscore::FilePath* pSessionDir);
 
-core::Error detachFromSourceDatabase();
+rscore::Error detachFromSourceDatabase();
 
 } // namespace supervisor
 } // namespace source_database

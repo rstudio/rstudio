@@ -37,31 +37,31 @@
 
 namespace session {
 
-void HttpConnection::sendJsonRpcError(const core::Error& error)
+void HttpConnection::sendJsonRpcError(const rscore::Error& error)
 {
-   core::json::JsonRpcResponse jsonRpcResponse;
+   rscore::json::JsonRpcResponse jsonRpcResponse;
    jsonRpcResponse.setError(error);
    sendJsonRpcResponse(jsonRpcResponse);
 }
 
 void HttpConnection::sendJsonRpcResponse()
 {
-   core::json::JsonRpcResponse jsonRpcResponse ;
+   rscore::json::JsonRpcResponse jsonRpcResponse ;
    sendJsonRpcResponse(jsonRpcResponse);
 }
 
 void HttpConnection::sendJsonRpcResponse(
-                     const core::json::JsonRpcResponse& jsonRpcResponse)
+                     const rscore::json::JsonRpcResponse& jsonRpcResponse)
 {
    // setup response
-   core::http::Response response ;
+   rscore::http::Response response ;
 
    // automagic gzip support
-   if (request().acceptsEncoding(core::http::kGzipEncoding))
-      response.setContentEncoding(core::http::kGzipEncoding);
+   if (request().acceptsEncoding(rscore::http::kGzipEncoding))
+      response.setContentEncoding(rscore::http::kGzipEncoding);
 
    // set response
-   core::json::setJsonRpcResponse(jsonRpcResponse, &response);
+   rscore::json::setJsonRpcResponse(jsonRpcResponse, &response);
 
    // send the response
    sendResponse(response);
@@ -71,7 +71,7 @@ void HttpConnection::sendJsonRpcResponse(
 
 namespace connection {
 
-std::string rstudioRequestIdFromRequest(const core::http::Request& request)
+std::string rstudioRequestIdFromRequest(const rscore::http::Request& request)
 {
    return request.headerValue("X-RS-RID");
 }
@@ -94,13 +94,13 @@ void handleAbortNextProjParam(
                boost::shared_ptr<HttpConnection> ptrConnection)
 {
    std::string nextProj;
-   core::json::JsonRpcRequest jsonRpcRequest;
-   core::Error error = core::json::parseJsonRpcRequest(
+   rscore::json::JsonRpcRequest jsonRpcRequest;
+   rscore::Error error = rscore::json::parseJsonRpcRequest(
                                          ptrConnection->request().body(),
                                          &jsonRpcRequest);
    if (!error)
    {
-      error = core::json::readParam(jsonRpcRequest.params, 0, &nextProj);
+      error = rscore::json::readParam(jsonRpcRequest.params, 0, &nextProj);
       if (error)
          LOG_ERROR(error);
 
@@ -111,13 +111,13 @@ void handleAbortNextProjParam(
          // constants rather than code so that this code (which runs in
          // a background thread) don't call into the projects module (which
          // is designed to be foreground and single-threaded)
-         core::FilePath userScratch = session::options().userScratchPath();
-         core::FilePath settings = userScratch.complete(kProjectsSettings);
+         rscore::FilePath userScratch = session::options().userScratchPath();
+         rscore::FilePath settings = userScratch.complete(kProjectsSettings);
          error = settings.ensureDirectory();
          if (error)
             LOG_ERROR(error);
-         core::FilePath writePath = settings.complete(kNextSessionProject);
-         core::Error error = core::writeStringToFile(writePath, nextProj);
+         rscore::FilePath writePath = settings.complete(kNextSessionProject);
+         rscore::Error error = rscore::writeStringToFile(writePath, nextProj);
          if (error)
             LOG_ERROR(error);
       }
@@ -185,12 +185,12 @@ bool checkForSuspend(boost::shared_ptr<HttpConnection> ptrConnection)
 
 bool checkForSuspend(boost::shared_ptr<HttpConnection> ptrConnection)
 {
-   using namespace core::json;
+   using namespace rscore::json;
    if (isMethod(ptrConnection, "suspend_session"))
    {
       bool force = false;
       JsonRpcRequest jsonRpcRequest;
-      core::Error error = parseJsonRpcRequest(ptrConnection->request().body(),
+      rscore::Error error = parseJsonRpcRequest(ptrConnection->request().body(),
                                               &jsonRpcRequest);
       if (error)
       {
@@ -203,7 +203,7 @@ bool checkForSuspend(boost::shared_ptr<HttpConnection> ptrConnection)
       else
       {
          // send a signal to this process to suspend
-         using namespace core::system;
+         using namespace rscore::system;
          sendSignalToSelf(force ? SigUsr2 : SigUsr1);
 
          // send response

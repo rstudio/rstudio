@@ -60,7 +60,7 @@ extern "C" SA_TYPE SaveAction;
 #endif
 
 
-using namespace core;
+using namespace rscore;
 
 namespace session {
 namespace modules { 
@@ -438,15 +438,15 @@ void ammendShellPaths(T* pTarget)
    // non-path git bin dir
    std::string gitBinDir = git::nonPathGitBinDir();
    if (!gitBinDir.empty())
-      core::system::addToPath(pTarget, gitBinDir);
+      rscore::system::addToPath(pTarget, gitBinDir);
 
    // non-path svn bin dir
    std::string svnBinDir = svn::nonPathSvnBinDir();
    if (!svnBinDir.empty())
-      core::system::addToPath(pTarget, svnBinDir);
+      rscore::system::addToPath(pTarget, svnBinDir);
 
    // msys_ssh path
-   core::system::addToPath(pTarget,
+   rscore::system::addToPath(pTarget,
                            session::options().msysSshPath().absolutePath());
 }
 
@@ -508,7 +508,7 @@ Error createSshKey(const json::JsonRpcRequest& request,
 
 #ifdef RSTUDIO_SERVER
    // In server mode, passphrases are encrypted
-   using namespace core::system::crypto;
+   using namespace rscore::system::crypto;
    error = rsaPrivateDecrypt(passphrase, &passphrase);
    if (error)
       return error;
@@ -555,7 +555,7 @@ Error createSshKey(const json::JsonRpcRequest& request,
    cmd << "-f" << sshKeyPath;
 
    // process options
-   core::system::ProcessOptions options;
+   rscore::system::ProcessOptions options;
 
    // detach the session so there is no terminal
 #ifndef _WIN32
@@ -564,22 +564,22 @@ Error createSshKey(const json::JsonRpcRequest& request,
 
    // customize the environment on Win32
 #ifdef _WIN32
-   core::system::Options childEnv;
-   core::system::environment(&childEnv);
+   rscore::system::Options childEnv;
+   rscore::system::environment(&childEnv);
 
    // set HOME to USERPROFILE
-   std::string userProfile = core::system::getenv(childEnv, "USERPROFILE");
-   core::system::setenv(&childEnv, "HOME", userProfile);
+   std::string userProfile = rscore::system::getenv(childEnv, "USERPROFILE");
+   rscore::system::setenv(&childEnv, "HOME", userProfile);
 
    // add msys_ssh to path
-   core::system::addToPath(&childEnv,
+   rscore::system::addToPath(&childEnv,
                            session::options().msysSshPath().absolutePath());
 
    options.environment = childEnv;
 #endif
 
    // run it
-   core::system::ProcessResult result;
+   rscore::system::ProcessResult result;
    error = runCommand(shell_utils::sendStdErrToStdOut(cmd),
                       options,
                       &result);
@@ -610,7 +610,7 @@ void editFilePostback(const std::string& file,
    // read file contents
    FilePath filePath(file);
    std::string fileContents;
-   Error error = core::readStringFromFile(filePath, &fileContents);
+   Error error = rscore::readStringFromFile(filePath, &fileContents);
    if (error)
    {
       LOG_ERROR(error);
@@ -643,7 +643,7 @@ void editFilePostback(const std::string& file,
    }
 
    // write the content back to the file
-   error = core::writeStringToFile(filePath, editedFileContents);
+   error = rscore::writeStringToFile(filePath, editedFileContents);
    if (error)
    {
       LOG_ERROR(error);
@@ -663,36 +663,36 @@ Error startShellDialog(const json::JsonRpcRequest& request,
    using namespace session::console_process;
 
    // configure environment for shell
-   core::system::Options shellEnv;
-   core::system::environment(&shellEnv);
+   rscore::system::Options shellEnv;
+   rscore::system::environment(&shellEnv);
 
    // set dumb terminal
-   core::system::setenv(&shellEnv, "TERM", "dumb");
+   rscore::system::setenv(&shellEnv, "TERM", "dumb");
 
    // set prompt
    std::string path = module_context::createAliasedPath(
                                  module_context::safeCurrentPath());
    std::string prompt = (path.length() > 30) ? "\\W$ " : "\\w$ ";
-   core::system::setenv(&shellEnv, "PS1", prompt);
+   rscore::system::setenv(&shellEnv, "PS1", prompt);
 
    // disable screen oriented facillites
-   core::system::unsetenv(&shellEnv, "EDITOR");
-   core::system::unsetenv(&shellEnv, "VISUAL");
-   core::system::setenv(&shellEnv, "PAGER", "/bin/cat");
+   rscore::system::unsetenv(&shellEnv, "EDITOR");
+   rscore::system::unsetenv(&shellEnv, "VISUAL");
+   rscore::system::setenv(&shellEnv, "PAGER", "/bin/cat");
 
-   core::system::setenv(&shellEnv, "GIT_EDITOR", s_editFileCommand);
-   core::system::setenv(&shellEnv, "SVN_EDITOR", s_editFileCommand);
+   rscore::system::setenv(&shellEnv, "GIT_EDITOR", s_editFileCommand);
+   rscore::system::setenv(&shellEnv, "SVN_EDITOR", s_editFileCommand);
 
    // ammend shell paths as appropriate
    ammendShellPaths(&shellEnv);
 
    // set options
-   core::system::ProcessOptions options;
+   rscore::system::ProcessOptions options;
    options.workingDir = module_context::shellWorkingDirectory();
    options.environment = shellEnv;
 
    // configure bash command
-   core::shell_utils::ShellCommand bashCommand("/bin/bash");
+   rscore::shell_utils::ShellCommand bashCommand("/bin/bash");
    bashCommand << "--norc";
 
    // run process

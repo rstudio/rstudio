@@ -20,7 +20,7 @@
 
 #include "clang-c/CXString.h"
 
-namespace core {
+namespace rscore {
 namespace libclang {
 
 // note that this function disposes the underlying CXString so it
@@ -28,6 +28,6 @@ namespace libclang {
 std::string toStdString(CXString cxStr);
 
 } // namespace libclang
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_LIBCLANG_UTILS_HPP

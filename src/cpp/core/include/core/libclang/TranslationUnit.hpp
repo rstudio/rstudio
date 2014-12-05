@@ -26,7 +26,7 @@
 #include "CodeCompleteResults.hpp"
 #include "UnsavedFiles.hpp"
 
-namespace core {
+namespace rscore {
 namespace libclang {
 
 class TranslationUnit
@@ -76,7 +76,7 @@ private:
 };
 
 } // namespace libclang
-} // namespace core
+} // namespace rscore
 
 
 #endif // CORE_LIBCLANG_TRANSLATION_UNIT_HPP

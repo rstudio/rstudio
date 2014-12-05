@@ -17,7 +17,7 @@
 #define CORE_SYSTEM_RECYCLE_BIN_HPP
 
 
-namespace core {
+namespace rscore {
 
 class Error;
 class FilePath;
@@ -29,7 +29,7 @@ Error sendTo(const FilePath& filePath);
 
 } // namespace recycle_bin
 } // namespace system
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_SYSTEM_RECYCLE_BIN_HPP
 

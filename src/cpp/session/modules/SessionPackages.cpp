@@ -42,7 +42,7 @@
 
 #include "session-config.h"
 
-using namespace core;
+using namespace rscore;
 
 namespace session {
 namespace modules { 
@@ -50,7 +50,7 @@ namespace packages {
 
 namespace {
 
-Error availablePackagesBegin(const core::json::JsonRpcRequest& request,
+Error availablePackagesBegin(const rscore::json::JsonRpcRequest& request,
                              std::vector<std::string>* pContribUrls)
 {
    return r::exec::evaluateString<std::vector<std::string> >(
@@ -208,9 +208,9 @@ SEXP rs_getCachedAvailablePackages(SEXP contribUrlSEXP)
       return R_NilValue;
 }
 
-Error availablePackagesEnd(const core::json::JsonRpcRequest& request,
+Error availablePackagesEnd(const rscore::json::JsonRpcRequest& request,
                            const std::vector<std::string>& contribUrls,
-                           core::json::JsonRpcResponse* pResponse)
+                           rscore::json::JsonRpcResponse* pResponse)
 {
    // download available packages
    std::vector<std::string> availablePackages;
@@ -340,9 +340,9 @@ void initializeRStudioPackages(bool newSession)
    
    if (newSession || (options().programMode() == kSessionProgramModeServer))
    {
-      std::string libDir = core::string_utils::utf8ToSystem(
+      std::string libDir = rscore::string_utils::utf8ToSystem(
                               options().sessionLibraryPath().absolutePath());
-      std::string pkgSrcDir = core::string_utils::utf8ToSystem(
+      std::string pkgSrcDir = rscore::string_utils::utf8ToSystem(
                               options().sessionPackagesPath().absolutePath());
       std::string rsVersion = RSTUDIO_VERSION;
       Error error = r::exec::RFunction(".rs.initializeRStudioPackages",

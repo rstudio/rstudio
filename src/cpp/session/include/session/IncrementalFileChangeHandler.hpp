@@ -37,8 +37,8 @@ namespace session {
 class IncrementalFileChangeHandler : boost::noncopyable
 {
 public:
-   typedef boost::function<bool(const core::FileInfo&)> Filter;
-   typedef boost::function<void(const core::system::FileChangeEvent&)> Handler;
+   typedef boost::function<bool(const rscore::FileInfo&)> Filter;
+   typedef boost::function<void(const rscore::system::FileChangeEvent&)> Handler;
 
 public:
    IncrementalFileChangeHandler(
@@ -79,7 +79,7 @@ public:
    void enqueFiles(ForwardIterator begin, ForwardIterator end)
    {
       // add all files that meet the filter to the queue
-      using namespace core::system;
+      using namespace rscore::system;
       for ( ; begin != end; ++begin)
       {
          if (filter_(*begin))
@@ -104,7 +104,7 @@ public:
       }
    }
 
-   void enqueFileChange(const core::system::FileChangeEvent& event)
+   void enqueFileChange(const rscore::system::FileChangeEvent& event)
    {
       // screen out files which don't pass the filter
       if (!filter_(event.fileInfo()))
@@ -131,7 +131,7 @@ public:
    void clear()
    {
       processing_ = false;
-      queue_ = std::queue<core::system::FileChangeEvent>();
+      queue_ = std::queue<rscore::system::FileChangeEvent>();
    }
 
 private:
@@ -141,7 +141,7 @@ private:
       if (!queue_.empty())
       {
          // remove the event from the queue
-         core::system::FileChangeEvent event = queue_.front();
+         rscore::system::FileChangeEvent event = queue_.front();
          queue_.pop();
 
          // process the change
@@ -155,12 +155,12 @@ private:
 
    // hooks for file monitor subscription
 
-   void onMonitoringEnabled(const tree<core::FileInfo>& files)
+   void onMonitoringEnabled(const tree<rscore::FileInfo>& files)
    {
       enqueFiles(files.begin_leaf(), files.end_leaf());
    }
 
-   void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
+   void onFilesChanged(const std::vector<rscore::system::FileChangeEvent>& events)
    {
       std::for_each(
         events.begin(),
@@ -170,7 +170,7 @@ private:
 
 private:
    bool processing_;
-   std::queue<core::system::FileChangeEvent> queue_;
+   std::queue<rscore::system::FileChangeEvent> queue_;
    Filter filter_;
    Handler handler_;
    boost::posix_time::time_duration initialWorkPeriod_;

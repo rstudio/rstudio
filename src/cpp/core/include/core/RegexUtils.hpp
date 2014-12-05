@@ -22,7 +22,7 @@
 #include <boost/regex_fwd.hpp>
 #include <boost/iostreams/filter/regex.hpp>
 
-namespace core {
+namespace rscore {
 
 class Error;
 class FilePath;
@@ -43,19 +43,19 @@ bool textMatches(const std::string& text,
                  bool prefixOnly,
                  bool caseSensitive);
 
-core::Error filterString(
+rscore::Error filterString(
                 const std::string& input,
                 const std::vector<boost::iostreams::regex_filter>& filters,
                 std::string* pOutput);
 
-core::Error filterString(
+rscore::Error filterString(
                 const std::string& input,
                 const boost::iostreams::regex_filter& filter,
                 std::string* pOutput);
 
 
 } // namespace regex_utils
-} // namespace core 
+} // namespace rscore
 
 
 #endif // CORE_REGEX_UTILS_HPP

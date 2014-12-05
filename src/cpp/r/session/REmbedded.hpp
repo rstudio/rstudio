@@ -29,7 +29,7 @@ typedef char CONSOLE_BUFFER_CHAR;
 typedef unsigned char CONSOLE_BUFFER_CHAR;
 #endif
 
-namespace core {
+namespace rscore {
    class Error;
    class FilePath;
 }
@@ -61,15 +61,15 @@ struct InternalCallbacks
    void (*cleanUp)(SA_TYPE, int, int);
 };
 
-void runEmbeddedR(const core::FilePath& rHome,
-                  const core::FilePath& userHome,
+void runEmbeddedR(const rscore::FilePath& rHome,
+                  const rscore::FilePath& userHome,
                   bool quiet,
                   bool loadInitFile,
                   SA_TYPE defaultSaveAction,
                   const Callbacks& callbacks,
                   InternalCallbacks* pInternal);
 
-core::Error completeEmbeddedRInitialization(bool useInternet2);
+rscore::Error completeEmbeddedRInitialization(bool useInternet2);
 
 } // namespace session
 } // namespace r

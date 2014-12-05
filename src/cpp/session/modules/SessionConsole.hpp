@@ -16,7 +16,7 @@
 #ifndef SESSION_CONSOLE_HPP
 #define SESSION_CONSOLE_HPP
 
-namespace core {
+namespace rscore {
    class Error;
 }
  
@@ -24,7 +24,7 @@ namespace session {
 namespace modules { 
 namespace console {
    
-core::Error initialize();
+rscore::Error initialize();
                        
 } // namespace console
 } // namespace modules

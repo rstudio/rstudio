@@ -27,7 +27,7 @@ namespace scheduler {
 //
 // note that this function does not synchronize access to the list of
 // scheduled commands so it should ONLY be called during server init
-void addCommand(boost::shared_ptr<core::ScheduledCommand> pCmd);
+void addCommand(boost::shared_ptr<rscore::ScheduledCommand> pCmd);
 
 } // namespace scheduler
 } // namespace server

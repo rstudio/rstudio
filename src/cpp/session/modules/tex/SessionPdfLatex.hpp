@@ -25,7 +25,7 @@
 #include <core/system/Types.hpp>
 #include <core/system/Process.hpp>
 
-namespace core {
+namespace rscore {
    class Error;
    class FilePath;
 }
@@ -68,17 +68,17 @@ struct PdfLatexOptions
    std::string versionInfo;
 };
 
-core::Error texToPdf(const core::FilePath& texProgramPath,
-                     const core::FilePath& texFilePath,
+rscore::Error texToPdf(const rscore::FilePath& texProgramPath,
+                     const rscore::FilePath& texFilePath,
                      const tex::pdflatex::PdfLatexOptions& options,
-                     core::system::ProcessResult* pResult);
+                     rscore::system::ProcessResult* pResult);
 
 bool isInstalled();
 
-core::json::Array supportedTypes();
+rscore::json::Array supportedTypes();
 
-bool latexProgramForFile(const core::tex::TexMagicComments& magicComments,
-                         core::FilePath* pTexProgramPath,
+bool latexProgramForFile(const rscore::tex::TexMagicComments& magicComments,
+                         rscore::FilePath* pTexProgramPath,
                          std::string* pUserErrMsg);
 
 } // namespace pdflatex

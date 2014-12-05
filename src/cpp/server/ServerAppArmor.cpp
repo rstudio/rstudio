@@ -24,7 +24,7 @@
 #include <dlfcn.h>
 #endif
 
-using namespace core;
+using namespace rscore;
 
 namespace server {
 namespace app_armor {

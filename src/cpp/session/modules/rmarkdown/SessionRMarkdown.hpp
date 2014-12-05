@@ -16,7 +16,7 @@
 #ifndef SESSION_SESSION_RMARKDOWN_HPP
 #define SESSION_SESSION_RMARKDOWN_HPP
 
-namespace core {
+namespace rscore {
    class Error;
 }
  
@@ -26,7 +26,7 @@ namespace rmarkdown {
 
 bool rmarkdownPackageAvailable();
 
-core::Error initialize();
+rscore::Error initialize();
 
 } // namespace rmarkdown
 } // namepace handlers

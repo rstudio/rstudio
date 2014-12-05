@@ -24,7 +24,7 @@
 
 #include <core/ProgramStatus.hpp>
 
-namespace core {
+namespace rscore {
    
 class Error;
 class ErrorLocation;
@@ -88,7 +88,7 @@ void reportWarnings(const std::string& warningMessages,
                     const ErrorLocation& location);
    
 } // namespace program_options
-} // namespace core 
+} // namespace rscore
 
 #endif // CORE_PROGRAM_OPTIONS_HPP
 

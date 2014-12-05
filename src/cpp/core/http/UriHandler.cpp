@@ -22,7 +22,7 @@
 
 #include <core/http/Request.hpp>
 
-namespace core {
+namespace rscore {
 namespace http {
 
 namespace {
@@ -94,5 +94,5 @@ UriAsyncHandlerFunction UriHandlers::handlerFor(const std::string& uri) const
 }
    
 } // namespace http
-} // namespace core
+} // namespace rscore
 

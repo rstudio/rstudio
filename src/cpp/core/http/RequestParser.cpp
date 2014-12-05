@@ -18,7 +18,7 @@
 
 #include <boost/lexical_cast.hpp>
 
-namespace core {
+namespace rscore {
 namespace http {
 
 RequestParser::RequestParser()
@@ -356,4 +356,4 @@ bool RequestParser::is_digit(int c)
 }
 
 } // namespace http
-} // namespace core
+} // namespace rscore

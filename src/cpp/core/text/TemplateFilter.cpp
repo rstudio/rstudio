@@ -20,7 +20,7 @@
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 
-namespace core {
+namespace rscore {
 namespace text {
 
 void handleTemplateRequest(const FilePath& templatePath,
@@ -55,6 +55,6 @@ void handleSecureTemplateRequest(const std::string& username,
 
 
 } // namespace text
-} // namespace core
+} // namespace rscore
 
 

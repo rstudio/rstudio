@@ -31,7 +31,7 @@
 
 #include <r/RErrorCategory.hpp>
 
-using namespace core;
+using namespace rscore;
 
 namespace r {
 namespace session {
@@ -201,7 +201,7 @@ RestorePreviousGraphicsDeviceScope::~RestorePreviousGraphicsDeviceScope()
    }
 }
 
-void reportError(const core::Error& error)
+void reportError(const rscore::Error& error)
 {
    std::string endUserMessage = r::endUserErrorMessage(error);
    std::string errmsg = ("Graphics error: " + endUserMessage + "\n");
@@ -211,7 +211,7 @@ void reportError(const core::Error& error)
 void logAndReportError(const Error& error, const ErrorLocation& location)
 {
    // log
-   core::log::logError(error, location);
+   rscore::log::logError(error, location);
 
    // report to user
    reportError(error);

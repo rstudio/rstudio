@@ -18,7 +18,7 @@
 
 #include <core/json/Json.hpp>
 
-namespace core {
+namespace rscore {
    class Error;
 }
  
@@ -26,9 +26,9 @@ namespace session {
 namespace modules { 
 namespace spelling {
 
-core::json::Object spellingPrefsContextAsJson();
+rscore::json::Object spellingPrefsContextAsJson();
 
-core::Error initialize();
+rscore::Error initialize();
                        
 } // namespace spelling
 } // namespace modules

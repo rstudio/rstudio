@@ -23,7 +23,7 @@
 #include <boost/utility.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-namespace core {
+namespace rscore {
    
 class PerformanceTimer : boost::noncopyable
 {
@@ -56,9 +56,9 @@ private:
 
 std::ostream& operator << (std::ostream& os, const PerformanceTimer& t) ;
 
-} // namespace core 
+} // namespace rscore
 
-#define TIME_FUNCTION core::PerformanceTimer t(BOOST_CURRENT_FUNCTION);
+#define TIME_FUNCTION rscore::PerformanceTimer t(BOOST_CURRENT_FUNCTION);
 
 #endif // CORE_PERFORMANCE_TIMER_HPP
 

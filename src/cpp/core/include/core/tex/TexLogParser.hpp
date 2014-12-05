@@ -21,7 +21,7 @@
 
 #include <core/FilePath.hpp>
 
-namespace core {
+namespace rscore {
 
 class Error;
 
@@ -79,7 +79,7 @@ Error parseLatexLog(const FilePath& logFilePath, LogEntries* pLogEntries);
 Error parseBibtexLog(const FilePath& logFilePath, LogEntries* pLogEntries);
 
 } // namespace tex
-} // namespace core 
+} // namespace rscore
 
 
 #endif // CORE_TEX_TEX_LOG_PARSER_HPP

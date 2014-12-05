@@ -16,7 +16,7 @@
 #ifndef R_SESSION_GRAPHICS_PLOT_MANIPULATOR_MANAGER_HPP
 #define R_SESSION_GRAPHICS_PLOT_MANIPULATOR_MANAGER_HPP
 
-#include <boost/signal.hpp>
+#include <boost/signals2/signal.hpp>
 
 #include <core/Error.hpp>
 #include <core/json/Json.hpp>
@@ -25,7 +25,7 @@
 
 #include "RGraphicsTypes.hpp"
 
-namespace core {
+namespace rscore {
    class Error;
 }
 
@@ -48,10 +48,10 @@ public:
    virtual ~PlotManipulatorManager() {}
 
 public:
-   core::Error initialize(const UnitConversionFunctions& convert);
+   rscore::Error initialize(const UnitConversionFunctions& convert);
 
-   boost::signal<void ()>& onShowManipulator() ;
-   void setPlotManipulatorValues(const core::json::Object& values);
+   boost::signals2::signal<void ()>& onShowManipulator() ;
+   void setPlotManipulatorValues(const rscore::json::Object& values);
    void manipulatorPlotClicked(int x, int y);
    
    void executeAndAttachManipulator(SEXP manipulatorSEXP);
@@ -82,7 +82,7 @@ private:
    bool replayingManipulator_;
 
    // manipulator event hook
-   boost::signal<void ()> onShowManipulator_;
+   boost::signals2::signal<void ()> onShowManipulator_;
 
    // unit conversion function
    UnitConversionFunctions convert_;

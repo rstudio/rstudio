@@ -16,14 +16,14 @@
 #ifndef SERVER_OFFLINE_HPP
 #define SERVER_OFFLINE_HPP
 
-namespace core {
+namespace rscore {
    class Error;
 }
 
 namespace server {
 namespace offline {
    
-core::Error httpServerAddHandlers();
+rscore::Error httpServerAddHandlers();
 
 } // namespace offline
 } // namespace server

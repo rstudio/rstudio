@@ -24,14 +24,14 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/regex.hpp>
 
-namespace core {
+namespace rscore {
 namespace tex {
 
 Error parseMagicComments(const FilePath& texFile,
                          TexMagicComments* pComments)
 {
    std::vector<std::string> lines;
-   Error error = core::readStringVectorFromFile(texFile, &lines);
+   Error error = rscore::readStringVectorFromFile(texFile, &lines);
    if (error)
       return error;
 
@@ -63,7 +63,7 @@ Error parseMagicComments(const FilePath& texFile,
 
    
 } // namespace tex
-} // namespace core 
+} // namespace rscore
 
 
 

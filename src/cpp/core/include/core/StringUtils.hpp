@@ -20,7 +20,7 @@
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 
-namespace core {
+namespace rscore {
 namespace string_utils {
 
 enum LineEnding {
@@ -196,7 +196,7 @@ void trimLeadingLines(int maxLines, std::string* pLines);
 void stripQuotes(std::string* pStr);
 
 } // namespace string_utils
-} // namespace core 
+} // namespace rscore
 
 #endif // CORE_STRING_UTILS_HPP
 

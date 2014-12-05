@@ -18,7 +18,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-namespace core {
+namespace rscore {
    class Error;
    class FilePath;
    class Settings;
@@ -34,19 +34,19 @@ namespace session {
 namespace module_context {
  
 // initialize
-core::Error initialize();
+rscore::Error initialize();
       
 // suspend and resume
 
 void onSuspended(const r::session::RSuspendOptions& options,
-                 core::Settings* pPersistentState);
-void onResumed(const core::Settings& persistentState);
+                 rscore::Settings* pPersistentState);
+void onResumed(const rscore::Settings& persistentState);
 
 // notify of backgound processing
 void onBackgroundProcessing(bool isIdle);
 
 // source diagnostics
-core::FilePath sourceDiagnostics();
+rscore::FilePath sourceDiagnostics();
 
 } // namespace module_context
 } // namespace session

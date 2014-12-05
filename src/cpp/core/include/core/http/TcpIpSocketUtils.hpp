@@ -22,7 +22,7 @@
 
 #include <core/http/SocketAcceptorService.hpp>
 
-namespace core {
+namespace rscore {
 namespace http {  
      
 template <typename SocketType>
@@ -109,6 +109,6 @@ inline Error initTcpIpAcceptor(
 }
    
 } // namespace http
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_HTTP_TCP_IP_SOCKET_UTILS_HPP

@@ -21,12 +21,12 @@
 
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/signals.hpp>
+#include <boost/signals2.hpp>
 
 #include <core/FilePath.hpp>
 #include <core/json/Json.hpp>
 
-namespace core {
+namespace rscore {
    class Error;
    class FilePath;
 }
@@ -52,7 +52,7 @@ public:
    double created() const { return created_; }
    bool sourceOnSave() const { return sourceOnSave_; }
    int relativeOrder() const { return relativeOrder_; } 
-   const core::json::Object& properties() const { return properties_; }
+   const rscore::json::Object& properties() const { return properties_; }
    const std::string& folds() const { return folds_; }
    std::string getProperty(const std::string& name) const;
 
@@ -63,10 +63,10 @@ public:
    void setContents(const std::string& contents);
 
    // set contents from file
-   core::Error setPathAndContents(const std::string& path,
+   rscore::Error setPathAndContents(const std::string& path,
                                   bool allowSubstChars = true);
 
-   core::Error updateDirty();
+   rscore::Error updateDirty();
 
    // set dirty
    void setDirty(bool dirty)
@@ -104,20 +104,20 @@ public:
    // properties that already exist but are not present in the given object are
    // left unchanged. if an entry in the given object has a null value, that
    // property should be removed.
-   void editProperties(core::json::Object& properties);
+   void editProperties(rscore::json::Object& properties);
 
    void setType(const std::string& type)
    {
       type_ = type;
    }
 
-   core::Error readFromJson(core::json::Object* pDocJson);
-   void writeToJson(core::json::Object* pDocJson) const;
+   rscore::Error readFromJson(rscore::json::Object* pDocJson);
+   void writeToJson(rscore::json::Object* pDocJson) const;
 
-   core::Error writeToFile(const core::FilePath& filePath) const;
+   rscore::Error writeToFile(const rscore::FilePath& filePath) const;
 
 private:
-   void editProperty(const core::json::Object::value_type& property);
+   void editProperty(const rscore::json::Object::value_type& property);
 
 private:
    std::string id_;
@@ -132,7 +132,7 @@ private:
    double created_;
    bool sourceOnSave_;
    int relativeOrder_;
-   core::json::Object properties_;
+   rscore::json::Object properties_;
 };
 
 bool sortByCreated(const boost::shared_ptr<SourceDocument>& pDoc1,
@@ -141,26 +141,26 @@ bool sortByRelativeOrder(const boost::shared_ptr<SourceDocument>& pDoc1,
                          const boost::shared_ptr<SourceDocument>& pDoc2);
 
 
-core::FilePath path();
-core::Error get(const std::string& id, boost::shared_ptr<SourceDocument> pDoc);
-core::Error getDurableProperties(const std::string& path,
-                                 core::json::Object* pProperties);
-core::Error list(std::vector<boost::shared_ptr<SourceDocument> >* pDocs);
-core::Error put(boost::shared_ptr<SourceDocument> pDoc);
-core::Error remove(const std::string& id);
-core::Error removeAll();
+rscore::FilePath path();
+rscore::Error get(const std::string& id, boost::shared_ptr<SourceDocument> pDoc);
+rscore::Error getDurableProperties(const std::string& path,
+                                 rscore::json::Object* pProperties);
+rscore::Error list(std::vector<boost::shared_ptr<SourceDocument> >* pDocs);
+rscore::Error put(boost::shared_ptr<SourceDocument> pDoc);
+rscore::Error remove(const std::string& id);
+rscore::Error removeAll();
 
 // source database events
 struct Events : boost::noncopyable
 {
-   boost::signal<void(boost::shared_ptr<SourceDocument>)> onDocUpdated;
-   boost::signal<void(const std::string&)>                onDocRemoved;
-   boost::signal<void()>                                  onRemoveAll;
+   boost::signals2::signal<void(boost::shared_ptr<SourceDocument>)> onDocUpdated;
+   boost::signals2::signal<void(const std::string&)>                onDocRemoved;
+   boost::signals2::signal<void()>                                  onRemoveAll;
 };
 
 Events& events();
 
-core::Error initialize();
+rscore::Error initialize();
 
 } // namespace source_database
 } // namesapce session

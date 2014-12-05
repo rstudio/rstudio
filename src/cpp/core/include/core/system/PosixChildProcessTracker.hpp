@@ -24,7 +24,7 @@
 #include <core/Thread.hpp>
 #include <core/system/System.hpp>
 
-namespace core {
+namespace rscore {
 
 class Error;
 class FilePath;
@@ -53,7 +53,7 @@ private:
 
 
 } // namespace system
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_SYSTEM_CHILD_PROCESS_TRACKER_HPP
 

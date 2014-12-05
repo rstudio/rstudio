@@ -35,7 +35,7 @@ extern "C" const char *locale2charset(const char *);
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace core ;
+using namespace rscore ;
 
 namespace session {
 namespace content_urls {
@@ -63,7 +63,7 @@ std::string buildContentUrl(const std::string& title,
 
 Error contentFileInfo(const std::string& contentUrl,
                       std::string* pTitle,
-                      core::FilePath* pFilePath)
+                      rscore::FilePath* pFilePath)
 {
    // extract and parse query string
    std::string queryString;
@@ -102,7 +102,7 @@ Error contentFileInfo(const std::string& contentUrl,
 std::string provision(const std::string& title, const FilePath& filePath)
 {
    // calculate content path
-   std::string contentFile = core::system::generateUuid(false) +
+   std::string contentFile = rscore::system::generateUuid(false) +
                              filePath.extension();
    FilePath contentPath = contentUrlPath().complete(contentFile);
 
@@ -120,7 +120,7 @@ std::string provision(const std::string& title,
                       const std::string& extension)
 {
    // calculate content path
-   std::string contentFile = core::system::generateUuid(false) + extension;
+   std::string contentFile = rscore::system::generateUuid(false) + extension;
    FilePath contentPath = contentUrlPath().complete(contentFile);
 
    // write the file
@@ -158,7 +158,7 @@ void handleContentRequest(const http::Request& request, http::Response* pRespons
       // If the content looks like valid UTF-8, assume it is. Otherwise, assume
       // it's the system encoding.
       std::string contents;
-      error = core::readStringFromFile(contentFilePath, &contents);
+      error = rscore::readStringFromFile(contentFilePath, &contents);
       if (!error)
       {
          for (std::string::iterator pos = contents.begin(); pos != contents.end(); )

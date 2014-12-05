@@ -77,7 +77,7 @@
 
 #include "config.h"
 
-namespace core {
+namespace rscore {
 namespace system {
 
 namespace {
@@ -214,7 +214,7 @@ void setLogToStderr(bool logToStderr)
       s_pLogWriter->setLogToStderr(logToStderr);
 }
 
-void addLogWriter(boost::shared_ptr<core::LogWriter> pLogWriter)
+void addLogWriter(boost::shared_ptr<rscore::LogWriter> pLogWriter)
 {
    s_logWriters.push_back(pLogWriter);
 }
@@ -389,7 +389,7 @@ Error handleSignal(SignalType signal, void (*handler)(int))
    return Success();
 }
    
-core::Error ignoreSignal(SignalType signal)
+rscore::Error ignoreSignal(SignalType signal)
 {
    int sig = signalForType(signal);
    if (sig < 0)
@@ -477,7 +477,7 @@ bool currentUserIsPrivilleged(unsigned int minimumUserId)
 
 namespace {
 
-// NOTE: this function is duplicated between here and core::system
+// NOTE: this function is duplicated between here and rscore::system
 // Did this to prevent the "system" interface from allowing Posix
 // constructs with Win32 no-ops to creep in (since this is used on
 // Posix for forking and has no purpose on Win32)
@@ -554,8 +554,8 @@ void attachStdFileDescriptorsToDevNull()
 
 void setStandardStreamsToDevNull()
 {
-   core::system::closeStdFileDescriptors();
-   core::system::attachStdFileDescriptorsToDevNull();
+   rscore::system::closeStdFileDescriptors();
+   rscore::system::attachStdFileDescriptorsToDevNull();
    std::ios::sync_with_stdio();
 }
 
@@ -724,7 +724,7 @@ Error daemonize()
       return error;
 
    // attach file descriptors 0, 1, and 2 to /dev/null
-   core::system::attachStdFileDescriptorsToDevNull();
+   rscore::system::attachStdFileDescriptorsToDevNull();
 
    // note: ignoring of terminal signals are handled by an optional
    // separate call (ignoreTerminalSignals)
@@ -884,13 +884,13 @@ void toPids(const std::vector<std::string>& lines, std::vector<PidType>* pPids)
 } // anonymous namespace
 
 #ifndef __APPLE__
-core::Error pidof(const std::string& process, std::vector<PidType>* pPids)
+rscore::Error pidof(const std::string& process, std::vector<PidType>* pPids)
 {
    // use pidof to capture pids
    std::string cmd = "pidof " + process;
-   core::system::ProcessResult result;
-   Error error = core::system::runCommand(cmd,
-                                          core::system::ProcessOptions(),
+   rscore::system::ProcessResult result;
+   Error error = rscore::system::runCommand(cmd,
+                                          rscore::system::ProcessOptions(),
                                           &result);
    if (error)
       return error;
@@ -936,7 +936,7 @@ Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo)
 
          // read the cmdline
          std::string cmdline;
-         Error error = core::readStringFromFile(cmdlineFile, &cmdline);
+         Error error = rscore::readStringFromFile(cmdlineFile, &cmdline);
          if (error)
          {
             LOG_ERROR(error);
@@ -968,8 +968,8 @@ Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo)
             }
 
             // get the username
-            core::system::user::User user;
-            Error error = core::system::user::userFromId(st.st_uid, &user);
+            rscore::system::user::User user;
+            Error error = rscore::system::user::userFromId(st.st_uid, &user);
             if (error)
             {
                LOG_ERROR(error);
@@ -993,14 +993,14 @@ Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo)
 }
 
 #else
-core::Error pidof(const std::string& process, std::vector<PidType>* pPids)
+rscore::Error pidof(const std::string& process, std::vector<PidType>* pPids)
 {
    // use ps to capture pids
    std::string cmd = "ps acx | awk \"{if (\\$5==\\\"" +
                       process + "\\\") print \\$1}\"";
-   core::system::ProcessResult result;
-   Error error = core::system::runCommand(cmd,
-                                          core::system::ProcessOptions(),
+   rscore::system::ProcessResult result;
+   Error error = rscore::system::runCommand(cmd,
+                                          rscore::system::ProcessOptions(),
                                           &result);
    if (error)
       return error;
@@ -1080,7 +1080,7 @@ Error ipAddresses(std::vector<IpAddress>* pAddresses)
 Error restrictCoreDumps()
 {
    // set allowed size of core dumps to 0 bytes
-   Error error = setResourceLimit(core::system::CoreLimit, 0);
+   Error error = setResourceLimit(rscore::system::CoreLimit, 0);
    if (error)
       return error;
 
@@ -1102,7 +1102,7 @@ void printCoreDumpable(const std::string& context)
 
    // ulimit
    RLimitType rLimitSoft, rLimitHard;
-   Error error = getResourceLimit(core::system::CoreLimit,
+   Error error = getResourceLimit(rscore::system::CoreLimit,
                                   &rLimitSoft, &rLimitHard);
    if (error)
       LOG_ERROR(error);
@@ -1196,12 +1196,12 @@ namespace {
 
 
 void copyEnvironmentVar(const std::string& name,
-                        core::system::Options* pVars,
+                        rscore::system::Options* pVars,
                         bool evenIfEmpty = false)
 {
-   std::string value = core::system::getenv(name);
+   std::string value = rscore::system::getenv(name);
    if (!value.empty() || evenIfEmpty)
-      core::system::setenv(pVars, name, value);
+      rscore::system::setenv(pVars, name, value);
 }
 
 }
@@ -1310,7 +1310,7 @@ Error launchChildProcess(std::string path,
 
       // clear the signal mask so the child process can handle whatever
       // signals it wishes to
-      Error error = core::system::clearSignalMask();
+      Error error = rscore::system::clearSignalMask();
       if (error)
       {
          LOG_ERROR(error);
@@ -1339,12 +1339,12 @@ Error launchChildProcess(std::string path,
       switch(config.stdStreamBehavior)
       {
          case StdStreamClose:
-            core::system::closeStdFileDescriptors();
+            rscore::system::closeStdFileDescriptors();
             break;
 
          case StdStreamDevNull:
-            core::system::closeStdFileDescriptors();
-            core::system::attachStdFileDescriptorsToDevNull();
+            rscore::system::closeStdFileDescriptors();
+            rscore::system::attachStdFileDescriptorsToDevNull();
             break;
 
          case StdStreamInherit:
@@ -1354,21 +1354,21 @@ Error launchChildProcess(std::string path,
       }
 
       // setup environment
-      core::system::Options env;
+      rscore::system::Options env;
       copyEnvironmentVar("PATH", &env);
       copyEnvironmentVar("MANPATH", &env);
       copyEnvironmentVar("LANG", &env);
-      core::system::setenv(&env, "USER", user.username);
-      core::system::setenv(&env, "LOGNAME", user.username);
-      core::system::setenv(&env, "HOME", user.homeDirectory);
+      rscore::system::setenv(&env, "USER", user.username);
+      rscore::system::setenv(&env, "LOGNAME", user.username);
+      rscore::system::setenv(&env, "HOME", user.homeDirectory);
       copyEnvironmentVar("SHELL", &env);
 
       // add custom environment vars (overriding as necessary)
-      for (core::system::Options::const_iterator it = config.environment.begin();
+      for (rscore::system::Options::const_iterator it = config.environment.begin();
            it != config.environment.end();
            ++it)
       {
-         core::system::setenv(&env, it->first, it->second);
+         rscore::system::setenv(&env, it->first, it->second);
       }
 
       // NOTE: this implemenentation ignores the config.stdInput field (that
@@ -1377,7 +1377,7 @@ Error launchChildProcess(std::string path,
       // format as ProcessArgs expects
       boost::format fmt("%1%=%2%");
       std::vector<std::string> envVars;
-      for(core::system::Options::const_iterator it = env.begin();
+      for(rscore::system::Options::const_iterator it = env.begin();
            it != env.end();
            ++it)
       {
@@ -1386,13 +1386,13 @@ Error launchChildProcess(std::string path,
 
       // create environment args  (allocate on heap so memory stays around
       // after we exec (some systems including OSX seem to require this)
-      core::system::ProcessArgs* pEnvironment = new core::system::ProcessArgs(
+      rscore::system::ProcessArgs* pEnvironment = new rscore::system::ProcessArgs(
                                                                        envVars);
 
       // build process args
       std::vector<std::string> argVector;
       argVector.push_back(path);
-      for (core::system::Options::const_iterator it = config.args.begin();
+      for (rscore::system::Options::const_iterator it = config.args.begin();
            it != config.args.end();
            ++it)
       {
@@ -1403,7 +1403,7 @@ Error launchChildProcess(std::string path,
 
       // allocate ProcessArgs on heap so memory stays around after we exec
       // (some systems including OSX seem to require this)
-      core::system::ProcessArgs* pProcessArgs = new core::system::ProcessArgs(
+      rscore::system::ProcessArgs* pProcessArgs = new rscore::system::ProcessArgs(
                                                                   argVector);
 
       // execute child
@@ -1763,5 +1763,5 @@ Error restorePriv()
 
 
 } // namespace system
-} // namespace core
+} // namespace rscore
 

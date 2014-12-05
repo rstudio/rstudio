@@ -47,7 +47,7 @@
 #include "SessionSource.hpp"
 #include "clang/DefinitionIndex.hpp"
 
-using namespace core ;
+using namespace rscore ;
 
 namespace session {  
 namespace modules {
@@ -103,7 +103,7 @@ public:
    void enqueFiles(ForwardIterator begin, ForwardIterator end)
    {
       // add all source files to the indexing queue
-      using namespace core::system;
+      using namespace rscore::system;
       for ( ; begin != end; ++begin)
       {
          if (isSourceFile(*begin))
@@ -128,7 +128,7 @@ public:
       }
    }
 
-   void enqueFileChange(const core::system::FileChangeEvent& event)
+   void enqueFileChange(const rscore::system::FileChangeEvent& event)
    {
       // screen out files which aren't source files
       if (!isSourceFile(event.fileInfo()))
@@ -289,7 +289,7 @@ public:
    void clear()
    {
       indexing_ = false;
-      indexingQueue_ = std::queue<core::system::FileChangeEvent>();
+      indexingQueue_ = std::queue<rscore::system::FileChangeEvent>();
       entries_.clear();
    }
 
@@ -304,20 +304,20 @@ private:
       }
 
       Entry(const FileInfo& fileInfo,
-            boost::shared_ptr<core::r_util::RSourceIndex> pIndex)
+            boost::shared_ptr<rscore::r_util::RSourceIndex> pIndex)
          : fileInfo(fileInfo), pIndex(pIndex)
       {
       }
 
       FileInfo fileInfo;
 
-      boost::shared_ptr<core::r_util::RSourceIndex> pIndex;
+      boost::shared_ptr<rscore::r_util::RSourceIndex> pIndex;
 
       bool hasIndex() const { return pIndex.get() != NULL; }
 
       bool operator < (const Entry& other) const
       {
-         return core::fileInfoPathLessThan(fileInfo, other.fileInfo);
+         return rscore::fileInfoPathLessThan(fileInfo, other.fileInfo);
       }
    };
 
@@ -325,7 +325,7 @@ private:
 
    bool dequeAndIndex()
    {
-      using namespace core::system;
+      using namespace rscore::system;
 
       if (!indexingQueue_.empty())
       {
@@ -378,7 +378,7 @@ private:
          {
             // log if not path not found error (this can happen if the
             // file was removed after entering the indexing queue)
-            if (!core::isPathNotFoundError(error))
+            if (!rscore::isPathNotFoundError(error))
             {
                error.addProperty("src-file", filePath.absolutePath());
                LOG_ERROR(error);
@@ -471,7 +471,7 @@ private:
 
    // indexing queue
    bool indexing_;
-   std::queue<core::system::FileChangeEvent> indexingQueue_;
+   std::queue<rscore::system::FileChangeEvent> indexingQueue_;
 };
 
 // global source file index
@@ -1742,12 +1742,12 @@ Error findFunctionInSearchPath(const json::JsonRpcRequest& request,
    return Success();
 }
 
-void onFileMonitorEnabled(const tree<core::FileInfo>& files)
+void onFileMonitorEnabled(const tree<rscore::FileInfo>& files)
 {
    s_projectIndex.enqueFiles(files.begin_leaf(), files.end_leaf());
 }
 
-void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
+void onFilesChanged(const std::vector<rscore::system::FileChangeEvent>& events)
 {
    std::for_each(
          events.begin(),

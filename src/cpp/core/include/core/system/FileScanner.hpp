@@ -25,7 +25,7 @@
 #include <core/collection/Tree.hpp>
 
 
-namespace core {
+namespace rscore {
 
 // recursively enumerate files from the specified root. these functions
 // are symlink aware -- this has two implications:
@@ -61,6 +61,6 @@ inline Error scanFiles(const FileInfo& fromRoot,
 
 
 } // namespace system
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_SYSTEM_FILE_SCANNER_HPP

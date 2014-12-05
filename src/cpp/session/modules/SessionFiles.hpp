@@ -16,7 +16,7 @@
 #ifndef SESSION_SESSION_FILES_HPP
 #define SESSION_SESSION_FILES_HPP
 
-namespace core {
+namespace rscore {
    class Error;
    class FilePath;
 }
@@ -25,9 +25,9 @@ namespace session {
 namespace modules {      
 namespace files {
    
-bool isMonitoringDirectory(const core::FilePath& directory);
+bool isMonitoringDirectory(const rscore::FilePath& directory);
 
-core::Error initialize();
+rscore::Error initialize();
                        
 } // namespace files
 } // namepace handlers

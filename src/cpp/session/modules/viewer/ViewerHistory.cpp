@@ -23,7 +23,7 @@
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace core;
+using namespace rscore;
 
 namespace session {
 namespace modules { 
@@ -103,12 +103,12 @@ module_context::ViewerHistoryEntry ViewerHistory::goBack()
 
 namespace {
 
-FilePath historyEntriesPath(const core::FilePath& serializationPath)
+FilePath historyEntriesPath(const rscore::FilePath& serializationPath)
 {
    return serializationPath.complete("history_entries");
 }
 
-FilePath currentIndexPath(const core::FilePath& serializationPath)
+FilePath currentIndexPath(const rscore::FilePath& serializationPath)
 {
    return serializationPath.complete("current_index");
 }
@@ -128,7 +128,7 @@ ReadCollectionAction historyEntryFromString(
 
 } // anonymous namespace
 
-void ViewerHistory::saveTo(const core::FilePath& serializationPath) const
+void ViewerHistory::saveTo(const rscore::FilePath& serializationPath) const
 {
    // blow away any existing serialization data
    Error error = serializationPath.removeIfExists();
@@ -149,7 +149,7 @@ void ViewerHistory::saveTo(const core::FilePath& serializationPath) const
 
    // save the current index
    std::string currentIndex = safe_convert::numberToString(currentIndex_);
-   error = core::writeStringToFile(currentIndexPath(serializationPath),
+   error = rscore::writeStringToFile(currentIndexPath(serializationPath),
                                    currentIndex);
    if (error)
    {
@@ -179,7 +179,7 @@ void ViewerHistory::saveTo(const core::FilePath& serializationPath) const
    }
 }
 
-void ViewerHistory::restoreFrom(const core::FilePath& serializationPath)
+void ViewerHistory::restoreFrom(const rscore::FilePath& serializationPath)
 {
    // skip if the directory doesn't exist
    if (!serializationPath.exists())
@@ -196,7 +196,7 @@ void ViewerHistory::restoreFrom(const core::FilePath& serializationPath)
 
    // read the index
    std::string currentIndex;
-   Error error = core::readStringFromFile(indexPath, &currentIndex);
+   Error error = rscore::readStringFromFile(indexPath, &currentIndex);
    if (error)
    {
       LOG_ERROR(error);
@@ -241,9 +241,9 @@ std::string ViewerHistoryEntry::url() const
    return module_context::sessionTempDirUrl(sessionTempPath_);
 }
 
-core::Error ViewerHistoryEntry::copy(
-             const core::FilePath& sourceDir,
-             const core::FilePath& destinationDir) const
+rscore::Error ViewerHistoryEntry::copy(
+             const rscore::FilePath& sourceDir,
+             const rscore::FilePath& destinationDir) const
 {
    // copy enclosing directory to the destinationDir
    FilePath entryPath = sourceDir.childPath(sessionTempPath_);

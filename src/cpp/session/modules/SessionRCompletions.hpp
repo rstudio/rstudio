@@ -16,7 +16,7 @@
 #ifndef SESSION_R_COMPLETIONS_HPP
 #define SESSION_R_COMPLETIONS_HPP
 
-namespace core {
+namespace rscore {
 class Error;
 }
 
@@ -24,7 +24,7 @@ namespace session {
 namespace modules {
 namespace r_completions {
 
-core::Error initialize();
+rscore::Error initialize();
 
 } // namespace r_completions
 } // namespace modules

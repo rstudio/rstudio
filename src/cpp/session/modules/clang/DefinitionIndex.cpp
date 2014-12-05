@@ -29,8 +29,8 @@
 #include "RSourceIndex.hpp"
 #include "RCompilationDatabase.hpp"
 
-using namespace core;
-using namespace core::libclang;
+using namespace rscore;
+using namespace rscore::libclang;
 
 namespace session {
 namespace modules { 
@@ -175,15 +175,15 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
    }
 }
 
-void fileChangeHandler(const core::system::FileChangeEvent& event)
+void fileChangeHandler(const rscore::system::FileChangeEvent& event)
 {
    // always remove existing definitions
    std::string file = event.fileInfo().absolutePath();
    s_definitionsByFile.erase(file);
 
    // if this is an add or an update then re-index
-   if (event.type() == core::system::FileChangeEvent::FileAdded ||
-       event.type() == core::system::FileChangeEvent::FileModified)
+   if (event.type() == rscore::system::FileChangeEvent::FileAdded ||
+       event.type() == rscore::system::FileChangeEvent::FileModified)
    {    
       // get the compilation arguments for this file and use them to
       // create a translation unit
@@ -198,7 +198,7 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
                                              0 /* No diagnostics */);
 
          // get args in form clang expects
-         core::system::ProcessArgs argsArray(compileArgs);
+         rscore::system::ProcessArgs argsArray(compileArgs);
 
          // parse the translation unit
          CXTranslationUnit tu = libclang::clang().parseTranslationUnit(

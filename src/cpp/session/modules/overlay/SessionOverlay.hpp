@@ -16,7 +16,7 @@
 #ifndef SESSION_OVERLAY_HPP
 #define SESSION_OVERLAY_HPP
 
-namespace core {
+namespace rscore {
    class Error;
 }
 
@@ -24,7 +24,7 @@ namespace session {
 namespace modules {
 namespace overlay {
 
-core::Error initialize();
+rscore::Error initialize();
    
 } // namespace overlay
 } // namespace modules

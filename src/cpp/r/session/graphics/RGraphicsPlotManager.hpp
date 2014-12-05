@@ -22,7 +22,7 @@
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
-#include <boost/signal.hpp>
+#include <boost/signals2/signal.hpp>
 #include <boost/regex.hpp>
 #include <boost/circular_buffer.hpp>
 
@@ -44,10 +44,10 @@ PlotManager& plotManager();
 
 struct GraphicsDeviceEvents
 {
-   boost::signal<void (SEXP)> onNewPage; 
-   boost::signal<void ()> onDrawing;
-   boost::signal<void ()> onResized;
-   boost::signal<void ()> onClosed;
+   boost::signals2::signal<void (SEXP)> onNewPage;
+   boost::signals2::signal<void ()> onDrawing;
+   boost::signals2::signal<void ()> onResized;
+   boost::signals2::signal<void ()> onClosed;
 };
 
 class PlotManipulatorManager;
@@ -61,30 +61,30 @@ private:
 public:
    virtual ~PlotManager() {}
    
-   core::Error initialize(const core::FilePath& graphicsPath,
+   rscore::Error initialize(const rscore::FilePath& graphicsPath,
                           const GraphicsDeviceFunctions& graphicsDevice,
                           GraphicsDeviceEvents* pEvents);
    
    // plot list
    virtual int plotCount() const;
-   virtual core::Error plotImageFilename(int index, 
+   virtual rscore::Error plotImageFilename(int index,
                                          std::string* pImageFilename) const;
    virtual int activePlotIndex() const;
-   virtual core::Error setActivePlot(int index) ;
-   virtual core::Error removePlot(int index);
+   virtual rscore::Error setActivePlot(int index) ;
+   virtual rscore::Error removePlot(int index);
    
    // actions on active plot
-   virtual core::Error savePlotAsImage(const core::FilePath& filePath,
+   virtual rscore::Error savePlotAsImage(const rscore::FilePath& filePath,
                                        const std::string& format,
                                        int widthPx,
                                        int heightPx);
 
-   virtual core::Error savePlotAsPdf(const core::FilePath& filePath,
+   virtual rscore::Error savePlotAsPdf(const rscore::FilePath& filePath,
                                      double widthInches,
                                      double heightInches,
                                      bool useCairoPdf);
 
-   virtual core::Error savePlotAsMetafile(const core::FilePath& filePath,
+   virtual rscore::Error savePlotAsMetafile(const rscore::FilePath& filePath,
                                           int widthPx,
                                           int heightPx);
 
@@ -98,23 +98,23 @@ public:
    virtual void refresh() ;
    
     // retrieve image path based on filename
-   virtual core::FilePath imagePath(const std::string& imageFilename) const;
+   virtual rscore::FilePath imagePath(const std::string& imageFilename) const;
    
    virtual void clear();
 
-   virtual boost::signal<void ()>& onShowManipulator() ;
-   virtual void setPlotManipulatorValues(const core::json::Object& values);
+   virtual boost::signals2::signal<void ()>& onShowManipulator() ;
+   virtual void setPlotManipulatorValues(const rscore::json::Object& values);
    virtual void manipulatorPlotClicked(int x, int y);
 
    virtual void onBeforeExecute();
 
    // manipulate persistent state
-   core::Error savePlotsState();
-   core::Error restorePlotsState();
+   rscore::Error savePlotsState();
+   rscore::Error restorePlotsState();
 
    // fully serialize and deserialize to an external directory
-   core::Error serialize(const core::FilePath& saveToPath);
-   core::Error deserialize(const core::FilePath& restoreFromPath);
+   rscore::Error serialize(const rscore::FilePath& saveToPath);
+   rscore::Error deserialize(const rscore::FilePath& restoreFromPath);
       
 private:
    
@@ -145,26 +145,26 @@ private:
    void renderActivePlotToDisplay();
    
    // render active plot file file
-   core::Error savePlotAsFile(const boost::function<core::Error()>&
+   rscore::Error savePlotAsFile(const boost::function<rscore::Error()>&
                                                          deviceCreationFunction);
-   core::Error savePlotAsFile(const std::string& fileDeviceCreationCode);
+   rscore::Error savePlotAsFile(const std::string& fileDeviceCreationCode);
 
-   core::Error savePlotAsBitmapFile(const core::FilePath& targetPath,
+   rscore::Error savePlotAsBitmapFile(const rscore::FilePath& targetPath,
                                     const std::string& bitmapFileType,
                                     int width,
                                     int height);
 
-   core::Error savePlotAsSvg(const core::FilePath& targetPath,
+   rscore::Error savePlotAsSvg(const rscore::FilePath& targetPath,
                              int width,
                              int height);
 
-   core::Error savePlotAsPostscript(const core::FilePath& targetPath,
+   rscore::Error savePlotAsPostscript(const rscore::FilePath& targetPath,
                                     int width,
                                     int height);
 
    
    // error helpers
-   core::Error plotIndexError(int index, const core::ErrorLocation& location)
+   rscore::Error plotIndexError(int index, const rscore::ErrorLocation& location)
                                                                          const;
 
    std::string emptyImageFilename() const ;
@@ -173,8 +173,8 @@ private:
    friend class SuppressDeviceEventsScope;
 
    // storage paths
-   core::FilePath plotsStateFile_;
-   core::FilePath graphicsPath_;
+   rscore::FilePath plotsStateFile_;
+   rscore::FilePath graphicsPath_;
   
    // interface to graphics device
    GraphicsDeviceFunctions graphicsDevice_ ;

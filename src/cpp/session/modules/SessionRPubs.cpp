@@ -39,7 +39,7 @@
 
 #include <session/projects/SessionProjects.hpp>
 
-using namespace core ;
+using namespace rscore ;
 
 namespace session {
 
@@ -125,7 +125,7 @@ private:
 
    void start(const std::string& title, const FilePath& htmlFile, bool allowUpdate)
    {
-      using namespace core::string_utils;
+      using namespace rscore::string_utils;
       using namespace module_context;
 
       htmlFile_ = htmlFile;
@@ -177,12 +177,12 @@ private:
       args.push_back(cmd);
 
       // options
-      core::system::ProcessOptions options;
+      rscore::system::ProcessOptions options;
       options.terminateChildren = true;
       options.workingDir = htmlFile.parent();
 
       // callbacks
-      core::system::ProcessCallbacks cb;
+      rscore::system::ProcessCallbacks cb;
       cb.onContinue = boost::bind(&RPubsUpload::onContinue,
                                   RPubsUpload::shared_from_this());
       cb.onStdout = boost::bind(&RPubsUpload::onStdOut,
@@ -221,7 +221,7 @@ private:
          if(csvOutputFile_.exists())
          {
             std::string csvOutput;
-            Error error = core::readStringFromFile(
+            Error error = rscore::readStringFromFile(
                                              csvOutputFile_,
                                              &csvOutput,
                                              string_utils::LineEndingPosix);

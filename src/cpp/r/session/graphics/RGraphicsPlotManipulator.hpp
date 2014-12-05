@@ -22,7 +22,7 @@
 
 #include <r/RSexp.hpp>
 
-namespace core {
+namespace rscore {
    class Error;
    class FilePath;
 }
@@ -42,18 +42,18 @@ public:
 
    void clear();
 
-   core::Error save(const core::FilePath& filePath) const;
-   core::Error load(const core::FilePath& filePath);
+   rscore::Error save(const rscore::FilePath& filePath) const;
+   rscore::Error load(const rscore::FilePath& filePath);
 
-   void asJson(core::json::Value* pValue) const;
+   void asJson(rscore::json::Value* pValue) const;
 
    SEXP sexp() const;
 
 private:
    SEXP get(const std::string& name) const;
-   core::json::Value getAsJson(const std::string& name) const;
-   core::json::Object getControlAsJson(SEXP controlSEXP) const;
-   core::json::Object getControlsAsJson() const;
+   rscore::json::Value getAsJson(const std::string& name) const;
+   rscore::json::Object getControlAsJson(SEXP controlSEXP) const;
+   rscore::json::Object getControlsAsJson() const;
    SEXP getUserVisibleValuesList() const;
 
 private:

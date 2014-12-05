@@ -33,11 +33,11 @@
 #include <core/FilePath.hpp>
 #include <core/StringUtils.hpp>
 
-namespace core {
+namespace rscore {
 
 template <typename CollectionType>
 Error writeCollectionToFile(
-         const core::FilePath& filePath, 
+         const rscore::FilePath& filePath,
          const CollectionType& collection,
          boost::function<std::string(
                                  const typename CollectionType::value_type&)>
@@ -86,7 +86,7 @@ enum ReadCollectionAction
    
 template <typename CollectionType>
 Error readCollectionFromFile(
-         const core::FilePath& filePath,
+         const rscore::FilePath& filePath,
          CollectionType* pCollection,
          boost::function<ReadCollectionAction(const std::string& line, 
                                  typename CollectionType::value_type* pValue)>
@@ -156,7 +156,7 @@ Error readCollectionFromFile(
 }
 
 template <typename ContentType>
-Error appendToFile(const core::FilePath& filePath,
+Error appendToFile(const rscore::FilePath& filePath,
                        const ContentType& content)
 {
    using namespace boost::system::errc ;
@@ -189,7 +189,7 @@ Error appendToFile(const core::FilePath& filePath,
 }
 
 template <typename T>
-Error appendStructToFile(const core::FilePath& filePath,
+Error appendStructToFile(const rscore::FilePath& filePath,
                          const T& data)
 {
    using namespace boost::system::errc ;
@@ -222,7 +222,7 @@ Error appendStructToFile(const core::FilePath& filePath,
 }
 
 template <typename T>
-Error readStructVectorFromFile(const core::FilePath& filePath,
+Error readStructVectorFromFile(const rscore::FilePath& filePath,
                                std::vector<T>* pVector)
 {
    using namespace boost::system::errc ;
@@ -266,26 +266,26 @@ ReadCollectionAction parseString(const std::string& line, std::string* pStr);
 std::string stringifyString(const std::string& str);
 
       
-Error writeStringMapToFile(const core::FilePath& filePath,
+Error writeStringMapToFile(const rscore::FilePath& filePath,
                            const std::map<std::string,std::string>& map) ;
 
-Error readStringMapFromFile(const core::FilePath& filePath,
+Error readStringMapFromFile(const rscore::FilePath& filePath,
                             std::map<std::string,std::string>* pMap) ;
    
-Error writeStringVectorToFile(const core::FilePath& filePath,
+Error writeStringVectorToFile(const rscore::FilePath& filePath,
                               const std::vector<std::string>& vector);
    
-Error readStringVectorFromFile(const core::FilePath& filePath,
+Error readStringVectorFromFile(const rscore::FilePath& filePath,
                                std::vector<std::string>* pVector,
                                bool trimAndIgnoreBlankLines=true);
 
 // lineEnding is the type of line ending you want to end up on disk
-Error writeStringToFile(const core::FilePath& filePath,
+Error writeStringToFile(const rscore::FilePath& filePath,
                         const std::string& str,
                         string_utils::LineEnding lineEnding=string_utils::LineEndingPassthrough);
 
 // lineEnding is the type of line ending you want the resulting string to have
-Error readStringFromFile(const core::FilePath& filePath,
+Error readStringFromFile(const rscore::FilePath& filePath,
                          std::string* pStr,
                          string_utils::LineEnding lineEnding=string_utils::LineEndingPassthrough,
                          int startLine = 0,
@@ -296,7 +296,7 @@ Error readStringFromFile(const core::FilePath& filePath,
 // read a string from a file with a filter
 template <typename Filter>
 Error readStringFromFile(
-   const core::FilePath& filePath,
+   const rscore::FilePath& filePath,
    const Filter& filter,
    std::string* pContents,
    string_utils::LineEnding lineEnding=string_utils::LineEndingPassthrough)
@@ -342,7 +342,7 @@ Error readStringFromFile(
 
 bool stripBOM(std::string* pStr);
 
-} // namespace core
+} // namespace rscore
 
 
 #endif // CORE_FILE_SERIALIZER_HPP

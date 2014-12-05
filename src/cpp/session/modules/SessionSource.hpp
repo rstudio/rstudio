@@ -22,7 +22,7 @@
 
 #include <core/json/Json.hpp>
 
-namespace core {
+namespace rscore {
    class Error;
    namespace r_util {
       class RSourceIndex;
@@ -33,9 +33,9 @@ namespace session {
 namespace modules { 
 namespace source {
    
-core::Error clientInitDocuments(core::json::Array* pJsonDocs) ;
+rscore::Error clientInitDocuments(rscore::json::Array* pJsonDocs) ;
 
-core::Error initialize();
+rscore::Error initialize();
                        
 } // namespace source
 } // namespace modules

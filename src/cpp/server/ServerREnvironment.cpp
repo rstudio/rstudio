@@ -23,7 +23,7 @@
 #include <server/ServerOptions.hpp>
 #include <server/ServerUriHandlers.hpp>
 
-using namespace core;
+using namespace rscore;
 
 namespace server {
 namespace r_environment {
@@ -66,8 +66,8 @@ std::vector<std::pair<std::string,std::string> > variables()
    return r_util::EnvironmentVars();
 }
 
-bool detectREnvironment(const core::FilePath& rScriptPath,
-                        core::r_util::EnvironmentVars* pVars,
+bool detectREnvironment(const rscore::FilePath& rScriptPath,
+                        rscore::r_util::EnvironmentVars* pVars,
                         std::string* pErrMsg)
 {
    // determine rLdPaths script location

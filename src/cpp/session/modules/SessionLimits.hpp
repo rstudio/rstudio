@@ -16,7 +16,7 @@
 #ifndef SESSION_LIMITS_HPP
 #define SESSION_LIMITS_HPP
 
-namespace core {
+namespace rscore {
    class Error;
 }
  
@@ -24,7 +24,7 @@ namespace session {
 namespace modules { 
 namespace limits {
    
-core::Error initialize();
+rscore::Error initialize();
                        
 } // namespace limits
 } // namespace modules

@@ -18,7 +18,7 @@
 
 #include <core/json/Json.hpp>
 
-namespace core {
+namespace rscore {
    class Error;
 }
  
@@ -27,16 +27,16 @@ namespace modules {
 namespace authoring {
    
 // accessors used by SessionMain
-core::json::Array supportedRnwWeaveTypes();
-core::json::Array supportedLatexProgramTypes();
-core::json::Object texCapabilitiesAsJson();
-core::json::Object compilePdfStateAsJson();
+rscore::json::Array supportedRnwWeaveTypes();
+rscore::json::Array supportedLatexProgramTypes();
+rscore::json::Object texCapabilitiesAsJson();
+rscore::json::Object compilePdfStateAsJson();
 bool hasRunningChildren();
 
 // accessors used by workbench
 std::string desktopSynctexViewer();
 
-core::Error initialize();
+rscore::Error initialize();
                        
 } // namespace authoring
 } // namespace modules

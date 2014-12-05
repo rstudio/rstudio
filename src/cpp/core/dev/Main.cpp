@@ -24,17 +24,17 @@
 
 #include <core/libclang/LibClang.hpp>
 
-using namespace core ;
+using namespace rscore ;
 
 int test_main(int argc, char * argv[])
 {
    try
    { 
       // setup log
-      initializeStderrLog("coredev", core::system::kLogLevelWarning);
+      initializeStderrLog("coredev", rscore::system::kLogLevelWarning);
 
       // ignore sigpipe
-      Error error = core::system::ignoreSignal(core::system::SigPipe);
+      Error error = rscore::system::ignoreSignal(rscore::system::SigPipe);
       if (error)
          LOG_ERROR(error);
 

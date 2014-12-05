@@ -25,7 +25,7 @@
 
 #define kPdfJsPath "/pdf_js/"
 
-using namespace core;
+using namespace rscore;
 
 namespace session {
 namespace modules { 
@@ -65,7 +65,7 @@ void handlePdfJs(const http::Request& request, http::Response* pResponse)
       return;
    }
 
-   core::FilePath pdfJsResource = options().rResourcesPath().childPath(path);
+   rscore::FilePath pdfJsResource = options().rResourcesPath().childPath(path);
    if (pdfJsResource.exists())
    {
       pResponse->setCacheableFile(pdfJsResource, request);
@@ -75,7 +75,7 @@ void handlePdfJs(const http::Request& request, http::Response* pResponse)
 
 } // anonymous namespace
 
-std::string createViewPdfUrl(const core::FilePath& filePath)
+std::string createViewPdfUrl(const rscore::FilePath& filePath)
 {
    return "view_pdf?path=" + http::util::urlEncode(filePath.absolutePath(),
                                                    true);

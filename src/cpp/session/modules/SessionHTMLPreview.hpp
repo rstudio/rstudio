@@ -24,7 +24,7 @@
 
 #include <core/json/Json.hpp>
 
-namespace core {
+namespace rscore {
    class Error;
    class FilePath;
    namespace http {
@@ -36,11 +36,11 @@ namespace session {
 namespace modules { 
 namespace html_preview {
 
-core::json::Object capabilitiesAsJson();
-void addFileSpecificHeaders(const core::FilePath& filePath,
-                            core::http::Response* pResponse);
+rscore::json::Object capabilitiesAsJson();
+void addFileSpecificHeaders(const rscore::FilePath& filePath,
+                            rscore::http::Response* pResponse);
 
-core::Error initialize();
+rscore::Error initialize();
                        
 } // namespace html_preview
 } // namespace modules

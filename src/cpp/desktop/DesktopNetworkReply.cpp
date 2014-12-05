@@ -34,7 +34,7 @@
 
 #include "DesktopNetworkIOService.hpp"
 
-using namespace core;
+using namespace rscore;
 
 namespace desktop {
 
@@ -274,7 +274,7 @@ void NetworkReply::onError(const Error& networkError)
    if ((networkError.code() != boost::asio::error::operation_aborted) &&
        (networkError.code() != boost::asio::error::broken_pipe) &&
        (networkError.code() != boost::asio::error::eof) &&
-       !core::isPathNotFoundError(networkError) )
+       !rscore::isPathNotFoundError(networkError) )
    {
       LOG_ERROR(networkError);
    }

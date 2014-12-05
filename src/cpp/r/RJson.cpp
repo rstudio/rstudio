@@ -57,7 +57,7 @@
 #include <r/RSexp.hpp>
 #include <r/RErrorCategory.hpp>
 
-using namespace core ;
+using namespace rscore ;
 
 namespace r {
 namespace json {
@@ -66,7 +66,7 @@ namespace {
 
 Error jsonValueFromVectorElement(SEXP vectorSEXP, 
                                  int i, 
-                                 core::json::Value* pValue)
+                                 rscore::json::Value* pValue)
 {   
    // NOTE: currently NaN is represented in json as null. this is problematic
    // as parsing routines (such as JS overlay types in GWT) won't handle
@@ -81,14 +81,14 @@ Error jsonValueFromVectorElement(SEXP vectorSEXP,
    // and also make sure they are distinguished for other types
    
    // default to null
-   *pValue = core::json::Value();
+   *pValue = rscore::json::Value();
    
    // check for underlying value
    switch(TYPEOF(vectorSEXP))
    {
       case NILSXP:
       {
-         *pValue = core::json::Value();
+         *pValue = rscore::json::Value();
          break;
       }
       case STRSXP:
@@ -131,7 +131,7 @@ Error jsonValueFromVectorElement(SEXP vectorSEXP,
          double imaginary = COMPLEX(vectorSEXP)[i].i;
          if ( !ISNAN(real) && !ISNAN(imaginary))
          {
-            core::json::Object jsonComplex ;
+            rscore::json::Object jsonComplex ;
             jsonComplex["r"] = real;
             jsonComplex["i"] = imaginary;
             *pValue = jsonComplex;
@@ -153,10 +153,10 @@ Error jsonValueFromVectorElement(SEXP vectorSEXP,
 }  
 
 
-Error jsonValueArrayFromList(SEXP listSEXP, core::json::Value* pValue)
+Error jsonValueArrayFromList(SEXP listSEXP, rscore::json::Value* pValue)
 {
    // value array to return
-   core::json::Array jsonValueArray;
+   rscore::json::Array jsonValueArray;
    
    // return a value for each list item
    int listLength = Rf_length(listSEXP);
@@ -166,7 +166,7 @@ Error jsonValueArrayFromList(SEXP listSEXP, core::json::Value* pValue)
       SEXP valueSEXP = VECTOR_ELT(listSEXP, i);
       
       // extract the value
-      core::json::Value jsonValue ;
+      rscore::json::Value jsonValue ;
       Error error = jsonValueFromObject(valueSEXP, &jsonValue);
       if (error)
          return error;
@@ -197,7 +197,7 @@ bool isNamedList(SEXP listSEXP)
       return false ;
    int nameCount = std::count_if(fieldNames.begin(), 
                                  fieldNames.end(),
-                                 &core::string_utils::stringNotEmpty);
+                                 &rscore::string_utils::stringNotEmpty);
    if (nameCount != listLength)
       return false;   
    
@@ -208,20 +208,20 @@ bool isNamedList(SEXP listSEXP)
 Error jsonObjectFromListElement(SEXP listSEXP, 
                                 const std::vector<std::string>& fieldNames,
                                 int index,
-                                core::json::Value* pValue)
+                                rscore::json::Value* pValue)
 {
    // note list length
    int listLength = Rf_length(listSEXP);
    
    // compose an object by iterating through the fields
-   core::json::Object jsonObject ;
+   rscore::json::Object jsonObject ;
    for (int f=0; f<listLength; f++)
    {
       // get the field
       SEXP fieldSEXP = VECTOR_ELT(listSEXP, f);
       
       // extract the value
-      core::json::Value fieldValue ;
+      rscore::json::Value fieldValue ;
       switch(TYPEOF(fieldSEXP))
       {
          case VECSXP:
@@ -258,7 +258,7 @@ Error jsonObjectFromListElement(SEXP listSEXP,
 // NOTE: this function assumes that isNamedList has been called
 // and returned true for this list (validates a name for each element)
 //   
-Error jsonObjectFromList(SEXP listSEXP, core::json::Value* pValue)  
+Error jsonObjectFromList(SEXP listSEXP, rscore::json::Value* pValue)
 {
    // get the names of the list elements
    std::vector<std::string> fieldNames ;
@@ -267,13 +267,13 @@ Error jsonObjectFromList(SEXP listSEXP, core::json::Value* pValue)
       return error;
    
    // compose object
-   core::json::Object object ;
+   rscore::json::Object object ;
    int fields = Rf_length(listSEXP);
    for (int i=0; i<fields; i++)
    {
       SEXP fieldSEXP = VECTOR_ELT(listSEXP, i);
       
-      core::json::Value objectValue ;
+      rscore::json::Value objectValue ;
       error = jsonValueFromObject(fieldSEXP, &objectValue);
       if (error)
          return error ;
@@ -290,7 +290,7 @@ Error jsonObjectFromList(SEXP listSEXP, core::json::Value* pValue)
 // NOTE: this function assumes that isNamedList has been called
 // and returned true for this list (validates a name for each element)
 //   
-Error jsonObjectArrayFromDataFrame(SEXP listSEXP, core::json::Value* pValue)
+Error jsonObjectArrayFromDataFrame(SEXP listSEXP, rscore::json::Value* pValue)
 {      
    // get the names of the list elements
    std::vector<std::string> fieldNames ;
@@ -299,13 +299,13 @@ Error jsonObjectArrayFromDataFrame(SEXP listSEXP, core::json::Value* pValue)
       return error;
    
    // object array to return
-   core::json::Array jsonObjectArray ;
+   rscore::json::Array jsonObjectArray ;
    
    // iterate through the values
    int values = Rf_length(VECTOR_ELT(listSEXP, 0));
    for (int v=0; v<values; v++)
    {
-      core::json::Value objectValue ;
+      rscore::json::Value objectValue ;
       error = jsonObjectFromListElement(listSEXP, fieldNames, v, &objectValue);
       if (error)
          return error ;
@@ -320,7 +320,7 @@ Error jsonObjectArrayFromDataFrame(SEXP listSEXP, core::json::Value* pValue)
 
 } // anonymous namespace
 
-Error jsonValueFromScalar(SEXP scalarSEXP, core::json::Value* pValue)
+Error jsonValueFromScalar(SEXP scalarSEXP, rscore::json::Value* pValue)
 {
    // verify length
    if (sexp::length(scalarSEXP) != 1)
@@ -331,7 +331,7 @@ Error jsonValueFromScalar(SEXP scalarSEXP, core::json::Value* pValue)
 }
    
    
-Error jsonValueFromVector(SEXP vectorSEXP, core::json::Value* pValue)
+Error jsonValueFromVector(SEXP vectorSEXP, rscore::json::Value* pValue)
 {
    int vectorLength = Rf_length(vectorSEXP);
 
@@ -342,15 +342,15 @@ Error jsonValueFromVector(SEXP vectorSEXP, core::json::Value* pValue)
       else
       {
          // return null
-         *pValue = core::json::Value();
+         *pValue = rscore::json::Value();
          return Success();
       }
    }
 
-   core::json::Array vectorValues ;
+   rscore::json::Array vectorValues ;
    for (int i=0; i<vectorLength; i++)
    {
-      core::json::Value elementValue ;
+      rscore::json::Value elementValue ;
       Error error = jsonValueFromVectorElement(vectorSEXP, i, &elementValue);
       if (error)
          return error;
@@ -363,7 +363,7 @@ Error jsonValueFromVector(SEXP vectorSEXP, core::json::Value* pValue)
 }   
    
    
-Error jsonValueFromList(SEXP listSEXP, core::json::Value* pValue)
+Error jsonValueFromList(SEXP listSEXP, rscore::json::Value* pValue)
 {
    if (isNamedList(listSEXP))
    {
@@ -379,7 +379,7 @@ Error jsonValueFromList(SEXP listSEXP, core::json::Value* pValue)
 }
    
    
-Error jsonValueFromObject(SEXP objectSEXP, core::json::Value* pValue)
+Error jsonValueFromObject(SEXP objectSEXP, rscore::json::Value* pValue)
 {
    // NOTE: a few additional types/scenarios we could support are:
    //         - special handling for array
@@ -392,7 +392,7 @@ Error jsonValueFromObject(SEXP objectSEXP, core::json::Value* pValue)
    {
       case NILSXP:
       {
-         *pValue = core::json::Value();
+         *pValue = rscore::json::Value();
          return Success();
       }   
       case VECSXP:

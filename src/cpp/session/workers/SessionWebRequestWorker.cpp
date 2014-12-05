@@ -17,7 +17,7 @@
 
 #include <session/SessionWorkerContext.hpp>
 
-using namespace core;
+using namespace rscore;
 
 namespace session {
 namespace workers {

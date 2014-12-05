@@ -52,7 +52,7 @@ extern "C" const char *locale2charset(const char *);
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-using namespace core;
+using namespace rscore;
 
 namespace session {
 namespace modules { 
@@ -63,7 +63,7 @@ using namespace session::source_database;
 namespace {
 
 void writeDocToJson(boost::shared_ptr<SourceDocument> pDoc,
-                    core::json::Object* pDocJson)
+                    rscore::json::Object* pDocJson)
 {
    // write the doc
    pDoc->writeToJson(pDocJson);
@@ -162,7 +162,7 @@ Error openDocument(const json::JsonRpcRequest& request,
 
    std::string encoding;
    error = json::readParam(request.params, 2, &encoding);
-   if (error && error.code() != core::json::errc::ParamTypeMismatch)
+   if (error && error.code() != rscore::json::errc::ParamTypeMismatch)
       return error ;
    if (encoding.empty())
       encoding = ::locale2charset(NULL);
@@ -311,7 +311,7 @@ Error saveDocumentCore(const std::string& contents,
       // enque file changed event if we need to
       if (!module_context::isDirectoryMonitored(fullDocPath.parent()))
       {
-         using core::system::FileChangeEvent;
+         using rscore::system::FileChangeEvent;
          FileChangeEvent changeEvent(newFile ? FileChangeEvent::FileAdded :
                                                FileChangeEvent::FileModified,
                                      FileInfo(fullDocPath));
@@ -372,7 +372,7 @@ Error saveDocument(const json::JsonRpcRequest& request,
 Error saveDocumentDiff(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
-   using namespace core::string_utils;
+   using namespace rscore::string_utils;
 
    // unique id and jsonPath (can be null for auto-save)
    std::string id;
@@ -670,12 +670,12 @@ Error processSourceTemplate(const std::string& name,
    // setup template filter
    std::map<std::string,std::string> vars;
    vars["name"] = name;
-   core::text::TemplateFilter filter(vars);
+   rscore::text::TemplateFilter filter(vars);
 
    // read file with template filter
    FilePath templatePath = session::options().rResourcesPath().complete(
                                              "templates/" +  templateName);
-   return core::readStringFromFile(templatePath,
+   return rscore::readStringFromFile(templatePath,
                                    filter,
                                    pContents,
                                    string_utils::LineEndingPosix);
@@ -710,7 +710,7 @@ Error defaultRdResponse(const std::string& name,
       return error;
 
    std::string contents;
-   error = core::readStringFromFile(
+   error = rscore::readStringFromFile(
                         FilePath(string_utils::systemToUtf8(filePath)),
                         &contents,
                         string_utils::LineEndingPosix);
@@ -779,7 +779,7 @@ Error createRdShell(const json::JsonRpcRequest& request,
          else
          {
             std::string contents;
-            error = core::readStringFromFile(rdFilePath,
+            error = rscore::readStringFromFile(rdFilePath,
                                              &contents,
                                              string_utils::LineEndingPosix);
             if (error)
@@ -816,7 +816,7 @@ Error isReadOnlyFile(const json::JsonRpcRequest& request,
    FilePath filePath = module_context::resolveAliasedPath(path);
 
    pResponse->setResult(filePath.exists() &&
-                        core::system::isReadOnly(filePath));
+                        rscore::system::isReadOnly(filePath));
 
    return Success();
 }
@@ -920,7 +920,7 @@ void enqueFileEditEvent(const std::string& file)
    // if it doesn't exist then create it
    if (!filePath.exists())
    {
-      Error error = core::writeStringToFile(filePath, "",
+      Error error = rscore::writeStringToFile(filePath, "",
                                             options().sourcePersistLineEnding());
       if (error)
       {
@@ -1009,7 +1009,7 @@ SEXP rs_fileEdit(SEXP fileSEXP)
 
 } // anonymous namespace
 
-Error clientInitDocuments(core::json::Array* pJsonDocs)
+Error clientInitDocuments(rscore::json::Array* pJsonDocs)
 {
    source_database::events().onRemoveAll();
 

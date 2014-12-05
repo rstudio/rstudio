@@ -23,7 +23,7 @@
 
 #include <core/SafeConvert.hpp>
 
-namespace core {
+namespace rscore {
 namespace gitgraph {
 
 namespace {
@@ -160,4 +160,4 @@ Line GitGraph::addCommit(const std::string& commit,
 }
 
 } // namespace gitgraph
-} // namespace core
+} // namespace rscore

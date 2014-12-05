@@ -21,7 +21,7 @@
 
 #include <core/http/Socket.hpp>
 
-namespace core {
+namespace rscore {
 
 class Error;
 
@@ -53,6 +53,6 @@ public:
 };
 
 } // namespace http
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_HTTP_ASYNC_CONNECTION_HPP

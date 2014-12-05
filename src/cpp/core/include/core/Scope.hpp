@@ -19,7 +19,7 @@
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 
-namespace core {
+namespace rscore {
 namespace scope {
 
 template <class T>
@@ -66,7 +66,7 @@ private:
 };
 
 } // namespace scope
-} // namespace core 
+} // namespace rscore
 
 
 #endif // CORE_SCOPE_HPP

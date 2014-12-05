@@ -44,7 +44,7 @@
 #include "SlideParser.hpp"
 #include "SlideRenderer.hpp"
 
-using namespace core;
+using namespace rscore;
 
 namespace session {
 namespace modules { 
@@ -334,13 +334,13 @@ bool performKnit(const FilePath& rmdPath,
    args.push_back(cmd);
 
    // options
-   core::system::ProcessOptions options;
-   core::system::ProcessResult result;
+   rscore::system::ProcessOptions options;
+   rscore::system::ProcessResult result;
    options.workingDir = rmdPath.parent();
 
    // run knit
-   error = core::system::runProgram(
-            core::string_utils::utf8ToSystem(rProgramPath.absolutePath()),
+   error = rscore::system::runProgram(
+            rscore::string_utils::utf8ToSystem(rProgramPath.absolutePath()),
             args,
             "",
             options,
@@ -356,7 +356,7 @@ bool performKnit(const FilePath& rmdPath,
       // play the error text back into
       if (!mdPath.exists())
       {
-         Error error = core::writeStringToFile(mdPath,
+         Error error = rscore::writeStringToFile(mdPath,
                                                mdPath.stem() +
                                                "\n=======================\n");
          if (error)
@@ -370,7 +370,7 @@ bool performKnit(const FilePath& rmdPath,
            << extractKnitrError(result.stdErr) << std::endl
            << "```" << std::endl;
 
-      Error error = core::appendToFile(mdPath, ostr.str());
+      Error error = rscore::appendToFile(mdPath, ostr.str());
       if (error)
          LOG_ERROR(error);
 
@@ -434,16 +434,16 @@ std::string fixupLink(const boost::cmatch& match)
       using namespace boost::algorithm;
       std::size_t colonLoc = href.find_first_of(':');
       std::string path = trim_copy(href.substr(colonLoc+1));
-      path = core::http::util::urlDecode(path);
+      path = rscore::http::util::urlDecode(path);
       if (boost::algorithm::starts_with(path, "~/"))
          path = module_context::resolveAliasedPath(path).absolutePath();
       FilePath filePath = presentation::state::directory()
                                                    .parent().complete(path);
 
-      Error error = core::system::realPath(filePath, &filePath);
+      Error error = rscore::system::realPath(filePath, &filePath);
       if (error)
       {
-         if (!core::isPathNotFoundError(error))
+         if (!rscore::isPathNotFoundError(error))
             LOG_ERROR(error);
          return match[0];
       }
@@ -486,7 +486,7 @@ std::string userSlidesCss(const SlideDeck& slideDeck)
    std::string userSlidesCss;
    if (cssPath.exists())
    {
-      Error error = core::readStringFromFile(cssPath, &userSlidesCss);
+      Error error = rscore::readStringFromFile(cssPath, &userSlidesCss);
       if (error)
          LOG_ERROR(error);
    }
@@ -920,7 +920,7 @@ void handlePresentationRootRequest(const std::string& path,
 
 void handlePresentationHelpMarkdownRequest(const FilePath& filePath,
                                            const std::string& jsCallbacks,
-                                           core::http::Response* pResponse)
+                                           rscore::http::Response* pResponse)
 {
    // indirection on the actual md file (related to processing R markdown)
    FilePath mdFilePath;
@@ -1001,7 +1001,7 @@ void handleRangeRequest(const FilePath& targetFile,
       s_cache.clear();
 
       // read the file in from disk
-      Error error = core::readStringFromFile(targetFile, &(s_cache.contents));
+      Error error = rscore::readStringFromFile(targetFile, &(s_cache.contents));
       if (error)
       {
          pResponse->setError(error);
@@ -1165,9 +1165,9 @@ void handlePresentationPaneRequest(const http::Request& request,
    }
 }
 
-void handlePresentationHelpRequest(const core::http::Request& request,
+void handlePresentationHelpRequest(const rscore::http::Request& request,
                                    const std::string& jsCallbacks,
-                                   core::http::Response* pResponse)
+                                   rscore::http::Response* pResponse)
 {
    // we save the most recent /help/presentation/&file=parameter so we
    // can resolve relative file references against it. we do this
@@ -1229,7 +1229,7 @@ void handlePresentationHelpRequest(const core::http::Request& request,
    }
 }
 
-bool savePresentationAsStandalone(const core::FilePath& filePath,
+bool savePresentationAsStandalone(const rscore::FilePath& filePath,
                                   ErrorResponse* pErrorResponse)
 {
    return createStandalonePresentation(filePath,
@@ -1237,7 +1237,7 @@ bool savePresentationAsStandalone(const core::FilePath& filePath,
                                        pErrorResponse);
 }
 
-bool savePresentationAsRpubsSource(const core::FilePath& filePath,
+bool savePresentationAsRpubsSource(const rscore::FilePath& filePath,
                                    ErrorResponse* pErrorResponse)
 {
    return createStandalonePresentation(filePath,

@@ -22,7 +22,7 @@
 
 #include "SourceLocation.hpp"
 
-namespace core {
+namespace rscore {
 namespace libclang {
 
 class Cursor
@@ -89,6 +89,6 @@ private:
 };
 
 } // namespace libclang
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_LIBCLANG_CURSOR_HPP

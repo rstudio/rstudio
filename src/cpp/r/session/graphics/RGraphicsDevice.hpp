@@ -18,7 +18,7 @@
 
 #include <boost/function.hpp>
 
-namespace core {
+namespace rscore {
    class Error;
    class FilePath;
 }
@@ -32,8 +32,8 @@ extern const int kDefaultWidth;
 extern const int kDefaultHeight;    
    
 // initialize
-core::Error initialize(
-          const core::FilePath& graphicsPath,
+rscore::Error initialize(
+          const rscore::FilePath& graphicsPath,
           const boost::function<bool(double*,double*)>& locatorFunction);
    
 // device size

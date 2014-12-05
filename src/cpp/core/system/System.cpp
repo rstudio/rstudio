@@ -21,7 +21,7 @@
 
 #include <core/system/Environment.hpp>
 
-namespace core {
+namespace rscore {
 namespace system {
      
 #ifdef _WIN32
@@ -65,14 +65,14 @@ void addToSystemPath(const FilePath& path, bool prepend)
 
 int exitFailure(const Error& error, const ErrorLocation& loggedFromLocation)
 {
-   core::log::logError(error, loggedFromLocation);
+   rscore::log::logError(error, loggedFromLocation);
    return EXIT_FAILURE;
 }
 
 int exitFailure(const std::string& errMsg,
                 const ErrorLocation& loggedFromLocation)
 {
-   core::log::logErrorMessage(errMsg, loggedFromLocation);
+   rscore::log::logErrorMessage(errMsg, loggedFromLocation);
    return EXIT_FAILURE;
 }
    
@@ -83,11 +83,11 @@ int exitSuccess()
 
 std::string generateShortenedUuid()
 {
-   std::string uuid = core::system::generateUuid(false);
-   return core::hash::crc32HexHash(uuid);
+   std::string uuid = rscore::system::generateUuid(false);
+   return rscore::hash::crc32HexHash(uuid);
 }
 
 
 } // namespace system
-} // namespace core
+} // namespace rscore
 

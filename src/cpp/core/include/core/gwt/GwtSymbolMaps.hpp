@@ -23,7 +23,7 @@
 
 #include <core/FilePath.hpp>
 
-namespace core {
+namespace rscore {
 
 class Error;
 class FilePath;
@@ -59,6 +59,6 @@ private:
 };
 
 } // namespace gwt
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_GWT_SYMBOL_MAPS_HPP

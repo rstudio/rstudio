@@ -28,7 +28,7 @@
 
 #include <core/http/NamedPipeProtocol.hpp>
 
-namespace core {
+namespace rscore {
 namespace http {
 
 class NamedPipeAsyncClient
@@ -129,6 +129,6 @@ private:
    
    
 } // namespace http
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_HTTP_LOCAL_STREAM_ASYNC_CLIENT_HPP

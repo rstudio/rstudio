@@ -34,7 +34,7 @@
 #include "clang-c/Index.h"
 #include "clang-c/CXCompilationDatabase.h"
 
-namespace core {
+namespace rscore {
 namespace libclang {
 
 struct LibraryVersion
@@ -108,7 +108,7 @@ public:
              LibraryVersion requiredVersion = LibraryVersion(3,4,0),
              std::string* pDiagnostics = NULL);
 
-   core::Error unload();
+   rscore::Error unload();
    bool isLoaded() const { return pLib_ != NULL; }
 
    // version
@@ -625,7 +625,7 @@ public:
    CXString (*CompileCommand_getArg)(CXCompileCommand, unsigned I);
 
 private:
-   core::Error tryLoad(const std::string& libraryPath,
+   rscore::Error tryLoad(const std::string& libraryPath,
                        LibraryVersion requiredVersion);
 
 private:
@@ -637,7 +637,7 @@ private:
 LibClang& clang();
 
 } // namespace libclang
-} // namespace core
+} // namespace rscore
 
 
 #endif // CORE_LIBCLANG_LIBCLANG_HPP

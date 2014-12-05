@@ -22,7 +22,7 @@ namespace session {
 namespace modules {      
 namespace clang {
 
-core::libclang::SourceIndex& rSourceIndex();
+rscore::libclang::SourceIndex& rSourceIndex();
 
 } // namespace clang
 } // namepace handlers

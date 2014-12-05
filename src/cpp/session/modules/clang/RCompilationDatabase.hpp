@@ -47,17 +47,17 @@ public:
 
 private:
 
-   core::Error executeSourceCpp(core::system::Options env,
+   rscore::Error executeSourceCpp(rscore::system::Options env,
                                 const std::string& rcppPkg,
-                                const core::FilePath& srcPath,
-                                core::system::ProcessResult* pResult);
+                                const rscore::FilePath& srcPath,
+                                rscore::system::ProcessResult* pResult);
 
-   core::Error executeRCmdSHLIB(core::system::Options env,
-                                const core::FilePath& srcPath,
-                                core::system::ProcessResult* pResult);
+   rscore::Error executeRCmdSHLIB(rscore::system::Options env,
+                                const rscore::FilePath& srcPath,
+                                rscore::system::ProcessResult* pResult);
 
    void updateForCurrentPackage();
-   void updateForSourceCpp(const core::FilePath& cppPath);
+   void updateForSourceCpp(const rscore::FilePath& cppPath);
 
    // struct used to represent compilation settings
    struct CompilationConfig
@@ -68,14 +68,14 @@ private:
       bool isCpp;
    };
    CompilationConfig configForSourceCpp(const std::string& rcppPkg,
-                                        core::FilePath srcFile);
+                                        rscore::FilePath srcFile);
 
-   std::vector<std::string> argsForRCmdSHLIB(core::system::Options env,
-                                             core::FilePath tempSrcFile);
+   std::vector<std::string> argsForRCmdSHLIB(rscore::system::Options env,
+                                             rscore::FilePath tempSrcFile);
 
    std::vector<std::string> baseCompilationArgs(bool isCppFile) const;
    std::vector<std::string> rToolsArgs() const;
-   core::system::Options compilationEnvironment() const;
+   rscore::system::Options compilationEnvironment() const;
    std::vector<std::string> precompiledHeaderArgs(const std::string& pkgName,
                                                   const std::string& stdArg);
 
@@ -100,7 +100,7 @@ private:
    bool usePrecompiledHeaders_;
 };
 
-core::libclang::CompilationDatabase rCompilationDatabase();
+rscore::libclang::CompilationDatabase rCompilationDatabase();
 
 
 } // namespace clang

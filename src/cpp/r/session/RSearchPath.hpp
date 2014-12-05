@@ -16,7 +16,7 @@
 #ifndef R_SESSION_SEARCH_PATH_HPP
 #define R_SESSION_SEARCH_PATH_HPP
 
-namespace core {
+namespace rscore {
    class Error;
    class FilePath;
 }
@@ -25,9 +25,9 @@ namespace r {
 namespace session {
 namespace search_path {
 
-core::Error save(const core::FilePath& statePath);
-core::Error saveGlobalEnvironment(const core::FilePath& statePath);
-core::Error restore(const core::FilePath& statePath);
+rscore::Error save(const rscore::FilePath& statePath);
+rscore::Error saveGlobalEnvironment(const rscore::FilePath& statePath);
+rscore::Error restore(const rscore::FilePath& statePath);
    
 } // namespace search_path
 } // namespace session

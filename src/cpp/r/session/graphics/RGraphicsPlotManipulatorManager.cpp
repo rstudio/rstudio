@@ -31,7 +31,7 @@
 #include "RGraphicsUtils.hpp"
 #include "RGraphicsPlotManager.hpp"
 
-using namespace core;
+using namespace rscore;
 
 namespace r {
 namespace session {  
@@ -183,7 +183,7 @@ Error PlotManipulatorManager::initialize(
 }
 
 
-boost::signal<void ()>& PlotManipulatorManager::onShowManipulator()
+boost::signals2::signal<void ()>& PlotManipulatorManager::onShowManipulator()
 {
    return onShowManipulator_;
 }

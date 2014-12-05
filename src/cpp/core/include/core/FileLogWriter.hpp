@@ -19,7 +19,7 @@
 #include <core/FilePath.hpp>
 #include <core/LogWriter.hpp>
 
-namespace core {
+namespace rscore {
 
 class FileLogWriter : public LogWriter
 {
@@ -29,10 +29,10 @@ public:
                   const FilePath& logDir);
     virtual ~FileLogWriter();
 
-    virtual void log(core::system::LogLevel level,
+    virtual void log(rscore::system::LogLevel level,
                      const std::string& message);
     virtual void log(const std::string& programIdentity,
-                     core::system::LogLevel level,
+                     rscore::system::LogLevel level,
                      const std::string& message);
 
 
@@ -45,6 +45,6 @@ private:
     FilePath rotatedLogFile_;
 };
 
-} // namespace core
+} // namespace rscore
 
 #endif // FILE_LOG_WRITER_HPP

@@ -21,7 +21,7 @@
 #include <boost/regex.hpp>
 #include <boost/function.hpp>
 
-namespace core {
+namespace rscore {
 namespace markdown {
 
 struct ExcludePattern
@@ -97,7 +97,7 @@ bool requiresMathjax(const std::string& htmlOutput);
 
 
 } // namespace markdown
-} // namespace core
+} // namespace rscore
    
 
 

@@ -28,7 +28,7 @@
 #define kRVersionArch32    "32"
 #define kRVersionArch64    "64"
 
-namespace core {
+namespace rscore {
 namespace r_util {
 
 struct RVersionInfo
@@ -115,7 +115,7 @@ inline std::ostream& operator<<(std::ostream& os, const RVersionNumber& ver)
 
 
 } // namespace r_util
-} // namespace core 
+} // namespace rscore
 
 
 #endif // CORE_R_UTIL_R_VERSION_INFO_HPP

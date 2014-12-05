@@ -31,13 +31,15 @@
 
 #include <core/libclang/LibClang.hpp>
 
+#include <boost/make_shared.hpp>
+
 #include "DefinitionIndex.hpp"
 #include "GoToDefinition.hpp"
 #include "CodeCompletion.hpp"
 #include "RSourceIndex.hpp"
 
-using namespace core ;
-using namespace core::libclang;
+using namespace rscore ;
+using namespace rscore::libclang;
 
 namespace session {
 namespace modules { 

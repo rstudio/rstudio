@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace core {
+namespace rscore {
    namespace http {
       class Request;
       class Response;
@@ -30,11 +30,11 @@ namespace browser {
   
 extern const char * const kBrowserUnsupported;
 
-bool supportedBrowserFilter(const core::http::Request& request,
-                            core::http::Response* pResponse);
+bool supportedBrowserFilter(const rscore::http::Request& request,
+                            rscore::http::Response* pResponse);
 
-void handleBrowserUnsupportedRequest(const core::http::Request& request,
-                                     core::http::Response* pResponse);
+void handleBrowserUnsupportedRequest(const rscore::http::Request& request,
+                                     rscore::http::Response* pResponse);
 
 } // namespace browser
 } // namespace server

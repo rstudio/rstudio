@@ -25,7 +25,7 @@
 
 #include <core/http/SocketAcceptorService.hpp>
 
-namespace core {
+namespace rscore {
 namespace http {  
 
 inline Error initializeStreamDir(const FilePath& streamDir)
@@ -48,8 +48,8 @@ inline Error initializeStreamDir(const FilePath& streamDir)
    
 inline Error initLocalStreamAcceptor(
    SocketAcceptorService<boost::asio::local::stream_protocol>& acceptorService,
-   const core::FilePath& localStreamPath,
-   core::system::FileMode fileMode)
+   const rscore::FilePath& localStreamPath,
+   rscore::system::FileMode fileMode)
 {
    // initialize endpoint
    using boost::asio::local::stream_protocol;
@@ -83,6 +83,6 @@ inline Error initLocalStreamAcceptor(
 }
 
 } // namespace http
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_HTTP_LOCAL_STREAM_SOCKET_UTILS_HPP

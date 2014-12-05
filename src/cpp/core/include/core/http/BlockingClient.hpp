@@ -23,7 +23,7 @@
 
 #include <core/http/AsyncClient.hpp>
 
-namespace core {
+namespace rscore {
 namespace http {
 
 namespace {
@@ -68,6 +68,6 @@ Error sendRequest(boost::asio::io_service& ioService,
    
 
 } // namespace http
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_HTTP_LOCAL_STREAM_BLOCKING_CLIENT_HPP

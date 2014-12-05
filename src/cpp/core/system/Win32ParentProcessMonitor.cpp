@@ -21,7 +21,7 @@
 #include <core/SafeConvert.hpp>
 #include <core/Error.hpp>
 
-namespace core {
+namespace rscore {
 namespace parent_process_monitor {
 
 Error wrapFork(boost::function<void()> func)
@@ -37,4 +37,4 @@ ParentTermination waitForParentTermination()
 }
 
 } // namespace parent_process_monitor
-} // namespace core
+} // namespace rscore

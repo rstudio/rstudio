@@ -28,7 +28,7 @@
 #include <core/system/Types.hpp>
 #include <core/FilePath.hpp>
 
-namespace core {
+namespace rscore {
 
 class Error;
 
@@ -110,14 +110,14 @@ struct ProcessOptions
    // (respectively) should be redirected to. Note that this ONLY works
    // if you use runCommand, not runProgram, as we use the shell to do
    // the redirection.
-   core::FilePath stdOutFile;
-   core::FilePath stdErrFile;
+   rscore::FilePath stdOutFile;
+   rscore::FilePath stdErrFile;
 
    // function to run within the child process immediately after the fork
    // NOTE: only supported on posix as there is no fork on Win32
    boost::function<void()> onAfterFork;
 
-   core::FilePath workingDir;
+   rscore::FilePath workingDir;
 };
 
 // Struct for returning output and exit status from a process
@@ -245,7 +245,7 @@ ProcessCallbacks createProcessCallbacks(
                const std::string& input,
                const boost::function<void(const ProcessResult&)>& onCompleted,
                const boost::function<void(const Error&)>& onError=
-                                  boost::function<void(const core::Error&)>());
+                                  boost::function<void(const rscore::Error&)>());
 
 // Process supervisor
 class ProcessSupervisor : boost::noncopyable
@@ -323,6 +323,6 @@ private:
 };
 
 } // namespace system
-} // namespace core
+} // namespace rscore
 
 #endif // CORE_SYSTEM_PROCESS_HPP

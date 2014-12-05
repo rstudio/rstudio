@@ -21,7 +21,7 @@
 #include <vector>
 #include <iosfwd>
 
-namespace core {
+namespace rscore {
    class FilePath;
 }
 
@@ -33,7 +33,7 @@ namespace presentation {
 
 void renderMedia(const std::string& type,
                  int slideNumber,
-                 const core::FilePath& baseDir,
+                 const rscore::FilePath& baseDir,
                  const std::string& fileName,
                  const std::vector<AtCommand>& atCommands,
                  std::ostream& os,

@@ -60,9 +60,9 @@ inline boost::system::error_condition make_error_condition( errc_t e )
 } // namespace errc
 
 
-bool isAuthenticationError(const core::Error& error);
+bool isAuthenticationError(const rscore::Error& error);
 
-bool isSessionUnavailableError(const core::Error& error);
+bool isSessionUnavailableError(const rscore::Error& error);
 
 } // namespace server
 

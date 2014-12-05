@@ -33,7 +33,7 @@ LibExtern int R_interrupts_pending;
 LibExtern int UserBreak;
 #endif
 
-using namespace core ;
+using namespace rscore ;
 
 namespace r {
    
@@ -206,7 +206,7 @@ Error executeSafely(boost::function<void()> function)
    }
 }
    
-core::Error executeSafely(boost::function<SEXP()> function, SEXP* pSEXP)
+rscore::Error executeSafely(boost::function<SEXP()> function, SEXP* pSEXP)
 {
    // disable custom error handlers while we execute code
    DisableErrorHandlerScope disableErrorHandler;
@@ -480,7 +480,7 @@ void checkUserInterrupt()
 }
    
 IgnoreInterruptsScope::IgnoreInterruptsScope()
-   : pSignalBlocker_(new core::system::SignalBlocker())
+   : pSignalBlocker_(new rscore::system::SignalBlocker())
 {
    // save suspend state and set suspend flag
    previousInterruptsSuspended_ = (R_interrupts_suspended == TRUE);
@@ -490,7 +490,7 @@ IgnoreInterruptsScope::IgnoreInterruptsScope()
    setInterruptsPending(false);
       
    // enable signal blocker
-   Error error = pSignalBlocker_->block(core::system::SigInt);
+   Error error = pSignalBlocker_->block(rscore::system::SigInt);
    if (error)
       LOG_ERROR(error);
 }

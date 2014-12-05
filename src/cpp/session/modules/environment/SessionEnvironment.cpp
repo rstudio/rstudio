@@ -31,12 +31,13 @@
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <boost/foreach.hpp>
+#include <boost/make_shared.hpp>
 
 #include "EnvironmentUtils.hpp"
 
 #define TOP_FUNCTION 1
 
-using namespace core;
+using namespace rscore;
 
 namespace session {
 namespace modules { 
@@ -85,7 +86,7 @@ bool isValidSrcref(SEXP srcref)
    return srcref && TYPEOF(srcref) != NILSXP;
 }
 
-bool handleRBrowseEnv(const core::FilePath& filePath)
+bool handleRBrowseEnv(const rscore::FilePath& filePath)
 {
    if (filePath.filename() == "wsbrowser.html")
    {
