@@ -273,12 +273,16 @@ public class CodeSearchOracle extends SuggestOracle
          request_ = request;
          callback_ = callback;
          invalidationToken_ = searchInvalidation_.getInvalidationToken();
-         nudge();
+         
+         if (!executing_)
+            nudge();
       }
 
       @Override
       protected void performAction(boolean shouldSchedulePassive)
-      {  
+      {
+         executing_ = true;
+         
          // failed to short-circuit via the cache, hit the server
          server_.searchCode(
                request_.getQuery(),
@@ -322,6 +326,8 @@ public class CodeSearchOracle extends SuggestOracle
                   callback_.onSuggestionsReady(request_, 
                                                new Response(suggestions));
                }
+               
+               executing_ = false;
             }
          });
          
@@ -330,6 +336,7 @@ public class CodeSearchOracle extends SuggestOracle
       private Request request_;
       private Callback callback_;
       private Invalidation.Token invalidationToken_;
+      private boolean executing_;
    };
    
    public static Comparator<String> createFuzzyComparator(
