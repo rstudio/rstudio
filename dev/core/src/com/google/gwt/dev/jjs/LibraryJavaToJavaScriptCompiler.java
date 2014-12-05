@@ -102,7 +102,7 @@ public class LibraryJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler {
       LongCastNormalizer.exec(jprogram);
       LongEmulationNormalizer.exec(jprogram);
       TypeCoercionNormalizer.exec(jprogram);
-      ComputeExhaustiveCastabilityInformation.exec(jprogram, options.isCastCheckingDisabled());
+      ComputeExhaustiveCastabilityInformation.exec(jprogram);
       ComputeInstantiatedJsoInterfaces.exec(jprogram);
       ImplementCastsAndTypeChecks.exec(jprogram, options.isCastCheckingDisabled(), false);
       ArrayNormalizer.exec(jprogram, options.isCastCheckingDisabled());

@@ -103,7 +103,7 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
           // Per file compilation reuses type JS even as references (like casts) in other files
           // change, which means all legal casts need to be allowed now before they are actually
           // used later.
-          ComputeExhaustiveCastabilityInformation.exec(jprogram, options.isCastCheckingDisabled());
+          ComputeExhaustiveCastabilityInformation.exec(jprogram);
         } else {
           // If trivial casts are pruned then one can use smaller runtime castmaps.
           ComputeCastabilityInformation.exec(jprogram, options.isCastCheckingDisabled(),

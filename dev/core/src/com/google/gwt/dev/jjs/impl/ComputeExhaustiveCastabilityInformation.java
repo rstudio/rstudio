@@ -28,17 +28,15 @@ import java.util.Map;
  */
 public class ComputeExhaustiveCastabilityInformation {
 
-  public static void exec(JProgram program, boolean disableCastChecking) {
-    new ComputeExhaustiveCastabilityInformation(program, disableCastChecking).execImpl();
+  public static void exec(JProgram program) {
+    new ComputeExhaustiveCastabilityInformation(program).execImpl();
   }
 
   private final Map<JReferenceType, JCastMap> castMaps = Maps.newIdentityHashMap();
-  private final boolean disableCastChecking;
   private final JProgram program;
 
-  private ComputeExhaustiveCastabilityInformation(JProgram program, boolean disableCastChecking) {
+  private ComputeExhaustiveCastabilityInformation(JProgram program) {
     this.program = program;
-    this.disableCastChecking = disableCastChecking;
   }
 
   private void createCompleteCastMap(JReferenceType sourceType) {
@@ -47,10 +45,6 @@ public class ComputeExhaustiveCastabilityInformation {
   }
 
   private void execImpl() {
-    if (disableCastChecking) {
-      return;
-    }
-
     // Builds cast maps for all types declared in this library.
     for (JDeclaredType declaredType : program.getModuleDeclaredTypes()) {
       createCompleteCastMap(declaredType);
