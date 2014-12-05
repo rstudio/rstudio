@@ -1,5 +1,5 @@
 /*
- * init.js
+ * gridviewer.js
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -94,16 +94,10 @@ var renderNumberCell = function(data, type, row, meta) {
 
 // applies a new size to the table--called on init, on tab activate (from
 // RStudio), and when the window size changes
-var sizeDataTable = function(recalc) {
+var sizeDataTable = function() {
   // don't apply a zero height
   if (window.innerHeight < 1) {
     return;
-  }
-
-  // recalculate rows at new size if needed (used when our initial init
-  // happened in a hidden tab)
-  if (recalc) {
-    table.settings().scroller().measure(false);
   }
 
   // adjust scroll body height accordingly
@@ -112,11 +106,14 @@ var sizeDataTable = function(recalc) {
     // apply the new height 
     scrollBody.css("height", 
       window.innerHeight - ($("thead").height() + 25));
-    $("#data").DataTable().columns.adjust().draw();
   }
+
+  // apply new size
+  table.columns.adjust();
+  table.settings().scroller().measure(true);
 };
 
-var debouncedDataTableSize = debounce(sizeDataTable, 100);
+var debouncedDataTableSize = debounce(sizeDataTable, 75);
 
 // run a function after window size stops changing
 var runAfterSizing = function(func) {
@@ -489,10 +486,10 @@ var initDataTable = function() {
 
     table = $("#data").DataTable();
 
-    // perform initial sizing and listen for size changes
-    sizeDataTable(false);
+    // listen for size changes
+    debouncedDataTableSize();
     window.addEventListener("resize", function() { 
-      debouncedDataTableSize(false); 
+      debouncedDataTableSize(); 
     });
   })
   .fail(function(jqXHR)
@@ -547,7 +544,7 @@ window.setFilterUIVisible = function(visible) {
       }
     }
   }
-  sizeDataTable(false);
+  sizeDataTable();
 };
 
 // called from RStudio when the underlying object changes
@@ -575,7 +572,7 @@ window.applySearch = function(text) {
 };
 
 window.applySizeChange = function() {
-  runAfterSizing(function() { sizeDataTable(true); });
+  debouncedDataTableSize();
 };
 
 })();
