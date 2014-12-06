@@ -238,6 +238,11 @@ assign(x = ".rs.acCompletionTypes",
       }
    }
    
+   # If we're trying to get completions from a directory that doesn't
+   # exist, give up
+   if (!file.exists(directory))
+      return(.rs.emptyCompletions())
+   
    # If the directory lies within a folder that we're monitoring for indexing, use that.
    cacheable <- TRUE
    if (.rs.hasFileMonitor() &&
@@ -1035,7 +1040,11 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getCompletionsSearchPath", function(token, overrideInsertParens = FALSE)
 {
-   objects <- .rs.objectsOnSearchPath(token, TRUE)
+   objects <- c(
+      .rs.objectsOnSearchPath(token, TRUE),
+      list(objects(environment(), all.names = TRUE))
+   )
+   
    objects[["keywords"]] <- c(
       "NULL", "NA", "TRUE", "FALSE", "T", "F", "Inf", "NaN",
       "NA_integer_", "NA_real_", "NA_character_", "NA_complex_"
@@ -1075,6 +1084,11 @@ assign(x = ".rs.acCompletionTypes",
    type <- vapply(seq_along(results), function(i) {
       if (packages[[i]] == "keywords")
          .rs.acCompletionTypes$KEYWORD
+      else if (packages[[i]] == "")
+         tryCatch(
+            .rs.getCompletionType(get(results[[i]], envir = environment())),
+            error = function(e) .rs.acCompletionTypes$UNKNOWN
+         )
       else
          tryCatch(
             .rs.getCompletionType(get(results[[i]], pos = which(search() == packages[[i]]))),
@@ -1223,7 +1237,8 @@ assign(x = ".rs.acCompletionTypes",
    if (.rs.acContextTypes$FILE %in% type)
    {
       whichIndex <- which(type == .rs.acContextTypes$FILE)
-      tokenToUse <- paste(token, string[[whichIndex]], sep = "")
+      
+      tokenToUse <- string[[whichIndex]]
       
       directoriesOnly <- FALSE
       if (length(string) > whichIndex)
