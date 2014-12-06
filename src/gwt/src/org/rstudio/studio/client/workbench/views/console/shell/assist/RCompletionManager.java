@@ -1063,13 +1063,11 @@ public class RCompletionManager implements CompletionManager
    }
    
    
-   private AutocompletionContext getAutocompletionContextForFile(
-         String line)
+   private void addAutocompletionContextForFile(AutocompletionContext context,
+                                         String line)
    {
       int index = Math.max(line.lastIndexOf('"'), line.lastIndexOf('\''));
-      return new AutocompletionContext(
-            line.substring(index + 1),
-            AutocompletionContext.TYPE_FILE);
+      context.add(line.substring(index + 1), AutocompletionContext.TYPE_FILE);
    }
    
    private AutocompletionContext getAutocompletionContextForFileMarkdownLink(
@@ -1184,13 +1182,14 @@ public class RCompletionManager implements CompletionManager
          return getAutocompletionContextForFileMarkdownLink(firstLine);
       
       // If we're completing an object within a string, assume it's a
-      // file-system completion
+      // file-system completion. Note that we may need other contextual information
+      // to decide if e.g. we only want directories.
       String firstLineStripped = StringUtil.stripBalancedQuotes(
             StringUtil.stripRComment(firstLine));
       
       if (firstLineStripped.indexOf('\'') != -1 || 
           firstLineStripped.indexOf('"') != -1)
-         return getAutocompletionContextForFile(firstLine);
+         addAutocompletionContextForFile(context, firstLine);
       
       // If this line starts with '```{', then we're completing chunk options
       // pass the whole line as a token

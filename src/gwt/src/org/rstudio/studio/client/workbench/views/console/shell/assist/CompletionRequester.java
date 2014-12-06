@@ -32,6 +32,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.icons.code.CodeIcons;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.codesearch.CodeSearchOracle;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.RFunction;
@@ -47,6 +48,7 @@ import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionConte
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -117,6 +119,33 @@ public class CompletionRequester
       for (QualifiedName qname : cachedResult.completions)
          if (StringUtil.isSubsequence(qname.name, token, true))
             newCompletions.add(qname) ;
+      
+      final String tokenLower = token.toLowerCase();
+      java.util.Collections.sort(newCompletions, new Comparator<QualifiedName>() {
+         
+         @Override
+         public int compare(QualifiedName lhs,
+                            QualifiedName rhs)
+         {
+            // Keep argument listings at the top
+            boolean lhsArg = lhs.type == RCompletionType.ARGUMENT;
+            boolean rhsArg = rhs.type == RCompletionType.ARGUMENT;
+            
+            if (lhsArg != rhsArg)
+            {
+               return lhsArg ? -1 : 1;
+            }
+            
+            int lhsScore = CodeSearchOracle.scoreMatch(lhs.name, tokenLower, false);
+            int rhsScore = CodeSearchOracle.scoreMatch(rhs.name, tokenLower, false);
+            
+            if (lhsScore == rhsScore)
+               return lhs.name.length() - rhs.name.length();
+            else
+               return lhsScore < rhsScore ? -1 : 1;
+         }
+      });
+       
       
       CompletionResult result = new CompletionResult(
             token,
