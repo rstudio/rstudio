@@ -125,6 +125,7 @@ public class RCompletionManager implements CompletionManager
       docDisplay_ = docDisplay;
       isConsole_ = isConsole;
       sigTip_ = new RCompletionToolTip(docDisplay_);
+      suggestTimer_ = new SuggestionTimer();
       
       input_.addBlurHandler(new BlurHandler() {
          public void onBlur(BlurEvent event)
@@ -402,7 +403,7 @@ public class RCompletionManager implements CompletionManager
             // This functionality is here to ensure backspace works properly;
             // e.g "stats::rna" -> "stats::rn" brings completions if the user
             // had originally requested completions at e.g. "stats::".
-            if (popup_.hasCompletions())
+            if (popup_.hasCompletions() && !popup_.isOffscreen())
             {
                if (keycode == KeyCodes.KEY_TAB
                      || keycode == KeyCodes.KEY_ENTER
@@ -571,9 +572,25 @@ public class RCompletionManager implements CompletionManager
    
    public boolean previewKeyPress(char c)
    {
+      suggestTimer_.cancel();
+      
       if (popup_.isShowing())
       {
-         if (isValidForRIdentifier(c) || c == ':')
+         // If insertion of this character completes a single available suggestion,
+         // then implicitly apply that. We place the completion list offscreen
+         // to ensure that backspace events are handled.
+         QualifiedName selectedItem =
+               popup_.getSelectedValue();
+         
+         if (selectedItem != null &&
+               popup_.numAvailableCompletions() == 1 &&
+               selectedItem.name.equals(token_ + c))
+         {
+            popup_.placeOffscreen();
+            return false;
+         }
+         
+         if (isValidForRIdentifier(c))
          {
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
@@ -583,6 +600,11 @@ public class RCompletionManager implements CompletionManager
                   beginSuggest(false, true, false);
                }
             });
+         }
+         
+         if (c == ':')
+         {
+            suggestTimer_.schedule(false, true, false);
          }
       }
       else
@@ -598,7 +620,6 @@ public class RCompletionManager implements CompletionManager
 
          if (!autoPopupEnabled)
             return false;
-         
          
          // Check for a valid number of R identifier characters for autopopup
          boolean canAutoPopup = checkCanAutoPopup(c, 4);
@@ -633,14 +654,8 @@ public class RCompletionManager implements CompletionManager
                (c == '@') ||
                isSweaveCompletion(c))
          {
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
-                  beginSuggest(true, true, false);
-               }
-            });
+            // Delay suggestion to avoid auto-popup while the user is typing
+            suggestTimer_.schedule(true, true, false);
          }
          else if (CompletionUtils.handleEncloseSelection(input_, c))
          {
@@ -902,12 +917,16 @@ public class RCompletionManager implements CompletionManager
    {
       return StringUtil.stripBalancedQuotes(line).contains("#");
    }
-
+   
    /**
     * If false, the suggest operation was aborted
     */
-   private boolean beginSuggest(boolean flushCache, boolean implicit, boolean canAutoInsert)
+   private boolean beginSuggest(boolean flushCache,
+                                boolean implicit,
+                                boolean canAutoInsert)
    {
+      suggestTimer_.cancel();
+      
       if (!input_.isSelectionCollapsed())
          return false ;
       
@@ -1478,13 +1497,18 @@ public class RCompletionManager implements CompletionManager
                // Show an empty popup message offscreen -- this is a hack to
                // ensure that we can get completion results on backspace after a
                // failed completion, e.g. 'stats::rna' -> 'stats::rn'
-               Rectangle offScreen = new Rectangle(-1000, -1000, 0, 0);
-               popup_.showErrorMessage(
-                     "",
-                     new PopupPositioner(offScreen, popup_));
+               popup_.placeOffscreen();
             }
             
             return ;
+         }
+         
+         // If there is only one result and the name is identical to the
+         // current token, then don't display anything
+         if (results.length == 1 &&
+             completions.token.equals(results[0].name))
+         {
+            return;
          }
 
          // Move range to beginning of token; we want to place the popup there.
@@ -1516,10 +1540,11 @@ public class RCompletionManager implements CompletionManager
 
       private void onSelection(QualifiedName qname)
       {
+         suggestTimer_.cancel();
          final String value = qname.name ;
          
          if (invalidationToken_.isInvalid())
-            return ;
+            return;
          
          requester_.flushCache() ;
          helpStrategy_.clearCache();
@@ -1564,6 +1589,8 @@ public class RCompletionManager implements CompletionManager
       
       private void applyValueRmdOption(final String value)
       {
+         suggestTimer_.cancel();
+         
          // If there is no token but spaces have been inserted, then compensate
          // for that. This is necessary as we allow for spaces in the completion,
          // and completions auto-popup after ',' so e.g. on
@@ -1824,4 +1851,52 @@ public class RCompletionManager implements CompletionManager
    
    private QualifiedName lastSelectedItem_;
    private Timer helpRequest_;
+   private final SuggestionTimer suggestTimer_;
+   
+   private class SuggestionTimer
+   {
+      
+      SuggestionTimer()
+      {
+         timer_ = new Timer()
+         {
+            @Override
+            public void run()
+            {
+               beginSuggest(
+                     flushCache_,
+                     implicit_,
+                     canAutoInsert_);
+            }
+         };
+      }
+      
+      public void schedule(boolean flushCache,
+                           boolean implicit,
+                           boolean canAutoInsert)
+      {
+         flushCache_ = flushCache;
+         implicit_ = implicit;
+         canAutoInsert_ = canAutoInsert;
+         timer_.schedule(400);
+      }
+      
+      @SuppressWarnings("unused")
+      public void cancel()
+      {
+         timer_.cancel();
+      }
+      
+      @SuppressWarnings("unused")
+      public boolean isRunning()
+      {
+         return timer_.isRunning();
+      }
+      
+      private boolean flushCache_;
+      private boolean implicit_;
+      private boolean canAutoInsert_;
+      private final Timer timer_;
+      
+   }
 }

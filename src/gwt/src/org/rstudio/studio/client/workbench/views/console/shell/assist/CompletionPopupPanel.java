@@ -66,6 +66,17 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       setVisible(false);
       help_.setVisible(false);
    }
+   
+   public void placeOffscreen()
+   {
+      setPopupPosition(-10000, -10000);
+   }
+   
+   public boolean isOffscreen()
+   {
+      return getAbsoluteLeft() + getOffsetWidth() < 0 &&
+             getAbsoluteTop() + getOffsetHeight() < 0;
+   }
 
    public void showProgress(String progress, PositionCallback callback)
    {
@@ -122,10 +133,16 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       show(callback) ;
    }
    
-   public boolean hasCompletions() {
+   public boolean hasCompletions()
+   {
       if (list_ == null)
          return false;
       return list_.getItemCount() > 0;
+   }
+   
+   public int numAvailableCompletions()
+   {
+      return list_.getItemCount();
    }
 
    private void show(PositionCallback callback)
