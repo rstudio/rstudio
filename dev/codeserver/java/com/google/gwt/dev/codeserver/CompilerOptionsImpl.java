@@ -188,12 +188,6 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   }
 
   @Override
-  @Deprecated
-  public boolean isAggressivelyOptimize() {
-    return false;
-  }
-
-  @Override
   public boolean isCastCheckingDisabled() {
     return false;
   }

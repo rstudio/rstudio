@@ -46,12 +46,6 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   }
 
   @Override
-  @Deprecated
-  public final void setAggressivelyOptimize(boolean aggressivelyOptimize) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public final void setCastCheckingDisabled(boolean disabled) {
     throw new UnsupportedOperationException();
   }

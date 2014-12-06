@@ -29,7 +29,6 @@ import java.io.Serializable;
 public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   private boolean addRuntimeChecks = false;
-  private boolean aggressivelyOptimize = true;
   private boolean closureCompilerEnabled;
   private boolean clusterSimilarFunctions = true;
   private boolean incrementalCompile = false;
@@ -70,7 +69,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   public void copyFrom(JJSOptions other) {
     setAddRuntimeChecks(other.shouldAddRuntimeChecks());
-    setAggressivelyOptimize(other.isAggressivelyOptimize());
     setCastCheckingDisabled(other.isCastCheckingDisabled());
     setClassMetadataDisabled(other.isClassMetadataDisabled());
     setClosureCompilerEnabled(other.isClosureCompilerEnabled());
@@ -146,12 +144,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   }
 
   @Override
-  @Deprecated
-  public boolean isAggressivelyOptimize() {
-    return aggressivelyOptimize;
-  }
-
-  @Override
   public boolean isCastCheckingDisabled() {
     return disableCastChecking;
   }
@@ -218,12 +210,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   @Override
   public void setAddRuntimeChecks(boolean enabled) {
     addRuntimeChecks = enabled;
-  }
-
-  @Override
-  @Deprecated
-  public void setAggressivelyOptimize(boolean enabled) {
-    aggressivelyOptimize = enabled;
   }
 
   @Override

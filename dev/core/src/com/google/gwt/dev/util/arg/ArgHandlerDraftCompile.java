@@ -23,7 +23,6 @@ import com.google.gwt.util.tools.ArgHandlerFlag;
  */
 public class ArgHandlerDraftCompile extends ArgHandlerFlag {
 
-  private final OptionAggressivelyOptimize aggressivelyOptimizeOption;
   private final OptionOptimize optimizeOption;
   private final OptionClusterSimilarFunctions clusterSimilarFunctionsOption;
   private final OptionInlineLiteralParameters inlineLiteralParametersOption;
@@ -35,11 +34,9 @@ public class ArgHandlerDraftCompile extends ArgHandlerFlag {
   public <
       T extends OptionOptimize & OptionClusterSimilarFunctions &
           OptionInlineLiteralParameters & OptionOptimizeDataflow &
-          OptionAggressivelyOptimize & OptionOrdinalizeEnums &
-          OptionRemoveDuplicateFunctions & OptionNamespace>
+          OptionOrdinalizeEnums & OptionRemoveDuplicateFunctions & OptionNamespace>
           ArgHandlerDraftCompile(T option) {
     this.optimizeOption = option;
-    this.aggressivelyOptimizeOption = option;
     this.clusterSimilarFunctionsOption = option;
     this.inlineLiteralParametersOption = option;
     this.namespaceOption = option;
@@ -64,7 +61,6 @@ public class ArgHandlerDraftCompile extends ArgHandlerFlag {
         value ? OptionOptimize.OPTIMIZE_LEVEL_DRAFT : OptionOptimize.OPTIMIZE_LEVEL_DEFAULT;
     optimizeOption.setOptimizationLevel(optimizeLevel);
 
-    aggressivelyOptimizeOption.setAggressivelyOptimize(!value);
     clusterSimilarFunctionsOption.setClusterSimilarFunctions(!value);
     inlineLiteralParametersOption.setInlineLiteralParameters(!value);
     namespaceOption.setNamespace(JsNamespaceOption.PACKAGE);
@@ -77,7 +73,6 @@ public class ArgHandlerDraftCompile extends ArgHandlerFlag {
 
   @Override
   public boolean getDefaultValue() {
-    return optimizeOption.getOptimizationLevel() == OptionOptimize.OPTIMIZE_LEVEL_DRAFT
-        && !aggressivelyOptimizeOption.isAggressivelyOptimize();
+    return optimizeOption.getOptimizationLevel() == OptionOptimize.OPTIMIZE_LEVEL_DRAFT;
   }
 }

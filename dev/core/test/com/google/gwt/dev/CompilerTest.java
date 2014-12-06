@@ -735,7 +735,7 @@ public class CompilerTest extends ArgProcessorTestBase {
 
   public void testAllValidArgs() {
     assertProcessSuccess(argProcessor, new String[] {"-logLevel", "DEBUG", "-style",
-        "PRETTY", "-ea", "-XdisableAggressiveOptimization", "-gen", "myGen",
+        "PRETTY", "-ea", "-gen", "myGen",
         "-war", "myWar", "-workDir", "myWork", "-extra", "myExtra", "-incremental",
         "-localWorkers", "2", "-sourceLevel", "1.7", "c.g.g.h.H", "my.Module"});
 
@@ -750,11 +750,11 @@ public class CompilerTest extends ArgProcessorTestBase {
     assertEquals(TreeLogger.DEBUG, options.getLogLevel());
     assertEquals(JsOutputOption.PRETTY, options.getOutput());
     assertTrue(options.isEnableAssertions());
-    assertFalse(options.shouldClusterSimilarFunctions());
-    assertFalse(options.shouldInlineLiteralParameters());
-    assertFalse(options.shouldOptimizeDataflow());
-    assertFalse(options.shouldOrdinalizeEnums());
-    assertFalse(options.shouldRemoveDuplicateFunctions());
+    assertTrue(options.shouldClusterSimilarFunctions());
+    assertTrue(options.shouldInlineLiteralParameters());
+    assertTrue(options.shouldOptimizeDataflow());
+    assertTrue(options.shouldOrdinalizeEnums());
+    assertTrue(options.shouldRemoveDuplicateFunctions());
     assertTrue(options.isIncrementalCompileEnabled());
 
     assertEquals(SourceLevel.JAVA7, options.getSourceLevel());

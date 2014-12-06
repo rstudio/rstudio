@@ -146,12 +146,6 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   }
 
   @Override
-  @Deprecated
-  public boolean isAggressivelyOptimize() {
-    return jjsOptions.isAggressivelyOptimize();
-  }
-
-  @Override
   public boolean isCastCheckingDisabled() {
     return jjsOptions.isCastCheckingDisabled();
   }
@@ -233,12 +227,6 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   @Override
   public void setAddRuntimeChecks(boolean enabled) {
     jjsOptions.setAddRuntimeChecks(enabled);
-  }
-
-  @Override
-  @Deprecated
-  public void setAggressivelyOptimize(boolean aggressivelyOptimize) {
-    jjsOptions.setAggressivelyOptimize(aggressivelyOptimize);
   }
 
   @Override

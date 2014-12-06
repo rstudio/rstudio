@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs;
 
-import com.google.gwt.dev.util.arg.OptionAggressivelyOptimize;
 import com.google.gwt.dev.util.arg.OptionAllowJDTConstantInlining;
 import com.google.gwt.dev.util.arg.OptionCheckedMode;
 import com.google.gwt.dev.util.arg.OptionClusterSimilarFunctions;
@@ -50,7 +49,7 @@ import com.google.gwt.dev.util.arg.OptionUseDetailedTypeIds;
 /**
  * Controls options for the {@link JavaToJavaScriptCompiler}.
  */
-public interface JJSOptions extends OptionOptimize, OptionAggressivelyOptimize,
+public interface JJSOptions extends OptionOptimize,
     OptionClusterSimilarFunctions, OptionIncrementalCompile, OptionDisableClassMetadata,
     OptionDisableCastChecking, OptionEnableAssertions, OptionInlineLiteralParameters,
     OptionOptimizeDataflow, OptionRunAsyncEnabled, OptionScriptStyle, OptionSoycEnabled,
