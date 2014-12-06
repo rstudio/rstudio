@@ -1038,12 +1038,23 @@ assign(x = ".rs.acCompletionTypes",
                        type = .rs.acCompletionTypes$OPTION)
 })
 
-.rs.addFunction("getCompletionsSearchPath", function(token, overrideInsertParens = FALSE)
+.rs.addFunction("getCompletionsSearchPath", function(token,
+                                                     overrideInsertParens = FALSE)
 {
-   objects <- c(
-      .rs.objectsOnSearchPath(token, TRUE),
-      list(objects(environment(), all.names = TRUE))
-   )
+   objects <- .rs.objectsOnSearchPath(token, TRUE)
+   
+   # If we called this function from a debug context, try to find that frame
+   # and pull the variables out for completion.
+   # 
+   # TODO: This likely needs to be tweaked for 'tryCatch', 'withCallingHandlers'
+   frames <- sys.frames()
+   if (length(frames) > sys.parent())
+   {
+      objects <- c(
+         objects,
+         list(objects(frames[[length(frames) - sys.parent()]]))
+      )
+   }
    
    objects[["keywords"]] <- c(
       "NULL", "NA", "TRUE", "FALSE", "T", "F", "Inf", "NaN",
@@ -1085,10 +1096,8 @@ assign(x = ".rs.acCompletionTypes",
       if (packages[[i]] == "keywords")
          .rs.acCompletionTypes$KEYWORD
       else if (packages[[i]] == "")
-         tryCatch(
-            .rs.getCompletionType(get(results[[i]], envir = environment())),
-            error = function(e) .rs.acCompletionTypes$UNKNOWN
-         )
+         ## Don't try to evaluate these as we don't want to force promises in debug contexts
+         .rs.acCompletionTypes$UNKNOWN
       else
          tryCatch(
             .rs.getCompletionType(get(results[[i]], pos = which(search() == packages[[i]]))),
