@@ -1563,7 +1563,9 @@ public class RCompletionManager implements CompletionManager
          }
 
          applyValue(qname);
-         if (suggestOnAccept_ || qname.name.endsWith(":"))
+         if (suggestOnAccept_ || qname.name.endsWith(":") ||
+             (qname.name.endsWith("/") && nativeEvent_ != null &&
+              nativeEvent_.getKeyCode() == KeyCodes.KEY_TAB))
          {
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
