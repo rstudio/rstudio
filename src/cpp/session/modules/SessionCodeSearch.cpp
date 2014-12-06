@@ -561,13 +561,28 @@ public:
                           T* pPaths)
    {
       FilePath projectDir = projects::projectContext().directory();
-      BOOST_FOREACH(const Entry& entry, *pEntries_)
+      
+      // Find the parent node in the tree
+      Entry parentEntry(core::toFileInfo(parentPath));
+      EntryTree::iterator parentItr = pEntries_->find(parentEntry);
+      if (parentItr == pEntries_->end())
       {
-         if (entry.fileInfo.isDirectory())
+         std::stringstream ss;
+         ss << "Expected node '" << parentPath.absolutePath() << "' in index tree but none found";
+         LOG_ERROR_MESSAGE(ss.str());
+         return;
+      }
+      
+      EntryTree::iterator it = parentItr.begin();
+      EntryTree::iterator end = parentItr.end();
+      for (; it != end; it++)
+      {
+         const FileInfo& fileInfo = (*it).fileInfo;
+         if (fileInfo.isDirectory())
          {
-            FilePath path = core::toFilePath(entry.fileInfo);
-            if (path.isWithin(parentPath) && string_utils::isSubsequence(path.filename(), term, true))
-               pPaths->push_back(entry.fileInfo.absolutePath());
+            int lastSlashIndex = fileInfo.absolutePath().rfind('/');
+            if (string_utils::isSubsequence(fileInfo.absolutePath().substr(lastSlashIndex + 1), term, true))
+               pPaths->push_back(fileInfo.absolutePath());
          }
       }
    }

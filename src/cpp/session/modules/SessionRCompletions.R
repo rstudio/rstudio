@@ -245,13 +245,13 @@ assign(x = ".rs.acCompletionTypes",
    {
       if (directoriesOnly)
       {
-         index <- .rs.getIndexedFiles(tokenName, directory) ## NOTE: guaranteed to work with above check
-         cacheable <- !index$more_available
-         absolutePaths <- index$paths
+         absolutePaths <- .rs.getIndexedDirectories(tokenName, directory)
       }
       else
       {
-         absolutePaths <- .rs.getIndexedDirectories(tokenName, directory)
+         index <- .rs.getIndexedFiles(tokenName, directory) ## NOTE: guaranteed to work with above check
+         cacheable <- !index$more_available
+         absolutePaths <- index$paths
       }
    }
    
@@ -308,6 +308,7 @@ assign(x = ".rs.acCompletionTypes",
    if (directoriesOnly && getRversion() >= "3.0.0")
    {
       paths <- paste(tokenPrefix, relativePaths, "/", sep = "")
+      type <- rep.int(.rs.acCompletionTypes$DIRECTORY, length(paths))
    }
    else
    {
@@ -315,13 +316,14 @@ assign(x = ".rs.acCompletionTypes",
       
       paths <- paste(tokenPrefix, relativePaths, sep = "")
       paths[isDir] <- paste(paths[isDir], "/", sep = "")
+      type = ifelse(isDir,
+                    .rs.acCompletionTypes$DIRECTORY,
+                    .rs.acCompletionTypes$FILE)
    }
    
    .rs.makeCompletions(token = token,
                        results = paths,
-                       type = ifelse(isDir,
-                                     .rs.acCompletionTypes$DIRECTORY,
-                                     .rs.acCompletionTypes$FILE),
+                       type = type,
                        quote = quote,
                        excludeOtherCompletions = TRUE,
                        cacheable = cacheable)
@@ -1217,6 +1219,38 @@ assign(x = ".rs.acCompletionTypes",
       return(.rs.getCompletionsPackages(token, excludeOtherCompletions = TRUE))
    }
    
+   ## File-based completions
+   if (.rs.acContextTypes$FILE %in% type)
+   {
+      whichIndex <- which(type == .rs.acContextTypes$FILE)
+      tokenToUse <- paste(token, string[[whichIndex]], sep = "")
+      
+      directoriesOnly <- FALSE
+      if (length(string) > whichIndex)
+      {
+         if (string[[whichIndex + 1]] %in% c("list.files",
+                                             "list.dirs",
+                                             "dir",
+                                             "setwd"))
+         {
+            directoriesOnly <- TRUE
+         }
+      }
+      # NOTE: For Markdown link completions, we overload the meaning of the
+      # function call string here, and use it as a signal to generate paths
+      # relative to the R markdown path.
+      path <- if (length(functionCallString) &&
+                     functionCallString == "useFile")
+         suppressWarnings(.rs.normalizePath(dirname(filePath)))
+      else
+         getwd()
+      
+      return(.rs.getCompletionsFile(token = tokenToUse,
+                                    path = path,
+                                    quote = FALSE,
+                                    directoriesOnly = directoriesOnly))
+   }
+   
    # Shiny completions
    
    ## Completions for server.r (from ui.r)
@@ -1353,24 +1387,6 @@ assign(x = ".rs.acCompletionTypes",
             .rs.getCompletionsActivePackage(token, pkgName)
          )
       }
-   }
-   
-   ## File-based completions
-   if (.rs.acContextTypes$FILE %in% type)
-   {
-      # NOTE: For Markdown link completions, we overload the meaning of the
-      # function call string here, and use it as a signal to generate paths
-      # relative to the R markdown path.
-      path <- if (length(functionCallString) &&
-                     functionCallString == "useFile")
-         suppressWarnings(.rs.normalizePath(dirname(filePath)))
-      else
-         getwd()
-      
-      completions <- .rs.appendCompletions(
-         completions,
-         .rs.getCompletionsFile(token, path)
-      )
    }
    
    ## Package completions (e.g. `stats::`)
