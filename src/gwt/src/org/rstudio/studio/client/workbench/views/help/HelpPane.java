@@ -163,7 +163,15 @@ public class HelpPane extends WorkbenchPane
          });
       } ;
       $wnd.helpNavigate = function(url) {
-         thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::showHelp(Ljava/lang/String;)(encodeURI(url));
+         // on some platforms url may arrive unencoded; on others it will already be encoded. to
+         // ascertain the difference, check to see if the url contains any characters that require
+         // encoding. 
+         var re = new RegExp("^([!#$&-;=?-[]_a-z~]|%[0-9a-fA-F]{2})+$");
+         if (!re.test(url)) 
+         {
+            url = encodeURI(url);
+         }
+         thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::showHelp(Ljava/lang/String;)(url);
       } ;
       
       $wnd.helpKeydown = function(e) {
