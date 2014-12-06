@@ -116,9 +116,41 @@ public class CompletionRequester
       ArrayList<QualifiedName> newCompletions = new ArrayList<QualifiedName>();
       newCompletions.ensureCapacity(cachedResult.completions.size());
       
+      // For completions that are files or directories, we need to post-process
+      // the token and the qualified name to strip out just the basename (filename).
+      // Note that we normalize the paths such that files will have no trailing slash,
+      // while directories will have one trailing slash (but we defend against multiple
+      // trailing slashes)
+      
+      // Transform the token once beforehand for potential file completions.
+      int tokenSlashOffset = token.length() - 1;
+      while (tokenSlashOffset > 0 &&
+             token.charAt(tokenSlashOffset) == '/')
+         tokenSlashOffset--;
+      
+      String tokenSub = token.substring(
+            token.lastIndexOf('/'), tokenSlashOffset);
+      
       for (QualifiedName qname : cachedResult.completions)
-         if (StringUtil.isSubsequence(qname.name, token, true))
-            newCompletions.add(qname) ;
+      {
+         // File types are narrowed only by the file name
+         if (RCompletionType.isFileType(qname.type))
+         {
+            int fileNameSlashOffset = qname.name.length() - 1;
+            while (fileNameSlashOffset > 0 &&
+                   qname.name.charAt(fileNameSlashOffset) == '/')
+               fileNameSlashOffset--;
+            
+            String fileName = qname.name.substring(
+                  qname.name.lastIndexOf('/', fileNameSlashOffset));
+            
+            if (StringUtil.isSubsequence(fileName, tokenSub, true))
+               newCompletions.add(qname);
+         }
+         else
+            if (StringUtil.isSubsequence(qname.name, token, true))
+               newCompletions.add(qname) ;
+      }
       
       final String tokenLower = token.toLowerCase();
       java.util.Collections.sort(newCompletions, new Comparator<QualifiedName>() {
