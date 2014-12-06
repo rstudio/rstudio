@@ -66,4 +66,8 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
    void getArgs(String name,
                 String source,
                 ServerRequestCallback<String> callback);
+   
+   void listProjectFiles(ServerRequestCallback<JsArrayString> callback);
+   
+   
 }

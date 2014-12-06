@@ -1,0 +1,34 @@
+@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+
+.selected {
+	background-color: #AACCEE;
+}
+
+.completionGrid {
+	cursor: pointer;
+	cursor: hand;
+	padding: 0;
+	overflow: hidden;
+	background-color: white;
+	border: 1px solid black; 
+}
+
+.completionGrid td {
+   font-family: fixedWidthFont;
+   font-size: 10px;
+   padding-left: 3px;
+   padding-right: 3px;
+   margin: 0;
+   white-space: nowrap;
+   text-overflow: ellipsis;
+}
+
+
+.outerPanel {
+	table-layout: fixed;
+}
+
+.textBox {
+	padding-left: 4px;
+}

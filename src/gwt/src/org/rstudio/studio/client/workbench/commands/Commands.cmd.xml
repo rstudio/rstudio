@@ -459,6 +459,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="closeSourceDoc" value="Cmd+W"/>
          <shortcut refid="closeAllSourceDocs" value="Cmd+Shift+W"/>
          <shortcut refid="findInFiles" value="Cmd+Shift+F"/>
+         <shortcut refid="searchProjectFiles" value="Cmd+Shift+P"/>
       </shortcutgroup>
       <shortcutgroup name="Build">
          <shortcut refid="compilePDF" value="Cmd+Shift+K"/>

@@ -333,6 +333,33 @@ public class CodeSearchOracle extends SuggestOracle
       private Invalidation.Token invalidationToken_;
    };
    
+   public static Comparator<String> createFuzzyComparator(
+         final String query,
+         final boolean isFile)
+   {
+      final String queryLower = query.toLowerCase();
+      return new Comparator<String>()
+      {
+         @Override
+         public int compare(String lhs, String rhs)
+         {
+            int lhsScore = scoreMatch(lhs, queryLower, isFile);
+            int rhsScore = scoreMatch(rhs, queryLower, isFile);
+
+            if (lhsScore == rhsScore)
+            {
+               return lhs.length() - rhs.length();
+            }
+            else
+            {
+               return lhsScore < rhsScore ? -1 : 1;
+            }
+         }
+         
+      };
+
+   }
+   
    private void sortSuggestions(ArrayList<CodeSearchSuggestion> suggestions,
                                 String query)
    {

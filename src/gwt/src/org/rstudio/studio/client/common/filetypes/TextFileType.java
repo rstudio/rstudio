@@ -259,6 +259,7 @@ public class TextFileType extends EditableFileType
       results.add(commands.vcsViewOnGitHub());
       results.add(commands.vcsBlameOnGitHub());
       results.add(commands.goToLine());
+      results.add(commands.searchProjectFiles());
       if (canExecuteCode() || isC())
       {
          results.add(commands.reindent());

@@ -4169,6 +4169,12 @@ public class TextEditingTarget implements
       }
    }
    
+   @Handler
+   void onSearchProjectFiles()
+   {
+      RStudioGinjector.INSTANCE.getFileSearch().listProjectFiles(docDisplay_);
+   }
+   
    boolean useScopeTreeFolding()
    {
       return docDisplay_.hasScopeTree() && !fileType_.isRmd();
@@ -4658,6 +4664,7 @@ public class TextEditingTarget implements
    private final TextEditingTargetScopeHelper scopeHelper_;
    private TextEditingTargetSpelling spelling_;
    private BreakpointManager breakpointManager_;
+   
 
    // Allows external edit checks to supercede one another
    private final Invalidation externalEditCheckInvalidation_ =

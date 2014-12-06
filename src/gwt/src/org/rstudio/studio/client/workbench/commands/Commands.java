@@ -87,6 +87,8 @@ public abstract class
    public abstract AppCommand findFromSelection();
    public abstract AppCommand replaceAndFind();
    public abstract AppCommand findInFiles();
+   public abstract AppCommand searchProjectFiles();
+   
    public abstract AppCommand fold();
    public abstract AppCommand unfold();
    public abstract AppCommand foldAll();
