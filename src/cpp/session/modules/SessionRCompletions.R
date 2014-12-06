@@ -187,7 +187,10 @@ assign(x = ".rs.acCompletionTypes",
    doGetCompletionsVignettes(token, vignettes$results[, "Item"])
 })
 
-.rs.addFunction("getCompletionsFile", function(token, path = getwd(), quote = FALSE)
+.rs.addFunction("getCompletionsFile", function(token,
+                                               path = getwd(),
+                                               quote = FALSE,
+                                               directoriesOnly = FALSE)
 {
    projectPath <- .rs.getProjectDirectory()
    hasFileMonitor <- .rs.hasFileMonitor()
@@ -240,9 +243,16 @@ assign(x = ".rs.acCompletionTypes",
    if (.rs.hasFileMonitor() &&
        .rs.startsWith(directory, .rs.getProjectDirectory()))
    {
-      index <- .rs.getIndexedFiles(tokenName, directory) ## NOTE: guaranteed to work with above check
-      cacheable <- !index$more_available
-      absolutePaths <- index$paths
+      if (directoriesOnly)
+      {
+         index <- .rs.getIndexedFiles(tokenName, directory) ## NOTE: guaranteed to work with above check
+         cacheable <- !index$more_available
+         absolutePaths <- index$paths
+      }
+      else
+      {
+         absolutePaths <- .rs.getIndexedDirectories(tokenName, directory)
+      }
    }
    
    # Otherwise, result to a listing of just the current directory.
@@ -251,12 +261,21 @@ assign(x = ".rs.acCompletionTypes",
       pattern <- if (nzchar(tokenName))
          paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeForRegex(tokenName)), sep = "")
       
-      absolutePaths <- gsub("/+", "/", list.files(path = directory,
-                                                  all.files = TRUE,
-                                                  pattern = pattern,
-                                                  no.. = TRUE,
-                                                  full.names = TRUE,
-                                                  include.dirs = TRUE))
+      if (directoriesOnly && getRversion() >= "3.0.0")
+      {
+         absolutePaths <- list.dirs(path = directory,
+                                    recursive = FALSE)
+      }
+      else
+      {
+         absolutePaths <- gsub("/+", "/", list.files(path = directory,
+                                                     all.files = TRUE,
+                                                     pattern = pattern,
+                                                     no.. = TRUE,
+                                                     full.names = TRUE,
+                                                     include.dirs = TRUE))
+      }
+      
    }
    
    ## Bail out early if we didn't get any completions.
@@ -286,10 +305,17 @@ assign(x = ".rs.acCompletionTypes",
       absolutePaths <- absolutePaths[order]
    }
    
-   isDir <- file.info(absolutePaths)[, "isdir"] %in% TRUE ## protect against NA
-   
-   paths <- paste(tokenPrefix, relativePaths, sep = "")
-   paths[isDir] <- paste(paths[isDir], "/", sep = "")
+   if (directoriesOnly && getRversion() >= "3.0.0")
+   {
+      paths <- paste(tokenPrefix, relativePaths, "/", sep = "")
+   }
+   else
+   {
+      isDir <- file.info(absolutePaths)[, "isdir"] %in% TRUE ## protect against NA
+      
+      paths <- paste(tokenPrefix, relativePaths, sep = "")
+      paths[isDir] <- paste(paths[isDir], "/", sep = "")
+   }
    
    .rs.makeCompletions(token = token,
                        results = paths,

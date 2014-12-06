@@ -554,6 +554,23 @@ public:
          }
       }
    }
+   
+   template <typename T>
+   void searchDirectories(const std::string& term,
+                          const FilePath& parentPath,
+                          T* pPaths)
+   {
+      FilePath projectDir = projects::projectContext().directory();
+      BOOST_FOREACH(const Entry& entry, *pEntries_)
+      {
+         if (entry.fileInfo.isDirectory())
+         {
+            FilePath path = core::toFilePath(entry.fileInfo);
+            if (path.isWithin(parentPath) && string_utils::isSubsequence(path.filename(), term, true))
+               pPaths->push_back(entry.fileInfo.absolutePath());
+         }
+      }
+   }
 
    void clear()
    {
@@ -2055,7 +2072,28 @@ SEXP rs_listIndexedFiles(SEXP termSEXP, SEXP absolutePathSEXP, SEXP maxCountSEXP
    builder.add("more_available", moreAvailable);
    return builder;
 }
+
+SEXP rs_listIndexedDirectories(SEXP termSEXP, SEXP absolutePathSEXP)
+{
+   std::string term = r::sexp::asString(termSEXP);
+   std::string absolutePath = r::sexp::asString(absolutePathSEXP);
    
+   FilePath filePath(absolutePath);
+   if (!filePath.exists())
+      return R_NilValue;
+   
+   if (!projects::projectContext().isMonitoringDirectory(filePath))
+      return R_NilValue;
+   
+   std::vector<std::string> paths;
+   s_projectIndex.searchDirectories(term,
+                                    filePath,
+                                    &paths);
+   
+   r::sexp::Protect protect;
+   return r::sexp::create(paths, &protect);
+}
+
 } // anonymous namespace
    
 Error initialize()
@@ -2079,6 +2117,11 @@ Error initialize()
             "rs_listIndexedFiles",
             (DL_FUNC) rs_listIndexedFiles,
             3);
+   
+   r::routines::registerCallMethod(
+            "rs_listIndexedDirectories",
+            (DL_FUNC) rs_listIndexedDirectories,
+            2);
 
    // initialize r source indexes
    rSourceIndex().initialize();

@@ -690,3 +690,31 @@
       more_available = indexedFiles$more_available
    )
 })
+
+.rs.addFunction("listIndexedDirectories", function(term,
+                                                   inDirectory = .rs.getProjectDirectory())
+{
+   if (is.null(inDirectory))
+      return(character())
+   
+   .Call("rs_listIndexedDirectories", term, inDirectory)
+})
+
+.rs.addFunction("getIndexedDirectories", function(term,
+                                                  inDirectory = .rs.getProjectDirectory())
+{
+   if (is.null(inDirectory))
+      return(character())
+   
+   inDirectory <- suppressWarnings(
+      .rs.normalizePath(inDirectory)
+   )
+   
+   indexedDirs <- .rs.listIndexedDirectories(term, inDirectory)
+   if (is.null(indexedDirs))
+      return(character())
+   
+   scores <- .rs.scoreMatches(basename(indexedDirs), term)
+   indexedDirs[order(scores)]
+   
+})
