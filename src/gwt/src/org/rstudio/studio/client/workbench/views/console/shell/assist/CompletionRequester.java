@@ -123,26 +123,16 @@ public class CompletionRequester
       // trailing slashes)
       
       // Transform the token once beforehand for potential file completions.
-      int tokenSlashOffset = token.length() - 1;
-      while (tokenSlashOffset > 0 &&
-             token.charAt(tokenSlashOffset) == '/')
-         tokenSlashOffset--;
-      
-      String tokenSub = token.substring(
-            token.lastIndexOf('/'), tokenSlashOffset);
+      String tokenSub = token.toLowerCase().substring(
+            token.lastIndexOf('/') + 1);
       
       for (QualifiedName qname : cachedResult.completions)
       {
          // File types are narrowed only by the file name
          if (RCompletionType.isFileType(qname.type))
          {
-            int fileNameSlashOffset = qname.name.length() - 1;
-            while (fileNameSlashOffset > 0 &&
-                   qname.name.charAt(fileNameSlashOffset) == '/')
-               fileNameSlashOffset--;
-            
-            String fileName = qname.name.substring(
-                  qname.name.lastIndexOf('/', fileNameSlashOffset));
+            String fileName = qname.name.toLowerCase().substring(
+                  qname.name.lastIndexOf('/'));
             
             if (StringUtil.isSubsequence(fileName, tokenSub, true))
                newCompletions.add(qname);
@@ -153,6 +143,7 @@ public class CompletionRequester
       }
       
       final String tokenLower = token.toLowerCase();
+      final String tokenLowerSub = tokenLower.substring(tokenLower.lastIndexOf('/') + 1);
       java.util.Collections.sort(newCompletions, new Comparator<QualifiedName>() {
          
          @Override
@@ -168,16 +159,28 @@ public class CompletionRequester
                return lhsArg ? -1 : 1;
             }
             
-            int lhsScore = CodeSearchOracle.scoreMatch(lhs.name, tokenLower, false);
-            int rhsScore = CodeSearchOracle.scoreMatch(rhs.name, tokenLower, false);
+            // Files should first be ranked by their level of nesting
+            int lhsScore;
+            int rhsScore;
+            if (RCompletionType.isFileType(lhs.type) &&
+                RCompletionType.isFileType(rhs.type))
+            {
+               int lhsNestLevel = StringUtil.countMatches(lhs.name, '/');
+               int rhsNestLevel = StringUtil.countMatches(rhs.name, '/');
+               
+               if (lhsNestLevel != rhsNestLevel)
+                  return lhsNestLevel < rhsNestLevel ? -1 : 1;
+            }
             
+            lhsScore = CodeSearchOracle.scoreMatch(lhs.name.toLowerCase(), tokenLower, false);
+            rhsScore = CodeSearchOracle.scoreMatch(rhs.name.toLowerCase(), tokenLower, false);
+
             if (lhsScore == rhsScore)
                return lhs.name.length() - rhs.name.length();
             else
                return lhsScore < rhsScore ? -1 : 1;
          }
       });
-       
       
       CompletionResult result = new CompletionResult(
             token,
@@ -680,69 +683,84 @@ public class CompletionRequester
                style,
                getIcon());
          
+         // Get the display name. Note that for file completions this requires
+         // some munging of the 'name' and 'package' fields.
+         addDisplayName(sb);
+         
+         return sb.toSafeHtml().asString();
+      }
+      
+      private void addDisplayName(SafeHtmlBuilder sb)
+      {
          // Handle files specially
          if (RCompletionType.isFileType(type))
-         {
-            ArrayList<Integer> slashIndices =
-                  StringUtil.indicesOf(name, '/');
-            
-            if (name.endsWith("/"))
-               slashIndices.remove(slashIndices.size() - 1);
-            
-            if (slashIndices.size() < 1)
-               SafeHtmlUtil.appendSpan(
-                     sb,
-                     RES.styles().completion(),
-                     name);
-            else
-            {
-               int lastSlashIndex = slashIndices.get(
-                     slashIndices.size() - 1);
-               
-               int firstSlashIndex = 0;
-               if (slashIndices.size() > 2)
-                  firstSlashIndex = slashIndices.get(
-                        slashIndices.size() - 3);
-               
-               String endName = name.substring(lastSlashIndex + 1);
-               String startName = "";
-               if (slashIndices.size() > 2)
-                  startName += "...";
-               startName += name.substring(firstSlashIndex, lastSlashIndex);
-               
-               SafeHtmlUtil.appendSpan(
-                     sb,
-                     RES.styles().completion(),
-                     endName);
-
-               SafeHtmlUtil.appendSpan(
-                     sb,
-                     RES.styles().packageName(),
-                     startName);
-            }
-                     
-         }
-         
-         // Non-file completions
+            doAddDisplayNameFile(sb);
          else
+            doAddDisplayNameGeneric(sb);
+      }
+      
+      private void doAddDisplayNameFile(SafeHtmlBuilder sb)
+      {
+         ArrayList<Integer> slashIndices =
+               StringUtil.indicesOf(name, '/');
+
+         if (slashIndices.size() < 1)
          {
-            // Get the name for the completion
             SafeHtmlUtil.appendSpan(
                   sb,
                   RES.styles().completion(),
-                  name);
-
-            // Get the associated package for functions
-            if (RCompletionType.isFunctionType(type))
-            {
-               SafeHtmlUtil.appendSpan(
-                     sb,
-                     RES.styles().packageName(),
-                     "{" + source.replaceAll("package:", "") + "}");
-            }
+                  type == RCompletionType.DIRECTORY ?
+                        name + "/" :
+                           name);
          }
-         
-         return sb.toSafeHtml().asString();
+         else
+         {
+            int lastSlashIndex = slashIndices.get(
+                  slashIndices.size() - 1);
+
+            int firstSlashIndex = 0;
+            if (slashIndices.size() > 2)
+               firstSlashIndex = slashIndices.get(
+                     slashIndices.size() - 3);
+
+            String endName = name.substring(lastSlashIndex + 1);
+            if (type == RCompletionType.DIRECTORY)
+               endName += "/";
+
+            String startName = "";
+            if (slashIndices.size() > 2)
+               startName += "...";
+            startName += name.substring(firstSlashIndex, lastSlashIndex);
+
+            SafeHtmlUtil.appendSpan(
+                  sb,
+                  RES.styles().completion(),
+                  endName);
+
+            SafeHtmlUtil.appendSpan(
+                  sb,
+                  RES.styles().packageName(),
+                  startName);
+         }
+
+      }
+      
+      private void doAddDisplayNameGeneric(SafeHtmlBuilder sb)
+      {
+         // Get the name for the completion
+         SafeHtmlUtil.appendSpan(
+               sb,
+               RES.styles().completion(),
+               name);
+
+         // Get the associated package for functions
+         if (RCompletionType.isFunctionType(type))
+         {
+            SafeHtmlUtil.appendSpan(
+                  sb,
+                  RES.styles().packageName(),
+                  "{" + source.replaceAll("package:", "") + "}");
+         }
       }
       
       private ImageResource getIcon()

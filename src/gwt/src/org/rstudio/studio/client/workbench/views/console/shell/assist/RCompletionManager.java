@@ -406,15 +406,27 @@ public class RCompletionManager implements CompletionManager
             // had originally requested completions at e.g. "stats::".
             if (popup_.hasCompletions())
             {
-               if (keycode == KeyCodes.KEY_TAB
-                     || keycode == KeyCodes.KEY_ENTER
-                     || keycode == KeyCodes.KEY_RIGHT)
+               if (keycode == KeyCodes.KEY_ENTER)
                {
                   QualifiedName value = popup_.getSelectedValue() ;
                   if (value != null)
                   {
                      context_.onSelection(value) ;
                      return true ;
+                  }
+               }
+               
+               else if (keycode == KeyCodes.KEY_TAB ||
+                        keycode == KeyCodes.KEY_RIGHT)
+               {
+                  QualifiedName value = popup_.getSelectedValue() ;
+                  if (value != null)
+                  {
+                     if (value.type == RCompletionType.DIRECTORY)
+                        context_.suggestOnAccept_ = true;
+                     
+                     context_.onSelection(value);
+                     return true;
                   }
                }
                
@@ -1064,10 +1076,12 @@ public class RCompletionManager implements CompletionManager
    
    
    private void addAutocompletionContextForFile(AutocompletionContext context,
-                                         String line)
+                                                String line)
    {
       int index = Math.max(line.lastIndexOf('"'), line.lastIndexOf('\''));
-      context.add(line.substring(index + 1), AutocompletionContext.TYPE_FILE);
+      String token = line.substring(index + 1);
+      context.add(token, AutocompletionContext.TYPE_FILE);
+      context.setToken(token);
    }
    
    private AutocompletionContext getAutocompletionContextForFileMarkdownLink(
@@ -1187,9 +1201,13 @@ public class RCompletionManager implements CompletionManager
       String firstLineStripped = StringUtil.stripBalancedQuotes(
             StringUtil.stripRComment(firstLine));
       
+      boolean isFileCompletion = false;
       if (firstLineStripped.indexOf('\'') != -1 || 
           firstLineStripped.indexOf('"') != -1)
+      {
+         isFileCompletion = true;
          addAutocompletionContextForFile(context, firstLine);
+      }
       
       // If this line starts with '```{', then we're completing chunk options
       // pass the whole line as a token
@@ -1210,15 +1228,18 @@ public class RCompletionManager implements CompletionManager
       if (token.contains("$") || token.contains("@"))
          addAutocompletionContextForDollar(context);
       
-      // If the token has '::' or ':::', escape early as we'll be completing
-      // something from a namespace
+      // If the token has '::' or ':::', add that context. Note that
+      // we still need outer contexts (so that e.g., if we try
+      // 'debug(stats::rnorm)' we know not to auto-insert parens)
       if (token.contains("::"))
          addAutocompletionContextForNamespace(token, context);
       
-      // Now strip the '$' and '@' post-hoc since they're not really part
-      // of the identifier
+      // If this is not a file completion, we need to further strip and
+      // then set the token. Note that the token will have already been
+      // set if this is a file completion.
       token = token.replaceAll(".*[$@:]", "");
-      context.setToken(token);
+      if (!isFileCompletion)
+         context.setToken(token);
       
       // access to the R Code model
       AceEditor editor = (AceEditor) docDisplay_;
@@ -1530,13 +1551,16 @@ public class RCompletionManager implements CompletionManager
 
          if (results.length == 1
              && canAutoAccept_
+             && results[0].type != RCompletionType.DIRECTORY
              && StringUtil.isNullOrEmpty(results[0].source))
          {
             onSelection(results[0]);
          }
          else
          {
-            if (results.length == 1 && canAutoAccept_)
+            if (results.length == 1
+                  && results[0].type != RCompletionType.DIRECTORY
+                  && canAutoAccept_)
                applyValue(results[0]);
             else
                popup_.showCompletionValues(
@@ -1563,9 +1587,7 @@ public class RCompletionManager implements CompletionManager
          }
 
          applyValue(qname);
-         if (suggestOnAccept_ || qname.name.endsWith(":") ||
-             (qname.name.endsWith("/") && nativeEvent_ != null &&
-              nativeEvent_.getKeyCode() == KeyCodes.KEY_TAB))
+         if (suggestOnAccept_ || qname.name.endsWith(":"))
          {
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
@@ -1668,6 +1690,9 @@ public class RCompletionManager implements CompletionManager
          String value = qualifiedName.name;
          String source = qualifiedName.source;
          boolean shouldQuote = qualifiedName.shouldQuote;
+         
+         if (qualifiedName.type == RCompletionType.DIRECTORY)
+            value = value + "/";
          
          if (!RCompletionType.isFileType(qualifiedName.type))
          {
