@@ -1550,23 +1550,17 @@ public class RCompletionManager implements CompletionManager
          overrideInsertParens_ = completions.dontInsertParens;
 
          if (results.length == 1
-             && canAutoAccept_
-             && results[0].type != RCompletionType.DIRECTORY
-             && StringUtil.isNullOrEmpty(results[0].source))
+               && canAutoAccept_
+               && results[0].type != RCompletionType.DIRECTORY)
          {
             onSelection(results[0]);
          }
          else
          {
-            if (results.length == 1
-                  && results[0].type != RCompletionType.DIRECTORY
-                  && canAutoAccept_)
-               applyValue(results[0]);
-            else
-               popup_.showCompletionValues(
-                     results,
-                     new PopupPositioner(rect, popup_),
-                     false);
+            popup_.showCompletionValues(
+                  results,
+                  new PopupPositioner(rect, popup_),
+                  false);
          }
       }
 
