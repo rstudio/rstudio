@@ -89,7 +89,7 @@ public class Compiler {
     }
     // TODO: returns the same UnitCache even if the passed directory changes. Make this less
     // surprising.
-    return UnitCacheSingleton.get(logger, persistentUnitCacheDir);
+    return UnitCacheSingleton.get(logger, null, persistentUnitCacheDir);
   }
 
   public static void main(String[] args) {

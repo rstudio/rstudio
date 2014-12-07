@@ -855,7 +855,7 @@ public abstract class DevModeBase implements DoneCallback {
     topLogger = ui.getTopLogger();
 
     compilerContext = compilerContextBuilder.unitCache(
-        UnitCacheSingleton.get(getTopLogger(), persistentCacheDir)).build();
+        UnitCacheSingleton.get(getTopLogger(), null, persistentCacheDir)).build();
 
     // Set done callback
     ui.setCallback(DoneEvent.getType(), this);
