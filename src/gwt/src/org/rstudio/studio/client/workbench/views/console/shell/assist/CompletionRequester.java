@@ -710,9 +710,7 @@ public class CompletionRequester
             SafeHtmlUtil.appendSpan(
                   sb,
                   RES.styles().completion(),
-                  type == RCompletionType.DIRECTORY ?
-                        name + "/" :
-                           name);
+                  name);
          }
          else
          {
@@ -725,9 +723,6 @@ public class CompletionRequester
                      slashIndices.size() - 3);
 
             String endName = name.substring(lastSlashIndex + 1);
-            if (type == RCompletionType.DIRECTORY)
-               endName += "/";
-
             String startName = "";
             if (slashIndices.size() > 2)
                startName += "...";
