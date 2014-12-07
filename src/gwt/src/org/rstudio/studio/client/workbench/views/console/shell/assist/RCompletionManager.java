@@ -956,12 +956,6 @@ public class RCompletionManager implements CompletionManager
       
       AutocompletionContext context = getAutocompletionContext();
       
-      if (!input_.hasSelection())
-      {
-         Debug.log("Cursor wasn't in input box or was in subelement");
-         return false ;
-      }
-
       context_ = new CompletionRequestContext(invalidation_.getInvalidationToken(),
                                               selection,
                                               canAutoInsert);
