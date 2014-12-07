@@ -315,10 +315,10 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP,
          throw r::exec::RErrorException("invalid caption argument");
       
       // attempt to cast to a data frame
-      SEXP dataFrameSEXP = NULL;
+      SEXP dataFrameSEXP = R_NilValue;
       r::exec::RFunction("as.data.frame", dataSEXP).call(
             &dataFrameSEXP, &protect);
-      if (dataFrameSEXP != NULL)
+      if (dataFrameSEXP != NULL && dataFrameSEXP != R_NilValue)
          dataSEXP = dataFrameSEXP;
            
       json::Value dataItem = makeDataItem(dataSEXP, 
@@ -643,7 +643,7 @@ Error getGridData(const http::Request& request,
 
       // attempt to find the original copy of the object (loads from cache key
       // if necessary)
-      SEXP dataSEXP = NULL;
+      SEXP dataSEXP = R_NilValue;
       Error error = r::exec::RFunction(".rs.findDataFrame", envName, objName, 
             cacheKey, viewerCacheDir()).call(&dataSEXP, &protect);
       if (error) 
@@ -651,13 +651,6 @@ Error getGridData(const http::Request& request,
          LOG_ERROR(error);
       }
 
-      // if the data is a promise (happens for built-in data), the value is
-      // what we're looking for
-      if (TYPEOF(dataSEXP) == PROMSXP) 
-      {
-         dataSEXP = PRVALUE(dataSEXP);
-      }
-      
       // couldn't find the original object
       if (dataSEXP == NULL || dataSEXP == R_UnboundValue || 
           Rf_isNull(dataSEXP) || TYPEOF(dataSEXP) == NILSXP)
@@ -669,6 +662,13 @@ Error getGridData(const http::Request& request,
       }
       else 
       {
+         // if the data is a promise (happens for built-in data), the value is
+         // what we're looking for
+         if (TYPEOF(dataSEXP) == PROMSXP) 
+         {
+            dataSEXP = PRVALUE(dataSEXP);
+         }
+      
          if (show == "cols")
          {
             result = getCols(dataSEXP);
@@ -741,6 +741,7 @@ Error duplicateDataView(const json::JsonRpcRequest& request,
    SEXP dataSEXP = findInNamedEnvir(envName, objName);
    if (dataSEXP == NULL) 
    {
+      dataSEXP = R_NilValue;
       error = r::exec::RFunction(".rs.findDataFrame", envName, objName, 
             cacheKey, viewerCacheDir()).call(&dataSEXP, &protect);
       if (error)
