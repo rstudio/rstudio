@@ -776,7 +776,7 @@ public class AceEditor implements DocDisplay,
 
    public boolean hasSelection()
    {
-      return true;
+      return !getSession().getSelection().getRange().isEmpty();
    }
 
    public InputEditorSelection getSelection()
