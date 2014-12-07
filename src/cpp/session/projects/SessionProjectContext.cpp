@@ -27,7 +27,7 @@
 #include <core/system/FileMonitor.hpp>
 
 #include <r/RExec.hpp>
-#include <R/RRoutines.hpp>
+#include <r/RRoutines.hpp>
 
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
