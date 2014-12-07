@@ -43,6 +43,8 @@ public interface CompletionPopupDisplay
    boolean isShowing() ;
 
    void setPopupPosition(int x, int y) ;
+   void placeOffscreen();
+   boolean isOffscreen();
    int getPopupLeft();
    int getPopupTop();
    
@@ -74,4 +76,5 @@ public interface CompletionPopupDisplay
    boolean isHelpVisible() ;
    
    boolean hasCompletions();
+   int numAvailableCompletions();
 }

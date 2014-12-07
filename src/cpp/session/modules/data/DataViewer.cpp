@@ -21,12 +21,15 @@
 
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
+#include <core/RecursionGuard.hpp>
 #include <core/StringUtils.hpp>
+#include <core/SafeConvert.hpp>
 
 #define R_INTERNAL_FUNCTIONS
 #include <r/RInternal.hpp>
@@ -38,8 +41,18 @@
 #include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
-
 #include <session/SessionContentUrls.hpp>
+
+#define kGridResource "grid_resource"
+#define kViewerCacheDir "viewer-cache"
+#define kGridResourceLocation "/" kGridResource "/"
+#define kNoBoundEnv "_rs_no_env"
+
+// the largest number of columns we're willing to display
+#define MAX_COLS 100  
+
+// the largest number of factor values we're willing to display
+#define MAX_FACTORS 256
 
 using namespace core;
 
@@ -49,187 +62,267 @@ namespace data {
 namespace viewer {
 
 namespace {   
-     
-void appendTag(std::string* pHTML,
-               const std::string& text,
-               const std::string& tag,
-               const std::string& className = std::string())
-{
-   std::string classAttrib;
-   if (!className.empty())
-      classAttrib = " class=\"" + className + "\"";
+/*
+ * Data Viewer caching overview
+ * ----------------------------
+ *
+ * For each object being viewed, there are three copies to consider:
+ * 
+ * ORIGINAL:
+ *    The original object on which the user invoked View(). This object may or
+ *    may not exist; for example, View(cars) binds a viewer to the 'cars' 
+ *    object in 'package:datasets', but View(rbind(cars,cars)) binds a viewer
+ *    to a temporary object that doesn't exist anywhere but in the viewer.
+ *
+ *    When the original object exists, and no sorting or filtering is applied,
+ *    requests for data are met by pulling data from the original object. We
+ *    also watch original objects; when they're replaced in their hosting
+ *    environments (assuming those environments are named), a client event is
+ *    emitted.
+ *
+ * CACHED:
+ *    Because the original object may be temporary (and, even if not, can be
+ *    deleted at any time), we always have a cached copy of the object 
+ *    available. 
+ *
+ *    The environment .rs.CachedDataEnv contains the cached objects. These
+ *    objects have randomly generated cache keys. 
+ *
+ *    When the session suspends/resumes, the contents of the cache environment
+ *    are written as individual .RData files to the user scratch folder. This
+ *    allows us to reload the data for viewing afterwards.
+ *
+ *    The client is responsible for letting the server know when the viewer has
+ *    closed; when this happens, the server removes the in-memory and disk 
+ *    cache entries.
+ *
+ * WORKING:
+ *    As the user orders, filters, and searches data, it's typical to follow a
+ *    narrowing approach--e.g. first show only "Housewares", then only
+ *    housewares between $10-$25, then only housewares between $10-25 and
+ *    matching the text "eggs".
+ *    
+ *    In order to avoid re-ordering and re-filtering the entire dataset every
+ *    time a new set of rows is requested, we keep a "working copy" of the
+ *    object in a second environment, .rs.WorkingDataEnv, using the same cache
+ *    keys.
+ *    
+ *    When a request for data arrives, we check to see if the data requested is
+ *    a subset of the data already in our working copy. If it is, we use the
+ *    working copy as a starting postion rather than the original or cached
+ *    object.
+ *
+ *    This allows us to efficiently perform operations on very large datasets
+ *    once they've been winnowed down to smaller objects using searches and
+ *    filters.
+ */    
 
-   boost::format fmt("<%1%%2%>%3%</%1%>");
-   pHTML->append(boost::str(fmt % tag %
-                                  classAttrib %
-                                  string_utils::textToHtml(text)));
+// indicates whether one filter string is a subset of another; e.g. if a column
+// is filtered for "abc" and then "abcd", the new state is a subset of the
+// previous state.
+bool isFilterSubset(const std::string& outer, const std::string& inner) 
+{
+   // shortcut for identical filters (the typical case)
+   if (inner == outer) 
+   {
+      return true;
+   }
+
+   // matches a numeric filter (i.e. "2.71-3.14") 
+   boost::regex numFilter("(\\d+\\.?\\d*)-(\\d+\\.?\\d*)");
+   boost::smatch innerMatch, outerMatch;
+   if (boost::regex_search(inner, innerMatch, numFilter) &&
+       boost::regex_search(outer, outerMatch, numFilter))
+   {
+      // for numeric filters, the inner is a subset if its lower bound (1) is 
+      // larger than the outer lower bound, and the upper bound (2) is smaller
+      // than the outer upper bound
+      return safe_convert::stringTo<double>(innerMatch[1], 0) >= 
+             safe_convert::stringTo<double>(outerMatch[1], 0) &&
+             safe_convert::stringTo<double>(innerMatch[2], 0) <= 
+             safe_convert::stringTo<double>(outerMatch[2], 0);
+   }
+
+   // non-numeric filters are just string prefix matches
+   if (inner.size() < outer.size()) 
+      return false;
+
+   if (inner.substr(0, outer.size()) != outer) 
+      return false;
+
+   return true;
 }
 
-void appendTD(std::string* pHTML,
-              const std::string& text,
-              const std::string& className = std::string())
+// CachedFrame represents an object that's currently active in a data viewer
+// window.
+struct CachedFrame
 {
-   appendTag(pHTML, text, "td", className);
+   CachedFrame(const std::string& env, const std::string& obj, SEXP sexp):
+      envName(env),
+      objName(obj),
+      observedSEXP(sexp)
+   {
+      if (sexp == NULL)
+         return;
+
+      // cache list of column names
+      r::sexp::Protect protect;
+      SEXP namesSEXP;
+      r::exec::RFunction("names", sexp).call(&namesSEXP, &protect);
+      if (namesSEXP != NULL && TYPEOF(namesSEXP) != NILSXP 
+          && !Rf_isNull(namesSEXP))
+      {
+         r::sexp::extract(namesSEXP, &colNames);
+      }
+
+      // cache number of columns
+      r::exec::RFunction("ncol", sexp).call(&ncol);
+   };
+
+   CachedFrame() {};
+
+   // The location of the frame (if we know it)
+   std::string envName;
+   std::string objName;
+
+   // The frame's columns; used to determine whether the shape of the frame has
+   // changed (necessitating a full reload of any displayed version of the
+   // frame)
+   int ncol;
+   std::vector<std::string> colNames;
+
+   // The current search string and filter set
+   std::string workingSearch;
+   std::vector<std::string> workingFilters;
+
+   bool isSupersetOf(const std::string& newSearch, 
+                     const std::vector<std::string> &newFilters)
+   {
+      if (!isFilterSubset(workingSearch, newSearch))
+         return false;
+
+      for (unsigned i = 0; 
+           i < std::min(newFilters.size(), workingFilters.size()); 
+           i++)
+      {
+         if (!isFilterSubset(workingFilters[i], newFilters[i]))
+            return false;
+      }
+
+      return true;
+   };
+
+   // The current order column and direction
+   int workingOrderCol;
+   std::string workingOrderDir;
+
+   // NB: There's no protection on this SEXP and it may be a stale pointer!
+   // Used only to test for changes.
+   SEXP observedSEXP;
+};
+
+// The set of active frames. Used primarily to check each for changes.
+std::map<std::string, CachedFrame> s_cachedFrames;
+
+std::string viewerCacheDir() 
+{
+   return module_context::scopedScratchPath().childPath(kViewerCacheDir)
+      .absolutePath();
 }
 
-void appendTH(std::string* pHTML, const std::string& text)
+SEXP findInNamedEnvir(const std::string& envir, const std::string& name)
 {
-   appendTag(pHTML, text, "th");
+   SEXP env = NULL;
+   r::sexp::Protect protect;
+
+   // shortcut for unbound environment
+   if (envir == kNoBoundEnv)
+      return NULL;
+
+   // use the global environment or resolve environment name
+   if (envir.empty() || envir == "R_GlobalEnv")
+      env = R_GlobalEnv;
+   else 
+      r::exec::RFunction("as.environment", envir).call(&env, &protect);
+
+   // if we failed to find an environment by name, return a null SEXP
+   if (env == NULL || TYPEOF(env) == NILSXP || Rf_isNull(env))
+      return NULL;
+
+   // find the SEXP directly in the environment; return null if unbound
+   SEXP obj = r::sexp::findVar(name, env); 
+   return obj == R_UnboundValue ? NULL : obj;
 }
 
+// data items are used both as the payload for the client event that opens an
+// editor viewer tab and as a server response when duplicating that tab's
+// contents
+json::Value makeDataItem(SEXP dataSEXP, const std::string& caption, 
+                         const std::string& objName, const std::string& envName, 
+                         const std::string& cacheKey)
+{
+   int nrow = 0, ncol = 0;
+   Error error = r::exec::RFunction("nrow", dataSEXP).call(&nrow);
+   if (error) 
+      LOG_ERROR(error);
+   error = r::exec::RFunction("ncol", dataSEXP).call(&ncol);
+   if (error) 
+      LOG_ERROR(error);
 
-SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP)
+   // fire show data event
+   json::Object dataItem;
+   dataItem["caption"] = caption;
+   dataItem["totalObservations"] = nrow;
+   dataItem["displayedObservations"] = nrow;
+   dataItem["variables"] = ncol;
+   dataItem["cacheKey"] = cacheKey;
+   dataItem["object"] = objName;
+   dataItem["environment"] = envName;
+   dataItem["contentUrl"] = kGridResource "/gridviewer.html?env=" +
+      http::util::urlEncode(envName, true) + "&obj=" + 
+      http::util::urlEncode(objName, true) + "&cache_key=" +
+      http::util::urlEncode(cacheKey, true);
+
+   return dataItem;
+}
+
+SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP, 
+                 SEXP cacheKeySEXP)
 {    
    try
    {
+      // attempt to reverse engineer the location of the data
+      std::string envName, objName, cacheKey;
+      r::sexp::Protect protect;
+      
+      // it's okay if this fails (and it might); we'll just treat the data as
+      // unbound to an environment
+      r::exec::RFunction("environmentName", envSEXP).call(&envName);
+      if (envName == "R_GlobalEnv")
+      {
+         // the global environment doesn't need to be named
+         envName.clear();
+      }
+      else if (envName == "R_EmptyEnv" || envName == "") 
+      {
+         envName = kNoBoundEnv;
+      }
+      objName = r::sexp::asString(nameSEXP);
+      cacheKey = r::sexp::asString(cacheKeySEXP);
+
       // validate title
       if (!Rf_isString(captionSEXP) || Rf_length(captionSEXP) != 1)
          throw r::exec::RErrorException("invalid caption argument");
-           
-      // validate data
-      if (TYPEOF(dataSEXP) != VECSXP)
-         throw r::exec::RErrorException("invalid data argument (not a list)");
       
-      // validate names (View ensures that length(names) == length(data))
-      SEXP namesSEXP = Rf_getAttrib(dataSEXP, R_NamesSymbol);
-      if (TYPEOF(namesSEXP) != STRSXP || 
-          Rf_length(namesSEXP) != Rf_length(dataSEXP))
-      {
-         throw r::exec::RErrorException(
-                              "invalid data argument (names not specified)");
-      }
-
-      // get column count
-      int columnCount = r::sexp::length(dataSEXP);
-
-      // calculate columns to display
-      const int kMaxColumns = 100;
-      int displayedColumns = std::min(columnCount, kMaxColumns);
-
-      // extract caption and column names
-      std::string caption = r::sexp::asString(captionSEXP);
-      std::vector<std::string> columnNames;
-      Error error = r::sexp::extract(namesSEXP, &columnNames);
-      if (error)
-         throw r::exec::RErrorException("invalid names: " +
-                                        error.code().message());
-
-      // truncate columns names to displayedColumns
-      columnNames.resize(displayedColumns);
-
-      // get column lenghts and then calculate # of rows based on the maximum #
-      // of elements in single column (technically R can pass columns which have
-      // a disparate # of rows to this method)
-      int rowCount = 0;
-      std::vector<int> columnLengths;
-      for (int i=0; i<displayedColumns; i++)
-      {
-          // get the column and record its length (updating rowCount)
-          SEXP columnSEXP = VECTOR_ELT(dataSEXP, i);
-          int columnLength = r::sexp::length(columnSEXP);
-          columnLengths.push_back(columnLength);
-          rowCount = std::max(columnLength, rowCount);
-      }
-
-      // calculate rows to display
-      const int kMaxRows = 1000;
-      int displayedRows = std::min(rowCount, kMaxRows);
-
-      // format the data for presentation
-      r::sexp::Protect rProtect;
-      SEXP formattedDataSEXP = Rf_allocVector(VECSXP, displayedColumns);
-      rProtect.add(formattedDataSEXP);
-      for (int i=0; i<displayedColumns; i++)
-      {
-         SEXP columnSEXP = VECTOR_ELT(dataSEXP, i);
-         SEXP formattedColumnSEXP;
-         r::exec::RFunction formatFx(".rs.formatDataColumn");
-         formatFx.addParam(columnSEXP);
-         formatFx.addParam(displayedRows);
-         Error error = formatFx.call(&formattedColumnSEXP, &rProtect);
-         if (error)
-            throw r::exec::RErrorException(error.summary());
-         SET_VECTOR_ELT(formattedDataSEXP, i, formattedColumnSEXP);
-       }
-
-      // write html header
-      boost::format headerFmt(
-         "<html>\n"
-         "  <head>\n"
-         "     <title>%1%</title>\n"
-         "     <meta charset=\"utf-8\"/>\n"
-         "     <link rel=\"stylesheet\" type=\"text/css\" href=\"css/data.css\"/>\n"
-         "  </head>\n"
-         "  <body>\n");
-      std::string html = boost::str(headerFmt % caption);
-
-      // output begin table & header
-      html += "<table>\n";
-      html += "<thead><tr>\n";
-      html += "<td id=\"origin\">&nbsp;</td>"; // above row numbers
-      std::for_each(columnNames.begin(),
-                    columnNames.end(),
-                    boost::bind(appendTH, &html, _1));
-      html += "\n</tr></thead>\n";
-
-      html += "<tbody>\n";
-      // output rows
-      for (int row=0; row<displayedRows; row++)
-      {
-         html += "<tr>\n";
-
-         // row number
-         appendTD(&html, safe_convert::numberToString(row+1), "rn");
-
-         // output a data element from each column where this row is available
-         for (int col=0; col<Rf_length(formattedDataSEXP); col++)
-         {
-            if (columnLengths[col] > row)
-            {
-               SEXP columnSEXP = VECTOR_ELT(formattedDataSEXP, col);
-               SEXP stringSEXP = STRING_ELT(columnSEXP, row);
-               if (stringSEXP != NULL &&
-                   stringSEXP != NA_STRING &&
-                   r::sexp::length(stringSEXP) > 0)
-               {
-                  std::string text(Rf_translateChar(stringSEXP));
-                  appendTD(&html, text);
-               }
-               else
-               {
-                  html += "<td>&nbsp;</td>";
-               }
-            }
-            else
-            {
-               html += "<td>&nbsp;</td>";
-            }
-         }
-
-         html += "\n</tr>\n";
-      }
-      html += "</tbody>\n";
-
-      // append table footer
-      html += "\n</table>\n";
-
-      // append document footer
-      html += "</body></html>\n";
-
-
-      // compute variables based on presence of row.names
-      int variables = columnCount;
-      if (columnNames.size() > 0 && columnNames[0] == "row.names")
-         variables--;
-
-      // fire show data event
-      json::Object dataItem;
-      dataItem["caption"] = caption;
-      dataItem["totalObservations"] = rowCount;
-      dataItem["displayedObservations"] = displayedRows;
-      dataItem["variables"] = variables;
-      dataItem["displayedVariables"] = displayedColumns;
-      dataItem["contentUrl"] = content_urls::provision(caption, html, ".htm");
+      // attempt to cast to a data frame
+      SEXP dataFrameSEXP = NULL;
+      r::exec::RFunction("as.data.frame", dataSEXP).call(
+            &dataFrameSEXP, &protect);
+      if (dataFrameSEXP != NULL)
+         dataSEXP = dataFrameSEXP;
+           
+      json::Value dataItem = makeDataItem(dataSEXP, 
+            r::sexp::asString(captionSEXP), objName, envName, cacheKey);
       ClientEvent event(client_events::kShowData, dataItem);
       module_context::enqueClientEvent(event);
 
@@ -246,24 +339,520 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP)
    return R_NilValue;
 }
   
+void handleGridResReq(const http::Request& request,
+                            http::Response* pResponse)
+{
+   std::string path("grid/");
+   path.append(http::util::pathAfterPrefix(request, kGridResourceLocation));
+
+   // setCacheableFile is responsible for emitting a 404 when the file doesn't
+   // exist.
+   core::FilePath gridResource = options().rResourcesPath().childPath(path);
+   pResponse->setCacheableFile(gridResource, request);
+}
+
+json::Value getCols(SEXP dataSEXP)
+{
+   SEXP colsSEXP = NULL;
+   r::sexp::Protect protect;
+   json::Value result;
+   Error error = r::exec::RFunction(".rs.describeCols", dataSEXP, MAX_COLS, 
+         MAX_FACTORS)
+      .call(&colsSEXP, &protect);
+   if (error) 
+   {
+      json::Object err;
+      err["error"] = error.summary();
+   }
+   r::json::jsonValueFromList(colsSEXP, &result);
+   return result;
+}
+
+// given an object from which to return data, and a description of the data to
+// return via URL-encoded paramters supplied by the DataTables API, returns the
+// data requested by the parameters. 
+//
+// the shape of the API is described here:
+// http://datatables.net/manual/server-side
+// 
+// NB: may throw exceptions! these are expected to be handled by the handlers
+// in getGridData, where they will be marshaled to JSON and displayed on the
+// client.
+json::Value getData(SEXP dataSEXP, const http::Fields& fields)
+{
+   Error error;
+   r::sexp::Protect protect;
+
+   // read draw parameters from DataTables
+   int draw = http::util::fieldValue<int>(fields, "draw", 0);
+   int start = http::util::fieldValue<int>(fields, "start", 0);
+   int length = http::util::fieldValue<int>(fields, "length", 0);
+   int ordercol = http::util::fieldValue<int>(fields, "order[0][column]", 
+         -1);
+   std::string orderdir = http::util::fieldValue<std::string>(fields, 
+         "order[0][dir]", "asc");
+   std::string search = http::util::fieldValue<std::string>(fields, 
+         "search[value]", "");
+   std::string cacheKey = http::util::urlDecode(
+         http::util::fieldValue<std::string>(fields, "cache_key", ""), 
+         true);
+
+   int nrow = 1, ncol = 0;
+   int filteredNRow = 0;
+   error = r::exec::RFunction("nrow", dataSEXP).call(&nrow);
+   if (error) 
+      LOG_ERROR(error);
+   error = r::exec::RFunction("ncol", dataSEXP).call(&ncol);
+   if (error) 
+      LOG_ERROR(error);
+   ncol = std::min(ncol, MAX_COLS);
+
+   // extract filters
+   std::vector<std::string> filters;
+   bool hasFilter = false;
+   for (int i = 1; i <= ncol; i++) 
+   {
+      std::string filterVal = http::util::fieldValue<std::string>(fields,
+                  "columns[" + boost::lexical_cast<std::string>(i) + "]" 
+                  "[search][value]", "");
+      if (!filterVal.empty()) 
+      {
+         hasFilter = true;
+      }
+      filters.push_back(filterVal);
+   }
+
+   bool needsTransform = ordercol > 0 || hasFilter || !search.empty();
+   bool hasTransform = false;
+
+   // check to see if we have an ordered/filtered view we can build from
+   std::map<std::string, CachedFrame>::iterator cachedFrame = 
+      s_cachedFrames.find(cacheKey);
+   if (needsTransform)
+   {
+      if (cachedFrame != s_cachedFrames.end())
+      {
+         // do we have a previously ordered/filtered view?
+         SEXP workingDataSEXP = NULL;
+         r::exec::RFunction(".rs.findWorkingData", cacheKey)
+            .call(&workingDataSEXP, &protect);
+         if (workingDataSEXP != NULL && TYPEOF(workingDataSEXP) != NILSXP &&
+             !Rf_isNull(workingDataSEXP))
+         {
+            if (cachedFrame->second.workingSearch == search &&
+                cachedFrame->second.workingFilters == filters && 
+                cachedFrame->second.workingOrderDir == orderdir &&
+                cachedFrame->second.workingOrderCol == ordercol)
+            {
+               // we have one with exactly the same parameters as requested;
+               // use it exactly as is
+               dataSEXP = workingDataSEXP;
+               needsTransform = false;
+               hasTransform = true;
+            } 
+            else if (cachedFrame->second.isSupersetOf(search, filters))
+            {
+               // we have one that is a strict superset of the parameters
+               // requested; transform the filtered set instead of starting
+               // from scratch
+               dataSEXP = workingDataSEXP;
+            }
+         }
+      }
+   }
+
+   // apply transformations if needed.    
+   if (needsTransform) 
+   {
+      // can we use a working copy? 
+      r::exec::RFunction transform(".rs.applyTransform");
+      transform.addParam("x", dataSEXP);       // data to transform
+      transform.addParam("filtered", filters); // which columns are filtered
+      transform.addParam("search", search);    // global search (across cols)
+      transform.addParam("col", ordercol);     // which column to order on
+      transform.addParam("dir", orderdir);     // order direction ("asc"/"desc")
+      transform.call(&dataSEXP, &protect);
+      if (error)
+         throw r::exec::RErrorException(error.summary());
+
+      // check to see if we've accidentally transformed ourselves into nothing
+      // (this shouldn't generally happen without a specific error)
+      if (dataSEXP == NULL || TYPEOF(dataSEXP) == NILSXP || 
+          Rf_isNull(dataSEXP)) 
+      {
+         throw r::exec::RErrorException("Failure to sort or filter data");
+      }
+
+      // save the working data state (it's okay if this fails; it's a
+      // performance optimization)
+      r::exec::RFunction(".rs.assignWorkingData", cacheKey, dataSEXP).call();
+      if (cachedFrame != s_cachedFrames.end())
+      {
+         cachedFrame->second.workingSearch = search;
+         cachedFrame->second.workingFilters = filters;
+         cachedFrame->second.workingOrderDir = orderdir;
+         cachedFrame->second.workingOrderCol = ordercol;
+      }
+   }
+
+   // apply new row count
+   if (needsTransform || hasTransform) 
+      r::exec::RFunction("nrow", dataSEXP).call(&filteredNRow);
+   else
+      filteredNRow = nrow;
+
+   // return the lesser of the rows available and rows requested
+   length = std::min(length, filteredNRow - start);
+
+   // DataTables uses 0-based indexing, but R uses 1-based indexing
+   start ++;
+
+   // extract the portion of the column vector requested by the client
+   SEXP formattedDataSEXP = Rf_allocVector(VECSXP, ncol);
+   protect.add(formattedDataSEXP);
+   for (unsigned i = 0; i < static_cast<unsigned>(ncol); i++)
+   {
+      SEXP columnSEXP = VECTOR_ELT(dataSEXP, i);
+      if (columnSEXP == NULL || TYPEOF(columnSEXP) == NILSXP || 
+          Rf_isNull(columnSEXP))
+      {
+         throw r::exec::RErrorException("No data in column " + 
+               boost::lexical_cast<std::string>(i));
+      }
+      SEXP formattedColumnSEXP;
+      r::exec::RFunction formatFx(".rs.formatDataColumn");
+      formatFx.addParam(columnSEXP);
+      formatFx.addParam(static_cast<int>(start));
+      formatFx.addParam(static_cast<int>(length));
+      error = formatFx.call(&formattedColumnSEXP, &protect);
+      if (error)
+         throw r::exec::RErrorException(error.summary());
+      SET_VECTOR_ELT(formattedDataSEXP, i, formattedColumnSEXP);
+    }
+
+   // format the row names 
+   SEXP rownamesSEXP;
+   r::exec::RFunction(".rs.formatRowNames", dataSEXP, start, length)
+      .call(&rownamesSEXP, &protect);
+   
+   // create the result grid as JSON
+   json::Array data;
+   for (int row = 0; row < length; row++)
+   {
+      json::Array rowData;
+      if (rownamesSEXP != NULL &&
+          TYPEOF(rownamesSEXP) != NILSXP &&
+          !Rf_isNull(rownamesSEXP) )
+      {
+         SEXP nameSEXP = STRING_ELT(rownamesSEXP, row);
+         if (nameSEXP != NULL &&
+             nameSEXP != NA_STRING &&
+             r::sexp::length(nameSEXP) > 0)
+         {
+            rowData.push_back(Rf_translateChar(nameSEXP));
+         }
+         else
+         {
+            rowData.push_back(row + start);
+         }
+      }
+      else
+      {
+         rowData.push_back(row + start);
+      }
+
+      for (int col = 0; col<Rf_length(formattedDataSEXP); col++)
+      {
+         SEXP columnSEXP = VECTOR_ELT(formattedDataSEXP, col);
+         if (columnSEXP != NULL && 
+             TYPEOF(columnSEXP) != NILSXP &&
+             !Rf_isNull(columnSEXP))
+         {
+            SEXP stringSEXP = STRING_ELT(columnSEXP, row);
+            if (stringSEXP != NULL &&
+                stringSEXP != NA_STRING &&
+                r::sexp::length(stringSEXP) > 0)
+            {
+               rowData.push_back(Rf_translateChar(stringSEXP));
+            }
+            else
+            {
+               rowData.push_back("");
+            }
+         }
+         else
+         {
+            rowData.push_back("");
+         }
+      }
+      data.push_back(rowData);
+   }
+
+   json::Object result;
+   result["draw"] = draw;
+   result["recordsTotal"] = nrow;
+   result["recordsFiltered"] = filteredNRow;
+   result["data"] = data;
+   return result;
+}
+
+Error getGridData(const http::Request& request,
+                  http::Response* pResponse)
+{
+   json::Value result;
+   http::status::Code status = http::status::Ok;
+
+   try
+   {
+      // extract the query string; if we don't find it, it's a no-op
+      std::string::size_type pos = request.uri().find('?');
+      if (pos == std::string::npos)
+      {
+         return Success();
+      }
+
+      // find the data frame we're going to be pulling data from
+      std::string queryString = request.uri().substr(pos+1);
+      http::Fields fields;
+      http::util::parseQueryString(queryString, &fields);
+      std::string envName = http::util::urlDecode(
+            http::util::fieldValue<std::string>(fields, "env", ""), true);
+      std::string objName = http::util::urlDecode(
+            http::util::fieldValue<std::string>(fields, "obj", ""), true);
+      std::string cacheKey = http::util::urlDecode(
+            http::util::fieldValue<std::string>(fields, "cache_key", ""), 
+            true);
+      std::string show = http::util::fieldValue<std::string>(
+            fields, "show", "data");
+      if (objName.empty() && cacheKey.empty()) 
+      {
+         return Success();
+      }
+
+      r::sexp::Protect protect;
+
+      // begin observing if we aren't already
+      if (envName != kNoBoundEnv) 
+      {
+         SEXP objSEXP = findInNamedEnvir(envName, objName);
+         std::map<std::string, CachedFrame>::iterator it = 
+            s_cachedFrames.find(cacheKey);
+         if (it == s_cachedFrames.end())
+            s_cachedFrames[cacheKey] = CachedFrame(envName, objName, objSEXP);
+      }
+
+      // attempt to find the original copy of the object (loads from cache key
+      // if necessary)
+      SEXP dataSEXP = NULL;
+      Error error = r::exec::RFunction(".rs.findDataFrame", envName, objName, 
+            cacheKey, viewerCacheDir()).call(&dataSEXP, &protect);
+      if (error) 
+      {
+         LOG_ERROR(error);
+      }
+
+      // if the data is a promise (happens for built-in data), the value is
+      // what we're looking for
+      if (TYPEOF(dataSEXP) == PROMSXP) 
+      {
+         dataSEXP = PRVALUE(dataSEXP);
+      }
+      
+      // couldn't find the original object
+      if (dataSEXP == NULL || dataSEXP == R_UnboundValue || 
+          Rf_isNull(dataSEXP) || TYPEOF(dataSEXP) == NILSXP)
+      {
+         json::Object err;
+         err["error"] = "The object no longer exists.";
+         status = http::status::NotFound;
+         result = err;
+      }
+      else 
+      {
+         if (show == "cols")
+         {
+            result = getCols(dataSEXP);
+         }
+         else if (show == "data")
+         {
+            result = getData(dataSEXP, fields);
+         }
+      }
+
+   }
+   catch(r::exec::RErrorException& e)
+   {
+      // marshal R errors to the client in the format DataTables (and our own
+      // error handling code) expects
+      json::Object err;
+      err["error"] = e.message();
+      result = err;
+      status = http::status::InternalServerError;
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
+   std::ostringstream ostr;
+   json::write(result, ostr);
+   pResponse->setNoCacheHeaders();    // don't cache data/grid shape
+   pResponse->setStatusCode(status);
+   pResponse->setBody(ostr.str());
+
+   return Success();
+}
+
+// called by the client to expire data cached by an associated viewer tab
+Error removeCachedData(const json::JsonRpcRequest& request,
+                       json::JsonRpcResponse*)
+{
+   std::string cacheKey;
+   Error error = json::readParam(request.params, 0, &cacheKey);
+   if (error)
+      return error;
+
+   // remove from watchlist
+   std::map<std::string, CachedFrame>::iterator pos = 
+      s_cachedFrames.find(cacheKey);
+   if (pos != s_cachedFrames.end())
+      s_cachedFrames.erase(pos);
+   
+   // remove cache env object and backing file
+   error = r::exec::RFunction(".rs.removeCachedData", cacheKey, 
+         viewerCacheDir()).call();
+   if (error)
+      return error;
+
+   return Success();
+}
+
+// called by the client to create a second window into a data frame. this is
+// primarily needed because each view needs its own cache key so we can
+// filter/sort/search them independently.
+Error duplicateDataView(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   r::sexp::Protect protect;
+   std::string caption, envName, objName, cacheKey;
+   Error error = json::readParams(request.params, &caption, &envName, &objName, 
+                                  &cacheKey);
+   if (error)
+      return error;
+
+   // try to duplicate the original object, but clone the cached copy if needed
+   SEXP dataSEXP = findInNamedEnvir(envName, objName);
+   if (dataSEXP == NULL) 
+   {
+      error = r::exec::RFunction(".rs.findDataFrame", envName, objName, 
+            cacheKey, viewerCacheDir()).call(&dataSEXP, &protect);
+      if (error)
+         return error;
+      if (dataSEXP == NULL || TYPEOF(dataSEXP) == NILSXP || Rf_isNull(dataSEXP))
+      {
+         // TODO: meaningful error message
+         return Success();
+      }
+   }
+
+   // assign a new cache key
+   std::string newCacheKey;
+   error = r::exec::RFunction(".rs.addCachedData", dataSEXP).call(&newCacheKey);
+   if (error)
+      return error;
+
+   // return the result
+   pResponse->setResult(makeDataItem(dataSEXP, 
+         caption, objName, envName, newCacheKey));
+   return Success();
+}
+
+void onShutdown(bool terminatedNormally)
+{
+   if (terminatedNormally) 
+   {
+      // when R suspends or shuts down, write out the contents of the cache
+      // environment to disk so we can load them again if we need to
+      Error error = r::exec::RFunction(".rs.saveCachedData", viewerCacheDir())
+         .call();
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
+void onSuspend(const r::session::RSuspendOptions&, core::Settings*)
+{
+   onShutdown(true);
+}
+
+void onResume(const Settings&)
+{
+}
+
+void onDetectChanges(module_context::ChangeSource source)
+{
+   DROP_RECURSIVE_CALLS;
+
+   // unlikely that data will change outside of a REPL
+   if (source != module_context::ChangeSourceREPL) 
+      return;
+
+   r::sexp::Protect protect;
+   for (std::map<std::string, CachedFrame>::iterator i = s_cachedFrames.begin();
+        i != s_cachedFrames.end();
+        i++) 
+   {
+      SEXP sexp = findInNamedEnvir(i->second.envName, i->second.objName);
+      if (sexp != i->second.observedSEXP) 
+      {
+         // create a new frame object to capture the new state of the frame
+         CachedFrame newFrame(i->second.envName, i->second.objName, sexp);
+
+         // clear working data for the object
+         r::exec::RFunction(".rs.removeWorkingData", i->first).call();
+
+         // replace cached copy (if we have something to replace it with)
+         if (sexp != NULL)
+            r::exec::RFunction(".rs.assignCachedData", i->first, sexp).call();
+
+         // emit client event
+         json::Object changed;
+         changed["cache_key"] = i->first;
+         changed["structure_changed"] = i->second.ncol != newFrame.ncol || 
+            i->second.colNames != newFrame.colNames;
+         ClientEvent event(client_events::kDataViewChanged, changed);
+         module_context::enqueClientEvent(event);
+
+         // replace old frame with new
+         s_cachedFrames[i->first] = newFrame;
+      }
+   }
+}
 
 } // anonymous namespace
    
 Error initialize()
 {
+   using namespace module_context;
+
    // register viewData method
    R_CallMethodDef methodDef ;
    methodDef.name = "rs_viewData" ;
    methodDef.fun = (DL_FUNC) rs_viewData ;
-   methodDef.numArgs = 2;
+   methodDef.numArgs = 5;
    r::routines::addCallMethod(methodDef);
+
+   module_context::events().onShutdown.connect(onShutdown);
+   module_context::events().onDetectChanges.connect(onDetectChanges);
+   addSuspendHandler(SuspendHandler(onSuspend, onResume));
 
    using boost::bind;
    using namespace r::function_hook ;
    using namespace session::module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
-      (bind(sourceModuleRFile, "SessionDataViewer.R"));
+      (bind(sourceModuleRFile, "SessionDataViewer.R"))
+      (bind(registerRpcMethod, "remove_cached_data", removeCachedData))
+      (bind(registerRpcMethod, "duplicate_data_view", duplicateDataView))
+      (bind(registerUriHandler, "/grid_data", getGridData))
+      (bind(registerUriHandler, kGridResourceLocation, handleGridResReq));
 
    Error error = initBlock.execute();
    if (error)

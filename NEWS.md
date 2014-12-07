@@ -28,7 +28,10 @@
 * Comment/uncomment respects indent level when appropriate
 * Shift+Enter now searches backwards in Find/Replace
 * New option to control comment continuation on insertion of new lines
-
+* Improvements to data viewer:
+    - Support for viewing large data sets (removed 1k row limit)
+    - Data can be filtered, searched, and sorted
+    - Viewer updates to reflect changes in data
 
 ### Workspace
 

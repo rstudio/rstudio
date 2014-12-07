@@ -57,6 +57,7 @@ import org.rstudio.studio.client.common.vcs.CreateKeyDialog;
 import org.rstudio.studio.client.common.vcs.ShowPublicKeyDialog;
 import org.rstudio.studio.client.common.vcs.SshKeyWidget;
 import org.rstudio.studio.client.common.vcs.ignore.IgnoreDialog;
+import org.rstudio.studio.client.dataviewer.DataViewerSatellite;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewApplication;
 import org.rstudio.studio.client.impl.BrowserFence;
 import org.rstudio.studio.client.notebookv2.CompileNotebookv2OptionsDialog;
@@ -183,6 +184,12 @@ public class RStudio implements EntryPoint
                   else if (RmdOutputSatellite.NAME.equals(view))
                   {
                      RStudioGinjector.INSTANCE.getRmdOutputSatellite().go(
+                           RootLayoutPanel.get(), 
+                           dismissProgressAnimation);
+                  }
+                  else if (DataViewerSatellite.NAME.equals(view))
+                  {
+                     RStudioGinjector.INSTANCE.getDataViewerSatellite().go(
                            RootLayoutPanel.get(), 
                            dismissProgressAnimation);
                   }

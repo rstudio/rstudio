@@ -128,6 +128,7 @@ import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEd
 import org.rstudio.studio.client.workbench.views.source.model.CppCapabilities;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResult;
 import org.rstudio.studio.client.workbench.views.source.model.CppSourceLocation;
+import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.source.model.RdShellResult;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -1486,6 +1487,25 @@ public class RemoteServer implements Server
                                 ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, REMOVE_CONTENT_URL, contentUrl, requestCallback);
+   }
+
+   public void removeCachedData(String cacheKey,
+                                ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, REMOVE_CACHED_DATA, cacheKey, requestCallback);
+   }
+
+   public void duplicateDataView(String caption, String envName,
+         String objName, String cacheKey,
+         ServerRequestCallback<DataItem> requestCallback)
+   {
+      
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(caption));
+      params.set(1, new JSONString(envName));
+      params.set(2, new JSONString(objName));
+      params.set(3, new JSONString(cacheKey));
+      sendRequest(RPC_SCOPE, DUPLICATE_DATA_VIEW, params, requestCallback);
    }
 
    public void detectFreeVars(String code,
@@ -3910,6 +3930,8 @@ public class RemoteServer implements Server
    private static final String GET_TEX_CAPABILITIES = "get_tex_capabilities";
    private static final String GET_CHUNK_OPTIONS = "get_chunk_options";
    private static final String SET_DOC_ORDER = "set_doc_order";
+   private static final String REMOVE_CACHED_DATA = "remove_cached_data";
+   private static final String DUPLICATE_DATA_VIEW = "duplicate_data_view";
 
    private static final String GET_RECENT_HISTORY = "get_recent_history";
    private static final String GET_HISTORY_ITEMS = "get_history_items";
