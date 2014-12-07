@@ -657,9 +657,9 @@
    .Call("rs_hasFileMonitor")
 })
 
-.rs.addFunction("listIndexedFiles", function(term,
+.rs.addFunction("listIndexedFiles", function(term = "",
                                              inDirectory = .rs.getProjectDirectory(),
-                                             maxCount = 2000L)
+                                             maxCount = 200L)
 {
    if (is.null(.rs.getProjectDirectory()))
       return(NULL)
@@ -670,51 +670,72 @@
          as.integer(maxCount))
 })
 
-.rs.addFunction("getIndexedFiles", function(term,
+.rs.addFunction("listIndexedFolders", function(term = "",
+                                               inDirectory = .rs.getProjectDirectory(),
+                                               maxCount = 200L)
+{
+   if (is.null(inDirectory))
+      return(character())
+   
+   .Call("rs_listIndexedFolders", term, inDirectory, maxCount)
+})
+
+.rs.addFunction("listIndexedFilesAndFolders", function(term = "",
+                                                       inDirectory = .rs.getProjectDirectory(),
+                                                       maxCount = 200L)
+{
+   if (is.null(inDirectory))
+      return(character())
+   
+   .Call("rs_listIndexedFilesAndFolders", term, inDirectory, maxCount)
+})
+
+.rs.addFunction("doGetIndex", function(term = "",
+                                       inDirectory = .rs.getProjectDirectory(),
+                                       maxCount = 200L,
+                                       getter)
+{
+   if (is.null(inDirectory))
+      return(character())
+   
+   inDirectory <- suppressWarnings(
+      .rs.normalizePath(inDirectory)
+   )
+   
+   index <- getter(term, inDirectory, maxCount)
+   
+   if (is.null(index))
+   {
+      return(list(
+         paths = character(),
+         more_available = FALSE
+      ))
+   }
+   
+   paths <- suppressWarnings(.rs.normalizePath(index$paths))
+   scores <- .rs.scoreMatches(basename(paths), term)
+   index$paths <- paths[order(scores)]
+   index
+   
+})
+
+.rs.addFunction("getIndexedFiles", function(term = "",
                                             inDirectory = .rs.getProjectDirectory(),
-                                            maxCount = 2000L)
+                                            maxCount = 200L)
 {
-   if (is.null(inDirectory))
-      return(NULL)
-   
-   inDirectory <- suppressWarnings(
-      .rs.normalizePath(inDirectory)
-   )
-   
-   indexedFiles <- .rs.listIndexedFiles(term, inDirectory, maxCount)
-   filePaths <- .rs.normalizePath(indexedFiles$paths)
-   
-   scores <- .rs.scoreMatches(basename(filePaths), term)
-   list(
-      paths = filePaths[order(scores)],
-      more_available = indexedFiles$more_available
-   )
+   .rs.doGetIndex(term, inDirectory, maxCount, .rs.listIndexedFiles)
 })
 
-.rs.addFunction("listIndexedDirectories", function(term,
-                                                   inDirectory = .rs.getProjectDirectory())
+.rs.addFunction("getIndexedFolders", function(term = "",
+                                              inDirectory = .rs.getProjectDirectory(),
+                                              maxCount = 200L)
 {
-   if (is.null(inDirectory))
-      return(character())
-   
-   .Call("rs_listIndexedDirectories", term, inDirectory)
+   .rs.doGetIndex(term, inDirectory, maxCount, .rs.listIndexedFolders)
 })
 
-.rs.addFunction("getIndexedDirectories", function(term,
-                                                  inDirectory = .rs.getProjectDirectory())
+.rs.addFunction("getIndexedFilesAndFolders", function(term = "",
+                                                      inDirectory = .rs.getProjectDirectory(),
+                                                      maxCount = 200L)
 {
-   if (is.null(inDirectory))
-      return(character())
-   
-   inDirectory <- suppressWarnings(
-      .rs.normalizePath(inDirectory)
-   )
-   
-   indexedDirs <- .rs.listIndexedDirectories(term, inDirectory)
-   if (is.null(indexedDirs))
-      return(character())
-   
-   scores <- .rs.scoreMatches(basename(indexedDirs), term)
-   indexedDirs[order(scores)]
-   
+   .rs.doGetIndex(term, inDirectory, maxCount, .rs.listIndexedFilesAndFolders)
 })

@@ -249,15 +249,12 @@ assign(x = ".rs.acCompletionTypes",
        .rs.startsWith(directory, .rs.getProjectDirectory()))
    {
       if (directoriesOnly)
-      {
-         absolutePaths <- .rs.getIndexedDirectories(tokenName, directory)
-      }
+         index <- .rs.getIndexedFolders(tokenName, directory)
       else
-      {
-         index <- .rs.getIndexedFiles(tokenName, directory) ## NOTE: guaranteed to work with above check
-         cacheable <- !index$more_available
-         absolutePaths <- index$paths
-      }
+         index <- .rs.getIndexedFilesAndFolders(tokenName, directory)
+      
+      cacheable <- !index$more_available
+      absolutePaths <- index$paths
    }
    
    # Otherwise, result to a listing of just the current directory.
@@ -310,20 +307,18 @@ assign(x = ".rs.acCompletionTypes",
       absolutePaths <- absolutePaths[order]
    }
    
-   if (directoriesOnly && getRversion() >= "3.0.0")
+   paths <- paste(tokenPrefix, relativePaths, sep = "")
+   
+   type <- if (directoriesOnly && getRversion() >= "3.0.0")
    {
-      paths <- paste(tokenPrefix, relativePaths, "/", sep = "")
-      type <- rep.int(.rs.acCompletionTypes$DIRECTORY, length(paths))
+      rep.int(.rs.acCompletionTypes$DIRECTORY, length(paths))
    }
    else
    {
       isDir <- file.info(absolutePaths)[, "isdir"] %in% TRUE ## protect against NA
-      
-      paths <- paste(tokenPrefix, relativePaths, sep = "")
-      paths[isDir] <- paste(paths[isDir], "/", sep = "")
-      type = ifelse(isDir,
-                    .rs.acCompletionTypes$DIRECTORY,
-                    .rs.acCompletionTypes$FILE)
+      ifelse(isDir,
+             .rs.acCompletionTypes$DIRECTORY,
+             .rs.acCompletionTypes$FILE)
    }
    
    .rs.makeCompletions(token = token,

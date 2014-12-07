@@ -109,6 +109,11 @@ public class CompletionRequester
       
    }
    
+   private String basename(String absolutePath)
+   {
+      return absolutePath.substring(absolutePath.lastIndexOf('/') + 1);
+   }
+   
    private CompletionResult narrow(String token,
                                    String diff,
                                    CompletionResult cachedResult)
@@ -122,8 +127,9 @@ public class CompletionRequester
       // while directories will have one trailing slash (but we defend against multiple
       // trailing slashes)
       
-      // Transform the token once beforehand for potential file completions.
-      String tokenSub = token.toLowerCase().substring(
+      // Transform the token once beforehand for completions.
+      final String tokenLower = token.toLowerCase();
+      final String tokenLowerSub = token.toLowerCase().substring(
             token.lastIndexOf('/') + 1);
       
       for (QualifiedName qname : cachedResult.completions)
@@ -131,19 +137,16 @@ public class CompletionRequester
          // File types are narrowed only by the file name
          if (RCompletionType.isFileType(qname.type))
          {
-            String fileName = qname.name.toLowerCase().substring(
-                  qname.name.lastIndexOf('/'));
-            
-            if (StringUtil.isSubsequence(fileName, tokenSub, true))
+            if (StringUtil.isSubsequence(basename(qname.name), tokenLowerSub, true))
+            {
                newCompletions.add(qname);
+            }
          }
          else
             if (StringUtil.isSubsequence(qname.name, token, true))
                newCompletions.add(qname) ;
       }
       
-      final String tokenLower = token.toLowerCase();
-      final String tokenLowerSub = tokenLower.substring(tokenLower.lastIndexOf('/') + 1);
       java.util.Collections.sort(newCompletions, new Comparator<QualifiedName>() {
          
          @Override
@@ -159,21 +162,19 @@ public class CompletionRequester
                return lhsArg ? -1 : 1;
             }
             
-            // Files should first be ranked by their level of nesting
             int lhsScore;
-            int rhsScore;
-            if (RCompletionType.isFileType(lhs.type) &&
-                RCompletionType.isFileType(rhs.type))
-            {
-               int lhsNestLevel = StringUtil.countMatches(lhs.name, '/');
-               int rhsNestLevel = StringUtil.countMatches(rhs.name, '/');
-               
-               if (lhsNestLevel != rhsNestLevel)
-                  return lhsNestLevel < rhsNestLevel ? -1 : 1;
-            }
+            if (RCompletionType.isFileType(lhs.type))
+               lhsScore = CodeSearchOracle.scoreMatch(
+                     basename(lhs.name).toLowerCase(), tokenLowerSub, true);
+            else
+               lhsScore = CodeSearchOracle.scoreMatch(lhs.name.toLowerCase(), tokenLower, false);
             
-            lhsScore = CodeSearchOracle.scoreMatch(lhs.name.toLowerCase(), tokenLower, false);
-            rhsScore = CodeSearchOracle.scoreMatch(rhs.name.toLowerCase(), tokenLower, false);
+            int rhsScore;
+            if (RCompletionType.isFileType(rhs.type))
+               rhsScore = CodeSearchOracle.scoreMatch(
+                     basename(rhs.name).toLowerCase(), tokenLowerSub, true);
+            else
+               rhsScore = CodeSearchOracle.scoreMatch(rhs.name.toLowerCase(), tokenLower, false);
 
             if (lhsScore == rhsScore)
                return lhs.name.length() - rhs.name.length();

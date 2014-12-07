@@ -86,7 +86,7 @@ bool enforceMaxResults(std::size_t maxResults,
                         T* pPaths,
                         bool* pMoreAvailable)
 {
-   if (pNames->size() > maxResults)
+   if (pNames->size() >= maxResults)
    {
       *pMoreAvailable = true;
       pNames->resize(maxResults);
@@ -139,7 +139,7 @@ void print_tree(tree<Entry> const& tr)
 #if CODESEARCH_DEBUG_LEVEL > 0
    std::cerr << "Tree of size " << tr.size() << ".\n";
    tree<Entry>::iterator it = tr.begin();
-   for (; it != tr.end(); it++)
+   for (; it != tr.end(); ++it)
    {
       int depth = tr.depth(it);
       for (int i = 0; i < depth; i++)
@@ -186,7 +186,8 @@ public:
       std::string absolutePath = entry.fileInfo.absolutePath();
       if (absolutePath.empty())
          return;
-      
+
+      DEBUG("");
       DEBUG("Begin entry insertion: '" << absolutePath << "'");
       
       // construct a tree branch from the path, with each directory forming a new node, e.g
@@ -220,7 +221,6 @@ public:
 
          else if (number_of_children(parent) == 0)
          {
-            print_tree(*this);
             DEBUG("- Inserting new node as first child of '" << (*parent).fileInfo.absolutePath() << "'");
 
             iterator newItr = append_child(parent, entry);
@@ -234,7 +234,7 @@ public:
             sibling_iterator it = parent.begin();
             sibling_iterator end = parent.end();
 
-            for (; it != end; it++)
+            for (; it != end; ++it)
             {
                DEBUG("-- Current node: '" << (*it).fileInfo.absolutePath() << "'");
                if (*it == entry)
@@ -266,15 +266,27 @@ public:
       if (parent.number_of_children() == 0)
       {
          DEBUG("- No children at parent node; adding child");
-         append_child(parent, entry);
+         parent = append_child(parent, entry);
       }
+
+      // We check for a dummy node. If we are inserting a file
+      // into a folder with just a dummy node, replace that node.
+      else if (parent.number_of_children() == 1 &&
+               !entry.fileInfo.isDirectory() &&
+               *child(parent, 0) == dummyEntry_)
+      {
+         DEBUG("- Replacing dummy node");
+         iterator firstChild = child(parent, 0);
+         *firstChild = entry;
+      }
+
+      // Otherwise, loop through all the children and try to find
+      // the node. If we don't find it, append it, otherwise no-op.
       else
       {
-         iterator firstChild = child(parent, 0);
-         sibling_iterator it = firstChild.begin();
-         sibling_iterator end = firstChild.end();
-
-         for (; it != end; it++)
+         sibling_iterator it = parent.begin();
+         sibling_iterator end = parent.end();
+         for (; it != end; ++it)
          {
             DEBUG("-- Current node: '" << (*it).fileInfo.absolutePath() << "'");
             if (*it == entry)
@@ -284,24 +296,74 @@ public:
          if (it == end)
          {
             DEBUG("- Adding another child to parent");
-            append_child(parent, entry);
+            parent = append_child(parent, entry);
          }
          else
          {
             DEBUG("- Already has this entry; skipping");
          }
       }
+
+      // If we just inserted a folder, we append an empty child
+      // to the node. This is done to optimize lookup time.
+      if (entry.fileInfo.isDirectory())
+      {
+         DEBUG("Inserted empty directory; adding dummy child to folder node");
+         parent = append_child(parent, dummyEntry_);
+      }
+      DEBUG("");
+
+      DEBUG("Tree is now:");
+      print_tree(*this);
       DEBUG("");
    }
-   
-   iterator find(const Entry& entry)
+
+private:
+
+   iterator find_leaf(const Entry& entry)
    {
-      iterator it = begin();
-      for (; it != end(); it++)
+      leaf_iterator it = begin_leaf();
+      for (; is_valid(it); ++it)
          if (*it == entry)
             return it;
-      return end();
+      return this->end();
    }
+
+   iterator find_branch(const Entry& entry)
+   {
+      iterator parent = begin();
+      return do_find_branch(entry, parent);
+   }
+
+   iterator do_find_branch(const Entry& entry,
+                           iterator parent)
+   {
+      sibling_iterator it = parent.begin();
+      sibling_iterator end = parent.end();
+      for (; it != end; ++it)
+      {
+         if (*it == entry)
+            return it;
+
+         if (number_of_children(it) > 0)
+            return do_find_branch(entry, it);
+      }
+      return this->end();
+   }
+
+public:
+
+   iterator find(const Entry& entry)
+   {
+      if (entry.fileInfo.isDirectory())
+         return find_branch(entry);
+      else
+         return find_leaf(entry);
+   }
+
+private:
+
+   Entry dummyEntry_;
    
 };
 
@@ -440,20 +502,6 @@ public:
                     std::size_t maxResults,
                     bool prefixOnly,
                     bool sourceFilesOnly,
-                    T* pNames,
-                    T* pPaths,
-                    bool* pMoreAvailable)
-   {
-      FilePath emptyFilePath;
-      return searchFiles(term, maxResults, prefixOnly, sourceFilesOnly,
-                         emptyFilePath, pNames, pPaths, pMoreAvailable);
-   }
-   
-   template <typename T>
-   void searchFiles(const std::string& term,
-                    std::size_t maxResults,
-                    bool prefixOnly,
-                    bool sourceFilesOnly,
                     const FilePath& parentPath,
                     T* pNames,
                     T* pPaths,
@@ -466,39 +514,28 @@ public:
       boost::regex pattern = regex_utils::regexIfWildcardPattern(term);
       
       // get the start and end iterators -- default to all leaves
-      EntryTree::iterator it = pEntries_->begin();
-      EntryTree::iterator end = pEntries_->end();
+      EntryTree::leaf_iterator it = pEntries_->begin_leaf();
       
-      if (!parentPath.empty())
+      DEBUG("Searching for node '" << parentPath.absolutePath());
+      Entry parentEntry(core::toFileInfo(parentPath));
+      EntryTree::iterator parent = pEntries_->find(parentEntry);
+      if (parent != pEntries_->end())
       {
-         DEBUG("Searching for node '" << parentPath.absolutePath());
-         Entry parentEntry(core::toFileInfo(parentPath));
-         EntryTree::post_order_iterator postItr =
-               std::find(pEntries_->begin_post(),
-                         pEntries_->end_post(),
-                         parentEntry);
-         
-         if (postItr != pEntries_->end_post())
-         {
-            DEBUG("Found node: '" + (*postItr).fileInfo.absolutePath() + "'");
-            DEBUG("Node has: '" << pEntries_->number_of_children(postItr) << "' children.");
-            DEBUG("Node has: '" << pEntries_->number_of_siblings(postItr) << "' siblings.");
-            EntryTree::sibling_iterator sibItr = postItr;
-            
-            for (; sibItr != sibItr.end(); sibItr++)
-               DEBUG("Sibling: '" << (*sibItr).fileInfo.absolutePath() << "'");
-            
-            it = postItr.begin();
-            end = postItr.end();
-         }
-         else
-         {
-            DEBUG("Failed to find node.");
-         }
+         DEBUG("Found node: '" + (*parent).fileInfo.absolutePath() + "'");
+         DEBUG("Node has: '" << pEntries_->number_of_children(parent) << "' children.");
+         DEBUG("Node has: '" << pEntries_->number_of_siblings(parent) << "' siblings.");
+
+         it = parent.begin();
+      }
+      else
+      {
+         DEBUG("Failed to find node.");
+         LOG_ERROR_MESSAGE("Failed to find parent node when searching index");
+         return;
       }
       
       // iterate over the files
-      for (; it != end; it++)
+      for (; pEntries_->is_valid(it); ++it)
       {
          Entry entry = *it;
          
@@ -556,12 +593,12 @@ public:
    }
    
    template <typename T>
-   void searchDirectories(const std::string& term,
-                          const FilePath& parentPath,
-                          T* pPaths)
+   void searchFolders(const std::string& term,
+                      const FilePath& parentPath,
+                      std::size_t maxResults,
+                      T* pPaths,
+                      bool* pMoreAvailable)
    {
-      FilePath projectDir = projects::projectContext().directory();
-      
       // Find the parent node in the tree
       Entry parentEntry(core::toFileInfo(parentPath));
       EntryTree::iterator parentItr = pEntries_->find(parentEntry);
@@ -575,14 +612,77 @@ public:
       
       EntryTree::iterator it = parentItr.begin();
       EntryTree::iterator end = parentItr.end();
-      for (; it != end; it++)
+      for (; it != end; ++it)
       {
          const FileInfo& fileInfo = (*it).fileInfo;
          if (fileInfo.isDirectory())
          {
             int lastSlashIndex = fileInfo.absolutePath().rfind('/');
-            if (string_utils::isSubsequence(fileInfo.absolutePath().substr(lastSlashIndex + 1), term, true))
+
+            std::string fileName =
+                  fileInfo.absolutePath().substr(lastSlashIndex + 1);
+
+            bool isSubsequence =
+                  string_utils::isSubsequence(fileName, term, true);
+
+            if (isSubsequence)
+            {
                pPaths->push_back(fileInfo.absolutePath());
+               if (pPaths->size() >= maxResults)
+               {
+                  *pMoreAvailable = true;
+                  return;
+               }
+            }
+
+         }
+      }
+   }
+
+   template <typename T>
+   void searchFilesAndFolders(const std::string& term,
+                              const FilePath& parentPath,
+                              std::size_t maxResults,
+                              T* pPaths,
+                              bool* pMoreAvailable)
+   {
+      // Find the parent node in the tree
+      Entry parentEntry(core::toFileInfo(parentPath));
+      EntryTree::iterator parentItr = pEntries_->find(parentEntry);
+      if (parentItr == pEntries_->end())
+      {
+         std::stringstream ss;
+         ss << "Expected node '" << parentPath.absolutePath() << "' in index tree but none found";
+         LOG_ERROR_MESSAGE(ss.str());
+         return;
+      }
+
+      EntryTree::iterator it = parentItr.begin();
+      EntryTree::iterator end = parentItr.end();
+      for (; it != end; ++it)
+      {
+         const FileInfo& fileInfo = (*it).fileInfo;
+
+         // Avoid dummy nodes
+         if (fileInfo.empty())
+            continue;
+
+         int lastSlashIndex = fileInfo.absolutePath().rfind('/');
+
+         std::string fileName =
+               fileInfo.absolutePath().substr(lastSlashIndex + 1);
+
+         bool isSubsequence =
+               string_utils::isSubsequence(fileName, term, true);
+
+         if (isSubsequence)
+         {
+            pPaths->push_back(fileInfo.absolutePath());
+            if (pPaths->size() >= maxResults)
+            {
+               *pMoreAvailable = true;
+               return;
+            }
          }
       }
    }
@@ -674,7 +774,6 @@ private:
       // create a fake entry with a null source index to pass to find
       Entry entry(fileInfo, boost::shared_ptr<r_util::RSourceIndex>());
 
-      // do the find (will use Entry::operator< for equivilance test)
       EntryTree::iterator it = pEntries_->find(entry);
       if (it != pEntries_->end())
       {
@@ -917,7 +1016,7 @@ void searchSource(const std::string& term,
    searchSourceDatabase(term, maxResults, prefixOnly, pItems, &srcDBContexts);
 
    // we are done if we had >= maxResults
-   if (pItems->size() > maxResults)
+   if (pItems->size() >= maxResults)
    {
       *pMoreAvailable = true;
       pItems->resize(maxResults);
@@ -942,7 +1041,7 @@ void searchSource(const std::string& term,
       pItems->push_back(sourceItem);
 
       // bail if we've hit the max
-      if (pItems->size() > maxResults)
+      if (pItems->size() >= maxResults)
       {
          *pMoreAvailable = true;
          pItems->resize(maxResults);
@@ -1032,6 +1131,7 @@ void searchFiles(const std::string& term,
                                  maxResults,
                                  false,
                                  sourceFilesOnly,
+                                 projects::projectContext().directory(),
                                  pNames,
                                  pPaths,
                                  pMoreAvailable);
@@ -2052,11 +2152,21 @@ SEXP rs_scoreMatches(SEXP suggestionsSEXP,
    return r::sexp::create(scores, &protect);
 }
 
-SEXP rs_listIndexedFiles(SEXP termSEXP, SEXP absolutePathSEXP, SEXP maxCountSEXP)
+inline SEXP pathResultsSEXP(std::vector<std::string> const& paths,
+                            bool moreAvailable)
+{
+   r::sexp::Protect protect;
+   r::sexp::ListBuilder builder(&protect);
+   builder.add("paths", paths);
+   builder.add("more_available", moreAvailable);
+   return builder;
+}
+
+SEXP rs_listIndexedFiles(SEXP termSEXP, SEXP absolutePathSEXP, SEXP maxResultsSEXP)
 {
    std::string term = r::sexp::asString(termSEXP);
    std::string absolutePath = r::sexp::asString(absolutePathSEXP);
-   int maxCount = r::sexp::asInteger(maxCountSEXP);
+   int maxResults = r::sexp::asInteger(maxResultsSEXP);
    
    FilePath filePath(absolutePath);
    
@@ -2073,25 +2183,24 @@ SEXP rs_listIndexedFiles(SEXP termSEXP, SEXP absolutePathSEXP, SEXP maxCountSEXP
       return R_NilValue;
    
    s_projectIndex.searchFiles(term,
-                              maxCount,
+                              maxResults,
                               false,
                               false,
                               filePath,
                               &names,
                               &paths,
                               &moreAvailable);
-   
-   r::sexp::Protect protect;
-   r::sexp::ListBuilder builder(&protect);
-   builder.add("paths", paths);
-   builder.add("more_available", moreAvailable);
-   return builder;
+
+   return pathResultsSEXP(paths, moreAvailable);
 }
 
-SEXP rs_listIndexedDirectories(SEXP termSEXP, SEXP absolutePathSEXP)
+SEXP rs_listIndexedFolders(SEXP termSEXP,
+                           SEXP absolutePathSEXP,
+                           SEXP maxResultsSEXP)
 {
    std::string term = r::sexp::asString(termSEXP);
    std::string absolutePath = r::sexp::asString(absolutePathSEXP);
+   int maxResults = r::sexp::asInteger(maxResultsSEXP);
    
    FilePath filePath(absolutePath);
    if (!filePath.exists())
@@ -2101,12 +2210,40 @@ SEXP rs_listIndexedDirectories(SEXP termSEXP, SEXP absolutePathSEXP)
       return R_NilValue;
    
    std::vector<std::string> paths;
-   s_projectIndex.searchDirectories(term,
-                                    filePath,
-                                    &paths);
-   
-   r::sexp::Protect protect;
-   return r::sexp::create(paths, &protect);
+   bool moreAvailable = false;
+   s_projectIndex.searchFolders(term,
+                                filePath,
+                                maxResults,
+                                &paths,
+                                &moreAvailable);
+
+   return pathResultsSEXP(paths, moreAvailable);
+}
+
+SEXP rs_listIndexedFilesAndFolders(SEXP termSEXP,
+                                   SEXP absolutePathSEXP,
+                                   SEXP maxResultsSEXP)
+{
+   std::string term = r::sexp::asString(termSEXP);
+   std::string absolutePath = r::sexp::asString(absolutePathSEXP);
+   int maxResults = r::sexp::asInteger(maxResultsSEXP);
+
+   FilePath filePath(absolutePath);
+   if (!filePath.exists())
+      return R_NilValue;
+
+   if (!projects::projectContext().isMonitoringDirectory(filePath))
+      return R_NilValue;
+
+   std::vector<std::string> paths;
+   bool moreAvailable = false;
+   s_projectIndex.searchFilesAndFolders(term,
+                                        filePath,
+                                        maxResults,
+                                        &paths,
+                                        &moreAvailable);
+
+   return pathResultsSEXP(paths, moreAvailable);
 }
 
 } // anonymous namespace
@@ -2134,9 +2271,14 @@ Error initialize()
             3);
    
    r::routines::registerCallMethod(
-            "rs_listIndexedDirectories",
-            (DL_FUNC) rs_listIndexedDirectories,
-            2);
+            "rs_listIndexedFolders",
+            (DL_FUNC) rs_listIndexedFolders,
+            3);
+
+   r::routines::registerCallMethod(
+            "rs_listIndexedFilesAndFolders",
+            (DL_FUNC) rs_listIndexedFilesAndFolders,
+            3);
 
    // initialize r source indexes
    rSourceIndex().initialize();
