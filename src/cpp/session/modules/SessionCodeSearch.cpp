@@ -332,23 +332,32 @@ private:
    iterator find_branch(const Entry& entry)
    {
       iterator parent = begin();
-      return do_find_branch(entry, parent);
+      iterator result = end();
+      do_find_branch(entry, parent, &result);
+      return result;
    }
 
-   iterator do_find_branch(const Entry& entry,
-                           iterator parent)
+   void do_find_branch(const Entry& entry,
+                       iterator parent,
+                       iterator* pResult)
    {
       sibling_iterator it = parent.begin();
       sibling_iterator end = parent.end();
       for (; it != end; ++it)
       {
+         DEBUG("- Current branch: '" << (*it).fileInfo.absolutePath() << "'");
          if (*it == entry)
-            return it;
+         {
+            *pResult = it;
+            return;
+         }
 
          if (number_of_children(it) > 0)
-            return do_find_branch(entry, it);
+         {
+            DEBUG("-- Searching children of branch");
+            do_find_branch(entry, it, pResult);
+         }
       }
-      return this->end();
    }
 
 public:
