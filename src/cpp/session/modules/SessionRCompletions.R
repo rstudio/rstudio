@@ -287,11 +287,18 @@ assign(x = ".rs.acCompletionTypes",
    ## Because the completions returned will replace the whole token,
    ## we need to be careful in how we construct the return result. In particular,
    ## we need to preserve the way the directory has been specified.
-   relativePaths <- if (identical(directory, "/"))
-      substring(absolutePaths, 2)
+   ##
+   ## Note that the directory may or may not end with a trailing slash,
+   ## depending on how it was normalized. We have to check for that when
+   ## determining the offset for constructing the relative path. Normally,
+   ## the trailing slash is included for root directories, e.g. `/` on Unix-alikes
+   ## or `C:/` on Windows.
+   offset <- if (grepl("[/\\\\]$", directory, perl = TRUE))
+      nchar(directory) + 1L
    else
-      substring(absolutePaths, nchar(directory) + 2L)
-      
+      nchar(directory) + 2L
+   
+   relativePaths <- substring(absolutePaths, offset)
    
    ## Order completions starting with alpha-numeric entries first if the
    ## token name is blank
