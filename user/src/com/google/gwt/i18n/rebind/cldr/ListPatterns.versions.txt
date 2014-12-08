@@ -1,438 +1,220 @@
 cldrVersion=25
 
-date=$Date: 2014-02-14 23:49:13 +0100 (Fri, 14 Feb 2014) $
 number=$Revision: 9737 Google $
-type=root
 
-af.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 af.number=$Revision: 9852 $
-af.type=root
 
-am.date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
 am.number=$Revision: 9876 $
-am.type=am
 
-ar.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 ar.number=$Revision: 9852 $
-ar.type=ar
 
-ar_EG.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
 ar_EG.number=$Revision: 9791 $
-ar_EG.type=ar
 
-ast.date=$Date: 2014-01-09 06:02:40 +0100 (Thu, 09 Jan 2014) $
 ast.number=$Revision: 9624 $
-ast.type=root
 
-az.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 az.number=$Revision: 9852 $
-az.type=az
 
-az_Cyrl.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
 az_Cyrl.number=$Revision: 9287 $
-az_Cyrl.type=az
 
-bg.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 bg.number=$Revision: 9852 $
-bg.type=root
 
-bn.date=$Date: 2014-03-14 18:20:13 +0100 (Fri, 14 Mar 2014) $
 bn.number=$Revision: 9967 $
-bn.type=root
 
-bs.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 bs.number=$Revision: 9852 $
-bs.type=bs
 
-bs_Cyrl.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 bs_Cyrl.number=$Revision: 9852 $
-bs_Cyrl.type=bs
 
-ca.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 ca.number=$Revision: 9852 $
-ca.type=ca
 
-cs.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 cs.number=$Revision: 9852 $
-cs.type=cs
 
-da.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 da.number=$Revision: 9852 $
-da.type=da
 
-de.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 de.number=$Revision: 9852 $
-de.type=de
 
-dz.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 dz.number=$Revision: 9852 $
-dz.type=dz
 
-ee.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 ee.number=$Revision: 9852 $
-ee.type=ee
 
-el.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 el.number=$Revision: 9852 $
-el.type=root
 
-en.date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
 en.number=$Revision: 9876 $
-en.type=en
 
-en_150.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
 en_150.number=$Revision: 9287 $
-en_150.type=001
 
-en_AU.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
 en_AU.number=$Revision: 9287 $
-en_AU.type=001
 
-en_DG.date=$Date: 2013-08-27 20:07:13 +0200 (Tue, 27 Aug 2013) $
 en_DG.number=$Revision: 9280 $
-en_DG.type=001
 
-en_FK.date=$Date: 2013-08-23 01:59:54 +0200 (Fri, 23 Aug 2013) $
 en_FK.number=$Revision: 9258 $
-en_FK.type=001
 
-en_HK.date=$Date: 2013-08-27 20:07:13 +0200 (Tue, 27 Aug 2013) $
 en_HK.number=$Revision: 9280 $
-en_HK.type=001
 
-en_IN.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
 en_IN.number=$Revision: 9287 $
-en_IN.type=001
 
-en_IO.date=$Date: 2013-08-27 20:07:13 +0200 (Tue, 27 Aug 2013) $
 en_IO.number=$Revision: 9280 $
-en_IO.type=001
 
-en_MO.date=$Date: 2013-08-19 06:26:52 +0200 (Mon, 19 Aug 2013) $
 en_MO.number=$Revision: 9229 $
-en_MO.type=MO
 
-en_NZ.date=$Date: 2013-07-20 19:27:45 +0200 (Sat, 20 Jul 2013) $
 en_NZ.number=$Revision: 9061 $
-en_NZ.type=001
 
-en_PK.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
 en_PK.number=$Revision: 9287 $
-en_PK.type=001
 
-en_SG.date=$Date: 2013-12-05 00:53:48 +0100 (Thu, 05 Dec 2013) $
 en_SG.number=$Revision: 9535 $
-en_SG.type=001
 
-en_SH.date=$Date: 2013-08-23 01:59:54 +0200 (Fri, 23 Aug 2013) $
 en_SH.number=$Revision: 9258 $
-en_SH.type=001
 
-en_VG.date=$Date: 2013-08-08 06:47:50 +0200 (Thu, 08 Aug 2013) $
 en_VG.number=$Revision: 9170 $
-en_VG.type=VG
 
-es.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 es.number=$Revision: 9852 $
-es.type=root
 
-et.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 et.number=$Revision: 9852 $
-et.type=root
 
-eu.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
 eu.number=$Revision: 9791 $
-eu.type=root
 
-fa.date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
 fa.number=$Revision: 9876 $
-fa.type=fa
 
-fi.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 fi.number=$Revision: 9852 $
-fi.type=fi
 
-fil.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
 fil.number=$Revision: 9791 $
-fil.type=fil
 
-fo.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
 fo.number=$Revision: 9791 $
-fo.type=root
 
-fr.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 fr.number=$Revision: 9852 $
-fr.type=fr
 
-fur.date=$Date: 2014-02-25 23:17:53 +0100 (Tue, 25 Feb 2014) $
 fur.number=$Revision: 9792 $
-fur.type=root
 
-fy.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 fy.number=$Revision: 9852 $
-fy.type=root
 
-gd.date=$Date: 2014-02-25 23:17:53 +0100 (Tue, 25 Feb 2014) $
 gd.number=$Revision: 9792 $
-gd.type=gd
 
-gl.date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
 gl.number=$Revision: 9876 $
-gl.type=gl
 
-gsw.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 gsw.number=$Revision: 9852 $
-gsw.type=gsw
 
-gu.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 gu.number=$Revision: 9852 $
-gu.type=gu
 
-he.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 he.number=$Revision: 9852 $
-he.type=he
 
-hi.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 hi.number=$Revision: 9852 $
-hi.type=hi
 
-hr.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 hr.number=$Revision: 9852 $
-hr.type=hr
 
-hu.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 hu.number=$Revision: 9852 $
-hu.type=root
 
-hy.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 hy.number=$Revision: 9852 $
-hy.type=root
 
-id.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 id.number=$Revision: 9852 $
-id.type=id
 
-is.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 is.number=$Revision: 9852 $
-is.type=is
 
-it.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 it.number=$Revision: 9852 $
-it.type=it
 
-ja.date=$Date: 2014-03-04 00:35:05 +0100 (Tue, 04 Mar 2014) $
 ja.number=$Revision: 9862 $
-ja.type=root
 
-jgo.date=$Date: 2014-02-24 18:09:08 +0100 (Mon, 24 Feb 2014) $
 jgo.number=$Revision: 9770 $
-jgo.type=jgo
 
-ka.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 ka.number=$Revision: 9852 $
-ka.type=root
 
-kea.date=$Date: 2013-11-15 19:32:44 +0100 (Fri, 15 Nov 2013) $
 kea.number=$Revision: 9515 $
-kea.type=kea
 
-kl.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
 kl.number=$Revision: 9287 $
-kl.type=kl
 
-km.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 km.number=$Revision: 9852 $
-km.type=km
 
-kn.date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
 kn.number=$Revision: 9876 $
-kn.type=kn
 
-ko.date=$Date: 2014-03-14 18:20:13 +0100 (Fri, 14 Mar 2014) $
 ko.number=$Revision: 9967 $
-ko.type=ko
 
-ksh.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 ksh.number=$Revision: 9852 $
-ksh.type=ksh
 
-ky.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 ky.number=$Revision: 9852 $
-ky.type=ky
 
-ln.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
 ln.number=$Revision: 9287 $
-ln.type=ln
 
-lo.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 lo.number=$Revision: 9852 $
-lo.type=lo
 
-lt.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 lt.number=$Revision: 9852 $
-lt.type=lt
 
-lv.date=$Date: 2014-03-14 18:20:13 +0100 (Fri, 14 Mar 2014) $
 lv.number=$Revision: 9967 $
-lv.type=lv
 
-ml.date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
 ml.number=$Revision: 9876 $
-ml.type=root
 
-mr.date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
 mr.number=$Revision: 9876 $
-mr.type=mr
 
-ms.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
 ms.number=$Revision: 9791 $
-ms.type=ms
 
-mt.date=$Date: 2014-02-25 23:17:53 +0100 (Tue, 25 Feb 2014) $
 mt.number=$Revision: 9792 $
-mt.type=mt
 
-my.date=$Date: 2014-03-04 00:35:05 +0100 (Tue, 04 Mar 2014) $
 my.number=$Revision: 9862 $
-my.type=my
 
-nb.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 nb.number=$Revision: 9852 $
-nb.type=nb
 
-ne.date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
 ne.number=$Revision: 9876 $
-ne.type=root
 
-nl.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 nl.number=$Revision: 9852 $
-nl.type=root
 
-nn.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 nn.number=$Revision: 9852 $
-nn.type=root
 
-os.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
 os.number=$Revision: 9791 $
-os.type=root
 
-pa.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 pa.number=$Revision: 9852 $
-pa.type=pa
 
-pa_Arab.date=$Date: 2013-08-26 05:28:21 +0200 (Mon, 26 Aug 2013) $
 pa_Arab.number=$Revision: 9275 $
-pa_Arab.type=Arab
 
-pl.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 pl.number=$Revision: 9852 $
-pl.type=root
 
-pt.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 pt.number=$Revision: 9852 $
-pt.type=root
 
-ro.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 ro.number=$Revision: 9852 $
-ro.type=ro
 
-ru.date=$Date: 2014-03-04 00:35:05 +0100 (Tue, 04 Mar 2014) $
 ru.number=$Revision: 9862 $
-ru.type=ru
 
-se.date=$Date: 2014-02-25 22:16:49 +0100 (Tue, 25 Feb 2014) $
 se.number=$Revision: 9791 $
-se.type=se
 
-si.date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
 si.number=$Revision: 9876 $
-si.type=si
 
-sk.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 sk.number=$Revision: 9852 $
-sk.type=sk
 
-sl.date=$Date: 2014-03-14 18:20:13 +0100 (Fri, 14 Mar 2014) $
 sl.number=$Revision: 9967 $
-sl.type=sl
 
-sq.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 sq.number=$Revision: 9852 $
-sq.type=sq
 
-sr.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 sr.number=$Revision: 9852 $
-sr.type=sr
 
-sr_Latn.date=$Date: 2014-03-04 00:35:05 +0100 (Tue, 04 Mar 2014) $
 sr_Latn.number=$Revision: 9862 $
-sr_Latn.type=sr
 
-sv.date=$Date: 2014-03-10 22:39:54 +0100 (Mon, 10 Mar 2014) $
 sv.number=$Revision: 9920 $
-sv.type=sv
 
-sw.date=$Date: 2014-02-26 21:43:57 +0100 (Wed, 26 Feb 2014) $
 sw.number=$Revision: 9813 $
-sw.type=sw
 
-ta.date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
 ta.number=$Revision: 9876 $
-ta.type=root
 
-te.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 te.number=$Revision: 9852 $
-te.type=te
 
-th.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 th.number=$Revision: 9852 $
-th.type=th
 
-to.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 to.number=$Revision: 9852 $
-to.type=to
 
-tr.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 tr.number=$Revision: 9852 $
-tr.type=tr
 
-ug.date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
 ug.number=$Revision: 9876 $
-ug.type=ug
 
-uk.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 uk.number=$Revision: 9852 $
-uk.type=uk
 
-ur.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 ur.number=$Revision: 9852 $
-ur.type=ur
 
-uz.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
 uz.number=$Revision: 9287 $
-uz.type=uz
 
-uz_Arab.date=$Date: 2014-03-10 19:02:01 +0100 (Mon, 10 Mar 2014) $
 uz_Arab.number=$Revision: 9914 $
-uz_Arab.type=Arab
 
-uz_Cyrl.date=$Date: 2013-08-29 04:32:04 +0200 (Thu, 29 Aug 2013) $
 uz_Cyrl.number=$Revision: 9287 $
-uz_Cyrl.type=uz
 
-vi.date=$Date: 2014-02-25 23:17:53 +0100 (Tue, 25 Feb 2014) $
 vi.number=$Revision: 9792 $
-vi.type=vi
 
-wae.date=$Date: 2013-08-26 05:28:21 +0200 (Mon, 26 Aug 2013) $
 wae.number=$Revision: 9275 $
-wae.type=wae
 
-zh.date=$Date: 2014-03-01 06:57:43 +0100 (Sat, 01 Mar 2014) $
 zh.number=$Revision: 9852 $
-zh.type=root
 
-zu.date=$Date: 2014-03-06 06:14:25 +0100 (Thu, 06 Mar 2014) $
 zu.number=$Revision: 9876 $
-zu.type=zu
 
