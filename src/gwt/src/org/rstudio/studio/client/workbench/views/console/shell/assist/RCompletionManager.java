@@ -576,18 +576,38 @@ public class RCompletionManager implements CompletionManager
       
       if (popup_.isShowing())
       {
-         // If insertion of this character completes a single available suggestion,
-         // then implicitly apply that. We place the completion list offscreen
-         // to ensure that backspace events are handled.
+         // If insertion of this character completes an available suggestion,
+         // and is not a prefix match of any other suggestion, then implicitly
+         // apply that.
          QualifiedName selectedItem =
                popup_.getSelectedValue();
          
          if (selectedItem != null &&
-               popup_.numAvailableCompletions() == 1 &&
                selectedItem.name.equals(token_ + c))
          {
-            popup_.placeOffscreen();
-            return false;
+            String fullToken = token_ + c;
+            
+            // Find prefix matches -- there should only be one if we really
+            // want this behaviour (ie the current selection)
+            int prefixMatchCount = 0;
+            QualifiedName[] items = popup_.getItems();
+            for (int i = 0; i < items.length; i++)
+            {
+               if (items[i].name.startsWith(fullToken))
+               {
+                  ++prefixMatchCount;
+                  if (prefixMatchCount > 1)
+                     break;
+               }
+            }
+            
+            if (prefixMatchCount == 1)
+            {
+               // We place the completion list offscreen to ensure that
+               // backspace events are handled later. 
+               popup_.placeOffscreen();
+               return false;
+            }
          }
          
          if (isValidForRIdentifier(c))

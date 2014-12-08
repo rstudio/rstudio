@@ -317,6 +317,11 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       return contents ;
    }
    
+   public QualifiedName[] getItems()
+   {
+      return list_.getItems();
+   }
+   
    private CompletionList<QualifiedName> list_ ;
    private HelpInfoPopupPanel help_ ;
    private final ConsoleResources.ConsoleStyles styles_;
