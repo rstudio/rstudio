@@ -70,6 +70,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    public void placeOffscreen()
    {
       setPopupPosition(-10000, -10000);
+      help_.setPopupPosition(-10000, -10000);
    }
    
    public boolean isOffscreen()
