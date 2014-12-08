@@ -20,6 +20,7 @@ import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -353,12 +354,30 @@ public class Projects implements OpenProjectFileHandler,
          }, false);
       }
 
-      // Next, create the project file
+      // Next, create the project itself -- depending on the type, this
+      // could involve creating an R package, or Shiny application, and so on.
       createProjectCmds.addCommand(new SerializedCommand()
       {
          @Override
          public void onExecute(final Command continuation)
          {
+            // Validate the package name if we're creating a package
+            if (newProject.getNewPackageOptions() != null)
+            {
+               final String packageName =
+                     newProject.getNewPackageOptions().getPackageName();
+
+               if (!PACKAGE_NAME_PATTERN.test(packageName))
+               {
+                  indicator.onError(
+                        "Invalid package name '" + packageName + "': " +
+                              "package names must start with a letter, and contain " +
+                              "only letters and numbers."
+                        );
+                  return;
+               }
+            }
+
             indicator.onProgress("Creating project...");
 
             projServer_.createProject(
@@ -718,7 +737,7 @@ public class Projects implements OpenProjectFileHandler,
    private final Provider<UIPrefs> pUIPrefs_;
    
    public static final String NONE = "none";
-
+   private static final Pattern PACKAGE_NAME_PATTERN =
+         Pattern.create("^[a-zA-Z][a-zA-Z0-9.]*$");
    
-  
 }

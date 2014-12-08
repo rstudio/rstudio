@@ -23,7 +23,8 @@ public class NewProjectResult
                            boolean usePackrat,
                            String newDefaultProjectLocation,
                            VcsCloneOptions vcsCloneOptions,
-                           NewPackageOptions newPackageOptions, NewShinyAppOptions newShinyAppOptions)
+                           NewPackageOptions newPackageOptions,
+                           NewShinyAppOptions newShinyAppOptions)
    {
       projectFile_ = projectFile;
       createGitRepo_ = createGitRepo;

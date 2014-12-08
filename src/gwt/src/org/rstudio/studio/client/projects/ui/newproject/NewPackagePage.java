@@ -89,6 +89,7 @@ public class NewPackagePage extends NewDirectoryPage
    protected NewPackageOptions getNewPackageOptions()
    {
       return NewPackageOptions.create(
+            getProjectName(),
             listProjectType_.getValue().equals("package-rcpp"),  
             JsUtil.toJsArrayString(listCodeFiles_.getCodeFiles()));
    }
