@@ -17,7 +17,7 @@
  - Optional: if you want to compile elemental you need
    `python` and `g++` installed.
 
- - You need the [gwt-tools](https://google-web-tookit.googlecode.com/svn/tools/)
+ - You need the [gwt-tools](https://google-web-toolkit.googlecode.com/svn/tools/)
    checked out and up-to-date, and it will be placed
    by default at `../tools`. You can override the default
    location using the GWT_TOOLS environment variable or passing `-Dgwt.tools=`
