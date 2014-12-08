@@ -599,3 +599,20 @@
    qualifiedArgsInCall <- setdiff(matchedArgs, "")
    setdiff(allArgs, qualifiedArgsInCall)[1]
 })
+
+.rs.addFunction("swap", function(vector, ..., default)
+{
+   dotArgs <- list(...)
+   
+   nm <- names(dotArgs)
+   
+   to <- unlist(lapply(seq_along(dotArgs), function(i)
+      rep(nm[i], each = length(dotArgs[[i]]))
+   ))
+   
+   from <- unlist(dotArgs)
+   
+   tmp <- to[match(vector, from)]
+   tmp[is.na(tmp)] <- default
+   tmp
+})

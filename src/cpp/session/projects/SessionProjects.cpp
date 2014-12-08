@@ -74,7 +74,8 @@ Error createProject(const json::JsonRpcRequest& request,
 {
    // read params
    std::string projectFile;
-   json::Value newPackageJson, newShinyAppJson;
+   json::Value newPackageJson;
+   json::Value newShinyAppJson;
    Error error = json::readParams(request.params,
                                   &projectFile,
                                   &newPackageJson,
@@ -86,7 +87,7 @@ Error createProject(const json::JsonRpcRequest& request,
    // package project
    if (!newPackageJson.is_null())
    {
-      // build list of code files
+      // read options
       bool usingRcpp;
       json::Array codeFilesJson;
       Error error = json::readObject(newPackageJson.get_obj(),
@@ -94,7 +95,9 @@ Error createProject(const json::JsonRpcRequest& request,
                                      "code_files", &codeFilesJson);
       if (error)
          return error;
-      std::vector<FilePath> codeFiles;
+      
+      std::vector<std::string> codeFiles;
+      codeFiles.reserve(codeFilesJson.size());
       BOOST_FOREACH(const json::Value codeFile, codeFilesJson)
       {
          if (!json::isType<std::string>(codeFile))
@@ -102,85 +105,23 @@ Error createProject(const json::JsonRpcRequest& request,
             BOOST_ASSERT(false);
             continue;
          }
-
-         FilePath codeFilePath =
-                     module_context::resolveAliasedPath(codeFile.get_str());
-         codeFiles.push_back(codeFilePath);
+         codeFiles.push_back(codeFile.get_str());
       }
 
-      // error if the package dir already exists
-      FilePath packageDir = projectFilePath.parent();
-      if (packageDir.exists())
-         return core::fileExistsError(ERROR_LOCATION);
-
-      // create a temp dir (so we can import the list of code files)
-      FilePath tempDir = module_context::tempFile("newpkg", "dir");
-      error = tempDir.ensureDirectory();
+      // resolve the package name, package directory
+      std::string fileName = projectFilePath.filename();
+      std::string packageName = fileName.substr(0, fileName.rfind('.'));
+      
+      r::exec::RFunction packageSkeleton(".rs.rpc.package_skeleton");
+      packageSkeleton.addParam("packageName", packageName);
+      packageSkeleton.addParam("packageDirectory", projectFilePath.parent().absolutePath());
+      packageSkeleton.addParam("sourceFiles", codeFiles);
+      packageSkeleton.addParam("usingRcpp", usingRcpp);
+      
+      error = packageSkeleton.call();
       if (error)
          return error;
-
-      // copy the code files into the tempDir and build up a
-      // list of the filenames for passing to package.skeleton
-      std::vector<std::string> rFileNames, cppFileNames;
-      BOOST_FOREACH(const FilePath& codeFilePath, codeFiles)
-      {
-         FilePath targetPath = tempDir.complete(codeFilePath.filename());
-         Error error = codeFilePath.copy(targetPath);
-         if (error)
-            return error;
-
-         std::string ext = targetPath.extensionLowerCase();
-         std::string file = string_utils::utf8ToSystem(targetPath.filename());
-         if (boost::algorithm::starts_with(ext,".c"))
-            cppFileNames.push_back(file);
-         else
-            rFileNames.push_back(file);
-      }
-
-
-      // if the list of code files is empty then add an empty file
-      // with the same name as the package (but don't do this for
-      // Rcpp since it generates a hello world file)
-      if (codeFiles.empty() && !usingRcpp)
-      {
-         std::string srcFileName = packageDir.filename() + ".R";
-         FilePath srcFilePath = tempDir.complete(srcFileName);
-         Error error = core::writeStringToFile(srcFilePath, "");
-         if (error)
-            return error;
-         rFileNames.push_back(string_utils::utf8ToSystem(srcFileName));
-      }
-
-      // temporarily switch to the tempDir for package creation
-      RestoreCurrentPathScope pathScope(module_context::safeCurrentPath());
-      tempDir.makeCurrentPath();
-
-      // call package.skeleton
-
-      r::exec::RFunction pkgSkeleton(usingRcpp ?
-                                       "Rcpp:::Rcpp.package.skeleton" :
-                                       "utils:::package.skeleton");
-      pkgSkeleton.addParam("name",
-                           string_utils::utf8ToSystem(packageDir.filename()));
-      pkgSkeleton.addParam("path",
-               string_utils::utf8ToSystem(packageDir.parent().absolutePath()));
-      pkgSkeleton.addParam("code_files", rFileNames);
-      if (usingRcpp && module_context::haveRcppAttributes())
-      {
-         if (!cppFileNames.empty())
-         {
-            pkgSkeleton.addParam("example_code", false);
-            pkgSkeleton.addParam("cpp_files", cppFileNames);
-         }
-         else
-         {
-            pkgSkeleton.addParam("attributes", true);
-         }
-      }
-      error = pkgSkeleton.call();
-      if (error)
-         return error;
-
+      
       // create the project file (allow auto-detection of the package
       // to setup the package build type & default options)
       return r_util::writeProjectFile(projectFilePath,

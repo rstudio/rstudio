@@ -551,3 +551,147 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 {
    .Call("rs_downloadAvailablePackages", contribUrl)
 })
+
+.rs.addFunction("error", function(...)
+{
+   list(
+      result = NULL,
+      message = paste(..., sep = "")
+   )
+})
+
+.rs.addFunction("success", function(result = NULL)
+{
+   list(
+      result = result,
+      message = NULL
+   )
+})
+
+.rs.addJsonRpcHandler("package_skeleton", function(packageName,
+                                                   packageDirectory,
+                                                   sourceFiles,
+                                                   usingRcpp)
+{
+   ## Validate the package name
+   if (!grepl("^[[:alpha:]][[:alnum:].]*", packageName))
+      return(.rs.error("Invalid package name: the package name must start ",
+                       "with a letter and follow with only alphanumeric characters"))
+   
+   ## Validate the package directory -- if it exists, make sure it's empty,
+   ## otherwise, try to create it
+   if (file.exists(packageDirectory))
+   {
+      containedFiles <- list.files(packageDirectory) ## what about hidden files?
+      containedFiles <- containedFiles[
+         file.info(containedFiles)[, "isdir"] %in% TRUE
+      ]
+      if (packageName %in% containedFiles)
+      {
+         return(.rs.error("Folder '", packageDirectory, "' ",
+                          "already exists and is not empty"))
+      }
+   }
+   
+   # Otherwise, create it
+   else
+   {
+      if (!dir.create(packageDirectory, recursive = TRUE))
+         return(.rs.error("Failed to create directory '", packageDirectory, "'"))
+   }
+   
+   # Create a DESCRIPTION file
+   DESCRIPTION <- list(
+      Package = packageName,
+      Type = "Package",
+      Title = "What The Package Does (Title Case)",
+      Version = "0.1",
+      Date = Sys.Date(),
+      Author = "Who wrote it",
+      Maintainer = "Who to complain to <yourfault@somewhere.net>",
+      Description = "More about what it does (maybe more than one line)",
+      License = "What license is it under?",
+      LazyData = "TRUE"
+   )
+   
+   # Create a NAMESPACE file
+   NAMESPACE <- c(
+      'exportPattern("^[[:alpha:]]+")'
+   )
+   
+   # If we are using Rcpp, update DESCRIPTION and NAMESPACE
+   if (usingRcpp)
+   {
+      rcppImportsStatement <- "Rcpp"
+      
+      # We'll enforce Rcpp > (installed version)
+      ip <- installed.packages()
+      if ("Rcpp" %in% rownames(ip))
+         rcppImportsStatement <- sprintf("Rcpp (>= %s)", ip["Rcpp", "Version"])
+      
+      DESCRIPTION$Imports <- rcppImportsStatement
+      
+      # Add an import from Rcpp, and also useDynLib
+      NAMESPACE <- c(
+         NAMESPACE,
+         "importFrom(Rcpp, evalCpp)",
+         sprintf("useDynLib(%s)", packageName)
+      )
+   }
+   
+   # If there were no source files specified, create a simple 'hello world'
+   # function
+   if (!length(sourceFiles))
+   {
+      helloWorld <- paste(collapse = "\n",
+                          "hello <- function() {",
+                          "    print(\"Hello, world!\")",
+                          "}")
+      if (!file.exists(file.path(packageDirectory, "R")))
+         dir.create(file.path(packageDirectory, "R"))
+      
+      cat(helloWorld, file = file.path(packageDirectory, "R", "hello_world.R"))
+   }
+   else
+   {
+      # Copy the source files to the appropriate sub-directory
+      sourceDirs <- .rs.swap(
+         sourceFileExtensions,
+         "R" = c("r", "q", "s"),
+         "src" = c("c", "cc", "cpp", "h", "hpp"),
+         "vignettes" = c("rmd", "rnw"),
+         "man" = "rd",
+         "data" = c("rda", "rdata"),
+         default = ""
+      )
+      
+      copyPaths <- gsub("/+", "", file.path(
+         packageDirectory,
+         sourceDirs,
+         basename(sourceFiles)
+      ))
+      
+      dirPaths <- dirname(copyPaths)
+      dir.create(dirPaths, recursive = TRUE)
+      
+      success <- file.copy(sourceFiles,
+                           copyPaths)
+      
+      if (!all(success))
+         return(.rs.error("Failed to copy one or more source files"))
+   }
+   
+   # Write various files out
+   write.dcf(
+      DESCRIPTION,
+      file = file.path(packageDirectory, "DESCRIPTION")
+   )
+   
+   cat(NAMESPACE, file = file.path(packageDirectory, "NAMESPACE"))
+   
+   file.create(file.path(packageDirectory, "README.md"))
+   
+   # Return success
+   .rs.success()
+   
+})
