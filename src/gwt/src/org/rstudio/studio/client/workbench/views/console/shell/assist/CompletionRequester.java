@@ -363,8 +363,11 @@ public class CompletionRequester
          CodeModel codeModel = editor.getSession().getMode().getCodeModel();
          JsArray<RFunction> scopedFunctions =
                codeModel.getFunctionsInScope(cursorPosition);
+         
          if (scopedFunctions.length() == 0)
             return;
+         
+         String tokenLower = token.toLowerCase();
          
          for (int i = 0; i < scopedFunctions.length(); i++)
          {
@@ -375,7 +378,7 @@ public class CompletionRequester
             for (int j = 0; j < argNames.length(); j++)
             {
                String argName = argNames.get(j);
-               if (argName.startsWith(token))
+               if (argName.toLowerCase().startsWith(tokenLower))
                {
                   if (functionName == null || functionName == "")
                   {
@@ -415,11 +418,15 @@ public class CompletionRequester
                editor.getSession().getSelection().getCursor();
          CodeModel codeModel = editor.getSession().getMode().getCodeModel();
       
-         JsArray<RScopeObject> scopeVariables = codeModel.getVariablesInScope(cursorPosition);
+         JsArray<RScopeObject> scopeVariables =
+               codeModel.getVariablesInScope(cursorPosition);
+         
+         String tokenLower = token.toLowerCase();
          for (int i = 0; i < scopeVariables.length(); i++)
          {
             RScopeObject variable = scopeVariables.get(i);
-            if (variable.getToken().startsWith(token) && variable.getType() == type)
+            if (variable.getType() == type &&
+                variable.getToken().toLowerCase().startsWith(tokenLower))
                completions.add(new QualifiedName(
                      variable.getToken(),
                      variable.getType(),
@@ -449,6 +456,7 @@ public class CompletionRequester
          if (!cursor.moveToPosition(cursorPosition))
             return;
          
+         String tokenLower = token.toLowerCase();
          if (cursor.currentValue() == "(" || cursor.findOpeningBracket("(", false))
          {
             if (cursor.moveToPreviousToken())
@@ -467,12 +475,14 @@ public class CompletionRequester
                      JsArrayString args = rFunction.getFunctionArgs();
                      for (int j = 0; j < args.length(); j++)
                      {
-                        completions.add(new QualifiedName(
-                              args.get(j) + " = ",
-                              fnName,
-                              false,
-                              RCompletionType.CONTEXT
-                        ));
+                        String arg = args.get(j);
+                        if (arg.toLowerCase().startsWith(tokenLower))
+                           completions.add(new QualifiedName(
+                                 args.get(j) + " = ",
+                                 fnName,
+                                 false,
+                                 RCompletionType.CONTEXT
+                           ));
                      }
                   }
                }
