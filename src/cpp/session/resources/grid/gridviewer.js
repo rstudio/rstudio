@@ -642,7 +642,7 @@ window.refreshData = function(structureChanged) {
     var row = s.scroller().pixelsToRow(pos);
 
     // reload data, then snap to that row
-    t.ajax.reload(function() {
+    table.ajax.reload(function() {
       s.scrollToRow(row, false);
     },false);
   }
