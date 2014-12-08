@@ -56,7 +56,7 @@ var showError = function(msg) {
   document.getElementById("errorWrapper").style.display = "block";
   document.getElementById("errorMask").style.display = "block";
   document.getElementById("error").textContent = msg;
-  document.getElementById("data").style.display = "none";
+  document.getElementById("rsGridData").style.display = "none";
 };
 
 // simple HTML escaping (avoid XSS in data)
@@ -64,14 +64,15 @@ var escapeHtml = function(html) {
   var replacements = {
     "<":  "&lt;",
     ">":  "&gt;",
-    "&":  "&amp;" };
+    "&":  "&amp;",
+    "\"": "&quot;" };
   return html.replace(/[&<>]/g, function(ch) { return replacements[ch]; });
 };
 
-// render a text cell--if no search is active, just renders the data literally;
-// when search is active, highlights the portion of the text that matches the
-// search
-var renderTextCell = function(data, type, row, meta) {
+// render cell contents--if no search is active, just renders the data
+// literally; when search is active, highlights the portion of the text that
+// matches the search
+var renderCellContents = function(data, type, row, meta) {
   var search = table.search();
   if (search.length > 0) {
     var idx = data.toLowerCase().indexOf(search.toLowerCase());
@@ -88,7 +89,14 @@ var renderTextCell = function(data, type, row, meta) {
 // render a number cell
 var renderNumberCell = function(data, type, row, meta) {
   return '<div class="numberCell">' + 
-         renderTextCell(data, type, row, meta) + 
+         renderCellContents(data, type, row, meta) + 
+         '</div>';
+};
+
+// render a text cell
+var renderTextCell = function(data, type, row, meta) {
+  return '<div class="textCell" title="' + escapeHtml(data) + '">' + 
+         renderCellContents(data, type, row, meta) + 
          '</div>';
 };
 
@@ -444,7 +452,7 @@ var initDataTable = function(result) {
   var scrollHeight = window.innerHeight - (thead.clientHeight + 2);
 
   // activate the data table
-  $("#data").dataTable({
+  $("#rsGridData").dataTable({
     "processing": true,
     "serverSide": true,
     "pagingType": "full_numbers",
@@ -452,7 +460,8 @@ var initDataTable = function(result) {
     "scrollY": scrollHeight + "px",
     "scrollX": true,
     "scroller": {
-      "loadingIndicator": true
+      "rowHeight": 23,            // sync w/ CSS (scroller auto row height is busted)
+      "loadingIndicator": true,   // show loading indicator when loading
     },
     "preDrawCallback": preDrawCallback,
     "drawCallback": postDrawCallback,
@@ -489,7 +498,7 @@ var initDataTable = function(result) {
      }
   });
 
-  table = $("#data").DataTable();
+  table = $("#rsGridData").DataTable();
 
   // listen for size changes
   debouncedDataTableSize();
@@ -499,9 +508,8 @@ var initDataTable = function(result) {
 };
 
 var debouncedSearch = debounce(function(text) {
-  var t = $("#data").DataTable();
-  if (text != t.search()) {
-    t.search(text).draw();
+  if (text != table.search()) {
+    table.search(text).draw();
   }
 }, 100);
 
@@ -545,7 +553,7 @@ window.setFilterUIVisible = function(visible) {
   var thead = document.getElementById("data_cols");
   if (!visible) {
     // clear all the filter data
-    $("#data").DataTable().columns().search("");
+    table.columns().search("");
   }
   for (var i = 0; i < Math.min(thead.children.length, cols.length); i++) {
     var col = cols[i];
@@ -571,8 +579,7 @@ window.refreshData = function(structureChanged) {
     window.location.reload();
   } else {
     // structure didn't change, so just reload data. 
-    var t = $("#data").DataTable();
-    var s = t.settings();
+    var s = table.settings();
     var pos = $(".dataTables_scrollBody").scrollTop();
     var row = s.scroller().pixelsToRow(pos);
 

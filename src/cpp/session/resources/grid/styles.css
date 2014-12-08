@@ -11,7 +11,7 @@ thead {
     background-color: #f7f8f9;
 }
 
-#data {
+#rsGridData {
     margin: 0px 0px 36px 0px;
 }
 
@@ -22,12 +22,19 @@ table.dataTable tbody td {
     font-size: 11px;
 }
 
-th, table.dataTable tbody td:first-child {
+th {
     text-align: left; 
+}
+
+th, table.dataTable tbody td:first-child {
     font-size: 11px;
     color: #555555;
     background-color: #f7f8f9;
     font-weight: bold;
+}
+
+table.dataTable tbody td:first-child {
+    text-align: right; 
 }
 
 table.dataTable thead th,
@@ -222,7 +229,7 @@ th:focus {
     font-size: 11px;
 }
 
-#data_info {
+#rsGridData_info {
     background-color: #f7f8f9;
     font-size: 11px;
     padding: 5px;
@@ -235,6 +242,13 @@ th:focus {
 
 .numberCell {
     text-align: right;
+}
+
+.numberCell, .textCell {
+    max-width: 300px; 
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .searchMatch {
@@ -252,3 +266,12 @@ div.DTS div.DTS_Loading.showLoading {
     color: #aaabac;
 } 
 
+#rsGridData tbody tr.even {
+    background-color: #fdfdfd;
+}
+
+#rsGridData tbody tr.even, 
+#rsGridData tbody tr.odd 
+{
+    height: 23px;
+}

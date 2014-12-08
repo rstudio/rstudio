@@ -284,6 +284,10 @@
 
 .rs.addFunction("saveCachedData", function(cacheDir)
 {
+  # no work to do if we have no cache
+  if (!exists(".rs.CachedDataEnv")) 
+    return(invisible(NULL))
+
   # create the cache directory if it doesn't already exist
   dir.create(cacheDir, recursive = TRUE, showWarnings = FALSE, mode = "0700")
 
