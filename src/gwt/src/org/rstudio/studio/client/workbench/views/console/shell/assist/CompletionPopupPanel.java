@@ -61,9 +61,8 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          }
       });
       
-      Event.addNativePreviewHandler(new NativePreviewHandler()
+      handler_ = new NativePreviewHandler()
       {
-         
          @Override
          public void onPreviewNativeEvent(NativePreviewEvent previewEvent)
          {
@@ -78,12 +77,11 @@ public class CompletionPopupPanel extends ThemedPopupPanel
                }
             }
          }
-      });
+      }; 
    }
    
    private void hideAll()
    {
-      placeOffscreen();
       hide();
       help_.hide();
    }
@@ -169,6 +167,8 @@ public class CompletionPopupPanel extends ThemedPopupPanel
 
    private void show(PositionCallback callback)
    {
+      registerNativeHandler(handler_);
+      
       if (callback != null)
          setPopupPositionAndShow(callback) ;
       else
@@ -181,6 +181,13 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          else
             help_.hide();
       }
+   }
+   
+   @Override
+   public void hide()
+   {
+      unregisterNativeHandler();
+      super.hide();
    }
    
    public QualifiedName getSelectedValue()
@@ -346,8 +353,23 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       return list_.getItems();
    }
    
+   private void registerNativeHandler(NativePreviewHandler handler)
+   {
+      if (handlerRegistration_ != null)
+         handlerRegistration_.removeHandler();
+      handlerRegistration_ = Event.addNativePreviewHandler(handler);
+   }
+   
+   private void unregisterNativeHandler()
+   {
+      if (handlerRegistration_ != null)
+         handlerRegistration_.removeHandler();
+   }
+   
    private CompletionList<QualifiedName> list_ ;
    private HelpInfoPopupPanel help_ ;
    private final ConsoleResources.ConsoleStyles styles_;
    private static QualifiedName lastSelectedValue_;
+   private final NativePreviewHandler handler_;
+   private HandlerRegistration handlerRegistration_;
 }
