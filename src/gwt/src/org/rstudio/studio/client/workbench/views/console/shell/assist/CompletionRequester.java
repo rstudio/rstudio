@@ -735,6 +735,15 @@ public class CompletionRequester
          return name.equals(other.name) &&
                 type == other.type;
       }
+      
+      @Override
+      public int hashCode()
+      {
+         int hash = 17;
+         hash = 31 * hash + name.hashCode();
+         hash = 31 * hash + type;
+         return hash;
+      }
 
       public final String name ;
       public final String source ;
