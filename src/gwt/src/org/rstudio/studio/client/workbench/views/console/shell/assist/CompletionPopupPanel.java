@@ -16,18 +16,23 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import java.util.Map;
 
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.PopupPanel;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
@@ -44,11 +49,8 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
       help_ = new HelpInfoPopupPanel();
       help_.setWidth("400px");
-      help_.show();
       
       setStylePrimaryName(styles_.completionPopup()) ;
-      
-      hideAll();
       
       addCloseHandler(new CloseHandler<PopupPanel>() {
          
@@ -58,13 +60,32 @@ public class CompletionPopupPanel extends ThemedPopupPanel
             hideAll();
          }
       });
+      
+      Event.addNativePreviewHandler(new NativePreviewHandler()
+      {
+         
+         @Override
+         public void onPreviewNativeEvent(NativePreviewEvent previewEvent)
+         {
+            if (previewEvent.getTypeInt() == Event.ONKEYDOWN)
+            {
+               NativeEvent event = previewEvent.getNativeEvent();
+               int keyCode = event.getKeyCode();
+               int modifier = KeyboardShortcut.getModifierValue(event);
+               if (modifier != 0 && keyCode == KeyCodes.KEY_ENTER)
+               {
+                  hideAll();
+               }
+            }
+         }
+      });
    }
    
    private void hideAll()
    {
-      // Throw everything off-screen to reduce flickering
-      setVisible(false);
-      help_.setVisible(false);
+      placeOffscreen();
+      hide();
+      help_.hide();
    }
    
    public void placeOffscreen()
@@ -154,10 +175,12 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          show() ;
       
       if (help_ != null)
+      {
          if (completionListIsOnScreen())
             resolveHelpPosition(help_.isVisible());
          else
             help_.hide();
+      }
    }
    
    public QualifiedName getSelectedValue()
@@ -306,7 +329,8 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    
    public boolean isHelpVisible()
    {
-      return help_.isVisible() && help_.isShowing();
+      return help_.isVisible() && help_.isShowing() &&
+            !isOffscreen();
    }
    
    private HTML setText(String text)
