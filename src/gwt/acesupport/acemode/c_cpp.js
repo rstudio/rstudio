@@ -64,7 +64,7 @@ var Mode = function(suppressHighlighting, doc, session) {
    // R-related tokenization
    this.$r_outdent = {};
    oop.implement(this.$r_outdent, RMatchingBraceOutdent);
-   this.$r_codeModel = new RCodeModel(doc, this.$tokenizer, /^r-/, /^\s*\/\*{3,}\s+[Rr]\s*$/);
+   this.r_codeModel = new RCodeModel(doc, this.$tokenizer, /^r-/, /^\s*\/\*{3,}\s+(.*)\s*$/);
 
    // C/C++ related tokenization
    this.codeModel = new CppCodeModel(session, this.$tokenizer);
@@ -163,7 +163,7 @@ oop.inherits(Mode, TextMode);
 
       // Defer to the R language indentation rules when in R language mode
       if (this.inRLanguageMode(state))
-         return this.$r_codeModel.getNextLineIndent(row, line, state, tab, tabSize);
+         return this.r_codeModel.getNextLineIndent(row, line, state, tab, tabSize);
       else
          return this.codeModel.getNextLineIndent(row, line, state, tab, tabSize, dontSubset);
 
@@ -178,7 +178,7 @@ oop.inherits(Mode, TextMode);
 
    this.autoOutdent = function(state, doc, row) {
       if (this.inRLanguageMode(state))
-         return this.$r_outdent.autoOutdent(state, doc, row, this.$r_codeModel);
+         return this.$r_outdent.autoOutdent(state, doc, row, this.r_codeModel);
       else
          return this.$outdent.autoOutdent(state, doc, row);
    };

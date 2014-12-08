@@ -1126,6 +1126,10 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       }
 
       function getChunkLabel(reOptions, comment) {
+
+         if (typeof reOptions === "undefined")
+            return "";
+         
          var match = reOptions.exec(comment);
          if (!match)
             return null;
