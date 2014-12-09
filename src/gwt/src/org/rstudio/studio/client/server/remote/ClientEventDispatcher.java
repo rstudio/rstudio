@@ -68,6 +68,7 @@ import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentCompletedEvent;
 import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentOutputEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
+import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.*;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
@@ -110,6 +111,7 @@ import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
 import org.rstudio.studio.client.workbench.views.presentation.events.PresentationPaneRequestCompletedEvent;
 import org.rstudio.studio.client.workbench.views.presentation.events.ShowPresentationPaneEvent;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
+import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DataViewChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.FileEditEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ShowContentEvent;
@@ -613,6 +615,11 @@ public class ClientEventDispatcher
          {
             DataViewChangedEvent.Data data = event.getData();
             eventBus_.fireEvent(new DataViewChangedEvent(data));
+         }
+         else if (type.equals(ClientEvent.ViewFunction))
+         {
+            SearchPathFunctionDefinition data = event.getData();
+            eventBus_.fireEvent(new CodeBrowserNavigationEvent(data, null, false));
          }
          else
          {

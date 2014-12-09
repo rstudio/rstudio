@@ -250,9 +250,6 @@
 
 .rs.registerReplaceHook("View", "utils", function(original, x, title) 
 {
-   # test for coercion to data frame 
-   as.data.frame(x)
-
    # generate title if necessary
    if (missing(title))
       title <- deparse(substitute(x))[1]
@@ -267,6 +264,21 @@
      name <- deparse(substitute(x))
      env <- .rs.findOwningEnv(name)
    }
+
+   # is this a function? if it is, view as a function instead
+   if (is.function(x)) 
+   {
+     namespace <- environmentName(env)
+     if (identical(namespace, "R_EmptyEnv") || identical(namespace, ""))
+       namespace <- "viewing"
+     else if (identical(namespace, "R_GlobalEnv"))
+       namespace <- ".GlobalEnv"
+     invisible(.Call("rs_viewFunction", x, title, namespace))
+     return(invisible(NULL))
+   }
+
+   # test for coercion to data frame 
+   as.data.frame(x)
 
    # save a copy into the cached environment
    cacheKey <- .rs.addCachedData(force(x))
