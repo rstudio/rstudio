@@ -1160,7 +1160,8 @@ assign(x = ".rs.acCompletionTypes",
                                                   additionalArgs,
                                                   excludeArgs,
                                                   excludeArgsFromObject,
-                                                  filePath)
+                                                  filePath,
+                                                  documentId)
 {
    filePath <- suppressWarnings(.rs.normalizePath(filePath))
    
@@ -2058,4 +2059,24 @@ assign(x = ".rs.acCompletionTypes",
    # TODO: Wire up file completions (e.g. 'Ctrl + P'-like behaviour)
    
    completions
+})
+
+.rs.addFunction("libraryCallsInSourceDoc", function(documentId)
+{
+   .Call("rs_libraryCallsInSourceDoc", documentId)
+})
+
+.rs.addFunction("getCompletionsSourceDocumentLibraryCalls", function(documentId)
+{
+   # Get the current set of packages
+   pkgs <- .rs.libraryCallsInSourceDoc(documentId)
+   
+   # Check to see if there's a cached set of completions which we can use
+   
+   # Construct a call that we can run in an async R process to get the set of completions
+   
+   
+   # Launch an async R process to fill the completions
+   system("")
+   
 })

@@ -263,10 +263,55 @@ public:
    {
       return search(term, context_, prefixOnly, caseSensitive, out);
    }
+   
+   std::set<std::wstring>& getLibraryItems()
+   {
+      return libraryItems_;
+   }
+   
+   void addPkgExports(std::string const& pkgName,
+                      std::vector<std::string> const& exports)
+   {
+      pkgNamespaceExports_[pkgName] = exports;
+   }
+   
+   void addPkgObjects(std::string const& pkgName,
+                      std::vector<std::string> const& objects)
+   {
+      pkgObjects_[pkgName] = objects;
+   }
+   
+   std::map< std::string, std::vector<std::string> >& getPkgExports()
+   {
+      return pkgNamespaceExports_;
+   }
+   
+   std::map< std::string, std::vector<std::string> >& getPkgObjects()
+   {
+      return pkgObjects_;
+   }
+   
+   std::vector<std::string>& getPkgExports(std::string const& pkgName)
+   {
+      return pkgNamespaceExports_[pkgName];
+   }
+   
+   std::vector<std::string>& getPkgObjects(std::string const& pkgName)
+   {
+      return pkgObjects_[pkgName];
+   }
 
 private:
    std::string context_;
    std::vector<RSourceItem> items_;
+   
+   // private fields related to the current set of library completions
+   std::set<std::wstring> libraryItems_;
+   
+   // we map package names to pairs of completions ('all', 'namespace exports')
+   std::map< std::string, std::vector<std::string> > pkgNamespaceExports_;
+   std::map< std::string, std::vector<std::string> > pkgObjects_;
+   
 };
 
 

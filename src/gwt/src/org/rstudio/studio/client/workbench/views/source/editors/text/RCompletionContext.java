@@ -18,4 +18,5 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 public interface RCompletionContext
 {
    String getPath();
+   String getId();
 }

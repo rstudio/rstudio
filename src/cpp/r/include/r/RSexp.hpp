@@ -119,6 +119,8 @@ SEXP create(const std::vector<double>& value, Protect*pProtect);
 SEXP create(const std::vector<bool>& value, Protect*pProtect);
 SEXP create(const std::vector<boost::posix_time::ptime>& value,
             Protect* pProtect);
+SEXP create(const std::map<std::string, std::vector<std::string> >& value,
+            Protect* pProtect);
 
 SEXP create(const std::vector<std::pair<std::string,std::string> >& value, 
             Protect* pProtect);

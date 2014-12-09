@@ -604,6 +604,28 @@ SEXP create(const std::vector<boost::posix_time::ptime>& value,
    // return it
    return posixCtSEXP;
 }
+
+SEXP create(const std::map<std::string, std::vector<std::string> > &value,
+            Protect *pProtect)
+{
+   SEXP listSEXP, namesSEXP;
+   std::size_t n = value.size();
+   pProtect->add(listSEXP = Rf_allocVector(VECSXP, n));
+   pProtect->add(namesSEXP = Rf_allocVector(STRSXP, n));
+   
+   int index = 0;
+   typedef std::map< std::string, std::vector<std::string> >::const_iterator iterator;
+   for (iterator it = value.begin(); it != value.end(); ++it)
+   {
+      SET_STRING_ELT(namesSEXP, index, Rf_mkChar(it->first.c_str()));
+      SET_VECTOR_ELT(listSEXP, index, r::sexp::create(it->second, pProtect));
+      ++index;
+   }
+   
+   Rf_setAttrib(listSEXP, R_NamesSymbol, namesSEXP);
+   
+   return listSEXP;
+}
    
 SEXP create(const std::vector<std::pair<std::string,std::string> >& value, 
             Protect* pProtect)

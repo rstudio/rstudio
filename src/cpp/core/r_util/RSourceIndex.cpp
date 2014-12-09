@@ -21,6 +21,15 @@
 
 #include <core/r_util/RTokenizer.hpp>
 
+#define SOURCE_INDEX_DEBUG_LEVEL 1
+
+#if SOURCE_INDEX_DEBUG_LEVEL > 0
+#define DEBUG(x) \
+   std::cerr << x << std::endl;
+#else
+#define DEBUG(x)
+#endif
+
 namespace core {
 namespace r_util {
 
@@ -221,9 +230,17 @@ RSourceIndex::RSourceIndex(const std::string& context,
    std::wstring setClass(L"setClass");
    std::wstring setClassUnion(L"setClassUnion");
    std::wstring setRefClass(L"setRefClass");
+   
+   // operator tokens
    std::wstring eqOp(L"=");
    std::wstring assignOp(L"<-");
    std::wstring parentAssignOp(L"<<-");
+   
+   // library, require (requireNamespace?)
+   std::wstring package(L"package");
+   std::wstring library(L"library");
+   std::wstring require(L"require");
+   
    for (std::size_t i=0; i<rTokens.size(); i++)
    {
       // initial name, qualifer, and type are nil
@@ -341,6 +358,109 @@ RSourceIndex::RSourceIndex(const std::string& context,
          name = idToken.content();
          tokenOffset = idToken.offset();
       }
+      
+      // is this a library / require call?
+      else if (token.contentEquals(library) ||
+               token.contentStartsWith(require))
+      {
+         std::cerr << "** Checking library token!" << std::endl;
+         
+         // make sure we have enough tokens available
+         if (i + 3 >= rTokens.size())
+            continue;
+         
+         // check for an open paren following
+         const RToken& lParenToken = rTokens.at(i + 1);
+         if (lParenToken.type() != RToken::LPAREN)
+            continue;
+         
+         // ensure that the following token is not a closing paren
+         if (static_cast<const RToken&>(rTokens.at(i + 2)).type() == RToken::RPAREN)
+            continue;
+         
+         // walk forward until we find an associated closing paren -- we'll have to
+         // look ahead a bit, and count parens as we go. also attempt to figure out
+         // what the 'package' and 'character.only' arguments resolve to
+         bool characterOnly = false;
+         
+         // assume that the package token is the first argument (but change our minds later
+         // if necessary)
+         RToken packageToken = rTokens.at(i + 2);
+         
+         std::size_t endParenIndex = i + 2;
+         bool foundRightParen = false;
+         int parenCount = 0;
+         for (int count = 0; count < 30; ++count)
+         {
+            if (endParenIndex + count >= rTokens.size())
+               break;
+            
+            const RToken& currentToken = rTokens.at(endParenIndex + count);
+            DEBUG("- Current token: '" << string_utils::wideToUtf8(currentToken.content()) << "'");
+            
+            if (currentToken.type() == RToken::LPAREN)
+               ++parenCount;
+            
+            if (currentToken.type() == RToken::RPAREN)
+            {
+               if (parenCount == 0)
+               {
+                  DEBUG("- Found closing right paren");
+                  foundRightParen = true;
+                  break;
+               }
+               --parenCount;
+            }
+            
+            // if we encounter 'package =', update the package setting
+            if (currentToken.contentEquals(package))
+            {
+               const RToken& nextToken = rTokens.at(endParenIndex + count + 1);
+               if (nextToken.contentEquals(eqOp))
+               {
+                  // note -- validate later whether this is appropriate as a package name
+                  packageToken = rTokens.at(endParenIndex + count + 2);
+               }
+            }
+            
+            // if we encounter the token 'character.only', assume that it's
+            // set to TRUE, ie,
+            //
+            //    library("foo", character.only = TRUE)
+            //
+            // it would be unlikely someone would set character.only = FALSE
+            // which is the default
+            if (currentToken.contentEquals(L"character.only"))
+            {
+               DEBUG("- - Setting 'characterOnly' to true");
+               characterOnly = true;
+            }
+            
+         }
+         
+         if (!foundRightParen)
+            continue;
+         
+         // if 'character.only' is TRUE and 'package' is not a string, bail
+         if (characterOnly && packageToken.type() != RToken::STRING)
+         {
+            DEBUG("* characterOnly is true but package token'"
+                  << string_utils::wideToUtf8(packageToken.content())
+                  << "' is not a string");
+            continue;
+         }
+         
+         // otherwise, take the name of the package and cache it
+         std::wstring packageName = packageToken.type() == RToken::STRING ?
+                  removeQuoteDelims(packageToken.content()) :
+                  packageToken.content();
+         
+         DEBUG("** Adding package '" << string_utils::wideToUtf8(packageName) << "'");
+         DEBUG("");
+         libraryItems_.insert(packageName);
+         continue;
+      }
+      
       else
       {
          continue;

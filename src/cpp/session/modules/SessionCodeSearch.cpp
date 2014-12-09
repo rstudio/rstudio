@@ -25,6 +25,7 @@
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/split.hpp>
 
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
@@ -38,18 +39,19 @@
 #include <core/system/FileChangeEvent.hpp>
 #include <core/system/FileMonitor.hpp>
 
+#include <r/RRoutines.hpp>
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
-
+#include <session/SessionAsyncRProcess.hpp>
 #include <session/projects/SessionProjects.hpp>
 
 #include "SessionSource.hpp"
 #include "clang/DefinitionIndex.hpp"
 
-#define CODESEARCH_DEBUG_LEVEL 0
+#define CODESEARCH_DEBUG_LEVEL 1
 #if CODESEARCH_DEBUG_LEVEL > 0
 
 #define DEBUG(STRING) { \
@@ -888,7 +890,12 @@ public:
       // insert it
       indexes_[pDoc->id()] = pIndex;
    }
-
+   
+   boost::shared_ptr<r_util::RSourceIndex> get(const std::string& id)
+   {
+      return indexes_[id];
+   }
+   
    void remove(const std::string& id)
    {
       indexes_.erase(id);
@@ -2144,11 +2151,10 @@ void onFileMonitorDisabled()
 SEXP rs_scoreMatches(SEXP suggestionsSEXP,
                      SEXP querySEXP)
 {
+   std::string query = r::sexp::asString(querySEXP);
    std::vector<std::string> suggestions;
    if (!r::sexp::fillVectorString(suggestionsSEXP, &suggestions))
       return R_NilValue;
-   
-   std::string query = r::sexp::asString(querySEXP);
    
    int n = suggestions.size();
    std::vector<int> scores;
@@ -2159,6 +2165,135 @@ SEXP rs_scoreMatches(SEXP suggestionsSEXP,
    
    r::sexp::Protect protect;
    return r::sexp::create(scores, &protect);
+}
+
+// A class that faciliates the update of 'library', 'require' completions
+class LibraryCompletions : public async_r::AsyncRProcess {
+   
+public:
+   static boost::shared_ptr<LibraryCompletions> update(
+         core::r_util::RSourceIndex& index)
+   {
+      std::set<std::wstring> const& pkgsWide(index.getLibraryItems());
+      
+      std::size_t n = pkgsWide.size();
+      
+      std::vector<std::string> packages(n);
+      std::transform(pkgsWide.begin(),
+                     pkgsWide.end(),
+                     packages.begin(),
+                     string_utils::wideToUtf8);
+      
+      
+      boost::shared_ptr<LibraryCompletions> pCompletions(
+               new LibraryCompletions(index));
+      
+      std::stringstream ss;
+      for (std::size_t i = 0; i < n; ++i)
+      {
+         std::string pkg = packages[i];
+         
+         boost::format fmt(
+                  "%1%_exports <- paste(getNamespaceExports('%1%'), collapse = ','); "
+                  "%1%_all <- paste(ls(envir = asNamespace('%1%')), collapse = ','); "
+                  "exports_msg <- paste('%1%|exports: [', %1%_exports, ']', sep = ''); "
+                  "all_msg <- paste('%1%|all: [', %1%_all, ']', sep = ''); "
+                  "cat(c(all_msg, exports_msg), sep = '\\\\n'); "
+                  );
+         
+         ss << boost::str(fmt % pkg);
+      }
+      
+      std::cerr << ss.str() << std::endl;
+      std::string finalCmd = ss.str();
+      pCompletions->start(finalCmd.c_str(),
+                          FilePath(),
+                          async_r::R_PROCESS_VANILLA);
+      return pCompletions;
+      
+   }
+   
+private:
+   
+   LibraryCompletions(core::r_util::RSourceIndex& index)
+      : index_(index) {}
+   
+   void onStdout(const std::string& output)
+   {
+      stdOut_ << output;
+   }
+   
+   void onCompleted(int exitStatus)
+   {
+      DEBUG("* Completed async library lookup");
+      std::vector<std::string> splat;
+      std::string line = stdOut_.str();
+      boost::split(splat, line, boost::is_any_of("\n"));
+      
+      std::size_t n = splat.size();
+      DEBUG("- Received " << n << " lines of response");
+      for (std::size_t i = 0; i < n / 2 + 1; i += 2)
+      {
+         std::cerr << "- Current line:\n-- '" << splat[i] << "'" << std::endl;
+         std::string package = parsePackage(splat[i]);
+         index_.addPkgExports(package, parseLine(splat[i]));
+         index_.addPkgObjects(package, parseLine(splat[i + 1]));
+      }
+   }
+   
+   std::string parsePackage(std::string const& line)
+   {
+      return line.substr(0, line.find('|'));
+   }
+   
+   std::vector<std::string> parseLine(std::string const& line)
+   {
+      int startIndex = line.find('[') + 1;
+      int endIndex = line.rfind(']');
+      
+      std::string substring = line.substr(startIndex, endIndex - startIndex + 1);
+      std::vector<std::string> output;
+      boost::split(output, substring, boost::is_any_of(","));
+      return output;
+   }
+   
+   std::stringstream stdOut_;
+   core::r_util::RSourceIndex& index_;
+   
+};
+
+SEXP rs_getSourceFileLibraryCompletions(SEXP documentIdSEXP)
+{
+   std::string documentId = r::sexp::asString(documentIdSEXP);
+   boost::shared_ptr<core::r_util::RSourceIndex> index = rSourceIndex().get(documentId);
+   
+   if (index == NULL)
+   {
+      LOG_ERROR_MESSAGE("No index for document '" + documentId + "'");
+      return R_NilValue;
+   }
+   
+   r::sexp::Protect protect;
+   r::sexp::ListBuilder builder(&protect);
+   
+   builder.add("exports", index->getPkgExports());
+   builder.add("all", index->getPkgObjects());
+   return builder;
+}
+
+SEXP rs_updateSourceFileLibraryCompletions(SEXP documentIdSEXP)
+{
+   std::string documentId = r::sexp::asString(documentIdSEXP);
+   boost::shared_ptr<core::r_util::RSourceIndex> index = rSourceIndex().get(documentId);
+   
+   if (index == NULL)
+      return R_NilValue;
+   
+   boost::shared_ptr<LibraryCompletions> pAsyncProcess = LibraryCompletions::update(*index);
+   
+   r::sexp::Protect protect;
+   return r::sexp::create(pAsyncProcess->isRunning(), &protect);
+   
 }
 
 inline SEXP pathResultsSEXP(std::vector<std::string> const& paths,
@@ -2288,10 +2423,20 @@ Error initialize()
             "rs_listIndexedFilesAndFolders",
             (DL_FUNC) rs_listIndexedFilesAndFolders,
             3);
+   
+   r::routines::registerCallMethod(
+            "rs_getSourceFileLibraryCompletions",
+            (DL_FUNC) rs_getSourceFileLibraryCompletions,
+            1);
+   
+   r::routines::registerCallMethod(
+            "rs_updateSourceFileLibraryCompletions",
+            (DL_FUNC) rs_updateSourceFileLibraryCompletions,
+            1);
 
    // initialize r source indexes
    rSourceIndex().initialize();
-
+   
    using boost::bind;
    using namespace module_context;
    ExecBlock initBlock ;

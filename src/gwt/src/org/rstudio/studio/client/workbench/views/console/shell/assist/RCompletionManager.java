@@ -1058,8 +1058,7 @@ public class RCompletionManager implements CompletionManager
       }
       
       String filePath = getSourceDocumentPath();
-      if (filePath == null)
-         filePath = "";
+      String docId = getSourceDocumentId();
       
       requester_.getCompletions(
             context.getToken(),
@@ -1072,6 +1071,7 @@ public class RCompletionManager implements CompletionManager
             infixData.getExcludeArgs(),
             infixData.getExcludeArgsFromObject(),
             filePath,
+            docId,
             implicit,
             context_);
 
@@ -1874,9 +1874,17 @@ public class RCompletionManager implements CompletionManager
    private String getSourceDocumentPath()
    {
       if (rContext_ != null)
-         return rContext_.getPath();
+         return StringUtil.notNull(rContext_.getPath());
       else
-         return null;
+         return "";
+   }
+   
+   private String getSourceDocumentId()
+   {
+      if (rContext_ != null)
+         return StringUtil.notNull(rContext_.getId());
+      else
+         return "";
    }
    
    public void showHelpDeferred(final CompletionRequestContext context,

@@ -4448,6 +4448,12 @@ public class TextEditingTarget implements
       {
          return docUpdateSentinel_.getPath();
       }
+      
+      @Override
+      public String getId()
+      {
+         return docUpdateSentinel_.getId();
+      }
    };
    
    // these methods are public static so that other editing targets which
