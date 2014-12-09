@@ -308,6 +308,8 @@ public class RCompletionManager implements CompletionManager
    
    public boolean previewKeyDown(NativeEvent event)
    {
+      suggestTimer_.cancel();
+      
       if (sigTip_ != null)
          if (sigTip_.previewKeyDown(event))
             return true;
