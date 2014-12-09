@@ -119,9 +119,12 @@
              destdir="bin"
              source="1.5" target="1.5" nowarn="true" deprecation="true"
              debug="true" debuglevel="lines,vars,source"
-             includeantruntime="false">
+             includeantruntime="false"
+             fork="true">
          <classpath refid="project.class.path"/>
          <compilerarg value="-Xlint"/>
+         <compilerarg value="-J-Xms256m"/>
+         <compilerarg value="-J-Xmx512m"/>
       </javac>
       <copy todir="bin">
          <fileset dir="src" excludes="**/*.java"/>
