@@ -1,518 +1,260 @@
 cldrVersion=25
 
-number=$Revision: 9737 Google $
-
+number=$Revision: 9737 $
 aa.number=$Revision: 9287 $
-
 af.number=$Revision: 9852 $
-
 agq.number=$Revision: 9287 $
-
 ak.number=$Revision: 9287 $
-
 am.number=$Revision: 9876 $
-
 ar.number=$Revision: 9852 $
-
 as.number=$Revision: 9287 $
-
 asa.number=$Revision: 9287 $
-
 ast.number=$Revision: 9624 $
-
 az.number=$Revision: 9852 $
-
 az_Cyrl.number=$Revision: 9287 $
-
 az_Latn.number=$Revision: 9061 $
-
 bas.number=$Revision: 9287 $
-
 be.number=$Revision: 9792 $
-
 bem.number=$Revision: 9287 $
-
 bez.number=$Revision: 9287 $
-
 bg.number=$Revision: 9852 $
-
 bm.number=$Revision: 9728 $
-
 bn.number=$Revision: 9967 $
-
 bn_IN.number=$Revision: 9791 $
-
 bo.number=$Revision: 9287 $
-
 bo_IN.number=$Revision: 9061 $
-
 br.number=$Revision: 9852 $
-
 brx.number=$Revision: 9852 $
-
 bs.number=$Revision: 9852 $
-
 bs_Cyrl.number=$Revision: 9852 $
-
 bs_Latn.number=$Revision: 9061 $
-
 byn.number=$Revision: 9791 $
-
 ca.number=$Revision: 9852 $
-
 cgg.number=$Revision: 9287 $
-
 chr.number=$Revision: 9876 $
-
 cs.number=$Revision: 9852 $
-
 cy.number=$Revision: 9852 $
-
 da.number=$Revision: 9852 $
-
 dav.number=$Revision: 9287 $
-
 de.number=$Revision: 9852 $
-
 de_CH.number=$Revision: 9287 $
-
 dje.number=$Revision: 9287 $
-
 dua.number=$Revision: 9287 $
-
 dyo.number=$Revision: 9287 $
-
 dz.number=$Revision: 9852 $
-
 ebu.number=$Revision: 9287 $
-
 ee.number=$Revision: 9852 $
-
 el.number=$Revision: 9852 $
-
 en.number=$Revision: 9876 $
-
 en_150.number=$Revision: 9287 $
-
 en_AU.number=$Revision: 9287 $
-
 en_DG.number=$Revision: 9280 $
-
 en_FK.number=$Revision: 9258 $
-
 en_HK.number=$Revision: 9280 $
-
 en_IN.number=$Revision: 9287 $
-
 en_IO.number=$Revision: 9280 $
-
 en_MO.number=$Revision: 9229 $
-
 en_NZ.number=$Revision: 9061 $
-
 en_PK.number=$Revision: 9287 $
-
 en_SG.number=$Revision: 9535 $
-
 en_SH.number=$Revision: 9258 $
-
 en_VG.number=$Revision: 9170 $
-
 eo.number=$Revision: 9791 $
-
 es.number=$Revision: 9852 $
-
 es_CL.number=$Revision: 9791 $
-
 es_MX.number=$Revision: 9852 $
-
 et.number=$Revision: 9852 $
-
 eu.number=$Revision: 9791 $
-
 ewo.number=$Revision: 9287 $
-
 fa.number=$Revision: 9876 $
-
 fa_AF.number=$Revision: 9280 $
-
 ff.number=$Revision: 9728 $
-
 fi.number=$Revision: 9852 $
-
 fil.number=$Revision: 9791 $
-
 fo.number=$Revision: 9791 $
-
 fr.number=$Revision: 9852 $
-
 fr_CA.number=$Revision: 9280 $
-
 fr_CH.number=$Revision: 9287 $
-
 fur.number=$Revision: 9792 $
-
 fy.number=$Revision: 9852 $
-
 ga.number=$Revision: 9791 $
-
 gd.number=$Revision: 9792 $
-
 gl.number=$Revision: 9876 $
-
 gsw.number=$Revision: 9852 $
-
 gu.number=$Revision: 9852 $
-
 guz.number=$Revision: 9287 $
-
 gv.number=$Revision: 9287 $
-
 ha.number=$Revision: 9791 $
-
 ha_Latn.number=$Revision: 9061 $
-
 haw.number=$Revision: 9876 $
-
 he.number=$Revision: 9852 $
-
 hi.number=$Revision: 9852 $
-
 hr.number=$Revision: 9852 $
-
 hu.number=$Revision: 9852 $
-
 hy.number=$Revision: 9852 $
-
 ia.number=$Revision: 9791 $
-
 id.number=$Revision: 9852 $
-
 ig.number=$Revision: 9287 $
-
 ii.number=$Revision: 9061 $
-
 is.number=$Revision: 9852 $
-
 it.number=$Revision: 9852 $
-
 ja.number=$Revision: 9862 $
-
 jgo.number=$Revision: 9770 $
-
 jmc.number=$Revision: 9287 $
-
 ka.number=$Revision: 9852 $
-
 kab.number=$Revision: 9728 $
-
 kam.number=$Revision: 9287 $
-
 kde.number=$Revision: 9287 $
-
 kea.number=$Revision: 9515 $
-
 khq.number=$Revision: 9728 $
-
 ki.number=$Revision: 9287 $
-
 kk.number=$Revision: 9852 $
-
 kk_Cyrl.number=$Revision: 9061 $
-
 kkj.number=$Revision: 9625 $
-
 kl.number=$Revision: 9287 $
-
 kln.number=$Revision: 9287 $
-
 km.number=$Revision: 9852 $
-
 kn.number=$Revision: 9876 $
-
 ko.number=$Revision: 9967 $
-
 kok.number=$Revision: 9791 $
-
 ks.number=$Revision: 9852 $
-
 ks_Arab.number=$Revision: 9061 $
-
 ksb.number=$Revision: 9287 $
-
 ksf.number=$Revision: 9287 $
-
 ksh.number=$Revision: 9852 $
-
 kw.number=$Revision: 9287 $
-
 ky.number=$Revision: 9852 $
-
 lag.number=$Revision: 9275 $
-
 lg.number=$Revision: 9287 $
-
 lkt.number=$Revision: 9876 $
-
 ln.number=$Revision: 9287 $
-
 lo.number=$Revision: 9852 $
-
 lt.number=$Revision: 9852 $
-
 lu.number=$Revision: 9287 $
-
 luo.number=$Revision: 9287 $
-
 luy.number=$Revision: 9287 $
-
 lv.number=$Revision: 9967 $
-
 mas.number=$Revision: 9287 $
-
 mer.number=$Revision: 9287 $
-
 mfe.number=$Revision: 9728 $
-
 mg.number=$Revision: 9728 $
-
 mgh.number=$Revision: 9061 $
-
 mgo.number=$Revision: 9287 $
-
 mk.number=$Revision: 9852 $
-
 ml.number=$Revision: 9876 $
-
 mn.number=$Revision: 9852 $
-
 mr.number=$Revision: 9876 $
-
 ms.number=$Revision: 9791 $
-
 ms_Latn.number=$Revision: 9061 $
-
 mt.number=$Revision: 9792 $
-
 mua.number=$Revision: 9287 $
-
 my.number=$Revision: 9862 $
-
 naq.number=$Revision: 9287 $
-
 nb.number=$Revision: 9852 $
-
 nd.number=$Revision: 9287 $
-
 ne.number=$Revision: 9876 $
-
 nl.number=$Revision: 9852 $
-
 nl_BE.number=$Revision: 9791 $
-
 nmg.number=$Revision: 9862 $
-
 nn.number=$Revision: 9852 $
-
 nnh.number=$Revision: 9297 $
-
 nr.number=$Revision: 9287 $
-
 nso.number=$Revision: 9287 $
-
 nus.number=$Revision: 9287 $
-
 nyn.number=$Revision: 9287 $
-
 om.number=$Revision: 9791 $
-
 or.number=$Revision: 9792 $
-
 os.number=$Revision: 9791 $
-
 pa.number=$Revision: 9852 $
-
 pa_Arab.number=$Revision: 9275 $
-
 pa_Guru.number=$Revision: 9061 $
-
 pl.number=$Revision: 9852 $
-
 ps.number=$Revision: 9862 $
-
 pt.number=$Revision: 9852 $
-
 pt_AO.number=$Revision: 9061 $
-
 pt_CV.number=$Revision: 9061 $
-
 pt_GW.number=$Revision: 9061 $
-
 pt_MO.number=$Revision: 9061 $
-
 pt_MZ.number=$Revision: 9061 $
-
 pt_PT.number=$Revision: 9852 $
-
 pt_ST.number=$Revision: 9061 $
-
 pt_TL.number=$Revision: 9061 $
-
 rm.number=$Revision: 9852 $
-
 rn.number=$Revision: 9287 $
-
 ro.number=$Revision: 9852 $
-
 rof.number=$Revision: 9287 $
-
 ru.number=$Revision: 9862 $
-
 rw.number=$Revision: 9791 $
-
 rwk.number=$Revision: 9287 $
-
 sah.number=$Revision: 9196 $
-
 saq.number=$Revision: 9287 $
-
 sbp.number=$Revision: 9287 $
-
 se.number=$Revision: 9791 $
-
 se_FI.number=$Revision: 9280 $
-
 seh.number=$Revision: 9287 $
-
 ses.number=$Revision: 9728 $
-
 sg.number=$Revision: 9728 $
-
 shi.number=$Revision: 9728 $
-
 shi_Latn.number=$Revision: 9728 $
-
 si.number=$Revision: 9876 $
-
 sk.number=$Revision: 9852 $
-
 sl.number=$Revision: 9967 $
-
 sn.number=$Revision: 9287 $
-
 so.number=$Revision: 9791 $
-
 sq.number=$Revision: 9852 $
-
 sr.number=$Revision: 9852 $
-
 sr_Cyrl.number=$Revision: 9061 $
-
 sr_Latn.number=$Revision: 9862 $
-
 ss.number=$Revision: 9287 $
-
 ssy.number=$Revision: 9287 $
-
 st.number=$Revision: 9791 $
-
 sv.number=$Revision: 9920 $
-
 sv_FI.number=$Revision: 9814 $
-
 sw.number=$Revision: 9813 $
-
 swc.number=$Revision: 9287 $
-
 ta.number=$Revision: 9876 $
-
 te.number=$Revision: 9852 $
-
 teo.number=$Revision: 9287 $
-
 tg.number=$Revision: 9791 $
-
 tg_Cyrl.number=$Revision: 9061 $
-
 th.number=$Revision: 9852 $
-
 ti.number=$Revision: 9791 $
-
 tig.number=$Revision: 9791 $
-
 tn.number=$Revision: 9791 $
-
 to.number=$Revision: 9852 $
-
 tr.number=$Revision: 9852 $
-
 ts.number=$Revision: 9287 $
-
 twq.number=$Revision: 9287 $
-
 tzm.number=$Revision: 9287 $
-
 ug.number=$Revision: 9876 $
-
 ug_Arab.number=$Revision: 9840 $
-
 uk.number=$Revision: 9852 $
-
 ur.number=$Revision: 9852 $
-
 uz.number=$Revision: 9287 $
-
 uz_Arab.number=$Revision: 9914 $
-
 uz_Cyrl.number=$Revision: 9287 $
-
 uz_Latn.number=$Revision: 9129 $
-
 vai.number=$Revision: 9287 $
-
 vai_Latn.number=$Revision: 9287 $
-
 ve.number=$Revision: 9287 $
-
 vi.number=$Revision: 9792 $
-
 vo.number=$Revision: 9061 $
-
 vun.number=$Revision: 9287 $
-
 wae.number=$Revision: 9275 $
-
 wal.number=$Revision: 9287 $
-
 xh.number=$Revision: 9791 $
-
 xog.number=$Revision: 9287 $
-
 yav.number=$Revision: 9287 $
-
 yo.number=$Revision: 9791 $
-
 yo_BJ.number=$Revision: 9862 $
-
 zgh.number=$Revision: 9287 $
-
 zh.number=$Revision: 9852 $
-
 zh_Hans.number=$Revision: 9061 $
-
 zh_Hans_HK.number=$Revision: 9625 $
-
 zh_Hans_MO.number=$Revision: 9287 $
-
 zh_Hans_SG.number=$Revision: 9287 $
-
 zh_Hant.number=$Revision: 9852 $
-
 zh_Hant_HK.number=$Revision: 9287 $
-
 zh_Hant_MO.number=$Revision: 9280 $
-
 zh_Hant_TW.number=$Revision: 9061 $
-
 zu.number=$Revision: 9876 $
-
