@@ -1336,7 +1336,7 @@ assign(x = ".rs.acCompletionTypes",
       if (type[[i]] %in% c(.rs.acContextTypes$FUNCTION, .rs.acContextTypes$UNKNOWN))
       {
          ## Blacklist certain functions
-         if (string[[i]] %in% c("help", "str"))
+         if (string[[i]] %in% c("help", "str", "args"))
          {
             completions$overrideInsertParens <- .rs.scalar(TRUE)
          }
