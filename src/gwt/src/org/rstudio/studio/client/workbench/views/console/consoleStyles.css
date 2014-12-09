@@ -137,3 +137,9 @@
 	width: 100%;
 	padding: 6px;
 }
+
+.truncatedLabel {
+	padding: 4px;
+	font-style: italic;
+	color: #888888;
+}

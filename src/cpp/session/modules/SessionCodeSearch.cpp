@@ -31,6 +31,7 @@
 #include <core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/SafeConvert.hpp>
+#include <core/collection/Tree.hpp>
 
 #include <core/r_util/RSourceIndex.hpp>
 
@@ -38,6 +39,7 @@
 #include <core/system/FileMonitor.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RRoutines.hpp>
 
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -47,6 +49,18 @@
 #include "SessionSource.hpp"
 #include "clang/DefinitionIndex.hpp"
 
+#define CODESEARCH_DEBUG_LEVEL 0
+#if CODESEARCH_DEBUG_LEVEL > 0
+
+#define DEBUG(STRING) { \
+   std::cerr << STRING << std::endl; \
+}
+#else
+
+#define DEBUG(STRING)
+
+#endif
+
 using namespace core ;
 
 namespace session {  
@@ -54,6 +68,7 @@ namespace modules {
 namespace code_search {
 
 namespace {
+
 
 bool isGlobalFunctionNamed(const r_util::RSourceItem& sourceItem,
                            const std::string& name)
@@ -71,7 +86,7 @@ bool enforceMaxResults(std::size_t maxResults,
                         T* pPaths,
                         bool* pMoreAvailable)
 {
-   if (pNames->size() > maxResults)
+   if (pNames->size() >= maxResults)
    {
       *pMoreAvailable = true;
       pNames->resize(maxResults);
@@ -85,11 +100,287 @@ bool enforceMaxResults(std::size_t maxResults,
 }
 
 
+// index entries we are managing
+struct Entry
+{
+   explicit Entry()
+   {
+   }
+
+   explicit Entry(const FileInfo& fileInfo)
+      : fileInfo(fileInfo)
+   {
+   }
+   
+   Entry(const FileInfo& fileInfo,
+         boost::shared_ptr<core::r_util::RSourceIndex> pIndex)
+      : fileInfo(fileInfo), pIndex(pIndex)
+   {
+   }
+   
+   FileInfo fileInfo;
+   boost::shared_ptr<core::r_util::RSourceIndex> pIndex;
+   
+   bool hasIndex() const { return pIndex.get() != NULL; }
+   
+   bool operator < (const Entry& other) const
+   {
+      return core::fileInfoPathLessThan(fileInfo, other.fileInfo);
+   }
+   
+   bool operator == (const Entry& other) const
+   {
+      return fileInfo == other.fileInfo;
+   }
+};
+
+void print_tree(tree<Entry> const& tr)
+{
+#if CODESEARCH_DEBUG_LEVEL > 0
+   std::cerr << "Tree of size " << tr.size() << ".\n";
+   tree<Entry>::iterator it = tr.begin();
+   for (; it != tr.end(); ++it)
+   {
+      int depth = tr.depth(it);
+      for (int i = 0; i < depth; i++)
+         std::cerr << "--";
+      std::cerr << (*it).fileInfo.absolutePath() << "\n";
+   }
+#endif
+}
+
+class EntryTree
+      : public tree<Entry>
+{
+public:
+   
+   EntryTree()
+   {
+      // NOTE from tree.hh, line 914:
+      //
+      // If your program fails here you probably used 'append_child' to add the top
+      // node to an empty tree. From version 1.45 the top element should be added
+      // using 'insert'. See the documentation for further information, and sorry about
+      // the API change.
+      //
+      // We work around this by explicitly inserting a root node on construction.
+      Entry dummy(FileInfo("", true));
+      insert(begin(), dummy);
+   }
+   
+   // make this BOOST_FOREACH aware
+   typedef iterator const_iterator;
+   
+   const_iterator const_begin() const
+   {
+      return static_cast<const_iterator>(begin());
+   }
+   
+   const_iterator const_end() const
+   {
+      return static_cast<const_iterator>(end());
+   }
+   
+   void insertEntry(const Entry& entry)
+   {
+      std::string absolutePath = entry.fileInfo.absolutePath();
+      if (absolutePath.empty())
+         return;
+
+      DEBUG("");
+      DEBUG("Begin entry insertion: '" << absolutePath << "'");
+      
+      // construct a tree branch from the path, with each directory forming a new node, e.g
+      //
+      //   foo/bar/baz
+      //
+      // becoming
+      //
+      // foo
+      //     --> foo/bar
+      //                  --> foo/bar/baz
+      iterator parent = begin();
+      DEBUG("First parent: '" << (*parent).fileInfo.absolutePath() << "'");
+
+      std::string::size_type matchIndex = absolutePath.find('/');
+      
+      DEBUG("Entering directory node insertion phase");
+      while (matchIndex != std::string::npos)
+      {
+         FileInfo path(
+                  absolutePath.substr(0, matchIndex), // note: don't include the trailing '/'
+                  true);
+         
+         Entry entry(path);
+         DEBUG("Entry: '" << entry.fileInfo.absolutePath() << "'");
+
+         if (*parent == entry)
+         {
+            DEBUG("- Node already exists as parent; skipping...");
+         }
+
+         else if (number_of_children(parent) == 0)
+         {
+            DEBUG("- Inserting new node as first child of '" << (*parent).fileInfo.absolutePath() << "'");
+
+            iterator newItr = append_child(parent, entry);
+            DEBUG("- Parent now has " << number_of_children(parent) << " children.");
+            DEBUG("- Parent now has " << number_of_siblings(parent) << " siblings.");
+            parent = newItr;
+         }
+         else
+         {
+            DEBUG("- Searching the children of this node");
+            sibling_iterator it = parent.begin();
+            sibling_iterator end = parent.end();
+
+            for (; it != end; ++it)
+            {
+               DEBUG("-- Current node: '" << (*it).fileInfo.absolutePath() << "'");
+               if (*it == entry)
+               {
+                  DEBUG("-- Found it!");
+                  break;
+               }
+            }
+
+            if (it == end)
+            {
+               DEBUG("- Adding another child to parent '" << (*parent).fileInfo.absolutePath() << "'");
+               parent = append_child(parent, entry);
+            }
+            else
+            {
+               DEBUG("- Node already exists; setting parent to child (" << (*parent).fileInfo.absolutePath() << ")");
+               parent = it;
+            }
+         }
+         
+         matchIndex = absolutePath.find('/', matchIndex + 1);
+      }
+      DEBUG("Exiting directory node insertion phase");
+      
+      // Now, we have the filename. We append that to the parent.
+      DEBUG("Parent: '" << (*parent).fileInfo.absolutePath() << "'");
+      DEBUG("Entry: '" << entry.fileInfo.absolutePath() << "'");
+      if (parent.number_of_children() == 0)
+      {
+         DEBUG("- No children at parent node; adding child");
+         parent = append_child(parent, entry);
+      }
+
+      // We check for a dummy node. If we are inserting a file
+      // into a folder with just a dummy node, replace that node.
+      else if (parent.number_of_children() == 1 &&
+               !entry.fileInfo.isDirectory() &&
+               *child(parent, 0) == dummyEntry_)
+      {
+         DEBUG("- Replacing dummy node");
+         iterator firstChild = child(parent, 0);
+         *firstChild = entry;
+      }
+
+      // Otherwise, loop through all the children and try to find
+      // the node. If we don't find it, append it, otherwise no-op.
+      else
+      {
+         sibling_iterator it = parent.begin();
+         sibling_iterator end = parent.end();
+         for (; it != end; ++it)
+         {
+            DEBUG("-- Current node: '" << (*it).fileInfo.absolutePath() << "'");
+            if (*it == entry)
+               break;
+         }
+
+         if (it == end)
+         {
+            DEBUG("- Adding another child to parent");
+            parent = append_child(parent, entry);
+         }
+         else
+         {
+            DEBUG("- Already has this entry; skipping");
+         }
+      }
+
+      // If we just inserted a folder, we append an empty child
+      // to the node. This is done to optimize lookup time.
+      if (entry.fileInfo.isDirectory())
+      {
+         DEBUG("Inserted empty directory; adding dummy child to folder node");
+         parent = append_child(parent, dummyEntry_);
+      }
+      DEBUG("");
+
+      DEBUG("Tree is now:");
+      print_tree(*this);
+      DEBUG("");
+   }
+
+private:
+
+   iterator find_leaf(const Entry& entry)
+   {
+      leaf_iterator it = begin_leaf();
+      for (; is_valid(it); ++it)
+         if (*it == entry)
+            return it;
+      return this->end();
+   }
+
+   iterator find_branch(const Entry& entry)
+   {
+      iterator parent = begin();
+      iterator result = end();
+      do_find_branch(entry, parent, &result);
+      return result;
+   }
+
+   void do_find_branch(const Entry& entry,
+                       iterator parent,
+                       iterator* pResult)
+   {
+      sibling_iterator it = parent.begin();
+      sibling_iterator end = parent.end();
+      for (; it != end; ++it)
+      {
+         DEBUG("- Current branch: '" << (*it).fileInfo.absolutePath() << "'");
+         if (*it == entry)
+         {
+            *pResult = it;
+            return;
+         }
+
+         if (number_of_children(it) > 0)
+         {
+            DEBUG("-- Searching children of branch");
+            do_find_branch(entry, it, pResult);
+         }
+      }
+   }
+
+public:
+
+   iterator find(const Entry& entry)
+   {
+      if (entry.fileInfo.isDirectory())
+         return find_branch(entry);
+      else
+         return find_leaf(entry);
+   }
+
+private:
+
+   Entry dummyEntry_;
+   
+};
+
 class SourceFileIndex : boost::noncopyable
 {
 public:
    SourceFileIndex()
-      : indexing_(false)
+      : pEntries_(new EntryTree()), indexing_(false)
    {
    }
 
@@ -102,15 +393,12 @@ public:
    template <typename ForwardIterator>
    void enqueFiles(ForwardIterator begin, ForwardIterator end)
    {
-      // add all source files to the indexing queue
+      // add all files to the indexing queue
       using namespace core::system;
       for ( ; begin != end; ++begin)
       {
-         if (isSourceFile(*begin))
-         {
-            FileChangeEvent addEvent(FileChangeEvent::FileAdded, *begin);
-            indexingQueue_.push(addEvent);
-         }
+         FileChangeEvent addEvent(FileChangeEvent::FileAdded, *begin);
+         indexingQueue_.push(addEvent);
       }
 
       // schedule indexing if necessary. perform up to 200ms of work
@@ -130,10 +418,6 @@ public:
 
    void enqueFileChange(const core::system::FileChangeEvent& event)
    {
-      // screen out files which aren't source files
-      if (!isSourceFile(event.fileInfo()))
-         return;
-
       // add to the queue
       indexingQueue_.push(event);
 
@@ -157,7 +441,7 @@ public:
                            r_util::RSourceItem* pFunctionItem)
    {
       std::vector<r_util::RSourceItem> sourceItems;
-      BOOST_FOREACH(const Entry& entry, entries_)
+      BOOST_FOREACH(const Entry& entry, *pEntries_)
       {
          // bail if there is no index
          if (!entry.hasIndex())
@@ -194,7 +478,7 @@ public:
                      const std::set<std::string>& excludeContexts,
                      std::vector<r_util::RSourceItem>* pItems)
    {
-      BOOST_FOREACH(const Entry& entry, entries_)
+      BOOST_FOREACH(const Entry& entry, *pEntries_)
       {
          // skip if it has no index
          if (!entry.hasIndex())
@@ -221,11 +505,13 @@ public:
          }
       }
    }
-
+   
    template <typename T>
    void searchFiles(const std::string& term,
                     std::size_t maxResults,
                     bool prefixOnly,
+                    bool sourceFilesOnly,
+                    const FilePath& parentPath,
                     T* pNames,
                     T* pPaths,
                     bool* pMoreAvailable)
@@ -235,10 +521,39 @@ public:
 
       // create wildcard pattern if the search has a '*'
       boost::regex pattern = regex_utils::regexIfWildcardPattern(term);
-
-      // iterate over the files
-      BOOST_FOREACH(const Entry& entry, entries_)
+      
+      // get the start and end iterators -- default to all leaves
+      EntryTree::leaf_iterator it = pEntries_->begin_leaf();
+      
+      DEBUG("Searching for node '" << parentPath.absolutePath());
+      Entry parentEntry(core::toFileInfo(parentPath));
+      EntryTree::iterator parent = pEntries_->find(parentEntry);
+      if (parent != pEntries_->end())
       {
+         DEBUG("Found node: '" + (*parent).fileInfo.absolutePath() + "'");
+         DEBUG("Node has: '" << pEntries_->number_of_children(parent) << "' children.");
+         DEBUG("Node has: '" << pEntries_->number_of_siblings(parent) << "' siblings.");
+
+         it = parent.begin();
+      }
+      else
+      {
+         DEBUG("Failed to find node.");
+         LOG_ERROR_MESSAGE("Failed to find parent node when searching index");
+         return;
+      }
+      
+      // iterate over the files
+      for (; pEntries_->is_valid(it); ++it)
+      {
+         Entry entry = *it;
+         
+         DEBUG("Node: '" << (*it).fileInfo.absolutePath() << "'");
+         
+         // skip if it's not a source file
+         if (sourceFilesOnly && !isSourceFile(entry.fileInfo))
+            continue;
+         
          // get file and name
          FilePath filePath(entry.fileInfo.absolutePath());
          std::string name = filePath.filename();
@@ -285,41 +600,108 @@ public:
          }
       }
    }
+   
+   template <typename T>
+   void searchFolders(const std::string& term,
+                      const FilePath& parentPath,
+                      std::size_t maxResults,
+                      T* pPaths,
+                      bool* pMoreAvailable)
+   {
+      // Find the parent node in the tree
+      Entry parentEntry(core::toFileInfo(parentPath));
+      EntryTree::iterator parentItr = pEntries_->find(parentEntry);
+      if (parentItr == pEntries_->end())
+      {
+         std::stringstream ss;
+         ss << "Expected node '" << parentPath.absolutePath() << "' in index tree but none found";
+         LOG_ERROR_MESSAGE(ss.str());
+         return;
+      }
+      
+      EntryTree::iterator it = parentItr.begin();
+      EntryTree::iterator end = parentItr.end();
+      for (; it != end; ++it)
+      {
+         const FileInfo& fileInfo = (*it).fileInfo;
+         if (fileInfo.isDirectory())
+         {
+            int lastSlashIndex = fileInfo.absolutePath().rfind('/');
+
+            std::string fileName =
+                  fileInfo.absolutePath().substr(lastSlashIndex + 1);
+
+            bool isSubsequence =
+                  string_utils::isSubsequence(fileName, term, true);
+
+            if (isSubsequence)
+            {
+               pPaths->push_back(fileInfo.absolutePath());
+               if (pPaths->size() >= maxResults)
+               {
+                  *pMoreAvailable = true;
+                  return;
+               }
+            }
+
+         }
+      }
+   }
+
+   template <typename T>
+   void searchFilesAndFolders(const std::string& term,
+                              const FilePath& parentPath,
+                              std::size_t maxResults,
+                              T* pPaths,
+                              bool* pMoreAvailable)
+   {
+      // Find the parent node in the tree
+      Entry parentEntry(core::toFileInfo(parentPath));
+      EntryTree::iterator parentItr = pEntries_->find(parentEntry);
+      if (parentItr == pEntries_->end())
+      {
+         std::stringstream ss;
+         ss << "Expected node '" << parentPath.absolutePath() << "' in index tree but none found";
+         LOG_ERROR_MESSAGE(ss.str());
+         return;
+      }
+
+      EntryTree::iterator it = parentItr.begin();
+      EntryTree::iterator end = parentItr.end();
+      for (; it != end; ++it)
+      {
+         const FileInfo& fileInfo = (*it).fileInfo;
+
+         // Avoid dummy nodes
+         if (fileInfo.empty())
+            continue;
+
+         int lastSlashIndex = fileInfo.absolutePath().rfind('/');
+
+         std::string fileName =
+               fileInfo.absolutePath().substr(lastSlashIndex + 1);
+
+         bool isSubsequence =
+               string_utils::isSubsequence(fileName, term, true);
+
+         if (isSubsequence)
+         {
+            pPaths->push_back(fileInfo.absolutePath());
+            if (pPaths->size() >= maxResults)
+            {
+               *pMoreAvailable = true;
+               return;
+            }
+         }
+      }
+   }
 
    void clear()
    {
       indexing_ = false;
       indexingQueue_ = std::queue<core::system::FileChangeEvent>();
-      entries_.clear();
+      pEntries_->clear();
    }
-
-private:
-
-   // index entries we are managing
-   struct Entry
-   {
-      explicit Entry(const FileInfo& fileInfo)
-         : fileInfo(fileInfo)
-      {
-      }
-
-      Entry(const FileInfo& fileInfo,
-            boost::shared_ptr<core::r_util::RSourceIndex> pIndex)
-         : fileInfo(fileInfo), pIndex(pIndex)
-      {
-      }
-
-      FileInfo fileInfo;
-
-      boost::shared_ptr<core::r_util::RSourceIndex> pIndex;
-
-      bool hasIndex() const { return pIndex.get() != NULL; }
-
-      bool operator < (const Entry& other) const
-      {
-         return core::fileInfoPathLessThan(fileInfo, other.fileInfo);
-      }
-   };
 
 private:
 
@@ -393,29 +775,7 @@ private:
 
       // attempt to add the entry
       Entry entry(fileInfo, pIndex);
-      std::pair<std::set<Entry>::iterator,bool> result = entries_.insert(entry);
-
-      // insert failed, remove then re-add
-      if (result.second == false)
-      {
-         // was the first item, erase and re-insert without a hint
-         if (result.first == entries_.begin())
-         {
-            entries_.erase(result.first);
-            entries_.insert(entry);
-         }
-         // can derive a valid hint
-         else
-         {
-            // derive hint iterator
-            std::set<Entry>::iterator hintIter = result.first;
-            hintIter--;
-
-            // erase and re-insert with hint
-            entries_.erase(result.first);
-            entries_.insert(hintIter, entry);
-         }
-      }
+      pEntries_->insertEntry(entry);
    }
 
    void removeIndexEntry(const FileInfo& fileInfo)
@@ -423,10 +783,11 @@ private:
       // create a fake entry with a null source index to pass to find
       Entry entry(fileInfo, boost::shared_ptr<r_util::RSourceIndex>());
 
-      // do the find (will use Entry::operator< for equivilance test)
-      std::set<Entry>::iterator it = entries_.find(entry);
-      if (it != entries_.end())
-         entries_.erase(it);
+      EntryTree::iterator it = pEntries_->find(entry);
+      if (it != pEntries_->end())
+      {
+         pEntries_->erase(it);
+      }
    }
 
    static bool isSourceFile(const FileInfo& fileInfo)
@@ -461,13 +822,22 @@ private:
    static bool isIndexableSourceFile(const FileInfo& fileInfo)
    {
       FilePath filePath(fileInfo.absolutePath());
-      return !filePath.isDirectory() &&
-              filePath.extensionLowerCase() == ".r";
+      if (!filePath.isDirectory())
+      {
+         std::string lowerExtension = filePath.extensionLowerCase();
+         return
+               lowerExtension == ".r" ||
+               lowerExtension == ".s" ||
+               lowerExtension == ".q";
+         
+      }
+      
+      return false;
    }
 
 private:
    // index entries
-   std::set<Entry> entries_;
+   boost::shared_ptr<EntryTree> pEntries_;
 
    // indexing queue
    bool indexing_;
@@ -476,7 +846,6 @@ private:
 
 // global source file index
 SourceFileIndex s_projectIndex;
-
 
 // maintain an in-memory list of R source document indexes (for fast
 // code searching)
@@ -501,8 +870,13 @@ public:
    void update(boost::shared_ptr<session::source_database::SourceDocument> pDoc)
    {
       // is this indexable? if not then bail
-      if ( pDoc->path().empty() ||
-           (FilePath(pDoc->path()).extensionLowerCase() != ".r") )
+      std::string extensionLowerCase = FilePath(pDoc->path()).extensionLowerCase();
+      bool isRextension =
+            extensionLowerCase == ".r" ||
+            extensionLowerCase == ".q" ||
+            extensionLowerCase == ".s";
+      
+      if (pDoc->path().empty() || !isRextension)
       {
          return;
       }
@@ -651,7 +1025,7 @@ void searchSource(const std::string& term,
    searchSourceDatabase(term, maxResults, prefixOnly, pItems, &srcDBContexts);
 
    // we are done if we had >= maxResults
-   if (pItems->size() > maxResults)
+   if (pItems->size() >= maxResults)
    {
       *pMoreAvailable = true;
       pItems->resize(maxResults);
@@ -676,7 +1050,7 @@ void searchSource(const std::string& term,
       pItems->push_back(sourceItem);
 
       // bail if we've hit the max
-      if (pItems->size() > maxResults)
+      if (pItems->size() >= maxResults)
       {
          *pMoreAvailable = true;
          pItems->resize(maxResults);
@@ -754,6 +1128,7 @@ void searchSourceDatabaseFiles(const std::string& term,
 template <typename T>
 void searchFiles(const std::string& term,
                  std::size_t maxResults,
+                 bool sourceFilesOnly,
                  T* pNames,
                  T* pPaths,
                  bool* pMoreAvailable)
@@ -764,6 +1139,8 @@ void searchFiles(const std::string& term,
       s_projectIndex.searchFiles(term,
                                  maxResults,
                                  false,
+                                 sourceFilesOnly,
+                                 projects::projectContext().directory(),
                                  pNames,
                                  pPaths,
                                  pMoreAvailable);
@@ -777,7 +1154,6 @@ void searchFiles(const std::string& term,
                                 pMoreAvailable);
    }
 }
-
 
 // NOTE: When modifying this code, you should ensure that corresponding
 // changes are made to the client side scoreMatch function as well
@@ -794,12 +1170,16 @@ int scoreMatch(std::string const& suggestion,
 
    int result = 0;
 
-   // Get query matches in suggestion (ordered)
-   // Note: we have already guaranteed this to be a subsequence so
-   // this will succeed
-   std::vector<int> matches = string_utils::subsequenceIndices(
+   // Call a version of subsequence indices that returns false if the query is not
+   // actually a subsequence
+   std::vector<int> matches;
+   bool success = string_utils::subsequenceIndices(
             boost::algorithm::to_lower_copy(suggestion),
-            boost::algorithm::to_lower_copy(query));
+            boost::algorithm::to_lower_copy(query),
+            &matches);
+   
+   if (!success)
+      return -1;
 
    // Loop over the matches and assign a score
    for (int j = 0; j < query_n; j++)
@@ -1044,12 +1424,12 @@ Error searchCode(const json::JsonRpcRequest& request,
 {
    // get params
    std::string term;
-   int maxResultsInt = 20;
+   int maxResultsInt = 200;
    Error error = json::readParams(request.params, &term, &maxResultsInt);
    if (error)
       return error;
    std::size_t maxResults = safe_convert::numberTo<std::size_t>(maxResultsInt,
-                                                                20);
+                                                                200);
 
    // object to return
    json::Object result;
@@ -1059,10 +1439,10 @@ Error searchCode(const json::JsonRpcRequest& request,
    std::vector<std::string> paths;
    bool moreFilesAvailable = false;
 
-   // TODO: Refactor searchFiles, searchSource to no longer take maximum number
+   // TODO: Refactor searchSourceFiles, searchSource to no longer take maximum number
    // of results (since we want to grab everything possible then filter before
    // sending over the wire). Simiarly with the 'more*Available' bools
-   searchFiles(term, 1E2, &names, &paths, &moreFilesAvailable);
+   searchFiles(term, 1E2, true, &names, &paths, &moreFilesAvailable);
 
    // search source and convert to source items
    std::vector<SourceItem> srcItems;
@@ -1761,7 +2141,120 @@ void onFileMonitorDisabled()
    s_projectIndex.clear();
 }
 
+SEXP rs_scoreMatches(SEXP suggestionsSEXP,
+                     SEXP querySEXP)
+{
+   std::vector<std::string> suggestions;
+   if (!r::sexp::fillVectorString(suggestionsSEXP, &suggestions))
+      return R_NilValue;
    
+   std::string query = r::sexp::asString(querySEXP);
+   
+   int n = suggestions.size();
+   std::vector<int> scores;
+   scores.reserve(n);
+   
+   for (int i = 0; i < n; i++)
+      scores.push_back(scoreMatch(suggestions[i], query, false));
+   
+   r::sexp::Protect protect;
+   return r::sexp::create(scores, &protect);
+}
+
+inline SEXP pathResultsSEXP(std::vector<std::string> const& paths,
+                            bool moreAvailable)
+{
+   r::sexp::Protect protect;
+   r::sexp::ListBuilder builder(&protect);
+   builder.add("paths", paths);
+   builder.add("more_available", moreAvailable);
+   return builder;
+}
+
+SEXP rs_listIndexedFiles(SEXP termSEXP, SEXP absolutePathSEXP, SEXP maxResultsSEXP)
+{
+   std::string term = r::sexp::asString(termSEXP);
+   std::string absolutePath = r::sexp::asString(absolutePathSEXP);
+   int maxResults = r::sexp::asInteger(maxResultsSEXP);
+   
+   FilePath filePath(absolutePath);
+   
+   std::vector<std::string> names;
+   std::vector<std::string> paths;
+   bool moreAvailable = false;
+   
+   // Bail if the file doesn't exist
+   if (!filePath.exists())
+      return R_NilValue;
+   
+   // Bail if it's not a monitored path
+   if (!projects::projectContext().isMonitoringDirectory(filePath))
+      return R_NilValue;
+   
+   s_projectIndex.searchFiles(term,
+                              maxResults,
+                              false,
+                              false,
+                              filePath,
+                              &names,
+                              &paths,
+                              &moreAvailable);
+
+   return pathResultsSEXP(paths, moreAvailable);
+}
+
+SEXP rs_listIndexedFolders(SEXP termSEXP,
+                           SEXP absolutePathSEXP,
+                           SEXP maxResultsSEXP)
+{
+   std::string term = r::sexp::asString(termSEXP);
+   std::string absolutePath = r::sexp::asString(absolutePathSEXP);
+   int maxResults = r::sexp::asInteger(maxResultsSEXP);
+   
+   FilePath filePath(absolutePath);
+   if (!filePath.exists())
+      return R_NilValue;
+   
+   if (!projects::projectContext().isMonitoringDirectory(filePath))
+      return R_NilValue;
+   
+   std::vector<std::string> paths;
+   bool moreAvailable = false;
+   s_projectIndex.searchFolders(term,
+                                filePath,
+                                maxResults,
+                                &paths,
+                                &moreAvailable);
+
+   return pathResultsSEXP(paths, moreAvailable);
+}
+
+SEXP rs_listIndexedFilesAndFolders(SEXP termSEXP,
+                                   SEXP absolutePathSEXP,
+                                   SEXP maxResultsSEXP)
+{
+   std::string term = r::sexp::asString(termSEXP);
+   std::string absolutePath = r::sexp::asString(absolutePathSEXP);
+   int maxResults = r::sexp::asInteger(maxResultsSEXP);
+
+   FilePath filePath(absolutePath);
+   if (!filePath.exists())
+      return R_NilValue;
+
+   if (!projects::projectContext().isMonitoringDirectory(filePath))
+      return R_NilValue;
+
+   std::vector<std::string> paths;
+   bool moreAvailable = false;
+   s_projectIndex.searchFilesAndFolders(term,
+                                        filePath,
+                                        maxResults,
+                                        &paths,
+                                        &moreAvailable);
+
+   return pathResultsSEXP(paths, moreAvailable);
+}
+
 } // anonymous namespace
    
 Error initialize()
@@ -1774,6 +2267,27 @@ Error initialize()
    cb.onMonitoringDisabled = onFileMonitorDisabled;
    projects::projectContext().subscribeToFileMonitor("R source file indexing",
                                                      cb);
+   
+   // register call methods
+   r::routines::registerCallMethod(
+            "rs_scoreMatches",
+            (DL_FUNC) rs_scoreMatches,
+            2);
+   
+   r::routines::registerCallMethod(
+            "rs_listIndexedFiles",
+            (DL_FUNC) rs_listIndexedFiles,
+            3);
+   
+   r::routines::registerCallMethod(
+            "rs_listIndexedFolders",
+            (DL_FUNC) rs_listIndexedFolders,
+            3);
+
+   r::routines::registerCallMethod(
+            "rs_listIndexedFilesAndFolders",
+            (DL_FUNC) rs_listIndexedFilesAndFolders,
+            3);
 
    // initialize r source indexes
    rSourceIndex().initialize();

@@ -70,6 +70,19 @@ bool asLogical(SEXP object)
 {
    return Rf_asLogical(object) ? true : false;
 }
+
+bool fillVectorString(SEXP object, std::vector<std::string>* pVector)
+{
+   if (TYPEOF(object) != STRSXP)
+      return false;
+   
+   int n = Rf_length(object);
+   pVector->reserve(pVector->size() + n);
+   for (int i = 0; i < n; i++)
+      pVector->push_back(std::string(CHAR(STRING_ELT(object, i))));
+   
+   return true;
+}
    
 SEXP findNamespace(const std::string& name)
 {
@@ -211,6 +224,23 @@ bool isNull(SEXP object)
 SEXP getNames(SEXP sexp)
 {
    return Rf_getAttrib(sexp, R_NamesSymbol);
+}
+
+bool setNames(SEXP sexp, const std::vector<std::string>& names)
+{
+   std::size_t n = names.size();
+   if (static_cast<std::size_t>(Rf_length(sexp)) != n)
+      return false;
+
+   Rf_setAttrib(sexp,
+                R_NamesSymbol,
+                Rf_allocVector(STRSXP, names.size()));
+
+   SEXP namesSEXP = Rf_getAttrib(sexp, R_NamesSymbol);
+   for (std::size_t i = 0; i < n; ++i)
+      SET_STRING_ELT(namesSEXP, i, Rf_mkChar(names[i].c_str()));
+
+   return true;
 }
    
 Error getNames(SEXP sexp, std::vector<std::string>* pNames)   
@@ -543,6 +573,7 @@ SEXP create(const std::vector<bool>& value, Protect *pProtect)
    
    return valueSEXP;
 }
+
    
 namespace {  
 int secondsSinceEpoch(boost::posix_time::ptime date)
@@ -680,7 +711,6 @@ void PreservedSEXP::releaseNow()
       sexp_ = R_NilValue;
    }
 }
-
 
 } // namespace sexp   
 } // namespace r

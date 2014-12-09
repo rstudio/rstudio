@@ -23,6 +23,7 @@ public interface CompletionRequesterResources extends ClientBundle
    public static interface Styles extends CssResource
    {
       String completionIcon();
+      String fileIcon();
       String completion();
       String packageName();
    }

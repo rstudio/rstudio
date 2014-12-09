@@ -54,14 +54,15 @@ assign(x = ".rs.acCompletionTypes",
           R5_OBJECT   = 13,
           R5_METHOD   = 14,
           FILE        = 15,
-          CHUNK       = 16,
-          ROXYGEN     = 17,
-          HELP        = 18,
-          STRING      = 19,
-          PACKAGE     = 20,
-          KEYWORD     = 21,
-          OPTION      = 22,
-          DATASET     = 23,
+          DIRECTORY   = 16,
+          CHUNK       = 17,
+          ROXYGEN     = 18,
+          HELP        = 19,
+          STRING      = 20,
+          PACKAGE     = 21,
+          KEYWORD     = 22,
+          OPTION      = 23,
+          DATASET     = 24,
           CONTEXT     = 99
        )
 )
@@ -186,87 +187,153 @@ assign(x = ".rs.acCompletionTypes",
    doGetCompletionsVignettes(token, vignettes$results[, "Item"])
 })
 
-.rs.addFunction("getCompletionsFile", function(token, path = NULL, quote = FALSE)
+.rs.addFunction("getCompletionsFile", function(token,
+                                               path = getwd(),
+                                               quote = FALSE,
+                                               directoriesOnly = FALSE)
 {
-   # If we might have wanted relative completions but the file path was actually
-   # qualified relative to home or root, then abort that
-   if (!is.null(path) && nzchar(token) && substring(token, 1, 1) %in% c("~", "/"))
-      path <- NULL
+   projectPath <- .rs.getProjectDirectory()
+   hasFileMonitor <- .rs.hasFileMonitor()
+   path <- suppressWarnings(.rs.normalizePath(path))
    
-   if (identical(token, "~"))
-      token <- "~/"
+   ## Separate the token into a 'directory' prefix, and a 'name' prefix. We need
+   ## to prefix the prefix as we will need to prepend it onto completions for
+   ## non-relative completions.
+   tokenPrefix <- ""
+   tokenName <- token
    
-   slashIndices <- gregexpr("/", token, fixed = TRUE)[[1]]
-   lastSlashIndex <- slashIndices[length(slashIndices)]
-   
-   if (lastSlashIndex == -1)
+   tokenSlashIndices <- c(gregexpr("[/\\\\]", token, perl = TRUE)[[1]])
+   if (!identical(tokenSlashIndices, -1L))
    {
-      pattern <- if (nzchar(token))
-         paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeForRegex(token)), sep = "")
+      maxIndex <- max(tokenSlashIndices)
+      tokenPrefix <- substring(token, 1, maxIndex)
+      tokenName <- substring(token, maxIndex + 1)
+   }
+   
+   ## Figure out the directory to list files in.
+   
+   # The token itself might dictate the directory we want to search in, e.g.
+   # if we see `~`, `/`, `[a-zA-Z]:`. In those cases, override the path argument.
+   regex <- "^[~/\\\\]|^[a-zA-Z]:[/\\\\]"
+   if (nzchar(token) && length(grep(regex, token, perl = TRUE)))
+   {
+      directory <- path <-
+         suppressWarnings(normalizePath(dirname(paste(token, ".", sep = ""))))
+   }
+   
+   # Check to see if there are delimiters in the token. If there are, but it's
+   # a relative path, we need to further qualify the directory.
+   else
+   {
+      if (!identical(tokenSlashIndices, -1L))
+      {
+         maxIndex <- max(tokenSlashIndices)
+         directory <- suppressWarnings(
+            .rs.normalizePath(file.path(path, substring(token, 1, maxIndex - 1)))
+         )
+      }
+      else
+      {
+         directory <- path
+      }
+   }
+   
+   # If we're trying to get completions from a directory that doesn't
+   # exist, give up
+   if (!file.exists(directory))
+      return(.rs.emptyCompletions())
+   
+   # If the directory lies within a folder that we're monitoring for indexing, use that.
+   cacheable <- TRUE
+   if (.rs.hasFileMonitor() &&
+       .rs.startsWith(directory, .rs.getProjectDirectory()))
+   {
+      if (directoriesOnly)
+         index <- .rs.getIndexedFolders(tokenName, directory)
+      else
+         index <- .rs.getIndexedFilesAndFolders(tokenName, directory)
       
-      if (is.null(path))
-         path <- getwd()
-      files <- list.files(path = path,
-                          all.files = TRUE,
-                          pattern = pattern,
-                          no.. =  TRUE)
+      cacheable <- !index$more_available
+      absolutePaths <- index$paths
+   }
+   
+   # Otherwise, result to a listing of just the current directory.
+   else
+   {
+      pattern <- if (nzchar(tokenName))
+         paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeForRegex(tokenName)), sep = "")
       
-      qualifiedPaths <- file.path(path, files)
+      if (directoriesOnly && getRversion() >= "3.0.0")
+      {
+         absolutePaths <- list.dirs(path = directory,
+                                    recursive = FALSE)
+      }
+      else
+      {
+         absolutePaths <- gsub("/+", "/", list.files(path = directory,
+                                                     all.files = TRUE,
+                                                     pattern = pattern,
+                                                     no.. = TRUE,
+                                                     full.names = TRUE,
+                                                     include.dirs = TRUE))
+      }
+      
+   }
+   
+   ## Bail out early if we didn't get any completions.
+   if (!length(absolutePaths))
+      return(.rs.emptyCompletions())
+   
+   ## Because the completions returned will replace the whole token,
+   ## we need to be careful in how we construct the return result. In particular,
+   ## we need to preserve the way the directory has been specified.
+   ##
+   ## Note that the directory may or may not end with a trailing slash,
+   ## depending on how it was normalized. We have to check for that when
+   ## determining the offset for constructing the relative path. Normally,
+   ## the trailing slash is included for root directories, e.g. `/` on Unix-alikes
+   ## or `C:/` on Windows.
+   offset <- if (grepl("[/\\\\]$", directory, perl = TRUE))
+      nchar(directory) + 1L
+   else
+      nchar(directory) + 2L
+   
+   relativePaths <- substring(absolutePaths, offset)
+   
+   ## Order completions starting with alpha-numeric entries first if the
+   ## token name is blank
+   if (!nzchar(tokenName))
+   {
+      startsWithAlnum <- grepl("^[[:alnum:]]", relativePaths, perl = TRUE)
+      order <- c(
+         which(startsWithAlnum),
+         which(!startsWithAlnum)
+      )
+      
+      relativePaths <- relativePaths[order]
+      absolutePaths <- absolutePaths[order]
+   }
+   
+   paths <- paste(tokenPrefix, relativePaths, sep = "")
+   
+   type <- if (directoriesOnly && getRversion() >= "3.0.0")
+   {
+      rep.int(.rs.acCompletionTypes$DIRECTORY, length(paths))
    }
    else
    {
-      if (identical(token, "/"))
-      {
-         directory <- "/"
-         file <- ""
-      }
-      else
-      {
-         directory <- substring(token, 1, lastSlashIndex - 1)
-         file <- substring(token, lastSlashIndex + 1, nchar(token))
-      }
-      
-      pattern <- if (nzchar(file))
-         paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeForRegex(file)), sep = "")
-      
-      listPath <- if (is.null(path))
-         directory
-      else
-         file.path(path, directory)
-      
-      listed <- list.files(path = listPath,
-                           all.files = TRUE,
-                           pattern = pattern,
-                           no.. = TRUE)
-      
-      startsWithLetter <- grepl("^[a-zA-Z0-9]", listed, perl = TRUE)
-      first <- which(startsWithLetter)
-      last <- which(!startsWithLetter)
-      order <- c(first, last)
-      listed <- listed[order]
-      
-      if (identical(directory, "/"))
-         directory <- ""
-      
-      files <- file.path(
-         directory,
-         listed
-      )
-      
-      qualifiedPaths <- if (is.null(path))
-         files
-      else
-         file.path(path, files)
+      isDir <- file.info(absolutePaths)[, "isdir"] %in% TRUE ## protect against NA
+      ifelse(isDir,
+             .rs.acCompletionTypes$DIRECTORY,
+             .rs.acCompletionTypes$FILE)
    }
    
-   isDir <- file.info(qualifiedPaths)[, "isdir"] %in% TRUE ## protect against NA
-   files[isDir] <- paste(files[isDir], "/", sep = "")
    .rs.makeCompletions(token = token,
-                       results = files,
-                       packages = ifelse(isDir, "<directory>", "<file>"),
-                       type = .rs.acCompletionTypes$FILE,
+                       results = paths,
+                       type = type,
                        quote = quote,
-                       excludeOtherCompletions = TRUE)
+                       excludeOtherCompletions = TRUE,
+                       cacheable = cacheable)
 })
 
 .rs.addFunction("resolveFormals", function(token,
@@ -588,13 +655,14 @@ assign(x = ".rs.acCompletionTypes",
                                             fguess = "",
                                             excludeOtherCompletions = FALSE,
                                             overrideInsertParens = FALSE,
-                                            orderStartsWithAlnumFirst = TRUE)
+                                            orderStartsWithAlnumFirst = TRUE,
+                                            cacheable = TRUE)
 {
    if (is.null(results))
       results <- character()
    
    # Ensure other 'vector' completions are of the same length as 'results'
-   n <- length(results)
+   n        <- length(results)
    packages <- .rs.formCompletionVector(packages, "", n)
    quote    <- .rs.formCompletionVector(quote, FALSE, n)
    type     <- .rs.formCompletionVector(type, .rs.acCompletionTypes$UNKNOWN, n)
@@ -603,14 +671,15 @@ assign(x = ".rs.acCompletionTypes",
    if (orderStartsWithAlnumFirst)
    {
       startsWithLetter <- grepl("^[a-zA-Z0-9]", results, perl = TRUE)
+      
       first <- which(startsWithLetter)
-      last <- which(!startsWithLetter)
+      last  <- which(!startsWithLetter)
       order <- c(first, last)
       
-      results <- results[order]
+      results  <- results[order]
       packages <- packages[order]
-      quote <- quote[order]
-      type <- type[order]
+      quote    <- quote[order]
+      type     <- type[order]
    }
    
    list(token = token,
@@ -620,7 +689,8 @@ assign(x = ".rs.acCompletionTypes",
         type = type,
         fguess = fguess,
         excludeOtherCompletions = .rs.scalar(excludeOtherCompletions),
-        overrideInsertParens = .rs.scalar(overrideInsertParens))
+        overrideInsertParens = .rs.scalar(overrideInsertParens),
+        cacheable = .rs.scalar(cacheable))
 })
 
 .rs.addFunction("subsetCompletions", function(completions, indices)
@@ -657,6 +727,10 @@ assign(x = ".rs.acCompletionTypes",
    
    if (length(new$overrideInsertParens) && new$overrideInsertParens)
       old$overrideInsertParens <- new$overrideInsertParens
+   
+   # If one completion states we are not cacheable, that setting is 'sticky'
+   if (length(new$cacheable) && !new$cacheable)
+      old$cacheable <- new$cacheable
    
    old
 })
@@ -966,9 +1040,24 @@ assign(x = ".rs.acCompletionTypes",
                        type = .rs.acCompletionTypes$OPTION)
 })
 
-.rs.addFunction("getCompletionsSearchPath", function(token, overrideInsertParens = FALSE)
+.rs.addFunction("getCompletionsSearchPath", function(token,
+                                                     overrideInsertParens = FALSE)
 {
    objects <- .rs.objectsOnSearchPath(token, TRUE)
+   
+   # If we called this function from a debug context, try to find that frame
+   # and pull the variables out for completion.
+   # 
+   # TODO: This likely needs to be tweaked for 'tryCatch', 'withCallingHandlers'
+   frames <- sys.frames()
+   if (length(frames) > sys.parent())
+   {
+      objects <- c(
+         objects,
+         list(objects(frames[[length(frames) - sys.parent()]]))
+      )
+   }
+   
    objects[["keywords"]] <- c(
       "NULL", "NA", "TRUE", "FALSE", "T", "F", "Inf", "NaN",
       "NA_integer_", "NA_real_", "NA_character_", "NA_complex_"
@@ -1008,6 +1097,9 @@ assign(x = ".rs.acCompletionTypes",
    type <- vapply(seq_along(results), function(i) {
       if (packages[[i]] == "keywords")
          .rs.acCompletionTypes$KEYWORD
+      else if (packages[[i]] == "")
+         ## Don't try to evaluate these as we don't want to force promises in debug contexts
+         .rs.acCompletionTypes$UNKNOWN
       else
          tryCatch(
             .rs.getCompletionType(get(results[[i]], pos = which(search() == packages[[i]]))),
@@ -1152,6 +1244,39 @@ assign(x = ".rs.acCompletionTypes",
       return(.rs.getCompletionsPackages(token, excludeOtherCompletions = TRUE))
    }
    
+   ## File-based completions
+   if (.rs.acContextTypes$FILE %in% type)
+   {
+      whichIndex <- which(type == .rs.acContextTypes$FILE)
+      
+      tokenToUse <- string[[whichIndex]]
+      
+      directoriesOnly <- FALSE
+      if (length(string) > whichIndex)
+      {
+         if (string[[whichIndex + 1]] %in% c("list.files",
+                                             "list.dirs",
+                                             "dir",
+                                             "setwd"))
+         {
+            directoriesOnly <- TRUE
+         }
+      }
+      # NOTE: For Markdown link completions, we overload the meaning of the
+      # function call string here, and use it as a signal to generate paths
+      # relative to the R markdown path.
+      path <- if (length(functionCallString) &&
+                     functionCallString == "useFile")
+         suppressWarnings(.rs.normalizePath(dirname(filePath)))
+      else
+         getwd()
+      
+      return(.rs.getCompletionsFile(token = tokenToUse,
+                                    path = path,
+                                    quote = FALSE,
+                                    directoriesOnly = directoriesOnly))
+   }
+   
    # Shiny completions
    
    ## Completions for server.r (from ui.r)
@@ -1288,22 +1413,6 @@ assign(x = ".rs.acCompletionTypes",
             .rs.getCompletionsActivePackage(token, pkgName)
          )
       }
-   }
-   
-   ## File-based completions
-   if (.rs.acContextTypes$FILE %in% type)
-   {
-      # NOTE: For Markdown link completions, we overload the meaning of the
-      # function call string here, and use it as a signal to generate paths
-      # relative to the R markdown path.
-      path <- if (length(functionCallString) &&
-                     functionCallString == "useFile")
-         dirname(filePath)
-      
-      completions <- .rs.appendCompletions(
-         completions,
-         .rs.getCompletionsFile(token, path)
-      )
    }
    
    ## Package completions (e.g. `stats::`)

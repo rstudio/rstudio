@@ -32,7 +32,6 @@ import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
 import org.rstudio.studio.client.workbench.codesearch.model.FileItem;
 import org.rstudio.studio.client.workbench.codesearch.model.SourceItem;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
-
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.inject.Inject;
 
@@ -274,12 +273,16 @@ public class CodeSearchOracle extends SuggestOracle
          request_ = request;
          callback_ = callback;
          invalidationToken_ = searchInvalidation_.getInvalidationToken();
-         nudge();
+         
+         if (!executing_)
+            nudge();
       }
 
       @Override
       protected void performAction(boolean shouldSchedulePassive)
-      {  
+      {
+         executing_ = true;
+         
          // failed to short-circuit via the cache, hit the server
          server_.searchCode(
                request_.getQuery(),
@@ -323,6 +326,8 @@ public class CodeSearchOracle extends SuggestOracle
                   callback_.onSuggestionsReady(request_, 
                                                new Response(suggestions));
                }
+               
+               executing_ = false;
             }
          });
          
@@ -331,7 +336,34 @@ public class CodeSearchOracle extends SuggestOracle
       private Request request_;
       private Callback callback_;
       private Invalidation.Token invalidationToken_;
+      private boolean executing_;
    };
+   
+   public static Comparator<String> createFuzzyComparator(
+         final String query,
+         final boolean isFile)
+   {
+      final String queryLower = query.toLowerCase();
+      return new Comparator<String>() {
+         @Override
+         public int compare(String lhs, String rhs)
+         {
+            int lhsScore = scoreMatch(lhs, queryLower, isFile);
+            int rhsScore = scoreMatch(rhs, queryLower, isFile);
+
+            if (lhsScore == rhsScore)
+            {
+               return lhs.length() - rhs.length();
+            }
+            else
+            {
+               return lhsScore < rhsScore ? -1 : 1;
+            }
+         }
+
+      };
+
+   }
    
    private void sortSuggestions(ArrayList<CodeSearchSuggestion> suggestions,
                                 String query)

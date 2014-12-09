@@ -28,7 +28,9 @@ import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Rectangle;
@@ -47,8 +49,12 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    {
       super();
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
+      
       help_ = new HelpInfoPopupPanel();
       help_.setWidth("400px");
+      
+      truncated_ = new Label("... Not all items shown");
+      truncated_.setStylePrimaryName(styles_.truncatedLabel());
       
       setStylePrimaryName(styles_.completionPopup()) ;
       
@@ -118,7 +124,8 @@ public class CompletionPopupPanel extends ThemedPopupPanel
 
    @Override
    public void showCompletionValues(QualifiedName[] values, 
-                                    PositionCallback callback)
+                                    PositionCallback callback,
+                                    boolean truncated)
    {
       CompletionList<QualifiedName> list = new CompletionList<QualifiedName>(
                                        values,
@@ -144,8 +151,14 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          }
       });
       
-      list_ = list ;
-      setWidget(list_);
+      list_ = list;
+      
+      container_ = new VerticalPanel();
+      container_.add(list_);
+      if (truncated)
+         container_.add(truncated_);
+      
+      setWidget(container_);
       
       ElementIds.assignElementId(list_.getElement(), 
             ElementIds.POPUP_COMPLETIONS);
@@ -370,6 +383,8 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    private HelpInfoPopupPanel help_ ;
    private final ConsoleResources.ConsoleStyles styles_;
    private static QualifiedName lastSelectedValue_;
+   private VerticalPanel container_;
+   private final Label truncated_;
    private final NativePreviewHandler handler_;
    private HandlerRegistration handlerRegistration_;
 }

@@ -35,5 +35,17 @@
 })
 
 .rs.addJsonRpcHandler("list_all_files", function(path, pattern) {
-   list.files(path, pattern=pattern, recursive=T)
+   list.files(path, pattern = pattern, recursive = TRUE)
+})
+
+.rs.addFunction("scanFiles", function(path,
+                                      pattern,
+                                      asRelativePath = TRUE,
+                                      maxCount = 200L)
+{
+   .Call("rs_scanFiles",
+         as.character(path),
+         as.character(pattern),
+         as.logical(asRelativePath),
+         as.integer(maxCount))
 })
