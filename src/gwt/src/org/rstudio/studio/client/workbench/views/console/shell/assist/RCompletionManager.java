@@ -986,7 +986,7 @@ public class RCompletionManager implements CompletionManager
       AceEditor editor = (AceEditor) docDisplay_;
       if (editor != null)
       {
-         CodeModel codeModel = editor.getSession().getMode().getCodeModel();
+         CodeModel codeModel = editor.getSession().getMode().getRCodeModel();
          TokenCursor cursor = codeModel.getTokenCursor();
          
          if (cursor.moveToPosition(input_.getCursorPosition()))
@@ -1158,7 +1158,7 @@ public class RCompletionManager implements CompletionManager
       if (editor == null)
          return false;
       
-      CodeModel codeModel = editor.getSession().getMode().getCodeModel();
+      CodeModel codeModel = editor.getSession().getMode().getRCodeModel();
       codeModel.tokenizeUpToRow(input_.getCursorPosition().getRow());
       
       TokenCursor cursor = codeModel.getTokenCursor();
@@ -1263,7 +1263,7 @@ public class RCompletionManager implements CompletionManager
       if (editor == null)
          return context;
       
-      CodeModel codeModel = editor.getSession().getMode().getCodeModel();
+      CodeModel codeModel = editor.getSession().getMode().getRCodeModel();
       
       // We might need to grab content from further up in the document than
       // the current cursor position -- so tokenize ahead.
@@ -1662,7 +1662,7 @@ public class RCompletionManager implements CompletionManager
          if (editor != null)
          {
             TokenCursor cursor =
-                  editor.getSession().getMode().getCodeModel().getTokenCursor();
+                  editor.getSession().getMode().getRCodeModel().getTokenCursor();
             cursor.moveToPosition(editor.getCursorPosition());
             if (cursor.moveToNextToken())
             {

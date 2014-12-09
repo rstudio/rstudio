@@ -289,31 +289,6 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
             return match[2];
       }
 
-      function getChunkLabel(reOptions, comment) {
-         var match = reOptions.exec(comment);
-         if (!match)
-            return null;
-         var value = match[1];
-         var values = value.split(',');
-         if (values.length == 0)
-            return null;
-
-         // If first arg has no =, it's a label
-         if (!/=/.test(values[0])) {
-            return values[0].replace(/(^\s+)|(\s+$)/g, '');
-         }
-
-         for (var i = 0; i < values.length; i++) {
-            match = /^\s*label\s*=\s*(.*)$/.exec(values[i]);
-            if (match) {
-               return maybeEvaluateLiteralString(
-                                        match[1].replace(/(^\s+)|(\s+$)/g, ''));
-            }
-         }
-
-         return null;
-      }
-
       var maxRow = Math.min(maxrow + 30, this.$doc.getLength() - 1);
       this.$tokenUtils.$tokenizeUpToRow(maxRow);
 
@@ -342,18 +317,15 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
             this.$scopes.onSectionHead(label, tokenCursor.currentPosition());
          }
+         
          else if (/\bcodebegin\b/.test(tokenType))
          {
             var chunkStartPos = tokenCursor.currentPosition();
             var chunkPos = {row: chunkStartPos.row + 1, column: 0};
             var chunkNum = this.$scopes.getTopLevelScopeCount()+1;
-            var chunkLabel = getChunkLabel(this.$codeBeginPattern,
-                                           tokenCursor.currentValue());
-            var scopeName = "Chunk " + chunkNum;
-            if (chunkLabel)
-               scopeName += ": " + chunkLabel;
+            var chunkLabel = "(R Code Chunk)";
             this.$scopes.onChunkStart(chunkLabel,
-                                      scopeName,
+                                      chunkLabel,
                                       chunkStartPos,
                                       chunkPos);
          }

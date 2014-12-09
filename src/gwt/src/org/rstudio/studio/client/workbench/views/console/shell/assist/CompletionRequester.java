@@ -354,7 +354,7 @@ public class CompletionRequester
       {
          Position cursorPosition =
                editor.getSession().getSelection().getCursor();
-         CodeModel codeModel = editor.getSession().getMode().getCodeModel();
+         CodeModel codeModel = editor.getSession().getMode().getRCodeModel();
          JsArray<RFunction> scopedFunctions =
                codeModel.getFunctionsInScope(cursorPosition);
          
@@ -410,7 +410,7 @@ public class CompletionRequester
       {
          Position cursorPosition =
                editor.getSession().getSelection().getCursor();
-         CodeModel codeModel = editor.getSession().getMode().getCodeModel();
+         CodeModel codeModel = editor.getSession().getMode().getRCodeModel();
       
          JsArray<RScopeObject> scopeVariables =
                codeModel.getVariablesInScope(cursorPosition);
@@ -441,7 +441,7 @@ public class CompletionRequester
       {
          Position cursorPosition =
                editor.getSession().getSelection().getCursor();
-         CodeModel codeModel = editor.getSession().getMode().getCodeModel();
+         CodeModel codeModel = editor.getSession().getMode().getRCodeModel();
          
          // Try to see if we can find a function name
          TokenCursor cursor = codeModel.getTokenCursor();
