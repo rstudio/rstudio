@@ -38,6 +38,9 @@
 
 .rs.addFunction("describeCols", function(x, maxCols, maxFactors) 
 {
+  # coerce argument to data frame
+  x <- as.data.frame(x)
+
   colNames <- names(x)
 
   # truncate to maximum displayed number of columns
@@ -142,9 +145,11 @@
       # apply filter appropriate to type
       if (identical(filtertype, "factor")) 
       {
-        # apply factor filter: convert to numeric values 
+        # apply factor filter: convert to numeric values and discard missing
         filterval <- as.numeric(filterval)
-        x <- x[as.numeric(x[,i]) == filterval,]
+        matches <- as.numeric(x[,i]) == filterval
+        matches[is.na(matches)] <- FALSE
+        x <- x[matches,]
       }
       else if (identical(filtertype, "character"))
       {
