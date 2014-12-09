@@ -50,9 +50,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 
 public class CompletionRequester
@@ -365,6 +364,9 @@ public class CompletionRequester
                if (!comp.get(i).endsWith(" = "))
                   newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
             
+            // Remove duplicates
+            newComp = resolveDuplicates(newComp);
+            
             CompletionResult result = new CompletionResult(
                   response.getToken(),
                   newComp,
@@ -382,21 +384,13 @@ public class CompletionRequester
       }) ;
    }
    
-   @SuppressWarnings("unused")
-   private ArrayList<QualifiedName> withoutDupes(ArrayList<QualifiedName> completions)
+   private ArrayList<QualifiedName> resolveDuplicates(ArrayList<QualifiedName> completions)
    {
-      Set<String> names = new HashSet<String>();
-      
-      ArrayList<QualifiedName> noDupes = new ArrayList<QualifiedName>();
-      for (int i = 0; i < completions.size(); i++)
-      {
-         if (!names.contains(completions.get(i).name))
-         {
-            noDupes.add(completions.get(i));
-            names.add(completions.get(i).name);
-         }
-      }
-      return noDupes;
+      LinkedHashSet<QualifiedName> set = new LinkedHashSet<QualifiedName>();
+      set.addAll(completions);
+      ArrayList<QualifiedName> withoutDupes = new ArrayList<QualifiedName>();
+      withoutDupes.addAll(set);
+      return withoutDupes;
    }
    
    private void addScopedArgumentCompletions(
@@ -410,11 +404,14 @@ public class CompletionRequester
       {
          Position cursorPosition =
                editor.getSession().getSelection().getCursor();
-         CodeModel codeModel = editor.getSession().getMode().getCodeModel();
+         CodeModel codeModel = editor.getSession().getMode().getRCodeModel();
          JsArray<RFunction> scopedFunctions =
                codeModel.getFunctionsInScope(cursorPosition);
+         
          if (scopedFunctions.length() == 0)
             return;
+         
+         String tokenLower = token.toLowerCase();
          
          for (int i = 0; i < scopedFunctions.length(); i++)
          {
@@ -425,7 +422,7 @@ public class CompletionRequester
             for (int j = 0; j < argNames.length(); j++)
             {
                String argName = argNames.get(j);
-               if (argName.startsWith(token))
+               if (argName.toLowerCase().startsWith(tokenLower))
                {
                   if (functionName == null || functionName == "")
                   {
@@ -463,13 +460,17 @@ public class CompletionRequester
       {
          Position cursorPosition =
                editor.getSession().getSelection().getCursor();
-         CodeModel codeModel = editor.getSession().getMode().getCodeModel();
+         CodeModel codeModel = editor.getSession().getMode().getRCodeModel();
       
-         JsArray<RScopeObject> scopeVariables = codeModel.getVariablesInScope(cursorPosition);
+         JsArray<RScopeObject> scopeVariables =
+               codeModel.getVariablesInScope(cursorPosition);
+         
+         String tokenLower = token.toLowerCase();
          for (int i = 0; i < scopeVariables.length(); i++)
          {
             RScopeObject variable = scopeVariables.get(i);
-            if (variable.getToken().startsWith(token) && variable.getType() == type)
+            if (variable.getType() == type &&
+                variable.getToken().toLowerCase().startsWith(tokenLower))
                completions.add(new QualifiedName(
                      variable.getToken(),
                      variable.getType(),
@@ -490,7 +491,7 @@ public class CompletionRequester
       {
          Position cursorPosition =
                editor.getSession().getSelection().getCursor();
-         CodeModel codeModel = editor.getSession().getMode().getCodeModel();
+         CodeModel codeModel = editor.getSession().getMode().getRCodeModel();
          
          // Try to see if we can find a function name
          TokenCursor cursor = codeModel.getTokenCursor();
@@ -499,6 +500,7 @@ public class CompletionRequester
          if (!cursor.moveToPosition(cursorPosition))
             return;
          
+         String tokenLower = token.toLowerCase();
          if (cursor.currentValue() == "(" || cursor.findOpeningBracket("(", false))
          {
             if (cursor.moveToPreviousToken())
@@ -517,12 +519,14 @@ public class CompletionRequester
                      JsArrayString args = rFunction.getFunctionArgs();
                      for (int j = 0; j < args.length(); j++)
                      {
-                        completions.add(new QualifiedName(
-                              args.get(j) + " = ",
-                              fnName,
-                              false,
-                              RCompletionType.CONTEXT
-                        ));
+                        String arg = args.get(j);
+                        if (arg.toLowerCase().startsWith(tokenLower))
+                           completions.add(new QualifiedName(
+                                 args.get(j) + " = ",
+                                 fnName,
+                                 false,
+                                 RCompletionType.CONTEXT
+                           ));
                      }
                   }
                }
@@ -840,6 +844,26 @@ public class CompletionRequester
          String pkg = source == null ? "" : source ;
          String opkg = o.source == null ? "" : o.source ;
          return pkg.compareTo(opkg) ;
+      }
+      
+      @Override
+      public boolean equals(Object object)
+      {
+         if (!(object instanceof QualifiedName))
+            return false;
+         
+         QualifiedName other = (QualifiedName) object;
+         return name.equals(other.name) &&
+                type == other.type;
+      }
+      
+      @Override
+      public int hashCode()
+      {
+         int hash = 17;
+         hash = 31 * hash + name.hashCode();
+         hash = 31 * hash + type;
+         return hash;
       }
 
       public final String name ;

@@ -16,13 +16,17 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import java.util.Map;
 
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -30,6 +34,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
@@ -47,14 +52,11 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       
       help_ = new HelpInfoPopupPanel();
       help_.setWidth("400px");
-      help_.show();
       
       truncated_ = new Label("... Not all items shown");
       truncated_.setStylePrimaryName(styles_.truncatedLabel());
       
       setStylePrimaryName(styles_.completionPopup()) ;
-      
-      hideAll();
       
       addCloseHandler(new CloseHandler<PopupPanel>() {
          
@@ -64,17 +66,36 @@ public class CompletionPopupPanel extends ThemedPopupPanel
             hideAll();
          }
       });
+      
+      handler_ = new NativePreviewHandler()
+      {
+         @Override
+         public void onPreviewNativeEvent(NativePreviewEvent previewEvent)
+         {
+            if (previewEvent.getTypeInt() == Event.ONKEYDOWN)
+            {
+               NativeEvent event = previewEvent.getNativeEvent();
+               int keyCode = event.getKeyCode();
+               int modifier = KeyboardShortcut.getModifierValue(event);
+               if (modifier != 0 && keyCode == KeyCodes.KEY_ENTER)
+               {
+                  hideAll();
+               }
+            }
+         }
+      }; 
    }
    
    private void hideAll()
    {
-      setVisible(false);
-      help_.setVisible(false);
+      hide();
+      help_.hide();
    }
    
    public void placeOffscreen()
    {
       setPopupPosition(-10000, -10000);
+      help_.setPopupPosition(-10000, -10000);
    }
    
    public boolean isOffscreen()
@@ -159,16 +180,27 @@ public class CompletionPopupPanel extends ThemedPopupPanel
 
    private void show(PositionCallback callback)
    {
+      registerNativeHandler(handler_);
+      
       if (callback != null)
          setPopupPositionAndShow(callback) ;
       else
          show() ;
       
       if (help_ != null)
+      {
          if (completionListIsOnScreen())
             resolveHelpPosition(help_.isVisible());
          else
             help_.hide();
+      }
+   }
+   
+   @Override
+   public void hide()
+   {
+      unregisterNativeHandler();
+      super.hide();
    }
    
    public QualifiedName getSelectedValue()
@@ -317,7 +349,8 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    
    public boolean isHelpVisible()
    {
-      return help_.isVisible() && help_.isShowing();
+      return help_.isVisible() && help_.isShowing() &&
+            !isOffscreen();
    }
    
    private HTML setText(String text)
@@ -328,10 +361,30 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       return contents ;
    }
    
+   public QualifiedName[] getItems()
+   {
+      return list_.getItems();
+   }
+   
+   private void registerNativeHandler(NativePreviewHandler handler)
+   {
+      if (handlerRegistration_ != null)
+         handlerRegistration_.removeHandler();
+      handlerRegistration_ = Event.addNativePreviewHandler(handler);
+   }
+   
+   private void unregisterNativeHandler()
+   {
+      if (handlerRegistration_ != null)
+         handlerRegistration_.removeHandler();
+   }
+   
    private CompletionList<QualifiedName> list_ ;
    private HelpInfoPopupPanel help_ ;
    private final ConsoleResources.ConsoleStyles styles_;
    private static QualifiedName lastSelectedValue_;
    private VerticalPanel container_;
    private final Label truncated_;
+   private final NativePreviewHandler handler_;
+   private HandlerRegistration handlerRegistration_;
 }

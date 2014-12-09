@@ -48,11 +48,15 @@
 #define kGridResourceLocation "/" kGridResource "/"
 #define kNoBoundEnv "_rs_no_env"
 
+// separates filter type from contents (e.g. "numeric|12-25")
+#define kFilterSeparator "|"
+
 // the largest number of columns we're willing to display
 #define MAX_COLS 100  
 
-// the largest number of factor values we're willing to display
-#define MAX_FACTORS 256
+// the largest number of factor values we're willing to display (after this
+// point the column's text is searched as though it were a character column)
+#define MAX_FACTORS 64
 
 using namespace core;
 
@@ -124,33 +128,64 @@ bool isFilterSubset(const std::string& outer, const std::string& inner)
 {
    // shortcut for identical filters (the typical case)
    if (inner == outer) 
-   {
       return true;
-   }
 
-   // matches a numeric filter (i.e. "2.71-3.14") 
-   boost::regex numFilter("(\\d+\\.?\\d*)-(\\d+\\.?\\d*)");
-   boost::smatch innerMatch, outerMatch;
-   if (boost::regex_search(inner, innerMatch, numFilter) &&
-       boost::regex_search(outer, outerMatch, numFilter))
+   // find filter separators; if we can't find them, presume no subset since we
+   // can't parse filters
+   size_t outerPipe = outer.find(kFilterSeparator);
+   if (outerPipe == std::string::npos) 
+      return false;
+   size_t innerPipe = inner.find(kFilterSeparator);
+   if (innerPipe == std::string::npos)
+      return false;
+
+   std::string outerType(outer.substr(0, outerPipe));
+   std::string innerType(inner.substr(0, innerPipe));
+   std::string outerValue(outer.substr(outerPipe + 1, 
+            outer.length() - outerPipe));
+   std::string innerValue(inner.substr(innerPipe + 1, 
+            inner.length() - innerPipe));
+   
+   // only identical types can be subsets
+   if (outerType != innerType) 
+      return false;
+
+   if (outerType == "numeric")
    {
-      // for numeric filters, the inner is a subset if its lower bound (1) is 
-      // larger than the outer lower bound, and the upper bound (2) is smaller
-      // than the outer upper bound
-      return safe_convert::stringTo<double>(innerMatch[1], 0) >= 
-             safe_convert::stringTo<double>(outerMatch[1], 0) &&
-             safe_convert::stringTo<double>(innerMatch[2], 0) <= 
-             safe_convert::stringTo<double>(outerMatch[2], 0);
+      // matches a numeric filter (i.e. "2.71-3.14") -- in this case we need to
+      // check the components for range inclusion
+      boost::regex numFilter("(\\d+\\.?\\d*)-(\\d+\\.?\\d*)");
+      boost::smatch innerMatch, outerMatch;
+      if (boost::regex_search(innerValue, innerMatch, numFilter) &&
+          boost::regex_search(outerValue, outerMatch, numFilter))
+      {
+         // for numeric filters, the inner is a subset if its lower bound (1) is 
+         // larger than the outer lower bound, and the upper bound (2) is smaller
+         // than the outer upper bound
+         return safe_convert::stringTo<double>(innerMatch[1], 0) >= 
+                safe_convert::stringTo<double>(outerMatch[1], 0) &&
+                safe_convert::stringTo<double>(innerMatch[2], 0) <= 
+                safe_convert::stringTo<double>(outerMatch[2], 0);
+      }
+
+      // if not identical and not a range, then not a subset
+      return false;
+   } 
+   else if (outerType == "factor")
+   {
+      // factors have to be identical for subsetting, and we already checked
+      // above
+      return false;
    }
-
-   // non-numeric filters are just string prefix matches
-   if (inner.size() < outer.size()) 
-      return false;
-
-   if (inner.substr(0, outer.size()) != outer) 
-      return false;
-
-   return true;
+   else if (outerType == "character")
+   {
+      // characters are a subset if the outer string is within the inner one
+      // (i.e. a seach for "walnuts" (inner) is within "walnut" (outer))
+      return inner.find(outer) != std::string::npos;
+   }
+   
+   // unknown filter type
+   return false;
 }
 
 // CachedFrame represents an object that's currently active in a data viewer
@@ -315,10 +350,10 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP,
          throw r::exec::RErrorException("invalid caption argument");
       
       // attempt to cast to a data frame
-      SEXP dataFrameSEXP = NULL;
+      SEXP dataFrameSEXP = R_NilValue;
       r::exec::RFunction("as.data.frame", dataSEXP).call(
             &dataFrameSEXP, &protect);
-      if (dataFrameSEXP != NULL)
+      if (dataFrameSEXP != NULL && dataFrameSEXP != R_NilValue)
          dataSEXP = dataFrameSEXP;
            
       json::Value dataItem = makeDataItem(dataSEXP, 
@@ -353,18 +388,25 @@ void handleGridResReq(const http::Request& request,
 
 json::Value getCols(SEXP dataSEXP)
 {
-   SEXP colsSEXP = NULL;
+   SEXP colsSEXP = R_NilValue;
    r::sexp::Protect protect;
    json::Value result;
    Error error = r::exec::RFunction(".rs.describeCols", dataSEXP, MAX_COLS, 
          MAX_FACTORS)
       .call(&colsSEXP, &protect);
-   if (error) 
+   if (error || colsSEXP == R_NilValue) 
    {
       json::Object err;
-      err["error"] = error.summary();
+      if (error) 
+         err["error"] = error.summary();
+      else
+         err["error"] = "Failed to retrieve column definitions for data.";
+      result = err;
    }
-   r::json::jsonValueFromList(colsSEXP, &result);
+   else 
+   {
+      r::json::jsonValueFromList(colsSEXP, &result);
+   }
    return result;
 }
 
@@ -643,7 +685,7 @@ Error getGridData(const http::Request& request,
 
       // attempt to find the original copy of the object (loads from cache key
       // if necessary)
-      SEXP dataSEXP = NULL;
+      SEXP dataSEXP = R_NilValue;
       Error error = r::exec::RFunction(".rs.findDataFrame", envName, objName, 
             cacheKey, viewerCacheDir()).call(&dataSEXP, &protect);
       if (error) 
@@ -651,13 +693,6 @@ Error getGridData(const http::Request& request,
          LOG_ERROR(error);
       }
 
-      // if the data is a promise (happens for built-in data), the value is
-      // what we're looking for
-      if (TYPEOF(dataSEXP) == PROMSXP) 
-      {
-         dataSEXP = PRVALUE(dataSEXP);
-      }
-      
       // couldn't find the original object
       if (dataSEXP == NULL || dataSEXP == R_UnboundValue || 
           Rf_isNull(dataSEXP) || TYPEOF(dataSEXP) == NILSXP)
@@ -669,6 +704,13 @@ Error getGridData(const http::Request& request,
       }
       else 
       {
+         // if the data is a promise (happens for built-in data), the value is
+         // what we're looking for
+         if (TYPEOF(dataSEXP) == PROMSXP) 
+         {
+            dataSEXP = PRVALUE(dataSEXP);
+         }
+      
          if (show == "cols")
          {
             result = getCols(dataSEXP);
@@ -741,6 +783,7 @@ Error duplicateDataView(const json::JsonRpcRequest& request,
    SEXP dataSEXP = findInNamedEnvir(envName, objName);
    if (dataSEXP == NULL) 
    {
+      dataSEXP = R_NilValue;
       error = r::exec::RFunction(".rs.findDataFrame", envName, objName, 
             cacheKey, viewerCacheDir()).call(&dataSEXP, &protect);
       if (error)

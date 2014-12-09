@@ -77,4 +77,6 @@ public interface CompletionPopupDisplay
    
    boolean hasCompletions();
    int numAvailableCompletions();
+   
+   QualifiedName[] getItems();
 }

@@ -24,6 +24,22 @@ var cols;
 // dismiss the active filter popup, if any
 var dismissActivePopup = null;
 
+// cached search/filter values--it's expensive to pull these from a new API
+// instance every time we render a cell, so we cache them 
+var cachedSearch = "";
+var cachedFilterValues = [];
+
+// update search/filter value cache
+var updateCachedSearchFilter = function() {
+  if (table) {
+    cachedSearch = table.search();
+    cachedFilterValues = [];
+    for (var idx = 0; idx < table.columns()[0].length; idx++) {
+      cachedFilterValues.push(table.columns(idx).search()[0]);
+    }
+  }
+};
+
 // throttle to avoid redrawing the table too frequently (when filtering,
 // resizing, etc.)
 var debounce = function(func, wait) {
@@ -56,7 +72,7 @@ var showError = function(msg) {
   document.getElementById("errorWrapper").style.display = "block";
   document.getElementById("errorMask").style.display = "block";
   document.getElementById("error").textContent = msg;
-  document.getElementById("data").style.display = "none";
+  document.getElementById("rsGridData").style.display = "none";
 };
 
 // simple HTML escaping (avoid XSS in data)
@@ -64,23 +80,41 @@ var escapeHtml = function(html) {
   var replacements = {
     "<":  "&lt;",
     ">":  "&gt;",
-    "&":  "&amp;" };
+    "&":  "&amp;",
+    "\"": "&quot;" };
   return html.replace(/[&<>]/g, function(ch) { return replacements[ch]; });
 };
 
-// render a text cell--if no search is active, just renders the data literally;
-// when search is active, highlights the portion of the text that matches the
-// search
-var renderTextCell = function(data, type, row, meta) {
-  var search = table.search();
-  if (search.length > 0) {
-    var idx = data.toLowerCase().indexOf(search.toLowerCase());
+var highlightSearchMatch = function(data, search, pos) {
+  return escapeHtml(data.substring(0, pos)) + '<span class="searchMatch">' + 
+         escapeHtml(data.substring(pos, pos + search.length)) + '</span>' + 
+         escapeHtml(data.substring(pos + search.length, data.length));
+
+};
+
+// render cell contents--if no search is active, just renders the data
+// literally; when search is active, highlights the portion of the text that
+// matches the search
+var renderCellContents = function(data, type, row, meta) {
+
+  // if row matches because of a global search, highlight that
+  if (cachedSearch.length > 0) {
+    var idx = data.toLowerCase().indexOf(cachedSearch.toLowerCase());
     if (idx >= 0) {
-      return escapeHtml(data.substring(0, idx)) + '<span class="searchMatch">' + 
-             escapeHtml(data.substring(idx, idx + search.length)) + '</span>' + 
-             escapeHtml(data.substring(idx + search.length, data.length));
+      return highlightSearchMatch(data, cachedSearch, idx);
     }
-    return escapeHtml(data);
+  }
+
+  // if row matches because of a column search (characterwise), highlight that
+  if (meta.col < cachedFilterValues.length) {
+    var colSearch = cachedFilterValues[meta.col];
+    if (colSearch.indexOf("character|") === 0) {
+      colSearch = parseSearchString(colSearch);
+      var colIdx = data.toLowerCase().indexOf(colSearch.toLowerCase());
+      if (colIdx >= 0) {
+        return highlightSearchMatch(data, colSearch, colIdx);
+      }
+    }
   }
   return escapeHtml(data);
 };
@@ -88,7 +122,14 @@ var renderTextCell = function(data, type, row, meta) {
 // render a number cell
 var renderNumberCell = function(data, type, row, meta) {
   return '<div class="numberCell">' + 
-         renderTextCell(data, type, row, meta) + 
+         renderCellContents(data, type, row, meta) + 
+         '</div>';
+};
+
+// render a text cell
+var renderTextCell = function(data, type, row, meta) {
+  return '<div class="textCell" title="' + escapeHtml(data) + '">' + 
+         renderCellContents(data, type, row, meta) + 
          '</div>';
 };
 
@@ -135,10 +176,10 @@ var runAfterSizing = function(func) {
   }, 25);
 };
 
-// when the loading indicator is shown by the scroller, apply a style to
-// transition it smoothly into view after a few ms
 var loadingTimer = 0;
 var preDrawCallback = function() {
+  // when the loading indicator is shown by the scroller, apply a style to
+  // transition it smoothly into view after a few ms
   window.clearTimeout(loadingTimer);
   loadingTimer = window.setTimeout(function() {
     var indicator = $(".DTS_Loading");
@@ -146,6 +187,9 @@ var preDrawCallback = function() {
       indicator.addClass("showLoading"); 
     }
   }, 100);
+
+  // prior to drawing, update cached search/filter values
+  updateCachedSearchFilter();
 };
 
 var postDrawCallback = function() {
@@ -156,13 +200,26 @@ var postDrawCallback = function() {
   window.clearTimeout(loadingTimer);
 };
 
+// returns the effective search value for a column (strips the type prefix)
+var parseSearchString = function(val) {
+  var pipe = val.indexOf("|");
+  if (pipe > 0) {
+    return val.substr(pipe + 1);
+  }
+  return val;
+};
+
+var parseSearchVal = function(idx) {
+  return parseSearchString(table.columns(idx).search()[0]);
+};
+
 var createNumericFilterUI = function(idx, col, onDismiss) {
   var ele = document.createElement("div");
   invokeFilterPopup(ele, function(popup) {
     popup.className += " numericFilterPopup";
     var min = col.col_min.toString();
     var max = col.col_max.toString();
-    var val = table.columns(idx).search()[0];
+    var val = parseSearchVal(idx);
     if (val.indexOf("-") > 0) {
       var range = val.split("-");
       min = range[0];
@@ -183,8 +240,13 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
     slider.className = "numSlider";
     popup.appendChild(slider);
     var updateView = debounce(function() {
-      searchText = minVal.textContent === min && maxVal.textContent === max ? 
-        "" : minVal.textContent + "-" + maxVal.textContent;
+      var searchText = 
+        minVal.textContent === min && maxVal.textContent === max ? 
+          "" :
+          minVal.textContent + "-" + maxVal.textContent;
+      if (searchText.length > 0) {
+        searchText = "numeric|" + searchText;
+      }
       table.columns(idx).search(searchText).draw();
     }, 200);
     $(slider).slider({
@@ -213,14 +275,15 @@ var createFactorFilterUI = function(idx, col, onDismiss) {
 
   var setValHandler = function(factor, text) {
       return function(evt) {
-        table.columns(idx).search(factor.toString()).draw();
+        var searchText = "factor|" + factor.toString();
+        table.columns(idx).search(searchText).draw();
         display.textContent = text;
       };
   };
   invokeFilterPopup(ele, function(popup) {
     var list = document.createElement("div");
     list.className = "factorList";
-    var val = table.columns(idx).search()[0];
+    var val = parseSearchVal(idx);
     var current = val.length > 0 ? parseInt(val) : 0;
     for (var i = 0; i < col.col_vals.length; i++) {
       var opt = document.createElement("div");
@@ -240,9 +303,9 @@ var createTextFilterUI = function(idx, col, onDismiss) {
   var input = document.createElement("input");
   input.type = "text";
   input.className = "textFilterBox";
-  input.value = table.columns(idx).search()[0];
+  input.value = parseSearchVal(idx);
   var updateView = debounce(function() {
-          table.columns(idx).search(input.value).draw();
+      table.columns(idx).search("character|" + input.value).draw();
     }, 200);
   input.addEventListener("keyup", function(evt) {
     // TODO: handle Esc
@@ -353,11 +416,11 @@ var createFilterUI = function(idx, col) {
   val = document.createElement("div");
   val.textContent = "All";
   val.addEventListener("click", function(evt) {
-    if (col.col_type === "numeric") {
+    if (col.col_search_type === "numeric") {
       ui = createNumericFilterUI(idx, col, onDismiss);
-    } else if (col.col_type === "factor") {
+    } else if (col.col_search_type === "factor") {
       ui = createFactorFilterUI(idx, col, onDismiss);
-    } else if (col.col_type === "character") {
+    } else if (col.col_search_type === "character") {
       ui = createTextFilterUI(idx, col, onDismiss);
     }
     if (ui) {
@@ -444,7 +507,7 @@ var initDataTable = function(result) {
   var scrollHeight = window.innerHeight - (thead.clientHeight + 2);
 
   // activate the data table
-  $("#data").dataTable({
+  $("#rsGridData").dataTable({
     "processing": true,
     "serverSide": true,
     "pagingType": "full_numbers",
@@ -452,7 +515,8 @@ var initDataTable = function(result) {
     "scrollY": scrollHeight + "px",
     "scrollX": true,
     "scroller": {
-      "loadingIndicator": true
+      "rowHeight": 23,            // sync w/ CSS (scroller auto row height is busted)
+      "loadingIndicator": true,   // show loading indicator when loading
     },
     "preDrawCallback": preDrawCallback,
     "drawCallback": postDrawCallback,
@@ -489,7 +553,7 @@ var initDataTable = function(result) {
      }
   });
 
-  table = $("#data").DataTable();
+  table = $("#rsGridData").DataTable();
 
   // listen for size changes
   debouncedDataTableSize();
@@ -499,9 +563,8 @@ var initDataTable = function(result) {
 };
 
 var debouncedSearch = debounce(function(text) {
-  var t = $("#data").DataTable();
-  if (text != t.search()) {
-    t.search(text).draw();
+  if (text != table.search()) {
+    table.search(text).draw();
   }
 }, 100);
 
@@ -545,14 +608,17 @@ window.setFilterUIVisible = function(visible) {
   var thead = document.getElementById("data_cols");
   if (!visible) {
     // clear all the filter data
-    $("#data").DataTable().columns().search("");
+    table.columns().search("");
+    // close any popup
+    if (dismissActivePopup)
+      dismissActivePopup();
   }
   for (var i = 0; i < Math.min(thead.children.length, cols.length); i++) {
     var col = cols[i];
     var th = thead.children[i];
-    if (col.col_type === "numeric" || 
-        col.col_type === "character" ||
-        col.col_type === "factor")  {
+    if (col.col_search_type === "numeric" || 
+        col.col_search_type === "character" ||
+        col.col_search_type === "factor")  {
       if (visible) {
         var filter = createFilterUI(i, col);
         th.appendChild(filter);
@@ -571,13 +637,12 @@ window.refreshData = function(structureChanged) {
     window.location.reload();
   } else {
     // structure didn't change, so just reload data. 
-    var t = $("#data").DataTable();
-    var s = t.settings();
+    var s = table.settings();
     var pos = $(".dataTables_scrollBody").scrollTop();
     var row = s.scroller().pixelsToRow(pos);
 
     // reload data, then snap to that row
-    t.ajax.reload(function() {
+    table.ajax.reload(function() {
       s.scrollToRow(row, false);
     },false);
   }
