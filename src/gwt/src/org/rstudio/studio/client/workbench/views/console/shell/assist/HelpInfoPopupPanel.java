@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 import java.util.Map;
 
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.StringUtil;
@@ -43,8 +42,7 @@ public class HelpInfoPopupPanel extends PopupPanel
       outer.add(f1prompt_);
 
       setWidget(outer) ;
-      setVisible(true);
-      show();
+      setVisible(false);
       setStylePrimaryName(RES.styles().helpPopup());
       
       timer_ = new Timer() {

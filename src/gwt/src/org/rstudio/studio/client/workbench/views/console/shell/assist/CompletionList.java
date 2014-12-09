@@ -292,6 +292,11 @@ class CompletionList<TItem> extends Composite
    {
       maxWidthInPixels_ = maxWidthInPixels;
    }
+   
+   public TItem[] getItems()
+   {
+      return items_;
+   }
 
    private int selectedIndex_ = -1 ;
    
