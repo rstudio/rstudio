@@ -630,6 +630,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          rcppImportsStatement <- sprintf("Rcpp (>= %s)", ip["Rcpp", "Version"])
       
       DESCRIPTION$Imports <- rcppImportsStatement
+      DESCRIPTION$LinkingTo <- "Rcpp"
       
       # Add an import from Rcpp, and also useDynLib
       NAMESPACE <- c(
@@ -650,7 +651,9 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       if (!file.exists(file.path(packageDirectory, "R")))
          dir.create(file.path(packageDirectory, "R"))
       
-      cat(helloWorld, file = file.path(packageDirectory, "R", "hello_world.R"))
+      cat(helloWorld,
+          file = file.path(packageDirectory, "R", "hello_world.R"),
+          sep = "\n")
    }
    else
    {
@@ -687,7 +690,9 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       file = file.path(packageDirectory, "DESCRIPTION")
    )
    
-   cat(NAMESPACE, file = file.path(packageDirectory, "NAMESPACE"))
+   cat(NAMESPACE,
+       file = file.path(packageDirectory, "NAMESPACE"),
+       sep = "\n")
    
    file.create(file.path(packageDirectory, "README.md"))
    
