@@ -388,18 +388,25 @@ void handleGridResReq(const http::Request& request,
 
 json::Value getCols(SEXP dataSEXP)
 {
-   SEXP colsSEXP = NULL;
+   SEXP colsSEXP = R_NilValue;
    r::sexp::Protect protect;
    json::Value result;
    Error error = r::exec::RFunction(".rs.describeCols", dataSEXP, MAX_COLS, 
          MAX_FACTORS)
       .call(&colsSEXP, &protect);
-   if (error) 
+   if (error || colsSEXP == R_NilValue) 
    {
       json::Object err;
-      err["error"] = error.summary();
+      if (error) 
+         err["error"] = error.summary();
+      else
+         err["error"] = "Failed to retrieve column definitions for data.";
+      result = err;
    }
-   r::json::jsonValueFromList(colsSEXP, &result);
+   else 
+   {
+      r::json::jsonValueFromList(colsSEXP, &result);
+   }
    return result;
 }
 
