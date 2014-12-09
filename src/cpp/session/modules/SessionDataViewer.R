@@ -121,6 +121,11 @@
 
 .rs.addFunction("applyTransform", function(x, filtered, search, col, dir) 
 {
+  # coerce argument to data frame--data.table objects (for example) report that
+  # they're data frames, but don't actually support the [,col] subsetting 
+  # operation needed for search/sort/filter without an explicit cast
+  x <- as.data.frame(x)
+
   # apply columnwise filters
   for (i in seq_along(filtered)) {
     if (nchar(filtered[i]) > 0 && length(x[,i]) > 0) {
