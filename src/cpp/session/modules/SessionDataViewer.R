@@ -250,6 +250,9 @@
 
 .rs.registerReplaceHook("View", "utils", function(original, x, title) 
 {
+   # test for coercion to data frame 
+   as.data.frame(x)
+
    # generate title if necessary
    if (missing(title))
       title <- deparse(substitute(x))[1]

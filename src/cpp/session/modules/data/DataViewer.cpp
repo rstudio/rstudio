@@ -351,10 +351,22 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP captionSEXP, SEXP nameSEXP, SEXP envSEXP,
       
       // attempt to cast to a data frame
       SEXP dataFrameSEXP = R_NilValue;
-      r::exec::RFunction("as.data.frame", dataSEXP).call(
+      Error error = r::exec::RFunction("as.data.frame", dataSEXP).call(
             &dataFrameSEXP, &protect);
+      if (error) 
+      {
+         // caught below
+         throw r::exec::RErrorException(error.summary());
+      }
       if (dataFrameSEXP != NULL && dataFrameSEXP != R_NilValue)
+      {
          dataSEXP = dataFrameSEXP;
+      }
+      else
+      {
+         // caught below
+         throw r::exec::RErrorException("Could not coerce object to data frame.");
+      }
            
       json::Value dataItem = makeDataItem(dataSEXP, 
             r::sexp::asString(captionSEXP), objName, envName, cacheKey);
