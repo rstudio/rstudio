@@ -48,9 +48,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 
 public class CompletionRequester
@@ -315,6 +314,9 @@ public class CompletionRequester
                if (!comp.get(i).endsWith(" = "))
                   newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
             
+            // Remove duplicates
+            newComp = resolveDuplicates(newComp);
+            
             CompletionResult result = new CompletionResult(
                   response.getToken(),
                   newComp,
@@ -332,21 +334,13 @@ public class CompletionRequester
       }) ;
    }
    
-   @SuppressWarnings("unused")
-   private ArrayList<QualifiedName> withoutDupes(ArrayList<QualifiedName> completions)
+   private ArrayList<QualifiedName> resolveDuplicates(ArrayList<QualifiedName> completions)
    {
-      Set<String> names = new HashSet<String>();
-      
-      ArrayList<QualifiedName> noDupes = new ArrayList<QualifiedName>();
-      for (int i = 0; i < completions.size(); i++)
-      {
-         if (!names.contains(completions.get(i).name))
-         {
-            noDupes.add(completions.get(i));
-            names.add(completions.get(i).name);
-         }
-      }
-      return noDupes;
+      LinkedHashSet<QualifiedName> set = new LinkedHashSet<QualifiedName>();
+      set.addAll(completions);
+      ArrayList<QualifiedName> withoutDupes = new ArrayList<QualifiedName>();
+      withoutDupes.addAll(set);
+      return withoutDupes;
    }
    
    private void addScopedArgumentCompletions(
@@ -729,6 +723,26 @@ public class CompletionRequester
          String pkg = source == null ? "" : source ;
          String opkg = o.source == null ? "" : o.source ;
          return pkg.compareTo(opkg) ;
+      }
+      
+      @Override
+      public boolean equals(Object object)
+      {
+         if (!(object instanceof QualifiedName))
+            return false;
+         
+         QualifiedName other = (QualifiedName) object;
+         return name.equals(other.name) &&
+                type == other.type;
+      }
+      
+      @Override
+      public int hashCode()
+      {
+         int hash = 17;
+         hash = 31 * hash + name.hashCode();
+         hash = 31 * hash + type;
+         return hash;
       }
 
       public final String name ;
