@@ -38,9 +38,6 @@
 
 .rs.addFunction("describeCols", function(x, maxCols, maxFactors) 
 {
-  # coerce argument to data frame
-  x <- as.data.frame(x)
-
   colNames <- names(x)
 
   # truncate to maximum displayed number of columns
@@ -57,9 +54,9 @@
     col_max <- 0
     col_vals <- ""
     col_search_type <- ""
-    if (length(x[,idx]) > 0)
+    if (length(x[[idx]]) > 0)
     {
-      val <- x[,idx][1]
+      val <- x[1,idx]
       if (is.factor(val))
       {
         col_type <- "factor"
@@ -80,8 +77,8 @@
         # ignore missing values when computing min/max
         col_type <- "numeric"
         col_search_type <- "numeric"
-        col_min <- min(x[,idx], na.rm = TRUE)
-        col_max <- max(x[,idx], na.rm = TRUE)
+        col_min <- min(x[[idx]], na.rm = TRUE)
+        col_max <- max(x[[idx]], na.rm = TRUE)
       }
       else if (is.character(val))
       {
@@ -125,13 +122,13 @@
 .rs.addFunction("applyTransform", function(x, filtered, search, col, dir) 
 {
   # coerce argument to data frame--data.table objects (for example) report that
-  # they're data frames, but don't actually support the [,col] subsetting 
-  # operation needed for search/sort/filter without an explicit cast
+  # they're data frames, but don't actually support the subsetting operations
+  # needed for search/sort/filter without an explicit cast
   x <- as.data.frame(x)
 
   # apply columnwise filters
   for (i in seq_along(filtered)) {
-    if (nchar(filtered[i]) > 0 && length(x[,i]) > 0) {
+    if (nchar(filtered[i]) > 0 && length(x[[i]]) > 0) {
       # split filter--string format is "type|value" (e.g. "numeric|12-25") 
       filter <- strsplit(filtered[i], split="|", fixed = TRUE)[[1]]
       if (length(filter) < 2) 
@@ -147,14 +144,14 @@
       {
         # apply factor filter: convert to numeric values and discard missing
         filterval <- as.numeric(filterval)
-        matches <- as.numeric(x[,i]) == filterval
+        matches <- as.numeric(x[[i]]) == filterval
         matches[is.na(matches)] <- FALSE
         x <- x[matches,]
       }
       else if (identical(filtertype, "character"))
       {
         # apply character filter: non-case-sensitive prefix
-        x <- x[grepl(filterval, x[,i], ignore.case = TRUE),]
+        x <- x[grepl(filterval, x[[i]], ignore.case = TRUE),]
       } 
       else if (identical(filtertype, "numeric"))
       {
@@ -162,10 +159,10 @@
         filterval <- as.numeric(strsplit(filterval, "-")[[1]])
         if (length(filterval) > 1)
           # range filter
-          x <- x[x[,i] >= filterval[1] & x[,i] <= filterval[2],]
+          x <- x[x[[i]] >= filterval[1] & x[[i]] <= filterval[2],]
         else
           # equality filter
-          x <- x[x[,i] == filterval,]
+          x <- x[x[[i]] == filterval,]
       }
     }
   }
@@ -179,9 +176,9 @@
   }
 
   # apply sort
-  if (col > 0 && length(x[,col]) > 0)
+  if (col > 0 && length(x[[col]]) > 0)
   {
-    x <- as.data.frame(x[order(x[,col], decreasing = identical(dir, "desc")),])
+    x <- as.data.frame(x[order(x[[col]], decreasing = identical(dir, "desc")),])
   }
 
   return(x)
