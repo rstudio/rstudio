@@ -46,7 +46,7 @@ import com.google.gwt.dev.jjs.impl.ImplementCastsAndTypeChecks;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.jjs.impl.MethodInliner;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences;
-import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.IntTypeMapper;
+import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.StringTypeMapper;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.TypeMapper;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.TypeOrder;
 import com.google.gwt.dev.js.ast.JsFunction;
@@ -231,7 +231,7 @@ public class JsStackEmulatorTest extends FullCompileTestBase {
         "try{throw $location[stackIndex]='EntryPoint.java:'+'5',new RuntimeException" +
         "}catch($e0){$e0=wrap($e0);" +
         "$stackDepth=($location[stackIndex]='EntryPoint.java:'+'6',stackIndex);" +
-        "if(instanceOf($e0,4)){" +
+        "if(instanceOf($e0,'java.lang.RuntimeException')){" +
         "e=$e0;s=($location[stackIndex]='EntryPoint.java:'+'7',e).getMessage()}" +
         "else throw unwrap(($location[stackIndex]='EntryPoint.java:'+'6',$e0))}" +
         "$stackDepth=stackIndex-1" +
@@ -285,7 +285,7 @@ public class JsStackEmulatorTest extends FullCompileTestBase {
     ImplementCastsAndTypeChecks.exec(jProgram, false);
     ArrayNormalizer.exec(jProgram, false);
 
-    TypeMapper<Integer> typeMapper = new IntTypeMapper();
+    TypeMapper<String> typeMapper = new StringTypeMapper();
     ResolveRuntimeTypeReferences.exec(jProgram, typeMapper, TypeOrder.FREQUENCY);
     Map<StandardSymbolData, JsName> symbolTable =
         new TreeMap<StandardSymbolData, JsName>(new SymbolData.ClassIdentComparator());
