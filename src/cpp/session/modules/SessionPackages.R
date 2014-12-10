@@ -573,7 +573,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
                                                    sourceFiles,
                                                    usingRcpp)
 {
-   ## Validate the package name
+   ## Validate the package name -- note that we validate this upstream
+   ## but it is sensible to validate it once more here
    if (!grepl("^[[:alpha:]][[:alnum:].]*", packageName))
       return(.rs.error("Invalid package name: the package name must start ",
                        "with a letter and follow with only alphanumeric characters"))
@@ -601,18 +602,36 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    }
    
    # Create a DESCRIPTION file
+   `%||%` <- function(x, y) {
+      if (length(x)) x else y
+   }
+   
    DESCRIPTION <- list(
       Package = packageName,
       Type = "Package",
-      Title = "What The Package Does (Title Case)",
+      Title = "What the Package Does (Title Case)",
       Version = "0.1",
       Date = Sys.Date(),
-      Author = "Who wrote it",
-      Maintainer = "Who to complain to <yourfault@somewhere.net>",
+      Author = getOption("devtools.name") %||% "Who wrote it",
+      Maintainer = getOption("devtools.desc.author") %||% "Who to complain to <yourfault@somewhere.net>",
       Description = "More about what it does (maybe more than one line)",
-      License = "What license is it under?",
+      License = getOption("devtools.desc.license") %||% "What license is it under?",
       LazyData = "TRUE"
    )
+   
+   if (length(getOption("devtools.desc.suggests")))
+      DESCRIPTION$Suggests <- getOption("devtools.desc.suggests")
+   
+   if (length(getOption("devtools.desc")))
+   {
+      devtools.desc <- getOption("devtools.desc")
+      for (i in seq_along(devtools.desc))
+      {
+         name <- names(devtools.desc)[[i]]
+         value <- devtools.desc[[i]]
+         DESCRIPTION[[name]] <- value
+      }
+   }
    
    # Create a NAMESPACE file
    NAMESPACE <- c(
@@ -641,18 +660,45 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    }
    
    # If there were no source files specified, create a simple 'hello world'
-   # function
-   if (!length(sourceFiles))
+   # function -- but only if the user hasn't implicitly opted into the 'devtools'
+   # ecosystem
+   if ((!length(getOption("devtools.desc"))) &&
+       (!length(sourceFiles)))
    {
-      helloWorld <- paste(collapse = "\n",
-                          "hello <- function() {",
-                          "    print(\"Hello, world!\")",
-                          "}")
+      helloWorld <- c(
+         "hello <- function() {",
+         "    print(\"Hello, world!\")",
+         "}"
+      )
+      
       if (!file.exists(file.path(packageDirectory, "R")))
          dir.create(file.path(packageDirectory, "R"))
       
       cat(helloWorld,
-          file = file.path(packageDirectory, "R", "hello_world.R"),
+          file = file.path(packageDirectory, "R", "hello.R"),
+          sep = "\n")
+      
+      # Similarly, create a simple example .Rd for this 'hello world' function
+      helloWorldRd <- c(
+         "\\name{hello}",
+         "\\alias{hello}",
+         "\\title{Hello, World!}",
+         "\\usage{",
+         "hello()",
+         "}",
+         "\\description{",
+         "Prints 'Hello, world!'.",
+         "}",
+         "\\examples{",
+         "hello()",
+         "}"
+      )
+      
+      if (!file.exists(file.path(packageDirectory, "man")))
+         dir.create(file.path(packageDirectory, "man"))
+      
+      cat(helloWorldRd,
+          file = file.path(packageDirectory, "man", "hello.Rd"),
           sep = "\n")
    }
    else
@@ -690,11 +736,11 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       file = file.path(packageDirectory, "DESCRIPTION")
    )
    
-   cat(NAMESPACE,
-       file = file.path(packageDirectory, "NAMESPACE"),
-       sep = "\n")
+   cat(NAMESPACE, file = file.path(packageDirectory, "NAMESPACE"), sep = "\n")
    
    file.create(file.path(packageDirectory, "README.md"))
+   
+   cat("^README\\.md$", file = file.path(packageDirectory, ".Rbuildignore"), sep = "\n")
    
    # Return success
    .rs.success()
