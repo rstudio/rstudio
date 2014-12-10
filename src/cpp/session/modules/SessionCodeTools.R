@@ -674,7 +674,6 @@
    tmp[is.na(tmp)] <- default
    tmp
 })
-})
 
 .rs.addFunction("scoreMatches", function(strings, string)
 {
