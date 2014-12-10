@@ -1594,10 +1594,6 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          if (this.$statePattern && !this.$statePattern.test(endState))
             return defaultIndent;
 
-         // Used to add extra whitspace if the next line is a continuation of the
-         // previous line (i.e. the last significant token is a binary operator).
-         var continuationIndent = "";
-
          // The significant token (no whitespace, comments) that most immediately
          // precedes this line. We don't look back further than 10 rows or so for
          // performance reasons.
@@ -1611,7 +1607,25 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             lastRow - 10
          );
 
-         if (prevToken
+         // Used to add extra whitspace if the next line is a continuation of the
+         // previous line (i.e. the last significant token is a binary operator).
+         var continuationIndent = "";
+         var startedOnOperator = false;
+
+         if (prevToken &&
+             /\boperator\b/.test(prevToken.token.type) &&
+             !/\bparen\b/.test(prevToken.token.type))
+         {
+            // Fix issue 2579: If the previous significant token is an operator
+            // (commonly, "+" when used with ggplot) then this line is a
+            // continuation of an expression that was started on a previous
+            // line. This line's indent should then be whatever would normally
+            // be used for a complete statement starting here, plus a tab.
+            continuationIndent = tab;
+            startedOnOperator = true;
+         }
+
+         else if (prevToken
                && /\bparen\b/.test(prevToken.token.type)
                && /\)$/.test(prevToken.token.value))
          {
@@ -1651,15 +1665,6 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             // braces, in which case we need to take the indent of the else/repeat
             // and increase by one level.
             return this.$getIndent(this.$getLine(prevToken.row)) + tab;
-         }
-         else if (prevToken && /\boperator\b/.test(prevToken.token.type) && !/\bparen\b/.test(prevToken.token.type))
-         {
-            // Fix issue 2579: If the previous significant token is an operator
-            // (commonly, "+" when used with ggplot) then this line is a
-            // continuation of an expression that was started on a previous
-            // line. This line's indent should then be whatever would normally
-            // be used for a complete statement starting here, plus a tab.
-            continuationIndent = tab;
          }
 
          // Walk backwards looking for an open paren, square bracket, or curly
@@ -1826,7 +1831,76 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             
          } while (tokenCursor.moveToPreviousToken() &&
                   numTokensWalked++ < maxTokensToWalk);
-         
+
+         // Fix some edge-case indentation issues, mainly for naked
+         // 'if' and 'else' blocks.
+         if (startedOnOperator)
+         {
+            var maxTokensToWalk = 20;
+            var count = 0;
+            
+            tokenCursor = new this.$TokenCursor();
+            tokenCursor.moveToPosition(startPos);
+
+            // Move off of the operator
+            tokenCursor.moveToPreviousToken();
+               
+            do
+            {
+               // If we encounter an 'if' or 'else' statement, add to
+               // the continuation indent
+               if (isOneOf(tokenCursor.currentValue(), ["if", "else"]))
+               {
+                  continuationIndent += tab;
+                  break;
+               }
+               
+               // If we're on a constant, then we need to find an
+               // operator beforehand, or give up.
+               if (/\bconstant\b|\bidentifier\b/.test(tokenCursor.currentType()))
+               {
+
+                  if (!tokenCursor.moveToPreviousToken())
+                     break;
+
+                  // Check if we're already on an if / else
+                  if (isOneOf(tokenCursor.currentValue(), ["if", "else"]))
+                  {
+                     continuationIndent += tab;
+                     break;
+                  }
+
+                  // If we're on a ')', check if it's associated with an 'if'
+                  if (tokenCursor.currentValue() === ")")
+                  {
+                     if (!tokenCursor.bwdToMatchingToken())
+                        break;
+
+                     if (!tokenCursor.moveToPreviousToken())
+                        break;
+
+                     if (isOneOf(tokenCursor.currentValue(), ["if", "else"]))
+                     {
+                        continuationIndent += tab;
+                        break;
+                     }
+
+                  }
+
+                  if (!/\boperator\b/.test(tokenCursor.currentType()))
+                     break;
+
+                  continue;
+               }
+               
+               // Move over a generic 'evaluation', e.g.
+               // foo::bar()[1]
+               if (!tokenCursor.findStartOfEvaluationContext())
+                  break;
+
+            } while (tokenCursor.moveToPreviousToken() &&
+                     count++ < maxTokensToWalk);
+         }
 
          var firstToken = this.$findNextSignificantToken({row: 0, column: 0}, lastRow);
          if (firstToken)

@@ -1262,8 +1262,9 @@ public class RCompletionManager implements CompletionManager
          return new AutocompletionContext(
                token, AutocompletionContext.TYPE_ROXYGEN);
       
-      // If the token has '$' or '@', escape early as we'll be completing
-      // either from names or an overloaded `$` method
+      // If the token has '$' or '@', add in the autocompletion context --
+      // note that we still need parent contexts to give more information
+      // about the appropriate completion
       if (token.contains("$") || token.contains("@"))
          addAutocompletionContextForDollar(context);
       
