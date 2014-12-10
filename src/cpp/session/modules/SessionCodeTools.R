@@ -13,6 +13,22 @@
 #
 #
 
+.rs.addFunction("error", function(...)
+{
+   list(
+      result = NULL,
+      message = paste(..., sep = "")
+   )
+})
+
+.rs.addFunction("success", function(result = NULL)
+{
+   list(
+      result = result,
+      message = NULL
+   )
+})
+
 .rs.addFunction("withTimeLimit", function(time,
                                           expr,
                                           envir = parent.frame(),
@@ -658,6 +674,7 @@
    tmp[is.na(tmp)] <- default
    tmp
 })
+<<<<<<< HEAD
 .rs.addFunction("scoreMatches", function(strings, string)
 {
    .Call("rs_scoreMatches", strings, string)
@@ -755,3 +772,4 @@
 {
    .rs.doGetIndex(term, inDirectory, maxCount, .rs.listIndexedFilesAndFolders)
 })
+

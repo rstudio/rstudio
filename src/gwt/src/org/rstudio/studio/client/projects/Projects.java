@@ -361,6 +361,7 @@ public class Projects implements OpenProjectFileHandler,
          @Override
          public void onExecute(final Command continuation)
          {
+            
             // Validate the package name if we're creating a package
             if (newProject.getNewPackageOptions() != null)
             {
@@ -377,7 +378,7 @@ public class Projects implements OpenProjectFileHandler,
                   return;
                }
             }
-
+            
             indicator.onProgress("Creating project...");
 
             projServer_.createProject(
@@ -737,7 +738,7 @@ public class Projects implements OpenProjectFileHandler,
    private final Provider<UIPrefs> pUIPrefs_;
    
    public static final String NONE = "none";
-   private static final Pattern PACKAGE_NAME_PATTERN =
-         Pattern.create("^[a-zA-Z][a-zA-Z0-9.]*$");
+   public static final Pattern PACKAGE_NAME_PATTERN =
+         Pattern.create("^[a-zA-Z][a-zA-Z0-9.]*$", "");
    
 }
