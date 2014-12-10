@@ -739,3 +739,44 @@
 {
    .rs.doGetIndex(term, inDirectory, maxCount, .rs.listIndexedFilesAndFolders)
 })
+
+## A tiny JSON generator that works for R primitive types. Only lists and data.frames
+## may have names; they are dropped from all other objects. Matrices and arrays are
+## just treated as vectors.
+.rs.addFunction("toJSON", function(object)
+{
+   if (is.list(object))
+      if (is.null(names(object)))
+         return(paste("[", paste(lapply(seq_along(object), function(i) {
+            .rs.toJSON(object[[i]])
+         }), collapse = ","), "]", sep = "", collapse=","))
+   
+   else
+      return(paste("{", paste(lapply(seq_along(object), function(i) {
+         paste('"', names(object)[[i]], '":', .rs.toJSON(object[[i]]), sep = "")
+      }), collapse = ","), "}", sep = "", collapse=","))
+   else
+   {
+      if (is.character(object) || is.factor(object))
+      {
+         object <- shQuote(object, "cmd")
+         object[object == "\"NA\""] <- "null"
+      }
+      else if (is.numeric(object))
+      {
+         object[is.na(object)] <- "\"NA\""
+      }
+      else if (is.logical(object))
+      {
+         object <- .rs.swap(
+            as.character(object),
+            "true" = "TRUE",
+            "false" = "FALSE",
+            "null" = "NA",
+            default = "null"
+         )
+      }
+      
+      return(paste("[", paste(object, collapse = ","), "]", sep = "", collapse = ","))
+   }
+})
