@@ -55,7 +55,6 @@ import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JForStatement;
-import com.google.gwt.dev.jjs.ast.JGwtCreate;
 import com.google.gwt.dev.jjs.ast.JIfStatement;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
@@ -76,6 +75,7 @@ import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JNumericEntry;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
+import com.google.gwt.dev.jjs.ast.JPermutationDependentValue;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
@@ -1138,13 +1138,6 @@ public class GenerateJavaScriptAST {
       push(jsFor);
     }
 
-    @Override
-    public void endVisit(JGwtCreate x, Context ctx) {
-      throw new IllegalStateException("AST should not contain permutation dependent values at " +
-          "this point but contains " + x);
-    }
-
-    @Override
     public void endVisit(JIfStatement x, Context ctx) {
       JsIf stmt = new JsIf(x.getSourceInfo());
 
@@ -1667,6 +1660,12 @@ public class GenerateJavaScriptAST {
     @Override
     public void endVisit(JParameterRef x, Context ctx) {
       push(names.get(x.getTarget()).makeRef(x.getSourceInfo()));
+    }
+
+    @Override
+    public void endVisit(JPermutationDependentValue x, Context ctx) {
+      throw new IllegalStateException("AST should not contain permutation dependent values at " +
+          "this point but contains " + x);
     }
 
     @Override

@@ -29,7 +29,6 @@ import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
-import com.google.gwt.dev.jjs.ast.JGwtCreate;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLocal;
@@ -38,6 +37,7 @@ import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
+import com.google.gwt.dev.jjs.ast.JPermutationDependentValue;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
@@ -469,12 +469,6 @@ public class TypeTightener {
     }
 
     @Override
-    public void endVisit(JGwtCreate x, Context ctx) {
-      throw new IllegalStateException("AST should not contain permutation dependent values at " +
-          "this point but contains " + x);
-    }
-
-    @Override
     public void endVisit(JInstanceOf x, Context ctx) {
       JType argType = x.getExpr().getType();
       if (!(argType instanceof JReferenceType)) {
@@ -577,6 +571,12 @@ public class TypeTightener {
         return;
       }
       tighten(x);
+    }
+
+    @Override
+    public void endVisit(JPermutationDependentValue x, Context ctx) {
+      throw new IllegalStateException("AST should not contain permutation dependent values at " +
+          "this point but contains " + x);
     }
 
     @Override

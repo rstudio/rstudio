@@ -18,7 +18,6 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.Linker;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.ModuleMetricsArtifact;
 import com.google.gwt.core.ext.linker.PrecompilationMetricsArtifact;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
@@ -30,6 +29,7 @@ import com.google.gwt.dev.cfg.PropertyCombinations;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
+import com.google.gwt.dev.jjs.PrecompilationContext;
 import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.shell.CheckForUpdates;
 import com.google.gwt.dev.shell.CheckForUpdates.UpdateResult;
@@ -170,15 +170,14 @@ public class Precompile {
         }
       }
 
-      ArtifactSet generatorArtifacts = new ArtifactSet();
-      DistillerRebindPermutationOracle rpo = new DistillerRebindPermutationOracle(
-          compilerContext, compilationState, generatorArtifacts,
-          new PropertyCombinations(module.getProperties(), module.getActiveLinkerNames()));
+      PrecompilationContext precompilationContext = PrecompilationContextCreator.create(
+          compilerContext, compilationState, new PropertyCombinations(module.getProperties(),
+              module.getActiveLinkerNames()), declEntryPts, additionalRootTypes, null);
       // Allow GC later.
       compilationState = null;
-      JavaToJavaScriptCompiler.precompile(
-          logger, compilerContext, rpo, declEntryPts, additionalRootTypes, true, null);
+      JavaToJavaScriptCompiler.precompile(logger, compilerContext, precompilationContext);
       return true;
+
     } catch (UnableToCompleteException e) {
       // Already logged.
       return false;
@@ -205,7 +204,7 @@ public class Precompile {
   }
 
   static Precompilation precompile(TreeLogger logger, CompilerContext compilerContext,
-      int permutationBase, PropertyCombinations allPermutations, long startTimeMilliseconds) {
+      int permutationBase, PropertyCombinations propertyCombinations, long startTimeMilliseconds) {
 
     Event precompileEvent = SpeedTracerLogger.start(CompilerEventType.PRECOMPILE);
 
@@ -242,17 +241,18 @@ public class Precompile {
         throw new UnableToCompleteException();
       }
 
-      ArtifactSet generatedArtifacts = new ArtifactSet();
-      DistillerRebindPermutationOracle rpo = new DistillerRebindPermutationOracle(
-          compilerContext, compilationState, generatedArtifacts, allPermutations);
-      // Allow GC later.
-      compilationState = null;
       PrecompilationMetricsArtifact precompilationMetrics =
           jjsOptions.isCompilerMetricsEnabled()
               ? new PrecompilationMetricsArtifact(permutationBase) : null;
+
+      PrecompilationContext precompilationContext = PrecompilationContextCreator.create(
+          compilerContext, compilationState, propertyCombinations, declEntryPts, null,
+          precompilationMetrics);
+      // Allow GC later.
+      compilationState = null;
+
       UnifiedAst unifiedAst =
-          JavaToJavaScriptCompiler.precompile(logger, compilerContext, rpo, declEntryPts, null,
-              rpo.getPermutationCount() == 1, precompilationMetrics);
+          JavaToJavaScriptCompiler.precompile(logger, compilerContext, precompilationContext);
 
       if (jjsOptions.isCompilerMetricsEnabled()) {
         ModuleMetricsArtifact moduleMetrics = new ModuleMetricsArtifact();
@@ -268,7 +268,7 @@ public class Precompile {
 
       // Merge all identical permutations together.
       List<Permutation> permutations =
-          new ArrayList<Permutation>(Arrays.asList(rpo.getPermutations()));
+          new ArrayList<Permutation>(Arrays.asList(precompilationContext.getPermutations()));
 
       mergeCollapsedPermutations(permutations);
 
@@ -292,8 +292,8 @@ public class Precompile {
       permutations.addAll(merged.values());
 
       if (jjsOptions.isCompilerMetricsEnabled()) {
-        int[] ids = new int[allPermutations.size()];
-        for (int i = 0; i < allPermutations.size(); i++) {
+        int[] ids = new int[propertyCombinations.size()];
+        for (int i = 0; i < propertyCombinations.size(); i++) {
           ids[i] = permutationBase + i;
         }
         precompilationMetrics.setPermutationIds(ids);
@@ -305,7 +305,8 @@ public class Precompile {
             - startTimeMilliseconds);
         unifiedAst.setPrecompilationMetrics(precompilationMetrics);
       }
-      return new Precompilation(unifiedAst, permutations, permutationBase, generatedArtifacts);
+      return new Precompilation(unifiedAst, permutations, permutationBase,
+          precompilationContext.getGeneratorArtifacts());
     } catch (UnableToCompleteException e) {
       // We intentionally don't pass in the exception here since the real
       // cause has been logged.

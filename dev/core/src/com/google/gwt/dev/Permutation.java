@@ -16,6 +16,7 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.dev.cfg.BindingProperties;
+import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.PermutationProperties;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
@@ -31,7 +32,7 @@ public final class Permutation implements Serializable {
   private final int id;
 
   private List<BindingProperties> orderedProps = Lists.newArrayList();
-  private List<GwtCreateMap> gwtCreateAnswers = Lists.newArrayList();
+  private List<PropertyAndBindingInfo> propertyAndBindingInfos = Lists.newArrayList();
 
   /**
    * Clones an existing permutation, but with a new id.
@@ -42,13 +43,18 @@ public final class Permutation implements Serializable {
   public Permutation(int id, Permutation other) {
     this.id = id;
     orderedProps = Lists.newArrayList(other.orderedProps);
-    gwtCreateAnswers = Lists.newArrayList(other.gwtCreateAnswers);
+    propertyAndBindingInfos = Lists.newArrayList(other.propertyAndBindingInfos);
   }
 
-  public Permutation(int id, BindingProperties properties) {
+  public Permutation(int id, BindingProperties bindingProperties) {
     this.id = id;
-    orderedProps.add(properties);
-    gwtCreateAnswers.add(new GwtCreateMap());
+    orderedProps.add(bindingProperties);
+    propertyAndBindingInfos.add(new PropertyAndBindingInfo());
+    BindingProperty[]  properties = bindingProperties.getOrderedProps();
+    String[]  propertyValues = bindingProperties.getOrderedPropValues();
+    for (int i = 0; i < properties.length; i++) {
+      propertyAndBindingInfos.get(0).putPropertyValue(properties[i].getName(), propertyValues[i]);
+    }
   }
 
   public int getId() {
@@ -59,8 +65,8 @@ public final class Permutation implements Serializable {
    * Returns the GWT.create() answers for each soft permutation,
    * ordered by soft permutation id.
    */
-  public List<GwtCreateMap> getGwtCreateAnswers() {
-    return Lists.newArrayList(gwtCreateAnswers);
+  public List<PropertyAndBindingInfo> getPropertyAndBindingInfos() {
+    return Lists.newArrayList(propertyAndBindingInfos);
   }
 
   /**
@@ -77,7 +83,7 @@ public final class Permutation implements Serializable {
   public void mergeFrom(Permutation other, SortedSet<String> liveRebindRequests) {
     if (getClass().desiredAssertionStatus()) {
       // Traverse and compare in unison.
-      assertSameAnswers(liveRebindRequests, gwtCreateAnswers, other.gwtCreateAnswers);
+      assertSameAnswers(liveRebindRequests, propertyAndBindingInfos, other.propertyAndBindingInfos);
     }
     mergeRebindsFromCollapsed(other);
   }
@@ -87,24 +93,24 @@ public final class Permutation implements Serializable {
    * vary between the two permutations.
    */
   public void mergeRebindsFromCollapsed(Permutation other) {
-    assert other.orderedProps.size() == other.gwtCreateAnswers.size();
+    assert other.orderedProps.size() == other.propertyAndBindingInfos.size();
     orderedProps.addAll(other.orderedProps);
-    gwtCreateAnswers.addAll(other.gwtCreateAnswers);
+    propertyAndBindingInfos.addAll(other.propertyAndBindingInfos);
     other.destroy();
   }
 
   public void putRebindAnswer(String requestType, String resultType) {
-    assert gwtCreateAnswers.size() == 1 : "Cannot add rebind to merged Permutation";
-    GwtCreateMap answerMap = gwtCreateAnswers.get(0);
+    assert propertyAndBindingInfos.size() == 1 : "Cannot add rebind to merged Permutation";
+    PropertyAndBindingInfo answerMap = propertyAndBindingInfos.get(0);
     assert answerMap != null;
-    answerMap.put(requestType, resultType);
+    answerMap.putReboundType(requestType, resultType);
   }
 
   private static void assertSameAnswers(SortedSet<String> liveRebindRequests,
-      List<GwtCreateMap> theseAnswers, List<GwtCreateMap> thoseAnswers) {
+      List<PropertyAndBindingInfo> theseAnswers, List<PropertyAndBindingInfo> thoseAnswers) {
     assert theseAnswers.size() == thoseAnswers.size();
     for (int i = 0; i < theseAnswers.size(); i++) {
-      theseAnswers.get(i).assertSameAnswers(thoseAnswers.get(i), liveRebindRequests);
+      theseAnswers.get(i).assertRebindsEqual(thoseAnswers.get(i), liveRebindRequests);
     }
   }
 
@@ -114,6 +120,6 @@ public final class Permutation implements Serializable {
    */
   private void destroy() {
     orderedProps = Lists.newArrayList();
-    gwtCreateAnswers = Lists.newArrayList();
+    propertyAndBindingInfos = Lists.newArrayList();
   }
 }

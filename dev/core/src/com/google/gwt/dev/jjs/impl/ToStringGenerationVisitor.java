@@ -48,7 +48,6 @@ import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JFloatLiteral;
 import com.google.gwt.dev.jjs.ast.JForStatement;
-import com.google.gwt.dev.jjs.ast.JGwtCreate;
 import com.google.gwt.dev.jjs.ast.JIfStatement;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JIntLiteral;
@@ -68,6 +67,7 @@ import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
+import com.google.gwt.dev.jjs.ast.JPermutationDependentValue;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
@@ -509,14 +509,6 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   }
 
   @Override
-  public boolean visit(JGwtCreate x, Context ctx) {
-    print("GWT.create(");
-    print(x.getSourceType());
-    print(".class)");
-    return false;
-  }
-
-  @Override
   public boolean visit(JIfStatement x, Context ctx) {
     print(CHARS_IF);
     lparen();
@@ -740,6 +732,29 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   @Override
   public boolean visit(JParameterRef x, Context ctx) {
     printName(x.getTarget());
+    return false;
+  }
+
+  @Override
+  public boolean visit(JPermutationDependentValue x, Context ctx) {
+    if (x.isTypeRebind()) {
+      print("GWT.create(");
+      print(x.getRequestedValue());
+      print(".class)");
+    } else {
+      assert x.isProperty();
+      print("GWT.getProperty(");
+      print("\"");
+      print(x.getRequestedValue());
+      print("\"");
+      if (x.getResultValues().get(0) != null) {
+        print(",");
+        print("\"");
+        print(x.getResultValues().get(0));
+        print("\"");
+      }
+      print(")");
+    }
     return false;
   }
 

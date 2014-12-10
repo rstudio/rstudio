@@ -65,7 +65,7 @@ public class ConfigurationProperties implements Serializable {
     Builder<String, List<String>> builder = ImmutableMap.builder();
     for (ConfigurationProperty property : properties) {
       builder.put(property.getName(), copyOf(property.getValues()));
-    }
+      }
     this.properties = builder.build();
   }
 
@@ -159,6 +159,14 @@ public class ConfigurationProperties implements Serializable {
       }
     }
     return result;
+  }
+
+  /**
+   * Returns whether the property is multivalued or not. If the property is not defined then it is
+   * considered single valued.
+   */
+  public boolean isMultiValued(String key) {
+    return getStrings(key).size() > 1;
   }
 
   /**

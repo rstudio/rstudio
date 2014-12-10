@@ -31,7 +31,6 @@ import com.google.gwt.dev.jjs.ast.JDoubleLiteral;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JFloatLiteral;
-import com.google.gwt.dev.jjs.ast.JGwtCreate;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JIntLiteral;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
@@ -43,6 +42,7 @@ import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JNumericEntry;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
+import com.google.gwt.dev.jjs.ast.JPermutationDependentValue;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
 import com.google.gwt.dev.jjs.ast.JRunAsync;
@@ -177,12 +177,6 @@ public class CloneExpressionVisitor extends JVisitor {
   }
 
   @Override
-  public boolean visit(JGwtCreate x, Context ctx) {
-    throw new IllegalStateException("AST should not contain permutation dependent values at " +
-        "this point but contains " + x);
-  }
-
-  @Override
   public boolean visit(JInstanceOf x, Context ctx) {
     expression = new JInstanceOf(x.getSourceInfo(), x.getTestType(), cloneExpression(x.getExpr()));
     return false;
@@ -211,16 +205,6 @@ public class CloneExpressionVisitor extends JVisitor {
     JMethodCall newMethodCall = new JMethodCall(x, cloneExpression(x.getInstance()));
     newMethodCall.addArgs(cloneExpressions(x.getArgs()));
     expression = newMethodCall;
-    return false;
-  }
-
-  @Override
-  public boolean visit(JRunAsync x, Context ctx) {
-    // Only the runAsync call itself needs cloning, the onSuccess can be shared.
-    JExpression runAsyncCall = cloneExpression(x.getRunAsyncCall());
-    expression =
-        new JRunAsync(x.getSourceInfo(), x.getRunAsyncId(), x.getName(),
-            x.hasExplicitClassLiteral(), runAsyncCall, x.getOnSuccessCall());
     return false;
   }
 
@@ -272,6 +256,12 @@ public class CloneExpressionVisitor extends JVisitor {
   }
 
   @Override
+  public void endVisit(JPermutationDependentValue x, Context ctx) {
+    throw new IllegalStateException("AST should not contain permutation dependent values at " +
+        "this point but contains " + x);
+  }
+
+  @Override
   public boolean visit(JPostfixOperation x, Context ctx) {
     expression = new JPostfixOperation(x.getSourceInfo(), x.getOp(), cloneExpression(x.getArg()));
     return false;
@@ -280,6 +270,16 @@ public class CloneExpressionVisitor extends JVisitor {
   @Override
   public boolean visit(JPrefixOperation x, Context ctx) {
     expression = new JPrefixOperation(x.getSourceInfo(), x.getOp(), cloneExpression(x.getArg()));
+    return false;
+  }
+
+  @Override
+  public boolean visit(JRunAsync x, Context ctx) {
+    // Only the runAsync call itself needs cloning, the onSuccess can be shared.
+    JExpression runAsyncCall = cloneExpression(x.getRunAsyncCall());
+    expression =
+        new JRunAsync(x.getSourceInfo(), x.getRunAsyncId(), x.getName(),
+            x.hasExplicitClassLiteral(), runAsyncCall, x.getOnSuccessCall());
     return false;
   }
 

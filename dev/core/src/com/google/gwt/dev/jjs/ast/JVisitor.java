@@ -221,6 +221,10 @@ public class JVisitor {
     endVisit((JStatement) x, ctx);
   }
 
+  public void endVisit(JCastMap x, Context ctx) {
+    endVisit((JExpression) x, ctx);
+  }
+
   public void endVisit(JCastOperation x, Context ctx) {
     endVisit((JExpression) x, ctx);
   }
@@ -294,10 +298,6 @@ public class JVisitor {
 
   public void endVisit(JForStatement x, Context ctx) {
     endVisit((JStatement) x, ctx);
-  }
-
-  public void endVisit(JGwtCreate x, Context ctx) {
-    endVisit((JExpression) x, ctx);
   }
 
   public void endVisit(JIfStatement x, Context ctx) {
@@ -391,6 +391,10 @@ public class JVisitor {
     endVisit((JVariableRef) x, ctx);
   }
 
+  public void endVisit(JPermutationDependentValue x, Context ctx) {
+    endVisit((JExpression) x, ctx);
+  }
+
   public void endVisit(JPostfixOperation x, Context ctx) {
     endVisit((JUnaryOperation) x, ctx);
   }
@@ -420,10 +424,6 @@ public class JVisitor {
   }
 
   public void endVisit(JRuntimeTypeReference x, Context ctx) {
-    endVisit((JExpression) x, ctx);
-  }
-
-  public void endVisit(JCastMap x, Context ctx) {
     endVisit((JExpression) x, ctx);
   }
 
@@ -541,6 +541,10 @@ public class JVisitor {
     return visit((JStatement) x, ctx);
   }
 
+  public boolean visit(JCastMap x, Context ctx) {
+    return visit((JExpression) x, ctx);
+  }
+
   public boolean visit(JCastOperation x, Context ctx) {
     return visit((JExpression) x, ctx);
   }
@@ -614,10 +618,6 @@ public class JVisitor {
 
   public boolean visit(JForStatement x, Context ctx) {
     return visit((JStatement) x, ctx);
-  }
-
-  public boolean visit(JGwtCreate x, Context ctx) {
-    return visit((JExpression) x, ctx);
   }
 
   public boolean visit(JIfStatement x, Context ctx) {
@@ -711,6 +711,10 @@ public class JVisitor {
     return visit((JVariableRef) x, ctx);
   }
 
+  public boolean visit(JPermutationDependentValue x, Context ctx) {
+    return visit((JExpression) x, ctx);
+  }
+
   public boolean visit(JPostfixOperation x, Context ctx) {
     return visit((JUnaryOperation) x, ctx);
   }
@@ -740,10 +744,6 @@ public class JVisitor {
   }
 
   public boolean visit(JRuntimeTypeReference x, Context ctx) {
-    return visit((JExpression) x, ctx);
-  }
-
-  public boolean visit(JCastMap x, Context ctx) {
     return visit((JExpression) x, ctx);
   }
 

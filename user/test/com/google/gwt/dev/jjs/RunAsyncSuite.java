@@ -21,6 +21,7 @@ import com.google.gwt.dev.jjs.test.RunAsyncContentTest;
 import com.google.gwt.dev.jjs.test.RunAsyncFailureTest;
 import com.google.gwt.dev.jjs.test.RunAsyncMetricsIntegrationTest;
 import com.google.gwt.dev.jjs.test.RunAsyncTest;
+import com.google.gwt.dev.jjs.test.SystemGetPropertyTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
 import junit.framework.Test;
@@ -34,6 +35,7 @@ public class RunAsyncSuite {
     GWTTestSuite suite = new GWTTestSuite("RunAsync test");
 
     // $JUnit-BEGIN$
+    suite.addTestSuite(SystemGetPropertyTest.class);
     suite.addTestSuite(CodeSplitterCollapsedPropertiesTest.class);
     suite.addTestSuite(RunAsyncCodeTest.class);
     suite.addTestSuite(RunAsyncContentTest.class);

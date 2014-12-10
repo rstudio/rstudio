@@ -102,10 +102,17 @@ public final class System {
   }
 
   /**
-   * Always returns default, used for source compatibility
+   * The compiler replaces getProperty by the actual value of the property.
+   */
+  public static String getProperty(String key) {
+    throw new AssertionError("System.getProperty should have been replaced by the compiler.");
+  }
+
+  /**
+   * The compiler replaces getProperty by the actual value of the property.
    */
   public static String getProperty(String key, String def) {
-    return def;
+    throw new AssertionError("System.getProperty should have been replaced by the compiler.");
   }
 
   public static int identityHashCode(Object o) {

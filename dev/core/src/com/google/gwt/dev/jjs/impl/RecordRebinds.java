@@ -16,14 +16,14 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.Context;
-import com.google.gwt.dev.jjs.ast.JGwtCreate;
+import com.google.gwt.dev.jjs.ast.JPermutationDependentValue;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -33,14 +33,16 @@ public class RecordRebinds {
 
   private class RebindVisitor extends JVisitor {
     @Override
-    public void endVisit(JGwtCreate x, Context ctx) {
-      liveRebindRequests.add(x.getSourceType());
+    public void endVisit(JPermutationDependentValue x, Context ctx) {
+      if (x.isTypeRebind()) {
+        liveRebindRequests.add(x.getRequestedValue());
+      }
     }
   }
 
   public static Set<String> exec(JProgram program) {
     Event recordRebindsEvent = SpeedTracerLogger.start(CompilerEventType.RECORD_REBINDS);
-    Set<String> liveRebindRequests = new HashSet<String>();
+    Set<String> liveRebindRequests = Sets.newHashSet();
     new RecordRebinds(program, liveRebindRequests).execImpl();
     recordRebindsEvent.end();
     return liveRebindRequests;

@@ -21,9 +21,9 @@ import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JConstructor;
-import com.google.gwt.dev.jjs.ast.JGwtCreate;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JNewArray;
+import com.google.gwt.dev.jjs.ast.JPermutationDependentValue;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVariable;
 
@@ -67,12 +67,6 @@ public abstract class TypeRemapper extends JChangeTrackingVisitor {
   }
 
   @Override
-  public void endVisit(JGwtCreate x, Context ctx) {
-    throw new IllegalStateException("AST should not contain permutation dependent values at " +
-        "this point but contains " + x);
-  }
-
-  @Override
   public void exit(JMethod x, Context ctx) {
     x.setType(modRemap(x.getType()));
   }
@@ -80,6 +74,12 @@ public abstract class TypeRemapper extends JChangeTrackingVisitor {
   @Override
   public void endVisit(JNewArray x, Context ctx) {
     x.setType((JArrayType) modRemap(x.getArrayType()));
+  }
+
+  @Override
+  public void endVisit(JPermutationDependentValue x, Context ctx) {
+    throw new IllegalStateException("AST should not contain permutation dependent values at " +
+        "this point but contains " + x);
   }
 
   @Override

@@ -175,7 +175,7 @@ java_library(
             "core/src/com/google/gwt/dev/CompilerContext.java",
             "core/src/com/google/gwt/dev/CompileTaskOptions.java",
             "core/src/com/google/gwt/dev/CompileTaskOptionsImpl.java",
-            "core/src/com/google/gwt/dev/GwtCreateMap.java",
+            "core/src/com/google/gwt/dev/PropertyAndBindingInfo.java",
             "core/src/com/google/gwt/dev/GwtVersion.java",
             "core/src/com/google/gwt/dev/MinimalRebuildCache.java",
             "core/src/com/google/gwt/dev/NullRebuildCache.java",

@@ -30,7 +30,6 @@ import com.google.gwt.dev.jjs.ast.JDoubleLiteral;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JFloatLiteral;
-import com.google.gwt.dev.jjs.ast.JGwtCreate;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JIntLiteral;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
@@ -40,6 +39,7 @@ import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
+import com.google.gwt.dev.jjs.ast.JPermutationDependentValue;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
@@ -144,13 +144,6 @@ class JavaPrecedenceVisitor extends JVisitor {
   }
 
   @Override
-  public boolean visit(JGwtCreate x, Context ctx) {
-    // It's a method call.
-    answer = 0;
-    return false;
-  }
-
-  @Override
   public boolean visit(JInstanceOf of, Context ctx) {
     answer = 6;
     return false;
@@ -206,6 +199,13 @@ class JavaPrecedenceVisitor extends JVisitor {
 
   @Override
   public boolean visit(JParameterRef x, Context ctx) {
+    answer = 0;
+    return false;
+  }
+
+  @Override
+  public boolean visit(JPermutationDependentValue x, Context ctx) {
+    // It's a method call.
     answer = 0;
     return false;
   }

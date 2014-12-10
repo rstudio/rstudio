@@ -20,12 +20,14 @@ import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.MinimalRebuildCache;
+import com.google.gwt.dev.Permutation;
 import com.google.gwt.dev.javac.CompilationProblemReporter;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.CompiledClass;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.jjs.PrecompilationContext;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.Context;
@@ -45,7 +47,6 @@ import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
-import com.google.gwt.dev.jjs.ast.JGwtCreate;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
@@ -58,6 +59,7 @@ import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JNullLiteral;
+import com.google.gwt.dev.jjs.ast.JPermutationDependentValue;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
@@ -408,6 +410,32 @@ public class UnifyAst {
       return !MAGIC_METHOD_CALLS.contains(target.getQualifiedName());
     }
 
+    private JExpression handleSystemGetProperty(JMethodCall gwtGetPropertyCall) {
+      assert (gwtGetPropertyCall.getArgs().size() == 1 || gwtGetPropertyCall.getArgs().size() == 2);
+      JExpression propertyNameExpression = gwtGetPropertyCall.getArgs().get(0);
+      JExpression defaultValueExpression = gwtGetPropertyCall.getArgs().size() == 2 ?
+          gwtGetPropertyCall.getArgs().get(1) : null;
+
+      if (!(propertyNameExpression instanceof JStringLiteral) ||
+          (defaultValueExpression != null && !(defaultValueExpression instanceof JStringLiteral))) {
+        error(gwtGetPropertyCall,
+            "Only string constants may be used as arguments to System.getProperty()");
+        return null;
+      }
+      String propertyName = ((JStringLiteral) propertyNameExpression).getValue();
+
+      if (isMultivaluedProperty(propertyName)) {
+        error(gwtGetPropertyCall,
+            "Multivalued properties are not supported by System.getProperty()");
+        return null;
+      }
+      String defaultValue = defaultValueExpression == null ? null :
+          ((JStringLiteral) defaultValueExpression).getValue();
+      return JPermutationDependentValue
+          .createRuntimeProperty(program, gwtGetPropertyCall.getSourceInfo(),
+              propertyName, defaultValue);
+    }
+
     private JExpression createRebindExpression(JMethodCall gwtCreateCall) {
       assert (gwtCreateCall.getArgs().size() == 1);
       JExpression arg = gwtCreateCall.getArgs().get(0);
@@ -423,10 +451,8 @@ public class UnifyAst {
       }
 
       Event event = SpeedTracerLogger.start(CompilerEventType.VISIT_GWT_CREATE,
-          "argument",
-          classLiteral.getRefType().getName(),
-          "caller",
-          gwtCreateCall.getSourceInfo().getFileName());
+          "argument", classLiteral.getRefType().getName(),
+          "caller", gwtCreateCall.getSourceInfo().getFileName());
       try {
         return createStaticRebindExpression(gwtCreateCall, classLiteral);
       } finally {
@@ -498,8 +524,9 @@ public class UnifyAst {
           error(gwtCreateCall, "Rebind result '" + answer + "' cannot be a JSO");
           return null;
         }
-        JExpression result = JGwtCreate.createInstantiationExpression(gwtCreateCall.getSourceInfo(),
-            (JClassType) answerType);
+        JExpression result = JjsUtils
+            .createDefaultConstructorInstantiation(gwtCreateCall.getSourceInfo(),
+                (JClassType) answerType);
         if (result == null) {
           error(gwtCreateCall,
               "Rebind result '" + answer + "' has no default (zero argument) constructors");
@@ -510,10 +537,10 @@ public class UnifyAst {
       assert answers.size() == instantiationExpressions.size();
       if (answers.size() == 1) {
         return instantiationExpressions.get(0);
-      } else {
-        return new JGwtCreate(gwtCreateCall.getSourceInfo(), reqType, answers,
-            program.getTypeJavaLangObject(), instantiationExpressions);
       }
+      return JPermutationDependentValue
+          .createTypeRebind(program, gwtCreateCall.getSourceInfo(), reqType,
+              answers, instantiationExpressions);
     }
 
     private JExpression handleImplNameOf(final JMethodCall x) {
@@ -549,13 +576,24 @@ public class UnifyAst {
     }
 
     private JExpression handleMagicMethodCall(JMethodCall x, String targetSignature) {
-      if (GWT_CREATE.equals(targetSignature) || OLD_GWT_CREATE.equals(targetSignature)) {
-        return createRebindExpression(x);
-      } else if (IMPL_GET_NAME_OF.equals(targetSignature)) {
-        return handleImplNameOf(x);
+      switch (targetSignature) {
+        case GWT_CREATE:
+        case OLD_GWT_CREATE:
+          return createRebindExpression(x);
+        case IMPL_GET_NAME_OF:
+          return handleImplNameOf(x);
+        case SYSTEM_GET_PROPERTY:
+        case SYSTEM_GET_PROPERTY_WITH_DEFAULT:
+          return handleSystemGetProperty(x);
       }
       throw new InternalCompilerException("Unknown magic method");
     }
+  }
+
+  private boolean isMultivaluedProperty(String propertyName) {
+    // Multivalued properties can only be Configuration properties, and those do not change between
+    // permutations.
+    return permutations[0].getProperties().getConfigurationProperties().isMultiValued(propertyName);
   }
 
   private static final String CLASS_DESIRED_ASSERTION_STATUS =
@@ -566,6 +604,13 @@ public class UnifyAst {
 
   public static final String GWT_CREATE =
       "com.google.gwt.core.shared.GWT.create(Ljava/lang/Class;)Ljava/lang/Object;";
+
+  public static final String SYSTEM_GET_PROPERTY =
+      "java.lang.System.getProperty(Ljava/lang/String;)Ljava/lang/String;";
+
+  public static final String SYSTEM_GET_PROPERTY_WITH_DEFAULT =
+      "java.lang.System.getProperty(Ljava/lang/String;Ljava/lang/String;)" +
+          "Ljava/lang/String;";
 
   private static final String GWT_DEBUGGER_SHARED = "com.google.gwt.core.shared.GWT.debugger()V";
 
@@ -599,7 +644,9 @@ public class UnifyAst {
    * Methods for which the call site must be replaced with magic AST nodes.
    */
   private static final Set<String> MAGIC_METHOD_CALLS = Sets.newLinkedHashSet(Arrays.asList(
-      GWT_CREATE, GWT_DEBUGGER_SHARED, GWT_DEBUGGER_CLIENT, OLD_GWT_CREATE, IMPL_GET_NAME_OF));
+      GWT_CREATE, GWT_DEBUGGER_SHARED, GWT_DEBUGGER_CLIENT, SYSTEM_GET_PROPERTY,
+      SYSTEM_GET_PROPERTY_WITH_DEFAULT,
+      OLD_GWT_CREATE, IMPL_GET_NAME_OF));
 
   /**
    * Methods with magic implementations that the compiler must insert.
@@ -681,9 +728,11 @@ public class UnifyAst {
   private boolean incrementalCompile;
   private boolean jsInteropEnabled;
   private final List<String> rootTypeSourceNames = Lists.newArrayList();
+  private final Permutation[] permutations;
 
   public UnifyAst(TreeLogger logger, CompilerContext compilerContext, JProgram program,
-      JsProgram jsProgram, RebindPermutationOracle rpo) {
+      JsProgram jsProgram, PrecompilationContext precompilationContext) {
+
     this.incrementalCompile = compilerContext.getOptions().isIncrementalCompileEnabled();
     this.jsInteropEnabled = program.typeOracle.isJsInteropEnabled();
 
@@ -691,7 +740,8 @@ public class UnifyAst {
     this.compilerContext = compilerContext;
     this.program = program;
     this.jsProgram = jsProgram;
-    this.rpo = rpo;
+    this.rpo = precompilationContext.getRebindPermutationOracle();
+    this.permutations = precompilationContext.getPermutations();
     this.compilationState = rpo.getCompilationState();
     this.compiledClassesByInternalName = compilationState.getClassFileMap();
     this.compiledClassesBySourceName = compilationState.getClassFileMapBySource();

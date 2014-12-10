@@ -107,7 +107,7 @@ import com.google.gwt.dev.jjs.impl.RemoveEmptySuperCalls;
 import com.google.gwt.dev.jjs.impl.RemoveSpecializations;
 import com.google.gwt.dev.jjs.impl.ReplaceDefenderMethodReferences;
 import com.google.gwt.dev.jjs.impl.ReplaceGetClassOverrides;
-import com.google.gwt.dev.jjs.impl.ResolveRebinds;
+import com.google.gwt.dev.jjs.impl.ResolvePermutationDependentValues;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.ClosureUniqueIdTypeMapper;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.IntTypeMapper;
@@ -164,7 +164,6 @@ import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.util.DefaultTextOutput;
-import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.Memory;
 import com.google.gwt.dev.util.Name.SourceName;
 import com.google.gwt.dev.util.Pair;
@@ -248,11 +247,9 @@ public final class JavaToJavaScriptCompiler {
   }
 
   public static UnifiedAst precompile(TreeLogger logger, CompilerContext compilerContext,
-      RebindPermutationOracle rpo, String[] declEntryPts, String[] additionalRootTypes,
-      boolean singlePermutation, PrecompilationMetricsArtifact precompilationMetrics)
+      PrecompilationContext precompilationContext)
       throws UnableToCompleteException {
-    return new JavaToJavaScriptCompiler(logger, compilerContext).precompile(
-        rpo, declEntryPts, additionalRootTypes, singlePermutation, precompilationMetrics);
+    return new JavaToJavaScriptCompiler(logger, compilerContext).precompile(precompilationContext);
   }
 
   /**
@@ -329,7 +326,8 @@ public final class JavaToJavaScriptCompiler {
       logger.log(TreeLogger.INFO, "Compiling permutation " + permutationId + "...");
 
       // (2) Transform unresolved Java AST to resolved Java AST
-      ResolveRebinds.exec(jprogram, permutation.getGwtCreateAnswers());
+      ResolvePermutationDependentValues
+          .exec(jprogram, properties, permutation.getPropertyAndBindingInfos());
 
       // TODO(stalcup): hide metrics gathering in a callback or subclass
       // This has to happen before optimizations because functions might
@@ -1071,10 +1069,11 @@ public final class JavaToJavaScriptCompiler {
     return internedLiteralByVariableName;
   }
 
-  private Map<JsName, JsLiteral> runPrettyNamer(ConfigurationProperties config, JavaToJavaScriptMap jjsmap)
+  private Map<JsName, JsLiteral> runPrettyNamer(ConfigurationProperties configurationProperties,
+      JavaToJavaScriptMap jjsmap)
       throws IllegalNameException {
     if (compilerContext.getOptions().isIncrementalCompileEnabled()) {
-      JsIncrementalNamer.exec(jsProgram, config,
+      JsIncrementalNamer.exec(jsProgram, configurationProperties,
           compilerContext.getMinimalRebuildCache().getPersistentPrettyNamerState(), jjsmap);
       return null;
     }
@@ -1084,7 +1083,7 @@ public final class JavaToJavaScriptCompiler {
         jprogram, jsProgram,
         (byte) (JsLiteralInterner.INTERN_ALL & ~JsLiteralInterner.INTERN_STRINGS));
 
-    JsPrettyNamer.exec(jsProgram, config);
+    JsPrettyNamer.exec(jsProgram, configurationProperties);
     return internedLiteralByVariableName;
   }
 
@@ -1113,10 +1112,19 @@ public final class JavaToJavaScriptCompiler {
    * Significant amounts of visitors implementing the intended above stages are triggered here but
    * in the wrong order. They have been noted for future cleanup.
    */
-  private UnifiedAst precompile(RebindPermutationOracle rpo, String[] entryPointTypeNames,
-      String[] additionalRootTypes, boolean singlePermutation,
-      PrecompilationMetricsArtifact precompilationMetrics) throws UnableToCompleteException {
+  private UnifiedAst precompile(PrecompilationContext precompilationContext)
+      throws UnableToCompleteException {
     try {
+
+      // (0) Assert preconditions
+      if (precompilationContext.getEntryPoints().length +
+          precompilationContext.getAdditionalRootTypes().length == 0) {
+        throw new IllegalArgumentException("entry point(s) required");
+      }
+
+      boolean singlePermutation = precompilationContext.getPermutations().length == 1;
+      PrecompilationMetricsArtifact precompilationMetrics =
+          precompilationContext.getPrecompilationMetricsArtifact();
       /*
        * Do not introduce any new pass here unless it is logically a part of one of the 6 defined
        * stages and is physically located in that stage.
@@ -1130,18 +1138,10 @@ public final class JavaToJavaScriptCompiler {
       jprogram.typeOracle.setJsInteropMode(options.getJsInteropMode());
 
       jsProgram = new JsProgram();
-      if (additionalRootTypes == null) {
-        additionalRootTypes = Empty.STRINGS;
-      }
 
-      // (2) Assert preconditions
-      if (entryPointTypeNames.length + additionalRootTypes.length == 0) {
-        throw new IllegalArgumentException("entry point(s) required");
-      }
-
-      // (3) Construct and unify the unresolved Java AST
+      // (2) Construct and unify the unresolved Java AST
       CompilationState compilationState =
-          constructJavaAst(rpo, entryPointTypeNames, additionalRootTypes);
+          constructJavaAst(precompilationContext);
 
       // TODO(stalcup): hide metrics gathering in a callback or subclass
       JsniRestrictionChecker.exec(logger, jprogram);
@@ -1154,7 +1154,7 @@ public final class JavaToJavaScriptCompiler {
       ConfigurationProperties configurationProperties = new ConfigurationProperties(module);
       EnumNameObfuscator.exec(jprogram, logger, configurationProperties, options);
 
-      // (4) Normalize the unresolved Java AST
+      // (3) Normalize the unresolved Java AST
       // Replace defender method references
       ReplaceDefenderMethodReferences.exec(jprogram);
 
@@ -1174,7 +1174,7 @@ public final class JavaToJavaScriptCompiler {
       // TODO(stalcup): hide metrics gathering in a callback or subclass
       logAstTypeMetrics(precompilationMetrics);
 
-      // (5) Construct and return a value.
+      // (4) Construct and return a value.
       Event createUnifiedAstEvent = SpeedTracerLogger.start(CompilerEventType.CREATE_UNIFIED_AST);
       UnifiedAst result = new UnifiedAst(
           options, new AST(jprogram, jsProgram), singlePermutation, RecordRebinds.exec(jprogram));
@@ -1214,17 +1214,14 @@ public final class JavaToJavaScriptCompiler {
     return entryMethodHolderTypeName;
   }
 
-  private CompilationState constructJavaAst(RebindPermutationOracle rpo,
-      String[] entryPointTypeNames, String[] additionalRootTypes)
-  throws UnableToCompleteException {
-    Set<String> allRootTypes = Sets.newTreeSet();
+  private CompilationState constructJavaAst(PrecompilationContext precompilationContext)
+      throws UnableToCompleteException {
+    RebindPermutationOracle rpo = precompilationContext.getRebindPermutationOracle();
+
     CompilationState compilationState = rpo.getCompilationState();
     Memory.maybeDumpMemory("CompStateBuilt");
     recordJsoTypes(compilationState.getTypeOracle());
-    populateRootTypes(allRootTypes, entryPointTypeNames, additionalRootTypes, compilationState);
-    String entryMethodHolderTypeName =
-        buildEntryMethodHolder(rpo.getGeneratorContext(), entryPointTypeNames, allRootTypes);
-    unifyJavaAst(rpo, entryPointTypeNames, allRootTypes, entryMethodHolderTypeName);
+    unifyJavaAst(precompilationContext);
     if (options.isSoycEnabled() || options.isJsonSoycEnabled()) {
       SourceInfoCorrelator.exec(jprogram);
     }
@@ -1276,8 +1273,10 @@ public final class JavaToJavaScriptCompiler {
     }
   }
 
-  private void populateRootTypes(Set<String> allRootTypes, String[] entryPointTypeNames,
+  private Set<String> computeRootTypes(String[] entryPointTypeNames,
       String[] additionalRootTypes, CompilationState compilationState) {
+
+    Set<String> allRootTypes = Sets.newTreeSet();
     if (jprogram.typeOracle.isJsInteropEnabled()) {
       Iterables.addAll(allRootTypes, compilationState.getQualifiedJsInteropRootTypesNames());
     }
@@ -1294,6 +1293,7 @@ public final class JavaToJavaScriptCompiler {
         typeOracle.getSingleJsoImplInterfaces()) {
       allRootTypes.add(typeOracle.getSingleJsoImpl(singleJsoIntf).getQualifiedSourceName());
     }
+    return allRootTypes;
   }
 
   private void recordJsoTypes(TypeOracle typeOracle) {
@@ -1379,13 +1379,23 @@ public final class JavaToJavaScriptCompiler {
     }
   }
 
-  private void unifyJavaAst(RebindPermutationOracle rpo, String[] entryPointTypeNames,
-      Set<String> allRootTypes, String entryMethodHolderTypeName)
+  private void unifyJavaAst(PrecompilationContext precompilationContext)
       throws UnableToCompleteException {
 
     Event event = SpeedTracerLogger.start(CompilerEventType.UNIFY_AST);
 
-    UnifyAst unifyAst = new UnifyAst(logger, compilerContext, jprogram, jsProgram, rpo);
+    RebindPermutationOracle rpo = precompilationContext.getRebindPermutationOracle();
+    String[] entryPointTypeNames = precompilationContext.getEntryPoints();
+    String[] additionalRootTypes = precompilationContext.getAdditionalRootTypes();
+
+    Set<String> allRootTypes = computeRootTypes(entryPointTypeNames, additionalRootTypes,
+        rpo.getCompilationState());
+
+    String entryMethodHolderTypeName =
+        buildEntryMethodHolder(rpo.getGeneratorContext(), entryPointTypeNames, allRootTypes);
+
+    UnifyAst unifyAst =
+        new UnifyAst(logger, compilerContext, jprogram, jsProgram, precompilationContext);
     // Makes JProgram aware of these types so they can be accessed via index.
     unifyAst.addRootTypes(allRootTypes);
     // Must synthesize entryPoint.onModuleLoad() calls because some EntryPoint classes are

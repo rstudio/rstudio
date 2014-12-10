@@ -16,10 +16,9 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.dev.util.StringKey;
+import com.google.gwt.thirdparty.guava.common.collect.SortedSetMultimap;
 
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.SortedSet;
 
 /**
  * Creates a string representation of live rebound types to all possible
@@ -35,8 +34,10 @@ import java.util.SortedSet;
 class RebindAnswersPermutationKey extends StringKey {
   private static String collapse(Permutation permutation, Set<String> liveRebindRequests) {
 
-    SortedMap<String, SortedSet<String>> answers =
-        GwtCreateMap.getPossibleAnswers(permutation.getGwtCreateAnswers(), liveRebindRequests);
+    SortedSetMultimap<String, String> answers =
+        PropertyAndBindingInfo
+            .getPossibleReboundTypesByRequestType(permutation.getPropertyAndBindingInfos(),
+                liveRebindRequests);
 
     // Create string
     return answers.toString();

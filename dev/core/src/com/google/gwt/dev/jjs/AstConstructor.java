@@ -53,31 +53,33 @@ public class AstConstructor {
     CompilerContext compilerContext = new CompilerContext.Builder().options(options)
         .minimalRebuildCache(new NullRebuildCache()).build();
 
-    RebindPermutationOracle rpo = new RebindPermutationOracle() {
-      @Override
-      public void clear() {
-      }
+    PrecompilationContext precompilationContext = new PrecompilationContext(
+        new RebindPermutationOracle() {
+          @Override
+          public void clear() {
+          }
 
-      @Override
-      public String[] getAllPossibleRebindAnswers(TreeLogger logger, String sourceTypeName)
-          throws UnableToCompleteException {
-        return new String[0];
-      }
+          @Override
+          public String[] getAllPossibleRebindAnswers(TreeLogger logger, String sourceTypeName)
+              throws UnableToCompleteException {
+            return new String[0];
+          }
 
-      @Override
-      public CompilationState getCompilationState() {
-        return state;
-      }
+          @Override
+          public CompilationState getCompilationState() {
+            return state;
+          }
 
-      @Override
-      public StandardGeneratorContext getGeneratorContext() {
-        return null;
-      }
-    };
+          @Override
+          public StandardGeneratorContext getGeneratorContext() {
+            return null;
+          }
+        });
 
     JProgram jprogram = new JProgram(compilerContext.getMinimalRebuildCache());
     JsProgram jsProgram = new JsProgram();
-    UnifyAst unifyAst = new UnifyAst(logger, compilerContext, jprogram, jsProgram, rpo);
+    UnifyAst unifyAst = new UnifyAst(logger, compilerContext, jprogram, jsProgram,
+        precompilationContext);
     unifyAst.buildEverything();
 
     // Compute all super type/sub type info
