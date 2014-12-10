@@ -462,7 +462,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          {
             // We want to find the index of the largest token column still less than
             // the column passed in by the caller.
-            var index = 0;
+            var index = 1;
             for (; index < rowTokens.length; index++)
             {
                if (rowTokens[index].column > column)
