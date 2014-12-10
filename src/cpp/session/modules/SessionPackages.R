@@ -617,6 +617,18 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       }
    }
    
+   if (grepl("MIT\\s+\\+\\s+file\\s+LICEN[SC]E", DESCRIPTION$License, perl = TRUE))
+   {
+      msg <- c(
+         paste("YEAR:", format(Sys.time(), "%Y")),
+         paste("COPYRIGHT HOLDER:", getOption("devtools.name") %||% "<Your Name>")
+      )
+      
+      cat(msg,
+          file = file.path(packageDirectory, "LICENSE"),
+          sep = "\n")
+   }
+   
    # Create a NAMESPACE file
    NAMESPACE <- c(
       'exportPattern("^[[:alpha:]]+")'
@@ -625,6 +637,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # If we are using Rcpp, update DESCRIPTION and NAMESPACE
    if (usingRcpp)
    {
+      dir.create(file.path(packageDirectory, "src"), showWarnings = FALSE)
+      
       rcppImportsStatement <- "Rcpp"
       
       # We'll enforce Rcpp > (installed version)
@@ -643,6 +657,10 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       )
    }
    
+   # Always create 'R/', 'man/' directories
+   dir.create(file.path(packageDirectory, "R"), showWarnings = FALSE)
+   dir.create(file.path(packageDirectory, "man"))
+   
    # If there were no source files specified, create a simple 'hello world'
    # function -- but only if the user hasn't implicitly opted into the 'devtools'
    # ecosystem
@@ -654,9 +672,6 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          "    print(\"Hello, world!\")",
          "}"
       )
-      
-      if (!file.exists(file.path(packageDirectory, "R")))
-         dir.create(file.path(packageDirectory, "R"))
       
       cat(helloWorld,
           file = file.path(packageDirectory, "R", "hello.R"),
@@ -678,16 +693,14 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          "}"
       )
       
-      if (!file.exists(file.path(packageDirectory, "man")))
-         dir.create(file.path(packageDirectory, "man"))
-      
       cat(helloWorldRd,
           file = file.path(packageDirectory, "man", "hello.Rd"),
           sep = "\n")
    }
-   else
+   else if (length(sourceFiles))
    {
       # Copy the source files to the appropriate sub-directory
+      sourceFileExtensions <- gsub(".*\\.", "", sourceFiles, perl = TRUE)
       sourceDirs <- .rs.swap(
          sourceFileExtensions,
          "R" = c("r", "q", "s"),
