@@ -1784,7 +1784,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                   }
                }
 
-               return result + continuationIndent;
+               return result;
             }
          }
 
