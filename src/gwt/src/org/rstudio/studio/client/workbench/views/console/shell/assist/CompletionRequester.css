@@ -1,6 +1,11 @@
 .completionIcon {
-	margin-top: -1px;
 	margin-bottom: -1px;
+	padding-left: 2px;
+	padding-right: 6px;
+}
+
+.fileIcon {
+	margin-bottom: -3px;
 	padding-left: 2px;
 	padding-right: 6px;
 }

@@ -393,6 +393,10 @@ if (NOT RSTUDIO_SESSION_WIN64)
    install(DIRECTORY "resources/pdfjs"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
+   # install DataTables
+   install(DIRECTORY "resources/grid"
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+
    # install libclang
    if(WIN32)
       file(GLOB LIBCLANG_32_FILES "${LIBCLANG_DIR}/x86/libclang.*")

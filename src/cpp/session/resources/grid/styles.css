@@ -1,0 +1,277 @@
+
+body {
+    height: 100%;
+    margin: 0px;
+    font-family: 'Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', Verdana, Helvetica, sans-serif;
+    background-color: #ffffff;
+}
+
+thead {
+    color: #555555;
+    background-color: #f7f8f9;
+}
+
+#rsGridData {
+    margin: 0px 0px 36px 0px;
+}
+
+table.dataTable tbody td {
+    padding: 4px 5px;
+    border-bottom: 1px solid #cfd4d8;
+    border-right: 1px solid #cfd4d8;
+    font-size: 11px;
+}
+
+th {
+    text-align: left; 
+}
+
+th, table.dataTable tbody td:first-child {
+    font-size: 11px;
+    color: #555555;
+    background-color: #f7f8f9;
+    font-weight: bold;
+}
+
+table.dataTable tbody td:first-child {
+    text-align: right; 
+}
+
+table.dataTable thead th,
+table.dataTable thead td {
+    padding: 5px 5px;
+    border-bottom: 1px solid #cfd4d8;
+    border-right: 1px solid #cfd4d8;
+}
+
+table.dataTable thead th:first-child {
+    background: none;
+}
+
+table.dataTable th div:first-child {
+    margin-right: 12px;
+}
+
+.dataTables_wrapper.no-footer .dataTables_scrollBody {
+    border: none;
+}
+
+
+#errorWrapper {
+    margin-left: auto;
+    margin-right: auto;
+    width: 33%;
+    margin-top: 10%;
+    text-align: center;
+    display: none;
+    padding: 30px;
+    font-size: 12px;
+    border: 2px solid #e0e0e0;
+    z-index: 100;
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: white;
+    position: absolute;
+    left: 29%;
+}
+
+.errorWrapper input {
+    margin-top: 30px;
+}
+
+#error
+{
+}
+
+#errorMask {
+    background-color: rgba(0, 0, 0, 0.3);
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+    z-index: 50;
+    display: none;
+    position: absolute;
+}
+
+.colFilter {
+    border: 1px solid #c0c0c0;
+    border-radius: 1px;
+    margin-top: 4px;
+    background-color: #ffffff;
+    border-radius: 3px;
+    white-space: nowrap;
+    padding-left: 3px;
+    padding-right: 3px;
+    padding-top: 2px; 
+    padding-bottom: 2px; 
+    position: relative;
+    font-weight: normal;
+}
+
+.unfiltered {
+    font-style: italic;
+    color: #abacad;
+    min-width: 35px;
+}
+
+.filterPopup {
+    position: absolute;
+    overflow: hidden;
+    z-index: 25;
+    font-size: 11px;
+    background-color: #ffffff;
+    border: 1px solid #cfd4d8;
+    -webkit-box-shadow: 0px 5px 5px 0px rgba(0,0,0,0.25);
+    -moz-box-shadow: 0px 5px 5px 0px rgba(0,0,0,0.25);
+    box-shadow: 0px 5px 5px 0px rgba(0,0,0,0.25);
+}
+
+.numericFilterPopup {
+    padding-left: 4px;
+    padding-right: 4px;
+    padding-top: 4px;
+    padding-bottom: 8px;
+}
+
+.factorList {
+    max-height: 300px;
+    max-width: 400px;
+    min-width: 50px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.factorListItem {
+    padding-top: 4px;
+    padding-bottom: 4px;
+    padding-right: 8px;
+    padding-left: 8px;
+    cursor: pointer;
+}
+
+.factorListItem:hover {
+    background-color: #bce0fc;
+}
+
+.filterValue {
+    margin-right: 14px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.textFilterBox {
+    border: none;
+    width: 100%;
+    height: 100%;
+    padding: 0px;
+}
+
+.textFilterBox:focus {
+    outline: none;
+}
+
+.clearFilter {
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    width: 11px;
+    height: 11px;
+    padding: 2px;
+}
+
+#filterActions {
+    margin-top: 3px;
+    text-align: right;
+}
+
+table.dataTable thead .sorting {
+    background: url("datatables/images/sort_both.png") no-repeat right top;
+}
+
+table.dataTable thead .sorting_desc {
+    background: url("datatables/images/sort_desc.png") no-repeat right top;
+}
+
+table.dataTable thead .sorting_asc {
+    background: url("datatables/images/sort_asc.png") no-repeat right top;
+}
+
+th:focus {
+    outline: none;
+}
+
+.numSlider {
+    font-size: 9px;
+    width: 150px;
+    margin-right: 7px;
+    margin-left: 7px;
+    margin-top: 4px;
+    margin-bottom: 10px;
+}
+
+.numMin {
+    width: 75px;
+    padding-left: 4px;
+    text-align: left;
+    display: inline-block;
+    font-size: 11px;
+}
+
+.numMax {
+    width: 75px;
+    text-align: right;
+    padding-right: 4px;
+    display: inline-block;
+    font-size: 11px;
+}
+
+#rsGridData_info {
+    background-color: #f7f8f9;
+    font-size: 11px;
+    padding: 5px;
+    width: 100%;
+    box-sizing: border-box;
+    border-top: 1px solid #cfd4d8;
+    height: 25px;
+    text-align: left;
+}
+
+.numberCell {
+    text-align: right;
+}
+
+.numberCell, .textCell {
+    max-width: 300px; 
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.searchMatch {
+    background-color: #e8e8ff;
+}
+
+div.DTS div.DTS_Loading {
+    border: none;
+    background: none;
+    color: #ffffff;
+}
+
+div.DTS div.DTS_Loading.showLoading {
+    transition: color 0.5s ease;
+    color: #aaabac;
+} 
+
+#rsGridData tbody tr.even {
+    background-color: #fdfdfd;
+}
+
+#rsGridData tbody tr.even, 
+#rsGridData tbody tr.odd 
+{
+    height: 23px;
+}

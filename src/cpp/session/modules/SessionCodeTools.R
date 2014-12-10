@@ -483,6 +483,48 @@
    paste(result, collapse = "")
 })
 
+.rs.addFunction("asCaseInsensitiveSubsequenceRegex", function(string)
+{
+   if (string == "")
+      return(string)
+   
+   splat <- strsplit(string, "", fixed = TRUE)[[1]]
+   lowerSplat <- tolower(splat)
+   upperSplat <- toupper(splat)
+   
+   result <- vapply(1:length(splat), FUN.VALUE = character(1), USE.NAMES = FALSE, function(i) {
+      if (lowerSplat[i] == upperSplat[i])
+         splat[i]
+      else
+         paste("[", lowerSplat[i], upperSplat[i], "]", sep = "")
+   })
+   
+   negated <- vapply(1:length(splat), FUN.VALUE = character(1), USE.NAMES = FALSE, function(i) {
+      if (lowerSplat[i] == upperSplat[i])
+         paste("[^", splat[i], "]*", sep = "")
+      else
+         paste("[^", lowerSplat[i], upperSplat[i], "]*", sep = "")
+   })
+   
+   negated <- c(negated[-1L], "")
+   paste(result, negated, sep = "", collapse = "")
+})
+
+.rs.addFunction("isSubsequence", function(strings, string)
+{
+   .Call("rs_isSubsequence", strings, string)
+})
+
+.rs.addFunction("whichIsSubsequence", function(strings, string)
+{
+   which(.rs.isSubsequence(strings, string))
+})
+
+.rs.addFunction("selectIsSubsequence", function(strings, string)
+{
+   .subset(strings, .rs.isSubsequence(strings))
+})
+
 .rs.addFunction("escapeForRegex", function(regex)
 {
    gsub("([\\-\\[\\]\\{\\}\\(\\)\\*\\+\\?\\.\\,\\\\\\^\\$\\|\\#\\s])", "\\\\\\1", regex, perl = TRUE)
@@ -598,4 +640,102 @@
    matchedArgs <- names(matchedCall)[-1L]
    qualifiedArgsInCall <- setdiff(matchedArgs, "")
    setdiff(allArgs, qualifiedArgsInCall)[1]
+})
+
+.rs.addFunction("scoreMatches", function(strings, string)
+{
+   .Call("rs_scoreMatches", strings, string)
+})
+
+.rs.addFunction("getProjectDirectory", function()
+{
+   .Call("rs_getProjectDirectory")
+})
+
+.rs.addFunction("hasFileMonitor", function()
+{
+   .Call("rs_hasFileMonitor")
+})
+
+.rs.addFunction("listIndexedFiles", function(term = "",
+                                             inDirectory = .rs.getProjectDirectory(),
+                                             maxCount = 200L)
+{
+   if (is.null(.rs.getProjectDirectory()))
+      return(NULL)
+   
+   .Call("rs_listIndexedFiles",
+         term,
+         suppressWarnings(.rs.normalizePath(inDirectory)),
+         as.integer(maxCount))
+})
+
+.rs.addFunction("listIndexedFolders", function(term = "",
+                                               inDirectory = .rs.getProjectDirectory(),
+                                               maxCount = 200L)
+{
+   if (is.null(inDirectory))
+      return(character())
+   
+   .Call("rs_listIndexedFolders", term, inDirectory, maxCount)
+})
+
+.rs.addFunction("listIndexedFilesAndFolders", function(term = "",
+                                                       inDirectory = .rs.getProjectDirectory(),
+                                                       maxCount = 200L)
+{
+   if (is.null(inDirectory))
+      return(character())
+   
+   .Call("rs_listIndexedFilesAndFolders", term, inDirectory, maxCount)
+})
+
+.rs.addFunction("doGetIndex", function(term = "",
+                                       inDirectory = .rs.getProjectDirectory(),
+                                       maxCount = 200L,
+                                       getter)
+{
+   if (is.null(inDirectory))
+      return(character())
+   
+   inDirectory <- suppressWarnings(
+      .rs.normalizePath(inDirectory)
+   )
+   
+   index <- getter(term, inDirectory, maxCount)
+   
+   if (is.null(index))
+   {
+      return(list(
+         paths = character(),
+         more_available = FALSE
+      ))
+   }
+   
+   paths <- suppressWarnings(.rs.normalizePath(index$paths))
+   scores <- .rs.scoreMatches(basename(paths), term)
+   index$paths <- paths[order(scores)]
+   index
+   
+})
+
+.rs.addFunction("getIndexedFiles", function(term = "",
+                                            inDirectory = .rs.getProjectDirectory(),
+                                            maxCount = 200L)
+{
+   .rs.doGetIndex(term, inDirectory, maxCount, .rs.listIndexedFiles)
+})
+
+.rs.addFunction("getIndexedFolders", function(term = "",
+                                              inDirectory = .rs.getProjectDirectory(),
+                                              maxCount = 200L)
+{
+   .rs.doGetIndex(term, inDirectory, maxCount, .rs.listIndexedFolders)
+})
+
+.rs.addFunction("getIndexedFilesAndFolders", function(term = "",
+                                                      inDirectory = .rs.getProjectDirectory(),
+                                                      maxCount = 200L)
+{
+   .rs.doGetIndex(term, inDirectory, maxCount, .rs.listIndexedFilesAndFolders)
 })

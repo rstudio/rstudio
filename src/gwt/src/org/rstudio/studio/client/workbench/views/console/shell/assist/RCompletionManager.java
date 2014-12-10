@@ -49,6 +49,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.codesearch.CodeSearchOracle;
 import org.rstudio.studio.client.workbench.codesearch.model.FunctionDefinition;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
@@ -76,6 +77,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 public class RCompletionManager implements CompletionManager
@@ -125,6 +127,7 @@ public class RCompletionManager implements CompletionManager
       docDisplay_ = docDisplay;
       isConsole_ = isConsole;
       sigTip_ = new RCompletionToolTip(docDisplay_);
+      suggestTimer_ = new SuggestionTimer();
       
       input_.addBlurHandler(new BlurHandler() {
          public void onBlur(BlurEvent event)
@@ -307,6 +310,8 @@ public class RCompletionManager implements CompletionManager
    
    public boolean previewKeyDown(NativeEvent event)
    {
+      suggestTimer_.cancel();
+      
       if (sigTip_ != null)
          if (sigTip_.previewKeyDown(event))
             return true;
@@ -402,17 +407,29 @@ public class RCompletionManager implements CompletionManager
             // This functionality is here to ensure backspace works properly;
             // e.g "stats::rna" -> "stats::rn" brings completions if the user
             // had originally requested completions at e.g. "stats::".
-            if (popup_.hasCompletions())
+            if (popup_.hasCompletions() && !popup_.isOffscreen())
             {
-               if (keycode == KeyCodes.KEY_TAB
-                     || keycode == KeyCodes.KEY_ENTER
-                     || keycode == KeyCodes.KEY_RIGHT)
+               if (keycode == KeyCodes.KEY_ENTER)
                {
                   QualifiedName value = popup_.getSelectedValue() ;
                   if (value != null)
                   {
                      context_.onSelection(value) ;
                      return true ;
+                  }
+               }
+               
+               else if (keycode == KeyCodes.KEY_TAB ||
+                        keycode == KeyCodes.KEY_RIGHT)
+               {
+                  QualifiedName value = popup_.getSelectedValue() ;
+                  if (value != null)
+                  {
+                     if (value.type == RCompletionType.DIRECTORY)
+                        context_.suggestOnAccept_ = true;
+                     
+                     context_.onSelection(value);
+                     return true;
                   }
                }
                
@@ -571,9 +588,45 @@ public class RCompletionManager implements CompletionManager
    
    public boolean previewKeyPress(char c)
    {
+      suggestTimer_.cancel();
+      
       if (popup_.isShowing())
       {
-         if (isValidForRIdentifier(c) || c == ':')
+         // If insertion of this character completes an available suggestion,
+         // and is not a prefix match of any other suggestion, then implicitly
+         // apply that.
+         QualifiedName selectedItem =
+               popup_.getSelectedValue();
+         
+         if (selectedItem != null &&
+               selectedItem.name.equals(token_ + c))
+         {
+            String fullToken = token_ + c;
+            
+            // Find prefix matches -- there should only be one if we really
+            // want this behaviour (ie the current selection)
+            int prefixMatchCount = 0;
+            QualifiedName[] items = popup_.getItems();
+            for (int i = 0; i < items.length; i++)
+            {
+               if (items[i].name.startsWith(fullToken))
+               {
+                  ++prefixMatchCount;
+                  if (prefixMatchCount > 1)
+                     break;
+               }
+            }
+            
+            if (prefixMatchCount == 1)
+            {
+               // We place the completion list offscreen to ensure that
+               // backspace events are handled later. 
+               popup_.placeOffscreen();
+               return false;
+            }
+         }
+         
+         if (isValidForRIdentifier(c))
          {
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
@@ -583,6 +636,11 @@ public class RCompletionManager implements CompletionManager
                   beginSuggest(false, true, false);
                }
             });
+         }
+         
+         if (c == ':')
+         {
+            suggestTimer_.schedule(false, true, false);
          }
       }
       else
@@ -598,7 +656,6 @@ public class RCompletionManager implements CompletionManager
 
          if (!autoPopupEnabled)
             return false;
-         
          
          // Check for a valid number of R identifier characters for autopopup
          boolean canAutoPopup = checkCanAutoPopup(c, 4);
@@ -633,14 +690,8 @@ public class RCompletionManager implements CompletionManager
                (c == '@') ||
                isSweaveCompletion(c))
          {
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
-                  beginSuggest(true, true, false);
-               }
-            });
+            // Delay suggestion to avoid auto-popup while the user is typing
+            suggestTimer_.schedule(true, true, false);
          }
          else if (CompletionUtils.handleEncloseSelection(input_, c))
          {
@@ -902,12 +953,16 @@ public class RCompletionManager implements CompletionManager
    {
       return StringUtil.stripBalancedQuotes(line).contains("#");
    }
-
+   
    /**
     * If false, the suggest operation was aborted
     */
-   private boolean beginSuggest(boolean flushCache, boolean implicit, boolean canAutoInsert)
+   private boolean beginSuggest(boolean flushCache,
+                                boolean implicit,
+                                boolean canAutoInsert)
    {
+      suggestTimer_.cancel();
+      
       if (!input_.isSelectionCollapsed())
          return false ;
       
@@ -937,12 +992,6 @@ public class RCompletionManager implements CompletionManager
       
       AutocompletionContext context = getAutocompletionContext();
       
-      if (!input_.hasSelection())
-      {
-         Debug.log("Cursor wasn't in input box or was in subelement");
-         return false ;
-      }
-
       context_ = new CompletionRequestContext(invalidation_.getInvalidationToken(),
                                               selection,
                                               canAutoInsert);
@@ -951,7 +1000,7 @@ public class RCompletionManager implements CompletionManager
       AceEditor editor = (AceEditor) docDisplay_;
       if (editor != null)
       {
-         CodeModel codeModel = editor.getSession().getMode().getCodeModel();
+         CodeModel codeModel = editor.getSession().getMode().getRCodeModel();
          TokenCursor cursor = codeModel.getTokenCursor();
          
          if (cursor.moveToPosition(input_.getCursorPosition()))
@@ -1065,13 +1114,13 @@ public class RCompletionManager implements CompletionManager
    }
    
    
-   private AutocompletionContext getAutocompletionContextForFile(
-         String line)
+   private void addAutocompletionContextForFile(AutocompletionContext context,
+                                                String line)
    {
       int index = Math.max(line.lastIndexOf('"'), line.lastIndexOf('\''));
-      return new AutocompletionContext(
-            line.substring(index + 1),
-            AutocompletionContext.TYPE_FILE);
+      String token = line.substring(index + 1);
+      context.add(token, AutocompletionContext.TYPE_FILE);
+      context.setToken(token);
    }
    
    private AutocompletionContext getAutocompletionContextForFileMarkdownLink(
@@ -1123,7 +1172,7 @@ public class RCompletionManager implements CompletionManager
       if (editor == null)
          return false;
       
-      CodeModel codeModel = editor.getSession().getMode().getCodeModel();
+      CodeModel codeModel = editor.getSession().getMode().getRCodeModel();
       codeModel.tokenizeUpToRow(input_.getCursorPosition().getRow());
       
       TokenCursor cursor = codeModel.getTokenCursor();
@@ -1186,13 +1235,18 @@ public class RCompletionManager implements CompletionManager
          return getAutocompletionContextForFileMarkdownLink(firstLine);
       
       // If we're completing an object within a string, assume it's a
-      // file-system completion
+      // file-system completion. Note that we may need other contextual information
+      // to decide if e.g. we only want directories.
       String firstLineStripped = StringUtil.stripBalancedQuotes(
             StringUtil.stripRComment(firstLine));
       
+      boolean isFileCompletion = false;
       if (firstLineStripped.indexOf('\'') != -1 || 
           firstLineStripped.indexOf('"') != -1)
-         return getAutocompletionContextForFile(firstLine);
+      {
+         isFileCompletion = true;
+         addAutocompletionContextForFile(context, firstLine);
+      }
       
       // If this line starts with '```{', then we're completing chunk options
       // pass the whole line as a token
@@ -1213,22 +1267,25 @@ public class RCompletionManager implements CompletionManager
       if (token.contains("$") || token.contains("@"))
          addAutocompletionContextForDollar(context);
       
-      // If the token has '::' or ':::', escape early as we'll be completing
-      // something from a namespace
+      // If the token has '::' or ':::', add that context. Note that
+      // we still need outer contexts (so that e.g., if we try
+      // 'debug(stats::rnorm)' we know not to auto-insert parens)
       if (token.contains("::"))
          addAutocompletionContextForNamespace(token, context);
       
-      // Now strip the '$' and '@' post-hoc since they're not really part
-      // of the identifier
+      // If this is not a file completion, we need to further strip and
+      // then set the token. Note that the token will have already been
+      // set if this is a file completion.
       token = token.replaceAll(".*[$@:]", "");
-      context.setToken(token);
+      if (!isFileCompletion)
+         context.setToken(token);
       
       // access to the R Code model
       AceEditor editor = (AceEditor) docDisplay_;
       if (editor == null)
          return context;
       
-      CodeModel codeModel = editor.getSession().getMode().getCodeModel();
+      CodeModel codeModel = editor.getSession().getMode().getRCodeModel();
       
       // We might need to grab content from further up in the document than
       // the current cursor position -- so tokenize ahead.
@@ -1407,6 +1464,39 @@ public class RCompletionManager implements CompletionManager
       
    }
    
+   public Comparator<QualifiedName> createFuzzyComparator(String query)
+   {
+      final String queryLower = query.toLowerCase();
+      return new Comparator<QualifiedName>() {
+
+         @Override
+         public int compare(final QualifiedName lhs,
+                            final QualifiedName rhs)
+         {
+            int lhsScore = CodeSearchOracle.scoreMatch(
+                  lhs.name,
+                  queryLower,
+                  false);
+            
+            int rhsScore = CodeSearchOracle.scoreMatch(
+                  rhs.name,
+                  queryLower,
+                  false);
+            
+            if (lhsScore == rhsScore)
+            {
+               return lhs.name.length() - rhs.name.length();
+            }
+            else
+            {
+               return lhsScore < rhsScore ? -1 : 1;
+            }
+            
+         }
+         
+      };
+   }
+   
    /**
     * It's important that we create a new instance of this each time.
     * It maintains state that is associated with a completion request.
@@ -1450,8 +1540,9 @@ public class RCompletionManager implements CompletionManager
          if (invalidationToken_.isInvalid())
             return ;
          
-         final QualifiedName[] results
-                     = completions.completions.toArray(new QualifiedName[0]) ;
+         // Only display the top completions
+         final QualifiedName[] results =
+               completions.completions.toArray(new QualifiedName[0]);
          
          if (results.length == 0)
          {
@@ -1478,13 +1569,18 @@ public class RCompletionManager implements CompletionManager
                // Show an empty popup message offscreen -- this is a hack to
                // ensure that we can get completion results on backspace after a
                // failed completion, e.g. 'stats::rna' -> 'stats::rn'
-               Rectangle offScreen = new Rectangle(-100, -100, 0, 0);
-               popup_.showErrorMessage(
-                     "",
-                     new PopupPositioner(offScreen, popup_));
+               popup_.placeOffscreen();
             }
             
             return ;
+         }
+         
+         // If there is only one result and the name is identical to the
+         // current token, then don't display anything
+         if (results.length == 1 &&
+             completions.token.equals(results[0].name))
+         {
+            return;
          }
 
          // Move range to beginning of token; we want to place the popup there.
@@ -1498,28 +1594,27 @@ public class RCompletionManager implements CompletionManager
          overrideInsertParens_ = completions.dontInsertParens;
 
          if (results.length == 1
-             && canAutoAccept_
-             && StringUtil.isNullOrEmpty(results[0].source))
+               && canAutoAccept_
+               && results[0].type != RCompletionType.DIRECTORY)
          {
             onSelection(results[0]);
          }
          else
          {
-            if (results.length == 1 && canAutoAccept_)
-               applyValue(results[0]);
-            else
-               popup_.showCompletionValues(
-                     results,
-                     new PopupPositioner(rect, popup_));
+            popup_.showCompletionValues(
+                  results,
+                  new PopupPositioner(rect, popup_),
+                  false);
          }
       }
 
       private void onSelection(QualifiedName qname)
       {
+         suggestTimer_.cancel();
          final String value = qname.name ;
          
          if (invalidationToken_.isInvalid())
-            return ;
+            return;
          
          requester_.flushCache() ;
          helpStrategy_.clearCache();
@@ -1531,7 +1626,7 @@ public class RCompletionManager implements CompletionManager
          }
 
          applyValue(qname);
-         if (suggestOnAccept_ || qname.name.endsWith("/") || qname.name.endsWith(":"))
+         if (suggestOnAccept_ || qname.name.endsWith(":"))
          {
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
@@ -1564,6 +1659,8 @@ public class RCompletionManager implements CompletionManager
       
       private void applyValueRmdOption(final String value)
       {
+         suggestTimer_.cancel();
+         
          // If there is no token but spaces have been inserted, then compensate
          // for that. This is necessary as we allow for spaces in the completion,
          // and completions auto-popup after ',' so e.g. on
@@ -1619,7 +1716,7 @@ public class RCompletionManager implements CompletionManager
          if (editor != null)
          {
             TokenCursor cursor =
-                  editor.getSession().getMode().getCodeModel().getTokenCursor();
+                  editor.getSession().getMode().getRCodeModel().getTokenCursor();
             cursor.moveToPosition(editor.getCursorPosition());
             if (cursor.moveToNextToken())
             {
@@ -1635,16 +1732,22 @@ public class RCompletionManager implements CompletionManager
          String source = qualifiedName.source;
          boolean shouldQuote = qualifiedName.shouldQuote;
          
-         if (value == ":=")
-            value = quoteIfNotSyntacticNameCompletion(value);
-         else if (!value.matches(".*[=:]\\s*$") && 
-               !value.matches("^\\s*([`'\"]).*\\1\\s*$") &&
-               source != "<file>" &&
-               source != "<directory>" &&
-               source != "`chunk-option`" &&
-               !value.startsWith("@") &&
-               !shouldQuote)
-            value = quoteIfNotSyntacticNameCompletion(value);
+         if (qualifiedName.type == RCompletionType.DIRECTORY)
+            value = value + "/";
+         
+         if (!RCompletionType.isFileType(qualifiedName.type))
+         {
+            if (value == ":=")
+               value = quoteIfNotSyntacticNameCompletion(value);
+            else if (!value.matches(".*[=:]\\s*$") && 
+                  !value.matches("^\\s*([`'\"]).*\\1\\s*$") &&
+                  source != "<file>" &&
+                  source != "<directory>" &&
+                  source != "`chunk-option`" &&
+                  !value.startsWith("@") &&
+                  !shouldQuote)
+               value = quoteIfNotSyntacticNameCompletion(value);
+         }
 
          /* In some cases, applyValue can be called more than once
           * as part of the same completion instance--specifically,
@@ -1824,4 +1927,51 @@ public class RCompletionManager implements CompletionManager
    
    private QualifiedName lastSelectedItem_;
    private Timer helpRequest_;
+   private final SuggestionTimer suggestTimer_;
+   
+   private class SuggestionTimer
+   {
+      
+      SuggestionTimer()
+      {
+         timer_ = new Timer()
+         {
+            @Override
+            public void run()
+            {
+               beginSuggest(
+                     flushCache_,
+                     implicit_,
+                     canAutoInsert_);
+            }
+         };
+      }
+      
+      public void schedule(boolean flushCache,
+                           boolean implicit,
+                           boolean canAutoInsert)
+      {
+         flushCache_ = flushCache;
+         implicit_ = implicit;
+         canAutoInsert_ = canAutoInsert;
+         timer_.schedule(400);
+      }
+      
+      public void cancel()
+      {
+         timer_.cancel();
+      }
+      
+      @SuppressWarnings("unused")
+      public boolean isRunning()
+      {
+         return timer_.isRunning();
+      }
+      
+      private boolean flushCache_;
+      private boolean implicit_;
+      private boolean canAutoInsert_;
+      private final Timer timer_;
+      
+   }
 }

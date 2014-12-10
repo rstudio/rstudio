@@ -24,9 +24,11 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.icons.code.CodeIcons;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -48,9 +50,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 
 public class CompletionRequester
@@ -107,25 +108,73 @@ public class CompletionRequester
       
    }
    
+   private String basename(String absolutePath)
+   {
+      return absolutePath.substring(absolutePath.lastIndexOf('/') + 1);
+   }
+   
    private CompletionResult narrow(String token,
                                    String diff,
                                    CompletionResult cachedResult)
    {
-      ArrayList<QualifiedName> newCompletions = new ArrayList<QualifiedName>() ;
-      for (QualifiedName qname : cachedResult.completions)
-         if (StringUtil.isSubsequence(qname.name, token, true))
-            newCompletions.add(qname) ;
+      ArrayList<QualifiedName> newCompletions = new ArrayList<QualifiedName>();
+      newCompletions.ensureCapacity(cachedResult.completions.size());
       
+      // For completions that are files or directories, we need to post-process
+      // the token and the qualified name to strip out just the basename (filename).
+      // Note that we normalize the paths such that files will have no trailing slash,
+      // while directories will have one trailing slash (but we defend against multiple
+      // trailing slashes)
+      
+      // Transform the token once beforehand for completions.
       final String tokenLower = token.toLowerCase();
+      final String tokenLowerSub = token.toLowerCase().substring(
+            token.lastIndexOf('/') + 1);
+      
+      for (QualifiedName qname : cachedResult.completions)
+      {
+         // File types are narrowed only by the file name
+         if (RCompletionType.isFileType(qname.type))
+         {
+            if (StringUtil.isSubsequence(basename(qname.name), tokenLowerSub, true))
+            {
+               newCompletions.add(qname);
+            }
+         }
+         else
+            if (StringUtil.isSubsequence(qname.name, token, true))
+               newCompletions.add(qname) ;
+      }
+      
       java.util.Collections.sort(newCompletions, new Comparator<QualifiedName>() {
          
          @Override
          public int compare(QualifiedName lhs,
                             QualifiedName rhs)
          {
-            int lhsScore = CodeSearchOracle.scoreMatch(lhs.name, tokenLower, false);
-            int rhsScore = CodeSearchOracle.scoreMatch(rhs.name, tokenLower, false);
+            // Keep argument listings at the top
+            boolean lhsArg = lhs.type == RCompletionType.ARGUMENT;
+            boolean rhsArg = rhs.type == RCompletionType.ARGUMENT;
             
+            if (lhsArg != rhsArg)
+            {
+               return lhsArg ? -1 : 1;
+            }
+            
+            int lhsScore;
+            if (RCompletionType.isFileType(lhs.type))
+               lhsScore = CodeSearchOracle.scoreMatch(
+                     basename(lhs.name).toLowerCase(), tokenLowerSub, true);
+            else
+               lhsScore = CodeSearchOracle.scoreMatch(lhs.name.toLowerCase(), tokenLower, false);
+            
+            int rhsScore;
+            if (RCompletionType.isFileType(rhs.type))
+               rhsScore = CodeSearchOracle.scoreMatch(
+                     basename(rhs.name).toLowerCase(), tokenLowerSub, true);
+            else
+               rhsScore = CodeSearchOracle.scoreMatch(rhs.name.toLowerCase(), tokenLower, false);
+
             if (lhsScore == rhsScore)
                return lhs.name.length() - rhs.name.length();
             else
@@ -315,6 +364,9 @@ public class CompletionRequester
                if (!comp.get(i).endsWith(" = "))
                   newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i)));
             
+            // Remove duplicates
+            newComp = resolveDuplicates(newComp);
+            
             CompletionResult result = new CompletionResult(
                   response.getToken(),
                   newComp,
@@ -332,21 +384,13 @@ public class CompletionRequester
       }) ;
    }
    
-   @SuppressWarnings("unused")
-   private ArrayList<QualifiedName> withoutDupes(ArrayList<QualifiedName> completions)
+   private ArrayList<QualifiedName> resolveDuplicates(ArrayList<QualifiedName> completions)
    {
-      Set<String> names = new HashSet<String>();
-      
-      ArrayList<QualifiedName> noDupes = new ArrayList<QualifiedName>();
-      for (int i = 0; i < completions.size(); i++)
-      {
-         if (!names.contains(completions.get(i).name))
-         {
-            noDupes.add(completions.get(i));
-            names.add(completions.get(i).name);
-         }
-      }
-      return noDupes;
+      LinkedHashSet<QualifiedName> set = new LinkedHashSet<QualifiedName>();
+      set.addAll(completions);
+      ArrayList<QualifiedName> withoutDupes = new ArrayList<QualifiedName>();
+      withoutDupes.addAll(set);
+      return withoutDupes;
    }
    
    private void addScopedArgumentCompletions(
@@ -360,11 +404,14 @@ public class CompletionRequester
       {
          Position cursorPosition =
                editor.getSession().getSelection().getCursor();
-         CodeModel codeModel = editor.getSession().getMode().getCodeModel();
+         CodeModel codeModel = editor.getSession().getMode().getRCodeModel();
          JsArray<RFunction> scopedFunctions =
                codeModel.getFunctionsInScope(cursorPosition);
+         
          if (scopedFunctions.length() == 0)
             return;
+         
+         String tokenLower = token.toLowerCase();
          
          for (int i = 0; i < scopedFunctions.length(); i++)
          {
@@ -375,7 +422,7 @@ public class CompletionRequester
             for (int j = 0; j < argNames.length(); j++)
             {
                String argName = argNames.get(j);
-               if (argName.startsWith(token))
+               if (argName.toLowerCase().startsWith(tokenLower))
                {
                   if (functionName == null || functionName == "")
                   {
@@ -413,13 +460,17 @@ public class CompletionRequester
       {
          Position cursorPosition =
                editor.getSession().getSelection().getCursor();
-         CodeModel codeModel = editor.getSession().getMode().getCodeModel();
+         CodeModel codeModel = editor.getSession().getMode().getRCodeModel();
       
-         JsArray<RScopeObject> scopeVariables = codeModel.getVariablesInScope(cursorPosition);
+         JsArray<RScopeObject> scopeVariables =
+               codeModel.getVariablesInScope(cursorPosition);
+         
+         String tokenLower = token.toLowerCase();
          for (int i = 0; i < scopeVariables.length(); i++)
          {
             RScopeObject variable = scopeVariables.get(i);
-            if (variable.getToken().startsWith(token) && variable.getType() == type)
+            if (variable.getType() == type &&
+                variable.getToken().toLowerCase().startsWith(tokenLower))
                completions.add(new QualifiedName(
                      variable.getToken(),
                      variable.getType(),
@@ -440,7 +491,7 @@ public class CompletionRequester
       {
          Position cursorPosition =
                editor.getSession().getSelection().getCursor();
-         CodeModel codeModel = editor.getSession().getMode().getCodeModel();
+         CodeModel codeModel = editor.getSession().getMode().getRCodeModel();
          
          // Try to see if we can find a function name
          TokenCursor cursor = codeModel.getTokenCursor();
@@ -449,6 +500,7 @@ public class CompletionRequester
          if (!cursor.moveToPosition(cursorPosition))
             return;
          
+         String tokenLower = token.toLowerCase();
          if (cursor.currentValue() == "(" || cursor.findOpeningBracket("(", false))
          {
             if (cursor.moveToPreviousToken())
@@ -467,12 +519,14 @@ public class CompletionRequester
                      JsArrayString args = rFunction.getFunctionArgs();
                      for (int j = 0; j < args.length(); j++)
                      {
-                        completions.add(new QualifiedName(
-                              args.get(j) + " = ",
-                              fnName,
-                              false,
-                              RCompletionType.CONTEXT
-                        ));
+                        String arg = args.get(j);
+                        if (arg.toLowerCase().startsWith(tokenLower))
+                           completions.add(new QualifiedName(
+                                 args.get(j) + " = ",
+                                 fnName,
+                                 false,
+                                 RCompletionType.CONTEXT
+                           ));
                      }
                   }
                }
@@ -545,7 +599,8 @@ public class CompletionRequester
                   JsUtil.toJsArrayInteger(new ArrayList<Integer>(result.completions.length())),
                   "",
                   false,
-                  false);
+                  false,
+                  true);
             
             // Unlike other completion types, Sweave completions are not
             // guaranteed to narrow the candidate list (in particular
@@ -622,17 +677,82 @@ public class CompletionRequester
          SafeHtmlBuilder sb = new SafeHtmlBuilder();
          
          // Get an icon for the completion
+         // We use separate styles for file icons, so we can nudge them
+         // a bit differently
+         String style = RES.styles().completionIcon();
+         if (RCompletionType.isFileType(type))
+            style = RES.styles().fileIcon();
+            
          SafeHtmlUtil.appendImage(
                sb,
-               RES.styles().completionIcon(),
+               style,
                getIcon());
          
+         // Get the display name. Note that for file completions this requires
+         // some munging of the 'name' and 'package' fields.
+         addDisplayName(sb);
+         
+         return sb.toSafeHtml().asString();
+      }
+      
+      private void addDisplayName(SafeHtmlBuilder sb)
+      {
+         // Handle files specially
+         if (RCompletionType.isFileType(type))
+            doAddDisplayNameFile(sb);
+         else
+            doAddDisplayNameGeneric(sb);
+      }
+      
+      private void doAddDisplayNameFile(SafeHtmlBuilder sb)
+      {
+         ArrayList<Integer> slashIndices =
+               StringUtil.indicesOf(name, '/');
+
+         if (slashIndices.size() < 1)
+         {
+            SafeHtmlUtil.appendSpan(
+                  sb,
+                  RES.styles().completion(),
+                  name);
+         }
+         else
+         {
+            int lastSlashIndex = slashIndices.get(
+                  slashIndices.size() - 1);
+
+            int firstSlashIndex = 0;
+            if (slashIndices.size() > 2)
+               firstSlashIndex = slashIndices.get(
+                     slashIndices.size() - 3);
+
+            String endName = name.substring(lastSlashIndex + 1);
+            String startName = "";
+            if (slashIndices.size() > 2)
+               startName += "...";
+            startName += name.substring(firstSlashIndex, lastSlashIndex);
+
+            SafeHtmlUtil.appendSpan(
+                  sb,
+                  RES.styles().completion(),
+                  endName);
+
+            SafeHtmlUtil.appendSpan(
+                  sb,
+                  RES.styles().packageName(),
+                  startName);
+         }
+
+      }
+      
+      private void doAddDisplayNameGeneric(SafeHtmlBuilder sb)
+      {
          // Get the name for the completion
          SafeHtmlUtil.appendSpan(
                sb,
                RES.styles().completion(),
                name);
-         
+
          // Get the associated package for functions
          if (RCompletionType.isFunctionType(type))
          {
@@ -641,8 +761,6 @@ public class CompletionRequester
                   RES.styles().packageName(),
                   "{" + source.replaceAll("package:", "") + "}");
          }
-         
-         return sb.toSafeHtml().asString();
       }
       
       private ImageResource getIcon()
@@ -671,7 +789,9 @@ public class CompletionRequester
          case RCompletionType.R5_OBJECT:
             return ICONS.clazz();
          case RCompletionType.FILE:
-            return ICONS.file();
+            return getIconForFilename(name);
+         case RCompletionType.DIRECTORY:
+            return ICONS.folder();
          case RCompletionType.CHUNK:
          case RCompletionType.ROXYGEN:
             return ICONS.keyword();
@@ -688,6 +808,11 @@ public class CompletionRequester
          default:
             return ICONS.variable();
          }
+      }
+      
+      private ImageResource getIconForFilename(String name)
+      {
+         return FILE_TYPE_REGISTRY.getIconForFilename(name);
       }
 
       public static QualifiedName parseFromText(String val)
@@ -720,11 +845,33 @@ public class CompletionRequester
          String opkg = o.source == null ? "" : o.source ;
          return pkg.compareTo(opkg) ;
       }
+      
+      @Override
+      public boolean equals(Object object)
+      {
+         if (!(object instanceof QualifiedName))
+            return false;
+         
+         QualifiedName other = (QualifiedName) object;
+         return name.equals(other.name) &&
+                type == other.type;
+      }
+      
+      @Override
+      public int hashCode()
+      {
+         int hash = 17;
+         hash = 31 * hash + name.hashCode();
+         hash = 31 * hash + type;
+         return hash;
+      }
 
       public final String name ;
       public final String source ;
       public final boolean shouldQuote ;
       public final int type ;
+      private static final FileTypeRegistry FILE_TYPE_REGISTRY =
+            RStudioGinjector.INSTANCE.getFileTypeRegistry();
    }
    
    private static final CompletionRequesterResources RES =

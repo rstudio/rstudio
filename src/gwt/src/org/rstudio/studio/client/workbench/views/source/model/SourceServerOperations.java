@@ -191,4 +191,11 @@ public interface SourceServerOperations extends FilesServerOperations,
    
    void setDocOrder(
          List<String> order, ServerRequestCallback<Void> requestCallback); 
+   
+   void removeCachedData(String cacheKey, 
+                         ServerRequestCallback<Void> requestCallback);
+   
+   void duplicateDataView(String caption, String envName, String objName, 
+                          String cacheKey,
+                          ServerRequestCallback<DataItem> requestCallback);
 }

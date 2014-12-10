@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8"/ >
+    <link rel="stylesheet" href="datatables/css/jquery.dataTables.min.css" />
+    <link rel="stylesheet" href="datatables/css/dataTables.scroller.min.css" />
+    <link rel="stylesheet" href="jquery/ui/jquery-ui.min.css" />
+    <link rel="stylesheet" href="styles.css" />
+    <script type="text/javascript" src="datatables/js/jquery.js"></script>
+    <script type="text/javascript" src="datatables/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="datatables/js/dataTables.scroller.min.js"></script>
+    <script type="text/javascript" src="jquery/ui/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="gridviewer.js"></script>
+</head>
+<body>
+    <div id="errorMask">
+    </div>
+    <div id="errorWrapper">
+        <div id="error">
+        </div>
+        <input type="button" onClick="window.location.reload();" value="Retry" />
+    </div>
+    <table id="rsGridData" class="dataTable" cellspacing="0">
+        <thead>
+            <tr id="data_cols">
+            </tr>
+        </thead>
+    </table>
+</body>
+</html>

@@ -864,6 +864,30 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    white-space: nowrap;
 }
 
+.toolbarButtonLatchable {
+  padding-right: 6px;
+  padding-left: 4px;
+  height: 16px;
+}
+
+.toolbarButtonLatchable .toolbarButtonLabel {
+  margin-top: 1px;
+  margin-left: 3px;
+}
+
+.toolbarButtonLatched {
+  /*
+   -moz-border-image: -moz-linear-gradient(top, #bfc8d0 0%, #cfd4d8 100%);
+   -webkit-border-image: -webkit-linear-gradient(top, #bfc8d0 0%, #cfd4d8 100%);
+   border-image: linear-gradient(to bottom, #bfc8d0 0%, #cfd4d8 100%);
+   border-image-slice: 1;
+   border-width: 1px;
+   */
+   border-radius: 2px;
+   background-color: #e3e7e9;
+   border: 1px solid #bfc8d0;
+}
+
 .globalToolbar {
    height:27px;
    z-index: 1;

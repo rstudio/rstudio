@@ -102,10 +102,15 @@ struct some_tag_struct_with_block_comment_above{} ;
 </pre></li>
 
 <li><pre data-expected="0">
-template <
+template &lt;
     int RTYPE
-> class
+&gt; class
 foo;
+</pre></li>
+
+<li><pre data-expected="4">
+template &lt;
+    int RTYPE,
 </pre></li>
 
 <li><pre data-expected="4">

@@ -279,7 +279,10 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
       this.currentToken = function()
       {
-         return (that.$tokens[this.$row] || [])[this.$offset];
+         var token = (that.$tokens[this.$row] || [])[this.$offset];
+         return typeof token === "undefined"
+            ? {}
+            : token;
       };
 
       this.currentValue = function()
@@ -1126,6 +1129,10 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       }
 
       function getChunkLabel(reOptions, comment) {
+
+         if (typeof reOptions === "undefined")
+            return "";
+         
          var match = reOptions.exec(comment);
          if (!match)
             return null;
@@ -1527,8 +1534,15 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          // The significant token (no whitespace, comments) that most immediately
          // precedes this line. We don't look back further than 10 rows or so for
          // performance reasons.
-         var prevToken = this.$findPreviousSignificantToken({row: lastRow, column: this.$getLine(lastRow).length},
-                                                            lastRow - 10);
+         var startPos = {
+            row: lastRow,
+            column: this.$getLine(lastRow).length
+         };
+         
+         var prevToken = this.$findPreviousSignificantToken(
+            startPos,
+            lastRow - 10
+         );
 
          if (prevToken
                && /\bparen\b/.test(prevToken.token.type)
@@ -1691,7 +1705,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                   if (rowEndState === "qstring" || rowEndState === "qqstring") 
                      continue;
                   thisIndent = this.$getLine(i).replace(/[^\s].*$/, '');
-                  thisIndentSize = thisIndent.replace("\t", tabAsSpaces).length;
+                  var thisIndentSize = thisIndent.replace("\t", tabAsSpaces).length;
                   if (thisIndentSize < resultSize) {
                      result = thisIndent;
                      resultSize = thisIndentSize;
@@ -1701,6 +1715,51 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                return result + continuationIndent;
             }
          }
+
+         // Try to find an assignment token to use for indentation, e.g. for
+         //
+         // x <- 1
+         //     y <- 2
+         //
+         //     ^
+         var maxTokensToWalk = 20;
+         var numTokensWalked = 0;
+         var tokenCursor = new this.$TokenCursor();
+         tokenCursor.moveToPosition(startPos);
+         do
+         {
+            // Step over matching braces, parens, etc.
+            if (tokenCursor.bwdToMatchingToken())
+               continue;
+
+            if (pAssign(tokenCursor.currentToken()))
+            {
+               // Use the token immediately preceding the
+               // assignment token for indentation
+               if (!tokenCursor.moveToPreviousToken())
+                  break;
+
+               // This might be a square bracket, e.g. for
+               //
+               //    x[1,
+               //      2,
+               //      3] <-
+               //
+               // In such a case, we want to walk the matching brackets.
+               while (tokenCursor.bwdToMatchingToken())
+               {
+                  if (!tokenCursor.moveToPreviousToken())
+                     break;
+               }
+               
+               return this.$getIndent(
+                  this.$getLine(tokenCursor.$row)
+               ) + continuationIndent;
+            }
+            
+         } while (tokenCursor.moveToPreviousToken() &&
+                  numTokensWalked++ < maxTokensToWalk);
+         
 
          var firstToken = this.$findNextSignificantToken({row: 0, column: 0}, lastRow);
          if (firstToken)

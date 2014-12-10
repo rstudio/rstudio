@@ -26,6 +26,8 @@
 #include <r/session/RClientState.hpp>
 #include <r/session/RSessionUtils.hpp>
 
+#include <core/system/FileScanner.hpp>
+
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RSourceIndex.hpp>
 #include <core/r_util/RPackageInfo.hpp>
@@ -207,6 +209,106 @@ SEXP rs_getSourceIndexCompletions(SEXP tokenSEXP)
    return resultSEXP;
 }
 
+bool subsequenceFilter(const FileInfo& fileInfo,
+                       const std::string& pattern,
+                       int parentPathLength,
+                       int maxCount,
+                       std::vector<std::string>* pPaths,
+                       int* pCount,
+                       bool* pMoreAvailable)
+{
+   if (*pCount >= maxCount)
+   {
+      *pMoreAvailable = true;
+      return false;
+   }
+   
+   bool isSubsequence = string_utils::isSubsequence(
+            fileInfo.absolutePath().substr(parentPathLength + 2),
+            pattern,
+            true);
+   
+   if (isSubsequence)
+   {
+      ++*pCount;
+      pPaths->push_back(fileInfo.absolutePath());
+   }
+
+   // Always add subdirectories
+   if (fileInfo.isDirectory())
+   {
+      return true;
+   }
+   
+   return false;
+}
+
+SEXP rs_scanFiles(SEXP pathSEXP,
+                  SEXP patternSEXP,
+                  SEXP maxCountSEXP)
+{
+   std::string path = r::sexp::asString(pathSEXP);
+   std::string pattern = r::sexp::asString(patternSEXP);
+   int maxCount = r::sexp::asInteger(maxCountSEXP);
+
+   FilePath filePath(path);
+   FileInfo fileInfo(filePath);
+   tree<FileInfo> tree;
+
+   core::system::FileScannerOptions options;
+   options.recursive = true;
+   options.yield = true;
+
+   // Use a subsequence filter, and bail after too many files
+   std::vector<std::string> paths;
+   
+   int count = 0;
+   bool moreAvailable = false;
+   options.filter = boost::bind(subsequenceFilter,
+                                _1,
+                                pattern,
+                                path.length(),
+                                maxCount,
+                                &paths,
+                                &count,
+                                &moreAvailable);
+
+   Error error = scanFiles(fileInfo, options, &tree);
+   if (error)
+      return R_NilValue;
+
+   r::sexp::Protect protect;
+   r::sexp::ListBuilder builder(&protect);
+
+   builder.add("paths", paths);
+   builder.add("more_available", moreAvailable);
+
+   return builder;
+}
+
+SEXP rs_isSubsequence(SEXP stringsSEXP, SEXP querySEXP)
+{
+   std::vector<std::string> strings;
+   if (!r::sexp::fillVectorString(stringsSEXP, &strings))
+      return R_NilValue;
+
+   std::string query = r::sexp::asString(querySEXP);
+
+   std::vector<bool> result(strings.size());
+
+   std::transform(strings.begin(),
+                  strings.end(),
+                  result.begin(),
+                  boost::bind(
+                     string_utils::isSubsequence,
+                     _1,
+                     query));
+
+   r::sexp::Protect protect;
+   return r::sexp::create(result, &protect);
+
+}
+
 } // end anonymous namespace
 
 Error initialize() {
@@ -220,6 +322,16 @@ Error initialize() {
             "rs_getSourceIndexCompletions",
             (DL_FUNC) r_completions::rs_getSourceIndexCompletions,
             1);
+
+   r::routines::registerCallMethod(
+            "rs_scanFiles",
+            (DL_FUNC) rs_scanFiles,
+            4);
+
+   r::routines::registerCallMethod(
+            "rs_isSubsequence",
+            (DL_FUNC) rs_isSubsequence,
+            2);
 
    using boost::bind;
    using namespace module_context;

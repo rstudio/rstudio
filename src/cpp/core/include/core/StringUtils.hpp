@@ -49,6 +49,10 @@ bool isSubsequence(std::string const& self,
 std::vector<int> subsequenceIndices(std::string const& sequence,
                                     std::string const& query);
 
+bool subsequenceIndices(std::string const& sequence,
+                        std::string const& query,
+                        std::vector<int> *pIndices);
+
 std::string getExtension(std::string const& str);
 
 std::string utf8ToSystem(const std::string& str,
