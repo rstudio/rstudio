@@ -52,7 +52,7 @@ define("mode/r_matching_brace_outdent", function(require, exports, module)
       };
 
       this.autoOutdent = function(state, session, row, codeModel) {
-         if (row == 0)
+         if (row === 0)
             return 0;
 
          var line = session.getLine(row);
