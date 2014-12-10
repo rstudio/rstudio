@@ -552,22 +552,6 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    .Call("rs_downloadAvailablePackages", contribUrl)
 })
 
-.rs.addFunction("error", function(...)
-{
-   list(
-      result = NULL,
-      message = paste(..., sep = "")
-   )
-})
-
-.rs.addFunction("success", function(result = NULL)
-{
-   list(
-      result = result,
-      message = NULL
-   )
-})
-
 .rs.addJsonRpcHandler("package_skeleton", function(packageName,
                                                    packageDirectory,
                                                    sourceFiles,
@@ -576,8 +560,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    ## Validate the package name -- note that we validate this upstream
    ## but it is sensible to validate it once more here
    if (!grepl("^[[:alpha:]][[:alnum:].]*", packageName))
-      return(.rs.error("Invalid package name: the package name must start ",
-                       "with a letter and follow with only alphanumeric characters"))
+      stop("Invalid package name: the package name must start ",
+           "with a letter and follow with only alphanumeric characters")
    
    ## Validate the package directory -- if it exists, make sure it's empty,
    ## otherwise, try to create it
@@ -587,10 +571,10 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       containedFiles <- containedFiles[
          file.info(containedFiles)[, "isdir"] %in% TRUE
       ]
-      if (packageName %in% containedFiles)
+      if (length(containedFiles))
       {
-         return(.rs.error("Folder '", packageDirectory, "' ",
-                          "already exists and is not empty"))
+         stop("Folder '", packageDirectory, "' ",
+              "already exists and is not empty")
       }
    }
    
@@ -598,7 +582,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    else
    {
       if (!dir.create(packageDirectory, recursive = TRUE))
-         return(.rs.error("Failed to create directory '", packageDirectory, "'"))
+         stop("Failed to create directory '", packageDirectory, "'")
    }
    
    # Create a DESCRIPTION file
@@ -727,7 +711,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
                            copyPaths)
       
       if (!all(success))
-         return(.rs.error("Failed to copy one or more source files"))
+         stop("Failed to copy one or more source files")
    }
    
    # Write various files out
@@ -741,8 +725,5 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    file.create(file.path(packageDirectory, "README.md"))
    
    cat("^README\\.md$", file = file.path(packageDirectory, ".Rbuildignore"), sep = "\n")
-   
-   # Return success
-   .rs.success()
    
 })

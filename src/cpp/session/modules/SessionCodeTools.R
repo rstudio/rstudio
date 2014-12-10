@@ -13,6 +13,22 @@
 #
 #
 
+.rs.addFunction("error", function(...)
+{
+   list(
+      result = NULL,
+      message = paste(..., sep = "")
+   )
+})
+
+.rs.addFunction("success", function(result = NULL)
+{
+   list(
+      result = result,
+      message = NULL
+   )
+})
+
 .rs.addFunction("withTimeLimit", function(time,
                                           expr,
                                           envir = parent.frame(),
