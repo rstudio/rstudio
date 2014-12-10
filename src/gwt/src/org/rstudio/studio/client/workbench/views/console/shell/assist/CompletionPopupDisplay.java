@@ -35,7 +35,9 @@ public interface CompletionPopupDisplay
 {
    void clearCompletions();
    void showCompletionValues(QualifiedName[] results,
-                             PositionCallback callback) ;
+                             PositionCallback callback,
+                             boolean truncated);
+   
    void showErrorMessage(String userMessage, PositionCallback callback) ;
    void hide() ;
    boolean isShowing() ;
@@ -75,4 +77,6 @@ public interface CompletionPopupDisplay
    
    boolean hasCompletions();
    int numAvailableCompletions();
+   
+   QualifiedName[] getItems();
 }

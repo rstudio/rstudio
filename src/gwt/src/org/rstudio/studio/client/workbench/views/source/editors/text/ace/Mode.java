@@ -42,6 +42,13 @@ public class Mode extends JavaScriptObject
    public native final CodeModel getCodeModel() /*-{
       return this.codeModel || {};
    }-*/;
+   
+   public native final CodeModel getRCodeModel() /*-{
+      if (typeof this.r_codeModel !== "undefined")
+         return this.r_codeModel;
+      else
+         return this.codeModel || {};
+   }-*/;
 
    public native final String getLanguageMode(Position position) /*-{
       if (!this.getLanguageMode)

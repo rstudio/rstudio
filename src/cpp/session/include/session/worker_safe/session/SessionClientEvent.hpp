@@ -120,6 +120,7 @@ extern const int kInstallRtools;
 extern const int kInstallShiny;
 extern const int kSuspendAndRestart;
 extern const int kDataViewChanged;
+extern const int kViewFunction;
 }
    
 class ClientEvent

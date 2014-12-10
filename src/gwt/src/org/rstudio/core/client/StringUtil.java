@@ -24,6 +24,7 @@ import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.regex.Pattern.ReplaceOperation;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
@@ -708,8 +709,6 @@ public class StringUtil
       boolean inDoubleQuotes = false;
       boolean inQuotes = false;
 
-      int stringStart = 0;
-
       char currentChar = '\0';
       char previousChar = '\0';
 
@@ -792,18 +791,16 @@ public class StringUtil
       return false;
    }
    
-   @SuppressWarnings("unused")
    public static int[] subsequenceIndices(
          String sequence, String query)
    {
       int query_n = query.length();
-      int sequence_n = sequence.length();
       int[] result = new int[query.length()];
       
-      int prevMatchIndex = 0;
+      int prevMatchIndex = -1;
       for (int i = 0; i < query_n; i++)
       {
-         result[i] = sequence.indexOf(query.charAt(i), prevMatchIndex);
+         result[i] = sequence.indexOf(query.charAt(i), prevMatchIndex + 1);
          prevMatchIndex = result[i];
       }
       return result;
@@ -875,6 +872,19 @@ public class StringUtil
       return builder.toString();
    }
    
+   public static ArrayList<Integer> indicesOf(String string, char ch)
+   {
+      ArrayList<Integer> indices = new ArrayList<Integer>();
+      
+      int matchIndex = string.indexOf(ch);
+      while (matchIndex != -1)
+      {
+         indices.add(matchIndex);
+         matchIndex = string.indexOf(ch, matchIndex + 1);
+      }
+      return indices;
+      
+   }
    
    private static final String[] LABELS = {
          "B",

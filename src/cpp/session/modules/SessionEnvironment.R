@@ -299,7 +299,7 @@
          return(paste(dim(obj)[1],
                       "obs. of",
                       dim(obj)[2],
-                      "variables",
+                      ifelse(dim(obj)[2] == 1, "variable", "variables"),
                       sep=" "))
       }
       else if (is.environment(obj))

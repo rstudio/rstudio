@@ -87,9 +87,7 @@ public class DocumentMode
    // C++ Mode
    private static boolean isPositionInCppMode(DocDisplay docDisplay,
                                               Position position)
-   {
-      String m = docDisplay.getLanguageMode(position);
-      
+   {    
       return isPositionInMode(
             docDisplay,
             position,

@@ -53,41 +53,55 @@
     col_min <- 0
     col_max <- 0
     col_vals <- ""
-    if (length(x[,idx]) > 0)
+    col_search_type <- ""
+    if (length(x[[idx]]) > 0)
     {
-      val <- x[,idx][1]
+      val <- x[1,idx]
       if (is.factor(val))
       {
         col_type <- "factor"
-        col_vals <- levels(val)
-        col_vals <- col_vals[1:min(length(col_vals), maxFactors)]
+        if (length(levels(val)) > maxFactors)
+        {
+          # if the number of factors exceeds the max, search the column as 
+          # though it were a character column
+          col_search_type <- "character"
+        }
+        else 
+        {
+          col_search_type <- "factor"
+          col_vals <- levels(val)
+        }
       }
       else if (is.numeric(val))
       {
         # ignore missing values when computing min/max
         col_type <- "numeric"
-        col_min <- min(x[,idx], na.rm = TRUE)
-        col_max <- max(x[,idx], na.rm = TRUE)
+        col_search_type <- "numeric"
+        col_min <- min(x[[idx]], na.rm = TRUE)
+        col_max <- max(x[[idx]], na.rm = TRUE)
       }
       else if (is.character(val))
       {
         col_type <- "character"
+        col_search_type <- "character"
       }
     }
     list(
-      col_name = .rs.scalar(col_name),
-      col_type = .rs.scalar(col_type),
-      col_min  = .rs.scalar(col_min),
-      col_max  = .rs.scalar(col_max),
-      col_vals = col_vals
+      col_name        = .rs.scalar(col_name),
+      col_type        = .rs.scalar(col_type),
+      col_min         = .rs.scalar(col_min),
+      col_max         = .rs.scalar(col_max),
+      col_search_type = .rs.scalar(col_search_type),
+      col_vals        = col_vals
     )
   })
   c(list(list(
-      col_name = .rs.scalar(""),
-      col_type = .rs.scalar("rownames"),
-      col_min  = .rs.scalar(0),
-      col_max  = .rs.scalar(0),
-      col_vals = ""
+      col_name        = .rs.scalar(""),
+      col_type        = .rs.scalar("rownames"),
+      col_min         = .rs.scalar(0),
+      col_max         = .rs.scalar(0),
+      col_search_type = .rs.scalar("none"),
+      col_vals        = ""
     )), colAttrs)
 })
 
@@ -107,32 +121,48 @@
 
 .rs.addFunction("applyTransform", function(x, filtered, search, col, dir) 
 {
+  # coerce argument to data frame--data.table objects (for example) report that
+  # they're data frames, but don't actually support the subsetting operations
+  # needed for search/sort/filter without an explicit cast
+  x <- as.data.frame(x)
+
   # apply columnwise filters
   for (i in seq_along(filtered)) {
-    if (nchar(filtered[i]) > 0 && length(x[,i]) > 0) {
-      sampleval <- x[1,i] 
-      if (is.factor(sampleval)) 
+    if (nchar(filtered[i]) > 0 && length(x[[i]]) > 0) {
+      # split filter--string format is "type|value" (e.g. "numeric|12-25") 
+      filter <- strsplit(filtered[i], split="|", fixed = TRUE)[[1]]
+      if (length(filter) < 2) 
       {
-        # apply factor filter: convert to numeric values 
-        filterval <- as.numeric(filtered[i])
-        x <- x[as.numeric(x[,i]) == filterval,]
+        # no filter type information
+        next
       }
-      else if (is.character(sampleval)) 
+      filtertype <- filter[1]
+      filterval <- filter[2]
+
+      # apply filter appropriate to type
+      if (identical(filtertype, "factor")) 
+      {
+        # apply factor filter: convert to numeric values and discard missing
+        filterval <- as.numeric(filterval)
+        matches <- as.numeric(x[[i]]) == filterval
+        matches[is.na(matches)] <- FALSE
+        x <- x[matches,]
+      }
+      else if (identical(filtertype, "character"))
       {
         # apply character filter: non-case-sensitive prefix
-        filterval <- tolower(filtered[i])
-        x <- x[tolower(substr(x[,i], 1, nchar(filterval))) == filterval,]
+        x <- x[grepl(filterval, x[[i]], ignore.case = TRUE),]
       } 
-      else if (is.numeric(sampleval))
+      else if (identical(filtertype, "numeric"))
       {
         # apply numeric filter, range ("2-32") or equality ("15")
-        filterval <- as.numeric(strsplit(filtered[i], "-")[[1]])
+        filterval <- as.numeric(strsplit(filterval, "-")[[1]])
         if (length(filterval) > 1)
           # range filter
-          x <- x[x[,i] >= filterval[1] & x[,i] <= filterval[2],]
+          x <- x[x[[i]] >= filterval[1] & x[[i]] <= filterval[2],]
         else
           # equality filter
-          x <- x[x[,i] == filterval,]
+          x <- x[x[[i]] == filterval,]
       }
     }
   }
@@ -146,9 +176,9 @@
   }
 
   # apply sort
-  if (col > 0 && length(x[,col]) > 0)
+  if (col > 0 && length(x[[col]]) > 0)
   {
-    x <- as.data.frame(x[order(x[,col], decreasing = identical(dir, "desc")),])
+    x <- as.data.frame(x[order(x[[col]], decreasing = identical(dir, "desc")),])
   }
 
   return(x)
@@ -235,6 +265,21 @@
      env <- .rs.findOwningEnv(name)
    }
 
+   # is this a function? if it is, view as a function instead
+   if (is.function(x)) 
+   {
+     namespace <- environmentName(env)
+     if (identical(namespace, "R_EmptyEnv") || identical(namespace, ""))
+       namespace <- "viewing"
+     else if (identical(namespace, "R_GlobalEnv"))
+       namespace <- ".GlobalEnv"
+     invisible(.Call("rs_viewFunction", x, title, namespace))
+     return(invisible(NULL))
+   }
+
+   # test for coercion to data frame 
+   as.data.frame(x)
+
    # save a copy into the cached environment
    cacheKey <- .rs.addCachedData(force(x))
    
@@ -284,6 +329,10 @@
 
 .rs.addFunction("saveCachedData", function(cacheDir)
 {
+  # no work to do if we have no cache
+  if (!exists(".rs.CachedDataEnv")) 
+    return(invisible(NULL))
+
   # create the cache directory if it doesn't already exist
   dir.create(cacheDir, recursive = TRUE, showWarnings = FALSE, mode = "0700")
 

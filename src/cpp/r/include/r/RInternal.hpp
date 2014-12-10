@@ -60,7 +60,6 @@
 #define Rf_allocList INTERNAL_R_FUNCTION
 #define Rf_allocS4Object INTERNAL_R_FUNCTION
 #define Rf_allocSExp INTERNAL_R_FUNCTION
-#define Rf_allocVector INTERNAL_R_FUNCTION
 #define Rf_applyClosure INTERNAL_R_FUNCTION
 #define Rf_arraySubscript INTERNAL_R_FUNCTION
 #define Rf_asComplex INTERNAL_R_FUNCTION
@@ -102,7 +101,6 @@
 #define R_lsInternal INTERNAL_R_FUNCTION
 #define Rf_match INTERNAL_R_FUNCTION
 #define Rf_namesgets INTERNAL_R_FUNCTION
-#define Rf_mkChar INTERNAL_R_FUNCTION
 #define Rf_mkCharLen INTERNAL_R_FUNCTION
 #define Rf_NonNullStringMatch INTERNAL_R_FUNCTION
 #define Rf_ncols INTERNAL_R_FUNCTION
@@ -112,7 +110,6 @@
 #define Rf_psmatch INTERNAL_R_FUNCTION
 #define Rf_PrintValue INTERNAL_R_FUNCTION
 #define Rf_protect INTERNAL_R_FUNCTION
-#define Rf_setAttrib INTERNAL_R_FUNCTION
 #define Rf_setSVector INTERNAL_R_FUNCTION
 #define Rf_setVar INTERNAL_R_FUNCTION
 #define Rf_str2type INTERNAL_R_FUNCTION

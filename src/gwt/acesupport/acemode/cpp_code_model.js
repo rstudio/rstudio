@@ -289,31 +289,6 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
             return match[2];
       }
 
-      function getChunkLabel(reOptions, comment) {
-         var match = reOptions.exec(comment);
-         if (!match)
-            return null;
-         var value = match[1];
-         var values = value.split(',');
-         if (values.length == 0)
-            return null;
-
-         // If first arg has no =, it's a label
-         if (!/=/.test(values[0])) {
-            return values[0].replace(/(^\s+)|(\s+$)/g, '');
-         }
-
-         for (var i = 0; i < values.length; i++) {
-            match = /^\s*label\s*=\s*(.*)$/.exec(values[i]);
-            if (match) {
-               return maybeEvaluateLiteralString(
-                                        match[1].replace(/(^\s+)|(\s+$)/g, ''));
-            }
-         }
-
-         return null;
-      }
-
       var maxRow = Math.min(maxrow + 30, this.$doc.getLength() - 1);
       this.$tokenUtils.$tokenizeUpToRow(maxRow);
 
@@ -342,18 +317,15 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
             this.$scopes.onSectionHead(label, tokenCursor.currentPosition());
          }
+         
          else if (/\bcodebegin\b/.test(tokenType))
          {
             var chunkStartPos = tokenCursor.currentPosition();
             var chunkPos = {row: chunkStartPos.row + 1, column: 0};
             var chunkNum = this.$scopes.getTopLevelScopeCount()+1;
-            var chunkLabel = getChunkLabel(this.$codeBeginPattern,
-                                           tokenCursor.currentValue());
-            var scopeName = "Chunk " + chunkNum;
-            if (chunkLabel)
-               scopeName += ": " + chunkLabel;
+            var chunkLabel = "(R Code Chunk)";
             this.$scopes.onChunkStart(chunkLabel,
-                                      scopeName,
+                                      chunkLabel,
                                       chunkStartPos,
                                       chunkPos);
          }
@@ -885,16 +857,16 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
          }
       }
 
-      // If the line is blank, try looking back for indentation.
-      if (line.length === 0) {
+      // If this line is intended for the preprocessor, it should be aligned
+      // at the start. Use the previous line for indentation.
+      if (line.length === 0 || /^\s*#/.test(line))
          return this.getNextLineIndent(row - 1, doc.getLine(row - 1), state, tab, tabSize, dontSubset);
-      }
 
       var indent = this.$getIndent(line);
       var unindent = this.$getUnindent(line, tabSize);
       
       var lines = doc.$lines;
-      
+
       var prevLine;
       if (row > 0) {
          prevLine = lines[row - 1];
@@ -1163,12 +1135,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
              line.split(">").length == line.split("<").length) {
             return indent;
          }
-
-         // If the line is just a '>', try looking back for an opening '<'.
-         var templateArrowRow = this.getRowForMatchingEOLArrows(session, doc, row);
-         if (templateArrowRow >= 0)
-            return this.$getIndent(lines[templateArrowRow]);
-
+         
          // Vertical alignment
          // We need to handle vertical alignment for two scenarios:
          // One, for multi-line function declarations, so that e.g.
@@ -1239,7 +1206,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
          //
          var i = row - 1;
          var prevLineNotWhitespace = prevLine;
-         while (i >= 0 && /^\s*$/.test(prevLineNotWhitespace)) {
+         while (i >= 0 && /^\s*$|^\s*#/.test(prevLineNotWhitespace)) {
             prevLineNotWhitespace = this.getLineSansComments(doc, i);
             i--;
          }
@@ -1274,25 +1241,21 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
                // If 'dontSubset' is false, then we want to plonk the token cursor
                // on the first token before the cursor.
-               if (!dontSubset) {
-                  var rowTokens = this.$tokens[row];
-                  if (rowTokens != null && rowTokens.length > 0) {
-                     for (var i = 0; i < rowTokens.length; i++) {
-                        var tokenColumn = rowTokens[i].column;
-                        if (tokenColumn >= cursor.column) {
-                           break;
-                        }
-                     }
-                     if (i > 0) {
-                        tokenCursor.$offset = i - 1;
-                     }
-                  }
-               }
+               if (!dontSubset)
+                  tokenCursor.moveToPosition(cursor);
 
                // If there is no token on this current line (this can occur when this code
                // is accessed by e.g. the matching brace offset code) then move back
                // to the previous row
-               while (tokenCursor.$offset === -1 && tokenCursor.$row > 0) {
+               while (tokenCursor.$offset < 0 && tokenCursor.$row > 0) {
+                  tokenCursor.$row--;
+                  tokenCursor.$offset = tokenCursor.$tokens[tokenCursor.$row].length - 1;
+               }
+
+               // If we're on a preprocessor line, keep moving back
+               while (tokenCursor.$row > 0 &&
+                      /^\s*#/.test(doc.getLine(tokenCursor.$row)))
+               {
                   tokenCursor.$row--;
                   tokenCursor.$offset = tokenCursor.$tokens[tokenCursor.$row].length - 1;
                }
@@ -1305,7 +1268,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                var startCursor = tokenCursor.cloneCursor();
                var startValue = startCursor.currentValue();
                var startType = startCursor.currentType();
-               
+
                if (startType === "constant" ||
                    startType === "keyword" ||
                    startType === "identifier" ||
@@ -1377,8 +1340,6 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
                while (true) {
 
-                  // Stop conditions:
-
                   // The token cursor is undefined (we moved past the start of the
                   // document)
                   if (typeof tokenCursor.currentValue() === "undefined") {
@@ -1393,7 +1354,13 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                   // We hit a semi-colon -- use the first token after that semi-colon.
                   if (tokenCursor.currentValue() === ";") {
                      if (tokenCursor.moveToNextToken()) {
-                        return this.$getIndent(lines[tokenCursor.$row]) + additionalIndent;
+                        
+                        var row = tokenCursor.$row;
+                        // Move up over preproc lines
+                        while (lines[row] != null && /^\s*#/.test(lines[row]))
+                           ++row;
+                        
+                        return this.$getIndent(lines[row]) + additionalIndent;
                      }
                   }
 
@@ -1499,7 +1466,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                   if (tokenCursor.currentValue() === "template" &&
                       tokenCursor.peekFwd().currentValue() === "<")
                   {
-                     return this.$getIndent(lines[tokenCursor.$row]);
+                     return this.$getIndent(lines[tokenCursor.$row]) + additionalIndent;
                   }
 
                   // We hit an '{'
@@ -1521,11 +1488,6 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                      }
                   }
 
-                  // We hit a preprocessor token
-                  if (/\bpreproc\b/.test(tokenCursor.currentType())) {
-                     return this.$getIndent(lines[tokenCursor.$row]);
-                  }
-
                   // We're at the start of the document
                   if (tokenCursor.$row === 0 && tokenCursor.$offset === 0) {
                      return this.$getIndent(lines[0]) + additionalIndent;
@@ -1545,9 +1507,17 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                         }
                      }
                   }
-                  
+
                   tokenCursor.bwdToMatchingToken();
                   tokenCursor.moveToPreviousToken();
+
+                  // If the token cursor is on a preproc line, skip it
+                  while (tokenCursor.$row > 0 &&
+                         /^\s*#/.test(lines[tokenCursor.$row]))
+                  {
+                     tokenCursor.$row--;
+                     tokenCursor.$offset = this.$tokens[tokenCursor.$row].length - 1;
+                  }
                }
 
             } finally {

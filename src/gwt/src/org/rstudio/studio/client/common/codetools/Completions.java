@@ -28,7 +28,9 @@ public class Completions extends JavaScriptObject
                                                       JsArrayInteger type,
                                                       String fguess,
                                                       boolean excludeOtherCompletions,
-                                                      boolean overrideInsertParens) /*-{
+                                                      boolean overrideInsertParens,
+                                                      boolean cacheable)
+   /*-{
       return {
          token: [token],
          results: completions,
@@ -37,7 +39,8 @@ public class Completions extends JavaScriptObject
          type: type,
          fguess: fguess ? [fguess] : null,
          excludeOtherCompletions: excludeOtherCompletions,
-         overrideInsertParens: overrideInsertParens
+         overrideInsertParens: overrideInsertParens,
+         cacheable: cacheable
       };
    }-*/;
 
@@ -72,11 +75,11 @@ public class Completions extends JavaScriptObject
    }-*/;
 
    public final native void setCacheable(boolean cacheable) /*-{
-      this.nocache = !cacheable;
+      this.cacheable = cacheable;
    }-*/;
 
    public final native boolean isCacheable() /*-{
-      return !this.nocache;
+      return !!this.cacheable;
    }-*/;
 
    public final native void setSuggestOnAccept(boolean suggestOnAccept) /*-{

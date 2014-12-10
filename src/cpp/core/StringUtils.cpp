@@ -43,6 +43,9 @@ bool isSubsequence(std::string const& self,
 {
    std::string::size_type self_n = self.length();
 
+   if (other_n == 0)
+      return true;
+
    if (other_n > other.length())
       other_n = other.length();
 
@@ -104,13 +107,36 @@ std::vector<int> subsequenceIndices(std::string const& sequence,
    std::vector<int> result;
    result.reserve(query.length());
 
-   int prevMatchIndex = 0;
+   int prevMatchIndex = -1;
    for (int i = 0; i < query_n; i++)
    {
-      result[i] = sequence.find(query[i], prevMatchIndex);
+      result[i] = sequence.find(query[i], prevMatchIndex + 1);
       prevMatchIndex = result[i];
    }
    return result;
+}
+
+bool subsequenceIndices(std::string const& sequence,
+                        std::string const& query,
+                        std::vector<int> *pIndices)
+{
+   pIndices->clear();
+   pIndices->reserve(query.length());
+   
+   int query_n = query.length();
+   int prevMatchIndex = -1;
+   
+   for (int i = 0; i < query_n; i++)
+   {
+      int index = sequence.find(query[i], prevMatchIndex + 1);
+      if (index == -1)
+         return false;
+      
+      pIndices->push_back(index);
+      prevMatchIndex = index;
+   }
+   
+   return true;
 }
 
 std::string getExtension(std::string const& x)

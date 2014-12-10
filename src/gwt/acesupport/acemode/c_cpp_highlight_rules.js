@@ -139,8 +139,11 @@ var c_cppHighlightRules = function() {
             token : "constant.numeric", // hex
             regex : "0[xX][0-9a-fA-F]+\\b"
          }, {
+            token : "constant.numeric", // binary literal
+            regex : "0[bB][01']+\\b"
+         }, {
             token : "constant.numeric", // float
-            regex : "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
+            regex : "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?(?:(?:[fF])|(?:(?:[uU]?(?:(?:l?l?)|(?:L?L?))?)|(?:(?:(?:l?l?)|(?:L?L?))[uU]?))|(?:_\\w+))?\\b"
          }, {
             token : "keyword.preproc",
             regex : "#\\s*include\\b",
