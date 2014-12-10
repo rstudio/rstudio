@@ -32,15 +32,6 @@ public interface TestBadKeys extends
   String __();
 
   /**
-   * Translated "_".
-   * 
-   * @return translated "_"
-   */
-  @DefaultStringValue("_")
-  @Key("-")
-  String _();
-
-  /**
    * Translated
    * "________________________________________________________________".
    * 

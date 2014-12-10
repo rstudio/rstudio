@@ -80,8 +80,6 @@ public class I18N2Test extends GWTTestCase {
     assertEquals(
         "________________________________________________________________",
         test.getString("________________________________________________________________"));
-    assertEquals("_", test._());
-    assertEquals("_", test.getString("_"));
     assertEquals("maven_jdiff_old_tag", test.maven_jdiff_old_tag());
     assertEquals("maven_jdiff_old_tag", test.getString("maven_jdiff_old_tag"));
     assertEquals("maven_checkstyle_properties",
