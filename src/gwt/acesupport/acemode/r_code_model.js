@@ -94,6 +94,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       // e.g.
       //
       //     x[[1]]$foo[[1]][, 2]@bar[[1]]()
+      //     ^~~~~~~~~~~~<~~~~~~~~~~~~~~~~~^
       this.findStartOfEvaluationContext = function() {
          
          var clone = this.cloneCursor();
@@ -152,51 +153,89 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
       this.moveToPreviousToken = function()
       {
-         var clone = this.cloneCursor();
-         while (clone.$offset <= 0 && clone.$row > 0)
-         {
-            clone.$row--;
-            clone.$offset = that.$tokens[clone.$row].length;
-         }
-
-         if (clone.$offset === 0)
+         // Bail if we're at the start of the document
+         if (this.$row === 0 && this.$offset === 0)
             return false;
 
-         clone.$offset--;
+         // If the offset is greater than zero, we know we can safely
+         // decrement it
+         if (this.$offset > 0)
+         {
+            this.$offset--;
+            return true;
+         }
 
-         this.$row = clone.$row;
-         this.$offset = clone.$offset;
+         // Otherwise, we keep walking back until we find a row containing
+         // at least one token
+         var row = this.$row - 1;
+         var length = 0;
+         while (row >= 0)
+         {
+            // Check to see if we have any tokens on this line --
+            // if we do, accept that
+            var rowTokens = that.$tokens[row];
+            if (rowTokens && rowTokens.length !== 0)
+            {
+               length = rowTokens.length;
+               break;
+            }
+            
+            row--;
+         }
+
+         // If we reached a negative row, we failed (we were actually on
+         // the first token)
+         if (row < 0)
+            return false;
+
+         // Otherwise, we can set the row + offset and return true
+         this.$row = row;
+         this.$offset = length - 1;
          return true;
       };
 
       this.moveToNextToken = function(maxRow)
       {
+         // If maxRow is undefined, we'll iterate up to the length of
+         // the tokens array
          if (typeof maxRow === "undefined")
-            maxRow = Infinity;
+            maxRow = (that.$tokens | []).length;
 
-         var clone = this.cloneCursor();
-         if (clone.$row > maxRow)
+         // If we're already past the maxRow bound, fail
+         if (this.$row > maxRow)
             return false;
 
-         clone.$offset++;
-
-         while (that.$tokens[clone.$row] != null &&
-                clone.$offset >= that.$tokens[clone.$row].length &&
-                clone.$row < maxRow)
+         // If the number of tokens on the current row is greater than
+         // the offset, we can just increment and return true
+         var rowTokens = that.$tokens[this.$row];
+         if (rowTokens &&
+             this.$offset < rowTokens.length - 1)
          {
-            clone.$row++;
-            clone.$offset = 0;
+            this.$offset++;
+            return true;
          }
 
-         if (that.$tokens[clone.$row] == null)
+         // Otherwise, we walk up rows until we find the first row
+         // containing a token. Note that we may need to check for
+         // invalidated rows (ie, rows that are null rather than having
+         // an empty array
+         var row = this.$row + 1;
+         var length = 0;
+         while (row <= maxRow)
+         {
+            rowTokens = that.$tokens[row];
+            if (rowTokens && rowTokens.length !== 0)
+               break;
+            row++;
+         }
+
+         if (row > maxRow)
             return false;
 
-         if (clone.$offset >= that.$tokens[clone.$row].length)
-            return false;
-
-         this.$row = clone.$row;
-         this.$offset = clone.$offset;
+         this.$row = row;
+         this.$offset = 0;
          return true;
+         
       };
 
       this.seekToNearestToken = function(position, maxRow)
@@ -333,6 +372,8 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          "]" : "["
       };
 
+      // Move backwards to a matching token for one of the three brackets
+      // ')', '}' and ']'.
       this.bwdToMatchingToken = function() {
 
          var thisValue = this.currentValue();
@@ -405,46 +446,62 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
       this.moveToPosition = function(pos) {
 
-         var rowTokens = that.$tokens[pos.row];
-
-         // If there's no tokens on this line, walk back until we find
-         // a line with tokens
          var row = pos.row;
-         while (row >= 0 && (rowTokens == null || rowTokens.length === 0)) {
-            row--;
-            rowTokens = that.$tokens[row];
-         }
+         var column = pos.column;
+         
+         var rowTokens = that.$tokens[row];
 
-         if (row < 0)
-            return false;
-
-         // If we walked back, we can use the last token on the row we found
-         if (row !== pos.row) {
-            this.$row = row;
-            this.$offset = that.$tokens[row].length - 1;
-            return true;
-         }
-
-         // Otherwise, walk over this row's tokens
-         for (var i = 0; i < rowTokens.length; i++) {
-            if (rowTokens[i].column >= pos.column) {
-               break;
+         // If there are tokens on this row, we can move to the first token
+         // on that line before the cursor position.
+         //
+         // Note that we validate that there is at least one token
+         // left of, or at, of the cursor position before entering
+         // this block.
+         if (rowTokens && rowTokens.length > 0 &&
+             rowTokens[0].column <= column)
+         {
+            // We want to find the index of the largest token column still less than
+            // the column passed in by the caller.
+            var index = 0;
+            for (; index < rowTokens.length; index++)
+            {
+               if (rowTokens[index].column > column)
+               {
+                  break;
+               }
             }
-         }
 
-         this.$row = pos.row;
-         this.$offset = i - 1;
-         if (i === 0) {
-            this.$offset = 0;
-            return this.moveToPreviousToken();
-         } else {
+            this.$row = row;
+            this.$offset = index - 1;
             return true;
          }
+
+         // Otherwise, we just move to the first token previous to this line.
+         // Clone the cursor, put that cursor at the start of the row, and try
+         // to find the previous token.
+         var clone = this.cloneCursor();
+         clone.$row = row;
+         clone.$offset = 0;
+         
+         if (clone.moveToPreviousToken())
+         {
+            this.$row = clone.$row;
+            this.$offset = clone.$offset;
+            return true;
+         }
+
+         return false;
          
       };
 
+      // Walk backwards to find an opening bracket (in the array 'tokens').
+      // If 'failOnOpenBrace' is true and we encounter a '{', we give up and return
+      // false.
       this.findOpeningBracket = function(tokens, failOnOpenBrace)
       {
+         // 'tokens' can be passed in either as a single token, or
+         // an array of tokens. If we don't have an array, convert it
+         // to one.
          if (!isArray(tokens))
             tokens = [tokens];
          
@@ -572,6 +629,10 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       return /\bidentifier\b/.test(t.type);
    }
 
+   // Find the associated function token from an open brace, e.g.
+   //
+   //   foo <- function(a, b, c) {
+   //          ^<<<<<<<<<<<<<<<<<^
    function findAssocFuncToken(tokenCursor)
    {
       var clonedCursor = tokenCursor.cloneCursor();
@@ -588,8 +649,14 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       tokenCursor.$offset = clonedCursor.$offset;
       return true;
 
-   };
+   }
 
+   // Move from the function token to the end of a function name.
+   // Note that it is legal to define functions in multi-line strings,
+   // hence the somewhat awkward name / interface.
+   //
+   //     "some function" <- function(a, b, c) {
+   //                   ^~~~~^
    function moveFromFunctionTokenToEndOfFunctionName(tokenCursor)
    {
       var clonedCursor = tokenCursor.cloneCursor();
@@ -1184,7 +1251,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                   tokenCursor.currentValue());
 
             var label = "" + sectionHeadMatch[1];
-            if (label.length == 0)
+            if (label.length === 0)
                label = "(Untitled)";
             if (label.length > 50)
                label = label.substring(0, 50) + "...";
@@ -2099,11 +2166,11 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    this.findNextSignificantToken = function(pos)
    {
 	   return this.$findNextSignificantToken(pos, this.$tokens.length - 1);
-   }
+   };
    
    this.$findPreviousSignificantToken = function(pos, firstRow)
    {
-      if (this.$tokens.length == 0)
+      if (this.$tokens.length === 0)
          return null;
       firstRow = Math.max(0, firstRow);
       
@@ -2111,7 +2178,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       for ( ; row >= firstRow; row--)
       {
          var tokens = this.$tokens[row];
-         if (tokens.length == 0)
+         if (tokens.length === 0)
             continue;
          
          if (row != pos.row)
