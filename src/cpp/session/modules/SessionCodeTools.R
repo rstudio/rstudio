@@ -675,6 +675,10 @@
    tmp
 })
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+
+>>>>>>> fix bad merge
 .rs.addFunction("scoreMatches", function(strings, string)
 {
    .Call("rs_scoreMatches", strings, string)
