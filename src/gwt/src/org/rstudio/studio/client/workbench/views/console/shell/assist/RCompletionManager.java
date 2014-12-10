@@ -1957,7 +1957,6 @@ public class RCompletionManager implements CompletionManager
          timer_.schedule(400);
       }
       
-      @SuppressWarnings("unused")
       public void cancel()
       {
          timer_.cancel();
