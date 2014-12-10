@@ -64,9 +64,9 @@ var $alignCase                 = true; // case 'a':
          }
 
          // outdenting for lines starting with 'closers' and 'openers'
-         if (/^\s*[\{\}\>\]\)<.:]/.test(input)) {
+         // also preproc lines
+         if (/^\s*[#\{\}\>\]\)<.:]/.test(input))
             return true;
-         }
 
          // outdenting for '='
          if (input === "=")
@@ -387,7 +387,9 @@ var $alignCase                 = true; // case 'a':
       }
 
       // Similar lookback for 'case foo:'.
-      if ($alignCase && /^\s*case.+:/.test(line)) {
+      if ($alignCase &&
+          (/^\s*case.+:/.test(line) || /^\s*default\s*:/.test(line)))
+      {
 
          // Find the associated open bracket.
          var openBracePos = session.$findOpeningBracket(
@@ -468,6 +470,17 @@ var $alignCase                 = true; // case 'a':
 
          }
 
+      }
+
+      // For lines intended for the preprocessor, trim off the indentation.
+      if (/^\s*#/.test(line))
+      {
+         var oldIndent = this.$getIndent(line);
+         doc.replace(
+            new Range(row, 0, row, oldIndent.length),
+            ""
+         );
+         return;
       }
 
    };
