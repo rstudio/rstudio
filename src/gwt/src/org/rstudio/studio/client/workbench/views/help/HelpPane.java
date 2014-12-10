@@ -499,10 +499,19 @@ public class HelpPane extends WorkbenchPane
 
    public String getUrl()
    {
-      if (getIFrameEx() != null)
-         return getIFrameEx().getContentWindow().getLocationHref() ;
-      else
-         return null;
+      String url = null;
+      try 
+      {
+         if (getIFrameEx() != null)
+            url = getIFrameEx().getContentWindow().getLocationHref();
+      }
+      catch (Exception e)
+      {
+         // attempting to get the URL can throw with a DOM security exception if
+         // the current URL is on another domain--in this case we'll just want 
+         // to return null, so eat the exception.
+      }
+      return url;
    }
    
    public String getDocTitle()
