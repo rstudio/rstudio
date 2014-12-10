@@ -308,8 +308,12 @@ var createTextFilterUI = function(idx, col, onDismiss) {
       table.columns(idx).search("character|" + input.value).draw();
     }, 200);
   input.addEventListener("keyup", function(evt) {
-    // TODO: handle Esc
     updateView();
+  });
+  input.addEventListener("keydown", function(evt) {
+    if (evt.keyCode === 27) {
+      onDismiss();
+    }
   });
   input.addEventListener("blur", function(evt) {
     onDismiss();
@@ -333,7 +337,8 @@ var invokeFilterPopup = function (ele, buildPopup, onDismiss, dismissOnClick) {
   var dismissPopup = function() {
     if (popup) {
       document.body.removeChild(popup);
-      document.body.removeEventListener(checkLightDismiss);
+      document.body.removeEventListener("click", checkLightDismiss);
+      document.body.removeEventListener("keydown", checkEscDismiss);
       dismissActivePopup = null;
       popup = null;
       onDismiss();
@@ -344,6 +349,12 @@ var invokeFilterPopup = function (ele, buildPopup, onDismiss, dismissOnClick) {
   
   var checkLightDismiss = function(evt) {
     if (popup && (!dismissOnClick || !popup.contains(evt.target))) {
+      dismissPopup();
+    }
+  };
+
+  var checkEscDismiss = function(evt) {
+    if (popup && evt.keyCode === 27) {
       dismissPopup();
     }
   };
@@ -372,6 +383,7 @@ var invokeFilterPopup = function (ele, buildPopup, onDismiss, dismissOnClick) {
       popup.style.top =  top + "px";
       popup.style.left = left  + "px";
       document.body.addEventListener("click", checkLightDismiss);
+      document.body.addEventListener("keydown", checkEscDismiss);
       dismissActivePopup = dismissPopup;
     }
     evt.preventDefault();
