@@ -31,7 +31,12 @@ if(NOT WIN32)
       if(APPLE)
          set(QT_COMPILER "clang_64")
       else()
-         set(QT_COMPILER "gcc_64")
+         # Qt named compiler folder varies by platform
+         if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+           set(QT_COMPILER "gcc_64")
+         else()
+           set(QT_COMPILER "gcc")
+         endif()
       endif()
 
       set(QMAKE_QT50_SDK "/opt/RStudio-QtSDK/${QT_VERSION}/${QT_COMPILER}")
