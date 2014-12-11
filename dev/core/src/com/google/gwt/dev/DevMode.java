@@ -40,6 +40,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerJsInteropMode;
 import com.google.gwt.dev.util.arg.ArgHandlerMethodNameDisplayMode;
 import com.google.gwt.dev.util.arg.ArgHandlerModuleName;
 import com.google.gwt.dev.util.arg.ArgHandlerModulePathPrefix;
+import com.google.gwt.dev.util.arg.ArgHandlerSetProperties;
 import com.google.gwt.dev.util.arg.ArgHandlerSourceLevel;
 import com.google.gwt.dev.util.arg.ArgHandlerWarDir;
 import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
@@ -253,6 +254,7 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
           return super.getPurpose() + " to host";
         }
       });
+      registerHandler(new ArgHandlerSetProperties(options));
     }
 
     @Override

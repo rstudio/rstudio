@@ -297,6 +297,10 @@ public class Recompiler {
     compilerContext = compilerContextBuilder.options(loadOptions).build();
 
     ModuleDef module = loadModule(compileLogger);
+    if (!Compiler.maybeRestrictProperties(compileLogger, module,
+        loadOptions.getProperties())) {
+      return false;
+    }
 
     // We need to generate the stub before restricting permutations
     String recompileJs = generateModuleRecompileJs(module, compileLogger);

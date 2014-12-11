@@ -23,15 +23,19 @@ import com.google.gwt.dev.util.arg.ArgHandlerIncrementalCompile;
 import com.google.gwt.dev.util.arg.ArgHandlerJsInteropMode;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.ArgHandlerMethodNameDisplayMode;
+import com.google.gwt.dev.util.arg.ArgHandlerSetProperties;
 import com.google.gwt.dev.util.arg.ArgHandlerSourceLevel;
 import com.google.gwt.dev.util.arg.OptionIncrementalCompile;
 import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.dev.util.arg.OptionLogLevel;
 import com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode;
+import com.google.gwt.dev.util.arg.OptionSetProperties;
 import com.google.gwt.dev.util.arg.OptionSourceLevel;
 import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
+import com.google.gwt.thirdparty.guava.common.collect.LinkedListMultimap;
+import com.google.gwt.thirdparty.guava.common.collect.ListMultimap;
 import com.google.gwt.util.tools.ArgHandler;
 import com.google.gwt.util.tools.ArgHandlerDir;
 import com.google.gwt.util.tools.ArgHandlerExtra;
@@ -81,6 +85,8 @@ public class Options {
   private OptionJsInteropMode.Mode jsInteropMode = OptionJsInteropMode.Mode.NONE;
   private OptionMethodNameDisplayMode.Mode methodNameDisplayMode =
       OptionMethodNameDisplayMode.Mode.NONE;
+
+  private final ListMultimap<String, String> properties = LinkedListMultimap.create();
 
   /**
    * Sets each option to the appropriate value, based on command-line arguments.
@@ -299,6 +305,10 @@ public class Options {
     return jsInteropMode;
   }
 
+  ListMultimap<String, String> getProperties() {
+    return properties;
+  }
+
   private class ArgProcessor extends ArgProcessorBase {
 
     public ArgProcessor() {
@@ -314,6 +324,19 @@ public class Options {
       registerHandler(new StrictResourcesFlag());
       registerHandler(new WorkDirFlag());
       registerHandler(new LauncherDir());
+      registerHandler(new ArgHandlerSetProperties(new OptionSetProperties() {
+
+          @Override
+        public void setPropertyValues(String name, Iterable<String> values) {
+          properties.replaceValues(name, values);
+        }
+
+          @Override
+        public ListMultimap<String, String> getProperties() {
+          return properties;
+        }
+
+      }));
       registerHandler(new ArgHandlerIncrementalCompile(new OptionIncrementalCompile() {
         @Override
         public boolean isIncrementalCompileEnabled() {

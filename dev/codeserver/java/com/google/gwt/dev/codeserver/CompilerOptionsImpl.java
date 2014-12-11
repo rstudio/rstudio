@@ -25,6 +25,8 @@ import com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
+import com.google.gwt.thirdparty.guava.common.collect.LinkedListMultimap;
+import com.google.gwt.thirdparty.guava.common.collect.ListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.io.File;
@@ -45,6 +47,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   private final boolean strictSourceResources;
   private final OptionJsInteropMode.Mode jsInteropMode;
   private final OptionMethodNameDisplayMode.Mode methodNameDisplayMode;
+  private final ListMultimap<String, String> properties;
 
   CompilerOptionsImpl(CompileDir compileDir, String moduleName, Options options) {
     this.compileDir = compileDir;
@@ -57,6 +60,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
     this.logLevel = options.getLogLevel();
     this.jsInteropMode = options.getJsInteropMode();
     this.methodNameDisplayMode = options.getMethodNameDisplayMode();
+    this.properties = LinkedListMultimap.create(options.getProperties());
   }
 
   @Override
@@ -109,11 +113,6 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
     return ImmutableList.of();
   }
 
-  @Override
-  public OptionMethodNameDisplayMode.Mode getMethodNameDisplayMode() {
-    return methodNameDisplayMode;
-  }
-
   /**
    * Number of threads to use to compile permutations.
    */
@@ -130,6 +129,11 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   @Override
   public int getMaxPermsPerPrecompile() {
     return -1;
+  }
+
+  @Override
+  public OptionMethodNameDisplayMode.Mode getMethodNameDisplayMode() {
+    return methodNameDisplayMode;
   }
 
   @Override
@@ -160,6 +164,11 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   @Override
   public String getOutputLibraryPath() {
     return null;
+  }
+
+  @Override
+  public ListMultimap<String, String> getProperties() {
+    return properties;
   }
 
   @Override
@@ -215,6 +224,11 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   @Override
   public boolean isEnabledGeneratingOnShards() {
     return true;
+  }
+
+  @Override
+  public boolean isIncrementalCompileEnabled() {
+    return incremental;
   }
 
   @Override
@@ -274,11 +288,6 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   }
 
   @Override
-  public boolean isIncrementalCompileEnabled() {
-    return incremental;
-  }
-
-  @Override
   public boolean shouldInlineLiteralParameters() {
     return false;
   }
@@ -319,12 +328,12 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   }
 
   @Override
-  public boolean warnOverlappingSource() {
+  public boolean warnMissingDeps() {
     return false;
   }
 
   @Override
-  public boolean warnMissingDeps() {
+  public boolean warnOverlappingSource() {
     return false;
   }
 }

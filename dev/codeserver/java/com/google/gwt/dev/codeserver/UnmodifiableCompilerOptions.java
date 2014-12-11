@@ -299,4 +299,9 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   public void setMethodNameDisplayMode(OptionMethodNameDisplayMode.Mode methodNameDisplayMode) {
     throw new UnsupportedOperationException();
   }
+
+  @Override
+  public void setPropertyValues(String name, Iterable<String> value) {
+    throw new UnsupportedOperationException();
+  }
 }

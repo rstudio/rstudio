@@ -24,6 +24,8 @@ import com.google.gwt.dev.DevMode.HostedModeOptions;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode;
+import com.google.gwt.thirdparty.guava.common.collect.ListMultimap;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.util.concurrent.SettableFuture;
 
 import java.io.File;
@@ -207,9 +209,26 @@ public class SuperDevListener implements CodeServerListener {
       args.add("-XmethodNameDisplayMode");
       args.add(options.getMethodNameDisplayMode().name());
     }
+    if (options.getProperties().size() > 0) {
+      args.addAll(makeSetPropertyArgs(options.getProperties()));
+    }
     for (String mod : options.getModuleNames()) {
       args.add(mod);
     }
     return args;
+  }
+
+  private static List<String> makeSetPropertyArgs(
+      ListMultimap<String, String> properties) {
+    List<String> propertyArgs = Lists.newArrayList();
+    for (String propertyName : properties.keySet()) {
+      propertyArgs.add("-setProperty");
+      StringBuilder nameValues = new StringBuilder(propertyName + "=");
+      for (String propertyValue : properties.get(propertyName)) {
+        nameValues.append(propertyValue + ",");
+      }
+      propertyArgs.add(nameValues.substring(0, nameValues.length() - 1));
+    }
+    return propertyArgs;
   }
 }
