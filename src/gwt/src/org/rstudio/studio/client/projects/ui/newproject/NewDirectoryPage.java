@@ -228,6 +228,11 @@ public class NewDirectoryPage extends NewProjectWizardPage
       txtProjectName_.setFocus(true);
    }
    
+   public String getProjectName()
+   {
+      return txtProjectName_.getText().trim();
+   }
+   
    protected Label dirNameLabel_;
    protected TextBox txtProjectName_;
    private CheckBox chkGitInit_;

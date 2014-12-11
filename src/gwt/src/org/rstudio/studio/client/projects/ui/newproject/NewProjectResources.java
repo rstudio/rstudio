@@ -57,6 +57,7 @@ public interface NewProjectResources extends ClientBundle
       String newProjectDirectoryName();
       String codeFilesListButton();
       String codeFilesListBox();
+      String invalidPkgName();
    }
    
    @Source("NewProjectWizard.css")

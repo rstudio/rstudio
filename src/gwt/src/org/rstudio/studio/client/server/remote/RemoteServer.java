@@ -842,7 +842,7 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, GET_CRAN_MIRRORS, requestCallback);
    }
-
+   
    public void suggestTopics(String prefix,
                              ServerRequestCallback<JsArrayString> requestCallback)
    {
@@ -1247,6 +1247,21 @@ public class RemoteServer implements Server
       params.set(2, newShinyAppOptions != null ?
             new JSONObject(newShinyAppOptions) : JSONNull.getInstance());
       sendRequest(RPC_SCOPE, CREATE_PROJECT, params, requestCallback);
+   }
+   
+   public void packageSkeleton(String packageName,
+                               String packageDirectory,
+                               JsArrayString sourceFiles,
+                               boolean usingRcpp,
+                               ServerRequestCallback<RResult<Void>> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(packageName));
+      params.set(1, new JSONString(packageDirectory));
+      setArrayString(params, 2, sourceFiles);
+      params.set(3, JSONBoolean.getInstance(usingRcpp));
+      
+      sendRequest(RPC_SCOPE, PACKAGE_SKELETON, params, requestCallback);
    }
    
    public void readProjectOptions(ServerRequestCallback<RProjectOptions> callback)
@@ -3872,6 +3887,7 @@ public class RemoteServer implements Server
    private static final String IS_PACKAGE_LOADED = "is_package_loaded";
    private static final String SET_CRAN_MIRROR = "set_cran_mirror";
    private static final String GET_CRAN_MIRRORS = "get_cran_mirrors";
+   private static final String PACKAGE_SKELETON = "package_skeleton";
 
    private static final String GET_HELP = "get_help";
    private static final String SHOW_HELP_TOPIC = "show_help_topic" ;
