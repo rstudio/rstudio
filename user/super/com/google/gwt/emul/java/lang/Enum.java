@@ -31,9 +31,9 @@ public abstract class Enum<E extends Enum<E>> implements Comparable<E>,
     Serializable {
 
   public static <T extends Enum<T>> T valueOf(Class<T> enumType, String name) {
-    JavaScriptObject enumValueOfFunc = enumType.enumValueOfFunc;
+    JavaScriptObject enumValueOfFunc = checkNotNull(enumType).enumValueOfFunc;
     checkCriticalArgument(enumValueOfFunc != null);
-
+    checkNotNull(name);
     return invokeValueOf(enumValueOfFunc, name);
   }
 
