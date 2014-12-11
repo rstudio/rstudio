@@ -23,6 +23,7 @@ import com.google.gwt.thirdparty.guava.common.collect.Multiset;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -36,6 +37,13 @@ public class FullOptimizerContext implements OptimizerContext {
   private int optimizationStep = -1;
 
   private CallGraph callGraph = new CallGraph();
+  private FieldReferencesGraph fieldReferencesGraph = new FieldReferencesGraph();
+
+  /**
+   * The deleted sub call graph and added sub call graph at each step.
+   */
+  private List<CallGraph> deletedSubCallGraphs = Lists.newArrayList();
+  private List<CallGraph> addedSubCallGraphs = Lists.newArrayList();
 
   // TODO(leafwang): add other dependencies here
 
@@ -68,30 +76,17 @@ public class FullOptimizerContext implements OptimizerContext {
     incOptimizationStep();
     initializeModifications(program);
     buildCallGraph(program);
+    buildFieldReferencesGraph(program);
     incOptimizationStep();
   }
 
   @Override
-  public void markModified(JField modifiedField) {
-    fieldsByModificationStep.get(modificationStepByField.count(modifiedField)).remove(
-        modifiedField);
-    fieldsByModificationStep.get(optimizationStep).add(modifiedField);
-    modificationStepByField.setCount(modifiedField, optimizationStep);
-
-    // TODO(leafwang): update related dependence information here.
+  public Set<JMethod> getCallees(Collection<JMethod> callerMethods) {
+    return callGraph.getCallees(callerMethods);
   }
 
   @Override
-  public void markModified(JMethod modifiedMethod) {
-    methodsByModificationStep.get(modificationStepByMethod.count(modifiedMethod)).remove(
-        modifiedMethod);
-    methodsByModificationStep.get(optimizationStep).add(modifiedMethod);
-    modificationStepByMethod.setCount(modifiedMethod, optimizationStep);
-    callGraph.updateCallGraphOfMethod(modifiedMethod);
-  }
-
-  @Override
-  public Set<JMethod> getCallers(Set<JMethod> calleeMethods) {
+  public Set<JMethod> getCallers(Collection<JMethod> calleeMethods) {
     return callGraph.getCallers(calleeMethods);
   }
 
@@ -101,18 +96,17 @@ public class FullOptimizerContext implements OptimizerContext {
   }
 
   @Override
+  public Set<JMethod> getMethodsByReferencedFields(Collection<JField> fields) {
+    return fieldReferencesGraph.getReferencingMethodsForFields(fields);
+  }
+
+  @Override
   public Set<JField> getModifiedFieldsSince(int stepSince) {
     Set<JField> result = Sets.newLinkedHashSet();
     for (int i = stepSince; i < optimizationStep; i++) {
       result.addAll(fieldsByModificationStep.get(i));
     }
     return result;
-  }
-
-  @Override
-  public Set<JMethod> getModifiedMethodsAt(int step) {
-    assert (step >= 0 && step < optimizationStep);
-    return Sets.newLinkedHashSet(methodsByModificationStep.get(step));
   }
 
   @Override
@@ -130,16 +124,66 @@ public class FullOptimizerContext implements OptimizerContext {
   }
 
   @Override
+  public Set<JField> getReferencedFieldsByMethods(Collection<JMethod> methods) {
+    return fieldReferencesGraph.getReferencedFieldsByMethods(methods);
+  }
+
+  @Override
+  public Set<JMethod> getRemovedCalleeMethodsSince(int stepSince) {
+    Set<JMethod> removedCalleeMethods = Sets.newLinkedHashSet();
+    for (int i = stepSince; i < optimizationStep; i++) {
+      removedCalleeMethods.addAll(deletedSubCallGraphs.get(i).getAllCallees());
+    }
+    return removedCalleeMethods;
+  }
+
+  @Override
   public void incOptimizationStep() {
     methodsByModificationStep.add(new LinkedHashSet<JMethod>());
     fieldsByModificationStep.add(new LinkedHashSet<JField>());
+    deletedSubCallGraphs.add(new CallGraph());
+    addedSubCallGraphs.add(new CallGraph());
     optimizationStep++;
+  }
+
+  @Override
+  public void markModified(JField modifiedField) {
+    fieldsByModificationStep.get(modificationStepByField.count(modifiedField)).remove(
+        modifiedField);
+    fieldsByModificationStep.get(optimizationStep).add(modifiedField);
+    modificationStepByField.setCount(modifiedField, optimizationStep);
+    // TODO(leafwang): update related dependence information here.
+  }
+
+  @Override
+  public void markModified(JMethod modifiedMethod) {
+    methodsByModificationStep.get(modificationStepByMethod.count(modifiedMethod)).remove(
+        modifiedMethod);
+    methodsByModificationStep.get(optimizationStep).add(modifiedMethod);
+    modificationStepByMethod.setCount(modifiedMethod, optimizationStep);
+
+    callGraph.updateCallGraphOfMethod(modifiedMethod, deletedSubCallGraphs.get(optimizationStep),
+        addedSubCallGraphs.get(optimizationStep));
+    fieldReferencesGraph.updateFieldReferencesOfMethod(modifiedMethod);
   }
 
   @Override
   public void remove(JField field) {
     fieldsByModificationStep.get(modificationStepByField.count(field)).remove(field);
     modificationStepByField.remove(field);
+    fieldReferencesGraph.removeField(field);
+  }
+
+  @Override
+  public void remove(JMethod method) {
+    methodsByModificationStep.get(modificationStepByMethod.count(method)).remove(method);
+    modificationStepByMethod.remove(method);
+    Set<JMethod> calleeMethods = callGraph.removeCallerMethod(method);
+    deletedSubCallGraphs.get(optimizationStep).addCallerMethod(method,
+        Sets.difference(calleeMethods, callGraph.getCallees(Collections.singleton(method))));
+    addedSubCallGraphs.get(optimizationStep).addCallerMethod(method,
+        Sets.difference(callGraph.getCallees(Collections.singleton(method)), calleeMethods));
+    fieldReferencesGraph.removeMethod(method);
   }
 
   @Override
@@ -147,13 +191,6 @@ public class FullOptimizerContext implements OptimizerContext {
     for (JField field : fields) {
       remove(field);
     }
-  }
-
-  @Override
-  public void remove(JMethod method) {
-    methodsByModificationStep.get(modificationStepByMethod.count(method)).remove(method);
-    modificationStepByMethod.remove(method);
-    callGraph.removeMethod(method);
   }
 
   @Override
@@ -168,8 +205,22 @@ public class FullOptimizerContext implements OptimizerContext {
     lastStepForOptimizer.setCount(optimizerName, step);
   }
 
+  @Override
+  public void syncDeletedSubCallGraphsSince(int step, Collection<JMethod> prunedMethods) {
+    for (int i = step; i < optimizationStep; i++) {
+      for (JMethod prunedMethod : prunedMethods) {
+        deletedSubCallGraphs.get(i).removeCallerMethod(prunedMethod);
+        deletedSubCallGraphs.get(i).removeCalleeMethod(prunedMethod);
+      }
+    }
+  }
+
   private void buildCallGraph(JProgram program) {
     callGraph.buildCallGraph(program);
+  }
+
+  private void buildFieldReferencesGraph(JProgram program) {
+    fieldReferencesGraph.buildFieldReferencesGraph(program);
   }
 
   private void initializeModifications(JProgram program) {

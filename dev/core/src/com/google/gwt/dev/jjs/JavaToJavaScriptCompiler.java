@@ -1457,6 +1457,7 @@ public abstract class JavaToJavaScriptCompiler {
     int passLimit = atMaxLevel ? MAX_PASSES : options.getOptimizationLevel();
     float minChangeRate = atMaxLevel ? FIXED_POINT_CHANGE_RATE : EFFICIENT_CHANGE_RATE;
     OptimizerContext optimizerCtx = new FullOptimizerContext(jprogram);
+    jprogram.typeOracle.computeOverrides(jprogram.getDeclaredTypes());
     while (true) {
       passCount++;
       if (passCount > passLimit) {

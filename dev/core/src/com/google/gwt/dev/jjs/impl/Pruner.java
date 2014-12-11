@@ -60,6 +60,7 @@ import com.google.gwt.thirdparty.guava.common.base.Predicates;
 import com.google.gwt.thirdparty.guava.common.collect.ArrayListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
 import com.google.gwt.thirdparty.guava.common.collect.ListMultimap;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Iterator;
 import java.util.List;
@@ -485,6 +486,7 @@ public class Pruner {
         if (referencedTypes.contains(type) || program.typeOracle.isInstantiatedType(type)) {
           accept(type);
         } else {
+          prunedMethods.addAll(type.getMethods());
           methodsWereRemoved(type.getMethods());
           fieldsWereRemoved(type.getFields());
           it.remove();
@@ -515,6 +517,7 @@ public class Pruner {
         if (!shouldRemove.apply(method)) {
           continue;
         }
+        prunedMethods.add(method);
         wasRemoved(method);
         type.removeMethod(i);
         program.removeStaticImplMapping(method);
@@ -530,7 +533,6 @@ public class Pruner {
       OptimizerContext optimizerCtx) {
     Event optimizeEvent = SpeedTracerLogger.start(CompilerEventType.OPTIMIZE, "optimizer", NAME);
     OptimizerStats stats = new Pruner(program, noSpecialTypes).execImpl(optimizerCtx);
-    optimizerCtx.incOptimizationStep();
     optimizeEvent.end("didChange", "" + stats.didChange());
     return stats;
   }
@@ -641,6 +643,8 @@ public class Pruner {
 
   private final boolean saveCodeGenTypes;
 
+  private final Set<JMethod> prunedMethods = Sets.newLinkedHashSet();
+
   private Pruner(JProgram program, boolean saveCodeGenTypes) {
     this.program = program;
     this.saveCodeGenTypes = saveCodeGenTypes;
@@ -685,7 +689,10 @@ public class Pruner {
         new CleanupRefsVisitor(livenessAnalyzer.getLiveFieldsAndMethods(), pruner
             .getPriorParametersByMethod(), optimizerCtx);
     cleaner.accept(program.getDeclaredTypes());
-
+    optimizerCtx.incOptimizationStep();
+    optimizerCtx.syncDeletedSubCallGraphsSince(optimizerCtx.getLastStepFor(NAME) + 1,
+        prunedMethods);
+    program.typeOracle.updateOverridesInfo(prunedMethods);
     JavaAstVerifier.assertProgramIsConsistent(program);
     return stats;
   }

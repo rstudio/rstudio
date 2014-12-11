@@ -58,6 +58,7 @@ import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.thirdparty.guava.common.collect.ArrayListMultimap;
+import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.ListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
@@ -884,7 +885,7 @@ public class ControlFlowAnalyzer {
         return;
       }
 
-      List<JMethod> overriders = methodsThatOverrideMe.get(method);
+      Iterable<JMethod> overriders = overriddingMethodsByOverriddenMethod.get(method);
       if (overriders == null) {
         return;
       }
@@ -937,7 +938,7 @@ public class ControlFlowAnalyzer {
    * A precomputed map of all instance methods onto a set of methods that
    * override each key method.
    */
-  private ListMultimap<JMethod, JMethod> methodsThatOverrideMe;
+  private LinkedHashMultimap<JMethod, JMethod> overriddingMethodsByOverriddenMethod;
 
   private final JField getClassField;
   private final JMethod getClassMethod;
@@ -963,7 +964,7 @@ public class ControlFlowAnalyzer {
       argsToRescueIfParameterRead =
           ArrayListMultimap.create(cfa.argsToRescueIfParameterRead);
     }
-    methodsThatOverrideMe = cfa.methodsThatOverrideMe;
+    overriddingMethodsByOverriddenMethod = cfa.overriddingMethodsByOverriddenMethod;
     getClassField = program.getIndexedField("Object.___clazz");
     getClassMethod = program.getIndexedMethod("Object.getClass");
     rescuer = new RescueVisitor();
@@ -975,7 +976,8 @@ public class ControlFlowAnalyzer {
     runAsyncOnsuccess = program.getIndexedMethod("RunAsyncCallback.onSuccess");
     getClassField = program.getIndexedField("Object.___clazz");
     getClassMethod = program.getIndexedMethod("Object.getClass");
-    buildMethodsOverriding();
+    program.typeOracle.computeOverrides(program.getDeclaredTypes());
+    overriddingMethodsByOverriddenMethod = program.typeOracle.getAllOverridings();
     rescuer = new RescueVisitor();
   }
 
@@ -1118,17 +1120,6 @@ public class ControlFlowAnalyzer {
   public void traverseFromRunAsyncs() {
     for (JRunAsync runAsync : program.getRunAsyncs()) {
       traverseFromRunAsync(runAsync);
-    }
-  }
-
-  private void buildMethodsOverriding() {
-    methodsThatOverrideMe = ArrayListMultimap.create();
-    for (JDeclaredType type : program.getDeclaredTypes()) {
-      for (JMethod method : type.getMethods()) {
-        for (JMethod overridden : program.typeOracle.getAllOverriddenMethods(method)) {
-          methodsThatOverrideMe.put(overridden, method);
-        }
-      }
     }
   }
 }

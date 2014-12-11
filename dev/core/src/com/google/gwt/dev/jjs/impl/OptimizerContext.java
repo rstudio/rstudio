@@ -38,7 +38,7 @@ public interface OptimizerContext {
     }
 
     @Override
-    public Set<JMethod> getCallers(Set<JMethod> calleeMethods) {
+    public Set<JMethod> getCallers(Collection<JMethod> calleeMethods) {
       return null;
     }
 
@@ -49,11 +49,6 @@ public interface OptimizerContext {
 
     @Override
     public Set<JField> getModifiedFieldsSince(int stepSince) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Set<JMethod> getModifiedMethodsAt(int step) {
       throw new UnsupportedOperationException();
     }
 
@@ -90,6 +85,30 @@ public interface OptimizerContext {
     @Override
     public void setLastStepFor(String optimizerName, int step) {
     }
+
+    @Override
+    public Set<JMethod> getCallees(Collection<JMethod> callerMethods) {
+      return null;
+    }
+
+    @Override
+    public Set<JMethod> getMethodsByReferencedFields(Collection<JField> fields) {
+      return null;
+    }
+
+    @Override
+    public Set<JField> getReferencedFieldsByMethods(Collection<JMethod> methods) {
+      return null;
+    }
+
+    @Override
+    public void syncDeletedSubCallGraphsSince(int step, Collection<JMethod> prunedMethods) {
+    }
+
+    @Override
+    public Set<JMethod> getRemovedCalleeMethodsSince(int stepSince) {
+      return null;
+    }
   };
 
   /**
@@ -102,7 +121,15 @@ public interface OptimizerContext {
    */
   void markModified(JMethod modifiedMethod);
 
-  Set<JMethod> getCallers(Set<JMethod> calleeMethods);
+  /**
+   * Return caller methods of {@code calleeMethods}.
+   */
+  Set<JMethod> getCallers(Collection<JMethod> calleeMethods);
+
+  /**
+   * Return callee methods of {@code callerMethods}.
+   */
+  Set<JMethod> getCallees(Collection<JMethod> callerMethods);
 
   /**
    * Return the last modification step for a given optimizer.
@@ -113,11 +140,6 @@ public interface OptimizerContext {
    * Return all the effective modified fields since a given step.
    */
   Set<JField> getModifiedFieldsSince(int stepSince);
-
-  /**
-   * Return all the modified methods at a given step.
-   */
-  Set<JMethod> getModifiedMethodsAt(int step);
 
   /**
    * Return all the effective modified methods since a given step.
@@ -158,4 +180,24 @@ public interface OptimizerContext {
    * Set the last modification step of a given optimizer.
    */
   void setLastStepFor(String optimizerName, int step);
+
+  /**
+   * Return methods that reference {@code fields}.
+   */
+  Set<JMethod> getMethodsByReferencedFields(Collection<JField> fields);
+
+  /**
+   * Return fields that are referenced by {@code methods}.
+   */
+  Set<JField> getReferencedFieldsByMethods(Collection<JMethod> methods);
+
+  /**
+   * Remove the pruned methods from the deleted sub call graphs since a given step.
+   */
+  void syncDeletedSubCallGraphsSince(int step, Collection<JMethod> prunedMethods);
+
+  /**
+   * Get the removed callee methods since a given step.
+   */
+  Set<JMethod> getRemovedCalleeMethodsSince(int stepSince);
 }

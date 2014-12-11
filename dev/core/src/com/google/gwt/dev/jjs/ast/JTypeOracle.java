@@ -27,6 +27,7 @@ import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSetMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Iterables;
+import com.google.gwt.thirdparty.guava.common.collect.LinkedHashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
@@ -232,7 +233,7 @@ public class JTypeOracle implements Serializable {
     }
 
     if (x.needsVtable() && isJsTypeMethod(x)) {
-      for (JMethod override : getAllOverriddenMethods(x)) {
+      for (JMethod override : getOverriddenMethodsOf(x)) {
         if (!isJsTypeMethod(override)) {
           return true;
         }
@@ -533,6 +534,9 @@ public class JTypeOracle implements Serializable {
   private final Map<JMethod, Multimap<JClassType, JMethod>> virtualUpRefMap =
       Maps.newIdentityHashMap();
 
+  private LinkedHashMultimap<JMethod, JMethod> overriddenMethodsByOverridingMethod;
+  private LinkedHashMultimap<JMethod, JMethod> overridingMethodsByOverriddenMethod;
+
   /**
    * An index of all polymorphic methods for each class.
    */
@@ -804,6 +808,25 @@ public class JTypeOracle implements Serializable {
         computeVirtualUpRefs((JClassType) type);
       }
     }
+
+    computeOverrides(declaredTypes);
+  }
+
+  public void computeOverrides(Collection<JDeclaredType> declaredTypes) {
+    if (overriddenMethodsByOverridingMethod == null
+        || overridingMethodsByOverriddenMethod == null) {
+      overriddenMethodsByOverridingMethod = LinkedHashMultimap.create();
+      overridingMethodsByOverriddenMethod = LinkedHashMultimap.create();
+      for (JDeclaredType type : declaredTypes) {
+        for (JMethod method : type.getMethods()) {
+          Set<JMethod> overriddens = computeAllOverriddenMethods(method);
+          overriddenMethodsByOverridingMethod.putAll(method, overriddens);
+          for (JMethod overridden : overriddens) {
+            overridingMethodsByOverriddenMethod.put(overridden, method);
+          }
+        }
+      }
+    }
   }
 
   private static Collection<String> getNamesOf(Collection<JDeclaredType> types) {
@@ -841,11 +864,46 @@ public class JTypeOracle implements Serializable {
    * In this case, <code>Unrelated.foo()</code> virtually implements
    * <code>IFoo.foo()</code> in subclass <code>Foo</code>.
    */
-  public Set<JMethod> getAllOverriddenMethods(JMethod method) {
+  private Set<JMethod> computeAllOverriddenMethods(JMethod method) {
     Set<JMethod> results = Sets.newIdentityHashSet();
     results.addAll(method.getOverriddenMethods());
     getAllVirtualOverriddenMethods(method, results);
     return results;
+  }
+
+  public Set<JMethod> getOverriddenMethodsOf(JMethod method) {
+    assert (overriddenMethodsByOverridingMethod != null);
+    return overriddenMethodsByOverridingMethod.get(method);
+  }
+
+  public Set<JMethod> getOverridingMethodsOf(JMethod method) {
+    assert (overridingMethodsByOverriddenMethod != null);
+    return overridingMethodsByOverriddenMethod.get(method);
+  }
+
+  public LinkedHashMultimap<JMethod, JMethod> getAllOverriddens() {
+    assert (overriddenMethodsByOverridingMethod != null);
+    return overriddenMethodsByOverridingMethod;
+  }
+
+  public LinkedHashMultimap<JMethod, JMethod> getAllOverridings() {
+    assert (overridingMethodsByOverriddenMethod != null);
+    return overridingMethodsByOverriddenMethod;
+  }
+
+  public void updateOverridesInfo(Set<JMethod> prunedMethods) {
+    assert (overriddenMethodsByOverridingMethod != null
+        && overridingMethodsByOverriddenMethod != null);
+    for (JMethod prunedMethod : prunedMethods) {
+      Set<JMethod> overriddenMethods = overriddenMethodsByOverridingMethod.removeAll(prunedMethod);
+      for (JMethod overriddenMethod : overriddenMethods) {
+        overridingMethodsByOverriddenMethod.remove(overriddenMethod, prunedMethod);
+      }
+      Set<JMethod> overriderMethods = overridingMethodsByOverriddenMethod.removeAll(prunedMethod);
+      for (JMethod overriderMethod : overriderMethods) {
+        overriddenMethodsByOverridingMethod.remove(overriderMethod, prunedMethod);
+      }
+    }
   }
 
   /**
@@ -1101,8 +1159,8 @@ public class JTypeOracle implements Serializable {
     if (!x.isNoExport() && isJsType(x.getEnclosingType())) {
       return true;
     }
-    for (JMethod om : getAllOverriddenMethods(x)) {
-      if (!om.isNoExport() && isJsType(om.getEnclosingType())) {
+    for (JMethod overriddenMethod : getOverriddenMethodsOf(x)) {
+      if (!overriddenMethod.isNoExport() && isJsType(overriddenMethod.getEnclosingType())) {
         return true;
       }
     }
