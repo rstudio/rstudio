@@ -54,6 +54,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.server.remote.RResult;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
@@ -380,19 +381,55 @@ public class Projects implements OpenProjectFileHandler,
             }
             
             indicator.onProgress("Creating project...");
-
-            projServer_.createProject(
-                  newProject.getProjectFile(),
-                  newProject.getNewPackageOptions(),
-                  newProject.getNewShinyAppOptions(),
-                  new VoidServerRequestCallback(indicator)
-                  {
-                     @Override
-                     public void onSuccess()
+            
+            if (newProject.getNewPackageOptions() == null)
+            {
+               projServer_.createProject(
+                     newProject.getProjectFile(),
+                     newProject.getNewPackageOptions(),
+                     newProject.getNewShinyAppOptions(),
+                     new VoidServerRequestCallback(indicator)
                      {
-                        continuation.execute();
-                     }
-                  });
+                        @Override
+                        public void onSuccess()
+                        {
+                           continuation.execute();
+                        }
+                     });
+            }
+            else
+            {
+               String projectFile = newProject.getProjectFile();
+               String packageDirectory = projectFile.substring(0,
+                     projectFile.lastIndexOf('/'));
+               
+               projServer_.packageSkeleton(
+                     newProject.getNewPackageOptions().getPackageName(),
+                     packageDirectory,
+                     newProject.getNewPackageOptions().getCodeFiles(),
+                     newProject.getNewPackageOptions().getUsingRcpp(),
+                     new ServerRequestCallback<RResult<Void>>()
+                     {
+                        
+                        @Override
+                        public void onResponseReceived(RResult<Void> response)
+                        {
+                           if (response.failed())
+                              indicator.onError(response.errorMessage());
+                           else
+                              continuation.execute();
+                        }
+
+                        @Override
+                        public void onError(ServerError error)
+                        {
+                           Debug.logError(error);
+                           indicator.onError(error.getUserMessage());
+                        }
+                     });
+                     
+            }
+
          }
       }, false);
       

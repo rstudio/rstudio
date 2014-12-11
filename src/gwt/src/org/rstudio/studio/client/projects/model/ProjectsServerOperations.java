@@ -34,10 +34,10 @@ public interface ProjectsServerOperations extends PrefsServerOperations,
    
    void packageSkeleton(String packageName,
                         String packageDirectory,
-                        JsArrayString codeFilePaths,
+                        JsArrayString sourceFiles,
                         boolean usingRcpp,
                         ServerRequestCallback<RResult<Void>> callback);
-    
+   
    void readProjectOptions(ServerRequestCallback<RProjectOptions> callback);
    
    void writeProjectOptions(RProjectOptions options,

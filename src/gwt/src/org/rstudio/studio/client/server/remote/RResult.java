@@ -13,7 +13,7 @@ public class RResult<T> extends JavaScriptObject
    }-*/;
    
    public final native String errorMessage() /*-{
-      return this.message;
+      return "" + this.message;
    }-*/;
    
    public final native T get() /*-{

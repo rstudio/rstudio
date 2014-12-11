@@ -16,15 +16,15 @@
 .rs.addFunction("error", function(...)
 {
    list(
-      result = NULL,
-      message = paste(..., sep = "")
+      result  = NULL,
+      message = .rs.scalar(paste(..., sep = ""))
    )
 })
 
 .rs.addFunction("success", function(result = NULL)
 {
    list(
-      result = result,
+      result  = result,
       message = NULL
    )
 })
