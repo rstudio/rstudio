@@ -79,6 +79,8 @@ json::Array toJsonArray(const std::vector<T>& val)
    return results;
 }
 
+bool fillVectorString(const Array& array, std::vector<std::string>* pVector);
+
 bool parse(const std::string& input, Value* pValue);
 
 void write(const Value& value, std::ostream& os);

@@ -2065,18 +2065,3 @@ assign(x = ".rs.acCompletionTypes",
 {
    .Call("rs_libraryCallsInSourceDoc", documentId)
 })
-
-.rs.addFunction("getCompletionsSourceDocumentLibraryCalls", function(documentId)
-{
-   # Get the current set of packages
-   pkgs <- .rs.libraryCallsInSourceDoc(documentId)
-   
-   # Check to see if there's a cached set of completions which we can use
-   
-   # Construct a call that we can run in an async R process to get the set of completions
-   
-   
-   # Launch an async R process to fill the completions
-   system("")
-   
-})

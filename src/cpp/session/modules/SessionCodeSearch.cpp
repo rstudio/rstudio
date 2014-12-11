@@ -51,7 +51,7 @@
 #include "SessionSource.hpp"
 #include "clang/DefinitionIndex.hpp"
 
-#define CODESEARCH_DEBUG_LEVEL 1
+#define CODESEARCH_DEBUG_LEVEL 0
 #if CODESEARCH_DEBUG_LEVEL > 0
 
 #define DEBUG(STRING) { \
@@ -2167,8 +2167,20 @@ SEXP rs_scoreMatches(SEXP suggestionsSEXP,
    return r::sexp::create(scores, &protect);
 }
 
+// A container struct for completions from the async process
+struct AsyncLibraryCompletions
+{
+   std::string package;
+   std::vector<std::string> exports;
+   std::vector<std::string> all;
+   std::map< std::string, std::vector<std::string> > functions;
+};
+
 // A class that faciliates the update of 'library', 'require' completions
 class LibraryCompletions : public async_r::AsyncRProcess {
+   
+private:
+   static const std::string s_toJSONFunction;
    
 public:
    static boost::shared_ptr<LibraryCompletions> update(
@@ -2189,16 +2201,25 @@ public:
                new LibraryCompletions(index));
       
       std::stringstream ss;
+      
+      // Throw in the toJSON function
+      ss << s_toJSONFunction;
+      
+      // Add in each of the package exports and whatnot
       for (std::size_t i = 0; i < n; ++i)
       {
          std::string pkg = packages[i];
          
          boost::format fmt(
-                  "%1%_exports <- paste(getNamespaceExports('%1%'), collapse = ','); "
-                  "%1%_all <- paste(ls(envir = asNamespace('%1%')), collapse = ','); "
-                  "exports_msg <- paste('%1%|exports: [', %1%_exports, ']', sep = ''); "
-                  "all_msg <- paste('%1%|all: [', %1%_all, ']', sep = ''); "
-                  "cat(c(all_msg, exports_msg), sep = '\\\\n'); "
+                  "ns <- asNamespace('%1%'); "
+                  "exports <- getNamespaceExports('%1%'); "
+                  "all <- ls(envir = ns, all.names = TRUE); "
+                  "objects <- mget(all, envir = ns); "
+                  "isFunction <- unlist(lapply(objects, is.function)); "
+                  "functions <- objects[isFunction]; "
+                  "functions <- lapply(functions, function(x) { names(formals(x)) }); "
+                  "output <- list(package = '%1%', exports = exports, all = all, functions = functions); "
+                  "cat(.rs.toJSON(output), sep = '\\\\n'); "
                   );
          
          ss << boost::str(fmt % pkg);
@@ -2223,6 +2244,11 @@ private:
       stdOut_ << output;
    }
    
+   void onStderr(const std::string &output)
+   {
+      std::cerr << output;
+   }
+   
    void onCompleted(int exitStatus)
    {
       DEBUG("* Completed async library lookup");
@@ -2231,14 +2257,63 @@ private:
       boost::split(splat, line, boost::is_any_of("\n"));
       
       std::size_t n = splat.size();
-      DEBUG("- Received " << n << " lines of response");
-      for (std::size_t i = 0; i < n / 2 + 1; i += 2)
+      std::cerr << "- Received " << n << " lines of response" << std::endl;
+      
+      // Each line should be a JSON object with the format:
+      //
+      // {
+      //    "package": <array of package names, although it's just one>
+      //    "exports": <array of exports>,
+      //    "all": <array of all things>,
+      //    "functions": <object mapping function names to arguments>
+      // }
+      AsyncLibraryCompletions completions;
+      json::Array exportsJson;
+      json::Array allJson;
+      for (std::size_t i = 0; i < n; ++i)
       {
-         std::cerr << "- Current line:\n-- '" << splat[i] << "'" << std::endl;
-         std::string package = parsePackage(splat[i]);
-         index_.addPkgExports(package, parseLine(splat[i]));
-         index_.addPkgObjects(package, parseLine(splat[i + 1]));
+         json::Value value;
+         
+         if (!json::parse(splat[i], &value))
+         {
+            std::string subset;
+            if (splat[i].length() > 60)
+               subset = splat[i].substr(0, 80) + "...";
+            else
+               subset = splat[i];
+            
+            LOG_ERROR_MESSAGE("Failed to parse JSON: '" + subset + "'");
+            continue;
+         }
+         
+         json::Object object = value.get_obj();
+         for (json::Object::const_iterator it = object.begin();
+              it != object.end();
+              ++it)
+         {
+            std::cerr << "Object key: '" << it->first << "'" << std::endl;
+            std::cerr << "Length of other thing: '" << it->second.get_obj().size() << "'" << std::endl;
+         }
+         
+         json::readObject(object,
+                          "package", &completions.package);
+         
+         std::cerr << "Length of 'object': " << object.size() << std::endl;
+         std::cerr << "Package: '" << completions.package << "'" << std::endl;
+         std::cerr << "Number of exports: '" << exportsJson.size() << "'" << std::endl;
+         
+         if (!json::fillVectorString(exportsJson, &(completions.exports)))
+            LOG_ERROR_MESSAGE("Failed to read JSON array to string");
+         
+         if (!json::fillVectorString(allJson, &(completions.all)))
+            LOG_ERROR_MESSAGE("Failed to read JSON array to string");
+         
+         // Update the index
+         index_.addPkgExports(completions.package, completions.exports);
+         index_.addPkgObjects(completions.package, completions.all);
+         
       }
+      
    }
    
    std::string parsePackage(std::string const& line)
@@ -2261,6 +2336,57 @@ private:
    core::r_util::RSourceIndex& index_;
    
 };
+
+// NOTE: Sync with 'toJSON' from 'SessionCodeTools.R' as necessary
+const std::string LibraryCompletions::s_toJSONFunction =
+" \
+.rs.toJSON <- function(object) \
+{ \
+   AsIs <- inherits(object, 'AsIs'); \
+   DQUOTE <- '\\\"'; \
+   if (is.list(object)) \
+   { \
+      if (is.null(names(object))) \
+      { \
+         return(paste('[', paste(lapply(seq_along(object), function(i) { \
+            .rs.toJSON(object[[i]]) \
+         }), collapse = ','), ']', sep = '', collapse=',')) \
+      } \
+      else \
+      { \
+         return(paste('{', paste(lapply(seq_along(object), function(i) { \
+            paste(DQUOTE, names(object)[[i]], DQUOTE, ':', .rs.toJSON(object[[i]]), sep = '') \
+         }), collapse = ','), '}', sep = '', collapse=',')) \
+      } \
+   } \
+   else \
+   { \
+      if (!length(object)) \
+      { \
+         return('[]') \
+      } \
+      if (is.character(object) || is.factor(object)) \
+      { \
+         object <- shQuote(object, 'cmd'); \
+         object[object == '\\\"NA\\\"'] <- 'null' \
+      } \
+      else if (is.numeric(object)) \
+      { \
+         object[is.na(object)] <- '\\\"NA\\\"' \
+      } \
+      else if (is.logical(object)) \
+      { \
+         object <- tolower(object); \
+         object[is.na(object)] <- 'null' \
+      }; \
+       \
+      if (AsIs) \
+         return(object) \
+      else \
+         return(paste('[', paste(object, collapse = ','), ']', sep = '', collapse = ',')) \
+   } \
+}; \
+";
 
 SEXP rs_getSourceFileLibraryCompletions(SEXP documentIdSEXP)
 {

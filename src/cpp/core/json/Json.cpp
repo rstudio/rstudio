@@ -42,6 +42,20 @@ json::Value toJsonString(const std::string& val)
    return json::Value(val);
 }
 
+bool fillVectorString(const Array& array, std::vector<std::string>* pVector)
+{
+   for (Array::const_iterator it = array.begin();
+        it != array.end();
+        ++it)
+   {
+      if (!isType<std::string>(*it))
+         return false;
+      pVector->push_back(it->get_str());
+   }
+   
+   return true;
+}
+
 bool parse(const std::string& input, Value* pValue)
 {
    // two threads simultaneously using the json parser has been observed

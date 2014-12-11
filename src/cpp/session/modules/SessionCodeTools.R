@@ -743,40 +743,50 @@
 ## A tiny JSON generator that works for R primitive types. Only lists and data.frames
 ## may have names; they are dropped from all other objects. Matrices and arrays are
 ## just treated as vectors.
-.rs.addFunction("toJSON", function(object)
+## 
+## NOTE: Must use double quotes, not single quotes!
+.rs.addFunction('toJSON', function(object)
 {
+   AsIs <- inherits(object, "AsIs");
    if (is.list(object))
+   {
       if (is.null(names(object)))
-         return(paste("[", paste(lapply(seq_along(object), function(i) {
+      {
+         return(paste('[', paste(lapply(seq_along(object), function(i) {
             .rs.toJSON(object[[i]])
-         }), collapse = ","), "]", sep = "", collapse=","))
-   
-   else
-      return(paste("{", paste(lapply(seq_along(object), function(i) {
-         paste('"', names(object)[[i]], '":', .rs.toJSON(object[[i]]), sep = "")
-      }), collapse = ","), "}", sep = "", collapse=","))
+         }), collapse = ','), ']', sep = '', collapse=','))
+      }
+      else
+      {
+         return(paste('{', paste(lapply(seq_along(object), function(i) {
+            paste('"', names(object)[[i]], '":', .rs.toJSON(object[[i]]), sep = '')
+         }), collapse = ','), '}', sep = '', collapse=','))
+      }
+   }
    else
    {
-      if (is.character(object) || is.factor(object))
+      if (!length(object))
       {
-         object <- shQuote(object, "cmd")
-         object[object == "\"NA\""] <- "null"
+         return('[]')
+      }
+      else if (is.character(object) || is.factor(object))
+      {
+         object <- shQuote(object, 'cmd');
+         object[object == '\"NA\"'] <- 'null'
       }
       else if (is.numeric(object))
       {
-         object[is.na(object)] <- "\"NA\""
+         object[is.na(object)] <- '\"NA\"'
       }
       else if (is.logical(object))
       {
-         object <- .rs.swap(
-            as.character(object),
-            "true" = "TRUE",
-            "false" = "FALSE",
-            "null" = "NA",
-            default = "null"
-         )
-      }
+         object <- tolower(object);
+         object[is.na(object)] <- 'null'
+      };
       
-      return(paste("[", paste(object, collapse = ","), "]", sep = "", collapse = ","))
+      if (AsIs)
+         return(object)
+      else
+         return(paste('[', paste(object, collapse = ','), ']', sep = '', collapse = ','))
    }
 })
