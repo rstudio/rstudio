@@ -199,7 +199,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          // If maxRow is undefined, we'll iterate up to the length of
          // the tokens array
          if (typeof maxRow === "undefined")
-            maxRow = (that.$tokens | []).length;
+            maxRow = (that.$tokens || []).length;
 
          // If we're already past the maxRow bound, fail
          if (this.$row > maxRow)
@@ -220,7 +220,6 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          // invalidated rows (ie, rows that are null rather than having
          // an empty array
          var row = this.$row + 1;
-         var length = 0;
          while (row <= maxRow)
          {
             rowTokens = that.$tokens[row];
