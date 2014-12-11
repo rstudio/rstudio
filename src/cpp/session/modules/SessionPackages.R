@@ -585,49 +585,51 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          stop("Failed to create directory '", packageDirectory, "'")
    }
    
-   # Create a DESCRIPTION file
-   `%||%` <- function(x, y) {
-      if (length(x)) x else y
+   ## Create a DESCRIPTION file
+   
+   # Fill some bits based on devtools options if they're available.
+   # Protect against vectors with length > 1
+   getDevtoolsOption <- function(optionName, default, collapse = " ")
+   {
+      option <- getOption(optionName)
+      if (!is.null(option))
+      {
+         if (length(option) > 0)
+            paste(option, collapse = collapse)
+         else
+            option
+      }
+      else default
    }
+   
+   `%||%` <- function(x, y)
+      if (is.null(x)) y else x
+   
+   Author <- getDevtoolsOption("devtools.name", "Who wrote it")
+   
+   Maintainer <- getDevtoolsOption(
+      "devtools.desc.author",
+      "Who to complain to <yourfault@somewhere.net>"
+   )
+   
+   License <- getDevtoolsOption(
+      "devtools.desc.license",
+      "What license is it under?",
+      ", "
+   )
    
    DESCRIPTION <- list(
       Package = packageName,
       Type = "Package",
       Title = "What the Package Does (Title Case)",
       Version = "0.1",
-      Date = Sys.Date(),
-      Author = getOption("devtools.name") %||% "Who wrote it",
-      Maintainer = getOption("devtools.desc.author") %||% "Who to complain to <yourfault@somewhere.net>",
+      Date = as.character(Sys.Date()),
+      Author = Author,
+      Maintainer = Maintainer,
       Description = "More about what it does (maybe more than one line)",
-      License = getOption("devtools.desc.license") %||% "What license is it under?",
+      License = License,
       LazyData = "TRUE"
    )
-   
-   if (length(getOption("devtools.desc.suggests")))
-      DESCRIPTION$Suggests <- getOption("devtools.desc.suggests")
-   
-   if (length(getOption("devtools.desc")))
-   {
-      devtools.desc <- getOption("devtools.desc")
-      for (i in seq_along(devtools.desc))
-      {
-         name <- names(devtools.desc)[[i]]
-         value <- devtools.desc[[i]]
-         DESCRIPTION[[name]] <- value
-      }
-   }
-   
-   if (grepl("MIT\\s+\\+\\s+file\\s+LICEN[SC]E", DESCRIPTION$License, perl = TRUE))
-   {
-      msg <- c(
-         paste("YEAR:", format(Sys.time(), "%Y")),
-         paste("COPYRIGHT HOLDER:", getOption("devtools.name") %||% "<Your Name>")
-      )
-      
-      cat(msg,
-          file = file.path(packageDirectory, "LICENSE"),
-          sep = "\n")
-   }
    
    # Create a NAMESPACE file
    NAMESPACE <- c(
@@ -646,8 +648,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       if ("Rcpp" %in% rownames(ip))
          rcppImportsStatement <- sprintf("Rcpp (>= %s)", ip["Rcpp", "Version"])
       
-      DESCRIPTION$Imports <- rcppImportsStatement
-      DESCRIPTION$LinkingTo <- "Rcpp"
+      DESCRIPTION$Imports <- c(DESCRIPTION$Imports, rcppImportsStatement)
+      DESCRIPTION$LinkingTo <- c(DESCRIPTION$LinkingTo, "Rcpp")
       
       # Add an import from Rcpp, and also useDynLib
       NAMESPACE <- c(
@@ -655,6 +657,67 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          "importFrom(Rcpp, evalCpp)",
          sprintf("useDynLib(%s)", packageName)
       )
+   }
+   
+   # Get other fields from devtools options
+   if (length(getOption("devtools.desc.suggests")))
+      DESCRIPTION$Suggests <- getOption("devtools.desc.suggests")
+   
+   if (length(getOption("devtools.desc")))
+   {
+      devtools.desc <- getOption("devtools.desc")
+      for (i in seq_along(devtools.desc))
+      {
+         name <- names(devtools.desc)[[i]]
+         value <- devtools.desc[[i]]
+         DESCRIPTION[[name]] <- value
+      }
+   }
+   
+   # If we are using 'testthat' and 'devtools' is available, use it to
+   # add test infrastructure
+   if ("testthat" %in% DESCRIPTION$Suggests)
+   {
+      dir.create(file.path(packageDirectory, "tests"))
+      dir.create(file.path(packageDirectory, "tests", "testthat"))
+      
+      if ("devtools" %in% rownames(installed.packages()))
+      {
+         # NOTE: Okay to load devtools as we will restart the R session
+         # soon anyhow
+         ns <- asNamespace("devtools")
+         if (exists("render_template", envir = ns))
+         {
+            tryCatch(
+               writeLines(
+                  devtools:::render_template(
+                     "testthat.R",
+                     list(name = packageName)
+                  ),
+                  file.path(packageDirectory, "tests", "testthat.R")
+               ), error = function(e) NULL
+            )
+         }
+      }
+   }
+   
+   # If we are using the MIT license, add the template
+   if (grepl("MIT\\s+\\+\\s+file\\s+LICEN[SC]E", DESCRIPTION$License, perl = TRUE))
+   {
+      # Guess the copyright holder
+      holder <- if (!is.null(getOption("devtools.name")))
+         Author
+      else
+         "<Copyright holder>"
+      
+      msg <- c(
+         paste("YEAR:", format(Sys.time(), "%Y")),
+         paste("COPYRIGHT HOLDER:", holder)
+      )
+      
+      cat(msg,
+          file = file.path(packageDirectory, "LICENSE"),
+          sep = "\n")
    }
    
    # Always create 'R/', 'man/' directories
@@ -728,10 +791,25 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    }
    
    # Write various files out
-   write.dcf(
-      DESCRIPTION,
-      file = file.path(packageDirectory, "DESCRIPTION")
-   )
+   
+   # NOTE: write.dcf mangles whitespace so we manually construct
+   # our DCF
+   for (name in c("Depends", "Imports", "Suggests", "LinkingTo"))
+   {
+      if (name %in% names(DESCRIPTION))
+      {
+         DESCRIPTION[[name]] <- paste(
+            sep = "",
+            "\n    ",
+            paste(DESCRIPTION[[name]], collapse = ",\n    ")
+         )
+      }
+   }
+   
+   names <- names(DESCRIPTION)
+   values <- unlist(DESCRIPTION)
+   text <- paste(names, ": ", values, sep = "", collapse = "\n")
+   cat(text, file = file.path(packageDirectory, "DESCRIPTION"))
    
    cat(NAMESPACE, file = file.path(packageDirectory, "NAMESPACE"), sep = "\n")
    
