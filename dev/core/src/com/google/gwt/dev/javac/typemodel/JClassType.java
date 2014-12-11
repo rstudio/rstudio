@@ -254,18 +254,6 @@ public abstract class JClassType implements
   }
 
   @Override
-  @Deprecated
-  public final String[][] getMetaData(String tagName) {
-    return TypeOracle.NO_STRING_ARR_ARR;
-  }
-
-  @Override
-  @Deprecated
-  public final String[] getMetaDataTags() {
-    return TypeOracle.NO_STRINGS;
-  }
-
-  @Override
   public abstract JMethod getMethod(String name, JType[] paramTypes)
       throws NotFoundException;
 

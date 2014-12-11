@@ -74,18 +74,6 @@ public class JField implements com.google.gwt.core.ext.typeinfo.JField {
   }
 
   @Override
-  @Deprecated
-  public final String[][] getMetaData(String tagName) {
-    return TypeOracle.NO_STRING_ARR_ARR;
-  }
-
-  @Override
-  @Deprecated
-  public final String[] getMetaDataTags() {
-    return TypeOracle.NO_STRINGS;
-  }
-
-  @Override
   public String getName() {
     assert (name != null);
     return name;

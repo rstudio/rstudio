@@ -18,8 +18,7 @@ package com.google.gwt.core.ext.typeinfo;
 /**
  * Represents a field declaration.
  */
-@SuppressWarnings("deprecation")
-public interface JField extends HasAnnotations, HasMetaData {
+public interface JField extends HasAnnotations {
 
   JClassType getEnclosingType();
 

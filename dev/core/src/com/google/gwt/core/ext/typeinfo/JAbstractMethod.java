@@ -18,9 +18,7 @@ package com.google.gwt.core.ext.typeinfo;
 /**
  * Common interface for {@link JMethod} and {@link JConstructor}.
  */
-@SuppressWarnings("deprecation")
-public interface JAbstractMethod extends HasAnnotations, HasMetaData,
-    HasTypeParameters {
+public interface JAbstractMethod extends HasAnnotations, HasTypeParameters {
 
   JParameter findParameter(String name);
 

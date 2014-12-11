@@ -18,8 +18,7 @@ package com.google.gwt.core.ext.typeinfo;
 /**
  * Represents a parameter in a declaration.
  */
-@SuppressWarnings("deprecation")
-public interface JParameter extends HasAnnotations, HasMetaData {
+public interface JParameter extends HasAnnotations {
 
   JAbstractMethod getEnclosingMethod();
 

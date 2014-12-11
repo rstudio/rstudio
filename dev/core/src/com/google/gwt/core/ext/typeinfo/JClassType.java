@@ -21,8 +21,7 @@ import java.util.Set;
 /**
  * Type used to represent any non-primitive type.
  */
-@SuppressWarnings("deprecation")
-public interface JClassType extends JType, HasAnnotations, HasMetaData {
+public interface JClassType extends JType, HasAnnotations {
 
   JParameterizedType asParameterizationOf(JGenericType type);
 
