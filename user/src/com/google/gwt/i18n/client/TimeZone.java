@@ -119,10 +119,10 @@ public class TimeZone implements com.google.gwt.i18n.shared.TimeZone {
       data[3] = '+';
       offset = -offset; // suppress the '-' sign for text display.
     }
-    data[4] += (offset / 60) / 10;
-    data[5] += (offset / 60) % 10;
-    data[7] += (offset % 60) / 10;
-    data[8] += offset % 10;
+    data[4] = (char) (data[4] + (offset / 60) / 10);
+    data[5] = (char) (data[5] + (offset / 60) % 10);
+    data[7] = (char) (data[7] + (offset % 60) / 10);
+    data[8] = (char) (data[8] + offset % 10);
     return new String(data);
   }
 
@@ -215,10 +215,10 @@ public class TimeZone implements com.google.gwt.i18n.shared.TimeZone {
       data[0] = '-';
       offset = -offset; // suppress the '-' sign for text display.
     }
-    data[1] += (offset / 60) / 10;
-    data[2] += (offset / 60) % 10;
-    data[4] += (offset % 60) / 10;
-    data[5] += offset % 10;
+    data[1] = (char) (data[1] + (offset / 60) / 10);
+    data[2] = (char) (data[2] + (offset / 60) % 10);
+    data[4] = (char) (data[4] + (offset % 60) / 10);
+    data[5] = (char) (data[5] + offset % 10);
     return new String(data);
   }
 
@@ -246,10 +246,10 @@ public class TimeZone implements com.google.gwt.i18n.shared.TimeZone {
       data[0] = '-';
       offset = -offset; // suppress the '-' sign for text display.
     }
-    data[1] += (offset / 60) / 10;
-    data[2] += (offset / 60) % 10;
-    data[3] += (offset % 60) / 10;
-    data[4] += offset % 10;
+    data[1] = (char) (data[1] + (offset / 60) / 10);
+    data[2] = (char) (data[2] + (offset / 60) % 10);
+    data[3] = (char) (data[3] + (offset % 60) / 10);
+    data[4] = (char) (data[4] + offset % 10);
     return new String(data);
   }
 

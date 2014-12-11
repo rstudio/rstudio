@@ -119,7 +119,7 @@ public class DataViewImpl extends ArrayBufferViewImpl implements DataView {
   public short getUint8(int byteOffset) {
     short val = getInt8(byteOffset);
     if (val < 0) {
-      val += 256;
+      val = (short) (val + 256);
     }
     return val;
   }

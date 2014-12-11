@@ -36,7 +36,7 @@ public class Uint8ArrayImpl extends ArrayBufferViewImpl implements Uint8Array {
   public short get(int index) {
     short val = arrayBuf.getInt8(checkRange(index, BYTES_PER_ELEMENT));
     if (val < 0) {
-      val += 0x100;
+      val = (short) (val + 0x100);
     }
     return val;
   }
