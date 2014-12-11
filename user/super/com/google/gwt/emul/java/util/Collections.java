@@ -918,8 +918,15 @@ public class Collections {
   }
 
   public static <T> void copy(List<? super T> dest, List<? extends T> src) {
-    // TODO(jat): optimize
-    dest.addAll(src);
+    if (src.size() > dest.size()) {
+      throw new IndexOutOfBoundsException("src does not fit in dest");
+    }
+
+    ListIterator<? super T> destIt = dest.listIterator();
+    for (T e : src) {
+      destIt.next();
+      destIt.set(e);
+    }
   }
 
   public static boolean disjoint(Collection<?> c1, Collection<?> c2) {

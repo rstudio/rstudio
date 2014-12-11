@@ -210,6 +210,25 @@ public class CollectionsTest extends EmulTestBase {
     assertEquals(new Object[b.size()], b);
   }
 
+  public void testListCopy() {
+    List<Integer> src = new ArrayList<Integer>(Arrays.asList(1, 2, 3));
+    List<Integer> dest = new ArrayList<Integer>(Arrays.asList(1, 2));
+
+    try {
+      Collections.copy(dest, src);
+      fail();
+    } catch (IndexOutOfBoundsException expected) {
+    }
+
+    dest = new ArrayList<Integer>(Arrays.asList(5, 6, 7, 8));
+    Collections.copy(dest, src);
+    assertEquals(new Integer[]{1, 2, 3, 8}, dest);
+
+    dest = new ArrayList<Integer>(Arrays.asList(5, 6, 7));
+    Collections.copy(dest, src);
+    assertEquals(new Integer[]{1, 2, 3}, dest);
+  }
+
   public void testNewSetFromMap() {
     Object o1 = new Object();
     Object o2 = new Object();
