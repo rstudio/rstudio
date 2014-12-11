@@ -31,9 +31,9 @@
   </macrodef>
 
   <property name="gwt.apicheck.config"
-            location="tools/api-checker/config/gwt26_27userApi.conf"/>
+            location="tools/api-checker/config/gwt27_28userApi.conf"/>
   <property name="gwt.apicheck.referencelibs"
-            value="${gwt.tools}/api-checker-reference/2.6.0/gwt-dev-modified.jar:${gwt.tools}/api-checker-reference/2.6.0/gwt-user-modified.jar"/>
+            value="${gwt.tools}/api-checker-reference/2.7.0/gwt-dev-modified.jar:${gwt.tools}/api-checker-reference/2.7.0/gwt-user-modified.jar"/>
 
   <target name="buildonly"
           description="[action] Minimal one-platform devel build, without distro packaging">
