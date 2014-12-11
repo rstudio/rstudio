@@ -654,6 +654,23 @@ SEXP create(const std::vector<std::pair<std::string,std::string> >& value,
    return charSEXP;   
 }
 
+SEXP create(const std::set<std::string> &value, Protect *pProtect)
+{
+   SEXP charSEXP;
+   pProtect->add(charSEXP = Rf_allocVector(STRSXP, value.size()));
+   
+   int index = 0;
+   for (std::set<std::string>::const_iterator it = value.begin();
+        it != value.end();
+        ++it)
+   {
+      SET_STRING_ELT(charSEXP, index, Rf_mkChar(it->c_str()));
+      ++index;
+   }
+   
+   return charSEXP;
+}
+
 SEXP createList(std::vector<std::string> names, Protect* pProtect)
 {
    std::size_t n = names.size();
@@ -732,6 +749,11 @@ void PreservedSEXP::releaseNow()
       ::R_ReleaseObject(sexp_);
       sexp_ = R_NilValue;
    }
+}
+
+void printValue(SEXP object)
+{
+   Rf_PrintValue(object);
 }
 
 } // namespace sexp   

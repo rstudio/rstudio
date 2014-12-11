@@ -457,7 +457,7 @@ RSourceIndex::RSourceIndex(const std::string& context,
          
          DEBUG("** Adding package '" << string_utils::wideToUtf8(packageName) << "'");
          DEBUG("");
-         libraryItems_.insert(packageName);
+         inferredPkgNames_.insert(string_utils::wideToUtf8(packageName));
          continue;
       }
       

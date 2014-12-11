@@ -2061,7 +2061,45 @@ assign(x = ".rs.acCompletionTypes",
    completions
 })
 
-.rs.addFunction("libraryCallsInSourceDoc", function(documentId)
+.rs.addFunction("listInferredPackages", function(documentId)
 {
-   .Call("rs_libraryCallsInSourceDoc", documentId)
+   .Call("rs_listInferredPackages", documentId)
+})
+
+.rs.addFunction("getSourceFileLibraryCompletions", function(documentId,
+                                                            packages = character())
+{
+   .Call("rs_getSourceFileLibraryCompletions", as.character(documentId), as.character(packages))
+})
+
+.rs.addFunction("updateSourceFileLibraryCompletions", function(documentId)
+{
+   .Call("rs_updateSourceFileLibraryCompletions", documentId)
+})
+
+.rs.addFunction("getCompletionsLibraryContext", function(token,
+                                                         string,
+                                                         type,
+                                                         numCommas,
+                                                         functionCall,
+                                                         documentId)
+{
+   ## If we detect that particular 'library' calls are in the source document,
+   ## and those packages are actually available (but the package is not currently loaded),
+   ## then we get an asynchronously-updated set of completions. We enocde them as 'context'
+   ## completions just so the user has a small hint that, even though we provide the
+   ## completions, the package isn't actually loaded.
+   packages <- .rs.listInferredPackages(documentId)
+   
+   # Remove any packages that are actually loaded
+   packages <- packages[!(packages %in% loadedNamespaces())]
+   
+   if (!length(packages))
+      return(.rs.emptyCompletions())
+   
+   completions <- .rs.getSourceFileLibraryCompletions(documentId, packages)
+   
+   # If we're getting completions for a particular function's arguments,
+   # use those
+   
 })

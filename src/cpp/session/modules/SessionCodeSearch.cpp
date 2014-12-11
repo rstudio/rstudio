@@ -2167,17 +2167,10 @@ SEXP rs_scoreMatches(SEXP suggestionsSEXP,
    return r::sexp::create(scores, &protect);
 }
 
-// A container struct for completions from the async process
-struct AsyncLibraryCompletions
-{
-   std::string package;
-   std::vector<std::string> exports;
-   std::vector<std::string> all;
-   std::map< std::string, std::vector<std::string> > functions;
-};
-
 // A class that faciliates the update of 'library', 'require' completions
-class LibraryCompletions : public async_r::AsyncRProcess {
+class LibraryCompletions : public async_r::AsyncRProcess
+{
+   typedef core::r_util::AsyncLibraryCompletions AsyncLibraryCompletions;
    
 private:
    static const std::string s_toJSONFunction;
@@ -2186,29 +2179,19 @@ public:
    static boost::shared_ptr<LibraryCompletions> update(
          core::r_util::RSourceIndex& index)
    {
-      std::set<std::wstring> const& pkgsWide(index.getLibraryItems());
-      
-      std::size_t n = pkgsWide.size();
-      
-      std::vector<std::string> packages(n);
-      std::transform(pkgsWide.begin(),
-                     pkgsWide.end(),
-                     packages.begin(),
-                     string_utils::wideToUtf8);
-      
-      
-      boost::shared_ptr<LibraryCompletions> pCompletions(
-               new LibraryCompletions(index));
-      
       std::stringstream ss;
       
       // Throw in the toJSON function
       ss << s_toJSONFunction;
       
       // Add in each of the package exports and whatnot
-      for (std::size_t i = 0; i < n; ++i)
+      std::set<std::string> const& pkgs(index.getInferredPackages());
+      
+      for (std::set<std::string>::const_iterator it = pkgs.begin();
+           it != pkgs.end();
+           ++it)
       {
-         std::string pkg = packages[i];
+         std::string const& pkg = *it;
          
          boost::format fmt(
                   "ns <- asNamespace('%1%'); "
@@ -2224,6 +2207,9 @@ public:
          
          ss << boost::str(fmt % pkg);
       }
+      
+      boost::shared_ptr<LibraryCompletions> pCompletions(
+               new LibraryCompletions(index));
       
       std::cerr << ss.str() << std::endl;
       std::string finalCmd = ss.str();
@@ -2302,8 +2288,12 @@ private:
             continue;
          }
          
+         std::cerr << "Adding entry for package: '" << completions.package << "'\n";
+         
+         std::cerr << "Received " << exportsJson.size() << " exports\n";
          if (!json::fillVectorString(exportsJson, &(completions.exports)))
             LOG_ERROR_MESSAGE("Failed to read JSON 'exports' array to vector");
+         std::cerr << "Have " << completions.exports.size() << " exports\n";
          
          if (!json::fillVectorString(allJson, &(completions.all)))
             LOG_ERROR_MESSAGE("Failed to read JSON 'all' array to vector");
@@ -2312,8 +2302,7 @@ private:
             LOG_ERROR_MESSAGE("Failed to read JSON 'functions' object to map");
          
          // Update the index
-         index_.addPkgExports(completions.package, completions.exports);
-         index_.addPkgObjects(completions.package, completions.all);
+         index_.addCompletions(completions.package, completions);
          
       }
       
@@ -2396,7 +2385,7 @@ SEXP rs_getSourceFileLibraryCompletions(SEXP documentIdSEXP,
 {
    std::string documentId = r::sexp::asString(documentIdSEXP);
    std::vector<std::string> packages;
-   if (!r::sexp::fillVectorString(packagesSEXP, &documentId))
+   if (!r::sexp::fillVectorString(packagesSEXP, &packages))
       return R_NilValue;
    
    boost::shared_ptr<core::r_util::RSourceIndex> index = rSourceIndex().get(documentId);
@@ -2407,12 +2396,31 @@ SEXP rs_getSourceFileLibraryCompletions(SEXP documentIdSEXP,
       return R_NilValue;
    }
    
+   // We create an R list with structure:
+   //
+   //    "<package>:
+   //        "all":
+   //        "exports":
+   //        "functions":
    r::sexp::Protect protect;
-   r::sexp::ListBuilder builder(&protect);
+   r::sexp::ListBuilder parent(&protect);
    
-   builder.add("exports", index->getPkgExports());
-   builder.add("all", index->getPkgObjects());
-   return builder;
+   for (std::vector<std::string>::const_iterator it = packages.begin();
+        it != packages.end();
+        ++it)
+   {
+      std::cerr << "* Adding completions for package '" << *it << "'\n";
+      const core::r_util::AsyncLibraryCompletions& completions = index->getCompletions(*it);
+      
+      r::sexp::ListBuilder builder(&protect);
+      builder.add("all", completions.all);
+      builder.add("exports", completions.exports);
+      builder.add("functions", completions.functions);
+      
+      parent.add(*it, static_cast<SEXP>(builder));
+   }
+   
+   return parent;
 }
 
 SEXP rs_updateSourceFileLibraryCompletions(SEXP documentIdSEXP)
@@ -2535,15 +2543,10 @@ SEXP rs_listInferredPackages(SEXP documentIdSEXP)
       return R_NilValue;
    }
    
-   std::set<std::wstring> pkgsSet = index->getLibraryItems();
-   std::vector<std::string> packages(pkgsSet.size());
-   std::transform(pkgsSet.begin(),
-                  pkgsSet.end(),
-                  packages.begin(),
-                  string_utils::wideToUtf8);
+   std::set<std::string> pkgs = index->getInferredPackages();
    
    r::sexp::Protect protect;
-   return r::sexp::create(packages, &protect);
+   return r::sexp::create(pkgs, &protect);
    
 }
 
@@ -2589,7 +2592,7 @@ Error initialize()
    r::routines::registerCallMethod(
             "rs_getSourceFileLibraryCompletions",
             (DL_FUNC) rs_getSourceFileLibraryCompletions,
-            1);
+            2);
    
    r::routines::registerCallMethod(
             "rs_updateSourceFileLibraryCompletions",
