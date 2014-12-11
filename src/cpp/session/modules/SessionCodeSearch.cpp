@@ -2391,9 +2391,14 @@ const std::string LibraryCompletions::s_toJSONFunction =
 }; \
 ";
 
-SEXP rs_getSourceFileLibraryCompletions(SEXP documentIdSEXP)
+SEXP rs_getSourceFileLibraryCompletions(SEXP documentIdSEXP,
+                                        SEXP packagesSEXP)
 {
    std::string documentId = r::sexp::asString(documentIdSEXP);
+   std::vector<std::string> packages;
+   if (!r::sexp::fillVectorString(packagesSEXP, &documentId))
+      return R_NilValue;
+   
    boost::shared_ptr<core::r_util::RSourceIndex> index = rSourceIndex().get(documentId);
    
    if (index == NULL)
@@ -2519,6 +2524,29 @@ SEXP rs_listIndexedFilesAndFolders(SEXP termSEXP,
    return pathResultsSEXP(paths, moreAvailable);
 }
 
+SEXP rs_listInferredPackages(SEXP documentIdSEXP)
+{
+   std::string documentId = r::sexp::asString(documentIdSEXP);
+   boost::shared_ptr<core::r_util::RSourceIndex> index = rSourceIndex().get(documentId);
+   
+   if (index == NULL)
+   {
+      LOG_ERROR_MESSAGE("No index for document '" + documentId + "'");
+      return R_NilValue;
+   }
+   
+   std::set<std::wstring> pkgsSet = index->getLibraryItems();
+   std::vector<std::string> packages(pkgsSet.size());
+   std::transform(pkgsSet.begin(),
+                  pkgsSet.end(),
+                  packages.begin(),
+                  string_utils::wideToUtf8);
+   
+   r::sexp::Protect protect;
+   return r::sexp::create(packages, &protect);
+   
+}
+
 } // anonymous namespace
    
 Error initialize()
@@ -2552,6 +2580,11 @@ Error initialize()
             "rs_listIndexedFilesAndFolders",
             (DL_FUNC) rs_listIndexedFilesAndFolders,
             3);
+   
+   r::routines::registerCallMethod(
+            "rs_listInferredPackages",
+            (DL_FUNC) rs_listInferredPackages,
+            1);
    
    r::routines::registerCallMethod(
             "rs_getSourceFileLibraryCompletions",

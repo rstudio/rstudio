@@ -790,3 +790,31 @@
          return(paste('[', paste(object, collapse = ','), ']', sep = '', collapse = ','))
    }
 })
+
+.rs.addFunction("listInferredPackages", function(documentId)
+{
+   .Call("rs_listInferredPackages", documentId)
+})
+
+.rs.addFunction("getCompletionsLibraryContext", function(token,
+                                                         documentId,
+                                                         exportsOnly = TRUE)
+{
+   ## If we detect that particular 'library' calls are in the source document,
+   ## and those packages are actually available (but the package is not currently loaded),
+   ## then we get an asynchronously-updated set of completions. We enocde them as 'context'
+   ## completions just so the user has a small hint that, even though we provide the
+   ## completions, the package isn't actually loaded.
+   packages <- .rs.listInferredPackages(documentId)
+   
+   # Remove any packages that are actually loaded
+   packages <- packages[!(packages %in% loadedNamespaces())]
+   
+   if (!length(packages))
+      return(.rs.emptyCompletions())
+   
+   # For the remaining packages, get the set of completions available
+   
+
+   
+})
