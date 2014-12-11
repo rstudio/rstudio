@@ -270,7 +270,6 @@ java_library(
             "src/com/google/gwt/json/client/JSONObject.java",
             "src/com/google/gwt/json/client/JSONString.java",
             "src/com/google/gwt/json/client/JSONValue.java",
-            "src/com/google/gwt/core/client/impl/SerializableThrowable.java",
             "src/com/google/gwt/core/client/JsonUtils.java",
             "src/com/google/gwt/core/client/impl/WeakMapping.java",
             "src/com/google/gwt/xhr/client/ReadyStateChangeHandler.java",
