@@ -1823,6 +1823,26 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                   if (!tokenCursor.moveToPreviousToken())
                      break;
                }
+
+               // Make sure this isn't the only assignment within a 'naked'
+               // if or else, e.g.
+               //
+               //    if (foo)
+               //        x <- 1
+               //
+               // Technically repeat would be legal too, as rare as it would be...
+               var clone = tokenCursor.cloneCursor();
+               if (clone.moveToPreviousToken())
+               {
+                  if (clone.currentValue() === "else" ||
+                      clone.currentValue() === "repeat")
+                     break;
+
+                  if (clone.bwdToMatchingToken() &&
+                      clone.moveToPreviousToken() &&
+                      clone.currentValue() === "if")
+                     break;
+               }
                
                return this.$getIndent(
                   this.$getLine(tokenCursor.$row)
