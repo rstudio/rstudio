@@ -80,6 +80,7 @@ json::Array toJsonArray(const std::vector<T>& val)
 }
 
 bool fillVectorString(const Array& array, std::vector<std::string>* pVector);
+bool fillMap(const Object& array, std::map< std::string, std::vector<std::string> >* pMap);
 
 bool parse(const std::string& input, Value* pValue);
 

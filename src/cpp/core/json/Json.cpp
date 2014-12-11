@@ -56,6 +56,22 @@ bool fillVectorString(const Array& array, std::vector<std::string>* pVector)
    return true;
 }
 
+bool fillMap(const Object& object, std::map< std::string, std::vector<std::string> >* pMap)
+{
+   for (Object::const_iterator it = object.begin();
+        it != object.end();
+        ++it)
+   {
+      std::vector<std::string> strings;
+      const json::Array& array = it->second.get_array();
+      if (!fillVectorString(array, &strings))
+         return false;
+      
+      (*pMap)[it->first] = strings;
+   }
+   return true;
+}
+
 bool parse(const std::string& input, Value* pValue)
 {
    // two threads simultaneously using the json parser has been observed

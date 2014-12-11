@@ -2218,7 +2218,7 @@ public:
                   "isFunction <- unlist(lapply(objects, is.function)); "
                   "functions <- objects[isFunction]; "
                   "functions <- lapply(functions, function(x) { names(formals(x)) }); "
-                  "output <- list(package = '%1%', exports = exports, all = all, functions = functions); "
+                  "output <- list(package = I('%1%'), exports = exports, all = all, functions = functions); "
                   "cat(.rs.toJSON(output), sep = '\\\\n'); "
                   );
          
@@ -2262,7 +2262,7 @@ private:
       // Each line should be a JSON object with the format:
       //
       // {
-      //    "package": <array of package names, although it's just one>
+      //    "package": <single package name>
       //    "exports": <array of exports>,
       //    "all": <array of all things>,
       //    "functions": <object mapping function names to arguments>
@@ -2270,6 +2270,7 @@ private:
       AsyncLibraryCompletions completions;
       json::Array exportsJson;
       json::Array allJson;
+      json::Object functionsJson;
       for (std::size_t i = 0; i < n; ++i)
       {
          json::Value value;
@@ -2286,27 +2287,26 @@ private:
             continue;
          }
          
-         json::Object object = value.get_obj();
-         for (json::Object::const_iterator it = object.begin();
-              it != object.end();
-              ++it)
+         Error error = json::readObject(value.get_obj(),
+                                        "package", &completions.package,
+                                        "exports", &exportsJson,
+                                        "all", &allJson,
+                                        "functions", &functionsJson);
+         
+         if (error)
          {
-            std::cerr << "Object key: '" << it->first << "'" << std::endl;
-            std::cerr << "Length of other thing: '" << it->second.get_obj().size() << "'" << std::endl;
+            LOG_ERROR(error);
+            continue;
          }
          
-         json::readObject(object,
-                          "package", &completions.package);
-         
-         std::cerr << "Length of 'object': " << object.size() << std::endl;
-         std::cerr << "Package: '" << completions.package << "'" << std::endl;
-         std::cerr << "Number of exports: '" << exportsJson.size() << "'" << std::endl;
-         
          if (!json::fillVectorString(exportsJson, &(completions.exports)))
-            LOG_ERROR_MESSAGE("Failed to read JSON array to string");
+            LOG_ERROR_MESSAGE("Failed to read JSON 'exports' array to vector");
          
          if (!json::fillVectorString(allJson, &(completions.all)))
-            LOG_ERROR_MESSAGE("Failed to read JSON array to string");
+            LOG_ERROR_MESSAGE("Failed to read JSON 'all' array to vector");
+         
+         if (!json::fillMap(functionsJson, &(completions.functions)))
+            LOG_ERROR_MESSAGE("Failed to read JSON 'functions' object to map");
          
          // Update the index
          index_.addPkgExports(completions.package, completions.exports);
