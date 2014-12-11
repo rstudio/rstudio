@@ -32,6 +32,10 @@ sudo yum install -y bzip2-devel
 sudo yum install -y zlib-devel
 sudo yum install -y pam-devel
 
+# needed by Qt WebKit >= 5
+sudo yum install -y gstreamer-devel
+sudo yum install -y gstreamer-plugins-base-devel
+
 # pandoc depenencies
 sudo yum install -y libffi
 
