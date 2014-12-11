@@ -2253,8 +2253,8 @@ private:
    {
       DEBUG("* Completed async library lookup");
       std::vector<std::string> splat;
-      std::string line = stdOut_.str();
-      boost::split(splat, line, boost::is_any_of("\n"));
+      std::string stdOut = stdOut_.str();
+      boost::split(splat, stdOut, boost::is_any_of("\n"));
       
       std::size_t n = splat.size();
       std::cerr << "- Received " << n << " lines of response" << std::endl;
@@ -2273,13 +2273,16 @@ private:
       json::Object functionsJson;
       for (std::size_t i = 0; i < n; ++i)
       {
+         if (splat[i].empty())
+            continue;
+         
          json::Value value;
          
          if (!json::parse(splat[i], &value))
          {
             std::string subset;
             if (splat[i].length() > 60)
-               subset = splat[i].substr(0, 80) + "...";
+               subset = splat[i].substr(0, 60) + "...";
             else
                subset = splat[i];
             
@@ -2365,7 +2368,7 @@ const std::string LibraryCompletions::s_toJSONFunction =
       { \
          return('[]') \
       } \
-      if (is.character(object) || is.factor(object)) \
+      else if (is.character(object) || is.factor(object)) \
       { \
          object <- shQuote(object, 'cmd'); \
          object[object == '\\\"NA\\\"'] <- 'null' \
