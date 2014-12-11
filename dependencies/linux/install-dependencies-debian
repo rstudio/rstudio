@@ -30,6 +30,9 @@ sudo apt-get -y install libbz2-dev
 sudo apt-get -y install zlib1g-dev
 sudo apt-get -y install libpam-dev
 
+# needed for QtWebKit >= 5
+sudo apt-get -y install libxslt1-dev
+
 # app armor dependencies no longer included in ubuntu >= 11.10
 sudo apt-get -y install libapparmor1 
 sudo apt-get -y install apparmor-utils
