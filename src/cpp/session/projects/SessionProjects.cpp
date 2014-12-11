@@ -27,6 +27,7 @@
 #include <session/SessionUserSettings.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RRoutines.hpp>
 #include <r/session/RSessionUtils.hpp>
 
 #include "SessionProjectFirstRun.hpp"
@@ -84,52 +85,7 @@ Error createProject(const json::JsonRpcRequest& request,
       return error;
    FilePath projectFilePath = module_context::resolveAliasedPath(projectFile);
 
-   // package project
-   if (!newPackageJson.is_null())
-   {
-      // read options
-      bool usingRcpp;
-      json::Array codeFilesJson;
-      Error error = json::readObject(newPackageJson.get_obj(),
-                                     "using_rcpp", &usingRcpp,
-                                     "code_files", &codeFilesJson);
-      if (error)
-         return error;
-      
-      std::vector<std::string> codeFiles;
-      codeFiles.reserve(codeFilesJson.size());
-      BOOST_FOREACH(const json::Value codeFile, codeFilesJson)
-      {
-         if (!json::isType<std::string>(codeFile))
-         {
-            BOOST_ASSERT(false);
-            continue;
-         }
-         codeFiles.push_back(codeFile.get_str());
-      }
-
-      // resolve the package name, package directory
-      std::string fileName = projectFilePath.filename();
-      std::string packageName = fileName.substr(0, fileName.rfind('.'));
-      
-      r::exec::RFunction packageSkeleton(".rs.rpc.package_skeleton");
-      packageSkeleton.addParam("packageName", packageName);
-      packageSkeleton.addParam("packageDirectory", projectFilePath.parent().absolutePath());
-      packageSkeleton.addParam("sourceFiles", codeFiles);
-      packageSkeleton.addParam("usingRcpp", usingRcpp);
-      
-      error = packageSkeleton.call();
-      if (error)
-         return error;
-      
-      // create the project file (allow auto-detection of the package
-      // to setup the package build type & default options)
-      return r_util::writeProjectFile(projectFilePath,
-                                      ProjectContext::buildDefaults(),
-                                      ProjectContext::defaultConfig());
-   }
-
-   else if (!newShinyAppJson.is_null())
+   if (!newShinyAppJson.is_null())
    {
       // error if the shiny app dir already exists
       FilePath appDir = projectFilePath.parent();
@@ -620,8 +576,29 @@ void startup()
    }
 }
 
+SEXP rs_writeProjectFile(SEXP projectFilePathSEXP)
+{
+   std::string absolutePath = r::sexp::asString(projectFilePathSEXP);
+   FilePath projectFilePath(absolutePath);
+   
+   Error error = r_util::writeProjectFile(
+            projectFilePath,
+            ProjectContext::buildDefaults(),
+            ProjectContext::defaultConfig());
+   
+   r::sexp::Protect protect;
+   return error ?
+            r::sexp::create(false, &protect) :
+            r::sexp::create(true, &protect);
+}
+
 Error initialize()
 {
+   r::routines::registerCallMethod(
+            "rs_writeProjectFile",
+            (DL_FUNC) rs_writeProjectFile,
+            1);
+   
    // call project-context initialize
    Error error = s_projectContext.initialize();
    if (error)

@@ -557,24 +557,27 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
                                                    sourceFiles,
                                                    usingRcpp)
 {
+   # Make sure we expand the aliased path if necessary
+   # (note this is a no-op if there is no leading '~')
+   packageDirectory <- path.expand(packageDirectory)
+   
    ## Validate the package name -- note that we validate this upstream
    ## but it is sensible to validate it once more here
    if (!grepl("^[[:alpha:]][[:alnum:].]*", packageName))
-      stop("Invalid package name: the package name must start ",
-           "with a letter and follow with only alphanumeric characters")
+      return(.rs.error(
+         "Invalid package name: the package name must start ",
+         "with a letter and follow with only alphanumeric characters"))
    
    ## Validate the package directory -- if it exists, make sure it's empty,
    ## otherwise, try to create it
    if (file.exists(packageDirectory))
    {
       containedFiles <- list.files(packageDirectory) ## what about hidden files?
-      containedFiles <- containedFiles[
-         file.info(containedFiles)[, "isdir"] %in% TRUE
-      ]
       if (length(containedFiles))
       {
-         stop("Folder '", packageDirectory, "' ",
-              "already exists and is not empty")
+         return(.rs.error(
+            "Folder '", packageDirectory, "' ",
+            "already exists and is not empty"))
       }
    }
    
@@ -582,7 +585,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    else
    {
       if (!dir.create(packageDirectory, recursive = TRUE))
-         stop("Failed to create directory '", packageDirectory, "'")
+         return(.rs.error(
+            "Failed to create directory '", packageDirectory, "'"))
    }
    
    ## Create a DESCRIPTION file
@@ -787,7 +791,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
                            copyPaths)
       
       if (!all(success))
-         stop("Failed to copy one or more source files")
+         return(.rs.error("Failed to copy one or more source files"))
    }
    
    # Write various files out
@@ -816,5 +820,15 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    file.create(file.path(packageDirectory, "README.md"))
    
    cat("^README\\.md$", file = file.path(packageDirectory, ".Rbuildignore"), sep = "\n")
+   
+   .Rproj <- file.path(
+      packageDirectory,
+      paste(packageName, ".Rproj", sep = "")
+   )
+   
+   if (!.Call("rs_writeProjectFile", .Rproj))
+      return(.rs.error("Failed to create package .Rproj file"))
+   
+   .rs.success()
    
 })

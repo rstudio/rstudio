@@ -843,22 +843,6 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_CRAN_MIRRORS, requestCallback);
    }
    
-   public void packageSkeleton(
-         String packageName,
-         String packageDirectory,
-         JsArrayString sourceFilePaths,
-         boolean usingRcpp,
-         ServerRequestCallback<RResult<Void>> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(packageName));
-      params.set(1, new JSONString(packageDirectory));
-      setArrayString(params, 2, sourceFilePaths);
-      params.set(3, JSONBoolean.getInstance(usingRcpp));
-      
-      sendRequest(RPC_SCOPE, PACKAGE_SKELETON, params, requestCallback);
-   }
-
    public void suggestTopics(String prefix,
                              ServerRequestCallback<JsArrayString> requestCallback)
    {
@@ -1263,6 +1247,21 @@ public class RemoteServer implements Server
       params.set(2, newShinyAppOptions != null ?
             new JSONObject(newShinyAppOptions) : JSONNull.getInstance());
       sendRequest(RPC_SCOPE, CREATE_PROJECT, params, requestCallback);
+   }
+   
+   public void packageSkeleton(String packageName,
+                               String packageDirectory,
+                               JsArrayString sourceFiles,
+                               boolean usingRcpp,
+                               ServerRequestCallback<RResult<Void>> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(packageName));
+      params.set(1, new JSONString(packageDirectory));
+      setArrayString(params, 2, sourceFiles);
+      params.set(3, JSONBoolean.getInstance(usingRcpp));
+      
+      sendRequest(RPC_SCOPE, PACKAGE_SKELETON, params, requestCallback);
    }
    
    public void readProjectOptions(ServerRequestCallback<RProjectOptions> callback)

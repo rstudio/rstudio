@@ -121,16 +121,18 @@ public class NewPackagePage extends NewDirectoryPage
    
    private void validatePackageName()
    {
-      if (isPackageNameValid())
+      String packageName = txtProjectName_.getText().trim();
+      
+      // Don't validate if the name is empty
+      if (packageName.isEmpty() || isPackageNameValid(packageName))
          txtProjectName_.removeStyleName(styles_.invalidPkgName());
       else
          txtProjectName_.addStyleName(styles_.invalidPkgName());
    }
    
-   private boolean isPackageNameValid()
+   private boolean isPackageNameValid(String packageName)
    {
-      return Projects.PACKAGE_NAME_PATTERN.test(
-            txtProjectName_.getText().trim());
+      return Projects.PACKAGE_NAME_PATTERN.test(packageName);
    }
    
    private SelectWidget listProjectType_;
