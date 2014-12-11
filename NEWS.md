@@ -44,9 +44,11 @@
 
 ### Packages
 
+* Improvements to New Package:
+    - Generate cleaner packages with no warnings
+    - Respect various devtools options
 * Improved checking for supported protocol with packrat package
 * Escape backslashes in library names when loading packages
-* Respect the 'devtools.desc' option when creating new packages
 
 ### Miscellaneous
 
