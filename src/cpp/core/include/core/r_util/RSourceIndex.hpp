@@ -295,7 +295,7 @@ private:
    std::set<std::string> inferredPkgNames_;
    
    // we map package names to pairs of completions ('all', 'namespace exports')
-   std::map<std::string, AsyncLibraryCompletions> completions_;
+   static std::map<std::string, AsyncLibraryCompletions> completions_;
    
 };
 

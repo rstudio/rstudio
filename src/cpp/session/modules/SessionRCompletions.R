@@ -246,7 +246,7 @@ assign(x = ".rs.acCompletionTypes",
    # If the directory lies within a folder that we're monitoring for indexing, use that.
    cacheable <- TRUE
    if (.rs.hasFileMonitor() &&
-       .rs.startsWith(directory, .rs.getProjectDirectory()))
+          .rs.startsWith(directory, .rs.getProjectDirectory()))
    {
       if (directoriesOnly)
          index <- .rs.getIndexedFolders(tokenName, directory)
@@ -1210,7 +1210,16 @@ assign(x = ".rs.acCompletionTypes",
       # Otherwise, complete from the seach path + available packages
       completions <- .rs.appendCompletions(
          .rs.getCompletionsSearchPath(token),
-         .rs.getCompletionsPackages(token, TRUE)
+         .rs.appendCompletions(
+            .rs.getCompletionsPackages(token, TRUE),
+            .rs.getCompletionsLibraryContext(token,
+                                             string,
+                                             type,
+                                             numCommas,
+                                             functionCall,
+                                             documentId,
+                                             parent.frame())
+         )
       )
       
       # try completing from the source index if this is an
@@ -1388,6 +1397,7 @@ assign(x = ".rs.acCompletionTypes",
                                 numCommas[[i]],
                                 functionCall,
                                 discardFirst,
+                                documentId,
                                 parent.frame())
          )
       }
@@ -1627,19 +1637,22 @@ assign(x = ".rs.acCompletionTypes",
                                             numCommas,
                                             functionCall,
                                             discardFirst,
+                                            documentId,
                                             envir)
 {
-   if (type == .rs.acContextTypes$FUNCTION)
-      .rs.getCompletionsFunction(token, string, functionCall, numCommas, discardFirst, envir)
-   else if (type == .rs.acContextTypes$ARGUMENT)
-      .rs.getCompletionsArgument(token, string)
-   else if (type == .rs.acContextTypes$SINGLE_BRACKET)
-      .rs.getCompletionsSingleBracket(token, string, numCommas, envir)
-   else if (type == .rs.acContextTypes$DOUBLE_BRACKET)
-      .rs.getCompletionsDoubleBracket(token, string, envir)
-   else
-      .rs.emptyCompletions()
-   
+   .rs.appendCompletions(
+      .rs.getCompletionsLibraryContext(token, string, type, numCommas, functionCall, documentId, envir),
+      if (type == .rs.acContextTypes$FUNCTION)
+         .rs.getCompletionsFunction(token, string, functionCall, numCommas, discardFirst, envir)
+      else if (type == .rs.acContextTypes$ARGUMENT)
+         .rs.getCompletionsArgument(token, string)
+      else if (type == .rs.acContextTypes$SINGLE_BRACKET)
+         .rs.getCompletionsSingleBracket(token, string, numCommas, envir)
+      else if (type == .rs.acContextTypes$DOUBLE_BRACKET)
+         .rs.getCompletionsDoubleBracket(token, string, envir)
+      else
+         .rs.emptyCompletions()
+   )
 })
 
 ## NOTE: This is a modified version of 'matchAvailableTopics'
@@ -2082,7 +2095,8 @@ assign(x = ".rs.acCompletionTypes",
                                                          type,
                                                          numCommas,
                                                          functionCall,
-                                                         documentId)
+                                                         documentId,
+                                                         envir)
 {
    ## If we detect that particular 'library' calls are in the source document,
    ## and those packages are actually available (but the package is not currently loaded),
@@ -2101,5 +2115,31 @@ assign(x = ".rs.acCompletionTypes",
    
    # If we're getting completions for a particular function's arguments,
    # use those
+   if (length(type) && type[[1]] == .rs.acCompletionTypes$ARGUMENT)
+   {
+      # NOTE: Masking implies that earlier functions with some name will
+      # be removed by some function with the later name; this is desired
+      # as load order matters
+      allFunctions <- Reduce(c, lapply(completions, `[[`, "functions"))
+      if (string[[1]] %in% names(allFunctions))
+      {
+         args <- allFunctions[[string[[1]]]]
+         results <- .rs.selectFuzzyMatches(args, token)
+         if (length(results))
+            results <- paste(results, "= ")
+         
+         return(.rs.makeCompletions(token = token,
+                                    results = results,
+                                    type = .rs.acCompletionTypes$CONTEXT))
+      }
+   }
+   
+   # Otherwise, assume that we're completing an exported item
+   allExports <- Reduce(c, lapply(completions, `[[`, "exports"))
+   results <- .rs.selectFuzzyMatches(allExports, token)
+   
+   return(.rs.makeCompletions(token = token,
+                              results = results,
+                              type = .rs.acCompletionTypes$CONTEXT))
    
 })

@@ -2253,12 +2253,13 @@ private:
       //    "all": <array of all things>,
       //    "functions": <object mapping function names to arguments>
       // }
-      AsyncLibraryCompletions completions;
-      json::Array exportsJson;
-      json::Array allJson;
-      json::Object functionsJson;
       for (std::size_t i = 0; i < n; ++i)
       {
+         json::Array exportsJson;
+         json::Array allJson;
+         json::Object functionsJson;
+         AsyncLibraryCompletions completions;
+         
          if (splat[i].empty())
             continue;
          
