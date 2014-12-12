@@ -656,6 +656,12 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    margin-top: 2px;
    margin-right: 3px;
 }
+.docTabLabel {
+   overflow: hidden;
+   max-width: 200px;
+   white-space: nowrap;
+   text-overflow: ellipsis;
+}
 
 .docMenuScroll {
    overflow-y: scroll !important;

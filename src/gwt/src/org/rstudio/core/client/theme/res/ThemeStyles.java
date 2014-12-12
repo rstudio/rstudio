@@ -56,6 +56,7 @@ public interface ThemeStyles extends CssResource
    String tabLayoutRight();
    String dirtyTab();
    String dirtyTabIndicator();
+   String docTabLabel();
 
    String toolbar();
    String secondaryToolbar();
