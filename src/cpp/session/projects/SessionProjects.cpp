@@ -592,12 +592,28 @@ SEXP rs_writeProjectFile(SEXP projectFilePathSEXP)
             r::sexp::create(true, &protect);
 }
 
+SEXP rs_addFirstRunDoc(SEXP projectFileAbsolutePathSEXP, SEXP docRelativePathSEXP)
+{
+   std::string projectFileAbsolutePath = r::sexp::asString(projectFileAbsolutePathSEXP);
+   const FilePath projectFilePath(projectFileAbsolutePath);
+   
+   std::string docRelativePath = r::sexp::asString(docRelativePathSEXP);
+   
+   addFirstRunDoc(projectFilePath, docRelativePath);
+   return R_NilValue;
+}
+
 Error initialize()
 {
    r::routines::registerCallMethod(
             "rs_writeProjectFile",
             (DL_FUNC) rs_writeProjectFile,
             1);
+   
+   r::routines::registerCallMethod(
+            "rs_addFirstRunDoc",
+            (DL_FUNC) rs_addFirstRunDoc,
+            2);
    
    // call project-context initialize
    Error error = s_projectContext.initialize();

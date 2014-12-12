@@ -754,13 +754,17 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          "Ctrl + Shift + T"
       
       helloWorld <- c(
+         "# Hello, world!"
+         "#"
          "# This is an example function named 'hello' which prints 'Hello, world!'.",
          "# You can learn more about package authoring with RStudio at http://r-pkgs.had.co.nz/",
          "#",
          "# Some useful keyboard shortcuts for package authoring:",
-         paste("# Build and Reload: '", buildShortcut, "'", sep = ""),
-         paste("# Check: '", checkShortcut, "'", sep = ""),
-         paste("# Test: '", testShortcut, "'", sep = ""),
+         "#"
+         paste("#   Build and Reload: '", buildShortcut, "'", sep = ""),
+         paste("#   Check: '", checkShortcut, "'", sep = ""),
+         paste("#   Test: '", testShortcut, "'", sep = ""),
+         "#"
          "hello <- function() {",
          "    print(\"Hello, world!\")",
          "}"
@@ -868,6 +872,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
    cat(Rproj, file = RprojPath, sep = "\n")
    
+   .Call("rs_addFirstRunDoc", RprojPath, "R/hello.R")
    .rs.success()
    
 })
