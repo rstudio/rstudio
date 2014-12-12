@@ -747,7 +747,7 @@
 ## NOTE: Must use double quotes, not single quotes!
 .rs.addFunction('toJSON', function(object)
 {
-   AsIs <- inherits(object, "AsIs");
+   AsIs <- inherits(object, "AsIs")
    if (is.list(object))
    {
       if (is.null(names(object)))
@@ -771,7 +771,7 @@
       }
       else if (is.character(object) || is.factor(object))
       {
-         object <- shQuote(object, 'cmd');
+         object <- shQuote(object, 'cmd')
          object[object == '\"NA\"'] <- 'null'
       }
       else if (is.numeric(object))
@@ -780,7 +780,7 @@
       }
       else if (is.logical(object))
       {
-         object <- tolower(object);
+         object <- tolower(object)
          object[is.na(object)] <- 'null'
       };
       
