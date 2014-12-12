@@ -2174,20 +2174,11 @@ class LibraryCompletions : public async_r::AsyncRProcess
    
 private:
 
-   static const std::string s_toJSONFunction;
-   static const std::string s_acCompletionTypes;
-   static const std::string s_getCompletionType;
-   
 public:
    static boost::shared_ptr<LibraryCompletions> update(
          core::r_util::RSourceIndex& index)
    {
       std::stringstream ss;
-      
-      // Throw in the helper functions
-      ss << s_toJSONFunction
-         << s_acCompletionTypes
-         << s_getCompletionType;
       
       // Add in each of the package exports and whatnot
       std::set<std::string> const& pkgs(index.getInferredPackages());
@@ -2222,9 +2213,22 @@ public:
       
       std::cerr << ss.str() << std::endl;
       std::string finalCmd = ss.str();
+
+      FilePath modulesPath =
+            session::options().modulesRSourcePath();
+
+      FilePath codeTools = modulesPath.childPath("SessionCodeTools.R");
+      FilePath rCompletions = modulesPath.childPath("SessionRCompletions.R");
+
+      std::vector<std::string> rFilesToSource;
+      rFilesToSource.push_back(codeTools.absolutePath());
+      rFilesToSource.push_back(rCompletions.absolutePath());
+
       pCompletions->start(finalCmd.c_str(),
                           FilePath(),
-                          async_r::R_PROCESS_VANILLA);
+                          async_r::R_PROCESS_VANILLA,
+                          rFilesToSource);
+
       return pCompletions;
       
    }
@@ -2336,126 +2340,6 @@ private:
    core::r_util::RSourceIndex& index_;
    
 };
-
-// NOTE: Sync with 'toJSON' from 'SessionCodeTools.R' as necessary
-const std::string LibraryCompletions::s_toJSONFunction =
-" \
-.rs.toJSON <- function(object) \
-{ \
-   AsIs <- inherits(object, 'AsIs'); \
-   DQUOTE <- '\\\"'; \
-   if (is.list(object)) \
-   { \
-      if (is.null(names(object))) \
-      { \
-         return(paste('[', paste(lapply(seq_along(object), function(i) { \
-            .rs.toJSON(object[[i]]) \
-         }), collapse = ','), ']', sep = '', collapse=',')) \
-      } \
-      else \
-      { \
-         return(paste('{', paste(lapply(seq_along(object), function(i) { \
-            paste(DQUOTE, names(object)[[i]], DQUOTE, ':', .rs.toJSON(object[[i]]), sep = '') \
-         }), collapse = ','), '}', sep = '', collapse=',')) \
-      } \
-   } \
-   else \
-   { \
-      if (!length(object)) \
-      { \
-         return('[]') \
-      } \
-      else if (is.character(object) || is.factor(object)) \
-      { \
-         object <- shQuote(object, 'cmd'); \
-         object[object == '\\\"NA\\\"'] <- 'null' \
-      } \
-      else if (is.numeric(object)) \
-      { \
-         object[is.na(object)] <- '\\\"NA\\\"' \
-      } \
-      else if (is.logical(object)) \
-      { \
-         object <- tolower(object); \
-         object[is.na(object)] <- 'null' \
-      }; \
-       \
-      if (AsIs) \
-         return(object) \
-      else \
-         return(paste('[', paste(object, collapse = ','), ']', sep = '', collapse = ',')) \
-   } \
-}; \
-";
-
-const std::string LibraryCompletions::s_acCompletionTypes =
-" \
-.rs.acCompletionTypes <- list( \
-   UNKNOWN     =  0, \
-   VECTOR      =  1, \
-   ARRAY       =  2, \
-   DATAFRAME   =  3, \
-   LIST        =  4, \
-   ENVIRONMENT =  5, \
-   FUNCTION    =  6, \
-   ARGUMENT    =  7, \
-   S4_CLASS    =  8, \
-   S4_OBJECT   =  9, \
-   S4_GENERIC  = 10, \
-   S4_METHOD   = 11, \
-   R5_CLASS    = 12, \
-   R5_OBJECT   = 13, \
-   R5_METHOD   = 14, \
-   FILE        = 15, \
-   DIRECTORY   = 16, \
-   CHUNK       = 17, \
-   ROXYGEN     = 18, \
-   HELP        = 19, \
-   STRING      = 20, \
-   PACKAGE     = 21, \
-   KEYWORD     = 22, \
-   OPTION      = 23, \
-   DATASET     = 24, \
-   CONTEXT     = 99 \
-); \
-";
-
-const std::string LibraryCompletions::s_getCompletionType =
-" \
-.rs.getCompletionType <- function(object) \
-{ \
-   if (inherits(object, 'refMethodDef')) \
-      .rs.acCompletionTypes$R5_METHOD \
-   else if (inherits(object, 'refObjectGenerator')) \
-      .rs.acCompletionTypes$R5_CLASS \
-   else if (inherits(object, 'refClass')) \
-      .rs.acCompletionTypes$R5_OBJECT \
-   else if (isS4(object)) \
-   { \
-      if (inherits(object, 'standardGeneric') || \
-          inherits(object, 'nonstandardGenericFunction')) \
-         .rs.acCompletionTypes$S4_GENERIC \
-      else if (inherits(object, 'MethodDefinition')) \
-         .rs.acCompletionTypes$S4_METHOD \
-      else \
-         .rs.acCompletionTypes$S4_OBJECT \
-   } \
-   else if (is.function(object)) \
-      .rs.acCompletionTypes$FUNCTION \
-   else if (is.array(object)) \
-      .rs.acCompletionTypes$ARRAY \
-   else if (inherits(object, 'data.frame')) \
-      .rs.acCompletionTypes$DATAFRAME \
-   else if (is.list(object)) \
-      .rs.acCompletionTypes$LIST \
-   else if (is.environment(object)) \
-      .rs.acCompletionTypes$ENVIRONMENT \
-   else if (is.vector(object)) \
-      .rs.acCompletionTypes$VECTOR \
-   else \
-      .rs.acCompletionTypes$UNKNOWN \
-}; \
-";
 
 SEXP rs_getSourceFileLibraryCompletions(SEXP documentIdSEXP,
                                         SEXP packagesSEXP)
