@@ -13,6 +13,11 @@
 #
 #
 
+#
+# TODO: automagic migration of shinyapps directory
+# TODO: calling deployApp in a child process is missing the getOption("repos")
+#
+
 .rs.addFunction("scalarListFromFrame", function(frame)
 {
    ret <- list()
@@ -29,16 +34,18 @@
    return(ret)
 })
 
+
 .rs.addJsonRpcHandler("get_rsconnect_account_list", function() {
-   rsconnect::accounts()
+   rsconnect::accounts(server = "shinyapps.io")$name
 })
 
 .rs.addJsonRpcHandler("remove_rsconnect_account", function(account) {
-   rsconnect::removeAccount(account)
+   rsconnect::removeAccount(account, server = "shinyapps.io")
 })
 
 .rs.addJsonRpcHandler("get_rsconnect_app_list", function(account) {
-   .rs.scalarListFromFrame(rsconnect::applications(account))
+   .rs.scalarListFromFrame(rsconnect::applications(account,
+                                                   server = "shinyapps.io"))
 })
 
 .rs.addJsonRpcHandler("get_rsconnect_deployments", function(dir) {

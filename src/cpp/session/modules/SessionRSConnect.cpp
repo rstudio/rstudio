@@ -54,6 +54,7 @@ public:
       std::string cmd("rsconnect::deployApp("
             "appDir = '" + dir + "'," 
             "account = '" + account + "',"
+            "server = 'shinyapps.io', "
             "appName = '" + app + "', " 
             "launch.browser = function (url) { "
             "   message('" kFinishedMarker "', url) "
