@@ -48,7 +48,6 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   private final OptionJsInteropMode.Mode jsInteropMode;
   private final OptionMethodNameDisplayMode.Mode methodNameDisplayMode;
   private final ListMultimap<String, String> properties;
-  private final boolean closureFormattedOutput;
 
   CompilerOptionsImpl(CompileDir compileDir, String moduleName, Options options) {
     this.compileDir = compileDir;
@@ -62,7 +61,6 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
     this.jsInteropMode = options.getJsInteropMode();
     this.methodNameDisplayMode = options.getMethodNameDisplayMode();
     this.properties = LinkedListMultimap.create(options.getProperties());
-    this.closureFormattedOutput = options.isClosureFormattedOutput();
   }
 
   @Override
@@ -337,10 +335,5 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   @Override
   public boolean warnOverlappingSource() {
     return false;
-  }
-
-  @Override
-  public boolean isClosureCompilerFormatEnabled() {
-    return closureFormattedOutput;
   }
 }

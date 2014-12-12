@@ -59,7 +59,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private boolean useDetailedTypeIds = false;
   private OptionMethodNameDisplayMode.Mode methodNameDisplayMode =
       OptionMethodNameDisplayMode.Mode.NONE;
-  private boolean closureFormatEnabled = false;
 
   public JJSOptionsImpl() {
   }
@@ -98,7 +97,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     setJsInteropMode(other.getJsInteropMode());
     setUseDetailedTypeIds(other.useDetailedTypeIds());
     setMethodNameDisplayMode(other.getMethodNameDisplayMode());
-    setClosureCompilerFormatEnabled(other.isClosureCompilerFormatEnabled());
   }
 
   @Override
@@ -408,15 +406,5 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   @Override
   public boolean useDetailedTypeIds() {
     return useDetailedTypeIds;
-  }
-
-  @Override
-  public boolean isClosureCompilerFormatEnabled() {
-    return closureFormatEnabled;
-  }
-
-  @Override
-  public void setClosureCompilerFormatEnabled(boolean enabled) {
-    closureFormatEnabled = enabled;
   }
 }

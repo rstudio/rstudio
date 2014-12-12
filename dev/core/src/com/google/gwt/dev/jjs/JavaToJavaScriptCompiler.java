@@ -190,7 +190,7 @@ public abstract class JavaToJavaScriptCompiler {
    */
   protected abstract class PermutationCompiler {
 
-    protected Permutation permutation;
+    private Permutation permutation;
 
     public PermutationCompiler(Permutation permutation) {
       this.permutation = permutation;

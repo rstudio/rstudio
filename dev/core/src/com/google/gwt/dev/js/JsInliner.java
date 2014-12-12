@@ -61,7 +61,6 @@ import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultiset;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multiset;
@@ -637,16 +636,10 @@ public class JsInliner {
 
     private JsProgram program;
 
-    private final Set<JsName> safeToInlineAtTopLevel;
-
     public InliningVisitor(JsProgram program, Set<JsNode> whitelist) {
       this.program = program;
       this.whitelist = whitelist;
       invocationCountingVisitor.accept(program);
-      safeToInlineAtTopLevel = ImmutableSet.of(
-          program.getIndexedFunction("JavaClassHierarchySetupUtil.defineClass").getName(),
-          program.getIndexedFunction("JavaClassHierarchySetupUtil.defineClassWithPrototype")
-              .getName());
     }
 
     /**
@@ -752,6 +745,9 @@ public class JsInliner {
 
     @Override
     public void endVisit(JsInvocation x, JsContext ctx) {
+      if (functionStack.isEmpty()) {
+        return;
+      }
       JsFunction callerFunction = functionStack.peek();
 
       /*
@@ -833,10 +829,9 @@ public class JsInliner {
     @Override
     public boolean visit(JsExprStmt x, JsContext ctx) {
       if (functionStack.peek() == programFunction) {
-        /* Don't inline most top-level invocations. */
+        /* Don't inline top-level invocations. */
         if (x.getExpression() instanceof JsInvocation) {
-          return safeToInlineAtTopLevel.contains(
-              JsUtils.maybeGetFunctionName(x.getExpression()));
+          return false;
         }
       }
       return true;
