@@ -34,8 +34,8 @@ endif()
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/packrat")
   message(FATAL_ERROR "packrat package not found (re-run install-dependencies script to install)")
 endif()
-if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/shinyapps")
-  message(FATAL_ERROR "shinyapps package not found (re-run install-dependencies script to install)")
+if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect")
+  message(FATAL_ERROR "rsconnect package not found (re-run install-dependencies script to install)")
 endif()
 
 
@@ -110,7 +110,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionRCompletions.cpp
    modules/SessionRHooks.cpp
    modules/SessionRPubs.cpp
-   modules/SessionShinyApps.cpp
+   modules/SessionRSConnect.cpp
    modules/SessionShinyViewer.cpp
    modules/SessionSource.cpp
    modules/SessionSpelling.cpp
@@ -384,9 +384,9 @@ if (NOT RSTUDIO_SESSION_WIN64)
    install(FILES ${PACKRAT_PACKAGE}
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
 
-   # install shinyapps package
-   file(GLOB SHINYAPPS_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/shinyapps*.tar.gz")
-   install(FILES ${SHINYAPPS_PACKAGE}
+   # install rsconnect package
+   file(GLOB RSCONNECT_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/rsconnect*.tar.gz")
+   install(FILES ${RSCONNECT_PACKAGE}
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
 
    # install PDF.js

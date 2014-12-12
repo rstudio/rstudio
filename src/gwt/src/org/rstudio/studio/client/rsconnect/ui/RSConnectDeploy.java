@@ -1,5 +1,5 @@
 /*
- * ShinyAppsDeploy.java
+ * RSConnectDeploy.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -12,14 +12,14 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.shiny.ui;
+package org.rstudio.studio.client.rsconnect.ui;
 
 import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.FilePathUtils;
-import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
+import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
@@ -44,12 +44,12 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
-public class ShinyAppsDeploy extends Composite
+public class RSConnectDeploy extends Composite
 {
-   private static ShinyAppsDeployUiBinder uiBinder = GWT
-         .create(ShinyAppsDeployUiBinder.class);
+   private static RSConnectDeployUiBinder uiBinder = GWT
+         .create(RSConnectDeployUiBinder.class);
 
-   interface ShinyAppsDeployUiBinder extends UiBinder<Widget, ShinyAppsDeploy>
+   interface RSConnectDeployUiBinder extends UiBinder<Widget, RSConnectDeploy>
    {
    }
    
@@ -67,7 +67,7 @@ public class ShinyAppsDeploy extends Composite
       ImageResource deployIllustration();
    }
 
-   public ShinyAppsDeploy()
+   public RSConnectDeploy()
    {
       initWidget(uiBinder.createAndBindUi(this));
 
@@ -160,7 +160,7 @@ public class ShinyAppsDeploy extends Composite
       return appName.getText();
    }
    
-   public void showAppInfo(ShinyAppsApplicationInfo info)
+   public void showAppInfo(RSConnectApplicationInfo info)
    {
       if (info == null)
       {

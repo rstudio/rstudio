@@ -1,5 +1,5 @@
 /*
- * ShinyAppsAccountManagerDialog.java
+ * RSConnectAccountManagerDialog.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -12,12 +12,12 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.shiny.ui;
+package org.rstudio.studio.client.rsconnect.ui;
 
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.shiny.model.ShinyAppsServerOperations;
+import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -31,14 +31,14 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.ui.PopupPanel;
 
-public class ShinyAppsAccountManagerDialog 
-             extends ShinyAppsDialog<ShinyAppsAccountManager>
+public class RSConnectAccountManagerDialog 
+             extends RSConnectDialog<RSConnectAccountManager>
 {
-   public ShinyAppsAccountManagerDialog(ShinyAppsServerOperations server, 
+   public RSConnectAccountManagerDialog(RSConnectServerOperations server, 
                                         final GlobalDisplay display)
    {
-      super(server, display, new ShinyAppsAccountManager());
-      setText("Manage ShinyApps Accounts");
+      super(server, display, new RSConnectAccountManager());
+      setText("Manage Accounts");
       setWidth("300px");
 
       connectButton_ = new ThemedButton("Connect...");
@@ -99,7 +99,7 @@ public class ShinyAppsAccountManagerDialog
             "Confirm Remove Account", 
             "Are you sure you want to disconnect the '" + 
               account + 
-            "' account? This won't delete the account on ShinyApps.", 
+            "' account? This won't delete the account on the server.", 
             false, 
             new Operation()
             {
@@ -113,7 +113,7 @@ public class ShinyAppsAccountManagerDialog
    
    private void onConfirmDisconnect(final String accountName)
    {
-      server_.removeShinyAppsAccount(accountName, new ServerRequestCallback<Void>()
+      server_.removeRSConnectAccount(accountName, new ServerRequestCallback<Void>()
       {
          @Override
          public void onResponseReceived(Void v)
@@ -133,8 +133,8 @@ public class ShinyAppsAccountManagerDialog
    
    private void onConnect()
    {
-      ShinyAppsConnectAccountDialog dialog = 
-            new ShinyAppsConnectAccountDialog(server_, display_);
+      RSConnectConnectAccountDialog dialog = 
+            new RSConnectConnectAccountDialog(server_, display_);
       dialog.addCloseHandler(new CloseHandler<PopupPanel>()
       {
          @Override
@@ -159,7 +159,7 @@ public class ShinyAppsAccountManagerDialog
    
    private void refreshAccountList()
    {
-      server_.getShinyAppsAccountList(new ServerRequestCallback<JsArrayString>()
+      server_.getRSConnectAccountList(new ServerRequestCallback<JsArrayString>()
       {
          @Override
          public void onResponseReceived(JsArrayString accounts)
@@ -171,7 +171,7 @@ public class ShinyAppsAccountManagerDialog
          @Override
          public void onError(ServerError error)
          {
-            display_.showErrorMessage("Error retrieving ShinyApps accounts", 
+            display_.showErrorMessage("Error retrieving accounts", 
                                      error.getMessage());
          }
       });

@@ -1,5 +1,5 @@
 /*
- * ShinyAppsDeployOutputTab.java
+ * RSConnectDeployOutputTab.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -13,7 +13,7 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.views.output.shinyappsdeploy;
+package org.rstudio.studio.client.workbench.views.output.rsconnectdeploy;
 
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
@@ -21,24 +21,24 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.widget.model.ProvidesBusy;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
-import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentCompletedEvent;
-import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentOutputEvent;
-import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentStartedEvent;
+import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentStartedEvent;
+import org.rstudio.studio.client.shiny.events.RSConnectDeploymentCompletedEvent;
+import org.rstudio.studio.client.shiny.events.RSConnectDeploymentOutputEvent;
 import org.rstudio.studio.client.workbench.events.BusyHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 
-public class ShinyAppsDeployOutputTab 
-   extends DelayLoadWorkbenchTab<ShinyAppsDeployOutputPresenter>
+public class RSConnectDeployOutputTab 
+   extends DelayLoadWorkbenchTab<RSConnectDeployOutputPresenter>
    implements ProvidesBusy
 {
    public abstract static class Shim extends
-                DelayLoadTabShim<ShinyAppsDeployOutputPresenter, 
-                                 ShinyAppsDeployOutputTab>
-      implements ShinyAppsDeploymentStartedEvent.Handler,
-                 ShinyAppsDeploymentOutputEvent.Handler,
-                 ShinyAppsDeploymentCompletedEvent.Handler, 
+                DelayLoadTabShim<RSConnectDeployOutputPresenter, 
+                                 RSConnectDeployOutputTab>
+      implements RSConnectDeploymentStartedEvent.Handler,
+                 RSConnectDeploymentOutputEvent.Handler,
+                 RSConnectDeploymentCompletedEvent.Handler, 
                  RestartStatusEvent.Handler,
                  ProvidesBusy
    {
@@ -47,16 +47,16 @@ public class ShinyAppsDeployOutputTab
    }
 
    @Inject
-   public ShinyAppsDeployOutputTab(Shim shim,
+   public RSConnectDeployOutputTab(Shim shim,
                              EventBus events,
                              final Session session)
    {
       super("Deploy", shim);
       shim_ = shim;
 
-      events.addHandler(ShinyAppsDeploymentStartedEvent.TYPE, shim);
-      events.addHandler(ShinyAppsDeploymentOutputEvent.TYPE, shim);
-      events.addHandler(ShinyAppsDeploymentCompletedEvent.TYPE, shim);
+      events.addHandler(RSConnectDeploymentStartedEvent.TYPE, shim);
+      events.addHandler(RSConnectDeploymentOutputEvent.TYPE, shim);
+      events.addHandler(RSConnectDeploymentCompletedEvent.TYPE, shim);
    }
 
    @Override

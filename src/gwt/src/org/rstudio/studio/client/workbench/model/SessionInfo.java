@@ -351,8 +351,8 @@ public class SessionInfo extends JavaScriptObject
       return this.have_advanced_step_commands;
    }-*/;
    
-   public final native boolean getShinyappsAvailable() /*-{
-      return this.shinyapps_available;
+   public final native boolean getRSConnectAvailable() /*-{
+      return this.rsconnect_available;
    }-*/;
    
    public final native boolean getRMarkdownPackageAvailable() /*-{

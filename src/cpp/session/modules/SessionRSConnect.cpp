@@ -1,5 +1,5 @@
 /*
- * SessionShinyApps.cpp
+ * SessionRSConnect.cpp
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -13,7 +13,7 @@
  *
  */
 
-#include "SessionShinyApps.hpp"
+#include "SessionRSConnect.hpp"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
@@ -27,8 +27,8 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncRProcess.hpp>
 
-#define kFinishedMarker "ShinyApps deployment completed: "
-#define kShinyAppsFolder "shinyapps/"
+#define kFinishedMarker "Deployment completed: "
+#define kRSConnectFolder "rsconnect/"
 #define kPackratFolder "packrat/"
 
 #define kMaxDeploymentSize 104857600
@@ -37,7 +37,7 @@ using namespace core;
 
 namespace session {
 namespace modules { 
-namespace shiny_apps {
+namespace rsconnect {
 
 namespace {
 
@@ -51,20 +51,13 @@ public:
          const std::string& app)
    {
       boost::shared_ptr<ShinyAppDeploy> pDeploy(new ShinyAppDeploy(file));
-      std::string cmd("shinyapps::deployApp("
+      std::string cmd("rsconnect::deployApp("
             "appDir = '" + dir + "'," 
             "account = '" + account + "',"
             "appName = '" + app + "', " 
             "launch.browser = function (url) { "
             "   message('" kFinishedMarker "', url) "
-            "}");
-
-      // append launch.rmd arg for older versions of shinyapps package
-      if (!module_context::isPackageVersionInstalled("shinyapps", "0.3.54"))
-      {
-         cmd += ", launch.rmd = NULL";
-      }
-      cmd += ")";
+            "})");
 
       pDeploy->start(cmd.c_str(), FilePath(), async_r::R_PROCESS_VANILLA);
       return pDeploy;
@@ -119,7 +112,7 @@ private:
 
       // emit the output to the client for display
       module_context::CompileOutput deployOutput(type, output);
-      ClientEvent event(client_events::kRmdShinyAppsDeploymentOutput, 
+      ClientEvent event(client_events::kRmdRSConnectDeploymentOutput,
                         module_context::compileOutputAsJson(deployOutput));
       module_context::enqueClientEvent(event);
    }
@@ -127,7 +120,7 @@ private:
    void onCompleted(int exitStatus)
    {
       // when the process completes, emit the discovered URL, if any
-      ClientEvent event(client_events::kRmdShinyAppsDeploymentCompleted, 
+      ClientEvent event(client_events::kRmdRSConnectDeploymentCompleted,
                         deployedUrl_);
       module_context::enqueClientEvent(event);
    }
@@ -173,12 +166,12 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "deploy_shiny_app", deployShinyApp))
-      (bind(sourceModuleRFile, "SessionShinyApps.R"));
+      (bind(sourceModuleRFile, "SessionRSConnect.R"));
 
    return initBlock.execute();
 }
 
-} // namespace shiny_apps
+} // namespace rsconnect
 } // namespace modules
 } // namespace session
 

@@ -47,7 +47,6 @@ import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.rpubs.model.RPubsServerOperations;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
-import org.rstudio.studio.client.common.shiny.model.ShinyAppsServerOperations;
 import org.rstudio.studio.client.common.shiny.model.ShinyServerOperations;
 import org.rstudio.studio.client.common.spelling.model.SpellingServerOperations;
 import org.rstudio.studio.client.common.synctex.Synctex;
@@ -78,11 +77,12 @@ import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputPanel;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputPresenter;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputWindow;
+import org.rstudio.studio.client.rsconnect.RSConnect;
+import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.remote.RemoteServer;
 import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.shiny.ShinyApplicationPresenter;
-import org.rstudio.studio.client.shiny.ShinyApps;
 import org.rstudio.studio.client.shiny.ui.ShinyApplicationPanel;
 import org.rstudio.studio.client.shiny.ui.ShinyApplicationView;
 import org.rstudio.studio.client.shiny.ui.ShinyApplicationWindow;
@@ -134,7 +134,7 @@ import org.rstudio.studio.client.workbench.views.output.find.FindOutputPresenter
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
 import org.rstudio.studio.client.workbench.views.output.renderrmd.RenderRmdOutputTab;
-import org.rstudio.studio.client.workbench.views.output.shinyappsdeploy.ShinyAppsDeployOutputTab;
+import org.rstudio.studio.client.workbench.views.output.rsconnectdeploy.RSConnectDeployOutputTab;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.SourceCppOutputPane;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.SourceCppOutputPresenter;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.SourceCppOutputTab;
@@ -227,7 +227,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(BreakpointManager.class).asEagerSingleton();
       bind(DebugCommander.class).asEagerSingleton();
       bind(ShortcutViewer.class).asEagerSingleton();
-      bind(ShinyApps.class).asEagerSingleton();
+      bind(RSConnect.class).asEagerSingleton();
       bind(RmdOutput.class).in(Singleton.class);
       bind(HelpStrategy.class).in(Singleton.class);
 
@@ -282,7 +282,7 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("R Markdown", RenderRmdOutputTab.class);
       bindTab("Find", FindOutputTab.class);
       bindTab("Source Cpp", SourceCppOutputTab.class);
-      bindTab("Deploy", ShinyAppsDeployOutputTab.class);
+      bindTab("Deploy", RSConnectDeployOutputTab.class);
 
       bind(Shell.Display.class).to(ShellPane.class) ;
            
@@ -332,7 +332,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(SynctexServerOperations.class).to(RemoteServer.class);
       bind(HTMLPreviewServerOperations.class).to(RemoteServer.class);
       bind(ShinyServerOperations.class).to(RemoteServer.class);
-      bind(ShinyAppsServerOperations.class).to(RemoteServer.class);
+      bind(RSConnectServerOperations.class).to(RemoteServer.class);
       bind(RPubsServerOperations.class).to(RemoteServer.class);
       bind(BuildServerOperations.class).to(RemoteServer.class);
       bind(PresentationServerOperations.class).to(RemoteServer.class);

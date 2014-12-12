@@ -1,5 +1,5 @@
 /*
- * ShinyAppsDeploymentStartedEvent.java
+ * RSConnectDeploymentStartedEvent.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -12,22 +12,22 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.shiny.events;
+package org.rstudio.studio.client.rsconnect.events;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ShinyAppsDeploymentStartedEvent extends GwtEvent<ShinyAppsDeploymentStartedEvent.Handler>
+public class RSConnectDeploymentStartedEvent extends GwtEvent<RSConnectDeploymentStartedEvent.Handler>
 { 
    public interface Handler extends EventHandler
    {
-      void onShinyAppsDeploymentStarted(ShinyAppsDeploymentStartedEvent event);
+      void onRSConnectDeploymentStarted(RSConnectDeploymentStartedEvent event);
    }
 
-   public static final GwtEvent.Type<ShinyAppsDeploymentStartedEvent.Handler> TYPE =
-      new GwtEvent.Type<ShinyAppsDeploymentStartedEvent.Handler>();
+   public static final GwtEvent.Type<RSConnectDeploymentStartedEvent.Handler> TYPE =
+      new GwtEvent.Type<RSConnectDeploymentStartedEvent.Handler>();
    
-   public ShinyAppsDeploymentStartedEvent(String path)
+   public RSConnectDeploymentStartedEvent(String path)
    {
       path_ = path;
    }
@@ -38,13 +38,13 @@ public class ShinyAppsDeploymentStartedEvent extends GwtEvent<ShinyAppsDeploymen
    }
    
    @Override
-   protected void dispatch(ShinyAppsDeploymentStartedEvent.Handler handler)
+   protected void dispatch(RSConnectDeploymentStartedEvent.Handler handler)
    {
-      handler.onShinyAppsDeploymentStarted(this);
+      handler.onRSConnectDeploymentStarted(this);
    }
 
    @Override
-   public GwtEvent.Type<ShinyAppsDeploymentStartedEvent.Handler> getAssociatedType()
+   public GwtEvent.Type<RSConnectDeploymentStartedEvent.Handler> getAssociatedType()
    {
       return TYPE;
    }

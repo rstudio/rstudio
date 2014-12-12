@@ -1,5 +1,5 @@
 #
-# SessionShinyApps
+# SessionRSConnect.R
 #
 # Copyright (C) 2009-14 by RStudio, Inc.
 #
@@ -29,20 +29,20 @@
    return(ret)
 })
 
-.rs.addJsonRpcHandler("get_shinyapps_account_list", function() {
-   shinyapps::accounts()
+.rs.addJsonRpcHandler("get_rsconnect_account_list", function() {
+   rsconnect::accounts()
 })
 
-.rs.addJsonRpcHandler("remove_shinyapps_account", function(account) {
-   shinyapps::removeAccount(account)
+.rs.addJsonRpcHandler("remove_rsconnect_account", function(account) {
+   rsconnect::removeAccount(account)
 })
 
-.rs.addJsonRpcHandler("get_shinyapps_app_list", function(account) {
-   .rs.scalarListFromFrame(shinyapps::applications(account))
+.rs.addJsonRpcHandler("get_rsconnect_app_list", function(account) {
+   .rs.scalarListFromFrame(rsconnect::applications(account))
 })
 
-.rs.addJsonRpcHandler("get_shinyapps_deployments", function(dir) {
-   .rs.scalarListFromFrame(shinyapps::deployments(dir))
+.rs.addJsonRpcHandler("get_rsconnect_deployments", function(dir) {
+   .rs.scalarListFromFrame(rsconnect::deployments(dir))
 })
 
 .rs.addFunction("maxDirectoryList", function(dir, root, cur_size, max_size, 
@@ -92,10 +92,10 @@
                       subdir_contents))
 })
 
-.rs.addFunction("shinyAppsDeployList", function(dir) {
+.rs.addFunction("rsconnectDeployList", function(dir) {
   max_size <- 104857600   # 100MB
   dirlist <- .rs.maxDirectoryList(dir, ".", 0, max_size, 
-                                  c("shinyapps", "packrat"), "Rproj")
+                                  c("rsconnect", "packrat"), "Rproj")
   list (
     # if the directory is too large, no need to bother sending a potentially
     # large blob of data to the client
@@ -108,14 +108,14 @@
 })
 
 .rs.addJsonRpcHandler("get_deployment_files", function(dir) {
-   .rs.shinyAppsDeployList(dir)
+   .rs.rsconnectDeployList(dir)
 })
 
 # The parameter to this function is a string containing the R command from
-# the ShinyApps service; we just need to parse and execute it directly.
+# the rsconnect service; we just need to parse and execute it directly.
 # The client is responsible for verifying that the statement corresponds to
 # a valid ::setAccountInfo command.
-.rs.addJsonRpcHandler("connect_shinyapps_account", function(accountCmd) {
+.rs.addJsonRpcHandler("connect_rsconnect_account", function(accountCmd) {
    cmd <- parse(text=accountCmd)
    eval(cmd, envir = globalenv())
 })
