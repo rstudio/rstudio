@@ -391,7 +391,7 @@ public class RSConnect implements SessionInitHandler,
    private void terminateShinyApp(String accountName, final String appName)
    {
       events_.fireEvent(new SendToConsoleEvent("rsconnect::terminateApp(\"" +
-            appName + "\", \"" + accountName + "\")", true));
+            appName + "\", \"" + accountName + "\", server = \"shinyapps.io\")", true));
    }
    
    private final native void exportNativeCallbacks() /*-{
