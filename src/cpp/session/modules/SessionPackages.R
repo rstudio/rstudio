@@ -817,10 +817,6 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
    cat(NAMESPACE, file = file.path(packageDirectory, "NAMESPACE"), sep = "\n")
    
-   file.create(file.path(packageDirectory, "README.md"))
-   
-   cat("^README\\.md$", file = file.path(packageDirectory, ".Rbuildignore"), sep = "\n")
-   
    RprojPath <- file.path(
       packageDirectory,
       paste(packageName, ".Rproj", sep = "")
