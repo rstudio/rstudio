@@ -114,8 +114,8 @@ const int kRmdRenderCompleted = 90;
 const int kRmdTemplateDiscovered = 91;
 const int kRmdTemplateDiscoveryCompleted = 92;
 const int kRmdShinyDocStarted = 93;
-const int kRmdShinyAppsDeploymentOutput = 94;
-const int kRmdShinyAppsDeploymentCompleted = 95;
+const int kRmdRSConnectDeploymentOutput = 94;
+const int kRmdRSConnectDeploymentCompleted = 95;
 const int kUserPrompt = 96;
 const int kInstallRtools = 97;
 const int kInstallShiny = 98;
@@ -311,10 +311,10 @@ std::string ClientEvent::typeName() const
          return "rmd_template_discovery_completed";
       case client_events::kRmdShinyDocStarted:
          return "rmd_shiny_doc_started";
-      case client_events::kRmdShinyAppsDeploymentOutput:
-         return "shiny_apps_deployment_output";
-      case client_events::kRmdShinyAppsDeploymentCompleted:
-         return "shiny_apps_deployment_completed";
+      case client_events::kRmdRSConnectDeploymentOutput:
+         return "rsconnect_deployment_output";
+      case client_events::kRmdRSConnectDeploymentCompleted:
+         return "rsconnect_deployment_completed";
       case client_events::kUserPrompt:
          return "user_prompt";
       case client_events::kInstallRtools:

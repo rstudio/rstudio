@@ -1,5 +1,5 @@
 /*
- * ShinyAppsConnectAccountDialog.java
+ * RSConnectConnectAccountDialog.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -12,11 +12,11 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.shiny.ui;
+package org.rstudio.studio.client.rsconnect.ui;
 
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.shiny.model.ShinyAppsServerOperations;
+import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -26,19 +26,19 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HTML;
 
-public class ShinyAppsConnectAccountDialog 
-       extends ShinyAppsDialog<ShinyAppsConnectAccount>
+public class RSConnectConnectAccountDialog 
+       extends RSConnectDialog<RSConnectConnectAccount>
 {
-   public ShinyAppsConnectAccountDialog(ShinyAppsServerOperations server, 
+   public RSConnectConnectAccountDialog(RSConnectServerOperations server, 
                                         final GlobalDisplay display)
    {
-      super(server, display, new ShinyAppsConnectAccount());
+      super(server, display, new RSConnectConnectAccount());
       display_ = display;
       server_ = server;
 
-      setText("Connect ShinyApps account");
+      setText("Connect Account");
       setWidth("450px");
-      HTML createLink = new HTML("<small>Need a ShinyApps account?<br />" +
+      HTML createLink = new HTML("<small>Need an account?<br />" +
             "Get started at <a href=\"http://shinyapps.io/\"" + 
             "target=\"blank\">http://shinyapps.io</a></small>");
       createLink.setStyleName(contents_.getStyle().spaced());
@@ -68,16 +68,16 @@ public class ShinyAppsConnectAccountDialog
    private void onConnect()
    {
       final String cmd = contents_.getAccountInfo();
-      if (!cmd.startsWith("shinyapps::setAccountInfo"))
+      if (!cmd.startsWith("rsconnect::setAccountInfo"))
       {
          display_.showErrorMessage("Error Connecting Account", 
                "The pasted command should start with " + 
-               "shinyapps::setAccountInfo. If you're having trouble, try " + 
+               "rsconnect::setAccountInfo. If you're having trouble, try " + 
                "connecting your account manually; type " +
-               "?shinyapps::setAccountInfo at the R console for help.");
+               "?rsconnect::setAccountInfo at the R console for help.");
          return;
       }
-      server_.connectShinyAppsAccount(cmd, 
+      server_.connectRSConnectAccount(cmd, 
             new ServerRequestCallback<Void>()
       {
          @Override
@@ -91,8 +91,8 @@ public class ShinyAppsConnectAccountDialog
          {
             display_.showErrorMessage("Error Connecting Account",  
                   "The command '" + cmd + "' failed. You can set up an " + 
-                  "account manually by using shinyapps::setAccountInfo; " +
-                  "type ?shinyapps::setAccountInfo at the R console for " +
+                  "account manually by using rsconnect::setAccountInfo; " +
+                  "type ?rsconnect::setAccountInfo at the R console for " +
                   "more information.");
          }
       });

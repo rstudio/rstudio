@@ -11,3 +11,5 @@ rmarkdown/
 rmarkdown*.tar.gz
 shinyapps/
 shinyapps*.tar.gz
+rsconnect/
+rsconnect*.tar.gz

@@ -82,16 +82,18 @@ public class DependencyManager implements InstallShinyEvent.Handler
                        command);
    }
    
-   public void withShinyapps(String userAction, final Command command)
+   public void withRSConnect(String userAction, final Command command)
    {
       withDependencies(
-        "Shinyapps",
+        "Deploy",
         userAction,
         new Dependency[] {
           Dependency.cranPackage("digest", "0.6"),
           Dependency.cranPackage("RCurl", "1.95"),
           Dependency.cranPackage("RJSONIO", "1.0"),
-          Dependency.embeddedPackage("shinyapps")
+          Dependency.cranPackage("PKI", "0.1"),
+          Dependency.cranPackage("packrat", "0.4.1"),
+          Dependency.embeddedPackage("rsconnect")
         },
         false,
         command

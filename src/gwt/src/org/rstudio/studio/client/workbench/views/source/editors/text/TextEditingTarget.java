@@ -87,12 +87,12 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
 import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateOptionsDialog;
+import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
-import org.rstudio.studio.client.shiny.events.ShinyAppsActionEvent;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -2588,18 +2588,18 @@ public class TextEditingTarget implements
    }
 
    @Handler 
-   void onShinyAppsDeploy()
+   void onRsconnectDeploy()
    {
-      events_.fireEvent(new ShinyAppsActionEvent(
-            ShinyAppsActionEvent.ACTION_TYPE_DEPLOY, 
+      events_.fireEvent(new RSConnectActionEvent(
+            RSConnectActionEvent.ACTION_TYPE_DEPLOY, 
             docUpdateSentinel_.getPath()));
    }
 
    @Handler 
-   void onShinyAppsTerminate()
+   void onRsconnectTerminate()
    {
-      events_.fireEvent(new ShinyAppsActionEvent(
-            ShinyAppsActionEvent.ACTION_TYPE_TERMINATE, 
+      events_.fireEvent(new RSConnectActionEvent(
+            RSConnectActionEvent.ACTION_TYPE_TERMINATE, 
             docUpdateSentinel_.getPath()));
    }
 

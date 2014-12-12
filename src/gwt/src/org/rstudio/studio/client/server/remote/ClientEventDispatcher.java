@@ -65,8 +65,8 @@ import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
 import org.rstudio.studio.client.rmarkdown.model.RmdShinyDocInfo;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
-import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentCompletedEvent;
-import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentOutputEvent;
+import org.rstudio.studio.client.shiny.events.RSConnectDeploymentCompletedEvent;
+import org.rstudio.studio.client.shiny.events.RSConnectDeploymentOutputEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.events.*;
@@ -581,15 +581,15 @@ public class ClientEventDispatcher
             RmdShinyDocInfo docInfo = event.getData();
             eventBus_.fireEvent(new RmdShinyDocStartedEvent(docInfo));
          }
-         else if (type.equals(ClientEvent.ShinyAppsDeploymentOutput))
+         else if (type.equals(ClientEvent.RSConnectDeploymentOutput))
          {
             CompileOutput output = event.getData();
-            eventBus_.fireEvent(new ShinyAppsDeploymentOutputEvent(output));
+            eventBus_.fireEvent(new RSConnectDeploymentOutputEvent(output));
          }
-         else if (type.equals(ClientEvent.ShinyAppsDeploymentCompleted))
+         else if (type.equals(ClientEvent.RSConnectDeploymentCompleted))
          {
             String url = event.getData();
-            eventBus_.fireEvent(new ShinyAppsDeploymentCompletedEvent(url));
+            eventBus_.fireEvent(new RSConnectDeploymentCompletedEvent(url));
          }
          else if (type.equals(ClientEvent.UserPrompt))
          {

@@ -368,10 +368,10 @@ public abstract class
    public abstract AppCommand shinyRunInViewer();
    public abstract AppCommand shinyRunInBrowser();
    
-   // ShinyApps connectivity
-   public abstract AppCommand shinyAppsDeploy();
-   public abstract AppCommand shinyAppsManageAccounts();
-   public abstract AppCommand shinyAppsTerminate();
+   // RSConnect connectivity
+   public abstract AppCommand rsconnectDeploy();
+   public abstract AppCommand rsconnectManageAccounts();
+   public abstract AppCommand rsconnectTerminate();
 
    // Other
    public abstract AppCommand checkSpelling();   

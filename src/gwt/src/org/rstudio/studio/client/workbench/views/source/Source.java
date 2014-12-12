@@ -2226,8 +2226,8 @@ public class Source implements InsertSourceHandler,
       // manage source navigation
       manageSourceNavigationCommands();
       
-      // manage ShinyApps commands
-      manageShinyAppsCommands();
+      // manage RSConnect commands
+      manageRSConnectCommands();
       
       // manage R Markdown commands
       manageRMarkdownCommands();
@@ -2308,15 +2308,15 @@ public class Source implements InsertSourceHandler,
       }
    }
    
-   private void manageShinyAppsCommands()
+   private void manageRSConnectCommands()
    {
       boolean shinyCommandsAvailable = 
-            session_.getSessionInfo().getShinyappsAvailable() &&
+            session_.getSessionInfo().getRSConnectAvailable() &&
             (activeEditor_ != null) &&
             (activeEditor_.getPath() != null) &&
             ((activeEditor_.getExtendedFileType() == "shiny"));
-      commands_.shinyAppsDeploy().setVisible(shinyCommandsAvailable);
-      commands_.shinyAppsTerminate().setVisible(shinyCommandsAvailable);
+      commands_.rsconnectDeploy().setVisible(shinyCommandsAvailable);
+      commands_.rsconnectTerminate().setVisible(shinyCommandsAvailable);
    }
    
    private void manageRMarkdownCommands()

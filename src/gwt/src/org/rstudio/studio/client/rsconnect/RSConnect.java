@@ -1,5 +1,5 @@
 /*
- * ShinyApps.java
+ * RSConnect.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.shiny;
+package org.rstudio.studio.client.rsconnect;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,18 +29,18 @@ import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.satellite.Satellite;
-import org.rstudio.studio.client.common.shiny.model.ShinyAppsServerOperations;
+import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
+import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
+import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentStartedEvent;
+import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
+import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
+import org.rstudio.studio.client.rsconnect.model.RSConnectDirectoryState;
+import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectAccountManagerDialog;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectDeployDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.shiny.events.ShinyAppsActionEvent;
-import org.rstudio.studio.client.shiny.events.ShinyAppsDeployInitiatedEvent;
-import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentCompletedEvent;
-import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentStartedEvent;
-import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
-import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentRecord;
-import org.rstudio.studio.client.shiny.model.ShinyAppsDirectoryState;
-import org.rstudio.studio.client.shiny.ui.ShinyAppsAccountManagerDialog;
-import org.rstudio.studio.client.shiny.ui.ShinyAppsDeployDialog;
+import org.rstudio.studio.client.shiny.events.RSConnectDeploymentCompletedEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
@@ -56,23 +56,23 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
-public class ShinyApps implements SessionInitHandler, 
-                                  ShinyAppsActionEvent.Handler,
-                                  ShinyAppsDeployInitiatedEvent.Handler,
-                                  ShinyAppsDeploymentCompletedEvent.Handler
+public class RSConnect implements SessionInitHandler, 
+                                  RSConnectActionEvent.Handler,
+                                  RSConnectDeployInitiatedEvent.Handler,
+                                  RSConnectDeploymentCompletedEvent.Handler
 {
    public interface Binder
-           extends CommandBinder<Commands, ShinyApps> {}
+           extends CommandBinder<Commands, RSConnect> {}
 
    @Inject
-   public ShinyApps(EventBus events, 
+   public RSConnect(EventBus events, 
                     Commands commands, 
                     Session session,
                     Satellite satellite,
                     GlobalDisplay display,
                     DependencyManager dependencyManager,
                     Binder binder, 
-                    ShinyAppsServerOperations server)
+                    RSConnectServerOperations server)
                     
    {
       commands_ = commands;
@@ -86,9 +86,9 @@ public class ShinyApps implements SessionInitHandler,
       binder.bind(commands, this);
 
       events.addHandler(SessionInitEvent.TYPE, this);
-      events.addHandler(ShinyAppsActionEvent.TYPE, this); 
-      events.addHandler(ShinyAppsDeployInitiatedEvent.TYPE, this); 
-      events.addHandler(ShinyAppsDeploymentCompletedEvent.TYPE, this); 
+      events.addHandler(RSConnectActionEvent.TYPE, this); 
+      events.addHandler(RSConnectDeployInitiatedEvent.TYPE, this); 
+      events.addHandler(RSConnectDeploymentCompletedEvent.TYPE, this); 
       
       exportNativeCallbacks();
    }
@@ -100,29 +100,29 @@ public class ShinyApps implements SessionInitHandler,
    }
    
    @Override
-   public void onShinyAppsAction(final ShinyAppsActionEvent event)
+   public void onRSConnectAction(final RSConnectActionEvent event)
    {
-      dependencyManager_.withShinyapps(
+      dependencyManager_.withRSConnect(
          "Publishing shiny applications", new Command() {
 
             @Override
             public void execute()
             {
-               handleShinyAppsAction(event); 
+               handleRSConnectAction(event); 
             }
          });  
    }
    
-   private void handleShinyAppsAction(ShinyAppsActionEvent event)
+   private void handleRSConnectAction(RSConnectActionEvent event)
    {
-      if (event.getAction() == ShinyAppsActionEvent.ACTION_TYPE_DEPLOY)
+      if (event.getAction() == RSConnectActionEvent.ACTION_TYPE_DEPLOY)
       {
          // ignore this request if there's already a modal up 
          if (ModalDialogTracker.numModalsShowing() > 0)
             return;    
 
          final String dir = FilePathUtils.dirFromFile(event.getPath());
-         ShinyAppsDeploymentRecord record = dirState_.getLastDeployment(dir);
+         RSConnectDeploymentRecord record = dirState_.getLastDeployment(dir);
          final String lastAccount = record == null ? null : record.getAccount();
          final String lastAppName = record == null ? null : record.getName();
          
@@ -134,22 +134,22 @@ public class ShinyApps implements SessionInitHandler,
             file = FilePathUtils.friendlyFileName(event.getPath());
          }
 
-         ShinyAppsDeployDialog dialog = 
-               new ShinyAppsDeployDialog(
+         RSConnectDeployDialog dialog = 
+               new RSConnectDeployDialog(
                          server_, display_, events_, 
                          dir, file, lastAccount, lastAppName,
                          satellite_.isCurrentWindowSatellite());
          dialog.showModal();
       }
-      else if (event.getAction() == ShinyAppsActionEvent.ACTION_TYPE_TERMINATE)
+      else if (event.getAction() == RSConnectActionEvent.ACTION_TYPE_TERMINATE)
       {
          terminateShinyApp(FilePathUtils.dirFromFile(event.getPath()));
       }
    }
    
    @Override
-   public void onShinyAppsDeployInitiated(
-         final ShinyAppsDeployInitiatedEvent event)
+   public void onRSConnectDeployInitiated(
+         final RSConnectDeployInitiatedEvent event)
    {
       server_.deployShinyApp(event.getPath(), 
                              event.getSourceFile(),
@@ -165,7 +165,7 @@ public class ShinyApps implements SessionInitHandler,
                dirState_.addDeployment(event.getPath(), event.getRecord());
                dirStateDirty_ = true;
                launchBrowser_ = event.getLaunchBrowser();
-               events_.fireEvent(new ShinyAppsDeploymentStartedEvent(
+               events_.fireEvent(new RSConnectDeploymentStartedEvent(
                      event.getPath()));
             }
             else
@@ -188,8 +188,8 @@ public class ShinyApps implements SessionInitHandler,
    }
 
    @Override
-   public void onShinyAppsDeploymentCompleted(
-         ShinyAppsDeploymentCompletedEvent event)
+   public void onRSConnectDeploymentCompleted(
+         RSConnectDeploymentCompletedEvent event)
    {
       if (launchBrowser_ && event.succeeded())
       {
@@ -198,15 +198,15 @@ public class ShinyApps implements SessionInitHandler,
    }
 
    @Handler
-   public void onShinyAppsManageAccounts()
+   public void onRsconnectManageAccounts()
    {
-      dependencyManager_.withShinyapps(
+      dependencyManager_.withRSConnect(
          "Publishing shiny applications", new Command() {
             @Override
             public void execute()
             {
-               ShinyAppsAccountManagerDialog dialog = 
-                     new ShinyAppsAccountManagerDialog(server_, display_);
+               RSConnectAccountManagerDialog dialog = 
+                     new RSConnectAccountManagerDialog(server_, display_);
                dialog.showModal();
             }
          });
@@ -218,15 +218,15 @@ public class ShinyApps implements SessionInitHandler,
          return;
       
       // "Manage accounts" can be invoked any time the package is available
-      commands_.shinyAppsManageAccounts().setVisible(
-            session_.getSessionInfo().getShinyappsAvailable());
+      commands_.rsconnectManageAccounts().setVisible(
+            session_.getSessionInfo().getRSConnectAvailable());
       
       // This object keeps track of the most recent deployment we made of each
       // directory, and is used to default directory deployments to last-used
       // settings.
       new JSObjectStateValue(
-            "shinyapps",
-            "shinyAppsDirectories",
+            "rsconnect",
+            "rsconnectDirectories",
             ClientState.PERSISTENT,
             session_.getSessionInfo().getClientState(),
             false)
@@ -234,8 +234,8 @@ public class ShinyApps implements SessionInitHandler,
           @Override
           protected void onInit(JsObject value)
           {
-             dirState_ = (ShinyAppsDirectoryState) (value == null ?
-                   ShinyAppsDirectoryState.create() :
+             dirState_ = (RSConnectDirectoryState) (value == null ?
+                   RSConnectDirectoryState.create() :
                    value.cast());
           }
    
@@ -244,7 +244,7 @@ public class ShinyApps implements SessionInitHandler,
           {
              dirStateDirty_ = false;
              return (JsObject) (dirState_ == null ?
-                   ShinyAppsDirectoryState.create().cast() :
+                   RSConnectDirectoryState.create().cast() :
                    dirState_.cast());
           }
    
@@ -263,7 +263,7 @@ public class ShinyApps implements SessionInitHandler,
          String file, 
          boolean launch, 
          JavaScriptObject record) /*-{
-      $wnd.opener.deployToShinyApps(path, file, launch, record);
+      $wnd.opener.deployToRSConnect(path, file, launch, record);
    }-*/;
    
    // Private methods ---------------------------------------------------------
@@ -271,12 +271,12 @@ public class ShinyApps implements SessionInitHandler,
    // Terminate, step 1: create a list of apps deployed from this directory
    private void terminateShinyApp(final String dir)
    {
-      server_.getShinyAppsDeployments(dir, 
-            new ServerRequestCallback<JsArray<ShinyAppsDeploymentRecord>>()
+      server_.getRSConnectDeployments(dir, 
+            new ServerRequestCallback<JsArray<RSConnectDeploymentRecord>>()
       {
          @Override
          public void onResponseReceived(
-               JsArray<ShinyAppsDeploymentRecord> records)
+               JsArray<RSConnectDeploymentRecord> records)
          {
             terminateShinyApp(dir, records);
          }
@@ -292,7 +292,7 @@ public class ShinyApps implements SessionInitHandler,
    
    // Terminate, step 2: Get the status of the applications from the server
    private void terminateShinyApp(final String dir, 
-         JsArray<ShinyAppsDeploymentRecord> records)
+         JsArray<RSConnectDeploymentRecord> records)
    {
       if (records.length() == 0)
       {
@@ -303,16 +303,16 @@ public class ShinyApps implements SessionInitHandler,
       
       // If we know the most recent deployment of the directory, act on that
       // deployment by default
-      final ArrayList<ShinyAppsDeploymentRecord> recordList = 
-            new ArrayList<ShinyAppsDeploymentRecord>();
-      ShinyAppsDeploymentRecord lastRecord = dirState_.getLastDeployment(dir);
+      final ArrayList<RSConnectDeploymentRecord> recordList = 
+            new ArrayList<RSConnectDeploymentRecord>();
+      RSConnectDeploymentRecord lastRecord = dirState_.getLastDeployment(dir);
       if (lastRecord != null)
       {
          recordList.add(lastRecord);
       }
       for (int i = 0; i < records.length(); i++)
       {
-         ShinyAppsDeploymentRecord record = records.get(i);
+         RSConnectDeploymentRecord record = records.get(i);
          if (lastRecord == null)
          {
             recordList.add(record);
@@ -326,11 +326,11 @@ public class ShinyApps implements SessionInitHandler,
       
       // We need to further filter the list by deployments that are 
       // eligible for termination (i.e. are currently running)
-      server_.getShinyAppsAppList(recordList.get(0).getAccount(),
-            new ServerRequestCallback<JsArray<ShinyAppsApplicationInfo>>()
+      server_.getRSConnectAppList(recordList.get(0).getAccount(),
+            new ServerRequestCallback<JsArray<RSConnectApplicationInfo>>()
       {
          @Override
-         public void onResponseReceived(JsArray<ShinyAppsApplicationInfo> apps)
+         public void onResponseReceived(JsArray<RSConnectApplicationInfo> apps)
          {
             terminateShinyApp(dir, apps, recordList);
          }
@@ -346,14 +346,14 @@ public class ShinyApps implements SessionInitHandler,
    // Terminate, step 3: compare the deployments and apps active on the server
    // until we find a running app from the current directory
    private void terminateShinyApp(String dir, 
-         JsArray<ShinyAppsApplicationInfo> apps, 
-         List<ShinyAppsDeploymentRecord> records)
+         JsArray<RSConnectApplicationInfo> apps, 
+         List<RSConnectDeploymentRecord> records)
    {
       for (int i = 0; i < records.size(); i++)
       {
          for (int j = 0; j < apps.length(); j++)
          {
-            ShinyAppsApplicationInfo candidate = apps.get(j);
+            RSConnectApplicationInfo candidate = apps.get(j);
             if (candidate.getName().equals(records.get(i).getName()) &&
                 candidate.getStatus().equals("running"))
             {
@@ -370,7 +370,7 @@ public class ShinyApps implements SessionInitHandler,
    // Terminate, step 4: confirm that we've selected the right app for
    // termination
    private void terminateShinyApp(final String accountName, 
-                                  final ShinyAppsApplicationInfo target)
+                                  final RSConnectApplicationInfo target)
    {
       display_.showYesNoMessage(GlobalDisplay.MSG_QUESTION, 
             "Confirm Terminate Application", 
@@ -390,20 +390,20 @@ public class ShinyApps implements SessionInitHandler,
    // Terminate, step 5: perform the termination 
    private void terminateShinyApp(String accountName, final String appName)
    {
-      events_.fireEvent(new SendToConsoleEvent("shinyapps::terminateApp(\"" +
+      events_.fireEvent(new SendToConsoleEvent("rsconnect::terminateApp(\"" +
             appName + "\", \"" + accountName + "\")", true));
    }
    
    private final native void exportNativeCallbacks() /*-{
       var thiz = this;     
-      $wnd.deployToShinyApps = $entry(
+      $wnd.deployToRSConnect = $entry(
          function(path, file, launch, record) {
-            thiz.@org.rstudio.studio.client.shiny.ShinyApps::deployToShinyApps(Ljava/lang/String;Ljava/lang/String;ZLcom/google/gwt/core/client/JavaScriptObject;)(path, file, launch, record);
+            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Ljava/lang/String;ZLcom/google/gwt/core/client/JavaScriptObject;)(path, file, launch, record);
          }
       ); 
    }-*/;
    
-   private void deployToShinyApps(String path, String file, boolean launch, 
+   private void deployToRSConnect(String path, String file, boolean launch, 
                                   JavaScriptObject jsoRecord)
    {
       // this can be invoked by a satellite, so bring the main frame to the
@@ -413,21 +413,21 @@ public class ShinyApps implements SessionInitHandler,
       else
          WindowEx.get().focus();
       
-      ShinyAppsDeploymentRecord record = jsoRecord.cast();
-      events_.fireEvent(new ShinyAppsDeployInitiatedEvent(
+      RSConnectDeploymentRecord record = jsoRecord.cast();
+      events_.fireEvent(new RSConnectDeployInitiatedEvent(
             path, file, launch, record));
    }
    
    private final Commands commands_;
    private final GlobalDisplay display_;
    private final Session session_;
-   private final ShinyAppsServerOperations server_;
+   private final RSConnectServerOperations server_;
    private final DependencyManager dependencyManager_;
    private final EventBus events_;
    private final Satellite satellite_;
    private boolean launchBrowser_ = false;
    private boolean sessionInited_ = false;
    
-   private ShinyAppsDirectoryState dirState_;
+   private RSConnectDirectoryState dirState_;
    private boolean dirStateDirty_ = false;
 }
