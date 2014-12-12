@@ -734,7 +734,33 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    if ((!length(getOption("devtools.desc"))) &&
        (!length(sourceFiles)))
    {
+      
+      # Some simple shortcuts that authors should know
+      sysname <- Sys.info()[["sysname"]]
+      
+      buildShortcut <- if (sysname == "Darwin")
+         "Cmd + Shift + B"
+      else
+         "Ctrl + Shift + B"
+      
+      checkShortcut <- if (sysname == "Darwin")
+         "Cmd + Shift + E"
+      else
+         "Ctrl + Shift + E"
+      
+      testShortcut <- if (sysname == "Darwin")
+         "Cmd + Shift + T"
+      else
+         "Ctrl + Shift + T"
+      
       helloWorld <- c(
+         "# This is an example function named 'hello' which prints 'Hello, world!'.",
+         "# You can learn more about package authoring with RStudio at http://r-pkgs.had.co.nz/",
+         "#",
+         "# Some useful keyboard shortcuts for package authoring:",
+         paste("# Build and Reload: '", buildShortcut, "'", sep = ""),
+         paste("# Check: '", checkShortcut, "'", sep = ""),
+         paste("# Test: '", testShortcut, "'", sep = ""),
          "hello <- function() {",
          "    print(\"Hello, world!\")",
          "}"
