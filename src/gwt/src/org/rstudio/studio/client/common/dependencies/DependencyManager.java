@@ -92,7 +92,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
           Dependency.cranPackage("RCurl", "1.95"),
           Dependency.cranPackage("RJSONIO", "1.0"),
           Dependency.cranPackage("PKI", "0.1"),
-          Dependency.cranPackage("packrat", "0.4.1"),
+          Dependency.embeddedPackage("packrat"),
           Dependency.embeddedPackage("rsconnect")
         },
         false,
