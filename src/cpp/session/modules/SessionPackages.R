@@ -821,13 +821,30 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
    cat("^README\\.md$", file = file.path(packageDirectory, ".Rbuildignore"), sep = "\n")
    
-   .Rproj <- file.path(
+   RprojPath <- file.path(
       packageDirectory,
       paste(packageName, ".Rproj", sep = "")
    )
    
-   if (!.Call("rs_writeProjectFile", .Rproj))
+   if (!.Call("rs_writeProjectFile", RprojPath))
       return(.rs.error("Failed to create package .Rproj file"))
+   
+   # Ensure new packages get AutoAppendNewLine + StripTrailingWhitespace
+   Rproj <- readLines(RprojPath)
+   
+   appendNewLineIndex <- grep("AutoAppendNewline:", Rproj, fixed = TRUE)
+   if (length(appendNewLineIndex))
+      Rproj[appendNewLineIndex] <- "AutoAppendNewline: Yes"
+   else
+      Rproj <- c(Rproj, "AutoAppendNewline: Yes")
+   
+   stripTrailingWhitespace <- grep("StripTrailingWhitespace:", Rproj, fixed = TRUE)
+   if (length(appendNewLineIndex))
+      Rproj[appendNewLineIndex] <- "StripTrailingWhitespace: Yes"
+   else
+      Rproj <- c(Rproj, "StripTrailingWhitespace: Yes")
+   
+   cat(Rproj, file = RprojPath, sep = "\n")
    
    .rs.success()
    
