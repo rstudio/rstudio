@@ -61,6 +61,7 @@ import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultiset;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Multiset;
@@ -636,10 +637,23 @@ public class JsInliner {
 
     private JsProgram program;
 
+    private final Set<JsName> safeToInlineAtTopLevel;
+
     public InliningVisitor(JsProgram program, Set<JsNode> whitelist) {
       this.program = program;
       this.whitelist = whitelist;
       invocationCountingVisitor.accept(program);
+      JsName defineClass = getFunctionName(program, "JavaClassHierarchySetupUtil.defineClass");
+      JsName defineClassProto = getFunctionName(program,
+          "JavaClassHierarchySetupUtil.defineClassWithPrototype");
+      // JsInlinerTest doesn't have these functions, but doesn't need them
+      safeToInlineAtTopLevel = defineClass != null ? ImmutableSet.of(
+          defineClass, defineClassProto) : ImmutableSet.<JsName>of();
+    }
+
+    private static JsName getFunctionName(JsProgram program, String name) {
+      JsFunction func = program.getIndexedFunction(name);
+      return func != null ? func.getName() : null;
     }
 
     /**
@@ -745,9 +759,6 @@ public class JsInliner {
 
     @Override
     public void endVisit(JsInvocation x, JsContext ctx) {
-      if (functionStack.isEmpty()) {
-        return;
-      }
       JsFunction callerFunction = functionStack.peek();
 
       /*
@@ -829,9 +840,10 @@ public class JsInliner {
     @Override
     public boolean visit(JsExprStmt x, JsContext ctx) {
       if (functionStack.peek() == programFunction) {
-        /* Don't inline top-level invocations. */
+        /* Don't inline most top-level invocations. */
         if (x.getExpression() instanceof JsInvocation) {
-          return false;
+          return safeToInlineAtTopLevel.contains(
+              JsUtils.maybeGetFunctionName(x.getExpression()));
         }
       }
       return true;

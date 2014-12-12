@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Google Inc.
+ * Copyright 2011 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,25 +16,11 @@
 package com.google.gwt.dev.util.arg;
 
 /**
- * An option that can indicates the Javascript interop mode.
+ * Encapsulates a compiler option to enable JavaScript output to be
+ * formatted for post-compilation by Closure Compiler.
  */
-public interface OptionJsInteropMode {
-  /**
-   * Specifies which level of JsInterop support is enabled in the compiler,
-   * NONE, JS.
-   */
-  public enum Mode {
-    /**
-     * Disabled, interop annotations are no-ops.
-     */
-    NONE,
-    /**
-     * For hand coded, external JS, not run through an external compiler.
-     */
-    JS
-  }
+public interface OptionClosureFormattedOutput {
+  boolean isClosureCompilerFormatEnabled();
 
-  Mode getJsInteropMode();
-
-  void setJsInteropMode(Mode mode);
+  void setClosureCompilerFormatEnabled(boolean enabled);
 }

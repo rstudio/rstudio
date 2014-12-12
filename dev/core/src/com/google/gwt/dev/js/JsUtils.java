@@ -18,6 +18,7 @@ package com.google.gwt.dev.js;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsInvocation;
+import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.util.StringInterner;
@@ -59,6 +60,21 @@ public class JsUtils {
     JsNode staticRef = ref.getName().getStaticRef();
     if (staticRef instanceof JsFunction) {
       return (JsFunction) staticRef;
+    }
+    return null;
+  }
+
+  /**
+   * Similar to {@link #isFunction(com.google.gwt.dev.js.ast.JsExpression)} but
+   * retrieves the JsName of an invocation if the qualifier is a name ref.
+   */
+  public static JsName maybeGetFunctionName(JsExpression expression) {
+    if (expression instanceof JsInvocation) {
+      JsInvocation jsInvoke = (JsInvocation) expression;
+      if (jsInvoke.getQualifier() instanceof JsNameRef) {
+        JsNameRef nameRef = (JsNameRef) jsInvoke.getQualifier();
+        return nameRef.getName();
+      }
     }
     return null;
   }

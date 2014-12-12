@@ -37,6 +37,7 @@ import com.google.gwt.dev.jjs.impl.EqualityNormalizer;
 import com.google.gwt.dev.jjs.impl.HandleCrossFragmentReferences;
 import com.google.gwt.dev.jjs.impl.ImplementCastsAndTypeChecks;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
+import com.google.gwt.dev.jjs.impl.JjsUtils;
 import com.google.gwt.dev.jjs.impl.LongCastNormalizer;
 import com.google.gwt.dev.jjs.impl.LongEmulationNormalizer;
 import com.google.gwt.dev.jjs.impl.PostOptimizationCompoundAssignmentNormalizer;
@@ -45,6 +46,7 @@ import com.google.gwt.dev.jjs.impl.RemoveEmptySuperCalls;
 import com.google.gwt.dev.jjs.impl.RemoveSpecializations;
 import com.google.gwt.dev.jjs.impl.ReplaceGetClassOverrides;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences;
+import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.ClosureUniqueIdTypeMapper;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.IntTypeMapper;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.StringTypeMapper;
 import com.google.gwt.dev.jjs.impl.ResolveRuntimeTypeReferences.TypeMapper;
@@ -309,18 +311,30 @@ public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler
   }
 
   private TypeMapper getTypeMapper() {
-    if (options.useDetailedTypeIds()) {
+
+    // Used to stabilize output for DeltaJS
+    if (JjsUtils.closureStyleLiteralsNeeded(this.options)) {
+      return new ClosureUniqueIdTypeMapper(jprogram);
+    }
+
+    if (this.options.useDetailedTypeIds()) {
       return new StringTypeMapper();
     }
-    return options.isIncrementalCompileEnabled() ?
+    return this.options.isIncrementalCompileEnabled() ?
         compilerContext.getMinimalRebuildCache().getTypeMapper() :
         new IntTypeMapper();
   }
 
   private TypeOrder getTypeOrder() {
-    if (options.useDetailedTypeIds()) {
+
+    // Used to stabilize output for DeltaJS
+    if (JjsUtils.closureStyleLiteralsNeeded(this.options)) {
+      return TypeOrder.ALPHABETICAL;
+    }
+
+    if (this.options.useDetailedTypeIds()) {
       return TypeOrder.NONE;
     }
-    return options.isIncrementalCompileEnabled() ? TypeOrder.ALPHABETICAL : TypeOrder.FREQUENCY;
+    return this.options.isIncrementalCompileEnabled() ? TypeOrder.ALPHABETICAL : TypeOrder.FREQUENCY;
   }
 }

@@ -16,6 +16,7 @@
 
 package com.google.gwt.dev;
 
+import com.google.gwt.dev.util.arg.ArgHandlerClosureFormattedOutput;
 import com.google.gwt.dev.util.arg.ArgHandlerCompileReport;
 import com.google.gwt.dev.util.arg.ArgHandlerCompilerMetrics;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableCastChecking;
@@ -56,6 +57,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerValidateOnlyFlag;
 class PrecompileTaskArgProcessor extends CompileArgProcessor {
   public PrecompileTaskArgProcessor(PrecompileTaskOptions options) {
     super(options);
+    registerHandler(new ArgHandlerClosureFormattedOutput(options));
     registerHandler(new ArgHandlerCompileReport(options));
     registerHandler(new ArgHandlerCompilerMetrics(options));
     registerHandler(new ArgHandlerDisableCastChecking(options));

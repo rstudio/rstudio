@@ -381,6 +381,15 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
     private void updateModuleBaseDir() {
       this.moduleBaseDir = new File(warDir, modulePathPrefix);
     }
+
+    @Override
+    public boolean isClosureCompilerFormatEnabled() {
+      return false;
+    }
+
+    @Override
+    public void setClosureCompilerFormatEnabled(boolean enabled) {
+    }
   }
 
   /**
