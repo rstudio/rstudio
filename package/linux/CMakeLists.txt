@@ -85,10 +85,39 @@ set(CPACK_RPM_SPEC_INSTALL_POST "/bin/true")
 set(CPACK_RPM_POST_INSTALL_SCRIPT_FILE "${CMAKE_CURRENT_BINARY_DIR}/rpm-script/postinst.sh")
 set(CPACK_RPM_POST_UNINSTALL_SCRIPT_FILE "${CMAKE_CURRENT_BINARY_DIR}/rpm-script/postrm.sh")
 
-set(CPACK_RPM_SPEC_MORE_DEFINE "%define ignore \#")
-set(CPACK_RPM_USER_FILELIST 
-  "%ignore /usr"
-  "%ignore /usr/lib")
+set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION 
+  "/usr/share/applications"
+  "/usr/share/icons"
+  "/usr/share/pixmaps"
+  "/usr/share/mime/packages"
+  "/usr/share/mime"
+  "/usr/share/icons/hicolor"
+  "/usr/share/icons/hicolor/16x16"
+  "/usr/share/icons/hicolor/16x16/apps"
+  "/usr/share/icons/hicolor/24x24/apps"
+  "/usr/share/icons/hicolor/256x256/apps"
+  "/usr/share/icons/hicolor/32x32/apps"
+  "/usr/share/icons/hicolor/48x48/apps"
+  "/usr/share/icons/hicolor/24x24"
+  "/usr/share/icons/hicolor/256x256"
+  "/usr/share/icons/hicolor/32x32"
+  "/usr/share/icons/hicolor/48x48"
+  "/usr/share/icons/hicolor"
+  "/usr/share/icons/hicolor/16x16"
+  "/usr/share/icons/hicolor/16x16/apps"
+  "/usr/share/icons/hicolor/24x24/apps"
+  "/usr/share/icons/hicolor/256x256/apps"
+  "/usr/share/icons/hicolor/32x32/apps"
+  "/usr/share/icons/hicolor/48x48/apps"
+  "/usr/share/icons/hicolor/16x16/mimetypes"
+  "/usr/share/icons/hicolor/24x24/mimetypes"
+  "/usr/share/icons/hicolor/256x256/mimetypes"
+  "/usr/share/icons/hicolor/32x32/mimetypes"
+  "/usr/share/icons/hicolor/48x48/mimetypes"
+  "/usr/share/icons/hicolor/24x24"
+  "/usr/share/icons/hicolor/256x256"
+  "/usr/share/icons/hicolor/32x32"
+  "/usr/share/icons/hicolor/48x48")
 
 # package file name
 set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}${RSTUDIO_PACKAGE_SUFFIX}${CPACK_PACKAGE_VERSION}-${PACKAGE_ARCHITECTURE}")
