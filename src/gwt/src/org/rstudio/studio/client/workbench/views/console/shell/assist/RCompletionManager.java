@@ -1127,8 +1127,11 @@ public class RCompletionManager implements CompletionManager
          String line)
    {
       int index = line.lastIndexOf('(');
+      String token = line.substring(index + 1);
+      
       AutocompletionContext result = new AutocompletionContext(
-            line.substring(index + 1),
+            token,
+            token,
             AutocompletionContext.TYPE_FILE);
       
       // NOTE: we overload the meaning of the function call string for file
@@ -1225,14 +1228,14 @@ public class RCompletionManager implements CompletionManager
       // trim to cursor position
       firstLine = firstLine.substring(0, input_.getCursorPosition().getColumn());
       
-      // Get the token at the cursor position
-      String token = firstLine.replaceAll(".*[^a-zA-Z0-9._:$@-]", "");
-      
       // If we're in Markdown mode and have an appropriate string, try to get
       // file completions
       if (DocumentMode.isCursorInMarkdownMode(docDisplay_) &&
             firstLine.matches(".*\\[.*\\]\\(.*"))
          return getAutocompletionContextForFileMarkdownLink(firstLine);
+      
+      // Get the token at the cursor position
+      String token = firstLine.replaceAll(".*[^a-zA-Z0-9._:$@-]", "");
       
       // If we're completing an object within a string, assume it's a
       // file-system completion. Note that we may need other contextual information
