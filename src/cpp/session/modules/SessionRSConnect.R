@@ -13,12 +13,6 @@
 #
 #
 
-#
-# TODO: automagic migration of shinyapps directory
-# TODO: calling deployApp in a child process is missing the getOption("repos")
-# TODO: confirm that packrat from CRAN is fine for rsconnect
-#
-
 .rs.addFunction("scalarListFromFrame", function(frame)
 {
    ret <- list()
