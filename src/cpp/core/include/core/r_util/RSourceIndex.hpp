@@ -298,6 +298,19 @@ public:
    {
       return completions()[package];
    }
+
+   std::vector<std::string> getUnindexedPackages()
+   {
+      std::vector<std::string> result;
+      for (std::set<std::string>::const_iterator it = inferredPkgNames_.begin();
+           it != inferredPkgNames_.end();
+           ++it)
+      {
+         if (completions().count(*it) == 0)
+            result.push_back(*it);
+      }
+      return result;
+   }
    
 private:
    std::string context_;

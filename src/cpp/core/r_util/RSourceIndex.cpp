@@ -21,7 +21,7 @@
 
 #include <core/r_util/RTokenizer.hpp>
 
-#define SOURCE_INDEX_DEBUG_LEVEL 1
+#define SOURCE_INDEX_DEBUG_LEVEL 0
 
 #if SOURCE_INDEX_DEBUG_LEVEL > 0
 #define DEBUG(x) \
@@ -488,6 +488,7 @@ RSourceIndex::RSourceIndex(const std::string& context,
                                    braceLevel,
                                    line,
                                    column));
+
    }
 }
 

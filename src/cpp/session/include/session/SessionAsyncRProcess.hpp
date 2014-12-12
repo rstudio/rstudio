@@ -32,6 +32,13 @@ enum AsyncRProcessOptions
    R_PROCESS_VANILLA        = 1 << 2,
    R_PROCESS_AUGMENTED      = 1 << 3
 };
+
+inline AsyncRProcessOptions operator | (AsyncRProcessOptions lhs,
+                                        AsyncRProcessOptions rhs)
+{
+   return static_cast<AsyncRProcessOptions>(
+            static_cast<int>(lhs) | static_cast<int>(rhs));
+}
     
 class AsyncRProcess :
       boost::noncopyable,

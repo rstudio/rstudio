@@ -2176,14 +2176,11 @@ private:
 
 public:
    static boost::shared_ptr<LibraryCompletions> update(
-         core::r_util::RSourceIndex& index)
+         core::r_util::RSourceIndex& index, const std::vector<std::string>& pkgs)
    {
       std::stringstream ss;
       
-      // Add in each of the package exports and whatnot
-      std::set<std::string> const& pkgs(index.getInferredPackages());
-      
-      for (std::set<std::string>::const_iterator it = pkgs.begin();
+      for (std::vector<std::string>::const_iterator it = pkgs.begin();
            it != pkgs.end();
            ++it)
       {
@@ -2211,13 +2208,11 @@ public:
       boost::shared_ptr<LibraryCompletions> pCompletions(
                new LibraryCompletions(index));
       
-      std::cerr << ss.str() << std::endl;
       std::string finalCmd = ss.str();
 
       pCompletions->start(finalCmd.c_str(),
                           FilePath(),
-                          async_r::R_PROCESS_VANILLA +
-                          async_r::R_PROCESS_AUGMENTED);
+                          async_r::R_PROCESS_VANILLA | async_r::R_PROCESS_AUGMENTED);
 
       return pCompletions;
       
@@ -2232,10 +2227,10 @@ private:
    {
       stdOut_ << output;
    }
-   
+
    void onStderr(const std::string &output)
    {
-      std::cerr << output;
+      LOG_ERROR_MESSAGE(output);
    }
    
    void onCompleted(int exitStatus)
@@ -2246,7 +2241,7 @@ private:
       boost::split(splat, stdOut, boost::is_any_of("\n"));
       
       std::size_t n = splat.size();
-      std::cerr << "- Received " << n << " lines of response" << std::endl;
+      DEBUG("- Received " << n << " lines of response");
       
       // Each line should be a JSON object with the format:
       //
@@ -2291,8 +2286,8 @@ private:
             LOG_ERROR(error);
             continue;
          }
-         
-         std::cerr << "Adding entry for package: '" << completions.package << "'\n";
+
+         DEBUG("Adding entry for package: '" << completions.package);
          
          if (!json::fillVectorString(exportsJson, &(completions.exports)))
             LOG_ERROR_MESSAGE("Failed to read JSON 'objects' array to vector");
@@ -2354,7 +2349,6 @@ SEXP rs_getSourceFileLibraryCompletions(SEXP documentIdSEXP,
         it != packages.end();
         ++it)
    {
-      std::cerr << "* Adding completions for package '" << *it << "'\n";
       const core::r_util::AsyncLibraryCompletions& completions = index->getCompletions(*it);
       
       r::sexp::ListBuilder builder(&protect);
@@ -2375,10 +2369,16 @@ SEXP rs_updateSourceFileLibraryCompletions(SEXP documentIdSEXP)
    
    if (index == NULL)
       return R_NilValue;
-   
-   boost::shared_ptr<LibraryCompletions> pAsyncProcess = LibraryCompletions::update(*index);
-   
+
    r::sexp::Protect protect;
+
+   std::vector<std::string> unindexedPkgs = index->getUnindexedPackages();
+   if (unindexedPkgs.empty())
+      return r::sexp::create(false, &protect);
+
+   boost::shared_ptr<LibraryCompletions> pAsyncProcess = LibraryCompletions::update(
+            *index, unindexedPkgs);
+
    return r::sexp::create(pAsyncProcess->isRunning(), &protect);
    
 }

@@ -56,11 +56,11 @@ void AsyncRProcess::start(const char* rCommand,
       // form the command that we send (over the command line)
       std::stringstream command;
 
-      FilePath modulesPath =
+      const core::FilePath modulesPath =
             session::options().modulesRSourcePath();
 
-      FilePath sessionCodeTools = modulesPath.childPath("SessionCodeTools.R");
-      FilePath sessionRCompletions = modulesPath.childPath("SessionRCompletions.R");
+      const core::FilePath sessionCodeTools = modulesPath.childPath("SessionCodeTools.R");
+      const core::FilePath sessionRCompletions = modulesPath.childPath("SessionRCompletions.R");
 
       // Use shims for the main RStudio functions
       command << "options(error = traceback); ";
