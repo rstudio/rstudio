@@ -40,7 +40,7 @@ struct AsyncLibraryCompletions
 {
    std::string package;
    std::vector<std::string> exports;
-   std::vector<std::string> all;
+   std::vector<int> types;
    std::map< std::string, std::vector<std::string> > functions;
 };
 
@@ -271,20 +271,32 @@ public:
    {
       return search(term, context_, prefixOnly, caseSensitive, out);
    }
+
+private:
+
+   // we map package names to pairs of completions ('all', 'namespace exports')
+   static std::map<std::string, AsyncLibraryCompletions>& completions()
+   {
+      static std::map<std::string, AsyncLibraryCompletions> s_completions;
+      return s_completions;
+   }
+
+public:
    
    std::set<std::string>& getInferredPackages()
    {
       return inferredPkgNames_;
    }
    
-   void addCompletions(const std::string& package, const AsyncLibraryCompletions& completions)
+   void addCompletions(const std::string& package,
+                       const AsyncLibraryCompletions& asyncCompletions)
    {
-      completions_[package] = completions;
+      completions()[package] = asyncCompletions;
    }
    
    AsyncLibraryCompletions& getCompletions(const std::string& package)
    {
-      return completions_[package];
+      return completions()[package];
    }
    
 private:
@@ -293,9 +305,6 @@ private:
    
    // private fields related to the current set of library completions
    std::set<std::string> inferredPkgNames_;
-   
-   // we map package names to pairs of completions ('all', 'namespace exports')
-   static std::map<std::string, AsyncLibraryCompletions> completions_;
    
 };
 

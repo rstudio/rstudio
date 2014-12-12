@@ -56,6 +56,20 @@ bool fillVectorString(const Array& array, std::vector<std::string>* pVector)
    return true;
 }
 
+bool fillVectorInt(const Array& array, std::vector<int>* pVector)
+{
+   for (Array::const_iterator it = array.begin();
+        it != array.end();
+        ++it)
+   {
+      if (!isType<int>(*it))
+         return false;
+      pVector->push_back(it->get_int());
+   }
+
+   return true;
+}
+
 bool fillMap(const Object& object, std::map< std::string, std::vector<std::string> >* pMap)
 {
    for (Object::const_iterator it = object.begin();

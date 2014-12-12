@@ -2134,12 +2134,17 @@ assign(x = ".rs.acCompletionTypes",
       }
    }
    
-   # Otherwise, assume that we're completing an exported item
-   allExports <- Reduce(c, lapply(completions, `[[`, "exports"))
-   results <- .rs.selectFuzzyMatches(allExports, token)
-   
-   return(.rs.makeCompletions(token = token,
-                              results = results,
-                              type = .rs.acCompletionTypes$CONTEXT))
+   # Otherwise, assume that we're completing an exported item.
+   Reduce(.rs.appendCompletions, lapply(seq_along(completions), function(i) {
+      
+      completion <- completions[[i]]
+      package <- names(completions)[[i]]
+      
+      keep <- .rs.fuzzyMatches(completion$exports, token)
+      .rs.makeCompletions(token = token,
+                          results = completion$exports[keep],
+                          packages = package,
+                          type = completion$types[keep])
+   }))
    
 })

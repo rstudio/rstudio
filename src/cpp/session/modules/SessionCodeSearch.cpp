@@ -2173,7 +2173,10 @@ class LibraryCompletions : public async_r::AsyncRProcess
    typedef core::r_util::AsyncLibraryCompletions AsyncLibraryCompletions;
    
 private:
+
    static const std::string s_toJSONFunction;
+   static const std::string s_acCompletionTypes;
+   static const std::string s_getCompletionType;
    
 public:
    static boost::shared_ptr<LibraryCompletions> update(
@@ -2181,8 +2184,10 @@ public:
    {
       std::stringstream ss;
       
-      // Throw in the toJSON function
-      ss << s_toJSONFunction;
+      // Throw in the helper functions
+      ss << s_toJSONFunction
+         << s_acCompletionTypes
+         << s_getCompletionType;
       
       // Add in each of the package exports and whatnot
       std::set<std::string> const& pkgs(index.getInferredPackages());
@@ -2194,14 +2199,18 @@ public:
          std::string const& pkg = *it;
          
          boost::format fmt(
-                  "ns <- asNamespace('%1%'); "
                   "exports <- getNamespaceExports('%1%'); "
-                  "all <- ls(envir = ns, all.names = TRUE); "
-                  "objects <- mget(all, envir = ns); "
+                  "objects <- mget(exports, envir = asNamespace('%1%')); "
+                  "types <- unlist(lapply(objects, .rs.getCompletionType)); "
                   "isFunction <- unlist(lapply(objects, is.function)); "
                   "functions <- objects[isFunction]; "
                   "functions <- lapply(functions, function(x) { names(formals(x)) }); "
-                  "output <- list(package = I('%1%'), exports = exports, all = all, functions = functions); "
+                  "output <- list( "
+                  "    package = I('%1%'), "
+                  "    exports = exports, "
+                  "    types = types, "
+                  "    functions = functions "
+                  "); "
                   "cat(.rs.toJSON(output), sep = '\\\\n'); "
                   );
          
@@ -2249,14 +2258,14 @@ private:
       //
       // {
       //    "package": <single package name>
-      //    "exports": <array of exports>,
-      //    "all": <array of all things>,
+      //    "exports": <array of object names in the namespace>,
+      //    "types": <array of types (see .rs.acCompletionTypes)>,
       //    "functions": <object mapping function names to arguments>
       // }
       for (std::size_t i = 0; i < n; ++i)
       {
          json::Array exportsJson;
-         json::Array allJson;
+         json::Array typesJson;
          json::Object functionsJson;
          AsyncLibraryCompletions completions;
          
@@ -2280,7 +2289,7 @@ private:
          Error error = json::readObject(value.get_obj(),
                                         "package", &completions.package,
                                         "exports", &exportsJson,
-                                        "all", &allJson,
+                                        "types", &typesJson,
                                         "functions", &functionsJson);
          
          if (error)
@@ -2291,13 +2300,11 @@ private:
          
          std::cerr << "Adding entry for package: '" << completions.package << "'\n";
          
-         std::cerr << "Received " << exportsJson.size() << " exports\n";
          if (!json::fillVectorString(exportsJson, &(completions.exports)))
-            LOG_ERROR_MESSAGE("Failed to read JSON 'exports' array to vector");
-         std::cerr << "Have " << completions.exports.size() << " exports\n";
-         
-         if (!json::fillVectorString(allJson, &(completions.all)))
-            LOG_ERROR_MESSAGE("Failed to read JSON 'all' array to vector");
+            LOG_ERROR_MESSAGE("Failed to read JSON 'objects' array to vector");
+
+         if (!json::fillVectorInt(typesJson, &(completions.types)))
+            LOG_ERROR_MESSAGE("Failed to read JSON 'types' array to vector");
          
          if (!json::fillMap(functionsJson, &(completions.functions)))
             LOG_ERROR_MESSAGE("Failed to read JSON 'functions' object to map");
@@ -2381,6 +2388,75 @@ const std::string LibraryCompletions::s_toJSONFunction =
 }; \
 ";
 
+const std::string LibraryCompletions::s_acCompletionTypes =
+" \
+.rs.acCompletionTypes <- list( \
+   UNKNOWN     =  0, \
+   VECTOR      =  1, \
+   ARRAY       =  2, \
+   DATAFRAME   =  3, \
+   LIST        =  4, \
+   ENVIRONMENT =  5, \
+   FUNCTION    =  6, \
+   ARGUMENT    =  7, \
+   S4_CLASS    =  8, \
+   S4_OBJECT   =  9, \
+   S4_GENERIC  = 10, \
+   S4_METHOD   = 11, \
+   R5_CLASS    = 12, \
+   R5_OBJECT   = 13, \
+   R5_METHOD   = 14, \
+   FILE        = 15, \
+   DIRECTORY   = 16, \
+   CHUNK       = 17, \
+   ROXYGEN     = 18, \
+   HELP        = 19, \
+   STRING      = 20, \
+   PACKAGE     = 21, \
+   KEYWORD     = 22, \
+   OPTION      = 23, \
+   DATASET     = 24, \
+   CONTEXT     = 99 \
+); \
+";
+
+const std::string LibraryCompletions::s_getCompletionType =
+" \
+.rs.getCompletionType <- function(object) \
+{ \
+   if (inherits(object, 'refMethodDef')) \
+      .rs.acCompletionTypes$R5_METHOD \
+   else if (inherits(object, 'refObjectGenerator')) \
+      .rs.acCompletionTypes$R5_CLASS \
+   else if (inherits(object, 'refClass')) \
+      .rs.acCompletionTypes$R5_OBJECT \
+   else if (isS4(object)) \
+   { \
+      if (inherits(object, 'standardGeneric') || \
+          inherits(object, 'nonstandardGenericFunction')) \
+         .rs.acCompletionTypes$S4_GENERIC \
+      else if (inherits(object, 'MethodDefinition')) \
+         .rs.acCompletionTypes$S4_METHOD \
+      else \
+         .rs.acCompletionTypes$S4_OBJECT \
+   } \
+   else if (is.function(object)) \
+      .rs.acCompletionTypes$FUNCTION \
+   else if (is.array(object)) \
+      .rs.acCompletionTypes$ARRAY \
+   else if (inherits(object, 'data.frame')) \
+      .rs.acCompletionTypes$DATAFRAME \
+   else if (is.list(object)) \
+      .rs.acCompletionTypes$LIST \
+   else if (is.environment(object)) \
+      .rs.acCompletionTypes$ENVIRONMENT \
+   else if (is.vector(object)) \
+      .rs.acCompletionTypes$VECTOR \
+   else \
+      .rs.acCompletionTypes$UNKNOWN \
+}; \
+";
+
 SEXP rs_getSourceFileLibraryCompletions(SEXP documentIdSEXP,
                                         SEXP packagesSEXP)
 {
@@ -2397,12 +2473,6 @@ SEXP rs_getSourceFileLibraryCompletions(SEXP documentIdSEXP,
       return R_NilValue;
    }
    
-   // We create an R list with structure:
-   //
-   //    "<package>:
-   //        "all":
-   //        "exports":
-   //        "functions":
    r::sexp::Protect protect;
    r::sexp::ListBuilder parent(&protect);
    
@@ -2414,8 +2484,8 @@ SEXP rs_getSourceFileLibraryCompletions(SEXP documentIdSEXP,
       const core::r_util::AsyncLibraryCompletions& completions = index->getCompletions(*it);
       
       r::sexp::ListBuilder builder(&protect);
-      builder.add("all", completions.all);
       builder.add("exports", completions.exports);
+      builder.add("types", completions.types);
       builder.add("functions", completions.functions);
       
       parent.add(*it, static_cast<SEXP>(builder));
