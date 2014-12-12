@@ -29,7 +29,8 @@ enum AsyncRProcessOptions
 {
    R_PROCESS_NORMAL         = 1 << 0,
    R_PROCESS_REDIRECTSTDERR = 1 << 1,
-   R_PROCESS_VANILLA        = 1 << 2
+   R_PROCESS_VANILLA        = 1 << 2,
+   R_PROCESS_AUGMENTED      = 1 << 3
 };
     
 class AsyncRProcess :
@@ -42,8 +43,7 @@ public:
 
    void start(const char* rCommand,
               const core::FilePath& workingDir,
-              AsyncRProcessOptions rOptions,
-              const std::vector<std::string>& rSourceFiles = std::vector<std::string>());
+              AsyncRProcessOptions rOptions);
 
    bool isRunning();
    void terminate();

@@ -32,8 +32,7 @@ AsyncRProcess::AsyncRProcess():
 
 void AsyncRProcess::start(const char* rCommand, 
                           const core::FilePath& workingDir, 
-                          AsyncRProcessOptions rOptions,
-                          const std::vector<std::string>& rSourceFilePaths)
+                          AsyncRProcessOptions rOptions)
 {
    // R binary
    core::FilePath rProgramPath;
@@ -52,33 +51,37 @@ void AsyncRProcess::start(const char* rCommand,
       args.push_back("--vanilla");
    args.push_back("-e");
 
-   if (!rSourceFilePaths.empty())
+   if (rOptions & R_PROCESS_AUGMENTED)
    {
       // form the command that we send (over the command line)
       std::stringstream command;
 
-      // use a shim for .rs.addFunction
+      FilePath modulesPath =
+            session::options().modulesRSourcePath();
+
+      FilePath sessionCodeTools = modulesPath.childPath("SessionCodeTools.R");
+      FilePath sessionRCompletions = modulesPath.childPath("SessionRCompletions.R");
+
+      // Use shims for the main RStudio functions
       command << "options(error = traceback); ";
 
       command << ".rs.Env <- attach(NULL, name = 'tools:rstudio'); ";
 
       command << ".rs.addFunction <- function(name, FN, attrs = list()) {"
-              << "  fullName = paste('.rs.', name, sep=''); "
-              << "  for (attrib in names(attrs)) "
-              << "    attr(FN, attrib) <- attrs[[attrib]];"
-              << "  assign(fullName, FN, .rs.Env); "
-              << "  environment(.rs.Env[[fullName]]) <- .rs.Env; "
+              << "   fullName = paste('.rs.', name, sep=''); "
+              << "   for (attrib in names(attrs)) "
+              << "     attr(FN, attrib) <- attrs[[attrib]];"
+              << "   assign(fullName, FN, .rs.Env); "
+              << "   environment(.rs.Env[[fullName]]) <- .rs.Env; "
               << "};";
 
       // similarly for .rs.addJsonRpcHandler
       command << ".rs.addJsonRpcHandler <- function(name, FN) {"
-              << ".rs.addFunction(paste('rpc.', name, sep = ''), FN, TRUE);"
+              << "   .rs.addFunction(paste('rpc.', name, sep = ''), FN, TRUE);"
               << "};";
 
-      for (std::vector<std::string>::const_iterator it = rSourceFilePaths.begin();
-           it != rSourceFilePaths.end();
-           ++it)
-         command << "source('" + *it + "');";
+      command << "source('" << sessionCodeTools.absolutePath() << "');";
+      command << "source('" << sessionRCompletions.absolutePath() << "');";
       command << rCommand;
 
       args.push_back(command.str());

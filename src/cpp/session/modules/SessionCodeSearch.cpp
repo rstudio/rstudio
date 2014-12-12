@@ -2214,20 +2214,10 @@ public:
       std::cerr << ss.str() << std::endl;
       std::string finalCmd = ss.str();
 
-      FilePath modulesPath =
-            session::options().modulesRSourcePath();
-
-      FilePath codeTools = modulesPath.childPath("SessionCodeTools.R");
-      FilePath rCompletions = modulesPath.childPath("SessionRCompletions.R");
-
-      std::vector<std::string> rFilesToSource;
-      rFilesToSource.push_back(codeTools.absolutePath());
-      rFilesToSource.push_back(rCompletions.absolutePath());
-
       pCompletions->start(finalCmd.c_str(),
                           FilePath(),
-                          async_r::R_PROCESS_VANILLA,
-                          rFilesToSource);
+                          async_r::R_PROCESS_VANILLA +
+                          async_r::R_PROCESS_AUGMENTED);
 
       return pCompletions;
       
