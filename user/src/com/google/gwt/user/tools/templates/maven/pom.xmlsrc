@@ -94,6 +94,7 @@
           <runTarget>@moduleShortName.html</runTarget>
           <!-- Ask GWT to create the Story of Your Compile (SOYC) (gwt:compile) -->
           <compileReport>true</compileReport>
+          <compilerMetrics>true</compilerMetrics>
           <!-- Run tests using HtmlUnit -->
           <mode>htmlunit</mode>
           <!-- Tests patterns -->
