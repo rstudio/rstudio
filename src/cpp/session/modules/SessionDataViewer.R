@@ -313,7 +313,8 @@
 .rs.addFunction("removeCachedData", function(cacheKey, cacheDir)
 {
   # remove data from the cache environment
-  if (exists(cacheKey, where = .rs.CachedDataEnv, inherits = FALSE))
+  if (exists(".rs.CachedDataEnv") &&
+      exists(cacheKey, where = .rs.CachedDataEnv, inherits = FALSE))
     rm(list = cacheKey, envir = .rs.CachedDataEnv, inherits = FALSE)
 
   # remove data from the cache directory
@@ -351,7 +352,8 @@
 
 .rs.addFunction("findWorkingData", function(cacheKey)
 {
-  if (exists(cacheKey, where = .rs.WorkingDataEnv, inherits = FALSE))
+  if (exists(".rs.WorkingDataEnv") &&
+      exists(cacheKey, where = .rs.WorkingDataEnv, inherits = FALSE))
     get(cacheKey, envir = .rs.WorkingDataEnv, inherits = FALSE)
   else
     NULL
@@ -359,7 +361,8 @@
 
 .rs.addFunction("removeWorkingData", function(cacheKey)
 {
-  if (exists(cacheKey, where = .rs.WorkingDataEnv, inherits = FALSE))
+  if (exists(".rs.WorkingDataEnv") &&
+      exists(cacheKey, where = .rs.WorkingDataEnv, inherits = FALSE))
     rm(list = cacheKey, envir = .rs.WorkingDataEnv, inherits = FALSE)
   invisible(NULL)
 })
