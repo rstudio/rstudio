@@ -734,7 +734,40 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    if ((!length(getOption("devtools.desc"))) &&
        (!length(sourceFiles)))
    {
+      
+      # Some simple shortcuts that authors should know
+      sysname <- Sys.info()[["sysname"]]
+      
+      buildShortcut <- if (sysname == "Darwin")
+         "Cmd + Shift + B"
+      else
+         "Ctrl + Shift + B"
+      
+      checkShortcut <- if (sysname == "Darwin")
+         "Cmd + Shift + E"
+      else
+         "Ctrl + Shift + E"
+      
+      testShortcut <- if (sysname == "Darwin")
+         "Cmd + Shift + T"
+      else
+         "Ctrl + Shift + T"
+      
       helloWorld <- c(
+         "# Hello, world!",
+         "#",
+         "# This is an example function named 'hello' which prints 'Hello, world!'.",
+         "#",
+         "# You can learn more about package authoring with RStudio at:",
+         "#",
+         "#   http://r-pkgs.had.co.nz/",
+         "#",
+         "# Some useful keyboard shortcuts for package authoring:",
+         "#",
+         paste("#   Build and Reload: '", buildShortcut, "'", sep = ""),
+         paste("#   Check: '", checkShortcut, "'", sep = ""),
+         paste("#   Test: '", testShortcut, "'", sep = ""),
+         "#",
          "hello <- function() {",
          "    print(\"Hello, world!\")",
          "}"
@@ -817,18 +850,32 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
    cat(NAMESPACE, file = file.path(packageDirectory, "NAMESPACE"), sep = "\n")
    
-   file.create(file.path(packageDirectory, "README.md"))
-   
-   cat("^README\\.md$", file = file.path(packageDirectory, ".Rbuildignore"), sep = "\n")
-   
-   .Rproj <- file.path(
+   RprojPath <- file.path(
       packageDirectory,
       paste(packageName, ".Rproj", sep = "")
    )
    
-   if (!.Call("rs_writeProjectFile", .Rproj))
+   if (!.Call("rs_writeProjectFile", RprojPath))
       return(.rs.error("Failed to create package .Rproj file"))
    
+   # Ensure new packages get AutoAppendNewLine + StripTrailingWhitespace
+   Rproj <- readLines(RprojPath)
+   
+   appendNewLineIndex <- grep("AutoAppendNewline:", Rproj, fixed = TRUE)
+   if (length(appendNewLineIndex))
+      Rproj[appendNewLineIndex] <- "AutoAppendNewline: Yes"
+   else
+      Rproj <- c(Rproj, "AutoAppendNewline: Yes")
+   
+   stripTrailingWhitespace <- grep("StripTrailingWhitespace:", Rproj, fixed = TRUE)
+   if (length(appendNewLineIndex))
+      Rproj[appendNewLineIndex] <- "StripTrailingWhitespace: Yes"
+   else
+      Rproj <- c(Rproj, "StripTrailingWhitespace: Yes")
+   
+   cat(Rproj, file = RprojPath, sep = "\n")
+   
+   .Call("rs_addFirstRunDoc", RprojPath, "R/hello.R")
    .rs.success()
    
 })
