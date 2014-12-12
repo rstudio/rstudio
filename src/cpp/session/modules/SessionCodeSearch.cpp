@@ -237,7 +237,7 @@ public:
             for (; it != end; ++it)
             {
                DEBUG("-- Current node: '" << (*it).fileInfo.absolutePath() << "'");
-               if (*it == entry)
+               if (it->fileInfo.absolutePath() == entry.fileInfo.absolutePath())
                {
                   DEBUG("-- Found it!");
                   break;
@@ -289,8 +289,13 @@ public:
          for (; it != end; ++it)
          {
             DEBUG("-- Current node: '" << (*it).fileInfo.absolutePath() << "'");
-            if (*it == entry)
+            DEBUG("-- Entry       : '" << entry.fileInfo.absolutePath() << "'");
+            
+            if (it->fileInfo.absolutePath() == entry.fileInfo.absolutePath())
+            {
+               DEBUG("- Found it!");
                break;
+            }
          }
 
          if (it == end)
