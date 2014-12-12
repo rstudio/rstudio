@@ -51,14 +51,18 @@ public:
          const std::string& app)
    {
       boost::shared_ptr<ShinyAppDeploy> pDeploy(new ShinyAppDeploy(file));
-      std::string cmd("rsconnect::deployApp("
-            "appDir = '" + dir + "'," 
-            "account = '" + account + "',"
-            "server = 'shinyapps.io', "
-            "appName = '" + app + "', " 
-            "launch.browser = function (url) { "
-            "   message('" kFinishedMarker "', url) "
-            "})");
+
+      std::string cmd("{ options(repos = c(CRAN=\"" +
+                       module_context::CRANReposURL() + "\")); ");
+
+      cmd += "rsconnect::deployApp("
+             "appDir = '" + dir + "',"
+             "account = '" + account + "',"
+             "server = 'shinyapps.io', "
+             "appName = '" + app + "', "
+             "launch.browser = function (url) { "
+             "   message('" kFinishedMarker "', url) "
+            "})}";
 
       pDeploy->start(cmd.c_str(), FilePath(), async_r::R_PROCESS_VANILLA);
       return pDeploy;
