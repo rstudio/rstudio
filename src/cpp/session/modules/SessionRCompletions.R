@@ -2116,7 +2116,7 @@ assign(x = ".rs.acCompletionTypes",
    
    # If we're getting completions for a particular function's arguments,
    # use those
-   if (length(type) && type[[1]] == .rs.acCompletionTypes$ARGUMENT)
+   if (length(type) && type[[1]] == .rs.acCompletionTypes$FUNCTION)
    {
       # NOTE: Masking implies that earlier functions with some name will
       # be removed by some function with the later name; this is desired
