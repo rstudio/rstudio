@@ -6,7 +6,7 @@ set PATH=%PATH%;%CD%\tools
 
 call:install rmarkdown master
 call:install packrat master
-call:install shinyapps master
+call:install rsconnect master
 
 GOTO:EOF
 
