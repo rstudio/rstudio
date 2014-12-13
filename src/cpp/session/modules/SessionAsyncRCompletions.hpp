@@ -48,6 +48,7 @@ protected:
    void onCompleted(int exitStatus);
 
 private:
+   static bool isUpdating_;
    static boost::mutex mutex_;
    std::stringstream stdOut_;
 

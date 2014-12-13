@@ -780,6 +780,9 @@ private:
       // attempt to add the entry
       Entry entry(fileInfo, pIndex);
       pEntries_->insertEntry(entry);
+
+      // kick off an update
+      r_completions::AsyncRCompletions::update();
    }
 
    void removeIndexEntry(const FileInfo& fileInfo)
@@ -881,9 +884,7 @@ public:
             extensionLowerCase == ".s";
       
       if (pDoc->path().empty() || !isRextension)
-      {
          return;
-      }
 
       // index the source
       boost::shared_ptr<r_util::RSourceIndex> pIndex(

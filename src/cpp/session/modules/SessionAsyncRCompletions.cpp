@@ -27,15 +27,28 @@
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 
-#define DEBUG(x) \
-   std::cerr << x << std::endl;
+#define SESSION_ASYNC_R_DEBUG_LEVEL 0
 
-// #define GENERIC_DEBUG(x) x
-#define GENERIC_DEBUG(x)
+#if SESSION_ASYNC_R_DEBUG_LEVEL > 0
+
+# define DEBUG(x) \
+   std::cerr << x << std::endl;
+# define GENERIC_DEBUG(x) x
+
+#else
+
+# define DEBUG(x)
+# define GENERIC_DEBUG(x)
+
+#endif
 
 namespace session {
 namespace modules {
 namespace r_completions {
+
+// static variables
+bool AsyncRCompletions::isUpdating_ = false;
+boost::mutex AsyncRCompletions::mutex_;
 
 using namespace core;
 
@@ -118,11 +131,11 @@ void AsyncRCompletions::onCompleted(int exitStatus)
       // Update the index
       core::r_util::RSourceIndex::addCompletions(completions.package, completions);
 
+      isUpdating_ = false;
+
    }
 
 }
-
-boost::mutex AsyncRCompletions::mutex_;
 
 void AsyncRCompletions::update()
 {
@@ -131,12 +144,13 @@ void AsyncRCompletions::update()
       static boost::shared_ptr<AsyncRCompletions> pProcess(
                new AsyncRCompletions());
 
-      if (pProcess->isRunning())
+      if (isUpdating_)
          return;
+      isUpdating_ = true;
 
       std::stringstream ss;
       std::vector<std::string> pkgs =
-            core::r_util::RSourceIndex::getUnindexedPackages();
+            core::r_util::RSourceIndex::getAllUnindexedPackages();
 
       GENERIC_DEBUG(
          if (!pkgs.empty())

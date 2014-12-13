@@ -285,14 +285,19 @@ private:
 
 public:
 
-   static std::set<std::string> getInferredPackages()
+   static std::set<std::string> getAllInferredPackages()
    {
       LOCK_MUTEX(mutex_)
       {
-         return inferredPkgNames_;
+         return allInferredPkgNames_;
       }
       END_LOCK_MUTEX
       return std::set<std::string>();
+   }
+
+   std::set<std::string>& getInferredPackages()
+   {
+      return inferredPkgNames_;
    }
    
    static void addCompletions(const std::string& package,
@@ -315,13 +320,14 @@ public:
       return AsyncLibraryCompletions();
    }
 
-   static std::vector<std::string> getUnindexedPackages()
+   static std::vector<std::string> getAllUnindexedPackages()
    {
       std::vector<std::string> result;
       LOCK_MUTEX(mutex_)
       {
-         for (std::set<std::string>::const_iterator it = inferredPkgNames_.begin();
-              it != inferredPkgNames_.end();
+         typedef std::set<std::string>::const_iterator iterator_t;
+         for (iterator_t it = allInferredPkgNames_.begin();
+              it != allInferredPkgNames_.end();
               ++it)
          {
             if (completions().count(*it) == 0)
@@ -331,13 +337,29 @@ public:
       END_LOCK_MUTEX
       return result;
    }
-   
+
+   void addInferredPackage(const std::string& packageName)
+   {
+      LOCK_MUTEX(mutex_)
+      {
+         inferredPkgNames_.insert(packageName);
+         allInferredPkgNames_.insert(packageName);
+      }
+      END_LOCK_MUTEX
+   }
+
 private:
    std::string context_;
    std::vector<RSourceItem> items_;
    
    // private fields related to the current set of library completions
-   static std::set<std::string> inferredPkgNames_;
+   // NOTE: each index tracks the 'library' calls encountered within,
+   // but we share that state in a static variable (so that we can
+   // cache and share across all indexes)
+   std::set<std::string> inferredPkgNames_;
+   static std::set<std::string> allInferredPkgNames_;
+
+   // A mutex used to synchronize access to static variables
    static boost::mutex mutex_;
    
 };

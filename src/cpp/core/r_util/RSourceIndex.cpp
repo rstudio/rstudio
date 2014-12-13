@@ -21,9 +21,9 @@
 
 #include <core/r_util/RTokenizer.hpp>
 
-#define SOURCE_INDEX_DEBUG_LEVEL 0
+#define R_SOURCE_INDEX_DEBUG_LEVEL 0
 
-#if SOURCE_INDEX_DEBUG_LEVEL > 0
+#if R_SOURCE_INDEX_DEBUG_LEVEL > 0
 #define DEBUG(x) \
    std::cerr << x << std::endl;
 #else
@@ -32,6 +32,10 @@
 
 namespace core {
 namespace r_util {
+
+// static members
+std::set<std::string> RSourceIndex::allInferredPkgNames_;
+boost::mutex RSourceIndex::mutex_;
 
 namespace {
 
@@ -205,6 +209,9 @@ RSourceIndex::RSourceIndex(const std::string& context,
                            const std::string& code)
    : context_(context)
 {
+   // clear any (source-local) inferred packages
+   inferredPkgNames_.clear();
+
    // convert code to wide
    std::wstring wCode = string_utils::utf8ToWide(code, context);
 
@@ -458,11 +465,7 @@ RSourceIndex::RSourceIndex(const std::string& context,
          DEBUG("** Adding package '" << string_utils::wideToUtf8(packageName) << "'");
          DEBUG("");
 
-         LOCK_MUTEX(mutex_)
-         {
-            inferredPkgNames_.insert(string_utils::wideToUtf8(packageName));
-         }
-         END_LOCK_MUTEX
+         addInferredPackage(string_utils::wideToUtf8(packageName));
 
          continue;
       }
@@ -497,10 +500,6 @@ RSourceIndex::RSourceIndex(const std::string& context,
 
    }
 }
-
-std::set<std::string> RSourceIndex::inferredPkgNames_;
-boost::mutex RSourceIndex::mutex_;
-
 
 } // namespace r_util
 } // namespace core 

@@ -2105,8 +2105,9 @@ assign(x = ".rs.acCompletionTypes",
    ## completions, the package isn't actually loaded.
    packages <- .rs.listInferredPackages(documentId)
    
-   # Remove any packages that are actually loaded
-   packages <- packages[!(packages %in% loadedNamespaces())]
+   # Remove any packages that are on the search path
+   searchNames <- paste("package", packages, sep = ":")
+   packages <- packages[!(searchNames %in% search())]
    
    if (!length(packages))
       return(.rs.emptyCompletions())
