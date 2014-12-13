@@ -27,7 +27,8 @@
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 
-#define DEBUG(x)
+#define DEBUG(x) \
+   std::cerr << x << std::endl;
 
 namespace session {
 namespace modules {
@@ -39,7 +40,18 @@ void AsyncRCompletions::onCompleted(int exitStatus)
 {
    DEBUG("* Completed async library lookup");
    std::vector<std::string> splat;
+
    std::string stdOut = stdOut_.str();
+
+   stdOut_.str(std::string());
+   stdOut_.clear();
+
+   if (stdOut == "" || stdOut == "\n")
+   {
+      DEBUG("- Received empty response");
+      return;
+   }
+
    boost::split(splat, stdOut, boost::is_any_of("\n"));
 
    std::size_t n = splat.size();
@@ -89,7 +101,7 @@ void AsyncRCompletions::onCompleted(int exitStatus)
          continue;
       }
 
-      DEBUG("Adding entry for package: '" << completions.package);
+      DEBUG("Adding entry for package: '" << completions.package << "'");
 
       if (!json::fillVectorString(exportsJson, &(completions.exports)))
          LOG_ERROR_MESSAGE("Failed to read JSON 'objects' array to vector");
@@ -107,48 +119,62 @@ void AsyncRCompletions::onCompleted(int exitStatus)
 
 }
 
+boost::mutex AsyncRCompletions::mutex_;
+
 void AsyncRCompletions::update()
 {
-   static boost::shared_ptr<AsyncRCompletions> pProcess(
-            new AsyncRCompletions());
-
-   std::stringstream ss;
-   std::vector<std::string> pkgs =
-         core::r_util::RSourceIndex::getUnindexedPackages();
-
-   for (std::vector<std::string>::const_iterator it = pkgs.begin();
-        it != pkgs.end();
-        ++it)
+   LOCK_MUTEX(mutex_)
    {
-      std::string const& pkg = *it;
+      static boost::shared_ptr<AsyncRCompletions> pProcess(
+               new AsyncRCompletions());
 
-      boost::format fmt(
-               "exports <- getNamespaceExports('%1%'); "
-               "objects <- mget(exports, envir = asNamespace('%1%')); "
-               "types <- unlist(lapply(objects, .rs.getCompletionType)); "
-               "isFunction <- unlist(lapply(objects, is.function)); "
-               "functions <- objects[isFunction]; "
-               "functions <- lapply(functions, function(x) { names(formals(x)) }); "
-               "output <- list( "
-               "    package = I('%1%'), "
-               "    exports = exports, "
-               "    types = types, "
-               "    functions = functions "
-               "); "
-               "cat(.rs.toJSON(output), sep = '\\\\n'); "
-               );
+      if (pProcess->isRunning())
+         return;
 
-      ss << boost::str(fmt % pkg);
+      std::stringstream ss;
+      std::vector<std::string> pkgs =
+            core::r_util::RSourceIndex::getUnindexedPackages();
+
+      if (pkgs.empty())
+         return;
+
+      for (std::vector<std::string>::const_iterator it = pkgs.begin();
+           it != pkgs.end();
+           ++it)
+      {
+         std::string const& pkg = *it;
+
+         // NOTE: Since this is all going over the command line eventually
+         // it's imperative that all statements are separated by semicolons.
+         boost::format fmt(
+                  "tryCatch({"
+                  "   ns <- asNamespace('%1%');"
+                  "   exports <- getNamespaceExports(ns);"
+                  "   objects <- mget(exports, ns, inherits = TRUE);"
+                  "   types <- unlist(lapply(objects, .rs.getCompletionType));"
+                  "   isFunction <- unlist(lapply(objects, is.function));"
+                  "   functions <- objects[isFunction];"
+                  "   functions <- lapply(functions, function(x) { names(formals(x)) });"
+                  "   output <- list("
+                  "     package = I('%1%'),"
+                  "     exports = exports,"
+                  "     types = types,"
+                  "     functions = functions"
+                  "   );"
+                  "   cat(.rs.toJSON(output), sep = '\\\\n');"
+                  "}, error = function(e) invisible(NULL));"
+                  );
+
+         ss << boost::str(fmt % pkg);
+      }
+
+      std::string finalCmd = ss.str();
+
+      pProcess->start(finalCmd.c_str(),
+                      core::FilePath(),
+                      async_r::R_PROCESS_VANILLA | async_r::R_PROCESS_AUGMENTED);
    }
-
-   std::string finalCmd = ss.str();
-
-   if (pProcess->isRunning())
-      return;
-
-   pProcess->start(finalCmd.c_str(),
-                   core::FilePath(),
-                   async_r::R_PROCESS_VANILLA | async_r::R_PROCESS_AUGMENTED);
+   END_LOCK_MUTEX
 
 }
 
