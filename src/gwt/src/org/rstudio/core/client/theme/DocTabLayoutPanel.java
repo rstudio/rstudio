@@ -307,7 +307,6 @@ public class DocTabLayoutPanel
 
          label_ = new Label(title, false);
          label_.addStyleName(styles_.docTabLabel());
-         label_.setTitle(title);
          contentPanel_.add(label_);
 
          appendDirtyMarker();
@@ -343,7 +342,6 @@ public class DocTabLayoutPanel
       public void replaceTitle(String title)
       {
          label_.setText(title);
-         appendDirtyMarker();
       }
 
       public void replaceTooltip(String tooltip)
