@@ -30,6 +30,9 @@
 #define DEBUG(x) \
    std::cerr << x << std::endl;
 
+// #define GENERIC_DEBUG(x) x
+#define GENERIC_DEBUG(x)
+
 namespace session {
 namespace modules {
 namespace r_completions {
@@ -134,6 +137,23 @@ void AsyncRCompletions::update()
       std::stringstream ss;
       std::vector<std::string> pkgs =
             core::r_util::RSourceIndex::getUnindexedPackages();
+
+      GENERIC_DEBUG(
+         if (!pkgs.empty())
+         {
+            std::cerr << "Updating packages: [";
+            std::cerr << "'" << pkgs[0] << "'";
+            for (std::size_t i = 1; i < pkgs.size(); i++)
+            {
+               std::cerr << ", '" << pkgs[i] << "'";
+            }
+            std::cerr << "]\n";
+          }
+          else
+          {
+             std::cerr << "No packages to update; bailing out" << std::endl;
+          }
+      )
 
       if (pkgs.empty())
          return;
