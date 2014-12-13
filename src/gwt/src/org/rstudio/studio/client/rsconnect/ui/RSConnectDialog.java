@@ -1,5 +1,5 @@
 /*
- * ShinyAppsDialog.java
+ * RSConnectDialog.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -12,18 +12,18 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.shiny.ui;
+package org.rstudio.studio.client.rsconnect.ui;
 
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.shiny.model.ShinyAppsServerOperations;
+import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 
 import com.google.gwt.user.client.ui.Widget;
 
-public abstract class ShinyAppsDialog<W extends Widget> 
+public abstract class RSConnectDialog<W extends Widget> 
                 extends ModalDialogBase
 {
-   public ShinyAppsDialog(ShinyAppsServerOperations server, 
+   public RSConnectDialog(RSConnectServerOperations server, 
                           final GlobalDisplay display, 
                           W contents)
    {
@@ -40,6 +40,6 @@ public abstract class ShinyAppsDialog<W extends Widget>
    
    protected W contents_;
    
-   protected ShinyAppsServerOperations server_;
+   protected RSConnectServerOperations server_;
    protected GlobalDisplay display_;
 }

@@ -118,7 +118,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/SessionRCompletions.hpp"
 #include "modules/SessionRPubs.hpp"
 #include "modules/SessionRHooks.hpp"
-#include "modules/SessionShinyApps.hpp"
+#include "modules/SessionRSConnect.hpp"
 #include "modules/SessionShinyViewer.hpp"
 #include "modules/SessionSpelling.hpp"
 #include "modules/SessionSource.hpp"
@@ -625,8 +625,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
            (options.programMode() == kSessionProgramModeServer) &&
            options.showUserIdentity();
 
-   // light up shinyapps-related UI features if shinyapps is installed
-   sessionInfo["shinyapps_available"] = session::options().allowRpubsPublish();
+   // light up rsconnect-related UI features if permitted
+   sessionInfo["rsconnect_available"] = session::options().allowRpubsPublish();
    sessionInfo["rmarkdown_available"] =
          modules::rmarkdown::rmarkdownPackageAvailable();
 
@@ -1628,7 +1628,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::updates::initialize)
       (modules::about::initialize)
       (modules::shiny_viewer::initialize)
-      (modules::shiny_apps::initialize)
+      (modules::rsconnect::initialize)
       (modules::packrat::initialize)
       (modules::rhooks::initialize)
       (modules::r_completions::initialize)

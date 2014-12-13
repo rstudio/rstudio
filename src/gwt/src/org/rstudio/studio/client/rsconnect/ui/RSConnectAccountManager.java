@@ -1,5 +1,5 @@
 /*
- * ShinyAppsAccountManager.java
+ * RSConnectAccountManager.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.shiny.ui;
+package org.rstudio.studio.client.rsconnect.ui;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
@@ -24,18 +24,18 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Widget;
 
-public class ShinyAppsAccountManager extends Composite
+public class RSConnectAccountManager extends Composite
 {
 
-   private static ShinyAppsAccountManagerUiBinder uiBinder = GWT
-         .create(ShinyAppsAccountManagerUiBinder.class);
+   private static RSConnectAccountManagerUIBinder uiBinder = GWT
+         .create(RSConnectAccountManagerUIBinder.class);
 
-   interface ShinyAppsAccountManagerUiBinder extends
-         UiBinder<Widget, ShinyAppsAccountManager>
+   interface RSConnectAccountManagerUIBinder extends
+         UiBinder<Widget, RSConnectAccountManager>
    {
    }
 
-   public ShinyAppsAccountManager()
+   public RSConnectAccountManager()
    {
       initWidget(uiBinder.createAndBindUi(this));
    }

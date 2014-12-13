@@ -163,11 +163,11 @@ public class GlobalToolbar extends Toolbar
          addLeftWidget(vcsButton);
       }
       
-      if (sessionInfo.getShinyappsAvailable())
+      if (sessionInfo.getRSConnectAvailable())
       {
          addLeftSeparator();
          ToolbarButton deployButton = 
-               commands_.shinyAppsDeploy().createToolbarButton();
+               commands_.rsconnectDeploy().createToolbarButton();
          deployButton.setText("Publish");
          addLeftWidget(deployButton);
       }

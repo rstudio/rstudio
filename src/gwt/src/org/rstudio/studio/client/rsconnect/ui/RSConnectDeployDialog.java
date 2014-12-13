@@ -1,5 +1,5 @@
 /*
- * ShinyAppsDeployDialog.java
+ * RSConnectDeployDialog.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.shiny.ui;
+package org.rstudio.studio.client.rsconnect.ui;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,14 +24,14 @@ import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.shiny.model.ShinyAppsServerOperations;
+import org.rstudio.studio.client.rsconnect.RSConnect;
+import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
+import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
+import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
+import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
+import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.shiny.ShinyApps;
-import org.rstudio.studio.client.shiny.events.ShinyAppsDeployInitiatedEvent;
-import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
-import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentFiles;
-import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentRecord;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
@@ -46,10 +46,10 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.PopupPanel;
 
-public class ShinyAppsDeployDialog 
-             extends ShinyAppsDialog<ShinyAppsDeploy>
+public class RSConnectDeployDialog 
+             extends RSConnectDialog<RSConnectDeploy>
 {
-   public ShinyAppsDeployDialog(ShinyAppsServerOperations server, 
+   public RSConnectDeployDialog(RSConnectServerOperations server, 
                                 final GlobalDisplay display, 
                                 EventBus events,
                                 final String sourceDir, 
@@ -59,8 +59,8 @@ public class ShinyAppsDeployDialog
                                 boolean isSatellite)
                                 
    {
-      super(server, display, new ShinyAppsDeploy());
-      setText("Publish to ShinyApps");
+      super(server, display, new RSConnectDeploy());
+      setText("Publish to Server");
       setWidth("350px");
       deployButton_ = new ThemedButton("Publish");
       addCancelButton();
@@ -95,10 +95,10 @@ public class ShinyAppsDeployDialog
 
       // Get the files to be deployed
       server_.getDeploymentFiles(sourceDir,
-            new ServerRequestCallback<ShinyAppsDeploymentFiles>()
+            new ServerRequestCallback<RSConnectDeploymentFiles>()
             {
                @Override 
-               public void onResponseReceived(ShinyAppsDeploymentFiles files)
+               public void onResponseReceived(RSConnectDeploymentFiles files)
                {
                   if (files.getDirSize() > files.getMaxSize())
                   {
@@ -125,12 +125,12 @@ public class ShinyAppsDeployDialog
 
       // Get the deployments of this directory from any account (should be fast,
       // since this information is stored locally in the directory). 
-      server_.getShinyAppsDeployments(sourceDir, 
-            new ServerRequestCallback<JsArray<ShinyAppsDeploymentRecord>>()
+      server_.getRSConnectDeployments(sourceDir, 
+            new ServerRequestCallback<JsArray<RSConnectDeploymentRecord>>()
       {
          @Override
          public void onResponseReceived(
-               JsArray<ShinyAppsDeploymentRecord> records)
+               JsArray<RSConnectDeploymentRecord> records)
          {
             processDeploymentRecords(records);
             if (records.length() == 1 && defaultAccount_ == null)
@@ -148,7 +148,7 @@ public class ShinyAppsDeployDialog
          }
       });
       
-      server_.getShinyAppsAccountList(new ServerRequestCallback<JsArrayString>()
+      server_.getRSConnectAccountList(new ServerRequestCallback<JsArrayString>()
       {
          @Override
          public void onResponseReceived(JsArrayString accounts)
@@ -158,8 +158,8 @@ public class ShinyAppsDeployDialog
                // The user has no accounts connected--hide ourselves and 
                // ask the user to connect an account before we continue.
                hide();
-               ShinyAppsConnectAccountDialog dialog = 
-                     new ShinyAppsConnectAccountDialog(server_, display_);
+               RSConnectConnectAccountDialog dialog = 
+                     new RSConnectConnectAccountDialog(server_, display_);
                dialog.addCloseHandler(new CloseHandler<PopupPanel>()
                {
                   @Override
@@ -182,7 +182,7 @@ public class ShinyAppsDeployDialog
          @Override
          public void onError(ServerError error)
          {
-            display_.showErrorMessage("Error retrieving ShinyApps accounts", 
+            display_.showErrorMessage("Error retrieving accounts", 
                                      error.getMessage());
             closeDialog();
          }
@@ -238,7 +238,7 @@ public class ShinyAppsDeployDialog
       }
       else if (apps_.containsKey(contents_.getSelectedAccount()))
       {
-         JsArray<ShinyAppsApplicationInfo> apps =
+         JsArray<RSConnectApplicationInfo> apps =
                apps_.get(contents_.getSelectedAccount());
          for (int i = 0; i < apps.length(); i++)
          {
@@ -263,24 +263,24 @@ public class ShinyAppsDeployDialog
          return;
       }
       
-      // This operation hits the ShinyApps service, so show some progress if 
+      // This operation hits the back-end service, so show some progress if 
       // it takes more than a few ms
       final Timer t = new Timer() {
          @Override
          public void run()
          {
-            indicator_.onProgress("Contacting ShinyApps...");
+            indicator_.onProgress("Contacting Server...");
          }
       };
       t.schedule(500);
 
       // Not already in our cache, fetch it and populate the cache
-      server_.getShinyAppsAppList(accountName,
-            new ServerRequestCallback<JsArray<ShinyAppsApplicationInfo>>()
+      server_.getRSConnectAppList(accountName,
+            new ServerRequestCallback<JsArray<RSConnectApplicationInfo>>()
       {
          @Override
          public void onResponseReceived(
-               JsArray<ShinyAppsApplicationInfo> apps)
+               JsArray<RSConnectApplicationInfo> apps)
          {
 
             t.cancel();
@@ -300,12 +300,12 @@ public class ShinyAppsDeployDialog
       });
    }
    
-   private void setAppList(JsArray<ShinyAppsApplicationInfo> apps)
+   private void setAppList(JsArray<RSConnectApplicationInfo> apps)
    {
       ArrayList<String> appNames = new ArrayList<String>();
       for (int i = 0; i < apps.length(); i++)
       {
-         ShinyAppsApplicationInfo appInfo = apps.get(i);
+         RSConnectApplicationInfo appInfo = apps.get(i);
          // Filter the app list by URLs deployed from this directory 
          // specifically
          if (deployments_.containsKey(appInfo.getUrl()))
@@ -320,7 +320,7 @@ public class ShinyAppsDeployDialog
    // Runs when we've finished doing a just-in-time account connection
    private void onConnectAccountFinished()
    {
-      server_.getShinyAppsAccountList(new ServerRequestCallback<JsArrayString>()
+      server_.getRSConnectAccountList(new ServerRequestCallback<JsArrayString>()
       {
          @Override
          public void onResponseReceived(JsArrayString accounts)
@@ -344,7 +344,7 @@ public class ShinyAppsDeployDialog
          @Override
          public void onError(ServerError error)
          {
-            display_.showErrorMessage("Error retrieving ShinyApps accounts", 
+            display_.showErrorMessage("Error retrieving accounts", 
                                      error.getMessage());
             closeDialog();
          }
@@ -363,18 +363,18 @@ public class ShinyAppsDeployDialog
       {
          // in a satellite window, call back to the main window to do a 
          // deployment
-         ShinyApps.deployFromSatellite(
+         RSConnect.deployFromSatellite(
                sourceDir_, 
                sourceFile_, 
                launchCheck_.getValue(), 
-               ShinyAppsDeploymentRecord.create(appName, account, ""));
+               RSConnectDeploymentRecord.create(appName, account, ""));
 
          // we can't raise the main window if we aren't in desktop mode, so show
          // a dialog to guide the user there
          if (!Desktop.isDesktop())
          {
             display_.showMessage(GlobalDisplay.MSG_INFO, "Deployment Started",
-                  "RStudio is deploying " + appName + " to ShinyApps. " + 
+                  "RStudio is deploying " + appName + ". " + 
                   "Check the Deploy console tab in the main window for " + 
                   "status updates. ");
          }
@@ -382,11 +382,11 @@ public class ShinyAppsDeployDialog
       else
       {
          // in the main window, initiate the deployment directly
-         events_.fireEvent(new ShinyAppsDeployInitiatedEvent(
+         events_.fireEvent(new RSConnectDeployInitiatedEvent(
                sourceDir_,
                sourceFile_,
                launchCheck_.getValue(),
-               ShinyAppsDeploymentRecord.create(appName, account, "")));
+               RSConnectDeploymentRecord.create(appName, account, "")));
       }
 
       closeDialog();
@@ -395,11 +395,11 @@ public class ShinyAppsDeployDialog
    // Create a lookup from app URL to deployments made of this directory
    // to that URL
    private void processDeploymentRecords(
-         JsArray<ShinyAppsDeploymentRecord> records)
+         JsArray<RSConnectDeploymentRecord> records)
    {
       for (int i = 0; i < records.length(); i++)
       {
-         ShinyAppsDeploymentRecord record = records.get(i);
+         RSConnectDeploymentRecord record = records.get(i);
          deployments_.put(record.getUrl(), record);
       }
    }
@@ -416,10 +416,10 @@ public class ShinyAppsDeployDialog
    private String defaultAccount_;
    
    // Map of account name to a list of applications owned by that account
-   private Map<String, JsArray<ShinyAppsApplicationInfo>> apps_ = 
-         new HashMap<String, JsArray<ShinyAppsApplicationInfo>>();
+   private Map<String, JsArray<RSConnectApplicationInfo>> apps_ = 
+         new HashMap<String, JsArray<RSConnectApplicationInfo>>();
    
    // Map of app URL to the deployment made to that URL
-   private Map<String, ShinyAppsDeploymentRecord> deployments_ = 
-         new HashMap<String, ShinyAppsDeploymentRecord>();
+   private Map<String, RSConnectDeploymentRecord> deployments_ = 
+         new HashMap<String, RSConnectDeploymentRecord>();
 }

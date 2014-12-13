@@ -1,5 +1,5 @@
 /*
- * ShinyAppsDeploymentCompletedEvent.java
+ * RSConnectDeploymentOutputEvent.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -14,45 +14,42 @@
  */
 package org.rstudio.studio.client.shiny.events;
 
+import org.rstudio.studio.client.common.compile.CompileOutput;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ShinyAppsDeploymentCompletedEvent extends GwtEvent<ShinyAppsDeploymentCompletedEvent.Handler>
+public class RSConnectDeploymentOutputEvent extends GwtEvent<RSConnectDeploymentOutputEvent.Handler>
 { 
    public interface Handler extends EventHandler
    {
-      void onShinyAppsDeploymentCompleted(ShinyAppsDeploymentCompletedEvent event);
+      void onRSConnectDeploymentOutput(RSConnectDeploymentOutputEvent event);
    }
 
-   public static final GwtEvent.Type<ShinyAppsDeploymentCompletedEvent.Handler> TYPE =
-      new GwtEvent.Type<ShinyAppsDeploymentCompletedEvent.Handler>();
+   public static final GwtEvent.Type<RSConnectDeploymentOutputEvent.Handler> TYPE =
+      new GwtEvent.Type<RSConnectDeploymentOutputEvent.Handler>();
    
-   public ShinyAppsDeploymentCompletedEvent(String url)
+   public RSConnectDeploymentOutputEvent(CompileOutput output)
    {
-      url_ = url;
+      output_ = output;
    }
    
-   public String getUrl()
+   public CompileOutput getOutput()
    {
-      return url_;
-   }
-   
-   public boolean succeeded()
-   {
-      return url_ != null && url_.length() > 0;
+      return output_;
    }
    
    @Override
-   protected void dispatch(ShinyAppsDeploymentCompletedEvent.Handler handler)
+   protected void dispatch(RSConnectDeploymentOutputEvent.Handler handler)
    {
-      handler.onShinyAppsDeploymentCompleted(this);
+      handler.onRSConnectDeploymentOutput(this);
    }
 
    @Override
-   public GwtEvent.Type<ShinyAppsDeploymentCompletedEvent.Handler> getAssociatedType()
+   public GwtEvent.Type<RSConnectDeploymentOutputEvent.Handler> getAssociatedType()
    {
       return TYPE;
    }
    
-   private String url_;
+   private CompileOutput output_;
 }

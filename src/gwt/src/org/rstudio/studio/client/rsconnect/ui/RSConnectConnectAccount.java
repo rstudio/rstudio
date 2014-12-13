@@ -1,5 +1,5 @@
 /*
- * ShinyAppsConnectAccount.java
+ * RSConnectConnectAccount.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.shiny.ui;
+package org.rstudio.studio.client.rsconnect.ui;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyUpEvent;
@@ -25,14 +25,14 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 
-public class ShinyAppsConnectAccount extends Composite
+public class RSConnectConnectAccount extends Composite
 {
 
-   private static ShinyAppsConnectAccountUiBinder uiBinder = GWT
-         .create(ShinyAppsConnectAccountUiBinder.class);
+   private static RSConnectConnectAccountUiBinder uiBinder = GWT
+         .create(RSConnectConnectAccountUiBinder.class);
 
-   interface ShinyAppsConnectAccountUiBinder extends
-         UiBinder<Widget, ShinyAppsConnectAccount>
+   interface RSConnectConnectAccountUiBinder extends
+         UiBinder<Widget, RSConnectConnectAccount>
    {
    }
    
@@ -41,7 +41,7 @@ public class ShinyAppsConnectAccount extends Composite
       String spaced();
    }
 
-   public ShinyAppsConnectAccount()
+   public RSConnectConnectAccount()
    {
       initWidget(uiBinder.createAndBindUi(this));
       accountInfo.addKeyUpHandler(new KeyUpHandler()

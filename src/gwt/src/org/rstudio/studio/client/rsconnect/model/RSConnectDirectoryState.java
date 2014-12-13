@@ -1,5 +1,5 @@
 /*
- * ShinyAppsDeploymentRecord.java
+ * RSConnectDirectoryState.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -12,36 +12,29 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.shiny.model;
+package org.rstudio.studio.client.rsconnect.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class ShinyAppsDeploymentRecord extends JavaScriptObject 
+public class RSConnectDirectoryState extends JavaScriptObject
 {
-   protected ShinyAppsDeploymentRecord()
+   protected RSConnectDirectoryState()
    {
    }
    
-   public static final native ShinyAppsDeploymentRecord create(
-         String name, 
-         String account, 
-         String url) /*-{
-      return {
-         'name': name,
-         'account': account,
-         'url': url
-         };
+   public final native static RSConnectDirectoryState create() /*-{ 
+      return { dir_map: {} };
    }-*/;
    
-   public final native String getName() /*-{
-      return this.name;
+   public final native void addDeployment (
+         String dir, 
+         RSConnectDeploymentRecord record) /*-{
+      this.dir_map[dir] = record;
    }-*/;
-
-   public final native String getAccount() /*-{
-      return this.account;
-   }-*/;
-
-   public final native String getUrl() /*-{
-      return this.url;
+   
+   public final native RSConnectDeploymentRecord getLastDeployment(String dir) /*-{
+      return this.dir_map[dir] ? 
+                 this.dir_map[dir] : 
+                 null;
    }-*/;
 }
