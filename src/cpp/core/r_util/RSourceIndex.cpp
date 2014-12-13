@@ -363,7 +363,7 @@ RSourceIndex::RSourceIndex(const std::string& context,
       else if (token.contentEquals(library) ||
                token.contentStartsWith(require))
       {
-         std::cerr << "** Checking library token!" << std::endl;
+         DEBUG("** Checking library token!");
          
          // make sure we have enough tokens available
          if (i + 3 >= rTokens.size())
@@ -457,7 +457,13 @@ RSourceIndex::RSourceIndex(const std::string& context,
          
          DEBUG("** Adding package '" << string_utils::wideToUtf8(packageName) << "'");
          DEBUG("");
-         inferredPkgNames_.insert(string_utils::wideToUtf8(packageName));
+
+         LOCK_MUTEX(mutex_)
+         {
+            inferredPkgNames_.insert(string_utils::wideToUtf8(packageName));
+         }
+         END_LOCK_MUTEX
+
          continue;
       }
       
@@ -491,6 +497,10 @@ RSourceIndex::RSourceIndex(const std::string& context,
 
    }
 }
+
+std::set<std::string> RSourceIndex::inferredPkgNames_;
+boost::mutex RSourceIndex::mutex_;
+
 
 } // namespace r_util
 } // namespace core 

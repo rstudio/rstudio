@@ -23,6 +23,7 @@
 #include <boost/function.hpp>
 #include <boost/utility.hpp>
 #include <boost/regex.hpp>
+#include <boost/thread/mutex.hpp>
 
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -30,6 +31,7 @@
 #include <core/SafeConvert.hpp>
 #include <core/StringUtils.hpp>
 #include <core/RegexUtils.hpp>
+#include <core/Thread.hpp>
 
 #include <core/r_util/RTokenizer.hpp>
 
@@ -274,7 +276,7 @@ public:
 
 private:
 
-   // we map package names to pairs of completions ('all', 'namespace exports')
+   // NOTE: All source indexes share a set of completions
    static std::map<std::string, AsyncLibraryCompletions>& completions()
    {
       static std::map<std::string, AsyncLibraryCompletions> s_completions;
@@ -282,33 +284,51 @@ private:
    }
 
 public:
-   
-   std::set<std::string>& getInferredPackages()
+
+   static std::set<std::string> getInferredPackages()
    {
-      return inferredPkgNames_;
+      LOCK_MUTEX(mutex_)
+      {
+         return inferredPkgNames_;
+      }
+      END_LOCK_MUTEX
+      return std::set<std::string>();
    }
    
-   void addCompletions(const std::string& package,
-                       const AsyncLibraryCompletions& asyncCompletions)
+   static void addCompletions(const std::string& package,
+                              const AsyncLibraryCompletions& asyncCompletions)
    {
-      completions()[package] = asyncCompletions;
+      LOCK_MUTEX(mutex_)
+      {
+         completions()[package] = asyncCompletions;
+      }
+      END_LOCK_MUTEX
    }
    
-   AsyncLibraryCompletions& getCompletions(const std::string& package)
+   static AsyncLibraryCompletions getCompletions(const std::string& package)
    {
-      return completions()[package];
+      LOCK_MUTEX(mutex_)
+      {
+         return completions()[package];
+      }
+      END_LOCK_MUTEX
+      return AsyncLibraryCompletions();
    }
 
-   std::vector<std::string> getUnindexedPackages()
+   static std::vector<std::string> getUnindexedPackages()
    {
       std::vector<std::string> result;
-      for (std::set<std::string>::const_iterator it = inferredPkgNames_.begin();
-           it != inferredPkgNames_.end();
-           ++it)
+      LOCK_MUTEX(mutex_)
       {
-         if (completions().count(*it) == 0)
-            result.push_back(*it);
+         for (std::set<std::string>::const_iterator it = inferredPkgNames_.begin();
+              it != inferredPkgNames_.end();
+              ++it)
+         {
+            if (completions().count(*it) == 0)
+               result.push_back(*it);
+         }
       }
+      END_LOCK_MUTEX
       return result;
    }
    
@@ -317,7 +337,8 @@ private:
    std::vector<RSourceItem> items_;
    
    // private fields related to the current set of library completions
-   std::set<std::string> inferredPkgNames_;
+   static std::set<std::string> inferredPkgNames_;
+   static boost::mutex mutex_;
    
 };
 

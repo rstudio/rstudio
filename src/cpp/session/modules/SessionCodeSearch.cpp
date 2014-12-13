@@ -48,6 +48,8 @@
 #include <session/SessionAsyncRProcess.hpp>
 #include <session/projects/SessionProjects.hpp>
 
+#include "SessionAsyncRCompletions.hpp"
+
 #include "SessionSource.hpp"
 #include "clang/DefinitionIndex.hpp"
 
@@ -889,6 +891,9 @@ public:
 
       // insert it
       indexes_[pDoc->id()] = pIndex;
+
+      // kick off an update if necessary
+      r_completions::AsyncRCompletions::update();
    }
    
    boost::shared_ptr<r_util::RSourceIndex> get(const std::string& id)
@@ -2168,163 +2173,6 @@ SEXP rs_scoreMatches(SEXP suggestionsSEXP,
 }
 
 // A class that faciliates the update of 'library', 'require' completions
-class LibraryCompletions : public async_r::AsyncRProcess
-{
-   typedef core::r_util::AsyncLibraryCompletions AsyncLibraryCompletions;
-   
-private:
-
-public:
-   static boost::shared_ptr<LibraryCompletions> update(
-         core::r_util::RSourceIndex& index, const std::vector<std::string>& pkgs)
-   {
-      std::stringstream ss;
-      
-      for (std::vector<std::string>::const_iterator it = pkgs.begin();
-           it != pkgs.end();
-           ++it)
-      {
-         std::string const& pkg = *it;
-         
-         boost::format fmt(
-                  "exports <- getNamespaceExports('%1%'); "
-                  "objects <- mget(exports, envir = asNamespace('%1%')); "
-                  "types <- unlist(lapply(objects, .rs.getCompletionType)); "
-                  "isFunction <- unlist(lapply(objects, is.function)); "
-                  "functions <- objects[isFunction]; "
-                  "functions <- lapply(functions, function(x) { names(formals(x)) }); "
-                  "output <- list( "
-                  "    package = I('%1%'), "
-                  "    exports = exports, "
-                  "    types = types, "
-                  "    functions = functions "
-                  "); "
-                  "cat(.rs.toJSON(output), sep = '\\\\n'); "
-                  );
-         
-         ss << boost::str(fmt % pkg);
-      }
-      
-      boost::shared_ptr<LibraryCompletions> pCompletions(
-               new LibraryCompletions(index));
-      
-      std::string finalCmd = ss.str();
-
-      pCompletions->start(finalCmd.c_str(),
-                          FilePath(),
-                          async_r::R_PROCESS_VANILLA | async_r::R_PROCESS_AUGMENTED);
-
-      return pCompletions;
-      
-   }
-   
-private:
-   
-   LibraryCompletions(core::r_util::RSourceIndex& index)
-      : index_(index) {}
-   
-   void onStdout(const std::string& output)
-   {
-      stdOut_ << output;
-   }
-
-   void onStderr(const std::string &output)
-   {
-      LOG_ERROR_MESSAGE(output);
-   }
-   
-   void onCompleted(int exitStatus)
-   {
-      DEBUG("* Completed async library lookup");
-      std::vector<std::string> splat;
-      std::string stdOut = stdOut_.str();
-      boost::split(splat, stdOut, boost::is_any_of("\n"));
-      
-      std::size_t n = splat.size();
-      DEBUG("- Received " << n << " lines of response");
-      
-      // Each line should be a JSON object with the format:
-      //
-      // {
-      //    "package": <single package name>
-      //    "exports": <array of object names in the namespace>,
-      //    "types": <array of types (see .rs.acCompletionTypes)>,
-      //    "functions": <object mapping function names to arguments>
-      // }
-      for (std::size_t i = 0; i < n; ++i)
-      {
-         json::Array exportsJson;
-         json::Array typesJson;
-         json::Object functionsJson;
-         AsyncLibraryCompletions completions;
-         
-         if (splat[i].empty())
-            continue;
-         
-         json::Value value;
-         
-         if (!json::parse(splat[i], &value))
-         {
-            std::string subset;
-            if (splat[i].length() > 60)
-               subset = splat[i].substr(0, 60) + "...";
-            else
-               subset = splat[i];
-            
-            LOG_ERROR_MESSAGE("Failed to parse JSON: '" + subset + "'");
-            continue;
-         }
-         
-         Error error = json::readObject(value.get_obj(),
-                                        "package", &completions.package,
-                                        "exports", &exportsJson,
-                                        "types", &typesJson,
-                                        "functions", &functionsJson);
-         
-         if (error)
-         {
-            LOG_ERROR(error);
-            continue;
-         }
-
-         DEBUG("Adding entry for package: '" << completions.package);
-         
-         if (!json::fillVectorString(exportsJson, &(completions.exports)))
-            LOG_ERROR_MESSAGE("Failed to read JSON 'objects' array to vector");
-
-         if (!json::fillVectorInt(typesJson, &(completions.types)))
-            LOG_ERROR_MESSAGE("Failed to read JSON 'types' array to vector");
-         
-         if (!json::fillMap(functionsJson, &(completions.functions)))
-            LOG_ERROR_MESSAGE("Failed to read JSON 'functions' object to map");
-         
-         // Update the index
-         index_.addCompletions(completions.package, completions);
-         
-      }
-      
-   }
-   
-   std::string parsePackage(std::string const& line)
-   {
-      return line.substr(0, line.find('|'));
-   }
-   
-   std::vector<std::string> parseLine(std::string const& line)
-   {
-      int startIndex = line.find('[') + 1;
-      int endIndex = line.rfind(']');
-      
-      std::string substring = line.substr(startIndex, endIndex - startIndex + 1);
-      std::vector<std::string> output;
-      boost::split(output, substring, boost::is_any_of(","));
-      return output;
-   }
-   
-   std::stringstream stdOut_;
-   core::r_util::RSourceIndex& index_;
-   
-};
 
 SEXP rs_getSourceFileLibraryCompletions(SEXP documentIdSEXP,
                                         SEXP packagesSEXP)
@@ -2371,15 +2219,9 @@ SEXP rs_updateSourceFileLibraryCompletions(SEXP documentIdSEXP)
       return R_NilValue;
 
    r::sexp::Protect protect;
+   r_completions::AsyncRCompletions::update();
 
-   std::vector<std::string> unindexedPkgs = index->getUnindexedPackages();
-   if (unindexedPkgs.empty())
-      return r::sexp::create(false, &protect);
-
-   boost::shared_ptr<LibraryCompletions> pAsyncProcess = LibraryCompletions::update(
-            *index, unindexedPkgs);
-
-   return r::sexp::create(pAsyncProcess->isRunning(), &protect);
+   return r::sexp::create(true, &protect);
    
 }
 
