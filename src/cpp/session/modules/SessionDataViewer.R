@@ -345,7 +345,9 @@
   })
 
   # clean the cache environment
-  rm(list = ls(.rs.CachedDataEnv), where = .rs.CachedDataEnv)
+  # can generate warnings if .rs.CachedDataEnv disappears (we call this on
+  # shutdown); suppress these
+  suppressWarnings(rm(list = ls(.rs.CachedDataEnv), where = .rs.CachedDataEnv))
 
   invisible(NULL)
 })
