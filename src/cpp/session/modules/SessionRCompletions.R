@@ -735,6 +735,19 @@ assign(x = ".rs.acCompletionTypes",
    old
 })
 
+.rs.addFunction("sortCompletions", function(completions, token)
+{
+   scores <- .rs.scoreMatches(completions$results, token)
+   
+   # Put package completions at the end
+   idx <- completions$type == .rs.acCompletionTypes$PACKAGE
+   scores[idx] <- scores[idx] + 10
+   
+   order <- order(scores, nchar(completions$results))
+   
+   .rs.subsetCompletions(completions, order)
+})
+
 .rs.addFunction("blackListEvaluationDataTable", function(token, string, envir)
 {
    tryCatch({
@@ -1221,6 +1234,8 @@ assign(x = ".rs.acCompletionTypes",
                                              parent.frame())
          )
       )
+      
+      completions <- .rs.sortCompletions(completions, token)
       
       # try completing from the source index if this is an
       # R file within a package
