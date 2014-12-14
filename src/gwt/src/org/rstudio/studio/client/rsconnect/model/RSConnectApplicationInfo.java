@@ -1,5 +1,5 @@
 /*
- * ShinyAppsApplicationInfo.java
+ * RSConnectApplicationInfo.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -12,13 +12,13 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.shiny.model;
+package org.rstudio.studio.client.rsconnect.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class ShinyAppsApplicationInfo extends JavaScriptObject
+public class RSConnectApplicationInfo extends JavaScriptObject
 {
-   protected ShinyAppsApplicationInfo() 
+   protected RSConnectApplicationInfo() 
    {
    }
    

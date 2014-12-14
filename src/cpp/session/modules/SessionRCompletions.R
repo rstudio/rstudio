@@ -245,8 +245,9 @@ assign(x = ".rs.acCompletionTypes",
    
    # If the directory lies within a folder that we're monitoring for indexing, use that.
    cacheable <- TRUE
-   if (.rs.hasFileMonitor() &&
-          .rs.startsWith(directory, .rs.getProjectDirectory()))
+   usingFileMonitor <- .rs.hasFileMonitor() && .rs.startsWith(directory, .rs.getProjectDirectory())
+   
+   if (usingFileMonitor)
    {
       if (directoriesOnly)
          index <- .rs.getIndexedFolders(tokenName, directory)
@@ -263,20 +264,14 @@ assign(x = ".rs.acCompletionTypes",
       pattern <- if (nzchar(tokenName))
          paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeForRegex(tokenName)), sep = "")
       
-      if (directoriesOnly && getRversion() >= "3.0.0")
-      {
-         absolutePaths <- list.dirs(path = directory,
-                                    recursive = FALSE)
-      }
-      else
-      {
-         absolutePaths <- gsub("/+", "/", list.files(path = directory,
-                                                     all.files = TRUE,
-                                                     pattern = pattern,
-                                                     no.. = TRUE,
-                                                     full.names = TRUE,
-                                                     include.dirs = TRUE))
-      }
+      # NOTE: We would like to use 'list.dirs' here but it does not accept
+      # a pattern argument
+      absolutePaths <- gsub("/+", "/", list.files(path = directory,
+                                                  all.files = TRUE,
+                                                  pattern = pattern,
+                                                  no.. = TRUE,
+                                                  full.names = TRUE,
+                                                  include.dirs = TRUE))
       
    }
    
@@ -316,16 +311,26 @@ assign(x = ".rs.acCompletionTypes",
    
    paths <- paste(tokenPrefix, relativePaths, sep = "")
    
-   type <- if (directoriesOnly && getRversion() >= "3.0.0")
+   # If we were able to use the file index and only wanted directories, we know that
+   # all completions must be directories
+   type <- if (usingFileMonitor && directoriesOnly)
    {
-      rep.int(.rs.acCompletionTypes$DIRECTORY, length(paths))
+      rep.int(.rs.acCompletionTypes$DIRECTORY, length(absolutePaths))
    }
+   
+   # Otherwise, query the file info for the set of completions we're using
    else
    {
       isDir <- file.info(absolutePaths)[, "isdir"] %in% TRUE ## protect against NA
       ifelse(isDir,
              .rs.acCompletionTypes$DIRECTORY,
              .rs.acCompletionTypes$FILE)
+   }
+   
+   if (directoriesOnly)
+   {
+      paths <- paths[isDir]
+      type <- type[isDir]
    }
    
    .rs.makeCompletions(token = token,

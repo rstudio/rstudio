@@ -241,7 +241,7 @@ public:
             for (; it != end; ++it)
             {
                DEBUG("-- Current node: '" << (*it).fileInfo.absolutePath() << "'");
-               if (*it == entry)
+               if (it->fileInfo.absolutePath() == entry.fileInfo.absolutePath())
                {
                   DEBUG("-- Found it!");
                   break;
@@ -293,8 +293,13 @@ public:
          for (; it != end; ++it)
          {
             DEBUG("-- Current node: '" << (*it).fileInfo.absolutePath() << "'");
-            if (*it == entry)
+            DEBUG("-- Entry       : '" << entry.fileInfo.absolutePath() << "'");
+            
+            if (it->fileInfo.absolutePath() == entry.fileInfo.absolutePath())
+            {
+               DEBUG("- Found it!");
                break;
+            }
          }
 
          if (it == end)
@@ -1437,12 +1442,12 @@ Error searchCode(const json::JsonRpcRequest& request,
 {
    // get params
    std::string term;
-   int maxResultsInt = 200;
+   int maxResultsInt = 20;
    Error error = json::readParams(request.params, &term, &maxResultsInt);
    if (error)
       return error;
    std::size_t maxResults = safe_convert::numberTo<std::size_t>(maxResultsInt,
-                                                                200);
+                                                                20);
 
    // object to return
    json::Object result;

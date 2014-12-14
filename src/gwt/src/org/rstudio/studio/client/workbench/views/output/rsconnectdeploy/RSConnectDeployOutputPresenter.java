@@ -1,5 +1,5 @@
 /*
- * ShinyAppsDeployOutputPresenter.java
+ * RSConnectDeployOutputPresenter.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -13,7 +13,7 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.views.output.shinyappsdeploy;
+package org.rstudio.studio.client.workbench.views.output.rsconnectdeploy;
 
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
@@ -21,22 +21,22 @@ import com.google.inject.Inject;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentCompletedEvent;
-import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentOutputEvent;
-import org.rstudio.studio.client.shiny.events.ShinyAppsDeploymentStartedEvent;
+import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentStartedEvent;
+import org.rstudio.studio.client.shiny.events.RSConnectDeploymentCompletedEvent;
+import org.rstudio.studio.client.shiny.events.RSConnectDeploymentOutputEvent;
 import org.rstudio.studio.client.workbench.views.BusyPresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneDisplay;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneFactory;
 
-public class ShinyAppsDeployOutputPresenter extends BusyPresenter
-   implements ShinyAppsDeploymentStartedEvent.Handler, 
-              ShinyAppsDeploymentOutputEvent.Handler,
-              ShinyAppsDeploymentCompletedEvent.Handler,
+public class RSConnectDeployOutputPresenter extends BusyPresenter
+   implements RSConnectDeploymentStartedEvent.Handler, 
+              RSConnectDeploymentOutputEvent.Handler,
+              RSConnectDeploymentCompletedEvent.Handler,
               RestartStatusEvent.Handler
 {
    @Inject
-   public ShinyAppsDeployOutputPresenter(CompileOutputPaneFactory outputFactory,
+   public RSConnectDeployOutputPresenter(CompileOutputPaneFactory outputFactory,
                                    GlobalDisplay globalDisplay,
                                    EventBus events)
    {
@@ -57,7 +57,7 @@ public class ShinyAppsDeployOutputPresenter extends BusyPresenter
    }
 
    @Override
-   public void onShinyAppsDeploymentStarted(ShinyAppsDeploymentStartedEvent event)
+   public void onRSConnectDeploymentStarted(RSConnectDeploymentStartedEvent event)
    {
       switchToConsoleAfterDeploy_ = !view_.isEffectivelyVisible();
       view_.ensureVisible(true);
@@ -66,14 +66,14 @@ public class ShinyAppsDeployOutputPresenter extends BusyPresenter
    }
 
    @Override
-   public void onShinyAppsDeploymentOutput(ShinyAppsDeploymentOutputEvent event)
+   public void onRSConnectDeploymentOutput(RSConnectDeploymentOutputEvent event)
    {
       view_.showOutput(event.getOutput());
    }
    
    @Override
-   public void onShinyAppsDeploymentCompleted(
-         ShinyAppsDeploymentCompletedEvent event)
+   public void onRSConnectDeploymentCompleted(
+         RSConnectDeploymentCompletedEvent event)
    {
       view_.compileCompleted();
       setIsBusy(false);

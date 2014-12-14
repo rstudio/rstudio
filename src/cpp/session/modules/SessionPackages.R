@@ -551,3 +551,331 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 {
    .Call("rs_downloadAvailablePackages", contribUrl)
 })
+
+.rs.addJsonRpcHandler("package_skeleton", function(packageName,
+                                                   packageDirectory,
+                                                   sourceFiles,
+                                                   usingRcpp)
+{
+   # Make sure we expand the aliased path if necessary
+   # (note this is a no-op if there is no leading '~')
+   packageDirectory <- path.expand(packageDirectory)
+   
+   ## Validate the package name -- note that we validate this upstream
+   ## but it is sensible to validate it once more here
+   if (!grepl("^[[:alpha:]][[:alnum:].]*", packageName))
+      return(.rs.error(
+         "Invalid package name: the package name must start ",
+         "with a letter and follow with only alphanumeric characters"))
+   
+   ## Validate the package directory -- if it exists, make sure it's empty,
+   ## otherwise, try to create it
+   if (file.exists(packageDirectory))
+   {
+      containedFiles <- list.files(packageDirectory) ## what about hidden files?
+      if (length(containedFiles))
+      {
+         return(.rs.error(
+            "Folder '", packageDirectory, "' ",
+            "already exists and is not empty"))
+      }
+   }
+   
+   # Otherwise, create it
+   else
+   {
+      if (!dir.create(packageDirectory, recursive = TRUE))
+         return(.rs.error(
+            "Failed to create directory '", packageDirectory, "'"))
+   }
+   
+   ## Create a DESCRIPTION file
+   
+   # Fill some bits based on devtools options if they're available.
+   # Protect against vectors with length > 1
+   getDevtoolsOption <- function(optionName, default, collapse = " ")
+   {
+      option <- getOption(optionName)
+      if (!is.null(option))
+      {
+         if (length(option) > 0)
+            paste(option, collapse = collapse)
+         else
+            option
+      }
+      else default
+   }
+   
+   `%||%` <- function(x, y)
+      if (is.null(x)) y else x
+   
+   Author <- getDevtoolsOption("devtools.name", "Who wrote it")
+   
+   Maintainer <- getDevtoolsOption(
+      "devtools.desc.author",
+      "Who to complain to <yourfault@somewhere.net>"
+   )
+   
+   License <- getDevtoolsOption(
+      "devtools.desc.license",
+      "What license is it under?",
+      ", "
+   )
+   
+   DESCRIPTION <- list(
+      Package = packageName,
+      Type = "Package",
+      Title = "What the Package Does (Title Case)",
+      Version = "0.1",
+      Date = as.character(Sys.Date()),
+      Author = Author,
+      Maintainer = Maintainer,
+      Description = "More about what it does (maybe more than one line)",
+      License = License,
+      LazyData = "TRUE"
+   )
+   
+   # Create a NAMESPACE file
+   NAMESPACE <- c(
+      'exportPattern("^[[:alpha:]]+")'
+   )
+   
+   # If we are using Rcpp, update DESCRIPTION and NAMESPACE
+   if (usingRcpp)
+   {
+      dir.create(file.path(packageDirectory, "src"), showWarnings = FALSE)
+      
+      rcppImportsStatement <- "Rcpp"
+      
+      # We'll enforce Rcpp > (installed version)
+      ip <- installed.packages()
+      if ("Rcpp" %in% rownames(ip))
+         rcppImportsStatement <- sprintf("Rcpp (>= %s)", ip["Rcpp", "Version"])
+      
+      DESCRIPTION$Imports <- c(DESCRIPTION$Imports, rcppImportsStatement)
+      DESCRIPTION$LinkingTo <- c(DESCRIPTION$LinkingTo, "Rcpp")
+      
+      # Add an import from Rcpp, and also useDynLib
+      NAMESPACE <- c(
+         NAMESPACE,
+         "importFrom(Rcpp, evalCpp)",
+         sprintf("useDynLib(%s)", packageName)
+      )
+   }
+   
+   # Get other fields from devtools options
+   if (length(getOption("devtools.desc.suggests")))
+      DESCRIPTION$Suggests <- getOption("devtools.desc.suggests")
+   
+   if (length(getOption("devtools.desc")))
+   {
+      devtools.desc <- getOption("devtools.desc")
+      for (i in seq_along(devtools.desc))
+      {
+         name <- names(devtools.desc)[[i]]
+         value <- devtools.desc[[i]]
+         DESCRIPTION[[name]] <- value
+      }
+   }
+   
+   # If we are using 'testthat' and 'devtools' is available, use it to
+   # add test infrastructure
+   if ("testthat" %in% DESCRIPTION$Suggests)
+   {
+      dir.create(file.path(packageDirectory, "tests"))
+      dir.create(file.path(packageDirectory, "tests", "testthat"))
+      
+      if ("devtools" %in% rownames(installed.packages()))
+      {
+         # NOTE: Okay to load devtools as we will restart the R session
+         # soon anyhow
+         ns <- asNamespace("devtools")
+         if (exists("render_template", envir = ns))
+         {
+            tryCatch(
+               writeLines(
+                  devtools:::render_template(
+                     "testthat.R",
+                     list(name = packageName)
+                  ),
+                  file.path(packageDirectory, "tests", "testthat.R")
+               ), error = function(e) NULL
+            )
+         }
+      }
+   }
+   
+   # If we are using the MIT license, add the template
+   if (grepl("MIT\\s+\\+\\s+file\\s+LICEN[SC]E", DESCRIPTION$License, perl = TRUE))
+   {
+      # Guess the copyright holder
+      holder <- if (!is.null(getOption("devtools.name")))
+         Author
+      else
+         "<Copyright holder>"
+      
+      msg <- c(
+         paste("YEAR:", format(Sys.time(), "%Y")),
+         paste("COPYRIGHT HOLDER:", holder)
+      )
+      
+      cat(msg,
+          file = file.path(packageDirectory, "LICENSE"),
+          sep = "\n")
+   }
+   
+   # Always create 'R/', 'man/' directories
+   dir.create(file.path(packageDirectory, "R"), showWarnings = FALSE)
+   dir.create(file.path(packageDirectory, "man"))
+   
+   # If there were no source files specified, create a simple 'hello world'
+   # function -- but only if the user hasn't implicitly opted into the 'devtools'
+   # ecosystem
+   if ((!length(getOption("devtools.desc"))) &&
+       (!length(sourceFiles)))
+   {
+      
+      # Some simple shortcuts that authors should know
+      sysname <- Sys.info()[["sysname"]]
+      
+      buildShortcut <- if (sysname == "Darwin")
+         "Cmd + Shift + B"
+      else
+         "Ctrl + Shift + B"
+      
+      checkShortcut <- if (sysname == "Darwin")
+         "Cmd + Shift + E"
+      else
+         "Ctrl + Shift + E"
+      
+      testShortcut <- if (sysname == "Darwin")
+         "Cmd + Shift + T"
+      else
+         "Ctrl + Shift + T"
+      
+      helloWorld <- c(
+         "# Hello, world!",
+         "#",
+         "# This is an example function named 'hello' which prints 'Hello, world!'.",
+         "#",
+         "# You can learn more about package authoring with RStudio at:",
+         "#",
+         "#   http://r-pkgs.had.co.nz/",
+         "#",
+         "# Some useful keyboard shortcuts for package authoring:",
+         "#",
+         paste("#   Build and Reload: '", buildShortcut, "'", sep = ""),
+         paste("#   Check: '", checkShortcut, "'", sep = ""),
+         paste("#   Test: '", testShortcut, "'", sep = ""),
+         "#",
+         "hello <- function() {",
+         "    print(\"Hello, world!\")",
+         "}"
+      )
+      
+      cat(helloWorld,
+          file = file.path(packageDirectory, "R", "hello.R"),
+          sep = "\n")
+      
+      # Similarly, create a simple example .Rd for this 'hello world' function
+      helloWorldRd <- c(
+         "\\name{hello}",
+         "\\alias{hello}",
+         "\\title{Hello, World!}",
+         "\\usage{",
+         "hello()",
+         "}",
+         "\\description{",
+         "Prints 'Hello, world!'.",
+         "}",
+         "\\examples{",
+         "hello()",
+         "}"
+      )
+      
+      cat(helloWorldRd,
+          file = file.path(packageDirectory, "man", "hello.Rd"),
+          sep = "\n")
+   }
+   else if (length(sourceFiles))
+   {
+      # Copy the source files to the appropriate sub-directory
+      sourceFileExtensions <- gsub(".*\\.", "", sourceFiles, perl = TRUE)
+      sourceDirs <- .rs.swap(
+         sourceFileExtensions,
+         "R" = c("r", "q", "s"),
+         "src" = c("c", "cc", "cpp", "h", "hpp"),
+         "vignettes" = c("rmd", "rnw"),
+         "man" = "rd",
+         "data" = c("rda", "rdata"),
+         default = ""
+      )
+      
+      copyPaths <- gsub("/+", "", file.path(
+         packageDirectory,
+         sourceDirs,
+         basename(sourceFiles)
+      ))
+      
+      dirPaths <- dirname(copyPaths)
+      dir.create(dirPaths, recursive = TRUE)
+      
+      success <- file.copy(sourceFiles,
+                           copyPaths)
+      
+      if (!all(success))
+         return(.rs.error("Failed to copy one or more source files"))
+   }
+   
+   # Write various files out
+   
+   # NOTE: write.dcf mangles whitespace so we manually construct
+   # our DCF
+   for (name in c("Depends", "Imports", "Suggests", "LinkingTo"))
+   {
+      if (name %in% names(DESCRIPTION))
+      {
+         DESCRIPTION[[name]] <- paste(
+            sep = "",
+            "\n    ",
+            paste(DESCRIPTION[[name]], collapse = ",\n    ")
+         )
+      }
+   }
+   
+   names <- names(DESCRIPTION)
+   values <- unlist(DESCRIPTION)
+   text <- paste(names, ": ", values, sep = "", collapse = "\n")
+   cat(text, file = file.path(packageDirectory, "DESCRIPTION"))
+   
+   cat(NAMESPACE, file = file.path(packageDirectory, "NAMESPACE"), sep = "\n")
+   
+   RprojPath <- file.path(
+      packageDirectory,
+      paste(packageName, ".Rproj", sep = "")
+   )
+   
+   if (!.Call("rs_writeProjectFile", RprojPath))
+      return(.rs.error("Failed to create package .Rproj file"))
+   
+   # Ensure new packages get AutoAppendNewLine + StripTrailingWhitespace
+   Rproj <- readLines(RprojPath)
+   
+   appendNewLineIndex <- grep("AutoAppendNewline:", Rproj, fixed = TRUE)
+   if (length(appendNewLineIndex))
+      Rproj[appendNewLineIndex] <- "AutoAppendNewline: Yes"
+   else
+      Rproj <- c(Rproj, "AutoAppendNewline: Yes")
+   
+   stripTrailingWhitespace <- grep("StripTrailingWhitespace:", Rproj, fixed = TRUE)
+   if (length(appendNewLineIndex))
+      Rproj[appendNewLineIndex] <- "StripTrailingWhitespace: Yes"
+   else
+      Rproj <- c(Rproj, "StripTrailingWhitespace: Yes")
+   
+   cat(Rproj, file = RprojPath, sep = "\n")
+   
+   .Call("rs_addFirstRunDoc", RprojPath, "R/hello.R")
+   .rs.success()
+   
+})

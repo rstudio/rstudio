@@ -16,8 +16,11 @@ package org.rstudio.studio.client.projects.model;
 
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.remote.RResult;
 import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
+
+import com.google.gwt.core.client.JsArrayString;
 
 public interface ProjectsServerOperations extends PrefsServerOperations,
                                                   SourceServerOperations
@@ -28,7 +31,13 @@ public interface ProjectsServerOperations extends PrefsServerOperations,
                       NewPackageOptions newPackageOptions,
                       NewShinyAppOptions newShinyAppOptions,
                       ServerRequestCallback<Void> callback);
-    
+   
+   void packageSkeleton(String packageName,
+                        String packageDirectory,
+                        JsArrayString sourceFiles,
+                        boolean usingRcpp,
+                        ServerRequestCallback<RResult<Void>> callback);
+   
    void readProjectOptions(ServerRequestCallback<RProjectOptions> callback);
    
    void writeProjectOptions(RProjectOptions options,

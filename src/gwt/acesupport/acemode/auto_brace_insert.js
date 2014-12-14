@@ -87,7 +87,10 @@ define("mode/auto_brace_insert", function(require, exports, module)
          }
          else if (typing && text === "\n") {
             var rangeEnd = this.$moveRight(session.doc, endPos);
-            if (prevChar == "{" && "}" == session.doc.getTextRange(Range.fromPoints(endPos, rangeEnd)))
+            var currentChar = session.doc.getTextRange(Range.fromPoints(endPos, rangeEnd));
+            if ((prevChar === "{" && currentChar === "}") ||
+                (prevChar === "(" && currentChar === ")") ||
+                (prevChar === "[" && currentChar === "]"))
             {
                var indent;
                if (this.getIndentForOpenBrace)

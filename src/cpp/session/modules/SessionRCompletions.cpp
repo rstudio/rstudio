@@ -245,13 +245,11 @@ bool subsequenceFilter(const FileInfo& fileInfo,
 
 SEXP rs_scanFiles(SEXP pathSEXP,
                   SEXP patternSEXP,
-                  SEXP asRelativePathSEXP,
                   SEXP maxCountSEXP)
 {
    std::string path = r::sexp::asString(pathSEXP);
    std::string pattern = r::sexp::asString(patternSEXP);
    int maxCount = r::sexp::asInteger(maxCountSEXP);
-   bool asRelativePath = r::sexp::asLogical(asRelativePathSEXP);
 
    FilePath filePath(path);
    FileInfo fileInfo(filePath);

@@ -306,8 +306,10 @@ public class DocTabLayoutPanel
             contentPanel_.add(imageForIcon(icon));
 
          label_ = new Label(title, false);
-         appendDirtyMarker();
+         label_.addStyleName(styles_.docTabLabel());
          contentPanel_.add(label_);
+
+         appendDirtyMarker();
 
          Image img = new Image(ThemeResources.INSTANCE.closeTab());
          img.setStylePrimaryName(styles_.closeTabButton());
@@ -332,16 +334,14 @@ public class DocTabLayoutPanel
       
       private void appendDirtyMarker()
       {
-         SpanElement span = Document.get().createSpanElement();
-         span.setInnerText("*");
-         span.setClassName(styles_.dirtyTabIndicator());
-         label_.getElement().appendChild(span);
+         Label marker = new Label("*");
+         marker.setStyleName(styles_.dirtyTabIndicator());
+         contentPanel_.insert(marker, 2);
       }
 
       public void replaceTitle(String title)
       {
          label_.setText(title);
-         appendDirtyMarker();
       }
 
       public void replaceTooltip(String tooltip)

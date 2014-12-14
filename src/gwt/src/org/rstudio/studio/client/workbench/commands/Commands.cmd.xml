@@ -321,10 +321,10 @@ well as menu structures (for main menu and popup menus).
          </menu>
          <separator/>
          <menu label="_ShinyApps">
-            <cmd refid="shinyAppsDeploy"/>
-            <cmd refid="shinyAppsTerminate"/>
+            <cmd refid="rsconnectDeploy"/>
+            <cmd refid="rsconnectTerminate"/>
             <separator/>
-            <cmd refid="shinyAppsManageAccounts"/>
+            <cmd refid="rsconnectManageAccounts"/>
          </menu>
          <separator/>
          <cmd refid="showShellDialog"/>
@@ -1483,17 +1483,17 @@ well as menu structures (for main menu and popup menus).
         desc="Run the Shiny application in the system's default Web browser"
         checkable="true"/>
 
-   <cmd id="shinyAppsDeploy"
+   <cmd id="rsconnectDeploy"
         menuLabel="Publish App..."
-        desc="Publish an application to the ShinyApps service"
+        desc="Publish an application"
         visible="false"/>
-   <cmd id="shinyAppsTerminate"
+   <cmd id="rsconnectTerminate"
         menuLabel="Terminate App..."
-        desc="Terminate a ShinyApps application"
+        desc="Terminate an application"
         visible="false"/>
-   <cmd id="shinyAppsManageAccounts"
+   <cmd id="rsconnectManageAccounts"
         menuLabel="Manage Accounts..."
-        desc="Connect or disconnect ShinyApps accounts"
+        desc="Connect or disconnect accounts"
         visible="false"/>
 
 </commands>

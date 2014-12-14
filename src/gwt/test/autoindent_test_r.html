@@ -89,6 +89,30 @@ plot(x,
     bar
   else
 </pre></li>
+
+<li><pre data-expected="0">
+if (foo)
+    x = 1
+</pre></li>
+
+<li><pre data-expected="0">
+else if (foo)
+    x = 1
+</pre></li>
+
+<li><pre data-expected="0">
+else
+    x = 1
+</pre></li>
+
+<li><pre data-expected="4">
+if (foo &&
+</pre></li>
+
+<li><pre data-expected="4" data-expected-vertical-args="7">
+while (foo &&
+</pre></li>
+
 <li><pre data-expected="4">
   if (foo())
     bar
@@ -143,7 +167,7 @@ function() {
 <li><pre data-expected="4">
   if (foo(
 </pre></li>
-<li><pre data-expected="6">
+<li><pre data-expected="4" data-expected-vertical-args="6">
   if (foo(
         bar),
 </pre></li>

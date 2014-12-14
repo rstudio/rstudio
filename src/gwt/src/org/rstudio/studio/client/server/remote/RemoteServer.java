@@ -85,16 +85,15 @@ import org.rstudio.studio.client.rmarkdown.model.RmdCreatedTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateContent;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
+import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
+import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
+import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.ClientException;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
-import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
-import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentFiles;
-import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentRecord;
 import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
 import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
@@ -845,7 +844,7 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, GET_CRAN_MIRRORS, requestCallback);
    }
-
+   
    public void suggestTopics(String prefix,
                              ServerRequestCallback<JsArrayString> requestCallback)
    {
@@ -1250,6 +1249,21 @@ public class RemoteServer implements Server
       params.set(2, newShinyAppOptions != null ?
             new JSONObject(newShinyAppOptions) : JSONNull.getInstance());
       sendRequest(RPC_SCOPE, CREATE_PROJECT, params, requestCallback);
+   }
+   
+   public void packageSkeleton(String packageName,
+                               String packageDirectory,
+                               JsArrayString sourceFiles,
+                               boolean usingRcpp,
+                               ServerRequestCallback<RResult<Void>> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(packageName));
+      params.set(1, new JSONString(packageDirectory));
+      setArrayString(params, 2, sourceFiles);
+      params.set(3, JSONBoolean.getInstance(usingRcpp));
+      
+      sendRequest(RPC_SCOPE, PACKAGE_SKELETON, params, requestCallback);
    }
    
    public void readProjectOptions(ServerRequestCallback<RProjectOptions> callback)
@@ -3498,60 +3512,60 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void getShinyAppsAccountList(
+   public void getRSConnectAccountList(
          ServerRequestCallback<JsArrayString> requestCallback)
    {
       sendRequest(RPC_SCOPE,
-            GET_SHINYAPPS_ACCOUNT_LIST,
+            GET_RSCONNECT_ACCOUNT_LIST,
             requestCallback);
    }
 
    @Override
-   public void removeShinyAppsAccount(String accountName,
+   public void removeRSConnectAccount(String accountName,
          ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(accountName));
       sendRequest(RPC_SCOPE,
-            REMOVE_SHINYAPPS_ACCOUNT,
+            REMOVE_RSCONNECT_ACCOUNT,
             params,
             requestCallback);
    }
 
    @Override
-   public void connectShinyAppsAccount(String command,
+   public void connectRSConnectAccount(String command,
          ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(command));
       sendRequest(RPC_SCOPE,
-            CONNECT_SHINYAPPS_ACCOUNT,
+            CONNECT_RSCONNECT_ACCOUNT,
             params,
             requestCallback);
    }
 
    @Override
-   public void getShinyAppsAppList(
+   public void getRSConnectAppList(
          String accountName,
-         ServerRequestCallback<JsArray<ShinyAppsApplicationInfo>> requestCallback)
+         ServerRequestCallback<JsArray<RSConnectApplicationInfo>> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(accountName));
       sendRequest(RPC_SCOPE,
-            GET_SHINYAPPS_APP_LIST,
+            GET_RSCONNECT_APP_LIST,
             params,
             requestCallback);
    }
 
    @Override
-   public void getShinyAppsDeployments(
+   public void getRSConnectDeployments(
          String dir,
-         ServerRequestCallback<JsArray<ShinyAppsDeploymentRecord>> requestCallback)
+         ServerRequestCallback<JsArray<RSConnectDeploymentRecord>> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(dir));
       sendRequest(RPC_SCOPE,
-            GET_SHINYAPPS_DEPLOYMENTS,
+            GET_RSCONNECT_DEPLOYMENTS,
             params,
             requestCallback);
    }
@@ -3573,7 +3587,7 @@ public class RemoteServer implements Server
 
    @Override
    public void getDeploymentFiles(String dir,
-         ServerRequestCallback<ShinyAppsDeploymentFiles> requestCallback)
+         ServerRequestCallback<RSConnectDeploymentFiles> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(dir));
@@ -3875,6 +3889,7 @@ public class RemoteServer implements Server
    private static final String IS_PACKAGE_LOADED = "is_package_loaded";
    private static final String SET_CRAN_MIRROR = "set_cran_mirror";
    private static final String GET_CRAN_MIRRORS = "get_cran_mirrors";
+   private static final String PACKAGE_SKELETON = "package_skeleton";
 
    private static final String GET_HELP = "get_help";
    private static final String SHOW_HELP_TOPIC = "show_help_topic" ;
@@ -4078,11 +4093,11 @@ public class RemoteServer implements Server
    private static final String GET_SHINY_RUN_CMD = "get_shiny_run_cmd";
    private static final String SET_SHINY_VIEWER_TYPE = "set_shiny_viewer_type";
    
-   private static final String GET_SHINYAPPS_ACCOUNT_LIST = "get_shinyapps_account_list";
-   private static final String REMOVE_SHINYAPPS_ACCOUNT = "remove_shinyapps_account";
-   private static final String CONNECT_SHINYAPPS_ACCOUNT = "connect_shinyapps_account";
-   private static final String GET_SHINYAPPS_APP_LIST = "get_shinyapps_app_list";
-   private static final String GET_SHINYAPPS_DEPLOYMENTS = "get_shinyapps_deployments";
+   private static final String GET_RSCONNECT_ACCOUNT_LIST = "get_rsconnect_account_list";
+   private static final String REMOVE_RSCONNECT_ACCOUNT = "remove_rsconnect_account";
+   private static final String CONNECT_RSCONNECT_ACCOUNT = "connect_rsconnect_account";
+   private static final String GET_RSCONNECT_APP_LIST = "get_rsconnect_app_list";
+   private static final String GET_RSCONNECT_DEPLOYMENTS = "get_rsconnect_deployments";
    private static final String DEPLOY_SHINY_APP = "deploy_shiny_app";
    private static final String GET_DEPLOYMENT_FILES = "get_deployment_files";
 

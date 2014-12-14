@@ -1,5 +1,5 @@
 /*
- * ShinyAppsServerOperations.java
+ * RSConnectServerOperations.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -12,36 +12,33 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.shiny.model;
+package org.rstudio.studio.client.rsconnect.model;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
-import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentFiles;
-import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentRecord;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
-public interface ShinyAppsServerOperations
+public interface RSConnectServerOperations
 {
-   void removeShinyAppsAccount(String accountName, 
+   void removeRSConnectAccount(String accountName, 
                ServerRequestCallback<Void> requestCallback);
 
-   void getShinyAppsAccountList(
+   void getRSConnectAccountList(
                ServerRequestCallback<JsArrayString> requestCallback);
 
-   void connectShinyAppsAccount(String command, 
+   void connectRSConnectAccount(String command, 
                ServerRequestCallback<Void> requestCallback);
 
-   void getShinyAppsAppList(String accountName,
-               ServerRequestCallback<JsArray<ShinyAppsApplicationInfo>> requestCallback);
+   void getRSConnectAppList(String accountName,
+               ServerRequestCallback<JsArray<RSConnectApplicationInfo>> requestCallback);
    
-   void getShinyAppsDeployments(String dir, 
-               ServerRequestCallback<JsArray<ShinyAppsDeploymentRecord>> requestCallback); 
+   void getRSConnectDeployments(String dir, 
+               ServerRequestCallback<JsArray<RSConnectDeploymentRecord>> requestCallback); 
    
    void getDeploymentFiles (String dir, 
-               ServerRequestCallback<ShinyAppsDeploymentFiles> requestCallback);
+               ServerRequestCallback<RSConnectDeploymentFiles> requestCallback);
    
    void deployShinyApp(String dir, String file, String account, String appName, 
                ServerRequestCallback<Boolean> requestCallback);

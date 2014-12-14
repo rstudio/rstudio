@@ -27,6 +27,7 @@
 #include <session/SessionUserSettings.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RRoutines.hpp>
 #include <r/session/RSessionUtils.hpp>
 
 #include "SessionProjectFirstRun.hpp"
@@ -74,7 +75,8 @@ Error createProject(const json::JsonRpcRequest& request,
 {
    // read params
    std::string projectFile;
-   json::Value newPackageJson, newShinyAppJson;
+   json::Value newPackageJson;
+   json::Value newShinyAppJson;
    Error error = json::readParams(request.params,
                                   &projectFile,
                                   &newPackageJson,
@@ -83,112 +85,7 @@ Error createProject(const json::JsonRpcRequest& request,
       return error;
    FilePath projectFilePath = module_context::resolveAliasedPath(projectFile);
 
-   // package project
-   if (!newPackageJson.is_null())
-   {
-      // build list of code files
-      bool usingRcpp;
-      json::Array codeFilesJson;
-      Error error = json::readObject(newPackageJson.get_obj(),
-                                     "using_rcpp", &usingRcpp,
-                                     "code_files", &codeFilesJson);
-      if (error)
-         return error;
-      std::vector<FilePath> codeFiles;
-      BOOST_FOREACH(const json::Value codeFile, codeFilesJson)
-      {
-         if (!json::isType<std::string>(codeFile))
-         {
-            BOOST_ASSERT(false);
-            continue;
-         }
-
-         FilePath codeFilePath =
-                     module_context::resolveAliasedPath(codeFile.get_str());
-         codeFiles.push_back(codeFilePath);
-      }
-
-      // error if the package dir already exists
-      FilePath packageDir = projectFilePath.parent();
-      if (packageDir.exists())
-         return core::fileExistsError(ERROR_LOCATION);
-
-      // create a temp dir (so we can import the list of code files)
-      FilePath tempDir = module_context::tempFile("newpkg", "dir");
-      error = tempDir.ensureDirectory();
-      if (error)
-         return error;
-
-      // copy the code files into the tempDir and build up a
-      // list of the filenames for passing to package.skeleton
-      std::vector<std::string> rFileNames, cppFileNames;
-      BOOST_FOREACH(const FilePath& codeFilePath, codeFiles)
-      {
-         FilePath targetPath = tempDir.complete(codeFilePath.filename());
-         Error error = codeFilePath.copy(targetPath);
-         if (error)
-            return error;
-
-         std::string ext = targetPath.extensionLowerCase();
-         std::string file = string_utils::utf8ToSystem(targetPath.filename());
-         if (boost::algorithm::starts_with(ext,".c"))
-            cppFileNames.push_back(file);
-         else
-            rFileNames.push_back(file);
-      }
-
-
-      // if the list of code files is empty then add an empty file
-      // with the same name as the package (but don't do this for
-      // Rcpp since it generates a hello world file)
-      if (codeFiles.empty() && !usingRcpp)
-      {
-         std::string srcFileName = packageDir.filename() + ".R";
-         FilePath srcFilePath = tempDir.complete(srcFileName);
-         Error error = core::writeStringToFile(srcFilePath, "");
-         if (error)
-            return error;
-         rFileNames.push_back(string_utils::utf8ToSystem(srcFileName));
-      }
-
-      // temporarily switch to the tempDir for package creation
-      RestoreCurrentPathScope pathScope(module_context::safeCurrentPath());
-      tempDir.makeCurrentPath();
-
-      // call package.skeleton
-
-      r::exec::RFunction pkgSkeleton(usingRcpp ?
-                                       "Rcpp:::Rcpp.package.skeleton" :
-                                       "utils:::package.skeleton");
-      pkgSkeleton.addParam("name",
-                           string_utils::utf8ToSystem(packageDir.filename()));
-      pkgSkeleton.addParam("path",
-               string_utils::utf8ToSystem(packageDir.parent().absolutePath()));
-      pkgSkeleton.addParam("code_files", rFileNames);
-      if (usingRcpp && module_context::haveRcppAttributes())
-      {
-         if (!cppFileNames.empty())
-         {
-            pkgSkeleton.addParam("example_code", false);
-            pkgSkeleton.addParam("cpp_files", cppFileNames);
-         }
-         else
-         {
-            pkgSkeleton.addParam("attributes", true);
-         }
-      }
-      error = pkgSkeleton.call();
-      if (error)
-         return error;
-
-      // create the project file (allow auto-detection of the package
-      // to setup the package build type & default options)
-      return r_util::writeProjectFile(projectFilePath,
-                                      ProjectContext::buildDefaults(),
-                                      ProjectContext::defaultConfig());
-   }
-
-   else if (!newShinyAppJson.is_null())
+   if (!newShinyAppJson.is_null())
    {
       // error if the shiny app dir already exists
       FilePath appDir = projectFilePath.parent();
@@ -679,8 +576,45 @@ void startup()
    }
 }
 
+SEXP rs_writeProjectFile(SEXP projectFilePathSEXP)
+{
+   std::string absolutePath = r::sexp::asString(projectFilePathSEXP);
+   FilePath projectFilePath(absolutePath);
+   
+   Error error = r_util::writeProjectFile(
+            projectFilePath,
+            ProjectContext::buildDefaults(),
+            ProjectContext::defaultConfig());
+   
+   r::sexp::Protect protect;
+   return error ?
+            r::sexp::create(false, &protect) :
+            r::sexp::create(true, &protect);
+}
+
+SEXP rs_addFirstRunDoc(SEXP projectFileAbsolutePathSEXP, SEXP docRelativePathSEXP)
+{
+   std::string projectFileAbsolutePath = r::sexp::asString(projectFileAbsolutePathSEXP);
+   const FilePath projectFilePath(projectFileAbsolutePath);
+   
+   std::string docRelativePath = r::sexp::asString(docRelativePathSEXP);
+   
+   addFirstRunDoc(projectFilePath, docRelativePath);
+   return R_NilValue;
+}
+
 Error initialize()
 {
+   r::routines::registerCallMethod(
+            "rs_writeProjectFile",
+            (DL_FUNC) rs_writeProjectFile,
+            1);
+   
+   r::routines::registerCallMethod(
+            "rs_addFirstRunDoc",
+            (DL_FUNC) rs_addFirstRunDoc,
+            2);
+   
    // call project-context initialize
    Error error = s_projectContext.initialize();
    if (error)

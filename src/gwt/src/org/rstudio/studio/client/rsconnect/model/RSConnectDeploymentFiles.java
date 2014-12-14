@@ -1,5 +1,5 @@
 /*
- * SessionShinyApps.hpp
+ * RSConnectDeploymentFiles.java
  *
  * Copyright (C) 2009-14 by RStudio, Inc.
  *
@@ -12,22 +12,26 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.rsconnect.model;
 
-#ifndef SESSION_SHINY_APPS_HPP
-#define SESSION_SHINY_APPS_HPP
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 
-namespace core {
-   class Error;
+public class RSConnectDeploymentFiles extends JavaScriptObject
+{
+   protected RSConnectDeploymentFiles()
+   {
+   }
+
+   public final native JsArrayString getDirList() /*-{
+      return this.dir_list;
+   }-*/;
+
+   public final native int getDirSize() /*-{
+      return this.dir_size;
+   }-*/;
+
+   public final native int getMaxSize() /*-{
+      return this.max_size;
+   }-*/;
 }
- 
-namespace session {
-namespace modules { 
-namespace shiny_apps {
-
-core::Error initialize();
-                       
-} // namespace shiny_apps
-} // namespace modules
-} // namespace session
-
-#endif // SESSION_SHINY_APPS_HPP
