@@ -1237,6 +1237,14 @@ assign(x = ".rs.acCompletionTypes",
       
       completions <- .rs.sortCompletions(completions, token)
       
+      # remove all queries that start with a '.' unless the
+      # token itself starts with a dot
+      if (!.rs.startsWith(token, "."))
+      {
+         startsWithDot <- .rs.startsWith(completions$results, ".")
+         completions <- .rs.subsetCompletions(completions, which(!startsWithDot))
+      }
+      
       # try completing from the source index if this is an
       # R file within a package
       if (.rs.isRScriptInPackageBuildTarget(filePath))
