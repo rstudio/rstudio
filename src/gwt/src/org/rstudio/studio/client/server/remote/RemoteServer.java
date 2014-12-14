@@ -91,6 +91,7 @@ import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.model.ShinyAppsApplicationInfo;
 import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentFiles;
 import org.rstudio.studio.client.shiny.model.ShinyAppsDeploymentRecord;
@@ -683,6 +684,11 @@ public class RemoteServer implements Server
                   GET_COMPLETIONS,
                   params,
                   requestCallback);
+   }
+   
+   public void updateCompletions(VoidServerRequestCallback callback)
+   {
+      sendRequest(RPC_SCOPE, UPDATE_COMPLETIONS, callback);
    }
 
    public void getHelpAtCursor(String line, int cursorPos,
@@ -3847,6 +3853,7 @@ public class RemoteServer implements Server
    private static final String GET_DPLYR_JOIN_COMPLETIONS = "get_dplyr_join_completions";
    private static final String GET_ARGS = "get_args";
    private static final String GET_COMPLETIONS = "get_completions";
+   private static final String UPDATE_COMPLETIONS = "update_completions";
    private static final String IS_FUNCTION = "is_function";
    private static final String GET_HELP_AT_CURSOR = "get_help_at_cursor";
 

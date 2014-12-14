@@ -1603,6 +1603,8 @@ public class TextEditingTarget implements
 
    private void saveThenExecute(String encodingOverride, final Command command)
    {
+      server_.updateCompletions(new VoidServerRequestCallback());
+      
       checkCompilePdfDependencies();
    
       final String path = docUpdateSentinel_.getPath();
@@ -1630,7 +1632,7 @@ public class TextEditingTarget implements
                                           ));
                }
             });
-         }
+   }
 
    private void saveNewFile(final String suggestedPath,
                             String encodingOverride,

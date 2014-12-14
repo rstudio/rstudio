@@ -52,8 +52,27 @@ boost::mutex AsyncRCompletions::mutex_;
 
 using namespace core;
 
+// ensure that 'isUpdating_' is unset
+class CompleteUpdateOnExit : public boost::noncopyable {
+
+public:
+
+   CompleteUpdateOnExit(bool* pIsUpdating)
+      : pIsUpdating_(pIsUpdating) {}
+
+   ~CompleteUpdateOnExit() {
+      *pIsUpdating_ = false;
+   }
+
+private:
+
+   bool* pIsUpdating_;
+};
+
 void AsyncRCompletions::onCompleted(int exitStatus)
 {
+   CompleteUpdateOnExit updateScope(&isUpdating_);
+
    DEBUG("* Completed async library lookup");
    std::vector<std::string> splat;
 
@@ -130,8 +149,6 @@ void AsyncRCompletions::onCompleted(int exitStatus)
 
       // Update the index
       core::r_util::RSourceIndex::addCompletions(completions.package, completions);
-
-      isUpdating_ = false;
 
    }
 
