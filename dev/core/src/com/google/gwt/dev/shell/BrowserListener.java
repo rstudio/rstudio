@@ -210,9 +210,4 @@ public class BrowserListener implements CodeServerListener {
       listenThread.start();
     }
   }
-
-  @Override
-  public void waitUntilReady(TreeLogger logger) throws UnableToCompleteException {
-    // already ready when constructor returns.
-  }
 }

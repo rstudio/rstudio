@@ -13,7 +13,6 @@
  */
 package com.google.gwt.dev.shell;
 
-import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
@@ -32,15 +31,9 @@ public interface CodeServerListener {
   int getSocketPort();
 
   /**
-   * Starts the code server. (It won't be ready until the {@link #waitUntilReady returns.)
+   * Starts the code server.
    */
   void start();
-
-  /**
-   * Blocks until the code server ready to handle requests.
-   * @throws UnableToCompleteException if unable to start.
-   */
-  void waitUntilReady(TreeLogger logger) throws UnableToCompleteException;
 
   /**
    * Returns the URL to use in the browser for using this codeserver.

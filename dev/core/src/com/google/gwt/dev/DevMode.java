@@ -513,28 +513,13 @@ public class DevMode extends DevModeBase implements RestartServerCallback {
                 + module.getCanonicalName() + "'");
         link(loadLogger, module);
       }
-
     } catch (UnableToCompleteException e) {
       // Already logged.
       return false;
     } finally {
       slowStartupEvent.end();
     }
-
-    // When in GWTTestCase and not using Dev Mode, there is no listener.
-    if (listener == null) {
-      return true;
-    }
-
-    // When this methods exits, the buttons will be enabled in the Swing UI.
-    // We shouldn't do that until the code server is ready, or the user might
-    // see a blank page.
-    try {
-      listener.waitUntilReady(getTopLogger());
-      return true;
-    } catch (UnableToCompleteException e) {
-      return false; // already logged
-    }
+    return true;
   }
 
   @Override

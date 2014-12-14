@@ -24,9 +24,9 @@ import com.google.gwt.dev.DevMode.HostedModeOptions;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode;
+import com.google.gwt.thirdparty.guava.common.base.Stopwatch;
 import com.google.gwt.thirdparty.guava.common.collect.ListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
-import com.google.gwt.thirdparty.guava.common.util.concurrent.SettableFuture;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,17 +36,15 @@ import java.net.ServerSocket;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Starts a superdev-mode codeserver.
  */
 public class SuperDevListener implements CodeServerListener {
 
-  private final Thread listenThread;
   private final TreeLogger logger;
   private final int codeServerPort;
-  private final SettableFuture<Void> codeServerReady = SettableFuture.create();
+  private List<String> codeServerArgs;
 
   /**
    * Listens for new connections from browsers.
@@ -58,44 +56,7 @@ public class SuperDevListener implements CodeServerListener {
     // This directory must exist when the Code Server starts.
     ensureModuleBaseDir(options);
 
-    List<String> args = makeCodeServerArgs(options, codeServerPort);
-
-    final String[] codeServerArgs = args.toArray(new String[0]);
-
-    logger.log(Type.INFO, "Runing CodeServer with parameters: " + args);
-
-    // Using reflection so as we don't create a circular dependency between
-    // dev.jar && codeserver.jar
-    final Method mainMethod;
-    try {
-      Class<?> clazz = Class.forName("com.google.gwt.dev.codeserver.CodeServer");
-      mainMethod = clazz.getMethod("main", String[].class);
-    } catch (ClassNotFoundException e) {
-      logger.log(TreeLogger.ERROR, "Unable to find main() method for Super Dev Mode "
-          + "code server. Hint: verify that gwt-codeserver.jar is in your classpath.");
-      throw new RuntimeException(e);
-    } catch (NoSuchMethodException e) {
-      logger.log(TreeLogger.ERROR, "Unable to run superdev codeServer.", e);
-      throw new RuntimeException(e);
-    }
-
-    listenThread = new Thread() {
-      public void run() {
-        try {
-          long startTime = System.currentTimeMillis();
-          mainMethod.invoke(null, new Object[] {codeServerArgs});
-          long elapsedTime = System.currentTimeMillis() - startTime;
-          logger.log(Type.INFO, "Code server started in " + elapsedTime + " ms");
-          // The main method returns when the code server has finished launching.
-          codeServerReady.set(null);
-        } catch (Exception e) {
-          logger.log(TreeLogger.ERROR, "Unable to run superdev codeServer.", e);
-          codeServerReady.setException(e);
-        }
-      }
-    };
-    listenThread.setName("SuperDevMode code server listener");
-    listenThread.setDaemon(true);
+    codeServerArgs = makeCodeServerArgs(options, codeServerPort);
   }
 
   @Override
@@ -125,24 +86,31 @@ public class SuperDevListener implements CodeServerListener {
 
   @Override
   public void start() {
-    listenThread.start();
+    try {
+      Stopwatch watch = Stopwatch.createStarted();
+      logger.log(Type.INFO, "Runing CodeServer with parameters: " + codeServerArgs);
+      runCodeServer(codeServerArgs.toArray(new String[0]));
+      logger.log(Type.INFO, "Code server started in " + watch + " ms");
+    } catch (Exception e) {
+      logger.log(Type.INFO, "Unable to start Code server");
+      throw new RuntimeException(e);
+    }
   }
 
-  @Override
-  public void waitUntilReady(TreeLogger logger) throws UnableToCompleteException {
-    long startTime = System.currentTimeMillis();
+  private void runCodeServer(String[] mainArgs) throws Exception {
+    // Using reflection so as we don't create a circular dependency between
+    // dev.jar && codeserver.jar
+    Method mainMethod;
     try {
-      codeServerReady.get();
-    } catch (InterruptedException e) {
-      logger.log(Type.ERROR, "thread interrupted while waiting for code server");
-      throw new UnableToCompleteException();
-    } catch (ExecutionException e) {
-      logger.log(Type.ERROR, "unable to launch code server", e);
-      throw new UnableToCompleteException();
-    } finally {
-      long elapsedTime = System.currentTimeMillis() - startTime;
-      logger.log(Type.INFO, "waited " + elapsedTime + " ms for code server to finish");
+      Class<?> clazz = Class.forName("com.google.gwt.dev.codeserver.CodeServer");
+      mainMethod = clazz.getMethod("main", String[].class);
+    } catch (ClassNotFoundException e) {
+      logger.log(TreeLogger.ERROR, "Unable to find main() method for Super Dev Mode "
+          + "code server. Hint: verify that gwt-codeserver.jar is in your classpath.");
+      throw e;
     }
+
+    mainMethod.invoke(null, new Object[] {mainArgs});
   }
 
   private static int chooseCodeServerPort(TreeLogger logger, HostedModeOptions options) {
