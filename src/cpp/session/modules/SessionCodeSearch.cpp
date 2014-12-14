@@ -2135,13 +2135,6 @@ Error findFunctionInSearchPath(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error updateCompletions(const json::JsonRpcRequest& request,
-                        json::JsonRpcResponse* pResponse)
-{
-   r_completions::AsyncRCompletions::update();
-   return Success();
-}
-
 void onFileMonitorEnabled(const tree<core::FileInfo>& files)
 {
    s_projectIndex.enqueFiles(files.begin_leaf(), files.end_leaf());
@@ -2416,8 +2409,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_function_definition", getFunctionDefinition))
       (bind(registerRpcMethod, "get_search_path_function_definition", getSearchPathFunctionDefinition))
       (bind(registerRpcMethod, "get_method_definition", getMethodDefinition))
-      (bind(registerRpcMethod, "find_function_in_search_path", findFunctionInSearchPath))
-      (bind(registerRpcMethod, "update_completions", updateCompletions));
+      (bind(registerRpcMethod, "find_function_in_search_path", findFunctionInSearchPath));
 
    return initBlock.execute();
 }

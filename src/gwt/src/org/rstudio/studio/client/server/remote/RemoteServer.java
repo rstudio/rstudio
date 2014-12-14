@@ -686,11 +686,6 @@ public class RemoteServer implements Server
                   requestCallback);
    }
    
-   public void updateCompletions(VoidServerRequestCallback callback)
-   {
-      sendRequest(RPC_SCOPE, UPDATE_COMPLETIONS, callback);
-   }
-
    public void getHelpAtCursor(String line, int cursorPos,
                                ServerRequestCallback<Void> requestCallback)
    {
@@ -3853,7 +3848,6 @@ public class RemoteServer implements Server
    private static final String GET_DPLYR_JOIN_COMPLETIONS = "get_dplyr_join_completions";
    private static final String GET_ARGS = "get_args";
    private static final String GET_COMPLETIONS = "get_completions";
-   private static final String UPDATE_COMPLETIONS = "update_completions";
    private static final String IS_FUNCTION = "is_function";
    private static final String GET_HELP_AT_CURSOR = "get_help_at_cursor";
 

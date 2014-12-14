@@ -44,7 +44,9 @@ protected:
 
 private:
    static bool isUpdating_;
+   static std::vector<std::string> pkgsToUpdate_;
    static boost::mutex mutex_;
+
    std::stringstream stdOut_;
 
 };

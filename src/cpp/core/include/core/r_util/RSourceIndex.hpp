@@ -309,6 +309,17 @@ public:
       }
       END_LOCK_MUTEX
    }
+
+   static bool hasCompletions(const std::string& package)
+   {
+      bool result = false;
+      LOCK_MUTEX(mutex_)
+      {
+         result = completions().find(package) != completions().end();
+      }
+      END_LOCK_MUTEX;
+      return result;
+   }
    
    static AsyncLibraryCompletions getCompletions(const std::string& package)
    {

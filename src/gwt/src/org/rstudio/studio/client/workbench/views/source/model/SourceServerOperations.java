@@ -199,6 +199,4 @@ public interface SourceServerOperations extends FilesServerOperations,
    void duplicateDataView(String caption, String envName, String objName, 
                           String cacheKey,
                           ServerRequestCallback<DataItem> requestCallback);
-   
-   void updateCompletions(VoidServerRequestCallback callback);
 }

@@ -49,6 +49,7 @@ namespace r_completions {
 // static variables
 bool AsyncRCompletions::isUpdating_ = false;
 boost::mutex AsyncRCompletions::mutex_;
+std::vector<std::string> AsyncRCompletions::pkgsToUpdate_;
 
 using namespace core;
 
@@ -57,21 +58,39 @@ class CompleteUpdateOnExit : public boost::noncopyable {
 
 public:
 
-   CompleteUpdateOnExit(bool* pIsUpdating)
-      : pIsUpdating_(pIsUpdating) {}
+   CompleteUpdateOnExit(bool* pIsUpdating,
+                        std::vector<std::string>* pPkgsToUpdate)
+      : pIsUpdating_(pIsUpdating),
+        pPkgsToUpdate_(pPkgsToUpdate) {}
 
-   ~CompleteUpdateOnExit() {
+   ~CompleteUpdateOnExit()
+   {
+      using namespace core::r_util;
+
+      // Give empty completions to the packages which weren't updated
+      for (std::vector<std::string>::const_iterator it = pPkgsToUpdate_->begin();
+           it != pPkgsToUpdate_->end();
+           ++it)
+      {
+         if (!RSourceIndex::hasCompletions(*it))
+         {
+            RSourceIndex::addCompletions(*it, AsyncLibraryCompletions());
+         }
+      }
+
+      pPkgsToUpdate_->clear();
       *pIsUpdating_ = false;
    }
 
 private:
-
    bool* pIsUpdating_;
+   std::vector<std::string>* pPkgsToUpdate_;
 };
 
 void AsyncRCompletions::onCompleted(int exitStatus)
 {
-   CompleteUpdateOnExit updateScope(&isUpdating_);
+   CompleteUpdateOnExit updateScope(&isUpdating_,
+                                    &pkgsToUpdate_);
 
    DEBUG("* Completed async library lookup");
    std::vector<std::string> splat;
@@ -156,6 +175,8 @@ void AsyncRCompletions::onCompleted(int exitStatus)
 
 void AsyncRCompletions::update()
 {
+   using namespace core::r_util;
+
    LOCK_MUTEX(mutex_)
    {
       if (isUpdating_)
@@ -164,8 +185,11 @@ void AsyncRCompletions::update()
       isUpdating_ = true;
 
       std::stringstream ss;
-      std::vector<std::string> pkgs =
-            core::r_util::RSourceIndex::getAllUnindexedPackages();
+      pkgsToUpdate_ =
+            RSourceIndex::getAllUnindexedPackages();
+
+      // alias for readability
+      const std::vector<std::string>& pkgs = pkgsToUpdate_;
 
       GENERIC_DEBUG(
          if (!pkgs.empty())
@@ -185,7 +209,10 @@ void AsyncRCompletions::update()
       )
 
       if (pkgs.empty())
+      {
+         isUpdating_ = false;
          return;
+      }
 
       for (std::vector<std::string>::const_iterator it = pkgs.begin();
            it != pkgs.end();
