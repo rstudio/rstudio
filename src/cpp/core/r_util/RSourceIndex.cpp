@@ -368,7 +368,7 @@ RSourceIndex::RSourceIndex(const std::string& context,
       
       // is this a library / require call?
       else if (token.contentEquals(library) ||
-               token.contentStartsWith(require))
+               token.contentEquals(require))
       {
          DEBUG("** Checking library token!");
          
@@ -420,7 +420,8 @@ RSourceIndex::RSourceIndex(const std::string& context,
             }
             
             // if we encounter 'package =', update the package setting
-            if (currentToken.contentEquals(package))
+            if (currentToken.contentEquals(package) &&
+                endParenIndex + count + 2 < rTokens.size())
             {
                const RToken& nextToken = rTokens.at(endParenIndex + count + 1);
                if (nextToken.contentEquals(eqOp))

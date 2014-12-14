@@ -141,11 +141,9 @@ void AsyncRCompletions::update()
 {
    LOCK_MUTEX(mutex_)
    {
-      static boost::shared_ptr<AsyncRCompletions> pProcess(
-               new AsyncRCompletions());
-
       if (isUpdating_)
          return;
+
       isUpdating_ = true;
 
       std::stringstream ss;
@@ -176,7 +174,7 @@ void AsyncRCompletions::update()
            it != pkgs.end();
            ++it)
       {
-         std::string const& pkg = *it;
+         const std::string& pkg = *it;
 
          // NOTE: Since this is all going over the command line eventually
          // it's imperative that all statements are separated by semicolons.
@@ -204,9 +202,13 @@ void AsyncRCompletions::update()
 
       std::string finalCmd = ss.str();
 
-      pProcess->start(finalCmd.c_str(),
-                      core::FilePath(),
-                      async_r::R_PROCESS_VANILLA | async_r::R_PROCESS_AUGMENTED);
+      boost::shared_ptr<AsyncRCompletions> pProcess(
+               new AsyncRCompletions());
+
+      pProcess->start(
+               finalCmd.c_str(),
+               core::FilePath(),
+               async_r::R_PROCESS_VANILLA | async_r::R_PROCESS_AUGMENTED);
    }
    END_LOCK_MUTEX
 

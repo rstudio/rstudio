@@ -26,11 +26,6 @@ namespace r_completions {
 class AsyncRCompletions : public async_r::AsyncRProcess
 {
 public:
-   AsyncRCompletions() {}
-   ~AsyncRCompletions() {}
-
-   // non-copyable through inheritance
-
    static void update();
 
 protected:
