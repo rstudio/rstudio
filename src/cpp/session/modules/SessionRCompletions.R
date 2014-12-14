@@ -2102,10 +2102,9 @@ assign(x = ".rs.acCompletionTypes",
    .Call("rs_listInferredPackages", documentId)
 })
 
-.rs.addFunction("getSourceFileLibraryCompletions", function(documentId,
-                                                            packages = character())
+.rs.addFunction("getSourceFileLibraryCompletions", function(packages = character())
 {
-   .Call("rs_getSourceFileLibraryCompletions", as.character(documentId), as.character(packages))
+   .Call("rs_getSourceFileLibraryCompletions", as.character(packages))
 })
 
 .rs.addFunction("updateSourceFileLibraryCompletions", function(documentId)
@@ -2135,27 +2134,54 @@ assign(x = ".rs.acCompletionTypes",
    if (!length(packages))
       return(.rs.emptyCompletions())
    
-   completions <- .rs.getSourceFileLibraryCompletions(documentId, packages)
+   completions <- .rs.getSourceFileLibraryCompletions(packages)
    
    # If we're getting completions for a particular function's arguments,
    # use those
-   if (length(type) && type[[1]] == .rs.acCompletionTypes$FUNCTION)
+   if (length(type) && type[[1]] == .rs.acContextTypes$FUNCTION)
    {
-      # NOTE: Masking implies that earlier functions with some name will
-      # be removed by some function with the later name; this is desired
-      # as load order matters
-      allFunctions <- Reduce(c, lapply(completions, `[[`, "functions"))
-      if (string[[1]] %in% names(allFunctions))
+      ## Figure out which package + args we actually want to use
+      pkg <- NULL
+      args <- NULL
+      for (i in seq_along(completions))
       {
-         args <- allFunctions[[string[[1]]]]
-         results <- .rs.selectFuzzyMatches(args, token)
-         if (length(results))
-            results <- paste(results, "= ")
-         
-         return(.rs.makeCompletions(token = token,
-                                    results = results,
-                                    type = .rs.acCompletionTypes$CONTEXT))
+         if (string[[1]] %in% names(completions[[i]]$functions))
+         {
+            pkg <- names(completions)[[i]]
+            args <- completions[[i]]$functions[[string[[1]]]]
+            break
+         }
       }
+      
+      # Bail if we couldn't find anything
+      if (is.null(pkg))
+         return(.rs.emptyCompletions())
+         
+      ## Make a dummy function to match a call against
+      argsText <- paste(args, collapse = ", ")
+      dummyFunction <- eval(parse(text = paste("function(", argsText, ") {}", sep = "")))
+      matchedCall <- .rs.matchCall(dummyFunction, functionCall)
+      
+      formals <- .rs.resolveFormals(token,
+                                    dummyFunction,
+                                    string[[1]],
+                                    functionCall,
+                                    matchedCall,
+                                    envir)
+      
+      # Protect against failure
+      if (is.null(formals))
+         return(.rs.emptyCompletions())
+      
+      results <- .rs.selectFuzzyMatches(formals$formals, token)
+      if (length(results))
+         results <- paste(results, "= ")
+      
+      return(.rs.makeCompletions(token = token,
+                                 results = results,
+                                 packages = paste(pkg, string[[1]], sep = "|||"),
+                                 type = .rs.acCompletionTypes$ARGUMENT,
+                                 fguess = string[[1]]))
    }
    
    # Otherwise, assume that we're completing an exported item.

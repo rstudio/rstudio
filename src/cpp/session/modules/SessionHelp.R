@@ -204,6 +204,14 @@ options(help_type = "html")
    if (!length(type))
       return()
    
+   # If we've encoded the package and function in 'what', pull it out
+   if (grepl("|||", what, fixed = TRUE))
+   {
+      splat <- strsplit(what, "|||", fixed = TRUE)[[1]]
+      from <- splat[[1]]
+      what <- splat[[2]]
+   }
+   
    # Avoid install.packages hook
    if (what == "install.packages" &&
        type == .rs.acCompletionTypes$ARGUMENT &&

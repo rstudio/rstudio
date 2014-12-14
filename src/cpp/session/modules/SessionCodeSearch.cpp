@@ -2175,22 +2175,14 @@ SEXP rs_scoreMatches(SEXP suggestionsSEXP,
 
 // A class that faciliates the update of 'library', 'require' completions
 
-SEXP rs_getSourceFileLibraryCompletions(SEXP documentIdSEXP,
-                                        SEXP packagesSEXP)
+SEXP rs_getSourceFileLibraryCompletions(SEXP packagesSEXP)
 {
-   std::string documentId = r::sexp::asString(documentIdSEXP);
+   using namespace core::r_util;
+
    std::vector<std::string> packages;
    if (!r::sexp::fillVectorString(packagesSEXP, &packages))
       return R_NilValue;
-   
-   boost::shared_ptr<core::r_util::RSourceIndex> index = rSourceIndex().get(documentId);
-   
-   if (index == NULL)
-   {
-      LOG_ERROR_MESSAGE("No index for document '" + documentId + "'");
-      return R_NilValue;
-   }
-   
+
    r::sexp::Protect protect;
    r::sexp::ListBuilder parent(&protect);
    
@@ -2198,7 +2190,8 @@ SEXP rs_getSourceFileLibraryCompletions(SEXP documentIdSEXP,
         it != packages.end();
         ++it)
    {
-      const core::r_util::AsyncLibraryCompletions& completions = index->getCompletions(*it);
+      AsyncLibraryCompletions completions =
+            RSourceIndex::getCompletions(*it);
       
       r::sexp::ListBuilder builder(&protect);
       builder.add("exports", completions.exports);
@@ -2380,7 +2373,7 @@ Error initialize()
    r::routines::registerCallMethod(
             "rs_getSourceFileLibraryCompletions",
             (DL_FUNC) rs_getSourceFileLibraryCompletions,
-            2);
+            1);
    
    r::routines::registerCallMethod(
             "rs_updateSourceFileLibraryCompletions",
