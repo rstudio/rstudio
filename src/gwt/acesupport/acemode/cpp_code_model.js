@@ -1287,22 +1287,48 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
                var lastCursor = tokenCursor.cloneCursor();
 
+               if ($verticallyAlignFunctionArgs)
+               {
+                  // If the token cursor is on an operator at the end of the
+                  // line...
+                  if (tokenCursor.isLastSignificantTokenOnLine() &&
+                      (tokenCursor.currentType() === "keyword.operator" ||
+                       tokenCursor.currentType() === "punctuation.operator"))
+                  {
+                     // ... and the line starts with a keyword...
+                     var lineStartCursor = tokenCursor.cloneCursor();
+                     lineStartCursor.$offset = 0;
+                     
+                     if (lineStartCursor.currentType() === "keyword")
+                     {
+                        // ... and there are more opening parens than closing on the line,
+                        // then vertically align
+                        var balance = line.split("(").length - line.split(")").length;
+                        if (balance > 0) {
+                           var parenMatch = line.match(/.*?\(\s*(\S)/);
+                           if (parenMatch) {
+                              return new Array(parenMatch[0].length).join(" ");
+                           }
+                        }
+                     }
+                  }
+               }
+
                // If the token cursor is on a comma...
                if (tokenCursor.currentValue() === ",") {
 
                   // ... and the previous character is a ']', find its match for indentation.
-                  if ($verticallyAlignFunctionArgs) {
+                  if ($verticallyAlignFunctionArgs)
+                  {
                      var peekOne = tokenCursor.peekBwd();
                      if (peekOne.currentValue() === "]") {
                         if (peekOne.bwdToMatchingToken()) {
                            return new Array(peekOne.currentPosition().column + 1).join(" ");
                         }
                      }
-                  }
-
-                  // ... and there are more opening parens than closing on the line,
-                  // then vertically align
-                  if ($verticallyAlignFunctionArgs) {
+                     
+                     // ... and there are more opening parens than closing on the line,
+                     // then vertically align
                      var balance = line.split("(").length - line.split(")").length;
                      if (balance > 0) {
                         var parenMatch = line.match(/.*?\(\s*(\S)/);
