@@ -457,14 +457,14 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          // left of, or at, of the cursor position before entering
          // this block.
          if (rowTokens && rowTokens.length > 0 &&
-             rowTokens[0].column <= column)
+             rowTokens[0].column < column)
          {
             // We want to find the index of the largest token column still less than
             // the column passed in by the caller.
             var index = 1;
             for (; index < rowTokens.length; index++)
             {
-               if (rowTokens[index].column > column)
+               if (rowTokens[index].column >= column)
                {
                   break;
                }
