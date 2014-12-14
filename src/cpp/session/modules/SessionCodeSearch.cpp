@@ -2313,6 +2313,17 @@ SEXP rs_listIndexedFilesAndFolders(SEXP termSEXP,
    return pathResultsSEXP(paths, moreAvailable);
 }
 
+SEXP rs_viewFunction(SEXP functionSEXP, SEXP nameSEXP, SEXP namespaceSEXP) 
+{
+   json::Object func = createFunctionDefinition(
+         r::sexp::safeAsString(nameSEXP),
+         r::sexp::safeAsString(namespaceSEXP),
+         functionSEXP);
+   ClientEvent viewEvent(client_events::kViewFunction, func);
+   module_context::enqueClientEvent(viewEvent);
+   return R_NilValue;
+}
+
 SEXP rs_listInferredPackages(SEXP documentIdSEXP)
 {
    std::string documentId = r::sexp::asString(documentIdSEXP);
@@ -2344,6 +2355,13 @@ Error initialize()
    projects::projectContext().subscribeToFileMonitor("R source file indexing",
                                                      cb);
    
+   // register viewFunction method
+   R_CallMethodDef methodDef ;
+   methodDef.name = "rs_viewFunction" ;
+   methodDef.fun = (DL_FUNC) rs_viewFunction ;
+   methodDef.numArgs = 3;
+   r::routines::addCallMethod(methodDef);
+
    // register call methods
    r::routines::registerCallMethod(
             "rs_scoreMatches",
