@@ -153,13 +153,8 @@ public class CompletionRequester
                             QualifiedName rhs)
          {
             // Keep argument listings at the top
-            boolean lhsArg = lhs.type == RCompletionType.ARGUMENT;
-            boolean rhsArg = rhs.type == RCompletionType.ARGUMENT;
-            
-            if (lhsArg != rhsArg)
-            {
-               return lhsArg ? -1 : 1;
-            }
+            if (lhs.type != rhs.type)
+               return lhs.type < rhs.type ? -1 : 1;
             
             int lhsScore;
             if (RCompletionType.isFileType(lhs.type))

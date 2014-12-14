@@ -1464,39 +1464,6 @@ public class RCompletionManager implements CompletionManager
       
    }
    
-   public Comparator<QualifiedName> createFuzzyComparator(String query)
-   {
-      final String queryLower = query.toLowerCase();
-      return new Comparator<QualifiedName>() {
-
-         @Override
-         public int compare(final QualifiedName lhs,
-                            final QualifiedName rhs)
-         {
-            int lhsScore = CodeSearchOracle.scoreMatch(
-                  lhs.name,
-                  queryLower,
-                  false);
-            
-            int rhsScore = CodeSearchOracle.scoreMatch(
-                  rhs.name,
-                  queryLower,
-                  false);
-            
-            if (lhsScore == rhsScore)
-            {
-               return lhs.name.length() - rhs.name.length();
-            }
-            else
-            {
-               return lhsScore < rhsScore ? -1 : 1;
-            }
-            
-         }
-         
-      };
-   }
-   
    /**
     * It's important that we create a new instance of this each time.
     * It maintains state that is associated with a completion request.
