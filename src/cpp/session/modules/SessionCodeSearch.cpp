@@ -894,6 +894,13 @@ public:
       // index the source
       boost::shared_ptr<r_util::RSourceIndex> pIndex(
                  new r_util::RSourceIndex(pDoc->path(), pDoc->contents()));
+      
+      // ensure not null
+      if (pIndex == NULL)
+      {
+         LOG_ERROR_MESSAGE("NULL pointer to source index");
+         return;
+      }
 
       // insert it
       indexes_[pDoc->id()] = pIndex;
