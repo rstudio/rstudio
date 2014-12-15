@@ -38,12 +38,6 @@ if [ ! -d "./ace" ]; then
     cd ..
 fi
 
-if [ ! -d "./ace/node_modules" ]; then
-    cd ace
-    npm install
-    cd ..
-fi
-
 cd ace
 cd build
 git checkout -- .
@@ -58,7 +52,12 @@ git fetch upstream
 #
 
 # NOTE: SHA1 for release v1.1.8
-git checkout b8e3198ba8e9fe98cdda85e90f517b94d4452b5e 
+git checkout b8e3198ba8e9fe98cdda85e90f517b94d4452b5e
+
+if [ ! -d "./node_modules" ]; then
+    npm install
+    node ./Makefile.dryice.js
+fi
 
 git submodule update --init --recursive
 
