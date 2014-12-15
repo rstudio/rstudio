@@ -882,26 +882,13 @@ public:
    void update(boost::shared_ptr<session::source_database::SourceDocument> pDoc)
    {
       // is this indexable? if not then bail
-      std::string extensionLowerCase = FilePath(pDoc->path()).extensionLowerCase();
-      bool isRextension =
-            extensionLowerCase == ".r" ||
-            extensionLowerCase == ".q" ||
-            extensionLowerCase == ".s";
-      
-      if (pDoc->path().empty() || !isRextension)
+      if (!pDoc->canContainRCode())
          return;
-
+      
       // index the source
       boost::shared_ptr<r_util::RSourceIndex> pIndex(
                  new r_util::RSourceIndex(pDoc->path(), pDoc->contents()));
       
-      // ensure not null
-      if (pIndex == NULL)
-      {
-         LOG_ERROR_MESSAGE("NULL pointer to source index");
-         return;
-      }
-
       // insert it
       indexes_[pDoc->id()] = pIndex;
 
