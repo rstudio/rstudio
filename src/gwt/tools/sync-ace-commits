@@ -40,8 +40,7 @@ fi
 
 if [ ! -d "./ace/node_modules" ]; then
     cd ace
-    npm install uglify-js
-    npm install dryice
+    npm install
     cd ..
 fi
 
@@ -57,42 +56,37 @@ git fetch upstream
 # NOTE: the following commits have been merged by upstream
 # so should be removed the next time we sync:
 #
-#  origin/patch/eclipse-selectedword
-#  origin/patch/blinking-cursor
-#  origin/patch/vim-ctrl-behavior
-#
-git checkout fc01cc624296c1b1be59b55ce03051fa29b5bd96
+
+# NOTE: SHA1 for release v1.1.8
+git checkout b8e3198ba8e9fe98cdda85e90f517b94d4452b5e 
 
 git submodule update --init --recursive
 
 # Merge all the bugfix branches
-git merge \
-    origin/bugfix-webkit-paste2 \
-    origin/bugfix-updatefontsize2 \
-    origin/bugfix-active-line-back \
-    origin/patch-advanced-indent4 \
-    origin/patch/normalizeinput4 \
-    origin/bugfix/no-paste-event-on-indent \
-    origin/patch/build-matchingbraceoutdent3
-    
-git merge \
-    origin/patch/mousewheel3 \
-    origin/patch/consistent-gutter-width3 \
-    origin/patch/suppress-native-scroll \
-    origin/patch/build \
-    origin/patch/remove-webfont \
-    origin/patch/eclipse-selectedword \
-    origin/patch/emacs-vim-keybindings
-
-git merge \
-    origin/patch/blinking-cursor \
-    origin/patch/vim-ctrl-behavior \
-    origin/patch/laggy-typing \
-    origin/bugfix/outdent-newline \
-    origin/bugfix/safari-fractional-cursor \
-    origin/feature/scrolling-compensation \
-    origin/bugfix/ie10-clipboard \
-    origin/bugfix/safari-8-copy
+## git merge \
+##     origin/bugfix-webkit-paste2 \
+##     origin/bugfix-updatefontsize2 \
+##     origin/bugfix-active-line-back \
+##     origin/patch-advanced-indent4 \
+##     origin/patch/normalizeinput4 \
+##     origin/bugfix/no-paste-event-on-indent \
+##     origin/patch/build-matchingbraceoutdent3
+##     
+## git merge \
+##     origin/patch/mousewheel3 \
+##     origin/patch/consistent-gutter-width3 \
+##     origin/patch/suppress-native-scroll \
+##     origin/patch/build \
+##     origin/patch/remove-webfont \
+##     origin/patch/emacs-vim-keybindings
+## 
+## git merge \
+##     origin/patch/laggy-typing \
+##     origin/bugfix/outdent-newline \
+##     origin/bugfix/safari-fractional-cursor \
+##     origin/feature/scrolling-compensation \
+##     origin/bugfix/ie10-clipboard \
+##     origin/bugfix/safari-8-copy
 
 
 node ./Makefile.dryice.js normal
