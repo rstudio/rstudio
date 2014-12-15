@@ -2164,8 +2164,17 @@ assign(x = ".rs.acCompletionTypes",
          
       ## Make a dummy function to match a call against
       argsText <- paste(args, collapse = ", ")
-      dummyFunction <- eval(parse(text = paste("function(", argsText, ") {}", sep = "")))
+      dummyFunction <- tryCatch(
+         suppressWarnings(
+            eval(parse(text = paste("function(", argsText, ") {}", sep = "")))
+         ), error = function(e) NULL
+      )
+      if (is.null(dummyFunction))
+         return(.rs.emptyCompletions())
+      
       matchedCall <- .rs.matchCall(dummyFunction, functionCall)
+      if (is.null(matchedCall))
+         return(.rs.emptyCompletions())
       
       formals <- .rs.resolveFormals(token,
                                     dummyFunction,
