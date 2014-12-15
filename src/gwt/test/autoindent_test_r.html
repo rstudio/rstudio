@@ -277,21 +277,28 @@ var editor = ace.edit('editor');
 editor.renderer.setHScrollBarAlwaysVisible(false);
 editor.setHighlightActiveLine(false);
 var RMode = require('mode/r').Mode;
-editor.getSession().setMode(new RMode(false, editor.getSession().getDocument()));
+
+editor.getSession().setMode(
+  new RMode(false,
+            editor.getSession()));
+
 //editor.getSession().setUseSoftTabs(false);
 
+var i = 0;
+
 function doIndentTest(el, state) {
+  
   var doc = new Document('');
-  var mode = new RMode(false, doc);
-  var rCodeModel = new RCodeModel(doc, mode.$tokenizer);
+  var mode = new RMode(false, editor.getSession());
+  var rCodeModel = new RCodeModel(editor.getSession(), mode.$tokenizer);
 
   doc.insert({row:0, column:0}, (el.innerText || el.textContent).trimRight());
 
-  var indent = rCodeModel.getNextLineIndent(doc.getLength() - 1,
+  var indent = rCodeModel.getNextLineIndent("start",
                                             doc.getLine(doc.getLength() - 1),
-                                            "start",
                                             "  ",
-                                            2);
+                                            doc.getLength() - 1);
+  
   el.appendChild(document.createTextNode(indent + "|"));
   var attrName = "data-expected"; 
   if (state.length > 0 && 

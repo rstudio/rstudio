@@ -33,14 +33,14 @@ define("mode/r", function(require, exports, module)
    var AutoBraceInsert = require("mode/auto_brace_insert").AutoBraceInsert;
    var unicode = require("ace/unicode");
 
-   var Mode = function(suppressHighlighting, doc, session)
+   var Mode = function(suppressHighlighting, session)
    {
       if (suppressHighlighting)
          this.$tokenizer = new Tokenizer(new TextHighlightRules().getRules());
       else
          this.$tokenizer = new Tokenizer(new RHighlightRules().getRules());
 
-      this.codeModel = new RCodeModel(doc, this.$tokenizer, null);
+      this.codeModel = new RCodeModel(session, this.$tokenizer, null);
       this.foldingRules = this.codeModel;
       this.$outdent = {};
       oop.implement(this.$outdent, RMatchingBraceOutdent);

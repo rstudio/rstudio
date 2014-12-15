@@ -72,6 +72,7 @@ oop.inherits(RStudioEditSession, EditSession);
          return EditSession.prototype.insert.call(this, position, text);
       }
    };
+
    this.reindent = function(range) {
       var mode = this.getMode();
       if (!mode.getNextLineIndent)
