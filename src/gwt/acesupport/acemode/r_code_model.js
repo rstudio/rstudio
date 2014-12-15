@@ -443,6 +443,21 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          
       };
 
+      // Move a token cursor to a document position. This essentially
+      // involves translating a '{row, column}' document position to a
+      // '{row, offset}' position for a token cursor. Note that this
+      // function _excludes_ the token directly at the cursor
+      // position, e.g.
+      //
+      //     foo[a, b|]
+      //            ^
+      // Note that the cursor is 'on' the ']' above, but we intend to
+      // move it onto the 'b' token instead. This is the more common
+      // action throughout the code model and hence why it is the
+      // default. (The intention is that only tokens immediately
+      // preceding the cursor should affect indentation choices, and
+      // so we should exclude anything on, or after, the cursor
+      // itself)
       this.moveToPosition = function(pos) {
 
          var row = pos.row;
