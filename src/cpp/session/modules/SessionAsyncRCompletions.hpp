@@ -27,6 +27,8 @@ class AsyncRCompletions : public async_r::AsyncRProcess
 {
 public:
    static void update();
+   
+   friend class CompleteUpdateOnExit;
 
 protected:
 
@@ -43,9 +45,8 @@ protected:
    void onCompleted(int exitStatus);
 
 private:
-   static bool isUpdating_;
-   static std::vector<std::string> pkgsToUpdate_;
-   static boost::mutex mutex_;
+   static bool s_isUpdating_;
+   static std::vector<std::string> s_pkgsToUpdate_;
 
    std::stringstream stdOut_;
 

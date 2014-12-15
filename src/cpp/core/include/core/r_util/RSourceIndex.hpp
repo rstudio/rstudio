@@ -273,26 +273,12 @@ public:
    {
       return search(term, context_, prefixOnly, caseSensitive, out);
    }
-
-private:
-
-   // NOTE: All source indexes share a set of completions
-   static std::map<std::string, AsyncLibraryCompletions>& completions()
-   {
-      static std::map<std::string, AsyncLibraryCompletions> s_completions;
-      return s_completions;
-   }
-
+   
 public:
 
-   static std::set<std::string> getAllInferredPackages()
+   static std::set<std::string>& getAllInferredPackages()
    {
-      LOCK_MUTEX(mutex_)
-      {
-         return allInferredPkgNames_;
-      }
-      END_LOCK_MUTEX
-      return std::set<std::string>();
+      return s_allInferredPkgNames_;
    }
 
    std::set<std::string>& getInferredPackages()
@@ -303,60 +289,37 @@ public:
    static void addCompletions(const std::string& package,
                               const AsyncLibraryCompletions& asyncCompletions)
    {
-      LOCK_MUTEX(mutex_)
-      {
-         completions()[package] = asyncCompletions;
-      }
-      END_LOCK_MUTEX
+      s_completions_[package] = asyncCompletions;
    }
 
    static bool hasCompletions(const std::string& package)
    {
-      bool result = false;
-      LOCK_MUTEX(mutex_)
-      {
-         result = completions().find(package) != completions().end();
-      }
-      END_LOCK_MUTEX;
-      return result;
+      return s_completions_.find(package) != s_completions_.end();
    }
    
-   static AsyncLibraryCompletions getCompletions(const std::string& package)
+   static AsyncLibraryCompletions& getCompletions(const std::string& package)
    {
-      LOCK_MUTEX(mutex_)
-      {
-         return completions()[package];
-      }
-      END_LOCK_MUTEX
-      return AsyncLibraryCompletions();
+      return s_completions_[package];
    }
 
    static std::vector<std::string> getAllUnindexedPackages()
    {
       std::vector<std::string> result;
-      LOCK_MUTEX(mutex_)
+      typedef std::set<std::string>::const_iterator iterator_t;
+      for (iterator_t it = s_allInferredPkgNames_.begin();
+           it != s_allInferredPkgNames_.end();
+           ++it)
       {
-         typedef std::set<std::string>::const_iterator iterator_t;
-         for (iterator_t it = allInferredPkgNames_.begin();
-              it != allInferredPkgNames_.end();
-              ++it)
-         {
-            if (completions().count(*it) == 0)
-               result.push_back(*it);
-         }
+         if (s_completions_.count(*it) == 0)
+            result.push_back(*it);
       }
-      END_LOCK_MUTEX
       return result;
    }
 
    void addInferredPackage(const std::string& packageName)
    {
-      LOCK_MUTEX(mutex_)
-      {
-         inferredPkgNames_.insert(packageName);
-         allInferredPkgNames_.insert(packageName);
-      }
-      END_LOCK_MUTEX
+      inferredPkgNames_.insert(packageName);
+      s_allInferredPkgNames_.insert(packageName);
    }
 
 private:
@@ -368,10 +331,10 @@ private:
    // but we share that state in a static variable (so that we can
    // cache and share across all indexes)
    std::set<std::string> inferredPkgNames_;
-   static std::set<std::string> allInferredPkgNames_;
-
-   // A mutex used to synchronize access to static variables
-   static boost::mutex mutex_;
+   static std::set<std::string> s_allInferredPkgNames_;
+   
+   // NOTE: All source indexes share a set of completions
+   static std::map<std::string, AsyncLibraryCompletions> s_completions_;
    
 };
 

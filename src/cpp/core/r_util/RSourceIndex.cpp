@@ -34,8 +34,8 @@ namespace core {
 namespace r_util {
 
 // static members
-std::set<std::string> RSourceIndex::allInferredPkgNames_;
-boost::mutex RSourceIndex::mutex_;
+std::set<std::string> RSourceIndex::s_allInferredPkgNames_;
+std::map<std::string, AsyncLibraryCompletions> RSourceIndex::s_completions_;
 
 namespace {
 

@@ -47,29 +47,23 @@ namespace modules {
 namespace r_completions {
 
 // static variables
-bool AsyncRCompletions::isUpdating_ = false;
-boost::mutex AsyncRCompletions::mutex_;
-std::vector<std::string> AsyncRCompletions::pkgsToUpdate_;
+bool AsyncRCompletions::s_isUpdating_ = false;
+std::vector<std::string> AsyncRCompletions::s_pkgsToUpdate_;
 
 using namespace core;
 
-// ensure that 'isUpdating_' is unset
+// ensure that 's_isUpdating_' is unset
 class CompleteUpdateOnExit : public boost::noncopyable {
 
 public:
-
-   CompleteUpdateOnExit(bool* pIsUpdating,
-                        std::vector<std::string>* pPkgsToUpdate)
-      : pIsUpdating_(pIsUpdating),
-        pPkgsToUpdate_(pPkgsToUpdate) {}
 
    ~CompleteUpdateOnExit()
    {
       using namespace core::r_util;
 
       // Give empty completions to the packages which weren't updated
-      for (std::vector<std::string>::const_iterator it = pPkgsToUpdate_->begin();
-           it != pPkgsToUpdate_->end();
+      for (std::vector<std::string>::const_iterator it = AsyncRCompletions::s_pkgsToUpdate_.begin();
+           it != AsyncRCompletions::s_pkgsToUpdate_.end();
            ++it)
       {
          if (!RSourceIndex::hasCompletions(*it))
@@ -78,19 +72,15 @@ public:
          }
       }
 
-      pPkgsToUpdate_->clear();
-      *pIsUpdating_ = false;
+      AsyncRCompletions::s_pkgsToUpdate_.clear();
+      AsyncRCompletions::s_isUpdating_ = false;
    }
 
-private:
-   bool* pIsUpdating_;
-   std::vector<std::string>* pPkgsToUpdate_;
 };
 
 void AsyncRCompletions::onCompleted(int exitStatus)
 {
-   CompleteUpdateOnExit updateScope(&isUpdating_,
-                                    &pkgsToUpdate_);
+   CompleteUpdateOnExit updateScope;
 
    DEBUG("* Completed async library lookup");
    std::vector<std::string> splat;
@@ -176,86 +166,82 @@ void AsyncRCompletions::onCompleted(int exitStatus)
 void AsyncRCompletions::update()
 {
    using namespace core::r_util;
-
-   LOCK_MUTEX(mutex_)
-   {
-      if (isUpdating_)
-         return;
-
-      isUpdating_ = true;
-
-      std::stringstream ss;
-      pkgsToUpdate_ =
-            RSourceIndex::getAllUnindexedPackages();
-
-      // alias for readability
-      const std::vector<std::string>& pkgs = pkgsToUpdate_;
-
-      GENERIC_DEBUG(
-         if (!pkgs.empty())
+   
+   if (s_isUpdating_)
+      return;
+   
+   s_isUpdating_ = true;
+   
+   std::stringstream ss;
+   s_pkgsToUpdate_ =
+      RSourceIndex::getAllUnindexedPackages();
+   
+   // alias for readability
+   const std::vector<std::string>& pkgs = s_pkgsToUpdate_;
+   
+   GENERIC_DEBUG(
+      if (!pkgs.empty())
+      {
+         std::cerr << "Updating packages: [";
+         std::cerr << "'" << pkgs[0] << "'";
+         for (std::size_t i = 1; i < pkgs.size(); i++)
          {
-            std::cerr << "Updating packages: [";
-            std::cerr << "'" << pkgs[0] << "'";
-            for (std::size_t i = 1; i < pkgs.size(); i++)
-            {
-               std::cerr << ", '" << pkgs[i] << "'";
-            }
-            std::cerr << "]\n";
-          }
-          else
-          {
-             std::cerr << "No packages to update; bailing out" << std::endl;
-          }
-      )
-
-      if (pkgs.empty())
-      {
-         isUpdating_ = false;
-         return;
+            std::cerr << ", '" << pkgs[i] << "'";
+         }
+         std::cerr << "]\n";
       }
-
-      for (std::vector<std::string>::const_iterator it = pkgs.begin();
-           it != pkgs.end();
-           ++it)
+      else
       {
-         const std::string& pkg = *it;
-
-         // NOTE: Since this is all going over the command line eventually
-         // it's imperative that all statements are separated by semicolons.
-         boost::format fmt(
-                  "tryCatch({"
-                  "   ns <- asNamespace('%1%');"
-                  "   exports <- getNamespaceExports(ns);"
-                  "   objects <- mget(exports, ns, inherits = TRUE);"
-                  "   types <- unlist(lapply(objects, .rs.getCompletionType));"
-                  "   isFunction <- unlist(lapply(objects, is.function));"
-                  "   functions <- objects[isFunction];"
-                  "   functions <- lapply(functions, function(x) { names(formals(x)) });"
-                  "   output <- list("
-                  "     package = I('%1%'),"
-                  "     exports = exports,"
-                  "     types = types,"
-                  "     functions = functions"
-                  "   );"
-                  "   cat(.rs.toJSON(output), sep = '\\\\n');"
-                  "}, error = function(e) invisible(NULL));"
-                  );
-
-         ss << boost::str(fmt % pkg);
+         std::cerr << "No packages to update; bailing out" << std::endl;
       }
-
-      std::string finalCmd = ss.str();
-
-      boost::shared_ptr<AsyncRCompletions> pProcess(
-               new AsyncRCompletions());
-
-      pProcess->start(
-               finalCmd.c_str(),
-               core::FilePath(),
-               async_r::R_PROCESS_VANILLA | async_r::R_PROCESS_AUGMENTED);
+   );
+   
+   if (pkgs.empty())
+   {
+      s_isUpdating_ = false;
+      return;
    }
-   END_LOCK_MUTEX
-
+   
+   for (std::vector<std::string>::const_iterator it = pkgs.begin();
+        it != pkgs.end();
+        ++it)
+   {
+      const std::string& pkg = *it;
+      
+      // NOTE: Since this is all going over the command line eventually
+      // it's imperative that all statements are separated by semicolons.
+      boost::format fmt(
+            "tryCatch({"
+            "   ns <- asNamespace('%1%');"
+            "   exports <- getNamespaceExports(ns);"
+            "   objects <- mget(exports, ns, inherits = TRUE);"
+            "   types <- unlist(lapply(objects, .rs.getCompletionType));"
+            "   isFunction <- unlist(lapply(objects, is.function));"
+            "   functions <- objects[isFunction];"
+            "   functions <- lapply(functions, function(x) { names(formals(x)) });"
+            "   output <- list("
+            "     package = I('%1%'),"
+            "     exports = exports,"
+            "     types = types,"
+            "     functions = functions"
+            "   );"
+            "   cat(.rs.toJSON(output), sep = '\\\\n');"
+            "}, error = function(e) invisible(NULL));"
+      );
+      
+      ss << boost::str(fmt % pkg);
+   }
+   
+   std::string finalCmd = ss.str();
+   
+   boost::shared_ptr<AsyncRCompletions> pProcess(
+         new AsyncRCompletions());
+   
+   pProcess->start(
+         finalCmd.c_str(),
+         core::FilePath(),
+         async_r::R_PROCESS_VANILLA | async_r::R_PROCESS_AUGMENTED);
+   
 }
 
 } // end namespace r_completions

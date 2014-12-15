@@ -753,7 +753,9 @@ void PreservedSEXP::releaseNow()
 
 void printValue(SEXP object)
 {
-   Rf_PrintValue(object);
+   r::exec::executeSafely(
+      boost::bind(Rf_PrintValue, object)
+   );
 }
 
 } // namespace sexp   
