@@ -776,8 +776,6 @@
 ## A tiny JSON generator that works for R primitive types. Only lists and data.frames
 ## may have names; they are dropped from all other objects. Matrices and arrays are
 ## just treated as vectors.
-## 
-## NOTE: Must use double quotes, not single quotes!
 .rs.addFunction('toJSON', function(object)
 {
    AsIs <- inherits(object, "AsIs")
@@ -793,7 +791,7 @@
       {
          return(paste('{', paste(lapply(seq_along(object), function(i) {
             paste('"', names(object)[[i]], '":', .rs.toJSON(object[[i]]), sep = '')
-         }), collapse = ','), '}', sep = '', collapse=','))
+         }), collapse = ','), '}', sep = '', collapse = ','))
       }
    }
    else
@@ -804,6 +802,7 @@
       }
       else if (is.character(object) || is.factor(object))
       {
+         # TODO: Proper escaping for character entries
          object <- shQuote(object, 'cmd')
          object[object == '\"NA\"'] <- 'null'
       }

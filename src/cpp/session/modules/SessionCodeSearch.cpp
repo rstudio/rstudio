@@ -2178,8 +2178,6 @@ SEXP rs_scoreMatches(SEXP suggestionsSEXP,
    return r::sexp::create(scores, &protect);
 }
 
-// A class that faciliates the update of 'library', 'require' completions
-
 SEXP rs_getSourceFileLibraryCompletions(SEXP packagesSEXP)
 {
    using namespace core::r_util;

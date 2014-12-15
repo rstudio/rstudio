@@ -309,14 +309,6 @@ SEXP rs_isSubsequence(SEXP stringsSEXP, SEXP querySEXP)
 
 }
 
-SEXP rs_parseJson(SEXP jsonSEXP)
-{
-   std::string jsonString = r::sexp::asString(jsonSEXP);
-   json::Value jsonValue;
-   r::sexp::Protect protect;
-   return r::sexp::create(json::parse(jsonString, &jsonValue), &protect);
-}
-
 } // end anonymous namespace
 
 Error initialize() {
@@ -341,11 +333,6 @@ Error initialize() {
             (DL_FUNC) rs_isSubsequence,
             2);
    
-   r::routines::registerCallMethod(
-            "rs_parseJson",
-            (DL_FUNC) rs_parseJson,
-            1);
-
    using boost::bind;
    using namespace module_context;
    ExecBlock initBlock;
