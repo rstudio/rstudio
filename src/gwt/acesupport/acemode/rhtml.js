@@ -53,9 +53,9 @@ oop.inherits(Mode, HtmlMode);
       return this.$session.getState(position.row).match(/^r-/) ? 'R' : 'HTML';
    };
 
-   this.getNextLineIndent = function(state, line, tab, tabSize, row)
+   this.getNextLineIndent = function(state, line, tab)
    {
-      return this.codeModel.getNextLineIndent(row, line, state, tab, tabSize);
+      return this.codeModel.getNextLineIndent(state, line, tab);
    };
 
 }).call(Mode.prototype);

@@ -669,7 +669,7 @@ require('mode/auto_brace_insert').setInsertMatching(true);
 var editor = ace.edit('editor');
 editor.renderer.setHScrollBarAlwaysVisible(false);
 editor.setHighlightActiveLine(false);
-editor.getSession().setMode(new CppMode(false, editor.getSession().getDocument(), editor.getSession()));
+editor.getSession().setMode(new CppMode(false, editor.getSession()));
 editor.setBehavioursEnabled(false);
 
 var session = editor.getSession();
@@ -739,7 +739,6 @@ testEditor.setBehavioursEnabled(false);
 
 testEditor.getSession().setMode(
   new CppMode(false,
-              testEditor.getSession().getDocument(),
               testEditor.getSession()));
 
 function doIndentTest(el, state) {

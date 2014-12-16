@@ -839,13 +839,17 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
       return -1;
    };
 
-   this.getNextLineIndent = function(row, line, state, tab, tabSize, dontSubset) {
+   this.getNextLineIndent = function(state, line, tab, row, dontSubset) {
 
       // Ask the R code model if we want to use vertical alignment
       var $verticallyAlignFunctionArgs = getVerticallyAlignFunctionArgs();
 
       var session = this.$session;
+      var tabSize = session.getTabSize();
       var doc = session.getDocument();
+
+      if (typeof row !== "number")
+         row = session.getSelection().getCursor().row - 1;
 
       // If we went back too far, use the first row for indentation.
       if (row === -1) {
@@ -860,7 +864,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
       // If this line is intended for the preprocessor, it should be aligned
       // at the start. Use the previous line for indentation.
       if (line.length === 0 || /^\s*#/.test(line))
-         return this.getNextLineIndent(row - 1, doc.getLine(row - 1), state, tab, tabSize, dontSubset);
+         return this.getNextLineIndent(state, doc.getLine(row - 1), tab, row - 1, dontSubset);
 
       var indent = this.$getIndent(line);
       var unindent = this.$getUnindent(line, tabSize);

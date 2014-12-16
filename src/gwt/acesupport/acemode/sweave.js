@@ -84,9 +84,9 @@ oop.inherits(Mode, TextMode);
       return this.$session.getState(position.row).match(/^r-/) ? 'R' : 'TeX';
    };
 
-   this.getNextLineIndent = function(state, line, tab, tabSize, row)
+   this.getNextLineIndent = function(state, line, tab)
    {
-      return this.codeModel.getNextLineIndent(row, line, state, tab, tabSize);
+      return this.codeModel.getNextLineIndent(state, line, tab);
    };
 
    this.allowAutoInsert = this.smartAllowAutoInsert;

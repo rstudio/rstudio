@@ -97,10 +97,10 @@ oop.inherits(Mode, MarkdownMode);
       return !state.match(/^r-/);
    }
 
-   this.getNextLineIndent = function(state, line, tab, tabSize, row)
+   this.getNextLineIndent = function(state, line, tab)
    {
       if (!this.inCppLanguageMode(state))
-         return this.codeModel.getNextLineIndent(row, line, state, tab, tabSize);
+         return this.codeModel.getNextLineIndent(state, line, tab);
       else {
          // from c_cpp getNextLineIndent
          var indent = this.$getIndent(line);

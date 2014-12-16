@@ -51,11 +51,11 @@ var CppCodeModel = require("mode/cpp_code_model").CppCodeModel;
 
 var TokenCursor = require("mode/token_cursor").TokenCursor;
 
-var Mode = function(suppressHighlighting, doc, session) {
+var Mode = function(suppressHighlighting, session) {
 
    // Keep references to current session, document
    this.$session = session;
-   this.$doc = doc;
+   this.$doc = session.getDocument();
 
    // Only need one tokenizer for the document (we assume other rules
    // have been properly embedded)
@@ -64,7 +64,7 @@ var Mode = function(suppressHighlighting, doc, session) {
    // R-related tokenization
    this.$r_outdent = {};
    oop.implement(this.$r_outdent, RMatchingBraceOutdent);
-   this.r_codeModel = new RCodeModel(doc, this.$tokenizer, /^r-/, /^\s*\/\*{3,}\s+(.*)\s*$/);
+   this.r_codeModel = new RCodeModel(session, this.$tokenizer, /^r-/, /^\s*\/\*{3,}\s+(.*)\s*$/);
 
    // C/C++ related tokenization
    this.codeModel = new CppCodeModel(session, this.$tokenizer);
@@ -159,13 +159,13 @@ oop.inherits(Mode, TextMode);
       return state.match(/^r-/);
    };
 
-   this.getNextLineIndent = function(state, line, tab, tabSize, row, dontSubset) {
+   this.getNextLineIndent = function(state, line, tab, row, dontSubset) {
 
       // Defer to the R language indentation rules when in R language mode
       if (this.inRLanguageMode(state))
-         return this.r_codeModel.getNextLineIndent(row, line, state, tab, tabSize);
+         return this.r_codeModel.getNextLineIndent(state, line, tab, row);
       else
-         return this.codeModel.getNextLineIndent(row, line, state, tab, tabSize, dontSubset);
+         return this.codeModel.getNextLineIndent(state, line, tab, row, dontSubset);
 
    };
 
