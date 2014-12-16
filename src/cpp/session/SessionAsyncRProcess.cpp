@@ -32,7 +32,8 @@ AsyncRProcess::AsyncRProcess():
 
 void AsyncRProcess::start(const char* rCommand, 
                           const core::FilePath& workingDir, 
-                          AsyncRProcessOptions rOptions)
+                          AsyncRProcessOptions rOptions,
+                          const std::vector<core::FilePath>& rSourceFiles)
 {
    // R binary
    core::FilePath rProgramPath;
@@ -51,16 +52,10 @@ void AsyncRProcess::start(const char* rCommand,
       args.push_back("--vanilla");
    args.push_back("-e");
 
-   if (rOptions & R_PROCESS_AUGMENTED)
+   if (rSourceFiles.size())
    {
       // form the command that we send (over the command line)
       std::stringstream command;
-
-      const core::FilePath modulesPath =
-            session::options().modulesRSourcePath();
-
-      const core::FilePath sessionCodeTools = modulesPath.childPath("SessionCodeTools.R");
-      const core::FilePath sessionRCompletions = modulesPath.childPath("SessionRCompletions.R");
 
       // Use shims for the main RStudio functions
       command << "options(error = traceback); ";
@@ -80,8 +75,12 @@ void AsyncRProcess::start(const char* rCommand,
               << "   .rs.addFunction(paste('rpc.', name, sep = ''), FN, TRUE);"
               << "};";
 
-      command << "source('" << sessionCodeTools.absolutePath() << "');";
-      command << "source('" << sessionRCompletions.absolutePath() << "');";
+      // add in the r source files requested
+      for (std::vector<core::FilePath>::const_iterator it = rSourceFiles.begin();
+           it != rSourceFiles.end();
+           ++it)
+         command << "source('" << it->absolutePath() << "');";
+      
       command << rCommand;
 
       args.push_back(command.str());

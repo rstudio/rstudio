@@ -27,6 +27,8 @@
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 
+#include <session/SessionModuleContext.hpp>
+
 #define SESSION_ASYNC_R_DEBUG_LEVEL 0
 
 #if SESSION_ASYNC_R_DEBUG_LEVEL > 0
@@ -52,7 +54,8 @@ std::vector<std::string> AsyncRCompletions::s_pkgsToUpdate_;
 
 using namespace core;
 
-// ensure that 's_isUpdating_' is unset
+// Class whose destructor ensures state variables in AsyncRCompletions
+// are cleaned up on exit
 class CompleteUpdateOnExit : public boost::noncopyable {
 
 public:
@@ -237,10 +240,22 @@ void AsyncRCompletions::update()
    boost::shared_ptr<AsyncRCompletions> pProcess(
          new AsyncRCompletions());
    
+   // R files we wish to source to provide functionality to async process
+   const core::FilePath modulesPath =
+         session::options().modulesRSourcePath();
+   
+   const core::FilePath sessionCodeTools = modulesPath.childPath("SessionCodeTools.R");
+   const core::FilePath sessionRCompletions = modulesPath.childPath("SessionRCompletions.R");
+   
+   std::vector<core::FilePath> rSourceFiles;
+   rSourceFiles.push_back(sessionCodeTools);
+   rSourceFiles.push_back(sessionRCompletions);
+   
    pProcess->start(
-         finalCmd.c_str(),
-         core::FilePath(),
-         async_r::R_PROCESS_VANILLA | async_r::R_PROCESS_AUGMENTED);
+            finalCmd.c_str(),
+            core::FilePath(),
+            async_r::R_PROCESS_VANILLA,
+            rSourceFiles);
    
 }
 

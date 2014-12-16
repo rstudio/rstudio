@@ -23,7 +23,6 @@
 #include <boost/function.hpp>
 #include <boost/utility.hpp>
 #include <boost/regex.hpp>
-#include <boost/thread/mutex.hpp>
 
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -31,7 +30,6 @@
 #include <core/SafeConvert.hpp>
 #include <core/StringUtils.hpp>
 #include <core/RegexUtils.hpp>
-#include <core/Thread.hpp>
 
 #include <core/r_util/RTokenizer.hpp>
 
@@ -276,12 +274,12 @@ public:
    
 public:
 
-   static std::set<std::string>& getAllInferredPackages()
+   static const std::set<std::string>& getAllInferredPackages()
    {
       return s_allInferredPkgNames_;
    }
 
-   std::set<std::string>& getInferredPackages()
+   const std::set<std::string>& getInferredPackages()
    {
       return inferredPkgNames_;
    }
@@ -297,12 +295,12 @@ public:
       return s_completions_.find(package) != s_completions_.end();
    }
    
-   static AsyncLibraryCompletions& getCompletions(const std::string& package)
+   static const AsyncLibraryCompletions& getCompletions(const std::string& package)
    {
       return s_completions_[package];
    }
 
-   static std::vector<std::string> getAllUnindexedPackages()
+   static const std::vector<std::string> getAllUnindexedPackages()
    {
       std::vector<std::string> result;
       typedef std::set<std::string>::const_iterator iterator_t;

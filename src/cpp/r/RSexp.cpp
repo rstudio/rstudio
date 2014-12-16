@@ -753,9 +753,12 @@ void PreservedSEXP::releaseNow()
 
 void printValue(SEXP object)
 {
-   r::exec::executeSafely(
+   Error error = r::exec::executeSafely(
       boost::bind(Rf_PrintValue, object)
    );
+   
+   if (error)
+      LOG_ERROR(error);
 }
 
 } // namespace sexp   

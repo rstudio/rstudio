@@ -118,6 +118,7 @@ public:
                type_ == "sweave" ||
                type_ == "r_source" ||
                type_ == "r_markdown" ||
+               type_ == "r_html" ||
                type_ == "cpp");
    }
 
