@@ -773,12 +773,47 @@
    .rs.doGetIndex(term, inDirectory, maxCount, .rs.listIndexedFilesAndFolders)
 })
 
-## A tiny JSON generator that works for R primitive types. Only lists and data.frames
-## may have names; they are dropped from all other objects. Matrices and arrays are
-## just treated as vectors.
-.rs.addFunction('toJSON', function(object)
+## NOTE: Function may be used by async R process; must not call back into
+## 'rs_' compiled code!
+.rs.addFunction("jsonEscapeString", function(value)
 {
-   AsIs <- inherits(object, "AsIs")
+   if (is.na(value)) return("null")
+   chars <- strsplit(value, "", fixed = TRUE)[[1]]
+   chars <- vapply(chars, function(x) {
+      if (x %in% c('"', '\\', '/'))
+         paste('\\', x, sep = '')
+      else if (charToRaw(x) < 20)
+         paste('\\u', toupper(format(as.hexmode(as.integer(charToRaw(x))), 
+                                     width = 4)), 
+               sep = '')
+      else
+         x
+   }, character(1))
+   paste(chars, sep = "", collapse = "")
+})
+
+## NOTE: Function may be used by async R process; must not call back into
+## 'rs_' compiled code!
+.rs.addFunction("jsonProperty", function(name, value)
+{
+   paste(sep = "",
+         "\"", 
+         .rs.jsonEscapeString(enc2utf8(name)), 
+         "\":\"",
+         .rs.jsonEscapeString(enc2utf8(value)), 
+         "\""
+   )
+})
+
+## NOTE: Specify that a JSON value should be returned as a scalar by
+## giving it the 'AsIs' class; ie, by writing 'foo = I(1)', or otherwise
+## by using the '.rs.scalar' function.
+## 
+## NOTE: Function may be used by async R process; must not call back into
+## 'rs_' compiled code!
+.rs.addFunction("toJSON", function(object)
+{
+   AsIs <- inherits(object, "AsIs") || inherits(object, ".rs.scalar")
    if (is.list(object))
    {
       if (is.null(names(object)))
@@ -790,21 +825,28 @@
       else
       {
          return(paste('{', paste(lapply(seq_along(object), function(i) {
-            paste('"', names(object)[[i]], '":', .rs.toJSON(object[[i]]), sep = '')
+            paste(sep = "",
+                  '"',
+                  .rs.jsonEscapeString(enc2utf8(names(object)[[i]])),
+                  '":',
+                  .rs.toJSON(object[[i]])
+            )
          }), collapse = ','), '}', sep = '', collapse = ','))
       }
    }
    else
    {
+      # NOTE: For type safety we cannot unmarshal NULL as '{}' as e.g. jsonlite does.
       if (!length(object))
       {
          return('[]')
       }
       else if (is.character(object) || is.factor(object))
       {
-         # TODO: Proper escaping for character entries
-         object <- shQuote(object, 'cmd')
-         object[object == '\"NA\"'] <- 'null'
+         object <- paste(collapse = ",", vapply(as.character(object), FUN.VALUE = character(1), USE.NAMES = FALSE, function(x) {
+            if (is.na(x)) "null"
+            else paste("\"", .rs.jsonEscapeString(enc2utf8(x)), "\"", sep = "")
+         }))
       }
       else if (is.numeric(object))
       {
@@ -814,7 +856,7 @@
       {
          object <- tolower(object)
          object[is.na(object)] <- 'null'
-      };
+      }
       
       if (AsIs)
          return(object)

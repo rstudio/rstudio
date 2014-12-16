@@ -2125,6 +2125,10 @@ assign(x = ".rs.acCompletionTypes",
                                                          documentId,
                                                          envir)
 {
+   # Bail on null / empty documentId (necessary for e.g. the console)
+   if (is.null(documentId) || !nzchar(documentId))
+      return(.rs.emptyCompletions())
+   
    ## If we detect that particular 'library' calls are in the source document,
    ## and those packages are actually available (but the package is not currently loaded),
    ## then we get an asynchronously-updated set of completions. We enocde them as 'context'
