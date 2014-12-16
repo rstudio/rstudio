@@ -898,7 +898,9 @@ public:
    
    boost::shared_ptr<r_util::RSourceIndex> get(const std::string& id)
    {
-      return indexes_[id];
+      if (indexes_.find(id) != indexes_.end())
+         return indexes_[id];
+      return boost::shared_ptr<r_util::RSourceIndex>();
    }
    
    void remove(const std::string& id)
