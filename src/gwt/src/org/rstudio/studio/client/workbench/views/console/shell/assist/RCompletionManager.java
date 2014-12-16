@@ -1327,6 +1327,7 @@ public class RCompletionManager implements CompletionManager
          int commaCount = tokenCursor.findOpeningBracketCountCommas(
                new String[]{ "[", "(" }, true);
          
+         // commaCount == -1 implies we failed to find an opening bracket
          if (commaCount == -1)
          {
             commaCount = tokenCursor.findOpeningBracketCountCommas("[", false);
@@ -1398,9 +1399,6 @@ public class RCompletionManager implements CompletionManager
       // We strip the current token so that the matched.call work later on
       // can properly resolve the current argument
       Position startPosition = startCursor.currentPosition();
-      if (startCursor.currentValue() == "(")
-         startPosition.setColumn(startPosition.getColumn() + 1);
-      
       String beforeText = editor.getTextForRange(Range.fromPoints(
             tokenCursor.currentPosition(),
             startPosition));
@@ -1412,7 +1410,7 @@ public class RCompletionManager implements CompletionManager
       
       String afterText = editor.getTextForRange(Range.fromPoints(
             afterTokenPos, endPos));
-            
+      
       context.setFunctionCallString(
             (beforeText + afterText).trim());
       

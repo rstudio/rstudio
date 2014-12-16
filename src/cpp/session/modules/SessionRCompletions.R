@@ -534,6 +534,27 @@ assign(x = ".rs.acCompletionTypes",
       if (!length(activeArg) || is.na(activeArg))
          activeArg <- ""
       
+      # Special casing for 'group_by' from dplyr
+      # TODO: Should we just allow for any function named 'group_by', ie,
+      # enable this even if 'dplyr' isn't loaded?
+      if (!is.null(activeArg) && activeArg == "..." &&
+          "dplyr" %in% loadedNamespaces() &&
+          identical(object, get("group_by", envir = asNamespace("dplyr"))))
+      {
+         .data <- .rs.getAnywhere(matchedCall[[".data"]], envir = envir)
+         if (!is.null(.data))
+         {
+            .names <- .rs.getNames(.data)
+            if (length(matchedCall) >= 3)
+               .names <- setdiff(.names, as.character(matchedCall)[3:length(matchedCall)])
+            
+            return(.rs.makeCompletions(token = token,
+                                       results = .names,
+                                       quote = FALSE,
+                                       type = .rs.acCompletionTypes$CONTEXT))
+         }
+      }
+      
       # Get completions for the current active argument
       argCompletions <- .rs.getCompletionsArgument(token,
                                                    activeArg)
@@ -1173,6 +1194,29 @@ assign(x = ".rs.acCompletionTypes",
    additionalArgs <- as.character(additionalArgs)
    excludeArgs <- as.character(excludeArgs)
    
+   ## For magrittr completions, we may see a pipe thrown in as part of the 'string'
+   ## and 'functionCallString'. In such a case, we need to strip off everything before
+   ## a '%>%' and signal to drop the first argument for that function.
+   dropFirstArgument <- FALSE
+   if (length(string))
+   {
+      pipes <- c("%>%", "%<>%", "%T>%", "%>>%")
+      pattern <- paste(pipes, collapse = "|")
+      
+      stringPipeMatches <- gregexpr(
+         pattern, string[[1]], perl = TRUE
+      )[[1]]
+      
+      if (!identical(c(stringPipeMatches), -1L))
+      {
+         n <- length(stringPipeMatches)
+         idx <- stringPipeMatches[n] + attr(stringPipeMatches, "match.length")[n]
+         dropFirstArgument <- TRUE
+         string[[1]] <- gsub("^\\s*", "", substring(string[[1]], idx), perl = TRUE)
+         functionCallString <- gsub("^\\s*", "", substring(functionCallString, idx), perl = TRUE)
+      }
+   }
+   
    ## Try to parse the function call string
    functionCall <- tryCatch({
       parse(text = .rs.finishExpression(functionCallString))[[1]]
@@ -1383,7 +1427,10 @@ assign(x = ".rs.acCompletionTypes",
    {
       for (i in seq_along(string))
       {
-         discardFirst <- type[[i]] == .rs.acContextTypes$FUNCTION && chainObjectName != ""
+         discardFirst <-
+            (dropFirstArgument) ||
+            (type[[i]] == .rs.acContextTypes$FUNCTION && chainObjectName != "")
+         
          completions <- .rs.appendCompletions(
             completions,
             .rs.getRCompletions(token,
