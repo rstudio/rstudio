@@ -83,9 +83,10 @@ public class CodeModel extends JavaScriptObject
          return pos;
    }-*/;
    
-   public native final TokenCursor getTokenCursor() /*-{
-      return new this.$TokenCursor();
-   }-*/;
+   public final TokenCursor getTokenCursor()
+   {
+      return TokenCursor.create(this);
+   }
    
    public native final boolean tokenizeUpToRow(int row) /*-{
       this.$tokenizeUpToRow(row);

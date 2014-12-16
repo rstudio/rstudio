@@ -169,8 +169,8 @@ var $alignCase                 = true; // case 'a':
       if ($alignDots && this.alignStartToken(".", session, row, line, prevLine))
          return;
 
-      if ($alignEquals && this.alignEquals(session, row, line, prevLine))
-         return;
+      // if ($alignEquals && this.alignEquals(session, row, line, prevLine))
+      //    return;
 
       // Outdent for a ':' places on its own line if it appears the
       // user is creating an initialization list for
