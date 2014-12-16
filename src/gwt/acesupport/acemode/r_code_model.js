@@ -1024,8 +1024,9 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       {
          var tokenCursor = this.getTokenCursor();
          if (tokenCursor.seekToNearestToken(pos, pos.row)
-                   && tokenCursor.currentValue() == "{"
-               && tokenCursor.moveBackwardOverMatchingParens())
+               && tokenCursor.currentValue() == "{"
+               && tokenCursor.moveToPreviousToken()
+               && tokenCursor.findStartOfEvaluationContext())
          {
             return this.$getIndent(this.$getLine(tokenCursor.currentPosition().row));
          }
@@ -1039,7 +1040,6 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       if (endState == "qstring" || endState == "qqstring")
          return "";
 
-      // TODO: optimize
       var tabAsSpaces = Array(tabSize + 1).join(" ");
 
       // This lineOverrides nonsense is necessary because the line has not 
@@ -1084,15 +1084,15 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             startPos,
             lastRow - 10
          );
-
+         
          // Used to add extra whitspace if the next line is a continuation of the
          // previous line (i.e. the last significant token is a binary operator).
          var continuationIndent = "";
          var startedOnOperator = false;
 
          if (prevToken &&
-             /\boperator\b/.test(prevToken.token.type) &&
-             !/\bparen\b/.test(prevToken.token.type))
+             prevToken.token.type.indexOf("operator") !== -1 &&
+             prevToken.token.type.indexOf("paren") === -1)
          {
             // Fix issue 2579: If the previous significant token is an operator
             // (commonly, "+" when used with ggplot) then this line is a
@@ -1276,6 +1276,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          var numTokensWalked = 0;
          var tokenCursor = this.getTokenCursor();
          tokenCursor.moveToPosition(startPos);
+
          do
          {
             // Step over matching braces, parens, etc.
