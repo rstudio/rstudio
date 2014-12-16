@@ -296,7 +296,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
       var maxRow = Math.min(maxrow + 30, this.$doc.getLength() - 1);
       this.$tokenUtils.$tokenizeUpToRow(maxRow);
 
-      var tokenCursor = new CppTokenCursor(this.$tokens);
+      var tokenCursor = this.getTokenCursor();
       if (!tokenCursor.seekToNearestToken(this.$scopes.parsePos, maxRow))
          return;
 
@@ -609,7 +609,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                } 
             }
 
-            var tokenCursor = new CppTokenCursor(this.$tokens);
+            var tokenCursor = this.getTokenCursor();
             if (useCursor) {
                var cursor = session.getSelection().getCursor();
                tokenCursor.moveToPosition(cursor);

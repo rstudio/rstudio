@@ -547,7 +547,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       
       this.$tokenizeUpToRow(pos.row);
       
-      var tokenCursor = new RTokenCursor(this.$tokens);
+      var tokenCursor = this.getTokenCursor();
       if (!tokenCursor.moveToPosition(pos))
          return [];
 
@@ -711,7 +711,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       this.$tokenizeUpToRow(maxRow);
 
       //console.log("Seeking to " + this.$scopes.parsePos.row + "x"+ this.$scopes.parsePos.column);
-      var tokenCursor = new RTokenCursor(this.$tokens);
+      var tokenCursor = this.getTokenCursor();
       if (!tokenCursor.seekToNearestToken(this.$scopes.parsePos, maxRow))
          return;
 
@@ -1022,7 +1022,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    {
       if (this.$tokenizeUpToRow(pos.row))
       {
-         var tokenCursor = new RTokenCursor(this.$tokens);
+         var tokenCursor = this.getTokenCursor();
          if (tokenCursor.seekToNearestToken(pos, pos.row)
                    && tokenCursor.currentValue() == "{"
                && tokenCursor.moveBackwardOverMatchingParens())
@@ -1274,7 +1274,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          //     ^
          var maxTokensToWalk = 20;
          var numTokensWalked = 0;
-         var tokenCursor = new RTokenCursor(this.$tokens);
+         var tokenCursor = this.getTokenCursor();
          tokenCursor.moveToPosition(startPos);
          do
          {
@@ -1337,7 +1337,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             var maxTokensToWalk = 20;
             var count = 0;
             
-            tokenCursor = new RTokenCursor(this.$tokens);
+            tokenCursor = this.getTokenCursor();
             tokenCursor.moveToPosition(startPos);
 
             // Move off of the operator
