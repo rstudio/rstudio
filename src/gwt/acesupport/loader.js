@@ -81,19 +81,22 @@ oop.inherits(RStudioEditSession, EditSession);
       var end = range.end.row;
       for (var i = start; i <= end; i++) {
          // First line is always unindented
-         if (i == 0) {
+         if (i === 0) {
             this.applyIndent(i, "");
          }
          else {
-            var state = this.getState(i-1);
+            var state = this.getState(i - 1);
             if (state == 'qstring' || state == 'qqstring')
                continue;
-            var line = this.getLine(i-1);
+            
+            var line = this.getLine(i - 1);
             var newline = this.getLine(i);
 
             var newIndent = mode.getNextLineIndent(state,
                                                    line,
-                                                   this.getTabString());
+                                                   this.getTabString(),
+                                                   i - 1,
+                                                   true);
 
             this.applyIndent(i, newIndent);
             mode.autoOutdent(state, this, i);
@@ -137,7 +140,7 @@ oop.inherits(RStudioEditSession, EditSession);
          this.setOverwrite(false);
 
          this.setOverwrite = function() { /* no-op */ };
-         this.getOverwrite = function() { return false; }
+         this.getOverwrite = function() { return false; };
       }
       else {
          // Restore the standard methods

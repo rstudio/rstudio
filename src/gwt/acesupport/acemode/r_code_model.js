@@ -2061,7 +2061,9 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
 
          var state = (row === 0) ? 'start' : this.$endStates[row-1];
          var lineTokens = this.$tokenizer.getLineTokens(this.$getLine(row), state);
-         if (!this.$statePattern || this.$statePattern.test(lineTokens.state) || this.$statePattern.test(state))
+         if (!this.$statePattern ||
+             this.$statePattern.test(lineTokens.state) ||
+             this.$statePattern.test(state))
             this.$tokens[row] = this.$filterWhitespaceAndComments(lineTokens.tokens);
          else
             this.$tokens[row] = [];

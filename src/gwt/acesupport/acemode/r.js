@@ -82,9 +82,9 @@ define("mode/r", function(require, exports, module)
       this.$reOpen = /^[(["'{]$/;
       this.$reClose = /^[)\]"'}]$/;
 
-      this.getNextLineIndent = function(state, line, tab)
+      this.getNextLineIndent = function(state, line, tab, row)
       {
-         return this.codeModel.getNextLineIndent(state, line, tab);
+         return this.codeModel.getNextLineIndent(state, line, tab, row);
       };
 
       this.allowAutoInsert = this.smartAllowAutoInsert;
