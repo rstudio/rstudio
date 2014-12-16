@@ -534,6 +534,27 @@ assign(x = ".rs.acCompletionTypes",
       if (!length(activeArg) || is.na(activeArg))
          activeArg <- ""
       
+      # Special casing for 'group_by' from dplyr
+      # TODO: Should we just allow for any function named 'group_by', ie,
+      # enable this even if 'dplyr' isn't loaded?
+      if (!is.null(activeArg) && activeArg == "..." &&
+          "dplyr" %in% loadedNamespaces() &&
+          identical(object, get("group_by", envir = asNamespace("dplyr"))))
+      {
+         .data <- .rs.getAnywhere(matchedCall[[".data"]], envir = envir)
+         if (!is.null(.data))
+         {
+            .names <- .rs.getNames(.data)
+            if (length(matchedCall) >= 3)
+               .names <- setdiff(.names, as.character(matchedCall)[3:length(matchedCall)])
+            
+            return(.rs.makeCompletions(token = token,
+                                       results = .names,
+                                       quote = FALSE,
+                                       type = .rs.acCompletionTypes$CONTEXT))
+         }
+      }
+      
       # Get completions for the current active argument
       argCompletions <- .rs.getCompletionsArgument(token,
                                                    activeArg)
