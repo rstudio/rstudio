@@ -863,7 +863,8 @@ oop.mixin(RTokenCursor.prototype, TokenCursor.prototype);
       return type === "identifier" ||
          type === "symbol" ||
          type === "keyword" ||
-         type === "string";
+         type === "string" ||
+         type.indexOf("constant") !== -1;
    };
 
    this.isLookingAtInfixySymbol = function() {
