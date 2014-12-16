@@ -57,6 +57,10 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
 (function () {
 
+   this.getTokenCursor = function() {
+      return new RTokenCursor(this.$tokens);
+   };
+
    this.$complements = {
       '(': ')',
       ')': '(',
