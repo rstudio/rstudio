@@ -20,6 +20,10 @@ public class TokenCursor extends JavaScriptObject
 {
    protected TokenCursor() {}
    
+   public static native final TokenCursor create(CodeModel codeModel) /*-{
+      return new TokenCursor(codeModel.$tokens);
+   }-*/;
+   
    public native final TokenCursor cloneCursor() /*-{
       return this.cloneCursor();
    }-*/;

@@ -26,6 +26,16 @@ var TokenCursor = function(tokens, row, offset) {
 
 (function () {
 
+   function isArray(o)
+   {
+      return Object.prototype.toString.call(o) === '[object Array]';
+   }
+
+   function lookingAtComma(cursor)
+   {
+      return /,\s*$/.test(cursor.currentValue()) && cursor.currentType() === "text";
+   }
+
    var $complements = {
       "(" : ")",
       "{" : "}",
@@ -45,32 +55,90 @@ var TokenCursor = function(tokens, row, offset) {
 
    this.moveToPreviousToken = function()
    {
-      if (this.$row < 0) return false;
-      
+      // Bail if we're at the start of the document
       if (this.$row === 0 && this.$offset === 0)
          return false;
-      
-      if (this.$row >= this.$tokens.length) {
-         while (this.$row >= this.$tokens.length) {
-            this.$row--;
-         }
-         this.$offset = this.$tokens[this.$row].length;
-      }
-      
-      while (this.$offset === 0 && this.$row > 0)
+
+      // If the offset is greater than zero, we know we can safely
+      // decrement it
+      if (this.$offset > 0)
       {
-         this.$row--;
-         this.$offset = this.$tokens[this.$row].length;
+         this.$offset--;
+         return true;
       }
 
-      if (this.$offset === 0)
+      // Otherwise, we keep walking back until we find a row containing
+      // at least one token
+      var row = this.$row - 1;
+      var length = 0;
+      while (row >= 0)
+      {
+         // Check to see if we have any tokens on this line --
+         // if we do, accept that
+         var rowTokens = this.$tokens[row];
+         if (rowTokens && rowTokens.length !== 0)
+         {
+            length = rowTokens.length;
+            break;
+         }
+         
+         row--;
+      }
+
+      // If we reached a negative row, we failed (we were actually on
+      // the first token)
+      if (row < 0)
          return false;
 
-      this.$offset--;
-
+      // Otherwise, we can set the row + offset and return true
+      this.$row = row;
+      this.$offset = length - 1;
       return true;
    };
 
+   this.moveToNextToken = function(maxRow)
+   {
+      // If maxRow is undefined, we'll iterate up to the length of
+      // the tokens array
+      if (typeof maxRow === "undefined")
+         maxRow = (this.$tokens || []).length;
+
+      // If we're already past the maxRow bound, fail
+      if (this.$row > maxRow)
+         return false;
+
+      // If the number of tokens on the current row is greater than
+      // the offset, we can just increment and return true
+      var rowTokens = this.$tokens[this.$row];
+      if (rowTokens &&
+          this.$offset < rowTokens.length - 1)
+      {
+         this.$offset++;
+         return true;
+      }
+
+      // Otherwise, we walk up rows until we find the first row
+      // containing a token. Note that we may need to check for
+      // invalidated rows (ie, rows that are null rather than having
+      // an empty array
+      var row = this.$row + 1;
+      while (row <= maxRow)
+      {
+         rowTokens = this.$tokens[row];
+         if (rowTokens && rowTokens.length !== 0)
+            break;
+         row++;
+      }
+
+      if (row > maxRow)
+         return false;
+
+      this.$row = row;
+      this.$offset = 0;
+      return true;
+      
+   };
+   
    this.peekBwd = function(n) {
       
       if (typeof n === "undefined") {
@@ -108,44 +176,6 @@ var TokenCursor = function(tokens, row, offset) {
       return this;
    };
 
-   this.moveToNextToken = function(maxRow)
-   {
-      var clone = this.cloneCursor();
-
-      if (typeof maxRow === "undefined") {
-         maxRow = Infinity;
-      }
-      
-      if (clone.$row > maxRow)
-         return false;
-
-      clone.$offset++;
-
-      while (clone.$row < clone.$tokens.length &&
-             clone.$tokens[clone.$row] !== null &&
-             clone.$offset >= clone.$tokens[clone.$row].length &&
-             clone.$row < maxRow)
-      {
-         clone.$row++;
-         clone.$offset = 0;
-      }
-
-      if (clone.$tokens[clone.$row] == null || clone.$tokens[clone.$row].length === 0)
-         return false;
-
-      if (clone.$row >= clone.$tokens.length)
-         return false;
-
-      if (clone.$offset >= clone.$tokens[clone.$row].length)
-         return false;
-
-      this.$row = clone.$row;
-      this.$offset = clone.$offset;
-      return true;
-   };
-
-   this.fwd = this.moveToNextToken;
-
    this.seekToNearestToken = function(position, maxRow)
    {
       if (position.row > maxRow)
@@ -169,6 +199,25 @@ var TokenCursor = function(tokens, row, offset) {
       }
       
    };
+
+   this.bwdToNearestToken = function(position)
+   {
+      this.$row = position.row;
+      this.$offset = position.column;
+      
+      var rowTokens = this.$tokens[this.$row] || [];
+      for (; this.$offset >= 0; this.$offset--)
+      {
+         var token = rowTokens[this.$offset];
+         if (typeof token !== "undefined" && (token.column <= position.column))
+         {
+            return true;
+         }
+      }
+      return this.moveToPreviousToken();
+   };
+
+   
 
    this.bwdToMatchingToken = function() {
 
@@ -283,12 +332,13 @@ var TokenCursor = function(tokens, row, offset) {
       return false;
       
    };
-   
+
 
    this.moveBackwardOverMatchingParens = function()
    {
       if (!this.moveToPreviousToken())
          return false;
+      
       if (this.currentValue() !== ")") {
          this.moveToNextToken();
          return false;
@@ -344,7 +394,7 @@ var TokenCursor = function(tokens, row, offset) {
       var token = (this.$tokens[this.$row] || [])[this.$offset];
       return typeof token === "undefined" ?
          {} :
-         token;
+      token;
    };
 
    this.currentValue = function()
@@ -393,37 +443,152 @@ var TokenCursor = function(tokens, row, offset) {
       }
    };
 
+   // Move a token cursor to a document position. This essentially
+   // involves translating a '{row, column}' document position to a
+   // '{row, offset}' position for a token cursor. Note that this
+   // function _excludes_ the token directly at the cursor
+   // position, e.g.
+   //
+   //     foo[a, b|]
+   //            ^
+   // Note that the cursor is 'on' the ']' above, but we intend to
+   // move it onto the 'b' token instead. This is the more common
+   // action throughout the code model and hence why it is the
+   // default. (The intention is that only tokens immediately
+   // preceding the cursor should affect indentation choices, and
+   // so we should exclude anything on, or after, the cursor
+   // itself)
    this.moveToPosition = function(pos) {
 
-      var rowTokens = this.$tokens[pos.row];
-
-      // If there's no tokens on this line, walk back until we find
-      // a line with tokens
       var row = pos.row;
-      while (rowTokens == null || rowTokens.length === 0) {
-         row--;
-         rowTokens = this.$tokens[row];
-      }
+      var column = pos.column;
+      
+      var rowTokens = this.$tokens[row];
 
-      if (row < 0)
-         return false;
+      // If there are tokens on this row, we can move to the first token
+      // on that line before the cursor position.
+      //
+      // Note that we validate that there is at least one token
+      // left of, or at, of the cursor position before entering
+      // this block.
+      if (rowTokens && rowTokens.length > 0 &&
+          rowTokens[0].column < column)
+      {
+         // We want to find the index of the largest token column still less than
+         // the column passed in by the caller.
+         var index = 1;
+         for (; index < rowTokens.length; index++)
+         {
+            if (rowTokens[index].column >= column)
+            {
+               break;
+            }
+         }
 
-      if (row !== pos.row) {
          this.$row = row;
-         this.$offset = this.$tokens[row].length - 1;
+         this.$offset = index - 1;
          return true;
       }
 
-      for (var i = 0; i < rowTokens.length; i++) {
-         if (rowTokens[i].column >= pos.column) {
-            break;
-         }
+      // Otherwise, we just move to the first token previous to this line.
+      // Clone the cursor, put that cursor at the start of the row, and try
+      // to find the previous token.
+      var clone = this.cloneCursor();
+      clone.$row = row;
+      clone.$offset = 0;
+      
+      if (clone.moveToPreviousToken())
+      {
+         this.$row = clone.$row;
+         this.$offset = clone.$offset;
+         return true;
       }
 
-      this.$row = pos.row;
-      this.$offset = i - 1;
-      return true;
+      return false;
       
+   };
+
+   // Walk backwards to find an opening bracket (in the array 'tokens').
+   // If 'failOnOpenBrace' is true and we encounter a '{', we give up and return
+   // false.
+   this.findOpeningBracket = function(tokens, failOnOpenBrace)
+   {
+      // 'tokens' can be passed in either as a single token, or
+      // an array of tokens. If we don't have an array, convert it
+      // to one.
+      if (!isArray(tokens))
+         tokens = [tokens];
+      
+      var clone = this.cloneCursor();
+
+      do
+      {
+         var currentValue = clone.currentValue();
+         if (failOnOpenBrace)
+         {
+            if (currentValue === "{")
+            {
+               return false;
+            }
+         }
+
+         for (var i = 0; i < tokens.length; i++)
+         {
+            if (currentValue === tokens[i])
+            {
+               this.$row = clone.$row;
+               this.$offset = clone.$offset;
+               return true;
+            }
+         }
+
+         if (clone.bwdToMatchingToken())
+            continue;
+         
+      } while (clone.moveToPreviousToken());
+
+      return false;
+      
+   };
+
+   this.findOpeningBracketCountCommas = function(tokens, failOnOpenBrace)
+   {
+      if (!isArray(tokens))
+         tokens = [tokens];
+      
+      var clone = this.cloneCursor();
+      var commaCount = 0;
+      
+      do
+      {
+         var currentValue = clone.currentValue();
+         if (lookingAtComma(clone))
+            commaCount += currentValue.length - currentValue.replace(/,/g, "").length;
+
+         if (failOnOpenBrace)
+         {
+            if (currentValue === "{")
+            {
+               return -1;
+            }
+         }
+
+         for (var i = 0; i < tokens.length; i++)
+         {
+            if (currentValue === tokens[i])
+            {
+               this.$row = clone.$row;
+               this.$offset = clone.$offset;
+               return commaCount;
+            }
+         }
+         
+         if (clone.bwdToMatchingToken())
+            continue;
+         
+      } while (clone.moveToPreviousToken());
+      
+      return -1;
    };
    
    
@@ -554,21 +719,20 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
       {
          this.moveToPreviousToken();
       }
-      
-      do {
 
-         if (this.bwdToMatchingArrow()) {
+      do
+      {
+         if (this.bwdToMatchingArrow())
             this.moveToPreviousToken();
-         }
 
          var type = this.currentType();
          var value = this.currentValue();
 
          if (!(
             type === "keyword" ||
-            value === "::" ||
-            type === "identifier" ||
-            type === "constant"
+               value === "::" ||
+               type === "identifier" ||
+               type === "constant"
          ))
          {
             break;
@@ -576,6 +740,7 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
 
          if (value === "class" ||
              value === "struct" ||
+             value === "enum" ||
              value === ":" ||
              value === ",")
          {
@@ -684,8 +849,100 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
    
 }).call(CppTokenCursor.prototype);
 
+var RTokenCursor = function(tokens, row, offset) {
+   this.$tokens = tokens;
+   this.$row = row || 0;
+   this.$offset = offset || 0;
+};
+oop.mixin(RTokenCursor.prototype, TokenCursor.prototype);
+
+(function() {
+
+   this.isValidAsIdentifier = function() {
+      var type = this.currentType();
+      return type === "identifier" ||
+         type === "symbol" ||
+         type === "keyword" ||
+         type === "string";
+   };
+
+   this.isLookingAtInfixySymbol = function() {
+      
+      var value = this.currentValue();
+      if (value === "$" ||
+          value === "@" ||
+          value === ":")
+         return true;
+      
+      if (this.currentType().indexOf("infix") !== -1)
+         return true;
+      
+      return false;
+   };
+
+   // Find the start of the evaluation context for a generic expression,
+   // e.g.
+   //
+   //     x[[1]]$foo[[1]][, 2]@bar[[1]]()
+   //     ^~~~~~~~~~~~<~~~~~~~~~~~~~~~~~^
+   this.findStartOfEvaluationContext = function() {
+      
+      var clone = this.cloneCursor();
+      
+      do
+      {
+         if (clone.bwdToMatchingToken())
+            continue;
+         
+         // If we land on an identifier, we keep going if the token previous is
+         // 'infix-y', and bail otherwise.
+         if (clone.isValidAsIdentifier())
+         {
+            if (!clone.moveToPreviousToken())
+               break;
+
+            // TODO: explicitly tokenize '::', ':::' so we don't have to do this hack
+            if (clone.isLookingAtInfixySymbol())
+            {
+               while (clone.isLookingAtInfixySymbol())
+                  if (!clone.moveToPreviousToken())
+                     return false;
+
+               // Move back up one because the loop condition will take us back again
+               if (!clone.moveToNextToken())
+                  return false;
+
+               continue;
+            }
+            
+            if (!clone.moveToNextToken())
+               return false;
+            
+            break;
+            
+         }
+
+         // Fail if we get here as it implies we hit something not permissible
+         // for the evaluation context
+         return false;
+         
+      } while (clone.moveToPreviousToken());
+
+      this.$row = clone.$row;
+      this.$offset = clone.$offset;
+      return true;
+      
+   };
+   
+   
+   
+   
+}).call(RTokenCursor.prototype);
+
+
 exports.TokenCursor = TokenCursor;
 exports.CppTokenCursor = CppTokenCursor;
+exports.RTokenCursor = RTokenCursor;
 
 });
 
