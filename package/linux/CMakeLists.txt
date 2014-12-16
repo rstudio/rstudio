@@ -37,7 +37,16 @@ if(RSTUDIO_SERVER)
   set(RSTUDIO_DEBIAN_DEPENDS "psmisc, libssl0.9.8, ")
 
   # rpm dependencies
-  set(RSTUDIO_RPM_DEPENDS "psmisc, libffi, ")
+  set(RSTUDIO_RPM_DEPENDS "psmisc, ")
+
+  # on RHEL 5 we also depend on libffi
+  if(EXISTS "/etc/redhat-release")
+     file(READ "/etc/redhat-release" RHEL_RELEASE)
+     string(FIND RHEL_RELEASE "release 5" RHEL_RELEASE_POS)
+     if(RHEL_RELEASE_POS GREATER "0")
+       set(RSTUDIO_RPM_DEPENDS "${RSTUDIO_RPM_DEPENDS}libffi, ")
+     endif()
+  endif()
 
   # don't auto-resolve other dependencies
   set(CPACK_RPM_PACKAGE_AUTOREQPROV " no")
