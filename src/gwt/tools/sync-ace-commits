@@ -54,11 +54,10 @@ git fetch upstream
 # NOTE: SHA1 for release v1.1.8
 git checkout b8e3198ba8e9fe98cdda85e90f517b94d4452b5e
 
-if [ ! -d "./node_modules" ]; then
-    npm install
-    node ./Makefile.dryice.js
-fi
+# Make sure node packages are up to date
+npm install
 
+# Update any submodules in the repo
 git submodule update --init --recursive
 
 # Merge all the bugfix branches
@@ -91,6 +90,7 @@ git merge \
 ##     origin/bugfix/safari-8-copy
 
 
+# Build and copy ace, ace-uncompressed to RStudio
 node ./Makefile.dryice.js normal
 node ./Makefile.dryice.js -m normal
 cp build/src/ace.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js
