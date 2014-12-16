@@ -5115,7 +5115,7 @@ var Tokenizer = function(rules) {
                     } else {
                         if (token.type)
                             tokens.push(token);
-                        token = {type: type, value: value};
+                        token = {type: type, value: value, column: match.index};
                     }
                 } else if (type) {
                     if (token.type)
@@ -5152,6 +5152,7 @@ var Tokenizer = function(rules) {
             }
         }
 
+	token.column = lastIndex - token.value.length;
         if (token.type)
             tokens.push(token);
         

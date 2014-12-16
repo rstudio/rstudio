@@ -24,8 +24,9 @@
 
 <h2>Interactive Tester</h2>
 <div id="editor" style="width: 600px; height: 200px; border: 1px solid #999"></div>
+<div id="testEditor" style="display: none;"></div>
 
-<h2 style="margin-top: 250px">Automated Tests</h2>
+<h2 style="margin-top: 100">Automated Tests</h2>
 <p>Passed: <span id="passed"></span>, Failed: <span id="failed"></span></p>
 <ol id="testcontainer" style="display: none;">
 <li><pre data-expected="2">
@@ -276,29 +277,38 @@ require('mode/auto_brace_insert').setInsertMatching(true);
 var editor = ace.edit('editor');
 editor.renderer.setHScrollBarAlwaysVisible(false);
 editor.setHighlightActiveLine(false);
+editor.getSession().setTabSize(2);
+editor.getSession().setUseSoftTabs(true);
 var RMode = require('mode/r').Mode;
 
 editor.getSession().setMode(
   new RMode(false,
             editor.getSession()));
 
-//editor.getSession().setUseSoftTabs(false);
-
-var i = 0;
+// A test editor that is used for the indent tests
+testEditor = ace.edit('testEditor');
+testEditor.getSession().setMode(
+  new RMode(false, testEditor.getSession())
+);
+testEditor.getSession().setTabSize(2);
 
 function doIndentTest(el, state) {
   
-  var doc = new Document('');
-  var mode = new RMode(false, editor.getSession());
-  var rCodeModel = new RCodeModel(editor.getSession(), mode.$tokenizer);
+  var doc = testEditor.getSession().getDocument();
+  doc.$lines = new Array(1);
 
-  doc.insert({row:0, column:0}, (el.innerText || el.textContent).trimRight());
+  var codeModel = testEditor.getSession().getMode().codeModel;
+  codeModel.$removeRows(
+    0,
+    codeModel.$tokens.length
+  );
 
-  var indent = rCodeModel.getNextLineIndent("start",
-                                            doc.getLine(doc.getLength() - 1),
-                                            "  ",
-                                            doc.getLength() - 1);
-  
+  testEditor.insert((el.innerText || el.textContent).trimRight());
+  testEditor.insert("\n");
+
+  var line = doc.$lines[doc.getLength() - 1];
+  var indent = line.match(/^(\s*)/)[1];
+
   el.appendChild(document.createTextNode(indent + "|"));
   var attrName = "data-expected"; 
   if (state.length > 0 && 
@@ -328,6 +338,7 @@ for (var i = 0; i < states.length; i++)
    // Set up the state to be tested
    require('mode/r_code_model').setVerticallyAlignFunctionArgs(
       states[i] === "vertical-args");
+
    // Clone the tests for the new state
    var testnode = container.cloneNode(true);
    var header = document.createElement("h2");
@@ -368,8 +379,8 @@ document.getElementById('failed').innerText = failed;
 
 session = editor.getSession();
 mode = session.getMode();
-model = mode.codeModel;
-scopes = model.$scopes;
+codeModel = mode.codeModel;
+scopes = codeModel.$scopes;
 
 </script>
 </body>

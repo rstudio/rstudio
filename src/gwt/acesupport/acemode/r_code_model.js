@@ -1583,7 +1583,7 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
       // so we need to push that back a single row.
       if (typeof lastRow !== "number")
          lastRow = this.$session.getSelection().getCursor().row - 1;
-      
+
       var tabSize = this.$session.getTabSize();
       var tabAsSpaces = new Array(tabSize + 1).join(" ");
 
@@ -2055,7 +2055,6 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
 
          var state = (row === 0) ? 'start' : this.$endStates[row-1];
          var lineTokens = this.$tokenizer.getLineTokens(this.$getLine(row), state);
-         console.log(lineTokens);
          if (!this.$statePattern || this.$statePattern.test(lineTokens.state) || this.$statePattern.test(state))
             this.$tokens[row] = this.$filterWhitespaceAndComments(lineTokens.tokens);
          else

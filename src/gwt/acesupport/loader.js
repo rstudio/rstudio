@@ -93,10 +93,7 @@ oop.inherits(RStudioEditSession, EditSession);
 
             var newIndent = mode.getNextLineIndent(state,
                                                    line,
-                                                   this.getTabString(),
-                                                   this.getTabSize(),
-                                                   i-1,
-                                                   true);
+                                                   this.getTabString());
 
             this.applyIndent(i, newIndent);
             mode.autoOutdent(state, this, i);
