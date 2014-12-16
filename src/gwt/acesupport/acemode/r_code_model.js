@@ -1966,8 +1966,14 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
    {
       this.$tokenizeUpToRow(lastRow);
 
-      var prevToken = this.$findPreviousSignificantToken({row: lastRow, column: this.$getLine(lastRow).length},
-                                                         lastRow - 10);
+      var prevToken = this.$findPreviousSignificantToken(
+         {
+            row: lastRow,
+            column: this.$getLine(lastRow).length
+         },
+         lastRow - 10
+      );
+      
       if (prevToken
             && /\bparen\b/.test(prevToken.token.type)
             && /\)$/.test(prevToken.token.value))
