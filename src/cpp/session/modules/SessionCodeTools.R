@@ -864,3 +864,27 @@
          return(paste('[', paste(object, collapse = ','), ']', sep = '', collapse = ','))
    }
 })
+
+.rs.addFunction("getAsyncExports", function(...)
+{
+   invisible(lapply(list(...), function(x) {
+      tryCatch({
+         ns <- asNamespace(x)
+         exports <- getNamespaceExports(ns)
+         objects <- mget(exports, ns, inherits = TRUE)
+         types <- unlist(lapply(objects, .rs.getCompletionType))
+         isFunction <- unlist(lapply(objects, is.function))
+         functions <- objects[isFunction]
+         functions <- lapply(functions, function(f) {
+            names(formals(f))
+         })
+         output <- list(
+            package = I(x),
+            exports = exports,
+            types = types,
+            functions = functions
+         )
+         cat(.rs.toJSON(output), sep = "\n")
+      }, error = function(e) NULL)
+   }))
+})

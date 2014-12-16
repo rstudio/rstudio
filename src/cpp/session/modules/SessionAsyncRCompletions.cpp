@@ -175,7 +175,6 @@ void AsyncRCompletions::update()
    
    s_isUpdating_ = true;
    
-   std::stringstream ss;
    s_pkgsToUpdate_ =
       RSourceIndex::getAllUnindexedPackages();
    
@@ -205,37 +204,24 @@ void AsyncRCompletions::update()
       return;
    }
    
-   for (std::vector<std::string>::const_iterator it = pkgs.begin();
-        it != pkgs.end();
-        ++it)
+   // Construct a call to .rs.getAsyncExports
+   std::stringstream ss;
+   ss << ".rs.getAsyncExports(";
+   ss << "\"" << pkgs[0] << "\"";
+   
+   if (pkgs.size() > 0)
    {
-      const std::string& pkg = *it;
-      
-      // NOTE: Since this is all going over the command line eventually
-      // it's imperative that all statements are separated by semicolons.
-      boost::format fmt(
-            "tryCatch({"
-            "   ns <- asNamespace('%1%');"
-            "   exports <- getNamespaceExports(ns);"
-            "   objects <- mget(exports, ns, inherits = TRUE);"
-            "   types <- unlist(lapply(objects, .rs.getCompletionType));"
-            "   isFunction <- unlist(lapply(objects, is.function));"
-            "   functions <- objects[isFunction];"
-            "   functions <- lapply(functions, function(x) { names(formals(x)) });"
-            "   output <- list("
-            "     package = I('%1%'),"
-            "     exports = exports,"
-            "     types = types,"
-            "     functions = functions"
-            "   );"
-            "   cat(.rs.toJSON(output), sep = '\\\\n');"
-            "}, error = function(e) invisible(NULL));"
-      );
-      
-      ss << boost::str(fmt % pkg);
+      for (std::vector<std::string>::const_iterator it = pkgs.begin() + 1;
+           it != pkgs.end();
+           ++it)
+      {
+         ss << ",\"" << *it << "\"";
+      }
    }
+   ss << ");";
    
    std::string finalCmd = ss.str();
+   DEBUG("Running command: '" << finalCmd << "'");
    
    boost::shared_ptr<AsyncRCompletions> pProcess(
          new AsyncRCompletions());
