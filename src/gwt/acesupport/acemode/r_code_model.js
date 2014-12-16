@@ -83,7 +83,9 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
          var value = this.currentValue();
          if (value === "$" ||
              value === "@" ||
-             value === ":")
+             value === ":" ||
+             value === "::" ||
+             value === ":::")
             return true;
          
          if (this.currentType().indexOf("infix") !== -1)
