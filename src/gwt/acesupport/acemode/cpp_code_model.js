@@ -56,6 +56,10 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
 (function() {
 
+   this.getTokenCursor = function() {
+      return new CppTokenCursor(this.$tokens);
+   };
+
    var $walkBackForScope = function(cursor, that) {
       
       while (true) {

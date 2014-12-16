@@ -66,6 +66,10 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       '}': '{'
    };
 
+   this.getTokenCursor = function() {
+      return new RTokenCursor(this.$tokens);
+   };
+
    var $normalizeWhitespace = function(text) {
       text = text.trim();
       text = text.replace(/[\n\s]+/g, " ");
