@@ -185,7 +185,7 @@ public class StackTraceCreator {
       var backingJsError;
       if (typeof jsThrown == 'string') {
         backingJsError = fixIE(new Error(jsThrown));
-      } else if (jsThrown instanceof Object && "stack" in jsThrown){
+      } else if (jsThrown && typeof jsThrown == 'object' && "stack" in jsThrown){
         backingJsError = jsThrown;
       } else {
         backingJsError = fixIE(new Error());
