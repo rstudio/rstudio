@@ -277,7 +277,7 @@ public class LibraryJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler {
         String resourcePath = entry.getKey();
         File resourceFile = entry.getValue();
         compilerContext.getLibraryWriter()
-            .addBuildResource(FileResource.create(null, resourcePath, resourceFile));
+            .addBuildResource(FileResource.of(resourcePath, resourceFile));
       }
     }
 

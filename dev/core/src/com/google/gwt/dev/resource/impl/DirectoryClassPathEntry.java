@@ -24,7 +24,6 @@ import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -78,18 +77,6 @@ public class DirectoryClassPathEntry extends ClassPathEntry {
     assert (dir.isAbsolute());
     this.dir = dir;
     this.location = dir.toURI().toString();
-  }
-
-  @Override
-  public List<Map<AbstractResource, ResourceResolution>> findApplicableResources(
-      TreeLogger logger, List<PathPrefixSet> pathPrefixSets) {
-    List<Map<AbstractResource, ResourceResolution>> results =
-        new ArrayList<Map<AbstractResource, ResourceResolution>>(pathPrefixSets.size());
-    for (PathPrefixSet pathPrefixSet : pathPrefixSets) {
-      results.add(new IdentityHashMap<AbstractResource, ResourceResolution>());
-    }
-    descendToFindResources(logger, pathPrefixSets, results, dir, "");
-    return results;
   }
 
   @Override
@@ -150,7 +137,7 @@ public class DirectoryClassPathEntry extends ClassPathEntry {
         DirectoryPathPrefixChangeManager.getAndClearChangedFiles(this, pathPrefixSet);
     for (File changedFile : changedFiles) {
       String changedRelativePath = Util.makeRelativePath(dir, changedFile);
-      FileResource resource = FileResource.create(this, changedRelativePath, changedFile);
+      FileResource resource = FileResource.of(changedRelativePath, changedFile);
 
       if (!changedFile.exists()) {
         if (resolutionsByResource.containsKey(resource)) {
@@ -229,7 +216,7 @@ public class DirectoryClassPathEntry extends ClassPathEntry {
           ResourceResolution resourceResolution = null;
           if ((resourceResolution = pathPrefixSets.get(i).includesResource(childPath)) != null) {
             Messages.INCLUDING_FILE.log(logger, childPath, null);
-            FileResource r = FileResource.create(this, childPath, child);
+            FileResource r = FileResource.of(childPath, child);
             results.get(i).put(r, resourceResolution);
           } else {
             Messages.EXCLUDING_FILE.log(logger, childPath, null);

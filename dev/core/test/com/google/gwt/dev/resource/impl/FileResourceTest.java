@@ -21,7 +21,6 @@ import junit.framework.TestCase;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * Tests related FileResources.
@@ -29,19 +28,9 @@ import java.io.InputStream;
 public class FileResourceTest extends TestCase {
 
   public void testBasic() {
-    File f = null;
-    try {
-      f = File.createTempFile("com.google.gwt.dev.javac.impl.FileResourceTest",
-          ".tmp");
-      f.deleteOnExit();
-      Util.writeStringAsFile(f, "contents 1");
-    } catch (IOException e) {
-      fail("Failed to create test file");
-    }
+    File f = createTempFile();
 
-    File dir = f.getParentFile();
-    DirectoryClassPathEntry cpe = new DirectoryClassPathEntry(dir);
-    FileResource r = FileResource.create(cpe, f.getName(), f);
+    FileResource r = FileResource.of(f.getName(), f);
     assertEquals(f.getAbsoluteFile().toURI().toString(), r.getLocation());
 
     /*
@@ -52,19 +41,9 @@ public class FileResourceTest extends TestCase {
   }
 
   public void testDeletion() {
-    File f = null;
-    try {
-      f = File.createTempFile("com.google.gwt.dev.javac.impl.FileResourceTest",
-          ".tmp");
-      f.deleteOnExit();
-      Util.writeStringAsFile(f, "contents 1");
-    } catch (IOException e) {
-      fail("Failed to create test file");
-    }
+    File f = createTempFile();
 
-    File dir = f.getParentFile();
-    DirectoryClassPathEntry cpe = new DirectoryClassPathEntry(dir);
-    FileResource r = FileResource.create(cpe, f.getName(), f);
+    FileResource r = FileResource.of(f.getName(), f);
     assertEquals(f.getAbsoluteFile().toURI().toString(), r.getLocation());
 
     /*
@@ -80,11 +59,31 @@ public class FileResourceTest extends TestCase {
      *  The resource is no longer available.  Check to make sure we can't access its contents
      *  through the API.
      */
-    InputStream in = null;
     try {
-      in = r.openContents();
+      r.openContents();
       fail("Open contents unexpectedly succeeded.");
     } catch (IOException expected) {
     }
   }
+
+  public void testInterning() throws Exception {
+    File f = createTempFile();
+
+    assertSame(FileResource.of(f.getName(), f), FileResource.of(f.getName(), f));
+    // A different FileResourse will return even files match if the pathname is different.
+    assertNotSame(FileResource.of(f.getName(), f), FileResource.of(f.getName() + "x", f));
+  }
+
+  private File createTempFile() {
+    File f = null;
+    try {
+      f = File.createTempFile("com.google.gwt.dev.javac.impl.FileResourceTest", ".tmp");
+      f.deleteOnExit();
+      Util.writeStringAsFile(f, "contents 1");
+    } catch (IOException e) {
+      fail("Failed to create test file");
+    }
+    return f;
+  }
+
 }

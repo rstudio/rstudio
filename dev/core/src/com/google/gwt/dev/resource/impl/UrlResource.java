@@ -36,11 +36,6 @@ public class UrlResource extends AbstractResource {
   }
 
   @Override
-  public ClassPathEntry getClassPathEntry() {
-    throw new UnsupportedOperationException("UrlResources do not come from the class path.");
-  }
-
-  @Override
   public long getLastModified() {
     return lastModified;
   }

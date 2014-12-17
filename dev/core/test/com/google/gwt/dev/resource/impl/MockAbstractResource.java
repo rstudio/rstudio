@@ -33,11 +33,6 @@ public final class MockAbstractResource extends AbstractResource {
   }
 
   @Override
-  public ClassPathEntry getClassPathEntry() {
-    return mockClassPathEntry;
-  }
-
-  @Override
   public long getLastModified() {
     return 0;
   }

@@ -63,11 +63,6 @@ public class ZipFileResource extends AbstractResource {
   }
 
   @Override
-  public ZipFileClassPathEntry getClassPathEntry() {
-    return classPathEntry;
-  }
-
-  @Override
   public long getLastModified() {
     return lastModified;
   }

@@ -78,11 +78,6 @@ public class ResourceOracleImpl extends AbstractResourceOracle {
     }
 
     @Override
-    public ClassPathEntry getClassPathEntry() {
-      return resource.getClassPathEntry();
-    }
-
-    @Override
     public long getLastModified() {
       return resource.getLastModified();
     }

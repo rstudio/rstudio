@@ -15,55 +15,41 @@
  */
 package com.google.gwt.dev.resource.impl;
 
-import com.google.gwt.thirdparty.guava.common.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.collect.MapMaker;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.ref.WeakReference;
-import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Represents a resource contained in a directory on a file system.
- * <p>
- * The class is immutable and automatically interned.
+ * <p>The class is immutable and automatically interned.
  */
 public class FileResource extends AbstractResource {
+  /*
+   * The #equals and #hashCode is locked to work on identities by the base class Resource.
+   * Without interning, it would be impractical to use this class as a key in a map.
+   */
 
-  private static Map<String, FileResource> fileResourceByKey = Maps.newHashMap();
+  private static final ConcurrentMap<String, FileResource> canonicalFileResources =
+      new MapMaker().weakValues().makeMap();
 
-  public static FileResource create(DirectoryClassPathEntry classPathEntry, String abstractPathName,
-      File file) {
-    // Intern the file resource.
-    String classPathLocation = classPathEntry != null ? classPathEntry.getLocation() : "null";
-    String key = classPathLocation + File.pathSeparator + abstractPathName + File.pathSeparator
-        + file.getAbsolutePath();
-    FileResource fileResource = fileResourceByKey.get(key);
-    if (fileResource == null) {
-      fileResource = new FileResource(classPathEntry, abstractPathName, file);
-      fileResourceByKey.put(key, fileResource);
-    }
-
-    return fileResource;
+  public static FileResource of(String abstractPathName, File file) {
+    String key = abstractPathName + "@" + file.getAbsolutePath();
+    FileResource sample = new FileResource(abstractPathName, file);
+    FileResource canonical = canonicalFileResources.putIfAbsent(key, sample);
+    return (canonical == null) ? sample : canonical;
   }
 
   private final String abstractPathName;
-  private final WeakReference<DirectoryClassPathEntry> classPathEntryReference;
   private final File file;
 
-  private FileResource(DirectoryClassPathEntry classPathEntry, String abstractPathName, File file) {
+  private FileResource(String abstractPathName, File file) {
     assert (file.isFile()) : file + " is not a file.";
-    this.classPathEntryReference = new WeakReference<DirectoryClassPathEntry>(classPathEntry);
     this.abstractPathName = abstractPathName;
     this.file = file;
-  }
-
-  @Override
-  public DirectoryClassPathEntry getClassPathEntry() {
-    DirectoryClassPathEntry classPathEntry = classPathEntryReference.get();
-    assert classPathEntry != null;
-    return classPathEntry;
   }
 
   @Override
