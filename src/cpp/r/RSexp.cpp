@@ -604,6 +604,28 @@ SEXP create(const std::vector<boost::posix_time::ptime>& value,
    // return it
    return posixCtSEXP;
 }
+
+SEXP create(const std::map<std::string, std::vector<std::string> > &value,
+            Protect *pProtect)
+{
+   SEXP listSEXP, namesSEXP;
+   std::size_t n = value.size();
+   pProtect->add(listSEXP = Rf_allocVector(VECSXP, n));
+   pProtect->add(namesSEXP = Rf_allocVector(STRSXP, n));
+   
+   int index = 0;
+   typedef std::map< std::string, std::vector<std::string> >::const_iterator iterator;
+   for (iterator it = value.begin(); it != value.end(); ++it)
+   {
+      SET_STRING_ELT(namesSEXP, index, Rf_mkChar(it->first.c_str()));
+      SET_VECTOR_ELT(listSEXP, index, r::sexp::create(it->second, pProtect));
+      ++index;
+   }
+   
+   Rf_setAttrib(listSEXP, R_NamesSymbol, namesSEXP);
+   
+   return listSEXP;
+}
    
 SEXP create(const std::vector<std::pair<std::string,std::string> >& value, 
             Protect* pProtect)
@@ -630,6 +652,23 @@ SEXP create(const std::vector<std::pair<std::string,std::string> >& value,
    
    // return the vector
    return charSEXP;   
+}
+
+SEXP create(const std::set<std::string> &value, Protect *pProtect)
+{
+   SEXP charSEXP;
+   pProtect->add(charSEXP = Rf_allocVector(STRSXP, value.size()));
+   
+   int index = 0;
+   for (std::set<std::string>::const_iterator it = value.begin();
+        it != value.end();
+        ++it)
+   {
+      SET_STRING_ELT(charSEXP, index, Rf_mkChar(it->c_str()));
+      ++index;
+   }
+   
+   return charSEXP;
 }
 
 SEXP createList(std::vector<std::string> names, Protect* pProtect)
@@ -710,6 +749,16 @@ void PreservedSEXP::releaseNow()
       ::R_ReleaseObject(sexp_);
       sexp_ = R_NilValue;
    }
+}
+
+void printValue(SEXP object)
+{
+   Error error = r::exec::executeSafely(
+      boost::bind(Rf_PrintValue, object)
+   );
+   
+   if (error)
+      LOG_ERROR(error);
 }
 
 } // namespace sexp   

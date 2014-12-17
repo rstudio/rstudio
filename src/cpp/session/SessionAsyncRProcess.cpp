@@ -32,7 +32,8 @@ AsyncRProcess::AsyncRProcess():
 
 void AsyncRProcess::start(const char* rCommand, 
                           const core::FilePath& workingDir, 
-                          AsyncRProcessOptions rOptions)
+                          AsyncRProcessOptions rOptions,
+                          const std::vector<core::FilePath>& rSourceFiles)
 {
    // R binary
    core::FilePath rProgramPath;
@@ -50,7 +51,44 @@ void AsyncRProcess::start(const char* rCommand,
    if (rOptions & R_PROCESS_VANILLA)
       args.push_back("--vanilla");
    args.push_back("-e");
-   args.push_back(rCommand);
+
+   if (rSourceFiles.size())
+   {
+      // form the command that we send (over the command line)
+      std::stringstream command;
+
+      // Use shims for the main RStudio functions
+      command << "options(error = traceback); ";
+
+      command << ".rs.Env <- attach(NULL, name = 'tools:rstudio'); ";
+
+      command << ".rs.addFunction <- function(name, FN, attrs = list()) {"
+              << "   fullName = paste('.rs.', name, sep=''); "
+              << "   for (attrib in names(attrs)) "
+              << "     attr(FN, attrib) <- attrs[[attrib]];"
+              << "   assign(fullName, FN, .rs.Env); "
+              << "   environment(.rs.Env[[fullName]]) <- .rs.Env; "
+              << "};";
+
+      // similarly for .rs.addJsonRpcHandler
+      command << ".rs.addJsonRpcHandler <- function(name, FN) {"
+              << "   .rs.addFunction(paste('rpc.', name, sep = ''), FN, TRUE);"
+              << "};";
+
+      // add in the r source files requested
+      for (std::vector<core::FilePath>::const_iterator it = rSourceFiles.begin();
+           it != rSourceFiles.end();
+           ++it)
+         command << "source('" << it->absolutePath() << "');";
+      
+      command << rCommand;
+
+      args.push_back(command.str());
+   }
+   else
+   {
+      args.push_back(rCommand);
+   }
 
    // options
    core::system::ProcessOptions options;

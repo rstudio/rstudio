@@ -568,6 +568,11 @@ public class DocUpdateSentinel
             return false;
       return true;
    }
+   
+   public String getId()
+   {
+      return sourceDoc_.getId();
+   }
 
    private boolean changesPending_ = false;
    private final ChangeTracker changeTracker_;

@@ -20,6 +20,7 @@
 #include <vector>
 #include <deque>
 #include <map>
+#include <set>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/any.hpp>
@@ -119,9 +120,12 @@ SEXP create(const std::vector<double>& value, Protect*pProtect);
 SEXP create(const std::vector<bool>& value, Protect*pProtect);
 SEXP create(const std::vector<boost::posix_time::ptime>& value,
             Protect* pProtect);
+SEXP create(const std::map<std::string, std::vector<std::string> >& value,
+            Protect* pProtect);
 
 SEXP create(const std::vector<std::pair<std::string,std::string> >& value, 
             Protect* pProtect);
+SEXP create(const std::set<std::string>& value, Protect* pProtect);
 SEXP create(const core::json::Array& value, Protect* pProtect);
 SEXP create(const core::json::Object& value, Protect* pProtect);
 
@@ -284,9 +288,15 @@ class ListBuilder : boost::noncopyable
 public:
    explicit ListBuilder(Protect* pProtect)
       : pProtect_(pProtect) {}
+   
+   void add(const std::string& name, SEXP object)
+   {
+      objects_.push_back(object);
+      names_.push_back(name);
+   }
 
    template <typename T>
-   void add(std::string name, const T& object)
+   void add(const std::string& name, const T& object)
    {
       objects_.push_back(create(object, pProtect_));
       names_.push_back(name);
@@ -318,6 +328,8 @@ private:
    std::vector<std::string> names_;
    Protect* pProtect_;
 };
+
+void printValue(SEXP object);
 
 } // namespace sexp
 } // namespace r
