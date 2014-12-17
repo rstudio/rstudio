@@ -757,7 +757,6 @@ public class JdtCompiler {
    */
   private static final Map<SourceLevel, Long> jdtLevelByGwtLevel =
       ImmutableMap.<SourceLevel, Long>of(
-          SourceLevel.JAVA6, ClassFileConstants.JDK1_6,
           SourceLevel.JAVA7, ClassFileConstants.JDK1_7,
           SourceLevel.JAVA8, ClassFileConstants.JDK1_8);
 

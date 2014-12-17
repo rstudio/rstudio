@@ -288,7 +288,6 @@ java_library(
             "src/com/google/gwt/core/client/JsDate.java",
             "src/com/google/gwt/core/client/Duration.java",
             "src/com/google/gwt/core/client/Scheduler.java",
-            "src/com/google/gwt/core/client/impl/JavaScriptExceptionBase.java",
             "src/com/google/gwt/user/client/Window.java",
             "src/com/google/gwt/user/client/Window*.java",
             "src/com/google/gwt/user/client/BaseListenerWrapper.java",

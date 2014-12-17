@@ -811,13 +811,11 @@ public class CompilerTest extends ArgProcessorTestBase {
   }
 
   public void testSourceLevelSelection() {
-    // We are not able to compile to less that Java 6 so, we might as well do Java7 on
-    // these cases.
     assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.4"));
     assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.5"));
+    assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.6"));
+    assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.6_26"));
 
-    assertEquals(SourceLevel.JAVA6, SourceLevel.getBestMatchingVersion("1.6"));
-    assertEquals(SourceLevel.JAVA6, SourceLevel.getBestMatchingVersion("1.6_26"));
     assertEquals(SourceLevel.JAVA7, SourceLevel.getBestMatchingVersion("1.7"));
     assertEquals(SourceLevel.JAVA8, SourceLevel.getBestMatchingVersion("1.8"));
     assertEquals(SourceLevel.JAVA8, SourceLevel.getBestMatchingVersion("1.9"));
