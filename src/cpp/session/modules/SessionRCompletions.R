@@ -520,6 +520,16 @@ assign(x = ".rs.acCompletionTypes",
       if (length(formals$formals))
          formals$formals <- paste(formals$formals, "= ")
       
+      # If we're getting completions for the `base::c` function, just discard
+      # the argument completions, since other context completions are more
+      # likely and more useful
+      if (identical(object, base::c) ||
+          identical(object, base::list))
+      {
+         formals <- list(formals = character(),
+                         methods = character())
+      }
+      
       # Get the current argument -- we can resolve this based on
       # 'numCommas' and the number of named formals. The idea is, e.g.
       # in a function call
@@ -941,6 +951,8 @@ assign(x = ".rs.acCompletionTypes",
       return(result)
    
    completions <- character()
+   
+   # Get completions from dimension names for arrays
    if (is.array(object) && !is.null(dn <- dimnames(object)))
    {
       if (numCommas + 1 <= length(dn))
@@ -953,6 +965,16 @@ assign(x = ".rs.acCompletionTypes",
       else
          paste("dimnames(", string, ")[", numCommas + 1, "]", sep = "")
    }
+   
+   # Get completions from rownames for data.frames if we have no commas, e.g.
+   # `mtcars[|`
+   else if (inherits(object, "data.frame") &&
+            numCommas == 0)
+   {
+      completions <- rownames(object)
+   }
+   
+   # Just get the names of the object
    else
    {
       completions <- .rs.getNames(object)
