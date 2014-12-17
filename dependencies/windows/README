@@ -18,7 +18,7 @@ Qt installation involves both the MinGW compiler as well as version Qt 5.4
 of the Qt Framework. You can install both of these components using the
 installer at this URL:
 
-http://download.qt-project.org/snapshots/qt/5.4/5.4.0-rc/2014-11-13_79/qt-opensource-windows-x86-mingw491_opengl-5.4.0-rc_2014-11-13_08-34-04-79.exe
+http://download.qt-project.org/official_releases/qt/5.4/5.4.0/qt-opensource-windows-x86-mingw491_opengl-5.4.0.exe
 
 Note that Mingw 4.9.1 is not installed by default so you need to be sure to
 select it under Tools in the installer target customization UI.
