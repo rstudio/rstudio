@@ -15,6 +15,16 @@ if (NOT PACKAGE_ARCHITECTURE)
    endif()
 endif()
 
+# detect RedHat 5
+set(IS_RHEL_5 "OFF")
+if(EXISTS "/etc/redhat-release")
+   file(READ "/etc/redhat-release" RHEL_RELEASE)
+   string(FIND "${RHEL_RELEASE}" "release 5" RHEL_RELEASE_POS)
+   if(RHEL_RELEASE_POS GREATER 0)
+     set(IS_RHEL_5 "ON")
+   endif()
+endif()
+
 # configuration specific
 if(RSTUDIO_SERVER)
 
@@ -40,12 +50,8 @@ if(RSTUDIO_SERVER)
   set(RSTUDIO_RPM_DEPENDS "psmisc, ")
 
   # on RHEL 5 we also depend on libffi
-  if(EXISTS "/etc/redhat-release")
-     file(READ "/etc/redhat-release" RHEL_RELEASE)
-     string(FIND RHEL_RELEASE "release 5" RHEL_RELEASE_POS)
-     if(RHEL_RELEASE_POS GREATER "0")
-       set(RSTUDIO_RPM_DEPENDS "${RSTUDIO_RPM_DEPENDS}libffi, ")
-     endif()
+  if(IS_RHEL_5)
+     set(RSTUDIO_RPM_DEPENDS "${RSTUDIO_RPM_DEPENDS}libffi, ")
   endif()
 
   # don't auto-resolve other dependencies
@@ -68,6 +74,10 @@ endif()
 
 # define package suffix
 set(RSTUDIO_PACKAGE_SUFFIX "-")
+
+if(IS_RHEL_5)
+   set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}rhel5-")
+endif()
 
 # include overlay if it exists
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
