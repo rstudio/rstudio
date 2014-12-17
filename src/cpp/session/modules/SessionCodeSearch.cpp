@@ -25,6 +25,7 @@
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/split.hpp>
 
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
@@ -38,13 +39,16 @@
 #include <core/system/FileChangeEvent.hpp>
 #include <core/system/FileMonitor.hpp>
 
+#include <r/RRoutines.hpp>
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
-
+#include <session/SessionAsyncRProcess.hpp>
 #include <session/projects/SessionProjects.hpp>
+
+#include "SessionAsyncRCompletions.hpp"
 
 #include "SessionSource.hpp"
 #include "clang/DefinitionIndex.hpp"
@@ -781,6 +785,9 @@ private:
       // attempt to add the entry
       Entry entry(fileInfo, pIndex);
       pEntries_->insertEntry(entry);
+
+      // kick off an update
+      r_completions::AsyncRCompletions::update();
    }
 
    void removeIndexEntry(const FileInfo& fileInfo)
@@ -875,25 +882,27 @@ public:
    void update(boost::shared_ptr<session::source_database::SourceDocument> pDoc)
    {
       // is this indexable? if not then bail
-      std::string extensionLowerCase = FilePath(pDoc->path()).extensionLowerCase();
-      bool isRextension =
-            extensionLowerCase == ".r" ||
-            extensionLowerCase == ".q" ||
-            extensionLowerCase == ".s";
-      
-      if (pDoc->path().empty() || !isRextension)
-      {
+      if (!pDoc->canContainRCode())
          return;
-      }
-
+      
       // index the source
       boost::shared_ptr<r_util::RSourceIndex> pIndex(
                  new r_util::RSourceIndex(pDoc->path(), pDoc->contents()));
-
+      
       // insert it
       indexes_[pDoc->id()] = pIndex;
-   }
 
+      // kick off an update if necessary
+      r_completions::AsyncRCompletions::update();
+   }
+   
+   boost::shared_ptr<r_util::RSourceIndex> get(const std::string& id)
+   {
+      if (indexes_.find(id) != indexes_.end())
+         return indexes_[id];
+      return boost::shared_ptr<r_util::RSourceIndex>();
+   }
+   
    void remove(const std::string& id)
    {
       indexes_.erase(id);
@@ -2149,11 +2158,10 @@ void onFileMonitorDisabled()
 SEXP rs_scoreMatches(SEXP suggestionsSEXP,
                      SEXP querySEXP)
 {
+   std::string query = r::sexp::asString(querySEXP);
    std::vector<std::string> suggestions;
    if (!r::sexp::fillVectorString(suggestionsSEXP, &suggestions))
       return R_NilValue;
-   
-   std::string query = r::sexp::asString(querySEXP);
    
    int n = suggestions.size();
    std::vector<int> scores;
@@ -2164,6 +2172,50 @@ SEXP rs_scoreMatches(SEXP suggestionsSEXP,
    
    r::sexp::Protect protect;
    return r::sexp::create(scores, &protect);
+}
+
+SEXP rs_getSourceFileLibraryCompletions(SEXP packagesSEXP)
+{
+   using namespace core::r_util;
+
+   std::vector<std::string> packages;
+   if (!r::sexp::fillVectorString(packagesSEXP, &packages))
+      return R_NilValue;
+
+   r::sexp::Protect protect;
+   r::sexp::ListBuilder parent(&protect);
+   
+   for (std::vector<std::string>::const_iterator it = packages.begin();
+        it != packages.end();
+        ++it)
+   {
+      AsyncLibraryCompletions completions =
+            RSourceIndex::getCompletions(*it);
+      
+      r::sexp::ListBuilder builder(&protect);
+      builder.add("exports", completions.exports);
+      builder.add("types", completions.types);
+      builder.add("functions", completions.functions);
+      
+      parent.add(*it, static_cast<SEXP>(builder));
+   }
+   
+   return parent;
+}
+
+SEXP rs_updateSourceFileLibraryCompletions(SEXP documentIdSEXP)
+{
+   std::string documentId = r::sexp::asString(documentIdSEXP);
+   boost::shared_ptr<core::r_util::RSourceIndex> index = rSourceIndex().get(documentId);
+   
+   if (index == NULL)
+      return R_NilValue;
+
+   r::sexp::Protect protect;
+   r_completions::AsyncRCompletions::update();
+
+   return r::sexp::create(true, &protect);
+   
 }
 
 inline SEXP pathResultsSEXP(std::vector<std::string> const& paths,
@@ -2271,6 +2323,24 @@ SEXP rs_viewFunction(SEXP functionSEXP, SEXP nameSEXP, SEXP namespaceSEXP)
    return R_NilValue;
 }
 
+SEXP rs_listInferredPackages(SEXP documentIdSEXP)
+{
+   std::string documentId = r::sexp::asString(documentIdSEXP);
+   boost::shared_ptr<core::r_util::RSourceIndex> index = rSourceIndex().get(documentId);
+   
+   if (index == NULL)
+   {
+      LOG_ERROR_MESSAGE("No index for document '" + documentId + "'");
+      return R_NilValue;
+   }
+   
+   std::set<std::string> pkgs = index->getInferredPackages();
+   
+   r::sexp::Protect protect;
+   return r::sexp::create(pkgs, &protect);
+   
+}
+
 } // anonymous namespace
    
 Error initialize()
@@ -2311,10 +2381,25 @@ Error initialize()
             "rs_listIndexedFilesAndFolders",
             (DL_FUNC) rs_listIndexedFilesAndFolders,
             3);
+   
+   r::routines::registerCallMethod(
+            "rs_listInferredPackages",
+            (DL_FUNC) rs_listInferredPackages,
+            1);
+   
+   r::routines::registerCallMethod(
+            "rs_getSourceFileLibraryCompletions",
+            (DL_FUNC) rs_getSourceFileLibraryCompletions,
+            1);
+   
+   r::routines::registerCallMethod(
+            "rs_updateSourceFileLibraryCompletions",
+            (DL_FUNC) rs_updateSourceFileLibraryCompletions,
+            1);
 
    // initialize r source indexes
    rSourceIndex().initialize();
-
+   
    using boost::bind;
    using namespace module_context;
    ExecBlock initBlock ;

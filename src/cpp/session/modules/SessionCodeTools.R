@@ -772,3 +772,119 @@
 {
    .rs.doGetIndex(term, inDirectory, maxCount, .rs.listIndexedFilesAndFolders)
 })
+
+## NOTE: Function may be used by async R process; must not call back into
+## 'rs_' compiled code!
+.rs.addFunction("jsonEscapeString", function(value)
+{
+   if (is.na(value)) return("null")
+   chars <- strsplit(value, "", fixed = TRUE)[[1]]
+   chars <- vapply(chars, function(x) {
+      if (x %in% c('"', '\\', '/'))
+         paste('\\', x, sep = '')
+      else if (charToRaw(x) < 20)
+         paste('\\u', toupper(format(as.hexmode(as.integer(charToRaw(x))), 
+                                     width = 4)), 
+               sep = '')
+      else
+         x
+   }, character(1))
+   paste(chars, sep = "", collapse = "")
+})
+
+## NOTE: Function may be used by async R process; must not call back into
+## 'rs_' compiled code!
+.rs.addFunction("jsonProperty", function(name, value)
+{
+   paste(sep = "",
+         "\"", 
+         .rs.jsonEscapeString(enc2utf8(name)), 
+         "\":\"",
+         .rs.jsonEscapeString(enc2utf8(value)), 
+         "\""
+   )
+})
+
+## NOTE: Specify that a JSON value should be returned as a scalar by
+## giving it the 'AsIs' class; ie, by writing 'foo = I(1)', or otherwise
+## by using the '.rs.scalar' function.
+## 
+## NOTE: Function may be used by async R process; must not call back into
+## 'rs_' compiled code!
+.rs.addFunction("toJSON", function(object)
+{
+   AsIs <- inherits(object, "AsIs") || inherits(object, ".rs.scalar")
+   if (is.list(object))
+   {
+      if (is.null(names(object)))
+      {
+         return(paste('[', paste(lapply(seq_along(object), function(i) {
+            .rs.toJSON(object[[i]])
+         }), collapse = ','), ']', sep = '', collapse=','))
+      }
+      else
+      {
+         return(paste('{', paste(lapply(seq_along(object), function(i) {
+            paste(sep = "",
+                  '"',
+                  .rs.jsonEscapeString(enc2utf8(names(object)[[i]])),
+                  '":',
+                  .rs.toJSON(object[[i]])
+            )
+         }), collapse = ','), '}', sep = '', collapse = ','))
+      }
+   }
+   else
+   {
+      # NOTE: For type safety we cannot unmarshal NULL as '{}' as e.g. jsonlite does.
+      if (!length(object))
+      {
+         return('[]')
+      }
+      else if (is.character(object) || is.factor(object))
+      {
+         object <- paste(collapse = ",", vapply(as.character(object), FUN.VALUE = character(1), USE.NAMES = FALSE, function(x) {
+            if (is.na(x)) "null"
+            else paste("\"", .rs.jsonEscapeString(enc2utf8(x)), "\"", sep = "")
+         }))
+      }
+      else if (is.numeric(object))
+      {
+         object[is.na(object)] <- '\"NA\"'
+      }
+      else if (is.logical(object))
+      {
+         object <- tolower(object)
+         object[is.na(object)] <- 'null'
+      }
+      
+      if (AsIs)
+         return(object)
+      else
+         return(paste('[', paste(object, collapse = ','), ']', sep = '', collapse = ','))
+   }
+})
+
+.rs.addFunction("getAsyncExports", function(...)
+{
+   invisible(lapply(list(...), function(x) {
+      tryCatch({
+         ns <- asNamespace(x)
+         exports <- getNamespaceExports(ns)
+         objects <- mget(exports, ns, inherits = TRUE)
+         types <- unlist(lapply(objects, .rs.getCompletionType))
+         isFunction <- unlist(lapply(objects, is.function))
+         functions <- objects[isFunction]
+         functions <- lapply(functions, function(f) {
+            names(formals(f))
+         })
+         output <- list(
+            package = I(x),
+            exports = exports,
+            types = types,
+            functions = functions
+         )
+         cat(.rs.toJSON(output), sep = "\n")
+      }, error = function(e) NULL)
+   }))
+})

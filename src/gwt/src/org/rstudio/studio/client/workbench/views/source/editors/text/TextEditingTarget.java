@@ -1630,7 +1630,7 @@ public class TextEditingTarget implements
                                           ));
                }
             });
-         }
+   }
 
    private void saveNewFile(final String suggestedPath,
                             String encodingOverride,
@@ -4447,6 +4447,12 @@ public class TextEditingTarget implements
       public String getPath()
       {
          return docUpdateSentinel_.getPath();
+      }
+      
+      @Override
+      public String getId()
+      {
+         return docUpdateSentinel_.getId();
       }
    };
    

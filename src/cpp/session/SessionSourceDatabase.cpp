@@ -684,6 +684,8 @@ Events& events()
 
 Error initialize()
 {
+   
+   
    // provision a source database directory
    Error error = supervisor::attachToSourceDatabase(&s_sourceDBPath);
    if (error)

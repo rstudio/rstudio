@@ -1058,8 +1058,7 @@ public class RCompletionManager implements CompletionManager
       }
       
       String filePath = getSourceDocumentPath();
-      if (filePath == null)
-         filePath = "";
+      String docId = getSourceDocumentId();
       
       requester_.getCompletions(
             context.getToken(),
@@ -1072,6 +1071,7 @@ public class RCompletionManager implements CompletionManager
             infixData.getExcludeArgs(),
             infixData.getExcludeArgsFromObject(),
             filePath,
+            docId,
             implicit,
             context_);
 
@@ -1466,39 +1466,6 @@ public class RCompletionManager implements CompletionManager
       
    }
    
-   public Comparator<QualifiedName> createFuzzyComparator(String query)
-   {
-      final String queryLower = query.toLowerCase();
-      return new Comparator<QualifiedName>() {
-
-         @Override
-         public int compare(final QualifiedName lhs,
-                            final QualifiedName rhs)
-         {
-            int lhsScore = CodeSearchOracle.scoreMatch(
-                  lhs.name,
-                  queryLower,
-                  false);
-            
-            int rhsScore = CodeSearchOracle.scoreMatch(
-                  rhs.name,
-                  queryLower,
-                  false);
-            
-            if (lhsScore == rhsScore)
-            {
-               return lhs.name.length() - rhs.name.length();
-            }
-            else
-            {
-               return lhsScore < rhsScore ? -1 : 1;
-            }
-            
-         }
-         
-      };
-   }
-   
    /**
     * It's important that we create a new instance of this each time.
     * It maintains state that is associated with a completion request.
@@ -1876,9 +1843,17 @@ public class RCompletionManager implements CompletionManager
    private String getSourceDocumentPath()
    {
       if (rContext_ != null)
-         return rContext_.getPath();
+         return StringUtil.notNull(rContext_.getPath());
       else
-         return null;
+         return "";
+   }
+   
+   private String getSourceDocumentId()
+   {
+      if (rContext_ != null)
+         return StringUtil.notNull(rContext_.getId());
+      else
+         return "";
    }
    
    public void showHelpDeferred(final CompletionRequestContext context,

@@ -761,6 +761,19 @@ assign(x = ".rs.acCompletionTypes",
    old
 })
 
+.rs.addFunction("sortCompletions", function(completions, token)
+{
+   scores <- .rs.scoreMatches(completions$results, token)
+   
+   # Put package completions at the end
+   idx <- completions$type == .rs.acCompletionTypes$PACKAGE
+   scores[idx] <- scores[idx] + 10
+   
+   order <- order(scores, nchar(completions$results))
+   
+   .rs.subsetCompletions(completions, order)
+})
+
 .rs.addFunction("blackListEvaluationDataTable", function(token, string, envir)
 {
    tryCatch({
@@ -1186,7 +1199,8 @@ assign(x = ".rs.acCompletionTypes",
                                                   additionalArgs,
                                                   excludeArgs,
                                                   excludeArgsFromObject,
-                                                  filePath)
+                                                  filePath,
+                                                  documentId)
 {
    filePath <- suppressWarnings(.rs.normalizePath(filePath))
    
@@ -1258,8 +1272,27 @@ assign(x = ".rs.acCompletionTypes",
       # Otherwise, complete from the seach path + available packages
       completions <- .rs.appendCompletions(
          .rs.getCompletionsSearchPath(token),
-         .rs.getCompletionsPackages(token, TRUE)
+         .rs.appendCompletions(
+            .rs.getCompletionsPackages(token, TRUE),
+            .rs.getCompletionsLibraryContext(token,
+                                             string,
+                                             type,
+                                             numCommas,
+                                             functionCall,
+                                             documentId,
+                                             parent.frame())
+         )
       )
+      
+      completions <- .rs.sortCompletions(completions, token)
+      
+      # remove all queries that start with a '.' unless the
+      # token itself starts with a dot
+      if (!.rs.startsWith(token, "."))
+      {
+         startsWithDot <- .rs.startsWith(completions$results, ".")
+         completions <- .rs.subsetCompletions(completions, which(!startsWithDot))
+      }
       
       # try completing from the source index if this is an
       # R file within a package
@@ -1439,6 +1472,7 @@ assign(x = ".rs.acCompletionTypes",
                                 numCommas[[i]],
                                 functionCall,
                                 discardFirst,
+                                documentId,
                                 parent.frame())
          )
       }
@@ -1678,19 +1712,22 @@ assign(x = ".rs.acCompletionTypes",
                                             numCommas,
                                             functionCall,
                                             discardFirst,
+                                            documentId,
                                             envir)
 {
-   if (type == .rs.acContextTypes$FUNCTION)
-      .rs.getCompletionsFunction(token, string, functionCall, numCommas, discardFirst, envir)
-   else if (type == .rs.acContextTypes$ARGUMENT)
-      .rs.getCompletionsArgument(token, string)
-   else if (type == .rs.acContextTypes$SINGLE_BRACKET)
-      .rs.getCompletionsSingleBracket(token, string, numCommas, envir)
-   else if (type == .rs.acContextTypes$DOUBLE_BRACKET)
-      .rs.getCompletionsDoubleBracket(token, string, envir)
-   else
-      .rs.emptyCompletions()
-   
+   .rs.appendCompletions(
+      .rs.getCompletionsLibraryContext(token, string, type, numCommas, functionCall, documentId, envir),
+      if (type == .rs.acContextTypes$FUNCTION)
+         .rs.getCompletionsFunction(token, string, functionCall, numCommas, discardFirst, envir)
+      else if (type == .rs.acContextTypes$ARGUMENT)
+         .rs.getCompletionsArgument(token, string)
+      else if (type == .rs.acContextTypes$SINGLE_BRACKET)
+         .rs.getCompletionsSingleBracket(token, string, numCommas, envir)
+      else if (type == .rs.acContextTypes$DOUBLE_BRACKET)
+         .rs.getCompletionsDoubleBracket(token, string, envir)
+      else
+         .rs.emptyCompletions()
+   )
 })
 
 ## NOTE: This is a modified version of 'matchAvailableTopics'
@@ -2110,4 +2147,119 @@ assign(x = ".rs.acCompletionTypes",
    # TODO: Wire up file completions (e.g. 'Ctrl + P'-like behaviour)
    
    completions
+})
+
+.rs.addFunction("listInferredPackages", function(documentId)
+{
+   .Call("rs_listInferredPackages", documentId)
+})
+
+.rs.addFunction("getSourceFileLibraryCompletions", function(packages = character())
+{
+   .Call("rs_getSourceFileLibraryCompletions", as.character(packages))
+})
+
+.rs.addFunction("updateSourceFileLibraryCompletions", function(documentId)
+{
+   .Call("rs_updateSourceFileLibraryCompletions", documentId)
+})
+
+.rs.addFunction("getCompletionsLibraryContext", function(token,
+                                                         string,
+                                                         type,
+                                                         numCommas,
+                                                         functionCall,
+                                                         documentId,
+                                                         envir)
+{
+   # Bail on null / empty documentId (necessary for e.g. the console)
+   if (is.null(documentId) || !nzchar(documentId))
+      return(.rs.emptyCompletions())
+   
+   ## If we detect that particular 'library' calls are in the source document,
+   ## and those packages are actually available (but the package is not currently loaded),
+   ## then we get an asynchronously-updated set of completions. We enocde them as 'context'
+   ## completions just so the user has a small hint that, even though we provide the
+   ## completions, the package isn't actually loaded.
+   packages <- .rs.listInferredPackages(documentId)
+   
+   # Remove any packages that are on the search path
+   searchNames <- paste("package", packages, sep = ":")
+   packages <- packages[!(searchNames %in% search())]
+   
+   if (!length(packages))
+      return(.rs.emptyCompletions())
+   
+   completions <- .rs.getSourceFileLibraryCompletions(packages)
+   
+   # If we're getting completions for a particular function's arguments,
+   # use those
+   if (length(type) && type[[1]] == .rs.acContextTypes$FUNCTION)
+   {
+      ## Figure out which package + args we actually want to use
+      pkg <- NULL
+      args <- NULL
+      for (i in seq_along(completions))
+      {
+         if (string[[1]] %in% names(completions[[i]]$functions))
+         {
+            pkg <- names(completions)[[i]]
+            args <- completions[[i]]$functions[[string[[1]]]]
+            break
+         }
+      }
+      
+      # Bail if we couldn't find anything
+      if (is.null(pkg))
+         return(.rs.emptyCompletions())
+         
+      ## Make a dummy function to match a call against
+      argsText <- paste(args, collapse = ", ")
+      dummyFunction <- tryCatch(
+         suppressWarnings(
+            eval(parse(text = paste("function(", argsText, ") {}", sep = "")))
+         ), error = function(e) NULL
+      )
+      if (is.null(dummyFunction))
+         return(.rs.emptyCompletions())
+      
+      matchedCall <- .rs.matchCall(dummyFunction, functionCall)
+      if (is.null(matchedCall))
+         return(.rs.emptyCompletions())
+      
+      formals <- .rs.resolveFormals(token,
+                                    dummyFunction,
+                                    string[[1]],
+                                    functionCall,
+                                    matchedCall,
+                                    envir)
+      
+      # Protect against failure
+      if (is.null(formals))
+         return(.rs.emptyCompletions())
+      
+      results <- .rs.selectFuzzyMatches(formals$formals, token)
+      if (length(results))
+         results <- paste(results, "= ")
+      
+      return(.rs.makeCompletions(token = token,
+                                 results = results,
+                                 packages = paste(pkg, string[[1]], sep = "|||"),
+                                 type = .rs.acCompletionTypes$ARGUMENT,
+                                 fguess = string[[1]]))
+   }
+   
+   # Otherwise, assume that we're completing an exported item.
+   Reduce(.rs.appendCompletions, lapply(seq_along(completions), function(i) {
+      
+      completion <- completions[[i]]
+      package <- names(completions)[[i]]
+      
+      keep <- .rs.fuzzyMatches(completion$exports, token)
+      .rs.makeCompletions(token = token,
+                          results = completion$exports[keep],
+                          packages = package,
+                          type = completion$types[keep])
+   }))
+   
 })
