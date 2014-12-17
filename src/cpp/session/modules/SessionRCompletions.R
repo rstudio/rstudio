@@ -941,6 +941,8 @@ assign(x = ".rs.acCompletionTypes",
       return(result)
    
    completions <- character()
+   
+   # Get completions from dimension names for arrays
    if (is.array(object) && !is.null(dn <- dimnames(object)))
    {
       if (numCommas + 1 <= length(dn))
@@ -953,6 +955,16 @@ assign(x = ".rs.acCompletionTypes",
       else
          paste("dimnames(", string, ")[", numCommas + 1, "]", sep = "")
    }
+   
+   # Get completions from rownames for data.frames if we have no commas, e.g.
+   # `mtcars[|`
+   else if (inherits(object, "data.frame") &&
+            numCommas == 0)
+   {
+      completions <- rownames(object)
+   }
+   
+   # Just get the names of the object
    else
    {
       completions <- .rs.getNames(object)
