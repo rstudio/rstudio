@@ -520,6 +520,16 @@ assign(x = ".rs.acCompletionTypes",
       if (length(formals$formals))
          formals$formals <- paste(formals$formals, "= ")
       
+      # If we're getting completions for the `base::c` function, just discard
+      # the argument completions, since other context completions are more
+      # likely and more useful
+      if (identical(object, base::c) ||
+          identical(object, base::list))
+      {
+         formals <- list(formals = character(),
+                         methods = character())
+      }
+      
       # Get the current argument -- we can resolve this based on
       # 'numCommas' and the number of named formals. The idea is, e.g.
       # in a function call
