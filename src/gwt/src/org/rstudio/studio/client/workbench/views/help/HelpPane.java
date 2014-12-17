@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.help;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -549,8 +550,8 @@ public class HelpPane extends WorkbenchPane
                }
                else
                {
-                  getIFrameEx().getContentWindow().replaceLocationHref(targetUrl_);
                   frame_.setUrl(targetUrl_);
+                  replaceFrameUrl(frame_.getIFrame().cast(), targetUrl_);
                }
                return false;
             }
@@ -647,6 +648,12 @@ public class HelpPane extends WorkbenchPane
                findInputSource);
       }     
    }
+   
+   private final native void replaceFrameUrl(JavaScriptObject frame, String url) /*-{
+   	 frame.contentWindow.setTimeout(function() {
+   	  	this.location.replace(url);
+   	 }, 0);
+   }-*/;
 
 
    private final VirtualHistory navStack_ = new VirtualHistory() ;
