@@ -49,7 +49,6 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.codesearch.CodeSearchOracle;
 import org.rstudio.studio.client.workbench.codesearch.model.FunctionDefinition;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
@@ -77,7 +76,6 @@ import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 
 public class RCompletionManager implements CompletionManager
@@ -657,10 +655,28 @@ public class RCompletionManager implements CompletionManager
          if (!autoPopupEnabled)
             return false;
          
-         // Check for a valid number of R identifier characters for autopopup
-         boolean canAutoPopup = checkCanAutoPopup(c, 4);
+         // Immediately display completions after '$', '::', etc.
          char prevChar = docDisplay_.getCurrentLine().charAt(
-               input_.getCursorPosition().getColumn() - 1); 
+               input_.getCursorPosition().getColumn() - 1);
+         if (
+               (c == ':' && prevChar == ':') ||
+               (c == '$') ||
+               (c == '@')
+               )
+         {
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  beginSuggest(true, true, false);
+               }
+            });
+            return false;
+         }
+         
+         // Check for a valid number of R identifier characters for autopopup
+         boolean canAutoPopup = checkCanAutoPopup(c, 2);
          
          // Automatically popup completions after certain function calls
          if (c == '(' && !isLineInComment(docDisplay_.getCurrentLine()))
@@ -685,9 +701,6 @@ public class RCompletionManager implements CompletionManager
          
          if (
                (canAutoPopup) ||
-               (c == ':' && prevChar == ':') ||
-               (c == '$') ||
-               (c == '@') ||
                isSweaveCompletion(c))
          {
             // Delay suggestion to avoid auto-popup while the user is typing
