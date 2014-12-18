@@ -198,6 +198,15 @@ public class PrunerTest extends OptimizerTestBase {
     assertNotNull(result.findClass("EntryPoint$JsProtoImpl2"));
   }
 
+  public void testCleanupVariableOfNonReferencedType() throws Exception {
+    runDeadCodeElimination = false;
+    addSnippetClassDecl("static class A {}");
+    addSnippetClassDecl("static boolean fun(A a) { return a == null; }");
+    Result result = optimize("void", "fun(null);");
+    assertNull(result.findClass("EntryPoint$A"));
+    assertEquals("static boolean fun(null a);\n", result.findMethod("fun").toString());
+  }
+
   /**
    * Test for issue 2478.
    */

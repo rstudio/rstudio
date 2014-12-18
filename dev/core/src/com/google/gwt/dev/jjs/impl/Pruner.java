@@ -89,7 +89,8 @@ public class Pruner {
    * Remove assignments to pruned fields, locals and params. Nullify the return
    * type of methods declared to return a globally uninstantiable type. Replace
    * references to pruned variables and methods by references to the null field
-   * and null method, and drop assignments to pruned variables.
+   * and null method, assignments to pruned variables, and nullify the type of
+   * variable whose type is a pruned type.
    */
   private class CleanupRefsVisitor extends JModVisitorWithTemporaryVariableCreation {
     private final Stack<JExpression> lValues = new Stack<JExpression>();
@@ -233,6 +234,15 @@ public class Pruner {
         JsniMethodRef nullMethodRef =
             new JsniMethodRef(x.getSourceInfo(), ident, nullMethod, program.getJavaScriptObject());
         ctx.replaceMe(nullMethodRef);
+      }
+    }
+
+    @Override
+    public void exit(JVariable x, Context ctx) {
+      JType type = x.getType();
+      if (type instanceof JReferenceType &&
+          !program.typeOracle.isInstantiatedType((JReferenceType) type)) {
+        x.setType(program.getTypeNull());
       }
     }
 
