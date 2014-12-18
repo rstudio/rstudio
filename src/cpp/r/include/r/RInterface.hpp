@@ -50,6 +50,8 @@ typedef struct SEXPREC *SEXP;
 // on Windows platforms, use a manual definition of sigjmp_buf that corresponds
 // to how R lays out the structure in memory
 
+namespace {
+
 typedef struct
 {
   jmp_buf buf;
@@ -57,6 +59,8 @@ typedef struct
   int savedmask;
 }
 sigjmp_buf[1];
+
+} // anonymous namespace
 #endif
 
 typedef struct RCNTXT {

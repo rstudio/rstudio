@@ -20,6 +20,7 @@
 #include <QObject>
 #include <QMap>
 #include <QPoint>
+
 #include <QDBusPendingCallWatcher>
 #define QT_NO_CAST_FROM_ASCII
 

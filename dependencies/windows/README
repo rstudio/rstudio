@@ -14,24 +14,14 @@ NSIS:      http://nsis.sourceforge.net
 Installing QT
 =============================================================================
 
-Qt installation involves both the Qt SDK and MinGW compiler
-as well as version Qt 4.8.3 of the Qt Framework. First, install
-the QtSDK from this URL:
+Qt installation involves both the MinGW compiler as well as version Qt 5.4
+of the Qt Framework. You can install both of these components using the
+installer at this URL:
 
-https://s3.amazonaws.com/rstudio-buildtools/QtSdk-online-win-x86-v1_2_1.exe
+http://download.qt-project.org/official_releases/qt/5.4/5.4.0/qt-opensource-windows-x86-mingw491_opengl-5.4.0.exe
 
-Note that Mingw 4.4 and the MinGW version of Qt are not installed
-by default so you need to perform a custom installation and
-modify the following defaults:
-
-- Under Development Tools, select the MinGW variant of the Qt
-framework (the last of the variants listed)
-- Under Miscellaneous, specify that Mingw4.4 be installed
-
-RStudio is built against version 4.8.3 of the Qt Framework, so you should
-install it from here:
-
-http://download.qt-project.org/archive/qt/4.8/4.8.3/qt-win-opensource-4.8.3-mingw.exe
+Note that Mingw 4.9.1 is not installed by default so you need to be sure to
+select it under Tools in the installer target customization UI.
 
 
 Update System Path
@@ -43,8 +33,8 @@ via the CMake installer if the "Add to system path" option was chosen during
 installation). For Qt and MinGW you should ensure that the following
 additional directories are available on the path:
 
-C:\Qt\4.8.3\bin
-C:\QtSDK\mingw\bin
+C:\Qt\Qt5.4.0\5.4\mingw491_32\bin
+C:\Qt\Qt5.4.0\Tools\mingw491_32\bin
 
 Finally, you should also ensure that your R installation's bin
 directory is on the system path. For example:
@@ -59,3 +49,73 @@ Additional dependencies (boost, mingw64, GWT, and gin) can be satisfied by
 running the following script:
 
 install-dependencies.cmd
+
+NOTE: How to upgrade boost-1.50-win-gcc491.zip
+=============================================================================
+
+boost-1.50-win-gcc491.zip is a prepackaged set of boost 1.50 windows headers and
+binaries (32 and 64 bit) built for MinGW 4.9.1 To upgrade to either a new
+boost or MinGW version you should download the appropriate boost windows
+source archive, boostrap the boost build system (note that this
+requires MSFT Visual C++) then follow the instructions below 
+
+Win32
+---------
+
+(ensure 32 bit mingw64 is in the path)
+
+bjam --prefix=C:\boost32 toolset=gcc address-model=32 ^
+ --with-date_time --with-filesystem --with-iostreams ^
+ --with-program_options --with-regex --with-signals ^
+ --with-system --with-thread --with-chrono ^
+ variant=debug,release link=static threading=multi ^
+ define=BOOST_USE_WINDOWS_H ^
+ install
+
+Win64
+--------- 
+
+(ensure 64 bit mingw64 is in the path) 
+
+bjam --prefix=C:\boost64 toolset=gcc address-model=64 ^
+     --with-date_time --with-filesystem --with-iostreams ^
+     --with-program_options --with-regex --with-signals ^ 
+     --with-system --with-thread --with-chrono ^ 
+     variant=debug,release link=static threading=multi ^ 
+     define=BOOST_USE_WINDOWS_H ^
+     install
+
+After this you can create a new boost-<ver>-win-gcc<ver>.zip 
+archive using the contents of the C:\boost32 and C:\boost64 
+directories.
+
+
+NOTE: Getting boost to work with mingw64
+=============================================================================
+
+See the following article for general approach/guidelines:
+
+http://sourceforge.net/apps/trac/mingw-w64/wiki/Building%20Boost
+
+In order to build rstudio with boost under win32 we had to apply the 
+following patch (so that boost can correctly detect mingw64 as distinct
+from another mingw distribution:
+
+https://svn.boost.org/trac/boost/changeset/79334
+
+This should be fixed in more recent versions of boost, see:
+
+https://svn.boost.org/trac/boost/ticket/4258
+
+Note that in order to build rstudio with boost under win64 we had to make
+the following additional accomodations:
+
+1) define BOOST_USE_WINDOWS_H to eliminate errors compiling boost::thread
+   (see thread: http://lists.boost.org/boost-users/2010/02/55945.php)
+
+2) #undef BOOST_USE_WINDOWS_H prior to including <boost/interprocess/*>
+within BoostErrors.hpp
+
+3) add a dummy definitions for boost::thread::tss_cleanup_implemented
+   (see ticket: https://svn.boost.org/trac/boost/ticket/4258)
+

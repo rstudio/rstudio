@@ -98,7 +98,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    @Override
    public void onCompilePdfCompleted(CompilePdfCompletedEvent event)
    {
-      String pdfPreview = prefs_.getPdfPreviewValue();
+      String pdfPreview = prefs_.pdfPreview().getValue();
       
       boolean synctexSupported =
                   // internal previewer
@@ -339,7 +339,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    {
       return Desktop.isDesktop() && 
              !satellite_.isCurrentWindowSatellite() &&
-              prefs_.getPdfPreviewValue().equals(
+             prefs_.pdfPreview().getValue().equals(
                                    UIPrefs.PDF_PREVIEW_DESKTOP_SYNCTEX);
    }
 

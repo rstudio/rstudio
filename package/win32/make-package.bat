@@ -4,10 +4,9 @@ set PACKAGE_DIR="%CD%"
 REM clean if requested
 if "%1" == "clean" call clean-build.bat
 
-REM Prepend Qt 4.8 SDK to path
+REM Prepend Qt 5.4 SDK Mingw to path
 setlocal
-set PATH=C:\QtSDK\mingw\bin;%PATH%
-
+set PATH=C:\Qt\Qt5.4.0\Tools\mingw491_32\bin;%PATH%
 
 REM Establish build dir
 set BUILD_DIR=build

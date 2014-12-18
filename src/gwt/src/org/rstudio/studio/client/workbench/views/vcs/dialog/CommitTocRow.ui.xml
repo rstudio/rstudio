@@ -7,7 +7,6 @@
          position: relative;
          top: 4px;
          margin-right: 4px;
-         cursor: pointer;
       }
       .outer a {
          text-decoration: none;

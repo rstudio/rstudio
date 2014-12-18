@@ -52,6 +52,21 @@ public class WebWindowOpener implements WindowOpener
                            showLocation);
    }
    
+   public void openWebMinimalWindow(GlobalDisplay globalDisplay,
+                                    String url,
+                                    NewWindowOptions options,
+                                    int width,
+                                    int height,
+                                    boolean showLocation)
+   {
+      webOpenMinimalWindow(globalDisplay, 
+                           url, 
+                           options, 
+                           width, 
+                           height, 
+                           showLocation);
+   }
+   
    public void openSatelliteWindow(GlobalDisplay globalDisplay,
                                    String viewName,
                                    int width,

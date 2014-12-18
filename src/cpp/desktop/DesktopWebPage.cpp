@@ -20,6 +20,7 @@
 #include <core/FilePath.hpp>
 
 #include <QWidget>
+#include <QWebFrame>
 #include <QtDebug>
 #include "DesktopNetworkAccessManager.hpp"
 #include "DesktopWindowTracker.hpp"
@@ -58,17 +59,22 @@ void WebPage::setBaseUrl(const QUrl& baseUrl)
    baseUrl_ = baseUrl;
 }
 
-void WebPage::activateSatelliteWindow(QString name)
+void WebPage::activateWindow(QString name)
 {
-   BrowserWindow* pSatellite = s_windowTracker.getWindow(name);
-   if (pSatellite)
-      desktop::raiseAndActivateWindow(pSatellite);
+   BrowserWindow* pWindow = s_windowTracker.getWindow(name);
+   if (pWindow)
+      desktop::raiseAndActivateWindow(pWindow);
 }
 
 void WebPage::prepareForSatelliteWindow(
                               const PendingSatelliteWindow& pendingWnd)
 {
    pendingSatelliteWindow_ = pendingWnd;
+}
+
+void WebPage::prepareForNamedWindow(const QString name)
+{
+   pendingNamedWindow_ = name;
 }
 
 QWebPage* WebPage::createWindow(QWebPage::WebWindowType)
@@ -100,12 +106,12 @@ QWebPage* WebPage::createWindow(QWebPage::WebWindowType)
       else
       {
          // create and size
-         pSatellite = new SatelliteWindow(pMainWindow);
+         pSatellite = new SatelliteWindow(pMainWindow, name);
          pSatellite->resize(width, height);
 
          // try to tile the window (but leave pdf window alone
          // since it is so large)
-         if (name != QString::fromAscii("pdf"))
+         if (name != QString::fromUtf8("pdf"))
          {
             // calculate location to move to
 
@@ -135,8 +141,18 @@ QWebPage* WebPage::createWindow(QWebPage::WebWindowType)
    }
    else
    {
-      SecondaryWindow* pWindow = new SecondaryWindow(baseUrl_);
+      // show toolbar unless this is the pdf.js window
+      SecondaryWindow* pWindow = new SecondaryWindow(baseUrl_,
+         pendingNamedWindow_ != QString::fromUtf8("rstudio_pdfjs"));
       pWindow->show();
+
+      // if we have a name set, start tracking this window
+      if (!pendingNamedWindow_.isEmpty())
+      {
+         s_windowTracker.addWindow(pendingNamedWindow_, pWindow);
+         pendingNamedWindow_.clear();
+      }
+
       return pWindow->webView()->webPage();
    }
 }
@@ -160,7 +176,7 @@ void WebPage::javaScriptConsoleMessage(const QString& message, int /*lineNumber*
 
 QString WebPage::userAgentForUrl(const QUrl &url) const
 {
-   return this->QWebPage::userAgentForUrl(url) + QString::fromAscii(" Qt/") + QString::fromAscii(qVersion());
+   return this->QWebPage::userAgentForUrl(url) + QString::fromUtf8(" Qt/") + QString::fromUtf8(qVersion());
 }
 
 bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
@@ -169,13 +185,13 @@ bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
 {
    QUrl url = request.url();
 
-   if (url.toString() == QString::fromAscii("about:blank"))
+   if (url.toString() == QString::fromUtf8("about:blank"))
       return true;
 
-   if (url.scheme() != QString::fromAscii("http")
-       && url.scheme() != QString::fromAscii("https")
-       && url.scheme() != QString::fromAscii("mailto")
-       && url.scheme() != QString::fromAscii("data"))
+   if (url.scheme() != QString::fromUtf8("http")
+       && url.scheme() != QString::fromUtf8("https")
+       && url.scheme() != QString::fromUtf8("mailto")
+       && url.scheme() != QString::fromUtf8("data"))
    {
       qDebug() << url.toString();
       return false;
@@ -246,7 +262,7 @@ void WebPage::handleBase64Download(QWebFrame* pWebFrame, QUrl url)
    {
       QWebElement a = aElements.at(i);
       QString href = a.attribute(QString::fromUtf8("href"));
-      href.replace(QChar::fromAscii('\n'), QString::fromUtf8(""));
+      href.replace(QChar::fromLatin1('\n'), QString::fromUtf8(""));
       if (href == urlString)
       {
          aTag = a;
@@ -312,7 +328,7 @@ void WebPage::handleBase64Download(QWebFrame* pWebFrame, QUrl url)
 void WebPage::setViewerUrl(const QString& viewerUrl)
 {
    // record about:blank literally
-   if (viewerUrl == QString::fromAscii("about:blank"))
+   if (viewerUrl == QString::fromUtf8("about:blank"))
    {
       viewerUrl_ = viewerUrl;
       return;
@@ -321,8 +337,8 @@ void WebPage::setViewerUrl(const QString& viewerUrl)
    // extract the authority (domain and port) from the URL; we'll agree to
    // serve requests for the viewer pane that match this prefix. 
    QUrl url(viewerUrl);
-   viewerUrl_ = url.scheme() + QString::fromAscii("://") + 
-                url.authority() + QString::fromAscii("/");
+   viewerUrl_ = url.scheme() + QString::fromUtf8("://") +
+                url.authority() + QString::fromUtf8("/");
 }
 
 }

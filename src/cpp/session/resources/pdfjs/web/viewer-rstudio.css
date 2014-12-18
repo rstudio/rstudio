@@ -8,7 +8,7 @@
 
 @media screen and (min-resolution: 2dppx) {
    .toolbarButton#jumpToSource::before {
-      content: url(images/toolbarButton-jumpToSource@2x.png);
+      content: url(images/toolbarButton-jumpToSource_2x.png);
    }
 }
 

@@ -21,7 +21,9 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+
 import org.rstudio.core.client.SafeHtmlUtil;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 
 public class LineActionButtonRenderer
 {
@@ -110,7 +112,8 @@ public class LineActionButtonRenderer
       {
          builder.append(SafeHtmlUtil.createOpenTag(
                "div",
-               "class", resources_.styles().button(),
+               "class", resources_.styles().button() + " " +
+                        ThemeStyles.INSTANCE.handCursor(),
                "data-action", action));
          {
                builder.append(SafeHtmlUtil.createOpenTag(

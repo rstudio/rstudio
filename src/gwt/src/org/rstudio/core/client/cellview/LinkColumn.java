@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.cellview;
 
+import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.OperationWithInput;
 
 import com.google.gwt.cell.client.ClickableTextCell;
@@ -57,7 +58,8 @@ public abstract class LinkColumn<T> extends Column<T, String>
               Styles styles = RESOURCES.styles();
               StringBuilder div = new StringBuilder();
               div.append("<div class=\"");
-              div.append(styles.link());
+              div.append(styles.link() + " ");
+              div.append(ThemeResources.INSTANCE.themeStyles().handCursor());
               if (alwaysUnderline)
                  div.append(" " + styles.linkUnderlined());
               div.append("\">");

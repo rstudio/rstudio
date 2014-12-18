@@ -25,7 +25,7 @@
 #include "DesktopUtils.hpp"
 
 // per-platform synctex implemetnations
-#if defined(Q_WS_MACX)
+#if defined(Q_OS_MACX)
 
 #elif defined(Q_OS_WIN)
 #include "synctex/sumatra/SumatraSynctex.hpp"
@@ -44,7 +44,7 @@ namespace {
 SynctexViewerInfo discoverViewer()
 {
   SynctexViewerInfo sv;
-  sv.name = QString::fromAscii("Sumatra");
+  sv.name = QString::fromUtf8("Sumatra");
   sv.versionMajor = 2;
   sv.versionMinor = 0;
   sv.versionPatch = 1;
@@ -79,7 +79,7 @@ SynctexViewerInfo discoverViewer()
    if (boost::regex_match(stdOut, match, re))
    {
       SynctexViewerInfo sv;
-      sv.name = QString::fromAscii("Evince");
+      sv.name = QString::fromUtf8("Evince");
       sv.versionMajor = safe_convert::stringTo<int>(match[1], 2);
       sv.versionMinor = safe_convert::stringTo<int>(match[2], 0);
       sv.versionPatch = safe_convert::stringTo<int>(match[3], 0);
@@ -127,7 +127,7 @@ SynctexViewerInfo Synctex::desktopViewerInfo()
 Synctex* Synctex::create(MainWindow* pMainWindow)
 {
    // per-platform synctex implemetnations
-#if defined(Q_WS_MACX)
+#if defined(Q_OS_MACX)
    return new Synctex(pMainWindow);
 #elif defined(Q_OS_WIN)
    return new synctex::SumatraSynctex(pMainWindow);

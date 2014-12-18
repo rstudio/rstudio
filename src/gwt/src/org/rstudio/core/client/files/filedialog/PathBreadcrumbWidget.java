@@ -21,11 +21,14 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
+
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -51,6 +54,7 @@ public class PathBreadcrumbWidget
          linkUp_.setTitle("Go to parent directory");
          linkUp_.setVisible(false);
          linkUp_.setStylePrimaryName(RES.styles().goUp());
+         linkUp_.addStyleName(ThemeStyles.INSTANCE.handCursor());
          Image image = new Image(FileIconResources.INSTANCE.iconUpFolder());
          linkUp_.getElement().appendChild(image.getElement());
       }
@@ -94,6 +98,7 @@ public class PathBreadcrumbWidget
 
       Image browse = new Image(RES.browse());
       browse.setStyleName(STYLES.browse());
+      browse.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
       frame.addEast(browse, RES.browse().getWidth());
       browse.addClickHandler(new ClickHandler()
       {
@@ -153,6 +158,8 @@ public class PathBreadcrumbWidget
       if (isHome)
          link.addStyleName(RES.styles().home());
 
+      link.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
+      
       link.addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)

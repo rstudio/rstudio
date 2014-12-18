@@ -26,7 +26,8 @@ class SecondaryWindow : public BrowserWindow
 {
     Q_OBJECT
 public:
-    explicit SecondaryWindow(QUrl baseUrl, QWidget* pParent = NULL);
+    explicit SecondaryWindow(QUrl baseUrl, bool showToolbar = false,
+                             QWidget* pParent = NULL);
 
 signals:
 

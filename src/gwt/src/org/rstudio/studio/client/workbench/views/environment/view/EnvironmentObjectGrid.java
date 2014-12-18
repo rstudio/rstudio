@@ -345,7 +345,9 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                {
                   className += " " + style_.dataFrameValueCol() +
                                " " +
-                               ThemeStyles.INSTANCE.environmentDataFrameCol();
+                               ThemeStyles.INSTANCE.environmentDataFrameCol() +
+                               "  " +
+                               ThemeStyles.INSTANCE.handCursor();
                }
                if (rowValue.isPromise())
                {

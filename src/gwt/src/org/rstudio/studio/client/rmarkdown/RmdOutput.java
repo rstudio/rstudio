@@ -344,7 +344,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                                                 result.getOutputFile()); 
       if (".pdf".equals(extension))
       {
-         String previewer = prefs_.getPdfPreviewValue();
+         String previewer = prefs_.pdfPreview().getValue();
          if (previewer.equals(UIPrefs.PDF_PREVIEW_RSTUDIO))
          {
             pdfViewer_.viewPdfUrl(

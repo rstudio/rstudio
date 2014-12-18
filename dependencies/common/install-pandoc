@@ -50,23 +50,15 @@ else
    then
       cp ${PANDOC_NAME}/mac/pandoc* ${PANDOC_DIR}
    else
-      # copy binaries for appropriate distro/arch. debian and fedora
-      # use the fully static debian binaries (so we don't run into 
-      # problems with libgmp.so.3 being missing on later versions 
-      # of fedora. rhel 5 and 6 use the rpm binaries
-      if [[ -x /usr/bin/dpkg ]] || [[ -f /etc/fedora-release ]]; then
-        BINARY_TYPE=debian
-      else
-        BINARY_TYPE=rpm
-        INCLUDE_STATIC="1"
+      # copy binaries for appropriate distro/arch. 
+      if grep -q -i -s "release 5" /etc/redhat-release
+      then
+         BINARY_TYPE=rpm
+      else 
+         BINARY_TYPE=debian
       fi
       ARCH=`uname -m`
       cp ${PANDOC_NAME}/linux/${BINARY_TYPE}/${ARCH}/pandoc* ${PANDOC_DIR}
-      if [ "$INCLUDE_STATIC" == "1" ]
-      then
-        cp ${PANDOC_NAME}/linux/debian/${ARCH}/pandoc ${PANDOC_DIR}/pandoc-static
-        cp ${PANDOC_NAME}/linux/debian/${ARCH}/pandoc-citeproc ${PANDOC_DIR}/pandoc-citeproc-static
-      fi
    fi
    rm $PANDOC_ZIP
    rm -rf $PANDOC_NAME

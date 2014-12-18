@@ -29,6 +29,13 @@ public interface WindowOpener
                           int height,
                           boolean showLocation);
    
+   void openWebMinimalWindow(GlobalDisplay globalDisplay,
+                             final String url,
+                             NewWindowOptions options,
+                             int width,
+                             int height,
+                             boolean showLocation);
+   
    void openSatelliteWindow(GlobalDisplay globalDisplay,
                             String viewName,
                             int width,

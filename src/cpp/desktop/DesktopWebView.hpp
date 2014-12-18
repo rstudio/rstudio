@@ -18,6 +18,7 @@
 
 #include <QtGui>
 #include <QWebView>
+#include <QWebInspector>
 
 #include "DesktopWebPage.hpp"
 

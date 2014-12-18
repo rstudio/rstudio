@@ -79,7 +79,6 @@
 
 @sprite div.disclosure {
    gwt-image: 'searchResultsContextButton2';
-   cursor: pointer;
    margin-top: 1px;
 }
 @sprite .selected div.disclosure {

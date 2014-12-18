@@ -103,7 +103,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    public void onCompilePdfCompleted(CompilePdfCompletedEvent event)
    {
       // only handle PDF compile events when we're the preferred viewer
-      if (!prefs_.getPdfPreviewValue().equals(UIPrefs.PDF_PREVIEW_RSTUDIO))
+      if (!prefs_.pdfPreview().getValue().equals(UIPrefs.PDF_PREVIEW_RSTUDIO))
          return;
       
       // only handle successful compiles
@@ -267,7 +267,17 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
              }
           });
           executeOnPdfJsLoad_ = loadPdf;
-          display_.openMinimalWindow(viewerUrl, false, width, height, options);
+          
+          if (Desktop.isDesktop() && Desktop.getFrame().isCocoa()) 
+          {
+             // on cocoa, we can open a native window
+             display_.openMinimalWindow(viewerUrl, false, width, height, options);
+          }
+          else
+          {
+             // on Qt, we need to open a web window so window.opener is wired
+             display_.openWebMinimalWindow(viewerUrl, false, width, height, options);
+          }
       }
       else
       {

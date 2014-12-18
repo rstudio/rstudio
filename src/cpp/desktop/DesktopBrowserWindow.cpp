@@ -15,6 +15,11 @@
 
 #include "DesktopBrowserWindow.hpp"
 #include <QWebFrame>
+#include <QToolBar>
+#include <QShortcut>
+
+#include <QtPrintSupport/QPrintPreviewDialog>
+
 #include "DesktopWebView.hpp"
 
 #include "DesktopUtils.hpp"
@@ -24,9 +29,11 @@ namespace desktop {
 
 BrowserWindow::BrowserWindow(bool showToolbar,
                              bool adjustTitle,
+                             QString name,
                              QUrl baseUrl,
                              QWidget* pParent) :
-   QMainWindow(pParent)
+   QMainWindow(pParent),
+   name_(name)
 {
    adjustTitle_ = adjustTitle;
    progress_ = 0;
@@ -76,6 +83,13 @@ void BrowserWindow::printRequested(QWebFrame* frame)
 
 void BrowserWindow::onCloseRequested()
 {
+   QString cmd = QString::fromUtf8("if (window.opener && "
+      "window.opener.unregisterDesktopChildWindow))"
+      "   window.opener.unregisterDesktopChildWindow('");
+   cmd.append(name_);
+   cmd.append(QString::fromUtf8("');"));
+
+   webView()->page()->mainFrame()->evaluateJavaScript(cmd);
    close();
 }
 
@@ -104,9 +118,9 @@ WebView* BrowserWindow::webView()
 
 void BrowserWindow::avoidMoveCursorIfNecessary()
 {
-#ifdef Q_WS_MACX
+#ifdef Q_OS_MACX
    webView()->page()->mainFrame()->evaluateJavaScript(
-         QString::fromAscii("document.body.className = document.body.className + ' avoid-move-cursor'"));
+         QString::fromUtf8("document.body.className = document.body.className + ' avoid-move-cursor'"));
 #endif
 }
 
@@ -128,6 +142,17 @@ void BrowserWindow::postWebViewEvent(QEvent *keyEvent)
 void BrowserWindow::triggerPageAction(QWebPage::WebAction action)
 {
    webView()->triggerPageAction(action);
+}
+
+void BrowserWindow::onJavaScriptWindowObjectCleared()
+{
+   QString cmd = QString::fromUtf8("if (window.opener && "
+      "window.opener.registerDesktopChildWindow))"
+      "   window.opener.registerDesktopChildWindow('");
+   cmd.append(name_);
+   cmd.append(QString::fromUtf8("', window);"));
+
+   webView()->page()->mainFrame()->evaluateJavaScript(cmd);
 }
 
 } // namespace desktop

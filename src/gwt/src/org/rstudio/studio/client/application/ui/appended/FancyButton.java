@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.application.ui.appended;
 
+import org.rstudio.core.client.theme.res.ThemeResources;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.ButtonElement;
 import com.google.gwt.dom.client.TableCellElement;
@@ -66,6 +68,7 @@ public class FancyButton extends FocusWidget
    {
       Binder binder = GWT.create(Binder.class);
       setElement(binder.createAndBindUi(this));
+      addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
    }
 
    public void setText(String text)

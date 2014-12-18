@@ -154,16 +154,13 @@ public class CompilePdfPreferencesPane extends PreferencesPane
                                UIPrefsAccessor.PDF_PREVIEW_DESKTOP_SYNCTEX);
       }
       
-      if (UIPrefsAccessor.internalPdfPreviewSupported())
-      {
-         pdfPreview_.addChoice("RStudio Viewer", 
-                               UIPrefsAccessor.PDF_PREVIEW_RSTUDIO);
-      }
+      pdfPreview_.addChoice("RStudio Viewer", 
+                            UIPrefsAccessor.PDF_PREVIEW_RSTUDIO);
       
       pdfPreview_.addChoice("System Viewer",
                             UIPrefsAccessor.PDF_PREVIEW_SYSTEM);
       
-      pdfPreview_.setValue(prefs_.getPdfPreviewValue());
+      pdfPreview_.setValue(prefs_.pdfPreview().getValue());
    }
    
    @Override
