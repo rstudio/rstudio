@@ -368,7 +368,18 @@ FilePath userHomePath(std::string envOverride)
       {
          // return if we found one that exists
          if (homePath.exists())
+         {
+            std::string path = homePath.absolutePath();
+
+            // standardize drive letter capitalization if in X:/y/z format
+            if (path.length() > 1 && path[1] == ':')
+            {
+               path[0] = toupper(path[0]);
+               homePath = FilePath(path);
+            }
+
             return homePath;
+         }
 
          // otherwise warn that we got a value that didn't exist
          LOG_WARNING_MESSAGE("Home path returned by " + source.first + " (" +
