@@ -396,9 +396,9 @@ bool GwtCallback::canChooseRVersion()
 #endif
 }
 
-bool GwtCallback::isRetina()
+double GwtCallback::devicePixelRatio()
 {
-   return desktop::isRetina(pMainWindow_);
+   return desktop::devicePixelRatio(pMainWindow_);
 }
 
 void GwtCallback::openMinimalWindow(QString name,

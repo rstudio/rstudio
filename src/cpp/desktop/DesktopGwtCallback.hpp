@@ -81,7 +81,7 @@ public slots:
    QString chooseRVersion();
    bool canChooseRVersion();
 
-   bool isRetina();
+   double devicePixelRatio();
 
    void openMinimalWindow(QString name, QString url, int width, int height);
    void activateMinimalWindow(QString name);

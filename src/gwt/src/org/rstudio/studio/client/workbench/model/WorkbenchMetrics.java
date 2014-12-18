@@ -24,11 +24,13 @@ public class WorkbenchMetrics extends JavaScriptObject
    
    public static final native WorkbenchMetrics create(int consoleWidth,
                                                       int graphicsWidth,
-                                                      int graphicsHeight) /*-{
+                                                      int graphicsHeight,
+                                                      double devicePixelRatio) /*-{
       var clientMetrics = new Object();
       clientMetrics.consoleWidth = consoleWidth ;
       clientMetrics.graphicsWidth = graphicsWidth ;
       clientMetrics.graphicsHeight = graphicsHeight ;
+      clientMetrics.devicePixelRatio = devicePixelRatio;
       return clientMetrics ;
    }-*/;
    
@@ -44,12 +46,17 @@ public class WorkbenchMetrics extends JavaScriptObject
       return this.graphicsHeight;
    }-*/;
    
+   public final native double getDevicePixelRatio() /*-{
+      return this.devicePixelRatio;
+   }-*/;
+   
    public final boolean equalTo(WorkbenchMetrics other)
    {  
       return (other != null &&
               getConsoleWidth() == other.getConsoleWidth() &&
               getGraphicsWidth() == other.getGraphicsWidth() && 
-              getGraphicsHeight() == other.getGraphicsHeight());
+              getGraphicsHeight() == other.getGraphicsHeight() &&
+              getDevicePixelRatio() == other.getDevicePixelRatio());
    }
    
    // are the metrics "close enough"to the previous ones such that we don't 
@@ -72,6 +79,7 @@ public class WorkbenchMetrics extends JavaScriptObject
          
       return (consoleCloseEnough &&
               (getGraphicsWidth() == previous.getGraphicsWidth()) && 
-              (getGraphicsHeight() == previous.getGraphicsHeight()));
+              (getGraphicsHeight() == previous.getGraphicsHeight()) &&
+              (getDevicePixelRatio() == previous.getDevicePixelRatio()));
    }
 }

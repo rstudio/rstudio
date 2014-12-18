@@ -40,13 +40,15 @@ public:
 public:
    void set(const std::string& name, const std::string& value);
    void set(const std::string& name, int value);
+   void set(const std::string& name, double value);
    void set(const std::string& name, bool value);
 
    bool contains(const std::string& name) const;
    std::string get(const std::string& name, 
                    const std::string& defaultValue = std::string()) const;
    int getInt(const std::string& name, int defaultValue = 0) const;
-   int getBool(const std::string& name, bool defaultValue = false) const; 
+   double getDouble(const std::string& name, double defaultValue = 0) const;
+   bool getBool(const std::string& name, bool defaultValue = false) const;
 
    void forEach(const boost::function<void(const std::string&,
                                            const std::string&)>& func) const;

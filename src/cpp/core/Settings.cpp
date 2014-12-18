@@ -70,6 +70,12 @@ void Settings::set(const std::string& name, int value)
    set(name, safe_convert::numberToString(value));
 }
 
+void Settings::set(const std::string& name, double value)
+{
+   set(name, safe_convert::numberToString(value));
+}
+
+
 void Settings::set(const std::string& name, bool value)
 {
    set(name, safe_convert::numberToString(value));
@@ -100,7 +106,16 @@ int Settings::getInt(const std::string& name, int defaultValue) const
        return boost::lexical_cast<int>(value);
 }
 
-int Settings::getBool(const std::string& name, bool defaultValue) const
+double Settings::getDouble(const std::string& name, double defaultValue) const
+{
+   std::string value = get(name) ;
+   if (value.empty())
+       return defaultValue ;
+   else
+       return boost::lexical_cast<double>(value);
+}
+
+bool Settings::getBool(const std::string& name, bool defaultValue) const
 {
    std::string value = get(name) ;
    if (value.empty())

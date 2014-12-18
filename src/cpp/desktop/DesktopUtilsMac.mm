@@ -23,19 +23,18 @@
 
 namespace desktop {
 
-bool isRetina(QMainWindow* pMainWindow)
+double devicePixelRatio(QMainWindow* pMainWindow)
 {
    OSWindowRef macWindow = qt_mac_window_for(pMainWindow);
    NSWindow* pWindow = (NSWindow*)macWindow;
 
    if ([pWindow respondsToSelector:@selector(backingScaleFactor)])
    {
-      double scaleFactor = [pWindow backingScaleFactor];
-      return scaleFactor == 2.0;
+      return [pWindow backingScaleFactor];
    }
    else
    {
-      return false;
+      return 1.0;
    }
 }
 
