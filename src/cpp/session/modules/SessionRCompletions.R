@@ -1301,6 +1301,7 @@ assign(x = ".rs.acCompletionTypes",
                                              type,
                                              numCommas,
                                              functionCall,
+                                             dropFirstArgument,
                                              documentId,
                                              parent.frame())
          )
@@ -1738,7 +1739,7 @@ assign(x = ".rs.acCompletionTypes",
                                             envir)
 {
    .rs.appendCompletions(
-      .rs.getCompletionsLibraryContext(token, string, type, numCommas, functionCall, documentId, envir),
+      .rs.getCompletionsLibraryContext(token, string, type, numCommas, functionCall, discardFirst, documentId, envir),
       if (type == .rs.acContextTypes$FUNCTION)
          .rs.getCompletionsFunction(token, string, functionCall, numCommas, discardFirst, envir)
       else if (type == .rs.acContextTypes$ARGUMENT)
@@ -2191,6 +2192,7 @@ assign(x = ".rs.acCompletionTypes",
                                                          type,
                                                          numCommas,
                                                          functionCall,
+                                                         discardFirst,
                                                          documentId,
                                                          envir)
 {
@@ -2263,6 +2265,9 @@ assign(x = ".rs.acCompletionTypes",
       results <- .rs.selectFuzzyMatches(formals$formals, token)
       if (length(results))
          results <- paste(results, "= ")
+      
+      if (discardFirst && length(results))
+         results <- results[-1]
       
       return(.rs.makeCompletions(token = token,
                                  results = results,
