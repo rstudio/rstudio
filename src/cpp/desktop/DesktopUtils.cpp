@@ -68,9 +68,9 @@ FilePath userLogPath()
 }
 
 #ifndef Q_OS_MAC
-bool isRetina(QMainWindow* pMainWindow)
+double devicePixelRatio(QMainWindow* pMainWindow)
 {
-   return false;
+   return 1.0;
 }
 
 bool isOSXMavericks()

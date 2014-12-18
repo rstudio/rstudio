@@ -41,6 +41,7 @@ struct DeviceContext
          pDeviceSpecific(NULL),
          width(0),
          height(0),
+         devicePixelRatio(1.0),
          dev(ownerDev) {}
 
    // platform specific device info
@@ -50,6 +51,7 @@ struct DeviceContext
    core::FilePath targetPath;
    int width;
    int height;
+   double devicePixelRatio;
 
    // back pointer to owning device
    pDevDesc dev;
@@ -58,7 +60,11 @@ struct DeviceContext
 extern DeviceContext* (*allocate)(pDevDesc dev);
 extern void (*destroy)(DeviceContext* pDC);
 
-extern bool (*initialize)(int width, int height, DeviceContext* pDC);
+extern bool (*initialize)(int width,
+                          int height,
+                          double devicePixelRatio,
+                          DeviceContext* pDC);
+
 
 
 extern void (*setSize)(pDevDesc pDev);

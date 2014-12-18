@@ -34,6 +34,7 @@ namespace {
 const char * const kConsoleWidth = "r.session.client_metrics.console-width";
 const char * const kGraphicsWidth = "r.session.client_metrics.graphics-width";
 const char * const kGraphicsHeight = "r.session.client_metrics.graphics-height";
+const char * const kDevicePixelRatio = "r.session.client_metrics.device-pixel-ratio";
 
 }   
    
@@ -43,6 +44,7 @@ RClientMetrics get()
    metrics.consoleWidth = r::options::getOptionWidth();
    metrics.graphicsWidth = graphics::device::getWidth();
    metrics.graphicsHeight = graphics::device::getHeight();
+   metrics.devicePixelRatio = graphics::device::devicePixelRatio();
    return metrics;
 }
    
@@ -72,7 +74,7 @@ void set(const RClientMetrics& metrics)
       height = std::min(height, 10000);
 
       // set device size
-      graphics::device::setSize(width, height);
+      graphics::device::setSize(width, height, metrics.devicePixelRatio);
    }
 }
       
@@ -86,6 +88,7 @@ void save(Settings* pSettings)
    pSettings->set(kConsoleWidth, metrics.consoleWidth);
    pSettings->set(kGraphicsWidth, metrics.graphicsWidth);
    pSettings->set(kGraphicsHeight, metrics.graphicsHeight);
+   pSettings->set(kDevicePixelRatio, metrics.devicePixelRatio);
    pSettings->endUpdate();
 }
    
@@ -101,6 +104,8 @@ void restore(const Settings& settings)
    
    metrics.graphicsHeight = settings.getInt(kGraphicsHeight,
                                             graphics::device::kDefaultHeight);
+   metrics.devicePixelRatio = settings.getDouble(kDevicePixelRatio,
+                                       graphics::device::kDefaultDevicePixelRatio);
    
    // set them
    set(metrics);

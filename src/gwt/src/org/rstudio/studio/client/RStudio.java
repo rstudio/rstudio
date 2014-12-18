@@ -117,7 +117,7 @@ public class RStudio implements EntryPoint
       str.append("<img src=\"");
       str.append(progressUrl);
       str.append("\"");
-      if (BrowseCap.isRetina())
+      if (BrowseCap.devicePixelRatio() > 1.0)
          str.append("width=24 height=24");
       str.append("/>");
       div.setInnerHTML(str.toString());

@@ -39,18 +39,17 @@ NSWindow* nsWindowForMainWindow(QMainWindow* pMainWindow)
 
 }
 
-bool isRetina(QMainWindow* pMainWindow)
+double devicePixelRatio(QMainWindow* pMainWindow)
 {
    NSWindow* pWindow = nsWindowForMainWindow(pMainWindow);
 
    if ([pWindow respondsToSelector:@selector(backingScaleFactor)])
    {
-      double scaleFactor = [pWindow backingScaleFactor];
-      return scaleFactor == 2.0;
+      return [pWindow backingScaleFactor];
    }
    else
    {
-      return false;
+      return 1.0;
    }
 }
 

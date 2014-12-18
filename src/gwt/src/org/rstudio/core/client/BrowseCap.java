@@ -138,25 +138,25 @@ public class BrowseCap
       return isUserAgent("chromeframe");
    }
    
-   public static boolean isRetina() 
+   public static double devicePixelRatio() 
    {
       if (Desktop.isDesktop())
-         return Desktop.getFrame().isRetina();
+         return Desktop.getFrame().devicePixelRatio();
       else
-         return getIsRetina();
+         return getDevicePixelRatio();
    }
    
-   private static native final boolean getIsRetina() /*-{
+   private static native final double getDevicePixelRatio() /*-{
       try
       {
-         return ((('devicePixelRatio' in $wnd) && 
-                  ($wnd.devicePixelRatio == 2)) ||
-                (('matchMedia' in $wnd) && 
-                 $wnd.matchMedia("(min-resolution:144dpi)").matches));
+         if ('devicePixelRatio' in $wnd)
+            return $wnd.devicePixelRatio;
+         else
+            return 1.0;
       }
       catch(ex)
       {
-         return false;
+         return 1.0;
       }
    }-*/;
    
