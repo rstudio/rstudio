@@ -395,6 +395,18 @@ public class DocTabLayoutPanel
             }
            
             case Event.ONMOUSEUP:
+            {
+               // middlemouse should close a tab
+               if (event.getButton() == Event.BUTTON_MIDDLE)
+               {
+                  event.stopPropagation();
+                  event.preventDefault();
+                  closeHandler_.onTabClose();
+                  break;
+               }
+               
+               // note: fallthrough
+            }
             case Event.ONLOSECAPTURE: 
             {
                if (Element.as(event.getEventTarget()) == closeElement_)
