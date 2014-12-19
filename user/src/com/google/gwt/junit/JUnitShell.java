@@ -60,6 +60,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerMaxPermsPerPrecompile;
 import com.google.gwt.dev.util.arg.ArgHandlerNamespace;
 import com.google.gwt.dev.util.arg.ArgHandlerOptimize;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
+import com.google.gwt.dev.util.arg.ArgHandlerSetProperties;
 import com.google.gwt.dev.util.arg.ArgHandlerSourceLevel;
 import com.google.gwt.dev.util.arg.ArgHandlerWarDir;
 import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
@@ -286,6 +287,9 @@ public class JUnitShell extends DevMode {
       registerHandler(new ArgHandlerLocalWorkers(options));
       registerHandler(new ArgHandlerNamespace(options));
       registerHandler(new ArgHandlerOptimize(options));
+      registerHandler(new ArgHandlerIncrementalCompile(options));
+      registerHandler(new ArgHandlerJsInteropMode(options));
+      registerHandler(new ArgHandlerSetProperties(options));
 
       /*
        * ----- Options specific to JUnitShell -----
@@ -532,9 +536,6 @@ public class JUnitShell extends DevMode {
           return true;
         }
       });
-
-      registerHandler(new ArgHandlerIncrementalCompile(options));
-      registerHandler(new ArgHandlerJsInteropMode(options));
     }
 
     @Override
@@ -1079,6 +1080,11 @@ public class JUnitShell extends DevMode {
         bindingProperty.setRootGeneratedValues(userAgents.toArray(new String[0]));
       }
     }
+
+    if (!Compiler.maybeRestrictProperties(getTopLogger(), module, options.getProperties())) {
+      throw new UnableToCompleteException();
+    }
+
     boolean success = false;
     try {
       success = new Compiler(options).run(getTopLogger(), module);
