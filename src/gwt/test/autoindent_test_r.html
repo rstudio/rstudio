@@ -12,6 +12,7 @@
   <script type="text/javascript" src="../acesupport/acemode/r.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/r_code_model.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/r_scope_tree.js"></script>
+  <script type="text/javascript" src="../tools/ace/build/src/keybinding-vim.js"></script>
   <style type="text/css">
   pre {
     margin-bottom: 30px;
@@ -29,6 +30,7 @@
 <h2>Configure Editor</h2>
 <button onclick="require('mode/r_code_model').setVerticallyAlignFunctionArgs(!require('mode/r_code_model').getVerticallyAlignFunctionArgs())">Toggle Vertical Alignment</button>
 <button onclick="editor.getSession().reindent()">Reindent</button>
+<button onclick="editor.setKeyboardHandler(vim.handler);">Toggle Vim Mode</button>
 
 <h2 style="margin-top: 100">Automated Tests</h2>
 <p>Passed: <span id="passed"></span>, Failed: <span id="failed"></span></p>
@@ -273,6 +275,7 @@ x[1,
 </ol>
 
 <script type="text/javascript">
+var vim = require("ace/keyboard/vim");
 var RCodeModel = require('mode/r_code_model').RCodeModel;
 var Document = require('ace/document').Document;
 var RMode = require('mode/r').Mode;

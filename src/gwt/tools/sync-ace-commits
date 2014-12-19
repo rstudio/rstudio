@@ -47,8 +47,9 @@ git fetch origin
 git fetch upstream
 
 # Point this to the upstream commit that we've tested
-# NOTE: SHA1 for release v1.1.8
-git checkout b8e3198ba8e9fe98cdda85e90f517b94d4452b5e
+# NOTE: This is a SHA1 for a commit after v1.1.8 release;
+# we take this to get better Vim support (e.g. block selection)
+git checkout ed5c38b7c87cece4de1acc17912aa3043dd0b11a
 
 # Make sure node packages are up to date
 npm install
