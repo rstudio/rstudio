@@ -380,7 +380,7 @@ public class DocTabLayoutPanel
                   event.preventDefault();
                   event.stopPropagation();
                }
-               
+               break;
             }
            
             case Event.ONMOUSEMOVE: 
