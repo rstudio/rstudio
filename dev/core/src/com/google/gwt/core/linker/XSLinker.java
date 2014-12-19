@@ -67,7 +67,7 @@ public class XSLinker extends SelectionScriptLinker {
   }
 
   @Override
-  protected String getModuleSuffix(TreeLogger logger, LinkerContext context) {
+  protected String getModuleSuffix2(TreeLogger logger, LinkerContext context, String strongName) {
     DefaultTextOutput out = new DefaultTextOutput(context.isOutputCompact());
 
     out.print("$stats && $stats({moduleName:'" + context.getModuleName()

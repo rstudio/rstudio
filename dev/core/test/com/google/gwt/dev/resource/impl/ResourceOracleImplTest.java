@@ -69,24 +69,16 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
 
   private static class ResourceOracleSnapshot {
     private final Set<String> pathNames;
-    private final Map<String, Resource> resourceMap;
     private final Set<Resource> resources;
 
     public ResourceOracleSnapshot(ResourceOracleImpl oracle) {
       resources = oracle.getResources();
-      resourceMap = oracle.getResourceMap();
       pathNames = oracle.getPathNames();
     }
 
     public void assertCollectionsConsistent(int expectedSize) {
       assertEquals(expectedSize, resources.size());
-      assertEquals(resources.size(), resourceMap.size());
       assertEquals(resources.size(), pathNames.size());
-
-      // Ensure every resource is in the map correctly.
-      for (Resource r : resources) {
-        assertSame(r, resourceMap.get(r.getPath()));
-      }
 
       // Ensure that every resource path is in the set.
       for (Resource r : resources) {
@@ -95,7 +87,6 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     }
 
     public void assertNotSameCollections(ResourceOracleSnapshot other) {
-      assertNotSame(resourceMap, other.resourceMap);
       assertNotSame(resources, other.resources);
       assertNotSame(pathNames, other.pathNames);
     }
@@ -123,7 +114,6 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     }
 
     public void assertSameCollections(ResourceOracleSnapshot other) {
-      assertResourcesEqual(resourceMap, other.resourceMap);
       assertResourcesEqual(resources, other.resources);
       assertEquals(pathNames, other.pathNames);
     }

@@ -17,7 +17,6 @@ package com.google.gwt.dev.resource.impl;
 
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.ResourceOracle;
-import com.google.gwt.thirdparty.guava.common.io.Files;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,12 +25,6 @@ import java.io.InputStream;
  * A helper base class for {@code ResourceOracle} implementations.
  */
 public abstract class AbstractResourceOracle implements ResourceOracle {
-  @Override
-  public Resource getResource(String pathName) {
-    pathName = Files.simplifyPath(pathName);
-    return getResourceMap().get(pathName);
-  }
-
   @Override
   public InputStream getResourceAsStream(String pathName) {
     Resource resource = getResource(pathName);

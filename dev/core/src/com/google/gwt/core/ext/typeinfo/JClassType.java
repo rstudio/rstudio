@@ -209,12 +209,6 @@ public interface JClassType extends JType, HasAnnotations {
   boolean isFinal();
 
   /**
-   * @deprecated local types are not modeled
-   */
-  @Deprecated
-  boolean isLocalType();
-
-  /**
    * Tests if this type is contained within another type.
    *
    * @return true if this type has an enclosing type, false if this type is a

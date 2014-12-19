@@ -175,16 +175,6 @@ public class D8ScriptLinker extends SelectionScriptLinker {
     throw new UnableToCompleteException();
   }
 
-  /**
-   * Unimplemented. Normally required by
-   * {@link #doEmitCompilation(TreeLogger, LinkerContext, CompilationResult, ArtifactSet)}.
-   */
-  @Override
-  protected String getModuleSuffix(TreeLogger logger, LinkerContext context)
-      throws UnableToCompleteException {
-    throw new UnableToCompleteException();
-  }
-
   @Override
   protected String getSelectionScriptTemplate(TreeLogger logger, LinkerContext context)
       throws UnableToCompleteException {

@@ -475,15 +475,6 @@ public abstract class JClassType implements
   public abstract JClassType isInterface();
 
   /**
-   * @deprecated local types are not modeled
-   */
-  @Override
-  @Deprecated
-  public final boolean isLocalType() {
-    return false;
-  }
-
-  /**
    * Tests if this type is contained within another type.
    *
    * @return true if this type has an enclosing type, false if this type is a

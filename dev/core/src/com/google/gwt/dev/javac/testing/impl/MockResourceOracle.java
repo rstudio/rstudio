@@ -19,6 +19,7 @@ import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.impl.ClassPathEntry;
 import com.google.gwt.dev.resource.impl.ResourceOracleImpl;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.io.Files;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -69,12 +70,12 @@ public class MockResourceOracle extends ResourceOracleImpl {
     return exportedMap.keySet();
   }
 
-  @Deprecated
   @Override
-  public Map<String, Resource> getResourceMap() {
-    return exportedMap;
+  public Resource getResource(String pathName) {
+    pathName = Files.simplifyPath(pathName);
+    return exportedMap.get(pathName);
   }
-
+  
   @Override
   public Set<Resource> getResources() {
     return exportedValues;

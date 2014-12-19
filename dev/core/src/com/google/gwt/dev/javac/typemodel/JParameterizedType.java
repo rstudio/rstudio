@@ -195,15 +195,6 @@ public class JParameterizedType extends JMaybeParameterizedType implements
     return members.getNestedTypes();
   }
 
-  /**
-   * @deprecated See {@link #getQualifiedSourceName()}
-   */
-  @Override
-  @Deprecated
-  public String getNonParameterizedQualifiedSourceName() {
-    return getQualifiedSourceName();
-  }
-
   @Override
   public JMethod[] getOverloads(String name) {
     return members.getOverloads(name);

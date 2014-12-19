@@ -35,13 +35,6 @@ public interface ConfigurationProperty {
   String getName();
 
   /**
-   * Returns the defined value for the configuration property.  If the property
-   * has multiple values, this returns the first value only.
-   */
-  @Deprecated
-  String getValue();
-
-  /**
    * Returns the defined values for the configuration property as a List
    * of Strings.
    */

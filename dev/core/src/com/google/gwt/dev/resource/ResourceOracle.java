@@ -16,7 +16,6 @@
 package com.google.gwt.dev.resource;
 
 import java.io.InputStream;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -57,16 +56,6 @@ public interface ResourceOracle {
    * is no such resource.
    */
   InputStream getResourceAsStream(String pathName);
-
-  /**
-   * Returns an unmodifiable map of abstract path name to resource.
-   *
-   * @deprecated use {@link #getResource(String pathName)}, {@link #getResources()}, and
-   *             {@link #getPathNames()} instead so that access to specific resources can be
-   *             tracked.
-   */
-  @Deprecated
-  Map<String, Resource> getResourceMap();
 
   /**
    * Returns an unmodifiable set of unique resources with constant lookup time.

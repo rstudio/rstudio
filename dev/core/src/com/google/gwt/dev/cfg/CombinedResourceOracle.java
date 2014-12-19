@@ -16,14 +16,12 @@ package com.google.gwt.dev.cfg;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.dev.resource.impl.AbstractResourceOracle;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
-import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
+import com.google.gwt.thirdparty.guava.common.io.Files;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -36,7 +34,6 @@ import java.util.Set;
 public class CombinedResourceOracle extends AbstractResourceOracle {
 
   private Set<Resource> buildResources;
-  private Map<String, Resource> buildResourcesByPath;
   private Set<String> pathNames;
   private List<ResourceOracle> resourceOracles;
 
@@ -61,24 +58,27 @@ public class CombinedResourceOracle extends AbstractResourceOracle {
     return pathNames;
   }
 
-  @Deprecated
-  @Override
-  public Map<String, Resource> getResourceMap() {
-    if (buildResourcesByPath == null) {
-      buildResourcesByPath = Maps.newHashMap();
-      for (ResourceOracle resourceOracle : resourceOracles) {
-        buildResourcesByPath.putAll(resourceOracle.getResourceMap());
-      }
-      buildResourcesByPath = Collections.unmodifiableMap(buildResourcesByPath);
-    }
-    return buildResourcesByPath;
-  }
-
   @Override
   public Set<Resource> getResources() {
     if (buildResources == null) {
-      buildResources = ImmutableSet.<Resource> copyOf(getResourceMap().values());
+      buildResources = Sets.newHashSet();
+      for (ResourceOracle resourceOracle : resourceOracles) {
+        buildResources.addAll(resourceOracle.getResources());
+      }
+      buildResources = Collections.unmodifiableSet(buildResources);
     }
     return buildResources;
+  }
+
+  @Override
+  public Resource getResource(String pathName) {
+    pathName = Files.simplifyPath(pathName);
+    for (ResourceOracle resourceOracle : resourceOracles) {
+      Resource resource = resourceOracle.getResource(pathName);
+      if (resource != null) {
+        return resource;
+      }
+    }
+    return null;
   }
 }

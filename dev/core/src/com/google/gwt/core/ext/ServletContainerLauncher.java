@@ -42,16 +42,6 @@ public abstract class ServletContainerLauncher {
   }
 
   /**
-   * @return a path to a 24-pixel high image file (relative to the classpath) to
-   *     be used for this servlet container, or null if none.
-   * @deprecated see {@link #getIconBytes} instead.
-   */
-  @Deprecated
-  public String getIconPath() {
-    return null;
-  }
-
-  /**
    * @return a short human-readable name of this servlet container, or null
    *     if no name should be displayed.
    */

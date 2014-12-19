@@ -70,12 +70,6 @@ public final class HostedModeLinker extends SelectionScriptLinker {
   }
 
   @Override
-  protected String getModuleSuffix(TreeLogger logger, LinkerContext context)
-      throws UnableToCompleteException {
-    return unsupported(logger);
-  }
-
-  @Override
   protected String getSelectionScriptTemplate(TreeLogger logger, LinkerContext context) {
     return "com/google/gwt/core/ext/linker/impl/HostedModeTemplate.js";
   }

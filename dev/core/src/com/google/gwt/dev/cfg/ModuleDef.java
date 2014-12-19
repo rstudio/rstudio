@@ -558,7 +558,7 @@ public class ModuleDef implements DepsInfoProvider {
 
   public synchronized Resource findPublicFile(String partialPath) {
     ensureResourcesScanned();
-    return lazyPublicOracle.getResourceMap().get(partialPath);
+    return lazyPublicOracle.getResource(partialPath);
   }
 
   public synchronized String findServletForPath(String actual) {
@@ -590,7 +590,7 @@ public class ModuleDef implements DepsInfoProvider {
    */
   public synchronized Resource findSourceFile(String partialPath) {
     ensureResourcesScanned();
-    return lazySourceOracle.getResourceMap().get(partialPath);
+    return lazySourceOracle.getResource(partialPath);
   }
 
   public Set<String> getActiveLinkerNames() {

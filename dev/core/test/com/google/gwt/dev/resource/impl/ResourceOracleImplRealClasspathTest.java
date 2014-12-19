@@ -20,7 +20,7 @@ import static com.google.gwt.dev.resource.impl.ResourceOracleImplTest.assertReso
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.resource.Resource;
 
-import java.util.Map;
+import java.util.Set;
 
 /**
  * Tests {@link ResourceOracleImpl} using the real class path.
@@ -69,8 +69,8 @@ public class ResourceOracleImplRealClasspathTest extends
     pathPrefixSet.add(makeThisClassPrefix());
     resourceOracle.setPathPrefixes(pathPrefixSet);
     resourceOracle.scanResources(logger);
-    Map<String, Resource> resourceMap = resourceOracle.getResourceMap();
-    assertEquals(2, resourceMap.size());
+    Set<Resource> resources = resourceOracle.getResources();
+    assertEquals(2, resources.size());
   }
 
   public void testRefresh() {
@@ -79,17 +79,17 @@ public class ResourceOracleImplRealClasspathTest extends
     pathPrefixSet.add(makeThisClassPrefix());
     resourceOracle.setPathPrefixes(pathPrefixSet);
     resourceOracle.scanResources(logger);
-    Map<String, Resource> resourceMap = resourceOracle.getResourceMap();
-    assertEquals(2, resourceMap.size());
+    Set<Resource> resources = resourceOracle.getResources();
+    assertEquals(2, resources.size());
 
     // Plain refresh should have no effect.
     resourceOracle.scanResources(logger);
-    assertResourcesEqual(resourceMap, resourceOracle.getResourceMap());
+    assertResourcesEqual(resources, resourceOracle.getResources());
 
     // Setting same path entries should have no effect.
     resourceOracle.setPathPrefixes(pathPrefixSet);
     resourceOracle.scanResources(logger);
-    assertResourcesEqual(resourceMap, resourceOracle.getResourceMap());
+    assertResourcesEqual(resources, resourceOracle.getResources());
 
     // Setting identical path entries should have no effect.
     pathPrefixSet = new PathPrefixSet();
@@ -97,7 +97,7 @@ public class ResourceOracleImplRealClasspathTest extends
     pathPrefixSet.add(makeThisClassPrefix());
     resourceOracle.setPathPrefixes(pathPrefixSet);
     resourceOracle.scanResources(logger);
-    assertResourcesEqual(resourceMap, resourceOracle.getResourceMap());
+    assertResourcesEqual(resources, resourceOracle.getResources());
 
     // Setting identical result should have no effect.
     pathPrefixSet = new PathPrefixSet();
@@ -106,7 +106,7 @@ public class ResourceOracleImplRealClasspathTest extends
     pathPrefixSet.add(makeJunitPrefix());
     resourceOracle.setPathPrefixes(pathPrefixSet);
     resourceOracle.scanResources(logger);
-    assertResourcesEqual(resourceMap, resourceOracle.getResourceMap());
+    assertResourcesEqual(resources, resourceOracle.getResources());
 
     // Actually change the working set.
     pathPrefixSet = new PathPrefixSet();
@@ -115,6 +115,6 @@ public class ResourceOracleImplRealClasspathTest extends
     pathPrefixSet.add(makeThisClassPrefixPlus());
     resourceOracle.setPathPrefixes(pathPrefixSet);
     resourceOracle.scanResources(logger);
-    assertEquals(3, resourceOracle.getResourceMap().size());
+    assertEquals(3, resourceOracle.getResources().size());
   }
 }

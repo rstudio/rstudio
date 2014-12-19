@@ -570,17 +570,6 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
   }
 
   /**
-   * @deprecated This method will always return 0 because a TypeOracle never
-   *             gets reloaded anymore. Callers should not rely on this value to
-   *             manage static state.
-   */
-  @Deprecated
-  @Override
-  public long getReloadCount() {
-    return 0;
-  }
-
-  /**
    * Returns the single implementation type for an interface returned via
    * {@link #getSingleJsoImplInterfaces()} or <code>null</code> if no JSO
    * implementation is defined.

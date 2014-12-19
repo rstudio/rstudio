@@ -21,7 +21,6 @@ import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.testing.impl.MockResource;
 import com.google.gwt.dev.javac.testing.impl.MockResourceOracle;
-import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
@@ -30,7 +29,6 @@ import junit.framework.TestCase;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -155,11 +153,11 @@ public abstract class CompilationStateTestBase extends TestCase {
         new HashSet<CompilationUnit>(units));
 
     // Save off a mutable copy of the source map and generated types to compare.
-    Map<String, Resource> sourceMap = new HashMap<String, Resource>(
-        oracle.getResourceMap());
+    Set<String> resourcePathNames = new HashSet<String>(
+        oracle.getPathNames());
     Set<String> generatedTypes = new HashSet<String>(
         Arrays.asList(generatedTypeNames));
-    assertEquals(sourceMap.size() + generatedTypes.size(), units.size());
+    assertEquals(resourcePathNames.size() + generatedTypes.size(), units.size());
     for (Entry<String, CompilationUnit> entry : unitMap.entrySet()) {
       // Validate source file internally consistent.
       String className = entry.getKey();
@@ -174,13 +172,13 @@ public abstract class CompilationStateTestBase extends TestCase {
         assertNotNull(generatedTypes.remove(className));
       } else {
         String partialPath = className.replace('.', '/') + ".java";
-        assertTrue(sourceMap.containsKey(partialPath));
+        assertTrue(resourcePathNames.contains(partialPath));
         // TODO: Validate the source file matches the resource.
-        assertNotNull(sourceMap.remove(partialPath));
+        assertNotNull(resourcePathNames.remove(partialPath));
       }
     }
     // The mutable sets should be empty now.
-    assertEquals(0, sourceMap.size());
+    assertEquals(0, resourcePathNames.size());
     assertEquals(0, generatedTypes.size());
   }
 }

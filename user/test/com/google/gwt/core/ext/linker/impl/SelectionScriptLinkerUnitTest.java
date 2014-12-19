@@ -98,7 +98,7 @@ public class SelectionScriptLinkerUnitTest extends TestCase {
     }
 
     @Override
-    protected String getModuleSuffix(TreeLogger logger, LinkerContext context) {
+    protected String getModuleSuffix2(TreeLogger logger, LinkerContext context, String strongName) {
       return "MODULE_SUFFIX";
     }
 

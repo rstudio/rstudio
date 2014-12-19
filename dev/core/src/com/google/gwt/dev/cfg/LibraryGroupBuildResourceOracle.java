@@ -18,11 +18,10 @@ package com.google.gwt.dev.cfg;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.impl.AbstractResourceOracle;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
-import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
+import com.google.gwt.thirdparty.guava.common.io.Files;
 
 import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -31,7 +30,6 @@ import java.util.Set;
 public class LibraryGroupBuildResourceOracle extends AbstractResourceOracle {
 
   private Set<Resource> buildResources;
-  private Map<String, Resource> buildResourcesByPath;
   private final LibraryGroup libraryGroup;
   private Set<String> pathNames;
 
@@ -52,17 +50,10 @@ public class LibraryGroupBuildResourceOracle extends AbstractResourceOracle {
     return pathNames;
   }
 
-  @Deprecated
   @Override
-  public Map<String, Resource> getResourceMap() {
-    if (buildResourcesByPath == null) {
-      buildResourcesByPath = Maps.newHashMap();
-      for (String path : getPathNames()) {
-        buildResourcesByPath.put(path, libraryGroup.getBuildResourceByPath(path));
-      }
-      buildResourcesByPath = Collections.unmodifiableMap(buildResourcesByPath);
-    }
-    return buildResourcesByPath;
+  public Resource getResource(String pathName) {
+    pathName = Files.simplifyPath(pathName);
+    return libraryGroup.getBuildResourceByPath(pathName);
   }
 
   @Override

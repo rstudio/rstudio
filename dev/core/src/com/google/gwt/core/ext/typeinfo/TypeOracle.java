@@ -43,16 +43,6 @@ import java.util.Set;
 public abstract class TypeOracle {
 
   /**
-   * A reserved metadata tag to indicates that a field type, method return type
-   * or method parameter type is intended to be parameterized. Note that
-   * constructor type parameters are not supported at present.
-   *
-   * @deprecated gwt.typeArgs is not longer supported
-   */
-  @Deprecated
-  public static final String TAG_TYPEARGS = "gwt.typeArgs";
-
-  /**
    * Convenience method to sort class types in a consistent way. Note that the
    * order is subject to change and is intended to generate an "aesthetically
    * pleasing" order rather than a computationally reliable order.
@@ -219,14 +209,6 @@ public abstract class TypeOracle {
    */
   public abstract JParameterizedType getParameterizedType(
       JGenericType genericType, JClassType[] typeArgs);
-
-  /**
-   * @deprecated This method will always return 0 because a TypeOracle never
-   *             gets reloaded anymore. Callers should not rely on this value to
-   *             manage static state.
-   */
-  @Deprecated
-  public abstract long getReloadCount();
 
   /**
    * Returns the single implementation type for an interface returned via

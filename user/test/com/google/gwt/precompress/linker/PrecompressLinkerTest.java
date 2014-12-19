@@ -66,12 +66,6 @@ public class PrecompressLinkerTest extends TestCase {
     }
 
     @Override
-    @Deprecated
-    public String getValue() {
-      return values.get(0);
-    }
-
-    @Override
     public List<String> getValues() {
       return values;
     }

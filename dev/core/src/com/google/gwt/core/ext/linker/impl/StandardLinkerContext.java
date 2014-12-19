@@ -254,7 +254,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     for (String path : publicResourceOracle.getPathNames()) {
       String partialPath = path.replace(File.separatorChar, '/');
       PublicResource resource = new StandardPublicResource(partialPath,
-          publicResourceOracle.getResourceMap().get(path));
+          publicResourceOracle.getResource(path));
       artifacts.add(resource);
       if (logger.isLoggable(TreeLogger.SPAM)) {
         logger.log(TreeLogger.SPAM, "Added public resource " + resource, null);

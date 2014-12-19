@@ -18,16 +18,9 @@ package com.google.gwt.core.ext.typeinfo;
 /**
  * Represents a parameterized type in a declaration.
  */
-
 public interface JParameterizedType extends JClassType {
 
   JGenericType getBaseType();
-
-  /**
-   * @deprecated See {@link #getQualifiedSourceName()}
-   */
-  @Deprecated
-  String getNonParameterizedQualifiedSourceName();
 
   JClassType getRawType();
 

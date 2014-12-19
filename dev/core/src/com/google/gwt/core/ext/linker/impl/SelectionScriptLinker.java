@@ -347,14 +347,11 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     String prefix = getDeferredFragmentPrefix(logger, context, fragment);
     b.append(prefix);
     b.append(js);
-    String suffix = getDeferredFragmentSuffix(logger, context, fragment);
+    String suffix = getDeferredFragmentSuffix2(logger, context, fragment, strongName);
     if (suffix == null) {
-      suffix = getDeferredFragmentSuffix2(logger, context, fragment, strongName);
-      if (suffix == null) {
-        logger.log(Type.ERROR, "Neither getDeferredFragmentSuffix nor getDeferredFragmentSuffix2 "
-            + "were overridden in linker: " + getClass().getName());
-        throw new UnableToCompleteException();
-      }
+      logger.log(Type.ERROR, "getDeferredFragmentSuffix2 "
+          + "was not overridden in linker: " + getClass().getName());
+      throw new UnableToCompleteException();
     }
     b.append(suffix);
     SymbolMapsLinker.ScriptFragmentEditsArtifact editsArtifact
@@ -367,7 +364,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   /**
    * Generate the primary fragment. The default implementation is based on {@link
    * #getModulePrefix(TreeLogger, LinkerContext, String, int)} and {@link
-   * #getModuleSuffix(TreeLogger, LinkerContext)}.
+   * #getModuleSuffix2(TreeLogger, LinkerContext, String)}.
    */
   protected byte[] generatePrimaryFragment(TreeLogger logger,
       LinkerContext context, CompilationResult result, String[] js,
@@ -393,14 +390,11 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     artifacts.add(editsArtifact);
     b.append(modulePrefix);
     b.append(js);
-    String suffix = getModuleSuffix(logger, context);
+    String suffix = getModuleSuffix2(logger, context, strongName);
     if (suffix == null) {
-      suffix = getModuleSuffix2(logger, context, strongName);
-      if (suffix == null) {
-        logger.log(Type.ERROR, "Neither getModuleSuffix nor getModuleSuffix2 were overridden in "
-            + "linker: " + getClass().getName());
-        throw new UnableToCompleteException();
-      }
+      logger.log(Type.ERROR, "getModuleSuffix2 was not overridden in "
+          + "linker: " + getClass().getName());
+      throw new UnableToCompleteException();
     }
     b.append(suffix);
     return wrapPrimaryFragment(logger, context, b.toString(), artifacts, result);
@@ -433,22 +427,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   }
 
   /**
-   * Returns the suffix at the end of a JavaScript fragment other than the initial fragment
-   * (deprecated version). The default version returns null, which will cause
-   * {@link #getDeferredFragmentSuffix2} to be called instead. Subclasses should switch to
-   * extending getDeferredFragmentSuffix2.
-   */
-  @Deprecated
-  protected String getDeferredFragmentSuffix(TreeLogger logger, LinkerContext context,
-      int fragment) {
-    return null;
-  }
-
-  /**
-   * Returns the suffix at the end of a JavaScript fragment other than the initial fragment
-   * (new version). This method won't be called if {@link #getDeferredFragmentSuffix} is overridden
-   * to return non-null. Subclasses should stop implementing getDeferredFramgnentSuffix and
-   * implement getDeferredFragmentSuffix2 instead.
+   * Returns the suffix at the end of a JavaScript fragment other than the initial fragment.
    */
   protected String getDeferredFragmentSuffix2(TreeLogger logger, LinkerContext context,
       int fragment, String strongName) {
@@ -503,20 +482,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   }
 
   /**
-   * Returns the suffix for the initial JavaScript fragment (deprecated version).
-   * The default returns null, which will cause {@link #getModuleSuffix2} to be called instead.
-   * Subclasses should switch to extending getModuleSuffix2.
-   */
-  @Deprecated
-  protected String getModuleSuffix(TreeLogger logger,
-      LinkerContext context) throws UnableToCompleteException {
-    return null;
-  }
-
-  /**
-   * Returns the suffix for the initial JavaScript fragment (new version). This version
-   * will not be called if {@link #getModuleSuffix} is overridden so that it doesn't return null.
-   * Subclasses should stop implementing getModuleSuffix and implmenet getModuleSuffix2 instead.
+   * Returns the suffix for the initial JavaScript fragment.
    */
   protected String getModuleSuffix2(TreeLogger logger,
       LinkerContext context, String strongName) throws UnableToCompleteException {

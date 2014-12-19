@@ -180,39 +180,6 @@ public abstract class EmittedArtifact extends Artifact<EmittedArtifact> {
   }
 
   /**
-   * Returns whether or not the data contained in the EmittedArtifact should be
-   * written into the module output directory or into an auxiliary directory.
-   * <p>
-   * EmittedArtifacts that return <code>true</code> for this method will not
-   * be emitted into the normal module output location, but will instead be
-   * written into a directory that is a sibling to the module output directory.
-   * The partial path of the EmittedArtifact will be prepended with the
-   * short-name of the Linker type that created the EmittedArtifact.
-   * <p>
-   * Private EmittedArtifacts are intended for resources that generally should
-   * not be deployed to the server in the same location as the module
-   * compilation artifacts.
-   *
-   * @deprecated use {@link #getVisibility()} instead
-   */
-  @Deprecated
-  public boolean isPrivate() {
-    return visibility == Visibility.Private;
-  }
-
-  /**
-   * Sets the private attribute of the EmittedResource.
-   *
-   * @param isPrivate true if this artifact is private
-   *
-   * @deprecated use {@link #setVisibility(Visibility)} instead
-   */
-  @Deprecated
-  public void setPrivate(boolean isPrivate) {
-    this.visibility = isPrivate ? Visibility.Private : Visibility.Public;
-  }
-
-  /**
    * @param visibility the visibility to set
    */
   public void setVisibility(Visibility visibility) {
