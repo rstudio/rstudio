@@ -380,6 +380,14 @@ public class DocTabLayoutPanel
                   event.preventDefault();
                   event.stopPropagation();
                }
+               
+               // middlemouse should close a tab
+               if (event.getButton() == Event.BUTTON_MIDDLE)
+               {
+                  event.stopPropagation();
+                  event.preventDefault();
+                  closeHandler_.onTabClose();
+               }
                break;
             }
            
