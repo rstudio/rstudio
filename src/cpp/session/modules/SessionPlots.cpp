@@ -544,7 +544,7 @@ void handleZoomRequest(const http::Request& request, http::Response* pResponse)
             "</script>"
          "</head>"
          "<body style=\"margin: 0; overflow: hidden\">"
-            "<img id=\"plot\" src=\"plot_zoom_png?width=#width#&height=#height#\"/>"
+            "<img id=\"plot\" width=\"100%\" height=\"100%\" src=\"plot_zoom_png?width=#width#&height=#height#\"/>"
          "</body>"
       "</html>";
 
@@ -576,7 +576,8 @@ void handleZoomPngRequest(const http::Request& request,
    Error saveError = graphics::display().savePlotAsImage(imagePath,
                                                          kPngFormat,
                                                          width,
-                                                         height);
+                                                         height,
+                                                         true);
    if (saveError)
    {
       pResponse->setError(http::status::InternalServerError, 

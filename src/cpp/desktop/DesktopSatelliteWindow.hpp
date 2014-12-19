@@ -30,7 +30,7 @@ class SatelliteWindow : public GwtWindow
 {
     Q_OBJECT
 public:
-    SatelliteWindow(MainWindow* pMainWindow);
+    SatelliteWindow(MainWindow* pMainWindow, QString name);
 
 signals:
 

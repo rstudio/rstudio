@@ -26,6 +26,7 @@ class GwtWindow : public BrowserWindow
 public:
     explicit GwtWindow(bool showToolbar,
                        bool adjustTitle,
+                       QString name,
                        QUrl baseUrl = QUrl(),
                        QWidget *parent = NULL);
 

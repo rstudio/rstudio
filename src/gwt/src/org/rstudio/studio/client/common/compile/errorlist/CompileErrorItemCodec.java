@@ -15,9 +15,11 @@
 package org.rstudio.studio.client.common.compile.errorlist;
 
 import com.google.gwt.dom.client.*;
+
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.HeaderBreaksItemCodec;
 import org.rstudio.studio.client.common.compile.CompileError;
 
@@ -101,6 +103,7 @@ public class CompileErrorItemCodec
          DivElement div = Document.get().createDivElement();
          div.setTitle("View error or warning within the log file");
          div.setClassName(resources_.styles().disclosure());
+         div.addClassName(ThemeResources.INSTANCE.themeStyles().handCursor());
    
          td.appendChild(div);
          return td;

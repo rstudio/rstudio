@@ -24,7 +24,9 @@ import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Image;
+
 import org.rstudio.core.client.HandlerRegistrations;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 
 public class CommitTocRow extends Composite implements HasClickHandlers
@@ -37,7 +39,9 @@ public class CommitTocRow extends Composite implements HasClickHandlers
       icon_ = new Image(
             RStudioGinjector.INSTANCE.getFileTypeRegistry().getIconForFilename(
                                                                      filename));
+      icon_.addStyleName(ThemeStyles.INSTANCE.handCursor());
       anchor_ = new Anchor(filename);
+      anchor_.addStyleName(ThemeStyles.INSTANCE.handCursor());
 
       initWidget(binder_.createAndBindUi(this));
    }

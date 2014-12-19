@@ -15,20 +15,9 @@
 #
 #
 
-# This archive includes the files required to build against Qt 4.8. It was 
-# created by:
-#
-#  1) Installing the Qt 4.8 SDK as sudo into /opt/RStudio-QtSDK. Note that 
-#     to minimize the size of the archive all components except Desktop Qt
-#     4.8.0 are excluded (via custom setup)
-
-#  2) Creating an archive using: 
-#
-#     tar czfP QtSDK-4.8.0-x86_64.tar.gz /opt/RStudio-QtSDK/ 
-#
-
-# install dir
-INSTALL_DIR=`pwd`
+# This archive includes the files required to build against Qt 5.4.0. It
+# was created by installing Qt 5.4.0 via an interactive installer, and 
+# manually removing components not needed by RStudio.
 
 # define QT archive to download
 SYSTEM_ARCH=`getconf LONG_BIT`
@@ -38,19 +27,18 @@ then
 else
   QT_ARCH=x86
 fi
-QT_SDK_BINARY=QtSDK-4.8.0-${QT_ARCH}.tar.gz
+QT_SDK_BINARY=QtSDK-5.4.0-${QT_ARCH}.tar.gz
 QT_SDK_URL=https://s3.amazonaws.com/rstudio-buildtools/$QT_SDK_BINARY
-QT_SDK_DIR=/opt/RStudio-QtSDK
+QT_SDK_DIR=~/Qt5.4.0
 
 if ! test -e $QT_SDK_DIR
 then
    # download and install
-   wget $QT_SDK_URL -O $QT_SDK_BINARY
-   cd /
-   sudo tar xfP $INSTALL_DIR/$QT_SDK_BINARY
-   cd $INSTALL_DIR
-   rm $QT_SDK_BINARY
+   wget $QT_SDK_URL -O /tmp/$QT_SDK_BINARY
+   cd ~
+   tar xzf /tmp/$QT_SDK_BINARY
+   rm /tmp/$QT_SDK_BINARY
 else
-   echo "Qt 4.8.0 SDK already installed"
+   echo "Qt 5.4.0 SDK already installed"
 fi
 

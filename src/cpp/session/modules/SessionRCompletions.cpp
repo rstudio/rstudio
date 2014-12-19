@@ -332,7 +332,7 @@ Error initialize() {
             "rs_isSubsequence",
             (DL_FUNC) rs_isSubsequence,
             2);
-
+   
    using boost::bind;
    using namespace module_context;
    ExecBlock initBlock;

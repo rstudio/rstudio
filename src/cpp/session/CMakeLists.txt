@@ -84,6 +84,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionAbout.cpp
    modules/SessionAgreement.cpp
    modules/SessionAskPass.cpp
+   modules/SessionAsyncRCompletions.cpp
    modules/SessionAuthoring.cpp
    modules/SessionBreakpoints.cpp
    modules/SessionCodeSearch.cpp
@@ -449,6 +450,8 @@ endif()
 if(RSTUDIO_SESSION_WIN64)
    get_filename_component(GCC_PATH ${CMAKE_C_COMPILER} PATH CACHE)
    install(PROGRAMS ${GCC_PATH}/libgcc_s_sjlj-1.dll
+                    ${GCC_PATH}/libstdc++-6.dll
+                    ${GCC_PATH}/libwinpthread-1.dll
            DESTINATION ${RSTUDIO_INSTALL_BIN})
 endif()
 

@@ -17,6 +17,8 @@
 #ifndef SESSION_ASYNC_R_PROCESS_HPP
 #define SESSION_ASYNC_R_PROCESS_HPP
 
+#include <boost/enable_shared_from_this.hpp>
+
 namespace core
 {
    class FilePath;
@@ -31,6 +33,13 @@ enum AsyncRProcessOptions
    R_PROCESS_REDIRECTSTDERR = 1 << 1,
    R_PROCESS_VANILLA        = 1 << 2
 };
+
+inline AsyncRProcessOptions operator | (AsyncRProcessOptions lhs,
+                                        AsyncRProcessOptions rhs)
+{
+   return static_cast<AsyncRProcessOptions>(
+            static_cast<int>(lhs) | static_cast<int>(rhs));
+}
     
 class AsyncRProcess :
       boost::noncopyable,
@@ -40,8 +49,11 @@ public:
    AsyncRProcess();
    virtual ~AsyncRProcess();
 
-   void start(const char* rCommand, const core::FilePath& workingDir,
-              AsyncRProcessOptions rOptions);
+   void start(const char* rCommand,
+              const core::FilePath& workingDir,
+              AsyncRProcessOptions rOptions,
+              const std::vector<core::FilePath>& rSourceFiles = std::vector<core::FilePath>());
+
    bool isRunning();
    void terminate();
    void markCompleted();

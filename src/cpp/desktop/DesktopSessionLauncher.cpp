@@ -186,7 +186,7 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
       closeAllSatillites();
 
       pMainWindow_->evaluateJavaScript(
-               QString::fromAscii("window.desktopHooks.notifyRCrashed()"));
+               QString::fromUtf8("window.desktopHooks.notifyRCrashed()"));
 
       if (abendLogPath().exists())
       {
@@ -242,7 +242,7 @@ Error SessionLauncher::launchNextSession(bool reload)
    }
 
    // build a new launch context -- re-use the same port if we aren't reloading
-   QString port = !reload ? options().portNumber() : QString::fromAscii("");
+   QString port = !reload ? options().portNumber() : QString::fromUtf8("");
    QString host;
    QStringList argList;
    QUrl url;
@@ -334,7 +334,7 @@ QString SessionLauncher::launchFailedErrorMessage() const
    }
 
    if (!abendLogMessage.isEmpty())
-      errMsg.append(QString::fromAscii("\n\n").append(abendLogMessage));
+      errMsg.append(QString::fromUtf8("\n\n").append(abendLogMessage));
 
    // check for stderr
    if (pRSessionProcess_)
@@ -344,7 +344,7 @@ QString SessionLauncher::launchFailedErrorMessage() const
       if (errmsgs.size())
       {
          errMsg = errMsg.append(
-                           QString::fromAscii("\n\n")).append(errmsgs);
+                           QString::fromUtf8("\n\n")).append(errmsgs);
       }
    }
 
@@ -364,15 +364,15 @@ void SessionLauncher::buildLaunchContext(QString* pHost,
                                          QStringList* pArgList,
                                          QUrl* pUrl) const
 {
-   *pHost = QString::fromAscii("127.0.0.1");
+   *pHost = QString::fromUtf8("127.0.0.1");
    if (pPort->isEmpty())
       *pPort = desktop::options().newPortNumber();
-   *pUrl = QUrl(QString::fromAscii("http://") + *pHost +
-                QString::fromAscii(":") + *pPort + QString::fromAscii("/"));
+   *pUrl = QUrl(QString::fromUtf8("http://") + *pHost +
+                QString::fromUtf8(":") + *pPort + QString::fromUtf8("/"));
 
    if (!confPath_.empty())
    {
-      *pArgList << QString::fromAscii("--config-file") <<
+      *pArgList << QString::fromUtf8("--config-file") <<
                    QString::fromUtf8(confPath_.absolutePath().c_str());
    }
    else
@@ -380,18 +380,18 @@ void SessionLauncher::buildLaunchContext(QString* pHost,
       // explicitly pass "none" so that rsession doesn't read an
       // /etc/rstudio/rsession.conf file which may be sitting around
       // from a previous configuratin or install
-      *pArgList << QString::fromAscii("--config-file") <<
-                   QString::fromAscii("none");
+      *pArgList << QString::fromUtf8("--config-file") <<
+                   QString::fromUtf8("none");
    }
 
-   *pArgList << QString::fromAscii("--program-mode") <<
-                QString::fromAscii("desktop");
+   *pArgList << QString::fromUtf8("--program-mode") <<
+                QString::fromUtf8("desktop");
 
-   *pArgList << QString::fromAscii("--www-port") << *pPort;
+   *pArgList << QString::fromUtf8("--www-port") << *pPort;
 
    if (options().runDiagnostics())
-      *pArgList << QString::fromAscii("--verify-installation") <<
-                   QString::fromAscii("1");
+      *pArgList << QString::fromUtf8("--verify-installation") <<
+                   QString::fromUtf8("1");
 }
 
 

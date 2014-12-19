@@ -123,8 +123,6 @@ public interface ThemeStyles extends CssResource
 
    String odd();
    
-   String linkDownArrow();
-   
    String showFile();
    String showFileFixed();
    
@@ -133,7 +131,6 @@ public interface ThemeStyles extends CssResource
    String fileUploadTipLabel();
    
    String fileList();
-   String parentDirIcon();
 
    String locatorPanel();
 
@@ -162,4 +159,6 @@ public interface ThemeStyles extends CssResource
    String notResizable();
    
    String dialogTabPanel();
+   
+   String handCursor();
 }

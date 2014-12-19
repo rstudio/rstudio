@@ -81,12 +81,13 @@ public slots:
    QString chooseRVersion();
    bool canChooseRVersion();
 
-   bool isRetina();
+   double devicePixelRatio();
 
    void openMinimalWindow(QString name, QString url, int width, int height);
    void activateMinimalWindow(QString name);
    void activateSatelliteWindow(QString name);
    void prepareForSatelliteWindow(QString name, int width, int height);
+   void prepareForNamedWindow(QString name);
 
 
    // Image coordinates are relative to the window contents

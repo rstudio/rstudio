@@ -110,6 +110,17 @@ public:
    {
       type_ = type;
    }
+   
+   // is this an R, or potentially R-containing, source file?
+   bool canContainRCode()
+   {
+      return type_.size() > 0 && (
+               type_ == "sweave" ||
+               type_ == "r_source" ||
+               type_ == "r_markdown" ||
+               type_ == "r_html" ||
+               type_ == "cpp");
+   }
 
    core::Error readFromJson(core::json::Object* pDocJson);
    void writeToJson(core::json::Object* pDocJson) const;

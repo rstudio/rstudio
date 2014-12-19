@@ -48,12 +48,6 @@
 #endif
 
 // Mingw doesn't have this declaration
-#ifndef _WIN64
-#define SDDL_REVISION_1 1
-extern "C" BOOL WINAPI ConvertStringSecurityDescriptorToSecurityDescriptorA(
-                           LPCSTR, DWORD, LPVOID *, PULONG);
-#endif
-
 #include <session/SessionOptions.hpp>
 
 #include "SessionHttpConnectionUtils.hpp"

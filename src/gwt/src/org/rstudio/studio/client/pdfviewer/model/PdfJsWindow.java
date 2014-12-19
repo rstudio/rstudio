@@ -113,6 +113,12 @@ public class PdfJsWindow extends WindowEx
          
          // fire the load event
          @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::fireLoadEvent()();
+         
+         // wire unload event
+         var unloadEvt = forDesktop ? "unload" : "beforeunload";
+         win.addEventListener(unloadEvt, function() {
+            @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::fireWindowClosedEvent()();
+         });
       };
 
       // starts a timer that initializes the UI when the PDFView object appears
@@ -123,8 +129,8 @@ public class PdfJsWindow extends WindowEx
             n++;
             if (typeof(win.PDFView) === "object") {
                // PDFView is available now, initialize it
-               initUi();
                clearInterval(t);
+               initUi();
                return true;
             }
             else if (n > 100) {
@@ -147,11 +153,6 @@ public class PdfJsWindow extends WindowEx
       else
          this.addEventListener("load", initUi);
       
-      var unloadEvt = forDesktop ? "unload" : "beforeunload";
-      this.addEventListener(unloadEvt, function() {
-         @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::fireWindowClosedEvent()();
-      });
-      
       this.addEventListener("click", function(evt) {
          @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::firePageClickEvent(Lorg/rstudio/studio/client/pdfviewer/model/PdfJsWindow;Lcom/google/gwt/dom/client/NativeEvent;Lcom/google/gwt/dom/client/Element;)(win, evt, evt.target);
       });
@@ -165,6 +166,23 @@ public class PdfJsWindow extends WindowEx
       {
          jumpToSource.style.display = synctex ? "inline-block" : "none";
       }
+
+      // set the initial view once the pages appear (on Qt this doesn't happen
+      // automatically)
+      var win = this;
+      var t = window.setInterval(function() 
+      {
+         if (typeof(win) === "undefined" || !win) 
+         {
+            clearInterval(t);
+            return;
+         }
+         if (!win.PDFView.loading) 
+         {
+            clearInterval(t);
+            win.PDFView.setInitialView();
+         }
+      }, 50);
    }-*/;
    
    public final native void goToPage(int page) /*-{

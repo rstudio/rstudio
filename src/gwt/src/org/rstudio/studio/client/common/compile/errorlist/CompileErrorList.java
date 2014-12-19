@@ -90,7 +90,7 @@ public class CompileErrorList extends Composite
             Element el = DOM.eventGetTarget((Event) event.getNativeEvent());
             if (el != null
                 && el.getTagName().equalsIgnoreCase("div")
-                && el.getClassName().equals(res_.styles().disclosure()))
+                && el.getClassName().contains(res_.styles().disclosure()))
             {
                ArrayList<CodeNavigationTarget> values =
                                              errorTable_.getSelectedValues2();

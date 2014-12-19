@@ -67,6 +67,10 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
       // set title
       [[self window] setTitle: @"RStudio"];
       
+      // set proxy icon
+      [[self window] setRepresentedURL: url];
+      [[[self window] standardWindowButton: NSWindowDocumentIconButton] setImage: [NSImage imageNamed: @"rstudio"]];
+      
       // set dock tile for application
       dockTile_ = [[DockTileView alloc] init];
       [[NSApp dockTile] setContentView: dockTile_];

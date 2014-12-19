@@ -31,7 +31,7 @@ void reattachConsoleIfNecessary();
 
 core::FilePath userLogPath();
 
-bool isRetina(QMainWindow* pMainWindow);
+double devicePixelRatio(QMainWindow* pMainWindow);
 
 bool isOSXMavericks();
 

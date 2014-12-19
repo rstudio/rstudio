@@ -54,6 +54,7 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
          {
             closeButton_ = new Image(ThemeResources.INSTANCE.closeTab());
             closeButton_.setStylePrimaryName(styles.closeTabButton());
+            closeButton_.addStyleName(ThemeStyles.INSTANCE.handCursor());
             center.add(closeButton_);
          }
          layoutPanel_.add(center);

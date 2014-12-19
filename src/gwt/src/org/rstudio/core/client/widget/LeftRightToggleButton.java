@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.theme.res.ThemeResources;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -73,7 +75,9 @@ public class LeftRightToggleButton extends Widget
       setElement(GWT.<Binder>create(Binder.class).createAndBindUi(this));
       Styles styles = GWT.<Resources>create(Resources.class).styles();
       left_.setInnerText(leftLabel);
+      left_.addClassName(ThemeResources.INSTANCE.themeStyles().handCursor());
       right_.setInnerText(rightLabel);
+      right_.addClassName(ThemeResources.INSTANCE.themeStyles().handCursor());
       if (leftIsOn)
          addStyleName(styles.leftOn());
       else

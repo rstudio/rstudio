@@ -56,6 +56,10 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
 
 (function() {
 
+   this.getTokenCursor = function() {
+      return new CppTokenCursor(this.$tokens);
+   };
+
    var $walkBackForScope = function(cursor, that) {
       
       while (true) {
@@ -292,7 +296,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
       var maxRow = Math.min(maxrow + 30, this.$doc.getLength() - 1);
       this.$tokenUtils.$tokenizeUpToRow(maxRow);
 
-      var tokenCursor = new CppTokenCursor(this.$tokens);
+      var tokenCursor = this.getTokenCursor();
       if (!tokenCursor.seekToNearestToken(this.$scopes.parsePos, maxRow))
          return;
 
@@ -376,9 +380,8 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
             else if (localCursor.peekBwd(2).currentValue() === "class" ||
                      localCursor.peekBwd(2).currentValue() === "struct" ||
                      localCursor.bwdOverClassInheritance()) {
-               
+
                localCursor.moveToPreviousToken();
-               
                
                // Clone the cursor and look back to get
                // the return type. Do this by walking
@@ -606,7 +609,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                } 
             }
 
-            var tokenCursor = new CppTokenCursor(this.$tokens);
+            var tokenCursor = this.getTokenCursor();
             if (useCursor) {
                var cursor = session.getSelection().getCursor();
                tokenCursor.moveToPosition(cursor);
@@ -1359,6 +1362,15 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                       endsWithCommaOrOpenParen(prevLineNotWhitespace))
                      return this.$getIndent(line);
 
+                  // ... and it's an entry in an enum, then indent
+                  var clone = tokenCursor.cloneCursor();
+                  if (clone.findOpeningBracket("{", false) &&
+                      clone.bwdOverClassySpecifiers() &&
+                      clone.currentValue() === "enum")
+                  {
+                     return this.$getIndent(lines[clone.$row]) + tab;
+                  }
+
                   // ... and there is an '=' on the line, then indent
                   if (line.indexOf("=") !== -1)
                      return this.$getIndent(line) + tab;
@@ -1374,7 +1386,8 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                   return this.$getIndent(lines[row]) + tab;
                }
 
-               while (true) {
+               while (true)
+               {
 
                   // The token cursor is undefined (we moved past the start of the
                   // document)
@@ -1545,7 +1558,10 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
                   }
 
                   tokenCursor.bwdToMatchingToken();
-                  tokenCursor.moveToPreviousToken();
+
+                  // If we cannot move to a previous token, bail
+                  if (!tokenCursor.moveToPreviousToken())
+                     break;
 
                   // If the token cursor is on a preproc line, skip it
                   while (tokenCursor.$row > 0 &&

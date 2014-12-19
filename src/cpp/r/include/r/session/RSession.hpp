@@ -38,12 +38,13 @@ namespace session {
 struct RClientMetrics
 {   
    RClientMetrics() 
-      : consoleWidth(0), graphicsWidth(0), graphicsHeight(0)
+      : consoleWidth(0), graphicsWidth(0), graphicsHeight(0), devicePixelRatio(1.0)
    {
    }
    int consoleWidth ;
    int graphicsWidth ;
    int graphicsHeight;
+   double devicePixelRatio;
 };
    
 struct ROptions

@@ -18,6 +18,7 @@
 
 #include <QtGui>
 #include <QtWebKit>
+#include <QWebPage>
 
 namespace desktop {
 
@@ -59,8 +60,9 @@ public:
    void setBaseUrl(const QUrl& baseUrl);
    void setViewerUrl(const QString& viewerUrl);
 
-   void activateSatelliteWindow(QString name);
+   void activateWindow(QString name);
    void prepareForSatelliteWindow(const PendingSatelliteWindow& pendingWnd);
+   void prepareForNamedWindow(const QString pendingName);
 
 public slots:
    bool shouldInterruptJavaScript();
@@ -82,6 +84,7 @@ private:
    QString viewerUrl_;
    bool navigated_;
    PendingSatelliteWindow pendingSatelliteWindow_;
+   QString pendingNamedWindow_;
    QDir defaultSaveDir_;
 };
 

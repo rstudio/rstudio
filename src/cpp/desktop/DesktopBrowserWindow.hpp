@@ -18,7 +18,7 @@
 
 #include <QAction>
 #include <QMainWindow>
-#include <QWebView>
+#include <QtWebKitWidgets/QWebView>
 #include <QLineEdit>
 
 #include "DesktopWebView.hpp"
@@ -32,6 +32,7 @@ class BrowserWindow : public QMainWindow, public GwtCallbackOwner
 public:
     explicit BrowserWindow(bool showToolbar,
                            bool adjustTitle,
+                           QString name,
                            QUrl baseUrl = QUrl(),
                            QWidget *parent = NULL);
     WebView* webView();
@@ -41,7 +42,7 @@ protected slots:
      void adjustTitle();
      void setProgress(int p);
      virtual void finishLoading(bool);
-     virtual void onJavaScriptWindowObjectCleared() {}
+     virtual void onJavaScriptWindowObjectCleared();
      void printRequested(QWebFrame* frame);
 
      void onCloseRequested();
@@ -68,6 +69,7 @@ protected:
 private:
      int progress_;
      bool adjustTitle_;
+     QString name_;
 };
 
 } // namespace desktop

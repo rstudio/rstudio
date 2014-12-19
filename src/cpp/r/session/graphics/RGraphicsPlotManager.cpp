@@ -256,14 +256,15 @@ Error PlotManager::savePlotAsFile(const std::string& deviceCreationCode)
 Error PlotManager::savePlotAsImage(const FilePath& filePath,
                                    const std::string& format,
                                    int widthPx,
-                                   int heightPx)
+                                   int heightPx,
+                                   bool useDevicePixelRatio)
 {
    if (format == kPngFormat ||
        format == kBmpFormat ||
        format == kJpegFormat ||
        format == kTiffFormat)
    {
-      return savePlotAsBitmapFile(filePath, format, widthPx, heightPx);
+      return savePlotAsBitmapFile(filePath, format, widthPx, heightPx, useDevicePixelRatio);
    }
    else if (format == kSvgFormat)
    {
@@ -286,8 +287,21 @@ Error PlotManager::savePlotAsImage(const FilePath& filePath,
 Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
                                         const std::string& bitmapFileType,
                                         int width,
-                                        int height)
+                                        int height,
+                                        bool useDevicePixelRatio)
 {
+   // default res
+   int res = 72;
+
+   // adjust for device pixel ratio if necessary
+   if (useDevicePixelRatio)
+   {
+      double pixelRatio = r::session::graphics::device::devicePixelRatio();
+      width = width * pixelRatio;
+      height = height * pixelRatio;
+      res = res * pixelRatio;
+   }
+
    // optional format specific extra params
    std::string extraParams;
 
@@ -301,11 +315,12 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
    // generate code for creating bitmap file device
    boost::format fmt(
       "{ require(grDevices, quietly=TRUE); "
-      "  %1%(filename=\"%2%\", width=%3%, height=%4%, pointsize = 16 %5%); }");
+      "  %1%(filename=\"%2%\", width=%3%, height=%4%, res = %5%, pointsize = 16 %6%); }");
    std::string deviceCreationCode = boost::str(fmt % bitmapFileType %
                                                      string_utils::utf8ToSystem(targetPath.absolutePath()) %
                                                      width %
                                                      height %
+                                                     res %
                                                      extraParams);
 
    // save the file

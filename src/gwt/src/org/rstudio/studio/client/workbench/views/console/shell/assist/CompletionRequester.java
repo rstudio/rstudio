@@ -153,13 +153,8 @@ public class CompletionRequester
                             QualifiedName rhs)
          {
             // Keep argument listings at the top
-            boolean lhsArg = lhs.type == RCompletionType.ARGUMENT;
-            boolean rhsArg = rhs.type == RCompletionType.ARGUMENT;
-            
-            if (lhsArg != rhsArg)
-            {
-               return lhsArg ? -1 : 1;
-            }
+            if (lhs.type != rhs.type)
+               return lhs.type < rhs.type ? -1 : 1;
             
             int lhsScore;
             if (RCompletionType.isFileType(lhs.type))
@@ -303,6 +298,7 @@ public class CompletionRequester
          final JsArrayString chainExcludeArgs,
          final boolean chainExcludeArgsFromObject,
          final String filePath,
+         final String documentId,
          final boolean implicit,
          final ServerRequestCallback<CompletionResult> callback)
    {
@@ -320,6 +316,7 @@ public class CompletionRequester
             chainExcludeArgs,
             chainExcludeArgsFromObject,
             filePath,
+            documentId,
             new ServerRequestCallback<Completions>()
       {
          @Override
@@ -546,6 +543,7 @@ public class CompletionRequester
          final JsArrayString chainExcludeArgs,
          final boolean chainExcludeArgsFromObject,
          final String filePath,
+         final String documentId,
          final ServerRequestCallback<Completions> requestCallback)
    {
       int optionsStartOffset;
@@ -567,6 +565,7 @@ public class CompletionRequester
                chainExcludeArgs,
                chainExcludeArgsFromObject,
                filePath,
+               documentId,
                requestCallback);
       }
    }

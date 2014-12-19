@@ -426,19 +426,20 @@ private:
    [self showFile: path];
 }
 
-- (Boolean) isRetina
+
+- (double) devicePixelRatio
 {
    NSWindow* mainWindow = [[MainFrameController instance] window];
    if ([mainWindow respondsToSelector:@selector(backingScaleFactor)])
    {
-      double scaleFactor = [mainWindow backingScaleFactor];
-      return scaleFactor == 2.0;
+      return [mainWindow backingScaleFactor];
    }
    else
    {
-      return false;
+      return 1.0;
    }
 }
+
 
 - (void) openMinimalWindow: (NSString*) name url: (NSString*) url
                      width: (int) width height: (int) height
@@ -539,7 +540,7 @@ private:
    NSImage* image = [[NSImage alloc] initWithCGImage: imageRef size: NSZeroSize];
    
    // downsample if this is a retina display
-   if ([self isRetina])
+   if ([self devicePixelRatio] != 1.0)
    {
       // allocate the imageRep
       NSSize size = regionRect.size;
@@ -547,7 +548,7 @@ private:
                                     initWithBitmapDataPlanes:NULL
                                     pixelsWide: size.width
                                     pixelsHigh: size.height
-                                    bitsPerSample: 8
+                                    bitsPerSample: (4 * [self devicePixelRatio])
                                     samplesPerPixel: 4
                                     hasAlpha: YES
                                     isPlanar: NO

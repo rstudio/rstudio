@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.prefs.model;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.Desktop;
@@ -290,35 +289,9 @@ public class UIPrefsAccessor extends Prefs
    public static final String PDF_PREVIEW_DESKTOP_SYNCTEX = "desktop-synctex";
    public static final String PDF_PREVIEW_SYSTEM = "system";
    
-   public static boolean internalPdfPreviewSupported()
-   {
-      // PDF.js doesn't play nicely with Qt and is therefore only supported
-      // on Cocoa desktop or in server mode
-      return BrowseCap.isCocoaDesktop() || !Desktop.isDesktop();
-   }
-
    public PrefValue<String> pdfPreview()
    {
       return string("pdf_previewer", getDefaultPdfPreview());
-   }
-   
-   // provide a straight value accessor for pdfPreview which will
-   // automatically prevent the use of the internal viewer on osx
-   public String getPdfPreviewValue()
-   {
-      // get the underlying value
-      String pdfPreview = pdfPreview().getValue();
-      
-      // if this system doesn't support the internal previewer, silently map
-      // that option to the system previewer
-      if (!internalPdfPreviewSupported() && 
-          pdfPreview.equals(PDF_PREVIEW_RSTUDIO))
-      {
-         pdfPreview = PDF_PREVIEW_SYSTEM;
-      }
-      
-      // return the (potentially) adjusted value
-      return pdfPreview;
    }
    
    public PrefValue<Boolean> alwaysEnableRnwConcordance()
@@ -422,18 +395,10 @@ public class UIPrefsAccessor extends Prefs
             return PDF_PREVIEW_DESKTOP_SYNCTEX;
          }
          
-         // otherwise default to the system viewer on linux and the internal 
-         // viewer on mac (windows will always have a desktop synctex viewer)
+         // otherwise default to the internal viewer
          else
          {
-            if (BrowseCap.isLinux())
-            {
-               return PDF_PREVIEW_SYSTEM;
-            }
-            else
-            {
-               return PDF_PREVIEW_RSTUDIO;
-            }
+            return PDF_PREVIEW_RSTUDIO;
          }
       }
       

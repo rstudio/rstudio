@@ -94,6 +94,13 @@ public abstract class GlobalDisplay extends MessageDisplay
                                    int width,
                                    int height,
                                    NewWindowOptions options);
+
+   public abstract void openWebMinimalWindow(String url,
+                                             boolean showLocation,
+                                             int width,
+                                             int height,
+                                             NewWindowOptions options);
+
    
    public abstract void openSatelliteWindow(String name, int width, int height);
 

@@ -1630,7 +1630,7 @@ public class TextEditingTarget implements
                                           ));
                }
             });
-         }
+   }
 
    private void saveNewFile(final String suggestedPath,
                             String encodingOverride,
@@ -3919,7 +3919,7 @@ public class TextEditingTarget implements
    @Handler
    void onCompilePDF()
    {
-      String pdfPreview = prefs_.getPdfPreviewValue();
+      String pdfPreview = prefs_.pdfPreview().getValue();
       boolean showPdf = !pdfPreview.equals(UIPrefsAccessor.PDF_PREVIEW_NONE);
       boolean useInternalPreview = 
             pdfPreview.equals(UIPrefsAccessor.PDF_PREVIEW_RSTUDIO);
@@ -4447,6 +4447,12 @@ public class TextEditingTarget implements
       public String getPath()
       {
          return docUpdateSentinel_.getPath();
+      }
+      
+      @Override
+      public String getId()
+      {
+         return docUpdateSentinel_.getId();
       }
    };
    

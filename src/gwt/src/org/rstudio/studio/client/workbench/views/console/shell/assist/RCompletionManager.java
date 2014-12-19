@@ -49,7 +49,6 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.codesearch.CodeSearchOracle;
 import org.rstudio.studio.client.workbench.codesearch.model.FunctionDefinition;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
@@ -77,7 +76,6 @@ import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 
 public class RCompletionManager implements CompletionManager
@@ -657,10 +655,28 @@ public class RCompletionManager implements CompletionManager
          if (!autoPopupEnabled)
             return false;
          
-         // Check for a valid number of R identifier characters for autopopup
-         boolean canAutoPopup = checkCanAutoPopup(c, 4);
+         // Immediately display completions after '$', '::', etc.
          char prevChar = docDisplay_.getCurrentLine().charAt(
-               input_.getCursorPosition().getColumn() - 1); 
+               input_.getCursorPosition().getColumn() - 1);
+         if (
+               (c == ':' && prevChar == ':') ||
+               (c == '$') ||
+               (c == '@')
+               )
+         {
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               @Override
+               public void execute()
+               {
+                  beginSuggest(true, true, false);
+               }
+            });
+            return false;
+         }
+         
+         // Check for a valid number of R identifier characters for autopopup
+         boolean canAutoPopup = checkCanAutoPopup(c, 2);
          
          // Automatically popup completions after certain function calls
          if (c == '(' && !isLineInComment(docDisplay_.getCurrentLine()))
@@ -685,9 +701,6 @@ public class RCompletionManager implements CompletionManager
          
          if (
                (canAutoPopup) ||
-               (c == ':' && prevChar == ':') ||
-               (c == '$') ||
-               (c == '@') ||
                isSweaveCompletion(c))
          {
             // Delay suggestion to avoid auto-popup while the user is typing
@@ -1058,8 +1071,7 @@ public class RCompletionManager implements CompletionManager
       }
       
       String filePath = getSourceDocumentPath();
-      if (filePath == null)
-         filePath = "";
+      String docId = getSourceDocumentId();
       
       requester_.getCompletions(
             context.getToken(),
@@ -1072,6 +1084,7 @@ public class RCompletionManager implements CompletionManager
             infixData.getExcludeArgs(),
             infixData.getExcludeArgsFromObject(),
             filePath,
+            docId,
             implicit,
             context_);
 
@@ -1327,6 +1340,7 @@ public class RCompletionManager implements CompletionManager
          int commaCount = tokenCursor.findOpeningBracketCountCommas(
                new String[]{ "[", "(" }, true);
          
+         // commaCount == -1 implies we failed to find an opening bracket
          if (commaCount == -1)
          {
             commaCount = tokenCursor.findOpeningBracketCountCommas("[", false);
@@ -1398,9 +1412,6 @@ public class RCompletionManager implements CompletionManager
       // We strip the current token so that the matched.call work later on
       // can properly resolve the current argument
       Position startPosition = startCursor.currentPosition();
-      if (startCursor.currentValue() == "(")
-         startPosition.setColumn(startPosition.getColumn() + 1);
-      
       String beforeText = editor.getTextForRange(Range.fromPoints(
             tokenCursor.currentPosition(),
             startPosition));
@@ -1412,7 +1423,7 @@ public class RCompletionManager implements CompletionManager
       
       String afterText = editor.getTextForRange(Range.fromPoints(
             afterTokenPos, endPos));
-            
+      
       context.setFunctionCallString(
             (beforeText + afterText).trim());
       
@@ -1466,39 +1477,6 @@ public class RCompletionManager implements CompletionManager
       
       return context;
       
-   }
-   
-   public Comparator<QualifiedName> createFuzzyComparator(String query)
-   {
-      final String queryLower = query.toLowerCase();
-      return new Comparator<QualifiedName>() {
-
-         @Override
-         public int compare(final QualifiedName lhs,
-                            final QualifiedName rhs)
-         {
-            int lhsScore = CodeSearchOracle.scoreMatch(
-                  lhs.name,
-                  queryLower,
-                  false);
-            
-            int rhsScore = CodeSearchOracle.scoreMatch(
-                  rhs.name,
-                  queryLower,
-                  false);
-            
-            if (lhsScore == rhsScore)
-            {
-               return lhs.name.length() - rhs.name.length();
-            }
-            else
-            {
-               return lhsScore < rhsScore ? -1 : 1;
-            }
-            
-         }
-         
-      };
    }
    
    /**
@@ -1878,9 +1856,17 @@ public class RCompletionManager implements CompletionManager
    private String getSourceDocumentPath()
    {
       if (rContext_ != null)
-         return rContext_.getPath();
+         return StringUtil.notNull(rContext_.getPath());
       else
-         return null;
+         return "";
+   }
+   
+   private String getSourceDocumentId()
+   {
+      if (rContext_ != null)
+         return StringUtil.notNull(rContext_.getId());
+      else
+         return "";
    }
    
    public void showHelpDeferred(final CompletionRequestContext context,

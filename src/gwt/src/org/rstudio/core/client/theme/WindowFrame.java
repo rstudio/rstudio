@@ -52,6 +52,7 @@ public class WindowFrame extends Composite
 
       HTML maximize = new HTML();
       maximize.setStylePrimaryName(styles.maximize());
+      maximize.addStyleName(ThemeStyles.INSTANCE.handCursor());
       maximize.addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)
@@ -62,6 +63,7 @@ public class WindowFrame extends Composite
 
       HTML minimize = new HTML();
       minimize.setStylePrimaryName(styles.minimize());
+      minimize.addStyleName(ThemeStyles.INSTANCE.handCursor());
       minimize.addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)

@@ -67,7 +67,10 @@ public class RSConnectConnectAccountDialog
 
    private void onConnect()
    {
-      final String cmd = contents_.getAccountInfo();
+      // get command and substitute rsconnect for shinyapps
+      final String cmd = contents_.getAccountInfo().replace("shinyapps::", 
+                                                            "rsconnect::");
+      
       if (!cmd.startsWith("rsconnect::setAccountInfo"))
       {
          display_.showErrorMessage("Error Connecting Account", 

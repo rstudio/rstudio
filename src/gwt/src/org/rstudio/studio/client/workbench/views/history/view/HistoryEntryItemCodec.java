@@ -18,7 +18,9 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.*;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
+
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.HeaderBreaksItemCodec;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 import org.rstudio.studio.client.workbench.views.history.view.HistoryPane.Resources;
@@ -73,11 +75,13 @@ public class HistoryEntryItemCodec extends HeaderBreaksItemCodec<HistoryEntry, S
 
       TableCellElement td = Document.get().createTDElement();
       td.setClassName(res_.styles().disclosure());
+      td.addClassName(ThemeStyles.INSTANCE.handCursor());
       td.setVAlign("middle");
 
       DivElement div = Document.get().createDivElement();
       div.setTitle("Show command in original context");
       div.setClassName(res_.styles().disclosure());
+      div.addClassName(ThemeStyles.INSTANCE.handCursor());
 
       td.appendChild(div);
       return td;

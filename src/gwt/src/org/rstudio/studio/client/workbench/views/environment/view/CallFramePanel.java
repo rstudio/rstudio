@@ -61,6 +61,7 @@ public class CallFramePanel extends ResizeComposite
       // import the minimize button from the global theme resources
       HTML minimize = new HTML();
       minimize.setStylePrimaryName(globalStyles.minimize());
+      minimize.addStyleName(ThemeStyles.INSTANCE.handCursor());
       minimize.addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)

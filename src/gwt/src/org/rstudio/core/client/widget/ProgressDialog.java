@@ -35,6 +35,7 @@ import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomMetrics;
+import org.rstudio.studio.client.application.Desktop;
 
 public abstract class ProgressDialog extends ModalDialogBase
 {
@@ -146,7 +147,7 @@ public abstract class ProgressDialog extends ModalDialogBase
    
    protected void setLabel(String text)
    {
-      if (BrowseCap.isChrome() || BrowseCap.isCocoaDesktop())
+      if (BrowseCap.isChrome() || Desktop.isDesktop())
       {
          Size labelSize = DomMetrics.measureHTML(text);
          labelCell_.getStyle().setWidth(labelSize.width + 10, Unit.PX);
