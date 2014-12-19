@@ -59,7 +59,11 @@ git submodule update --init --recursive
 
 # Merge all the bugfix branches
 git merge \
-    origin/bugfix/token-column
+    origin/bugfix/token-column \
+    origin/bugfix/vim-vertical-block-eol
+
+## git merge \
+##     origin/bugfix/scrolling-compensation
 
 ## git merge \
 ##     origin/bugfix-webkit-paste2 \
