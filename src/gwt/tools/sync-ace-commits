@@ -89,8 +89,13 @@ git merge \
 # Build and copy ace, ace-uncompressed to RStudio
 node ./Makefile.dryice.js normal
 node ./Makefile.dryice.js -m normal
+
 cp build/src/ace.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js
 cp build/src-min/ace.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace.js
+
+# Copy in the 'emacs', 'vim' keybindings
+cp build/src/keybinding-* ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/
+cp build/src-min/keybinding-* ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/
 
 stripUseStrict() {
     sed 's/"use strict";//g' "$1" > "$1.stripped"
