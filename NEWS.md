@@ -52,14 +52,19 @@
 * Improved checking for supported protocol with packrat package
 * Escape backslashes in library names when loading packages
 
+### Plots
+
+* Render plots using devicePixelRatio for retina and HDPI screens
+
 ### Miscellaneous
 
+* Updated rendering engine to Qt 5.4 for improved performance
+* Update to pandoc 1.13.1
 * Bind Cmd+Shift+K shortcut to Compile PDF and Preview HTML
 * When evaluating R strings ensure 'try' is called from base package
 * Add Clear Recent Projects menu item to toolbar project menu
 * Command to sync current working directory and Files pane to project directory
-* Update to MSYS SSH 1000.18
-* Update to pandoc 1.13.1
+* Windows: updated to MSYS SSH 1000.18
 
 ### Bug Fixes
 
