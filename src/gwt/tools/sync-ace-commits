@@ -47,10 +47,6 @@ git fetch origin
 git fetch upstream
 
 # Point this to the upstream commit that we've tested
-# NOTE: the following commits have been merged by upstream
-# so should be removed the next time we sync:
-#
-
 # NOTE: SHA1 for release v1.1.8
 git checkout b8e3198ba8e9fe98cdda85e90f517b94d4452b5e
 
