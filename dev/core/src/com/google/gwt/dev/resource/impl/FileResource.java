@@ -47,7 +47,6 @@ public class FileResource extends AbstractResource {
   private final File file;
 
   private FileResource(String abstractPathName, File file) {
-    assert (file.isFile()) : file + " is not a file.";
     this.abstractPathName = abstractPathName;
     this.file = file;
   }
