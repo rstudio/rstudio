@@ -943,7 +943,6 @@ Section "Uninstall"
   doNotRemoveFromPath:
 SectionEnd
 
-
 ;--------------------------------
 ; determine admin versus local install
 ; Is install for "AllUsers" or "JustMe"?
@@ -965,9 +964,10 @@ Function .onInit
   Push $0    ; window HWND
   Push $1    ; window title/classname
   Push $2    ; truncated title
+  Push $3    ; found 
 
   ; Loop through all open windows--we want one that has window class "QWidget"
-  ; or "Qt5WindowIcon" and title "RStudio"
+  ; or "Qt5WindowIcon" and title containing "RStudio"
   search_loop:
    FindWindow  $0  ""  ""  0  $0
     IntCmp  $0  0  not_running
@@ -978,14 +978,18 @@ Function .onInit
       StrCmp  $1  "Qt5QWindowIcon"  found_qt_window
       Goto search_loop
 
-      ; check to see if its title begins with RStudio
+      ; check to see if its title contains RStudio
       found_qt_window:
       System::Call 'user32.dll::GetWindowText(i r0, t .r1, i ${NSIS_MAX_STRLEN}) i .n'
-      StrCpy $2  $1  7   ; extract first 7 chars (title may include project name)
-      StrCmp $2  "@CPACK_PACKAGE_NAME@"  found_package_window
-      Goto search_loop
+      Push $1
+      Push "@CPACK_PACKAGE_NAME@"
+      Call StrStr
+      Pop $3
 
-      found_package_window:
+      ; title does not contain RStudio, continue
+      StrCmp  $3  ""  search_loop
+
+      ; title contains RStudio, bail out
       MessageBox MB_OK|MB_ICONEXCLAMATION "@CPACK_PACKAGE_NAME@ is currently running. Please close it before installing a new version." /SD IDOK
       Abort
 
@@ -995,6 +999,7 @@ Function .onInit
   Pop $0
   Pop $1
   Pop $2
+  Pop $3
 
   ; Reads components status for registry
   !insertmacro SectionList "InitSection"
