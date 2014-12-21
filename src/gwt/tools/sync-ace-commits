@@ -32,9 +32,9 @@
 set -e
 
 if [ ! -d "./ace" ]; then
-    git clone git://github.com/rstudio/ace.git
+    git clone https://github.com/rstudio/ace.git
     cd ace
-    git remote add upstream git://github.com/ajaxorg/ace.git
+    git remote add upstream https://github.com/ajaxorg/ace.git
     cd ..
 fi
 
