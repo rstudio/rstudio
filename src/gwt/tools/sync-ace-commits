@@ -60,7 +60,8 @@ git submodule update --init --recursive
 # Merge all the bugfix branches
 git merge \
     origin/bugfix/token-column \
-    origin/bugfix/vim-vertical-block-eol
+    origin/bugfix/vim-vertical-block-eol \
+    origin/bugfix/dont-place-text-area-offscreen
 
 ## git merge \
 ##     origin/bugfix/scrolling-compensation

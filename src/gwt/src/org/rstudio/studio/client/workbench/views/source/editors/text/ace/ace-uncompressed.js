@@ -1949,14 +1949,7 @@ var TextInput = function(parentNode, host) {
         host.onFocus(e);
         resetSelection();
     });
-    this.focus = function() {
-        text.style.position = "fixed";
-        text.style.top = "-10000000px";
-        text.focus();
-        setTimeout(function() {
-            text.style.position = "";
-        }, 0);
-    };
+    this.focus = function() { text.focus(); };
     this.blur = function() { text.blur(); };
     this.isFocused = function() {
         return isFocused;
