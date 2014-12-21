@@ -1093,6 +1093,27 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onActivateSource()
    {
+      if (activeEditor_ == null)
+      {
+         newDoc(FileTypeRegistry.R, new ResultCallback<EditingTarget, ServerError>()
+         {
+            @Override
+            public void onSuccess(EditingTarget target)
+            {
+               activeEditor_ = target;
+               doActivateSource();
+            }
+            
+         });
+      }
+      else
+      {
+         doActivateSource();
+      }
+   }
+   
+   private void doActivateSource()
+   {
       ensureVisible(false);
       if (activeEditor_ != null)
       {
@@ -2182,7 +2203,6 @@ public class Source implements InsertSourceHandler,
       commands_.firstTab().setEnabled(hasDocs);
       commands_.lastTab().setEnabled(hasDocs);
       commands_.switchToTab().setEnabled(hasDocs);
-      commands_.activateSource().setEnabled(hasDocs);
       commands_.setWorkingDirToActiveDoc().setEnabled(hasDocs);
 
       HashSet<AppCommand> newCommands =
