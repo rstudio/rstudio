@@ -1725,9 +1725,12 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
 void rDeferredInit(bool newSession)
 {
    module_context::events().onDeferredInit(newSession);
-
+   
    // allow any packages listening to complete initialization
    modules::rhooks::invokeHook(kSessionInitHook, newSession);
+   
+   // finish off initialization
+   module_context::events().afterDeferredInit(newSession);
    
    // fire an event to the client
    ClientEvent event(client_events::kDeferredInitCompleted);
