@@ -869,21 +869,40 @@
 {
    invisible(lapply(list(...), function(x) {
       tryCatch({
+         
+         # Explicitly load the library, and do everything we can to hide any
+         # package startup messages (because we don't want to put non-JSON
+         # on stdout)
+         invisible(capture.output(suppressPackageStartupMessages(
+            library(x, character.only = TRUE, quietly = TRUE)
+         )))
+         
+         # Get the exported items in the NAMESPACE (for search path + `::`
+         # completions), and then everything else (for `:::` completions)
          ns <- asNamespace(x)
          exports <- getNamespaceExports(ns)
          objects <- mget(exports, ns, inherits = TRUE)
+         
+         # Figure out the completion types for these objects
          types <- unlist(lapply(objects, .rs.getCompletionType))
+         
+         # Find the functions -- for these, we want to return the argument
+         # names (since we want to enable function argument completions)
          isFunction <- unlist(lapply(objects, is.function))
          functions <- objects[isFunction]
          functions <- lapply(functions, function(f) {
             names(formals(f))
          })
+         
+         # Generate the output
          output <- list(
             package = I(x),
             exports = exports,
             types = types,
             functions = functions
          )
+         
+         # Write the JSON to stdout; parent processes
          cat(.rs.toJSON(output), sep = "\n")
       }, error = function(e) NULL)
    }))
