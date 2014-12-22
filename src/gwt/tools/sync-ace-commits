@@ -64,32 +64,29 @@ git merge \
     origin/bugfix/dont-place-text-area-offscreen
 
 ## git merge \
-##     origin/bugfix/scrolling-compensation
-
-## git merge \
-##     origin/bugfix-webkit-paste2 \
-##     origin/bugfix-updatefontsize2 \
-##     origin/bugfix-active-line-back \
-##     origin/patch-advanced-indent4 \
-##     origin/patch/normalizeinput4 \
-##     origin/bugfix/no-paste-event-on-indent \
-##     origin/patch/build-matchingbraceoutdent3
+##     origin/bugfix-webkit-paste2 \               # test copy + paste
+##     origin/bugfix-updatefontsize2 \             # character size (investigate)
+##     origin/bugfix-active-line-back \            # test printing (margin-layering; active line highlighting)
+##     origin/patch-advanced-indent4 \             # no longer necessary
+##     origin/patch/normalizeinput4 \              # normalization for UTF8 (NFD) (probably needs merge)
+##     origin/bugfix/no-paste-event-on-indent \    # test indent (probably not needed)
+##     origin/patch/build-matchingbraceoutdent3    # not needed (patches Ace w/matching brace outdent; now in acesupport)
 ##     
 ## git merge \
-##     origin/patch/mousewheel3 \
-##     origin/patch/consistent-gutter-width3 \
-##     origin/patch/suppress-native-scroll \
-##     origin/patch/build \
-##     origin/patch/remove-webfont \
-##     origin/patch/emacs-vim-keybindings
+##     origin/patch/mousewheel3 \                  # scrollwheel handling (axe)
+##     origin/patch/consistent-gutter-width3 \     # gutter width (unneeded)
+##     origin/patch/suppress-native-scroll \       # ask joe
+##     origin/patch/build \                        # more monkey-patching of ace (unneeded; in acesupport)
+##     origin/patch/remove-webfont \               # need to remove from build_supprt/style.css
+##     origin/patch/emacs-vim-keybindings          # included explicitly now
 ## 
 ## git merge \
-##     origin/patch/laggy-typing \
-##     origin/bugfix/outdent-newline \
-##     origin/bugfix/safari-fractional-cursor \
-##     origin/feature/scrolling-compensation \
-##     origin/bugfix/ie10-clipboard \
-##     origin/bugfix/safari-8-copy
+##     origin/patch/laggy-typing \                 # double-check .ace_text-input in editor.css
+##     origin/bugfix/outdent-newline \             # probably not needed (test)
+##     origin/bugfix/safari-fractional-cursor \    # accounted for in Ace (toss it!)
+##     origin/feature/scrolling-compensation \     # investigate
+##     origin/bugfix/ie10-clipboard \              # test copy+paste in IE10 (probably okay)
+##     origin/bugfix/safari-8-copy                 # double check if still a problem (seems likely)
 
 
 # Build and copy ace, ace-uncompressed to RStudio
