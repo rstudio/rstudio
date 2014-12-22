@@ -322,7 +322,7 @@ public class RCompletionManager implements CompletionManager
        * 
        * When popup showing:
        * Esc - dismiss popup
-       * Enter - accept current selection
+       * Enter/Tab - accept current selection
        * Up-arrow/Down-arrow - change selected item
        * [identifier] - narrow suggestions--or if we're lame, just dismiss
        * All others - dismiss popup
@@ -422,16 +422,10 @@ public class RCompletionManager implements CompletionManager
                   if (value != null)
                   {
                      if (value.type == RCompletionType.DIRECTORY)
-                     {
                         context_.suggestOnAccept_ = true;
                      
-                        context_.onSelection(value);
-                        return true;
-                     }
-                     else
-                     {
-                        return false;
-                     }
+                     context_.onSelection(value);
+                     return true;
                   }
                }
                

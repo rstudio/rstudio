@@ -241,6 +241,13 @@ public class CppCompletionManager implements CompletionManager
             return false;
          }
          
+         // tab accepts the current selection (popup handles Enter)
+         else if (event.getKeyCode() == KeyCodes.KEY_TAB)
+         {
+            popup.acceptSelected();
+            return true;
+         }
+         
          // non c++ identifier keys (that aren't navigational) close the popup
          else if (!CppCompletionUtils.isCppIdentifierKey(event))
          {
