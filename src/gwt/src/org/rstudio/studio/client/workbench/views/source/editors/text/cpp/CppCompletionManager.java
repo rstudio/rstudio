@@ -241,16 +241,8 @@ public class CppCompletionManager implements CompletionManager
             return false;
          }
          
-         // left key terminates the request (popup handles Esc)
-         if (event.getKeyCode() == KeyCodes.KEY_LEFT)
-         {
-            terminateCompletionRequest();
-            return true;
-         }
-          
-         // tab/right accept the current selection (popup handles Enter)
-         else if (event.getKeyCode() == KeyCodes.KEY_TAB ||
-                  event.getKeyCode() == KeyCodes.KEY_RIGHT)
+         // tab accepts the current selection (popup handles Enter)
+         else if (event.getKeyCode() == KeyCodes.KEY_TAB)
          {
             popup.acceptSelected();
             return true;
