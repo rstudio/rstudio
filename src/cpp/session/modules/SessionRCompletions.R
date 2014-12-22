@@ -313,24 +313,24 @@ assign(x = ".rs.acCompletionTypes",
    
    # If we were able to use the file index and only wanted directories, we know that
    # all completions must be directories
-   type <- if (usingFileMonitor && directoriesOnly)
+   if (usingFileMonitor && directoriesOnly)
    {
-      rep.int(.rs.acCompletionTypes$DIRECTORY, length(absolutePaths))
+      type <- rep.int(.rs.acCompletionTypes$DIRECTORY, length(absolutePaths))
    }
    
    # Otherwise, query the file info for the set of completions we're using
    else
    {
       isDir <- file.info(absolutePaths)[, "isdir"] %in% TRUE ## protect against NA
-      ifelse(isDir,
-             .rs.acCompletionTypes$DIRECTORY,
-             .rs.acCompletionTypes$FILE)
-   }
-   
-   if (directoriesOnly)
-   {
-      paths <- paths[isDir]
-      type <- type[isDir]
+      type <- ifelse(isDir,
+                     .rs.acCompletionTypes$DIRECTORY,
+                     .rs.acCompletionTypes$FILE)
+      
+      if (directoriesOnly)
+      {
+         paths <- paths[isDir]
+         type <- type[isDir]
+      }
    }
    
    .rs.makeCompletions(token = token,
