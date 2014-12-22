@@ -189,6 +189,8 @@ public class AceEditorNative extends JavaScriptObject {
          String eventName,
          CommandWithArg<T> command) /*-{
       var callback = $entry(function(arg) {
+         if (arg && arg.text)
+            arg = arg.text;
          command.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(arg);
       });
 
