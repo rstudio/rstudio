@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.util.TextOutput;
 import com.google.gwt.resources.css.ast.Context;
+import com.google.gwt.resources.css.ast.CssCharset;
 import com.google.gwt.resources.css.ast.CssDef;
 import com.google.gwt.resources.css.ast.CssEval;
 import com.google.gwt.resources.css.ast.CssExternalSelectors;
@@ -53,6 +54,7 @@ import java.util.regex.Pattern;
 public class GssGenerationVisitor extends ExtendedCssVisitor {
   /* templates and tokens list */
   private static final String AND = " && ";
+  private static final String CHARSET = "@charset \"%s\";";
   private static final String DEF = "@def ";
   private static final String ELSE = "@else ";
   private static final String ELSE_IF = "@elseif (%s)";
@@ -223,6 +225,14 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
     }
 
     return false;
+  }
+
+  @Override
+  public boolean visit(CssCharset x, Context ctx) {
+    out.print(String.format(CHARSET, x.getCharset()));
+    out.newlineOpt();
+
+    return true;
   }
 
   private void maybePrintWrongExternalNodes() {

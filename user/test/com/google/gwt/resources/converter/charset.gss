@@ -1,0 +1,9 @@
+@charset "UTF-8";
+
+.foo:before {
+  display: inline-block;
+  content: "‹";
+  text-align: right;
+  width: 12px;
+  margin: 0 4px 0 -16px;
+}

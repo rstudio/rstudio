@@ -172,6 +172,13 @@ public class CssVisitor {
    * @param x the node being visited
    * @param ctx the context for the visit
    */
+  public void endVisit(CssCharset x, Context ctx) {
+  }
+
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   */
   public boolean visit(CssDef x, Context ctx) {
     return true;
   }
@@ -285,6 +292,14 @@ public class CssVisitor {
    * @param ctx the context for the visit
    */
   public boolean visit(CssUnknownAtRule x, Context ctx) {
+    return true;
+  }
+
+  /**
+   * @param x the node being visited
+   * @param ctx the context for the visit
+   */
+  public boolean visit(CssCharset x, Context ctx) {
     return true;
   }
 

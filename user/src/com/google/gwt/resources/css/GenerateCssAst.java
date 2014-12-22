@@ -17,6 +17,7 @@ package com.google.gwt.resources.css;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.resources.css.ast.CssCharset;
 import com.google.gwt.resources.css.ast.CssDef;
 import com.google.gwt.resources.css.ast.CssEval;
 import com.google.gwt.resources.css.ast.CssExternalSelectors;
@@ -298,6 +299,15 @@ public class GenerateCssAst {
     }
 
     public void startDocument(InputSource source) throws CSSException {
+      // Unfortunately flute doesn't call parseCharset() method when it reaches a charset
+      // declaration. The only place to get the charset is in this method. Flute use ASCII by
+      // default to read the file except if it detects a valid charset definition.
+
+      if (source.getEncoding() != null && !"ASCII".equals(source.getEncoding())) {
+        // valid charset at-rule is defined in this file.
+        CssCharset charset = new CssCharset(source.getEncoding());
+        addNode(charset);
+      }
     }
 
     public void startFontFace() throws CSSException {

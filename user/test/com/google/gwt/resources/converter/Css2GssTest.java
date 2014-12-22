@@ -94,6 +94,11 @@ public class Css2GssTest extends TestCase {
         "invalidConstantName.css", "invalidConstantName.gss", true);
   }
 
+  public void testCharset() throws IOException, UnableToCompleteException {
+    assertFileContentEqualsAfterConversionAndIsGssCompatible(
+        "charset.css", "charset.gss", true);
+  }
+
   public void testEscaping() throws IOException, UnableToCompleteException {
     assertFileContentEqualsAfterConversionAndIsGssCompatible("escape.css", "escape.gss", true);
   }

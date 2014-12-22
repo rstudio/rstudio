@@ -261,6 +261,13 @@ public class CssNodeCloner extends CssVisitor {
     return true;
   }
 
+  @Override
+  public boolean visit(CssCharset x, Context ctx) {
+    CssCharset newRule = new CssCharset(x.getCharset());
+    addToNodes(newRule);
+    return true;
+  }
+
   /**
    * Add a cloned node instance to the output.
    */
