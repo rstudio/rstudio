@@ -860,7 +860,7 @@ void activatePackagesIfPendingActions()
    }
 }
 
-void onDeferredInit(bool newSession)
+void afterDeferredInit(bool newSession)
 {
    // additional stuff if we are in packrat mode
    if (module_context::packratContext().modeOn)
@@ -980,7 +980,10 @@ Error initialize()
    // we need to wait until all other modules initialize and all R routines
    // are initialized -- otherwise the package load hook attempts to call
    // rs_packageLoaded and can't find it
-   module_context::events().onDeferredInit.connect(onDeferredInit);
+   //
+   // we want this to occur _after_ packrat has done its own initialization,
+   // so we ensure that the package hooks are run before this
+   module_context::events().afterDeferredInit.connect(afterDeferredInit);
 
    // register packrat action hook
    R_CallMethodDef onPackratActionMethodDef ;
