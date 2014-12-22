@@ -339,6 +339,14 @@ public class HelpPane extends WorkbenchPane
             @Override
             public void onKeyUp(KeyUpEvent event)
             {     
+               // ignore modifier key release
+               if (event.getNativeKeyCode() == KeyCodes.KEY_CTRL || 
+                   event.getNativeKeyCode() == KeyCodes.KEY_ALT || 
+                   event.getNativeKeyCode() == KeyCodes.KEY_SHIFT)
+               {
+                  return;
+               }
+
                WindowEx contentWindow = getContentWindow();
                if (contentWindow != null)
                {
