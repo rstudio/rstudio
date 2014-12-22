@@ -322,9 +322,8 @@ public class RCompletionManager implements CompletionManager
        * 
        * When popup showing:
        * Esc - dismiss popup
-       * Enter/Tab/Right-arrow - accept current selection
+       * Enter - accept current selection
        * Up-arrow/Down-arrow - change selected item
-       * Left-arrow - dismiss popup
        * [identifier] - narrow suggestions--or if we're lame, just dismiss
        * All others - dismiss popup
        */
@@ -417,17 +416,22 @@ public class RCompletionManager implements CompletionManager
                   }
                }
                
-               else if (keycode == KeyCodes.KEY_TAB ||
-                        keycode == KeyCodes.KEY_RIGHT)
+               else if (keycode == KeyCodes.KEY_TAB)
                {
                   QualifiedName value = popup_.getSelectedValue() ;
                   if (value != null)
                   {
                      if (value.type == RCompletionType.DIRECTORY)
+                     {
                         context_.suggestOnAccept_ = true;
                      
-                     context_.onSelection(value);
-                     return true;
+                        context_.onSelection(value);
+                        return true;
+                     }
+                     else
+                     {
+                        return false;
+                     }
                   }
                }
                
@@ -439,15 +443,7 @@ public class RCompletionManager implements CompletionManager
                   return popup_.selectPrevPage() ;
                else if (keycode == KeyCodes.KEY_PAGEDOWN)
                   return popup_.selectNextPage() ;
-               else if (keycode == KeyCodes.KEY_HOME)
-                  return popup_.selectFirst() ;
-               else if (keycode == KeyCodes.KEY_END)
-                  return popup_.selectLast() ;
-               else if (keycode == KeyCodes.KEY_LEFT)
-               {
-                  invalidatePendingRequests() ;
-                  return true ;
-               }
+               
                if (keycode == 112) // F1
                {
                   context_.showHelpTopic() ;
