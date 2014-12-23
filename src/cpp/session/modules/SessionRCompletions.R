@@ -1225,9 +1225,13 @@ assign(x = ".rs.acCompletionTypes",
                                                   excludeArgs,
                                                   excludeArgsFromObject,
                                                   filePath,
-                                                  documentId,
-                                                  frameStack = sys.frames())
+                                                  documentId)
 {
+   # Get the frame stack (used for completions in e.g. debug contexts).
+   # TODO: we likely need to filter certain frames, e.g. those for
+   # 'tryCatch' and whatnot.
+   frameStack = sys.frames()
+   
    # Remove this call from the frame stack
    if (length(frameStack))
       frameStack <- frameStack[-length(frameStack)]
