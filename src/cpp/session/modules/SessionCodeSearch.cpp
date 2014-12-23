@@ -755,10 +755,12 @@ private:
    {
       // index the source if necessary
       boost::shared_ptr<r_util::RSourceIndex> pIndex;
+
+      // read the file
+      FilePath filePath(fileInfo.absolutePath());
+
       if (isIndexableSourceFile(fileInfo))
       {
-         // read the file
-         FilePath filePath(fileInfo.absolutePath());
          std::string code;
          Error error = module_context::readAndDecodeFile(
                                  filePath,
@@ -784,10 +786,16 @@ private:
 
       // attempt to add the entry
       Entry entry(fileInfo, pIndex);
-      pEntries_->insertEntry(entry);
 
-      // kick off an update
-      r_completions::AsyncRCompletions::update();
+      if (!filePath.isWithin(projects::projectContext().directory().complete("packrat")))
+      {
+         pEntries_->insertEntry(entry);
+
+         // kick off an update
+         r_completions::AsyncRCompletions::update();
+      }
+
+
    }
 
    void removeIndexEntry(const FileInfo& fileInfo)
@@ -944,7 +952,8 @@ bool sourceDatabaseFilter(const r_util::RSourceIndex& index)
    {
       // get file path
       FilePath docPath = module_context::resolveAliasedPath(index.context());
-      return docPath.isWithin(projects::projectContext().directory());
+      return docPath.isWithin(projects::projectContext().directory()) &&
+            !docPath.isWithin(projects::projectContext().directory().complete("packrat"));
    }
    else
    {
