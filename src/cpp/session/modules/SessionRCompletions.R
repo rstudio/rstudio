@@ -1102,7 +1102,8 @@ assign(x = ".rs.acCompletionTypes",
 })
 
 .rs.addFunction("getCompletionsSearchPath", function(token,
-                                                     overrideInsertParens = FALSE)
+                                                     overrideInsertParens = FALSE,
+                                                     frameStack = list())
 {
    objects <- .rs.objectsOnSearchPath(token, TRUE)
    
@@ -1110,13 +1111,15 @@ assign(x = ".rs.acCompletionTypes",
    # and pull the variables out for completion.
    # 
    # TODO: This likely needs to be tweaked for 'tryCatch', 'withCallingHandlers'
-   frames <- sys.frames()
-   if (length(frames) > sys.parent())
+   if (length(frameStack))
    {
-      objects <- c(
-         objects,
-         list(objects(frames[[length(frames) - sys.parent()]]))
-      )
+      for (i in seq_along(frameStack))
+      {
+         objects <- c(
+            objects,
+            list(objects(frameStack[[i]], all.names = TRUE))
+         )
+      }
    }
    
    objects[["keywords"]] <- c(
@@ -1222,8 +1225,13 @@ assign(x = ".rs.acCompletionTypes",
                                                   excludeArgs,
                                                   excludeArgsFromObject,
                                                   filePath,
-                                                  documentId)
+                                                  documentId,
+                                                  frameStack = sys.frames())
 {
+   # Remove this call from the frame stack
+   if (length(frameStack))
+      frameStack <- frameStack[-length(frameStack)]
+   
    filePath <- suppressWarnings(.rs.normalizePath(filePath))
    
    ## NOTE: these are passed in as lists of strings; convert to character
@@ -1293,7 +1301,7 @@ assign(x = ".rs.acCompletionTypes",
       
       # Otherwise, complete from the seach path + available packages
       completions <- .rs.appendCompletions(
-         .rs.getCompletionsSearchPath(token),
+         .rs.getCompletionsSearchPath(token, frameStack = frameStack),
          .rs.appendCompletions(
             .rs.getCompletionsPackages(token, TRUE),
             .rs.getCompletionsLibraryContext(token,
@@ -1511,7 +1519,7 @@ assign(x = ".rs.acCompletionTypes",
    {
       completions <- .rs.appendCompletions(
          completions,
-         .rs.getCompletionsSearchPath(token)
+         .rs.getCompletionsSearchPath(token, frameStack = frameStack)
       )
       
       if (.rs.isRScriptInPackageBuildTarget(filePath))
