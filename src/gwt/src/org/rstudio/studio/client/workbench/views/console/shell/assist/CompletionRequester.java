@@ -113,6 +113,12 @@ public class CompletionRequester
       return absolutePath.substring(absolutePath.lastIndexOf('/') + 1);
    }
    
+   private boolean filterStartsWithDot(String item,
+                                       String token)
+   {
+      return !(!token.startsWith(".") && item.startsWith("."));
+   }
+   
    private CompletionResult narrow(String token,
                                    String diff,
                                    CompletionResult cachedResult)
@@ -137,12 +143,11 @@ public class CompletionRequester
          if (RCompletionType.isFileType(qname.type))
          {
             if (StringUtil.isSubsequence(basename(qname.name), tokenLowerSub, true))
-            {
                newCompletions.add(qname);
-            }
          }
          else
-            if (StringUtil.isSubsequence(qname.name, token, true))
+            if (StringUtil.isSubsequence(qname.name, token, true) &&
+                filterStartsWithDot(qname.name, token))
                newCompletions.add(qname) ;
       }
       
@@ -152,10 +157,6 @@ public class CompletionRequester
          public int compare(QualifiedName lhs,
                             QualifiedName rhs)
          {
-            // Keep argument listings at the top
-            if (lhs.type != rhs.type)
-               return lhs.type < rhs.type ? -1 : 1;
-            
             int lhsScore;
             if (RCompletionType.isFileType(lhs.type))
                lhsScore = CodeSearchOracle.scoreMatch(
@@ -169,6 +170,10 @@ public class CompletionRequester
                      basename(rhs.name).toLowerCase(), tokenLowerSub, true);
             else
                rhsScore = CodeSearchOracle.scoreMatch(rhs.name.toLowerCase(), tokenLower, false);
+            
+            // Place arguments higher (give less penalty)
+            if (lhs.type == RCompletionType.ARGUMENT) lhsScore -= 3;
+            if (rhs.type == RCompletionType.ARGUMENT) rhsScore -= 3;
 
             if (lhsScore == rhsScore)
                return lhs.name.length() - rhs.name.length();
