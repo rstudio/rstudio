@@ -54,7 +54,9 @@
     col_max <- 0
     col_vals <- ""
     col_search_type <- ""
-    if (length(x[[idx]]) > 0)
+    # ensure that the column contains some scalar values we can examine 
+    # (treat vector-valued columns as of unknown type)
+    if (length(x[[idx]]) > 0 && length(x[1,idx]) == 1)
     {
       val <- x[1,idx]
       if (is.factor(val))
@@ -178,7 +180,19 @@
   # apply sort
   if (col > 0 && length(x[[col]]) > 0)
   {
-    x <- as.data.frame(x[order(x[[col]], decreasing = identical(dir, "desc")),])
+    if (is.list(x[1,col]) || length(x[1,col]) > 1)
+    {
+      # extract the first value from each cell for ordering (handle
+      # vector-valued columns gracefully)
+      x <- as.data.frame(x[order(vapply(x[[col]], `[`, 0, 1), 
+                                 decreasing = identical(dir, "desc")),])
+    }
+    else
+    {
+      # skip the expensive vapply when we're dealing with scalars
+      x <- as.data.frame(x[order(x[[col]], 
+                                 decreasing = identical(dir, "desc")),])
+    }
   }
 
   return(x)
