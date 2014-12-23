@@ -842,17 +842,17 @@ private:
    static bool isIndexableSourceFile(const FileInfo& fileInfo)
    {
       FilePath filePath(fileInfo.absolutePath());
-      if (!filePath.isDirectory())
+      if (!filePath.isDirectory() && filePath.exists())
       {
          std::string lowerExtension = filePath.extensionLowerCase();
          return
                lowerExtension == ".r" ||
                lowerExtension == ".s" ||
                lowerExtension == ".q";
-         
       }
-      
+
       return false;
+
    }
 
 private:
