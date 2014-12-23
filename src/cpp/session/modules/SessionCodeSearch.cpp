@@ -73,6 +73,20 @@ namespace code_search {
 
 namespace {
 
+bool isInCmakeBuildDirectory(const FilePath& filePath)
+{
+   FilePath parentPath = filePath.parent();
+   while (!parentPath.empty()
+          && parentPath != projects::projectContext().directory())
+   {
+      // if this directory contains a 'cmake_install' file, filter it out
+      if (parentPath.complete("cmake_install.cmake").exists())
+         return true;
+
+      parentPath = parentPath.parent();
+   }
+   return false;
+}
 
 bool isGlobalFunctionNamed(const r_util::RSourceItem& sourceItem,
                            const std::string& name)
@@ -555,7 +569,7 @@ public:
       // iterate over the files
       for (; pEntries_->is_valid(it); ++it)
       {
-         Entry entry = *it;
+         const Entry& entry = *it;
          
          DEBUG("Node: '" << (*it).fileInfo.absolutePath() << "'");
          
@@ -759,6 +773,10 @@ private:
       // read the file
       FilePath filePath(fileInfo.absolutePath());
 
+      // filter certain directories (e.g. those that exist in build directories)
+      if (isInCmakeBuildDirectory(filePath))
+         return;
+
       if (isIndexableSourceFile(fileInfo))
       {
          std::string code;
@@ -787,14 +805,14 @@ private:
       // attempt to add the entry
       Entry entry(fileInfo, pIndex);
 
-      if (!filePath.isWithin(projects::projectContext().directory().complete("packrat")))
+      if (!filePath.isWithin(projects::projectContext().directory().complete("packrat")) &&
+          !isInCmakeBuildDirectory(filePath))
       {
          pEntries_->insertEntry(entry);
 
          // kick off an update
          r_completions::AsyncRCompletions::update();
       }
-
 
    }
 
