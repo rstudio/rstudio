@@ -62,6 +62,7 @@ then
   fakeroot cpack -G $2
 else
   cpack -G $2
+  ../fix-debian-permissions `ls *.deb`
 fi
 
 cd ..
