@@ -62,6 +62,7 @@ import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
@@ -459,11 +460,12 @@ public class TypeTightener {
     @Override
     public void endVisit(JConditional x, Context ctx) {
       if (x.getType() instanceof JReferenceType) {
-        JReferenceType newType =
-            program.generalizeTypes((JReferenceType) x.getThenExpr().getType(), (JReferenceType) x
-                .getElseExpr().getType());
-        if (newType != x.getType()) {
-          x.setType(newType);
+        JReferenceType refType = (JReferenceType) x.getType();
+        JReferenceType resultType = program.strengthenType(refType, Arrays.asList(
+            (JReferenceType) x.getThenExpr().getType(),
+            (JReferenceType) x.getElseExpr().getType()));
+        if (refType != resultType) {
+          x.setType(resultType);
           madeChanges();
         }
       }
@@ -487,8 +489,9 @@ public class TypeTightener {
         typeList.add(type);
       }
 
-      JReferenceType resultType = program.generalizeTypes(typeList);
-      if (x.getType() != resultType) {
+      JReferenceType refType = (JReferenceType) x.getType();
+      JReferenceType resultType = program.strengthenType(refType, typeList);
+      if (refType != resultType) {
         x.setType(resultType);
         madeChanges();
       }
@@ -603,14 +606,7 @@ public class TypeTightener {
         }
       }
 
-      JReferenceType resultType;
-      if (typeList.isEmpty()) {
-        // The method returns nothing
-        resultType = program.getTypeNull();
-      } else {
-        resultType = program.generalizeTypes(typeList);
-      }
-      resultType = program.strongerType(refType, resultType);
+      JReferenceType resultType = program.strengthenType(refType, typeList);
       if (refType != resultType) {
         x.setType(resultType);
         madeChanges();
@@ -783,15 +779,8 @@ public class TypeTightener {
         }
       }
 
-      JReferenceType resultType;
-      if (!typeList.isEmpty()) {
-        resultType = program.generalizeTypes(typeList);
-        resultType = program.strongerType(refType, resultType);
-      } else {
-        resultType = program.getTypeNull();
-      }
-
-      if (x.getType() != resultType) {
+      JReferenceType resultType = program.strengthenType(refType, typeList);
+      if (refType != resultType) {
         x.setType(resultType);
         madeChanges();
       }

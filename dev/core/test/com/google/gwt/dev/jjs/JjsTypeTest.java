@@ -36,6 +36,7 @@ import junit.framework.TestCase;
 import org.junit.Assert;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -316,13 +317,13 @@ public class JjsTypeTest extends TestCase {
   }
 
   public void testStrongerType() {
-    assertSame(classA, program.strongerType(classA, classA));
-    assertSame(classBnn, program.strongerType(classB, classBnn));
-    assertSame(classB, program.strongerType(classB, classBase));
-    assertSame(classB, program.strongerType(classBase, classB));
-    assertSame(intfI, program.strongerType(intfI, intfJ));
-    assertSame(arrayOfA, program.strongerType(intfSerializable, arrayOfA));
-    assertSame(arrayOfA, program.strongerType(intfCloneable, arrayOfA));
+    assertSame(classA, strongerType(classA, classA));
+    assertSame(classBnn, strongerType(classB, classBnn));
+    assertSame(classB, strongerType(classB, classBase));
+    assertSame(classB, strongerType(classBase, classB));
+    assertSame(intfI, strongerType(intfI, intfJ));
+    assertSame(arrayOfA, strongerType(intfSerializable, arrayOfA));
+    assertSame(arrayOfA, strongerType(intfCloneable, arrayOfA));
   }
 
   public void testUpdateTypeInformation_isJavaScriptObject() {
@@ -560,11 +561,12 @@ public class JjsTypeTest extends TestCase {
     typeNull = program.getTypeNull();
   }
 
+  private JReferenceType strongerType(JReferenceType type1, JReferenceType type2) {
+    return program.strengthenType(type1, Arrays.asList(type2));
+  }
+
   private JReferenceType generalizeTypes(JReferenceType type1, JReferenceType type2) {
-    List<JReferenceType> types = new ArrayList<JReferenceType>(2);
-    types.add(type1);
-    types.add(type2);
-    return program.generalizeTypes(types);
+    return program.strengthenType(program.getTypeJavaLangObject(), Arrays.asList(type1, type2));
   }
 
   /**

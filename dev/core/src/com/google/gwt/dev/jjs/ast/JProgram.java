@@ -443,6 +443,18 @@ public class JProgram extends JNode implements ArrayTypeCreator {
   }
 
   /**
+   * Tries the strengthen the reference type based on the assigned types in the program.
+   */
+  public JReferenceType strengthenType(JReferenceType refType, List<JReferenceType> assignedTypes) {
+    if (assignedTypes.isEmpty()) {
+      // Not assigned, it can only be null.
+      return getTypeNull();
+    } else {
+      return strongerType(refType, generalizeTypes(assignedTypes));
+    }
+  }
+
+  /**
    * Return a minimal upper bound of a set of types. That is, a type
    * that is a supertype of all the input types and is as close as possible to the
    * input types.
@@ -466,7 +478,7 @@ public class JProgram extends JNode implements ArrayTypeCreator {
    * In particular generalizeTypes({I,A,C}) = I and generalizeTypes({A,C,I}) = O.
    *
    */
-  public JReferenceType generalizeTypes(Collection<? extends JReferenceType> types) {
+  private JReferenceType generalizeTypes(Collection<? extends JReferenceType> types) {
     assert (types != null);
     assert (!types.isEmpty());
     Iterator<? extends JReferenceType> it = types.iterator();
@@ -484,7 +496,7 @@ public class JProgram extends JNode implements ArrayTypeCreator {
    * Return the least upper bound of two types. That is, the smallest type that
    * is a supertype of both types.
    */
-  public JReferenceType generalizeTypes(JReferenceType type1, JReferenceType type2) {
+  private JReferenceType generalizeTypes(JReferenceType type1, JReferenceType type2) {
     if (type1 == type2) {
       return type1;
     }
@@ -1126,7 +1138,7 @@ public class JProgram extends JNode implements ArrayTypeCreator {
    * Return the greatest lower bound of two types. That is, return the largest
    * type that is a subtype of both inputs.
    */
-  public JReferenceType strongerType(JReferenceType type1, JReferenceType type2) {
+  private JReferenceType strongerType(JReferenceType type1, JReferenceType type2) {
     if (type1 == type2) {
       return type1;
     }
