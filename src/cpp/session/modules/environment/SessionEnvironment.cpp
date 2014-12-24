@@ -273,8 +273,7 @@ RCNTXT* errorOriginatorContext(RCNTXT* handlerCtx, int* dist)
 RCNTXT* getFunctionContext(const int depth,
                            bool findUserCode = false,
                            int* pFoundDepth = NULL,
-                           SEXP* pEnvironment = NULL,
-                           RCNTXT** ppSrcContext = NULL)
+                           SEXP* pEnvironment = NULL)
 {
    RCNTXT* pRContext = r::getGlobalContext();
    RCNTXT* pSrcContext = pRContext;
@@ -349,11 +348,6 @@ RCNTXT* getFunctionContext(const int depth,
             *pFoundDepth = 1;
       }
       pRContext = r::getGlobalContext();
-   }
-   // output source context if desired
-   if (ppSrcContext != NULL)
-   {
-      *ppSrcContext = pSrcContext;
    }
    return pRContext;
 }
@@ -730,12 +724,7 @@ json::Object commonEnvironmentStateData(
    // being debugged
    if (depth > 0)
    {
-      RCNTXT* pSrcContext = NULL;
-      RCNTXT* pContext = getFunctionContext(depth, false, NULL, NULL, &pSrcContext);
-      if (pSrcContext == NULL)
-      {
-         pSrcContext = pContext;
-      }
+      RCNTXT* pContext = getFunctionContext(depth);
       std::string functionName;
       Error error = functionNameFromContext(pContext, &functionName);
       if (error)
@@ -754,13 +743,7 @@ json::Object commonEnvironmentStateData(
          inFunctionEnvironment = true;
       }
 
-      // Check to see if the function is out of sync (in which case we need to
-      // debug a copy). Don't do this if the context has source refs but the 
-      // function being debugged doesn't--this indicates that the expression 
-      // being evaluated came from elsewhere, and we want to show it in its
-      // original context.
-      if (functionName != "eval" && !(isValidSrcref(pSrcContext->srcref) && 
-             !isValidSrcref(sourceRefsOfContext(pSrcContext))))
+      if (pContext && functionName != "eval")
       {
          // see if the function to be debugged is out of sync with its saved
          // sources (if available).
