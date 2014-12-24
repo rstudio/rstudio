@@ -17,6 +17,7 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.ast.CanBeAbstract;
+import com.google.gwt.dev.jjs.ast.CanBeStatic;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
@@ -36,15 +37,12 @@ import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
-import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
-import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JRunAsync;
-import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JTryStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
@@ -139,17 +137,17 @@ public class TypeTightener {
     @Override
     public void endVisit(JFieldRef x, Context ctx) {
       JExpression instance = x.getInstance();
-      boolean isStatic = x.getField().isStatic();
-      if (isStatic && instance != null) {
+      JField field = x.getField();
+      if (field.isStatic() && instance != null) {
         // this doesn't really belong here, but while we're here let's remove
         // non-side-effect qualifiers to statics
         if (!instance.hasSideEffects()) {
           JFieldRef fieldRef =
-              new JFieldRef(x.getSourceInfo(), null, x.getField(), x.getEnclosingType());
+              new JFieldRef(x.getSourceInfo(), null, field, x.getEnclosingType());
           ctx.replaceMe(fieldRef);
         }
-      } else if (!isStatic && instance.getType() == typeNull
-          && x.getField() != program.getNullField()) {
+      } else if (isNullReference(field, instance)
+          && field != program.getNullField()) {
         // Change any dereference of null to use the null field
         ctx.replaceMe(Pruner.transformToNullFieldRef(x, program));
       }
@@ -159,9 +157,8 @@ public class TypeTightener {
     public void endVisit(JMethodCall x, Context ctx) {
       JExpression instance = x.getInstance();
       JMethod method = x.getTarget();
-      boolean isStatic = method.isStatic();
       boolean isStaticImpl = program.isStaticImpl(method);
-      if (isStatic && !isStaticImpl && instance != null) {
+      if (method.isStatic() && !isStaticImpl && instance != null) {
         // TODO: move to DeadCodeElimination.
         // this doesn't really belong here, but while we're here let's remove
         // non-side-effect qualifiers to statics
@@ -170,11 +167,11 @@ public class TypeTightener {
           newCall.addArgs(x.getArgs());
           ctx.replaceMe(newCall);
         }
-      } else if (!isStatic && instance.getType() == typeNull) {
+      } else if (isNullReference(method, instance)) {
         ctx.replaceMe(Pruner.transformToNullMethodCall(x, program));
       } else if (isStaticImpl && method.getParams().size() > 0
           && method.getParams().get(0).isThis() && x.getArgs().size() > 0
-          && x.getArgs().get(0).getType() == typeNull) {
+          && x.getArgs().get(0).getType() == program.getTypeNull()) {
         // bind null instance calls to the null method for static impls
         ctx.replaceMe(Pruner.transformToNullMethodCall(x, program));
       }
@@ -253,10 +250,7 @@ public class TypeTightener {
 
     @Override
     public void endVisit(JField x, Context ctx) {
-      if (x.hasInitializer() && canUninitializedValueBeObserved.apply(x)) {
-        addAssignment(x, x.getType().getDefaultValue());
-      }
-      if (!x.hasInitializer()) {
+      if (!x.hasInitializer() || canUninitializedValueBeObserved.apply(x)) {
         addAssignment(x, x.getType().getDefaultValue());
       }
       currentMethod = null;
@@ -568,13 +562,13 @@ public class TypeTightener {
       }
       JReferenceType refType = (JReferenceType) x.getType();
 
-      if (refType == typeNull) {
+      if (refType == program.getTypeNull()) {
         return;
       }
 
       // tighten based on non-instantiability
       if (!program.typeOracle.isInstantiatedType(refType)) {
-        x.setType(typeNull);
+        x.setType(program.getTypeNull());
         madeChanges();
         return;
       }
@@ -612,7 +606,7 @@ public class TypeTightener {
       JReferenceType resultType;
       if (typeList.isEmpty()) {
         // The method returns nothing
-        resultType = typeNull;
+        resultType = program.getTypeNull();
       } else {
         resultType = program.generalizeTypes(typeList);
       }
@@ -748,13 +742,13 @@ public class TypeTightener {
         return;
       }
 
-      if (refType == typeNull) {
+      if (refType == program.getTypeNull()) {
         return;
       }
 
       // tighten based on non-instantiability
       if (!program.typeOracle.isInstantiatedType(refType)) {
-        x.setType(typeNull);
+        x.setType(program.getTypeNull());
         madeChanges();
         return;
       }
@@ -794,27 +788,13 @@ public class TypeTightener {
         resultType = program.generalizeTypes(typeList);
         resultType = program.strongerType(refType, resultType);
       } else {
-        if (x instanceof JParameter) {
-          /*
-           * There is no need to tighten unused parameters, because they will be
-           * pruned.
-           */
-          resultType = refType;
-        } else {
-          resultType = typeNull;
-        }
+        resultType = program.getTypeNull();
       }
 
       if (x.getType() != resultType) {
         x.setType(resultType);
         madeChanges();
       }
-    }
-
-    private boolean cannotBeSeenUninitialized(JVariable x) {
-      return (x instanceof JField) && ((JField) x).isFinal() && x.getConstInitializer() != null &&
-          (x.getConstInitializer().getType() instanceof JPrimitiveType ||
-              x.getConstInitializer() instanceof JStringLiteral);
     }
   }
 
@@ -906,11 +886,9 @@ public class TypeTightener {
   private final Multimap<JField, JMethod> calledMethodsByFieldRefArg = HashMultimap.create();
 
   private final JProgram program;
-  private final JNullType typeNull;
 
   private TypeTightener(JProgram program) {
     this.program = program;
-    typeNull = program.getTypeNull();
   }
 
   private OptimizerStats execImpl(OptimizerContext optimizerCtx) {
@@ -1017,7 +995,11 @@ public class TypeTightener {
     return affectedFields;
   }
 
-  private enum AnalysisResult { TRUE, FALSE, UNKNOWN };
+  private boolean isNullReference(CanBeStatic member, JExpression instance) {
+    return !member.isStatic() && instance.getType() == program.getTypeNull();
+  }
+
+  private enum AnalysisResult { TRUE, FALSE, UNKNOWN }
 
   /**
    * Tries to statically evaluate the instanceof operation. Returning TRUE if it can be determined
