@@ -1241,7 +1241,15 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getActiveFrame", function(n = 1)
 {
-   .Call("rs_getActiveFrame", as.integer(n) + 3L)
+   # We need to skip the following frames:
+   # 1. The frame created by the .Call,
+   # 2. The current frame from this function call,
+   # 3. The browser call (if necessary).
+   offset <- 2L
+   if (.Call("rs_isBrowserActive"))
+      offset <- offset + 1L
+   
+   .Call("rs_getActiveFrame", as.integer(n) + offset)
 })
 
 .rs.addJsonRpcHandler("get_completions", function(token,
