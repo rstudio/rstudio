@@ -391,6 +391,7 @@
    }
    
    result
+   
 })
 
 .rs.addFunction("getFunctionArgumentNames", function(object)

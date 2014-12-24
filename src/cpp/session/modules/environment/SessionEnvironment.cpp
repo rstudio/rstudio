@@ -27,6 +27,7 @@
 #include <r/RExec.hpp>
 #include <r/session/RSession.hpp>
 #include <r/RInterface.hpp>
+#include <r/RRoutines.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionPersistentState.hpp>
@@ -46,6 +47,11 @@ namespace environment {
 // to the destructor we might release the underlying environment SEXP after
 // R has already shut down)
 EnvironmentMonitor* s_pEnvironmentMonitor = NULL;
+
+// is the browser currently active? we store this state
+// so that we can query this from R, without 'hiding' the
+// browser state by pushing new contexts / frames on the stack
+bool s_browserActive = false;
 
 namespace {
 
@@ -367,10 +373,12 @@ bool inBrowseContext()
       }
       if (foundBrowser && foundFunction)
       {
+         s_browserActive = true;
          return true;
       }
       pRContext = pRContext->nextcontext;
    }
+   s_browserActive = false;
    return false;
 }
 
@@ -1109,6 +1117,12 @@ json::Value environmentStateAsJson()
    return commonEnvironmentStateData(contextDepth, NULL);
 }
 
+SEXP rs_isBrowserActive()
+{
+   r::sexp::Protect protect;
+   return r::sexp::create(s_browserActive, &protect);
+}
+
 Error initialize()
 {
    // store on the heap so that the destructor is never called (so we
@@ -1128,6 +1142,11 @@ Error initialize()
          boost::make_shared<LineDebugState>();
    boost::shared_ptr<bool> pCapturingDebugOutput =
          boost::make_shared<bool>(false);
+
+   r::routines::registerCallMethod(
+            "rs_isBrowserActive",
+            (DL_FUNC) rs_isBrowserActive,
+            0);
 
    // subscribe to events
    using boost::bind;

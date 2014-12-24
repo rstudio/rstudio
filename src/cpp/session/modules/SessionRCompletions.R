@@ -1101,26 +1101,50 @@ assign(x = ".rs.acCompletionTypes",
                        type = .rs.acCompletionTypes$OPTION)
 })
 
+.rs.addFunction("getCompletionsActiveFrame", function(token,
+                                                      envir)
+{
+   currentEnv <- envir
+   encounteredEnvs <- list()
+   
+   completions <- character()
+   types <- numeric()
+   
+   empty <- emptyenv()
+   while (!(identical(currentEnv, empty) ||
+            identical(currentEnv, .GlobalEnv) ||
+            identical(currentEnv, .BaseNamespaceEnv)))
+   {
+      for (i in seq_along(encounteredEnvs))
+      {
+         if (identical(currentEnv, encounteredEnvs[[i]]))
+            return(.rs.emptyCompletions())
+      }
+         
+      objects <- objects(currentEnv, all.names = TRUE)
+      
+      completions <- c(completions, objects)
+      types <- c(
+         types,
+         vapply(objects, USE.NAMES = FALSE, FUN.VALUE = numeric(1), function(object) {
+            .rs.getCompletionType(get(object, envir = currentEnv, inherits = TRUE))
+         })
+      )
+      
+      encounteredEnvs <- c(encounteredEnvs, currentEnv)
+      currentEnv <- parent.env(currentEnv)
+   }
+   
+   keep <- .rs.fuzzyMatches(completions, token)
+   .rs.makeCompletions(token = token,
+                       results = completions[keep],
+                       type = types[keep])
+})
+
 .rs.addFunction("getCompletionsSearchPath", function(token,
-                                                     overrideInsertParens = FALSE,
-                                                     frameStack = list())
+                                                     overrideInsertParens = FALSE)
 {
    objects <- .rs.objectsOnSearchPath(token, TRUE)
-   
-   # If we called this function from a debug context, try to find that frame
-   # and pull the variables out for completion.
-   # 
-   # TODO: This likely needs to be tweaked for 'tryCatch', 'withCallingHandlers'
-   if (length(frameStack))
-   {
-      for (i in seq_along(frameStack))
-      {
-         objects <- c(
-            objects,
-            list(objects(frameStack[[i]], all.names = TRUE))
-         )
-      }
-   }
    
    objects[["keywords"]] <- c(
       "NULL", "NA", "TRUE", "FALSE", "T", "F", "Inf", "NaN",
@@ -1215,6 +1239,24 @@ assign(x = ".rs.acCompletionTypes",
    result
 })
 
+.rs.addFunction("isBrowserActive", function()
+{
+   .Call("rs_isBrowserActive")
+})
+
+.rs.addFunction("getActiveFrame", function(n = 0L)
+{
+   # We need to skip the following frames:
+   # 1. The frame created by the .Call,
+   # 2. The current frame from this function call,
+   # 3. The browser call (if necessary).
+   offset <- 2L
+   if (.rs.isBrowserActive())
+      offset <- offset + 1L
+   
+   .Call("rs_getActiveFrame", as.integer(n) + offset)
+})
+
 .rs.addJsonRpcHandler("get_completions", function(token,
                                                   string,
                                                   type,
@@ -1227,14 +1269,8 @@ assign(x = ".rs.acCompletionTypes",
                                                   filePath,
                                                   documentId)
 {
-   # Get the frame stack (used for completions in e.g. debug contexts).
-   # TODO: we likely need to filter certain frames, e.g. those for
-   # 'tryCatch' and whatnot.
-   frameStack = sys.frames()
-   
-   # Remove this call from the frame stack
-   if (length(frameStack))
-      frameStack <- frameStack[-length(frameStack)]
+   # Get the currently active frame
+   envir <- .rs.getActiveFrame(1L)
    
    filePath <- suppressWarnings(.rs.normalizePath(filePath))
    
@@ -1304,20 +1340,19 @@ assign(x = ".rs.acCompletionTypes",
          return(.rs.emptyCompletions())
       
       # Otherwise, complete from the seach path + available packages
-      completions <- .rs.appendCompletions(
-         .rs.getCompletionsSearchPath(token, frameStack = frameStack),
-         .rs.appendCompletions(
-            .rs.getCompletionsPackages(token, TRUE),
-            .rs.getCompletionsLibraryContext(token,
-                                             string,
-                                             type,
-                                             numCommas,
-                                             functionCall,
-                                             dropFirstArgument,
-                                             documentId,
-                                             parent.frame())
-         )
-      )
+      completions <- Reduce(.rs.appendCompletions, list(
+         .rs.getCompletionsSearchPath(token),
+         .rs.getCompletionsPackages(token, TRUE),
+         .rs.getCompletionsActiveFrame(token, envir),
+         .rs.getCompletionsLibraryContext(token,
+                                          string,
+                                          type,
+                                          numCommas,
+                                          functionCall,
+                                          dropFirstArgument,
+                                          documentId,
+                                          envir)
+      ))
       
       completions <- .rs.sortCompletions(completions, token)
       
@@ -1347,7 +1382,7 @@ assign(x = ".rs.acCompletionTypes",
    # getting arguments from the RStudio hook
    if ("install.packages" %in% string[[1]])
    {
-      fn <- .rs.getAnywhere("install.packages", parent.frame())
+      fn <- .rs.getAnywhere("install.packages", envir)
       if (is.function(fn) && identical(names(formals(fn)), "..."))
       {
          string[[1]] <- "utils::install.packages"
@@ -1434,7 +1469,7 @@ assign(x = ".rs.acCompletionTypes",
    # attr
    completions <- if (string[[1]] == "attr")
    {
-      .rs.getCompletionsAttr(token, functionCall, parent.frame())
+      .rs.getCompletionsAttr(token, functionCall, envir)
    }
    
    # getOption
@@ -1472,7 +1507,7 @@ assign(x = ".rs.acCompletionTypes",
          completions <- .rs.getCompletionsDollar(
             token,
             string[[1]],
-            parent.frame(),
+            envir,
             type[[1]] == .rs.acContextTypes$AT
          )
       }
@@ -1485,7 +1520,7 @@ assign(x = ".rs.acCompletionTypes",
             token,
             string[[1]],
             type[[1]] == .rs.acContextTypes$NAMESPACE_EXPORTED,
-            parent.frame()
+            envir
          )
       }
    }
@@ -1508,7 +1543,7 @@ assign(x = ".rs.acCompletionTypes",
                                 functionCall,
                                 discardFirst,
                                 documentId,
-                                parent.frame())
+                                envir)
          )
       }
    }
@@ -1521,10 +1556,11 @@ assign(x = ".rs.acCompletionTypes",
                            .rs.acContextTypes$SINGLE_BRACKET,
                            .rs.acContextTypes$DOUBLE_BRACKET))
    {
-      completions <- .rs.appendCompletions(
+      completions <- Reduce(.rs.appendCompletions, list(
          completions,
-         .rs.getCompletionsSearchPath(token, frameStack = frameStack)
-      )
+         .rs.getCompletionsSearchPath(token),
+         .rs.getCompletionsActiveFrame(token, envir)
+      ))
       
       if (.rs.isRScriptInPackageBuildTarget(filePath))
       {
@@ -1557,7 +1593,7 @@ assign(x = ".rs.acCompletionTypes",
                                excludeArgs,
                                excludeArgsFromObject,
                                discardFirst,
-                               parent.frame())
+                               envir)
    )
    
    ## Override param insertion if the function was 'debug' or 'trace'
@@ -1573,7 +1609,7 @@ assign(x = ".rs.acCompletionTypes",
          else
          {
             ## Blacklist based on formals of the function
-            object <- .rs.getAnywhere(string[[i]], parent.frame())
+            object <- .rs.getAnywhere(string[[i]], envir)
             if (is.function(object))
             {
                argNames <- .rs.getFunctionArgumentNames(object)
@@ -1601,7 +1637,7 @@ assign(x = ".rs.acCompletionTypes",
       rightDataName,
       verb,
       cursorPos,
-      parent.frame()
+      .rs.getActiveFrame()
    )
    
 })
