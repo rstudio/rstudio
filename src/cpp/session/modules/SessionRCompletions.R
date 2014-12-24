@@ -1241,33 +1241,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getActiveFrame", function(n = 1)
 {
-   frames <- sys.frames()
-   calls <- sys.calls()
-   
-   # If the number of frames is less than, or equal to, n + 1, this
-   # implies it's actually a top-level evaluation -- just return the
-   # appropriate parent frame.
-   if (length(frames) <= n + 1)
-      return(parent.frame(n + 1))
-   
-   # Exclude this frame plus the n parent frames
-   frames <- head(frames, length(frames) - n - 1)
-   calls  <- head(calls, length(calls) - n - 1)
-   
-   # Exclude 'tryCatch' frames
-   k <- length(frames)
-   while (k > 1 &&
-          identical(calls[[k]][[1]], as.name("tryCatchList")) &&
-          identical(calls[[k - 1]][[1]], as.name("tryCatch")))
-   {
-      frames <- head(frames, k - 2)
-      calls <- head(calls, k - 2)
-      k <- length(frames)
-   }
-   
-   # The active frame is the final frame
-   frames[[length(frames)]]
-   
+   .Call("rs_getActiveFrame", as.integer(n) + 3L)
 })
 
 .rs.addJsonRpcHandler("get_completions", function(token,
@@ -1569,10 +1543,11 @@ assign(x = ".rs.acCompletionTypes",
                            .rs.acContextTypes$SINGLE_BRACKET,
                            .rs.acContextTypes$DOUBLE_BRACKET))
    {
-      completions <- .rs.appendCompletions(
+      completions <- Reduce(.rs.appendCompletions, list(
          completions,
-         .rs.getCompletionsSearchPath(token)
-      )
+         .rs.getCompletionsSearchPath(token),
+         .rs.getCompletionsActiveFrame(token, envir)
+      ))
       
       if (.rs.isRScriptInPackageBuildTarget(filePath))
       {

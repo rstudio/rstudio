@@ -309,6 +309,19 @@ SEXP rs_isSubsequence(SEXP stringsSEXP, SEXP querySEXP)
 
 }
 
+SEXP rs_getActiveFrame(SEXP depthSEXP)
+{
+   int depth = r::sexp::asInteger(depthSEXP);
+   RCNTXT* context = r::getGlobalContext();
+   for (int i = 0; i < depth; ++i)
+   {
+      context = context->nextcontext;
+      if (context == NULL)
+         return R_NilValue;
+   }
+   return context->cloenv;
+}
+
 } // end anonymous namespace
 
 Error initialize() {
@@ -332,6 +345,11 @@ Error initialize() {
             "rs_isSubsequence",
             (DL_FUNC) rs_isSubsequence,
             2);
+
+   r::routines::registerCallMethod(
+            "rs_getActiveFrame",
+            (DL_FUNC) rs_getActiveFrame,
+            1);
    
    using boost::bind;
    using namespace module_context;
