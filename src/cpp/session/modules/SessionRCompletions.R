@@ -1239,14 +1239,19 @@ assign(x = ".rs.acCompletionTypes",
    result
 })
 
-.rs.addFunction("getActiveFrame", function(n = 1)
+.rs.addFunction("isBrowserActive", function()
+{
+   .Call("rs_isBrowserActive")
+})
+
+.rs.addFunction("getActiveFrame", function(n = 0L)
 {
    # We need to skip the following frames:
    # 1. The frame created by the .Call,
    # 2. The current frame from this function call,
    # 3. The browser call (if necessary).
    offset <- 2L
-   if (.Call("rs_isBrowserActive"))
+   if (.rs.isBrowserActive())
       offset <- offset + 1L
    
    .Call("rs_getActiveFrame", as.integer(n) + offset)
@@ -1265,7 +1270,7 @@ assign(x = ".rs.acCompletionTypes",
                                                   documentId)
 {
    # Get the currently active frame
-   envir <- .rs.getActiveFrame()
+   envir <- .rs.getActiveFrame(1L)
    
    filePath <- suppressWarnings(.rs.normalizePath(filePath))
    
