@@ -460,12 +460,12 @@ assign(x = ".rs.acCompletionTypes",
    object <- NULL
    if (length(splat) == 1)
    {
-      object <- .rs.getAnywhere(string, envir = envir)
+      object <- .rs.getAnywhere(.rs.stripSurrounding(string), envir = envir)
    }
    else if (length(splat) == 2)
    {
-      namespaceString <- splat[[1]]
-      functionString <- string <- splat[[2]]
+      namespaceString <- .rs.stripSurrounding(splat[[1]])
+      functionString <- string <- .rs.stripSurrounding(splat[[2]])
       
       if (namespaceString %in% loadedNamespaces())
       {

@@ -1238,7 +1238,7 @@ public class RCompletionManager implements CompletionManager
          return getAutocompletionContextForFileMarkdownLink(firstLine);
       
       // Get the token at the cursor position
-      String token = firstLine.replaceAll(".*[^a-zA-Z0-9._:$@-]", "");
+      String token = firstLine.replaceAll(".*[^a-zA-Z0-9._:$@'\"`-]", "");
       
       // If we're completing an object within a string, assume it's a
       // file-system completion. Note that we may need other contextual information
