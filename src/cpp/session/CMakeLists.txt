@@ -355,6 +355,10 @@ if (NOT RSTUDIO_SESSION_WIN64)
    install(FILES "resources/NOTICE"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
+   # citation
+   install(FILES "resources/CITATION"
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+
    # R scripts
    file(GLOB R_MODULE_SRC_FILES "${CMAKE_CURRENT_BINARY_DIR}/modules/R/*.R")
    install(FILES ${R_MODULE_SRC_FILES}

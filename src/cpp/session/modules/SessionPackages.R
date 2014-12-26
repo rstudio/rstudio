@@ -262,41 +262,6 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       .rs.initDefaultUserLibrary()
 })
 
-.rs.addFunction( "initializeRStudioPackages", function(libDir,
-                                                       pkgSrcDir,
-                                                       rsVersion,
-                                                       force) {
-  
-  if (getRversion() >= "3.0.0") {
-    
-    # make sure the default library is writeable
-    .rs.ensureWriteableUserLibrary()
-
-    # function to update a package if necessary
-    updateIfNecessary <- function(pkgName) {
-      isInstalled <- .rs.isPackageInstalled(pkgName, .rs.defaultLibraryPath())
-      if (force || !isInstalled || (.rs.getPackageVersion(pkgName) != rsVersion)) {
-        
-        # remove if necessary
-        if (isInstalled)
-          utils::remove.packages(pkgName, .rs.defaultLibraryPath())
-        
-        # call back into rstudio to install
-        .Call("rs_installPackage", 
-              file.path(pkgSrcDir, pkgName),
-              .rs.defaultLibraryPath())
-      }
-    }
-    
-    updateIfNecessary("rstudio")
-    updateIfNecessary("manipulate")
-    
-  } else {
-    .rs.libPathsAppend(libDir)
-  }
-  
-})
-
 .rs.addFunction("listInstalledPackages", function()
 {
    # calculate unique libpaths

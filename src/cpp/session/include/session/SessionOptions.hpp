@@ -159,11 +159,6 @@ public:
       return core::FilePath(sessionLibraryPath_.c_str());
    }
    
-   core::FilePath sessionPackagesPath() const
-   {
-      return core::FilePath(sessionPackagesPath_.c_str());
-   }
-
    core::FilePath sessionPackageArchivesPath() const
    {
       return core::FilePath(sessionPackageArchivesPath_.c_str());
@@ -448,7 +443,6 @@ private:
    std::string coreRSourcePath_;
    std::string modulesRSourcePath_;
    std::string sessionLibraryPath_;
-   std::string sessionPackagesPath_;
    std::string sessionPackageArchivesPath_;
    std::string rLibsUser_;
    std::string rCRANRepos_;

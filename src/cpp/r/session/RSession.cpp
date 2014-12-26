@@ -389,6 +389,12 @@ Error initialize()
    if (error)
       return error ;
 
+   // install RStudio API
+   FilePath apiFilePath = s_options.rSourcePath.complete("Api.R");
+   error = r::sourceManager().sourceTools(apiFilePath);
+   if (error)
+      return error;
+
    // initialize graphics device -- use a stable directory for server mode
    // and temp directory for desktop mode (so that we can support multiple
    // concurrent processes using the same project)

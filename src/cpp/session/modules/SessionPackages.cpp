@@ -329,38 +329,8 @@ void onDetectChanges(module_context::ChangeSource source)
       detectLibPathsChanges();
 }
 
-
-void initializeRStudioPackages(bool newSession)
-{
-#ifdef RSTUDIO_UNVERSIONED_BUILD
-   bool force = true;
-#else
-   bool force = false;
-#endif
-   
-   if (newSession || (options().programMode() == kSessionProgramModeServer))
-   {
-      std::string libDir = core::string_utils::utf8ToSystem(
-                              options().sessionLibraryPath().absolutePath());
-      std::string pkgSrcDir = core::string_utils::utf8ToSystem(
-                              options().sessionPackagesPath().absolutePath());
-      std::string rsVersion = RSTUDIO_VERSION;
-      Error error = r::exec::RFunction(".rs.initializeRStudioPackages",
-                                                                  libDir,
-                                                                  pkgSrcDir,
-                                                                  rsVersion,
-                                                                  force)
-                                                                       .call();
-      if (error)
-         LOG_ERROR(error);
-   }
-}
-
 void onDeferredInit(bool newSession)
 {
-   // initialize rstudio packages
-   initializeRStudioPackages(newSession);
-
    // monitor libPaths for changes
    detectLibPathsChanges();
    module_context::events().onDetectChanges.connect(onDetectChanges);
