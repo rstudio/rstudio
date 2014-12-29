@@ -66,6 +66,7 @@
 * Add Clear Recent Projects menu item to toolbar project menu
 * Command to sync current working directory and Files pane to project directory
 * Windows: updated to MSYS SSH 1000.18
+* Eliminated rstudio and manipulate packages (both now available on CRAN)
 
 ### Bug Fixes
 
