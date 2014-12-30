@@ -191,7 +191,7 @@ public class ValidateRuntimeConditionalNodeTest extends BaseGssTest {
     new CreateConditionalNodes(mutatingVisitController, errorManager).runPass();
     new CreateRuntimeConditionalNodes(mutatingVisitController).runPass();
 
-    new PermutationsCollector(mutatingVisitController, errorManager).runPass();
+    new PermutationsCollector(mutatingVisitController).runPass();
     RuntimeConditionalBlockCollector runtimeConditionalBlockCollector = new
         RuntimeConditionalBlockCollector(mutatingVisitController);
     runtimeConditionalBlockCollector.runPass();

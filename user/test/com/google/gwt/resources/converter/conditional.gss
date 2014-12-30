@@ -116,3 +116,37 @@
     color: black;
   }
 }
+
+@if (eval('CONSTANT_DEFINED_ON_INTERFACE')) {
+  .foo9 {
+    color: red;
+  }
+}
+@elseif (eval('CONSTANT_DEFINED_ON_INTERFACE2')) {
+  .foo9 {
+    color: blue;
+  }
+}
+
+@if (!WILL_MATCH_A_CONFIGURATION_PROPERTY) {
+  .foo10 {
+    color: red;
+  }
+}
+@elseif (WILL_MATCH_A_CONFIGURATION_PROPERTY2) {
+  .foo10 {
+    color: blue;
+  }
+}
+
+@if (!WILL_MATCH_A_CONFIGURATION_PROPERTY) {
+  .foo11 {
+    color: red;
+  }
+}
+
+@if (WILL_MATCH_A_CONFIGURATION_PROPERTY2) {
+  .foo12 {
+    color: red;
+  }
+}

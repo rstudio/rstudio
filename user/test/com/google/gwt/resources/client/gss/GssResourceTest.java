@@ -188,6 +188,12 @@ public class GssResourceTest extends RenamingClassNameTest {
 
     s += "." + foo + "{margin:100px}";
 
+    if (RuntimeConditional.CONSTANT_DEFINED_ON_INTERFACE) {
+      s += "." + foo + "{height:10px}";
+    }
+
+    s += "." + foo + "{font-family:kennedy;top:5px}";
+
     return s;
   }
 }

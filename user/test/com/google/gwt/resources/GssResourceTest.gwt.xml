@@ -26,4 +26,10 @@
 
   <define-property name="custom.two" values="foo,bar"/>
   <set-property name="custom.two" value="bar"/>
+
+  <define-configuration-property name="DISABLE_KENNEDY" is-multi-valued="false"/>
+  <set-configuration-property name="DISABLE_KENNEDY" value="false" />
+
+  <define-configuration-property name="TRUE_PROPERTY" is-multi-valued="false"/>
+  <set-configuration-property name="TRUE_PROPERTY" value="true" />
 </module>

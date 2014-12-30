@@ -135,6 +135,8 @@ public interface TestResources extends ClientBundle {
    * Used to test conditional nodes containing conditions evaluated at runtime.
    */
   interface RuntimeConditional extends CssResource {
+    boolean CONSTANT_DEFINED_ON_INTERFACE = true;
+
     String foo();
   }
 

@@ -65,7 +65,8 @@ public class AutoConversionTest extends GWTTestCase {
   public void testConditional() {
     Conditional conditional = res().conditional();
 
-    String expectedCss = "." + conditional.foo() + "{color:white}";
+    String expectedCss = "." + conditional.foo() +
+        "{color:white;font-family:kennedy;font-weight:bold;top:5px;left:5px}";
     assertEquals(expectedCss, conditional.getText());
   }
 

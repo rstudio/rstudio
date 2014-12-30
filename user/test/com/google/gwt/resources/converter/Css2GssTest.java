@@ -15,10 +15,15 @@
  */
 package com.google.gwt.resources.converter;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.thirdparty.common.css.SourceCode;
 import com.google.gwt.thirdparty.common.css.compiler.ast.GssParser;
 import com.google.gwt.thirdparty.common.css.compiler.ast.GssParserException;
+import com.google.gwt.thirdparty.guava.common.base.Predicate;
+import com.google.gwt.thirdparty.guava.common.base.Predicates;
 
 import junit.framework.TestCase;
 
@@ -44,7 +49,14 @@ public class Css2GssTest extends TestCase {
   }
 
   public void testCssConditional() throws Exception {
-    assertFileContentEqualsAfterConversion("conditional.css", "conditional.gss");
+    Predicate<String> mockPropertyConfigurationMatcher =  mock(Predicate.class);
+    when(mockPropertyConfigurationMatcher.apply("!WILL_MATCH_A_CONFIGURATION_PROPERTY"))
+        .thenReturn(true);
+    when(mockPropertyConfigurationMatcher.apply("WILL_MATCH_A_CONFIGURATION_PROPERTY2"))
+        .thenReturn(true);
+
+    assertFileContentEqualsAfterConversionAndIsGssCompatible("conditional.css", "conditional.gss",
+        false, mockPropertyConfigurationMatcher);
   }
 
   public void testLenientFlag() throws Exception {
@@ -110,9 +122,16 @@ public class Css2GssTest extends TestCase {
 
   private void assertFileContentEqualsAfterConversionAndIsGssCompatible(String inputCssFile,
       String expectedGssFile, boolean lenient) throws IOException, UnableToCompleteException {
+    assertFileContentEqualsAfterConversionAndIsGssCompatible(inputCssFile, expectedGssFile, lenient,
+        Predicates.<String>alwaysFalse());
+  }
+
+  private void assertFileContentEqualsAfterConversionAndIsGssCompatible(String inputCssFile,
+      String expectedGssFile, boolean lenient, Predicate<String> simpleBooleanConditionPredicate)
+      throws IOException, UnableToCompleteException {
     URL resource = Css2GssTest.class.getResource(inputCssFile);
     InputStream stream = Css2GssTest.class.getResourceAsStream(expectedGssFile);
-    String convertedGss = new Css2Gss(resource, lenient).toGss();
+    String convertedGss = new Css2Gss(resource, lenient, simpleBooleanConditionPredicate).toGss();
     String gss = IOUtils.toString(stream, "UTF-8");
     Assert.assertEquals(gss, convertedGss);
 

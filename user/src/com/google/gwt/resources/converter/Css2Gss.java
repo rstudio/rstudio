@@ -21,6 +21,10 @@ import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.resources.css.GenerateCssAst;
 import com.google.gwt.resources.css.ast.CssStylesheet;
+import com.google.gwt.thirdparty.guava.common.base.Predicate;
+import com.google.gwt.thirdparty.guava.common.base.Predicates;
+import com.google.gwt.thirdparty.guava.common.base.Splitter;
+import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
 import com.google.gwt.thirdparty.guava.common.io.Files;
 
 import org.apache.commons.io.Charsets;
@@ -32,8 +36,10 @@ import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Converter from Css to Gss.
@@ -45,26 +51,30 @@ public class Css2Gss {
 
   private PrintWriter printWriter;
   private Map<String, String> defNameMapping;
+  private Predicate<String> simpleBooleanConditionPredicate;
 
   public Css2Gss(String filePath) throws MalformedURLException {
     this(new File(filePath).toURI().toURL(), false);
   }
 
-  public Css2Gss(URL fileUrl, TreeLogger treeLogger) {
-    this(fileUrl, treeLogger, false);
-  }
-
-  public Css2Gss(URL fileUrl, TreeLogger treeLogger, boolean lenient) {
-    cssFile = fileUrl;
-    this.treeLogger = treeLogger;
-    this.lenient = lenient;
-  }
-
   public Css2Gss(URL resource, boolean lenient) {
+    this(resource, lenient, Predicates.alwaysFalse());
+  }
+
+  public Css2Gss(URL resource, boolean lenient, Predicate simpleBooleanConditionPredicate) {
     cssFile = resource;
     printWriter = new PrintWriter(System.err);
     this.treeLogger = new PrintWriterTreeLogger(printWriter);
     this.lenient = lenient;
+    this.simpleBooleanConditionPredicate = simpleBooleanConditionPredicate;
+  }
+
+  public Css2Gss(URL fileUrl, TreeLogger treeLogger, boolean lenient,
+      Predicate simpleBooleanConditionPredicate) {
+    cssFile = fileUrl;
+    this.treeLogger = treeLogger;
+    this.lenient = lenient;
+    this.simpleBooleanConditionPredicate = simpleBooleanConditionPredicate;
   }
 
   public String toGss() throws UnableToCompleteException {
@@ -83,7 +93,8 @@ public class Css2Gss {
         new AlternateAnnotationCreatorVisitor().accept(sheet);
 
         GssGenerationVisitor gssGenerationVisitor = new GssGenerationVisitor(
-            new DefaultTextOutput(false), defNameMapping, lenient, treeLogger);
+            new DefaultTextOutput(false), defNameMapping, lenient, treeLogger,
+            simpleBooleanConditionPredicate);
         gssGenerationVisitor.accept(sheet);
 
         return gssGenerationVisitor.getContent();
@@ -109,7 +120,7 @@ public class Css2Gss {
 
     if (options.singleFile) {
       try {
-        System.out.println(convertFile(options.resource));
+        System.out.println(convertFile(options.resource, options.simpleBooleanConditions));
         System.exit(0);
       } catch (Exception e) {
         e.printStackTrace();
@@ -127,7 +138,7 @@ public class Css2Gss {
               "GSS file already exists - will not convert, file: " + cssFile.getAbsolutePath());
           continue;
         }
-        String gss = convertFile(cssFile);
+        String gss = convertFile(cssFile, options.simpleBooleanConditions);
         writeGss(gss, cssFile);
         System.out.println("Converted " + cssFile.getAbsolutePath());
       } catch (Exception e) {
@@ -155,63 +166,125 @@ public class Css2Gss {
     Files.asCharSink(gssFile, Charsets.UTF_8).write(gss);
   }
 
-  private static String convertFile(File resource) throws MalformedURLException,
-      UnableToCompleteException {
-    return new Css2Gss(resource.toURI().toURL(), false).toGss();
+  private static String convertFile(File resource, Set<String> simpleBooleanConditions)
+      throws MalformedURLException, UnableToCompleteException {
+    Predicate<String> simpleConditionPredicate;
+
+    if (simpleBooleanConditions != null) {
+      simpleConditionPredicate = Predicates.in(simpleBooleanConditions);
+    } else {
+      simpleConditionPredicate = Predicates.alwaysFalse();
+    }
+
+    return new Css2Gss(resource.toURI().toURL(), false, simpleConditionPredicate).toGss();
   }
 
   private static void printUsage() {
     System.err.println("Usage :");
     System.err.println("java " + Css2Gss.class.getName() + " [Options] [file or directory]");
     System.err.println("Options:");
-    System.err.println("  -r -> Recursively convert all css files on the given directory"
+    System.err.println(" -r -> Recursively convert all css files on the given directory"
         + "(leaves .css files in place)");
+    System.err.println(" -condition list_of_condition -> Specify a comma-separated list of " +
+        "variables that are used in conditionals and that will be mapped to configuration " +
+        "properties. The converter will not use the is() function when it will convert these " +
+        "conditions");
   }
 
-  private static class Options {
+  static class Options {
+    static final Map<String, ArgumentConsumer> argumentConsumers;
+
+    static {
+      argumentConsumers = new HashMap<String, ArgumentConsumer>(2);
+      argumentConsumers.put("-r", new ArgumentConsumer() {
+        @Override
+        public boolean consume(Options option, String nextArg) {
+          option.recurse = true;
+          return false;
+        }
+      });
+
+      argumentConsumers.put("-condition", new ArgumentConsumer() {
+        @Override
+        public boolean consume(Options option, String nextArg) {
+          if (nextArg == null) {
+            quitEarly("-condition option must be followed by a comma separated list of conditions");
+          }
+
+          option.simpleBooleanConditions = FluentIterable.from(Splitter.on(',').split(nextArg))
+              .toSet();
+
+          return true;
+        }
+      });
+    }
 
     boolean recurse;
     boolean singleFile;
     File resource;
+    Set<String> simpleBooleanConditions;
 
-    static Options parseOrQuit(String[] args) {
+    private static Options parseOrQuit(String[] args) {
+      if (!validateArgs(args)) {
+        quitEarly(null);
+      }
 
       Options options = new Options();
 
-      if (args.length == 1) {
-        options.recurse = false;
-        options.resource = new File(args[0]);
-        verifyResourceExists(options.resource);
-        options.singleFile = !options.resource.isDirectory();
-        return options;
+      int index = 0;
+
+      // consume options
+      while (index < args.length - 1) {
+        String arg = args[index++];
+        String nextArg = index < args.length - 1 ? args[index] : null;
+
+        ArgumentConsumer consumer = argumentConsumers.get(arg);
+
+        if (consumer == null) {
+          quitEarly("Unknown argument: " + arg);
+        }
+
+        boolean skipNextArg = consumer.consume(options, nextArg);
+
+        if (skipNextArg) {
+          index++;
+        }
       }
 
-      if (args.length != 2) {
-        printUsage();
-        System.exit(-1);
+      // last argument is always the file or directory path
+      options.resource = new File(args[index]);
+      options.singleFile = !options.resource.isDirectory();
+
+      // validate options
+      if (!options.resource.exists()) {
+        quitEarly("File or Directory does not exists: " + options.resource.getAbsolutePath());
       }
 
-      if (!args[0].trim().equals("-r")) {
-        printUsage();
-        System.exit(-1);
+      if (options.recurse && !options.resource.isDirectory()) {
+        quitEarly("When using -r the last parameter needs to be a directory");
       }
 
-      String fileName = args[1];
-      options.recurse = true;
-      options.resource = new File(fileName);
-      verifyResourceExists(options.resource);
-      if (!options.resource.isDirectory()) {
-        System.err.println("When using -r second parameter needs to be a directory");
-        System.exit(-1);
-      }
       return options;
     }
 
-    private static void verifyResourceExists(File f) {
-      if (!f.exists()) {
-        System.err.println("File or Directory does not exists: " + f.getAbsolutePath());
-        System.exit(-1);
+    private static void quitEarly(String errorMsg) {
+      if (errorMsg != null) {
+        System.err.println("Error: " + errorMsg);
       }
+
+      printUsage();
+      System.exit(-1);
     }
+
+    private static boolean validateArgs(String[] args) {
+      return args.length > 0 && args.length < 5;
+    }
+  }
+
+  private interface ArgumentConsumer {
+    /**
+     *Returns true if the next argument has been consumed.
+     */
+    boolean consume(Options option, String nextArg);
   }
 }

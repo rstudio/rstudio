@@ -16,14 +16,8 @@
 
 package com.google.gwt.resources.gss;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-
 import com.google.gwt.thirdparty.common.css.compiler.ast.CssTree;
 import com.google.gwt.thirdparty.common.css.compiler.ast.ErrorManager;
-import com.google.gwt.thirdparty.common.css.compiler.ast.GssError;
 import com.google.gwt.thirdparty.common.css.compiler.passes.CreateConditionalNodes;
 
 import java.util.List;
@@ -49,16 +43,12 @@ public class PermutationsCollectorTest extends BaseGssTest {
         " }",
         "}"));
 
-    ErrorManager errorManager = mock(ErrorManager.class);
-    PermutationsCollector visitor = new PermutationsCollector(cssTree.getMutatingVisitController(),
-        errorManager);
+    PermutationsCollector visitor = new PermutationsCollector(cssTree.getMutatingVisitController());
 
     // when
     visitor.runPass();
 
     // then
-    verify(errorManager, never()).report(any(GssError.class));
-
     List<String> permutationAxis = visitor.getPermutationAxes();
     assertEquals(4, permutationAxis.size());
     assertTrue(permutationAxis.contains("custom.one"));
@@ -75,16 +65,12 @@ public class PermutationsCollectorTest extends BaseGssTest {
         " }",
         "}"));
 
-    ErrorManager errorManager = mock(ErrorManager.class);
-    PermutationsCollector visitor = new PermutationsCollector(cssTree.getMutatingVisitController(),
-        errorManager);
+    PermutationsCollector visitor = new PermutationsCollector(cssTree.getMutatingVisitController());
 
     // when
     visitor.runPass();
 
     // then
-    verify(errorManager, never()).report(any(GssError.class));
-
     List<String> permutationAxis = visitor.getPermutationAxes();
     assertEquals(2, permutationAxis.size());
     assertTrue(permutationAxis.contains("custom.one"));
@@ -111,16 +97,12 @@ public class PermutationsCollectorTest extends BaseGssTest {
         "  }",
         "}"));
 
-    ErrorManager errorManager = mock(ErrorManager.class);
-    PermutationsCollector visitor = new PermutationsCollector(cssTree.getMutatingVisitController(),
-        errorManager);
+    PermutationsCollector visitor = new PermutationsCollector(cssTree.getMutatingVisitController());
 
     // when
     visitor.runPass();
 
     // then
-    verify(errorManager, never()).report(any(GssError.class));
-
     List<String> permutationAxis = visitor.getPermutationAxes();
     assertEquals(1, permutationAxis.size());
     assertTrue(permutationAxis.contains("custom.one"));
@@ -135,15 +117,12 @@ public class PermutationsCollectorTest extends BaseGssTest {
         "}"
     ));
 
-    ErrorManager errorManager = mock(ErrorManager.class);
-    PermutationsCollector visitor = new PermutationsCollector(cssTree.getMutatingVisitController(),
-        errorManager);
+    PermutationsCollector visitor = new PermutationsCollector(cssTree.getMutatingVisitController());
 
     // when
     visitor.runPass();
 
     // then
-    verify(errorManager).report(any(GssError.class));
     assertEquals(0, visitor.getPermutationAxes().size());
   }
 

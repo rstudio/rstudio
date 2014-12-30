@@ -3,7 +3,7 @@
 }
 
 /* will be evaluated to false) */
-@if (is("custom.one", "foo")) {
+@if (is('custom.one', "foo")) {
     .foo {
         color: black;
     }
@@ -63,3 +63,23 @@
     margin: 100px;
   }
 }
+
+/* java constants defined in the interface itself */
+@if (eval('CONSTANT_DEFINED_ON_INTERFACE')) {
+    .foo {
+        height: 10px;
+    }
+}
+
+@if (!DISABLE_KENNEDY) {
+    .foo {
+        font-family: kennedy;
+    }
+}
+
+@if (TRUE_PROPERTY) {
+    .foo {
+        top: 5px;
+    }
+}
+

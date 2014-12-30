@@ -8,3 +8,27 @@
     color: white;
   }
 }
+
+@if (!!!!!DISABLE_KENNEDY) {
+  .foo {
+    font-family: kennedy;
+  }
+}
+
+@if (!DISABLE_KENNEDY) {
+  .foo {
+    font-weight: bold;
+  }
+}
+
+@if (TRUE_PROPERTY) {
+  .foo {
+    top: 5px;
+  }
+}
+
+@if (!!!!TRUE_PROPERTY) {
+  .foo {
+    left: 5px;
+  }
+}

@@ -27,6 +27,7 @@ import com.google.gwt.resources.css.CssRtlTest;
 import com.google.gwt.resources.css.ExtractClassNamesVisitorTest;
 import com.google.gwt.resources.css.UnknownAtRuleTest;
 import com.google.gwt.resources.ext.ResourceGeneratorUtilTest;
+import com.google.gwt.resources.gss.BooleanConditionCollectorTest;
 import com.google.gwt.resources.gss.ClassNamesCollectorTest;
 import com.google.gwt.resources.gss.CssPrinterTest;
 import com.google.gwt.resources.gss.ExtendedEliminateConditionalNodesTest;
@@ -76,6 +77,7 @@ public class ResourcesJreSuite {
     suite.addTestSuite(RuntimeConditionalBlockCollectorTest.class);
     suite.addTestSuite(ValidateRuntimeConditionalNodeTest.class);
     suite.addTestSuite(ValueFunctionTest.class);
+    suite.addTestSuite(BooleanConditionCollectorTest.class);
 
     // CSS to GSS converter tests
     suite.addTestSuite(Css2GssTest.class);

@@ -143,7 +143,7 @@ public class ExtendedEliminateConditionalNodesTest extends BaseGssTest {
   protected void runPassesOnNewTree(CssTree cssTree, ErrorManager errorManager) {
     new CreateConditionalNodes(cssTree.getMutatingVisitController(), errorManager).runPass();
     new CreateRuntimeConditionalNodes(cssTree.getMutatingVisitController()).runPass();
-    new PermutationsCollector(cssTree.getMutatingVisitController(), errorManager).runPass();
+    new PermutationsCollector(cssTree.getMutatingVisitController()).runPass();
     RuntimeConditionalBlockCollector runtimeConditionalBlockCollector = new
         RuntimeConditionalBlockCollector(cssTree.getVisitController());
     runtimeConditionalBlockCollector.runPass();

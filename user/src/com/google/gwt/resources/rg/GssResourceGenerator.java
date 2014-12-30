@@ -44,6 +44,7 @@ import com.google.gwt.resources.ext.ClientBundleRequirements;
 import com.google.gwt.resources.ext.ResourceContext;
 import com.google.gwt.resources.ext.ResourceGeneratorUtil;
 import com.google.gwt.resources.ext.SupportsGeneratorResultCaching;
+import com.google.gwt.resources.gss.BooleanConditionCollector;
 import com.google.gwt.resources.gss.CreateRuntimeConditionalNodes;
 import com.google.gwt.resources.gss.CssPrinter;
 import com.google.gwt.resources.gss.ExtendedEliminateConditionalNodes;
@@ -101,6 +102,7 @@ import com.google.gwt.thirdparty.common.css.compiler.passes.SplitRulesetNodes;
 import com.google.gwt.thirdparty.guava.common.base.CaseFormat;
 import com.google.gwt.thirdparty.guava.common.base.Charsets;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.base.Predicates;
 import com.google.gwt.thirdparty.guava.common.base.Strings;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
@@ -210,12 +212,49 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     final CssTree tree;
     final List<String> permutationAxes;
     final Map<String, String> originalConstantNameMapping;
+    final Set<String> trueConditions;
 
-    private CssParsingResult(CssTree tree, List<String> permutationAxis,
+    private CssParsingResult(CssTree tree, List<String> permutationAxis, Set<String> trueConditions,
         Map<String, String> originalConstantNameMapping) {
       this.tree = tree;
       this.permutationAxes = permutationAxis;
       this.originalConstantNameMapping = originalConstantNameMapping;
+      this.trueConditions = trueConditions;
+    }
+  }
+
+  /**
+   * Predicate implementation used during the conversion to GSS.
+   */
+  private static class ConfigurationPropertyMatcher implements Predicate<String> {
+    private final PropertyOracle propertyOracle;
+    private final TreeLogger logger;
+
+    private boolean error;
+
+    ConfigurationPropertyMatcher(ResourceContext context, TreeLogger logger) {
+      this.logger = logger;
+      propertyOracle = context.getGeneratorContext().getPropertyOracle();
+    }
+
+    @Override
+    public boolean apply(String booleanCondition) {
+      // if the condition is negated, the string parameter contains the ! operator if this method
+      // is called during the conversion to GSS
+      if (booleanCondition.startsWith("!")) {
+        booleanCondition = booleanCondition.substring(1);
+      }
+
+      try {
+        ConfigurationProperty property = propertyOracle.getConfigurationProperty(booleanCondition);
+        boolean valid = checkPropertyIsSingleValueAndBoolean(property, logger);
+
+        error |= !valid;
+
+        return valid;
+      } catch (BadPropertyValueException e) {
+        return false;
+      }
     }
   }
 
@@ -276,6 +315,27 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     }
 
     return b.toString();
+  }
+
+  private static boolean checkPropertyIsSingleValueAndBoolean(ConfigurationProperty property,
+      TreeLogger logger) {
+    List<String> values = property.getValues();
+
+    if (values.size() > 1) {
+      logger.log(Type.ERROR, "The configuration property " + property.getName() + " is used in " +
+          "a conditional css and cannot be a multi-valued property");
+      return false;
+    }
+
+    String value = values.get(0);
+
+    if (!"true".equals(value) && !"false".equals(value)) {
+      logger.log(Type.ERROR, "The configuration property " + property.getName() + " is used in " +
+          "a conditional css. Its value must be either \"true\" or \"false\"");
+      return false;
+    }
+
+    return true;
   }
 
   private Map<JMethod, CssParsingResult> cssParsingResultMap;
@@ -490,7 +550,8 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
       throw new UnableToCompleteException();
     }
 
-    CssParsingResult cssParsingResult = parseResources(Lists.newArrayList(resourceUrls), logger);
+    CssParsingResult cssParsingResult = parseResources(Lists.newArrayList(resourceUrls), context,
+        logger);
 
     cssParsingResultMap.put(method, cssParsingResult);
 
@@ -597,7 +658,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     return notStrict == null;
   }
 
-  private List<String> finalizeTree(CssTree cssTree) throws UnableToCompleteException {
+  private void finalizeTree(CssTree cssTree) throws UnableToCompleteException {
     new CheckDependencyNodes(cssTree.getMutatingVisitController(), errorManager, false).runPass();
 
     // Don't continue if errors exist
@@ -615,12 +676,6 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
         allowedAtRules, true, false).runPass();
     new ProcessKeyframes(cssTree.getMutatingVisitController(), errorManager, true, true).runPass();
     new ProcessRefiners(cssTree.getMutatingVisitController(), errorManager, true).runPass();
-
-    PermutationsCollector permutationsCollector = new PermutationsCollector(cssTree
-        .getMutatingVisitController(), errorManager);
-    permutationsCollector.runPass();
-
-    return permutationsCollector.getPermutationAxes();
   }
 
   private ConstantDefinitions optimizeTree(CssParsingResult cssParsingResult, ResourceContext context,
@@ -641,9 +696,15 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
         RuntimeConditionalBlockCollector(cssTree.getVisitController());
     runtimeConditionalBlockCollector.runPass();
 
+    Set<String> trueCompileTimeConditions = ImmutableSet.<String>builder()
+        .addAll(getCurrentDeferredBindingProperties(context, cssParsingResult.permutationAxes,
+            logger))
+        .addAll(getTrueConfigurationProperties(context, cssParsingResult.trueConditions, logger))
+        .build();
+
     new ExtendedEliminateConditionalNodes(cssTree.getMutatingVisitController(),
-        getPermutationsConditions(context, cssParsingResult.permutationAxes, logger),
-        runtimeConditionalBlockCollector.getRuntimeConditionalBlock()).runPass();
+        trueCompileTimeConditions, runtimeConditionalBlockCollector.getRuntimeConditionalBlock())
+        .runPass();
 
     new ValidateRuntimeConditionalNode(cssTree.getVisitController(), errorManager,
         lenientConversion).runPass();
@@ -695,13 +756,39 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     return collectConstantDefinitionsPass.getConstantDefinitions();
   }
 
-  private Set<String> getPermutationsConditions(ResourceContext context,
+  private Set<String> getTrueConfigurationProperties(ResourceContext context,
+      Set<String> configurationProperties, TreeLogger logger) throws UnableToCompleteException {
+    Builder<String> setBuilder = ImmutableSet.builder();
+    PropertyOracle oracle = context.getGeneratorContext().getPropertyOracle();
+
+    for (String property : configurationProperties) {
+      try {
+        // TODO : only check configuration properties ?
+        ConfigurationProperty confProp = oracle.getConfigurationProperty(property);
+
+        if (!checkPropertyIsSingleValueAndBoolean(confProp, logger)) {
+          throw new UnableToCompleteException();
+        }
+
+        if ("true".equals(confProp.getValues().get(0))) {
+          setBuilder.add(property);
+        }
+      } catch (BadPropertyValueException e1) {
+        logger.log(Type.ERROR, "Unknown configuration property [" + property + "]");
+        throw new UnableToCompleteException();
+      }
+    }
+
+    return setBuilder.build();
+  }
+
+  private Set<String> getCurrentDeferredBindingProperties(ResourceContext context,
       List<String> permutationAxes, TreeLogger logger) throws UnableToCompleteException {
     Builder<String> setBuilder = ImmutableSet.builder();
     PropertyOracle oracle = context.getGeneratorContext().getPropertyOracle();
 
     for (String permutationAxis : permutationAxes) {
-      String propValue = null;
+      String propValue;
       try {
         SelectionProperty selProp = oracle.getSelectionProperty(null,
             permutationAxis);
@@ -723,8 +810,8 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     return setBuilder.build();
   }
 
-  private CssParsingResult parseResources(List<URL> resources, TreeLogger logger)
-      throws UnableToCompleteException {
+  private CssParsingResult parseResources(List<URL> resources, ResourceContext context,
+      TreeLogger logger) throws UnableToCompleteException {
     List<SourceCode> sourceCodes = new ArrayList<SourceCode>(resources.size());
     ImmutableMap.Builder<String, String> constantNameMappingBuilder = ImmutableMap.builder();
 
@@ -747,7 +834,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     if (css) {
       String concatenatedCss = concatCssFiles(resources, logger);
 
-      ConversionResult result = convertToGss(concatenatedCss, logger);
+      ConversionResult result = convertToGss(concatenatedCss, context, logger);
 
       String gss = result.gss;
       String name = "[auto-converted gss files from : " + resources + "]";
@@ -804,11 +891,23 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
       throw new UnableToCompleteException();
     }
 
-    List<String> permutationAxes = finalizeTree(tree);
+    // create more explicit nodes
+    finalizeTree(tree);
 
     checkErrors();
 
-    return new CssParsingResult(tree, permutationAxes, constantNameMappingBuilder.build());
+    // collect boolean conditions that have to be mapped to configuration properties
+    BooleanConditionCollector booleanConditionCollector = new BooleanConditionCollector(tree
+        .getMutatingVisitController());
+    booleanConditionCollector.runPass();
+
+    // collect permutations axis used in conditionals.
+    PermutationsCollector permutationsCollector = new PermutationsCollector(tree
+        .getMutatingVisitController());
+    permutationsCollector.runPass();
+
+    return new CssParsingResult(tree, permutationsCollector.getPermutationAxes(),
+        booleanConditionCollector.getBooleanConditions(), constantNameMappingBuilder.build());
   }
 
   private String extractCharset(ByteSource byteSource, TreeLogger logger) throws IOException {
@@ -822,8 +921,8 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     return null;
   }
 
-  private ConversionResult convertToGss(String concatenatedCss, TreeLogger logger)
-      throws UnableToCompleteException {
+  private ConversionResult convertToGss(String concatenatedCss, ResourceContext context,
+      TreeLogger logger) throws UnableToCompleteException {
     File tempFile = null;
     FileOutputStream fos = null;
     try {
@@ -834,9 +933,19 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
       IOUtils.write(concatenatedCss, fos);
       fos.close();
 
-      Css2Gss converter = new Css2Gss(tempFile.toURI().toURL(), logger, lenientConversion);
+      ConfigurationPropertyMatcher configurationPropertyMatcher =
+          new ConfigurationPropertyMatcher(context, logger);
 
-      return new ConversionResult(converter.toGss(), converter.getDefNameMapping());
+      Css2Gss converter = new Css2Gss(tempFile.toURI().toURL(), logger, lenientConversion,
+          configurationPropertyMatcher);
+
+      String gss = converter.toGss();
+
+      if (configurationPropertyMatcher.error) {
+        throw new UnableToCompleteException();
+      }
+
+      return new ConversionResult(gss, converter.getDefNameMapping());
 
     } catch (Css2GssConversionException e) {
       String message = "An error occurs during the automatic conversion: " + e.getMessage();

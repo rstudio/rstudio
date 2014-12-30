@@ -40,12 +40,14 @@ import com.google.gwt.resources.css.ast.CssUrl;
 import com.google.gwt.thirdparty.common.css.SourceCode;
 import com.google.gwt.thirdparty.common.css.compiler.ast.GssParser;
 import com.google.gwt.thirdparty.common.css.compiler.ast.GssParserException;
+import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.base.Splitter;
 import com.google.gwt.thirdparty.guava.common.base.Strings;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -76,12 +78,16 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
   // Used to quote font family name that contains white space(s) and aren't quoted yet.
   private static Pattern NOT_QUOTED_WITH_WITHESPACE = Pattern.compile("^[^'\"].*\\s.*[^'\"]$");
 
+  // Used to sanitize the boolean conditions
+  private static Pattern BANG_OPERATOR = Pattern.compile("^(!+)(.*)");
+
   // GSS impose constant names to be in uppercase. This Map will contains the mapping between
   // the name of constants defined in the CSS and the corresponding name that will be used in GSS.
   private final Map<String, String> cssToGssConstantMapping;
   private final TextOutput out;
   private final boolean lenient;
   private final TreeLogger treeLogger;
+  private final Predicate<String> simpleBooleanConditionPredicate;
   // list of external at-rules defined inside a media at-rule.
   // In lenient mode, these nodes will be extracted and print outside the media at-rule.
   private final List<CssExternalSelectors> wrongExternalNodes = new
@@ -98,11 +104,12 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
   private boolean insideMediaAtRule;
 
   public GssGenerationVisitor(TextOutput out, Map<String, String> cssToGssConstantMapping,
-      boolean lenient, TreeLogger treeLogger) {
+      boolean lenient, TreeLogger treeLogger, Predicate<String> simpleBooleanConditionPredicate) {
     this.cssToGssConstantMapping = cssToGssConstantMapping;
     this.out = out;
     this.lenient = lenient;
     this.treeLogger = treeLogger;
+    this.simpleBooleanConditionPredicate = simpleBooleanConditionPredicate;
   }
 
   public String getContent() {
@@ -454,7 +461,11 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
     String runtimeCondition = extractExpression(ifOrElif);
 
     if (runtimeCondition != null) {
-      condition = String.format(EVAL, runtimeCondition);
+      if (simpleBooleanConditionPredicate.apply(runtimeCondition)) {
+        condition = runtimeCondition;
+      } else {
+        condition = String.format(EVAL, runtimeCondition);
+      }
     } else {
       condition = printConditionnalExpression(ifOrElif);
     }
@@ -474,6 +485,20 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
 
     if (condition.trim().startsWith("(")) {
       condition = condition.substring(1, condition.length() - 1);
+    }
+
+    // sanitize the expression. GSS doesn't accept more than one ! operator
+    Matcher m = BANG_OPERATOR.matcher(condition);
+    if (m.matches()) {
+      String bangs = m.group(1);
+      String replacement;
+      if (bangs.length() % 2 == 0) {
+        replacement = "";
+      } else {
+        replacement = "!";
+      }
+
+      condition = m.replaceFirst(replacement + "$2");
     }
 
     return condition;
