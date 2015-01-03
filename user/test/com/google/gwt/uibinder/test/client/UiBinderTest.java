@@ -165,6 +165,7 @@ public class UiBinderTest extends GWTTestCase {
   public void testBraceEscaping() {
     assertEquals("blah di blah {foo: \"bar\"} di blah",
         widgetUi.bracedParagraph.getAttribute("fnord"));
+    assertEquals("{{blah in blah}}", widgetUi.bracedParagraph.getAttribute("doubleMustache"));
   }
 
   public void testBundle() {

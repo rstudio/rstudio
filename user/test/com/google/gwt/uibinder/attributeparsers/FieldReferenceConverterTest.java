@@ -60,7 +60,7 @@ public class FieldReferenceConverterTest extends TestCase {
 
     assertEquals(expected, converter.convert(before, frDelegate));
   }
-  
+
   public void testReplaceSimple() {
     String before = "able {baker} charlie";
     String expected = "*able * & baker & * charlie*";
@@ -83,7 +83,7 @@ public class FieldReferenceConverterTest extends TestCase {
   }
   
   public void testEscaping() {
-    String before = "Well {{Hi mom}!";
+    String before = "Well \\{Hi mom}!";
     String expected = "*Well {Hi mom}!*";
 
     assertEquals(expected, converter.convert(before, frDelegate));
@@ -92,6 +92,13 @@ public class FieldReferenceConverterTest extends TestCase {
   public void testIgnoreEmpty() {
     String before = "Hi {} mom";
     String expected = "*Hi {} mom*";
+
+    assertEquals(expected, converter.convert(before, frDelegate));
+  }
+
+  public void testIgnoreMustache() {
+    String before = "{{abc.dfc in klm}}";
+    String expected = "*{{abc.dfc in klm}}*";
 
     assertEquals(expected, converter.convert(before, frDelegate));
   }
@@ -105,6 +112,8 @@ public class FieldReferenceConverterTest extends TestCase {
   
   public void testHasFieldReferences() {
     assertTrue(FieldReferenceConverter.hasFieldReferences("{able} {baker}"));
+    assertFalse(FieldReferenceConverter.hasFieldReferences("{{able}}"));
     assertFalse(FieldReferenceConverter.hasFieldReferences("{{able} baker { Charlie }"));
+    assertFalse(FieldReferenceConverter.hasFieldReferences("\\{able} baker { Charlie }"));
   }
 }

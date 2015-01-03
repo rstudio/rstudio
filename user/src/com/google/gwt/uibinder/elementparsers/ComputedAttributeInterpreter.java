@@ -71,7 +71,7 @@ class ComputedAttributeInterpreter implements XMLElement.Interpreter<String> {
          * TODO(rjrjr) Move this to XMLElement RSN
          */
         String n = att.getName();
-        String v = att.consumeRawValue().replace("{{", "{");
+        String v = att.consumeRawValue().replace("\\{", "{");
         elem.setAttribute(n, v);
       }
     }

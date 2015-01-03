@@ -42,8 +42,11 @@ import java.util.regex.Pattern;
  * dashes are converted to camel case. That is, {able.baker-charlie} is the same
  * as {able.bakerCharlie}
  * <p>
- * Opening braces may be escape by doubling them. That is, "{{foo}" will
- * converted to "{foo}", with no field reference detected.
+ * Double mustaches (i.e. "{{..}}") are not matched as references to play well
+ * with modern templating systems.
+ * <p>
+ * Opening braces may be escape by slash. That is, "\{foo}" will converted to
+ * "{foo}", with no field reference detected.
  */
 public class FieldReferenceConverter {
   /**
@@ -176,12 +179,17 @@ public class FieldReferenceConverter {
     Matcher m = BRACES.matcher(in);
     while (m.find(nextFindStart)) {
       String fieldReference = m.group(1);
-      if (!legalFirstCharacter(fieldReference)) {
-        nextFindStart = m.start() + 2;
+      int start = m.start();
+      if (!isLegalPreviousCharacter(in, start)) {
+        nextFindStart = start + 1;
+        continue;
+      }
+      if (!isLegalFirstCharacter(fieldReference)) {
+        nextFindStart = start + 2;
         continue;
       }
 
-      String precedingFragment = in.substring(lastMatchEnd, m.start());
+      String precedingFragment = in.substring(lastMatchEnd, start);
       precedingFragment = handleFragment(precedingFragment, delegate);
       b.append(precedingFragment);
 
@@ -220,11 +228,19 @@ public class FieldReferenceConverter {
   }
 
   private String handleFragment(String fragment, Delegate delegate) {
-    fragment = fragment.replace("{{", "{");
+    fragment = fragment.replace("\\{", "{");
     return delegate.handleFragment(fragment);
   }
 
-  private boolean legalFirstCharacter(String fieldReference) {
+  private boolean isLegalFirstCharacter(String fieldReference) {
     return LEGAL_FIRST_CHAR.matcher(fieldReference).matches();
+  }
+
+  private boolean isLegalPreviousCharacter(String in, int start) {
+    if (start < 1) {
+      return true;
+    }
+    char previousChar = in.charAt(start - 1);
+    return previousChar != '{' && previousChar != '\\';
   }
 }
