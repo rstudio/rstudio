@@ -162,7 +162,7 @@ public class CodeSearchOracle extends SuggestOracle
                   if (colonIndex == -1)
                      colonIndex = query.length();
                   
-                  if (StringUtil.isSubsequence(name, query.substring(0, colonIndex)))
+                  if (StringUtil.isSubsequence(name, query.substring(0, colonIndex), true))
                      suggestions.add(sugg);
                }
             }
