@@ -840,7 +840,11 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
    cat(Rproj, file = RprojPath, sep = "\n")
    
-   .Call("rs_addFirstRunDoc", RprojPath, "R/hello.R")
+   # NOTE: this file is not always generated (e.g. people who have implicitly opted
+   # into using devtools won't need the template file)
+   if (file.exists(file.path(packageDirectory, "R", "hello.R")))
+      .Call("rs_addFirstRunDoc", RprojPath, "R/hello.R")
+   
    .rs.success()
    
 })
