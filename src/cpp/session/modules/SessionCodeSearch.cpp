@@ -1209,8 +1209,6 @@ int scoreMatch(std::string const& suggestion,
    
    int query_n = query.length();
 
-   int result = 0;
-
    // Call a version of subsequence indices that returns false if the query is not
    // actually a subsequence
    std::vector<int> matches;
@@ -1222,10 +1220,13 @@ int scoreMatch(std::string const& suggestion,
    if (!success)
       return -1;
 
+   int totalPenalty = 0;
+
    // Loop over the matches and assign a score
    for (int j = 0; j < query_n; j++)
    {
       int matchPos = matches[j];
+      int penalty = matchPos;
 
       // Less penalty if character follows special delim
       if (matchPos >= 1)
@@ -1233,23 +1234,26 @@ int scoreMatch(std::string const& suggestion,
          char prevChar = suggestion[matchPos - 1];
          if (prevChar == '_' || prevChar == '-' || (!isFile && prevChar == '.'))
          {
-            matchPos = j + 1;
+            penalty = j + 1;
          }
       }
+
+      // Less penalty for perfect match (ie, reward case-sensitive match)
+      penalty -= suggestion[matchPos] == query[j];
       
       // More penalty for 'uninteresting' files (e.g. .Rd)
       std::string extension = string_utils::getExtension(suggestion);
       if (boost::algorithm::to_lower_copy(extension) == ".rd")
-         matchPos += 3;
+         penalty += 3;
 
-      result += matchPos;
+      totalPenalty += penalty;
    }
    
    // Penalize files
    if (isFile)
-      ++result;
+      ++totalPenalty;
 
-   return result;
+   return totalPenalty;
 }
 
 struct ScorePairComparator
