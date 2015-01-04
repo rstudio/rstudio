@@ -32,6 +32,7 @@ import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
 import org.rstudio.studio.client.workbench.codesearch.model.FileItem;
 import org.rstudio.studio.client.workbench.codesearch.model.SourceItem;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
+
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.inject.Inject;
 
@@ -55,53 +56,58 @@ public class CodeSearchOracle extends SuggestOracle
    // (see: SessionCodeSearch.cpp)
    public static int scoreMatch(String suggestion, String query, boolean isFile)
    {
-      String string = suggestion.toLowerCase();
+      String suggestionLower = suggestion.toLowerCase();
+      String queryLower = query.toLowerCase();
       
       // No penalty for identical results
-      if (string == query)
+      if (suggestion == query)
          return 0;
       
       int query_n = query.length();
       
-      int result = 0;
+      int totalPenalty = 0;
       
       // Get query matches in string (ordered)
       // Note: we have already guaranteed this to be a subsequence so
       // this will succeed
-      int[] matches = StringUtil.subsequenceIndices(string, query);
+      int[] matches = StringUtil.subsequenceIndices(suggestionLower, queryLower);
       
       // Loop over the matches and assign a score
       for (int j = 0; j < query_n; j++)
       {
          int matchPos = matches[j];
          
+         // The initial penalty is equal to the match position
+         int penalty = matchPos;
+         
          // Less penalty if character follows special delim
          if (matchPos >= 1)
          {
-            char prevChar = string.charAt(matchPos - 1);
+            char prevChar = suggestionLower.charAt(matchPos - 1);
             if (prevChar == '_' || prevChar == '-' ||
                   (!isFile && prevChar == '.'))
             {
-               matchPos = j + 1;
+               penalty = j;
             }
          }
          
-         // More penalty for 'uninteresting' files (e.g. .Rd)
-         String extension = StringUtil.getExtension(string);
-         if (extension.toLowerCase() == "rd")
-         {
-            matchPos += 3;
-         }
+         // Less penalty for case-sensitive matches
+         if (suggestion.charAt(matchPos) == query.charAt(j))
+            penalty--;
          
-         result += matchPos;
+         // More penalty for 'uninteresting' files (e.g. .Rd)
+         String extension = StringUtil.getExtension(suggestionLower);
+         if (extension.toLowerCase() == "rd")
+            penalty += 3;
+         
+         totalPenalty += penalty;
       }
       
       // Penalize file targets
       if (isFile)
-         result++;
+         totalPenalty++;
       
-      // Debug.logToConsole("Score for string '" + string + "' against query '" + query + "': " + result);
-      return result;
+      return totalPenalty;
    }
    
    @Override
@@ -131,7 +137,9 @@ public class CodeSearchOracle extends SuggestOracle
              request.getQuery().startsWith(res.getQuery()))
          {
             Pattern pattern = null;
-            String queryLower = request.getQuery().toLowerCase();
+            String query = request.getQuery();
+            String queryLower = query.toLowerCase();
+            
             if (queryLower.indexOf('*') != -1)
                pattern = patternForTerm(queryLower);
             
@@ -150,11 +158,11 @@ public class CodeSearchOracle extends SuggestOracle
                }
                else
                {
-                  int colonIndex = queryLower.indexOf(":");
+                  int colonIndex = query.indexOf(":");
                   if (colonIndex == -1)
-                     colonIndex = queryLower.length();
+                     colonIndex = query.length();
                   
-                  if (StringUtil.isSubsequence(name, queryLower.substring(0, colonIndex)))
+                  if (StringUtil.isSubsequence(name, query.substring(0, colonIndex), true))
                      suggestions.add(sugg);
                }
             }
@@ -165,7 +173,7 @@ public class CodeSearchOracle extends SuggestOracle
             suggestions = processSuggestions(request, suggestions, false);
             
             // sort suggestions
-            sortSuggestions(suggestions, queryLower);
+            sortSuggestions(suggestions, query);
             
             // return suggestions
             callback.onSuggestionsReady(request, new Response(suggestions));
@@ -339,56 +347,30 @@ public class CodeSearchOracle extends SuggestOracle
       private boolean executing_;
    };
    
-   public static Comparator<String> createFuzzyComparator(
-         final String query,
-         final boolean isFile)
-   {
-      final String queryLower = query.toLowerCase();
-      return new Comparator<String>() {
-         @Override
-         public int compare(String lhs, String rhs)
-         {
-            int lhsScore = scoreMatch(lhs, queryLower, isFile);
-            int rhsScore = scoreMatch(rhs, queryLower, isFile);
-
-            if (lhsScore == rhsScore)
-            {
-               return lhs.length() - rhs.length();
-            }
-            else
-            {
-               return lhsScore < rhsScore ? -1 : 1;
-            }
-         }
-
-      };
-
-   }
-   
    private void sortSuggestions(ArrayList<CodeSearchSuggestion> suggestions,
                                 String query)
    {
       // sort the suggestions -- we want suggestions for which
       // the query matches the start to come first
       int colonIndex = query.indexOf(":");
-      final String queryLower = colonIndex > 0 ?
-            query.substring(0, colonIndex).toLowerCase() :
-            query.toLowerCase();
-            
+      final String localQuery = colonIndex > 0 ?
+            query.substring(0, colonIndex) :
+            query;
+      
       java.util.Collections.sort(suggestions,
             new Comparator<CodeSearchSuggestion>() {
 
          @Override
          public int compare(CodeSearchSuggestion lhs,
-               CodeSearchSuggestion rhs)
+                            CodeSearchSuggestion rhs)
          {
-            int lhsScore = scoreMatch(lhs, queryLower);
-            int rhsScore = scoreMatch(rhs, queryLower);
+            int lhsScore = scoreMatch(lhs, localQuery);
+            int rhsScore = scoreMatch(rhs, localQuery);
 
             if (lhsScore == rhsScore)
             {
                return lhs.getMatchedString().length() -
-                     rhs.getMatchedString().length();
+                      rhs.getMatchedString().length();
             }
             else
             {
