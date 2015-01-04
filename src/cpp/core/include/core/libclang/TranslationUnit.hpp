@@ -19,6 +19,8 @@
 #include <iosfwd>
 #include <string>
 
+#include <boost/shared_ptr.hpp>
+
 #include "clang-c/Index.h"
 
 #include "Cursor.hpp"
@@ -54,9 +56,9 @@ public:
    bool includesFile(const std::string& filename) const;
 
    unsigned getNumDiagnostics() const;
-   Diagnostic getDiagnostic(unsigned index) const;
+   boost::shared_ptr<Diagnostic> getDiagnostic(unsigned index) const;
 
-   // NOTE: this can return an empty cursor if no cursor is found
+   // NOTE: this can return a null cursor if no cursor is found
    Cursor getCursor(const std::string& filename,
                     unsigned line,
                     unsigned column);

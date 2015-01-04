@@ -64,9 +64,11 @@ unsigned TranslationUnit::getNumDiagnostics() const
    return clang().getNumDiagnostics(tu_);
 }
 
-Diagnostic TranslationUnit::getDiagnostic(unsigned index) const
+boost::shared_ptr<Diagnostic>
+               TranslationUnit::getDiagnostic(unsigned index) const
 {
-   return Diagnostic(clang().getDiagnostic(tu_, index));
+   return boost::shared_ptr<Diagnostic>(
+                     new Diagnostic(clang().getDiagnostic(tu_, index)));
 }
 
 Cursor TranslationUnit::getCursor(const std::string& filename,

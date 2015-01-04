@@ -28,7 +28,7 @@ Diagnostic::~Diagnostic()
 {
    try
    {
-      clang().disposeDiagnostic(diagnostic());
+      clang().disposeDiagnostic(diagnostic_);
    }
    catch(...)
    {
@@ -42,22 +42,22 @@ std::string Diagnostic::format() const
 
 std::string Diagnostic::format(unsigned options) const
 {
-   return toStdString(clang().formatDiagnostic(diagnostic(), options));
+   return toStdString(clang().formatDiagnostic(diagnostic_, options));
 }
 
 CXDiagnosticSeverity Diagnostic::getSeverity() const
 {
-   return clang().getDiagnosticSeverity(diagnostic());
+   return clang().getDiagnosticSeverity(diagnostic_);
 }
 
 SourceLocation Diagnostic::getLocation() const
 {
-   return SourceLocation(clang().getDiagnosticLocation(diagnostic()));
+   return SourceLocation(clang().getDiagnosticLocation(diagnostic_));
 }
 
 std::string Diagnostic::getSpelling() const
 {
-   return toStdString(clang().getDiagnosticSpelling(diagnostic()));
+   return toStdString(clang().getDiagnosticSpelling(diagnostic_));
 }
 
 } // namespace libclang

@@ -16,8 +16,6 @@
 #ifndef CORE_LIBCLANG_CURSOR_HPP
 #define CORE_LIBCLANG_CURSOR_HPP
 
-#include <boost/shared_ptr.hpp>
-
 #include "clang-c/Index.h"
 
 #include "SourceLocation.hpp"
@@ -29,14 +27,12 @@ class Cursor
 {
 public:
 
-   Cursor() {}
+   Cursor();
 
    explicit Cursor(CXCursor cursor)
-      : pCursor_(new CXCursor(cursor))
+      : cursor_(cursor)
    {
    }
-
-   ~Cursor();
 
 public:
 
@@ -80,12 +76,8 @@ public:
       return !(other == *this);
    }
 
-
 private:
-   CXCursor cursor() const { return *pCursor_; }
-
-private:
-   boost::shared_ptr<CXCursor> pCursor_;
+   CXCursor cursor_;
 };
 
 } // namespace libclang

@@ -16,7 +16,7 @@
 #ifndef CORE_LIBCLANG_DIAGNOSTIC_HPP
 #define CORE_LIBCLANG_DIAGNOSTIC_HPP
 
-#include <boost/shared_ptr.hpp>
+#include <boost/noncopyable.hpp>
 
 #include "clang-c/Index.h"
 
@@ -25,11 +25,11 @@
 namespace core {
 namespace libclang {
 
-class Diagnostic
+class Diagnostic : boost::noncopyable
 {
 public:
    explicit Diagnostic(CXDiagnostic diagnostic)
-      : pDiagnostic_(new CXDiagnostic(diagnostic))
+      : diagnostic_(diagnostic)
    {
    }
 
@@ -43,10 +43,7 @@ public:
    std::string getSpelling() const;
 
 private:
-   CXDiagnostic diagnostic() const { return *pDiagnostic_; }
-
-private:
-   boost::shared_ptr<CXDiagnostic> pDiagnostic_;
+   CXDiagnostic diagnostic_;
 };
 
 } // namespace libclang

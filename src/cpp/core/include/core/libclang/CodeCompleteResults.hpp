@@ -17,6 +17,7 @@
 #define CORE_LIBCLANG_HPP
 
 #include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include "clang-c/Index.h"
 
@@ -68,7 +69,7 @@ public:
    CodeCompleteResult getResult(unsigned index) const;
 
    unsigned getNumDiagnostics() const;
-   Diagnostic getDiagnostic(unsigned index) const;
+   boost::shared_ptr<Diagnostic> getDiagnostic(unsigned index) const;
 
    unsigned long long getContexts() const;
 

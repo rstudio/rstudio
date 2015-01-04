@@ -161,10 +161,11 @@ unsigned CodeCompleteResults::getNumDiagnostics() const
    return clang().codeCompleteGetNumDiagnostics(pResults_);
 }
 
-Diagnostic CodeCompleteResults::getDiagnostic(unsigned index) const
+boost::shared_ptr<Diagnostic> CodeCompleteResults::getDiagnostic(
+                                                         unsigned index) const
 {
    CXDiagnostic cxDiag = clang().codeCompleteGetDiagnostic(pResults_, index);
-   return Diagnostic(cxDiag);
+   return boost::shared_ptr<Diagnostic>(new Diagnostic(cxDiag));
 }
 
 unsigned long long CodeCompleteResults::getContexts() const

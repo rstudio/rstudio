@@ -21,25 +21,20 @@
 namespace core {
 namespace libclang {
 
-Cursor::~Cursor()
+Cursor::Cursor()
+   : cursor_(clang().getNullCursor())
 {
-   try
-   {
-
-   }
-   catch(...)
-   {
-   }
 }
+
 
 std::string Cursor::displayName() const
 {
-   return toStdString(clang().getCursorDisplayName(cursor()));
+   return toStdString(clang().getCursorDisplayName(cursor_));
 }
 
 CXCursorKind Cursor::getKind() const
 {
-   return clang().getCursorKind(cursor());
+   return clang().getCursorKind(cursor_);
 }
 
 bool Cursor::isDeclaration() const
@@ -89,32 +84,32 @@ bool Cursor::isUnexposed() const
 
 bool Cursor::isDefinition() const
 {
-   return clang().isCursorDefinition(cursor()) != 0;
+   return clang().isCursorDefinition(cursor_) != 0;
 }
 
 Cursor Cursor::getReferenced() const
 {
-   return Cursor(clang().getCursorReferenced(cursor()));
+   return Cursor(clang().getCursorReferenced(cursor_));
 }
 
 Cursor Cursor::getDefinition() const
 {
-   return Cursor(clang().getCursorDefinition(cursor()));
+   return Cursor(clang().getCursorDefinition(cursor_));
 }
 
 Cursor Cursor::getCannonical() const
 {
-   return Cursor(clang().getCanonicalCursor(cursor()));
+   return Cursor(clang().getCanonicalCursor(cursor_));
 }
 
 Cursor Cursor::getSemanticParent() const
 {
-   return Cursor(clang().getCursorSemanticParent(cursor()));
+   return Cursor(clang().getCursorSemanticParent(cursor_));
 }
 
 CXLinkageKind Cursor::getLinkageKind() const
 {
-   return clang().getCursorLinkage(cursor());
+   return clang().getCursorLinkage(cursor_);
 }
 
 bool Cursor::hasExternalLinkage() const
@@ -125,20 +120,17 @@ bool Cursor::hasExternalLinkage() const
 
 std::string Cursor::getUSR() const
 {
-   return toStdString(clang().getCursorUSR(cursor()));
+   return toStdString(clang().getCursorUSR(cursor_));
 }
 
 SourceLocation Cursor::getSourceLocation() const
 {
-   return SourceLocation(clang().getCursorLocation(cursor()));
+   return SourceLocation(clang().getCursorLocation(cursor_));
 }
 
 bool Cursor::isNull() const
 {
-   if (! pCursor_)
-      return true;
-   else
-      return (clang().equalCursors(cursor(), clang().getNullCursor()));
+   return (clang().equalCursors(cursor_, clang().getNullCursor()));
 }
 
 bool Cursor::isValid() const
@@ -148,7 +140,7 @@ bool Cursor::isValid() const
 
 bool Cursor::operator==(const Cursor& other) const
 {
-   return clang().equalCursors(cursor(), other.cursor());
+   return clang().equalCursors(cursor_, other.cursor_);
 }
 
 
