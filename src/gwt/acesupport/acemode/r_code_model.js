@@ -1360,13 +1360,10 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                         break;
 
                   // Make sure this isn't the only assignment within a 'naked'
-                  // if or else, e.g.
+                  // control flow section
                   //
                   //    if (foo)
                   //        x <- 1
-                  //
-                  // Technically repeat would be legal too,
-                  // as rare as it would be...
                   var clone = tokenCursor.cloneCursor();
                   if (clone.findStartOfEvaluationContext() &&
                       clone.moveToPreviousToken())
@@ -1379,11 +1376,16 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                      }
 
                      if (clone.bwdToMatchingToken() &&
-                         clone.moveToPreviousToken() &&
-                         clone.currentValue() === "if")
+                         clone.moveToPreviousToken())
                      {
-                        success = false;
-                        break;
+                        var currentValue = clone.currentValue();
+                        if (["if", "for", "while", "repeat", "else"].some(function(x) {
+                           return x === currentValue;
+                        }))
+                        {
+                           success = false;
+                           break;
+                        }
                      }
                   }
 
