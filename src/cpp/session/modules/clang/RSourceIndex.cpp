@@ -41,12 +41,18 @@ public:
    }
 };
 
+// store as a pointer so that it's never destructrued during shutdown
+// (we observed at least one instance of libclang crashing when calling
+// clang_disposeTranslationUnit during shutdown)
+RSourceIndex* s_pRSourceIndex = NULL;
+
 } // anonymous namespace
 
 SourceIndex& rSourceIndex()
 {
-   static RSourceIndex instance;
-   return instance;
+   if (s_pRSourceIndex == NULL)
+      s_pRSourceIndex = new RSourceIndex();
+   return *s_pRSourceIndex;
 }
 
 } // namespace clang
