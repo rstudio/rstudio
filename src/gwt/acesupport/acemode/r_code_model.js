@@ -1339,25 +1339,8 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                   if (!tokenCursor.moveToPreviousToken())
                      break;
 
-                  // This might be a square bracket, e.g. for
-                  //
-                  //    x[1,
-                  //      2,
-                  //      3] <-
-                  //
-                  // In such a case, we want to walk the matching brackets.
-                  // This could also apply for e.g.
-                  //
-                  //    attributes(a,
-                  //               b)[1] <-
-                  //
-                  // We also want to walk back assignment chains, e.g.
-                  //
-                  // x <-
-                  //    y <-
-                  while (tokenCursor.bwdToMatchingToken())
-                     if (!tokenCursor.moveToPreviousToken())
-                        break;
+                  if (!tokenCursor.findStartOfEvaluationContext())
+                     break;
 
                   // Make sure this isn't the only assignment within a 'naked'
                   // control flow section
@@ -1365,17 +1348,19 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                   //    if (foo)
                   //        x <- 1
                   var clone = tokenCursor.cloneCursor();
-                  if (clone.findStartOfEvaluationContext() &&
-                      clone.moveToPreviousToken())
+                  if (clone.moveToPreviousToken())
                   {
                      if (clone.currentValue() === "else" ||
                          clone.currentValue() === "repeat")
                      {
-                        success = false;
-                        break;
+                        return this.$getIndent(
+                           this.$doc.getLine(clone.$row)
+                        ) + continuationIndent;
                      }
 
-                     if (clone.bwdToMatchingToken() &&
+                     var tokenIsClosingParen = clone.currentValue() === ")";
+                     if (tokenIsClosingParen &&
+                         clone.bwdToMatchingToken() &&
                          clone.moveToPreviousToken())
                      {
                         var currentValue = clone.currentValue();
@@ -1383,8 +1368,9 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                            return x === currentValue;
                         }))
                         {
-                           success = false;
-                           break;
+                           return this.$getIndent(
+                              this.$doc.getLine(clone.$row)
+                           ) + continuationIndent;
                         }
                      }
                   }
@@ -1395,11 +1381,6 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                      tokenCursor.moveToPreviousToken();
 
                }
-
-               // If this failed, we want to exit out of this block
-               // and try again
-               if (!success)
-                  continue;
 
                // We broke out of the loop; we should be on the
                // appropriate line to provide for indentation now.
