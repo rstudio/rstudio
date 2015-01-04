@@ -1158,33 +1158,25 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          tokenCursor.moveToPosition(startPos);
 
          // The first loop looks for an open brace for indentation.
+         var encounteredBrace = false;
          do
          {
+            var currentValue = tokenCursor.currentValue();
+            encounteredBrace = encounteredBrace || currentValue === "}";
+             
             // Walk over matching braces ('()', '{}', '[]')
             if (tokenCursor.bwdToMatchingToken())
-            {
-               // If we ended up on a '{', we want to get its indentation.
-               if (tokenCursor.currentValue() === "{")
-               {
-                  return this.getIndentForOpenBrace(
-                     tokenCursor.currentPosition()
-                  ) + continuationIndent;
-               }
-
-               // Otherwise, move backwards one and keep going
                continue;
-            }
 
             // If we found a '{', we break out and loop back -- this is because
             // we may want to indent either on a '<-' token or on a '{'
             // token.
-            var currentValue = tokenCursor.currentValue();
             if (currentValue === "{")
                break;
 
             // If we hit a keyword like 'if', 'else' and so on,
             // use that line's indentation.
-            if (["if", "else", "repeat", "while", "for"].some(function(x) {
+            if (!encounteredBrace &&["if", "else", "repeat", "while", "for"].some(function(x) {
                return x === currentValue;
             }))
             {
