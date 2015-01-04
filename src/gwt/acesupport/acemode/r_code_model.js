@@ -1168,7 +1168,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                {
                   return this.getIndentForOpenBrace(
                      tokenCursor.currentPosition()
-                  );
+                  ) + continuationIndent;
                }
 
                // Otherwise, move backwards one and keep going
