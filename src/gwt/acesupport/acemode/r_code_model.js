@@ -1178,8 +1178,28 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             // If we found a '{', we break out and loop back -- this is because
             // we may want to indent either on a '<-' token or on a '{'
             // token.
-            if (tokenCursor.currentValue() === "{")
+            var currentValue = tokenCursor.currentValue();
+            if (currentValue === "{")
                break;
+
+            // If we hit a keyword like 'if', 'else' and so on,
+            // use that line's indentation.
+            if (["if", "else", "repeat", "while", "for"].some(function(x) {
+               return x === currentValue;
+            }))
+            {
+               // NOTE: We add the continuation indent twice as we
+               // may have seen e.g.
+               //
+               //     if (foo)
+               //         x +
+               //
+               // in which case we want to use the indentation of
+               // the 'if' statement, with _two_ tabs.
+               return this.$getIndent(
+                  this.$doc.getLine(tokenCursor.$row)
+               ) + continuationIndent + continuationIndent;
+            }
 
             // If we find an open parenthesis or bracket, we
             // can use this to provide the indentation context.
