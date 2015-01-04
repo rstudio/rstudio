@@ -1368,7 +1368,8 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                   // Technically repeat would be legal too,
                   // as rare as it would be...
                   var clone = tokenCursor.cloneCursor();
-                  if (clone.moveToPreviousToken())
+                  if (clone.findStartOfEvaluationContext() &&
+                      clone.moveToPreviousToken())
                   {
                      if (clone.currentValue() === "else" ||
                          clone.currentValue() === "repeat")
