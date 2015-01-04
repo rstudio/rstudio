@@ -1151,179 +1151,197 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             return this.$getIndent(this.$getLine(prevToken.row)) + tab;
          }
 
-         // Walk backwards looking for an open paren, square bracket, or curly
-         // brace, *ignoring matched pairs along the way*. (That's the "balanced"
-         // in $walkParensBalanced.)
-         //
-         // If we find an open brace, we want to quit and let other
-         // logic ahead work. This is because we might want to
-         // determine indentation based on an assignment token, rather
-         // than the opening brace, and that logic is too cumbersome to
-         // inline into these blocks.
-         var isBrace = false;
-         var openBracePos = this.$walkParensBalanced(
-               lastRow,
-               0,
-               function(parens, paren, pos)
-               {
-                  isBrace = paren === "{";
-                  return /[\[({]/.test(paren) && parens.length === 0;
-               },
-               null);
+         // Walk backwards looking for an open paren, square bracket, curly
+         // brace, or assignment token. We use the first found token to provide
+         // context for the indentation.
+         var tokenCursor = this.getTokenCursor();
+         tokenCursor.moveToPosition(startPos);
 
-         if (!isBrace && openBracePos != null)
+         // The first loop looks for an open brace for indentation.
+         do
          {
-            // OK, we found an open brace; this just means we're not a
-            // top-level expression.
+            // Walk over matching braces ('()', '{}', '[]')
+            if (tokenCursor.bwdToMatchingToken())
+            {
+               // If we ended up on a '{', we want to get its indentation.
+               if (tokenCursor.currentValue() === "{")
+               {
+                  return this.getIndentForOpenBrace(
+                     tokenCursor.currentPosition()
+                  );
+               }
 
-            var nextTokenPos = null;
+               // Otherwise, move backwards one and keep going
+               continue;
+            }
 
-            if ($verticallyAlignFunctionArgs) {
-               // If the user has selected verticallyAlignFunctionArgs mode in the
-               // prefs, for example:
-               //
-               // soDomethingAwesome(a = 1,
-               //                    b = 2,
-               //                    c = 3)
-               //
-               // Then we simply follow the example of the next significant
-               // token. BTW implies that this mode also supports this:
-               //
-               // soDomethingAwesome(
-               //   a = 1,
-               //   b = 2,
-               //   c = 3)
-               //
-               // But not this:
-               //
-               // soDomethingAwesome(a = 1,
-               //   b = 2,
-               //   c = 3)
-               nextTokenPos = this.$findNextSignificantToken(
+            // If we found a '{', we break out and loop back -- this is because
+            // we may want to indent either on a '<-' token or on a '{'
+            // token.
+            if (tokenCursor.currentValue() === "{")
+               break;
+
+            // If we find an open parenthesis or bracket, we
+            // can use this to provide the indentation context.
+            if (["[", "("].some(function(x) {
+               return x === tokenCursor.currentValue();
+            }))
+            {
+               var openBracePos = tokenCursor.currentPosition();
+               var nextTokenPos = null;
+
+               if ($verticallyAlignFunctionArgs) {
+                  // If the user has selected
+                  // verticallyAlignFunctionArgs mode in the prefs,
+                  // for example:
+                  //
+                  // soDomethingAwesome(a = 1,
+                  //                    b = 2,
+                  //                    c = 3)
+                  //
+                  // Then we simply follow the example of the next significant
+                  // token. BTW implies that this mode also supports this:
+                  //
+                  // soDomethingAwesome(
+                  //   a = 1,
+                  //   b = 2,
+                  //   c = 3)
+                  //
+                  // But not this:
+                  //
+                  // soDomethingAwesome(a = 1,
+                  //   b = 2,
+                  //   c = 3)
+                  nextTokenPos = this.$findNextSignificantToken(
                      {
                         row: openBracePos.row,
                         column: openBracePos.column + 1
                      }, lastRow);
-            }
-
-            if (!nextTokenPos)
-            {
-               // Either there wasn't a significant token between the new
-               // line and the previous open brace, or, we're not in
-               // vertical argument alignment mode. Either way, we need
-               // to just indent one level from the open brace's level.
-               return this.getIndentForOpenBrace(openBracePos) +
-                      tab + continuationIndent;
-            }
-            else
-            {
-               // Return indent up to next token position.
-               // Note that in hard tab mode, the tab character only counts 
-               // as a single character unfortunately. What we really want
-               // is the screen column, but what we have is the document
-               // column, which we can't convert to screen column without
-               // copy-and-pasting a bunch of code from layer/text.js.
-               // As a shortcut, we just pull off the leading whitespace
-               // from the line and include it verbatim in the new indent.
-               // This strategy works fine unless there is a tab in the
-               // line that comes after a non-whitespace character, which
-               // seems like it should be rare.
-               var line = this.$getLine(nextTokenPos.row);
-               var leadingIndent = line.replace(/[^\s].*$/, '');
-
-               var indentWidth = nextTokenPos.column - leadingIndent.length;
-               var tabsToUse = Math.floor(indentWidth / tabSize);
-               var spacesToAdd = indentWidth - (tabSize * tabsToUse);
-               var buffer = "";
-               for (var i = 0; i < tabsToUse; i++)
-                  buffer += tab;
-               for (var j = 0; j < spacesToAdd; j++)
-                  buffer += " ";
-               var result = leadingIndent + buffer;
-
-               // Compute the size of the indent in spaces (e.g. if a tab
-               // is 4 spaces, and result is "\t\t ", the size is 9)
-               var resultSize = result.replace("\t", tabAsSpaces).length;
-
-               // Sometimes even though verticallyAlignFunctionArgs is used,
-               // the user chooses to manually "break the rules" and use the
-               // non-aligned style, like so:
-               //
-               // plot(foo,
-               //   bar, baz,
-               //
-               // Without the below loop, hitting Enter after "baz," causes
-               // the cursor to end up aligned with foo. The loop simply
-               // replaces the indentation with the minimal indentation.
-               //
-               // TODO: Perhaps we can skip the above few lines of code if
-               // there are other lines present
-               var thisIndent;
-               for (var i = nextTokenPos.row + 1; i <= lastRow; i++) {
-                  // If a line contains only whitespace, it doesn't count
-                  if (!/[^\s]/.test(this.$getLine(i)))
-                     continue;
-                  // If this line is is a continuation of a multi-line string, 
-                  // ignore it.
-                  var rowEndState = this.$endStates[i-1];
-                  if (rowEndState === "qstring" || rowEndState === "qqstring") 
-                     continue;
-                  thisIndent = this.$getLine(i).replace(/[^\s].*$/, '');
-                  var thisIndentSize = thisIndent.replace("\t", tabAsSpaces).length;
-                  if (thisIndentSize < resultSize) {
-                     result = thisIndent;
-                     resultSize = thisIndentSize;
-                  }
                }
 
-               // We want to tweak vertical alignment; e.g. in this
-               // case:
-               //
-               //    if (foo &&
-               //        |
-               //
-               // vs.
-               //
-               //    plot(x +
-               //             |
-               //
-               // Ie, normally, we might want a continuation indent if
-               // the line ended with an operator; however, in some
-               // cases (notably with multi-line if statements) we
-               // would prefer not including that indentation.
-               return /^\s*(?:if|else|while|for|repeat)/.test(line) ?
-                  result :
-                  result + continuationIndent;
-            }
-         }
+               if (!nextTokenPos)
+               {
+                  // Either there wasn't a significant token between the new
+                  // line and the previous open brace, or, we're not in
+                  // vertical argument alignment mode. Either way, we need
+                  // to just indent one level from the open brace's level.
+                  return this.getIndentForOpenBrace(openBracePos) +
+                     tab + continuationIndent;
+               }
+               else
+               {
+                  // Return indent up to next token position.
+                  // Note that in hard tab mode, the tab character only counts 
+                  // as a single character unfortunately. What we really want
+                  // is the screen column, but what we have is the document
+                  // column, which we can't convert to screen column without
+                  // copy-and-pasting a bunch of code from layer/text.js.
+                  // As a shortcut, we just pull off the leading whitespace
+                  // from the line and include it verbatim in the new indent.
+                  // This strategy works fine unless there is a tab in the
+                  // line that comes after a non-whitespace character, which
+                  // seems like it should be rare.
+                  var line = this.$getLine(nextTokenPos.row);
+                  var leadingIndent = line.replace(/[^\s].*$/, '');
 
-         // Try to find an assignment token to use for indentation, e.g. for
-         //
-         // x <- 1
-         //     y <- 2
-         //
-         //     ^
-         var maxTokensToWalk = 20;
-         var numTokensWalked = 0;
-         var tokenCursor = this.getTokenCursor();
-         var success = true;
-         
+                  var indentWidth = nextTokenPos.column - leadingIndent.length;
+                  var tabsToUse = Math.floor(indentWidth / tabSize);
+                  var spacesToAdd = indentWidth - (tabSize * tabsToUse);
+                  var buffer = "";
+                  for (var i = 0; i < tabsToUse; i++)
+                     buffer += tab;
+                  for (var j = 0; j < spacesToAdd; j++)
+                     buffer += " ";
+                  var result = leadingIndent + buffer;
+
+                  // Compute the size of the indent in spaces (e.g. if a tab
+                  // is 4 spaces, and result is "\t\t ", the size is 9)
+                  var resultSize = result.replace("\t", tabAsSpaces).length;
+
+                  // Sometimes even though verticallyAlignFunctionArgs is used,
+                  // the user chooses to manually "break the rules" and use the
+                  // non-aligned style, like so:
+                  //
+                  // plot(foo,
+                  //   bar, baz,
+                  //
+                  // Without the below loop, hitting Enter after "baz," causes
+                  // the cursor to end up aligned with foo. The loop simply
+                  // replaces the indentation with the minimal indentation.
+                  //
+                  // TODO: Perhaps we can skip the above few lines of code if
+                  // there are other lines present
+                  var thisIndent;
+                  for (var i = nextTokenPos.row + 1; i <= lastRow; i++) {
+                     // If a line contains only whitespace, it doesn't count
+                     if (!/[^\s]/.test(this.$getLine(i)))
+                        continue;
+                     // If this line is is a continuation of a multi-line string, 
+                     // ignore it.
+                     var rowEndState = this.$endStates[i-1];
+                     if (rowEndState === "qstring" || rowEndState === "qqstring") 
+                        continue;
+                     thisIndent = this.$getLine(i).replace(/[^\s].*$/, '');
+                     var thisIndentSize = thisIndent.replace("\t", tabAsSpaces).length;
+                     if (thisIndentSize < resultSize) {
+                        result = thisIndent;
+                        resultSize = thisIndentSize;
+                     }
+                  }
+
+                  // We want to tweak vertical alignment; e.g. in this
+                  // case:
+                  //
+                  //    if (foo &&
+                  //        |
+                  //
+                  // vs.
+                  //
+                  //    plot(x +
+                  //             |
+                  //
+                  // Ie, normally, we might want a continuation indent if
+                  // the line ended with an operator; however, in some
+                  // cases (notably with multi-line if statements) we
+                  // would prefer not including that indentation.
+                  return /^\s*(?:if|else|while|for|repeat)/.test(line) ?
+                     result :
+                     result + continuationIndent;
+                  
+
+               }
+
+            }
+
+         } while (tokenCursor.moveToPreviousToken());
+
+         // If we got here, either the scope is provided by a '{'
+         // or we failed otherwise. For '{' scopes, we may want to
+         // short-circuit and indent based on a '<-', hence the second
+         // pass through here.
          tokenCursor.moveToPosition(startPos);
-         
          do
          {
-            // Step over matching braces, parens, etc.
+            // Walk over matching parens
             if (tokenCursor.bwdToMatchingToken())
                continue;
-
-            // If we landed on a '{', just return the indent associated
-            // with that open brace + an indent
+            
+            // If we find an open brace, use its associated indentation
+            // plus a tab.
             if (tokenCursor.currentValue() === "{")
-               return this.getIndentForOpenBrace(tokenCursor.currentPosition()) +
-                  tab;
-
+            {
+               return this.getIndentForOpenBrace(
+                  tokenCursor.currentPosition()
+               ) + tab;
+            }
+                  
+            // If we found an assignment token, use that for indentation
             if (pAssign(tokenCursor.currentToken()))
             {
+               // boolean to indicate whether we can successfully indent
+               // for an assignment token
+               var success = true;
+               
                while (pAssign(tokenCursor.currentToken()))
                {
                   // Move off of the assignment token
@@ -1384,9 +1402,10 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
                }
 
-               // Break out of the enclosing while loop
+               // If this failed, we want to exit out of this block
+               // and try again
                if (!success)
-                  break;
+                  continue;
 
                // We broke out of the loop; we should be on the
                // appropriate line to provide for indentation now.
@@ -1418,9 +1437,8 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                   this.$getLine(tokenCursor.$row)
                ) + continuationIndent;
             }
-            
-         } while (tokenCursor.moveToPreviousToken() &&
-                  numTokensWalked++ < maxTokensToWalk);
+
+         } while (tokenCursor.moveToPreviousToken());
 
          // Fix some edge-case indentation issues, mainly for naked
          // 'if' and 'else' blocks.
@@ -1492,9 +1510,15 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                      count++ < maxTokensToWalk);
          }
 
-         var firstToken = this.$findNextSignificantToken({row: 0, column: 0}, lastRow);
+         var firstToken = this.$findNextSignificantToken(
+            {row: 0, column: 0},
+            lastRow
+         );
+         
          if (firstToken)
-            return this.$getIndent(this.$getLine(firstToken.row)) + continuationIndent;
+            return this.$getIndent(
+               this.$getLine(firstToken.row)
+            ) + continuationIndent;
          else
             return "" + continuationIndent;
       }
