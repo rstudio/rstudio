@@ -1347,6 +1347,9 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                   //
                   //    if (foo)
                   //        x <- 1
+                  //
+                  // In such cases, we rely on the 'naked' control identifier
+                  // to provide the appropriate indentation.
                   var clone = tokenCursor.cloneCursor();
                   if (clone.moveToPreviousToken())
                   {
