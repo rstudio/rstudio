@@ -1329,10 +1329,6 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             // If we found an assignment token, use that for indentation
             if (pAssign(tokenCursor.currentToken()))
             {
-               // boolean to indicate whether we can successfully indent
-               // for an assignment token
-               var success = true;
-               
                while (pAssign(tokenCursor.currentToken()))
                {
                   // Move off of the assignment token
@@ -1387,7 +1383,6 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
                // We broke out of the loop; we should be on the
                // appropriate line to provide for indentation now.
-
                return this.$getIndent(
                   this.$getLine(tokenCursor.$row)
                ) + continuationIndent;
@@ -1465,6 +1460,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                      count++ < maxTokensToWalk);
          }
 
+         // All else fails -- just indent based on the first token.
          var firstToken = this.$findNextSignificantToken(
             {row: 0, column: 0},
             lastRow
