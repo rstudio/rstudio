@@ -1430,29 +1430,6 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                // We broke out of the loop; we should be on the
                // appropriate line to provide for indentation now.
 
-               // If the line we ended on ends with an assignment
-               // token, but the line we started on did not, then add
-               // an extra continuation indent.
-               //
-               // Ie, support:
-               //
-               //     x <-
-               //         1 +
-               //             |
-               //             ^
-               if (tokenCursor.$row !== startPos.row)
-               {
-                  var rowTokens = tokenCursor.$tokens[tokenCursor.$row];
-                  if (rowTokens != null)
-                  {
-                     tokenCursor.$offset = rowTokens.length - 1;
-                     if (pAssign(tokenCursor.currentToken()))
-                     {
-                        continuationIndent += continuationIndent;
-                     }
-                  }
-               }
-
                return this.$getIndent(
                   this.$getLine(tokenCursor.$row)
                ) + continuationIndent;
