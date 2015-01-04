@@ -63,7 +63,8 @@ public:
 
    // NOTE: this can return an empty code completion object
    // if the operation fails
-   CodeCompleteResults codeCompleteAt(const std::string& filename,
+   boost::shared_ptr<CodeCompleteResults> codeCompleteAt(
+                                      const std::string& filename,
                                       unsigned line,
                                       unsigned column);
 

@@ -169,16 +169,18 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
    // get the translation unit and do the code completion
    std::string filename = filePath.absolutePath();
    TranslationUnit tu = rSourceIndex().getTranslationUnit(filename);
+
    if (!tu.empty())
    {
       std::string lastTypedText;
       json::Array completionsJson;
-      CodeCompleteResults results = tu.codeCompleteAt(filename, line, column);
-      if (!results.empty())
+      boost::shared_ptr<CodeCompleteResults> pResults =
+                              tu.codeCompleteAt(filename, line, column);
+      if (!pResults->empty())
       {
-         for (unsigned i = 0; i<results.getNumResults(); i++)
+         for (unsigned i = 0; i<pResults->getNumResults(); i++)
          {
-            CodeCompleteResult result = results.getResult(i);
+            CodeCompleteResult result = pResults->getResult(i);
 
             // filter on user text if we have it
             if (!userText.empty() &&

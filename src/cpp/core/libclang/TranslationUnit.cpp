@@ -90,9 +90,10 @@ Cursor TranslationUnit::getCursor(const std::string& filename,
    return Cursor(cursor);
 }
 
-CodeCompleteResults TranslationUnit::codeCompleteAt(const std::string& filename,
-                                                    unsigned line,
-                                                    unsigned column)
+boost::shared_ptr<CodeCompleteResults> TranslationUnit::codeCompleteAt(
+                                            const std::string& filename,
+                                            unsigned line,
+                                            unsigned column)
 {
    CXCodeCompleteResults* pResults = clang().codeCompleteAt(
                                  tu_,
@@ -108,11 +109,12 @@ CodeCompleteResults TranslationUnit::codeCompleteAt(const std::string& filename,
       clang().sortCodeCompletionResults(pResults->Results,
                                         pResults->NumResults);
 
-      return CodeCompleteResults(pResults);
+      return boost::shared_ptr<CodeCompleteResults>(
+                                    new CodeCompleteResults(pResults));
    }
    else
    {
-      return CodeCompleteResults();
+      return boost::shared_ptr<CodeCompleteResults>(new CodeCompleteResults());
    }
 }
 
