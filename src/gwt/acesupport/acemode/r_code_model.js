@@ -1089,6 +1089,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          // previous line (i.e. the last significant token is a binary operator).
          var continuationIndent = "";
          var startedOnOperator = false;
+         var startedOnAssign = false;
 
          if (prevToken &&
              /\boperator\b/.test(prevToken.token.type) &&
@@ -1101,6 +1102,11 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             // be used for a complete statement starting here, plus a tab.
             continuationIndent = tab;
             startedOnOperator = true;
+            var tokenValue = prevToken.token.value;
+            startedOnAssign = ["<-", "->", "=", "<<-"].some(function(x) {
+               return x === tokenValue;
+            });
+             
          }
 
          else if (prevToken
@@ -1148,16 +1154,24 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          // Walk backwards looking for an open paren, square bracket, or curly
          // brace, *ignoring matched pairs along the way*. (That's the "balanced"
          // in $walkParensBalanced.)
+         //
+         // If we find an open brace, we want to quit and let other
+         // logic ahead work. This is because we might want to
+         // determine indentation based on an assignment token, rather
+         // than the opening brace, and that logic is too cumbersome to
+         // inline into these blocks.
+         var isBrace = false;
          var openBracePos = this.$walkParensBalanced(
                lastRow,
                0,
                function(parens, paren, pos)
                {
+                  isBrace = paren === "{";
                   return /[\[({]/.test(paren) && parens.length === 0;
                },
                null);
 
-         if (openBracePos != null)
+         if (!isBrace && openBracePos != null)
          {
             // OK, we found an open brace; this just means we're not a
             // top-level expression.
@@ -1262,7 +1276,24 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                   }
                }
 
-               return result;
+               // We want to tweak vertical alignment; e.g. in this
+               // case:
+               //
+               //    if (foo &&
+               //        |
+               //
+               // vs.
+               //
+               //    plot(x +
+               //             |
+               //
+               // Ie, normally, we might want a continuation indent if
+               // the line ended with an operator; however, in some
+               // cases (notably with multi-line if statements) we
+               // would prefer not including that indentation.
+               return /^\s*(?:if|else|while|for|repeat)/.test(line) ?
+                  result :
+                  result + continuationIndent;
             }
          }
 
@@ -1275,53 +1306,114 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          var maxTokensToWalk = 20;
          var numTokensWalked = 0;
          var tokenCursor = this.getTokenCursor();
+         var success = true;
+         
          tokenCursor.moveToPosition(startPos);
+         
          do
          {
             // Step over matching braces, parens, etc.
             if (tokenCursor.bwdToMatchingToken())
                continue;
 
+            // If we landed on a '{', just return the indent associated
+            // with that open brace + an indent
+            if (tokenCursor.currentValue() === "{")
+               return this.getIndentForOpenBrace(tokenCursor.currentPosition()) +
+                  tab;
+
             if (pAssign(tokenCursor.currentToken()))
             {
-               // Use the token immediately preceding the
-               // assignment token for indentation
-               if (!tokenCursor.moveToPreviousToken())
-                  break;
-
-               // This might be a square bracket, e.g. for
-               //
-               //    x[1,
-               //      2,
-               //      3] <-
-               //
-               // In such a case, we want to walk the matching brackets.
-               while (tokenCursor.bwdToMatchingToken())
+               while (pAssign(tokenCursor.currentToken()))
                {
+                  // Move off of the assignment token
                   if (!tokenCursor.moveToPreviousToken())
                      break;
+
+                  // This might be a square bracket, e.g. for
+                  //
+                  //    x[1,
+                  //      2,
+                  //      3] <-
+                  //
+                  // In such a case, we want to walk the matching brackets.
+                  // This could also apply for e.g.
+                  //
+                  //    attributes(a,
+                  //               b)[1] <-
+                  //
+                  // We also want to walk back assignment chains, e.g.
+                  //
+                  // x <-
+                  //    y <-
+                  while (tokenCursor.bwdToMatchingToken())
+                     if (!tokenCursor.moveToPreviousToken())
+                        break;
+
+                  // Make sure this isn't the only assignment within a 'naked'
+                  // if or else, e.g.
+                  //
+                  //    if (foo)
+                  //        x <- 1
+                  //
+                  // Technically repeat would be legal too,
+                  // as rare as it would be...
+                  var clone = tokenCursor.cloneCursor();
+                  if (clone.moveToPreviousToken())
+                  {
+                     if (clone.currentValue() === "else" ||
+                         clone.currentValue() === "repeat")
+                     {
+                        success = false;
+                        break;
+                     }
+
+                     if (clone.bwdToMatchingToken() &&
+                         clone.moveToPreviousToken() &&
+                         clone.currentValue() === "if")
+                     {
+                        success = false;
+                        break;
+                     }
+                  }
+
+                  // If the previous token is an assignment operator,
+                  // move on to it
+                  if (pAssign(tokenCursor.peekBwd().currentToken()))
+                     tokenCursor.moveToPreviousToken();
+
                }
 
-               // Make sure this isn't the only assignment within a 'naked'
-               // if or else, e.g.
+               // Break out of the enclosing while loop
+               if (!success)
+                  break;
+
+               // We broke out of the loop; we should be on the
+               // appropriate line to provide for indentation now.
+
+               // If the line we ended on ends with an assignment
+               // token, but the line we started on did not, then add
+               // an extra continuation indent.
                //
-               //    if (foo)
-               //        x <- 1
+               // Ie, support:
                //
-               // Technically repeat would be legal too, as rare as it would be...
-               var clone = tokenCursor.cloneCursor();
-               if (clone.moveToPreviousToken())
+               //     x <-
+               //         1 +
+               //             |
+               //             ^
+               if (tokenCursor.$row !== startPos.row)
                {
-                  if (clone.currentValue() === "else" ||
-                      clone.currentValue() === "repeat")
-                     break;
-
-                  if (clone.bwdToMatchingToken() &&
-                      clone.moveToPreviousToken() &&
-                      clone.currentValue() === "if")
-                     break;
+                  var rowTokens = tokenCursor.$tokens[tokenCursor.$row];
+                  if (rowTokens != null)
+                  {
+                     tokenCursor.$offset = rowTokens.length - 1;
+                     if (pAssign(tokenCursor.currentToken()))
+                     {
+                        continuationIndent += continuationIndent;
+                     }
+                  }
                }
-               
+
                return this.$getIndent(
                   this.$getLine(tokenCursor.$row)
                ) + continuationIndent;
