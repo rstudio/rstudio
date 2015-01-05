@@ -62,7 +62,6 @@ git merge \
     origin/bugfix/token-column \
     origin/bugfix/vim-vertical-block-eol \
     origin/bugfix/dont-place-text-area-offscreen \
-    origin/patch/laggy-typing-2 \
     origin/patch/remove-webfont-2 \
     -m "merge bugfix branches"
 
