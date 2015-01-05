@@ -1089,7 +1089,6 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          // previous line (i.e. the last significant token is a binary operator).
          var continuationIndent = "";
          var startedOnOperator = false;
-         var startedOnAssign = false;
 
          if (prevToken &&
              /\boperator\b/.test(prevToken.token.type) &&
@@ -1103,10 +1102,6 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             continuationIndent = tab;
             startedOnOperator = true;
             var tokenValue = prevToken.token.value;
-            startedOnAssign = ["<-", "->", "=", "<<-"].some(function(x) {
-               return x === tokenValue;
-            });
-             
          }
 
          else if (prevToken
