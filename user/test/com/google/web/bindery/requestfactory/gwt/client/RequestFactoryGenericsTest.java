@@ -24,6 +24,7 @@ import com.google.web.bindery.requestfactory.shared.Request;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
 import com.google.web.bindery.requestfactory.shared.RequestFactory;
 import com.google.web.bindery.requestfactory.shared.Service;
+import com.google.web.bindery.requestfactory.shared.SkipInterfaceValidation;
 import com.google.web.bindery.requestfactory.shared.ValueProxy;
 
 import java.util.Collections;
@@ -32,6 +33,7 @@ import java.util.List;
 /**
  * Tests usage of generics in RequestFactory.
  */
+@SkipInterfaceValidation
 public class RequestFactoryGenericsTest extends GWTTestCase {
 
   /** Service under test. */

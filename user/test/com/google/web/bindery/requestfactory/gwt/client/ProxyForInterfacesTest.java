@@ -22,12 +22,14 @@ import com.google.web.bindery.requestfactory.shared.Request;
 import com.google.web.bindery.requestfactory.shared.RequestContext;
 import com.google.web.bindery.requestfactory.shared.RequestFactory;
 import com.google.web.bindery.requestfactory.shared.Service;
+import com.google.web.bindery.requestfactory.shared.SkipInterfaceValidation;
 import com.google.web.bindery.requestfactory.shared.ValueProxy;
 
 /**
  * Tests RequestFactory when using proxies for interfaces.
  * @see http://code.google.com/p/google-web-toolkit/issues/detail?id=5762
  */
+@SkipInterfaceValidation
 public class ProxyForInterfacesTest extends GWTTestCase {
 
   /**
