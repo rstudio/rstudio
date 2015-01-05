@@ -66,7 +66,6 @@ git merge \
 ## git merge \
 ##     origin/bugfix-active-line-back \            # test printing (margin-layering; active line highlighting)
 
-##     origin/patch/suppress-native-scroll \       # ask joe
 ##     origin/patch/remove-webfont \               # need to remove from build_supprt/style.css
 
 ## git merge \
