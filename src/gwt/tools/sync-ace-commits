@@ -61,16 +61,15 @@ git submodule update --init --recursive
 git merge \
     origin/bugfix/token-column \
     origin/bugfix/vim-vertical-block-eol \
-    origin/bugfix/dont-place-text-area-offscreen
+    origin/bugfix/dont-place-text-area-offscreen \
+    origin/patch/laggy-typing-2 \
+    origin/patch/remove-webfont-2 \
+    -m "merge bugfix branches"
 
 ## git merge \
 ##     origin/bugfix-active-line-back \            # test printing (margin-layering; active line highlighting)
 
-##     origin/patch/remove-webfont \               # need to remove from build_supprt/style.css
-
 ## git merge \
-##     origin/patch/laggy-typing \                 # double-check .ace_text-input in editor.css
-##     origin/feature/scrolling-compensation \     # investigate
 ##     origin/bugfix/ie10-clipboard \              # test copy+paste in IE10 (probably okay)
 ##     origin/bugfix/safari-8-copy                 # double check if still a problem (seems likely)
 

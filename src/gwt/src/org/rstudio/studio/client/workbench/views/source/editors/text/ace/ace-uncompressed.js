@@ -14591,7 +14591,7 @@ position: absolute;\
 height: 100%;\
 }\
 .ace_text-input {\
-position: absolute;\
+position: fixed;\
 z-index: 0;\
 width: 0.5em;\
 height: 1em;\
