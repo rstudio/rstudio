@@ -30,10 +30,12 @@
 * Comment/uncomment respects indent level when appropriate
 * Shift+Enter now searches backwards in Find/Replace
 * New option to control comment continuation on insertion of new lines
-* Improvements to data viewer:
-    - Support for viewing large data sets (removed 1k row limit)
-    - Data can be filtered, searched, and sorted
-    - Viewer updates to reflect changes in data
+
+### Data Viewer
+
+- Support for viewing large data sets (removed 1k row limit)
+- Data can be filtered, searched, and sorted
+- Viewer updates to reflect changes in data
 
 ### Workspace
 
@@ -59,13 +61,13 @@
 
 ### Miscellaneous
 
+* Updated to pandoc 1.13.1
 * Updated rendering engine to Qt 5.4 for improved performance
-* Update to pandoc 1.13.1
+* Windows: updated to MSYS SSH 1000.18
 * Bind Cmd+Shift+K shortcut to Compile PDF and Preview HTML
 * When evaluating R strings ensure 'try' is called from base package
 * Add Clear Recent Projects menu item to toolbar project menu
 * Command to sync current working directory and Files pane to project directory
-* Windows: updated to MSYS SSH 1000.18
 * Eliminated rstudio and manipulate packages (both now available on CRAN)
 
 ### Bug Fixes
