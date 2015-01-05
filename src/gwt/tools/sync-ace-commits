@@ -63,14 +63,14 @@ git merge \
     origin/bugfix/vim-vertical-block-eol \
     origin/bugfix/dont-place-text-area-offscreen \
     origin/patch/remove-webfont-2 \
-    -m "merge bugfix branches"
+    origin/patch/other-modes \
+    -m "merge branches"
 
 ## git merge \
 ##     origin/bugfix-active-line-back \            # test printing (margin-layering; active line highlighting)
 
 ## git merge \
 ##     origin/bugfix/ie10-clipboard \              # test copy+paste in IE10 (probably okay)
-##     origin/bugfix/safari-8-copy                 # double check if still a problem (seems likely)
 
 
 # Build and copy ace, ace-uncompressed to RStudio
