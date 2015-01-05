@@ -94,7 +94,7 @@ Description:
         </module>
         <module name="ImportOrder">
             <property name="severity" value="error"/>
-            <property name="groups" value="com.google, com,  junit, net,org, java,javax"/>
+            <property name="groups" value="com.google, cern, com, junit, net, org, java, javax"/>
             <property name="ordered" value="true"/>
             <property name="separated" value="true"/>
             <property name="option" value="top"/>

@@ -16,6 +16,7 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
+import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import junit.framework.TestCase;
@@ -36,12 +37,19 @@ public class MinimalRebuildCacheTest extends TestCase {
     minimalRebuildCache.recordDiskSourceResources(currentModifiedBySourcePath);
 
     // They each contain a type and nested type.
+    StringAnalyzableTypeEnvironment typeEnvironment = minimalRebuildCache.getTypeEnvironment();
     minimalRebuildCache.recordNestedTypeName("Foo", "Foo");
+    typeEnvironment.recordTypeEnclosesMethod("Foo", "Foo::$clinit()");
     minimalRebuildCache.recordNestedTypeName("Foo", "Foo$Inner");
+    typeEnvironment.recordTypeEnclosesMethod("Foo$Inner", "Foo$Inner::$clinit()");
     minimalRebuildCache.recordNestedTypeName("Bar", "Bar");
+    typeEnvironment.recordTypeEnclosesMethod("Bar", "Bar::$clinit()");
     minimalRebuildCache.recordNestedTypeName("Bar", "Bar$Inner");
+    typeEnvironment.recordTypeEnclosesMethod("Bar$Inner", "Bar$Inner::$clinit()");
     minimalRebuildCache.recordNestedTypeName("Baz", "Baz");
+    typeEnvironment.recordTypeEnclosesMethod("Baz", "Baz::$clinit()");
     minimalRebuildCache.recordNestedTypeName("Baz", "Baz$Inner");
+    typeEnvironment.recordTypeEnclosesMethod("Baz$Inner", "Baz$Inner::$clinit()");
 
     // There's some JS for each type.
     minimalRebuildCache.setJsForType(TreeLogger.NULL, "Foo", "Some Js for Foo");
@@ -53,13 +61,23 @@ public class MinimalRebuildCacheTest extends TestCase {
 
     // Record that Bar references Foo and Baz subclasses Foo.
     minimalRebuildCache.addTypeReference("Bar", "Foo");
+    typeEnvironment.recordMethodCallsMethod("Bar::start()", "Foo::run()");
+    typeEnvironment.recordStaticReferenceInMethod("Foo", "Bar::start()");
+    typeEnvironment.recordTypeEnclosesMethod("Bar", "Bar::start()");
+    typeEnvironment.recordTypeEnclosesMethod("Foo", "Foo::run()");
     minimalRebuildCache.getImmediateTypeRelations().getImmediateSuperclassesByClass().put("Baz",
         "Foo");
+    typeEnvironment.recordMethodCallsMethod("Foo::run()", "Baz::run()");
+    typeEnvironment.recordStaticReferenceInMethod("Baz", "Foo::run()");
+    typeEnvironment.recordTypeEnclosesMethod("Baz", "Baz::run()");
 
     // Record that these types reference their inner classes.
     minimalRebuildCache.addTypeReference("Foo", "Foo$Inner");
     minimalRebuildCache.addTypeReference("Bar", "Bar$Inner");
     minimalRebuildCache.addTypeReference("Baz", "Baz$Inner");
+    typeEnvironment.recordStaticReferenceInMethod("Bar$Inner", "Bar::start()");
+    typeEnvironment.recordStaticReferenceInMethod("Foo$Inner", "Foo::run()");
+    typeEnvironment.recordStaticReferenceInMethod("Baz$Inner", "Baz::run()");
 
     // In the next compile only Foo is modified.
     Map<String, Long> laterModifiedBySourcePath = new ImmutableMap.Builder<String, Long>().put(
@@ -68,6 +86,7 @@ public class MinimalRebuildCacheTest extends TestCase {
 
     // Ensure the types are known to be reachable.
     minimalRebuildCache.setRootTypeNames(Sets.newHashSet("Foo", "Bar", "Baz"));
+    minimalRebuildCache.setEntryMethodNames(Lists.newArrayList("Bar::start()"));
     minimalRebuildCache.computeReachableTypeNames();
 
     // Request clearing of cache related to stale types.

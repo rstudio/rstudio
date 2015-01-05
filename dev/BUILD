@@ -183,6 +183,7 @@ java_library(
             "core/src/com/google/gwt/dev/PrecompileTaskOptions.java",
             "core/src/com/google/gwt/dev/PrecompileTaskOptionsImpl.java",
             "core/src/com/google/gwt/dev/PrecompilationResult.java",
+            "core/src/com/google/gwt/dev/StringAnalyzableTypeEnvironment.java",
             "core/src/com/google/gwt/dev/cfg/**/*.java",
             "core/src/com/google/gwt/dev/javac/**/*.java",
             "core/src/com/google/gwt/dev/jdt/**/*.java",

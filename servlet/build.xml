@@ -24,6 +24,7 @@
     <mkdir dir="${gwt.build.lib}" />
     <gwt.jar>
       <!-- Rebased dependencies go in gwt-servlet too -->
+      <zipfileset src="${gwt.tools.lib}/colt/colt-1.2.jar" />
       <zipfileset src="${gwt.tools.lib}/guava/guava-16.0.1/guava-16.0.1-rebased.jar" />
       <zipfileset src="${gwt.tools.lib}/jscomp/20131118.json.rebased/sourcemap-rebased.jar" />
       <zipfileset src="${gwt.tools.lib}/json/android-sdk-19.1/json-android-rebased.jar" />

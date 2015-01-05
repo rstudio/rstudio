@@ -37,7 +37,7 @@ import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import java.util.List;
 
 /**
- * Collects and Type->Type references.
+ * Records Type->Type references.
  */
 public class TypeReferencesRecorder extends JVisitor {
 

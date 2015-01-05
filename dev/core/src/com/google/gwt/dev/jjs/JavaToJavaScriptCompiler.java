@@ -64,6 +64,7 @@ import com.google.gwt.dev.jjs.impl.AssertionNormalizer;
 import com.google.gwt.dev.jjs.impl.AssertionRemover;
 import com.google.gwt.dev.jjs.impl.AstDumper;
 import com.google.gwt.dev.jjs.impl.CompileTimeConstantsReplacer;
+import com.google.gwt.dev.jjs.impl.ControlFlowRecorder;
 import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
 import com.google.gwt.dev.jjs.impl.EnumOrdinalizer;
 import com.google.gwt.dev.jjs.impl.Finalizer;
@@ -275,7 +276,7 @@ public abstract class JavaToJavaScriptCompiler {
         // AST has happened (to record for example reference to types declaring compile-time
         // constants) and 2) after all normalizations to collect synthetic references (e.g. to
         // record references to runtime classes like LongLib).
-        maybeRecordTypeReferences(false);
+        maybeRecordReferencesAndControlFlow(false);
 
         // Replace compile time constants by their values.
         // TODO(rluble): eventually move to normizeSemantics.
@@ -293,7 +294,7 @@ public abstract class JavaToJavaScriptCompiler {
         postNormalizationOptimizeJava();
 
         // Now that the AST has stopped mutating update with the final references.
-        maybeRecordTypeReferences(true);
+        maybeRecordReferencesAndControlFlow(true);
 
         jprogram.typeOracle.recomputeAfterOptimizations(jprogram.getDeclaredTypes());
 
@@ -375,11 +376,13 @@ public abstract class JavaToJavaScriptCompiler {
       }
     }
 
-    private void maybeRecordTypeReferences(boolean onlyUpdate) {
+    private void maybeRecordReferencesAndControlFlow(boolean onlyUpdate) {
       if (options.isIncrementalCompileEnabled()) {
         // Per file compilation needs the type reference graph to construct the set of reachable
         // types when linking.
-        TypeReferencesRecorder.exec(jprogram, getMinimalRebuildCache(),onlyUpdate);
+        TypeReferencesRecorder.exec(jprogram, getMinimalRebuildCache(), onlyUpdate);
+        ControlFlowRecorder.exec(jprogram, getMinimalRebuildCache().getTypeEnvironment(),
+            onlyUpdate);
       }
     }
 

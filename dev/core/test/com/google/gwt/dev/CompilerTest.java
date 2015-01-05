@@ -71,7 +71,7 @@ public class CompilerTest extends ArgProcessorTestBase {
   private MockJavaResource referencesParentResource =
       JavaResourceBase.createMockJavaResource("com.foo.ReferencesParent",
           "package com.foo;",
-          "public abstract class ReferencesParent {",
+          "public class ReferencesParent {",
           "  void run() {",
           "    PackagePrivateParent packagePrivateParent = null;",
           "    packagePrivateParent.someFunction();",
@@ -85,8 +85,8 @@ public class CompilerTest extends ArgProcessorTestBase {
           "public class TestEntryPoint implements EntryPoint {",
           "  @Override",
           "  public void onModuleLoad() {",
-          "    ReferencesParent referencesParent = null;",
-          "    PackagePrivateChild packagePrivateChild = null;",
+          "    ReferencesParent referencesParent = new ReferencesParent();",
+          "    PackagePrivateChild packagePrivateChild = new PackagePrivateChild();",
           "  }",
           "}");
 
@@ -1221,7 +1221,7 @@ public class CompilerTest extends ArgProcessorTestBase {
     checkRecompiledModifiedApp("com.foo.SuperFromStaleInnerModule",
         Lists.newArrayList(superFromStaleInnerModuleResource,
             superFromStaleInnerEntryPointResource), interfaceOneResource, interfaceOneResource,
-        stringSet("com.foo.SuperFromStaleInnerEntryPoint$B$1", "com.foo.InterfaceOne"), output);
+        stringSet("com.foo.SuperFromStaleInnerEntryPoint$B$1"), output);
   }
 
   private void checkIncrementalRecompile_deterministicUiBinder(JsOutputOption output)
@@ -1230,7 +1230,7 @@ public class CompilerTest extends ArgProcessorTestBase {
 
     checkRecompiledModifiedApp(compilerOptions, "com.foo.UiBinderTestModule", Lists.newArrayList(
         uiBinderTestModuleResource, uiBinderTestEntryPointResource, myWidgetUiXml), myWidget,
-        myWidget, stringSet("com.foo.MyWidget", "com.foo.MyWidget$Binder", "com.foo.TestEntryPoint",
+        myWidget, stringSet("com.foo.MyWidget", "com.foo.TestEntryPoint",
             "com.foo.MyWidget_BinderImpl", "com.foo.MyWidget_BinderImpl$Widgets"), output);
   }
 
@@ -1238,16 +1238,14 @@ public class CompilerTest extends ArgProcessorTestBase {
       throws UnableToCompleteException, IOException, InterruptedException {
     // Switches from a white styled widget to a grey styled widget in the CSS in the style tag
     // nested in the .ui.xml template file.
+    String binderImpl = "com.foo.MyWidget_BinderImpl";
     checkRecompiledModifiedApp("com.foo.UiBinderTestModule",
         Lists.newArrayList(uiBinderTestModuleResource, uiBinderTestEntryPointResource, myWidget),
-        myWidgetWithWhiteStyleUiXml, myWidgetWithGreyStyleUiXml,
-        stringSet("com.foo.MyWidget",
-            "com.foo.MyWidget_BinderImpl$Template",
-            "com.foo.MyWidget_BinderImpl_GenBundle_default_InlineClientBundleGenerator",
-            "com.foo.MyWidget_BinderImpl_GenBundle_default_InlineClientBundleGenerator$1",
-            "com.foo.MyWidget_BinderImpl_TemplateImpl",
-            "com.foo.MyWidget_BinderImpl_GenBundle_default_InlineClientBundleGenerator$styleInitializer",
-            "com.foo.MyWidget_BinderImpl", "com.foo.MyWidget_BinderImpl$Widgets"), output);
+        myWidgetWithWhiteStyleUiXml, myWidgetWithGreyStyleUiXml, stringSet("com.foo.MyWidget",
+            binderImpl, binderImpl + "_GenBundle_default_InlineClientBundleGenerator",
+            binderImpl + "_GenBundle_default_InlineClientBundleGenerator$1",
+            binderImpl + "_GenBundle_default_InlineClientBundleGenerator$styleInitializer",
+            binderImpl + "_TemplateImpl", binderImpl + "$Widgets"), output);
   }
 
   private void checkIncrementalRecompile_packagePrivateOverride(JsOutputOption output)

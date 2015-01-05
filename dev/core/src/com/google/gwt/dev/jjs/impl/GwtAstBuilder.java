@@ -2466,8 +2466,7 @@ public class GwtAstBuilder {
             continue;
           }
           if (m.getAccess() == AccessModifier.PUBLIC
-            && (m.isStatic() ||
-              (m instanceof JConstructor))) {
+              && (m.isStatic() || (m instanceof JConstructor))) {
             m.setExportName("");
           }
         }
@@ -2475,7 +2474,7 @@ public class GwtAstBuilder {
           if (f.getExportName() != null) {
             continue;
           }
-          if (f.isStatic()) {
+          if (f.isStatic() || type instanceof JInterfaceType) {
             f.setExportName("");
           }
         }

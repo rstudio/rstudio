@@ -773,8 +773,10 @@ public class UnifyAst {
    */
   public void exec() throws UnableToCompleteException {
     // Trace execution from entry points and resolve references.
+    List<String> entryMethodNames = new ArrayList<String>();
     for (JMethod entryMethod : program.getEntryMethods()) {
       flowInto(entryMethod);
+      entryMethodNames.add(entryMethod.getJsniSignature(true, false));
     }
 
     // Ensure that root types are loaded and possibly (depending on mode) traversed.
@@ -792,6 +794,7 @@ public class UnifyAst {
       }
     }
     minimalRebuildCache.setRootTypeNames(rootTypeBinaryNames);
+    minimalRebuildCache.setEntryMethodNames(entryMethodNames);
 
     // Some fields and methods in codegen types might only become referenced as the result of
     // visitor execution after unification. Since we don't want those fields are methods to be

@@ -50,6 +50,7 @@ public class UnstableNestedAnonymousGenerator extends Generator {
       OutputVersion outputVersion = outputVersionOrder.removeFirst();
 
       pw.println("package com.foo;");
+      pw.println("import java.lang.Runnable;");
       pw.println("public class NestedAnonymousClasses {");
       if (outputVersion == OutputVersion.A) {
         insertClassDefinitionOne(pw);
@@ -58,11 +59,12 @@ public class UnstableNestedAnonymousGenerator extends Generator {
         insertClassDefinitionTwo(pw);
         insertClassDefinitionOne(pw);
       }
+      pw.println("  public NestedAnonymousClasses() {run();}");
       pw.println("  void run() {");
-      pw.println("    new Object() {");
-      pw.println("      void run() {");
-      pw.println("        new Object() {");
-      pw.println("          void run() {");
+      pw.println("    new Runnable() {");
+      pw.println("      public void run() {");
+      pw.println("        new Runnable() {");
+      pw.println("          public void run() {");
       if (outputVersion == OutputVersion.A) {
         pw.println("ClassOne classOne = new ClassOne();");
         pw.println("ClassTwo classTwo = new ClassTwo();");
@@ -71,9 +73,9 @@ public class UnstableNestedAnonymousGenerator extends Generator {
         pw.println("ClassOne classOne = new ClassOne();");
       }
       pw.println("          }");
-      pw.println("        };");
+      pw.println("        }.run();");
       pw.println("      }");
-      pw.println("    };");
+      pw.println("    }.run();");
       pw.println("  }");
       pw.println("}");
       pw.flush();
