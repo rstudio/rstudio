@@ -137,23 +137,32 @@ public class DataEditingTarget extends UrlContentEditingTarget
    public void popoutDoc()
    {
       DataItem item = getDataItem();
-      server_.duplicateDataView(item.getCaption(), item.getEnvironment(), 
-                                item.getObject(), item.getCacheKey(), 
-            new ServerRequestCallback<DataItem>() {
-               @Override
-               public void onResponseReceived(DataItem item)
-               {
-                  satelliteManager_.openSatellite(DataViewerSatellite.NAME, item, 
-                                                  new Size(750, 850));
-               }
+      if (item.getCacheKey() != null && item.getCacheKey().length() > 0)
+      {
+         // if we have a cache key, duplicate it
+         server_.duplicateDataView(item.getCaption(), item.getEnvironment(), 
+                                   item.getObject(), item.getCacheKey(), 
+               new ServerRequestCallback<DataItem>() {
+                  @Override
+                  public void onResponseReceived(DataItem item)
+                  {
+                     satelliteManager_.openSatellite(DataViewerSatellite.NAME, item, 
+                                                     new Size(750, 850));
+                  }
 
-               @Override
-               public void onError(ServerError error)
-               {
-                  globalDisplay_.showErrorMessage("View Failed", 
-                        error.getMessage());
-               }
-      });
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     globalDisplay_.showErrorMessage("View Failed", 
+                           error.getMessage());
+                  }
+         });
+      }
+      else
+      {
+         // no cache key, just show the content directly
+         globalDisplay_.showHtmlFile(item.getContentUrl());
+      }
    }
 
    protected String getCacheKey()
