@@ -35,7 +35,7 @@
 
 #include "EnvironmentUtils.hpp"
 
-#define TOP_FUNCTION 1
+#define BROWSER_FUNCTION 0
 
 using namespace core;
 
@@ -244,74 +244,40 @@ bool isErrorHandlerContext(RCNTXT* pContext)
    return TYPEOF(errFlag) == INTSXP;
 }
 
-// Given a context at which an error handler was found, return the context at
-// which we should presume the error originated. 
-RCNTXT* errorOriginatorContext(RCNTXT* handlerCtx, int* dist) 
-{
-   (*dist)++;
-   RCNTXT* originator = firstFunctionContext(handlerCtx->nextcontext);
-   std::string functionName;
-
-   // skip "stop" if present
-   Error err = functionNameFromContext(originator, &functionName);
-   if (!err && functionName == "stop")
-   {
-      (*dist)++;
-      originator = firstFunctionContext(originator->nextcontext);
-   }
-   // skip "stopifnot" if present
-   err = functionNameFromContext(originator, &functionName);
-   if (!err && functionName == "stopifnot")
-   {
-      (*dist)++;
-      originator = firstFunctionContext(originator->nextcontext);
-   }
-   return originator;
-}
-
 // return the function context at the given depth
 RCNTXT* getFunctionContext(const int depth,
-                           bool findUserCode = false,
                            int* pFoundDepth = NULL,
                            SEXP* pEnvironment = NULL)
 {
    RCNTXT* pRContext = r::getGlobalContext();
-   RCNTXT* pSrcContext = pRContext;
+   RCNTXT* pFoundContext = NULL;
    int currentDepth = 0;
-   bool foundUserCode = false;
-   RCNTXT* pErrContext = NULL;
-   int errorDepth = 0;
+   int foundDepth = 0;
+   SEXP browseEnv = R_NilValue;
    while (pRContext->callflag)
    {
+      // if looking for the actively browsed function, pick the environment
+      // evaluated by the browser on top of the stack
+      if (pRContext->callflag & CTXT_BROWSER && browseEnv == R_NilValue) 
+      {
+         browseEnv = pRContext->cloenv;
+      }
       if (pRContext->callflag & CTXT_FUNCTION)
       {
-         // If the caller asked us to find user code, don't stop unless the
-         // context we're examining meets the following criteria:
-         // 1) has a valid source ref (i.e. we have the user code associated
-         //    with the context
-         // 2) source ref is not a duplicate of the source ref from the
-         //    previous frame.  R <= 2.15.0 appears to have a bug wherein error
-         //    handlers have a srcref that points not to the handler itself but
-         //    to the error, so the error source reference appears twice
-         //    consecutively on the stack.  This duplicate reference should not
-         //    be considered real user code since we don't want to break into
-         //    the error handler.
-         if (++currentDepth >= depth &&
-             !isDebugHiddenContext(pRContext) &&
-             !(findUserCode && (!isValidSrcref(pSrcContext->srcref) ||
-                                 (pRContext != pSrcContext &&
-                                  pRContext->srcref == pSrcContext->srcref))))
+         currentDepth++;
+         if (depth == BROWSER_FUNCTION && pRContext->cloenv == browseEnv) 
          {
-            foundUserCode = true;
-            break;
+            foundDepth = currentDepth;
+            pFoundContext = pRContext;
+            // continue traversing the callstack; there may be several 
+            // functions eval'ing this environment and we want the "original"
+            // (here meaning oldest on the callstack)
          }
-         // Record the depth at which the error handler was found (if at all);
-         // we will default to reporting code at the function that invoked
-         // the handler
-         if (findUserCode && isErrorHandlerContext(pRContext))
+         else if (depth > BROWSER_FUNCTION && currentDepth >= depth)
          {
-            errorDepth = currentDepth;
-            pErrContext = errorOriginatorContext(pRContext, &errorDepth);
+            foundDepth = currentDepth;
+            pFoundContext = pRContext;
+            break;
          }
       }
       pRContext = pRContext->nextcontext;
@@ -321,35 +287,15 @@ RCNTXT* getFunctionContext(const int depth,
    // that depth, if requested
    if (pFoundDepth)
    {
-      *pFoundDepth = currentDepth;
+      *pFoundDepth = foundDepth;
    }
    if (pEnvironment)
    {
-      *pEnvironment = currentDepth == 0 ? R_GlobalEnv : pRContext->cloenv;
+      *pEnvironment = (foundDepth == 0 || pFoundContext == NULL) ? 
+         R_GlobalEnv : 
+         pFoundContext->cloenv;
    }
-   if (depth == TOP_FUNCTION && findUserCode && !foundUserCode)
-   {
-      if (pErrContext != NULL)
-      {
-         // if there's an error handler on the stack, report the "user" code to
-         // be the function that invoked the handler.
-         pRContext = pErrContext;
-         *pFoundDepth = errorDepth;
-         if (pEnvironment)
-            *pEnvironment = pErrContext->cloenv;
-      }
-      else
-      {
-         // if we were looking for the top user-mode function on the stack but
-         // found nothing, return the top of the stack rather than the bottom.
-         if (pEnvironment)
-            *pEnvironment = r::getGlobalContext()->cloenv;
-         if (pFoundDepth)
-            *pFoundDepth = 1;
-      }
-      pRContext = r::getGlobalContext();
-   }
-   return pRContext;
+   return pFoundContext;
 }
 
 // Return whether we're in browse context--meaning that there's a browser on
@@ -823,7 +769,7 @@ Error setContextDepth(boost::shared_ptr<int> pContextDepth,
    // set state for the new depth
    *pContextDepth = requestedDepth;
    SEXP env = NULL;
-   getFunctionContext(requestedDepth, false, NULL, &env);
+   getFunctionContext(requestedDepth, NULL, &env);
    s_pEnvironmentMonitor->setMonitoredEnvironment(env);
 
    // populate the new state on the client
@@ -879,8 +825,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
       // show the user their own code on entering debug), but once debugging,
       // allow the user to explore other code.
       pRContext =
-             getFunctionContext(TOP_FUNCTION, *pContextDepth == 0,
-                                &depth, &environmentTop);
+             getFunctionContext(BROWSER_FUNCTION, &depth, &environmentTop);
    }
 
    if (environmentTop != s_pEnvironmentMonitor->getMonitoredEnvironment() ||
@@ -977,7 +922,7 @@ void initEnvironmentMonitoring()
    // Check to see whether we're actively debugging. If we are, the debug
    // environment trumps whatever the user wants to browse in at the top level.
    int contextDepth = 0;
-   RCNTXT* pContext = getFunctionContext(TOP_FUNCTION, false, &contextDepth);
+   RCNTXT* pContext = getFunctionContext(BROWSER_FUNCTION, &contextDepth);
    if (contextDepth == 0 ||
        !inBrowseContext())
    {
@@ -1109,7 +1054,7 @@ void onConsoleOutput(boost::shared_ptr<LineDebugState> pLineDebugState,
 json::Value environmentStateAsJson()
 {
    int contextDepth = 0;
-   getFunctionContext(TOP_FUNCTION, true, &contextDepth);
+   getFunctionContext(BROWSER_FUNCTION, &contextDepth);
    // If there's no browser on the stack, stay at the top level even if
    // there are functions on the stack--this is not a user debug session.
    if (!inBrowseContext())

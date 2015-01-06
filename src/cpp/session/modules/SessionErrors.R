@@ -139,18 +139,16 @@
       # the user code that raised the error to be. These will need to be
       # adjusted if evaluation layers are added or removed between the
       # root error handler (set in options(error=...)) and this function.
-      errorFrameOffset <- 2
+      frame <- length(sys.frames()) - 2
 
       # move the frame backwards if it's on stop or stopifnot
-      if (identical(deparse(sys.call(errorFrameOffset)[[1]]), "stop"))
-         errorFrameOffset <- errorFrameOffset + 1
-      if (identical(deparse(sys.call(errorFrameOffset)[[1]]), "stopifnot"))
-         errorFrameOffset <- errorFrameOffset + 1
-
-      frame <- length(sys.frames()) - errorFrameOffset
+      if (identical(deparse(sys.call(frame)[[1]]), "stop"))
+         frame <- frame - 1
+      if (identical(deparse(sys.call(frame)[[1]]), "stopifnot"))
+         frame <- frame - 1
 
       eval(substitute(browser(skipCalls = pos), 
-                      list(pos = errorFrameOffset + 2)),
+                      list(pos = (length(sys.frames()) - frame) + 2)),
            envir = sys.frame(frame))
    }
 },
