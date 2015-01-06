@@ -31,7 +31,7 @@ var RCodeModel = require("mode/r_code_model").RCodeModel;
 var MarkdownFoldMode = require("mode/markdown_folding").FoldMode;
 
 
-var Mode = function(suppressHighlighting, doc, session) {
+var Mode = function(suppressHighlighting, session) {
    var that = this;
 
    this.$session = session;
@@ -41,7 +41,7 @@ var Mode = function(suppressHighlighting, doc, session) {
    this.$r_outdent = {};
    oop.implement(this.$r_outdent, RMatchingBraceOutdent);
 
-   this.codeModel = new RCodeModel(doc, this.$tokenizer, /^r-/,
+   this.codeModel = new RCodeModel(session, this.$tokenizer, /^r-/,
                                    /^(?:[ ]{4})?`{3,}\s*\{r(.*)\}\s*$/);
 
    var markdownFoldingRules = new MarkdownFoldMode();
