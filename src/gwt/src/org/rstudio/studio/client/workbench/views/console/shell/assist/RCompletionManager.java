@@ -1306,22 +1306,6 @@ public class RCompletionManager implements CompletionManager
       
       TokenCursor startCursor = tokenCursor.cloneCursor();
       
-      // If this is an argument, return auto-completions tuned to that argument
-      TokenCursor argsCursor = startCursor.cloneCursor();
-      if (argsCursor.currentType() == "identifier")
-         argsCursor.moveToPreviousToken();
-      
-      if (argsCursor.currentValue() == "=")
-      {
-         if (argsCursor.moveToPreviousToken())
-         {
-            return new AutocompletionContext(
-                  token,
-                  argsCursor.currentValue(),
-                  AutocompletionContext.TYPE_ARGUMENT);
-         }
-      }
-      
       // Find an opening '(' or '[' -- this provides the function or object
       // for completion.
       int initialNumCommas = 0;
@@ -1416,6 +1400,33 @@ public class RCompletionManager implements CompletionManager
       
       context.setFunctionCallString(
             (beforeText + afterText).trim());
+      
+      // If this is an argument, return auto-completions tuned to that argument
+      TokenCursor argsCursor = startCursor.cloneCursor();
+      if (argsCursor.currentType() == "identifier")
+         argsCursor.moveToPreviousToken();
+      
+      if (argsCursor.currentValue() == "=")
+      {
+         if (argsCursor.moveToPreviousToken())
+         {
+            context.setToken(token);
+            
+            ArrayList<String> argData = new ArrayList<String>();
+            argData.add(argsCursor.currentValue());
+            context.setAssocData(argData);
+            
+            ArrayList<Integer> dataType = new ArrayList<Integer>();
+            dataType.add(AutocompletionContext.TYPE_ARGUMENT);
+            context.setDataType(dataType);
+            
+            ArrayList<Integer> numCommas = new ArrayList<Integer>();
+            numCommas.add(0);
+            context.setNumCommas(numCommas);
+            
+            return context;
+         }
+      }
       
       String initialData =
             docDisplay_.getTextForRange(Range.fromPoints(

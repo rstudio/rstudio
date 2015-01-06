@@ -447,15 +447,10 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
-.rs.addFunction("getCompletionsFunction", function(token,
-                                                   string,
-                                                   functionCall,
-                                                   numCommas,
-                                                   discardFirst,
-                                                   envir = parent.frame())
+.rs.addFunction("resolveObjectFromFunctionCall", function(functionCall,
+                                                          envir)
 {
-   result <- .rs.emptyCompletions()
-   
+   string <- capture.output(print(functionCall[[1]]))
    splat <- strsplit(string, ":{2,3}", perl = TRUE)[[1]]
    object <- NULL
    if (length(splat) == 1)
@@ -500,6 +495,20 @@ assign(x = ".rs.acCompletionTypes",
       if (any(sapply(writers, identical, object)))
          object <- utils::write.table
    }
+   
+   object
+   
+})
+
+.rs.addFunction("getCompletionsFunction", function(token,
+                                                   string,
+                                                   functionCall,
+                                                   numCommas,
+                                                   discardFirst,
+                                                   envir = parent.frame())
+{
+   result <- .rs.emptyCompletions()
+   object <- .rs.resolveObjectFromFunctionCall(functionCall, envir)
    
    if (!is.null(object) && is.function(object))
    {
@@ -1857,7 +1866,7 @@ assign(x = ".rs.acCompletionTypes",
       if (type == .rs.acContextTypes$FUNCTION)
          .rs.getCompletionsFunction(token, string, functionCall, numCommas, discardFirst, envir)
       else if (type == .rs.acContextTypes$ARGUMENT)
-         .rs.getCompletionsArgument(token, string)
+         .rs.getCompletionsArgument(token, string, functionCall, envir)
       else if (type == .rs.acContextTypes$SINGLE_BRACKET)
          .rs.getCompletionsSingleBracket(token, string, numCommas, envir)
       else if (type == .rs.acContextTypes$DOUBLE_BRACKET)
@@ -2269,9 +2278,57 @@ assign(x = ".rs.acCompletionTypes",
 })
 
 .rs.addFunction("getCompletionsArgument", function(token,
-                                                   activeArg)
+                                                   activeArg,
+                                                   functionCall = NULL,
+                                                   envir = NULL)
 {
    completions <- .rs.emptyCompletions()
+   
+   object <- if (!is.null(functionCall))
+      .rs.resolveObjectFromFunctionCall(functionCall, envir)
+   
+   # Check for knitr chunk completions, if possible
+   if ("knitr" %in% loadedNamespaces())
+   {
+      ns <- asNamespace("knitr")
+      tryGet <- function(name, ns)
+         tryCatch(get(name, envir = ns)$set, error = function(e) NULL)
+      
+      setter <- tryGet("opts_chunk", ns)
+      if (identical(object, setter))
+      {
+         opts <- knitr:::opts_chunk_attr
+         if (activeArg %in% names(opts))
+         {
+            # Options to fill in the various if statements
+            foundCompletions <- FALSE
+            results <- character()
+            quote <- TRUE
+            
+            if (is.list(opts[[activeArg]]))
+            {
+               foundCompletions <- TRUE
+               potentials <- unlist(opts[[activeArg]])
+               results <- .rs.selectFuzzyMatches(potentials, token)
+               quote <- TRUE
+            }
+            
+            if (identical(opts[[activeArg]], "logical"))
+            {
+               foundCompletions <- TRUE
+               potentials <- c(TRUE, FALSE)
+               results <- .rs.selectFuzzyMatches(potentials, token)
+               quote <- FALSE
+            }
+            
+            if (foundCompletions)
+               return(.rs.makeCompletions(token = token,
+                                          type = .rs.acCompletionTypes$ARGUMENT,
+                                          quote = quote,
+                                          results = results))
+         }
+      }
+   }
    
    if (activeArg %in% c("pkg", "package"))
       completions <- .rs.appendCompletions(
