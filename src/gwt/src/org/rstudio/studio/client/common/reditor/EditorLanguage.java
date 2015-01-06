@@ -37,37 +37,36 @@ public class EditorLanguage
          "mode/tex", false);
    public static final EditorLanguage LANG_SWEAVE = new EditorLanguage(
          "mode/sweave", true);
-   public static final EditorLanguage LANG_PLAIN = new EditorLanguage(
-         "ace/mode/text", false);
-   public static final EditorLanguage LANG_MARKDOWN = new EditorLanguage(
-         "mode/markdown", false);
    public static final EditorLanguage LANG_RMARKDOWN = new EditorLanguage(
          "mode/rmarkdown", true);
    public static final EditorLanguage LANG_DCF = new EditorLanguage(
          "mode/dcf", false);
-   public static final EditorLanguage LANG_HTML = new EditorLanguage(
-         "ace/mode/html", false);
    public static final EditorLanguage LANG_RHTML = new EditorLanguage(
          "mode/rhtml", true);
+   public static final EditorLanguage LANG_CPP = new EditorLanguage(
+         "mode/c_cpp", true);
+   public static final EditorLanguage LANG_PLAIN = new EditorLanguage(
+         "ace/mode/text", false);
+   public static final EditorLanguage LANG_MARKDOWN = new EditorLanguage(
+         "ace/mode/markdown", false);
+   public static final EditorLanguage LANG_HTML = new EditorLanguage(
+         "ace/mode/html", false);
    public static final EditorLanguage LANG_CSS = new EditorLanguage(
          "ace/mode/css", true);
    public static final EditorLanguage LANG_JAVASCRIPT = new EditorLanguage(
          "ace/mode/javascript", true);
-   public static final EditorLanguage LANG_CPP = new EditorLanguage(
-         "mode/c_cpp", true);
    public static final EditorLanguage LANG_PYTHON = new EditorLanguage(
-         "mode/python", true);
+         "ace/mode/python", true);
    public static final EditorLanguage LANG_SQL = new EditorLanguage(
-         "mode/sql", true);
+         "ace/mode/sql", true);
    public static final EditorLanguage LANG_SH = new EditorLanguage(
-         "mode/sh", true);
+         "ace/mode/sh", true);
    public static final EditorLanguage LANG_YAML = new EditorLanguage(
-         "mode/yaml", true);
+         "ace/mode/yaml", true);
    public static final EditorLanguage LANG_XML = new EditorLanguage(
-         "mode/xml", true);
+         "ace/mode/xml", true);
    public static final EditorLanguage LANG_GROOVY = new EditorLanguage(
          "ace/mode/groovy", true);
-   
 
    /**
     *
