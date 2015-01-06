@@ -45,11 +45,6 @@ public class CachedGeneratorResultImpl implements CachedGeneratorResult, Seriali
     this.clientDataMap = clientDataMap;
   }
 
-  public CachedGeneratorResultImpl(String resultTypeName, ArtifactSet artifacts,
-      Map<String, GeneratedUnit> generatedUnitMap, long timeGenerated) {
-    this(resultTypeName, artifacts, generatedUnitMap, timeGenerated, null);
-  }
-
   public ArtifactSet getArtifacts() {
     return artifacts;
   }

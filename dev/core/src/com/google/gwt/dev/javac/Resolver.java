@@ -54,10 +54,6 @@ public interface Resolver {
   JRealClassType newRealClassType(JPackage pkg, String enclosingTypeName,
       boolean isLocalType, String className, boolean isIntf);
 
-  boolean resolveAnnotation(TreeLogger logger,
-      CollectAnnotationData annotVisitor,
-      Map<Class<? extends Annotation>, Annotation> declaredAnnotations);
-
   boolean resolveAnnotations(TreeLogger logger,
       List<CollectAnnotationData> annotations,
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations);

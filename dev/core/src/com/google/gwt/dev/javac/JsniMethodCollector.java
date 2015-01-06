@@ -162,10 +162,6 @@ public class JsniMethodCollector {
     }
   }
 
-  public static final String JSNI_BLOCK_END = "}-*/";
-
-  public static final String JSNI_BLOCK_START = "/*-{";
-
   public static Map<MethodDeclaration, JsniMethod> collectJsniMethods(
       CompilationUnitDeclaration cud, String sourceMapPath,
       String source, JsScope scope,

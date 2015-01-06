@@ -186,19 +186,6 @@ public class JWildcardType extends JDelegatingClassType implements
     return this;
   }
 
-  /**
-   * Returns <code>true</code> if this instance has the same bounds that are
-   * requested.
-   *
-   * @param otherWildcard
-   * @return <code>true</code> if this instance has the same bounds that are
-   *         requested
-   */
-  boolean boundsMatch(JWildcardType otherWildcard) {
-    return isUpperBound() == otherWildcard.isUpperBound()
-        && getFirstBound() == otherWildcard.getFirstBound();
-  }
-
   @Override
   JClassType getSubstitutedType(JParameterizedType parameterizedType) {
     return getOracle().getWildcardType(boundType,

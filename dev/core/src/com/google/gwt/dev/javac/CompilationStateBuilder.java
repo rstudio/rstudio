@@ -520,10 +520,6 @@ public class CompilationStateBuilder {
     }
   }
 
-  public static CompilationStateBuilder get() {
-    return instance;
-  }
-
   /**
    * Build a new compilation state from a source oracle. Allow the caller to
    * specify a compiler delegate that will handle undefined names.

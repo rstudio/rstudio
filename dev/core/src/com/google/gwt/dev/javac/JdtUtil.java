@@ -37,7 +37,6 @@ import org.eclipse.jdt.internal.compiler.lookup.SyntheticArgumentBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SyntheticMethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
@@ -66,21 +65,6 @@ public final class JdtUtil {
       result.append(name[i]);
     }
     return result.toString();
-  }
-
-  /**
-   * Returns the relative file path for the resource of the compilation unit that defines
-   * {@code binding}.
-   */
-  public static String bindingToResourcePath(ReferenceBinding binding) {
-    String packagePathPrefix =
-        join(binding.getPackage().compoundName, File.separator);
-    String bindingFileName = CharOperation.charToString(binding.getFileName());
-    int relativePathPosition = bindingFileName.lastIndexOf(packagePathPrefix);
-    if (relativePathPosition == -1) {
-      return null;
-    }
-    return bindingFileName.substring(relativePathPosition);
   }
 
   /**

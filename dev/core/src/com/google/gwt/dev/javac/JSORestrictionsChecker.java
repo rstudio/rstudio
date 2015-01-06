@@ -130,16 +130,6 @@ public class JSORestrictionsChecker {
     private boolean areInSameModule(TypeDeclaration jsoType, ReferenceBinding interf) {
       return true;
     }
-
-    public String getJsoImplementor(ReferenceBinding binding) {
-      String name = CharOperation.toString(binding.compoundName);
-      return interfacesToJsoImpls.get(name);
-    }
-
-    public boolean isJsoInterface(ReferenceBinding binding) {
-      String name = CharOperation.toString(binding.compoundName);
-      return interfacesToJsoImpls.containsKey(name);
-    }
   }
 
   private class JSORestrictionsVisitor extends SafeASTVisitor implements

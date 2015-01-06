@@ -30,10 +30,6 @@ public class JConstructor extends JAbstractMethod implements
     this.enclosingType = enclosingType;
   }
 
-  JConstructor(JClassType enclosingType, String name) {
-    this(enclosingType, name, null, null);
-  }
-
   JConstructor(JClassType enclosingType, String name,
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations,
       JTypeParameter[] jtypeParameters) {

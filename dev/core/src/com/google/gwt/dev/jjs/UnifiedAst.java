@@ -113,17 +113,6 @@ public class UnifiedAst implements Serializable {
   }
 
   /**
-   * Copy constructor, invalidates the original.
-   */
-  UnifiedAst(UnifiedAst other) {
-    this.options = other.options;
-    this.initialAst = other.initialAst;
-    other.initialAst = null; // steal its copy
-    this.rebindRequests = other.rebindRequests;
-    this.serializedAstToken = other.serializedAstToken;
-  }
-
-  /**
    * Compiles a particular permutation.
    *
    * @param logger the logger to use

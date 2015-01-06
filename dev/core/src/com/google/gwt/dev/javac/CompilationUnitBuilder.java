@@ -237,10 +237,6 @@ public abstract class CompilationUnitBuilder {
     return resource.getPathPrefix() + resource.getPath();
   }
 
-  public static String makeContentId(String typeName, String strongHash) {
-    return typeName + ':' + strongHash;
-  }
-
   static String getLocationFor(GeneratedUnit generatedUnit) {
     String location = generatedUnit.optionalFileLocation();
     if (location != null) {
@@ -310,11 +306,6 @@ public abstract class CompilationUnitBuilder {
     return this;
   }
 
-  public CompilationUnitBuilder setCompiledClasses(List<CompiledClass> compiledClasses) {
-    this.compiledClasses = compiledClasses;
-    return this;
-  }
-
   public CompilationUnitBuilder setDependencies(Dependencies dependencies) {
     this.dependencies = dependencies;
     return this;
@@ -332,11 +323,6 @@ public abstract class CompilationUnitBuilder {
 
   public CompilationUnitBuilder setProblems(CategorizedProblem[] problems) {
     this.problems = problems;
-    return this;
-  }
-
-  public CompilationUnitBuilder setSource(String source) {
-    this.source = source;
     return this;
   }
 

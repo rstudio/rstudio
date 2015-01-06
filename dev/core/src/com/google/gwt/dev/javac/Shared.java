@@ -15,22 +15,9 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.gwt.core.ext.typeinfo.JClassType;
-import com.google.gwt.core.ext.typeinfo.JConstructor;
-import com.google.gwt.core.ext.typeinfo.JField;
-import com.google.gwt.core.ext.typeinfo.JMethod;
-import com.google.gwt.core.ext.typeinfo.JPackage;
-import com.google.gwt.core.ext.typeinfo.JParameter;
-import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Util;
-import com.google.gwt.util.tools.Utility;
 
-import org.eclipse.jdt.internal.compiler.lookup.FieldBinding;
-import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
-import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
-
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -48,50 +35,6 @@ public class Shared {
   public static final int MOD_STATIC = 0x00000040;
   public static final int MOD_TRANSIENT = 0x00000080;
   public static final int MOD_VOLATILE = 0x00000100;
-  public static final JClassType[] NO_JCLASSES = new JClassType[0];
-  public static final JConstructor[] NO_JCTORS = new JConstructor[0];
-  public static final JField[] NO_JFIELDS = new JField[0];
-  public static final JMethod[] NO_JMETHODS = new JMethod[0];
-  public static final JPackage[] NO_JPACKAGES = new JPackage[0];
-  public static final JParameter[] NO_JPARAMS = new JParameter[0];
-  public static final JType[] NO_JTYPES = new JType[0];
-  public static final String[][] NO_STRING_ARR_ARR = new String[0][];
-  public static final String[] NO_STRINGS = new String[0];
-
-  public static int bindingToModifierBits(FieldBinding binding) {
-    int bits = 0;
-    bits |= (binding.isPublic() ? MOD_PUBLIC : 0);
-    bits |= (binding.isPrivate() ? MOD_PRIVATE : 0);
-    bits |= (binding.isProtected() ? MOD_PROTECTED : 0);
-    bits |= (binding.isStatic() ? MOD_STATIC : 0);
-    bits |= (binding.isTransient() ? MOD_TRANSIENT : 0);
-    bits |= (binding.isFinal() ? MOD_FINAL : 0);
-    bits |= (binding.isVolatile() ? MOD_VOLATILE : 0);
-    return bits;
-  }
-
-  public static int bindingToModifierBits(MethodBinding binding) {
-    int bits = 0;
-    bits |= (binding.isPublic() ? MOD_PUBLIC : 0);
-    bits |= (binding.isPrivate() ? MOD_PRIVATE : 0);
-    bits |= (binding.isProtected() ? MOD_PROTECTED : 0);
-    bits |= (binding.isStatic() ? MOD_STATIC : 0);
-    bits |= (binding.isFinal() ? MOD_FINAL : 0);
-    bits |= (binding.isNative() ? MOD_NATIVE : 0);
-    bits |= (binding.isAbstract() ? MOD_ABSTRACT : 0);
-    return bits;
-  }
-
-  public static int bindingToModifierBits(ReferenceBinding binding) {
-    int bits = 0;
-    bits |= (binding.isPublic() ? MOD_PUBLIC : 0);
-    bits |= (binding.isPrivate() ? MOD_PRIVATE : 0);
-    bits |= (binding.isProtected() ? MOD_PROTECTED : 0);
-    bits |= (binding.isStatic() ? MOD_STATIC : 0);
-    bits |= (binding.isFinal() ? MOD_FINAL : 0);
-    bits |= (binding.isAbstract() ? MOD_ABSTRACT : 0);
-    return bits;
-  }
 
   public static String getPackageName(String qualifiedTypeName) {
     int pos = qualifiedTypeName.lastIndexOf('.');
@@ -131,29 +74,9 @@ public class Shared {
     }
   }
 
-  public static String readContent(InputStream content) {
-    try {
-      ByteArrayOutputStream out = new ByteArrayOutputStream();
-      byte[] buf = new byte[1024];
-      for (int readCount = content.read(buf); readCount > 0; readCount = content.read(buf)) {
-        out.write(buf, 0, readCount);
-      }
-      return Util.toString(out.toByteArray());
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    } finally {
-      Utility.close(content);
-    }
-  }
-
   public static String readSource(Resource sourceFile) throws IOException {
     InputStream contents = sourceFile.openContents();
     return Util.readStreamAsString(contents);
-  }
-
-  public static String toInternalName(String path) {
-    assert (path.endsWith(".java"));
-    return path.substring(0, path.lastIndexOf('.'));
   }
 
   public static String toPath(String qualifiedTypeName) {

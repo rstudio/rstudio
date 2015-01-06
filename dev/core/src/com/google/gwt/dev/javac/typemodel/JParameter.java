@@ -108,11 +108,6 @@ public class JParameter implements com.google.gwt.core.ext.typeinfo.JParameter {
     return sb.toString();
   }
 
-  // Only called by JAbstractMethod after real parameter names are fetched.
-  void setName(String name) {
-    this.name = StringInterner.get().intern(name);
-  }
-
   // Called when parameter types are found to be parameterized
   void setType(JType type) {
     this.type = type;

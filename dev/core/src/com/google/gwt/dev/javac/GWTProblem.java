@@ -38,12 +38,6 @@ public class GWTProblem extends SerializableCategorizedProblem {
         ProblemSeverities.Error);
   }
 
-  public static void recordError(SourceInfo info, int startColumn,
-      CompilationResult compResult, String message, HelpInfo helpInfo) {
-    recordProblem(info, startColumn, compResult, message, helpInfo,
-        ProblemSeverities.Error);
-  }
-
   public static void recordProblem(ASTNode node, CompilationResult compResult,
       String message, HelpInfo helpInfo, int problemSeverity) {
     int[] lineEnds = compResult.getLineSeparatorPositions();

@@ -1436,14 +1436,6 @@ public abstract class JavaToJavaScriptCompiler {
   /**
    * Performs a precompilation, returning a unified AST.
    */
-  public UnifiedAst precompile(RebindPermutationOracle rpo, String[] entryPointTypeNames,
-      String[] additionalRootTypes, boolean singlePermutation) throws UnableToCompleteException {
-    return precompile(rpo, entryPointTypeNames, additionalRootTypes, singlePermutation, null);
-  }
-
-  /**
-   * Performs a precompilation, returning a unified AST.
-   */
   public abstract UnifiedAst precompile(RebindPermutationOracle rpo, String[] entryPointTypeNames,
       String[] additionalRootTypes, boolean singlePermutation,
       PrecompilationMetricsArtifact precompilationMetrics) throws UnableToCompleteException;

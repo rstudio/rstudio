@@ -176,13 +176,6 @@ public class CompilationUnitTypeOracleUpdater extends TypeOracleUpdater {
     }
 
     @Override
-    public boolean resolveAnnotation(TreeLogger logger, CollectAnnotationData annotVisitor,
-        Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
-      return CompilationUnitTypeOracleUpdater.this.resolveAnnotation(
-          logger, annotVisitor, declaredAnnotations);
-    }
-
-    @Override
     public boolean resolveAnnotations(TreeLogger logger, List<CollectAnnotationData> annotations,
         Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
       return CompilationUnitTypeOracleUpdater.this.resolveAnnotations(

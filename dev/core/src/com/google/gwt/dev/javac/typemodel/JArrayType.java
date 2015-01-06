@@ -443,15 +443,6 @@ public class JArrayType extends JClassType implements
   void removeFromSupertypes() {
   }
 
-  void setLeafType(JType type) {
-    JArrayType componentTypeIsArray = (JArrayType) componentType.isArray();
-    if (componentTypeIsArray != null) {
-      componentTypeIsArray.setLeafType(type);
-    } else {
-      componentType = type;
-    }
-  }
-
   @Override
   void setSuperclass(JClassType type) {
   }

@@ -274,12 +274,10 @@ public class JdtCompiler {
       this.diet = false;
       CompilationUnitDeclaration decl = super.parse(sourceUnit, compilationResult);
       this.diet = saveDiet;
-      if (removeGwtIncompatible) {
-        // Remove @GwtIncompatible classes and members.
-        // It is safe to remove @GwtIncompatible types, fields and methods on incomplete ASTs due
-        // to parsing errors.
-        GwtIncompatiblePreprocessor.preproccess(decl);
-      }
+      // Remove @GwtIncompatible classes and members.
+      // It is safe to remove @GwtIncompatible types, fields and methods on incomplete ASTs due
+      // to parsing errors.
+      GwtIncompatiblePreprocessor.preproccess(decl);
       if (decl.imports != null) {
         originalImportsByCud.putAll(decl, Arrays.asList(decl.imports));
       }
@@ -742,11 +740,6 @@ public class JdtCompiler {
   private CompilerContext compilerContext;
 
   /**
-   * Controls whether the compiler strips GwtIncompatible annotations.
-   */
-  private static boolean removeGwtIncompatible = true;
-
-  /**
    * Controls whether the compiler strips unused imports.
    */
   private static boolean removeUnusedImports = true;
@@ -1008,13 +1001,6 @@ public class JdtCompiler {
 
   public void setAdditionalTypeProviderDelegate(AdditionalTypeProviderDelegate newDelegate) {
     additionalTypeProviderDelegate = newDelegate;
-  }
-
-  /**
-   * Sets whether the compiler should remove GwtIncompatible annotated classes amd members.
-   */
-  public static void setRemoveGwtIncompatible(boolean remove) {
-    removeGwtIncompatible = remove;
   }
 
   /**

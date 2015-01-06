@@ -61,10 +61,6 @@ public class JsSourceMap implements Serializable {
     return ranges;
   }
 
-  public int size() {
-    return ranges.size();
-  }
-
   private void readObject(ObjectInputStream inStream) throws IOException, ClassNotFoundException {
     bytes = inStream.readInt();
     lines = inStream.readInt();

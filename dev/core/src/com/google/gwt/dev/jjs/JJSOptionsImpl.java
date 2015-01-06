@@ -64,10 +64,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   public JJSOptionsImpl() {
   }
 
-  public JJSOptionsImpl(JJSOptions other) {
-    copyFrom(other);
-  }
-
   public void copyFrom(JJSOptions other) {
     setAddRuntimeChecks(other.shouldAddRuntimeChecks());
     setCastCheckingDisabled(other.isCastCheckingDisabled());

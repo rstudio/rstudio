@@ -24,7 +24,6 @@ import com.google.gwt.core.ext.typeinfo.ParseException;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
 import com.google.gwt.dev.javac.JavaSourceParser;
 import com.google.gwt.dev.jjs.InternalCompilerException;
-import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Name;
 import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.dev.util.collect.IdentityHashMap;
@@ -138,7 +137,6 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
   static final JPackage[] NO_JPACKAGES = new JPackage[0];
   static final JParameter[] NO_JPARAMS = new JParameter[0];
   static final JType[] NO_JTYPES = new JType[0];
-  static final String[][] NO_STRING_ARR_ARR = new String[0][];
   static final String[] NO_STRINGS = new String[0];
 
   private static final String JSO_CLASS = "com.google.gwt.core.client.JavaScriptObject";
@@ -154,53 +152,6 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
       public int compare(JClassType type1, JClassType type2) {
         String name1 = type1.getQualifiedSourceName();
         String name2 = type2.getQualifiedSourceName();
-        return name1.compareTo(name2);
-      }
-    });
-  }
-
-  /**
-   * Convenience method to sort constructors in a consistent way. Note that the
-   * order is subject to change and is intended to generate an "aesthetically
-   * pleasing" order rather than a computationally reliable order.
-   */
-  public static void sort(JConstructor[] ctors) {
-    Arrays.sort(ctors, new Comparator<JConstructor>() {
-      @Override
-      public int compare(JConstructor o1, JConstructor o2) {
-        // Nothing for now; could enhance to sort based on parameter list
-        return 0;
-      }
-    });
-  }
-
-  /**
-   * Convenience method to sort fields in a consistent way. Note that the order
-   * is subject to change and is intended to generate an "aesthetically
-   * pleasing" order rather than a computationally reliable order.
-   */
-  public static void sort(JField[] fields) {
-    Arrays.sort(fields, new Comparator<JField>() {
-      @Override
-      public int compare(JField f1, JField f2) {
-        String name1 = f1.getName();
-        String name2 = f2.getName();
-        return name1.compareTo(name2);
-      }
-    });
-  }
-
-  /**
-   * Convenience method to sort methods in a consistent way. Note that the order
-   * is subject to change and is intended to generate an "aesthetically
-   * pleasing" order rather than a computationally reliable order.
-   */
-  public static void sort(JMethod[] methods) {
-    Arrays.sort(methods, new Comparator<JMethod>() {
-      @Override
-      public int compare(JMethod m1, JMethod m2) {
-        String name1 = m1.getName();
-        String name2 = m2.getName();
         return name1.compareTo(name2);
       }
     });
@@ -712,13 +663,6 @@ public class TypeOracle extends com.google.gwt.core.ext.typeinfo.TypeOracle {
     assert !allTypes.containsKey(fqcn) : "TypeOracle already contains " + fqcn;
     allTypes.put(fqcn, newType);
     recentTypes.add(newType);
-  }
-
-  /**
-   * Called to add a source reference for a top-level class type.
-   */
-  void addSourceReference(JRealClassType type, Resource sourceFile) {
-    javaSourceParser.addSourceForType(type, sourceFile);
   }
 
   /**

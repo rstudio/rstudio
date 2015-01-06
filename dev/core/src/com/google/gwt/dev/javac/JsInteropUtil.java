@@ -41,16 +41,6 @@ public final class JsInteropUtil {
   public static final String JSTYPEPROTOTYPE_CLASS =
       "com.google.gwt.core.client.js.impl.PrototypeOfJsType";
 
-  public static String maybeGetJsNamespace(TypeDeclaration x) {
-    if (x.annotations != null) {
-      AnnotationBinding jsNamespace = JdtUtil.getAnnotation(x.binding, JSNAMESPACE_CLASS);
-      if (jsNamespace != null) {
-       return JdtUtil.getAnnotationParameterString(jsNamespace, "value");
-      }
-    }
-    return null;
-  }
-
   public static void maybeSetExportedField(FieldDeclaration x, JField field) {
     if (x.annotations != null) {
       AnnotationBinding jsExport = JdtUtil.getAnnotation(x.binding, JSEXPORT_CLASS);

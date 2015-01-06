@@ -350,18 +350,6 @@ public abstract class CompilationUnit implements Serializable {
   public abstract String getResourcePath();
 
   /**
-   * Returns the contained type with the given name.
-   */
-  public JDeclaredType getTypeByName(String typeName) {
-    for (JDeclaredType type : getTypes()) {
-      if (type.getName().equals(typeName)) {
-        return type;
-      }
-    }
-    return null;
-  }
-
-  /**
    * Returns the source name of the top level public type.
    */
   public abstract String getTypeName();

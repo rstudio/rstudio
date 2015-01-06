@@ -24,7 +24,6 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * Tracks dependencies from a {@link CompilationUnit} to {@link CompiledClass
@@ -88,19 +87,6 @@ class Dependencies implements Serializable {
    */
   List<String> getApiRefs() {
     return apiRefs;
-  }
-
-  /**
-   * Returns the list of deps that cannot be resolved at all.
-   */
-  List<String> findMissingApiRefs(Set<String> allValidClasses) {
-    List<String> result = Lists.create();
-    for (String apiRef : apiRefs) {
-      if (!allValidClasses.contains(apiRef)) {
-        result = Lists.add(result, apiRef);
-      }
-    }
-    return result;
   }
 
   /**
