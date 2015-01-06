@@ -44,7 +44,6 @@ import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
-import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 import com.google.gwt.thirdparty.guava.common.collect.Ordering;
@@ -227,36 +226,9 @@ public class EnumOrdinalizer {
       }
     }
 
-    public void logEnumsVisitedPerPass(TreeLogger logger, TreeLogger.Type logType) {
-      if (logger == null) {
-        return;
-      }
-      if (allEnumsVisited.size() == 0) {
-        return;
-      }
-      int pass = 0;
-      for (Set<String> enumsVisited : enumsVisitedPerPass) {
-        pass++;
-        if (enumsVisited.size() > 0) {
-          TreeLogger subLogger =
-              logger.branch(logType, "Pass " + pass + ": " + enumsVisited.size() + " visited");
-          for (String enumVisited : enumsVisited) {
-            subLogger.branch(logType, enumVisited);
-          }
-        }
-      }
-    }
-
-    public void logResults(TreeLogger logger, TreeLogger.Type logType) {
-      logger = logResultsSummary(logger, logType);
-      logEnumsOrdinalized(logger, logType);
-      logEnumsNotOrdinalized(logger, logType);
-    }
-
     public void logResultsDetailed(TreeLogger logger, TreeLogger.Type logType) {
       logger = logResultsSummary(logger, logType);
       logEnumsOrdinalizedPerPass(logger, logType);
-      // logEnumsVisitedPerPass(logger, logType);
       logEnumsNotOrdinalized(logger, logType);
     }
 
@@ -745,11 +717,6 @@ public class EnumOrdinalizer {
 
   public static void enableTracker() {
     trackerEnabled = true;
-  }
-
-  @VisibleForTesting
-  static OptimizerStats exec(JProgram program) {
-    return exec(program, OptimizerContext.NULL_OPTIMIZATION_CONTEXT);
   }
 
   public static OptimizerStats exec(JProgram program, OptimizerContext optimizerCtx) {

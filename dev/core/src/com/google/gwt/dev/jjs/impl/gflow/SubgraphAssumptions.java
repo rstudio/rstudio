@@ -25,28 +25,8 @@ import java.util.List;
  */
 public class SubgraphAssumptions<A extends Assumption<?>> {
   public static <A extends Assumption<?>> SubgraphAssumptions<A>
-  replaceInValues(SubgraphAssumptions<A> assumptions, A inValue) {
-    ArrayList<A> inValues = new ArrayList<A>();
-    for (int i = 0; i < assumptions.getInValues().size(); ++i) {
-      inValues.add(inValue);
-    }
-
-    return replaceInValues(assumptions, inValues);
-  }
-
-  public static <A extends Assumption<?>> SubgraphAssumptions<A>
   replaceInValues(SubgraphAssumptions<A> assumptions, ArrayList<A> inValues) {
     return new SubgraphAssumptions<A>(inValues, assumptions.getOutValues());
-  }
-
-  public static <A extends Assumption<?>> SubgraphAssumptions<A>
-  replaceOutValues(SubgraphAssumptions<A> assumptions, A outValue) {
-    ArrayList<A> outValues = new ArrayList<A>();
-    for (int i = 0; i < assumptions.getOutValues().size(); ++i) {
-      outValues.add(outValue);
-    }
-
-    return replaceOutValues(assumptions, outValues);
   }
 
   public static <A extends Assumption<?>> SubgraphAssumptions<A>

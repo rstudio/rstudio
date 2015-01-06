@@ -49,17 +49,6 @@ public class AssumptionUtil {
     return a1 != a2 ? a1.join(a2) : a1;
   }
 
-  /**
-   * Join assumptions from the list.
-   */
-  public static <A extends Assumption<A>> A join(List<A> assumptions) {
-    A result = null;
-    for (A assumption : assumptions) {
-      result = join(result, assumption);
-    }
-    return result;
-  }
-
   public static <E, A extends Assumption<A>> A join(List<E> edges,
       AssumptionMap<E, A> assumptionMap) {
     A result = null;

@@ -26,8 +26,6 @@ public interface Context {
 
   boolean canRemove();
 
-  void insertAfter(JNode node);
-
   void insertBefore(JNode node);
 
   boolean isLvalue();

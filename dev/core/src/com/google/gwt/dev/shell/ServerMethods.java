@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.shell;
 
-import com.google.gwt.dev.shell.BrowserChannel.FreeMessage;
 import com.google.gwt.dev.shell.BrowserChannel.InvokeSpecialMessage;
 import com.google.gwt.dev.shell.BrowserChannel.ReturnMessage;
 import com.google.gwt.dev.shell.BrowserChannel.SessionHandler.SpecialDispatchId;
@@ -28,26 +27,6 @@ import java.io.IOException;
  * A class to encapsulate function invocations of objects on the server side.
  */
 public class ServerMethods {
-  /**
-   * Tell the server that the client no longer has any references to the
-   * specified Java object.
-   *
-   * @param ids IDs of objects to free
-   * @return false if an error occurred
-   */
-  static boolean freeJava(BrowserChannelClient channel, int ids[]) {
-    if (!channel.isConnected()) {
-      // ignoring freeJava after disconnect.
-      return true;
-    }
-    try {
-      new FreeMessage(channel, ids).send();
-    } catch (IOException e) {
-      return false;
-    }
-    return true;
-  }
-
   /**
    * Get the value of a property on an object.
    *

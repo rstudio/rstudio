@@ -114,8 +114,6 @@ public class JsValueOOPHM extends JsValue {
   private static class UndefinedValue {
   }
 
-  public static final String JSE_CLASS = "com.google.gwt.core.client.JavaScriptException";
-
   private static final ThreadLocal<Map<Object, DispatchObject>> dispatchObjectCache = new ThreadLocal<Map<Object, DispatchObject>>();
 
   private static final UndefinedValue undefValue = new UndefinedValue();
@@ -141,25 +139,6 @@ public class JsValueOOPHM extends JsValue {
    */
   public JsValueOOPHM() {
     this.value = undefValue;
-  }
-
-  /**
-   * Create a JsValueOOPHM object wrapping a JS object given the object
-   * reference id.
-   *
-   * @param jsRefId pointer to underlying JsRootedValue as an integer.
-   */
-  public JsValueOOPHM(int jsRefId) {
-    this.value = new JsObjectRef(jsRefId);
-  }
-
-  /**
-   * Copy constructor.
-   *
-   * @param other JsValueMoz instance to copy
-   */
-  public JsValueOOPHM(JsValueOOPHM other) {
-    value = other.value;
   }
 
   @Override

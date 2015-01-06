@@ -24,10 +24,6 @@ public abstract class JsUnaryOperation extends JsExpression {
 
   private final JsUnaryOperator op;
 
-  public JsUnaryOperation(SourceInfo sourceInfo, JsUnaryOperator op) {
-    this(sourceInfo, op, null);
-  }
-
   public JsUnaryOperation(SourceInfo sourceInfo, JsUnaryOperator op, JsExpression arg) {
     super(sourceInfo);
     this.op = op;

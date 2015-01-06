@@ -82,10 +82,6 @@ public abstract class JsonNumber implements JsonValue {
     return new JsonDecimal(value);
   }
 
-  public static JsonNumber create(int value) {
-    return new JsonInteger(value);
-  }
-
   public static JsonNumber create(long value) {
     return new JsonInteger(value);
   }

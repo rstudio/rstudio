@@ -24,8 +24,4 @@ public class BrowserChannelException extends Exception {
   public BrowserChannelException(String message) {
     super(message);
   }
-
-  public BrowserChannelException(String message, Throwable cause) {
-    super(message, cause);
-  }
 }

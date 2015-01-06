@@ -45,11 +45,6 @@ public class JVisitor {
     }
 
     @Override
-    public void insertAfter(JNode node) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
     public void insertBefore(JNode node) {
       throw new UnsupportedOperationException();
     }
@@ -80,11 +75,6 @@ public class JVisitor {
     @Override
     public boolean canRemove() {
       return false;
-    }
-
-    @Override
-    public void insertAfter(JNode node) {
-      throw new UnsupportedOperationException();
     }
 
     @Override

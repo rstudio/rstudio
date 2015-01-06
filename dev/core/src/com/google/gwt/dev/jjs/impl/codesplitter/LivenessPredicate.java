@@ -57,11 +57,6 @@ public interface LivenessPredicate {
   boolean isLive(JMethod method);
 
   /**
-   * Subclasses should return true if {@code stringLiteral} is deemed live and false otherwise.
-   */
-  boolean isLive(String stringLiteral);
-
-  /**
    * Whether miscellaneous statements should be considered live.
    * Miscellaneous statements are any that the fragment extractor does not
    * recognize as being in any particular category. This method should almost

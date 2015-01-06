@@ -1259,8 +1259,4 @@ public class CfgBuilder {
   public static Cfg build(JProgram program, JBlock codeblock) {
     return new BuilderVisitor(program).build(codeblock);
   }
-
-  public static Cfg buildExpressionCfg(JProgram program, JExpression value) {
-    return new BuilderVisitor(program).build(value);
-  }
 }

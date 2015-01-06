@@ -1167,10 +1167,6 @@ public class JTypeOracle implements Serializable {
     return false;
   }
 
-  public boolean isSameOrSuper(JClassType type, JClassType qType) {
-    return (type == qType || isSuperClass(type, qType));
-  }
-
   public boolean isSingleJsoImpl(JType type) {
     return type instanceof JReferenceType && getSingleJsoImpl((JReferenceType) type) != null;
   }

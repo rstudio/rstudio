@@ -244,15 +244,6 @@ public class CheckForUpdates {
    *
    * @return an UpdateResult or null if there is no new update
    */
-  public UpdateResult check() {
-    return check(0);
-  }
-
-  /**
-   * Check for updates and log to the logger if they are available.
-   *
-   * @return an UpdateResult or null if there is no new update
-   */
   public UpdateResult check(long minCheckMillis) {
     TreeLogger branch = logger.branch(CHECK_INFO, "Checking for updates");
     try {

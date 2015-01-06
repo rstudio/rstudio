@@ -76,11 +76,6 @@ class ExclusivityMap {
     }
 
     @Override
-    public boolean isLive(String literal) {
-      return isLiveInFragment(fragment, literal);
-    }
-
-    @Override
     public boolean miscellaneousStatementsAreLive() {
       return true;
     }

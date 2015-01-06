@@ -50,13 +50,6 @@ public class JModVisitor extends JVisitor {
     }
 
     @Override
-    public void insertAfter(JNode node) {
-      checkRemoved();
-      list.add(index + 1, (T) node);
-      madeChanges();
-    }
-
-    @Override
     public void insertBefore(JNode node) {
       checkRemoved();
       list.add(index++, (T) node);
@@ -135,13 +128,6 @@ public class JModVisitor extends JVisitor {
     @Override
     public boolean canRemove() {
       return true;
-    }
-
-    @Override
-    public void insertAfter(JNode node) {
-      checkRemoved();
-      list = Lists.add(list, index + 1, (T) node);
-      madeChanges();
     }
 
     @Override
@@ -230,11 +216,6 @@ public class JModVisitor extends JVisitor {
     @Override
     public boolean canRemove() {
       return this.canRemove;
-    }
-
-    @Override
-    public void insertAfter(JNode node) {
-      throw new UnsupportedOperationException("Can't insert after " + node);
     }
 
     @Override

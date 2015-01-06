@@ -40,11 +40,6 @@ public class NothingAlivePredicate implements LivenessPredicate {
   }
 
   @Override
-  public boolean isLive(String string) {
-    return false;
-  }
-
-  @Override
   public boolean miscellaneousStatementsAreLive() {
     return false;
   }

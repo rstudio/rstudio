@@ -23,7 +23,6 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  */
@@ -71,21 +70,6 @@ public class ModuleSpaceOOPHM extends ModuleSpace {
       jsni.append(";\n\n");
     }
     channel.loadJsni(jsni.toString());
-  }
-
-  // @Override
-  protected void cleanupJsValues() {
-    Set<Integer> refIdsForCleanup = channel.getRefIdsForCleanup();
-    if (refIdsForCleanup.isEmpty()) {
-      // nothing to do
-      return;
-    }
-    int[] ids = new int[refIdsForCleanup.size()];
-    int i = 0;
-    for (Integer id : refIdsForCleanup) {
-      ids[i++] = id;
-    }
-    channel.freeJsValue(ids);
   }
 
   /**

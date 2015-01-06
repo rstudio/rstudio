@@ -117,17 +117,6 @@ public class RemoteObjectTable<T extends RemoteObjectRef> {
   }
 
   /**
-   * Check to see if this ID does not already exist.
-   *
-   * @param refId reference ID to check
-   * @return true if this ID is not currently in use
-   */
-  public synchronized boolean isNewObjectId(int refId) {
-    return !remoteObjectFromId.containsKey(refId)
-    || (remoteObjectFromId.get(refId).get() == null);
-  }
-
-  /**
    * Store a remote object reference in the table.
    *
    * @param refId

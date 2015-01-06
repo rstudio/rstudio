@@ -15,14 +15,12 @@
  */
 package com.google.gwt.dev.jjs.impl.gflow.cfg;
 
-import com.google.gwt.dev.jjs.impl.gflow.Assumption;
 import com.google.gwt.dev.jjs.impl.gflow.Graph;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Control flow graph representation for gflow framework.
@@ -152,15 +150,6 @@ public class Cfg implements Graph<CfgNode<?>, CfgEdge, CfgTransformer> {
   @Override
   public String print() {
     return new CfgPrinter(this).print();
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public <A extends Assumption<A>> String printWithAssumptions(
-      Map<CfgEdge, A> map) {
-    return new AssumptionsPrinter<A>(this, map).print();
   }
 
   @Override

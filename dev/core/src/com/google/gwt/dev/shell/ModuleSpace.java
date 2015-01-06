@@ -531,22 +531,6 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     throw new UnableToCompleteException();
   }
 
-  protected String createNativeMethodInjector(String jsniSignature,
-      String[] paramNames, String js) {
-    String newScript = "window[\"" + jsniSignature + "\"] = function(";
-
-    for (int i = 0; i < paramNames.length; ++i) {
-      if (i > 0) {
-        newScript += ", ";
-      }
-
-      newScript += paramNames[i];
-    }
-
-    newScript += ") { " + js + " };\n";
-    return newScript;
-  }
-
   /**
    * Create the __defineStatic method.
    *

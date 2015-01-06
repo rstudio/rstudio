@@ -18,7 +18,6 @@ package com.google.gwt.dev.shell;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.util.msg.Message0;
 import com.google.gwt.dev.util.msg.Message1String;
-import com.google.gwt.dev.util.msg.Message1StringArray;
 import com.google.gwt.dev.util.msg.Message1ToString;
 
 /**
@@ -46,10 +45,6 @@ public final class Messages {
 
   public static final Message1String TRACE_TOPLEVEL_REBIND_RESULT = new Message1String(
       TreeLogger.DEBUG, "Rebind result was $0");
-
-  public static final Message1StringArray UNABLE_TO_REBIND_DUE_TO_CYCLE_IN_RULES = new Message1StringArray(
-      TreeLogger.WARN,
-      "The deferred binding request failed due to a cycle in the applicable rules: $0");
 
   // no instances
   private Messages() {

@@ -48,11 +48,6 @@ public class CfaLivenessPredicate implements LivenessPredicate {
   }
 
   @Override
-  public boolean isLive(String string) {
-    return cfa.getLiveStrings().contains(string);
-  }
-
-  @Override
   public boolean miscellaneousStatementsAreLive() {
     return true;
   }

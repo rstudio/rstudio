@@ -65,16 +65,6 @@ public class CallGraph {
   private HashMultimap<JMethod, JMethod> callerCalleesPairs = HashMultimap.create();
 
   /**
-   * Add a callee method and its caller methods to the call graph.
-   */
-  public void addCalleeMethod(JMethod calleeMethod, Collection<JMethod> callerMethods) {
-    calleeCallersPairs.putAll(calleeMethod, callerMethods);
-    for (JMethod callerMethod : callerMethods) {
-      callerCalleesPairs.put(callerMethod, calleeMethod);
-    }
-  }
-
-  /**
    * Add a caller method and its callee methods to the call graph.
    */
   public void addCallerMethod(JMethod callerMethod, Collection<JMethod> calleeMethods) {

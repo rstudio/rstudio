@@ -30,14 +30,6 @@ public interface JsOperator {
 
   boolean isLeftAssociative();
 
-  boolean isPrecedenceLessThan(JsOperator other);
-
-  boolean isValidInfix();
-
-  boolean isValidPostfix();
-
-  boolean isValidPrefix();
-
   @Override
   String toString();
 }

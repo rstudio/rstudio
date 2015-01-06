@@ -16,11 +16,8 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
-import com.google.gwt.dev.util.Name.BinaryName;
-import com.google.gwt.dev.util.collect.Lists;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -49,14 +46,6 @@ public class JGwtCreate extends JExpression {
     }
     // Call it, using a new expression as a qualifier
     return new JNewInstance(info, noArgCtor);
-  }
-
-  static List<String> nameOf(Collection<? extends JType> types) {
-    List<String> result = Lists.create();
-    for (JType type : types) {
-      result = Lists.add(result, BinaryName.toSourceName(type.getName()));
-    }
-    return Lists.normalizeUnmodifiable(result);
   }
 
   private final ArrayList<JExpression> instantiationExpressions;

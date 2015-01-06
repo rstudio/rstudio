@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.gwt.core.ext.linker.StatementRanges;
 import com.google.gwt.core.ext.soyc.Range;
 import com.google.gwt.dev.jjs.JsSourceMap;
 import com.google.gwt.dev.util.editdistance.GeneralEditDistance;
@@ -82,11 +81,6 @@ public class JsFunctionClusterer extends JsAbstractTextTransformer {
 
   public JsFunctionClusterer(JsAbstractTextTransformer xformer) {
     super(xformer);
-  }
-
-  public JsFunctionClusterer(String js, StatementRanges statementRanges,
-      JsSourceMap sourceInfoMap) {
-    super(js, statementRanges, sourceInfoMap);
   }
 
   @Override

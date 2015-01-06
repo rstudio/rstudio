@@ -35,13 +35,6 @@ public class AssumptionsPrinter<A extends Assumption<A>> extends CfgPrinter {
     this.assumptionMap = null;
   }
 
-  public AssumptionsPrinter(Cfg graph,
-      AssumptionMap<CfgEdge, A> assumptionMap) {
-    super(graph);
-    this.assumptions = null;
-    this.assumptionMap = assumptionMap;
-  }
-
   @Override
   protected void appendEdgeInfo(StringBuilder result, CfgEdge edge) {
     A a;

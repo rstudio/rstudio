@@ -16,10 +16,6 @@
 package com.google.gwt.dev.jjs.impl.gflow.cfg;
 
 import com.google.gwt.dev.jjs.ast.JStatement;
-import com.google.gwt.dev.jjs.impl.gflow.Assumption;
-import com.google.gwt.dev.jjs.impl.gflow.SubgraphAssumptions;
-
-import java.util.ArrayList;
 
 /**
  * Utilities for working with Cfg.
@@ -38,21 +34,6 @@ public class CfgUtil {
       newSubgraph.addOut(newEndNode, edge);
       newSubgraph.addGraphOutEdge(edge);
     }
-  }
-
-  public static <A extends Assumption<?>> SubgraphAssumptions<A>
-  createGraphBottomAssumptions(Cfg graph) {
-    ArrayList<A> in = new ArrayList<A>();
-    for (int i = 0; i < graph.getGraphInEdges().size(); ++i) {
-      in.add(null);
-    }
-
-    ArrayList<A> out = new ArrayList<A>();
-    for (int i = 0; i < graph.getGraphOutEdges().size(); ++i) {
-      out.add(null);
-    }
-
-    return new SubgraphAssumptions<A>(in, out);
   }
 
   /**

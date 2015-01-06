@@ -162,11 +162,6 @@ public class FragmentExtractorTest extends JJSTestBase {
     }
 
     @Override
-    public boolean isLive(String literal) {
-      return false;
-    }
-
-    @Override
     public boolean miscellaneousStatementsAreLive() {
       return false;
     }

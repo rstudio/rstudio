@@ -602,14 +602,6 @@ public class JsStaticEval {
       JsBinaryOperator.OR, JsBinaryOperator.AND, JsBinaryOperator.BIT_AND,
       JsBinaryOperator.BIT_OR, JsBinaryOperator.COMMA);
 
-  public static <T extends JsVisitable> T exec(JsProgram program, T node) {
-    Event optimizeJsEvent = SpeedTracerLogger.start(
-        CompilerEventType.OPTIMIZE_JS, "optimizer", NAME);
-    T result = new JsStaticEval(program).execImpl(node);
-    optimizeJsEvent.end();
-    return result;
-  }
-
   public static OptimizerStats exec(JsProgram program) {
     Event optimizeJsEvent = SpeedTracerLogger.start(
         CompilerEventType.OPTIMIZE_JS, "optimizer", NAME);

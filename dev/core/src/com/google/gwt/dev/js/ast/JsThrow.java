@@ -22,10 +22,6 @@ public class JsThrow extends JsStatement {
 
   private JsExpression expr;
 
-  public JsThrow(SourceInfo sourceInfo) {
-    super(sourceInfo);
-  }
-
   public JsThrow(SourceInfo sourceInfo, JsExpression expr) {
     super(sourceInfo);
     this.expr = expr;

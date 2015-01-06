@@ -336,53 +336,6 @@ public abstract class BrowserChannel {
       value = obj;
     }
 
-    /**
-     * Convert a value to the requested Java type.
-     *
-     * @param reqType type to convert to
-     * @return value as that type.
-     */
-    public Object convertToJavaType(Class<?> reqType) {
-      if (reqType.isArray()) {
-        // TODO(jat): handle arrays?
-      }
-      if (reqType.equals(Boolean.class)) {
-        assert type == ValueType.BOOLEAN;
-        return value;
-      } else if (reqType.equals(Byte.class) || reqType.equals(byte.class)) {
-        assert isNumber();
-        return Byte.valueOf(((Number) value).byteValue());
-      } else if (reqType.equals(Character.class) || reqType.equals(char.class)) {
-        if (type == ValueType.CHAR) {
-          return value;
-        } else {
-          assert isNumber();
-          return Character.valueOf((char) ((Number) value).shortValue());
-        }
-      } else if (reqType.equals(Double.class) || reqType.equals(double.class)) {
-        assert isNumber();
-        return Double.valueOf(((Number) value).doubleValue());
-      } else if (reqType.equals(Float.class) || reqType.equals(float.class)) {
-        assert isNumber();
-        return Float.valueOf(((Number) value).floatValue());
-      } else if (reqType.equals(Integer.class) || reqType.equals(int.class)) {
-        assert isNumber();
-        return Integer.valueOf(((Number) value).intValue());
-      } else if (reqType.equals(Long.class) || reqType.equals(long.class)) {
-        assert isNumber();
-        return Long.valueOf(((Number) value).longValue());
-      } else if (reqType.equals(Short.class) || reqType.equals(short.class)) {
-        assert isNumber();
-        return Short.valueOf(((Number) value).shortValue());
-      } else if (reqType.equals(String.class)) {
-        assert type == ValueType.STRING;
-        return value;
-      } else {
-        // Wants an object, caller must deal with object references.
-        return value;
-      }
-    }
-
     public boolean getBoolean() {
       assert type == ValueType.BOOLEAN;
       return ((Boolean) value).booleanValue();

@@ -17,7 +17,6 @@ package com.google.gwt.dev.jjs.impl.gflow;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Directed graph abstraction for flow analysis. We specifically define all
@@ -77,13 +76,6 @@ public interface Graph<NodeType, EdgeType, TransformerType> {
    * Returns string representation of the graph.
    */
   String print();
-
-  /**
-   * Returns string representation of the graph with all assumptions along its
-   * edges.
-   */
-  <A extends Assumption<A>> String printWithAssumptions(
-      Map<EdgeType, A> assumptions);
 
   void setEdgeData(EdgeType edge, Object data);
 
