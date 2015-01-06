@@ -1262,7 +1262,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                   }
                }
 
-               return result;
+               return result + continuationIndent;
             }
          }
 
