@@ -29,6 +29,7 @@ package org.rstudio.studio.client.common.reditor;
  */
 public class EditorLanguage
 {
+   // RStudio-maintained or extended modes
    public static final EditorLanguage LANG_R = new EditorLanguage(
          "mode/r", true);
    public static final EditorLanguage LANG_RDOC = new EditorLanguage(
@@ -45,6 +46,8 @@ public class EditorLanguage
          "mode/rhtml", true);
    public static final EditorLanguage LANG_CPP = new EditorLanguage(
          "mode/c_cpp", true);
+   
+   // Modes borrowed from Ace
    public static final EditorLanguage LANG_PLAIN = new EditorLanguage(
          "ace/mode/text", false);
    public static final EditorLanguage LANG_MARKDOWN = new EditorLanguage(
