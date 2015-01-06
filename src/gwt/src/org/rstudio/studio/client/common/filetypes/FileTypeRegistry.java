@@ -149,9 +149,12 @@ public class FileTypeRegistry
    public static final TextFileType C = new CppFileType("c", ".c", ICONS.iconC(), false);
    public static final TextFileType HPP = new CppFileType("hpp", ".hpp", ICONS.iconHpp(), true);
    public static final TextFileType CPP = new CppFileType("cpp", ".cpp", ICONS.iconCpp(), true);
-
-
-
+   
+   public static final TextFileType GROOVY =
+         new TextFileType("groovy", "Groovy", EditorLanguage.LANG_GROOVY,
+               ".groovy", ICONS.iconGroovy(), false, false, false, false, false,
+                          false, false, false, false, false, false, false);
+   
    public static final RDataType RDATA = new RDataType();
    public static final RProjectType RPROJECT = new RProjectType();
 
@@ -256,6 +259,7 @@ public class FileTypeRegistry
       register("*.yml", YAML, icons.iconYaml());
       register("*.yaml", YAML, icons.iconYaml());
       register("*.xml", XML, icons.iconXml());
+      register("*.groovy", GROOVY, icons.iconGroovy());
 
       registerIcon(".jpg", icons.iconPng());
       registerIcon(".jpeg", icons.iconPng());

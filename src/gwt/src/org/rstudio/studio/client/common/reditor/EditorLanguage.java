@@ -65,11 +65,14 @@ public class EditorLanguage
          "mode/yaml", true);
    public static final EditorLanguage LANG_XML = new EditorLanguage(
          "mode/xml", true);
+   public static final EditorLanguage LANG_GROOVY = new EditorLanguage(
+         "ace/mode/groovy", true);
+   
 
    /**
     *
     * @param parserName The name of the parser--it's found at the top of the
-    *    parser .js fil
+    *    parser .js file
     * e. This MUST match the value inside the .js file or else
     *    dynamic language switching (Save As... with a different extension)
     *    won't work.
