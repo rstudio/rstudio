@@ -70,7 +70,7 @@ public class LogManager {
   private void addLoggerAndEnsureParents(Logger logger) {
     String name = logger.getName();
     String parentName = name.substring(0, Math.max(0, name.lastIndexOf('.')));
-    logger.setParent(ensureLogger(parentName));
+    logger.setParent(ensureLogger(parentName, logger.getResourceBundleName()));
     addLoggerImpl(logger);
   }
 
@@ -88,10 +88,10 @@ public class LogManager {
    *  APIs for getLogger and addLogger make it difficult to use those functions
    *  for this.
    */
-  Logger ensureLogger(String name) {
+  Logger ensureLogger(String name, String resourceName) {
     Logger logger = getLogger(name);
     if (logger == null) {
-      Logger newLogger = new Logger(name, null);
+      Logger newLogger = new Logger(name, resourceName);
       addLoggerAndEnsureParents(newLogger);
       return newLogger;
     }

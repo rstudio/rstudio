@@ -46,11 +46,15 @@ public static final String GLOBAL_LOGGER_NAME = "global";
   }
 
   public static Logger getLogger(String name) {
+    return getLogger(name, null);
+  }
+
+  public static Logger getLogger(String name, String resourceName) {
     // Use shortcut if logging is disabled to avoid parent logger creations in LogManager
     if (LOGGING_FALSE) {
-      return new Logger(name, "");
+      return new Logger(name, resourceName);
     }
-    return LogManager.getLogManager().ensureLogger(name);
+    return LogManager.getLogManager().ensureLogger(name, resourceName);
   }
 
   static void assertLoggingValues() {
@@ -155,8 +159,12 @@ public static final String GLOBAL_LOGGER_NAME = "global";
     return LOGGING_FALSE ? null : parent;
   }
 
+  public String getResourceBundleName() {
+    return null;
+  }
+
   public boolean getUseParentHandlers() {
-    return LOGGING_FALSE ? null : useParentHandlers;
+    return LOGGING_FALSE ? false : useParentHandlers;
   }
 
   public boolean isLoggable(Level messageLevel) {
@@ -276,9 +284,7 @@ public static final String GLOBAL_LOGGER_NAME = "global";
   // public static Logger getAnonymousLogger() {
   // public static Logger getAnonymousLogger(String resourceBundleName) {}
   // public Filter getFilter() {}
-  // public static Logger getLogger(String name, String resourceBundleName) {}
   // public ResourceBundle getResourceBundle() {}
-  // public String getResourceBundleName() {}
   // public void setFilter(Filter newFilter) {}
   // public void entering(String sourceClass, String sourceMethod) {}
   // public void entering(String sourceClass, String sourceMethod, Object param1) {}

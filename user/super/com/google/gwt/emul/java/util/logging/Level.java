@@ -88,27 +88,38 @@ public class Level implements Serializable {
       return null;
     }
 
-    name = name.toUpperCase(Locale.ROOT);
-    if (name.equals("ALL")) {
-      return ALL;
-    } else if (name.equals("CONFIG")) {
-      return CONFIG;
-    } else if (name.equals("FINE")) {
-      return FINE;
-    } else if (name.equals("FINER")) {
-      return FINER;
-    } else if (name.equals("FINEST")) {
-      return FINEST;
-    } else if (name.equals("INFO")) {
-      return INFO;
-    } else if (name.equals("OFF")) {
-      return OFF;
-    } else if (name.equals("SEVERE")) {
-      return SEVERE;
-    } else if (name.equals("WARNING")) {
-      return WARNING;
+    String value = name.toUpperCase(Locale.ROOT);
+    switch (value) {
+      case "ALL":
+        return Level.ALL;
+
+      case "CONFIG":
+        return Level.CONFIG;
+
+      case "FINE":
+        return Level.FINE;
+
+      case "FINER":
+        return Level.FINER;
+
+      case "FINEST":
+        return Level.FINEST;
+
+      case "INFO":
+        return Level.INFO;
+
+      case "OFF":
+        return Level.OFF;
+
+      case "SEVERE":
+        return Level.SEVERE;
+
+      case "WARNING":
+        return Level.WARNING;
+
+      default:
+        throw new IllegalArgumentException("Invalid level \"" + name + "\"");
     }
-    throw new IllegalArgumentException("Invalid level \"" + name + "\"");
   }
 
   protected Level() { }
