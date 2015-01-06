@@ -2,7 +2,7 @@
 <html>
 <head>
   <!script type="text/javascript" src="../tools/ace/build_support/mini_require.js"></script>
-  <script type="text/javascript" src="../tools/ace/build/src/ace.js"></script>
+  <script type="text/javascript" src="../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/auto_brace_insert.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/tex_highlight_rules.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/token_cursor.js"></script>
@@ -264,6 +264,86 @@ x[1,
   2,
   3] <- 1
 </pre></li>
+
+<li><pre data-expected="4">
+if (foo) {
+  x <-
+</pre></li>
+
+<li><pre data-expected="2">
+x <-
+  y <-
+</pre></li>
+
+<li><pre data-expected="2">
+x <-
+  1 +
+</pre></li>
+
+<li><pre data-expected="4">
+{
+  x <-
+</pre></li>
+
+<li><pre data-expected="4">
+{
+  x <-
+    1 +
+</pre></li>
+
+<li><pre data-expected="4">
+plot(
+  x +
+</pre></li>
+
+<li><pre data-expected="2">
+foo(bar, function(x)
+{
+</pre></li>
+
+<li><pre data-expected="0">
+if (length(foo))
+    x <- bar()
+</pre></li>
+
+<li><pre data-expected="2">
+if () {}
+foo <- foo &
+</pre></li>
+
+<li><pre data-expected="0">
+foo <- function()
+  function() {}
+</pre></li>
+
+<li><pre data-expected="0">
+foo <- function(x, y)
+   if (x) y else x
+</pre></li>
+
+<li><pre data-expected="0">
+if ()
+  x$y <- 1
+</pre></li>
+
+<li><pre data-expected="0">
+while ()
+  x[
+    1, 2, 3
+  ] <- 1
+</pre></li>
+
+<li><pre data-expected="4">
+{
+  else {}
+  foo$bar <- x &
+</pre></li>
+
+<li><pre data-expected="4">
+{
+  x %in%
+</pre></li>
+
 
 </ol>
 

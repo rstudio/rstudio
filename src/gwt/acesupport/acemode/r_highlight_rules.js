@@ -115,7 +115,7 @@ define("mode/r_highlight_rules", function(require, exports, module)
             },
             {
                token : "keyword.operator",
-               regex : "%%|>=|<=|==|!=|\\->|<\\-|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||~|\\$|:|@"
+               regex : "%%|>=|<=|==|!=|\\->|<\\-|<<\\-|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||~|\\$|:|@"
             },
             {
                token : "keyword.operator.infix", // infix operators
