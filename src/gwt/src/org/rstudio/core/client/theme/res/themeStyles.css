@@ -209,11 +209,12 @@ button {
 
 @if rstudio.desktop true {
 .linux button {
-   cursor: HANDCURSOR, pointer;
+   cursor: HANDCURSOR 10 6, pointer;
 }
 
 .linux .handCursor {
-   cursor: HANDCURSOR, pointer;
+    
+   cursor: HANDCURSOR 10 6, pointer;
 }
 }
 
