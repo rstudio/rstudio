@@ -1553,7 +1553,6 @@ public class Source implements InsertSourceHandler,
    {
       final boolean isDebugNavigation = 
             navMethod == NavigationMethod.DebugStep ||
-            navMethod == NavigationMethod.DebugFrame || 
             navMethod == NavigationMethod.DebugEnd;
       
       final CommandWithArg<EditingTarget> editingTargetAction = 
@@ -1609,13 +1608,6 @@ public class Source implements InsertSourceHandler,
                            srcPosition, 
                            srcEndPosition, 
                            true);
-                  }
-                  else if (navMethod == NavigationMethod.DebugFrame)
-                  {
-                     target.highlightDebugLocation(
-                           srcPosition,
-                           srcEndPosition,
-                           false);
                   }
                   else if (navMethod == NavigationMethod.DebugEnd)
                   {
