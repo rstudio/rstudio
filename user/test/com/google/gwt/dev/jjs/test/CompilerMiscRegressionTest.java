@@ -299,6 +299,14 @@ public class CompilerMiscRegressionTest extends GWTTestCase {
     return Math.round(local) / 100f;
   }
 
+  /**
+   * Test for issue 9043.
+   */
+  public native void testMultipleClassLiteralReferences() /*-{
+    var a = @com.google.gwt.dev.jjs.test.CompilerMiscRegressionTest::class;
+    var b = @com.google.gwt.dev.jjs.test.CompilerMiscRegressionTest::class;
+  }-*/;
+
   private static void assertEqualContents(float[] expected, float[] actual) {
 
     assertEquals("Array length mismatch", expected.length, actual.length);

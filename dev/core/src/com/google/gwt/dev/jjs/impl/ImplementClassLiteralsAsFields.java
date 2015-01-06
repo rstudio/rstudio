@@ -52,9 +52,11 @@ import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.thirdparty.guava.common.collect.ArrayListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
+import com.google.gwt.thirdparty.guava.common.collect.Multimap;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Map;
@@ -236,7 +238,8 @@ public class ImplementClassLiteralsAsFields {
         return;
       }
 
-      final Map<String, JsniClassLiteral> jsniClassLiteralsByJsniReference = Maps.newHashMap();
+      final Multimap<String, JsniClassLiteral> jsniClassLiteralsByJsniReference =
+          ArrayListMultimap.create();
       final JMethod getClassLiteralForArrayMethod =
           program.getIndexedMethod("Array.getClassLiteralForArray");
       final String getClassLiteralForArrayMethodIdent =
@@ -254,9 +257,7 @@ public class ImplementClassLiteralsAsFields {
         }
 
         // Map JSNI reference string to the actual JsniClassLiterals.
-        Object o = jsniClassLiteralsByJsniReference.put(jsniClassLiteral.getIdent(),
-              jsniClassLiteral);
-        assert o == null;
+        jsniClassLiteralsByJsniReference.put(jsniClassLiteral.getIdent(), jsniClassLiteral);
       }
 
       if (!areThereArrayClassLiterals) {
@@ -276,12 +277,14 @@ public class ImplementClassLiteralsAsFields {
             return;
           }
 
-          JsniClassLiteral jsniClassLiteral = jsniClassLiteralsByJsniReference.get(
-              x.getIdent());
-
-          if (jsniClassLiteral == null) {
+          if (jsniClassLiteralsByJsniReference.get(x.getIdent()).isEmpty()) {
+            // The JsNameRef is not a class literal.
             return;
           }
+
+          JsniClassLiteral jsniClassLiteral = jsniClassLiteralsByJsniReference.get(
+              x.getIdent()).iterator().next();
+          jsniClassLiteralsByJsniReference.remove(x.getIdent(), jsniClassLiteral);
 
           if (jsniClassLiteral.getRefType() instanceof JArrayType) {
             // Replace the array class literal by an expression that retrieves it from
