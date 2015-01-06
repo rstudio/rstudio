@@ -1318,7 +1318,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
             {
                return this.getIndentForOpenBrace(
                   tokenCursor.currentPosition()
-               ) + tab;
+               ) + tab + continuationIndent;
             }
                   
             // If we found an assignment token, use that for indentation

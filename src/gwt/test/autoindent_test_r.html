@@ -2,7 +2,7 @@
 <html>
 <head>
   <!script type="text/javascript" src="../tools/ace/build_support/mini_require.js"></script>
-  <script type="text/javascript" src="../tools/ace/build/src/ace.js"></script>
+  <script type="text/javascript" src="../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/auto_brace_insert.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/tex_highlight_rules.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/token_cursor.js"></script>
@@ -338,6 +338,12 @@ while ()
   else {}
   foo$bar <- x &
 </pre></li>
+
+<li><pre data-expected="4">
+{
+  x %in%
+</pre></li>
+
 
 </ol>
 
