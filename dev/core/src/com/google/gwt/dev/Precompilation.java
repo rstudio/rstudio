@@ -45,11 +45,6 @@ public class Precompilation implements PrecompilationResult {
   private final Permutation[] permutations;
   private final UnifiedAst unifiedAst;
 
-  public Precompilation(UnifiedAst unifiedAst,
-      Collection<Permutation> permutations, ArtifactSet generatedArtifacts) {
-    this(unifiedAst, permutations, 0, generatedArtifacts);
-  }
-
   /**
    * Constructs a new precompilation. We create new Permutations with a new id
    * so that the ids are consecutive and correspond to the index in the array.
@@ -93,15 +88,6 @@ public class Precompilation implements PrecompilationResult {
       }
     }
     return generatedArtifacts;
-  }
-
-  public Permutation getPermutation(int id) {
-    for (Permutation perm : permutations) {
-      if (perm.getId() == id) {
-        return perm;
-      }
-    }
-    return null;
   }
 
   /**

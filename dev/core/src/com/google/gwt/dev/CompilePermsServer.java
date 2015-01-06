@@ -187,13 +187,6 @@ public class CompilePermsServer {
     private String cookie;
     private Type logLevel;
 
-    public void copyFrom(CompileServerOptions other) {
-      setCompileHost(other.getCompileHost());
-      setCompilePort(other.getCompilePort());
-      setCookie(other.getCookie());
-      setLogLevel(other.getLogLevel());
-    }
-
     @Override
     public String getCompileHost() {
       return compileHost;

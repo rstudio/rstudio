@@ -41,11 +41,6 @@ public class WebServerPanel extends JPanel {
 
   private SwingLoggerPanel logWindow;
 
-  public WebServerPanel(int serverPort, TreeLogger.Type maxLevel,
-      File logFile) {
-    this(serverPort, maxLevel, logFile, null);
-  }
-
   /**
    * @param serverPort the server port number
    */

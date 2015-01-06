@@ -441,18 +441,6 @@ public class ModuleDef implements DepsInfoProvider {
         caseSensitive, true);
   }
 
-  /**
-   * Free up memory no longer needed in later compile stages. After calling this
-   * method, the ResourceOracle will be empty and unusable. Calling
-   * {@link #ensureResourcesScanned()} will restore them.
-   */
-  public synchronized void clear() {
-    if (lazySourceOracle != null) {
-      lazySourceOracle.clear();
-    }
-    rules.dispose();
-  }
-
   public void clearEntryPoints() {
     entryPointTypeNames.clear();
   }

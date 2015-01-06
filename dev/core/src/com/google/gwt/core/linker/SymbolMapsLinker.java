@@ -74,31 +74,17 @@ public class SymbolMapsLinker extends AbstractLinker {
 
     private static class EditOperation {
 
-      public static EditOperation insert(int lineNumber, String data) {
-        return new EditOperation(Edit.INSERT, lineNumber, data);
-      }
-
       public static EditOperation prefix(String data) {
         return new EditOperation(Edit.PREFIX, 0, data);
       }
 
-      public static EditOperation remove(int lineNumber) {
-        return new EditOperation(Edit.REMOVE, lineNumber, null);
-      }
-
       Edit op;
-      int lineNumber;
       int numLines;
 
       public EditOperation(
           Edit op, int lineNumber, String data) {
         this.op = op;
-        this.lineNumber = lineNumber;
         this.numLines = countNewLines(data);
-      }
-
-      public int getLineNumber() {
-        return lineNumber;
       }
 
       public int getNumLines() {
@@ -143,10 +129,6 @@ public class SymbolMapsLinker extends AbstractLinker {
     @Override
     public int hashCode() {
       return (strongName + fragment).hashCode();
-    }
-
-    public void insertLinesBefore(int position, String lines) {
-      editOperations.add(EditOperation.insert(position, lines));
     }
 
     public void prefixLines(String lines) {

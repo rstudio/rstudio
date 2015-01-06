@@ -43,11 +43,6 @@ public interface LibraryWriter {
   void addCompilationUnit(CompilationUnit compilationUnit);
 
   /**
-   * Registers a dependency on some other library.
-   */
-  void addDependencyLibraryName(String dependencyLibraryName);
-
-  /**
    * Registers dependency on a set of other libraries.
    */
   void addDependencyLibraryNames(Set<String> dependencyLibraryNames);

@@ -442,11 +442,6 @@ public class ZipLibraryWriter implements LibraryWriter {
   }
 
   @Override
-  public void addDependencyLibraryName(String libraryName) {
-    dependencyLibraryNames.add(libraryName);
-  }
-
-  @Override
   public void addDependencyLibraryNames(Set<String> dependencyLibraryNames) {
     this.dependencyLibraryNames.addAll(dependencyLibraryNames);
   }

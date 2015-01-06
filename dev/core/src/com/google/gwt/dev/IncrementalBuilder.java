@@ -45,26 +45,20 @@ public class IncrementalBuilder {
    * Represents a combination of whether a build succeeded and whether output changed.
    */
   public static enum BuildResultStatus {
-    FAILED(false, false), SUCCESS_NO_CHANGES(false, true), SUCCESS_WITH_CHANGES(true, true);
+    FAILED(false), SUCCESS_NO_CHANGES(true), SUCCESS_WITH_CHANGES(true);
 
     private static BuildResultStatus get(boolean success) {
       return success ? SUCCESS_WITH_CHANGES : FAILED;
     }
 
-    private boolean outputChanged;
     private boolean success;
 
-    private BuildResultStatus(boolean outputChanged, boolean success) {
-      this.outputChanged = outputChanged;
+    private BuildResultStatus(boolean success) {
       this.success = success;
     }
 
     public boolean isSuccess() {
       return success;
-    }
-
-    public boolean outputChanged() {
-      return outputChanged;
     }
   }
 

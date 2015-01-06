@@ -40,10 +40,6 @@ public class NullLibraryWriter implements LibraryWriter {
   }
 
   @Override
-  public void addDependencyLibraryName(String libraryName) {
-  }
-
-  @Override
   public void addDependencyLibraryNames(Set<String> dependencyLibraryNames) {
   }
 

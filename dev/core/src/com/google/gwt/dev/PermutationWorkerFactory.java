@@ -225,19 +225,6 @@ public abstract class PermutationWorkerFactory {
   public static final int WORKERS_AUTO = 0;
 
   /**
-   * Compiles all Permutations in a Precompilation and returns an array of Files
-   * that can be consumed by Link using the system-default
-   * PermutationWorkersFactories.
-   */
-  public static void compilePermutations(TreeLogger logger, CompilerContext compilerContext,
-      Precompilation precompilation, int localWorkers,
-      List<PersistenceBackedObject<PermutationResult>> resultFiles)
-      throws UnableToCompleteException {
-    compilePermutations(logger, compilerContext, precompilation, precompilation.getPermutations(),
-        localWorkers, resultFiles);
-  }
-
-  /**
    * Compiles a subset of the Permutations in a Precompilation and returns an
    * array of Files that can be consumed by Link using the system-default
    * PermutationWorkersFactories.

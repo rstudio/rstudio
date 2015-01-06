@@ -40,10 +40,6 @@ class CompileTaskOptionsImpl implements CompileTaskOptions {
   public CompileTaskOptionsImpl() {
   }
 
-  public CompileTaskOptionsImpl(CompileTaskOptions other) {
-    copyFrom(other);
-  }
-
   @Override
   public void addModuleName(String moduleName) {
     moduleNames.add(moduleName);
