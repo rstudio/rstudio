@@ -224,8 +224,6 @@ public class Jsni {
     }
   }
 
-  public static final String JAVASCRIPTHOST_NAME = JavaScriptHost.class.getName();
-
   /**
    * Gets the body of a JSNI method, with Java refs escaped for hosted mode
    * injection.

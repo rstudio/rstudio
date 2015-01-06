@@ -47,9 +47,6 @@ public class Messages {
   public static final Message1String HINT_CHECK_TYPENAME = new Message1String(
       TreeLogger.ERROR,
       "Hint: Check that the type name '$0' is really what you meant");
-  public static final Message0 HINT_PRIOR_COMPILER_ERRORS = new Message0(
-      TreeLogger.ERROR,
-      "Hint: Previous compiler errors may have made this type unavailable");
 
   private Messages() {
   }
