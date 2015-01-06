@@ -88,7 +88,7 @@ public class TypeTightenerTest extends OptimizerTestBase {
   }
 
   public void testTightenParameterBasedOnLeafType() throws Exception {
-    addSnippetClassDecl("abstract static class A {}");
+    addSnippetClassDecl("abstract static class A { void makeSureFunIsCalled() {fun(this);} }");
     addSnippetClassDecl("static class B extends A {}");
     addSnippetClassDecl("static void fun(A a) {if (a == null) return;}");
 
@@ -123,7 +123,7 @@ public class TypeTightenerTest extends OptimizerTestBase {
   }
 
   public void testMethodBasedOnLeafType() throws Exception {
-    addSnippetClassDecl("abstract static class A {}");
+    addSnippetClassDecl("abstract static class A { void makeSureFunIsCalled() {fun(this);} }");
     addSnippetClassDecl("static class B extends A {}");
     addSnippetClassDecl("static A fun(A a) {return a;}");
 
