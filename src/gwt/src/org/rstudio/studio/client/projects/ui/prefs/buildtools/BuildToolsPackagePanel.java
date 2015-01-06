@@ -90,7 +90,8 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
                      roxygenOptions_ = input;
                      chkUseRoxygen_.setValue(input.getRocletRd() || 
                                              input.getRocletCollate() || 
-                                             input.getRocletNamespace());
+                                             input.getRocletNamespace() ||
+                                             input.getRocletVignette());
                      
                   }
                   
@@ -152,6 +153,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
             config.getPackageRoxygenzieRd(),
             config.getPackageRoxygenizeCollate(),
             config.getPackageRoxygenizeNamespace(),
+            config.getPackageRoxygenizeVignette(),
             options.getBuildOptions().getAutoRogyginizeOptions());
        
       boolean showRoxygenize = config.hasPackageRoxygenize() ||
@@ -193,7 +195,8 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       config.setPackageCheckArgs(checkAdditionalArguments_.getText());
       config.setPackageRoxygenize(roxygenOptions_.getRocletRd(),
                                   roxygenOptions_.getRocletCollate(),
-                                  roxygenOptions_.getRocletNamespace());
+                                  roxygenOptions_.getRocletNamespace(),
+                                  roxygenOptions_.getRocletVignette());
       RProjectBuildOptions buildOptions = options.getBuildOptions();
       buildOptions.setAutoRoxyginizeOptions(
                                        roxygenOptions_.getAutoRoxygenize());

@@ -44,6 +44,7 @@ public class BuildToolsRoxygenOptionsDialog extends ModalDialog<BuildToolsRoxyge
       chkRocletRd_.setValue(options.getRocletRd());
       chkRocletCollate_.setValue(options.getRocletCollate());
       chkRocletNamespace_.setValue(options.getRocletNamespace());
+      chkRocletVignette_.setValue(options.getRocletVignette());
       RProjectAutoRoxygenizeOptions runOptions = options.getAutoRoxygenize();
       chkRunForCheckPackage_.setValue(runOptions.getRunOnCheck());
       chkRunForBuildPackage_.setValue(runOptions.getRunOnPackageBuilds());
@@ -63,6 +64,7 @@ public class BuildToolsRoxygenOptionsDialog extends ModalDialog<BuildToolsRoxyge
             chkRocletRd_.getValue(),
             chkRocletCollate_.getValue(),
             chkRocletNamespace_.getValue(),
+            chkRocletVignette_.getValue(),
         RProjectAutoRoxygenizeOptions.create(
             chkRunForCheckPackage_.getValue(),
             chkRunForBuildPackage_.getValue(),
@@ -83,6 +85,8 @@ public class BuildToolsRoxygenOptionsDialog extends ModalDialog<BuildToolsRoxyge
    CheckBox chkRocletCollate_;
    @UiField
    CheckBox chkRocletNamespace_;
+   @UiField
+   CheckBox chkRocletVignette_;
    @UiField
    CheckBox chkRunForCheckPackage_;
    @UiField
