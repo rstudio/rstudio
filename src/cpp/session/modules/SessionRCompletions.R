@@ -470,15 +470,9 @@ assign(x = ".rs.acCompletionTypes",
       if (namespaceString %in% loadedNamespaces())
       {
          object <- tryCatch(
-            expr = {
-               get(
-                  functionString,
-                  envir = asNamespace(namespaceString)
-               )
-            },
-            error = function(e) {
-               NULL
-            }
+            eval(parse(text = functionString),
+                 envir = asNamespace(namespaceString)),
+            error = function(e) NULL
          )
       }
    }
@@ -510,12 +504,83 @@ assign(x = ".rs.acCompletionTypes",
    if (!is.null(object) && is.function(object))
    {
       matchedCall <- .rs.matchCall(object, functionCall)
-      formals <- .rs.resolveFormals(token,
-                                    object,
-                                    string,
-                                    functionCall,
-                                    matchedCall,
-                                    envir)
+      
+      # Try to figure out what function arguments are
+      # eligible for completion. Note that, on success,
+      # this should be an R list with character fields
+      # 'formals' and (optionally) 'methods'.
+      formals <- NULL
+      
+      ## Special cases
+      # We handle special cases for function argument
+      # completions first.
+      # If we're completing a knitr getter function, then try
+      # to produce auto-completions for potential argument
+      # names
+      if (.rs.isKnitrObject(object))
+      {
+         ns <- asNamespace("knitr")
+         
+         # Get the knitr getters and setters for various
+         # options
+         tryGetKnitrGetter <- function(name, ns = asNamespace("knitr"))
+            tryCatch(get(name, envir = ns)$get, error = function(e) NULL)
+         
+         tryGetKnitrSetter <- function(name, ns = asNamespace("knitr"))
+            tryCatch(get(name, envir = ns)$set, error = function(e) NULL)
+         
+         tryGet <- function(name, ns = asNamespace("knitr"))
+            list(getter = tryGetKnitrGetter(name, ns),
+                 setter = tryGetKnitrSetter(name, ns))
+         
+         knitrOpts <- list(
+            tryGet("opts_chunk", ns),
+            tryGet("opts_knit", ns),
+            tryGet("opts_current", ns),
+            tryGet("opts_template", ns),
+            tryGet("knit_hooks", ns),
+            tryGet("knit_theme", ns)
+         )
+         
+         for (opt in knitrOpts)
+         {
+            # If we're identical to the getter, short-circuit
+            # and just return the names of parameters
+            if (identical(object, opt$getter))
+            {
+               results <- .rs.selectFuzzyMatches(
+                  names(opt$getter()),
+                  token
+               )
+               
+               return(.rs.makeCompletions(token = token,
+                                          results = results,
+                                          type = .rs.acCompletionTypes$STRING,
+                                          quote = TRUE))
+            }
+            
+            # If we're identical to the setter, get the
+            # names from the getter as named arguments to use
+            if (identical(object, opt$setter))
+            {
+               formals <- list(formals = names(opt$getter()))
+               break
+            }
+         }
+         
+      }
+      
+      ## Base case
+      # Resolve formals from the function itself
+      if (is.null(formals))
+      {
+         formals <- .rs.resolveFormals(token,
+                                       object,
+                                       string,
+                                       functionCall,
+                                       matchedCall,
+                                       envir)
+      }
       
       if (length(formals$formals))
          formals$formals <- paste(formals$formals, "= ")
@@ -2338,4 +2403,24 @@ assign(x = ".rs.acCompletionTypes",
                           type = completion$types[keep])
    }))
    
+})
+
+.rs.addFunction("isKnitrObject", function(object)
+{
+   if (!("knitr" %in% loadedNamespaces()))
+      return(FALSE)
+   
+   ns <- asNamespace("knitr")
+   if (identical(environment(object), ns))
+      return(TRUE)
+   
+   parent <- tryCatch(
+      parent.env(environment(object)),
+      error = function(e) NULL
+   )
+   
+   if (identical(parent, ns))
+      return(TRUE)
+   
+   return(FALSE)
 })
