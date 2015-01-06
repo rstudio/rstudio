@@ -15,6 +15,7 @@
     - Completions for dimension names in `[`, `[[` calls
     - Completions from packages in `library`, `require` calls automatically
       inferred and supplied even when not loaded
+    - Completions for knitr options, e.g. in `opts_chunk$get()`, are now supplied
 * Improvements to C/C++ editing mode:
     - Code completion
     - F2 code navigation (go to definition)
