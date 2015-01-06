@@ -361,9 +361,21 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
    json::Array listFrames;
    int contextDepth = 0;
    Error error;
+   std::map<SEXP,RCNTXT*> envSrcrefCtx;
 
    while (pRContext->callflag)
    {
+      // if this context has a valid srcref, use it to supply the srcrefs for
+      // debugging in the environment of the callee. note that there may be
+      // multiple srcrefs on the stack for a given closure; in this case we
+      // always want to take the first one as it's the most current/specific.
+      if (isValidSrcref(pRContext->srcref) && pRContext->nextcontext != NULL) 
+      {
+         SEXP env = pRContext->nextcontext->cloenv;
+         if (envSrcrefCtx.find(env) == envSrcrefCtx.end())
+            envSrcrefCtx[env] = pRContext;
+      }
+
       if (pRContext->callflag & CTXT_FUNCTION)
       {
          json::Object varFrame;
@@ -379,11 +391,12 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
          varFrame["is_error_handler"] = isErrorHandlerContext(pRContext);
          varFrame["is_hidden"] = isDebugHiddenContext(pRContext);
 
-         // in the linked list of R contexts, the srcref associated with each
-         // context points to the place from which the context was invoked.
-         // however, for traditional debugging, we want the call frame to show
-         // where control *left* the frame to go to the next frame. pSrcContext
-         // keeps track of the previous invocation.
+         std::map<SEXP,RCNTXT*>::iterator srcCtx = envSrcrefCtx.find(pRContext->cloenv);
+         if (srcCtx != envSrcrefCtx.end())
+            pSrcContext = srcCtx->second;
+         else
+            pSrcContext = pRContext;
+
          std::string filename;
          error = getFileNameFromContext(pSrcContext, &filename);
          if (error)
@@ -429,7 +442,6 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
 
             sourceRefToJson(simulatedSrcref, &varFrame);
          }
-         pSrcContext = pRContext;
 
          // extract the first line of the function. the client can optionally
          // use this to compute the source location as an offset into the
