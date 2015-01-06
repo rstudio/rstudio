@@ -30,7 +30,8 @@ assign(x = ".rs.acContextTypes",
           CHUNK              =  9,
           ROXYGEN            = 10,
           HELP               = 11,
-          ARGUMENT           = 12
+          ARGUMENT           = 12,
+          PACKAGE            = 13
        )
 )
 
@@ -1331,6 +1332,12 @@ assign(x = ".rs.acCompletionTypes",
           string[[1]] == "data" &&
           numCommas[[1]] == 0)
       return(.rs.getCompletionsData(token))
+   
+   # package name
+   if (.rs.acContextTypes$PACKAGE %in% type)
+      return(.rs.getCompletionsPackages(token = token,
+                                        appendColons = TRUE,
+                                        excludeOtherCompletions = TRUE))
    
    # No information on completions other than token
    if (!length(string))

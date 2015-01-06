@@ -826,6 +826,7 @@ public class RCompletionManager implements CompletionManager
       public static final int TYPE_ROXYGEN = 10;
       public static final int TYPE_HELP = 11;
       public static final int TYPE_ARGUMENT = 12;
+      public static final int TYPE_PACKAGE = 13;
       
       public AutocompletionContext(
             String token,
@@ -1317,6 +1318,22 @@ public class RCompletionManager implements CompletionManager
       TokenCursor tokenCursor = codeModel.getTokenCursor();
       if (!tokenCursor.moveToPosition(input_.getCursorPosition()))
          return context;
+      
+      // Check to see if the token following the cursor is a `::` or `:::`.
+      // If that's the case, then we probably only want to complete package
+      // names.
+      if (tokenCursor.moveToNextToken())
+      {
+         if (tokenCursor.currentValue() == ":" ||
+             tokenCursor.currentValue() == "::" ||
+             tokenCursor.currentValue() == ":::")
+         {
+            return new AutocompletionContext(
+                  token,
+                  AutocompletionContext.TYPE_PACKAGE);
+         }
+         tokenCursor.moveToPreviousToken();
+      }
       
       TokenCursor startCursor = tokenCursor.cloneCursor();
       
