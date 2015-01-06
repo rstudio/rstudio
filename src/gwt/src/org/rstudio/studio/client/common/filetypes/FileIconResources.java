@@ -58,4 +58,5 @@ public interface FileIconResources extends ClientBundle
    ImageResource iconProfiler();
    ImageResource iconWord();
    ImageResource iconGroovy();
+   ImageResource iconGo();
 }

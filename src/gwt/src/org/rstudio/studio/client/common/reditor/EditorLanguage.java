@@ -70,6 +70,8 @@ public class EditorLanguage
          "ace/mode/xml", true);
    public static final EditorLanguage LANG_GROOVY = new EditorLanguage(
          "ace/mode/groovy", true);
+   public static final EditorLanguage LANG_GO = new EditorLanguage(
+         "ace/mode/golang", true);
 
    /**
     *

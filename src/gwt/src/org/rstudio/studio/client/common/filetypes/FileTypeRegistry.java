@@ -155,6 +155,11 @@ public class FileTypeRegistry
                ".groovy", ICONS.iconGroovy(), false, false, false, false, false,
                           false, false, false, false, false, false, false);
    
+   public static final TextFileType GO =
+         new TextFileType("go", "Go", EditorLanguage.LANG_GO, ".go", ICONS.iconGo(),
+               false, false, false, false, false,
+               false, false, false, false, false, false, false);
+   
    public static final RDataType RDATA = new RDataType();
    public static final RProjectType RPROJECT = new RProjectType();
 
@@ -260,6 +265,7 @@ public class FileTypeRegistry
       register("*.yaml", YAML, icons.iconYaml());
       register("*.xml", XML, icons.iconXml());
       register("*.groovy", GROOVY, icons.iconGroovy());
+      register("*.go", GO, icons.iconGo());
 
       registerIcon(".jpg", icons.iconPng());
       registerIcon(".jpeg", icons.iconPng());
