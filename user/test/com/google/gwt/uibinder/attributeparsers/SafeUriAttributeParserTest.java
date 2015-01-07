@@ -58,18 +58,20 @@ public class SafeUriAttributeParserTest extends TestCase {
     assertEquals("UriUtils.fromSafeConstant(\"hi mom\")", parserForHtml.parse(null, "hi mom"));
     assertEquals("UriUtils.fromSafeConstant(\"hi mom\")", parserForWidgets.parse(null, "hi mom"));
     // Don't get caught out by escaped braces
-    assertEquals("UriUtils.fromSafeConstant(\"hi {foo.bar.baz} friend\")", parserForHtml.parse(
-        null, "hi {{foo.bar.baz} friend"));
-    assertEquals("UriUtils.fromSafeConstant(\"hi {foo.bar.baz} friend\")", parserForWidgets.parse(
-        null, "hi {{foo.bar.baz} friend"));
+    assertEquals("UriUtils.fromSafeConstant(\"hi {foo.bar.baz} friend\")",
+        parserForHtml.parse(null, "hi \\{foo.bar.baz} friend"));
+    assertEquals("UriUtils.fromSafeConstant(\"hi {foo.bar.baz} friend\")",
+        parserForWidgets.parse(null, "hi \\{foo.bar.baz} friend"));
   }
 
   public void testFieldRef() throws UnableToCompleteException {
     assertEquals("foo.bar().baz()", parserForHtml.parse(null, "{foo.bar.baz}"));
     assertEquals("foo.bar().baz()", parserForWidgets.parse(null, "{foo.bar.baz}"));
     // Don't get caught out by escaped braces
-    assertEquals("UriUtils.fromSafeConstant(\"{foo.bar.baz}\")", parserForHtml.parse(null, "{{foo.bar.baz}"));
-    assertEquals("UriUtils.fromSafeConstant(\"{foo.bar.baz}\")", parserForWidgets.parse(null, "{{foo.bar.baz}"));
+    assertEquals("UriUtils.fromSafeConstant(\"{foo.bar.baz}\")",
+        parserForHtml.parse(null, "\\{foo.bar.baz}"));
+    assertEquals("UriUtils.fromSafeConstant(\"{foo.bar.baz}\")",
+        parserForWidgets.parse(null, "\\{foo.bar.baz}"));
   }
 
   public void testConcatenatedFieldRefAllowed() throws UnableToCompleteException {
