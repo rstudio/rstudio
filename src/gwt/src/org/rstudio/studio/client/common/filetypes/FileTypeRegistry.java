@@ -211,17 +211,17 @@ public class FileTypeRegistry
                false, false, false, false, false, false, false);
    
    public static final TextFileType PERL = 
-         new TextFileType("perl", "Perl", EditorLanguage.LANG_PERL, ".perl", ICONS.iconPerl(),
+         new TextFileType("perl", "Perl", EditorLanguage.LANG_PERL, ".pl", ICONS.iconPerl(),
                false, false, false, false, false,
                false, false, false, false, false, false, false);
    
    public static final TextFileType RUBY = 
-         new TextFileType("ruby", "Ruby", EditorLanguage.LANG_RUBY, ".ruby", ICONS.iconRuby(),
+         new TextFileType("ruby", "Ruby", EditorLanguage.LANG_RUBY, ".rb", ICONS.iconRuby(),
                false, false, false, false, false,
                false, false, false, false, false, false, false);
    
    public static final TextFileType RUST = 
-         new TextFileType("rust", "Rust", EditorLanguage.LANG_RUST, ".rust", ICONS.iconRust(),
+         new TextFileType("rust", "Rust", EditorLanguage.LANG_RUST, ".rs", ICONS.iconRust(),
                false, false, false, false, false,
          false, false, false, false, false, false, false);
    
@@ -342,9 +342,9 @@ public class FileTypeRegistry
       register("*.lisp", LISP, icons.iconLisp());
       register("*.lua", LUA, icons.iconLua());
       register("*.matlab", MATLAB, icons.iconMatlab());
-      register("*.perl", PERL, icons.iconPerl());
-      register("*.ruby", RUBY, icons.iconRuby());
-      register("*.rust", RUST, icons.iconRust());
+      register("*.pl", PERL, icons.iconPerl());
+      register("*.rb", RUBY, icons.iconRuby());
+      register("*.rs", RUST, icons.iconRust());
 
       registerIcon(".jpg", icons.iconPng());
       registerIcon(".jpeg", icons.iconPng());
