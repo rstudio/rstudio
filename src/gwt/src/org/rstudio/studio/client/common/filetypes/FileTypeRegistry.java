@@ -229,7 +229,13 @@ public class FileTypeRegistry
    public static final TextFileType RUST = 
          new TextFileType("rust", "Rust", EditorLanguage.LANG_RUST, ".rs", ICONS.iconRust(),
                false, false, false, false, false,
-         false, false, false, false, false, false, false);
+               false, false, false, false, false, false, false);
+   
+   public static final TextFileType SCALA = 
+         new TextFileType("scala", "Scala", EditorLanguage.LANG_SCALA, ".scala", ICONS.iconScala(),
+               false, false, false, false, false,
+               false, false, false, false, false, false, false);
+   
    
    public static final RDataType RDATA = new RDataType();
    public static final RProjectType RPROJECT = new RProjectType();
@@ -354,6 +360,7 @@ public class FileTypeRegistry
       register("*.pl", PERL, icons.iconPerl());
       register("*.rb", RUBY, icons.iconRuby());
       register("*.rs", RUST, icons.iconRust());
+      register("*.scala", SCALA, icons.iconScala());
 
       registerIcon(".jpg", icons.iconPng());
       registerIcon(".jpeg", icons.iconPng());

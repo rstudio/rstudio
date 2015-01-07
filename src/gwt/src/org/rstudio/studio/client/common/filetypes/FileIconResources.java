@@ -75,6 +75,7 @@ public interface FileIconResources extends ClientBundle
    ImageResource iconPerl();
    ImageResource iconRuby();
    ImageResource iconRust();
+   ImageResource iconScala();
    
    
 }

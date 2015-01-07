@@ -85,6 +85,7 @@ public class EditorLanguage
    public static final EditorLanguage LANG_PERL = new EditorLanguage("ace/mode/perl", true);
    public static final EditorLanguage LANG_RUBY = new EditorLanguage("ace/mode/ruby", true);
    public static final EditorLanguage LANG_RUST = new EditorLanguage("ace/mode/rust", true);
+   public static final EditorLanguage LANG_SCALA = new EditorLanguage("ace/mode/scala", true);
  
    /**
     *
