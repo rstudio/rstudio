@@ -93,7 +93,7 @@ public class EditSession extends JavaScriptObject
       if (existingMode && existingMode.constructor == Mode)
          return;
 
-      this.setMode(new Mode(suppressHighlighting, this.getDocument(), this));
+      this.setMode(new Mode(suppressHighlighting, this));
    }-*/;
 
    public native final Mode getMode() /*-{

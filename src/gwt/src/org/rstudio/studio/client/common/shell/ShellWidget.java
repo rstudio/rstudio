@@ -555,13 +555,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
          // Don't drive focus to the input unless there is no selection.
          // Otherwise it would interfere with the ability to select stuff
          // from the output buffer for copying to the clipboard.
-         // (BUG: DomUtils.selectionExists() doesn't work in a timely
-         // fashion on IE8.)
          if (!DomUtils.selectionExists() && isInputOnscreen())
-         {
             input_.setFocus(true) ;
-            DomUtils.collapseSelection(false);
-         }
       }
 
       public void onKeyDown(KeyDownEvent event)

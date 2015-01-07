@@ -88,7 +88,7 @@ public class AceEditorPreview extends DynamicIFrame
                               "editor.renderer.setShowGutter(false);\n" +
                               "editor.renderer.setDisplayIndentGuides(false);\n" +
                               "var RMode = require('mode/r').Mode;\n" +
-                              "editor.getSession().setMode(new RMode(false, editor.getSession().getDocument()));"));
+                              "editor.getSession().setMode(new RMode(false, editor.getSession()));"));
                      }
                   });
          }

@@ -64,9 +64,6 @@
             <file name="sweave.js"/>
             <file name="rdoc_highlight_rules.js"/>
             <file name="rdoc.js"/>
-            <file name="markdown_highlight_rules.js"/>
-            <file name="markdown_folding.js"/>
-            <file name="markdown.js"/>
             <file name="rmarkdown_highlight_rules.js"/>
             <file name="rmarkdown.js"/>
             <file name="rhtml_highlight_rules.js"/>
@@ -81,15 +78,6 @@
             <file name="c_cpp_highlight_rules.js"/>
             <file name="c_cpp.js"/>
             <file name="c_cpp_fold_mode.js"/>
-            <file name="python_highlight_rules.js"/>
-            <file name="python.js"/>
-            <file name="pythonic_fold_mode.js"/>
-            <file name="sql_highlight_rules.js"/>
-            <file name="sql.js"/>
-            <file name="sh_highlight_rules.js"/>
-            <file name="sh.js"/>
-            <file name="yaml_highlight_rules.js"/>
-            <file name="yaml.js"/>
             <file name="xml.js"/>
             <file name="xml_behavior.js"/>
             <file name="xml_fold_mode.js"/>

@@ -115,6 +115,7 @@ define("mode/r_highlight_rules", function(require, exports, module)
             },
             {
                token : "keyword.operator",
+               merge : false,
                regex : "%%|>=|<=|==|!=|\\->|<\\-|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||~|\\$|:|@"
             },
             {
@@ -126,6 +127,7 @@ define("mode/r_highlight_rules", function(require, exports, module)
                // labelling them as such was the easiest way to get them
                // to be colored distinctly from regular text
                token : "paren.keyword.operator",
+               merge : false,
                regex : "[[({]"
             },
             {
@@ -133,6 +135,7 @@ define("mode/r_highlight_rules", function(require, exports, module)
                // labelling them as such was the easiest way to get them
                // to be colored distinctly from regular text
                token : "paren.keyword.operator",
+               merge : false,
                regex : "[\\])}]"
             },
             {

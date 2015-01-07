@@ -39,11 +39,13 @@ function isOneOf(object, array)
 var ScopeManager = require("mode/r_scope_tree").ScopeManager;
 var ScopeNode = require("mode/r_scope_tree").ScopeNode;
 
-var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
-   this.$doc = doc;
+var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
+
+   this.$session = session;
+   this.$doc = session.getDocument();
    this.$tokenizer = tokenizer;
-   this.$tokens = new Array(doc.getLength());
-   this.$endStates = new Array(doc.getLength());
+   this.$tokens = new Array(this.$doc.getLength());
+   this.$endStates = new Array(this.$doc.getLength());
    this.$statePattern = statePattern;
    this.$codeBeginPattern = codeBeginPattern;
    this.$scopes = new ScopeManager(ScopeNode);
@@ -1034,13 +1036,20 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       return this.$getIndent(this.$getLine(pos.row));
    };
 
-   this.getNextLineIndent = function(lastRow, line, endState, tab, tabSize)
+   // NOTE: lastRow is used purely for testing. If it's non-numeric then we need to
+   // set it with the current cursor position.
+   this.getNextLineIndent = function(state, line, tab, row)
    {
-      if (endState == "qstring" || endState == "qqstring")
+      if (state == "qstring" || state == "qqstring")
          return "";
 
-      // TODO: optimize
-      var tabAsSpaces = Array(tabSize + 1).join(" ");
+      // NOTE: Pressing enter will already have moved the cursor to the next row,
+      // so we need to push that back a single row.
+      if (typeof row !== "number")
+         row = this.$session.getSelection().getCursor().row - 1;
+
+      var tabSize = this.$session.getTabSize();
+      var tabAsSpaces = new Array(tabSize + 1).join(" ");
 
       // This lineOverrides nonsense is necessary because the line has not 
       // changed in the real document yet. We need to simulate it by replacing
@@ -1050,39 +1059,40 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
       // block of code, and in the editor hit Enter in the middle of a line 
       // that contains a }.
       this.$lineOverrides = null;
-      if (!(this.$doc.getLine(lastRow) === line))
+      if (!(this.$doc.getLine(row) === line))
       {
          this.$lineOverrides = {};
-         this.$lineOverrides[lastRow] = line;
-         this.$invalidateRow(lastRow);
+         this.$lineOverrides[row] = line;
+         this.$invalidateRow(row);
       }
       
       try
       {
-         var defaultIndent = lastRow < 0 ? "" 
-                                         : this.$getIndent(this.$getLine(lastRow));
+         var defaultIndent = row < 0 ?
+                "" : 
+                this.$getIndent(this.$getLine(row));
 
          // jcheng 12/7/2013: It doesn't look to me like $tokenizeUpToRow can return
          // anything but true, at least not today.
-         if (!this.$tokenizeUpToRow(lastRow))
+         if (!this.$tokenizeUpToRow(row))
             return defaultIndent;
 
          // If we're in an Sweave/Rmd/etc. document and this line isn't R, then
          // don't auto-indent
-         if (this.$statePattern && !this.$statePattern.test(endState))
+         if (this.$statePattern && !this.$statePattern.test(state))
             return defaultIndent;
 
          // The significant token (no whitespace, comments) that most immediately
          // precedes this line. We don't look back further than 10 rows or so for
          // performance reasons.
          var startPos = {
-            row: lastRow,
-            column: this.$getLine(lastRow).length
+            row: row,
+            column: this.$getLine(row).length
          };
-         
+
          var prevToken = this.$findPreviousSignificantToken(
             startPos,
-            lastRow - 10
+            row - 10
          );
 
          // Used to add extra whitspace if the next line is a continuation of the
@@ -1149,7 +1159,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          // brace, *ignoring matched pairs along the way*. (That's the "balanced"
          // in $walkParensBalanced.)
          var openBracePos = this.$walkParensBalanced(
-               lastRow,
+               row,
                0,
                function(parens, paren, pos)
                {
@@ -1189,7 +1199,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                      {
                         row: openBracePos.row,
                         column: openBracePos.column + 1
-                     }, lastRow);
+                     }, row);
             }
 
             if (!nextTokenPos)
@@ -1245,7 +1255,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                // TODO: Perhaps we can skip the above few lines of code if
                // there are other lines present
                var thisIndent;
-               for (var i = nextTokenPos.row + 1; i <= lastRow; i++) {
+               for (var i = nextTokenPos.row + 1; i <= row; i++) {
                   // If a line contains only whitespace, it doesn't count
                   if (!/[^\s]/.test(this.$getLine(i)))
                      continue;
@@ -1400,7 +1410,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
                      count++ < maxTokensToWalk);
          }
 
-         var firstToken = this.$findNextSignificantToken({row: 0, column: 0}, lastRow);
+         var firstToken = this.$findNextSignificantToken({row: 0, column: 0}, row);
          if (firstToken)
             return this.$getIndent(this.$getLine(firstToken.row)) + continuationIndent;
          else
@@ -1411,7 +1421,7 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
          if (this.$lineOverrides)
          {
             this.$lineOverrides = null;
-            this.$invalidateRow(lastRow);
+            this.$invalidateRow(row);
          }
       }
    };
@@ -1420,8 +1430,14 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
    {
       this.$tokenizeUpToRow(lastRow);
 
-      var prevToken = this.$findPreviousSignificantToken({row: lastRow, column: this.$getLine(lastRow).length},
-                                                         lastRow - 10);
+      var prevToken = this.$findPreviousSignificantToken(
+         {
+            row: lastRow,
+            column: this.$getLine(lastRow).length
+         },
+         lastRow - 10
+      );
+      
       if (prevToken
             && /\bparen\b/.test(prevToken.token.type)
             && /\)$/.test(prevToken.token.value))
@@ -1509,7 +1525,9 @@ var RCodeModel = function(doc, tokenizer, statePattern, codeBeginPattern) {
 
          var state = (row === 0) ? 'start' : this.$endStates[row-1];
          var lineTokens = this.$tokenizer.getLineTokens(this.$getLine(row), state);
-         if (!this.$statePattern || this.$statePattern.test(lineTokens.state) || this.$statePattern.test(state))
+         if (!this.$statePattern ||
+             this.$statePattern.test(lineTokens.state) ||
+             this.$statePattern.test(state))
             this.$tokens[row] = this.$filterWhitespaceAndComments(lineTokens.tokens);
          else
             this.$tokens[row] = [];

@@ -12,6 +12,7 @@
   <script type="text/javascript" src="../acesupport/acemode/r.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/r_code_model.js"></script>
   <script type="text/javascript" src="../acesupport/acemode/r_scope_tree.js"></script>
+  <script type="text/javascript" src="../tools/ace/build/src/keybinding-vim.js"></script>
   <style type="text/css">
   pre {
     margin-bottom: 30px;
@@ -24,8 +25,14 @@
 
 <h2>Interactive Tester</h2>
 <div id="editor" style="width: 600px; height: 200px; border: 1px solid #999"></div>
+<div id="testEditor" style="display: none;"></div>
 
-<h2 style="margin-top: 250px">Automated Tests</h2>
+<h2>Configure Editor</h2>
+<button onclick="require('mode/r_code_model').setVerticallyAlignFunctionArgs(!require('mode/r_code_model').getVerticallyAlignFunctionArgs())">Toggle Vertical Alignment</button>
+<button onclick="editor.getSession().reindent()">Reindent</button>
+<button onclick="editor.setKeyboardHandler(vim.handler);">Toggle Vim Mode</button>
+
+<h2 style="margin-top: 100">Automated Tests</h2>
 <p>Passed: <span id="passed"></span>, Failed: <span id="failed"></span></p>
 <ol id="testcontainer" style="display: none;">
 <li><pre data-expected="2">
@@ -268,30 +275,102 @@ x[1,
 </ol>
 
 <script type="text/javascript">
+var vim = require("ace/keyboard/vim");
 var RCodeModel = require('mode/r_code_model').RCodeModel;
 var Document = require('ace/document').Document;
 var RMode = require('mode/r').Mode;
+var EditSession = require("ace/edit_session").EditSession;
+var Range = require('ace/range').Range;
 require('mode/auto_brace_insert').setInsertMatching(true);
 
 var editor = ace.edit('editor');
 editor.renderer.setHScrollBarAlwaysVisible(false);
 editor.setHighlightActiveLine(false);
+editor.getSession().setTabSize(2);
+editor.getSession().setUseSoftTabs(true);
 var RMode = require('mode/r').Mode;
-editor.getSession().setMode(new RMode(false, editor.getSession().getDocument()));
-//editor.getSession().setUseSoftTabs(false);
+
+editor.getSession().setMode(
+  new RMode(false,
+            editor.getSession()));
+
+(function() {
+  
+  this.reindent = function(start, end) {
+    var mode = this.getMode();
+    if (!mode.getNextLineIndent)
+      return;
+    
+    if (typeof start === "undefined") {
+      start = 0;
+    }
+
+    if (typeof end === "undefined") {
+      end = this.getDocument().$lines.length - 1;
+    }
+      
+    for (var i = start; i <= end; i++) {
+
+      // First line is always unindented
+      if (i == 0) {
+        this.applyIndent(i, "");
+      }
+      else {
+        var state = this.getState(i-1);
+        if (state == 'qstring' || state == 'qqstring')
+          continue;
+
+        var line = this.getLine(i-1);
+        var newline = this.getLine(i);
+
+        var newIndent = mode.getNextLineIndent(state,
+                                               line,
+                                               this.getTabString(),
+                                               i-1,
+                                               true);
+
+        this.applyIndent(i, newIndent);
+        mode.autoOutdent(state, this, i);
+        
+      }
+    }
+  };
+  
+  this.applyIndent = function(lineNum, indent) {
+    var line = this.getLine(lineNum);
+      var matchLen = line.match(/^\s*/g)[0].length;
+      console.log(matchLen);
+      console.log(lineNum);
+    this.replace(new Range(lineNum, 0, lineNum, matchLen), indent);
+  };
+
+}).call(EditSession.prototype);
+
+
+// A test editor that is used for the indent tests
+testEditor = ace.edit('testEditor');
+testEditor.getSession().setMode(
+  new RMode(false, testEditor.getSession())
+);
+testEditor.getSession().setTabSize(2);
 
 function doIndentTest(el, state) {
-  var doc = new Document('');
-  var mode = new RMode(false, doc);
-  var rCodeModel = new RCodeModel(doc, mode.$tokenizer);
+  
+  var doc = testEditor.getSession().getDocument();
+  doc.$lines = new Array(1);
 
-  doc.insert({row:0, column:0}, (el.innerText || el.textContent).trimRight());
+  var codeModel = testEditor.getSession().getMode().codeModel;
+  codeModel.$removeRows(
+    0,
+    codeModel.$tokens.length
+  );
 
-  var indent = rCodeModel.getNextLineIndent(doc.getLength() - 1,
-                                            doc.getLine(doc.getLength() - 1),
-                                            "start",
-                                            "  ",
-                                            2);
+  testEditor.insert((el.innerText || el.textContent).trimRight());
+  testEditor.insert("\n");
+
+  var line = doc.$lines[doc.getLength() - 1];
+  var indent = line.match(/^(\s*)/)[1];
+
   el.appendChild(document.createTextNode(indent + "|"));
   var attrName = "data-expected"; 
   if (state.length > 0 && 
@@ -321,6 +400,7 @@ for (var i = 0; i < states.length; i++)
    // Set up the state to be tested
    require('mode/r_code_model').setVerticallyAlignFunctionArgs(
       states[i] === "vertical-args");
+
    // Clone the tests for the new state
    var testnode = container.cloneNode(true);
    var header = document.createElement("h2");
@@ -361,8 +441,8 @@ document.getElementById('failed').innerText = failed;
 
 session = editor.getSession();
 mode = session.getMode();
-model = mode.codeModel;
-scopes = model.$scopes;
+codeModel = mode.codeModel;
+scopes = codeModel.$scopes;
 
 </script>
 </body>

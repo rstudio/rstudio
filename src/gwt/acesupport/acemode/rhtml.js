@@ -27,11 +27,11 @@ var RHtmlHighlightRules = require("mode/rhtml_highlight_rules").RHtmlHighlightRu
 var SweaveBackgroundHighlighter = require("mode/sweave_background_highlighter").SweaveBackgroundHighlighter;
 var RCodeModel = require("mode/r_code_model").RCodeModel;
 
-var Mode = function(suppressHighlighting, doc, session) {
+var Mode = function(suppressHighlighting, session) {
    this.$session = session;
    this.$tokenizer = new Tokenizer(new RHtmlHighlightRules().getRules());
 
-   this.codeModel = new RCodeModel(doc, this.$tokenizer, /^r-/,
+   this.codeModel = new RCodeModel(session, this.$tokenizer, /^r-/,
                                    /^<!--\s*begin.rcode\s*(.*)/);
    this.foldingRules = this.codeModel;
    this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
@@ -53,9 +53,9 @@ oop.inherits(Mode, HtmlMode);
       return this.$session.getState(position.row).match(/^r-/) ? 'R' : 'HTML';
    };
 
-   this.getNextLineIndent = function(state, line, tab, tabSize, row)
+   this.getNextLineIndent = function(state, line, tab)
    {
-      return this.codeModel.getNextLineIndent(row, line, state, tab, tabSize);
+      return this.codeModel.getNextLineIndent(state, line, tab);
    };
 
 }).call(Mode.prototype);

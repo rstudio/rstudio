@@ -57,4 +57,23 @@ public interface FileIconResources extends ClientBundle
    ImageResource iconSourceViewer();
    ImageResource iconProfiler();
    ImageResource iconWord();
+   
+   // Ace modes
+   ImageResource iconClojure();
+   ImageResource iconCoffee();
+   ImageResource iconGitignore();
+   ImageResource iconGo();
+   ImageResource iconGroovy();
+   ImageResource iconHaskell();
+   ImageResource iconHaxe();
+   ImageResource iconJava();
+   ImageResource iconJulia();
+   ImageResource iconLisp();
+   ImageResource iconLua();
+   ImageResource iconMatlab();
+   ImageResource iconPerl();
+   ImageResource iconRuby();
+   ImageResource iconRust();
+   
+   
 }

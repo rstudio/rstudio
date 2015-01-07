@@ -32,16 +32,9 @@
 set -e
 
 if [ ! -d "./ace" ]; then
-    git clone git://github.com/rstudio/ace.git
+    git clone https://github.com/rstudio/ace.git
     cd ace
-    git remote add upstream git://github.com/ajaxorg/ace.git
-    cd ..
-fi
-
-if [ ! -d "./ace/node_modules" ]; then
-    cd ace
-    npm install uglify-js
-    npm install dryice
+    git remote add upstream https://github.com/ajaxorg/ace.git
     cd ..
 fi
 
@@ -54,51 +47,42 @@ git fetch origin
 git fetch upstream
 
 # Point this to the upstream commit that we've tested
-# NOTE: the following commits have been merged by upstream
-# so should be removed the next time we sync:
-#
-#  origin/patch/eclipse-selectedword
-#  origin/patch/blinking-cursor
-#  origin/patch/vim-ctrl-behavior
-#
-git checkout fc01cc624296c1b1be59b55ce03051fa29b5bd96
+# NOTE: This is a SHA1 for a commit after v1.1.8 release;
+# we take this to get better Vim support (e.g. block selection)
+git checkout ed5c38b7c87cece4de1acc17912aa3043dd0b11a
 
+# Make sure node packages are up to date
+npm install
+
+# Update any submodules in the repo
 git submodule update --init --recursive
 
 # Merge all the bugfix branches
 git merge \
-    origin/bugfix-webkit-paste2 \
-    origin/bugfix-updatefontsize2 \
-    origin/bugfix-active-line-back \
-    origin/patch-advanced-indent4 \
-    origin/patch/normalizeinput4 \
-    origin/bugfix/no-paste-event-on-indent \
-    origin/patch/build-matchingbraceoutdent3
-    
-git merge \
-    origin/patch/mousewheel3 \
-    origin/patch/consistent-gutter-width3 \
-    origin/patch/suppress-native-scroll \
-    origin/patch/build \
-    origin/patch/remove-webfont \
-    origin/patch/eclipse-selectedword \
-    origin/patch/emacs-vim-keybindings
+    origin/bugfix/token-column \
+    origin/bugfix/vim-vertical-block-eol \
+    origin/bugfix/dont-place-text-area-offscreen \
+    origin/patch/remove-webfont-2 \
+    origin/patch/other-modes \
+    -m "merge branches"
 
-git merge \
-    origin/patch/blinking-cursor \
-    origin/patch/vim-ctrl-behavior \
-    origin/patch/laggy-typing \
-    origin/bugfix/outdent-newline \
-    origin/bugfix/safari-fractional-cursor \
-    origin/feature/scrolling-compensation \
-    origin/bugfix/ie10-clipboard \
-    origin/bugfix/safari-8-copy
+## git merge \
+##     origin/bugfix-active-line-back \            # test printing (margin-layering; active line highlighting)
+
+## git merge \
+##     origin/bugfix/ie10-clipboard \              # test copy+paste in IE10 (probably okay)
 
 
+# Build and copy ace, ace-uncompressed to RStudio
 node ./Makefile.dryice.js normal
 node ./Makefile.dryice.js -m normal
+
 cp build/src/ace.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js
 cp build/src-min/ace.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace.js
+
+# Copy in the 'emacs', 'vim' keybindings
+cp build/src/keybinding-* ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/
+cp build/src-min/keybinding-* ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/
 
 stripUseStrict() {
     sed 's/"use strict";//g' "$1" > "$1.stripped"

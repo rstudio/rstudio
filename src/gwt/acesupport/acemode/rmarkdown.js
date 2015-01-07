@@ -21,17 +21,17 @@
 define("mode/rmarkdown", function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
-var MarkdownMode = require("mode/markdown").Mode;
+var MarkdownMode = require("ace/mode/markdown").Mode;
 var Tokenizer = require("ace/tokenizer").Tokenizer;
 var RMarkdownHighlightRules = require("mode/rmarkdown_highlight_rules").RMarkdownHighlightRules;
 var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
 var RMatchingBraceOutdent = require("mode/r_matching_brace_outdent").RMatchingBraceOutdent;
 var SweaveBackgroundHighlighter = require("mode/sweave_background_highlighter").SweaveBackgroundHighlighter;
 var RCodeModel = require("mode/r_code_model").RCodeModel;
-var MarkdownFoldMode = require("mode/markdown_folding").FoldMode;
+var MarkdownFoldMode = require("ace/mode/folding/markdown").FoldMode;
 
 
-var Mode = function(suppressHighlighting, doc, session) {
+var Mode = function(suppressHighlighting, session) {
    var that = this;
 
    this.$session = session;
@@ -41,7 +41,7 @@ var Mode = function(suppressHighlighting, doc, session) {
    this.$r_outdent = {};
    oop.implement(this.$r_outdent, RMatchingBraceOutdent);
 
-   this.codeModel = new RCodeModel(doc, this.$tokenizer, /^r-/,
+   this.codeModel = new RCodeModel(session, this.$tokenizer, /^r-/,
                                    /^(?:[ ]{4})?`{3,}\s*\{r(.*)\}\s*$/);
 
    var markdownFoldingRules = new MarkdownFoldMode();
@@ -62,7 +62,7 @@ var Mode = function(suppressHighlighting, doc, session) {
             return that.codeModel.getFoldWidgetRange(session, foldStyle, row);
       }
 
-   };   
+   };
 
    this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
          session,
@@ -73,7 +73,7 @@ var Mode = function(suppressHighlighting, doc, session) {
 oop.inherits(Mode, MarkdownMode);
 
 (function() {
-   
+
    this.insertChunkInfo = {
       value: "```{r}\n\n```\n",
       position: {row: 0, column: 5}
@@ -97,10 +97,10 @@ oop.inherits(Mode, MarkdownMode);
       return !state.match(/^r-/);
    }
 
-   this.getNextLineIndent = function(state, line, tab, tabSize, row)
+   this.getNextLineIndent = function(state, line, tab)
    {
       if (!this.inCppLanguageMode(state))
-         return this.codeModel.getNextLineIndent(row, line, state, tab, tabSize);
+         return this.codeModel.getNextLineIndent(state, line, tab);
       else {
          // from c_cpp getNextLineIndent
          var indent = this.$getIndent(line);
@@ -160,7 +160,7 @@ oop.inherits(Mode, MarkdownMode);
                     return {text: "\n" + match[1]};
                 }
             }
-        
+
             else if ((text === "R") && this.inCppLanguageMode(state)) {
                 // If newline to start and embedded R chunk complete the chunk
                 var pos = editor.getSelectionRange().start;

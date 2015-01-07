@@ -204,8 +204,20 @@ public class AceEditor implements DocDisplay,
             {
                public void onLoaded()
                {
-                  if (command != null)
-                     command.execute();
+                  vimLoader_.addCallback(new Callback()
+                  {
+                     public void onLoaded()
+                     {
+                        emacsLoader_.addCallback(new Callback()
+                        {
+                           public void onLoaded()
+                           {
+                              if (command != null)
+                                 command.execute();
+                           }
+                        });
+                     }
+                  });
                }
             });
          }
@@ -2003,9 +2015,15 @@ public class AceEditor implements DocDisplay,
    private Integer lineHighlightMarkerId_ = null;
    private Integer lineDebugMarkerId_ = null;
    private Integer executionLine_ = null;
+   
    private static final ExternalJavaScriptLoader aceLoader_ =
          new ExternalJavaScriptLoader(AceResources.INSTANCE.acejs().getSafeUri().asString());
    private static final ExternalJavaScriptLoader aceSupportLoader_ =
          new ExternalJavaScriptLoader(AceResources.INSTANCE.acesupportjs().getSafeUri().asString());
+   private static final ExternalJavaScriptLoader vimLoader_ =
+         new ExternalJavaScriptLoader(AceResources.INSTANCE.keybindingVimJs().getSafeUri().asString());
+   private static final ExternalJavaScriptLoader emacsLoader_ =
+         new ExternalJavaScriptLoader(AceResources.INSTANCE.keybindingEmacsJs().getSafeUri().asString());
+   
    private boolean popupVisible_;
 }
