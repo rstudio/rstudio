@@ -49,7 +49,6 @@
  * ***** END LICENSE BLOCK ***** */
 
 define("mode/markdown_folding", function(require, exports, module) {
-"use strict";
 
 var oop = require("ace/lib/oop");
 var BaseFoldMode = require("ace/mode/folding/fold_mode").FoldMode;
