@@ -68,11 +68,23 @@ public class EditorLanguage
          "ace/mode/yaml", true);
    public static final EditorLanguage LANG_XML = new EditorLanguage(
          "ace/mode/xml", true);
-   public static final EditorLanguage LANG_GROOVY = new EditorLanguage(
-         "ace/mode/groovy", true);
-   public static final EditorLanguage LANG_GO = new EditorLanguage(
-         "ace/mode/golang", true);
-
+   
+   public static final EditorLanguage LANG_CLOJURE = new EditorLanguage("ace/mode/clojure", true);
+   public static final EditorLanguage LANG_COFFEE = new EditorLanguage("ace/mode/coffee", true);
+   public static final EditorLanguage LANG_GITIGNORE = new EditorLanguage("ace/mode/gitignore", true);
+   public static final EditorLanguage LANG_GO = new EditorLanguage("ace/mode/golang", true);
+   public static final EditorLanguage LANG_GROOVY = new EditorLanguage("ace/mode/groovy", true);
+   public static final EditorLanguage LANG_HASKELL = new EditorLanguage("ace/mode/haskell", true);
+   public static final EditorLanguage LANG_HAXE = new EditorLanguage("ace/mode/haxe", true);
+   public static final EditorLanguage LANG_JAVA = new EditorLanguage("ace/mode/java", true);
+   public static final EditorLanguage LANG_JULIA = new EditorLanguage("ace/mode/julia", true);
+   public static final EditorLanguage LANG_LISP = new EditorLanguage("ace/mode/lisp", true);
+   public static final EditorLanguage LANG_LUA = new EditorLanguage("ace/mode/lua", true);
+   public static final EditorLanguage LANG_MATLAB = new EditorLanguage("ace/mode/matlab", true);
+   public static final EditorLanguage LANG_PERL = new EditorLanguage("ace/mode/perl", true);
+   public static final EditorLanguage LANG_RUBY = new EditorLanguage("ace/mode/ruby", true);
+   public static final EditorLanguage LANG_RUST = new EditorLanguage("ace/mode/rust", true);
+ 
    /**
     *
     * @param parserName The name of the parser--it's found at the top of the

@@ -150,15 +150,80 @@ public class FileTypeRegistry
    public static final TextFileType HPP = new CppFileType("hpp", ".hpp", ICONS.iconHpp(), true);
    public static final TextFileType CPP = new CppFileType("cpp", ".cpp", ICONS.iconCpp(), true);
    
-   public static final TextFileType GROOVY =
-         new TextFileType("groovy", "Groovy", EditorLanguage.LANG_GROOVY,
-               ".groovy", ICONS.iconGroovy(), false, false, false, false, false,
-                          false, false, false, false, false, false, false);
+   public static final TextFileType CLOJURE = 
+         new TextFileType("clojure", "Clojure", EditorLanguage.LANG_CLOJURE, ".clojure", ICONS.iconClojure(),
+               false, false, false, false, false,
+               false, false, false, false, false, false, false);
    
-   public static final TextFileType GO =
+   public static final TextFileType COFFEE = 
+         new TextFileType("coffee", "Coffee", EditorLanguage.LANG_COFFEE, ".coffee", ICONS.iconCoffee(),
+               false, false, false, false, false,
+               false, false, false, false, false, false, false);
+   
+   public static final TextFileType GITIGNORE = 
+         new TextFileType("gitignore", "Gitignore", EditorLanguage.LANG_GITIGNORE, ".gitignore", ICONS.iconGitignore(),
+               false, false, false, false, false,
+               false, false, false, false, false, false, false);
+   
+   public static final TextFileType GO = 
          new TextFileType("go", "Go", EditorLanguage.LANG_GO, ".go", ICONS.iconGo(),
                false, false, false, false, false,
                false, false, false, false, false, false, false);
+   
+   public static final TextFileType GROOVY = 
+         new TextFileType("groovy", "Groovy", EditorLanguage.LANG_GROOVY, ".groovy", ICONS.iconGroovy(),
+               false, false, false, false, false,
+               false, false, false, false, false, false, false);
+   
+   public static final TextFileType HASKELL = 
+         new TextFileType("haskell", "Haskell", EditorLanguage.LANG_HASKELL, ".haskell", ICONS.iconHaskell(),
+               false, false, false, false, false,
+               false, false, false, false, false, false, false);
+   
+   public static final TextFileType HAXE = 
+         new TextFileType("haxe", "Haxe", EditorLanguage.LANG_HAXE, ".haxe", ICONS.iconHaxe(),
+               false, false, false, false, false,
+               false, false, false, false, false, false, false);
+   
+   public static final TextFileType JAVA = 
+         new TextFileType("java", "Java", EditorLanguage.LANG_JAVA, ".java", ICONS.iconJava(),
+               false, false, false, false, false,
+               false, false, false, false, false, false, false);
+   
+   public static final TextFileType JULIA = 
+         new TextFileType("julia", "Julia", EditorLanguage.LANG_JULIA, ".julia", ICONS.iconJulia(),
+               false, false, false, false, false,
+               false, false, false, false, false, false, false);
+   
+   public static final TextFileType LISP = 
+         new TextFileType("lisp", "Lisp", EditorLanguage.LANG_LISP, ".lisp", ICONS.iconLisp(),
+               false, false, false, false, false,
+               false, false, false, false, false, false, false);
+   
+   public static final TextFileType LUA = 
+         new TextFileType("lua", "Lua", EditorLanguage.LANG_LUA, ".lua", ICONS.iconLua(),
+               false, false, false, false, false,
+               false, false, false, false, false, false, false);
+   
+   public static final TextFileType MATLAB = 
+         new TextFileType("matlab", "Matlab", EditorLanguage.LANG_MATLAB, ".matlab", ICONS.iconMatlab(),
+               false, false, false, false, false,
+               false, false, false, false, false, false, false);
+   
+   public static final TextFileType PERL = 
+         new TextFileType("perl", "Perl", EditorLanguage.LANG_PERL, ".perl", ICONS.iconPerl(),
+               false, false, false, false, false,
+               false, false, false, false, false, false, false);
+   
+   public static final TextFileType RUBY = 
+         new TextFileType("ruby", "Ruby", EditorLanguage.LANG_RUBY, ".ruby", ICONS.iconRuby(),
+               false, false, false, false, false,
+               false, false, false, false, false, false, false);
+   
+   public static final TextFileType RUST = 
+         new TextFileType("rust", "Rust", EditorLanguage.LANG_RUST, ".rust", ICONS.iconRust(),
+               false, false, false, false, false,
+         false, false, false, false, false, false, false);
    
    public static final RDataType RDATA = new RDataType();
    public static final RProjectType RPROJECT = new RProjectType();
@@ -264,8 +329,22 @@ public class FileTypeRegistry
       register("*.yml", YAML, icons.iconYaml());
       register("*.yaml", YAML, icons.iconYaml());
       register("*.xml", XML, icons.iconXml());
-      register("*.groovy", GROOVY, icons.iconGroovy());
+      
+      register("*.clojure", CLOJURE, icons.iconClojure());
+      register("*.coffee", COFFEE, icons.iconCoffee());
+      register(".gitignore", GITIGNORE, icons.iconGitignore());
       register("*.go", GO, icons.iconGo());
+      register("*.groovy", GROOVY, icons.iconGroovy());
+      register("*.haskell", HASKELL, icons.iconHaskell());
+      register("*.haxe", HAXE, icons.iconHaxe());
+      register("*.java", JAVA, icons.iconJava());
+      register("*.julia", JULIA, icons.iconJulia());
+      register("*.lisp", LISP, icons.iconLisp());
+      register("*.lua", LUA, icons.iconLua());
+      register("*.matlab", MATLAB, icons.iconMatlab());
+      register("*.perl", PERL, icons.iconPerl());
+      register("*.ruby", RUBY, icons.iconRuby());
+      register("*.rust", RUST, icons.iconRust());
 
       registerIcon(".jpg", icons.iconPng());
       registerIcon(".jpeg", icons.iconPng());
