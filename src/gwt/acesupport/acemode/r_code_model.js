@@ -1036,7 +1036,7 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
       return this.$getIndent(this.$getLine(pos.row));
    };
 
-   // NOTE: lastRow is used purely for testing. If it's non-numeric then we need to
+   // NOTE: 'row' is used purely for testing. If it's non-numeric then we need to
    // set it with the current cursor position.
    this.getNextLineIndent = function(state, line, tab, row)
    {
@@ -1211,7 +1211,7 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
                      {
                         row: openBracePos.row,
                         column: openBracePos.column + 1
-                     }, lastRow);
+                     }, row);
                }
 
                if (!nextTokenPos)
@@ -1267,7 +1267,7 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
                   // TODO: Perhaps we can skip the above few lines of code if
                   // there are other lines present
                   var thisIndent;
-                  for (var i = nextTokenPos.row + 1; i <= lastRow; i++) {
+                  for (var i = nextTokenPos.row + 1; i <= row; i++) {
                      // If a line contains only whitespace, it doesn't count
                      if (!/[^\s]/.test(this.$getLine(i)))
                         continue;
@@ -1467,7 +1467,7 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
          // All else fails -- just indent based on the first token.
          var firstToken = this.$findNextSignificantToken(
             {row: 0, column: 0},
-            lastRow
+            row
          );
          
          if (firstToken)
