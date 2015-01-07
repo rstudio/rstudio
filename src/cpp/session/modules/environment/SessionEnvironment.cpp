@@ -391,11 +391,18 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
          varFrame["is_error_handler"] = isErrorHandlerContext(pRContext);
          varFrame["is_hidden"] = isDebugHiddenContext(pRContext);
 
+         // attempt to find the refs for the source that invoked this function;
+         // use our own refs otherwise
          std::map<SEXP,RCNTXT*>::iterator srcCtx = envSrcrefCtx.find(pRContext->cloenv);
          if (srcCtx != envSrcrefCtx.end())
             pSrcContext = srcCtx->second;
          else
             pSrcContext = pRContext;
+
+         // mark this as a source-equivalent function if it's evaluating user
+         // code into the global environment
+         varFrame["is_source_equiv"] = pRContext->cloenv == R_GlobalEnv && 
+            isValidSrcref(pSrcContext->srcref);
 
          std::string filename;
          error = getFileNameFromContext(pSrcContext, &filename);
