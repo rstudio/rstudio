@@ -272,6 +272,86 @@ x[1,
   3] <- 1
 </pre></li>
 
+<li><pre data-expected="4">
+if (foo) {
+  x <-
+</pre></li>
+
+<li><pre data-expected="2">
+x <-
+  y <-
+</pre></li>
+
+<li><pre data-expected="2">
+x <-
+  1 +
+</pre></li>
+
+<li><pre data-expected="4">
+{
+  x <-
+</pre></li>
+
+<li><pre data-expected="4">
+{
+  x <-
+    1 +
+</pre></li>
+
+<li><pre data-expected="4">
+plot(
+  x +
+</pre></li>
+
+<li><pre data-expected="2">
+foo(bar, function(x)
+{
+</pre></li>
+
+<li><pre data-expected="0">
+if (length(foo))
+    x <- bar()
+</pre></li>
+
+<li><pre data-expected="2">
+if () {}
+foo <- foo &
+</pre></li>
+
+<li><pre data-expected="0">
+foo <- function()
+  function() {}
+</pre></li>
+
+<li><pre data-expected="0">
+foo <- function(x, y)
+   if (x) y else x
+</pre></li>
+
+<li><pre data-expected="0">
+if ()
+  x$y <- 1
+</pre></li>
+
+<li><pre data-expected="0">
+while ()
+  x[
+    1, 2, 3
+  ] <- 1
+</pre></li>
+
+<li><pre data-expected="4">
+{
+  else {}
+  foo$bar <- x &
+</pre></li>
+
+<li><pre data-expected="4">
+{
+  x %in%
+</pre></li>
+
+
 </ol>
 
 <script type="text/javascript">

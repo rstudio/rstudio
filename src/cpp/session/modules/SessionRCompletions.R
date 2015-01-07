@@ -82,7 +82,7 @@ assign(x = ".rs.acCompletionTypes",
    else if (isS4(object))
    {
       if (inherits(object, "standardGeneric") ||
-             inherits(object, "nonstandardGenericFunction"))
+          inherits(object, "nonstandardGenericFunction"))
          .rs.acCompletionTypes$S4_GENERIC
       else if (inherits(object, "MethodDefinition"))
          .rs.acCompletionTypes$S4_METHOD
@@ -1195,7 +1195,7 @@ assign(x = ".rs.acCompletionTypes",
          if (identical(currentEnv, encounteredEnvs[[i]]))
             return(.rs.emptyCompletions())
       }
-         
+      
       objects <- objects(currentEnv, all.names = TRUE)
       
       completions <- c(completions, objects)
@@ -1403,8 +1403,8 @@ assign(x = ".rs.acCompletionTypes",
    
    # data
    if (.rs.acContextTypes$FUNCTION %in% type &&
-          string[[1]] == "data" &&
-          numCommas[[1]] == 0)
+       string[[1]] == "data" &&
+       numCommas[[1]] == 0)
       return(.rs.getCompletionsData(token))
    
    # package name
@@ -1472,7 +1472,7 @@ assign(x = ".rs.acCompletionTypes",
    
    # library, require, requireNamespace, loadNamespace
    if (string[[1]] %in% c("library", "require", "requireNamespace") &&
-          numCommas[[1]] == 0)
+       numCommas[[1]] == 0)
    {
       return(.rs.getCompletionsPackages(token, excludeOtherCompletions = TRUE))
    }
@@ -1515,8 +1515,8 @@ assign(x = ".rs.acCompletionTypes",
    ## Completions for server.r (from ui.r)
    if (type[[1]] %in% c(.rs.acContextTypes$DOLLAR,
                         .rs.acContextTypes$DOUBLE_BRACKET) &&
-          tolower(basename(filePath)) == "server.r" &&
-          string[[1]] %in% c("input", "output"))
+       tolower(basename(filePath)) == "server.r" &&
+       string[[1]] %in% c("input", "output"))
    {
       completions <- .rs.getCompletionsFromShinyUI(token, filePath, string[[1]], type[[1]])
       if (!is.null(completions))
@@ -1525,8 +1525,8 @@ assign(x = ".rs.acCompletionTypes",
    
    ## Completions for server.r, on session
    if (type[[1]] == .rs.acContextTypes$DOLLAR &&
-          tolower(basename(filePath)) == "server.r" &&
-          string[[1]] == "session")
+       tolower(basename(filePath)) == "server.r" &&
+       string[[1]] == "session")
    {
       completions <- rs.getCompletionsShinySession(token)
       if (!is.null(completions))
@@ -1535,9 +1535,9 @@ assign(x = ".rs.acCompletionTypes",
    
    ## Completions for ui.r (from server.r)
    if (type[[1]] == .rs.acContextTypes$FUNCTION &&
-          tolower(basename(filePath)) == "ui.r" &&
-          numCommas[[1]] == 0 &&
-          (.rs.endsWith(string[[1]], "Input") || .rs.endsWith(string[[1]], "Output")))
+       tolower(basename(filePath)) == "ui.r" &&
+       numCommas[[1]] == 0 &&
+       (.rs.endsWith(string[[1]], "Input") || .rs.endsWith(string[[1]], "Output")))
    {
       completions <- .rs.getCompletionsFromShinyServer(token, filePath, string[[1]], type[[1]])
       if (!is.null(completions))
@@ -1631,11 +1631,11 @@ assign(x = ".rs.acCompletionTypes",
    
    # get completions from the search path for the 'generic' contexts
    if (token != "" &&
-          type[[1]] %in% c(.rs.acContextTypes$UNKNOWN,
-                           .rs.acContextTypes$FUNCTION,
-                           .rs.acContextTypes$ARGUMENT,
-                           .rs.acContextTypes$SINGLE_BRACKET,
-                           .rs.acContextTypes$DOUBLE_BRACKET))
+       type[[1]] %in% c(.rs.acContextTypes$UNKNOWN,
+                        .rs.acContextTypes$FUNCTION,
+                        .rs.acContextTypes$ARGUMENT,
+                        .rs.acContextTypes$SINGLE_BRACKET,
+                        .rs.acContextTypes$DOUBLE_BRACKET))
    {
       completions <- Reduce(.rs.appendCompletions, list(
          completions,
@@ -2060,7 +2060,7 @@ assign(x = ".rs.acCompletionTypes",
    info <- file.info(file)
    mtime <- info[1, "mtime"]
    if (identical(mtime, .rs.get(fileCacheName)) &&
-          !is.null(.rs.get(completionsCacheName)))
+       !is.null(.rs.get(completionsCacheName)))
    {
       return(.rs.get(completionsCacheName))
    }
@@ -2151,7 +2151,7 @@ assign(x = ".rs.acCompletionTypes",
    info <- file.info(file)
    mtime <- info[1, "mtime"]
    if (identical(mtime, .rs.get(fileCacheName)) &&
-          !is.null(.rs.get(completionsCacheName)))
+       !is.null(.rs.get(completionsCacheName)))
    {
       return(.rs.get(completionsCacheName))
    }
@@ -2414,7 +2414,7 @@ assign(x = ".rs.acCompletionTypes",
       # Bail if we couldn't find anything
       if (is.null(pkg))
          return(.rs.emptyCompletions())
-         
+      
       ## Make a dummy function to match a call against
       argsText <- paste(args, collapse = ", ")
       dummyFunction <- tryCatch(
