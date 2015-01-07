@@ -54,7 +54,9 @@
     col_max <- 0
     col_vals <- ""
     col_search_type <- ""
-    if (length(x[[idx]]) > 0)
+    # ensure that the column contains some scalar values we can examine 
+    # (treat vector-valued columns as of unknown type)
+    if (length(x[[idx]]) > 0 && length(x[1,idx]) == 1)
     {
       val <- x[1,idx]
       if (is.factor(val))
@@ -114,8 +116,19 @@
 .rs.addFunction("toDataFrame", function(x, name) {
   if (is.data.frame(x))
     return(x)
-  frame <- as.data.frame(x)
-  names(frame)[names(frame) == "x"] <- name
+  frame <- NULL
+  # attempt to coerce to a data frame--this can throw errors in the case where
+  # we're watching a named object in an environment and the user replaces an
+  # object that can be coerced to a data frame with one that cannot
+  tryCatch(
+  {
+    frame <- as.data.frame(x)
+  },
+  error = function(e)
+  {
+  })
+  if (!is.null(frame))
+    names(frame)[names(frame) == "x"] <- name
   frame
 })
 
@@ -178,7 +191,19 @@
   # apply sort
   if (col > 0 && length(x[[col]]) > 0)
   {
-    x <- as.data.frame(x[order(x[[col]], decreasing = identical(dir, "desc")),])
+    if (is.list(x[1,col]) || length(x[1,col]) > 1)
+    {
+      # extract the first value from each cell for ordering (handle
+      # vector-valued columns gracefully)
+      x <- as.data.frame(x[order(vapply(x[[col]], `[`, 0, 1), 
+                                 decreasing = identical(dir, "desc")),])
+    }
+    else
+    {
+      # skip the expensive vapply when we're dealing with scalars
+      x <- as.data.frame(x[order(x[[col]], 
+                                 decreasing = identical(dir, "desc")),])
+    }
   }
 
   return(x)
@@ -214,12 +239,21 @@
     # if the object exists in this environment, return it (avoid creating a
     # temporary here)
     if (exists(objName, where = env, inherits = FALSE))
-      return(.rs.toDataFrame(get(objName, envir = env, inherits = FALSE), objName))
+    {
+      # attempt to coerce the object to a data frame--note that a null return
+      # value here may indicate that the object exists in the environment but
+      # is no longer a data frame (we want to fall back on the cache in this
+      # case)
+      dataFrame <- .rs.toDataFrame(get(objName, envir = env, inherits = FALSE), objName)
+      if (!is.null(dataFrame)) 
+        return(dataFrame)
+    }
   }
 
-  # if the object exists in the cache environment, return it
+  # if the object exists in the cache environment, return it. Objects
+  # in the cache environment have already been coerced to data frames.
   if (exists(cacheKey, where = .rs.CachedDataEnv, inherits = FALSE))
-    return(.rs.toDataFrame(get(cacheKey, envir = .rs.CachedDataEnv, inherits = FALSE), objName))
+    return(get(cacheKey, envir = .rs.CachedDataEnv, inherits = FALSE))
 
   # perhaps the object has been saved? attempt to load it into the
   # cached environment
@@ -228,7 +262,7 @@
   { 
     load(cacheFile, envir = .rs.CachedDataEnv)
     if (exists(cacheKey, where = .rs.CachedDataEnv, inherits = FALSE))
-      return(.rs.toDataFrame(get(cacheKey, envir = .rs.CachedDataEnv, inherits = FALSE), objName))
+      return(get(cacheKey, envir = .rs.CachedDataEnv, inherits = FALSE))
   }
   
   # failure
@@ -281,7 +315,7 @@
    as.data.frame(x)
 
    # save a copy into the cached environment
-   cacheKey <- .rs.addCachedData(force(x))
+   cacheKey <- .rs.addCachedData(force(x), name)
    
    # call viewData 
    invisible(.Call("rs_viewData", x, title, name, env, cacheKey))
@@ -298,16 +332,19 @@
     }
 })
 
-.rs.addFunction("addCachedData", function(obj) 
+.rs.addFunction("addCachedData", function(obj, objName) 
 {
    cacheKey <- paste(sample(c(letters, 0:9), 10, replace = TRUE), collapse = "")
-   .rs.assignCachedData(cacheKey, obj)
+   .rs.assignCachedData(cacheKey, obj, objName)
    cacheKey
 })
 
-.rs.addFunction("assignCachedData", function(cacheKey, obj) 
+.rs.addFunction("assignCachedData", function(cacheKey, obj, objName) 
 {
-   assign(cacheKey, obj, .rs.CachedDataEnv)
+   # coerce to data frame before assigning, and don't assign if we can't coerce
+   frame <- .rs.toDataFrame(obj, objName)
+   if (!is.null(frame))
+      assign(cacheKey, obj, .rs.CachedDataEnv)
 })
 
 .rs.addFunction("removeCachedData", function(cacheKey, cacheDir)

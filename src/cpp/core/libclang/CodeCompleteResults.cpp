@@ -138,7 +138,7 @@ CodeCompleteResults:: ~CodeCompleteResults()
    try
    {
       if (!empty())
-         clang().disposeCodeCompleteResults(results());
+         clang().disposeCodeCompleteResults(pResults_);
    }
    catch(...)
    {
@@ -147,29 +147,30 @@ CodeCompleteResults:: ~CodeCompleteResults()
 
 void CodeCompleteResults::sort()
 {
-   clang().sortCodeCompletionResults(results()->Results,
-                                     results()->NumResults);
+   clang().sortCodeCompletionResults(pResults_->Results,
+                                     pResults_->NumResults);
 }
 
 CodeCompleteResult CodeCompleteResults::getResult(unsigned index) const
 {
-   return CodeCompleteResult(results()->Results[index]);
+   return CodeCompleteResult(pResults_->Results[index]);
 }
 
 unsigned CodeCompleteResults::getNumDiagnostics() const
 {
-   return clang().codeCompleteGetNumDiagnostics(results());
+   return clang().codeCompleteGetNumDiagnostics(pResults_);
 }
 
-Diagnostic CodeCompleteResults::getDiagnostic(unsigned index) const
+boost::shared_ptr<Diagnostic> CodeCompleteResults::getDiagnostic(
+                                                         unsigned index) const
 {
-   CXDiagnostic cxDiag = clang().codeCompleteGetDiagnostic(results(), index);
-   return Diagnostic(cxDiag);
+   CXDiagnostic cxDiag = clang().codeCompleteGetDiagnostic(pResults_, index);
+   return boost::shared_ptr<Diagnostic>(new Diagnostic(cxDiag));
 }
 
 unsigned long long CodeCompleteResults::getContexts() const
 {
-   return clang().codeCompleteGetContexts(results());
+   return clang().codeCompleteGetContexts(pResults_);
 }
 
 

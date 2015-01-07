@@ -206,9 +206,6 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
       ("r-session-library",
          value<std::string>(&sessionLibraryPath_)->default_value("R/library"),
          "R library path")
-      ("r-session-packages",
-         value<std::string>(&sessionPackagesPath_)->default_value("R/packages"),
-         "R packages path")
       ("r-session-package-archives",
           value<std::string>(&sessionPackageArchivesPath_)->default_value("R/packages"),
          "R package archives path")
@@ -423,7 +420,6 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    resolvePath(resourcePath, &coreRSourcePath_);
    resolvePath(resourcePath, &modulesRSourcePath_);
    resolvePath(resourcePath, &sessionLibraryPath_);
-   resolvePath(resourcePath, &sessionPackagesPath_);
    resolvePath(resourcePath, &sessionPackageArchivesPath_);
    resolvePostbackPath(resourcePath, &rpostbackPath_);
 #ifdef _WIN32

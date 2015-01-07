@@ -113,8 +113,14 @@ public class CompletionRequester
       return absolutePath.substring(absolutePath.lastIndexOf('/') + 1);
    }
    
-   private CompletionResult narrow(String token,
-                                   String diff,
+   private boolean filterStartsWithDot(String item,
+                                       String token)
+   {
+      return !(!token.startsWith(".") && item.startsWith("."));
+   }
+   
+   private CompletionResult narrow(final String token,
+                                   final String diff,
                                    CompletionResult cachedResult)
    {
       ArrayList<QualifiedName> newCompletions = new ArrayList<QualifiedName>();
@@ -127,8 +133,7 @@ public class CompletionRequester
       // trailing slashes)
       
       // Transform the token once beforehand for completions.
-      final String tokenLower = token.toLowerCase();
-      final String tokenLowerSub = token.toLowerCase().substring(
+      final String tokenSub = token.substring(
             token.lastIndexOf('/') + 1);
       
       for (QualifiedName qname : cachedResult.completions)
@@ -136,13 +141,12 @@ public class CompletionRequester
          // File types are narrowed only by the file name
          if (RCompletionType.isFileType(qname.type))
          {
-            if (StringUtil.isSubsequence(basename(qname.name), tokenLowerSub, true))
-            {
+            if (StringUtil.isSubsequence(basename(qname.name), tokenSub, true))
                newCompletions.add(qname);
-            }
          }
          else
-            if (StringUtil.isSubsequence(qname.name, token, true))
+            if (StringUtil.isSubsequence(qname.name, token, true) &&
+                filterStartsWithDot(qname.name, token))
                newCompletions.add(qname) ;
       }
       
@@ -152,23 +156,23 @@ public class CompletionRequester
          public int compare(QualifiedName lhs,
                             QualifiedName rhs)
          {
-            // Keep argument listings at the top
-            if (lhs.type != rhs.type)
-               return lhs.type < rhs.type ? -1 : 1;
-            
             int lhsScore;
             if (RCompletionType.isFileType(lhs.type))
                lhsScore = CodeSearchOracle.scoreMatch(
-                     basename(lhs.name).toLowerCase(), tokenLowerSub, true);
+                     basename(lhs.name), tokenSub, true);
             else
-               lhsScore = CodeSearchOracle.scoreMatch(lhs.name.toLowerCase(), tokenLower, false);
+               lhsScore = CodeSearchOracle.scoreMatch(lhs.name, token, false);
             
             int rhsScore;
             if (RCompletionType.isFileType(rhs.type))
                rhsScore = CodeSearchOracle.scoreMatch(
-                     basename(rhs.name).toLowerCase(), tokenLowerSub, true);
+                     basename(rhs.name), tokenSub, true);
             else
-               rhsScore = CodeSearchOracle.scoreMatch(rhs.name.toLowerCase(), tokenLower, false);
+               rhsScore = CodeSearchOracle.scoreMatch(rhs.name, token, false);
+            
+            // Place arguments higher (give less penalty)
+            if (lhs.type == RCompletionType.ARGUMENT) lhsScore -= 3;
+            if (rhs.type == RCompletionType.ARGUMENT) rhsScore -= 3;
 
             if (lhsScore == rhsScore)
                return lhs.name.length() - rhs.name.length();

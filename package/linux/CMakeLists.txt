@@ -84,11 +84,22 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
    include(CMakeOverlay.txt)
 endif()
 
-# dynamically configured debian control scripts
+# dynamically configured debian control scripts--process to temporary files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/debian-control/${DEBIAN_POSTINST}
-               ${CMAKE_CURRENT_BINARY_DIR}/debian-control/postinst)
+               ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/postinst)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/debian-control/${DEBIAN_POSTRM}
-               ${CMAKE_CURRENT_BINARY_DIR}/debian-control/postrm)
+               ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/postrm)
+
+# Lintian insists on 0755 permissions on postinst and postrm files, but by
+# default CMake just copies the permissions set on the original (*.in) files,
+# which can change when those files are created/altered by source control. We
+# set 0755 manually on these files to avoid any dependencies on particular
+# permissions bits on the source files.
+file(COPY ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/postinst
+          ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/postrm
+          DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/debian-control
+          FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
+          GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 
 set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_BINARY_DIR}/debian-control/postinst;${CMAKE_CURRENT_BINARY_DIR}/debian-control/postrm")
 

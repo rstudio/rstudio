@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# create directory to host uncompressed dpkg
+mkdir tmp_deb
+
+# extract contents and remove original package
+echo Extracting $1 to correct permissions...
+dpkg-deb -x $1 tmp_deb
+dpkg-deb --control $1 tmp_deb/DEBIAN
+rm $1
+
+# fix permissions on md5sums 
+chmod 0644 tmp_deb/DEBIAN/md5sums
+
+# repackage to original file
+echo Repackaging $1...
+fakeroot dpkg -b tmp_deb $1
+
+# clean up
+rm -rf tmp_deb
+

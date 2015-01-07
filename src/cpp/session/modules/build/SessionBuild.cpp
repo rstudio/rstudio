@@ -348,6 +348,18 @@ private:
       boost::algorithm::split(roclets,
                               projectConfig().packageRoxygenize,
                               boost::algorithm::is_any_of(","));
+
+      // remove vignette roclet if we don't have the requisite roxygen2 version
+      bool haveVignetteRoclet = module_context::isPackageVersionInstalled(
+                                                   "roxygen2", "4.1.0.9001");
+      if (!haveVignetteRoclet)
+      {
+         std::vector<std::string>::iterator it =
+                      std::find(roclets.begin(), roclets.end(), "vignette");
+         if (it != roclets.end())
+            roclets.erase(it);
+      }
+
       BOOST_FOREACH(std::string& roclet, roclets)
       {
          roclet = "'" + roclet + "'";

@@ -191,6 +191,37 @@ SEXP rs_rstudioProgramMode()
    return r::sexp::create(session::options().programMode(), &rProtect);
 }
 
+// get version
+SEXP rs_rstudioVersion()
+{
+   r::sexp::Protect rProtect;
+   return r::sexp::create(std::string(RSTUDIO_VERSION), &rProtect);
+}
+
+// get citation
+SEXP rs_rstudioCitation()
+{
+   FilePath resPath = session::options().rResourcesPath();
+   FilePath citationPath = resPath.childPath("CITATION");
+
+   SEXP citationSEXP;
+   r::sexp::Protect rProtect;
+   Error error = r::exec::RFunction("utils:::readCitationFile",
+                                    citationPath.absolutePath())
+                                                   .call(&citationSEXP,
+                                                         &rProtect);
+
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_NilValue;
+   }
+   else
+   {
+      return citationSEXP;
+   }
+}
+
 // ensure file hidden
 SEXP rs_ensureFileHidden(SEXP fileSEXP)
 {
@@ -1786,6 +1817,18 @@ Error initialize()
             "rs_packageNameForSourceFile",
             (DL_FUNC) rs_packageNameForSourceFile,
             1);
+
+   // register rs_rstudioVersion
+   r::routines::registerCallMethod(
+            "rs_rstudioVersion",
+            (DL_FUNC) rs_rstudioVersion,
+            0);
+
+   // regsiter rs_rstudioCitation
+   r::routines::registerCallMethod(
+            "rs_rstudioCitation",
+            (DL_FUNC) rs_rstudioCitation,
+            0);
    
    // initialize monitored scratch dir
    initializeMonitoredUserScratchDir();

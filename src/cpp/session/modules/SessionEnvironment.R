@@ -44,10 +44,11 @@
             return (paste(.rs.getSingleClass(val), " (empty)"))
          if (length(val) == 1)
          {
-            if (nchar(val) < 1024)
-                return (deparse(val))
+            quotedVal <- deparse(val)
+            if (nchar(quotedVal) < 1024)
+                return (quotedVal)
             else
-                return (paste(substr(val, 1, 1024), " ..."))
+                return (paste(substr(quotedVal, 1, 1024), " ..."))
          }
          else if (length(val) > 1)
             return (.rs.valueFromStr(val))

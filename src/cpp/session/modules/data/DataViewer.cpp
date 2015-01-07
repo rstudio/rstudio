@@ -865,7 +865,8 @@ void onDetectChanges(module_context::ChangeSource source)
 
          // replace cached copy (if we have something to replace it with)
          if (sexp != NULL)
-            r::exec::RFunction(".rs.assignCachedData", i->first, sexp).call();
+            r::exec::RFunction(".rs.assignCachedData", 
+                  i->first, sexp, i->second.objName).call();
 
          // emit client event
          json::Object changed;

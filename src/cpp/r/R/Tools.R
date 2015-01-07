@@ -37,6 +37,13 @@ assign( envir = .rs.Env, ".rs.addGlobalFunction", function(name, FN)
    environment(.rs.Env[[name]]) <- .rs.Env
 })
 
+# add an rpc handler to the tools:rstudio environment
+.rs.addFunction( "addApiFunction", function(name, FN)
+{
+   fullName = paste("api.", name, sep="")
+   .rs.addFunction(fullName, FN)
+})
+
 assign( envir = .rs.Env, ".rs.setVar", function(name, var)
 { 
    fullName = paste(".rs.", name, sep="")

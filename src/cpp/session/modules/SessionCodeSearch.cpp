@@ -73,6 +73,20 @@ namespace code_search {
 
 namespace {
 
+bool isInCmakeBuildDirectory(const FilePath& filePath)
+{
+   FilePath parentPath = filePath.parent();
+   while (!parentPath.empty()
+          && parentPath != projects::projectContext().directory())
+   {
+      // if this directory contains a 'cmake_install' file, filter it out
+      if (parentPath.complete("cmake_install.cmake").exists())
+         return true;
+
+      parentPath = parentPath.parent();
+   }
+   return false;
+}
 
 bool isGlobalFunctionNamed(const r_util::RSourceItem& sourceItem,
                            const std::string& name)
@@ -555,7 +569,7 @@ public:
       // iterate over the files
       for (; pEntries_->is_valid(it); ++it)
       {
-         Entry entry = *it;
+         const Entry& entry = *it;
          
          DEBUG("Node: '" << (*it).fileInfo.absolutePath() << "'");
          
@@ -755,10 +769,16 @@ private:
    {
       // index the source if necessary
       boost::shared_ptr<r_util::RSourceIndex> pIndex;
+
+      // read the file
+      FilePath filePath(fileInfo.absolutePath());
+
+      // filter certain directories (e.g. those that exist in build directories)
+      if (isInCmakeBuildDirectory(filePath))
+         return;
+
       if (isIndexableSourceFile(fileInfo))
       {
-         // read the file
-         FilePath filePath(fileInfo.absolutePath());
          std::string code;
          Error error = module_context::readAndDecodeFile(
                                  filePath,
@@ -784,10 +804,16 @@ private:
 
       // attempt to add the entry
       Entry entry(fileInfo, pIndex);
-      pEntries_->insertEntry(entry);
 
-      // kick off an update
-      r_completions::AsyncRCompletions::update();
+      if (!filePath.isWithin(projects::projectContext().directory().complete("packrat")) &&
+          !isInCmakeBuildDirectory(filePath))
+      {
+         pEntries_->insertEntry(entry);
+
+         // kick off an update
+         r_completions::AsyncRCompletions::update();
+      }
+
    }
 
    void removeIndexEntry(const FileInfo& fileInfo)
@@ -834,17 +860,17 @@ private:
    static bool isIndexableSourceFile(const FileInfo& fileInfo)
    {
       FilePath filePath(fileInfo.absolutePath());
-      if (!filePath.isDirectory())
+      if (!filePath.isDirectory() && filePath.exists())
       {
          std::string lowerExtension = filePath.extensionLowerCase();
          return
                lowerExtension == ".r" ||
                lowerExtension == ".s" ||
                lowerExtension == ".q";
-         
       }
-      
+
       return false;
+
    }
 
 private:
@@ -944,7 +970,8 @@ bool sourceDatabaseFilter(const r_util::RSourceIndex& index)
    {
       // get file path
       FilePath docPath = module_context::resolveAliasedPath(index.context());
-      return docPath.isWithin(projects::projectContext().directory());
+      return docPath.isWithin(projects::projectContext().directory()) &&
+            !docPath.isWithin(projects::projectContext().directory().complete("packrat"));
    }
    else
    {
@@ -1182,8 +1209,6 @@ int scoreMatch(std::string const& suggestion,
    
    int query_n = query.length();
 
-   int result = 0;
-
    // Call a version of subsequence indices that returns false if the query is not
    // actually a subsequence
    std::vector<int> matches;
@@ -1195,10 +1220,13 @@ int scoreMatch(std::string const& suggestion,
    if (!success)
       return -1;
 
+   int totalPenalty = 0;
+
    // Loop over the matches and assign a score
    for (int j = 0; j < query_n; j++)
    {
       int matchPos = matches[j];
+      int penalty = matchPos;
 
       // Less penalty if character follows special delim
       if (matchPos >= 1)
@@ -1206,23 +1234,26 @@ int scoreMatch(std::string const& suggestion,
          char prevChar = suggestion[matchPos - 1];
          if (prevChar == '_' || prevChar == '-' || (!isFile && prevChar == '.'))
          {
-            matchPos = j + 1;
+            penalty = j;
          }
       }
+
+      // Less penalty for perfect match (ie, reward case-sensitive match)
+      penalty -= suggestion[matchPos] == query[j];
       
       // More penalty for 'uninteresting' files (e.g. .Rd)
       std::string extension = string_utils::getExtension(suggestion);
       if (boost::algorithm::to_lower_copy(extension) == ".rd")
-         matchPos += 3;
+         penalty += 3;
 
-      result += matchPos;
+      totalPenalty += penalty;
    }
    
    // Penalize files
    if (isFile)
-      ++result;
+      ++totalPenalty;
 
-   return result;
+   return totalPenalty;
 }
 
 struct ScorePairComparator

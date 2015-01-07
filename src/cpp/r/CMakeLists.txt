@@ -15,9 +15,6 @@
 
 project (R)
 
-# custom R packages for RStudio
-add_subdirectory(R/packages)
-
 # include files
 file(GLOB_RECURSE R_HEADER_FILES "*.h*")
 

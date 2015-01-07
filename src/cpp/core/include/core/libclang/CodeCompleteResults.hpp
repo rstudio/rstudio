@@ -16,6 +16,7 @@
 #ifndef CORE_LIBCLANG_HPP
 #define CORE_LIBCLANG_HPP
 
+#include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include "clang-c/Index.h"
@@ -49,35 +50,31 @@ private:
 };
 
 
-class CodeCompleteResults
+class CodeCompleteResults : boost::noncopyable
 {
 public:
-   CodeCompleteResults() {}
+   CodeCompleteResults() : pResults_(NULL) {}
    explicit CodeCompleteResults(CXCodeCompleteResults* pResults)
-      : pResults_(new CXCodeCompleteResults*(pResults))
+      : pResults_(pResults)
    {
    }
 
    ~CodeCompleteResults();
 
-   bool empty() const { return ! pResults_; }
+   bool empty() const { return pResults_ == NULL; }
 
    void sort();
 
-   unsigned getNumResults() const { return results()->NumResults; }
+   unsigned getNumResults() const { return pResults_->NumResults; }
    CodeCompleteResult getResult(unsigned index) const;
 
    unsigned getNumDiagnostics() const;
-   Diagnostic getDiagnostic(unsigned index) const;
+   boost::shared_ptr<Diagnostic> getDiagnostic(unsigned index) const;
 
    unsigned long long getContexts() const;
 
-
 private:
-   CXCodeCompleteResults* results() const { return *pResults_; }
-
-private:
-   boost::shared_ptr<CXCodeCompleteResults*> pResults_;
+   CXCodeCompleteResults* pResults_;
 };
 
 } // namespace libclang

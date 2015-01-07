@@ -536,6 +536,14 @@ public class RCompletionManager implements CompletionManager
       if (docDisplay_.isCursorInSingleLineString())
          return false;
       
+      // Don't auto-popup if there is a character following the cursor
+      // (this implies an in-line edit and automatic popups are likely to
+      // be annoying)
+      char charAtCursor = docDisplay_.getCharacterAtCursor();
+      if (Character.isLetter(charAtCursor) ||
+          Character.isDigit(charAtCursor))
+         return false;
+      
       // Grab the current token on the line
       String currentToken = StringUtil.getToken(
             currentLine, cursorColumn, "^[a-zA-Z0-9._'\"`]$", false, false);
@@ -586,8 +594,14 @@ public class RCompletionManager implements CompletionManager
          QualifiedName selectedItem =
                popup_.getSelectedValue();
          
+         // NOTE: We should strip off trailing colons so that in-line edits of
+         // package completions, e.g.
+         //
+         //     <foo>::
+         //
+         // can also dismiss the popup on a perfect match of <foo>.
          if (selectedItem != null &&
-               selectedItem.name.equals(token_ + c))
+               selectedItem.name.replaceAll(":",  "").equals(token_ + c))
          {
             String fullToken = token_ + c;
             
@@ -812,6 +826,7 @@ public class RCompletionManager implements CompletionManager
       public static final int TYPE_ROXYGEN = 10;
       public static final int TYPE_HELP = 11;
       public static final int TYPE_ARGUMENT = 12;
+      public static final int TYPE_PACKAGE = 13;
       
       public AutocompletionContext(
             String token,
@@ -1238,7 +1253,7 @@ public class RCompletionManager implements CompletionManager
          return getAutocompletionContextForFileMarkdownLink(firstLine);
       
       // Get the token at the cursor position
-      String token = firstLine.replaceAll(".*[^a-zA-Z0-9._:$@-]", "");
+      String token = firstLine.replaceAll(".*[^a-zA-Z0-9._:$@'\"`-]", "");
       
       // If we're completing an object within a string, assume it's a
       // file-system completion. Note that we may need other contextual information
@@ -1303,6 +1318,22 @@ public class RCompletionManager implements CompletionManager
       TokenCursor tokenCursor = codeModel.getTokenCursor();
       if (!tokenCursor.moveToPosition(input_.getCursorPosition()))
          return context;
+      
+      // Check to see if the token following the cursor is a `::` or `:::`.
+      // If that's the case, then we probably only want to complete package
+      // names.
+      if (tokenCursor.moveToNextToken())
+      {
+         if (tokenCursor.currentValue() == ":" ||
+             tokenCursor.currentValue() == "::" ||
+             tokenCursor.currentValue() == ":::")
+         {
+            return new AutocompletionContext(
+                  token,
+                  AutocompletionContext.TYPE_PACKAGE);
+         }
+         tokenCursor.moveToPreviousToken();
+      }
       
       TokenCursor startCursor = tokenCursor.cloneCursor();
       
@@ -1550,7 +1581,7 @@ public class RCompletionManager implements CompletionManager
          // If there is only one result and the name is identical to the
          // current token, then don't display anything
          if (results.length == 1 &&
-             completions.token.equals(results[0].name))
+             completions.token.equals(results[0].name.replaceAll(":*", "")))
          {
             return;
          }
@@ -1579,7 +1610,7 @@ public class RCompletionManager implements CompletionManager
                   false);
          }
       }
-
+      
       private void onSelection(QualifiedName qname)
       {
          suggestTimer_.cancel();
@@ -1598,7 +1629,11 @@ public class RCompletionManager implements CompletionManager
          }
 
          applyValue(qname);
-         if (suggestOnAccept_ || qname.name.endsWith(":"))
+         
+         // For in-line edits, we don't want to auto-popup after replacement
+         if (suggestOnAccept_ || 
+               (qname.name.endsWith(":") &&
+                     docDisplay_.getCharacterAtCursor() != ':'))
          {
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
@@ -1685,6 +1720,7 @@ public class RCompletionManager implements CompletionManager
          AceEditor editor = (AceEditor) input_;
          boolean textFollowingCursorIsOpenParen = false;
          boolean textFollowingCursorIsClosingParen = false;
+         boolean textFollowingCursorIsColon = false;
          if (editor != null)
          {
             TokenCursor cursor =
@@ -1696,6 +1732,10 @@ public class RCompletionManager implements CompletionManager
                      cursor.currentValue() == "(";
                textFollowingCursorIsClosingParen =
                      cursor.currentValue() == ")" && !cursor.bwdToMatchingToken();
+               textFollowingCursorIsColon =
+                     cursor.currentValue() == ":" ||
+                     cursor.currentValue() == "::" ||
+                     cursor.currentValue() == ":::";
             }
             
          }
@@ -1703,6 +1743,12 @@ public class RCompletionManager implements CompletionManager
          String value = qualifiedName.name;
          String source = qualifiedName.source;
          boolean shouldQuote = qualifiedName.shouldQuote;
+         
+         
+         // Don't insert the `::` following a package completion if there is
+         // already a `:` following the cursor
+         if (textFollowingCursorIsColon)
+            value = value.replaceAll(":", "");
          
          if (qualifiedName.type == RCompletionType.DIRECTORY)
             value = value + "/";

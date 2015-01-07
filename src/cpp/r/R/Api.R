@@ -1,19 +1,24 @@
 
-
-versionInfo <- function() {
+.rs.addApiFunction("versionInfo", function() {
   info <- list()
-  info$version <- package_version(utils:::packageDescription("rstudio", 
-                                                             fields="Version"))
+  info$version <- package_version(
+    .Call(getNativeSymbolInfo("rs_rstudioVersion", PACKAGE=""))
+  )
+
   info$mode <- .Call(getNativeSymbolInfo("rs_rstudioProgramMode", 
                                          PACKAGE=""))
+  
+  info$citation <- .Call(getNativeSymbolInfo("rs_rstudioCitation", 
+                                         PACKAGE=""))
   info
-}
+})
 
-diagnosticsReport <- function() {
+.rs.addApiFunction("diagnosticsReport", function() {
   invisible(.Call(getNativeSymbolInfo("rs_sourceDiagnostics", PACKAGE="")))
-}
+})
 
-previewRd <- function(rdFile) {
+
+.rs.addApiFunction("previewRd", function(rdFile) {
   
   if (!is.character(rdFile) || (length(rdFile) != 1))
     stop("rdFile must be a single element character vector.")
@@ -21,9 +26,9 @@ previewRd <- function(rdFile) {
     stop("The specified rdFile ' ", rdFile, "' does not exist.")
       
   invisible(.Call(getNativeSymbolInfo("rs_previewRd", PACKAGE=""), rdFile))
-}
+})
 
-viewer <- function(url, height = NULL) {
+.rs.addApiFunction("viewer", function(url, height = NULL) {
   
   if (!is.character(url) || (length(url) != 1))
     stop("url must be a single element character vector.")
@@ -35,5 +40,5 @@ viewer <- function(url, height = NULL) {
      stop("height must be a single element numeric vector or 'maximize'.")
   
   invisible(.Call(getNativeSymbolInfo("rs_viewer", PACKAGE=""), url, height))     
-}
+})
 

@@ -168,8 +168,9 @@ var CStyleBehaviour = function(codeModel) {
 
          // If we're inserting a newline within a newly constructed comment
          // block, insert a '*'.
-         if (/^\s*\/\*/.test(line)) {
-
+         if (/^\s*\/\*/.test(line) &&
+             line.indexOf("*/") === -1)
+         {
             var indent = this.$getIndent(line);
             var newIndent = indent + " * ";
             
