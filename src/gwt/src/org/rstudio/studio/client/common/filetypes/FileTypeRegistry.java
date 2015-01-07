@@ -206,7 +206,7 @@ public class FileTypeRegistry
                false, false, false, false, false, false, false);
    
    public static final TextFileType MATLAB = 
-         new TextFileType("matlab", "Matlab", EditorLanguage.LANG_MATLAB, ".matlab", ICONS.iconMatlab(),
+         new TextFileType("matlab", "Matlab", EditorLanguage.LANG_MATLAB, ".m", ICONS.iconMatlab(),
                false, false, false, false, false,
                false, false, false, false, false, false, false);
    
@@ -340,8 +340,10 @@ public class FileTypeRegistry
       register("*.java", JAVA, icons.iconJava());
       register("*.julia", JULIA, icons.iconJulia());
       register("*.lisp", LISP, icons.iconLisp());
+      register(".emacs", LISP, icons.iconLisp());
+      register("*.el", LISP, icons.iconLisp());
       register("*.lua", LUA, icons.iconLua());
-      register("*.matlab", MATLAB, icons.iconMatlab());
+      register("*.m", MATLAB, icons.iconMatlab());
       register("*.pl", PERL, icons.iconPerl());
       register("*.rb", RUBY, icons.iconRuby());
       register("*.rs", RUST, icons.iconRust());
