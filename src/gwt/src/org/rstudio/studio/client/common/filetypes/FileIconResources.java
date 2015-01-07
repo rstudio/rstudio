@@ -61,6 +61,7 @@ public interface FileIconResources extends ClientBundle
    // Ace modes
    ImageResource iconClojure();
    ImageResource iconCoffee();
+   ImageResource iconCsharp();
    ImageResource iconGitignore();
    ImageResource iconGo();
    ImageResource iconGroovy();

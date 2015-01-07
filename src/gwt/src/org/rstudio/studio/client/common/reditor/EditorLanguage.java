@@ -71,6 +71,7 @@ public class EditorLanguage
    
    public static final EditorLanguage LANG_CLOJURE = new EditorLanguage("ace/mode/clojure", true);
    public static final EditorLanguage LANG_COFFEE = new EditorLanguage("ace/mode/coffee", true);
+   public static final EditorLanguage LANG_CSHARP = new EditorLanguage("ace/mode/csharp", true);
    public static final EditorLanguage LANG_GITIGNORE = new EditorLanguage("ace/mode/gitignore", true);
    public static final EditorLanguage LANG_GO = new EditorLanguage("ace/mode/golang", true);
    public static final EditorLanguage LANG_GROOVY = new EditorLanguage("ace/mode/groovy", true);

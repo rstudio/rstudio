@@ -160,6 +160,12 @@ public class FileTypeRegistry
                false, false, false, false, false,
                false, false, false, false, false, false, false);
    
+   public static final TextFileType CSHARP = 
+         new TextFileType("csharp", "C#", EditorLanguage.LANG_CSHARP, ".cs", ICONS.iconCsharp(),
+               false, false, false, false, false,
+               false, false, false, false, false, false, false);
+   
+   
    public static final TextFileType GITIGNORE = 
          new TextFileType("gitignore", "Gitignore", EditorLanguage.LANG_GITIGNORE, ".gitignore", ICONS.iconGitignore(),
                false, false, false, false, false,
@@ -332,6 +338,7 @@ public class FileTypeRegistry
       
       register("*.clojure", CLOJURE, icons.iconClojure());
       register("*.coffee", COFFEE, icons.iconCoffee());
+      register("*.cs", CSHARP, icons.iconCsharp());
       register(".gitignore", GITIGNORE, icons.iconGitignore());
       register("*.go", GO, icons.iconGo());
       register("*.groovy", GROOVY, icons.iconGroovy());
