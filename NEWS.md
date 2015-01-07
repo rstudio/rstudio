@@ -47,6 +47,8 @@
 * Allow 'debugSource' to be executed in user-specified environment
 * Improved heuristics for locating the stack frame where errors originated
 * Autocompletions now available when debugging
+* Improved debug stepping through statements wrapped in tryCatch()
+* Better call frame selection when using recover()
 
 ### Packages
 
