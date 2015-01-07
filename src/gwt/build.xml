@@ -57,6 +57,9 @@
             <file name="r_code_model.js"/>
             <file name="r_scope_tree.js"/>
             <file name="r.js"/>
+            <file name="markdown_highlight_rules.js"/>
+            <file name="markdown_folding.js"/>
+            <file name="markdown.js"/>
             <file name="tex_highlight_rules.js"/>
             <file name="tex.js"/>
             <file name="sweave_background_highlighter.js"/>
