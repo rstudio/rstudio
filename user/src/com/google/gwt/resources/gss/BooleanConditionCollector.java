@@ -29,22 +29,18 @@ import java.util.regex.Matcher;
 /**
  * Visitor that collects the simple boolean conditions that are mapped to configuration
  * properties.
- * <p/>
+ * <p>
  * <code>
  *
  * &#064;if (MY_PROPERTY) {
  * ...
  * }
  * </code>
- * <p/>
  * <p>will be evaluated to true if and only if a configuration property with the same name is set
  * to the value "true":
- * <p/>
- * <code>
+ * {@code
  * <set-configuration-property name="MY_PROPERTY" value="true" />
- * </code>
- * <p/>
- * <p/>
+ * }
  */
 public class BooleanConditionCollector extends ExtendedConditionalNodeVisitor
     implements CssCompilerPass {
@@ -52,8 +48,6 @@ public class BooleanConditionCollector extends ExtendedConditionalNodeVisitor
   private final Set<String> booleanConditions;
 
   public BooleanConditionCollector(MutatingVisitController delegate) {
-    super(delegate);
-
     this.delegate = delegate;
     booleanConditions = new HashSet<String>();
   }

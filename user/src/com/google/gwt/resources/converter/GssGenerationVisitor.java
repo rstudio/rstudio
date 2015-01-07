@@ -397,7 +397,6 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
    *   }
    * }
    * @param cssProperty
-   * @return
    */
   private String quoteFontFamilyWithWhiteSpace(String cssProperty) {
     StringBuilder valueBuilder = new StringBuilder();

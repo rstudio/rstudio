@@ -467,6 +467,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     initReplacement(context);
   }
 
+  @SuppressWarnings("unchecked")
   private void initReplacement(ResourceContext context) {
     if (context.getCachedData(KEY_HAS_CACHED_DATA, Boolean.class) != Boolean.TRUE) {
 
@@ -854,7 +855,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
           Charset charset = Charsets.UTF_8;
 
           // check if the stylesheet doesn't include a @charset at-rule
-          String styleSheetCharset = extractCharset(byteSource, logger);
+          String styleSheetCharset = extractCharset(byteSource);
           if (styleSheetCharset != null) {
             try {
               charset = Charset.forName(styleSheetCharset);
@@ -913,7 +914,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
         booleanConditionCollector.getBooleanConditions(), constantNameMappingBuilder.build());
   }
 
-  private String extractCharset(ByteSource byteSource, TreeLogger logger) throws IOException {
+  private String extractCharset(ByteSource byteSource) throws IOException {
     String firstLine = byteSource.asCharSource(Charsets.UTF_8).readFirstLine();
     Matcher matcher = CHARSET.matcher(firstLine);
 
@@ -1184,7 +1185,6 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
    * Transform a camel case string to upper case. Each word is separated by a '_'
    *
    * @param camelCase
-   * @return
    */
   private String toUpperCase(String camelCase) {
     return CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, camelCase);

@@ -40,8 +40,6 @@ public class PermutationsCollector extends ExtendedConditionalNodeVisitor
   private final Set<String> permutationAxesSet;
 
   public PermutationsCollector(MutatingVisitController delegate) {
-    super(delegate);
-
     this.delegate = delegate;
     permutationAxesSet = new HashSet<String>();
   }

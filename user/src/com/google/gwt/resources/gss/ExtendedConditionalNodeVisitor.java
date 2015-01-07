@@ -20,7 +20,6 @@ import com.google.gwt.thirdparty.common.css.compiler.ast.CssBooleanExpressionNod
 import com.google.gwt.thirdparty.common.css.compiler.ast.CssConditionalRuleNode;
 import com.google.gwt.thirdparty.common.css.compiler.ast.CssValueNode;
 import com.google.gwt.thirdparty.common.css.compiler.ast.DefaultTreeVisitor;
-import com.google.gwt.thirdparty.common.css.compiler.ast.VisitController;
 
 import java.util.Stack;
 
@@ -29,11 +28,10 @@ import java.util.Stack;
  * is to implement this behavior.
  */
 public class ExtendedConditionalNodeVisitor  extends DefaultTreeVisitor {
-  private final VisitController delegate;
+
   private final Stack<CssBooleanExpressionNode> childrenStack;
 
-  public ExtendedConditionalNodeVisitor(VisitController delegate) {
-    this.delegate = delegate;
+  public ExtendedConditionalNodeVisitor() {
     childrenStack = new Stack<CssBooleanExpressionNode>();
   }
 

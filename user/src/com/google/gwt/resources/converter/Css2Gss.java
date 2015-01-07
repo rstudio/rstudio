@@ -58,10 +58,11 @@ public class Css2Gss {
   }
 
   public Css2Gss(URL resource, boolean lenient) {
-    this(resource, lenient, Predicates.alwaysFalse());
+    this(resource, lenient, Predicates.<String>alwaysFalse());
   }
 
-  public Css2Gss(URL resource, boolean lenient, Predicate simpleBooleanConditionPredicate) {
+  public Css2Gss(URL resource, boolean lenient,
+      Predicate<String> simpleBooleanConditionPredicate) {
     cssFile = resource;
     printWriter = new PrintWriter(System.err);
     this.treeLogger = new PrintWriterTreeLogger(printWriter);
@@ -70,7 +71,7 @@ public class Css2Gss {
   }
 
   public Css2Gss(URL fileUrl, TreeLogger treeLogger, boolean lenient,
-      Predicate simpleBooleanConditionPredicate) {
+      Predicate<String> simpleBooleanConditionPredicate) {
     cssFile = fileUrl;
     this.treeLogger = treeLogger;
     this.lenient = lenient;
