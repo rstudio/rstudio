@@ -81,23 +81,28 @@ define("mode/r_highlight_rules", function(require, exports, module)
             },
             {
                token : "constant.numeric", // hex
-               regex : "0[xX][0-9a-fA-F]+[Li]?\\b"
+               regex : "0[xX][0-9a-fA-F]+[Li]?\\b",
+               merge : false
             },
             {
                token : "constant.numeric", // number + integer
-               regex : "\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?[iL]?\\b"
+               regex : "\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?[iL]?\\b",
+               merge : false
             },
             {
                token : "constant.numeric", // number + integer with leading decimal
-               regex : "\\.\\d+(?:[eE][+\\-]?\\d*)?[iL]?\\b"
+               regex : "\\.\\d+(?:[eE][+\\-]?\\d*)?[iL]?\\b",
+               merge : false
             },
             {
                token : "constant.language.boolean",
-               regex : "(?:TRUE|FALSE|T|F)\\b"
+               regex : "(?:TRUE|FALSE|T|F)\\b",
+               merge : false
             },
             {
                token : "identifier",
-               regex : "`.*?`"
+               regex : "`.*?`",
+               merge : false
             },
             {
                token : function(value)
@@ -115,11 +120,13 @@ define("mode/r_highlight_rules", function(require, exports, module)
             },
             {
                token : "keyword.operator",
-               regex : "%%|>=|<=|==|!=|\\->|<\\-|<<\\-|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||~|\\$|:|@"
+               regex : ":::|::|%%|>=|<=|==|!=|\\->|<\\-|<<\\-|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||~|\\$|:|@",
+               merge : false
             },
             {
                token : "keyword.operator.infix", // infix operators
-               regex : "%.*?%"
+               regex : "%.*?%",
+               merge : false
             },
             {
                // Obviously these are neither keywords nor operators, but
@@ -139,7 +146,8 @@ define("mode/r_highlight_rules", function(require, exports, module)
             },
             {
                token : "text",
-               regex : "\\s+"
+               regex : "\\s+",
+               merge : true
             }
          ],
          "qqstring" : [
