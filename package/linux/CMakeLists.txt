@@ -115,6 +115,13 @@ set(CPACK_RPM_SPEC_INSTALL_POST "/bin/true")
 set(CPACK_RPM_POST_INSTALL_SCRIPT_FILE "${CMAKE_CURRENT_BINARY_DIR}/rpm-script/postinst.sh")
 set(CPACK_RPM_POST_UNINSTALL_SCRIPT_FILE "${CMAKE_CURRENT_BINARY_DIR}/rpm-script/postrm.sh")
 
+# /usr and /usr/lib are already present in CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST, 
+# but some Linux distributions complain without this explicit suppression
+set(CPACK_RPM_SPEC_MORE_DEFINE "%define ignore \#")
+set(CPACK_RPM_USER_FILELIST 
+  "%ignore /usr"
+  "%ignore /usr/lib")
+
 set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION 
   "/usr/share/applications"
   "/usr/share/icons"
