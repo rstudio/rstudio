@@ -38,6 +38,8 @@ public class EditorLanguage
          "mode/tex", false);
    public static final EditorLanguage LANG_SWEAVE = new EditorLanguage(
          "mode/sweave", true);
+   public static final EditorLanguage LANG_MARKDOWN = new EditorLanguage(
+         "mode/markdown", false);
    public static final EditorLanguage LANG_RMARKDOWN = new EditorLanguage(
          "mode/rmarkdown", true);
    public static final EditorLanguage LANG_DCF = new EditorLanguage(
@@ -50,8 +52,6 @@ public class EditorLanguage
    // Modes borrowed from Ace
    public static final EditorLanguage LANG_PLAIN = new EditorLanguage(
          "ace/mode/text", false);
-   public static final EditorLanguage LANG_MARKDOWN = new EditorLanguage(
-         "ace/mode/markdown", false);
    public static final EditorLanguage LANG_HTML = new EditorLanguage(
          "ace/mode/html", false);
    public static final EditorLanguage LANG_CSS = new EditorLanguage(

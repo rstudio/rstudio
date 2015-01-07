@@ -48,7 +48,7 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
-define(function(require, exports, module) {
+define("mode/markdown_folding", function(require, exports, module) {
 "use strict";
 
 var oop = require("ace/lib/oop");
