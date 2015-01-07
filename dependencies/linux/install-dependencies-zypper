@@ -56,9 +56,12 @@ cd ../linux
 # desktop dependencies (qt)
 if [ "$1" != "--exclude-qt-sdk" ]
 then
-   # install Qt 4.8 SDK (into a private /opt/RStudio-QtSDK directory so as to 
-   # not conflict with any other installed versions of Qt on the system)
+   # install Qt 5.4 SDK 
    ./install-qt-sdk
+
+   # install headers needed by Qt 5 (GL, xslt)
+   sudo zypper --non-interactive in mesa-devel
+   sudo zypper --non-interactive in libxslt-devel
 fi
 
 
