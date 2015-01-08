@@ -127,7 +127,7 @@
 .ace_marker-layer .ace_find_line {
   position: absolute;
   z-index: -1;
-  background-color: #CCCCCC;
+  background-color: #7F7F7F;
 }
 .ace_marker-layer .ace_active_debug_line {
   position: absolute;
@@ -138,10 +138,10 @@
   background-color: #CCCCCC;
 }
 .ace_keyword.ace_operator {
-  color: #800080 !important;
+  color: black !important;
 }
 .ace_keyword {
-  color: #800080 !important;
+  color: black !important;
   font-weight: bold;
   letter-spacing: -1px;
 }

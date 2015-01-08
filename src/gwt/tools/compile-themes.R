@@ -232,7 +232,6 @@ for (file in themeFiles) {
       next
    }
       
-   
    ## This might be a hex name or an RGB field.
    value <- if (grepl("rgb", borderField)) {
       gsub(".*rgb", "rgb", borderField)
@@ -251,11 +250,13 @@ for (file in themeFiles) {
    )
    
    ## Marker line stuff.
+   jsContents <- readLines(sub("css$", "js", file))
+   isDark <- any(grepl("exports.isDark = true;", jsContents))
    background <- if ("ace_scroller" %in% names(parsed) &&
                      "background-color" %in% parsed$ace_scroller) {
       strip_color_from_field(parsed$ace_scroller[["background-color"]])
    } else {
-      "#FFFFFF"
+      if (isDark) "#000000" else "#FFFFFF"
    }
    
    ## Get the ace text color.
@@ -263,10 +264,10 @@ for (file in themeFiles) {
                      "color" %in% names(parsed[["ace_text-layer"]])) {
       strip_color_from_field(parsed[["ace_text-layer"]][["color"]])
    } else {
-      "#000000"
+      if (isDark) "#FFFFFF" else "#000000"
    }
    
-   ## Generate mixable colors.
+   ## Generate a color used for chunks, e.g. in .Rmd documents.
    backgroundRgb <- parse_css_color(background)
    foregroundRgb <- parse_css_color(foreground)
    
@@ -281,12 +282,14 @@ for (file in themeFiles) {
       create_line_marker_rule(".ace_foreign_line", color_as_hex(mergedColor))
    )
    
-   findBackground <- color_as_hex(mix_colors(backgroundRgb, foregroundRgb, 0.8))
+   ## Generate a background used for 'find's.
+   findBackground <- color_as_hex(mix_colors(backgroundRgb, foregroundRgb, 0.5))
    content <- c(
       content,
       create_line_marker_rule(".ace_find_line", findBackground)
    )
    
+   ## Generate a color used for 'debugging' backgrounds.
    debugPrimary <- parse_css_color("#FFDE38")
    debugBg <- color_as_hex(mix_colors(backgroundRgb, debugPrimary, 0.5))
    
@@ -295,6 +298,7 @@ for (file in themeFiles) {
       create_line_marker_rule(".ace_active_debug_line", debugBg)
    )
    
+   ## Generate a background for console errors.
    errorBg <- color_as_hex(mix_colors(backgroundRgb, foregroundRgb, 0.8))
    content <- add_content(
       content,
