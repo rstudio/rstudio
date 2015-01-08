@@ -72,6 +72,13 @@ public class ControlFlowRecorder extends JVisitor {
       stringAnalyzableTypeEnvironment.recordStaticReferenceInMethod(typeName, currentMethodName);
       maybeRecordClinitCall(typeName);
     }
+    // Any Enum subtype whose class literal is referenced might have its enumValueOfFunc
+    // reflectively called at runtime (see Enum.valueOf()). So to be safe the enumValueOfFunc
+    // must be assumed to be called.
+    if (type.isEnumOrSubclass() != null && !type.getName().equals("java.lang.Enum")) {
+      String valueOfMethodName = type.getName() + "::valueOf(Ljava/lang/String;)";
+      stringAnalyzableTypeEnvironment.recordMethodCallsMethod(currentMethodName, valueOfMethodName);
+    }
   }
 
   @Override

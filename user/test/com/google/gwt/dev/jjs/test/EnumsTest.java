@@ -23,6 +23,14 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class EnumsTest extends GWTTestCase {
 
+  enum BarelyReferenced {
+    A, B, C
+  }
+
+  enum BarelyReferenced2 {
+    A, B, C
+  }
+
   enum Basic {
     A, B, C
   }
@@ -222,6 +230,20 @@ public class EnumsTest extends GWTTestCase {
       default:
         break;
     }
+  }
+
+  public void testBarelyReferencedValueOf() {
+    try {
+      Enum.valueOf(BarelyReferenced.class, "foo");
+      fail("Passed an invalid enum constant name to Enum.valueOf; expected "
+          + "IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+
+  public void testBarelyReferencedGetEnumConstants() {
+    assertNotNull(BarelyReferenced2.class.getEnumConstants());
   }
 
   @SuppressWarnings("unchecked")
