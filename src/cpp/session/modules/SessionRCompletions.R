@@ -1383,8 +1383,30 @@ assign(x = ".rs.acCompletionTypes",
          n <- length(stringPipeMatches)
          idx <- stringPipeMatches[n] + attr(stringPipeMatches, "match.length")[n]
          dropFirstArgument <- TRUE
-         string[[1]] <- gsub("^\\s*", "", substring(string[[1]], idx), perl = TRUE)
-         functionCallString <- gsub("^\\s*", "", substring(functionCallString, idx), perl = TRUE)
+         string[[1]] <- gsub("^[\\s\\n]*", "", substring(string[[1]], idx), perl = TRUE)
+         
+         ## Figure out the 'parent object' of the call. We munge the
+         ## function call and place that back in, so S3 dispatch and such
+         ## can work.
+         firstPipeIdx <- stringPipeMatches[[1]]
+         parentObject <- .rs.trimWhitespace(
+            substring(functionCallString, 1, firstPipeIdx - 1L)
+         )
+         
+         functionCallString <- gsub(
+            "^\\s*",
+            "",
+            substring(functionCallString, idx),
+            perl = TRUE
+         )
+         
+         # Add the argument back in
+         functionCallString <- sub(
+            "(",
+            paste("(", parentObject, ",", sep = ""),
+            functionCallString,
+            fixed = TRUE
+         )
       }
    }
    
