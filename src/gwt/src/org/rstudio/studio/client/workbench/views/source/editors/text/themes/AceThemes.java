@@ -50,7 +50,7 @@ public class AceThemes
    public static final String PASTEL_ON_DARK = "Pastel On Dark";
    public static final String SOLARIZED_DARK = "Solarized Dark";
    public static final String SOLARIZED_LIGHT = "Solarized Light";
-   public static final String TEXTMATE = "Textmate";
+   public static final String TEXTMATE = "TextMate";
    public static final String TOMORROW_NIGHT_BLUE = "Tomorrow Night Blue";
    public static final String TOMORROW_NIGHT_BRIGHT = "Tomorrow Night Bright";
    public static final String TOMORROW_NIGHT_EIGHTIES = "Tomorrow Night 80s";
@@ -146,7 +146,7 @@ public class AceThemes
 
    private final ArrayList<String> themes_;
    private final HashMap<String, String> themesByName_;
-   private final String defaultThemeName_ = "TextMate";
+   private final String defaultThemeName_ = TEXTMATE;
 
    private LinkElement currentStyleEl_;
 }
