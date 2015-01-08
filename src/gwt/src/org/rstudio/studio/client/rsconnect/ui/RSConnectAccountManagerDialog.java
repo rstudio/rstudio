@@ -38,7 +38,7 @@ public class RSConnectAccountManagerDialog
                                         final GlobalDisplay display)
    {
       super(server, display, new RSConnectAccountManager());
-      setText("Manage Accounts");
+      setText("Configure Accounts");
       setWidth("300px");
 
       connectButton_ = new ThemedButton("Connect...");
