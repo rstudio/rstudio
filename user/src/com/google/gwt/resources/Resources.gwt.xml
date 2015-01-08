@@ -93,10 +93,7 @@
   <extend-configuration-property name="CssResource.allowedFunctions" value="" />
 
   <!-- Enable the in-memory conversion of css files with .css extension to GSS -->
-  <define-configuration-property name="CssResource.legacy" is-multi-valued="false" />
-  <set-configuration-property name="CssResource.legacy" value="false" />
-
-  <!-- Set the mode used by the in-memory conversion: strict or lenient -->
+  <!-- Can be set to: strict | lenient | off -->
   <define-configuration-property name="CssResource.conversionMode" is-multi-valued="false" />
-  <set-configuration-property name="CssResource.conversionMode" value="strict" />
+  <set-configuration-property name="CssResource.conversionMode" value="off" />
 </module>

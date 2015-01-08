@@ -129,6 +129,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
@@ -144,6 +145,9 @@ import java.util.zip.Adler32;
  */
 public class GssResourceGenerator extends AbstractCssResourceGenerator implements
     SupportsGeneratorResultCaching {
+
+  private enum AutoConversionMode { STRICT, LENIENT, OFF }
+
   /**
    * {@link ErrorManager} used to log the errors and warning messages produced by the different
    * {@link com.google.gwt.thirdparty.common.css.compiler.ast.CssCompilerPass}.
@@ -264,7 +268,6 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
   // as short as possible. For instance if we have two GssResources to compile, the  prefix
   // for the first resource will be 'a' and the prefix for the second resource will be 'b' and so on
   private static final SubstitutionMap resourcePrefixBuilder = new MinimalSubstitutionMap();
-  private static final String KEY_LEGACY = "CssResource.legacy";
   private static final String KEY_CONVERSION_MODE = "CssResource.conversionMode";
   private static final String KEY_STYLE = "CssResource.style";
   private static final String ALLOWED_AT_RULE = "CssResource.allowedAtRules";
@@ -349,8 +352,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
   private Set<String> allowedAtRules;
   private Map<JClassType, Map<String, String>> replacementsByClassAndMethod;
   private Map<JMethod, String> replacementsForSharedMethods;
-  private boolean allowLegacy;
-  private boolean lenientConversion;
+  private AutoConversionMode conversionMode;
 
   @Override
   public String createAssignment(TreeLogger logger, ResourceContext context, JMethod method)
@@ -432,19 +434,15 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
           .getConfigurationProperty(ALLOWED_FUNCTIONS);
       allowedNonStandardFunctions.addAll(allowedFunctionsProperty.getValues());
 
-      allowLegacy = "true".equals(propertyOracle.getConfigurationProperty(KEY_LEGACY).getValues()
-          .get(0));
-
-      // enable lenient conversion when legacy mode is enabled
-      lenientConversion = allowLegacy && "lenient".equals(propertyOracle
-          .getConfigurationProperty(KEY_CONVERSION_MODE).getValues().get(0));
+      conversionMode = Enum.valueOf(AutoConversionMode.class, propertyOracle
+          .getConfigurationProperty(KEY_CONVERSION_MODE).getValues().get(0)
+          .toUpperCase(Locale.ROOT));
 
       ClientBundleRequirements requirements = context.getRequirements();
       requirements.addConfigurationProperty(KEY_STYLE);
       requirements.addConfigurationProperty(KEY_OBFUSCATION_PREFIX);
       requirements.addConfigurationProperty(ALLOWED_AT_RULE);
       requirements.addConfigurationProperty(ALLOWED_FUNCTIONS);
-      requirements.addConfigurationProperty(KEY_LEGACY);
       requirements.addConfigurationProperty(KEY_CONVERSION_MODE);
     } catch (BadPropertyValueException e) {
       logger.log(TreeLogger.ERROR, "Unable to query module property", e);
@@ -480,6 +478,10 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
 
     replacementsByClassAndMethod = context.getCachedData(KEY_BY_CLASS_AND_METHOD, Map.class);
     replacementsForSharedMethods = context.getCachedData(KEY_SHARED_METHODS, Map.class);
+  }
+
+  private boolean isLenientConversion() {
+    return conversionMode == AutoConversionMode.LENIENT;
   }
 
   private String getObfuscationPrefix(PropertyOracle propertyOracle, ResourceContext context)
@@ -707,7 +709,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
         .runPass();
 
     new ValidateRuntimeConditionalNode(cssTree.getVisitController(), errorManager,
-        lenientConversion).runPass();
+        isLenientConversion()).runPass();
 
     // Don't continue if errors exist
     checkErrors();
@@ -818,7 +820,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     // assert that we only support either gss or css on one resource.
     boolean css = ensureEitherCssOrGss(resources, logger);
 
-    if (css && !allowLegacy) {
+    if (css && conversionMode == AutoConversionMode.OFF) {
       // TODO(dankurka): add link explaining the situation in detail.
       logger.log(Type.ERROR,
           "Your ClientBundle is referencing css files instead of gss. "
@@ -827,7 +829,8 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
               + "Note: Autoconversion will be removed in the next version of GWT, "
               + "you will need to move to gss."
               + "Add this line to your gwt.xml file to temporary avoid this:"
-              + "<set-configuration-property name=\"CssResource.legacy\" value=\"true\" />");
+              + "<set-configuration-property name=\"CssResource.conversionMode\""
+              + "    value=\"strict\" />");
       throw new UnableToCompleteException();
     }
 
@@ -936,7 +939,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
       ConfigurationPropertyMatcher configurationPropertyMatcher =
           new ConfigurationPropertyMatcher(context, logger);
 
-      Css2Gss converter = new Css2Gss(tempFile.toURI().toURL(), logger, lenientConversion,
+      Css2Gss converter = new Css2Gss(tempFile.toURI().toURL(), logger, isLenientConversion(),
           configurationPropertyMatcher);
 
       String gss = converter.toGss();
@@ -949,7 +952,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
 
     } catch (Css2GssConversionException e) {
       String message = "An error occurs during the automatic conversion: " + e.getMessage();
-      if (!lenientConversion) {
+      if (!isLenientConversion()) {
         message += "\n You should try to change the faulty css to fix this error. If you are " +
             "unable to change the css, you can setup the automatic conversion to be lenient. Add " +
             "the following line to your gwt.xml file: " +

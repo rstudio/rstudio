@@ -4,7 +4,6 @@
   <inherits name="com.google.gwt.resources.GssResourceTest" />
 
   <!-- Enable auto-conversion -->
-  <set-configuration-property name="CssResource.legacy" value="true" />
   <set-configuration-property name="CssResource.conversionMode" value="lenient" />
   <define-configuration-property name="customProperty" is-multi-valued="false"/>
   <set-configuration-property name="customProperty" value="true"/>
