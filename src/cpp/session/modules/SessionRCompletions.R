@@ -251,6 +251,9 @@ assign(x = ".rs.acCompletionTypes",
    projDirEndsWithSlash <-
       paste(gsub("/*$", "", .rs.getProjectDirectory()), "/", sep = "")
    
+   directory <-
+      paste(gsub("/*$", "", directory), "/", sep = "")
+   
    # If the directory lies within a folder that we're monitoring
    # for indexing, use that.
    cacheable <- TRUE
