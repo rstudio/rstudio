@@ -136,6 +136,9 @@
 .ace_console_error {
   background-color: #CCCCCC;
 }
+.ace_keyword.ace_operator {
+  color: #888888 !important;
+}
 .ace_keyword {
   color: #800080 !important;
 }

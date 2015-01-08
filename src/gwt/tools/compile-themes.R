@@ -19,6 +19,7 @@ operator_theme_map <- list(
    "solarized_dark" = "#B58900",
    "twilight" = "#7587A6",
    "idle_fingers" = "#6892B2",
+   "clouds" = light_theme_operator,
    "cobalt" = "#BED6FF",
    "dawn" = light_theme_operator,
    "eclipse" = light_theme_operator,
@@ -116,6 +117,18 @@ create_line_marker_rule <- function(markerName, markerColor) {
                  "}"),
            markerName,
            markerColor)
+}
+
+chunk_bg_proportion_map <- list(
+   "tomorrow_night_bright" = 0.85
+)
+
+get_chunk_bg_color <- function(themeName, isDark) {
+   p <- chunk_bg_proportion_map[[themeName]]
+   if (is.null(p))
+      if (isDark) 0.9 else 0.95
+   else
+      p
 }
 
 ## Get the set of all theme .css files
@@ -287,10 +300,16 @@ for (file in themeFiles) {
    backgroundRgb <- parse_css_color(background)
    foregroundRgb <- parse_css_color(foreground)
    
+   fileName <- gsub("\\.css$", "", basename(file))
+   
+   ## Determine an appropriate mixing proportion, and override for certain
+   ## themes.
+   mix <- get_chunk_bg_color(fileName, isDark)
+   
    mergedColor <- mix_colors(
       backgroundRgb,
       foregroundRgb,
-      if (isDark) 0.90 else 0.95
+      mix
    )
    
    content <- c(
@@ -323,8 +342,6 @@ for (file in themeFiles) {
       "}",
       replace = errorBg
    )
-   
-   fileName <- gsub("\\.css$", "", basename(file))
    
    ## Add operator colors if necessary.
    if (fileName %in% names(operator_theme_map))
