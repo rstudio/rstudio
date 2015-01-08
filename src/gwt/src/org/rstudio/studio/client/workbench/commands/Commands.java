@@ -84,7 +84,7 @@ public abstract class
    public abstract AppCommand findReplace();
    public abstract AppCommand findNext();
    public abstract AppCommand findPrevious();
-   public abstract AppCommand selectAll();
+   public abstract AppCommand findSelectAll();
    public abstract AppCommand findFromSelection();
    public abstract AppCommand replaceAndFind();
    public abstract AppCommand findInFiles();

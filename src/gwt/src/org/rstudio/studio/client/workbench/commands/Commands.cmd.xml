@@ -770,10 +770,10 @@ well as menu structures (for main menu and popup menus).
         buttonLabel="Prev"
         menuLabel="Find Pre_vious"
         desc="Find previous occurrence"/>
-   <cmd id="selectAll"
+   <cmd id="findSelectAll"
         buttonLabel="All"
-        menuLabel="Select All"
-        desc="Select all matches"/>
+        menuLabel="Find And Select All"
+        desc="Find and select all matches"/>
    <cmd id="replaceAndFind"
         buttonLabel="Replace"
         menuLabel="_Replace and Find"

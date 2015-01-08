@@ -168,7 +168,7 @@ public class TextEditingTarget implements
       void showFindReplace(boolean defaultForward);
       void findNext();
       void findPrevious();
-      void selectAll();
+      void findSelectAll();
       void findFromSelection();
       void replaceAndFind();
       
@@ -3012,7 +3012,7 @@ public class TextEditingTarget implements
       if (docDisplay_.isFocused())
          codeExecution_.executeSelection(true, false);
       else if (view_.isAttached())
-         view_.selectAll();
+         view_.findSelectAll();
    }
    
    @Handler
@@ -4003,9 +4003,9 @@ public class TextEditingTarget implements
    }
    
    @Handler
-   void onSelectAll()
+   void onFindSelectAll()
    {
-      view_.selectAll();
+      view_.findSelectAll();
    }
    
    @Handler

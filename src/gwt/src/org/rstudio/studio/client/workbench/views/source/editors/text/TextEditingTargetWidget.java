@@ -448,7 +448,7 @@ public class TextEditingTargetWidget
    }
    
    @Override
-   public void selectAll()
+   public void findSelectAll()
    {
       findReplace_.selectAll();
    }

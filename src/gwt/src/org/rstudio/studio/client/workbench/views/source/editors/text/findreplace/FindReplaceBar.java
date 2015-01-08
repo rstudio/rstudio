@@ -73,7 +73,7 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       Commands cmds = RStudioGinjector.INSTANCE.getCommands();
       findReplacePanel.add(btnFindNext_ = new SmallButton(cmds.findNext()));
       findReplacePanel.add(btnFindPrev_ = new SmallButton(cmds.findPrevious()));
-      findReplacePanel.add(btnSelectAll_ = new SmallButton(cmds.selectAll()));
+      findReplacePanel.add(btnSelectAll_ = new SmallButton(cmds.findSelectAll()));
       
       findReplacePanel.add(txtReplace_ = new FindTextBox("Replace"));
       txtReplace_.addStyleName(RES.styles().replaceTextBox());
