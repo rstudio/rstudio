@@ -244,9 +244,18 @@ assign(x = ".rs.acCompletionTypes",
    if (!file.exists(directory))
       return(.rs.emptyCompletions())
    
-   # If the directory lies within a folder that we're monitoring for indexing, use that.
+   # When checking if the path lies within the project directory,
+   # we just do a substring check -- so make sure that the path
+   # is actually within the project directory (append a trailing
+   # slash to the directory we check)
+   projDirEndsWithSlash <-
+      paste(gsub("/*$", "", .rs.getProjectDirectory()), "/", sep = "")
+   
+   # If the directory lies within a folder that we're monitoring
+   # for indexing, use that.
    cacheable <- TRUE
-   usingFileMonitor <- .rs.hasFileMonitor() && .rs.startsWith(directory, .rs.getProjectDirectory())
+   usingFileMonitor <- .rs.hasFileMonitor() &&
+      .rs.startsWith(directory, projDirEndsWithSlash)
    
    if (usingFileMonitor)
    {
