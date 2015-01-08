@@ -909,3 +909,6 @@
    }))
 })
 
+.rs.addFunction("trimWhitespace", function(x) {
+   gsub("^[\\s\\n]+|[\\s\\n]+$", "", x, perl = TRUE)
+})
