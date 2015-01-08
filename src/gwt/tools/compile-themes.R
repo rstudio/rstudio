@@ -290,7 +290,7 @@ for (file in themeFiles) {
    mergedColor <- mix_colors(
       backgroundRgb,
       foregroundRgb,
-      if (isDark) 0.85 else 0.95
+      if (isDark) 0.90 else 0.95
    )
    
    content <- c(

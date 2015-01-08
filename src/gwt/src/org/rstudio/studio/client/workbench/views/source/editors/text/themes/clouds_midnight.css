@@ -122,7 +122,7 @@
 .ace_marker-layer .ace_foreign_line {
   position: absolute;
   z-index: -1;
-  background-color: #2B2B2B;
+  background-color: #252525;
 }
 .ace_marker-layer .ace_find_line {
   position: absolute;
