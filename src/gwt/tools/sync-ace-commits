@@ -64,6 +64,7 @@ git merge \
     origin/bugfix/dont-place-text-area-offscreen \
     origin/patch/remove-webfont-2 \
     origin/patch/other-modes \
+    origin/patch/dont-bundle-textmate-theme \
     -m "merge branches"
 
 ## git merge \
