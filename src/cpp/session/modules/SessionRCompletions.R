@@ -1661,7 +1661,9 @@ assign(x = ".rs.acCompletionTypes",
       }
    }
    
-   completions <- .rs.sortCompletions(completions, token)
+   if (nzchar(token))
+      completions <- .rs.sortCompletions(completions, token)
+   
    completions$token <- token
    completions
    
