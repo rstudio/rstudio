@@ -21,6 +21,7 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Command;
 
 import org.rstudio.core.client.CommandWithArg;
+
 import java.util.LinkedList;
 
 public class AceEditorNative extends JavaScriptObject {
@@ -259,6 +260,19 @@ public class AceEditorNative extends JavaScriptObject {
    
    public final native int findAll(String needle) /*-{
       return this.findAll(needle);
+   }-*/;
+   
+   public final native void insert(String text) /*-{
+      this.forEachSelection(function() {
+         this.replace(this.getSelectionRange(), text);
+      });
+   }-*/;
+   
+   public final native void moveCursorLeft() /*-{
+      var that = this;
+      this.forEachSelection(function() {
+         that.navigateLeft(1);
+      });
    }-*/;
    
 }

@@ -641,9 +641,7 @@ public class AceEditor implements DocDisplay,
    
    public void insertCode(String code, boolean blockMode)
    {
-      // TODO: implement block mode
-      getSession().replace(
-            getSession().getSelection().getRange(), code);
+      widget_.getEditor().insert(code);
    }
 
    public String getCode(Position start, Position end)
@@ -789,6 +787,10 @@ public class AceEditor implements DocDisplay,
    public boolean hasSelection()
    {
       return !getSession().getSelection().getRange().isEmpty();
+   }
+   
+   public final Selection getNativeSelection() {
+      return widget_.getEditor().getSession().getSelection();
    }
 
    public InputEditorSelection getSelection()
@@ -963,6 +965,10 @@ public class AceEditor implements DocDisplay,
          widget_.getEditor().focus();
       else
          widget_.getEditor().blur();
+   }
+   
+   public void replaceRange(Range range, String text) {
+      getSession().replace(range, text);
    }
 
    public String replaceSelection(String value, boolean collapseSelection)
@@ -2003,6 +2009,11 @@ public class AceEditor implements DocDisplay,
    public void selectAll(String needle)
    {
       widget_.getEditor().findAll(needle);
+   }
+   
+   public void moveCursorLeft()
+   {
+      widget_.getEditor().moveCursorLeft();
    }
 
    private static final int DEBUG_CONTEXT_LINES = 2;

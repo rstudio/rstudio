@@ -1786,67 +1786,67 @@ public class RCompletionManager implements CompletionManager
           * selection.
           */
          
-         // Move range to beginning of token
-         input_.setSelection(new InputEditorSelection(
-               selection_.getStart().movePosition(-token_.length(), true),
-               input_.getSelection().getEnd()));
-
-         if (insertParen && !overrideInsertParens_ && !textFollowingCursorIsOpenParen)
+         // There might be multiple cursors. Get the position of each cursor.
+         Range[] ranges = editor.getNativeSelection().getAllRanges();
+         
+         // Determine the replacement value.
+         boolean shouldInsertParens = insertParen &&
+               !overrideInsertParens_ &&
+               !textFollowingCursorIsOpenParen;
+         
+         if (shouldInsertParens)
          {
-            // Don't replace the selection if the token ends with a ')'
-            // (implies an earlier replacement handled this)
-            if (token_.endsWith("("))
+            // Munge the value -- determine whether we want to append '()' 
+            // for e.g. function completions, and so on.
+            if (textFollowingCursorIsClosingParen ||
+                  !uiPrefs_.insertMatching().getValue())
             {
-               input_.setSelection(new InputEditorSelection(
-                     input_.getSelection().getEnd(),
-                     input_.getSelection().getEnd()));
+               value = value + "(";
             }
             else
             {
-               // If the token after the cursor is already a ')', don't insert
-               // a closing paren
-               int relMovement = 0;
-               if (textFollowingCursorIsClosingParen || !uiPrefs_.insertMatching().getValue())
-               {
-                  input_.replaceSelection(value + "(", true);
-               }
-               else
-               {
-                  input_.replaceSelection(value + "()", true);
-                  relMovement = -1;
-               }
-               
-               // Move the cursor into the newly inserted parens
-               InputEditorSelection newSelection = new InputEditorSelection(
-                     input_.getSelection().getEnd().movePosition(
-                           relMovement, true));
-               
-               token_ = value + "(";
-               selection_ = new InputEditorSelection(
-                     input_.getSelection().getStart().movePosition(
-                           relMovement - 1, true),
-                     newSelection.getStart());
-
-               input_.setSelection(newSelection);
+               value = value + "()";
             }
          }
          else
          {
             if (shouldQuote)
                value = "\"" + value + "\"";
-            
+
             // don't add spaces around equals if requested
             final String kSpaceEquals = " = ";
             if (!uiPrefs_.insertSpacesAroundEquals().getValue() &&
-                value.endsWith(kSpaceEquals))
+                  value.endsWith(kSpaceEquals))
             {
                value = value.substring(0, value.length() - kSpaceEquals.length()) + "=";
             }
-               
-
-            input_.replaceSelection(value, true);
-            token_ = value;
-            selection_ = input_.getSelection();
+         }
+         
+         // Loop over all of the active cursors, and replace.
+         for (Range range : ranges)
+         {
+            // We should be typing, and so each range should just define a
+            // cursor position. Take those positions, construct ranges, replace
+            // text in those ranges, and proceed.
+            Position replaceEnd = range.getEnd();
+            Position replaceStart = Position.create(
+                  replaceEnd.getRow(),
+                  replaceEnd.getColumn() - token_.length());
+            
+            editor.replaceRange(
+                  Range.fromPoints(replaceStart, replaceEnd),
+                  value);
+            
+         }
+         
+         // Set the active selection, and update the token.
+         token_ = value;
+         selection_ = input_.getSelection();
+         
+         // Move the cursor(s) back inside parens if necessary.
+         if (shouldInsertParens)
+         {
+            editor.moveCursorLeft();
          }
          
          // Show a signature popup if we just completed a function
