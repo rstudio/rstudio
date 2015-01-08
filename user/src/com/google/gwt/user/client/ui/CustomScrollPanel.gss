@@ -1,0 +1,6 @@
+.customScrollPanel {
+}
+
+.customScrollPanelCorner {
+  background: #efefef;
+}

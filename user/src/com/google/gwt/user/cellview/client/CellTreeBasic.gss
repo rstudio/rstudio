@@ -1,0 +1,58 @@
+.cellTreeWidget {
+}
+
+.cellTreeEmptyMessage {
+  padding-left: 16px;
+  font-style: italic;
+}
+
+.cellTreeItem {
+  padding-top: 4px;
+  padding-bottom: 4px;
+  cursor: hand;
+  /* @alternate */ cursor: pointer;
+  zoom: 1;
+}
+
+.cellTreeItemImage {
+}
+
+.cellTreeItemImageValue {
+  zoom: 1;
+}
+
+.cellTreeItemValue {
+  padding-left: 3px;
+  padding-right: 3px;
+  outline: none;
+}
+
+.cellTreeOpenItem {
+}
+
+.cellTreeTopItem {
+}
+
+.cellTreeTopItemImage {
+}
+
+.cellTreeTopItemImageValue {
+}
+
+.cellTreeKeyboardSelectedItem {
+  background-color: #ffc;
+  outline: none;
+}
+
+.cellTreeSelectedItem {
+  gwt-sprite: "cellTreeSelectedBackground";
+  background-color: #628cd5;
+  color: white;
+  height: auto;
+  overflow: visible;
+}
+
+.cellTreeShowMoreButton {
+  padding-left: 16px;
+  outline: none;
+}

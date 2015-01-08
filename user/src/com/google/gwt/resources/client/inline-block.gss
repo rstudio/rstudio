@@ -1,0 +1,4 @@
+.inlineBlock {
+  position: relative;
+  display: inline-block;
+}
