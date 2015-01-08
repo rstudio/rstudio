@@ -60,8 +60,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       exportMenu.addItem(commands_.viewerCopyToClipboard().createMenuItem(false));
       exportMenu.addSeparator();
       exportMenu.addItem(commands_.viewerSaveAsWebPage().createMenuItem(false));
-      exportMenu.addSeparator();
-      exportMenu.addItem(commands_.viewerPublishToRPubs().createMenuItem(false));
       
       exportButton_ = new ToolbarButton(
             "Export", StandardIcons.INSTANCE.export_menu(),
@@ -85,10 +83,14 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.viewerStop().createToolbarButton());
      
-      // add publish button 
+      // add html document publish button 
       publishButton_ = commands_.publishHTML().createToolbarButton(false);
       toolbar_.addRightWidget(publishButton_);
       publishButton_.setVisible(false);
+      
+      // add rpubs publish button
+      rpubsPublishButton_ = toolbar_.addRightWidget(
+                commands_.viewerPublishToRPubs().createToolbarButton(false));
       
       return toolbar_;
    }
@@ -107,6 +109,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       navigate(url, false);
       publishButton_.setVisible(false);
+      rpubsPublishButton_.setVisible(commands_.viewerPublishToRPubs().isVisible());
       rmdPreviewParams_ = null;
    }
 
@@ -114,6 +117,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    public void previewRmd(RmdPreviewParams params)
    {
       navigate(params.getOutputUrl(), true);
+      rpubsPublishButton_.setVisible(false);
       publishButton_.setVisible(!params.isShinyDocument());
       if (!params.isShinyDocument())
          publishButton_.setText(params.getResult().getRpubsPublished() ? 
@@ -203,6 +207,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    private Toolbar toolbar_;
    
    private ToolbarButton publishButton_;
+   private ToolbarButton rpubsPublishButton_;
    
    private ToolbarButton exportButton_;
    private Widget exportButtonSeparator_;
