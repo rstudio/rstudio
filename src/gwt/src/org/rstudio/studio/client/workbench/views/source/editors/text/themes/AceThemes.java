@@ -53,7 +53,7 @@ public class AceThemes
    public static final String TEXTMATE = "Textmate";
    public static final String TOMORROW_NIGHT_BLUE = "Tomorrow Night Blue";
    public static final String TOMORROW_NIGHT_BRIGHT = "Tomorrow Night Bright";
-   public static final String TOMORROW_NIGHT_EIGHTIES = "Tomorrow Night Eighties";
+   public static final String TOMORROW_NIGHT_EIGHTIES = "Tomorrow Night 80s";
    public static final String TOMORROW_NIGHT = "Tomorrow Night";
    public static final String TOMORROW = "Tomorrow";
    public static final String TWILIGHT = "Twilight";
