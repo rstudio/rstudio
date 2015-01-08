@@ -1484,15 +1484,15 @@ well as menu structures (for main menu and popup menus).
         checkable="true"/>
 
    <cmd id="rsconnectDeploy"
-        menuLabel="Publish App..."
+        menuLabel="_Publish Application..."
         desc="Publish the application"
         visible="false"/>
    <cmd id="rsconnectManage"
-        menuLabel="Manage App..."
+        menuLabel="_Manage Application..."
         desc="Manage the application"
         visible="false"/>
    <cmd id="rsconnectManageAccounts"
-        menuLabel="Manage Accounts..."
+        menuLabel="_Configure Accounts..."
         desc="Connect or disconnect accounts"
         visible="false"/>
 
