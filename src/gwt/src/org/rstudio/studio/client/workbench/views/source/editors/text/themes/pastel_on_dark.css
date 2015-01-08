@@ -135,15 +135,18 @@
   border: 0 !important;
   background-color: rgba(255, 255, 255, 0.25);
 }
+.ace_editor {
+  color: #EAEAEA !important;
+}
 .ace_marker-layer .ace_foreign_line {
   position: absolute;
   z-index: -1;
-  background-color: #3F3D3C;
+  background-color: #484545;
 }
 .ace_marker-layer .ace_find_line {
   position: absolute;
   z-index: -1;
-  background-color: #5D5D5B;
+  background-color: #8B8989;
 }
 .ace_marker-layer .ace_active_debug_line {
   position: absolute;
@@ -151,5 +154,8 @@
   background-color: #958330;
 }
 .ace_console_error {
-  background-color: #3F3D3C;
+  background-color: #524E4E;
+}
+.ace_keyword.ace_operator {
+  color: #AAAAAA !important;
 }

@@ -7,6 +7,11 @@ if (!require("highlight")) {
    }
 }
 
+## Default operator colors to use for light, dark themes. These should be
+## a grey tone that remains distinctive on either dark or light backgrounds.
+dark_theme_operator <- "#AAAAAA"
+light_theme_operator <- "#888888"
+
 ## A set of operator colors to use, for each theme. Should match the name
 ## of the theme file in ace.
 operator_theme_map <- list(
@@ -15,13 +20,23 @@ operator_theme_map <- list(
    "twilight" = "#7587A6",
    "idle_fingers" = "#6892B2",
    "cobalt" = "#BED6FF",
-   "eclipse" = "black",
+   "dawn" = light_theme_operator,
+   "eclipse" = light_theme_operator,
+   "katzenmilch" = light_theme_operator,
+   "kr_theme" = "#A56464",
+   "merbivore" = dark_theme_operator,
+   "merbivore_soft" = dark_theme_operator,
+   "monokai" = dark_theme_operator,
+   "pastel_on_dark" = dark_theme_operator,
+   "vibrant_ink" = dark_theme_operator,
+   "xcode" = light_theme_operator,
    NULL
 )
 
 ## Similarly, colors for keywords that we might override.
 keyword_theme_map <- list(
-   "eclipse" = "#0000FF",
+   "eclipse" = "#800080",
+   "clouds" = "#800080",
    NULL
 )
 
@@ -40,10 +55,8 @@ add_keyword_color <- function(content, file) {
       content,
       ".ace_keyword {",
       "  color: %s !important;",
-      if (identical(file, "eclipse")) "  font-weight: bold;",
-      if (identical(file, "eclipse")) "  letter-spacing: -1px;",
       "}",
-      replace = operator_theme_map[[file]]
+      replace = keyword_theme_map[[file]]
    )
 }
 
@@ -247,6 +260,7 @@ for (file in themeFiles) {
    jsContents <- readLines(sub("css$", "js", file))
    isDark <- any(grepl("exports.isDark = true;", jsContents))
    
+   ## Get the default background, foreground color for the theme.
    background <- parsed$ace_editor$`background-color`
    if (is.null(background))
       background <- if (isDark) "#000000" else "#FFFFFF"
@@ -255,6 +269,20 @@ for (file in themeFiles) {
    if (is.null(foreground))
       foreground <- if (isDark) "#FFFFFF" else "#000000"
    
+   ## Tweak pastel on dark -- we want the foreground color to be white.
+   if (identical(basename(file), "pastel_on_dark.css"))
+   {
+      foreground <- "#EAEAEA"
+      content <- add_content(
+         content,
+         ".ace_editor {",
+         "  color: %s !important;",
+         "}",
+         replace = foreground
+      )
+   }
+      
+   
    ## Generate a color used for chunks, e.g. in .Rmd documents.
    backgroundRgb <- parse_css_color(background)
    foregroundRgb <- parse_css_color(foreground)
@@ -262,7 +290,7 @@ for (file in themeFiles) {
    mergedColor <- mix_colors(
       backgroundRgb,
       foregroundRgb,
-      if (isDark) 0.8 else 0.9
+      if (isDark) 0.85 else 0.95
    )
    
    content <- c(
