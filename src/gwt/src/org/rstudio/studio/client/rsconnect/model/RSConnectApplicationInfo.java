@@ -22,6 +22,10 @@ public class RSConnectApplicationInfo extends JavaScriptObject
    {
    }
    
+   public final native double getId() /*-{
+      return this.id;
+   }-*/;
+   
    public final native String getName() /*-{
       return this.name;
    }-*/;

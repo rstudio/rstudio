@@ -2328,7 +2328,7 @@ public class Source implements InsertSourceHandler,
             (activeEditor_.getPath() != null) &&
             ((activeEditor_.getExtendedFileType() == "shiny"));
       commands_.rsconnectDeploy().setVisible(shinyCommandsAvailable);
-      commands_.rsconnectTerminate().setVisible(shinyCommandsAvailable);
+      commands_.rsconnectManage().setVisible(shinyCommandsAvailable);
    }
    
    private void manageRMarkdownCommands()
