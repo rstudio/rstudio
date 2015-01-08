@@ -3271,7 +3271,7 @@ var Tokenizer = function(rules) {
                 } else {
                     if (token.type)
                         tokens.push(token);
-                    token = {type: type, value: skipped};
+                    token = {type: type, value: skipped, column: match.index};
                 }
             }
 
