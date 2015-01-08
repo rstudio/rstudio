@@ -446,6 +446,12 @@ public class TextEditingTargetWidget
    {
       findReplace_.findNext();
    }
+   
+   @Override
+   public void selectAll()
+   {
+      findReplace_.selectAll();
+   }
 
    @Override
    public void findPrevious()

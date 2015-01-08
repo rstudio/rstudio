@@ -257,4 +257,8 @@ public class AceEditorNative extends JavaScriptObject {
       return this.getLastVisibleRow();
    }-*/;
    
+   public final native int findAll(String needle) /*-{
+      return this.findAll(needle);
+   }-*/;
+   
 }

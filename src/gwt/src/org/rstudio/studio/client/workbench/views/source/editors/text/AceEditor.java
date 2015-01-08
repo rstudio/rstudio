@@ -1999,6 +1999,11 @@ public class AceEditor implements DocDisplay,
    {
       return popupVisible_;
    }
+   
+   public void selectAll(String needle)
+   {
+      widget_.getEditor().findAll(needle);
+   }
 
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);

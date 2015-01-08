@@ -145,6 +145,10 @@ public class FindReplace
                return ;
             }
             
+            // bail on control characters
+            if (event.getNativeKeyCode() < 32)
+               return;
+            
             // perform incremental search
             find(defaultForward_ ? FindType.Forward : FindType.Reverse, true);
          }
@@ -197,6 +201,15 @@ public class FindReplace
    private boolean find(FindType findType)
    {
       return find(findType, false);
+   }
+   
+   public void selectAll()
+   {
+      String searchString = display_.getFindValue().getValue();
+      if (searchString.length() != 0)
+      {
+         editor_.selectAll(searchString);
+      }
    }
    
    private boolean find(FindType findType, boolean incremental)

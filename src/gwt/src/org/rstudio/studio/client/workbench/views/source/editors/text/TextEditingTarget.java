@@ -168,6 +168,7 @@ public class TextEditingTarget implements
       void showFindReplace(boolean defaultForward);
       void findNext();
       void findPrevious();
+      void selectAll();
       void findFromSelection();
       void replaceAndFind();
       
@@ -3008,7 +3009,10 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCodeWithoutMovingCursor()
    {
-      codeExecution_.executeSelection(true, false);
+      if (docDisplay_.isFocused())
+         codeExecution_.executeSelection(true, false);
+      else if (view_.isAttached())
+         view_.selectAll();
    }
    
    @Handler
@@ -3991,11 +3995,17 @@ public class TextEditingTarget implements
    {
       view_.findNext();
    }
-
+   
    @Handler
    void onFindPrevious()
    {
       view_.findPrevious();
+   }
+   
+   @Handler
+   void onSelectAll()
+   {
+      view_.selectAll();
    }
    
    @Handler
