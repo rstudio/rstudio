@@ -73,7 +73,8 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
       addLeftWidget(commands_.clearPlots().createToolbarButton());
       
       // refresh
-      addRightWidget(commands_.refreshPlot().createToolbarButton());
+      addLeftSeparator();
+      addLeftWidget(commands_.refreshPlot().createToolbarButton());
    }
    
    private Commands commands_;   

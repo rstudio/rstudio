@@ -70,23 +70,26 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       exportButton_.setVisible(false);
       exportButtonSeparator_.setVisible(false);
       
-      // add publish button 
-      publishButtonSeparator_ = toolbar_.addLeftSeparator();
-      publishButton_ = commands_.publishHTML().createToolbarButton(false);
-      toolbar_.addLeftWidget(publishButton_);
-      publishButtonSeparator_.setVisible(false);
-      publishButton_.setVisible(false);
-     
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.viewerClear().createToolbarButton());
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.viewerClearAll().createToolbarButton());
       
-      toolbar_.addRightWidget(commands_.viewerStop().createToolbarButton());
-      toolbar_.addRightSeparator();
-      toolbar_.addRightWidget(commands_.viewerPopout().createToolbarButton());
-      toolbar_.addRightSeparator();
-      toolbar_.addRightWidget(commands_.viewerRefresh().createToolbarButton());
+      toolbar_.addLeftSeparator();
+      toolbar_.addLeftWidget(commands_.viewerRefresh().createToolbarButton());
+     
+      toolbar_.addLeftSeparator();
+      toolbar_.addLeftWidget(commands_.viewerPopout().createToolbarButton());
+     
+      
+      toolbar_.addLeftSeparator();
+      toolbar_.addLeftWidget(commands_.viewerStop().createToolbarButton());
+     
+      // add publish button 
+      publishButton_ = commands_.publishHTML().createToolbarButton(false);
+      toolbar_.addRightWidget(publishButton_);
+      publishButton_.setVisible(false);
+      
       return toolbar_;
    }
    
@@ -104,7 +107,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       navigate(url, false);
       publishButton_.setVisible(false);
-      publishButtonSeparator_.setVisible(false);
       rmdPreviewParams_ = null;
    }
 
@@ -113,7 +115,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       navigate(params.getOutputUrl(), true);
       publishButton_.setVisible(!params.isShinyDocument());
-      publishButtonSeparator_.setVisible(!params.isShinyDocument());
       if (!params.isShinyDocument())
          publishButton_.setText(params.getResult().getRpubsPublished() ? 
                "Republish" : "Publish");
@@ -202,7 +203,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    private Toolbar toolbar_;
    
    private ToolbarButton publishButton_;
-   private Widget publishButtonSeparator_;
    
    private ToolbarButton exportButton_;
    private Widget exportButtonSeparator_;
