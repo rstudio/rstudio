@@ -19,6 +19,7 @@ operator_theme_map <- list(
    NULL
 )
 
+## Similarly, colors for keywords that we might override.
 keyword_theme_map <- list(
    "eclipse" = "#0000FF",
    NULL
@@ -104,13 +105,6 @@ create_line_marker_rule <- function(markerName, markerColor) {
            markerColor)
 }
 
-content <- add_content(
-   ".nocolor.ace_editor .ace_line span {",
-   "  color: %s !important;",
-   "}",
-   replace = keywordColor
-)
-
 ## Get the set of all theme .css files
 outDir <- "../src/org/rstudio/studio/client/workbench/views/source/editors/text/themes"
 themeDir <- "ace/lib/ace/theme"
@@ -140,7 +134,7 @@ for (file in themeFiles) {
    regex <- paste("^\\s*", themeNameCssClass, "\\s*\\{\\s*$", sep = "")
    content <- gsub(regex, ".ace_editor {", content)
    
-   ## Strip it out from the content
+   ## Strip the theme name rule from the CSS.
    regex <- paste("^\\", themeNameCssClass, "\\S*\\s+", sep = "")
    content <- gsub(regex, "", content)
    
@@ -252,20 +246,14 @@ for (file in themeFiles) {
    ## Marker line stuff.
    jsContents <- readLines(sub("css$", "js", file))
    isDark <- any(grepl("exports.isDark = true;", jsContents))
-   background <- if ("ace_scroller" %in% names(parsed) &&
-                     "background-color" %in% parsed$ace_scroller) {
-      strip_color_from_field(parsed$ace_scroller[["background-color"]])
-   } else {
-      if (isDark) "#000000" else "#FFFFFF"
-   }
    
-   ## Get the ace text color.
-   foreground <- if ("ace_text-layer" %in% names(parsed) &&
-                     "color" %in% names(parsed[["ace_text-layer"]])) {
-      strip_color_from_field(parsed[["ace_text-layer"]][["color"]])
-   } else {
-      if (isDark) "#FFFFFF" else "#000000"
-   }
+   background <- parsed$ace_editor$`background-color`
+   if (is.null(background))
+      background <- if (isDark) "#000000" else "#FFFFFF"
+   
+   foreground <- parsed$ace_editor$color
+   if (is.null(foreground))
+      foreground <- if (isDark) "#FFFFFF" else "#000000"
    
    ## Generate a color used for chunks, e.g. in .Rmd documents.
    backgroundRgb <- parse_css_color(background)
@@ -274,7 +262,7 @@ for (file in themeFiles) {
    mergedColor <- mix_colors(
       backgroundRgb,
       foregroundRgb,
-      0.8
+      if (isDark) 0.8 else 0.9
    )
    
    content <- c(

@@ -152,12 +152,12 @@
 .ace_marker-layer .ace_foreign_line {
   position: absolute;
   z-index: -1;
-  background-color: #CCCCCC;
+  background-color: #EBEBEB;
 }
 .ace_marker-layer .ace_find_line {
   position: absolute;
   z-index: -1;
-  background-color: #7F7F7F;
+  background-color: #9F9F9F;
 }
 .ace_marker-layer .ace_active_debug_line {
   position: absolute;
@@ -165,5 +165,5 @@
   background-color: #FFEE9B;
 }
 .ace_console_error {
-  background-color: #CCCCCC;
+  background-color: #D8D8D8;
 }
