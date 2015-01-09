@@ -125,6 +125,7 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -135,6 +136,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.Adler32;
@@ -147,6 +149,34 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     SupportsGeneratorResultCaching {
 
   private enum AutoConversionMode { STRICT, LENIENT, OFF }
+
+  /*
+   * TODO(dankurka): This is a nasty hack to get the compiler to output all @def's
+   * it has seen in a compile. Once GSS migration is done this needs to be removed.
+   */
+  private static Set<String> allAtDefs =
+      Collections.<String> newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+
+  private static boolean shouldEmitVariables;
+
+  static {
+    shouldEmitVariables = "true".equals(System.getProperty("emitAtDefs"));
+    if (shouldEmitVariables) {
+      Runnable runnable = new Runnable() {
+
+        @Override
+        public void run() {
+          System.out.println("================== @defs found in this compile");
+          for (String atDef : allAtDefs) {
+            System.out.println("@def " + atDef + " 1px");
+          }
+          System.out.println("==============================================");
+        }
+      };
+
+      Runtime.getRuntime().addShutdownHook(new Thread(runnable));
+    }
+  }
 
   /**
    * {@link ErrorManager} used to log the errors and warning messages produced by the different
@@ -839,6 +869,10 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
       String concatenatedCss = concatCssFiles(resources, logger);
 
       ConversionResult result = convertToGss(concatenatedCss, context, logger);
+
+      if (shouldEmitVariables) {
+        allAtDefs.addAll(result.defNameMapping.keySet());
+      }
 
       String gss = result.gss;
       String name = "[auto-converted gss files from : " + resources + "]";
