@@ -18,6 +18,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.inject.client.GinModules;
 import com.google.gwt.inject.client.Ginjector;
 
+import org.rstudio.core.client.files.filedialog.PathBreadcrumbWidget;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.LocalRepositoriesWidget;
 import org.rstudio.studio.client.application.Application;
@@ -102,6 +103,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(CppCompletionRequest request);
    void injectMembers(CppCompletionManager completionManager);
    void injectMembers(RCompletionToolTip toolTip);
+   void injectMembers(PathBreadcrumbWidget pathBreadcrumbWidget);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

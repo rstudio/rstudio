@@ -21,6 +21,8 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
@@ -32,9 +34,11 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
+import org.rstudio.studio.client.workbench.model.Session;
 
 public class PathBreadcrumbWidget
       extends Composite
@@ -43,6 +47,8 @@ public class PathBreadcrumbWidget
 {
    public PathBreadcrumbWidget(FileSystemContext context)
    {
+      RStudioGinjector.INSTANCE.injectMembers(this);
+      
       context_ = context;
   
       pathPanel_ = new HorizontalPanel();
@@ -112,15 +118,52 @@ public class PathBreadcrumbWidget
       frame.setStyleName(STYLES.breadcrumbFrame());
       initWidget(frame);
    }
+   
+   @Inject
+   public void initialize(Provider<Session> pSession)
+   {
+      pSession_ = pSession;
+   }
+   
+   private Anchor maybeAddProjectIcon()
+   {
+      if (pSession_ == null ||
+          pSession_.get() == null)
+         return null;
+      
+      final FileSystemItem projDir =
+            pSession_.get().getSessionInfo().getActiveProjectDir();
+      
+      if (projDir != null)
+      {
+         Anchor projAnchor = new Anchor("", false);
+         projAnchor.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
+
+         projAnchor.addClickHandler(new ClickHandler()
+         {
+            public void onClick(ClickEvent event)
+            {
+               SelectionCommitEvent.fire(PathBreadcrumbWidget.this, projDir);
+            }
+         });
+         projAnchor.addStyleName(RES.styles().project());
+         
+         pathPanel_.add(projAnchor);
+         pathPanel_.add(Toolbar.getSeparator());
+         return projAnchor;
+      }
+      return null;
+   }
 
    public void setDirectory(FileSystemItem[] pathElements)
    {
       pathPanel_.clear();
-
+      
       if (linkUp_ != null)
          linkUp_.setVisible(pathElements.length > 1);
 
-      Anchor lastAnchor = null;
+      Anchor lastAnchor = maybeAddProjectIcon();
+      
       for (FileSystemItem item : pathElements)
          lastAnchor = addAnchor(item);
 
@@ -236,4 +279,6 @@ public class PathBreadcrumbWidget
    private FileDialogStyles STYLES = RES.styles();
    private static final boolean INCLUDE_UP_LINK = false;
    private SimplePanel outer_;
+   
+   private Provider<Session> pSession_;
 }

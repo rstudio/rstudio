@@ -33,8 +33,14 @@ public interface FileDialogResources extends ClientBundle
    @Source("home.png")
    DataResource home();
    
+   @Source("project.png")
+   DataResource project();
+   
    @Source("home.png")
    ImageResource homeImage();
+   
+   @Source("project.png")
+   ImageResource projectImage();
 
    ImageResource fade();   
 
