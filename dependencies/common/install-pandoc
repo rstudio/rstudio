@@ -54,6 +54,10 @@ else
       if grep -q -i -s "release 5" /etc/redhat-release
       then
          BINARY_TYPE=rpm
+
+         # rhel5 itself won't use these, but we also build for sles on rhel5
+         cp ${PANDOC_NAME}/linux/debian/${ARCH}/pandoc ${PANDOC_DIR}/pandoc-static
+         cp ${PANDOC_NAME}/linux/debian/${ARCH}/pandoc-citeproc ${PANDOC_DIR}/pandoc-citeproc-static
       else 
          BINARY_TYPE=debian
       fi
