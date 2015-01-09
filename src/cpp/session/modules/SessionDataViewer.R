@@ -76,11 +76,12 @@
       }
       else if (is.numeric(val))
       {
-        # ignore missing values when computing min/max
+        # ignore missing values when computing min/max, and round to 5 decimals
+        # (otherwise it's difficult to draw the UI accurately)
         col_type <- "numeric"
         col_search_type <- "numeric"
-        col_min <- min(x[[idx]], na.rm = TRUE)
-        col_max <- max(x[[idx]], na.rm = TRUE)
+        col_min <- round(min(x[[idx]], na.rm = TRUE), 5)
+        col_max <- round(max(x[[idx]], na.rm = TRUE), 5)
       }
       else if (is.character(val))
       {
