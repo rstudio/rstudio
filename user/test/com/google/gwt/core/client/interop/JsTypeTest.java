@@ -168,6 +168,10 @@ public class JsTypeTest extends GWTTestCase {
     // Test exported constructor called from JS in module window
     ScriptInjector.fromString("new $wnd.MyClassImpl3();").inject();
     assertTrue(MyClassImpl3.calledFromJsModuleWindow);
+
+    // This is to reproduce the problem where we incorrectly type-tighten an exported method params.
+    ScriptInjector.fromString("$wnd.MyClassImpl3.foo($wnd.newA());").inject();
+    assertTrue(MyClassImpl3.calledFromBar);
   }
 
   public void testCasts() {

@@ -473,7 +473,10 @@ public class TypeTightener {
 
     @Override
     public void exit(JField x, Context ctx) {
-      if (program.codeGenTypes.contains(x.getEnclosingType())) {
+      // TODO: we should also skip @JsType fields when we implement them.
+      if (program.codeGenTypes.contains(x.getEnclosingType())
+          || program.typeOracle.isExportedField(x)) {
+        // We cannot tighten this field as we don't know all callers.
         return;
       }
       if (!x.isVolatile()) {
@@ -659,6 +662,13 @@ public class TypeTightener {
 
     @Override
     public void endVisit(JParameter x, Context ctx) {
+      JMethod currentMethod = getCurrentMethod();
+      if (program.codeGenTypes.contains(currentMethod.getEnclosingType())
+          || program.typeOracle.isExportedMethod(currentMethod)
+          || program.typeOracle.isJsTypeMethod(currentMethod)) {
+        // We cannot tighten this parameter as we don't know all callers.
+        return;
+      }
       tighten(x);
     }
 
@@ -684,8 +694,7 @@ public class TypeTightener {
        * Explicitly NOT visiting native methods since we can't infer further
        * type information.
        */
-      return !program.codeGenTypes.contains(x.getEnclosingType()) && !x.isNative()
-          || program.typeOracle.isJsTypeMethod(x) || program.typeOracle.isExportedMethod(x);
+      return !x.isNative();
     }
 
     /**
@@ -733,10 +742,6 @@ public class TypeTightener {
         return;
       }
       JReferenceType refType = (JReferenceType) x.getType();
-
-      if (program.typeOracle.isJsType(refType)) {
-        return;
-      }
 
       if (refType == program.getTypeNull()) {
         return;

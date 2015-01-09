@@ -35,4 +35,23 @@ class MyClassImpl3 {
       Assert.assertEquals(42, foo);
       calledFromJsModuleWindow = true;
   }
+
+  public static boolean calledFromBar = false;
+
+  public static class A {
+    void bar() {
+      calledFromBar = true;
+    }
+  }
+
+  // There should be no calls to this method from java.
+  @JsExport("$wnd.MyClassImpl3.foo")
+  public static void foo(A a) {
+    a.bar();
+  }
+
+  @JsExport("$wnd.newA")
+  private static A newA() {
+    return new A();
+  }
 }
