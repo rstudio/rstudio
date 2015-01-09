@@ -28,6 +28,10 @@ cpack -G NSIS
 IF "%CMAKE_BUILD_TYPE%" == "Release" cpack -G ZIP
 cd ..
 
+REM unzip to devel directory
+rmdir /S /Q "C:\RStudio-devel"
+7zip x RStudio-99.9.9.zip -o"C:\RStudio-devel"
+
 REM reset modified environment variables (PATH)
 endlocal
 
