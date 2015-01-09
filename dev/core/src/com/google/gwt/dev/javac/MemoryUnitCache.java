@@ -17,6 +17,7 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.javac.MemoryUnitCache.UnitCacheEntry;
 import com.google.gwt.thirdparty.guava.common.collect.Maps;
 
 import java.util.Map;
@@ -56,11 +57,6 @@ public class MemoryUnitCache implements UnitCache {
    */
   protected static enum UnitOrigin {
     /**
-     * Unit was loaded from an archive.
-     */
-    ARCHIVE,
-
-    /**
      * Unit was loaded from persistent store.
      */
     PERSISTENT,
@@ -90,16 +86,14 @@ public class MemoryUnitCache implements UnitCache {
    */
   @Override
   public void add(CompilationUnit newUnit) {
-    add(newUnit, UnitOrigin.RUN_TIME);
-  }
-
-  /**
-   * Adds a new entry into the cache, but marks it as already coming from a
-   * persistent archive. This means it doesn't need to be saved out to disk.
-   */
-  @Override
-  public void addArchivedUnit(CompilationUnit newUnit) {
-    add(newUnit, UnitOrigin.ARCHIVE);
+    UnitCacheEntry newEntry = new UnitCacheEntry(newUnit, UnitOrigin.RUN_TIME);
+    String resourcePath = newUnit.getResourcePath();
+    UnitCacheEntry oldEntry = unitMap.get(resourcePath);
+    if (oldEntry != null) {
+      remove(oldEntry.getUnit());
+    }
+    unitMap.put(resourcePath, newEntry);
+    unitMapByContentId.put(newUnit.getContentId(), newEntry);
   }
 
   /**
@@ -138,16 +132,5 @@ public class MemoryUnitCache implements UnitCache {
   public void remove(CompilationUnit unit) {
     unitMap.remove(unit.getResourcePath());
     unitMapByContentId.remove(unit.getContentId());
-  }
-
-  private void add(CompilationUnit newUnit, UnitOrigin origin) {
-    UnitCacheEntry newEntry = new UnitCacheEntry(newUnit, origin);
-    String resourcePath = newUnit.getResourcePath();
-    UnitCacheEntry oldEntry = unitMap.get(resourcePath);
-    if (oldEntry != null) {
-      remove(oldEntry.getUnit());
-    }
-    unitMap.put(resourcePath, newEntry);
-    unitMapByContentId.put(newUnit.getContentId(), newEntry);
   }
 }

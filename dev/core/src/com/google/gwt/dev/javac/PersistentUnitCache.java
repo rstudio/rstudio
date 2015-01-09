@@ -226,14 +226,12 @@ class PersistentUnitCache extends MemoryUnitCache {
   synchronized void maybeAddLoadedUnit(CachedCompilationUnit unit) {
     UnitCacheEntry entry = new UnitCacheEntry(unit, UnitOrigin.PERSISTENT);
     UnitCacheEntry existingEntry = unitMap.get(unit.getResourcePath());
-        /*
-         * Don't assume that an existing entry is stale - an entry might
-         * have been loaded already from another source like a
-         * CompilationUnitArchive that is more up to date. If the
-         * timestamps are the same, accept the latest version. If it turns
-         * out to be stale, it will be recompiled and the updated unit
-         * will win this test the next time the session starts.
-         */
+    /*
+     * Don't assume that an existing entry is stale - an entry might have been loaded already from
+     * another source that is more up to date. If the timestamps are the same, accept the latest
+     * version. If it turns out to be stale, it will be recompiled and the updated unit will win
+     * this test the next time the session starts.
+     */
     if (existingEntry != null
         && unit.getLastModified() >= existingEntry.getUnit().getLastModified()) {
       super.remove(existingEntry.getUnit());
@@ -248,11 +246,7 @@ class PersistentUnitCache extends MemoryUnitCache {
   private synchronized List<CompilationUnit> getUnitsToSaveToDisk() {
     List<CompilationUnit> result = Lists.newArrayList();
     for (UnitCacheEntry entry : unitMap.values()) {
-      // Units from GWTAR archives should not be kept in the persistent unit cache on disk
-      // because they are already being kept in their original GWTAR file location.
-      if (entry.getOrigin() != UnitOrigin.ARCHIVE) {
-        result.add(Preconditions.checkNotNull(entry.getUnit()));
-      }
+      result.add(Preconditions.checkNotNull(entry.getUnit()));
     }
     return result;
   }

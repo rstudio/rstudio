@@ -53,7 +53,6 @@ import com.google.gwt.thirdparty.guava.common.collect.Queues;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.File;
-import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -198,14 +197,6 @@ public class ModuleDef implements DepsInfoProvider {
   private final Set<String> activeLinkers = new LinkedHashSet<String>();
 
   private String activePrimaryLinker;
-
-  /**
-   * A set of URLs for <module>.gwtar files found on the classpath that correspond
-   * to <module>.gwt.xml files loaded as a part of this module's nested load.
-   *
-   * @see com.google.gwt.dev.CompileModule
-   */
-  private final List<URL> archiveURLs = new ArrayList<URL>();
 
   private boolean collapseAllProperties;
 
@@ -600,15 +591,6 @@ public class ModuleDef implements DepsInfoProvider {
   }
 
   /**
-   * Returns URLs to fetch archives of precompiled compilation units.
-   *
-   * @see com.google.gwt.dev.CompileModule
-   */
-  public Collection<URL> getAllCompilationUnitArchiveURLs() {
-    return Collections.unmodifiableCollection(archiveURLs);
-  }
-
-  /**
    * Strictly for statistics gathering. There is no guarantee that the source
    * oracle has been initialized.
    */
@@ -904,10 +886,6 @@ public class ModuleDef implements DepsInfoProvider {
     } else {
       bindingProperty.addDefinedValue(bindingProperty.getRootCondition(), token);
     }
-  }
-
-  void addCompilationUnitArchiveURL(URL url) {
-    archiveURLs.add(url);
   }
 
   void addConfigurationPropertyValue(ConfigurationProperty configurationProperty, String value) {

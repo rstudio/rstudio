@@ -33,7 +33,6 @@ public abstract class Message {
   private static final Formatter FMT_CLASS = new FormatterForClass();
   private static final Formatter FMT_INTEGER = new FormatterForInteger();
   private static final Formatter FMT_STRING = new FormatterForString();
-  private static final Formatter FMT_STRING_ARRAY = new FormatterForStringArray();
 
   protected final TreeLogger.Type type;
 
@@ -94,14 +93,6 @@ public abstract class Message {
     return FMT_STRING;
   }
 
-  /**
-   * @param sa a String array
-   * @return a suitable Formatter
-   */
-  protected final Formatter getFormatter(String[] sa) {
-    return FMT_STRING_ARRAY;
-  }
-
   protected final Formatter getToStringFormatter() {
     return FMT_TOSTRING;
   }
@@ -112,21 +103,6 @@ public abstract class Message {
 
   protected TreeLogger branch(TreeLogger logger, Object arg, Formatter fmt, Throwable caught) {
     return branch(logger, toArray(arg), toArray(fmt), caught);
-  }
-
-  protected TreeLogger branch(TreeLogger logger, Object arg1, Object arg2, Formatter fmt1,
-      Formatter fmt2, Throwable caught) {
-    return branch(logger, toArray(arg1, arg2), toArray(fmt1, fmt2), caught);
-  }
-
-  protected TreeLogger branch(TreeLogger logger, Object arg1, Object arg2, Object arg3,
-      Formatter fmt1, Formatter fmt2, Formatter fmt3, Throwable caught) {
-    return branch(logger, toArray(arg1, arg2, arg3), toArray(fmt1, fmt2, fmt3), caught);
-  }
-
-  protected TreeLogger branch(TreeLogger logger, Object arg1, Object arg2, Object arg3, Object arg4,
-      Formatter fmt1, Formatter fmt2, Formatter fmt3, Formatter fmt4, Throwable caught) {
-    return branch(logger, toArray(arg1, arg2, arg3, arg4), toArray(fmt1, fmt2, fmt3, fmt4), caught);
   }
 
   protected TreeLogger branch(TreeLogger logger, Object[] args, Object[] fmts,

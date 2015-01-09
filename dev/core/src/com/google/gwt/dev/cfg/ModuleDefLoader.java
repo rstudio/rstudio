@@ -47,11 +47,6 @@ public class ModuleDefLoader {
    */
 
   /**
-   * Filename suffix used for Precompiled GWT Module files.
-   */
-  public static final String COMPILATION_UNIT_ARCHIVE_SUFFIX = ".gwtar";
-
-  /**
    * Filename suffix used for GWT Module XML files.
    */
   public static final String GWT_MODULE_XML_SUFFIX = ".gwt.xml";
@@ -346,12 +341,6 @@ public class ModuleDefLoader {
       } catch (URISyntaxException e) {
         logger.log(TreeLogger.ERROR, "Error parsing URI", e);
         throw new UnableToCompleteException();
-      }
-      String compilationUnitArchiveName = slashedModuleName +
-          ModuleDefLoader.COMPILATION_UNIT_ARCHIVE_SUFFIX;
-      URL compiledModuleURL = resourceLoader.getResource(compilationUnitArchiveName);
-      if (compiledModuleURL != null) {
-        moduleDef.addCompilationUnitArchiveURL(compiledModuleURL);
       }
     }
     if (moduleURL == null) {

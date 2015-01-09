@@ -150,17 +150,6 @@ public class Lists {
     }
   }
 
-  public static <T> List<T> create(List<T> list) {
-    switch (list.size()) {
-      case 0:
-        return create();
-      case 1:
-        return create(list.get(0));
-      default:
-        return new ArrayList<T>(list);
-    }
-  }
-
   public static <T> List<T> create(T item) {
     return Collections.singletonList(item);
   }
@@ -249,13 +238,6 @@ public class Lists {
         list.set(index, e);
         return list;
     }
-  }
-
-  public static <T extends Comparable<? super T>> List<T> sort(List<T> list) {
-    if (list.size() > 1) {
-      Collections.sort(list);
-    }
-    return list;
   }
 
   public static <T> List<T> sort(List<T> list, Comparator<? super T> sort) {

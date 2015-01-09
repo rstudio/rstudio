@@ -15,8 +15,6 @@
  */
 package com.google.gwt.dev.util;
 
-import java.lang.reflect.Method;
-
 /**
  * Java type helpers used.
  */
@@ -51,48 +49,6 @@ public class TypeInfo {
   // types below
   public static final int TYPE_WRAP_STRING = 0x000001;
 
-  public static Method getInterfaceMethod(Class<?> intf, String methodName,
-      Class<?>[] paramTypes, boolean includeInherited) {
-    try {
-      return intf.getDeclaredMethod(methodName, paramTypes);
-    } catch (NoSuchMethodException e) {
-      if (includeInherited) {
-        Class<?>[] superintfs = intf.getInterfaces();
-        for (int i = 0; i < superintfs.length; i++) {
-          Method method = getInterfaceMethod(superintfs[i], methodName,
-            paramTypes, true);
-          if (method != null) {
-            return method;
-          }
-        }
-      }
-
-      return null;
-    }
-  }
-
-  public static String getJavahMangledIdent(String before) {
-    StringBuffer after = new StringBuffer();
-    char[] chars = before.toCharArray();
-    for (int i = 0; i < chars.length; i++) {
-      char c = chars[i];
-      if (c == '_') {
-        after.append("_1");
-      } else if (c == ';') {
-        after.append("_2");
-      } else if (c == '[') {
-        after.append("_3");
-      } else if (c == '/') {
-        after.append('_');
-      } else if (Character.isJavaIdentifierPart(c)) {
-        after.append(c);
-      } else {
-        throw new UnsupportedOperationException("Cannot handle non-ascii yet");
-      }
-    }
-    return after.toString();
-  }
-
   public static String getSourceRepresentation(Class<?> type) {
     // Primitives
     //
@@ -124,53 +80,5 @@ public class TypeInfo {
     // Everything else
     //
     return type.getName().replace('$', '.');
-  }
-
-  public static int isPrimitiveType(Class<?> type) {
-    if (type.equals(Integer.TYPE)) {
-      return TYPE_PRIM_INT;
-    } else if (type.equals(Long.TYPE)) {
-      return TYPE_PRIM_LONG;
-    } else if (type.equals(Character.TYPE)) {
-      return TYPE_PRIM_CHAR;
-    } else if (type.equals(Byte.TYPE)) {
-      return TYPE_PRIM_BYTE;
-    } else if (type.equals(Short.TYPE)) {
-      return TYPE_PRIM_SHORT;
-    } else if (type.equals(Boolean.TYPE)) {
-      return TYPE_PRIM_BOOLEAN;
-    } else if (type.equals(Float.TYPE)) {
-      return TYPE_PRIM_FLOAT;
-    } else if (type.equals(Double.TYPE)) {
-      return TYPE_PRIM_DOUBLE;
-    } else if (type.equals(Void.TYPE)) {
-      return TYPE_PRIM_VOID;
-    } else {
-      return NOT_FOUND;
-    }
-  }
-
-  public static int isPrimitiveWrapperType(Class<?> type) {
-    if (type.equals(String.class)) {
-      return TYPE_WRAP_STRING;
-    } else if (type.equals(Integer.class)) {
-      return TYPE_WRAP_INT;
-    } else if (type.equals(Long.class)) {
-      return TYPE_WRAP_LONG;
-    } else if (type.equals(Character.class)) {
-      return TYPE_WRAP_CHAR;
-    } else if (type.equals(Byte.class)) {
-      return TYPE_WRAP_BYTE;
-    } else if (type.equals(Short.class)) {
-      return TYPE_WRAP_SHORT;
-    } else if (type.equals(Boolean.class)) {
-      return TYPE_WRAP_BOOLEAN;
-    } else if (type.equals(Float.class)) {
-      return TYPE_WRAP_FLOAT;
-    } else if (type.equals(Double.class)) {
-      return TYPE_WRAP_DOUBLE;
-    } else {
-      return NOT_FOUND;
-    }
   }
 }

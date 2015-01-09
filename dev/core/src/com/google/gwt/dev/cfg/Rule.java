@@ -72,9 +72,6 @@ public abstract class Rule {
       StandardGeneratorContext context, String typeName)
       throws UnableToCompleteException;
 
-  protected void dispose() {
-  }
-
   /**
    * Generate and return a String of Java source that will create an instance of whatever type this
    * Rule intends to rebind to.

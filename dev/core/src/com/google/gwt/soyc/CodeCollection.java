@@ -26,7 +26,6 @@ public class CodeCollection {
 
   public TreeSet<String> classes = new TreeSet<String>();
   public int cumSize = 0;
-  public TreeSet<String> stories = new TreeSet<String>();
 
   public int getCumSize(SizeBreakdown breakdown) {
     cumSize = 0;

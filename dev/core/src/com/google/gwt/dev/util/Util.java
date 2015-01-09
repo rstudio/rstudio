@@ -48,7 +48,6 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.Serializable;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 import java.net.JarURLConnection;
@@ -135,22 +134,6 @@ public final class Util {
     } finally {
       Utility.close(is);
       Utility.close(os);
-    }
-  }
-
-  /**
-   * Copies an input stream out to a file. Closes the input steam.
-   */
-  public static void copy(TreeLogger logger, InputStream is, File out)
-      throws UnableToCompleteException {
-    try {
-      // No need to check mkdirs result because an IOException will occur anyway
-      out.getParentFile().mkdirs();
-      copy(logger, is, new FileOutputStream(out));
-    } catch (FileNotFoundException e) {
-      logger.log(TreeLogger.ERROR, "Unable to create file '"
-          + out.getAbsolutePath() + "'", e);
-      throw new UnableToCompleteException();
     }
   }
 
@@ -688,32 +671,6 @@ public final class Util {
    */
   public static String toString(byte[] bytes) {
     return toString(bytes, DEFAULT_ENCODING);
-  }
-
-  public static byte[] toXmlUtf8(Document doc) {
-    Throwable caught = null;
-    try {
-      StringWriter sw = new StringWriter();
-      PrintWriter pw = new PrintWriter(sw);
-      writeDocument(pw, doc);
-      return sw.toString().getBytes(DEFAULT_ENCODING);
-    } catch (UnsupportedEncodingException e) {
-      caught = e;
-    } catch (IOException e) {
-      caught = e;
-    }
-    throw new RuntimeException(
-        "Unable to encode xml document object as a string", caught);
-  }
-
-  public static File tryCombine(File parentMaybeIgnored, File childMaybeAbsolute) {
-    if (childMaybeAbsolute == null) {
-      return parentMaybeIgnored;
-    } else if (childMaybeAbsolute.isAbsolute()) {
-      return childMaybeAbsolute;
-    } else {
-      return new File(parentMaybeIgnored, childMaybeAbsolute.getPath());
-    }
   }
 
   /**

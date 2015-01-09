@@ -294,42 +294,12 @@ public abstract class AbstractTreeLogger extends TreeLogger implements CanUpdate
   protected abstract AbstractTreeLogger doBranch();
 
   /**
-   * @deprecated This method has been deprecated; override
-   *             {@link #doCommitBranch(AbstractTreeLogger, com.google.gwt.core.ext.TreeLogger.Type, String, Throwable, com.google.gwt.core.ext.TreeLogger.HelpInfo)}
-   *             instead.
-   *
-   * @param childBeingCommitted
-   * @param type
-   * @param msg
-   * @param caught
-   */
-  @Deprecated
-  protected final void doCommitBranch(AbstractTreeLogger childBeingCommitted,
-      TreeLogger.Type type, String msg, Throwable caught) {
-  }
-
-  /**
    * Derived classes should override this method to actually commit the
    * specified message associated with this the root of this branch.
    */
   protected abstract void doCommitBranch(
       AbstractTreeLogger childBeingCommitted, TreeLogger.Type type, String msg,
       Throwable caught, HelpInfo helpInfo);
-
-  /**
-   * @deprecated This method has been deprecated; override
-   *             {@link #branch(com.google.gwt.core.ext.TreeLogger.Type, String, Throwable, com.google.gwt.core.ext.TreeLogger.HelpInfo)
-   *             instead.
-   *
-   * @param indexOfLogEntryWithinParentLogger
-   * @param type
-   * @param msg
-   * @param caught
-   */
-  @Deprecated
-  protected final void doLog(int indexOfLogEntryWithinParentLogger,
-      TreeLogger.Type type, String msg, Throwable caught) {
-  }
 
   /**
    * Derived classes should override this method to actually write a log

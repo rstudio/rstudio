@@ -70,8 +70,6 @@ public enum CompilerEventType implements EventType {
   CHECK_FOR_ERRORS("CheckForErrors", "DimGrey"), //
   GRAPHICS_INIT("Graphics2D.createGraphics()", "Blue"), //
   ANALYZE_MODULE("AnalyzeModule", "LightBlue"), //
-  COMPILE_MODULE("CompileModule", "LightBlue"),
-  LOAD_ARCHIVE("LoadArchive", "DarkSlateBlue"),
 
   UNIFY_AST("UnifyAst", "Blue"),
   VISIT_GWT_CREATE("VisitGwtCreate", "LightBlue"),

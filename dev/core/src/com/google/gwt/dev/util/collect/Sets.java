@@ -116,28 +116,4 @@ public class Sets {
         return result;
     }
   }
-
-  public static <T> Set<T> remove(Set<T> set, T toRemove) {
-    switch (set.size()) {
-      case 0:
-        // Empty
-        return set;
-      case 1:
-        // Singleton -> Empty
-        if (set.contains(toRemove)) {
-          return create();
-        }
-        return set;
-      case 2:
-        // HashSet -> Singleton
-        if (set.remove(toRemove)) {
-          return create(set.iterator().next());
-        }
-        return set;
-      default:
-        // HashSet
-        set.remove(toRemove);
-        return set;
-    }
-  }
 }

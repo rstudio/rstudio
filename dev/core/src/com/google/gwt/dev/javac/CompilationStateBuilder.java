@@ -472,26 +472,6 @@ public class CompilationStateBuilder {
   private static final CompilationStateBuilder instance = new CompilationStateBuilder();
 
   /**
-   * Use previously compiled {@link CompilationUnit}s to pre-populate the unit cache.
-   */
-  public static void addArchive(
-      CompilerContext compilerContext, CompilationUnitArchive compilationUnitArchive) {
-    UnitCache unitCache = compilerContext.getUnitCache();
-    for (CachedCompilationUnit archivedUnit : compilationUnitArchive.getUnits().values()) {
-      if (archivedUnit.getTypesSerializedVersion() != GwtAstBuilder.getSerializationVersion()) {
-        continue;
-      }
-      CompilationUnit cachedCompilationUnit = unitCache.find(archivedUnit.getResourcePath());
-      // A previously cached unit might be from the persistent cache or another
-      // archive.
-      if (cachedCompilationUnit == null
-          || cachedCompilationUnit.getLastModified() < archivedUnit.getLastModified()) {
-        unitCache.addArchivedUnit(archivedUnit);
-      }
-    }
-  }
-
-  /**
    * Compiles the given source files and adds them to the CompilationState. See
    * {@link CompileMoreLater#compile} for details.
    *

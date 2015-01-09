@@ -33,13 +33,6 @@ public interface UnitCache {
   void add(CompilationUnit newUnit);
 
   /**
-   * Adds a new entry into the cache, but marks it as already coming from a
-   * persistent archive. This means it doesn't need to be saved out to disk in a
-   * persistent implementation of the cache.
-   */
-  void addArchivedUnit(CompilationUnit newUnit);
-
-  /**
    * Each run of the compiler should call {@link #cleanup(TreeLogger)} when
    * finished adding units to the cache so that cache files from previous runs
    * can be purged from a persistent cache.

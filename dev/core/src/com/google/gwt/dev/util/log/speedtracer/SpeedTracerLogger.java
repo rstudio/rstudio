@@ -570,17 +570,6 @@ public final class SpeedTracerLogger {
   }
 
   /**
-   * Annotate the current event on the top of the stack with more information.
-   * The method expects key, value pairs, so there must be an even number of
-   * parameters.
-   *
-   * @param data JSON property, value pair to add to current event.
-   */
-  public static void addData(String... data) {
-    SpeedTracerLogger.get().addDataImpl(data);
-  }
-
-  /**
    * Create a new global instance. Force the zero time to be recorded and the
    * log to be opened if the default logging is turned on with the <code>
    * -Dgwt.speedtracerlog</code> VM property.
@@ -596,14 +585,6 @@ public final class SpeedTracerLogger {
    */
   public static boolean jsniCallLoggingEnabled() {
     return jsniCallLoggingEnabled;
-  }
-
-  /**
-   * Adds a LOG_MESSAGE SpeedTracer event to the log. This represents a single
-   * point in time and has a special representation in the SpeedTracer UI.
-   */
-  public static void markTimeline(String message) {
-    SpeedTracerLogger.get().markTimelineImpl(message);
   }
 
   /**

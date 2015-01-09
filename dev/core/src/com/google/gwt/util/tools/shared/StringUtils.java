@@ -24,16 +24,6 @@ public class StringUtils {
       '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
   /**
-   * A 4-digit hex result.
-   */
-  public static void hex4(char c, StringBuffer sb) {
-    sb.append(HEX_CHARS[(c & 0xF000) >> 12]);
-    sb.append(HEX_CHARS[(c & 0x0F00) >> 8]);
-    sb.append(HEX_CHARS[(c & 0x00F0) >> 4]);
-    sb.append(HEX_CHARS[c & 0x000F]);
-  }
-
-  /**
    * Generate JavaScript code that evaluates to the supplied string. Adapted
    * from {@link com.google.gwt.dev.js.rhino.ScriptRuntime#escapeString(String)}
    * . The difference is that we quote with either &quot; or &apos; depending on

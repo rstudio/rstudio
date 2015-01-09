@@ -49,16 +49,6 @@ public abstract class ToolBase {
 
   private static final String PROPERTY_NOWARN_LEGACY_TOOLS = "gwt.nowarn.legacy.tools";
 
-  public static void legacyWarn(Class<?> legacy, Class<?> replacement) {
-    if (System.getProperty(PROPERTY_NOWARN_LEGACY_TOOLS) == null) {
-      System.err.println("WARNING: '" + legacy.getName()
-          + "' is deprecated and will be removed in a future release.");
-      System.err.println("Use '" + replacement.getName() + "' instead.");
-      System.err.println("(To disable this warning, pass -D"
-          + PROPERTY_NOWARN_LEGACY_TOOLS + " as a JVM arg.)");
-    }
-  }
-
   /**
    * Use a linked hash map to preserve the declaration order.
    */
