@@ -100,12 +100,12 @@ public class PathBreadcrumbWidget
          });
       }
 
-      DockLayoutPanel frame = new DockLayoutPanel(Unit.PX);
+      frame_ = new DockLayoutPanel(Unit.PX);
+      eastFrame_ = new FlowPanel();
 
       Image browse = new Image(RES.browse());
       browse.setStyleName(STYLES.browse());
       browse.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
-      frame.addEast(browse, RES.browse().getWidth());
       browse.addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)
@@ -113,10 +113,12 @@ public class PathBreadcrumbWidget
             browse();
          }
       });
+      eastFrame_.add(browse);
+      frame_.addEast(eastFrame_, browse.getWidth());
       
-      frame.add(outer_);
-      frame.setStyleName(STYLES.breadcrumbFrame());
-      initWidget(frame);
+      frame_.add(outer_);
+      frame_.setStyleName(STYLES.breadcrumbFrame());
+      initWidget(frame_);
    }
    
    @Inject
@@ -125,45 +127,52 @@ public class PathBreadcrumbWidget
       pSession_ = pSession;
    }
    
-   private Anchor maybeAddProjectIcon()
+   private void maybeAddProjectIcon()
    {
+      if (projectIconsAdded_)
+         return;
+      
       if (pSession_ == null ||
           pSession_.get() == null)
-         return null;
+         return;
       
       final FileSystemItem projDir =
             pSession_.get().getSessionInfo().getActiveProjectDir();
       
       if (projDir != null)
       {
-         Anchor projAnchor = new Anchor("", false);
-         projAnchor.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
+         Image projIcon = new Image(RES.projectImage());
+         projIcon.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
 
-         projAnchor.addClickHandler(new ClickHandler()
+         projIcon.addClickHandler(new ClickHandler()
          {
             public void onClick(ClickEvent event)
             {
                SelectionCommitEvent.fire(PathBreadcrumbWidget.this, projDir);
             }
          });
-         projAnchor.addStyleName(RES.styles().project());
+         projIcon.addStyleName(RES.styles().project());
          
-         pathPanel_.add(projAnchor);
-         pathPanel_.add(Toolbar.getSeparator());
-         return projAnchor;
+         eastFrame_.insert(projIcon, 0);
+         
+         // TODO: infer from contents
+         double width = 42;
+         
+         frame_.setWidgetSize(eastFrame_, width);
+         projectIconsAdded_ = true;
+         
       }
-      return null;
    }
 
    public void setDirectory(FileSystemItem[] pathElements)
    {
       pathPanel_.clear();
+      maybeAddProjectIcon();
       
       if (linkUp_ != null)
          linkUp_.setVisible(pathElements.length > 1);
 
-      Anchor lastAnchor = maybeAddProjectIcon();
-      
+      Anchor lastAnchor = null;
       for (FileSystemItem item : pathElements)
          lastAnchor = addAnchor(item);
 
@@ -279,6 +288,9 @@ public class PathBreadcrumbWidget
    private FileDialogStyles STYLES = RES.styles();
    private static final boolean INCLUDE_UP_LINK = false;
    private SimplePanel outer_;
+   private FlowPanel eastFrame_;
+   private boolean projectIconsAdded_ = false;
+   private final DockLayoutPanel frame_;
    
    private Provider<Session> pSession_;
 }

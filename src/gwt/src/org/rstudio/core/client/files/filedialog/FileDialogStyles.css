@@ -5,7 +5,6 @@
 
 @url DIRSEPARATOR dirseparator;
 @url HOME home;
-@url PROJECT project;
 
 .contents, .filename {
    background-color: white;
@@ -111,11 +110,9 @@
    background: HOME 0 1px no-repeat;
 }
 
-.breadcrumb table.path a.project {
-   margin-left: 6px;
-   margin-top: 1px;
-   margin-right: 2px;
-   background: PROJECT 0 1px no-repeat;
+.project {
+   margin-bottom: 2px;
+   margin-right: 4px;
 }
 
 .breadcrumb table.path a.last {
