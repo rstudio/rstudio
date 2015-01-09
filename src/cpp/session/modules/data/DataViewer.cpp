@@ -278,7 +278,7 @@ SEXP findInNamedEnvir(const std::string& envir, const std::string& name)
    if (envir.empty() || envir == "R_GlobalEnv")
       env = R_GlobalEnv;
    else 
-      r::exec::RFunction("as.environment", envir).call(&env, &protect);
+      r::exec::RFunction(".rs.safeAsEnvironment", envir).call(&env, &protect);
 
    // if we failed to find an environment by name, return a null SEXP
    if (env == NULL || TYPEOF(env) == NILSXP || Rf_isNull(env))

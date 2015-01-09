@@ -210,6 +210,18 @@
   return(x)
 })
 
+# returns envName as an environment, or NULL if the conversion failed
+.rs.addFunction("safeAsEnvironment", function(envName)
+{
+  env <- NULL
+  tryCatch(
+  {
+    env <- as.environment(envName)
+  }, 
+  error = function(e) { })
+  env
+})
+
 .rs.addFunction("findDataFrame", function(envName, objName, cacheKey, cacheDir) 
 {
   env <- NULL
@@ -225,16 +237,9 @@
     }
     else 
     {
-      # some other environment
-      tryCatch(
-      {
-        env <- as.environment(envName)
-      }, 
-      error = function(e)
-      {
-        # if we couldn't find the environment any more, use the empty one
-        env <<- emptyenv()
-      })
+      env <- .rs.safeAsEnvironment(envName)
+      if (is.null(env))
+        env <- emptyenv()
     }
 
     # if the object exists in this environment, return it (avoid creating a
