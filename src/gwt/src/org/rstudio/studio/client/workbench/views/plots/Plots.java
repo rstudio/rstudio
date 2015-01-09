@@ -412,7 +412,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
              // show the dialog
              RPubsUploadDialog dlg = new RPubsUploadDialog(
                 "Plots",
-                "",
+                "Plot",
                 new RPubsHtmlGenerator() {
 
                    @Override
