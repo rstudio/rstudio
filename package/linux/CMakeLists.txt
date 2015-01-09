@@ -16,8 +16,10 @@ if (NOT PACKAGE_ARCHITECTURE)
 endif()
 
 # detect RedHat 5
+set(IS_RHEL "OFF")
 set(IS_RHEL_5 "OFF")
 if(EXISTS "/etc/redhat-release")
+   set(IS_RHEL "ON")
    file(READ "/etc/redhat-release" RHEL_RELEASE)
    string(FIND "${RHEL_RELEASE}" "release 5" RHEL_RELEASE_POS)
    if(RHEL_RELEASE_POS GREATER 0)
@@ -81,6 +83,8 @@ if(RSTUDIO_PACKAGE_BUILD_SLES)
    set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}sles-")
 elseif(IS_RHEL_5)
    set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}rhel5-")
+elseif(IS_RHEL) 
+   set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}rhel-")
 endif()
 
 # include overlay if it exists
