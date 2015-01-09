@@ -142,17 +142,6 @@ public class IdentitySets {
     return new IdentitySingletonSet<T>(item);
   }
 
-  public static <T> Set<T> create(T... items) {
-    switch (items.length) {
-      case 0:
-        return create();
-      case 1:
-        return create(items[0]);
-      default:
-        return new IdentityHashSet<T>(items);
-    }
-  }
-
   public static <T> Set<T> normalize(Set<T> set) {
     switch (set.size()) {
       case 0:

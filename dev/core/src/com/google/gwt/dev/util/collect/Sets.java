@@ -117,15 +117,6 @@ public class Sets {
     }
   }
 
-  public static <T> Set<T> normalizeUnmodifiable(Set<T> set) {
-    if (set.size() < 2) {
-      return normalize(set);
-    } else {
-      // TODO: implement an UnmodifiableHashSet?
-      return Collections.unmodifiableSet(normalize(set));
-    }
-  }
-
   public static <T> Set<T> remove(Set<T> set, T toRemove) {
     switch (set.size()) {
       case 0:

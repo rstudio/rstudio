@@ -46,7 +46,6 @@ import com.google.gwt.dev.js.ast.JsUnaryOperator;
 import com.google.gwt.dev.js.ast.JsValueLiteral;
 import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
-import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.js.ast.JsWhile;
 import com.google.gwt.dev.js.rhino.ScriptRuntime;
@@ -884,10 +883,6 @@ public class JsStaticEval {
 
   public JsStaticEval(JsProgram program) {
     this.program = program;
-  }
-
-  public <T extends JsVisitable> T execImpl(T node) {
-    return new StaticEvalVisitor().accept(node);
   }
 
   public OptimizerStats execImpl() {

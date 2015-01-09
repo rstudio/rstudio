@@ -28,7 +28,6 @@ import com.google.gwt.dev.cfg.PropertyProviderRegistratorGenerator;
 import com.google.gwt.dev.cfg.Rule;
 import com.google.gwt.dev.cfg.RuleGenerateWith;
 import com.google.gwt.dev.cfg.RuleReplaceWithFallback;
-import com.google.gwt.dev.cfg.Rules;
 import com.google.gwt.dev.cfg.RuntimeRebindRegistratorGenerator;
 import com.google.gwt.dev.cfg.RuntimeRebindRuleGenerator;
 import com.google.gwt.dev.javac.CompilationUnit;
@@ -69,6 +68,7 @@ import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -347,7 +347,7 @@ public class LibraryJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler {
     }
 
     @VisibleForTesting
-    void buildSimpleRuntimeRebindRules(Rules rules) throws UnableToCompleteException {
+    void buildSimpleRuntimeRebindRules(Deque<Rule> rules) throws UnableToCompleteException {
       // Create rebinders for rules specified in the module.
       Iterator<Rule> iterator = rules.iterator();
       while (iterator.hasNext()) {

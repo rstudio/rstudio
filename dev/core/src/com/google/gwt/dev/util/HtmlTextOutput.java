@@ -62,11 +62,4 @@ public class HtmlTextOutput extends AbstractTextOutput {
   public void printRaw(String s) {
     super.print(s);
   }
-
-  /**
-   * Print unescaped data into the output.
-   */
-  public void printRawOpt(String s) {
-    super.printOpt(s);
-  }
 }

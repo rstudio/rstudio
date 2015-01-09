@@ -20,7 +20,6 @@ import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 
 import java.io.Serializable;
-import java.util.Comparator;
 
 /**
  * Each SourceInfo may define one or more axes by which it can be correlated
@@ -83,24 +82,6 @@ public final class Correlation implements Serializable {
       return description;
     }
   }
-
-  /**
-   * Compares Correlations based on axis and idents. Note that due to inherent
-   * limitations of mapping AST nodes into Strings, this Comparator may not
-   * always agree with {@link Correlation#equals(Object)}.
-   */
-  public static final Comparator<Correlation> AXIS_IDENT_COMPARATOR =
-      new Comparator<Correlation>() {
-        @Override
-        public int compare(Correlation a, Correlation b) {
-          int r = a.axis.compareTo(b.axis);
-          if (r != 0) {
-            return r;
-          }
-
-          return a.ident.compareTo(b.ident);
-        }
-      };
 
   /**
    * This may contain a reference to either a Java or Js AST node.

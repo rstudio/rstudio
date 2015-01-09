@@ -23,7 +23,7 @@ import com.google.gwt.dev.cfg.BindingProps;
 import com.google.gwt.dev.cfg.ConfigProps;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.PropertyPermutations;
-import com.google.gwt.dev.cfg.Rules;
+import com.google.gwt.dev.cfg.Rule;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
 import com.google.gwt.dev.jdt.RebindOracle;
@@ -35,6 +35,7 @@ import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
+import java.util.Deque;
 import java.util.Set;
 
 /**
@@ -57,7 +58,7 @@ class DistillerRebindPermutationOracle implements RebindPermutationOracle {
         compilerContext, compilationState, generatorArtifacts, true);
     BindingProperty[] orderedProps = perms.getOrderedProperties();
     ConfigProps config = new ConfigProps(module);
-    Rules rules = module.getRules();
+    Deque<Rule> rules = module.getRules();
     for (int i = 0; i < rebindOracles.length; ++i) {
       BindingProps props = new BindingProps(orderedProps, perms.getOrderedPropertyValues(i), config);
       rebindOracles[i] = new StandardRebindOracle(props.toPropertyOracle(), rules,

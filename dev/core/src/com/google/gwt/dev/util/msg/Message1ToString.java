@@ -30,8 +30,4 @@ public final class Message1ToString extends Message {
   public TreeLogger branch(TreeLogger logger, Object o, Throwable caught) {
     return branch(logger, o, getToStringFormatter(), caught);
   }
-
-  public void log(TreeLogger logger, Object o, Throwable caught) {
-    log(logger, o, getToStringFormatter(), caught);
-  }
 }

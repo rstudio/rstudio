@@ -27,13 +27,6 @@ public final class Message4IntStringStringString extends Message {
     super(type, fmt, 4);
   }
 
-  public TreeLogger branch(TreeLogger logger, int x, String s1, String s2, String s3,
-      Throwable caught) {
-    Integer xi = Integer.valueOf(x);
-    return branch(logger, xi, s1, s2, s3, getFormatter(xi), getFormatter(s1), getFormatter(s2),
-        getFormatter(s3), caught);
-  }
-
   public void log(TreeLogger logger, int x, String s1, String s2, String s3, Throwable caught) {
     Integer xi = Integer.valueOf(x);
     log(logger, xi, s1, s2, s3, getFormatter(xi), getFormatter(s1), getFormatter(s2),

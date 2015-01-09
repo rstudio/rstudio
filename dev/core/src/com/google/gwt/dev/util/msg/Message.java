@@ -17,10 +17,6 @@ package com.google.gwt.dev.util.msg;
 
 import com.google.gwt.core.ext.TreeLogger;
 
-import java.io.File;
-import java.lang.reflect.Method;
-import java.net.URL;
-
 /**
  * Fast way to produce messages for the logger. Use $N to specify the replacement argument.
  * <p>
@@ -35,11 +31,7 @@ public abstract class Message {
 
   private static final Formatter FMT_TOSTRING = new FormatterToString();
   private static final Formatter FMT_CLASS = new FormatterForClass();
-  private static final Formatter FMT_FILE = new FormatterForFile();
-  private static final Formatter FMT_URL = new FormatterForURL();
   private static final Formatter FMT_INTEGER = new FormatterForInteger();
-  private static final Formatter FMT_LONG = new FormatterForLong();
-  private static final Formatter FMT_METHOD = new FormatterForMethod();
   private static final Formatter FMT_STRING = new FormatterForString();
   private static final Formatter FMT_STRING_ARRAY = new FormatterForStringArray();
 
@@ -48,8 +40,6 @@ public abstract class Message {
   protected final char[][] fmtParts;
 
   protected final int[] argIndices;
-
-  protected final int minChars;
 
   /**
    * Creates a lazily-formatted message.
@@ -78,12 +68,6 @@ public abstract class Message {
       throw new IllegalArgumentException("Expected arg $" + i);
     }
     fmtParts[args] = fmt.substring(from).toCharArray();
-
-    int minNumChars = 0;
-    for (int i = 0, n = fmtParts.length; i < n; ++i) {
-      minNumChars += fmtParts[i].length;
-    }
-    this.minChars = minNumChars;
   }
 
   /**
@@ -95,35 +79,11 @@ public abstract class Message {
   }
 
   /**
-   * @param f a File
-   * @return a suitable Formatter
-   */
-  protected final Formatter getFormatter(File f) {
-    return FMT_FILE;
-  }
-
-  /**
    * @param i an Integer
    * @return a suitable Formatter
    */
   protected final Formatter getFormatter(Integer i) {
     return FMT_INTEGER;
-  }
-
-  /**
-   * @param l a Long
-   * @return a suitable Formatter
-   */
-  protected Formatter getFormatter(Long l) {
-    return FMT_LONG;
-  }
-
-  /**
-   * @param m a Method
-   * @return a suitable Formatter
-   */
-  protected final Formatter getFormatter(Method m) {
-    return FMT_METHOD;
   }
 
   /**
@@ -140,14 +100,6 @@ public abstract class Message {
    */
   protected final Formatter getFormatter(String[] sa) {
     return FMT_STRING_ARRAY;
-  }
-
-  /**
-   * @param u a URL
-   * @return a suitable Formatter
-   */
-  protected final Formatter getFormatter(URL u) {
-    return FMT_URL;
   }
 
   protected final Formatter getToStringFormatter() {

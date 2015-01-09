@@ -83,44 +83,6 @@ public class Lists {
     }
   }
 
-  public static <T> List<T> addAll(List<T> list, int index, List<T> toAdd) {
-    switch (toAdd.size()) {
-      case 0:
-        // No-op.
-        return list;
-      case 1:
-        // Add one element.
-        return add(list, index, toAdd.get(0));
-      default:
-        // True list merge, result >= 2.
-        switch (list.size()) {
-          case 0:
-            if (index != 0) {
-              throw newIndexOutOfBounds(list, index);
-            }
-            return new ArrayList<T>(toAdd);
-          case 1: {
-            List<T> result = new ArrayList<T>(1 + toAdd.size());
-            switch (index) {
-              case 0:
-                result.addAll(toAdd);
-                result.add(list.get(0));
-                return result;
-              case 1:
-                result.add(list.get(0));
-                result.addAll(toAdd);
-                return result;
-              default:
-                throw newIndexOutOfBounds(list, index);
-            }
-          }
-          default:
-            list.addAll(index, toAdd);
-            return list;
-        }
-    }
-  }
-
   public static <T> List<T> addAll(List<T> list, List<T> toAdd) {
     switch (toAdd.size()) {
       case 0:

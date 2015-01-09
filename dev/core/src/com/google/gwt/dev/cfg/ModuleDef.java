@@ -302,7 +302,7 @@ public class ModuleDef implements DepsInfoProvider {
 
   private boolean resourcesScanned;
 
-  private final Rules rules = new Rules();
+  private final Deque<Rule> rules = Lists.newLinkedList();
 
   private final Scripts scripts = new Scripts();
 
@@ -411,7 +411,7 @@ public class ModuleDef implements DepsInfoProvider {
     if (!attributeIsForTargetLibrary()) {
       return;
     }
-    getRules().prepend(rule);
+    getRules().addFirst(rule);
   }
 
   public void addSourcePackage(String sourcePackage, String[] includeList, String[] excludeList,
@@ -795,7 +795,7 @@ public class ModuleDef implements DepsInfoProvider {
   /**
    * Gets a reference to the internal rules for this module def.
    */
-  public synchronized Rules getRules() {
+  public synchronized Deque<Rule> getRules() {
     return rules;
   }
 

@@ -197,15 +197,6 @@ public class EnumOrdinalizer {
       }
     }
 
-    public void logEnumsOrdinalized(TreeLogger logger, TreeLogger.Type logType) {
-      if (logger != null && allEnumsOrdinalized.size() > 0) {
-        logger = logger.branch(logType, "Enums Ordinalized:");
-        for (String enumOrdinalized : allEnumsOrdinalized) {
-          logger.branch(logType, enumOrdinalized);
-        }
-      }
-    }
-
     public void logEnumsOrdinalizedPerPass(TreeLogger logger, TreeLogger.Type logType) {
       if (logger == null) {
         return;

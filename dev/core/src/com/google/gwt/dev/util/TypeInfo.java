@@ -51,24 +51,6 @@ public class TypeInfo {
   // types below
   public static final int TYPE_WRAP_STRING = 0x000001;
 
-  public static int classifyType(Class<?> type) {
-    int ret = isPrimitiveType(type);
-    if (ret != 0) {
-      return ret;
-    }
-
-    ret = isPrimitiveWrapperType(type);
-    if (ret != 0) {
-      return ret;
-    }
-
-    if (type.isArray()) {
-      return TYPE_ARRAY;
-    }
-
-    return TYPE_USER;
-  }
-
   public static Method getInterfaceMethod(Class<?> intf, String methodName,
       Class<?>[] paramTypes, boolean includeInherited) {
     try {

@@ -493,7 +493,7 @@ public class ModuleDefSchema extends Schema {
       // Generator rebind rules for even distant dependencies are always considered primary since
       // knowing whether they should be run is more complicated and is expected to be analyzed later
       // during compilation.
-      moduleDef.getRules().prepend(rule);
+      moduleDef.getRules().addFirst(rule);
       return new FullConditionSchema(rule.getRootCondition());
     }
 

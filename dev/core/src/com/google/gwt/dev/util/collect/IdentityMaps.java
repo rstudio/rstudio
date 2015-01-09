@@ -85,35 +85,6 @@ public class IdentityMaps {
     }
   }
 
-  public static <K, V> Map<K, V> putAll(Map<K, V> map, Map<K, V> toAdd) {
-    switch (toAdd.size()) {
-      case 0:
-        // No-op.
-        return map;
-      case 1: {
-        // Add one element.
-        K key = toAdd.keySet().iterator().next();
-        return put(map, key, toAdd.get(key));
-      }
-      default:
-        // True list merge, result >= 2.
-        switch (map.size()) {
-          case 0:
-            return new IdentityHashMap<K, V>(toAdd);
-          case 1: {
-            IdentityHashMap<K, V> result = new IdentityHashMap<K, V>();
-            K key = map.keySet().iterator().next();
-            result.put(key, map.get(key));
-            result.putAll(toAdd);
-            return result;
-          }
-          default:
-            map.putAll(toAdd);
-            return map;
-        }
-    }
-  }
-
   public static <K, V> Map<K, V> remove(Map<K, V> map, K key) {
     switch (map.size()) {
       case 0:

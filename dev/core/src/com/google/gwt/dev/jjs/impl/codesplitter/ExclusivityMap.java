@@ -148,13 +148,6 @@ class ExclusivityMap {
   }
 
   /**
-   * Determine whether a string is live in a fragment.
-   */
-  public boolean isLiveInFragment(Fragment fragment, String string) {
-    return isLiveInFragment(fragmentForString, string, fragment);
-  }
-
-  /**
    * Determine whether a type is live in a fragment.
    */
   public boolean isLiveInFragment(Fragment fragment, JDeclaredType type) {

@@ -36,11 +36,11 @@ import com.google.gwt.dev.cfg.MockLibraryWriter;
 import com.google.gwt.dev.cfg.MockModuleDef;
 import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.cfg.PropertyProvider;
+import com.google.gwt.dev.cfg.Rule;
 import com.google.gwt.dev.cfg.RuleFail;
 import com.google.gwt.dev.cfg.RuleGenerateWith;
 import com.google.gwt.dev.cfg.RuleReplaceWith;
 import com.google.gwt.dev.cfg.RuleReplaceWithFallback;
-import com.google.gwt.dev.cfg.Rules;
 import com.google.gwt.dev.cfg.RuntimeRebindRuleGenerator;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationStateBuilder;
@@ -61,6 +61,7 @@ import junit.framework.TestCase;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Deque;
 import java.util.Map;
 import java.util.Set;
 
@@ -302,16 +303,16 @@ public class LibraryJavaToJavaScriptCompilerTest extends TestCase {
     compiler.jprogram = new JProgram(new MinimalRebuildCache());
     Map<String, String> runtimeRebindRuleSourcesByShortName =
         RuntimeRebindRuleGenerator.RUNTIME_REBIND_RULE_SOURCES_BY_SHORT_NAME;
-    Rules rules = new Rules();
+    Deque<Rule> rules = Lists.newLinkedList();
     RuleFail ruleFail = new RuleFail();
     ruleFail.getRootCondition().getConditions().add(new ConditionWhenPropertyIs("foo", "bar"));
-    rules.prepend(ruleFail);
-    rules.prepend(new RuleGenerateWith(Generator.class));
+    rules.addFirst(ruleFail);
+    rules.addFirst(new RuleGenerateWith(Generator.class));
     RuleReplaceWith ruleReplaceCanvas = new RuleReplaceWith("WebkitCanvasElement");
     ruleReplaceCanvas.getRootCondition()
         .getConditions().add(new ConditionWhenTypeIs("CanvasElement"));
-    rules.prepend(ruleReplaceCanvas);
-    rules.prepend(new RuleReplaceWithFallback("CanvasElement"));
+    rules.addFirst(ruleReplaceCanvas);
+    rules.addFirst(new RuleReplaceWithFallback("CanvasElement"));
 
     // Creates rebind rule classes for the non-generator rules in the provided list.
     precompiler.buildSimpleRuntimeRebindRules(rules);

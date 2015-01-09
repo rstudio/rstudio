@@ -22,7 +22,7 @@ import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.PrecompileTaskOptionsImpl;
 import com.google.gwt.dev.RebindCache;
 import com.google.gwt.dev.cfg.ModuleDef;
-import com.google.gwt.dev.cfg.Rules;
+import com.google.gwt.dev.cfg.Rule;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.StandardGeneratorContext;
 import com.google.gwt.dev.util.log.speedtracer.DevModeEventType;
@@ -30,6 +30,7 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 
 import java.io.File;
+import java.util.Deque;
 
 /**
  * Provides an environment for a {@link com.google.gwt.dev.shell.ModuleSpace}
@@ -104,7 +105,7 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
       // Set up the rebind oracle for the module.
       // It has to wait until now because we need to inject javascript.
       //
-      Rules rules = module.getRules();
+      Deque<Rule> rules = module.getRules();
       PrecompileTaskOptionsImpl options = new PrecompileTaskOptionsImpl();
       options.setGenDir(genDir);
       CompilerContext compilerContext =

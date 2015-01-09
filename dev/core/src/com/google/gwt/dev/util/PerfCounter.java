@@ -85,16 +85,6 @@ public class PerfCounter {
   /**
    * Record the end of the operation.
    */
-  public static void end(String operation) {
-    if (!enabled) {
-      return;
-    }
-    end(operation, 1 * 1000000000 /* 1 sec */);
-  }
-
-  /**
-   * Record the end of the operation.
-   */
   public static void end(String operation, long slowThresholdNano) {
     if (!enabled) {
       return;
