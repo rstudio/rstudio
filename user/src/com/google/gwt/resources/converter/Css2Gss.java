@@ -25,6 +25,7 @@ import com.google.gwt.thirdparty.guava.common.base.Predicate;
 import com.google.gwt.thirdparty.guava.common.base.Predicates;
 import com.google.gwt.thirdparty.guava.common.base.Splitter;
 import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
+import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.thirdparty.guava.common.io.Files;
 
 import org.apache.commons.io.Charsets;
@@ -52,30 +53,38 @@ public class Css2Gss {
   private PrintWriter printWriter;
   private Map<String, String> defNameMapping;
   private Predicate<String> simpleBooleanConditionPredicate;
+  private final Set<URL> scopeFiles;
 
   public Css2Gss(String filePath) throws MalformedURLException {
     this(new File(filePath).toURI().toURL(), false);
   }
 
   public Css2Gss(URL resource, boolean lenient) {
-    this(resource, lenient, Predicates.<String>alwaysFalse());
+    this(resource, lenient, Predicates.<String>alwaysFalse(), new HashSet<URL>());
   }
 
   public Css2Gss(URL resource, boolean lenient,
-      Predicate<String> simpleBooleanConditionPredicate) {
+      Predicate<String> simpleBooleanConditionPredicate, Set<URL> scopeFiles) {
     cssFile = resource;
     printWriter = new PrintWriter(System.err);
     this.treeLogger = new PrintWriterTreeLogger(printWriter);
     this.lenient = lenient;
     this.simpleBooleanConditionPredicate = simpleBooleanConditionPredicate;
+    this.scopeFiles = scopeFiles;
   }
 
   public Css2Gss(URL fileUrl, TreeLogger treeLogger, boolean lenient,
-      Predicate<String> simpleBooleanConditionPredicate) {
+      Predicate<String> simpleBooleanConditionPredicate, Set<URL> scopeFiles) {
     cssFile = fileUrl;
     this.treeLogger = treeLogger;
     this.lenient = lenient;
     this.simpleBooleanConditionPredicate = simpleBooleanConditionPredicate;
+    this.scopeFiles = scopeFiles;
+  }
+
+  public Css2Gss(URL url, TreeLogger logger, boolean lenientConversion,
+      Predicate<String> simpleBooleanConditionPredicate) {
+    this(url, logger, lenientConversion, simpleBooleanConditionPredicate, new HashSet<URL>());
   }
 
   public String toGss() throws UnableToCompleteException {
@@ -85,6 +94,8 @@ public class Css2Gss {
         DefCollectorVisitor defCollectorVisitor = new DefCollectorVisitor(lenient, treeLogger);
         defCollectorVisitor.accept(sheet);
         defNameMapping = defCollectorVisitor.getDefMapping();
+
+        addScopeDefs(scopeFiles, defNameMapping);
 
         new UndefinedConstantVisitor(new HashSet<String>(defNameMapping.values()),
             lenient, treeLogger).accept(sheet);
@@ -106,6 +117,16 @@ public class Css2Gss {
       }
   }
 
+  private void addScopeDefs(Set<URL> scopeFiles, Map<String, String> defNameMapping)
+      throws UnableToCompleteException {
+    for (URL fileName : scopeFiles) {
+      CssStylesheet sheet = GenerateCssAst.exec(treeLogger, fileName);
+      DefCollectorVisitor defCollectorVisitor = new DefCollectorVisitor(lenient, treeLogger);
+      defCollectorVisitor.accept(sheet);
+      defNameMapping.putAll(defCollectorVisitor.getDefMapping());
+    }
+  }
+
   /**
    * GSS allows only uppercase letters and numbers for a name of the constant. The constants
    * need to be renamed in order to be compatible with GSS. This method returns a mapping
@@ -121,7 +142,8 @@ public class Css2Gss {
 
     if (options.singleFile) {
       try {
-        System.out.println(convertFile(options.resource, options.simpleBooleanConditions));
+        System.out.println(convertFile(options.resource, options.simpleBooleanConditions,
+            options.scopeFiles));
         System.exit(0);
       } catch (Exception e) {
         e.printStackTrace();
@@ -139,7 +161,8 @@ public class Css2Gss {
               "GSS file already exists - will not convert, file: " + cssFile.getAbsolutePath());
           continue;
         }
-        String gss = convertFile(cssFile, options.simpleBooleanConditions);
+        String gss = convertFile(cssFile, options.simpleBooleanConditions,
+            options.scopeFiles);
         writeGss(gss, cssFile);
         System.out.println("Converted " + cssFile.getAbsolutePath());
       } catch (Exception e) {
@@ -167,8 +190,8 @@ public class Css2Gss {
     Files.asCharSink(gssFile, Charsets.UTF_8).write(gss);
   }
 
-  private static String convertFile(File resource, Set<String> simpleBooleanConditions)
-      throws MalformedURLException, UnableToCompleteException {
+  private static String convertFile(File resource, Set<String> simpleBooleanConditions,
+      Set<URL> scopeFiles) throws MalformedURLException, UnableToCompleteException {
     Predicate<String> simpleConditionPredicate;
 
     if (simpleBooleanConditions != null) {
@@ -177,7 +200,8 @@ public class Css2Gss {
       simpleConditionPredicate = Predicates.alwaysFalse();
     }
 
-    return new Css2Gss(resource.toURI().toURL(), false, simpleConditionPredicate).toGss();
+    return new Css2Gss(resource.toURI().toURL(), false, simpleConditionPredicate,
+        scopeFiles).toGss();
   }
 
   private static void printUsage() {
@@ -190,6 +214,8 @@ public class Css2Gss {
         "variables that are used in conditionals and that will be mapped to configuration " +
         "properties. The converter will not use the is() function when it will convert these " +
         "conditions");
+    System.err.println(" -scope list_of_files -> Specify a comma-separated list of "
+        + "css files to be used in this conversion to determine all defined variables");
   }
 
   static class Options {
@@ -218,10 +244,35 @@ public class Css2Gss {
           return true;
         }
       });
+
+      argumentConsumers.put("-scope", new ArgumentConsumer() {
+          @Override
+        public boolean consume(Options option, String nextArg) {
+          ImmutableSet<String> scopeFileSet =
+              FluentIterable.from(Splitter.on(',').split(nextArg)).toSet();
+
+          HashSet<URL> set = new HashSet<URL>();
+          for (String scopeFile : scopeFileSet) {
+            File file = new File(scopeFile).getAbsoluteFile();
+            if (!file.exists() && !file.isFile()) {
+              quitEarly("The scope file '" + scopeFile + "' does not exist");
+            }
+            try {
+              set.add(file.toURI().toURL());
+            } catch (MalformedURLException e) {
+              quitEarly("Can not create url for scope file: '" + scopeFile + "'");
+            }
+          }
+          option.scopeFiles = ImmutableSet.copyOf(set);
+
+          return true;
+        }
+      });
     }
 
     boolean recurse;
     boolean singleFile;
+    ImmutableSet<URL> scopeFiles;
     File resource;
     Set<String> simpleBooleanConditions;
 
@@ -278,7 +329,7 @@ public class Css2Gss {
     }
 
     private static boolean validateArgs(String[] args) {
-      return args.length > 0 && args.length < 5;
+      return args.length > 0 && args.length < 7;
     }
   }
 

@@ -1,0 +1,4 @@
+.foo {
+  color: VARIABLE_THAT_IS_DEFINED_IN_ANOTHER_FILE;
+  background-color: LOWER_CASE_VARIABLE;
+}
