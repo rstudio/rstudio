@@ -50,7 +50,7 @@ if(RSTUDIO_SERVER)
   set(RSTUDIO_RPM_DEPENDS "psmisc, ")
 
   # on RHEL 5 we also depend on libffi
-  if(IS_RHEL_5)
+  if(IS_RHEL_5 AND NOT RSTUDIO_PACKAGE_BUILD_SLES)
      set(RSTUDIO_RPM_DEPENDS "${RSTUDIO_RPM_DEPENDS}libffi, ")
   endif()
 
@@ -75,7 +75,11 @@ endif()
 # define package suffix
 set(RSTUDIO_PACKAGE_SUFFIX "-")
 
-if(IS_RHEL_5)
+# SLES builds are produced from a CentOS5 machine, so check for specific SLES
+# target first
+if(RSTUDIO_PACKAGE_BUILD_SLES)
+   set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}sles-")
+elseif(IS_RHEL_5)
    set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}rhel5-")
 endif()
 
