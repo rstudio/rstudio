@@ -77,14 +77,16 @@ endif()
 # define package suffix
 set(RSTUDIO_PACKAGE_SUFFIX "-")
 
-# SLES builds are produced from a CentOS5 machine, so check for specific SLES
-# target first
-if(RSTUDIO_PACKAGE_BUILD_SLES)
-   set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}suse-")
-elseif(IS_RHEL_5)
-   set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}rhel5-")
-elseif(IS_RHEL) 
-   set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}rhel-")
+if(RSTUDIO_SERVER)
+   # SLES builds are produced from a CentOS5 machine, so check for specific SLES
+   # target first
+   if(RSTUDIO_PACKAGE_BUILD_SLES)
+      set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}suse-")
+   elseif(IS_RHEL_5)
+      set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}rhel5-")
+   elseif(IS_RHEL) 
+      set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}rhel-")
+   endif()
 endif()
 
 # include overlay if it exists
