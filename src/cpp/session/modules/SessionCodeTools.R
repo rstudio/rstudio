@@ -415,12 +415,14 @@
 
 .rs.addFunction("getNames", function(object)
 {
-   if (is.environment(object))
-      ls(object, all.names = TRUE)
-   else if (inherits(object, "tbl") && "dplyr" %in% loadedNamespaces())
-      dplyr::tbl_vars(object)
-   else
-      names(object)
+   tryCatch({
+      if (is.environment(object))
+         ls(object, all.names = TRUE)
+      else if (inherits(object, "tbl") && "dplyr" %in% loadedNamespaces())
+         dplyr::tbl_vars(object)
+      else
+         names(object)
+   }, error = function(e) NULL)
 })
 
 .rs.addJsonRpcHandler("get_help_at_cursor", function(line, cursorPos)
