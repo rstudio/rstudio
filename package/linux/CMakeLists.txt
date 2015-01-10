@@ -80,7 +80,7 @@ set(RSTUDIO_PACKAGE_SUFFIX "-")
 # SLES builds are produced from a CentOS5 machine, so check for specific SLES
 # target first
 if(RSTUDIO_PACKAGE_BUILD_SLES)
-   set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}suse-")
+   set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}sles-")
 elseif(IS_RHEL_5)
    set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}rhel5-")
 elseif(IS_RHEL) 
