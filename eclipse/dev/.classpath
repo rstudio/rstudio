@@ -28,5 +28,6 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/json/android-sdk-19.1/json-android-rebased.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/commons/commons-collections-3.2.1.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jetty/jetty-8.1.12.v20130726/servlet-api-3.0-NoMetaInf.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/colt/colt-1.2.jar" sourcepath="/GWT_TOOLS/lib/colt/colt-1.2-src.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
