@@ -12,6 +12,10 @@ then
    # remove temporary streams
    rm -rf /tmp/rstudio-rsession
    rm -rf /tmp/rstudio-rserver
+
+   # remove openssl softlinks
+   rm -rf ${CMAKE_INSTALL_PREFIX}/bin/libssl.so.6
+   rm -rf ${CMAKE_INSTALL_PREFIX}/bin/libcrypto.so.6
 fi
 
 # clear error termination state
