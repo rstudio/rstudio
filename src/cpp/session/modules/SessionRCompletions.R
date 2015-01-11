@@ -691,9 +691,9 @@ assign(x = ".rs.acCompletionTypes",
 .rs.addFunction("formCompletionVector", function(object, default, n)
 {
    if (!length(object))
-      rep_len(default, n)
+      rep.int(default, n)
    else
-      rep_len(object, n)
+      rep.int(object, n)
 })
 
 .rs.addFunction("makeCompletions", function(token,
