@@ -15,16 +15,19 @@
  */
 package com.google.gwt.util.tools;
 
-import com.google.gwt.thirdparty.guava.common.base.Function;
+import static com.google.gwt.thirdparty.guava.common.base.Preconditions.checkNotNull;
+
+import com.google.gwt.thirdparty.guava.common.base.Ascii;
+import com.google.gwt.thirdparty.guava.common.base.Enums;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.thirdparty.guava.common.base.Preconditions;
 import com.google.gwt.thirdparty.guava.common.base.Predicate;
-import com.google.gwt.thirdparty.guava.common.collect.Collections2;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
+import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
+
+import javax.annotation.Nullable;
 
 /**
  * A generic arg handler for options defined by enums.
@@ -39,7 +42,7 @@ public abstract class ArgHandlerEnum<T extends Enum<T>> extends ArgHandler {
   private static final int ABBREVIATION_MIN_SIZE = 3;
 
   /**
-   * Constructor, assumes that the default value for the options is the first enum value.
+   * Constructor, default value must be handled by the user code.
    */
   public ArgHandlerEnum(Class<T> optionsEnumClass) {
     this(optionsEnumClass, null, false);
@@ -48,9 +51,14 @@ public abstract class ArgHandlerEnum<T extends Enum<T>> extends ArgHandler {
   /**
    * Constructor, allows to specify the default value for the option and whether to accept or
    * prefixes as abbreviations.
+   * <p>
+   * When {@code defaultValue} is null, handling of the default for the option is left to be
+   * handled by the user code.
    */
-  public ArgHandlerEnum(Class<T> optionsEnumClass, T defaultValue, boolean allowAbbreviation) {
-    this.optionsEnumClass = optionsEnumClass;
+  public ArgHandlerEnum(
+      Class<T> optionsEnumClass, @Nullable T defaultValue, boolean allowAbbreviation) {
+    Preconditions.checkArgument(optionsEnumClass.getEnumConstants().length > 1);
+    this.optionsEnumClass = checkNotNull(optionsEnumClass);
     this.defaultValue = defaultValue;
     this.allowAbbreviation = allowAbbreviation;
   }
@@ -70,29 +78,34 @@ public abstract class ArgHandlerEnum<T extends Enum<T>> extends ArgHandler {
 
   @Override
   public final int handle(String[] args, int startIndex) {
-    if (startIndex + 1 < args.length) {
-      String value = args[startIndex + 1].trim().toUpperCase(Locale.ROOT);
+    // A command line argument corresponding to an enum option has a parameter
+    // (the desired value), will be at startIndex + 1.
+    int optionValueIndex = startIndex + 1;
+    if (optionValueIndex < args.length) {
+      String value = Ascii.toUpperCase(args[optionValueIndex].trim());
       T mode = matchOption(value);
       if (mode == null) {
-        System.err.println(value + " is not a valid option for " + getTag());
-        System.err.println(
-            getTag() + " value must be one of " +
-                getFormattedOptionNames(", ", " or ", optionsEnumClass) + ".");
+        System.err.format("%s is not a valid option for %s\n", value, getTag());
+        System.err.format("%s value must be one of %s.\n",
+            getTag(), getFormattedOptionNames(", ", " or ", optionsEnumClass));
         return -1;
       }
       setValue(mode);
       return 1;
     }
 
-    System.err.println("Missing argument for " + getTag() + " must be followed by one of " +
-        getFormattedOptionNames(", ", " or ", optionsEnumClass) + ".");
+    System.err.format("Missing argument for %s must be followed by one of %s.\n" +
+        getTag(), getFormattedOptionNames(", ", " or ", optionsEnumClass));
     return -1;
   }
 
   protected String getPurposeString(String prefix) {
-    return (isExperimental() ? "EXPERIMENTAL: " : "") + prefix + " " +
-        getFormattedOptionNames(", ", " or ", optionsEnumClass) +
-        (defaultValue != null ? " (defaults to " + defaultValue.name() + ")" : "");
+    String maybeExperimentalString = isExperimental() ? "EXPERIMENTAL: " : "";
+    String defaultValueString = defaultValue != null ?
+        " (defaults to " + defaultValue.name() + ")" : "";
+
+    return String.format("%s%s %s%s", maybeExperimentalString, prefix,
+        getFormattedOptionNames(", ", " or ", optionsEnumClass), defaultValueString);
   }
 
   /**
@@ -101,46 +114,41 @@ public abstract class ArgHandlerEnum<T extends Enum<T>> extends ArgHandler {
   public abstract void setValue(T value);
 
   private List<String> getEnumNames(Class<T> optionsEnumClass) {
-    return Lists.transform(Arrays.asList(optionsEnumClass.getEnumConstants()),
-        new Function<T, String>() {
-          @Override
-          public String apply(T t) {
-            return t.name();
-          }
-        });
+    return FluentIterable.from(Arrays.asList(optionsEnumClass.getEnumConstants()))
+        .transform(Enums.stringConverter(optionsEnumClass).reverse())
+        .toList();
   }
 
-  private String getFormattedOptionNames(String separator,Class<T> optionsEnumClass) {
+  private String getFormattedOptionNames(String separator, Class<T> optionsEnumClass) {
     return getFormattedOptionNames(separator, separator, optionsEnumClass);
   }
 
-  private String getFormattedOptionNames(String separator,String lastSeparator,
-      Class<T> optionsEnumClass) {
+  private String getFormattedOptionNames(
+      String separator, String lastSeparator, Class<T> optionsEnumClass) {
     List<String> enumNames = getEnumNames(optionsEnumClass);
     List<String> allNamesButLast = enumNames.subList(0, enumNames.size() - 1);
     String lastName = enumNames.get(enumNames.size() - 1);
 
-    return Joiner.on(lastSeparator).join(Joiner.on(separator).join(allNamesButLast), lastName);
+    return Joiner.on(separator).join(allNamesButLast) + lastSeparator + lastName;
   }
 
-  private T matchOption(final String value) {
-    try {
-      Collection<T> matches = Collections2.filter(
-          Arrays.asList(optionsEnumClass.getEnumConstants()),
-              new Predicate<T>() {
-                @Override
-                public boolean apply(T t) {
-                  if (allowAbbreviation && value.length() >= ABBREVIATION_MIN_SIZE) {
-                    return t.name().startsWith(value);
-                  }
-                  return t.name().equals(value);
-                }
-              });
-      if (matches.size() == 1) {
-        return matches.iterator().next();
-      }
-    } catch (IllegalArgumentException e) {
-    }
-    return null;
+  private Predicate<Enum<?>> buildMatchPredicate(final String value) {
+    return
+        new Predicate<Enum<?>>() {
+          @Override
+          public boolean apply(Enum<?> t) {
+            if (allowAbbreviation && value.length() >= ABBREVIATION_MIN_SIZE) {
+              return t.name().startsWith(value);
+            }
+            return t.name().equals(value);
+          }
+        };
+  }
+
+  private T matchOption(String value) {
+    List<T> matchedOptions = FluentIterable.from(Arrays.asList(optionsEnumClass.getEnumConstants()))
+        .filter(buildMatchPredicate(value))
+        .toList();
+    return matchedOptions.size() == 1 ? matchedOptions.get(0) : null;
   }
 }

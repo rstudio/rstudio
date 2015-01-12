@@ -24,17 +24,21 @@ public class ArgHandlerEnumTest extends TestCase {
 
   enum SomeFlags { THIS_FLAG, THAT_FLAG, THAT_OTHER_FLAG, ANOTHER_FLAG }
 
-  static public SomeFlags optionValue = null;
+  enum EmptyEnum { }
 
-  private abstract class MockArgHandlerEnumBase extends ArgHandlerEnum<SomeFlags> {
+  enum OneOptionEnum { SINGLE_OPTION }
 
-    public MockArgHandlerEnumBase() {
-      super(SomeFlags.class);
+  static public Enum<?> optionValue = null;
+
+  private abstract class MockArgHandlerEnumBase<T extends Enum<T>> extends ArgHandlerEnum<T> {
+
+    public MockArgHandlerEnumBase(Class<T> enumClass) {
+      super(enumClass);
     }
 
-    public MockArgHandlerEnumBase(SomeFlags defaultValue,
-        boolean allowAbbraviation) {
-      super(SomeFlags.class, defaultValue, allowAbbraviation);
+    public MockArgHandlerEnumBase(
+        Class<T> enumClass, T defaultValue, boolean allowAbbraviation) {
+      super(enumClass, defaultValue, allowAbbraviation);
     }
 
     @Override
@@ -53,13 +57,13 @@ public class ArgHandlerEnumTest extends TestCase {
     }
 
     @Override
-    public void setValue(SomeFlags value) {
+    public void setValue(T value) {
       optionValue = value;
     }
   }
 
   public void testHandle() {
-    ArgHandler handler = new MockArgHandlerEnumBase() { };
+    ArgHandler handler = new MockArgHandlerEnumBase<SomeFlags>(SomeFlags.class) { };
     optionValue = null;
     int consuemdArguments = handler.handle(new String[] {"-Xflag", "THIS_FLAG"}, 0);
     assertEquals(1, consuemdArguments);
@@ -79,7 +83,8 @@ public class ArgHandlerEnumTest extends TestCase {
   }
 
   public void testHandle_default() {
-    ArgHandler handler = new MockArgHandlerEnumBase(SomeFlags.THAT_OTHER_FLAG, false) { };
+    ArgHandler handler = new MockArgHandlerEnumBase<SomeFlags>(
+        SomeFlags.class, SomeFlags.THAT_OTHER_FLAG, false) { };
     optionValue = null;
     int consuemdArguments = handler.handle(handler.getDefaultArgs(), 0);
     assertEquals(1, consuemdArguments);
@@ -87,7 +92,7 @@ public class ArgHandlerEnumTest extends TestCase {
   }
 
   public void testHandle_Abbreviations() {
-    ArgHandler handler = new MockArgHandlerEnumBase(null, true) { };
+    ArgHandler handler = new MockArgHandlerEnumBase<SomeFlags>(SomeFlags.class, null, true) { };
     optionValue = null;
     int consuemdArguments =  handler.handle(new String[] {"-Xflag", "THIS"}, 0);
     assertEquals(1, consuemdArguments);
@@ -115,13 +120,32 @@ public class ArgHandlerEnumTest extends TestCase {
   }
 
   public void testGetDefaultTags() {
-    ArgHandler handler = new MockArgHandlerEnumBase() { };
+    ArgHandler handler = new MockArgHandlerEnumBase<SomeFlags>(SomeFlags.class) { };
     assertNull(handler.getDefaultArgs());
 
-    handler = new MockArgHandlerEnumBase(SomeFlags.THAT_FLAG, false) { };
+    handler =
+      new MockArgHandlerEnumBase<SomeFlags>(SomeFlags.class, SomeFlags.THAT_FLAG, false) { };
     assertContentsEquals(new String[]{"-Xflag", "THAT_FLAG"}, handler.getDefaultArgs());
   }
 
+  public void testGetPurposeString() {
+    assertEquals("EXPERIMENTAL: Set flag: THIS_FLAG, THAT_FLAG, THAT_OTHER_FLAG or ANOTHER_FLAG",
+        new MockArgHandlerEnumBase<SomeFlags>(SomeFlags.class) { }.getPurpose());
+  }
+
+  public void testBadEnums() {
+    try {
+      new MockArgHandlerEnumBase<EmptyEnum>(EmptyEnum.class) { };
+      fail("Should have thrown IllegalArgumentException");
+    } catch (IllegalArgumentException expected) {
+    }
+
+    try {
+      new MockArgHandlerEnumBase<OneOptionEnum>(OneOptionEnum.class) { };
+      fail("Should have thrown IllegalArgumentException");
+    } catch (IllegalArgumentException expected) {
+    }
+  }
   private <T> void assertContentsEquals(T[] expected, T[] actual) {
     assertEquals("Different sizes", expected.length, actual.length);
     for (int i = 0; i < expected.length; i++) {

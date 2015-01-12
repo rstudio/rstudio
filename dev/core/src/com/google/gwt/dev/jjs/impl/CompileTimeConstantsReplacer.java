@@ -52,23 +52,22 @@ public class CompileTimeConstantsReplacer {
       JExpression value = resolveValuesByField.get(field);
       if (value != null) {
         return new CloneExpressionVisitor().cloneExpression(value);
-      } else {
-        // TODO(rluble): Simplify the expression to a literal here after refactoring Simplifier.
-        // The initializer is guaranteed to be constant but it may be a non literal expression, so
-        // clone it and recursively remove field references, and finally cache the results.
-        value = accept(new CloneExpressionVisitor().cloneExpression(field.getInitializer()));
-        JType fieldType = field.getType().getUnderlyingType();
-        assert fieldType instanceof JPrimitiveType || fieldType == program.getTypeJavaLangString()
-            : fieldType.getName() + " is not a primitive nor String ";
-        if (fieldType != value.getType()) {
-          value = new JCastOperation(value.getSourceInfo(), fieldType, value);
-        }
-        resolveValuesByField.put(field, value);
       }
+      // TODO(rluble): Simplify the expression to a literal here after refactoring Simplifier.
+      // The initializer is guaranteed to be constant but it may be a non literal expression, so
+      // clone it and recursively remove field references, and finally cache the results.
+      value = accept(new CloneExpressionVisitor().cloneExpression(field.getInitializer()));
+      JType fieldType = field.getType().getUnderlyingType();
+      assert fieldType instanceof JPrimitiveType || fieldType == program.getTypeJavaLangString()
+          : fieldType.getName() + " is not a primitive nor String";
+      if (fieldType != value.getType()) {
+        value = new JCastOperation(value.getSourceInfo(), fieldType, value);
+      }
+      resolveValuesByField.put(field, value);
       return value;
     }
 
-    public CompileTimeConstantsReplacingVisitor(JProgram program) {
+    private CompileTimeConstantsReplacingVisitor(JProgram program) {
       this.program = program;
     }
   }
