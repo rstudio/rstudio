@@ -66,10 +66,7 @@ public class FileTypeRegistry
                           ICONS.iconText(), false, false, false, false, false,
                           false, false, false, false, false, false, false);
    
-   public static final TextFileType MERMAID =
-         new TextFileType("mermaid", "Mermaid", EditorLanguage.LANG_MERMAID, ".mmd",
-                          ICONS.iconText(), false, false, false, false, false,
-                          false, false, false, false, false, false, false);
+   public static final TextFileType MERMAID = new MermaidFileType();
 
 
    public static final TextFileType NAMESPACE =

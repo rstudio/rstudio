@@ -310,6 +310,7 @@ public class TextEditingTargetWidget
       boolean isCpp = fileType.isCpp();
       boolean isScript = fileType.isScript();
       boolean isRMarkdown2 = extendedType_.equals("rmarkdown");
+      boolean isMermaid = fileType.isMermaid();
       
       // don't show the run buttons for cpp files, or R files in Shiny
       runButton_.setVisible(canExecuteCode && !isCpp && !isShinyFile());
@@ -328,7 +329,8 @@ public class TextEditingTargetWidget
       sourceButton_.setVisible(canSource && !isPlainMarkdown);
       sourceMenuButton_.setVisible(canSourceWithEcho && 
                                    !isPlainMarkdown && 
-                                   !isScript);
+                                   !isScript &&
+                                   !isMermaid);
    
       texSeparatorWidget_.setVisible(canCompilePdf);
       texToolbarButton_.setVisible(canCompilePdf);
@@ -359,7 +361,7 @@ public class TextEditingTargetWidget
       }
       else
       {
-         setSourceButtonFromScriptState(isScript);
+         setSourceButtonFromScriptState(isScript, isMermaid);
       }
       
       toolbar_.invalidateSeparators();
@@ -641,7 +643,7 @@ public class TextEditingTargetWidget
       previewHTMLButton_.setText(previewCommandText_);
    }
    
-   private void setSourceButtonFromScriptState(boolean isScript)
+   private void setSourceButtonFromScriptState(boolean isScript, boolean isMermaid)
    {
       sourceCommandText_ = commands_.sourceActiveDocument().getButtonLabel();
       String sourceCommandDesc = commands_.sourceActiveDocument().getDesc();
@@ -649,6 +651,13 @@ public class TextEditingTargetWidget
       {
          sourceCommandText_ = "Run Script";
          sourceCommandDesc = "Save changes and run the current script";
+         sourceButton_.setLeftImage(
+                           commands_.debugContinue().getImageResource());
+      }
+      else if (isMermaid)
+      {
+         sourceCommandText_ = "Preview";
+         sourceCommandDesc = "Save changes and preview the diagram";
          sourceButton_.setLeftImage(
                            commands_.debugContinue().getImageResource());
       }

@@ -68,6 +68,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.SweaveFileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.common.synctex.SynctexUtils;
@@ -2454,11 +2455,12 @@ public class TextEditingTarget implements
    {
       if (isCursorInTexMode())
          doCommentUncomment("%");
+      else if (isCursorInMermaidMode())
+         doCommentUncomment("%%");
       else if (isCursorInRMode())
          doCommentUncomment("#");
       else if (fileType_.isCpp())
-         doCommentUncomment("//");
-      
+         doCommentUncomment("//"); 
    }
    
    private void doCommentUncomment(String c)
@@ -3429,6 +3431,13 @@ public class TextEditingTarget implements
          return;
       }
 
+      // If the document is mermaid.js then use DiagrameR
+      if (fileType_.getEditorLanguage().equals(EditorLanguage.LANG_MERMAID))
+      {
+         runMermaid();
+         return;
+      }
+      
       String code = docDisplay_.getCode();
       if (code != null && code.trim().length() > 0)
       {
@@ -3533,6 +3542,26 @@ public class TextEditingTarget implements
                   @Override
                   public void onResponseReceived(String cmd)
                   {
+                     events_.fireEvent(new SendToConsoleEvent(cmd, true));
+                  }
+               });
+         }   
+      });
+   }
+   
+   private void runMermaid()
+   {
+      saveThenExecute(null, new Command() {
+         @Override
+         public void execute()
+         {
+            server_.getMinimalSourcePath(
+               getPath(), 
+               new SimpleRequestCallback<String>() {
+                  @Override
+                  public void onResponseReceived(String path)
+                  {
+                     String cmd = "DiagrammeR::DiagrammeR(\"" + path + "\")";
                      events_.fireEvent(new SendToConsoleEvent(cmd, true));
                   }
                });
@@ -4423,6 +4452,11 @@ public class TextEditingTarget implements
       }
    }
 
+   private boolean isCursorInMermaidMode()
+   {
+      return fileType_.getEditorLanguage().equals(EditorLanguage.LANG_MERMAID);
+   }
+   
    private boolean isCursorInRMode()
    {
       String mode = docDisplay_.getLanguageMode(docDisplay_.getCursorPosition());

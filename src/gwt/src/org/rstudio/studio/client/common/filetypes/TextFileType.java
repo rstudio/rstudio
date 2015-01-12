@@ -235,6 +235,11 @@ public class TextFileType extends EditableFileType
       return false;
    }
    
+   public boolean isMermaid()
+   {
+      return EditorLanguage.LANG_MERMAID.equals(getEditorLanguage());
+   }
+   
    public boolean isScript()
    {
       return false;

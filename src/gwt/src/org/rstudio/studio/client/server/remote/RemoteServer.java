@@ -1563,6 +1563,14 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void getMinimalSourcePath(String path, 
+                                    ServerRequestCallback<String> callback)
+   {
+      sendRequest(RPC_SCOPE, "get_minimal_source_path", path, callback);
+   }
+
+   
+   @Override
    public void getShinyCapabilities(
          ServerRequestCallback<ShinyCapabilities> requestCallback)
    {

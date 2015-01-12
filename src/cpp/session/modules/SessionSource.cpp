@@ -821,6 +821,25 @@ Error isReadOnlyFile(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error getMinimalSourcePath(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   // params
+   std::string path;
+   Error error = json::readParams(request.params, &path);
+   if (error)
+      return error ;
+   FilePath filePath = module_context::resolveAliasedPath(path);
+
+   // calculate path
+   pResponse->setResult(module_context::pathRelativeTo(
+            module_context::safeCurrentPath(),
+            filePath));
+
+   return Success();
+}
+
+
 Error getScriptRunCommand(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
@@ -1085,6 +1104,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_source_template", getSourceTemplate))
       (bind(registerRpcMethod, "create_rd_shell", createRdShell))
       (bind(registerRpcMethod, "is_read_only_file", isReadOnlyFile))
+      (bind(registerRpcMethod, "get_minimal_source_path", getMinimalSourcePath))
       (bind(registerRpcMethod, "get_script_run_command", getScriptRunCommand))
       (bind(registerRpcMethod, "set_doc_order", setDocOrder))
       (bind(sourceModuleRFile, "SessionSource.R"));
