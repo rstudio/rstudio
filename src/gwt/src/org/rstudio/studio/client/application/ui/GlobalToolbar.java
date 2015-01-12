@@ -188,6 +188,7 @@ public class GlobalToolbar extends Toolbar
             } 
          });
          addLeftWidget(connectMenuButton);
+         connectMenuButton.setVisible(commands_.rsconnectDeploy().isEnabled());   
       }
       
       // project popup menu
