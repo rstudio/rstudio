@@ -25,8 +25,8 @@ public class MermaidFileType extends TextFileType
    public MermaidFileType()
    {
       super("mermaid", "Mermaid", EditorLanguage.LANG_MERMAID, ".mmd",
-            FileIconResources.INSTANCE.iconText(),
-            true, false, false, false, false, false, 
+            FileIconResources.INSTANCE.iconMermaid(),
+            true, true, false, false, false, false, 
             false, false, false, false, false, false);
    }
    

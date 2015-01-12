@@ -2455,8 +2455,6 @@ public class TextEditingTarget implements
    {
       if (isCursorInTexMode())
          doCommentUncomment("%");
-      else if (isCursorInMermaidMode())
-         doCommentUncomment("%%");
       else if (isCursorInRMode())
          doCommentUncomment("#");
       else if (fileType_.isCpp())
@@ -4298,6 +4296,10 @@ public class TextEditingTarget implements
                {
                   previewRd();
                }
+               else if (fileType_.isMermaid())
+               {
+                  runMermaid();
+               }
                else
                {
                   if (docDisplay_.hasBreakpoints())
@@ -4450,11 +4452,6 @@ public class TextEditingTarget implements
       {
          return false;
       }
-   }
-
-   private boolean isCursorInMermaidMode()
-   {
-      return fileType_.getEditorLanguage().equals(EditorLanguage.LANG_MERMAID);
    }
    
    private boolean isCursorInRMode()

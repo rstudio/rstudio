@@ -318,7 +318,7 @@ public class TextEditingTargetWidget
       
       sourceOnSave_.setVisible(canSourceOnSave);
       srcOnSaveLabel_.setVisible(canSourceOnSave);
-      if (fileType.isRd())
+      if (fileType.isRd() || isMermaid)
          srcOnSaveLabel_.setText("Preview on Save");
       else
          srcOnSaveLabel_.setText("Source on Save");
@@ -404,7 +404,7 @@ public class TextEditingTargetWidget
       previewHTMLButton_.setText(width < 450 ? "" : previewCommandText_);                                                       
       knitDocumentButton_.setText(width < 450 ? "" : knitCommandText_);
       
-      if (editor_.getFileType().isRd())
+      if (editor_.getFileType().isRd() || editor_.getFileType().isMermaid())
          srcOnSaveLabel_.setText(width < 450 ? "Preview" : "Preview on Save");
       else
          srcOnSaveLabel_.setText(width < 450 ? "Source" : "Source on Save");
