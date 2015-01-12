@@ -8,8 +8,9 @@ set WGET_ARGS=--no-check-certificate
 set UNZIP_ARGS=-q
 
 set BASEURL=https://s3.amazonaws.com/rstudio-buildtools/
+set BOOST_FILE=boost-1.50-win.zip
 set BOOST_GCC491_FILE=boost-1.50-win-gcc491.zip
-set MINGW_FILE=mingw64-x86_64-posix-sjlj-4.9.1.zip
+set MINGW_FILE=mingw64-2010-10-03.zip
 set GIN_FILE=gin-1.5.zip
 set GWT_FILE=gwt-2.7.0.zip
 set JUNIT_FILE=junit-4.9b3.jar
@@ -35,7 +36,14 @@ if not exist boost-1.50-win-gcc491 (
   del "%BOOST_GCC491_FILE%"
 )
 
-if not exist mingw64-x86_64-posix-sjlj-4.9.1 (
+if not exist boost-1.50-win (
+  wget %WGET_ARGS% "%BASEURL%%BOOST_FILE%"
+  echo Unzipping %BOOST_FILE%
+  unzip %UNZIP_ARGS% "%BOOST_FILE%"
+  del "%BOOST_FILE%"
+)
+
+if not exist mingw64 (
   wget %WGET_ARGS% "%BASEURL%%MINGW_FILE%"
   echo Unzipping %MINGW_FILE%
   unzip %UNZIP_ARGS% "%MINGW_FILE%"
