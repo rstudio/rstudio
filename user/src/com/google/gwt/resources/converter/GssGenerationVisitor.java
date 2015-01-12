@@ -98,10 +98,14 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
   private final List<CssDef> wrongDefNodes = new ArrayList<CssDef>();
 
   private boolean insideNoFlipNode;
-  private boolean needsNewLine = true;
+  private boolean needsNewLine;
   private boolean needsOpenBrace;
   private boolean needsComma;
   private boolean insideMediaAtRule;
+  // used to group a sequence of @def in one block
+  private boolean previousNodeIsDef;
+  // used to group asequence of @external in one block
+  private boolean previousNodeIsExternal;
 
   public GssGenerationVisitor(TextOutput out, Map<String, String> cssToGssConstantMapping,
       boolean lenient, TreeLogger treeLogger, Predicate<String> simpleBooleanConditionPredicate) {
@@ -168,6 +172,9 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
   public boolean visit(CssDef x, Context ctx) {
     printDef(x, null, "def", false);
 
+    previousNodeIsDef = true;
+    previousNodeIsExternal = false;
+
     return false;
   }
 
@@ -187,13 +194,13 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
 
   @Override
   public boolean visit(CssRule x, Context ctx) {
-    if (needsNewLine) {
-      out.newlineOpt();
-    }
+    maybePrintNewLine();
 
     needsOpenBrace = true;
     needsComma = false;
     needsNewLine = false;
+    previousNodeIsDef = false;
+    previousNodeIsExternal = false;
 
     return true;
   }
@@ -211,6 +218,8 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
   @Override
   public boolean visit(CssNoFlip x, Context ctx) {
     insideNoFlipNode = true;
+    previousNodeIsDef = false;
+    previousNodeIsExternal = false;
     return true;
   }
 
@@ -238,6 +247,10 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
   public boolean visit(CssCharset x, Context ctx) {
     out.print(String.format(CHARSET, x.getCharset()));
     out.newlineOpt();
+
+    needsNewLine = true;
+    previousNodeIsDef = false;
+    previousNodeIsExternal = false;
 
     return true;
   }
@@ -276,6 +289,10 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
       String unescaped = unescapeExternalClass(selector);
       if (validateExternalClass(selector) && !Strings.isNullOrEmpty(unescaped)) {
         if (first) {
+          if (!previousNodeIsExternal) {
+            maybePrintNewLine();
+          }
+
           out.print(EXTERNAL);
           first = false;
         }
@@ -299,6 +316,9 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
     if (!first) {
       semiColon();
     }
+
+    previousNodeIsDef = false;
+    previousNodeIsExternal = true;
   }
 
   private boolean validateExternalClass(String selector) {
@@ -423,9 +443,14 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
   @Override
   public boolean visit(CssElse x, Context ctx) {
     closeBrace();
+
     out.print(ELSE);
+
     openBrace();
+
     needsNewLine = false;
+    previousNodeIsDef = false;
+    previousNodeIsExternal = false;
 
     return true;
   }
@@ -447,7 +472,7 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
 
   @Override
   public boolean visit(CssIf x, Context ctx) {
-    out.newline();
+    maybePrintNewLine();
 
     openConditional(IF, x);
 
@@ -472,7 +497,10 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
     out.print(String.format(template, condition));
 
     openBrace();
+
     needsNewLine = false;
+    previousNodeIsDef = false;
+    previousNodeIsExternal = false;
   }
 
   private String extractExpression(CssIf ifOrElif) {
@@ -506,12 +534,19 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
   @Override
   public boolean visit(CssFontFace x, Context ctx) {
     out.print("@font-face");
+
     openBrace();
+
+    previousNodeIsDef = false;
+    previousNodeIsExternal = false;
+
     return true;
   }
 
   @Override
   public boolean visit(CssMediaRule x, Context ctx) {
+    maybePrintNewLine();
+
     insideMediaAtRule = true;
 
     out.print("@media");
@@ -529,6 +564,11 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
     out.print("{");
     out.newlineOpt();
     out.indentIn();
+
+    needsNewLine = false;
+    previousNodeIsDef = false;
+    previousNodeIsExternal = false;
+
     return true;
   }
 
@@ -543,6 +583,10 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
     out.print("{");
     out.newlineOpt();
     out.indentIn();
+
+    previousNodeIsDef = false;
+    previousNodeIsExternal = false;
+
     return true;
   }
 
@@ -551,9 +595,8 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
     if (needsComma) {
       comma();
     }
-    if (needsNewLine) {
-      out.newline();
-    }
+
+    maybePrintNewLine();
 
     needsComma = true;
 
@@ -566,6 +609,10 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
 
   private void printDef(CssDef def, String valueTemplate, String atRule, boolean insideUrlNode) {
     if (validateDefNode(def, atRule)) {
+      if (!previousNodeIsDef) {
+        maybePrintNewLine();
+      }
+
       out.print(DEF);
 
       String name = cssToGssConstantMapping.get(def.getKey());
@@ -586,6 +633,9 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
       }
 
       semiColon();
+
+      previousNodeIsDef = true;
+      needsNewLine = true;
     }
   }
 
@@ -637,6 +687,12 @@ public class GssGenerationVisitor extends ExtendedCssVisitor {
     if (needsOpenBrace) {
       openBrace();
       needsOpenBrace = false;
+    }
+  }
+
+  private void maybePrintNewLine() {
+    if (needsNewLine) {
+      out.newlineOpt();
     }
   }
 

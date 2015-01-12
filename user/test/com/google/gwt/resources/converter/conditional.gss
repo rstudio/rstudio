@@ -1,11 +1,9 @@
-
 @if (is("user.agent", "ie6") || is("user.agent", "opera")) {
   .blop {
     color: wheat;
   }
 }
 @elseif (is("user.agent", "ie8")) {
-
   @if (is("local", "en")) {
     .blop {
       color: black;
@@ -81,14 +79,12 @@
   }
 }
 @elseif (is("property1", "blop2")) {
-
   @if (is("property2", "true")) {
     .foo4 {
     }
   }
 }
 @else  {
-
   @if (is("property2", "true")) {
     .foo4 {
     }

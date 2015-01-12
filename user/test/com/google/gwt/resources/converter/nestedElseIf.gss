@@ -1,4 +1,3 @@
-
 @if (is("propertyname", "value1")) {
   .foo {
     width: 1px;

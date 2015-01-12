@@ -1,4 +1,3 @@
-
 @if (is("user.agent", "gecko1_8")) {
   .inlineBlock {
     display: -moz-inline-box;

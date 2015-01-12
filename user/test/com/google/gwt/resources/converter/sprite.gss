@@ -1,4 +1,3 @@
-
 .topLeft {
   gwt-sprite: "topLeftBorder";
   padding-left: value('topLeftBorder.getWidth', 'px');

@@ -1,5 +1,4 @@
 @media (max-width:767px) {
-
   .appFooter-appPanel {
     text-align: center;
   }
@@ -23,6 +22,7 @@
     padding-bottom: 0;
   }
 }
+
 @external appFooter-appPanel;
 @external appFooter-linksPanelWithApps;
 @external panel;
@@ -48,6 +48,7 @@
     }
   }
 }
+
 @external foo;
 @external dragdrop-proxy;
 @external dragdrop-selected dragdrop-movable-panel;

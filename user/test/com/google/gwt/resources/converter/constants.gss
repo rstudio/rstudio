@@ -50,12 +50,13 @@
   @def MY_EVAL3 eval('com.foo.bar.foo()');
   @def MY_URL3 resourceUrl("imageName");
 }
-@media print {
 
+@media print {
   .appFooter-appPanel {
     text-align: center;
   }
 }
+
 @def MY_CONSTANT4 15px;
 @def MY_EVAL4 eval('com.foo.bar.foo()');
 @def MY_URL4 resourceUrl("imageName");

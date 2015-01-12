@@ -1,4 +1,3 @@
-
 .replacement:after {
   content: "Hello\\\" world";
 }
