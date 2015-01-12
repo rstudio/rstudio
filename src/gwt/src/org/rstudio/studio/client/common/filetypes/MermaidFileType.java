@@ -41,7 +41,6 @@ public class MermaidFileType extends TextFileType
    public HashSet<AppCommand> getSupportedCommands(Commands commands)
    {
       HashSet<AppCommand> result = super.getSupportedCommands(commands);
-      result.add(commands.commentUncomment());
       result.add(commands.sourceActiveDocument());
       result.add(commands.sourceActiveDocumentWithEcho());
       return result;
