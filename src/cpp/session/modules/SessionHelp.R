@@ -98,13 +98,12 @@ options(help_type = "html")
    else if (is.function(object))
    {
       envString <- capture.output(environment(object))[1]
-      match <- regexpr("<environment: namespace:(.*)>", envString, perl = TRUE)
-      if (match == -1L)
-         return()
       
-      start <- attr(match, "capture.start")[1]
-      end <- start + attr(match, "capture.length")[1]
-      namespace <- substring(envString, start, end - 1)
+      # Strip out the irrelevant bits of the package name. We'd like
+      # to just use 'regexpr' but its output is funky with older versions
+      # of R.
+      namespace <- sub(".*namespace:", "", envString)
+      namespace <- sub(">.*", "", namespace)
    }
    else if (isS4(object))
       namespace <- attr(class(object), "package")
@@ -150,7 +149,20 @@ options(help_type = "html")
    success <- FALSE
    for (i in seq_along(objects))
    {
-      if (identical(object, objects[[i]], ignore.environment = TRUE))
+      # Once again, 'ignore.environment' is not available in older R's
+      # identical, so construct and eval a call to 'base::identical'.
+      formals <- as.list(formals(base::identical))
+      formals$x <- object
+      formals$y <- objects[[i]]
+      if ("ignore.environment" %in% names(formals))
+         formals[["ignore.environment"]] <- TRUE
+      
+      result <- tryCatch(
+         do.call(base::identical, formals),
+         error = function(e) FALSE
+      )
+      
+      if (result)
       {
          success <- TRUE
          break
