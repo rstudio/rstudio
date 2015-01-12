@@ -102,6 +102,9 @@ options(help_type = "html")
       # Strip out the irrelevant bits of the package name. We'd like
       # to just use 'regexpr' but its output is funky with older versions
       # of R.
+      if (!grepl("namespace:", envString))
+         return()
+      
       namespace <- sub(".*namespace:", "", envString)
       namespace <- sub(">.*", "", namespace)
    }
