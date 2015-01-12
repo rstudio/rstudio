@@ -24,11 +24,7 @@ var MermaidHighlightRules = function() {
 
    this.$rules = {
         
-      "start" : [    
-      {
-         token : "comment",
-         regex : "^\\%\\%.*$"
-      },   
+      "start" : [     
       {
          token: "keyword",
          merge: false,
