@@ -272,7 +272,7 @@ public class Css2Gss {
 
     boolean recurse;
     boolean singleFile;
-    ImmutableSet<URL> scopeFiles;
+    ImmutableSet<URL> scopeFiles = ImmutableSet.of();
     File resource;
     Set<String> simpleBooleanConditions;
 
