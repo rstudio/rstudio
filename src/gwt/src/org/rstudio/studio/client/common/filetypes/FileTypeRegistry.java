@@ -65,6 +65,12 @@ public class FileTypeRegistry
          new TextFileType("dcf", "DCF", EditorLanguage.LANG_DCF, ".dcf",
                           ICONS.iconText(), false, false, false, false, false,
                           false, false, false, false, false, false, false);
+   
+   public static final TextFileType MERMAID =
+         new TextFileType("mermaid", "Mermaid", EditorLanguage.LANG_MERMAID, ".mmd",
+                          ICONS.iconText(), false, false, false, false, false,
+                          false, false, false, false, false, false, false);
+
 
    public static final TextFileType NAMESPACE =
      new TextFileType("r_namespace", "NAMESPACE", EditorLanguage.LANG_R, "",
@@ -335,6 +341,7 @@ public class FileTypeRegistry
       register("*.rda", RDATA, icons.iconRdata());
       register("*.Rproj", RPROJECT, icons.iconRproject());
       register("*.dcf", DCF, icons.iconText());
+      register("*.mmd", MERMAID, icons.iconText());
       register("*.py", PYTHON, icons.iconPython());
       register("*.sql", SQL, icons.iconSql());
       register("*.sh", SH, icons.iconSh());

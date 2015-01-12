@@ -44,6 +44,8 @@ public class EditorLanguage
          "mode/rmarkdown", true);
    public static final EditorLanguage LANG_DCF = new EditorLanguage(
          "mode/dcf", false);
+   public static final EditorLanguage LANG_MERMAID = new EditorLanguage(
+         "mode/mermaid", false);
    public static final EditorLanguage LANG_RHTML = new EditorLanguage(
          "mode/rhtml", true);
    public static final EditorLanguage LANG_CPP = new EditorLanguage(

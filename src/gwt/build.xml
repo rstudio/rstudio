@@ -73,6 +73,8 @@
             <file name="rhtml.js"/>
             <file name="dcf_highlight_rules.js"/>
             <file name="dcf.js"/>
+            <file name="mermaid_highlight_rules.js"/>
+            <file name="mermaid.js"/>
             <file name="cpp_scope_tree.js"/>
             <file name="cpp_code_model.js"/>
             <file name="doc_comment_highlight_rules.js"/>
