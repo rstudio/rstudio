@@ -50,14 +50,19 @@ else
    then
       cp ${PANDOC_NAME}/mac/pandoc* ${PANDOC_DIR}
    else
+      ARCH=`uname -m`
       # copy binaries for appropriate distro/arch. 
       if grep -q -i -s "release 5" /etc/redhat-release
       then
          BINARY_TYPE=rpm
+
+         # rhel5 itself won't use these, but we also build for sles on rhel5
+         PANDOC_STATIC_DIR=${PANDOC_DIR}/static
+         mkdir -p ${PANDOC_STATIC_DIR}
+         cp ${PANDOC_NAME}/linux/debian/${ARCH}/pandoc* ${PANDOC_STATIC_DIR}
       else 
          BINARY_TYPE=debian
       fi
-      ARCH=`uname -m`
       cp ${PANDOC_NAME}/linux/${BINARY_TYPE}/${ARCH}/pandoc* ${PANDOC_DIR}
    fi
    rm $PANDOC_ZIP

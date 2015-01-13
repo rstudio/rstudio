@@ -277,14 +277,43 @@ assign(x = ".rs.acCompletionTypes",
       pattern <- if (nzchar(tokenName))
          paste("^", .rs.asCaseInsensitiveRegex(.rs.escapeForRegex(tokenName)), sep = "")
       
-      # NOTE: We would like to use 'list.dirs' here but it does not accept
-      # a pattern argument
-      absolutePaths <- gsub("/+", "/", list.files(path = directory,
-                                                  all.files = TRUE,
-                                                  pattern = pattern,
-                                                  no.. = TRUE,
-                                                  full.names = TRUE,
-                                                  include.dirs = TRUE))
+      # Manually construct a call to `list.files` which should work across
+      # versions of R >= 2.11.
+      formals <- as.list(formals(base::list.files))
+      
+      formals$path <- directory
+      formals$pattern <- pattern
+      formals$all.files <- TRUE
+      formals$full.names <- TRUE
+      
+      # NOTE: not available in older versions of R, but defaults to FALSE
+      # with newer versions.
+      if ("include.dirs" %in% names(formals))
+         fomals[["include.dirs"]] <- TRUE
+      
+      # NOTE: not available with older versions of R, but defaults to FALSE
+      if ("no.." %in% names(formals))
+         formals[["no.."]] <- TRUE
+      
+      # Generate the call, and evaluate it.
+      result <- do.call(base::list.files, formals)
+      
+      # Clean up duplicated '/'.
+      absolutePaths <- gsub("/+", "/", result)
+      
+      # Remove un-needed `.` paths. These paths will look like
+      #
+      #     <path>/.
+      #     <path>/..
+      #
+      # This is only unnecessary if we couldn't use 'no..'.
+      if (!("no.." %in% names(formals)))
+      {
+         absolutePaths <- grep("/\\.+$",
+                               absolutePaths,
+                               invert = TRUE,
+                               value = TRUE)
+      }
       
    }
    
@@ -765,9 +794,9 @@ assign(x = ".rs.acCompletionTypes",
 .rs.addFunction("formCompletionVector", function(object, default, n)
 {
    if (!length(object))
-      rep_len(default, n)
+      rep.int(default, n)
    else
-      rep_len(object, n)
+      rep.int(object, n)
 })
 
 .rs.addFunction("makeCompletions", function(token,

@@ -16,8 +16,10 @@ if (NOT PACKAGE_ARCHITECTURE)
 endif()
 
 # detect RedHat 5
+set(IS_RHEL "OFF")
 set(IS_RHEL_5 "OFF")
 if(EXISTS "/etc/redhat-release")
+   set(IS_RHEL "ON")
    file(READ "/etc/redhat-release" RHEL_RELEASE)
    string(FIND "${RHEL_RELEASE}" "release 5" RHEL_RELEASE_POS)
    if(RHEL_RELEASE_POS GREATER 0)
@@ -50,7 +52,7 @@ if(RSTUDIO_SERVER)
   set(RSTUDIO_RPM_DEPENDS "psmisc, ")
 
   # on RHEL 5 we also depend on libffi
-  if(IS_RHEL_5)
+  if(IS_RHEL_5 AND NOT RSTUDIO_PACKAGE_BUILD_SLES)
      set(RSTUDIO_RPM_DEPENDS "${RSTUDIO_RPM_DEPENDS}libffi, ")
   endif()
 
@@ -75,8 +77,16 @@ endif()
 # define package suffix
 set(RSTUDIO_PACKAGE_SUFFIX "-")
 
-if(IS_RHEL_5)
-   set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}rhel5-")
+if(RSTUDIO_SERVER)
+   # SLES builds are produced from a CentOS5 machine, so check for specific SLES
+   # target first
+   if(RSTUDIO_PACKAGE_BUILD_SLES)
+      set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}suse-")
+   elseif(IS_RHEL_5)
+      set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}rhel5-")
+   elseif(IS_RHEL) 
+      set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}rhel-")
+   endif()
 endif()
 
 # include overlay if it exists
@@ -114,6 +124,13 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/rpm-script/${RPM_POSTRM}
 set(CPACK_RPM_SPEC_INSTALL_POST "/bin/true")
 set(CPACK_RPM_POST_INSTALL_SCRIPT_FILE "${CMAKE_CURRENT_BINARY_DIR}/rpm-script/postinst.sh")
 set(CPACK_RPM_POST_UNINSTALL_SCRIPT_FILE "${CMAKE_CURRENT_BINARY_DIR}/rpm-script/postrm.sh")
+
+# /usr and /usr/lib are already present in CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST, 
+# but some Linux distributions complain without this explicit suppression
+set(CPACK_RPM_SPEC_MORE_DEFINE "%define ignore \#")
+set(CPACK_RPM_USER_FILELIST 
+  "%ignore /usr"
+  "%ignore /usr/lib")
 
 set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION 
   "/usr/share/applications"

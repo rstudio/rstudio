@@ -292,6 +292,13 @@ endif()
 # define executable
 add_executable(rsession ${SESSION_SOURCE_FILES} ${SESSION_HEADER_FILES})
 
+# add origin rpath for suse/sles
+if(RSTUDIO_PACKAGE_BUILD_SLES)
+   set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+   set_target_properties(rsession PROPERTIES
+                         INSTALL_RPATH \$ORIGIN)
+endif()
+
 # set link dependencies
 if(WIN32)
    set(RSTUDIO_CORE_ZLIB rstudio-core-zlib)
@@ -373,7 +380,12 @@ if (NOT RSTUDIO_SESSION_WIN64)
            DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
 
    # install pandoc
-   set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/1.13.1")
+   if(RSTUDIO_PACKAGE_BUILD_SLES)
+      # when producing a SUSE Linux Enterpise build, we want to install the 
+      # static Pandoc binaries (see dependencies/common/install-pandoc)
+      set(PANDOC_EXTENSION_DIR "/static")
+   endif()
+   set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/1.13.1${PANDOC_EXTENSION_DIR}")
    file(GLOB PANDOC_FILES "${PANDOC_BIN}/pandoc*")
    install(FILES ${PANDOC_FILES}
            PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
@@ -454,8 +466,6 @@ endif()
 if(RSTUDIO_SESSION_WIN64)
    get_filename_component(GCC_PATH ${CMAKE_C_COMPILER} PATH CACHE)
    install(PROGRAMS ${GCC_PATH}/libgcc_s_sjlj-1.dll
-                    ${GCC_PATH}/libstdc++-6.dll
-                    ${GCC_PATH}/libwinpthread-1.dll
            DESTINATION ${RSTUDIO_INSTALL_BIN})
 endif()
 

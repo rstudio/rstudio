@@ -651,6 +651,10 @@ public class RCompletionManager implements CompletionManager
          if (!DocumentMode.isCursorInRMode(docDisplay_))
             return false;
          
+         // Bail if we're in a single-line string
+         if (docDisplay_.isCursorInSingleLineString())
+            return false;
+         
          // Perform an auto-popup if a set number of R identifier characters
          // have been inserted (but only if the user has allowed it in prefs)
          boolean autoPopupEnabled = uiPrefs_.codeComplete().getValue().equals(

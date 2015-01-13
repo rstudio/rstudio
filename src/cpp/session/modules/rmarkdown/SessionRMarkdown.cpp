@@ -656,14 +656,14 @@ private:
       {
          // we found the start of the MathJax section; add the MathJax config
          // block if we're in a configuration that requires it
-#ifdef __APPLE__
-         return match[0];
-#else
+#if defined(_WIN32)
          if (session::options().programMode() != kSessionProgramModeDesktop)
             return match[0];
 
          result.append(kQtMathJaxConfigScript "\n");
          result.append(match[0]);
+#else
+         return match[0];
 #endif
       }
       else if (hasMathjax_)
