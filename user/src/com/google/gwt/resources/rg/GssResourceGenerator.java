@@ -121,11 +121,11 @@ import org.apache.commons.io.IOUtils;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -136,7 +136,6 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.Adler32;
@@ -154,28 +153,33 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
    * TODO(dankurka): This is a nasty hack to get the compiler to output all @def's
    * it has seen in a compile. Once GSS migration is done this needs to be removed.
    */
-  private static Set<String> allAtDefs =
-      Collections.<String> newSetFromMap(new ConcurrentHashMap<String, Boolean>());
-
   private static boolean shouldEmitVariables;
+  private static PrintWriter printWriter;
+  private static Set<String> writtenAtDefs = new HashSet<>();
 
   static {
-    shouldEmitVariables = "true".equals(System.getProperty("emitAtDefs"));
+    String varFileName = System.getProperty("emitGssVarNameFile");
+    shouldEmitVariables = varFileName != null;
     if (shouldEmitVariables) {
-      Runnable runnable = new Runnable() {
-
-        @Override
-        public void run() {
-          System.out.println("================== @defs found in this compile");
-          for (String atDef : allAtDefs) {
-            System.out.println("@def " + atDef + " 1px");
-          }
-          System.out.println("==============================================");
-        }
-      };
-
-      Runtime.getRuntime().addShutdownHook(new Thread(runnable));
+      try {
+        File file = new File(varFileName);
+        file.createNewFile();
+        printWriter = new PrintWriter(new FileOutputStream(file));
+      } catch (Exception e) {
+        System.err.println("Error while opening file");
+        e.printStackTrace();
+        System.exit(-1);
+      }
     }
+  }
+
+  private static synchronized void write(Set<String> variables) {
+    for (String atDef : variables) {
+      if (writtenAtDefs.add(atDef)) {
+        printWriter.println("@def " + atDef + " 1px;");
+      }
+    }
+    printWriter.flush();
   }
 
   /**
@@ -871,7 +875,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
       ConversionResult result = convertToGss(concatenatedCss, context, logger);
 
       if (shouldEmitVariables) {
-        allAtDefs.addAll(result.defNameMapping.keySet());
+        write(result.defNameMapping.keySet());
       }
 
       String gss = result.gss;
