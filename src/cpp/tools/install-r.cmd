@@ -56,7 +56,7 @@ REM plus some other libraries.
 xcopy /E C:\R64 %ROOT_DIR%\R-%R_FULL_VERSION%
 
 REM Ensure the temporary directory exists.
-if not exist "%TMPDIR%" mkdir "%TMPDIR"
+if not exist "%TMPDIR%" mkdir "%TMPDIR%"
 
 cd R-%R_FULL_VERSION%\src\gnuwin32
 
