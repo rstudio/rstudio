@@ -16,6 +16,7 @@
 package com.google.gwt.resources.converter;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
@@ -67,7 +68,9 @@ public class Css2Gss {
       Predicate<String> simpleBooleanConditionPredicate, Set<URL> scopeFiles) {
     cssFile = resource;
     printWriter = new PrintWriter(System.err);
-    this.treeLogger = new PrintWriterTreeLogger(printWriter);
+    PrintWriterTreeLogger printWriterTreeLogger = new PrintWriterTreeLogger(printWriter);
+    printWriterTreeLogger.setMaxDetail(Type.WARN);
+    this.treeLogger = printWriterTreeLogger;
     this.lenient = lenient;
     this.simpleBooleanConditionPredicate = simpleBooleanConditionPredicate;
     this.scopeFiles = scopeFiles;
