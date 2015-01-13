@@ -12,6 +12,6 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 <module>
-  <inherits name="com.google.gwt.resources.Resources" />
+  <inherits name="com.google.gwt.resources.ResourcesTest" />
   <set-property name="ClientBundle.enableInlining" value="false" />
 </module>

@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -96,11 +96,11 @@ public class ImageResourceTest extends GWTTestCase {
 
     // Test default filename lookup while we're at it
     ImageResource largeLossy();
-  
+
     @Source("64x64.png")
     @ImageOptions(width = 32)
     ImageResource scaledDown();
-    
+
     @Source("64x64.png")
     @ImageOptions(width = 128)
     ImageResource scaledUp();
@@ -108,7 +108,7 @@ public class ImageResourceTest extends GWTTestCase {
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.resources.Resources";
+    return "com.google.gwt.resources.ResourcesTest";
   }
 
   public void testAnimated() {

@@ -67,7 +67,7 @@ public class DataResourceMimeTypeTest extends GWTTestCase {
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.resources.Resources";
+    return "com.google.gwt.resources.ResourcesTest";
   }
 
   public void testMimeTypeAnnotationMissingDefaultsToContentUnknown() {
