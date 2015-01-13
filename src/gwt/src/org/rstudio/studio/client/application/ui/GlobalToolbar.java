@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.application.ui;
 
-import org.rstudio.core.client.command.AppCommand;
-import org.rstudio.core.client.command.VisibleChangedHandler;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FocusContext;
@@ -167,29 +165,7 @@ public class GlobalToolbar extends Toolbar
       }
       
       if (sessionInfo.getRSConnectAvailable())
-      {
-         addLeftSeparator();
-         
-         ToolbarButton deployButton = 
-               commands_.rsconnectDeploy().createToolbarButton();
-         deployButton.setText("Publish");
-         addLeftWidget(deployButton);
-         
-         ToolbarPopupMenu connectMenu = RSConnectUtils.createToolbarPopupMenu();
-         final ToolbarButton connectMenuButton = new ToolbarButton(connectMenu, 
-                                                                   true);
-         commands_.rsconnectDeploy().addVisibleChangedHandler(
-                                          new VisibleChangedHandler() {
-            @Override
-            public void onVisibleChanged(AppCommand command)
-            {
-               connectMenuButton.setVisible(
-                           commands_.rsconnectDeploy().isVisible());   
-            } 
-         });
-         addLeftWidget(connectMenuButton);
-         connectMenuButton.setVisible(commands_.rsconnectDeploy().isEnabled());   
-      }
+         RSConnectUtils.addPublishCommands(this, "Publish");
       
       // project popup menu
       ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo,

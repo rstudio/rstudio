@@ -371,8 +371,8 @@ public abstract class
    
    // RSConnect connectivity
    public abstract AppCommand rsconnectDeploy();
+   public abstract AppCommand rsconnectConfigure();
    public abstract AppCommand rsconnectManageAccounts();
-   public abstract AppCommand rsconnectManage();
 
    // Other
    public abstract AppCommand checkSpelling();   

@@ -139,9 +139,9 @@ public class RSConnect implements SessionInitHandler,
                          satellite_.isCurrentWindowSatellite());
          dialog.showModal();
       }
-      else if (event.getAction() == RSConnectActionEvent.ACTION_TYPE_MANAGE)
+      else if (event.getAction() == RSConnectActionEvent.ACTION_TYPE_CONFIGURE)
       {
-         manageShinyApp(FilePathUtils.dirFromFile(event.getPath()));
+         configureShinyApp(FilePathUtils.dirFromFile(event.getPath()));
       }
    }
    
@@ -267,7 +267,7 @@ public class RSConnect implements SessionInitHandler,
    // Private methods ---------------------------------------------------------
    
    // Manage, step 1: create a list of apps deployed from this directory
-   private void manageShinyApp(final String dir)
+   private void configureShinyApp(final String dir)
    {
       server_.getRSConnectDeployments(dir, 
             new ServerRequestCallback<JsArray<RSConnectDeploymentRecord>>()
@@ -276,12 +276,12 @@ public class RSConnect implements SessionInitHandler,
          public void onResponseReceived(
                JsArray<RSConnectDeploymentRecord> records)
          {
-            manageShinyApp(dir, records);
+            configureShinyApp(dir, records);
          }
          @Override
          public void onError(ServerError error)
          {
-            display_.showErrorMessage("Error Managing Application",
+            display_.showErrorMessage("Error Configuring Application",
                   "Could not determine application deployments for '" +
                    dir + "':" + error.getMessage());
          }
@@ -289,7 +289,7 @@ public class RSConnect implements SessionInitHandler,
    }
    
    // Manage, step 2: Get the status of the applications from the server
-   private void manageShinyApp(final String dir, 
+   private void configureShinyApp(final String dir, 
          JsArray<RSConnectDeploymentRecord> records)
    {
       if (records.length() == 0)
@@ -330,7 +330,7 @@ public class RSConnect implements SessionInitHandler,
          @Override
          public void onResponseReceived(JsArray<RSConnectApplicationInfo> apps)
          {
-            manageShinyApp(dir, apps, recordList);
+            configureShinyApp(dir, apps, recordList);
          }
          @Override
          public void onError(ServerError error)
@@ -343,7 +343,7 @@ public class RSConnect implements SessionInitHandler,
    
    // Manage, step 3: compare the deployments and apps active on the server
    // until we find a running app from the current directory
-   private void manageShinyApp(String dir, 
+   private void configureShinyApp(String dir, 
          JsArray<RSConnectApplicationInfo> apps, 
          List<RSConnectDeploymentRecord> records)
    {

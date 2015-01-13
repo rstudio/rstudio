@@ -322,7 +322,7 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <menu label="_ShinyApps">
             <cmd refid="rsconnectDeploy"/>
-            <cmd refid="rsconnectManage"/>
+            <cmd refid="rsconnectConfigure"/>
             <separator/>
             <cmd refid="rsconnectManageAccounts"/>
          </menu>
@@ -1489,12 +1489,12 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Publish Application..."
         desc="Publish the application"
         visible="false"/>
-   <cmd id="rsconnectManage"
-        menuLabel="_Manage Application..."
-        desc="Manage the application"
+   <cmd id="rsconnectConfigure"
+        menuLabel="_Configure Application..."
+        desc="Configure the application"
         visible="false"/>
    <cmd id="rsconnectManageAccounts"
-        menuLabel="_Configure Accounts..."
+        menuLabel="_Manage Accounts..."
         desc="Connect or disconnect accounts"
         visible="false"/>
 

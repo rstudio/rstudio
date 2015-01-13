@@ -15,6 +15,10 @@
 
 package org.rstudio.studio.client.rsconnect.ui;
 
+import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.VisibleChangedHandler;
+import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -26,9 +30,39 @@ public class RSConnectUtils
       Commands commands = RStudioGinjector.INSTANCE.getCommands();   
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
       menu.addItem(commands.rsconnectDeploy().createMenuItem(false));
-      menu.addItem(commands.rsconnectManage().createMenuItem(false));
+      menu.addItem(commands.rsconnectConfigure().createMenuItem(false));
       menu.addSeparator();
       menu.addItem(commands.rsconnectManageAccounts().createMenuItem(false));
       return menu;
    }
+   
+   public static void addPublishCommands(Toolbar toolbar, String caption)
+   {
+      final Commands commands = RStudioGinjector.INSTANCE.getCommands();
+      
+      toolbar.addLeftSeparator();
+      
+      ToolbarButton deployButton = 
+            commands.rsconnectDeploy().createToolbarButton();
+      if (caption != null)
+         deployButton.setText(caption);
+      toolbar.addLeftWidget(deployButton);
+      
+      ToolbarPopupMenu connectMenu = RSConnectUtils.createToolbarPopupMenu();
+      final ToolbarButton connectMenuButton = new ToolbarButton(connectMenu, 
+                                                                true);
+      commands.rsconnectDeploy().addVisibleChangedHandler(
+                                       new VisibleChangedHandler() {
+         @Override
+         public void onVisibleChanged(AppCommand command)
+         {
+            connectMenuButton.setVisible(
+                        commands.rsconnectDeploy().isVisible());   
+         } 
+      });
+      toolbar.addLeftWidget(connectMenuButton);
+      connectMenuButton.setVisible(commands.rsconnectDeploy().isEnabled());  
+   }
+   
+   
 }

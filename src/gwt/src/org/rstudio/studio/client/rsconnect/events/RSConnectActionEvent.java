@@ -56,7 +56,7 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
    }
    
    public static int ACTION_TYPE_DEPLOY = 0;
-   public static int ACTION_TYPE_MANAGE = 1;
+   public static int ACTION_TYPE_CONFIGURE = 1;
    
    private String path_;
    private int action_;

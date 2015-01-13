@@ -2607,10 +2607,10 @@ public class TextEditingTarget implements
    }
 
    @Handler 
-   void onRsconnectManage()
+   void onRsconnectConfigure()
    {
       events_.fireEvent(new RSConnectActionEvent(
-            RSConnectActionEvent.ACTION_TYPE_MANAGE, 
+            RSConnectActionEvent.ACTION_TYPE_CONFIGURE, 
             docUpdateSentinel_.getPath()));
    }
 
