@@ -17,6 +17,7 @@ SET ROOT_DIR=C:\R-src
 SET R_MAJOR_VERSION=3
 SET R_FULL_VERSION=3.1.2
 SET RTOOLS_BIN_DIR=C:\Rtools\bin
+SET TMPDIR=C:\tmp
 
 REM Note: Tool path must use forward slashes, and
 REM should end with a trailing slash.
@@ -34,9 +35,7 @@ set NLM=^
 set NL=^^^%NLM%%NLM%^%NLM%%NLM%
 
 REM Set the current directory.
-if not exist "%ROOT_DIR%" (
-	mkdir "%ROOT_DIR%
-)
+if not exist "%ROOT_DIR%" mkdir "%ROOT_DIR%"
 cd "%ROOT_DIR%"
 
 SET OLDPATH=%PATH%
@@ -56,9 +55,8 @@ REM Copy in the 'extras' for a 64bit build. This includes tcltk
 REM plus some other libraries.
 xcopy /E C:\R64 %ROOT_DIR%\R-%R_FULL_VERSION%
 
-REM Set the environment variable 'TMPDIR' to the absolute path
-REM of a writable directory, with a path specified with forward slashes.
-SET TMPDIR=C:/tmp
+REM Ensure the temporary directory exists.
+if not exist "%TMPDIR%" mkdir "%TMPDIR"
 
 cd R-%R_FULL_VERSION%\src\gnuwin32
 
