@@ -58,7 +58,6 @@ public class JavaCompilationSuite {
     suite.addTestSuite(CompilationStateBuilderTest.class);
     suite.addTestSuite(CompilationUnitTypeOracleUpdaterFromByteCodeTest.class);
     suite.addTestSuite(CompilationUnitTypeOracleUpdaterFromSourceTest.class);
-    suite.addTestSuite(LibraryCompilationUnitTypeOracleUpdaterFromSourceTest.class);
 
     suite.addTestSuite(CollectClassDataTest.class);
     suite.addTestSuite(CollectReferencesVisitorTest.class);

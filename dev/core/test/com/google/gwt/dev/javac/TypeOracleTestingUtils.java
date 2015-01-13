@@ -19,15 +19,10 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.CompilerContext;
-import com.google.gwt.dev.cfg.LibraryGroup;
-import com.google.gwt.dev.cfg.MockLibrary;
 import com.google.gwt.dev.javac.testing.impl.JavaResourceBase;
 import com.google.gwt.dev.resource.Resource;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
-import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -91,42 +86,6 @@ public class TypeOracleTestingUtils {
       Set<Resource> resources, Set<GeneratedUnit> generatedUnits) {
     return buildTypeOracle(logger, standardBuildersPlus(resources),
         generatedUnits);
-  }
-
-  public static TypeOracle buildLibraryTypeOracle(TreeLogger logger, Set<Resource> resources) {
-    return buildLibraryTypeOracle(logger, resources, Collections.<GeneratedUnit> emptySet());
-  }
-
-  public static TypeOracle buildLibraryTypeOracle(TreeLogger logger, Set<Resource> resources,
-      Set<GeneratedUnit> generatedUnits) {
-    try {
-      // Compile resources to compilation units and place in an old library.
-      CompilerContext oldCompilerContext = new CompilerContext();
-      oldCompilerContext.getOptions().setStrict(true);
-      CompilationState oldState =
-          CompilationStateBuilder.buildFrom(logger, oldCompilerContext, resources);
-      oldState.addGeneratedCompilationUnits(logger, generatedUnits);
-      MockLibrary oldLibrary = new MockLibrary("OldLib");
-      Collection<CompilationUnit> oldCompilationUnits =
-          Lists.newArrayList(oldState.getCompilationUnits());
-      CompilationUnitInvalidator.retainValidUnits(logger, oldCompilationUnits,
-          oldState.getValidClasses(), new CompilationErrorsIndexImpl());
-      for (CompilationUnit compilationUnit : oldCompilationUnits) {
-        oldLibrary.addCompilationUnit(compilationUnit);
-      }
-
-      // Create and return a LibraryTypeOracle that doesn't have any compilation units loaded but
-      // which can lazy load all of them out of a previously compiled library.
-      LibraryGroup libraryGroup = LibraryGroup.fromLibraries(Lists.newArrayList(oldLibrary), false);
-      CompilerContext newCompilerContext =
-          new CompilerContext.Builder().compileMonolithic(false).libraryGroup(libraryGroup).build();
-      newCompilerContext.getOptions().setStrict(true);
-      CompilationState state = CompilationStateBuilder.buildFrom(logger, newCompilerContext,
-          Sets.<Resource> newHashSet());
-      return state.getTypeOracle();
-    } catch (UnableToCompleteException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   public static TypeOracle buildTypeOracle(TreeLogger logger,

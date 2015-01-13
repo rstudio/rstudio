@@ -451,11 +451,6 @@ public class JdtCompiler {
         return additionalProviderAnswer;
       }
 
-      NameEnvironmentAnswer libraryGroupAnswer = findTypeInLibraryGroup(internalName);
-      if (libraryGroupAnswer != null) {
-        return libraryGroupAnswer;
-      }
-
       // TODO(stalcup): Add verification that all classpath bytecode is for Annotations.
       NameEnvironmentAnswer classPathAnswer = findTypeInClassPath(internalName);
       if (classPathAnswer != null) {
@@ -488,26 +483,6 @@ public class JdtCompiler {
       }
 
       return new NameEnvironmentAnswer(new Adapter(CompilationUnitBuilder.create(unit)), null);
-    }
-
-    private NameEnvironmentAnswer findTypeInLibraryGroup(String internalName) {
-      InputStream classFileStream =
-          compilerContext.getLibraryGroup().getClassFileStream(internalName);
-      if (classFileStream == null) {
-        return null;
-      }
-
-      try {
-        ClassFileReader classFileReader =
-            ClassFileReader.read(classFileStream, internalName + ".class", true);
-        return new NameEnvironmentAnswer(classFileReader, null);
-      } catch (IOException e) {
-        return null;
-      } catch (ClassFormatException e) {
-        return null;
-      } finally {
-        Utility.close(classFileStream);
-      }
     }
 
     private NameEnvironmentAnswer findTypeInClassPath(String internalName) {

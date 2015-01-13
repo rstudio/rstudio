@@ -18,9 +18,6 @@ package com.google.gwt.dev.cfg;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
-import com.google.gwt.dev.PrecompileTaskOptions;
-import com.google.gwt.dev.resource.Resource;
-import com.google.gwt.dev.resource.impl.UrlResource;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
@@ -155,31 +152,7 @@ public class ModuleDefLoader {
         return moduleDef;
       }
       ModuleDefLoader loader = new ModuleDefLoader(compilerContext, resources);
-      PrecompileTaskOptions options = compilerContext.getOptions();
-      boolean mergePathPrefixes = !(options.warnMissingDeps()
-          || compilerContext.getOptions().warnOverlappingSource()
-          || compilerContext.getOptions().getMissingDepsFile() != null);
-      ModuleDef module = ModuleDefLoader.doLoadModule(loader, logger, moduleName, resources,
-          compilerContext.shouldCompileMonolithic(), mergePathPrefixes);
-
-      LibraryWriter libraryWriter = compilerContext.getLibraryWriter();
-      libraryWriter.setLibraryName(module.getCanonicalName());
-      libraryWriter.addDependencyLibraryNames(module.getExternalLibraryCanonicalModuleNames());
-
-      // Saves non java and gwt.xml build resources, like PNG and CSS files.
-      for (Resource buildResource : module.getBuildResourceOracle().getResources()) {
-        if (buildResource.getPath().endsWith(".java")
-            || buildResource.getPath().endsWith(".gwt.xml")) {
-          continue;
-        }
-        libraryWriter.addBuildResource(buildResource);
-      }
-      // Saves public resources.
-      for (Resource publicResource : module.getPublicResourceOracle().getResources()) {
-        libraryWriter.addPublicResource(publicResource);
-      }
-
-      return module;
+      return ModuleDefLoader.doLoadModule(loader, logger, moduleName, resources, true, true);
     } finally {
       moduleDefLoadFromClassPathEvent.end();
     }
@@ -303,8 +276,6 @@ public class ModuleDefLoader {
 
     TreeLogger logger = parentLogger.branch(TreeLogger.DEBUG, "Loading inherited module '"
         + moduleName + "'", null);
-    LibraryWriter libraryWriter = compilerContext.getLibraryWriter();
-    LibraryGroup libraryGroup = compilerContext.getLibraryGroup();
 
     if (!ModuleDef.isValidModuleName(moduleName)) {
       logger.log(TreeLogger.ERROR, "Invalid module name: '" + moduleName + "'",
@@ -318,11 +289,7 @@ public class ModuleDefLoader {
     String slashedModuleName = moduleName.replace('.', '/');
     String resName = slashedModuleName + ModuleDefLoader.GWT_MODULE_XML_SUFFIX;
     URL moduleURL = resourceLoader.getResource(resName);
-    if (moduleURL == null && libraryGroup.containsBuildResource(resName)) {
-      moduleURL = libraryGroup.getBuildResourceByPath(resName).getURL();
-    }
 
-    long lastModified = 0;
     if (moduleURL != null) {
       moduleDef.recordModuleGwtXmlFile(moduleName, moduleURL.getPath());
       String externalForm = moduleURL.toExternalForm();
@@ -334,9 +301,7 @@ public class ModuleDefLoader {
             && (!(externalForm.startsWith("zip:file")))
             && (!(externalForm.startsWith("http://")))
             && (!(externalForm.startsWith("ftp://")))) {
-          File gwtXmlFile = new File(moduleURL.toURI());
-          lastModified = gwtXmlFile.lastModified();
-          moduleDef.addGwtXmlFile(gwtXmlFile);
+          moduleDef.addGwtXmlFile(new File(moduleURL.toURI()));
         }
       } catch (URISyntaxException e) {
         logger.log(TreeLogger.ERROR, "Error parsing URI", e);
@@ -364,13 +329,6 @@ public class ModuleDefLoader {
       ModuleDefSchema schema =
           new ModuleDefSchema(logger, this, moduleName, moduleURL, moduleDir, moduleDef);
       ReflectiveParser.parse(logger, schema, r);
-
-      // If this module.gwt.xml file is one of the target modules that together make up this
-      // ModuleDef.
-      if (moduleDef.getTargetLibraryCanonicalModuleNames().contains(moduleName)) {
-        // Then save a copy of the xml file in the created library file.
-        libraryWriter.addBuildResource(new UrlResource(moduleURL, resName, lastModified));
-      }
     } catch (UnableToCompleteException e) {
       // The error has already been logged.
       throw  e;

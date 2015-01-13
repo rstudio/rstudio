@@ -22,6 +22,7 @@ import com.google.gwt.util.tools.ArgHandlerFlag;
  * Normally the separate compiler does not link and instead outputs just a precompiled library of
  * the currently being compiled module.
  */
+@Deprecated
 public class ArgHandlerLink extends ArgHandlerFlag {
 
   private final OptionLink options;
@@ -42,7 +43,7 @@ public class ArgHandlerLink extends ArgHandlerFlag {
 
   @Override
   public String getPurposeSnippet() {
-    return "Link compiled output and supplied precompiled libraries "
+    return "DEPRECATED: Link compiled output and supplied precompiled libraries "
         + "into a usable result.";
   }
 

@@ -16,6 +16,7 @@ package com.google.gwt.dev.util.arg;
 /**
  * Option to turn on warnings for when more than one module includes the same source files.
  */
+@Deprecated
 public interface OptionWarnOverlappingSource {
 
   /**

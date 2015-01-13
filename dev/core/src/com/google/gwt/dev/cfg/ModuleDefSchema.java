@@ -21,7 +21,6 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.PropertyProviderGenerator;
-import com.google.gwt.dev.cfg.ModuleDef.ModuleType;
 import com.google.gwt.dev.js.JsParser;
 import com.google.gwt.dev.js.JsParserException;
 import com.google.gwt.dev.js.ast.JsExprStmt;
@@ -40,7 +39,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -500,7 +498,6 @@ public class ModuleDefSchema extends Schema {
     @SuppressWarnings("unused") // called reflectively
     protected Schema __inherits_begin(String name)
         throws UnableToCompleteException {
-      moduleDef.addDirectDependency(moduleName, name);
       loader.nestedLoad(logger, name, moduleDef);
       return null;
     }
@@ -1455,8 +1452,7 @@ public class ModuleDefSchema extends Schema {
   @SuppressWarnings("unused")
   protected Schema __module_begin(NullableName renameTo, String type)
       throws UnableToCompleteException {
-    ModuleType moduleType = ModuleType.valueOf(type.toUpperCase(Locale.ROOT));
-    moduleDef.enterModule(moduleType, moduleName);
+    moduleDef.enterModule(moduleName);
 
     // All modules implicitly depend on com.google.gwt.core.Core. Processing of this dependency
     // needs to occur early so that subsequent processing has the opportunity to override property

@@ -1930,7 +1930,7 @@ public class GenerateJavaScriptAST {
       SortedSet<JDeclaredType> reachableClasses =
           computeReachableTypes(METHODS_PROVIDED_BY_PREAMBLE);
 
-      assert !modularCompile || checkCoreModulePreambleComplete(program,
+      assert !compilePerFile || checkCoreModulePreambleComplete(program,
           program.getTypeClassLiteralHolder().getClinitMethod());
 
       Set<JDeclaredType> orderedPreambleClasses = Sets.newLinkedHashSet();
@@ -3363,8 +3363,6 @@ public class GenerateJavaScriptAST {
 
   private final TreeLogger logger;
 
-  private final boolean modularCompile;
-
   private final boolean compilePerFile;
 
   /**
@@ -3423,10 +3421,8 @@ public class GenerateJavaScriptAST {
         compilerContext.getOptions().getOptimizationLevel() > OptionOptimize.OPTIMIZE_LEVEL_DRAFT;
     this.methodNameMappingMode = compilerContext.getOptions().getMethodNameDisplayMode();
     assert methodNameMappingMode != null;
-    this.hasWholeWorldKnowledge = compilerContext.shouldCompileMonolithic()
-        && !compilerContext.getOptions().isIncrementalCompileEnabled();
+    this.hasWholeWorldKnowledge = !compilerContext.getOptions().isIncrementalCompileEnabled();
     this.compilePerFile = compilerContext.getOptions().isIncrementalCompileEnabled();
-    this.modularCompile = !compilerContext.shouldCompileMonolithic();
     this.symbolTable = symbolTable;
     this.typeMapper = typeMapper;
     this.props = props;

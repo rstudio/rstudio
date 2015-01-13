@@ -111,6 +111,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   }
 
   @Override
+  @Deprecated
   public List<String> getLibraryPaths() {
     return ImmutableList.of();
   }
@@ -139,6 +140,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   }
 
   @Override
+  @Deprecated
   public File getMissingDepsFile() {
     return null; // Don't record and save missing dependency information to a file.
   }
@@ -164,6 +166,7 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   }
 
   @Override
+  @Deprecated
   public String getOutputLibraryPath() {
     return null;
   }

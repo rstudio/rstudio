@@ -125,10 +125,8 @@ public class UnifiedAst implements Serializable {
   public PermutationResult compilePermutation(
       TreeLogger logger, CompilerContext compilerContext, Permutation permutation)
       throws UnableToCompleteException {
-    boolean compileMonolithic = compilerContext.shouldCompileMonolithic();
-    JavaToJavaScriptCompiler javaToJavaScriptCompiler = compileMonolithic
-        ? new MonolithicJavaToJavaScriptCompiler(logger, compilerContext)
-        : new LibraryJavaToJavaScriptCompiler(logger, compilerContext);
+    JavaToJavaScriptCompiler javaToJavaScriptCompiler =
+        new MonolithicJavaToJavaScriptCompiler(logger, compilerContext);
     return javaToJavaScriptCompiler.compilePermutation(this, permutation);
   }
 

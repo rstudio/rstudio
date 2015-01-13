@@ -29,10 +29,4 @@ public interface DepsInfoProvider {
    * Returns a set of the names of modules that source included the given type referenced by name.
    */
   Set<String> getSourceModuleNames(String typeSourceName);
-
-  /**
-   * Returns a set of the names of modules in the transitive dependency tree for the given module
-   * referenced by name.
-   */
-  Set<String> getTransitiveDepModuleNames(String targetModuleName);
 }

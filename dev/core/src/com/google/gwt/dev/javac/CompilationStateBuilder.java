@@ -21,7 +21,6 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
 import com.google.gwt.dev.javac.JdtCompiler.AdditionalTypeProviderDelegate;
 import com.google.gwt.dev.javac.JdtCompiler.UnitProcessor;
-import com.google.gwt.dev.javac.typemodel.LibraryTypeOracle;
 import com.google.gwt.dev.javac.typemodel.TypeOracle;
 import com.google.gwt.dev.jjs.CorrelationFactory.DummyCorrelationFactory;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
@@ -116,28 +115,13 @@ public class CompilationStateBuilder {
                       }
                     });
 
-            if (compilerContext.shouldCompileMonolithic()) {
-              // GWT drives JDT in a way that allows missing references in the source to be
-              // resolved to precompiled bytecode on disk (see INameEnvironment). This is
-              // done so that annotations can be supplied in bytecode form only. But since no
-              // AST is available for these types it creates the danger that some functional
-              // class (not just an annotation) gets filled in but is missing AST. This would
-              // cause later compiler stages to fail.
-              //
-              // Library compilation needs to ignore this check since it is expected behavior
-              // for the source being compiled in a library to make references to other types
-              // which are only available as bytecode coming out of dependency libraries.
-              //
-              // But if the referenced bytecode did not come from a dependency library but
-              // instead was free floating in the classpath, then there is no guarantee that
-              // AST for it was ever seen and translated to JS anywhere in the dependency tree.
-              // This would be a mistake.
-              //
-              // TODO(stalcup): add a more specific check for library compiles such that binary
-              // types can be referenced but only if they are an Annotation or if the binary
-              // type comes from a dependency library.
-              BinaryTypeReferenceRestrictionsChecker.check(cud);
-            }
+            // GWT drives JDT in a way that allows missing references in the source to be
+            // resolved to precompiled bytecode on disk (see INameEnvironment). This is
+            // done so that annotations can be supplied in bytecode form only. But since no
+            // AST is available for these types it creates the danger that some functional
+            // class (not just an annotation) gets filled in but is missing AST. This would
+            // cause later compiler stages to fail.
+            BinaryTypeReferenceRestrictionsChecker.check(cud);
 
             if (!cud.compilationResult().hasErrors()) {
               // The above checks might have recorded errors; so we need to check here again.
@@ -395,7 +379,7 @@ public class CompilationStateBuilder {
       }
 
       // Index errors so that error chains can be reported.
-      CompilationProblemReporter.indexErrors(compilerContext.getLocalCompilationErrorsIndex(),
+      CompilationProblemReporter.indexErrors(compilerContext.getCompilationErrorsIndex(),
           resultUnits);
 
       // Report error chains and hints.
@@ -570,16 +554,9 @@ public class CompilationStateBuilder {
         logger, compilerContext, builders, cachedUnits,
         CompilerEventType.JDT_COMPILER_CSB_FROM_ORACLE);
 
-    boolean compileMonolithic = compilerContext.shouldCompileMonolithic();
-    TypeOracle typeOracle = null;
-    CompilationUnitTypeOracleUpdater typeOracleUpdater = null;
-    if (compileMonolithic) {
-      typeOracle = new TypeOracle();
-      typeOracleUpdater = new CompilationUnitTypeOracleUpdater(typeOracle);
-    } else {
-      typeOracle = new LibraryTypeOracle(compilerContext);
-      typeOracleUpdater = ((LibraryTypeOracle) typeOracle).getTypeOracleUpdater();
-    }
+    TypeOracle typeOracle = new TypeOracle();
+    CompilationUnitTypeOracleUpdater typeOracleUpdater =
+        new CompilationUnitTypeOracleUpdater(typeOracle);
 
     CompilationState compilationState = new CompilationState(logger, compilerContext, typeOracle,
         typeOracleUpdater, resultUnits, compileMoreLater);

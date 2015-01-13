@@ -24,10 +24,8 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.dev.util.msg.Message0;
 import com.google.gwt.dev.util.msg.Message1String;
-import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.thirdparty.guava.common.collect.HashMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.MapMaker;
-import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.collect.SetMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 import com.google.gwt.thirdparty.guava.common.io.Files;
@@ -169,8 +167,6 @@ public class ResourceOracleImpl extends AbstractResourceOracle {
   private SetMultimap<String, String> sourceModulesByTypeSourceName =
       HashMultimap.create();
 
-  private Map<String, String> overlapWarningsByModuleSet = Maps.newHashMap();
-
   public static void clearCache() {
     classPathCache.clear();
   }
@@ -249,16 +245,6 @@ public class ResourceOracleImpl extends AbstractResourceOracle {
   }
 
   /**
-   * Print overlapping include warnings that accumulated during resource
-   * scanning. Prints only one entry per set of overlapping modules.
-   */
-  public void printOverlappingModuleIncludeWarnings(TreeLogger logger) {
-    for (String overlapWarning : overlapWarningsByModuleSet.values()) {
-      logger.log(TreeLogger.WARN, overlapWarning);
-    }
-  }
-
-  /**
    * Scans the associated paths to recompute the available resources.
    *
    * @param logger status and error details are written here
@@ -284,7 +270,6 @@ public class ResourceOracleImpl extends AbstractResourceOracle {
             new ResourceDescription(resource, resourceResolution.getPathPrefix());
         String resourcePath = resourceDescription.resource.getPath();
         maybeRecordTypeForModule(resourceResolution, resourcePath);
-        maybeRecordOverlapWarning(resourceResolution, resourcePath);
 
         // In case of collision.
         if (resourceDescriptionsByPath.containsKey(resourcePath)) {
@@ -327,26 +312,6 @@ public class ResourceOracleImpl extends AbstractResourceOracle {
 
   private String asTypeSourceName(String resourcePath) {
     return resourcePath.replace(".java", "").replace("/", ".");
-  }
-
-  private void maybeRecordOverlapWarning(ResourceResolution resourceResolution,
-      String resourcePath) {
-    // If PathPrefix->Module associations are inaccurate because PathPrefixes have been merged.
-    if (pathPrefixSet.mergePathPrefixes()) {
-      // Then don't record any overlap warnings since they won't be accurate;
-      return;
-    }
-
-    if (resourceResolution.getSourceModuleNames().size() > 1) {
-      if (!overlapWarningsByModuleSet.containsKey(
-          resourceResolution.getSourceModuleNames().toString())) {
-        overlapWarningsByModuleSet.put(
-            resourceResolution.getSourceModuleNames().toString(), String.format(
-                "Resource %s is included by multiple modules (%s).",
-                resourcePath, Joiner.on(", ").join(
-                    resourceResolution.getSourceModuleNames())));
-      }
-    }
   }
 
   private static void addAllClassPathEntries(TreeLogger logger, ResourceLoader loader,
@@ -444,7 +409,6 @@ public class ResourceOracleImpl extends AbstractResourceOracle {
   @Override
   public void clear() {
     sourceModulesByTypeSourceName.clear();
-    overlapWarningsByModuleSet.clear();
     exposedPathNames = Collections.emptySet();
     exposedResourceMap = Collections.emptyMap();
     exposedResources = Collections.emptySet();

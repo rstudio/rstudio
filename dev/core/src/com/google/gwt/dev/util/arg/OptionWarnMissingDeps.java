@@ -17,6 +17,7 @@ package com.google.gwt.dev.util.arg;
  * Option to report warnings when modules are missing dependencies necessary to satisfy type
  * references in their provided source.
  */
+@Deprecated
 public interface OptionWarnMissingDeps {
 
   /**

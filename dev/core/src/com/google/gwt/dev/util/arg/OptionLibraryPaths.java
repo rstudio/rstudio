@@ -18,6 +18,7 @@ import java.util.List;
 /**
  * Option providing the paths to the input libraries.
  */
+@Deprecated
 public interface OptionLibraryPaths {
 
   /**

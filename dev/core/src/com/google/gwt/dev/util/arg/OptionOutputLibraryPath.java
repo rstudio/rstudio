@@ -16,6 +16,7 @@ package com.google.gwt.dev.util.arg;
 /**
  * Option providing the path for the output library.
  */
+@Deprecated
 public interface OptionOutputLibraryPath {
 
   /**

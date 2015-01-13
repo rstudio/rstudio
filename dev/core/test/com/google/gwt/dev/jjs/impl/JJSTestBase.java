@@ -294,7 +294,7 @@ public abstract class JJSTestBase extends TestCase {
           public boolean shouldJDTInlineCompileTimeConstants() {
             return false;
           }
-        }).compileMonolithic(compileMonolithic).build();
+        }).build();
     compilerContext.getOptions().setSourceLevel(sourceLevel);
     compilerContext.getOptions().setStrict(true);
     CompilationState state =

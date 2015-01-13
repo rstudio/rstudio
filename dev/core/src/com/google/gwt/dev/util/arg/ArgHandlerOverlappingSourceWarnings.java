@@ -18,6 +18,7 @@ import com.google.gwt.util.tools.ArgHandlerFlag;
 /**
  * Toggles the display of overlapping source include warnings (during monolithic compiles).
  */
+@Deprecated
 public final class ArgHandlerOverlappingSourceWarnings extends ArgHandlerFlag {
 
   private final OptionWarnOverlappingSource optionWarnOverlappingSource;
@@ -38,7 +39,8 @@ public final class ArgHandlerOverlappingSourceWarnings extends ArgHandlerFlag {
 
   @Override
   public String getPurposeSnippet() {
-    return "Whether to show warnings during monolithic compiles for overlapping source inclusion.";
+    return "DEPRECATED: Whether to show warnings during monolithic compiles for "
+        + "overlapping source inclusion.";
   }
 
   @Override

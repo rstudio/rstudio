@@ -22,6 +22,7 @@ import java.io.File;
 /**
  * Optionally specifies a file into which detailed missing dependency information will be written.
  */
+@Deprecated
 public final class ArgHandlerMissingDepsFile extends ArgHandlerFile {
 
   private final OptionMissingDepsFile option;
@@ -32,7 +33,8 @@ public final class ArgHandlerMissingDepsFile extends ArgHandlerFile {
 
   @Override
   public String getPurpose() {
-    return "Specifies a file into which detailed missing dependency information will be written.";
+    return "DEPRECATED: Specifies a file into which detailed missing dependency "
+        + "information will be written.";
   }
 
   @Override

@@ -87,7 +87,6 @@ import com.google.gwt.dev.util.log.MetricName;
 import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 import com.google.gwt.thirdparty.guava.common.collect.Sets.SetView;
 
@@ -147,8 +146,6 @@ public class UnifyAst {
 
     protected abstract boolean hasCompileErrors(String typeName);
 
-    protected abstract CompilationUnit getCompilationUnitFromLibrary(String typeName);
-
     protected abstract void logErrorTrace(TreeLogger branch, Type logLevel, String sourceName);
 
     protected CompilationUnit getCompilationUnitFromSource(String typeName) {
@@ -158,10 +155,6 @@ public class UnifyAst {
     protected JDeclaredType getResolvedType(String typeName) {
       JDeclaredType resolvedType = program.getFromTypeMap(typeName);
       return resolvedType;
-    }
-
-    protected boolean libraryCompilationUnitIsAvailable(String typeName) {
-      return getCompilationUnitFromLibrary(typeName) != null;
     }
 
     protected boolean resolvedTypeIsAvailable(String typeName) {
@@ -438,29 +431,16 @@ public class UnifyAst {
         return null;
       }
 
-      if (compilerContext.shouldCompileMonolithic()) {
-        Event event = SpeedTracerLogger.start(CompilerEventType.VISIT_GWT_CREATE,
-            "argument",
-            classLiteral.getRefType().getName(),
-            "caller",
-            gwtCreateCall.getSourceInfo().getFileName());
-        try {
-          return createStaticRebindExpression(gwtCreateCall, classLiteral);
-        } finally {
-          event.end();
-        }
-      } else {
-        return createRuntimeRebindExpression(gwtCreateCall, classLiteral);
+      Event event = SpeedTracerLogger.start(CompilerEventType.VISIT_GWT_CREATE,
+          "argument",
+          classLiteral.getRefType().getName(),
+          "caller",
+          gwtCreateCall.getSourceInfo().getFileName());
+      try {
+        return createStaticRebindExpression(gwtCreateCall, classLiteral);
+      } finally {
+        event.end();
       }
-    }
-
-    private JExpression createRuntimeRebindExpression(JMethodCall gwtCreateCall,
-        JClassLiteral classLiteral) {
-      // RuntimeRebinder.createInstance(classLiteral);
-      JMethod runtimeCreateInstanceMethod =
-          program.getIndexedMethod("RuntimeRebinder.createInstance");
-      return new JMethodCall(gwtCreateCall.getSourceInfo(), null, runtimeCreateInstanceMethod,
-          classLiteral);
     }
 
     private JExpression createStaticRebindExpression(JMethodCall gwtCreateCall,
@@ -708,14 +688,12 @@ public class UnifyAst {
 
   private MinimalRebuildCache minimalRebuildCache;
   private boolean incrementalCompile;
-  private boolean isLibraryCompile;
   private boolean jsInteropEnabled;
   private final List<String> rootTypeSourceNames = new ArrayList<String>();
 
   public UnifyAst(TreeLogger logger, CompilerContext compilerContext, JProgram program,
       JsProgram jsProgram, RebindPermutationOracle rpo) {
     this.incrementalCompile = compilerContext.getOptions().isIncrementalCompileEnabled();
-    this.isLibraryCompile = !compilerContext.shouldCompileMonolithic();
     this.jsInteropEnabled = program.typeOracle.isJsInteropEnabled();
 
     this.logger = logger;
@@ -765,11 +743,8 @@ public class UnifyAst {
   /**
    * Translates and stitches (unifies) type ASTs into one connected graph.<br />
    *
-   * For normal monolithic compiles only types reachable from entry points are traversed. This
-   * speeds, saves memory trims unreferenced elements.<br />
-   *
-   * Library compiles traverse all types that were supplied as source in the compilation state and
-   * no elements are pruned.
+   * Only types reachable from entry points are traversed. This speeds, saves memory trims
+   * unreferenced elements.
    */
   public void exec() throws UnableToCompleteException {
     // Trace execution from entry points and resolve references.
@@ -810,22 +785,6 @@ public class UnifyAst {
 
     if (incrementalCompile) {
       fullFlowIntoRemainingStaleTypes();
-    } else if (isLibraryCompile) {
-      // Trace execution from all types supplied as source and resolve references.
-      Set<String> internalNames = ImmutableSet.copyOf(compiledClassesByInternalName.keySet());
-      for (String internalName : internalNames) {
-        // Library compilation needs to walk all local types so that they can be in the library
-        // output. If one of these types contains errors but is not locally reachable the
-        // compilation might still be a success. So ignore errors in this set of types.
-        boolean reportErrors = false;
-        JDeclaredType type =
-            internalFindType(internalName, internalNameBasedTypeLocator, reportErrors);
-        if (type == null) {
-          continue;
-        }
-
-        fullFlowIntoType(type);
-      }
     }
 
     /*
@@ -891,9 +850,7 @@ public class UnifyAst {
     computeOverrides();
 
     // Post-stitching clean-ups.
-    if (compilerContext.shouldCompileMonolithic()) {
-      pruneDeadFieldsAndMethods();
-    }
+    pruneDeadFieldsAndMethods();
     if (errorsFound) {
       // Already logged.
       throw new UnableToCompleteException();
@@ -952,32 +909,6 @@ public class UnifyAst {
           --methodIndex;
         }
       }
-    }
-  }
-
-  private void assimilateLibraryUnit(CompilationUnit referencedCompilationUnit,
-      boolean reportErrors) {
-    if (referencedCompilationUnit.isError()) {
-      if (failedUnits.add(referencedCompilationUnit) && reportErrors) {
-        CompilationProblemReporter.logErrorTrace(logger, TreeLogger.ERROR,
-            compilerContext, referencedCompilationUnit.getTypeName(), true);
-        errorsFound = true;
-      }
-      return;
-    }
-
-    compilerContext.getUnitCache().add(referencedCompilationUnit);
-    compilationState.addReferencedCompilationUnits(logger, Lists.create(referencedCompilationUnit));
-    // Record the types in the JProgram but do *not* flow into them and resolve their internal
-    // references. There's no need since they're not part of this library. It's important to call
-    // getTypes() only ONCE since each call returns a new copy.
-    List<JDeclaredType> types = referencedCompilationUnit.getTypes();
-    for (JDeclaredType referenceOnlyType : types) {
-      program.addType(referenceOnlyType);
-      program.addReferenceOnlyType(referenceOnlyType);
-    }
-    for (JDeclaredType referenceOnlyType : types) {
-      resolveType(referenceOnlyType);
     }
   }
 
@@ -1314,13 +1245,8 @@ public class UnifyAst {
   private void initializeNameBasedLocators() {
     sourceNameBasedTypeLocator = new NameBasedTypeLocator(compiledClassesBySourceName) {
       @Override
-      protected CompilationUnit getCompilationUnitFromLibrary(String sourceName) {
-        return compilerContext.getLibraryGroup().getCompilationUnitByTypeSourceName(sourceName);
-      }
-
-      @Override
       protected boolean hasCompileErrors(String sourceName) {
-        return compilerContext.getGlobalCompilationErrorsIndex().hasCompileErrors(sourceName);
+        return compilerContext.getCompilationErrorsIndex().hasCompileErrors(sourceName);
       }
 
       @Override
@@ -1330,11 +1256,6 @@ public class UnifyAst {
       }
     };
     binaryNameBasedTypeLocator = new NameBasedTypeLocator(null) {
-      @Override
-      protected CompilationUnit getCompilationUnitFromLibrary(String binaryName) {
-        return compilerContext.getLibraryGroup().getCompilationUnitByTypeBinaryName(binaryName);
-      }
-
       @Override
       protected CompilationUnit getCompilationUnitFromSource(String binaryName) {
         // There is no binary name based index for this, use the internal name based one instead.
@@ -1362,13 +1283,6 @@ public class UnifyAst {
       }
     };
     internalNameBasedTypeLocator = new NameBasedTypeLocator(compiledClassesByInternalName) {
-      @Override
-      protected CompilationUnit getCompilationUnitFromLibrary(String internalName) {
-        // There is no internal name based index for this, use the binary name based one instead.
-        return binaryNameBasedTypeLocator.getCompilationUnitFromLibrary(
-            InternalName.toBinaryName(internalName));
-      }
-
       @Override
       protected JDeclaredType getResolvedType(String internalName) {
         // There is no internal name based index for this, use the binary name based one instead.
@@ -1597,30 +1511,17 @@ public class UnifyAst {
       return nameBasedTypeLocator.getResolvedType(typeName);
     }
 
-    if (!compilerContext.shouldCompileMonolithic() &&
-        nameBasedTypeLocator.libraryCompilationUnitIsAvailable(typeName)) {
-      // Resolve from a library in modular compiles.
-      assimilateLibraryUnit(nameBasedTypeLocator.getCompilationUnitFromLibrary(typeName),
-          reportErrors);
-      return nameBasedTypeLocator.getResolvedType(typeName);
-    }
-
     if (reportErrors) {
-      // The type could not be resolved as source nor from a library; report the appropriate error.
+      // The type could not be resolved as source; report the appropriate error.
       if (nameBasedTypeLocator.hasCompileErrors(typeName)) {
         TreeLogger branch = logger.branch(TreeLogger.ERROR, String.format(
-              "Type %s could not be referenced because it previously failed to "
-              + "compile with errors:", typeName));
-          nameBasedTypeLocator.logErrorTrace(branch, TreeLogger.ERROR, typeName);
-        } else if (compilerContext.shouldCompileMonolithic())  {
-          logger.log(TreeLogger.ERROR, String.format(
-              "Could not find %s in types compiled from source. Is the source glob too strict?",
-              typeName));
-        } else {
-          logger.log(TreeLogger.ERROR, String.format(
-          "Could not find %s in types compiled from source or in provided dependency libraries. "
-              + "Either the source file was unavailable or there is a missing dependency.",
-          typeName));
+            "Type %s could not be referenced because it previously failed to "
+            + "compile with errors:", typeName));
+        nameBasedTypeLocator.logErrorTrace(branch, TreeLogger.ERROR, typeName);
+      } else {
+        logger.log(TreeLogger.ERROR, String.format(
+            "Could not find %s in types compiled from source. Is the source glob too strict?",
+            typeName));
       }
       errorsFound = true;
     }

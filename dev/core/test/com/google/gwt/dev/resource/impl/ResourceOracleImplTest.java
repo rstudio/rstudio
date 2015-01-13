@@ -508,7 +508,6 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
 
     resourceOracleImpl.setPathPrefixes(pathPrefixSet);
     resourceOracleImpl.scanResources(logger);
-    resourceOracleImpl.printOverlappingModuleIncludeWarnings(logger);
 
     logger.assertCorrectLogEntries();
   }

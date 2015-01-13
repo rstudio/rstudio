@@ -89,7 +89,7 @@ public class CompilationUnitInvalidatorTest extends TestCase {
 
     // Invoke the method under test
     CompilationUnitInvalidator.retainValidUnits(TreeLogger.NULL, units, validClasses,
-        compilerContext.getLocalCompilationErrorsIndex());
+        compilerContext.getCompilationErrorsIndex());
 
     // Check that the compilation errors index was correctly populated.
     UnitTestTreeLogger.Builder loggerBuilder = new UnitTestTreeLogger.Builder();

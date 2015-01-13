@@ -23,6 +23,7 @@ import java.io.File;
  * If provided the compiler will dump a record of missing dependencies to this file formatted like:
  * <fromModuleName>\t<fromModuleUrl>\t<toModuleName>\t<toModuleUrl>\t<humanReadableWarning>
  */
+@Deprecated
 public interface OptionMissingDepsFile {
 
   /**

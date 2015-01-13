@@ -8,12 +8,9 @@
 
   <property name="alldeps.jar" location="${project.build}/alldeps.jar"/>
   <property name="gwt.junit.testcase.dev.core.includes" value="**/com/google/**/*Test.class"/>
-  <!-- BrowserManagerTest is brought in from user and is not instantiable.
-       IncrementalBuilderTest needs a special setup.
-       TODO(stalcup): Add the correct setup for IncrementalBuilderTest and reenable.
-  -->
+  <!-- BrowserManagerTest is brought in from user and is not instantiable. -->
   <property name="gwt.junit.testcase.dev.core.excludes"
-            value="**/BrowserManagerTest.class **/IncrementalBuilderTest.class"/>
+            value="**/BrowserManagerTest.class"/>
 
   <target name="clean" description="Cleans this project's intermediate and output files">
     <delete dir="${project.build}" failonerror="false"/>

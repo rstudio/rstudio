@@ -24,6 +24,7 @@ import java.util.List;
 /**
  * An argument handler for providing a list of paths to input precompiled library files.
  */
+@Deprecated
 public class ArgHandlerLibraries extends ArgHandlerString {
 
   private final OptionLibraryPaths option;
@@ -34,7 +35,7 @@ public class ArgHandlerLibraries extends ArgHandlerString {
 
   @Override
   public String getPurpose() {
-    return "The path(s) to .gwtlib library file(s).";
+    return "DEPRECATED: The path(s) to .gwtlib library file(s).";
   }
 
   @Override

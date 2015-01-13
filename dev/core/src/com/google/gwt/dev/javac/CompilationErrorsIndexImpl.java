@@ -141,19 +141,6 @@ public class CompilationErrorsIndexImpl implements CompilationErrorsIndex, Seria
     return referencesByTypeSourceName.containsKey(typeSourceName);
   }
 
-  public void merge(CompilationErrorsIndexImpl that) {
-    for (String typeSourceName : that.fileNamesByTypeSourceName.keySet()) {
-      if (!this.fileNamesByTypeSourceName.containsKey(typeSourceName)) {
-        this.fileNamesByTypeSourceName.put(typeSourceName,
-            that.fileNamesByTypeSourceName.get(typeSourceName));
-        this.compilationErrorsByTypeSourceName.putAll(typeSourceName,
-            that.compilationErrorsByTypeSourceName.get(typeSourceName));
-        this.referencesByTypeSourceName.putAll(typeSourceName,
-            that.referencesByTypeSourceName.get(typeSourceName));
-      }
-    }
-  }
-
   private void readObject(ObjectInputStream objectInputStream) throws IOException {
     fileNamesByTypeSourceName = readStringMap(objectInputStream);
     compilationErrorsByTypeSourceName = readStringListMap(objectInputStream);

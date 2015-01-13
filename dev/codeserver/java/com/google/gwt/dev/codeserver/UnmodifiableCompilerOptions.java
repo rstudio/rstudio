@@ -146,6 +146,7 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   }
 
   @Override
+  @Deprecated
   public void setLibraryPaths(List<String> libraryPaths) {
     throw new UnsupportedOperationException();
   }
@@ -171,6 +172,7 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   }
 
   @Override
+  @Deprecated
   public final void setMissingDepsFile(File file) {
     throw new UnsupportedOperationException();
   }
@@ -211,6 +213,7 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   }
 
   @Override
+  @Deprecated
   public void setOutputLibraryPath(String outputLibraryPath) {
     throw new UnsupportedOperationException();
   }
@@ -281,11 +284,13 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   }
 
   @Override
+  @Deprecated
   public final void setWarnOverlappingSource(boolean warnOverlappingSource) {
     throw new UnsupportedOperationException();
   }
 
   @Override
+  @Deprecated
   public final void setWarnMissingDeps(boolean warnMissingDeps) {
     throw new UnsupportedOperationException();
   }

@@ -19,6 +19,7 @@ import com.google.gwt.util.tools.ArgHandlerString;
 /**
  * An argument handler for specifying the path for the generated precompiled library file.
  */
+@Deprecated
 public class ArgHandlerOutputLibrary extends ArgHandlerString {
 
   private final OptionOutputLibraryPath option;
@@ -29,7 +30,7 @@ public class ArgHandlerOutputLibrary extends ArgHandlerString {
 
   @Override
   public String getPurpose() {
-    return "The path into which the generated .gwtlib library will be written.";
+    return "DEPRECATED: The path into which the generated .gwtlib library will be written.";
   }
 
   @Override

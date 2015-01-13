@@ -31,10 +31,8 @@ public class JavaScriptCompiler implements AbstractCompiler {
       RebindPermutationOracle rpo, String[] declEntryPts, String[] additionalRootTypes,
       boolean singlePermutation, PrecompilationMetricsArtifact precompilationMetrics)
       throws UnableToCompleteException {
-    boolean compileMonolithic = compilerContext.shouldCompileMonolithic();
-    JavaToJavaScriptCompiler javaToJavaScriptCompiler = compileMonolithic
-        ? new MonolithicJavaToJavaScriptCompiler(logger, compilerContext)
-        : new LibraryJavaToJavaScriptCompiler(logger, compilerContext);
+    JavaToJavaScriptCompiler javaToJavaScriptCompiler =
+        new MonolithicJavaToJavaScriptCompiler(logger, compilerContext);
     return javaToJavaScriptCompiler.precompile(
         rpo, declEntryPts, additionalRootTypes, singlePermutation, precompilationMetrics);
   }

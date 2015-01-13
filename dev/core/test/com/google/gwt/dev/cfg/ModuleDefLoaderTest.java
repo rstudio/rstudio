@@ -18,20 +18,12 @@ package com.google.gwt.dev.cfg;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilerContext;
-import com.google.gwt.dev.cfg.Libraries.IncompatibleLibraryVersionException;
-import com.google.gwt.dev.javac.testing.impl.MockResource;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
-import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import junit.framework.TestCase;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -41,7 +33,6 @@ public class ModuleDefLoaderTest extends TestCase {
 
   private CompilerContext compilerContext;
   private CompilerContext.Builder compilerContextBuilder;
-  private MockLibraryWriter mockLibraryWriter = new MockLibraryWriter();
 
   public void assertHonorsStrictResources(boolean strictResources)
       throws UnableToCompleteException {
@@ -141,62 +132,6 @@ public class ModuleDefLoaderTest extends TestCase {
   public void testErrorReporting_unexpectedTag() {
     assertErrorsWhenLoading("com.google.gwt.dev.cfg.testdata.errors.UnexpectedTag",
         "Line 2: Unexpected element 'inherited'");
-  }
-
-  public void testLoadFromLibraryGroup() throws UnableToCompleteException, IOException,
-      IncompatibleLibraryVersionException {
-    PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
-    logger.setMaxDetail(TreeLogger.INFO);
-
-    // Create the library zip file.
-    File zipFile = File.createTempFile("FooLib", ".gwtlib");
-    zipFile.deleteOnExit();
-
-    // Put data in the library and save it.
-    ZipLibraryWriter zipLibraryWriter = new ZipLibraryWriter(zipFile.getPath());
-    zipLibraryWriter.setLibraryName("FooLib");
-    MockResource userXmlResource = new MockResource("com/google/gwt/user/User.gwt.xml") {
-        @Override
-      public CharSequence getContent() {
-        return "<module></module>";
-      }
-    };
-    zipLibraryWriter.addBuildResource(userXmlResource);
-    zipLibraryWriter.write();
-
-    // Read data back from disk.
-    ZipLibrary zipLibrary = new ZipLibrary(zipFile.getPath());
-
-    // Prepare the LibraryGroup and ResourceLoader.
-    compilerContext = compilerContextBuilder.libraryGroup(
-        LibraryGroup.fromLibraries(Lists.<Library> newArrayList(zipLibrary), false)).build();
-    ResourceLoader resourceLoader = ResourceLoaders.forPathAndFallback(Lists.newArrayList(zipFile),
-        ResourceLoaders.forClassLoader(Thread.currentThread()));
-
-    // Will throw an exception if com.google.gwt.user.User can't be found and parsed.
-    ModuleDefLoader.loadFromResources(logger, compilerContext, "com.google.gwt.user.User",
-        resourceLoader, false);
-  }
-
-  /**
-   * Tests that the tree representation for a module is correct.
-   */
-  public void testLibraryTree() throws Exception {
-    TreeLogger logger = TreeLogger.NULL;
-    ModuleDef six = ModuleDefLoader.loadFromClassPath(
-        logger, compilerContext, "com.google.gwt.dev.cfg.testdata.dependents.Six");
-
-    Collection<String> sixActualDependencies =
-        six.getDirectDependencies("com.google.gwt.dev.cfg.testdata.dependents.Six");
-    Collection<String> fiveActualDependencies =
-        six.getDirectDependencies("com.google.gwt.dev.cfg.testdata.dependents.Five");
-
-    assertEquals(ImmutableSet.of("com.google.gwt.core.Core",
-        "com.google.gwt.dev.cfg.testdata.dependents.Five"), sixActualDependencies);
-    assertEquals("Contains " + fiveActualDependencies, ImmutableSet.of(
-        "com.google.gwt.core.Core", "com.google.gwt.dev.cfg.testdata.dependents.One",
-        "com.google.gwt.dev.cfg.testdata.dependents.Two",
-        "com.google.gwt.dev.cfg.testdata.dependents.Four"), fiveActualDependencies);
   }
 
   /**
@@ -300,77 +235,8 @@ public class ModuleDefLoaderTest extends TestCase {
         "com/google/gwt/dev/cfg/testdata/merging/resources/NotAResource.java"));
   }
 
-  public void testSeparateLibraryModuleReferences() throws UnableToCompleteException {
-    compilerContext = compilerContextBuilder.compileMonolithic(false).build();
-    ModuleDefLoader.loadFromClassPath(TreeLogger.NULL, compilerContext,
-        "com.google.gwt.dev.cfg.testdata.separate.libraryone.LibraryOne", false);
-
-    // The library writer was given the module and it's direct fileset module xml files as build
-    // resources.
-    assertEquals(Sets.newHashSet(
-        "com/google/gwt/dev/cfg/testdata/separate/filesetone/FileSetOne.gwt.xml",
-        "com/google/gwt/dev/cfg/testdata/separate/libraryone/LibraryOne.gwt.xml"),
-        mockLibraryWriter.getBuildResourcePaths());
-    // The library writer was given LibraryTwo as a dependency library.
-    assertEquals(Sets.newHashSet("com.google.gwt.core.Core",
-        "com.google.gwt.dev.cfg.testdata.separate.librarytwo.LibraryTwo"),
-        mockLibraryWriter.getDependencyLibraryNames());
-  }
-
-  public void testSeparateLibraryName() throws UnableToCompleteException {
-    compilerContext = compilerContextBuilder.compileMonolithic(false).build();
-    ModuleDefLoader.loadFromClassPath(TreeLogger.NULL, compilerContext,
-        "com.google.gwt.dev.cfg.testdata.separate.libraryone.LibraryOne", false);
-
-    assertEquals("com.google.gwt.dev.cfg.testdata.separate.libraryone.LibraryOne",
-        mockLibraryWriter.getLibraryName());
-  }
-
-  public void testSeparateModuleReferences() throws UnableToCompleteException {
-    compilerContext = compilerContextBuilder.compileMonolithic(false).build();
-    ModuleDef libraryOneModule = ModuleDefLoader.loadFromClassPath(TreeLogger.NULL, compilerContext,
-        "com.google.gwt.dev.cfg.testdata.separate.libraryone.LibraryOne", false);
-
-    // The module sees itself and it's direct fileset module as "target" modules.
-    assertEquals(Sets.newHashSet("com.google.gwt.dev.cfg.testdata.separate.libraryone.LibraryOne",
-        "com.google.gwt.dev.cfg.testdata.separate.filesetone.FileSetOne"),
-        libraryOneModule.getTargetLibraryCanonicalModuleNames());
-    // The module sees the referenced library module as a "library" module.
-    assertEquals(Sets.newHashSet("com.google.gwt.core.Core",
-        "com.google.gwt.dev.cfg.testdata.separate.librarytwo.LibraryTwo"),
-        libraryOneModule.getExternalLibraryCanonicalModuleNames());
-  }
-
-  public void testSeparateModuleResourcesLibraryOne() throws UnableToCompleteException {
-    compilerContext = compilerContextBuilder.compileMonolithic(false).build();
-    ModuleDef libraryOneModule = ModuleDefLoader.loadFromClassPath(TreeLogger.NULL, compilerContext,
-        "com.google.gwt.dev.cfg.testdata.separate.libraryone.LibraryOne", false);
-
-    // Includes own source.
-    assertNotNull(libraryOneModule.findSourceFile(
-        "com/google/gwt/dev/cfg/testdata/separate/libraryone/client/LibraryOne.java"));
-    // Cascades to include the subtree of fileset sources.
-    assertNotNull(libraryOneModule.findSourceFile(
-        "com/google/gwt/dev/cfg/testdata/separate/filesetone/client/FileSetOne.java"));
-    // Does not include source from referenced libraries.
-    assertNull(libraryOneModule.findSourceFile(
-        "com/google/gwt/dev/cfg/testdata/separate/librarytwo/client/LibraryTwo.java"));
-  }
-
-  public void testSeparateRootFilesetFail() {
-    compilerContext = compilerContextBuilder.compileMonolithic(false).build();
-    TreeLogger logger = TreeLogger.NULL;
-    try {
-      ModuleDefLoader.loadFromClassPath(logger,
-          compilerContext, "com.google.gwt.dev.cfg.testdata.separate.filesetone.FileSetOne", false);
-      fail("Expected a fileset loaded as the root of a module tree to fail, but it didn't.");
-    } catch (UnableToCompleteException e) {
-      // Expected behavior.
-    }
-  }
-
   public void testWritesTargetLibraryProperties() throws UnableToCompleteException {
-    compilerContext = compilerContextBuilder.compileMonolithic(false).build();
+    compilerContext = compilerContextBuilder.build();
     ModuleDef libraryOneModule = ModuleDefLoader.loadFromClassPath(TreeLogger.NULL, compilerContext,
         "com.google.gwt.dev.cfg.testdata.separate.libraryone.LibraryOne", false);
 
@@ -393,8 +259,6 @@ public class ModuleDefLoaderTest extends TestCase {
         continue;
       }
       assertEquals(Sets.newHashSet(configurationProperty.getValues()), Sets.newHashSet("false"));
-      assertEquals(Sets.newHashSet(configurationProperty.getTargetLibraryValues()),
-          Sets.newHashSet("false"));
     }
   }
 
@@ -422,6 +286,6 @@ public class ModuleDefLoaderTest extends TestCase {
     super.setUp();
     ModuleDefLoader.getModulesCache().clear();
     compilerContextBuilder = new CompilerContext.Builder();
-    compilerContext = compilerContextBuilder.libraryWriter(mockLibraryWriter).build();
+    compilerContext = compilerContextBuilder.build();
   }
 }
