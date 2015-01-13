@@ -38,8 +38,8 @@ import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -225,7 +225,7 @@ public class Css2Gss {
     static final Map<String, ArgumentConsumer> argumentConsumers;
 
     static {
-      argumentConsumers = new HashMap<String, ArgumentConsumer>(2);
+      argumentConsumers = new LinkedHashMap<String, ArgumentConsumer>();
       argumentConsumers.put("-r", new ArgumentConsumer() {
         @Override
         public boolean consume(Options option, String nextArg) {
@@ -248,26 +248,24 @@ public class Css2Gss {
         }
       });
 
+      argumentConsumers.put("-basedir", new ArgumentConsumer() {
+        @Override
+        public boolean consume(Options option, String nextArg) {
+          nextArg += nextArg.endsWith(File.separator) ? "" : File.separator;
+          option.baseDir = new File(nextArg);
+
+          if (!option.baseDir.exists() || !option.baseDir.isDirectory()) {
+            quitEarly("Basedir is does not exist");
+          }
+
+          return true;
+        }
+      });
+
       argumentConsumers.put("-scope", new ArgumentConsumer() {
           @Override
         public boolean consume(Options option, String nextArg) {
-          ImmutableSet<String> scopeFileSet =
-              FluentIterable.from(Splitter.on(',').split(nextArg)).toSet();
-
-          HashSet<URL> set = new HashSet<URL>();
-          for (String scopeFile : scopeFileSet) {
-            File file = new File(scopeFile).getAbsoluteFile();
-            if (!file.exists() && !file.isFile()) {
-              quitEarly("The scope file '" + scopeFile + "' does not exist");
-            }
-            try {
-              set.add(file.toURI().toURL());
-            } catch (MalformedURLException e) {
-              quitEarly("Can not create url for scope file: '" + scopeFile + "'");
-            }
-          }
-          option.scopeFiles = ImmutableSet.copyOf(set);
-
+          option.scope = nextArg;
           return true;
         }
       });
@@ -278,6 +276,9 @@ public class Css2Gss {
     ImmutableSet<URL> scopeFiles = ImmutableSet.of();
     File resource;
     Set<String> simpleBooleanConditions;
+    File baseDir;
+
+    private String scope;
 
     private static Options parseOrQuit(String[] args) {
       if (!validateArgs(args)) {
@@ -293,6 +294,10 @@ public class Css2Gss {
         String arg = args[index++];
         String nextArg = index < args.length - 1 ? args[index] : null;
 
+        if (nextArg == null) {
+          quitEarly("Missing file or directly as last parameter");
+        }
+
         ArgumentConsumer consumer = argumentConsumers.get(arg);
 
         if (consumer == null) {
@@ -306,8 +311,36 @@ public class Css2Gss {
         }
       }
 
+      if (options.scope != null) {
+        ImmutableSet<String> scopeFileSet =
+            FluentIterable.from(Splitter.on(',').split(options.scope)).toSet();
+        HashSet<URL> set = new HashSet<URL>();
+        for (String scopeFile : scopeFileSet) {
+          File file = null;
+          if (options.baseDir != null && !scopeFile.startsWith(File.separator)) {
+            file = new File(options.baseDir, scopeFile).getAbsoluteFile();
+          } else {
+            file = new File(scopeFile).getAbsoluteFile();
+          }
+          if (!file.exists() && !file.isFile()) {
+            quitEarly("The scope file '" + file.getAbsolutePath() + "' does not exist");
+          }
+          try {
+            set.add(file.toURI().toURL());
+          } catch (MalformedURLException e) {
+            quitEarly("Can not create url for scope file: '" + scopeFile + "'");
+          }
+        }
+        options.scopeFiles = ImmutableSet.copyOf(set);
+      }
+
       // last argument is always the file or directory path
-      options.resource = new File(args[index]);
+      if (options.baseDir != null && !args[index].startsWith(File.separator)) {
+        options.resource = new File(options.baseDir, args[index]).getAbsoluteFile();
+      } else {
+        options.resource = new File(args[index]).getAbsoluteFile();
+      }
+
       options.singleFile = !options.resource.isDirectory();
 
       // validate options
@@ -332,7 +365,7 @@ public class Css2Gss {
     }
 
     private static boolean validateArgs(String[] args) {
-      return args.length > 0 && args.length < 7;
+      return args.length > 0 && args.length < 9;
     }
   }
 
