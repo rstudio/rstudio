@@ -15,6 +15,9 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.junit.DoNotRunWith;
+import com.google.gwt.junit.Platform;
+
 /**
  * Tests for the history system without encoding of history tokens.
  */
@@ -31,18 +34,27 @@ public class HistoryTestNoopTokenEncoder extends HistoryTest {
     return "com.google.gwt.user.HistoryTestNoopTokenEncoder";
   }
 
+  @Override
   protected String getHistoryToken2() {
     return isFirefox() ? "token2" : "token 2";
   }
 
+  @Override
   protected String getHistoryToken2_encoded() {
     return isFirefox() ? "token2" : "token%202";
   }
 
+  @Override
   public void testTokenEscaping() {
     if (isFirefox()) {
       return; // encoding is broken for Firefox.
     }
     super.testTokenEscaping();
+  }
+
+  @DoNotRunWith(Platform.HtmlUnitUnknown)
+  @Override
+  public void testEmptyHistoryTokens() {
+    super.testEmptyHistoryTokens();
   }
 }
