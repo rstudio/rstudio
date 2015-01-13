@@ -93,6 +93,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       // add rpubs publish button
       rpubsPublishButton_ = toolbar_.addRightWidget(
                 commands_.viewerPublishToRPubs().createToolbarButton(false));
+      rpubsPublishButton_.setVisible(false);
       
       return toolbar_;
    }
