@@ -767,7 +767,8 @@ public class TextEditingTarget implements
                                           docDisplay_,
                                           fileType_,
                                           extendedType_,
-                                          events_);
+                                          events_,
+                                          session_);
       docUpdateSentinel_ = new DocUpdateSentinel(
             server_,
             docDisplay_,

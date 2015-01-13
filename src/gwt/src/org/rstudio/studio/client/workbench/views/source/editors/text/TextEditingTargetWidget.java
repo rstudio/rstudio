@@ -46,9 +46,11 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectUtils;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
@@ -68,10 +70,12 @@ public class TextEditingTargetWidget
                                   DocDisplay editor,
                                   TextFileType fileType,
                                   String extendedType,
-                                  EventBus events)
+                                  EventBus events,
+                                  Session session)
    {
       commands_ = commands;
       uiPrefs_ = uiPrefs;
+      session_ = session;
       fileTypeRegistry_ = fileTypeRegistry;
       editor_ = editor;
       extendedType_ = extendedType;
@@ -217,7 +221,7 @@ public class TextEditingTargetWidget
       sourceMenuButton_ = new ToolbarButton(sourceMenu, true);
       toolbar.addRightWidget(sourceMenuButton_);  
 
-      toolbar.addRightSeparator();
+      //toolbar.addRightSeparator();
      
       ToolbarPopupMenu chunksMenu = new ToolbarPopupMenu();
       chunksMenu.addItem(commands_.insertChunk().createMenuItem(false));
@@ -238,12 +242,17 @@ public class TextEditingTargetWidget
       
       ToolbarPopupMenu shinyLaunchMenu = shinyViewerMenu_;
       shinyLaunchButton_ = new ToolbarButton(
-                       "", 
-                       StandardIcons.INSTANCE.viewer_window(),
                        shinyLaunchMenu, 
                        true);
       shinyLaunchButton_.setVisible(false);
       toolbar.addRightWidget(shinyLaunchButton_);
+      
+      if (session_.getSessionInfo().getRSConnectAvailable())
+      {
+         toolbar.addRightSeparator();
+         RSConnectUtils.addPublishCommands(toolbar, null, false);
+      }
+      
       
       return toolbar;
    }
@@ -734,6 +743,7 @@ public class TextEditingTargetWidget
    
    private final Commands commands_;
    private final UIPrefs uiPrefs_;
+   private final Session session_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final DocDisplay editor_;
    private final ShinyViewerTypePopupMenu shinyViewerMenu_;

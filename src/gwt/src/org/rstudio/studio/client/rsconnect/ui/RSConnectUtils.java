@@ -36,17 +36,20 @@ public class RSConnectUtils
       return menu;
    }
    
-   public static void addPublishCommands(Toolbar toolbar, String caption)
+   public static void addPublishCommands(Toolbar toolbar, 
+                                         String caption,
+                                         boolean left)
    {
       final Commands commands = RStudioGinjector.INSTANCE.getCommands();
-      
-      toolbar.addLeftSeparator();
       
       ToolbarButton deployButton = 
             commands.rsconnectDeploy().createToolbarButton();
       if (caption != null)
          deployButton.setText(caption);
-      toolbar.addLeftWidget(deployButton);
+      if (left)
+         toolbar.addLeftWidget(deployButton);
+      else
+         toolbar.addRightWidget(deployButton);
       
       ToolbarPopupMenu connectMenu = RSConnectUtils.createToolbarPopupMenu();
       final ToolbarButton connectMenuButton = new ToolbarButton(connectMenu, 
@@ -60,7 +63,10 @@ public class RSConnectUtils
                         commands.rsconnectDeploy().isVisible());   
          } 
       });
-      toolbar.addLeftWidget(connectMenuButton);
+      if (left)
+         toolbar.addLeftWidget(connectMenuButton);
+      else
+         toolbar.addRightWidget(connectMenuButton);
       connectMenuButton.setVisible(commands.rsconnectDeploy().isEnabled());  
    }
    

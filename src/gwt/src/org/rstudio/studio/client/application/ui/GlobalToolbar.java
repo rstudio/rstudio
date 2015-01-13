@@ -24,7 +24,6 @@ import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
-import org.rstudio.studio.client.rsconnect.ui.RSConnectUtils;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -163,9 +162,6 @@ public class GlobalToolbar extends Toolbar
          vcsButton.setTitle("Version control");
          addLeftWidget(vcsButton);
       }
-      
-      if (sessionInfo.getRSConnectAvailable())
-         RSConnectUtils.addPublishCommands(this, "Publish");
       
       // project popup menu
       ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo,
