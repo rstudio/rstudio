@@ -186,7 +186,30 @@ public class PdfJsWindow extends WindowEx
    }-*/;
    
    public final native void goToPage(int page) /*-{
-      this.PDFView.page = page;
+      // sets the page if the page exists; returns false if the page
+      // doesn't exist yet
+      var setPage = function(view, page) 
+      {
+         if (view && view.pages && view.pages.length >= page)
+         {
+            view.page = page;
+            return true;
+         }
+         return false;
+      };
+      
+      // attempt to set the page; if it fails, keep trying every 50ms until we
+      // succeed or time out
+      var win = this;
+      if (!setPage(win.PDFView, page)) 
+      {
+         var tries = 0;
+         var t = window.setInterval(function() 
+         {
+            if (setPage(win.PDFView, page) || ++tries > 100)
+               clearInterval(t);
+         }, 50);
+      }
    }-*/;
 
    public final native int getCurrentPage () /*-{
