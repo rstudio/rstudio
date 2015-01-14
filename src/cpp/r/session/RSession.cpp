@@ -750,11 +750,12 @@ int RReadConsole (const char *pmt,
          return 0; // terminate
       }
    }
-   catch(r::exec::InterruptException)
+   catch(r::exec::InterruptException&)
    {
-      // this will result in a longjmp
+      // Set interrupts pending, and let the R event loop
+      // handle the actual interrupt later.
       r::exec::setInterruptsPending(true);
-      r::exec::checkUserInterrupt();
+      return 1;
    }
    catch(const std::exception& e)
    {
