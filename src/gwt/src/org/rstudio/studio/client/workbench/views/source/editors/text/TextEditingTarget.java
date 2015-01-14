@@ -504,16 +504,6 @@ public class TextEditingTarget implements
                String indent = docDisplay_.getNextLineIndent();
                docDisplay_.insertCode("\n" + indent);
             }
-            
-            // TODO: Wire up ':' handlers when in Vim mode
-            else if (
-                  prefs_.useVimMode().getValue() &&
-                  mod == KeyboardShortcut.SHIFT &&
-                  ne.getKeyCode() == 186) // semi-colon
-            {
-               event.preventDefault();
-               event.stopPropagation();
-            }
          }
 
       });
