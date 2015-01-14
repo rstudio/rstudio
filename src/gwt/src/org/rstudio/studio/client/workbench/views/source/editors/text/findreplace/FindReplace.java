@@ -404,6 +404,15 @@ public class FindReplace
 
             // Point to the end of this match
             pos = index + m.getValue().length();
+            
+            // If the data matched is an empty string (which can happen for
+            // regexps that don't consume characters such as ^ or $), then we
+            // didn't advance the state of the underlying RegExp object, and
+            // we'll loop forever (see case 4191). Bail out.
+            if (m.getValue().length() == 0)
+            {
+               break;
+            }
          }
          result.append(code, pos, code.length());
 
