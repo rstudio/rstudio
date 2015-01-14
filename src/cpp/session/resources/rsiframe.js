@@ -151,10 +151,11 @@ window.setTimeout(function() {
 
 // mathjax setup -------------------------------------------------------------
 
-// if this is a Qt-based browser, inject the MathJax configuration data. 
-// at the time this runs it's not possible to know whether the document uses
-// MathJax or not.
-if (window.navigator.userAgent.indexOf(" Qt/") > 0) {
+// if this is a Qt-based browser on Windows, inject the MathJax configuration
+// data.  at the time this runs it's not possible to know whether the document
+// uses MathJax or not.
+if (window.navigator.userAgent.indexOf(" Qt/") > 0 &&
+    window.navigator.userAgent.indexOf("Windows") > 0) {
    var s = document.createElement("script");
    s.type = "text/x-mathjax-config";
    s.textContent = 
