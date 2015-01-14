@@ -750,11 +750,19 @@ int RReadConsole (const char *pmt,
          return 0; // terminate
       }
    }
-   catch(r::exec::InterruptException)
+   catch(r::exec::InterruptException&)
    {
-      // this will result in a longjmp
+      // set interrupts pending
       r::exec::setInterruptsPending(true);
+
+      // only issue an interrupt when not on Windows -- let the regular
+      // event loop handle interrupts there. note that this will longjmp
+#ifndef _WIN32
       r::exec::checkUserInterrupt();
+#endif
+
+      // return success
+      return 1;
    }
    catch(const std::exception& e)
    {
