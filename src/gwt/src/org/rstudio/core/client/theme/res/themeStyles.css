@@ -500,6 +500,10 @@ pre {
    -webkit-font-smoothing: subpixel-antialiased;
 }
 
+.macintosh #rstudio_console_input {
+   margin-left: -1px;
+}
+
 /* on the Mac specifically, keeping the ACE input textarea on the same z-index
  * as the text causes rendering problems in Safari (see case 4093), and lifting
  * it above the text causes it to intercept unwanted events (e.g. clicks for
