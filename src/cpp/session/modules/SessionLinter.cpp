@@ -28,6 +28,7 @@ namespace modules {
 namespace linter {
 
 enum LintType {
+   STYLE,
    INFO,
    WARNING,
    ERROR
