@@ -213,6 +213,14 @@ public class WidgetListBox<T extends Widget>
       itemPaddingUnit_ = unit;
    }
    
+   public void clearItems()
+   {
+      panel_.clear();
+      options_.clear();
+      items_.clear();
+      selectedIdx_ = 0;
+   }
+   
    private int selectedIdx_ = 0;
 
    private FlowPanel panel_;

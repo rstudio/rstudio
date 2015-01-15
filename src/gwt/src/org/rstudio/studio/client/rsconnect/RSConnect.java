@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.command.CommandBinder;
-import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.ModalDialogTracker;
@@ -35,7 +34,6 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDirectoryState;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
-import org.rstudio.studio.client.rsconnect.ui.RSConnectAccountManagerDialog;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectDeployDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -195,21 +193,6 @@ public class RSConnect implements SessionInitHandler,
       }
    }
 
-   @Handler
-   public void onRsconnectManageAccounts()
-   {
-      dependencyManager_.withRSConnect(
-         "Publishing shiny applications", new Command() {
-            @Override
-            public void execute()
-            {
-               RSConnectAccountManagerDialog dialog = 
-                     new RSConnectAccountManagerDialog(server_, display_);
-               dialog.showModal();
-            }
-         });
-   }
-   
    public void ensureSessionInit()
    {
       if (sessionInited_)
