@@ -136,6 +136,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/rmarkdown/SessionRMarkdown.hpp"
 #include "modules/shiny/SessionShiny.hpp"
 #include "modules/viewer/SessionViewer.hpp"
+#include "modules/SessionLinter.hpp"
 
 #include "modules/SessionGit.hpp"
 #include "modules/SessionSVN.hpp"
@@ -1632,6 +1633,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::packrat::initialize)
       (modules::rhooks::initialize)
       (modules::r_completions::initialize)
+      (modules::linter::initialize)
 
       // workers
       (workers::web_request::initialize)
