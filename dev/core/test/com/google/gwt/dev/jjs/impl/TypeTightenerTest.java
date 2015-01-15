@@ -83,8 +83,7 @@ public class TypeTightenerTest extends OptimizerTestBase {
     addSnippetClassDecl("static class D extends B { }");
     addSnippetClassDecl("static void test(A a) { }");
     Result result = optimize("void", "C c = new C(); D d = new D(); test(c); test(d);");
-    assertEquals("static void test(EntryPoint$B a);\n",
-        result.findMethod("test").toString());
+    assertParameterTypes(result, "test", "EntryPoint$B");
   }
 
   public void testTightenParameterBasedOnLeafType() throws Exception {
@@ -93,8 +92,7 @@ public class TypeTightenerTest extends OptimizerTestBase {
     addSnippetClassDecl("static void fun(A a) {if (a == null) return;}");
 
     Result result = optimize("void", "");
-    assertEquals("static void fun(EntryPoint$B a);\n",
-        result.findMethod("fun").toString());
+    assertParameterTypes(result, "fun", "EntryPoint$B");
   }
 
   public void testTightenParameterBasedOnOverriddens() throws Exception {
@@ -105,10 +103,8 @@ public class TypeTightenerTest extends OptimizerTestBase {
     Result result = optimize("void", "B b = new B();"
         + "Test1 test1 = new Test1();"
         + "test1.fun(b);");
-    assertEquals("public void fun(EntryPoint$B a);\n",
-        OptimizerTestBase.findMethod(result.findClass("EntryPoint$Test1"), "fun").toString());
-    assertEquals("public void fun(EntryPoint$B a);\n",
-        OptimizerTestBase.findMethod(result.findClass("EntryPoint$Test2"), "fun").toString());
+    assertParameterTypes(result, "EntryPoint$Test1.fun(Ltest/EntryPoint$A;)V", "EntryPoint$B");
+    assertParameterTypes(result, "EntryPoint$Test2.fun(Ltest/EntryPoint$A;)V", "EntryPoint$B");
   }
 
   public void testInstanceOf() throws Exception {
@@ -128,8 +124,8 @@ public class TypeTightenerTest extends OptimizerTestBase {
     addSnippetClassDecl("static A fun(A a) {return a;}");
 
     Result result = optimize("void", "");
-    assertEquals("static EntryPoint$B fun(EntryPoint$B a);\n",
-        result.findMethod("fun").toString());
+    assertParameterTypes(result, "fun", "EntryPoint$B");
+    assertReturnType(result, "fun", "EntryPoint$B");
   }
 
   public void testMethodBasedOnReturns() throws Exception {
@@ -140,7 +136,7 @@ public class TypeTightenerTest extends OptimizerTestBase {
     addSnippetClassDecl(
         "A fun(int a) { if(a<0) return new B(); else if(a==0) return new C(); return new D();}");
     Result result = optimize("void", "");
-    assertEquals("EntryPoint$B fun(int a);\n", result.findMethod("fun").toString());
+    assertReturnType(result, "fun", "EntryPoint$B");
   }
 
   public void testMethodBasedOnOverriders() throws Exception {
@@ -149,8 +145,7 @@ public class TypeTightenerTest extends OptimizerTestBase {
     addSnippetClassDecl("static class C extends A { public B fun() {return new B();} }");
     addSnippetClassDecl("static class D extends B { public D fun() {return new D();} }");
     Result result = optimize("void", "");
-    assertEquals("public abstract EntryPoint$B fun();\n",
-        OptimizerTestBase.findMethod(result.findClass("EntryPoint$A"), "fun").toString());
+    assertReturnType(result, "EntryPoint$A.fun()Ltest/EntryPoint$A;", "EntryPoint$B");;
   }
 
   public void testTightenDependsOnTightenedMethods() throws Exception {
@@ -167,12 +162,12 @@ public class TypeTightenerTest extends OptimizerTestBase {
         + "C c = new C(); c.a = test();" // tighten field
         + "fun1(test());" // tighten parameter
         );
-    assertEquals("static EntryPoint$B fun2();\n", result.findMethod("fun2").toString());
+    assertReturnType(result, "fun2()Ltest/EntryPoint$A;", "EntryPoint$B");
+    assertParameterTypes(result, "fun1", "EntryPoint$B");;
     assertEquals("EntryPoint$B a",
         OptimizerTestBase.findLocal(result.findMethod(MAIN_METHOD_NAME), "a").toString());
     assertEquals("EntryPoint$B a",
         OptimizerTestBase.findField(result.findClass("EntryPoint$C"), "a").toString());
-    assertEquals("static void fun1(EntryPoint$B a);\n", result.findMethod("fun1").toString());
   }
 
   @Override

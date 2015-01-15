@@ -306,10 +306,8 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
     AddParamWhenEnterMethodVisitor addParamWhenEnterMethodVisitor =
         new AddParamWhenEnterMethodVisitor(new FullOptimizerContext(program));
     addParamWhenEnterMethodVisitor.accept(program);
-    assertEquals("public void fun(int _newParam_enter);\n",
-        findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun").toString());
-    assertEquals("public EntryPoint$A(int f, int _newParam_enter);\n",
-        findMethod(program.getFromTypeMap("test.EntryPoint$A"), "EntryPoint$A").toString());
+    assertParameterTypes(program, "test.EntryPoint$A.fun()V", "int");
+    assertParameterTypes(program, "test.EntryPoint$A.EntryPoint$A(I) <init>", "int", "int");
   }
 
   public void testAddParamWhenExitMethodVisitor() throws Exception {
@@ -320,10 +318,8 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
     AddParamWhenExitMethodVisitor addParamWhenExitMethodVisitor =
         new AddParamWhenExitMethodVisitor(new FullOptimizerContext(program));
     addParamWhenExitMethodVisitor.accept(program);
-    assertEquals("public void fun(int _newParam_exit);\n",
-        findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun").toString());
-    assertEquals("public EntryPoint$A(int f, int _newParam_exit);\n",
-        findMethod(program.getFromTypeMap("test.EntryPoint$A"), "EntryPoint$A").toString());
+    assertParameterTypes(program, "test.EntryPoint$A.fun()V", "int");
+    assertParameterTypes(program, "test.EntryPoint$A.EntryPoint$A(I) <init>", "int", "int");
   }
 
   public void testAddParamsWhenEnterAndExitMethodVisitor() throws Exception {
@@ -334,10 +330,8 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
     AddParamsWhenEnterAndExitMethodVisitor addParamsWhenEnterAndExitMethodVisitor =
         new AddParamsWhenEnterAndExitMethodVisitor(new FullOptimizerContext(program));
     addParamsWhenEnterAndExitMethodVisitor.accept(program);
-    assertEquals("public void fun(int _newParam_enter, int _newParam_exit);\n",
-        findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun").toString());
-    assertEquals("public EntryPoint$A(int f, int _newParam_enter, int _newParam_exit);\n",
-        findMethod(program.getFromTypeMap("test.EntryPoint$A"), "EntryPoint$A").toString());
+    assertParameterTypes(program, "test.EntryPoint$A.fun()V", "int", "int");
+    assertParameterTypes(program, "test.EntryPoint$A.EntryPoint$A(I) <init>", "int", "int", "int");
   }
 
   public void testAddParamWhenEnterNonConstructorMethodVisitor() throws Exception {
@@ -348,10 +342,8 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
     AddParamWhenEnterNonConstructorMethodVisitor addParamsWhenEnterNonConstructorMethodVisitor =
         new AddParamWhenEnterNonConstructorMethodVisitor(new FullOptimizerContext(program));
     addParamsWhenEnterNonConstructorMethodVisitor.accept(program);
-    assertEquals("public void fun(int _newParam_enter);\n",
-        findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun").toString());
-    assertEquals("public EntryPoint$A(int f);\n",
-        findMethod(program.getFromTypeMap("test.EntryPoint$A"), "EntryPoint$A").toString());
+    assertParameterTypes(program, "test.EntryPoint$A.fun()V", "int");
+    assertParameterTypes(program, "test.EntryPoint$A.EntryPoint$A(I) <init>", "int");
   }
 
   public void testAddParamWhenExitNonConstructorMethodVisitor() throws Exception {
@@ -362,10 +354,8 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
     AddParamWhenExitNonConstructorMethodVisitor addParamsWhenExitNonConstructorMethodVisitor =
         new AddParamWhenExitNonConstructorMethodVisitor(new FullOptimizerContext(program));
     addParamsWhenExitNonConstructorMethodVisitor.accept(program);
-    assertEquals("public void fun(int _newParam_exit);\n",
-        findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun").toString());
-    assertEquals("public EntryPoint$A(int f);\n",
-        findMethod(program.getFromTypeMap("test.EntryPoint$A"), "EntryPoint$A").toString());
+    assertParameterTypes(program, "test.EntryPoint$A.fun()V", "int");
+    assertParameterTypes(program, "test.EntryPoint$A.EntryPoint$A(I) <init>", "int");
   }
 
   public void testSetVariableOfIntToLongByEnterVisitor() throws Exception {
@@ -379,8 +369,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
         findField(program.getFromTypeMap("test.EntryPoint$A"), "field1").toString());
     assertEquals("double field2",
         findField(program.getFromTypeMap("test.EntryPoint$A"), "field2").toString());
-    assertEquals("public void fun(long a);\n",
-        findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun").toString());
+    assertParameterTypes(program, "test.EntryPoint$A.fun(I)V", "long");
   }
 
   public void testSetVariableOfIntToLongByExitVisitor() throws Exception {
@@ -394,8 +383,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
         findField(program.getFromTypeMap("test.EntryPoint$A"), "field1").toString());
     assertEquals("double field2",
         findField(program.getFromTypeMap("test.EntryPoint$A"), "field2").toString());
-    assertEquals("public void fun(long a);\n",
-        findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun").toString());
+    assertParameterTypes(program, "test.EntryPoint$A.fun(I)V", "long");
   }
 
   public void testSetNonFieldVariableOfIntToLongByEnterVisitor() throws Exception {
@@ -409,8 +397,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
         findField(program.getFromTypeMap("test.EntryPoint$A"), "field1").toString());
     assertEquals("double field2",
         findField(program.getFromTypeMap("test.EntryPoint$A"), "field2").toString());
-    assertEquals("public void fun(long a);\n",
-        findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun").toString());
+    assertParameterTypes(program, "test.EntryPoint$A.fun(I)V", "long");
   }
 
   public void testSetNonFieldVariableOfIntToLongByExitVisitor() throws Exception {
@@ -424,8 +411,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
         findField(program.getFromTypeMap("test.EntryPoint$A"), "field1").toString());
     assertEquals("double field2",
         findField(program.getFromTypeMap("test.EntryPoint$A"), "field2").toString());
-    assertEquals("public void fun(long a);\n",
-        findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun").toString());
+    assertParameterTypes(program, "test.EntryPoint$A.fun(I)V", "long");
   }
 
   public void testSetFieldOfIntToLongByEnterVisitor() throws Exception {
@@ -439,8 +425,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
         findField(program.getFromTypeMap("test.EntryPoint$A"), "field1").toString());
     assertEquals("double field2",
         findField(program.getFromTypeMap("test.EntryPoint$A"), "field2").toString());
-    assertEquals("public void fun(int a);\n",
-        findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun").toString());
+    assertParameterTypes(program, "test.EntryPoint$A.fun(I)V", "int");
   }
 
   public void testSetFieldOfIntToLongByExitVisitor() throws Exception {
@@ -454,8 +439,7 @@ public class JChangeTrackingVisitorTest extends JJSTestBase {
         findField(program.getFromTypeMap("test.EntryPoint$A"), "field1").toString());
     assertEquals("double field2",
         findField(program.getFromTypeMap("test.EntryPoint$A"), "field2").toString());
-    assertEquals("public void fun(int a);\n",
-        findMethod(program.getFromTypeMap("test.EntryPoint$A"), "fun").toString());
+    assertParameterTypes(program, "test.EntryPoint$A.fun(I)V", "int");
   }
 
   public void testInitialModifications() throws Exception {

@@ -142,38 +142,66 @@ public class JjsUtils {
           .put(JStringLiteral.class, LiteralTranslators.STRING_LITERAL_TRANSLATOR)
           .build();
 
-  public static void createForwardingMethod(JDeclaredType classToBeModified,
-      JMethod methodToDelegate) {
-    JMethod delegate = new JMethod(methodToDelegate.getSourceInfo(), methodToDelegate.getName(),
-        classToBeModified, methodToDelegate.getType(), false, false, false,
-        methodToDelegate.getAccess());
-    delegate.addThrownExceptions(methodToDelegate.getThrownExceptions());
-    delegate.setSynthetic();
+  /**
+   * Creates a synthetic forwarding  stub in {@code type} with the same signature as
+   * {@code superTypeMethod} that dispatchs to that method..
+   */
+  public static JMethod createForwardingMethod(JDeclaredType type,
+      JMethod methodToDelegateTo) {
+    JMethod forwardingMethod = createEmptyMethodFromExample(type, methodToDelegateTo, false);
 
-    // copy params
-    for (JParameter p : methodToDelegate.getParams()) {
-      delegate.addParam(
-          new JParameter(p.getSourceInfo(), p.getName(), p.getType(), p.isFinal(),
-              p.isThis(), delegate));
+    // This is a synthetic forwading method due to a default.
+    if (methodToDelegateTo.isDefaultMethod()) {
+      forwardingMethod.setDefaultMethod();
     }
-    JMethodBody body = new JMethodBody(methodToDelegate.getSourceInfo());
-    // invoke methodToDelegate
-    JMethodCall delegateCall = new JMethodCall(methodToDelegate.getSourceInfo(),
-        new JThisRef(methodToDelegate.getSourceInfo(), methodToDelegate.getEnclosingType()),
-        methodToDelegate);
-    delegateCall.setStaticDispatchOnly();
+
+    // Create the forwarding body.
+    JMethodBody body = (JMethodBody) forwardingMethod.getBody();
+    // Invoke methodToDelegate
+    JMethodCall forwardingCall = new JMethodCall(methodToDelegateTo.getSourceInfo(),
+        new JThisRef(methodToDelegateTo.getSourceInfo(), methodToDelegateTo.getEnclosingType()),
+        methodToDelegateTo);
+    forwardingCall.setStaticDispatchOnly();
     // copy params
-    for (JParameter p : delegate.getParams()) {
-      delegateCall.addArg(new JParameterRef(p.getSourceInfo(), p));
+    for (JParameter p : forwardingMethod.getParams()) {
+      forwardingCall.addArg(new JParameterRef(p.getSourceInfo(), p));
     }
+
     // return statement if not void return type
-    body.getBlock().addStmt(delegate.getType() == JPrimitiveType.VOID ?
-        delegateCall.makeStatement() :
-        new JReturnStatement(methodToDelegate.getSourceInfo(), delegateCall));
-    delegate.setBody(body);
-    delegate.freezeParamTypes();
-    classToBeModified.addMethod(delegate);
-    delegate.addOverriddenMethod(methodToDelegate);
+    body.getBlock().addStmt(forwardingMethod.getType() == JPrimitiveType.VOID ?
+        forwardingCall.makeStatement() :
+        new JReturnStatement(methodToDelegateTo.getSourceInfo(), forwardingCall));
+    return forwardingMethod;
+  }
+
+  /**
+   * Creates a synthetic abstract stub in {@code type} with the same signature as
+   * {@code superTypeMethod}.
+   */
+  public static JMethod createSyntheticAbstractStub(JDeclaredType type, JMethod superTypeMethod) {
+    assert type.isAbstract();
+    assert superTypeMethod.isAbstract();
+    return createEmptyMethodFromExample(type, superTypeMethod, true);
+  }
+
+  private static JMethod createEmptyMethodFromExample(
+      JDeclaredType inType, JMethod exampleMethod, boolean isAbstract) {
+    JMethod emptyMethod = new JMethod(exampleMethod.getSourceInfo(), exampleMethod.getName(),
+        inType, exampleMethod.getType(), isAbstract, false, false,
+        exampleMethod.getAccess());
+    emptyMethod.addThrownExceptions(exampleMethod.getThrownExceptions());
+    emptyMethod.setSynthetic();
+    // Copy parameters.
+    for (JParameter param : exampleMethod.getParams()) {
+      emptyMethod.addParam(
+          new JParameter(param.getSourceInfo(), param.getName(), param.getType(),
+              param.isFinal(), param.isThis(), emptyMethod));
+    }
+    JMethodBody body = new JMethodBody(exampleMethod.getSourceInfo());
+    emptyMethod.setBody(body);
+    emptyMethod.freezeParamTypes();
+    inType.addMethod(emptyMethod);
+    return emptyMethod;
   }
 
   public static void constructManglingSignature(JMethod x, StringBuilder partialSignature) {

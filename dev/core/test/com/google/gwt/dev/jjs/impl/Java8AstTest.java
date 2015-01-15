@@ -1037,7 +1037,7 @@ public class Java8AstTest extends JJSTestBase {
     JMethod defaultMethod = findMethod(clazz, "method2");
     assertNotNull(defaultMethod);
     assertNotNull(defaultMethod.getBody());
-    assertEquals("{return super();}",
+    assertEquals("{return super.method2();}",
         formatSource(defaultMethod.getBody().toSource()));
   }
 }

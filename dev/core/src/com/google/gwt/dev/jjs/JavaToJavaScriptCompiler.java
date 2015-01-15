@@ -251,7 +251,6 @@ public abstract class JavaToJavaScriptCompiler {
 
         // TODO(stalcup): hide metrics gathering in a callback or subclass
         logger.log(TreeLogger.INFO, "Compiling permutation " + permutationId + "...");
-        printPermutationTrace(permutation);
 
         // (2) Transform unresolved Java AST to resolved Java AST
         ResolveRebinds.exec(jprogram, permutation.getGwtCreateAnswers());
@@ -804,27 +803,6 @@ public abstract class JavaToJavaScriptCompiler {
 
       if (optimizationLevel > OptionOptimize.OPTIMIZE_LEVEL_DRAFT) {
         DuplicateExecuteOnceRemover.exec(jsProgram);
-      }
-      printJsOptimizeTrace(allOptimizerStats);
-    }
-
-    private void printJsOptimizeTrace(List<OptimizerStats> allOptimizerStats) {
-      if (JProgram.isTracingEnabled()) {
-        System.out.println("");
-        System.out.println("               Js Optimization Stats");
-        System.out.println("");
-        for (OptimizerStats stats : allOptimizerStats) {
-          System.out.println(stats.prettyPrint());
-        }
-      }
-    }
-
-    private void printPermutationTrace(Permutation permutation) {
-      if (JProgram.isTracingEnabled()) {
-        System.out.println("-------------------------------------------------------------");
-        System.out.println("|                     (new permutation)                     |");
-        System.out.println("-------------------------------------------------------------");
-        System.out.println("Properties: " + permutation.getProps().prettyPrint());
       }
     }
 
@@ -1424,8 +1402,6 @@ public abstract class JavaToJavaScriptCompiler {
       allOptimizerStats.add(DataflowOptimizer.exec(jprogram));
     }
 
-    printJavaOptimizeTrace(allOptimizerStats);
-
     optimizeEvent.end();
   }
 
@@ -1465,17 +1441,6 @@ public abstract class JavaToJavaScriptCompiler {
     }
     optimizeEvent.end();
     return stats;
-  }
-
-  private void printJavaOptimizeTrace(List<OptimizerStats> allOptimizerStats) {
-    if (JProgram.isTracingEnabled()) {
-      System.out.println("");
-      System.out.println("                Java Optimization Stats");
-      System.out.println("");
-      for (OptimizerStats stats : allOptimizerStats) {
-        System.out.println(stats.prettyPrint());
-      }
-    }
   }
 
   private MinimalRebuildCache getMinimalRebuildCache() {

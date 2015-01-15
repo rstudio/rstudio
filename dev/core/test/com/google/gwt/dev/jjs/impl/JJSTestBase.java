@@ -43,12 +43,16 @@ import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.arg.SourceLevel;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
+import com.google.gwt.thirdparty.guava.common.base.Function;
 import com.google.gwt.thirdparty.guava.common.base.Joiner;
+import com.google.gwt.thirdparty.guava.common.base.Predicates;
+import com.google.gwt.thirdparty.guava.common.collect.FluentIterable;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
 import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import junit.framework.TestCase;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -109,9 +113,11 @@ public abstract class JJSTestBase extends TestCase {
     return findMethod(program, MAIN_METHOD_NAME);
   }
 
-  public static JMethod findMethod(JDeclaredType type, String methodName) {
+  public static JMethod findMethod(JDeclaredType type, String methodNameOrSignature) {
+    // Signatures and names never collide (names never have parens but signatures always do).
     for (JMethod method : type.getMethods()) {
-      if (method.getName().equals(methodName)) {
+      if (method.getSignature().equals(methodNameOrSignature) ||
+          method.getName().equals(methodNameOrSignature)) {
         return method;
       }
     }
@@ -120,8 +126,14 @@ public abstract class JJSTestBase extends TestCase {
   }
 
   public static JMethod findMethod(JProgram program, String methodName) {
-    JDeclaredType mainType = program.getFromTypeMap("test.EntryPoint");
-    return findMethod(mainType, methodName);
+    int lastDot = methodName.lastIndexOf(".");
+    if (lastDot != -1) {
+      String className = methodName.substring(0, lastDot);
+      JDeclaredType clazz = program.getFromTypeMap(className);
+      assertNotNull("Did not find class " + className, clazz);
+      return clazz.findMethod(methodName.substring(lastDot + 1), true);
+    }
+    return findMethod(program.getFromTypeMap("test.EntryPoint"), methodName);
   }
 
   public static JMethod findQualifiedMethod(JProgram program, String methodName) {
@@ -320,6 +332,53 @@ public abstract class JJSTestBase extends TestCase {
    */
   protected SourceLevel sourceLevel = SourceLevel.DEFAULT_SOURCE_LEVEL;
 
+  protected static void assertContainsAll(Iterable<String> expectedMethodSnippets,
+      Set<String> actualMethodSnippets) {
+    List<String> missing = FluentIterable.from(expectedMethodSnippets)
+        .filter(Predicates.not(Predicates.in(actualMethodSnippets)))
+        .toList();
+    assertTrue(missing + "not contained in " + actualMethodSnippets, missing.size() == 0);
+  }
+
+  protected void assertEqualBlock(String expected, String input)
+      throws UnableToCompleteException {
+    JBlock testExpression = getStatement(input);
+    assertEquals(formatSource("{ " + expected + "}"),
+        formatSource(testExpression.toSource()));
+  }
+
+  protected static void assertParameterTypes(JMethod method, JType... parameterTypes) {
+    for (int i = 0; i < parameterTypes.length; i++) {
+      JType parameterType = parameterTypes[i];
+      assertEquals(parameterType, method.getParams().get(i).getType().getUnderlyingType());
+    }
+  }
+
+  protected static void assertParameterTypes(
+      final JProgram program, String methodName, String... parameterTypeNames) {
+    JMethod method = findMethod(program, methodName);
+    assertNotNull("Did not find method " + methodName, method);
+    assertEquals(parameterTypeNames.length, method.getParams().size());
+    JType[] parameterTypes = FluentIterable.from(Arrays.asList(parameterTypeNames))
+        .transform(new Function<String, JType>() {
+          @Override
+          public JType apply(String typeName) {
+            return findType(program, typeName);
+          }
+        })
+        .toArray(JType.class);
+    assertParameterTypes(method, parameterTypes);
+  }
+
+  protected static void assertReturnType(
+      JProgram program, String methodName, String resultTypeName) {
+    JMethod method = findMethod(program, methodName);
+    assertNotNull("Did not find method " + methodName, method);
+    JDeclaredType resultType = program.getFromTypeMap(resultTypeName);
+    assertNotNull("Did not find class " + resultTypeName, resultType);
+    assertEquals(resultType, method.getType().getUnderlyingType());
+  }
+
   public Result assertTransform(String codeSnippet, JVisitor visitor)
       throws UnableToCompleteException {
     JProgram program = compileSnippet("void", codeSnippet, true);
@@ -355,13 +414,6 @@ public abstract class JJSTestBase extends TestCase {
       .replaceAll("\\s([\\p{Punct}&&[^$]])", "$1")  // removes whitespace preceding symbols
                                                     // (except $ which can be part of an identifier)
       .replaceAll("([\\p{Punct}&&[^$]])\\s", "$1"); // removes whitespace succeeding symbols.
-  }
-
-  protected void assertEqualBlock(String expected, String input)
-      throws UnableToCompleteException {
-    JBlock testExpression = getStatement(input);
-    assertEquals(formatSource("{ " + expected + "}"),
-        formatSource(testExpression.toSource()));
   }
 
   protected void addAll(Resource... sourceFiles) {

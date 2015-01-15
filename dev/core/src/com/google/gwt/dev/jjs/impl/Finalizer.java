@@ -168,10 +168,7 @@ public class Finalizer {
 
     @Override
     public void endVisit(JMethod x, Context ctx) {
-      for (int i = 0; i < x.getOverriddenMethods().size(); ++i) {
-        JMethod it = x.getOverriddenMethods().get(i);
-        isOverridden.add(it);
-      }
+      isOverridden.addAll(x.getOverriddenMethods());
     }
 
     @Override

@@ -36,6 +36,7 @@ import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * This class will identify instances of an implicit upcast between
@@ -105,11 +106,11 @@ public class ImplicitUpcastAnalyzer extends JVisitor {
   @Override
   public void endVisit(JMethod x, Context ctx) {
     // check for upcast in return type as compared to an overridden method
-    List<JMethod> overrides = x.getOverriddenMethods();
+    Set<JMethod> overrides = x.getOverriddenMethods();
     if (overrides != null && overrides.size() > 0) {
       // only check the first one, since other ones will be checked when those
       // overridden methods are visited, don't want to do redundant work
-      processIfTypesNotEqual(x.getType(), overrides.get(0).getType(), x.getSourceInfo());
+      processIfTypesNotEqual(x.getType(), overrides.iterator().next().getType(), x.getSourceInfo());
     }
 
     if (x.getBody() != null && x.getBody().isNative()) {

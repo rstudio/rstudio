@@ -17,7 +17,6 @@ package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -48,7 +47,7 @@ public class JGwtCreate extends JExpression {
     return new JNewInstance(info, noArgCtor);
   }
 
-  private final ArrayList<JExpression> instantiationExpressions;
+  private final List<JExpression> instantiationExpressions;
 
   private final List<String> resultTypes;
 
@@ -63,7 +62,7 @@ public class JGwtCreate extends JExpression {
    * Constructor used for cloning an existing node.
    */
   public JGwtCreate(SourceInfo info, String sourceType, List<String> resultTypes, JType type,
-      ArrayList<JExpression> instantiationExpressions) {
+      List<JExpression> instantiationExpressions) {
     super(info);
     this.sourceType = sourceType;
     this.resultTypes = resultTypes;
@@ -71,7 +70,7 @@ public class JGwtCreate extends JExpression {
     this.instantiationExpressions = instantiationExpressions;
   }
 
-  public ArrayList<JExpression> getInstantiationExpressions() {
+  public List<JExpression> getInstantiationExpressions() {
     return instantiationExpressions;
   }
 

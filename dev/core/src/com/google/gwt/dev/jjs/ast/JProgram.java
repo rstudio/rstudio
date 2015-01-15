@@ -119,8 +119,6 @@ public class JProgram extends JNode implements ArrayTypeCreator {
    */
   public static final Set<String> SYNTHETIC_TYPE_NAMES = Sets.newHashSet(CLASS_LITERAL_HOLDER);
 
-  static final Map<String, Set<String>> traceMethods = Maps.newHashMap();
-
   private static final Comparator<JArrayType> ARRAYTYPE_COMPARATOR = new ArrayTypeComparator();
 
   private static final int IS_ARRAY = 2;
@@ -141,31 +139,6 @@ public class JProgram extends JNode implements ArrayTypeCreator {
       IMMORTAL_CODEGEN_TYPES_SET.add("com.google.gwt.lang.CoverageUtil");
     }
     CODEGEN_TYPES_SET.addAll(IMMORTAL_CODEGEN_TYPES_SET);
-
-    /*
-     * The format to trace methods is a colon-separated list of
-     * "className.methodName", such as "Hello.onModuleLoad:Foo.bar". You can
-     * fully-qualify a class to disambiguate classes, and you can also append
-     * the JSNI signature of the method to disambiguate overloads, ala
-     * "Foo.bar(IZ)".
-     */
-    String toTrace = System.getProperty("gwt.jjs.traceMethods");
-    if (toTrace != null) {
-      String[] split = toTrace.split(":");
-      for (String str : split) {
-        int pos = str.lastIndexOf('.');
-        if (pos > 0) {
-          String className = str.substring(0, pos);
-          String methodName = str.substring(pos + 1);
-          Set<String> set = traceMethods.get(className);
-          if (set == null) {
-            set = Sets.newHashSet();
-            traceMethods.put(className, set);
-          }
-          set.add(methodName);
-        }
-      }
-    }
 
     primitiveTypes.put(JPrimitiveType.BOOLEAN.getName(), JPrimitiveType.BOOLEAN);
     primitiveTypes.put(JPrimitiveType.BYTE.getName(), JPrimitiveType.BYTE);
@@ -250,10 +223,6 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     } else {
       return false;
     }
-  }
-
-  public static boolean isTracingEnabled() {
-    return traceMethods.size() > 0;
   }
 
   public static void serializeTypes(List<JDeclaredType> types, ObjectOutputStream stream)
@@ -1069,9 +1038,6 @@ public class JProgram extends JNode implements ArrayTypeCreator {
   public void putStaticImpl(JMethod method, JMethod staticImpl) {
     instanceToStaticMap.put(method, staticImpl);
     staticToInstanceMap.put(staticImpl, method);
-    if (method.isTrace()) {
-      staticImpl.setTrace();
-    }
   }
 
   public void recordClassLiteralFields(Map<JType, JField> classLiteralFields) {
@@ -1219,7 +1185,7 @@ public class JProgram extends JNode implements ArrayTypeCreator {
     } else if (type instanceof JClassType) {
       return IS_CLASS;
     }
-    throw new InternalCompilerException("Unknown reference type");
+    throw new InternalCompilerException("Unknown reference type " + type);
   }
 
   private int countSuperTypes(JClassType type) {

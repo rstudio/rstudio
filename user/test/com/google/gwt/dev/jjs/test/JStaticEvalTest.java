@@ -23,9 +23,8 @@ import com.google.gwt.junit.client.GWTTestCase;
  * does not go wrong.
  * 
  * This test does not verify that static evaluation is happening, merely that it
- * does not make incorrect changes. To verify that static eval is happening, run
- * with <code>-Dgwt.jjs.traceMethods=JStaticEvalTest.*</code> . All calls to
- * assert should become trivial things like <code>assertEquals("", 5, 5)</code>.
+ * does not make incorrect changes. All calls to assert should become trivial things like
+ * <code>assertEquals("", 5, 5)</code>.
  * 
  * To verify the test itself, which includes a lot of random constants, run in
  * Development Mode.

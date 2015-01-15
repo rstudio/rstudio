@@ -84,9 +84,8 @@ public class DevirtualizerTest extends OptimizerTestBase {
     result.intoString(expected.toString());
     // Asserts that a() AND b() method definitions were both duplicated as devirtualized versions
     // even though b() was never called.
-    result.classHasMethodSnippets("EntryPoint$Jso1", Lists.newArrayList("public final int a();",
-        "public final int b();", "public static final int $a(EntryPoint$Jso1 this$static);",
-        "public static final int $b(EntryPoint$Jso1 this$static);"));
+    result.classHasMethods("EntryPoint$Jso1", Lists.newArrayList(
+        "a()I", "b()I", "$a(Ltest/EntryPoint$Jso1;)I", "$b(Ltest/EntryPoint$Jso1;)I"));
   }
 
   public void testDevirtualizeString() throws UnableToCompleteException {
