@@ -85,6 +85,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdCreatedTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateContent;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
+import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
@@ -3521,7 +3522,7 @@ public class RemoteServer implements Server
 
    @Override
    public void getRSConnectAccountList(
-         ServerRequestCallback<JsArrayString> requestCallback)
+         ServerRequestCallback<JsArray<RSConnectAccount>> requestCallback)
    {
       sendRequest(RPC_SCOPE,
             GET_RSCONNECT_ACCOUNT_LIST,

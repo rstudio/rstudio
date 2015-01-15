@@ -31,11 +31,7 @@
 
 
 .rs.addJsonRpcHandler("get_rsconnect_account_list", function() {
-   accounts <- rsconnect::accounts(server = "shinyapps.io")
-   if (is.null(accounts))
-      character()
-   else
-      accounts$name
+   .rs.scalarListFromFrame(rsconnect::accounts())
 })
 
 .rs.addJsonRpcHandler("remove_rsconnect_account", function(account) {

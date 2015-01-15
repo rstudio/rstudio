@@ -26,7 +26,7 @@ public interface RSConnectServerOperations
                ServerRequestCallback<Void> requestCallback);
 
    void getRSConnectAccountList(
-               ServerRequestCallback<JsArrayString> requestCallback);
+               ServerRequestCallback<JsArray<RSConnectAccount>> requestCallback);
 
    void connectRSConnectAccount(String command, 
                ServerRequestCallback<Void> requestCallback);

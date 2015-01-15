@@ -15,13 +15,15 @@
 
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.FontWeight;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -32,6 +34,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectConnectAccountDialog;
 import org.rstudio.studio.client.server.ServerError;
@@ -42,6 +45,31 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 public class PublishingPreferencesPane extends PreferencesPane
 {
+   public class AccountEntry extends Composite
+   {
+      public AccountEntry(RSConnectAccount account)
+      {
+         account_ = account;
+         HorizontalPanel panel = new HorizontalPanel();
+         Label serverLabel = new Label(account.getServer());
+         serverLabel.getElement().getStyle().setFontWeight(FontWeight.BOLD);
+         serverLabel.getElement().getStyle().setMarginRight(10, Unit.PX);
+         panel.add(serverLabel);
+
+         Label nameLabel = new Label(account.getName());
+         panel.add(nameLabel);
+
+         initWidget(panel);
+      }
+      
+      public RSConnectAccount getAccount()
+      {
+         return account_;
+      }
+      
+      final RSConnectAccount account_;
+   }
+   
    @Inject
    public PublishingPreferencesPane(GlobalDisplay globalDisplay,
                                     RSConnectServerOperations server,
@@ -55,7 +83,7 @@ public class PublishingPreferencesPane extends PreferencesPane
       accountLabel.getElement().getStyle().setFontWeight(FontWeight.BOLD);
       add(accountLabel);
       
-      accountList_ = new WidgetListBox<Label>();
+      accountList_ = new WidgetListBox<AccountEntry>();
       accountList_.setHeight("200px");
       add(accountList_);
       
@@ -180,15 +208,16 @@ public class PublishingPreferencesPane extends PreferencesPane
 
    private void refreshAccountList()
    {
-      server_.getRSConnectAccountList(new ServerRequestCallback<JsArrayString>()
+      server_.getRSConnectAccountList(
+            new ServerRequestCallback<JsArray<RSConnectAccount>>()
       {
          @Override
-         public void onResponseReceived(JsArrayString accounts)
+         public void onResponseReceived(JsArray<RSConnectAccount> accounts)
          {
             accountList_.clearItems();
             for (int i = 0; i < accounts.length(); i++)
             {
-               accountList_.addItem(new Label(accounts.get(i)), true);
+               accountList_.addItem(new AccountEntry(accounts.get(i)));
             }
             setDisconnectButtonEnabledState();
          }
@@ -211,7 +240,7 @@ public class PublishingPreferencesPane extends PreferencesPane
    private final GlobalDisplay display_;
    private final UIPrefs uiPrefs_;
    private final RSConnectServerOperations server_;
-   private WidgetListBox<Label> accountList_;
+   private WidgetListBox<AccountEntry> accountList_;
    private ThemedButton connectButton_;
    private ThemedButton disconnectButton_;
 }

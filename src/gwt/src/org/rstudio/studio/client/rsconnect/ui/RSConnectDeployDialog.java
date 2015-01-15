@@ -26,6 +26,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
+import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
@@ -148,10 +149,10 @@ public class RSConnectDeployDialog
          }
       });
       
-      server_.getRSConnectAccountList(new ServerRequestCallback<JsArrayString>()
+      server_.getRSConnectAccountList(new ServerRequestCallback<JsArray<RSConnectAccount>>()
       {
          @Override
-         public void onResponseReceived(JsArrayString accounts)
+         public void onResponseReceived(JsArray<RSConnectAccount> accounts)
          {
             if (accounts.length() == 0)
             {
@@ -172,7 +173,8 @@ public class RSConnectDeployDialog
             }
             else
             {
-               contents_.setAccountList(accounts);
+               // TODO Populate with accounts properly
+               // contents_.setAccountList(accounts);
                if (defaultAccount_ != null)
                   contents_.setDefaultAccount(defaultAccount_);
                updateApplicationList();
@@ -320,10 +322,10 @@ public class RSConnectDeployDialog
    // Runs when we've finished doing a just-in-time account connection
    private void onConnectAccountFinished()
    {
-      server_.getRSConnectAccountList(new ServerRequestCallback<JsArrayString>()
+      server_.getRSConnectAccountList(new ServerRequestCallback<JsArray<RSConnectAccount>>()
       {
          @Override
-         public void onResponseReceived(JsArrayString accounts)
+         public void onResponseReceived(JsArray<RSConnectAccount> accounts)
          {
             if (accounts.length() == 0)
             {
@@ -334,8 +336,8 @@ public class RSConnectDeployDialog
             else
             {
                // We have an account, show it and re-display ourselves
-               contents_.setAccountList(accounts);
-               contents_.setDefaultAccount(accounts.get(0));
+               // contents_.setAccountList(accounts);
+               // contents_.setDefaultAccount(accounts.get(0));
                updateApplicationList();
                showModal();
             }
