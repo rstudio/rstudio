@@ -180,7 +180,8 @@ public class PdfJsWindow extends WindowEx
          if (!win.PDFView.loading) 
          {
             clearInterval(t);
-            win.PDFView.setInitialView();
+            if (win.PDFView.page === 1) 
+               win.PDFView.setInitialView();
          }
       }, 50);
    }-*/;
@@ -190,7 +191,7 @@ public class PdfJsWindow extends WindowEx
       // doesn't exist yet
       var setPage = function(view, page) 
       {
-         if (view && view.pages && view.pages.length >= page)
+         if (view && view.pagesCount && view.pagesCount >= page)
          {
             view.page = page;
             return true;
