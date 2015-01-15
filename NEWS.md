@@ -27,10 +27,16 @@
     - Navigate to file posititions using file:line:col
     - Include parameters in function navigation menu
 * Editor tabs in the source pane can now be rearranged
+* Support for multiple cursors via Ctrl+Alt+Up/Down
 * Alt+Enter to run code while retaining cursor position
 * Comment/uncomment respects indent level when appropriate
 * Shift+Enter now searches backwards in Find/Replace
+* Find All option added in Find/Replace
 * New option to control comment continuation on insertion of new lines
+* Updated to Ace (source editor component) v1.1.8
+* Improved Vim mode:
+     - TODO: new vim features
+* Syntax highlighting modes for many new languages including Clojure, CoffeeScript, C#, Go, Groovy, Haskell, Java, Julia, Lisp, Lua, Matlab, Perl, Ruby, Rust, and Scala.
 
 ### Data Viewer
 
@@ -64,9 +70,14 @@
 
 * Render plots using devicePixelRatio for retina and HDPI screens
 
-### Miscellaneous
+### R Markdown
 
 * Updated to pandoc 1.13.1
+* Make publishing UI easier to discover
+
+
+### Miscellaneous
+
 * Updated rendering engine to Qt 5.4 for improved performance
 * Windows: updated to MSYS SSH 1000.18
 * Bind Cmd+Shift+K shortcut to Compile PDF and Preview HTML
@@ -74,11 +85,16 @@
 * Add Clear Recent Projects menu item to toolbar project menu
 * Command to sync current working directory and Files pane to project directory
 * Eliminated rstudio and manipulate packages (both now available on CRAN)
+
+### Server
+
+* Improved installation by reducing dependencies and providing additional platform-specific builds (e.g. SUSE, RHEL5 vs. RHEL6/7)
 * Server Pro: Support for SPDY protocol
 
 ### Bug Fixes
 
 * Prevent error dialog when getOption("repos") is an unnamed vector
+* Fix for regex Find/Replace lockup with empty strings 
 
 
 
