@@ -86,6 +86,7 @@ public class PdfJsWindow extends WindowEx
          }
          
          // make the sidebar open by default
+         win.PDFView.switchSidebarView('thumbs');
          var container = win.document.getElementById("outerContainer");
          if (container) {
             container.className += " sidebarOpen";
@@ -166,10 +167,28 @@ public class PdfJsWindow extends WindowEx
       {
          jumpToSource.style.display = synctex ? "inline-block" : "none";
       }
+      
+      var win = this;
+
+      // pdf.js doesn't always finish rendering thumbnails--periodically 
+      // check the rendering queue
+      var completeThumbnailRender = function() 
+      {
+         var p = 0;
+         var s = window.setInterval(function() 
+         {
+            // forceRendering kicks of an async process that renders one
+            // thumbnail from the queue, and returns true if it did so.
+            // it returns false if the queue is empty.
+            if (!win.PDFView.pdfThumbnailViewer.forceRendering())
+            {
+               clearInterval(s);
+            }
+         }, 50);
+      }
 
       // set the initial view once the pages appear (on Qt this doesn't happen
       // automatically)
-      var win = this;
       var t = window.setInterval(function() 
       {
          if (typeof(win) === "undefined" || !win) 
@@ -182,6 +201,7 @@ public class PdfJsWindow extends WindowEx
             clearInterval(t);
             if (win.PDFView.page === 1) 
                win.PDFView.setInitialView();
+            completeThumbnailRender();
          }
       }, 50);
    }-*/;
