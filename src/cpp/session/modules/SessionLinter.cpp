@@ -13,12 +13,47 @@
  *
  */
 
+#include "SessionLinter.hpp"
+
+#include <core/Exec.hpp>
+#include <core/Error.hpp>
+
+#include <session/SessionModuleContext.hpp>
+
+#include <boost/shared_ptr.hpp>
+#include <boost/bind.hpp>
+
 namespace session {
 namespace modules {
 namespace linter {
 
+enum LintType {
+   INFO,
+   WARNING,
+   ERROR
+};
+
+class LintItem
+{
+private:
+   int startRow_;
+   int startColumn_;
+   int endRow_;
+   int endColumn_;
+   std::string message;
+};
+
+class LintNode
+{
+private:
+   LintItem item_;
+   boost::shared_ptr<LintNode> pParent_;
+   std::vector< boost::shared_ptr<LintNode> > pChildren_;
+};
+
 core::Error initialize()
 {
+   using namespace core;
    using boost::bind;
    using namespace module_context;
    ExecBlock initBlock;
