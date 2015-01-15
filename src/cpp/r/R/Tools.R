@@ -57,6 +57,12 @@ assign( envir = .rs.Env, ".rs.clearVar", function(name)
    remove(list=fullName, pos=.rs.Env)
 })
 
+assign(envir = .rs.Env, ".rs.getVar", function(name)
+{
+   fullName <- paste(".rs.", name, sep = "")
+   .rs.Env[[fullName]]
+})
+
 .rs.addFunction( "evalInGlobalEnv", function(code)
 {
    eval(parse(text=code), envir=globalenv())
