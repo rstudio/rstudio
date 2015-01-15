@@ -22,6 +22,13 @@ public class RSConnectAccount extends JavaScriptObject
    {
    }
    
+   static public final native RSConnectAccount create(String name, String server) /*-{
+      return { 
+         "name":   name, 
+         "server": server 
+      };
+   }-*/;
+   
    public final native String getName() /*-{
       return this.name;
    }-*/;
@@ -29,4 +36,10 @@ public class RSConnectAccount extends JavaScriptObject
    public final native String getServer() /*-{
       return this.server;
    }-*/;
+   
+   public final boolean equals(RSConnectAccount other)
+   {
+      return getName() == other.getName() && 
+             getServer() == other.getServer();
+   }
 }

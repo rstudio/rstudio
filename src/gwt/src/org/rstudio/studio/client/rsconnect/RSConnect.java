@@ -30,6 +30,7 @@ import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentStartedEvent;
+import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDirectoryState;
@@ -119,7 +120,7 @@ public class RSConnect implements SessionInitHandler,
 
          final String dir = FilePathUtils.dirFromFile(event.getPath());
          RSConnectDeploymentRecord record = dirState_.getLastDeployment(dir);
-         final String lastAccount = record == null ? null : record.getAccount();
+         final RSConnectAccount lastAccount = record == null ? null : record.getAccount();
          final String lastAppName = record == null ? null : record.getName();
          
          // don't consider this to be a deployment of a specific file unless
@@ -149,7 +150,8 @@ public class RSConnect implements SessionInitHandler,
    {
       server_.deployShinyApp(event.getPath(), 
                              event.getSourceFile(),
-                             event.getRecord().getAccount(), 
+                             event.getRecord().getAccountName(), 
+                             event.getRecord().getServer(),
                              event.getRecord().getName(), 
       new ServerRequestCallback<Boolean>()
       {
@@ -307,7 +309,8 @@ public class RSConnect implements SessionInitHandler,
       
       // We need to further filter the list by deployments that are 
       // eligible for termination (i.e. are currently running)
-      server_.getRSConnectAppList(recordList.get(0).getAccount(),
+      server_.getRSConnectAppList(recordList.get(0).getAccountName(),
+            recordList.get(0).getServer(),
             new ServerRequestCallback<JsArray<RSConnectApplicationInfo>>()
       {
          @Override

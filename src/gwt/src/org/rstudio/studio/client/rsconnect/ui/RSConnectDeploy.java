@@ -19,7 +19,10 @@ import java.util.List;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.FilePathUtils;
+import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
+import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
@@ -67,8 +70,9 @@ public class RSConnectDeploy extends Composite
       ImageResource deployIllustration();
    }
 
-   public RSConnectDeploy()
+   public RSConnectDeploy(RSConnectServerOperations server, GlobalDisplay display)
    {
+      accountList = new RSConnectAccountList(server, display);
       initWidget(uiBinder.createAndBindUi(this));
 
       // Validate the application name on every keystroke
@@ -89,31 +93,14 @@ public class RSConnectDeploy extends Composite
       appName.setText(FilePathUtils.friendlyFileName(dir));
    }
 
-   public void setAccountList(JsArrayString accounts)
+   public void setDefaultAccount(RSConnectAccount account)
    {
-      accountList.clear();
-      for (int i = 0; i < accounts.length(); i++)
-         accountList.addItem(accounts.get(i));
+      accountList.selectAccount(account);
    }
    
-   public void setDefaultAccount(String defaultAccount)
+   public RSConnectAccount getSelectedAccount()
    {
-      for (int i = 0; i < accountList.getItemCount(); i++)
-      {
-         if (accountList.getItemText(i).equals(defaultAccount))
-         {
-            accountList.setSelectedIndex(i);
-            break;
-         }
-      }
-   }
-   
-   public String getSelectedAccount()
-   {
-      int idx = accountList.getSelectedIndex();
-      return idx >= 0 ? 
-            accountList.getItemText(idx) :
-            null;
+      return accountList.getSelectedAccount();
    }
    
    public String getSelectedApp()
@@ -231,7 +218,7 @@ public class RSConnectDeploy extends Composite
    @UiField Anchor urlAnchor;
    @UiField Label nameLabel;
    @UiField InlineLabel statusLabel;
-   @UiField ListBox accountList;
+   @UiField(provided=true) RSConnectAccountList accountList;
    @UiField ListBox appList;
    @UiField TextBox appName;
    @UiField HTMLPanel appInfoPanel;

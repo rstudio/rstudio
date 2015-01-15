@@ -24,6 +24,8 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -97,6 +99,23 @@ public class RSConnectAccountList extends Composite
          return accounts_.get(idx);
       }
       return null;
+   }
+   
+   public void selectAccount(RSConnectAccount account)
+   {
+      for (int i = 0; i < accounts_.length(); i ++)
+      {
+         if (accounts_.get(i).equals(account))
+         {
+            accountList_.setSelectedIndex(i);
+            break;
+         }
+      }
+   }
+   
+   public HandlerRegistration addChangeHandler(ChangeHandler handler)
+   {
+      return accountList_.addChangeHandler(handler);
    }
    
    private final WidgetListBox<AccountEntry> accountList_;

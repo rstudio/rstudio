@@ -3556,10 +3556,12 @@ public class RemoteServer implements Server
    @Override
    public void getRSConnectAppList(
          String accountName,
+         String server,
          ServerRequestCallback<JsArray<RSConnectApplicationInfo>> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(accountName));
+      params.set(1, new JSONString(server));
       sendRequest(RPC_SCOPE,
             GET_RSCONNECT_APP_LIST,
             params,
@@ -3581,12 +3583,13 @@ public class RemoteServer implements Server
    
    @Override
    public void deployShinyApp(String dir, String file, String account, 
-         String appName, ServerRequestCallback<Boolean> requestCallback)
+         String appName, String server, ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(dir));
       params.set(1, new JSONString(file));
       params.set(2, new JSONString(account));
+      params.set(2, new JSONString(server));
       params.set(3, new JSONString(appName));
       sendRequest(RPC_SCOPE,
             DEPLOY_SHINY_APP,

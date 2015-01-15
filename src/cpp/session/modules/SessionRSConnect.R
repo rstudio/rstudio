@@ -34,13 +34,12 @@
    .rs.scalarListFromFrame(rsconnect::accounts())
 })
 
-.rs.addJsonRpcHandler("remove_rsconnect_account", function(account) {
-   rsconnect::removeAccount(account, server = "shinyapps.io")
+.rs.addJsonRpcHandler("remove_rsconnect_account", function(account, server) {
+   rsconnect::removeAccount(account, server)
 })
 
-.rs.addJsonRpcHandler("get_rsconnect_app_list", function(account) {
-   .rs.scalarListFromFrame(rsconnect::applications(account,
-                                                   server = "shinyapps.io"))
+.rs.addJsonRpcHandler("get_rsconnect_app_list", function(account, server) {
+   .rs.scalarListFromFrame(rsconnect::applications(account, server))
 })
 
 .rs.addJsonRpcHandler("get_rsconnect_deployments", function(dir) {

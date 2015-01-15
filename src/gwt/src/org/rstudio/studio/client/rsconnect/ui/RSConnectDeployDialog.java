@@ -54,12 +54,12 @@ public class RSConnectDeployDialog
                                 EventBus events,
                                 final String sourceDir, 
                                 String sourceFile,
-                                final String lastAccount, 
+                                final RSConnectAccount lastAccount, 
                                 String lastAppName, 
                                 boolean isSatellite)
                                 
    {
-      super(server, display, new RSConnectDeploy());
+      super(server, display, new RSConnectDeploy(server, display));
       setText("Publish to Server");
       setWidth("350px");
       deployButton_ = new ThemedButton("Publish");
@@ -253,14 +253,14 @@ public class RSConnectDeployDialog
    
    private void updateApplicationList()
    {
-      final String accountName = contents_.getSelectedAccount();
-      if (accountName == null)
+      final RSConnectAccount account = contents_.getSelectedAccount();
+      if (account == null)
          return;
 
       // Check to see if the app list is already in our cache
-      if (apps_.containsKey(accountName))
+      if (apps_.containsKey(account))
       {
-         setAppList(apps_.get(accountName));
+         setAppList(apps_.get(account));
          return;
       }
       
@@ -276,7 +276,7 @@ public class RSConnectDeployDialog
       t.schedule(500);
 
       // Not already in our cache, fetch it and populate the cache
-      server_.getRSConnectAppList(accountName,
+      server_.getRSConnectAppList(account.getName(), account.getServer(),
             new ServerRequestCallback<JsArray<RSConnectApplicationInfo>>()
       {
          @Override
@@ -286,7 +286,7 @@ public class RSConnectDeployDialog
 
             t.cancel();
             indicator_.onCompleted();
-            apps_.put(accountName, apps);
+            apps_.put(account, apps);
             setAppList(apps);
          }
 
@@ -358,7 +358,7 @@ public class RSConnectDeployDialog
       if (appName == null || appName == "Create New")
          appName = contents_.getNewAppName();
       
-      String account = contents_.getSelectedAccount();
+      RSConnectAccount account = contents_.getSelectedAccount();
       
       if (isSatellite_)
       {
@@ -414,11 +414,11 @@ public class RSConnectDeployDialog
    private ThemedButton deployButton_;
    private ProgressIndicator indicator_;
    private CheckBox launchCheck_;
-   private String defaultAccount_;
+   private RSConnectAccount defaultAccount_;
    
-   // Map of account name to a list of applications owned by that account
-   private Map<String, JsArray<RSConnectApplicationInfo>> apps_ = 
-         new HashMap<String, JsArray<RSConnectApplicationInfo>>();
+   // Map of account to a list of applications owned by that account
+   private Map<RSConnectAccount, JsArray<RSConnectApplicationInfo>> apps_ = 
+         new HashMap<RSConnectAccount, JsArray<RSConnectApplicationInfo>>();
    
    // Map of app URL to the deployment made to that URL
    private Map<String, RSConnectDeploymentRecord> deployments_ = 
