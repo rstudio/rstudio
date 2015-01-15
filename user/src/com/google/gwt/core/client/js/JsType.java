@@ -42,5 +42,4 @@ import java.lang.annotation.Target;
 @Documented
 public @interface JsType {
   String prototype() default "";
-  boolean isNative() default false;
 }
