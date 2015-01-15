@@ -8,13 +8,14 @@
       position: relative;
       overflow: hidden;
       margin: 5px 5px 5px 0px;
-      padding: 5px 0px 5px 0px;
+      padding: 5px 0px 5px 5px;
    }
 
    .consoleErrorCommands {
       top: 5px;
       float: right;
       margin-right: 10px;
+      margin-left: 5px;
       margin-bottom: 15px;
       line-height: 80%;
       position: relative;
@@ -40,6 +41,13 @@
    
    .errorMessage {
       display: inline;
+      word-wrap: break-word;
+      word-break: break-word;
+   }
+
+   .errorMessage:before {
+      content: "";
+      margin-left: -0.5em;
    }
    
    .framePanel {
