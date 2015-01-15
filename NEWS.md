@@ -91,6 +91,7 @@
 * Add Clear Recent Projects menu item to toolbar project menu
 * Command to sync current working directory and Files pane to project directory
 * Eliminated rstudio and manipulate packages (both now available on CRAN)
+* Updated internal PDF viewer (PDF.js) to version 1.0.1040 
 
 ### Server
 
