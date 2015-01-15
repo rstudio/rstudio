@@ -40,7 +40,8 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
                             PaneLayoutPreferencesPane paneLayout,
                             PackagesPreferencesPane packages,
                             SourceControlPreferencesPane sourceControl,
-                            SpellingPreferencesPane spelling)
+                            SpellingPreferencesPane spelling, 
+                            PublishingPreferencesPane publishing)
    {
       super("Options", 
             res.styles().panelContainer(),
@@ -52,7 +53,8 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
                                    packages,
                                    compilePdf,
                                    spelling,
-                                   sourceControl}); 
+                                   sourceControl, 
+                                   publishing}); 
 
       session_ = session;
       server_ = server;
