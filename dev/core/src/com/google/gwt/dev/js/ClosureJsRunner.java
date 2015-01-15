@@ -377,58 +377,58 @@ public class ClosureJsRunner {
     options.setInputVariableMapSerialized(VariableMap.fromMap(varNames).toBytes());
     if (jsOutputOption == JsOutputOption.OBFUSCATED) {
       options.setRenamingPolicy(VariableRenamingPolicy.ALL, PropertyRenamingPolicy.OFF);
-      options.prettyPrint = false;
+      options.setPrettyPrint(false);
       // This can help debug renaming policy changes.
       // options.generatePseudoNames = true;
     } else {
       options.setRenamingPolicy(VariableRenamingPolicy.OFF, PropertyRenamingPolicy.OFF);
-      options.prettyPrint = true;
+      options.setPrettyPrint(true);
     }
 
     // All the safe optimizations.
-    options.closurePass = true;
-    options.foldConstants = true;
-    options.coalesceVariableNames = true;
-    options.deadAssignmentElimination = true;
+    options.setClosurePass(true);
+    options.setFoldConstants(true);
+    options.setCoalesceVariableNames(true);
+    options.setDeadAssignmentElimination(true);
     options.setExtractPrototypeMemberDeclarations(true);
-    options.collapseVariableDeclarations = true;
-    options.convertToDottedProperties = true;
-    options.rewriteFunctionExpressions = true;
-    options.labelRenaming = true;
-    options.removeDeadCode = true;
-    options.optimizeArgumentsArray = true;
+    options.setCollapseVariableDeclarations(true);
+    options.setConvertToDottedProperties(true);
+    options.setRewriteFunctionExpressions(true);
+    options.setLabelRenaming(true);
+    options.setRemoveDeadCode(true);
+    options.setOptimizeArgumentsArray(true);
     options.setCollapseObjectLiterals(true);
     options.setShadowVariables(true);
 
     // All the advance optimizations.
-    options.reserveRawExports = true;
-    options.removeUnusedPrototypeProperties = true;
-    options.collapseAnonymousFunctions = true;
-    options.smartNameRemoval = true; // ?
-    options.inlineConstantVars = true;
+    options.setReserveRawExports(true);
+    options.setRemoveUnusedPrototypeProperties(true);
+    options.setCollapseAnonymousFunctions(true);
+    options.setSmartNameRemoval(true); // ?
+    options.setInlineConstantVars(true);
     options.setInlineFunctions(Reach.ALL);
-    options.inlineGetters = true;
+    options.setInlineGetters(true);
     options.setInlineVariables(Reach.ALL);
-    options.flowSensitiveInlineVariables = true;
-    options.computeFunctionSideEffects = true;
+    options.setFlowSensitiveInlineVariables(true);
+    options.setComputeFunctionSideEffects(true);
     // Remove unused vars also removes unused functions.
     options.setRemoveUnusedVariable(Reach.ALL);
-    options.optimizeParameters = true;
-    options.optimizeReturns = true;
-    options.optimizeCalls = true;
+    options.setOptimizeParameters(true);
+    options.setOptimizeReturns(true);
+    options.setOptimizeCalls(true);
 
     // Maybe turn these off as well
-    options.collapseProperties = true; // ?
-    options.crossModuleCodeMotion = true; // ?
-    options.crossModuleMethodMotion = true; // ?
-    options.devirtualizePrototypeMethods = true; // ?
+    options.setCollapseProperties(true); // ?
+    options.setCrossModuleCodeMotion(true); // ?
+    options.setCrossModuleMethodMotion(true); // ?
+    options.setDevirtualizePrototypeMethods(true); // ?
 
     // Advanced optimization, disabled
     options.setRemoveClosureAsserts(false);
-    options.aliasKeywords = false;
-    options.removeUnusedPrototypePropertiesInExterns = false;
-    options.checkGlobalThisLevel = CheckLevel.OFF;
-    options.rewriteFunctionExpressions = false; // Performance hit
+    options.setAliasKeywords(false);
+    options.setRemoveUnusedPrototypePropertiesInExterns(false);
+    options.setCheckGlobalThisLevel(CheckLevel.OFF);
+    options.setRewriteFunctionExpressions(false); // Performance hit
 
     // Kindly tell the user that they have JsDocs that we don't understand.
     options.setWarningLevel(DiagnosticGroups.NON_STANDARD_JSDOC, CheckLevel.OFF);
