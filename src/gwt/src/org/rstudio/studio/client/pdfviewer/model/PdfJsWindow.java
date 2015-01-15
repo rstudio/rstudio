@@ -87,6 +87,7 @@ public class PdfJsWindow extends WindowEx
          
          // make the sidebar open by default
          win.PDFView.switchSidebarView('thumbs');
+         win.PDFView.preferenceSidebarViewOnLoad = 1;
          var container = win.document.getElementById("outerContainer");
          if (container) {
             container.className += " sidebarOpen";
@@ -170,23 +171,6 @@ public class PdfJsWindow extends WindowEx
       
       var win = this;
 
-      // pdf.js doesn't always finish rendering thumbnails--periodically 
-      // check the rendering queue
-      var completeThumbnailRender = function() 
-      {
-         var p = 0;
-         var s = window.setInterval(function() 
-         {
-            // forceRendering kicks of an async process that renders one
-            // thumbnail from the queue, and returns true if it did so.
-            // it returns false if the queue is empty.
-            if (!win.PDFView.pdfThumbnailViewer.forceRendering())
-            {
-               clearInterval(s);
-            }
-         }, 50);
-      }
-
       // set the initial view once the pages appear (on Qt this doesn't happen
       // automatically)
       var t = window.setInterval(function() 
@@ -201,7 +185,6 @@ public class PdfJsWindow extends WindowEx
             clearInterval(t);
             if (win.PDFView.page === 1) 
                win.PDFView.setInitialView();
-            completeThumbnailRender();
          }
       }, 50);
    }-*/;
@@ -252,7 +235,7 @@ public class PdfJsWindow extends WindowEx
    }-*/;
    
    public final native float getCurrentScale() /*-{
-      return this.PDFView.currentScale;
+      return this.PDFView.pdfViewer.currentScale;
    }-*/;
 
    private static void firePDFLoadEvent()
@@ -383,7 +366,7 @@ public class PdfJsWindow extends WindowEx
       final double y = pdfLocation.getY() * factor;
       final double w = pdfLocation.getWidth() * factor;
       final double h = pdfLocation.getHeight() * factor;
-
+      
       final Value<Integer> retries = new Value<Integer>(0);
 
       // Sometimes pageContainer is null during load, so retry every 100ms
