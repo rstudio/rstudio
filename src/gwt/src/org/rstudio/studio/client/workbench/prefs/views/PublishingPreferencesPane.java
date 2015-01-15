@@ -36,6 +36,7 @@ import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectAccountList;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectConnectAccountDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -45,31 +46,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 public class PublishingPreferencesPane extends PreferencesPane
 {
-   public class AccountEntry extends Composite
-   {
-      public AccountEntry(RSConnectAccount account)
-      {
-         account_ = account;
-         HorizontalPanel panel = new HorizontalPanel();
-         Label serverLabel = new Label(account.getServer());
-         serverLabel.getElement().getStyle().setFontWeight(FontWeight.BOLD);
-         serverLabel.getElement().getStyle().setMarginRight(10, Unit.PX);
-         panel.add(serverLabel);
-
-         Label nameLabel = new Label(account.getName());
-         panel.add(nameLabel);
-
-         initWidget(panel);
-      }
-      
-      public RSConnectAccount getAccount()
-      {
-         return account_;
-      }
-      
-      final RSConnectAccount account_;
-   }
-   
    @Inject
    public PublishingPreferencesPane(GlobalDisplay globalDisplay,
                                     RSConnectServerOperations server,
@@ -83,8 +59,10 @@ public class PublishingPreferencesPane extends PreferencesPane
       accountLabel.getElement().getStyle().setFontWeight(FontWeight.BOLD);
       add(accountLabel);
       
-      accountList_ = new WidgetListBox<AccountEntry>();
+      accountList_ = new RSConnectAccountList(server, globalDisplay);
       accountList_.setHeight("200px");
+      accountList_.setWidth("300px");
+      accountList_.getElement().getStyle().setMarginBottom(10, Unit.PX);
       add(accountList_);
       
       HorizontalPanel panel = new HorizontalPanel();
@@ -115,7 +93,6 @@ public class PublishingPreferencesPane extends PreferencesPane
    @Override
    protected void initialize(RPrefs rPrefs)
    {
-      refreshAccountList();
    }
 
    @Override
@@ -146,7 +123,7 @@ public class PublishingPreferencesPane extends PreferencesPane
    private void onDisconnect()
    {
       // TODO: read selected account
-      final String account = "";
+      final String account = accountList_.getSelectedAccount().getName();
       if (account == null)
       {
          display_.showErrorMessage("Error Disconnection Account", 
@@ -200,47 +177,22 @@ public class PublishingPreferencesPane extends PreferencesPane
          @Override
          public void onClose(CloseEvent<PopupPanel> event)
          {
-            refreshAccountList();
+            accountList_.refreshAccountList();
          }
       });
       dialog.showModal();
    }
 
-   private void refreshAccountList()
-   {
-      server_.getRSConnectAccountList(
-            new ServerRequestCallback<JsArray<RSConnectAccount>>()
-      {
-         @Override
-         public void onResponseReceived(JsArray<RSConnectAccount> accounts)
-         {
-            accountList_.clearItems();
-            for (int i = 0; i < accounts.length(); i++)
-            {
-               accountList_.addItem(new AccountEntry(accounts.get(i)));
-            }
-            setDisconnectButtonEnabledState();
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            display_.showErrorMessage("Error retrieving accounts", 
-                                     error.getMessage());
-         }
-      });
-   }
-   
    private void setDisconnectButtonEnabledState()
    {
       disconnectButton_.setEnabled(
-            accountList_.getSelectedIndex() >= 0);
+            accountList_.getSelectedAccount() != null);
    }
    
    private final GlobalDisplay display_;
    private final UIPrefs uiPrefs_;
    private final RSConnectServerOperations server_;
-   private WidgetListBox<AccountEntry> accountList_;
+   private RSConnectAccountList accountList_;
    private ThemedButton connectButton_;
    private ThemedButton disconnectButton_;
 }
