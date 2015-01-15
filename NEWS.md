@@ -35,7 +35,13 @@
 * New option to control comment continuation on insertion of new lines
 * Updated to Ace (source editor component) v1.1.8
 * Improved Vim mode:
-     - TODO: new vim features
+    - Various bug fixes
+    - Visual block selection (CTRL + v)
+    - Multiple-cursor aware
+    - Macros (`q`)
+    - Marks (`m`)
+    - Quick find (`/`)
+    - Support a subset of commands in `:`
 * Syntax highlighting modes for many new languages including Clojure, CoffeeScript, C#, Go, Groovy, Haskell, Java, Julia, Lisp, Lua, Matlab, Perl, Ruby, Rust, and Scala.
 
 ### Data Viewer
