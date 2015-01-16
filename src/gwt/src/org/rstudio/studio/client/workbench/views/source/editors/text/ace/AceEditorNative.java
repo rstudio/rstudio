@@ -263,8 +263,9 @@ public class AceEditorNative extends JavaScriptObject {
    }-*/;
    
    public final native void insert(String text) /*-{
+      var that = this;
       this.forEachSelection(function() {
-         this.replace(this.getSelectionRange(), text);
+         that.insert(text);
       });
    }-*/;
    
