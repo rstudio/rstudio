@@ -138,7 +138,6 @@
   # they're data frames, but don't actually support the subsetting operations
   # needed for search/sort/filter without an explicit cast
   x <- as.data.frame(x)
-  colnames <- names(x)
 
   # apply columnwise filters
   for (i in seq_along(filtered)) {
@@ -160,12 +159,12 @@
         filterval <- as.numeric(filterval)
         matches <- as.numeric(x[[i]]) == filterval
         matches[is.na(matches)] <- FALSE
-        x <- x[matches,]
+        x <- x[matches, , drop = FALSE]
       }
       else if (identical(filtertype, "character"))
       {
         # apply character filter: non-case-sensitive prefix
-        x <- x[grepl(filterval, x[[i]], ignore.case = TRUE),]
+        x <- x[grepl(filterval, x[[i]], ignore.case = TRUE), , drop = FALSE]
       } 
       else if (identical(filtertype, "numeric"))
       {
@@ -173,21 +172,12 @@
         filterval <- as.numeric(strsplit(filterval, "-")[[1]])
         if (length(filterval) > 1)
           # range filter
-          x <- x[x[[i]] >= filterval[1] & x[[i]] <= filterval[2],]
+          x <- x[x[[i]] >= filterval[1] & x[[i]] <= filterval[2], , drop = FALSE]
         else
           # equality filter
-          x <- x[x[[i]] == filterval,]
+          x <- x[x[[i]] == filterval, , drop = FALSE]
       }
     }
-  }
-
-  # when x is a single column data frame, filtering can cause x to be assigned
-  # to the vector representing the column (so it's no longer a frame). restore
-  # the lost column name in this case.
-  if (!is.data.frame(x))
-  {
-    x <- as.data.frame(x)
-    names(x) <- colnames
   }
 
   # apply global search
@@ -195,7 +185,7 @@
   {
     x <- x[Reduce("|", lapply(x, function(column) { 
              grepl(search, column, ignore.case = TRUE)
-           })),]
+           })), , drop = FALSE]
   }
 
   # apply sort
@@ -206,13 +196,15 @@
       # extract the first value from each cell for ordering (handle
       # vector-valued columns gracefully)
       x <- as.data.frame(x[order(vapply(x[[col]], `[`, 0, 1), 
-                                 decreasing = identical(dir, "desc")),])
+                                 decreasing = identical(dir, "desc")), ,
+                           drop = FALSE])
     }
     else
     {
       # skip the expensive vapply when we're dealing with scalars
       x <- as.data.frame(x[order(x[[col]], 
-                                 decreasing = identical(dir, "desc")),])
+                                 decreasing = identical(dir, "desc")), ,
+                           drop = FALSE])
     }
   }
 
