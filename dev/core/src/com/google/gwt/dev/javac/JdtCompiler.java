@@ -29,6 +29,7 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.collect.ArrayListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.ListMultimap;
+import com.google.gwt.thirdparty.guava.common.io.BaseEncoding;
 import com.google.gwt.util.tools.Utility;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
@@ -457,7 +458,56 @@ public class JdtCompiler {
         return classPathAnswer;
       }
 
+      // LambdaMetafactory is byte-code side artifact of JDT compile and actually not referenced by
+      // our AST. However, this class is only available in JDK8+ so JdtCompiler fails to validate
+      // the classes that are referencing it. We tackle that by providing a stub version if it is
+      // not found in the class path.
+      if (internalName.equals("java/lang/invoke/LambdaMetafactory")) {
+        try {
+          ClassFileReader cfr = new ClassFileReader(getLambdaMetafactoryBytes(),
+              "synthtetic:java/lang/invoke/LambdaMetafactory".toCharArray(), true);
+          return new NameEnvironmentAnswer(cfr, null);
+        } catch (ClassFormatException e) {
+          e.printStackTrace();
+        }
+      }
+
       return null;
+    }
+
+    /*
+      Generated from:
+
+      public class LambdaMetafactory {
+        public static CallSite metafactory(MethodHandles.Lookup caller, String invokedName,
+            MethodType invokedType, MethodType samMethodType, MethodHandle implMethod,
+            MethodType instantiatedMethodType) {
+          return null;
+        }
+
+        public static CallSite altMetafactory(MethodHandles.Lookup caller, String invokedName,
+            MethodType invokedType, Object... args) {
+          return null;
+        }
+      }
+     */
+    private byte[] getLambdaMetafactoryBytes() {
+      return BaseEncoding.base64().decode(
+          "yv66vgAAADMAFwoAAwARBwASBwATAQAGPGluaXQ+AQADKClWAQAEQ29kZQEAD0xpbmVOdW1iZXJU"
+          + "YWJsZQEAC21ldGFmYWN0b3J5BwAVAQAGTG9va3VwAQAMSW5uZXJDbGFzc2VzAQDMKExqYXZhL2xh"
+          + "bmcvaW52b2tlL01ldGhvZEhhbmRsZXMkTG9va3VwO0xqYXZhL2xhbmcvU3RyaW5nO0xqYXZhL2xh"
+          + "bmcvaW52b2tlL01ldGhvZFR5cGU7TGphdmEvbGFuZy9pbnZva2UvTWV0aG9kVHlwZTtMamF2YS9s"
+          + "YW5nL2ludm9rZS9NZXRob2RIYW5kbGU7TGphdmEvbGFuZy9pbnZva2UvTWV0aG9kVHlwZTspTGph"
+          + "dmEvbGFuZy9pbnZva2UvQ2FsbFNpdGU7AQAOYWx0TWV0YWZhY3RvcnkBAIYoTGphdmEvbGFuZy9p"
+          + "bnZva2UvTWV0aG9kSGFuZGxlcyRMb29rdXA7TGphdmEvbGFuZy9TdHJpbmc7TGphdmEvbGFuZy9p"
+          + "bnZva2UvTWV0aG9kVHlwZTtbTGphdmEvbGFuZy9PYmplY3Q7KUxqYXZhL2xhbmcvaW52b2tlL0Nh"
+          + "bGxTaXRlOwEAClNvdXJjZUZpbGUBABZMYW1iZGFNZXRhZmFjdG9yeS5qYXZhDAAEAAUBACJqYXZh"
+          + "L2xhbmcvaW52b2tlL0xhbWJkYU1ldGFmYWN0b3J5AQAQamF2YS9sYW5nL09iamVjdAcAFgEAJWph"
+          + "dmEvbGFuZy9pbnZva2UvTWV0aG9kSGFuZGxlcyRMb29rdXABAB5qYXZhL2xhbmcvaW52b2tlL01l"
+          + "dGhvZEhhbmRsZXMAIQACAAMAAAAAAAMAAQAEAAUAAQAGAAAAHQABAAEAAAAFKrcAAbEAAAABAAcA"
+          + "AAAGAAEAAAAGAAkACAAMAAEABgAAABoAAQAGAAAAAgGwAAAAAQAHAAAABgABAAAAEACJAA0ADgAB"
+          + "AAYAAAAaAAEABAAAAAIBsAAAAAEABwAAAAYAAQAAABUAAgAPAAAAAgAQAAsAAAAKAAEACQAUAAoA"
+          + "GQ==");
     }
 
     private NameEnvironmentAnswer findTypeInCache(String internalName) {
