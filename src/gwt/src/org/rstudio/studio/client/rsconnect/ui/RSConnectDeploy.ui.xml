@@ -65,7 +65,7 @@
 	{
 	  background-color: #ffffff;
      border: 1px solid gray;
-     height: 110px;
+     height: 150px;
      width: 250px;
      padding: 7px;
      margin-top: 5px;
@@ -98,6 +98,15 @@
 	  height: 100px;
 	}
 	
+	.accountAnchor
+	{
+	  text-align: right;
+	  font-size: x-small;
+	  display: block;
+	  margin-top: 5px;
+	  cursor: pointer;
+	}
+	
 	</ui:style>
 	<g:HTMLPanel>
 	<g:Image resource="{res.deployIllustration}"></g:Image>
@@ -113,7 +122,10 @@
      </g:customCell>
      <g:customCell styleName="{style.rootCell}">
       <g:HTMLPanel>
-         <g:Label styleName="{style.controlLabel}" text="Destination:"></g:Label>
+         <g:HorizontalPanel width="100%">
+         <g:Label styleName="{style.controlLabel}" text="Destination Account:"></g:Label>
+         <g:Anchor styleName="rstudio-HyperlinkLabel {style.accountAnchor}" ui:field="addAccountAnchor" text="Add New Account"></g:Anchor>
+         </g:HorizontalPanel>
          <rsc:RSConnectAccountList styleName="{style.accountList}" ui:field="accountList"></rsc:RSConnectAccountList>
          <g:Label styleName="{style.controlLabel}" text="Application:"></g:Label>
          <g:ListBox styleName="{style.dropListControl}" ui:field="appList"></g:ListBox>

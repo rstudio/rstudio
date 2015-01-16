@@ -27,8 +27,12 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.regexp.shared.RegExp;
 import com.google.gwt.resources.client.ClientBundle;
@@ -44,6 +48,7 @@ import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -70,7 +75,8 @@ public class RSConnectDeploy extends Composite
       ImageResource deployIllustration();
    }
 
-   public RSConnectDeploy(RSConnectServerOperations server, GlobalDisplay display)
+   public RSConnectDeploy(final RSConnectServerOperations server, 
+                          final GlobalDisplay display)
    {
       accountList = new RSConnectAccountList(server, display);
       initWidget(uiBinder.createAndBindUi(this));
@@ -82,6 +88,27 @@ public class RSConnectDeploy extends Composite
          public void onKeyUp(KeyUpEvent event)
          {
             validateAppName();
+         }
+      });
+      // Invoke the "add account" dialog
+      addAccountAnchor.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            RSConnectConnectAccountDialog dialog = 
+                  new RSConnectConnectAccountDialog(server, display);
+            dialog.addCloseHandler(new CloseHandler<PopupPanel>()
+            {
+               @Override
+               public void onClose(CloseEvent<PopupPanel> event)
+               {
+                  accountList.refreshAccountList();
+               }
+            });
+            dialog.showModal();
+            event.preventDefault();
+            event.stopPropagation();
          }
       });
    }
@@ -216,6 +243,7 @@ public class RSConnectDeploy extends Composite
    }
    
    @UiField Anchor urlAnchor;
+   @UiField Anchor addAccountAnchor;
    @UiField Label nameLabel;
    @UiField InlineLabel statusLabel;
    @UiField(provided=true) RSConnectAccountList accountList;
