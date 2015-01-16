@@ -47,11 +47,6 @@ public class ConditionWhenTypeIs extends Condition {
   }
 
   @Override
-  public String toSource() {
-    return String.format("requestTypeClass == @%s::class", exactTypeSourceName);
-  }
-
-  @Override
   public String toString() {
     return "<when-type-is class='" + exactTypeSourceName + "'/>";
   }

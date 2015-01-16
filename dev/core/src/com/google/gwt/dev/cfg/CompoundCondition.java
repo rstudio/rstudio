@@ -16,13 +16,9 @@
 package com.google.gwt.dev.cfg;
 
 import com.google.gwt.dev.util.collect.Sets;
-import com.google.gwt.thirdparty.guava.common.base.Joiner;
 import com.google.gwt.thirdparty.guava.common.base.Objects;
-import com.google.gwt.thirdparty.guava.common.base.Strings;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -65,27 +61,4 @@ public abstract class CompoundCondition extends Condition {
   public int hashCode() {
     return Objects.hashCode(conditions);
   }
-
-  @Override
-  public String toSource() {
-    List<String> conditionSources = Lists.newArrayList();
-
-    // Translate all the contained conditions.
-    for (Condition condition : getConditions()) {
-      String conditionSource = condition.toSource();
-      if (Strings.isNullOrEmpty(conditionSource)) {
-        continue;
-      }
-      conditionSources.add("(" + conditionSource + ")");
-    }
-
-    // If we still have something then wrap it and return.
-    if (!conditionSources.isEmpty()) {
-      return "(" + Joiner.on(" " + getBinaryOperator() + " ").join(conditionSources) + ")";
-    }
-    // When there are no contained conditions, the whole thing is a NOP.
-    return "";
-  }
-
-  protected abstract String getBinaryOperator();
 }

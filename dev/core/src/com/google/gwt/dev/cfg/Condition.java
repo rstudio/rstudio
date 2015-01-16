@@ -60,11 +60,6 @@ public abstract class Condition implements Serializable {
     return result;
   }
 
-  /**
-   * Returns the Java source String to runtime check the condition being encapsulated here.
-   */
-  public abstract String toSource();
-
   protected abstract boolean doEval(TreeLogger logger, DeferredBindingQuery query)
       throws UnableToCompleteException;
 

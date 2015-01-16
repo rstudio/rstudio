@@ -13,47 +13,20 @@
  */
 package com.google.gwt.dev.util.arg;
 
-import com.google.gwt.thirdparty.guava.common.base.Strings;
-import com.google.gwt.util.tools.ArgHandlerString;
+import com.google.gwt.util.tools.ArgHandlerNoopDeprecatedFlag;
 
 /**
  * An argument handler for specifying the path for the generated precompiled library file.
  */
 @Deprecated
-public class ArgHandlerOutputLibrary extends ArgHandlerString {
+public class ArgHandlerOutputLibrary extends ArgHandlerNoopDeprecatedFlag {
 
-  private final OptionOutputLibraryPath option;
-
-  public ArgHandlerOutputLibrary(OptionOutputLibraryPath option) {
-    this.option = option;
-  }
-
-  @Override
-  public String getPurpose() {
-    return "DEPRECATED: The path into which the generated .gwtlib library will be written.";
-  }
-
-  @Override
-  public String getTag() {
-    return "-outLibrary";
-  }
-
-  @Override
-  public String[] getTagArgs() {
-    return new String[] {"library"};
+  public ArgHandlerOutputLibrary() {
+    super(1, "outLibrary", "library");
   }
 
   @Override
   public boolean isExperimental() {
-    return true;
-  }
-
-  @Override
-  public boolean setString(String outputLibraryPath) {
-    if (Strings.isNullOrEmpty(outputLibraryPath)) {
-      return true;
-    }
-    option.setOutputLibraryPath(outputLibraryPath);
     return true;
   }
 }

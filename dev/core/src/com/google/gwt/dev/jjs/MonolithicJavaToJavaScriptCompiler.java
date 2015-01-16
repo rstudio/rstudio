@@ -74,13 +74,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Compiles the Java <code>JProgram</code> representation into its corresponding library Js source.
- * <br />
- *
- * Care is taken to ensure that the resulting Js source will be valid for runtime linking, such as
- * performing only local optimizations, running only local stages of Generators, gathering and
- * enqueueing rebind information for runtime usage and outputting Js source with names that are
- * stable across libraries.
+ * Compiles the Java <code>JProgram</code> representation into its corresponding Js source.
  */
 public class MonolithicJavaToJavaScriptCompiler extends JavaToJavaScriptCompiler {
 

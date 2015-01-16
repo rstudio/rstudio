@@ -17,7 +17,6 @@ package com.google.gwt.dev.cfg;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.thirdparty.guava.common.base.Objects;
 
 import java.util.Iterator;
@@ -47,11 +46,6 @@ public class ConditionNone extends CompoundCondition {
   }
 
   @Override
-  public String toSource() {
-    return "!(" + super.toSource() + ")";
-  }
-
-  @Override
   protected boolean doEval(TreeLogger logger, DeferredBindingQuery query)
       throws UnableToCompleteException {
     for (Iterator<Condition> iter = getConditions().iterator(); iter.hasNext();) {
@@ -61,11 +55,6 @@ public class ConditionNone extends CompoundCondition {
       }
     }
     return true;
-  }
-
-  @Override
-  protected String getBinaryOperator() {
-    return JBinaryOperator.OR.toString();
   }
 
   @Override

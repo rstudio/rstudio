@@ -17,7 +17,6 @@ package com.google.gwt.dev.cfg;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.thirdparty.guava.common.base.Objects;
 
 import java.util.Iterator;
@@ -56,11 +55,6 @@ public class ConditionAll extends CompoundCondition {
       }
     }
     return true;
-  }
-
-  @Override
-  protected String getBinaryOperator() {
-    return JBinaryOperator.AND.toString();
   }
 
   @Override

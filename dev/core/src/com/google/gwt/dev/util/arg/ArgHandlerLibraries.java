@@ -13,54 +13,20 @@
  */
 package com.google.gwt.dev.util.arg;
 
-import com.google.gwt.thirdparty.guava.common.base.Splitter;
-import com.google.gwt.thirdparty.guava.common.collect.Lists;
-import com.google.gwt.util.tools.ArgHandlerString;
-
-import java.io.File;
-import java.util.Collections;
-import java.util.List;
+import com.google.gwt.util.tools.ArgHandlerNoopDeprecatedFlag;
 
 /**
  * An argument handler for providing a list of paths to input precompiled library files.
  */
 @Deprecated
-public class ArgHandlerLibraries extends ArgHandlerString {
+public class ArgHandlerLibraries extends ArgHandlerNoopDeprecatedFlag {
 
-  private final OptionLibraryPaths option;
-
-  public ArgHandlerLibraries(OptionLibraryPaths option) {
-    this.option = option;
-  }
-
-  @Override
-  public String getPurpose() {
-    return "DEPRECATED: The path(s) to .gwtlib library file(s).";
-  }
-
-  @Override
-  public String getTag() {
-    return "-libraries";
-  }
-
-  @Override
-  public String[] getTagArgs() {
-    return new String[] {"library[s]"};
+  public ArgHandlerLibraries() {
+    super(1, "libraries");
   }
 
   @Override
   public boolean isExperimental() {
-    return true;
-  }
-
-  @Override
-  public boolean setString(String value) {
-    List<String> libraryPaths = Lists.newArrayList(
-        Splitter.on(File.pathSeparator).omitEmptyStrings().trimResults().split(value));
-    libraryPaths.removeAll(Collections.singleton(""));
-    if (!libraryPaths.isEmpty()) {
-      option.setLibraryPaths(libraryPaths);
-    }
     return true;
   }
 }

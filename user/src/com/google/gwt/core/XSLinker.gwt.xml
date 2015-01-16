@@ -13,7 +13,7 @@
 <!-- limitations under the License.                                         -->
 
 <!-- Defines the cross-site linker   -->
-<module type="fileset">
+<module>
   <define-linker name="xs" class="com.google.gwt.core.linker.XSLinker" />
 
   <replace-with class="com.google.gwt.core.client.impl.CrossSiteLoadingStrategy">

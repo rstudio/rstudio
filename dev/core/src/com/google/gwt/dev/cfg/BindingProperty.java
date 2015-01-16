@@ -20,7 +20,6 @@ import com.google.gwt.dev.util.collect.IdentityHashSet;
 import com.google.gwt.dev.util.collect.Lists;
 import com.google.gwt.dev.util.collect.Sets;
 import com.google.gwt.thirdparty.guava.common.base.Objects;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 
 import java.io.Serializable;
@@ -59,7 +58,6 @@ public class BindingProperty extends Property {
   private HashMap<String,LinkedList<String>> fallbackValues = new HashMap<String,LinkedList<String>>();
   private PropertyProvider provider;
   private Class<? extends PropertyProviderGenerator> providerGenerator;
-  private final SortedSet<String> targetLibraryDefinedValues = new TreeSet<String>();
   private final ConditionAll rootCondition = new ConditionAll();
 
   /**
@@ -105,11 +103,6 @@ public class BindingProperty extends Property {
     definedValues.add(definedValue);
     allowedValues.addValue(condition, definedValue);
     generatedValues.addValue(condition, definedValue);
-  }
-
-  public void addTargetLibraryDefinedValue(Condition condition, String definedValue) {
-    targetLibraryDefinedValues.add(definedValue);
-    addDefinedValue(condition, definedValue);
   }
 
   /**
@@ -270,10 +263,6 @@ public class BindingProperty extends Property {
       throw new IllegalStateException("binding property has no generated values: " + name);
     }
     return value;
-  }
-
-  public List<String> getTargetLibraryDefinedValues() {
-    return ImmutableList.copyOf(targetLibraryDefinedValues);
   }
 
   public PropertyProvider getProvider() {

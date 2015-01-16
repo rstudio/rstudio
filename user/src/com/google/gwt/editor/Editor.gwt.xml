@@ -12,7 +12,7 @@
 -->
 
 <!-- Editor framework support -->
-<module type="fileset">
+<module>
   <inherits name="com.google.gwt.core.Core" />
   <inherits name="com.google.gwt.event.Event" />
   <inherits name="com.google.gwt.validation.Validation" />

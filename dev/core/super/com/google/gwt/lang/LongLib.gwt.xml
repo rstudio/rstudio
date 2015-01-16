@@ -17,7 +17,7 @@
 <!--                                                                        -->
 <!-- Types from this module are not visible to nor imported into user code. -->
 <!--                                                                        -->
-<module type="fileset">
+<module>
   <source path=""/>
   <public path="public" />
 </module>

@@ -15,35 +15,15 @@
  */
 package com.google.gwt.dev.util.arg;
 
-import com.google.gwt.util.tools.ArgHandlerFile;
-
-import java.io.File;
+import com.google.gwt.util.tools.ArgHandlerNoopDeprecatedFlag;
 
 /**
  * Optionally specifies a file into which detailed missing dependency information will be written.
  */
 @Deprecated
-public final class ArgHandlerMissingDepsFile extends ArgHandlerFile {
+public final class ArgHandlerMissingDepsFile extends ArgHandlerNoopDeprecatedFlag {
 
-  private final OptionMissingDepsFile option;
-
-  public ArgHandlerMissingDepsFile(OptionMissingDepsFile option) {
-    this.option = option;
-  }
-
-  @Override
-  public String getPurpose() {
-    return "DEPRECATED: Specifies a file into which detailed missing dependency "
-        + "information will be written.";
-  }
-
-  @Override
-  public String getTag() {
-    return "-missingDepsFile";
-  }
-
-  @Override
-  public void setFile(File missingDepsFile) {
-    option.setMissingDepsFile(missingDepsFile);
+  public ArgHandlerMissingDepsFile() {
+    super(1, "missingDepsFile");
   }
 }

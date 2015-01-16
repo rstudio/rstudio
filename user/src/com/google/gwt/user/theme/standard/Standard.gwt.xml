@@ -15,6 +15,6 @@
 -->
 
 <!-- Includes the source files for the Standard theme. -->
-<module type="fileset">
+<module>
       <stylesheet src="gwt/standard/standard.css"/>
 </module>

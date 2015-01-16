@@ -44,13 +44,6 @@ public class ConditionWhenLinkerAdded extends Condition {
   }
 
   @Override
-  public String toSource() {
-    // TODO(stalcup): implement real runtime linker presence detection or else delete this already
-    // deprecated class...
-    return "false";
-  }
-
-  @Override
   public String toString() {
     return "<when-linkers-include name='" + linkerName + "'/>";
   }

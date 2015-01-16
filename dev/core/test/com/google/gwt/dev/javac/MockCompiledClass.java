@@ -16,7 +16,7 @@
 package com.google.gwt.dev.javac;
 
 /**
- * Used by {@link LibraryGroupTest} and {@link MockCompilationUnit}.
+ * Used by {@link MockCompilationUnit}.
  */
 public class MockCompiledClass extends CompiledClass {
 

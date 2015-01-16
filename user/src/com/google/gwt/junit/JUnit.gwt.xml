@@ -16,7 +16,7 @@
 <!--                                                                        -->
 <!-- Do not inherit this module directly.  Running GWTTestCase under JUnit  -->
 <!-- will inherit this module automatically.                                -->
-<module type="fileset">
+<module>
   <inherits name="com.google.gwt.logging.Logging"/>
   <inherits name="com.google.gwt.user.User"/>
   <inherits name="com.google.gwt.junit.JUnit3"/>

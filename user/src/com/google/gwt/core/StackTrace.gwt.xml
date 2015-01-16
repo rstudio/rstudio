@@ -14,7 +14,7 @@
 <!-- limitations under the License.                                         -->
 
 <!-- Defines support stack traces -->
-<module type="fileset">
+<module>
 
   <!-- Legacy property. Do NOT use. See 'compiler.stackMode' instead. -->
   <define-property name="compiler.emulatedStack" values="true,false" />

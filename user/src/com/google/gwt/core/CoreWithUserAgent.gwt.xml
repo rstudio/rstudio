@@ -13,7 +13,7 @@
 <!-- limitations under the License.                                         -->
 
 <!-- Deferred binding rules for core classes based on user agent. -->
-<module type="fileset">
+<module>
   <inherits name="com.google.gwt.core.Core"/>
 
   <!-- Replace JS map factory to support older browsers -->

@@ -157,15 +157,14 @@ public class ResourceOracleImpl extends AbstractResourceOracle {
       new MapMaker().weakKeys().makeMap();
 
   /**
-   * A mapping from resource paths to the name of the library module that
+   * A mapping from resource paths to the name of the module that
    * created the PathPrefix (usually because of a <source> entry) that made
    * the resource path live.
    * <p>
    * For example com/google/gwt/user/client/DOM.java was made live by the
-   * com.google.gwt.user.User library module.
+   * com.google.gwt.user.User module.
    */
-  private SetMultimap<String, String> sourceModulesByTypeSourceName =
-      HashMultimap.create();
+  private SetMultimap<String, String> sourceModulesByTypeSourceName = HashMultimap.create();
 
   public static void clearCache() {
     classPathCache.clear();
@@ -233,12 +232,11 @@ public class ResourceOracleImpl extends AbstractResourceOracle {
   }
 
   /**
-   * Returns a mapping from resource paths to the set of names of library
-   * modules that created PathPrefixes (usually because of a <source> entry)
-   * that made the resource path live.
+   * Returns a mapping from resource paths to the set of names of modules that created PathPrefixes
+   * (usually because of a <source> entry) that made the resource path live.
    * <p>
-   * For example com/google/gwt/user/client/DOM.java was made live by the
-   * com.google.gwt.user.User library module.
+   * For example com/google/gwt/user/client/DOM.java was made live by the com.google.gwt.user.User
+   * module.
    */
   public SetMultimap<String, String> getSourceModulesByTypeSourceName() {
     return sourceModulesByTypeSourceName;

@@ -17,6 +17,6 @@
 <!-- This module is typically inherited via com.google.gwt.user.User        -->
 <!-- New code should inherit c.g.g.useragent.UserAgent instead.             -->
 <!--                                                                        -->
-<module type="fileset">
+<module>
   <inherits name="com.google.gwt.useragent.UserAgent"/>
 </module>

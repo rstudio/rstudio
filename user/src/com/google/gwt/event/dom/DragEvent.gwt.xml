@@ -11,7 +11,7 @@
 <!-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or        -->
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
-<module type="fileset">
+<module>
 
   <!-- Define the support property -->
   <define-property name="dragEventSupport" values="maybe,no" />

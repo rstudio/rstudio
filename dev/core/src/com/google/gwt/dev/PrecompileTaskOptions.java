@@ -20,20 +20,16 @@ import com.google.gwt.dev.util.arg.OptionDisableUpdateCheck;
 import com.google.gwt.dev.util.arg.OptionEnableGeneratingOnShards;
 import com.google.gwt.dev.util.arg.OptionGenDir;
 import com.google.gwt.dev.util.arg.OptionMaxPermsPerPrecompile;
-import com.google.gwt.dev.util.arg.OptionMissingDepsFile;
 import com.google.gwt.dev.util.arg.OptionSaveSource;
 import com.google.gwt.dev.util.arg.OptionSetProperties;
 import com.google.gwt.dev.util.arg.OptionSourceMapFilePrefix;
 import com.google.gwt.dev.util.arg.OptionValidateOnly;
-import com.google.gwt.dev.util.arg.OptionWarnMissingDeps;
-import com.google.gwt.dev.util.arg.OptionWarnOverlappingSource;
 
 /**
  * The set of options for the Precompiler.
  */
 public interface PrecompileTaskOptions extends JJSOptions, CompileTaskOptions, OptionGenDir,
     OptionSaveSource, OptionSourceMapFilePrefix, OptionValidateOnly, OptionDisableUpdateCheck,
-    OptionEnableGeneratingOnShards, OptionMaxPermsPerPrecompile, OptionMissingDepsFile,
-    OptionWarnOverlappingSource, OptionWarnMissingDeps, PrecompilationResult,
+    OptionEnableGeneratingOnShards, OptionMaxPermsPerPrecompile, PrecompilationResult,
     OptionSetProperties {
 }

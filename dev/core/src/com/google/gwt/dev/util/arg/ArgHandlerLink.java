@@ -13,7 +13,7 @@
  */
 package com.google.gwt.dev.util.arg;
 
-import com.google.gwt.util.tools.ArgHandlerFlag;
+import com.google.gwt.util.tools.ArgHandlerNoopDeprecatedFlag;
 
 /**
  * Whether the separate compiler should link compiled output and supplied precompiled libraries into
@@ -23,38 +23,14 @@ import com.google.gwt.util.tools.ArgHandlerFlag;
  * the currently being compiled module.
  */
 @Deprecated
-public class ArgHandlerLink extends ArgHandlerFlag {
+public class ArgHandlerLink extends ArgHandlerNoopDeprecatedFlag {
 
-  private final OptionLink options;
-
-  public ArgHandlerLink(OptionLink options) {
-    this.options = options;
-  }
-
-  @Override
-  public boolean getDefaultValue() {
-    return options.shouldLink();
-  }
-
-  @Override
-  public String getLabel() {
-    return "link";
-  }
-
-  @Override
-  public String getPurposeSnippet() {
-    return "DEPRECATED: Link compiled output and supplied precompiled libraries "
-        + "into a usable result.";
+  public ArgHandlerLink() {
+    super(0, "link");
   }
 
   @Override
   public boolean isExperimental() {
-    return true;
-  }
-
-  @Override
-  public boolean setFlag(boolean value) {
-    options.setLink(value);
     return true;
   }
 }

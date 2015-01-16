@@ -13,7 +13,7 @@
 <!-- limitations under the License.                                         -->
 
 <!-- Base module for Debug code.                                            -->
-<module type="fileset">
+<module>
   <inherits name="com.google.gwt.core.Core" />
   <source path="client" />
   <public path="public" />

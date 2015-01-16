@@ -25,8 +25,6 @@ import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableSet;
 
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 /**
@@ -48,9 +46,6 @@ public class RuleGenerateWith extends Rule {
 
   private Generator generator;
   private final Class<? extends Generator> generatorClass;
-  private Map<String, String> rebindProperties;
-  private String rebindRequestTypeName;
-  private String rebindResultTypeName;
 
   public RuleGenerateWith(Class<? extends Generator> generatorClass) {
     this.generatorClass = generatorClass;
@@ -111,26 +106,6 @@ public class RuleGenerateWith extends Rule {
   @Override
   public String toString() {
     return "<generate-with class='" + generatorClass.getName() + "'/>";
-  }
-
-  @Override
-  protected String generateCreateInstanceExpression() {
-    return "return @" + rebindResultTypeName + "::new()();";
-  }
-
-  @Override
-  protected String generateMatchesExpression() {
-    ConditionAll rootCondition = new ConditionAll();
-    Conditions conditions = rootCondition.getConditions();
-
-    conditions.add(new ConditionWhenTypeIs(rebindRequestTypeName));
-    for (Entry<String, String> propertyEntry : rebindProperties.entrySet()) {
-      String propertyName = propertyEntry.getKey();
-      String propertyValue = propertyEntry.getValue();
-      conditions.add(new ConditionWhenPropertyIs(propertyName, propertyValue));
-    }
-
-    return "return " + rootCondition.toSource() + ";";
   }
 
   @VisibleForTesting

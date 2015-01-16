@@ -13,48 +13,16 @@
  */
 package com.google.gwt.dev.util.arg;
 
-import com.google.gwt.util.tools.ArgHandlerFlag;
+import com.google.gwt.util.tools.ArgHandlerNoopDeprecatedFlag;
 
 /**
  * Toggles the display of warnings (during monolithic compiles) for issues that will break in
  * incremental compiles.
  */
-public final class ArgHandlerIncrementalCompileWarnings extends ArgHandlerFlag {
+@Deprecated
+public final class ArgHandlerIncrementalCompileWarnings extends ArgHandlerNoopDeprecatedFlag {
 
-  private final OptionStrict optionStrict;
-  private final OptionStrictSourceResources optionStrictSourceResources;
-  private final OptionWarnMissingDeps optionWarnMissingDeps;
-
-  public <
-      T extends OptionWarnMissingDeps & OptionStrictSourceResources &
-                OptionStrict> ArgHandlerIncrementalCompileWarnings(T option) {
-    this.optionWarnMissingDeps = option;
-    this.optionStrictSourceResources = option;
-    this.optionStrict = option;
-  }
-
-  @Override
-  public boolean getDefaultValue() {
-    return false;
-  }
-
-  @Override
-  public String getLabel() {
-    return "incrementalCompileWarnings";
-  }
-
-  @Override
-  public String getPurposeSnippet() {
-    return "Whether to show warnings during monolithic compiles for issues that "
-        + "will break in incremental compiles (strict compile errors, strict source "
-        + "directory inclusion, missing dependencies).";
-  }
-
-  @Override
-  public boolean setFlag(boolean value) {
-    optionWarnMissingDeps.setWarnMissingDeps(value);
-    optionStrictSourceResources.setEnforceStrictSourceResources(value);
-    optionStrict.setStrict(value);
-    return true;
+  public ArgHandlerIncrementalCompileWarnings() {
+    super(0, "incrementalCompileWarnings");
   }
 }

@@ -24,7 +24,6 @@ import com.google.gwt.dev.util.arg.OptionJsInteropMode;
 import com.google.gwt.dev.util.arg.OptionMethodNameDisplayMode;
 import com.google.gwt.dev.util.arg.OptionOptimize;
 import com.google.gwt.dev.util.arg.SourceLevel;
-import com.google.gwt.thirdparty.guava.common.collect.ImmutableList;
 import com.google.gwt.thirdparty.guava.common.collect.LinkedListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.ListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.Lists;
@@ -110,12 +109,6 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
     return jsInteropMode;
   }
 
-  @Override
-  @Deprecated
-  public List<String> getLibraryPaths() {
-    return ImmutableList.of();
-  }
-
   /**
    * Number of threads to use to compile permutations.
    */
@@ -140,12 +133,6 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   }
 
   @Override
-  @Deprecated
-  public File getMissingDepsFile() {
-    return null; // Don't record and save missing dependency information to a file.
-  }
-
-  @Override
   public List<String> getModuleNames() {
     return moduleNames;
   }
@@ -163,12 +150,6 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   @Override
   public JsOutputOption getOutput() {
     return JsOutputOption.PRETTY;
-  }
-
-  @Override
-  @Deprecated
-  public String getOutputLibraryPath() {
-    return null;
   }
 
   @Override
@@ -303,11 +284,6 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
   }
 
   @Override
-  public boolean shouldLink() {
-    return false;
-  }
-
-  @Override
   public boolean shouldOptimizeDataflow() {
     return false;
   }
@@ -329,16 +305,6 @@ class CompilerOptionsImpl extends UnmodifiableCompilerOptions {
 
   @Override
   public boolean useDetailedTypeIds() {
-    return false;
-  }
-
-  @Override
-  public boolean warnMissingDeps() {
-    return false;
-  }
-
-  @Override
-  public boolean warnOverlappingSource() {
     return false;
   }
 

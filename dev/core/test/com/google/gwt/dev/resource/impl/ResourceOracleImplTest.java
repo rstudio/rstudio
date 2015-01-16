@@ -16,9 +16,7 @@
 package com.google.gwt.dev.resource.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.dev.cfg.ResourceLoaders;
 import com.google.gwt.dev.resource.Resource;
-import com.google.gwt.dev.util.UnitTestTreeLogger;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.util.tools.Utility;
 
@@ -472,44 +470,6 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     testResourceInCPE(logger, "org/example/bar/client/BarClient2.txt", cpe1,
         new ClassPathEntry[]{cpe1, cpe2}, makeBarPrefix(), new PathPrefix(
             "org/example/bar/", null, false));
-  }
-
-  public void testOverlappingIncludeWarning() {
-    DefaultFilters defaultFilters = new DefaultFilters();
-
-    UnitTestTreeLogger.Builder loggerBuilder = new UnitTestTreeLogger.Builder();
-    loggerBuilder.setLowestLogLevel(TreeLogger.WARN);
-    loggerBuilder.expectWarn(
-        "Resource com/google/gwt/dev/resource/impl/testdata/outer/inner/"
-        + "empty.txt is included by multiple modules (InnerDirModule, "
-        + "InnerFileModule, OuterDirModule).", null);
-    UnitTestTreeLogger logger = loggerBuilder.createLogger();
-    ResourceOracleImpl resourceOracleImpl = new ResourceOracleImpl(logger,
-        ResourceLoaders.wrap(Thread.currentThread().getContextClassLoader()));
-
-    PathPrefixSet pathPrefixSet = new PathPrefixSet(false);
-    // Include from an outer directory.
-    pathPrefixSet.add(new PathPrefix("OuterDirModule",
-        "com/google/gwt/dev/resource/impl/testdata/outer/",
-        defaultFilters.customResourceFilter(new String[0], new String[0],
-            new String[0], true, true), false, new String[0]));
-    // Include on the inner directory.
-    pathPrefixSet.add(
-        new PathPrefix("InnerDirModule",
-            "com/google/gwt/dev/resource/impl/testdata/outer/inner/",
-            defaultFilters.customResourceFilter(new String[0], new String[0],
-                new String[0], true, true), false, new String[0]));
-    // Include a specific file in the inner directory.
-    pathPrefixSet.add(new PathPrefix("InnerFileModule",
-        "com/google/gwt/dev/resource/impl/testdata/",
-        defaultFilters.customResourceFilter(new String[] {
-            "com/google/gwt/dev/resource/impl/testdata/outer/inner/empty.txt"},
-            new String[0], new String[0], true, true), false, new String[0]));
-
-    resourceOracleImpl.setPathPrefixes(pathPrefixSet);
-    resourceOracleImpl.scanResources(logger);
-
-    logger.assertCorrectLogEntries();
   }
 
   /**

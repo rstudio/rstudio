@@ -12,7 +12,7 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
-<module type="fileset">
+<module>
   <!-- uses different package to isolate from other tests -->
   <source path="client2"/>
 </module>

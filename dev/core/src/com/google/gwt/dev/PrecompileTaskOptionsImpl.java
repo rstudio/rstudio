@@ -38,12 +38,9 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   private File genDir;
   private final JJSOptionsImpl jjsOptions = new JJSOptionsImpl();
   private int maxPermsPerPrecompile;
-  private File missingDepsFile;
   private boolean saveSource;
   private String sourceMapFilePrefix;
   private boolean validateOnly;
-  private boolean warnOverlappingSource;
-  private boolean warnMissingDeps;
   private final ListMultimap<String, String> properties = LinkedListMultimap.create();
 
   public PrecompileTaskOptionsImpl() {
@@ -75,9 +72,6 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
     setSaveSource(other.shouldSaveSource());
     setSourceMapFilePrefix(other.getSourceMapFilePrefix());
     setMaxPermsPerPrecompile(other.getMaxPermsPerPrecompile());
-    setWarnOverlappingSource(other.warnOverlappingSource());
-    setWarnMissingDeps(other.warnMissingDeps());
-    setMissingDepsFile(other.getMissingDepsFile());
     setValidateOnly(other.isValidateOnly());
     setEnabledGeneratingOnShards(other.isEnabledGeneratingOnShards());
     properties.putAll(other.getProperties());
@@ -120,11 +114,6 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   @Override
   public OptionMethodNameDisplayMode.Mode getMethodNameDisplayMode() {
     return jjsOptions.getMethodNameDisplayMode();
-  }
-
-  @Override
-  public File getMissingDepsFile() {
-    return missingDepsFile;
   }
 
   @Override
@@ -341,11 +330,6 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   }
 
   @Override
-  public void setMissingDepsFile(File missingDepsFile) {
-    this.missingDepsFile = missingDepsFile;
-  }
-
-  @Override
   public void setNamespace(JsNamespaceOption newValue) {
     jjsOptions.setNamespace(newValue);
   }
@@ -436,16 +420,6 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   }
 
   @Override
-  public void setWarnMissingDeps(boolean showMissingDepsWarnings) {
-    this.warnMissingDeps = showMissingDepsWarnings;
-  }
-
-  @Override
-  public void setWarnOverlappingSource(boolean warnOverlappingSource) {
-    this.warnOverlappingSource = warnOverlappingSource;
-  }
-
-  @Override
   public boolean shouldAddRuntimeChecks() {
     return jjsOptions.shouldAddRuntimeChecks();
   }
@@ -487,16 +461,6 @@ public class PrecompileTaskOptionsImpl extends CompileTaskOptionsImpl
   @Override
   public boolean useDetailedTypeIds() {
     return jjsOptions.useDetailedTypeIds();
-  }
-
-  @Override
-  public boolean warnMissingDeps() {
-    return warnMissingDeps;
-  }
-
-  @Override
-  public boolean warnOverlappingSource() {
-    return warnOverlappingSource;
   }
 
   @Override

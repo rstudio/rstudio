@@ -57,14 +57,6 @@ public class ConditionWhenTypeAssignableTo extends Condition {
   }
 
   @Override
-  public String toSource() {
-    // Should only be used in non-monolithic (library) compiles. Dynamic cast checks are only safe
-    // when exhaustive cast maps are available as is the case with library compiles.
-    return String.format("@com.google.gwt.lang.Cast::canCastClass(*)(requestTypeClass, @%s::class)",
-        assignableToTypeName);
-  }
-
-  @Override
   public String toString() {
     return "<when-assignable class='" + assignableToTypeName + "'/>";
   }

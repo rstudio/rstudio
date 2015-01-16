@@ -180,7 +180,7 @@ public class Link {
         new StandardLinkerContext(logger, module, publicResourceOracle,
             precompileOptions.getOutput());
     ArtifactSet artifacts = doSimulatedShardingLink(
-        logger, module, linkerContext, generatedArtifacts, permutations, resultFiles, libraries);
+        logger, module, linkerContext, generatedArtifacts, permutations, resultFiles);
 
     doProduceOutput(logger, artifacts, linkerContext, module, precompileOptions.shouldSaveSource(),
         linkOptions);
@@ -442,14 +442,12 @@ public class Link {
    */
   private static ArtifactSet doSimulatedShardingLink(TreeLogger logger, ModuleDef module,
       StandardLinkerContext linkerContext, ArtifactSet generatedArtifacts, Permutation[] perms,
-      List<PersistenceBackedObject<PermutationResult>> resultFiles,
-      Set<PermutationResult> libraries)
+      List<PersistenceBackedObject<PermutationResult>> resultFiles)
       throws UnableToCompleteException {
     ArtifactSet combinedArtifacts = new ArtifactSet();
     for (int i = 0; i < perms.length; ++i) {
       ArtifactSet newArtifacts = finishPermutation(
-          logger, perms[i], resultFiles.get(i), libraries, linkerContext,
-          generatedArtifacts);
+          logger, perms[i], resultFiles.get(i), linkerContext, generatedArtifacts);
       combinedArtifacts.addAll(newArtifacts);
     }
 
@@ -473,12 +471,12 @@ public class Link {
    *         operation
    */
   private static ArtifactSet finishPermutation(TreeLogger logger, Permutation perm,
-      PersistenceBackedObject<PermutationResult> resultFile, Set<PermutationResult> libraries,
-      StandardLinkerContext linkerContext, ArtifactSet generatedArtifacts)
+      PersistenceBackedObject<PermutationResult> resultFile, StandardLinkerContext linkerContext,
+      ArtifactSet generatedArtifacts)
       throws UnableToCompleteException {
     PermutationResult permResult = resultFile.newInstance(logger);
     StandardCompilationResult compilation =
-        new StandardCompilationResult(permResult, libraries);
+        new StandardCompilationResult(permResult);
     addSelectionPermutations(compilation, perm, linkerContext);
     logScriptSize(logger, perm.getId(), compilation);
 

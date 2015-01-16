@@ -12,6 +12,6 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
-<module type="fileset">
+<module>
   <inherits name='com.google.gwt.junit.JUnitTest' />
 </module>

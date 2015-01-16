@@ -15,6 +15,6 @@
 -->
 
 <!-- Includes the source files for the Dark theme. -->
-<module type="fileset">
+<module>
       <stylesheet src="gwt/dark/dark.css"/>
 </module>

@@ -146,17 +146,6 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
   }
 
   @Override
-  @Deprecated
-  public void setLibraryPaths(List<String> libraryPaths) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void setLink(boolean link) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public final void setLocalWorkers(int localWorkers) {
     throw new UnsupportedOperationException();
   }
@@ -168,12 +157,6 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
 
   @Override
   public final void setMaxPermsPerPrecompile(int maxPerms) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  @Deprecated
-  public final void setMissingDepsFile(File file) {
     throw new UnsupportedOperationException();
   }
 
@@ -209,12 +192,6 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
 
   @Override
   public final void setOutput(JsOutputOption obfuscated) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  @Deprecated
-  public void setOutputLibraryPath(String outputLibraryPath) {
     throw new UnsupportedOperationException();
   }
 
@@ -280,18 +257,6 @@ abstract class UnmodifiableCompilerOptions implements CompilerOptions {
 
   @Override
   public final void setWarDir(File dir) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  @Deprecated
-  public final void setWarnOverlappingSource(boolean warnOverlappingSource) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  @Deprecated
-  public final void setWarnMissingDeps(boolean warnMissingDeps) {
     throw new UnsupportedOperationException();
   }
 

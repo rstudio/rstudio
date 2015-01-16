@@ -63,13 +63,6 @@ public class ConditionWhenPropertyIs extends Condition {
   }
 
   @Override
-  public String toSource() {
-    return String.format(
-        "@com.google.gwt.lang.RuntimePropertyRegistry::getPropertyValue(*)(\"%s\") == \"%s\"",
-        propName, value);
-  }
-
-  @Override
   public String toString() {
     return "<when-property-is name='" + propName + "' value='" + value + "'/>";
   }

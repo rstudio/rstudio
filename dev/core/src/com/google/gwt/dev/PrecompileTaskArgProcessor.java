@@ -78,13 +78,13 @@ class PrecompileTaskArgProcessor extends CompileArgProcessor {
     registerHandler(new ArgHandlerFragmentCount(options));
     registerHandler(new ArgHandlerFragmentMerge(options));
     registerHandler(new ArgHandlerGenDir(options));
-    registerHandler(new ArgHandlerIncrementalCompileWarnings(options));
+    registerHandler(new ArgHandlerIncrementalCompileWarnings());
     registerHandler(new ArgHandlerJsInteropMode(options));
     registerHandler(new ArgHandlerMaxPermsPerPrecompile(options));
-    registerHandler(new ArgHandlerMissingDepsFile(options));
+    registerHandler(new ArgHandlerMissingDepsFile());
     registerHandler(new ArgHandlerNamespace(options));
     registerHandler(new ArgHandlerOptimize(options));
-    registerHandler(new ArgHandlerOverlappingSourceWarnings(options));
+    registerHandler(new ArgHandlerOverlappingSourceWarnings());
     registerHandler(new ArgHandlerSaveSource(options));
     registerHandler(new ArgHandlerScriptStyle(options));
     registerHandler(new ArgHandlerSoyc(options));

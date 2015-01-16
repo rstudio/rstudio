@@ -13,39 +13,15 @@
  */
 package com.google.gwt.dev.util.arg;
 
-import com.google.gwt.util.tools.ArgHandlerFlag;
+import com.google.gwt.util.tools.ArgHandlerNoopDeprecatedFlag;
 
 /**
  * Toggles the display of overlapping source include warnings (during monolithic compiles).
  */
 @Deprecated
-public final class ArgHandlerOverlappingSourceWarnings extends ArgHandlerFlag {
+public final class ArgHandlerOverlappingSourceWarnings extends ArgHandlerNoopDeprecatedFlag {
 
-  private final OptionWarnOverlappingSource optionWarnOverlappingSource;
-
-  public ArgHandlerOverlappingSourceWarnings(OptionWarnOverlappingSource option) {
-    this.optionWarnOverlappingSource = option;
-  }
-
-  @Override
-  public boolean getDefaultValue() {
-    return false;
-  }
-
-  @Override
-  public String getLabel() {
-    return "overlappingSourceWarnings";
-  }
-
-  @Override
-  public String getPurposeSnippet() {
-    return "DEPRECATED: Whether to show warnings during monolithic compiles for "
-        + "overlapping source inclusion.";
-  }
-
-  @Override
-  public boolean setFlag(boolean value) {
-    optionWarnOverlappingSource.setWarnOverlappingSource(value);
-    return true;
+  public ArgHandlerOverlappingSourceWarnings() {
+    super(0, "overlappingSourceWarnings");
   }
 }

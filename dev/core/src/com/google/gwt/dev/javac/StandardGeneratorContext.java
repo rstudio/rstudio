@@ -626,15 +626,6 @@ public class StandardGeneratorContext implements GeneratorContext {
     return propertyOracle;
   }
 
-  /**
-   * Returns whether the current compile and generator passes are executing in
-   * the global phase of a compile, as opposed to further down in the dependency
-   * tree.
-   */
-  public boolean isGlobalCompile() {
-    return compilerContext.getOptions().shouldLink();
-  }
-
   @Override
   public ResourceOracle getResourcesOracle() {
     return buildResourceOracle;

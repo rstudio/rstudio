@@ -29,11 +29,8 @@ import java.util.List;
 class CompileTaskOptionsImpl implements CompileTaskOptions {
 
   private Properties finalProperties;
-  private List<String> libraryPaths = new ArrayList<String>();
-  private boolean link;
   private Type logLevel;
   private final List<String> moduleNames = new ArrayList<String>();
-  private String outputLibraryPath;
   private File workDir;
   private Mode jsInteropMode;
 
@@ -49,10 +46,7 @@ class CompileTaskOptionsImpl implements CompileTaskOptions {
     setLogLevel(other.getLogLevel());
     setModuleNames(other.getModuleNames());
     setWorkDir(other.getWorkDir());
-    setLibraryPaths(other.getLibraryPaths());
-    setOutputLibraryPath(other.getOutputLibraryPath());
     setFinalProperties(other.getFinalProperties());
-    setLink(other.shouldLink());
   }
 
   public File getCompilerWorkDir(String moduleName) {
@@ -69,11 +63,6 @@ class CompileTaskOptionsImpl implements CompileTaskOptions {
   }
 
   @Override
-  public List<String> getLibraryPaths() {
-    return libraryPaths;
-  }
-
-  @Override
   public Type getLogLevel() {
     return logLevel;
   }
@@ -81,11 +70,6 @@ class CompileTaskOptionsImpl implements CompileTaskOptions {
   @Override
   public List<String> getModuleNames() {
     return new ArrayList<String>(moduleNames);
-  }
-
-  @Override
-  public String getOutputLibraryPath() {
-    return outputLibraryPath;
   }
 
   @Override
@@ -103,17 +87,6 @@ class CompileTaskOptionsImpl implements CompileTaskOptions {
   }
 
   @Override
-  public void setLibraryPaths(List<String> libraryPaths) {
-    this.libraryPaths.clear();
-    this.libraryPaths.addAll(libraryPaths);
-  }
-
-  @Override
-  public void setLink(boolean link) {
-    this.link = link;
-  }
-
-  @Override
   public void setLogLevel(Type logLevel) {
     this.logLevel = logLevel;
   }
@@ -125,17 +98,7 @@ class CompileTaskOptionsImpl implements CompileTaskOptions {
   }
 
   @Override
-  public void setOutputLibraryPath(String outputLibraryPath) {
-    this.outputLibraryPath = outputLibraryPath;
-  }
-
-  @Override
   public void setWorkDir(File workDir) {
     this.workDir = workDir;
-  }
-
-  @Override
-  public boolean shouldLink() {
-    return link;
   }
 }
