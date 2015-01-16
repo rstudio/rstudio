@@ -294,10 +294,6 @@ public class Css2Gss {
         String arg = args[index++];
         String nextArg = index < args.length - 1 ? args[index] : null;
 
-        if (nextArg == null) {
-          quitEarly("Missing file or directly as last parameter");
-        }
-
         ArgumentConsumer consumer = argumentConsumers.get(arg);
 
         if (consumer == null) {
@@ -309,6 +305,10 @@ public class Css2Gss {
         if (skipNextArg) {
           index++;
         }
+      }
+
+      if (index == args.length) {
+        quitEarly("Missing file or directly as last parameter");
       }
 
       if (options.scope != null) {
