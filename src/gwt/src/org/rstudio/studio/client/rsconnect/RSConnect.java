@@ -133,7 +133,7 @@ public class RSConnect implements SessionInitHandler,
 
          RSConnectDeployDialog dialog = 
                new RSConnectDeployDialog(
-                         server_, display_, events_, 
+                         server_, display_, session_, events_, 
                          dir, file, lastAccount, lastAppName,
                          satellite_.isCurrentWindowSatellite());
          dialog.showModal();

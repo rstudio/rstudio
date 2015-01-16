@@ -16,7 +16,7 @@ package org.rstudio.studio.client.rsconnect.model;
 
 public class NewRSConnectAccountResult
 {
-   enum AccountType
+   public enum AccountType
    {
       RSConnectCloudAccount,
       RSconnectLocalAccount

@@ -18,11 +18,13 @@ import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
+import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
@@ -76,7 +78,8 @@ public class RSConnectDeploy extends Composite
    }
 
    public RSConnectDeploy(final RSConnectServerOperations server, 
-                          final GlobalDisplay display)
+                          final GlobalDisplay display,
+                          final Session session)
    {
       accountList = new RSConnectAccountList(server, display);
       initWidget(uiBinder.createAndBindUi(this));
@@ -90,23 +93,26 @@ public class RSConnectDeploy extends Composite
             validateAppName();
          }
       });
-      // Invoke the "add account" dialog
+      // Invoke the "add account" wizard
       addAccountAnchor.addClickHandler(new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
          {
-            RSConnectConnectAccountDialog dialog = 
-                  new RSConnectConnectAccountDialog(server, display);
-            dialog.addCloseHandler(new CloseHandler<PopupPanel>()
+            RSAccountConnector connector = new RSAccountConnector(
+                  server, display, session);
+            connector.showAccountWizard(new OperationWithInput<Boolean>() 
             {
                @Override
-               public void onClose(CloseEvent<PopupPanel> event)
+               public void execute(Boolean successful)
                {
-                  accountList.refreshAccountList();
+                  if (successful)
+                  {
+                     accountList.refreshAccountList();
+                  }
                }
             });
-            dialog.showModal();
+            
             event.preventDefault();
             event.stopPropagation();
          }

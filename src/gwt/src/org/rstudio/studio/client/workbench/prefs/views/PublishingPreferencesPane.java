@@ -31,6 +31,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -39,6 +40,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
+import org.rstudio.studio.client.rsconnect.ui.RSAccountConnector;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectAccountList;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectAccountWizard;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectConnectAccountDialog;
@@ -177,18 +179,19 @@ public class PublishingPreferencesPane extends PreferencesPane
    
    private void onConnect()
    {
-      RSConnectAccountWizard wizard = new RSConnectAccountWizard(
-            session_.getSessionInfo(),
-            new ProgressOperationWithInput<NewRSConnectAccountResult>()
+      RSAccountConnector connector = new RSAccountConnector(
+            server_, display_, session_);
+      connector.showAccountWizard(new OperationWithInput<Boolean>() 
       {
          @Override
-         public void execute(NewRSConnectAccountResult input,
-               ProgressIndicator indicator)
+         public void execute(Boolean successful)
          {
-            
+            if (successful)
+            {
+               accountList_.refreshAccountList();
+            }
          }
       });
-      wizard.showModal();
    }
 
    private void setDisconnectButtonEnabledState()

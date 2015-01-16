@@ -33,6 +33,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -51,6 +52,7 @@ public class RSConnectDeployDialog
 {
    public RSConnectDeployDialog(RSConnectServerOperations server, 
                                 final GlobalDisplay display, 
+                                Session session,
                                 EventBus events,
                                 final String sourceDir, 
                                 String sourceFile,
@@ -59,7 +61,7 @@ public class RSConnectDeployDialog
                                 boolean isSatellite)
                                 
    {
-      super(server, display, new RSConnectDeploy(server, display));
+      super(server, display, new RSConnectDeploy(server, display, session));
       setText("Publish to Server");
       setWidth("350px");
       deployButton_ = new ThemedButton("Publish");
