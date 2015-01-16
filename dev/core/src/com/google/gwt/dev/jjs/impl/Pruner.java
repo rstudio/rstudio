@@ -243,6 +243,7 @@ public class Pruner {
       if (type instanceof JReferenceType &&
           !program.typeOracle.isInstantiatedType((JReferenceType) type)) {
         x.setType(program.getTypeNull());
+        madeChanges();
       }
     }
 

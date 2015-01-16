@@ -47,6 +47,7 @@ import com.google.gwt.dev.util.log.speedtracer.CompilerEventType;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger;
 import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.annotations.VisibleForTesting;
+import com.google.gwt.thirdparty.guava.common.collect.Sets;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -454,7 +455,7 @@ public class MakeCallsStatic {
 
   @VisibleForTesting
   static OptimizerStats exec(JProgram program,  boolean addRuntimeChecks) {
-    return exec(program, addRuntimeChecks, OptimizerContext.NULL_OPTIMIZATION_CONTEXT);
+    return exec(program, addRuntimeChecks, new FullOptimizerContext(program));
   }
 
   protected Set<JMethod> toBeMadeStatic = new HashSet<JMethod>();
@@ -470,7 +471,10 @@ public class MakeCallsStatic {
   private OptimizerStats execImpl(OptimizerContext optimizerCtx) {
     OptimizerStats stats = new OptimizerStats(NAME);
     FindStaticDispatchSitesVisitor finder = new FindStaticDispatchSitesVisitor();
-    finder.accept(program);
+    Set<JMethod> modifiedMethods =
+        optimizerCtx.getModifiedMethodsSince(optimizerCtx.getLastStepFor(NAME));
+    Set<JMethod> affectedMethods = affectedMethods(modifiedMethods, optimizerCtx);
+    optimizerCtx.traverse(finder, affectedMethods);
 
     CreateStaticImplsVisitor creator = new CreateStaticImplsVisitor(program, optimizerCtx);
     for (JMethod method : toBeMadeStatic) {
@@ -502,5 +506,18 @@ public class MakeCallsStatic {
     assert (rewriter.didChange() || toBeMadeStatic.isEmpty());
     JavaAstVerifier.assertProgramIsConsistent(program);
     return stats;
+  }
+
+  /**
+   * Return the set of methods affected (because they are or callers of) by the modifications to the
+   * given set functions.
+   */
+  private Set<JMethod> affectedMethods(Set<JMethod> modifiedMethods,
+      OptimizerContext optimizerCtx) {
+    assert (modifiedMethods != null);
+    Set<JMethod> affectedMethods = Sets.newLinkedHashSet();
+    affectedMethods.addAll(modifiedMethods);
+    affectedMethods.addAll(optimizerCtx.getCallers(modifiedMethods));
+    return affectedMethods;
   }
 }
