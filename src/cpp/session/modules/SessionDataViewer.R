@@ -159,12 +159,12 @@
         filterval <- as.numeric(filterval)
         matches <- as.numeric(x[[i]]) == filterval
         matches[is.na(matches)] <- FALSE
-        x <- x[matches,]
+        x <- x[matches, , drop = FALSE]
       }
       else if (identical(filtertype, "character"))
       {
         # apply character filter: non-case-sensitive prefix
-        x <- x[grepl(filterval, x[[i]], ignore.case = TRUE),]
+        x <- x[grepl(filterval, x[[i]], ignore.case = TRUE), , drop = FALSE]
       } 
       else if (identical(filtertype, "numeric"))
       {
@@ -172,10 +172,10 @@
         filterval <- as.numeric(strsplit(filterval, "-")[[1]])
         if (length(filterval) > 1)
           # range filter
-          x <- x[x[[i]] >= filterval[1] & x[[i]] <= filterval[2],]
+          x <- x[x[[i]] >= filterval[1] & x[[i]] <= filterval[2], , drop = FALSE]
         else
           # equality filter
-          x <- x[x[[i]] == filterval,]
+          x <- x[x[[i]] == filterval, , drop = FALSE]
       }
     }
   }
@@ -185,7 +185,7 @@
   {
     x <- x[Reduce("|", lapply(x, function(column) { 
              grepl(search, column, ignore.case = TRUE)
-           })),]
+           })), , drop = FALSE]
   }
 
   # apply sort
@@ -196,13 +196,15 @@
       # extract the first value from each cell for ordering (handle
       # vector-valued columns gracefully)
       x <- as.data.frame(x[order(vapply(x[[col]], `[`, 0, 1), 
-                                 decreasing = identical(dir, "desc")),])
+                                 decreasing = identical(dir, "desc")), ,
+                           drop = FALSE])
     }
     else
     {
       # skip the expensive vapply when we're dealing with scalars
       x <- as.data.frame(x[order(x[[col]], 
-                                 decreasing = identical(dir, "desc")),])
+                                 decreasing = identical(dir, "desc")), ,
+                           drop = FALSE])
     }
   }
 
@@ -270,9 +272,24 @@
 })
 
 # given a name, return the first environment on the search list that contains
-# an object bearing that name
-.rs.addFunction("findOwningEnv", function(name, env = parent.frame()) 
+# an object bearing that name. 
+.rs.addFunction("findViewingEnv", function(name)
 {
+   # default to searching from the global environment
+   env <- globalenv()
+   
+   # attempt to find a callframe from which View was invoked; this will allow
+   # us to locate viewing environments further in the callstack (e.g. in the
+   # debugger)
+   for (i in seq_along(sys.calls()))
+   {
+     if (identical(deparse(sys.call(i)[[1]]), "View"))
+     {
+       env <- sys.frame(i - 1)
+       break
+     }
+   }
+
    while (environmentName(env) != "R_EmptyEnv" && 
           !exists(name, where = env, inherits = FALSE)) 
    {
@@ -296,7 +313,7 @@
    if (is.name(substitute(x)))
    {
      name <- deparse(substitute(x))
-     env <- .rs.findOwningEnv(name)
+     env <- .rs.findViewingEnv(name)
    }
 
    # is this a function? if it is, view as a function instead
