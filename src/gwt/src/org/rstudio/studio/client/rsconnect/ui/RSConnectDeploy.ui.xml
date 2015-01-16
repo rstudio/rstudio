@@ -93,6 +93,11 @@
 	  display: block;
 	}
 	
+	.accountList
+	{
+	  height: 100px;
+	}
+	
 	</ui:style>
 	<g:HTMLPanel>
 	<g:Image resource="{res.deployIllustration}"></g:Image>
@@ -108,14 +113,14 @@
      </g:customCell>
      <g:customCell styleName="{style.rootCell}">
       <g:HTMLPanel>
-         <g:Label styleName="{style.controlLabel}" text="Account:"></g:Label>
-         <rsc:RSConnectAccountList ui:field="accountList"></rsc:RSConnectAccountList>
+         <g:Label styleName="{style.controlLabel}" text="Destination:"></g:Label>
+         <rsc:RSConnectAccountList styleName="{style.accountList}" ui:field="accountList"></rsc:RSConnectAccountList>
          <g:Label styleName="{style.controlLabel}" text="Application:"></g:Label>
          <g:ListBox styleName="{style.dropListControl}" ui:field="appList"></g:ListBox>
          <g:Label styleName="{style.controlLabel}" ui:field="nameLabel" text="Name:"></g:Label>
          <g:TextBox styleName="{style.gridControl}" ui:field="appName" maxLength="63"></g:TextBox>
          <g:HTMLPanel styleName="{style.controlLabel}" visible="false" ui:field="appInfoPanel">
-            <g:InlineLabel text="Status:"></g:InlineLabel>
+            <g:InlineLabel text="URL:"></g:InlineLabel>
             <g:InlineLabel styleName="{style.statusLabel}" ui:field="statusLabel"></g:InlineLabel>
             <g:Anchor styleName="{style.urlAnchor}" ui:field="urlAnchor" target="_blank"></g:Anchor>
          </g:HTMLPanel>
