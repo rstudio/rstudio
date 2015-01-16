@@ -63,6 +63,7 @@ Error installRtools()
    std::string version, url;
    FilePath installPath("C:\\Rtools");
    std::vector<r_util::RToolsInfo> availableRtools;
+   availableRtools.push_back(r_util::RToolsInfo("3.2", installPath));
    availableRtools.push_back(r_util::RToolsInfo("3.1", installPath));
    availableRtools.push_back(r_util::RToolsInfo("3.0", installPath));
    availableRtools.push_back(r_util::RToolsInfo("2.15", installPath));
