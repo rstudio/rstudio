@@ -138,6 +138,7 @@
   # they're data frames, but don't actually support the subsetting operations
   # needed for search/sort/filter without an explicit cast
   x <- as.data.frame(x)
+  colnames <- names(x)
 
   # apply columnwise filters
   for (i in seq_along(filtered)) {
@@ -178,6 +179,15 @@
           x <- x[x[[i]] == filterval,]
       }
     }
+  }
+
+  # when x is a single column data frame, filtering can cause x to be assigned
+  # to the vector representing the column (so it's no longer a frame). restore
+  # the lost column name in this case.
+  if (!is.data.frame(x))
+  {
+    x <- as.data.frame(x)
+    names(x) <- colnames
   }
 
   # apply global search
@@ -270,9 +280,24 @@
 })
 
 # given a name, return the first environment on the search list that contains
-# an object bearing that name
-.rs.addFunction("findOwningEnv", function(name, env = parent.frame()) 
+# an object bearing that name. 
+.rs.addFunction("findViewingEnv", function(name)
 {
+   # default to searching from the global environment
+   env <- globalenv()
+   
+   # attempt to find a callframe from which View was invoked; this will allow
+   # us to locate viewing environments further in the callstack (e.g. in the
+   # debugger)
+   for (i in seq_along(sys.calls()))
+   {
+     if (identical(deparse(sys.call(i)[[1]]), "View"))
+     {
+       env <- sys.frame(i - 1)
+       break
+     }
+   }
+
    while (environmentName(env) != "R_EmptyEnv" && 
           !exists(name, where = env, inherits = FALSE)) 
    {
@@ -296,7 +321,7 @@
    if (is.name(substitute(x)))
    {
      name <- deparse(substitute(x))
-     env <- .rs.findOwningEnv(name)
+     env <- .rs.findViewingEnv(name)
    }
 
    # is this a function? if it is, view as a function instead
