@@ -289,7 +289,7 @@ assign(x = ".rs.acCompletionTypes",
       # NOTE: not available in older versions of R, but defaults to FALSE
       # with newer versions.
       if ("include.dirs" %in% names(formals))
-         fomals[["include.dirs"]] <- TRUE
+         formals[["include.dirs"]] <- TRUE
       
       # NOTE: not available with older versions of R, but defaults to FALSE
       if ("no.." %in% names(formals))

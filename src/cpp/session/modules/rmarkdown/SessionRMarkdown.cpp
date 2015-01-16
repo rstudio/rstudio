@@ -207,13 +207,26 @@ private:
                         "auto_reload = FALSE, ";
          extraParams += "dir = '" + targetFile_.parent().absolutePath() + "', ";
 
+         std::string rsIFramePath("rsiframe.js");
+
+#ifndef __APPLE__
+         // on Qt platforms, rsiframe.js needs to have its origin specified
+         // explicitly; Qt 5.4 disables document.referrer
+         if (session::options().programMode() == kSessionProgramModeDesktop)
+         {
+             rsIFramePath += "?origin=" +
+                     session::options().wwwAddress() + ":" +
+                     session::options().wwwPort();
+         }
+#endif
+
          std::string extraDependencies("htmltools::htmlDependency("
                      "name = 'rstudio-iframe', "
                      "version = '0.1', "
                      "src = '" +
                          session::options().rResourcesPath().absolutePath() +
                      "', "
-                     "script = 'rsiframe.js')");
+                     "script = '" + rsIFramePath + "')");
 
          std::string outputOptions("extra_dependencies = list(" + 
                extraDependencies + ")");

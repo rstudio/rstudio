@@ -1,9 +1,41 @@
 /*jshint browser:true, strict:false, curly:false, indent:3*/
 (function(){
+// returns the value of a querystring variable passed to this script, or null
+// if the variable is not specified
+var getQueryVal = function(name) {
+   // find the rsiframe script in the doc so we can examine its params
+   var queryStr = "";
+   for (var i = 0; i < document.scripts.length; i++) {
+      var src = document.scripts[i].src;
+      if (src.indexOf("/rsiframe.js?") > 0) {
+        queryStr = src.substr(src.indexOf("?") + 1);
+        break;
+      }
+   }
+
+   // parse the querystring and find the sought variable
+   var pairs = queryStr.split("&");
+   for (var i = 0; i < pairs.length; i++) {
+      var pair = pairs[i].split("=");
+      if (pair.length === 2 && pair[0] === name) {
+         return pair[1];
+      }
+   }
+   return null;
+};
+
 // returns the origin we should post messages to (if on same host), or null if
 // no suitable origin is found
 var getOrigin = function() {
    var origin = null; 
+
+   // if an origin is supplied, use it directly. origins are supplied directly
+   // on Qt, since it doesn't return a value for document.referrer reliably.
+   var queryOrigin = getQueryVal("origin");
+   if (queryOrigin !== null && queryOrigin.length > 0) {
+      return window.location.protocol + "//" + queryOrigin;
+   }
+
    // function to normalize hostnames
    var normalize = function(hostname) {
      if (hostname == "127.0.0.1")
@@ -14,6 +46,7 @@ var getOrigin = function() {
 
    // construct the parent origin if the hostnames match
    var parentUrl = (parent !== window) ? document.referrer : null;
+
    if (parentUrl) {
      // parse the parent href
      var a = document.createElement('a');
@@ -115,5 +148,21 @@ window.addEventListener("scroll", onScroll, false);
 window.setTimeout(function() {
    send({ event: "doc_ready", data: null });
 }, 0);
+
+// mathjax setup -------------------------------------------------------------
+
+// if this is a Qt-based browser on Windows, inject the MathJax configuration
+// data.  at the time this runs it's not possible to know whether the document
+// uses MathJax or not.
+if (window.navigator.userAgent.indexOf(" Qt/") > 0 &&
+    window.navigator.userAgent.indexOf("Windows") > 0) {
+   var s = document.createElement("script");
+   s.type = "text/x-mathjax-config";
+   s.textContent = 
+      'MathJax.Hub.Config({' + 
+      '  "HTML-CSS": { minScaleAdjust: 125, availableFonts: [] } ' +
+      '});';
+   document.head.appendChild(s);
+}
 })();
 
