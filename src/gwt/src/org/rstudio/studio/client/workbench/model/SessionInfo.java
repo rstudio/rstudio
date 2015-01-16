@@ -362,4 +362,8 @@ public class SessionInfo extends JavaScriptObject
    public final native boolean getClangAvailable() /*-{
       return this.clang_available;
    }-*/;
+
+   public final native boolean getEnableRStudioConnect() /*-{
+      return this.enable_rstudio_connect;
+   }-*/;
 }

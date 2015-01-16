@@ -170,6 +170,8 @@ public:
    int clangVerbose() const;
    void setClangVerbose(int level);
 
+   bool enableRStudioConnect() const;
+
 private:
 
    void onSettingsFileChanged(

@@ -654,4 +654,9 @@ void UserSettings::setClangVerbose(int level)
    settings_.set("clangVerbose", level);
 }
 
+bool UserSettings::enableRStudioConnect() const
+{
+   return true;
+}
+
 }// namespace session

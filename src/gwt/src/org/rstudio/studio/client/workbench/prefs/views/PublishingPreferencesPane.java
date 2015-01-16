@@ -31,16 +31,21 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectAccountList;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectAccountWizard;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectConnectAccountDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
@@ -49,11 +54,13 @@ public class PublishingPreferencesPane extends PreferencesPane
    @Inject
    public PublishingPreferencesPane(GlobalDisplay globalDisplay,
                                     RSConnectServerOperations server,
-                                    UIPrefs prefs)
+                                    UIPrefs prefs,
+                                    Session session)
    {
       display_ = globalDisplay;
       uiPrefs_ = prefs;
       server_ = server;
+      session_ = session;
       
       Label accountLabel = new Label("Connected Accounts");
       accountLabel.getElement().getStyle().setFontWeight(FontWeight.BOLD);
@@ -170,17 +177,18 @@ public class PublishingPreferencesPane extends PreferencesPane
    
    private void onConnect()
    {
-      RSConnectConnectAccountDialog dialog = 
-            new RSConnectConnectAccountDialog(server_, display_);
-      dialog.addCloseHandler(new CloseHandler<PopupPanel>()
+      RSConnectAccountWizard wizard = new RSConnectAccountWizard(
+            session_.getSessionInfo(),
+            new ProgressOperationWithInput<NewRSConnectAccountResult>()
       {
          @Override
-         public void onClose(CloseEvent<PopupPanel> event)
+         public void execute(NewRSConnectAccountResult input,
+               ProgressIndicator indicator)
          {
-            accountList_.refreshAccountList();
+            
          }
       });
-      dialog.showModal();
+      wizard.showModal();
    }
 
    private void setDisconnectButtonEnabledState()
@@ -191,6 +199,7 @@ public class PublishingPreferencesPane extends PreferencesPane
    
    private final GlobalDisplay display_;
    private final UIPrefs uiPrefs_;
+   private final Session session_;
    private final RSConnectServerOperations server_;
    private RSConnectAccountList accountList_;
    private ThemedButton connectButton_;
