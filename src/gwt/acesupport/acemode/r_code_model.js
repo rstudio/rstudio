@@ -712,7 +712,6 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
       var maxRow = Math.min(maxrow + 30, this.$doc.getLength() - 1);
       this.$tokenizeUpToRow(maxRow);
 
-      //console.log("Seeking to " + this.$scopes.parsePos.row + "x"+ this.$scopes.parsePos.column);
       var tokenCursor = this.getTokenCursor();
       if (!tokenCursor.seekToNearestToken(this.$scopes.parsePos, maxRow))
          return;
@@ -721,8 +720,6 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
       {
          this.$scopes.parsePos = tokenCursor.currentPosition();
          this.$scopes.parsePos.column += tokenCursor.currentValue().length;
-
-         //console.log("                                 Token: " + tokenCursor.currentValue() + " [" + tokenCursor.currentPosition().row + "x" + tokenCursor.currentPosition().column + "]");
 
          var tokenType = tokenCursor.currentToken().type;
          if (/\bsectionhead\b/.test(tokenType))
