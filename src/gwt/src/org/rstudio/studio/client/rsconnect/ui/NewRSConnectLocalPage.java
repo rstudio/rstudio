@@ -30,8 +30,7 @@ public class NewRSConnectLocalPage
    {
       super("RStudio Connect", 
             "A local service running inside your organization. Publish and " +
-            "collaborate on Shiny applications and dcouments privately and " +
-            "securely.",
+            "collaborate privately and securely.",
             "Project Type",
             RSConnectAccountResources.INSTANCE.localAccountIcon(), 
             RSConnectAccountResources.INSTANCE.localAccountIconLarge(), 

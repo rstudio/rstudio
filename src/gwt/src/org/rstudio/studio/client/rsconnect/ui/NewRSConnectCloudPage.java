@@ -16,37 +16,57 @@ package org.rstudio.studio.client.rsconnect.ui;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountInput;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 
-public class NewRSConnectCloudPage 
-            extends WizardNavigationPage<NewRSConnectAccountInput,
-                                         NewRSConnectAccountResult>
-{
+import com.google.gwt.user.client.ui.Widget;
 
+public class NewRSConnectCloudPage 
+            extends WizardPage<NewRSConnectAccountInput,
+                               NewRSConnectAccountResult>
+{
    public NewRSConnectCloudPage()
    {
       super("ShinyApps.io", 
             "A cloud service run by RStudio. Publish Shiny applications " +
             "and interactive documents to the Internet.",
-            "Account Type",
+            "Connect ShinyApps.io Account",
             RSConnectAccountResources.INSTANCE.cloudAccountIcon(), 
-            RSConnectAccountResources.INSTANCE.cloudAccountIconLarge(), 
-            createPages());
+            RSConnectAccountResources.INSTANCE.cloudAccountIconLarge());
    }
 
-  
-   private static ArrayList<WizardPage<NewRSConnectAccountInput, 
-                                       NewRSConnectAccountResult>>
-                                createPages()
-   {   
-      ArrayList<WizardPage<NewRSConnectAccountInput, 
-                           NewRSConnectAccountResult>> pages = 
-            new ArrayList<WizardPage<NewRSConnectAccountInput, 
-                                     NewRSConnectAccountResult>>();
-      
-      return pages;
+   @Override
+   public void focus()
+   {
    }
+
+   @Override
+   protected Widget createWidget()
+   {
+      if (accountWidget == null)
+         accountWidget = new RSConnectConnectAccount();
+      
+      return accountWidget;
+   }
+
+   @Override
+   protected void initialize(NewRSConnectAccountInput initData)
+   {
+   }
+
+   @Override
+   protected NewRSConnectAccountResult collectInput()
+   {
+      return new NewRSConnectAccountResult(
+            accountWidget.getAccountInfo());
+   }
+
+   @Override
+   protected boolean validate(NewRSConnectAccountResult input)
+   {
+      return input.getCloudSecret().length() > 0;
+   }
+   
+   private RSConnectConnectAccount accountWidget;
 }

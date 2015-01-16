@@ -31,10 +31,8 @@
            account on ShinyApps</a> and log in.</p></li>
        <li><p>Click your name, then choose <b>Tokens</b> from your account menu.
            </p></li>
-       <li><p>Use the Copy command under <b>Actions</b> to copy the token, 
-           account, and secret information to the clipboard, and paste the 
-           result here or at the R console. (It will start with 
-           <tt>shinyapps::setAccountInfo</tt>.)</p></li>
+       <li><p>Click <b>Show</b> on the token you want to use, then <b>Copy to
+           Clipboard.</b> Paste the result here:</p></li>
      </ol>
 	  </g:HTML>
 	  <g:TextArea styleName="{style.accountInfo} {style.spaced}"

@@ -16,5 +16,28 @@ package org.rstudio.studio.client.rsconnect.model;
 
 public class NewRSConnectAccountResult
 {
-
+   enum AccountType
+   {
+      RSConnectCloudAccount,
+      RSconnectLocalAccount
+   }
+   
+   public NewRSConnectAccountResult(String cloudSecret)
+   {
+      type_ = AccountType.RSConnectCloudAccount;
+      cloudSecret_ = cloudSecret;
+   }
+   
+   public String getCloudSecret()
+   {
+      return cloudSecret_;
+   }
+   
+   public AccountType getAccountType()
+   {
+      return type_;
+   }
+   
+   private AccountType type_;
+   private String cloudSecret_;
 }
