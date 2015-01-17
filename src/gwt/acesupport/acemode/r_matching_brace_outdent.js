@@ -73,8 +73,8 @@ define("mode/r_matching_brace_outdent", function(require, exports, module)
          if (match)
          {
             var column = match[1].length;
-            var indent = codeModel.getBraceIndent(row-1);
-            session.replace(new Range(row, 0, row, column-1), indent);
+            var indent = codeModel.getBraceIndent(row - 1);
+            session.replace(new Range(row, 0, row, column - 1), indent);
          }
       };
    }).call(RMatchingBraceOutdent);
