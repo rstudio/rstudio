@@ -1373,24 +1373,33 @@ assign(x = ".rs.acCompletionTypes",
    .Call("rs_getActiveFrame", as.integer(n) + offset)
 })
 
-.rs.addFunction("getCompletionsNativeRoutine", function(token, routine)
+.rs.addFunction("getCompletionsNativeRoutine", function(token, interface)
 {
-   # We look for dynamic symbols
+   # For a package which has dynamic symbol loading, just get the strings.
+   # For other packages, search the namespace for the symbol.
    loadedDLLs <- getLoadedDLLs()
    routines <- lapply(loadedDLLs, getDLLRegisteredRoutines)
-   routineNames <- lapply(routines, function(x) {
-      names(x[[routine]])
+   
+   isDynamic <- unlist(lapply(loadedDLLs, `[[`, "dynamicLookup"))
+   
+   dynRoutines <- c(
+      routines[isDynamic],
+      routines["(embedding)"]
+   )
+   
+   dynRoutineNames <- lapply(dynRoutines, function(x) {
+      names(x[[interface]])
    })
    
-   results <- .rs.namedVectorAsList(routineNames)
-   indices <- .rs.fuzzyMatches(results$values, token)
+   dynResults <- .rs.namedVectorAsList(dynRoutineNames)
+   dynIndices <- .rs.fuzzyMatches(dynResults$values, token)
    
    .rs.makeCompletions(token = token,
-                       results = results$values[indices],
-                       packages = results$names[indices],
+                       results = dynResults$values[dynIndices],
+                       packages = dynResults$names[dynIndices],
                        quote = TRUE,
-                       type = .rs.acCompletionTypes$STRING,
-                       excludeOtherCompletions = TRUE)
+                       type = .rs.acCompletionTypes$STRING)
+   
 })
 
 .rs.addJsonRpcHandler("get_completions", function(token,
