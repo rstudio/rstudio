@@ -1001,10 +1001,11 @@ LintResults parseAndLintRFile(const FilePath& filePath)
    return std::make_pair(root, lintItems);
 }
 
-SEXP rs_parseAndLintRFile(SEXP absoluteFilePathSEXP)
+SEXP rs_parseAndLintRFile(SEXP pathSEXP)
 {
-   std::string absoluteFilePath = r::sexp::asString(absoluteFilePathSEXP);
-   FilePath filePath(absoluteFilePath);
+   std::string path = r::sexp::asString(pathSEXP);
+   FilePath filePath(module_context::resolveAliasedPath(path));
+   
    LintResults lintResults = parseAndLintRFile(filePath);
    
    std::vector<LintItem> lintItems = lintResults.second.get();
