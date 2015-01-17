@@ -1248,6 +1248,56 @@ private:
       module_context::enqueClientEvent(event);
    }
 
+   std::string parseLibrarySwitchFromInstallArgs()
+   {
+      if (usedDevtools_)
+         return std::string();
+
+      std::string libPath;
+
+      std::string extraArgs = projectConfig().packageInstallArgs;
+      std::size_t n = extraArgs.size();
+      std::size_t index = extraArgs.find("--library=");
+
+      if (index != std::string::npos &&
+          index < n - 2) // ensure some space for path
+      {
+         std::size_t startIndex = index + std::string("--library=").length();
+         std::size_t endIndex = startIndex + 1;
+
+         // The library path can be specified with quotes + spaces, or without
+         // quotes (but no spaces), so handle both cases.
+         char firstChar = extraArgs[startIndex];
+         if (firstChar == '\'' || firstChar == '\"')
+         {
+            while (++endIndex < n)
+            {
+               // skip escaped characters
+               if (extraArgs[endIndex] == '\\')
+               {
+                  ++endIndex;
+                  continue;
+               }
+
+               if (extraArgs[endIndex] == firstChar)
+                  break;
+            }
+
+            libPath = extraArgs.substr(startIndex + 1, endIndex - startIndex - 1);
+         }
+         else
+         {
+            while (++endIndex < n)
+            {
+               if (std::isspace(extraArgs[endIndex]))
+                  break;
+            }
+            libPath = extraArgs.substr(startIndex, endIndex - startIndex + 1);
+         }
+      }
+      return libPath;
+   }
+
    void enqueBuildCompleted()
    {
       isRunning_ = false;
@@ -1260,8 +1310,16 @@ private:
 
       // enque event
       std::string afterRestartCommand;
+      std::string libPath = parseLibrarySwitchFromInstallArgs();
       if (restartR_)
-         afterRestartCommand = "library(" + pkgInfo_.name() + ")";
+      {
+         // if --library="" was specified and we're not in devmode,
+         // use it
+         afterRestartCommand = "library(" + pkgInfo_.name();
+         if (!libPath.empty())
+            afterRestartCommand += ", lib.loc = '" + libPath + "'";
+         afterRestartCommand += ")";
+      }
       json::Object dataJson;
       dataJson["restart_r"] = restartR_;
       dataJson["after_restart_command"] = afterRestartCommand;
