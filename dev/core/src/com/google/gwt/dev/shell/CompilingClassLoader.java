@@ -985,13 +985,21 @@ public final class CompilingClassLoader extends ClassLoader implements
       Set<String> jsoTypeNames = new HashSet<String>();
       Map<String, List<String>> jsoSuperTypes = new HashMap<String, List<String>>();
       for (JClassType type : jsoTypes) {
+        String binaryName = getBinaryName(type);
+
+        // Skip JSOs under emul because;
+        //  1- We shouldn't need re-write those as they will not be used in dev mode.
+        //  2- Trying to that will throw SecurityException.
+        if (binaryName.startsWith("java.")) {
+          continue;
+        }
+
         List<String> types = new ArrayList<String>();
         types.add(getBinaryName(type.getSuperclass()));
         for (JClassType impl : type.getImplementedInterfaces()) {
           types.add(getBinaryName(impl));
         }
 
-        String binaryName = getBinaryName(type);
         jsoTypeNames.add(binaryName);
         jsoSuperTypes.put(binaryName, types);
       }
