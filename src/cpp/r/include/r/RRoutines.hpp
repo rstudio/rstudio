@@ -30,7 +30,17 @@ void registerCallMethod(const char* name,
                         int numArgs);
 
 void registerAll();
-   
+
+#define RS_REGISTER_CALL_METHOD(__NAME__, __NUM_ARGS__)                        \
+   do                                                                          \
+   {                                                                           \
+      R_CallMethodDef callMethodDef;                                           \
+      callMethodDef.name = #__NAME__;                                          \
+      callMethodDef.fun = (DL_FUNC)__NAME__;                                   \
+      callMethodDef.numArgs = __NUM_ARGS__;                                    \
+      ::r::routines::addCallMethod(callMethodDef);                             \
+   } while (0)
+
 } // namespace routines   
 } // namespace r
 

@@ -33,6 +33,16 @@
 #include <core/FileUtils.hpp>
 #include <core/collection/Tree.hpp>
 
+#define LINTER_DEBUG_LEVEL 1
+#if LINTER_DEBUG_LEVEL > 0
+# define DEBUG(x) \
+   std::cerr << "(linter) " << x << std::endl;
+# define DEBUG_BLOCK(x) x
+#else
+# define DEBUG(x)
+# define DEBUG_BLOCK(x)
+#endif
+
 namespace session {
 namespace modules {
 namespace linter {
@@ -75,9 +85,28 @@ public:
       return std::equal(token_.begin(), token_.end(), text.begin());
    }
    
-   operator RToken() const
+   const RToken& token() const
    {
       return token_;
+   }
+   
+   operator const RToken&() const
+   {
+      return token_;
+   }
+   
+   std::string asString() const
+   {
+      std::stringstream ss;
+      ss << "("
+         << row_
+         << ", "
+         << column_
+         << ", '"
+         << string_utils::jsonLiteralEscape(token_.contentAsUtf8())
+         << "')";
+      
+      return ss.str();
    }
    
 private:
@@ -92,7 +121,7 @@ public:
    
    // NOTE: Must be constructed from tokens that have not
    // stripped whitespace
-   AnnotatedRTokens(const RTokens& rTokens)
+   explicit AnnotatedRTokens(const RTokens& rTokens)
       : dummyToken_(AnnotatedRToken(-1, -1, RToken()))
    {
       std::size_t row = 0;
@@ -101,7 +130,7 @@ public:
       std::size_t n = rTokens.size();
       for (std::size_t i = 0; i < n; ++i)
       {
-         // Add the token
+         // Add the token if it's not whitespace
          const RToken& token = rTokens.at(i);
          tokens_.push_back(
                   AnnotatedRToken(row, column, token));
@@ -114,7 +143,7 @@ public:
          if (numNewLines > 0)
          {
             row += numNewLines;
-            column = content.length() - content.find_last_of(L"\r\n");
+            column = content.length() - content.find_last_of(L"\r\n") - 1;
          }
          else
          {
@@ -125,7 +154,7 @@ public:
    
    const AnnotatedRToken& at(std::size_t index) const
    {
-      if (index > tokens_.size())
+      if (index >= tokens_.size())
          return dummyToken_;
       
       return tokens_[index];
@@ -139,7 +168,7 @@ public:
    void dump()
    {
       std::cerr
-            << "Dumping " << tokens_.size() << " tokens:\n";
+            << "Dumping " << tokens_.size() << " tokens:" << std::endl;
       
       for (std::size_t i = 0; i < tokens_.size(); ++i)
       {
@@ -151,7 +180,8 @@ public:
                << token.column()
                << ", "
                << "'" << string_utils::jsonLiteralEscape(token.contentAsUtf8()) << "'"
-               << "}\n";
+               << "}"
+               << std::endl;
       }
    }
    
@@ -161,6 +191,9 @@ private:
    
 };
 
+// simulate scoped enum
+namespace LintType {
+
 enum LintType
 {
    STYLE,
@@ -169,25 +202,122 @@ enum LintType
    ERROR
 };
 
-class LintItem
+std::string asString(LintType type)
 {
-private:
-   int startRow_;
-   int startColumn_;
-   int endRow_;
-   int endColumn_;
-   LintType type_;
-   std::string message_;
+   switch (type)
+   {
+   case STYLE: return "style";
+   case INFO: return "info";
+   case WARNING: return "warning";
+   case ERROR: return "error";
+   }
+   
+   return std::string();
+}
+
+} // end namespace LintType
+
+struct LintItem
+{
+
+   LintItem (int startRow,
+             int startColumn,
+             int endRow,
+             int endColumn,
+             LintType::LintType type,
+             const std::string message)
+      : startRow(startRow),
+        startColumn(startColumn),
+        endRow(endRow),
+        endColumn(endColumn),
+        type(type),
+        message(message) {}
+
+   int startRow;
+   int startColumn;
+   int endRow;
+   int endColumn;
+   LintType::LintType type;
+   std::string message;
 };
 
-typedef std::vector<LintItem> LintItems;
+class LintItems
+{
+private:
+   
+public:
+   // default ctors: copyable members
+   
+   void add(int startRow,
+            int startColumn,
+            int endRow,
+            int endColumn,
+            LintType::LintType type,
+            const std::string& message)
+   {
+      LintItem item(startRow,
+                    startColumn,
+                    endRow,
+                    endColumn,
+                    type,
+                    message);
+      
+      lintItems_.push_back(item);
+   }
+   
+   void addUnexpectedToken(const AnnotatedRToken& token,
+                           const std::string& expected = std::string())
+   {
+      std::string content = token.contentAsUtf8();
+      std::string message = "Unexpected token '" + content + "'";
+      if (!expected.empty())
+         message = message + ", expected " + expected;
+      
+      LintItem item(token.row(),
+                    token.column(),
+                    token.row(),
+                    token.column() + content.length(),
+                    LintType::ERROR,
+                    message);
+      
+      lintItems_.push_back(item);
+   }
+   
+   void addUnexpectedToken(const AnnotatedRToken& token,
+                           const std::wstring& expected)
+   {
+      addUnexpectedToken(token, string_utils::wideToUtf8(expected));
+   }
+   
+   void addUnmatchedToken(const AnnotatedRToken& token)
+   {
+      std::string content = token.contentAsUtf8();
+      
+      LintItem item(token.row(),
+                    token.column(),
+                    token.row(),
+                    token.column() + content.length(),
+                    LintType::ERROR,
+                    "unmatched bracket '" + content + "'");
+      
+      lintItems_.push_back(item);
+   }
+   
+   const std::vector<LintItem>& get() const
+   {
+      return lintItems_;
+   }
+   
+private:
+   std::vector<LintItem> lintItems_;
+};
 
 struct ParseItem
 {
    ParseItem(int row, int column, const std::string& name)
       : row(row), column(column), name(name) {}
    
-   ParseItem(const AnnotatedRToken& rToken)
+   explicit ParseItem(const AnnotatedRToken& rToken)
       : row(rToken.row()), column(rToken.column())
    {
       name = rToken.contentAsUtf8();
@@ -218,11 +348,39 @@ struct ParseItem
 
 class ParseNode
 {
+private:
+   
+   // private constructor: root node should be created through
+   // 'createRootNode()', with future nodes appended to that node;
+   // child nodes with 'createChildNode()'
+   explicit ParseNode(ParseNode* pParent,
+                      const std::string& name)
+      : pParent_(pParent), name_(name) {}
+   
 public:
    
-   explicit ParseNode(const std::string& name)
-      : name_(name) {}
+   ~ParseNode()
+   {
+   }
    
+   static boost::shared_ptr<ParseNode> createRootNode()
+   {
+      return boost::shared_ptr<ParseNode>(new ParseNode(NULL, "<root>"));
+   }
+   
+   static boost::shared_ptr<ParseNode> createChildNode(
+         ParseNode* pParent,
+         const std::string& name)
+   {
+      return boost::shared_ptr<ParseNode>(
+               new ParseNode(pParent, name));
+   }
+   
+   bool isRootNode() const
+   {
+      return pParent_ == NULL;
+   }
+
    void addDefinedVariable(int row,
                            int column,
                            const std::string& name)
@@ -270,9 +428,18 @@ public:
    
    // Tree-related operations
    
-   boost::weak_ptr<ParseNode>& getParent()
+   ParseNode* getParent() const
    {
-      return parent_;
+      return pParent_;
+   }
+   
+   ParseNode* getRoot() const
+   {
+      ParseNode* pNode = const_cast<ParseNode*>(this);
+      while (pNode->pParent_ != NULL)
+         pNode = pNode->pParent_;
+      
+      return pNode;
    }
    
    std::vector< boost::shared_ptr<ParseNode> > getChildren()
@@ -280,16 +447,16 @@ public:
       return children_;
    }
    
-   void addChild(const boost::shared_ptr<ParseNode>& pChild)
+   void addChild(boost::shared_ptr<ParseNode> pChild)
    {
+      pChild->pParent_ = this;
       children_.push_back(pChild);
    }
    
 private:
    
    // tree reference -- children and parent
-   // parents protect their children
-   boost::weak_ptr<ParseNode> parent_;
+   ParseNode* pParent_;
    std::vector< boost::shared_ptr<ParseNode> > children_;
    
    // member variables
@@ -306,75 +473,195 @@ private:
    PackageSymbols exportedSymbols_; // <pgk>:::<bar>
 };
 
-namespace {
-
-// Move pIndex to the index of the matching token, or no movement
-// on failure.
-bool moveIndexToMatchingToken(const AnnotatedRTokens& rTokens,
-                              std::size_t* pIndex)
+class TokenCursor
 {
-   std::size_t index = *pIndex;
-   const AnnotatedRToken& currentToken = rTokens.at(index);
+private:
+   
+   TokenCursor(const AnnotatedRTokens &rTokens,
+               std::size_t offset,
+               std::size_t n)
+      : rTokens_(rTokens), offset_(offset), n_(n) {}
+   
+public:
+   
+   explicit TokenCursor(const AnnotatedRTokens& rTokens)
+      : rTokens_(rTokens), offset_(0), n_(rTokens.size()) {}
+   
+   TokenCursor(const AnnotatedRTokens &rTokens,
+               std::size_t offset)
+      : rTokens_(rTokens), offset_(offset), n_(rTokens.size()) {}
+   
+   TokenCursor clone() const
+   {
+      return TokenCursor(rTokens_, offset_, n_);
+   }
+   
+   bool moveToNextToken()
+   {
+      if (offset_ == n_ - 1)
+         return false;
+      
+      ++offset_;
+      return true;
+   }
+   
+   bool moveToPreviousToken()
+   {
+      if (offset_ == 0)
+         return false;
+      
+      --offset_;
+      return true;
+   }
+   
+   const AnnotatedRToken& nextNonWhitespaceToken() const
+   {
+      TokenCursor cursor = clone();
+      cursor.moveToNextToken();
+      cursor.fwdOverWhitespace();
+      return cursor.currentToken();
+   }
+   
+   const AnnotatedRToken& currentToken() const
+   {
+      return rTokens_.at(offset_);
+   }
+   
+   operator const AnnotatedRToken&() const
+   {
+      return rTokens_.at(offset_);
+   }
+   
+   operator const RToken&() const
+   {
+      return rTokens_.at(offset_).token();
+   }
+   
+   const AnnotatedRToken& peek(int offset = 1) const
+   {
+      return rTokens_.at(offset_ + offset);
+   }
+   
+   bool contentEquals(const std::wstring& content) const
+   {
+      return rTokens_.at(offset_).contentEquals(content);
+   }
+   
+   void fwdOverWhitespace()
+   {
+      while (currentToken().isType(RToken::WHITESPACE))
+         moveToNextToken();
+   }
+   
+   void bwdOverWhitespace()
+   {
+      while (currentToken().isType(RToken::WHITESPACE))
+         moveToPreviousToken();
+   }
+   
+   friend std::ostream& operator <<(std::ostream& os, const TokenCursor& cursor)
+   {
+      os << cursor.currentToken().asString();
+      return os;
+   }
 
-#define RSTUDIO_FWD_TO_MATCHING_TOKEN(LEFT_OP, RIGHT_OP) do { \
-   if (currentToken.type() == LEFT_OP) \
-   { \
-      std::size_t numTokens = rTokens.size(); \
-      ++index; \
-      while (rTokens.at(index).type() != RIGHT_OP && index < numTokens - 1) \
-         ++index; \
-      *pIndex = index; \
-      return true; \
-   } \
-} while (0)
-   
-#define RSTUDIO_BWD_TO_MATCHING_TOKEN(LEFT_OP, RIGHT_OP) do { \
-   if (currentToken.type() == RIGHT_OP) \
-   { \
-      --index; \
-      while (rTokens.at(index).type() != LEFT_OP && index > 0) \
-         --index; \
-      *pIndex = index; \
-      return index; \
-   } \
-} while (0)
-   
-#define RSTUDIO_MOVE_TO_MATCHING_TOKEN(TOKEN_NAME) \
-   RSTUDIO_FWD_TO_MATCHING_TOKEN(RToken::L##TOKEN_NAME, RToken::R##TOKEN_NAME); \
-   RSTUDIO_BWD_TO_MATCHING_TOKEN(RToken::L##TOKEN_NAME, RToken::R##TOKEN_NAME); \
-   
-RSTUDIO_MOVE_TO_MATCHING_TOKEN(BRACE);
-RSTUDIO_MOVE_TO_MATCHING_TOKEN(PAREN);
-RSTUDIO_MOVE_TO_MATCHING_TOKEN(BRACKET);
-RSTUDIO_MOVE_TO_MATCHING_TOKEN(DBRACKET);
+#define RSTUDIO_FWD_TO_MATCHING_TOKEN_2(__LEFT_OP__, __RIGHT_OP__)             \
+   do                                                                          \
+   {                                                                           \
+      if (currentToken().type() == __LEFT_OP__)                                \
+      {                                                                        \
+         while (currentToken().type() != __RIGHT_OP__)                         \
+            moveToNextToken();                                                 \
+         return currentToken().type() == __RIGHT_OP__;                         \
+      }                                                                        \
+   } while (0)
 
-return false;
+#define RSTUDIO_FWD_TO_MATCHING_TOKEN(__TOKEN_NAME__)                          \
+   RSTUDIO_FWD_TO_MATCHING_TOKEN_2(RToken::L##__TOKEN_NAME__,                  \
+                                   RToken::R##__TOKEN_NAME__);
+
+#define RSTUDIO_BWD_TO_MATCHING_TOKEN_2(__LEFT_OP__, __RIGHT_OP__)             \
+   do                                                                          \
+   {                                                                           \
+      if (currentToken().type() == __RIGHT_OP__)                               \
+      {                                                                        \
+         while (currentToken().type() != __LEFT_OP__)                          \
+            moveToPreviousToken();                                             \
+         return currentToken().type() == __LEFT_OP__;                          \
+      }                                                                        \
+   } while (0)
+
+#define RSTUDIO_BWD_TO_MATCHING_TOKEN(__TOKEN_NAME__)                          \
+   RSTUDIO_BWD_TO_MATCHING_TOKEN_2(RToken::L##__TOKEN_NAME__,                  \
+                                   RToken::R##__TOKEN_NAME__);
+
+   bool fwdToMatchingToken()
+   {
+      RSTUDIO_FWD_TO_MATCHING_TOKEN(BRACE);
+      RSTUDIO_FWD_TO_MATCHING_TOKEN(PAREN);
+      RSTUDIO_FWD_TO_MATCHING_TOKEN(BRACKET);
+      RSTUDIO_FWD_TO_MATCHING_TOKEN(DBRACKET);
+      return false;
+   }
+   
+   bool bwdToMatchingToken()
+   {
+      RSTUDIO_BWD_TO_MATCHING_TOKEN(BRACE);
+      RSTUDIO_BWD_TO_MATCHING_TOKEN(PAREN);
+      RSTUDIO_BWD_TO_MATCHING_TOKEN(BRACKET);
+      RSTUDIO_BWD_TO_MATCHING_TOKEN(DBRACKET);
+      return false;
+   }
 
 #undef RSTUDIO_BWD_TO_MATCHING_TOKEN
 #undef RSTUDIO_FWD_TO_MATCHING_TOKEN
 #undef RSTUDIO_MOVE_TO_MATCHING_TOKEN
 
-}
+private:
+   
+   const AnnotatedRTokens& rTokens_;
+   std::size_t offset_;
+   std::size_t n_;
+};
 
-void handleIdToken(const AnnotatedRTokens& rTokens,
-                   const AnnotatedRToken& thisToken,
-                   boost::shared_ptr<ParseNode> pNode,
-                   std::size_t i)
+namespace {
+
+void handleIdToken(TokenCursor& cursor,
+                   ParseNode* pNode,
+                   LintItems& lintItems)
 {
    // If the following token is a '::' or ':::', then
    // we add to the set of namespace entries used.
-   const AnnotatedRToken& nextToken = rTokens.at(i + 1);
-   if (isNamespace(nextToken))
+   if (isNamespace(cursor.peek(1)))
    {
-      const AnnotatedRToken& nextNextToken = rTokens.at(i + 2);
-      if (nextToken.content() == L"::")
+      // Validate that the entries before and after the '::' are either
+      // strings, symbols or identifiers
+      const AnnotatedRToken& pkgToken = cursor;
+      const AnnotatedRToken& nsToken = cursor.peek(1);
+      const AnnotatedRToken& exportedToken = cursor.peek(2);
+      
+      if (!(isString(pkgToken) ||
+            isId(pkgToken)))
+      {
+         lintItems.addUnexpectedToken(pkgToken, "'string' or 'id'");
+         return;
+      }
+      
+      if (!(isString(exportedToken) ||
+            isId(exportedToken)))
+      {
+         lintItems.addUnexpectedToken(exportedToken, "'string' or 'id'");
+         return;
+      }
+      
+      if (nsToken.contentEquals(L"::"))
          pNode->addExportedPackageSymbol(
-                  thisToken.contentAsUtf8(),
-                  nextNextToken.contentAsUtf8());
+                  pkgToken.contentAsUtf8(),
+                  exportedToken.contentAsUtf8());
       else
          pNode->addInternalPackageSymbol(
-                  thisToken.contentAsUtf8(),
-                  nextNextToken.contentAsUtf8());
+                  pkgToken.contentAsUtf8(),
+                  exportedToken.contentAsUtf8());
 
       return;
    }
@@ -383,114 +670,206 @@ void handleIdToken(const AnnotatedRTokens& rTokens,
    // touch it for now.
    //
    // TODO: Add another map for 'containers' in a scope?
-   const AnnotatedRToken& prevToken = rTokens.at(i - 1);
+   const AnnotatedRToken& prevToken = cursor.peek(-1);
    if (isAt(prevToken) ||
        isDollar(prevToken))
       return;
 
    // Check to see if there is a left assign following the token.
    // If so, add that symbol to this scope.
+   const AnnotatedRToken& nextToken = cursor.peek(1);
    if (isLocalLeftAssign(nextToken))
-      pNode->addDefinedVariable(thisToken);
+      pNode->addDefinedVariable(cursor);
 
    // Similarily for previous assign
    if (isLocalRightAssign(prevToken))
-      pNode->addDefinedVariable(thisToken);
+      pNode->addDefinedVariable(cursor);
 
    // TODO: Handle 'global' assign. This implies searching
    // parent scopes to see if the variable is defined locally
    // or defined in a parent scope.
 
    // Add a reference to this variable
-   pNode->addReferencedVariable(nextToken);
+   DEBUG("Adding reference to variable '" << nextToken.asString() << "'");
+   pNode->addReferencedVariable(cursor);
+   
 }
 
-// This function takes a token stream of the form:
+// Take a token stream of the form:
 //
 //    x <- function(a, b, c) {
 //         ^
 // and:
 // 1. Populates the current scope with variables in the argument list,
 // 2. Creates a new node for the function.
-std::size_t handleFunctionToken(const AnnotatedRTokens& rTokens,
-                                const AnnotatedRToken& thisToken,
-                                boost::shared_ptr<ParseNode> pNode,
-                                std::size_t i)
+void handleFunctionToken(TokenCursor& cursor,
+                         ParseNode* pNode,
+                         LintItems& lintItems)
 {
-   std::size_t n = rTokens.size();
-   std::size_t tokenIndex = i + 1;
+   // ensure we're on a function token
+   DEBUG_BLOCK(
+      if (!cursor.contentEquals(L"function"))
+      {
+         DEBUG("ASSERTION ERROR: Expected token cursor to lie on 'function' token");
+         return;
+      }
+   );
    
-   // TODO: name me!
-   boost::shared_ptr<ParseNode> pChild(new ParseNode("name"));
+   // there should be a '(' following the function keyword
+   cursor.moveToNextToken();
+   if (!cursor.contentEquals(L"("))
+   {
+      lintItems.addUnexpectedToken(
+               cursor,
+               "(");
+      return;
+   }
    
-   // TODO: What if the token following the 'function' isn't an open paren?
-   if (rTokens.at(tokenIndex).content() != L"(")
-      return -1;
-   
-   ++tokenIndex;
+   boost::shared_ptr<ParseNode> pChild =
+         ParseNode::createChildNode(pNode, "TODO");
    
    // Check to see if we have no arguments for this function.
-   if (rTokens.at(tokenIndex).content() == L")")
-      goto ENCOUNTERED_END_OF_ARGUMENT_LIST;
-   
-   ++tokenIndex;
-   
-   // Add the first element from the argument list.
-   if (isId(rTokens.at(tokenIndex)))
-      pChild->addDefinedVariable(rTokens.at(tokenIndex));
-   
-   // Start looking for ',' for the next entries.
-   while (++tokenIndex < n)
+   cursor.moveToNextToken();
+   if (cursor.contentEquals(L")"))
    {
-      const RToken& token = rTokens.at(tokenIndex);
-      
-      // Move over matching parens
-      if (moveIndexToMatchingToken(rTokens, &tokenIndex))
-         continue;
-      
-      // If we encounter a ',', the next token should be
-      // an identifier.
-      if (isComma(token))
-         pChild->addDefinedVariable(rTokens.at(tokenIndex + 1));
-      
-      // If we encounter a closing paren, break
-      if (isRightBrace(token))
-      {
-         // TODO: We escape on all right braces but only ')' is valid.
-         break;
-      }
+      DEBUG("Argument list for function is empty; skipping");
+      goto ENCOUNTERED_END_OF_ARGUMENT_LIST;
    }
+   
+   // Start running through the function arguments. This loop should
+   // begin at the start of a new function block; ie, on an identifier.
+   // We break out when a ')' or other unmatched closing brace is identified.
+   
+   DEBUG("Parsing argument list for function");
+   do
+   {
+      START:
+      
+      cursor.fwdOverWhitespace();
+      DEBUG("Current token: " << cursor.currentToken().asString());
+      
+      // start on identifier
+      if (!isId(cursor))
+         lintItems.addUnexpectedToken(cursor, "id");
+      else
+         pChild->addDefinedVariable(cursor);
+      
+      cursor.moveToNextToken();
+      
+      // expect either a ',' or '=' (for default arg)
+      if (isComma(cursor))
+      {
+         DEBUG("Found comma; parsing next argument");
+         continue;
+      }
+      else if (cursor.contentEquals(L"="))
+      {
+         DEBUG("Found '='; looking for next argument name");
+         
+         // TODO: Parse expression following '='. 
+         // For now, we just look for a comma (starting a new argument)
+         // or a ')' (closing the argument list)
+         while (cursor.moveToNextToken())
+         {
+            // TODO: We skip whitespace but stylistically we might warn
+            // about whitespace before / after '='
+            cursor.fwdOverWhitespace();
+            DEBUG("Current token: " << cursor);
+            
+            if (isLeftBrace(cursor))
+            {
+               if (cursor.fwdToMatchingToken())
+                  continue;
+               else
+                  lintItems.addUnmatchedToken(cursor);
+            }
+            
+            if (isComma(cursor))
+            {
+               // We found a comma; continue parsing other function arguments
+               DEBUG("Found comma in function argument list; parsing next arguments");
+               cursor.moveToNextToken();
+               goto START;
+            }
+            
+            if (isRightBrace(cursor))
+            {
+               // Found a closing brace; this should be a ')'.
+               if (!cursor.contentEquals(L")"))
+                  lintItems.addUnexpectedToken(cursor, ")");
+               
+               goto ENCOUNTERED_END_OF_ARGUMENT_LIST;
+            }
+         }
+      }
+      else if (isRightBrace(cursor))
+      {
+         if (!cursor.contentEquals(L")"))
+            lintItems.addUnexpectedToken(cursor, ")");
+         
+         goto ENCOUNTERED_END_OF_ARGUMENT_LIST;
+      }
+      {
+         DEBUG("Unexpected token: expected ',', '=' or ')' following identifier");
+         lintItems.addUnexpectedToken(cursor, "',' or '='");
+      }
+      
+   } while (cursor.moveToNextToken());
       
    ENCOUNTERED_END_OF_ARGUMENT_LIST:
    
-   // The next token should be a '{'.
-   if (rTokens.at(tokenIndex).content() == L"{")
-      pNode->addChild(pChild);
-   
-   // Return the updated index
-   ++tokenIndex;
-   return tokenIndex;
-   
-}
-
-std::size_t handleStringToken(const AnnotatedRTokens& rTokens,
-                              const AnnotatedRToken& thisToken,
-                              boost::shared_ptr<ParseNode> pNode,
-                              std::size_t i)
-{
-   const RToken& nextToken = rTokens.at(i + 1);
-   if (isLocalLeftAssign(nextToken))
+   // Following the paren that closes a function argument list, we may
+   // either be opening a new block, or defining a function with a single
+   // statement.
+   //
+   // TODO: Handle single-expression functions, e.g.
+   // foo <- function() bar()
+   if (cursor.contentEquals(L"{"))
    {
-      pNode->addDefinedVariable(thisToken);
-      return i + 1;
+      DEBUG("Found '{' opening function body");
+      pNode->addChild(pChild);
    }
-   return i;
+   
 }
 
-   
+void handleStringToken(TokenCursor& cursor,
+                       ParseNode* pNode,
+                       LintItems& lintItems)
+{
+   if (isLocalLeftAssign(cursor.peek(1)))
+      pNode->addDefinedVariable(cursor);
+}
+
+std::map<std::wstring, std::wstring> makeComplementVector()
+{
+   std::map<std::wstring, std::wstring> m;
+   m[L"["] = L"]";
+   m[L"("] = L")";
+   m[L"{"] = L"}";
+   m[L"[["] = L"]]";
+   m[L"]"] = L"[";
+   m[L")"] = L"(";
+   m[L"}"] = L"{";
+   m[L"]]"] = L"[[";
+   return m;
+}
+
+static std::map<std::wstring, std::wstring> s_complements =
+      makeComplementVector();
+
+
+std::wstring complement(const std::wstring string)
+{
+   return s_complements[string];
+}
+
 } // end anonymous namespace
 
-boost::shared_ptr<ParseNode> parseRFile(const FilePath& filePath)
+typedef std::pair<
+   boost::shared_ptr<ParseNode>,
+   LintItems> LintResults;
+
+LintResults parseAndLintRFile(const FilePath& filePath)
 {
    std::string contents = file_utils::readFile(filePath);
    
@@ -498,29 +877,77 @@ boost::shared_ptr<ParseNode> parseRFile(const FilePath& filePath)
    AnnotatedRTokens rTokens(tokens);
    
    // Create an empty tree to populate
-   boost::shared_ptr<ParseNode> pNode(new ParseNode("<root>"));
+   boost::shared_ptr<ParseNode> root =
+         ParseNode::createRootNode();
    
-   // Move through the tokens and populate the lint tree.
-   std::size_t numTokens = rTokens.size();
+   // The pointer we use to walkt the tree is a raw pointer, to avoid
+   // accidentally having multiple shared pointers to a parent node.
+   ParseNode* pNode = root.get();
    
-   std::size_t braceStack = 0; // counting '{', '}'
+   // Create a vector of lint objects to fill as we parse
+   LintItems lintItems;
    
-   for (std::size_t i = 0; i < numTokens; ++i)
+   // Brace stack
+   std::vector<std::wstring> braceStack;
+   std::size_t braceCount = 0;
+   
+   TokenCursor cursor(rTokens);
+   
+   do
    {
-      const AnnotatedRToken& thisToken = rTokens.at(i);
+      DEBUG("Current token: " << cursor);
+      
+      // Update the brace stack
+      if (isLeftBrace(cursor))
+      {
+         DEBUG("Encountered '" << cursor.currentToken().contentAsUtf8() << "'; updating brace stack");
+         braceStack.push_back(cursor.currentToken().content());
+         braceCount += cursor.currentToken().contentEquals(L"{") ? 1 : 0;
+         continue;
+      }
+      
+      // If we encounter a right brace, check to see if
+      // its partner is on the token stack; if not, parse error
+      if (isRightBrace(cursor))
+      {
+         DEBUG("Encountered '" << cursor.currentToken().contentAsUtf8() << "', updating brace stack");
+         if (braceStack.empty())
+         {
+            DEBUG("Unexpected token " << cursor.currentToken().asString());
+            lintItems.addUnexpectedToken(cursor);
+         }
+         else
+         {
+            const std::wstring& toBePopped =
+                  braceStack.at(braceStack.size() - 1);
+
+            if (complement(cursor.currentToken().content()) != toBePopped)
+            {
+               DEBUG("Unexpected token " << cursor);
+               lintItems.addUnexpectedToken(cursor, complement(toBePopped));
+            }
+            else
+            {
+               DEBUG("Popping brace stack");
+               braceStack.pop_back();
+            }
+         }
+      }
       
       // Handle a 'function' token (implies we are about to enter a new scope)
-      if (isFunction(thisToken))
+      if (isFunction(cursor))
       {
-         i = handleFunctionToken(rTokens, thisToken, pNode, i);
+         DEBUG("Handling function token");
+         handleFunctionToken(cursor, pNode, lintItems);
          continue;
       }
       
       // Handle an identifier (implies we should check to see if it has a reference
       // in the parse tree)
-      if (isId(thisToken))
+      if (isId(cursor))
       {
-         handleIdToken(rTokens, thisToken, pNode, i);
+         DEBUG("Handling ID token");
+         handleIdToken(cursor, pNode, lintItems);
          continue;
       }
       
@@ -528,57 +955,81 @@ boost::shared_ptr<ParseNode> parseRFile(const FilePath& filePath)
       //
       //    "abc" <- function() {}
       //    "abc"()
-      if (isString(thisToken))
+      if (isString(cursor))
       {
-         i = handleStringToken(rTokens, thisToken, pNode, i);
+         DEBUG("Handling string token");
+         handleStringToken(cursor, pNode, lintItems);
          continue;
       }
       
       // If we encounter a '{', add to the stack. Note that 'isFunction()'
       // will have moved over such an open brace and hence these open
       // braces are just opening expressions (not associated with a closure)
-      if (thisToken.contentEquals(L"{"))
+      if (cursor.contentEquals(L"{"))
       {
-         ++braceStack;
+         DEBUG("Incrementing '{' count");
+         ++braceCount;
          continue;
       }
       
       // If we encounter a '}', decrement the stack,
       // or close a function node.
-      if (thisToken.contentEquals(L"}"))
+      if (cursor.contentEquals(L"}"))
       {
-         if (braceStack == 0)
+         if (braceCount == 0)
          {
-            // If this is a '}' not associated with a function, then
-            // there will be no parent. Only set the current node to
-            // the parent if it exists!
-            boost::shared_ptr<ParseNode> pParent(pNode->getParent());
-            if (pParent != NULL)
+            // It is possible that this is a parse error (ie this '}' has no
+            // scope to close). If that's the case the current node will be
+            // the root and we should warn
+            if (pNode->isRootNode())
             {
-               pNode = pParent;
+               DEBUG("Unexpected token '}' -- no function scope to close");
+               lintItems.addUnexpectedToken(cursor);
+            }
+            else
+            {
+               pNode = pNode->getParent();
             }
          }
          else
-            --braceStack;
+            --braceCount;
          
          continue;
       }
-   }
+   } while (cursor.moveToNextToken());
    
-   // Return the parent node
-   while (pNode->getName() != "<root>")
-      pNode = boost::shared_ptr<ParseNode>(pNode->getParent());
-   
-   return pNode;
-   
+   return std::make_pair(root, lintItems);
 }
 
-SEXP rs_parseRFile(SEXP absoluteFilePathSEXP)
+SEXP rs_parseAndLintRFile(SEXP absoluteFilePathSEXP)
 {
    std::string absoluteFilePath = r::sexp::asString(absoluteFilePathSEXP);
    FilePath filePath(absoluteFilePath);
-   boost::shared_ptr<ParseNode> pParseTree = parseRFile(filePath);
-   return R_NilValue;
+   LintResults lintResults = parseAndLintRFile(filePath);
+   
+   std::vector<LintItem> lintItems = lintResults.second.get();
+   
+   using namespace r::sexp;
+   Protect protect;
+   ListBuilder result(&protect);
+   for (std::size_t i = 0; i < lintItems.size(); ++i)
+   {
+      const LintItem& item = lintItems[i];
+      
+      ListBuilder lintList(&protect);
+      
+      // NOTE: Convert from C++ to R indexing
+      lintList.add("start.row", item.startRow + 1);
+      lintList.add("end.row", item.endRow + 1);
+      lintList.add("start.column", item.startColumn + 1);
+      lintList.add("end.column", item.endColumn + 1);
+      lintList.add("type", LintType::asString(item.type));
+      lintList.add("message", item.message);
+      
+      result.add(static_cast<SEXP>(lintList));
+   }
+   
+   return result;
 }
 
 core::Error initialize()
@@ -587,10 +1038,7 @@ core::Error initialize()
    using boost::bind;
    using namespace module_context;
    
-   r::routines::registerCallMethod(
-            "rs_parseRFile",
-            (DL_FUNC) rs_parseRFile,
-            1);
+   RS_REGISTER_CALL_METHOD(rs_parseAndLintRFile, 1);
    
    ExecBlock initBlock;
    initBlock.addFunctions()
