@@ -14,16 +14,16 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
-import java.util.ArrayList;
 
-import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountInput;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 
+import com.google.gwt.user.client.ui.Widget;
+
 public class NewRSConnectLocalPage 
-            extends WizardNavigationPage<NewRSConnectAccountInput,
-                                         NewRSConnectAccountResult>
+            extends WizardPage<NewRSConnectAccountInput,
+                               NewRSConnectAccountResult>
 {
 
    public NewRSConnectLocalPage()
@@ -33,20 +33,33 @@ public class NewRSConnectLocalPage
             "collaborate privately and securely.",
             "Project Type",
             RSConnectAccountResources.INSTANCE.localAccountIcon(), 
-            RSConnectAccountResources.INSTANCE.localAccountIconLarge(), 
-            createPages());
+            RSConnectAccountResources.INSTANCE.localAccountIconLarge());
    }
 
-  
-   private static ArrayList<WizardPage<NewRSConnectAccountInput, 
-                                       NewRSConnectAccountResult>>
-                                createPages()
-   {   
-      ArrayList<WizardPage<NewRSConnectAccountInput, 
-                           NewRSConnectAccountResult>> pages = 
-            new ArrayList<WizardPage<NewRSConnectAccountInput, 
-                                     NewRSConnectAccountResult>>();
-      
-      return pages;
+   @Override
+   public void focus()
+   {
+   }
+
+   @Override
+   protected Widget createWidget()
+   {
+
+   }
+
+   @Override
+   protected void initialize(NewRSConnectAccountInput initData)
+   {
+   }
+
+   @Override
+   protected NewRSConnectAccountResult collectInput()
+   {
+   }
+
+   @Override
+   protected boolean validate(NewRSConnectAccountResult input)
+   {
+      return true;
    }
 }

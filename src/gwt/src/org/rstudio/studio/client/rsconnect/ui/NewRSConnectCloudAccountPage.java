@@ -1,6 +1,11 @@
 package org.rstudio.studio.client.rsconnect.ui;
 
-public class NewRSConnectCloudAccountPage
+import org.rstudio.core.client.widget.WizardPage;
+import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountInput;
+import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
+
+public class NewRSConnectCloudAccountPage 
+extends WizardPage<NewRSConnectAccountInput, NewRSConnectAccountResult>
 {
 
 }

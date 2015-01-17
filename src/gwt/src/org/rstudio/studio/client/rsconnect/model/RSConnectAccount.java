@@ -37,6 +37,11 @@ public class RSConnectAccount extends JavaScriptObject
       return this.server;
    }-*/;
    
+   public final boolean isCloudAccount()
+   {
+      return getServer() == "shinyapps.io";
+   }
+
    public final boolean equals(RSConnectAccount other)
    {
       return getName() == other.getName() && 

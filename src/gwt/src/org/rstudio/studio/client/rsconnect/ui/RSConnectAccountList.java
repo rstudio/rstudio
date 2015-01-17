@@ -29,6 +29,7 @@ import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 
 public class RSConnectAccountList extends Composite
@@ -39,9 +40,15 @@ public class RSConnectAccountList extends Composite
       {
          account_ = account;
          HorizontalPanel panel = new HorizontalPanel();
-         Label serverLabel = new Label(account.getServer());
+         Image icon = new Image(account.isCloudAccount() ? 
+               RSConnectAccountResources.INSTANCE.cloudAccountIconSmall() : 
+               RSConnectAccountResources.INSTANCE.localAccountIconSmall());
+         icon.getElement().getStyle().setMarginRight(2, Unit.PX);
+         icon.set
+         panel.add(icon);
+         Label serverLabel = new Label(account.getServer() + ": ");
          serverLabel.getElement().getStyle().setFontWeight(FontWeight.BOLD);
-         serverLabel.getElement().getStyle().setMarginRight(10, Unit.PX);
+         serverLabel.getElement().getStyle().setMarginRight(5, Unit.PX);
          panel.add(serverLabel);
 
          Label nameLabel = new Label(account.getName());
