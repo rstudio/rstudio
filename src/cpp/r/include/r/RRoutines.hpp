@@ -36,7 +36,7 @@ void registerAll();
    {                                                                           \
       R_CallMethodDef callMethodDef;                                           \
       callMethodDef.name = #__NAME__;                                          \
-      callMethodDef.fun = (DL_FUNC)__NAME__;                                   \
+      callMethodDef.fun = (DL_FUNC) __NAME__;                                  \
       callMethodDef.numArgs = __NUM_ARGS__;                                    \
       ::r::routines::addCallMethod(callMethodDef);                             \
    } while (0)
