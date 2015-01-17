@@ -49,8 +49,15 @@ import java.util.List;
  */
 public abstract class JDeclaredType extends JReferenceType {
 
-  protected final String jsPrototype;
-  protected final JsInteropType jsInteropType;
+  /**
+   * The type of the class for JsInterop purposes.
+   */
+  public enum JsInteropType {
+    NONE, NO_PROTOTYPE, JS_PROTOTYPE,
+  }
+
+  private final String jsPrototype;
+  private final JsInteropType jsInteropType;
   private String jsNamespace = "";
 
   /**
@@ -514,17 +521,5 @@ public abstract class JDeclaredType extends JReferenceType {
     String fqName = getName();
     return getEnclosingType() == null ? fqName.substring(fqName.lastIndexOf('.') + 1) :
         fqName.substring(getEnclosingType().getName().length() + 1);
-  }
-
-  /**
-   * The type of JsType this can be: NONE, NO_PROTOTYPE, JS_PROTOTYPE, NATIVE_PROTOTYPE (e.g. DOM element), and
-   * WEB_COMPONENT.
-   */
-  public enum JsInteropType {
-    NONE,
-    NO_PROTOTYPE,
-    JS_PROTOTYPE,
-    NATIVE_PROTOTYPE,
-    WEB_COMPONENT
   }
 }

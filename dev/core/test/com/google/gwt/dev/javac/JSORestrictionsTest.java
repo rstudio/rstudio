@@ -481,21 +481,6 @@ public class JSORestrictionsTest extends TestCase {
         + JSORestrictionsChecker.ERR_MUST_EXTEND_MAGIC_PROTOTYPE_CLASS);
   }
 
-  public void testJsTypePrototypeExtensionNotAllowedOnNativePrototype() {
-    StringBuilder buggyCode = new StringBuilder();
-    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
-    buggyCode.append("import com.google.gwt.core.client.js.impl.PrototypeOfJsType;\n");
-    buggyCode.append("public class Buggy {\n");
-    buggyCode.append("@JsType (prototype =\"foo\", isNative = true) interface Foo { " +
-        "@PrototypeOfJsType static class Foo_Prototype implements Foo {} }\n");
-    buggyCode.append("static class BuggyFoo extends Foo.Foo_Prototype {\n");
-    buggyCode.append("}\n");
-    buggyCode.append("}\n");
-
-    shouldGenerateError(buggyCode, "Line 5: "
-        + JSORestrictionsChecker.ERR_SUBCLASSING_NATIVE_NOT_ALLOWED);
-  }
-
   public void testJsPropertyBadStyle() {
     StringBuilder buggyCode = new StringBuilder();
     buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");

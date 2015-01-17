@@ -18,8 +18,8 @@ package com.google.gwt.dev.javac;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
+import com.google.gwt.dev.jjs.ast.JDeclaredType.JsInteropType;
 import com.google.gwt.dev.jjs.ast.JField;
-import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.js.ast.JsNameRef;
 
@@ -76,33 +76,32 @@ public final class JsInteropUtil {
     }
   }
 
-  public static JInterfaceType.JsInteropType maybeGetJsInteropType(TypeDeclaration x,
-       String jsPrototype, JInterfaceType.JsInteropType interopType) {
+  public static JsInteropType maybeGetJsInteropType(TypeDeclaration x, String jsPrototype) {
     if (x.annotations != null) {
       AnnotationBinding jsInterface = JdtUtil.getAnnotation(x.binding, JSTYPE_CLASS);
       if (jsInterface != null) {
-        boolean isNative = JdtUtil.getAnnotationParameterBoolean(jsInterface, "isNative");
-        interopType = jsPrototype != null ?
-            (isNative ? JDeclaredType.JsInteropType.NATIVE_PROTOTYPE :
-            JDeclaredType.JsInteropType.JS_PROTOTYPE) : JDeclaredType.JsInteropType.NO_PROTOTYPE;
+        return jsPrototype.isEmpty() ? JsInteropType.NO_PROTOTYPE : JsInteropType.JS_PROTOTYPE;
       }
     }
-    return interopType;
+    return JsInteropType.NONE;
   }
 
-  public static String maybeGetJsTypePrototype(TypeDeclaration x, String jsPrototype) {
+  public static String maybeGetJsTypePrototype(TypeDeclaration x) {
     if (x.annotations != null) {
       AnnotationBinding jsType = JdtUtil.getAnnotation(x.binding, JSTYPE_CLASS);
       if (jsType != null) {
-        jsPrototype = JdtUtil.getAnnotationParameterString(jsType, "prototype");
+        String value = JdtUtil.getAnnotationParameterString(jsType, "prototype");
+        if (value != null) {
+          return value;
+        }
       }
     }
-    return jsPrototype;
+    return "";
   }
 
   public static void maybeSetJsPrototypeFlag(TypeDeclaration x, JClassType type) {
     if (JdtUtil.getAnnotation(x.binding, JSTYPEPROTOTYPE_CLASS) != null) {
-      ((JClassType) type).setJsPrototypeStub(true);
+      type.setJsPrototypeStub(true);
     }
   }
 

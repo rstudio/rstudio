@@ -87,7 +87,6 @@ public class JSORestrictionsChecker {
       "Methods cannot be overridden in JavaScriptObject subclasses";
   public static final String JSO_CLASS = "com/google/gwt/core/client/JavaScriptObject";
   public static final String ERR_FORGOT_TO_MAKE_PROTOTYPE_IMPL_JSTYPE = "@JsType subtype extends magic _Prototype class, but _Prototype class doesn't implement JsType";
-  public static final String ERR_SUBCLASSING_NATIVE_NOT_ALLOWED = "Subclassing prototypes of native browser prototypes not allowed.";
   public static final String ERR_JS_TYPE_WITH_PROTOTYPE_SET_NOT_ALLOWED_ON_CLASS_TYPES = "@JsType with prototype set not allowed on class types";
   static boolean LINT_MODE = false;
 
@@ -406,19 +405,15 @@ public class JSORestrictionsChecker {
       AnnotationBinding jsinterfaceAnn = JdtUtil.getAnnotation(jsInterface,
           JsInteropUtil.JSTYPE_CLASS);
       String jsPrototype = JdtUtil.getAnnotationParameterString(jsinterfaceAnn, "prototype");
-      boolean isNative = JdtUtil.getAnnotationParameterBoolean(jsinterfaceAnn, "isNative");
-      if (!Strings.isNullOrEmpty(jsPrototype)) {
-        checkClassExtendsMagicPrototype(type, jsInterface, !isNative, isNative);
-      } else {
-        checkClassExtendsMagicPrototype(type, jsInterface, false, isNative);
-      }
+      boolean shouldExtend = !Strings.isNullOrEmpty(jsPrototype);
+      checkClassExtendsMagicPrototype(type, jsInterface, shouldExtend);
 
       // TODO(cromwellian) add multiple-inheritance checks when ambiguity in spec is resolved
       return true;
     }
 
     private void checkClassExtendsMagicPrototype(TypeDeclaration type, ReferenceBinding jsInterface,
-                                                 boolean shouldExtend, boolean isNative) {
+        boolean shouldExtend) {
       ReferenceBinding superClass = type.binding.superclass();
       // if type is the _Prototype stub (implements JsType) exit
       if (isMagicPrototype(type.binding, jsInterface)) {
@@ -434,11 +429,7 @@ public class JSORestrictionsChecker {
         }
       } else {
         if (superClass != null && isMagicPrototype(superClass, jsInterface)) {
-          if (!isNative) {
-            errorOn(type, ERR_CLASS_EXTENDS_MAGIC_PROTOTYPE_BUT_NO_PROTOTYPE_ATTRIBUTE);
-          } else {
-            errorOn(type, ERR_SUBCLASSING_NATIVE_NOT_ALLOWED);
-          }
+          errorOn(type, ERR_CLASS_EXTENDS_MAGIC_PROTOTYPE_BUT_NO_PROTOTYPE_ATTRIBUTE);
         }
       }
     }

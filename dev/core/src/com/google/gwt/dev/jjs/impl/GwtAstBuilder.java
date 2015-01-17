@@ -48,6 +48,7 @@ import com.google.gwt.dev.jjs.ast.JConstructor;
 import com.google.gwt.dev.jjs.ast.JContinueStatement;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
+import com.google.gwt.dev.jjs.ast.JDeclaredType.JsInteropType;
 import com.google.gwt.dev.jjs.ast.JDoStatement;
 import com.google.gwt.dev.jjs.ast.JDoubleLiteral;
 import com.google.gwt.dev.jjs.ast.JEnumField;
@@ -4005,10 +4006,8 @@ public class GwtAstBuilder {
       }
       name = intern(name);
       JDeclaredType type;
-      String jsPrototype = "";
-      JInterfaceType.JsInteropType interopType = JDeclaredType.JsInteropType.NONE;
-      jsPrototype = JsInteropUtil.maybeGetJsTypePrototype(x, jsPrototype);
-      interopType = JsInteropUtil.maybeGetJsInteropType(x, jsPrototype, interopType);
+      String jsPrototype = JsInteropUtil.maybeGetJsTypePrototype(x);
+      JsInteropType interopType = JsInteropUtil.maybeGetJsInteropType(x, jsPrototype);
 
       if (binding.isClass()) {
         type = new JClassType(info, name, binding.isAbstract(), binding.isFinal(), interopType);

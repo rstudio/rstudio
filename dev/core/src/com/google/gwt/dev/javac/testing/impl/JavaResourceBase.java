@@ -369,7 +369,6 @@ public class JavaResourceBase {
           "package com.google.gwt.core.client.js;",
           "public @interface JsType {\n",
           "  String prototype() default \"\";\n" +
-          "  boolean isNative() default false;\n",
           "}"
       );
   public static final MockJavaResource JSTYPEPROTOTYPE =
