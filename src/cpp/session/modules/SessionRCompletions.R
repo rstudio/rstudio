@@ -1373,6 +1373,26 @@ assign(x = ".rs.acCompletionTypes",
    .Call("rs_getActiveFrame", as.integer(n) + offset)
 })
 
+.rs.addFunction("getCompletionsNativeRoutine", function(token, routine)
+{
+   # We look for dynamic symbols
+   loadedDLLs <- getLoadedDLLs()
+   routines <- lapply(loadedDLLs, getDLLRegisteredRoutines)
+   routineNames <- lapply(routines, function(x) {
+      names(x[[routine]])
+   })
+   
+   results <- .rs.namedVectorAsList(routineNames)
+   indices <- .rs.fuzzyMatches(results$values, token)
+   
+   .rs.makeCompletions(token = token,
+                       results = results$values[indices],
+                       packages = results$names[indices],
+                       quote = TRUE,
+                       type = .rs.acCompletionTypes$STRING,
+                       excludeOtherCompletions = TRUE)
+})
+
 .rs.addJsonRpcHandler("get_completions", function(token,
                                                   string,
                                                   type,
@@ -1463,6 +1483,12 @@ assign(x = ".rs.acCompletionTypes",
    # vignettes
    if (length(string) && string[[1]] == "vignette" && numCommas[[1]] == 0)
       return(.rs.getCompletionsVignettes(token))
+   
+   # .Call, .C, .Fortran, .External
+   if (length(string) && 
+       string[[1]] %in% c(".Call", ".C", ".Fortran", ".External") &&
+       numCommas[[1]] == 0)
+      return(.rs.getCompletionsNativeRoutine(token, string[[1]]))
    
    # data
    if (.rs.acContextTypes$FUNCTION %in% type &&
