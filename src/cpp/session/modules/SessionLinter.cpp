@@ -690,7 +690,7 @@ void handleIdToken(TokenCursor& cursor,
    // or defined in a parent scope.
 
    // Add a reference to this variable
-   DEBUG("Adding reference to variable '" << nextToken.asString() << "'");
+   DEBUG("Adding reference to variable '" << cursor.currentToken().contentAsUtf8() << "'");
    pNode->addReferencedVariable(cursor);
    
 }
