@@ -3530,11 +3530,12 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void removeRSConnectAccount(String accountName,
+   public void removeRSConnectAccount(String accountName, String server,
          ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(accountName));
+      params.set(1, new JSONString(server));
       sendRequest(RPC_SCOPE,
             REMOVE_RSCONNECT_ACCOUNT,
             params,

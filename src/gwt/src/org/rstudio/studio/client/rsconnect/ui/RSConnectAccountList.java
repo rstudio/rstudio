@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
@@ -66,6 +67,11 @@ public class RSConnectAccountList extends Composite
       initWidget(accountList_);
    }
    
+   public void setOnRefreshCompleted(Operation operation)
+   {
+      onRefreshCompleted_ = operation;
+   }
+   
    public void refreshAccountList()
    {
       server_.getRSConnectAccountList(
@@ -80,6 +86,10 @@ public class RSConnectAccountList extends Composite
             {
                accountList_.addItem(new AccountEntry(accounts.get(i)));
             }
+            if (onRefreshCompleted_ != null)
+            {
+               onRefreshCompleted_.execute();
+            }
          }
 
          @Override
@@ -93,6 +103,11 @@ public class RSConnectAccountList extends Composite
    
    public RSConnectAccount getSelectedAccount()
    {
+      if (accountList_ == null || accounts_ == null)
+      {
+         return null;
+      }
+
       int idx = accountList_.getSelectedIndex();
       if (idx < accounts_.length()) 
       {
@@ -122,4 +137,5 @@ public class RSConnectAccountList extends Composite
    private final RSConnectServerOperations server_; 
    private final GlobalDisplay display_;
    private JsArray<RSConnectAccount> accounts_;
+   private Operation onRefreshCompleted_ = null;
 }

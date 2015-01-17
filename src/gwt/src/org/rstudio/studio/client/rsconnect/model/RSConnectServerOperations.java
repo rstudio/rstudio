@@ -21,7 +21,7 @@ import com.google.gwt.core.client.JsArray;
 
 public interface RSConnectServerOperations
 {
-   void removeRSConnectAccount(String accountName, 
+   void removeRSConnectAccount(String accountName, String server,
                ServerRequestCallback<Void> requestCallback);
 
    void getRSConnectAccountList(

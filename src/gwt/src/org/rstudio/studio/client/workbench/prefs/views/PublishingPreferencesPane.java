@@ -74,6 +74,15 @@ public class PublishingPreferencesPane extends PreferencesPane
       accountList_.getElement().getStyle().setMarginBottom(10, Unit.PX);
       add(accountList_);
       
+      accountList_.setOnRefreshCompleted(new Operation() 
+      {
+         @Override
+         public void execute()
+         {
+            setDisconnectButtonEnabledState();
+         }
+      });
+      
       HorizontalPanel panel = new HorizontalPanel();
       connectButton_ = new ThemedButton("Connect...");
       connectButton_.addClickHandler(new ClickHandler()
@@ -94,8 +103,9 @@ public class PublishingPreferencesPane extends PreferencesPane
             onDisconnect();
          }
       });
-      disconnectButton_.setEnabled(false);
       panel.add(disconnectButton_);
+      setDisconnectButtonEnabledState();
+
       add(panel);
    }
 
@@ -132,10 +142,10 @@ public class PublishingPreferencesPane extends PreferencesPane
    private void onDisconnect()
    {
       // TODO: read selected account
-      final String account = accountList_.getSelectedAccount().getName();
+      final RSConnectAccount account = accountList_.getSelectedAccount();
       if (account == null)
       {
-         display_.showErrorMessage("Error Disconnection Account", 
+         display_.showErrorMessage("Error Disconnecting Account", 
                "Please select an account to disconnect.");
          return;
       }
@@ -143,8 +153,10 @@ public class PublishingPreferencesPane extends PreferencesPane
             GlobalDisplay.MSG_QUESTION, 
             "Confirm Remove Account", 
             "Are you sure you want to disconnect the '" + 
-              account + 
-            "' account? This won't delete the account on the server.", 
+              account.getName() + 
+            "' account on '" + 
+              account.getServer() + "'" + 
+            "? This won't delete the account on the server.", 
             false, 
             new Operation()
             {
@@ -156,16 +168,15 @@ public class PublishingPreferencesPane extends PreferencesPane
             }, null, null, "Disconnect Account", "Cancel", false);
    }
    
-   private void onConfirmDisconnect(final String accountName)
+   private void onConfirmDisconnect(final RSConnectAccount account)
    {
-      server_.removeRSConnectAccount(accountName, new ServerRequestCallback<Void>()
+      server_.removeRSConnectAccount(account.getName(), 
+            account.getServer(), new ServerRequestCallback<Void>()
       {
          @Override
          public void onResponseReceived(Void v)
          {
-            // TODO: remove selected account from UI
-            // contents_.removeAccount(accountName);
-            setDisconnectButtonEnabledState();
+            accountList_.refreshAccountList();
          }
 
          @Override
