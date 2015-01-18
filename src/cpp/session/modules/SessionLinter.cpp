@@ -570,8 +570,8 @@ public:
    {                                                                           \
       if (currentToken().type() == __LEFT_OP__)                                \
       {                                                                        \
-         while (currentToken().type() != __RIGHT_OP__)                         \
-            moveToNextToken();                                                 \
+         while (currentToken().type() != __RIGHT_OP__ && moveToNextToken())    \
+            ;                                                                  \
          return currentToken().type() == __RIGHT_OP__;                         \
       }                                                                        \
    } while (0)
@@ -585,8 +585,8 @@ public:
    {                                                                           \
       if (currentToken().type() == __RIGHT_OP__)                               \
       {                                                                        \
-         while (currentToken().type() != __LEFT_OP__)                          \
-            moveToPreviousToken();                                             \
+         while (currentToken().type() != __LEFT_OP__ && moveToPreviousToken()) \
+            ;                                                                  \
          return currentToken().type() == __LEFT_OP__;                          \
       }                                                                        \
    } while (0)
