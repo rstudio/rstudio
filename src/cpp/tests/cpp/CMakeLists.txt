@@ -50,3 +50,8 @@ target_link_libraries(test-runner
    ${CMAKE_DL_LIBS}
    ${Boost_LIBRARIES}
 )
+
+add_custom_command(TARGET test-runner
+   POST_BUILD
+   COMMAND "${CMAKE_CURRENT_BINARY_DIR}/test-runner"
+)

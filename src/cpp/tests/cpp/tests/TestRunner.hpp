@@ -13,6 +13,9 @@
  *
  */
 
+// Include this file if you want to use Catch inside a
+// custom built main.
+
 #ifndef CORE_TESTRUNNER_HPP
 #define CORE_TESTRUNNER_HPP
 
