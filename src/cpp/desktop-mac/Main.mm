@@ -11,8 +11,6 @@
 #import "AppDelegate.h"
 #import "Utils.hpp"
 
-#include <tests/TestRunner.hpp>
-
 using namespace core;
 
 int main(int argc, char* argv[])

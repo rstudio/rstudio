@@ -41,8 +41,6 @@
 #include "DesktopUtils.hpp"
 #include "DesktopSessionLauncher.hpp"
 
-#include <tests/TestRunner.hpp>
-
 QProcess* pRSessionProcess;
 QString sharedSecret;
 

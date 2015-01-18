@@ -25,8 +25,6 @@
 #include <core/system/PosixUser.hpp>
 #include <core/system/Pam.hpp>
 
-#include <tests/TestRunner.hpp>
-
 using namespace core ;
 
 namespace {

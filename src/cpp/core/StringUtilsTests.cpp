@@ -1,5 +1,5 @@
 /*
- * Main.cpp
+ * StringUtils.cpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,15 +13,16 @@
  *
  */
 
-#include <core/Error.hpp>
-#include <core/Log.hpp>
-#include <core/system/System.hpp>
+#include <core/StringUtils.hpp>
+#include <tests/TestThat.hpp>
 
-int main(int argc, char * const argv[]) 
+namespace core {
+namespace string_utils {
+
+test_that("isSubsequence works")
 {
-   core::system::initializeLog("rserver", 2); 
- 
-   LOG_WARNING_MESSAGE("hello cmake!");
-   
-   return EXIT_SUCCESS;
+   expect_true(isSubsequence("", ""));
 }
+
+} // end namespace string_utils
+} // end namespace core

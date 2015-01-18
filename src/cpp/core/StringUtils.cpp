@@ -102,14 +102,6 @@ bool isSubsequence(std::string const& self,
    return isSubsequence(self, other, other.length(), caseInsensitive);
 }
 
-test_that("isSubsequence")
-{
-   expect_true(isSubsequence("", ""));
-   expect_true(isSubsequence("annnbnnnc", "abc"));
-   expect_false(isSubsequence("abc", "acb"));
-   expect_true(isSubsequence("ANNNBNNNC", "abc", true));
-}
-
 std::vector<int> subsequenceIndices(std::string const& sequence,
                                     std::string const& query)
 {

@@ -186,6 +186,9 @@ endif()
 # core library
 add_subdirectory(core)
 
+# test executable
+add_subdirectory(tests/cpp)
+
 # are we in CORE_DEV mode? if so then just add the core/dev project
 # otherwise, add the rest of our projects
 if(RSTUDIO_CONFIG_CORE_DEV)

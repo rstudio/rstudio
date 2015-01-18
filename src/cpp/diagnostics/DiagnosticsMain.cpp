@@ -26,8 +26,6 @@
 
 #include "config.h"
 
-#include <tests/TestRunner.hpp>
-
 using namespace core;
 
 namespace {
