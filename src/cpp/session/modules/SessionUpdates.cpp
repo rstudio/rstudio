@@ -31,7 +31,7 @@
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 namespace modules {
 namespace updates {
 namespace {
@@ -68,7 +68,7 @@ void beginUpdateCheck(bool manual,
    }
 
    // Find the path to the script we need to source
-   FilePath modulesPath = session::options().modulesRSourcePath();;
+   FilePath modulesPath = rsession::options().modulesRSourcePath();;
    std::string scriptPath = core::string_utils::utf8ToSystem(
                      modulesPath.complete("SessionUpdates.R").absolutePath());
 

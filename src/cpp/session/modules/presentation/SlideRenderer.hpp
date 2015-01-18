@@ -23,7 +23,7 @@ namespace core {
    class FilePath;
 } // anonymous namespace
 
-namespace session {
+namespace rsession {
 namespace modules { 
 namespace presentation {
 

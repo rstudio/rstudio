@@ -22,7 +22,7 @@
 
 #include <core/Settings.hpp>
 
-namespace session {
+namespace rsession {
 
 // singleton
 class PersistentState;

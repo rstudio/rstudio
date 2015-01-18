@@ -36,7 +36,7 @@
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 namespace projects {
 
 namespace {
@@ -332,7 +332,7 @@ namespace {
 // that are single threaded by convention
 FilePath settingsPath()
 {
-   return r_util::projectsSettingsPath(session::options().userScratchPath());
+   return r_util::projectsSettingsPath(rsession::options().userScratchPath());
 }
 
 std::string readSetting(const char * const settingName)

@@ -45,7 +45,7 @@ using namespace core;
 using namespace r::sexp;
 using namespace r::exec;
 
-namespace session {
+namespace rsession {
 namespace modules {
 namespace breakpoints {
 namespace

@@ -35,7 +35,7 @@
 #include <session/SessionOptions.hpp>
 
 
-namespace session {
+namespace rsession {
 
 void HttpConnection::sendJsonRpcError(const core::Error& error)
 {
@@ -111,7 +111,7 @@ void handleAbortNextProjParam(
          // constants rather than code so that this code (which runs in
          // a background thread) don't call into the projects module (which
          // is designed to be foreground and single-threaded)
-         core::FilePath userScratch = session::options().userScratchPath();
+         core::FilePath userScratch = rsession::options().userScratchPath();
          core::FilePath settings = userScratch.complete(kProjectsSettings);
          error = settings.ensureDirectory();
          if (error)

@@ -31,7 +31,7 @@ namespace core {
    class Error;
 }
 
-namespace session {
+namespace rsession {
 namespace console_process {
 
 enum InteractionMode

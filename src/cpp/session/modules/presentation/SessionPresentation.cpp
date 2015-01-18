@@ -41,7 +41,7 @@
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 namespace modules { 
 namespace presentation {
 
@@ -147,7 +147,7 @@ Error createNewPresentation(const json::JsonRpcRequest& request,
    core::text::TemplateFilter filter(vars);
 
    // read file with template filter
-   FilePath templatePath = session::options().rResourcesPath().complete(
+   FilePath templatePath = rsession::options().rResourcesPath().complete(
                                              "templates/r_presentation.Rpres");
    std::string presContents;
    error = core::readStringFromFile(templatePath, filter, &presContents);
@@ -479,7 +479,7 @@ Error initialize()
       return error;
 
    using boost::bind;
-   using namespace session::module_context;
+   using namespace rsession::module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerUriHandler, "/presentation", handlePresentationPaneRequest))

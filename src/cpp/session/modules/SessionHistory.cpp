@@ -45,7 +45,7 @@
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 namespace modules { 
 namespace history {
 
@@ -389,7 +389,7 @@ Error initialize()
 
    // install handlers
    using boost::bind;
-   using namespace session::module_context;
+   using namespace rsession::module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "get_recent_history", getRecentHistory))

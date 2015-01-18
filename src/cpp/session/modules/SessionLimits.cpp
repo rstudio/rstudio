@@ -30,7 +30,7 @@
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 namespace modules { 
 namespace limits {
 
@@ -39,10 +39,10 @@ namespace {
 void onBeforeExecute()
 {
    // enforce a limit if there is one
-   if (session::options().limitCpuTimeMinutes() > 0)
+   if (rsession::options().limitCpuTimeMinutes() > 0)
    {
       // calculate seconds
-      int seconds = session::options().limitCpuTimeMinutes() * 60;
+      int seconds = rsession::options().limitCpuTimeMinutes() * 60;
    
       // call setTimeLimit
       r::exec::RFunction setTimeLimit("setTimeLimit");

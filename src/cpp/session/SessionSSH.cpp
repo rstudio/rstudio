@@ -22,7 +22,7 @@
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 namespace ssh {
 
 void ProcessOptionsCreator::addEnv(const std::string& name, const std::string& value)

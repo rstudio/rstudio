@@ -34,6 +34,8 @@
 #include <winnls.h>
 #endif
 
+#include <tests/TestThat.hpp>
+
 namespace core {
 namespace string_utils {
 
@@ -98,6 +100,14 @@ bool isSubsequence(std::string const& self,
                    bool caseInsensitive)
 {
    return isSubsequence(self, other, other.length(), caseInsensitive);
+}
+
+test_that("isSubsequence")
+{
+   expect_true(isSubsequence("", ""));
+   expect_true(isSubsequence("annnbnnnc", "abc"));
+   expect_false(isSubsequence("abc", "acb"));
+   expect_true(isSubsequence("ANNNBNNNC", "abc", true));
 }
 
 std::vector<int> subsequenceIndices(std::string const& sequence,

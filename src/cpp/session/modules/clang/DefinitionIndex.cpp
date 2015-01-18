@@ -32,7 +32,7 @@
 using namespace core;
 using namespace core::libclang;
 
-namespace session {
+namespace rsession {
 namespace modules { 
 namespace clang {
 

@@ -23,7 +23,7 @@
 
 using namespace core ;
 
-namespace session {
+namespace rsession {
 
 void HttpConnectionQueue::enqueConnection(
                               boost::shared_ptr<HttpConnection> ptrConnection)

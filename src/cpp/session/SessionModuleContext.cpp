@@ -74,7 +74,7 @@
 
 using namespace core ;
 
-namespace session {   
+namespace rsession {
 namespace module_context {
       
 namespace {
@@ -122,14 +122,14 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
       // determine the event type from the event name
       int type = -1 ;
       if (name == "package_status_changed")
-         type = session::client_events::kPackageStatusChanged;
+         type = rsession::client_events::kPackageStatusChanged;
       else if (name == "unhandled_error")
-         type = session::client_events::kUnhandledError;
+         type = rsession::client_events::kUnhandledError;
       
       if (type != -1)
       {
          ClientEvent event(type, data);
-         session::clientEventQueue().add(event);
+         rsession::clientEventQueue().add(event);
       }
       else
       {
@@ -188,7 +188,7 @@ SEXP rs_threadSleep(SEXP secondsSEXP)
 SEXP rs_rstudioProgramMode()
 {
    r::sexp::Protect rProtect;
-   return r::sexp::create(session::options().programMode(), &rProtect);
+   return r::sexp::create(rsession::options().programMode(), &rProtect);
 }
 
 // get version
@@ -201,7 +201,7 @@ SEXP rs_rstudioVersion()
 // get citation
 SEXP rs_rstudioCitation()
 {
-   FilePath resPath = session::options().rResourcesPath();
+   FilePath resPath = rsession::options().rResourcesPath();
    FilePath citationPath = resPath.childPath("CITATION");
 
    SEXP citationSEXP;
@@ -667,7 +667,7 @@ Error convertToUtf8(const std::string& encodedContents,
 
 FilePath userHomePath()
 {
-   return session::options().userHomePath();
+   return rsession::options().userHomePath();
 }
 
 std::string createAliasedPath(const FileInfo& fileInfo)
@@ -687,7 +687,7 @@ FilePath resolveAliasedPath(const std::string& aliasedPath)
 
 FilePath userScratchPath()
 {
-   return session::options().userScratchPath();
+   return rsession::options().userScratchPath();
 }
 
 FilePath scopedScratchPath()
@@ -1117,7 +1117,7 @@ std::string libPathsString()
 
 Error sourceModuleRFile(const std::string& rSourceFile)
 {
-   FilePath modulesPath = session::options().modulesRSourcePath();
+   FilePath modulesPath = rsession::options().modulesRSourcePath();
    FilePath srcPath = modulesPath.complete(rSourceFile);
    return r::sourceManager().sourceTools(srcPath);
 }
@@ -1141,7 +1141,7 @@ Error sourceModuleRFileWithResult(const std::string& rSourceFile,
 
    // build source command
    boost::format fmt("source('%1%')");
-   FilePath modulesPath = session::options().modulesRSourcePath();
+   FilePath modulesPath = rsession::options().modulesRSourcePath();
    FilePath srcFilePath = modulesPath.complete(rSourceFile);
    std::string srcPath = core::string_utils::utf8ToSystem(
                                                 srcFilePath.absolutePath());
@@ -1169,18 +1169,18 @@ Error sourceModuleRFileWithResult(const std::string& rSourceFile,
       
 void enqueClientEvent(const ClientEvent& event)
 {
-   session::clientEventQueue().add(event);
+   rsession::clientEventQueue().add(event);
 }
 
 bool isDirectoryMonitored(const FilePath& directory)
 {
-   return session::projects::projectContext().isMonitoringDirectory(directory) ||
-          session::modules::files::isMonitoringDirectory(directory);
+   return rsession::projects::projectContext().isMonitoringDirectory(directory) ||
+          rsession::modules::files::isMonitoringDirectory(directory);
 }
 
 bool isRScriptInPackageBuildTarget(const FilePath &filePath)
 {
-   using namespace session::projects;
+   using namespace rsession::projects;
 
    if (projectContext().config().buildType == r_util::kBuildTypePackage)
    {
@@ -1257,7 +1257,7 @@ void enqueFileChangedEvent(const core::system::FileChangeEvent &event)
 {
    FilePath filePath = FilePath(event.fileInfo().absolutePath());
 
-   using namespace session::modules::source_control;
+   using namespace rsession::modules::source_control;
    boost::shared_ptr<FileDecorationContext> pCtx =
                                        fileDecorationContext(filePath);
 
@@ -1284,7 +1284,7 @@ void enqueFileChangedEvents(const core::FilePath& vcsStatusRoot,
       }
    }
 
-   using namespace session::modules::source_control;
+   using namespace rsession::modules::source_control;
    boost::shared_ptr<FileDecorationContext> pCtx =
                                   fileDecorationContext(commonParentPath);
 
@@ -1340,12 +1340,12 @@ void consoleWriteError(const std::string& message)
 
 void showErrorMessage(const std::string& title, const std::string& message)
 {
-   session::clientEventQueue().add(showErrorMessageEvent(title, message));
+   rsession::clientEventQueue().add(showErrorMessageEvent(title, message));
 }
 
 void showFile(const FilePath& filePath, const std::string& window)
 {
-   if (session::options().programMode() == kSessionProgramModeDesktop)
+   if (rsession::options().programMode() == kSessionProgramModeDesktop)
    {
       // for pdfs handle specially for each platform
       if (filePath.extensionLowerCase() == ".pdf")
@@ -1361,9 +1361,9 @@ void showFile(const FilePath& filePath, const std::string& window)
          module_context::enqueClientEvent(event);
       }
    }
-   else if (session::options().programMode() == kSessionProgramModeServer)
+   else if (rsession::options().programMode() == kSessionProgramModeServer)
    {
-      if (session::options().allowFileDownloads())
+      if (rsession::options().allowFileDownloads())
       {
          std::string url = createFileUrl(filePath);
          ClientEvent event = browseUrlEvent(url);
@@ -1414,7 +1414,7 @@ void showContent(const std::string& title, const core::FilePath& filePath)
 
 std::string resourceFileAsString(const std::string& fileName)
 {
-   FilePath resPath = session::options().rResourcesPath();
+   FilePath resPath = rsession::options().rResourcesPath();
    FilePath filePath = resPath.complete(fileName);
    std::string fileContents;
    Error error = readStringFromFile(filePath, &fileContents);
@@ -1454,7 +1454,7 @@ bool portmapPathForLocalhostUrl(const std::string& url, std::string* pPath)
 std::string mapUrlPorts(const std::string& url)
 {
    // if we are in server mode then we need to do port mapping
-   if (session::options().programMode() != kSessionProgramModeServer)
+   if (rsession::options().programMode() != kSessionProgramModeServer)
       return url;
 
    // see if we can form a portmap path for this url
@@ -1616,7 +1616,7 @@ core::Error recursiveCopyDirectory(const core::FilePath& fromDir,
 
 std::string sessionTempDirUrl(const std::string& sessionTempPath)
 {
-   if (session::options().programMode() == kSessionProgramModeDesktop)
+   if (rsession::options().programMode() == kSessionProgramModeDesktop)
    {
       boost::format fmt("http://localhost:%1%/session/%2%");
       return boost::str(fmt % rLocalHelpPort() % sessionTempPath);
@@ -1834,7 +1834,7 @@ Error initialize()
    initializeMonitoredUserScratchDir();
 
    // source the ModuleTools.R file
-   FilePath modulesPath = session::options().modulesRSourcePath();
+   FilePath modulesPath = rsession::options().modulesRSourcePath();
    return r::sourceManager().sourceTools(modulesPath.complete("ModuleTools.R"));
 }
 

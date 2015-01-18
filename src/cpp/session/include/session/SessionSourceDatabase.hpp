@@ -31,7 +31,7 @@ namespace core {
    class FilePath;
 }
  
-namespace session {
+namespace rsession {
 namespace source_database {
    
 class SourceDocument : boost::noncopyable

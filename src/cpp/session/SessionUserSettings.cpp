@@ -37,7 +37,7 @@
 
 using namespace core ;
 
-namespace session {  
+namespace rsession {  
    
 #define kAgreementPrefix "agreement."
    
@@ -360,7 +360,7 @@ void UserSettings::setAlwaysRestoreLastProject(bool alwaysRestore)
 bool UserSettings::rProfileOnResume() const
 {
    return settings_.getBool(kRProfileOnResume,
-                            session::options().rProfileOnResumeDefault());
+                            rsession::options().rProfileOnResumeDefault());
 }
 
 void UserSettings::setRprofileOnResume(bool rProfileOnResume)
@@ -371,7 +371,7 @@ void UserSettings::setRprofileOnResume(bool rProfileOnResume)
 int UserSettings::saveAction() const
 {   
    return settings_.getInt(kSaveAction,
-                           session::options().saveActionDefault());
+                           rsession::options().saveActionDefault());
 }
 
 void UserSettings::setSaveAction(int saveAction)

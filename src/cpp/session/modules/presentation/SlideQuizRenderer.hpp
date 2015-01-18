@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace session {
+namespace rsession {
 namespace modules { 
 namespace presentation {
 

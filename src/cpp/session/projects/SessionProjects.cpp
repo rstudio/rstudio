@@ -35,10 +35,12 @@
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 namespace projects {
 
 namespace {
+
+using namespace rsession;
 
 ProjectContext s_projectContext;
 
@@ -105,7 +107,7 @@ Error createProject(const json::JsonRpcRequest& request,
          shinyVer = "shiny-0.9";
       else
          shinyVer = "shiny";
-      FilePath shinyDir = session::options().rResourcesPath().childPath(
+      FilePath shinyDir = rsession::options().rResourcesPath().childPath(
                                                      "templates/" + shinyVer);
       error = shinyDir.childPath(kUI).copy(appDir.childPath(kUI));
       if (error)
@@ -500,7 +502,7 @@ void startup()
 
       // clear any initial context settings which may be leftover
       // by a re-instatiation of rsession by desktop
-      session::options().clearInitialContextSettings();
+      rsession::options().clearInitialContextSettings();
 
       // check for special "none" value (used for close project)
       if (nextSessionProject == kNextSessionProjectNone)
@@ -519,15 +521,15 @@ void startup()
    }
 
    // check for envrionment variable (file association)
-   else if (!session::options().initialProjectPath().empty())
+   else if (!rsession::options().initialProjectPath().empty())
    {
-      projectFilePath = session::options().initialProjectPath();
+      projectFilePath = rsession::options().initialProjectPath();
    }
 
    // check for other working dir override (implies a launch of a file
    // but not of a project). this code path is here to prevent
    // the next code path from executing
-   else if (!session::options().initialWorkingDirOverride().empty())
+   else if (!rsession::options().initialWorkingDirOverride().empty())
    {
       projectFilePath = FilePath();
    }

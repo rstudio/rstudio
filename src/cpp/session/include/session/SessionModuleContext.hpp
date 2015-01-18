@@ -56,7 +56,7 @@ namespace session {
 }
 }
 
-namespace session {   
+namespace rsession {   
 namespace module_context {
 
 enum PackageCompatStatus

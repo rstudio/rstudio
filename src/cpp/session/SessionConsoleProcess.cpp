@@ -38,7 +38,7 @@
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 namespace console_process {
 
 namespace {
@@ -512,7 +512,7 @@ Error procWriteStdin(const json::JsonRpcRequest& request,
    if (pos != s_procs.end())
    {
 #ifdef RSTUDIO_SERVER
-      if (session::options().programMode() == kSessionProgramModeServer)
+      if (rsession::options().programMode() == kSessionProgramModeServer)
       {
          if (!input.interrupt)
          {

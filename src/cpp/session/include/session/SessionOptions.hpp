@@ -34,7 +34,7 @@ namespace core {
    class ProgramStatus;
 }
 
-namespace session {
+namespace rsession {
  
 
 // singleton

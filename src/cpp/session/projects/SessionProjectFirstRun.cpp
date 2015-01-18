@@ -26,7 +26,7 @@
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 namespace projects {
 
 namespace {

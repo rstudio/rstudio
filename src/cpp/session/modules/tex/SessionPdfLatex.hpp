@@ -30,7 +30,7 @@ namespace core {
    class FilePath;
 }
  
-namespace session {
+namespace rsession {
 namespace modules { 
 namespace tex {
 namespace pdflatex {

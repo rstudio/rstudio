@@ -29,7 +29,7 @@
 
 #include <core/system/FileChangeEvent.hpp>
 
-namespace session {
+namespace rsession {
 
 // singleton
 class UserSettings;

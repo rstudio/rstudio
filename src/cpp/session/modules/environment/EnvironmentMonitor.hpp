@@ -16,7 +16,7 @@
 #include <r/RSexp.hpp>
 #include <r/RInterface.hpp>
 
-namespace session {
+namespace rsession {
 namespace modules {
 namespace environment {
 

@@ -67,7 +67,7 @@
 
 using namespace core ;
 
-namespace session {  
+namespace rsession {  
 namespace modules {
 namespace code_search {
 
@@ -905,7 +905,7 @@ public:
                               boost::bind(&RSourceIndexes::removeAll, this));
    }
 
-   void update(boost::shared_ptr<session::source_database::SourceDocument> pDoc)
+   void update(boost::shared_ptr<rsession::source_database::SourceDocument> pDoc)
    {
       // is this indexable? if not then bail
       if (!pDoc->canContainRCode())
@@ -1175,7 +1175,7 @@ void searchFiles(const std::string& term,
                  bool* pMoreAvailable)
 {
    // if we have a file monitor then search the project index
-   if (session::projects::projectContext().hasFileMonitor())
+   if (rsession::projects::projectContext().hasFileMonitor())
    {
       s_projectIndex.searchFiles(term,
                                  maxResults,
@@ -2378,7 +2378,7 @@ Error initialize()
 {
    // subscribe to project context file monitoring state changes
    // (note that if there is no project this will no-op)
-   session::projects::FileMonitorCallbacks cb;
+   rsession::projects::FileMonitorCallbacks cb;
    cb.onMonitoringEnabled = onFileMonitorEnabled;
    cb.onFilesChanged = onFilesChanged;
    cb.onMonitoringDisabled = onFileMonitorDisabled;

@@ -17,6 +17,8 @@
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
 
+#include <tests/TestRunner.hpp>
+
 int main(int argc, char * const argv[]) 
 {
    core::system::initializeLog("rserver", 2); 

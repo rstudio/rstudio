@@ -61,6 +61,8 @@
 #include "ServerPAMAuth.hpp"
 #include "ServerREnvironment.hpp"
 
+#include <tests/TestRunner.hpp>
+
 using namespace core ;
 using namespace server;
 

@@ -32,7 +32,7 @@ namespace core {
    }
 }
  
-namespace session {
+namespace rsession {
 namespace modules { 
 namespace tex {
 namespace compile_pdf_supervisor {

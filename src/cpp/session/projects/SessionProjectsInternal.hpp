@@ -23,7 +23,7 @@ namespace core {
    class FilePath;
 }
  
-namespace session {
+namespace rsession {
 namespace projects {
 
 void startup();

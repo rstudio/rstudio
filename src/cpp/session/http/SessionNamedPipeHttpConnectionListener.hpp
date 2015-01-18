@@ -56,7 +56,7 @@ using namespace core ;
 
 #define kReadBufferSize 4096
 
-namespace session {
+namespace rsession {
 
 class NamedPipeHttpConnection : public HttpConnection,
                                 boost::noncopyable

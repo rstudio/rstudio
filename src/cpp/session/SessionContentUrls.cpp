@@ -37,7 +37,7 @@ extern "C" const char *locale2charset(const char *);
 
 using namespace core ;
 
-namespace session {
+namespace rsession {
 namespace content_urls {
 
 namespace {
@@ -206,7 +206,7 @@ Error removeContentUrl(const json::JsonRpcRequest& request,
 Error initialize()
 {
    using boost::bind;
-   using namespace session::module_context;
+   using namespace rsession::module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerUriHandler, "/content", handleContentRequest))

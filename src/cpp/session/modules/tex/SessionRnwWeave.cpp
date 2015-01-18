@@ -39,9 +39,9 @@
 #include "SessionCompilePdfSupervisor.hpp"
 
 using namespace core;
-using namespace session::modules::tex::rnw_concordance;
+using namespace rsession::modules::tex::rnw_concordance;
 
-namespace session {
+namespace rsession {
 namespace modules { 
 namespace tex {
 namespace rnw_weave {

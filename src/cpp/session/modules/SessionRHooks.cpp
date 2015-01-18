@@ -24,7 +24,7 @@
 
 #include "SessionRHooks.hpp"
 
-namespace session {
+namespace rsession {
 namespace modules { 
 namespace rhooks {
 

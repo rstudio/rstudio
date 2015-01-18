@@ -35,7 +35,7 @@
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 namespace modules {   
 namespace find {
 
@@ -572,7 +572,7 @@ json::Object findInFilesStateAsJson()
 core::Error initialize()
 {
    using boost::bind;
-   using namespace session::module_context;
+   using namespace rsession::module_context;
 
    // register suspend handler
    addSuspendHandler(SuspendHandler(bind(onSuspend, _2), onResume));

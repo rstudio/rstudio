@@ -16,7 +16,7 @@
 #ifndef SESSION_MAIN_HPP
 #define SESSION_MAIN_HPP
 
-namespace session {
+namespace rsession {
 
 
 }

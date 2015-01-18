@@ -41,7 +41,7 @@
 
 using namespace core ;
 
-namespace session {
+namespace rsession {
 
 namespace {
 
@@ -158,7 +158,7 @@ private:
                                " file='%5%', "
                                " row.names=FALSE);");
 
-      FilePath modulesPath = session::options().modulesRSourcePath();;
+      FilePath modulesPath = rsession::options().modulesRSourcePath();;
       std::string scriptPath = utf8ToSystem(
                         modulesPath.complete("SessionRPubs.R").absolutePath());
       std::string htmlPath = utf8ToSystem(htmlFile.absolutePath());

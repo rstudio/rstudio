@@ -19,7 +19,7 @@
 #include <core/r_util/RSourceIndex.hpp>
 #include <session/SessionAsyncRProcess.hpp>
 
-namespace session {
+namespace rsession {
 namespace modules {
 namespace r_completions {
 

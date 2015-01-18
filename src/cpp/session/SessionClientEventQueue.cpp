@@ -27,7 +27,7 @@
 
 using namespace core ;
 
-namespace session {
+namespace rsession {
  
 namespace {
 ClientEventQueue* s_pClientEventQueue = NULL;

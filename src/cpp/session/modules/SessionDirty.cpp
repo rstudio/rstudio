@@ -40,7 +40,7 @@ using namespace core ;
 using namespace r::sexp;
 using namespace r::exec;
 
-namespace session {
+namespace rsession {
 namespace modules {
 namespace dirty {
 
@@ -114,7 +114,7 @@ void onDetectChanges(module_context::ChangeSource source)
 Error initialize()
 {         
    // add suspend handler
-   using namespace session::module_context;
+   using namespace rsession::module_context;
    addSuspendHandler(SuspendHandler(onSuspend, onResume));
 
    // subscribe to events

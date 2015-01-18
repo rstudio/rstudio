@@ -34,7 +34,7 @@
 
 using namespace core ;
 
-namespace session {
+namespace rsession {
 namespace modules { 
 namespace files {
 namespace quotas {
@@ -198,8 +198,8 @@ void checkQuotaThread()
 Error initialize()
 {
     // one time initialization of s_systemHasQuotas
-   if ( (session::options().programMode() == kSessionProgramModeServer) &&
-        session::options().limitXfsDiskQuota() )
+   if ( (rsession::options().programMode() == kSessionProgramModeServer) &&
+        rsession::options().limitXfsDiskQuota() )
    {
       std::string out;
       Error error = r::exec::system("which xfs_quota", &out);

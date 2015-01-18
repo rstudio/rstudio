@@ -21,7 +21,7 @@
 
 #include <session/SessionAsyncRProcess.hpp>
 
-namespace session {
+namespace rsession {
 namespace async_r {
 
 AsyncRProcess::AsyncRProcess():

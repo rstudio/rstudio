@@ -36,7 +36,7 @@
 
 using namespace core;
 
-namespace session {
+namespace rsession {
    
 namespace {
 
@@ -194,14 +194,14 @@ void ClientEventService::run()
       time_duration maxTotalBatchDelay = seconds(2);
 
       // make much shorter for desktop mode
-      if (session::options().programMode() == kSessionProgramModeDesktop)
+      if (options().programMode() == kSessionProgramModeDesktop)
       {
          batchDelay = milliseconds(2);
          maxTotalBatchDelay = milliseconds(10);
       }
       
       // get alias to client event queue
-      ClientEventQueue& clientEventQueue = session::clientEventQueue();
+      ClientEventQueue& clientEventQueue = rsession::clientEventQueue();
       
       // initialize state
       int nextEventId = 0;

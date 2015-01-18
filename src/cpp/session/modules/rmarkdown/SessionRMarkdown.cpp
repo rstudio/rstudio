@@ -52,7 +52,7 @@
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 namespace modules {
 namespace rmarkdown {
 
@@ -224,7 +224,7 @@ private:
                      "name = 'rstudio-iframe', "
                      "version = '0.1', "
                      "src = '" +
-                         session::options().rResourcesPath().absolutePath() +
+                         rsession::options().rResourcesPath().absolutePath() +
                      "', "
                      "script = '" + rsIFramePath + "')");
 
@@ -704,9 +704,9 @@ void initEnvironment()
 {
    r::exec::RFunction sysSetenv("Sys.setenv");
    sysSetenv.addParam("RSTUDIO_PANDOC",
-                      session::options().pandocPath().absolutePath());
+                      rsession::options().pandocPath().absolutePath());
    sysSetenv.addParam("RMARKDOWN_MATHJAX_PATH",
-                      session::options().mathjaxPath().absolutePath());
+                      rsession::options().mathjaxPath().absolutePath());
    Error error = sysSetenv.call();
    if (error)
       LOG_ERROR(error);
@@ -846,7 +846,7 @@ Error terminateRenderRmd(const json::JsonRpcRequest& request,
 // return the path to the local copy of MathJax
 FilePath mathJaxDirectory()
 {
-   return session::options().mathjaxPath();
+   return rsession::options().mathjaxPath();
 }
 
 // Handles a request for RMarkdown output. This request embeds the name of
@@ -923,7 +923,7 @@ void handleRmdOutputRequest(const http::Request& request,
       // serve a file resource from the output folder
       FilePath filePath = outputFilePath.parent().childPath(path);
       html_preview::addFileSpecificHeaders(filePath, pResponse);
-      if (session::options().programMode() == kSessionProgramModeDesktop)
+      if (rsession::options().programMode() == kSessionProgramModeDesktop)
       {
          pResponse->setNoCacheHeaders();
          pResponse->setFile(filePath, request);

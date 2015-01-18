@@ -24,7 +24,7 @@
 #include <core/json/Json.hpp>
 #include <core/FilePath.hpp>
 
-namespace session {
+namespace rsession {
 namespace modules {
 namespace source_control {
 

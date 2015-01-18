@@ -60,7 +60,7 @@
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 namespace modules {
 namespace data {
 namespace viewer {
@@ -901,7 +901,7 @@ Error initialize()
 
    using boost::bind;
    using namespace r::function_hook ;
-   using namespace session::module_context;
+   using namespace rsession::module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionDataViewer.R"))
@@ -916,7 +916,7 @@ Error initialize()
 
    // initialize data viewer (don't make failure fatal because we are
    // adding this code in a hot patch release)
-   bool server = session::options().programMode() == kSessionProgramModeServer;
+   bool server = rsession::options().programMode() == kSessionProgramModeServer;
    error = r::exec::RFunction(".rs.initializeDataViewer", server).call();
    if (error)
        LOG_ERROR(error);

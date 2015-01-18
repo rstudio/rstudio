@@ -64,7 +64,7 @@ using namespace core;
 // compatibility with older versions of RStudio
 #define kPackratRStudioProtocolVersion 1
 
-namespace session {
+namespace rsession {
 
 namespace modules { 
 namespace packrat {
@@ -716,7 +716,7 @@ Error initPackratMonitoring()
    PACKRAT_TRACE("found " << lockfilePath.absolutePath() << 
                  ", init monitoring");
 
-   session::projects::FileMonitorCallbacks cb;
+   rsession::projects::FileMonitorCallbacks cb;
    cb.onFilesChanged = onFilesChanged;
    projects::projectContext().subscribeToFileMonitor("Packrat", cb);
    module_context::events().onSourceEditorFileSaved.connect(onFileChanged);

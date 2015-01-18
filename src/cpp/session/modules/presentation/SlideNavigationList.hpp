@@ -24,7 +24,7 @@
 
 #include "SlideParser.hpp"
 
-namespace session {
+namespace rsession {
 namespace modules { 
 namespace presentation {
 

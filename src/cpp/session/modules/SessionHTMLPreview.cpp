@@ -56,7 +56,7 @@
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 namespace modules { 
 namespace html_preview {
 
@@ -750,7 +750,7 @@ std::string preFontFamily()
 
 void modifyOutputForPreview(std::string* pOutput)
 {
-   if (session::options().programMode() == kSessionProgramModeDesktop)
+   if (rsession::options().programMode() == kSessionProgramModeDesktop)
    {
       // use correct font ordering for this platform
       *pOutput = boost::regex_replace(
@@ -806,7 +806,7 @@ void handleInternalMarkdownPreviewRequest(
    try
    {
       // read input template
-      FilePath resPath = session::options().rResourcesPath();
+      FilePath resPath = rsession::options().rResourcesPath();
       std::string previewTemplate;
       Error error = readPreviewTemplate(resPath, &previewTemplate);
       if (error)
@@ -935,7 +935,7 @@ void handlePreviewRequest(const http::Request& request,
    {
 
       FilePath filePath =
-            session::options().mathjaxPath().parent().childPath(path);
+            rsession::options().mathjaxPath().parent().childPath(path);
       pResponse->setFile(filePath, request);
    }
 
@@ -958,7 +958,7 @@ void addFileSpecificHeaders(const FilePath& filePath, http::Response* pResponse)
    std::string ext = filePath.extensionLowerCase();
    if (ext.length() == 4 &&
        videoExts.find(ext) != std::string::npos &&
-       session::options().programMode() == kSessionProgramModeDesktop)
+       rsession::options().programMode() == kSessionProgramModeDesktop)
    {
       // mp4 and QuickTime files served in IFrames cause problems on
       // some desktop configurations (see case 3828)

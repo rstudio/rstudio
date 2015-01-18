@@ -32,7 +32,7 @@
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 namespace modules { 
 namespace console {
 
@@ -142,7 +142,7 @@ SEXP rs_getPendingInput()
    
 Error initialize()
 {    
-   if (!session::options().verifyInstallation())
+   if (!rsession::options().verifyInstallation())
    {
       // capture standard streams
       Error error = initializeOutputCapture();

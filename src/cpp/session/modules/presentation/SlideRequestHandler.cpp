@@ -46,7 +46,7 @@
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 namespace modules { 
 namespace presentation {
 
@@ -170,7 +170,7 @@ std::string copiedMathjax(const FilePath& targetFile)
    // copy the mathjax directory
    r::exec::RFunction fileCopy("file.copy");
    fileCopy.addParam("from", string_utils::utf8ToSystem(
-                         session::options().mathjaxPath().absolutePath()));
+                         rsession::options().mathjaxPath().absolutePath()));
    fileCopy.addParam("to", string_utils::utf8ToSystem(
                          filesTargetDir.absolutePath()));
    fileCopy.addParam("recursive", true);
@@ -212,7 +212,7 @@ std::string embeddedWebFonts()
       boost::iostreams::filtering_ostream filteredStream;
 
       // base64 encoder
-      FilePath fontPath = session::options().rResourcesPath().complete(fonts);
+      FilePath fontPath = rsession::options().rResourcesPath().complete(fonts);
       filteredStream.push(html_utils::CssUrlFilter(fontPath));
 
       // target stream
@@ -1139,7 +1139,7 @@ void handlePresentationPaneRequest(const http::Request& request,
    else if (boost::algorithm::starts_with(path, "mathjax-23/"))
    {
       FilePath filePath =
-            session::options().mathjaxPath().parent().childPath(path);
+            rsession::options().mathjaxPath().parent().childPath(path);
       pResponse->setCacheWithRevalidationHeaders();
       pResponse->setCacheableBody(filePath, request);
    }

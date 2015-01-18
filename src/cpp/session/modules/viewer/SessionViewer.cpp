@@ -35,7 +35,7 @@
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 namespace modules { 
 namespace viewer {
 
@@ -378,7 +378,7 @@ Error initialize()
    addSuspendHandler(SuspendHandler(onSuspend, onResume));
 
    // set ggvis.renderer to svg in desktop mode
-   if ((session::options().programMode() == kSessionProgramModeDesktop) &&
+   if ((rsession::options().programMode() == kSessionProgramModeDesktop) &&
        r::options::getOption<std::string>("ggvis.renderer", "", false).empty())
    {
       r::options::setOption("ggvis.renderer", "svg");

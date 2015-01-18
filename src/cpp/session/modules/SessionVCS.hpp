@@ -28,7 +28,7 @@
 
 #include "SessionGit.hpp"
 
-namespace session {
+namespace rsession {
 namespace modules {
 namespace source_control {
 

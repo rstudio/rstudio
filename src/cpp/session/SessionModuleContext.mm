@@ -29,7 +29,7 @@
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 namespace module_context {
 
 bool isOSXMavericks()

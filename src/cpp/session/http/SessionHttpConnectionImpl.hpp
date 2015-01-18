@@ -40,7 +40,7 @@
 
 #include "SessionHttpConnectionUtils.hpp"
 
-namespace session {
+namespace rsession {
 
 template <typename ProtocolType>
 class HttpConnectionImpl :

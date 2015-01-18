@@ -35,7 +35,7 @@
 
 using namespace core ;
 
-namespace session {  
+namespace rsession {  
 namespace modules {
 namespace agreement {
 
@@ -62,7 +62,7 @@ struct Agreement
    
 Error agreementFileContents(std::string* pContents, std::string* pContentType)
 {
-   FilePath agreementFilePath = session::options().agreementFilePath();
+   FilePath agreementFilePath = rsession::options().agreementFilePath();
    *pContentType = agreementFilePath.mimeContentType();
    return readStringFromFile(agreementFilePath, pContents);
 }
@@ -82,7 +82,7 @@ Agreement checkForPendingAgreement()
    }
    
    // hash: filename + crc32 checksum of contents
-   std::string hash = session::options().agreementFilePath().filename() +
+   std::string hash = rsession::options().agreementFilePath().filename() +
                       hash::crc32Hash(contents);
    
    // see if we have not yet agreed to this agreement
@@ -143,13 +143,13 @@ void handleAgreementRequest(const http::Request& request,
 
 bool hasAgreement()
 {
-   return !session::options().agreementFilePath().empty();
+   return !rsession::options().agreementFilePath().empty();
 }
 
 json::Value pendingAgreement()
 {
    if ( hasAgreement() &&
-        (session::options().programMode() == kSessionProgramModeServer) )
+        (rsession::options().programMode() == kSessionProgramModeServer) )
    {
       Agreement agreement = checkForPendingAgreement();
       if (!agreement.empty())

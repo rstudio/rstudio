@@ -54,7 +54,7 @@ To create a new postback handler for an action 'foo' do the following:
 
 using namespace core ;
 
-namespace session {  
+namespace rsession {  
 namespace module_context {
 
 namespace {  
@@ -103,7 +103,7 @@ Error registerPostbackHandler(const std::string& name,
       return error ;
                                                     
    // compute the shell command required to invoke this handler and return it
-   Options& options = session::options();
+   Options& options = rsession::options();
    *pShellCommand = options.rpostbackPath().absolutePath() + "-" + name ;
    
    // return success

@@ -24,7 +24,7 @@ namespace core
    class FilePath;
 }
 
-namespace session {   
+namespace rsession {   
 namespace async_r {
 
 enum AsyncRProcessOptions

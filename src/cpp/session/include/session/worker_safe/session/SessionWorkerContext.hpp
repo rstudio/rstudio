@@ -22,7 +22,7 @@
 
 #include "SessionClientEvent.hpp"
 
-namespace session {   
+namespace rsession {   
 namespace worker_context {
     
 // register a worker method

@@ -18,7 +18,7 @@
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 namespace addins {
   
 ${SESSION_ADDIN_DECLARATIONS}
@@ -43,5 +43,5 @@ Error initialize()
 }
 
 } // namespace addins
-} // namespace session
+} // namespace rsession
 

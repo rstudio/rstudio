@@ -171,6 +171,8 @@ endif()
 # add boost as system include directory
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
+# add cpp test dir as system include directory
+include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/tests/cpp)
 
 # automatically build addins found in the addins subdirectory
 # (if another path wasn't already specified)

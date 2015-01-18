@@ -48,7 +48,7 @@ namespace core {
    }
 }
 
-namespace session {
+namespace rsession {
 
 // abstract base (insulate clients from knowledge of protocol-specifics)
 class HttpConnection

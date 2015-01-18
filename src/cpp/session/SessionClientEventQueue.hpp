@@ -27,7 +27,7 @@
 
 #include <session/SessionClientEvent.hpp>
 
-namespace session {
+namespace rsession {
    
 // initialization
 void initializeClientEventQueue();

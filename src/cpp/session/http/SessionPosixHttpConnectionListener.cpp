@@ -27,7 +27,7 @@
 
 using namespace core ;
 
-namespace session {
+namespace rsession {
 
 namespace {
 
@@ -40,7 +40,7 @@ HttpConnectionListener* s_pHttpConnectionListener = NULL;
 void initializeHttpConnectionListener()
 {
    // alias options
-   session::Options& options = session::options();
+   rsession::Options& options = rsession::options();
 
    if (options.programMode() == kSessionProgramModeDesktop)
    {
@@ -64,7 +64,7 @@ void initializeHttpConnectionListener()
    }
    else // mode == "server"
    {
-      if (session::options().standalone())
+      if (rsession::options().standalone())
       {
          s_pHttpConnectionListener = new TcpIpHttpConnectionListener(
                                             options.wwwAddress(),

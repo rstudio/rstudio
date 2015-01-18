@@ -24,7 +24,7 @@ namespace core {
 
 #include <core/json/Json.hpp>
  
-namespace session {
+namespace rsession {
 namespace modules {      
 namespace rmarkdown {
 namespace presentation {

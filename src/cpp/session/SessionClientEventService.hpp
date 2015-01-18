@@ -29,7 +29,7 @@ namespace core {
    class FilePath;
 }
 
-namespace session {
+namespace rsession {
 
 // singleton
 class ClientEventService;

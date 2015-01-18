@@ -23,7 +23,7 @@ namespace core {
    class FilePath;
 }
  
-namespace session {
+namespace rsession {
 namespace modules { 
 namespace presentation {
 namespace state {

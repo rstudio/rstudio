@@ -32,7 +32,7 @@
 
 #include <session/projects/SessionProjects.hpp>
 
-namespace session {
+namespace rsession {
 
 class IncrementalFileChangeHandler : boost::noncopyable
 {

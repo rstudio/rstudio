@@ -27,7 +27,7 @@
 
 using namespace core ;
 
-namespace session {
+namespace rsession {
 
 // implementation of local stream http connection listener
 class LocalStreamHttpConnectionListener :

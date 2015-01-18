@@ -44,7 +44,7 @@
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 namespace modules { 
 namespace packages {
 
@@ -283,7 +283,7 @@ SEXP rs_enqueLoadedPackageUpdates(SEXP installCmdSEXP)
 SEXP rs_canInstallPackages()
 {
    r::sexp::Protect rProtect;
-   return r::sexp::create(session::options().allowPackageInstallation(),
+   return r::sexp::create(rsession::options().allowPackageInstallation(),
                           &rProtect);
 }
 

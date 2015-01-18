@@ -74,7 +74,7 @@ namespace core {
 	class Error;
 }
 
-namespace session {
+namespace rsession {
 
 // global initialization (allows instantation of listener which
 // implements the protocol appropriate for our current configuration)

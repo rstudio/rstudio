@@ -42,7 +42,7 @@
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 
 namespace {
    const char * const kVcsIdNone = "none";
@@ -220,7 +220,7 @@ core::Error initialize()
    const projects::ProjectContext& projContext = projects::projectContext();
    FilePath workingDir = projContext.directory();
 
-   if (!session::options().allowVcs() || !userSettings().vcsEnabled() || workingDir.empty())
+   if (!rsession::options().allowVcs() || !userSettings().vcsEnabled() || workingDir.empty())
       return Success();
 
 
@@ -268,13 +268,13 @@ core::Error initialize()
 } // namespace modules
 } // namespace session
 
-namespace session {
+namespace rsession {
 namespace module_context {
 
 VcsContext vcsContext(const FilePath& workingDir)
 {
-   using namespace session::modules;
-   using namespace session::modules::source_control;
+   using namespace rsession::modules;
+   using namespace rsession::modules::source_control;
 
    // inspect current vcs state (underlying functions execute child
    // processes so we want to be sure to only call them once)

@@ -28,7 +28,7 @@ namespace http {
 }
 }
 
-namespace session {
+namespace rsession {
 namespace connection {
 
 std::string rstudioRequestIdFromRequest(const core::http::Request& request);

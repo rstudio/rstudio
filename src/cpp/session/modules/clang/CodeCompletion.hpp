@@ -20,7 +20,7 @@
 
 #include <core/json/JsonRpc.hpp>
  
-namespace session {
+namespace rsession {
 namespace modules {      
 namespace clang {
 

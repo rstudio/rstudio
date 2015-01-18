@@ -39,7 +39,7 @@
 
 using namespace core ;
 
-namespace session {  
+namespace rsession {  
 
 namespace {
 const char* const kDefaultPandocPath = "bin/pandoc";

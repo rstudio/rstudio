@@ -46,7 +46,7 @@
 #include "SessionHttpConnectionImpl.hpp"
 
 
-namespace session {
+namespace rsession {
 
 namespace {
 

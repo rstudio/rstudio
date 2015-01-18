@@ -27,7 +27,7 @@
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 namespace modules { 
 namespace shiny {
 
@@ -37,7 +37,7 @@ void onPackageLoaded(const std::string& pkgname)
 {
    // we need an up to date version of shiny when running in server mode
    // to get the websocket protocol/path and port randomizing changes
-   if (session::options().programMode() == kSessionProgramModeServer)
+   if (rsession::options().programMode() == kSessionProgramModeServer)
    {
       if (pkgname == "shiny")
       {

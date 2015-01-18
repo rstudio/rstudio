@@ -23,7 +23,7 @@ namespace core {
    class FilePath;
 }
  
-namespace session {    
+namespace rsession {    
 namespace content_urls {
 
 std::string provision(const std::string& title, const core::FilePath& filePath);

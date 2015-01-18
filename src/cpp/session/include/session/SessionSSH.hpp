@@ -24,7 +24,7 @@
 #include <core/FilePath.hpp>
 #include <core/system/Process.hpp>
 
-namespace session {
+namespace rsession {
 namespace ssh {
 
 // Holds a common set of options that need to be applied to child

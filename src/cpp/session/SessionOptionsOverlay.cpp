@@ -17,7 +17,7 @@
 
 using namespace core ;
 
-namespace session {
+namespace rsession {
 
 void Options::addOverlayOptions(
                            boost::program_options::options_description* pOpt)

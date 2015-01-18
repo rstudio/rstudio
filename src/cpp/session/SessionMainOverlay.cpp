@@ -17,7 +17,7 @@
 
 using namespace core ;
 
-namespace session {
+namespace rsession {
 namespace overlay {
 
 Error initialize()

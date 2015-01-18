@@ -20,7 +20,7 @@
 
 using namespace core ;
 
-namespace session {
+namespace rsession {
 namespace postback {
 
 Options& options()

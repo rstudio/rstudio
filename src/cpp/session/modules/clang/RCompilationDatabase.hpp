@@ -32,7 +32,7 @@
 
 #define kCompilationDbPrefix "clang-compilation-db-"
 
-namespace session {
+namespace rsession {
 namespace modules {      
 namespace clang {
 

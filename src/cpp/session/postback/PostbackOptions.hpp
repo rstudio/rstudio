@@ -24,7 +24,7 @@ namespace core {
    class ProgramStatus;
 }
 
-namespace session {
+namespace rsession {
 namespace postback {
 
 // singleton

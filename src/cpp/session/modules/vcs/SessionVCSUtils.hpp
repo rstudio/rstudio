@@ -21,7 +21,7 @@
 #include <core/json/Json.hpp>
 #include <core/system/Process.hpp>
 
-namespace session {
+namespace rsession {
 namespace modules {
 namespace vcs_utils {
 

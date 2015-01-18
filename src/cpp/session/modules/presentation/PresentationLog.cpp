@@ -36,7 +36,7 @@
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 namespace modules { 
 namespace presentation {
 
@@ -52,7 +52,7 @@ Error Log::initialize()
 
    // connect to console events
    using namespace boost;
-   using namespace session::module_context;
+   using namespace rsession::module_context;
 
    events().onConsolePrompt.connect(boost::bind(&Log::onConsolePrompt,
                                                 this, _1));

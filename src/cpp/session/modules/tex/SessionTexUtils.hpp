@@ -26,7 +26,7 @@ namespace core {
    class Error;
 }
  
-namespace session {
+namespace rsession {
 namespace modules { 
 namespace tex {
 namespace utils {

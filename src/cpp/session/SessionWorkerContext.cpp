@@ -24,7 +24,7 @@
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 namespace worker_context {
 
 // Worker RPC methods don't hold up an HTTP connection while the operation

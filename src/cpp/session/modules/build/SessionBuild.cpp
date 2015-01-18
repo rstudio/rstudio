@@ -54,7 +54,7 @@
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 
 namespace {
 
@@ -100,6 +100,8 @@ namespace modules {
 namespace build {
 
 namespace {
+
+using namespace rsession;
 
 // track whether to force a package rebuild. we do this if the user
 // saves a header file (since the R CMD INSTALL makefile doesn't
@@ -1657,7 +1659,7 @@ Error initialize()
    // subscribe to file monitor and source editor file saved so we
    // can tickle a flag to indicates when we should force an R
    // package rebuild
-   session::projects::FileMonitorCallbacks cb;
+   rsession::projects::FileMonitorCallbacks cb;
    cb.onFilesChanged = onFilesChanged;
    projects::projectContext().subscribeToFileMonitor("", cb);
    module_context::events().onSourceEditorFileSaved.connect(onFileChanged);

@@ -23,7 +23,7 @@ namespace core {
    class FilePath;
 }
  
-namespace session {
+namespace rsession {
 namespace projects {
 
 void addFirstRunDoc(const core::FilePath& projectFile, const std::string& doc);

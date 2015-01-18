@@ -34,7 +34,7 @@
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 
 namespace {
 
@@ -51,7 +51,7 @@ struct EmbeddedPackage
 EmbeddedPackage embeddedPackageInfo(const std::string& name)
 {
    // determine location of archives
-   FilePath archivesDir = session::options().sessionPackageArchivesPath();
+   FilePath archivesDir = rsession::options().sessionPackageArchivesPath();
    std::vector<FilePath> children;
    Error error = archivesDir.children(&children);
    if (error)
@@ -374,7 +374,7 @@ Error initialize()
 {         
    // install handlers
    using boost::bind;
-   using namespace session::module_context;
+   using namespace rsession::module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "unsatisfied_dependencies", unsatisfiedDependencies))

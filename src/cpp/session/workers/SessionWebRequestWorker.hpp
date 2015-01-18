@@ -20,7 +20,7 @@ namespace core {
    class Error;
 }
 
-namespace session {
+namespace rsession {
 namespace workers {
 namespace web_request {
 

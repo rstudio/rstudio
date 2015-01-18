@@ -30,7 +30,7 @@ namespace core {
    class Error;
 }
 
-namespace session {
+namespace rsession {
 
 class HttpConnectionQueue : boost::noncopyable
 {

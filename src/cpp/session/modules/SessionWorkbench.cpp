@@ -62,7 +62,7 @@ extern "C" SA_TYPE SaveAction;
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 namespace modules { 
 namespace workbench {
 
@@ -426,7 +426,7 @@ Error getRPrefs(const json::JsonRpcRequest& request,
    result["source_control_prefs"] = sourceControlPrefs;
    result["compile_pdf_prefs"] = compilePdfPrefs;
    result["spelling_prefs_context"] =
-                  session::modules::spelling::spellingPrefsContextAsJson();
+                  rsession::modules::spelling::spellingPrefsContextAsJson();
 
    pResponse->setResult(result);
 
@@ -448,7 +448,7 @@ void ammendShellPaths(T* pTarget)
 
    // msys_ssh path
    core::system::addToPath(pTarget,
-                           session::options().msysSshPath().absolutePath());
+                           rsession::options().msysSshPath().absolutePath());
 }
 
 Error getTerminalOptions(const json::JsonRpcRequest& request,
@@ -620,7 +620,7 @@ void editFilePostback(const std::string& file,
    }
 
    // prepare edit event
-   ClientEvent editEvent = session::showEditorEvent(fileContents, false, true);
+   ClientEvent editEvent = rsession::showEditorEvent(fileContents, false, true);
 
    // wait for edit_completed
    json::JsonRpcRequest request ;
@@ -660,8 +660,8 @@ Error startShellDialog(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
 #ifndef _WIN32
-   using namespace session::module_context;
-   using namespace session::console_process;
+   using namespace rsession::module_context;
+   using namespace rsession::console_process;
 
    // configure environment for shell
    core::system::Options shellEnv;
@@ -784,7 +784,7 @@ Error initialize()
    userSettings().onChanged.connect(onUserSettingsChanged);
 
    // register postback handler for viewPDF (server-only)
-   if (session::options().programMode() == kSessionProgramModeServer)
+   if (rsession::options().programMode() == kSessionProgramModeServer)
    {
       std::string pdfShellCommand ;
       Error error = module_context::registerPostbackHandler("pdfviewer",

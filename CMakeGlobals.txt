@@ -35,6 +35,7 @@ set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSIO
 # default to debug builds
 if(NOT CMAKE_BUILD_TYPE)
    set(CMAKE_BUILD_TYPE "Debug")
+   add_definitions(-DRSTUDIO_ENABLE_TESTING)
 endif()
 
 # platform specific default for targets

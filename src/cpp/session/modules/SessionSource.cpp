@@ -54,11 +54,11 @@ extern "C" const char *locale2charset(const char *);
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 namespace modules { 
 namespace source {
 
-using namespace session::source_database;
+using namespace rsession::source_database;
 
 namespace {
 
@@ -673,7 +673,7 @@ Error processSourceTemplate(const std::string& name,
    core::text::TemplateFilter filter(vars);
 
    // read file with template filter
-   FilePath templatePath = session::options().rResourcesPath().complete(
+   FilePath templatePath = rsession::options().rResourcesPath().complete(
                                              "templates/" +  templateName);
    return core::readStringFromFile(templatePath,
                                    filter,

@@ -23,14 +23,14 @@
 
 using namespace core ;
 
-namespace session {
+namespace rsession {
 namespace modules { 
 namespace data {
 
 Error initialize()
 {
    using boost::bind;
-   using namespace session::module_context;
+   using namespace rsession::module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (data::viewer::initialize)

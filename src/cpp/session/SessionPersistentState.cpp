@@ -25,7 +25,7 @@
 
 using namespace core ;
 
-namespace session {  
+namespace rsession {  
 
 namespace {
 const char * const kActiveClientId = "active-client-id";
@@ -40,7 +40,7 @@ PersistentState& persistentState()
    
 Error PersistentState::initialize()
 {
-   serverMode_ = (session::options().programMode() ==
+   serverMode_ = (rsession::options().programMode() ==
                   kSessionProgramModeServer);
 
    // always the same so that we can supporrt a restart of

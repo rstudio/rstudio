@@ -19,7 +19,7 @@
 
 using namespace core;
 
-namespace session {
+namespace rsession {
 namespace workers {
 namespace web_request {
 

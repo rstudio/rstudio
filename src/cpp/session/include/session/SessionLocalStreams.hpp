@@ -26,7 +26,7 @@
 
 #define kSessionLocalStreamsDir "/tmp/rstudio-rsession"
 
-namespace session {
+namespace rsession {
 namespace local_streams {
 
 inline core::Error ensureStreamsDir()
