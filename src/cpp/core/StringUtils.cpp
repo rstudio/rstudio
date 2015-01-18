@@ -34,8 +34,6 @@
 #include <winnls.h>
 #endif
 
-#include <tests/TestThat.hpp>
-
 namespace core {
 namespace string_utils {
 
