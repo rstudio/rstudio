@@ -2822,18 +2822,9 @@ int main (int argc, char * const argv[])
       s_printCharsetWarning = !ensureUtf8Charset();
 
       // run tests
-      if (argc > 1 && strcmp(argv[1], "--test") == 0)
-      {
-         int testArgc = argc - 1;
-         char* testArgv[testArgc];
-
-         testArgv[0] = argv[0];
-         for (int i = 2; i < argc; ++i)
-            testArgv[i - 1] = argv[i];
-
-         return Catch::Session().run(testArgc, testArgv);
-      }
-
+      if (tests::enabled(argc, argv))
+         return tests::run(argc, argv);
+      
       // read program options
       Options& options = rsession::options();
       ProgramStatus status = options.read(argc, argv) ;

@@ -26,7 +26,7 @@
 
 #else
 
-# define test_that(__X__, ...) void __RSTUDIO_TESTS_DISABLED__()
+# define test_that(__X__, ...) void __RSTUDIO_TESTS_DISABLED_##__LINE__()
 # define expect_true(__X__)
 # define expect_false(__X__)
 

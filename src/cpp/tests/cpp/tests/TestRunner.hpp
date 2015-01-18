@@ -16,8 +16,50 @@
 #ifndef CORE_TESTRUNNER_HPP
 #define CORE_TESTRUNNER_HPP
 
-#define CATCH_CONFIG_RUNNER
-#include "vendor/catch.hpp"
+#ifdef RSTUDIO_ENABLE_TESTING
+
+# define CATCH_CONFIG_RUNNER
+# include "vendor/catch.hpp"
+
+namespace tests {
+
+bool enabled(int argc, char* const argv[])
+{
+    return argc > 1 && strcmp(argv[1], "--test") == 0;
+}
+
+// use Catch to run tests -- check for the '--test'
+// flag and run if that's applied
+int run(int argc, char* const argv[])
+{
+    if (argc > 1 && strcmp(argv[1], "--test") == 0)
+    {
+        int testArgc = argc - 1;
+        char* testArgv[testArgc];
+
+        testArgv[0] = argv[0];
+        for (int i = 2; i < argc; ++i)
+            testArgv[i - 1] = argv[i];
+
+        return Catch::Session().run(testArgc, testArgv);
+    }
+
+    return 1;
+}
+
+} // end namespace tests
+
+#else // not RSTUDIO_ENABLE_TESTING
+
+namespace tests {
+
+// no-op for running tests
+bool enabled() { return false; }
+int run(int argc, char* const argv[]) {}
+
+} // end namespace tests
+
+#endif // end RSTUDIO_ENABLE_TESTING
 
 #endif
 
