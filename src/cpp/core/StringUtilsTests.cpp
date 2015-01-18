@@ -22,6 +22,9 @@ namespace string_utils {
 test_that("isSubsequence works")
 {
    expect_true(isSubsequence("", ""));
+   expect_true(isSubsequence("annnbnnnc", "abc"));
+   expect_false(isSubsequence("abcdef", "abdcef"));
+   expect_true(isSubsequence("abcdef", "AeF", true));
 }
 
 } // end namespace string_utils
