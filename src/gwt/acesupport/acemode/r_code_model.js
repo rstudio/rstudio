@@ -131,6 +131,24 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
 
    }
 
+   // Determine whether the token cursor lies within the
+   // argument list for a control flow statement, e.g.
+   //
+   //    if (foo &&
+   //        (bar
+   //         ^
+   function isWithinControlFlowArgList(tokenCursor)
+   {
+      while (tokenCursor.findOpeningBracket("(") &&
+             tokenCursor.moveToPreviousToken())
+         if (isOneOf(
+            tokenCursor.currentValue(),
+            ["if", "for", "while"]))
+             return true;
+
+      return false;
+   }
+
    // Move from the function token to the end of a function name.
    // Note that it is legal to define functions in multi-line strings,
    // hence the somewhat awkward name / interface.
@@ -1305,10 +1323,10 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
                   // the line ended with an operator; however, in some
                   // cases (notably with multi-line if statements) we
                   // would prefer not including that indentation.
-                  return /^\s*(?:if|else|while|for|repeat)/.test(line) ?
-                     result :
-                     result + continuationIndent;
-                  
+                  if (isWithinControlFlowArgList(tokenCursor))
+                     return result;
+                  else
+                     return result + continuationIndent;
 
                }
 
@@ -1515,10 +1533,10 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
             }
          }
       }
-      else if (isOneOf(
-         tokenCursor.currentValue(),
-         ["else", "repeat", "<-", "<<-", "="]
-      ) || tokenCursor.currentType().indexOf("infix") !== -1)
+      else if (isOneOf(tokenCursor.currentValue(),
+                       ["else", "repeat", "<-", "<<-", "="]) ||
+        tokenCursor.currentType().indexOf("infix") !== -1 ||
+        tokenCursor.currentType() === "keyword.operator")
       {
          return this.$getIndent(this.$getLine(tokenCursor.$row));
       }
