@@ -361,7 +361,7 @@
    # coerce to data frame before assigning, and don't assign if we can't coerce
    frame <- .rs.toDataFrame(obj, objName)
    if (!is.null(frame))
-      assign(cacheKey, obj, .rs.CachedDataEnv)
+      assign(cacheKey, frame, .rs.CachedDataEnv)
 })
 
 .rs.addFunction("removeCachedData", function(cacheKey, cacheDir)
