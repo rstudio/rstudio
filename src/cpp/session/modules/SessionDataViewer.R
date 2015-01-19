@@ -80,7 +80,7 @@
         # implicitly remove those values); if that leaves us with nothing,
         # treat this column as untyped since we can do no meaningful filtering
         # on it
-        minmax_vals <- x[[idx]][!is.na(x[[idx]]) & !is.infinite(x[[idx]])]
+        minmax_vals <- x[[idx]][is.finite(x[[idx]])]
         if (length(minmax_vals) > 1)
         {
           col_min <- min(minmax_vals)
