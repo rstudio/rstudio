@@ -19,6 +19,7 @@ import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountInput;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 public class NewRSConnectLocalPage 
@@ -31,7 +32,7 @@ public class NewRSConnectLocalPage
       super("RStudio Connect", 
             "A local service running inside your organization. Publish and " +
             "collaborate privately and securely.",
-            "Project Type",
+            "RStudio Connect Account",
             RSConnectAccountResources.INSTANCE.localAccountIcon(), 
             RSConnectAccountResources.INSTANCE.localAccountIconLarge());
    }
@@ -44,7 +45,7 @@ public class NewRSConnectLocalPage
    @Override
    protected Widget createWidget()
    {
-
+      return new Label("NYI");
    }
 
    @Override
@@ -55,6 +56,7 @@ public class NewRSConnectLocalPage
    @Override
    protected NewRSConnectAccountResult collectInput()
    {
+      return new NewRSConnectAccountResult("", "", "");
    }
 
    @Override

@@ -44,7 +44,6 @@ public class RSConnectAccountList extends Composite
                RSConnectAccountResources.INSTANCE.cloudAccountIconSmall() : 
                RSConnectAccountResources.INSTANCE.localAccountIconSmall());
          icon.getElement().getStyle().setMarginRight(2, Unit.PX);
-         icon.set
          panel.add(icon);
          Label serverLabel = new Label(account.getServer() + ": ");
          serverLabel.getElement().getStyle().setFontWeight(FontWeight.BOLD);
