@@ -19,10 +19,17 @@
 #ifndef TESTS_TESTRUNNER_HPP
 #define TESTS_TESTRUNNER_HPP
 
-#define CATCH_CONFIG_RUNNER
-#include "vendor/catch.hpp"
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
+
+# define CATCH_CONFIG_RUNNER
+# include "vendor/catch.hpp"
 
 namespace tests {
+
+bool enabled(int argc, char* const argv[])
+{
+   return argc > 1 && strcmp(argv[1], "--test") == 0;
+}
 
 // use Catch to run tests -- check for the '--test'
 // flag and run if that's applied
@@ -43,7 +50,25 @@ int run(int argc, char* const argv[])
     return 1;
 }
 
-// end namespace
+} // end namespace tests
+
+#else // not RSTUDIO_UNIT_TESTS_ENABLED
+
+namespace tests {
+
+bool enabled(int argc, char* const argv[])
+{
+   return false;
+}
+
+int run(int argc, char* const argv[])
+{
+   // no-op -- unit tests disabled
+}
+
+} // end namespace tests
+
+#endif // end RSTUDIO_UNIT_TESTS_ENABLED
 
 #endif
 

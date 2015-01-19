@@ -16,11 +16,23 @@
 #ifndef TESTS_TESTTHAT_HPP
 #define TESTS_TESTTHAT_HPP
 
-#include "vendor/catch.hpp"
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
 
-#define test_that(__X__, ...) TEST_CASE(__X__, __FILE__, ##__VA_ARGS__)
-#define expect_true(__X__) CHECK(__X__)
-#define expect_false(__X__) CHECK_FALSE(__X__)
+# include "vendor/catch.hpp"
+
+# define context(__X__, ...) TEST_CASE(__X__, __FILE__, ##__VA_ARGS__)
+# define test_that SECTION
+# define expect_true CHECK
+# define expect_false CHECK_FALSE
+
+#else
+
+# define context(__X__, ...) void RSTUDIO_UNIT_TESTS_DISABLED_##__LINE__()
+# define test_that(__X__) void RSTUDIO_UNIT_TESTS_DISABLED_##__LINE__()
+# define expect_true(__X__)
+# define expect_false(__X__)
+
+#endif
 
 #endif
 

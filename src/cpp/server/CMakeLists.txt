@@ -108,6 +108,12 @@ endif()
 # include directories and libraries
 set(SERVER_SYSTEM_LIBRARIES ${DL_LIBRARIES})
 
+# add tests
+if (RSTUDIO_UNIT_TESTS_ENABLED)
+   file(GLOB_RECURSE SERVER_TEST_FILES "*Tests.cpp")
+   list(APPEND SERVER_SOURCE_FILES ${SERVER_TEST_FILES})
+   add_definitions(-DRSTUDIO_UNIT_TESTS_ENABLED)
+endif()
 
 # set include directories
 include_directories(

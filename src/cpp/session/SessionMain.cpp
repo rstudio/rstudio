@@ -149,6 +149,8 @@ extern "C" const char *locale2charset(const char *);
 
 #include <session/SessionHttpConnectionListener.hpp>
 
+#include <tests/TestRunner.hpp>
+
 #include "session-config.h"
 
 using namespace core; 
@@ -2818,6 +2820,10 @@ int main (int argc, char * const argv[])
 
       // determine character set
       s_printCharsetWarning = !ensureUtf8Charset();
+      
+      // run tests
+      if (tests::enabled(argc, argv))
+         return tests::run(argc, argv);
 
       // read program options
       Options& options = rsession::options();

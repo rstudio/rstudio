@@ -51,7 +51,6 @@ set (R_SOURCE_FILES
    session/graphics/RShadowPngGraphicsHandler.cpp
 )
 
-
 # UNIX specific
 if (UNIX)
 

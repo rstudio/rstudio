@@ -1,7 +1,7 @@
 /*
- * SessionRCompletions.hpp
+ * Main.cpp
  *
- * Copyright (C) 2014 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,26 +13,4 @@
  *
  */
 
-#ifndef SESSION_R_COMPLETIONS_HPP
-#define SESSION_R_COMPLETIONS_HPP
-
-#include <string>
-
-namespace core {
-class Error;
-}
-
-namespace rsession {
-namespace modules {
-namespace r_completions {
-
-core::Error initialize();
-
-std::string finishExpression(const std::string& expression);
-
-} // namespace r_completions
-} // namespace modules
-} // namespace session
-
-#endif // SESSION_R_COMPLETIONS_HPP
-
+#include <tests/TestMain.hpp>

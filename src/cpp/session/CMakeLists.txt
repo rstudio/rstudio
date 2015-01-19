@@ -191,6 +191,21 @@ endif()
 # R files
 file(GLOB_RECURSE SESSION_R_FILES "modules/*.R")
 
+# test files
+if (RSTUDIO_UNIT_TESTS_ENABLED)
+
+  file(GLOB_RECURSE SESSION_TEST_FILES "*Tests.cpp")
+  list(APPEND SESSION_SOURCE_FILES ${SESSION_TEST_FILES})
+  add_definitions(-DRSTUDIO_UNIT_TESTS_ENABLED)
+
+  # run tests after build
+  add_custom_target(rsession-tests ALL
+    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/rsession --test
+    DEPENDS rsession
+  )
+
+endif()
+
 # define core include dirs
 set(CORE_INCLUDE_DIRS ${CORE_SOURCE_DIR}/include)
 

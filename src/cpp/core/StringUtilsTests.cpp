@@ -13,18 +13,23 @@
  *
  */
 
-#include <core/StringUtils.hpp>
 #include <tests/TestThat.hpp>
+
+#include <core/StringUtils.hpp>
 
 namespace core {
 namespace string_utils {
 
-test_that("isSubsequence works")
+context("isSubsequence")
 {
-   expect_true(isSubsequence("", ""));
-   expect_true(isSubsequence("annnbnnnc", "abc"));
-   expect_false(isSubsequence("abcdef", "abdcef"));
-   expect_true(isSubsequence("abcdef", "AeF", true));
+   test_that("isSubsequence works")
+   {
+      expect_true(isSubsequence("", ""));
+      expect_true(isSubsequence("annnbnnnc", "abc"));
+      expect_false(isSubsequence("abcdef", "abdcef"));
+      expect_true(isSubsequence("abcdef", "AeF", true));
+      expect_true(isSubsequence("a1d2", "12"));
+   }
 }
 
 } // end namespace string_utils
