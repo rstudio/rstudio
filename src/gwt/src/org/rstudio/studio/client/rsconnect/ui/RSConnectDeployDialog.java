@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.application.Desktop;
@@ -40,12 +41,9 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.PopupPanel;
 
 public class RSConnectDeployDialog 
              extends RSConnectDialog<RSConnectDeploy>
@@ -73,6 +71,7 @@ public class RSConnectDeployDialog
       lastAppName_ = lastAppName;
       isSatellite_ = isSatellite;
       defaultAccount_ = lastAccount;
+      session_ = session;
 
       launchCheck_ = new CheckBox("Launch browser");
       launchCheck_.setValue(true);
@@ -160,17 +159,16 @@ public class RSConnectDeployDialog
                // The user has no accounts connected--hide ourselves and 
                // ask the user to connect an account before we continue.
                hide();
-               RSConnectConnectAccountDialog dialog = 
-                     new RSConnectConnectAccountDialog(server_, display_);
-               dialog.addCloseHandler(new CloseHandler<PopupPanel>()
+               RSAccountConnector connector = new RSAccountConnector(
+                     server_, display_, session_);
+               connector.showAccountWizard(new OperationWithInput<Boolean>() 
                {
                   @Override
-                  public void onClose(CloseEvent<PopupPanel> event)
+                  public void execute(Boolean input)
                   {
                      onConnectAccountFinished();
                   }
                });
-               dialog.showModal();
             }
             else
             {
@@ -409,6 +407,7 @@ public class RSConnectDeployDialog
    
    private final EventBus events_;
    private final boolean isSatellite_;
+   private final Session session_;
    
    private String sourceDir_;
    private String sourceFile_;

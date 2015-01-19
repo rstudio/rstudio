@@ -45,7 +45,8 @@ public class NewRSConnectLocalPage
    @Override
    protected Widget createWidget()
    {
-      return new Label("NYI");
+      RSConnectLocalAccount local = new RSConnectLocalAccount();
+      return local;
    }
 
    @Override

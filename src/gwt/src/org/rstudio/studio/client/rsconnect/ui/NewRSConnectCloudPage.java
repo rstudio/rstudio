@@ -43,7 +43,7 @@ public class NewRSConnectCloudPage
    protected Widget createWidget()
    {
       if (accountWidget == null)
-         accountWidget = new RSConnectConnectAccount();
+         accountWidget = new RSConnectCloudAccount();
       
       return accountWidget;
    }
@@ -66,5 +66,5 @@ public class NewRSConnectCloudPage
       return input.getCloudSecret().length() > 0;
    }
    
-   private RSConnectConnectAccount accountWidget;
+   private RSConnectCloudAccount accountWidget;
 }

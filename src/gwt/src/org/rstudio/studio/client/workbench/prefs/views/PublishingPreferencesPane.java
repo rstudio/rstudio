@@ -15,35 +15,25 @@
 
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.ProgressIndicator;
-import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
-import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.rsconnect.ui.RSAccountConnector;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectAccountList;
-import org.rstudio.studio.client.rsconnect.ui.RSConnectAccountWizard;
-import org.rstudio.studio.client.rsconnect.ui.RSConnectConnectAccountDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -57,12 +47,15 @@ public class PublishingPreferencesPane extends PreferencesPane
    public PublishingPreferencesPane(GlobalDisplay globalDisplay,
                                     RSConnectServerOperations server,
                                     UIPrefs prefs,
-                                    Session session)
+                                    Session session,
+                                    PreferencesDialogResources res)
    {
       display_ = globalDisplay;
       uiPrefs_ = prefs;
       server_ = server;
       session_ = session;
+      
+      HorizontalPanel hpanel = new HorizontalPanel();
       
       Label accountLabel = new Label("Connected Accounts");
       accountLabel.getElement().getStyle().setFontWeight(FontWeight.BOLD);
@@ -71,8 +64,7 @@ public class PublishingPreferencesPane extends PreferencesPane
       accountList_ = new RSConnectAccountList(server, globalDisplay);
       accountList_.setHeight("200px");
       accountList_.setWidth("300px");
-      accountList_.getElement().getStyle().setMarginBottom(10, Unit.PX);
-      add(accountList_);
+      hpanel.add(accountList_);
       
       accountList_.setOnRefreshCompleted(new Operation() 
       {
@@ -83,8 +75,10 @@ public class PublishingPreferencesPane extends PreferencesPane
          }
       });
       
-      HorizontalPanel panel = new HorizontalPanel();
+      VerticalPanel vpanel = new VerticalPanel();
+      hpanel.add(vpanel);
       connectButton_ = new ThemedButton("Connect...");
+      connectButton_.getElement().getStyle().setMarginBottom(5, Unit.PX);
       connectButton_.addClickHandler(new ClickHandler()
       {
          @Override
@@ -93,7 +87,7 @@ public class PublishingPreferencesPane extends PreferencesPane
             onConnect();
          }
       });
-      panel.add(connectButton_);
+      vpanel.add(connectButton_);
       disconnectButton_ = new ThemedButton("Disconnect");
       disconnectButton_.addClickHandler(new ClickHandler()
       {
@@ -103,10 +97,15 @@ public class PublishingPreferencesPane extends PreferencesPane
             onDisconnect();
          }
       });
-      panel.add(disconnectButton_);
+      vpanel.add(disconnectButton_);
       setDisconnectButtonEnabledState();
 
-      add(panel);
+      add(hpanel);
+
+      Label settingsLabel = new Label("Settings");
+      settingsLabel.setStyleName(res.styles().newSection());
+      settingsLabel.getElement().getStyle().setFontWeight(FontWeight.BOLD);
+      add(settingsLabel);
    }
 
    @Override
