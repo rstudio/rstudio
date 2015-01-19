@@ -1653,6 +1653,7 @@ public class RCompletionManager implements CompletionManager
             popup_.hide() ;
             popup_.clearHelp(false);
             popup_.setHelpVisible(false);
+            docDisplay_.setFocus(true);
          }
          
       }
