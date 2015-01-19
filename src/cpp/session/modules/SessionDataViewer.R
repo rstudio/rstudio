@@ -76,11 +76,21 @@
       }
       else if (is.numeric(val))
       {
-        # ignore missing values when computing min/max
-        col_type <- "numeric"
-        col_search_type <- "numeric"
-        col_min <- min(x[[idx]], na.rm = TRUE)
-        col_max <- max(x[[idx]], na.rm = TRUE)
+        # ignore missing and infinite values (i.e. let any filter applied
+        # implicitly remove those values); if that leaves us with nothing,
+        # treat this column as untyped since we can do no meaningful filtering
+        # on it
+        minmax_vals <- x[[idx]][!is.na(x[[idx]]) & !is.infinite(x[[idx]])]
+        if (length(minmax_vals) > 1)
+        {
+          col_min <- min(minmax_vals)
+          col_max <- max(minmax_vals)
+          if (col_min < col_max) 
+          {
+            col_type <- "numeric"
+            col_search_type <- "numeric"
+          }
+        }
       }
       else if (is.character(val))
       {
