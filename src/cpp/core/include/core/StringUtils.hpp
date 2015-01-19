@@ -199,6 +199,15 @@ void trimLeadingLines(int maxLines, std::string* pLines);
 
 void stripQuotes(std::string* pStr);
 
+std::size_t countNewLines(const std::wstring& string);
+std::size_t countNewLines(const std::string& string);
+
+std::size_t countNewLines(std::string::iterator begin,
+                          std::string::iterator end);
+
+std::size_t countNewLines(std::wstring::iterator begin,
+                          std::wstring::iterator end);
+
 } // namespace string_utils
 } // namespace core 
 

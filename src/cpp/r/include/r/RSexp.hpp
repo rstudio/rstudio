@@ -294,12 +294,25 @@ public:
       objects_.push_back(object);
       names_.push_back(name);
    }
+   
+   void add(SEXP object)
+   {
+      objects_.push_back(object);
+      names_.push_back(std::string());
+   }
 
    template <typename T>
    void add(const std::string& name, const T& object)
    {
       objects_.push_back(create(object, pProtect_));
       names_.push_back(name);
+   }
+   
+   template <typename T>
+   void add(const T& object)
+   {
+      objects_.push_back(create(object, pProtect_));
+      names_.push_back(std::string());
    }
 
    operator SEXP() const

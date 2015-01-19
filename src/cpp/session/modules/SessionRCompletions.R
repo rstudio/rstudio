@@ -289,7 +289,7 @@ assign(x = ".rs.acCompletionTypes",
       # NOTE: not available in older versions of R, but defaults to FALSE
       # with newer versions.
       if ("include.dirs" %in% names(formals))
-         fomals[["include.dirs"]] <- TRUE
+         formals[["include.dirs"]] <- TRUE
       
       # NOTE: not available with older versions of R, but defaults to FALSE
       if ("no.." %in% names(formals))
@@ -1373,6 +1373,35 @@ assign(x = ".rs.acCompletionTypes",
    .Call("rs_getActiveFrame", as.integer(n) + offset)
 })
 
+.rs.addFunction("getCompletionsNativeRoutine", function(token, interface)
+{
+   # For a package which has dynamic symbol loading, just get the strings.
+   # For other packages, search the namespace for the symbol.
+   loadedDLLs <- getLoadedDLLs()
+   routines <- lapply(loadedDLLs, getDLLRegisteredRoutines)
+   
+   isDynamic <- unlist(lapply(loadedDLLs, `[[`, "dynamicLookup"))
+   
+   dynRoutines <- c(
+      routines[isDynamic],
+      routines["(embedding)"]
+   )
+   
+   dynRoutineNames <- lapply(dynRoutines, function(x) {
+      names(x[[interface]])
+   })
+   
+   dynResults <- .rs.namedVectorAsList(dynRoutineNames)
+   dynIndices <- .rs.fuzzyMatches(dynResults$values, token)
+   
+   .rs.makeCompletions(token = token,
+                       results = dynResults$values[dynIndices],
+                       packages = dynResults$names[dynIndices],
+                       quote = TRUE,
+                       type = .rs.acCompletionTypes$STRING)
+   
+})
+
 .rs.addJsonRpcHandler("get_completions", function(token,
                                                   string,
                                                   type,
@@ -1463,6 +1492,12 @@ assign(x = ".rs.acCompletionTypes",
    # vignettes
    if (length(string) && string[[1]] == "vignette" && numCommas[[1]] == 0)
       return(.rs.getCompletionsVignettes(token))
+   
+   # .Call, .C, .Fortran, .External
+   if (length(string) && 
+       string[[1]] %in% c(".Call", ".C", ".Fortran", ".External") &&
+       numCommas[[1]] == 0)
+      return(.rs.getCompletionsNativeRoutine(token, string[[1]]))
    
    # data
    if (.rs.acContextTypes$FUNCTION %in% type &&

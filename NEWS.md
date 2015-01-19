@@ -16,6 +16,7 @@
     - Completions from packages in `library`, `require` calls automatically
       inferred and supplied even when not loaded
     - Completions for knitr options, e.g. in `opts_chunk$get()`, are now supplied
+    - Completions for dynamic symbols within `.C`, `.Call`, `.Fortran`, `.External`
 * Improvements to C/C++ editing mode:
     - Code completion
     - F2 code navigation (go to definition)
@@ -43,6 +44,7 @@
     - Quick find (`/`)
     - Support a subset of commands in `:`
 * Syntax highlighting modes for many new languages including Clojure, CoffeeScript, C#, Go, Groovy, Haskell, Java, Julia, Lisp, Lua, Matlab, Perl, Ruby, Rust, and Scala.
+* A wide variety of new editor themes (color schemes) are now available.
 
 ### Data Viewer
 
