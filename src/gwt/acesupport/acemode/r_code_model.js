@@ -131,6 +131,24 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
 
    }
 
+   // Determine whether the token cursor lies within the
+   // argument list for a control flow statement, e.g.
+   //
+   //    if (foo &&
+   //        (bar
+   //         ^
+   function isWithinControlFlowArgList(tokenCursor)
+   {
+      while (tokenCursor.findOpeningBracket("(") &&
+             tokenCursor.moveToPreviousToken())
+         if (isOneOf(
+            tokenCursor.currentValue(),
+            ["if", "for", "while"]))
+             return true;
+
+      return false;
+   }
+
    // Move from the function token to the end of a function name.
    // Note that it is legal to define functions in multi-line strings,
    // hence the somewhat awkward name / interface.
@@ -1033,6 +1051,15 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
       return this.$getIndent(this.$getLine(pos.row));
    };
 
+   this.getIndentForRow = function(row)
+   {
+      return this.getNextLineIndent(
+         "start",
+         this.$getLine(row),
+         this.$session.getTabString()
+      );
+   };
+
    // NOTE: 'row' is used purely for testing. If it's non-numeric then we need to
    // set it with the current cursor position.
    this.getNextLineIndent = function(state, line, tab, row)
@@ -1296,10 +1323,10 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
                   // the line ended with an operator; however, in some
                   // cases (notably with multi-line if statements) we
                   // would prefer not including that indentation.
-                  return /^\s*(?:if|else|while|for|repeat)/.test(line) ?
-                     result :
-                     result + continuationIndent;
-                  
+                  if (isWithinControlFlowArgList(tokenCursor))
+                     return result;
+                  else
+                     return result + continuationIndent;
 
                }
 
@@ -1484,49 +1511,37 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
       }
    };
 
-   this.getBraceIndent = function(lastRow)
+   this.getBraceIndent = function(row)
    {
-      this.$tokenizeUpToRow(lastRow);
-
-      var prevToken = this.$findPreviousSignificantToken(
-         {
-            row: lastRow,
-            column: this.$getLine(lastRow).length
-         },
-         lastRow - 10
-      );
+      this.$tokenizeUpToRow(row);
+      var tokenCursor = this.getTokenCursor();
       
-      if (prevToken
-            && /\bparen\b/.test(prevToken.token.type)
-            && /\)$/.test(prevToken.token.value))
-      {
-         var lastPos = this.$walkParensBalanced(
-               prevToken.row,
-               prevToken.row - 10,
-               null,
-               function(parens, paren, pos)
-               {
-                  return parens.length == 0;
-               });
+      tokenCursor.moveToPosition({
+         row: row,
+         column: this.$getLine(row).length
+      });
 
-         if (lastPos != null)
+      if (tokenCursor.currentValue() === ")")
+      {
+         if (tokenCursor.bwdToMatchingToken() &&
+             tokenCursor.moveToPreviousToken())
          {
-            var preParenToken = this.$findPreviousSignificantToken(lastPos, 0);
-            if (preParenToken && preParenToken.token.type === "keyword"
-                  && /^(if|while|for|function)$/.test(preParenToken.token.value))
+            var preParenValue = tokenCursor.currentValue();
+            if (isOneOf(preParenValue, ["if", "while", "for", "function"]))
             {
-               return this.$getIndent(this.$getLine(preParenToken.row));
+               return this.$getIndent(this.$getLine(tokenCursor.$row));
             }
          }
       }
-      else if (prevToken
-                  && prevToken.token.type === "keyword"
-                  && (prevToken.token.value === "repeat" || prevToken.token.value === "else"))
+      else if (isOneOf(tokenCursor.currentValue(),
+                       ["else", "repeat", "<-", "<<-", "="]) ||
+        tokenCursor.currentType().indexOf("infix") !== -1 ||
+        tokenCursor.currentType() === "keyword.operator")
       {
-         return this.$getIndent(this.$getLine(prevToken.row));
+         return this.$getIndent(this.$getLine(tokenCursor.$row));
       }
 
-      return this.$getIndent(lastRow);
+      return this.getIndentForRow(row);
    };
 
    /**
