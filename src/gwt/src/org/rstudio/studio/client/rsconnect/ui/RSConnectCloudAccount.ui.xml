@@ -8,7 +8,6 @@
 	{
 	  font-family: fixedFont;
 	  padding: 5px;
-	  margin-left: 40px;
 	  width: 325px;
 	}
 	
@@ -23,20 +22,21 @@
 	}
 	</ui:style>
 	<g:HTMLPanel>
-	  <g:Label styleName="{style.connectHeader}" 
-	           text="Connecting your ShinyApps account"></g:Label>
 	  <g:HTML>
-     <ol>
-       <li><p>Go to <a href="http://www.shinyapps.io/" target="_blank">your 
-           account on ShinyApps</a> and log in.</p></li>
-       <li><p>Click your name, then choose <b>Tokens</b> from your account menu.
-           </p></li>
-       <li><p>Click <b>Show</b> on the token you want to use, then <b>Copy to
-           Clipboard.</b> Paste the result here:</p></li>
-     </ol>
+       <p>Go to <a href="http://www.shinyapps.io/" target="_blank">your 
+           account on ShinyApps</a> and log in.</p>
+       <p>Click your name, then choose <b>Tokens</b> from your account menu.</p>
+       <p>Click <b>Show</b> on the token you want to use, then <b>Copy to
+          Clipboard.</b> Paste the result here:</p>
 	  </g:HTML>
 	  <g:TextArea styleName="{style.accountInfo} {style.spaced}"
 	              ui:field="accountInfo" visibleLines="5">
 	  </g:TextArea>
+	  <g:HTML>
+	  	<small>
+	  	Need a ShinyApps.io account? 
+           <a href="http://www.shinyapps.io" target="_blank">Get started here.</a>
+	  	</small>
+	  </g:HTML>
 	</g:HTMLPanel>
 </ui:UiBinder> 

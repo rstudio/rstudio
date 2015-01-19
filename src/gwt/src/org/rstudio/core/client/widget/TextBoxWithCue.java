@@ -27,6 +27,11 @@ import org.rstudio.core.client.dom.WindowEx;
 
 public class TextBoxWithCue extends TextBox
 {
+   public TextBoxWithCue() 
+   {
+      this("");
+   }
+
    public TextBoxWithCue(String cueText)
    {
       cueText_ = cueText;

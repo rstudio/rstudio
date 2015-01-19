@@ -1,21 +1,35 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	xmlns:g="urn:import:com.google.gwt.user.client.ui"
+	xmlns:rsw="urn:import:org.rstudio.core.client.widget">
 	<ui:style>
 	.explanatoryText
 	{
 		font-size: x-small;
 	}
+	.spaced
+	{
+	  margin-top: 15px;
+	}
+	
+	.textControl
+	{
+	  margin-top: 5px;
+	  padding: 3px;
+	}
 	</ui:style>
 	<g:HTMLPanel>
       <g:VerticalPanel>
-         <g:Label text="Enter the URL of the RStudio Connect server (ex. http://servername/)">
+         <g:Label text="Enter the URL of the RStudio Connect server:">
          </g:Label>
-         <g:TextBox></g:TextBox>
-         <g:Label text="Enter a nickname for your account (ex. jsmith; optional)">
+         <rsw:TextBoxWithCue styleName="{style.textControl}"
+                             cueText="http://servername/" 
+                             width="250px"></rsw:TextBoxWithCue>
+         <g:Label styleName="{style.spaced}" text="Enter a nickname for your account: (optional)">
          </g:Label>
-         <g:TextBox></g:TextBox>
-         <g:Label styleName="{style.explanatoryText}"
+         <rsw:TextBoxWithCue styleName="{style.textControl}"
+                             cueText="jsmith"></rsw:TextBoxWithCue>
+         <g:Label styleName="{style.spaced} {style.explanatoryText}"
                   text="Contact your RStudio Connect server administrator if you need its URL.">
          </g:Label>
        </g:VerticalPanel>
