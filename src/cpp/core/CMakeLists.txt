@@ -286,7 +286,6 @@ target_link_libraries(
 if (RSTUDIO_UNIT_TESTS_ENABLED)
 
   file(GLOB_RECURSE CORE_TEST_FILES "*Tests.cpp")
-  message(STATUS "Test files: " ${CORE_TEST_FILES})
 
   add_executable(rstudio-core-bin
      TestMain.cpp
@@ -297,7 +296,6 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
    set_target_properties(rstudio-core-bin
       PROPERTIES
          OUTPUT_NAME rstudio-core
-         COMPILE_FLAGS -DRSTUDIO_UNIT_TESTS_ENABLED
    )
 
    target_link_libraries(rstudio-core-bin

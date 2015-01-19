@@ -40,6 +40,7 @@ endif()
 # enable testing on debug builds
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
   set(RSTUDIO_UNIT_TESTS_ENABLED true)
+  add_definitions(-DRSTUDIO_UNIT_TESTS_ENABLED)
 endif()
 
 # platform specific default for targets

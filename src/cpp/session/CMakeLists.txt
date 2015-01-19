@@ -196,7 +196,6 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
 
   file(GLOB_RECURSE SESSION_TEST_FILES "*Tests.cpp")
   list(APPEND SESSION_SOURCE_FILES ${SESSION_TEST_FILES})
-  add_definitions(-DRSTUDIO_UNIT_TESTS_ENABLED)
 
   # run tests after build
   add_custom_target(rsession-tests ALL
