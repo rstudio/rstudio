@@ -1,5 +1,5 @@
 /*
- * TestThat.cpp
+ * TestMain.cpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,6 +13,7 @@
  *
  */
 
-#define CATCH_CONFIG_MAIN
-#include "TestThat.hpp"
-
+// Include this to build a Catch test executable.
+// See TestRunner.hpp if you want to embed the test runner
+// in your own executable.
+#include "TestMain.hpp"

@@ -32,7 +32,7 @@ set(TESTS_HEADER_FILES
 )
 
 add_executable(test-runner
-   tests/TestRunner.cpp
+   tests/TestMain.cpp
    ${TESTS_SOURCE_FILES}
    ${TESTS_HEADER_FILES}
 )

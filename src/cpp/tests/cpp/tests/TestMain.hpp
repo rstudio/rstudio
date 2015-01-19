@@ -1,5 +1,5 @@
 /*
- * TestThat.hpp
+ * TestMain.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,14 +13,14 @@
  *
  */
 
-#ifndef TESTS_TESTTHAT_HPP
-#define TESTS_TESTTHAT_HPP
+// Include this to build a Catch test executable.
+// See TestRunner.hpp if you want to embed the test runner
+// in your own executable.
 
+#ifndef TESTS_TESTMAIN_HPP
+#define TESTS_TESTMAIN_HPP
+
+#define CATCH_CONFIG_MAIN
 #include "vendor/catch.hpp"
 
-#define test_that(__X__, ...) TEST_CASE(__X__, __FILE__, ##__VA_ARGS__)
-#define expect_true(__X__) CHECK(__X__)
-#define expect_false(__X__) CHECK_FALSE(__X__)
-
 #endif
-
