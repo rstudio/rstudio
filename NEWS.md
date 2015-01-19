@@ -43,6 +43,7 @@
     - Quick find (`/`)
     - Support a subset of commands in `:`
 * Syntax highlighting modes for many new languages including Clojure, CoffeeScript, C#, Go, Groovy, Haskell, Java, Julia, Lisp, Lua, Matlab, Perl, Ruby, Rust, and Scala.
+* A wide variety of new editor themes (color schemes) are now available.
 
 ### Data Viewer
 
