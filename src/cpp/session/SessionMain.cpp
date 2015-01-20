@@ -75,6 +75,7 @@
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/RGraphics.hpp>
 #include <r/session/REventLoop.hpp>
+#include <r/RUtil.hpp>
 
 extern "C" const char *locale2charset(const char *);
 
@@ -2086,9 +2087,22 @@ void rBrowseFile(const core::FilePath& filePath)
       if ((*it)(filePath))
          return;
    }
-   
-   // no handlers took it, send along to default
-   module_context::showFile(filePath);
+
+   // see if this is an html file in the session temporary directory (in which
+   // case we can serve it over http)
+   if ((filePath.mimeContentType() == "text/html") &&
+       filePath.isWithin(module_context::tempDir()) &&
+       r::util::hasRequiredVersion("2.14"))
+   {
+      std::string path = filePath.relativePath(module_context::tempDir());
+      std::string url = module_context::sessionTempDirUrl(path);
+      session::clientEventQueue().add(browseUrlEvent(url));
+   }
+   // otherwise just show the file
+   else
+   {
+      module_context::showFile(filePath);
+   }
 }
 
 void rShowHelp(const std::string& helpURL)   
