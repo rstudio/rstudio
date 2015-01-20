@@ -30,6 +30,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.CppSourceLocation;
 
@@ -43,6 +44,13 @@ import com.google.inject.Inject;
 
 public class CppCompletionManager implements CompletionManager
 {
+   public void onPaste(PasteEvent event)
+   {
+      CppCompletionPopupMenu popup = getCompletionPopup();
+      if (popup != null)
+         popup.hide();
+   }
+   
    public CppCompletionManager(DocDisplay docDisplay,
                                InitCompletionFilter initFilter,
                                CppCompletionContext completionContext,

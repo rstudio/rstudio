@@ -289,6 +289,9 @@ public class AceEditor implements DocDisplay,
          @Override
          public void onPaste(PasteEvent event)
          {
+            if (completionManager_ != null)
+               completionManager_.onPaste(event);
+            
             final Position start = getSelectionStart();
 
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
@@ -1785,7 +1788,7 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().getRenderer().updateFontSize();
       widget_.forceResize();
    }
-
+   
    public HandlerRegistration addValueChangeHandler(
          ValueChangeHandler<Void> handler)
    {
