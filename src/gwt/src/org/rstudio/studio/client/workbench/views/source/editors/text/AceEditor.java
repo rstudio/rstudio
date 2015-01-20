@@ -1334,6 +1334,18 @@ public class AceEditor implements DocDisplay,
       useVimMode_ = use;
       updateKeyboardHandlers();
    }
+   
+   @Override
+   public boolean isVimModeOn()
+   {
+      return useVimMode_;
+   }
+   
+   @Override
+   public boolean isVimInInsertMode()
+   {
+      return useVimMode_ && widget_.getEditor().isVimInInsertMode();
+   }
 
    public void setPadding(int padding)
    {
