@@ -14,10 +14,16 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
+
 import com.google.gwt.dom.client.NativeEvent;
 
 public class NullCompletionManager implements CompletionManager
 {
+   public void onPaste(PasteEvent event)
+   {
+   }
+   
    public void close()
    {
    }
@@ -43,4 +49,5 @@ public class NullCompletionManager implements CompletionManager
    {
       return false;
    }
+
 }

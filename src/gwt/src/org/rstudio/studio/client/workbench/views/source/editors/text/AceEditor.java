@@ -291,6 +291,16 @@ public class AceEditor implements DocDisplay,
          }
       });
       
+      widget_.addHandler(new PasteEvent.Handler()
+      {
+         @Override
+         public void onPaste(PasteEvent event)
+         {
+            if (completionManager_ != null)
+               completionManager_.onPaste(event);
+         }
+      }, PasteEvent.TYPE);
+      
       // handle click events
       addAceClickHandler(new AceClickEvent.Handler()
       {    
@@ -1755,7 +1765,7 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().getRenderer().updateFontSize();
       widget_.forceResize();
    }
-
+   
    public HandlerRegistration addValueChangeHandler(
          ValueChangeHandler<Void> handler)
    {
