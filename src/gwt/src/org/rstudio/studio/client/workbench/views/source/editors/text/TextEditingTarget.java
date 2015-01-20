@@ -68,7 +68,6 @@ import org.rstudio.studio.client.common.filetypes.FileTypeCommands;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.SweaveFileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
-import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.common.synctex.SynctexUtils;
@@ -3420,10 +3419,10 @@ public class TextEditingTarget implements
          return;
       }
 
-      // If the document is mermaid.js then use DiagrameR
-      if (fileType_.getEditorLanguage().equals(EditorLanguage.LANG_MERMAID))
+      // If the document is previewable
+      if (fileType_.canPreviewFromR())
       {
-         runMermaid();
+         previewFromR();
          return;
       }
       
@@ -3538,7 +3537,7 @@ public class TextEditingTarget implements
       });
    }
    
-   private void runMermaid()
+   private void previewFromR()
    {
       saveThenExecute(null, new Command() {
          @Override
@@ -3550,8 +3549,9 @@ public class TextEditingTarget implements
                   @Override
                   public void onResponseReceived(String path)
                   {
-                     String cmd = "DiagrammeR::DiagrammeR(\"" + path + "\")";
-                     events_.fireEvent(new SendToConsoleEvent(cmd, true));
+                     String cmd = fileType_.createPreviewCommand(path);
+                     if (cmd != null)
+                        events_.fireEvent(new SendToConsoleEvent(cmd, true));
                   }
                });
          }   
@@ -4287,9 +4287,9 @@ public class TextEditingTarget implements
                {
                   previewRd();
                }
-               else if (fileType_.isMermaid())
+               else if (fileType_.canPreviewFromR())
                {
-                  runMermaid();
+                  previewFromR();
                }
                else
                {

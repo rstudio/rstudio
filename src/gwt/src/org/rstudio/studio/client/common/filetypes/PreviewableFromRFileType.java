@@ -1,5 +1,5 @@
 /*
- * CppFileType.java
+ * PreviewableFromRFileType.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -16,63 +16,50 @@ package org.rstudio.studio.client.common.filetypes;
 
 import java.util.HashSet;
 
-import com.google.gwt.resources.client.ImageResource;
-
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
-public class CppFileType extends TextFileType
+import com.google.gwt.resources.client.ImageResource;
+
+public class PreviewableFromRFileType extends TextFileType
 {
-   CppFileType(String id, String ext, ImageResource icon, boolean isCpp)
+   public PreviewableFromRFileType(String id,
+                                   String label,
+                                   EditorLanguage editorLanguage,
+                                   String defaultExtension,
+                                   ImageResource icon,
+                                   String previewFunction)
    {
-      super(id, "C/C++", EditorLanguage.LANG_CPP, ext, icon,
-            false, false, isCpp, false, false, false, 
-            false, false, false, true, false, true, false);
+      super(id, label, editorLanguage, defaultExtension, icon,
+            true, true, false, false, false, false, 
+            false, false, false, false, false, false, true);
       
-      isCpp_ = isCpp;
+      previewFunction_ = previewFunction;
    }
    
-   @Override
-   public boolean isCpp()
-   {
-      return isCpp_;
-   }
    
    @Override
    public boolean canSource()
    {
-      return isCpp();
+      return true;
    }
- 
+   
    @Override
-   public boolean canSourceWithEcho()
+   public String createPreviewCommand(String file)
    {
-      return false;
+      String cmd = previewFunction_ + "(\"" + file + "\")";
+      return cmd;
    }
-     
-   @Override
-   public boolean canSourceOnSave()
-   {
-      return canSource();
-   }
- 
    
    @Override
    public HashSet<AppCommand> getSupportedCommands(Commands commands)
    {
       HashSet<AppCommand> result = super.getSupportedCommands(commands);
-      if (isCpp())
-      {
-         result.add(commands.commentUncomment());
-         result.add(commands.reflowComment());
-         result.add(commands.sourceActiveDocument());
-         result.add(commands.sourceActiveDocumentWithEcho());
-         result.add(commands.rcppHelp());
-      }
-            
+      result.add(commands.sourceActiveDocument());
+      result.add(commands.sourceActiveDocumentWithEcho());
       return result;
    }
-    
-   private final boolean isCpp_;
+   
+   private final String previewFunction_;
 }
