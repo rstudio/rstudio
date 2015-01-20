@@ -1,5 +1,5 @@
 /*
- * MermaidFileType.java
+ * GraphViz.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -17,11 +17,11 @@ package org.rstudio.studio.client.common.filetypes;
 
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 
-public class MermaidFileType extends PreviewableFromRFileType
+public class GraphvizFileType extends PreviewableFromRFileType
 {
-   public MermaidFileType()
+   public GraphvizFileType()
    {
-      super("mermaid", "Mermaid", EditorLanguage.LANG_MERMAID, ".mmd",
-            FileIconResources.INSTANCE.iconMermaid(), "DiagrammeR::mermaid");
+      super("graphviz", "GraphViz", EditorLanguage.LANG_PLAIN, ".gv",
+            FileIconResources.INSTANCE.iconGraphviz(), "DiagrammeR::grViz");
    }
 }

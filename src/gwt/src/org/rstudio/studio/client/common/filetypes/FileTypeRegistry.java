@@ -68,6 +68,8 @@ public class FileTypeRegistry
                           false, false, false, false, false, false, false, false);
    
    public static final TextFileType MERMAID = new MermaidFileType();
+   
+   public static final TextFileType GRAPHVIZ = new GraphvizFileType();
 
 
    public static final TextFileType NAMESPACE =
@@ -339,7 +341,8 @@ public class FileTypeRegistry
       register("*.rda", RDATA, icons.iconRdata());
       register("*.Rproj", RPROJECT, icons.iconRproject());
       register("*.dcf", DCF, icons.iconText());
-      register("*.mmd", MERMAID, icons.iconText());
+      register("*.mmd", MERMAID, icons.iconMermaid());
+      register("*.gv", GRAPHVIZ, icons.iconGraphviz());
       register("*.py", PYTHON, icons.iconPython());
       register("*.sql", SQL, icons.iconSql());
       register("*.sh", SH, icons.iconSh());

@@ -43,6 +43,7 @@ public interface FileIconResources extends ClientBundle
    ImageResource iconXml();
    ImageResource iconMarkdown();
    ImageResource iconMermaid();
+   ImageResource iconGraphviz();
    ImageResource iconH();
    ImageResource iconC();
    ImageResource iconHpp();
