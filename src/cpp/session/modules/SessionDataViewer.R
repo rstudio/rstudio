@@ -123,6 +123,38 @@
   rownames[start:min(length(rownames), start+len)]
 })
 
+# wrappers for nrow/ncol which will report the class of object for which we
+# fail to get dimensions along with the original error
+.rs.addFunction("nrow", function(x)
+{
+  rows <- 0
+  tryCatch({
+    rows <- nrow(x)
+  }, error = function(e) {
+    stop("Failed to determine rows for object of class '", class(x), "': ", 
+         e$message)
+  })
+  if (is.null(rows))
+    0
+  else
+    rows
+})
+
+.rs.addFunction("ncol", function(x)
+{
+  cols <- 0
+  tryCatch({
+    cols <- ncol(x)
+  }, error = function(e) {
+    stop("Failed to determine columns for object of class '", class(x), "': ", 
+         e$message)
+  })
+  if (is.null(cols))
+    0
+  else
+    cols
+})
+
 .rs.addFunction("toDataFrame", function(x, name) {
   if (is.data.frame(x))
     return(x)
