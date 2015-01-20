@@ -44,6 +44,8 @@
     - Quick find (`/`)
     - Support a subset of commands in `:`
 * Syntax highlighting modes for many new languages including Clojure, CoffeeScript, C#, Go, Groovy, Haskell, Java, Julia, Lisp, Lua, Matlab, Perl, Ruby, Rust, and Scala.
+* Syntax highlighting for GraphViz and mermaid.js diagrams. 
+* Diagram previews using the `DiagrammeR` package (requires recent version from GitHub).
 * A wide variety of new editor themes (color schemes) are now available.
 
 ### Data Viewer
