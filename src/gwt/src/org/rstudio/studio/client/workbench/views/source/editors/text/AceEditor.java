@@ -277,6 +277,9 @@ public class AceEditor implements DocDisplay,
          @Override
          public void onPaste(PasteEvent event)
          {
+            if (completionManager_ != null)
+               completionManager_.onPaste(event);
+            
             final Position start = getSelectionStart();
 
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
@@ -290,16 +293,6 @@ public class AceEditor implements DocDisplay,
             });
          }
       });
-      
-      widget_.addHandler(new PasteEvent.Handler()
-      {
-         @Override
-         public void onPaste(PasteEvent event)
-         {
-            if (completionManager_ != null)
-               completionManager_.onPaste(event);
-         }
-      }, PasteEvent.TYPE);
       
       // handle click events
       addAceClickHandler(new AceClickEvent.Handler()
