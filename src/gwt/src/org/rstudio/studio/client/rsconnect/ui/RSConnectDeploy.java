@@ -75,6 +75,7 @@ public class RSConnectDeploy extends Composite
    }
 
    public RSConnectDeploy(final RSConnectServerOperations server, 
+                          final RSAccountConnector connector,    
                           final GlobalDisplay display,
                           final Session session)
    {
@@ -96,8 +97,6 @@ public class RSConnectDeploy extends Composite
          @Override
          public void onClick(ClickEvent event)
          {
-            RSAccountConnector connector = new RSAccountConnector(
-                  server, display, session);
             connector.showAccountWizard(new OperationWithInput<Boolean>() 
             {
                @Override

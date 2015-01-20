@@ -14,12 +14,14 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
+import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult.AccountType;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPreAuthToken;
@@ -32,13 +34,19 @@ import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
+@Singleton
 public class RSAccountConnector
 {
-   public RSAccountConnector(RSConnectServerOperations server,
+   @Inject
+   public RSAccountConnector(SatelliteManager satelliteManager,
+         RSConnectServerOperations server,
          GlobalDisplay display,
          Session session)
    {
+      satelliteManager_ = satelliteManager;
       server_ = server;
       display_ = display;
       session_ = session;
@@ -171,17 +179,8 @@ public class RSAccountConnector
          @Override
          public void onResponseReceived(final RSConnectPreAuthToken token)
          {
-            NewWindowOptions options = new NewWindowOptions();
-            options.setCallback(new OperationWithInput<WindowEx>()
-            {
-               @Override
-               public void execute(WindowEx win)
-               {
-                  waitForAuth(win, serverInfo, token, onConnected);
-               }
-            });
-            display_.openMinimalWindow(
-                  token.ClaimUrl(), false, 700, 800, options);
+            satelliteManager_.openSatellite(
+                  RSConnectAuthSatellite.NAME, serverInfo, new Size(700, 800));
          }
 
          @Override
@@ -211,6 +210,8 @@ public class RSAccountConnector
          @Override
          public boolean execute()
          {
+            Debug.devlog("window closed: " + win.getLeft());
+            Debug.logObject(win);
             if (win.isClosed())
             {
                onAuthCompleted(serverInfo, token, onConnected);
@@ -232,4 +233,5 @@ public class RSAccountConnector
    private final GlobalDisplay display_;
    private final RSConnectServerOperations server_;
    private final Session session_;
+   private final SatelliteManager satelliteManager_;
 }

@@ -37,7 +37,6 @@ import org.rstudio.studio.client.rsconnect.ui.RSConnectAccountList;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
@@ -46,14 +45,14 @@ public class PublishingPreferencesPane extends PreferencesPane
    @Inject
    public PublishingPreferencesPane(GlobalDisplay globalDisplay,
                                     RSConnectServerOperations server,
+                                    RSAccountConnector connector,
                                     UIPrefs prefs,
-                                    Session session,
                                     PreferencesDialogResources res)
    {
       display_ = globalDisplay;
       uiPrefs_ = prefs;
       server_ = server;
-      session_ = session;
+      connector_ = connector;
       
       HorizontalPanel hpanel = new HorizontalPanel();
       
@@ -189,9 +188,7 @@ public class PublishingPreferencesPane extends PreferencesPane
    
    private void onConnect()
    {
-      RSAccountConnector connector = new RSAccountConnector(
-            server_, display_, session_);
-      connector.showAccountWizard(new OperationWithInput<Boolean>() 
+      connector_.showAccountWizard(new OperationWithInput<Boolean>() 
       {
          @Override
          public void execute(Boolean successful)
@@ -212,8 +209,8 @@ public class PublishingPreferencesPane extends PreferencesPane
    
    private final GlobalDisplay display_;
    private final UIPrefs uiPrefs_;
-   private final Session session_;
    private final RSConnectServerOperations server_;
+   private final RSAccountConnector connector_;
    private RSConnectAccountList accountList_;
    private ThemedButton connectButton_;
    private ThemedButton disconnectButton_;

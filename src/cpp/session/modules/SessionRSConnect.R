@@ -30,7 +30,7 @@
 })
 
 .rs.addFunction("scalarListFromList", function(l) {
-   lapply(l, function(item) { .rs.scalar(item) })
+   lapply(l, .rs.scalar)
 })
 
 .rs.addJsonRpcHandler("get_rsconnect_account_list", function() {

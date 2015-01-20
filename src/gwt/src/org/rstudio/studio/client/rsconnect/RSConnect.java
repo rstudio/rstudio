@@ -35,6 +35,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDirectoryState;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
+import org.rstudio.studio.client.rsconnect.ui.RSAccountConnector;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectDeployDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -69,7 +70,8 @@ public class RSConnect implements SessionInitHandler,
                     GlobalDisplay display,
                     DependencyManager dependencyManager,
                     Binder binder, 
-                    RSConnectServerOperations server)
+                    RSConnectServerOperations server,
+                    RSAccountConnector connector)
                     
    {
       commands_ = commands;
@@ -79,6 +81,7 @@ public class RSConnect implements SessionInitHandler,
       server_ = server;
       events_ = events;
       satellite_ = satellite;
+      connector_ = connector;
 
       binder.bind(commands, this);
 
@@ -133,7 +136,7 @@ public class RSConnect implements SessionInitHandler,
 
          RSConnectDeployDialog dialog = 
                new RSConnectDeployDialog(
-                         server_, display_, session_, events_, 
+                         server_, connector_, display_, session_, events_, 
                          dir, file, lastAccount, lastAppName,
                          satellite_.isCurrentWindowSatellite());
          dialog.showModal();
@@ -385,6 +388,8 @@ public class RSConnect implements SessionInitHandler,
    private final DependencyManager dependencyManager_;
    private final EventBus events_;
    private final Satellite satellite_;
+   private final RSAccountConnector connector_;
+   
    private boolean launchBrowser_ = false;
    private boolean sessionInited_ = false;
    

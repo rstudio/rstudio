@@ -49,6 +49,7 @@ public class RSConnectDeployDialog
              extends RSConnectDialog<RSConnectDeploy>
 {
    public RSConnectDeployDialog(RSConnectServerOperations server, 
+                                RSAccountConnector connector,
                                 final GlobalDisplay display, 
                                 Session session,
                                 EventBus events,
@@ -59,7 +60,7 @@ public class RSConnectDeployDialog
                                 boolean isSatellite)
                                 
    {
-      super(server, display, new RSConnectDeploy(server, display, session));
+      super(server, display, new RSConnectDeploy(server, connector, display, session));
       setText("Publish to Server");
       setWidth("350px");
       deployButton_ = new ThemedButton("Publish");
@@ -71,7 +72,7 @@ public class RSConnectDeployDialog
       lastAppName_ = lastAppName;
       isSatellite_ = isSatellite;
       defaultAccount_ = lastAccount;
-      session_ = session;
+      connector_ = connector;
 
       launchCheck_ = new CheckBox("Launch browser");
       launchCheck_.setValue(true);
@@ -159,9 +160,7 @@ public class RSConnectDeployDialog
                // The user has no accounts connected--hide ourselves and 
                // ask the user to connect an account before we continue.
                hide();
-               RSAccountConnector connector = new RSAccountConnector(
-                     server_, display_, session_);
-               connector.showAccountWizard(new OperationWithInput<Boolean>() 
+               connector_.showAccountWizard(new OperationWithInput<Boolean>() 
                {
                   @Override
                   public void execute(Boolean input)
@@ -407,7 +406,7 @@ public class RSConnectDeployDialog
    
    private final EventBus events_;
    private final boolean isSatellite_;
-   private final Session session_;
+   private final RSAccountConnector connector_;
    
    private String sourceDir_;
    private String sourceFile_;
