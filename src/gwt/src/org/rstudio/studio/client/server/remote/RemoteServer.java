@@ -89,6 +89,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
+import org.rstudio.studio.client.rsconnect.model.RSConnectPreAuthToken;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerInfo;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.ClientException;
@@ -3612,6 +3613,18 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void getPreAuthToken(String serverName, 
+         ServerRequestCallback<RSConnectPreAuthToken> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(serverName));
+      sendRequest(RPC_SCOPE,
+            GET_AUTH_TOKEN,
+            params,
+            requestCallback);
+   }
+
+   @Override
    public void getDeploymentFiles(String dir,
          ServerRequestCallback<RSConnectDeploymentFiles> requestCallback)
    {
@@ -4127,6 +4140,7 @@ public class RemoteServer implements Server
    private static final String DEPLOY_SHINY_APP = "deploy_shiny_app";
    private static final String GET_DEPLOYMENT_FILES = "get_deployment_files";
    private static final String VALIDATE_SERVER_URL = "validate_server_url";
+   private static final String GET_AUTH_TOKEN = "get_auth_token";
 
    private static final String RENDER_RMD = "render_rmd";
    private static final String RENDER_RMD_SOURCE = "render_rmd_source";

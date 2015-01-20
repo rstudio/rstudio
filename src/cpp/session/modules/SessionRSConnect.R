@@ -53,6 +53,10 @@
    .rs.scalarListFromList(rsconnect:::validateServerUrl(url))
 })
 
+.rs.addJsonRpcHandler("get_auth_token", function(name) {
+   .rs.scalarListFromList(rsconnect:::getAuthToken(name))
+})
+
 .rs.addFunction("maxDirectoryList", function(dir, root, cur_size, max_size, 
                                              exclude_dirs, exclude_ext) {
   # generate a list of files at this level

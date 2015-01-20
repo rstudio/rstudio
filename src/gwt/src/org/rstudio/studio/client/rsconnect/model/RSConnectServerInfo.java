@@ -37,4 +37,19 @@ public class RSConnectServerInfo extends JavaScriptObject
    public final native String getAbout() /*-{
       return this.about || "";
    }-*/;
+   
+   public final native String getUrl() /*-{
+      return this.url || "";
+   }-*/;
+
+   public final native String getName() /*-{
+      return this.name || "";
+   }-*/;
+   
+   public final String getInfoString() 
+   {
+      return "Server: " + getName() + " (" + getUrl() + ")\n" + 
+             "Version: " + getVersion() + "\n" + 
+             "About: " + getAbout() + "\n";
+   }
 }

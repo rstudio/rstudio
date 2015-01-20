@@ -45,4 +45,6 @@ public interface RSConnectServerOperations
    void validateServerUrl (String url, 
                ServerRequestCallback<RSConnectServerInfo> requestCallback);
    
+   void getPreAuthToken(String serverName, 
+               ServerRequestCallback<RSConnectPreAuthToken> requestCallback);
 }
