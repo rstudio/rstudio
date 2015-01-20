@@ -19,7 +19,6 @@ import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountInput;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 public class NewRSConnectLocalPage 
@@ -45,8 +44,9 @@ public class NewRSConnectLocalPage
    @Override
    protected Widget createWidget()
    {
-      RSConnectLocalAccount local = new RSConnectLocalAccount();
-      return local;
+      if (local_ == null)
+         local_ = new RSConnectLocalAccount();
+      return local_;
    }
 
    @Override
@@ -57,12 +57,16 @@ public class NewRSConnectLocalPage
    @Override
    protected NewRSConnectAccountResult collectInput()
    {
-      return new NewRSConnectAccountResult("", "", "");
+      return new NewRSConnectAccountResult("", local_.getServerUrl(), 
+            local_.getAccountName());
    }
 
    @Override
    protected boolean validate(NewRSConnectAccountResult input)
    {
-      return true;
+      return local_.getServerUrl() != null && 
+             !local_.getServerUrl().isEmpty();
    }
+   
+   private RSConnectLocalAccount local_;
 }

@@ -41,4 +41,8 @@ public interface RSConnectServerOperations
    
    void deployShinyApp(String dir, String file, String account, String server, String appName, 
                ServerRequestCallback<Boolean> requestCallback);
+
+   void validateServerUrl (String url, 
+               ServerRequestCallback<RSConnectServerInfo> requestCallback);
+   
 }

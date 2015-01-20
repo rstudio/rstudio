@@ -89,6 +89,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
+import org.rstudio.studio.client.rsconnect.model.RSConnectServerInfo;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.ClientException;
 import org.rstudio.studio.client.server.Server;
@@ -3597,6 +3598,18 @@ public class RemoteServer implements Server
             params,
             requestCallback);
    }
+   
+   @Override
+   public void validateServerUrl(String url, 
+         ServerRequestCallback<RSConnectServerInfo> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(url));
+      sendRequest(RPC_SCOPE,
+            VALIDATE_SERVER_URL,
+            params,
+            requestCallback);
+   }
 
    @Override
    public void getDeploymentFiles(String dir,
@@ -4113,6 +4126,7 @@ public class RemoteServer implements Server
    private static final String GET_RSCONNECT_DEPLOYMENTS = "get_rsconnect_deployments";
    private static final String DEPLOY_SHINY_APP = "deploy_shiny_app";
    private static final String GET_DEPLOYMENT_FILES = "get_deployment_files";
+   private static final String VALIDATE_SERVER_URL = "validate_server_url";
 
    private static final String RENDER_RMD = "render_rmd";
    private static final String RENDER_RMD_SOURCE = "render_rmd_source";

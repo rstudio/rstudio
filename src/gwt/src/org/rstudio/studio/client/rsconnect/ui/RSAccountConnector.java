@@ -20,6 +20,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult.AccountType;
+import org.rstudio.studio.client.rsconnect.model.RSConnectServerInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -121,6 +122,39 @@ public class RSAccountConnector
          final NewRSConnectAccountResult result,
          final OperationWithInput<Boolean> onConnected)
    {
+      server_.validateServerUrl(result.getServerUrl(), 
+            new ServerRequestCallback<RSConnectServerInfo>()
+      {
+         @Override
+         public void onResponseReceived(RSConnectServerInfo info)
+         {
+            if (info.isValid()) 
+            {
+               display_.showMessage(GlobalDisplay.MSG_INFO, 
+                                    "Server Validated", info.getAbout());
+               onConnected.execute(true);
+            }
+            else
+            {
+               display_.showErrorMessage("Server Validation Failed", 
+                     "The URL '" + result.getServerUrl() + "' does not " +
+                     "appear to belong to a valid server. Please double " +
+                     "check the URL, and contact your administrator if " + 
+                     "the problem persists.\n\n" +
+                     "Error: " + info.getMessage());
+               onConnected.execute(false);
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            display_.showErrorMessage("Error Connecting Account", 
+                  "The server couldn't be validated. " + 
+                   error.getMessage());
+            onConnected.execute(false);
+         }
+      });
    }
    
    private final GlobalDisplay display_;

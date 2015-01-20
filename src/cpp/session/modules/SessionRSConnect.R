@@ -29,6 +29,9 @@
    return(ret)
 })
 
+.rs.addFunction("scalarListFromList", function(l) {
+   lapply(l, function(item) { .rs.scalar(item) })
+})
 
 .rs.addJsonRpcHandler("get_rsconnect_account_list", function() {
    .rs.scalarListFromFrame(rsconnect::accounts())
@@ -44,6 +47,10 @@
 
 .rs.addJsonRpcHandler("get_rsconnect_deployments", function(dir) {
    .rs.scalarListFromFrame(rsconnect::deployments(dir))
+})
+
+.rs.addJsonRpcHandler("validate_server_url", function(url) {
+   .rs.scalarListFromList(rsconnect:::validateServerUrl(url))
 })
 
 .rs.addFunction("maxDirectoryList", function(dir, root, cur_size, max_size, 

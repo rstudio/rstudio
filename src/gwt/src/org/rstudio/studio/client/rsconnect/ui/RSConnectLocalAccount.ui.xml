@@ -24,11 +24,13 @@
          </g:Label>
          <rsw:TextBoxWithCue styleName="{style.textControl}"
                              cueText="http://servername/" 
-                             width="250px"></rsw:TextBoxWithCue>
+                             width="250px"
+                             ui:field="serverUrl_"></rsw:TextBoxWithCue>
          <g:Label styleName="{style.spaced}" text="Enter a nickname for your account: (optional)">
          </g:Label>
          <rsw:TextBoxWithCue styleName="{style.textControl}"
-                             cueText="jsmith"></rsw:TextBoxWithCue>
+                             cueText="jsmith"
+                             ui:field="accountName_"></rsw:TextBoxWithCue>
          <g:Label styleName="{style.spaced} {style.explanatoryText}"
                   text="Contact your RStudio Connect server administrator if you need its URL.">
          </g:Label>

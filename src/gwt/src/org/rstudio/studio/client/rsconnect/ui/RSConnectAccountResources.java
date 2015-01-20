@@ -23,10 +23,21 @@ public interface RSConnectAccountResources extends ClientBundle
    static RSConnectAccountResources INSTANCE = 
                   (RSConnectAccountResources)GWT.create(RSConnectAccountResources.class);
    
+   @Source("localAccountIconSmall.png")
    ImageResource localAccountIconSmall();
+
+   @Source("localAccountIcon.png")
    ImageResource localAccountIcon();
+
+   @Source("localAccountIconLarge.png")
    ImageResource localAccountIconLarge();
+
+   @Source("cloudAccountIconSmall.png")
    ImageResource cloudAccountIconSmall();
+
+   @Source("cloudAccountIcon.png")
    ImageResource cloudAccountIcon();
+
+   @Source("cloudAccountIconLarge.png")
    ImageResource cloudAccountIconLarge();
 }
