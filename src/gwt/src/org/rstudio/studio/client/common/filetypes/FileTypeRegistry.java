@@ -343,6 +343,7 @@ public class FileTypeRegistry
       register("*.dcf", DCF, icons.iconText());
       register("*.mmd", MERMAID, icons.iconMermaid());
       register("*.gv", GRAPHVIZ, icons.iconGraphviz());
+      register("*.dot", GRAPHVIZ, icons.iconGraphviz());
       register("*.py", PYTHON, icons.iconPython());
       register("*.sql", SQL, icons.iconSql());
       register("*.sh", SH, icons.iconSh());
