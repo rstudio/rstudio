@@ -108,7 +108,7 @@ public class UIPrefsAccessor extends Prefs
    }
    
    public static final String COMPLETION_ALWAYS = "always";
-   public static final String COMPLETION_WHEN_TRIGGERED = "triggered";
+   public static final String COMPLETION_AFTER_ACCESSOR = "accessor";
    public static final String COMPLETION_MANUAL = "manual";
    
    public PrefValue<Boolean> allowTabMultilineCompletion()

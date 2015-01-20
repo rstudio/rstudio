@@ -528,6 +528,14 @@ public class RCompletionManager implements CompletionManager
    
    private boolean checkCanAutoPopup(char c, int lookbackLimit)
    {
+      // Don't auto-popup if the user has opted out
+      if (!uiPrefs_.codeComplete().getValue().equals(
+            UIPrefsAccessor.COMPLETION_ALWAYS))
+         return false;
+      
+      if (isConsole_ && !uiPrefs_.alwaysCompleteInConsole().getValue())
+         return false;
+      
       String currentLine = docDisplay_.getCurrentLine();
       Position cursorPos = input_.getCursorPosition();
       int cursorColumn = cursorPos.getColumn();
@@ -563,9 +571,6 @@ public class RCompletionManager implements CompletionManager
       boolean canAutoPopup =
             (currentLine.length() > lookbackLimit - 1 && isValidForRIdentifier(c));
       
-      if (isConsole_ && !uiPrefs_.alwaysCompleteInConsole().getValue())
-         canAutoPopup = false;
-
       if (canAutoPopup)
       {
          for (int i = 0; i < lookbackLimit; i++)
@@ -657,8 +662,8 @@ public class RCompletionManager implements CompletionManager
          
          // Perform an auto-popup if a set number of R identifier characters
          // have been inserted (but only if the user has allowed it in prefs)
-         boolean autoPopupEnabled = uiPrefs_.codeComplete().getValue().equals(
-               UIPrefsAccessor.COMPLETION_ALWAYS);
+         boolean autoPopupEnabled = !uiPrefs_.codeComplete().getValue().equals(
+               UIPrefsAccessor.COMPLETION_MANUAL);
 
          if (!autoPopupEnabled)
             return false;
@@ -687,7 +692,9 @@ public class RCompletionManager implements CompletionManager
          boolean canAutoPopup = checkCanAutoPopup(c, 2);
          
          // Automatically popup completions after certain function calls
-         if (c == '(' && !isLineInComment(docDisplay_.getCurrentLine()))
+         if (uiPrefs_.codeComplete().getValue().equals(
+               UIPrefs.COMPLETION_ALWAYS) &&
+             c == '(' && !isLineInComment(docDisplay_.getCurrentLine()))
          {
             String token = StringUtil.getToken(
                   docDisplay_.getCurrentLine(),

@@ -69,13 +69,13 @@ public class EditingPreferencesPane extends PreferencesPane
       showCompletions_ = new SelectWidget(
             "Show code completions:",
             new String[] {
-                  "Always",
-                  "When Triggered",
+                  "Automatically",
+                  "After '$', '@', '::'",
                   "Manually (Tab)"
             },
             new String[] {
                   UIPrefsAccessor.COMPLETION_ALWAYS,
-                  UIPrefsAccessor.COMPLETION_WHEN_TRIGGERED,
+                  UIPrefsAccessor.COMPLETION_AFTER_ACCESSOR,
                   UIPrefsAccessor.COMPLETION_MANUAL
             },
             false, 
