@@ -199,12 +199,6 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
   file(GLOB_RECURSE SESSION_TEST_FILES "*Tests.cpp")
   list(APPEND SESSION_SOURCE_FILES ${SESSION_TEST_FILES})
 
-  # run tests after build
-  add_custom_target(rsession-tests ALL
-    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/rsession --test
-    DEPENDS rsession
-  )
-
 endif()
 
 # define core include dirs

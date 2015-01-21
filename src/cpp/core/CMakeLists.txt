@@ -305,11 +305,5 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
       ${Boost_LIBRARIES}
       ${CORE_SYSTEM_LIBRARIES}
    )
-   
-   # run tests after build
-   add_custom_target(rstudio-core-tests ALL
-      COMMAND "${CMAKE_CURRENT_BINARY_DIR}/rstudio-core"
-      DEPENDS rstudio-core-bin
-   )
 
 endif()
