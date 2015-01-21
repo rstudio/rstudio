@@ -733,6 +733,49 @@ struct SourceMarker
 
 core::json::Array sourceMarkersAsJson(const std::vector<SourceMarker>& markers);
 
+struct SourceMarkerSet
+{
+   enum AutoSelect
+   {
+      AutoSelectNone = 0,
+      AutoSelectFirst = 1,
+      AutoSelectFirstError = 2
+   };
+
+   SourceMarkerSet() {}
+
+   SourceMarkerSet(const std::string& name,
+                   const std::vector<SourceMarker>& markers,
+                   AutoSelect autoSelect = AutoSelectNone)
+      : name(name),
+        markers(markers),
+        autoSelect(autoSelect)
+   {
+   }
+
+   SourceMarkerSet(const std::string& name,
+                   const core::FilePath& targetFile,
+                   const core::FilePath& basePath,
+                   const std::vector<SourceMarker>& markers,
+                   AutoSelect autoSelect)
+      : name(name),
+        targetFile(targetFile),
+        basePath(basePath),
+        markers(markers),
+        autoSelect(autoSelect)
+   {
+   }
+
+   bool empty() const { return name.empty(); }
+
+   std::string name;
+   core::FilePath targetFile;
+   core::FilePath basePath;
+   std::vector<SourceMarker> markers;
+   AutoSelect autoSelect;
+};
+
+void showSourceMarkers(const SourceMarkerSet& markerSet);
 
 } // namespace module_context
 } // namespace session

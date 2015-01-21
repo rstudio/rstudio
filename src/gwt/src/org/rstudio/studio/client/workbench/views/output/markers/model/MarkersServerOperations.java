@@ -19,5 +19,5 @@ import org.rstudio.studio.client.server.Void;
 
 public interface MarkersServerOperations
 {
-   void clearAllMarkers(ServerRequestCallback<Void> requestCallback);
+   void markersTabClosed(ServerRequestCallback<Void> requestCallback);
 }

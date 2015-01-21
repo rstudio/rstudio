@@ -114,10 +114,10 @@ public class SourceMarkerList extends Composite
       return addHandler(handler, SelectionCommitEvent.getType());
    }
  
-   public void showErrors(String targetFile, 
-                          String basePath,
-                          JsArray<SourceMarker> errors,
-                          int autoSelect)
+   public void showMarkers(String targetFile, 
+                           String basePath,
+                           JsArray<SourceMarker> errors,
+                           int autoSelect)
    {
       boolean showFileHeaders = false;
       ArrayList<SourceMarker> errorList = new ArrayList<SourceMarker>();

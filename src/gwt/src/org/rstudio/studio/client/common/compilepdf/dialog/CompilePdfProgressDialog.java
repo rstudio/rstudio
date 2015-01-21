@@ -129,10 +129,10 @@ public class CompilePdfProgressDialog extends ProgressDialog
          if (SourceMarker.showErrorList(errors_))
          {
             label +=  " (double-click to view source location of error)";
-            errorList_.showErrors(result.getTargetFile(), 
-                                  null, 
-                                  errors_,
-                                  SourceMarkerList.AUTO_SELECT_FIRST);
+            errorList_.showMarkers(result.getTargetFile(), 
+                                   null, 
+                                   errors_,
+                                   SourceMarkerList.AUTO_SELECT_FIRST);
             container_.setWidget(errorList_);
             errorList_.focus();
          }

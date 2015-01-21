@@ -25,11 +25,14 @@ import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
+import org.rstudio.studio.client.workbench.views.output.markers.events.ShowMarkersEvent;
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersState;
 
 public class MarkersOutputTab extends DelayLoadWorkbenchTab<MarkersOutputPresenter>
 {
-   public abstract static class Shim extends DelayLoadTabShim<MarkersOutputPresenter, MarkersOutputTab>
+   public abstract static class Shim 
+            extends DelayLoadTabShim<MarkersOutputPresenter, MarkersOutputTab>
+            implements ShowMarkersEvent.Handler
    {
       abstract void initialize(MarkersState state);
       abstract void onDismiss();
@@ -58,6 +61,8 @@ public class MarkersOutputTab extends DelayLoadWorkbenchTab<MarkersOutputPresent
       });
 
       GWT.<Binder>create(Binder.class).bind(commands, shim);
+      
+      events.addHandler(ShowMarkersEvent.TYPE, shim);
    }
 
    @Override

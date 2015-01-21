@@ -15,15 +15,17 @@
 package org.rstudio.studio.client.workbench.views.output.markers;
 
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
-import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.widget.*;
+import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerList;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersSet;
+import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersState;
 
 public class MarkersOutputPane extends WorkbenchPane
       implements MarkersOutputPresenter.Display
@@ -32,8 +34,27 @@ public class MarkersOutputPane extends WorkbenchPane
    public MarkersOutputPane()
    {
       super("Markers");
+      markerList_ = new SourceMarkerList();
       ensureWidget();
    }
+   
+   @Override
+   public void initialize(MarkersState markerState)
+   {
+      if (markerState.isVisible())
+         ensureVisible(false);
+   }
+
+   @Override
+   public void showMarkersSet(MarkersSet markerSet)
+   {
+      markerList_.clear();
+      markerList_.showMarkers(markerSet.getTargetFile(),
+                              markerSet.getBasePath(),
+                              markerSet.getMarkers(), 
+                              markerSet.getAutoSelect());
+   }
+
 
    @Override
    protected Toolbar createMainToolbar()
@@ -47,7 +68,7 @@ public class MarkersOutputPane extends WorkbenchPane
    @Override
    protected Widget createMainWidget()
    {
-      return new Label("Markers");
+      return markerList_;
    }
 
    @Override
@@ -59,8 +80,9 @@ public class MarkersOutputPane extends WorkbenchPane
    @Override
    public HandlerRegistration addSelectionCommitHandler(SelectionCommitHandler<CodeNavigationTarget> handler)
    {
-      return addHandler(handler, SelectionCommitEvent.getType());
+      return markerList_.addSelectionCommitHandler(handler);
    }
 
    
+   private SourceMarkerList markerList_;
 }

@@ -148,10 +148,10 @@ public class CompilePanel extends Composite
                           int autoSelect,
                           boolean alwaysShowList)
    {
-      errorList_.showErrors(targetFileName_, 
-                            basePath, 
-                            errors,
-                            autoSelect);
+      errorList_.showMarkers(targetFileName_, 
+                             basePath, 
+                             errors,
+                             autoSelect);
 
       if (alwaysShowList || SourceMarker.showErrorList(errors))
       {

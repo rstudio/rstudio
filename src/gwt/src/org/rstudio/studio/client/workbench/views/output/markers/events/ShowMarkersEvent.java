@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.output.markers.events;
 
+import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersSet;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
@@ -24,10 +26,16 @@ public class ShowMarkersEvent extends GwtEvent<ShowMarkersEvent.Handler>
       void onShowMarkers(ShowMarkersEvent event);
    }
 
-   public ShowMarkersEvent()
+   public ShowMarkersEvent(MarkersSet markersSet)
    {
+      markersSet_ = markersSet;
    }
 
+   public MarkersSet getMarkersSet()
+   {
+      return markersSet_;
+   }
+   
 
    @Override
    public Type<Handler> getAssociatedType()
@@ -42,4 +50,6 @@ public class ShowMarkersEvent extends GwtEvent<ShowMarkersEvent.Handler>
    }
 
    public static final Type<Handler> TYPE = new Type<Handler>();
+   
+   private final MarkersSet markersSet_;
 }

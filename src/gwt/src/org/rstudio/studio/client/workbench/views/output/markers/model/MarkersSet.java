@@ -15,28 +15,34 @@
 package org.rstudio.studio.client.workbench.views.output.markers.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.JsArray;
 
-public class MarkersState extends JavaScriptObject
+import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
+
+public class MarkersSet extends JavaScriptObject
 {
-   protected MarkersState()
+   protected MarkersSet()
    {
    }
-   
-
-   public native final boolean isVisible() /*-{
-      return this.visible;
+  
+   public native final String getName() /*-{
+      return this.name;
    }-*/;
    
-   public native final String getActiveMarkersSet() /*-{
-      return this.active_set;
+   public native final String getTargetFile() /*-{
+      return this.target_file;
    }-*/;
    
-   public native final JsArrayString getMarkersSetNames() /*-{
-      return Object.keys(this.sets);
+   public native final String getBasePath() /*-{
+      return this.base_path;
    }-*/;
    
-   public native final MarkersSet getMarkersSet(String name) /*-{
-      return this.sets[name];
+   public native final JsArray<SourceMarker> getMarkers() /*-{
+      return this.markers;
+   }-*/;
+   
+   // see SourceMarkerList.AUTO_SELECT_NONE, etc.
+   public native final int getAutoSelect() /*-{
+      return this.auto_select;
    }-*/;
 }

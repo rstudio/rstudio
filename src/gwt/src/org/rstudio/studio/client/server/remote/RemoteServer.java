@@ -3813,9 +3813,9 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void clearAllMarkers(ServerRequestCallback<Void> requestCallback)
+   public void markersTabClosed(ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, "clear_all_markers", requestCallback);
+      sendRequest(RPC_SCOPE, "markers_tab_closed", requestCallback);
    }
    
    private String clientId_;
