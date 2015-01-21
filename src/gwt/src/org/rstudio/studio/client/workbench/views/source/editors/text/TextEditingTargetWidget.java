@@ -319,7 +319,7 @@ public class TextEditingTargetWidget
       boolean isCpp = fileType.isCpp();
       boolean isScript = fileType.isScript();
       boolean isRMarkdown2 = extendedType_.equals("rmarkdown");
-      boolean isMermaid = fileType.isMermaid();
+      boolean canPreviewFromR = fileType.canPreviewFromR();
       
       // don't show the run buttons for cpp files, or R files in Shiny
       runButton_.setVisible(canExecuteCode && !isCpp && !isShinyFile());
@@ -327,7 +327,7 @@ public class TextEditingTargetWidget
       
       sourceOnSave_.setVisible(canSourceOnSave);
       srcOnSaveLabel_.setVisible(canSourceOnSave);
-      if (fileType.isRd() || isMermaid)
+      if (fileType.isRd() || canPreviewFromR)
          srcOnSaveLabel_.setText("Preview on Save");
       else
          srcOnSaveLabel_.setText("Source on Save");
@@ -339,7 +339,7 @@ public class TextEditingTargetWidget
       sourceMenuButton_.setVisible(canSourceWithEcho && 
                                    !isPlainMarkdown && 
                                    !isScript &&
-                                   !isMermaid);
+                                   !canPreviewFromR);
    
       texSeparatorWidget_.setVisible(canCompilePdf);
       texToolbarButton_.setVisible(canCompilePdf);
@@ -370,7 +370,7 @@ public class TextEditingTargetWidget
       }
       else
       {
-         setSourceButtonFromScriptState(isScript, isMermaid);
+         setSourceButtonFromScriptState(isScript, canPreviewFromR);
       }
       
       toolbar_.invalidateSeparators();
@@ -413,7 +413,7 @@ public class TextEditingTargetWidget
       previewHTMLButton_.setText(width < 450 ? "" : previewCommandText_);                                                       
       knitDocumentButton_.setText(width < 450 ? "" : knitCommandText_);
       
-      if (editor_.getFileType().isRd() || editor_.getFileType().isMermaid())
+      if (editor_.getFileType().isRd() || editor_.getFileType().canPreviewFromR())
          srcOnSaveLabel_.setText(width < 450 ? "Preview" : "Preview on Save");
       else
          srcOnSaveLabel_.setText(width < 450 ? "Source" : "Source on Save");

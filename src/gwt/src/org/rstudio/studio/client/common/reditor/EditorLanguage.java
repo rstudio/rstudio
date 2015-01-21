@@ -70,6 +70,7 @@ public class EditorLanguage
          "ace/mode/yaml", true);
    public static final EditorLanguage LANG_XML = new EditorLanguage(
          "ace/mode/xml", true);
+   public static final EditorLanguage LANG_GRAPHVIZ = new EditorLanguage("ace/mode/dot", true);
    
    public static final EditorLanguage LANG_CLOJURE = new EditorLanguage("ace/mode/clojure", true);
    public static final EditorLanguage LANG_COFFEE = new EditorLanguage("ace/mode/coffee", true);

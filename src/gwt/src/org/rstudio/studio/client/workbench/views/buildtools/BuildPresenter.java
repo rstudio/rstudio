@@ -34,10 +34,10 @@ import org.rstudio.studio.client.application.events.SuspendAndRestartEvent;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.compile.CompileError;
 import org.rstudio.studio.client.common.compile.CompileOutput;
-import org.rstudio.studio.client.common.compile.errorlist.CompileErrorList;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
+import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerList;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
@@ -65,7 +65,7 @@ public class BuildPresenter extends BasePresenter
       void scrollToBottom();
       
       void showErrors(String basePath,
-                      JsArray<CompileError> errors, 
+                      JsArray<SourceMarker> errors, 
                       boolean ensureVisible,
                       int autoSelect);
       void buildCompleted();
@@ -129,12 +129,12 @@ public class BuildPresenter extends BasePresenter
                              event.getErrors(), 
                              true,
                              uiPrefs_.navigateToBuildError().getValue() ?
-                                 CompileErrorList.AUTO_SELECT_FIRST_ERROR :
-                                 CompileErrorList.AUTO_SELECT_NONE);
+                                 SourceMarkerList.AUTO_SELECT_FIRST_ERROR :
+                                 SourceMarkerList.AUTO_SELECT_NONE);
             
             if (uiPrefs_.navigateToBuildError().getValue())
             {
-               CompileError error = CompileError.getFirstError(event.getErrors());
+               SourceMarker error = SourceMarker.getFirstError(event.getErrors());
                if (error != null)
                {
                   fileTypeRegistry_.editFile(
@@ -217,7 +217,7 @@ public class BuildPresenter extends BasePresenter
          view_.showErrors(buildState.getErrorsBaseDir(),
                           buildState.getErrors(), 
                           false,
-                          CompileErrorList.AUTO_SELECT_NONE);
+                          SourceMarkerList.AUTO_SELECT_NONE);
       
       if (!buildState.isRunning())
          view_.buildCompleted();

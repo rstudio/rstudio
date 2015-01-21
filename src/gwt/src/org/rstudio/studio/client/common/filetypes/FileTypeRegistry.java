@@ -44,7 +44,7 @@ public class FileTypeRegistry
          new TextFileType("text", "Text File", EditorLanguage.LANG_PLAIN, "",
                           ICONS.iconText(),
                           true,
-                          false, false, false, false, false, false, false, false, false, true, false);
+                          false, false, false, false, false, false, false, false, false, true, false, false);
 
    public static final TextFileType R =
          new RFileType("r_source", "R Script", EditorLanguage.LANG_R, ".R",
@@ -59,20 +59,23 @@ public class FileTypeRegistry
                        true, // preview html
                        false, false, false, false,
                        true, // check spelling
+                       false,
                        false);
 
    public static final TextFileType DCF =
          new TextFileType("dcf", "DCF", EditorLanguage.LANG_DCF, ".dcf",
                           ICONS.iconText(), false, false, false, false, false,
-                          false, false, false, false, false, false, false);
+                          false, false, false, false, false, false, false, false);
    
    public static final TextFileType MERMAID = new MermaidFileType();
+   
+   public static final TextFileType GRAPHVIZ = new GraphvizFileType();
 
 
    public static final TextFileType NAMESPACE =
      new TextFileType("r_namespace", "NAMESPACE", EditorLanguage.LANG_R, "",
                       ICONS.iconText(), false, false, false, false, false,
-                      false, false, false, false, false, false, false);
+                      false, false, false, false, false, false, false, false);
 
    public static final TextFileType SWEAVE =
       new SweaveFileType("sweave", "R Sweave",
@@ -110,19 +113,19 @@ public class FileTypeRegistry
          new TextFileType("css", "CSS", EditorLanguage.LANG_CSS, ".css",
                           ICONS.iconCss(),
                           true,
-                          false, false, false, false, false, false, false, false, false, false, false);
+                          false, false, false, false, false, false, false, false, false, false, false, false);
 
    public static final TextFileType JS =
          new TextFileType("js", "JavaScript", EditorLanguage.LANG_JAVASCRIPT, ".js",
                           ICONS.iconJavascript(),
                           true,
-                          false, false, false, false, false, false, false, false, false, false, false);
+                          false, false, false, false, false, false, false, false, false, false, false, false);
    
    public static final TextFileType JSON =
          new TextFileType("json", "JSON", EditorLanguage.LANG_JAVASCRIPT, ".json",
                           ICONS.iconJavascript(),
                           true,
-                          false, false, false, false, false, false, false, false, false, false, false);
+                          false, false, false, false, false, false, false, false, false, false, false, false);
    
 
    public static final TextFileType PYTHON = new ScriptFileType(
@@ -132,7 +135,7 @@ public class FileTypeRegistry
    public static final TextFileType SQL =
          new TextFileType("sql", "SQL", EditorLanguage.LANG_SQL, ".sql",
                           ICONS.iconSql(), false, false, false, false, false,
-                          false, false, false, false, false, false, false);
+                          false, false, false, false, false, false, false, false);
 
    public static final TextFileType SH = new ScriptFileType(
          "sh", "Shell", EditorLanguage.LANG_SH, ".sh", ICONS.iconSh(),
@@ -141,12 +144,12 @@ public class FileTypeRegistry
    public static final TextFileType YAML =
          new TextFileType("yaml", "YAML", EditorLanguage.LANG_YAML, ".yaml",
                           ICONS.iconYaml(), false, false, false, false, false,
-                          false, false, false, false, false, false, false);
+                          false, false, false, false, false, false, false, false);
 
    public static final TextFileType XML =
          new TextFileType("xml", "XML", EditorLanguage.LANG_XML, ".xml",
                           ICONS.iconXml(), false, false, false, false, false,
-                          false, false, false, false, false, false, false);
+                          false, false, false, false, false, false, false, false);
    
    public static final TextFileType H = new CppFileType("h", ".h", ICONS.iconH(), false);
    public static final TextFileType C = new CppFileType("c", ".c", ICONS.iconC(), false);
@@ -156,88 +159,88 @@ public class FileTypeRegistry
    public static final TextFileType CLOJURE = 
          new TextFileType("clojure", "Clojure", EditorLanguage.LANG_CLOJURE, ".clojure", ICONS.iconClojure(),
                false, false, false, false, false,
-               false, false, false, false, false, false, false);
+               false, false, false, false, false, false, false, false);
    
    public static final TextFileType COFFEE = 
          new TextFileType("coffee", "Coffee", EditorLanguage.LANG_COFFEE, ".coffee", ICONS.iconCoffee(),
                false, false, false, false, false,
-               false, false, false, false, false, false, false);
+               false, false, false, false, false, false, false, false);
    
    public static final TextFileType CSHARP = 
          new TextFileType("csharp", "C#", EditorLanguage.LANG_CSHARP, ".cs", ICONS.iconCsharp(),
                false, false, false, false, false,
-               false, false, false, false, false, false, false);
+               false, false, false, false, false, false, false, false);
    
    
    public static final TextFileType GITIGNORE = 
          new TextFileType("gitignore", "Gitignore", EditorLanguage.LANG_GITIGNORE, ".gitignore", ICONS.iconGitignore(),
                false, false, false, false, false,
-               false, false, false, false, false, false, false);
+               false, false, false, false, false, false, false, false);
    
    public static final TextFileType GO = 
          new TextFileType("go", "Go", EditorLanguage.LANG_GO, ".go", ICONS.iconGo(),
                false, false, false, false, false,
-               false, false, false, false, false, false, false);
+               false, false, false, false, false, false, false, false);
    
    public static final TextFileType GROOVY = 
          new TextFileType("groovy", "Groovy", EditorLanguage.LANG_GROOVY, ".groovy", ICONS.iconGroovy(),
                false, false, false, false, false,
-               false, false, false, false, false, false, false);
+               false, false, false, false, false, false, false, false);
    
    public static final TextFileType HASKELL = 
          new TextFileType("haskell", "Haskell", EditorLanguage.LANG_HASKELL, ".haskell", ICONS.iconHaskell(),
                false, false, false, false, false,
-               false, false, false, false, false, false, false);
+               false, false, false, false, false, false, false, false);
    
    public static final TextFileType HAXE = 
          new TextFileType("haxe", "Haxe", EditorLanguage.LANG_HAXE, ".haxe", ICONS.iconHaxe(),
                false, false, false, false, false,
-               false, false, false, false, false, false, false);
+               false, false, false, false, false, false, false, false);
    
    public static final TextFileType JAVA = 
          new TextFileType("java", "Java", EditorLanguage.LANG_JAVA, ".java", ICONS.iconJava(),
                false, false, false, false, false,
-               false, false, false, false, false, false, false);
+               false, false, false, false, false, false, false, false);
    
    public static final TextFileType JULIA = 
          new TextFileType("julia", "Julia", EditorLanguage.LANG_JULIA, ".julia", ICONS.iconJulia(),
                false, false, false, false, false,
-               false, false, false, false, false, false, false);
+               false, false, false, false, false, false, false, false);
    
    public static final TextFileType LISP = 
          new TextFileType("lisp", "Lisp", EditorLanguage.LANG_LISP, ".lisp", ICONS.iconLisp(),
                false, false, false, false, false,
-               false, false, false, false, false, false, false);
+               false, false, false, false, false, false, false, false);
    
    public static final TextFileType LUA = 
          new TextFileType("lua", "Lua", EditorLanguage.LANG_LUA, ".lua", ICONS.iconLua(),
                false, false, false, false, false,
-               false, false, false, false, false, false, false);
+               false, false, false, false, false, false, false, false);
    
    public static final TextFileType MATLAB = 
          new TextFileType("matlab", "Matlab", EditorLanguage.LANG_MATLAB, ".m", ICONS.iconMatlab(),
                false, false, false, false, false,
-               false, false, false, false, false, false, false);
+               false, false, false, false, false, false, false, false);
    
    public static final TextFileType PERL = 
          new TextFileType("perl", "Perl", EditorLanguage.LANG_PERL, ".pl", ICONS.iconPerl(),
                false, false, false, false, false,
-               false, false, false, false, false, false, false);
+               false, false, false, false, false, false, false, false);
    
    public static final TextFileType RUBY = 
          new TextFileType("ruby", "Ruby", EditorLanguage.LANG_RUBY, ".rb", ICONS.iconRuby(),
                false, false, false, false, false,
-               false, false, false, false, false, false, false);
+               false, false, false, false, false, false, false, false);
    
    public static final TextFileType RUST = 
          new TextFileType("rust", "Rust", EditorLanguage.LANG_RUST, ".rs", ICONS.iconRust(),
                false, false, false, false, false,
-               false, false, false, false, false, false, false);
+               false, false, false, false, false, false, false, false);
    
    public static final TextFileType SCALA = 
          new TextFileType("scala", "Scala", EditorLanguage.LANG_SCALA, ".scala", ICONS.iconScala(),
                false, false, false, false, false,
-               false, false, false, false, false, false, false);
+               false, false, false, false, false, false, false, false);
    
    
    public static final RDataType RDATA = new RDataType();
@@ -338,7 +341,9 @@ public class FileTypeRegistry
       register("*.rda", RDATA, icons.iconRdata());
       register("*.Rproj", RPROJECT, icons.iconRproject());
       register("*.dcf", DCF, icons.iconText());
-      register("*.mmd", MERMAID, icons.iconText());
+      register("*.mmd", MERMAID, icons.iconMermaid());
+      register("*.gv", GRAPHVIZ, icons.iconGraphviz());
+      register("*.dot", GRAPHVIZ, icons.iconGraphviz());
       register("*.py", PYTHON, icons.iconPython());
       register("*.sql", SQL, icons.iconSql());
       register("*.sh", SH, icons.iconSh());

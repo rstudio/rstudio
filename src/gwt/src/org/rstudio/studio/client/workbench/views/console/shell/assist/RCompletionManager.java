@@ -69,6 +69,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RInfixData;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.RCompletionToolTip;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
@@ -99,7 +100,12 @@ public class RCompletionManager implements CompletionManager
                }
             }
          }
-      });   
+      });
+   }
+   
+   public void onPaste(PasteEvent event)
+   {
+      popup_.hide();
    }
    
    public RCompletionManager(InputEditorDisplay input,
@@ -528,6 +534,10 @@ public class RCompletionManager implements CompletionManager
    
    private boolean checkCanAutoPopup(char c, int lookbackLimit)
    {
+      if (docDisplay_.isVimModeOn() &&
+            !docDisplay_.isVimInInsertMode())
+         return false;
+      
       String currentLine = docDisplay_.getCurrentLine();
       Position cursorPos = input_.getCursorPosition();
       int cursorColumn = cursorPos.getColumn();
@@ -672,6 +682,13 @@ public class RCompletionManager implements CompletionManager
                (c == '@')
                )
          {
+            // Bail if we're in Vim but not in insert mode
+            if (docDisplay_.isVimModeOn() &&
+                !docDisplay_.isVimInInsertMode())
+            {
+               return false;
+            }
+            
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
                @Override
@@ -1664,6 +1681,7 @@ public class RCompletionManager implements CompletionManager
             popup_.hide() ;
             popup_.clearHelp(false);
             popup_.setHelpVisible(false);
+            docDisplay_.setFocus(true);
          }
          
       }

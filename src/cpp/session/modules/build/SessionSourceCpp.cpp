@@ -91,8 +91,8 @@ void enqueSourceCppCompleted(const FilePath& sourceFile,
    // parse errors
    std::string allOutput = output + "\n" + errorOutput;
    CompileErrorParser errorParser = gccErrorParser(sourceFile.parent());
-   std::vector<CompileError> errors = errorParser(allOutput);
-   sourceCppState.errors = compileErrorsAsJson(errors);
+   std::vector<SourceMarker> errors = errorParser(allOutput);
+   sourceCppState.errors = sourceMarkersAsJson(errors);
 
    // enque event
    ClientEvent event(client_events::kSourceCppCompleted,

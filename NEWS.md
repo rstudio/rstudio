@@ -44,6 +44,8 @@
     - Quick find (`/`)
     - Support a subset of commands in `:`
 * Syntax highlighting modes for many new languages including Clojure, CoffeeScript, C#, Go, Groovy, Haskell, Java, Julia, Lisp, Lua, Matlab, Perl, Ruby, Rust, and Scala.
+* Syntax highlighting for GraphViz and mermaid.js diagrams. 
+* Diagram previews using the `DiagrammeR` package (requires recent version from GitHub).
 * A wide variety of new editor themes (color schemes) are now available.
 
 ### Data Viewer
@@ -94,6 +96,7 @@
 * Add Clear Recent Projects menu item to toolbar project menu
 * Command to sync current working directory and Files pane to project directory
 * Eliminated rstudio and manipulate packages (both now available on CRAN)
+* Added global RStudio.Version function for getting basic version info
 
 ### Server
 
@@ -104,6 +107,7 @@
 
 * Prevent error dialog when getOption("repos") is an unnamed vector
 * Fix for regex Find/Replace lockup with empty strings 
+* Find in Files now always activates result pane
 
 
 

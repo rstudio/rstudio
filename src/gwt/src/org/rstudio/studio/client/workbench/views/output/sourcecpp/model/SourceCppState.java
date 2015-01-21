@@ -15,8 +15,8 @@
 
 package org.rstudio.studio.client.workbench.views.output.sourcecpp.model;
 
-import org.rstudio.studio.client.common.compile.CompileError;
 import org.rstudio.studio.client.common.compile.CompileOutput;
+import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -35,7 +35,7 @@ public class SourceCppState extends JavaScriptObject
       return this.outputs;
    }-*/;
    
-   public final native JsArray<CompileError> getErrors() /*-{
+   public final native JsArray<SourceMarker> getErrors() /*-{
       return this.errors;
    }-*/;
 }

@@ -50,7 +50,8 @@ public class TextFileType extends EditableFileType
                 boolean canExecuteChunks,
                 boolean canAutoIndent,
                 boolean canCheckSpelling,
-                boolean canShowScopeTree)
+                boolean canShowScopeTree,
+                boolean canPreviewFromR)
    {
       super(id, label, defaultIcon);
       editorLanguage_ = editorLanguage;
@@ -67,6 +68,7 @@ public class TextFileType extends EditableFileType
       canAutoIndent_ = canAutoIndent;
       canCheckSpelling_ = canCheckSpelling;
       canShowScopeTree_ = canShowScopeTree;
+      canPreviewFromR_ = canPreviewFromR;
    }
 
    @Override
@@ -171,6 +173,11 @@ public class TextFileType extends EditableFileType
    {
       return canShowScopeTree_;
    }
+  
+   public boolean canPreviewFromR()
+   {
+      return canPreviewFromR_;
+   }
 
    public boolean isR()
    {
@@ -235,9 +242,9 @@ public class TextFileType extends EditableFileType
       return false;
    }
    
-   public boolean isMermaid()
+   public String createPreviewCommand(String file)
    {
-      return EditorLanguage.LANG_MERMAID.equals(getEditorLanguage());
+      return null;
    }
    
    public boolean isScript()
@@ -396,7 +403,8 @@ public class TextFileType extends EditableFileType
    private final boolean canExecuteChunks_;
    private final boolean canAutoIndent_;
    private final boolean canCheckSpelling_;
-   private boolean canShowScopeTree_;
+   private final boolean canShowScopeTree_;
+   private final boolean canPreviewFromR_;
    private final String defaultExtension_;
 
    private static Pattern reTextType_ = Pattern.create("\\btext\\b");

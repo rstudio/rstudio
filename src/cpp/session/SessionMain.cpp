@@ -75,6 +75,7 @@
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/RGraphics.hpp>
 #include <r/session/REventLoop.hpp>
+#include <r/RUtil.hpp>
 
 extern "C" const char *locale2charset(const char *);
 
@@ -137,6 +138,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/shiny/SessionShiny.hpp"
 #include "modules/viewer/SessionViewer.hpp"
 #include "modules/SessionLinter.hpp"
+#include "modules/SessionMarkers.hpp"
 
 #include "modules/SessionGit.hpp"
 #include "modules/SessionSVN.hpp"
@@ -497,6 +499,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["html_capabilities"] = modules::html_preview::capabilitiesAsJson();
 
    sessionInfo["find_in_files_state"] = modules::find::findInFilesStateAsJson();
+
+   sessionInfo["markers_state"] = modules::markers::markersStateAsJson();
 
    sessionInfo["rstudio_version"] = std::string(RSTUDIO_VERSION);
 
@@ -1635,6 +1639,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::rhooks::initialize)
       (modules::r_completions::initialize)
       (modules::linter::initialize)
+      (modules::markers::initialize)
 
       // workers
       (workers::web_request::initialize)
@@ -2089,9 +2094,22 @@ void rBrowseFile(const core::FilePath& filePath)
       if ((*it)(filePath))
          return;
    }
-   
-   // no handlers took it, send along to default
-   module_context::showFile(filePath);
+
+   // see if this is an html file in the session temporary directory (in which
+   // case we can serve it over http)
+   if ((filePath.mimeContentType() == "text/html") &&
+       filePath.isWithin(module_context::tempDir()) &&
+       r::util::hasRequiredVersion("2.14"))
+   {
+      std::string path = filePath.relativePath(module_context::tempDir());
+      std::string url = module_context::sessionTempDirUrl(path);
+      session::clientEventQueue().add(browseUrlEvent(url));
+   }
+   // otherwise just show the file
+   else
+   {
+      module_context::showFile(filePath);
+   }
 }
 
 void rShowHelp(const std::string& helpURL)   

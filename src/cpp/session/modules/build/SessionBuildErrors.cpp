@@ -91,10 +91,12 @@ FilePath scanForRSourceFile(const FilePath& basePath,
    return FilePath();
 }
 
-std::vector<CompileError> parseRErrors(const FilePath& basePath,
+std::vector<module_context::SourceMarker> parseRErrors(
+                                       const FilePath& basePath,
                                        const std::string& output)
 {
-   std::vector<CompileError> errors;
+   using namespace module_context;
+   std::vector<SourceMarker> errors;
 
    boost::regex re("^Error in parse\\(outFile\\) : ([0-9]+?):([0-9]+?): (.+?)\\n"
                    "([0-9]+?): (.*?)\\n([0-9]+?): (.+?)$");
@@ -123,7 +125,7 @@ std::vector<CompileError> parseRErrors(const FilePath& basePath,
          if (!rSrcFile.empty())
          {
             // create error and add it
-            CompileError err(CompileError::Error,
+            SourceMarker err(SourceMarker::Error,
                              rSrcFile,
                              core::safe_convert::stringTo<int>(line, 1),
                              core::safe_convert::stringTo<int>(column, 1),
@@ -140,10 +142,12 @@ std::vector<CompileError> parseRErrors(const FilePath& basePath,
 }
 
 
-std::vector<CompileError> parseGccErrors(const FilePath& basePath,
-                                         const std::string& output)
+std::vector<module_context::SourceMarker> parseGccErrors(
+                                           const FilePath& basePath,
+                                           const std::string& output)
 {
-   std::vector<CompileError> errors;
+   using namespace module_context;
+   std::vector<SourceMarker> errors;
 
    // parse standard gcc errors and warning lines but also pickup "from"
    // prefixed errors and substitute the from file for the error/warning file
@@ -194,11 +198,11 @@ std::vector<CompileError> parseGccErrors(const FilePath& basePath,
          continue;
 
       // resolve type
-      CompileError::Type errType = (type == "warning") ? CompileError::Warning :
-                                                         CompileError::Error;
+      SourceMarker::Type errType = (type == "warning") ? SourceMarker::Warning :
+                                                         SourceMarker::Error;
 
       // create error and add it
-      CompileError err(errType,
+      SourceMarker err(errType,
                        filePath,
                        core::safe_convert::stringTo<int>(line, 1),
                        core::safe_convert::stringTo<int>(column, 1),
@@ -210,33 +214,7 @@ std::vector<CompileError> parseGccErrors(const FilePath& basePath,
    return errors;
 }
 
-// NOTE: sync changes with SessionCompilePdf.cpp logEntryJson
-json::Value compileErrorJson(const CompileError& compileError)
-{
-   json::Object obj;
-   obj["type"] = static_cast<int>(compileError.type);
-   obj["path"] = module_context::createAliasedPath(compileError.path);
-   obj["line"] = compileError.line;
-   obj["column"] = compileError.column;
-   obj["message"] = compileError.message;
-   obj["log_path"] = "";
-   obj["log_line"] = -1;
-   obj["show_error_list"] = compileError.showErrorList;
-   return obj;
-}
-
-
 } // anonymous namespace
-
-json::Array compileErrorsAsJson(const std::vector<CompileError>& errors)
-{
-   json::Array errorsJson;
-   std::transform(errors.begin(),
-                  errors.end(),
-                  std::back_inserter(errorsJson),
-                  compileErrorJson);
-   return errorsJson;
-}
 
 CompileErrorParser gccErrorParser(const FilePath& basePath)
 {

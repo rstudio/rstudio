@@ -13,6 +13,11 @@
 #
 #
 
+# get version
+.rs.addGlobalFunction("RStudio.Version", function() {
+   .rs.api.versionInfo()
+})
+
 # custom browseURL implementation
 options(browser = function(url)
 {

@@ -17,12 +17,13 @@ package org.rstudio.studio.client.workbench.views.output.sourcecpp;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
+
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.studio.client.common.compile.CompileError;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
@@ -105,7 +106,7 @@ public class SourceCppOutputPresenter extends BasePresenter
       // navigate to the first error
       if (uiPrefs_.navigateToBuildError().getValue())
       {
-         CompileError error = CompileError.getFirstError(state.getErrors());
+         SourceMarker error = SourceMarker.getFirstError(state.getErrors());
          if (error != null)
          {
             fileTypeRegistry_.editFile(

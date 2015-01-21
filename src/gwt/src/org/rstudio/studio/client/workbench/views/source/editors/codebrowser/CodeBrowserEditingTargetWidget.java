@@ -59,6 +59,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToo
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetFindReplace;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
@@ -117,6 +118,12 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
        
       // setup custom completion manager for executing F1 and F2 actions
       docDisplay_.setFileType(FileTypeRegistry.R, new CompletionManager() {
+         
+         @Override
+         public void onPaste(PasteEvent event)
+         {
+            // read-only; this can be a no-op
+         }
 
          @Override
          public boolean previewKeyDown(NativeEvent event)
