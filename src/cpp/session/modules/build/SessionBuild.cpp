@@ -102,8 +102,6 @@ namespace build {
 
 namespace {
 
-using namespace rsession;
-
 // track whether to force a package rebuild. we do this if the user
 // saves a header file (since the R CMD INSTALL makefile doesn't
 // force a rebuild for those changes)

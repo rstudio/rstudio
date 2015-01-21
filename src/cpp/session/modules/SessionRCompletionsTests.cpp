@@ -17,7 +17,8 @@
 
 #include "SessionRCompletions.hpp"
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules {
 namespace r_completions {
 
@@ -34,3 +35,4 @@ context("r_completions")
 } // namespace r_completions
 } // namespace modules
 } // namespace rsession
+} // namespace rstudio

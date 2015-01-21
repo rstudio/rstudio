@@ -17,6 +17,7 @@
 
 #include <core/StringUtils.hpp>
 
+namespace rstudio {
 namespace core {
 namespace string_utils {
 
@@ -34,3 +35,4 @@ context("isSubsequence")
 
 } // end namespace string_utils
 } // end namespace core
+} // end namespace rstudio

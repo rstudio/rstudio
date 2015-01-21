@@ -41,8 +41,6 @@ namespace projects {
 
 namespace {
 
-using namespace rsession;
-
 ProjectContext s_projectContext;
 
 
