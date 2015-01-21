@@ -24,24 +24,20 @@
  */
 
 // Concatenate two tokens.
-#define RSTUDIO_PASTE(A, B) A ## B
+#define RSTUDIO_PP_PASTE(A, B) A ## B
 
 // Concatenate a name and a number (to form the 
 // name of an implementation macro)
-#define RSTUDIO_SELECT(NAME, NUMBER) \
-   RSTUDIO_PASTE(NAME ## _, NUMBER)
+#define RSTUDIO_PP_SELECT(NAME, NUMBER) \
+   RSTUDIO_PP_PASTE(NAME ## _, NUMBER)
 
 // Count the number of arguments in a variadic macro.
 // This uses the GCC extension ##__VA_ARGS__, but should
 // be supported in all the platforms we target.
-#define RSTUDIO_VA_NUM_ARGS(...) \
-   RSTUDIO_VA_NUM_ARGS_IMPL(, ##__VA_ARGS__, 5, 4, 3, 2, 1, 0)
+#define RSTUDIO_PP_VA_NUM_ARGS(...) \
+   RSTUDIO_PP_VA_NUM_ARGS_IMPL(, ##__VA_ARGS__, 5, 4, 3, 2, 1, 0)
 
-#define RSTUDIO_VA_NUM_ARGS_IMPL(_0, _1, _2, _3, _4, _5, N, ...) N
-
-// Define a selector on __VA_ARGS__.
-#define RSTUDIO_VA_SELECT(NAME, ...) \
-   RSTUDIO_SELECT(NAME, RSTUDIO_VA_NUM_ARGS(__VA_ARGS__))(__VA_ARGS__)
+#define RSTUDIO_PP_VA_NUM_ARGS_IMPL(_0, _1, _2, _3, _4, _5, N, ...) N
 
 /**
  * End macro dispatch infrastructure
@@ -49,9 +45,9 @@
 
 // A selector for debugging blocks of code
 #define RSTUDIO_DEBUG_BLOCK(...)                                               \
-   RSTUDIO_SELECT(                                                             \
+   RSTUDIO_PP_SELECT(                                                          \
       RSTUDIO_DEBUG_BLOCK__IMPL,                                               \
-      RSTUDIO_VA_NUM_ARGS(__VA_ARGS__)                                         \
+      RSTUDIO_PP_VA_NUM_ARGS(__VA_ARGS__)                                      \
    )(__VA_ARGS__)
 
 #define RSTUDIO_DEBUG_BLOCK__IMPL_0    if (false)
