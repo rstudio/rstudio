@@ -229,7 +229,7 @@ void AsyncRCompletions::update()
    
    // R files we wish to source to provide functionality to async process
    const core::FilePath modulesPath =
-         rsession::options().modulesRSourcePath();
+         session::options().modulesRSourcePath();
    
    const core::FilePath sessionCodeTools = modulesPath.childPath("SessionCodeTools.R");
    const core::FilePath sessionRCompletions = modulesPath.childPath("SessionRCompletions.R");

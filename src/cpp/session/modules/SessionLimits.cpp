@@ -40,10 +40,10 @@ namespace {
 void onBeforeExecute()
 {
    // enforce a limit if there is one
-   if (rsession::options().limitCpuTimeMinutes() > 0)
+   if (session::options().limitCpuTimeMinutes() > 0)
    {
       // calculate seconds
-      int seconds = rsession::options().limitCpuTimeMinutes() * 60;
+      int seconds = session::options().limitCpuTimeMinutes() * 60;
    
       // call setTimeLimit
       r::exec::RFunction setTimeLimit("setTimeLimit");

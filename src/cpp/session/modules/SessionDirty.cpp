@@ -115,7 +115,7 @@ void onDetectChanges(module_context::ChangeSource source)
 Error initialize()
 {         
    // add suspend handler
-   using namespace rsession::module_context;
+   using namespace session::module_context;
    addSuspendHandler(SuspendHandler(onSuspend, onResume));
 
    // subscribe to events

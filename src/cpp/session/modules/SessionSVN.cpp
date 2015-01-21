@@ -116,7 +116,7 @@ core::system::ProcessOptions procOptions(bool requiresSsh)
    core::system::environment(&childEnv);
 
    // add postback directory to PATH
-   FilePath postbackDir = rsession::options().rpostbackPath().parent();
+   FilePath postbackDir = session::options().rpostbackPath().parent();
    core::system::addToPath(&childEnv, postbackDir.absolutePath());
 
    // on windows add gnudiff directory to the path
@@ -268,7 +268,7 @@ core::Error createConsoleProc(const ShellArgs& args,
       options.stdOutFile = outputFile;
 
    // create the process
-   using namespace rsession::console_process;
+   using namespace session::console_process;
    *ppCP = ConsoleProcess::create(command,
                                   options,
                                   caption,
@@ -397,7 +397,7 @@ FilePath whichSvnExe()
 void initSvnBin()
 {
    // get the svn exe from user settings if it is there
-   if (rsession::options().allowVcsExecutableEdit())
+   if (session::options().allowVcsExecutableEdit())
       s_svnExePath = userSettings().svnExePath().absolutePath();
 
    // if it wasn't provided in settings try to detect it

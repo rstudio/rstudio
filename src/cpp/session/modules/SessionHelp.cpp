@@ -85,7 +85,7 @@ std::string localURL(const std::string& address, const std::string& port)
 std::string replaceRPort(const std::string& url, const std::string& rPort)
 {
    std::string newUrl = url;
-   boost::algorithm::replace_last(newUrl, rPort, rsession::options().wwwPort());
+   boost::algorithm::replace_last(newUrl, rPort, session::options().wwwPort());
    return newUrl;
 }
 
@@ -176,7 +176,7 @@ bool handleLocalHttpUrl(const std::string& url)
 
    // other localhost URLs can benefit from port mapping -- we map them
    // all since if we don't do any mapping they'll just fail hard
-   if (rsession::options().programMode() == kSessionProgramModeServer)
+   if (session::options().programMode() == kSessionProgramModeServer)
    {
       // see if we can form a portmap path for this url
       std::string path;
@@ -886,7 +886,7 @@ Error initialize()
 
    // init help
    bool isDesktop = options().programMode() == kSessionProgramModeDesktop;
-   int port = safe_convert::stringTo<int>(rsession::options().wwwPort(), 0);
+   int port = safe_convert::stringTo<int>(session::options().wwwPort(), 0);
    error = r::exec::RFunction(".rs.initHelp", port, isDesktop).call(
                                                             &s_handleCustom);
    if (error)

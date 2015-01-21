@@ -573,7 +573,7 @@ json::Object findInFilesStateAsJson()
 core::Error initialize()
 {
    using boost::bind;
-   using namespace rsession::module_context;
+   using namespace session::module_context;
 
    // register suspend handler
    addSuspendHandler(SuspendHandler(bind(onSuspend, _2), onResume));

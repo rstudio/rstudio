@@ -69,7 +69,7 @@ void beginUpdateCheck(bool manual,
    }
 
    // Find the path to the script we need to source
-   FilePath modulesPath = rsession::options().modulesRSourcePath();;
+   FilePath modulesPath = session::options().modulesRSourcePath();;
    std::string scriptPath = core::string_utils::utf8ToSystem(
                      modulesPath.complete("SessionUpdates.R").absolutePath());
 

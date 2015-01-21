@@ -148,7 +148,7 @@ Error createNewPresentation(const json::JsonRpcRequest& request,
    core::text::TemplateFilter filter(vars);
 
    // read file with template filter
-   FilePath templatePath = rsession::options().rResourcesPath().complete(
+   FilePath templatePath = session::options().rResourcesPath().complete(
                                              "templates/r_presentation.Rpres");
    std::string presContents;
    error = core::readStringFromFile(templatePath, filter, &presContents);
@@ -480,7 +480,7 @@ Error initialize()
       return error;
 
    using boost::bind;
-   using namespace rsession::module_context;
+   using namespace session::module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerUriHandler, "/presentation", handlePresentationPaneRequest))

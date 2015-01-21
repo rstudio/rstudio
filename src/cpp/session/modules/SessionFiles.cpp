@@ -205,7 +205,7 @@ Error listFiles(const json::JsonRpcRequest& request, json::JsonRpcResponse* pRes
       s_filesListingMonitor.stop();
 
       // install a monitor only if we aren't already covered by the project monitor
-      if (!rsession::projects::projectContext().isMonitoringDirectory(targetPath))
+      if (!session::projects::projectContext().isMonitoringDirectory(targetPath))
       {
          error = s_filesListingMonitor.start(targetPath, &jsonFiles);
          if (error)
@@ -258,7 +258,7 @@ core::Error createFolder(const core::json::JsonRpcRequest& request,
 
 core::Error deleteFile(const FilePath& filePath)
 {
-   if (rsession::options().programMode() == kSessionProgramModeDesktop)
+   if (session::options().programMode() == kSessionProgramModeDesktop)
    {
       Error error = core::system::recycle_bin::sendTo(filePath);
       if (error)
@@ -461,7 +461,7 @@ core::Error renameFile(const core::json::JsonRpcRequest& request,
 void handleFilesRequest(const http::Request& request, 
                         http::Response* pResponse)
 {   
-   Options& options = rsession::options();
+   Options& options = session::options();
    if (options.programMode() != kSessionProgramModeServer)
    {
       pResponse->setNotFoundError(request.uri());
@@ -622,7 +622,7 @@ Error detectZipFileOverwrites(const FilePath& uploadedZipFile,
 bool validateUploadedFile(const http::File& file, http::Response* pResponse)
 {
    // get limit
-   size_t mbLimit = rsession::options().limitFileUploadSizeMb();
+   size_t mbLimit = session::options().limitFileUploadSizeMb();
 
    // don't enforce if no limit specified
    if (mbLimit <= 0)

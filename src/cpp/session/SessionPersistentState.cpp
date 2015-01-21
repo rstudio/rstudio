@@ -41,7 +41,7 @@ PersistentState& persistentState()
    
 Error PersistentState::initialize()
 {
-   serverMode_ = (rsession::options().programMode() ==
+   serverMode_ = (session::options().programMode() ==
                   kSessionProgramModeServer);
 
    // always the same so that we can supporrt a restart of

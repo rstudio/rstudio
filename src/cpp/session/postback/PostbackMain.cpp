@@ -78,7 +78,7 @@ Error sendRequest(http::Request* pRequest, http::Response* pResponse)
    {
       // determine stream path
       std::string userIdentity = core::system::getenv(kRStudioUserIdentity);
-      FilePath streamPath = rsession::local_streams::streamPath(userIdentity);
+      FilePath streamPath = session::local_streams::streamPath(userIdentity);
       return http::sendRequest(streamPath, *pRequest, pResponse);
    }
 #endif
@@ -98,7 +98,7 @@ int main(int argc, char * const argv[])
          LOG_ERROR(error);
 
       // read program options 
-      Options& options = rsession::postback::options();
+      Options& options = session::postback::options();
       ProgramStatus status = options.read(argc, argv); 
       if ( status.exit() )
          return status.exitCode() ;

@@ -41,7 +41,7 @@ HttpConnectionListener* s_pHttpConnectionListener = NULL;
 void initializeHttpConnectionListener()
 {
    // alias options
-   rsession::Options& options = rsession::options();
+   session::Options& options = session::options();
 
    if (options.programMode() == kSessionProgramModeDesktop)
    {
@@ -65,7 +65,7 @@ void initializeHttpConnectionListener()
    }
    else // mode == "server"
    {
-      if (rsession::options().standalone())
+      if (session::options().standalone())
       {
          s_pHttpConnectionListener = new TcpIpHttpConnectionListener(
                                             options.wwwAddress(),

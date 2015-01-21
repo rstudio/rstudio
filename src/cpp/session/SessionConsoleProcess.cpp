@@ -513,7 +513,7 @@ Error procWriteStdin(const json::JsonRpcRequest& request,
    if (pos != s_procs.end())
    {
 #ifdef RSTUDIO_SERVER
-      if (rsession::options().programMode() == kSessionProgramModeServer)
+      if (session::options().programMode() == kSessionProgramModeServer)
       {
          if (!input.interrupt)
          {

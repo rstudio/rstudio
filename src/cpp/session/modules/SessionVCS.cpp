@@ -221,7 +221,7 @@ core::Error initialize()
    const projects::ProjectContext& projContext = projects::projectContext();
    FilePath workingDir = projContext.directory();
 
-   if (!rsession::options().allowVcs() || !userSettings().vcsEnabled() || workingDir.empty())
+   if (!session::options().allowVcs() || !userSettings().vcsEnabled() || workingDir.empty())
       return Success();
 
 
@@ -276,8 +276,8 @@ namespace module_context {
 
 VcsContext vcsContext(const FilePath& workingDir)
 {
-   using namespace rsession::modules;
-   using namespace rsession::modules::source_control;
+   using namespace session::modules;
+   using namespace session::modules::source_control;
 
    // inspect current vcs state (underlying functions execute child
    // processes so we want to be sure to only call them once)

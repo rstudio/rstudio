@@ -53,7 +53,7 @@ Error Log::initialize()
 
    // connect to console events
    using namespace boost;
-   using namespace rsession::module_context;
+   using namespace session::module_context;
 
    events().onConsolePrompt.connect(boost::bind(&Log::onConsolePrompt,
                                                 this, _1));

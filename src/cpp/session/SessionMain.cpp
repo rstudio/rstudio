@@ -262,11 +262,11 @@ double s_version = 0;
 double installedVersion()
 {
    // never return a version in desktop mode
-   if (rsession::options().programMode() == kSessionProgramModeDesktop)
+   if (session::options().programMode() == kSessionProgramModeDesktop)
       return 0;
 
    // never return a version in standalone mode
-   if (rsession::options().standalone())
+   if (session::options().standalone())
       return 0;
 
    // read installation time (as string) from file (return 0 if not found)
@@ -336,7 +336,7 @@ FilePath getDefaultWorkingDirectory()
    if (defaultWorkingDir.exists() && defaultWorkingDir.isDirectory())
       return defaultWorkingDir;
    else
-      return rsession::options().userHomePath();
+      return session::options().userHomePath();
 }
 
 FilePath getInitialWorkingDirectory()
@@ -347,7 +347,7 @@ FilePath getInitialWorkingDirectory()
 
    // see if there is an override from the environment (perhaps based
    // on a folder drag and drop or other file association)
-   FilePath workingDirPath = rsession::options().initialWorkingDirOverride();
+   FilePath workingDirPath = session::options().initialWorkingDirOverride();
    if (workingDirPath.exists() && workingDirPath.isDirectory())
    {
       return workingDirPath;
@@ -409,10 +409,10 @@ void handleClientInit(const boost::function<void()>& initFunction,
                       boost::shared_ptr<HttpConnection> ptrConnection)
 {
    // alias options
-   Options& options = rsession::options();
+   Options& options = session::options();
    
    // calculate initialization parameters
-   std::string clientId = rsession::persistentState().newActiveClientId();
+   std::string clientId = session::persistentState().newActiveClientId();
    bool resumed = s_rSessionResumed || s_sessionInitialized;
 
    // if we are resuming then we don't need to worry about events queued up
@@ -480,7 +480,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["pendingAgreement"] = modules::agreement::pendingAgreement();
 
    // docs url
-   sessionInfo["docsURL"] = rsession::options().docsURL();
+   sessionInfo["docsURL"] = session::options().docsURL();
 
    // get alias to console_actions and get limit
    rstudio::r::session::ConsoleActions& consoleActions = rstudio::r::session::consoleActions();
@@ -551,7 +551,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["lists"] = modules::lists::allListsAsJson();
 
    sessionInfo["console_processes"] =
-         rsession::console_process::processesAsJson();
+         session::console_process::processesAsJson();
 
    // send sumatra pdf exe path if we are on windows
 #ifdef _WIN32
@@ -636,7 +636,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
            options.showUserIdentity();
 
    // light up rsconnect-related UI features if permitted
-   sessionInfo["rsconnect_available"] = rsession::options().allowRpubsPublish();
+   sessionInfo["rsconnect_available"] = session::options().allowRpubsPublish();
    sessionInfo["rmarkdown_available"] =
          modules::rmarkdown::rmarkdownPackageAvailable();
 
@@ -823,7 +823,7 @@ bool parseAndValidateJsonRpcConnection(
    }
 
    // check for invalid client id
-   if (pJsonRpcRequest->clientId != rsession::persistentState().activeClientId())
+   if (pJsonRpcRequest->clientId != session::persistentState().activeClientId())
    {
       Error error(json::errc::InvalidClientId, ERROR_LOCATION);
       ptrConnection->sendJsonRpcError(error);
@@ -908,7 +908,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
             // note switch to project
             if (!switchToProject.empty())
             {
-               rsession::projects::projectContext().setNextSessionProject(
+               session::projects::projectContext().setNextSessionProject(
                                                                   switchToProject);
             }
 
@@ -1077,7 +1077,7 @@ void polledEventHandler()
             // client_init means the user is attempting to reload the browser
             // in the middle of a computation. process client_init and post
             // a busy event as our initFunction
-            using namespace rsession::module_context;
+            using namespace session::module_context;
             ClientEvent busyEvent(client_events::kBusy, true);
             handleClientInit(boost::bind(enqueClientEvent, busyEvent),
                              ptrConnection);
@@ -1103,7 +1103,7 @@ bool suspendSession(bool force)
 void suspendIfRequested(const boost::function<bool()>& allowSuspend)
 {
    // never suspend in desktop mode
-   if (rsession::options().programMode() == kSessionProgramModeDesktop)
+   if (session::options().programMode() == kSessionProgramModeDesktop)
       return;
 
    // check for forced suspend request
@@ -1160,7 +1160,7 @@ bool isTimedOut(const boost::posix_time::ptime& timeoutTime)
    using namespace boost::posix_time;
 
    // never time out in desktop mode
-   if (rsession::options().programMode() == kSessionProgramModeDesktop)
+   if (session::options().programMode() == kSessionProgramModeDesktop)
       return false;
 
    // check for an client disconnection based timeout
@@ -1188,11 +1188,11 @@ bool isTimedOut(const boost::posix_time::ptime& timeoutTime)
 
 boost::posix_time::ptime timeoutTimeFromNow()
 {
-   int timeoutMinutes = rsession::options().timeoutMinutes();
+   int timeoutMinutes = session::options().timeoutMinutes();
    if (timeoutMinutes > 0)
    {
       return boost::posix_time::second_clock::universal_time() +
-             boost::posix_time::minutes(rsession::options().timeoutMinutes());
+             boost::posix_time::minutes(session::options().timeoutMinutes());
    }
    else
    {
@@ -1203,7 +1203,7 @@ boost::posix_time::ptime timeoutTimeFromNow()
 void processDesktopGuiEvents()
 {
    // keep R gui alive when we are in destkop mode
-   if (rsession::options().programMode() == kSessionProgramModeDesktop)
+   if (session::options().programMode() == kSessionProgramModeDesktop)
    {
       // execute safely since this can call arbitrary R code (and
       // (can also cause jump_to_top if an interrupt is pending)
@@ -1454,13 +1454,13 @@ Error startHttpConnectionListener()
 
 Error startClientEventService()
 {
-   return clientEventService().start(rsession::persistentState().activeClientId());
+   return clientEventService().start(session::persistentState().activeClientId());
 }
 
 void registerGwtHandlers()
 {
    // alias options
-   rsession::Options& options = rsession::options();
+   session::Options& options = session::options();
 
    // establish logging handler
    module_context::registerUriHandler(
@@ -1487,7 +1487,7 @@ Error registerSignalHandlers()
    using namespace rstudio::core::system;
 
    // USR1 and USR2: perform suspend in server mode
-   if (rsession::options().programMode() == kSessionProgramModeServer)
+   if (session::options().programMode() == kSessionProgramModeServer)
    {
       ExecBlock registerBlock ;
       registerBlock.addFunctions()
@@ -1510,10 +1510,10 @@ Error registerSignalHandlers()
 Error runPreflightScript()
 {
    // alias options
-   Options& options = rsession::options();
+   Options& options = session::options();
 
    // run the preflight script (if specified)
-   if (rsession::options().programMode() == kSessionProgramModeServer)
+   if (session::options().programMode() == kSessionProgramModeServer)
    {
       FilePath preflightScriptPath = options.preflightScriptPath();
       if (!preflightScriptPath.empty())
@@ -1662,10 +1662,10 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       return error;
    
    // if we are in verify installation mode then we should exit (successfully) now
-   if (rsession::options().verifyInstallation())
+   if (session::options().verifyInstallation())
    {
       // in desktop mode we write a success message and execute diagnostics
-      if (rsession::options().programMode() == kSessionProgramModeDesktop)
+      if (session::options().programMode() == kSessionProgramModeDesktop)
       {
          std::cout << "Successfully initialized R session."
                    << std::endl << std::endl;
@@ -1681,7 +1681,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
          }
       }
 
-      rsession::options().verifyInstallationHomeDir().removeIfExists();
+      session::options().verifyInstallationHomeDir().removeIfExists();
       ::exit(EXIT_SUCCESS);
    }
 
@@ -1696,21 +1696,21 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    }
 
    // add gwt handlers if we are running desktop mode
-   if ((rsession::options().programMode() == kSessionProgramModeDesktop) ||
-       rsession::options().standalone())
+   if ((session::options().programMode() == kSessionProgramModeDesktop) ||
+       session::options().standalone())
    {
       registerGwtHandlers();
    }
 
    // enque abend warning event if necessary (but not in standalone
    // mode since those processes are often aborted unceremoniously)
-   using namespace rsession::client_events;
-   if (rsession::persistentState().hadAbend() && !options().standalone())
+   using namespace session::client_events;
+   if (session::persistentState().hadAbend() && !options().standalone())
    {
       LOG_ERROR_MESSAGE("session hadabend");
 
       ClientEvent abendWarningEvent(kAbendWarning);
-      rsession::clientEventQueue().add(abendWarningEvent);
+      session::clientEventQueue().add(abendWarningEvent);
    }
 
    if (s_printCharsetWarning)
@@ -1731,7 +1731,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    // set flag indicating we had an abnormal end (if this doesn't get
    // unset by the time we launch again then we didn't terminate normally
    // i.e. either the process dying unexpectedly or a call to R_Suicide)
-   rsession::persistentState().setAbend(true);
+   session::persistentState().setAbend(true);
    
    // setup fork handlers
    setupForkHandlers();
@@ -1767,7 +1767,7 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
    bool isDefaultPrompt = prompt == rstudio::r::options::getOption<std::string>("prompt");
    data["default"] = isDefaultPrompt;
    ClientEvent consolePromptEvent(client_events::kConsolePrompt, data);
-   rsession::clientEventQueue().add(consolePromptEvent);
+   session::clientEventQueue().add(consolePromptEvent);
    
    // allow modules to detect changes after execution of previous REPL
    detectChanges(module_context::ChangeSourceREPL);   
@@ -1845,9 +1845,9 @@ bool rConsoleRead(const std::string& prompt,
    s_rProcessingInput = true;
 
    ClientEvent promptEvent(kConsoleWritePrompt, prompt);
-   rsession::clientEventQueue().add(promptEvent);
+   session::clientEventQueue().add(promptEvent);
    ClientEvent inputEvent(kConsoleWriteInput, pConsoleInput->text + "\n");
-   rsession::clientEventQueue().add(inputEvent);
+   session::clientEventQueue().add(inputEvent);
 
    // always return true (returning false causes the process to exit)
    return true;
@@ -1867,8 +1867,8 @@ int rEditFile(const std::string& file)
    }
    
    // fire edit event
-   ClientEvent editEvent = rsession::showEditorEvent(fileContents, true, false);
-   rsession::clientEventQueue().add(editEvent);
+   ClientEvent editEvent = session::showEditorEvent(fileContents, true, false);
+   session::clientEventQueue().add(editEvent);
 
    // wait for edit_completed 
    json::JsonRpcRequest request ;
@@ -1917,7 +1917,7 @@ FilePath rChooseFile(bool newFile)
 {
    // fire choose file event
    ClientEvent chooseFileEvent(kChooseFile, newFile);
-   rsession::clientEventQueue().add(chooseFileEvent);
+   session::clientEventQueue().add(chooseFileEvent);
    
    // wait for choose_file_completed 
    json::JsonRpcRequest request ;
@@ -1957,7 +1957,7 @@ void rBusy(bool busy)
       return;
 
    ClientEvent busyEvent(kBusy, busy);
-   rsession::clientEventQueue().add(busyEvent);
+   session::clientEventQueue().add(busyEvent);
 }
       
 void rConsoleWrite(const std::string& output, int otype)   
@@ -1967,7 +1967,7 @@ void rConsoleWrite(const std::string& output, int otype)
 
    int event = otype == 1 ? kConsoleWriteError : kConsoleWriteOutput;
    ClientEvent writeEvent(event, output);
-   rsession::clientEventQueue().add(writeEvent);
+   session::clientEventQueue().add(writeEvent);
 
    // fire event
    module_context::events().onConsoleOutput(
@@ -1985,7 +1985,7 @@ void rConsoleHistoryReset()
    resetJson["history"] = historyJson;
    resetJson["preserve_ui_context"] = false;
    ClientEvent event(kConsoleResetHistory, resetJson);
-   rsession::clientEventQueue().add(event);
+   session::clientEventQueue().add(event);
 }
 
 bool rLocator(double* x, double* y)
@@ -1997,7 +1997,7 @@ bool rLocator(double* x, double* y)
    
    // fire locator event
    ClientEvent locatorEvent(kLocator);
-   rsession::clientEventQueue().add(locatorEvent);
+   session::clientEventQueue().add(locatorEvent);
    
    // wait for locator_completed 
    json::JsonRpcRequest request ;
@@ -2033,7 +2033,7 @@ bool rLocator(double* x, double* y)
    
 void rShowFile(const std::string& title, const FilePath& filePath, bool del)
 {
-   if (rsession::options().programMode() == kSessionProgramModeServer)
+   if (session::options().programMode() == kSessionProgramModeServer)
    {
       // for files in the user's home directory and pdfs use an external browser
       if (module_context::isVisibleUserFile(filePath) ||
@@ -2084,7 +2084,7 @@ void rBrowseURL(const std::string& url)
    }
    
    // raise event to client
-   rsession::clientEventQueue().add(browseUrlEvent(url));
+   session::clientEventQueue().add(browseUrlEvent(url));
 }
    
 void rBrowseFile(const core::FilePath& filePath)
@@ -2119,13 +2119,13 @@ void rBrowseFile(const core::FilePath& filePath)
 void rShowHelp(const std::string& helpURL)   
 {
    ClientEvent showHelpEvent(kShowHelp, helpURL);
-   rsession::clientEventQueue().add(showHelpEvent);
+   session::clientEventQueue().add(showHelpEvent);
 }
       
 void rShowMessage(const std::string& message)   
 {
    ClientEvent event = showErrorMessageEvent("R Error", message);
-   rsession::clientEventQueue().add(event);
+   session::clientEventQueue().add(event);
 }
 
 void logExitEvent(const monitor::Event& precipitatingEvent)
@@ -2141,7 +2141,7 @@ void rSuspended(const rstudio::r::session::RSuspendOptions& options)
    using namespace monitor;
    std::string data;
    if (s_suspendedFromTimeout)
-      data = safe_convert::numberToString(rsession::options().timeoutMinutes());
+      data = safe_convert::numberToString(session::options().timeoutMinutes());
    logExitEvent(Event(kSessionScope, kSessionSuspendEvent, data));
 
    // fire event
@@ -2192,9 +2192,9 @@ void rQuit()
 
    // enque a quit event
    bool switchProjects =
-         !rsession::projects::projectContext().nextSessionProject().empty();
+         !session::projects::projectContext().nextSessionProject().empty();
    ClientEvent quitEvent(kQuit, switchProjects);
-   rsession::clientEventQueue().add(quitEvent);
+   session::clientEventQueue().add(quitEvent);
 }
    
 // NOTE: this event is never received on windows (because we can't
@@ -2214,7 +2214,7 @@ void rSuicide(const std::string& message)
    
    // enque suicide event so the client knows
    ClientEvent suicideEvent(kSuicide, message);
-   rsession::clientEventQueue().add(suicideEvent);
+   session::clientEventQueue().add(suicideEvent);
 }
 
 // terminate all children of the provided process supervisor
@@ -2245,7 +2245,7 @@ void rCleanup(bool terminatedNormally)
 
       // note that we didn't abend
       if (terminatedNormally)
-         rsession::persistentState().setAbend(false);
+         session::persistentState().setAbend(false);
 
       // fire shutdown event to modules
       module_context::events().onShutdown(terminatedNormally);
@@ -2261,7 +2261,7 @@ void rCleanup(bool terminatedNormally)
       // the full 3 seconds to terminate. the cleanup is kind of a nice
       // to have and most important on the server where we delete the
       // unix domain socket file so it is no big deal to bypass it
-      if (rsession::options().programMode() == kSessionProgramModeServer)
+      if (session::options().programMode() == kSessionProgramModeServer)
       {
          clientEventService().stop();
          httpConnectionListener().stop();
@@ -2286,14 +2286,14 @@ void rSerialization(int action, const FilePath& targetPath)
    }
    
    ClientEvent event(kSessionSerialization, serializationActionObject);
-   rsession::clientEventQueue().add(event);
+   session::clientEventQueue().add(event);
 }
 
    
 void ensureRProfile()
 {
    // check if we need to create the proifle (bail if we don't)
-   Options& options = rsession::options();
+   Options& options = session::options();
    if (!options.createProfile())
       return;
 
@@ -2320,7 +2320,7 @@ void ensureRProfile()
 void ensurePublicFolder()
 {
    // check if we need to create the public folder (bail if we don't)
-   Options& options = rsession::options();
+   Options& options = session::options();
    if (!options.createPublicFolder())
       return;
 
@@ -2429,9 +2429,9 @@ FilePath rEnvironmentDir()
    }
 
    // for desktop the current path
-   else if (rsession::options().programMode() == kSessionProgramModeDesktop)
+   else if (session::options().programMode() == kSessionProgramModeDesktop)
    {
-      return FilePath::safeCurrentPath(rsession::options().userHomePath());
+      return FilePath::safeCurrentPath(session::options().userHomePath());
    }
 
    // for server the initial working dir
@@ -2473,7 +2473,7 @@ bool restoreWorkspaceOption()
 
    // no project override
    return userSettings().loadRData() ||
-          !rsession::options().initialEnvironmentFileOverride().empty();
+          !session::options().initialEnvironmentFileOverride().empty();
 }
 
 FilePath rHistoryDir()
@@ -2485,7 +2485,7 @@ FilePath rHistoryDir()
    }
 
    // for server we use the default working directory
-   else if (rsession::options().programMode() == kSessionProgramModeServer)
+   else if (session::options().programMode() == kSessionProgramModeServer)
    {
       return getDefaultWorkingDirectory();
    }
@@ -2493,7 +2493,7 @@ FilePath rHistoryDir()
    // for desktop we take the current path
    else
    {
-      return FilePath::safeCurrentPath(rsession::options().userHomePath());
+      return FilePath::safeCurrentPath(session::options().userHomePath());
    }
 }
 
@@ -2520,7 +2520,7 @@ bool alwaysSaveHistoryOption()
 
 FilePath getStartupEnvironmentFilePath()
 {
-   FilePath envFile = rsession::options().initialEnvironmentFileOverride();
+   FilePath envFile = session::options().initialEnvironmentFileOverride();
    if (!envFile.empty())
       return envFile;
    else
@@ -2630,7 +2630,7 @@ UserPrompt::Response showUserPrompt(const UserPrompt& userPrompt)
    obj["yesIsDefault"] = userPrompt.yesIsDefault;
    obj["includeCancel"] = userPrompt.includeCancel;
    ClientEvent userPromptEvent(client_events::kUserPrompt, obj);
-   rsession::clientEventQueue().add(userPromptEvent);
+   session::clientEventQueue().add(userPromptEvent);
 
    // wait for user_prompt_completed
    json::JsonRpcRequest request ;
@@ -2851,7 +2851,7 @@ int main (int argc, char * const argv[])
          return tests::run(argc, argv);
 
       // read program options
-      Options& options = rsession::options();
+      Options& options = session::options();
       ProgramStatus status = options.read(argc, argv) ;
       if (status.exit())
          return status.exitCode() ;
@@ -2892,7 +2892,7 @@ int main (int argc, char * const argv[])
       }
 
       // initialize overlay
-      error = rsession::overlay::initialize();
+      error = session::overlay::initialize();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
 
@@ -2943,7 +2943,7 @@ int main (int argc, char * const argv[])
       // initialize client event queue. this must be done very early
       // in main so that any other code which needs to enque an event
       // has access to the queue
-      rsession::initializeClientEventQueue();
+      session::initializeClientEventQueue();
 
       // detect parent termination
       if (desktopMode)
@@ -2973,7 +2973,7 @@ int main (int argc, char * const argv[])
       projects::startup();
 
       // initialize persistent state
-      error = rsession::persistentState().initialize();
+      error = session::persistentState().initialize();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION) ;
 

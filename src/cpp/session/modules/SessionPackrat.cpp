@@ -717,7 +717,7 @@ Error initPackratMonitoring()
    PACKRAT_TRACE("found " << lockfilePath.absolutePath() << 
                  ", init monitoring");
 
-   rsession::projects::FileMonitorCallbacks cb;
+   session::projects::FileMonitorCallbacks cb;
    cb.onFilesChanged = onFilesChanged;
    projects::projectContext().subscribeToFileMonitor("Packrat", cb);
    module_context::events().onSourceEditorFileSaved.connect(onFileChanged);

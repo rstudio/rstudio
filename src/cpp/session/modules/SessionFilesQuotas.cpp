@@ -199,8 +199,8 @@ void checkQuotaThread()
 Error initialize()
 {
     // one time initialization of s_systemHasQuotas
-   if ( (rsession::options().programMode() == kSessionProgramModeServer) &&
-        rsession::options().limitXfsDiskQuota() )
+   if ( (session::options().programMode() == kSessionProgramModeServer) &&
+        session::options().limitXfsDiskQuota() )
    {
       std::string out;
       Error error = r::exec::system("which xfs_quota", &out);

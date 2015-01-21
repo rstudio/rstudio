@@ -751,7 +751,7 @@ std::string preFontFamily()
 
 void modifyOutputForPreview(std::string* pOutput)
 {
-   if (rsession::options().programMode() == kSessionProgramModeDesktop)
+   if (session::options().programMode() == kSessionProgramModeDesktop)
    {
       // use correct font ordering for this platform
       *pOutput = boost::regex_replace(
@@ -807,7 +807,7 @@ void handleInternalMarkdownPreviewRequest(
    try
    {
       // read input template
-      FilePath resPath = rsession::options().rResourcesPath();
+      FilePath resPath = session::options().rResourcesPath();
       std::string previewTemplate;
       Error error = readPreviewTemplate(resPath, &previewTemplate);
       if (error)
@@ -936,7 +936,7 @@ void handlePreviewRequest(const http::Request& request,
    {
 
       FilePath filePath =
-            rsession::options().mathjaxPath().parent().childPath(path);
+            session::options().mathjaxPath().parent().childPath(path);
       pResponse->setFile(filePath, request);
    }
 
@@ -959,7 +959,7 @@ void addFileSpecificHeaders(const FilePath& filePath, http::Response* pResponse)
    std::string ext = filePath.extensionLowerCase();
    if (ext.length() == 4 &&
        videoExts.find(ext) != std::string::npos &&
-       rsession::options().programMode() == kSessionProgramModeDesktop)
+       session::options().programMode() == kSessionProgramModeDesktop)
    {
       // mp4 and QuickTime files served in IFrames cause problems on
       // some desktop configurations (see case 3828)

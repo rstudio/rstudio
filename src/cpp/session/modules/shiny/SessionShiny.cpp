@@ -38,7 +38,7 @@ void onPackageLoaded(const std::string& pkgname)
 {
    // we need an up to date version of shiny when running in server mode
    // to get the websocket protocol/path and port randomizing changes
-   if (rsession::options().programMode() == kSessionProgramModeServer)
+   if (session::options().programMode() == kSessionProgramModeServer)
    {
       if (pkgname == "shiny")
       {

@@ -202,7 +202,7 @@ void ClientEventService::run()
       }
       
       // get alias to client event queue
-      ClientEventQueue& clientEventQueue = rsession::clientEventQueue();
+      ClientEventQueue& clientEventQueue = session::clientEventQueue();
       
       // initialize state
       int nextEventId = 0;

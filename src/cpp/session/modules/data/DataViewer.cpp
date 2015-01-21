@@ -923,7 +923,7 @@ Error initialize()
 
    // initialize data viewer (don't make failure fatal because we are
    // adding this code in a hot patch release)
-   bool server = rsession::options().programMode() == kSessionProgramModeServer;
+   bool server = session::options().programMode() == kSessionProgramModeServer;
    error = r::exec::RFunction(".rs.initializeDataViewer", server).call();
    if (error)
        LOG_ERROR(error);

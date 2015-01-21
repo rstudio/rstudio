@@ -31,7 +31,7 @@ namespace data {
 Error initialize()
 {
    using boost::bind;
-   using namespace rsession::module_context;
+   using namespace session::module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (data::viewer::initialize)

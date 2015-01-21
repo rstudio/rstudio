@@ -63,7 +63,7 @@ struct Agreement
    
 Error agreementFileContents(std::string* pContents, std::string* pContentType)
 {
-   FilePath agreementFilePath = rsession::options().agreementFilePath();
+   FilePath agreementFilePath = session::options().agreementFilePath();
    *pContentType = agreementFilePath.mimeContentType();
    return readStringFromFile(agreementFilePath, pContents);
 }
@@ -83,7 +83,7 @@ Agreement checkForPendingAgreement()
    }
    
    // hash: filename + crc32 checksum of contents
-   std::string hash = rsession::options().agreementFilePath().filename() +
+   std::string hash = session::options().agreementFilePath().filename() +
                       hash::crc32Hash(contents);
    
    // see if we have not yet agreed to this agreement
@@ -144,13 +144,13 @@ void handleAgreementRequest(const http::Request& request,
 
 bool hasAgreement()
 {
-   return !rsession::options().agreementFilePath().empty();
+   return !session::options().agreementFilePath().empty();
 }
 
 json::Value pendingAgreement()
 {
    if ( hasAgreement() &&
-        (rsession::options().programMode() == kSessionProgramModeServer) )
+        (session::options().programMode() == kSessionProgramModeServer) )
    {
       Agreement agreement = checkForPendingAgreement();
       if (!agreement.empty())

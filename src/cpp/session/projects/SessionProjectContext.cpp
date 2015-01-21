@@ -333,7 +333,7 @@ namespace {
 // that are single threaded by convention
 FilePath settingsPath()
 {
-   return r_util::projectsSettingsPath(rsession::options().userScratchPath());
+   return r_util::projectsSettingsPath(session::options().userScratchPath());
 }
 
 std::string readSetting(const char * const settingName)

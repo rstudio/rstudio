@@ -59,7 +59,7 @@ namespace session {
 namespace modules { 
 namespace source {
 
-using namespace rsession::source_database;
+using namespace session::source_database;
 
 namespace {
 
@@ -674,7 +674,7 @@ Error processSourceTemplate(const std::string& name,
    core::text::TemplateFilter filter(vars);
 
    // read file with template filter
-   FilePath templatePath = rsession::options().rResourcesPath().complete(
+   FilePath templatePath = session::options().rResourcesPath().complete(
                                              "templates/" +  templateName);
    return core::readStringFromFile(templatePath,
                                    filter,

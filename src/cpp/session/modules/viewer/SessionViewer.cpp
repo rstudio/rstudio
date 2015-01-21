@@ -379,7 +379,7 @@ Error initialize()
    addSuspendHandler(SuspendHandler(onSuspend, onResume));
 
    // set ggvis.renderer to svg in desktop mode
-   if ((rsession::options().programMode() == kSessionProgramModeDesktop) &&
+   if ((session::options().programMode() == kSessionProgramModeDesktop) &&
        r::options::getOption<std::string>("ggvis.renderer", "", false).empty())
    {
       r::options::setOption("ggvis.renderer", "svg");

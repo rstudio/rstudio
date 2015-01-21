@@ -108,7 +108,7 @@ core::system::ProcessOptions procOptions()
       core::system::addToPath(&childEnv, nonPathGitBinDir);
 
    // add postback directory to PATH
-   FilePath postbackDir = rsession::options().rpostbackPath().parent();
+   FilePath postbackDir = session::options().rpostbackPath().parent();
    core::system::addToPath(&childEnv, postbackDir.absolutePath());
 
    options.workingDir = projects::projectContext().directory();
@@ -300,7 +300,7 @@ protected:
                                  boost::shared_ptr<ConsoleProcess>* ppCP,
                                  const boost::optional<FilePath>& workingDir=boost::optional<FilePath>())
    {
-      using namespace rsession::console_process;
+      using namespace session::console_process;
 
       core::system::ProcessOptions options = procOptions();
 #ifdef _WIN32
@@ -2611,7 +2611,7 @@ std::string nonPathGitBinDir()
 void onUserSettingsChanged()
 {
    FilePath gitExePath = userSettings().gitExePath();
-   if (rsession::options().allowVcsExecutableEdit() && !gitExePath.empty())
+   if (session::options().allowVcsExecutableEdit() && !gitExePath.empty())
    {
       // if there is an explicit value then set it
       s_gitExePath = gitExePath.absolutePath();
@@ -2657,7 +2657,7 @@ bool initGitBin()
    Error error;
 
    // get the git bin dir from settings if it is there
-   if (rsession::options().allowVcsExecutableEdit())
+   if (session::options().allowVcsExecutableEdit())
       s_gitExePath = userSettings().gitExePath().absolutePath();
 
    // if it wasn't provided in settings then make sure we can detect it
@@ -2767,7 +2767,7 @@ Error clone(const std::string& url,
 
 core::Error initialize()
 {
-   using namespace rsession::module_context;
+   using namespace session::module_context;
 
    Error error;
 

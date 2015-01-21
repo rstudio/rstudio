@@ -1660,7 +1660,7 @@ Error initialize()
    // subscribe to file monitor and source editor file saved so we
    // can tickle a flag to indicates when we should force an R
    // package rebuild
-   rsession::projects::FileMonitorCallbacks cb;
+   session::projects::FileMonitorCallbacks cb;
    cb.onFilesChanged = onFilesChanged;
    projects::projectContext().subscribeToFileMonitor("", cb);
    module_context::events().onSourceEditorFileSaved.connect(onFileChanged);

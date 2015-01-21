@@ -159,7 +159,7 @@ private:
                                " file='%5%', "
                                " row.names=FALSE);");
 
-      FilePath modulesPath = rsession::options().modulesRSourcePath();;
+      FilePath modulesPath = session::options().modulesRSourcePath();;
       std::string scriptPath = utf8ToSystem(
                         modulesPath.complete("SessionRPubs.R").absolutePath());
       std::string htmlPath = utf8ToSystem(htmlFile.absolutePath());

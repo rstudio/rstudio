@@ -284,7 +284,7 @@ SEXP rs_enqueLoadedPackageUpdates(SEXP installCmdSEXP)
 SEXP rs_canInstallPackages()
 {
    r::sexp::Protect rProtect;
-   return r::sexp::create(rsession::options().allowPackageInstallation(),
+   return r::sexp::create(session::options().allowPackageInstallation(),
                           &rProtect);
 }
 

@@ -1115,7 +1115,7 @@ Error initialize()
 
    // subscribe to events
    using boost::bind;
-   using namespace rsession::module_context;
+   using namespace session::module_context;
    events().onDetectChanges.connect(bind(onDetectChanges, _1));
    events().onConsolePrompt.connect(bind(onConsolePrompt,
                                          pContextDepth,

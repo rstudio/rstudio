@@ -76,7 +76,7 @@ Error launchSessionRecovery(const http::Request& request,
       return Error(server::errc::SessionUnavailableError, ERROR_LOCATION);
 
    // recreate streams dir if necessary
-   Error error = rsession::local_streams::ensureStreamsDir();
+   Error error = session::local_streams::ensureStreamsDir();
    if (error)
       LOG_ERROR(error);
 
@@ -405,7 +405,7 @@ void proxyRequest(
       return;
 
    // create async client
-   FilePath streamPath = rsession::local_streams::streamPath(username);
+   FilePath streamPath = session::local_streams::streamPath(username);
    boost::shared_ptr<http::LocalStreamAsyncClient> pClient(
     new http::LocalStreamAsyncClient(ptrConnection->ioService(), streamPath));
 
@@ -456,7 +456,7 @@ bool validateUser(boost::shared_ptr<http::AsyncConnection> ptrConnection,
 
 Error initialize()
 { 
-   return rsession::local_streams::ensureStreamsDir();
+   return session::local_streams::ensureStreamsDir();
 }
 
 Error runVerifyInstallationSession()
