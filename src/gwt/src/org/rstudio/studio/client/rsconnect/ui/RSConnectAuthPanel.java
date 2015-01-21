@@ -14,11 +14,19 @@
  */
 
 package org.rstudio.studio.client.rsconnect.ui;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.command.ImageResourceProvider;
+import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.SatelliteFramePanel;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 public class RSConnectAuthPanel extends SatelliteFramePanel<RStudioFrame>
@@ -33,6 +41,18 @@ public class RSConnectAuthPanel extends SatelliteFramePanel<RStudioFrame>
    @Override 
    protected void initToolbar(Toolbar toolbar, Commands commands)
    {
+      serverLabel_ = new Label();
+      toolbar.addLeftWidget(serverLabel_);
+      
+      cancelButton_ = new ToolbarButton("Cancel", (ImageResource)null,
+            new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent arg0)
+         {
+            onCancelAuth();
+         }
+      });
    }
    
    @Override
@@ -42,8 +62,16 @@ public class RSConnectAuthPanel extends SatelliteFramePanel<RStudioFrame>
    }
 
    @Override
-   public void showClaimUrl(String url)
+   public void showClaimUrl(String serverName, String url)
    {
       showUrl(url);
    }
+   
+   private void onCancelAuth()
+   {
+      
+   }
+   
+   private Label serverLabel_;
+   private ToolbarButton cancelButton_;
 }

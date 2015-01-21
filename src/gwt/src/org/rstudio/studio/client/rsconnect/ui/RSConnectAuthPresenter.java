@@ -22,7 +22,7 @@ public class RSConnectAuthPresenter implements IsWidget
 {
    public interface Display extends IsWidget
    {
-      void showClaimUrl(String url);
+      void showClaimUrl(String serverName, String url);
    }
    
    @Inject
@@ -37,9 +37,9 @@ public class RSConnectAuthPresenter implements IsWidget
       return view_.asWidget();
    }
    
-   public void showClaimUrl(String url)
+   public void showClaimUrl(String serverName, String url)
    {
-      view_.showClaimUrl(url);
+      view_.showClaimUrl(serverName, url);
    }
    
    private final Display view_;

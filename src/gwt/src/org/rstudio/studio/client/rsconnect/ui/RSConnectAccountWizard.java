@@ -30,14 +30,10 @@ public class RSConnectAccountWizard
       super("Connect Account", "Select the type of account", 
             new NewRSConnectAccountInput(), operation);
       setOkButtonCaption("Connect Account");
-      /*
+      addPage(new NewRSConnectCloudPage());
       if (session.getEnableRStudioConnect())
       {
-         addPage(new NewRSConnectCloudPage());
          addPage(new NewRSConnectLocalPage());
       }
-      */
-      addPage(new NewRSConnectCloudPage());
-      addPage(new NewRSConnectLocalPage());
    }
 }

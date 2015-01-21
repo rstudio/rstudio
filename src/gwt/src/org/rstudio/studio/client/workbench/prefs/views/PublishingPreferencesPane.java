@@ -25,6 +25,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.prefs.PreferencesDialogBase;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -57,12 +58,16 @@ public class PublishingPreferencesPane extends PreferencesPane
       HorizontalPanel hpanel = new HorizontalPanel();
       
       Label accountLabel = new Label("Connected Accounts");
-      accountLabel.getElement().getStyle().setFontWeight(FontWeight.BOLD);
+      accountLabel.setStyleName(
+            PreferencesDialogBaseResources.INSTANCE.styles().headerLabel());
+      nudgeRight(accountLabel);
       add(accountLabel);
       
       accountList_ = new RSConnectAccountList(server, globalDisplay);
       accountList_.setHeight("200px");
       accountList_.setWidth("300px");
+      accountList_.getElement().getStyle().setMarginBottom(15, Unit.PX);
+      accountList_.getElement().getStyle().setMarginLeft(3, Unit.PX);
       hpanel.add(accountList_);
       
       accountList_.setOnRefreshCompleted(new Operation() 
@@ -102,9 +107,12 @@ public class PublishingPreferencesPane extends PreferencesPane
       add(hpanel);
 
       Label settingsLabel = new Label("Settings");
-      settingsLabel.setStyleName(res.styles().newSection());
-      settingsLabel.getElement().getStyle().setFontWeight(FontWeight.BOLD);
+      settingsLabel.setStyleName(
+            PreferencesDialogBaseResources.INSTANCE.styles().headerLabel());
+      nudgeRight(settingsLabel);
       add(settingsLabel);
+      add(checkboxPref("Enable publishing apps and documents",
+                       uiPrefs_.showPublishUi()));
    }
 
    @Override

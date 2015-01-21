@@ -49,7 +49,8 @@ public class RSConnectAuthWindow extends SatelliteWindow
       RSConnectAuthPresenter appPresenter = pPresenter_.get();
       RSConnectAuthParams authParams = params.cast();
       
-      appPresenter.showClaimUrl(authParams.getPreAuthToken().getClaimUrl());
+      appPresenter.showClaimUrl(authParams.getServerInfo().getName(),
+            authParams.getPreAuthToken().getClaimUrl());
       
       // make it fill the containing layout panel
       Widget presWidget = appPresenter.asWidget();
