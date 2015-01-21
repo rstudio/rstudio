@@ -1177,10 +1177,10 @@ private:
       // call the error parser if one has been specified
       if (errorParser_)
       {
-         std::vector<CompileError> errors = errorParser_(outputAsText());
+         std::vector<SourceMarker> errors = errorParser_(outputAsText());
          if (!errors.empty())
          {
-            errorsJson_ = compileErrorsAsJson(errors);
+            errorsJson_ = sourceMarkersAsJson(errors);
             enqueBuildErrors(errorsJson_);
          }
       }

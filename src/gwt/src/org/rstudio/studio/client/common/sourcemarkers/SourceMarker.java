@@ -1,5 +1,5 @@
 /*
- * CompileError.java
+ * SourceMarker.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,24 +13,24 @@
  *
  */
 
-package org.rstudio.studio.client.common.compile;
+package org.rstudio.studio.client.common.sourcemarkers;
 
 import org.rstudio.core.client.js.JsUtil;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
-public class CompileError extends JavaScriptObject
+public class SourceMarker extends JavaScriptObject
 {
-   // all possible errors across all compilation types should be listed
-   // here -- we do this because the way we display error icons is via
+   // all possible marker types should be listed
+   // here -- we do this because the way we display marker icons is via
    // css styles and it's a bit complicated to dynamically compose the
-   // stylesheet for different compilation scenarios
+   // stylesheet for different  scenarios
    public static final int ERROR = 0;
    public static final int WARNING = 1;
    public static final int BOX = 2;  // LaTeX bad box error
    
-   protected CompileError()
+   protected SourceMarker()
    {
    }
    
@@ -78,28 +78,28 @@ public class CompileError extends JavaScriptObject
          return this.show_error_list;
    }-*/;
  
-   public final static boolean showErrorList(JsArray<CompileError> errors)
+   public final static boolean showErrorList(JsArray<SourceMarker> markers)
    { 
-      if (errors == null)
+      if (markers == null)
          return false;
       
-      for (CompileError error : JsUtil.asIterable(errors))
+      for (SourceMarker marker : JsUtil.asIterable(markers))
       {  
-         if ((error.getType() == CompileError.ERROR) && 
-             error.getShowErrorList())
+         if ((marker.getType() == SourceMarker.ERROR) && 
+             marker.getShowErrorList())
            return true;
       }
       
       return false;
    }
    
-   public final static CompileError getFirstError(JsArray<CompileError> errors)
+   public final static SourceMarker getFirstError(JsArray<SourceMarker> markers)
    {
-      for (int i=0; i<errors.length(); i++)
+      for (int i=0; i<markers.length(); i++)
       {
-         CompileError error = errors.get(i);
-         if (error.getType() == CompileError.ERROR)
-            return error;
+         SourceMarker marker = markers.get(i);
+         if (marker.getType() == SourceMarker.ERROR)
+            return marker;
       }
       
       return null;

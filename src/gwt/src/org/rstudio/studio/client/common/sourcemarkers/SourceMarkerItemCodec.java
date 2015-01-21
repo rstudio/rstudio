@@ -1,5 +1,5 @@
 /*
- * CompileErrorItemCodec.java
+ * SourceMarkerItemCodec.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.compile.errorlist;
+package org.rstudio.studio.client.common.sourcemarkers;
 
 import com.google.gwt.dom.client.*;
 
@@ -21,12 +21,11 @@ import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.HeaderBreaksItemCodec;
-import org.rstudio.studio.client.common.compile.CompileError;
 
-public class CompileErrorItemCodec
-      extends HeaderBreaksItemCodec<CompileError, CodeNavigationTarget, CodeNavigationTarget>
+public class SourceMarkerItemCodec
+      extends HeaderBreaksItemCodec<SourceMarker, CodeNavigationTarget, CodeNavigationTarget>
 {
-   public CompileErrorItemCodec(CompileErrorListResources resources,
+   public SourceMarkerItemCodec(SourceMarkerListResources resources,
                                 boolean showFileHeaders)
    {
       resources_ = resources;
@@ -49,7 +48,7 @@ public class CompileErrorItemCodec
    }
 
    @Override
-   public TableRowElement getRowForItem(CompileError entry)
+   public TableRowElement getRowForItem(SourceMarker entry)
    {
       TableRowElement tr = Document.get().createTRElement();
       tr.setAttribute(DATA_PATH,
@@ -67,8 +66,8 @@ public class CompileErrorItemCodec
       tdIcon.setClassName(resources_.styles().iconCell());
       DivElement iconDiv = Document.get().createDivElement();
       iconDiv.setClassName(
-            entry.getType() == CompileError.ERROR ? resources_.styles().errorIcon() :
-            entry.getType() == CompileError.WARNING ? resources_.styles().warningIcon() :
+            entry.getType() == SourceMarker.ERROR ? resources_.styles().errorIcon() :
+            entry.getType() == SourceMarker.WARNING ? resources_.styles().warningIcon() :
             resources_.styles().boxIcon());
       tdIcon.appendChild(iconDiv);
       tr.appendChild(tdIcon);
@@ -92,7 +91,7 @@ public class CompileErrorItemCodec
 
    }
    
-   protected TableCellElement maybeCreateDisclosureButton(CompileError entry)
+   protected TableCellElement maybeCreateDisclosureButton(SourceMarker entry)
    {
       if (entry.getLogLine() != -1)
       {
@@ -190,7 +189,7 @@ public class CompileErrorItemCodec
       return showFileHeaders_;
    }
 
-   private final CompileErrorListResources resources_;
+   private final SourceMarkerListResources resources_;
    private boolean showFileHeaders_;
    private String fileHeaderBasePath_ = null;
 

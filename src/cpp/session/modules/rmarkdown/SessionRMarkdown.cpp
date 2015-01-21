@@ -373,6 +373,8 @@ private:
 
    void terminate(bool succeeded)
    {
+      using namespace module_context;
+
       markCompleted();
 
       // if a quiet terminate was requested, don't queue any client events
@@ -381,14 +383,13 @@ private:
 
       json::Object resultJson;
       resultJson["succeeded"] = succeeded;
-      resultJson["target_file"] =
-            module_context::createAliasedPath(targetFile_);
+      resultJson["target_file"] = createAliasedPath(targetFile_);
       resultJson["target_encoding"] = encoding_;
       resultJson["target_line"] = sourceLine_;
 
-      std::string outputFile = module_context::createAliasedPath(outputFile_);
+      std::string outputFile = createAliasedPath(outputFile_);
       resultJson["output_file"] = outputFile;
-      resultJson["knitr_errors"] = build::compileErrorsAsJson(knitrErrors_);
+      resultJson["knitr_errors"] = sourceMarkersAsJson(knitrErrors_);
 
       std::string outputUrl(kRmdOutput "/");
 
@@ -505,8 +506,8 @@ private:
          {
             // looks like a knitr error; compose a compile error object and
             // emit it to the client when the render is complete
-            build::CompileError err(
-                     build::CompileError::Error,
+            SourceMarker err(
+                     SourceMarker::Error,
                      targetFile_.parent().complete(matches[3].str()),
                      boost::lexical_cast<int>(matches[1].str()),
                      1,
@@ -530,7 +531,7 @@ private:
    std::string encoding_;
    bool sourceNavigation_;
    json::Object outputFormat_;
-   std::vector<build::CompileError> knitrErrors_;
+   std::vector<module_context::SourceMarker> knitrErrors_;
    std::string allOutput_;
 };
 

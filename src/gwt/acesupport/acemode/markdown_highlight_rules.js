@@ -213,16 +213,16 @@ var MarkdownHighlightRules = function() {
             token : "constant.language.escape",
             regex : /\\[\\`*_{}\[\]()#+\-.!]/
         }, { // code span `
-            token : "support.function",
+            token : ["support.function", "support.function", "support.function"],
             regex : "(`+)(.*?[^`])(\\1)"
         }, { // reference
             token : ["text", "constant", "text", "url", "string", "text"],
             regex : "^([ ]{0,3}\\[)([^\\]]+)(\\]:\\s*)([^ ]+)(\\s*(?:[\"][^\"]+[\"])?(\\s*))$"
         }, { // link by reference
-            token : ["text", "string", "text", "constant", "text"],
+            token : ["text", "keyword", "text", "constant", "text"],
             regex : "(\\[)(" + escaped("]") + ")(\\]\s*\\[)("+ escaped("]") + ")(\\])"
         }, { // link by url
-            token : ["text", "string", "text", "markup.underline", "string", "text"],
+            token : ["text", "keyword", "text", "markup.underline", "string", "text"],
             regex : "(\\[)(" +                                        // [
                 escaped("]") +                                    // link text
                 ")(\\]\\()"+                                      // ](
@@ -230,13 +230,13 @@ var MarkdownHighlightRules = function() {
                 '(\\s*"' +  escaped('"') + '"\\s*)?' +            // "title"
                 "(\\))"                                           // )
         }, { // strong ** __
-            token : "string.strong",
+            token : ["constant.numeric", "constant.numeric", "constant.numeric"],
             regex : "([*]{2}|[_]{2}(?=\\S))(.*?\\S[*_]*)(\\1)"
         }, { // emphasis * _
-            token : "string.emphasis",
+            token : ["constant.language.boolean", "constant.language.boolean", "constant.language.boolean"],
             regex : "([*]|[_](?=\\S))(.*?\\S[*_]*)(\\1)"
         }, { //
-            token : ["text", "url", "text"],
+            token : ["text", "keyword", "text"],
             regex : "(<)("+
                 "(?:https?|ftp|dict):[^'\">\\s]+"+
                 "|"+

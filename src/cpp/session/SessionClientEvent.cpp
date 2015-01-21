@@ -123,6 +123,7 @@ const int kInstallShiny = 98;
 const int kSuspendAndRestart = 99;
 const int kDataViewChanged = 100;
 const int kViewFunction = 101;
+const int kShowMarkers = 102;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -328,6 +329,8 @@ std::string ClientEvent::typeName() const
          return "data_view_changed";
       case client_events::kViewFunction:
          return "view_function";
+      case client_events::kShowMarkers:
+         return "show_markers";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

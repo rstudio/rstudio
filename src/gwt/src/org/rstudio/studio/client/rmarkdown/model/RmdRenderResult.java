@@ -14,7 +14,7 @@
  */
 package org.rstudio.studio.client.rmarkdown.model;
 
-import org.rstudio.studio.client.common.compile.CompileError;
+import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 
 import com.google.gwt.core.client.JsArray;
 
@@ -83,7 +83,7 @@ public class RmdRenderResult extends RmdSlideNavigationInfo
       return getFormat().getFormatName();
    }
    
-   public final native JsArray<CompileError> getKnitrErrors() /*-{
+   public final native JsArray<SourceMarker> getKnitrErrors() /*-{
       return this.knitr_errors;
    }-*/;
    

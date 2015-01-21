@@ -22,7 +22,8 @@ import org.rstudio.core.client.widget.LeftRightToggleButton;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.compile.errorlist.CompileErrorList;
+import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
+import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerList;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.gwt.core.client.JsArray;
@@ -47,7 +48,7 @@ public class CompilePanel extends Composite
       outputDisplay_ = outputDisplay;
       
       panel_.setWidget(outputDisplay_.asWidget());
-      errorList_ = new CompileErrorList();
+      errorList_ = new SourceMarkerList();
       
       initWidget(panel_);
    }
@@ -136,14 +137,14 @@ public class CompilePanel extends Composite
    }
    
    public void showErrors(String basePath, 
-                          JsArray<CompileError> errors,
+                          JsArray<SourceMarker> errors,
                           int autoSelect)
    {
       showErrors(basePath, errors, autoSelect, false);
    }
    
    public void showErrors(String basePath, 
-                          JsArray<CompileError> errors,
+                          JsArray<SourceMarker> errors,
                           int autoSelect,
                           boolean alwaysShowList)
    {
@@ -152,7 +153,7 @@ public class CompilePanel extends Composite
                             errors,
                             autoSelect);
 
-      if (alwaysShowList || CompileError.showErrorList(errors))
+      if (alwaysShowList || SourceMarker.showErrorList(errors))
       {
          panel_.setWidget(errorList_);
          showOutputButton_.setVisible(true);
@@ -204,6 +205,6 @@ public class CompilePanel extends Composite
    private LeftRightToggleButton showErrorsButton_;
    private SimplePanel panel_;
    private CompileOutputDisplay outputDisplay_;
-   private CompileErrorList errorList_;
+   private SourceMarkerList errorList_;
    private boolean canStop_ = true;
 }

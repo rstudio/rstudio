@@ -130,6 +130,8 @@ public class FindOutputPresenter extends BasePresenter
             if (!event.getHandle().equals(currentFindHandle_))
                return;
             view_.addMatches(event.getResults());
+            
+            view_.ensureVisible(true);
          }
       });
 

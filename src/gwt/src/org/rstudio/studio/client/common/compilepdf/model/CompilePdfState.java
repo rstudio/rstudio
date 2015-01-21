@@ -15,7 +15,7 @@
 
 package org.rstudio.studio.client.common.compilepdf.model;
 
-import org.rstudio.studio.client.common.compile.CompileError;
+import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -42,7 +42,7 @@ public class CompilePdfState extends JavaScriptObject
       return this.output;
    }-*/;
 
-   public final native JsArray<CompileError> getErrors() /*-{
+   public final native JsArray<SourceMarker> getErrors() /*-{
       return this.errors;
    }-*/;
 }

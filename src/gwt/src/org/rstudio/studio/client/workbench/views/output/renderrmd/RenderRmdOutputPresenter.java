@@ -29,7 +29,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.compile.CompileError;
+import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderOutputEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
@@ -147,7 +147,7 @@ public class RenderRmdOutputPresenter extends BusyPresenter
          view_.ensureVisible(true);
       }
       if (!event.getResult().getSucceeded() && 
-          CompileError.showErrorList(event.getResult().getKnitrErrors()))
+          SourceMarker.showErrorList(event.getResult().getKnitrErrors()))
       {
          view_.showErrors(event.getResult().getKnitrErrors());
       }

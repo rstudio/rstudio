@@ -708,6 +708,37 @@ core::Error createSelfContainedHtml(const core::FilePath& sourceFilePath,
 
 bool isUserFile(const core::FilePath& filePath);
 
+struct SourceMarker
+{
+   // NOTE: marker types are shared accross all client code that uses
+   // the SourceMarker type. therefore if we want to add more types
+   // we need to do so beyond the 'Box' value
+   enum Type {
+      Error = 0, Warning = 1  /*, Box = 2 */
+   };
+
+   SourceMarker(Type type,
+                const core::FilePath& path,
+                int line,
+                int column,
+                const std::string& message,
+                bool showErrorList)
+      : type(type), path(path), line(line), column(column), message(message),
+        showErrorList(showErrorList)
+   {
+   }
+
+   Type type;
+   core::FilePath path;
+   int line;
+   int column;
+   std::string message;
+   bool showErrorList;
+};
+
+core::json::Array sourceMarkersAsJson(const std::vector<SourceMarker>& markers);
+
+
 } // namespace module_context
 } // namespace session
 } // namespace rstudio

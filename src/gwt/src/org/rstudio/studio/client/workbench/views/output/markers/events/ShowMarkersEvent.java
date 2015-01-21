@@ -1,5 +1,5 @@
 /*
- * CompilePdfErrorsEvent.java
+ * ShowMarkersEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,30 +12,22 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.compilepdf.events;
+package org.rstudio.studio.client.workbench.views.output.markers.events;
 
-import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
-
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class CompilePdfErrorsEvent extends GwtEvent<CompilePdfErrorsEvent.Handler>
+public class ShowMarkersEvent extends GwtEvent<ShowMarkersEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onCompilePdfErrors(CompilePdfErrorsEvent event);
+      void onShowMarkers(ShowMarkersEvent event);
    }
 
-   public CompilePdfErrorsEvent(JsArray<SourceMarker> errors)
+   public ShowMarkersEvent()
    {
-      errors_ = errors;
    }
-   
-   public JsArray<SourceMarker> getErrors()
-   {
-      return errors_;
-   }
+
 
    @Override
    public Type<Handler> getAssociatedType()
@@ -46,10 +38,8 @@ public class CompilePdfErrorsEvent extends GwtEvent<CompilePdfErrorsEvent.Handle
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onCompilePdfErrors(this);
+      handler.onShowMarkers(this);
    }
-   
-   private JsArray<SourceMarker> errors_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }
