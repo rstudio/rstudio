@@ -549,9 +549,7 @@ public class RCompletionManager implements CompletionManager
       // Don't auto-popup if there is a character following the cursor
       // (this implies an in-line edit and automatic popups are likely to
       // be annoying)
-      char charAtCursor = docDisplay_.getCharacterAtCursor();
-      if (Character.isLetter(charAtCursor) ||
-          Character.isDigit(charAtCursor))
+      if (isValidForRIdentifier(docDisplay_.getCharacterAtCursor()))
          return false;
       
       // Grab the current token on the line
@@ -663,6 +661,11 @@ public class RCompletionManager implements CompletionManager
          
          // Bail if we're in a single-line string
          if (docDisplay_.isCursorInSingleLineString())
+            return false;
+         
+         // Bail if there is an alpha-numeric character
+         // following the cursor
+         if (isValidForRIdentifier(docDisplay_.getCharacterAtCursor()))
             return false;
          
          // Perform an auto-popup if a set number of R identifier characters
