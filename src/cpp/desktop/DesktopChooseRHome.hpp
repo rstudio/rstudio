@@ -31,13 +31,13 @@ class ChooseRHome : public QDialog
    Q_OBJECT
 
 public:
-   explicit ChooseRHome(QList<desktop::RVersion> list, QWidget *parent = 0);
+   explicit ChooseRHome(QList<rstudio::desktop::RVersion> list, QWidget *parent = 0);
    ~ChooseRHome();
 
    // "" means auto-detect
-   desktop::RVersion value();
+   rstudio::desktop::RVersion value();
    bool preferR64();
-   void setValue(const desktop::RVersion& value, bool preferR64);
+   void setValue(const rstudio::desktop::RVersion& value, bool preferR64);
 
 protected slots:
    void chooseOther();
