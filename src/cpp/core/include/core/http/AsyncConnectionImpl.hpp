@@ -34,6 +34,7 @@
 #include <core/http/RequestParser.hpp>
 #include <core/http/AsyncConnection.hpp>
 
+namespace rstudio {
 namespace core {
 namespace http {
    
@@ -258,6 +259,7 @@ private:
 
 } // namespace http
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_HTTP_ASYNC_CONNECTION_IMPL_HPP
 

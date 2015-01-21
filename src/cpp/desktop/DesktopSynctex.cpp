@@ -33,8 +33,9 @@
 #include "synctex/evince/EvinceSynctex.hpp"
 #endif
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace desktop {
 
 namespace {
@@ -173,3 +174,4 @@ void Synctex::onSyncSource(const QString &srcFile, const QPoint &srcLoc)
 }
 
 } // namespace desktop
+} // namespace rstudio

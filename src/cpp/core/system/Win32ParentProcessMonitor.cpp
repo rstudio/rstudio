@@ -21,6 +21,7 @@
 #include <core/SafeConvert.hpp>
 #include <core/Error.hpp>
 
+namespace rstudio {
 namespace core {
 namespace parent_process_monitor {
 
@@ -38,3 +39,4 @@ ParentTermination waitForParentTermination()
 
 } // namespace parent_process_monitor
 } // namespace core
+} // namespace rstudio

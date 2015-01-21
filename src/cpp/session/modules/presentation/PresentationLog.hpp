@@ -26,11 +26,14 @@
 
 #include "SlideParser.hpp"
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
 }
+}
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace presentation {
@@ -96,5 +99,6 @@ private:
 } // namespace presentation
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_PRESENTATION_LOG_HPP

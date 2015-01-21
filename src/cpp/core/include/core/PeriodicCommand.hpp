@@ -19,6 +19,7 @@
 
 #include <core/ScheduledCommand.hpp>
 
+namespace rstudio {
 namespace core {
 
 class PeriodicCommand : public ScheduledCommand
@@ -65,6 +66,7 @@ private:
 
 
 } // namespace core
+} // namespace rstudio
 
 
 #endif // CORE_PERIODIC_COMMAND_HPP

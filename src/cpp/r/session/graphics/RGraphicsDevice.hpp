@@ -18,11 +18,14 @@
 
 #include <boost/function.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
 }
+}
 
+namespace rstudio {
 namespace r {
 namespace session {
 namespace graphics {
@@ -51,6 +54,7 @@ void close();
 } // namespace graphics
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 
 #endif // R_SESSION_GRAPHICS_DEVICE_HPP 

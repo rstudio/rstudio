@@ -16,10 +16,13 @@
 #ifndef SESSION_UPDATES_HPP
 #define SESSION_UPDATES_HPP
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
 
+namespace rstudio {
 namespace session {
 namespace modules {
 namespace updates {
@@ -29,5 +32,6 @@ core::Error initialize();
 } // namespace updates
 } // namespace modules
 } // namespace session
+} // namespace rstudio
 
 #endif

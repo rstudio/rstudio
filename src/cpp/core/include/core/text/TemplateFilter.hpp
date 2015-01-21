@@ -28,6 +28,7 @@
 
 #include <core/StringUtils.hpp>
 
+namespace rstudio {
 namespace core {
 
 class FilePath;
@@ -91,6 +92,7 @@ void handleSecureTemplateRequest(const std::string& username,
 
 } // namespace text
 } // namespace core
+} // namespace rstudio
 
 
 #endif // CORE_TEXT_TEMPLATE_FILTER_HPP

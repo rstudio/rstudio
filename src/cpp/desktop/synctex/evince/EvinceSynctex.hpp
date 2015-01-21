@@ -26,6 +26,7 @@
 
 #include <DesktopSynctex.hpp>
 
+namespace rstudio {
 namespace desktop {
 
 class MainWindow;
@@ -108,5 +109,6 @@ private:
 
 } // namespace synctex
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_SYNCTEX_EVINCESYNCTEX_HPP

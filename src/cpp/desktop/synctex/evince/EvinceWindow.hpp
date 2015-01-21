@@ -29,6 +29,7 @@
 
 #include <DesktopSynctex.hpp>
 
+namespace rstudio {
 namespace desktop {
 namespace synctex {
 
@@ -80,6 +81,7 @@ private:
 
 } // namespace synctex
 } // namespace desktop
+} // namespace rstudio
 
 namespace org {
   namespace gnome {

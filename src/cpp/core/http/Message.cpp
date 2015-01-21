@@ -24,6 +24,7 @@
 
 #include <core/SafeConvert.hpp>
 
+namespace rstudio {
 namespace core {
 namespace http {
   
@@ -241,5 +242,6 @@ std::ostream& operator << (std::ostream& stream, const Message& m)
 
 } // namespace http
 } // namespace core
+} // namespace rstudio
 
 

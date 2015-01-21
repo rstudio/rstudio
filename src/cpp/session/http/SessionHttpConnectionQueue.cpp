@@ -21,8 +21,9 @@
 
 #include <core/http/Request.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace session {
 
 void HttpConnectionQueue::enqueConnection(
@@ -137,3 +138,4 @@ boost::posix_time::ptime HttpConnectionQueue::lastConnectionTime()
 }
 
 } // namespace session
+} // namespace rstudio

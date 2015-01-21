@@ -11,7 +11,8 @@
 #import "AppDelegate.h"
 #import "Utils.hpp"
 
-using namespace core;
+using namespace rstudio;
+using namespace rstudio::core;
 
 int main(int argc, char* argv[])
 {

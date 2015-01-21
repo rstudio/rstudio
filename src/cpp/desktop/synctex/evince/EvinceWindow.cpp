@@ -15,6 +15,7 @@
 
 #include "EvinceWindow.hpp"
 
+namespace rstudio {
 namespace desktop {
 namespace synctex {
 
@@ -36,4 +37,5 @@ EvinceWindow::~EvinceWindow()
 
 } // namespace synctex
 } // namespace desktop
+} // namespace rstudio
 

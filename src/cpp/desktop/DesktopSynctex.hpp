@@ -19,6 +19,7 @@
 #include <QObject>
 
 #include "DesktopMainWindow.hpp"
+namespace rstudio {
 namespace desktop {
 
 struct SynctexViewerInfo
@@ -95,5 +96,6 @@ private:
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_SYNCTEX_HPP

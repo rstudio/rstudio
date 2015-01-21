@@ -55,6 +55,7 @@
 #define JOB_OBJECT_LIMIT_BREAKAWAY_OK 0x00000800
 #endif
 
+namespace rstudio {
 namespace core {
 namespace system {
 
@@ -844,4 +845,5 @@ CloseHandleOnExitScope::~CloseHandleOnExitScope()
 
 } // namespace system
 } // namespace core
+} // namespace rstudio
 

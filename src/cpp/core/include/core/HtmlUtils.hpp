@@ -23,6 +23,7 @@
 
 #include <core/FilePath.hpp>
 
+namespace rstudio {
 namespace core {
 namespace html_utils {
    
@@ -57,6 +58,7 @@ private:
 
 } // namespace regex_utils
 } // namespace core 
+} // namespace rstudio
 
 
 #endif // CORE_HTML_UTILS_HPP

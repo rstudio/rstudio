@@ -26,8 +26,9 @@
 
 #include "DesktopUtils.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace desktop {
 
 #ifdef _WIN32
@@ -379,3 +380,4 @@ bool Options::webkitDevTools()
 }
 
 } // namespace desktop
+} // namespace rstudio

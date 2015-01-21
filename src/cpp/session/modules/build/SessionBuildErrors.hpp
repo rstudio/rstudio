@@ -25,6 +25,7 @@
 #include <core/FilePath.hpp>
 #include <core/json/Json.hpp>
 
+namespace rstudio {
 namespace session {
 namespace modules {
 namespace build {
@@ -99,6 +100,7 @@ CompileErrorParser rErrorParser(const core::FilePath& basePath);
 } // namespace build
 } // namespace modules
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_BUILD_ERRORS_HPP
 

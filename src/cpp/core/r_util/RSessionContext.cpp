@@ -28,6 +28,7 @@
 
 #include <core/r_util/RProjectFile.hpp>
 
+namespace rstudio {
 namespace core {
 namespace r_util {
 
@@ -194,6 +195,7 @@ RVersionInfo nextSessionRVersion(SessionType sessionType,
 
 } // namespace r_util
 } // namespace core 
+} // namespace rstudio
 
 
 

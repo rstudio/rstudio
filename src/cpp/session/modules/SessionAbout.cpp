@@ -25,8 +25,9 @@
 
 #include "session-config.h"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules {
 namespace about {
@@ -59,3 +60,4 @@ Error initialize()
 } // namespace about
 } // namespace modules
 } // namespace session
+} // namespace rstudio

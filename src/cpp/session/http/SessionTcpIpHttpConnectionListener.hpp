@@ -20,8 +20,9 @@
 #include "SessionHttpConnectionUtils.hpp"
 #include "SessionHttpConnectionListenerImpl.hpp"
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace session {
 
 // implementation of local stream http connection listener
@@ -72,3 +73,4 @@ private:
 };
 
 } // namespace session
+} // namespace rstudio

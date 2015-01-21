@@ -29,6 +29,8 @@
 
 
 
+using namespace rstudio;
+
 @implementation MainFrameController
 
 static MainFrameController* instance_;

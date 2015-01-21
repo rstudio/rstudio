@@ -17,6 +17,7 @@
 #define CORE_SYSTEM_RECYCLE_BIN_HPP
 
 
+namespace rstudio {
 namespace core {
 
 class Error;
@@ -30,6 +31,7 @@ Error sendTo(const FilePath& filePath);
 } // namespace recycle_bin
 } // namespace system
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_SYSTEM_RECYCLE_BIN_HPP
 

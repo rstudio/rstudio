@@ -30,8 +30,9 @@
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace console {
@@ -178,4 +179,5 @@ Error initialize()
 } // namespace console
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

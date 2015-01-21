@@ -25,6 +25,7 @@
 #include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
 
+namespace rstudio {
 namespace core {
 namespace base64 {
 
@@ -71,6 +72,7 @@ Error encode(const FilePath& inputFile, std::string* pOutput)
 
 } // namespace base64
 } // namespace core
+} // namespace rstudio
 
 
 

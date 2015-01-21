@@ -27,7 +27,7 @@ namespace {
 
 int logPriority(int logLevel)
 {
-   using namespace core::system;
+   using namespace rstudio::core::system;
 
    // map universal log entry type to posix constant
    switch(logLevel)
@@ -51,6 +51,7 @@ int logPriority(int logLevel)
 
 } // anonymous namespace
 
+namespace rstudio {
 namespace core {
 
 SyslogLogWriter::~SyslogLogWriter()
@@ -106,4 +107,5 @@ void SyslogLogWriter::log(const std::string&,
 }
 
 } // namespace core
+} // namespace rstudio
 

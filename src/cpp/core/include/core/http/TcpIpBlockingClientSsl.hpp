@@ -20,6 +20,7 @@
 
 #include <core/http/TcpIpAsyncClientSsl.hpp>
 
+namespace rstudio {
 namespace core {
 namespace http {  
 
@@ -44,5 +45,6 @@ inline Error sendSslRequest(const std::string& address,
    
 } // namespace http
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_HTTP_TCP_IP_BLOCKING_CLIENT_SSL_HPP

@@ -18,6 +18,7 @@
 
 #include <string>
 
+namespace rstudio {
 namespace core {
 
 class Error;
@@ -30,5 +31,6 @@ Error closeLibrary(void* pLib);
 
 } // namespace system
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_SYSTEM_LIBRARY_LOADER_HPP

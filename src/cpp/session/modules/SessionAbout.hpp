@@ -16,10 +16,13 @@
 #ifndef SESSION_ABOUT_HPP
 #define SESSION_ABOUT_HPP
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
 
+namespace rstudio {
 namespace session {
 namespace modules {
 namespace about {
@@ -29,5 +32,6 @@ core::Error initialize();
 } // namespace about
 } // namespace modules
 } // namespace session
+} // namespace rstudio
 
 #endif

@@ -17,6 +17,7 @@
 
 #include "MonitorClientImpl.hpp"
 
+namespace rstudio {
 namespace monitor {
 
 namespace {
@@ -81,5 +82,6 @@ Client& client()
 }
 
 } // namespace monitor
+} // namespace rstudio
 
 

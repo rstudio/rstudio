@@ -54,8 +54,9 @@
 #define kHTMLPreview "html_preview"
 #define kHTMLPreviewLocation "/" kHTMLPreview "/"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace html_preview {
@@ -1021,4 +1022,5 @@ Error initialize()
 } // namespace html_preview
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

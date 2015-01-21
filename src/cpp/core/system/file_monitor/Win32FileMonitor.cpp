@@ -30,6 +30,7 @@
 #include "FileMonitorImpl.hpp"
 
 
+namespace rstudio {
 namespace core {
 namespace system {
 namespace file_monitor {
@@ -617,6 +618,7 @@ void stop()
 } // namespace file_monitor
 } // namespace system
 } // namespace core 
+} // namespace rstudio
 
    
 

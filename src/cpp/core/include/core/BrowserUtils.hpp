@@ -19,6 +19,7 @@
 #include <string>
 #include <boost/regex.hpp>
 
+namespace rstudio {
 namespace core {
 
 class Error;
@@ -40,6 +41,7 @@ bool hasRequiredBrowser(const std::string& userAgent);
 
 } // namespace browser_utils
 } // namespace core 
+} // namespace rstudio
 
 
 #endif // CORE_BROWSER_UTILS_HPP

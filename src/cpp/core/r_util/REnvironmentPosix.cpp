@@ -32,6 +32,7 @@
 #include <core/system/Process.hpp>
 #include <core/system/Environment.hpp>
 
+namespace rstudio {
 namespace core {
 namespace r_util {
 
@@ -780,6 +781,7 @@ Error rVersion(const FilePath& rHomePath,
 
 } // namespace r_util
 } // namespace core 
+} // namespace rstudio
 
 
 

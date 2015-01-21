@@ -33,6 +33,7 @@
 
 #include <core/r_util/RTokenizer.hpp>
 
+namespace rstudio {
 namespace core {
 namespace r_util {
 
@@ -339,6 +340,7 @@ private:
 
 } // namespace r_util
 } // namespace core 
+} // namespace rstudio
 
 
 #endif // CORE_R_UTIL_R_SOURCE_INDEX_HPP

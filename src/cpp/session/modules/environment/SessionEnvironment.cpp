@@ -37,8 +37,9 @@
 
 #define BROWSER_FUNCTION 0
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace environment {
@@ -489,7 +490,7 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
 
 json::Array environmentListAsJson()
 {
-    using namespace r::sexp;
+    using namespace rstudio::r::sexp;
     Protect rProtect;
     std::vector<Variable> vars;
     json::Array listJson;
@@ -1167,4 +1168,5 @@ Error initialize()
 } // namespace environment
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

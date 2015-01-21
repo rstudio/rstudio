@@ -33,6 +33,7 @@
 #endif
 #include <boost/interprocess/sync/file_lock.hpp>
 
+namespace rstudio {
 namespace core {
 
 bool FileLock::isLocked(const FilePath& lockFilePath)
@@ -170,6 +171,7 @@ FilePath FileLock::lockFilePath() const
 
 
 } // namespace core
+} // namespace rstudio
 
 
 

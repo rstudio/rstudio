@@ -34,6 +34,7 @@
 #include "sundown/markdown.h"
 #include "sundown/html.h"
 
+namespace rstudio {
 namespace core {
 namespace markdown {
 
@@ -455,6 +456,7 @@ bool isMathJaxRequired(const std::string& htmlOutput)
 
 } // namespace markdown
 } // namespace core
+} // namespace rstudio
    
 
 

@@ -39,6 +39,7 @@
 
 typedef boost::filesystem::path path_t;
 
+namespace rstudio {
 namespace core {
 
 namespace {
@@ -1174,3 +1175,4 @@ void addErrorProperties(path_t path, Error* pError)
 }
 
 } // namespace core
+} // namespace rstudio

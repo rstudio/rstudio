@@ -22,6 +22,7 @@
 #include <QMenu>
 #include <QKeyEvent>
 
+namespace rstudio {
 namespace desktop {
 
 class SubMenu : public QMenu
@@ -38,5 +39,6 @@ protected slots:
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_SUBMENU_HPP

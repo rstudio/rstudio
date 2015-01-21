@@ -20,8 +20,9 @@
 
 #include <r/RExec.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace r {
 namespace function_hook {
    
@@ -45,6 +46,7 @@ Error registerUnsupportedWithAlternative(const std::string& name,
 
 } // namespace function_hook   
 } // namespace r
+} // namespace rstudio
 
 
 

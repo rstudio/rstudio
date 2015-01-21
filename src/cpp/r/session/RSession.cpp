@@ -70,8 +70,9 @@ extern "C" SA_TYPE SaveAction;
 // constants for graphics scratch subdirectory
 #define kGraphicsPath "graphics"
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace r {
 namespace session {
 
@@ -1693,3 +1694,4 @@ SuppressOutputInScope::~SuppressOutputInScope()
    
 } // namespace session
 } // namespace r
+} // namespace rstudio

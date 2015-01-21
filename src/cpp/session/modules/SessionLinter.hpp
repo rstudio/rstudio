@@ -16,10 +16,13 @@
 #ifndef SESSION_LINTER_HPP
 #define SESSION_LINTER_HPP
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
 
+namespace rstudio {
 namespace session {
 namespace modules {
 namespace linter {
@@ -29,5 +32,6 @@ core::Error initialize();
 } // namespace linter
 } // namespace modules
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_LNTER_HPP

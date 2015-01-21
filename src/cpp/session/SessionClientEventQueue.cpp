@@ -25,8 +25,9 @@
 
 #include <r/session/RConsoleActions.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace session {
  
 namespace {
@@ -175,3 +176,4 @@ void ClientEventQueue::flushPendingConsoleOutput()
 }
 
 } // namespace session
+} // namespace rstudio

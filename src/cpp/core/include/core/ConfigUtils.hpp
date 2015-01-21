@@ -19,6 +19,7 @@
 #include <string>
 #include <map>
 
+namespace rstudio {
 namespace core {
 
 class Error;
@@ -33,6 +34,7 @@ Error extractVariables(const FilePath& file, Variables* pVariables);
 
 } // namespace config_utils
 } // namespace core 
+} // namespace rstudio
 
 
 #endif // CORE_CONFIG_UTILS_HPP

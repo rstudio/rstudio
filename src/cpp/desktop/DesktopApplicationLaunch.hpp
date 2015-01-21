@@ -21,6 +21,7 @@
 #include <QApplication>
 #include <boost/scoped_ptr.hpp>
 
+namespace rstudio {
 namespace desktop {
 
 class ApplicationLaunch : public QWidget
@@ -60,5 +61,6 @@ private:
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOPAPPLICATIONLAUNCH_HPP

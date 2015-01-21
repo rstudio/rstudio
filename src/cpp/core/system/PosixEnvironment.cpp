@@ -21,6 +21,7 @@
 
 extern char **environ;
 
+namespace rstudio {
 namespace core {
 namespace system {
 
@@ -65,4 +66,5 @@ void unsetenv(const std::string& name)
 
 } // namespace sytem
 } // namespace core
+} // namespace rstudio
 

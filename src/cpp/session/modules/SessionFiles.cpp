@@ -60,8 +60,9 @@
 #include "SessionFilesQuotas.hpp"
 #include "SessionFilesListingMonitor.hpp"
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace session {
 
 namespace modules { 
@@ -938,4 +939,5 @@ Error initialize()
 } // namepsace files
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

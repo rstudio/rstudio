@@ -23,6 +23,7 @@
 #include <ApplicationServices/ApplicationServices.h>
 #endif
 
+namespace rstudio {
 namespace desktop {
 
 MenuCallback::MenuCallback(QObject *parent) :
@@ -309,3 +310,4 @@ void WindowMenu::showWindow()
 }
 
 } // namespace desktop
+} // namespace rstudio

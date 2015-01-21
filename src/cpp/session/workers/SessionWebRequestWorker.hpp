@@ -16,10 +16,13 @@
 #ifndef SESSION_WEB_REQUEST_WORKER_HPP
 #define SESSION_WEB_REQUEST_WORKER_HPP
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
 
+namespace rstudio {
 namespace session {
 namespace workers {
 namespace web_request {
@@ -29,5 +32,6 @@ core::Error initialize();
 } // namespace web_request
 } // namespace workers
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_WEB_REQUEST_WORKER_HPP

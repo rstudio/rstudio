@@ -32,8 +32,9 @@
 #include <session/SessionConsoleProcess.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 
 namespace {
@@ -397,4 +398,5 @@ Error installEmbeddedPackage(const std::string& name)
 } // anonymous namespace
 
 } // namesapce session
+} // namespace rstudio
 

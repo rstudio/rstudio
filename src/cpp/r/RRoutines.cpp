@@ -17,6 +17,7 @@
 
 #include <algorithm>
 
+namespace rstudio {
 namespace r {
 namespace routines {
  
@@ -81,6 +82,7 @@ void registerAll()
    
 } // namespace routines   
 } // namespace r
+} // namespace rstudio
 
 
 

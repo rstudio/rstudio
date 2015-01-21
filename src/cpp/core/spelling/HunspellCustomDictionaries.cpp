@@ -19,6 +19,7 @@
 
 #include <core/Algorithm.hpp>
 
+namespace rstudio {
 namespace core {
 namespace spelling {
 
@@ -83,3 +84,4 @@ Error HunspellCustomDictionaries::remove(const std::string& name) const
 
 } // namespace spelling
 } // namespace core
+} // namespace rstudio

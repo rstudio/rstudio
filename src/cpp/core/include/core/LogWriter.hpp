@@ -18,6 +18,7 @@
 
 #include <core/system/System.hpp>
 
+namespace rstudio {
 namespace core {
 
 class LogWriter
@@ -52,5 +53,6 @@ void addLogWriter(boost::shared_ptr<core::LogWriter> pLogWriter);
 } // namespace system
 
 } // namespace core
+} // namespace rstudio
 
 #endif // LOG_WRITER_HPP

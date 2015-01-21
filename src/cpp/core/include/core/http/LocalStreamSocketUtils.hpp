@@ -25,6 +25,7 @@
 
 #include <core/http/SocketAcceptorService.hpp>
 
+namespace rstudio {
 namespace core {
 namespace http {  
 
@@ -84,5 +85,6 @@ inline Error initLocalStreamAcceptor(
 
 } // namespace http
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_HTTP_LOCAL_STREAM_SOCKET_UTILS_HPP

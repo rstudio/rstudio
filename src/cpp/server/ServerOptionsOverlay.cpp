@@ -15,8 +15,9 @@
 
 #include <server/ServerOptions.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace server {
 
 void Options::addOverlayOptions(
@@ -39,3 +40,4 @@ void Options::resolveOverlayOptions()
 }
 
 } // namespace server
+} // namespace rstudio

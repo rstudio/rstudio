@@ -29,6 +29,7 @@
 #include <core/http/AsyncClient.hpp>
 #include <core/http/TcpIpAsyncConnector.hpp>
 
+namespace rstudio {
 namespace core {
 namespace http {  
 
@@ -152,5 +153,6 @@ private:
 
 } // namespace http
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_HTTP_TCP_IP_ASYNC_CLIENT_SSL_HPP

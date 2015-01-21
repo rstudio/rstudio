@@ -26,6 +26,7 @@
 
 #include <core/StringUtils.hpp>
 
+namespace rstudio {
 namespace core {
 namespace regex_utils {
 
@@ -122,6 +123,7 @@ Error filterString(const std::string& input,
 
 } // namespace regex_utils
 } // namespace core 
+} // namespace rstudio
 
 
 

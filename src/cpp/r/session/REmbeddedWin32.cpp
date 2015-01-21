@@ -44,8 +44,9 @@ extern "C" void R_ProcessEvents(void);
 extern "C" void R_CleanUp(SA_TYPE, int, int);
 extern "C" UImode CharacterMode;
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace r {
 namespace session {
 
@@ -264,6 +265,7 @@ void processEvents()
 } // namespace event_loop
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 
 

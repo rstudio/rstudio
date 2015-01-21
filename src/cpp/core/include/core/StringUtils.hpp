@@ -20,6 +20,7 @@
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 
+namespace rstudio {
 namespace core {
 namespace string_utils {
 
@@ -210,6 +211,7 @@ std::size_t countNewLines(std::wstring::iterator begin,
 
 } // namespace string_utils
 } // namespace core 
+} // namespace rstudio
 
 #endif // CORE_STRING_UTILS_HPP
 

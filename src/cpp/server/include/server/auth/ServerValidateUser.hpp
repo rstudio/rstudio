@@ -20,6 +20,7 @@
 
 #include <server/ServerOptions.hpp>
 
+namespace rstudio {
 namespace server {
 namespace auth {
 
@@ -38,6 +39,7 @@ inline bool validateUser(const std::string& username)
 
 } // namespace auth
 } // namespace server
+} // namespace rstudio
 
 #endif // SERVER_AUTH_VALIDATE_USER_HPP
 

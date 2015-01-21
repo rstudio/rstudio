@@ -55,8 +55,9 @@
 #undef TRUE
 #undef FALSE
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace help {
@@ -872,7 +873,7 @@ Error initialize()
    using boost::bind;
    using core::http::UriHandler;
    using namespace module_context;
-   using namespace r::function_hook ;
+   using namespace rstudio::r::function_hook ;
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRBrowseUrlHandler, handleLocalHttpUrl))
@@ -912,4 +913,5 @@ Error initialize()
 } // namepsace help
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

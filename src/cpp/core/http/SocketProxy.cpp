@@ -35,8 +35,9 @@
 
 #include <core/http/SocketUtils.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace core {
 namespace http {
 
@@ -181,3 +182,4 @@ void SocketProxy::close()
 
 } // namespace http
 } // namespace core
+} // namespace rstudio

@@ -21,6 +21,7 @@
 
 #include "DesktopWebView.hpp"
 
+namespace rstudio {
 namespace desktop {
 
 namespace {
@@ -100,3 +101,4 @@ void SecondaryWindow::manageCommandState()
 }
 
 } // namespace desktop
+} // namespace rstudio

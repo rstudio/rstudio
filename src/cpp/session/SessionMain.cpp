@@ -153,16 +153,19 @@ extern "C" const char *locale2charset(const char *);
 
 #include "session-config.h"
 
-using namespace core; 
+using namespace rstudio;
+using namespace rstudio::core;
 using namespace session;
 using namespace session::client_events;
 
 // forward-declare overlay methods
+namespace rstudio {
 namespace session {
 namespace overlay {
 Error initialize();
 } // namespace overlay
 } // namespace session
+} // namespace rstudio
 
 namespace {
 
@@ -198,7 +201,7 @@ volatile sig_atomic_t s_rProcessingInput = 0;
 // did we fail to coerce the charset to UTF-8
 bool s_printCharsetWarning = false;
 
-std::queue<r::session::RConsoleInput> s_consoleInputBuffer;
+std::queue<rstudio::r::session::RConsoleInput> s_consoleInputBuffer;
 
 // json rpc methods we handle (the rest are delegated to the HttpServer)
 const char * const kClientInit = "client_init" ;
@@ -240,7 +243,7 @@ void handleUSR2(int unused)
       s_forceSuspendInterruptedR = 1;
 
    // set the r interrupt flag (always)
-   r::exec::setInterruptsPending(true);
+   rstudio::r::exec::setInterruptsPending(true);
 
    // note that a suspend is being forced. 
    s_forceSuspend = 1;
@@ -318,7 +321,7 @@ void ensureSessionInitialized()
    // ensure the session is fully deserialized (deferred deserialization
    // is supported so that the workbench UI can load without having to wait
    // for the potentially very lengthy deserialization of the environment)
-   r::session::ensureDeserialized();
+   rstudio::r::session::ensureDeserialized();
 }
 
 FilePath getDefaultWorkingDirectory()
@@ -445,7 +448,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    }
 
    // temp dir
-   FilePath tempDir = r::session::utils::tempDir();
+   FilePath tempDir = rstudio::r::session::utils::tempDir();
    Error error = tempDir.ensureDirectory();
    if (error)
       LOG_ERROR(error);
@@ -455,11 +458,11 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["version"] = installedVersion();
    
    // default prompt
-   sessionInfo["prompt"] = r::options::getOption<std::string>("prompt");
+   sessionInfo["prompt"] = rstudio::r::options::getOption<std::string>("prompt");
 
    // client state
    json::Object clientStateObject;
-   r::session::clientState().currentState(&clientStateObject);
+   rstudio::r::session::clientState().currentState(&clientStateObject);
    sessionInfo["client_state"] = clientStateObject;
    
    // source documents
@@ -477,7 +480,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["docsURL"] = session::options().docsURL();
 
    // get alias to console_actions and get limit
-   r::session::ConsoleActions& consoleActions = r::session::consoleActions();
+   rstudio::r::session::ConsoleActions& consoleActions = rstudio::r::session::consoleActions();
    sessionInfo["console_actions_limit"] = consoleActions.capacity();
 
    // resumed
@@ -596,10 +599,10 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // console history -- we do this at the end because
    // restoreBuildRestartContext may have reset it
    json::Array historyArray;
-   r::session::consoleHistory().asJson(&historyArray);
+   rstudio::r::session::consoleHistory().asJson(&historyArray);
    sessionInfo["console_history"] = historyArray;
    sessionInfo["console_history_capacity"] =
-                              r::session::consoleHistory().capacity();
+                              rstudio::r::session::consoleHistory().capacity();
 
    sessionInfo["disable_packages"] =
            !core::system::getenv("RSTUDIO_DISABLE_PACKAGES").empty();
@@ -877,7 +880,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
 #ifdef _WIN32
             // if we are on windows then we can't quit while the browser
             // context is active
-            if (r::session::browserContextActive())
+            if (rstudio::r::session::browserContextActive())
             {
                module_context::consoleWriteError(
                         "Error: unable to quit when browser is active\n");
@@ -911,7 +914,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
             json::JsonRpcResponse response;
             response.setResult(true);
             ptrConnection->sendJsonRpcResponse(response);
-            r::session::quit(saveWorkspace, status); // does not return
+            rstudio::r::session::quit(saveWorkspace, status); // does not return
          }
          else if (jsonRpcRequest.method == kSuspendSession)
          {
@@ -941,7 +944,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
 
             // only accept interrupts while R is processing input
             if ( s_rProcessingInput )
-               r::exec::setInterruptsPending(true);
+               rstudio::r::exec::setInterruptsPending(true);
          }
 
          // other rpc method, handle it
@@ -1019,7 +1022,7 @@ void polledEventHandler()
    if (s_wasForked)
    {
       // no more polled events
-      r::session::event_loop::permanentlyDisablePolledEventHandler();
+      rstudio::r::session::event_loop::permanentlyDisablePolledEventHandler();
 
       // done
       return;
@@ -1086,10 +1089,10 @@ bool suspendSession(bool force)
 {
    // need to make sure the global environment is loaded before we
    // attemmpt to save it!
-   r::session::ensureDeserialized();
+   rstudio::r::session::ensureDeserialized();
 
    // perform the suspend (does not return if successful)
-   return r::session::suspend(force);
+   return rstudio::r::session::suspend(force);
 }
 
 void suspendIfRequested(const boost::function<bool()>& allowSuspend)
@@ -1112,7 +1115,7 @@ void suspendIfRequested(const boost::function<bool()>& allowSuspend)
          s_forceSuspendInterruptedR = false;
 
          // notify user
-         r::session::reportAndLogWarning(
+         rstudio::r::session::reportAndLogWarning(
             "Session forced to suspend due to system upgrade, restart, maintenance, "
             "or other issue. Your session data was saved however running "
             "computations may have been interrupted.");
@@ -1143,7 +1146,7 @@ bool haveRunningChildren()
 
 bool canSuspend(const std::string& prompt)
 {
-   return !haveRunningChildren() && r::session::isSuspendable(prompt);
+   return !haveRunningChildren() && rstudio::r::session::isSuspendable(prompt);
 }
 
 
@@ -1199,8 +1202,8 @@ void processDesktopGuiEvents()
    {
       // execute safely since this can call arbitrary R code (and
       // (can also cause jump_to_top if an interrupt is pending)
-      Error error = r::exec::executeSafely(
-                        r::session::event_loop::processEvents);
+      Error error = rstudio::r::exec::executeSafely(
+                        rstudio::r::session::event_loop::processEvents);
       if (error)
          LOG_ERROR(error);
    }
@@ -1312,8 +1315,8 @@ bool waitForMethod(const std::string& method,
          // by the logic above. if we didn't do this then client_init or
          // console_input (often the first request) could go directly to
          // handleConnection which wouldn't know what to do with them
-         if (!r::session::event_loop::polledEventHandlerInitialized())
-            r::session::event_loop::initializePolledEventHandler(
+         if (!rstudio::r::session::event_loop::polledEventHandlerInitialized())
+            rstudio::r::session::event_loop::initializePolledEventHandler(
                                                      polledEventHandler);
       }
    }
@@ -1342,7 +1345,7 @@ bool waitForMethod(const std::string& method,
 // prompt or a busy event
 void waitForMethodInitFunction(const ClientEvent& initEvent);
 
-void addToConsoleInputBuffer(const r::session::RConsoleInput& consoleInput)
+void addToConsoleInputBuffer(const rstudio::r::session::RConsoleInput& consoleInput)
 {
    if (consoleInput.cancel || consoleInput.text.find('\n') == std::string::npos)
    {
@@ -1373,14 +1376,14 @@ Error extractConsoleInput(const json::JsonRpcRequest& request)
    {
       if (request.params[0].is_null())
       {
-         addToConsoleInputBuffer(r::session::RConsoleInput());
+         addToConsoleInputBuffer(rstudio::r::session::RConsoleInput());
          return Success();
       }
       else if (request.params[0].type() == json::StringType)
       {
          // get console input to return to R
          std::string text = request.params[0].get_str();
-         addToConsoleInputBuffer(r::session::RConsoleInput(text));
+         addToConsoleInputBuffer(rstudio::r::session::RConsoleInput(text));
 
          // return success
          return Success();
@@ -1407,17 +1410,17 @@ Error bufferConsoleInput(const core::json::JsonRpcRequest& request,
 }
 
 
-void doSuspendForRestart(const r::session::RSuspendOptions& options)
+void doSuspendForRestart(const rstudio::r::session::RSuspendOptions& options)
 {
    module_context::consoleWriteOutput("\nRestarting R session...\n\n");
 
-   r::session::suspendForRestart(options);
+   rstudio::r::session::suspendForRestart(options);
 }
 
 Error suspendForRestart(const core::json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
-   r::session::RSuspendOptions options;
+   rstudio::r::session::RSuspendOptions options;
    Error error = json::readObjectParam(
                                request.params, 0,
                                "save_minimal", &(options.saveMinimal),
@@ -1476,7 +1479,7 @@ void registerGwtHandlers()
 Error registerSignalHandlers()
 {
    using boost::bind;
-   using namespace core::system;
+   using namespace rstudio::core::system;
 
    // USR1 and USR2: perform suspend in server mode
    if (session::options().programMode() == kSessionProgramModeServer)
@@ -1537,7 +1540,7 @@ Error runPreflightScript()
    return Success();
 }
       
-Error rInit(const r::session::RInitInfo& rInitInfo) 
+Error rInit(const rstudio::r::session::RInitInfo& rInitInfo) 
 {
    // save state we need to reference later
    s_rSessionResumed = rInitInfo.resumed;
@@ -1551,7 +1554,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
 
    // execute core initialization functions
    using boost::bind;
-   using namespace core::system;
+   using namespace rstudio::core::system;
    using namespace session::module_context;
    ExecBlock initialize ;
    initialize.addFunctions()
@@ -1644,8 +1647,8 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (bind(sourceModuleRFile, "SessionCompletionHooks.R"))
    
       // unsupported functions
-      (bind(r::function_hook::registerUnsupported, "bug.report", "utils"))
-      (bind(r::function_hook::registerUnsupported, "help.request", "utils"))
+      (bind(rstudio::r::function_hook::registerUnsupported, "bug.report", "utils"))
+      (bind(rstudio::r::function_hook::registerUnsupported, "help.request", "utils"))
    ;
 
    Error error = initialize.execute();
@@ -1666,7 +1669,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
             std::cout << "Diagnostics report written to: "
                       << diagFile << std::endl << std::endl;
 
-            Error error = r::exec::RFunction(".rs.showDiagnostics").call();
+            Error error = rstudio::r::exec::RFunction(".rs.showDiagnostics").call();
             if (error)
                LOG_ERROR(error);
          }
@@ -1678,7 +1681,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
 
    // register all of the json rpc methods implemented in R
    json::JsonRpcMethods rMethods ;
-   error = r::json::getRpcMethods(&rMethods);
+   error = rstudio::r::json::getRpcMethods(&rMethods);
    if (error)
       return error ;
    BOOST_FOREACH(const json::JsonRpcMethod& method, rMethods)
@@ -1705,16 +1708,16 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
    }
 
    if (s_printCharsetWarning)
-      r::exec::warning("Character set is not UTF-8; please change your locale");
+      rstudio::r::exec::warning("Character set is not UTF-8; please change your locale");
 
    // propagate console history options
-   r::session::consoleHistory().setRemoveDuplicates(
+   rstudio::r::session::consoleHistory().setRemoveDuplicates(
                                  userSettings().removeHistoryDuplicates());
 
 
    // register function editor on windows
 #ifdef _WIN32
-   error = r::exec::RFunction(".rs.registerFunctionEditor").call();
+   error = rstudio::r::exec::RFunction(".rs.registerFunctionEditor").call();
    if (error)
       LOG_ERROR(error);
 #endif
@@ -1755,7 +1758,7 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
    json::Object data ;
    data["prompt"] = prompt ;
    data["history"] = addToHistory;
-   bool isDefaultPrompt = prompt == r::options::getOption<std::string>("prompt");
+   bool isDefaultPrompt = prompt == rstudio::r::options::getOption<std::string>("prompt");
    data["default"] = isDefaultPrompt;
    ClientEvent consolePromptEvent(client_events::kConsolePrompt, data);
    session::clientEventQueue().add(consolePromptEvent);
@@ -1774,7 +1777,7 @@ void reissueLastConsolePrompt()
 
 bool rConsoleRead(const std::string& prompt,
                   bool addToHistory,
-                  r::session::RConsoleInput* pConsoleInput)
+                  rstudio::r::session::RConsoleInput* pConsoleInput)
 {
    // this is an invalid state in a forked (multicore) process
    if (s_wasForked)
@@ -1819,7 +1822,7 @@ bool rConsoleRead(const std::string& prompt,
       if (error)
       {
          LOG_ERROR(error);
-         *pConsoleInput = r::session::RConsoleInput("");
+         *pConsoleInput = rstudio::r::session::RConsoleInput("");
       }
       *pConsoleInput = s_consoleInputBuffer.front();
       s_consoleInputBuffer.pop();
@@ -1971,7 +1974,7 @@ void rConsoleWrite(const std::string& output, int otype)
 void rConsoleHistoryReset()
 {
    json::Array historyJson;
-   r::session::consoleHistory().asJson(&historyJson);
+   rstudio::r::session::consoleHistory().asJson(&historyJson);
    json::Object resetJson;
    resetJson["history"] = historyJson;
    resetJson["preserve_ui_context"] = false;
@@ -2094,7 +2097,7 @@ void rBrowseFile(const core::FilePath& filePath)
    // case we can serve it over http)
    if ((filePath.mimeContentType() == "text/html") &&
        filePath.isWithin(module_context::tempDir()) &&
-       r::util::hasRequiredVersion("2.14"))
+       rstudio::r::util::hasRequiredVersion("2.14"))
    {
       std::string path = filePath.relativePath(module_context::tempDir());
       std::string url = module_context::sessionTempDirUrl(path);
@@ -2126,7 +2129,7 @@ void logExitEvent(const monitor::Event& precipitatingEvent)
    client().logEvent(Event(kSessionScope, kSessionExitEvent));
 }
    
-void rSuspended(const r::session::RSuspendOptions& options)
+void rSuspended(const rstudio::r::session::RSuspendOptions& options)
 {
    // log to monitor
    using namespace monitor;
@@ -2436,9 +2439,9 @@ SA_TYPE saveWorkspaceOption()
 {
    // convert from internal type to R type
    int saveAction = module_context::saveWorkspaceAction();
-   if (saveAction == r::session::kSaveActionSave)
+   if (saveAction == rstudio::r::session::kSaveActionSave)
       return SA_SAVE;
-   else if (saveAction == r::session::kSaveActionNoSave)
+   else if (saveAction == rstudio::r::session::kSaveActionNoSave)
       return SA_NOSAVE;
    else
       return SA_SAVEASK;
@@ -2538,6 +2541,7 @@ void waitForMethodInitFunction(const ClientEvent& initEvent)
 
 
 // provide definition methods for session::module_context
+namespace rstudio {
 namespace session { 
 namespace module_context {
    
@@ -2674,11 +2678,11 @@ int saveWorkspaceAction()
       switch(projContext.config().saveWorkspace)
       {
       case r_util::YesValue:
-         return r::session::kSaveActionSave;
+         return rstudio::r::session::kSaveActionSave;
       case r_util::NoValue:
-         return r::session::kSaveActionNoSave;
+         return rstudio::r::session::kSaveActionNoSave;
       case r_util::AskValue:
-         return r::session::kSaveActionAsk;
+         return rstudio::r::session::kSaveActionAsk;
       default:
          // fall through
          break;
@@ -2691,7 +2695,7 @@ int saveWorkspaceAction()
 
 void syncRSaveAction()
 {
-   r::session::setSaveAction(saveWorkspaceOption());
+   rstudio::r::session::setSaveAction(saveWorkspaceOption());
 }
 
 
@@ -2721,6 +2725,7 @@ WaitForMethodFunction registerWaitForMethod(const std::string& methodName)
 
 } // namespace module_context
 } // namespace session
+} // namespace rstudio
 
 
 namespace {
@@ -3004,7 +3009,7 @@ int main (int argc, char * const argv[])
          core::system::setenv("R_DOC_DIR", options.rDocDirOverride());
 
       // r options
-      r::session::ROptions rOptions ;
+      rstudio::r::session::ROptions rOptions ;
       rOptions.userHomePath = options.userHomePath();
       rOptions.userScratchPath = userScratchPath;
       rOptions.scopedScratchPath = module_context::scopedScratchPath();
@@ -3035,7 +3040,7 @@ int main (int argc, char * const argv[])
                                   userSettings().rProfileOnResume();
       
       // r callbacks
-      r::session::RCallbacks rCallbacks;
+      rstudio::r::session::RCallbacks rCallbacks;
       rCallbacks.init = rInit;
       rCallbacks.consoleRead = rConsoleRead;
       rCallbacks.editFile = rEditFile;
@@ -3059,7 +3064,7 @@ int main (int argc, char * const argv[])
       rCallbacks.serialization = rSerialization;
       
       // run r (does not return, terminates process using exit)
-      error = r::session::run(rOptions, rCallbacks) ;
+      error = rstudio::r::session::run(rOptions, rCallbacks) ;
       if (error)
       {
           // this is logically equivilant to R_Suicide

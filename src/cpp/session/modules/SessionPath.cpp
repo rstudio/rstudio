@@ -31,8 +31,9 @@
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace path {
@@ -130,4 +131,5 @@ Error initialize()
 } // namespace path
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

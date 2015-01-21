@@ -23,8 +23,9 @@
 #include <session/SessionModuleContext.hpp>
 
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules {
 namespace environment {
@@ -221,3 +222,4 @@ void sourceRefToJson(const SEXP srcref, json::Object* pObject)
 } // namespace environment
 } // namespace modules
 } // namespace session
+} // namespace rstudio

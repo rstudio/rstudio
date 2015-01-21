@@ -25,7 +25,7 @@
 #include "DesktopOptions.hpp"
 #include "desktop-config.h"
 
-using namespace core;
+using namespace rstudio::core;
 
 AboutDialog::AboutDialog(QWidget *parent) :
       QDialog(parent, Qt::Dialog),

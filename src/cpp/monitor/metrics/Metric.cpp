@@ -24,8 +24,9 @@
 
 #include <core/json/JsonRpc.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace monitor {
 namespace metrics {
 
@@ -174,4 +175,5 @@ Error metricFromJson(const json::Object& multiMetricJson,
 
 } // namespace metrics
 } // namespace monitor
+} // namespace rstudio
 

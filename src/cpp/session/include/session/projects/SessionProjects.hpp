@@ -39,6 +39,7 @@
 #include <core/r_util/RSourceIndex.hpp>
 #include <core/r_util/RPackageInfo.hpp>
 
+namespace rstudio {
 namespace session {
 namespace projects {
 
@@ -217,5 +218,6 @@ ProjectContext& projectContext();
 
 } // namespace projects
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_PROJECTS_PROJECTS_HPP

@@ -21,6 +21,7 @@
 
 #include <core/FilePath.hpp>
 
+namespace rstudio {
 namespace core {
 
 class Error;
@@ -80,6 +81,7 @@ Error parseBibtexLog(const FilePath& logFilePath, LogEntries* pLogEntries);
 
 } // namespace tex
 } // namespace core 
+} // namespace rstudio
 
 
 #endif // CORE_TEX_TEX_LOG_PARSER_HPP

@@ -33,6 +33,7 @@
 #include <wingdi.h>
 #endif
 
+namespace rstudio {
 namespace desktop {
 
 WebView::WebView(QUrl baseUrl, QWidget *parent) :
@@ -282,3 +283,4 @@ void WebView::closeEvent(QCloseEvent*)
 }
 
 } // namespace desktop
+} // namespace rstudio

@@ -31,8 +31,9 @@
 #include "RGraphicsUtils.hpp"
 #include "RGraphicsPlotManager.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace r {
 namespace session {  
 namespace graphics {
@@ -351,3 +352,4 @@ void PlotManipulatorManager::ensureManipulatorSaved()
 } // namespace graphics
 } // namespace session
 } // namespace r
+} // namespace rstudio

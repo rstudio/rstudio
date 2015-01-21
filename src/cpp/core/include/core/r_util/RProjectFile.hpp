@@ -21,6 +21,7 @@
 
 #include <core/r_util/RVersionInfo.hpp>
 
+namespace rstudio {
 namespace core {
 
 class Error;
@@ -134,6 +135,7 @@ bool updateSetPackageInstallArgsDefault(RProjectConfig* pConfig);
 
 } // namespace r_util
 } // namespace core 
+} // namespace rstudio
 
 
 #endif // CORE_R_UTIL_R_PROJECT_FILE_HPP

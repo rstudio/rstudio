@@ -20,6 +20,7 @@
 
 #include <boost/noncopyable.hpp>
 
+namespace rstudio {
 namespace core {
 namespace gitgraph {
 
@@ -83,5 +84,6 @@ private:
 
 } // namespace gitgraph
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_GITGRAPH_HPP

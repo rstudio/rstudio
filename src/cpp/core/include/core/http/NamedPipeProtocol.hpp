@@ -23,6 +23,7 @@
 #include <core/http/SocketUtils.hpp>
 #include <core/http/AsyncConnectionImpl.hpp>
 
+namespace rstudio {
 namespace core {
 namespace http {
 
@@ -41,5 +42,6 @@ template<> Error closeSocket(boost::asio::windows::stream_handle& socket);
 
 } // namespace http
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_HTTP_NAMED_PIPE_PROTOCOL_HPP

@@ -18,6 +18,7 @@
 
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 
+namespace rstudio {
 namespace r {
 namespace session {
 namespace event_loop {
@@ -61,6 +62,7 @@ void processEvents();
 } // namespace event_loop
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 
 #endif // R_EVENT_LOOP_HPP

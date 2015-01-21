@@ -18,6 +18,7 @@
 
 #include "DesktopBrowserWindow.hpp"
 
+namespace rstudio {
 namespace desktop {
 
 class GwtWindow : public BrowserWindow
@@ -41,5 +42,6 @@ private:
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_GWT_WINDOW_HPP

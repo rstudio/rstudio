@@ -23,8 +23,9 @@
 #include <server/ServerOptions.hpp>
 #include <server/ServerUriHandlers.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace server {
 namespace r_environment {
   
@@ -86,4 +87,5 @@ bool detectREnvironment(const core::FilePath& rScriptPath,
 
 } // namespace r_environment
 } // namespace server
+} // namespace rstudio
 

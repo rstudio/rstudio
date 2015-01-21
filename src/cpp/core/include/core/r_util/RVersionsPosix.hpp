@@ -25,6 +25,7 @@
 
 #include <core/r_util/RVersionInfo.hpp>
 
+namespace rstudio {
 namespace core {
 namespace r_util {
 
@@ -54,6 +55,7 @@ RVersion selectVersion(const RVersionInfo& matchVersion,
 
 } // namespace r_util
 } // namespace core 
+} // namespace rstudio
 
 #endif // CORE_R_UTIL_R_VERSIONS_HPP
 

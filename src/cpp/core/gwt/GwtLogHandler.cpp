@@ -30,6 +30,7 @@
 
 #include <core/gwt/GwtSymbolMaps.hpp>
 
+namespace rstudio {
 namespace core {
 namespace gwt {
 
@@ -196,7 +197,7 @@ void handleLogMessageRequest(const std::string& username,
    }
    
    // convert level to appropriate enum and str
-   using namespace core::system;
+   using namespace rstudio::core::system;
    LogLevel logLevel;
    std::string logLevelStr;
    switch(level)
@@ -292,5 +293,6 @@ void handleLogRequest(const std::string& username,
 
 } // namespace gwt
 } // namespace core
+} // namespace rstudio
 
 

@@ -18,6 +18,7 @@
 
 #include <core/LogWriter.hpp>
 
+namespace rstudio {
 namespace core {
 
 class StderrLogWriter : public LogWriter
@@ -39,5 +40,6 @@ private:
 };
 
 } // namespace core
+} // namespace rstudio
 
 #endif // STDERR_LOG_WRITER_HPP

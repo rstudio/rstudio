@@ -20,6 +20,7 @@
 
 #include <windows.h>
 
+namespace rstudio {
 namespace core {
 namespace system {
 
@@ -72,6 +73,7 @@ private:
 
 } // namespace system
 } // namespace core
+} // namespace rstudio
 
 #endif // _WIN32
 

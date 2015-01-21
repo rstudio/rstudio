@@ -21,6 +21,7 @@
 
 #include <core/http/LocalStreamAsyncClient.hpp>
 
+namespace rstudio {
 namespace core {
 namespace http {  
 
@@ -42,5 +43,6 @@ inline Error sendRequest(const FilePath& localStreamPath,
    
 } // namespace http
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_HTTP_LOCAL_STREAM_BLOCKING_CLIENT_HPP

@@ -31,8 +31,9 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace shiny_viewer {
@@ -225,4 +226,5 @@ Error initialize()
 } // namespace shiny_viewer
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

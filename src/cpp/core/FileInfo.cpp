@@ -17,6 +17,7 @@
 
 #include <core/FilePath.hpp>
 
+namespace rstudio {
 namespace core {
 
 FileInfo::FileInfo(const FilePath& filePath, bool isSymlink)
@@ -67,6 +68,7 @@ std::ostream& operator << (std::ostream& stream, const FileInfo& fileInfo)
 
    
 } // namespace core 
+} // namespace rstudio
 
 
 

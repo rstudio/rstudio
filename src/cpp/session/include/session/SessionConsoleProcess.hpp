@@ -27,10 +27,13 @@
 
 #include <core/json/Json.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
 
+namespace rstudio {
 namespace session {
 namespace console_process {
 
@@ -250,5 +253,6 @@ core::Error initialize();
 
 } // namespace console_process
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_CONSOLE_PROCESS_HPP

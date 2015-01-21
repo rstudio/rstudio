@@ -15,6 +15,7 @@
 
 #include <core/http/NamedPipeProtocol.hpp>
 
+namespace rstudio {
 namespace core {
 namespace http {
 
@@ -45,4 +46,5 @@ template<> Error closeSocket(boost::asio::windows::stream_handle& socket)
    
 } // namespace http
 } // namespace core
+} // namespace rstudio
 

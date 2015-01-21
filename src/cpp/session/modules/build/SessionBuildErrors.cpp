@@ -29,8 +29,9 @@
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace session {  
 namespace modules {
 namespace build {
@@ -252,3 +253,4 @@ CompileErrorParser rErrorParser(const FilePath& basePath)
 } // namespace build
 } // namespace modules
 } // namespace session
+} // namespace rstudio

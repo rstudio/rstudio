@@ -16,13 +16,16 @@
 #ifndef SERVER_EVAL_HPP
 #define SERVER_EVAL_HPP
 
+namespace rstudio {
 namespace core {
    namespace http {
       class Request;
       class Response;
    }
 }
+}
 
+namespace rstudio {
 namespace server {
 namespace eval {
    
@@ -31,6 +34,7 @@ bool expirationFilter(const core::http::Request& request,
 
 } // namespace eval
 } // namespace server
+} // namespace rstudio
 
 #endif // SERVER_EVAL_HPP
 
