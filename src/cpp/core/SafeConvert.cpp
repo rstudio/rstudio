@@ -16,12 +16,14 @@
 #include <core/SafeConvert.hpp>
 
 
+namespace rstudio {
 namespace core {
 namespace safe_convert {   
 
    
 } // namespace safe_convert
 } // namespace core 
+} // namespace rstudio
 
 
 

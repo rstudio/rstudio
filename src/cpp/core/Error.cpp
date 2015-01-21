@@ -27,6 +27,7 @@
 #include <boost/system/windows_error.hpp>
 #endif
 
+namespace rstudio {
 namespace core {
 
 struct Error::Impl
@@ -312,5 +313,6 @@ std::ostream& operator<<(std::ostream& os, const ErrorLocation& location)
    
 
 } // namespace core 
+} // namespace rstudio
 
 

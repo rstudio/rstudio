@@ -52,8 +52,9 @@ To create a new postback handler for an action 'foo' do the following:
 
 #include <session/SessionOptions.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace session {  
 namespace module_context {
 
@@ -114,3 +115,4 @@ Error registerPostbackHandler(const std::string& name,
    
 } // namespace module_context
 } // namespace session
+} // namespace rstudio

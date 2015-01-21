@@ -20,6 +20,7 @@
 
 #include <boost/function.hpp>
 
+namespace rstudio {
 namespace core {
 
 class Error ;   
@@ -67,6 +68,7 @@ private:
    
 
 } // namespace core 
+} // namespace rstudio
 
 #endif // CORE_EXEC_HPP
 

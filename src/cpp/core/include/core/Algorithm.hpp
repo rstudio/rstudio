@@ -17,6 +17,7 @@
 #ifndef CORE_ALGORITHM_HPP
 #define CORE_ALGORITHM_HPP
 
+namespace rstudio {
 namespace core {
 namespace algorithm {
 
@@ -57,6 +58,7 @@ OutputIterator copy_transformed_if(InputIterator begin,
 
 } // namespace algorithm
 } // namespace core
+} // namespace rstudio
 
 
 #endif // CORE_ALGORITHM_HPP

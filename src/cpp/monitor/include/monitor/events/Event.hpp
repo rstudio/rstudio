@@ -22,6 +22,7 @@
 
 #include <core/system/System.hpp>
 
+namespace rstudio {
 namespace monitor {
 
 enum EventScope
@@ -86,6 +87,7 @@ private:
 std::ostream& operator<<(std::ostream& ostr, const Event& event);
 
 } // namespace monitor
+} // namespace rstudio
 
 #endif // MONITOR_EVENTS_EVENT_HPP
 

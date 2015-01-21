@@ -30,6 +30,7 @@
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 
+namespace rstudio {
 namespace core {
 namespace http {
 
@@ -359,4 +360,5 @@ std::string pathAfterPrefix(const Request& request,
 
 } // namespace http
 } // namespace core
+} // namespace rstudio
 

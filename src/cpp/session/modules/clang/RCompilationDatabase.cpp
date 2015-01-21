@@ -40,9 +40,10 @@
 
 #include <core/libclang/LibClang.hpp>
 
-using namespace core ;
-using namespace core::libclang;
+using namespace rstudio::core ;
+using namespace rstudio::core::libclang;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace clang {
@@ -826,4 +827,5 @@ core::libclang::CompilationDatabase rCompilationDatabase()
 } // namespace clang
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

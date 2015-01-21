@@ -21,13 +21,16 @@
 #include <core/http/UriHandler.hpp>
 #include <core/http/AsyncUriHandler.hpp>
 
+namespace rstudio {
 namespace core {
 namespace http { 
    class Request;
    class Response;
 } // namespace http
 } // namespace core
+} // namespace rstudio
 
+namespace rstudio {
 namespace server {
 namespace auth {
    
@@ -64,6 +67,7 @@ core::http::AsyncUriHandlerFunction secureAsyncUploadHandler(
 
 } // namespace auth
 } // namespace server
+} // namespace rstudio
 
 #endif // SERVER_AUTH_SECURE_URI_HANDLER_HPP
 

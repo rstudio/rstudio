@@ -20,6 +20,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 
+namespace rstudio {
 namespace core {
 
 FileLogWriter::FileLogWriter(const std::string& programIdentity,
@@ -91,3 +92,4 @@ bool FileLogWriter::rotateLogFile()
 
 
 } // namespace core
+} // namespace rstudio

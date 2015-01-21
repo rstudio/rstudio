@@ -70,10 +70,13 @@
 
 #include "SessionHttpConnectionQueue.hpp"
 
+namespace rstudio {
 namespace core {
 	class Error;
 }
+}
 
+namespace rstudio {
 namespace session {
 
 // global initialization (allows instantation of listener which
@@ -99,6 +102,7 @@ public:
 };
 
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_HTTP_CONNECTION_LISTENER_HPP
 

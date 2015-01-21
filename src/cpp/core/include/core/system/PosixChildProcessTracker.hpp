@@ -24,6 +24,7 @@
 #include <core/Thread.hpp>
 #include <core/system/System.hpp>
 
+namespace rstudio {
 namespace core {
 
 class Error;
@@ -54,6 +55,7 @@ private:
 
 } // namespace system
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_SYSTEM_CHILD_PROCESS_TRACKER_HPP
 

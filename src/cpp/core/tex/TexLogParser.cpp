@@ -26,6 +26,7 @@
 #include <core/SafeConvert.hpp>
 #include <core/system/System.hpp>
 
+namespace rstudio {
 namespace core {
 namespace tex {
 
@@ -540,6 +541,7 @@ Error parseBibtexLog(const FilePath& logFilePath, LogEntries* pLogEntries)
 
 } // namespace tex
 } // namespace core 
+} // namespace rstudio
 
 
 

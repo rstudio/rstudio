@@ -29,6 +29,7 @@
 #define KEY_WOW64_32KEY 0x0200
 #endif
 
+namespace rstudio {
 namespace core {
 namespace r_util {
 
@@ -186,6 +187,7 @@ Error scanRegistryForRTools(std::vector<RToolsInfo>* pRTools)
 
 } // namespace r_util
 } // namespace core 
+} // namespace rstudio
 
 
 

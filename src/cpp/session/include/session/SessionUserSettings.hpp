@@ -29,6 +29,7 @@
 
 #include <core/system/FileChangeEvent.hpp>
 
+namespace rstudio {
 namespace session {
 
 // singleton
@@ -210,6 +211,7 @@ private:
 };
    
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_USER_SETTINGS_HPP
 

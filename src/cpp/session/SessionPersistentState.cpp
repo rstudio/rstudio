@@ -23,8 +23,9 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace session {  
 
 namespace {
@@ -126,3 +127,4 @@ void PersistentState::setStoredHash(const std::string& hashName,
 }
 
 } // namespace session
+} // namespace rstudio

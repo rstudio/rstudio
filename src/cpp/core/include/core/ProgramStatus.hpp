@@ -18,6 +18,7 @@
 
 #include <cstdlib>
 
+namespace rstudio {
 namespace core {
 
 class ProgramStatus
@@ -52,6 +53,7 @@ private:
 };
    
 } // namespace core
+} // namespace rstudio
 
 
 #endif // CORE_PROGRAM_STATUS_HPP

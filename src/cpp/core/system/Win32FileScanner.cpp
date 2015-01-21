@@ -23,6 +23,7 @@
 #include <core/FilePath.hpp>
 #include <core/BoostThread.hpp>
 
+namespace rstudio {
 namespace core {
 namespace system {
 
@@ -143,4 +144,5 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
 
 } // namespace system
 } // namespace core
+} // namespace rstudio
 

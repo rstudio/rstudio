@@ -24,8 +24,9 @@
 
 #include <server/ServerOptions.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace server {
 namespace auth {
 
@@ -88,6 +89,7 @@ bool validateUser(const std::string& username,
 
 } // namespace auth
 } // namespace server
+} // namespace rstudio
 
 
 

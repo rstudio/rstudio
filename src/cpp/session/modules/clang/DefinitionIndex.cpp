@@ -29,9 +29,10 @@
 #include "RSourceIndex.hpp"
 #include "RCompilationDatabase.hpp"
 
-using namespace core;
-using namespace core::libclang;
+using namespace rstudio::core;
+using namespace rstudio::core::libclang;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace clang {
@@ -476,4 +477,5 @@ Error initializeDefinitionIndex()
 } // namespace clang
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

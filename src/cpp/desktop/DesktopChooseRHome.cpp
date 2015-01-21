@@ -27,7 +27,7 @@
 #include "DesktopRVersion.hpp"
 #include "DesktopUtils.hpp"
 
-using namespace desktop;
+using namespace rstudio::desktop;
 
 namespace {
 

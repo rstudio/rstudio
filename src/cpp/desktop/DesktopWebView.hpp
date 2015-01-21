@@ -22,6 +22,7 @@
 
 #include "DesktopWebPage.hpp"
 
+namespace rstudio {
 namespace desktop {
 
 class MainWindow;
@@ -67,5 +68,6 @@ private:
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_WEB_VIEW_HPP

@@ -32,8 +32,9 @@
 #include "DesktopUtils.hpp"
 #include "DesktopOptions.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace desktop {
 
 namespace {
@@ -90,3 +91,4 @@ bool prepareEnvironment(Options& options)
 }
 
 } // namespace desktop
+} // namespace rstudio

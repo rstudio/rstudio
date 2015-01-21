@@ -18,6 +18,7 @@
 
 #include <vector>
 
+namespace rstudio {
 namespace core {
 
 class Error;
@@ -34,6 +35,7 @@ Error setCpuAffinity(const CpuAffinity& cpus);
 
 } // namespace system
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_SYSTEM_POSIX_SCHED_HPP
 

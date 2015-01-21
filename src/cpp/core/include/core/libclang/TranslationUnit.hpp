@@ -28,6 +28,7 @@
 #include "CodeCompleteResults.hpp"
 #include "UnsavedFiles.hpp"
 
+namespace rstudio {
 namespace core {
 namespace libclang {
 
@@ -80,6 +81,7 @@ private:
 
 } // namespace libclang
 } // namespace core
+} // namespace rstudio
 
 
 #endif // CORE_LIBCLANG_TRANSLATION_UNIT_HPP

@@ -24,7 +24,8 @@
 
 #include <core/libclang/LibClang.hpp>
 
-using namespace core ;
+using namespace rstudio;
+using namespace rstudio::core;
 
 int test_main(int argc, char * argv[])
 {

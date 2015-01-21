@@ -50,8 +50,9 @@
 
 #define kShinyContentWarning "Warning: Shiny application in a static R Markdown document"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules {
 namespace rmarkdown {
@@ -1052,4 +1053,5 @@ Error initialize()
 } // namespace rmarkdown
 } // namespace modules
 } // namespace session
+} // namespace rstudio
 

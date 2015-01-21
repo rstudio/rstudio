@@ -23,6 +23,7 @@
 #include <QNetworkReply>
 #include <QTimer>
 
+namespace rstudio {
 namespace desktop {
 
 // URLDownloader is self-freeing
@@ -56,5 +57,6 @@ private:
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_URL_DOWNLOADER_HPP

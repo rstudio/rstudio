@@ -34,6 +34,7 @@
       therefore be sent on background threads.
 */
 
+namespace rstudio {
 namespace core {
 
    class Error;
@@ -47,7 +48,9 @@ namespace core {
       class JsonRpcResponse;
    }
 }
+}
 
+namespace rstudio {
 namespace session {
 
 // abstract base (insulate clients from knowledge of protocol-specifics)
@@ -75,6 +78,7 @@ public:
 
 
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_HTTP_CONNECTION_HPP
 

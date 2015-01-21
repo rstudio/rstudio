@@ -14,8 +14,10 @@
 
 #import "Utils.hpp"
 
-using namespace core;
+using namespace rstudio;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace desktop {
 namespace utils {
       
@@ -281,4 +283,5 @@ void cleanDuplicateEnvVars()
    
 } // namespace utils
 } // namespace desktop
+} // namespace rstudio
 

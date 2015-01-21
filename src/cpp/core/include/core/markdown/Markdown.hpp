@@ -18,6 +18,7 @@
 
 #include <string>
 
+namespace rstudio {
 namespace core {
 
 class Error;
@@ -103,6 +104,7 @@ bool isMathJaxRequired(const std::string& htmlOutput);
 
 } // namespace markdown
 } // namespace core 
+} // namespace rstudio
 
 #endif // CORE_MARKDOWN_MARKDOWN_HPP
 

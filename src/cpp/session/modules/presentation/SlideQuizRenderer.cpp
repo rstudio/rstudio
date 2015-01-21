@@ -25,8 +25,9 @@
 #include <core/SafeConvert.hpp>
 #include <core/RegexUtils.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace presentation {
@@ -156,4 +157,5 @@ void renderQuiz(int slideIndex, std::string* pHead, std::string* pHTML)
 } // namespace presentation
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

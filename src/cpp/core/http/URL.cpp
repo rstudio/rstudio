@@ -20,6 +20,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/regex.hpp>
 
+namespace rstudio {
 namespace core {
 namespace http {
 
@@ -306,3 +307,4 @@ void URL::test()
  
 } // namespace http
 } // namespace core
+} // namespace rstudio

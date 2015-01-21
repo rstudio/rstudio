@@ -23,11 +23,14 @@
 typedef uid_t  UidType;
 typedef gid_t  GidType;
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
 }
+}
 
+namespace rstudio {
 namespace core {
 namespace system {
 namespace user {
@@ -60,6 +63,7 @@ core::Error userFromId(UidType uid, User* pUser);
 } // namespace user
 } // namespace system
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_SYSTEM_POSIX_USER_HPP
 

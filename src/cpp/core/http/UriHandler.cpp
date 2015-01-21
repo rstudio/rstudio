@@ -22,6 +22,7 @@
 
 #include <core/http/Request.hpp>
 
+namespace rstudio {
 namespace core {
 namespace http {
 
@@ -95,4 +96,5 @@ UriAsyncHandlerFunction UriHandlers::handlerFor(const std::string& uri) const
    
 } // namespace http
 } // namespace core
+} // namespace rstudio
 

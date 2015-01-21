@@ -15,8 +15,9 @@
 
 #include <session/SessionOptions.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace session {
 
 void Options::addOverlayOptions(
@@ -39,3 +40,4 @@ bool Options::allowOverlay() const
 }
 
 } // namespace session
+} // namespace rstudio

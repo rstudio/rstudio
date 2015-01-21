@@ -21,6 +21,7 @@
 
 #include <core/text/DcfParser.hpp>
 
+namespace rstudio {
 namespace core {
 namespace r_util {
 
@@ -123,6 +124,7 @@ bool isPackageDirectory(const FilePath& dir)
 
 } // namespace r_util
 } // namespace core 
+} // namespace rstudio
 
 
 

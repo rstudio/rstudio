@@ -16,10 +16,13 @@
 #ifndef SESSION_SHINY_VIEWER_HPP
 #define SESSION_SHINY_VIEWER_HPP
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
  
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace shiny_viewer {
@@ -35,5 +38,6 @@ core::Error initialize();
 } // namespace shiny_viewer
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_SHINY_VIEWER_HPP

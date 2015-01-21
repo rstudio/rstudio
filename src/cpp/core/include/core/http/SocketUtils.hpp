@@ -25,6 +25,7 @@
 
 #include <core/Error.hpp>
 
+namespace rstudio {
 namespace core {
 namespace http {  
 
@@ -93,5 +94,6 @@ inline bool isConnectionUnavailableError(const Error& error)
 
 } // namespace http
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_HTTP_SOCKET_UTILS_HPP

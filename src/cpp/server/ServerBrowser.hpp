@@ -18,13 +18,16 @@
 
 #include <string>
 
+namespace rstudio {
 namespace core {
    namespace http {
       class Request;
       class Response;
    }
 }
+}
 
+namespace rstudio {
 namespace server {
 namespace browser {
   
@@ -38,6 +41,7 @@ void handleBrowserUnsupportedRequest(const core::http::Request& request,
 
 } // namespace browser
 } // namespace server
+} // namespace rstudio
 
 #endif // SERVER_BROWSER_HPP
 

@@ -21,6 +21,7 @@
 #include <core/http/Response.hpp>
 
 
+namespace rstudio {
 namespace core {
 namespace json {
 
@@ -375,6 +376,7 @@ JsonRpcAsyncMethod adaptMethodToAsync(JsonRpcMethod synchronousMethod)
 
 } // namespace json
 } // namespace core
+} // namespace rstudio
 
 
 

@@ -20,6 +20,7 @@
 
 #include <core/ScheduledCommand.hpp>
 
+namespace rstudio {
 namespace server {
 namespace scheduler {
 
@@ -31,6 +32,7 @@ void addCommand(boost::shared_ptr<core::ScheduledCommand> pCmd);
 
 } // namespace scheduler
 } // namespace server
+} // namespace rstudio
 
 #endif // SERVER_SCHEDULER_HPP
 

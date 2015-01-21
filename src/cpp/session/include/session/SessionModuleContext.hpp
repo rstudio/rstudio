@@ -35,6 +35,7 @@
 #include <session/SessionClientEvent.hpp>
 #include <session/SessionSourceDatabase.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
    class Success;
@@ -49,13 +50,17 @@ namespace core {
       class ShellCommand;
    }
 }
+}
 
+namespace rstudio {
 namespace r {
 namespace session {
    struct RSuspendOptions;
 }
 }
+}
 
+namespace rstudio {
 namespace session {   
 namespace module_context {
 
@@ -776,6 +781,7 @@ void showSourceMarkers(const SourceMarkerSet& markerSet);
 
 } // namespace module_context
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_MODULE_CONTEXT_HPP
 

@@ -37,6 +37,7 @@
       return error; \
    }
 
+namespace rstudio {
 namespace core {
 namespace libclang {
 
@@ -548,4 +549,5 @@ LibClang& clang()
 
 } // namesapce libclang
 } // namespace core
+} // namespace rstudio
 

@@ -18,6 +18,7 @@
 
 #include <string>
 
+namespace rstudio {
 namespace core {
 
 class Error ;
@@ -45,6 +46,7 @@ std::string errorAsLogEntry(const Error& error);
   
 } // namespace log
 } // namespace core 
+} // namespace rstudio
 
 // Macros for automatic inclusion of ERROR_LOCATION and easy ability to 
 // compile out logging calls

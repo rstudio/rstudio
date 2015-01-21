@@ -21,10 +21,13 @@
 #include <QMainWindow>
 #include <QFileDialog>
 
+namespace rstudio {
 namespace core {
    class FilePath;
 }
+}
 
+namespace rstudio {
 namespace desktop {
 
 void reattachConsoleIfNecessary();
@@ -74,5 +77,6 @@ double getDpiZoomScaling();
 QFileDialog::Options standardFileDialogOptions();
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_UTILS_HPP

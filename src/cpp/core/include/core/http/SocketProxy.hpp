@@ -26,6 +26,7 @@
 #include <core/Error.hpp>
 #include <core/http/Socket.hpp>
 
+namespace rstudio {
 namespace core {
 namespace http {
 
@@ -74,6 +75,7 @@ private:
 
 } // namespace http
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_HTTP_SOCKET_PROXY_HPP
 

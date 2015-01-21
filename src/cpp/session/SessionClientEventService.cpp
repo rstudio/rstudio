@@ -34,8 +34,9 @@
 
 #include "SessionClientEventQueue.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
    
 namespace {
@@ -351,3 +352,4 @@ void ClientEventService::run()
 }
       
 } // namespace session
+} // namespace rstudio

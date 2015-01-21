@@ -16,10 +16,13 @@
 #ifndef SESSION_RSCONNECT_HPP
 #define SESSION_RSCONNECT_HPP
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
  
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace rsconnect {
@@ -29,5 +32,6 @@ core::Error initialize();
 } // namespace rsconnect
 } // namespace modules
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_RSCONNECT_HPP

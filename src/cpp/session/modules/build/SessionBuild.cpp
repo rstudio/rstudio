@@ -52,8 +52,9 @@
 #include "SessionSourceCpp.hpp"
 #include "SessionInstallRtools.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 
 namespace {
@@ -1550,7 +1551,7 @@ SEXP rs_installBuildTools()
 
 SEXP rs_installPackage(SEXP pkgPathSEXP, SEXP libPathSEXP)
 {
-   using namespace r::sexp;
+   using namespace rstudio::r::sexp;
    Error error = module_context::installPackage(safeAsString(pkgPathSEXP),
                                                 safeAsString(libPathSEXP));
    if (error)
@@ -1773,4 +1774,5 @@ bool installRBuildTools(const std::string& action)
 }
 
 } // namesapce session
+} // namespace rstudio
 

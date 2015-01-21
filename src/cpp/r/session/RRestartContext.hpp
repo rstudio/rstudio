@@ -20,6 +20,7 @@
 
 #include <core/FilePath.hpp>
 
+namespace rstudio {
 namespace r {
 namespace session {
 
@@ -57,6 +58,7 @@ private:
 
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 #endif // R_SESSION_RESTART_CONTEXT_HPP
 

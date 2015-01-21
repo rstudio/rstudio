@@ -18,8 +18,9 @@
 #include <core/ProgramStatus.hpp>
 #include <core/ProgramOptions.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace session {
 namespace postback {
 
@@ -60,3 +61,4 @@ ProgramStatus Options::read(int argc, char * const argv[])
 
 } // namespace postback
 } // namespace session
+} // namespace rstudio

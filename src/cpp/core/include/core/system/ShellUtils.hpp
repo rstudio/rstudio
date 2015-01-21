@@ -24,6 +24,7 @@
 #include <core/FilePath.hpp>
 #include <core/StringUtils.hpp>
 
+namespace rstudio {
 namespace core {
 
 namespace shell_utils {
@@ -116,6 +117,7 @@ private:
    std::vector<std::string> args_;
 };
 
+}
 }
 }
 

@@ -28,10 +28,13 @@
 // IMPORTANT NOTE: all code in r::options must provide "no jump" guarantee.
 // See comment in RInternal.hpp for more info on this
 
+namespace rstudio {
 namespace core {
    class FilePath;
 }
+}
 
+namespace rstudio {
 namespace r {
 namespace options {
    
@@ -102,6 +105,7 @@ SEXP setErrorOption(SEXP value);
 
 } // namespace options   
 } // namespace r
+} // namespace rstudio
 
 
 #endif // R_R_OPTIONS_HPP 

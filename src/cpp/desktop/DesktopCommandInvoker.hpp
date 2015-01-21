@@ -18,6 +18,7 @@
 
 #include <QObject>
 
+namespace rstudio {
 namespace desktop {
 
 class CommandInvoker : public QObject
@@ -37,5 +38,6 @@ private:
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_COMMAND_INVOKER_HPP

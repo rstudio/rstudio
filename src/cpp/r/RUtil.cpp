@@ -27,8 +27,9 @@
 
 #include <R_ext/Riconv.h>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace r {
 namespace util {
 
@@ -160,6 +161,7 @@ core::Error iconvstr(const std::string& value,
 
 } // namespace util
 } // namespace r
+} // namespace rstudio
 
 
 

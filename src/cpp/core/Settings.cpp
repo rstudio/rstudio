@@ -22,6 +22,7 @@
 #include <core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
 
+namespace rstudio {
 namespace core {
 
 Settings::Settings()
@@ -156,6 +157,7 @@ void Settings::writeSettings()
 }
 
 
+}
 }
 
 

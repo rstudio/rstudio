@@ -43,13 +43,14 @@
 # define DEBUG_BLOCK(x)
 #endif
 
+namespace rstudio {
 namespace session {
 namespace modules {
 namespace linter {
 
-using namespace core;
-using namespace core::r_util;
-using namespace core::r_util::token_utils;
+using namespace rstudio::core;
+using namespace rstudio::core::r_util;
+using namespace rstudio::core::r_util::token_utils;
 
 class AnnotatedRToken
 {
@@ -1010,7 +1011,7 @@ SEXP rs_parseAndLintRFile(SEXP pathSEXP)
    
    std::vector<LintItem> lintItems = lintResults.second.get();
    
-   using namespace r::sexp;
+   using namespace rstudio::r::sexp;
    Protect protect;
    ListBuilder result(&protect);
    for (std::size_t i = 0; i < lintItems.size(); ++i)
@@ -1035,7 +1036,7 @@ SEXP rs_parseAndLintRFile(SEXP pathSEXP)
 
 core::Error initialize()
 {
-   using namespace core;
+   using namespace rstudio::core;
    using boost::bind;
    using namespace module_context;
    
@@ -1052,3 +1053,4 @@ core::Error initialize()
 } // end namespace linter
 } // end namespace modules
 } // end namespace session
+}

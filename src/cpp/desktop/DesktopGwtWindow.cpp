@@ -17,6 +17,7 @@
 
 
 
+namespace rstudio {
 namespace desktop {
 
 GwtWindow::GwtWindow(bool showToolbar,
@@ -38,3 +39,4 @@ bool GwtWindow::event(QEvent* pEvent)
 
 
 } // namespace desktop
+} // namespace rstudio

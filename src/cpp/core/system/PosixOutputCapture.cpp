@@ -28,6 +28,7 @@
 
 #include <core/system/System.hpp>
 
+namespace rstudio {
 namespace core {
 namespace system {
 
@@ -176,4 +177,5 @@ Error captureStandardStreams(
 
 } // namespace system
 } // namespace core
+} // namespace rstudio
 

@@ -38,6 +38,7 @@
 // See comment in RInternal.hpp for more info on this
 
 
+namespace rstudio {
 namespace r {
 namespace sexp {
    
@@ -346,6 +347,7 @@ void printValue(SEXP object);
 
 } // namespace sexp
 } // namespace r
+} // namespace rstudio
    
 
 #endif // R_R_SEXP_HPP 

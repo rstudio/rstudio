@@ -23,8 +23,9 @@
 #include "DesktopOptions.hpp"
 #include "DesktopUtils.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace desktop {
 
 bool PosixApplication::event(QEvent* pEvent)
@@ -75,3 +76,4 @@ bool PosixApplication::event(QEvent* pEvent)
 }
 
 } // namespace desktop
+} // namespace rstudio

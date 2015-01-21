@@ -43,8 +43,9 @@
 
 #include "SessionHistoryArchive.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace history {
@@ -147,7 +148,7 @@ Error getRecentHistory(const json::JsonRpcRequest& request,
       return error;
 
    // alias console history
-   using namespace r::session;
+   using namespace rstudio::r::session;
    ConsoleHistory& consoleHistory = r::session::consoleHistory();
 
    // validate
@@ -406,4 +407,5 @@ Error initialize()
 } // namespace history
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

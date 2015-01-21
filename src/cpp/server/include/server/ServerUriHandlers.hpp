@@ -21,6 +21,7 @@
 #include <core/http/UriHandler.hpp>
 #include <core/http/AsyncUriHandler.hpp>
 
+namespace rstudio {
 namespace server {
 namespace uri_handlers {
 
@@ -40,6 +41,7 @@ void setBlockingDefault(const core::http::UriHandlerFunction& handler);
 
 } // namespace uri_handlers
 } // namespace server
+} // namespace rstudio
 
 #endif // SERVER_URI_HANDLERS_HPP
 

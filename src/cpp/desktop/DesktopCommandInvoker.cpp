@@ -15,6 +15,7 @@
 
 #include "DesktopCommandInvoker.hpp"
 
+namespace rstudio {
 namespace desktop {
 
 CommandInvoker::CommandInvoker(QString commandId, QObject *parent) :
@@ -28,3 +29,4 @@ void CommandInvoker::invoke()
 }
 
 } // namespace desktop
+} // namespace rstudio

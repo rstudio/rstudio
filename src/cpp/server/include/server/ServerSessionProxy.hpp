@@ -20,10 +20,13 @@
 
 #include <core/http/AsyncConnection.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
 } 
+}
 
+namespace rstudio {
 namespace server {
 namespace session_proxy {
 
@@ -56,6 +59,7 @@ void setProxyFilter(ProxyFilter filter);
 
 } // namespace session_proxy
 } // namespace server
+} // namespace rstudio
 
 #endif // SERVER_SESSION_PROXY_HPP
 

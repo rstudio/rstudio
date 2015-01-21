@@ -26,11 +26,14 @@
 #include <core/FilePath.hpp>
 #include <core/json/Json.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
 }
+}
  
+namespace rstudio {
 namespace session {
 namespace source_database {
    
@@ -175,5 +178,6 @@ core::Error initialize();
 
 } // namespace source_database
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_SOURCE_DATABASE_HPP

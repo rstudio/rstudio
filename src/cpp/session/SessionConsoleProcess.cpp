@@ -36,8 +36,9 @@
 #include <core/system/Crypto.hpp>
 #endif
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace console_process {
 
@@ -762,3 +763,4 @@ Error initialize()
 
 } // namespace console_process
 } // namespace session
+} // namespace rstudio

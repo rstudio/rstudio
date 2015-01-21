@@ -39,6 +39,7 @@ typedef pid_t PidType;
 
 #include <core/system/Types.hpp>
 
+namespace rstudio {
 namespace core {
 
 class FileInfo;
@@ -267,6 +268,7 @@ Error terminateProcess(PidType pid);
    
 } // namespace system
 } // namespace core 
+} // namespace rstudio
 
 #endif // CORE_SYSTEM_SYSTEM_HPP
 

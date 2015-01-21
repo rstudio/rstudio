@@ -19,6 +19,7 @@
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 
+namespace rstudio {
 namespace core {
 namespace scope {
 
@@ -67,6 +68,7 @@ private:
 
 } // namespace scope
 } // namespace core 
+} // namespace rstudio
 
 
 #endif // CORE_SCOPE_HPP

@@ -33,6 +33,7 @@
  wrong with the message-only window.
  */
 
+namespace rstudio {
 namespace desktop {
 
 namespace {
@@ -205,3 +206,4 @@ bool ApplicationLaunch::nativeEvent(const QByteArray & eventType,
 }
 
 } // namespace desktop
+} // namespace rstudio

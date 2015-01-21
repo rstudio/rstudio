@@ -21,6 +21,7 @@
 
 #include <core/system/System.hpp>
 
+namespace rstudio {
 namespace core {
 namespace file_utils {
 
@@ -66,3 +67,4 @@ std::string readFile(const FilePath& filePath)
 
 } // namespace file_utils
 } // namespace core
+} // namespace rstudio

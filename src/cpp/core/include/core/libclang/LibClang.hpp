@@ -34,6 +34,7 @@
 #include "clang-c/Index.h"
 #include "clang-c/CXCompilationDatabase.h"
 
+namespace rstudio {
 namespace core {
 namespace libclang {
 
@@ -638,6 +639,7 @@ LibClang& clang();
 
 } // namespace libclang
 } // namespace core
+} // namespace rstudio
 
 
 #endif // CORE_LIBCLANG_LIBCLANG_HPP

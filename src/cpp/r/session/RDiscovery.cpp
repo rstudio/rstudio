@@ -27,8 +27,9 @@
 #endif
 #include <Rembedded.h>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace r {
 namespace session {
 
@@ -76,6 +77,7 @@ Error discoverR(RLocations* pLocations)
 
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 
 

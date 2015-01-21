@@ -23,6 +23,7 @@
 
 #include <core/http/Util.hpp>
 
+namespace rstudio {
 namespace core {
 namespace html_utils {
 
@@ -120,6 +121,7 @@ std::string CssUrlFilter::toBase64Url(const boost::cmatch& match)
 
 } // namespace html_utils
 } // namespace core 
+} // namespace rstudio
 
 
 

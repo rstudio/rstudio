@@ -24,8 +24,9 @@
 
 #include "graphics/RGraphicsDevice.hpp"
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace r {
 namespace session {
 namespace client_metrics {
@@ -115,6 +116,7 @@ void restore(const Settings& settings)
 } // namespace client_metrics
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 
 

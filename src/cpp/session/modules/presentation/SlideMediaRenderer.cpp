@@ -16,8 +16,9 @@
 
 #include "SlideMediaRenderer.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace presentation {
@@ -37,4 +38,5 @@ void renderMedia(const std::string& type,
 } // namespace presentation
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

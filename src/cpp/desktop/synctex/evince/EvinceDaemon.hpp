@@ -27,6 +27,7 @@
 #include <QtDBus/QtDBus>
 #define QT_NO_CAST_FROM_ASCII
 
+namespace rstudio {
 namespace desktop {
 namespace synctex {
 
@@ -55,6 +56,7 @@ Q_SIGNALS: // SIGNALS
 
 } // namespace synctex
 } // namespace desktop
+} // namespace rstudio
 
 namespace org {
   namespace gnome {

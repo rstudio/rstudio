@@ -27,8 +27,9 @@
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionUserSettings.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace session {  
 namespace modules {
 namespace build {
@@ -134,3 +135,4 @@ Error installRtools()
 } // namespace build
 } // namespace modules
 } // namespace session
+} // namespace rstudio

@@ -20,8 +20,9 @@
 
 #include <core/json/JsonRpc.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace server {
 namespace meta {
 
@@ -67,3 +68,4 @@ void handleMetaRequest(const std::string& username,
 
 } // namespace meta
 } // namespace server
+} // namespace rstudio

@@ -22,11 +22,14 @@
 
 typedef struct SEXPREC *SEXP;
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
 }
+}
 
+namespace rstudio {
 namespace r {
 namespace json {
    
@@ -34,5 +37,6 @@ core::Error getRpcMethods(core::json::JsonRpcMethods* pMethods);
    
 } // namespace json
 } // namesapce r
+} // namespace rstudio
 
 #endif // R_R_JSON_RPC_HPP

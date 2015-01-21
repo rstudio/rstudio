@@ -31,6 +31,7 @@
 #include <core/r_util/RPackageInfo.hpp>
 #include <core/r_util/RVersionInfo.hpp>
 
+namespace rstudio {
 namespace core {
 namespace r_util {
 
@@ -855,6 +856,7 @@ bool updateSetPackageInstallArgsDefault(RProjectConfig* pConfig)
 
 } // namespace r_util
 } // namespace core 
+} // namespace rstudio
 
 
 

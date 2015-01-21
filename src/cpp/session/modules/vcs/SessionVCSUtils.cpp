@@ -23,8 +23,9 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules {
 namespace vcs_utils {
@@ -204,3 +205,4 @@ std::string convertDiff(const std::string& diff,
 } // namespace vcs_utils
 } // namespace modules
 } // namespace session
+} // namespace rstudio

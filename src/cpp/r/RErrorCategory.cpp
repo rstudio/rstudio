@@ -15,6 +15,7 @@
 
 #include <r/RErrorCategory.hpp>
 
+namespace rstudio {
 namespace r {
 
 class RErrorCategory : public boost::system::error_category
@@ -115,3 +116,4 @@ std::string endUserErrorMessage(const core::Error& error)
    
    
 } // namespace r
+} // namespace rstudio

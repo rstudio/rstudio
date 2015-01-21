@@ -34,6 +34,7 @@
 #include <core/FileSerializer.hpp>
 
 
+namespace rstudio {
 namespace core {
 namespace text {
 
@@ -175,3 +176,4 @@ std::string dcfMultilineAsFolded(const std::string& line)
 
 } // namespace dcf
 } // namespace core
+} // namespace rstudio

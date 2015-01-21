@@ -58,8 +58,9 @@
 // point the column's text is searched as though it were a character column)
 #define MAX_FACTORS 64
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules {
 namespace data {
@@ -906,7 +907,7 @@ Error initialize()
    addSuspendHandler(SuspendHandler(onSuspend, onResume));
 
    using boost::bind;
-   using namespace r::function_hook ;
+   using namespace rstudio::r::function_hook ;
    using namespace session::module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
@@ -935,4 +936,5 @@ Error initialize()
 } // namespace data
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

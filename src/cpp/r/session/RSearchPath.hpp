@@ -16,11 +16,14 @@
 #ifndef R_SESSION_SEARCH_PATH_HPP
 #define R_SESSION_SEARCH_PATH_HPP
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
 }
+}
 
+namespace rstudio {
 namespace r {
 namespace session {
 namespace search_path {
@@ -32,6 +35,7 @@ core::Error restore(const core::FilePath& statePath);
 } // namespace search_path
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 #endif // R_SESSION_SEARCH_PATH_HPP 
 

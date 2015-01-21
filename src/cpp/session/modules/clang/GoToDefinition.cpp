@@ -23,9 +23,10 @@
 #include "RSourceIndex.hpp"
 #include "DefinitionIndex.hpp"
 
-using namespace core;
-using namespace core::libclang;
+using namespace rstudio::core;
+using namespace rstudio::core::libclang;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace clang {
@@ -72,4 +73,5 @@ Error goToCppDefinition(const json::JsonRpcRequest& request,
 } // namespace clang
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

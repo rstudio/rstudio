@@ -24,6 +24,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/regex.hpp>
 
+namespace rstudio {
 namespace core {
 namespace tex {
 
@@ -64,6 +65,7 @@ Error parseMagicComments(const FilePath& texFile,
    
 } // namespace tex
 } // namespace core 
+} // namespace rstudio
 
 
 

@@ -18,11 +18,14 @@
 
 #include <core/json/Json.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
 }
+}
  
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace presentation {
@@ -61,5 +64,6 @@ core::Error initializeOverlay();
 } // namespace presentation
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_PRESENTATION_STATE_HPP

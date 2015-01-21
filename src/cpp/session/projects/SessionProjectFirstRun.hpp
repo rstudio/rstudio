@@ -19,10 +19,13 @@
 #include <string>
 #include <vector>
 
+namespace rstudio {
 namespace core {
    class FilePath;
 }
+}
  
+namespace rstudio {
 namespace session {
 namespace projects {
 
@@ -31,5 +34,6 @@ std::vector<std::string> collectFirstRunDocs(const core::FilePath& projectFile);
 
 } // namespace projects
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_PROJECTS_PROJECT_FIRST_RUN_HPP

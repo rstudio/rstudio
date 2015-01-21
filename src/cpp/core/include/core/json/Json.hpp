@@ -24,6 +24,7 @@
 
 #include <core/json/spirit/json_spirit_value.h>
 
+namespace rstudio {
 namespace core {
 namespace json {
    
@@ -90,6 +91,7 @@ void writeFormatted(const Value& value, std::ostream& os);
    
 } // namespace json
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_JSON_HPP
 

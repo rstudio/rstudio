@@ -20,6 +20,7 @@
 #include <QString>
 #include <QWebPage>
 
+namespace rstudio {
 namespace desktop {
 
 class WebPage;
@@ -36,5 +37,6 @@ public:
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_GWT_CALLBACK_OWNER_HPP

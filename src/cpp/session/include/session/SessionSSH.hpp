@@ -24,6 +24,7 @@
 #include <core/FilePath.hpp>
 #include <core/system/Process.hpp>
 
+namespace rstudio {
 namespace session {
 namespace ssh {
 
@@ -68,5 +69,6 @@ private:
 
 } // namespace ssh
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_SSH_HPP

@@ -24,8 +24,9 @@
 #include <dlfcn.h>
 #endif
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace server {
 namespace app_armor {
   
@@ -100,4 +101,5 @@ Error enforceRestricted()
 
 } // namespace app_aprmor
 } // namespace server
+} // namespace rstudio
 

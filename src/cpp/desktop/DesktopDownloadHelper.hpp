@@ -19,6 +19,7 @@
 #include <QObject>
 #include <QNetworkReply>
 
+namespace rstudio {
 namespace desktop {
 
 // DownloadHelper is self-freeing
@@ -42,5 +43,6 @@ private:
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_DOWNLOAD_HELPER_HPP

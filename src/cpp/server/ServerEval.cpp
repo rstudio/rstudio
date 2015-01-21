@@ -27,8 +27,9 @@
 
 #include <server/ServerOptions.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace server {
 namespace eval {
   
@@ -62,4 +63,5 @@ bool expirationFilter(const core::http::Request& request,
 
 } // namespace eval
 } // namespace server
+} // namespace rstudio
 

@@ -19,8 +19,9 @@
 #import "Utils.hpp"
 #import "MainFrameController.h"
 
-using namespace core;
-using namespace desktop;
+using namespace rstudio;
+using namespace rstudio::core;
+using namespace rstudio::desktop;
 
 NSString* executablePath()
 {

@@ -26,6 +26,7 @@
 
 #include <boost/current_function.hpp>
 
+namespace rstudio {
 namespace core {
 
 class FilePath;
@@ -171,6 +172,7 @@ private:
 std::ostream& operator<<(std::ostream& os, const ErrorLocation& location);
    
 } // namespace core 
+} // namespace rstudio
 
 #define ERROR_LOCATION core::ErrorLocation( \
       BOOST_CURRENT_FUNCTION,__FILE__,__LINE__)

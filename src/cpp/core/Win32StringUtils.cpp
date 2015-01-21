@@ -20,6 +20,7 @@
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 
+namespace rstudio {
 namespace core {
 namespace string_utils {
 
@@ -77,6 +78,7 @@ std::wstring utf8ToWide(const std::string& value,
 
 } // namespace string_utils
 } // namespace core
+} // namespace rstudio
 
 
 

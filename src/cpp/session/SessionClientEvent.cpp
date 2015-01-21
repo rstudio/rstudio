@@ -24,8 +24,9 @@
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace session {
 
 namespace client_events {
@@ -370,3 +371,4 @@ ClientEvent showErrorMessageEvent(const std::string& title,
    
    
 } // namespace session
+} // namespace rstudio

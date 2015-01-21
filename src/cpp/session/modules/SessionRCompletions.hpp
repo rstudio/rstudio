@@ -16,10 +16,13 @@
 #ifndef SESSION_R_COMPLETIONS_HPP
 #define SESSION_R_COMPLETIONS_HPP
 
+namespace rstudio {
 namespace core {
 class Error;
 }
+}
 
+namespace rstudio {
 namespace session {
 namespace modules {
 namespace r_completions {
@@ -29,6 +32,7 @@ core::Error initialize();
 } // namespace r_completions
 } // namespace modules
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_R_COMPLETIONS_HPP
 
