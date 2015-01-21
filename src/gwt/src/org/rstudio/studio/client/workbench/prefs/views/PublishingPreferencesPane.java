@@ -15,17 +15,18 @@
 
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.prefs.PreferencesDialogBase;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -47,9 +48,9 @@ public class PublishingPreferencesPane extends PreferencesPane
    public PublishingPreferencesPane(GlobalDisplay globalDisplay,
                                     RSConnectServerOperations server,
                                     RSAccountConnector connector,
-                                    UIPrefs prefs,
-                                    PreferencesDialogResources res)
+                                    UIPrefs prefs)
    {
+      reloadRequired_ = false;
       display_ = globalDisplay;
       uiPrefs_ = prefs;
       server_ = server;
@@ -111,8 +112,16 @@ public class PublishingPreferencesPane extends PreferencesPane
             PreferencesDialogBaseResources.INSTANCE.styles().headerLabel());
       nudgeRight(settingsLabel);
       add(settingsLabel);
-      add(checkboxPref("Enable publishing apps and documents",
-                       uiPrefs_.showPublishUi()));
+      CheckBox chkEnablePublishing = checkboxPref("Enable publishing apps and documents", 
+            uiPrefs_.showPublishUi());
+      chkEnablePublishing.addValueChangeHandler(new ValueChangeHandler<Boolean>(){
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            reloadRequired_ = true;
+         }
+      });
+      add(chkEnablePublishing);
    }
 
    @Override
@@ -123,7 +132,9 @@ public class PublishingPreferencesPane extends PreferencesPane
    @Override
    public boolean onApply(RPrefs rPrefs)
    {
-      return super.onApply(rPrefs);
+      boolean reload = super.onApply(rPrefs);
+
+      return reload || reloadRequired_;
    }
 
    
@@ -219,8 +230,10 @@ public class PublishingPreferencesPane extends PreferencesPane
    private final UIPrefs uiPrefs_;
    private final RSConnectServerOperations server_;
    private final RSAccountConnector connector_;
+
    private RSConnectAccountList accountList_;
    private ThemedButton connectButton_;
    private ThemedButton disconnectButton_;
+   private boolean reloadRequired_;
 }
 

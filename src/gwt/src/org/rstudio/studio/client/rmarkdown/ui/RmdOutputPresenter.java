@@ -30,6 +30,8 @@ import org.rstudio.studio.client.shiny.ShinyDisconnectNotifier;
 import org.rstudio.studio.client.shiny.ShinyDisconnectNotifier.ShinyDisconnectSource;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionUtils;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -66,11 +68,13 @@ public class RmdOutputPresenter implements
                              Session session,
                              Commands commands,
                              EventBus eventBus,
-                             Satellite satellite)
+                             Satellite satellite,
+                             UIPrefs prefs)
    {
       view_ = view;
       globalDisplay_ = globalDisplay;
       session_ = session;
+      prefs_ = prefs;
       
       rpubsPresenter.setContext(this);
       slideNavigationPresenter_ = new SlideNavigationPresenter(view_);
@@ -190,7 +194,7 @@ public class RmdOutputPresenter implements
       boolean refresh = params_ != null && 
             params_.getResult().equals(params.getResult());
       params_ = params;
-      view_.showOutput(params, session_.getSessionInfo().getAllowRpubsPublish(), 
+      view_.showOutput(params, SessionUtils.showPublishUi(session_, prefs_), 
                        session_.getSessionInfo().getRSConnectAvailable(), refresh);
    }
    
@@ -222,6 +226,7 @@ public class RmdOutputPresenter implements
    private final Display view_;
    private final GlobalDisplay globalDisplay_;
    private final Session session_;
+   private final UIPrefs prefs_;
   
    private final SlideNavigationPresenter slideNavigationPresenter_;
    private final ShinyDisconnectNotifier disconnectNotifier_;
