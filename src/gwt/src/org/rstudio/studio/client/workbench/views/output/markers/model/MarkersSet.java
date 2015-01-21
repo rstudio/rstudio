@@ -29,10 +29,6 @@ public class MarkersSet extends JavaScriptObject
       return this.name;
    }-*/;
    
-   public native final String getTargetFile() /*-{
-      return this.target_file;
-   }-*/;
-   
    public native final String getBasePath() /*-{
       return this.base_path;
    }-*/;

@@ -49,7 +49,7 @@ public class MarkersOutputPane extends WorkbenchPane
    public void showMarkersSet(MarkersSet markerSet)
    {
       markerList_.clear();
-      markerList_.showMarkers(markerSet.getTargetFile(),
+      markerList_.showMarkers(null,
                               markerSet.getBasePath(),
                               markerSet.getMarkers(), 
                               markerSet.getAutoSelect());

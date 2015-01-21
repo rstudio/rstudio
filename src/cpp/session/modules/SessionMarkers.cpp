@@ -37,11 +37,6 @@ json::Object sourceMarkerSetAsJson(const module_context::SourceMarkerSet& set)
    using namespace module_context;
    json::Object jsonSet;
    jsonSet["name"] = set.name;
-   if (set.targetFile.empty())
-      jsonSet["target_file"] = json::Value();
-   else
-      jsonSet["target_file"] = createAliasedPath(set.targetFile);
-
    if (set.basePath.empty())
    {
       jsonSet["base_path"] = json::Value();
@@ -98,11 +93,10 @@ public:
          json::Value markerSetJson = setJson.second;
          if (json::isType<json::Object>(markerSetJson))
          {
-            std::string targetFile, basePath;
+            std::string basePath;
             int autoSelect;
             json::Array markersJson;
             Error error = json::readObject(markerSetJson.get_obj(),
-                                           "target_file", &targetFile,
                                            "base_path", &basePath,
                                            "markers", &markersJson,
                                            "auto_select", &autoSelect);
@@ -148,15 +142,12 @@ public:
             }
 
             using namespace module_context;
-            FilePath target = !targetFile.empty() ?
-                       resolveAliasedPath(targetFile) :
-                       FilePath();
             FilePath base = !basePath.empty() ?
                        resolveAliasedPath(basePath) :
                        FilePath();
 
             markerSets[name] = SourceMarkerSet(
-                                    name, target, base, markers,
+                                    name, base, markers,
                                     (SourceMarkerSet::AutoSelect)autoSelect);
          }
 
@@ -266,7 +257,6 @@ SEXP rs_showMarkers()
                                   true));
 
    SourceMarkerSet markerSet("cpp-errors",
-                             FilePath(), //resolveAliasedPath("~/woozy11.cpp"),
                              resolveAliasedPath("~"),
                              markers,
                              SourceMarkerSet::AutoSelectFirst);

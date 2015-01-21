@@ -754,12 +754,10 @@ struct SourceMarkerSet
    }
 
    SourceMarkerSet(const std::string& name,
-                   const core::FilePath& targetFile,
                    const core::FilePath& basePath,
                    const std::vector<SourceMarker>& markers,
                    AutoSelect autoSelect)
       : name(name),
-        targetFile(targetFile),
         basePath(basePath),
         markers(markers),
         autoSelect(autoSelect)
@@ -769,7 +767,6 @@ struct SourceMarkerSet
    bool empty() const { return name.empty(); }
 
    std::string name;
-   core::FilePath targetFile;
    core::FilePath basePath;
    std::vector<SourceMarker> markers;
    AutoSelect autoSelect;
