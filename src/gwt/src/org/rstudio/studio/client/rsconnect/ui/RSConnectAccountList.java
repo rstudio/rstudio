@@ -69,6 +69,7 @@ public class RSConnectAccountList extends Composite
       server_ = server;
       display_ = display;
       accountList_ = new WidgetListBox<AccountEntry>();
+      accountList_.setEmptyText("No accounts connected.");
       refreshAccountList();
       initWidget(accountList_);
    }

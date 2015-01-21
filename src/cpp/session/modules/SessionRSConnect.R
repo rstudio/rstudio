@@ -16,6 +16,11 @@
 .rs.addFunction("scalarListFromFrame", function(frame)
 {
    ret <- list()
+
+   # return an empty list when no entries exist
+   if (is.null(frame))
+     return(ret)
+
    cols <- names(frame)
 
    # take apart the frame and compose a list of scalars from each row

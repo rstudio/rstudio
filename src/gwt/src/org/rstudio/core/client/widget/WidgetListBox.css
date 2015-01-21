@@ -18,6 +18,11 @@
 	padding: 0px;
 }
 
+.outerPanel:focus
+{
+	outline: none;
+}
+
 .listPanel
 {
 	background-color: #ffffff;
@@ -28,4 +33,16 @@
 	-moz-box-sizing: border-box;
 	-webkit-box-sizing: border-box;
 	overflow: auto;
+}
+
+.listPanel:focus
+{
+	outline: none;
+}
+
+.emptyMessage
+{
+	color: #c0c0c0;
+	padding-top: 30%;
+	text-align: center;
 }
