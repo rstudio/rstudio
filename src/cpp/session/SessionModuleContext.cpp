@@ -1713,6 +1713,35 @@ bool isUserFile(const FilePath& filePath)
    return true;
 }
 
+namespace {
+
+// NOTE: sync changes with SessionCompilePdf.cpp logEntryJson
+json::Value sourceMarkerJson(const SourceMarker& sourceMarker)
+{
+   json::Object obj;
+   obj["type"] = static_cast<int>(sourceMarker.type);
+   obj["path"] = module_context::createAliasedPath(sourceMarker.path);
+   obj["line"] = sourceMarker.line;
+   obj["column"] = sourceMarker.column;
+   obj["message"] = sourceMarker.message;
+   obj["log_path"] = "";
+   obj["log_line"] = -1;
+   obj["show_error_list"] = sourceMarker.showErrorList;
+   return obj;
+}
+
+} // anonymous namespace
+
+json::Array sourceMarkersAsJson(const std::vector<SourceMarker>& markers)
+{
+   json::Array markersJson;
+   std::transform(markers.begin(),
+                  markers.end(),
+                  std::back_inserter(markersJson),
+                  sourceMarkerJson);
+   return markersJson;
+}
+
 Error initialize()
 {
    // register rs_enqueClientEvent with R 

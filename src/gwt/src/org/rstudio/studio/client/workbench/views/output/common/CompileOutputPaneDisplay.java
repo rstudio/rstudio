@@ -17,8 +17,8 @@ package org.rstudio.studio.client.workbench.views.output.common;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.events.HasEnsureHiddenHandlers;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
-import org.rstudio.studio.client.common.compile.CompileError;
 import org.rstudio.studio.client.common.compile.CompileOutput;
+import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 
 import com.google.gwt.core.client.JsArray;
@@ -29,7 +29,7 @@ public interface CompileOutputPaneDisplay extends WorkbenchView, HasEnsureHidden
    void ensureVisible(boolean activate);
    void compileStarted(String text);
    void showOutput(CompileOutput output);
-   void showErrors(JsArray<CompileError> errors);
+   void showErrors(JsArray<SourceMarker> errors);
    void clearAll();
    void compileCompleted();
    HasClickHandlers stopButton();

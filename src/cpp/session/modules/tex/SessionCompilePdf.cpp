@@ -252,7 +252,7 @@ void enqueErrorsEvent(const json::Array& logEntriesJson)
    module_context::enqueClientEvent(event);
 }
 
-// NOTE: sync changes with SessionBuildErrors.cpp compileErrorJson
+// NOTE: sync changes with SessionModuleContext.cpp sourceMarkerJson
 json::Object logEntryJson(const core::tex::LogEntry& logEntry)
 {
    json::Object obj;

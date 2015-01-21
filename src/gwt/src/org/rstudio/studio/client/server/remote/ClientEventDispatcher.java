@@ -27,7 +27,6 @@ import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.SaveAction;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
-import org.rstudio.studio.client.common.compile.CompileError;
 import org.rstudio.studio.client.common.compile.CompileOutput;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfErrorsEvent;
@@ -46,6 +45,7 @@ import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.dependencies.events.InstallShinyEvent;
 import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
+import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.common.synctex.events.SynctexEditFileEvent;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
@@ -368,7 +368,7 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.CompilePdfErrorsEvent))
          {
-            JsArray<CompileError> data = event.getData();
+            JsArray<SourceMarker> data = event.getData();
             eventBus_.fireEvent(new CompilePdfErrorsEvent(data));
          }
          else if (type.equals(ClientEvent.CompilePdfCompletedEvent))

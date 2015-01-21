@@ -1,5 +1,5 @@
 /*
- * CompileErrorListResources.java
+ * SourceMarkerListResources.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.compile.errorlist;
+package org.rstudio.studio.client.common.sourcemarkers;
 
 
 import com.google.gwt.core.client.GWT;
@@ -20,7 +20,7 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 
-public interface CompileErrorListResources extends ClientBundle
+public interface SourceMarkerListResources extends ClientBundle
 {  
    public static interface Styles extends CssResource
    {
@@ -45,13 +45,13 @@ public interface CompileErrorListResources extends ClientBundle
    @Source("images/badbox.png")
    ImageResource badbox();
 
-   @Source("CompileErrorList.css")
+   @Source("SourceMarkerList.css")
    Styles styles();
    
    @Source("images/logContextButton.png")
    ImageResource logContextButton();
     
-   public static CompileErrorListResources INSTANCE = 
-      (CompileErrorListResources)GWT.create(CompileErrorListResources.class) ;
+   public static SourceMarkerListResources INSTANCE = 
+      (SourceMarkerListResources)GWT.create(SourceMarkerListResources.class) ;
   
 }
