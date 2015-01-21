@@ -16,6 +16,8 @@
 #ifndef SESSION_R_COMPLETIONS_HPP
 #define SESSION_R_COMPLETIONS_HPP
 
+#include <string>
+
 namespace rstudio {
 namespace core {
 class Error;

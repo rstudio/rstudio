@@ -24,8 +24,12 @@
 # define CATCH_CONFIG_RUNNER
 # include "vendor/catch.hpp"
 
+#endif
+
 namespace rstudio {
 namespace tests {
+
+#ifdef RSTUDIO_UNIT_TESTS_ENABLED
 
 bool enabled(int argc, char* const argv[])
 {
@@ -51,11 +55,7 @@ int run(int argc, char* const argv[])
     return 1;
 }
 
-} // end namespace tests
-
 #else // not RSTUDIO_UNIT_TESTS_ENABLED
-
-namespace tests {
 
 bool enabled(int argc, char* const argv[])
 {
@@ -67,10 +67,10 @@ int run(int argc, char* const argv[])
    // no-op -- unit tests disabled
 }
 
+#endif // end RSTUDIO_UNIT_TESTS_ENABLED
+
 } // namespace tests
 } // namespace rstudio
-
-#endif // end RSTUDIO_UNIT_TESTS_ENABLED
 
 #endif
 
