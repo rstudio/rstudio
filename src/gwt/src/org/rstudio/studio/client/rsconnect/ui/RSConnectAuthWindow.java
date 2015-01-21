@@ -24,6 +24,8 @@ import com.google.inject.Singleton;
 
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.satellite.SatelliteWindow;
+import org.rstudio.studio.client.rsconnect.model.RSConnectAuthParams;
+import org.rstudio.studio.client.rsconnect.model.RSConnectServerInfo;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 
 @Singleton
@@ -45,6 +47,9 @@ public class RSConnectAuthWindow extends SatelliteWindow
    {
       // RSConnectServerInfo appParams = params.cast();
       RSConnectAuthPresenter appPresenter = pPresenter_.get();
+      RSConnectAuthParams authParams = params.cast();
+      
+      appPresenter.showClaimUrl(authParams.getPreAuthToken().getClaimUrl());
       
       // make it fill the containing layout panel
       Widget presWidget = appPresenter.asWidget();

@@ -1,5 +1,5 @@
 /*
- * RSConnectPreAuthToken.java
+ * RSConnectAuthParams.java
  *
  * Copyright (C) 2009-15 by RStudio, Inc.
  *
@@ -16,21 +16,23 @@ package org.rstudio.studio.client.rsconnect.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class RSConnectPreAuthToken extends JavaScriptObject
+public class RSConnectAuthParams extends JavaScriptObject
 {
-   protected RSConnectPreAuthToken() 
+   protected RSConnectAuthParams() 
    {
    }
    
-   public final native String getToken() /*-{
-      return this.token;
+   public final native static RSConnectAuthParams create(
+         RSConnectServerInfo info,
+         RSConnectPreAuthToken token) /*-{
+      return { server_info: info, auth_token: token };
+   }-*/;
+   
+   public final native RSConnectPreAuthToken getPreAuthToken() /*-{
+      return this.auth_token;
    }-*/;
 
-   public final native String getPrivateKey() /*-{
-      return this.private_key;
-   }-*/;
-
-   public final native String getClaimUrl() /*-{
-      return this.claim_url;
+   public final native RSConnectServerInfo getServerInfo() /*-{
+      return this.server_info;
    }-*/;
 }

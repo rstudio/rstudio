@@ -24,6 +24,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult.AccountType;
+import org.rstudio.studio.client.rsconnect.model.RSConnectAuthParams;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPreAuthToken;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
@@ -180,7 +181,9 @@ public class RSAccountConnector
          public void onResponseReceived(final RSConnectPreAuthToken token)
          {
             satelliteManager_.openSatellite(
-                  RSConnectAuthSatellite.NAME, serverInfo, new Size(700, 800));
+                  RSConnectAuthSatellite.NAME, 
+                  RSConnectAuthParams.create(serverInfo, token), 
+                  new Size(700, 800));
          }
 
          @Override

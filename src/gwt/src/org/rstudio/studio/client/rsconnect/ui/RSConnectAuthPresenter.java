@@ -37,5 +37,10 @@ public class RSConnectAuthPresenter implements IsWidget
       return view_.asWidget();
    }
    
+   public void showClaimUrl(String url)
+   {
+      view_.showClaimUrl(url);
+   }
+   
    private final Display view_;
 }
