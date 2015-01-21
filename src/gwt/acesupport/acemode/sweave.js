@@ -29,13 +29,13 @@ var RCodeModel = require("mode/r_code_model").RCodeModel;
 var RMatchingBraceOutdent = require("mode/r_matching_brace_outdent").RMatchingBraceOutdent;
 var unicode = require("ace/unicode");
 
-var Mode = function(suppressHighlighting, doc, session) {
-	if (suppressHighlighting)
-    	this.$tokenizer = new Tokenizer(new TextHighlightRules().getRules());
-	else
-    	this.$tokenizer = new Tokenizer(new SweaveHighlightRules().getRules());
+var Mode = function(suppressHighlighting, session) {
+   if (suppressHighlighting)
+      this.$tokenizer = new Tokenizer(new TextHighlightRules().getRules());
+   else
+      this.$tokenizer = new Tokenizer(new SweaveHighlightRules().getRules());
 
-   this.codeModel = new RCodeModel(doc, this.$tokenizer, /^r-/, /<<(.*?)>>/);
+   this.codeModel = new RCodeModel(session, this.$tokenizer, /^r-/, /<<(.*?)>>/);
    this.foldingRules = this.codeModel;
    this.$sweaveBackgroundHighlighter = new SweaveBackgroundHighlighter(
          session,
@@ -84,9 +84,9 @@ oop.inherits(Mode, TextMode);
       return this.$session.getState(position.row).match(/^r-/) ? 'R' : 'TeX';
    };
 
-   this.getNextLineIndent = function(state, line, tab, tabSize, row)
+   this.getNextLineIndent = function(state, line, tab)
    {
-      return this.codeModel.getNextLineIndent(row, line, state, tab, tabSize);
+      return this.codeModel.getNextLineIndent(state, line, tab);
    };
 
    this.allowAutoInsert = this.smartAllowAutoInsert;

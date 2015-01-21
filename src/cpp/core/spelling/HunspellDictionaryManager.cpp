@@ -20,6 +20,7 @@
 
 #include <core/Algorithm.hpp>
 
+namespace rstudio {
 namespace core {
 namespace spelling {
 
@@ -203,3 +204,4 @@ FilePath HunspellDictionaryManager::userLanguagesDir() const
 
 } // namespace spelling
 } // namespace core
+} // namespace rstudio

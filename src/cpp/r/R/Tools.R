@@ -30,6 +30,13 @@ assign( envir = .rs.Env, ".rs.addFunction", function(
    environment(.rs.Env[[fullName]]) <- .rs.Env
 })
 
+# add a global (non-scoped) variable to the tools:rstudio environment
+assign(envir = .rs.Env, ".rs.addGlobalVariable", function(name, var)
+{ 
+   assign(name, var, .rs.Env)
+   environment(.rs.Env[[name]]) <- .rs.Env
+})
+
 # add a global (non-scoped) function to the tools:rstudio environment
 assign( envir = .rs.Env, ".rs.addGlobalFunction", function(name, FN)
 { 
@@ -55,6 +62,12 @@ assign( envir = .rs.Env, ".rs.clearVar", function(name)
 { 
    fullName = paste(".rs.", name, sep="")
    remove(list=fullName, pos=.rs.Env)
+})
+
+assign(envir = .rs.Env, ".rs.getVar", function(name)
+{
+   fullName <- paste(".rs.", name, sep = "")
+   .rs.Env[[fullName]]
 })
 
 .rs.addFunction( "evalInGlobalEnv", function(code)

@@ -27,6 +27,7 @@
 #include <core/http/UriHandler.hpp>
 #include <core/http/AsyncUriHandler.hpp>
 
+namespace rstudio {
 namespace core {
 namespace http {
 
@@ -69,6 +70,7 @@ public:
 
 } // namespace http
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_HTTP_ASYNC_SERVER_HPP
 

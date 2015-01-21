@@ -24,6 +24,7 @@
 
 #include <core/FilePath.hpp>
 
+namespace rstudio {
 namespace core {
 
 class Error ;
@@ -66,6 +67,7 @@ private:
    bool isDirty_;
 };
 
+}
 }
 
 #endif // CORE_SETTINGS_HPP

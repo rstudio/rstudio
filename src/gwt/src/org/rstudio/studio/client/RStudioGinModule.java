@@ -133,6 +133,10 @@ import org.rstudio.studio.client.workbench.views.output.find.FindOutputPane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputPresenter;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
+import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputPane;
+import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputPresenter;
+import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputTab;
+import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersServerOperations;
 import org.rstudio.studio.client.workbench.views.output.renderrmd.RenderRmdOutputTab;
 import org.rstudio.studio.client.workbench.views.output.rsconnectdeploy.RSConnectDeployOutputTab;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.SourceCppOutputPane;
@@ -267,6 +271,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(Ignore.Display.class).to(IgnoreDialog.class);
       bind(FindOutputPresenter.Display.class).to(FindOutputPane.class);
       bind(SourceCppOutputPresenter.Display.class).to(SourceCppOutputPane.class);
+      bind(MarkersOutputPresenter.Display.class).to(MarkersOutputPane.class);
       bindTab("History", HistoryTab.class);
       bindTab("Data", DataTab.class);
       bindTab("Files", FilesTab.class);
@@ -283,6 +288,7 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("Find", FindOutputTab.class);
       bindTab("Source Cpp", SourceCppOutputTab.class);
       bindTab("Deploy", RSConnectDeployOutputTab.class);
+      bindTab("Markers", MarkersOutputTab.class);
 
       bind(Shell.Display.class).to(ShellPane.class) ;
            
@@ -345,6 +351,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(DependencyServerOperations.class).to(RemoteServer.class);
       bind(PackratServerOperations.class).to(RemoteServer.class);
       bind(CppServerOperations.class).to(RemoteServer.class);
+      bind(MarkersServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
 

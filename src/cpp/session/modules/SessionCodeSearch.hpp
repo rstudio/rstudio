@@ -18,11 +18,14 @@
 
 #include <core/r_util/RSourceIndex.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules {
 namespace code_search {
 
@@ -37,6 +40,7 @@ core::Error initialize();
 } // namespace code_search
 } // namespace modules
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_CODE_SEARCH_HPP
 

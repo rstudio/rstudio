@@ -23,6 +23,7 @@
 
 #include <core/SafeConvert.hpp>
 
+namespace rstudio {
 namespace core {
 namespace gitgraph {
 
@@ -161,3 +162,4 @@ Line GitGraph::addCommit(const std::string& commit,
 
 } // namespace gitgraph
 } // namespace core
+} // namespace rstudio

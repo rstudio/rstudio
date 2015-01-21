@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+namespace rstudio {
 namespace core {
 namespace system {
 
@@ -27,5 +28,6 @@ typedef std::vector<Option> Options;
 
 } // namespace system
 } // namespace stypes
+} // namespace rstudio
 
 #endif // CORE_SYSTEM_TYPES_HPP

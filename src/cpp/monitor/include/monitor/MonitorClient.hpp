@@ -28,6 +28,7 @@
 
 #include "MonitorConstants.hpp"
 
+namespace rstudio {
 namespace monitor {
 
 class Client : boost::noncopyable
@@ -76,6 +77,7 @@ void initializeMonitorClient(const std::string& metricsSocket,
 Client& client();
 
 } // namespace monitor
+} // namespace rstudio
 
 #endif // MONITOR_MONITOR_CLIENT_HPP
 

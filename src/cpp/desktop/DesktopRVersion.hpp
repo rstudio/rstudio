@@ -23,6 +23,7 @@
 
 #include "desktop-config.h"
 
+namespace rstudio {
 namespace desktop {
 
 enum Architecture
@@ -87,5 +88,6 @@ RVersion detectRVersion(bool forceUi,
                         QWidget* parent = NULL);
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOPRVERSION_HPP

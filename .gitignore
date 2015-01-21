@@ -25,3 +25,4 @@ CMakeLists.txt.user
 **/\.tern-port
 .#*
 *.autosave
+*~

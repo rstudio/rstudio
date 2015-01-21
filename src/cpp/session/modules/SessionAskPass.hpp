@@ -18,11 +18,14 @@
 
 #include <string>
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
  
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules {      
 namespace ask_pass {
 
@@ -47,5 +50,6 @@ core::Error initialize();
 } // namespace ask_pass
 } // namepace handlers
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_SESSION_ASK_PASS_HPP

@@ -25,8 +25,9 @@
 
 #include "RSessionState.hpp"
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace r {
 namespace session {
 
@@ -105,6 +106,7 @@ FilePath RestartContext::createSessionStatePath(const FilePath& scopePath,
 
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 
 

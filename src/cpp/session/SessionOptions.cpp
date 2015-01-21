@@ -37,9 +37,10 @@
 
 #include "session-config.h"
 
-using namespace core ;
+using namespace rstudio::core ;
 
-namespace rsession {  
+namespace rstudio {
+namespace session {  
 
 namespace {
 const char* const kDefaultPandocPath = "bin/pandoc";
@@ -564,3 +565,4 @@ void Options::resolveRsclangPath(const FilePath& resourcePath,
 #endif
    
 } // namespace session
+} // namespace rstudio

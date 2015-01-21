@@ -27,9 +27,10 @@
 
 #include "SessionCompilePdfSupervisor.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules { 
 namespace tex {
 namespace utils {
@@ -183,4 +184,5 @@ core::Error runTexCompile(
 } // namespace tex
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

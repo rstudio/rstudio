@@ -30,11 +30,14 @@
 
 #include <session/SessionConstants.hpp>
 
+namespace rstudio {
 namespace core {
    class ProgramStatus;
 }
+}
 
-namespace rsession {
+namespace rstudio {
+namespace session {
  
 
 // singleton
@@ -501,6 +504,7 @@ private:
 };
   
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_SESSION_OPTIONS_HPP
 

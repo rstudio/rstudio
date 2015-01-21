@@ -33,9 +33,10 @@
 #include "SessionProjectFirstRun.hpp"
 #include "SessionProjectsInternal.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace projects {
 
 namespace {
@@ -651,4 +652,5 @@ ProjectContext& projectContext()
 
 } // namespace projects
 } // namesapce session
+} // namespace rstudio
 

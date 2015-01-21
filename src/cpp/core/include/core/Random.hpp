@@ -21,6 +21,7 @@
 
 #include <boost/random.hpp>
 
+namespace rstudio {
 namespace core {
 namespace random {
 
@@ -44,6 +45,7 @@ T uniformRandomInteger()
 
 } // namespace random
 } // namespace core
+} // namespace rstudio
 
 
 #endif // CORE_RANDOM_HPP

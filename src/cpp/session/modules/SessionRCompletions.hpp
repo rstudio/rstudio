@@ -16,13 +16,14 @@
 #ifndef SESSION_R_COMPLETIONS_HPP
 #define SESSION_R_COMPLETIONS_HPP
 
-#include <string>
-
+namespace rstudio {
 namespace core {
 class Error;
 }
+}
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules {
 namespace r_completions {
 
@@ -33,6 +34,7 @@ std::string finishExpression(const std::string& expression);
 } // namespace r_completions
 } // namespace modules
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_R_COMPLETIONS_HPP
 

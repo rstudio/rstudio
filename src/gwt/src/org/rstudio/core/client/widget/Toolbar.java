@@ -185,6 +185,12 @@ public class Toolbar extends Composite
    {
       return addToolbarPopupMenu(label, menu, false);
    }
+   
+   public static Widget getSeparator()
+   {
+      Image sep = new Image(ThemeResources.INSTANCE.toolbarSeparator());
+      return sep;
+   }
 
    public Widget addLeftSeparator()
    {

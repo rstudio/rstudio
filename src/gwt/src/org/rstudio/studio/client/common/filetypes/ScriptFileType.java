@@ -35,7 +35,7 @@ public class ScriptFileType extends TextFileType
    {
       super(id, label, language, ext, icon,
             false, false, false, false, false, false, 
-            false, false, false, false, false, false);
+            false, false, false, false, false, false, false);
       interpreter_ = interpreter;
       windowsCompatible_ = windowsCompatible;
    }

@@ -22,6 +22,7 @@
 #include <boost/regex_fwd.hpp>
 #include <boost/iostreams/filter/regex.hpp>
 
+namespace rstudio {
 namespace core {
 
 class Error;
@@ -56,6 +57,7 @@ core::Error filterString(
 
 } // namespace regex_utils
 } // namespace core 
+} // namespace rstudio
 
 
 #endif // CORE_REGEX_UTILS_HPP

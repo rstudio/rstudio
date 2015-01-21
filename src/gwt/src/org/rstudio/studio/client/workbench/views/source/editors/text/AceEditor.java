@@ -204,8 +204,20 @@ public class AceEditor implements DocDisplay,
             {
                public void onLoaded()
                {
-                  if (command != null)
-                     command.execute();
+                  vimLoader_.addCallback(new Callback()
+                  {
+                     public void onLoaded()
+                     {
+                        emacsLoader_.addCallback(new Callback()
+                        {
+                           public void onLoaded()
+                           {
+                              if (command != null)
+                                 command.execute();
+                           }
+                        });
+                     }
+                  });
                }
             });
          }
@@ -277,6 +289,9 @@ public class AceEditor implements DocDisplay,
          @Override
          public void onPaste(PasteEvent event)
          {
+            if (completionManager_ != null)
+               completionManager_.onPaste(event);
+            
             final Position start = getSelectionStart();
 
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
@@ -629,9 +644,7 @@ public class AceEditor implements DocDisplay,
    
    public void insertCode(String code, boolean blockMode)
    {
-      // TODO: implement block mode
-      getSession().replace(
-            getSession().getSelection().getRange(), code);
+      widget_.getEditor().insert(code);
    }
 
    public String getCode(Position start, Position end)
@@ -777,6 +790,10 @@ public class AceEditor implements DocDisplay,
    public boolean hasSelection()
    {
       return !getSession().getSelection().getRange().isEmpty();
+   }
+   
+   public final Selection getNativeSelection() {
+      return widget_.getEditor().getSession().getSelection();
    }
 
    public InputEditorSelection getSelection()
@@ -951,6 +968,10 @@ public class AceEditor implements DocDisplay,
          widget_.getEditor().focus();
       else
          widget_.getEditor().blur();
+   }
+   
+   public void replaceRange(Range range, String text) {
+      getSession().replace(range, text);
    }
 
    public String replaceSelection(String value, boolean collapseSelection)
@@ -1315,6 +1336,18 @@ public class AceEditor implements DocDisplay,
       
       useVimMode_ = use;
       updateKeyboardHandlers();
+   }
+   
+   @Override
+   public boolean isVimModeOn()
+   {
+      return useVimMode_;
+   }
+   
+   @Override
+   public boolean isVimInInsertMode()
+   {
+      return useVimMode_ && widget_.getEditor().isVimInInsertMode();
    }
 
    public void setPadding(int padding)
@@ -1755,7 +1788,7 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().getRenderer().updateFontSize();
       widget_.forceResize();
    }
-
+   
    public HandlerRegistration addValueChangeHandler(
          ValueChangeHandler<Void> handler)
    {
@@ -1987,6 +2020,16 @@ public class AceEditor implements DocDisplay,
    {
       return popupVisible_;
    }
+   
+   public void selectAll(String needle)
+   {
+      widget_.getEditor().findAll(needle);
+   }
+   
+   public void moveCursorLeft()
+   {
+      widget_.getEditor().moveCursorLeft();
+   }
 
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
@@ -2003,9 +2046,15 @@ public class AceEditor implements DocDisplay,
    private Integer lineHighlightMarkerId_ = null;
    private Integer lineDebugMarkerId_ = null;
    private Integer executionLine_ = null;
+   
    private static final ExternalJavaScriptLoader aceLoader_ =
          new ExternalJavaScriptLoader(AceResources.INSTANCE.acejs().getSafeUri().asString());
    private static final ExternalJavaScriptLoader aceSupportLoader_ =
          new ExternalJavaScriptLoader(AceResources.INSTANCE.acesupportjs().getSafeUri().asString());
+   private static final ExternalJavaScriptLoader vimLoader_ =
+         new ExternalJavaScriptLoader(AceResources.INSTANCE.keybindingVimJs().getSafeUri().asString());
+   private static final ExternalJavaScriptLoader emacsLoader_ =
+         new ExternalJavaScriptLoader(AceResources.INSTANCE.keybindingEmacsJs().getSafeUri().asString());
+   
    private boolean popupVisible_;
 }

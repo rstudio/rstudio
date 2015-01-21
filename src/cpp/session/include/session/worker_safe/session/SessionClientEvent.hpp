@@ -20,11 +20,14 @@
 
 #include <core/json/Json.hpp>
 
+namespace rstudio {
 namespace core {
    class FilePath;
 }
+}
 
-namespace rsession {
+namespace rstudio {
+namespace session {
    
 namespace client_events {
    
@@ -121,6 +124,7 @@ extern const int kInstallShiny;
 extern const int kSuspendAndRestart;
 extern const int kDataViewChanged;
 extern const int kViewFunction;
+extern const int kShowMarkers;
 }
    
 class ClientEvent
@@ -183,6 +187,7 @@ ClientEvent showErrorMessageEvent(const std::string& title,
                                   const std::string& message);
    
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_SESSION_CLIENT_EVENT_HPP
 

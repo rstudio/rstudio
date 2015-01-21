@@ -21,6 +21,8 @@
 #import "FileDownloader.h"
 #import "MainFrameController.h"
 
+using namespace rstudio;
+
 struct PendingSatelliteWindow
 {
    PendingSatelliteWindow()

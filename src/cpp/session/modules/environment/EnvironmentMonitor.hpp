@@ -16,7 +16,8 @@
 #include <r/RSexp.hpp>
 #include <r/RInterface.hpp>
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules {
 namespace environment {
 
@@ -45,3 +46,4 @@ private:
 } // namespace environment
 } // namespace modules
 } // namespace session
+} // namespace rstudio

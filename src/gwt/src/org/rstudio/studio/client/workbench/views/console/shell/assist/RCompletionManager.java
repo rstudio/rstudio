@@ -69,6 +69,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RInfixData;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.RCompletionToolTip;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
@@ -99,7 +100,12 @@ public class RCompletionManager implements CompletionManager
                }
             }
          }
-      });   
+      });
+   }
+   
+   public void onPaste(PasteEvent event)
+   {
+      popup_.hide();
    }
    
    public RCompletionManager(InputEditorDisplay input,
@@ -528,6 +534,10 @@ public class RCompletionManager implements CompletionManager
    
    private boolean checkCanAutoPopup(char c, int lookbackLimit)
    {
+      if (docDisplay_.isVimModeOn() &&
+            !docDisplay_.isVimInInsertMode())
+         return false;
+      
       String currentLine = docDisplay_.getCurrentLine();
       Position cursorPos = input_.getCursorPosition();
       int cursorColumn = cursorPos.getColumn();
@@ -539,9 +549,7 @@ public class RCompletionManager implements CompletionManager
       // Don't auto-popup if there is a character following the cursor
       // (this implies an in-line edit and automatic popups are likely to
       // be annoying)
-      char charAtCursor = docDisplay_.getCharacterAtCursor();
-      if (Character.isLetter(charAtCursor) ||
-          Character.isDigit(charAtCursor))
+      if (isValidForRIdentifier(docDisplay_.getCharacterAtCursor()))
          return false;
       
       // Grab the current token on the line
@@ -655,6 +663,11 @@ public class RCompletionManager implements CompletionManager
          if (docDisplay_.isCursorInSingleLineString())
             return false;
          
+         // Bail if there is an alpha-numeric character
+         // following the cursor
+         if (isValidForRIdentifier(docDisplay_.getCharacterAtCursor()))
+            return false;
+         
          // Perform an auto-popup if a set number of R identifier characters
          // have been inserted (but only if the user has allowed it in prefs)
          boolean autoPopupEnabled = uiPrefs_.codeComplete().getValue().equals(
@@ -672,6 +685,13 @@ public class RCompletionManager implements CompletionManager
                (c == '@')
                )
          {
+            // Bail if we're in Vim but not in insert mode
+            if (docDisplay_.isVimModeOn() &&
+                !docDisplay_.isVimInInsertMode())
+            {
+               return false;
+            }
+            
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
                @Override
@@ -1341,22 +1361,6 @@ public class RCompletionManager implements CompletionManager
       
       TokenCursor startCursor = tokenCursor.cloneCursor();
       
-      // If this is an argument, return auto-completions tuned to that argument
-      TokenCursor argsCursor = startCursor.cloneCursor();
-      if (argsCursor.currentType() == "identifier")
-         argsCursor.moveToPreviousToken();
-      
-      if (argsCursor.currentValue() == "=")
-      {
-         if (argsCursor.moveToPreviousToken())
-         {
-            return new AutocompletionContext(
-                  token,
-                  argsCursor.currentValue(),
-                  AutocompletionContext.TYPE_ARGUMENT);
-         }
-      }
-      
       // Find an opening '(' or '[' -- this provides the function or object
       // for completion.
       int initialNumCommas = 0;
@@ -1451,6 +1455,33 @@ public class RCompletionManager implements CompletionManager
       
       context.setFunctionCallString(
             (beforeText + afterText).trim());
+      
+      // If this is an argument, return auto-completions tuned to that argument
+      TokenCursor argsCursor = startCursor.cloneCursor();
+      if (argsCursor.currentType() == "identifier")
+         argsCursor.moveToPreviousToken();
+      
+      if (argsCursor.currentValue() == "=")
+      {
+         if (argsCursor.moveToPreviousToken())
+         {
+            context.setToken(token);
+            
+            ArrayList<String> argData = new ArrayList<String>();
+            argData.add(argsCursor.currentValue());
+            context.setAssocData(argData);
+            
+            ArrayList<Integer> dataType = new ArrayList<Integer>();
+            dataType.add(AutocompletionContext.TYPE_ARGUMENT);
+            context.setDataType(dataType);
+            
+            ArrayList<Integer> numCommas = new ArrayList<Integer>();
+            numCommas.add(0);
+            context.setNumCommas(numCommas);
+            
+            return context;
+         }
+      }
       
       String initialData =
             docDisplay_.getTextForRange(Range.fromPoints(
@@ -1653,6 +1684,7 @@ public class RCompletionManager implements CompletionManager
             popup_.hide() ;
             popup_.clearHelp(false);
             popup_.setHelpVisible(false);
+            docDisplay_.setFocus(true);
          }
          
       }
@@ -1779,67 +1811,67 @@ public class RCompletionManager implements CompletionManager
           * selection.
           */
          
-         // Move range to beginning of token
-         input_.setSelection(new InputEditorSelection(
-               selection_.getStart().movePosition(-token_.length(), true),
-               input_.getSelection().getEnd()));
-
-         if (insertParen && !overrideInsertParens_ && !textFollowingCursorIsOpenParen)
+         // There might be multiple cursors. Get the position of each cursor.
+         Range[] ranges = editor.getNativeSelection().getAllRanges();
+         
+         // Determine the replacement value.
+         boolean shouldInsertParens = insertParen &&
+               !overrideInsertParens_ &&
+               !textFollowingCursorIsOpenParen;
+         
+         if (shouldInsertParens)
          {
-            // Don't replace the selection if the token ends with a ')'
-            // (implies an earlier replacement handled this)
-            if (token_.endsWith("("))
+            // Munge the value -- determine whether we want to append '()' 
+            // for e.g. function completions, and so on.
+            if (textFollowingCursorIsClosingParen ||
+                  !uiPrefs_.insertMatching().getValue())
             {
-               input_.setSelection(new InputEditorSelection(
-                     input_.getSelection().getEnd(),
-                     input_.getSelection().getEnd()));
+               value = value + "(";
             }
             else
             {
-               // If the token after the cursor is already a ')', don't insert
-               // a closing paren
-               int relMovement = 0;
-               if (textFollowingCursorIsClosingParen || !uiPrefs_.insertMatching().getValue())
-               {
-                  input_.replaceSelection(value + "(", true);
-               }
-               else
-               {
-                  input_.replaceSelection(value + "()", true);
-                  relMovement = -1;
-               }
-               
-               // Move the cursor into the newly inserted parens
-               InputEditorSelection newSelection = new InputEditorSelection(
-                     input_.getSelection().getEnd().movePosition(
-                           relMovement, true));
-               
-               token_ = value + "(";
-               selection_ = new InputEditorSelection(
-                     input_.getSelection().getStart().movePosition(
-                           relMovement - 1, true),
-                     newSelection.getStart());
-
-               input_.setSelection(newSelection);
+               value = value + "()";
             }
          }
          else
          {
             if (shouldQuote)
                value = "\"" + value + "\"";
-            
+
             // don't add spaces around equals if requested
             final String kSpaceEquals = " = ";
             if (!uiPrefs_.insertSpacesAroundEquals().getValue() &&
-                value.endsWith(kSpaceEquals))
+                  value.endsWith(kSpaceEquals))
             {
                value = value.substring(0, value.length() - kSpaceEquals.length()) + "=";
             }
-               
-
-            input_.replaceSelection(value, true);
-            token_ = value;
-            selection_ = input_.getSelection();
+         }
+         
+         // Loop over all of the active cursors, and replace.
+         for (Range range : ranges)
+         {
+            // We should be typing, and so each range should just define a
+            // cursor position. Take those positions, construct ranges, replace
+            // text in those ranges, and proceed.
+            Position replaceEnd = range.getEnd();
+            Position replaceStart = Position.create(
+                  replaceEnd.getRow(),
+                  replaceEnd.getColumn() - token_.length());
+            
+            editor.replaceRange(
+                  Range.fromPoints(replaceStart, replaceEnd),
+                  value);
+            
+         }
+         
+         // Set the active selection, and update the token.
+         token_ = value;
+         selection_ = input_.getSelection();
+         
+         // Move the cursor(s) back inside parens if necessary.
+         if (shouldInsertParens)
+         {
+            editor.moveCursorLeft();
          }
          
          // Show a signature popup if we just completed a function

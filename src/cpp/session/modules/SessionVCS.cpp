@@ -40,9 +40,10 @@
 #include <core/system/Crypto.hpp>
 #endif
 
-using namespace core;
+using namespace rstudio::core;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 
 namespace {
    const char * const kVcsIdNone = "none";
@@ -267,8 +268,10 @@ core::Error initialize()
 } // namespace source_control
 } // namespace modules
 } // namespace session
+} // namespace rstudio
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace module_context {
 
 VcsContext vcsContext(const FilePath& workingDir)
@@ -309,3 +312,4 @@ VcsContext vcsContext(const FilePath& workingDir)
 
 } // namespace module_context
 } // namespace session
+} // namespace rstudio

@@ -15,6 +15,8 @@
     - Completions for dimension names in `[`, `[[` calls
     - Completions from packages in `library`, `require` calls automatically
       inferred and supplied even when not loaded
+    - Completions for knitr options, e.g. in `opts_chunk$get()`, are now supplied
+    - Completions for dynamic symbols within `.C`, `.Call`, `.Fortran`, `.External`
 * Improvements to C/C++ editing mode:
     - Code completion
     - F2 code navigation (go to definition)
@@ -26,10 +28,25 @@
     - Navigate to file posititions using file:line:col
     - Include parameters in function navigation menu
 * Editor tabs in the source pane can now be rearranged
+* Support for multiple cursors via Ctrl+Alt+Up/Down
 * Alt+Enter to run code while retaining cursor position
 * Comment/uncomment respects indent level when appropriate
 * Shift+Enter now searches backwards in Find/Replace
+* Find All option added in Find/Replace
 * New option to control comment continuation on insertion of new lines
+* Updated to Ace (source editor component) v1.1.8
+* Improved Vim mode:
+    - Various bug fixes
+    - Visual block selection (CTRL + v)
+    - Multiple-cursor aware
+    - Macros (`q`)
+    - Marks (`m`)
+    - Quick find (`/`)
+    - Support a subset of commands in `:`
+* Syntax highlighting modes for many new languages including Clojure, CoffeeScript, C#, Go, Groovy, Haskell, Java, Julia, Lisp, Lua, Matlab, Perl, Ruby, Rust, and Scala.
+* Syntax highlighting for GraphViz and mermaid.js diagrams. 
+* Diagram previews using the `DiagrammeR` package (requires recent version from GitHub).
+* A wide variety of new editor themes (color schemes) are now available.
 
 ### Data Viewer
 
@@ -46,6 +63,8 @@
 * Allow 'debugSource' to be executed in user-specified environment
 * Improved heuristics for locating the stack frame where errors originated
 * Autocompletions now available when debugging
+* Improved debug stepping through statements wrapped in tryCatch()
+* Better call frame selection when using recover()
 
 ### Packages
 
@@ -61,9 +80,15 @@
 
 * Render plots using devicePixelRatio for retina and HDPI screens
 
-### Miscellaneous
+### R Markdown
 
 * Updated to pandoc 1.13.1
+* Make publishing UI easier to discover
+* Updated internal PDF viewer (PDF.js) to version 1.0.1040 
+
+
+### Miscellaneous
+
 * Updated rendering engine to Qt 5.4 for improved performance
 * Windows: updated to MSYS SSH 1000.18
 * Bind Cmd+Shift+K shortcut to Compile PDF and Preview HTML
@@ -71,11 +96,18 @@
 * Add Clear Recent Projects menu item to toolbar project menu
 * Command to sync current working directory and Files pane to project directory
 * Eliminated rstudio and manipulate packages (both now available on CRAN)
+* Added global RStudio.Version function for getting basic version info
+
+### Server
+
+* Improved installation by reducing dependencies and providing additional platform-specific builds (e.g. SUSE, RHEL5 vs. RHEL6/7)
 * Server Pro: Support for SPDY protocol
 
 ### Bug Fixes
 
 * Prevent error dialog when getOption("repos") is an unnamed vector
+* Fix for regex Find/Replace lockup with empty strings 
+* Find in Files now always activates result pane
 
 
 

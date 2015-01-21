@@ -38,6 +38,7 @@
 #include <core/StringUtils.hpp>
 
 
+namespace rstudio {
 namespace core {
 namespace r_util {
 
@@ -264,22 +265,45 @@ RToken RTokenizer::matchUserOperator()
 RToken RTokenizer::matchOperator()
 {
    wchar_t cNext = peek(1) ;
+   wchar_t cNextNext = peek(2);
 
    switch (peek())
    {
+   case L':':
+      return consumeToken(RToken::OPER, (cNext == L':') + (cNextNext == L':') + 1);
+      
+   case L'|':
+      return consumeToken(RToken::OPER, cNext == L'|' ? 2 : 1);
+      
+   case L'&':
+      return consumeToken(RToken::OPER, cNext == L'&' ? 2 : 1);
+      
+   case L'<': // <=, <-, <<-, but not <<
+      
+      if (cNext == L'=' || cNext == L'-') // <=, <-
+         return consumeToken(RToken::OPER, 2);
+      else if (cNext == L'<')
+      {
+         if (cNextNext == L'=') // <<=
+            return consumeToken(RToken::OPER, 3); 
+      }
+      else // plain old <
+         return consumeToken(RToken::OPER, 1);
+      
+   case L'-': // also -> and ->>
+      if (cNext == L'>')
+         return consumeToken(RToken::OPER, cNextNext == L'>' ? 3 : 2);
+      else
+         return consumeToken(RToken::OPER, 1);
+      
    case L'+': case L'*': case L'/':
-   case L'^': case L'&': case L'|':
-   case L'~': case L'$': case L':':
+   case L'^': case L'~': case L'$':
       // single-character operators
       return consumeToken(RToken::OPER, 1) ;
-   case L'-': // also ->
-      return consumeToken(RToken::OPER, cNext == L'>' ? 2 : 1) ;
+      
    case L'>': // also >=
       return consumeToken(RToken::OPER, cNext == L'=' ? 2 : 1) ;
-   case L'<': // also <- and <=
-      return consumeToken(RToken::OPER, cNext == L'=' ? 2 :
-                                       cNext == L'-' ? 2 :
-                                       1) ;
+      
    case L'=': // also ==
       return consumeToken(RToken::OPER, cNext == L'=' ? 2 : 1) ;
    case L'!': // also !=
@@ -366,8 +390,13 @@ RToken RTokenizer::consumeToken(wchar_t tokenType, std::size_t length)
                  start - data_.begin()) ;
 }
 
+std::string RToken::contentAsUtf8() const
+{
+   return string_utils::wideToUtf8(content());
+}
 
 } // namespace r_util
 } // namespace core 
+} // namespace rstudio
 
 

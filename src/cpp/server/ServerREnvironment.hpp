@@ -21,11 +21,14 @@
 
 #include <core/r_util/REnvironment.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
 }
+}
 
+namespace rstudio {
 namespace server {
 namespace r_environment {
    
@@ -39,6 +42,7 @@ bool detectREnvironment(const core::FilePath& filePath,
 
 } // namespace r_environment
 } // namespace server
+} // namespace rstudio
 
 #endif // SERVER_R_ENVIRONMENT_HPP
 

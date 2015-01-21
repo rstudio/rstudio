@@ -19,7 +19,8 @@
 #include <core/r_util/RSourceIndex.hpp>
 #include <session/SessionAsyncRProcess.hpp>
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules {
 namespace r_completions {
 
@@ -55,5 +56,6 @@ private:
 } // end namespace r_completions
 } // end namesapce modules
 } // end namespace session
+}
 
 #endif

@@ -24,6 +24,7 @@
 
 #include <core/system/System.hpp>
 
+namespace rstudio {
 namespace core {
 namespace markdown {
 
@@ -266,6 +267,7 @@ bool requiresMathjax(const std::string& htmlOutput)
 
 } // namespace markdown
 } // namespace core
+} // namespace rstudio
    
 
 

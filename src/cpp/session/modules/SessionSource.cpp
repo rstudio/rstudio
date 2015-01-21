@@ -52,9 +52,10 @@ extern "C" const char *locale2charset(const char *);
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules { 
 namespace source {
 
@@ -372,7 +373,7 @@ Error saveDocument(const json::JsonRpcRequest& request,
 Error saveDocumentDiff(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
-   using namespace core::string_utils;
+   using namespace rstudio::core::string_utils;
 
    // unique id and jsonPath (can be null for auto-save)
    std::string id;
@@ -821,6 +822,25 @@ Error isReadOnlyFile(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error getMinimalSourcePath(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   // params
+   std::string path;
+   Error error = json::readParams(request.params, &path);
+   if (error)
+      return error ;
+   FilePath filePath = module_context::resolveAliasedPath(path);
+
+   // calculate path
+   pResponse->setResult(module_context::pathRelativeTo(
+            module_context::safeCurrentPath(),
+            filePath));
+
+   return Success();
+}
+
+
 Error getScriptRunCommand(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
@@ -1067,7 +1087,7 @@ Error initialize()
 
    // install rpc methods
    using boost::bind;
-   using namespace r::function_hook;
+   using namespace rstudio::r::function_hook;
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "new_document", newDocument))
@@ -1085,6 +1105,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_source_template", getSourceTemplate))
       (bind(registerRpcMethod, "create_rd_shell", createRdShell))
       (bind(registerRpcMethod, "is_read_only_file", isReadOnlyFile))
+      (bind(registerRpcMethod, "get_minimal_source_path", getMinimalSourcePath))
       (bind(registerRpcMethod, "get_script_run_command", getScriptRunCommand))
       (bind(registerRpcMethod, "set_doc_order", setDocOrder))
       (bind(sourceModuleRFile, "SessionSource.R"));
@@ -1103,4 +1124,5 @@ Error initialize()
 } // namespace source
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

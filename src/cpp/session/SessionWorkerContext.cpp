@@ -22,9 +22,10 @@
 #include <session/SessionClientEvent.hpp>
 #include <session/SessionModuleContext.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace worker_context {
 
 // Worker RPC methods don't hold up an HTTP connection while the operation
@@ -42,3 +43,4 @@ Error registerWorkerRpcMethod(const std::string& name,
 
 } // namespace worker_context
 } // namespace session
+} // namespace rstudio

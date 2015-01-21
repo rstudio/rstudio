@@ -34,6 +34,7 @@
 // both extremely large trees and or self-referential (and thus infinitely
 // recursive) trees.
 
+namespace rstudio {
 namespace core {   
 namespace system {
 namespace file_monitor {
@@ -154,6 +155,7 @@ boost::function<bool(const FileInfo&)> excludeHiddenFilter();
 } // namespace file_monitor
 } // namespace system
 } // namespace core 
+} // namespace rstudio
 
 #endif // CORE_SYSTEM_FILE_MONITOR_HPP
 

@@ -34,6 +34,7 @@
 #include <winnls.h>
 #endif
 
+namespace rstudio {
 namespace core {
 namespace string_utils {
 
@@ -470,8 +471,71 @@ void stripQuotes(std::string* pStr)
       *pStr = pStr->substr(0, len -1);
 }
 
+template <typename T, typename U>
+inline std::size_t countNewLinesImpl(const T& string,
+                                     const U& CR,
+                                     const U& LF)
+{
+   return countNewLinesImpl(string.begin(),
+                            string.end(),
+                            CR,
+                            LF);
+}
+
+template <typename Iter, typename U>
+inline std::size_t countNewLinesImpl(Iter begin,
+                                     Iter end,
+                                     const U& CR,
+                                     const U& LF)
+{
+   std::size_t numNewLines = 0;
+   Iter it = begin;
+   for (; it != end; ++it)
+   {
+      // Detect '\r\n'
+      if (*it == CR)
+      {
+         if (it + 1 != end &&
+             *(it + 1) == LF)
+         {
+            ++it;
+            ++numNewLines;
+         }
+      }
+      
+      // Detect '\n'
+      if (*it == LF)
+         ++numNewLines;
+   }
+   
+   return numNewLines;
+}
+
+std::size_t countNewLines(const std::wstring& string)
+{
+   return countNewLinesImpl(string.begin(), string.end(), L'\r', L'\n');
+}
+
+std::size_t countNewLines(const std::string& string)
+{
+   return countNewLinesImpl(string.begin(), string.end(), '\r', '\n');
+}
+
+std::size_t countNewLines(std::string::iterator begin,
+                          std::string::iterator end)
+{
+   return countNewLinesImpl(begin, end, '\r', '\n');
+}
+
+std::size_t countNewLines(std::wstring::iterator begin,
+                          std::wstring::iterator end)
+{
+   return countNewLinesImpl(begin, end, '\r', '\n');
+}
+
 } // namespace string_utils
 } // namespace core 
+} // namespace rstudio
 
 
 

@@ -40,8 +40,9 @@ extern "C"  typedef void (*ptr_QuartzCocoa_SetupEventLoop)(int, unsigned long);
 
 extern int R_running_as_main_program;  // from unix/system.c
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace r {
 namespace session {
 
@@ -369,6 +370,7 @@ void processEvents()
 } // namespace event_loop
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 
 

@@ -20,9 +20,10 @@
 
 #include <core/FileSerializer.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules { 
 namespace rmarkdown {
 namespace presentation {
@@ -207,4 +208,5 @@ void ammendResults(const std::string& formatName,
 } // namepsace rmarkdown
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

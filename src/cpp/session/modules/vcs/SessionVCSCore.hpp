@@ -24,7 +24,8 @@
 #include <core/json/Json.hpp>
 #include <core/FilePath.hpp>
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules {
 namespace source_control {
 
@@ -91,5 +92,6 @@ public:
 } // namespace source_control
 } // namespace modules
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_VCS_CORE_HPP

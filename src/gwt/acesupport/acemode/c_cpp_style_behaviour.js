@@ -658,7 +658,6 @@ var CStyleBehaviour = function(codeModel) {
                state,
                line + "\\", // added so the indentation mode believes we're still in a macro
                session.getTabString(),
-               session.getTabSize(),
                row,
                false
             );

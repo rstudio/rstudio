@@ -21,10 +21,13 @@
 
 #include <core/system/Process.hpp>
 
+namespace rstudio {
 namespace  core {
    class Error;
 }
+}
 
+namespace rstudio {
 namespace server {
 namespace process_supervisor {
 
@@ -39,6 +42,7 @@ core::Error initialize();
 
 } // namespace process_supervisor
 } // namespace server
+} // namespace rstudio
 
 #endif // SERVER_PROCESS_SUPERVISOR_HPP
 

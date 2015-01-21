@@ -224,9 +224,9 @@ var createNumericFilterUI = function(idx, col, onDismiss) {
       var range = val.split("-");
       min = range[0];
       max = range[1];
-    } else if (!isNaN(parseInt(val))) {
-      min = parseInt(val);
-      max = parseInt(val);
+    } else if (!isNaN(parseFloat(val))) {
+      min = parseFloat(val);
+      max = parseFloat(val);
     }
     var minVal = document.createElement("div");
     minVal.textContent = min;

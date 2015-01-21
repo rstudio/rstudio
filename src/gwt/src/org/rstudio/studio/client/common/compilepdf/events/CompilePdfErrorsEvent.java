@@ -14,7 +14,7 @@
  */
 package org.rstudio.studio.client.common.compilepdf.events;
 
-import org.rstudio.studio.client.common.compile.CompileError;
+import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.EventHandler;
@@ -27,12 +27,12 @@ public class CompilePdfErrorsEvent extends GwtEvent<CompilePdfErrorsEvent.Handle
       void onCompilePdfErrors(CompilePdfErrorsEvent event);
    }
 
-   public CompilePdfErrorsEvent(JsArray<CompileError> errors)
+   public CompilePdfErrorsEvent(JsArray<SourceMarker> errors)
    {
       errors_ = errors;
    }
    
-   public JsArray<CompileError> getErrors()
+   public JsArray<SourceMarker> getErrors()
    {
       return errors_;
    }
@@ -49,7 +49,7 @@ public class CompilePdfErrorsEvent extends GwtEvent<CompilePdfErrorsEvent.Handle
       handler.onCompilePdfErrors(this);
    }
    
-   private JsArray<CompileError> errors_;
+   private JsArray<SourceMarker> errors_;
 
    public static final Type<Handler> TYPE = new Type<Handler>();
 }

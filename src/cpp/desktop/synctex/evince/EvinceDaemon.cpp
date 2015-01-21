@@ -15,6 +15,7 @@
 
 #include "EvinceDaemon.hpp"
 
+namespace rstudio {
 namespace desktop {
 namespace synctex {
 
@@ -33,4 +34,5 @@ EvinceDaemon::~EvinceDaemon()
 
 } // namespace synctex
 } // namespace desktop
+} // namespace rstudio
 

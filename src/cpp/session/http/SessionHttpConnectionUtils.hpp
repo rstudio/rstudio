@@ -22,13 +22,16 @@
 
 #include <boost/function.hpp>
 
+namespace rstudio {
 namespace core {
 namespace http {
    class Request;
 }
 }
+}
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace connection {
 
 std::string rstudioRequestIdFromRequest(const core::http::Request& request);
@@ -53,6 +56,7 @@ bool authenticate(boost::shared_ptr<HttpConnection> ptrConnection,
 
 } // namespace connection
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_HTTP_CONNECTION_HPP
 

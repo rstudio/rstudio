@@ -16,9 +16,10 @@
 
 #include <core/FilePath.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules {
 namespace source_control {
 
@@ -35,3 +36,4 @@ VCSStatus StatusResult::getStatus(const FilePath& fileOrDirectory) const
 } // namespace source_control
 } // namespace modules
 } // namespace session
+} // namespace rstudio

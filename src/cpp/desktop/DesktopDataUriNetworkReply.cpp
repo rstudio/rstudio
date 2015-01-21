@@ -22,6 +22,7 @@
 
 #include "DesktopUtils.hpp"
 
+namespace rstudio {
 namespace desktop {
 
 // NOTE: this does not yet actually work. PNGs served back through this
@@ -90,3 +91,4 @@ qint64 DataUriNetworkReply::readData(char *data, qint64 maxSize)
 
 
 } // namespace desktop
+} // namespace rstudio

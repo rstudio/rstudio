@@ -39,6 +39,7 @@
       LOG_ERROR(threadError); \
    }
 
+namespace rstudio {
 namespace core {
 namespace thread {
       
@@ -287,6 +288,7 @@ void safeLaunchThread(boost::function<void()> threadMain,
       
 } // namespace thread
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_THREAD_HPP
 

@@ -21,6 +21,7 @@
 
 #include <core/Error.hpp>
 
+namespace rstudio {
 namespace core {
 namespace system {
 namespace crypto {
@@ -55,6 +56,7 @@ core::Error rsaPrivateDecrypt(const std::string& pCipherText, std::string* pPlai
 } // namespace crypto
 } // namespace system
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_SYSTEM_CRYPTO_HPP
 

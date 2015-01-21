@@ -22,6 +22,7 @@
 #include <core/Error.hpp>
 #include <core/system/System.hpp>
 
+namespace rstudio {
 namespace core {
 namespace log {
 
@@ -167,6 +168,7 @@ std::string errorAsLogEntry(const Error& error)
 
 } // namespace log
 } // namespace core 
+} // namespace rstudio
 
 
 

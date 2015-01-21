@@ -38,6 +38,7 @@
 
 #include <server/ServerOptions.hpp>
 
+namespace rstudio {
 namespace server {
 namespace auth {
 namespace secure_cookie {
@@ -301,4 +302,5 @@ Error initialize()
 } // namespace secure_cookie
 } // namespace auth
 } // namespace server
+} // namespace rstudio
 

@@ -18,11 +18,14 @@
 
 #include <core/Error.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
  
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules {      
 namespace clang {
 
@@ -33,5 +36,6 @@ core::Error initialize();
 } // namespace clang
 } // namepace handlers
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_MODULES_CLANG_HPP

@@ -45,11 +45,9 @@
 
 #include "PostbackOptions.hpp"
 
-#define CATCH_CONFIG_RUNNER
-#include <tests/TestThat.hpp>
-
-using namespace core ;
-using namespace rsession::postback ;
+using namespace rstudio;
+using namespace rstudio::core;
+using namespace session::postback ;
 
 int exitFailure(const Error& error)
 {

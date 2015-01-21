@@ -24,9 +24,10 @@
 
 #include "SessionProjectsInternal.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace projects {
 
 namespace {
@@ -83,4 +84,5 @@ std::vector<std::string> collectFirstRunDocs(const FilePath& projectFile)
 
 } // namespace projects
 } // namesapce session
+} // namespace rstudio
 

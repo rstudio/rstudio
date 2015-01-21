@@ -549,19 +549,30 @@
    gsub("([\\-\\[\\]\\{\\}\\(\\)\\*\\+\\?\\.\\,\\\\\\^\\$\\|\\#\\s])", "\\\\\\1", regex, perl = TRUE)
 })
 
-.rs.addFunction("objectsOnSearchPath", function(token, caseInsensitive = FALSE)
+.rs.addFunction("objectsOnSearchPath", function(token = "",
+                                                caseInsensitive = FALSE)
 {
-   token <- .rs.escapeForRegex(token)
-   if (caseInsensitive)
-      token <- .rs.asCaseInsensitiveRegex(token)
-   
    search <- search()
-   objects <- lapply(1:length(search()), function(i) {
-      ls(pos = i, all.names = TRUE, pattern = paste("^", token, sep = ""))
-   })
+   
+   if (nzchar(token))
+   {
+      token <- .rs.escapeForRegex(token)
+      if (caseInsensitive)
+         token <- .rs.asCaseInsensitiveRegex(token)
+      pattern <- paste("^", token, sep = "")
+      
+      objects <- lapply(1:length(search), function(i) {
+         ls(pos = i, all.names = TRUE, pattern = pattern)
+      })
+   }
+   else
+   {
+      objects <- lapply(1:length(search), function(i) {
+         ls(pos = i, all.names = TRUE)
+      })
+   }
    
    names(objects) <- search
-   
    objects
 })
 

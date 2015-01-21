@@ -22,7 +22,8 @@
 
 #include <core/Settings.hpp>
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 
 // singleton
 class PersistentState;
@@ -66,6 +67,7 @@ private:
 };
    
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_PERSISTENT_STATE_HPP
 

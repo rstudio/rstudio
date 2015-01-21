@@ -36,7 +36,7 @@
 #include "SessionPackages.hpp"
 #include "session-config.h"
 
-using namespace core;
+using namespace rstudio::core;
 
 #ifdef TRACE_PACKRAT_OUTPUT
 #define PACKRAT_TRACE(x) \
@@ -64,7 +64,8 @@ using namespace core;
 // compatibility with older versions of RStudio
 #define kPackratRStudioProtocolVersion 1
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 
 namespace modules { 
 namespace packrat {
@@ -1163,4 +1164,5 @@ json::Object packratOptionsAsJson()
 
 } // namespace module_context
 } // namespace session
+} // namespace rstudio
 

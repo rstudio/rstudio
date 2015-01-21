@@ -26,6 +26,7 @@
 #include <core/json/Json.hpp>
 #include <core/system/FileMonitor.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
@@ -34,8 +35,10 @@ namespace core {
       class FileChangeEvent;
    }
 }
+}
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules {
 
    namespace git {
@@ -89,5 +92,6 @@ private:
 } // namespace files
 } // namepace handlers
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_SESSION_FILES_LISTING_MONITOR_HPP

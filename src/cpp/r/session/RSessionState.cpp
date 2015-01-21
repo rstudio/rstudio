@@ -39,8 +39,9 @@
 #include "RSearchPath.hpp"
 #include "graphics/RGraphicsPlotManager.hpp"
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace r {
    
 using namespace exec ;  
@@ -561,3 +562,4 @@ bool destroy(const FilePath& statePath)
 } // namespace state
 } // namespace session   
 } // namespace r
+} // namespace rstudio

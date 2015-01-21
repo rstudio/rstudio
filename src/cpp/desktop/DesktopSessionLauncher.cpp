@@ -35,8 +35,9 @@
 #define RUN_DIAGNOSTICS_LOG(message) if (desktop::options().runDiagnostics()) \
              std::cout << (message) << std::endl;
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace desktop {
 
 namespace {
@@ -396,3 +397,4 @@ void SessionLauncher::buildLaunchContext(QString* pHost,
 
 
 } // namespace desktop
+} // namespace rstudio

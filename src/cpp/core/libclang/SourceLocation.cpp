@@ -17,6 +17,7 @@
 
 #include <core/libclang/LibClang.hpp>
 
+namespace rstudio {
 namespace core {
 namespace libclang {
 
@@ -93,3 +94,4 @@ bool SourceLocation::operator!=(const SourceLocation& other) const
 
 } // namespace libclang
 } // namespace core
+} // namespace rstudio

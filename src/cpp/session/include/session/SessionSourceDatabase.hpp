@@ -26,12 +26,15 @@
 #include <core/FilePath.hpp>
 #include <core/json/Json.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
 }
+}
  
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace source_database {
    
 class SourceDocument : boost::noncopyable
@@ -175,5 +178,6 @@ core::Error initialize();
 
 } // namespace source_database
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_SOURCE_DATABASE_HPP

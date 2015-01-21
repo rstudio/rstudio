@@ -21,6 +21,7 @@
       return; \
    RecursionGuard rg(&recursionCount)
 
+namespace rstudio {
 namespace core {
 
 // RecursionGuard is a simple class intended to prevent reentrancy for a 
@@ -36,4 +37,5 @@ private:
    int* pCounter_;
 };
 
+}
 }

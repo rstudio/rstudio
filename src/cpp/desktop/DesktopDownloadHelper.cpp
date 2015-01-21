@@ -19,6 +19,7 @@
 
 #include "DesktopUtils.hpp"
 
+namespace rstudio {
 namespace desktop {
 
 namespace {
@@ -88,3 +89,4 @@ void DownloadHelper::onDownloadFinished()
 }
 
 } // namespace desktop
+} // namespace rstudio

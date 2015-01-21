@@ -37,6 +37,7 @@
 // practice we can't think of an easy way for the user to specify the
 // non case-sensitive variant of a file
 
+namespace rstudio {
 namespace core {
 namespace system {
 namespace file_monitor {
@@ -680,6 +681,7 @@ void checkForChanges()
 } // namespace file_monitor
 } // namespace system
 } // namespace core 
+} // namespace rstudio
 
    
 

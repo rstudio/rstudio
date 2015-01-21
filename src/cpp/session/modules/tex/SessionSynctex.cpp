@@ -28,9 +28,10 @@
 
 #include "SessionRnwConcordance.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules { 
 namespace tex {
 namespace synctex {
@@ -371,4 +372,5 @@ Error initialize()
 } // namespace tex
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

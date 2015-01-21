@@ -19,7 +19,8 @@
 #include <core/Error.hpp>
 #include <core/json/Json.hpp>
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules {
 namespace find {
 
@@ -30,5 +31,6 @@ core::Error initialize();
 } // namespace find
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_FIND_HPP

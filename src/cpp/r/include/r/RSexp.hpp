@@ -38,6 +38,7 @@
 // See comment in RInternal.hpp for more info on this
 
 
+namespace rstudio {
 namespace r {
 namespace sexp {
    
@@ -294,12 +295,25 @@ public:
       objects_.push_back(object);
       names_.push_back(name);
    }
+   
+   void add(SEXP object)
+   {
+      objects_.push_back(object);
+      names_.push_back(std::string());
+   }
 
    template <typename T>
    void add(const std::string& name, const T& object)
    {
       objects_.push_back(create(object, pProtect_));
       names_.push_back(name);
+   }
+   
+   template <typename T>
+   void add(const T& object)
+   {
+      objects_.push_back(create(object, pProtect_));
+      names_.push_back(std::string());
    }
 
    operator SEXP() const
@@ -333,6 +347,7 @@ void printValue(SEXP object);
 
 } // namespace sexp
 } // namespace r
+} // namespace rstudio
    
 
 #endif // R_R_SEXP_HPP 

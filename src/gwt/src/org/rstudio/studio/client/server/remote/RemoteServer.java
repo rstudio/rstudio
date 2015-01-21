@@ -1563,6 +1563,14 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void getMinimalSourcePath(String path, 
+                                    ServerRequestCallback<String> callback)
+   {
+      sendRequest(RPC_SCOPE, "get_minimal_source_path", path, callback);
+   }
+
+   
+   @Override
    public void getShinyCapabilities(
          ServerRequestCallback<ShinyCapabilities> requestCallback)
    {
@@ -3804,6 +3812,12 @@ public class RemoteServer implements Server
                   requestCallback);
    }
    
+   @Override
+   public void markersTabClosed(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "markers_tab_closed", requestCallback);
+   }
+   
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;
@@ -4116,4 +4130,5 @@ public class RemoteServer implements Server
    private static final String GET_PACKRAT_STATUS = "get_packrat_status";
    private static final String PACKRAT_BOOTSTRAP = "packrat_bootstrap";
    private static final String GET_PENDING_ACTIONS = "get_pending_actions";
+  
 }

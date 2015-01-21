@@ -42,9 +42,10 @@
 
 #include "session-config.h"
 
-using namespace core;
+using namespace rstudio::core;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules { 
 namespace packages {
 
@@ -422,4 +423,5 @@ Error initialize()
 } // namespace packages
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

@@ -18,10 +18,13 @@
 
 #include <string>
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
 
+namespace rstudio {
 namespace r {
 namespace function_hook {
 
@@ -35,6 +38,7 @@ core::Error registerUnsupportedWithAlternative(const std::string& name,
 
 } // namespace function_hook   
 } // namespace r
+} // namespace rstudio
 
 
 #endif // R_FUNCTION_HOOK_HPP 

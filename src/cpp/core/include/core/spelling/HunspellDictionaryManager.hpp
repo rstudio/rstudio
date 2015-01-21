@@ -23,6 +23,7 @@
 
 #include <core/spelling/HunspellCustomDictionaries.hpp>
 
+namespace rstudio {
 namespace core {
 
 class Error;
@@ -102,6 +103,7 @@ private:
 
 } // namespace spelling
 } // namespace core 
+} // namespace rstudio
 
 
 #endif // CORE_SPELLING_HUNSPELL_DICTIONARY_MANAGER_HPP

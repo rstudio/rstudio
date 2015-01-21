@@ -42,9 +42,10 @@
 #include "tex/SessionSynctex.hpp"
 #include "tex/SessionViewPdf.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules { 
 namespace authoring {
 
@@ -234,4 +235,5 @@ Error initialize()
 } // namespace authoring
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

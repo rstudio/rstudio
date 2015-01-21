@@ -18,12 +18,15 @@
 
 #include <string>
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
 } // anonymous namespace
+}
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules { 
 namespace presentation {
 
@@ -40,5 +43,6 @@ core::Error renderSlides(const SlideDeck& slideDeck,
 } // namespace presentation
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_PRESENTATION_SLIDE_RENDERER_HPP

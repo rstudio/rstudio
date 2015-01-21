@@ -27,7 +27,8 @@
 
 #include <session/SessionClientEvent.hpp>
 
-namespace rsession {
+namespace rstudio {
+namespace session {
    
 // initialization
 void initializeClientEventQueue();
@@ -84,5 +85,6 @@ private:
 };
 
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_SESSION_CLIENT_EVENT_QUEUE_HPP

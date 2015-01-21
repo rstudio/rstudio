@@ -20,6 +20,7 @@
 
 #include <core/ScheduledCommand.hpp>
 
+namespace rstudio {
 namespace core {
 
 class IncrementalCommand : public ScheduledCommand
@@ -65,6 +66,7 @@ private:
 
 
 } // namespace core
+} // namespace rstudio
 
 
 #endif // CORE_INCREMENTAL_COMMAND_HPP

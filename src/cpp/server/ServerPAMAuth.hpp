@@ -18,10 +18,13 @@
 
 #include <string>
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
 
+namespace rstudio {
 namespace server {
 namespace pam_auth {
    
@@ -31,6 +34,7 @@ core::Error initialize();
 
 } // namespace pam_auth
 } // namespace server
+} // namespace rstudio
 
 #endif // SERVER_PAM_AUTH_HPP
 

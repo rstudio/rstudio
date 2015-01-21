@@ -58,9 +58,10 @@
 // point the column's text is searched as though it were a character column)
 #define MAX_FACTORS 64
 
-using namespace core;
+using namespace rstudio::core;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules {
 namespace data {
 namespace viewer {
@@ -211,7 +212,9 @@ struct CachedFrame
       }
 
       // cache number of columns
-      r::exec::RFunction("ncol", sexp).call(&ncol);
+      Error error = r::exec::RFunction(".rs.ncol", sexp).call(&ncol);
+      if (error)
+         LOG_ERROR(error);
    };
 
    CachedFrame() {};
@@ -278,7 +281,7 @@ SEXP findInNamedEnvir(const std::string& envir, const std::string& name)
    if (envir.empty() || envir == "R_GlobalEnv")
       env = R_GlobalEnv;
    else 
-      r::exec::RFunction("as.environment", envir).call(&env, &protect);
+      r::exec::RFunction(".rs.safeAsEnvironment", envir).call(&env, &protect);
 
    // if we failed to find an environment by name, return a null SEXP
    if (env == NULL || TYPEOF(env) == NILSXP || Rf_isNull(env))
@@ -297,10 +300,10 @@ json::Value makeDataItem(SEXP dataSEXP, const std::string& caption,
                          const std::string& cacheKey)
 {
    int nrow = 0, ncol = 0;
-   Error error = r::exec::RFunction("nrow", dataSEXP).call(&nrow);
+   Error error = r::exec::RFunction(".rs.nrow", dataSEXP).call(&nrow);
    if (error) 
       LOG_ERROR(error);
-   error = r::exec::RFunction("ncol", dataSEXP).call(&ncol);
+   error = r::exec::RFunction(".rs.ncol", dataSEXP).call(&ncol);
    if (error) 
       LOG_ERROR(error);
 
@@ -453,10 +456,10 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
 
    int nrow = 1, ncol = 0;
    int filteredNRow = 0;
-   error = r::exec::RFunction("nrow", dataSEXP).call(&nrow);
+   error = r::exec::RFunction(".rs.nrow", dataSEXP).call(&nrow);
    if (error) 
       LOG_ERROR(error);
-   error = r::exec::RFunction("ncol", dataSEXP).call(&ncol);
+   error = r::exec::RFunction(".rs.ncol", dataSEXP).call(&ncol);
    if (error) 
       LOG_ERROR(error);
    ncol = std::min(ncol, MAX_COLS);
@@ -551,7 +554,11 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
 
    // apply new row count
    if (needsTransform || hasTransform) 
-      r::exec::RFunction("nrow", dataSEXP).call(&filteredNRow);
+   {
+      error = r::exec::RFunction(".rs.nrow", dataSEXP).call(&filteredNRow);
+      if (error)
+         LOG_ERROR(error);
+   }
    else
       filteredNRow = nrow;
 
@@ -900,8 +907,8 @@ Error initialize()
    addSuspendHandler(SuspendHandler(onSuspend, onResume));
 
    using boost::bind;
-   using namespace r::function_hook ;
-   using namespace rsession::module_context;
+   using namespace rstudio::r::function_hook ;
+   using namespace session::module_context;
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionDataViewer.R"))
@@ -929,4 +936,5 @@ Error initialize()
 } // namespace data
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

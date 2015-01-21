@@ -21,6 +21,7 @@
 #include <core/http/AsyncServerImpl.hpp>
 #include <core/http/TcpIpSocketUtils.hpp>
 
+namespace rstudio {
 namespace core {
 namespace http {
 
@@ -42,6 +43,7 @@ public:
 
 } // namespace http
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_HTTP_TCP_IP_ASYNC_SERVER_HPP
 

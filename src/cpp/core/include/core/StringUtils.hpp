@@ -20,6 +20,7 @@
 #include <core/Error.hpp>
 #include <core/FilePath.hpp>
 
+namespace rstudio {
 namespace core {
 namespace string_utils {
 
@@ -199,8 +200,18 @@ void trimLeadingLines(int maxLines, std::string* pLines);
 
 void stripQuotes(std::string* pStr);
 
+std::size_t countNewLines(const std::wstring& string);
+std::size_t countNewLines(const std::string& string);
+
+std::size_t countNewLines(std::string::iterator begin,
+                          std::string::iterator end);
+
+std::size_t countNewLines(std::wstring::iterator begin,
+                          std::wstring::iterator end);
+
 } // namespace string_utils
 } // namespace core 
+} // namespace rstudio
 
 #endif // CORE_STRING_UTILS_HPP
 

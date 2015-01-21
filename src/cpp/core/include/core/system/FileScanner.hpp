@@ -25,6 +25,7 @@
 #include <core/collection/Tree.hpp>
 
 
+namespace rstudio {
 namespace core {
 
 // recursively enumerate files from the specified root. these functions
@@ -62,5 +63,6 @@ inline Error scanFiles(const FileInfo& fromRoot,
 
 } // namespace system
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_SYSTEM_FILE_SCANNER_HPP

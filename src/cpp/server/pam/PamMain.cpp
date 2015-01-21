@@ -25,7 +25,8 @@
 #include <core/system/PosixUser.hpp>
 #include <core/system/Pam.hpp>
 
-using namespace core ;
+using namespace rstudio;
+using namespace rstudio::core;
 
 namespace {
 

@@ -17,9 +17,10 @@
 
 #include <session/SessionWorkerContext.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace workers {
 namespace web_request {
 
@@ -44,6 +45,7 @@ Error initialize()
 } // namespace web_request
 } // namespace workers
 } // namespace session
+} // namespace rstudio
 
 
 

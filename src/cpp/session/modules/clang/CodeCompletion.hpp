@@ -20,7 +20,8 @@
 
 #include <core/json/JsonRpc.hpp>
  
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules {      
 namespace clang {
 
@@ -30,5 +31,6 @@ core::Error getCppCompletions(const core::json::JsonRpcRequest& request,
 } // namespace clang
 } // namepace handlers
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_MODULES_CLANG_CODE_COMPLETION_HPP

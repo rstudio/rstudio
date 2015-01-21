@@ -23,9 +23,9 @@
 #include "DesktopNetworkIOService.hpp"
 #include "DesktopOptions.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
-using namespace desktop;
+using namespace rstudio::desktop;
 
 NetworkAccessManager::NetworkAccessManager(QString secret, QObject *parent) :
     QNetworkAccessManager(parent), secret_(secret)

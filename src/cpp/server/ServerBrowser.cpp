@@ -23,8 +23,9 @@
 
 #include <server/ServerOptions.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace server {
 namespace browser {
 
@@ -62,4 +63,5 @@ void handleBrowserUnsupportedRequest(const http::Request& request,
    
 } // namespace browser
 } // namespace server
+} // namespace rstudio
 

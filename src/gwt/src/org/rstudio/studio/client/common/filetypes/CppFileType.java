@@ -28,7 +28,7 @@ public class CppFileType extends TextFileType
    {
       super(id, "C/C++", EditorLanguage.LANG_CPP, ext, icon,
             false, false, isCpp, false, false, false, 
-            false, false, false, true, false, true);
+            false, false, false, true, false, true, false);
       
       isCpp_ = isCpp;
    }

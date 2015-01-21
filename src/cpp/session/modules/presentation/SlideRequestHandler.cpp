@@ -44,9 +44,10 @@
 #include "SlideParser.hpp"
 #include "SlideRenderer.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules { 
 namespace presentation {
 
@@ -1251,4 +1252,5 @@ bool savePresentationAsRpubsSource(const core::FilePath& filePath,
 } // namespace presentation
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

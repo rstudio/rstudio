@@ -22,6 +22,7 @@
 
 class IDispatch;
 
+namespace rstudio {
 namespace desktop {
 
 class WordViewer : boost::noncopyable
@@ -46,5 +47,6 @@ private:
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOPWORDVIEWER_HPP

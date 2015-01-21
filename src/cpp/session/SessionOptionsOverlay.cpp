@@ -15,9 +15,10 @@
 
 #include <session/SessionOptions.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 
 void Options::addOverlayOptions(
                            boost::program_options::options_description* pOpt)
@@ -39,3 +40,4 @@ bool Options::allowOverlay() const
 }
 
 } // namespace session
+} // namespace rstudio

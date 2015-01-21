@@ -21,6 +21,7 @@
 
 using namespace boost::algorithm;
 
+namespace rstudio {
 namespace core {
 namespace browser_utils {
 
@@ -145,6 +146,7 @@ bool hasRequiredBrowser(const std::string& userAgent)
 
 } // namespace browser_utils
 } // namespace core 
+} // namespace rstudio
 
 
 

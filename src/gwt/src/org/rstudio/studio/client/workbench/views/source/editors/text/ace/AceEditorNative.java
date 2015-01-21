@@ -21,6 +21,7 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Command;
 
 import org.rstudio.core.client.CommandWithArg;
+
 import java.util.LinkedList;
 
 public class AceEditorNative extends JavaScriptObject {
@@ -98,7 +99,10 @@ public class AceEditorNative extends JavaScriptObject {
    public native final void addKeyboardHandler(KeyboardHandler keyboardHandler) /*-{
       this.keyBinding.addKeyboardHandler(keyboardHandler);
    }-*/;
-
+   
+   public native final boolean isVimInInsertMode() /*-{
+      return this.state.cm.state.vim.insertMode;
+   }-*/;
 
    public native final void onChange(CommandWithArg<AceDocumentChangeEventNative> command) /*-{
       this.getSession().on("change",
@@ -189,6 +193,8 @@ public class AceEditorNative extends JavaScriptObject {
          String eventName,
          CommandWithArg<T> command) /*-{
       var callback = $entry(function(arg) {
+         if (arg && arg.text)
+            arg = arg.text;
          command.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(arg);
       });
 
@@ -253,6 +259,24 @@ public class AceEditorNative extends JavaScriptObject {
 
    public final native int getLastVisibleRow() /*-{
       return this.getLastVisibleRow();
+   }-*/;
+   
+   public final native int findAll(String needle) /*-{
+      return this.findAll(needle);
+   }-*/;
+   
+   public final native void insert(String text) /*-{
+      var that = this;
+      this.forEachSelection(function() {
+         that.insert(text);
+      });
+   }-*/;
+   
+   public final native void moveCursorLeft() /*-{
+      var that = this;
+      this.forEachSelection(function() {
+         that.navigateLeft(1);
+      });
    }-*/;
    
 }

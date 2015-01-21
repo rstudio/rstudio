@@ -23,6 +23,7 @@
 
 #include <core/spelling/HunspellDictionaryManager.hpp>
 
+namespace rstudio {
 namespace core {
 
 class FilePath;
@@ -61,6 +62,7 @@ private:
 
 } // namespace spelling
 } // namespace core 
+} // namespace rstudio
 
 
 #endif // CORE_SPELLING_HUNSPELL_SPELLING_ENGINE_HPP

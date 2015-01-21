@@ -27,11 +27,14 @@
 
 #define EX_CONTINUE 100
 
+namespace rstudio {
 namespace core {
 	class Error ;
    class Settings;
 } 
+}
 
+namespace rstudio {
 namespace r {
 namespace session {
    
@@ -186,6 +189,7 @@ void quit(bool saveWorkspace, int status = EXIT_SUCCESS);
 
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 #endif // R_RSESSION_HPP
 

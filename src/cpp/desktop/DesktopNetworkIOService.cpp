@@ -16,8 +16,9 @@
 #include <core/Log.hpp>
 #include <core/Error.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace desktop {
 
 boost::asio::io_service& ioService()
@@ -38,3 +39,4 @@ void ioServicePoll()
 
 
 } // namespace desktop
+} // namespace rstudio

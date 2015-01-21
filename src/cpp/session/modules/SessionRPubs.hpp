@@ -19,11 +19,14 @@
 #include <string>
 #include <core/FilePath.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
  
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules {      
 namespace rpubs {
 
@@ -32,5 +35,6 @@ core::Error initialize();
 } // namespace rpubs
 } // namepace handlers
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_SESSION_RPUBS_HPP

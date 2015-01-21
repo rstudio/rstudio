@@ -25,6 +25,7 @@
 #include <core/FilePath.hpp>
 #include <core/system/Environment.hpp>
 
+namespace rstudio {
 namespace core {
 namespace r_util {
 
@@ -75,6 +76,7 @@ void prependToSystemPath(const RToolsInfo& toolsInfo, T* pTarget)
 
 } // namespace r_util
 } // namespace core 
+} // namespace rstudio
 
 
 #endif // CORE_R_UTIL_R_TOOLS_INFO_HPP

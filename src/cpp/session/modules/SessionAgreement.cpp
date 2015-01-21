@@ -33,9 +33,10 @@
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
-namespace rsession {  
+namespace rstudio {
+namespace session {  
 namespace modules {
 namespace agreement {
 
@@ -189,3 +190,4 @@ Error initialize()
 } // namespace agreement
 } // namespace modules
 } // namespace session
+} // namespace rstudio

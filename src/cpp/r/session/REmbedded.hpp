@@ -29,11 +29,14 @@ typedef char CONSOLE_BUFFER_CHAR;
 typedef unsigned char CONSOLE_BUFFER_CHAR;
 #endif
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
 }
+}
 
+namespace rstudio {
 namespace r {
 namespace session {
 
@@ -73,6 +76,7 @@ core::Error completeEmbeddedRInitialization(bool useInternet2);
 
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 
 #endif // R_EMBEDDED_HPP

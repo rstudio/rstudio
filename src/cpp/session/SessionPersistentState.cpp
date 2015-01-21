@@ -23,9 +23,10 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionModuleContext.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
-namespace rsession {  
+namespace rstudio {
+namespace session {  
 
 namespace {
 const char * const kActiveClientId = "active-client-id";
@@ -126,3 +127,4 @@ void PersistentState::setStoredHash(const std::string& hashName,
 }
 
 } // namespace session
+} // namespace rstudio

@@ -31,6 +31,7 @@
 
 #include <core/FileSerializer.hpp>
 
+namespace rstudio {
 namespace core {
 namespace http {
 
@@ -455,4 +456,5 @@ std::ostream& operator << (std::ostream& stream, const Response& r)
 
 } // namespacc http
 } // namespace core
+} // namespace rstudio
 

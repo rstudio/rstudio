@@ -22,9 +22,10 @@
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules { 
 namespace tex {
 namespace compile_pdf_supervisor {
@@ -154,4 +155,5 @@ Error initialize()
 } // namespace tex
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

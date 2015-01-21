@@ -30,9 +30,10 @@
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace module_context {
 
 #ifdef _WIN32
@@ -233,3 +234,4 @@ bool addRtoolsToPathIfNecessary(core::system::Options* pEnvironment,
 
 } // namespace module_context
 } // namespace session
+} // namespace rstudio

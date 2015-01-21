@@ -52,11 +52,12 @@
 
 #include "SessionHttpConnectionUtils.hpp"
 
-using namespace core ;
+using namespace rstudio::core ;
 
 #define kReadBufferSize 4096
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 
 class NamedPipeHttpConnection : public HttpConnection,
                                 boost::noncopyable
@@ -479,3 +480,4 @@ private:
 };
 
 } // namespace session
+} // namespace rstudio

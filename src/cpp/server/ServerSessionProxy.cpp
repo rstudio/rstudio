@@ -59,8 +59,9 @@
 
 #include <server/ServerConstants.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace server {
 namespace session_proxy {
    
@@ -589,5 +590,6 @@ void setProxyFilter(ProxyFilter filter)
 
 } // namespace session_proxy
 } // namespace server
+} // namespace rstudio
 
 

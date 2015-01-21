@@ -31,9 +31,10 @@
 
 #include "SessionBuildErrors.hpp"
 
-using namespace core ;
+using namespace rstudio::core ;
 
-namespace rsession {  
+namespace rstudio {
+namespace session {  
 namespace modules {
 namespace build {
 namespace source_cpp {
@@ -91,8 +92,8 @@ void enqueSourceCppCompleted(const FilePath& sourceFile,
    // parse errors
    std::string allOutput = output + "\n" + errorOutput;
    CompileErrorParser errorParser = gccErrorParser(sourceFile.parent());
-   std::vector<CompileError> errors = errorParser(allOutput);
-   sourceCppState.errors = compileErrorsAsJson(errors);
+   std::vector<SourceMarker> errors = errorParser(allOutput);
+   sourceCppState.errors = sourceMarkersAsJson(errors);
 
    // enque event
    ClientEvent event(client_events::kSourceCppCompleted,
@@ -295,3 +296,4 @@ Error initialize()
 } // namespace build
 } // namespace modules
 } // namespace session
+} // namespace rstudio

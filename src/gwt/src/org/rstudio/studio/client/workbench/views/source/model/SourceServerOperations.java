@@ -189,6 +189,9 @@ public interface SourceServerOperations extends FilesServerOperations,
                             String path,
                             ServerRequestCallback<String> requestCallback);
    
+   void getMinimalSourcePath(String path, 
+                             ServerRequestCallback<String> requestCallback);
+   
    void setDocOrder(
          List<String> order, ServerRequestCallback<Void> requestCallback); 
    

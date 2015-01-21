@@ -18,6 +18,7 @@
 
 #include <boost/system/error_code.hpp>
 
+namespace rstudio {
 namespace core {
 namespace json {
 namespace errc {
@@ -58,11 +59,12 @@ enum errc_t {
 } // namespace errc
 } // namespace json
 } // namespace core
+} // namespace rstudio
 
 namespace boost {
 namespace system {
 template <>
-struct is_error_code_enum<core::json::errc::errc_t>
+struct is_error_code_enum<rstudio::core::json::errc::errc_t>
  { static const bool value = true; };
 } // namespace system
 } // namespace boost
@@ -79,12 +81,15 @@ struct is_error_code_enum<core::json::errc::errc_t>
 #include <core/Error.hpp>
 #include <core/json/Json.hpp>
 
+namespace rstudio {
 namespace core {
 namespace http {
    class Response ;
 }
 }
+}
 
+namespace rstudio {
 namespace core {
 namespace json {
 
@@ -115,7 +120,9 @@ inline boost::system::error_condition make_error_condition( errc_t e )
 } // namespace errc
 } // namespace json
 } // namespace core
+} // namespace rstudio
 
+namespace rstudio {
 namespace core {
 namespace json {
 
@@ -1030,6 +1037,7 @@ JsonRpcAsyncMethod adaptMethodToAsync(JsonRpcMethod synchronousMethod);
 
 } // namespace json
 } // namespace core
+} // namespace rstudio
 
 
 

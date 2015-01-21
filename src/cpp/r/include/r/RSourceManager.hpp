@@ -26,10 +26,13 @@
 
 #include <core/FilePath.hpp>
 
+namespace rstudio {
 namespace core {
    class Error ;
 }
+}
 
+namespace rstudio {
 namespace r {
 
 // singleton
@@ -83,6 +86,7 @@ private:
 };
    
 } // namespace r
+} // namespace rstudio
 
 
 #endif // R_SOURCE_MANAGER_HPP 

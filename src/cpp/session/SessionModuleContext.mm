@@ -27,9 +27,11 @@
 #include <AppKit/NSPasteboard.h>
 #include <AppKit/NSImage.h>
 
-using namespace core;
+using namespace rstudio;
+using namespace rstudio::core;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace module_context {
 
 bool isOSXMavericks()
@@ -95,3 +97,4 @@ Error copyImageToCocoaPasteboard(const FilePath& imagePath)
 
 } // namespace module_context
 } // namespace session
+} // namespace rstudio

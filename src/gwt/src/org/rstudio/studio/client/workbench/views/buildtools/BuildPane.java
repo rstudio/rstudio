@@ -24,11 +24,11 @@ import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
-import org.rstudio.studio.client.common.compile.CompileError;
 import org.rstudio.studio.client.common.compile.CompileOutput;
 import org.rstudio.studio.client.common.compile.CompileOutputBufferWithHighlight;
 import org.rstudio.studio.client.common.compile.CompilePanel;
 import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -125,13 +125,13 @@ public class BuildPane extends WorkbenchPane implements BuildPresenter.Display
    
    @Override
    public void showErrors(String basePath,
-                          JsArray<CompileError> errors, 
+                          JsArray<SourceMarker> errors, 
                           boolean ensureVisible,
                           int autoSelect)
    {
       compilePanel_.showErrors(basePath, errors, autoSelect);
       
-      if (ensureVisible && CompileError.showErrorList(errors))
+      if (ensureVisible && SourceMarker.showErrorList(errors))
          ensureVisible();
    }
    

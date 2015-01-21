@@ -74,4 +74,9 @@ public class Selection extends JavaScriptObject
                  command.@com.google.gwt.user.client.Command::execute()();
               }));
    }-*/;
+   
+   public native final Range[] getAllRanges() /*-{
+      return this.getAllRanges();
+   }-*/;
+   
 }

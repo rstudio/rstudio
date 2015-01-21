@@ -20,9 +20,10 @@
 
 // TODO: Implement ProcessOptions.workingDir for Windows
 
-using namespace core;
+using namespace rstudio::core;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace ssh {
 
 void ProcessOptionsCreator::addEnv(const std::string& name, const std::string& value)
@@ -91,3 +92,4 @@ core::system::ProcessOptions ProcessOptionsCreator::processOptions() const
 
 } // namespace ssh
 } // namespace session
+} // namespace rstudio

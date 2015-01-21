@@ -17,6 +17,7 @@
 
 #include <core/StringUtils.hpp>
 
+namespace rstudio {
 namespace core {
 namespace libclang {
 
@@ -106,5 +107,6 @@ std::ostream& operator << (std::ostream& ostr, UnsavedFiles& unsaved)
 
 } // namespace libclang
 } // namespace core
+} // namespace rstudio
 
 

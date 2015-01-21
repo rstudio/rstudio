@@ -28,7 +28,8 @@
 
 #include "SessionGit.hpp"
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules {
 namespace source_control {
 
@@ -60,5 +61,6 @@ core::Error initialize();
 } // namespace source_control
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_VCS_HPP

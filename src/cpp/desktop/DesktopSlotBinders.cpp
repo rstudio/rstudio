@@ -17,6 +17,7 @@
 
 #include <QtCore>
 
+namespace rstudio {
 namespace desktop {
 
 StringSlotBinder::StringSlotBinder(QString arg, QObject *parent) :
@@ -30,3 +31,4 @@ void StringSlotBinder::trigger()
 }
 
 } // namespace desktop
+} // namespace rstudio

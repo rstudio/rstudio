@@ -54,9 +54,10 @@
 // One way to overcome this might be to use filesystem metadata to store
 // properties rather than a side-database
 
-using namespace core;
+using namespace rstudio::core;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace source_database {
 
 namespace {
@@ -699,4 +700,5 @@ Error initialize()
 
 } // namespace source_database
 } // namesapce session
+} // namespace rstudio
 

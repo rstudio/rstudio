@@ -41,11 +41,12 @@
 #include <session/SessionUserSettings.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-using namespace core;
-using namespace r::sexp;
-using namespace r::exec;
+using namespace rstudio::core;
+using namespace rstudio::r::sexp;
+using namespace rstudio::r::exec;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules {
 namespace breakpoints {
 namespace
@@ -623,5 +624,6 @@ Error initialize()
 } // namepsace breakpoints
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 
 

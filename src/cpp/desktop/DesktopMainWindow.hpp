@@ -26,6 +26,7 @@
 #include "DesktopGwtWindow.hpp"
 #include "DesktopMenuCallback.hpp"
 
+namespace rstudio {
 namespace desktop {
 
 class SessionLauncher;
@@ -99,5 +100,6 @@ private:
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_MAIN_WINDOW_HPP

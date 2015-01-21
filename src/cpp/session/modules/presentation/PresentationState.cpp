@@ -22,9 +22,10 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules { 
 namespace presentation {
 namespace state {
@@ -229,4 +230,5 @@ Error initialize()
 } // namespace presentation
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

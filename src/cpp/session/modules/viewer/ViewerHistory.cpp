@@ -23,9 +23,10 @@
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules { 
 namespace viewer {
 
@@ -259,4 +260,5 @@ void addViewerHistoryEntry(const ViewerHistoryEntry& entry)
 } // namespace module_context
 
 } // namesapce session
+} // namespace rstudio
 

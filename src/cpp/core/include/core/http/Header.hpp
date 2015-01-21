@@ -20,6 +20,7 @@
 #include <vector>
 #include <iosfwd>
 
+namespace rstudio {
 namespace core {
 namespace http {
 
@@ -66,5 +67,6 @@ void parseHeaders(std::istream& is, Headers* pHeaders);
 
 } // namespace http
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_HTTP_HEADER_HPP

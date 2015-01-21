@@ -38,10 +38,11 @@
 #include "SessionRnwConcordance.hpp"
 #include "SessionCompilePdfSupervisor.hpp"
 
-using namespace core;
-using namespace rsession::modules::tex::rnw_concordance;
+using namespace rstudio::core;
+using namespace rstudio::session::modules::tex::rnw_concordance;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules { 
 namespace tex {
 namespace rnw_weave {
@@ -577,4 +578,5 @@ void getTypesInstalledStatus(json::Object* pObj)
 } // namespace tex
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

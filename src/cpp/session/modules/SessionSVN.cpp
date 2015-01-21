@@ -50,12 +50,13 @@
 #include "SessionWorkbench.hpp"
 #include "SessionGit.hpp"
 
-using namespace core;
-using namespace core::shell_utils;
-using namespace rsession::modules::vcs_utils;
-using namespace rsession::console_process;
+using namespace rstudio::core;
+using namespace rstudio::core::shell_utils;
+using namespace rstudio::session::modules::vcs_utils;
+using namespace rstudio::session::console_process;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules {
 namespace svn {
 
@@ -1854,3 +1855,4 @@ Error initializeSvn(const core::FilePath& workingDir)
 } // namespace svn
 } // namespace modules
 } //namespace session
+} // namespace rstudio

@@ -32,6 +32,7 @@
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 
+namespace rstudio {
 namespace core {
 
 class Error ;
@@ -231,6 +232,7 @@ private:
    boost::scoped_ptr<Impl> pImpl_;
 };
 
+}
 }
 
 #endif // CORE_FILE_PATH_HPP

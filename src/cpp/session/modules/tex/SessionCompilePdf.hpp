@@ -20,12 +20,15 @@
 
 #include <core/json/Json.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
 }
+}
  
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules { 
 namespace tex {
 namespace compile_pdf {
@@ -49,5 +52,6 @@ core::Error initialize();
 } // namespace tex
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_MODULES_TEX_COMPILE_PDF_HPP

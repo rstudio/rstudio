@@ -40,7 +40,8 @@
 
 #include "SessionHttpConnectionUtils.hpp"
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 
 template <typename ProtocolType>
 class HttpConnectionImpl :
@@ -222,6 +223,7 @@ private:
 };
 
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_HTTP_CONNECTION_HPP
 

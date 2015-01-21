@@ -171,21 +171,25 @@ var c_cppHighlightRules = function() {
             regex : "[a-zA-Z_$][a-zA-Z0-9_$]*\\b"
          }, {
             token : "keyword.operator",
+            merge : false,
             regex : reOperatorTokens
          }, {
             token : "punctuation.operator",
+            merge : false,
             regex : "\\?|\\:|\\,|\\;|\\.|\\\\"
          }, {
             // Obviously these are neither keywords nor operators, but
             // labelling them as such was the easiest way to get them
             // to be colored distinctly from regular text
             token : "paren.keyword.operator",
+            merge : false,
             regex : "[[({<]"
          }, {
             // Obviously these are neither keywords nor operators, but
             // labelling them as such was the easiest way to get them
             // to be colored distinctly from regular text
             token : "paren.keyword.operator",
+            merge : false,
             regex : "[\\])}>]"
          }, {
             token : "text",

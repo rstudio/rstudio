@@ -23,6 +23,7 @@
 
 #include <core/system/PosixUser.hpp>
 
+namespace rstudio {
 namespace core {
 namespace http {
 
@@ -121,6 +122,7 @@ private:
 
 } // namespace http
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_HTTP_LOCAL_STREAM_ASYNC_SERVER_HPP
 

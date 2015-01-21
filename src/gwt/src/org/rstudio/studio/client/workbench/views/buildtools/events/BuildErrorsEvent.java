@@ -14,7 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.buildtools.events;
 
-import org.rstudio.studio.client.common.compile.CompileError;
+import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -33,7 +33,7 @@ public class BuildErrorsEvent extends GwtEvent<BuildErrorsEvent.Handler>
          return this.base_dir;
       }-*/;
       
-      public final native JsArray<CompileError> getErrors() /*-{
+      public final native JsArray<SourceMarker> getErrors() /*-{
          return this.errors;
       }-*/;
    }
@@ -54,7 +54,7 @@ public class BuildErrorsEvent extends GwtEvent<BuildErrorsEvent.Handler>
       return data_.getBaseDirectory();
    }
    
-   public JsArray<CompileError> getErrors()
+   public JsArray<SourceMarker> getErrors()
    {
       return data_.getErrors();
    }

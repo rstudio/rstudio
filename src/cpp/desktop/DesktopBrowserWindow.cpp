@@ -25,6 +25,7 @@
 #include "DesktopUtils.hpp"
 #include "DesktopOptions.hpp"
 
+namespace rstudio {
 namespace desktop {
 
 BrowserWindow::BrowserWindow(bool showToolbar,
@@ -156,3 +157,4 @@ void BrowserWindow::onJavaScriptWindowObjectCleared()
 }
 
 } // namespace desktop
+} // namespace rstudio

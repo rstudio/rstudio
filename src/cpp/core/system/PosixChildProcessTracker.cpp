@@ -19,6 +19,7 @@
 
 #include <boost/format.hpp>
 
+namespace rstudio {
 namespace core {
 namespace system {
 
@@ -137,4 +138,5 @@ std::map<PidType,ChildProcessTracker::ExitHandler>
 
 } // namespace system
 } // namespace core
+} // namespace rstudio
 

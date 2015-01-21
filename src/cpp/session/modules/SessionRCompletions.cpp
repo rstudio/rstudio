@@ -38,9 +38,10 @@
 
 #include "SessionCodeSearch.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules {
 namespace r_completions {
 
@@ -366,3 +367,4 @@ Error initialize() {
 } // namespace r_completions
 } // namespace modules
 } // namespace session
+} // namespace rstudio

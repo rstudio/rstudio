@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 import com.google.gwt.dom.client.NativeEvent;
 import org.rstudio.studio.client.workbench.views.console.shell.KeyDownPreviewHandler;
 import org.rstudio.studio.client.workbench.views.console.shell.KeyPressPreviewHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 
 public interface CompletionManager extends KeyDownPreviewHandler,
                                            KeyPressPreviewHandler
@@ -32,5 +33,7 @@ public interface CompletionManager extends KeyDownPreviewHandler,
    void codeCompletion();
    
    void close();
+   
+   void onPaste(PasteEvent event);
 
 }

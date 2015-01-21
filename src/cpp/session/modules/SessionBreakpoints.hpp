@@ -18,11 +18,14 @@
 
 #include <core/json/Json.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules {
 namespace breakpoints {
 
@@ -33,5 +36,6 @@ bool haveAdvancedStepCommands();
 } // namespace breakpoints
 } // namespace modules
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSIONBREAKPOINTS_HPP

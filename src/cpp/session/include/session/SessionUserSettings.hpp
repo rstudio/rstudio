@@ -29,7 +29,8 @@
 
 #include <core/system/FileChangeEvent.hpp>
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 
 // singleton
 class UserSettings;
@@ -210,6 +211,7 @@ private:
 };
    
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_USER_SETTINGS_HPP
 

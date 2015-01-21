@@ -24,6 +24,7 @@
 
 #include <core/json/Json.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
@@ -31,8 +32,10 @@ namespace core {
       class Response;
    }
 }
+}
  
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules { 
 namespace html_preview {
 
@@ -45,5 +48,6 @@ core::Error initialize();
 } // namespace html_preview
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_HTML_PREVIEW_HPP

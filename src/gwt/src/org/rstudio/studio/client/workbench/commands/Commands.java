@@ -84,6 +84,7 @@ public abstract class
    public abstract AppCommand findReplace();
    public abstract AppCommand findNext();
    public abstract AppCommand findPrevious();
+   public abstract AppCommand findSelectAll();
    public abstract AppCommand findFromSelection();
    public abstract AppCommand replaceAndFind();
    public abstract AppCommand findInFiles();
@@ -370,8 +371,8 @@ public abstract class
    
    // RSConnect connectivity
    public abstract AppCommand rsconnectDeploy();
+   public abstract AppCommand rsconnectConfigure();
    public abstract AppCommand rsconnectManageAccounts();
-   public abstract AppCommand rsconnectTerminate();
 
    // Other
    public abstract AppCommand checkSpelling();   

@@ -18,12 +18,15 @@
 
 #include <string>
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
 }
+}
  
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace projects {
 
 void startup();
@@ -35,5 +38,6 @@ core::Error computeScratchPath(const core::FilePath& projectFile,
 
 } // namespace projects
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_PROJECTS_PROJECTS_INTERNAL_HPP

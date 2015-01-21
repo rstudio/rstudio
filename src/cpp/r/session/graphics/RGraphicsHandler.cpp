@@ -15,6 +15,7 @@
 
 #include "RGraphicsHandler.hpp"
 
+namespace rstudio {
 namespace r {
 namespace session {
 namespace graphics {
@@ -117,5 +118,6 @@ void (*onBeforeExecute)(DeviceContext* pDC);
 } // namespace graphics
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 

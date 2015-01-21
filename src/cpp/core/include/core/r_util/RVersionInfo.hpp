@@ -28,6 +28,7 @@
 #define kRVersionArch32    "32"
 #define kRVersionArch64    "64"
 
+namespace rstudio {
 namespace core {
 namespace r_util {
 
@@ -116,6 +117,7 @@ inline std::ostream& operator<<(std::ostream& os, const RVersionNumber& ver)
 
 } // namespace r_util
 } // namespace core 
+} // namespace rstudio
 
 
 #endif // CORE_R_UTIL_R_VERSION_INFO_HPP

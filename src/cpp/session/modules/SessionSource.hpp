@@ -22,14 +22,17 @@
 
 #include <core/json/Json.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
    namespace r_util {
       class RSourceIndex;
    }
 }
+}
  
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules { 
 namespace source {
    
@@ -40,5 +43,6 @@ core::Error initialize();
 } // namespace source
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_SOURCE_HPP

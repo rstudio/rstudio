@@ -82,7 +82,7 @@ assign(x = ".rs.acCompletionTypes",
    else if (isS4(object))
    {
       if (inherits(object, "standardGeneric") ||
-             inherits(object, "nonstandardGenericFunction"))
+          inherits(object, "nonstandardGenericFunction"))
          .rs.acCompletionTypes$S4_GENERIC
       else if (inherits(object, "MethodDefinition"))
          .rs.acCompletionTypes$S4_METHOD
@@ -489,15 +489,10 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
-.rs.addFunction("getCompletionsFunction", function(token,
-                                                   string,
-                                                   functionCall,
-                                                   numCommas,
-                                                   discardFirst,
-                                                   envir = parent.frame())
+.rs.addFunction("resolveObjectFromFunctionCall", function(functionCall,
+                                                          envir)
 {
-   result <- .rs.emptyCompletions()
-   
+   string <- capture.output(print(functionCall[[1]]))
    splat <- strsplit(string, ":{2,3}", perl = TRUE)[[1]]
    object <- NULL
    if (length(splat) == 1)
@@ -512,15 +507,9 @@ assign(x = ".rs.acCompletionTypes",
       if (namespaceString %in% loadedNamespaces())
       {
          object <- tryCatch(
-            expr = {
-               get(
-                  functionString,
-                  envir = asNamespace(namespaceString)
-               )
-            },
-            error = function(e) {
-               NULL
-            }
+            eval(parse(text = functionString),
+                 envir = asNamespace(namespaceString)),
+            error = function(e) NULL
          )
       }
    }
@@ -549,15 +538,100 @@ assign(x = ".rs.acCompletionTypes",
          object <- utils::write.table
    }
    
+   object
+   
+})
+
+.rs.addFunction("getCompletionsFunction", function(token,
+                                                   string,
+                                                   functionCall,
+                                                   numCommas,
+                                                   discardFirst,
+                                                   envir = parent.frame())
+{
+   result <- .rs.emptyCompletions()
+   object <- .rs.resolveObjectFromFunctionCall(functionCall, envir)
+   
    if (!is.null(object) && is.function(object))
    {
       matchedCall <- .rs.matchCall(object, functionCall)
-      formals <- .rs.resolveFormals(token,
-                                    object,
-                                    string,
-                                    functionCall,
-                                    matchedCall,
-                                    envir)
+      
+      # Try to figure out what function arguments are
+      # eligible for completion. Note that, on success,
+      # this should be an R list with character fields
+      # 'formals' and (optionally) 'methods'.
+      formals <- NULL
+      
+      ## Special cases
+      # We handle special cases for function argument
+      # completions first.
+      # If we're completing a knitr getter function, then try
+      # to produce auto-completions for potential argument
+      # names
+      if (.rs.isKnitrObject(object))
+      {
+         ns <- asNamespace("knitr")
+         
+         # Get the knitr getters and setters for various
+         # options
+         tryGetKnitrGetter <- function(name, ns = asNamespace("knitr"))
+            tryCatch(get(name, envir = ns)$get, error = function(e) NULL)
+         
+         tryGetKnitrSetter <- function(name, ns = asNamespace("knitr"))
+            tryCatch(get(name, envir = ns)$set, error = function(e) NULL)
+         
+         tryGet <- function(name, ns = asNamespace("knitr"))
+            list(getter = tryGetKnitrGetter(name, ns),
+                 setter = tryGetKnitrSetter(name, ns))
+         
+         knitrOpts <- list(
+            tryGet("opts_chunk", ns),
+            tryGet("opts_knit", ns),
+            tryGet("opts_current", ns),
+            tryGet("opts_template", ns),
+            tryGet("knit_hooks", ns),
+            tryGet("knit_theme", ns)
+         )
+         
+         for (opt in knitrOpts)
+         {
+            # If we're identical to the getter, short-circuit
+            # and just return the names of parameters
+            if (identical(object, opt$getter))
+            {
+               results <- .rs.selectFuzzyMatches(
+                  names(opt$getter()),
+                  token
+               )
+               
+               return(.rs.makeCompletions(token = token,
+                                          results = results,
+                                          type = .rs.acCompletionTypes$STRING,
+                                          quote = TRUE))
+            }
+            
+            # If we're identical to the setter, get the
+            # names from the getter as named arguments to use
+            if (identical(object, opt$setter))
+            {
+               formals <- list(formals = names(opt$getter()))
+               break
+            }
+         }
+         
+      }
+      
+      ## Base case
+      # Resolve formals from the function itself
+      if (is.null(formals))
+      {
+         formals <- .rs.resolveFormals(token,
+                                       object,
+                                       string,
+                                       functionCall,
+                                       matchedCall,
+                                       envir)
+      }
       
       if (length(formals$formals))
          formals$formals <- paste(formals$formals, "= ")
@@ -1162,7 +1236,7 @@ assign(x = ".rs.acCompletionTypes",
          if (identical(currentEnv, encounteredEnvs[[i]]))
             return(.rs.emptyCompletions())
       }
-         
+      
       objects <- objects(currentEnv, all.names = TRUE)
       
       completions <- c(completions, objects)
@@ -1299,6 +1373,35 @@ assign(x = ".rs.acCompletionTypes",
    .Call("rs_getActiveFrame", as.integer(n) + offset)
 })
 
+.rs.addFunction("getCompletionsNativeRoutine", function(token, interface)
+{
+   # For a package which has dynamic symbol loading, just get the strings.
+   # For other packages, search the namespace for the symbol.
+   loadedDLLs <- getLoadedDLLs()
+   routines <- lapply(loadedDLLs, getDLLRegisteredRoutines)
+   
+   isDynamic <- unlist(lapply(loadedDLLs, `[[`, "dynamicLookup"))
+   
+   dynRoutines <- c(
+      routines[isDynamic],
+      routines["(embedding)"]
+   )
+   
+   dynRoutineNames <- lapply(dynRoutines, function(x) {
+      names(x[[interface]])
+   })
+   
+   dynResults <- .rs.namedVectorAsList(dynRoutineNames)
+   dynIndices <- .rs.fuzzyMatches(dynResults$values, token)
+   
+   .rs.makeCompletions(token = token,
+                       results = dynResults$values[dynIndices],
+                       packages = dynResults$names[dynIndices],
+                       quote = TRUE,
+                       type = .rs.acCompletionTypes$STRING)
+   
+})
+
 .rs.addJsonRpcHandler("get_completions", function(token,
                                                   string,
                                                   type,
@@ -1390,10 +1493,16 @@ assign(x = ".rs.acCompletionTypes",
    if (length(string) && string[[1]] == "vignette" && numCommas[[1]] == 0)
       return(.rs.getCompletionsVignettes(token))
    
+   # .Call, .C, .Fortran, .External
+   if (length(string) && 
+       string[[1]] %in% c(".Call", ".C", ".Fortran", ".External") &&
+       numCommas[[1]] == 0)
+      return(.rs.getCompletionsNativeRoutine(token, string[[1]]))
+   
    # data
    if (.rs.acContextTypes$FUNCTION %in% type &&
-          string[[1]] == "data" &&
-          numCommas[[1]] == 0)
+       string[[1]] == "data" &&
+       numCommas[[1]] == 0)
       return(.rs.getCompletionsData(token))
    
    # package name
@@ -1461,7 +1570,7 @@ assign(x = ".rs.acCompletionTypes",
    
    # library, require, requireNamespace, loadNamespace
    if (string[[1]] %in% c("library", "require", "requireNamespace") &&
-          numCommas[[1]] == 0)
+       numCommas[[1]] == 0)
    {
       return(.rs.getCompletionsPackages(token, excludeOtherCompletions = TRUE))
    }
@@ -1504,8 +1613,8 @@ assign(x = ".rs.acCompletionTypes",
    ## Completions for server.r (from ui.r)
    if (type[[1]] %in% c(.rs.acContextTypes$DOLLAR,
                         .rs.acContextTypes$DOUBLE_BRACKET) &&
-          tolower(basename(filePath)) == "server.r" &&
-          string[[1]] %in% c("input", "output"))
+       tolower(basename(filePath)) == "server.r" &&
+       string[[1]] %in% c("input", "output"))
    {
       completions <- .rs.getCompletionsFromShinyUI(token, filePath, string[[1]], type[[1]])
       if (!is.null(completions))
@@ -1514,8 +1623,8 @@ assign(x = ".rs.acCompletionTypes",
    
    ## Completions for server.r, on session
    if (type[[1]] == .rs.acContextTypes$DOLLAR &&
-          tolower(basename(filePath)) == "server.r" &&
-          string[[1]] == "session")
+       tolower(basename(filePath)) == "server.r" &&
+       string[[1]] == "session")
    {
       completions <- rs.getCompletionsShinySession(token)
       if (!is.null(completions))
@@ -1524,9 +1633,9 @@ assign(x = ".rs.acCompletionTypes",
    
    ## Completions for ui.r (from server.r)
    if (type[[1]] == .rs.acContextTypes$FUNCTION &&
-          tolower(basename(filePath)) == "ui.r" &&
-          numCommas[[1]] == 0 &&
-          (.rs.endsWith(string[[1]], "Input") || .rs.endsWith(string[[1]], "Output")))
+       tolower(basename(filePath)) == "ui.r" &&
+       numCommas[[1]] == 0 &&
+       (.rs.endsWith(string[[1]], "Input") || .rs.endsWith(string[[1]], "Output")))
    {
       completions <- .rs.getCompletionsFromShinyServer(token, filePath, string[[1]], type[[1]])
       if (!is.null(completions))
@@ -1620,11 +1729,11 @@ assign(x = ".rs.acCompletionTypes",
    
    # get completions from the search path for the 'generic' contexts
    if (token != "" &&
-          type[[1]] %in% c(.rs.acContextTypes$UNKNOWN,
-                           .rs.acContextTypes$FUNCTION,
-                           .rs.acContextTypes$ARGUMENT,
-                           .rs.acContextTypes$SINGLE_BRACKET,
-                           .rs.acContextTypes$DOUBLE_BRACKET))
+       type[[1]] %in% c(.rs.acContextTypes$UNKNOWN,
+                        .rs.acContextTypes$FUNCTION,
+                        .rs.acContextTypes$ARGUMENT,
+                        .rs.acContextTypes$SINGLE_BRACKET,
+                        .rs.acContextTypes$DOUBLE_BRACKET))
    {
       completions <- Reduce(.rs.appendCompletions, list(
          completions,
@@ -1864,7 +1973,7 @@ assign(x = ".rs.acCompletionTypes",
       if (type == .rs.acContextTypes$FUNCTION)
          .rs.getCompletionsFunction(token, string, functionCall, numCommas, discardFirst, envir)
       else if (type == .rs.acContextTypes$ARGUMENT)
-         .rs.getCompletionsArgument(token, string)
+         .rs.getCompletionsArgument(token, string, functionCall, envir)
       else if (type == .rs.acContextTypes$SINGLE_BRACKET)
          .rs.getCompletionsSingleBracket(token, string, numCommas, envir)
       else if (type == .rs.acContextTypes$DOUBLE_BRACKET)
@@ -2051,7 +2160,7 @@ assign(x = ".rs.acCompletionTypes",
    info <- file.info(file)
    mtime <- info[1, "mtime"]
    if (identical(mtime, .rs.get(fileCacheName)) &&
-          !is.null(.rs.get(completionsCacheName)))
+       !is.null(.rs.get(completionsCacheName)))
    {
       return(.rs.get(completionsCacheName))
    }
@@ -2142,7 +2251,7 @@ assign(x = ".rs.acCompletionTypes",
    info <- file.info(file)
    mtime <- info[1, "mtime"]
    if (identical(mtime, .rs.get(fileCacheName)) &&
-          !is.null(.rs.get(completionsCacheName)))
+       !is.null(.rs.get(completionsCacheName)))
    {
       return(.rs.get(completionsCacheName))
    }
@@ -2276,9 +2385,57 @@ assign(x = ".rs.acCompletionTypes",
 })
 
 .rs.addFunction("getCompletionsArgument", function(token,
-                                                   activeArg)
+                                                   activeArg,
+                                                   functionCall = NULL,
+                                                   envir = NULL)
 {
    completions <- .rs.emptyCompletions()
+   
+   object <- if (!is.null(functionCall))
+      .rs.resolveObjectFromFunctionCall(functionCall, envir)
+   
+   # Check for knitr chunk completions, if possible
+   if ("knitr" %in% loadedNamespaces())
+   {
+      ns <- asNamespace("knitr")
+      tryGet <- function(name, ns)
+         tryCatch(get(name, envir = ns)$set, error = function(e) NULL)
+      
+      setter <- tryGet("opts_chunk", ns)
+      if (identical(object, setter))
+      {
+         opts <- knitr:::opts_chunk_attr
+         if (activeArg %in% names(opts))
+         {
+            # Options to fill in the various if statements
+            foundCompletions <- FALSE
+            results <- character()
+            quote <- TRUE
+            
+            if (is.list(opts[[activeArg]]))
+            {
+               foundCompletions <- TRUE
+               potentials <- unlist(opts[[activeArg]])
+               results <- .rs.selectFuzzyMatches(potentials, token)
+               quote <- TRUE
+            }
+            
+            if (identical(opts[[activeArg]], "logical"))
+            {
+               foundCompletions <- TRUE
+               potentials <- c(TRUE, FALSE)
+               results <- .rs.selectFuzzyMatches(potentials, token)
+               quote <- FALSE
+            }
+            
+            if (foundCompletions)
+               return(.rs.makeCompletions(token = token,
+                                          type = .rs.acCompletionTypes$ARGUMENT,
+                                          quote = quote,
+                                          results = results))
+         }
+      }
+   }
    
    if (activeArg %in% c("pkg", "package"))
       completions <- .rs.appendCompletions(
@@ -2357,7 +2514,7 @@ assign(x = ".rs.acCompletionTypes",
       # Bail if we couldn't find anything
       if (is.null(pkg))
          return(.rs.emptyCompletions())
-         
+      
       ## Make a dummy function to match a call against
       argsText <- paste(args, collapse = ", ")
       dummyFunction <- tryCatch(
@@ -2410,4 +2567,24 @@ assign(x = ".rs.acCompletionTypes",
                           type = completion$types[keep])
    }))
    
+})
+
+.rs.addFunction("isKnitrObject", function(object)
+{
+   if (!("knitr" %in% loadedNamespaces()))
+      return(FALSE)
+   
+   ns <- asNamespace("knitr")
+   if (identical(environment(object), ns))
+      return(TRUE)
+   
+   parent <- tryCatch(
+      parent.env(environment(object)),
+      error = function(e) NULL
+   )
+   
+   if (identical(parent, ns))
+      return(TRUE)
+   
+   return(FALSE)
 })

@@ -25,6 +25,7 @@
 #include <core/libclang/LibClang.hpp>
 #include <core/libclang/UnsavedFiles.hpp>
 
+namespace rstudio {
 namespace core {
 namespace libclang {
 
@@ -249,5 +250,6 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
 
 } // namespace libclang
 } // namespace core
+} // namespace rstudio
 
 

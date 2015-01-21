@@ -52,9 +52,10 @@
 #include "SessionSourceCpp.hpp"
 #include "SessionInstallRtools.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 
 namespace {
 
@@ -1178,10 +1179,10 @@ private:
       // call the error parser if one has been specified
       if (errorParser_)
       {
-         std::vector<CompileError> errors = errorParser_(outputAsText());
+         std::vector<SourceMarker> errors = errorParser_(outputAsText());
          if (!errors.empty())
          {
-            errorsJson_ = compileErrorsAsJson(errors);
+            errorsJson_ = sourceMarkersAsJson(errors);
             enqueBuildErrors(errorsJson_);
          }
       }
@@ -1552,7 +1553,7 @@ SEXP rs_installBuildTools()
 
 SEXP rs_installPackage(SEXP pkgPathSEXP, SEXP libPathSEXP)
 {
-   using namespace r::sexp;
+   using namespace rstudio::r::sexp;
    Error error = module_context::installPackage(safeAsString(pkgPathSEXP),
                                                 safeAsString(libPathSEXP));
    if (error)
@@ -1775,4 +1776,5 @@ bool installRBuildTools(const std::string& action)
 }
 
 } // namesapce session
+} // namespace rstudio
 

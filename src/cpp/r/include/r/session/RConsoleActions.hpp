@@ -22,11 +22,14 @@
 #include <core/BoostThread.hpp>
 #include <core/json/Json.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
 }
+}
 
+namespace rstudio {
 namespace r {
 namespace session {
    
@@ -77,6 +80,7 @@ private:
    
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 #endif // R_SESSION_CONSOLE_ACTIONS_HPP 
 

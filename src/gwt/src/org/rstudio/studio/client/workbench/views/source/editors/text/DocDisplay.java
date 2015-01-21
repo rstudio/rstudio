@@ -121,8 +121,11 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setPrintMarginColumn(int column);
    void setShowInvisibles(boolean show);
    void setShowIndentGuides(boolean show);
-   void setUseVimMode(boolean use);
    void setBlinkingCursor(boolean blinking);
+   
+   void setUseVimMode(boolean use);
+   boolean isVimModeOn();
+   boolean isVimInInsertMode();
 
    JsArray<AceFold> getFolds();
    void addFold(Range range);
@@ -236,4 +239,5 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    
    void setPopupVisible(boolean visible);
    boolean isPopupVisible();
+   void selectAll(String needle);
 }

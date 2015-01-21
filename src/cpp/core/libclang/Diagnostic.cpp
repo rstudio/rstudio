@@ -21,6 +21,7 @@
 
 #include <core/libclang/LibClang.hpp>
 
+namespace rstudio {
 namespace core {
 namespace libclang {
 
@@ -62,4 +63,5 @@ std::string Diagnostic::getSpelling() const
 
 } // namespace libclang
 } // namespace core
+} // namespace rstudio
 

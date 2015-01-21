@@ -163,15 +163,6 @@ public class GlobalToolbar extends Toolbar
          addLeftWidget(vcsButton);
       }
       
-      if (sessionInfo.getRSConnectAvailable())
-      {
-         addLeftSeparator();
-         ToolbarButton deployButton = 
-               commands_.rsconnectDeploy().createToolbarButton();
-         deployButton.setText("Publish");
-         addLeftWidget(deployButton);
-      }
-      
       // project popup menu
       ProjectPopupMenu projectMenu = new ProjectPopupMenu(sessionInfo,
                                                           commands_);

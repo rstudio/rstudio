@@ -76,11 +76,21 @@
       }
       else if (is.numeric(val))
       {
-        # ignore missing values when computing min/max
-        col_type <- "numeric"
-        col_search_type <- "numeric"
-        col_min <- min(x[[idx]], na.rm = TRUE)
-        col_max <- max(x[[idx]], na.rm = TRUE)
+        # ignore missing and infinite values (i.e. let any filter applied
+        # implicitly remove those values); if that leaves us with nothing,
+        # treat this column as untyped since we can do no meaningful filtering
+        # on it
+        minmax_vals <- x[[idx]][is.finite(x[[idx]])]
+        if (length(minmax_vals) > 1)
+        {
+          col_min <- round(min(minmax_vals), 5)
+          col_max <- round(max(minmax_vals), 5)
+          if (col_min < col_max) 
+          {
+            col_type <- "numeric"
+            col_search_type <- "numeric"
+          }
+        }
       }
       else if (is.character(val))
       {
@@ -111,6 +121,38 @@
 {
   rownames <- row.names(x)
   rownames[start:min(length(rownames), start+len)]
+})
+
+# wrappers for nrow/ncol which will report the class of object for which we
+# fail to get dimensions along with the original error
+.rs.addFunction("nrow", function(x)
+{
+  rows <- 0
+  tryCatch({
+    rows <- nrow(x)
+  }, error = function(e) {
+    stop("Failed to determine rows for object of class '", class(x), "': ", 
+         e$message)
+  })
+  if (is.null(rows))
+    0
+  else
+    rows
+})
+
+.rs.addFunction("ncol", function(x)
+{
+  cols <- 0
+  tryCatch({
+    cols <- ncol(x)
+  }, error = function(e) {
+    stop("Failed to determine columns for object of class '", class(x), "': ", 
+         e$message)
+  })
+  if (is.null(cols))
+    0
+  else
+    cols
 })
 
 .rs.addFunction("toDataFrame", function(x, name) {
@@ -211,6 +253,18 @@
   return(x)
 })
 
+# returns envName as an environment, or NULL if the conversion failed
+.rs.addFunction("safeAsEnvironment", function(envName)
+{
+  env <- NULL
+  tryCatch(
+  {
+    env <- as.environment(envName)
+  }, 
+  error = function(e) { })
+  env
+})
+
 .rs.addFunction("findDataFrame", function(envName, objName, cacheKey, cacheDir) 
 {
   env <- NULL
@@ -226,16 +280,9 @@
     }
     else 
     {
-      # some other environment
-      tryCatch(
-      {
-        env <- as.environment(envName)
-      }, 
-      error = function(e)
-      {
-        # if we couldn't find the environment any more, use the empty one
-        env <<- emptyenv()
-      })
+      env <- .rs.safeAsEnvironment(envName)
+      if (is.null(env))
+        env <- emptyenv()
     }
 
     # if the object exists in this environment, return it (avoid creating a
@@ -361,7 +408,7 @@
    # coerce to data frame before assigning, and don't assign if we can't coerce
    frame <- .rs.toDataFrame(obj, objName)
    if (!is.null(frame))
-      assign(cacheKey, obj, .rs.CachedDataEnv)
+      assign(cacheKey, frame, .rs.CachedDataEnv)
 })
 
 .rs.addFunction("removeCachedData", function(cacheKey, cacheDir)

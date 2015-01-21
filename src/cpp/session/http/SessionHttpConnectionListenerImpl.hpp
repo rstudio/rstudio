@@ -46,7 +46,8 @@
 #include "SessionHttpConnectionImpl.hpp"
 
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 
 namespace {
 
@@ -314,6 +315,7 @@ private:
 };
 
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_HTTP_CONNECTION_LISTENER_IMPL_HPP
 

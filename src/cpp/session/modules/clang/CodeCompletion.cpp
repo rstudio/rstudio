@@ -24,10 +24,11 @@
 
 #include "RSourceIndex.hpp"
 
-using namespace core ;
-using namespace core::libclang;
+using namespace rstudio::core ;
+using namespace rstudio::core::libclang;
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules { 
 namespace clang {
 
@@ -230,4 +231,5 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
 } // namespace clang
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

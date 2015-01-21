@@ -22,6 +22,7 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+namespace rstudio {
 namespace core {
 
 // NOTE: execute function should return true if it has more work to do
@@ -58,6 +59,7 @@ protected:
 
 
 } // namespace core
+} // namespace rstudio
 
 
 #endif // CORE_SCHEDULED_COMMAND_HPP

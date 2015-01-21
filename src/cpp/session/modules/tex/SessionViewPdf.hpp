@@ -18,12 +18,15 @@
 
 #include <string>
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
 }
+}
  
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules { 
 namespace tex {
 namespace view_pdf {
@@ -36,5 +39,6 @@ core::Error initialize();
 } // namespace tex
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_MODULES_VIEW_PDF_HPP

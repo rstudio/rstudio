@@ -25,6 +25,7 @@ import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentContextData;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
+import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersState;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
@@ -68,6 +69,10 @@ public class SessionInfo extends JavaScriptObject
 
    public final native FindInFilesState getFindInFilesState() /*-{
       return this.find_in_files_state;
+   }-*/;
+   
+   public final native MarkersState getMarkersState() /*-{
+      return this.markers_state;
    }-*/;
 
    public final native String getLogDir() /*-{

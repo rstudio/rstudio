@@ -21,7 +21,8 @@
 
 #include <session/SessionAsyncRProcess.hpp>
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace async_r {
 
 AsyncRProcess::AsyncRProcess():
@@ -184,4 +185,5 @@ AsyncRProcess::~AsyncRProcess()
 
 } // namespace async_r
 } // namespace session
+} // namespace rstudio
 

@@ -27,11 +27,14 @@
 
 #include <core/json/Json.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace console_process {
 
 enum InteractionMode
@@ -250,5 +253,6 @@ core::Error initialize();
 
 } // namespace console_process
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_CONSOLE_PROCESS_HPP

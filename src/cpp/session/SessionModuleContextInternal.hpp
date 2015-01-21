@@ -18,10 +18,12 @@
 
 #include <session/SessionModuleContext.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
    class Settings;
+}
 }
 
 namespace r {
@@ -30,7 +32,8 @@ namespace session {
 }
 }
 
-namespace rsession {   
+namespace rstudio {
+namespace session {   
 namespace module_context {
  
 // initialize
@@ -50,6 +53,7 @@ core::FilePath sourceDiagnostics();
 
 } // namespace module_context
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_MODULE_CONTEXT_INTERNAL_HPP
 

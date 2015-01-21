@@ -22,7 +22,8 @@
 
 #include "SessionClientEvent.hpp"
 
-namespace rsession {   
+namespace rstudio {
+namespace session {   
 namespace worker_context {
     
 // register a worker method
@@ -36,6 +37,7 @@ void enqueClientEvent(const ClientEvent& event);
 
 } // namespace worker_context
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_WORKER_CONTEXT_HPP
 

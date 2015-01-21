@@ -18,7 +18,8 @@
 
 #include <core/libclang/SourceIndex.hpp>
 
-namespace rsession {
+namespace rstudio {
+namespace session {
 namespace modules {      
 namespace clang {
 
@@ -27,5 +28,6 @@ core::libclang::SourceIndex& rSourceIndex();
 } // namespace clang
 } // namepace handlers
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_MODULES_CLANG_R_SOURCE_INDEX_HPP

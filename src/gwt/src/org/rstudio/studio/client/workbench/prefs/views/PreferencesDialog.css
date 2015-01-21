@@ -43,4 +43,6 @@
 
 .themeChooser select {
    width: 148px;
+   overflow-x: hidden;
+   overflow-y: scroll;
 }
