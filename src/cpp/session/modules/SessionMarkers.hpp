@@ -20,10 +20,13 @@
 
 #include <core/json/Json.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
  
+namespace rstudio {
 namespace session {
 namespace modules {      
 namespace markers {
@@ -35,5 +38,6 @@ core::Error initialize();
 } // namespace markers
 } // namepace handlers
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_SESSION_MARKERS_HPP

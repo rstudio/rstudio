@@ -26,8 +26,9 @@
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace session {
 
 namespace {
@@ -295,4 +296,5 @@ Error initialize()
 } // namespace markers
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 
