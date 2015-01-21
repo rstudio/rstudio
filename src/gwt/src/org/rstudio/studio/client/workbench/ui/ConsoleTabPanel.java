@@ -23,6 +23,7 @@ import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
+import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputTab;
 
 import java.util.ArrayList;
 
@@ -35,6 +36,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                           WorkbenchTab sourceCppTab,
                           WorkbenchTab renderRmdTab, 
                           WorkbenchTab deployShinyTab,
+                          MarkersOutputTab markersTab,
                           EventBus events,
                           ConsoleInterruptButton consoleInterrupt,
                           ToolbarButton goToWorkingDirButton)
@@ -49,6 +51,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       goToWorkingDirButton_ = goToWorkingDirButton;
       renderRmdTab_ = renderRmdTab;
       deployShinyTab_ = deployShinyTab;
+      markersTab_ = markersTab;
 
       compilePdfTab.addEnsureVisibleHandler(new EnsureVisibleHandler()
       {
@@ -165,6 +168,30 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                selectTab(0);
          }
       });
+      
+      markersTab.addEnsureVisibleHandler(new EnsureVisibleHandler()
+      {
+         @Override
+         public void onEnsureVisible(EnsureVisibleEvent event)
+         {
+            markersTabVisible_ = true;
+            managePanels();
+            if (event.getActivate())
+               selectTab(markersTab_);
+         }
+      });
+      markersTab.addEnsureHiddenHandler(new EnsureHiddenHandler()
+      {
+         @Override
+         public void onEnsureHidden(EnsureHiddenEvent event)
+         {
+            markersTab_.onDismiss();
+            markersTabVisible_ = false;
+            managePanels();
+            if (!consoleOnly_)
+               selectTab(0);
+         }
+      });
 
       events.addHandler(WorkingDirChangedEvent.TYPE, new WorkingDirChangedHandler()
       {
@@ -189,7 +216,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                             !findResultsTabVisible_ &&
                             !sourceCppTabVisible_ &&
                             !renderRmdTabVisible_ &&
-                            !deployShinyTabVisible_;
+                            !deployShinyTabVisible_ &&
+                            !markersTabVisible_;
 
       if (!consoleOnly)
       {
@@ -205,6 +233,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
             tabs.add(renderRmdTab_);
          if (deployShinyTabVisible_)
             tabs.add(deployShinyTab_);
+         if (markersTabVisible_)
+            tabs.add(markersTab_);
 
          setTabs(tabs);
       }
@@ -245,6 +275,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    private boolean renderRmdTabVisible_;
    private final WorkbenchTab deployShinyTab_;
    private boolean deployShinyTabVisible_;
+   private final MarkersOutputTab markersTab_;
+   private boolean markersTabVisible_;
    private final ConsoleInterruptButton consoleInterrupt_;
    private final ToolbarButton goToWorkingDirButton_;
    private boolean findResultsTabVisible_;

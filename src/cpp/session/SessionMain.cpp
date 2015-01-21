@@ -138,6 +138,7 @@ extern "C" const char *locale2charset(const char *);
 #include "modules/shiny/SessionShiny.hpp"
 #include "modules/viewer/SessionViewer.hpp"
 #include "modules/SessionLinter.hpp"
+#include "modules/SessionMarkers.hpp"
 
 #include "modules/SessionGit.hpp"
 #include "modules/SessionSVN.hpp"
@@ -498,6 +499,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["html_capabilities"] = modules::html_preview::capabilitiesAsJson();
 
    sessionInfo["find_in_files_state"] = modules::find::findInFilesStateAsJson();
+
+   sessionInfo["markers_state"] = modules::markers::markersStateAsJson();
 
    sessionInfo["rstudio_version"] = std::string(RSTUDIO_VERSION);
 
@@ -1635,6 +1638,7 @@ Error rInit(const r::session::RInitInfo& rInitInfo)
       (modules::rhooks::initialize)
       (modules::r_completions::initialize)
       (modules::linter::initialize)
+      (modules::markers::initialize)
 
       // workers
       (workers::web_request::initialize)

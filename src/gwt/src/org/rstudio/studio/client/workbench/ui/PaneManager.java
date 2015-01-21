@@ -24,6 +24,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.name.Named;
+
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Triad;
 import org.rstudio.core.client.command.CommandBinder;
@@ -48,6 +49,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptButton;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
+import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputTab;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 
 import java.util.ArrayList;
@@ -115,6 +117,7 @@ public class PaneManager
                       @Named("Source Cpp") final WorkbenchTab sourceCppTab,
                       @Named("R Markdown") final WorkbenchTab renderRmdTab,
                       @Named("Deploy") final WorkbenchTab deployShinyTab,
+                      final MarkersOutputTab markersTab,
                       final FindOutputTab findOutputTab)
    {
       eventBus_ = eventBus;
@@ -138,6 +141,7 @@ public class PaneManager
       sourceCppTab_ = sourceCppTab;
       renderRmdTab_ = renderRmdTab;
       deployShinyTab_ = deployShinyTab;
+      markersTab_ = markersTab;
       
       binder.bind(commands, this);
       
@@ -347,6 +351,7 @@ public class PaneManager
                                                             sourceCppTab_,
                                                             renderRmdTab_,
                                                             deployShinyTab_,
+                                                            markersTab_,
                                                             eventBus_,
                                                             consoleInterrupt_,
                                                             goToWorkingDirButton);
@@ -499,6 +504,7 @@ public class PaneManager
    private final WorkbenchTab viewerTab_;
    private final WorkbenchTab renderRmdTab_;
    private final WorkbenchTab deployShinyTab_;
+   private final MarkersOutputTab markersTab_;
    private MainSplitPanel panel_;
    private LogicalWindow sourceLogicalWindow_;
    private final HashMap<Tab, WorkbenchTabPanel> tabToPanel_ =

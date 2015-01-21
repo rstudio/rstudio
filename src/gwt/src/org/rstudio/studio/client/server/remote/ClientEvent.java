@@ -114,6 +114,7 @@ class ClientEvent extends JavaScriptObject
    public static final String PackratRestoreNeeded = "packrat_restore_needed";
    public static final String DataViewChanged = "data_view_changed";
    public static final String ViewFunction = "view_function";
+   public static final String ShowMarkers = "show_markers";
    
    protected ClientEvent()
    {
