@@ -152,9 +152,9 @@ extern "C" const char *locale2charset(const char *);
 
 #include <session/SessionHttpConnectionListener.hpp>
 
-#include <tests/TestRunner.hpp>
-
 #include "session-config.h"
+
+#include <tests/TestRunner.hpp>
 
 using namespace rstudio;
 using namespace rstudio::core;
@@ -1689,6 +1689,13 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       ::exit(EXIT_SUCCESS);
    }
 
+   // run unit tests
+   if (rsession::options().runTests())
+   {
+      int result = tests::run();
+      ::exit(result);
+   }
+   
    // register all of the json rpc methods implemented in R
    json::JsonRpcMethods rMethods ;
    error = rstudio::r::json::getRpcMethods(&rMethods);
@@ -2850,10 +2857,6 @@ int main (int argc, char * const argv[])
       // determine character set
       s_printCharsetWarning = !ensureUtf8Charset();
       
-      // run tests
-      if (tests::enabled(argc, argv))
-         return tests::run(argc, argv);
-
       // read program options
       Options& options = rsession::options();
       ProgramStatus status = options.read(argc, argv) ;

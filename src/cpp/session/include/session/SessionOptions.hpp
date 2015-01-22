@@ -59,6 +59,11 @@ public:
    core::ProgramStatus read(int argc, char * const argv[]);   
    virtual ~Options() {}
    
+   bool runTests() const
+   {
+      return runTests_;
+   }
+   
    bool verifyInstallation() const
    {
       return verifyInstallation_;
@@ -408,6 +413,9 @@ private:
    bool allowOverlay() const;
 
 private:
+   // tests
+   bool runTests_;
+   
    // verify
    bool verifyInstallation_;
    std::string verifyInstallationHomeDir_;

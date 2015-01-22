@@ -31,40 +31,18 @@ namespace tests {
 
 #ifdef RSTUDIO_UNIT_TESTS_ENABLED
 
-bool enabled(int argc, char* const argv[])
+int run()
 {
-   return argc > 1 && strcmp(argv[1], "--test") == 0;
-}
-
-// use Catch to run tests -- check for the '--test'
-// flag and run if that's applied
-int run(int argc, char* const argv[])
-{
-    if (argc > 1 && strcmp(argv[1], "--test") == 0)
-    {
-        int testArgc = argc - 1;
-        char* testArgv[testArgc];
-
-        testArgv[0] = argv[0];
-        for (int i = 2; i < argc; ++i)
-            testArgv[i - 1] = argv[i];
-
-        return Catch::Session().run(testArgc, testArgv);
-    }
-
-    return 1;
+   int argc = 1;
+   char* argv[1];
+   argv[0] = "tests";
+   return Catch::Session().run(argc, argv);
 }
 
 #else // not RSTUDIO_UNIT_TESTS_ENABLED
 
-bool enabled(int argc, char* const argv[])
-{
-   return false;
-}
-
 int run(int argc, char* const argv[])
 {
-   // no-op -- unit tests disabled
 }
 
 #endif // end RSTUDIO_UNIT_TESTS_ENABLED

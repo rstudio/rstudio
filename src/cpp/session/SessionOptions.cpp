@@ -82,6 +82,10 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
    if (resourcePath.complete("x64").exists())
       resourcePath = resourcePath.parent();
 #endif
+   
+   // run tests flag
+   options_description runTests("tests");
+   runTests.add_options()(kRunTestsSessionOption, "run unit tests");
 
    // verify installation flag
    options_description verify("verify");
@@ -309,6 +313,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
                                                          configFile);
 
    optionsDesc.commandLine.add(verify);
+   optionsDesc.commandLine.add(runTests);
    optionsDesc.commandLine.add(program);
    optionsDesc.commandLine.add(log);
    optionsDesc.commandLine.add(agreement);
