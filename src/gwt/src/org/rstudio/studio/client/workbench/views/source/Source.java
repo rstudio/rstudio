@@ -515,10 +515,7 @@ public class Source implements InsertSourceHandler,
    
       var callback = $entry(function(cm, params) {
          if (params.args && params.args.length === 1) {
-            source.@org.rstudio.studio.client.workbench.views.source.Source::pasteFileContentsAtCursor(
-               Ljava/lang/String;
-               Ljava/lang/String;
-            )(params.args[0], encoding);
+            source.@org.rstudio.studio.client.workbench.views.source.Source::pasteFileContentsAtCursor(Ljava/lang/String;Ljava/lang/String;)(params.args[0], encoding);
          }
       });
       
@@ -530,9 +527,7 @@ public class Source implements InsertSourceHandler,
       
       var callback = $entry(function(cm, params) {
          if (params.args) {
-            source.@org.rstudio.studio.client.workbench.views.source.Source::pasteRCodeExecutionResult(
-               Ljava/lang/String;
-            )(params.argString);
+            source.@org.rstudio.studio.client.workbench.views.source.Source::pasteRCodeExecutionResult(Ljava/lang/String;)(params.argString);
          }
       });
       
