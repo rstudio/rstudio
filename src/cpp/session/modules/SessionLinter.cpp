@@ -192,31 +192,26 @@ private:
    
 };
 
-// simulate scoped enum
-namespace LintType {
-
 enum LintType
 {
-   STYLE,
-   INFO,
-   WARNING,
-   ERROR
+   LintTypeStyle,
+   LintTypeInfo,
+   LintTypeWarning,
+   LintTypeError
 };
 
 std::string asString(LintType type)
 {
    switch (type)
    {
-   case STYLE: return "style";
-   case INFO: return "info";
-   case WARNING: return "warning";
-   case ERROR: return "error";
+   case LintTypeStyle: return "style";
+   case LintTypeInfo: return "info";
+   case LintTypeWarning: return "warning";
+   case LintTypeError: return "error";
    }
    
    return std::string();
 }
-
-} // end namespace LintType
 
 struct LintItem
 {
@@ -225,7 +220,7 @@ struct LintItem
              int startColumn,
              int endRow,
              int endColumn,
-             LintType::LintType type,
+             LintType type,
              const std::string message)
       : startRow(startRow),
         startColumn(startColumn),
@@ -238,7 +233,7 @@ struct LintItem
    int startColumn;
    int endRow;
    int endColumn;
-   LintType::LintType type;
+   LintType type;
    std::string message;
 };
 
@@ -253,7 +248,7 @@ public:
             int startColumn,
             int endRow,
             int endColumn,
-            LintType::LintType type,
+            LintType type,
             const std::string& message)
    {
       LintItem item(startRow,
@@ -278,7 +273,7 @@ public:
                     token.column(),
                     token.row(),
                     token.column() + content.length(),
-                    LintType::ERROR,
+                    LintTypeError,
                     message);
       
       lintItems_.push_back(item);
@@ -298,7 +293,7 @@ public:
                     token.column(),
                     token.row(),
                     token.column() + content.length(),
-                    LintType::ERROR,
+                    LintTypeError,
                     "unmatched bracket '" + content + "'");
       
       lintItems_.push_back(item);
@@ -1025,7 +1020,7 @@ SEXP rs_parseAndLintRFile(SEXP pathSEXP)
       lintList.add("end.row", item.endRow + 1);
       lintList.add("start.column", item.startColumn + 1);
       lintList.add("end.column", item.endColumn + 1);
-      lintList.add("type", LintType::asString(item.type));
+      lintList.add("type", asString(item.type));
       lintList.add("message", item.message);
       
       result.add(static_cast<SEXP>(lintList));
@@ -1053,4 +1048,4 @@ core::Error initialize()
 } // end namespace linter
 } // end namespace modules
 } // end namespace session
-}
+} // end namespace rstudio
