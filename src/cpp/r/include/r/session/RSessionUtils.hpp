@@ -35,6 +35,8 @@ bool isR3();
 
 bool isPackratModeOn();
 
+bool isDevtoolsDevModeOn();
+
 bool isDefaultPrompt(const std::string& prompt);
 
 // user home path

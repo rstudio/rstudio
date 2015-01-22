@@ -1251,9 +1251,6 @@ private:
 
    std::string parseLibrarySwitchFromInstallArgs()
    {
-      if (usedDevtools_)
-         return std::string();
-
       std::string libPath;
 
       std::string extraArgs = projectConfig().packageInstallArgs;
@@ -1298,7 +1295,7 @@ private:
       }
       return libPath;
    }
-
+   
    void enqueBuildCompleted()
    {
       isRunning_ = false;
@@ -1311,14 +1308,20 @@ private:
 
       // enque event
       std::string afterRestartCommand;
-      std::string libPath = parseLibrarySwitchFromInstallArgs();
       if (restartR_)
       {
+         afterRestartCommand = "library(" + pkgInfo_.name();
+         
          // if --library="" was specified and we're not in devmode,
          // use it
-         afterRestartCommand = "library(" + pkgInfo_.name();
-         if (!libPath.empty())
-            afterRestartCommand += ", lib.loc = '" + libPath + "'";
+         if (!(r::session::utils::isPackratModeOn() ||
+               r::session::utils::isDevtoolsDevModeOn()))
+         {
+            std::string libPath = parseLibrarySwitchFromInstallArgs();
+            if (!libPath.empty())
+               afterRestartCommand += ", lib.loc = \"" + libPath + "\"";
+         }
+         
          afterRestartCommand += ")";
       }
       json::Object dataJson;
