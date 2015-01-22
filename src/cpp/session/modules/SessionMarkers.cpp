@@ -24,6 +24,8 @@
 
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
+#include <r/RJson.hpp>
+#include <r/RExec.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -326,22 +328,92 @@ Error clearActiveMarkerSet(const core::json::JsonRpcRequest& request,
 }
 
 
-SEXP rs_showMarkers(SEXP nameSEXP)
+SEXP rs_sourceMarkers(SEXP nameSEXP,
+                      SEXP markersSEXP,
+                      SEXP basePathSEXP,
+                      SEXP autoSelectSEXP)
 {
-   using namespace module_context;
-   std::vector<SourceMarker> markers;
-   markers.push_back(SourceMarker(SourceMarker::Error,
-                                  resolveAliasedPath("~/woozy11.cpp"),
-                                  10,
-                                  1,
-                                  "you did this totally wrong",
-                                  true));
+   try
+   {
+      using namespace module_context;
 
-   SourceMarkerSet markerSet(r::sexp::safeAsString(nameSEXP),
-                             resolveAliasedPath("~"),
-                             markers);
+      // string parameters
+      std::string name = r::sexp::safeAsString(nameSEXP);
+      std::string basePath = r::sexp::safeAsString(basePathSEXP);
+      std::string autoSelect = r::sexp::safeAsString(autoSelectSEXP);
 
-   showSourceMarkers(markerSet, MarkerAutoSelectFirst);
+      // markers list
+      using namespace r::exec;
+      json::Value markersJson;
+      Error error = r::json::jsonValueFromList(markersSEXP, &markersJson);
+      if (error)
+         throw RErrorException(error.summary());
+      if (!json::isType<json::Array>(markersJson))
+         throw RErrorException("markers parameter was not an unnamed list");
+
+      json::writeFormatted(markersJson, std::cerr);
+
+      std::vector<SourceMarker> markers;
+      BOOST_FOREACH(const json::Value& markerJson, markersJson.get_array())
+      {
+         if (json::isType<json::Object>(markerJson))
+         {
+            std::string type;
+            std::string path;
+            double line, column;
+            std::string message;
+            Error error = json::readObject(
+               markerJson.get_obj(),
+               "type", &type,
+               "file", &path,
+               "line", &line,
+               "column", &column,
+               "message", &message);
+            if (error)
+            {
+               LOG_ERROR(error);
+               continue;
+            }
+
+            SourceMarker::Type markerType = SourceMarker::Error;
+            if (type == "error")
+               markerType = SourceMarker::Error;
+            else if (type == "warning")
+               markerType = SourceMarker::Warning;
+
+            SourceMarker marker(
+                markerType,
+                resolveAliasedPath(path),
+                safe_convert::numberTo<int>(line, 1),
+                safe_convert::numberTo<int>(column, 1),
+                message,
+                true);
+
+            markers.push_back(marker);
+         }
+      }
+
+      SourceMarkerSet markerSet(name,
+                                basePath.empty() ? FilePath() :
+                                                   resolveAliasedPath(basePath),
+                                markers);
+
+      MarkerAutoSelect markerAutoSelect = MarkerAutoSelectNone;
+      if (autoSelect == "none")
+         markerAutoSelect = MarkerAutoSelectNone;
+      else if (autoSelect == "first")
+         markerAutoSelect = MarkerAutoSelectFirst;
+      else if (autoSelect == "error")
+         markerAutoSelect = MarkerAutoSelectFirstError;
+
+
+      showSourceMarkers(markerSet, markerAutoSelect);
+   }
+   catch(r::exec::RErrorException& e)
+   {
+      r::exec::error(e.message());
+   }
+   CATCH_UNEXPECTED_EXCEPTION
 
    return R_NilValue;
 }
@@ -407,7 +479,7 @@ Error initialize()
    events().onShutdown.connect(writeSourceMarkers);
 
    // register R api
-   RS_REGISTER_CALL_METHOD(rs_showMarkers, 1);
+   RS_REGISTER_CALL_METHOD(rs_sourceMarkers, 4);
 
    // complete initialization
    using boost::bind;

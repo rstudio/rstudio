@@ -43,3 +43,66 @@
   invisible(.Call(getNativeSymbolInfo("rs_viewer", PACKAGE=""), url, height))     
 })
 
+.rs.addApiFunction("sourceMarkers", function(name, 
+                                             markers, 
+                                             basePath = NULL,
+                                             autoSelect = c("none", "first", "error")) {
+   
+   # validate name
+   if (!is.character(name))
+      stop("name parameter is specified or invalid: ", name, call. = FALSE)
+   
+   # validate autoSelect
+   autoSelect = match.arg(autoSelect)
+   
+   # validate markers
+   isMarker <- function(marker) {
+      markerTypes <- c("error", "warning")
+      if (is.null(marker$type) || (!marker$type %in% markerTypes))
+         stop("Invalid marker type (", marker, ")", call. = FALSE)
+      if (!is.character(marker$file))
+         stop("Marker file is unspecified or invalid: ", marker$file, call. = FALSE)
+      if (!is.numeric(marker$line))
+         stop("Marker line is unspecified or invalid", marker$line, call. = FALSE)
+      if (!is.numeric(marker$column))
+         stop("Marker column is unspecified or invalid", marker$line, call. = FALSE)
+      if (!is.character(marker$message))
+         stop("Marker message is unspecified or invalid: ", marker$message, call. = FALSE)
+   }
+   
+   if (!is.list(markers))
+      stop("markers were not specified as a list")
+   markers <- lapply(markers, function(marker) {
+      markerTypes <- c("error", "warning")
+      if (is.null(marker$type) || (!marker$type %in% markerTypes))
+         stop("Invalid marker type (", marker, ")", call. = FALSE)
+      if (!is.character(marker$file))
+         stop("Marker file is unspecified or invalid: ", marker$file, call. = FALSE)
+      if (!is.numeric(marker$line))
+         stop("Marker line is unspecified or invalid", marker$line, call. = FALSE)
+      if (!is.numeric(marker$column))
+         stop("Marker column is unspecified or invalid", marker$line, call. = FALSE)
+      if (!is.character(marker$message))
+         stop("Marker message is unspecified or invalid: ", marker$message, call. = FALSE)
+      
+      marker$type <- .rs.scalar(marker$type)
+      marker$file <- .rs.scalar(marker$file)
+      marker$line <- .rs.scalar(marker$line)
+      marker$column <- .rs.scalar(marker$column)
+      marker$message <- .rs.scalar(marker$message)
+      
+      marker
+   })
+   
+   # validate basePath
+   if (is.null(basePath))
+      basePath <- ""
+   else if (!is.character(basePath))
+      stop("basePath parameter is not of type character", call. = FALSE)
+   
+   # pass everything on
+   invisible(.Call("rs_sourceMarkers", name, markers, basePath, autoSelect))
+})
+
+
+

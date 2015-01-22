@@ -42,8 +42,6 @@ import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersSer
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersSet;
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersState;
 
-// TOOO: R API
-
 public class MarkersOutputPresenter extends BasePresenter
 {
    public interface Display extends WorkbenchView,
