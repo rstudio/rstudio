@@ -49,7 +49,7 @@
 * A wide variety of new editor themes (color schemes) are now available.
 * Multiple cursors:
    - Create a new cursor above / below the current cursor with CTRL + ALT + {up / down}
-   - Move the active secondary cursor up / down with CTRL + SHIFT + ALT + {up / down}
+   - Move the active cursor up / down with CTRL + SHIFT + ALT + {up / down}
    - Create multiple cursors by pressing CTRL + ALT and clicking + dragging the mouse
 
 ### Data Viewer
