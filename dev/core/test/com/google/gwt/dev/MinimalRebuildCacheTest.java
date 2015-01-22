@@ -39,17 +39,17 @@ public class MinimalRebuildCacheTest extends TestCase {
     // They each contain a type and nested type.
     StringAnalyzableTypeEnvironment typeEnvironment = minimalRebuildCache.getTypeEnvironment();
     minimalRebuildCache.recordNestedTypeName("Foo", "Foo");
-    typeEnvironment.recordTypeEnclosesMethod("Foo", "Foo::$clinit()");
+    typeEnvironment.recordTypeEnclosesMethod("Foo", "Foo::$clinit()V");
     minimalRebuildCache.recordNestedTypeName("Foo", "Foo$Inner");
-    typeEnvironment.recordTypeEnclosesMethod("Foo$Inner", "Foo$Inner::$clinit()");
+    typeEnvironment.recordTypeEnclosesMethod("Foo$Inner", "Foo$Inner::$clinit()V");
     minimalRebuildCache.recordNestedTypeName("Bar", "Bar");
-    typeEnvironment.recordTypeEnclosesMethod("Bar", "Bar::$clinit()");
+    typeEnvironment.recordTypeEnclosesMethod("Bar", "Bar::$clinit()V");
     minimalRebuildCache.recordNestedTypeName("Bar", "Bar$Inner");
-    typeEnvironment.recordTypeEnclosesMethod("Bar$Inner", "Bar$Inner::$clinit()");
+    typeEnvironment.recordTypeEnclosesMethod("Bar$Inner", "Bar$Inner::$clinit()V");
     minimalRebuildCache.recordNestedTypeName("Baz", "Baz");
-    typeEnvironment.recordTypeEnclosesMethod("Baz", "Baz::$clinit()");
+    typeEnvironment.recordTypeEnclosesMethod("Baz", "Baz::$clinit()V");
     minimalRebuildCache.recordNestedTypeName("Baz", "Baz$Inner");
-    typeEnvironment.recordTypeEnclosesMethod("Baz$Inner", "Baz$Inner::$clinit()");
+    typeEnvironment.recordTypeEnclosesMethod("Baz$Inner", "Baz$Inner::$clinit()V");
 
     // There's some JS for each type.
     minimalRebuildCache.setJsForType(TreeLogger.NULL, "Foo", "Some Js for Foo");

@@ -75,53 +75,53 @@ public class JsTypeLinkerTest extends TestCase {
     Map<String, String> superClassesByClass =
         minimalRebuildCache.getImmediateTypeRelations().getImmediateSuperclassesByClass();
     StringAnalyzableTypeEnvironment typeEnvironment = minimalRebuildCache.getTypeEnvironment();
-    typeEnvironment.recordTypeEnclosesMethod("java.lang.Object", "java.lang.Object::$clinit()");
+    typeEnvironment.recordTypeEnclosesMethod("java.lang.Object", "java.lang.Object::$clinit()V");
     superClassesByClass.put("java.lang.Class", "java.lang.Object");
-    typeEnvironment.recordTypeEnclosesMethod("java.lang.Class", "java.lang.Class::$clinit()");
+    typeEnvironment.recordTypeEnclosesMethod("java.lang.Class", "java.lang.Class::$clinit()V");
     superClassesByClass.put("com.some.app.SomeAModel", "java.lang.Object");
     typeEnvironment.recordTypeEnclosesMethod("com.some.app.SomeAModel",
-        "com.some.app.SomeAModel::$clinit()");
+        "com.some.app.SomeAModel::$clinit()V");
     superClassesByClass.put("com.some.app.SomeBModel", "java.lang.Object");
     typeEnvironment.recordTypeEnclosesMethod("com.some.app.SomeBModel",
-        "com.some.app.SomeBModel::$clinit()");
+        "com.some.app.SomeBModel::$clinit()V");
     superClassesByClass.put("com.some.app.SomeController", "java.lang.Object");
     typeEnvironment.recordTypeEnclosesMethod("com.some.app.SomeController",
-        "com.some.app.SomeController::$clinit()");
+        "com.some.app.SomeController::$clinit()V");
     superClassesByClass.put("com.some.app.EntryPoint", "java.lang.Object");
     typeEnvironment.recordTypeEnclosesMethod("com.some.app.EntryPoint",
-        "com.some.app.EntryPoint::$clinit()");
+        "com.some.app.EntryPoint::$clinit()V");
 
     // Record root types.
     minimalRebuildCache.setRootTypeNames(Lists.newArrayList("com.some.app.EntryPoint"));
     minimalRebuildCache.setEntryMethodNames(
-        Lists.newArrayList("com.some.app.EntryPoint::onModuleLoad()"));
+        Lists.newArrayList("com.some.app.EntryPoint::onModuleLoad()V"));
     typeEnvironment.recordTypeEnclosesMethod("com.some.app.EntryPoint",
-        "com.some.app.EntryPoint::onModuleLoad()");
+        "com.some.app.EntryPoint::onModuleLoad()V");
 
     // Record type references.
     minimalRebuildCache.addTypeReference("com.some.app.EntryPoint", "com.some.app.SomeController");
-    typeEnvironment.recordMethodInstantiatesType("com.some.app.EntryPoint::onModuleLoad()",
+    typeEnvironment.recordMethodInstantiatesType("com.some.app.EntryPoint::onModuleLoad()V",
         "com.some.app.SomeController");
-    typeEnvironment.recordMethodCallsMethod("com.some.app.EntryPoint::onModuleLoad()",
-        "com.some.app.SomeController::createData()");
+    typeEnvironment.recordMethodCallsMethod("com.some.app.EntryPoint::onModuleLoad()V",
+        "com.some.app.SomeController::createData()V");
     typeEnvironment.recordTypeEnclosesMethod("com.some.app.SomeController",
-        "com.some.app.SomeController::createData()");
+        "com.some.app.SomeController::createData()V");
 
     minimalRebuildCache.addTypeReference("com.some.app.SomeController", "com.some.app.SomeBModel");
-    typeEnvironment.recordMethodInstantiatesType("com.some.app.SomeController::createData()",
+    typeEnvironment.recordMethodInstantiatesType("com.some.app.SomeController::createData()V",
         "com.some.app.SomeBModel");
-    typeEnvironment.recordMethodCallsMethod("com.some.app.SomeController::createData()",
-        "com.some.app.SomeBModel::SomeBModel()");
+    typeEnvironment.recordMethodCallsMethod("com.some.app.SomeController::createData()V",
+        "com.some.app.SomeBModel::SomeBModel()V");
     typeEnvironment.recordTypeEnclosesMethod("com.some.app.SomeBModel",
-        "com.some.app.SomeBModel::SomeBModel()");
+        "com.some.app.SomeBModel::SomeBModel()V");
 
     minimalRebuildCache.addTypeReference("com.some.app.SomeController", "com.some.app.SomeAModel");
-    typeEnvironment.recordMethodInstantiatesType("com.some.app.SomeController::createData()",
+    typeEnvironment.recordMethodInstantiatesType("com.some.app.SomeController::createData()V",
         "com.some.app.SomeAModel");
-    typeEnvironment.recordMethodCallsMethod("com.some.app.SomeController::createData()",
-        "com.some.app.SomeAModel::SomeAModel()");
+    typeEnvironment.recordMethodCallsMethod("com.some.app.SomeController::createData()V",
+        "com.some.app.SomeAModel::SomeAModel()V");
     typeEnvironment.recordTypeEnclosesMethod("com.some.app.SomeAModel",
-        "com.some.app.SomeAModel::SomeAModel()");
+        "com.some.app.SomeAModel::SomeAModel()V");
 
     JsTypeLinker jsTypeLinker = new JsTypeLinker(TreeLogger.NULL,
         new JsNoopTransformer(originalJs, srb.build(), smb.build()), classRanges, programRange,
@@ -164,13 +164,13 @@ public class JsTypeLinkerTest extends TestCase {
 
     typeEnvironment.removeControlFlowIndexesFor("com.some.app.SomeController");
     typeEnvironment.recordTypeEnclosesMethod("com.some.app.SomeController",
-        "com.some.app.SomeController::createData()");
+        "com.some.app.SomeController::createData()V");
     typeEnvironment.recordTypeEnclosesMethod("com.some.app.SomeController",
-        "com.some.app.SomeController::$clinit()");
-    typeEnvironment.recordMethodInstantiatesType("com.some.app.SomeController::createData()",
+        "com.some.app.SomeController::$clinit()V");
+    typeEnvironment.recordMethodInstantiatesType("com.some.app.SomeController::createData()V",
         "com.some.app.SomeBModel");
-    typeEnvironment.recordMethodCallsMethod("com.some.app.SomeController::createData()",
-        "com.some.app.SomeBModel::SomeBModel()");
+    typeEnvironment.recordMethodCallsMethod("com.some.app.SomeController::createData()V",
+        "com.some.app.SomeBModel::SomeBModel()V");
 
     jsTypeLinker = new JsTypeLinker(TreeLogger.NULL,
         new JsNoopTransformer(originalJs, srb.build(), smb.build()), classRanges, programRange,

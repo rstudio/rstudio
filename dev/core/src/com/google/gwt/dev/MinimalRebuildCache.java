@@ -411,7 +411,7 @@ public class MinimalRebuildCache implements Serializable {
       int typeId = typeIdsWithExportedStaticReferences.get(i);
       rapidTypeAnalyzer.markTypeIdReachable(typeId);
       String typeName = typeEnvironment.getTypeNameById(typeId);
-      int typeClinitMethodId = typeEnvironment.getMethodIdByName(typeName + "::$clinit()");
+      int typeClinitMethodId = typeEnvironment.getMethodIdByName(typeName + "::$clinit()V");
       rapidTypeAnalyzer.markMethodIdReachable(typeClinitMethodId, false);
     }
 

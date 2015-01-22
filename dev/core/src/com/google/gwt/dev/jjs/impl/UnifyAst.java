@@ -751,7 +751,7 @@ public class UnifyAst {
     List<String> entryMethodNames = new ArrayList<String>();
     for (JMethod entryMethod : program.getEntryMethods()) {
       flowInto(entryMethod);
-      entryMethodNames.add(entryMethod.getJsniSignature(true, false));
+      entryMethodNames.add(entryMethod.getJsniSignature(true, true));
     }
 
     // Ensure that root types are loaded and possibly (depending on mode) traversed.

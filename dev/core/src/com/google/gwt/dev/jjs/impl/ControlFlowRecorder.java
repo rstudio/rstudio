@@ -46,7 +46,7 @@ public class ControlFlowRecorder extends JVisitor {
   }
 
   private static String computeName(JMethod method) {
-    return method.getJsniSignature(true, false);
+    return method.getJsniSignature(true, true);
   }
 
   private final Set<String> bannedMethodNames = Sets.newHashSet();
@@ -76,8 +76,11 @@ public class ControlFlowRecorder extends JVisitor {
     // reflectively called at runtime (see Enum.valueOf()). So to be safe the enumValueOfFunc
     // must be assumed to be called.
     if (type.isEnumOrSubclass() != null && !type.getName().equals("java.lang.Enum")) {
-      String valueOfMethodName = type.getName() + "::valueOf(Ljava/lang/String;)";
-      stringAnalyzableTypeEnvironment.recordMethodCallsMethod(currentMethodName, valueOfMethodName);
+      JMethod valueOfMethod = getValueOfMethod((JDeclaredType) type);
+      if (valueOfMethod != null) {
+        stringAnalyzableTypeEnvironment.recordMethodCallsMethod(currentMethodName,
+            computeName(valueOfMethod));
+      }
     }
   }
 
@@ -162,8 +165,17 @@ public class ControlFlowRecorder extends JVisitor {
     accept(program);
   }
 
+  private JMethod getValueOfMethod(JDeclaredType type) {
+    for (JMethod method : type.getMethods()) {
+      if (method.getName().equals("valueOf")) {
+        return method;
+      }
+    }
+    return null;
+  }
+
   private void maybeRecordClinitCall(String typeName) {
-    String typeClinitMethod = typeName + "::$clinit()";
+    String typeClinitMethod = typeName + "::$clinit()V";
     if (!typeClinitMethod.equals(currentMethodName)) {
       stringAnalyzableTypeEnvironment.recordMethodCallsMethod(currentMethodName, typeClinitMethod);
     }

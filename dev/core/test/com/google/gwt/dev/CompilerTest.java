@@ -445,6 +445,46 @@ public class CompilerTest extends ArgProcessorTestBase {
           "  public void onModuleLoad() {}",
           "}");
 
+  private MockJavaResource topResource =
+      JavaResourceBase.createMockJavaResource("com.foo.top",
+          "package com.foo;",
+          "abstract class Top {",
+          "  Object run() {",
+          "    return \"\";",
+          "  }",
+          "}");
+
+  private MockJavaResource middleResource =
+      JavaResourceBase.createMockJavaResource("com.foo.Middle",
+          "package com.foo;",
+          "public abstract class Middle extends Top {",
+          "  abstract String run();",
+          "}");
+
+  private MockJavaResource bottomResource =
+      JavaResourceBase.createMockJavaResource("com.foo.Bottom",
+          "package com.foo;",
+          "public class Bottom extends Middle {",
+          "  // ",
+          "  private final class Value {}",
+          "  String run() {",
+          "    Value value = new Value();",
+          "    return \"\";",
+          "  }",
+          "}");
+
+  private MockJavaResource overriddenMethodChainEntryPointResource =
+      JavaResourceBase.createMockJavaResource("com.foo.TestEntryPoint",
+          "package com.foo;",
+          "import com.google.gwt.core.client.EntryPoint;",
+          "public class TestEntryPoint implements EntryPoint {",
+          "  @Override",
+          "  public void onModuleLoad() {",
+          "    Bottom bottom = new Bottom();",
+          "    ((Top)bottom).run();",
+          "  }",
+          "}");
+
   private MockJavaResource bazResource =
       JavaResourceBase.createMockJavaResource("com.foo.Baz",
           "package com.foo;",
@@ -884,6 +924,28 @@ public class CompilerTest extends ArgProcessorTestBase {
         JsOutputOption.PRETTY);
     // Show that only this little change is stale, not the whole world.
     assertEquals(2, relinkMinimalRebuildCache.getProcessedStaleTypeNames().size());
+  }
+
+  public void testIncrementalRecompile_bridgeMethodOverrideChain()
+      throws UnableToCompleteException, IOException, InterruptedException {
+    MinimalRebuildCache relinkMinimalRebuildCache = new MinimalRebuildCache();
+    File relinkApplicationDir = Files.createTempDir();
+
+    // Perform a first compile.
+    compileToJs(relinkApplicationDir, "com.foo.SimpleModule", Lists.newArrayList(
+        simpleModuleResource, overriddenMethodChainEntryPointResource, topResource, middleResource,
+        bottomResource), relinkMinimalRebuildCache, null, JsOutputOption.PRETTY);
+    // On first compile nothing is explicitly stale, only implicitly stale.
+    assertEquals(0, relinkMinimalRebuildCache.getStaleTypeNames().size());
+
+    // Recompile with a change to Bottom.
+    relinkMinimalRebuildCache.markSourceFileStale("com/foo/Bottom.java");
+    compileToJs(relinkApplicationDir, "com.foo.SimpleModule", Lists.<MockResource> newArrayList(),
+        relinkMinimalRebuildCache, null, JsOutputOption.PRETTY);
+    // Show that the third level bridge method override of Top.run() is seen to be live and thus
+    // makes type com.foo.Bottom$Value live.
+    assertTrue(
+        relinkMinimalRebuildCache.getProcessedStaleTypeNames().contains("com.foo.Bottom$Value"));
   }
 
   public void testIncrementalRecompile_superClassOrder() throws UnableToCompleteException,

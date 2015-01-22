@@ -76,13 +76,13 @@ public class MinimalRebuildCacheManagerTest extends TestCase {
     startingCache.recordDiskSourceResources(laterModifiedBySourcePath);
     startingCache.setRootTypeNames(Sets.newHashSet("Foo", "Bar", "Baz"));
     StringAnalyzableTypeEnvironment typeEnvironment = startingCache.getTypeEnvironment();
-    typeEnvironment.recordTypeEnclosesMethod("Foo", "Foo::$clinit()");
-    typeEnvironment.recordTypeEnclosesMethod("Bar", "Bar::$clinit()");
-    typeEnvironment.recordTypeEnclosesMethod("Baz", "Baz::$clinit()");
-    typeEnvironment.recordMethodInstantiatesType("Foo::start()", "Bar");
-    typeEnvironment.recordMethodCallsMethod("Foo::start()", "Bar::run()");
-    typeEnvironment.recordMethodInstantiatesType("Bar::start()", "Baz");
-    typeEnvironment.recordMethodCallsMethod("Bar::run()", "Baz::run()");
+    typeEnvironment.recordTypeEnclosesMethod("Foo", "Foo::$clinit()V");
+    typeEnvironment.recordTypeEnclosesMethod("Bar", "Bar::$clinit()V");
+    typeEnvironment.recordTypeEnclosesMethod("Baz", "Baz::$clinit()V");
+    typeEnvironment.recordMethodInstantiatesType("Foo::start()V", "Bar");
+    typeEnvironment.recordMethodCallsMethod("Foo::start()V", "Bar::run()V");
+    typeEnvironment.recordMethodInstantiatesType("Bar::start()V", "Baz");
+    typeEnvironment.recordMethodCallsMethod("Bar::run()V", "Baz::run()V");
     startingCache.computeReachableTypeNames();
     startingCache.computeAndClearStaleTypesCache(TreeLogger.NULL,
         new JTypeOracle(null, startingCache, true));
