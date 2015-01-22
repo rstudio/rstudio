@@ -65,6 +65,7 @@ git merge \
     origin/patch/remove-webfont-2 \
     origin/patch/other-modes \
     origin/patch/dont-bundle-textmate-theme \
+    origin/bugfix/vim-ex-command-spellcheck \
     -m "merge branches"
 
 ## git merge \
