@@ -32,6 +32,8 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.Session;
 
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -244,8 +246,53 @@ public class RSAccountConnector
    
    private void pollForAuthCompleted()
    {
-      // TODO: check every ~1s to see if token has become valid; auto-close the
-      // window if it has
+      Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
+      {
+         @Override
+         public boolean execute()
+         {
+            // don't keep polling once auth is complete or window is closed
+            if (pendingAuthToken_ == null ||
+                pendingServerInfo_ == null)
+               return false;
+            
+            // if we're already running a check but it hasn't returned for some
+            // reason, just wait for it to finish
+            if (runningAuthCompleteCheck_)
+               return true;
+            
+            runningAuthCompleteCheck_ = true;
+            server_.getUserFromToken(pendingServerInfo_.getUrl(), 
+                  pendingAuthToken_, 
+                  new ServerRequestCallback<RSConnectAuthUser>()
+                  {
+                     @Override
+                     public void onResponseReceived(RSConnectAuthUser user)
+                     {
+                        runningAuthCompleteCheck_ = false;
+                        
+                        // expected if user hasn't finished authenticating yet,
+                        // just wait and try again
+                        if (!user.isValidUser())
+                           return;
+                        
+                        // user is valid--cache account info and close the
+                        // window
+                        pendingAuthUser_ = user;
+                        satelliteManager_.closeSatelliteWindow(
+                              RSConnectAuthSatellite.NAME);
+                     }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        // ignore this error
+                        runningAuthCompleteCheck_ = false;
+                     }
+                  });
+            return true;
+         }
+      }, 1000);
    }
    
    private void notifyAuthClosed()
@@ -255,10 +302,26 @@ public class RSAccountConnector
           pendingAuthIndicator_ != null &&
           pendingOnConnected_ != null)
       {
-         onAuthCompleted(pendingServerInfo_, 
-               pendingAuthToken_, 
-               pendingAuthIndicator_, 
-               pendingOnConnected_);
+         if (pendingAuthUser_ == null)
+         {
+            // the window closed because the user closed it manually--check to
+            // see if the token is now valid
+            onAuthCompleted(pendingServerInfo_, 
+                  pendingAuthToken_, 
+                  pendingAuthIndicator_, 
+                  pendingOnConnected_);
+         }
+         else
+         {
+            // the window closed because we detected that the token became
+            // valid--add the user directly
+            onUserAuthVerified(pendingServerInfo_, 
+                  pendingAuthToken_, 
+                  pendingAuthUser_, 
+                  pendingAuthIndicator_, 
+                  pendingOnConnected_);
+            
+         }
       }
       pendingAuthToken_ = null;
       pendingServerInfo_ = null;
@@ -372,4 +435,6 @@ public class RSAccountConnector
    private RSConnectServerInfo pendingServerInfo_;
    private ProgressIndicator pendingAuthIndicator_;
    private OperationWithInput<AccountConnectResult> pendingOnConnected_;
+   private RSConnectAuthUser pendingAuthUser_;
+   private boolean runningAuthCompleteCheck_ = false;
 }
