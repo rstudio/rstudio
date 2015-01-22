@@ -24,11 +24,14 @@
 
 #include <core/json/JsonRpc.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
 }
+}
 
+namespace rstudio {
 namespace session {
 
 // singleton
@@ -71,5 +74,6 @@ private:
    
   
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_CLIENT_EVENT_SERVICE_HPP

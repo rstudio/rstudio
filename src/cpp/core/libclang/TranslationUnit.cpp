@@ -21,6 +21,7 @@
 #include <core/libclang/LibClang.hpp>
 #include <core/libclang/UnsavedFiles.hpp>
 
+namespace rstudio {
 namespace core {
 namespace libclang {
 
@@ -150,5 +151,6 @@ void TranslationUnit::printResourceUsage(std::ostream& ostr, bool detailed)
 
 } // namespace libclang
 } // namespace core
+} // namespace rstudio
 
 

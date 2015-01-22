@@ -27,8 +27,10 @@
 
 #define kScreenFontSubstitutionKey @"NSFontDefaultScreenFontSubstitutionEnabled"
 
-using namespace core;
+using namespace rstudio;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace desktop {
    
 Options& options()
@@ -195,4 +197,5 @@ void Options::setIgnoredUpdateVersions(const std::vector<std::string>& ignored)
 
 
 } // namespace desktop
+} // namespace rstudio
 

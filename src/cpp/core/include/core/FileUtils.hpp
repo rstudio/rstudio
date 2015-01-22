@@ -20,6 +20,7 @@
 
 
 
+namespace rstudio {
 namespace core {
 
 class FilePath;
@@ -29,8 +30,10 @@ namespace file_utils {
 FilePath uniqueFilePath(const core::FilePath& parent,
                         const std::string& prefix = "");
 
+std::string readFile(const core::FilePath& filePath);
 
 } // namespace file_utils
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_FILEUTILS_HPP

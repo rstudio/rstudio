@@ -1,79 +1,74 @@
-.ace_editor {
-  border: 2px solid rgb(159, 159, 159);
-}
-
-.ace_editor.ace_focus {
-  border: 2px solid #327fbd;
-}
-
 .ace_gutter {
   background: #ebebeb;
   border-right: 1px solid rgb(159, 159, 159);
   color: rgb(136, 136, 136);
 }
 
-.ace_print_margin {
+.ace_print-margin {
   width: 1px;
   background: #ebebeb;
+}
+
+.ace_editor {
+  background-color: #FFFFFF;
+  color: black;
 }
 
 .ace_fold {
     background-color: rgb(60, 76, 114);
 }
 
-.ace_text-layer {
-}
-
 .ace_cursor {
-  border-left: 2px solid black;
+  color: black;
 }
 
-.ace_line .ace_storage,
-.ace_line .ace_keyword,
-.ace_line .ace_variable {
+.ace_storage,
+.ace_keyword,
+.ace_variable {
   color: rgb(127, 0, 85);
 }
 
-.ace_line .ace_constant.ace_buildin {
+.ace_constant.ace_buildin {
   color: rgb(88, 72, 246);
 }
 
-.ace_line .ace_constant.ace_library {
+.ace_constant.ace_library {
   color: rgb(6, 150, 14);
 }
 
-.ace_line .ace_function {
+.ace_function {
   color: rgb(60, 76, 114);
 }
 
-.ace_line .ace_string {
+.ace_string {
   color: rgb(42, 0, 255);
 }
 
-.ace_line .ace_comment {
-  color: rgb(63, 127, 95);
+.ace_comment {
+  color: rgb(113, 150, 130);
 }
 
-.ace_line .ace_comment.ace_doc {
+.ace_comment.ace_doc {
   color: rgb(63, 95, 191);
 }
 
-.ace_line .ace_comment.ace_doc.ace_tag {
+.ace_comment.ace_doc.ace_tag {
   color: rgb(127, 159, 191);
 }
 
-.ace_line .ace_constant.ace_numeric {
+.ace_constant.ace_numeric {
+  color: darkblue;
 }
 
-.ace_line .ace_tag {
-  color: rgb(63, 127, 127);
+.ace_tag {
+  color: rgb(25, 118, 116);
 }
 
-.ace_line .ace_type {
+.ace_type {
   color: rgb(127, 0, 127);
 }
 
-.ace_line .ace_xml_pe {
+.ace_xml-pe {
   color: rgb(104, 104, 91);
 }
 
@@ -86,8 +81,12 @@
   border: 1px solid rgb(192, 192, 192);
 }
 
-.ace_line .ace_meta.ace_tag {
-  color:rgb(63, 127, 127);
+.ace_meta.ace_tag {
+  color:rgb(25, 118, 116);
+}
+
+.ace_invisible {
+  color: #ddd;
 }
 
 .ace_entity.ace_other.ace_attribute-name {
@@ -97,20 +96,50 @@
   background: rgb(255, 255, 0);
 }
 
-.ace_marker-layer .ace_active_line {
+.ace_active-line {
   background: rgb(232, 242, 254);
 }
 
-.ace_marker-layer .ace_selected_word {
+.ace_gutter-active-line {
+  background-color : #DADADA;
+}
+
+.ace_marker-layer .ace_selected-word {
   border: 1px solid rgb(181, 213, 255);
 }
 
 .ace_indent-guide {
   background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAE0lEQVQImWP4////f4bLly//BwAmVgd1/w11/gAAAABJRU5ErkJggg==") right repeat-y;
 }
-.nocolor.ace_editor .ace_line span {color: rgb(127, 0, 85) !important;}
-.ace_bracket {margin: 0 !important; border: 0 !important; background-color: rgb(192, 192, 192);}
-.ace_marker-layer .ace_foreign_line {position: absolute; z-index: -1; background-color: rgb(229, 204, 221);}
-.ace_marker-layer .ace_find_line {position: absolute; z-index: -1; background-color: rgb(191, 127, 170);}
-.ace_marker-layer .ace_active_debug_line {position: absolute; z-index: -1; background-color: rgb(255, 238, 155);}
-.ace_console_error { background-color: rgb(229, 204, 221); }
+.nocolor.ace_editor .ace_line span {
+  color: #7F0055 !important;
+}
+.ace_bracket {
+  margin: 0 !important;
+  border: 0 !important;
+  background-color: rgb(192, 192, 192);
+}
+.ace_marker-layer .ace_foreign_line {
+  position: absolute;
+  z-index: -1;
+  background-color: #F2F2F2;
+}
+.ace_marker-layer .ace_find_line {
+  position: absolute;
+  z-index: -1;
+  background-color: #CCCCCC;
+}
+.ace_marker-layer .ace_active_debug_line {
+  position: absolute;
+  z-index: -1;
+  background-color: #FFEE9B;
+}
+.ace_console_error {
+  background-color: #CCCCCC;
+}
+.ace_keyword.ace_operator {
+  color: #888888 !important;
+}
+.ace_keyword {
+  color: #800080 !important;
+}

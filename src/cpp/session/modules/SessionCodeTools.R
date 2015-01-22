@@ -439,6 +439,27 @@
       print(help(pieces[1], help_type='html', try.all.packages=T))
 })
 
+.rs.addJsonRpcHandler("execute_r_code", function(code)
+{
+   .envir <- parent.frame(2)
+   result <- .rs.withTimeLimit(2, fail = "", envir = .envir, {
+   
+      output <- capture.output(
+         evaled <- suppressWarnings(
+            eval(parse(text = code), envir = .envir)
+         )
+      )
+      
+      object <- if (!(length(evaled)) && length(output))
+         output
+      else
+         evaled
+      
+      paste(as.character(object), collapse = "\n")
+   })
+   .rs.scalar(result)
+})
+
 .rs.addJsonRpcHandler("is_function", function(nameString, envString)
 {
    object <- NULL
@@ -549,19 +570,30 @@
    gsub("([\\-\\[\\]\\{\\}\\(\\)\\*\\+\\?\\.\\,\\\\\\^\\$\\|\\#\\s])", "\\\\\\1", regex, perl = TRUE)
 })
 
-.rs.addFunction("objectsOnSearchPath", function(token, caseInsensitive = FALSE)
+.rs.addFunction("objectsOnSearchPath", function(token = "",
+                                                caseInsensitive = FALSE)
 {
-   token <- .rs.escapeForRegex(token)
-   if (caseInsensitive)
-      token <- .rs.asCaseInsensitiveRegex(token)
-   
    search <- search()
-   objects <- lapply(1:length(search()), function(i) {
-      ls(pos = i, all.names = TRUE, pattern = paste("^", token, sep = ""))
-   })
+   
+   if (nzchar(token))
+   {
+      token <- .rs.escapeForRegex(token)
+      if (caseInsensitive)
+         token <- .rs.asCaseInsensitiveRegex(token)
+      pattern <- paste("^", token, sep = "")
+      
+      objects <- lapply(1:length(search), function(i) {
+         ls(pos = i, all.names = TRUE, pattern = pattern)
+      })
+   }
+   else
+   {
+      objects <- lapply(1:length(search), function(i) {
+         ls(pos = i, all.names = TRUE)
+      })
+   }
    
    names(objects) <- search
-   
    objects
 })
 

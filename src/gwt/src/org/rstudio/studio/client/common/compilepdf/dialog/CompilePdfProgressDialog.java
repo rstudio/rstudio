@@ -21,14 +21,13 @@ import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.widget.ProgressDialog;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-
-import org.rstudio.studio.client.common.compile.CompileError;
 import org.rstudio.studio.client.common.compile.CompileOutputBuffer;
-import org.rstudio.studio.client.common.compile.errorlist.CompileErrorList;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfOutputEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfErrorsEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEvent;
 import org.rstudio.studio.client.common.compilepdf.model.CompilePdfResult;
+import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
+import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerList;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
@@ -53,7 +52,7 @@ public class CompilePdfProgressDialog extends ProgressDialog
       
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      errorList_ = new CompileErrorList();
+      errorList_ = new SourceMarkerList();
       
       addHandlerRegistration(eventBus_.addHandler(
                                     CompilePdfOutputEvent.TYPE, this));
@@ -127,13 +126,13 @@ public class CompilePdfProgressDialog extends ProgressDialog
       {   
          // show error list if there are errors
          String label = "Compile PDF failed";
-         if (CompileError.showErrorList(errors_))
+         if (SourceMarker.showErrorList(errors_))
          {
             label +=  " (double-click to view source location of error)";
-            errorList_.showErrors(result.getTargetFile(), 
-                                  null, 
-                                  errors_,
-                                  CompileErrorList.AUTO_SELECT_FIRST);
+            errorList_.showMarkers(result.getTargetFile(), 
+                                   null, 
+                                   errors_,
+                                   SourceMarkerList.AUTO_SELECT_FIRST);
             container_.setWidget(errorList_);
             errorList_.focus();
          }
@@ -148,6 +147,6 @@ public class CompilePdfProgressDialog extends ProgressDialog
    
    private SimplePanel container_;
    private CompileOutputBuffer output_;
-   private CompileErrorList errorList_;
-   private JsArray<CompileError> errors_;
+   private SourceMarkerList errorList_;
+   private JsArray<SourceMarker> errors_;
 }

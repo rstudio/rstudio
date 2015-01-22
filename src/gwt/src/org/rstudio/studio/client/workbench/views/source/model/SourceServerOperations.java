@@ -189,6 +189,9 @@ public interface SourceServerOperations extends FilesServerOperations,
                             String path,
                             ServerRequestCallback<String> requestCallback);
    
+   void getMinimalSourcePath(String path, 
+                             ServerRequestCallback<String> requestCallback);
+   
    void setDocOrder(
          List<String> order, ServerRequestCallback<Void> requestCallback); 
    
@@ -198,4 +201,14 @@ public interface SourceServerOperations extends FilesServerOperations,
    void duplicateDataView(String caption, String envName, String objName, 
                           String cacheKey,
                           ServerRequestCallback<DataItem> requestCallback);
+   
+   void ensureFileExists(String path,
+                         ServerRequestCallback<Boolean> requestCallback);
+   
+   public void getFileContents(String path,
+                               String encoding,
+                               ServerRequestCallback<String> requestCallback);
+   
+   public void executeRCode(String code,
+                            ServerRequestCallback<String> requestCallback);
 }

@@ -24,6 +24,7 @@
 
 #include <core/ProgramStatus.hpp>
 
+namespace rstudio {
 namespace core {
    
 class Error;
@@ -89,6 +90,7 @@ void reportWarnings(const std::string& warningMessages,
    
 } // namespace program_options
 } // namespace core 
+} // namespace rstudio
 
 #endif // CORE_PROGRAM_OPTIONS_HPP
 

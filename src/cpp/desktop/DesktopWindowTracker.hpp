@@ -22,6 +22,7 @@
 
 #include "DesktopBrowserWindow.hpp"
 
+namespace rstudio {
 namespace desktop {
 
 class WindowTracker : public QObject
@@ -41,5 +42,6 @@ private:
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_WINDOW_TRACKER_HPP

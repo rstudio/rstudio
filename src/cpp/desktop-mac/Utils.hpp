@@ -21,11 +21,14 @@
 
 #import <AppKit/NSAlert.h>
 
+namespace rstudio {
 namespace core {
    class FilePath;
 }
+}
 
 
+namespace rstudio {
 namespace desktop {
 namespace utils {
 
@@ -51,5 +54,6 @@ void cleanDuplicateEnvVars();
    
 } // namespace utils
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_UTILS_HPP

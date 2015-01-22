@@ -24,6 +24,7 @@
 
 #include <core/FileInfo.hpp>
 
+namespace rstudio {
 namespace core {
 
 class Error;
@@ -173,6 +174,7 @@ void collectFileChangeEvents(PreviousIterator prevBegin,
   
 } // namespace system
 } // namespace core 
+} // namespace rstudio
 
 #endif // CORE_SYSTEM_FILE_CHANGE_EVENT_HPP
 

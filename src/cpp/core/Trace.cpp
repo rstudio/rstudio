@@ -22,6 +22,7 @@
 
 #include <core/Thread.hpp>
 
+namespace rstudio {
 namespace core {
 namespace trace {
 
@@ -43,3 +44,4 @@ void add(void* key, const std::string& functionName)
 
 } // namespace trace
 } // namespace core
+} // namespace rstudio

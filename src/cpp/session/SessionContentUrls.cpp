@@ -35,8 +35,9 @@ extern "C" const char *locale2charset(const char *);
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace session {
 namespace content_urls {
 
@@ -149,8 +150,38 @@ void handleContentRequest(const http::Request& request, http::Response* pRespons
    // set private cache forever headers
    pResponse->setPrivateCacheForeverHeaders();
 
-   // set file
-   pResponse->setFile(contentFilePath, request);
+   // read file
+   std::string contents;
+   error = core::readStringFromFile(contentFilePath, &contents);
+   if (error)
+   {
+      pResponse->setError(error);
+      return;
+   }
+
+   // Ensure we are over the Qt iframe (?) minimum of 513 bytes for our custom
+   // network reply handler to work correctly (for this case and apparently
+   // this case only if bytesAvailable is less than 512 then Qt never calls
+   // readData after the call to bytesAvailable). This is the behavior we used
+   // to see in Qt 4.X and for that case we had a special workaround (see
+   // https://github.com/rstudio/rstudio/blob/master/src/cpp/desktop/DesktopNetworkReply.cpp#L186-L195)
+   //
+   // Note that we can't just restore the workaround because the IDE didn't
+   // even come up with the workaround in place! (due to RPC calls that
+   // were less than 512 bytes). I'm not sure why this case and this case
+   // only presents problems -- it may be because it's a request in an
+   // iframe? (I tried to find other iframes where we might have less than
+   // 512 bytes -- e.g. Plots, Help but couldn't even construct a case
+   // where the payload was that small)
+   if (contents.length() <= 512)
+   {
+      std::string fill(512 - contents.length() + 1, ' ');
+      contents.append(fill);
+   }
+
+   // set contents
+   pResponse->setContentType(contentFilePath.mimeContentType());
+   pResponse->setBody(contents);
 
    bool isUtf8 = true;
    if (boost::algorithm::starts_with(contentFilePath.mimeContentType(), "text/"))
@@ -217,4 +248,5 @@ Error initialize()
    
 } // namespace content_urls
 } // namesapce session
+} // namespace rstudio
 

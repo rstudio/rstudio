@@ -20,10 +20,13 @@
 
 #include <boost/utility.hpp>
 
+namespace rstudio {
 namespace core {
    class ProgramStatus;
 }
+}
 
+namespace rstudio {
 namespace session {
 namespace postback {
 
@@ -59,6 +62,7 @@ private:
 
 } // namespace postback
 } // namespace session
+} // namespace rstudio
 
 #endif // POSTBACK_OPTIONS_HPP
 

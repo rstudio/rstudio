@@ -21,8 +21,9 @@
 
 #include "DataViewer.hpp"
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace data {
@@ -42,4 +43,5 @@ Error initialize()
 } // namespace data
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

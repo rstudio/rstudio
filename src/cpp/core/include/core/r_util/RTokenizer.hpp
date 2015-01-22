@@ -29,6 +29,7 @@
    #error "wchar_t is not Unicode"
 #endif
 
+namespace rstudio {
 namespace core {
 
 class Error;
@@ -91,6 +92,7 @@ public:
    // accessors
    wchar_t type() const { return type_; }
    std::wstring content() const { return std::wstring(begin_, end_); }
+   std::string contentAsUtf8() const;
    std::size_t offset() const { return offset_; }
    std::size_t length() const { return end_ - begin_; }
 
@@ -128,6 +130,16 @@ public:
    bool operator!() const
    {
       return offset_ == static_cast<std::size_t>(-1);
+   }
+   
+   std::wstring::const_iterator begin() const
+   {
+      return begin_;
+   }
+   
+   std::wstring::const_iterator end() const
+   {
+      return end_;
    }
 
 private:
@@ -212,9 +224,115 @@ private:
     RTokenizer tokenizer_;
 };
 
+namespace token_utils {
+
+inline bool isBinaryOp(const RToken& token)
+{
+   return token.isType(RToken::OPER) ||
+          token.isType(RToken::UOPER);
+}
+
+inline bool isLocalLeftAssign(const RToken& token)
+{
+   return token.isType(RToken::OPER) && (
+            token.content() == L"=" ||
+            token.content() == L"<-");
+}
+
+inline bool isLocalRightAssign(const RToken& token)
+{
+   return token.isType(RToken::OPER) && (
+            token.content() == L"->");
+}
+
+inline bool isGlobalLeftAssign(const RToken& token)
+{
+   return token.isType(RToken::OPER) &&
+         token.content() == L"<<-";
+}
+
+inline bool isGlobalRightAssign(const RToken& token)
+{
+   return token.isType(RToken::OPER) &&
+         token.content() == L"->>";
+}
+
+inline bool isLeftAssign(const RToken& token)
+{
+   return token.isType(RToken::OPER) && (
+            token.content() == L"=" ||
+            token.content() == L"<-" ||
+            token.content() == L"<<-");
+}
+
+inline bool isRightAssign(const RToken& token)
+{
+   return token.isType(RToken::OPER) && (
+            token.content() == L"->" ||
+            token.content() == L"->>");
+}
+
+inline bool isRightBrace(const RToken& rToken)
+{
+   return rToken.isType(RToken::RBRACE) ||
+          rToken.isType(RToken::RBRACKET) ||
+          rToken.isType(RToken::RDBRACKET) ||
+          rToken.isType(RToken::RPAREN);
+}
+
+inline bool isLeftBrace(const RToken& rToken)
+{
+   return rToken.isType(RToken::LBRACE) ||
+          rToken.isType(RToken::LBRACKET) ||
+          rToken.isType(RToken::LDBRACKET) ||
+          rToken.isType(RToken::LPAREN);
+}
+
+inline bool isDollar(const RToken& rToken)
+{
+   return rToken.isType(RToken::OPER) &&
+          rToken.content() == L"$";
+}
+
+inline bool isAt(const RToken& rToken)
+{
+   return rToken.isType(RToken::OPER) &&
+          rToken.content() == L"@";
+}
+
+inline bool isId(const RToken& rToken)
+{
+   return rToken.isType(RToken::ID);
+}
+
+inline bool isNamespace(const RToken& rToken)
+{
+   return rToken.isType(RToken::OPER) && (
+            rToken.content() == L"::" ||
+            rToken.content() == L":::");
+}
+
+inline bool isFunction(const RToken& rToken)
+{
+   return rToken.isType(RToken::ID) &&
+         rToken.content() == L"function";
+}
+
+inline bool isString(const RToken& rToken)
+{
+   return rToken.isType(RToken::STRING);
+}
+
+inline bool isComma(const RToken& rToken)
+{
+   return rToken.isType(RToken::COMMA);
+}
+
+} // end namespace token_utils
 
 } // namespace r_util
 } // namespace core 
+} // namespace rstudio
 
 
 #endif // CORE_R_UTIL_R_ENVIRONMENT_HPP

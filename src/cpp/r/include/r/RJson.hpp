@@ -20,14 +20,17 @@
 
 typedef struct SEXPREC *SEXP;
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
+}
 }
 
 // IMPORTANT NOTE: all code in r::json must provide "no jump" guarantee.
 // See comment in RInternal.hpp for more info on this
 
+namespace rstudio {
 namespace r {
 namespace json {
    
@@ -38,5 +41,6 @@ core::Error jsonValueFromObject(SEXP objectSEXP, core::json::Value* pValue);
    
 } // namespace json
 } // namesapce r
+} // namespace rstudio
 
 #endif // R_JSON_HPP

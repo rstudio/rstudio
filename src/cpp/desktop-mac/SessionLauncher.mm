@@ -41,8 +41,10 @@
                    std::cout << (message) << std::endl;
 
 
-using namespace core;
+using namespace rstudio;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace desktop {
    
 namespace {
@@ -393,4 +395,5 @@ void SessionLauncher::closeAllWindows()
 
 
 } // namespace desktop
+} // namespace rstudio
 

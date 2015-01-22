@@ -31,13 +31,16 @@
 #include <r/RInterface.hpp>
 
 
+namespace rstudio {
 namespace core {
    class FilePath;
+}
 }
 
 // IMPORTANT NOTE: all code in r::exec must provide "no jump" guarantee.
 // See comment in RInternal.hpp for more info on this
 
+namespace rstudio {
 namespace r {
 namespace exec {
    
@@ -303,6 +306,7 @@ class InterruptException {};
 
 } // namespace exec   
 } // namespace r
+} // namespace rstudio
 
 
 #endif // R_R_EXEC_HPP 

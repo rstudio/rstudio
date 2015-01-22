@@ -19,6 +19,7 @@
 #include <boost/system/error_code.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 
+namespace rstudio {
 namespace r {
 namespace session {
 namespace graphics {
@@ -40,11 +41,12 @@ enum errc_t
 } // namespace graphics
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 namespace boost {
 namespace system {
 template <>
-struct is_error_code_enum<r::session::graphics::errc::errc_t>
+struct is_error_code_enum<rstudio::r::session::graphics::errc::errc_t>
  { static const bool value = true; };
 } // namespace system
 } // namespace boost
@@ -59,10 +61,13 @@ struct is_error_code_enum<r::session::graphics::errc::errc_t>
 #include <core/Error.hpp>
 #include <core/json/Json.hpp>
 
+namespace rstudio {
 namespace core {
    class FilePath;
 }
+}
 
+namespace rstudio {
 namespace r {
 namespace session {
 namespace graphics {
@@ -176,6 +181,7 @@ inline boost::system::error_condition make_error_condition( errc_t e )
 } // namespace graphics
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 #endif // R_SESSION_GRAPHICS_HPP 
 

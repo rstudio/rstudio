@@ -25,6 +25,7 @@
 #include "DesktopWordViewer.hpp"
 #endif
 
+namespace rstudio {
 namespace desktop {
 
 class MainWindow;
@@ -196,5 +197,6 @@ private:
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_GWT_CALLBACK_HPP

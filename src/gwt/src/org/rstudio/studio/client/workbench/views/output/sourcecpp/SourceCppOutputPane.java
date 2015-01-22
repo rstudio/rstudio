@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.output.sourcecpp;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
@@ -24,7 +25,7 @@ import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.compile.CompileOutput;
 import org.rstudio.studio.client.common.compile.CompileOutputBufferWithHighlight;
 import org.rstudio.studio.client.common.compile.CompilePanel;
-import org.rstudio.studio.client.common.compile.errorlist.CompileErrorList;
+import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerList;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.model.SourceCppState;
 
@@ -79,7 +80,7 @@ public class SourceCppOutputPane extends WorkbenchPane
       {
          compilePanel_.showErrors(null, 
                                   state.getErrors(), 
-                                  CompileErrorList.AUTO_SELECT_FIRST,
+                                  SourceMarkerList.AUTO_SELECT_FIRST,
                                   true);
       }
    }

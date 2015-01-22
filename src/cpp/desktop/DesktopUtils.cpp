@@ -30,8 +30,9 @@
 #include <windows.h>
 #endif
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace desktop {
 
 #ifdef Q_OS_WIN
@@ -304,3 +305,4 @@ QFileDialog::Options standardFileDialogOptions()
 #endif
 
 } // namespace desktop
+} // namespace rstudio

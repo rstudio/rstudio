@@ -42,6 +42,8 @@ public interface FileIconResources extends ClientBundle
    ImageResource iconYaml();
    ImageResource iconXml();
    ImageResource iconMarkdown();
+   ImageResource iconMermaid();
+   ImageResource iconGraphviz();
    ImageResource iconH();
    ImageResource iconC();
    ImageResource iconHpp();
@@ -57,4 +59,25 @@ public interface FileIconResources extends ClientBundle
    ImageResource iconSourceViewer();
    ImageResource iconProfiler();
    ImageResource iconWord();
+   
+   // Ace modes
+   ImageResource iconClojure();
+   ImageResource iconCoffee();
+   ImageResource iconCsharp();
+   ImageResource iconGitignore();
+   ImageResource iconGo();
+   ImageResource iconGroovy();
+   ImageResource iconHaskell();
+   ImageResource iconHaxe();
+   ImageResource iconJava();
+   ImageResource iconJulia();
+   ImageResource iconLisp();
+   ImageResource iconLua();
+   ImageResource iconMatlab();
+   ImageResource iconPerl();
+   ImageResource iconRuby();
+   ImageResource iconRust();
+   ImageResource iconScala();
+   
+   
 }

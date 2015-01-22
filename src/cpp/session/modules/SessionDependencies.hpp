@@ -18,10 +18,13 @@
 
 #include <string>
 
+namespace rstudio {
 namespace core {
    class Error ;
 }
+}
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace dependencies {
@@ -31,5 +34,6 @@ core::Error initialize();
 } // namespace dependencies
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_SESSION_DEPENDENCIES_HPP

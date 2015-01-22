@@ -28,6 +28,7 @@
 // TODO: satisfy outselves that it is safe to query for symlink status
 // in all cases and eliminate its "optional" semantics
 
+namespace rstudio {
 namespace core {
 
 class FileInfo
@@ -143,6 +144,7 @@ std::ostream& operator << (std::ostream& stream, const FileInfo& fileInfo) ;
 
    
 } // namespace core 
+} // namespace rstudio
 
 
 #endif // CORE_FILE_INFO_HPP

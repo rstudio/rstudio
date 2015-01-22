@@ -32,6 +32,7 @@
 
 #define kCompilationDbPrefix "clang-compilation-db-"
 
+namespace rstudio {
 namespace session {
 namespace modules {      
 namespace clang {
@@ -106,5 +107,6 @@ core::libclang::CompilationDatabase rCompilationDatabase();
 } // namespace clang
 } // namepace handlers
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_MODULES_CLANG_R_COMPILATION_DATABASE_HPP

@@ -18,6 +18,7 @@
 
 #include "3rdparty/qtsingleapplication/QtSingleApplication"
 
+namespace rstudio {
 namespace desktop {
 
 class PosixApplication : public QtSingleApplication
@@ -50,5 +51,6 @@ private:
 
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_POSIX_APPLICATION_HPP

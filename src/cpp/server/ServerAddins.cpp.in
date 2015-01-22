@@ -16,8 +16,9 @@
 #include <core/Error.hpp>
 #include <core/Exec.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace server {
 namespace addins {
   
@@ -45,4 +46,5 @@ Error initialize()
 
 } // namespace addins
 } // namespace server
+} // namespace rstudio
 

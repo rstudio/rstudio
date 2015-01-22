@@ -57,8 +57,9 @@
 #include <r/RErrorCategory.hpp>
 #include <r/RJson.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace r {
 namespace json {
 
@@ -152,4 +153,5 @@ Error getRpcMethods(core::json::JsonRpcMethods* pMethods)
       
 } // namespace json
 } // namesapce r
+} // namespace rstudio
 

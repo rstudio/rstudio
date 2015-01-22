@@ -35,6 +35,7 @@
 #include <session/SessionClientEvent.hpp>
 #include <session/SessionSourceDatabase.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
    class Success;
@@ -49,13 +50,17 @@ namespace core {
       class ShellCommand;
    }
 }
+}
 
+namespace rstudio {
 namespace r {
 namespace session {
    struct RSuspendOptions;
 }
 }
+}
 
+namespace rstudio {
 namespace session {   
 namespace module_context {
 
@@ -703,8 +708,76 @@ core::Error createSelfContainedHtml(const core::FilePath& sourceFilePath,
 
 bool isUserFile(const core::FilePath& filePath);
 
+struct SourceMarker
+{
+   // NOTE: marker types are shared accross all client code that uses
+   // the SourceMarker type. therefore if we want to add more types
+   // we need to do so beyond the 'Box' value
+   enum Type {
+      Error = 0, Warning = 1  /*, Box = 2 */
+   };
+
+   SourceMarker(Type type,
+                const core::FilePath& path,
+                int line,
+                int column,
+                const std::string& message,
+                bool showErrorList)
+      : type(type), path(path), line(line), column(column), message(message),
+        showErrorList(showErrorList)
+   {
+   }
+
+   Type type;
+   core::FilePath path;
+   int line;
+   int column;
+   std::string message;
+   bool showErrorList;
+};
+
+core::json::Array sourceMarkersAsJson(const std::vector<SourceMarker>& markers);
+
+struct SourceMarkerSet
+{  
+   SourceMarkerSet() {}
+
+   SourceMarkerSet(const std::string& name,
+                   const std::vector<SourceMarker>& markers)
+      : name(name),
+        markers(markers)
+   {
+   }
+
+   SourceMarkerSet(const std::string& name,
+                   const core::FilePath& basePath,
+                   const std::vector<SourceMarker>& markers)
+      : name(name),
+        basePath(basePath),
+        markers(markers)
+   {
+   }
+
+   bool empty() const { return name.empty(); }
+
+   std::string name;
+   core::FilePath basePath;
+   std::vector<SourceMarker> markers;
+};
+
+enum MarkerAutoSelect
+{
+   MarkerAutoSelectNone = 0,
+   MarkerAutoSelectFirst = 1,
+   MarkerAutoSelectFirstError = 2
+};
+
+void showSourceMarkers(const SourceMarkerSet& markerSet,
+                       MarkerAutoSelect autoSelect);
+
 } // namespace module_context
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_MODULE_CONTEXT_HPP
 

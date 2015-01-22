@@ -22,10 +22,13 @@
 
 #include <core/Error.hpp>
 
+namespace rstudio {
 namespace core {
    class FilePath;
 }
+}
 
+namespace rstudio {
 namespace r {
 namespace session {
 namespace state {
@@ -53,6 +56,7 @@ bool destroy(const core::FilePath& statePath);
 } // namespace state
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 #endif // R_R_SESSION_STATE_HPP
 

@@ -35,8 +35,9 @@
 #include "SlideNavigationList.hpp"
 #include "SlideQuizRenderer.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace presentation {
@@ -552,4 +553,5 @@ Error renderSlides(const SlideDeck& slideDeck,
 } // namespace presentation
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

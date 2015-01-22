@@ -21,8 +21,9 @@
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace r {
 namespace session {
 namespace graphics { 
@@ -268,4 +269,5 @@ SEXP PlotManipulator::getUserVisibleValuesList() const
 } // namespace graphics
 } // namespace session
 } // namesapce r
+} // namespace rstudio
 

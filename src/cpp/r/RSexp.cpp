@@ -35,8 +35,9 @@
 #undef TRUE
 #undef FALSE
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace r {
    
 using namespace exec ;
@@ -763,6 +764,7 @@ void printValue(SEXP object)
 
 } // namespace sexp   
 } // namespace r
+} // namespace rstudio
 
 
 

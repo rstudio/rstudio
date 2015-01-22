@@ -219,6 +219,7 @@ th:focus {
     text-align: left;
     display: inline-block;
     font-size: 11px;
+    overflow: hidden;
 }
 
 .numMax {
@@ -227,6 +228,7 @@ th:focus {
     padding-right: 4px;
     display: inline-block;
     font-size: 11px;
+    overflow: hidden;
 }
 
 #rsGridData_info {

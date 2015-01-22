@@ -19,6 +19,7 @@
 #include <string>
 #include <core/http/Response.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
@@ -26,7 +27,9 @@ namespace core {
       class Request;
    }
 }
+}
  
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace presentation {
@@ -63,5 +66,6 @@ bool savePresentationAsRpubsSource(const core::FilePath& filePath,
 } // namespace presentation
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_PRESENTATION_SLIDE_REQUEST_HANDLER_HPP

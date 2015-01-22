@@ -83,7 +83,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
                }
             }
          }
-      }; 
+      };
    }
    
    private void hideAll()

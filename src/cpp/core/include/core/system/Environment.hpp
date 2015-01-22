@@ -20,6 +20,7 @@
 
 #include <core/system/Types.hpp>
 
+namespace rstudio {
 namespace core {
 namespace system {
 
@@ -83,5 +84,6 @@ bool parseEnvVar(const std::string envVar, Option* pEnvVar);
 
 } // namespace system
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_SYSTEM_ENVIRONMENT_HPP

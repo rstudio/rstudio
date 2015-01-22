@@ -1,147 +1,142 @@
-
-.ace_editor {
-  border: 2px solid rgb(159, 159, 159);
-}
-
-.ace_editor.ace_focus {
-  border: 2px solid #327fbd;
-}
-
 .ace_gutter {
   background: #3b3b3b;
-  color: #fff;
+  color: rgb(153,153,153)
 }
 
-.ace_print_margin {
+.ace_print-margin {
   width: 1px;
-  background: #3b3b3b;
+  background: #3b3b3b
 }
 
-.ace_scroller {
+.ace_editor {
   background-color: #323232;
-}
-
-.ace_text-layer {
-  color: #FFFFFF;
+  color: #FFFFFF
 }
 
 .ace_cursor {
-  border-left: 2px solid #91FF00;
-}
-
-.ace_cursor.ace_overwrite {
-  border-left: 0px;
-  border-bottom: 1px solid #91FF00;
+  color: #91FF00
 }
 
 .ace_marker-layer .ace_selection {
-  background: rgba(90, 100, 126, 0.88);
+  background: rgba(90, 100, 126, 0.88)
 }
 
-.multiselect .ace_selection.start {
+.ace_selection.ace_start {
   box-shadow: 0 0 3px 0px #323232;
-  border-radius: 2px;
+  border-radius: 2px
 }
 
 .ace_marker-layer .ace_step {
-  background: rgb(102, 82, 0);
+  background: rgb(102, 82, 0)
 }
 
 .ace_marker-layer .ace_bracket {
   margin: -1px 0 0 -1px;
-  border: 1px solid #404040;
+  border: 1px solid #404040
 }
 
-.ace_marker-layer .ace_active_line {
-  background: #353637;
+.ace_marker-layer .ace_active-line {
+  background: #353637
 }
 
-.ace_gutter_active_line {
-  background-color: #353637;
+.ace_gutter-active-line {
+  background-color: #353637
 }
 
-.ace_marker-layer .ace_selected_word {
-  border: 1px solid rgba(90, 100, 126, 0.88);
+.ace_marker-layer .ace_selected-word {
+  border: 1px solid rgba(90, 100, 126, 0.88)
 }
 
 .ace_invisible {
-  color: #404040;
+  color: #404040
 }
 
-.ace_keyword, .ace_meta {
-  color:#CC7833;
+.ace_keyword,
+.ace_meta {
+  color: #CC7833
 }
 
-.ace_constant, .ace_constant.ace_other {
-  color:#6C99BB;
-}
-
-.ace_constant.ace_character,  {
-  color:#6C99BB;
-}
-
-.ace_constant.ace_character.ace_escape,  {
-  color:#6C99BB;
+.ace_constant,
+.ace_constant.ace_character,
+.ace_constant.ace_character.ace_escape,
+.ace_constant.ace_other,
+.ace_support.ace_constant {
+  color: #6C99BB
 }
 
 .ace_invalid {
-  color:#FFFFFF;
-background-color:#FF0000;
-}
-
-.ace_support.ace_constant {
-  color:#6C99BB;
+  color: #FFFFFF;
+  background-color: #FF0000
 }
 
 .ace_fold {
-    background-color: #CC7833;
-    border-color: #FFFFFF;
+  background-color: #CC7833;
+  border-color: #FFFFFF
 }
 
 .ace_support.ace_function {
-  color:#B83426;
+  color: #B83426
 }
 
 .ace_variable.ace_parameter {
-  font-style:italic;
+  font-style: italic
 }
 
 .ace_string {
-  color:#A5C261;
+  color: #A5C261
 }
 
 .ace_string.ace_regexp {
-  color:#CCCC33;
+  color: #CCCC33
 }
 
 .ace_comment {
-  font-style:italic;
-color:#BC9458;
+  font-style: italic;
+  color: #BC9458
 }
 
 .ace_meta.ace_tag {
-  color:#FFE5BB;
+  color: #FFE5BB
 }
 
 .ace_entity.ace_name {
-  color:#FFC66D;
-}
-
-.ace_markup.ace_underline {
-    text-decoration:underline;
+  color: #FFC66D
 }
 
 .ace_collab.ace_user1 {
-  color:#323232;
-  background-color:#FFF980;
+  color: #323232;
+  background-color: #FFF980
 }
 
 .ace_indent-guide {
-  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAEklEQVQImWMwMjL6zzBz5sz/ABEUBGCqhK6UAAAAAElFTkSuQmCC) right repeat-y;
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAEklEQVQImWMwMjLyZYiPj/8PAAreAwAI1+g0AAAAAElFTkSuQmCC) right repeat-y
 }
-.nocolor.ace_editor .ace_line span {color:#CC7833 !important;}
-.ace_bracket {margin: 0 !important; border: 0 !important; background-color: #404040;}
-.ace_marker-layer .ace_foreign_line {position: absolute; z-index: -1; background-color: rgb(90, 90, 90);}
-.ace_marker-layer .ace_find_line {position: absolute; z-index: -1; background-color: rgb(152, 152, 152);}
-.ace_marker-layer .ace_active_debug_line {position: absolute; z-index: -1; background-color: rgb(152, 136, 53);}
-.ace_console_error { background-color: rgb(90, 90, 90); }
+.nocolor.ace_editor .ace_line span {
+  color: #cc7833 !important;
+}
+.ace_bracket {
+  margin: 0 !important;
+  border: 0 !important;
+  background-color: #404040;
+}
+.ace_marker-layer .ace_foreign_line {
+  position: absolute;
+  z-index: -1;
+  background-color: #464646;
+}
+.ace_marker-layer .ace_find_line {
+  position: absolute;
+  z-index: -1;
+  background-color: #5A5A5A;
+}
+.ace_marker-layer .ace_active_debug_line {
+  position: absolute;
+  z-index: -1;
+  background-color: #988835;
+}
+.ace_console_error {
+  background-color: #5A5A5A;
+}
+.ace_keyword.ace_operator {
+  color: #6892B2 !important;
+}

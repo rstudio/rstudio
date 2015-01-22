@@ -16,10 +16,13 @@
 #ifndef SESSION_BUILD_SOURCE_CPP_HPP
 #define SESSION_BUILD_SOURCE_CPP_HPP
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
 
+namespace rstudio {
 namespace session {
 namespace modules {
 namespace build {
@@ -31,6 +34,7 @@ core::Error initialize();
 } // namespace build
 } // namespace modules
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_BUILD_SOURCE_CPP_HPP
 

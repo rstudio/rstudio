@@ -17,6 +17,7 @@
 #include <core/Error.hpp>
 #include <core/Log.hpp>
 
+namespace rstudio {
 namespace core {
 namespace system {
 
@@ -200,3 +201,4 @@ std::vector<std::string> RegistryKey::keyNames()
 
 } // namespace system
 } // namespace core
+} // namespace rstudio

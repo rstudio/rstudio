@@ -15,8 +15,9 @@
 
 #include <core/Error.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace server {
 namespace overlay {
 
@@ -36,3 +37,4 @@ void shutdown()
 
 } // namespace overlay
 } // namespace server
+} // namespace rstudio

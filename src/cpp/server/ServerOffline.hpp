@@ -16,10 +16,13 @@
 #ifndef SERVER_OFFLINE_HPP
 #define SERVER_OFFLINE_HPP
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
 
+namespace rstudio {
 namespace server {
 namespace offline {
    
@@ -27,6 +30,7 @@ core::Error httpServerAddHandlers();
 
 } // namespace offline
 } // namespace server
+} // namespace rstudio
 
 #endif // SERVER_OFFLINE_HPP
 

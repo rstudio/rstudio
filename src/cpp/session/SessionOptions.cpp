@@ -37,8 +37,9 @@
 
 #include "session-config.h"
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace session {  
 
 namespace {
@@ -564,3 +565,4 @@ void Options::resolveRsclangPath(const FilePath& resourcePath,
 #endif
    
 } // namespace session
+} // namespace rstudio

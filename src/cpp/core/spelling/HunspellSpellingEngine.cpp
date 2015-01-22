@@ -34,6 +34,7 @@
 #endif
 #include "hunspell/hunspell.hxx"
 
+namespace rstudio {
 namespace core {
 namespace spelling {
 
@@ -484,6 +485,7 @@ Error HunspellSpellingEngine::wordChars(std::wstring *pChars)
 
 } // namespace spelling
 } // namespace core 
+} // namespace rstudio
 
 
 

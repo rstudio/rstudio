@@ -30,6 +30,7 @@
 #define DEBUG(x)
 #endif
 
+namespace rstudio {
 namespace core {
 namespace r_util {
 
@@ -504,5 +505,6 @@ RSourceIndex::RSourceIndex(const std::string& context,
 
 } // namespace r_util
 } // namespace core 
+} // namespace rstudio
 
 

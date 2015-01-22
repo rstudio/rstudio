@@ -37,7 +37,8 @@
 #define kPostbackUriScope                 "postback/"
 #define kPostbackExitCodeHeader           "X-Postback-ExitCode"
 
-using namespace core;
+using namespace rstudio;
+using namespace rstudio::core;
 
 int main(int argc, char** argv)
 {

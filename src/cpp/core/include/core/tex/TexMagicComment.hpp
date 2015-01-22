@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+namespace rstudio {
 namespace core {
 
 class Error;
@@ -55,6 +56,7 @@ Error parseMagicComments(const FilePath& texFile, TexMagicComments* pComments);
 
 } // namespace tex
 } // namespace core 
+} // namespace rstudio
 
 
 #endif // CORE_TEX_TEX_MAGIC_COMMENT_HPP

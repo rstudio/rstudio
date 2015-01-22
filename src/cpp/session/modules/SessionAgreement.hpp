@@ -18,10 +18,13 @@
 
 #include <core/json/JsonRpc.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
 
+namespace rstudio {
 namespace session {
 namespace modules {
 namespace agreement {
@@ -35,6 +38,7 @@ core::Error initialize();
 } // namespace agreeement
 } // namespace modules
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_AGREEMENT_HPP
 

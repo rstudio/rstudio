@@ -28,6 +28,7 @@
 #include <core/Error.hpp>
 #include <core/http/Response.hpp>
 
+namespace rstudio {
 namespace core {
 namespace http {
 
@@ -148,5 +149,6 @@ public:
 
 } // namespace http
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_HTTP_RESPONSE_PARSER_HPP

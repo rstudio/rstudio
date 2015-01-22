@@ -15,6 +15,7 @@
 
 #include <core/RecursionGuard.hpp>
 
+namespace rstudio {
 namespace core {
 
 RecursionGuard::RecursionGuard (int* pCounter):
@@ -29,4 +30,5 @@ RecursionGuard::~RecursionGuard()
 }
 
 } // namespace core
+} // namespace rstudio
 

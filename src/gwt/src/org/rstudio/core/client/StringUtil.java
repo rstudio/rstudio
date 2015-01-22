@@ -721,6 +721,11 @@ public class StringUtil
          {
             previousChar = string.charAt(i - 1);
          }
+         
+         if (currentChar == '#' && !inQuotes)
+         {
+            return false;
+         }
 
          if (currentChar == '\'' && !inQuotes)
          {

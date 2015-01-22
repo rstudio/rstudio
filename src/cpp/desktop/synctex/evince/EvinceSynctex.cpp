@@ -28,8 +28,9 @@
 #include "EvinceDaemon.hpp"
 #include "EvinceWindow.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace desktop {
 namespace synctex {
 
@@ -206,3 +207,4 @@ void EvinceSynctex::onSyncSource(const QString& srcFile,
 
 } // namesapce synctex
 } // namespace desktop
+} // namespace rstudio

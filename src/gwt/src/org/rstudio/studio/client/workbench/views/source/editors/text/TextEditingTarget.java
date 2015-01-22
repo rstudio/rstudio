@@ -168,6 +168,7 @@ public class TextEditingTarget implements
       void showFindReplace(boolean defaultForward);
       void findNext();
       void findPrevious();
+      void findSelectAll();
       void findFromSelection();
       void replaceAndFind();
       
@@ -755,7 +756,8 @@ public class TextEditingTarget implements
                                           docDisplay_,
                                           fileType_,
                                           extendedType_,
-                                          events_);
+                                          events_,
+                                          session_);
       docUpdateSentinel_ = new DocUpdateSentinel(
             server_,
             docDisplay_,
@@ -2288,6 +2290,12 @@ public class TextEditingTarget implements
    @Handler
    void onExtractLocalVariable()
    {
+      if (!isCursorInRMode())
+      {
+         showRModeWarning("Extract Variable");
+         return;
+      }
+      
       docDisplay_.focus();
 
       String initialSelection = docDisplay_.getSelectionValue();
@@ -2348,9 +2356,25 @@ public class TextEditingTarget implements
       );
    }
    
+   private void showRModeWarning(String command)
+   {
+      globalDisplay_.showMessage(MessageDisplay.MSG_WARNING,
+                                 "Command Not Available", 
+                                 "The "+ command + " command is " +
+                                 "only valid for R code chunks.");
+      return;
+   }
+   
+   
    @Handler
    void onExtractFunction()
    {
+      if (!isCursorInRMode())
+      {
+         showRModeWarning("Extract Function");
+         return;
+      }
+      
       docDisplay_.focus();
 
       String initialSelection = docDisplay_.getSelectionValue();
@@ -2446,8 +2470,7 @@ public class TextEditingTarget implements
       else if (isCursorInRMode())
          doCommentUncomment("#");
       else if (fileType_.isCpp())
-         doCommentUncomment("//");
-      
+         doCommentUncomment("//"); 
    }
    
    private void doCommentUncomment(String c)
@@ -2596,10 +2619,10 @@ public class TextEditingTarget implements
    }
 
    @Handler 
-   void onRsconnectTerminate()
+   void onRsconnectConfigure()
    {
       events_.fireEvent(new RSConnectActionEvent(
-            RSConnectActionEvent.ACTION_TYPE_TERMINATE, 
+            RSConnectActionEvent.ACTION_TYPE_CONFIGURE, 
             docUpdateSentinel_.getPath()));
    }
 
@@ -2998,7 +3021,10 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCodeWithoutMovingCursor()
    {
-      codeExecution_.executeSelection(true, false);
+      if (docDisplay_.isFocused())
+         codeExecution_.executeSelection(true, false);
+      else if (view_.isAttached())
+         view_.findSelectAll();
    }
    
    @Handler
@@ -3415,6 +3441,13 @@ public class TextEditingTarget implements
          return;
       }
 
+      // If the document is previewable
+      if (fileType_.canPreviewFromR())
+      {
+         previewFromR();
+         return;
+      }
+      
       String code = docDisplay_.getCode();
       if (code != null && code.trim().length() > 0)
       {
@@ -3520,6 +3553,27 @@ public class TextEditingTarget implements
                   public void onResponseReceived(String cmd)
                   {
                      events_.fireEvent(new SendToConsoleEvent(cmd, true));
+                  }
+               });
+         }   
+      });
+   }
+   
+   private void previewFromR()
+   {
+      saveThenExecute(null, new Command() {
+         @Override
+         public void execute()
+         {
+            server_.getMinimalSourcePath(
+               getPath(), 
+               new SimpleRequestCallback<String>() {
+                  @Override
+                  public void onResponseReceived(String path)
+                  {
+                     String cmd = fileType_.createPreviewCommand(path);
+                     if (cmd != null)
+                        events_.fireEvent(new SendToConsoleEvent(cmd, true));
                   }
                });
          }   
@@ -3981,11 +4035,17 @@ public class TextEditingTarget implements
    {
       view_.findNext();
    }
-
+   
    @Handler
    void onFindPrevious()
    {
       view_.findPrevious();
+   }
+   
+   @Handler
+   void onFindSelectAll()
+   {
+      view_.findSelectAll();
    }
    
    @Handler
@@ -4249,6 +4309,10 @@ public class TextEditingTarget implements
                {
                   previewRd();
                }
+               else if (fileType_.canPreviewFromR())
+               {
+                  previewFromR();
+               }
                else
                {
                   if (docDisplay_.hasBreakpoints())
@@ -4402,7 +4466,7 @@ public class TextEditingTarget implements
          return false;
       }
    }
-
+   
    private boolean isCursorInRMode()
    {
       String mode = docDisplay_.getLanguageMode(docDisplay_.getCursorPosition());

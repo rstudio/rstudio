@@ -26,8 +26,9 @@
 #include <core/system/Environment.hpp>
 #include <core/SafeConvert.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace r {
 namespace session {   
    
@@ -186,6 +187,7 @@ void ConsoleHistory::safeRemove(int index)
 
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 
 

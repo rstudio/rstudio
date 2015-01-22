@@ -22,7 +22,6 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.ModalDialogTracker;
-import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
@@ -47,7 +46,6 @@ import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
-import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -141,9 +139,9 @@ public class RSConnect implements SessionInitHandler,
                          satellite_.isCurrentWindowSatellite());
          dialog.showModal();
       }
-      else if (event.getAction() == RSConnectActionEvent.ACTION_TYPE_TERMINATE)
+      else if (event.getAction() == RSConnectActionEvent.ACTION_TYPE_CONFIGURE)
       {
-         terminateShinyApp(FilePathUtils.dirFromFile(event.getPath()));
+         configureShinyApp(FilePathUtils.dirFromFile(event.getPath()));
       }
    }
    
@@ -268,8 +266,8 @@ public class RSConnect implements SessionInitHandler,
    
    // Private methods ---------------------------------------------------------
    
-   // Terminate, step 1: create a list of apps deployed from this directory
-   private void terminateShinyApp(final String dir)
+   // Manage, step 1: create a list of apps deployed from this directory
+   private void configureShinyApp(final String dir)
    {
       server_.getRSConnectDeployments(dir, 
             new ServerRequestCallback<JsArray<RSConnectDeploymentRecord>>()
@@ -278,20 +276,20 @@ public class RSConnect implements SessionInitHandler,
          public void onResponseReceived(
                JsArray<RSConnectDeploymentRecord> records)
          {
-            terminateShinyApp(dir, records);
+            configureShinyApp(dir, records);
          }
          @Override
          public void onError(ServerError error)
          {
-            display_.showErrorMessage("Error Terminating Application",
+            display_.showErrorMessage("Error Configuring Application",
                   "Could not determine application deployments for '" +
                    dir + "':" + error.getMessage());
          }
       });
    }
    
-   // Terminate, step 2: Get the status of the applications from the server
-   private void terminateShinyApp(final String dir, 
+   // Manage, step 2: Get the status of the applications from the server
+   private void configureShinyApp(final String dir, 
          JsArray<RSConnectDeploymentRecord> records)
    {
       if (records.length() == 0)
@@ -332,7 +330,7 @@ public class RSConnect implements SessionInitHandler,
          @Override
          public void onResponseReceived(JsArray<RSConnectApplicationInfo> apps)
          {
-            terminateShinyApp(dir, apps, recordList);
+            configureShinyApp(dir, apps, recordList);
          }
          @Override
          public void onError(ServerError error)
@@ -343,9 +341,9 @@ public class RSConnect implements SessionInitHandler,
       });
    }
    
-   // Terminate, step 3: compare the deployments and apps active on the server
+   // Manage, step 3: compare the deployments and apps active on the server
    // until we find a running app from the current directory
-   private void terminateShinyApp(String dir, 
+   private void configureShinyApp(String dir, 
          JsArray<RSConnectApplicationInfo> apps, 
          List<RSConnectDeploymentRecord> records)
    {
@@ -354,10 +352,13 @@ public class RSConnect implements SessionInitHandler,
          for (int j = 0; j < apps.length(); j++)
          {
             RSConnectApplicationInfo candidate = apps.get(j);
-            if (candidate.getName().equals(records.get(i).getName()) &&
-                candidate.getStatus().equals("running"))
+            if (candidate.getName().equals(records.get(i).getName()))
             {
-               terminateShinyApp(records.get(i).getAccount(), candidate);
+               // show the management ui
+               display_.openWindow(
+                 "https://www.shinyapps.io/admin/#/application/" + 
+                 Math.round(candidate.getId()));
+               
                return;
             }
          }
@@ -365,33 +366,6 @@ public class RSConnect implements SessionInitHandler,
       display_.showMessage(GlobalDisplay.MSG_INFO, 
             "No Running Deployments Found", "No applications deployed from '" +
              dir + "' appear to be running.");
-   }
-   
-   // Terminate, step 4: confirm that we've selected the right app for
-   // termination
-   private void terminateShinyApp(final String accountName, 
-                                  final RSConnectApplicationInfo target)
-   {
-      display_.showYesNoMessage(GlobalDisplay.MSG_QUESTION, 
-            "Confirm Terminate Application", 
-            "Terminate the application '" + target.getName() + "' running " +
-            "at " + target.getUrl() + "?", 
-            new Operation() {
-               @Override
-               public void execute()
-               {
-                  terminateShinyApp(accountName, target.getName());
-               }
-            }, 
-            true
-      );
-   }
-   
-   // Terminate, step 5: perform the termination 
-   private void terminateShinyApp(String accountName, final String appName)
-   {
-      events_.fireEvent(new SendToConsoleEvent("rsconnect::terminateApp(\"" +
-            appName + "\", \"" + accountName + "\", server = \"shinyapps.io\")", true));
    }
    
    private final native void exportNativeCallbacks() /*-{

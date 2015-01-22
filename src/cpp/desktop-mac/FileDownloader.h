@@ -16,9 +16,11 @@
 
 #import <Cocoa/Cocoa.h>
 
+namespace rstudio {
 namespace desktop {
    
 void downloadAndShowFile(NSURLRequest* request);
 void downloadAndSaveFile(NSURLRequest* request, NSString* destination);
    
 } // namespace desktop
+} // namespace rstudio

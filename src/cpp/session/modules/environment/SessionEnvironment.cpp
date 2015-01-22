@@ -35,10 +35,11 @@
 
 #include "EnvironmentUtils.hpp"
 
-#define TOP_FUNCTION 1
+#define BROWSER_FUNCTION 0
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace environment {
@@ -244,74 +245,40 @@ bool isErrorHandlerContext(RCNTXT* pContext)
    return TYPEOF(errFlag) == INTSXP;
 }
 
-// Given a context at which an error handler was found, return the context at
-// which we should presume the error originated. 
-RCNTXT* errorOriginatorContext(RCNTXT* handlerCtx, int* dist) 
-{
-   (*dist)++;
-   RCNTXT* originator = firstFunctionContext(handlerCtx->nextcontext);
-   std::string functionName;
-
-   // skip "stop" if present
-   Error err = functionNameFromContext(originator, &functionName);
-   if (!err && functionName == "stop")
-   {
-      (*dist)++;
-      originator = firstFunctionContext(originator->nextcontext);
-   }
-   // skip "stopifnot" if present
-   err = functionNameFromContext(originator, &functionName);
-   if (!err && functionName == "stopifnot")
-   {
-      (*dist)++;
-      originator = firstFunctionContext(originator->nextcontext);
-   }
-   return originator;
-}
-
 // return the function context at the given depth
 RCNTXT* getFunctionContext(const int depth,
-                           bool findUserCode = false,
                            int* pFoundDepth = NULL,
                            SEXP* pEnvironment = NULL)
 {
    RCNTXT* pRContext = r::getGlobalContext();
-   RCNTXT* pSrcContext = pRContext;
+   RCNTXT* pFoundContext = NULL;
    int currentDepth = 0;
-   bool foundUserCode = false;
-   RCNTXT* pErrContext = NULL;
-   int errorDepth = 0;
+   int foundDepth = 0;
+   SEXP browseEnv = R_NilValue;
    while (pRContext->callflag)
    {
+      // if looking for the actively browsed function, pick the environment
+      // evaluated by the browser on top of the stack
+      if (pRContext->callflag & CTXT_BROWSER && browseEnv == R_NilValue) 
+      {
+         browseEnv = pRContext->cloenv;
+      }
       if (pRContext->callflag & CTXT_FUNCTION)
       {
-         // If the caller asked us to find user code, don't stop unless the
-         // context we're examining meets the following criteria:
-         // 1) has a valid source ref (i.e. we have the user code associated
-         //    with the context
-         // 2) source ref is not a duplicate of the source ref from the
-         //    previous frame.  R <= 2.15.0 appears to have a bug wherein error
-         //    handlers have a srcref that points not to the handler itself but
-         //    to the error, so the error source reference appears twice
-         //    consecutively on the stack.  This duplicate reference should not
-         //    be considered real user code since we don't want to break into
-         //    the error handler.
-         if (++currentDepth >= depth &&
-             !isDebugHiddenContext(pRContext) &&
-             !(findUserCode && (!isValidSrcref(pSrcContext->srcref) ||
-                                 (pRContext != pSrcContext &&
-                                  pRContext->srcref == pSrcContext->srcref))))
+         currentDepth++;
+         if (depth == BROWSER_FUNCTION && pRContext->cloenv == browseEnv) 
          {
-            foundUserCode = true;
-            break;
+            foundDepth = currentDepth;
+            pFoundContext = pRContext;
+            // continue traversing the callstack; there may be several 
+            // functions eval'ing this environment and we want the "original"
+            // (here meaning oldest on the callstack)
          }
-         // Record the depth at which the error handler was found (if at all);
-         // we will default to reporting code at the function that invoked
-         // the handler
-         if (findUserCode && isErrorHandlerContext(pRContext))
+         else if (depth > BROWSER_FUNCTION && currentDepth >= depth)
          {
-            errorDepth = currentDepth;
-            pErrContext = errorOriginatorContext(pRContext, &errorDepth);
+            foundDepth = currentDepth;
+            pFoundContext = pRContext;
+            break;
          }
       }
       pRContext = pRContext->nextcontext;
@@ -321,35 +288,15 @@ RCNTXT* getFunctionContext(const int depth,
    // that depth, if requested
    if (pFoundDepth)
    {
-      *pFoundDepth = currentDepth;
+      *pFoundDepth = foundDepth;
    }
    if (pEnvironment)
    {
-      *pEnvironment = currentDepth == 0 ? R_GlobalEnv : pRContext->cloenv;
+      *pEnvironment = (foundDepth == 0 || pFoundContext == NULL) ? 
+         R_GlobalEnv : 
+         pFoundContext->cloenv;
    }
-   if (depth == TOP_FUNCTION && findUserCode && !foundUserCode)
-   {
-      if (pErrContext != NULL)
-      {
-         // if there's an error handler on the stack, report the "user" code to
-         // be the function that invoked the handler.
-         pRContext = pErrContext;
-         *pFoundDepth = errorDepth;
-         if (pEnvironment)
-            *pEnvironment = pErrContext->cloenv;
-      }
-      else
-      {
-         // if we were looking for the top user-mode function on the stack but
-         // found nothing, return the top of the stack rather than the bottom.
-         if (pEnvironment)
-            *pEnvironment = r::getGlobalContext()->cloenv;
-         if (pFoundDepth)
-            *pFoundDepth = 1;
-      }
-      pRContext = r::getGlobalContext();
-   }
-   return pRContext;
+   return pFoundContext;
 }
 
 // Return whether we're in browse context--meaning that there's a browser on
@@ -415,9 +362,21 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
    json::Array listFrames;
    int contextDepth = 0;
    Error error;
+   std::map<SEXP,RCNTXT*> envSrcrefCtx;
 
    while (pRContext->callflag)
    {
+      // if this context has a valid srcref, use it to supply the srcrefs for
+      // debugging in the environment of the callee. note that there may be
+      // multiple srcrefs on the stack for a given closure; in this case we
+      // always want to take the first one as it's the most current/specific.
+      if (isValidSrcref(pRContext->srcref) && pRContext->nextcontext != NULL) 
+      {
+         SEXP env = pRContext->nextcontext->cloenv;
+         if (envSrcrefCtx.find(env) == envSrcrefCtx.end())
+            envSrcrefCtx[env] = pRContext;
+      }
+
       if (pRContext->callflag & CTXT_FUNCTION)
       {
          json::Object varFrame;
@@ -433,11 +392,19 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
          varFrame["is_error_handler"] = isErrorHandlerContext(pRContext);
          varFrame["is_hidden"] = isDebugHiddenContext(pRContext);
 
-         // in the linked list of R contexts, the srcref associated with each
-         // context points to the place from which the context was invoked.
-         // however, for traditional debugging, we want the call frame to show
-         // where control *left* the frame to go to the next frame. pSrcContext
-         // keeps track of the previous invocation.
+         // attempt to find the refs for the source that invoked this function;
+         // use our own refs otherwise
+         std::map<SEXP,RCNTXT*>::iterator srcCtx = envSrcrefCtx.find(pRContext->cloenv);
+         if (srcCtx != envSrcrefCtx.end())
+            pSrcContext = srcCtx->second;
+         else
+            pSrcContext = pRContext;
+
+         // mark this as a source-equivalent function if it's evaluating user
+         // code into the global environment
+         varFrame["is_source_equiv"] = pRContext->cloenv == R_GlobalEnv && 
+            isValidSrcref(pSrcContext->srcref);
+
          std::string filename;
          error = getFileNameFromContext(pSrcContext, &filename);
          if (error)
@@ -483,7 +450,6 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
 
             sourceRefToJson(simulatedSrcref, &varFrame);
          }
-         pSrcContext = pRContext;
 
          // extract the first line of the function. the client can optionally
          // use this to compute the source location as an offset into the
@@ -524,7 +490,7 @@ json::Array callFramesAsJson(LineDebugState* pLineDebugState)
 
 json::Array environmentListAsJson()
 {
-    using namespace r::sexp;
+    using namespace rstudio::r::sexp;
     Protect rProtect;
     std::vector<Variable> vars;
     json::Array listJson;
@@ -823,7 +789,7 @@ Error setContextDepth(boost::shared_ptr<int> pContextDepth,
    // set state for the new depth
    *pContextDepth = requestedDepth;
    SEXP env = NULL;
-   getFunctionContext(requestedDepth, false, NULL, &env);
+   getFunctionContext(requestedDepth, NULL, &env);
    s_pEnvironmentMonitor->setMonitoredEnvironment(env);
 
    // populate the new state on the client
@@ -879,8 +845,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
       // show the user their own code on entering debug), but once debugging,
       // allow the user to explore other code.
       pRContext =
-             getFunctionContext(TOP_FUNCTION, *pContextDepth == 0,
-                                &depth, &environmentTop);
+             getFunctionContext(BROWSER_FUNCTION, &depth, &environmentTop);
    }
 
    if (environmentTop != s_pEnvironmentMonitor->getMonitoredEnvironment() ||
@@ -977,7 +942,7 @@ void initEnvironmentMonitoring()
    // Check to see whether we're actively debugging. If we are, the debug
    // environment trumps whatever the user wants to browse in at the top level.
    int contextDepth = 0;
-   RCNTXT* pContext = getFunctionContext(TOP_FUNCTION, false, &contextDepth);
+   RCNTXT* pContext = getFunctionContext(BROWSER_FUNCTION, &contextDepth);
    if (contextDepth == 0 ||
        !inBrowseContext())
    {
@@ -1109,7 +1074,7 @@ void onConsoleOutput(boost::shared_ptr<LineDebugState> pLineDebugState,
 json::Value environmentStateAsJson()
 {
    int contextDepth = 0;
-   getFunctionContext(TOP_FUNCTION, true, &contextDepth);
+   getFunctionContext(BROWSER_FUNCTION, &contextDepth);
    // If there's no browser on the stack, stay at the top level even if
    // there are functions on the stack--this is not a user debug session.
    if (!inBrowseContext())
@@ -1203,4 +1168,5 @@ Error initialize()
 } // namespace environment
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

@@ -28,6 +28,7 @@
 #include <core/Log.hpp>
 
 
+namespace rstudio {
 namespace core {
 namespace http {
 
@@ -102,5 +103,6 @@ private:
 
 } // namespace http
 } // namespace core 
+} // namespace rstudio
 
 #endif // CORE_HTTP_SOCKET_ACCEPTOR_SERVICE_HPP

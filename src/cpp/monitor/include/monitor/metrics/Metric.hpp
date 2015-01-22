@@ -24,10 +24,13 @@
 
 #include <core/json/Json.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
 
+namespace rstudio {
 namespace monitor {
 namespace metrics {
 
@@ -157,6 +160,7 @@ core::Error metricFromJson(const core::json::Object& multiMetricJson,
 
 } // namespace metrics
 } // namespace monitor
+} // namespace rstudio
 
 #endif // MONITOR_METRIC_METRIC_HPP
 

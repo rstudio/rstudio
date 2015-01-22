@@ -28,8 +28,9 @@
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace limits {
@@ -70,4 +71,5 @@ Error initialize()
 } // namespace limits
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

@@ -18,6 +18,7 @@
 
 #include <monitor/MonitorClient.hpp>
 
+namespace rstudio {
 namespace monitor {
 
 class SyncClient : public Client
@@ -69,5 +70,6 @@ private:
 };
 
 } // namespace monitor
+} // namespace rstudio
 
 #endif // MONITOR_MONITOR_CLIENT_IMPL_HPP

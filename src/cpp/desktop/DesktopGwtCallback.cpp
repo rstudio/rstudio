@@ -50,8 +50,9 @@
 #include <Carbon/Carbon.h>
 #endif
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace desktop {
 
 namespace {
@@ -1095,3 +1096,4 @@ void GwtCallback::installRtools(QString version, QString installerPath)
 
 
 } // namespace desktop
+} // namespace rstudio

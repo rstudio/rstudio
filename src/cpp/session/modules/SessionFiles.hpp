@@ -16,11 +16,14 @@
 #ifndef SESSION_SESSION_FILES_HPP
 #define SESSION_SESSION_FILES_HPP
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
 }
+}
  
+namespace rstudio {
 namespace session {
 namespace modules {      
 namespace files {
@@ -32,5 +35,6 @@ core::Error initialize();
 } // namespace files
 } // namepace handlers
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_SESSION_FILES_HPP

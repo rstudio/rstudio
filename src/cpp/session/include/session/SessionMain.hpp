@@ -16,9 +16,11 @@
 #ifndef SESSION_MAIN_HPP
 #define SESSION_MAIN_HPP
 
+namespace rstudio {
 namespace session {
 
 
+}
 }
 
 #endif // SESSION_MAIN_HPP

@@ -39,8 +39,9 @@
 #include "ServerREnvironment.hpp"
 
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace server {
 
 namespace {
@@ -175,7 +176,7 @@ Error SessionManager::launchAndTrackSession(
                            const core::r_util::SessionLaunchProfile& profile)
 {
    // if we are root then assume the identity of the user
-   using namespace core::system;
+   using namespace rstudio::core::system;
    std::string runAsUser = realUserIsRoot() ? profile.username : "";
 
    // launch the session
@@ -242,4 +243,5 @@ Error launchSession(const std::string& username,
 
 
 } // namespace server
+} // namespace rstudio
 

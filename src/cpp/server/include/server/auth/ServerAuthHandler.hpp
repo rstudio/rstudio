@@ -25,6 +25,7 @@
 
 #include <server/auth/ServerSecureUriHandler.hpp>
 
+namespace rstudio {
 namespace server {
 namespace auth {
 namespace handler {
@@ -93,6 +94,7 @@ void signOut(const core::http::Request& request,
 } // namespace handler
 } // namespace auth
 } // namespace server
+} // namespace rstudio
 
 #endif // SERVER_AUTH_HANDLER_HPP
 

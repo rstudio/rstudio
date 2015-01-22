@@ -28,6 +28,7 @@
 
 using namespace boost::program_options ;
 
+namespace rstudio {
 namespace core {
 
 namespace program_options {
@@ -203,3 +204,4 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
    
 } // namespace program_options
 } // namespace core
+} // namespace rstudio

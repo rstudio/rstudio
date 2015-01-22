@@ -1,15 +1,16 @@
 
 .rs.addApiFunction("versionInfo", function() {
   info <- list()
-  info$version <- package_version(
-    .Call(getNativeSymbolInfo("rs_rstudioVersion", PACKAGE=""))
-  )
-
+  info$citation <- .Call(getNativeSymbolInfo("rs_rstudioCitation", 
+                                             PACKAGE=""))
+  
   info$mode <- .Call(getNativeSymbolInfo("rs_rstudioProgramMode", 
                                          PACKAGE=""))
   
-  info$citation <- .Call(getNativeSymbolInfo("rs_rstudioCitation", 
-                                         PACKAGE=""))
+  info$version <- package_version(
+    .Call(getNativeSymbolInfo("rs_rstudioVersion", PACKAGE=""))
+  )
+  
   info
 })
 

@@ -1,5 +1,5 @@
 /*
- * CompileErrorList.java
+ * SourceMarkerList.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.compile.errorlist;
+package org.rstudio.studio.client.common.sourcemarkers;
 
 import java.util.ArrayList;
 
@@ -22,7 +22,6 @@ import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.widget.DoubleClickState;
 import org.rstudio.core.client.widget.FastSelectTable;
-import org.rstudio.studio.client.common.compile.CompileError;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Document;
@@ -42,18 +41,18 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.ScrollPanel;
 
-public class CompileErrorList extends Composite
+public class SourceMarkerList extends Composite
                   implements HasSelectionCommitHandlers<CodeNavigationTarget>
 {
    public static final int AUTO_SELECT_NONE = 0;
    public static final int AUTO_SELECT_FIRST = 1;
    public static final int AUTO_SELECT_FIRST_ERROR = 2;
    
-   public CompileErrorList()
+   public SourceMarkerList()
    {
-      codec_ = new CompileErrorItemCodec(res_, false);
+      codec_ = new SourceMarkerItemCodec(res_, false);
       
-      errorTable_ = new FastSelectTable<CompileError, CodeNavigationTarget, CodeNavigationTarget>(
+      errorTable_ = new FastSelectTable<SourceMarker, CodeNavigationTarget, CodeNavigationTarget>(
             codec_,
             res_.styles().selectedRow(),
             true,
@@ -115,18 +114,18 @@ public class CompileErrorList extends Composite
       return addHandler(handler, SelectionCommitEvent.getType());
    }
  
-   public void showErrors(String targetFile, 
-                          String basePath,
-                          JsArray<CompileError> errors,
-                          int autoSelect)
+   public void showMarkers(String targetFile, 
+                           String basePath,
+                           JsArray<SourceMarker> errors,
+                           int autoSelect)
    {
       boolean showFileHeaders = false;
-      ArrayList<CompileError> errorList = new ArrayList<CompileError>();
+      ArrayList<SourceMarker> errorList = new ArrayList<SourceMarker>();
       int firstErrorIndex = -1;
       for (int i=0; i<errors.length(); i++)
       {
-         CompileError error = errors.get(i);
-         if (firstErrorIndex == -1 && error.getType() == CompileError.ERROR)
+         SourceMarker error = errors.get(i);
+         if (firstErrorIndex == -1 && error.getType() == SourceMarker.ERROR)
             firstErrorIndex = i;
          
          if (!error.getPath().equals(targetFile))
@@ -200,7 +199,7 @@ public class CompileErrorList extends Composite
       SelectionCommitEvent.fire(this, target);
    }
 
-   private final CompileErrorItemCodec codec_;
-   private final FastSelectTable<CompileError, CodeNavigationTarget, CodeNavigationTarget> errorTable_;
-   private final CompileErrorListResources res_ = CompileErrorListResources.INSTANCE;  
+   private final SourceMarkerItemCodec codec_;
+   private final FastSelectTable<SourceMarker, CodeNavigationTarget, CodeNavigationTarget> errorTable_;
+   private final SourceMarkerListResources res_ = SourceMarkerListResources.INSTANCE;  
 }

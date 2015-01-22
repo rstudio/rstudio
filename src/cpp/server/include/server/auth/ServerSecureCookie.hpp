@@ -20,6 +20,7 @@
 #include <boost/optional.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
    namespace http {
@@ -27,9 +28,11 @@ namespace core {
       class Response;
    }
 }
+}
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace server {
 namespace auth {
 namespace secure_cookie {
@@ -62,5 +65,6 @@ core::Error initialize();
 } // namespace secure_cookie
 } // namespace auth
 } // namespace server
+} // namespace rstudio
 
 #endif // SERVER_AUTH_SECURE_COOKIE_HPP

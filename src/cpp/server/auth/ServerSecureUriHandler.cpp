@@ -29,8 +29,9 @@
 #include <server/auth/ServerAuthHandler.hpp>
 #include <server/auth/ServerValidateUser.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace server {
 namespace auth {
    
@@ -190,6 +191,7 @@ http::AsyncUriHandlerFunction secureAsyncUploadHandler(
 
 } // namespace auth
 } // namespace server
+} // namespace rstudio
 
 
 

@@ -21,12 +21,15 @@
 #include <vector>
 #include <iosfwd>
 
+namespace rstudio {
 namespace core {
    class FilePath;
+}
 }
 
 #include "SlideParser.hpp"
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace presentation {
@@ -44,5 +47,6 @@ void renderMedia(const std::string& type,
 } // namespace presentation
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_PRESENTATION_SLIDE_MEDIA_RENDERER_HPP

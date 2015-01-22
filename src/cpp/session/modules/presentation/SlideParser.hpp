@@ -27,6 +27,7 @@
 
 #include <core/json/Json.hpp>
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace presentation {
@@ -185,5 +186,6 @@ private:
 } // namespace presentation
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_PRESENTATION_SLIDE_PARSER_HPP

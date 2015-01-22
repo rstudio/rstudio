@@ -47,6 +47,7 @@ public class WebContentFileType extends TextFileType
             false,
             false,
             true,
+            false,
             false);
       
       isMarkdown_ = isMarkdown;

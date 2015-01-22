@@ -23,6 +23,7 @@
 
 #include "Diagnostic.hpp"
 
+namespace rstudio {
 namespace core {
 namespace libclang {
 
@@ -79,6 +80,7 @@ private:
 
 } // namespace libclang
 } // namespace core
+} // namespace rstudio
 
 
 #endif // CORE_LIBCLANG_HPP

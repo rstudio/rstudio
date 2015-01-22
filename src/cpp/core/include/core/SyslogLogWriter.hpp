@@ -18,6 +18,7 @@
 
 #include <core/LogWriter.hpp>
 
+namespace rstudio {
 namespace core {
 
 class SyslogLogWriter : public LogWriter
@@ -42,5 +43,6 @@ private:
 };
 
 } // namespace core
+} // namespace rstudio
 
 #endif // SYSLOG_LOG_WRITER_HPP

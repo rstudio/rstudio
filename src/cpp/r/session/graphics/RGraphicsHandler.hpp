@@ -21,11 +21,14 @@
 
 #include "RGraphicsDevDesc.hpp"
 
+namespace rstudio {
 namespace core {
    class Error;
    class FilePath;
 }
+}
 
+namespace rstudio {
 namespace r {
 namespace session {
 namespace graphics {
@@ -159,6 +162,7 @@ extern void (*onBeforeExecute)(DeviceContext* pDC);
 } // namespace graphics
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 
 #endif // R_GRAPHICS_HANDLER_HPP

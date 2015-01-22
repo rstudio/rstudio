@@ -25,8 +25,9 @@
 
 #include "SessionHttpConnectionListenerImpl.hpp"
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace session {
 
 // implementation of local stream http connection listener
@@ -45,7 +46,7 @@ public:
       if (limitRpcClientUid != -1)
       {
          // always add current user
-         using namespace core::system::user;
+         using namespace rstudio::core::system::user;
          permittedClients_.push_back(currentUserIdentity().userId);
 
          // also add rpc client
@@ -131,3 +132,4 @@ private:
 };
 
 } // namespace session
+} // namespace rstudio

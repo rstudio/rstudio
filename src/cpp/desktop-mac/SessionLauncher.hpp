@@ -24,6 +24,7 @@
 #include <core/FilePath.hpp>
 #include <core/system/Process.hpp>
 
+namespace rstudio {
 namespace desktop {
 
 enum PendingQuit {
@@ -94,5 +95,6 @@ private:
 
    
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_SESSION_LAUNCHER_HPP

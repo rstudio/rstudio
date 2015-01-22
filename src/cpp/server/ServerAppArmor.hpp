@@ -18,10 +18,13 @@
 
 #include <boost/utility.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
 
+namespace rstudio {
 namespace server {
 namespace app_armor {
    
@@ -29,6 +32,7 @@ core::Error enforceRestricted();
 
 } // namespace app_armor
 } // namespace server
+} // namespace rstudio
 
 #endif // SERVER_APP_ARMOR_HPP
 

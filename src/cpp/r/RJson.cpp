@@ -57,8 +57,9 @@
 #include <r/RSexp.hpp>
 #include <r/RErrorCategory.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace r {
 namespace json {
 
@@ -414,4 +415,5 @@ Error jsonValueFromObject(SEXP objectSEXP, core::json::Value* pValue)
    
 } // namespace json
 } // namesapce r
+} // namespace rstudio
 

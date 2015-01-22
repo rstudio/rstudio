@@ -21,6 +21,7 @@
 
 #include "clang-c/Index.h"
 
+namespace rstudio {
 namespace core {
 namespace libclang {
 
@@ -67,5 +68,6 @@ private:
 
 } // namespace libclang
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_LIBCLANG_SOURCE_LOCATION_HPP

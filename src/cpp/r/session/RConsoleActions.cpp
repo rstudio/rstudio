@@ -27,8 +27,9 @@
 
 #include <r/ROptions.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace r {
 namespace session {
 
@@ -228,6 +229,7 @@ Error ConsoleActions::saveToFile(const core::FilePath& filePath) const
    
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 
 

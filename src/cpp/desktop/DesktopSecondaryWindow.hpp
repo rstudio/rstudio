@@ -20,6 +20,7 @@
 #include <QtWebKit>
 #include "DesktopBrowserWindow.hpp"
 
+namespace rstudio {
 namespace desktop {
 
 class SecondaryWindow : public BrowserWindow
@@ -47,5 +48,6 @@ private:
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_SECONDARY_WINDOW_HPP

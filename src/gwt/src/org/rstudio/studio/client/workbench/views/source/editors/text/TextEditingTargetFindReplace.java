@@ -136,6 +136,12 @@ public class TextEditingTargetFindReplace
          findReplace_.findNext();
    }
    
+   public void selectAll()
+   {
+      if (findReplace_ != null)
+         findReplace_.selectAll();
+   }
+   
    public void findPrevious()
    {
       if (findReplace_ != null)

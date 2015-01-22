@@ -18,10 +18,13 @@
 
 #include <string>
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
 
+namespace rstudio {
 namespace r {
 namespace session {
 
@@ -35,6 +38,7 @@ core::Error discoverR(RLocations* pLocations);
 
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 #endif // R_SESSION_DISCOVERY_HPP
 

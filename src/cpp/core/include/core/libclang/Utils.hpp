@@ -20,6 +20,7 @@
 
 #include "clang-c/CXString.h"
 
+namespace rstudio {
 namespace core {
 namespace libclang {
 
@@ -29,5 +30,6 @@ std::string toStdString(CXString cxStr);
 
 } // namespace libclang
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_LIBCLANG_UTILS_HPP

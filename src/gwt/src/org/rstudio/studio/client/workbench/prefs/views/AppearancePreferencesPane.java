@@ -141,7 +141,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       theme_ = new SelectWidget("Editor theme:",
                                 themes.getThemeNames(),
                                 themes.getThemeNames(),
-                                true);
+                                false);
       theme_.getListBox().addChangeHandler(new ChangeHandler()
       {
          public void onChange(ChangeEvent event)
@@ -149,8 +149,7 @@ public class AppearancePreferencesPane extends PreferencesPane
             preview_.setTheme(themes.getThemeUrl(theme_.getValue()));
          }
       });
-      theme_.getListBox().getElement().<SelectElement>cast().setSize(
-            themes.getThemeNames().length);
+      theme_.getListBox().getElement().<SelectElement>cast().setSize(10);
       theme_.addStyleName(res.styles().themeChooser());
       leftPanel.add(theme_);
       theme_.setValue(themes.getEffectiveThemeName(uiPrefs_.theme().getGlobalValue()));

@@ -25,41 +25,14 @@
 #include <core/FilePath.hpp>
 #include <core/json/Json.hpp>
 
+#include <session/SessionModuleContext.hpp>
+
+namespace rstudio {
 namespace session {
 namespace modules {
 namespace build {
 
-struct CompileError
-{
-   // NOTE: error types are shared accross all client code that uses
-   // the CompileError type. therefore if we want to add more types
-   // we need to do so beyond the 'Box' value
-   enum Type {
-      Error = 0, Warning = 1  /*, Box = 2 */
-   };
-
-   CompileError(Type type,
-                const core::FilePath& path,
-                int line,
-                int column,
-                const std::string& message,
-                bool showErrorList)
-      : type(type), path(path), line(line), column(column), message(message),
-        showErrorList(showErrorList)
-   {
-   }
-
-   Type type;
-   core::FilePath path;
-   int line;
-   int column;
-   std::string message;
-   bool showErrorList;
-};
-
-core::json::Array compileErrorsAsJson(const std::vector<CompileError>& errors);
-   
-typedef boost::function<std::vector<CompileError>(const std::string&)>
+typedef boost::function<std::vector<module_context::SourceMarker>(const std::string&)>
                                                          CompileErrorParser;
 
 class CompileErrorParsers
@@ -75,12 +48,13 @@ public:
    }
 
 public:
-   std::vector<CompileError> operator()(const std::string& output)
+   std::vector<module_context::SourceMarker> operator()(const std::string& output)
    {
-      std::vector<CompileError> allErrors;
+      using namespace module_context;
+      std::vector<SourceMarker> allErrors;
       BOOST_FOREACH(const CompileErrorParser& parser, parsers_)
       {
-         std::vector<CompileError> errors = parser(output);
+         std::vector<SourceMarker> errors = parser(output);
          std::copy(errors.begin(), errors.end(), std::back_inserter(allErrors));
       }
 
@@ -99,6 +73,7 @@ CompileErrorParser rErrorParser(const core::FilePath& basePath);
 } // namespace build
 } // namespace modules
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_BUILD_ERRORS_HPP
 

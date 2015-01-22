@@ -45,7 +45,8 @@
 
 #include "PostbackOptions.hpp"
 
-using namespace core ;
+using namespace rstudio;
+using namespace rstudio::core;
 using namespace session::postback ;
 
 int exitFailure(const Error& error)

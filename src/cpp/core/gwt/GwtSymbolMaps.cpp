@@ -35,6 +35,7 @@
 
 // https://code.google.com/p/google-web-toolkit/source/browse/trunk/user/src/com/google/gwt/core/server/impl/StackTraceDeobfuscator.java?r=11565
 
+namespace rstudio {
 namespace core {
 namespace gwt {
 
@@ -361,5 +362,6 @@ StackElement SymbolMaps::resymbolize(const StackElement& se,
 
 } // namespace gwt
 } // namespace core
+} // namespace rstudio
 
 

@@ -18,6 +18,7 @@
 
 #include <core/BoostThread.hpp>
 
+namespace rstudio {
 namespace core {
 
 Error waitWithTimeout(const boost::function<WaitResult()>& waitFunction,
@@ -63,3 +64,4 @@ Error waitWithTimeout(const boost::function<WaitResult()>& waitFunction,
 }
 
 } // namespace core
+} // namespace rstudio

@@ -33,6 +33,7 @@
 #define FORMAT QSettings::IniFormat
 #endif
 
+namespace rstudio {
 namespace desktop {
 
 class Options;
@@ -107,5 +108,6 @@ private:
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_OPTIONS_HPP

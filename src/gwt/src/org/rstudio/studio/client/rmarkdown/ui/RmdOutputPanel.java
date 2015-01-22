@@ -126,13 +126,11 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       publishButton_.setText(params.getResult().getRpubsPublished() ? 
             "Republish" : "Publish");
       publishButton_.setVisible(showPublish);
-      publishButtonSeparator_.setVisible(showPublish);
       
       // RSConnect
       boolean showDeploy = enableDeploy && params.isShinyDocument();
       deployButton_.setVisible(showDeploy);
       deployButton_.setText("Publish");
-      deployButtonSeparator_.setVisible(showDeploy);
       
       // find text box
       boolean showFind = params.getResult().isHtml() && 
@@ -181,30 +179,13 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
             commands.viewerPopout().createToolbarButton();
       popoutButton.setText("Open in Browser");
       toolbar.addLeftWidget(popoutButton);
-      publishButtonSeparator_ = toolbar.addLeftSeparator();
-      publishButton_ = commands.publishHTML().createToolbarButton(false);
-      toolbar.addLeftWidget(publishButton_);
-
-      deployButtonSeparator_ = toolbar.addLeftSeparator();
-      deployButton_ = new ToolbarButton("Publish", 
-            commands.rsconnectDeploy().getImageResource(), 
-            new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent evt)
-         {
-            events_.fireEvent(new RSConnectActionEvent(
-                  RSConnectActionEvent.ACTION_TYPE_DEPLOY, 
-                  targetFile_.getPath()));
-         }
-      });
-      toolbar.addLeftWidget(deployButton_);
 
       findTextBox_ = new FindTextBox("Find");
       findTextBox_.setIconVisible(true);
       findTextBox_.setOverrideWidth(120);
       findTextBox_.getElement().getStyle().setMarginRight(6, Unit.PX);
-      toolbar.addRightWidget(findTextBox_);
+      findSeparator_ = toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(findTextBox_);
       
       findTextBox_.addKeyDownHandler(new KeyDownHandler() {
          @Override
@@ -242,10 +223,26 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
          }
          
       });
-      toolbar.addRightWidget(findTextBox_);
-      findSeparator_ = toolbar.addRightSeparator();
       
-      toolbar.addRightWidget(commands.viewerRefresh().createToolbarButton());
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands.viewerRefresh().createToolbarButton());
+      
+      publishButton_ = commands.publishHTML().createToolbarButton(false);
+      toolbar.addRightWidget(publishButton_);
+
+      deployButton_ = new ToolbarButton("Publish", 
+            commands.rsconnectDeploy().getImageResource(), 
+            new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent evt)
+         {
+            events_.fireEvent(new RSConnectActionEvent(
+                  RSConnectActionEvent.ACTION_TYPE_DEPLOY, 
+                  targetFile_.getPath()));
+         }
+      });
+      toolbar.addRightWidget(deployButton_);
    }
    
    @Override
@@ -508,9 +505,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    private Label fileLabel_;
    private Widget fileLabelSeparator_;
    private ToolbarButton publishButton_;
-   private Widget publishButtonSeparator_;
    private ToolbarButton deployButton_;
-   private Widget deployButtonSeparator_;
    private String title_;
    
    private final FileTypeRegistry fileTypeRegistry_;
