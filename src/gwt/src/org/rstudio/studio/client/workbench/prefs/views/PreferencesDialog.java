@@ -55,19 +55,11 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
                                    spelling,
                                    sourceControl, 
                                    publishing}); 
-
       session_ = session;
       server_ = server;
       
       if (!session.getSessionInfo().getAllowVcs())
          hidePane(7);
-   }
-   
-
-   
-   public void activateSourceControl()
-   {
-      activatePane(4);
    }
    
    @Override

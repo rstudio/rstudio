@@ -39,7 +39,7 @@ public class OptionsLoader
    public abstract static class Shim extends AsyncShim<OptionsLoader>
    {
       public abstract void showOptions();
-      public abstract void showVersionControlOptions();
+      public abstract void showOptions(Class<?> paneClass);
    }
 
 
@@ -56,18 +56,13 @@ public class OptionsLoader
       server_ = server;
       pPrefDialog_ = pPrefDialog;
    }
-
+   
    public void showOptions()
    {
-      showOptions(false);
+      showOptions(null);
    }
-   
-   public void showVersionControlOptions()
-   {
-      showOptions(true);
-   }
-   
-   private void showOptions(final boolean activateSourceControl)
+
+   public void showOptions(final Class<?> paneClass)
    {
       final ProgressIndicator indicator = globalDisplay_.getProgressIndicator(
                                                       "Error Reading Options");
@@ -82,8 +77,8 @@ public class OptionsLoader
                indicator.onCompleted();
                PreferencesDialog prefDialog = pPrefDialog_.get();
                prefDialog.initialize(rPrefs);
-               if (activateSourceControl)
-                  prefDialog.activateSourceControl();
+               if (paneClass != null)
+                  prefDialog.activatePane(paneClass);
                prefDialog.showModal();
                
                // if the user changes global sweave or latex options notify

@@ -127,12 +127,26 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
    public void initialize(T prefs)
    {
       for (PreferencesDialogPaneBase<T> pane : panes_)
+      {
          pane.initialize(prefs);
+      }
    }
    
    public void activatePane(int index)
    {
       sectionChooser_.select(index);
+   }
+   
+   public void activatePane(Class<?> clazz)
+   {
+      for (int i = 0; i < panes_.length; i++)
+      {
+         if (panes_[i].getClass().equals(clazz))
+         {
+            activatePane(i);
+            break;
+         }
+      }
    }
    
    private void setPaneVisibility(PreferencesDialogPaneBase<T> pane, boolean visible)

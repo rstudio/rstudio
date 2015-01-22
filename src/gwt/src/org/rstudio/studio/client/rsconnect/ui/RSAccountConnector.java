@@ -15,6 +15,8 @@
 package org.rstudio.studio.client.rsconnect.ui;
 
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -30,7 +32,10 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.views.PublishingPreferencesPane;
+import org.rstudio.studio.client.workbench.ui.OptionsLoader;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
@@ -40,6 +45,9 @@ import com.google.inject.Singleton;
 @Singleton
 public class RSAccountConnector
 {
+   public interface Binder
+   extends CommandBinder<Commands, RSAccountConnector> {}
+
    // possible results of attempting to connect an account
    enum AccountConnectResult
    {
@@ -52,12 +60,19 @@ public class RSAccountConnector
    public RSAccountConnector(SatelliteManager satelliteManager,
          RSConnectServerOperations server,
          GlobalDisplay display,
-         Session session)
+         Session session,
+         Commands commands,
+         Binder binder,
+         OptionsLoader.Shim optionsLoader)
    {
       satelliteManager_ = satelliteManager;
       server_ = server;
       display_ = display;
       session_ = session;
+      optionsLoader_ = optionsLoader;
+
+      binder.bind(commands, this);
+
       exportAuthClosedCallback();
    }
    
@@ -103,8 +118,16 @@ public class RSAccountConnector
       });
       wizard.showModal();
    }
+   
+   @Handler
+   public void onRsconnectManageAccounts()
+   {
+      optionsLoader_.showOptions(PublishingPreferencesPane.class);
+   }
+   
+   // Private methods --------------------------------------------------------
 
-   public void connectNewAccount(
+   private void connectNewAccount(
          NewRSConnectAccountResult result,
          ProgressIndicator indicator,
          OperationWithInput<AccountConnectResult> onConnected)
@@ -119,7 +142,7 @@ public class RSAccountConnector
       }
    }
    
-   public void connectCloudAccount(
+   private void connectCloudAccount(
          final NewRSConnectAccountResult result,
          final ProgressIndicator indicator,
          final OperationWithInput<AccountConnectResult> onConnected)
@@ -159,7 +182,7 @@ public class RSAccountConnector
       });
    }
 
-   public void connectLocalAccount(
+   private void connectLocalAccount(
          final NewRSConnectAccountResult result,
          final ProgressIndicator indicator,
          final OperationWithInput<AccountConnectResult> onConnected)
@@ -430,6 +453,7 @@ public class RSAccountConnector
    private final RSConnectServerOperations server_;
    private final Session session_;
    private final SatelliteManager satelliteManager_;
+   private final OptionsLoader.Shim optionsLoader_;
    
    private RSConnectPreAuthToken pendingAuthToken_;
    private RSConnectServerInfo pendingServerInfo_;
