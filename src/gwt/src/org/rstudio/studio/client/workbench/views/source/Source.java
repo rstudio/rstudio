@@ -459,6 +459,8 @@ public class Source implements InsertSourceHandler,
       
       // TODO: Infer encoding from source document?
       vimOnReadFile(this, "UTF-8");
+      
+      vimOnRunRScript(this);
    }
    
    private final native void vimOnSave(Source source) /*-{
@@ -524,6 +526,20 @@ public class Source implements InsertSourceHandler,
       });
       
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("read", "r", callback);
+   
+   }-*/;
+   
+   private native final void vimOnRunRScript(Source source) /*-{
+      
+      var callback = $entry(function(cm, params) {
+         if (params.args) {
+            source.@org.rstudio.studio.client.workbench.views.source.Source::pasteRCodeExecutionResult(
+               Ljava/lang/String;
+            )(params.argString);
+         }
+      });
+      
+      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("Rscript", "R", callback);
    
    }-*/;
    
@@ -2476,6 +2492,28 @@ public class Source implements InsertSourceHandler,
          {
             // TODO Auto-generated method stub
             
+         }
+      });
+   }
+   
+   private void pasteRCodeExecutionResult(final String code)
+   {
+      server_.executeRCode(code, new ServerRequestCallback<String>()
+      {
+         @Override
+         public void onResponseReceived(String output)
+         {
+            if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+            {
+               TextEditingTarget editor = (TextEditingTarget) activeEditor_;
+               editor.insertCode(output, false);
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
          }
       });
    }

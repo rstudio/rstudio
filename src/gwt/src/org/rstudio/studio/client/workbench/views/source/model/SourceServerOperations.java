@@ -208,4 +208,7 @@ public interface SourceServerOperations extends FilesServerOperations,
    public void getFileContents(String path,
                                String encoding,
                                ServerRequestCallback<String> requestCallback);
+   
+   public void executeRCode(String code,
+                            ServerRequestCallback<String> requestCallback);
 }
