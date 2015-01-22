@@ -349,9 +349,8 @@ SEXP rs_sourceMarkers(SEXP nameSEXP,
       if (error)
          throw RErrorException(error.summary());
       if (!json::isType<json::Array>(markersJson))
-         throw RErrorException("markers parameter was not an unnamed list");
-
-      json::writeFormatted(markersJson, std::cerr);
+         throw RErrorException(
+            "markers parameter was not a data frame or unnamed list");
 
       std::vector<SourceMarker> markers;
       BOOST_FOREACH(const json::Value& markerJson, markersJson.get_array())
