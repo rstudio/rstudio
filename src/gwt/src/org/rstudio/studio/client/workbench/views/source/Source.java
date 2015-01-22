@@ -23,6 +23,9 @@ import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.*;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.http.client.Request;
+import com.google.gwt.http.client.RequestCallback;
+import com.google.gwt.http.client.Response;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.resources.client.ImageResource;
@@ -453,6 +456,9 @@ public class Source implements InsertSourceHandler,
       vimOnPreviousTab(this);
       vimOnCloseTab(this);
       vimOnNewDoc(this);
+      
+      // TODO: Infer encoding from source document?
+      vimOnReadFile(this, "UTF-8");
    }
    
    private final native void vimOnSave(Source source) /*-{
@@ -489,16 +495,36 @@ public class Source implements InsertSourceHandler,
    }-*/;
    
    private native final void vimOnNewDoc(Source source) /*-{
-      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("badd", "badd",
-         $entry(function(cm, params) {
-         
-            if (params.args) {
-               // TODO: create file and then open it
-            } else {
-               source.@org.rstudio.studio.client.workbench.views.source.Source::onNewSourceDoc()();
+   
+      var callback = $entry(function(cm, params) {
+         if (params.args) {
+            if (params.args.length === 1) {
+               source.@org.rstudio.studio.client.workbench.views.source.Source::editFile(Ljava/lang/String;)(params.args[0]);
             }
-         })
-      );
+            // TODO: on error?
+         } else {
+            source.@org.rstudio.studio.client.workbench.views.source.Source::onNewSourceDoc()();
+         }
+      });
+      
+      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("badd", "bad", callback);
+      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("edit", "e", callback);
+      
+   }-*/;
+   
+   private native final void vimOnReadFile(Source source, String encoding) /*-{
+   
+      var callback = $entry(function(cm, params) {
+         if (params.args && params.args.length === 1) {
+            source.@org.rstudio.studio.client.workbench.views.source.Source::pasteFileContentsAtCursor(
+               Ljava/lang/String;
+               Ljava/lang/String;
+            )(params.args[0], encoding);
+         }
+      });
+      
+      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("read", "r", callback);
+   
    }-*/;
    
    /**
@@ -1527,7 +1553,6 @@ public class Source implements InsertSourceHandler,
             
    }
    
-   
    @Handler
    public void onOpenSourceDoc()
    {
@@ -2430,6 +2455,53 @@ public class Source implements InsertSourceHandler,
       HashSet<AppCommand> temp = new HashSet<AppCommand>(commands);
       temp.removeAll(dynamicCommands_);
       return temp.size() == 0;
+   }
+   
+   private void pasteFileContentsAtCursor(final String path, final String encoding)
+   {
+      server_.getFileContents(path, encoding, new ServerRequestCallback<String>()
+      {
+         @Override
+         public void onResponseReceived(String content)
+         {
+            if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+            {
+               TextEditingTarget editor = (TextEditingTarget) activeEditor_;
+               editor.insertCode(content, false);
+            }
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            // TODO Auto-generated method stub
+            
+         }
+      });
+   }
+   
+   private void editFile(final String path)
+   {
+      server_.ensureFileExists(
+            path,
+            new ServerRequestCallback<Boolean>()
+            {
+               @Override
+               public void onResponseReceived(Boolean success)
+               {
+                  if (success)
+                  {
+                     FileSystemItem file = FileSystemItem.createFile(path);
+                     openFile(file);
+                  }
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
    }
 
    public void onFileEdit(FileEditEvent event)

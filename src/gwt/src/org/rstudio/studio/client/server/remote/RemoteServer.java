@@ -1524,6 +1524,14 @@ public class RemoteServer implements Server
       params.set(3, new JSONString(cacheKey));
       sendRequest(RPC_SCOPE, DUPLICATE_DATA_VIEW, params, requestCallback);
    }
+   
+   public void ensureFileExists(String path,
+                                ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+      sendRequest(RPC_SCOPE, ENSURE_FILE_EXISTS, params, requestCallback);
+   }
 
    public void detectFreeVars(String code,
                               ServerRequestCallback<JsArrayString> requestCallback)
@@ -3964,6 +3972,7 @@ public class RemoteServer implements Server
    private static final String SET_DOC_ORDER = "set_doc_order";
    private static final String REMOVE_CACHED_DATA = "remove_cached_data";
    private static final String DUPLICATE_DATA_VIEW = "duplicate_data_view";
+   private static final String ENSURE_FILE_EXISTS = "ensure_file_exists";
 
    private static final String GET_RECENT_HISTORY = "get_recent_history";
    private static final String GET_HISTORY_ITEMS = "get_history_items";
