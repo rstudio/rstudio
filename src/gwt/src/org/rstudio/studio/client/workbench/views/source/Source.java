@@ -441,8 +441,66 @@ public class Source implements InsertSourceHandler,
       
       // open project docs
       openProjectDocs(session);    
+      
+      // add vim commands
+      initVimCommands();
    }
-
+   
+   private void initVimCommands()
+   {
+      vimOnSave(this);
+      vimOnNextTab(this);
+      vimOnPreviousTab(this);
+      vimOnCloseTab(this);
+      vimOnNewDoc(this);
+   }
+   
+   private final native void vimOnSave(Source source) /*-{
+      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("write", "w",
+         $entry(function(cm, params) {
+            var target = source.@org.rstudio.studio.client.workbench.views.source.Source::getActiveEditor()();
+            target.@org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget::onSaveSourceDoc()();
+         })
+      );
+   }-*/;
+   
+   private native final void vimOnNextTab(Source source) /*-{
+      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("bnext", "bn",
+         $entry(function(cm, params) {
+            source.@org.rstudio.studio.client.workbench.views.source.Source::onNextTab()();
+         })
+      );
+   }-*/;
+   
+   private native final void vimOnPreviousTab(Source source) /*-{
+      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("bprev", "bp",
+         $entry(function(cm, params) {
+            source.@org.rstudio.studio.client.workbench.views.source.Source::onPreviousTab()();
+         })
+      );
+   }-*/;
+   
+   private native final void vimOnCloseTab(Source source) /*-{
+      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("bdelete", "bd",
+         $entry(function(cm, params) {
+            source.@org.rstudio.studio.client.workbench.views.source.Source::onCloseSourceDoc()();
+         })
+      );
+   }-*/;
+   
+   private native final void vimOnNewDoc(Source source) /*-{
+      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("badd", "badd",
+         $entry(function(cm, params) {
+         
+            if (params.args) {
+               // TODO: create file and then open it
+            } else {
+               source.@org.rstudio.studio.client.workbench.views.source.Source::onNewSourceDoc()();
+            }
+         })
+      );
+   }-*/;
+   
    /**
     * @param isNewTabPending True if a new tab is about to be created. (If
     *    false and there are no tabs already, then a new source doc might
@@ -2719,6 +2777,11 @@ public class Source implements InsertSourceHandler,
          idx = tabOrder_.get(idx);
       }
       view_.selectTab(idx);
+   }
+   
+   private EditingTarget getActiveEditor()
+   {
+      return activeEditor_;
    }
 
    ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();
