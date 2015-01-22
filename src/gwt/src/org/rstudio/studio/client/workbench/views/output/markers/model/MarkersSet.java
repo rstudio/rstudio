@@ -36,9 +36,4 @@ public class MarkersSet extends JavaScriptObject
    public native final JsArray<SourceMarker> getMarkers() /*-{
       return this.markers;
    }-*/;
-   
-   // see SourceMarkerList.AUTO_SELECT_NONE, etc.
-   public native final int getAutoSelect() /*-{
-      return this.auto_select;
-   }-*/;
 }

@@ -25,14 +25,14 @@ import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
-import org.rstudio.studio.client.workbench.views.output.markers.events.ShowMarkersEvent;
+import org.rstudio.studio.client.workbench.views.output.markers.events.MarkersChangedEvent;
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersState;
 
 public class MarkersOutputTab extends DelayLoadWorkbenchTab<MarkersOutputPresenter>
 {
    public abstract static class Shim 
             extends DelayLoadTabShim<MarkersOutputPresenter, MarkersOutputTab>
-            implements ShowMarkersEvent.Handler
+            implements MarkersChangedEvent.Handler
    {
       abstract void initialize(MarkersState state);
       abstract void onDismiss();
@@ -43,9 +43,9 @@ public class MarkersOutputTab extends DelayLoadWorkbenchTab<MarkersOutputPresent
 
    @Inject
    public MarkersOutputTab(final Shim shim,
-                          EventBus events,
-                          Commands commands,
-                          final Session session)
+                           EventBus events,
+                           Commands commands,
+                           final Session session)
    {
       super("Markers", shim);
       shim_ = shim;
@@ -56,13 +56,13 @@ public class MarkersOutputTab extends DelayLoadWorkbenchTab<MarkersOutputPresent
          public void onSessionInit(SessionInitEvent sie)
          {
             MarkersState state = session.getSessionInfo().getMarkersState();
-            shim.initialize(state);
+            shim_.initialize(state);
          }
       });
 
-      GWT.<Binder>create(Binder.class).bind(commands, shim);
+      GWT.<Binder>create(Binder.class).bind(commands, shim_);
       
-      events.addHandler(ShowMarkersEvent.TYPE, shim);
+      events.addHandler(MarkersChangedEvent.TYPE, shim_);
    }
 
    @Override

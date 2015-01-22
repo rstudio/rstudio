@@ -52,22 +52,27 @@ json::Object sourceMarkerSetAsJson(const module_context::SourceMarkerSet& set)
       jsonSet["base_path"] = basePath;
    }
    jsonSet["markers"] = sourceMarkersAsJson(set.markers);
-   jsonSet["auto_select"] = static_cast<int>(set.autoSelect);
    return jsonSet;
 }
 
 
-class MarkersState : boost::noncopyable
+class SourceMarkers : boost::noncopyable
 {
 public:
-   MarkersState() : visible_(false)
+   SourceMarkers() : visible_(false)
    {
    }
 
    bool visible() const { return visible_; }
    void setVisible(bool visible) { visible_ = visible; }
 
-   void setActiveSourceMarkers(const module_context::SourceMarkerSet& markerSet)
+   void setActiveMarkers(const std::string& set)
+   {
+      if (markerSets_.find(set) != markerSets_.end())
+         activeSet_ = set;
+   }
+
+   void setActiveMarkers(const module_context::SourceMarkerSet& markerSet)
    {
       activeSet_ = markerSet.name;
       markerSets_[markerSet.name] = markerSet;
@@ -95,12 +100,10 @@ public:
          if (json::isType<json::Object>(markerSetJson))
          {
             std::string basePath;
-            int autoSelect;
             json::Array markersJson;
             Error error = json::readObject(markerSetJson.get_obj(),
                                            "base_path", &basePath,
-                                           "markers", &markersJson,
-                                           "auto_select", &autoSelect);
+                                           "markers", &markersJson);
             if (error)
             {
                LOG_ERROR(error);
@@ -147,9 +150,7 @@ public:
                        resolveAliasedPath(basePath) :
                        FilePath();
 
-            markerSets[name] = SourceMarkerSet(
-                                    name, base, markers,
-                                    (SourceMarkerSet::AutoSelect)autoSelect);
+            markerSets[name] = SourceMarkerSet(name, base, markers);
          }
 
 
@@ -162,7 +163,7 @@ public:
       return Success();
    }
 
-   json::Object asJson()
+   json::Object asJson() const
    {
       json::Object obj;
       obj["visible"] = visible_;
@@ -177,6 +178,32 @@ public:
       return obj;
    }
 
+   json::Object stateAsJson() const
+   {
+      json::Object obj;
+      obj["visible"] = visible_;
+      json::Array namesJson;
+      BOOST_FOREACH(const MarkerSets::value_type& set, markerSets_)
+      {
+         namesJson.push_back(set.first);
+      }
+      obj["names"] = namesJson;
+      if (!namesJson.empty())
+      {
+         MarkerSets::const_iterator it = markerSets_.find(activeSet_);
+         if (it != markerSets_.end())
+            obj["markers"] = sourceMarkerSetAsJson(it->second);
+         else
+            obj["markers"] = json::Value();
+      }
+      else
+      {
+         obj["markers"] = json::Value();
+      }
+
+      return obj;
+   }
+
 private:
    bool visible_;
    std::string activeSet_;
@@ -184,25 +211,34 @@ private:
    MarkerSets markerSets_;
 };
 
-MarkersState& markersState()
+SourceMarkers& sourceMarkers()
 {
-   static MarkersState instance;
+   static SourceMarkers instance;
    return instance;
+}
+
+void fireMarkersChanged(module_context::MarkerAutoSelect autoSelect)
+{
+   json::Object jsonData;
+   jsonData["markers_state"] = sourceMarkers().stateAsJson();
+   jsonData["auto_select"] = static_cast<int>(autoSelect);
+
+   ClientEvent event(client_events::kMarkersChanged,jsonData);
+   module_context::enqueClientEvent(event);
 }
 
 } // anonymous namespace
 
 namespace module_context {
 
-void showSourceMarkers(const SourceMarkerSet& markerSet)
+void showSourceMarkers(const SourceMarkerSet& markerSet,
+                       MarkerAutoSelect autoSelect)
 {
-   markersState().setVisible(true);
+   sourceMarkers().setVisible(true);
 
-   markersState().setActiveSourceMarkers(markerSet);
+   sourceMarkers().setActiveMarkers(markerSet);
 
-   ClientEvent event(client_events::kShowMarkers,
-                     sourceMarkerSetAsJson(markerSet));
-   module_context::enqueClientEvent(event);
+   fireMarkersChanged(autoSelect);
 }
 
 } // namespace module_context
@@ -216,20 +252,35 @@ namespace {
 Error markersTabClosed(const core::json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
-   markersState().setVisible(false);
+   sourceMarkers().setVisible(false);
+   return Success();
+}
+
+Error updateActiveMarkerSet(const core::json::JsonRpcRequest& request,
+                            json::JsonRpcResponse* pResponse)
+{
+   std::string set;
+   Error error = json::readParams(request.params, &set);
+   if (error)
+      return error;
+
+   sourceMarkers().setActiveMarkers(set);
+
+   fireMarkersChanged(module_context::MarkerAutoSelectNone);
+
    return Success();
 }
 
 void onSuspend(core::Settings* pSettings)
 {
    std::ostringstream os;
-   json::write(markersState().asJson(), os);
-   pSettings->set("source-markers-state", os.str());
+   json::write(sourceMarkers().asJson(), os);
+   pSettings->set("source-markers-data", os.str());
 }
 
 void onResume(const core::Settings& settings)
 {
-   std::string state = settings.get("source-markers-state");
+   std::string state = settings.get("source-markers-data");
    if (!state.empty())
    {
       json::Value stateJson;
@@ -239,7 +290,7 @@ void onResume(const core::Settings& settings)
          return;
       }
 
-      Error error = markersState().readFromJson(stateJson.get_obj());
+      Error error = sourceMarkers().readFromJson(stateJson.get_obj());
       if (error)
          LOG_ERROR(error);
    }
@@ -259,10 +310,9 @@ SEXP rs_showMarkers()
 
    SourceMarkerSet markerSet("cpp-errors",
                              resolveAliasedPath("~"),
-                             markers,
-                             SourceMarkerSet::AutoSelectFirst);
+                             markers);
 
-   showSourceMarkers(markerSet);
+   showSourceMarkers(markerSet, MarkerAutoSelectFirst);
 
    return R_NilValue;
 }
@@ -271,7 +321,7 @@ SEXP rs_showMarkers()
 
 json::Value markersStateAsJson()
 {
-   return markersState().asJson();
+   return sourceMarkers().stateAsJson();
 }
 
 Error initialize()
@@ -287,6 +337,7 @@ Error initialize()
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "markers_tab_closed", markersTabClosed))
+      (bind(registerRpcMethod, "update_active_marker_set", updateActiveMarkerSet))
       (bind(sourceModuleRFile, "SessionMarkers.R"));
    return initBlock.execute();
 

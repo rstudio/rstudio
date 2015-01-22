@@ -28,15 +28,11 @@ public class MarkersState extends JavaScriptObject
       return this.visible;
    }-*/;
    
-   public native final String getActiveMarkersSet() /*-{
-      return this.active_set;
-   }-*/;
-   
    public native final JsArrayString getMarkersSetNames() /*-{
-      return Object.keys(this.sets);
+      return this.names;
    }-*/;
    
-   public native final MarkersSet getMarkersSet(String name) /*-{
-      return this.sets[name];
+   public native final MarkersSet getMarkersSet() /*-{
+      return this.markers;
    }-*/;
 }
