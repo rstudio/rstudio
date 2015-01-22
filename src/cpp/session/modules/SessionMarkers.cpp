@@ -66,6 +66,13 @@ public:
    bool visible() const { return visible_; }
    void setVisible(bool visible) { visible_ = visible; }
 
+   void clear()
+   {
+      visible_ = false;
+      activeSet_.clear();
+      markerSets_.clear();
+   }
+
    void setActiveMarkers(const std::string& set)
    {
       if (markerSets_.find(set) != markerSets_.end())
@@ -76,6 +83,16 @@ public:
    {
       activeSet_ = markerSet.name;
       markerSets_[markerSet.name] = markerSet;
+   }
+
+   void clearActiveMarkers()
+   {
+      markerSets_.erase(activeSet_);
+      activeSet_.clear();
+      if (markerSets_.size() > 0)
+         activeSet_ = markerSets_.begin()->first;
+      else
+         visible_ = false;
    }
 
 public:
@@ -252,7 +269,10 @@ namespace {
 Error markersTabClosed(const core::json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
-   sourceMarkers().setVisible(false);
+   sourceMarkers().clear();
+
+   fireMarkersChanged(module_context::MarkerAutoSelectNone);
+
    return Success();
 }
 
@@ -265,6 +285,16 @@ Error updateActiveMarkerSet(const core::json::JsonRpcRequest& request,
       return error;
 
    sourceMarkers().setActiveMarkers(set);
+
+   fireMarkersChanged(module_context::MarkerAutoSelectNone);
+
+   return Success();
+}
+
+Error clearActiveMarkerSet(const core::json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   sourceMarkers().clearActiveMarkers();
 
    fireMarkersChanged(module_context::MarkerAutoSelectNone);
 
@@ -338,6 +368,7 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "markers_tab_closed", markersTabClosed))
       (bind(registerRpcMethod, "update_active_marker_set", updateActiveMarkerSet))
+      (bind(registerRpcMethod, "clear_active_marker_set", clearActiveMarkerSet))
       (bind(sourceModuleRFile, "SessionMarkers.R"));
    return initBlock.execute();
 
