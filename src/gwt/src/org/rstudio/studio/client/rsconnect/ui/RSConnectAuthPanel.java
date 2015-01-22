@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.rsconnect.ui;
 import com.google.gwt.dom.client.Style.FontWeight;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
@@ -42,9 +43,10 @@ public class RSConnectAuthPanel extends SatelliteFramePanel<RStudioFrame>
       toolbar.addLeftWidget(new Label("Connecting RStudio Connect account on "));
       serverLabel_ = new Label();
       serverLabel_.getElement().getStyle().setFontWeight(FontWeight.BOLD);
+      serverLabel_.getElement().getStyle().setMarginLeft(3, Unit.PX);
       toolbar.addLeftWidget(serverLabel_);
       
-      cancelButton_ = new ToolbarButton("Cancel", (ImageResource)null,
+      cancelButton_ = new ToolbarButton("Close", (ImageResource)null,
             new ClickHandler()
       {
          @Override

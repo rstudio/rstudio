@@ -167,6 +167,18 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
       sectionChooser_.hideSection(index);
    }
    
+   protected void hidePane(Class<?> clazz)
+   {
+      for (int i = 0; i < panes_.length; i++)
+      {
+         if (panes_[i].getClass().equals(clazz))
+         {
+            hidePane(i);
+            break;
+         }
+      }
+   }
+   
    protected void attemptSaveChanges()
    {
       attemptSaveChanges(null);
