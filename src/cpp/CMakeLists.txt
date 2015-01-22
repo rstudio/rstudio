@@ -234,6 +234,7 @@ else()
       # initialize subdirectories
       file(MAKE_DIRECTORY conf)
 
+      # test runner script
       configure_file(rstudio-tests.in ${CMAKE_CURRENT_BINARY_DIR}/rstudio-tests)
 
       # add desktop subprojects if we aren't building in server only mode
