@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.output.markers;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.command.CommandBinder;
@@ -35,7 +36,7 @@ public class MarkersOutputTab extends DelayLoadWorkbenchTab<MarkersOutputPresent
             implements MarkersChangedEvent.Handler
    {
       abstract void initialize(MarkersState state);
-      abstract void onDismiss();
+      abstract void onClosing();
    }
 
    static interface Binder extends CommandBinder<Commands, Shim>
@@ -71,10 +72,17 @@ public class MarkersOutputTab extends DelayLoadWorkbenchTab<MarkersOutputPresent
       return true;
    }
    
+   @Override
+   public void confirmClose(Command onConfirmed)
+   {
+      shim_.onClosing();
+      onConfirmed.execute();
+   }
+   
    public void onDismiss()
    {
-      shim_.onDismiss();
    }
+  
    
    private final Shim shim_;
 }

@@ -49,25 +49,24 @@ public class MarkersOutputPane extends WorkbenchPane
    public void update(MarkersState markerState, int autoSelect)
    {
       // update list and toolbar button
-      MarkersSet markersSet = markerState.getMarkersSet();
       markerList_.clear();
-      if (markersSet != null)
+      markerSetsToolbarButton_.updateActiveMarkerSet(null);
+      markerSetsToolbarButton_.updateAvailableMarkerSets(new String[]{});
+      
+      if (markerState.hasMarkers())
       {
+         MarkersSet markersSet = markerState.getMarkersSet();
+     
          markerList_.showMarkers(null,
                                  markersSet.getBasePath(),
                                  markersSet.getMarkers(), 
                                  autoSelect);
+              
+         markerSetsToolbarButton_.updateAvailableMarkerSets(
+               JsUtil.toStringArray(markerState.getMarkersSetNames()));
          
          markerSetsToolbarButton_.updateActiveMarkerSet(markersSet.getName());
       }
-      else
-      {
-         markerSetsToolbarButton_.updateActiveMarkerSet(null);
-      }
-      
-      // update underlying set of choices
-      markerSetsToolbarButton_.updateAvailableMarkerSets(
-            JsUtil.toStringArray(markerState.getMarkersSetNames()));
    }
 
 

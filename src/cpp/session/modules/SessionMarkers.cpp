@@ -60,16 +60,12 @@ json::Object sourceMarkerSetAsJson(const module_context::SourceMarkerSet& set)
 class SourceMarkers : boost::noncopyable
 {
 public:
-   SourceMarkers() : visible_(false)
+   SourceMarkers()
    {
    }
 
-   bool visible() const { return visible_; }
-   void setVisible(bool visible) { visible_ = visible; }
-
    void clear()
    {
-      visible_ = false;
       activeSet_.clear();
       markerSets_.clear();
    }
@@ -92,18 +88,14 @@ public:
       activeSet_.clear();
       if (markerSets_.size() > 0)
          activeSet_ = markerSets_.begin()->first;
-      else
-         visible_ = false;
    }
 
 public:
    Error readFromJson(const json::Object& asJson)
    {
-      bool visible;
       std::string activeSet;
       json::Object setsJson;
       Error error = json::readObject(asJson,
-                                     "visible", &visible,
                                      "active_set", &activeSet,
                                      "sets", &setsJson);
       if (error)
@@ -174,7 +166,6 @@ public:
 
       }
 
-      visible_ = visible;
       activeSet_ = activeSet;
       markerSets_ = markerSets;
 
@@ -184,7 +175,6 @@ public:
    json::Object asJson() const
    {
       json::Object obj;
-      obj["visible"] = visible_;
       obj["active_set"] = activeSet_;
       json::Object setsJson;
       BOOST_FOREACH(const MarkerSets::value_type& set, markerSets_)
@@ -198,32 +188,34 @@ public:
 
    json::Object stateAsJson() const
    {
+      // default to null members
       json::Object obj;
-      obj["visible"] = visible_;
-      json::Array namesJson;
-      BOOST_FOREACH(const MarkerSets::value_type& set, markerSets_)
+      obj["names"] = json::Value();
+      obj["markers"] = json::Value();
+
+      // read the data
+      if (!markerSets_.empty())
       {
-         namesJson.push_back(set.first);
-      }
-      obj["names"] = namesJson;
-      if (!namesJson.empty())
-      {
+         // names
+         json::Array namesJson;
+         BOOST_FOREACH(const MarkerSets::value_type& set, markerSets_)
+         {
+            namesJson.push_back(set.first);
+         }
+
+         // markers for active set
          MarkerSets::const_iterator it = markerSets_.find(activeSet_);
          if (it != markerSets_.end())
+         {
+            obj["names"] = namesJson;
             obj["markers"] = sourceMarkerSetAsJson(it->second);
-         else
-            obj["markers"] = json::Value();
-      }
-      else
-      {
-         obj["markers"] = json::Value();
+         }
       }
 
       return obj;
    }
 
 private:
-   bool visible_;
    std::string activeSet_;
    typedef std::map<std::string,module_context::SourceMarkerSet> MarkerSets;
    MarkerSets markerSets_;
@@ -252,8 +244,6 @@ namespace module_context {
 void showSourceMarkers(const SourceMarkerSet& markerSet,
                        MarkerAutoSelect autoSelect)
 {
-   sourceMarkers().setVisible(true);
-
    sourceMarkers().setActiveMarkers(markerSet);
 
    fireMarkersChanged(autoSelect);

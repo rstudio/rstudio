@@ -42,7 +42,7 @@ import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersSer
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersSet;
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersState;
 
-// TODO: stable order for markers
+// TODO: bug: after a clear we can't re-show
 // TOOO: R API
 
 public class MarkersOutputPresenter extends BasePresenter
@@ -113,10 +113,11 @@ public class MarkersOutputPresenter extends BasePresenter
 
    public void initialize(MarkersState state)
    {
-      if (state.isVisible())
+      if (state.hasMarkers())
+      {
          view_.ensureVisible(false);
-      
-      view_.update(state, SourceMarkerList.AUTO_SELECT_NONE);
+         view_.update(state, SourceMarkerList.AUTO_SELECT_NONE);
+      }
    }
    
    public void onMarkersChanged(MarkersChangedEvent event)
@@ -124,42 +125,43 @@ public class MarkersOutputPresenter extends BasePresenter
       // get the state
       MarkersState state = event.getMarkersState();
       
-      // update tab visibility
-      if (state.isVisible())
-         view_.ensureVisible(true);
-      else
-         view_.ensureHidden();
-      
-      // update the view
-      view_.update(event.getMarkersState(), event.getAutoSelect());
-      
-      // navigate to auto-selection if requested
-      MarkersSet markersSet = state.getMarkersSet();
-      if (markersSet != null)
+      if (state.hasMarkers())
       {
-         JsArray<SourceMarker> markers = markersSet.getMarkers();
-         if (markers.length() > 0)
+         view_.ensureVisible(true);
+         view_.update(event.getMarkersState(), event.getAutoSelect());
+         
+         // navigate to auto-selection if requested
+         MarkersSet markersSet = state.getMarkersSet();
+         if (markersSet != null)
          {
-            SourceMarker selectMarker = null;
-            int autoSelect = event.getAutoSelect();
-            if (autoSelect == SourceMarkerList.AUTO_SELECT_FIRST)
-               selectMarker = markers.get(0);
-            else if (autoSelect == SourceMarkerList.AUTO_SELECT_FIRST_ERROR)
-               selectMarker = SourceMarker.getFirstError(markers);
-            
-            if (selectMarker != null)
+            JsArray<SourceMarker> markers = markersSet.getMarkers();
+            if (markers.length() > 0)
             {
-               fileTypeRegistry_.editFile(
-                 FileSystemItem.createFile(selectMarker.getPath()),
-                    FilePosition.create(selectMarker.getLine(),
-                                        selectMarker.getColumn()));
+               SourceMarker selectMarker = null;
+               int autoSelect = event.getAutoSelect();
+               if (autoSelect == SourceMarkerList.AUTO_SELECT_FIRST)
+                  selectMarker = markers.get(0);
+               else if (autoSelect == SourceMarkerList.AUTO_SELECT_FIRST_ERROR)
+                  selectMarker = SourceMarker.getFirstError(markers);
+               
+               if (selectMarker != null)
+               {
+                  fileTypeRegistry_.editFile(
+                    FileSystemItem.createFile(selectMarker.getPath()),
+                       FilePosition.create(selectMarker.getLine(),
+                                           selectMarker.getColumn()));
+               }
             }
          }
+      }
+      else
+      {
+         view_.ensureHidden();
       }
    }
    
    
-   public void onDismiss()
+   public void onClosing()
    {
       server_.markersTabClosed(new VoidServerRequestCallback());
    }
