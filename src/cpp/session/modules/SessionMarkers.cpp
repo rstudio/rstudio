@@ -20,6 +20,7 @@
 
 #include <core/Exec.hpp>
 #include <core/Settings.hpp>
+#include <core/FileSerializer.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
@@ -301,31 +302,6 @@ Error clearActiveMarkerSet(const core::json::JsonRpcRequest& request,
    return Success();
 }
 
-void onSuspend(core::Settings* pSettings)
-{
-   std::ostringstream os;
-   json::write(sourceMarkers().asJson(), os);
-   pSettings->set("source-markers-data", os.str());
-}
-
-void onResume(const core::Settings& settings)
-{
-   std::string state = settings.get("source-markers-data");
-   if (!state.empty())
-   {
-      json::Value stateJson;
-      if (!json::parse(state, &stateJson))
-      {
-         LOG_WARNING_MESSAGE("invalid find results state json");
-         return;
-      }
-
-      Error error = sourceMarkers().readFromJson(stateJson.get_obj());
-      if (error)
-         LOG_ERROR(error);
-   }
-}
-
 
 SEXP rs_showMarkers()
 {
@@ -347,6 +323,52 @@ SEXP rs_showMarkers()
    return R_NilValue;
 }
 
+FilePath sourceMarkersFilePath()
+{
+   return module_context::scopedScratchPath().childPath("source_markers");
+}
+
+void readSourceMarkers()
+{
+   FilePath filePath = sourceMarkersFilePath();
+   if (!filePath.exists())
+      return;
+
+   std::string contents;
+   Error error = readStringFromFile(filePath, &contents);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   json::Value stateJson;
+   if (!json::parse(contents, &stateJson))
+   {
+      LOG_WARNING_MESSAGE("invalid session markers json");
+      return;
+   }
+
+   error = sourceMarkers().readFromJson(stateJson.get_obj());
+   if (error)
+      LOG_ERROR(error);
+}
+
+void writeSourceMarkers(bool terminatedNormally)
+{
+   if (terminatedNormally)
+   {
+      std::ostringstream os;
+      json::write(sourceMarkers().asJson(), os);
+      Error error = writeStringToFile(sourceMarkersFilePath(), os.str());
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
+
+
+
 } // anonymous namespace
 
 json::Value markersStateAsJson()
@@ -356,10 +378,12 @@ json::Value markersStateAsJson()
 
 Error initialize()
 {
-   // suspend/resume handler to save state
+   // read source markers and arrange to write them at shutdown
    using namespace module_context;
-   addSuspendHandler(SuspendHandler(bind(onSuspend, _2), onResume));
+   readSourceMarkers();
+   events().onShutdown.connect(writeSourceMarkers);
 
+   // register R api
    RS_REGISTER_CALL_METHOD(rs_showMarkers, 0);
 
    // complete initialization

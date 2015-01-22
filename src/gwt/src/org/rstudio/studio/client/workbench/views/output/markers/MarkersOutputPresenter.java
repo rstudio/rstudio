@@ -42,7 +42,6 @@ import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersSer
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersSet;
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersState;
 
-// TODO: consider whether to keep markers around across project loads
 // TODO: stable order for markers
 // TOOO: R API
 
