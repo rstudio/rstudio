@@ -56,6 +56,12 @@ json::Object sourceMarkerSetAsJson(const module_context::SourceMarkerSet& set)
    return jsonSet;
 }
 
+bool isNamed(const module_context::SourceMarkerSet& set,
+             const std::string& name)
+{
+   return set.name == name;
+}
+
 
 class SourceMarkers : boost::noncopyable
 {
@@ -72,29 +78,43 @@ public:
 
    void setActiveMarkers(const std::string& set)
    {
-      if (markerSets_.find(set) != markerSets_.end())
+      MarkerSets::iterator it = findSetByName(set);
+      if (it != markerSets_.end())
          activeSet_ = set;
    }
 
    void setActiveMarkers(const module_context::SourceMarkerSet& markerSet)
    {
+      // set active set
       activeSet_ = markerSet.name;
-      markerSets_[markerSet.name] = markerSet;
+
+      // update or append as appropriate
+      MarkerSets::iterator it = findSetByName(markerSet.name);
+      if (it != markerSets_.end())
+         *it = markerSet;
+      else
+         markerSets_.push_back(markerSet);
    }
 
    void clearActiveMarkers()
    {
-      markerSets_.erase(activeSet_);
+      // remove the active set
+      MarkerSets::iterator it = findSetByName(activeSet_);
+      if (it != markerSets_.end())
+         markerSets_.erase(it);
       activeSet_.clear();
+
+      // if there are still more sets left then reset the active set
+      // to the last set in the list
       if (markerSets_.size() > 0)
-         activeSet_ = markerSets_.begin()->first;
+         activeSet_ = markerSets_.back().name;
    }
 
 public:
    Error readFromJson(const json::Object& asJson)
    {
       std::string activeSet;
-      json::Object setsJson;
+      json::Array setsJson;
       Error error = json::readObject(asJson,
                                      "active_set", &activeSet,
                                      "sets", &setsJson);
@@ -103,15 +123,14 @@ public:
 
       MarkerSets markerSets;
 
-      BOOST_FOREACH(const json::Object::value_type& setJson, setsJson)
+      BOOST_FOREACH(const json::Value& setJson, setsJson)
       {
-         std::string name = setJson.first;
-         json::Value markerSetJson = setJson.second;
-         if (json::isType<json::Object>(markerSetJson))
+         if (json::isType<json::Object>(setJson))
          {
-            std::string basePath;
+            std::string name, basePath;
             json::Array markersJson;
-            Error error = json::readObject(markerSetJson.get_obj(),
+            Error error = json::readObject(setJson.get_obj(),
+                                           "name", &name,
                                            "base_path", &basePath,
                                            "markers", &markersJson);
             if (error)
@@ -160,10 +179,8 @@ public:
                        resolveAliasedPath(basePath) :
                        FilePath();
 
-            markerSets[name] = SourceMarkerSet(name, base, markers);
+            markerSets.push_back(SourceMarkerSet(name, base, markers));
          }
-
-
       }
 
       activeSet_ = activeSet;
@@ -176,11 +193,11 @@ public:
    {
       json::Object obj;
       obj["active_set"] = activeSet_;
-      json::Object setsJson;
-      BOOST_FOREACH(const MarkerSets::value_type& set, markerSets_)
-      {
-         setsJson[set.first] = sourceMarkerSetAsJson(set.second);
-      }
+      json::Array setsJson;
+      std::transform(markerSets_.begin(),
+                     markerSets_.end(),
+                     std::back_inserter(setsJson),
+                     sourceMarkerSetAsJson);
       obj["sets"] = setsJson;
 
       return obj;
@@ -198,17 +215,17 @@ public:
       {
          // names
          json::Array namesJson;
-         BOOST_FOREACH(const MarkerSets::value_type& set, markerSets_)
+         BOOST_FOREACH(const module_context::SourceMarkerSet& set, markerSets_)
          {
-            namesJson.push_back(set.first);
+            namesJson.push_back(set.name);
          }
 
          // markers for active set
-         MarkerSets::const_iterator it = markerSets_.find(activeSet_);
+         MarkerSets::const_iterator it = findSetByName(activeSet_);
          if (it != markerSets_.end())
          {
             obj["names"] = namesJson;
-            obj["markers"] = sourceMarkerSetAsJson(it->second);
+            obj["markers"] = sourceMarkerSetAsJson(*it);
          }
       }
 
@@ -216,8 +233,24 @@ public:
    }
 
 private:
+   typedef std::vector<module_context::SourceMarkerSet> MarkerSets;
+   MarkerSets::const_iterator findSetByName(const std::string& name) const
+   {
+      return std::find_if(markerSets_.begin(),
+                          markerSets_.end(),
+                          boost::bind(isNamed, _1, name));
+   }
+
+   MarkerSets::iterator findSetByName(const std::string& name)
+   {
+      return std::find_if(markerSets_.begin(),
+                          markerSets_.end(),
+                          boost::bind(isNamed, _1, name));
+   }
+
+
+private:
    std::string activeSet_;
-   typedef std::map<std::string,module_context::SourceMarkerSet> MarkerSets;
    MarkerSets markerSets_;
 };
 
@@ -293,7 +326,7 @@ Error clearActiveMarkerSet(const core::json::JsonRpcRequest& request,
 }
 
 
-SEXP rs_showMarkers()
+SEXP rs_showMarkers(SEXP nameSEXP)
 {
    using namespace module_context;
    std::vector<SourceMarker> markers;
@@ -304,7 +337,7 @@ SEXP rs_showMarkers()
                                   "you did this totally wrong",
                                   true));
 
-   SourceMarkerSet markerSet("cpp-errors",
+   SourceMarkerSet markerSet(r::sexp::safeAsString(nameSEXP),
                              resolveAliasedPath("~"),
                              markers);
 
@@ -315,7 +348,7 @@ SEXP rs_showMarkers()
 
 FilePath sourceMarkersFilePath()
 {
-   return module_context::scopedScratchPath().childPath("source_markers");
+   return module_context::scopedScratchPath().childPath("source_markers_db");
 }
 
 void readSourceMarkers()
@@ -374,7 +407,7 @@ Error initialize()
    events().onShutdown.connect(writeSourceMarkers);
 
    // register R api
-   RS_REGISTER_CALL_METHOD(rs_showMarkers, 0);
+   RS_REGISTER_CALL_METHOD(rs_showMarkers, 1);
 
    // complete initialization
    using boost::bind;

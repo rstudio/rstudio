@@ -42,7 +42,6 @@ import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersSer
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersSet;
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersState;
 
-// TODO: bug: after a clear we can't re-show
 // TOOO: R API
 
 public class MarkersOutputPresenter extends BasePresenter

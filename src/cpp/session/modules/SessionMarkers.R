@@ -13,6 +13,6 @@
 #
 #
 
-.rs.addFunction("showMarkers", function() {
-   invisible(.Call("rs_showMarkers"))
+.rs.addFunction("showMarkers", function(name) {
+   invisible(.Call("rs_showMarkers", name))
 })
