@@ -174,7 +174,7 @@ std::ostream& operator<<(std::ostream& os, const ErrorLocation& location);
 } // namespace core 
 } // namespace rstudio
 
-#define ERROR_LOCATION core::ErrorLocation( \
+#define ERROR_LOCATION rstudio::core::ErrorLocation( \
       BOOST_CURRENT_FUNCTION,__FILE__,__LINE__)
 
 #define CATCH_UNEXPECTED_EXCEPTION \
