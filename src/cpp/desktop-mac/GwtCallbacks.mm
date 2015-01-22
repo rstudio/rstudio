@@ -904,6 +904,15 @@ private:
           boost::algorithm::starts_with(version, "10.10");
 }
 
+- (void) prepareSatelliteNavigate: (NSString*) name
+                              url: (NSString*) url
+{
+   WebViewController* controller =
+      [WebViewController windowNamed: name];
+   if (controller)
+      [controller prepareExternalNavigate: url];
+}
+
 // On Mavericks we need to tell the OS that we are busy so that
 // AppNap doesn't kick in. Declare a local version of NSActivityOptions
 // so we can build this on non-Mavericks systems
@@ -1092,6 +1101,8 @@ enum RS_NSActivityOptions : uint64_t
       return @"setWindowTitle";
    else if (sel == @selector(reloadViewerZoomWindow:))
       return @"reloadViewerZoomWindow";
+   else if (sel == @selector(prepareSatelliteNavigate:url:))
+      return @"prepareSatelliteNavigate";
   
    return nil;
 }

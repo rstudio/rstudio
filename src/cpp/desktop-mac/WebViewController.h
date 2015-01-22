@@ -13,6 +13,8 @@
    NSString* clientName_;
    NSURL* baseUrl_;
    NSString* viewerUrl_;
+   NSString* externalNavUrl_;
+   bool allowAllExternalNav_;
 }
 
 + (WebViewController*) windowNamed: (NSString*) name;
@@ -22,7 +24,6 @@
 + (void) prepareForSatelliteWindow: (NSString*) name
                              width: (int) width
                             height: (int) height;
-
 
 // The designated initializer
 - (id)initWithURLRequest: (NSURLRequest*) request
@@ -49,6 +50,9 @@
 
 // evaluate javascript
 - (id) evaluateJavaScript: (NSString*) js;
+
+// prepare to navigate to an external url (once)
+- (void) prepareExternalNavigate: (NSString*) url;
 
 @end
 

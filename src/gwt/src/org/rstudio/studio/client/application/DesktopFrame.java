@@ -150,4 +150,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void setWindowTitle(String title);
    
    void installRtools(String version, String installerPath);
+   
+   void prepareSatelliteNavigate(String windowName, String url);
 }

@@ -42,6 +42,20 @@ struct PendingSatelliteWindow
    int height;
 };
 
+NSString* authorityFromUrl (NSString* url)
+{
+   // extract the authority (domain and port) from the URL:
+   // e.g. for http://foo:8402/bar/baz.html, extract http://foo:8402/
+   NSURL* authorityUrl = [NSURL URLWithString: url];
+   NSString* port = @"";
+   if ([authorityUrl port] != nil) {
+      port = [NSString stringWithFormat: @":%@", [authorityUrl port]];
+   }
+   NSString* prefix = [NSString stringWithFormat: @"%@://%@%@/",
+                       [authorityUrl scheme], [authorityUrl host], port];
+   return prefix;
+}
+
 // get access to private webview zoom apis
 @interface WebView (Zoom)
 - (IBAction)zoomPageIn:(id)sender;
@@ -79,7 +93,6 @@ static PendingSatelliteWindow pendingWindow_;
       [[controller window] makeKeyAndOrderFront: self];
 }
 
-
 - (WebView*) webView
 {
    return webView_;
@@ -90,6 +103,8 @@ static PendingSatelliteWindow pendingWindow_;
    [name_ release];
    [webView_ release];
    [baseUrl_ release];
+   [viewerUrl_ release];
+   [externalNavUrl_ release];
    [super dealloc];
 }
 
@@ -162,7 +177,7 @@ static PendingSatelliteWindow pendingWindow_;
          clientName_ = [clientName copy];
       }
       
-      // set fullscreen mode (defualt to non-primary)
+      // set fullscreen mode (default to non-primary)
       desktop::utils::enableFullscreenMode(window, false);
       
    }
@@ -222,17 +237,7 @@ static PendingSatelliteWindow pendingWindow_;
          return;
       }
       
-      // extract the authority (domain and port) from the URL; we'll agree to
-      // serve requests for the viewer pane that match this prefix.
-      // e.g. for http://foo:8402/bar/baz.html, extract http://foo:8402/
-      NSURL* viewerUrl = [NSURL URLWithString: url];
-      NSString* port = @"";
-      if ([viewerUrl port] != nil) {
-         port = [NSString stringWithFormat: @":%@", [viewerUrl port]];
-      }
-      NSString* prefix = [NSString stringWithFormat: @"%@://%@%@/",
-                          [viewerUrl scheme], [viewerUrl host], port];
-      viewerUrl_ = [prefix retain];
+      viewerUrl_ = [authorityFromUrl(url) retain];
    }
 }
 
@@ -297,6 +302,15 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
    [printOperation runOperation];
 }
 
+// prepareExternalNavigate prepares this controller to accept all navigations
+// providing that the given URL is the next navigation target.
+// the goal is to enable, as securely as possible, the scenario in which we
+// want to show arbitrary web content in a satellite window.
+- (void) prepareExternalNavigate: (NSString *) url
+{
+   [externalNavUrl_ release];
+   externalNavUrl_ = [url retain];
+}
 
 // WebViewController is a self-freeing object so free it when the window closes
 - (void)windowWillClose:(NSNotification *) notification
@@ -361,6 +375,17 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
       return;
    }
    
+   // check to see if we're heading to a whitelisted external URL
+   if (externalNavUrl_ != nil)
+   {
+      if ([[url absoluteString] isEqualToString: externalNavUrl_])
+      {
+         allowAllExternalNav_ = true;
+      }
+      [externalNavUrl_ release];
+      externalNavUrl_ = nil;
+   }
+   
    // ensure this is a supported scheme
    NSString* scheme = [url scheme];
    if (![self isSupportedScheme: scheme])
@@ -403,14 +428,21 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
          [self handleBase64Download: url
                          forElement: [actionInformation
                                       objectForKey:WebActionElementKey]];
+         [listener ignore];
       }
       // show external links in a new window
       else if (navType == WebNavigationTypeLinkClicked)
       {
          desktop::utils::browseURL(url);
+         [listener ignore];
       }
-      
-      [listener ignore];
+      else
+      {
+         if (allowAllExternalNav_)
+            [listener use];
+         else
+            [listener ignore];
+      }
    }
 }
 

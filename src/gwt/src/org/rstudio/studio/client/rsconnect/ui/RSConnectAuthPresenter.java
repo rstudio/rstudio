@@ -14,7 +14,9 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.satellite.Satellite;
+import org.rstudio.studio.client.common.satellite.SatelliteUtils;
 
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
@@ -52,6 +54,10 @@ public class RSConnectAuthPresenter implements IsWidget
    
    public void showClaimUrl(String serverName, String url)
    {
+      if (Desktop.isDesktop())
+         Desktop.getFrame().prepareSatelliteNavigate(
+               SatelliteUtils.getSatelliteWindowName(
+                     RSConnectAuthSatellite.NAME), url);
       view_.showClaimUrl(serverName, url);
    }
    

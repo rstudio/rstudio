@@ -23,7 +23,7 @@ public class RSConnectAuthUser extends JavaScriptObject
    }
    
    public final native boolean isValidUser() /*-{
-      return this.hasOwnProperty("id");
+      return this !== null && this.hasOwnProperty("id");
    }-*/;
    
    public final native int getId() /*-{
