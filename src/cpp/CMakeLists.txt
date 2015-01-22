@@ -171,9 +171,6 @@ endif()
 # add boost as system include directory
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
-# add cpp test dir as system include directory
-include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/tests/cpp)
-
 # automatically build addins found in the addins subdirectory
 # (if another path wasn't already specified)
 if(NOT RSTUDIO_ADDINS_PATH)
@@ -186,8 +183,8 @@ endif()
 # core library
 add_subdirectory(core)
 
-# test executable
-add_subdirectory(tests/cpp)
+# test directory
+set(TESTS_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp" CACHE STRING "Test includes")
 
 # are we in CORE_DEV mode? if so then just add the core/dev project
 # otherwise, add the rest of our projects
@@ -236,6 +233,8 @@ else()
 
       # initialize subdirectories
       file(MAKE_DIRECTORY conf)
+
+      configure_file(rstudio-tests.in ${CMAKE_CURRENT_BINARY_DIR}/rstudio-tests)
 
       # add desktop subprojects if we aren't building in server only mode
       if(RSTUDIO_DESKTOP)

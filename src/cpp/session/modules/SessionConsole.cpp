@@ -143,7 +143,8 @@ SEXP rs_getPendingInput()
    
 Error initialize()
 {    
-   if (!session::options().verifyInstallation())
+   if (!(session::options().verifyInstallation() ||
+         session::options().runTests()))
    {
       // capture standard streams
       Error error = initializeOutputCapture();

@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+
+echo Running 'core' tests...
+${CMAKE_CURRENT_BINARY_DIR}/core/rstudio-core-tests
+
+echo Running 'rsession' tests...
+${CMAKE_CURRENT_BINARY_DIR}/session/rsession \
+    --run-tests \
+    --config-file=${CMAKE_CURRENT_BINARY_DIR}/conf/rsession-dev.conf

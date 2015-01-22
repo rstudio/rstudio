@@ -270,6 +270,7 @@ endif()
 include_directories(
    ${CORE_INCLUDE_DIRS}
    ${CMAKE_CURRENT_BINARY_DIR}
+   ${TESTS_INCLUDE_DIR}
 )
 
 # define shared library
@@ -285,20 +286,15 @@ target_link_libraries(
 # define executable (for running unit tests)
 if (RSTUDIO_UNIT_TESTS_ENABLED)
 
-  file(GLOB_RECURSE CORE_TEST_FILES "*Tests.cpp")
+   file(GLOB_RECURSE CORE_TEST_FILES "*Tests.cpp")
 
-  add_executable(rstudio-core-bin
-     TestMain.cpp
-     ${CORE_TEST_FILES}
-     ${CORE_HEADER_FILES}
+   add_executable(rstudio-core-tests
+      TestMain.cpp
+      ${CORE_TEST_FILES}
+      ${CORE_HEADER_FILES}
    )
 
-   set_target_properties(rstudio-core-bin
-      PROPERTIES
-         OUTPUT_NAME rstudio-core
-   )
-
-   target_link_libraries(rstudio-core-bin
+   target_link_libraries(rstudio-core-tests
       rstudio-core
       rstudio-core-synctex
       rstudio-core-hunspell

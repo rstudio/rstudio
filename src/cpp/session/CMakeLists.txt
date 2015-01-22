@@ -267,6 +267,7 @@ include_directories(
    ${MONITOR_SOURCE_DIR}/include
    ${R_SOURCE_DIR}/include
    ${CMAKE_CURRENT_BINARY_DIR}
+   ${TESTS_INCLUDE_DIR}
 )
 
 # link directories

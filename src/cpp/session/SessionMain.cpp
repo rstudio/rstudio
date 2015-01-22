@@ -2990,10 +2990,13 @@ int main (int argc, char * const argv[])
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
       
-      // start http connection listener
-      error = startHttpConnectionListener();
-      if (error)
-         return sessionExitFailure(error, ERROR_LOCATION);
+      // start http connection listener (TODO: not if running tests)
+      if (!rsession::options().runTests())
+      {
+         error = startHttpConnectionListener();
+         if (error)
+            return sessionExitFailure(error, ERROR_LOCATION);
+      }
 
       // run optional preflight script -- needs to be after the http listeners
       // so the proxy server sees that we have startup up
@@ -3018,8 +3021,7 @@ int main (int argc, char * const argv[])
       // we've gotten through startup so let's log a start event
       using namespace monitor;
       client().logEvent(Event(kSessionScope, kSessionStartEvent));
-
-
+      
       // install home and doc dir overrides if requested (for debugger mode)
       if (!options.rHomeDirOverride().empty())
          core::system::setenv("R_HOME", options.rHomeDirOverride());

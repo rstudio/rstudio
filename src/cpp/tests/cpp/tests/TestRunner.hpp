@@ -33,16 +33,19 @@ namespace tests {
 
 int run()
 {
+   // pass some dummy arguments to Catch
    int argc = 1;
-   char* argv[1];
-   argv[0] = "tests";
-   return Catch::Session().run(argc, argv);
+   
+   // avoid deprecation warnings by initializing as const char*
+   const char* argv[1] = { "catch-unit-tests" };
+   return Catch::Session().run(argc, const_cast<char**>(argv));
 }
 
 #else // not RSTUDIO_UNIT_TESTS_ENABLED
 
-int run(int argc, char* const argv[])
+int run()
 {
+   return -1;
 }
 
 #endif // end RSTUDIO_UNIT_TESTS_ENABLED
