@@ -25,7 +25,8 @@
 #include "DesktopOptions.hpp"
 #include "desktop-config.h"
 
-using namespace core;
+using namespace rstudio::core;
+using namespace rstudio::desktop;
 
 AboutDialog::AboutDialog(QWidget *parent) :
       QDialog(parent, Qt::Dialog),
@@ -42,13 +43,13 @@ AboutDialog::AboutDialog(QWidget *parent) :
    setWindowModality(Qt::ApplicationModal);
 
    // read notice file
-   FilePath supportingFilePath = desktop::options().supportingFilePath();
+   FilePath supportingFilePath = options().supportingFilePath();
    FilePath noticePath = supportingFilePath.complete("NOTICE");
    std::string notice;
    Error error = readStringFromFile(noticePath, &notice);
    if (!error)
    {
-      ui->textBrowser->setFontFamily(desktop::options().fixedWidthFont());
+      ui->textBrowser->setFontFamily(options().fixedWidthFont());
 #ifdef Q_OS_MACX
       ui->textBrowser->setFontPointSize(11);
 #else

@@ -16,6 +16,7 @@
 #include <core/StringUtils.hpp>
 #include <core/system/ShellUtils.hpp>
 
+namespace rstudio {
 namespace core {
 namespace shell_utils {
 
@@ -79,5 +80,6 @@ const FilePath& devnull()
    return s_devnull;
 }
 
+}
 }
 }

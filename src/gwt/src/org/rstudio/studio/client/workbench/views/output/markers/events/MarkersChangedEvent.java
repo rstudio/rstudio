@@ -1,5 +1,5 @@
 /*
- * ShowMarkersEvent.java
+ * MarkersChangedEvent.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -14,20 +14,48 @@
  */
 package org.rstudio.studio.client.workbench.views.output.markers.events;
 
+import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersState;
+
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ShowMarkersEvent extends GwtEvent<ShowMarkersEvent.Handler>
+public class MarkersChangedEvent extends GwtEvent<MarkersChangedEvent.Handler>
 {
+   static public class Data extends JavaScriptObject
+   {
+      protected Data()
+      {
+      }
+      
+      public native final MarkersState getMarkersState() /*-{
+         return this.markers_state;
+      }-*/;
+      
+      public native final int getAutoSelect() /*-{
+         return this.auto_select;
+      }-*/;
+   }
+   
    public interface Handler extends EventHandler
    {
-      void onShowMarkers(ShowMarkersEvent event);
+      void onMarkersChanged(MarkersChangedEvent event);
    }
 
-   public ShowMarkersEvent()
+   public MarkersChangedEvent(Data data)
    {
+      data_ = data;
    }
 
+   public MarkersState getMarkersState()
+   {
+      return data_.getMarkersState();
+   }
+   
+   public int getAutoSelect()
+   {
+      return data_.getAutoSelect();
+   }
 
    @Override
    public Type<Handler> getAssociatedType()
@@ -38,8 +66,10 @@ public class ShowMarkersEvent extends GwtEvent<ShowMarkersEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onShowMarkers(this);
+      handler.onMarkersChanged(this);
    }
 
    public static final Type<Handler> TYPE = new Type<Handler>();
+   
+   private final Data data_;
 }

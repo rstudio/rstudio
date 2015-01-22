@@ -19,6 +19,7 @@
 #include <core/Error.hpp>
 #include <boost/function.hpp>
 
+namespace rstudio {
 namespace core {
 namespace parent_process_monitor {
 
@@ -35,5 +36,6 @@ ParentTermination waitForParentTermination();
 
 } // namespace parent_process_monitor
 } // namespace core
+} // namespace rstudio
 
 #endif // PARENT_PROCESS_MONITOR_HPP

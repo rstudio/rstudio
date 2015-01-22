@@ -37,8 +37,9 @@
 #include "RGraphicsDevice.hpp"
 #include "RGraphicsPlotManipulatorManager.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace r {
 namespace session {  
 namespace graphics {
@@ -882,6 +883,7 @@ std::string PlotManager::emptyImageFilename() const
 } // namespace graphics
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 
 

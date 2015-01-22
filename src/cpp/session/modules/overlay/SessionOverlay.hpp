@@ -16,10 +16,13 @@
 #ifndef SESSION_OVERLAY_HPP
 #define SESSION_OVERLAY_HPP
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
 
+namespace rstudio {
 namespace session {
 namespace modules {
 namespace overlay {
@@ -29,6 +32,7 @@ core::Error initialize();
 } // namespace overlay
 } // namespace modules
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_OVERLAY_HPP
 

@@ -26,8 +26,9 @@
 
 #include "ServerAppArmor.hpp"
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace server {
 
 namespace {
@@ -329,3 +330,4 @@ void Options::resolvePath(const FilePath& basePath,
 }
 
 } // namespace server
+} // namespace rstudio

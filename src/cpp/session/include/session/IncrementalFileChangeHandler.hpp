@@ -32,6 +32,7 @@
 
 #include <session/projects/SessionProjects.hpp>
 
+namespace rstudio {
 namespace session {
 
 class IncrementalFileChangeHandler : boost::noncopyable
@@ -79,7 +80,7 @@ public:
    void enqueFiles(ForwardIterator begin, ForwardIterator end)
    {
       // add all files that meet the filter to the queue
-      using namespace core::system;
+      using namespace rstudio::core::system;
       for ( ; begin != end; ++begin)
       {
          if (filter_(*begin))
@@ -180,6 +181,7 @@ private:
 
 
 } // namespace session
+} // namespace rstudio
 
 
 #endif // SESSION_INCREMENTAL_FILE_CHANGE_HANDLER_HPP

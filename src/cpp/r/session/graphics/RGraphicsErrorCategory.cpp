@@ -15,8 +15,9 @@
 
 #include <r/session/RGraphics.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace r {
 namespace session {
 namespace graphics {
@@ -83,3 +84,4 @@ std::string RGraphicsErrorCategory::message( int ev ) const
 } // namespace graphics
 } // namespace session
 } // namespace r
+} // namespace rstudio

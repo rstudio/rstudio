@@ -16,10 +16,13 @@
 #ifndef SESSION_PACKAGES_HPP
 #define SESSION_PACKAGES_HPP
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
  
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace packages {
@@ -30,5 +33,6 @@ void enquePackageStateChanged();
 } // namespace packages
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_PACKAGES_HPP

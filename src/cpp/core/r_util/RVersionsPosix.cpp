@@ -31,6 +31,7 @@
 #define kRScriptPath "Resources/bin/R"
 #endif
 
+namespace rstudio {
 namespace core {
 namespace r_util {
 
@@ -147,7 +148,7 @@ std::vector<RVersion> enumerateRVersions(
    {
       if (!versionPath.isHidden() && (versionPath.filename() != "Current"))
       {
-         using namespace core::system;
+         using namespace rstudio::core::system;
          core::system::Options env;
          FilePath rHomePath = versionPath.childPath("Resources");
          FilePath rLibPath = rHomePath.childPath("lib");
@@ -286,6 +287,7 @@ RVersion selectVersion(const RVersionInfo& matchVersion,
 
 } // namespace r_util
 } // namespace core 
+} // namespace rstudio
 
 
 

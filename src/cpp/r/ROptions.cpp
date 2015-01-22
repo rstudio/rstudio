@@ -23,8 +23,9 @@
 
 #include <r/RExec.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace r {
 namespace options {
       
@@ -82,6 +83,7 @@ SEXP setErrorOption(SEXP value)
 
 } // namespace options   
 } // namespace r
+} // namespace rstudio
 
 
 

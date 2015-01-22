@@ -33,8 +33,9 @@
 
 #define kMaxDeploymentSize 104857600
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace rsconnect {
@@ -180,4 +181,5 @@ Error initialize()
 } // namespace rsconnect
 } // namespace modules
 } // namespace session
+} // namespace rstudio
 

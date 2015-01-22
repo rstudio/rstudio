@@ -30,10 +30,11 @@
 
 #include "DesktopUtils.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
 extern QString sharedSecret;
 
+namespace rstudio {
 namespace desktop {
 
 namespace {
@@ -341,4 +342,5 @@ void WebPage::setViewerUrl(const QString& viewerUrl)
                 url.authority() + QString::fromUtf8("/");
 }
 
+}
 }

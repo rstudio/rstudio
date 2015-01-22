@@ -34,6 +34,7 @@
 
 #include "config.h"
 
+namespace rstudio {
 namespace core {
 namespace system {
 namespace user {
@@ -146,4 +147,5 @@ Error userFromId(uid_t uid, User* pUser)
 } // namespace user
 } // namespace system
 } // namespace core
+} // namespace rstudio
 

@@ -28,8 +28,9 @@
 #include "SessionErrors.hpp"
 #include "SessionBreakpoints.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules {
 namespace errors {
@@ -219,5 +220,6 @@ Error initialize()
 } // namespace errors
 } // namespace modules
 } // namespace session
+} // namespace rstudio
 
 

@@ -33,8 +33,9 @@
 #include <session/SessionUserSettings.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules {   
 namespace find {
@@ -589,3 +590,4 @@ core::Error initialize()
 } // namespace find
 } // namespace modules
 } // namespace session
+} // namespace rstudio

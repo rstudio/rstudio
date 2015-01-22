@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.output.markers.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 
 public class MarkersState extends JavaScriptObject
 {
@@ -25,5 +26,13 @@ public class MarkersState extends JavaScriptObject
 
    public native final boolean isVisible() /*-{
       return this.visible;
+   }-*/;
+   
+   public native final JsArrayString getMarkersSetNames() /*-{
+      return this.names;
+   }-*/;
+   
+   public native final MarkersSet getMarkersSet() /*-{
+      return this.markers;
    }-*/;
 }

@@ -123,6 +123,7 @@ struct DevDescVersion9
 
 } // extern "C"
 
+namespace rstudio {
 namespace r {
 namespace session {
 namespace graphics {
@@ -169,6 +170,7 @@ void text(double x,
 } // namespace graphics
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 
 

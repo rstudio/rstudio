@@ -14,16 +14,21 @@
  */
 package org.rstudio.studio.client.workbench.views.output.markers;
 
+
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
-import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.*;
+import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerList;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersSet;
+import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersState;
 
 public class MarkersOutputPane extends WorkbenchPane
       implements MarkersOutputPresenter.Display
@@ -32,14 +37,43 @@ public class MarkersOutputPane extends WorkbenchPane
    public MarkersOutputPane()
    {
       super("Markers");
+      markerSetsToolbarButton_ = new MarkerSetsToolbarButton();
+      markerList_ = new SourceMarkerList();
       ensureWidget();
    }
+   
+   @Override
+   public void update(MarkersState markerState, int autoSelect)
+   {
+      // update list and toolbar button
+      MarkersSet markersSet = markerState.getMarkersSet();
+      markerList_.clear();
+      if (markersSet != null)
+      {
+         markerList_.showMarkers(null,
+                                 markersSet.getBasePath(),
+                                 markersSet.getMarkers(), 
+                                 autoSelect);
+         
+         markerSetsToolbarButton_.updateActiveMarkerSet(markersSet.getName());
+      }
+      else
+      {
+         markerSetsToolbarButton_.updateActiveMarkerSet(null);
+      }
+      
+      // update underlying set of choices
+      markerSetsToolbarButton_.updateAvailableMarkerSets(
+            JsUtil.toStringArray(markerState.getMarkersSetNames()));
+   }
+
 
    @Override
    protected Toolbar createMainToolbar()
    {
       Toolbar toolbar = new Toolbar();
-
+      toolbar.addLeftWidget(new ToolbarLabel("Showing:"));
+      toolbar.addLeftWidget(markerSetsToolbarButton_);
 
       return toolbar;
    }
@@ -47,7 +81,7 @@ public class MarkersOutputPane extends WorkbenchPane
    @Override
    protected Widget createMainWidget()
    {
-      return new Label("Markers");
+      return markerList_;
    }
 
    @Override
@@ -55,12 +89,19 @@ public class MarkersOutputPane extends WorkbenchPane
    {
       fireEvent(new EnsureVisibleEvent(activate));
    }
+   
+   @Override
+   public HandlerRegistration addValueChangeHandler(ValueChangeHandler<String> handler)
+   {
+      return markerSetsToolbarButton_.addValueChangeHandler(handler);
+   }
 
    @Override
    public HandlerRegistration addSelectionCommitHandler(SelectionCommitHandler<CodeNavigationTarget> handler)
    {
-      return addHandler(handler, SelectionCommitEvent.getType());
+      return markerList_.addSelectionCommitHandler(handler);
    }
-
    
+   private SourceMarkerList markerList_;
+   private MarkerSetsToolbarButton markerSetsToolbarButton_;
 }

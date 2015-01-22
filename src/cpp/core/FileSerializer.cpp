@@ -27,6 +27,7 @@
 #include <core/FilePath.hpp>
 #include <core/StringUtils.hpp>
 
+namespace rstudio {
 namespace core {
 
 std::string stringifyStringPair(const std::pair<std::string,std::string>& pair)
@@ -257,4 +258,5 @@ bool stripBOM(std::string* pStr)
 }
 
 } // namespace core
+} // namespace rstudio
 

@@ -18,10 +18,13 @@
 
 #include <core/json/Json.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
 
+namespace rstudio {
 namespace session {
 namespace modules {
 namespace errors {
@@ -40,5 +43,6 @@ core::json::Value errorStateAsJson();
 } // namespace errors
 } // namepace modules
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSIONERRORS_HPP

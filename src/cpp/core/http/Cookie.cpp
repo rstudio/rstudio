@@ -21,6 +21,7 @@
 
 using namespace boost::gregorian ;
 
+namespace rstudio {
 namespace core {
 namespace http {
 
@@ -103,3 +104,4 @@ std::string Cookie::cookieHeaderValue() const
 
 } // namespace http
 } // namespace core
+} // namespace rstudio

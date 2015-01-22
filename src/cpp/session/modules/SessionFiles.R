@@ -38,6 +38,15 @@
    list.files(path, pattern = pattern, recursive = TRUE)
 })
 
+.rs.addJsonRpcHandler("ensure_file_exists", function(path)
+{
+   if (!file.exists(path))
+      if (!file.create(path, recursive = TRUE))
+         return(.rs.scalar(FALSE))
+   
+   .rs.scalar(identical(file.info(path)$isdir, FALSE))
+})
+
 .rs.addFunction("scanFiles", function(path,
                                       pattern,
                                       asRelativePath = TRUE,

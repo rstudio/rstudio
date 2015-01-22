@@ -25,10 +25,13 @@
 
 #include "RGraphicsTypes.hpp"
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
 
+namespace rstudio {
 namespace r {
 namespace session {
 namespace graphics {
@@ -92,6 +95,7 @@ private:
 } // namespace graphics
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 #endif // R_SESSION_GRAPHICS_PLOT_MANIPULATOR_MANAGER_HPP
 

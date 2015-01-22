@@ -22,6 +22,7 @@
 #include <core/Log.hpp>
 #include <core/Thread.hpp>
 
+namespace rstudio {
 namespace core {
 namespace http {
 
@@ -251,4 +252,5 @@ std::ostream& operator << (std::ostream& stream, const Request& r)
 
 } // namespacce http
 } // namespace core
+} // namespace rstudio
 

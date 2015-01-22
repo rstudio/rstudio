@@ -921,6 +921,7 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "get_file_contents", paramArray, requestCallback);
    }
 
+   @Override
    public void listFiles(
                   FileSystemItem directory,
                   boolean monitor,
@@ -1241,6 +1242,15 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, GET_NEW_PROJECT_CONTEXT, callback);
    }
    
+   @Override
+   public void executeRCode(String code,
+                            ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0,  new JSONString(code));
+      sendRequest(RPC_SCOPE, EXECUTE_R_CODE, params, requestCallback);
+   }
+   
    public void createProject(String projectFile,
                              NewPackageOptions newPackageOptions,
                              NewShinyAppOptions newShinyAppOptions,
@@ -1527,6 +1537,14 @@ public class RemoteServer implements Server
       params.set(2, new JSONString(objName));
       params.set(3, new JSONString(cacheKey));
       sendRequest(RPC_SCOPE, DUPLICATE_DATA_VIEW, params, requestCallback);
+   }
+   
+   public void ensureFileExists(String path,
+                                ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+      sendRequest(RPC_SCOPE, ENSURE_FILE_EXISTS, params, requestCallback);
    }
 
    public void detectFreeVars(String code,
@@ -3877,9 +3895,16 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void clearAllMarkers(ServerRequestCallback<Void> requestCallback)
+   public void markersTabClosed(ServerRequestCallback<Void> requestCallback)
    {
-      sendRequest(RPC_SCOPE, "clear_all_markers", requestCallback);
+      sendRequest(RPC_SCOPE, "markers_tab_closed", requestCallback);
+   }
+   
+   @Override
+   public void updateActiveMarkerSet(String set,
+                                     ServerRequestCallback<Void> callback)
+   {
+      sendRequest(RPC_SCOPE, "update_active_marker_set", set, callback);
    }
    
    private String clientId_;
@@ -3998,6 +4023,8 @@ public class RemoteServer implements Server
    private static final String LOCATOR_COMPLETED = "locator_completed";
    private static final String SET_MANIPULATOR_VALUES = "set_manipulator_values";
    private static final String MANIPULATOR_PLOT_CLICKED = "manipulator_plot_clicked";
+   
+   private static final String EXECUTE_R_CODE = "execute_r_code";
 
    private static final String GET_NEW_PROJECT_CONTEXT = "get_new_project_context";
    private static final String CREATE_PROJECT = "create_project";
@@ -4028,6 +4055,7 @@ public class RemoteServer implements Server
    private static final String SET_DOC_ORDER = "set_doc_order";
    private static final String REMOVE_CACHED_DATA = "remove_cached_data";
    private static final String DUPLICATE_DATA_VIEW = "duplicate_data_view";
+   private static final String ENSURE_FILE_EXISTS = "ensure_file_exists";
 
    private static final String GET_RECENT_HISTORY = "get_recent_history";
    private static final String GET_HISTORY_ITEMS = "get_history_items";

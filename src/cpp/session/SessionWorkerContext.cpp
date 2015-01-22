@@ -22,8 +22,9 @@
 #include <session/SessionClientEvent.hpp>
 #include <session/SessionModuleContext.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace worker_context {
 
@@ -42,3 +43,4 @@ Error registerWorkerRpcMethod(const std::string& name,
 
 } // namespace worker_context
 } // namespace session
+} // namespace rstudio

@@ -65,8 +65,9 @@
 
 #endif
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace session {  
 namespace modules {
 namespace code_search {
@@ -417,7 +418,7 @@ public:
    void enqueFiles(ForwardIterator begin, ForwardIterator end)
    {
       // add all files to the indexing queue
-      using namespace core::system;
+      using namespace rstudio::core::system;
       for ( ; begin != end; ++begin)
       {
          FileChangeEvent addEvent(FileChangeEvent::FileAdded, *begin);
@@ -730,7 +731,7 @@ private:
 
    bool dequeAndIndex()
    {
-      using namespace core::system;
+      using namespace rstudio::core::system;
 
       if (!indexingQueue_.empty())
       {
@@ -2207,7 +2208,7 @@ SEXP rs_scoreMatches(SEXP suggestionsSEXP,
 
 SEXP rs_getSourceFileLibraryCompletions(SEXP packagesSEXP)
 {
-   using namespace core::r_util;
+   using namespace rstudio::core::r_util;
 
    std::vector<std::string> packages;
    if (!r::sexp::fillVectorString(packagesSEXP, &packages))
@@ -2448,3 +2449,4 @@ Error initialize()
 } // namespace code_search
 } // namespace modules
 } // namespace session
+} // namespace rstudio

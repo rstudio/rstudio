@@ -20,6 +20,7 @@
 
 #include <R_ext/Rdynload.h>
 
+namespace rstudio {
 namespace r {
 namespace routines {
 
@@ -38,11 +39,12 @@ void registerAll();
       callMethodDef.name = #__NAME__;                                          \
       callMethodDef.fun = (DL_FUNC) __NAME__;                                  \
       callMethodDef.numArgs = __NUM_ARGS__;                                    \
-      ::r::routines::addCallMethod(callMethodDef);                             \
+      ::rstudio::r::routines::addCallMethod(callMethodDef);                    \
    } while (0)
 
 } // namespace routines   
 } // namespace r
+} // namespace rstudio
 
 
 #endif // R_ROUTINES_HPP 

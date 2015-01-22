@@ -19,6 +19,7 @@
 
 #include "DesktopGwtCallback.hpp"
 
+namespace rstudio {
 namespace desktop {
 
 
@@ -75,3 +76,4 @@ void SatelliteWindow::onActivated()
 
 
 } // namespace desktop
+} // namespace rstudio

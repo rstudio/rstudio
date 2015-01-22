@@ -34,8 +34,9 @@
 
 #include "SessionVCS.hpp"
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace files {
@@ -205,4 +206,5 @@ Error FilesListingMonitor::listFiles(const FilePath& rootPath,
 } // namepsace files
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

@@ -25,8 +25,9 @@
 #include "DesktopUtils.hpp"
 #include "DesktopOptions.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace desktop {
 namespace synctex {
 
@@ -123,3 +124,4 @@ void SumatraSynctex::view(const QString& pdfFile, int pdfPage)
 
 } // namesapce synctex
 } // namespace desktop
+} // namespace rstudio

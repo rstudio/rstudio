@@ -30,8 +30,9 @@
 #include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace spelling {
@@ -186,7 +187,7 @@ Error addCustomDictionary(const json::JsonRpcRequest& request,
    }
 
    // perform the add
-   using namespace core::spelling;
+   using namespace rstudio::core::spelling;
    HunspellDictionaryManager dictManager = hunspellDictionaryManager();
    error = dictManager.custom().add(dictPath);
    if (error)
@@ -210,7 +211,7 @@ Error removeCustomDictionary(const json::JsonRpcRequest& request,
       return error;
 
    // perform the remove
-   using namespace core::spelling;
+   using namespace rstudio::core::spelling;
    HunspellDictionaryManager dictManager = hunspellDictionaryManager();
    error = dictManager.custom().remove(name);
    if (error)
@@ -258,7 +259,7 @@ void onUserSettingsChanged()
 
 core::json::Object spellingPrefsContextAsJson()
 {
-   using namespace core::spelling;
+   using namespace rstudio::core::spelling;
 
    core::json::Object contextJson;
 
@@ -297,7 +298,7 @@ Error initialize()
    r::routines::addCallMethod(methodDef);
 
    // initialize spelling engine
-   using namespace core::spelling;
+   using namespace rstudio::core::spelling;
    HunspellSpellingEngine* pHunspell = new HunspellSpellingEngine(
                                              userSettings().spellingLanguage(),
                                              hunspellDictionaryManager(),
@@ -326,4 +327,5 @@ Error initialize()
 } // namespace spelling
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

@@ -17,6 +17,7 @@
 
 #include "DesktopSlotBinders.hpp"
 
+namespace rstudio {
 namespace desktop {
 
 WindowTracker::WindowTracker(QObject *parent) :
@@ -51,3 +52,4 @@ void WindowTracker::onWindowDestroyed(QString key)
 }
 
 } // namespace desktop
+} // namespace rstudio

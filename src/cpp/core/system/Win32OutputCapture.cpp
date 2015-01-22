@@ -27,6 +27,7 @@
 #include <core/BoostThread.hpp>
 #include <core/BoostErrors.hpp>
 
+namespace rstudio {
 namespace core {
 namespace system {
 
@@ -144,4 +145,5 @@ Error captureStandardStreams(
 
 } // namespace system
 } // namespace core
+} // namespace rstudio
 

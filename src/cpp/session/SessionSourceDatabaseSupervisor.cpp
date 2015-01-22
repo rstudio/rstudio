@@ -34,8 +34,9 @@
 #include <session/SessionModuleContext.hpp>
 #include "session/SessionSourceDatabase.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace source_database {
 namespace supervisor {
@@ -402,6 +403,7 @@ Error detachFromSourceDatabase()
 } // namespace supervisor
 } // namespace source_database
 } // namespace session
+} // namespace rstudio
 
 
 

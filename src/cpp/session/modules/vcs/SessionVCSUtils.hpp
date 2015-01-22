@@ -21,6 +21,7 @@
 #include <core/json/Json.hpp>
 #include <core/system/Process.hpp>
 
+namespace rstudio {
 namespace session {
 namespace modules {
 namespace vcs_utils {
@@ -71,6 +72,7 @@ struct RefreshOnExit : public boost::noncopyable
 } // namespace vcs_utils
 } // namespace modules
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_VCS_UTILS_HPP
 

@@ -38,6 +38,7 @@
 #include <core/StringUtils.hpp>
 
 
+namespace rstudio {
 namespace core {
 namespace r_util {
 
@@ -396,5 +397,6 @@ std::string RToken::contentAsUtf8() const
 
 } // namespace r_util
 } // namespace core 
+} // namespace rstudio
 
 

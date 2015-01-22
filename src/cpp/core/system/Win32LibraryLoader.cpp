@@ -19,6 +19,7 @@
 
 #include <core/Error.hpp>
 
+namespace rstudio {
 namespace core {
 namespace system {
 
@@ -102,3 +103,4 @@ Error closeLibrary(void* pLib)
 
 } // namespace system
 } // namespace core
+} // namespace rstudio

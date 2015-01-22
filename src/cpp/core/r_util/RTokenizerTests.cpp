@@ -20,6 +20,7 @@
 #include <boost/assert.hpp>
 #include <boost/foreach.hpp>
 
+namespace rstudio {
 namespace core {
 namespace r_util {
 
@@ -240,5 +241,6 @@ void runTokenizerTests()
 
 } // namespace r_util
 } // namespace core 
+} // namespace rstudio
 
 

@@ -28,8 +28,9 @@
 
 #include "DesktopRVersion.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace desktop {
 
 bool prepareEnvironment(Options &options)
@@ -71,3 +72,4 @@ bool prepareEnvironment(Options &options)
 }
 
 } // namespace desktop
+} // namespace rstudio

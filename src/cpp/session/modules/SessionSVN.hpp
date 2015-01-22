@@ -21,6 +21,7 @@
 
 #include "vcs/SessionVCSCore.hpp"
 
+namespace rstudio {
 namespace session {
 
 namespace console_process {
@@ -74,5 +75,6 @@ core::Error initializeSvn(const core::FilePath& workingDir);
 } // namespace svn
 } // namespace modules
 } // namespace session
+} // namespace rstudio
 
 #endif

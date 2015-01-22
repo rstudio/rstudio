@@ -44,6 +44,7 @@
 
 #endif
 
+namespace rstudio {
 namespace session {
 namespace modules {
 namespace r_completions {
@@ -52,7 +53,7 @@ namespace r_completions {
 bool AsyncRCompletions::s_isUpdating_ = false;
 std::vector<std::string> AsyncRCompletions::s_pkgsToUpdate_;
 
-using namespace core;
+using namespace rstudio::core;
 
 // Class whose destructor ensures state variables in AsyncRCompletions
 // are cleaned up on exit
@@ -62,7 +63,7 @@ public:
 
    ~CompleteUpdateOnExit()
    {
-      using namespace core::r_util;
+      using namespace rstudio::core::r_util;
 
       // Give empty completions to the packages which weren't updated
       for (std::vector<std::string>::const_iterator it = AsyncRCompletions::s_pkgsToUpdate_.begin();
@@ -168,7 +169,7 @@ void AsyncRCompletions::onCompleted(int exitStatus)
 
 void AsyncRCompletions::update()
 {
-   using namespace core::r_util;
+   using namespace rstudio::core::r_util;
    
    if (s_isUpdating_)
       return;
@@ -248,3 +249,4 @@ void AsyncRCompletions::update()
 } // end namespace r_completions
 } // end namespace modules
 } // end namespace session
+}

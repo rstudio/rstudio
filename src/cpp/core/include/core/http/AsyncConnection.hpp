@@ -21,6 +21,7 @@
 
 #include <core/http/Socket.hpp>
 
+namespace rstudio {
 namespace core {
 
 class Error;
@@ -54,5 +55,6 @@ public:
 
 } // namespace http
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_HTTP_ASYNC_CONNECTION_HPP

@@ -18,6 +18,7 @@
 
 #include <boost/lexical_cast.hpp>
 
+namespace rstudio {
 namespace core {
 namespace http {
 
@@ -357,3 +358,4 @@ bool RequestParser::is_digit(int c)
 
 } // namespace http
 } // namespace core
+} // namespace rstudio

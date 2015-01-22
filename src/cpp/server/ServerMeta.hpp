@@ -18,13 +18,16 @@
 
 #include <string>
 
+namespace rstudio {
 namespace core {
    namespace http {
       class Request;
       class Response;
    }
 }
+}
 
+namespace rstudio {
 namespace server {
 namespace meta {
    
@@ -34,6 +37,7 @@ void handleMetaRequest(const std::string& username,
 
 } // namespace meta
 } // namespace server
+} // namespace rstudio
 
 #endif // SERVER_META_HPP
 

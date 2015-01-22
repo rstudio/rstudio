@@ -22,6 +22,7 @@
 
 #include "DesktopGwtCallback.hpp"
 
+namespace rstudio {
 namespace desktop {
 
 class MainWindow;
@@ -59,5 +60,6 @@ private:
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_SATELLITE_WINDOW_HPP

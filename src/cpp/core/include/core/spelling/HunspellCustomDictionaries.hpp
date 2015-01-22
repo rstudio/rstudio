@@ -21,6 +21,7 @@
 
 #include <core/FilePath.hpp>
 
+namespace rstudio {
 namespace core {
 
 class Error;
@@ -53,6 +54,7 @@ private:
 
 } // namespace spelling
 } // namespace core 
+} // namespace rstudio
 
 
 #endif // CORE_SPELLING_HUNSPELL_CUSTOM_DICTIONARIES_HPP

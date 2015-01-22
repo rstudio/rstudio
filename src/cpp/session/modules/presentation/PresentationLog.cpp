@@ -34,8 +34,9 @@
 
 #include "PresentationState.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace presentation {
@@ -366,4 +367,5 @@ void Log::recordQuizResponse(int index, int answer, bool correct)
 } // namespace presentation
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

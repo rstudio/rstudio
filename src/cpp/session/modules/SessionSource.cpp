@@ -52,8 +52,9 @@ extern "C" const char *locale2charset(const char *);
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace source {
@@ -372,7 +373,7 @@ Error saveDocument(const json::JsonRpcRequest& request,
 Error saveDocumentDiff(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
-   using namespace core::string_utils;
+   using namespace rstudio::core::string_utils;
 
    // unique id and jsonPath (can be null for auto-save)
    std::string id;
@@ -1086,7 +1087,7 @@ Error initialize()
 
    // install rpc methods
    using boost::bind;
-   using namespace r::function_hook;
+   using namespace rstudio::r::function_hook;
    ExecBlock initBlock ;
    initBlock.addFunctions()
       (bind(registerRpcMethod, "new_document", newDocument))
@@ -1123,4 +1124,5 @@ Error initialize()
 } // namespace source
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

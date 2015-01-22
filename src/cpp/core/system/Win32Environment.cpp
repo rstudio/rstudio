@@ -24,6 +24,7 @@
 
 #include <core/StringUtils.hpp>
 
+namespace rstudio {
 namespace core {
 namespace system {
 
@@ -112,4 +113,5 @@ void unsetenv(const std::string& name)
 
 } // namespace system
 } // namespace core
+} // namespace rstudio
 

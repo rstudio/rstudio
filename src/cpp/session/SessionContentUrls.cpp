@@ -35,8 +35,9 @@ extern "C" const char *locale2charset(const char *);
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace session {
 namespace content_urls {
 
@@ -247,4 +248,5 @@ Error initialize()
    
 } // namespace content_urls
 } // namesapce session
+} // namespace rstudio
 

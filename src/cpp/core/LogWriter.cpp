@@ -20,6 +20,7 @@
 
 #include <core/DateTime.hpp>
 
+namespace rstudio {
 namespace core {
 
 std::string LogWriter::formatLogEntry(const std::string& programIdentity,
@@ -46,3 +47,4 @@ std::string LogWriter::formatLogEntry(const std::string& programIdentity,
 }
 
 } // namespace core
+} // namespace rstudio

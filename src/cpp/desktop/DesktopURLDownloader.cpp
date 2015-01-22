@@ -19,6 +19,7 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 
+namespace rstudio {
 namespace desktop {
 
 
@@ -89,4 +90,5 @@ void URLDownloader::timeout()
 }
 
 
+}
 }

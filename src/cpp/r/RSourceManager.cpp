@@ -26,8 +26,9 @@
 
 #include <r/RExec.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace r {
    
    
@@ -149,6 +150,7 @@ void SourceManager::reloadSourceIfNecessary(
 }
    
 } // namespace r
+} // namespace rstudio
 
 
 

@@ -21,6 +21,7 @@
 
 #include <boost/current_function.hpp>
 
+namespace rstudio {
 namespace core { 
 namespace trace {
 
@@ -28,6 +29,7 @@ void add(void* key, const std::string& functionName);
 
 } // namespace trace
 } // namespace core 
+} // namespace rstudio
 
 #define TRACE_CURRENT_METHOD \
    core::trace::add(this, BOOST_CURRENT_FUNCTION);

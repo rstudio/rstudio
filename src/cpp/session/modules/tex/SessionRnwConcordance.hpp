@@ -25,10 +25,13 @@
 #include <core/SafeConvert.hpp>
 #include <core/tex/TexLogParser.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
  
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace tex {
@@ -178,5 +181,6 @@ core::Error readIfExists(const core::FilePath& srcFile,
 } // namespace tex
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 
 #endif // SESSION_MODULES_RNW_CONCORDANCE_HPP

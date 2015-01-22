@@ -18,6 +18,7 @@
 
 #include <core/libclang/LibClang.hpp>
 
+namespace rstudio {
 namespace core {
 namespace libclang {
 
@@ -146,4 +147,5 @@ bool Cursor::operator==(const Cursor& other) const
 
 } // namespace libclang
 } // namespace core
+} // namespace rstudio
 

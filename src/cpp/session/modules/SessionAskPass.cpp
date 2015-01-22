@@ -34,8 +34,9 @@
 #endif
 
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace ask_pass {
@@ -172,4 +173,5 @@ Error initialize()
 } // namespace content_urls
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

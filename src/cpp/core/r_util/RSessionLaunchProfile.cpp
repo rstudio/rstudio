@@ -23,6 +23,7 @@
 
 #include <core/json/JsonRpc.hpp>
 
+namespace rstudio {
 namespace core {
 namespace r_util {
 
@@ -172,6 +173,7 @@ SessionLaunchProfile sessionLaunchProfileFromJson(
 
 } // namespace r_util
 } // namespace core 
+} // namespace rstudio
 
 
 

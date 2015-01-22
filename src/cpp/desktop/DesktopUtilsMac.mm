@@ -27,6 +27,9 @@
 
 
 
+using namespace rstudio;
+
+namespace rstudio {
 namespace desktop {
 
 namespace {
@@ -179,3 +182,4 @@ void initializeLang()
 }
 
 } // namespace desktop
+} // namespace rstudio

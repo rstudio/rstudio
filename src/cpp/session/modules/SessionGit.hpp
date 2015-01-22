@@ -24,6 +24,7 @@
 
 #include "vcs/SessionVCSCore.hpp"
 
+namespace rstudio {
 namespace session {
 
 namespace console_process {
@@ -84,5 +85,6 @@ core::Error initialize();
 } // namespace git
 } // namespace modules
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_GIT_HPP

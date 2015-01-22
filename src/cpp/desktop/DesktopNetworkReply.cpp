@@ -34,8 +34,9 @@
 
 #include "DesktopNetworkIOService.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace desktop {
 
 struct NetworkReply::Impl
@@ -292,3 +293,4 @@ void NetworkReply::onError(const Error& networkError)
 
 
 } // namespace desktop
+} // namespace rstudio

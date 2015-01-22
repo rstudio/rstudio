@@ -29,6 +29,7 @@
    #error "wchar_t is not Unicode"
 #endif
 
+namespace rstudio {
 namespace core {
 
 class Error;
@@ -331,6 +332,7 @@ inline bool isComma(const RToken& rToken)
 
 } // namespace r_util
 } // namespace core 
+} // namespace rstudio
 
 
 #endif // CORE_R_UTIL_R_ENVIRONMENT_HPP

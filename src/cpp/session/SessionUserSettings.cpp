@@ -35,8 +35,9 @@
 #include <r/session/RSession.hpp>
 #include <r/session/RConsoleHistory.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace session {  
    
 #define kAgreementPrefix "agreement."
@@ -149,7 +150,7 @@ void UserSettings::onSettingsFileChanged(
       setBioconductorReposOption(bioconductorMirrorURL);
 
    // update remove dups in underlying R session
-   using namespace r::session;
+   using namespace rstudio::r::session;
    consoleHistory().setRemoveDuplicates(removeHistoryDuplicates());
 
    // fire event so others can react appropriately
@@ -660,3 +661,4 @@ bool UserSettings::enableRStudioConnect() const
 }
 
 }// namespace session
+} // namespace rstudio

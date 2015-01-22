@@ -17,6 +17,7 @@
 
 #include <core/libclang/LibClang.hpp>
 
+namespace rstudio {
 namespace core {
 namespace libclang {
 
@@ -31,4 +32,5 @@ std::string toStdString(CXString cxStr)
 
 } // namespace libclang
 } // namespace core
+} // namespace rstudio
 

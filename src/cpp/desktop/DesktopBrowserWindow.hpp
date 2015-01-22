@@ -24,6 +24,7 @@
 #include "DesktopWebView.hpp"
 #include "DesktopGwtCallbackOwner.hpp"
 
+namespace rstudio {
 namespace desktop {
 
 class BrowserWindow : public QMainWindow, public GwtCallbackOwner
@@ -73,5 +74,6 @@ private:
 };
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_BROWSER_WINDOW_HPP

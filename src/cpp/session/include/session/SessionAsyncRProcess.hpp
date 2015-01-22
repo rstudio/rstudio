@@ -24,6 +24,7 @@ namespace core
    class FilePath;
 }
 
+namespace rstudio {
 namespace session {   
 namespace async_r {
 
@@ -73,5 +74,6 @@ private:
 
 } // namespace async_r
 } // namespace session
+} // namespace rstudio
 
 #endif

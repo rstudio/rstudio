@@ -34,8 +34,9 @@
 
 #include "SessionProjectFirstRun.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace projects {
 
@@ -710,4 +711,5 @@ Error ProjectContext::writeBuildOptions(const RProjectBuildOptions& options)
 
 } // namespace projects
 } // namesapce session
+} // namespace rstudio
 

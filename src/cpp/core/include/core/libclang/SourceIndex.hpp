@@ -27,6 +27,7 @@
 
 #include "TranslationUnit.hpp"
 
+namespace rstudio {
 namespace core {
 
 class FilePath;
@@ -102,5 +103,6 @@ private:
 
 } // namespace libclang
 } // namespace core
+} // namespace rstudio
 
 #endif // CORE_LIBCLANG_SOURCE_INDEX_HPP

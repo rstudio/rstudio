@@ -36,8 +36,9 @@
 #include "DesktopUtils.hpp"
 #include "DesktopSessionLauncher.hpp"
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace desktop {
 
 MainWindow::MainWindow(QUrl url) :
@@ -372,3 +373,4 @@ void MainWindow::onActivated()
 }
 
 } // namespace desktop
+} // namespace rstudio

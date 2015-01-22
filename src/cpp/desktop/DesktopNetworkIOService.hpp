@@ -16,6 +16,7 @@
 
 #include <boost/asio/io_service.hpp>
 
+namespace rstudio {
 namespace desktop {
 
 boost::asio::io_service& ioService();
@@ -23,5 +24,6 @@ boost::asio::io_service& ioService();
 void ioServicePoll();
 
 } // namespace desktop
+} // namespace rstudio
 
 #endif // DESKTOP_NETWORK_IO_SERVICE_HPP

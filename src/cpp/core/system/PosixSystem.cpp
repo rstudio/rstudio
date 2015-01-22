@@ -77,6 +77,7 @@
 
 #include "config.h"
 
+namespace rstudio {
 namespace core {
 namespace system {
 
@@ -1764,4 +1765,5 @@ Error restorePriv()
 
 } // namespace system
 } // namespace core
+} // namespace rstudio
 

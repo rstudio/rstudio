@@ -19,6 +19,7 @@
 
 #include <boost/utility.hpp>
 
+namespace rstudio {
 namespace core {
 namespace system {
 
@@ -56,3 +57,4 @@ protected:
 
 } // namespace system
 } // namespace core
+} // namespace rstudio

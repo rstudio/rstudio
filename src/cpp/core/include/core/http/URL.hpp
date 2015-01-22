@@ -21,6 +21,7 @@
 
 #include <core/SafeConvert.hpp>
 
+namespace rstudio {
 namespace core {
 namespace http {
 
@@ -131,6 +132,7 @@ std::ostream& operator << (std::ostream& stream, const URL& url);
 
 } // namespace http
 } // namespace core
+} // namespace rstudio
 
 
 #endif // CORE_HTTP_URL_HPP

@@ -15,6 +15,9 @@
 
 #include "SessionMarkers.hpp"
 
+#include <boost/foreach.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <core/Exec.hpp>
 #include <core/Settings.hpp>
 
@@ -23,81 +26,261 @@
 
 #include <session/SessionModuleContext.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace session {
-namespace modules { 
-namespace markers {
 
 namespace {
 
-class MarkersState : boost::noncopyable
+json::Object sourceMarkerSetAsJson(const module_context::SourceMarkerSet& set)
+{
+   using namespace module_context;
+   json::Object jsonSet;
+   jsonSet["name"] = set.name;
+   if (set.basePath.empty())
+   {
+      jsonSet["base_path"] = json::Value();
+   }
+   else
+   {
+      std::string basePath = createAliasedPath(set.basePath);
+      // ensure that the base_path ends with "/" so that markers don't
+      // display the path
+      if (!boost::algorithm::ends_with(basePath, "/"))
+         basePath.append("/");
+      jsonSet["base_path"] = basePath;
+   }
+   jsonSet["markers"] = sourceMarkersAsJson(set.markers);
+   return jsonSet;
+}
+
+
+class SourceMarkers : boost::noncopyable
 {
 public:
-   MarkersState() : visible_(false)
+   SourceMarkers() : visible_(false)
    {
    }
 
    bool visible() const { return visible_; }
    void setVisible(bool visible) { visible_ = visible; }
 
+   void setActiveMarkers(const std::string& set)
+   {
+      if (markerSets_.find(set) != markerSets_.end())
+         activeSet_ = set;
+   }
+
+   void setActiveMarkers(const module_context::SourceMarkerSet& markerSet)
+   {
+      activeSet_ = markerSet.name;
+      markerSets_[markerSet.name] = markerSet;
+   }
+
 public:
    Error readFromJson(const json::Object& asJson)
    {
+      bool visible;
+      std::string activeSet;
+      json::Object setsJson;
       Error error = json::readObject(asJson,
-                                     "visible", &visible_);
+                                     "visible", &visible,
+                                     "active_set", &activeSet,
+                                     "sets", &setsJson);
       if (error)
          return error;
+
+      MarkerSets markerSets;
+
+      BOOST_FOREACH(const json::Object::value_type& setJson, setsJson)
+      {
+         std::string name = setJson.first;
+         json::Value markerSetJson = setJson.second;
+         if (json::isType<json::Object>(markerSetJson))
+         {
+            std::string basePath;
+            json::Array markersJson;
+            Error error = json::readObject(markerSetJson.get_obj(),
+                                           "base_path", &basePath,
+                                           "markers", &markersJson);
+            if (error)
+            {
+               LOG_ERROR(error);
+               continue;
+            }
+            std::vector<module_context::SourceMarker> markers;
+            BOOST_FOREACH(json::Value markerJson, markersJson)
+            {
+               if (json::isType<json::Object>(markerJson))
+               {
+                  int type;
+                  std::string path;
+                  int line, column;
+                  std::string message;
+                  bool showErrorList;
+                  Error error = json::readObject(
+                     markerJson.get_obj(),
+                     "type", &type,
+                     "path", &path,
+                     "line", &line,
+                     "column", &column,
+                     "message", &message,
+                     "show_error_list", &showErrorList);
+                  if (error)
+                  {
+                     LOG_ERROR(error);
+                     continue;
+                  }
+
+                  module_context::SourceMarker marker(
+                      (module_context::SourceMarker::Type)type,
+                      module_context::resolveAliasedPath(path),
+                      line,
+                      column,
+                      message,
+                      showErrorList);
+
+                  markers.push_back(marker);
+               }
+            }
+
+            using namespace module_context;
+            FilePath base = !basePath.empty() ?
+                       resolveAliasedPath(basePath) :
+                       FilePath();
+
+            markerSets[name] = SourceMarkerSet(name, base, markers);
+         }
+
+
+      }
+
+      visible_ = visible;
+      activeSet_ = activeSet;
+      markerSets_ = markerSets;
 
       return Success();
    }
 
-   json::Object asJson()
+   json::Object asJson() const
    {
       json::Object obj;
       obj["visible"] = visible_;
+      obj["active_set"] = activeSet_;
+      json::Object setsJson;
+      BOOST_FOREACH(const MarkerSets::value_type& set, markerSets_)
+      {
+         setsJson[set.first] = sourceMarkerSetAsJson(set.second);
+      }
+      obj["sets"] = setsJson;
+
+      return obj;
+   }
+
+   json::Object stateAsJson() const
+   {
+      json::Object obj;
+      obj["visible"] = visible_;
+      json::Array namesJson;
+      BOOST_FOREACH(const MarkerSets::value_type& set, markerSets_)
+      {
+         namesJson.push_back(set.first);
+      }
+      obj["names"] = namesJson;
+      if (!namesJson.empty())
+      {
+         MarkerSets::const_iterator it = markerSets_.find(activeSet_);
+         if (it != markerSets_.end())
+            obj["markers"] = sourceMarkerSetAsJson(it->second);
+         else
+            obj["markers"] = json::Value();
+      }
+      else
+      {
+         obj["markers"] = json::Value();
+      }
+
       return obj;
    }
 
 private:
    bool visible_;
+   std::string activeSet_;
+   typedef std::map<std::string,module_context::SourceMarkerSet> MarkerSets;
+   MarkerSets markerSets_;
 };
 
-MarkersState& markersState()
+SourceMarkers& sourceMarkers()
 {
-   static MarkersState instance;
+   static SourceMarkers instance;
    return instance;
 }
 
-
-// IN: Array<String> paths, String targetPath
-Error clearAllMarkers(const core::json::JsonRpcRequest& request,
-                      json::JsonRpcResponse* pResponse)
+void fireMarkersChanged(module_context::MarkerAutoSelect autoSelect)
 {
-   markersState().setVisible(false);
+   json::Object jsonData;
+   jsonData["markers_state"] = sourceMarkers().stateAsJson();
+   jsonData["auto_select"] = static_cast<int>(autoSelect);
+
+   ClientEvent event(client_events::kMarkersChanged,jsonData);
+   module_context::enqueClientEvent(event);
+}
+
+} // anonymous namespace
+
+namespace module_context {
+
+void showSourceMarkers(const SourceMarkerSet& markerSet,
+                       MarkerAutoSelect autoSelect)
+{
+   sourceMarkers().setVisible(true);
+
+   sourceMarkers().setActiveMarkers(markerSet);
+
+   fireMarkersChanged(autoSelect);
+}
+
+} // namespace module_context
+
+
+namespace modules { 
+namespace markers {
+
+namespace {
+
+Error markersTabClosed(const core::json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   sourceMarkers().setVisible(false);
    return Success();
 }
 
-SEXP rs_showMarkers()
+Error updateActiveMarkerSet(const core::json::JsonRpcRequest& request,
+                            json::JsonRpcResponse* pResponse)
 {
-   markersState().setVisible(true);
+   std::string set;
+   Error error = json::readParams(request.params, &set);
+   if (error)
+      return error;
 
-   ClientEvent event(client_events::kShowMarkers);
-   module_context::enqueClientEvent(event);
+   sourceMarkers().setActiveMarkers(set);
 
-   return R_NilValue;
+   fireMarkersChanged(module_context::MarkerAutoSelectNone);
+
+   return Success();
 }
 
 void onSuspend(core::Settings* pSettings)
 {
    std::ostringstream os;
-   json::write(markersState().asJson(), os);
-   pSettings->set("markers-state", os.str());
+   json::write(sourceMarkers().asJson(), os);
+   pSettings->set("source-markers-data", os.str());
 }
 
 void onResume(const core::Settings& settings)
 {
-   std::string state = settings.get("markers-state");
+   std::string state = settings.get("source-markers-data");
    if (!state.empty())
    {
       json::Value stateJson;
@@ -107,17 +290,38 @@ void onResume(const core::Settings& settings)
          return;
       }
 
-      Error error = markersState().readFromJson(stateJson.get_obj());
+      Error error = sourceMarkers().readFromJson(stateJson.get_obj());
       if (error)
          LOG_ERROR(error);
    }
+}
+
+
+SEXP rs_showMarkers()
+{
+   using namespace module_context;
+   std::vector<SourceMarker> markers;
+   markers.push_back(SourceMarker(SourceMarker::Error,
+                                  resolveAliasedPath("~/woozy11.cpp"),
+                                  10,
+                                  1,
+                                  "you did this totally wrong",
+                                  true));
+
+   SourceMarkerSet markerSet("cpp-errors",
+                             resolveAliasedPath("~"),
+                             markers);
+
+   showSourceMarkers(markerSet, MarkerAutoSelectFirst);
+
+   return R_NilValue;
 }
 
 } // anonymous namespace
 
 json::Value markersStateAsJson()
 {
-   return markersState().asJson();
+   return sourceMarkers().stateAsJson();
 }
 
 Error initialize()
@@ -126,14 +330,14 @@ Error initialize()
    using namespace module_context;
    addSuspendHandler(SuspendHandler(bind(onSuspend, _2), onResume));
 
-   // register rs_showMarkers with R
    RS_REGISTER_CALL_METHOD(rs_showMarkers, 0);
 
    // complete initialization
    using boost::bind;
    ExecBlock initBlock ;
    initBlock.addFunctions()
-      (bind(registerRpcMethod, "clear_all_markers", clearAllMarkers))
+      (bind(registerRpcMethod, "markers_tab_closed", markersTabClosed))
+      (bind(registerRpcMethod, "update_active_marker_set", updateActiveMarkerSet))
       (bind(sourceModuleRFile, "SessionMarkers.R"));
    return initBlock.execute();
 
@@ -143,4 +347,5 @@ Error initialize()
 } // namespace markers
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

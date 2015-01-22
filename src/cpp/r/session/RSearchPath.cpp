@@ -42,8 +42,9 @@
 #include <r/RExec.hpp>
 #include <r/RInterface.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace r {
    
 using namespace exec ;
@@ -406,6 +407,7 @@ Error restore(const FilePath& statePath)
 } // namespace search_path
 } // namespace session
 } // namespace r
+} // namespace rstudio
 
 
 

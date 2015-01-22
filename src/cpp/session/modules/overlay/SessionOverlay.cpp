@@ -17,8 +17,9 @@
 
 #include <core/Error.hpp>
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace session {  
 namespace modules {
 namespace overlay {
@@ -31,3 +32,4 @@ Error initialize()
 } // namespace overlay
 } // namespace modules
 } // namespace session
+} // namespace rstudio

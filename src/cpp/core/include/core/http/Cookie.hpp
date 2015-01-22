@@ -21,6 +21,7 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include "Request.hpp"
 
+namespace rstudio {
 namespace core {
 namespace http {
 
@@ -69,6 +70,7 @@ private:
 
 } // namespace http
 } // namespace core 
+} // namespace rstudio
 
 
 #endif // CORE_HTTP_COOKIE_HTTP

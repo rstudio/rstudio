@@ -20,6 +20,7 @@
 
 #include <boost/algorithm/string.hpp>
 
+namespace rstudio {
 namespace core {
 namespace http {
    
@@ -96,3 +97,4 @@ void parseHeaders(std::istream& is, Headers* pHeaders)
    
 } // namespace http
 } // namespace core
+} // namespace rstudio

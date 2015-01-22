@@ -20,6 +20,7 @@
 #include "DesktopSubMenu.hpp"
 #include "DesktopCommandInvoker.hpp"
 
+namespace rstudio {
 namespace desktop {
 
 SubMenu::SubMenu(const QString& title, QWidget* parent):
@@ -77,3 +78,4 @@ void SubMenu::onAboutToShow()
 }
 
 } // namespace desktop
+} // namespace rstudio

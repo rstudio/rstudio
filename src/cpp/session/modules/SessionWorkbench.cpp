@@ -60,8 +60,9 @@ extern "C" SA_TYPE SaveAction;
 #endif
 
 
-using namespace core;
+using namespace rstudio::core;
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace workbench {
@@ -509,7 +510,7 @@ Error createSshKey(const json::JsonRpcRequest& request,
 
 #ifdef RSTUDIO_SERVER
    // In server mode, passphrases are encrypted
-   using namespace core::system::crypto;
+   using namespace rstudio::core::system::crypto;
    error = rsaPrivateDecrypt(passphrase, &passphrase);
    if (error)
       return error;
@@ -833,4 +834,5 @@ Error initialize()
 } // namepsace workbench
 } // namespace modules
 } // namesapce session
+} // namespace rstudio
 

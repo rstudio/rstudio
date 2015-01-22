@@ -61,10 +61,12 @@
 #include "ServerPAMAuth.hpp"
 #include "ServerREnvironment.hpp"
 
-using namespace core ;
+using namespace rstudio;
+using namespace rstudio::core;
 using namespace server;
 
 // forward-declare overlay methods
+namespace rstudio {
 namespace server {
 namespace overlay {
 
@@ -74,6 +76,7 @@ void shutdown();
 
 } // namespace overlay
 } // namespace server
+} // namespace rstudio
 
 namespace {
    
@@ -303,6 +306,7 @@ Error waitForSignals()
 } // anonymous namespace
 
 // provide global access to handlers
+namespace rstudio {
 namespace server {
 namespace uri_handlers {
 
@@ -340,6 +344,7 @@ void addCommand(boost::shared_ptr<ScheduledCommand> pCmd)
 
 } // namespace scheduler
 } // namespace server
+} // namespace rstudio
 
 
 int main(int argc, char * const argv[]) 

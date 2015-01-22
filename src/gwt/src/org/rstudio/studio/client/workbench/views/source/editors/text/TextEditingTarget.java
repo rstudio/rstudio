@@ -2290,6 +2290,12 @@ public class TextEditingTarget implements
    @Handler
    void onExtractLocalVariable()
    {
+      if (!isCursorInRMode())
+      {
+         showRModeWarning("Extract Variable");
+         return;
+      }
+      
       docDisplay_.focus();
 
       String initialSelection = docDisplay_.getSelectionValue();
@@ -2350,9 +2356,25 @@ public class TextEditingTarget implements
       );
    }
    
+   private void showRModeWarning(String command)
+   {
+      globalDisplay_.showMessage(MessageDisplay.MSG_WARNING,
+                                 "Command Not Available", 
+                                 "The "+ command + " command is " +
+                                 "only valid for R code chunks.");
+      return;
+   }
+   
+   
    @Handler
    void onExtractFunction()
    {
+      if (!isCursorInRMode())
+      {
+         showRModeWarning("Extract Function");
+         return;
+      }
+      
       docDisplay_.focus();
 
       String initialSelection = docDisplay_.getSelectionValue();

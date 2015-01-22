@@ -33,8 +33,9 @@ LibExtern int R_interrupts_pending;
 LibExtern int UserBreak;
 #endif
 
-using namespace core ;
+using namespace rstudio::core ;
 
+namespace rstudio {
 namespace r {
    
 namespace exec {
@@ -548,6 +549,7 @@ DisableDebugScope::~DisableDebugScope()
 
 } // namespace exec   
 } // namespace r
+} // namespace rstudio
 
 
 

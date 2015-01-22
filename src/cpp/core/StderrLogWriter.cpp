@@ -23,6 +23,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 
+namespace rstudio {
 namespace core {
 
 StderrLogWriter::StderrLogWriter(const std::string& programIdentity,
@@ -59,3 +60,4 @@ void StderrLogWriter::log(const std::string& programIdentity,
 
 
 } // namespace core
+} // namespace rstudio

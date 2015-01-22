@@ -30,10 +30,13 @@
 
 #include <session/SessionConstants.hpp>
 
+namespace rstudio {
 namespace core {
    class ProgramStatus;
 }
+}
 
+namespace rstudio {
 namespace session {
  
 
@@ -501,6 +504,7 @@ private:
 };
   
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_SESSION_OPTIONS_HPP
 

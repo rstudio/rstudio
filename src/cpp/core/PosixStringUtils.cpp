@@ -34,6 +34,7 @@
 #pragma clang diagnostic pop
 #endif
 
+namespace rstudio {
 namespace core {
 namespace string_utils {
 
@@ -83,6 +84,7 @@ std::wstring utf8ToWide(const std::string& value, const std::string& context)
 
 } // namespace string_utils
 } // namespace core
+} // namespace rstudio
 
 
 

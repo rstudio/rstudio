@@ -15,6 +15,7 @@
 
 #include <server/ServerErrorCategory.hpp>
 
+namespace rstudio {
 namespace server {
 
 class ServerErrorCategory : public boost::system::error_category
@@ -74,3 +75,4 @@ bool isSessionUnavailableError(const core::Error& error)
 }
 
 } // namespace server
+} // namespace rstudio

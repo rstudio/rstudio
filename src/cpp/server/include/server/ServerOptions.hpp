@@ -26,10 +26,13 @@
 #include <core/ProgramOptions.hpp>
 #include <core/SafeConvert.hpp>
 
+namespace rstudio {
 namespace core {
    class ProgramStatus;
 }
+}
 
+namespace rstudio {
 namespace server {
 
 // singleton
@@ -248,6 +251,7 @@ private:
 };
       
 } // namespace server
+} // namespace rstudio
 
 #endif // SERVER_SERVER_OPTIONS_HPP
 

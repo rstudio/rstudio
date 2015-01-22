@@ -20,10 +20,13 @@
 #include <r/RSexp.hpp>
 #include <session/SessionModuleContext.hpp>
 
+namespace rstudio {
 namespace core {
    class Error;
 }
+}
 
+namespace rstudio {
 namespace session {
 namespace modules { 
 namespace packrat {
@@ -45,5 +48,6 @@ core::Error getPackratOptions(SEXP* pOptionsSEXP, r::sexp::Protect* pRProtect);
 } // namespace packrat
 } // namespace modules
 } // namespace session
+} // namespace rstudio
 
 #endif // SESSION_PACKRAT_HPP

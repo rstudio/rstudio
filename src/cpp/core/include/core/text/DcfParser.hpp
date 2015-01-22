@@ -22,6 +22,7 @@
 #include <boost/function.hpp>
 
 
+namespace rstudio {
 namespace core {
 
 class Error;
@@ -50,5 +51,6 @@ std::string dcfMultilineAsFolded(const std::string& line);
 
 } // namespace text
 } // namespace core
+} // namespace rstudio
 
 #endif // DCF_PARSER_HPP
