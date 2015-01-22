@@ -14,6 +14,10 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import org.rstudio.studio.client.common.satellite.Satellite;
+
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -26,9 +30,18 @@ public class RSConnectAuthPresenter implements IsWidget
    }
    
    @Inject
-   public RSConnectAuthPresenter(Display view)
+   public RSConnectAuthPresenter(Display view,
+         Satellite satellite)
    {
       view_ = view;
+      satellite.addCloseHandler(new CloseHandler<Satellite>()
+      {
+         @Override
+         public void onClose(CloseEvent<Satellite> arg0)
+         {
+            notifyAuthClosed();
+         }
+      });
    }     
 
    @Override
@@ -42,5 +55,9 @@ public class RSConnectAuthPresenter implements IsWidget
       view_.showClaimUrl(serverName, url);
    }
    
+   private final native void notifyAuthClosed() /*-{
+      $wnd.opener.notifyAuthClosed();
+   }-*/;
+
    private final Display view_;
 }

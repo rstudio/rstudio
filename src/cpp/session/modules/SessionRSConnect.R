@@ -35,7 +35,10 @@
 })
 
 .rs.addFunction("scalarListFromList", function(l) {
-   lapply(l, .rs.scalar)
+   if (is.null(l))
+     NULL
+   else
+     lapply(l, function(x) { if (is.null(x)) x else .rs.scalar(x) })
 })
 
 .rs.addJsonRpcHandler("get_rsconnect_account_list", function() {
@@ -60,6 +63,17 @@
 
 .rs.addJsonRpcHandler("get_auth_token", function(name) {
    .rs.scalarListFromList(rsconnect:::getAuthToken(name))
+})
+
+.rs.addJsonRpcHandler("get_user_from_token", function(url, token, privateKey) {
+   user <- rsconnect:::getUserFromRawToken(url, token, privateKey)
+   .rs.scalarListFromList(user)
+})
+
+.rs.addJsonRpcHandler("register_user_token", function(serverName, accountName,
+   userId, token, privateKey) {
+  rsconnect:::registerUserToken(serverName, accountName, userId, token, 
+                                privateKey)
 })
 
 .rs.addFunction("maxDirectoryList", function(dir, root, cur_size, max_size, 

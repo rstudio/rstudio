@@ -14,9 +14,7 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Size;
-import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -25,6 +23,7 @@ import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult.AccountType;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAuthParams;
+import org.rstudio.studio.client.rsconnect.model.RSConnectAuthUser;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPreAuthToken;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
@@ -33,14 +32,20 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.Session;
 
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
 public class RSAccountConnector
 {
+   // possible results of attempting to connect an account
+   enum AccountConnectResult
+   {
+      Incomplete,
+      Successful,
+      Failed
+   }
+
    @Inject
    public RSAccountConnector(SatelliteManager satelliteManager,
          RSConnectServerOperations server,
@@ -51,6 +56,7 @@ public class RSAccountConnector
       server_ = server;
       display_ = display;
       session_ = session;
+      exportAuthClosedCallback();
    }
    
    public void showAccountWizard(
@@ -64,15 +70,30 @@ public class RSAccountConnector
          public void execute(NewRSConnectAccountResult input,
                final ProgressIndicator indicator)
          {
-            connectNewAccount(input, new OperationWithInput<Boolean>()
+            connectNewAccount(input, indicator, 
+                  new OperationWithInput<AccountConnectResult>()
             {
                @Override
-               public void execute(Boolean input)
+               public void execute(AccountConnectResult input)
                {
-                  if (input)
+                  if (input == AccountConnectResult.Failed)
                   {
+                     // the connection failed--take down the dialog entirely
+                     // (we do this when retrying doesn't make sense)
+                     onCompleted.execute(false);
                      indicator.onCompleted();
+                  }
+                  else if (input == AccountConnectResult.Incomplete)
+                  {
+                     // the connection didn't finish--take down the progress and
+                     // allow retry
+                     indicator.clearProgress();
+                  }
+                  else if (input == AccountConnectResult.Successful)
+                  {
+                     // successful account connection--mark finished
                      onCompleted.execute(true);
+                     indicator.onCompleted();
                   }
                }
             });
@@ -83,21 +104,23 @@ public class RSAccountConnector
 
    public void connectNewAccount(
          NewRSConnectAccountResult result,
-         OperationWithInput<Boolean> onConnected)
+         ProgressIndicator indicator,
+         OperationWithInput<AccountConnectResult> onConnected)
    {
       if (result.getAccountType() == AccountType.RSConnectCloudAccount)
       {
-         connectCloudAccount(result, onConnected);
+         connectCloudAccount(result, indicator, onConnected);
       }
       else
       {
-         connectLocalAccount(result, onConnected);
+         connectLocalAccount(result, indicator, onConnected);
       }
    }
    
    public void connectCloudAccount(
          final NewRSConnectAccountResult result,
-         final OperationWithInput<Boolean> onConnected)
+         final ProgressIndicator indicator,
+         final OperationWithInput<AccountConnectResult> onConnected)
    {
       // get command and substitute rsconnect for shinyapps
       final String cmd = result.getCloudSecret().replace("shinyapps::", 
@@ -109,15 +132,16 @@ public class RSAccountConnector
                "rsconnect::setAccountInfo. If you're having trouble, try " + 
                "connecting your account manually; type " +
                "?rsconnect::setAccountInfo at the R console for help.");
-         onConnected.execute(false);
+         onConnected.execute(AccountConnectResult.Incomplete);
       }
+      indicator.onProgress("Connecting account...");
       server_.connectRSConnectAccount(cmd, 
             new ServerRequestCallback<Void>()
       {
          @Override
          public void onResponseReceived(Void v)
          {
-            onConnected.execute(true);
+            onConnected.execute(AccountConnectResult.Successful);
          }
 
          @Override
@@ -128,15 +152,17 @@ public class RSAccountConnector
                   "account manually by using rsconnect::setAccountInfo; " +
                   "type ?rsconnect::setAccountInfo at the R console for " +
                   "more information.");
-            onConnected.execute(false);
+            onConnected.execute(AccountConnectResult.Failed);
          }
       });
    }
 
    public void connectLocalAccount(
          final NewRSConnectAccountResult result,
-         final OperationWithInput<Boolean> onConnected)
+         final ProgressIndicator indicator,
+         final OperationWithInput<AccountConnectResult> onConnected)
    {
+      indicator.onProgress("Checking server connection...");
       server_.validateServerUrl(result.getServerUrl(), 
             new ServerRequestCallback<RSConnectServerInfo>()
       {
@@ -145,7 +171,7 @@ public class RSAccountConnector
          {
             if (info.isValid()) 
             {
-               getPreAuthToken(info, onConnected);
+               getPreAuthToken(info, indicator, onConnected);
             }
             else
             {
@@ -155,7 +181,7 @@ public class RSAccountConnector
                      "check the URL, and contact your administrator if " + 
                      "the problem persists.\n\n" +
                      info.getMessage());
-               onConnected.execute(false);
+               onConnected.execute(AccountConnectResult.Incomplete);
             }
          }
 
@@ -165,25 +191,42 @@ public class RSAccountConnector
             display_.showErrorMessage("Error Connecting Account", 
                   "The server couldn't be validated. " + 
                    error.getMessage());
-            onConnected.execute(false);
+            onConnected.execute(AccountConnectResult.Incomplete);
          }
       });
    }
    
    private void getPreAuthToken(
          final RSConnectServerInfo serverInfo,
-         final OperationWithInput<Boolean> onConnected)
+         final ProgressIndicator indicator,
+         final OperationWithInput<AccountConnectResult> onConnected)
    {
+      indicator.onProgress("Setting up an account...");
       server_.getPreAuthToken(serverInfo.getName(), 
             new ServerRequestCallback<RSConnectPreAuthToken>()
       {
          @Override
          public void onResponseReceived(final RSConnectPreAuthToken token)
          {
+            indicator.onProgress("Waiting for authentication...");
+
+            // set up pending state -- these will be used to complete the wizard
+            // once the user finishes using the wizard to authenticate
+            pendingAuthToken_ = token;
+            pendingServerInfo_ = serverInfo;
+            pendingAuthIndicator_ = indicator;
+            pendingOnConnected_ = onConnected;
+            
+            // open the satellite window 
             satelliteManager_.openSatellite(
                   RSConnectAuthSatellite.NAME, 
                   RSConnectAuthParams.create(serverInfo, token), 
                   new Size(700, 800));
+            
+            // we'll finish auth automatically when the satellite closes, but we
+            // also want to close it ourselves when we detect that auth has
+            // completed
+            pollForAuthCompleted();
          }
 
          @Override
@@ -194,47 +237,139 @@ public class RSAccountConnector
                   "request to authorize an account.\n\n"+
                   serverInfo.getInfoString() + "\n" +
                   error.getMessage());
-            onConnected.execute(false);
+            onConnected.execute(AccountConnectResult.Incomplete);
          }
       });
    }
    
-   private void waitForAuth(
-         final WindowEx win,
-         final RSConnectServerInfo serverInfo,
-         final RSConnectPreAuthToken token,
-         final OperationWithInput<Boolean> onConnected)
+   private void pollForAuthCompleted()
    {
-      // wait for the window to close -- since we're loading a URL on a
-      // different domain we can't inject unload handlers or script into the
-      // window directly, so polling is necessary
-      Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
-      {
-         @Override
-         public boolean execute()
-         {
-            Debug.devlog("window closed: " + win.getLeft());
-            Debug.logObject(win);
-            if (win.isClosed())
-            {
-               onAuthCompleted(serverInfo, token, onConnected);
-               return false;
-            }
-            return true;
-         }
-      }, 100);
+      // TODO: check every ~1s to see if token has become valid; auto-close the
+      // window if it has
    }
    
+   private void notifyAuthClosed()
+   {
+      if (pendingAuthToken_ != null &&
+          pendingServerInfo_ != null &&
+          pendingAuthIndicator_ != null &&
+          pendingOnConnected_ != null)
+      {
+         onAuthCompleted(pendingServerInfo_, 
+               pendingAuthToken_, 
+               pendingAuthIndicator_, 
+               pendingOnConnected_);
+      }
+      pendingAuthToken_ = null;
+      pendingServerInfo_ = null;
+      pendingAuthIndicator_ = null;
+      pendingOnConnected_ = null;
+   }
+
    private void onAuthCompleted(
          final RSConnectServerInfo serverInfo,
-         final RSConnectPreAuthToken toekn,
-         final OperationWithInput<Boolean> onConnected)
+         final RSConnectPreAuthToken token,
+         final ProgressIndicator indicator,
+         final OperationWithInput<AccountConnectResult> onConnected)
    {
-      onConnected.execute(true);
+      indicator.onProgress("Validating account...");
+      server_.getUserFromToken(serverInfo.getUrl(), token, 
+            new ServerRequestCallback<RSConnectAuthUser>()
+      {
+         @Override 
+         public void onResponseReceived(RSConnectAuthUser user)
+         {
+            if (!user.isValidUser())
+            {
+               display_.showErrorMessage("Account Not Connected", 
+                     "Authentication failed. If you did not cancel " +
+                     "authentication, try again, or contact your server " +
+                     "administrator for assistance.");
+               onConnected.execute(AccountConnectResult.Incomplete);
+            }
+            else
+            {
+               onUserAuthVerified(serverInfo, token, user, 
+                                  indicator, onConnected);
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            display_.showErrorMessage("Account Validation Failed", 
+                  "RStudio failed to determine whether the account was " +
+                  "valid. Try again; if the error persists, contact your " +
+                  "server administrator.\n\n" +
+                  serverInfo.getInfoString() + "\n" +
+                  error.getMessage());
+            onConnected.execute(AccountConnectResult.Incomplete);
+         }
+      });
    }
    
+   private void onUserAuthVerified(
+         final RSConnectServerInfo serverInfo,
+         final RSConnectPreAuthToken token,
+         final RSConnectAuthUser user,
+         final ProgressIndicator indicator,
+         final OperationWithInput<AccountConnectResult> onConnected)
+   {
+      indicator.onProgress("Adding account...");
+      String accountName;
+      if (user.getUsername().length() > 0) 
+      {
+         // if we have a username already, just use it 
+         accountName = user.getUsername();
+      }
+      else
+      {
+         // if we don't have any username, guess one based on user's given name
+         // on the server
+         accountName = (user.getFirstName().substring(0, 1) + 
+               user.getLastName()).toLowerCase();
+      }
+       
+      server_.registerUserToken(serverInfo.getName(), accountName, 
+            user.getId(), token, new ServerRequestCallback<Void>()
+      {
+         @Override
+         public void onResponseReceived(Void result)
+         {
+            onConnected.execute(AccountConnectResult.Successful);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            display_.showErrorMessage("Account Connect Failed", 
+                  "Your account was authenticated successfully, but could " +
+                  "not be connected to RStudio. Make sure your installation " +
+                  "of the 'rsconnect' package is correct for the server " + 
+                  "you're connecting to.\n\n" +
+                  serverInfo.getInfoString() + "\n" +
+                  error.getMessage());
+            onConnected.execute(AccountConnectResult.Failed);
+         }
+      });
+   }
+
+   private final native void exportAuthClosedCallback()/*-{
+      var registry = this;     
+      $wnd.notifyAuthClosed = $entry(
+         function() {
+            registry.@org.rstudio.studio.client.rsconnect.ui.RSAccountConnector::notifyAuthClosed()();
+         }
+      ); 
+   }-*/;
+
    private final GlobalDisplay display_;
    private final RSConnectServerOperations server_;
    private final Session session_;
    private final SatelliteManager satelliteManager_;
+   
+   private RSConnectPreAuthToken pendingAuthToken_;
+   private RSConnectServerInfo pendingServerInfo_;
+   private ProgressIndicator pendingAuthIndicator_;
+   private OperationWithInput<AccountConnectResult> pendingOnConnected_;
 }

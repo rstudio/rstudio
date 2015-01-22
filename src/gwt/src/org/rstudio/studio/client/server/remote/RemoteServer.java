@@ -87,6 +87,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
+import org.rstudio.studio.client.rsconnect.model.RSConnectAuthUser;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPreAuthToken;
@@ -3625,6 +3626,38 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void getUserFromToken(String url, 
+         RSConnectPreAuthToken token,
+         ServerRequestCallback<RSConnectAuthUser> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(url));
+      params.set(1, new JSONString(token.getToken()));
+      params.set(2, new JSONString(token.getPrivateKey()));
+      sendRequest(RPC_SCOPE,
+            GET_USER_FROM_TOKEN,
+            params,
+            requestCallback);
+   }
+
+   @Override
+   public void registerUserToken(String serverName, String accountName, int userId, 
+                RSConnectPreAuthToken token, 
+                ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(serverName));
+      params.set(1, new JSONString(accountName));
+      params.set(2, new JSONNumber(userId));
+      params.set(3, new JSONString(token.getToken()));
+      params.set(4, new JSONString(token.getPrivateKey()));
+      sendRequest(RPC_SCOPE,
+            REGISTER_USER_TOKEN,
+            params,
+            requestCallback);
+   }
+
+   @Override
    public void getDeploymentFiles(String dir,
          ServerRequestCallback<RSConnectDeploymentFiles> requestCallback)
    {
@@ -4147,6 +4180,8 @@ public class RemoteServer implements Server
    private static final String GET_DEPLOYMENT_FILES = "get_deployment_files";
    private static final String VALIDATE_SERVER_URL = "validate_server_url";
    private static final String GET_AUTH_TOKEN = "get_auth_token";
+   private static final String GET_USER_FROM_TOKEN = "get_user_from_token";
+   private static final String REGISTER_USER_TOKEN = "register_user_token";
 
    private static final String RENDER_RMD = "render_rmd";
    private static final String RENDER_RMD_SOURCE = "render_rmd_source";

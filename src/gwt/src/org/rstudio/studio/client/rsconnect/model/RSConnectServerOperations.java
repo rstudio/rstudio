@@ -47,4 +47,11 @@ public interface RSConnectServerOperations
    
    void getPreAuthToken(String serverName, 
                ServerRequestCallback<RSConnectPreAuthToken> requestCallback);
+   
+   void getUserFromToken(String url, RSConnectPreAuthToken token,
+               ServerRequestCallback<RSConnectAuthUser> requestCallback);
+   
+   void registerUserToken(String serverName, String accountName, int userId, 
+                RSConnectPreAuthToken token, 
+                ServerRequestCallback<Void> requestCallback);
 }
