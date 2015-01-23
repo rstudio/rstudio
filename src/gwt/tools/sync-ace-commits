@@ -66,6 +66,7 @@ git merge \
     origin/patch/other-modes \
     origin/patch/dont-bundle-textmate-theme \
     origin/bugfix/vim-ex-command-spellcheck \
+    origin/bugfix/vim-join-lines \
     -m "merge branches"
 
 ## git merge \
@@ -83,7 +84,6 @@ cp build/src/ace.js ../../src/org/rstudio/studio/client/workbench/views/source/e
 cp build/src-min/ace.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace.js
 
 # Copy in the 'emacs', 'vim' keybindings
-cp build/src/keybinding-* ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/
 cp build/src-min/keybinding-* ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/
 
 stripUseStrict() {
