@@ -38,7 +38,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.*;
-import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -120,6 +119,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Tokenizer;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
@@ -2124,13 +2125,90 @@ public class TextEditingTarget implements
    }
    
    @Handler
-   void onAlignAssignment()
+   void onReformatCode()
    {
       // Only allow if entire selection in R or C++ mode for now
       if (!(DocumentMode.isSelectionInCppMode(docDisplay_) ||
             DocumentMode.isSelectionInRMode(docDisplay_)))
          return;
       
+      if (DocumentMode.isSelectionInRMode(docDisplay_))
+         alignAssignment();
+      
+      insertPrettyNewlines();
+   }
+   
+   boolean isWhitespaceWithNewline(String line)
+   {
+      return line.indexOf('\n') != -1 &&
+             line.matches("[\\s\\n]+");
+   }
+   
+   void insertPrettyNewlines()
+   {
+      AceEditor editor = (AceEditor) docDisplay_;
+      if (editor != null)
+      {
+         String selectionText = docDisplay_.getSelectionValue();
+         
+         // Tokenize the selection and walk through and replace
+         Tokenizer tokenizer = editor.getSession().getMode().getTokenizer();
+         Token[] tokens = tokenizer.getLineTokens(selectionText);
+         
+         StringBuilder builder = new StringBuilder();
+         
+         Token prev = Token.create();
+         Token curr = Token.create();
+         Token next = Token.create();
+         
+         String value = "";
+         
+         for (int i = 0; i < tokens.length; i++)
+         {
+            if (i > 0)
+               prev = tokens[i - 1];
+               
+            curr = tokens[i];
+            
+            if (i < tokens.length - 1)
+               next = tokens[i + 1];
+            else
+               next = Token.create();
+            
+            value = curr.getValue();
+            
+            if (!isWhitespaceWithNewline(prev.getValue()) && value == ")")
+            {
+               builder.append("\n");
+            }
+            
+            // We don't tokenize ',' separately from text in all cases
+            // (note that 'text' is separate from 'string' types)
+            if (curr.getType() == "text")
+               value = value.replaceAll(",(?!\n)", ",\n");
+            
+            builder.append(value);
+            
+            if (!isWhitespaceWithNewline(next.getValue()) && (
+                  value == "(" || value == ","))
+            {
+               builder.append("\n");
+            }
+         }
+         
+         String replacement = builder.toString();
+         
+         // Trim off trailing whitespace
+         replacement = replacement.replaceAll("\\s*\n", "\n");
+         
+         docDisplay_.replaceSelection(replacement);
+         docDisplay_.reindent(docDisplay_.getSelectionRange());
+         
+      }
+   }
+   
+   void alignAssignment()
+   {
       InputEditorSelection initialSelection =
             docDisplay_.getSelection();
       
@@ -4345,7 +4423,7 @@ public class TextEditingTarget implements
       if (getPath() == null)
          return;
 
-      final Token token = externalEditCheckInvalidation_.getInvalidationToken();
+      final Invalidation.Token token = externalEditCheckInvalidation_.getInvalidationToken();
 
       server_.checkForExternalEdit(
             id_,
