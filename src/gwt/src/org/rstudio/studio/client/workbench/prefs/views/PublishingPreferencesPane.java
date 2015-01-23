@@ -75,7 +75,7 @@ public class PublishingPreferencesPane extends PreferencesPane
       Label missingDepsText = new Label(
                   "Publishing apps and documents requires up to date " +
                   "versions of one or more packages. After the packages " +
-                  "are installed, return to this pane to create or " +
+                  "are installed, you may return to this pane to create or " +
                   "connect accounts.");
       missingDepsText.getElement().getStyle().setMarginBottom(5, Unit.PX);
       missingDepsPanel.add(missingDepsText);
@@ -85,19 +85,23 @@ public class PublishingPreferencesPane extends PreferencesPane
       final Label missingDepsDesc = new Label("");
       missingDepsDesc.getElement().getStyle().setFontWeight(FontWeight.BOLD);
       missingDepsPanel.add(missingDepsDesc);
-      ThemedButton installButton = new ThemedButton("Install", 
+      installButton_ = new ThemedButton("Install", 
             new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent arg0)
          {
             if (installDepsCommand_ != null)
+            {
+               installButton_.setText("Installing...");
+               installButton_.setEnabled(false);
                installDepsCommand_.execute();
+            }
          }
       });
-      installButton.getElement().getStyle().setMarginTop(5, Unit.PX);
-      installButton.getElement().getStyle().setMarginBottom(15, Unit.PX);
-      missingDepsPanel.add(installButton);
+      installButton_.getElement().getStyle().setMarginTop(5, Unit.PX);
+      installButton_.getElement().getStyle().setMarginBottom(15, Unit.PX);
+      missingDepsPanel.add(installButton_);
       
       // set up the UI to be shown in the pane if the packages *are* installed
       final VerticalPanel accountPanel = new VerticalPanel();
@@ -168,11 +172,16 @@ public class PublishingPreferencesPane extends PreferencesPane
                @Override
                public void execute()
                {
+                  // runs when the dependencies have finished installing
                   if (missingDepsPanel.isAttached())
                   {
                      rootPanel.remove(missingDepsPanel);
                   }
                   rootPanel.insert(accountPanel, 0);
+                  
+                  // in case there's any account metadata from a previous
+                  // installation of the package
+                  accountList_.refreshAccountList();
                }
             });
       
@@ -305,6 +314,7 @@ public class PublishingPreferencesPane extends PreferencesPane
    private RSConnectAccountList accountList_;
    private ThemedButton connectButton_;
    private ThemedButton disconnectButton_;
+   private ThemedButton installButton_;
    private boolean reloadRequired_;
    private Command installDepsCommand_;
 }
