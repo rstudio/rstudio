@@ -17,48 +17,16 @@
 #define CORE_MACROS_HPP
 
 // re-define this in implementation files for labelled debugging
-#define RSTUDIO_DEBUG_LABEL "rstudio"
+#ifndef RSTUDIO_DEBUG_LABEL
+# define RSTUDIO_DEBUG_LABEL "rstudio"
+#endif
 
-/**
- * Basic infrastructure for macro dispatch
- */
+#ifndef RSTUDIO_ENABLE_DEBUG_MACROS
 
-// Concatenate two tokens.
-#define RSTUDIO_PP_PASTE(A, B) A ## B
-
-// Concatenate a name and a number (to form the 
-// name of an implementation macro)
-#define RSTUDIO_PP_SELECT(NAME, NUMBER) \
-   RSTUDIO_PP_PASTE(NAME ## _, NUMBER)
-
-// Count the number of arguments in a variadic macro.
-// This uses the GCC extension ##__VA_ARGS__, but should
-// be supported in all the platforms we target.
-#define RSTUDIO_PP_VA_NUM_ARGS(...) \
-   RSTUDIO_PP_VA_NUM_ARGS_IMPL(, ##__VA_ARGS__, 5, 4, 3, 2, 1, 0)
-
-#define RSTUDIO_PP_VA_NUM_ARGS_IMPL(_0, _1, _2, _3, _4, _5, N, ...) N
-
-/**
- * End macro dispatch infrastructure
- */
-
-// A selector for debugging blocks of code
-#define RSTUDIO_DEBUG_BLOCK(...)                                               \
-   RSTUDIO_PP_SELECT(                                                          \
-      RSTUDIO_DEBUG_BLOCK__IMPL,                                               \
-      RSTUDIO_PP_VA_NUM_ARGS(__VA_ARGS__)                                      \
-   )(__VA_ARGS__)
-
-#define RSTUDIO_DEBUG_BLOCK__IMPL_0    if (false)
-#define RSTUDIO_DEBUG_BLOCK__IMPL_1(x) if (false)
-
-// More vanilla debugging
 #define RSTUDIO_DEBUG(x)
+#define RSTUDIO_DEBUG_BLOCK if (false)
 
-// When RSTUDIO_DEBUG_MODE is set, we provide implementations for
-// the above.
-#ifdef RSTUDIO_DEBUG_MODE
+#else
 
 #undef RSTUDIO_DEBUG
 #define RSTUDIO_DEBUG(x)                                                       \
@@ -69,14 +37,16 @@
                 << x << std::endl << std::endl;                                \
    } while (0)
 
-#undef RSTUDIO_DEBUG_BLOCK__IMPL_0
-#define RSTUDIO_DEBUG_BLOCK__IMPL_0 if (true)
+#define RSTUDIO_DEBUG_BLOCK if (true)
 
-#undef RSTUDIO_DEBUG_BLOCK__IMPL_1
-#define RSTUDIO_DEBUG_BLOCK__IMPL_1(x)                                         \
-   RSTUDIO_DEBUG(x); \
-   if (true)
+#endif
 
+#ifndef DEBUG
+# define DEBUG RSTUDIO_DEBUG
+#endif
+
+#ifndef DEBUG_BLOCK
+# define DEBUG_BLOCK RSTUDIO_DEBUG_BLOCK
 #endif
 
 #endif

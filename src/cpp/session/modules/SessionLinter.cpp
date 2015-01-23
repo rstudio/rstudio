@@ -33,15 +33,9 @@
 #include <core/FileUtils.hpp>
 #include <core/collection/Tree.hpp>
 
-#define LINTER_DEBUG_LEVEL 1
-#if LINTER_DEBUG_LEVEL > 0
-# define DEBUG(x) \
-   std::cerr << "(linter) " << x << std::endl;
-# define DEBUG_BLOCK(x) x
-#else
-# define DEBUG(x)
-# define DEBUG_BLOCK(x)
-#endif
+#define RSTUDIO_ENABLE_DEBUG_MACROS
+#define RSTUDIO_DEBUG_LABEL "linter"
+#include <core/Macros.hpp>
 
 namespace rstudio {
 namespace session {
@@ -703,13 +697,14 @@ void handleFunctionToken(TokenCursor& cursor,
                          LintItems& lintItems)
 {
    // ensure we're on a function token
-   DEBUG_BLOCK(
+   DEBUG_BLOCK
+   {
       if (!cursor.contentEquals(L"function"))
       {
          DEBUG("ASSERTION ERROR: Expected token cursor to lie on 'function' token");
          return;
       }
-   );
+   }
    
    // there should be a '(' following the function keyword
    cursor.moveToNextToken();
