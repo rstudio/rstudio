@@ -55,6 +55,10 @@
    # validate autoSelect
    autoSelect = match.arg(autoSelect)
    
+   # normalize basePath
+   if (!is.null(basePath))
+      basePath <- .rs.normalizePath(basePath,  mustWork = TRUE)
+   
    # validate markers
    isMarker <- function(marker) {
       markerTypes <- c("error", "warning", "box", "info", "style")
@@ -85,6 +89,9 @@
       if (!"message" %in% cols || !is.character(markers$message))
          stop("markers message field is unspecified or invalid", call. = FALSE)
       
+      # normalize paths
+      cols$file <- .rs.normalizePath(cols$file, mustWork = TRUE)
+      
    } else if (is.list(markers)) {
       markers <- lapply(markers, function(marker) {
          markerTypes <- c("error", "warning", "box", "info", "style")
@@ -100,7 +107,7 @@
             stop("Marker message is unspecified or invalid: ", marker$message, call. = FALSE)
          
          marker$type <- .rs.scalar(marker$type)
-         marker$file <- .rs.scalar(marker$file)
+         marker$file <- .rs.scalar(.rs.normalizePath(marker$file, mustWork = TRUE))
          marker$line <- .rs.scalar(marker$line)
          marker$column <- .rs.scalar(marker$column)
          marker$message <- .rs.scalar(marker$message)
