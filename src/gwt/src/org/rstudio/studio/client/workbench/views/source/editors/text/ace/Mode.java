@@ -72,4 +72,8 @@ public class Mode extends JavaScriptObject
          int row) /*-{
       return this.getNextLineIndent(state, line, tab, tabSize, row);
    }-*/;
+   
+   public native final Tokenizer getTokenizer() /*-{
+      return this.$tokenizer;
+   }-*/;
 }
