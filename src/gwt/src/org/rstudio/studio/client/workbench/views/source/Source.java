@@ -455,7 +455,7 @@ public class Source implements InsertSourceHandler,
       vimOnNewDoc(this);
       
       // TODO: Infer encoding from source document?
-      vimOnReadFile(this, "UTF-8");
+      vimOnReadFile(this, uiPrefs_.defaultEncoding().getValue());
       
       vimOnRunRScript(this);
    }
@@ -463,11 +463,24 @@ public class Source implements InsertSourceHandler,
    private final native void vimOnSave(Source source) /*-{
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("write", "w",
          $entry(function(cm, params) {
-            var target = source.@org.rstudio.studio.client.workbench.views.source.Source::getActiveEditor()();
-            target.@org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget::onSaveSourceDoc()();
+            source.@org.rstudio.studio.client.workbench.views.source.Source::saveActiveSourceDoc()();
          })
       );
    }-*/;
+   
+   void saveActiveSourceDoc()
+   {
+      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+      {
+         // ensure the command is enabled (we might want to re-save a document
+         // that hasn't changed). we prefer re-saving so that the last modified
+         // time for the file is updated
+         boolean enabled = commands_.saveSourceDoc().isEnabled();
+         commands_.saveSourceDoc().setEnabled(true);
+         commands_.saveSourceDoc().execute();
+         commands_.saveSourceDoc().setEnabled(enabled);
+      }
+   }
    
    private native final void vimOnNextTab(Source source) /*-{
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("bnext", "bn",
@@ -2467,25 +2480,24 @@ public class Source implements InsertSourceHandler,
    
    private void pasteFileContentsAtCursor(final String path, final String encoding)
    {
-      server_.getFileContents(path, encoding, new ServerRequestCallback<String>()
+      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
       {
-         @Override
-         public void onResponseReceived(String content)
+         final TextEditingTarget target = (TextEditingTarget) activeEditor_;
+         server_.getFileContents(path, encoding, new ServerRequestCallback<String>()
          {
-            if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+            @Override
+            public void onResponseReceived(String content)
             {
-               TextEditingTarget editor = (TextEditingTarget) activeEditor_;
-               editor.insertCode(content, false);
+               target.insertCode(content, false);
             }
-         }
-         
-         @Override
-         public void onError(ServerError error)
-         {
-            // TODO Auto-generated method stub
-            
-         }
-      });
+
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+            }
+         });
+      }
    }
    
    private void pasteRCodeExecutionResult(final String code)
