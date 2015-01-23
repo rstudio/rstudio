@@ -1743,6 +1743,25 @@ json::Array sourceMarkersAsJson(const std::vector<SourceMarker>& markers)
    return markersJson;
 }
 
+SourceMarker::Type sourceMarkerTypeFromString(const std::string& type)
+{
+   if (type == "error")
+      return SourceMarker::Error;
+   else if (type == "warning")
+      return SourceMarker::Warning;
+   else if (type == "box")
+      return SourceMarker::Box;
+   else if (type == "info")
+      return SourceMarker::Info;
+   else if (type == "style")
+      return SourceMarker::Style;
+   else
+      return SourceMarker::Error;
+}
+
+core::json::Array sourceMarkersAsJson(const std::vector<SourceMarker>& markers);
+
+
 Error initialize()
 {
    // register rs_enqueClientEvent with R 

@@ -57,6 +57,14 @@
    gwt-image: 'badbox';
 }
 
+@sprite .infoIcon {
+   gwt-image: 'info';
+}
+
+@sprite .styleIcon {
+   gwt-image: 'style';
+}
+
 div.disclosure {
    margin-top: 1px;
    margin-right: 3px;

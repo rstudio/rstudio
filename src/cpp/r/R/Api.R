@@ -57,9 +57,9 @@
    
    # validate markers
    isMarker <- function(marker) {
-      markerTypes <- c("error", "warning")
+      markerTypes <- c("error", "warning", "box", "info", "style")
       if (is.null(marker$type) || (!marker$type %in% markerTypes))
-         stop("Invalid marker type (", marker, ")", call. = FALSE)
+         stop("Invalid marker type (", marker$type, ")", call. = FALSE)
       if (!is.character(marker$file))
          stop("Marker file is unspecified or invalid: ", marker$file, call. = FALSE)
       if (!is.numeric(marker$line))

@@ -374,14 +374,8 @@ SEXP rs_sourceMarkers(SEXP nameSEXP,
                continue;
             }
 
-            SourceMarker::Type markerType = SourceMarker::Error;
-            if (type == "error")
-               markerType = SourceMarker::Error;
-            else if (type == "warning")
-               markerType = SourceMarker::Warning;
-
             SourceMarker marker(
-                markerType,
+                sourceMarkerTypeFromString(type),
                 resolveAliasedPath(path),
                 safe_convert::numberTo<int>(line, 1),
                 safe_convert::numberTo<int>(column, 1),
@@ -393,8 +387,8 @@ SEXP rs_sourceMarkers(SEXP nameSEXP,
       }
 
       SourceMarkerSet markerSet(name,
-                                basePath.empty() ? FilePath() :
-                                                   resolveAliasedPath(basePath),
+                                basePath.empty() ?
+                                   FilePath() : resolveAliasedPath(basePath),
                                 markers);
 
       MarkerAutoSelect markerAutoSelect = MarkerAutoSelectNone;

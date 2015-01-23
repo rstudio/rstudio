@@ -710,11 +710,8 @@ bool isUserFile(const core::FilePath& filePath);
 
 struct SourceMarker
 {
-   // NOTE: marker types are shared accross all client code that uses
-   // the SourceMarker type. therefore if we want to add more types
-   // we need to do so beyond the 'Box' value
    enum Type {
-      Error = 0, Warning = 1  /*, Box = 2 */
+      Error = 0, Warning = 1, Box = 2, Info = 3, Style = 4
    };
 
    SourceMarker(Type type,
@@ -735,6 +732,8 @@ struct SourceMarker
    std::string message;
    bool showErrorList;
 };
+
+SourceMarker::Type sourceMarkerTypeFromString(const std::string& type);
 
 core::json::Array sourceMarkersAsJson(const std::vector<SourceMarker>& markers);
 

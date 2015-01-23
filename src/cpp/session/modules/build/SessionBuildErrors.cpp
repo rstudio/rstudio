@@ -198,12 +198,8 @@ std::vector<module_context::SourceMarker> parseGccErrors(
       if (filePath.filename() == "Makeconf")
          continue;
 
-      // resolve type
-      SourceMarker::Type errType = (type == "warning") ? SourceMarker::Warning :
-                                                         SourceMarker::Error;
-
-      // create error and add it
-      SourceMarker err(errType,
+      // create marker and add it
+      SourceMarker err(module_context::sourceMarkerTypeFromString(type),
                        filePath,
                        core::safe_convert::stringTo<int>(line, 1),
                        core::safe_convert::stringTo<int>(column, 1),

@@ -29,6 +29,8 @@ public class SourceMarker extends JavaScriptObject
    public static final int ERROR = 0;
    public static final int WARNING = 1;
    public static final int BOX = 2;  // LaTeX bad box error
+   public static final int INFO = 3;
+   public static final int STYLE = 4; 
    
    protected SourceMarker()
    {
