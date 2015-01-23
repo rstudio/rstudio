@@ -29,6 +29,7 @@ import com.google.gwt.dev.util.log.speedtracer.SpeedTracerLogger.Event;
 import com.google.gwt.thirdparty.guava.common.collect.ArrayListMultimap;
 import com.google.gwt.thirdparty.guava.common.collect.ImmutableMap;
 import com.google.gwt.thirdparty.guava.common.collect.ListMultimap;
+import com.google.gwt.thirdparty.guava.common.collect.Maps;
 import com.google.gwt.thirdparty.guava.common.io.BaseEncoding;
 import com.google.gwt.util.tools.Utility;
 
@@ -452,33 +453,18 @@ public class JdtCompiler {
         return additionalProviderAnswer;
       }
 
-      // TODO(stalcup): Add verification that all classpath bytecode is for Annotations.
       NameEnvironmentAnswer classPathAnswer = findTypeInClassPath(internalName);
+
       if (classPathAnswer != null) {
         return classPathAnswer;
       }
-
-      // LambdaMetafactory is byte-code side artifact of JDT compile and actually not referenced by
-      // our AST. However, this class is only available in JDK8+ so JdtCompiler fails to validate
-      // the classes that are referencing it. We tackle that by providing a stub version if it is
-      // not found in the class path.
-      if (internalName.equals("java/lang/invoke/LambdaMetafactory")) {
-        try {
-          ClassFileReader cfr = new ClassFileReader(getLambdaMetafactoryBytes(),
-              "synthtetic:java/lang/invoke/LambdaMetafactory".toCharArray(), true);
-          return new NameEnvironmentAnswer(cfr, null);
-        } catch (ClassFormatException e) {
-          e.printStackTrace();
-        }
-      }
-
       return null;
     }
 
     /*
       Generated from:
 
-      public class LambdaMetafactory {
+       public class LambdaMetafactory {
         public static CallSite metafactory(MethodHandles.Lookup caller, String invokedName,
             MethodType invokedType, MethodType samMethodType, MethodHandle implMethod,
             MethodType instantiatedMethodType) {
@@ -536,6 +522,19 @@ public class JdtCompiler {
     }
 
     private NameEnvironmentAnswer findTypeInClassPath(String internalName) {
+
+      // If the class was previously queried here return the cached result.
+      if (cachedClassPathAnswerByInternalName.containsKey(internalName)) {
+        // The return might be null if the class was not found at all.
+        return cachedClassPathAnswerByInternalName.get(internalName);
+      }
+      NameEnvironmentAnswer answer = doFindTypeInClassPath(internalName);
+      // Here we cache the answer even if it is null to denote that it was not found.
+      cachedClassPathAnswerByInternalName.put(internalName, answer);
+      return answer;
+    }
+
+    private NameEnvironmentAnswer doFindTypeInClassPath(String internalName) {
       URL resource = getClassLoader().getResource(internalName + ".class");
       if (resource == null) {
         return null;
@@ -548,15 +547,30 @@ public class JdtCompiler {
             ClassFileReader.read(openStream, resource.toExternalForm(), true);
         // In case insensitive file systems we might have found a resource  whose name is different
         // in case and should not be returned as an answer.
-        return internalName.equals(CharOperation.charToString(classFileReader.getName()))  ?
-            new NameEnvironmentAnswer(classFileReader, null) : null;
+        if (internalName.equals(CharOperation.charToString(classFileReader.getName()))) {
+          return new NameEnvironmentAnswer(classFileReader, null);
+        }
       } catch (IOException e) {
-        return null;
+        // returns null indicating a failure.
       } catch (ClassFormatException e) {
-        return null;
+        // returns null indicating a failure.
       } finally {
         Utility.close(openStream);
       }
+      // LambdaMetafactory is byte-code side artifact of JDT compile and actually not referenced by
+      // our AST. However, this class is only available in JDK8+ so JdtCompiler fails to validate
+      // the classes that are referencing it. We tackle that by providing a stub version if it is
+      // not found in the class path.
+      if (internalName.equals("java/lang/invoke/LambdaMetafactory")) {
+        try {
+          ClassFileReader cfr = new ClassFileReader(getLambdaMetafactoryBytes(),
+              "synthetic:java/lang/invoke/LambdaMetafactory".toCharArray(), true);
+          return new NameEnvironmentAnswer(cfr, null);
+        } catch (ClassFormatException e) {
+          e.printStackTrace();
+        }
+      }
+      return null;
     }
 
     @Override
@@ -745,6 +759,13 @@ public class JdtCompiler {
    * Maps internal names to compiled classes.
    */
   private final Map<String, CompiledClass> internalTypes = new HashMap<String, CompiledClass>();
+
+  /**
+   * Remembers types that have been found in the classpath or not found at all to avoid unnecessary
+   * resource scanning.
+   */
+  private final Map<String, NameEnvironmentAnswer> cachedClassPathAnswerByInternalName =
+      Maps.newHashMap();
 
   /**
    * Only active during a compile.
