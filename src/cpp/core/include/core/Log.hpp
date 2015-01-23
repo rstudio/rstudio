@@ -51,18 +51,18 @@ std::string errorAsLogEntry(const Error& error);
 // Macros for automatic inclusion of ERROR_LOCATION and easy ability to 
 // compile out logging calls
 
-#define LOG_ERROR(error) core::log::logError(error, ERROR_LOCATION) 
+#define LOG_ERROR(error) rstudio::core::log::logError(error, ERROR_LOCATION)
 
-#define LOG_ERROR_MESSAGE(message) core::log::logErrorMessage(message, \
+#define LOG_ERROR_MESSAGE(message) rstudio::core::log::logErrorMessage(message, \
                                                               ERROR_LOCATION)
 
-#define LOG_WARNING_MESSAGE(message) core::log::logWarningMessage( \
+#define LOG_WARNING_MESSAGE(message) rstudio::core::log::logWarningMessage( \
                                                                message, \
                                                                ERROR_LOCATION)
 
-#define LOG_INFO_MESSAGE(message) core::log::logInfoMessage(message)
+#define LOG_INFO_MESSAGE(message) rstudio::core::log::logInfoMessage(message)
 
-#define LOG_DEBUG_MESSAGE(message) core::log::logDebugMessage(message)
+#define LOG_DEBUG_MESSAGE(message) rstudio::core::log::logDebugMessage(message)
 
 #endif // CORE_LOG_HPP
 

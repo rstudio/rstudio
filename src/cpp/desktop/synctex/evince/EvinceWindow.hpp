@@ -86,7 +86,7 @@ private:
 namespace org {
   namespace gnome {
     namespace evince {
-      typedef desktop::synctex::EvinceWindow Window;
+      typedef rstudio::desktop::synctex::EvinceWindow Window;
     }
   }
 }

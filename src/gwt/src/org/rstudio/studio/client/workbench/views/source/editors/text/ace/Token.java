@@ -19,6 +19,14 @@ import com.google.gwt.core.client.JavaScriptObject;
 public class Token extends JavaScriptObject
 {
    protected Token() {}
+   
+   public static native final Token create() /*-{
+      return {
+         "value": "",
+         "type": "",
+         "column": 0
+      };
+   }-*/;
 
    public native final String getValue() /*-{
       return this.value;
@@ -26,5 +34,9 @@ public class Token extends JavaScriptObject
 
    public native final String getType() /*-{
       return this.type;
+   }-*/;
+   
+   public native final int getColumn() /*-{
+      return this.column;
    }-*/;
 }

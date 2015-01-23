@@ -29,6 +29,8 @@
 #include "DesktopWordViewer.hpp"
 
 using namespace rstudio::core;
+
+namespace rstudio {
 namespace desktop {
 namespace {
 
@@ -382,3 +384,4 @@ LErrExit:
 }
 
 } // namespace desktop
+} // namespace rstudio

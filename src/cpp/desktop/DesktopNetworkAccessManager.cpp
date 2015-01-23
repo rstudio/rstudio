@@ -24,7 +24,6 @@
 #include "DesktopOptions.hpp"
 
 using namespace rstudio::core;
-
 using namespace rstudio::desktop;
 
 NetworkAccessManager::NetworkAccessManager(QString secret, QObject *parent) :
@@ -45,10 +44,10 @@ QNetworkReply* NetworkAccessManager::createRequest(
    if (req.url().scheme() == QString::fromUtf8("http") &&
        (req.url().host() == QString::fromUtf8("127.0.0.1") ||
         req.url().host() == QString::fromUtf8("localhost")) &&
-        req.url().port() == desktop::options().portNumber().toInt())
+        req.url().port() == options().portNumber().toInt())
    {
       return new NetworkReply(
-            desktop::options().localPeer(),
+            options().localPeer(),
             secret_,
             op,
             req,

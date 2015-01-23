@@ -317,8 +317,10 @@ for (file in themeFiles) {
       create_line_marker_rule(".ace_foreign_line", color_as_hex(mergedColor))
    )
    
-   ## Generate a background used for 'find's.
-   findBackground <- color_as_hex(mix_colors(backgroundRgb, foregroundRgb, 0.5))
+   ## Generate a background used for 'find_line'; most
+   ## promently used for highlighting lines after a failed
+   ## compile
+   findBackground <- color_as_hex(mix_colors(backgroundRgb, foregroundRgb, 0.8))
    content <- c(
       content,
       create_line_marker_rule(".ace_find_line", findBackground)

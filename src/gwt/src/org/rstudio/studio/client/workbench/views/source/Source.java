@@ -276,7 +276,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.vcsViewOnGitHub());
       dynamicCommands_.add(commands.vcsBlameOnGitHub());
       dynamicCommands_.add(commands.editRmdFormatOptions());
-      dynamicCommands_.add(commands.alignAssignment());
+      dynamicCommands_.add(commands.reformatCode());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);
@@ -441,8 +441,141 @@ public class Source implements InsertSourceHandler,
       
       // open project docs
       openProjectDocs(session);    
+      
+      // add vim commands
+      initVimCommands();
    }
-
+   
+   private void initVimCommands()
+   {
+      vimOnSave(this);
+      vimOnNextTab(this);
+      vimOnPreviousTab(this);
+      vimOnCloseTab(this);
+      vimOnNewDoc(this);
+      vimOnSaveAndCloseTab(this);
+      
+      // TODO: Infer encoding from source document?
+      vimOnReadFile(this, uiPrefs_.defaultEncoding().getValue());
+      
+      vimOnRunRScript(this);
+   }
+   
+   private final native void vimOnSave(Source source) /*-{
+      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("write", "w",
+         $entry(function(cm, params) {
+            source.@org.rstudio.studio.client.workbench.views.source.Source::saveActiveSourceDoc()();
+         })
+      );
+   }-*/;
+   
+   private void saveActiveSourceDoc()
+   {
+      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+      {
+         TextEditingTarget target = (TextEditingTarget) activeEditor_;
+         target.save();
+      }
+   }
+   
+   private void saveAndCloseActiveSourceDoc()
+   {
+      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+      {
+         TextEditingTarget target = (TextEditingTarget) activeEditor_;
+         target.save(new Command()
+         {
+            @Override
+            public void execute()
+            {
+               onCloseSourceDoc();
+            }
+         });
+      }
+   }
+   
+   private native final void vimOnNextTab(Source source) /*-{
+      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("bnext", "bn",
+         $entry(function(cm, params) {
+            source.@org.rstudio.studio.client.workbench.views.source.Source::onNextTab()();
+         })
+      );
+   }-*/;
+   
+   private native final void vimOnPreviousTab(Source source) /*-{
+      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("bprev", "bp",
+         $entry(function(cm, params) {
+            source.@org.rstudio.studio.client.workbench.views.source.Source::onPreviousTab()();
+         })
+      );
+   }-*/;
+   
+   private native final void vimOnCloseTab(Source source) /*-{
+      var callback = $entry(function(cm, params) {
+      
+         var interactive = true;
+         if (params.argString && params.argString === "!")
+            interactive = false;
+         
+         source.@org.rstudio.studio.client.workbench.views.source.Source::closeSourceDoc(Z)(interactive);
+      });
+       
+      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("bdelete", "bd", callback);
+      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("quit", "q", callback);
+   }-*/;
+   
+   private native final void vimOnNewDoc(Source source) /*-{
+   
+      var callback = $entry(function(cm, params) {
+         if (params.args) {
+            if (params.args.length === 1) {
+               source.@org.rstudio.studio.client.workbench.views.source.Source::editFile(Ljava/lang/String;)(params.args[0]);
+            }
+            // TODO: on error?
+         } else {
+            source.@org.rstudio.studio.client.workbench.views.source.Source::onNewSourceDoc()();
+         }
+      });
+      
+      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("badd", "bad", callback);
+      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("edit", "e", callback);
+      
+   }-*/;
+   
+   private native final void vimOnSaveAndCloseTab(Source source) /*-{
+   
+      var callback = $entry(function(cm, params) {
+         source.@org.rstudio.studio.client.workbench.views.source.Source::saveAndCloseActiveSourceDoc()();
+      });
+      
+      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("wq", "wq", callback);
+      
+   }-*/;
+   
+   private native final void vimOnReadFile(Source source, String encoding) /*-{
+   
+      var callback = $entry(function(cm, params) {
+         if (params.args && params.args.length === 1) {
+            source.@org.rstudio.studio.client.workbench.views.source.Source::pasteFileContentsAtCursor(Ljava/lang/String;Ljava/lang/String;)(params.args[0], encoding);
+         }
+      });
+      
+      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("read", "r", callback);
+   
+   }-*/;
+   
+   private native final void vimOnRunRScript(Source source) /*-{
+      
+      var callback = $entry(function(cm, params) {
+         if (params.args) {
+            source.@org.rstudio.studio.client.workbench.views.source.Source::pasteRCodeExecutionResult(Ljava/lang/String;)(params.argString);
+         }
+      });
+      
+      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("Rscript", "R", callback);
+   
+   }-*/;
+   
    /**
     * @param isNewTabPending True if a new tab is about to be created. (If
     *    false and there are no tabs already, then a new source doc might
@@ -1182,10 +1315,15 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onCloseSourceDoc()
    {
+      closeSourceDoc(true);
+   }
+   
+   void closeSourceDoc(boolean interactive)
+   {
       if (view_.getTabCount() == 0)
          return;
-
-      view_.closeTab(view_.getActiveTabIndex(), true);
+      
+      view_.closeTab(view_.getActiveTabIndex(), interactive);
    }
 
    /**
@@ -1468,7 +1606,6 @@ public class Source implements InsertSourceHandler,
       );          
             
    }
-   
    
    @Handler
    public void onOpenSourceDoc()
@@ -2373,6 +2510,74 @@ public class Source implements InsertSourceHandler,
       temp.removeAll(dynamicCommands_);
       return temp.size() == 0;
    }
+   
+   private void pasteFileContentsAtCursor(final String path, final String encoding)
+   {
+      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+      {
+         final TextEditingTarget target = (TextEditingTarget) activeEditor_;
+         server_.getFileContents(path, encoding, new ServerRequestCallback<String>()
+         {
+            @Override
+            public void onResponseReceived(String content)
+            {
+               target.insertCode(content, false);
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+            }
+         });
+      }
+   }
+   
+   private void pasteRCodeExecutionResult(final String code)
+   {
+      server_.executeRCode(code, new ServerRequestCallback<String>()
+      {
+         @Override
+         public void onResponseReceived(String output)
+         {
+            if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+            {
+               TextEditingTarget editor = (TextEditingTarget) activeEditor_;
+               editor.insertCode(output, false);
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+      });
+   }
+   
+   private void editFile(final String path)
+   {
+      server_.ensureFileExists(
+            path,
+            new ServerRequestCallback<Boolean>()
+            {
+               @Override
+               public void onResponseReceived(Boolean success)
+               {
+                  if (success)
+                  {
+                     FileSystemItem file = FileSystemItem.createFile(path);
+                     openFile(file);
+                  }
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
+   }
 
    public void onFileEdit(FileEditEvent event)
    {
@@ -2719,6 +2924,11 @@ public class Source implements InsertSourceHandler,
          idx = tabOrder_.get(idx);
       }
       view_.selectTab(idx);
+   }
+   
+   private EditingTarget getActiveEditor()
+   {
+      return activeEditor_;
    }
 
    ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();

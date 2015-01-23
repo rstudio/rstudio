@@ -35,7 +35,6 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
@@ -538,18 +537,10 @@ public class AceEditor implements DocDisplay,
       // reset keyboard handlers
       widget_.getEditor().setKeyboardHandler(null);
       
-      // if required add vim handlers (to main editor and our previewer)
+      // if required add vim handlers to main editor
       if (useVimMode_)
       {
          widget_.getEditor().addKeyboardHandler(KeyboardHandler.vim());
-         previewer.addHandler(
-            new AceVimCommandHandler(new CommandWithArg<Boolean>() {
-               @Override
-               public void execute(Boolean arg)
-               {
-                 fireEvent(new FindRequestedEvent(arg));
-               }             
-            }));
       }
       
       // add the previewer's handler

@@ -61,7 +61,7 @@ Q_SIGNALS: // SIGNALS
 namespace org {
   namespace gnome {
     namespace evince {
-      typedef desktop::synctex::EvinceDaemon Daemon;
+      typedef rstudio::desktop::synctex::EvinceDaemon Daemon;
     }
   }
 }

@@ -710,11 +710,8 @@ bool isUserFile(const core::FilePath& filePath);
 
 struct SourceMarker
 {
-   // NOTE: marker types are shared accross all client code that uses
-   // the SourceMarker type. therefore if we want to add more types
-   // we need to do so beyond the 'Box' value
    enum Type {
-      Error = 0, Warning = 1  /*, Box = 2 */
+      Error = 0, Warning = 1, Box = 2, Info = 3, Style = 4
    };
 
    SourceMarker(Type type,
@@ -736,36 +733,27 @@ struct SourceMarker
    bool showErrorList;
 };
 
+SourceMarker::Type sourceMarkerTypeFromString(const std::string& type);
+
 core::json::Array sourceMarkersAsJson(const std::vector<SourceMarker>& markers);
 
 struct SourceMarkerSet
-{
-   enum AutoSelect
-   {
-      AutoSelectNone = 0,
-      AutoSelectFirst = 1,
-      AutoSelectFirstError = 2
-   };
-
+{  
    SourceMarkerSet() {}
 
    SourceMarkerSet(const std::string& name,
-                   const std::vector<SourceMarker>& markers,
-                   AutoSelect autoSelect = AutoSelectNone)
+                   const std::vector<SourceMarker>& markers)
       : name(name),
-        markers(markers),
-        autoSelect(autoSelect)
+        markers(markers)
    {
    }
 
    SourceMarkerSet(const std::string& name,
                    const core::FilePath& basePath,
-                   const std::vector<SourceMarker>& markers,
-                   AutoSelect autoSelect)
+                   const std::vector<SourceMarker>& markers)
       : name(name),
         basePath(basePath),
-        markers(markers),
-        autoSelect(autoSelect)
+        markers(markers)
    {
    }
 
@@ -774,10 +762,17 @@ struct SourceMarkerSet
    std::string name;
    core::FilePath basePath;
    std::vector<SourceMarker> markers;
-   AutoSelect autoSelect;
 };
 
-void showSourceMarkers(const SourceMarkerSet& markerSet);
+enum MarkerAutoSelect
+{
+   MarkerAutoSelectNone = 0,
+   MarkerAutoSelectFirst = 1,
+   MarkerAutoSelectFirstError = 2
+};
+
+void showSourceMarkers(const SourceMarkerSet& markerSet,
+                       MarkerAutoSelect autoSelect);
 
 } // namespace module_context
 } // namespace session

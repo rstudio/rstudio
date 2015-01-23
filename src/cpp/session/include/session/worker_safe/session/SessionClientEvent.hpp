@@ -124,7 +124,7 @@ extern const int kInstallShiny;
 extern const int kSuspendAndRestart;
 extern const int kDataViewChanged;
 extern const int kViewFunction;
-extern const int kShowMarkers;
+extern const int kMarkersChanged;
 }
    
 class ClientEvent

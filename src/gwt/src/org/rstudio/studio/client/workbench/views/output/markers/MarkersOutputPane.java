@@ -14,15 +14,19 @@
  */
 package org.rstudio.studio.client.workbench.views.output.markers;
 
-import com.google.gwt.event.shared.HandlerRegistration;
+
+import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
-import org.rstudio.core.client.events.SelectionCommitHandler;
+import org.rstudio.core.client.events.HasSelectionCommitHandlers;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerList;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersSet;
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersState;
@@ -31,28 +35,38 @@ public class MarkersOutputPane extends WorkbenchPane
       implements MarkersOutputPresenter.Display
 {
    @Inject
-   public MarkersOutputPane()
+   public MarkersOutputPane(Commands commands)
    {
       super("Markers");
+      markerSetsToolbarButton_ = new MarkerSetsToolbarButton();
       markerList_ = new SourceMarkerList();
+      clearButton_ = new ToolbarButton(commands.clearPlots().getImageResource(),
+                                       null);
       ensureWidget();
    }
    
    @Override
-   public void initialize(MarkersState markerState)
+   public void update(MarkersState markerState, int autoSelect)
    {
-      if (markerState.isVisible())
-         ensureVisible(false);
-   }
-
-   @Override
-   public void showMarkersSet(MarkersSet markerSet)
-   {
+      // update list and toolbar button
       markerList_.clear();
-      markerList_.showMarkers(null,
-                              markerSet.getBasePath(),
-                              markerSet.getMarkers(), 
-                              markerSet.getAutoSelect());
+      markerSetsToolbarButton_.updateActiveMarkerSet(null);
+      markerSetsToolbarButton_.updateAvailableMarkerSets(new String[]{});
+      
+      if (markerState.hasMarkers())
+      {
+         MarkersSet markersSet = markerState.getMarkersSet();
+     
+         markerList_.showMarkers(null,
+                                 markersSet.getBasePath(),
+                                 markersSet.getMarkers(), 
+                                 autoSelect);
+              
+         markerSetsToolbarButton_.updateAvailableMarkerSets(
+               JsUtil.toStringArray(markerState.getMarkersSetNames()));
+         
+         markerSetsToolbarButton_.updateActiveMarkerSet(markersSet.getName());
+      }
    }
 
 
@@ -60,7 +74,10 @@ public class MarkersOutputPane extends WorkbenchPane
    protected Toolbar createMainToolbar()
    {
       Toolbar toolbar = new Toolbar();
-
+      toolbar.addLeftWidget(new ToolbarLabel("Showing:"));
+      toolbar.addLeftWidget(markerSetsToolbarButton_);
+      
+      toolbar.addRightWidget(clearButton_);
 
       return toolbar;
    }
@@ -76,13 +93,26 @@ public class MarkersOutputPane extends WorkbenchPane
    {
       fireEvent(new EnsureVisibleEvent(activate));
    }
-
+   
    @Override
-   public HandlerRegistration addSelectionCommitHandler(SelectionCommitHandler<CodeNavigationTarget> handler)
+   public HasValueChangeHandlers<String> getMarkerSetList()
    {
-      return markerList_.addSelectionCommitHandler(handler);
+      return markerSetsToolbarButton_;
    }
 
+   @Override
+   public HasSelectionCommitHandlers<CodeNavigationTarget> getMarkerList()
+   {
+      return markerList_;
+   }
+   
+   @Override
+   public HasClickHandlers getClearButton()
+   {
+      return clearButton_;
+   }
    
    private SourceMarkerList markerList_;
+   private MarkerSetsToolbarButton markerSetsToolbarButton_;
+   private ToolbarButton clearButton_;
 }

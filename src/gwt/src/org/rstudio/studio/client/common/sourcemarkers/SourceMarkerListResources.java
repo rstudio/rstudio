@@ -31,6 +31,8 @@ public interface SourceMarkerListResources extends ClientBundle
       String errorIcon();
       String warningIcon();
       String boxIcon();
+      String infoIcon();
+      String styleIcon();
       String lineCell();
       String messageCell();
       String disclosure();
@@ -44,6 +46,12 @@ public interface SourceMarkerListResources extends ClientBundle
 
    @Source("images/badbox.png")
    ImageResource badbox();
+   
+   @Source("images/info.png")
+   ImageResource info();
+   
+   @Source("images/style.png")
+   ImageResource style();
 
    @Source("SourceMarkerList.css")
    Styles styles();

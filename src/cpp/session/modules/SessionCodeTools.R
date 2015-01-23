@@ -439,6 +439,27 @@
       print(help(pieces[1], help_type='html', try.all.packages=T))
 })
 
+.rs.addJsonRpcHandler("execute_r_code", function(code)
+{
+   .envir <- parent.frame(2)
+   result <- .rs.withTimeLimit(2, fail = "", envir = .envir, {
+   
+      output <- capture.output(
+         evaled <- suppressWarnings(
+            eval(parse(text = code), envir = .envir)
+         )
+      )
+      
+      object <- if (!(length(evaled)) && length(output))
+         output
+      else
+         evaled
+      
+      paste(as.character(object), collapse = "\n")
+   })
+   .rs.scalar(result)
+})
+
 .rs.addJsonRpcHandler("is_function", function(nameString, envString)
 {
    object <- NULL
