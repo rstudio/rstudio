@@ -339,8 +339,11 @@ SEXP rs_sourceMarkers(SEXP nameSEXP,
 
       // string parameters
       std::string name = r::sexp::safeAsString(nameSEXP);
-      std::string basePath = r::sexp::safeAsString(basePathSEXP);
+      std::string base = r::sexp::safeAsString(basePathSEXP);
       std::string autoSelect = r::sexp::safeAsString(autoSelectSEXP);
+
+      // resolve basePath
+      FilePath basePath = base.empty() ? FilePath() : FilePath(base);
 
       // markers list
       using namespace r::exec;
@@ -376,7 +379,7 @@ SEXP rs_sourceMarkers(SEXP nameSEXP,
 
             SourceMarker marker(
                 sourceMarkerTypeFromString(type),
-                resolveAliasedPath(path),
+                FilePath(path),
                 safe_convert::numberTo<int>(line, 1),
                 safe_convert::numberTo<int>(column, 1),
                 message,
@@ -386,10 +389,7 @@ SEXP rs_sourceMarkers(SEXP nameSEXP,
          }
       }
 
-      SourceMarkerSet markerSet(name,
-                                basePath.empty() ?
-                                   FilePath() : resolveAliasedPath(basePath),
-                                markers);
+      SourceMarkerSet markerSet(name, basePath, markers);
 
       MarkerAutoSelect markerAutoSelect = MarkerAutoSelectNone;
       if (autoSelect == "none")
