@@ -190,7 +190,10 @@ public class StringAnalyzableTypeEnvironment implements AnalyzableTypeEnvironmen
       if (overriddenMethodIds != null) {
         for (int j = 0; j < overriddenMethodIds.size(); j++) {
           int overriddenMethodId = overriddenMethodIds.get(j);
-          overidingMethodIdsByOverriddenMethodId.remove(memberMethodId, overriddenMethodId);
+          while (overidingMethodIdsByOverriddenMethodId
+              .remove(memberMethodId, overriddenMethodId)) {
+            // Remove all instances by repeating remove one.
+          }
         }
       }
       staticallyReferencedTypeIdsByMethodId.remove(memberMethodId);

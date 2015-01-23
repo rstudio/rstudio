@@ -111,13 +111,15 @@ public class IntMultimap implements Serializable {
     return values;
   }
 
-  public void remove(int key, int value) {
+  public boolean remove(int key, int value) {
     IntArrayList values = get(key);
     if (values != null) {
       int valueIndex = values.indexOf(value);
       if (valueIndex != -1) {
         values.remove(valueIndex);
+        return true;
       }
     }
+    return false;
   }
 }
