@@ -86,6 +86,8 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="compilePDF"/>
          <cmd refid="compileNotebook"/>
          <separator/>
+         <cmd refid="rsconnectDeploy"/>
+         <separator/>
          <cmd refid="printSourceDoc"/>
          <separator/>
          <cmd refid="closeSourceDoc"/>

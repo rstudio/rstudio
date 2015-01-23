@@ -16,16 +16,12 @@
 package org.rstudio.studio.client.rsconnect.ui;
 import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.SatelliteFramePanel;
 import org.rstudio.core.client.widget.Toolbar;
-import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 public class RSConnectAuthPanel extends SatelliteFramePanel<RStudioFrame>
@@ -45,17 +41,6 @@ public class RSConnectAuthPanel extends SatelliteFramePanel<RStudioFrame>
       serverLabel_.getElement().getStyle().setFontWeight(FontWeight.BOLD);
       serverLabel_.getElement().getStyle().setMarginLeft(3, Unit.PX);
       toolbar.addLeftWidget(serverLabel_);
-      
-      cancelButton_ = new ToolbarButton("Close", (ImageResource)null,
-            new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent arg0)
-         {
-            onCancelAuth();
-         }
-      });
-      toolbar.addRightWidget(cancelButton_);
    }
    
    @Override
@@ -71,10 +56,5 @@ public class RSConnectAuthPanel extends SatelliteFramePanel<RStudioFrame>
       showUrl(url);
    }
    
-   private final native void onCancelAuth() /*-{
-      window.close();
-   }-*/;
-   
    private Label serverLabel_;
-   private ToolbarButton cancelButton_;
 }
