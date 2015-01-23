@@ -453,9 +453,10 @@ public class Source implements InsertSourceHandler,
       vimOnPreviousTab(this);
       vimOnCloseTab(this);
       vimOnNewDoc(this);
+      vimOnSaveAndCloseTab(this);
       
       // TODO: Infer encoding from source document?
-      vimOnReadFile(this, "UTF-8");
+      vimOnReadFile(this, uiPrefs_.defaultEncoding().getValue());
       
       vimOnRunRScript(this);
    }
@@ -463,11 +464,35 @@ public class Source implements InsertSourceHandler,
    private final native void vimOnSave(Source source) /*-{
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("write", "w",
          $entry(function(cm, params) {
-            var target = source.@org.rstudio.studio.client.workbench.views.source.Source::getActiveEditor()();
-            target.@org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget::onSaveSourceDoc()();
+            source.@org.rstudio.studio.client.workbench.views.source.Source::saveActiveSourceDoc()();
          })
       );
    }-*/;
+   
+   private void saveActiveSourceDoc()
+   {
+      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+      {
+         TextEditingTarget target = (TextEditingTarget) activeEditor_;
+         target.save();
+      }
+   }
+   
+   private void saveAndCloseActiveSourceDoc()
+   {
+      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+      {
+         TextEditingTarget target = (TextEditingTarget) activeEditor_;
+         target.save(new Command()
+         {
+            @Override
+            public void execute()
+            {
+               onCloseSourceDoc();
+            }
+         });
+      }
+   }
    
    private native final void vimOnNextTab(Source source) /*-{
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("bnext", "bn",
@@ -486,11 +511,17 @@ public class Source implements InsertSourceHandler,
    }-*/;
    
    private native final void vimOnCloseTab(Source source) /*-{
-      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("bdelete", "bd",
-         $entry(function(cm, params) {
-            source.@org.rstudio.studio.client.workbench.views.source.Source::onCloseSourceDoc()();
-         })
-      );
+      var callback = $entry(function(cm, params) {
+      
+         var interactive = true;
+         if (params.argString && params.argString === "!")
+            interactive = false;
+         
+         source.@org.rstudio.studio.client.workbench.views.source.Source::closeSourceDoc(Z)(interactive);
+      });
+       
+      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("bdelete", "bd", callback);
+      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("quit", "q", callback);
    }-*/;
    
    private native final void vimOnNewDoc(Source source) /*-{
@@ -508,6 +539,16 @@ public class Source implements InsertSourceHandler,
       
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("badd", "bad", callback);
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("edit", "e", callback);
+      
+   }-*/;
+   
+   private native final void vimOnSaveAndCloseTab(Source source) /*-{
+   
+      var callback = $entry(function(cm, params) {
+         source.@org.rstudio.studio.client.workbench.views.source.Source::saveAndCloseActiveSourceDoc()();
+      });
+      
+      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("wq", "wq", callback);
       
    }-*/;
    
@@ -1274,10 +1315,15 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onCloseSourceDoc()
    {
+      closeSourceDoc(true);
+   }
+   
+   void closeSourceDoc(boolean interactive)
+   {
       if (view_.getTabCount() == 0)
          return;
-
-      view_.closeTab(view_.getActiveTabIndex(), true);
+      
+      view_.closeTab(view_.getActiveTabIndex(), interactive);
    }
 
    /**
@@ -2467,25 +2513,24 @@ public class Source implements InsertSourceHandler,
    
    private void pasteFileContentsAtCursor(final String path, final String encoding)
    {
-      server_.getFileContents(path, encoding, new ServerRequestCallback<String>()
+      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
       {
-         @Override
-         public void onResponseReceived(String content)
+         final TextEditingTarget target = (TextEditingTarget) activeEditor_;
+         server_.getFileContents(path, encoding, new ServerRequestCallback<String>()
          {
-            if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+            @Override
+            public void onResponseReceived(String content)
             {
-               TextEditingTarget editor = (TextEditingTarget) activeEditor_;
-               editor.insertCode(content, false);
+               target.insertCode(content, false);
             }
-         }
-         
-         @Override
-         public void onError(ServerError error)
-         {
-            // TODO Auto-generated method stub
-            
-         }
-      });
+
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+            }
+         });
+      }
    }
    
    private void pasteRCodeExecutionResult(final String code)
