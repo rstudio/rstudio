@@ -17,7 +17,7 @@ package org.rstudio.studio.client.common.dependencies;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -55,7 +55,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
    }
    
    public void withDependencies(String progressCaption,
-                                CommandWithArg<Command> userPrompt,
+                                CommandWith2Args<String,Command> userPrompt,
                                 Dependency[] dependencies, 
                                 boolean silentUpdate,
                                 Command command)
@@ -82,11 +82,14 @@ public class DependencyManager implements InstallShinyEvent.Handler
                        command);
    }
    
-   public void withRSConnect(String userAction, final Command command)
+   public void withRSConnect(String userAction, 
+         CommandWith2Args<String, Command> userPrompt, 
+         final Command command)
    {
       withDependencies(
         "Establishing connection",
         userAction,
+        userPrompt,
         new Dependency[] {
           Dependency.cranPackage("digest", "0.6"),
           Dependency.cranPackage("RCurl", "1.95"),
@@ -121,9 +124,10 @@ public class DependencyManager implements InstallShinyEvent.Handler
    public void withShiny(final String userAction, final Command command)
    {
       // create user prompt command
-      CommandWithArg<Command> userPrompt = new CommandWithArg<Command>() {
+      CommandWith2Args<String, Command> userPrompt =
+            new CommandWith2Args<String, Command>() {
          @Override
-         public void execute(final Command yesCommand)
+         public void execute(final String unmetDeps, final Command yesCommand)
          {
             globalDisplay_.showYesNoMessage(
               MessageDialog.QUESTION,
@@ -169,7 +173,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
    
    private void withDependencies(String progressCaption,
                                  final String userAction,
-                                 final CommandWithArg<Command> userPrompt,
+                                 final CommandWith2Args<String,Command> userPrompt,
                                  Dependency[] dependencies, 
                                  final boolean silentUpdate,
                                  final Command command)
@@ -216,7 +220,8 @@ public class DependencyManager implements InstallShinyEvent.Handler
                
                if (userPrompt != null)
                {
-                  userPrompt.execute(installCommand);
+                  userPrompt.execute(describeDepPkgs(unsatisfiedDeps), 
+                                     installCommand);
                }
                else
                {
@@ -302,12 +307,9 @@ public class DependencyManager implements InstallShinyEvent.Handler
       }
       else
       {
-         ArrayList<String> deps = new ArrayList<String>();
-         for (int i = 0; i < dependencies.length(); i++)
-            deps.add(dependencies.get(i).getName());
          
          msg = "requires updated versions of the following packages: " + 
-               StringUtil.join(deps, ", ") + ". " +
+               describeDepPkgs(dependencies) + ". " +
                "\n\nDo you want to install these packages now?";
       }
       
@@ -331,6 +333,14 @@ public class DependencyManager implements InstallShinyEvent.Handler
       {
          onConfirmed.execute();
       }
+   }
+   
+   private String describeDepPkgs(JsArray<Dependency> dependencies)
+   {
+      ArrayList<String> deps = new ArrayList<String>();
+      for (int i = 0; i < dependencies.length(); i++)
+         deps.add(dependencies.get(i).getName());
+      return StringUtil.join(deps, ", ");
    }
    
    private final GlobalDisplay globalDisplay_;

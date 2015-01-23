@@ -237,14 +237,14 @@ public class WidgetListBox<T extends Widget>
    
    private void updateEmptyText()
    {
-      if (emptyTextLabel_.isAttached() && items_.size() > 0)
+      if (emptyTextLabel_.getParent() == this && items_.size() > 0)
       {
-         remove(emptyTextLabel_);
+         clear();
          add(panel_);
       }
-      else if (!emptyTextLabel_.isAttached() && items_.size() == 0)
+      else if (emptyTextLabel_.getParent() != this && items_.size() == 0)
       {
-         remove(panel_);
+         clear();
          add(emptyTextLabel_);
       }
    }

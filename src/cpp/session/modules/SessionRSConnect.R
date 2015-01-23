@@ -42,7 +42,14 @@
 })
 
 .rs.addJsonRpcHandler("get_rsconnect_account_list", function() {
-   .rs.scalarListFromFrame(rsconnect::accounts())
+   accounts <- list()
+   # safely return an empty list--we want to consider there to be 0 connected
+   # accounts when the rsconnect package is not installed or broken 
+   # (vs. raising an error)
+   tryCatch({
+     accounts <- .rs.scalarListFromFrame(rsconnect::accounts())
+   }, error = function(e) { })
+   accounts
 })
 
 .rs.addJsonRpcHandler("remove_rsconnect_account", function(account, server) {
