@@ -120,8 +120,8 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
       
       binder.bind(commands, this);  
       
-      // disable rpubs if requested
-      if (!session.getSessionInfo().getAllowRpubsPublish())
+      // disable external publishing if requested
+      if (!SessionUtils.showExternalPublishUi(session, prefs))
       {
          commands.publishHTML().remove();
       }

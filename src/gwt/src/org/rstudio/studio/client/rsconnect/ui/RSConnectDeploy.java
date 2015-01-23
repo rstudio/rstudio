@@ -27,6 +27,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -125,6 +126,11 @@ public class RSConnectDeploy extends Composite
    public void setDefaultAccount(RSConnectAccount account)
    {
       accountList.selectAccount(account);
+   }
+   
+   public void setAccountList(JsArray<RSConnectAccount> accounts)
+   {
+      accountList.setAccountList(accounts);
    }
    
    public RSConnectAccount getSelectedAccount()

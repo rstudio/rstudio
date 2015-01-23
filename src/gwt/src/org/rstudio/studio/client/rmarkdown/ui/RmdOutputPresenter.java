@@ -194,8 +194,8 @@ public class RmdOutputPresenter implements
       boolean refresh = params_ != null && 
             params_.getResult().equals(params.getResult());
       params_ = params;
-      view_.showOutput(params, SessionUtils.showPublishUi(session_, prefs_), 
-                       session_.getSessionInfo().getRSConnectAvailable(), refresh);
+      view_.showOutput(params, SessionUtils.showExternalPublishUi(session_, prefs_), 
+                       SessionUtils.showPublishUi(session_, prefs_), refresh);
    }
    
    private native void initializeEvents() /*-{  

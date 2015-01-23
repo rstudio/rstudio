@@ -248,7 +248,7 @@ public class TextEditingTargetWidget
       shinyLaunchButton_.setVisible(false);
       toolbar.addRightWidget(shinyLaunchButton_);
       
-      if (SessionUtils.showShinyPublishUi(session_, uiPrefs_))
+      if (SessionUtils.showPublishUi(session_, uiPrefs_))
       {
          toolbar.addRightSeparator();
          RSConnectUtils.addPublishCommands(toolbar, null, false);

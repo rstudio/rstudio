@@ -65,7 +65,7 @@
 	{
 	  background-color: #ffffff;
      border: 1px solid gray;
-     height: 150px;
+     height: 165px;
      width: 250px;
      padding: 7px;
      margin-top: 5px;

@@ -620,7 +620,17 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["allow_shell"] = options.allowShell();
    sessionInfo["allow_file_download"] = options.allowFileDownloads();
    sessionInfo["allow_remove_public_folder"] = options.allowRemovePublicFolder();
-   sessionInfo["allow_rpubs_publish"] = options.allowRpubsPublish();
+
+   // publishing may be disabled globally or just for external services, and
+   // via configuration options or environment variables
+   bool allowPublish = options.allowPublish() &&
+      core::system::getenv("RSTUDIO_DISABLE_PUBLISH").empty();
+   sessionInfo["allow_publish"] = allowPublish;
+
+   sessionInfo["allow_external_publish"] = options.allowRpubsPublish() &&
+      options.allowExternalPublish() &&
+      core::system::getenv("RSTUDIO_DISABLE_EXTERNAL_PUBLISH").empty() &&
+      allowPublish;
 
    // check whether a switch project is required
    sessionInfo["switch_to_project"] = switchToProject(ptrConnection->request());
@@ -633,8 +643,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
            (options.programMode() == kSessionProgramModeServer) &&
            options.showUserIdentity();
 
-   // light up rsconnect-related UI features if permitted
-   sessionInfo["rsconnect_available"] = session::options().allowRpubsPublish();
    sessionInfo["rmarkdown_available"] =
          modules::rmarkdown::rmarkdownPackageAvailable();
 

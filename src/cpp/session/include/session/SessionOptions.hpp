@@ -304,6 +304,16 @@ public:
       return allowOverlay() || allowRpubsPublish_;
    }
 
+   bool allowExternalPublish() const
+   {
+      return allowOverlay() || allowExternalPublish_;
+   }
+
+   bool allowPublish() const
+   {
+      return allowOverlay() || allowPublish_;
+   }
+
    // user info
    std::string userIdentity() const 
    { 
@@ -482,6 +492,8 @@ private:
    bool allowVcsExecutableEdit_;
    bool allowRemovePublicFolder_;
    bool allowRpubsPublish_;
+   bool allowExternalPublish_;
+   bool allowPublish_;
 
    // user info
    bool showUserIdentity_;

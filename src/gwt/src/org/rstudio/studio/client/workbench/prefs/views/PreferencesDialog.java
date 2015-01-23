@@ -61,7 +61,7 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
       if (!session.getSessionInfo().getAllowVcs())
          hidePane(SourceControlPreferencesPane.class);
       
-      if (!session.getSessionInfo().getAllowRpubsPublish())
+      if (!session.getSessionInfo().getAllowPublish())
          hidePane(PublishingPreferencesPane.class);
    }
    

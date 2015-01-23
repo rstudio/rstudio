@@ -87,16 +87,7 @@ public class RSConnectAccountList extends Composite
          @Override
          public void onResponseReceived(JsArray<RSConnectAccount> accounts)
          {
-            accounts_ = accounts;
-            accountList_.clearItems();
-            for (int i = 0; i < accounts.length(); i++)
-            {
-               accountList_.addItem(new AccountEntry(accounts.get(i)));
-            }
-            if (onRefreshCompleted_ != null)
-            {
-               onRefreshCompleted_.execute();
-            }
+            setAccountList(accounts);
          }
 
          @Override
@@ -106,6 +97,20 @@ public class RSConnectAccountList extends Composite
                                      error.getMessage());
          }
       });
+   }
+   
+   public void setAccountList(JsArray<RSConnectAccount> accounts)
+   {
+      accounts_ = accounts;
+      accountList_.clearItems();
+      for (int i = 0; i < accounts.length(); i++)
+      {
+         accountList_.addItem(new AccountEntry(accounts.get(i)));
+      }
+      if (onRefreshCompleted_ != null)
+      {
+         onRefreshCompleted_.execute();
+      }
    }
    
    public RSConnectAccount getSelectedAccount()

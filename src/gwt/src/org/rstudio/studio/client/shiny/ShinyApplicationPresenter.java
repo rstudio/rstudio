@@ -115,7 +115,7 @@ public class ShinyApplicationPresenter implements
    public void loadApp(ShinyApplicationParams params) 
    {
       params_ = params;
-      view_.showApp(params, SessionUtils.showShinyPublishUi(session_, prefs_));
+      view_.showApp(params, SessionUtils.showPublishUi(session_, prefs_));
    }
    
    private native void initializeEvents() /*-{  

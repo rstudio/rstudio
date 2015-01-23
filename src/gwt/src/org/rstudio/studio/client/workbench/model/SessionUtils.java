@@ -20,13 +20,16 @@ public class SessionUtils
 {
    public static boolean showPublishUi(Session session, UIPrefs prefs)
    {
-      return session.getSessionInfo().getAllowRpubsPublish() &&
+      return session.getSessionInfo().getAllowPublish() &&
             prefs.showPublishUi().getValue();
    }
    
-   public static boolean showShinyPublishUi(Session session, UIPrefs prefs)
+   // Whether to show UI that publishes content to an external service. Note
+   // that the server takes care of ensuring that this is false if showPublishUi
+   // is false, so it's unnecessary to check both values.
+   public static boolean showExternalPublishUi(Session session, UIPrefs prefs)
    {
-      return session.getSessionInfo().getRSConnectAvailable() &&
-            showPublishUi(session, prefs);
+      return session.getSessionInfo().getAllowExternalPublish() &&
+            prefs.showPublishUi().getValue();
    }
 }

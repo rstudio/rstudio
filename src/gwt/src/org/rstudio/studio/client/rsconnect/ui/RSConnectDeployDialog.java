@@ -334,8 +334,7 @@ public class RSConnectDeployDialog
             else
             {
                // We have an account, show it and re-display ourselves
-               // contents_.setAccountList(accounts);
-               // contents_.setDefaultAccount(accounts.get(0));
+               contents_.setAccountList(accounts);
                updateApplicationList();
                showModal();
             }

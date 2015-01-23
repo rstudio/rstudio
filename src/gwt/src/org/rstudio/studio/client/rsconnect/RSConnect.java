@@ -45,12 +45,15 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
@@ -71,7 +74,8 @@ public class RSConnect implements SessionInitHandler,
                     DependencyManager dependencyManager,
                     Binder binder, 
                     RSConnectServerOperations server,
-                    RSAccountConnector connector)
+                    RSAccountConnector connector,
+                    Provider<UIPrefs> pUiPrefs)
                     
    {
       commands_ = commands;
@@ -82,6 +86,7 @@ public class RSConnect implements SessionInitHandler,
       events_ = events;
       satellite_ = satellite;
       connector_ = connector;
+      pUiPrefs_ = pUiPrefs;
 
       binder.bind(commands, this);
 
@@ -203,9 +208,10 @@ public class RSConnect implements SessionInitHandler,
       if (sessionInited_)
          return;
       
-      // "Manage accounts" can be invoked any time the package is available
+      // "Manage accounts" can be invoked any time we're permitted to
+      // publish 
       commands_.rsconnectManageAccounts().setVisible(
-            session_.getSessionInfo().getRSConnectAvailable());
+            SessionUtils.showPublishUi(session_, pUiPrefs_.get()));
       
       // This object keeps track of the most recent deployment we made of each
       // directory, and is used to default directory deployments to last-used
@@ -389,6 +395,7 @@ public class RSConnect implements SessionInitHandler,
    private final EventBus events_;
    private final Satellite satellite_;
    private final RSAccountConnector connector_;
+   private final Provider<UIPrefs> pUiPrefs_;
    
    private boolean launchBrowser_ = false;
    private boolean sessionInited_ = false;
