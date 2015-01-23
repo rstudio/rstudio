@@ -1,7 +1,7 @@
 /*
- * SessionRCompletions.hpp
+ * TestMain.hpp
  *
- * Copyright (C) 2014 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,30 +13,14 @@
  *
  */
 
-#ifndef SESSION_R_COMPLETIONS_HPP
-#define SESSION_R_COMPLETIONS_HPP
+// Include this to build a Catch test executable.
+// See TestRunner.hpp if you want to embed the test runner
+// in your own executable.
 
-#include <string>
+#ifndef TESTS_TESTMAIN_HPP
+#define TESTS_TESTMAIN_HPP
 
-namespace rstudio {
-namespace core {
-class Error;
-}
-}
+#define CATCH_CONFIG_MAIN
+#include "vendor/catch.hpp"
 
-namespace rstudio {
-namespace session {
-namespace modules {
-namespace r_completions {
-
-core::Error initialize();
-
-std::string finishExpression(const std::string& expression);
-
-} // namespace r_completions
-} // namespace modules
-} // namespace session
-} // namespace rstudio
-
-#endif // SESSION_R_COMPLETIONS_HPP
-
+#endif

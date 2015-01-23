@@ -193,6 +193,14 @@ endif()
 # R files
 file(GLOB_RECURSE SESSION_R_FILES "modules/*.R")
 
+# test files
+if (RSTUDIO_UNIT_TESTS_ENABLED)
+
+  file(GLOB_RECURSE SESSION_TEST_FILES "*Tests.cpp")
+  list(APPEND SESSION_SOURCE_FILES ${SESSION_TEST_FILES})
+
+endif()
+
 # define core include dirs
 set(CORE_INCLUDE_DIRS ${CORE_SOURCE_DIR}/include)
 
@@ -259,6 +267,7 @@ include_directories(
    ${MONITOR_SOURCE_DIR}/include
    ${R_SOURCE_DIR}/include
    ${CMAKE_CURRENT_BINARY_DIR}
+   ${TESTS_INCLUDE_DIR}
 )
 
 # link directories

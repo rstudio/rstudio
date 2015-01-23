@@ -158,7 +158,7 @@ void initializeStartupEnvironment(QString* pFilename)
          setInitialProject(filePath, pFilename);
       }
       else if (ext == ".rdata" || ext == ".rda")
-      {   
+      {
          core::system::setenv(kRStudioInitialEnvironment, filePath.absolutePath());
          pFilename->clear();
       }

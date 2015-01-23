@@ -1,7 +1,7 @@
 /*
- * SessionRCompletions.hpp
+ * StringUtils.cpp
  *
- * Copyright (C) 2014 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,30 +13,26 @@
  *
  */
 
-#ifndef SESSION_R_COMPLETIONS_HPP
-#define SESSION_R_COMPLETIONS_HPP
+#include <tests/TestThat.hpp>
 
-#include <string>
+#include <core/StringUtils.hpp>
 
 namespace rstudio {
 namespace core {
-class Error;
+namespace string_utils {
+
+context("isSubsequence")
+{
+   test_that("isSubsequence works")
+   {
+      expect_true(isSubsequence("", ""));
+      expect_true(isSubsequence("annnbnnnc", "abc"));
+      expect_false(isSubsequence("abcdef", "abdcef"));
+      expect_true(isSubsequence("abcdef", "AeF", true));
+      expect_true(isSubsequence("a1d2", "12"));
+   }
 }
-}
 
-namespace rstudio {
-namespace session {
-namespace modules {
-namespace r_completions {
-
-core::Error initialize();
-
-std::string finishExpression(const std::string& expression);
-
-} // namespace r_completions
-} // namespace modules
-} // namespace session
-} // namespace rstudio
-
-#endif // SESSION_R_COMPLETIONS_HPP
-
+} // end namespace string_utils
+} // end namespace core
+} // end namespace rstudio
