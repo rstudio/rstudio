@@ -72,22 +72,24 @@
    
    if (is.data.frame(markers)) {
       
-      if (is.null(markers$type))
-         stop("markers type field not specified", call. = FALSE)
-      if (is.null(markers$file))
-         stop("markers type field not specified", call. = FALSE)
-      if (is.null(markers$line))
-         stop("markers type field not specified", call. = FALSE)
-      if (is.null(markers$column))
-         stop("markers column field not specified", call. = FALSE)
-      if (is.null(markers$message))
-         stop("markers message field not specified", call. = FALSE)
+      cols <- colnames(markers)
+      
+      if (!"type" %in% cols || !is.character(markers$type))
+         stop("markers type field is unspecified or invalid", call. = FALSE)
+      if (!"file" %in% cols || !is.character(markers$file))
+         stop("markers file field is unspecified or invalid", call. = FALSE)
+      if (!"line" %in% cols || !is.numeric(markers$line))
+         stop("markers line field is unspecified or invalid", call. = FALSE)
+      if (!"column" %in% cols || !is.numeric(markers$column))
+         stop("markers column field is unspecified or invalid", call. = FALSE)
+      if (!"message" %in% cols || !is.character(markers$message))
+         stop("markers message field is unspecified or invalid", call. = FALSE)
       
    } else if (is.list(markers)) {
       markers <- lapply(markers, function(marker) {
-         markerTypes <- c("error", "warning")
+         markerTypes <- c("error", "warning", "box", "info", "style")
          if (is.null(marker$type) || (!marker$type %in% markerTypes))
-            stop("Invalid marker type (", marker, ")", call. = FALSE)
+            stop("Invalid marker type (", marker$type, ")", call. = FALSE)
          if (!is.character(marker$file))
             stop("Marker file is unspecified or invalid: ", marker$file, call. = FALSE)
          if (!is.numeric(marker$line))
