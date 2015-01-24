@@ -79,6 +79,7 @@
 * Default to roxygenize for Build and Reload
 * Improved checking for supported protocol with packrat package
 * Escape backslashes in library names when loading packages
+* Call to library after Build and Reload respects --library argument.
 
 ### Plots
 
@@ -101,6 +102,7 @@
 * Command to sync current working directory and Files pane to project directory
 * Eliminated rstudio and manipulate packages (both now available on CRAN)
 * Added global RStudio.Version function for getting basic version info
+* Added Markers pane and sourceMarker API for externals tools (e.g. linters)
 
 ### Server
 
