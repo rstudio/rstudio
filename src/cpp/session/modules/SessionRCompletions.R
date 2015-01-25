@@ -1516,7 +1516,7 @@ assign(x = ".rs.acCompletionTypes",
    {
       # If there was no token, give up
       if (token == "")
-         return(.rs.emptyCompletions())
+         return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
       
       # Otherwise, complete from the seach path + available packages
       completions <- Reduce(.rs.appendCompletions, list(
