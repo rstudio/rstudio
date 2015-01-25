@@ -53,17 +53,9 @@
 #include "SessionSource.hpp"
 #include "clang/DefinitionIndex.hpp"
 
-#define CODESEARCH_DEBUG_LEVEL 0
-#if CODESEARCH_DEBUG_LEVEL > 0
-
-#define DEBUG(STRING) { \
-   std::cerr << STRING << std::endl; \
-}
-#else
-
-#define DEBUG(STRING)
-
-#endif
+#define RSTUDIO_DEBUG_LABEL "codesearch"
+// #define RSTUDIO_ENABLE_DEBUG_MACROS
+#include <core/Macros.hpp>
 
 using namespace rstudio::core ;
 
@@ -151,11 +143,17 @@ struct Entry
    {
       return fileInfo == other.fileInfo;
    }
+   
+   friend bool isSamePath(const Entry& lhs, const Entry& rhs)
+   {
+      return lhs.fileInfo.absolutePath() ==
+             rhs.fileInfo.absolutePath();
+   }
 };
 
 void print_tree(tree<Entry> const& tr)
 {
-#if CODESEARCH_DEBUG_LEVEL > 0
+#ifdef RSTUDIO_ENABLE_DEBUG_MACROS
    std::cerr << "Tree of size " << tr.size() << ".\n";
    tree<Entry>::iterator it = tr.begin();
    for (; it != tr.end(); ++it)
@@ -233,7 +231,7 @@ public:
          Entry entry(path);
          DEBUG("Entry: '" << entry.fileInfo.absolutePath() << "'");
 
-         if (*parent == entry)
+         if (isSamePath(*parent, entry))
          {
             DEBUG("- Node already exists as parent; skipping...");
          }
@@ -256,7 +254,7 @@ public:
             for (; it != end; ++it)
             {
                DEBUG("-- Current node: '" << (*it).fileInfo.absolutePath() << "'");
-               if (it->fileInfo.absolutePath() == entry.fileInfo.absolutePath())
+               if (isSamePath(*it, entry))
                {
                   DEBUG("-- Found it!");
                   break;
@@ -310,7 +308,7 @@ public:
             DEBUG("-- Current node: '" << (*it).fileInfo.absolutePath() << "'");
             DEBUG("-- Entry       : '" << entry.fileInfo.absolutePath() << "'");
             
-            if (it->fileInfo.absolutePath() == entry.fileInfo.absolutePath())
+            if (isSamePath(*it, entry))
             {
                DEBUG("- Found it!");
                break;
@@ -348,7 +346,7 @@ private:
    {
       leaf_iterator it = begin_leaf();
       for (; is_valid(it); ++it)
-         if (*it == entry)
+         if (isSamePath(*it, entry))
             return it;
       return this->end();
    }
@@ -370,7 +368,7 @@ private:
       for (; it != end; ++it)
       {
          DEBUG("- Current branch: '" << (*it).fileInfo.absolutePath() << "'");
-         if (*it == entry)
+         if (isSamePath(*it, entry))
          {
             *pResult = it;
             return;
@@ -824,8 +822,11 @@ private:
 
       EntryTree::iterator it = pEntries_->find(entry);
       if (it != pEntries_->end())
-      {
          pEntries_->erase(it);
+      else
+      {
+         DEBUG("Failed to remove index entry for file: '" << fileInfo.absolutePath() << "'");
+         print_tree(*pEntries_);
       }
    }
 

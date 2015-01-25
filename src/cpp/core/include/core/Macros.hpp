@@ -23,26 +23,39 @@
 
 #ifndef RSTUDIO_ENABLE_DEBUG_MACROS
 
-#define RSTUDIO_DEBUG(x)
-#define RSTUDIO_DEBUG_BLOCK if (false)
+# define RSTUDIO_DEBUG(x) do {} while (0)
+# define RSTUDIO_DEBUG_LINE(x) do {} while (0)
+# define RSTUDIO_DEBUG_BLOCK(x) if (false)
 
 #else
 
-#undef RSTUDIO_DEBUG
-#define RSTUDIO_DEBUG(x)                                                       \
+# define RSTUDIO_DEBUG(x)                                                      \
    do                                                                          \
    {                                                                           \
-      std::cerr << "[" << RSTUDIO_DEBUG_LABEL << "] "                          \
-                << "(" << __FILE__ << ":" << __LINE__ << "):" << std::endl     \
-                << x << std::endl << std::endl;                                \
+      std::cerr << "(" << RSTUDIO_DEBUG_LABEL << "): "                         \
+                << x << std::endl;                                             \
    } while (0)
 
-#define RSTUDIO_DEBUG_BLOCK if (true)
+#define RSTUDIO_DEBUG_LINE(x)                                                  \
+   do                                                                          \
+   {                                                                           \
+      std::string file = std::string(__FILE__);                                \
+      std::string shortFile = file.substr(file.rfind("/") + 1);                \
+      std::cerr << "(" << RSTUDIO_DEBUG_LABEL << ")"                           \
+                << "[" << shortFile << ":" << __LINE__ << "]: " << std::endl   \
+                << x << std::endl;                                             \
+   } while (0)
+
+# define RSTUDIO_DEBUG_BLOCK if (true)
 
 #endif
 
 #ifndef DEBUG
 # define DEBUG RSTUDIO_DEBUG
+#endif
+
+#ifndef DEBUG_LINE
+# define DEBUG_LINE RSTUDIO_DEBUG_LINE
 #endif
 
 #ifndef DEBUG_BLOCK
