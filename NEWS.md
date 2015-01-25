@@ -115,6 +115,7 @@
 * Prevent error dialog when getOption("repos") is an unnamed vector
 * Fix for regex Find/Replace lockup with empty strings 
 * Find in Files now always activates result pane
+* Correctly reflow comments in Rmd C++ code chunks
 
 
 
