@@ -1626,7 +1626,7 @@ assign(x = ".rs.acCompletionTypes",
        tolower(basename(filePath)) == "server.r" &&
        string[[1]] == "session")
    {
-      completions <- rs.getCompletionsShinySession(token)
+      completions <- .rs.getCompletionsShinySession(token)
       if (!is.null(completions))
          return(completions)
    }
