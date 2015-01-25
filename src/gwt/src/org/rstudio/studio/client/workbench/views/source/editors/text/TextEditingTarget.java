@@ -2668,7 +2668,9 @@ public class TextEditingTarget implements
    @Handler
    void onReflowComment()
    {
-      if (fileType_.isCpp())
+      if (DocumentMode.isSelectionInRMode(docDisplay_))
+         doReflowComment("(#)");
+      else if (DocumentMode.isSelectionInCppMode(docDisplay_))
       {
          String currentLine = docDisplay_.getLine(
                                     docDisplay_.getCursorPosition().getRow());
@@ -2677,9 +2679,8 @@ public class TextEditingTarget implements
          else
             doReflowComment("(//)");
       }
-         
-      else
-         doReflowComment("(#)");
+      else if (DocumentMode.isSelectionInTexMode(docDisplay_))
+         doReflowComment("(%)");
    }
    
    @Handler
