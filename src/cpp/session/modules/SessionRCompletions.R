@@ -2011,7 +2011,7 @@ assign(x = ".rs.acCompletionTypes",
    aliases <- get(helpTopicsName, pos = rsEnvPos)
    completions <- .rs.selectFuzzyMatches(aliases, token)
    
-   .rs.makeCompletions(
+   completions <- .rs.makeCompletions(
       token = token,
       results = completions,
       quote = grepl("[^a-zA-Z0-9._]", completions, perl = TRUE),
@@ -2019,6 +2019,8 @@ assign(x = ".rs.acCompletionTypes",
       overrideInsertParens = TRUE
    )
    
+   .rs.sortCompletions(completions, token)
+
 })
 
 .rs.addFunction("readAliases", function(path)
