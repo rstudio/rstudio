@@ -29,6 +29,9 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/../../CMakeGlobals.txt")
 # global directives
 add_definitions(-DBOOST_ENABLE_ASSERT_HANDLER)
 
+# test directory
+set(TESTS_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp" CACHE STRING "Test includes")
+
 # UNIX specific global directivies
 if(UNIX)
    # cmake modules
@@ -182,9 +185,6 @@ endif()
 
 # core library
 add_subdirectory(core)
-
-# test directory
-set(TESTS_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp" CACHE STRING "Test includes")
 
 # are we in CORE_DEV mode? if so then just add the core/dev project
 # otherwise, add the rest of our projects
