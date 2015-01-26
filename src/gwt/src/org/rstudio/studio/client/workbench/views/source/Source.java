@@ -152,6 +152,7 @@ public class Source implements InsertSourceHandler,
       void closeTab(Widget widget, boolean interactive, Command onClosed);
       void closeTab(int index, boolean interactive);
       void closeTab(int index, boolean interactive, Command onClosed);
+      void closeAllTabs();
       void setDirty(Widget widget, boolean dirty);
       void manageChevronVisibility();
       void showOverflowPopup();
@@ -532,11 +533,33 @@ public class Source implements InsertSourceHandler,
          if (params.argString && params.argString === "!")
             interactive = false;
          
-         source.@org.rstudio.studio.client.workbench.views.source.Source::closeAllSourceDocs(Z)(interactive);
+         source.@org.rstudio.studio.client.workbench.views.source.Source::doVimOnCloseAll(Z)(interactive);
       });
        
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("qall", "qa", callback);
    }-*/;
+   
+   private void doVimOnCloseAll(boolean interactive)
+   {
+      if (interactive)
+      {
+         // call into the interactive tab closer
+         onCloseAllSourceDocs();
+      }
+      else
+      {
+         // revert unsaved targets and close tabs
+         revertUnsavedTargets(new Command()
+         {
+            @Override
+            public void execute()
+            {
+               // documents have been reverted; we can close
+               view_.closeAllTabs();
+            }
+         });
+      }
+   }
    
    private native final void vimOnNewDoc(Source source) /*-{
    
@@ -1340,15 +1363,6 @@ public class Source implements InsertSourceHandler,
       view_.closeTab(view_.getActiveTabIndex(), interactive);
    }
    
-   void closeAllSourceDocs(boolean interactive)
-   {
-      if (view_.getTabCount() == 0)
-         return;
-      
-      for (int i = 0; i < view_.getTabCount(); i++)
-         view_.closeTab(i, interactive);
-   }
-
    /**
     * Execute the given command for each editor, using continuation-passing
     * style. When executed, the CPSEditingTargetCommand needs to execute its

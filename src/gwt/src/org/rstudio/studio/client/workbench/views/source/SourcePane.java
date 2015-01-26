@@ -150,6 +150,11 @@ public class SourcePane extends Composite implements Display,
          tabPanel_.closeTab(index, onClosed);
    }
    
+   public void closeAllTabs()
+   {
+      tabPanel_.clear();
+   }
+   
    public void setDirty(Widget widget, boolean dirty)
    {
       Widget tab = tabPanel_.getTabWidget(widget);
