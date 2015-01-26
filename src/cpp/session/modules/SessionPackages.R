@@ -734,7 +734,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          paste("#   Test: '", testShortcut, "'", sep = ""),
          "#",
          "hello <- function() {",
-         "    print(\"Hello, world!\")",
+         "  print(\"Hello, world!\")",
          "}"
       )
       
