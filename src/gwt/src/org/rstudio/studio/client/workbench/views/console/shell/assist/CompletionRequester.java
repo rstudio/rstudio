@@ -33,6 +33,7 @@ import org.rstudio.studio.client.common.icons.code.CodeIcons;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearchOracle;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager.AutocompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.RFunction;
@@ -74,9 +75,20 @@ public class CompletionRequester
    }
    
    private boolean usingCache(
-         final String token,
+         String token,
          final ServerRequestCallback<CompletionResult> callback)
    {
+      return usingCache(token, false, callback);
+   }
+   
+   private boolean usingCache(
+         String token,
+         boolean isHelpCompletion,
+         final ServerRequestCallback<CompletionResult> callback)
+   {
+      if (isHelpCompletion)
+         token = token.substring(token.lastIndexOf(':') + 1);
+      
       if (cachedLinePrefix_ == null)
          return false;
       
@@ -145,9 +157,11 @@ public class CompletionRequester
                newCompletions.add(qname);
          }
          else
+         {
             if (StringUtil.isSubsequence(qname.name, token, true) &&
                 filterStartsWithDot(qname.name, token))
                newCompletions.add(qname) ;
+         }
       }
       
       java.util.Collections.sort(newCompletions, new Comparator<QualifiedName>() {
@@ -306,7 +320,10 @@ public class CompletionRequester
          final boolean implicit,
          final ServerRequestCallback<CompletionResult> callback)
    {
-      if (usingCache(token, callback))
+      boolean isHelp = dataType.size() > 0 &&
+            dataType.get(0) == AutocompletionContext.TYPE_HELP;
+      
+      if (usingCache(token, isHelp, callback))
          return;
       
       doGetCompletions(
