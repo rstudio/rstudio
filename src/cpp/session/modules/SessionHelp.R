@@ -16,19 +16,30 @@
 # use html help 
 options(help_type = "html")
 
+.rs.addFunction( "httpdPortIsFunction", function() {
+   .rs.haveRequiredRSvnRev(67550)
+})
+
 .rs.addFunction( "httpdPort", function()
 {
-   as.character(tools:::httpdPort)
+   if (.rs.httpdPortIsFunction())
+      as.character(tools:::httpdPort())
+   else
+      as.character(tools:::httpdPort)
 })
 
 .rs.addFunction("initHelp", function(port, isDesktop)
 { 
-   # function to set the help port directly
+   # function to set the help port
    setHelpPort <- function() {
-      env <- environment(tools::startDynamicHelp)
-      unlockBinding("httpdPort", env)
-      assign("httpdPort", port, envir = env)
-      lockBinding("httpdPort", env)
+      if (.rs.httpdPortIsFunction()) {
+         tools:::httpdPort(port)
+      } else {
+         env <- environment(tools::startDynamicHelp)
+         unlockBinding("httpdPort", env)
+         assign("httpdPort", port, envir = env)
+         lockBinding("httpdPort", env)   
+      }
    }
    
    # for desktop mode see if R can successfully initialize the httpd
@@ -40,12 +51,12 @@ options(help_type = "html")
       # (suppress warnings and messages because if there is a problem
       # binding to a local port we are going to patch this up by 
       # redirecting all traffic to our local peer)
-      if (tools:::httpdPort <= 0L)
+      if (.rs.httpdPort() <= 0L)
          suppressWarnings(suppressMessages(tools::startDynamicHelp()))
       
       # if couldn't start it then set the help port directly so that
       # help requests still flow through our local peer connection
-      if (tools:::httpdPort <= 0L)
+      if (.rs.httpdPort() <= 0L)
       {
          setHelpPort()
          return (TRUE)
@@ -59,7 +70,7 @@ options(help_type = "html")
    else 
    { 
       # stop the help server if it was previously started e.g. by .Rprofile
-      if (tools:::httpdPort > 0L)
+      if (.rs.httpdPort() > 0L)
          suppressMessages(tools::startDynamicHelp(start=FALSE))
       
       # set the help port

@@ -496,15 +496,6 @@
 })
 
 .rs.addFunction("haveAdvancedSteppingCommands", function() {
-   if (getRversion() >= "3.1") {
-      svnRev <- R.version$`svn rev`
-      if (!is.null(svnRev)) {
-         svnRevNumeric <- suppressWarnings(as.numeric(svnRev))
-         if (!is.na(svnRevNumeric) && length(svnRevNumeric) == 1)
-            return (svnRevNumeric >= 63400)
-      }
-   } 
-   # fallthrough
-   return (FALSE)
+   getRversion() >= "3.1" && .rs.haveRequiredRSvnRev(63400)
 })
 
