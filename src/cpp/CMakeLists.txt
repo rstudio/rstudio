@@ -29,6 +29,9 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/../../CMakeGlobals.txt")
 # global directives
 add_definitions(-DBOOST_ENABLE_ASSERT_HANDLER)
 
+# test directory
+set(TESTS_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp" CACHE STRING "Test includes")
+
 # UNIX specific global directivies
 if(UNIX)
    # cmake modules
@@ -171,7 +174,6 @@ endif()
 # add boost as system include directory
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
-
 # automatically build addins found in the addins subdirectory
 # (if another path wasn't already specified)
 if(NOT RSTUDIO_ADDINS_PATH)
@@ -231,6 +233,9 @@ else()
 
       # initialize subdirectories
       file(MAKE_DIRECTORY conf)
+
+      # test runner script
+      configure_file(rstudio-tests.in ${CMAKE_CURRENT_BINARY_DIR}/rstudio-tests)
 
       # add desktop subprojects if we aren't building in server only mode
       if(RSTUDIO_DESKTOP)

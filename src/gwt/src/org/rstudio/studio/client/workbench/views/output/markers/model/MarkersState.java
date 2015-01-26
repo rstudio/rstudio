@@ -23,10 +23,10 @@ public class MarkersState extends JavaScriptObject
    {
    }
    
-
-   public native final boolean isVisible() /*-{
-      return this.visible;
-   }-*/;
+   public final boolean hasMarkers() 
+   {
+      return getMarkersSet() != null;
+   }
    
    public native final JsArrayString getMarkersSetNames() /*-{
       return this.names;

@@ -201,7 +201,7 @@ var MarkdownHighlightRules = function() {
         regex : "^ {0,2}(?:(?: ?\\* ?){3,}|(?: ?\\- ?){3,}|(?: ?\\_ ?){3,})\\s*$",
         next: "allowBlock"
     }, { // list
-        token : "markup.list",
+        token : "text",
         regex : "^\\s{0,3}(?:[*+-]|\\d+\\.)\\s+",
         next  : "listblock-start"
     }, {
@@ -260,7 +260,7 @@ var MarkdownHighlightRules = function() {
         } ],
 
         "listblock-start" : [{
-            token : "support.variable",
+            token : "text",
             regex : /(?:\[[ x]\])?/,
             next  : "listblock"
         }],
@@ -270,7 +270,7 @@ var MarkdownHighlightRules = function() {
             regex : "^$",
             next  : "start"
         }, { // list
-            token : "markup.list",
+            token : "text",
             regex : "^\\s{0,3}(?:[*+-]|\\d+\\.)\\s+",
             next  : "listblock-start"
         }, {
@@ -280,7 +280,7 @@ var MarkdownHighlightRules = function() {
             regex : "^\\s*```\\s*[a-zA-Z]*(?:{.*?\\})?\\s*$",
             next  : "githubblock"
         }, {
-            defaultToken : "list" //do not use markup.list to allow stling leading `*` differntly
+            defaultToken : "text" //do not use markup.list to allow stling leading `*` differntly
         } ],
 
         "blockquote" : [ { // Blockquotes only escape on blank lines.

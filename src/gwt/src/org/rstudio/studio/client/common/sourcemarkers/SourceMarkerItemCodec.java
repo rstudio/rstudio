@@ -68,6 +68,8 @@ public class SourceMarkerItemCodec
       iconDiv.setClassName(
             entry.getType() == SourceMarker.ERROR ? resources_.styles().errorIcon() :
             entry.getType() == SourceMarker.WARNING ? resources_.styles().warningIcon() :
+            entry.getType() == SourceMarker.INFO ? resources_.styles().infoIcon() :
+            entry.getType() == SourceMarker.STYLE ? resources_.styles().styleIcon() :
             resources_.styles().boxIcon());
       tdIcon.appendChild(iconDiv);
       tr.appendChild(tdIcon);

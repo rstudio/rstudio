@@ -16,6 +16,8 @@
 #ifndef SESSION_R_COMPLETIONS_HPP
 #define SESSION_R_COMPLETIONS_HPP
 
+#include <string>
+
 namespace rstudio {
 namespace core {
 class Error;
@@ -28,6 +30,8 @@ namespace modules {
 namespace r_completions {
 
 core::Error initialize();
+
+std::string finishExpression(const std::string& expression);
 
 } // namespace r_completions
 } // namespace modules

@@ -78,6 +78,8 @@ bool isBinaryOp(char character)
 
 }
 
+} // end anonymous namespace
+
 std::string finishExpression(const std::string& expression)
 {
    std::string result = expression;
@@ -144,6 +146,8 @@ std::string finishExpression(const std::string& expression)
 
    return result;
 }
+
+namespace {
 
 SEXP rs_finishExpression(SEXP stringSEXP)
 {

@@ -1645,6 +1645,15 @@ bool isPackratModeOn()
    return !core::system::getenv("R_PACKRAT_MODE").empty();
 }
 
+bool isDevtoolsDevModeOn()
+{
+   bool isDevtoolsDevModeOn;
+   Error error = r::exec::RFunction(".rs.devModeOn").call(&isDevtoolsDevModeOn);
+   if (error)
+      LOG_ERROR(error);
+   return isDevtoolsDevModeOn;
+}
+
 bool isDefaultPrompt(const std::string& prompt)
 {
    return prompt == r::options::getOption<std::string>("prompt");

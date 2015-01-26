@@ -15,6 +15,9 @@
 package org.rstudio.studio.client.workbench.views.output.markers;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -39,19 +42,20 @@ import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersSer
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersSet;
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersState;
 
-// TODO: clear current markers
-// TODO: consider whether to keep markers around across project loads
-
 public class MarkersOutputPresenter extends BasePresenter
 {
    public interface Display extends WorkbenchView,
-                                    HasSelectionCommitHandlers<CodeNavigationTarget>,
-                                    HasValueChangeHandlers<String>,
                                     HasEnsureHiddenHandlers
    {
       void ensureVisible(boolean activate);
         
       void update(MarkersState markerState, int autoSelect);
+      
+      HasValueChangeHandlers<String> getMarkerSetList();
+      
+      HasSelectionCommitHandlers<CodeNavigationTarget> getMarkerList();
+      
+      HasClickHandlers getClearButton();
    }
 
    @Inject
@@ -66,7 +70,7 @@ public class MarkersOutputPresenter extends BasePresenter
       fileTypeRegistry_ = fileTypeRegistry;
 
       // active marker set changed
-      view_.addValueChangeHandler(new ValueChangeHandler<String>() {
+      view_.getMarkerSetList().addValueChangeHandler(new ValueChangeHandler<String>() {
 
          @Override
          public void onValueChange(ValueChangeEvent<String> event)
@@ -77,8 +81,18 @@ public class MarkersOutputPresenter extends BasePresenter
          
       });
       
+      // clear button
+      view_.getClearButton().addClickHandler(new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            server_.clearActiveMarkerSet(new VoidServerRequestCallback());
+         }
+      });
+      
       // source navigation
-      view_.addSelectionCommitHandler(new SelectionCommitHandler<CodeNavigationTarget>()
+      view_.getMarkerList().addSelectionCommitHandler(
+                          new SelectionCommitHandler<CodeNavigationTarget>()
       {
          @Override
          public void onSelectionCommit(SelectionCommitEvent<CodeNavigationTarget> event)
@@ -96,10 +110,11 @@ public class MarkersOutputPresenter extends BasePresenter
 
    public void initialize(MarkersState state)
    {
-      if (state.isVisible())
+      if (state.hasMarkers())
+      {
          view_.ensureVisible(false);
-      
-      view_.update(state, SourceMarkerList.AUTO_SELECT_NONE);
+         view_.update(state, SourceMarkerList.AUTO_SELECT_NONE);
+      }
    }
    
    public void onMarkersChanged(MarkersChangedEvent event)
@@ -107,42 +122,43 @@ public class MarkersOutputPresenter extends BasePresenter
       // get the state
       MarkersState state = event.getMarkersState();
       
-      // update tab visibility
-      if (state.isVisible())
-         view_.ensureVisible(true);
-      else
-         view_.ensureHidden();
-      
-      // update the view
-      view_.update(event.getMarkersState(), event.getAutoSelect());
-      
-      // navigate to auto-selection if requested
-      MarkersSet markersSet = state.getMarkersSet();
-      if (markersSet != null)
+      if (state.hasMarkers())
       {
-         JsArray<SourceMarker> markers = markersSet.getMarkers();
-         if (markers.length() > 0)
+         view_.ensureVisible(true);
+         view_.update(event.getMarkersState(), event.getAutoSelect());
+         
+         // navigate to auto-selection if requested
+         MarkersSet markersSet = state.getMarkersSet();
+         if (markersSet != null)
          {
-            SourceMarker selectMarker = null;
-            int autoSelect = event.getAutoSelect();
-            if (autoSelect == SourceMarkerList.AUTO_SELECT_FIRST)
-               selectMarker = markers.get(0);
-            else if (autoSelect == SourceMarkerList.AUTO_SELECT_FIRST_ERROR)
-               selectMarker = SourceMarker.getFirstError(markers);
-            
-            if (selectMarker != null)
+            JsArray<SourceMarker> markers = markersSet.getMarkers();
+            if (markers.length() > 0)
             {
-               fileTypeRegistry_.editFile(
-                 FileSystemItem.createFile(selectMarker.getPath()),
-                    FilePosition.create(selectMarker.getLine(),
-                                        selectMarker.getColumn()));
+               SourceMarker selectMarker = null;
+               int autoSelect = event.getAutoSelect();
+               if (autoSelect == SourceMarkerList.AUTO_SELECT_FIRST)
+                  selectMarker = markers.get(0);
+               else if (autoSelect == SourceMarkerList.AUTO_SELECT_FIRST_ERROR)
+                  selectMarker = SourceMarker.getFirstError(markers);
+               
+               if (selectMarker != null)
+               {
+                  fileTypeRegistry_.editFile(
+                    FileSystemItem.createFile(selectMarker.getPath()),
+                       FilePosition.create(selectMarker.getLine(),
+                                           selectMarker.getColumn()));
+               }
             }
          }
+      }
+      else
+      {
+         view_.ensureHidden();
       }
    }
    
    
-   public void onDismiss()
+   public void onClosing()
    {
       server_.markersTabClosed(new VoidServerRequestCallback());
    }

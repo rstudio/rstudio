@@ -3907,6 +3907,12 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "update_active_marker_set", set, callback);
    }
    
+   @Override
+   public void clearActiveMarkerSet(ServerRequestCallback<Void> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "clear_active_marker_set", requestCallback);
+   }
+   
    private String clientId_;
    private double clientVersion_ = 0;
    private boolean listeningForEvents_;

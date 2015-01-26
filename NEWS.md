@@ -47,6 +47,10 @@
 * Syntax highlighting for GraphViz and mermaid.js diagrams. 
 * Diagram previews using the `DiagrammeR` package (requires recent version from GitHub).
 * A wide variety of new editor themes (color schemes) are now available.
+* Multiple cursors:
+   - Create a new cursor above / below the current cursor with CTRL + ALT + {up / down}
+   - Move the active cursor up / down with CTRL + SHIFT + ALT + {up / down}
+   - Create multiple cursors by pressing CTRL + ALT and clicking + dragging the mouse
 
 ### Data Viewer
 
@@ -75,6 +79,7 @@
 * Default to roxygenize for Build and Reload
 * Improved checking for supported protocol with packrat package
 * Escape backslashes in library names when loading packages
+* Call to library after Build and Reload respects --library argument.
 
 ### Plots
 
@@ -83,6 +88,7 @@
 ### R Markdown
 
 * Updated to pandoc 1.13.1
+* Improved handling of lists in editor
 * Make publishing UI easier to discover
 * Updated internal PDF viewer (PDF.js) to version 1.0.1040 
 
@@ -97,6 +103,7 @@
 * Command to sync current working directory and Files pane to project directory
 * Eliminated rstudio and manipulate packages (both now available on CRAN)
 * Added global RStudio.Version function for getting basic version info
+* Added Markers pane and sourceMarker API for externals tools (e.g. linters)
 
 ### Server
 
@@ -108,7 +115,8 @@
 * Prevent error dialog when getOption("repos") is an unnamed vector
 * Fix for regex Find/Replace lockup with empty strings 
 * Find in Files now always activates result pane
-
-
+* Correctly reflow comments in Rmd C++ code chunks
+* Ensure that rmarkdown documents render within input directory
+* Eliminate race condition that could cause crash when polling child processes
 
 
