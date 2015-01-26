@@ -452,6 +452,7 @@ public class Source implements InsertSourceHandler,
       vimOnNextTab(this);
       vimOnPreviousTab(this);
       vimOnCloseTab(this);
+      vimOnCloseAll(this);
       vimOnNewDoc(this);
       vimOnSaveAndCloseTab(this);
       
@@ -522,6 +523,19 @@ public class Source implements InsertSourceHandler,
        
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("bdelete", "bd", callback);
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("quit", "q", callback);
+   }-*/;
+   
+   private native final void vimOnCloseAll(Source source) /*-{
+      var callback = $entry(function(cm, params) {
+      
+         var interactive = true;
+         if (params.argString && params.argString === "!")
+            interactive = false;
+         
+         source.@org.rstudio.studio.client.workbench.views.source.Source::closeAllSourceDocs(Z)(interactive);
+      });
+       
+      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("qall", "qa", callback);
    }-*/;
    
    private native final void vimOnNewDoc(Source source) /*-{
@@ -1324,6 +1338,15 @@ public class Source implements InsertSourceHandler,
          return;
       
       view_.closeTab(view_.getActiveTabIndex(), interactive);
+   }
+   
+   void closeAllSourceDocs(boolean interactive)
+   {
+      if (view_.getTabCount() == 0)
+         return;
+      
+      for (int i = 0; i < view_.getTabCount(); i++)
+         view_.closeTab(i, interactive);
    }
 
    /**
