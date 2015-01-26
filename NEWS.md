@@ -117,5 +117,6 @@
 * Find in Files now always activates result pane
 * Correctly reflow comments in Rmd C++ code chunks
 * Ensure that rmarkdown documents render within input directory
+* Eliminate race condition that could cause crash when polling child processes
 
 
