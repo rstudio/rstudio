@@ -175,7 +175,7 @@ private:
       }
 
       std::string extraParams;
-      std::string targetFile(targetFile_.filename());
+      std::string targetFile = targetFile_.absolutePath();
 
       std::string renderOptions("encoding = '" + encoding + "'");
 
