@@ -328,6 +328,11 @@ inline bool isComma(const RToken& rToken)
    return rToken.isType(RToken::COMMA);
 }
 
+inline bool isWhitespace(const RToken& rToken)
+{
+   return rToken.isType(RToken::WHITESPACE);
+}
+
 } // end namespace token_utils
 
 } // namespace r_util

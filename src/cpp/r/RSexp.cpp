@@ -84,7 +84,19 @@ bool fillVectorString(SEXP object, std::vector<std::string>* pVector)
    
    return true;
 }
+
+bool fillSetString(SEXP object, std::set<std::string>* pSet)
+{
+   if (TYPEOF(object) != STRSXP)
+      return false;
    
+   int n = Rf_length(object);
+   for (int i = 0; i < n; i++)
+      pSet->insert(std::string(CHAR(STRING_ELT(object, i))));
+   
+   return true;
+}
+
 SEXP findNamespace(const std::string& name)
 {
    if (name.empty())

@@ -24,6 +24,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
@@ -231,6 +232,40 @@ struct LintItem
    std::string message;
 };
 
+struct ParseItem
+{
+   ParseItem(int row, int column, const std::string& name)
+      : row(row), column(column), name(name) {}
+   
+   explicit ParseItem(const AnnotatedRToken& rToken)
+      : row(rToken.row()), column(rToken.column())
+   {
+      name = rToken.contentAsUtf8();
+   }
+   
+   bool operator <(const ParseItem& other) const
+   {
+      if (row < other.row)
+         return true;
+      
+      if (row > other.row)
+         return false;
+      
+      if (column < other.column)
+         return true;
+      
+      if (column > other.column)
+         return false;
+      
+      // shouldn't be reached, but whatever
+      return name < other.name;
+   }
+   
+   int row;
+   int column;
+   std::string name;
+};
+
 class LintItems
 {
 private:
@@ -293,6 +328,28 @@ public:
       lintItems_.push_back(item);
    }
    
+   void addUnexpectedEndOfDocument(const AnnotatedRToken& token)
+   {
+      LintItem item(token.row(),
+                    token.column() + token.contentAsUtf8().length(),
+                    token.row(),
+                    token.column() + token.contentAsUtf8().length(),
+                    LintTypeError,
+                    "unexpected end of document");
+      lintItems_.push_back(item);
+   }
+   
+   void addUnreferencedSymbol(const ParseItem& item)
+   {
+      LintItem lint(item.row,
+                    item.column,
+                    item.row,
+                    item.column + item.name.size(),
+                    LintTypeWarning,
+                    "no reference for symbol '" + item.name + "'");
+      lintItems_.push_back(lint);
+   }
+   
    const std::vector<LintItem>& get() const
    {
       return lintItems_;
@@ -302,39 +359,6 @@ private:
    std::vector<LintItem> lintItems_;
 };
 
-struct ParseItem
-{
-   ParseItem(int row, int column, const std::string& name)
-      : row(row), column(column), name(name) {}
-   
-   explicit ParseItem(const AnnotatedRToken& rToken)
-      : row(rToken.row()), column(rToken.column())
-   {
-      name = rToken.contentAsUtf8();
-   }
-   
-   bool operator <(const ParseItem& other) const
-   {
-      if (row < other.row)
-         return true;
-      
-      if (row > other.row)
-         return false;
-      
-      if (column < other.column)
-         return true;
-      
-      if (column > other.column)
-         return false;
-      
-      // shouldn't be reached, but whatever
-      return name < other.name;
-   }
-   
-   int row;
-   int column;
-   std::string name;
-};
 
 class ParseNode
 {
@@ -358,12 +382,11 @@ public:
       return boost::shared_ptr<ParseNode>(new ParseNode(NULL, "<root>"));
    }
    
-   static boost::shared_ptr<ParseNode> createChildNode(
-         ParseNode* pParent,
+   static boost::shared_ptr<ParseNode> createNode(
          const std::string& name)
    {
       return boost::shared_ptr<ParseNode>(
-               new ParseNode(pParent, name));
+               new ParseNode(NULL, name));
    }
    
    bool isRootNode() const
@@ -432,7 +455,7 @@ public:
       return pNode;
    }
    
-   std::vector< boost::shared_ptr<ParseNode> > getChildren()
+   std::vector< boost::shared_ptr<ParseNode> > getChildren() const
    {
       return children_;
    }
@@ -441,6 +464,101 @@ public:
    {
       pChild->pParent_ = this;
       children_.push_back(pChild);
+   }
+   
+   friend void findAllUnresolvedSymbols(
+         const ParseNode& node,
+         const std::set<std::string> objects,
+         LintItems* pLintItems)
+   {
+      // Get the unresolved symbols at this node
+      std::set<ParseItem> unresolved = node.getUnresolvedSymbols(objects);
+      
+      // Add them to the set of lint items
+      for (std::set<ParseItem>::iterator it = unresolved.begin();
+           it != unresolved.end();
+           ++it)
+      {
+         pLintItems->addUnreferencedSymbol(*it);
+      }
+      
+      // Apply this over all children on the node
+      typedef std::vector< boost::shared_ptr<ParseNode> > Children;
+      Children children = node.getChildren();
+      
+      for (Children::iterator it = children.begin();
+           it != children.end();
+           ++it)
+      {
+         findAllUnresolvedSymbols(**it, objects, pLintItems);
+      }
+      
+   }
+   
+private:
+   
+   std::set<ParseItem> getUnresolvedSymbols(
+         const std::set<std::string>& objects) const
+   {
+      // Start by assuming everything is unresolved, and then resolve
+      // as we find references.
+      std::set<ParseItem> items(referencedVariables_.begin(),
+                                referencedVariables_.end());
+      
+      // Remove any parse items which are found on the
+      // search path
+      BOOST_FOREACH(const std::string& object, objects)
+      {
+         std::set<ParseItem>::const_iterator it =
+               std::find_if(items.begin(),
+                            items.end(),
+                            HasSymbolNamed(object));
+         if (it != items.end())
+            items.erase(it);
+      }
+
+      // Now, check the list against variables defined
+      // in the parse tree
+      doGetUnresolvedSymbols(*this, &items);
+      return items;
+   }
+   
+   struct HasSymbolNamed
+   {
+      
+      explicit HasSymbolNamed(const std::string& name)
+         : name_(name) {}
+      
+      bool operator()(const ParseItem& item) const
+      {
+         return item.name == name_;
+      }
+      
+      std::string name_;
+   };
+   
+   void doGetUnresolvedSymbols(const ParseNode& node,
+                               std::set<ParseItem>* pItems) const
+   {
+      typedef std::set<ParseItem>::iterator iterator;
+      
+      // Iterate over all defined variables
+      for (iterator it = node.definedVariables_.begin();
+           it != node.definedVariables_.end();
+           ++it)
+      {
+         iterator found = std::find_if(
+                  pItems->begin(),
+                  pItems->end(),
+                  HasSymbolNamed(it->name));
+
+         if (found != pItems->end())
+            pItems->erase(found);
+      }
+      
+      // If we have a parent closure, check there as well
+      if (node.pParent_ != NULL)
+         doGetUnresolvedSymbols(*(node.pParent_), pItems);
    }
    
 private:
@@ -488,7 +606,7 @@ public:
    
    bool moveToNextToken()
    {
-      if (offset_ == n_ - 1)
+      if (UNLIKELY(offset_ == n_ - 1))
          return false;
       
       ++offset_;
@@ -497,24 +615,56 @@ public:
    
    bool moveToPreviousToken()
    {
-      if (offset_ == 0)
+      if (UNLIKELY(offset_ == 0))
          return false;
       
       --offset_;
       return true;
    }
    
-   const AnnotatedRToken& nextNonWhitespaceToken() const
-   {
-      TokenCursor cursor = clone();
-      cursor.moveToNextToken();
-      cursor.fwdOverWhitespace();
-      return cursor.currentToken();
-   }
-   
    const AnnotatedRToken& currentToken() const
    {
       return rTokens_.at(offset_);
+   }
+   
+   const AnnotatedRToken& nextToken() const
+   {
+      return rTokens_.at(offset_ + 1);
+   }
+   
+   const AnnotatedRToken& previousToken() const
+   {
+      return rTokens_.at(offset_ - 1);
+   }
+   
+   const AnnotatedRToken& nextSignificantToken(std::size_t times = 1) const
+   {
+      int offset = 0;
+      while (times != 0)
+      {
+         ++offset;
+         while (isWhitespace(rTokens_.at(offset_ + offset)))
+            ++offset;
+         
+         --times;
+      }
+      
+      return rTokens_.at(offset_ + offset);
+   }
+   
+   const AnnotatedRToken& previousSignificantToken(std::size_t times = 1) const
+   {
+      int offset = 0;
+      while (times != 0)
+      {
+         ++offset;
+         while (isWhitespace(rTokens_.at(offset_ - offset)))
+            ++offset;
+         
+         --times;
+      }
+      
+      return rTokens_.at(offset_ - offset);
    }
    
    operator const AnnotatedRToken&() const
@@ -527,9 +677,26 @@ public:
       return rTokens_.at(offset_).token();
    }
    
-   const AnnotatedRToken& peek(int offset = 1) const
+   bool moveToNextSignificantToken()
    {
-      return rTokens_.at(offset_ + offset);
+      if (!moveToNextToken())
+         return false;
+      
+      if (!fwdOverWhitespace())
+         return false;
+      
+      return true;
+   }
+   
+   bool moveToPreviousSignificantToken()
+   {
+      if (!moveToPreviousToken())
+         return false;
+      
+      if (!bwdOverWhitespace())
+         return false;
+      
+      return true;
    }
    
    bool contentEquals(const std::wstring& content) const
@@ -537,16 +704,20 @@ public:
       return rTokens_.at(offset_).contentEquals(content);
    }
    
-   void fwdOverWhitespace()
+   bool fwdOverWhitespace()
    {
       while (currentToken().isType(RToken::WHITESPACE))
-         moveToNextToken();
+         if (!moveToNextToken())
+            return false;
+      return true;
    }
    
-   void bwdOverWhitespace()
+   bool bwdOverWhitespace()
    {
       while (currentToken().isType(RToken::WHITESPACE))
-         moveToPreviousToken();
+         if (!moveToPreviousToken())
+            return false;
+      return true;
    }
    
    friend std::ostream& operator <<(std::ostream& os, const TokenCursor& cursor)
@@ -616,19 +787,42 @@ private:
 
 namespace {
 
+// Utility macros for inspecting and handling tokens
+#define MOVE_TO_NEXT_TOKEN(__CURSOR__, __LINT_ITEMS__)                         \
+   do                                                                          \
+   {                                                                           \
+      if (!__CURSOR__.moveToNextToken())                                       \
+      {                                                                        \
+         DEBUG("Encountered unexpected end of document");                      \
+         __LINT_ITEMS__.addUnexpectedEndOfDocument(__CURSOR__.currentToken()); \
+         return;                                                               \
+      }                                                                        \
+   } while (0)
+
+#define FWD_OVER_WHITESPACE(__CURSOR__, __LINT_ITEMS__)                        \
+   do                                                                          \
+   {                                                                           \
+      if (!__CURSOR__.fwdOverWhitespace())                                     \
+      {                                                                        \
+         DEBUG("Encountered unexpected end of document");                      \
+         __LINT_ITEMS__.addUnexpectedEndOfDocument(__CURSOR__.currentToken()); \
+         return;                                                               \
+      }                                                                        \
+   } while (0)
+
 void handleIdToken(TokenCursor& cursor,
                    ParseNode* pNode,
                    LintItems& lintItems)
 {
    // If the following token is a '::' or ':::', then
    // we add to the set of namespace entries used.
-   if (isNamespace(cursor.peek(1)))
+   if (isNamespace(cursor.nextSignificantToken()))
    {
       // Validate that the entries before and after the '::' are either
       // strings, symbols or identifiers
       const AnnotatedRToken& pkgToken = cursor;
-      const AnnotatedRToken& nsToken = cursor.peek(1);
-      const AnnotatedRToken& exportedToken = cursor.peek(2);
+      const AnnotatedRToken& nsToken = cursor.nextSignificantToken();
+      const AnnotatedRToken& exportedToken = cursor.nextSignificantToken(2);
       
       if (!(isString(pkgToken) ||
             isId(pkgToken)))
@@ -660,20 +854,28 @@ void handleIdToken(TokenCursor& cursor,
    // touch it for now.
    //
    // TODO: Add another map for 'containers' in a scope?
-   const AnnotatedRToken& prevToken = cursor.peek(-1);
+   const AnnotatedRToken& prevToken = cursor.previousSignificantToken();
    if (isAt(prevToken) ||
        isDollar(prevToken))
       return;
 
    // Check to see if there is a left assign following the token.
    // If so, add that symbol to this scope.
-   const AnnotatedRToken& nextToken = cursor.peek(1);
+   const AnnotatedRToken& nextToken = cursor.nextSignificantToken();
+   DEBUG("Next token: " << nextToken.asString());
+   
    if (isLocalLeftAssign(nextToken))
+   {
+      DEBUG("Adding defined variable '" << cursor.currentToken().contentAsUtf8() << "'");
       pNode->addDefinedVariable(cursor);
+   }
 
    // Similarily for previous assign
    if (isLocalRightAssign(prevToken))
+   {
+      DEBUG("Adding defined variable '" << cursor.currentToken().contentAsUtf8() << "'");
       pNode->addDefinedVariable(cursor);
+   }
 
    // TODO: Handle 'global' assign. This implies searching
    // parent scopes to see if the variable is defined locally
@@ -693,7 +895,7 @@ void handleIdToken(TokenCursor& cursor,
 // 1. Populates the current scope with variables in the argument list,
 // 2. Creates a new node for the function.
 void handleFunctionToken(TokenCursor& cursor,
-                         ParseNode* pNode,
+                         ParseNode** ppNode,
                          LintItems& lintItems)
 {
    // ensure we're on a function token
@@ -706,8 +908,11 @@ void handleFunctionToken(TokenCursor& cursor,
       }
    }
    
+   ParseNode* pNode = *ppNode;
+   
    // there should be a '(' following the function keyword
-   cursor.moveToNextToken();
+   MOVE_TO_NEXT_TOKEN(cursor, lintItems);
+   
    if (!cursor.contentEquals(L"("))
    {
       lintItems.addUnexpectedToken(
@@ -717,10 +922,11 @@ void handleFunctionToken(TokenCursor& cursor,
    }
    
    boost::shared_ptr<ParseNode> pChild =
-         ParseNode::createChildNode(pNode, "TODO");
+         ParseNode::createNode("TODO");
    
    // Check to see if we have no arguments for this function.
-   cursor.moveToNextToken();
+   MOVE_TO_NEXT_TOKEN(cursor, lintItems);
+   
    if (cursor.contentEquals(L")"))
    {
       DEBUG("Argument list for function is empty; skipping");
@@ -730,22 +936,25 @@ void handleFunctionToken(TokenCursor& cursor,
    // Start running through the function arguments. This loop should
    // begin at the start of a new function block; ie, on an identifier.
    // We break out when a ')' or other unmatched closing brace is identified.
-   
    DEBUG("Parsing argument list for function");
    do
    {
       START:
       
-      cursor.fwdOverWhitespace();
+      FWD_OVER_WHITESPACE(cursor, lintItems);
       DEBUG("Current token: " << cursor.currentToken().asString());
       
       // start on identifier
       if (!isId(cursor))
          lintItems.addUnexpectedToken(cursor, "id");
       else
+      {
+         DEBUG("Adding definition: '" << cursor.currentToken().contentAsUtf8() << "'");
          pChild->addDefinedVariable(cursor);
+      }
       
-      cursor.moveToNextToken();
+      MOVE_TO_NEXT_TOKEN(cursor, lintItems);
+      FWD_OVER_WHITESPACE(cursor, lintItems);
       
       // expect either a ',' or '=' (for default arg)
       if (isComma(cursor))
@@ -760,11 +969,13 @@ void handleFunctionToken(TokenCursor& cursor,
          // TODO: Parse expression following '='. 
          // For now, we just look for a comma (starting a new argument)
          // or a ')' (closing the argument list)
-         while (cursor.moveToNextToken())
+         while (true)
          {
+            MOVE_TO_NEXT_TOKEN(cursor, lintItems);
+            
             // TODO: We skip whitespace but stylistically we might warn
             // about whitespace before / after '='
-            cursor.fwdOverWhitespace();
+            FWD_OVER_WHITESPACE(cursor, lintItems);
             DEBUG("Current token: " << cursor);
             
             if (isLeftBrace(cursor))
@@ -772,20 +983,25 @@ void handleFunctionToken(TokenCursor& cursor,
                if (cursor.fwdToMatchingToken())
                   continue;
                else
+               {
                   lintItems.addUnmatchedToken(cursor);
+                  return; // TODO: continue parsing?
+               }
             }
             
             if (isComma(cursor))
             {
                // We found a comma; continue parsing other function arguments
                DEBUG("Found comma in function argument list; parsing next arguments");
-               cursor.moveToNextToken();
+               MOVE_TO_NEXT_TOKEN(cursor, lintItems);
                goto START;
             }
             
             if (isRightBrace(cursor))
             {
                // Found a closing brace; this should be a ')'.
+               // Earlier branches should have handled walking over other matching
+               // braces ('{' to '}', etc)
                if (!cursor.contentEquals(L")"))
                   lintItems.addUnexpectedToken(cursor, ")");
                
@@ -815,10 +1031,15 @@ void handleFunctionToken(TokenCursor& cursor,
    //
    // TODO: Handle single-expression functions, e.g.
    // foo <- function() bar()
+   DEBUG("Cursor at end of argument list: " << cursor.currentToken().contentAsUtf8());
+   MOVE_TO_NEXT_TOKEN(cursor, lintItems);
+   FWD_OVER_WHITESPACE(cursor, lintItems);
+   
    if (cursor.contentEquals(L"{"))
    {
       DEBUG("Found '{' opening function body");
       pNode->addChild(pChild);
+      *ppNode = pChild.get();
    }
    
 }
@@ -827,7 +1048,7 @@ void handleStringToken(TokenCursor& cursor,
                        ParseNode* pNode,
                        LintItems& lintItems)
 {
-   if (isLocalLeftAssign(cursor.peek(1)))
+   if (isLocalLeftAssign(cursor.nextSignificantToken()))
       pNode->addDefinedVariable(cursor);
 }
 
@@ -848,7 +1069,6 @@ std::map<std::wstring, std::wstring> makeComplementVector()
 static std::map<std::wstring, std::wstring> s_complements =
       makeComplementVector();
 
-
 std::wstring complement(const std::wstring string)
 {
    return s_complements[string];
@@ -860,7 +1080,8 @@ typedef std::pair<
    boost::shared_ptr<ParseNode>,
    LintItems> LintResults;
 
-LintResults parseAndLintRFile(const FilePath& filePath)
+LintResults parseAndLintRFile(const FilePath& filePath,
+                              const std::set<std::string>& objects)
 {
    std::string contents = file_utils::readFile(filePath);
    
@@ -902,10 +1123,17 @@ LintResults parseAndLintRFile(const FilePath& filePath)
       if (isRightBrace(cursor))
       {
          DEBUG("Encountered '" << cursor.currentToken().contentAsUtf8() << "', updating brace stack");
-         if (braceStack.empty())
+         if (cursor.contentEquals(L"}") && pNode->getParent() != NULL)
+         {
+            DEBUG("Encountered '}' closing function block");
+            pNode = pNode->getParent();
+            continue;
+         }
+         else if (braceStack.empty())
          {
             DEBUG("Unexpected token " << cursor.currentToken().asString());
             lintItems.addUnexpectedToken(cursor);
+            continue;
          }
          else
          {
@@ -922,14 +1150,15 @@ LintResults parseAndLintRFile(const FilePath& filePath)
                DEBUG("Popping brace stack");
                braceStack.pop_back();
             }
+            continue;
          }
       }
       
-      // Handle a 'function' token (implies we are about to enter a new scope)
+      // Handle a 'function' token.
       if (isFunction(cursor))
       {
          DEBUG("Handling function token");
-         handleFunctionToken(cursor, pNode, lintItems);
+         handleFunctionToken(cursor, &pNode, lintItems);
          continue;
       }
       
@@ -989,16 +1218,48 @@ LintResults parseAndLintRFile(const FilePath& filePath)
       }
    } while (cursor.moveToNextToken());
    
+   DEBUG("- Finished building parse tree");
+   if (!braceStack.empty())
+   {
+      DEBUG("Unexpected end of document; unclosed brace(s)");
+      lintItems.addUnexpectedEndOfDocument(cursor.currentToken());
+   }
+   
+   // TODO: Should we report missing matches? Probably need a way
+   // of specifying a 'full' lint vs. 'partial' lint; ie,
+   // to differentiate between 'does it look okay so far' and
+   // 'is this entire document okay'.
+   if (pNode->getParent() != NULL)
+   {
+      DEBUG("Unexpected end of document; unclosed function brace");
+      lintItems.addUnexpectedEndOfDocument(cursor.currentToken());
+   }
+   
+   // Now that we have parsed through the whole document and
+   // built a lint tree, we now walk through each identifier and
+   // ensure that they exist either on the search path, or a parent
+   // closure.
+   findAllUnresolvedSymbols(*root, objects, &lintItems);
+   
    return std::make_pair(root, lintItems);
 }
 
-SEXP rs_parseAndLintRFile(SEXP pathSEXP)
+SEXP rs_parseAndLintRFile(SEXP pathSEXP,
+                          SEXP searchPathObjectsSEXP)
 {
    std::string path = r::sexp::asString(pathSEXP);
    FilePath filePath(module_context::resolveAliasedPath(path));
    
-   LintResults lintResults = parseAndLintRFile(filePath);
+   // NOTE: Want to optimize for fast lookup.
+   std::set<std::string> objects;
+   bool success = r::sexp::fillSetString(searchPathObjectsSEXP, &objects);
+   if (!success)
+   {
+      DEBUG("Failed to fill search path vector");
+      return R_NilValue;
+   }
    
+   LintResults lintResults = parseAndLintRFile(filePath, objects);
    std::vector<LintItem> lintItems = lintResults.second.get();
    
    using namespace rstudio::r::sexp;
@@ -1030,7 +1291,7 @@ core::Error initialize()
    using boost::bind;
    using namespace module_context;
    
-   RS_REGISTER_CALL_METHOD(rs_parseAndLintRFile, 1);
+   RS_REGISTER_CALL_METHOD(rs_parseAndLintRFile, 2);
    
    ExecBlock initBlock;
    initBlock.addFunctions()

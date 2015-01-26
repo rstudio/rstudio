@@ -16,6 +16,18 @@
 #ifndef CORE_MACROS_HPP
 #define CORE_MACROS_HPP
 
+/* Utility Macros */
+
+#if defined(__GNUC__)
+# define LIKELY(x)   __builtin_expect(!!(x), 1)
+# define UNLIKELY(x) __builtin_expect(!!(x), 0)
+#else
+# define LIKELY(x)   __builtin_expect(!!(x), 1)
+# define UNLIKELY(x) __builtin_expect(!!(x), 0)
+#endif
+
+/* Logging Macros */
+
 // re-define this in implementation files for labelled debugging
 #ifndef RSTUDIO_DEBUG_LABEL
 # define RSTUDIO_DEBUG_LABEL "rstudio"
