@@ -346,9 +346,10 @@ RSourceIndex::RSourceIndex(const std::string& context,
              !opToken.isOperator(parentAssignOp))
             continue;
 
-         // check for an identifier
+         // check for an identifier or string
          const RToken& idToken = rTokens.at(i-2);
-         if ( idToken.type() != RToken::ID )
+         if (!(idToken.type() == RToken::ID ||
+               idToken.type() == RToken::STRING))
             continue;
 
          // if there is another previous token make sure it isn't a
