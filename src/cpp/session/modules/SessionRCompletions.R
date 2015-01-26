@@ -1987,6 +1987,9 @@ assign(x = ".rs.acCompletionTypes",
 ## in 'completions.R' of the R sources.
 .rs.addFunction("getCompletionsHelp", function(token)
 {
+   ## Attempt to find the help topic item in the local
+   ## cache, as reading files from disk multiple times
+   ## could be slow
    pkgCacheName <- ".completions.attachedPackagesCache"
    helpTopicsName <- ".completions.helpTopics"
    rsEnvPos <- which(search() == "tools:rstudio")
@@ -1996,6 +1999,8 @@ assign(x = ".rs.acCompletionTypes",
       error = function(e) character()
    )
    
+   ## If the the current search paths have changed, invalidate
+   ## the cache and update our aliases
    paths <- searchpaths()[substring(search(), 1, 8) == "package:"]
    if (!identical(basename(paths), attachedPackagesCache))
    {
@@ -2003,12 +2008,35 @@ assign(x = ".rs.acCompletionTypes",
              basename(paths),
              pos = rsEnvPos)
       
+      # Get the set of help topics
+      topics <- lapply(paths, .rs.readAliases)
+      names(topics) <- basename(paths)
+      
       assign(helpTopicsName,
-             unique(unlist(lapply(paths, .rs.readAliases))),
+             topics,
              pos = rsEnvPos)
    }
    
    aliases <- get(helpTopicsName, pos = rsEnvPos)
+   
+   ## If the token is of the form `<pkg>::<topic>`,
+   ## then attempt to get the topic 'topic' for that
+   ## package.
+   if (regexpr(":{2,3}", token, perl = TRUE) != -1)
+   {
+      splat <- strsplit(token, ":{2,3}", perl = TRUE)[[1]]
+      pkg <- splat[[1]]
+      token <- if (length(splat) > 1)
+         splat[[2]]
+      else
+         ""
+      aliases <- tryCatch(
+         aliases[[pkg]],
+         error = function(e) character()
+      )
+   }
+   
+   aliases <- unlist(aliases)
    completions <- .rs.selectFuzzyMatches(aliases, token)
    
    completions <- .rs.makeCompletions(
