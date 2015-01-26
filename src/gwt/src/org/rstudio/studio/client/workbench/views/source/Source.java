@@ -152,7 +152,6 @@ public class Source implements InsertSourceHandler,
       void closeTab(Widget widget, boolean interactive, Command onClosed);
       void closeTab(int index, boolean interactive);
       void closeTab(int index, boolean interactive, Command onClosed);
-      void closeAllTabs();
       void setDirty(Widget widget, boolean dirty);
       void manageChevronVisibility();
       void showOverflowPopup();
@@ -555,7 +554,19 @@ public class Source implements InsertSourceHandler,
             public void execute()
             {
                // documents have been reverted; we can close
-               view_.closeAllTabs();
+               cpsExecuteForEachEditor(editors_,
+                     new CPSEditingTargetCommand()
+               {
+                  @Override
+                  public void execute(EditingTarget editingTarget,
+                                      Command continuation)
+                  {
+                     view_.closeTab(
+                           editingTarget.asWidget(),
+                           false,
+                           continuation);
+                  }
+               });
             }
          });
       }
