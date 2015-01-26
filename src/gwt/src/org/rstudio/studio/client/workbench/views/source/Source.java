@@ -452,6 +452,7 @@ public class Source implements InsertSourceHandler,
       vimOnNextTab(this);
       vimOnPreviousTab(this);
       vimOnCloseTab(this);
+      vimOnCloseAll(this);
       vimOnNewDoc(this);
       vimOnSaveAndCloseTab(this);
       
@@ -523,6 +524,53 @@ public class Source implements InsertSourceHandler,
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("bdelete", "bd", callback);
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("quit", "q", callback);
    }-*/;
+   
+   private native final void vimOnCloseAll(Source source) /*-{
+      var callback = $entry(function(cm, params) {
+      
+         var interactive = true;
+         if (params.argString && params.argString === "!")
+            interactive = false;
+         
+         source.@org.rstudio.studio.client.workbench.views.source.Source::doVimOnCloseAll(Z)(interactive);
+      });
+       
+      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("qall", "qa", callback);
+   }-*/;
+   
+   private void doVimOnCloseAll(boolean interactive)
+   {
+      if (interactive)
+      {
+         // call into the interactive tab closer
+         onCloseAllSourceDocs();
+      }
+      else
+      {
+         // revert unsaved targets and close tabs
+         revertUnsavedTargets(new Command()
+         {
+            @Override
+            public void execute()
+            {
+               // documents have been reverted; we can close
+               cpsExecuteForEachEditor(editors_,
+                     new CPSEditingTargetCommand()
+               {
+                  @Override
+                  public void execute(EditingTarget editingTarget,
+                                      Command continuation)
+                  {
+                     view_.closeTab(
+                           editingTarget.asWidget(),
+                           false,
+                           continuation);
+                  }
+               });
+            }
+         });
+      }
+   }
    
    private native final void vimOnNewDoc(Source source) /*-{
    
@@ -1325,7 +1373,7 @@ public class Source implements InsertSourceHandler,
       
       view_.closeTab(view_.getActiveTabIndex(), interactive);
    }
-
+   
    /**
     * Execute the given command for each editor, using continuation-passing
     * style. When executed, the CPSEditingTargetCommand needs to execute its
