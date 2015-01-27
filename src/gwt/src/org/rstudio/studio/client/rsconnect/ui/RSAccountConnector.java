@@ -14,14 +14,20 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
+import org.rstudio.studio.client.common.satellite.events.WindowClosedEvent;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult.AccountType;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAuthParams;
@@ -39,11 +45,14 @@ import org.rstudio.studio.client.workbench.ui.OptionsLoader;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
-public class RSAccountConnector
+public class RSAccountConnector implements WindowClosedEvent.Handler
 {
    public interface Binder
    extends CommandBinder<Commands, RSAccountConnector> {}
@@ -63,17 +72,17 @@ public class RSAccountConnector
          Session session,
          Commands commands,
          Binder binder,
-         OptionsLoader.Shim optionsLoader)
+         OptionsLoader.Shim optionsLoader,
+         EventBus events)
    {
       satelliteManager_ = satelliteManager;
       server_ = server;
       display_ = display;
       session_ = session;
       optionsLoader_ = optionsLoader;
+      events.addHandler(WindowClosedEvent.TYPE, this);
 
       binder.bind(commands, this);
-
-      exportAuthClosedCallback();
    }
    
    public void showAccountWizard(
@@ -125,6 +134,15 @@ public class RSAccountConnector
       optionsLoader_.showOptions(PublishingPreferencesPane.class);
    }
    
+   @Override
+   public void onWindowClosed(WindowClosedEvent event)
+   {
+      if (event.getName() == AUTH_WINDOW_NAME)
+      {
+         notifyAuthClosed();
+      }
+   }
+
    // Private methods --------------------------------------------------------
 
    private void connectNewAccount(
@@ -242,11 +260,38 @@ public class RSAccountConnector
             pendingAuthIndicator_ = indicator;
             pendingOnConnected_ = onConnected;
             
-            // open the satellite window 
-            satelliteManager_.openSatellite(
-                  RSConnectAuthSatellite.NAME, 
-                  RSConnectAuthParams.create(serverInfo, token), 
-                  new Size(700, 800));
+            // prepare a new window with the auth URL loaded
+            NewWindowOptions options = new NewWindowOptions();
+            options.setName(AUTH_WINDOW_NAME);
+            display_.openWebMinimalWindow(
+                  pendingAuthToken_.getClaimUrl(), 
+                  false, 
+                  700, 800, options);
+            
+            if (Desktop.isDesktop())
+            {
+               // on the desktop we're in control over the window and just need
+               // to be sure the content loads
+               Desktop.getFrame().prepareSatelliteNavigate(AUTH_WINDOW_NAME, 
+                     pendingAuthToken_.getClaimUrl());
+            }
+            else
+            {
+               // in the browser we have no control over the window, so show
+               // a dialog to help guide the user
+               waitDialog_ = new RSConnectAuthWaitDialog(
+                     serverInfo, token);
+               waitDialog_.addCloseHandler(new CloseHandler<PopupPanel>()
+               {
+                  @Override
+                  public void onClose(CloseEvent<PopupPanel> arg0)
+                  {
+                     waitDialog_ = null;
+                     notifyAuthClosed();
+                  }
+               });
+               waitDialog_.showModal();
+            }
             
             // we'll finish auth automatically when the satellite closes, but we
             // also want to close it ourselves when we detect that auth has
@@ -302,8 +347,19 @@ public class RSAccountConnector
                         // user is valid--cache account info and close the
                         // window
                         pendingAuthUser_ = user;
-                        satelliteManager_.closeSatelliteWindow(
-                              RSConnectAuthSatellite.NAME);
+                        
+                        if (Desktop.isDesktop())
+                        {
+                           // on the desktop, we can close the window by name
+                           satelliteManager_.closeSatelliteWindow(
+                                 AUTH_WINDOW_NAME);
+                        }
+                        
+                        if (waitDialog_ != null)
+                        {
+                           waitDialog_.closeDialog();
+                           waitDialog_ = null;
+                        }
                      }
 
                      @Override
@@ -440,15 +496,6 @@ public class RSAccountConnector
       });
    }
 
-   private final native void exportAuthClosedCallback()/*-{
-      var registry = this;     
-      $wnd.notifyAuthClosed = $entry(
-         function() {
-            registry.@org.rstudio.studio.client.rsconnect.ui.RSAccountConnector::notifyAuthClosed()();
-         }
-      ); 
-   }-*/;
-
    private final GlobalDisplay display_;
    private final RSConnectServerOperations server_;
    private final Session session_;
@@ -461,4 +508,7 @@ public class RSAccountConnector
    private OperationWithInput<AccountConnectResult> pendingOnConnected_;
    private RSConnectAuthUser pendingAuthUser_;
    private boolean runningAuthCompleteCheck_ = false;
+   private RSConnectAuthWaitDialog waitDialog_;
+   
+   private final static String AUTH_WINDOW_NAME = "rstudio_rsconnect_auth";
 }
