@@ -51,6 +51,9 @@ public final class JsInteropUtil {
         }
         field.setExportName(value);
       }
+      if (JdtUtil.getAnnotation(x.binding, JSNOEXPORT_CLASS) != null) {
+        field.setNoExport(true);
+      }
     }
   }
 

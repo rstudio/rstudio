@@ -27,5 +27,5 @@ public class NamespaceTester {
   /**
    * Exported field.
    */
-  public static int BAR = 42;
+  public final static int BAR = 42;
 }

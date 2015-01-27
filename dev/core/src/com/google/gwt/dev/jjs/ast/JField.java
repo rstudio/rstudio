@@ -50,6 +50,15 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
   }
 
   private String exportName;
+  private boolean noExport = false;
+
+  public boolean isNoExport() {
+    return noExport;
+  }
+
+  public void setNoExport(boolean noExport) {
+    this.noExport = noExport;
+  }
 
   public void setExportName(String exportName) {
     this.exportName = exportName;

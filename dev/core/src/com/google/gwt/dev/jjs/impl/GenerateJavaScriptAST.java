@@ -2764,6 +2764,7 @@ public class GenerateJavaScriptAST {
     }
 
     private void generateExports(JDeclaredType x, List<JsStatement> globalStmts) {
+      TreeLogger branch = logger.branch(TreeLogger.Type.INFO, "Exporting " + x.getName());
 
       String lastProvidedNamespace = "";
       boolean createdClinit = false;
@@ -2798,6 +2799,11 @@ public class GenerateJavaScriptAST {
 
       for (JField f : x.getFields()) {
         if (f.isStatic() && f.getExportName() != null) {
+          if (!f.isFinal()) {
+            branch.log(TreeLogger.Type.WARN, "Exporting effectively non-final field " + f.getName()
+                + " is discouraged. Due to the way exporting works, the value of the exported field"
+                + " will not be reflected across Java&JavaScript border.");
+          }
           createdClinit = maybeHoistClinit(exportStmts, createdClinit,
               maybeCreateClinitCall(f, true));
           JsNameRef exportRhs = names.get(f).makeRef(f.getSourceInfo());

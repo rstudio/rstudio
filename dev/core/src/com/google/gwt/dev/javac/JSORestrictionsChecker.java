@@ -33,6 +33,7 @@ import org.eclipse.jdt.internal.compiler.lookup.AnnotationBinding;
 import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
+import org.eclipse.jdt.internal.compiler.lookup.FieldBinding;
 import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.MethodScope;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
@@ -61,8 +62,10 @@ public class JSORestrictionsChecker {
 
   public static final String ERR_JSTYPE_OVERLOADS_NOT_ALLOWED =
       "JsType methods cannot overload another method.";
-  public static final String ERR_JSEXPORT_ONLY_CTORS_AND_STATIC_METHODS =
-      "@JsExport may only be applied to constructors and static methods.";
+  public static final String ERR_JSEXPORT_ONLY_CTORS_STATIC_METHODS_AND_STATIC_FINAL_FIELDS =
+      "@JsExport may only be applied to constructors and static methods and static final fields.";
+  public static final String ERR_EITHER_JSEXPORT_JSNOEXPORT =
+      "@JsExport and @JsNoExport is not allowed at the same time.";
   public static final String ERR_JSPROPERTY_ONLY_BEAN_OR_FLUENT_STYLE_NAMING =
       "@JsProperty is only allowed on JavaBean-style or fluent-style named methods";
   public static final String ERR_MUST_EXTEND_MAGIC_PROTOTYPE_CLASS =
@@ -173,6 +176,8 @@ public class JSORestrictionsChecker {
 
     @Override
     public void endVisit(FieldDeclaration field, MethodScope scope) {
+      checkJsExport(field.binding);
+
       if (!isJso()) {
         return;
       }
@@ -183,6 +188,8 @@ public class JSORestrictionsChecker {
 
     @Override
     public void endVisit(MethodDeclaration meth, ClassScope scope) {
+      checkJsExport(meth.binding);
+
       if (!isJso()) {
         return;
       }
@@ -246,20 +253,31 @@ public class JSORestrictionsChecker {
         }
       }
       Map<String, MethodBinding> methodSignatures = new HashMap<String, MethodBinding>();
-      Map<String, MethodBinding> noExports = new HashMap<String, MethodBinding>();
 
-      checkJsTypeMethodsForOverloads(methodSignatures, noExports, binding);
+      checkJsTypeMethodsForOverloads(methodSignatures, binding);
       for (MethodBinding mb : binding.methods()) {
         checkJsProperty(mb, true);
-        checkJsExport(mb, !binding.isInterface());
       }
     }
 
-    private void checkJsExport(MethodBinding mb, boolean allowed) {
-      AnnotationBinding jsExport = JdtUtil.getAnnotation(mb, JsInteropUtil.JSEXPORT_CLASS);
-      if (jsExport != null && allowed) {
+    private void checkJsExport(MethodBinding mb) {
+      if (JdtUtil.getAnnotation(mb, JsInteropUtil.JSEXPORT_CLASS) != null) {
         if (!mb.isConstructor() && !mb.isStatic()) {
-          errorOn(mb, ERR_JSEXPORT_ONLY_CTORS_AND_STATIC_METHODS);
+          errorOn(mb, ERR_JSEXPORT_ONLY_CTORS_STATIC_METHODS_AND_STATIC_FINAL_FIELDS);
+        }
+        if (JdtUtil.getAnnotation(mb, JsInteropUtil.JSNOEXPORT_CLASS) != null) {
+          errorOn(mb, ERR_EITHER_JSEXPORT_JSNOEXPORT);
+        }
+      }
+    }
+
+    private void checkJsExport(FieldBinding fb) {
+      if (JdtUtil.getAnnotation(fb, JsInteropUtil.JSEXPORT_CLASS) != null) {
+        if (!fb.isStatic() || !fb.isFinal()) {
+          errorOn(fb, ERR_JSEXPORT_ONLY_CTORS_STATIC_METHODS_AND_STATIC_FINAL_FIELDS);
+        }
+        if (JdtUtil.getAnnotation(fb, JsInteropUtil.JSNOEXPORT_CLASS) != null) {
+          errorOn(fb, ERR_EITHER_JSEXPORT_JSNOEXPORT);
         }
       }
     }
@@ -314,15 +332,10 @@ public class JSORestrictionsChecker {
     }
 
     private void checkJsTypeMethodsForOverloads(Map<String, MethodBinding> methodNamesAndSigs,
-                                                Map<String, MethodBinding> noExports,
                                                 ReferenceBinding binding) {
       if (isJsType(binding)) {
         for (MethodBinding mb : binding.methods()) {
           String methodName = String.valueOf(mb.selector);
-          if (JdtUtil.getAnnotation(mb, JsInteropUtil.JSNOEXPORT_CLASS) != null) {
-            noExports.put(methodName, mb);
-            continue;
-          }
           if (mb.isConstructor() || mb.isStatic()) {
             continue;
           }
@@ -334,10 +347,6 @@ public class JSORestrictionsChecker {
           }
           if (methodNamesAndSigs.containsKey(methodName)) {
             if (!methodNamesAndSigs.get(methodName).areParameterErasuresEqual(mb)) {
-              if (noExports.containsKey(methodName)
-                  && noExports.get(methodName).areParameterErasuresEqual(mb)) {
-                continue;
-              }
               errorOn(mb, ERR_JSTYPE_OVERLOADS_NOT_ALLOWED);
             }
           } else {
@@ -346,7 +355,7 @@ public class JSORestrictionsChecker {
         }
       }
       for (ReferenceBinding rb : binding.superInterfaces()) {
-        checkJsTypeMethodsForOverloads(methodNamesAndSigs, noExports, rb);
+        checkJsTypeMethodsForOverloads(methodNamesAndSigs, rb);
       }
     }
 
@@ -398,7 +407,6 @@ public class JSORestrictionsChecker {
       }
 
       for (MethodBinding mb : type.binding.methods()) {
-        checkJsExport(mb, true);
         checkJsProperty(mb, false);
       }
 
@@ -593,6 +601,11 @@ public class JSORestrictionsChecker {
       // Workaround for bad JDT bug
       error = "Error in " + mb.toString() + ": " + error;
     }
+    errorOn(node, cud, error);
+  }
+
+  private void errorOn(FieldBinding fb, String error) {
+    ASTNode node = fb.sourceField();
     errorOn(node, cud, error);
   }
 }

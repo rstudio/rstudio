@@ -28,6 +28,6 @@ public class OuternamespaceTester {
    */
   @JsExport
   public static class Inner {
-    public static int BAZ = 99;
+    public static final int BAZ = 99;
   }
 }

@@ -25,5 +25,5 @@ public class PackageNamespaceTester {
   /**
    * Exported field.
    */
-  public static int WOO = 1001;
+  public final static int WOO = 1001;
 }

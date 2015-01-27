@@ -24,7 +24,7 @@ import com.google.gwt.core.client.js.JsType;
 @JsExport
 @JsType
 public class StaticInitializerVirtualMethod {
-  public static StaticInitializerVirtualMethod STATIC = new StaticInitializerVirtualMethod();
+  private static StaticInitializerVirtualMethod STATIC = new StaticInitializerVirtualMethod();
   public StaticInitializerVirtualMethod getInstance() {
     return STATIC;
   }

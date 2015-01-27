@@ -16,14 +16,26 @@
 package com.google.gwt.core.client.interop;
 
 import com.google.gwt.core.client.js.JsExport;
+import com.google.gwt.core.client.js.JsNoExport;
 
 /**
  * Test access to static field from JS through exported static method.
  */
 @JsExport
 public class StaticInitializerStaticMethod {
-  public static StaticInitializerStaticMethod STATIC = new StaticInitializerStaticMethod();
+  private static StaticInitializerStaticMethod STATIC = new StaticInitializerStaticMethod();
+
   public static StaticInitializerStaticMethod getInstance() {
+    return STATIC;
+  }
+
+  @JsNoExport
+  public static StaticInitializerStaticMethod notExported_1() {
+    return STATIC;
+  }
+
+  // not static
+  public StaticInitializerStaticMethod notExported_2() {
     return STATIC;
   }
 }

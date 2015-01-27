@@ -380,19 +380,93 @@ public class JSORestrictionsTest extends TestCase {
         "Line 3: " + JSORestrictionsChecker.ERR_JSTYPE_OVERLOADS_NOT_ALLOWED);
   }
 
-  public void testJsExportNotOnMethod() {
+  public void testJsExport() {
+    StringBuilder goodCode = new StringBuilder();
+    goodCode.append("import com.google.gwt.core.client.js.JsExport;\n");
+    goodCode.append("public class Buggy {\n");
+    goodCode.append("@JsExport public static final String field = null;\n");
+    goodCode.append("@JsExport public static void method() {}\n");
+    goodCode.append("public interface Foo {\n");
+    goodCode.append("@JsExport String field1 = null;\n");
+    // TODO: enable after java 8 becomes default
+    // goodCode.append("@JsExport static void method1() {}\n");
+    goodCode.append("}\n");
+    goodCode.append("}\n");
+
+    shouldGenerateNoError(goodCode);
+  }
+
+  public void testJsExportOnClass() {
+    StringBuilder goodCode = new StringBuilder();
+    goodCode.append("import com.google.gwt.core.client.js.JsExport;\n");
+    goodCode.append("@JsExport public class Buggy {}");
+
+    shouldGenerateNoError(goodCode);
+  }
+
+  public void testJsExportOnInterface() {
+    StringBuilder goodCode = new StringBuilder();
+    goodCode.append("import com.google.gwt.core.client.js.JsExport;\n");
+    goodCode.append("@JsExport public interface Buggy {}");
+
+    shouldGenerateNoError(goodCode);
+  }
+
+  public void testJsExportNotOnObjectMethod() {
     StringBuilder buggyCode = new StringBuilder();
-    buggyCode.append("import com.google.gwt.core.client.js.JsType;\n");
     buggyCode.append("import com.google.gwt.core.client.js.JsExport;\n");
     buggyCode.append("public class Buggy {\n");
-    buggyCode.append("@JsType interface Foo {}\n");
-    buggyCode.append("static class BuggyFoo implements Foo {\n");
-    buggyCode.append("@JsExport void foo() {}\n");
-    buggyCode.append("}\n");
+    buggyCode.append("@JsExport public void foo() {}\n");
     buggyCode.append("}\n");
 
-    shouldGenerateError(buggyCode, "Line 6: "
-        + JSORestrictionsChecker.ERR_JSEXPORT_ONLY_CTORS_AND_STATIC_METHODS);
+    shouldGenerateError(buggyCode, "Line 3: "
+        + JSORestrictionsChecker.ERR_JSEXPORT_ONLY_CTORS_STATIC_METHODS_AND_STATIC_FINAL_FIELDS);
+  }
+
+  public void testJsExportNotOnObjectField() {
+    StringBuilder buggyCode = new StringBuilder();
+    buggyCode.append("import com.google.gwt.core.client.js.JsExport;\n");
+    buggyCode.append("public class Buggy {\n");
+    buggyCode.append("@JsExport public final String foo = null;\n");
+    buggyCode.append("}\n");
+
+    shouldGenerateError(buggyCode, "Line 3: "
+        + JSORestrictionsChecker.ERR_JSEXPORT_ONLY_CTORS_STATIC_METHODS_AND_STATIC_FINAL_FIELDS);
+  }
+
+  public void testJsExportNotOnNonFinalField() {
+    StringBuilder buggyCode = new StringBuilder();
+    buggyCode.append("import com.google.gwt.core.client.js.JsExport;\n");
+    buggyCode.append("public class Buggy {\n");
+    buggyCode.append("@JsExport public static String foo = null;\n");
+    buggyCode.append("}\n");
+
+    shouldGenerateError(buggyCode, "Line 3: "
+        + JSORestrictionsChecker.ERR_JSEXPORT_ONLY_CTORS_STATIC_METHODS_AND_STATIC_FINAL_FIELDS);
+  }
+
+  public void testJsExportAndJsNotExportNotOnField() {
+    StringBuilder buggyCode = new StringBuilder();
+    buggyCode.append("import com.google.gwt.core.client.js.JsExport;\n");
+    buggyCode.append("import com.google.gwt.core.client.js.JsNoExport;\n");
+    buggyCode.append("public class Buggy {\n");
+    buggyCode.append("@JsExport @JsNoExport public final static String foo = null;\n");
+    buggyCode.append("}\n");
+
+    shouldGenerateError(buggyCode, "Line 4: "
+        + JSORestrictionsChecker.ERR_EITHER_JSEXPORT_JSNOEXPORT);
+  }
+
+  public void testJsExportAndJsNotExportNotOnMethod() {
+    StringBuilder buggyCode = new StringBuilder();
+    buggyCode.append("import com.google.gwt.core.client.js.JsExport;\n");
+    buggyCode.append("import com.google.gwt.core.client.js.JsNoExport;\n");
+    buggyCode.append("public class Buggy {\n");
+    buggyCode.append("@JsExport @JsNoExport public static void method() {}\n");
+    buggyCode.append("}\n");
+
+    shouldGenerateError(buggyCode, "Line 4: "
+        + JSORestrictionsChecker.ERR_EITHER_JSEXPORT_JSNOEXPORT);
   }
 
   public void testJsPrototypeNotOnClass() {
