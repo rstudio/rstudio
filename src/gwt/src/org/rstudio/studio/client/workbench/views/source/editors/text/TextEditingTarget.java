@@ -142,6 +142,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Stack;
 
 public class TextEditingTarget implements 
                                   EditingTarget,
@@ -2127,21 +2128,685 @@ public class TextEditingTarget implements
    @Handler
    void onReformatCode()
    {
-      // Only allow if entire selection in R or C++ mode for now
-      if (!(DocumentMode.isSelectionInCppMode(docDisplay_) ||
-            DocumentMode.isSelectionInRMode(docDisplay_)))
+      // Only allow if entire selection in R mode for now
+      if (!DocumentMode.isSelectionInRMode(docDisplay_))
          return;
-      
-      if (DocumentMode.isSelectionInRMode(docDisplay_))
-         alignAssignment();
       
       insertPrettyNewlines();
    }
    
-   boolean isWhitespaceWithNewline(String line)
+   class MutableInteger {
+      
+      public MutableInteger(int data)
+      {
+         data_ = data;
+      }
+      
+      public void set(int data)
+      {
+         data_ = data;
+      }
+      
+      public int get()
+      {
+         return data_;
+      }
+      
+      private int data_;
+   }
+   
+   class TokenCursor {
+      
+      public TokenCursor(ArrayList<Token> tokens)
+      {
+         this(tokens, 0, tokens.size());
+      }
+      
+      private TokenCursor(ArrayList<Token> tokens,
+                          int offset,
+                          int n)
+      {
+         complements_ = new HashMap<String, String>();
+         
+         complements_.put("(", ")");
+         complements_.put("[", "]");
+         complements_.put("{", "}");
+         complements_.put("[[", "]]");
+         
+         complements_.put(")", "(");
+         complements_.put("]", "[");
+         complements_.put("}", "{");
+         complements_.put("]]", "[[");
+         
+         tokens_ = tokens;
+         offset_ = offset;
+         n_ = n;
+      }
+      
+      private TokenCursor(ArrayList<Token> tokens,
+                          int offset,
+                          int n,
+                          HashMap<String, String> complements)
+      {
+         tokens_ = tokens;
+         offset_ = offset;
+         n_ = n;
+         complements_ = complements;
+      }
+      
+      public TokenCursor clone()
+      {
+         return new TokenCursor(
+               tokens_,
+               offset_,
+               n_,
+               complements_);
+      }
+      
+      public TokenCursor clone(int offset)
+      {
+         return new TokenCursor(
+               tokens_,
+               offset_ + offset,
+               n_,
+               complements_);
+      }
+      
+      public boolean moveToNextToken()
+      {
+         if (offset_ == n_ - 1)
+            return false;
+         ++offset_;
+         return true;
+      }
+      
+      public boolean moveToPreviousToken()
+      {
+         if (offset_ == 0)
+            return false;
+         --offset_;
+         return true;
+      }
+      
+      public boolean moveToNextSignificantToken()
+      {
+         if (!moveToNextToken())
+            return false;
+         
+         while (isWhitespaceOrNewline())
+            if (!moveToNextToken())
+               return false;
+         
+         return true;
+      }
+      
+      public boolean moveToPreviousSignificantToken()
+      {
+         if (!moveToPreviousToken())
+            return false;
+         
+         while (isWhitespaceOrNewline())
+            if (!moveToPreviousToken())
+               return false;
+         
+         return true;
+      }
+      
+      public Token previousSignificantToken()
+      {
+         TokenCursor clone = clone();
+         if (!clone.moveToPreviousToken())
+            return Token.create();
+         
+         while (clone.isWhitespaceOrNewline())
+            if (!clone.moveToPreviousToken())
+               return Token.create();
+         
+         return clone.currentToken();
+      }
+      
+      public Token nextSignificantToken()
+      {
+         TokenCursor clone = clone();
+         if (!clone.moveToNextToken())
+            return Token.create();
+         
+         while (clone.isWhitespaceOrNewline())
+            if (!clone.moveToNextToken())
+               return Token.create();
+         
+         return clone.currentToken();
+      }
+      
+      public TokenCursor peek(int offset)
+      {
+         int index = offset_ + offset;
+         if (index < 0 || index >= n_)
+         {
+            ArrayList<Token> dummyTokens = new ArrayList<Token>();
+            dummyTokens.add(Token.create("__ERROR__", "error", 0));
+            return new TokenCursor(dummyTokens, 0, 1, complements_);
+         }
+         
+         TokenCursor clone = clone();
+         clone.offset_ = index;
+         return clone;
+      }
+      
+      private boolean isLeftBrace()
+      {
+         String value = currentValue();
+         return value.equals("(") ||
+                value.equals("[") ||
+                value.equals("[[") ||
+                value.equals("{");
+      }
+      
+      private boolean isRightBrace()
+      {
+         String value = currentValue();
+         return value.equals(")") ||
+                value.equals("]") ||
+                value.equals("]]") ||
+                value.equals("}");
+      }
+      
+      public boolean fwdToMatchingToken()
+      {
+         return fwdToMatchingToken(null);
+      }
+      
+      public boolean fwdToMatchingToken(MutableInteger counter)
+      {
+         String lhs = this.currentValue();
+         if (!isLeftBrace())
+            return false;
+         
+         boolean isCounterActive = true;
+         
+         Stack<String> braceStack = new Stack<String>();
+         
+         int stack = 0;
+         String rhs = complements_.get(lhs);
+         TokenCursor cursor = clone();
+         while (cursor.moveToNextToken())
+         {
+            String value = cursor.currentValue();
+            if (isCounterActive &&
+                  counter != null &&
+                  !cursor.isComment())
+            {
+               counter.set(counter.get() + value.replaceAll("\\s", "").length());
+            }
+
+            if (cursor.isLeftBrace())
+            {
+               braceStack.push(value);
+               if (value.equals(lhs))
+                  stack++;
+               isCounterActive = false;
+            }
+            else if (cursor.isRightBrace())
+            {
+               if (!braceStack.isEmpty())
+                  braceStack.pop();
+
+               isCounterActive = braceStack.isEmpty();
+
+               if (value.equals(rhs))
+               {
+                  if (stack == 0)
+                  {
+                     offset_ = cursor.offset_;
+                     return true;
+                  }
+                  stack--;
+               }
+            }
+         }
+         
+         return false;
+      }
+      
+      public boolean bwdToMatchingToken()
+      {
+         String rhs = this.currentValue();
+         if (!isRightBrace())
+            return false;
+         
+         int stack = 0;
+         String lhs = complements_.get(rhs);
+         TokenCursor cursor = clone();
+         
+         while (cursor.moveToPreviousToken())
+         {
+            if (cursor.currentValue() == rhs)
+            {
+               stack++;
+            } else if (cursor.currentValue() == lhs)
+            {
+               if (stack == 0)
+               {
+                  offset_ = cursor.offset_;
+                  return true;
+               }
+               stack--;
+            }
+         }
+         
+         return false;
+      }
+      
+      public Token currentToken()
+      {
+         return tokens_.get(offset_);
+      }
+      
+      public String currentValue()
+      {
+         return currentToken().getValue();
+      }
+      
+      public String getComplement(String value)
+      {
+         return complements_.get(value);
+      }
+      
+      public String getValue()
+      {
+         return currentValue();
+      }
+      
+      public void setValue(String value)
+      {
+         currentToken().setValue(value);
+      }
+      
+      public String valueAtOffset(int offset)
+      {
+         int index = offset_ + offset;
+         if (index < 0 || index >= n_)
+            return "";
+         
+         return tokens_.get(index).getValue();
+      }
+      
+      public String currentType()
+      {
+         return tokens_.get(offset_).getType();
+      }
+      
+      // NOTE: see 'r_highlight_rules.js' for token type info
+      public boolean isWhitespaceOrNewline()
+      {
+         Token token = tokens_.get(offset_);
+         return token.getType() == "text" &&
+                token.getValue().matches("^\\s+$");
+      }
+      
+      public void trimWhitespaceFwd()
+      {
+         TokenCursor clone = clone();
+         while (clone.isWhitespaceOrNewline())
+         {
+            clone.setValue("");
+            if (!clone.moveToNextToken())
+               return;
+         }
+      }
+      
+      public void trimWhitespaceBwd()
+      {
+         TokenCursor clone = clone();
+         while (clone.isWhitespaceOrNewline())
+         {
+            clone.setValue("");
+            if (!clone.moveToPreviousToken())
+               return;
+         }
+      }
+      
+      public boolean isComment()
+      {
+         return tokens_.get(offset_).getType().indexOf("comment") != -1;
+      }
+      
+      public boolean hasNewline()
+      {
+         return tokens_.get(offset_).getValue().indexOf('\n') != -1;
+      }
+      
+      public boolean isKeyword()
+      {
+         return tokens_.get(offset_).getType().equals("keyword");
+      }
+      
+      public boolean isBinaryOp()
+      {
+         String type = tokens_.get(offset_).getType();
+         return type.equals("keyword.operator") ||
+                type.equals("keyword.operator.infix");
+      }
+      
+      @Override
+      public boolean equals(Object object)
+      {
+         if (!(object instanceof TokenCursor))
+            return false;
+         
+         return offset_ == ((TokenCursor) object).offset_;
+      }
+      
+      private final ArrayList<Token> tokens_;
+      private int offset_;
+      private int n_;
+      private HashMap<String, String> complements_;
+   }
+   
+   void doInsertPrettyNewlines(TokenCursor cursor,
+                               String opener,
+                               String closer,
+                               int nestLevel,
+                               boolean preferNewlineAfterComma,
+                               boolean preferNewlineAfterBrace)
    {
-      return line.indexOf('\n') != -1 &&
-             line.matches("[\\s\\n]+");
+      // Root state == top level of document; no open braces yet
+      // encountered.
+      boolean rootState = nestLevel == 0 && opener.isEmpty();
+      
+      boolean newlineAfterComma = preferNewlineAfterComma;
+      boolean newlineAfterBrace = preferNewlineAfterBrace;
+      
+      int commaCount = 0;
+      int equalsCount = 0;
+      
+      boolean overrideNewlineInsertionAsFalse = false;
+      
+      String startValue = cursor.currentValue();
+      String prevSignificantValue = cursor.previousSignificantToken().getValue();
+      
+      // Trim whitespace following the 'opener' -- we may add it back later.
+      if (!rootState)
+         cursor.peek(1).trimWhitespaceFwd();
+      
+      // Scan through once to figure out whether we want to insert newlines.
+      TokenCursor clone = cursor.clone();
+      int accumulatedLength = 0;
+      
+      while (clone.moveToNextToken())
+      {
+         if (clone.isComment())
+            continue;
+         
+         accumulatedLength += clone.getValue().replaceAll("\\s", "").length();
+         
+         if (clone.currentType().equals("text"))
+         {
+            commaCount += StringUtil.countMatches(
+                  clone.currentValue(), ',');
+         }
+         
+         if (clone.currentValue().equals("function") ||
+             clone.currentValue().equals("{"))
+         {
+            overrideNewlineInsertionAsFalse = true;
+         }
+         
+         if (clone.currentValue().equals("="))
+         {
+            equalsCount++;
+            if (clone.moveToNextSignificantToken())
+            {
+               if (clone.currentValue().equals("function"))
+                  newlineAfterBrace = true;
+            }
+         }
+         
+         if (clone.currentValue().equals("{") ||
+             clone.currentValue().equals("["))
+         {
+            clone.fwdToMatchingToken();
+            continue;
+         }
+         
+         if (clone.currentValue().equals("("))
+         {
+            if (clone.moveToPreviousSignificantToken())
+            {
+               boolean isKeyword = clone.isKeyword();
+               clone.moveToNextSignificantToken();
+               if (isKeyword)
+                  clone.fwdToMatchingToken();
+               else
+               {
+                  MutableInteger counter = new MutableInteger(0);
+                  clone.fwdToMatchingToken(counter);
+                  accumulatedLength += counter.get();
+               }
+            }
+            continue;
+         }
+         
+         if (!rootState && clone.currentValue().equals(closer))
+            break;
+      }
+      
+      // If this is a '{', ensure the previous token is whitespace
+      if (startValue.equals("{"))
+      {
+         if (cursor.peek(-1).currentValue().equals(")"))
+            cursor.peek(-1).setValue(") ");
+      }
+      
+      // Heuristically decide if we want to insert newlines after
+      // commas, parens.
+      int commaScore = accumulatedLength + commaCount * 5;
+      if (prevSignificantValue.equals("function"))
+         commaScore += 100;
+      
+      int equalsScore = accumulatedLength + equalsCount * 20;
+      
+      // TODO: Further refine this (use actual tab length? infer
+      // what collapsed line length would be?)
+      /**
+      Debug.logToConsole("Accumulated length: " + accumulatedLength);
+      Debug.logToConsole("Root state: " + rootState);
+      Debug.logToConsole("Nest level: " + nestLevel);
+      Debug.logToConsole("Comma count: " + commaCount);
+      Debug.logToConsole("Equals count: " + equalsCount);
+      Debug.logToConsole("Cursor value: " + cursor.currentValue());
+      Debug.logToConsole("Previous value: " + cursor.previousSignificantToken().getValue());
+      Debug.logToConsole("Comma Score: " + commaScore);
+      Debug.logToConsole("Equals score: " + equalsScore);
+      **/
+      
+      if (!rootState && startValue.equals("("))
+      {
+         if (commaScore + equalsScore + nestLevel * 50 >= 180)
+         {
+            newlineAfterBrace = true;
+            nestLevel = 0;
+         }
+         
+         if (commaScore + equalsScore >= 160)
+            newlineAfterComma = true;
+      }
+      
+      // If the previous token is a control-flow keyword, override the
+      // 'newlineAfterParen' behaviour.
+      if (cursor.moveToPreviousSignificantToken())
+      {
+         if (cursor.currentValue().matches("^(?:function|if|else|while|for)$"))
+            newlineAfterBrace = false;
+         
+         // Handle 'tryCatch'
+         if (cursor.currentValue().equals("tryCatch") &&
+             accumulatedLength >= 20)
+         {
+            newlineAfterBrace = true;
+            newlineAfterComma = true;
+         }
+         
+         cursor.moveToNextSignificantToken();
+      }
+      
+      if (overrideNewlineInsertionAsFalse)
+      {
+         newlineAfterComma = false;
+         newlineAfterBrace = false;
+      }
+      
+      TokenCursor peekFwd = cursor.peek(1);
+      
+      // Always insert newlines following '{'
+      if (startValue.equals("{"))
+      {
+         if (cursor.peek(1).currentValue().indexOf('\n') == -1)
+            cursor.setValue("{\n");
+      }
+      
+      // Otherwise, use the heuristics
+      else if (newlineAfterBrace)
+      {
+         if (!rootState &&
+             !peekFwd.isLeftBrace() &&
+             !peekFwd.isRightBrace() &&
+             peekFwd.getValue().indexOf('\n') == -1)
+            cursor.setValue(opener + "\n");
+      }
+      else if (!rootState)
+         peekFwd.trimWhitespaceFwd();
+      
+      // Now, walk through and replace tokens with appropriately white-spaced
+      // versions.
+      while (cursor.moveToNextToken())
+      {
+         if (cursor.isComment())
+            continue;
+         
+         // Bail when we find a closing paren
+         if (!rootState && cursor.isRightBrace())
+            break;
+         
+         // Ensure spaces around operators
+         if (cursor.isBinaryOp())
+         {
+            String value = cursor.currentValue();
+            if (value.equals("$") ||
+                value.equals("@") ||
+                value.equals(":") ||
+                value.equals("::") ||
+                value.equals(":::") ||
+                value.equals("!"))
+            {
+               cursor.peek(-1).trimWhitespaceBwd();
+               cursor.peek(1).trimWhitespaceFwd();
+            }
+            else
+            {
+               // NOTE: Don't want whitespace following unary operators.
+               if (value.equals("-") || value.equals("+"))
+               {
+                  String prevType = cursor.previousSignificantToken().getType();
+                  
+                  if (prevType.equals("text") ||
+                      prevType.indexOf("paren") != -1)
+                  {
+                     cursor.peek(1).trimWhitespaceFwd();
+                     cursor.peek(-1).trimWhitespaceBwd();
+                  }
+                  else
+                  {
+                     if (!cursor.peek(-1).isWhitespaceOrNewline())
+                        cursor.setValue(" " + cursor.currentValue());
+                     
+                     if (!cursor.peek(1).isWhitespaceOrNewline())
+                        cursor.setValue(cursor.getValue() + " ");
+                  }
+               }
+               
+               // Regular case -- ensure whitespace following binary operators.
+               else
+               {
+                  if (!cursor.peek(1).isWhitespaceOrNewline())
+                     cursor.setValue(cursor.currentValue() + " ");
+                  
+                  if (!cursor.peek(-1).isWhitespaceOrNewline())
+                     cursor.setValue(" " + cursor.currentValue());
+               }
+            }
+         }
+         
+         // Ensure spaces, or newlines, after commas
+         if (cursor.currentType().equals("text"))
+         {
+            if (newlineAfterComma &&
+                cursor.peek(1).currentValue().indexOf('\n') == -1)
+            {
+               cursor.setValue(
+                     cursor.currentValue().replaceAll(",(?!\\n)", ",\n"));
+            }
+            
+            else if (!newlineAfterComma &&
+                     !cursor.peek(1).isWhitespaceOrNewline())
+            {
+               cursor.setValue(cursor.getValue().replaceAll(",[\\s\\n]*", ", "));
+            }
+            
+            cursor.setValue(cursor.getValue().replaceAll(";(?!\\n)", "\n"));
+         }
+         
+         // Walk over matching parens -- we (recursively) call this
+         // function to handle the bits within.
+         if (cursor.currentValue().equals("{") ||
+             cursor.currentValue().equals("(") ||
+             cursor.currentValue().equals("[") ||
+             cursor.currentValue().equals("[["))
+         {
+            /*
+            Debug.logToConsole("Found opening paren");
+            Debug.logToConsole("--------------------");
+            Debug.logToConsole("-- Previous token: '" + cursor.previousSignificantToken().getValue() + "'");
+            Debug.logToConsole("-- Recursing with: '" + cursor.currentValue() + "'");
+            */
+            
+            TokenCursor recursingCursor = cursor.clone();
+            boolean success = cursor.fwdToMatchingToken();
+            
+            if (startValue.equals("("))
+               nestLevel++;
+            else
+               nestLevel = 0;
+            
+            doInsertPrettyNewlines(
+                  recursingCursor,
+                  recursingCursor.currentValue(),
+                  recursingCursor.getComplement(recursingCursor.currentValue()),
+                  nestLevel,
+                  accumulatedLength >= 80  && !rootState && !startValue.equals("{"),
+                  accumulatedLength >= 200 && !rootState && !startValue.equals("{"));
+            
+            if (!success)
+               return;
+         }
+      }
+      
+      if (rootState)
+         return;
+      
+      // If we ended on a ')', maybe insert newline before
+      if (cursor.currentValue().equals(closer))
+      {
+         TokenCursor peek = cursor.peek(-1);
+         if (newlineAfterBrace || cursor.currentValue().equals("}"))
+         {
+            if (peek.currentValue().indexOf('\n') == -1)
+               peek.setValue(peek.currentValue() + "\n");
+         }
+         
+         // Otherwise, ensure no whitespace before the token
+         else peek.trimWhitespaceBwd();
+      }
    }
    
    void insertPrettyNewlines()
@@ -2153,53 +2818,31 @@ public class TextEditingTarget implements
          
          // Tokenize the selection and walk through and replace
          Tokenizer tokenizer = editor.getSession().getMode().getTokenizer();
-         Token[] tokens = tokenizer.getLineTokens(selectionText);
+         ArrayList<Token> tokens = tokenizer.tokenize(selectionText);
          
-         StringBuilder builder = new StringBuilder();
+         TokenCursor cursor = new TokenCursor(tokens);
          
-         Token prev = Token.create();
-         Token curr = Token.create();
-         Token next = Token.create();
-         
-         String value = "";
-         
-         for (int i = 0; i < tokens.length; i++)
+         // Set the initial state -- we recurse every time we encounter
+         // an opening paren, so check for that initially.
+         String lhs = "";
+         String rhs = "";
+         if (cursor.isLeftBrace())
          {
-            if (i > 0)
-               prev = tokens[i - 1];
-               
-            curr = tokens[i];
-            
-            if (i < tokens.length - 1)
-               next = tokens[i + 1];
-            else
-               next = Token.create();
-            
-            value = curr.getValue();
-            
-            if (!isWhitespaceWithNewline(prev.getValue()) && value == ")")
-            {
-               builder.append("\n");
-            }
-            
-            // We don't tokenize ',' separately from text in all cases
-            // (note that 'text' is separate from 'string' types)
-            if (curr.getType() == "text")
-               value = value.replaceAll(",(?!\n)", ",\n");
-            
-            builder.append(value);
-            
-            if (!isWhitespaceWithNewline(next.getValue()) && (
-                  value == "(" || value == ","))
-            {
-               builder.append("\n");
-            }
+            lhs = cursor.currentValue();
+            rhs = cursor.getComplement(lhs);
          }
          
+         doInsertPrettyNewlines(cursor, lhs, rhs, 0, false, false);
+         
+         // Build the replacement from the modified token set
+         StringBuilder builder = new StringBuilder();
+         for (int i = 0; i < tokens.size(); i++)
+            builder.append(tokens.get(i).getValue());
          String replacement = builder.toString();
          
          // Trim off trailing whitespace
-         replacement = replacement.replaceAll("\\s*\n", "\n");
+         replacement = replacement.replaceAll("[ \\t]*\\n", "\n");
+         replacement = replacement.replaceAll("\\n+$", "\n");
          
          docDisplay_.replaceSelection(replacement);
          docDisplay_.reindent(docDisplay_.getSelectionRange());
