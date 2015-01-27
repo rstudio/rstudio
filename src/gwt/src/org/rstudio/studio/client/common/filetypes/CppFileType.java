@@ -69,6 +69,8 @@ public class CppFileType extends TextFileType
          result.add(commands.sourceActiveDocument());
          result.add(commands.sourceActiveDocumentWithEcho());
          result.add(commands.rcppHelp());
+         result.add(commands.goToFunctionDefinition());
+         result.add(commands.codeCompletion());
       }
             
       return result;
