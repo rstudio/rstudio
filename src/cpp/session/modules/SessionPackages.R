@@ -729,9 +729,9 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          "#",
          "# Some useful keyboard shortcuts for package authoring:",
          "#",
-         paste("#   Build and Reload: '", buildShortcut, "'", sep = ""),
-         paste("#   Check: '", checkShortcut, "'", sep = ""),
-         paste("#   Test: '", testShortcut, "'", sep = ""),
+         paste("#   Build and Reload Package: '", buildShortcut, "'", sep = ""),
+         paste("#   Check Package:            '", checkShortcut, "'", sep = ""),
+         paste("#   Test Package:             '", testShortcut, "'", sep = ""),
          "#",
          "hello <- function() {",
          "  print(\"Hello, world!\")",
@@ -761,6 +761,53 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       cat(helloWorldRd,
           file = file.path(packageDirectory, "man", "hello.Rd"),
           sep = "\n")
+      
+      if (usingRcpp)
+      {
+         ## Ensure 'src/' directory exists
+         if (!file.exists(file.path(packageDirectory, "src")))
+            dir.create(file.path(packageDirectory, "src"))
+         
+         ## Write a 'hello world' for C++
+         helloWorldCpp <- c(
+            "#include <Rcpp.h>",
+            "using namespace Rcpp;",
+            "",
+            "// This is a simple function using Rcpp that",
+            "// creates an R list containing a character vector",
+            "// c(\"foo\", \"bar\") and a numeric vector",
+            "// c(0, 1).",
+            "",
+            "// The comment '// [[Rcpp::export' immediately above the function",
+            "// signals that this function should automatically be exported to",
+            "// R when the package is built.",
+            "//",
+            "// [[Rcpp::export]]",
+            "List rcpp_hello_world() {",
+            "",
+            "    CharacterVector x = CharacterVector::create(\"foo\", \"bar\");",
+            "    NumericVector y   = NumericVector::create(0.0, 1.0);",
+            "    List z            = List::create(x, y);",
+            "",
+            "    return z;",
+            "}",
+            "",
+            "// Learn more about how to use Rcpp at:",
+            "//",
+            "//     http://www.rcpp.org/",
+            "//     http://adv-r.had.co.nz/Rcpp.html",
+            "//",
+            "// and browse examples of code using Rcpp at:",
+            "// ",
+            "//     http://gallery.rcpp.org/",
+            "//"
+         )
+         
+         cat(helloWorldCpp,
+             file = file.path(packageDirectory, "src", "rcpp_hello_world.cpp"),
+             sep = "\n")
+         
+      }
    }
    else if (length(sourceFiles))
    {
@@ -844,6 +891,17 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # into using devtools won't need the template file)
    if (file.exists(file.path(packageDirectory, "R", "hello.R")))
       .Call("rs_addFirstRunDoc", RprojPath, "R/hello.R")
+
+   ## NOTE: This must come last to ensure the other package
+   ## infrastructure bits have been generated; otherwise
+   ## compileAttributes can fail
+   if (usingRcpp &&
+       require(Rcpp, quietly = TRUE) &&
+       "compileAttributes" %in% getNamespaceExports("Rcpp"))
+   {
+      Rcpp::compileAttributes(packageDirectory)
+      .Call("rs_addFirstRunDoc", RprojPath, "src/rcpp_hello_world.cpp")
+   }
    
    .rs.success()
    
