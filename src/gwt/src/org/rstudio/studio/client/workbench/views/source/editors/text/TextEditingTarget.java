@@ -3449,6 +3449,47 @@ public class TextEditingTarget implements
    } 
    
    @Handler
+   void onFindUsages()
+   {
+      cppCompletionOperation(new CppCompletionOperation() {
+         @Override
+         public void execute(String docPath, int line, int column)
+         {
+            server_.findCppUsages(
+                  docPath, 
+                  line, 
+                  column, 
+                  new VoidServerRequestCallback());
+         }
+         
+      });
+   }
+   
+   private interface CppCompletionOperation
+   {
+      void execute(String docPath, int line, int column);
+   }
+   
+   private void cppCompletionOperation(final CppCompletionOperation operation)
+   {
+      if (cppCompletionContext_.isCompletionEnabled())
+      {
+         cppCompletionContext_.withUpdatedDoc(new CommandWithArg<String>() {
+            @Override
+            public void execute(String docPath)
+            {
+               Position pos = docDisplay_.getCursorPosition();
+               
+               operation.execute(docPath, 
+                                 pos.getRow() + 1, 
+                                 pos.getColumn() + 1);
+            }
+         });
+      }
+   }
+   
+   
+   @Handler
    public void onSetWorkingDirToActiveDoc()
    {
       // get path

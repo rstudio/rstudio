@@ -248,6 +248,31 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
    }
 }
 
+Cursor SourceIndex::definitionForFileLocation(const FileLocation &loc)
+{
+   // get the translation unit
+   std::string filename = loc.filePath.absolutePath();
+   TranslationUnit tu = getTranslationUnit(filename, true);
+   if (tu.empty())
+      return Cursor();
+
+   // get the cursor
+   Cursor cursor = tu.getCursor(filename, loc.line, loc.column);
+   if (!cursor.isValid())
+      return Cursor();
+
+   // follow reference if we need to
+   if (cursor.isReference() || cursor.isExpression())
+   {
+      cursor = cursor.getReferenced();
+      if (!cursor.isValid())
+         return Cursor();
+   }
+
+   // return the cursor that points to the definition
+   return cursor;
+}
+
 } // namespace libclang
 } // namespace core
 } // namespace rstudio

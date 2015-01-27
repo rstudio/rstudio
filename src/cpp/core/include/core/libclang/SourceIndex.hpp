@@ -23,15 +23,14 @@
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 
+#include <core/FilePath.hpp>
+
 #include "clang-c/Index.h"
 
 #include "TranslationUnit.hpp"
 
 namespace rstudio {
 namespace core {
-
-class FilePath;
-
 namespace libclang {
 
 struct CompilationDatabase
@@ -73,6 +72,8 @@ public:
    // or a header file)
    TranslationUnit getTranslationUnit(const std::string& filename,
                                       bool alwaysReparse = false);
+
+   Cursor definitionForFileLocation(const FileLocation& loc);
 
 private:
 

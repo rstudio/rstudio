@@ -59,6 +59,9 @@ public:
    unsigned getNumDiagnostics() const;
    boost::shared_ptr<Diagnostic> getDiagnostic(unsigned index) const;
 
+   // get the cursor for the translation unit
+   Cursor getCursor();
+
    // NOTE: this can return a null cursor if no cursor is found
    Cursor getCursor(const std::string& filename,
                     unsigned line,

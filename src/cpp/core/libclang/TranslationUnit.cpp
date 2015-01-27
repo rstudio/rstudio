@@ -72,6 +72,11 @@ boost::shared_ptr<Diagnostic>
                      new Diagnostic(clang().getDiagnostic(tu_, index)));
 }
 
+Cursor TranslationUnit::getCursor()
+{
+   return Cursor(clang().getTranslationUnitCursor(tu_));
+}
+
 Cursor TranslationUnit::getCursor(const std::string& filename,
                                   unsigned line,
                                   unsigned column)

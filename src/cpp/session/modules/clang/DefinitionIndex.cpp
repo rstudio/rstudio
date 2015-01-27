@@ -145,18 +145,12 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
       parentName = parent.displayName();
    }
 
-   // get the source location
-   SourceLocation loc = cursor.getSourceLocation();
-   std::string file;
-   unsigned line, column;
-   loc.getSpellingLocation(&file, &line, &column);
-
    // create the definition
    CppDefinition definition(cursor.getUSR(),
                             kind,
                             parentName,
                             name,
-                            FileLocation(FilePath(file), line, column));
+                            cursor.getFileLocation());
 
    // yield the definition (break if requested)
    DefinitionVisitor& visitor = *((DefinitionVisitor*)clientData);
@@ -305,24 +299,10 @@ FileLocation findDefinitionLocation(const FileLocation& location)
    if (!s_initialized)
       return FileLocation();
 
-   // get the translation unit
-   std::string filename = location.filePath.absolutePath();
-   TranslationUnit tu = rSourceIndex().getTranslationUnit(filename, true);
-   if (tu.empty())
+   // get the definition cursor for this file location
+   Cursor cursor = rSourceIndex().definitionForFileLocation(location);
+   if (cursor.isNull())
       return FileLocation();
-
-   // get the cursor
-   Cursor cursor = tu.getCursor(filename, location.line, location.column);
-   if (!cursor.isValid())
-      return FileLocation();
-
-   // follow reference if we need to
-   if (cursor.isReference() || cursor.isExpression())
-   {
-      cursor = cursor.getReferenced();
-      if (!cursor.isValid())
-         return FileLocation();
-   }
 
    // get the USR for the cursor and search for it
    std::string USR = cursor.getUSR();
@@ -372,6 +352,7 @@ FileLocation findDefinitionLocation(const FileLocation& location)
    // return the location
    SourceLocation loc = cursor.getSourceLocation();
    unsigned line, column;
+   std::string filename = location.filePath.absolutePath();
    loc.getSpellingLocation(&filename, &line, &column);
    return FileLocation(FilePath(filename), line, column);
 }

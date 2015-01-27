@@ -18,11 +18,33 @@
 
 #include "clang-c/Index.h"
 
+#include <core/FilePath.hpp>
+
 #include "SourceLocation.hpp"
 
 namespace rstudio {
 namespace core {
 namespace libclang {
+
+// source location
+struct FileLocation
+{
+   FileLocation()
+      : line(0), column(0)
+   {
+   }
+
+   FileLocation(const FilePath& filePath, unsigned line, unsigned column)
+      : filePath(filePath), line(line), column(column)
+   {
+   }
+
+   bool empty() const { return filePath.empty(); }
+
+   core::FilePath filePath;
+   unsigned line;
+   unsigned column;
+};
 
 class Cursor
 {
@@ -66,7 +88,11 @@ public:
 
    std::string getUSR() const;
 
+   CXCursor getCXCursor() const { return cursor_; }
+
    SourceLocation getSourceLocation() const;
+
+   FileLocation getFileLocation() const;
 
    bool isNull() const;
    bool isValid() const;
