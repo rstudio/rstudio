@@ -60,6 +60,7 @@ public:
 
    void setBaseUrl(const QUrl& baseUrl);
    void setViewerUrl(const QString& viewerUrl);
+   void prepareExternalNavigate(const QString& externalUrl);
 
    void activateWindow(QString name);
    void prepareForSatelliteWindow(const PendingSatelliteWindow& pendingWnd);
@@ -83,7 +84,9 @@ private:
 private:
    QUrl baseUrl_;
    QString viewerUrl_;
+   QString externalUrl_;
    bool navigated_;
+   bool allowAllNav_;
    PendingSatelliteWindow pendingSatelliteWindow_;
    QString pendingNamedWindow_;
    QDir defaultSaveDir_;

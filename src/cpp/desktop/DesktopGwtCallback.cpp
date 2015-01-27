@@ -1034,9 +1034,6 @@ void GwtCallback::reloadViewerZoomWindow(QString url)
       pBrowser->webView()->setUrl(url);
 }
 
-
-
-
 bool GwtCallback::isOSXMavericks()
 {
    return desktop::isOSXMavericks();
@@ -1093,7 +1090,20 @@ void GwtCallback::installRtools(QString version, QString installerPath)
 #endif
 
 
+void GwtCallback::prepareSatelliteNavigate(QString name, QString url)
+{
+   // get the satellite window  with the given name
+   BrowserWindow* browser = s_windowTracker.getWindow(name);
 
+   // if we found one and it has a loaded page/view, prepare it for
+   // external navigation to the given URL
+   if (browser &&
+       browser->webView() &&
+       browser->webView()->webPage())
+   {
+       browser->webView()->webPage()->prepareExternalNavigate(url);
+   }
+}
 
 } // namespace desktop
 } // namespace rstudio

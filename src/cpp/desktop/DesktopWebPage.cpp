@@ -198,6 +198,14 @@ bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
       return false;
    }
 
+   // if this is the 'gateway' request that we're allowing to open us to
+   // arbitrary navigations, mark it
+   if (url == externalUrl_)
+   {
+       allowAllNav_ = true;
+       externalUrl_.clear();
+   }
+
    // determine if this is a local request (handle internally only if local)
    std::string host = url.host().toStdString();
    bool isLocal = host == "localhost" || host == "127.0.0.1";
@@ -228,6 +236,11 @@ bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
       else if (navType == QWebPage::NavigationTypeLinkClicked)
       {
          desktop::openUrl(url);
+      }
+      else if (allowAllNav_)
+      {
+         navigated_ = true;
+         return true;
       }
 
       if (!navigated_)
@@ -340,6 +353,11 @@ void WebPage::setViewerUrl(const QString& viewerUrl)
    QUrl url(viewerUrl);
    viewerUrl_ = url.scheme() + QString::fromUtf8("://") +
                 url.authority() + QString::fromUtf8("/");
+}
+
+void WebPage::prepareExternalNavigate(const QString &externalUrl)
+{
+   externalUrl_ = externalUrl;
 }
 
 }

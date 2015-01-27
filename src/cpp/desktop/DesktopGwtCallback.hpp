@@ -179,6 +179,8 @@ public slots:
 
    void installRtools(QString version, QString installerPath);
 
+   void prepareSatelliteNavigate(QString name, QString url);
+
 private:
    Synctex& synctex();
 
