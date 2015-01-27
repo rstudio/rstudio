@@ -71,9 +71,14 @@ var TokenCursor = function(tokens, row, offset) {
    // on failure.
    this.moveToPreviousToken = function()
    {
-      // Bail if we're at the start of the document
-      if (this.$row === 0 && this.$offset === 0)
+      // Bail if we're at the start of the document (protect against
+      // invalid token cursors)
+      if (this.$row <= 0 && this.$offset <= 0)
+      {
+         this.$row = 0;
+         this.$offset = 0;
          return false;
+      }
 
       // If the offset is greater than zero, we know we can safely
       // decrement it
@@ -132,7 +137,7 @@ var TokenCursor = function(tokens, row, offset) {
          if (this.$codeModel &&
              this.$codeModel.$tokenizeUpToRow)
          {
-            this.$codeModel.$tokenizeUpToRow(maxRow);
+            this.$codeModel.$tokenizeUpToRow.call(this.$codeModel, maxRow);
          }
       }
 
@@ -508,7 +513,7 @@ var TokenCursor = function(tokens, row, offset) {
           this.$codeModel &&
           this.$codeModel.$tokenizeUpToRow)
       {
-         this.$codeModel.$tokenizeUpToRow(row);
+         this.$codeModel.$tokenizeUpToRow.call(this.$codeModel, row);
          rowTokens = this.$tokens[row];
       }
 

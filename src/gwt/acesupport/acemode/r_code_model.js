@@ -60,7 +60,7 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
 (function () {
 
    this.getTokenCursor = function() {
-      return new RTokenCursor(this.$tokens, this);
+      return new RTokenCursor(this.$tokens, 0, 0, this);
    };
 
    this.$complements = {
@@ -1184,7 +1184,11 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
          // brace, or assignment token. We use the first found token to provide
          // context for the indentation.
          var tokenCursor = this.getTokenCursor();
-         tokenCursor.moveToPosition(startPos);
+
+         // moveToPosition can fail if there are no tokens previous to
+         // the cursor
+         if (!tokenCursor.moveToPosition(startPos))
+            return "";
 
          // The first loop looks for an open brace for indentation.
          do
@@ -1339,7 +1343,9 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
          // or we failed otherwise. For '{' scopes, we may want to
          // short-circuit and indent based on a '<-', hence the second
          // pass through here.
-         tokenCursor.moveToPosition(startPos);
+         if (!tokenCursor.moveToPosition(startPos))
+            return "";
+         
          do
          {
             // Walk over matching parens
@@ -1515,11 +1521,13 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
    this.getBraceIndent = function(row)
    {
       var tokenCursor = this.getTokenCursor();
-      
-      tokenCursor.moveToPosition({
+      var pos = {
          row: row,
          column: this.$getLine(row).length
-      });
+      };
+
+      if (!tokenCursor.moveToPosition(pos))
+         return "";
 
       if (tokenCursor.currentValue() === ")")
       {

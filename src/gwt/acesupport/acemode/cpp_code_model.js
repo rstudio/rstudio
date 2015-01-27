@@ -612,7 +612,8 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
             var tokenCursor = this.getTokenCursor();
             if (useCursor) {
                var cursor = session.getSelection().getCursor();
-               tokenCursor.moveToPosition(cursor);
+               if (!tokenCursor.moveToPosition(cursor))
+                  return 0;
             } else {
                tokenCursor.$row = row;
 
