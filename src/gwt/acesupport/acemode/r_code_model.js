@@ -60,7 +60,7 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
 (function () {
 
    this.getTokenCursor = function() {
-      return new RTokenCursor(this.$tokens, this);
+      return new RTokenCursor(this.$tokens);
    };
 
    this.$complements = {
@@ -564,7 +564,9 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
    };
 
    this.getVariablesInScope = function(pos) {
-
+      
+      this.$tokenizeUpToRow(pos.row);
+      
       var tokenCursor = this.getTokenCursor();
       if (!tokenCursor.moveToPosition(pos))
          return [];
@@ -640,12 +642,10 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
    function $getFunctionArgs(tokenCursor)
    {
       if (pFunction(tokenCursor.currentToken()))
-         if (!tokenCursor.moveToNextToken())
-            return [];
+         tokenCursor.moveToNextToken();
 
       if (tokenCursor.currentValue() === "(")
-         if (!tokenCursor.moveToNextToken())
-            return [];
+         tokenCursor.moveToNextToken();
 
       if (tokenCursor.currentValue() === ")")
          return [];
@@ -670,8 +670,7 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
          if (lookingAtComma(tokenCursor))
          {
             while (lookingAtComma(tokenCursor))
-               if (!tokenCursor.moveToNextToken())
-                  break;
+               tokenCursor.moveToNextToken();
             
             if (pIdentifier(tokenCursor.currentToken()))
                functionArgs.push(tokenCursor.currentValue());
@@ -1514,6 +1513,7 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
 
    this.getBraceIndent = function(row)
    {
+      this.$tokenizeUpToRow(row);
       var tokenCursor = this.getTokenCursor();
       
       tokenCursor.moveToPosition({
