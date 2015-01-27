@@ -151,10 +151,10 @@ public class FileTypeRegistry
                           ICONS.iconXml(), false, false, false, false, false,
                           false, false, false, false, false, false, false, false);
    
-   public static final TextFileType H = new CppFileType("h", ".h", ICONS.iconH(), false);
-   public static final TextFileType C = new CppFileType("c", ".c", ICONS.iconC(), false);
-   public static final TextFileType HPP = new CppFileType("hpp", ".hpp", ICONS.iconHpp(), true);
-   public static final TextFileType CPP = new CppFileType("cpp", ".cpp", ICONS.iconCpp(), true);
+   public static final TextFileType H = new CppFileType("h", ".h", ICONS.iconH(), true, false);
+   public static final TextFileType C = new CppFileType("c", ".c", ICONS.iconC(), false, false);
+   public static final TextFileType HPP = new CppFileType("hpp", ".hpp", ICONS.iconHpp(), true, false);
+   public static final TextFileType CPP = new CppFileType("cpp", ".cpp", ICONS.iconCpp(), true, true);
    
    public static final TextFileType CLOJURE = 
          new TextFileType("clojure", "Clojure", EditorLanguage.LANG_CLOJURE, ".clojure", ICONS.iconClojure(),

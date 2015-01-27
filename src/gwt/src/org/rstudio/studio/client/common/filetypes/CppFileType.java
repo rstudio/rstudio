@@ -24,13 +24,15 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 
 public class CppFileType extends TextFileType
 {
-   CppFileType(String id, String ext, ImageResource icon, boolean isCpp)
+   CppFileType(String id, String ext, ImageResource icon, 
+               boolean isCpp, boolean canSource)
    {
       super(id, "C/C++", EditorLanguage.LANG_CPP, ext, icon,
             false, false, isCpp, false, false, false, 
             false, false, false, true, false, true, false);
       
       isCpp_ = isCpp;
+      canSource_ = canSource;
    }
    
    @Override
@@ -42,7 +44,7 @@ public class CppFileType extends TextFileType
    @Override
    public boolean canSource()
    {
-      return isCpp();
+      return canSource_;
    }
  
    @Override
@@ -77,4 +79,5 @@ public class CppFileType extends TextFileType
    }
     
    private final boolean isCpp_;
+   private final boolean canSource_;
 }
