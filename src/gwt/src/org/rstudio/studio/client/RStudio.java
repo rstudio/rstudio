@@ -66,7 +66,6 @@ import org.rstudio.studio.client.packrat.ui.PackratResolveConflictDialog;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectResources;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialogResources;
 import org.rstudio.studio.client.rmarkdown.RmdOutputSatellite;
-import org.rstudio.studio.client.rsconnect.ui.RSConnectAuthSatellite;
 import org.rstudio.studio.client.shiny.ShinyApplicationSatellite;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchResources;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotResources;
@@ -191,12 +190,6 @@ public class RStudio implements EntryPoint
                   else if (DataViewerSatellite.NAME.equals(view))
                   {
                      RStudioGinjector.INSTANCE.getDataViewerSatellite().go(
-                           RootLayoutPanel.get(), 
-                           dismissProgressAnimation);
-                  }
-                  else if (RSConnectAuthSatellite.NAME.equals(view))
-                  {
-                     RStudioGinjector.INSTANCE.getRSConnectAuthSatellite().go(
                            RootLayoutPanel.get(), 
                            dismissProgressAnimation);
                   }

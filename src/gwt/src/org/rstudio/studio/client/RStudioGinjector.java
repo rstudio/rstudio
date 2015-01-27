@@ -49,7 +49,6 @@ import org.rstudio.studio.client.rmarkdown.RmdOutputSatellite;
 import org.rstudio.studio.client.rmarkdown.RmdTemplateDiscovery;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputFramePane;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputFrameSatellite;
-import org.rstudio.studio.client.rsconnect.ui.RSConnectAuthSatellite;
 import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.shiny.ShinyApplicationSatellite;
 import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
@@ -118,7 +117,6 @@ public interface RStudioGinjector extends Ginjector
    RmdOutputFramePane getRmdOutputFramePane();
    RmdOutputFrameSatellite getRmdOutputFrameSatellite();
    DataViewerSatellite getDataViewerSatellite();
-   RSConnectAuthSatellite getRSConnectAuthSatellite();
    EventBus getEventBus();
    GlobalDisplay getGlobalDisplay();
    RemoteFileSystemContext getRemoteFileSystemContext();

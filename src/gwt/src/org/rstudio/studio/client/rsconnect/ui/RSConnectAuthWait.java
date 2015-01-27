@@ -23,7 +23,6 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class RSConnectAuthWait extends Composite
 {
-
    private static RSConnectAuthWaitUiBinder uiBinder = GWT
          .create(RSConnectAuthWaitUiBinder.class);
 

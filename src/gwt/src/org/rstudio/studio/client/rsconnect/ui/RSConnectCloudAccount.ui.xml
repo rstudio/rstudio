@@ -27,7 +27,7 @@
            account on ShinyApps</a> and log in.</p>
        <p>Click your name, then choose <b>Tokens</b> from your account menu.</p>
        <p>Click <b>Show</b> on the token you want to use, then <b>Show
-          Secret<b> and <b>Copy to Clipboard.</b> Paste the result here:</p>
+          Secret</b> and <b>Copy to Clipboard.</b> Paste the result here:</p>
 	  </g:HTML>
 	  <g:TextArea styleName="{style.accountInfo} {style.spaced}"
 	              ui:field="accountInfo" visibleLines="5">

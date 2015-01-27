@@ -80,10 +80,6 @@ import org.rstudio.studio.client.rmarkdown.ui.RmdOutputWindow;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.rsconnect.ui.RSAccountConnector;
-import org.rstudio.studio.client.rsconnect.ui.RSConnectAuthPanel;
-import org.rstudio.studio.client.rsconnect.ui.RSConnectAuthPresenter;
-import org.rstudio.studio.client.rsconnect.ui.RSConnectAuthView;
-import org.rstudio.studio.client.rsconnect.ui.RSConnectAuthWindow;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.remote.RemoteServer;
 import org.rstudio.studio.client.shiny.ShinyApplication;
@@ -252,7 +248,6 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ShinyApplicationView.class).to(ShinyApplicationWindow.class);
       bind(RmdOutputView.class).to(RmdOutputWindow.class);
       bind(DataTableView.class).to(DataViewerWindow.class);
-      bind(RSConnectAuthView.class).to(RSConnectAuthWindow.class);
       
       bind(Server.class).to(RemoteServer.class) ;
       bind(WorkbenchServerOperations.class).to(RemoteServer.class) ;
@@ -312,7 +307,6 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ShinyApplicationPresenter.Display.class).to(ShinyApplicationPanel.class);
       bind(RmdOutputPresenter.Display.class).to(RmdOutputPanel.class);
       bind(DataViewerPresenter.Display.class).to(DataViewerPanel.class);
-      bind(RSConnectAuthPresenter.Display.class).to(RSConnectAuthPanel.class);
       
       bind(GlobalDisplay.class)
             .to(DefaultGlobalDisplay.class)
