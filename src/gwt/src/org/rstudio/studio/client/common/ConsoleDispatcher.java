@@ -24,6 +24,7 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.inject.Inject;
@@ -37,6 +38,7 @@ public class ConsoleDispatcher
    public ConsoleDispatcher(EventBus eventBus,
                             Commands commands,
                             FileDialogs fileDialogs,
+                            UIPrefs uiPrefs,
                             WorkbenchContext workbenchContext,
                             Session session,
                             RemoteFileSystemContext fsContext)
@@ -44,6 +46,7 @@ public class ConsoleDispatcher
       eventBus_ = eventBus;
       commands_ = commands;
       fileDialogs_ = fileDialogs;
+      uiPrefs_ = uiPrefs;
       workbenchContext_ = workbenchContext;
       session_ = session;
       fsContext_ = fsContext;
@@ -162,6 +165,10 @@ public class ConsoleDispatcher
          
          if (echo)
             code.append(", echo=TRUE");
+         
+         if (uiPrefs_.sourceChdir().getValue() && !isProjectScript(path))
+            code.append(", chdir=TRUE");
+         
          code.append(")");
       }
       
@@ -170,6 +177,19 @@ public class ConsoleDispatcher
       
       if (focus)
          commands_.activateConsole().execute();
+   }
+   
+   private boolean isProjectScript(String path)
+   {
+      FileSystemItem projectDir = session_.getSessionInfo().getActiveProjectDir();
+      if (projectDir != null)
+      {
+         return path.startsWith(projectDir.getPath());
+      }
+      else
+      {
+         return false;
+      }
    }
    
    private String escapedPath(String path)
@@ -188,6 +208,7 @@ public class ConsoleDispatcher
    
    private final EventBus eventBus_;
    private final Commands commands_;
+   private final UIPrefs uiPrefs_;
    private final FileDialogs fileDialogs_;
    private final WorkbenchContext workbenchContext_;
    private final Session session_;

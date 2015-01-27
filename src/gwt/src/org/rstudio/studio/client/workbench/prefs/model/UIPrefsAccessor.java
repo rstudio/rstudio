@@ -221,6 +221,12 @@ public class UIPrefsAccessor extends Prefs
       return bool("source_with_echo", false);
    }
    
+   
+   public PrefValue<Boolean> sourceChdir()
+   {
+      return bool("source_chdir", true);
+   }
+   
    public PrefValue<Boolean> clearHidden()
    {
       return bool("clear_hidden", false);

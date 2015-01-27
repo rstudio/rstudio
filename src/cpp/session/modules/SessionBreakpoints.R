@@ -347,8 +347,13 @@
 })
 
 # Parses and executes a file for debugging
-.rs.addFunction("executeDebugSource", function(fileName, encoding, breaklines, local)
+.rs.addFunction("executeDebugSource", function(fileName, encoding, breaklines, local, chdir)
 {
+   if (chdir) {
+      oldwd <- setwd(dirname(fileName))
+      on.exit(setwd(oldwd), add = TRUE) 
+   }
+   
    envir <-
       if (isTRUE(local)) {
          # If local is TRUE, we take the first frame as it's what was artificially
@@ -473,12 +478,13 @@
 .rs.addGlobalFunction("debugSource", function(fileName,
                                               echo = FALSE,
                                               encoding = "unknown",
-                                              local = FALSE)
+                                              local = FALSE,
+                                              chdir = FALSE)
 {
    # NYI: Consider whether we need to implement source with echo for debugging.
    # This would likely involve injecting print statements into the generated
    # source-equivalent function.
-   invisible(.Call("rs_debugSourceFile", fileName, encoding, local))
+   invisible(.Call("rs_debugSourceFile", fileName, encoding, local, chdir))
 })
 
 # Parameters expected to be in environment:

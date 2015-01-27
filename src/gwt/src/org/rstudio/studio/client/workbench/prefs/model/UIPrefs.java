@@ -186,6 +186,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          sourceWithEcho().setGlobalValue(
                                  newUiPrefs.sourceWithEcho().getGlobalValue());
          
+         // source files with chdir
+         sourceChdir().setGlobalValue(
+                                 newUiPrefs.sourceChdir().getGlobalValue());
+         
          // clear hidden values in workspace
          clearHidden().setGlobalValue(
                                  newUiPrefs.clearHidden().getGlobalValue());

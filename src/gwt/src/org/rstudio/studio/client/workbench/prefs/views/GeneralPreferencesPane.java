@@ -99,10 +99,15 @@ public class GeneralPreferencesPane extends PreferencesPane
                                                     null,
                                                     fileDialogs_, 
                                                     fsContext_));  
-      spaced(dirChooser_);
+      lessSpaced(dirChooser_);
       nudgeRight(dirChooser_);
       textBoxWithChooser(dirChooser_);
-
+      
+      CheckBox sourceChdir = checkboxPref(
+            "Source files with chdir (when not in current project)", prefs_.sourceChdir());
+      add(sourceChdir);
+      sourceChdir.getElement().getStyle().setMarginBottom(15, Unit.PX);
+     
       restoreLastProject_ = new CheckBox("Restore most recently opened project at startup");
       lessSpaced(restoreLastProject_);
       add(restoreLastProject_);
