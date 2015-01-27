@@ -280,14 +280,14 @@ public:
             LintType type,
             const std::string& message)
    {
-      LintItem item(startRow,
+      LintItem lint(startRow,
                     startColumn,
                     endRow,
                     endColumn,
                     type,
                     message);
       
-      lintItems_.push_back(item);
+      lintItems_.push_back(lint);
    }
    
    void addUnexpectedToken(const AnnotatedRToken& token,
@@ -298,14 +298,14 @@ public:
       if (!expected.empty())
          message = message + ", expected " + expected;
       
-      LintItem item(token.row(),
+      LintItem lint(token.row(),
                     token.column(),
                     token.row(),
                     token.column() + content.length(),
                     LintTypeError,
                     message);
       
-      lintItems_.push_back(item);
+      lintItems_.push_back(lint);
    }
    
    void addUnexpectedToken(const AnnotatedRToken& token,
@@ -318,25 +318,25 @@ public:
    {
       std::string content = token.contentAsUtf8();
       
-      LintItem item(token.row(),
+      LintItem lint(token.row(),
                     token.column(),
                     token.row(),
                     token.column() + content.length(),
                     LintTypeError,
                     "unmatched bracket '" + content + "'");
       
-      lintItems_.push_back(item);
+      lintItems_.push_back(lint);
    }
    
    void addUnexpectedEndOfDocument(const AnnotatedRToken& token)
    {
-      LintItem item(token.row(),
+      LintItem lint(token.row(),
                     token.column() + token.contentAsUtf8().length(),
                     token.row(),
                     token.column() + token.contentAsUtf8().length(),
                     LintTypeError,
                     "unexpected end of document");
-      lintItems_.push_back(item);
+      lintItems_.push_back(lint);
    }
    
    void addUnreferencedSymbol(const ParseItem& item)
@@ -349,6 +349,29 @@ public:
                     "no reference for symbol '" + item.name + "'");
       lintItems_.push_back(lint);
    }
+   
+   void addShouldUseWhitespace(const AnnotatedRToken& token)
+   {
+      LintItem lint(token.row(),
+                    token.column(),
+                    token.row(),
+                    token.column(),
+                    LintTypeStyle,
+                    "expected whitespace");
+      lintItems_.push_back(lint);
+   }
+   
+   void addShouldRemoveWhitespace(const AnnotatedRToken& token)
+   {
+      LintItem lint(token.row(),
+                    token.column(),
+                    token.row(),
+                    token.column(),
+                    LintTypeStyle,
+                    "unnecessary whitespace");
+      lintItems_.push_back(lint);
+   }
+   
    
    const std::vector<LintItem>& get() const
    {
@@ -818,6 +841,9 @@ void handleIdToken(TokenCursor& cursor,
    // we add to the set of namespace entries used.
    if (isNamespace(cursor.nextSignificantToken()))
    {
+      if (isWhitespace(cursor.nextToken()))
+         lintItems.addShouldRemoveWhitespace(cursor.nextToken());
+      
       // Validate that the entries before and after the '::' are either
       // strings, symbols or identifiers
       const AnnotatedRToken& pkgToken = cursor;
@@ -842,7 +868,7 @@ void handleIdToken(TokenCursor& cursor,
          pNode->addExportedPackageSymbol(
                   pkgToken.contentAsUtf8(),
                   exportedToken.contentAsUtf8());
-      else
+      else if (nsToken.contentEquals(L":::"))
          pNode->addInternalPackageSymbol(
                   pkgToken.contentAsUtf8(),
                   exportedToken.contentAsUtf8());
@@ -866,6 +892,10 @@ void handleIdToken(TokenCursor& cursor,
    
    if (isLocalLeftAssign(nextToken))
    {
+      // style: spaces around assignment tokens
+      if (!isWhitespace(cursor.nextToken()))
+         lintItems.addShouldUseWhitespace(cursor.nextToken());
+      
       DEBUG("Adding defined variable '" << cursor.currentToken().contentAsUtf8() << "'");
       pNode->addDefinedVariable(cursor);
    }
@@ -873,14 +903,19 @@ void handleIdToken(TokenCursor& cursor,
    // Similarily for previous assign
    if (isLocalRightAssign(prevToken))
    {
+      // style: spaces around assignment tokens
+      if (!isWhitespace(cursor.previousToken()))
+         lintItems.addShouldUseWhitespace(cursor.previousToken());
+      
       DEBUG("Adding defined variable '" << cursor.currentToken().contentAsUtf8() << "'");
       pNode->addDefinedVariable(cursor);
    }
 
    // TODO: Handle 'global' assign. This implies searching
    // parent scopes to see if the variable is defined locally
-   // or defined in a parent scope.
-
+   // or defined in a parent scope. We likely want to warn if
+   // a 'global' assign sees no variables in the parent scope.
+   
    // Add a reference to this variable
    DEBUG("Adding reference to variable '" << cursor.currentToken().contentAsUtf8() << "'");
    pNode->addReferencedVariable(cursor);
@@ -913,6 +948,11 @@ void handleFunctionToken(TokenCursor& cursor,
    // there should be a '(' following the function keyword
    MOVE_TO_NEXT_TOKEN(cursor, lintItems);
    
+   // style: no spaces between `function` and `(`
+   if (isWhitespace(cursor))
+      lintItems.addShouldRemoveWhitespace(cursor);
+   FWD_OVER_WHITESPACE(cursor, lintItems);
+   
    if (!cursor.contentEquals(L"("))
    {
       lintItems.addUnexpectedToken(
@@ -926,12 +966,20 @@ void handleFunctionToken(TokenCursor& cursor,
    
    // Check to see if we have no arguments for this function.
    MOVE_TO_NEXT_TOKEN(cursor, lintItems);
-   
    if (cursor.contentEquals(L")"))
    {
       DEBUG("Argument list for function is empty; skipping");
       goto ENCOUNTERED_END_OF_ARGUMENT_LIST;
    }
+   
+   // Warn on whitespace for e.g.
+   //
+   //     foo <- function(  a,
+   //                     ^^
+   //
+   if (isWhitespace(cursor))
+      lintItems.addShouldRemoveWhitespace(cursor);
+   FWD_OVER_WHITESPACE(cursor, lintItems);
    
    // Start running through the function arguments. This loop should
    // begin at the start of a new function block; ie, on an identifier.
@@ -959,11 +1007,23 @@ void handleFunctionToken(TokenCursor& cursor,
       // expect either a ',' or '=' (for default arg)
       if (isComma(cursor))
       {
+         // style: should follow ',' with whitespace
+         if (!isWhitespace(cursor.nextToken()))
+            lintItems.addShouldUseWhitespace(cursor.nextToken());
+         
          DEBUG("Found comma; parsing next argument");
          continue;
       }
       else if (cursor.contentEquals(L"="))
       {
+         // warn if no whitespace before '='
+         if (!isWhitespace(cursor.previousToken()))
+            lintItems.addShouldUseWhitespace(cursor.previousToken());
+         
+         // warn if no whitespace after '='
+         if (!isWhitespace(cursor.nextToken()))
+            lintItems.addShouldUseWhitespace(cursor.nextToken());
+         
          DEBUG("Found '='; looking for next argument name");
          
          // TODO: Parse expression following '='. 
@@ -1033,6 +1093,15 @@ void handleFunctionToken(TokenCursor& cursor,
    // foo <- function() bar()
    DEBUG("Cursor at end of argument list: " << cursor.currentToken().contentAsUtf8());
    MOVE_TO_NEXT_TOKEN(cursor, lintItems);
+   
+   // style: prefer space between e.g.
+   //
+   //    foo <- function() { ... }
+   //                     ^
+   //
+   if (!isWhitespace(cursor))
+      lintItems.addShouldUseWhitespace(cursor);
+   
    FWD_OVER_WHITESPACE(cursor, lintItems);
    
    if (cursor.contentEquals(L"{"))
