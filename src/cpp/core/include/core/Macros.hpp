@@ -37,7 +37,7 @@
 
 # define RSTUDIO_DEBUG(x) do {} while (0)
 # define RSTUDIO_DEBUG_LINE(x) do {} while (0)
-# define RSTUDIO_DEBUG_BLOCK(x) if (false)
+# define RSTUDIO_DEBUG_BLOCK if (false)
 
 #else
 

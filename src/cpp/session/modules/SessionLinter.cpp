@@ -47,6 +47,11 @@ using namespace rstudio::core;
 using namespace rstudio::core::r_util;
 using namespace rstudio::core::r_util::token_utils;
 
+struct Position {
+   std::size_t row;
+   std::size_t column;
+};
+
 class AnnotatedRToken
 {
 public:
@@ -421,14 +426,13 @@ public:
                            int column,
                            const std::string& name)
    {
-      definedVariables_.insert(
-               ParseItem(row, column, name));
+      definedVariables_[name] = Position(row, column);
    }
 
    void addDefinedVariable(const AnnotatedRToken& rToken)
    {
-      definedVariables_.insert(
-               ParseItem(rToken));
+      definedVariables_[rToken.contentAsUtf8()] =
+            Position(rToken.row(), rToken.column());
    }
    
    void addReferencedVariable(int row,
@@ -491,7 +495,6 @@ public:
    
    friend void findAllUnresolvedSymbols(
          const ParseNode& node,
-         const std::set<std::string> objects,
          LintItems* pLintItems)
    {
       // Get the unresolved symbols at this node
@@ -528,21 +531,21 @@ private:
       std::set<ParseItem> items(referencedVariables_.begin(),
                                 referencedVariables_.end());
       
-      // Remove any parse items which are found on the
-      // search path
+      // Now, check the list against variables defined
+      // in the parse tree
+      doGetUnresolvedSymbols(*this, &items);
+      
+      // Prune out anything that was on the search path
       BOOST_FOREACH(const std::string& object, objects)
       {
-         std::set<ParseItem>::const_iterator it =
+         std::set<ParseItem>::iterator it =
                std::find_if(items.begin(),
                             items.end(),
                             HasSymbolNamed(object));
          if (it != items.end())
             items.erase(it);
       }
-
-      // Now, check the list against variables defined
-      // in the parse tree
-      doGetUnresolvedSymbols(*this, &items);
+      
       return items;
    }
    
@@ -592,8 +595,14 @@ private:
    
    // member variables
    std::string name_; // name of scope (usually function name)
-   std::set<ParseItem> definedVariables_; // variables defined in this scope
-   std::set<ParseItem> referencedVariables_; // variables referenced in this scope
+   
+   // variables defined in this scope, e.g. with 'x <- ...'.
+   // map variable names to locations (row, column)
+   std::map<std::string, Position> definedVariables_;
+   
+   // variables referenced in this scope
+   // map variable names to locations(row, column)
+   std::map<std::string, Position> referencedVariables_; // var
    
    typedef std::map<
       std::string,
@@ -1153,6 +1162,8 @@ LintResults parseAndLintRFile(const FilePath& filePath,
                               const std::set<std::string>& objects)
 {
    std::string contents = file_utils::readFile(filePath);
+   if (contents.empty() || contents.find_first_not_of(" \n\t\v") == std::string::npos)
+      return LintResults();
    
    RTokens tokens(string_utils::utf8ToWide(contents));
    AnnotatedRTokens rTokens(tokens);
@@ -1327,6 +1338,8 @@ SEXP rs_parseAndLintRFile(SEXP pathSEXP,
       DEBUG("Failed to fill search path vector");
       return R_NilValue;
    }
+   
+   DEBUG("Number of objects on search path: " << objects.size());
    
    LintResults lintResults = parseAndLintRFile(filePath, objects);
    std::vector<LintItem> lintItems = lintResults.second.get();
