@@ -384,6 +384,19 @@ public:
       lintItems_.push_back(lint);
    }
    
+   void addSymbolDefinedAhead(const ParseItem& item,
+                              const Position& position)
+   {
+      LintItem lint(position.row,
+                    position.column,
+                    position.row,
+                    position.column + item.symbol.length(),
+                    LintTypeInfo,
+                    "'" + item.symbol + "' is defined after it is used");
+      
+      lintItems_.push_back(lint);
+   }
+   
    void addShouldUseWhitespace(const AnnotatedRToken& token)
    {
       LintItem lint(token.row(),
@@ -430,6 +443,11 @@ private:
 
 class ParseNode
 {
+public:
+   
+   typedef std::vector<Position> Positions;
+   typedef std::map<std::string, Positions> SymbolPositions;
+   
 private:
    
    // private constructor: root node should be created through
@@ -462,32 +480,42 @@ public:
    {
       return pParent_ == NULL;
    }
+   
+   const SymbolPositions& getDefinedSymbols() const
+   {
+      return definedSymbols_;
+   }
+   
+   const SymbolPositions& getReferencedSymbols() const
+   {
+      return referencedSymbols_;
+   }
 
-   void addDefinedVariable(int row,
+   void addDefinedSymbol(int row,
                            int column,
                            const std::string& name)
    {
       DEBUG("--- Adding defined variable '" << name << "' (" << row << ", " << column << ")");
-      definedVariables_[name].push_back(Position(row, column));
+      definedSymbols_[name].push_back(Position(row, column));
    }
 
-   void addDefinedVariable(const AnnotatedRToken& rToken)
+   void addDefinedSymbol(const AnnotatedRToken& rToken)
    {
       DEBUG("--- Adding defined variable '" << rToken.contentAsUtf8() << "'");
-      definedVariables_[rToken.contentAsUtf8()].push_back(
+      definedSymbols_[rToken.contentAsUtf8()].push_back(
             Position(rToken.row(), rToken.column()));
    }
    
-   void addReferencedVariable(int row,
+   void addReferencedSymbol(int row,
                               int column,
                               const std::string& name)
    {
-      referencedVariables_[name].push_back(Position(row, column));
+      referencedSymbols_[name].push_back(Position(row, column));
    }
 
-   void addReferencedVariable(const AnnotatedRToken& rToken)
+   void addReferencedSymbol(const AnnotatedRToken& rToken)
    {
-      referencedVariables_[rToken.contentAsUtf8()].push_back(
+      referencedSymbols_[rToken.contentAsUtf8()].push_back(
             Position(rToken.row(), rToken.column()));
    }
    
@@ -565,10 +593,10 @@ private:
    bool symbolHasDefinitionInTree(const std::string& symbol,
                                   const Position& position) const
    {
-      if (definedVariables_.count(symbol) != 0)
+      if (definedSymbols_.count(symbol) != 0)
       {
          DEBUG("- Checking for symbol '" << symbol << "' in node");
-         const Positions& positions = const_cast<ParseNode*>(this)->definedVariables_[symbol];
+         const Positions& positions = const_cast<ParseNode*>(this)->definedSymbols_[symbol];
          for (Positions::const_iterator it = positions.begin();
               it != positions.end();
               ++it)
@@ -590,8 +618,8 @@ private:
    {
       std::set<ParseItem> unresolvedSymbols;
       
-      for (SymbolPositions::const_iterator it = referencedVariables_.begin();
-           it != referencedVariables_.end();
+      for (SymbolPositions::const_iterator it = referencedSymbols_.begin();
+           it != referencedSymbols_.end();
            ++it)
       {
          const std::string& symbol = it->first;
@@ -619,8 +647,8 @@ public:
    std::string suggestSimilarSymbolFor(const ParseItem& item) const
    {
       std::string nameLower = boost::algorithm::to_lower_copy(item.symbol);
-      for (SymbolPositions::const_iterator it = definedVariables_.begin();
-           it != definedVariables_.end();
+      for (SymbolPositions::const_iterator it = definedSymbols_.begin();
+           it != definedSymbols_.end();
            ++it)
       {
          DEBUG("-- '" << it->first << "'");
@@ -656,13 +684,11 @@ private:
    
    // variables defined in this scope, e.g. with 'x <- ...'.
    // map variable names to locations (row, column)
-   typedef std::vector<Position> Positions;
-   typedef std::map<std::string, Positions> SymbolPositions;
-   SymbolPositions definedVariables_;
+   SymbolPositions definedSymbols_;
    
    // variables referenced in this scope
    // map variable names to locations(row, column)
-   SymbolPositions referencedVariables_;
+   SymbolPositions referencedSymbols_;
    
    // for e.g. <pkg>::<foo>, we keep a cache of those symbols
    // in case we want to verify that e.g. <foo> really is an
@@ -677,12 +703,30 @@ private:
 
 namespace {
 
-std::string suggestSimilarSymbolFor(const ParseItem& item)
+void addUnreferencedSymbol(const ParseItem& item,
+                           LintItems* pLint)
 {
    const ParseNode* pNode = item.pNode;
-   if (pNode)
-      return pNode->suggestSimilarSymbolFor(item);
-   return std::string();
+   if (!pNode)
+      return;
+   
+   // Attempt to find a similarly named candidate in scope
+   std::string candidate = pNode->suggestSimilarSymbolFor(item);
+   pLint->addUnreferencedSymbol(item, candidate);
+   
+   // Check to see if there is a symbol in that node of
+   // the parse tree (but defined later)
+   ParseNode::SymbolPositions& symbols =
+         const_cast<ParseNode::SymbolPositions&>(pNode->getDefinedSymbols());
+   
+   if (symbols.count(item.symbol))
+   {
+      ParseNode::Positions positions = symbols[item.symbol];
+      BOOST_FOREACH(const Position& position, positions)
+      {
+         pLint->addSymbolDefinedAhead(item, position);
+      }
+   }
 }
 
 } // end anonymous namespace
@@ -986,7 +1030,7 @@ void handleIdToken(TokenCursor& cursor,
          lintItems.addShouldUseWhitespace(cursor.nextToken());
       
       DEBUG("Adding defined variable '" << cursor.currentToken().contentAsUtf8() << "'");
-      pNode->addDefinedVariable(cursor);
+      pNode->addDefinedSymbol(cursor);
    }
 
    // Similarily for previous assign
@@ -997,7 +1041,7 @@ void handleIdToken(TokenCursor& cursor,
          lintItems.addShouldUseWhitespace(cursor.previousToken());
       
       DEBUG("Adding defined variable '" << cursor.currentToken().contentAsUtf8() << "'");
-      pNode->addDefinedVariable(cursor);
+      pNode->addDefinedSymbol(cursor);
    }
 
    // TODO: Handle 'global' assign. This implies searching
@@ -1007,7 +1051,7 @@ void handleIdToken(TokenCursor& cursor,
    
    // Add a reference to this variable
    DEBUG("Adding reference to variable '" << cursor.currentToken().contentAsUtf8() << "'");
-   pNode->addReferencedVariable(cursor);
+   pNode->addReferencedSymbol(cursor);
    
 }
 
@@ -1087,7 +1131,7 @@ void handleFunctionToken(TokenCursor& cursor,
       else
       {
          DEBUG("Adding definition: '" << cursor.currentToken().contentAsUtf8() << "'");
-         pChild->addDefinedVariable(cursor);
+         pChild->addDefinedSymbol(cursor);
       }
       
       MOVE_TO_NEXT_TOKEN(cursor, lintItems);
@@ -1207,7 +1251,7 @@ void handleStringToken(TokenCursor& cursor,
                        LintItems& lintItems)
 {
    if (isLocalLeftAssign(cursor.nextSignificantToken()))
-      pNode->addDefinedVariable(cursor);
+      pNode->addDefinedSymbol(cursor);
 }
 
 std::map<std::wstring, std::wstring> makeComplementVector()
@@ -1408,11 +1452,7 @@ LintResults parseAndLintRFile(const FilePath& filePath,
    {
       if (objects.count(item.symbol) == 0)
       {
-         // Being helpful: is there another definition
-         // for a variable with a similar name?
-         DEBUG("- Attempting to find suggested symbol for '" << item.symbol << "'");
-         std::string candidate = suggestSimilarSymbolFor(item);
-         lintItems.addUnreferencedSymbol(item, candidate);
+         addUnreferencedSymbol(item, &lintItems);
       }
    }
    
