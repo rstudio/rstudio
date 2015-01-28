@@ -27,6 +27,7 @@
 #include "Diagnostic.hpp"
 #include "SourceIndex.hpp"
 #include "SourceLocation.hpp"
+#include "SourceRange.hpp"
 #include "TranslationUnit.hpp"
 #include "UnsavedFiles.hpp"
 #include "Utils.hpp"
@@ -489,7 +490,7 @@ public:
    void (*remap_dispose)(CXRemapping);
 
    // Higher level API functions
-   void (*findReferencesInFile)(CXCursor cursor,
+   CXResult (*findReferencesInFile)(CXCursor cursor,
                                 CXFile file,
                                 CXCursorAndRangeVisitor visitor);
    CXResult (*findIncludesInFile)(CXTranslationUnit TU,

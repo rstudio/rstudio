@@ -56,6 +56,12 @@ public:
 
    bool includesFile(const std::string& filename) const;
 
+   CXFile getFile(const std::string& filename = std::string()) const;
+
+   CXResult findReferencesInFile(Cursor cursor,
+                                 CXCursorAndRangeVisitor visitor,
+                                 const std::string& filename = std::string());
+
    unsigned getNumDiagnostics() const;
    boost::shared_ptr<Diagnostic> getDiagnostic(unsigned index) const;
 

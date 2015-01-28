@@ -94,8 +94,6 @@ public:
 
    SourceLocation getSourceLocation() const;
 
-   FileLocation getFileLocation() const;
-
    bool isNull() const;
    bool isValid() const;
 

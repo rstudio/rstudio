@@ -150,7 +150,7 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
                             kind,
                             parentName,
                             name,
-                            cursor.getFileLocation());
+                            cursor.getSourceLocation().getSpellingLocation());
 
    // yield the definition (break if requested)
    DefinitionVisitor& visitor = *((DefinitionVisitor*)clientData);

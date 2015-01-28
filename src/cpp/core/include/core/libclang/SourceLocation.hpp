@@ -25,6 +25,8 @@ namespace rstudio {
 namespace core {
 namespace libclang {
 
+class FileLocation;
+
 class SourceLocation
 {
 public:
@@ -55,6 +57,8 @@ public:
                             unsigned* pLine,
                             unsigned* pColumn,
                             unsigned* pOffset = NULL) const;
+
+   FileLocation getSpellingLocation() const;
 
    void printSpellingLocation(std::ostream& ostr);
 

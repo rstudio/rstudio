@@ -134,15 +134,6 @@ unsigned Cursor::hash() const
    return clang().hashCursor(cursor_);
 }
 
-FileLocation Cursor::getFileLocation() const
-{
-   SourceLocation loc = getSourceLocation();
-   std::string file;
-   unsigned line, column;
-   loc.getSpellingLocation(&file, &line, &column);
-   return FileLocation(FilePath(file), line, column);
-}
-
 bool Cursor::isNull() const
 {
    return (clang().equalCursors(cursor_, clang().getNullCursor()));

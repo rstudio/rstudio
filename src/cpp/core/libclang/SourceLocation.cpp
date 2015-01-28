@@ -74,6 +74,14 @@ void SourceLocation::getSpellingLocation(std::string* pFile,
    *pFile = toStdString(filename);
 }
 
+FileLocation SourceLocation::getSpellingLocation() const
+{
+   std::string file;
+   unsigned line, column;
+   getSpellingLocation(&file, &line, &column);
+   return FileLocation(FilePath(file), line, column);
+}
+
 void SourceLocation::printSpellingLocation(std::ostream& ostr)
 {
    std::string file;
