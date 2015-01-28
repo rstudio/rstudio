@@ -299,6 +299,10 @@ struct ParseItem
 class LintItems
 {
 public:
+   
+   LintItems()
+      : errorCount_(0) {}
+   
    // default ctors: copyable members
    
    void add(int startRow,
@@ -334,6 +338,7 @@ public:
                     message);
       
       lintItems_.push_back(lint);
+      ++errorCount_;
    }
    
    void addUnexpectedToken(const AnnotatedRToken& token,
@@ -354,6 +359,7 @@ public:
                     "unmatched bracket '" + content + "'");
       
       lintItems_.push_back(lint);
+      ++errorCount_;
    }
    
    void addUnexpectedEndOfDocument(const AnnotatedRToken& token)
@@ -419,6 +425,18 @@ public:
       lintItems_.push_back(lint);
    }
    
+   void addTooManyErrors(const Position& position)
+   {
+      LintItem lint(position.row,
+                    position.column,
+                    position.row,
+                    position.column,
+                    LintTypeError,
+                    "too many errors emitted; stopping now");
+      lintItems_.push_back(lint);
+      ++errorCount_;
+   }
+   
    
    const std::vector<LintItem>& get() const
    {
@@ -436,8 +454,14 @@ public:
    iterator begin() { return lintItems_.begin(); }
    iterator end() { return lintItems_.end(); }
    
+   std::size_t errorCount()
+   {
+      return errorCount_;
+   }
+   
 private:
    std::vector<LintItem> lintItems_;
+   std::size_t errorCount_;
 };
 
 
@@ -1125,6 +1149,10 @@ void handleFunctionToken(TokenCursor& cursor,
       FWD_OVER_WHITESPACE(cursor, lintItems);
       DEBUG("Current token: " << cursor.currentToken().asString());
       
+      // we might have moved on to a comma, e.g. for an 'empty' argument
+      if (isComma(cursor))
+         continue;
+      
       // start on identifier
       if (!isId(cursor))
          lintItems.addUnexpectedToken(cursor, "id");
@@ -1285,6 +1313,8 @@ typedef std::pair<
 LintResults parseAndLintRFile(const FilePath& filePath,
                               const std::set<std::string>& objects)
 {
+   std::size_t maxErrors = 5;
+   
    std::string contents = file_utils::readFile(filePath);
    if (contents.empty() || contents.find_first_not_of(" \n\t\v") == std::string::npos)
       return LintResults();
@@ -1312,6 +1342,13 @@ LintResults parseAndLintRFile(const FilePath& filePath,
    do
    {
       DEBUG("Current token: " << cursor);
+      
+      // bail if too many errors
+      if (lintItems.errorCount() > maxErrors)
+      {
+         lintItems.addTooManyErrors(cursor.currentPosition());
+         break;
+      }
       
       // Update the brace stack
       if (isLeftBrace(cursor))
