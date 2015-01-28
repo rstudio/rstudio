@@ -31,48 +31,61 @@ public abstract class GlobalDisplay extends MessageDisplay
 
       public String getName()
       {
-         return name;
+         return name_;
       }
 
       public void setName(String name)
       {
-         this.name = name;
+         this.name_ = name;
       }
 
       public boolean isFocus()
       {
-         return focus;
+         return focus_;
       }
 
       public void setFocus(boolean focus)
       {
-         this.focus = focus;
+         this.focus_ = focus;
       }
 
       public OperationWithInput<WindowEx> getCallback()
       {
-         return callback;
+         return callback_;
       }
 
       public void setCallback(OperationWithInput<WindowEx> callback)
       {
-         this.callback = callback;
+         this.callback_ = callback;
       }
       
       public void setPosition(Point pos)
       {
-         position = pos;
+         position_ = pos;
       }
       
       public Point getPosition()
       {
-         return position;
+         return position_;
+      }
+      
+      // only applicable in desktop mode--by default windows will not load
+      // non-local content
+      public void setAllowExternalNavigation(boolean allow)
+      {
+         allowExternalNavigation_ = allow;
+      }
+      
+      public boolean allowExternalNavigation()
+      {
+         return allowExternalNavigation_;
       }
 
-      private Point position = null;
-      private String name = "_blank";
-      private boolean focus = true;
-      private OperationWithInput<WindowEx> callback;
+      private Point position_ = null;
+      private String name_ = "_blank";
+      private boolean focus_ = true;
+      private OperationWithInput<WindowEx> callback_;
+      private boolean allowExternalNavigation_ = false;
    }
    
    public abstract void openWindow(String url);

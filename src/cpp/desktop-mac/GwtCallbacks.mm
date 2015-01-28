@@ -458,7 +458,8 @@ private:
       controller = [[WebViewController alloc] initWithURLRequest:
                   [NSURLRequest requestWithURL: [NSURL URLWithString: url]]
                                           name: windowName
-                                    clientName: name];
+                                    clientName: name
+                         allowExternalNavigate: false];
       
       if ([windowName isEqualToString: @"_rstudio_viewer_zoom_minimal"])
          [[controller window] setTitle: @"Viewer Zoom"];
@@ -499,8 +500,15 @@ private:
 }
 
 - (void) prepareForNamedWindow: (NSString*) name
+         allowExternalNavigate: (bool) allowExternalNavigate
 {
-   [WebViewController prepareForNamedWindow: name];
+   [WebViewController prepareForNamedWindow: name
+                      allowExternalNavigate: allowExternalNavigate];
+}
+
+- (void) closeNamedWindow: (NSString*) name
+{
+   [WebViewController closeNamedWindow: name];
 }
 
 - (void) copyImageToClipboard: (int) left top: (int) top
@@ -908,15 +916,6 @@ private:
           boost::algorithm::starts_with(version, "10.10");
 }
 
-- (void) prepareSatelliteNavigate: (NSString*) name
-                              url: (NSString*) url
-{
-   WebViewController* controller =
-      [WebViewController windowNamed: name];
-   if (controller)
-      [controller prepareExternalNavigate: url];
-}
-
 // On Mavericks we need to tell the OS that we are busy so that
 // AppNap doesn't kick in. Declare a local version of NSActivityOptions
 // so we can build this on non-Mavericks systems
@@ -1105,10 +1104,10 @@ enum RS_NSActivityOptions : uint64_t
       return @"setWindowTitle";
    else if (sel == @selector(reloadViewerZoomWindow:))
       return @"reloadViewerZoomWindow";
-   else if (sel == @selector(prepareSatelliteNavigate:url:))
-      return @"prepareSatelliteNavigate";
-   else if (sel == @selector(prepareForNamedWindow:))
+   else if (sel == @selector(prepareForNamedWindow:allowExternalNavigate:))
       return @"prepareForNamedWindow";
+   else if (sel == @selector(closeNamedWindow:))
+      return @"closeNamedWindow";
    
    return nil;
 }

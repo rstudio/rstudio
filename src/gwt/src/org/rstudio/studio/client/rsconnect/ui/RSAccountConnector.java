@@ -23,7 +23,6 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
-import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.satellite.events.WindowClosedEvent;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult.AccountType;
@@ -62,8 +61,7 @@ public class RSAccountConnector implements WindowClosedEvent.Handler
    }
 
    @Inject
-   public RSAccountConnector(SatelliteManager satelliteManager,
-         RSConnectServerOperations server,
+   public RSAccountConnector(RSConnectServerOperations server,
          GlobalDisplay display,
          Session session,
          Commands commands,
@@ -71,7 +69,6 @@ public class RSAccountConnector implements WindowClosedEvent.Handler
          OptionsLoader.Shim optionsLoader,
          EventBus events)
    {
-      satelliteManager_ = satelliteManager;
       server_ = server;
       display_ = display;
       session_ = session;
@@ -259,19 +256,13 @@ public class RSAccountConnector implements WindowClosedEvent.Handler
             // prepare a new window with the auth URL loaded
             NewWindowOptions options = new NewWindowOptions();
             options.setName(AUTH_WINDOW_NAME);
+            options.setAllowExternalNavigation(true);
             display_.openWebMinimalWindow(
                   pendingAuthToken_.getClaimUrl(), 
                   false, 
                   700, 800, options);
             
-            if (Desktop.isDesktop())
-            {
-               // on the desktop we're in control over the window and just need
-               // to be sure the content loads
-               Desktop.getFrame().prepareSatelliteNavigate(AUTH_WINDOW_NAME, 
-                     pendingAuthToken_.getClaimUrl());
-            }
-            else
+            if (!Desktop.isDesktop())
             {
                // in the browser we have no control over the window, so show
                // a dialog to help guide the user
@@ -347,7 +338,7 @@ public class RSAccountConnector implements WindowClosedEvent.Handler
                         if (Desktop.isDesktop())
                         {
                            // on the desktop, we can close the window by name
-                           satelliteManager_.closeSatelliteWindow(
+                           Desktop.getFrame().closeNamedWindow(
                                  AUTH_WINDOW_NAME);
                         }
                         
@@ -495,7 +486,6 @@ public class RSAccountConnector implements WindowClosedEvent.Handler
    private final GlobalDisplay display_;
    private final RSConnectServerOperations server_;
    private final Session session_;
-   private final SatelliteManager satelliteManager_;
    private final OptionsLoader.Shim optionsLoader_;
    
    private RSConnectPreAuthToken pendingAuthToken_;

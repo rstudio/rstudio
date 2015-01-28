@@ -60,7 +60,8 @@ public class DesktopWindowOpener extends WebWindowOpener
                                     int height,
                                     boolean showLocation)
    {
-      Desktop.getFrame().prepareForNamedWindow(options.getName());
+      Desktop.getFrame().prepareForNamedWindow(options.getName(),
+            options.allowExternalNavigation());
       super.openWebMinimalWindow(globalDisplay, url, options, width, 
                                  height, showLocation);
    }

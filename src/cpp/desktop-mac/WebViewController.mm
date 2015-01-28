@@ -9,7 +9,6 @@
 #import <WebKit/WebFrame.h>
 #import <Webkit/WebUIDelegate.h>
 
-
 #import "Options.hpp"
 #import "WebViewController.h"
 #import "GwtCallbacks.h"
@@ -23,15 +22,21 @@
 
 using namespace rstudio;
 
-struct PendingSatelliteWindow
+struct PendingWindow
 {
-   PendingSatelliteWindow()
+   PendingWindow()
       : name(), width(-1), height(-1)
    {
    }
    
-   PendingSatelliteWindow(std::string name, int width, int height)
-      : name(name), width(width), height(height)
+   PendingWindow(std::string name, int width, int height)
+      : name(name), width(width), height(height), isSatellite(true)
+   {
+   }
+   
+   PendingWindow(std::string name, bool allowExternalNavigation)
+      : name(name), allowExternalNavigate(allowExternalNavigation),
+        isSatellite(false)
    {
    }
    
@@ -40,6 +45,8 @@ struct PendingSatelliteWindow
    std::string name;
    int width;
    int height;
+   bool allowExternalNavigate;
+   bool isSatellite;
 };
 
 NSString* authorityFromUrl (NSString* url)
@@ -66,26 +73,25 @@ NSString* authorityFromUrl (NSString* url)
 @implementation WebViewController
 
 static NSMutableDictionary* namedWindows_;
-static PendingSatelliteWindow pendingWindow_;
-static NSString* pendingWindowName_;
+static PendingWindow pendingWindow_;
 
 + (void) initialize
 {
    namedWindows_ = [[NSMutableDictionary alloc] init];
-   pendingWindow_ = PendingSatelliteWindow();
-   pendingWindowName_ = nil;
+   pendingWindow_ = PendingWindow();
 }
 
 + (void) prepareForSatelliteWindow: (NSString*) name
                              width: (int) width
                             height: (int) height
 {
-   pendingWindow_ = PendingSatelliteWindow([name UTF8String], width, height);
+   pendingWindow_ = PendingWindow([name UTF8String], width, height);
 }
 
-+ (void) prepareForNamedWindow:(NSString *) name
++ (void) prepareForNamedWindow: (NSString *) name
+         allowExternalNavigate: (bool) allow
 {
-   pendingWindowName_ = [name retain];
+   pendingWindow_ = PendingWindow([name UTF8String], allow);
 }
 
 + (WebViewController*) windowNamed: (NSString*) name
@@ -100,6 +106,13 @@ static NSString* pendingWindowName_;
       [[controller window] makeKeyAndOrderFront: self];
 }
 
++ (void) closeNamedWindow: (NSString *)name
+{
+   WebViewController* controller = [self windowNamed: name];
+   if (controller)
+      [[controller window] close];
+}
+
 - (WebView*) webView
 {
    return webView_;
@@ -111,7 +124,6 @@ static NSString* pendingWindowName_;
    [webView_ release];
    [baseUrl_ release];
    [viewerUrl_ release];
-   [externalNavUrl_ release];
    [super dealloc];
 }
 
@@ -125,9 +137,14 @@ static NSString* pendingWindowName_;
 - (id)initWithURLRequest: (NSURLRequest*) request
                     name: (NSString*) name
               clientName: (NSString*) clientName
+   allowExternalNavigate: (bool) allowExternalNavigate
 {
    // record base url
    baseUrl_ = [[request URL] retain];
+   
+   // indicate whether this window is permitted to load external (non-local)
+   // URLs
+   allowExternalNav_ = allowExternalNavigate;
    
    // create window and become it's delegate
    NSRect frameRect =  NSMakeRect(20, 20, 1024, 768);
@@ -309,16 +326,6 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
    [printOperation runOperation];
 }
 
-// prepareExternalNavigate prepares this controller to accept all navigations
-// providing that the given URL is the next navigation target.
-// the goal is to enable, as securely as possible, the scenario in which we
-// want to show arbitrary web content in a satellite window.
-- (void) prepareExternalNavigate: (NSString *) url
-{
-   [externalNavUrl_ release];
-   externalNavUrl_ = [url retain];
-}
-
 // WebViewController is a self-freeing object so free it when the window closes
 - (void)windowWillClose:(NSNotification *) notification
 {
@@ -382,17 +389,6 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
       return;
    }
    
-   // check to see if we're heading to a whitelisted external URL
-   if (externalNavUrl_ != nil)
-   {
-      if ([[url absoluteString] isEqualToString: externalNavUrl_])
-      {
-         allowAllExternalNav_ = true;
-      }
-      [externalNavUrl_ release];
-      externalNavUrl_ = nil;
-   }
-   
    // ensure this is a supported scheme
    NSString* scheme = [url scheme];
    if (![self isSupportedScheme: scheme])
@@ -445,7 +441,7 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
       }
       else
       {
-         if (allowAllExternalNav_)
+         if (allowExternalNav_)
             [listener use];
          else
             [listener ignore];
@@ -521,24 +517,16 @@ decidePolicyForMIMEType: (NSDictionary *) actionInformation
 {
    NSString* name = nil;
    bool isSatellite = false;
+   bool allowExternalNavigate = false;
 
-   // check for a pending satellite/named window request
-   if (!pendingWindow_.empty() || pendingWindowName_ != nil)
+   // check to see if this window is one we're expecting
+   if (!pendingWindow_.empty())
    {
-      // capture and then clear the pending window
-      if (!pendingWindow_.empty())
-      {
-         PendingSatelliteWindow pendingWindow = pendingWindow_;
-         pendingWindow_ = PendingSatelliteWindow();
-         name = [NSString stringWithUTF8String: pendingWindow.name.c_str()];
-         isSatellite = true;
-      }
-      else if (pendingWindowName_ != nil)
-      {
-         name = [NSString stringWithString: pendingWindowName_];
-         [pendingWindowName_ release];
-         pendingWindowName_ = nil;
-      }
+      PendingWindow pendingWindow = pendingWindow_;
+      pendingWindow_ = PendingWindow();
+      name = [NSString stringWithUTF8String: pendingWindow.name.c_str()];
+      isSatellite = pendingWindow.isSatellite;
+      allowExternalNavigate = pendingWindow.allowExternalNavigate;
 
       // check for an existing window, and activate it
       WebViewController* controller = [namedWindows_ objectForKey: name];
@@ -556,16 +544,19 @@ decidePolicyForMIMEType: (NSDictionary *) actionInformation
       SatelliteController* satelliteController =
       [[SatelliteController alloc] initWithURLRequest: request
                                                  name: name
-                                           clientName: name];
+                                           clientName: name
+                                allowExternalNavigate: allowExternalNavigate];
       
       return [satelliteController webView];
    }
    else
    {
+      NSLog(@"creating window with name %@", name);
       SecondaryWindowController * controller =
          [[SecondaryWindowController alloc] initWithURLRequest: request
                                                           name: name
-                                                    clientName: name];
+                                                    clientName: name
+                                         allowExternalNavigate: allowExternalNavigate];
       return [controller webView];
    }
 }

@@ -48,7 +48,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void activateMinimalWindow(String name);
    void activateSatelliteWindow(String name);
    void prepareForSatelliteWindow(String name, int width, int height);
-   void prepareForNamedWindow(String name);
+   void prepareForNamedWindow(String name, boolean allowExternalNavigation);
+   void closeNamedWindow(String name);
    
    // interface for plot export where coordinates are specified relative to
    // the iframe where the image is located within
@@ -150,6 +151,4 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void setWindowTitle(String title);
    
    void installRtools(String version, String installerPath);
-   
-   void prepareSatelliteNavigate(String windowName, String url);
 }

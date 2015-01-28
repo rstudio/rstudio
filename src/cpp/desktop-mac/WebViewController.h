@@ -13,8 +13,7 @@
    NSString* clientName_;
    NSURL* baseUrl_;
    NSString* viewerUrl_;
-   NSString* externalNavUrl_;
-   bool allowAllExternalNav_;
+   bool allowExternalNav_;
 }
 
 + (WebViewController*) windowNamed: (NSString*) name;
@@ -25,12 +24,16 @@
                              width: (int) width
                             height: (int) height;
 
-+ (void) prepareForNamedWindow: (NSString*) name;
++ (void) prepareForNamedWindow: (NSString*) name
+         allowExternalNavigate: (bool) allowExternalNavigate;
+
++ (void) closeNamedWindow: (NSString*) name;
 
 // The designated initializer
 - (id)initWithURLRequest: (NSURLRequest*) request
                     name: (NSString*) name
-              clientName: (NSString*) clientName;
+              clientName: (NSString*) clientName
+   allowExternalNavigate: (bool) allowExternalNavigate;
 
 // load a new url
 - (void) loadURL: (NSURL*) url;
