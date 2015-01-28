@@ -25,6 +25,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
+#include <boost/range/adaptor/map.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
@@ -47,7 +48,42 @@ using namespace rstudio::core;
 using namespace rstudio::core::r_util;
 using namespace rstudio::core::r_util::token_utils;
 
-struct Position {
+struct Position
+{
+   
+   Position(std::size_t row = 0, std::size_t column = 0)
+      : row(row), column(column) {}
+   
+   friend bool operator <(const Position& lhs,
+                          const Position& rhs)
+   {
+      if (lhs.row == rhs.row)
+         return lhs.column < rhs.column;
+      else
+         return lhs.row < rhs.row;
+   }
+   
+   friend bool operator <=(const Position& lhs,
+                           const Position& rhs)
+   {
+      if (lhs.row == rhs.row)
+         return lhs.column <= rhs.column;
+      return lhs.row < rhs.row;
+   }
+   
+   friend bool operator ==(const Position& lhs,
+                           const Position& rhs)
+   {
+      return lhs.row == rhs.row && lhs.column == rhs.column;
+   }
+   
+   std::string toString() const
+   {
+      std::stringstream ss;
+      ss << "(" << row << ", " << column << ")";
+      return ss.str();
+   }
+   
    std::size_t row;
    std::size_t column;
 };
@@ -237,44 +273,31 @@ struct LintItem
    std::string message;
 };
 
+// Forward decl
+class ParseNode;
+
 struct ParseItem
 {
-   ParseItem(int row, int column, const std::string& name)
-      : row(row), column(column), name(name) {}
-   
-   explicit ParseItem(const AnnotatedRToken& rToken)
-      : row(rToken.row()), column(rToken.column())
-   {
-      name = rToken.contentAsUtf8();
-   }
+   explicit ParseItem(const std::string& symbol,
+                      const Position& position,
+                      const ParseNode* pNode)
+      : symbol(symbol),
+        position(position),
+        pNode(pNode) {}
    
    bool operator <(const ParseItem& other) const
    {
-      if (row < other.row)
-         return true;
-      
-      if (row > other.row)
-         return false;
-      
-      if (column < other.column)
-         return true;
-      
-      if (column > other.column)
-         return false;
-      
-      // shouldn't be reached, but whatever
-      return name < other.name;
+      return position < other.position;
    }
    
-   int row;
-   int column;
-   std::string name;
+   std::string symbol;
+   Position position;
+   const ParseNode* pNode;
+   
 };
 
 class LintItems
 {
-private:
-   
 public:
    // default ctors: copyable members
    
@@ -344,14 +367,20 @@ public:
       lintItems_.push_back(lint);
    }
    
-   void addUnreferencedSymbol(const ParseItem& item)
+   void addUnreferencedSymbol(const ParseItem& item,
+                              const std::string& candidate)
    {
-      LintItem lint(item.row,
-                    item.column,
-                    item.row,
-                    item.column + item.name.size(),
+      std::string message("no symbol named '" + item.symbol + "' in scope");
+      if (!candidate.empty())
+         message += "; did you mean '" + candidate + "'?";
+      
+      LintItem lint(item.position.row,
+                    item.position.column,
+                    item.position.row,
+                    item.position.column + item.symbol.size(),
                     LintTypeWarning,
-                    "no reference for symbol '" + item.name + "'");
+                    message);
+      
       lintItems_.push_back(lint);
    }
    
@@ -383,6 +412,17 @@ public:
       return lintItems_;
    }
    
+   void push_back(const LintItem& item)
+   {
+      lintItems_.push_back(item);
+   }
+   
+   typedef std::vector<LintItem>::iterator iterator;
+   typedef std::vector<LintItem>::const_iterator const_iterator;
+   
+   iterator begin() { return lintItems_.begin(); }
+   iterator end() { return lintItems_.end(); }
+   
 private:
    std::vector<LintItem> lintItems_;
 };
@@ -394,27 +434,28 @@ private:
    
    // private constructor: root node should be created through
    // 'createRootNode()', with future nodes appended to that node;
-   // child nodes with 'createChildNode()'
-   explicit ParseNode(ParseNode* pParent,
-                      const std::string& name)
-      : pParent_(pParent), name_(name) {}
+   // child nodes with 'createChildNode()'.
+   //
+   // 'start' refers to the location of the opening brace opening
+   // the node (or, [0, 0] for the root node)
+   ParseNode(ParseNode* pParent,
+             const std::string& name,
+             Position position)
+      : pParent_(pParent), name_(name), position_(position) {}
    
 public:
    
-   ~ParseNode()
-   {
-   }
-   
    static boost::shared_ptr<ParseNode> createRootNode()
    {
-      return boost::shared_ptr<ParseNode>(new ParseNode(NULL, "<root>"));
+      return boost::shared_ptr<ParseNode>(
+               new ParseNode(NULL, "<root>", Position(0, 0)));
    }
    
    static boost::shared_ptr<ParseNode> createNode(
          const std::string& name)
    {
       return boost::shared_ptr<ParseNode>(
-               new ParseNode(NULL, name));
+               new ParseNode(NULL, name, Position(0, 0)));
    }
    
    bool isRootNode() const
@@ -426,27 +467,28 @@ public:
                            int column,
                            const std::string& name)
    {
-      definedVariables_[name] = Position(row, column);
+      DEBUG("--- Adding defined variable '" << name << "' (" << row << ", " << column << ")");
+      definedVariables_[name].push_back(Position(row, column));
    }
 
    void addDefinedVariable(const AnnotatedRToken& rToken)
    {
-      definedVariables_[rToken.contentAsUtf8()] =
-            Position(rToken.row(), rToken.column());
+      DEBUG("--- Adding defined variable '" << rToken.contentAsUtf8() << "'");
+      definedVariables_[rToken.contentAsUtf8()].push_back(
+            Position(rToken.row(), rToken.column()));
    }
    
    void addReferencedVariable(int row,
-                           int column,
-                           const std::string& name)
+                              int column,
+                              const std::string& name)
    {
-      referencedVariables_.insert(
-               ParseItem(row, column, name));
+      referencedVariables_[name].push_back(Position(row, column));
    }
 
    void addReferencedVariable(const AnnotatedRToken& rToken)
    {
-      referencedVariables_.insert(
-               ParseItem(rToken));
+      referencedVariables_[rToken.contentAsUtf8()].push_back(
+            Position(rToken.row(), rToken.column()));
    }
    
    void addInternalPackageSymbol(const std::string& package,
@@ -482,136 +524,168 @@ public:
       return pNode;
    }
    
-   std::vector< boost::shared_ptr<ParseNode> > getChildren() const
+   const std::vector< boost::shared_ptr<ParseNode> >& getChildren() const
    {
       return children_;
    }
    
-   void addChild(boost::shared_ptr<ParseNode> pChild)
+   void addChild(boost::shared_ptr<ParseNode> pChild,
+                 const Position& position)
    {
       pChild->pParent_ = this;
+      pChild->position_ = position;
       children_.push_back(pChild);
    }
    
-   friend void findAllUnresolvedSymbols(
-         const ParseNode& node,
-         LintItems* pLintItems)
+   void findAllUnresolvedSymbols(std::vector<ParseItem>* pItems) const
    {
       // Get the unresolved symbols at this node
-      std::set<ParseItem> unresolved = node.getUnresolvedSymbols(objects);
-      
-      // Add them to the set of lint items
-      for (std::set<ParseItem>::iterator it = unresolved.begin();
-           it != unresolved.end();
-           ++it)
-      {
-         pLintItems->addUnreferencedSymbol(*it);
-      }
+      std::set<ParseItem> unresolved = getUnresolvedSymbols();
+      pItems->insert(pItems->end(), unresolved.begin(), unresolved.end());
       
       // Apply this over all children on the node
-      typedef std::vector< boost::shared_ptr<ParseNode> > Children;
-      Children children = node.getChildren();
+      Children children = getChildren();
       
       for (Children::iterator it = children.begin();
            it != children.end();
            ++it)
       {
-         findAllUnresolvedSymbols(**it, objects, pLintItems);
+         (**it).findAllUnresolvedSymbols(pItems);
       }
-      
    }
    
 private:
    
-   std::set<ParseItem> getUnresolvedSymbols(
-         const std::set<std::string>& objects) const
+   bool symbolExistsInSearchPath(const std::string& symbol,
+                                 const std::set<std::string>& searchPathObjects) const
    {
-      // Start by assuming everything is unresolved, and then resolve
-      // as we find references.
-      std::set<ParseItem> items(referencedVariables_.begin(),
-                                referencedVariables_.end());
-      
-      // Now, check the list against variables defined
-      // in the parse tree
-      doGetUnresolvedSymbols(*this, &items);
-      
-      // Prune out anything that was on the search path
-      BOOST_FOREACH(const std::string& object, objects)
-      {
-         std::set<ParseItem>::iterator it =
-               std::find_if(items.begin(),
-                            items.end(),
-                            HasSymbolNamed(object));
-         if (it != items.end())
-            items.erase(it);
-      }
-      
-      return items;
+      return searchPathObjects.count(symbol) != 0;
    }
    
-   struct HasSymbolNamed
+   bool symbolHasDefinitionInTree(const std::string& symbol,
+                                  const Position& position) const
    {
-      
-      explicit HasSymbolNamed(const std::string& name)
-         : name_(name) {}
-      
-      bool operator()(const ParseItem& item) const
+      if (definedVariables_.count(symbol) != 0)
       {
-         return item.name == name_;
+         DEBUG("- Checking for symbol '" << symbol << "' in node");
+         const Positions& positions = const_cast<ParseNode*>(this)->definedVariables_[symbol];
+         for (Positions::const_iterator it = positions.begin();
+              it != positions.end();
+              ++it)
+         {
+            // NOTE: '<=' because 'defined' variables are both referenced
+            // and defined (at least for now?)
+            if (*it <= position)
+               return true;
+         }
       }
       
-      std::string name_;
-   };
-   
-   void doGetUnresolvedSymbols(const ParseNode& node,
-                               std::set<ParseItem>* pItems) const
-   {
-      typedef std::set<ParseItem>::iterator iterator;
+      if (pParent_)
+         return pParent_->symbolHasDefinitionInTree(symbol, position);
       
-      // Iterate over all defined variables
-      for (iterator it = node.definedVariables_.begin();
-           it != node.definedVariables_.end();
+      return false;
+   }
+   
+   std::set<ParseItem> getUnresolvedSymbols() const
+   {
+      std::set<ParseItem> unresolvedSymbols;
+      
+      for (SymbolPositions::const_iterator it = referencedVariables_.begin();
+           it != referencedVariables_.end();
            ++it)
       {
-         iterator found = std::find_if(
-                  pItems->begin(),
-                  pItems->end(),
-                  HasSymbolNamed(it->name));
-
-         if (found != pItems->end())
-            pItems->erase(found);
+         const std::string& symbol = it->first;
+         BOOST_FOREACH(const Position& position, it->second)
+         {
+            DEBUG("-- Checking for symbol '" << symbol << "' " << position.toString());
+            if (!symbolHasDefinitionInTree(symbol, position))
+            {
+               DEBUG("--- No definition for symbol '" << symbol << "'");
+               unresolvedSymbols.insert(
+                        ParseItem(symbol, position, this));
+            }
+            else
+            {
+               DEBUG("--- Found definition for symbol '" << symbol << "'");
+            }
+         }
       }
-      
-      // If we have a parent closure, check there as well
-      if (node.pParent_ != NULL)
-         doGetUnresolvedSymbols(*(node.pParent_), pItems);
+
+      return unresolvedSymbols;
+   }
+   
+public:
+   
+   std::string suggestSimilarSymbolFor(const ParseItem& item) const
+   {
+      std::string nameLower = boost::algorithm::to_lower_copy(item.symbol);
+      for (SymbolPositions::const_iterator it = definedVariables_.begin();
+           it != definedVariables_.end();
+           ++it)
+      {
+         DEBUG("-- '" << it->first << "'");
+         if (nameLower == boost::algorithm::to_lower_copy(it->first))
+         {
+            BOOST_FOREACH(const Position& position, it->second)
+            {
+               if (position < item.position)
+               {
+                  return it->first;
+               }
+            }
+         }
+      }
+
+      if (getParent())
+         return getParent()->suggestSimilarSymbolFor(item);
+
+      return std::string();
    }
    
 private:
    
    // tree reference -- children and parent
    ParseNode* pParent_;
-   std::vector< boost::shared_ptr<ParseNode> > children_;
+   
+   typedef std::vector< boost::shared_ptr<ParseNode> > Children;
+   Children children_;
    
    // member variables
    std::string name_; // name of scope (usually function name)
+   Position position_; // location of opening '{' for scope
    
    // variables defined in this scope, e.g. with 'x <- ...'.
    // map variable names to locations (row, column)
-   std::map<std::string, Position> definedVariables_;
+   typedef std::vector<Position> Positions;
+   typedef std::map<std::string, Positions> SymbolPositions;
+   SymbolPositions definedVariables_;
    
    // variables referenced in this scope
    // map variable names to locations(row, column)
-   std::map<std::string, Position> referencedVariables_; // var
+   SymbolPositions referencedVariables_;
    
-   typedef std::map<
-      std::string,
-      std::set<std::string>
-   > PackageSymbols;
+   // for e.g. <pkg>::<foo>, we keep a cache of those symbols
+   // in case we want to verify that e.g. <foo> really is an
+   // exported function from <pkg>. TODO: keep position
+   typedef std::string PackageName;
+   typedef std::set<std::string> Symbols;
+   typedef std::map<PackageName, Symbols> PackageSymbols;
    
    PackageSymbols internalSymbols_; // <pkg>::<foo>
    PackageSymbols exportedSymbols_; // <pgk>:::<bar>
 };
+
+namespace {
+
+std::string suggestSimilarSymbolFor(const ParseItem& item)
+{
+   const ParseNode* pNode = item.pNode;
+   if (pNode)
+      return pNode->suggestSimilarSymbolFor(item);
+   return std::string();
+}
+
+} // end anonymous namespace
 
 class TokenCursor
 {
@@ -657,6 +731,12 @@ public:
    const AnnotatedRToken& currentToken() const
    {
       return rTokens_.at(offset_);
+   }
+   
+   const Position currentPosition() const
+   {
+      const AnnotatedRToken& token = currentToken();
+      return Position(token.row(), token.column());
    }
    
    const AnnotatedRToken& nextToken() const
@@ -1116,7 +1196,7 @@ void handleFunctionToken(TokenCursor& cursor,
    if (cursor.contentEquals(L"{"))
    {
       DEBUG("Found '{' opening function body");
-      pNode->addChild(pChild);
+      pNode->addChild(pChild, cursor.currentPosition());
       *ppNode = pChild.get();
    }
    
@@ -1319,7 +1399,22 @@ LintResults parseAndLintRFile(const FilePath& filePath,
    // built a lint tree, we now walk through each identifier and
    // ensure that they exist either on the search path, or a parent
    // closure.
-   findAllUnresolvedSymbols(*root, objects, &lintItems);
+   std::vector<ParseItem> unresolvedItems;
+   root->findAllUnresolvedSymbols(&unresolvedItems);
+   
+   // Finally, prune the set of lintItems -- we exclude any symbols
+   // that were on the search path.
+   BOOST_FOREACH(const ParseItem& item, unresolvedItems)
+   {
+      if (objects.count(item.symbol) == 0)
+      {
+         // Being helpful: is there another definition
+         // for a variable with a similar name?
+         DEBUG("- Attempting to find suggested symbol for '" << item.symbol << "'");
+         std::string candidate = suggestSimilarSymbolFor(item);
+         lintItems.addUnreferencedSymbol(item, candidate);
+      }
+   }
    
    return std::make_pair(root, lintItems);
 }
@@ -1330,7 +1425,6 @@ SEXP rs_parseAndLintRFile(SEXP pathSEXP,
    std::string path = r::sexp::asString(pathSEXP);
    FilePath filePath(module_context::resolveAliasedPath(path));
    
-   // NOTE: Want to optimize for fast lookup.
    std::set<std::string> objects;
    bool success = r::sexp::fillSetString(searchPathObjectsSEXP, &objects);
    if (!success)

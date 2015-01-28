@@ -334,7 +334,10 @@ public:
          SET_STRING_ELT(namesSEXP, i, Rf_mkChar(names_[i].c_str()));
       }
 
-      Rf_setAttrib(resultSEXP, R_NamesSymbol, namesSEXP);
+      // NOTE: empty lists are unnamed
+      if (n > 0)
+         Rf_setAttrib(resultSEXP, R_NamesSymbol, namesSEXP);
+      
       return resultSEXP;
    }
 

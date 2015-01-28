@@ -13,36 +13,14 @@
 #
 #
 
-.rs.addFunction("makeLintObject", function(rowStart,
-                                           rowEnd = rowStart,
-                                           columnStart,
-                                           columnEnd = columnStart,
-                                           text,
-                                           type)
-{
-   validTypes <- c("info", "warning", "error")
-   if (length(type) != 1 ||
-       !(type %in% validTypes))
-      stop("Invalid lint type '", type, "'; must be one of ",
-           paste(shQuote(validTypes), collapse = ", "))
-   
-   text <- paste(text, collapse = "\n")
-   
-   list(
-      row.start = rowStart,
-      row.end = rowEnd,
-      column.start = columnStart,
-      column.end = columnEnd,
-      text = text,
-      type = type
-   )
-   
-})
-
 .rs.addFunction("setLintEngine", function(engine)
 {
    if (identical(engine, "internal"))
       .rs.setVar("r.lint.engine", .rs.internalLinter)
+   else if (!is.function(engine))
+      stop("'engine' must be a function taking a single argument (file path)")
+   else
+      .rs.setVar("r.lint.engine", engine)
 })
 
 .rs.addFunction("getLintEngine", function()
@@ -70,7 +48,7 @@
    lint <- .Call("rs_parseAndLintRFile", filePath, objects)
    markers <- .rs.createMarkersFromLint(lint, filePath)
    .rs.api.sourceMarkers(
-      name = "internal.linter",
+      name = "Linter",
       markers = markers,
       basePath = .rs.getProjectDirectory()
    )
