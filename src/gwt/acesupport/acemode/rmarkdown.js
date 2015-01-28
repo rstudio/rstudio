@@ -21,7 +21,7 @@
 define("mode/rmarkdown", function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
-var MarkdownMode = require("ace/mode/markdown").Mode;
+var MarkdownMode = require("mode/markdown").Mode;
 var Tokenizer = require("ace/tokenizer").Tokenizer;
 var RMarkdownHighlightRules = require("mode/rmarkdown_highlight_rules").RMarkdownHighlightRules;
 var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
@@ -82,7 +82,7 @@ oop.inherits(Mode, MarkdownMode);
    this.getLanguageMode = function(position)
    {
       var state = Utils.getPrimaryState(this.$session, position.row);
-      
+
       if (state.match(/^r-cpp-(?!r-)/))
          return 'C_CPP';
       else
