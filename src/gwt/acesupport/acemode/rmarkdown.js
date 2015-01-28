@@ -21,7 +21,7 @@
 define("mode/rmarkdown", function(require, exports, module) {
 
 var oop = require("ace/lib/oop");
-var MarkdownMode = require("ace/mode/markdown").Mode;
+var MarkdownMode = require("mode/markdown").Mode;
 var Tokenizer = require("ace/tokenizer").Tokenizer;
 var RMarkdownHighlightRules = require("mode/rmarkdown_highlight_rules").RMarkdownHighlightRules;
 var MatchingBraceOutdent = require("ace/mode/matching_brace_outdent").MatchingBraceOutdent;
@@ -29,7 +29,7 @@ var RMatchingBraceOutdent = require("mode/r_matching_brace_outdent").RMatchingBr
 var SweaveBackgroundHighlighter = require("mode/sweave_background_highlighter").SweaveBackgroundHighlighter;
 var RCodeModel = require("mode/r_code_model").RCodeModel;
 var MarkdownFoldMode = require("ace/mode/folding/markdown").FoldMode;
-
+var Utils = require("mode/utils");
 
 var Mode = function(suppressHighlighting, session) {
    var that = this;
@@ -81,24 +81,27 @@ oop.inherits(Mode, MarkdownMode);
 
    this.getLanguageMode = function(position)
    {
-      if (this.$session.getState(position.row).match(/^r-cpp-(?!r-)/))
+      var state = Utils.getPrimaryState(this.$session, position.row);
+
+      if (state.match(/^r-cpp-(?!r-)/))
          return 'C_CPP';
       else
-         return this.$session.getState(position.row).match(/^r-/) ? 'R' : 'Markdown';
+         return state.match(/^r-/) ? 'R' : 'Markdown';
    };
 
    this.inCppLanguageMode = function(state)
    {
       return state.match(/^r-cpp-(?!r-)/);
-   }
+   };
 
    this.inMarkdownLanguageMode = function(state)
    {
       return !state.match(/^r-/);
-   }
+   };
 
    this.getNextLineIndent = function(state, line, tab)
    {
+      state = Utils.primaryState(state);
       if (!this.inCppLanguageMode(state))
          return this.codeModel.getNextLineIndent(state, line, tab);
       else {
@@ -136,6 +139,7 @@ oop.inherits(Mode, MarkdownMode);
    };
 
     this.checkOutdent = function(state, line, input) {
+        state = Utils.primaryState(state);
         if (this.inCppLanguageMode(state))
             return this.$outdent.checkOutdent(line, input);
         else
@@ -143,6 +147,7 @@ oop.inherits(Mode, MarkdownMode);
     };
 
     this.autoOutdent = function(state, doc, row) {
+        state = Utils.primaryState(state);
         if (this.inCppLanguageMode(state))
             return this.$outdent.autoOutdent(doc, row);
         else
@@ -150,6 +155,7 @@ oop.inherits(Mode, MarkdownMode);
     };
 
     this.transformAction = function(state, action, editor, session, text) {
+        state = Utils.primaryState(state);
         // from c_cpp.js
         if (action === 'insertion') {
             if ((text === "\n") && this.inCppLanguageMode(state)) {

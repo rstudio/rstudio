@@ -55,6 +55,8 @@ var BaseFoldMode = require("ace/mode/folding/fold_mode").FoldMode;
 var Range = require("ace/range").Range;
 
 var FoldMode = exports.FoldMode = function() {};
+var Utils = require("ace/mode");
+
 oop.inherits(FoldMode, BaseFoldMode);
 
 (function() {
@@ -66,7 +68,7 @@ oop.inherits(FoldMode, BaseFoldMode);
             return "";
 
         if (line[0] == "`") {
-            if (session.bgTokenizer.getState(row) == "start")
+            if (Utils.getPrimaryState(session, row) === "start")
                 return "end";
             return "start";
         }
@@ -84,7 +86,7 @@ oop.inherits(FoldMode, BaseFoldMode);
             return;
 
         if (line[0] == "`") {
-            if (session.bgTokenizer.getState(row) !== "start") {
+            if (Utils.getPrimaryState(session, row) !== "start") {
                 while (++row < maxRow) {
                     line = session.getLine(row);
                     if (line[0] == "`" & line.substring(0, 3) == "```")

@@ -37170,7 +37170,10 @@ var Editor = function(renderer, session) {
             }
             
             if (token.type.indexOf("tag-open") != -1)
+            {
                 token = iterator.stepForward();
+                if (!token) return;
+            }
 
             var tag = token.value;
             var depth = 0;
