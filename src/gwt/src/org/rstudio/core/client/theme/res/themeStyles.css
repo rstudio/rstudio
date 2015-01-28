@@ -107,8 +107,6 @@
 @url PENDINGBREAKPOINT pendingBreakpoint;
 @url EXECUTINGLINE executingLine;
 
-@url HANDCURSOR handCursor;
-
 @url MACCHECK macCheck;
 
 body.windows, body.macintosh, body.linux {}
@@ -209,12 +207,12 @@ button {
 
 @if rstudio.desktop true {
 .linux button {
-   cursor: HANDCURSOR 9 5, pointer;
+   cursor: hand 9 5, pointer;
 }
 
 .linux .handCursor {
     
-   cursor: HANDCURSOR 9 5, pointer;
+   cursor: hand 9 5, pointer;
 }
 }
 
