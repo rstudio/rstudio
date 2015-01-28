@@ -943,6 +943,17 @@
    }))
 })
 
-.rs.addFunction("trimWhitespace", function(x) {
+.rs.addFunction("trimWhitespace", function(x)
+{
    gsub("^[\\s\\n]+|[\\s\\n]+$", "", x, perl = TRUE)
+})
+
+.rs.addFunction("trimCommonIndent", function(string, ...)
+{
+   splat <- strsplit(string, "\n", fixed = TRUE)[[1]]
+   indents <- regexpr("\\S", splat, perl = TRUE)
+   indents[indents == -1] <- Inf
+   common <- min(indents)
+   result <- paste(substring(splat, common, nchar(string)), collapse = "\n")
+   .rs.trimWhitespace(sprintf(result, ...))
 })
