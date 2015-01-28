@@ -67,6 +67,7 @@ git merge \
     origin/patch/dont-bundle-textmate-theme \
     origin/bugfix/vim-ex-command-spellcheck \
     origin/bugfix/vim-join-lines \
+    origin/bugfix/highlight-tags-error \
     -m "merge branches"
 
 ## git merge \

@@ -26,6 +26,7 @@ var CppScopeNode = require("mode/cpp_scope_tree").CppScopeNode;
 var CppScopeManager = require("mode/cpp_scope_tree").CppScopeManager;
 
 var getVerticallyAlignFunctionArgs = require("mode/r_code_model").getVerticallyAlignFunctionArgs;
+var Utils = require("mode/utils");
 
 var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
 
@@ -869,7 +870,7 @@ var CppCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) 
       // at the start. Use the previous line for indentation.
       if (line.length === 0 || /^\s*#/.test(line))
          return this.getNextLineIndent(
-            session.getState(row - 1),
+            Utils.getPrimaryState(session, row - 1),
             doc.getLine(row - 1),
             tab,
             row - 1,

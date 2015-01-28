@@ -51,6 +51,8 @@ var CppCodeModel = require("mode/cpp_code_model").CppCodeModel;
 
 var TokenCursor = require("mode/token_cursor").TokenCursor;
 
+var Utils = require("mode/utils");
+
 var Mode = function(suppressHighlighting, session) {
 
    // Keep references to current session, document
@@ -146,7 +148,8 @@ oop.inherits(Mode, TextMode);
 
    this.getLanguageMode = function(position)
    {
-      return this.$session.getState(position.row).match(/^r-/) ? 'R' : 'C_CPP';
+      var state = Utils.getPrimaryState(this.$session, position.row);
+      return state.match(/^r-/) ? 'R' : 'C_CPP';
    };
 
    this.cursorInRLanguageMode = function()
@@ -159,14 +162,14 @@ oop.inherits(Mode, TextMode);
       return state.match(/^r-/);
    };
 
-   this.getNextLineIndent = function(state, line, tab, row, dontSubset) {
-
+   this.getNextLineIndent = function(state, line, tab, row, dontSubset)
+   {
+      state = Utils.primaryState(state);
       // Defer to the R language indentation rules when in R language mode
       if (this.inRLanguageMode(state))
          return this.r_codeModel.getNextLineIndent(state, line, tab, row);
       else
          return this.codeModel.getNextLineIndent(state, line, tab, row, dontSubset);
-
    };
 
    this.checkOutdent = function(state, line, input) {
@@ -185,6 +188,7 @@ oop.inherits(Mode, TextMode);
 
    this.$transformAction = this.transformAction;
    this.transformAction = function(state, action, editor, session, param) {
+      state = Utils.primaryState(state);
       if (this.inRLanguageMode(state)) {
          // intentionally left blank -- this behaviour is handled elsewhere
          // in the code base
