@@ -35,11 +35,11 @@ namespace {
 
 struct FindUsagesData
 {
-   explicit FindUsagesData(Cursor definitionCursor)
-      : definitionCursor(definitionCursor)
+   explicit FindUsagesData(const std::string& USR)
+      : USR(USR)
    {
    }
-   Cursor definitionCursor;
+   std::string USR;
    std::vector<FileLocation> locations;
 };
 
@@ -56,7 +56,17 @@ CXChildVisitResult findUsagesVisitor(CXCursor cxCursor,
    if (!location.isFromMainFile())
       return CXChildVisit_Continue;
 
+   // get referenced cursor
+   Cursor referencedCursor = cursor.getReferenced();
+   if (!referencedCursor.isNull())
+   {
+      // get USR and compare to the USR we are seeking
+      if (referencedCursor.getUSR() == pData->USR)
+      {
+         std::cout << pData->USR << " " << cursor.getFileLocation().line << std::endl;
 
+      }
+   }
 
    // recurse into namespaces, classes, etc.
    return CXChildVisit_Recurse;
@@ -87,6 +97,11 @@ Error findUsages(const json::JsonRpcRequest& request,
    if (cursor.isNull())
       return Success();
 
+   // get it's USR (bail if it doesn't have one)
+   std::string USR = cursor.getUSR();
+   if (USR.empty())
+      return Success();
+
    // now look for references in the current translation unit
    TranslationUnit tu = rSourceIndex().getTranslationUnit(
                                           filePath.absolutePath(), true);
@@ -94,7 +109,7 @@ Error findUsages(const json::JsonRpcRequest& request,
       return Success();
 
    // visit the cursors and accumulate file locations
-   FindUsagesData findUsagesData(cursor);
+   FindUsagesData findUsagesData(USR);
    libclang::clang().visitChildren(tu.getCursor().getCXCursor(),
                                    findUsagesVisitor,
                                    (CXClientData)&findUsagesData);
