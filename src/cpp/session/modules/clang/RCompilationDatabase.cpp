@@ -669,6 +669,16 @@ core::system::Options RCompilationDatabase::compilationEnvironment() const
    return env;
 }
 
+namespace {
+
+FilePath precompiledHeaderDir(const std::string& pkgName)
+{
+   return module_context::tempDir().childPath("rstudio/libclang/precompiled/"
+                                              + pkgName);
+}
+
+} // anonymous namespace
+
 std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
                                                   const std::string& pkgName,
                                                   const std::string& stdArg)
@@ -676,10 +686,8 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
    // args to return
    std::vector<std::string> args;
 
-   // precompiled rcpp dir
-   const std::string kPrecompiledDir = "libclang/precompiled/" + pkgName;
-   FilePath precompiledDir = module_context::userScratchPath().
-                                            childPath(kPrecompiledDir);
+   // precompiled header dir
+   FilePath precompiledDir = precompiledHeaderDir(pkgName);
 
    // further scope to actual path of package (as the locations of the
    // header files must be stable)
