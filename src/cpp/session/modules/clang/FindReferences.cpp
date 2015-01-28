@@ -33,22 +33,22 @@ namespace clang {
 
 namespace {
 
-struct FindUsagesData
+struct FindReferencesData
 {
-   explicit FindUsagesData(const std::string& USR)
+   explicit FindReferencesData(const std::string& USR)
       : USR(USR)
    {
    }
    std::string USR;
-   std::vector<CursorLocation> locations;
+   std::vector<CursorLocation> references;
 };
 
-CXChildVisitResult findUsagesVisitor(CXCursor cxCursor,
-                                     CXCursor,
-                                     CXClientData data)
+CXChildVisitResult findReferencesVisitor(CXCursor cxCursor,
+                                         CXCursor,
+                                         CXClientData data)
 {
    // get pointer to data struct
-   FindUsagesData* pData = (FindUsagesData*)data;
+   FindReferencesData* pData = (FindReferencesData*)data;
 
    // reference to the cursor
    Cursor cursor(cxCursor);
@@ -64,15 +64,45 @@ CXChildVisitResult findUsagesVisitor(CXCursor cxCursor,
    {
       // check for matching USR
       if (referencedCursor.getUSR() == pData->USR)
-         pData->locations.push_back(cursor.getLocation());
+         pData->references.push_back(cursor.getLocation());
    }
 
    // recurse into namespaces, classes, etc.
    return CXChildVisit_Recurse;
 }
 
-
 } // anonymous namespace
+
+core::Error findReferences(const core::libclang::FileLocation& location,
+                           std::vector<core::libclang::CursorLocation>* pRefs)
+{
+   Cursor cursor = rSourceIndex().referencedCursorForFileLocation(location);
+   if (!cursor.isValid() || !cursor.isDeclaration())
+      return Success();
+
+   // get it's USR (bail if it doesn't have one)
+   std::string USR = cursor.getUSR();
+   if (USR.empty())
+      return Success();
+
+   // now look for references in the current translation unit
+   TranslationUnit tu = rSourceIndex().getTranslationUnit(
+                                    location.filePath.absolutePath(), true);
+   if (tu.empty())
+      return Success();
+
+   // visit the cursors and accumulate references
+   FindReferencesData findUsagesData(USR);
+   libclang::clang().visitChildren(tu.getCursor().getCXCursor(),
+                                   findReferencesVisitor,
+                                   (CXClientData)&findUsagesData);
+
+   // copy the locations to the out parameter
+   *pRefs = findUsagesData.references;
+
+   return Success();
+
+}
 
 Error findUsages(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
@@ -92,29 +122,14 @@ Error findUsages(const json::JsonRpcRequest& request,
 
    // get the declaration cursor for this file location
    core::libclang::FileLocation location(filePath, line, column);
-   Cursor cursor = rSourceIndex().referencedCursorForFileLocation(location);
-   if (!cursor.isValid() || !cursor.isDeclaration())
-      return Success();
 
-   // get it's USR (bail if it doesn't have one)
-   std::string USR = cursor.getUSR();
-   if (USR.empty())
-      return Success();
+   // find the references
+   std::vector<core::libclang::CursorLocation> usageLocations;
+   error = findReferences(location, &usageLocations);
+   if (error)
+      return error;
 
-   // now look for references in the current translation unit
-   TranslationUnit tu = rSourceIndex().getTranslationUnit(
-                                          filePath.absolutePath(), true);
-   if (tu.empty())
-      return Success();
-
-   // visit the cursors and accumulate file locations
-   FindUsagesData findUsagesData(USR);
-   libclang::clang().visitChildren(tu.getCursor().getCXCursor(),
-                                   findUsagesVisitor,
-                                   (CXClientData)&findUsagesData);
-
-
-   BOOST_FOREACH(const CursorLocation& loc, findUsagesData.locations)
+   BOOST_FOREACH(const CursorLocation& loc, usageLocations)
    {
       std::cerr << loc.filePath
                 << " ["

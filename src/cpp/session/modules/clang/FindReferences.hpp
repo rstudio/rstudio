@@ -16,14 +16,27 @@
 #ifndef SESSION_MODULES_CLANG_FIND_REFERENCES_HPP
 #define SESSION_MODULES_CLANG_FIND_REFERENCES_HPP
 
+#include <vector>
+
 #include <core/Error.hpp>
 
 #include <core/json/JsonRpc.hpp>
  
 namespace rstudio {
+
+namespace core {
+namespace libclang {
+   struct FileLocation;
+   struct CursorLocation;
+}
+}
+
 namespace session {
 namespace modules {      
 namespace clang {
+
+core::Error findReferences(const core::libclang::FileLocation& location,
+                           std::vector<core::libclang::CursorLocation>* pRefs);
 
 core::Error findUsages(const core::json::JsonRpcRequest& request,
                        core::json::JsonRpcResponse* pResponse);
