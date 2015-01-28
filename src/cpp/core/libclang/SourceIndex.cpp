@@ -248,7 +248,7 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
    }
 }
 
-Cursor SourceIndex::definitionForFileLocation(const FileLocation &loc)
+Cursor SourceIndex::referencedCursorForFileLocation(const FileLocation &loc)
 {
    // get the translation unit
    std::string filename = loc.filePath.absolutePath();

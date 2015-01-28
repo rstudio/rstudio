@@ -300,7 +300,7 @@ FileLocation findDefinitionLocation(const FileLocation& location)
       return FileLocation();
 
    // get the definition cursor for this file location
-   Cursor cursor = rSourceIndex().definitionForFileLocation(location);
+   Cursor cursor = rSourceIndex().referencedCursorForFileLocation(location);
    if (cursor.isNull())
       return FileLocation();
 

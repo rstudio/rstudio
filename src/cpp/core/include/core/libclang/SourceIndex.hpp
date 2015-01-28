@@ -73,7 +73,7 @@ public:
    TranslationUnit getTranslationUnit(const std::string& filename,
                                       bool alwaysReparse = false);
 
-   Cursor definitionForFileLocation(const FileLocation& loc);
+   Cursor referencedCursorForFileLocation(const FileLocation& loc);
 
 private:
 
