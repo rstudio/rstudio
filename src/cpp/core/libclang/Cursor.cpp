@@ -129,6 +129,11 @@ SourceLocation Cursor::getSourceLocation() const
    return SourceLocation(clang().getCursorLocation(cursor_));
 }
 
+unsigned Cursor::hash() const
+{
+   return clang().hashCursor(cursor_);
+}
+
 FileLocation Cursor::getFileLocation() const
 {
    SourceLocation loc = getSourceLocation();

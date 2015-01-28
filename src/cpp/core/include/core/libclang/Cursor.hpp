@@ -90,6 +90,8 @@ public:
 
    CXCursor getCXCursor() const { return cursor_; }
 
+   unsigned hash() const;
+
    SourceLocation getSourceLocation() const;
 
    FileLocation getFileLocation() const;
