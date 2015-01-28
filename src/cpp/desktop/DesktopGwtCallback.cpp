@@ -453,13 +453,16 @@ void GwtCallback::prepareForSatelliteWindow(QString name,
                                             int width,
                                             int height)
 {
-   pOwner_->webPage()->prepareForSatelliteWindow(
-                PendingSatelliteWindow(name, pMainWindow_, width, height));
+   pOwner_->webPage()->prepareForWindow(
+                PendingWindow(name, pMainWindow_, width, height));
 }
 
-void GwtCallback::prepareForNamedWindow(QString name)
+void GwtCallback::prepareForNamedWindow(QString name,
+                                        bool allowExternalNavigate,
+                                        bool showDesktopToolbar)
 {
-   pOwner_->webPage()->prepareForNamedWindow(name);
+   pOwner_->webPage()->prepareForWindow(
+                PendingWindow(name, allowExternalNavigate, showDesktopToolbar));
 }
 
 void GwtCallback::activateSatelliteWindow(QString name)
@@ -1089,21 +1092,6 @@ void GwtCallback::installRtools(QString version, QString installerPath)
 }
 #endif
 
-
-void GwtCallback::prepareSatelliteNavigate(QString name, QString url)
-{
-   // get the satellite window  with the given name
-   BrowserWindow* browser = s_windowTracker.getWindow(name);
-
-   // if we found one and it has a loaded page/view, prepare it for
-   // external navigation to the given URL
-   if (browser &&
-       browser->webView() &&
-       browser->webView()->webPage())
-   {
-       browser->webView()->webPage()->prepareExternalNavigate(url);
-   }
-}
 
 } // namespace desktop
 } // namespace rstudio

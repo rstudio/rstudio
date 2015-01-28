@@ -257,6 +257,7 @@ public class RSAccountConnector implements WindowClosedEvent.Handler
             NewWindowOptions options = new NewWindowOptions();
             options.setName(AUTH_WINDOW_NAME);
             options.setAllowExternalNavigation(true);
+            options.setShowDesktopToolbar(false);
             display_.openWebMinimalWindow(
                   pendingAuthToken_.getClaimUrl(), 
                   false, 

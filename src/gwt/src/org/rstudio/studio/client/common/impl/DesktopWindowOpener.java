@@ -61,7 +61,8 @@ public class DesktopWindowOpener extends WebWindowOpener
                                     boolean showLocation)
    {
       Desktop.getFrame().prepareForNamedWindow(options.getName(),
-            options.allowExternalNavigation());
+            options.allowExternalNavigation(),
+            options.showDesktopToolbar());
       super.openWebMinimalWindow(globalDisplay, url, options, width, 
                                  height, showLocation);
    }

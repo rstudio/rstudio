@@ -33,12 +33,13 @@ class WebView : public ::QWebView
 
 public:
    explicit WebView(QUrl baseUrl = QUrl(),
-                    QWidget *parent = NULL);
+                    QWidget *parent = NULL,
+                    bool allowExternalNavigate = false);
 
    void setBaseUrl(const QUrl& baseUrl);
 
    void activateSatelliteWindow(QString name);
-   void prepareForSatelliteWindow(const PendingSatelliteWindow& pendingWnd);
+   void prepareForWindow(const PendingWindow& pendingWnd);
    void setDpiAwareZoomFactor(qreal factor);
    qreal dpiAwareZoomFactor();
 

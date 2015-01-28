@@ -88,8 +88,8 @@ public slots:
    void activateMinimalWindow(QString name);
    void activateSatelliteWindow(QString name);
    void prepareForSatelliteWindow(QString name, int width, int height);
-   void prepareForNamedWindow(QString name);
-
+   void prepareForNamedWindow(QString name, bool allowExternalNavigate,
+                              bool showToolbar);
 
    // Image coordinates are relative to the window contents
    void copyImageToClipboard(int left, int top, int width, int height);
@@ -178,8 +178,6 @@ public slots:
    void setWindowTitle(QString title);
 
    void installRtools(QString version, QString installerPath);
-
-   void prepareSatelliteNavigate(QString name, QString url);
 
 private:
    Synctex& synctex();

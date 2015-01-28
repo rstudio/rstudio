@@ -80,12 +80,25 @@ public abstract class GlobalDisplay extends MessageDisplay
       {
          return allowExternalNavigation_;
       }
+      
+      // only applicable in desktop mode--by default windows showing web content
+      // get a basic web navigation toolbar
+      public void setShowDesktopToolbar(boolean show)
+      {
+         showDesktopToolbar_ = show;
+      }
+      
+      public boolean showDesktopToolbar()
+      {
+         return showDesktopToolbar_;
+      }
 
       private Point position_ = null;
       private String name_ = "_blank";
       private boolean focus_ = true;
       private OperationWithInput<WindowEx> callback_;
       private boolean allowExternalNavigation_ = false;
+      private boolean showDesktopToolbar_ = true;
    }
    
    public abstract void openWindow(String url);

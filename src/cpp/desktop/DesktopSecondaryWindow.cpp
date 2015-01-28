@@ -38,8 +38,11 @@ QIcon icon(const char* name)
 
 }
 
-SecondaryWindow::SecondaryWindow(QUrl baseUrl, bool showToolbar, QWidget* pParent) :
-    BrowserWindow(showToolbar, true, QString(), baseUrl, pParent)
+SecondaryWindow::SecondaryWindow(bool showToolbar, QString name, QUrl baseUrl,
+                                 QWidget* pParent, WebPage* pOpener,
+                                 bool allowExternalNavigate) :
+    BrowserWindow(showToolbar, true, name, baseUrl, pParent, pOpener,
+                  allowExternalNavigate)
 {
    setAttribute(Qt::WA_QuitOnClose, false);
    setAttribute(Qt::WA_DeleteOnClose, true);

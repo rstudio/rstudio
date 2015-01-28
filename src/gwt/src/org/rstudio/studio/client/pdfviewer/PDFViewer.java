@@ -256,6 +256,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
                 server_.getApplicationURL("pdf_js/web/viewer.html?file=");
           NewWindowOptions options = new NewWindowOptions();
           options.setName(WINDOW_NAME);
+          options.setShowDesktopToolbar(false);
           if (pos != null)
              options.setPosition(pos);
           options.setCallback(new OperationWithInput<WindowEx>() 
