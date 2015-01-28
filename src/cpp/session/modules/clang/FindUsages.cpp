@@ -40,7 +40,7 @@ struct FindUsagesData
    {
    }
    std::string USR;
-   std::vector<FileLocation> locations;
+   std::vector<CursorLocation> locations;
 };
 
 CXChildVisitResult findUsagesVisitor(CXCursor cxCursor,
@@ -50,22 +50,21 @@ CXChildVisitResult findUsagesVisitor(CXCursor cxCursor,
    // get pointer to data struct
    FindUsagesData* pData = (FindUsagesData*)data;
 
-   // get the cursor and check if it's in the right file
+   // reference to the cursor
    Cursor cursor(cxCursor);
+
+   // continue with sibling if it's not from the main file
    SourceLocation location = cursor.getSourceLocation();
    if (!location.isFromMainFile())
       return CXChildVisit_Continue;
 
    // get referenced cursor
    Cursor referencedCursor = cursor.getReferenced();
-   if (!referencedCursor.isNull())
+   if (referencedCursor.isValid() && referencedCursor.isDeclaration())
    {
-      // get USR and compare to the USR we are seeking
+      // check for matching USR
       if (referencedCursor.getUSR() == pData->USR)
-      {
-         std::cout << pData->USR << " " << cursor.getFileLocation().line << std::endl;
-
-      }
+         pData->locations.push_back(cursor.getLocation());
    }
 
    // recurse into namespaces, classes, etc.
@@ -91,10 +90,10 @@ Error findUsages(const json::JsonRpcRequest& request,
    // resolve the docPath if it's aliased
    FilePath filePath = module_context::resolveAliasedPath(docPath);
 
-   // get the definition cursor for this file location
+   // get the declaration cursor for this file location
    core::libclang::FileLocation location(filePath, line, column);
-   Cursor cursor = rSourceIndex().definitionForFileLocation(location);
-   if (cursor.isNull())
+   Cursor cursor = rSourceIndex().referencedCursorForFileLocation(location);
+   if (!cursor.isValid() || !cursor.isDeclaration())
       return Success();
 
    // get it's USR (bail if it doesn't have one)
@@ -115,9 +114,14 @@ Error findUsages(const json::JsonRpcRequest& request,
                                    (CXClientData)&findUsagesData);
 
 
-   BOOST_FOREACH(const FileLocation& loc, findUsagesData.locations)
+   BOOST_FOREACH(const CursorLocation& loc, findUsagesData.locations)
    {
-      std::cerr << loc.filePath << " [" << loc.line << ":" << loc.column << "]"
+      std::cerr << loc.filePath
+                << " ["
+                << loc.line << ":"
+                << loc.column << ":"
+                << loc.extent
+                << "]"
                 << std::endl;
    }
 

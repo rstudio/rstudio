@@ -26,7 +26,7 @@ namespace rstudio {
 namespace core {
 namespace libclang {
 
-// source location
+// file location
 struct FileLocation
 {
    FileLocation()
@@ -45,6 +45,27 @@ struct FileLocation
    unsigned line;
    unsigned column;
 };
+
+// cursor location
+struct CursorLocation : public FileLocation
+{
+   CursorLocation()
+      : FileLocation(), extent(0)
+   {
+   }
+
+   CursorLocation(const FilePath& filePath,
+                  unsigned line,
+                  unsigned column,
+                  unsigned extent)
+      : FileLocation(filePath, line, column), extent(extent)
+   {
+   }
+
+   unsigned extent;
+};
+
+class SourceRange;
 
 class Cursor
 {
@@ -93,6 +114,10 @@ public:
    unsigned hash() const;
 
    SourceLocation getSourceLocation() const;
+
+   SourceRange getExtent() const;
+
+   CursorLocation getLocation() const;
 
    bool isNull() const;
    bool isValid() const;
