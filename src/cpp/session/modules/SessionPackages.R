@@ -733,7 +733,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          #   Build and Reload Package:  \'%s\'
          #   Check Package:             \'%s\'
          #   Test Package:              \'%s\'
-         #
+         
          hello <- function() {
            print(\"Hello, world!\")
          }
@@ -774,24 +774,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
             #include <Rcpp.h>
             using namespace Rcpp;
             
-            // This is a simple function using Rcpp that
-            // creates an R list containing a character vector
-            // c("foo", "bar") and a numeric vector
-            // c(0, 1).
-            
-            // [[Rcpp::export]]
-            List rcpp_hello_world() {
-            
-              CharacterVector x = CharacterVector::create("foo", "bar");
-              NumericVector y   = NumericVector::create(0.0, 1.0);
-              List z            = List::create(x, y);
-            
-              return z;
-            }
-            
-            // The comment \'// [[Rcpp::export]]\' above signals that
-            // a function named \'rcpp_hello_world()\' should automatically
-            // be exported to R when the package is built.
+            // This is a simple function using Rcpp that creates an R list
+            // containing a character vector and a numeric vector.
             //
             // Learn more about how to use Rcpp at:
             //
@@ -802,30 +786,39 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
             // 
             //   http://gallery.rcpp.org/
             //
+
+            // [[Rcpp::export]]
+            List rcpp_hello() {
+              CharacterVector x = CharacterVector::create("foo", "bar");
+              NumericVector y   = NumericVector::create(0.0, 1.0);
+              List z            = List::create(x, y);
+              return z;
+            }
+
          ')
 
          helloWorldDoc <- .rs.trimCommonIndent('
-            \\name{rcpp_hello_world}
-            \\alias{rcpp_hello_world}
+            \\name{rcpp_hello}
+            \\alias{rcpp_hello}
             \\title{Hello, Rcpp!}
             \\usage{
-            rcpp_hello_world()
+            rcpp_hello()
             }
             \\description{
             Returns an \\R \\code{list} containing the character vector
             \\code{c("foo", "bar")} and the numeric vector \\code{c(0, 1)}.
             }
             \\examples{
-            rcpp_hello_world()
+            rcpp_hello()
             }
          ')
          
          cat(helloWorldCpp,
-             file = file.path(packageDirectory, "src", "rcpp_hello_world.cpp"),
+             file = file.path(packageDirectory, "src", "rcpp_hello.cpp"),
              sep = "\n")
 
          cat(helloWorldDoc,
-             file = file.path(packageDirectory, "man", "rcpp_hello_world.Rd"),
+             file = file.path(packageDirectory, "man", "rcpp_hello.Rd"),
              sep = "\n")
          
       }
@@ -921,8 +914,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
        require(Rcpp, quietly = TRUE))
    {
       Rcpp::compileAttributes(packageDirectory)
-      if (file.exists(file.path(packageDirectory, "src/rcpp_hello_world.cpp")))
-         .Call("rs_addFirstRunDoc", RprojPath, "src/rcpp_hello_world.cpp")
+      if (file.exists(file.path(packageDirectory, "src/rcpp_hello.cpp")))
+         .Call("rs_addFirstRunDoc", RprojPath, "src/rcpp_hello.cpp")
    }
    
    .rs.success()
