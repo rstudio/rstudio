@@ -32,7 +32,7 @@
 #include <core/libclang/LibClang.hpp>
 
 #include "DefinitionIndex.hpp"
-#include "FindUsages.hpp"
+#include "FindReferences.hpp"
 #include "GoToDefinition.hpp"
 #include "CodeCompletion.hpp"
 #include "RSourceIndex.hpp"

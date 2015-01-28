@@ -1,5 +1,5 @@
 /*
- * FindUsages.cpp
+ * FindReferences.cpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,7 +13,7 @@
  *
  */
 
-#include "FindUsages.hpp"
+#include "FindReferences.hpp"
 
 #include <boost/foreach.hpp>
 

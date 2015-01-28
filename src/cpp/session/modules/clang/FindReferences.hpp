@@ -1,5 +1,5 @@
 /*
- * FindUsages.hpp
+ * FindReferences.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef SESSION_MODULES_CLANG_FIND_USAGES_HPP
-#define SESSION_MODULES_CLANG_FIND_USAGES_HPP
+#ifndef SESSION_MODULES_CLANG_FIND_REFERENCES_HPP
+#define SESSION_MODULES_CLANG_FIND_REFERENCES_HPP
 
 #include <core/Error.hpp>
 
@@ -33,4 +33,4 @@ core::Error findUsages(const core::json::JsonRpcRequest& request,
 } // namesapce session
 } // namespace rstudio
 
-#endif // SESSION_MODULES_CLANG_FIND_USAGES_HPP
+#endif // SESSION_MODULES_CLANG_FIND_REFERENCES_HPP
