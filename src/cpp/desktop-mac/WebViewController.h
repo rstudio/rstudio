@@ -25,6 +25,8 @@
                              width: (int) width
                             height: (int) height;
 
++ (void) prepareForNamedWindow: (NSString*) name;
+
 // The designated initializer
 - (id)initWithURLRequest: (NSURLRequest*) request
                     name: (NSString*) name

@@ -67,11 +67,13 @@ NSString* authorityFromUrl (NSString* url)
 
 static NSMutableDictionary* namedWindows_;
 static PendingSatelliteWindow pendingWindow_;
+static NSString* pendingWindowName_;
 
 + (void) initialize
 {
    namedWindows_ = [[NSMutableDictionary alloc] init];
    pendingWindow_ = PendingSatelliteWindow();
+   pendingWindowName_ = nil;
 }
 
 + (void) prepareForSatelliteWindow: (NSString*) name
@@ -79,6 +81,11 @@ static PendingSatelliteWindow pendingWindow_;
                             height: (int) height
 {
    pendingWindow_ = PendingSatelliteWindow([name UTF8String], width, height);
+}
+
++ (void) prepareForNamedWindow:(NSString *) name
+{
+   pendingWindowName_ = [name retain];
 }
 
 + (WebViewController*) windowNamed: (NSString*) name
@@ -512,43 +519,53 @@ decidePolicyForMIMEType: (NSDictionary *) actionInformation
 - (WebView *) webView: (WebView *) sender
               createWebViewWithRequest:(NSURLRequest *)request
 {
-   // check for a pending satellite request
-   if (!pendingWindow_.empty())
+   NSString* name = nil;
+   bool isSatellite = false;
+
+   // check for a pending satellite/named window request
+   if (!pendingWindow_.empty() || pendingWindowName_ != nil)
    {
       // capture and then clear the pending window
-      PendingSatelliteWindow pendingWindow = pendingWindow_;
-      pendingWindow_ = PendingSatelliteWindow();
-      
-      // get the name
-      NSString* name =
-        [NSString stringWithUTF8String: pendingWindow.name.c_str()];
-     
-      // check for an existing window
+      if (!pendingWindow_.empty())
+      {
+         PendingSatelliteWindow pendingWindow = pendingWindow_;
+         pendingWindow_ = PendingSatelliteWindow();
+         name = [NSString stringWithUTF8String: pendingWindow.name.c_str()];
+         isSatellite = true;
+      }
+      else if (pendingWindowName_ != nil)
+      {
+         name = [NSString stringWithString: pendingWindowName_];
+         [pendingWindowName_ release];
+         pendingWindowName_ = nil;
+      }
+
+      // check for an existing window, and activate it
       WebViewController* controller = [namedWindows_ objectForKey: name];
       if (controller)
       {
          [[controller window] makeKeyAndOrderFront: self];
          return nil;
       }
-      else
-      {
-         // self-freeing so don't auto-release
-         SatelliteController* satelliteController =
-         [[SatelliteController alloc] initWithURLRequest: request
-                                                    name: name
-                                              clientName: name];
-         
-         // return it
-         return [satelliteController webView];
-      }
+   }
+   
+   // create the appropriate controller type; these are self-freeing so don't
+   // auto-release
+   if (isSatellite)
+   {
+      SatelliteController* satelliteController =
+      [[SatelliteController alloc] initWithURLRequest: request
+                                                 name: name
+                                           clientName: name];
+      
+      return [satelliteController webView];
    }
    else
    {
-      // self-freeing so don't auto-release
       SecondaryWindowController * controller =
          [[SecondaryWindowController alloc] initWithURLRequest: request
-                                                          name: nil
-                                                    clientName: nil];
+                                                          name: name
+                                                    clientName: name];
       return [controller webView];
    }
 }

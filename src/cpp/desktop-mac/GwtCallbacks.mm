@@ -498,6 +498,10 @@ private:
                                           height: height];
 }
 
+- (void) prepareForNamedWindow: (NSString*) name
+{
+   [WebViewController prepareForNamedWindow: name];
+}
 
 - (void) copyImageToClipboard: (int) left top: (int) top
                         width: (int) width height: (int) height
@@ -1103,7 +1107,9 @@ enum RS_NSActivityOptions : uint64_t
       return @"reloadViewerZoomWindow";
    else if (sel == @selector(prepareSatelliteNavigate:url:))
       return @"prepareSatelliteNavigate";
-  
+   else if (sel == @selector(prepareForNamedWindow:))
+      return @"prepareForNamedWindow";
+   
    return nil;
 }
 
