@@ -465,6 +465,16 @@ void GwtCallback::prepareForNamedWindow(QString name,
                 PendingWindow(name, allowExternalNavigate, showDesktopToolbar));
 }
 
+void GwtCallback::closeNamedWindow(QString name)
+{
+   // close the requested window
+   pOwner_->webPage()->closeWindow(name);
+
+   // bring the main window to the front (so we don't lose RStudio context
+   // entirely)
+   desktop::raiseAndActivateWindow(pMainWindow_);
+}
+
 void GwtCallback::activateSatelliteWindow(QString name)
 {
    pOwner_->webPage()->activateWindow(name);

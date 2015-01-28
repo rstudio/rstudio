@@ -68,6 +68,13 @@ void WebPage::activateWindow(QString name)
       desktop::raiseAndActivateWindow(pWindow);
 }
 
+void WebPage::closeWindow(QString name)
+{
+   BrowserWindow* pWindow = s_windowTracker.getWindow(name);
+   if (pWindow)
+      desktop::closeWindow(pWindow);
+}
+
 void WebPage::prepareForWindow(const PendingWindow& pendingWnd)
 {
    pendingWindow_ = pendingWnd;

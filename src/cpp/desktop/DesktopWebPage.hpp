@@ -78,6 +78,7 @@ public:
 
    void activateWindow(QString name);
    void prepareForWindow(const PendingWindow& pendingWnd);
+   void closeWindow(QString name);
 
 public slots:
    bool shouldInterruptJavaScript();

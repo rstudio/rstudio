@@ -90,6 +90,7 @@ public slots:
    void prepareForSatelliteWindow(QString name, int width, int height);
    void prepareForNamedWindow(QString name, bool allowExternalNavigate,
                               bool showToolbar);
+   void closeNamedWindow(QString name);
 
    // Image coordinates are relative to the window contents
    void copyImageToClipboard(int left, int top, int width, int height);
