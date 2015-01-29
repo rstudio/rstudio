@@ -17,6 +17,9 @@
 
 #include <boost/foreach.hpp>
 
+#include <boost/algorithm/string/split.hpp>
+
+#include <core/FileSerializer.hpp>
 #include <core/libclang/LibClang.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -70,6 +73,97 @@ CXChildVisitResult findReferencesVisitor(CXCursor cxCursor,
    // recurse into namespaces, classes, etc.
    return CXChildVisit_Recurse;
 }
+
+class SourceMarkerGenerator
+{
+public:
+   std::vector<module_context::SourceMarker> markersForCursorLocations(
+              const std::vector<core::libclang::CursorLocation>& locations)
+   {
+      using namespace module_context;
+      std::vector<SourceMarker> markers;
+
+      BOOST_FOREACH(const libclang::CursorLocation& loc, locations)
+      {
+         // get file contents and use it to create the message
+         std::size_t line = loc.line - 1;
+         std::string message;
+         const std::vector<std::string>& lines = fileContents(
+                                                loc.filePath.absolutePath());
+         if (line < lines.size())
+            message = lines[line];
+
+
+         // create marker
+         SourceMarker marker(SourceMarker::Info,
+                             loc.filePath,
+                             loc.line,
+                             loc.column,
+                             message,
+                             true);
+
+         // add it to the list
+         markers.push_back(marker);
+      }
+
+      return markers;
+   }
+
+
+private:
+   typedef std::map<std::string,std::vector<std::string> > SourceFileContentsMap;
+
+   const std::vector<std::string>& fileContents(const std::string& filename)
+   {
+      // check cache
+      SourceFileContentsMap::const_iterator it =
+                                       sourceFileContents_.find(filename);
+      if (it == sourceFileContents_.end())
+      {
+         // check unsaved files
+         UnsavedFiles& unsavedFiles = rSourceIndex().unsavedFiles();
+         unsigned numFiles = unsavedFiles.numUnsavedFiles();
+         for (unsigned i = 0; i<numFiles; ++i)
+         {
+            CXUnsavedFile unsavedFile = unsavedFiles.unsavedFilesArray()[i];
+            if (std::string(unsavedFile.Filename) == filename)
+            {
+               std::string contents(unsavedFile.Contents, unsavedFile.Length);
+               std::vector<std::string> lines;
+               boost::algorithm::split(lines,
+                                       contents,
+                                       boost::is_any_of("\n"));
+
+
+               sourceFileContents_.insert(std::make_pair(filename, lines));
+               it = sourceFileContents_.find(filename);
+               break;
+            }
+         }
+
+         // if we didn't get one then read it from disk
+         if (it == sourceFileContents_.end())
+         {
+            std::vector<std::string> lines;
+            Error error = readStringVectorFromFile(FilePath(filename),
+                                                   &lines,
+                                                   false);
+            if (error)
+               LOG_ERROR(error);
+
+            // insert anyway to ensure it->second below works
+            sourceFileContents_.insert(std::make_pair(filename, lines));
+            it = sourceFileContents_.find(filename);
+         }
+      }
+
+      // return reference to contents
+      return it->second;
+   }
+
+private:
+   SourceFileContentsMap sourceFileContents_;
+};
 
 } // anonymous namespace
 
@@ -129,16 +223,14 @@ Error findUsages(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   BOOST_FOREACH(const CursorLocation& loc, usageLocations)
-   {
-      std::cerr << loc.filePath
-                << " ["
-                << loc.line << ":"
-                << loc.column << ":"
-                << loc.extent
-                << "]"
-                << std::endl;
-   }
+   // produce source markers from cursor locations
+   using namespace module_context;
+   std::vector<SourceMarker> markers = SourceMarkerGenerator()
+                                 .markersForCursorLocations(usageLocations);
+
+
+   SourceMarkerSet markerSet("C++ Find Usages", markers);
+   showSourceMarkers(markerSet, MarkerAutoSelectNone);
 
    return Success();
 }
