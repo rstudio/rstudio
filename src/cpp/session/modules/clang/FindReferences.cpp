@@ -28,7 +28,6 @@
 
 // TODO: multi-file project searches
 
-// TODO: differnet keyboard shortcut
 
 // TODO: ace content menu
 
