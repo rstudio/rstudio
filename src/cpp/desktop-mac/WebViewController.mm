@@ -551,7 +551,6 @@ decidePolicyForMIMEType: (NSDictionary *) actionInformation
    }
    else
    {
-      NSLog(@"creating window with name %@", name);
       SecondaryWindowController * controller =
          [[SecondaryWindowController alloc] initWithURLRequest: request
                                                           name: name

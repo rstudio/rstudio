@@ -24,6 +24,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.satellite.events.WindowClosedEvent;
+import org.rstudio.studio.client.rsconnect.events.EnableRStudioConnectUIEvent;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult.AccountType;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAuthUser;
@@ -35,6 +36,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.PublishingPreferencesPane;
 import org.rstudio.studio.client.workbench.ui.OptionsLoader;
 
@@ -44,10 +46,12 @@ import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
-public class RSAccountConnector implements WindowClosedEvent.Handler
+public class RSAccountConnector implements WindowClosedEvent.Handler, 
+   EnableRStudioConnectUIEvent.Handler
 {
    public interface Binder
    extends CommandBinder<Commands, RSAccountConnector> {}
@@ -63,17 +67,19 @@ public class RSAccountConnector implements WindowClosedEvent.Handler
    @Inject
    public RSAccountConnector(RSConnectServerOperations server,
          GlobalDisplay display,
-         Session session,
          Commands commands,
          Binder binder,
          OptionsLoader.Shim optionsLoader,
-         EventBus events)
+         EventBus events,
+         Provider<UIPrefs> pUiPrefs)
    {
       server_ = server;
       display_ = display;
-      session_ = session;
       optionsLoader_ = optionsLoader;
+      pUiPrefs_ = pUiPrefs;
+
       events.addHandler(WindowClosedEvent.TYPE, this);
+      events.addHandler(EnableRStudioConnectUIEvent.TYPE, this);
 
       binder.bind(commands, this);
    }
@@ -82,7 +88,7 @@ public class RSAccountConnector implements WindowClosedEvent.Handler
          final OperationWithInput<Boolean> onCompleted)
    {
       RSConnectAccountWizard wizard = new RSConnectAccountWizard(
-            session_.getSessionInfo(),
+            pUiPrefs_.get(),
             new ProgressOperationWithInput<NewRSConnectAccountResult>()
       {
          @Override
@@ -127,6 +133,8 @@ public class RSAccountConnector implements WindowClosedEvent.Handler
       optionsLoader_.showOptions(PublishingPreferencesPane.class);
    }
    
+   // Event handlers ---------------------------------------------------------
+
    @Override
    public void onWindowClosed(WindowClosedEvent event)
    {
@@ -134,6 +142,13 @@ public class RSAccountConnector implements WindowClosedEvent.Handler
       {
          notifyAuthClosed();
       }
+   }
+
+   @Override
+   public void onEnableRStudioConnectUI(EnableRStudioConnectUIEvent event)
+   {
+      pUiPrefs_.get().enableRStudioConnect().setGlobalValue(event.getEnable());
+      pUiPrefs_.get().writeUIPrefs();
    }
 
    // Private methods --------------------------------------------------------
@@ -486,8 +501,8 @@ public class RSAccountConnector implements WindowClosedEvent.Handler
 
    private final GlobalDisplay display_;
    private final RSConnectServerOperations server_;
-   private final Session session_;
    private final OptionsLoader.Shim optionsLoader_;
+   private final Provider<UIPrefs> pUiPrefs_;
    
    private RSConnectPreAuthToken pendingAuthToken_;
    private RSConnectServerInfo pendingServerInfo_;
@@ -498,4 +513,5 @@ public class RSAccountConnector implements WindowClosedEvent.Handler
    private RSConnectAuthWaitDialog waitDialog_;
    
    private final static String AUTH_WINDOW_NAME = "rstudio_rsconnect_auth";
+
 }

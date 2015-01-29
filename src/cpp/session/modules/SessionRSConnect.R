@@ -145,6 +145,12 @@
     dir_size = .rs.scalar(dirlist$cur_size))
 })
 
+.rs.addFunction("enableRStudioConnectUI", function(enable) {
+  .rs.enqueClientEvent("enable_rstudio_connect", enable);
+  message("RStudio Connect UI ", if (enable) "enabled" else "disabled", ".")
+  invisible(enable)
+})
+
 .rs.addJsonRpcHandler("get_deployment_files", function(dir) {
    .rs.rsconnectDeployList(dir)
 })
@@ -157,3 +163,4 @@
    cmd <- parse(text=accountCmd)
    eval(cmd, envir = globalenv())
 })
+

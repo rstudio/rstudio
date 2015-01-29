@@ -115,6 +115,7 @@ class ClientEvent extends JavaScriptObject
    public static final String DataViewChanged = "data_view_changed";
    public static final String ViewFunction = "view_function";
    public static final String MarkersChanged = "markers_changed";
+   public static final String EnableRStudioConnect = "enable_rstudio_connect";
    
    protected ClientEvent()
    {

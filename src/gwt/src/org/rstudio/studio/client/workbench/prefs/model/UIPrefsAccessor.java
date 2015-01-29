@@ -390,6 +390,11 @@ public class UIPrefsAccessor extends Prefs
       return bool("show_publish_ui", true);
    }
 
+   public PrefValue<Boolean> enableRStudioConnect()
+   {
+      return bool("enable_rstudio_connect", false);
+   }
+
    private String getDefaultPdfPreview()
    {
       if (Desktop.isDesktop())

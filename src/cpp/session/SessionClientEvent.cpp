@@ -124,6 +124,7 @@ const int kSuspendAndRestart = 99;
 const int kDataViewChanged = 100;
 const int kViewFunction = 101;
 const int kMarkersChanged = 102;
+const int kEnableRStudioConnect = 103;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -331,6 +332,8 @@ std::string ClientEvent::typeName() const
          return "view_function";
       case client_events::kMarkersChanged:
          return "markers_changed";
+      case client_events::kEnableRStudioConnect:
+         return "enable_rstudio_connect";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

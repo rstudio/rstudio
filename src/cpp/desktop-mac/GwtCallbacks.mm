@@ -509,6 +509,7 @@ private:
 - (void) closeNamedWindow: (NSString*) name
 {
    [WebViewController closeNamedWindow: name];
+   [self bringMainFrameToFront];
 }
 
 - (void) copyImageToClipboard: (int) left top: (int) top

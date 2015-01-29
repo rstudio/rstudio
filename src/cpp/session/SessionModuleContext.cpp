@@ -126,6 +126,8 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kPackageStatusChanged;
       else if (name == "unhandled_error")
          type = session::client_events::kUnhandledError;
+      else if (name == "enable_rstudio_connect")
+         type = session::client_events::kEnableRStudioConnect;
       
       if (type != -1)
       {

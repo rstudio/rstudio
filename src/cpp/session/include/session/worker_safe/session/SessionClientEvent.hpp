@@ -125,6 +125,7 @@ extern const int kSuspendAndRestart;
 extern const int kDataViewChanged;
 extern const int kViewFunction;
 extern const int kMarkersChanged;
+extern const int kEnableRStudioConnect;
 }
    
 class ClientEvent
