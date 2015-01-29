@@ -52,7 +52,7 @@ public class NewRSConnectAccountResult
       return serverUrl_;
    }
    
-   public String getAccountNickanem()
+   public String getAccountNickname()
    {
       return accountNickname_;
    }

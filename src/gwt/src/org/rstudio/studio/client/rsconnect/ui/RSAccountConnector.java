@@ -222,7 +222,7 @@ public class RSAccountConnector implements WindowClosedEvent.Handler,
          {
             if (info.isValid()) 
             {
-               getPreAuthToken(info, indicator, onConnected);
+               getPreAuthToken(result, info, indicator, onConnected);
             }
             else
             {
@@ -248,6 +248,7 @@ public class RSAccountConnector implements WindowClosedEvent.Handler,
    }
    
    private void getPreAuthToken(
+         final NewRSConnectAccountResult result,
          final RSConnectServerInfo serverInfo,
          final ProgressIndicator indicator,
          final OperationWithInput<AccountConnectResult> onConnected)
@@ -267,6 +268,7 @@ public class RSAccountConnector implements WindowClosedEvent.Handler,
             pendingServerInfo_ = serverInfo;
             pendingAuthIndicator_ = indicator;
             pendingOnConnected_ = onConnected;
+            pendingWizardResult_ = result;
             
             // prepare a new window with the auth URL loaded
             NewWindowOptions options = new NewWindowOptions();
@@ -382,13 +384,15 @@ public class RSAccountConnector implements WindowClosedEvent.Handler,
       if (pendingAuthToken_ != null &&
           pendingServerInfo_ != null &&
           pendingAuthIndicator_ != null &&
-          pendingOnConnected_ != null)
+          pendingOnConnected_ != null &&
+          pendingWizardResult_ != null)
       {
          if (pendingAuthUser_ == null)
          {
             // the window closed because the user closed it manually--check to
             // see if the token is now valid
-            onAuthCompleted(pendingServerInfo_, 
+            onAuthCompleted(pendingWizardResult_,
+                  pendingServerInfo_, 
                   pendingAuthToken_, 
                   pendingAuthIndicator_, 
                   pendingOnConnected_);
@@ -397,7 +401,8 @@ public class RSAccountConnector implements WindowClosedEvent.Handler,
          {
             // the window closed because we detected that the token became
             // valid--add the user directly
-            onUserAuthVerified(pendingServerInfo_, 
+            onUserAuthVerified(pendingWizardResult_,
+                  pendingServerInfo_, 
                   pendingAuthToken_, 
                   pendingAuthUser_, 
                   pendingAuthIndicator_, 
@@ -405,6 +410,7 @@ public class RSAccountConnector implements WindowClosedEvent.Handler,
             
          }
       }
+      pendingWizardResult_ = null;
       pendingAuthToken_ = null;
       pendingServerInfo_ = null;
       pendingAuthIndicator_ = null;
@@ -412,6 +418,7 @@ public class RSAccountConnector implements WindowClosedEvent.Handler,
    }
 
    private void onAuthCompleted(
+         final NewRSConnectAccountResult result,
          final RSConnectServerInfo serverInfo,
          final RSConnectPreAuthToken token,
          final ProgressIndicator indicator,
@@ -434,7 +441,7 @@ public class RSAccountConnector implements WindowClosedEvent.Handler,
             }
             else
             {
-               onUserAuthVerified(serverInfo, token, user, 
+               onUserAuthVerified(result, serverInfo, token, user, 
                                   indicator, onConnected);
             }
          }
@@ -454,6 +461,7 @@ public class RSAccountConnector implements WindowClosedEvent.Handler,
    }
    
    private void onUserAuthVerified(
+         final NewRSConnectAccountResult result,
          final RSConnectServerInfo serverInfo,
          final RSConnectPreAuthToken token,
          final RSConnectAuthUser user,
@@ -462,7 +470,12 @@ public class RSAccountConnector implements WindowClosedEvent.Handler,
    {
       indicator.onProgress("Adding account...");
       String accountName;
-      if (user.getUsername().length() > 0) 
+      if (result.getAccountNickname().length() > 0)
+      {
+         // if the user specified a nickname, that trumps everything else
+         accountName = result.getAccountNickname();
+      }
+      else if (user.getUsername().length() > 0) 
       {
          // if we have a username already, just use it 
          accountName = user.getUsername();
@@ -509,6 +522,7 @@ public class RSAccountConnector implements WindowClosedEvent.Handler,
    private ProgressIndicator pendingAuthIndicator_;
    private OperationWithInput<AccountConnectResult> pendingOnConnected_;
    private RSConnectAuthUser pendingAuthUser_;
+   private NewRSConnectAccountResult pendingWizardResult_;
    private boolean runningAuthCompleteCheck_ = false;
    private RSConnectAuthWaitDialog waitDialog_;
    

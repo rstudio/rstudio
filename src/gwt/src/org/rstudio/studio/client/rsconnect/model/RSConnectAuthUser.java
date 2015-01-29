@@ -43,6 +43,6 @@ public class RSConnectAuthUser extends JavaScriptObject
    }-*/;
 
    public final native String getLastName() /*-{
-      return this.first_name;
+      return this.last_name;
    }-*/;
 }
