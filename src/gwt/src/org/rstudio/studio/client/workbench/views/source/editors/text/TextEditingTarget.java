@@ -1997,8 +1997,25 @@ public class TextEditingTarget implements
       return fileType_;
    }
    
+   // We define a pattern that specifies valid lines for alignment. These
+   // are lines of the form:
+   //
+   //    x = 1,
+   //    y = 2,
+   //    z = 3
+   //
+   // For now, we disallow parentheses and such.
+   private static final String ID_PATTERN_STRING =
+         "[\\w._$@'\"]+";
+   
    private static final Pattern ALIGN_DELIM_PATTERN =
-         Pattern.create("(<<-|<-|==|=)");
+         Pattern.create("(^\\s*" +
+               ID_PATTERN_STRING +
+               ")\\s*" +
+               "(<<-|<-|=)" +
+               "\\s*(" +
+               ID_PATTERN_STRING +
+               "\\s*[,;]?\\s*$)");
    
    private ArrayList<Pair<Integer, Integer>> getAlignmentRanges()
    {
@@ -2010,17 +2027,27 @@ public class TextEditingTarget implements
       
       for (int i = selectionStart; i <= selectionEnd; i++)
       {
-         if (ALIGN_DELIM_PATTERN.match(
-               StringUtil.maskStrings(
-                     docDisplay_.getLine(i)), 0) != null)
+         String masked = StringUtil.maskStrings(
+               docDisplay_.getLine(i));
+         
+         Match match = ALIGN_DELIM_PATTERN.match(masked, 0);
+         if (match != null)
          {
+            String delimiter = match.getGroup(2);
+            Debug.logToConsole("Delimiter: " + delimiter);
             int rangeStart = i;
             
-            while (i <= selectionEnd &&
-                  ALIGN_DELIM_PATTERN.match(
-                        StringUtil.maskStrings(
-                              docDisplay_.getLine(i)), 0) != null)
-               i++;
+            int n = docDisplay_.getRowCount();
+            while (i++ < n)
+            {
+               String line = StringUtil.maskStrings(
+                     docDisplay_.getLine(i));
+               
+               match = ALIGN_DELIM_PATTERN.match(line, 0);
+               if (match == null || !match.getGroup(2).equals(delimiter))
+                  break;
+            }
+            
             int rangeEnd = i - 1;
             ranges.add(new Pair<Integer, Integer>(rangeStart, rangeEnd));
          }
@@ -2037,7 +2064,7 @@ public class TextEditingTarget implements
             Position.create(startRow, 0),
             Position.create(endRow, docDisplay_.getLine(endRow).length())));
       
-      String[] splat = docDisplay_.getSelectionValue().split("\\n");
+      String[] splat = docDisplay_.getSelectionValue().split("\n");
       
       ArrayList<String> starts = new ArrayList<String>();
       ArrayList<String> delimiters = new ArrayList<String>();
@@ -2047,6 +2074,8 @@ public class TextEditingTarget implements
          Match match = ALIGN_DELIM_PATTERN.match(
                StringUtil.maskStrings(splat[i]), 0);
          
+         Debug.logObject(match);
+         
          if (match == null)
          {
             starts.add(splat[i]);
@@ -2055,16 +2084,19 @@ public class TextEditingTarget implements
          }
          else
          {
-            String delimiter = match.getGroup(0);
-            int index = match.getIndex();
-            
-            starts.add(splat[i].substring(0, index).replaceAll("\\s*$", ""));
-            delimiters.add(delimiter);
-            ends.add(splat[i].substring(index + delimiter.length()).trim());
+            starts.add(match.getGroup(1));
+            delimiters.add(match.getGroup(2));
+            ends.add(match.getGroup(3));
          }
       }
       
-      // Transform the ends if they appear numeric-y
+      // Transform the ends if they appear numeric-y -- we want to
+      // right-align numbers, e.g.
+      //
+      //    x =   1,
+      //    y =  10,
+      //    z = 100
+      //
       ArrayList<Integer> endPrefixes = new ArrayList<Integer>();
       boolean success = true;
       for (int i = 0; i < ends.size(); i++)
@@ -2094,6 +2126,7 @@ public class TextEditingTarget implements
                   ends.get(i).replaceAll("^\\s*", ""));  
       }
       
+      // Pad the 'start's with whitespace, to align the delimiter.
       int maxLength = 0;
       for (int i = 0; i < starts.size(); i++)
          maxLength = Math.max(maxLength, starts.get(i).length());
@@ -2102,20 +2135,14 @@ public class TextEditingTarget implements
          starts.set(i, starts.get(i) +
                StringUtil.repeat(" ", maxLength - starts.get(i).length()));
       
+      // Build a new selection by concatenating the (transformed)
+      // pieces.
       StringBuilder newSelectionBuilder = new StringBuilder();
-      int maxDelimiterLength = 0;
-      for (int i = 0; i < delimiters.size(); i++)
-         maxDelimiterLength = Math.max(maxDelimiterLength,
-               delimiters.get(i).length());
       
       for (int i = 0; i < starts.size(); i++)
       {
          newSelectionBuilder.append(starts.get(i));
-         newSelectionBuilder.append(
-               StringUtil.repeat(" ",
-                     maxDelimiterLength - delimiters.get(i).length() + 1) +
-               delimiters.get(i) +
-               " ");
+         newSelectionBuilder.append(" " + delimiters.get(i) + " ");
          newSelectionBuilder.append(ends.get(i));
          if (i < starts.size() - 1)
             newSelectionBuilder.append("\n");
@@ -2133,6 +2160,7 @@ public class TextEditingTarget implements
          return;
       
       insertPrettyNewlines();
+      alignAssignment();
    }
    
    class MutableInteger {
@@ -2879,7 +2907,7 @@ public class TextEditingTarget implements
             
             // Transform semi-colons into newlines.
             // TODO: Too destructive?
-            cursor.setValue(cursor.getValue().replaceAll(";+(?!\\n)", "\n"));
+            cursor.setValue(cursor.getValue().replaceAll(";+\\s*(?!\\n)", "\n"));
          }
          
          // If we encounter an opening paren, recurse a new token cursor within,
@@ -2993,8 +3021,11 @@ public class TextEditingTarget implements
       InputEditorSelection initialSelection =
             docDisplay_.getSelection();
       
+      Debug.logToConsole("Getting alignment ranges...");
       ArrayList<Pair<Integer, Integer>> ranges =
             getAlignmentRanges();
+      
+      Debug.logObject(ranges);
       
       if (ranges.isEmpty())
          return;
