@@ -26,8 +26,6 @@
 
 #include "RSourceIndex.hpp"
 
-// TODO: populate the target search string in toolbar
-
 // TODO: multi-file project searches
 
 // TODO: differnet keyboard shortcut
@@ -52,6 +50,7 @@ struct FindReferencesData
    }
    CXTranslationUnit tu;
    std::string USR;
+   std::string spelling;
    std::vector<SourceRange> references;
 };
 
@@ -79,6 +78,10 @@ CXChildVisitResult findReferencesVisitor(CXCursor cxCursor,
       // check for matching USR
       if (referencedCursor.getUSR() == pData->USR)
       {
+         // record spelling
+         if (pData->spelling.empty())
+            pData->spelling = referencedCursor.spelling();
+
          // if the cursor is a declaration then we need to
          // tokenize it in order to get the type name
          if (cursor.isDeclaration())
@@ -88,7 +91,7 @@ CXChildVisitResult findReferencesVisitor(CXCursor cxCursor,
             {
                Token token = tokens.getToken(i);
                if (token.kind() == CXToken_Identifier &&
-                   token.spelling() == cursor.displayName())
+                   token.spelling() == cursor.spelling())
                {
                   SourceRange range = token.extent();
                   pData->references.push_back(range);
@@ -240,9 +243,11 @@ private:
 
 } // anonymous namespace
 
-core::Error findReferences(const core::libclang::Cursor& cursor,
+core::Error findReferences(const core::libclang::FileLocation& location,
+                           std::string* pSpelling,
                            std::vector<core::libclang::SourceRange>* pRefs)
 {
+   Cursor cursor = rSourceIndex().referencedCursorForFileLocation(location);
    if (!cursor.isValid() || !cursor.isDeclaration())
       return Success();
 
@@ -261,13 +266,14 @@ core::Error findReferences(const core::libclang::Cursor& cursor,
       return Success();
 
    // visit the cursors and accumulate references
-   FindReferencesData findUsagesData(tu.getCXTranslationUnit(), USR);
+   FindReferencesData findReferencesData(tu.getCXTranslationUnit(), USR);
    libclang::clang().visitChildren(tu.getCursor().getCXCursor(),
                                    findReferencesVisitor,
-                                   (CXClientData)&findUsagesData);
+                                   (CXClientData)&findReferencesData);
 
    // copy the locations to the out parameter
-   *pRefs = findUsagesData.references;
+   *pSpelling = findReferencesData.spelling;
+   *pRefs = findReferencesData.references;
 
    return Success();
 
@@ -291,13 +297,11 @@ Error findUsages(const json::JsonRpcRequest& request,
 
    // get the declaration cursor for this file location
    core::libclang::FileLocation location(filePath, line, column);
-   Cursor cursor = rSourceIndex().referencedCursorForFileLocation(location);
-   if (!cursor.isValid())
-      return Success();
 
    // find the references
+   std::string spelling;
    std::vector<core::libclang::SourceRange> usageLocations;
-   error = findReferences(cursor, &usageLocations);
+   error = findReferences(location, &spelling, &usageLocations);
    if (error)
       return error;
 
@@ -306,8 +310,7 @@ Error findUsages(const json::JsonRpcRequest& request,
    std::vector<SourceMarker> markers = SourceMarkerGenerator()
                                  .markersForCursorLocations(usageLocations);
 
-   SourceMarkerSet markerSet("C++ Find Usages: " + cursor.displayName(),
-                             markers);
+   SourceMarkerSet markerSet("C++ Find Usages: " + spelling, markers);
    showSourceMarkers(markerSet, MarkerAutoSelectNone);
 
    return Success();

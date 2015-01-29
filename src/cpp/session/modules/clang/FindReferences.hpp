@@ -26,7 +26,7 @@ namespace rstudio {
 
 namespace core {
 namespace libclang {
-   struct Cursor;
+   struct FileLocation;
    struct SourceRange;
 }
 }
@@ -35,7 +35,8 @@ namespace session {
 namespace modules {      
 namespace clang {
 
-core::Error findReferences(const core::libclang::Cursor& cursor,
+core::Error findReferences(const core::libclang::FileLocation& location,
+                           std::string* pSpelling,
                            std::vector<core::libclang::SourceRange>* pRefs);
 
 core::Error findUsages(const core::json::JsonRpcRequest& request,

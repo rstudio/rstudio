@@ -61,6 +61,7 @@ public:
 
 public:
 
+   std::string spelling() const;
    std::string displayName() const;
 
    CXCursorKind getKind() const;

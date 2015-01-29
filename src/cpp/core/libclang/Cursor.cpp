@@ -27,6 +27,10 @@ Cursor::Cursor()
 {
 }
 
+std::string Cursor::spelling() const
+{
+   return toStdString(clang().getCursorSpelling(cursor_));
+}
 
 std::string Cursor::displayName() const
 {
