@@ -451,6 +451,18 @@ core::Error RCompilationDatabase::executeRCmdSHLIB(
    return core::system::runCommand(rCmd.commandString(), options, pResult);
 }
 
+bool RCompilationDatabase::isProjectTranslationUnit(
+                                          const FilePath& filePath) const
+{
+   using namespace projects;
+   FilePath pkgPath = projectContext().buildTargetPath();
+   FilePath srcDirPath = pkgPath.childPath("src");
+   FilePath includePath = pkgPath.childPath("inst/include");
+   return ((projectContext().config().buildType == r_util::kBuildTypePackage) &&
+          (!filePath.relativePath(srcDirPath).empty() ||
+           !filePath.relativePath(includePath).empty()));
+}
+
 
 std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
                                             const std::string& filename)
@@ -462,14 +474,8 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
    FilePath filePath(filename);
 
    // if this is a package source file then return the package args
-   using namespace projects;
    CompilationConfig config;
-   FilePath pkgPath = projectContext().buildTargetPath();
-   FilePath srcDirPath = pkgPath.childPath("src");
-   FilePath includePath = pkgPath.childPath("inst/include");
-   if ((projectContext().config().buildType == r_util::kBuildTypePackage) &&
-       (!filePath.relativePath(srcDirPath).empty() ||
-        !filePath.relativePath(includePath).empty()))
+   if (isProjectTranslationUnit(filePath))
    {
       // (re-)create on demand
       updateForCurrentPackage();

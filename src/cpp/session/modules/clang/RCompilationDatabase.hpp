@@ -46,6 +46,8 @@ public:
    std::vector<std::string> compileArgsForTranslationUnit(
                                              const std::string& filename);
 
+   bool isProjectTranslationUnit(const core::FilePath& filePath) const;
+
 private:
 
    core::Error executeSourceCpp(core::system::Options env,
