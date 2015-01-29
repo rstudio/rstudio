@@ -52,6 +52,8 @@ public:
 
    bool empty() const { return ! tu_; }
 
+   CXTranslationUnit getCXTranslationUnit() const { return tu_; }
+
    std::string getSpelling() const;
 
    bool includesFile(const std::string& filename) const;

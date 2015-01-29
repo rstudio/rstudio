@@ -103,6 +103,11 @@ Cursor Cursor::getCannonical() const
    return Cursor(clang().getCanonicalCursor(cursor_));
 }
 
+Cursor Cursor::getLexicalParent() const
+{
+   return Cursor(clang().getCursorLexicalParent(cursor_));
+}
+
 Cursor Cursor::getSemanticParent() const
 {
    return Cursor(clang().getCursorSemanticParent(cursor_));
@@ -134,23 +139,6 @@ SourceRange Cursor::getExtent() const
 {
    return SourceRange(clang().getCursorExtent(cursor_));
 }
-
-CursorLocation Cursor::getLocation() const
-{
-   SourceRange sourceRange = getExtent();
-   FileLocation startLocation = sourceRange.getStart().getSpellingLocation();
-   FileLocation endLocation = sourceRange.getEnd().getSpellingLocation();
-
-   unsigned extent = 0;
-   if (startLocation.line == endLocation.line)
-      extent = endLocation.column - startLocation.column;
-
-   return CursorLocation(startLocation.filePath,
-                         startLocation.line,
-                         startLocation.column,
-                         extent);
-}
-
 
 unsigned Cursor::hash() const
 {

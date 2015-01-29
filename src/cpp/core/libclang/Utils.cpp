@@ -25,9 +25,17 @@ namespace libclang {
 // shouldn't be used after this call
 std::string toStdString(CXString cxStr)
 {
-   std::string str(clang().getCString(cxStr));
-   clang().disposeString(cxStr);
-   return str;
+   const char* str = clang().getCString(cxStr);
+   if (str != NULL)
+   {
+      std::string stdString(str);
+      clang().disposeString(cxStr);
+      return stdString;
+   }
+   else
+   {
+      return std::string();
+   }
 }
 
 } // namespace libclang

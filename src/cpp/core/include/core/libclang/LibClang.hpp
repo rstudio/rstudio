@@ -28,6 +28,7 @@
 #include "SourceIndex.hpp"
 #include "SourceLocation.hpp"
 #include "SourceRange.hpp"
+#include "Token.hpp"
 #include "TranslationUnit.hpp"
 #include "UnsavedFiles.hpp"
 #include "Utils.hpp"

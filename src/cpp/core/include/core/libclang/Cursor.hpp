@@ -46,25 +46,6 @@ struct FileLocation
    unsigned column;
 };
 
-// cursor location
-struct CursorLocation : public FileLocation
-{
-   CursorLocation()
-      : FileLocation(), extent(0)
-   {
-   }
-
-   CursorLocation(const FilePath& filePath,
-                  unsigned line,
-                  unsigned column,
-                  unsigned extent)
-      : FileLocation(filePath, line, column), extent(extent)
-   {
-   }
-
-   unsigned extent;
-};
-
 class SourceRange;
 
 class Cursor
@@ -102,6 +83,7 @@ public:
 
    Cursor getCannonical() const;
 
+   Cursor getLexicalParent() const;
    Cursor getSemanticParent() const;
 
    CXLinkageKind getLinkageKind() const;
@@ -116,8 +98,6 @@ public:
    SourceLocation getSourceLocation() const;
 
    SourceRange getExtent() const;
-
-   CursorLocation getLocation() const;
 
    bool isNull() const;
    bool isValid() const;

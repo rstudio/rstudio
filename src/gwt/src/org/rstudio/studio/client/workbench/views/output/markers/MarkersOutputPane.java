@@ -74,7 +74,6 @@ public class MarkersOutputPane extends WorkbenchPane
    protected Toolbar createMainToolbar()
    {
       Toolbar toolbar = new Toolbar();
-      toolbar.addLeftWidget(new ToolbarLabel("Showing:"));
       toolbar.addLeftWidget(markerSetsToolbarButton_);
       
       toolbar.addRightWidget(clearButton_);

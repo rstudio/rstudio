@@ -26,12 +26,13 @@
 
 #include "RSourceIndex.hpp"
 
-// TODO: need to be able to vector in on the actual type name
-// for multi-line references! (such that extent is always valid)
-
 // TODO: populate the target search string in toolbar
 
 // TODO: multi-file project searches
+
+// TODO: differnet keyboard shortcut
+
+// TODO: ace content menu
 
 using namespace rstudio::core;
 using namespace rstudio::core::libclang;
@@ -45,18 +46,21 @@ namespace {
 
 struct FindReferencesData
 {
-   explicit FindReferencesData(const std::string& USR)
-      : USR(USR)
+   FindReferencesData(CXTranslationUnit tu, const std::string& USR)
+      : tu(tu), USR(USR)
    {
    }
+   CXTranslationUnit tu;
    std::string USR;
-   std::vector<CursorLocation> references;
+   std::vector<SourceRange> references;
 };
 
 CXChildVisitResult findReferencesVisitor(CXCursor cxCursor,
                                          CXCursor,
                                          CXClientData data)
 {
+   using namespace rstudio::core::libclang;
+
    // get pointer to data struct
    FindReferencesData* pData = (FindReferencesData*)data;
 
@@ -74,7 +78,29 @@ CXChildVisitResult findReferencesVisitor(CXCursor cxCursor,
    {
       // check for matching USR
       if (referencedCursor.getUSR() == pData->USR)
-         pData->references.push_back(cursor.getLocation());
+      {
+         // if the cursor is a declaration then we need to
+         // tokenize it in order to get the type name
+         if (cursor.isDeclaration())
+         {
+            libclang::Tokens tokens(pData->tu, cursor.getExtent());
+            for (unsigned i=0; i<tokens.numTokens(); ++i)
+            {
+               Token token = tokens.getToken(i);
+               if (token.kind() == CXToken_Identifier &&
+                   token.spelling() == cursor.displayName())
+               {
+                  SourceRange range = token.extent();
+                  pData->references.push_back(range);
+                  break;
+               }
+           }
+         }
+         else
+         {
+            pData->references.push_back(cursor.getExtent());
+         }
+      }
    }
 
    // recurse into namespaces, classes, etc.
@@ -85,27 +111,29 @@ class SourceMarkerGenerator
 {
 public:
    std::vector<module_context::SourceMarker> markersForCursorLocations(
-              const std::vector<core::libclang::CursorLocation>& locations)
+              const std::vector<core::libclang::SourceRange>& locations)
    {
       using namespace module_context;
       std::vector<SourceMarker> markers;
 
-      BOOST_FOREACH(const libclang::CursorLocation& loc, locations)
+      BOOST_FOREACH(const libclang::SourceRange& loc, locations)
       {
+         FileLocation startLoc = loc.getStart().getSpellingLocation();
+
          // get file contents and use it to create the message
-         std::size_t line = loc.line - 1;
+         std::size_t line = startLoc.line - 1;
          std::string message;
          const std::vector<std::string>& lines = fileContents(
-                                                loc.filePath.absolutePath());
+                                 startLoc.filePath.absolutePath());
          if (line < lines.size())
             message = htmlMessage(loc, lines[line]);
 
 
          // create marker
          SourceMarker marker(SourceMarker::Usage,
-                             loc.filePath,
-                             loc.line,
-                             loc.column,
+                             startLoc.filePath,
+                             startLoc.line,
+                             startLoc.column,
                              core::html_utils::HTML(message, true),
                              true);
 
@@ -118,15 +146,22 @@ public:
 
 private:
 
-   static std::string htmlMessage(const libclang::CursorLocation& loc,
+   static std::string htmlMessage(const libclang::SourceRange& loc,
                                   const std::string& message)
    {
+      FileLocation startLoc = loc.getStart().getSpellingLocation();
+      FileLocation endLoc = loc.getEnd().getSpellingLocation();
+
+      unsigned extent = 0;
+      if (startLoc.line == endLoc.line)
+         extent = endLoc.column - startLoc.column;
+
       // attempt to highlight the location
       using namespace string_utils;
-      unsigned col = loc.column - 1;
-      if ((col + loc.extent) < message.length())
+      unsigned col = startLoc.column - 1;
+      if ((col + extent) < message.length())
       {
-         if (loc.extent == 0)
+         if (extent == 0)
          {
             return "<strong>" + htmlEscape(message) + "</strong>";
          }
@@ -135,9 +170,9 @@ private:
             std::ostringstream ostr;
             ostr << htmlEscape(message.substr(0, col));
             ostr << "<strong>";
-            ostr << htmlEscape(message.substr(col, loc.extent));
+            ostr << htmlEscape(message.substr(col, extent));
             ostr << "</strong>";
-            ostr << htmlEscape(message.substr(col + loc.extent));
+            ostr << htmlEscape(message.substr(col + extent));
             return ostr.str();
          }
       }
@@ -162,7 +197,9 @@ private:
          for (unsigned i = 0; i<numFiles; ++i)
          {
             CXUnsavedFile unsavedFile = unsavedFiles.unsavedFilesArray()[i];
-            if (std::string(unsavedFile.Filename) == filename)
+            if (unsavedFile.Filename != NULL &&
+                std::string(unsavedFile.Filename) == filename &&
+                unsavedFile.Contents != NULL)
             {
                std::string contents(unsavedFile.Contents, unsavedFile.Length);
                std::vector<std::string> lines;
@@ -203,10 +240,9 @@ private:
 
 } // anonymous namespace
 
-core::Error findReferences(const core::libclang::FileLocation& location,
-                           std::vector<core::libclang::CursorLocation>* pRefs)
+core::Error findReferences(const core::libclang::Cursor& cursor,
+                           std::vector<core::libclang::SourceRange>* pRefs)
 {
-   Cursor cursor = rSourceIndex().referencedCursorForFileLocation(location);
    if (!cursor.isValid() || !cursor.isDeclaration())
       return Success();
 
@@ -217,12 +253,15 @@ core::Error findReferences(const core::libclang::FileLocation& location,
 
    // now look for references in the current translation unit
    TranslationUnit tu = rSourceIndex().getTranslationUnit(
-                                    location.filePath.absolutePath(), true);
+                                             cursor.getSourceLocation()
+                                                   .getSpellingLocation()
+                                                   .filePath.absolutePath(),
+                                             true);
    if (tu.empty())
       return Success();
 
    // visit the cursors and accumulate references
-   FindReferencesData findUsagesData(USR);
+   FindReferencesData findUsagesData(tu.getCXTranslationUnit(), USR);
    libclang::clang().visitChildren(tu.getCursor().getCXCursor(),
                                    findReferencesVisitor,
                                    (CXClientData)&findUsagesData);
@@ -252,10 +291,13 @@ Error findUsages(const json::JsonRpcRequest& request,
 
    // get the declaration cursor for this file location
    core::libclang::FileLocation location(filePath, line, column);
+   Cursor cursor = rSourceIndex().referencedCursorForFileLocation(location);
+   if (!cursor.isValid())
+      return Success();
 
    // find the references
-   std::vector<core::libclang::CursorLocation> usageLocations;
-   error = findReferences(location, &usageLocations);
+   std::vector<core::libclang::SourceRange> usageLocations;
+   error = findReferences(cursor, &usageLocations);
    if (error)
       return error;
 
@@ -264,8 +306,8 @@ Error findUsages(const json::JsonRpcRequest& request,
    std::vector<SourceMarker> markers = SourceMarkerGenerator()
                                  .markersForCursorLocations(usageLocations);
 
-
-   SourceMarkerSet markerSet("C++ Find Usages", markers);
+   SourceMarkerSet markerSet("C++ Find Usages: " + cursor.displayName(),
+                             markers);
    showSourceMarkers(markerSet, MarkerAutoSelectNone);
 
    return Success();

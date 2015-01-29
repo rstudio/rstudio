@@ -1,5 +1,6 @@
+
 /*
- * SourceRange.hpp
+ * Token.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,51 +14,62 @@
  *
  */
 
-#ifndef CORE_LIBCLANG_SOURCE_RANGE_HPP
-#define CORE_LIBCLANG_SOURCE_RANGE_HPP
+#ifndef CORE_LIBCLANG_TOKEN_HPP
+#define CORE_LIBCLANG_TOKEN_HPP
 
 #include <string>
-#include <iosfwd>
+
+#include <boost/noncopyable.hpp>
 
 #include "clang-c/Index.h"
+
 
 namespace rstudio {
 namespace core {
 namespace libclang {
 
+class TranslationUnit;
+class SourceRange;
 class SourceLocation;
 
-class SourceRange
+class Token
 {
 public:
-   SourceRange();
-
-   explicit SourceRange(CXSourceRange range)
-      : range_(range)
+   Token(CXTranslationUnit tu, CXToken token)
+      : tu_(tu), token_(token)
    {
    }
 
-   // source range objects are managed internal to clang so instances
-   // of this type can be freely copied
+   CXTokenKind kind() const;
 
-   CXSourceRange getCXSourceRange() const { return range_; }
+   std::string spelling() const;
 
-   bool isNull() const;
+   SourceLocation location() const;
 
-   SourceLocation getStart() const;
-
-   SourceLocation getEnd() const;
-
-   bool operator==(const SourceRange& other) const ;
-   bool operator!=(const SourceRange& other) const ;
+   SourceRange extent() const;
 
 private:
-   CXSourceRange range_;
+   CXTranslationUnit tu_;
+   CXToken token_;
 };
 
+class Tokens : boost::noncopyable
+{
+public:
+   Tokens(CXTranslationUnit tu, const SourceRange& sourceRange);
+   virtual ~Tokens();
+
+   unsigned numTokens() const { return numTokens_; }
+   Token getToken(unsigned index) const { return Token(tu_, pTokens_[index]); }
+
+private:
+   CXTranslationUnit tu_;
+   CXToken* pTokens_;
+   unsigned numTokens_;
+};
 
 } // namespace libclang
 } // namespace core
 } // namespace rstudio
 
-#endif // CORE_LIBCLANG_SOURCE_RANGE_HPP
+#endif // CORE_LIBCLANG_TOKEN_HPP

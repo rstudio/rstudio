@@ -63,6 +63,7 @@ set (CORE_SOURCE_FILES
    libclang/SourceIndex.cpp
    libclang/SourceLocation.cpp
    libclang/SourceRange.cpp
+   libclang/Token.cpp
    libclang/TranslationUnit.cpp
    libclang/UnsavedFiles.cpp
    libclang/Utils.cpp
