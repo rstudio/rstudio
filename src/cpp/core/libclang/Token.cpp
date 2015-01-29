@@ -28,23 +28,26 @@ CXTokenKind Token::kind() const
 
 std::string Token::spelling() const
 {
-   return toStdString(libclang::clang().getTokenSpelling(tu_, token_));
+   return toStdString(libclang::clang().getTokenSpelling(
+                         tu_.getCXTranslationUnit(), token_));
 }
 
 SourceLocation Token::location() const
 {
-   return SourceLocation(libclang::clang().getTokenLocation(tu_, token_));
+   return SourceLocation(libclang::clang().getTokenLocation(
+                         tu_.getCXTranslationUnit(), token_));
 }
 
 SourceRange Token::extent() const
 {
-   return SourceRange(libclang::clang().getTokenExtent(tu_, token_));
+   return SourceRange(libclang::clang().getTokenExtent(
+                         tu_.getCXTranslationUnit(), token_));
 }
 
-Tokens::Tokens(CXTranslationUnit tu, const SourceRange &sourceRange)
+Tokens::Tokens(TranslationUnit tu, const SourceRange &sourceRange)
    : tu_(tu), pTokens_(NULL), numTokens_(0)
 {
-   libclang::clang().tokenize(tu_,
+   libclang::clang().tokenize(tu_.getCXTranslationUnit(),
                               sourceRange.getCXSourceRange(),
                               &pTokens_,
                               &numTokens_);
@@ -55,7 +58,11 @@ Tokens::~Tokens()
    try
    {
       if (pTokens_ != NULL)
-        libclang::clang().disposeTokens(tu_, pTokens_, numTokens_);
+      {
+        libclang::clang().disposeTokens(tu_.getCXTranslationUnit(),
+                                        pTokens_,
+                                        numTokens_);
+      }
    }
    catch(...)
    {

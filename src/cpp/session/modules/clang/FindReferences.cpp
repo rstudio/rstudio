@@ -25,6 +25,7 @@
 #include <session/SessionModuleContext.hpp>
 
 #include "RSourceIndex.hpp"
+#include "RCompilationDatabase.hpp"
 
 // TODO: multi-file project searches
 
@@ -43,11 +44,11 @@ namespace {
 
 struct FindReferencesData
 {
-   FindReferencesData(CXTranslationUnit tu, const std::string& USR)
+   FindReferencesData(TranslationUnit tu, const std::string& USR)
       : tu(tu), USR(USR)
    {
    }
-   CXTranslationUnit tu;
+   TranslationUnit tu;
    std::string USR;
    std::string spelling;
    std::vector<SourceRange> references;
@@ -255,22 +256,38 @@ core::Error findReferences(const core::libclang::FileLocation& location,
    if (USR.empty())
       return Success();
 
-   // now look for references in the current translation unit
-   TranslationUnit tu = rSourceIndex().getTranslationUnit(
+   // determine what translation units to look in
+   std::vector<TranslationUnit> units;
+
+   //if (rCompilationDatabase().isProjectTranslationUnit(location.filePath))
+   if (false)
+   {
+
+   }
+   else
+   {
+      TranslationUnit tu = rSourceIndex().getTranslationUnit(
                                              location.filePath.absolutePath(),
                                              true);
-   if (tu.empty())
-      return Success();
+      if (!tu.empty())
+         units.push_back(tu);
+   }
 
-   // visit the cursors and accumulate references
-   FindReferencesData findReferencesData(tu.getCXTranslationUnit(), USR);
-   libclang::clang().visitChildren(tu.getCursor().getCXCursor(),
-                                   findReferencesVisitor,
-                                   (CXClientData)&findReferencesData);
+   // visit all the translation units
+   BOOST_FOREACH(TranslationUnit tu, units)
+   {
+      // visit the cursors and accumulate references
+      FindReferencesData findReferencesData(tu, USR);
+      libclang::clang().visitChildren(tu.getCursor().getCXCursor(),
+                                      findReferencesVisitor,
+                                      (CXClientData)&findReferencesData);
 
-   // copy the locations to the out parameter
-   *pSpelling = findReferencesData.spelling;
-   *pRefs = findReferencesData.references;
+      // copy the locations to the out parameter
+      *pSpelling = findReferencesData.spelling;
+      std::copy(findReferencesData.references.begin(),
+                findReferencesData.references.end(),
+                std::back_inserter(*pRefs));
+   }
 
    return Success();
 
