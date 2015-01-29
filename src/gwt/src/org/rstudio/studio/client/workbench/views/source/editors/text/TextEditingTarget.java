@@ -2503,12 +2503,25 @@ public class TextEditingTarget implements
       private HashMap<String, String> complements_;
    }
    
+   // The main driver of the new line inserter.
+   //
+   // 'cursor': The current token cursor, unique to this block.
+   // 'opener': The open brace ('[', '{', '(', '[['),
+   // 'closer': The closing brace (']', '}', ')', ']]')
+   // 'nestLevel': The nesting level within parentheses; e.g. '()'.
+   //              This is used to infer appropriate newline levels
+   //              for deeply nested function calls.
+   // 'preferNewlineAfterComma': Does the parent scope prefer that this scope
+   //                            insert a newline after commas?
+   // 'preferNewlineAfterBrace': Does the parent scope prefer that this scope
+   //                            insert a newline after braces?
    void doInsertPrettyNewlines(TokenCursor cursor,
                                String opener,
                                String closer,
                                int nestLevel,
                                boolean preferNewlineAfterComma,
-                               boolean preferNewlineAfterBrace)
+                               boolean preferNewlineAfterBrace,
+                               boolean topLevel)
    {
       // Root state == top level of document; no open braces yet
       // encountered.
@@ -2520,10 +2533,18 @@ public class TextEditingTarget implements
       int commaCount = 0;
       int equalsCount = 0;
       
+      // We may override newline insertions in special cases to ensure
+      // certain code structures remain intact, e.g.
+      //
+      //     lapply(x, function() { ... })
+      //
+      // We almost never want the anonymous function to lie on its own
+      // line.
       boolean overrideNewlineInsertionAsFalse = false;
       
       String startValue = cursor.currentValue();
-      String prevSignificantValue = cursor.previousSignificantToken().getValue();
+      String prevSignificantValue =
+            cursor.previousSignificantToken().getValue();
       
       // Trim whitespace following the 'opener' -- we may add it back later.
       if (!rootState)
@@ -2531,6 +2552,9 @@ public class TextEditingTarget implements
       
       // Scan through once to figure out whether we want to insert newlines.
       TokenCursor clone = cursor.clone();
+      
+      // Accumulate the length of the (non-whitespace)
+      // tokens within this scope.
       int accumulatedLength = 0;
       
       while (clone.moveToNextToken())
@@ -2541,20 +2565,40 @@ public class TextEditingTarget implements
          accumulatedLength += clone.getValue().replaceAll("\\s", "").length();
          
          if (clone.currentType().equals("text"))
-         {
             commaCount += StringUtil.countMatches(
                   clone.currentValue(), ',');
-         }
          
+         // If we encounter an (anonymous) function token, or an
+         // opening brace, we prefer not inserting newlines (to preserve
+         // structures like:
+         //
+         //    lapply(foo, function(x) { ... })
+         //
+         // or
+         //
+         //    tryCatch({
+         //
          if (clone.currentValue().equals("function") ||
              clone.currentValue().equals("{"))
          {
             overrideNewlineInsertionAsFalse = true;
          }
          
+         // If we encounter an '=', presumedly
+         // this is for a named function call.
          if (clone.currentValue().equals("="))
          {
             equalsCount++;
+            
+            // If there is a function token ahead of the '=', we prefer
+            // inserting newlines after braces, so that function objects
+            // assigned within lists (or function calls) are placed on
+            // their own line, e.g.
+            //
+            //  foo = list(
+            //     y = function(...) { ... }
+            //   )
+            //
             if (clone.moveToNextSignificantToken())
             {
                if (clone.currentValue().equals("function"))
@@ -2562,6 +2606,8 @@ public class TextEditingTarget implements
             }
          }
          
+         // If we encounter a '{' or '[', skip over -- we don't want to
+         // enumerate things in 'child' scopes.
          if (clone.currentValue().equals("{") ||
              clone.currentValue().equals("["))
          {
@@ -2569,10 +2615,17 @@ public class TextEditingTarget implements
             continue;
          }
          
+         // If we encounter a '(', we will want to accumulate the length
+         // of tokens in that scope. This, used alongside the nesting level,
+         // helps us infer the appropriate place to insert newlines when
+         // within nested function calls.
          if (clone.currentValue().equals("("))
          {
             if (clone.moveToPreviousSignificantToken())
             {
+               // For keywords, we prefer not accumulating -- this helps us
+               // ensure we don't insert unnecessary newlines within
+               // 'for', 'if', 'while' statements and the like.
                boolean isKeyword = clone.isKeyword();
                clone.moveToNextSignificantToken();
                if (isKeyword)
@@ -2587,11 +2640,17 @@ public class TextEditingTarget implements
             continue;
          }
          
-         if (!rootState && clone.currentValue().equals(closer))
+         // If we find the associated closing paren, and we're not at the
+         // top level, break. (The top level cursor gets to iterate over
+         // the entire scope, sending out recursive searches as we encounter
+         // opening parens.
+         if (!topLevel && clone.currentValue().equals(closer))
             break;
       }
       
-      // If this is a '{', ensure the previous token is whitespace
+      // If this is a '{', and the immediately previous token is a ')',
+      // insert some whitespace.
+      // TODO: Allow preferences e.g. 1TBS, always newline before brace, etc?
       if (startValue.equals("{"))
       {
          if (cursor.peek(-1).currentValue().equals(")"))
@@ -2599,16 +2658,21 @@ public class TextEditingTarget implements
       }
       
       // Heuristically decide if we want to insert newlines after
-      // commas, parens.
+      // commas, parens. We 'score' whether we would like to insert
+      // newlines after commas, and after braces.
       int commaScore = accumulatedLength + commaCount * 5;
+      
+      // Within a function argument list, we almost always want to insert
+      // newlines after commas, expect for very short function argument
+      // lists.
       if (prevSignificantValue.equals("function"))
          commaScore += 100;
       
+      // For scopes containing many `=`, we typically prefer inserting a
+      // newline following a '('.
       int equalsScore = accumulatedLength + equalsCount * 20;
       
-      // TODO: Further refine this (use actual tab length? infer
-      // what collapsed line length would be?)
-      /**
+      /*
       Debug.logToConsole("Accumulated length: " + accumulatedLength);
       Debug.logToConsole("Root state: " + rootState);
       Debug.logToConsole("Nest level: " + nestLevel);
@@ -2633,13 +2697,22 @@ public class TextEditingTarget implements
       }
       
       // If the previous token is a control-flow keyword, override the
-      // 'newlineAfterParen' behaviour.
+      // 'newlineAfterParen' behaviour. We almost always prefer e.g.
+      //
+      //    if ( ... )
+      //
+      // over
+      //
+      //    if (
+      //       ...
+      //    )
+      //
       if (cursor.moveToPreviousSignificantToken())
       {
          if (cursor.currentValue().matches("^(?:function|if|else|while|for)$"))
             newlineAfterBrace = false;
          
-         // Handle 'tryCatch'
+         // Special casing for tryCatch -- we prefer newlines everywhere.
          if (cursor.currentValue().equals("tryCatch") &&
              accumulatedLength >= 20)
          {
@@ -2658,14 +2731,23 @@ public class TextEditingTarget implements
       
       TokenCursor peekFwd = cursor.peek(1);
       
-      // Always insert newlines following '{'
+      // Always insert newlines following '{'.
+      // TODO: Allow very compact single line functions?
       if (startValue.equals("{"))
       {
          if (cursor.peek(1).currentValue().indexOf('\n') == -1)
             cursor.setValue("{\n");
       }
       
-      // Otherwise, use the heuristics
+      // Otherwise, use the heuristics. Note that it is okay to
+      // collect multiple braces on one line, e.g.
+      //
+      //    apple(banana(cherry(danish(
+      //       ...
+      //    ))))
+      //
+      // so we do not want to indiscriminately insert newlines after
+      // all parens.
       else if (newlineAfterBrace)
       {
          if (!rootState &&
@@ -2704,28 +2786,70 @@ public class TextEditingTarget implements
             }
             else
             {
-               // NOTE: Don't want whitespace following unary operators.
+               // Unary operators are tricky, especially '-'. We need to make
+               // sure that we don't e.g. transform this:
+               //
+               //    if (- x < - y)
+               //
+               // into
+               //
+               //    if (-x <- y)
+               //
+               // for example.
                if (value.equals("-") || value.equals("+"))
                {
-                  String prevType = cursor.previousSignificantToken().getType();
+                  Debug.logToConsole("-- Token value: " + value);
                   
-                  if (prevType.equals("text") ||
-                      prevType.indexOf("paren") != -1)
+                  // Figure out if the current token is binary or unary.
+                  TokenCursor previousCursor =
+                        cursor.clone();
+                  previousCursor.moveToPreviousSignificantToken();
+                  
+                  TokenCursor nextCursor =
+                        cursor.clone();
+                  nextCursor.moveToNextSignificantToken();
+                  
+                  /*
+                  Debug.logToConsole("Previous cursor is right brace: " + previousCursor.isRightBrace());
+                  Debug.logToConsole("Previous cursor's type: " + previousCursor.currentType());
+                  
+                  Debug.logToConsole("Next cursor is left brace: " +nextCursor.isLeftBrace());
+                  Debug.logToConsole("Next cursor's type: " + nextCursor.currentType());
+                  */
+                  
+                  boolean isBinary =
+                    (previousCursor.isRightBrace() ||
+                     previousCursor.currentType().indexOf("identifier") != -1 ||
+                     previousCursor.currentType().indexOf("constant") != -1) &&
+                    (nextCursor.isLeftBrace() ||
+                     nextCursor.currentType().indexOf("operator") == -1 ||
+                     nextCursor.currentType().indexOf("constant") != -1);
+                  
+                  // Binary operators should have whitespace surrounding.
+                  if (isBinary)
                   {
-                     cursor.peek(1).trimWhitespaceFwd();
-                     cursor.peek(-1).trimWhitespaceBwd();
-                  }
-                  else
-                  {
+                     if (!cursor.peek(1).isWhitespaceOrNewline())
+                        cursor.setValue(cursor.currentValue() + " ");
+
                      if (!cursor.peek(-1).isWhitespaceOrNewline())
                         cursor.setValue(" " + cursor.currentValue());
-                     
-                     if (!cursor.peek(1).isWhitespaceOrNewline())
-                        cursor.setValue(cursor.getValue() + " ");
+                  }
+                  
+                  // Unary operators should have no whitespace after the token,
+                  // but __may__ have whitespace before; e.g. if the previous
+                  // significant token is an operator. In other words,
+                  // only trim whitespace if that token is not an operator.
+                  else
+                  {
+                     cursor.peek(1).trimWhitespaceFwd();
+                     if (previousCursor.currentType().indexOf("operator") == -1)
+                     {
+                        cursor.peek(-1).trimWhitespaceBwd();
+                     }
                   }
                }
                
-               // Regular case -- ensure whitespace following binary operators.
+               // Regular case -- ensure whitespace surrounds binary operators.
                else
                {
                   if (!cursor.peek(1).isWhitespaceOrNewline())
@@ -2737,7 +2861,7 @@ public class TextEditingTarget implements
             }
          }
          
-         // Ensure spaces, or newlines, after commas
+         // Ensure spaces, or newlines, after commas, if so desired.
          if (cursor.currentType().equals("text"))
          {
             if (newlineAfterComma &&
@@ -2753,11 +2877,14 @@ public class TextEditingTarget implements
                cursor.setValue(cursor.getValue().replaceAll(",[\\s\\n]*", ", "));
             }
             
-            cursor.setValue(cursor.getValue().replaceAll(";(?!\\n)", "\n"));
+            // Transform semi-colons into newlines.
+            // TODO: Too destructive?
+            cursor.setValue(cursor.getValue().replaceAll(";+(?!\\n)", "\n"));
          }
          
-         // Walk over matching parens -- we (recursively) call this
-         // function to handle the bits within.
+         // If we encounter an opening paren, recurse a new token cursor within,
+         // and step over the block. This ensures that indentation rules are
+         // consistent within a particular scope.
          if (cursor.currentValue().equals("{") ||
              cursor.currentValue().equals("(") ||
              cursor.currentValue().equals("[") ||
@@ -2773,26 +2900,37 @@ public class TextEditingTarget implements
             TokenCursor recursingCursor = cursor.clone();
             boolean success = cursor.fwdToMatchingToken();
             
+            // If we encounter a non-paren opener, this implies that we can
+            // reset the function nesting level. Otherwise, we increment.
             if (startValue.equals("("))
                nestLevel++;
             else
                nestLevel = 0;
             
+            // Signal children scopes whether we'd prefer them to insert
+            // newlines. TODO: less magic numbers
+            preferNewlineAfterComma =
+                  accumulatedLength >= 80  && !rootState && !startValue.equals("{");
+                  
+            preferNewlineAfterBrace =
+                  accumulatedLength >= 200 && !rootState && !startValue.equals("{");
+                  
             doInsertPrettyNewlines(
                   recursingCursor,
                   recursingCursor.currentValue(),
                   recursingCursor.getComplement(recursingCursor.currentValue()),
                   nestLevel,
-                  accumulatedLength >= 80  && !rootState && !startValue.equals("{"),
-                  accumulatedLength >= 200 && !rootState && !startValue.equals("{"));
+                  preferNewlineAfterComma,
+                  preferNewlineAfterBrace,
+                  false);
             
+            // If we weren't able to move the current active cursor to a
+            // matching token, give up. This implies a different recursing
+            // token will eventually hit the end of the token stream.
             if (!success)
                return;
          }
       }
-      
-      if (rootState)
-         return;
       
       // If we ended on a ')', maybe insert newline before
       if (cursor.currentValue().equals(closer))
@@ -2832,7 +2970,7 @@ public class TextEditingTarget implements
             rhs = cursor.getComplement(lhs);
          }
          
-         doInsertPrettyNewlines(cursor, lhs, rhs, 0, false, false);
+         doInsertPrettyNewlines(cursor, lhs, rhs, 0, false, false, true);
          
          // Build the replacement from the modified token set
          StringBuilder builder = new StringBuilder();

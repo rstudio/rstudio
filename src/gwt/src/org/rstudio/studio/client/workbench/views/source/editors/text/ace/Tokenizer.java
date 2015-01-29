@@ -12,7 +12,9 @@ public class Tokenizer extends JavaScriptObject
    }
    
    // This is a wrapper function that takes a line (that may have
-   // new lines) and properly tokenizes it as a flat token array.
+   // new lines) and properly tokenizes it as a flat token array, which
+   // makes it very easy to iterate and munge. This will work for any
+   // generic tokenizer (not just R)
    private final native Token[] doTokenize(String line) /*-{
       
       var currentToken;
@@ -42,13 +44,15 @@ public class Tokenizer extends JavaScriptObject
          
          var tokenizedLine = this.getLineTokens(splat[i], state);
          var lineTokens = tokenizedLine.tokens;
+         var n = lineTokens.length;
+         
          state = tokenizedLine.state;
          
          // We may skip the first token if it is text.
          var start = 0;
          
          // If there are no tokens on this line...
-         if (lineTokens.length === 0)
+         if (n === 0)
          {
             // ... and the last token of the previous line
             // was whitespace, then add a newline to it.
@@ -58,8 +62,9 @@ public class Tokenizer extends JavaScriptObject
                continue;
             }
             
-            // Otherwise, add a newline token and set
-            // it as current.
+            // ... otherwise, add a newline token and set
+            // it as the 'lastToken', implicitly adding a
+            // newline to the previous line.
             else
             {
                tokens.push({
@@ -75,7 +80,7 @@ public class Tokenizer extends JavaScriptObject
          if (lastToken.type === "text")
          {
             // ... and the first token on this line is text too,
-            // then merge them.
+            // then merge them
             if (lineTokens[0].type === "text")
             {
                start++;
@@ -83,25 +88,28 @@ public class Tokenizer extends JavaScriptObject
                lastToken.value += lineTokens[0].value;
             }
             
-            // Otherwise, just append a newline to the last token. 
+            // ... otherwise, just append a newline to the last token. 
             else
             {
                lastToken.value += "\n";
             }
          }
          
-         // If the last token on the previous line was not 'text'...
+         // ... otherwise, if the last token on the previous line was not 'text'...
          else
          {
             // ... and the first token on this line was text,
-            // prepend a newline.
+            // prepend a newline to it -- effectively merging a
+            // single 'newline' whitespace token into that token.
             if (lineTokens[0].type === "text")
             {
                lineTokens[0].value = "\n" + lineTokens[0].value;
             }
             
-            // Otherwise, insert a newline text token before
-            // appending the tokens from this line.
+            // ... otherwise, insert a newline text token before
+            // appending the tokens from this line -- this adds
+            // a single whitespace token, separating two non-whitespace
+            // tokens.
             else
             {
                tokens.push({
@@ -113,7 +121,8 @@ public class Tokenizer extends JavaScriptObject
          }
          
          // Push back the rest of the tokens.
-         for (var j = start; j < lineTokens.length; j++)
+         var n = lineTokens.length;
+         for (var j = start; j < n; j++)
             tokens.push(lineTokens[j]);
          
          // Update the last token.
