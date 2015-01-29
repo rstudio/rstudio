@@ -59,21 +59,6 @@
    if (!is.null(basePath))
       basePath <- .rs.normalizePath(basePath,  mustWork = TRUE)
    
-   # validate markers
-   isMarker <- function(marker) {
-      markerTypes <- c("error", "warning", "box", "info", "style")
-      if (is.null(marker$type) || (!marker$type %in% markerTypes))
-         stop("Invalid marker type (", marker$type, ")", call. = FALSE)
-      if (!is.character(marker$file))
-         stop("Marker file is unspecified or invalid: ", marker$file, call. = FALSE)
-      if (!is.numeric(marker$line))
-         stop("Marker line is unspecified or invalid", marker$line, call. = FALSE)
-      if (!is.numeric(marker$column))
-         stop("Marker column is unspecified or invalid", marker$line, call. = FALSE)
-      if (!is.character(marker$message))
-         stop("Marker message is unspecified or invalid: ", marker$message, call. = FALSE)
-   }
-   
    if (is.data.frame(markers)) {
       
       cols <- colnames(markers)
@@ -92,9 +77,12 @@
       # normalize paths
       cols$file <- .rs.normalizePath(cols$file, mustWork = TRUE)
       
+      # check for html
+      cols$messageHTML <- inherits(cols$message, "html")
+      
    } else if (is.list(markers)) {
       markers <- lapply(markers, function(marker) {
-         markerTypes <- c("error", "warning", "box", "info", "style")
+         markerTypes <- c("error", "warning", "box", "info", "style", "usage")
          if (is.null(marker$type) || (!marker$type %in% markerTypes))
             stop("Invalid marker type (", marker$type, ")", call. = FALSE)
          if (!is.character(marker$file))
@@ -111,6 +99,7 @@
          marker$line <- .rs.scalar(marker$line)
          marker$column <- .rs.scalar(marker$column)
          marker$message <- .rs.scalar(marker$message)
+         marker$messageHTML <- inherits(marker$message, "html")
          
          marker
       })

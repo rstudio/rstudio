@@ -20,6 +20,7 @@ import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.HeaderBreaksItemCodec;
 
 public class SourceMarkerItemCodec
@@ -51,6 +52,9 @@ public class SourceMarkerItemCodec
    public TableRowElement getRowForItem(SourceMarker entry)
    {
       TableRowElement tr = Document.get().createTRElement();
+      tr.addClassName(ThemeResources.INSTANCE.themeStyles().fixedWidthFont());
+      FontSizer.applyNormalFontSize(tr);
+      
       tr.setAttribute(DATA_PATH,
                       entry.getPath());
       tr.setAttribute(DATA_LINE,
@@ -68,10 +72,13 @@ public class SourceMarkerItemCodec
       iconDiv.setClassName(
             entry.getType() == SourceMarker.ERROR ? resources_.styles().errorIcon() :
             entry.getType() == SourceMarker.WARNING ? resources_.styles().warningIcon() :
+            entry.getType() == SourceMarker.BOX ? resources_.styles().boxIcon() :
             entry.getType() == SourceMarker.INFO ? resources_.styles().infoIcon() :
             entry.getType() == SourceMarker.STYLE ? resources_.styles().styleIcon() :
-            resources_.styles().boxIcon());
+            "");
       tdIcon.appendChild(iconDiv);
+      if (entry.getType() == SourceMarker.USAGE)
+         tdIcon.addClassName(resources_.styles().noIcon());
       tr.appendChild(tdIcon);
 
       TableCellElement tdLine = Document.get().createTDElement();
@@ -82,7 +89,7 @@ public class SourceMarkerItemCodec
 
       TableCellElement tdMsg = Document.get().createTDElement();
       tdMsg.setClassName(resources_.styles().messageCell());
-      tdMsg.setInnerText(entry.getMessage());
+      tdMsg.setInnerHTML(entry.getMessage());
       tr.appendChild(tdMsg);
       
       TableCellElement tdDiscButton = maybeCreateDisclosureButton(entry);
@@ -139,7 +146,7 @@ public class SourceMarkerItemCodec
       cell.setColSpan(3);
       
       String path = row.getAttribute(DATA_PATH);
-      if (fileHeaderBasePath_ != null)
+      if (!StringUtil.isNullOrEmpty(fileHeaderBasePath_))
       {
          if (path.startsWith(fileHeaderBasePath_))
             path = path.substring(fileHeaderBasePath_.length());

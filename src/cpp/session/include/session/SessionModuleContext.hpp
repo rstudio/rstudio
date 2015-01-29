@@ -23,6 +23,7 @@
 #include <boost/signals.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <core/HtmlUtils.hpp>
 #include <core/system/System.hpp>
 #include <core/system/ShellUtils.hpp>
 #include <core/system/FileChangeEvent.hpp>
@@ -708,17 +709,18 @@ core::Error createSelfContainedHtml(const core::FilePath& sourceFilePath,
 
 bool isUserFile(const core::FilePath& filePath);
 
+
 struct SourceMarker
 {
    enum Type {
-      Error = 0, Warning = 1, Box = 2, Info = 3, Style = 4
+      Error = 0, Warning = 1, Box = 2, Info = 3, Style = 4, Usage = 5
    };
 
    SourceMarker(Type type,
                 const core::FilePath& path,
                 int line,
                 int column,
-                const std::string& message,
+                const core::html_utils::HTML& message,
                 bool showErrorList)
       : type(type), path(path), line(line), column(column), message(message),
         showErrorList(showErrorList)
@@ -729,7 +731,7 @@ struct SourceMarker
    core::FilePath path;
    int line;
    int column;
-   std::string message;
+   core::html_utils::HTML message;
    bool showErrorList;
 };
 

@@ -26,6 +26,13 @@
 
 #include "RSourceIndex.hpp"
 
+// TODO: need to be able to vector in on the actual type name
+// for multi-line references! (such that extent is always valid)
+
+// TODO: populate the target search string in toolbar
+
+// TODO: multi-file project searches
+
 using namespace rstudio::core;
 using namespace rstudio::core::libclang;
 
@@ -91,15 +98,15 @@ public:
          const std::vector<std::string>& lines = fileContents(
                                                 loc.filePath.absolutePath());
          if (line < lines.size())
-            message = lines[line];
+            message = htmlMessage(loc, lines[line]);
 
 
          // create marker
-         SourceMarker marker(SourceMarker::Info,
+         SourceMarker marker(SourceMarker::Usage,
                              loc.filePath,
                              loc.line,
                              loc.column,
-                             message,
+                             core::html_utils::HTML(message, true),
                              true);
 
          // add it to the list
@@ -109,8 +116,37 @@ public:
       return markers;
    }
 
-
 private:
+
+   static std::string htmlMessage(const libclang::CursorLocation& loc,
+                                  const std::string& message)
+   {
+      // attempt to highlight the location
+      using namespace string_utils;
+      unsigned col = loc.column - 1;
+      if ((col + loc.extent) < message.length())
+      {
+         if (loc.extent == 0)
+         {
+            return "<strong>" + htmlEscape(message) + "</strong>";
+         }
+         else
+         {
+            std::ostringstream ostr;
+            ostr << htmlEscape(message.substr(0, col));
+            ostr << "<strong>";
+            ostr << htmlEscape(message.substr(col, loc.extent));
+            ostr << "</strong>";
+            ostr << htmlEscape(message.substr(col + loc.extent));
+            return ostr.str();
+         }
+      }
+      else
+      {
+         return string_utils::htmlEscape(message);
+      }
+   }
+
    typedef std::map<std::string,std::vector<std::string> > SourceFileContentsMap;
 
    const std::vector<std::string>& fileContents(const std::string& filename)

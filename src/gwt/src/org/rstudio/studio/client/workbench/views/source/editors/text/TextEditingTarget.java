@@ -3478,7 +3478,7 @@ public class TextEditingTarget implements
             @Override
             public void execute(String docPath)
             {
-               Position pos = docDisplay_.getCursorPosition();
+               Position pos = docDisplay_.getSelectionStart();
                
                operation.execute(docPath, 
                                  pos.getRow() + 1, 
