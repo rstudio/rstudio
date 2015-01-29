@@ -2034,7 +2034,6 @@ public class TextEditingTarget implements
          if (match != null)
          {
             String delimiter = match.getGroup(2);
-            Debug.logToConsole("Delimiter: " + delimiter);
             int rangeStart = i;
             
             int n = docDisplay_.getRowCount();
@@ -2042,6 +2041,11 @@ public class TextEditingTarget implements
             {
                String line = StringUtil.maskStrings(
                      docDisplay_.getLine(i));
+               
+               // Allow empty lines, and comments, to live in the range.
+               if (line.matches("^\\s*$") ||
+                   line.matches("^\\s*#.*$"))
+                  continue;
                
                match = ALIGN_DELIM_PATTERN.match(line, 0);
                if (match == null || !match.getGroup(2).equals(delimiter))
@@ -2073,8 +2077,6 @@ public class TextEditingTarget implements
       {
          Match match = ALIGN_DELIM_PATTERN.match(
                StringUtil.maskStrings(splat[i]), 0);
-         
-         Debug.logObject(match);
          
          if (match == null)
          {
@@ -3021,11 +3023,8 @@ public class TextEditingTarget implements
       InputEditorSelection initialSelection =
             docDisplay_.getSelection();
       
-      Debug.logToConsole("Getting alignment ranges...");
       ArrayList<Pair<Integer, Integer>> ranges =
             getAlignmentRanges();
-      
-      Debug.logObject(ranges);
       
       if (ranges.isEmpty())
          return;
