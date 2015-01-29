@@ -257,9 +257,7 @@ core::Error findReferences(const core::libclang::FileLocation& location,
 
    // now look for references in the current translation unit
    TranslationUnit tu = rSourceIndex().getTranslationUnit(
-                                             cursor.getSourceLocation()
-                                                   .getSpellingLocation()
-                                                   .filePath.absolutePath(),
+                                             location.filePath.absolutePath(),
                                              true);
    if (tu.empty())
       return Success();
