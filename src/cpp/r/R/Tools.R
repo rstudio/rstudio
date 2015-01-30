@@ -598,3 +598,15 @@ assign(envir = .rs.Env, ".rs.getVar", function(name)
       end_character_number = .rs.scalar(srcref[6]))
 })
 
+.rs.addFunction("haveRequiredRSvnRev", function(requiredSvnRev) {
+   svnRev <- R.version$`svn rev`
+   if (!is.null(svnRev)) {
+      svnRevNumeric <- suppressWarnings(as.numeric(svnRev))
+      if (!is.na(svnRevNumeric) && length(svnRevNumeric) == 1)
+         svnRevNumeric >= requiredSvnRev
+      else
+         FALSE
+   } else {
+      FALSE
+   }
+})

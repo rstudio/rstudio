@@ -36,6 +36,19 @@ var TokenCursor = function(tokens, row, offset) {
       return /,\s*$/.test(cursor.currentValue()) && cursor.currentType() === "text";
    }
 
+   // Simulate 'new Foo([args])'; ie, construction of an
+   // object from an array of arguments
+   function construct(constructor, args)
+   {
+      function F()
+      {
+         return constructor.apply(this, args);
+      }
+
+      F.prototype = constructor.prototype;
+      return new F();
+   }
+
    var $complements = {
       "(" : ")",
       "{" : "}",
@@ -53,11 +66,19 @@ var TokenCursor = function(tokens, row, offset) {
       this.$offset = 0;
    };
 
+   // Move the cursor to the previous token. Returns true (and moves the
+   // the cursor) on success; returns false (and does not move the cursor)
+   // on failure.
    this.moveToPreviousToken = function()
    {
-      // Bail if we're at the start of the document
-      if (this.$row === 0 && this.$offset === 0)
+      // Bail if we're at the start of the document (protect against
+      // invalid token cursors)
+      if (this.$row <= 0 && this.$offset <= 0)
+      {
+         this.$row = 0;
+         this.$offset = 0;
          return false;
+      }
 
       // If the offset is greater than zero, we know we can safely
       // decrement it
@@ -96,6 +117,9 @@ var TokenCursor = function(tokens, row, offset) {
       return true;
    };
 
+   // Move the cursor to the next token. Returns true (and moves the
+   // the cursor) on success; returns false (and does not move the cursor)
+   // on failure.
    this.moveToNextToken = function(maxRow)
    {
       // If maxRow is undefined, we'll iterate up to the length of
@@ -106,6 +130,16 @@ var TokenCursor = function(tokens, row, offset) {
       // If we're already past the maxRow bound, fail
       if (this.$row > maxRow)
          return false;
+
+      // Tokenize ahead, if appropriate
+      if (this.$tokens[this.$row] == null)
+      {
+         if (this.$codeModel &&
+             this.$codeModel.$tokenizeUpToRow)
+         {
+            this.$codeModel.$tokenizeUpToRow.call(this.$codeModel, maxRow);
+         }
+      }
 
       // If the number of tokens on the current row is greater than
       // the offset, we can just increment and return true
@@ -416,9 +450,17 @@ var TokenCursor = function(tokens, row, offset) {
          return {row: this.$row, column: token.column};
    };
 
+   // Perform a (shallow) copy of a cursor. This is sufficient as
+   // long as the new cursor has its own $row and $offset (which
+   // is ensured by their being primtive types)
    this.cloneCursor = function()
    {
-      return new this.constructor(this.$tokens, this.$row, this.$offset);
+      var args = [];
+      for (var item in this)
+         if (this.hasOwnProperty(item))
+            args.push(this[item]);
+
+      return construct(this.constructor, args);
    };
 
    this.isFirstSignificantTokenOnLine = function()
@@ -464,6 +506,16 @@ var TokenCursor = function(tokens, row, offset) {
       var column = pos.column;
       
       var rowTokens = this.$tokens[row];
+
+      // Ensure that we have tokenized up to the current position,
+      // if a code model is available.
+      if (rowTokens == null &&
+          this.$codeModel &&
+          this.$codeModel.$tokenizeUpToRow)
+      {
+         this.$codeModel.$tokenizeUpToRow.call(this.$codeModel, row);
+         rowTokens = this.$tokens[row];
+      }
 
       // If there are tokens on this row, we can move to the first token
       // on that line before the cursor position.
@@ -849,10 +901,11 @@ oop.mixin(CppTokenCursor.prototype, TokenCursor.prototype);
    
 }).call(CppTokenCursor.prototype);
 
-var RTokenCursor = function(tokens, row, offset) {
+var RTokenCursor = function(tokens, row, offset, codeModel) {
    this.$tokens = tokens;
    this.$row = row || 0;
    this.$offset = offset || 0;
+   this.$codeModel = codeModel;
 };
 oop.mixin(RTokenCursor.prototype, TokenCursor.prototype);
 

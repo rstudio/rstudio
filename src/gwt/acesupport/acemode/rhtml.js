@@ -26,6 +26,7 @@ var Tokenizer = require("ace/tokenizer").Tokenizer;
 var RHtmlHighlightRules = require("mode/rhtml_highlight_rules").RHtmlHighlightRules;
 var SweaveBackgroundHighlighter = require("mode/sweave_background_highlighter").SweaveBackgroundHighlighter;
 var RCodeModel = require("mode/r_code_model").RCodeModel;
+var Utils = require("mode/utils");
 
 var Mode = function(suppressHighlighting, session) {
    this.$session = session;
@@ -50,7 +51,8 @@ oop.inherits(Mode, HtmlMode);
     
    this.getLanguageMode = function(position)
    {
-      return this.$session.getState(position.row).match(/^r-/) ? 'R' : 'HTML';
+      var state = Utils.getPrimaryState(this.$session, position.row);
+      return state.match(/^r-/) ? 'R' : 'HTML';
    };
 
    this.getNextLineIndent = function(state, line, tab)
