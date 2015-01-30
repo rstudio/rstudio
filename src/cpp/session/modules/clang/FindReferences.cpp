@@ -29,9 +29,6 @@
 
 // TODO: multi-file project searches
 
-
-// TODO: ace content menu
-
 using namespace rstudio::core;
 using namespace rstudio::core::libclang;
 
@@ -63,8 +60,10 @@ CXChildVisitResult findReferencesVisitor(CXCursor cxCursor,
    // get pointer to data struct
    FindReferencesData* pData = (FindReferencesData*)data;
 
-   // reference to the cursor
+   // reference to the cursor (ensure valid)
    Cursor cursor(cxCursor);
+   if (!cursor.isValid())
+      return CXChildVisit_Continue;
 
    // continue with sibling if it's not from the main file
    SourceLocation location = cursor.getSourceLocation();
