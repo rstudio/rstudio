@@ -23,12 +23,16 @@ public class RSConnectAccountWizard
    extends Wizard<NewRSConnectAccountInput,NewRSConnectAccountResult>
 {
    public RSConnectAccountWizard(
+         boolean showCloudPage,
          ProgressOperationWithInput<NewRSConnectAccountResult> operation)
    {
       super("Connect Account", "Select the type of account", 
             new NewRSConnectAccountInput(), operation);
       setOkButtonCaption("Connect Account");
-      addPage(new NewRSConnectCloudPage());
+      if (showCloudPage)
+      {
+         addPage(new NewRSConnectCloudPage());
+      }
       addPage(new NewRSConnectLocalPage());
    }
 }

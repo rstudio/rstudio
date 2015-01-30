@@ -37,6 +37,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.PublishingPreferencesPane;
 import org.rstudio.studio.client.workbench.ui.OptionsLoader;
@@ -72,12 +73,14 @@ public class RSAccountConnector implements WindowClosedEvent.Handler,
          Binder binder,
          OptionsLoader.Shim optionsLoader,
          EventBus events,
+         Session session,
          Provider<UIPrefs> pUiPrefs)
    {
       server_ = server;
       display_ = display;
       optionsLoader_ = optionsLoader;
       pUiPrefs_ = pUiPrefs;
+      session_ = session;
 
       events.addHandler(WindowClosedEvent.TYPE, this);
       events.addHandler(EnableRStudioConnectUIEvent.TYPE, this);
@@ -152,6 +155,7 @@ public class RSAccountConnector implements WindowClosedEvent.Handler,
          final OperationWithInput<Boolean> onCompleted)
    {
       RSConnectAccountWizard wizard = new RSConnectAccountWizard(
+            SessionUtils.showExternalPublishUi(session_, pUiPrefs_.get()),
             new ProgressOperationWithInput<NewRSConnectAccountResult>()
       {
          @Override
@@ -560,6 +564,7 @@ public class RSAccountConnector implements WindowClosedEvent.Handler,
    private final RSConnectServerOperations server_;
    private final OptionsLoader.Shim optionsLoader_;
    private final Provider<UIPrefs> pUiPrefs_;
+   private final Session session_;
    
    private RSConnectPreAuthToken pendingAuthToken_;
    private RSConnectServerInfo pendingServerInfo_;
