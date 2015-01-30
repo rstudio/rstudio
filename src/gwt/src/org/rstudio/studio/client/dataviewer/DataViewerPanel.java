@@ -70,7 +70,7 @@ public class DataViewerPanel extends SatelliteFramePanel<RStudioFrame>
       if (item_ != null && 
           event.getData().getCacheKey().equals(item_.getCacheKey()))
       {
-         table_.refreshData(event.getData().structureChanged());
+         table_.refreshData(event.getData().structureChanged(), false);
       }
    } 
 

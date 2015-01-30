@@ -1,7 +1,7 @@
 /*
  * LatchingToolbarButton.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,15 +33,24 @@ public class LatchingToolbarButton extends ToolbarButton
          @Override
          public void onClick(ClickEvent arg0)
          {
-            latched_ = !latched_;
-            if (latched_)
-               getElement().addClassName(ThemeStyles.INSTANCE.toolbarButtonLatched());
-            else
-               getElement().removeClassName(ThemeStyles.INSTANCE.toolbarButtonLatched());
+            setLatched(!latched_);
          }
       };
       addClickHandler(onClicked_);
       getElement().addClassName(ThemeStyles.INSTANCE.toolbarButtonLatchable());
+   }
+   
+   public void setLatched(boolean latched)
+   {
+      // no op if we're already in requested state
+      if (latched == latched_)
+         return;
+      latched_ = latched;
+      
+      if (latched_)
+         getElement().addClassName(ThemeStyles.INSTANCE.toolbarButtonLatched());
+      else
+         getElement().removeClassName(ThemeStyles.INSTANCE.toolbarButtonLatched());
    }
    
    private ClickHandler onClicked_;

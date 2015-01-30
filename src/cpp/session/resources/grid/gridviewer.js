@@ -29,6 +29,9 @@ var dismissActivePopup = null;
 var cachedSearch = "";
 var cachedFilterValues = [];
 
+// the height of the table at the last time we adjusted it to fit its window
+var lastHeight = 0;
+
 // update search/filter value cache
 var updateCachedSearchFilter = function() {
   if (table) {
@@ -135,7 +138,6 @@ var renderTextCell = function(data, type, row, meta) {
 
 // applies a new size to the table--called on init, on tab activate (from
 // RStudio), and when the window size changes
-var lastHeight = 0;
 var sizeDataTable = function(force) {
   // don't apply a zero height
   if (window.innerHeight < 1) {
@@ -581,37 +583,75 @@ var debouncedSearch = debounce(function(text) {
 }, 100);
 
 // bootstrapping: 
-// 1. make the request to get the shape of the data object to be viewed 
+// 1. clean up state (we re-bootstrap whenever table structure changes)
+// 2. make the request to get the shape of the data object to be viewed 
 //    (we want this to start as soon as possible so the shape can be prepared
 //    on the server while we wait for the geometry to finish initializing on
 //    the client)
-// 2. wait for the document to be ready
-// 3. wait for the window size to stop changing (RStudio animates tab opening)
-// 4. initialize the data table
-$.ajax({
-      url: "../grid_data?show=cols&" + window.location.search.substring(1)})
-  .done(function(result) {
-    $(document).ready(function() {
-      runAfterSizing(function() {
-        initDataTable(result);
-      });
-    });
-  })
-  .fail(function(jqXHR)
-  {
-    if (jqXHR.responseText[0] !== "{")
-      showError(jqXHR.responseText);
-    else
-    {
-      var result = $.parseJSON(jqXHR.responseText);
+// 3. wait for the document to be ready
+// 4. wait for the window size to stop changing (RStudio animates tab opening)
+// 5. initialize the data table
+var bootstrap = function() {
 
-      if (result.error) {
-        showError(result.error);
-      } else {
-        showError("The object could not be displayed.");
+  // dismiss any active popups
+  if (dismissActivePopup)
+    dismissActivePopup();
+
+  // clean state
+  table = null;   
+  cols = null;
+  dismissActivePopup = null;
+  cachedSearch = "";
+  cachedFilterValues = [];
+  lastHeight = 0;
+
+  // when datatables is initialized on an element, it adds a bunch of goo 
+  // around the element to handle scrolling, etc.--we need to pull the whole
+  // thing from the DOM so we get a clean re-init
+  oldEle = document.getElementById("rsGridData_wrapper");
+  if (oldEle) {
+    oldEle.parentNode.removeChild(oldEle);
+    oldEle = null;
+  }
+
+  // make a new one, but don't hook it up yet (the document may not exist at
+  // this point)
+  var newEle = document.createElement("table");
+  newEle.id = "rsGridData";
+  newEle.className = "dataTable";
+  newEle.setAttribute("cellspacing", "0");
+  newEle.innerHTML = "<thead>" +
+                     "    <tr id='data_cols'>" +
+                     "    </tr>" +
+                     "</thead>";
+
+  // call the server to get data shape
+  $.ajax({
+        url: "../grid_data?show=cols&" + window.location.search.substring(1)})
+    .done(function(result) {
+      $(document).ready(function() {
+        document.body.appendChild(newEle);
+        runAfterSizing(function() {
+          initDataTable(result);
+        });
+      });
+    })
+    .fail(function(jqXHR)
+    {
+      if (jqXHR.responseText[0] !== "{")
+        showError(jqXHR.responseText);
+      else
+      {
+        var result = $.parseJSON(jqXHR.responseText);
+
+        if (result.error) {
+          showError(result.error);
+        } else {
+          showError("The object could not be displayed.");
+        }
       }
-    }
-  });  
+    });  
+};
 
 // Exports -------------------------------------------------------------------
 
@@ -643,10 +683,10 @@ window.setFilterUIVisible = function(visible) {
 };
 
 // called from RStudio when the underlying object changes
-window.refreshData = function(structureChanged) {
+window.refreshData = function(structureChanged, sizeChanged) {
   if (structureChanged) {
     // structure changed--this necessitates a full refresh
-    window.location.reload();
+    bootstrap();
   } else {
     // structure didn't change, so just reload data. 
     var s = table.settings();
@@ -656,6 +696,9 @@ window.refreshData = function(structureChanged) {
     // reload data, then snap to that row
     table.ajax.reload(function() {
       s.scrollToRow(row, false);
+      if (sizeChanged) {
+        debouncedDataTableSize();
+      }
     },false);
   }
 };
@@ -668,6 +711,9 @@ window.applySearch = function(text) {
 window.applySizeChange = function() {
   debouncedDataTableSize();
 };
+
+// start the first request
+bootstrap();
 
 })();
 
