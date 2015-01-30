@@ -2551,7 +2551,7 @@ public class TextEditingTarget implements
       {
          Token token = currentToken();
          return token.getType().equals("text") &&
-                token.getValue().matches("^[\\s\\n]+$");
+                token.getValue().matches("^[\\s\\n]*$");
       }
       
       public void trimWhitespaceFwd()
@@ -2594,7 +2594,7 @@ public class TextEditingTarget implements
       public boolean isControlFlowKeyword()
       {
          return tokens_.get(offset_).getValue().matches(
-               "^(?:if|else|try|for|while|repeat|break|next)$");
+               "^\\s*(?:if|else|try|for|while|repeat|break|next|function)\\s*$");
       }
       
       public boolean isOperator()
@@ -2902,7 +2902,7 @@ public class TextEditingTarget implements
       //
       if (cursor.moveToPreviousSignificantToken())
       {
-         if (cursor.currentValue().matches("^(?:function|if|else|while|for)$"))
+         if (cursor.isControlFlowKeyword())
             newlineAfterBrace = false;
          
          // Special casing for tryCatch -- we prefer newlines everywhere.
@@ -3160,8 +3160,8 @@ public class TextEditingTarget implements
       //    if (foo) bar
       //
       if (cursor.currentValue().equals(")") &&
-          beforeStartCursor.isKeyword() &&
-          !cursor.nextSignificantToken().equals("{"))
+          beforeStartCursor.isControlFlowKeyword() &&
+          !cursor.nextSignificantToken().getValue().equals("{"))
       {
          cursor.ensureNewlineFollows();
       }
