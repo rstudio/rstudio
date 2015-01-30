@@ -2435,6 +2435,37 @@ public class TextEditingTarget implements
          return false;
       }
       
+      public void ensureWhitespaceFollows()
+      {
+         String value = getValue();
+         boolean mightWantNewline = value.equals("&&") ||
+             value.equals("||") ||
+             value.equals("&") ||
+             value.equals("|") ||
+             value.equals("<-") ||
+             value.equals("<<-");
+         
+         Debug.logToConsole("" + getCurrentLineLength());
+         
+         if (mightWantNewline && 
+             getCurrentLineLength() >= 70)
+         {
+            if (peek(1).getValue().indexOf('\n') == -1)
+               setValue(getValue() + "\n");
+         }
+         else
+         {
+            if (!peek(1).isWhitespaceOrNewline())
+               setValue(currentValue() + " ");
+         }
+      }
+      
+      public void ensureWhitespacePreceeds()
+      {
+         if (!peek(-1).isWhitespaceOrNewline())
+            setValue(" " + getValue());
+      }
+      
       public Token currentToken()
       {
          return tokens_.get(offset_);
@@ -2525,11 +2556,67 @@ public class TextEditingTarget implements
                "^(?:if|else|try|for|while|repeat|break|next)$");
       }
       
-      public boolean isBinaryOp()
+      public boolean isOperator()
       {
          String type = tokens_.get(offset_).getType();
          return type.equals("keyword.operator") ||
                 type.equals("keyword.operator.infix");
+      }
+      
+      public int getCurrentLineLength()
+      {
+         int length = 0;
+         SimpleTokenCursor bwdCursor = clone();
+         
+         while (bwdCursor.moveToPreviousToken())
+         {
+            String value = bwdCursor.getValue();
+            int index = value.lastIndexOf('\n');
+            
+            if (index == -1)
+               length += value.length();
+            else
+            {
+               length += value.length() - index;
+               break;
+            }
+         }
+         
+         SimpleTokenCursor fwdCursor = clone();
+         do
+         {
+            String value = fwdCursor.currentValue();
+            int index = value.indexOf('\n');
+            
+            if (index == -1)
+               length += value.length();
+            else
+            {
+               length += index;
+               break;
+            }
+         } while (fwdCursor.moveToNextToken());
+         
+         return length;
+      }
+      
+      public int getDistanceToPreviousNewline()
+      {
+         int distance = 0;
+         SimpleTokenCursor clone = clone();
+         while (clone.moveToPreviousToken())
+         {
+            String value = clone.getValue();
+            int index = value.lastIndexOf('\n');
+            if (index == -1)
+               distance += value.length();
+            else
+            {
+               distance += (value.length() - index);
+               break;
+            }
+         }
+         return distance;
       }
       
       @Override
@@ -2826,8 +2913,7 @@ public class TextEditingTarget implements
             break;
          
          // Ensure spaces around operators.
-         // TODO: Insert newlines after certain operators for long lines?
-         if (cursor.isBinaryOp())
+         if (cursor.isOperator())
          {
             String value = cursor.currentValue();
             
@@ -2850,8 +2936,7 @@ public class TextEditingTarget implements
                 value.equals("@") ||
                 value.equals(":") ||
                 value.equals("::") ||
-                value.equals(":::") ||
-                value.equals("!"))
+                value.equals(":::"))
             {
                cursor.peek(-1).trimWhitespaceBwd();
                cursor.peek(1).trimWhitespaceFwd();
@@ -2868,7 +2953,7 @@ public class TextEditingTarget implements
                //    if (-x <- y)
                //
                // for example.
-               if (value.equals("-") || value.equals("+"))
+               if (value.equals("-") || value.equals("+") || value.equals("!"))
                {
                   // Figure out if the current token is binary or unary.
                   SimpleTokenCursor previousCursor =
@@ -2890,11 +2975,8 @@ public class TextEditingTarget implements
                   // Binary operators should have whitespace surrounding.
                   if (isBinary)
                   {
-                     if (!cursor.peek(1).isWhitespaceOrNewline())
-                        cursor.setValue(cursor.currentValue() + " ");
-
-                     if (!cursor.peek(-1).isWhitespaceOrNewline())
-                        cursor.setValue(" " + cursor.currentValue());
+                     cursor.ensureWhitespaceFollows();
+                     cursor.ensureWhitespacePreceeds();
                   }
                   
                   // Unary operators should have no whitespace after the token,
@@ -2914,11 +2996,8 @@ public class TextEditingTarget implements
                // Regular case -- ensure whitespace surrounds binary operators.
                else
                {
-                  if (!cursor.peek(1).isWhitespaceOrNewline())
-                     cursor.setValue(cursor.currentValue() + " ");
-                  
-                  if (!cursor.peek(-1).isWhitespaceOrNewline())
-                     cursor.setValue(" " + cursor.currentValue());
+                  cursor.ensureWhitespaceFollows();
+                  cursor.ensureWhitespacePreceeds();
                }
             }
          }
