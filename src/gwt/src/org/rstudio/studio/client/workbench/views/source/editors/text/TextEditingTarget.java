@@ -2031,7 +2031,7 @@ public class TextEditingTarget implements
                line = docDisplay_.getLine(i);
                masked = StringUtil.maskStrings(line);
                
-               // Allow empty lines, and comments, to live in the range.
+               // Allow empty lines, and comments, to live within the range.
                if (masked.matches("^\\s*$") ||
                    masked.matches("^\\s*#.*$"))
                   continue;
@@ -2042,7 +2042,16 @@ public class TextEditingTarget implements
                   break;
             }
             
+            // But don't allow comments or whitespaces to exist at the
+            // end of a range.
             int rangeEnd = i - 1;
+            line = docDisplay_.getLine(rangeEnd);
+            while (line.matches("^\\s*$") || line.matches("^\\s*#.*$"))
+            {
+               rangeEnd--;
+               line = docDisplay_.getLine(rangeEnd);
+            }
+            
             ranges.add(new Pair<Integer, Integer>(rangeStart, rangeEnd));
          }
       }
@@ -2131,7 +2140,7 @@ public class TextEditingTarget implements
       // Pad the 'start's with whitespace, to align the delimiter.
       int maxLength = 0;
       for (int i = 0; i < starts.size(); i++)
-         maxLength = Math.max(maxLength, starts.get(i).length());
+         maxLength = Math.max(maxLength, starts.get(i).replaceAll("\\s*$", "").length());
       
       for (int i = 0; i < starts.size(); i++)
          starts.set(i, starts.get(i) +
@@ -2162,7 +2171,6 @@ public class TextEditingTarget implements
          return;
       
       insertPrettyNewlines();
-      alignAssignment();
    }
    
    class MutableInteger {
@@ -2828,8 +2836,6 @@ public class TextEditingTarget implements
                // for example.
                if (value.equals("-") || value.equals("+"))
                {
-                  Debug.logToConsole("-- Token value: " + value);
-                  
                   // Figure out if the current token is binary or unary.
                   TokenCursor previousCursor =
                         cursor.clone();
