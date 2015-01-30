@@ -119,8 +119,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Tokenizer;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
@@ -376,6 +374,7 @@ public class TextEditingTarget implements
       cppHelper_ = new TextEditingTargetCppHelper(server);
       presentationHelper_ = new TextEditingTargetPresentationHelper(
                                                                   docDisplay_);
+      reformatHelper_ = new TextEditingTargetReformatHelper(docDisplay_);
       docDisplay_.setRnwCompletionContext(compilePdfHelper_);
       docDisplay_.setCppCompletionContext(cppCompletionContext_);
       docDisplay_.setRCompletionContext(rContext_);
@@ -1996,236 +1995,19 @@ public class TextEditingTarget implements
       return fileType_;
    }
    
-   private static final Pattern ALIGN_DELIM_PATTERN =
-         Pattern.create("(<<-|<-|==|=)");
-   
-   private ArrayList<Pair<Integer, Integer>> getAlignmentRanges()
-   {
-      int selectionStart = docDisplay_.getSelectionStart().getRow();
-      int selectionEnd = docDisplay_.getSelectionEnd().getRow();
-      
-      ArrayList<Pair<Integer, Integer>> ranges =
-            new ArrayList<Pair<Integer, Integer>>();
-      
-      for (int i = selectionStart; i <= selectionEnd; i++)
-      {
-         if (ALIGN_DELIM_PATTERN.match(
-               StringUtil.maskStrings(
-                     docDisplay_.getLine(i)), 0) != null)
-         {
-            int rangeStart = i;
-            
-            while (i <= selectionEnd &&
-                  ALIGN_DELIM_PATTERN.match(
-                        StringUtil.maskStrings(
-                              docDisplay_.getLine(i)), 0) != null)
-               i++;
-            int rangeEnd = i - 1;
-            ranges.add(new Pair<Integer, Integer>(rangeStart, rangeEnd));
-         }
-      }
-      
-      return ranges;
-      
-   }
-   
-   private void doAlignAssignment(int startRow,
-                                  int endRow)
-   {
-      docDisplay_.setSelectionRange(Range.fromPoints(
-            Position.create(startRow, 0),
-            Position.create(endRow, docDisplay_.getLine(endRow).length())));
-      
-      String[] splat = docDisplay_.getSelectionValue().split("\\n");
-      
-      ArrayList<String> starts = new ArrayList<String>();
-      ArrayList<String> delimiters = new ArrayList<String>();
-      ArrayList<String> ends = new ArrayList<String>();
-      for (int i = 0; i < splat.length; i++)
-      {
-         Match match = ALIGN_DELIM_PATTERN.match(
-               StringUtil.maskStrings(splat[i]), 0);
-         
-         if (match == null)
-         {
-            starts.add(splat[i]);
-            delimiters.add("");
-            ends.add("");
-         }
-         else
-         {
-            String delimiter = match.getGroup(0);
-            int index = match.getIndex();
-            
-            starts.add(splat[i].substring(0, index).replaceAll("\\s*$", ""));
-            delimiters.add(delimiter);
-            ends.add(splat[i].substring(index + delimiter.length()).trim());
-         }
-      }
-      
-      // Transform the ends if they appear numeric-y
-      ArrayList<Integer> endPrefixes = new ArrayList<Integer>();
-      boolean success = true;
-      for (int i = 0; i < ends.size(); i++)
-      {
-         String current = ends.get(i).replaceAll("[\\s,\\);]*", "");
-         try
-         {
-            endPrefixes.add(("" + Integer.parseInt(current)).length());
-         }
-         catch (Exception e)
-         {
-            success = false;
-            break;
-         }
-         
-      }
-      
-      if (success)
-      {
-         int maxLength = 0;
-         for (int i = 0; i < endPrefixes.size(); i++)
-            maxLength = Math.max(maxLength, endPrefixes.get(i));
-         
-         for (int i = 0; i < ends.size(); i++)
-            ends.set(i, StringUtil.repeat(" ",
-                  maxLength - endPrefixes.get(i)) +
-                  ends.get(i).replaceAll("^\\s*", ""));  
-      }
-      
-      int maxLength = 0;
-      for (int i = 0; i < starts.size(); i++)
-         maxLength = Math.max(maxLength, starts.get(i).length());
-      
-      for (int i = 0; i < starts.size(); i++)
-         starts.set(i, starts.get(i) +
-               StringUtil.repeat(" ", maxLength - starts.get(i).length()));
-      
-      StringBuilder newSelectionBuilder = new StringBuilder();
-      int maxDelimiterLength = 0;
-      for (int i = 0; i < delimiters.size(); i++)
-         maxDelimiterLength = Math.max(maxDelimiterLength,
-               delimiters.get(i).length());
-      
-      for (int i = 0; i < starts.size(); i++)
-      {
-         newSelectionBuilder.append(starts.get(i));
-         newSelectionBuilder.append(
-               StringUtil.repeat(" ",
-                     maxDelimiterLength - delimiters.get(i).length() + 1) +
-               delimiters.get(i) +
-               " ");
-         newSelectionBuilder.append(ends.get(i));
-         if (i < starts.size() - 1)
-            newSelectionBuilder.append("\n");
-      }
-      
-      docDisplay_.replaceSelection(newSelectionBuilder.toString());
-      
-   }
-   
    @Handler
    void onReformatCode()
    {
-      // Only allow if entire selection in R or C++ mode for now
-      if (!(DocumentMode.isSelectionInCppMode(docDisplay_) ||
-            DocumentMode.isSelectionInRMode(docDisplay_)))
-         return;
-      
-      if (DocumentMode.isSelectionInRMode(docDisplay_))
-         alignAssignment();
-      
-      insertPrettyNewlines();
-   }
-   
-   boolean isWhitespaceWithNewline(String line)
-   {
-      return line.indexOf('\n') != -1 &&
-             line.matches("[\\s\\n]+");
-   }
-   
-   void insertPrettyNewlines()
-   {
-      AceEditor editor = (AceEditor) docDisplay_;
-      if (editor != null)
+      // Only allow if entire selection in R mode for now
+      if (!DocumentMode.isSelectionInRMode(docDisplay_))
       {
-         String selectionText = docDisplay_.getSelectionValue();
-         
-         // Tokenize the selection and walk through and replace
-         Tokenizer tokenizer = editor.getSession().getMode().getTokenizer();
-         Token[] tokens = tokenizer.getLineTokens(selectionText);
-         
-         StringBuilder builder = new StringBuilder();
-         
-         Token prev = Token.create();
-         Token curr = Token.create();
-         Token next = Token.create();
-         
-         String value = "";
-         
-         for (int i = 0; i < tokens.length; i++)
-         {
-            if (i > 0)
-               prev = tokens[i - 1];
-               
-            curr = tokens[i];
-            
-            if (i < tokens.length - 1)
-               next = tokens[i + 1];
-            else
-               next = Token.create();
-            
-            value = curr.getValue();
-            
-            if (!isWhitespaceWithNewline(prev.getValue()) && value == ")")
-            {
-               builder.append("\n");
-            }
-            
-            // We don't tokenize ',' separately from text in all cases
-            // (note that 'text' is separate from 'string' types)
-            if (curr.getType() == "text")
-               value = value.replaceAll(",(?!\n)", ",\n");
-            
-            builder.append(value);
-            
-            if (!isWhitespaceWithNewline(next.getValue()) && (
-                  value == "(" || value == ","))
-            {
-               builder.append("\n");
-            }
-         }
-         
-         String replacement = builder.toString();
-         
-         // Trim off trailing whitespace
-         replacement = replacement.replaceAll("\\s*\n", "\n");
-         
-         docDisplay_.replaceSelection(replacement);
-         docDisplay_.reindent(docDisplay_.getSelectionRange());
-         
+         showRModeWarning("Reformat Code");
+         return;
       }
+      
+      reformatHelper_.insertPrettyNewlines();
    }
    
-   void alignAssignment()
-   {
-      InputEditorSelection initialSelection =
-            docDisplay_.getSelection();
-      
-      ArrayList<Pair<Integer, Integer>> ranges =
-            getAlignmentRanges();
-      
-      if (ranges.isEmpty())
-         return;
-      
-      for (Pair<Integer, Integer> range : ranges)
-         doAlignAssignment(range.first, range.second);
-      
-      docDisplay_.setSelection(
-            initialSelection.extendToLineStart().extendToLineEnd());
-      
-   }
-
    @Handler
    void onCheckSpelling()
    {
@@ -4792,6 +4574,7 @@ public class TextEditingTarget implements
    private final TextEditingTargetRMarkdownHelper rmarkdownHelper_;
    private final TextEditingTargetCppHelper cppHelper_;
    private final TextEditingTargetPresentationHelper presentationHelper_;
+   private final TextEditingTargetReformatHelper reformatHelper_;
    private boolean ignoreDeletes_;
    private boolean forceSaveCommandActive_ = false;
    private final TextEditingTargetScopeHelper scopeHelper_;

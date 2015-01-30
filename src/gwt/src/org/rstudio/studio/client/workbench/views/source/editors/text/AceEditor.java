@@ -2021,6 +2021,11 @@ public class AceEditor implements DocDisplay,
    {
       widget_.getEditor().moveCursorLeft();
    }
+   
+   public int getTabSize()
+   {
+      return widget_.getEditor().getSession().getTabSize();
+   }
 
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
