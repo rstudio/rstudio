@@ -1389,7 +1389,7 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
                      {
                         return this.$getIndent(
                            this.$doc.getLine(clone.$row)
-                        ) + continuationIndent;
+                        ) + continuationIndent + continuationIndent;
                      }
 
                      var tokenIsClosingParen = clone.currentValue() === ")";
@@ -1404,7 +1404,7 @@ var RCodeModel = function(session, tokenizer, statePattern, codeBeginPattern) {
                         {
                            return this.$getIndent(
                               this.$doc.getLine(clone.$row)
-                           ) + continuationIndent;
+                           ) + continuationIndent + continuationIndent;
                         }
                      }
                   }
