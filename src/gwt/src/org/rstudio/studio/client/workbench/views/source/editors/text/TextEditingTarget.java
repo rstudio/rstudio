@@ -2496,8 +2496,11 @@ public class TextEditingTarget implements
          }
          else
          {
+            String newlineOrSpace = getDistanceToPreviousNewline() >= 70 ?
+                  "\n" :
+                  " ";
             if (!peek(1).isWhitespaceOrNewline())
-               setValue(currentValue() + " ");
+               setValue(currentValue() + newlineOrSpace);
          }
       }
       
