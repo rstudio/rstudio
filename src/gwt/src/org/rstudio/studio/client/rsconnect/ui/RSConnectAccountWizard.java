@@ -18,21 +18,17 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountInput;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 public class RSConnectAccountWizard 
    extends Wizard<NewRSConnectAccountInput,NewRSConnectAccountResult>
 {
-   public RSConnectAccountWizard(UIPrefs uiPrefs,
+   public RSConnectAccountWizard(
          ProgressOperationWithInput<NewRSConnectAccountResult> operation)
    {
       super("Connect Account", "Select the type of account", 
             new NewRSConnectAccountInput(), operation);
       setOkButtonCaption("Connect Account");
       addPage(new NewRSConnectCloudPage());
-      if (uiPrefs.enableRStudioConnect().getGlobalValue())
-      {
-         addPage(new NewRSConnectLocalPage());
-      }
+      addPage(new NewRSConnectLocalPage());
    }
 }

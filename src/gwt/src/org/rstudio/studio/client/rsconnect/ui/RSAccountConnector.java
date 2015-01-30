@@ -16,6 +16,7 @@ package org.rstudio.studio.client.rsconnect.ui;
 
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -87,44 +88,14 @@ public class RSAccountConnector implements WindowClosedEvent.Handler,
    public void showAccountWizard(
          final OperationWithInput<Boolean> onCompleted)
    {
-      RSConnectAccountWizard wizard = new RSConnectAccountWizard(
-            pUiPrefs_.get(),
-            new ProgressOperationWithInput<NewRSConnectAccountResult>()
+      if (pUiPrefs_.get().enableRStudioConnect().getGlobalValue())
       {
-         @Override
-         public void execute(NewRSConnectAccountResult input,
-               final ProgressIndicator indicator)
-         {
-            connectNewAccount(input, indicator, 
-                  new OperationWithInput<AccountConnectResult>()
-            {
-               @Override
-               public void execute(AccountConnectResult input)
-               {
-                  if (input == AccountConnectResult.Failed)
-                  {
-                     // the connection failed--take down the dialog entirely
-                     // (we do this when retrying doesn't make sense)
-                     onCompleted.execute(false);
-                     indicator.onCompleted();
-                  }
-                  else if (input == AccountConnectResult.Incomplete)
-                  {
-                     // the connection didn't finish--take down the progress and
-                     // allow retry
-                     indicator.clearProgress();
-                  }
-                  else if (input == AccountConnectResult.Successful)
-                  {
-                     // successful account connection--mark finished
-                     onCompleted.execute(true);
-                     indicator.onCompleted();
-                  }
-               }
-            });
-         }
-      });
-      wizard.showModal();
+         showAccountTypeWizard(onCompleted);
+      }
+      else
+      {
+         showShinyAppsDialog(onCompleted);
+      }
    }
    
    @Handler
@@ -152,6 +123,79 @@ public class RSAccountConnector implements WindowClosedEvent.Handler,
    }
 
    // Private methods --------------------------------------------------------
+   
+   private void showShinyAppsDialog(
+         final OperationWithInput<Boolean> onCompleted)
+   {
+      RSConnectCloudDialog dialog = new RSConnectCloudDialog(
+      new ProgressOperationWithInput<NewRSConnectAccountResult>()
+      {
+         @Override
+         public void execute(NewRSConnectAccountResult input, 
+                             ProgressIndicator indicator)
+         {
+            processDialogResult(input, indicator, onCompleted);
+         }
+      }, 
+      new Operation() 
+      {
+         @Override
+         public void execute()
+         {
+            onCompleted.execute(false);
+         }
+      });
+      dialog.showModal();
+   }
+
+   private void showAccountTypeWizard(
+         final OperationWithInput<Boolean> onCompleted)
+   {
+      RSConnectAccountWizard wizard = new RSConnectAccountWizard(
+            new ProgressOperationWithInput<NewRSConnectAccountResult>()
+      {
+         @Override
+         public void execute(NewRSConnectAccountResult input,
+               final ProgressIndicator indicator)
+         {
+            processDialogResult(input, indicator, onCompleted);
+         }
+      });
+      wizard.showModal();
+   }
+   
+   private void processDialogResult(final NewRSConnectAccountResult input, 
+         final ProgressIndicator indicator,
+         final OperationWithInput<Boolean> onCompleted)
+   {
+      connectNewAccount(input, indicator, 
+            new OperationWithInput<AccountConnectResult>()
+      {
+         @Override
+         public void execute(AccountConnectResult input)
+         {
+            if (input == AccountConnectResult.Failed)
+            {
+               // the connection failed--take down the dialog entirely
+               // (we do this when retrying doesn't make sense)
+               onCompleted.execute(false);
+               indicator.onCompleted();
+            }
+            else if (input == AccountConnectResult.Incomplete)
+            {
+               // the connection didn't finish--take down the progress and
+               // allow retry
+               indicator.clearProgress();
+            }
+            else if (input == AccountConnectResult.Successful)
+            {
+               // successful account connection--mark finished
+               onCompleted.execute(true);
+               indicator.onCompleted();
+            }
+         }
+      });
+   }
 
    private void connectNewAccount(
          NewRSConnectAccountResult result,
