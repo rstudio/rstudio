@@ -1511,6 +1511,18 @@ public class Source implements InsertSourceHandler,
       });   
    }
    
+   private void revertActiveDocument()
+   {
+      if (activeEditor_ == null)
+         return;
+      
+      if (activeEditor_.getPath() != null)
+         activeEditor_.revertChanges(null);
+      
+      // Ensure that the document is in view
+      activeEditor_.ensureCursorVisible();
+   }
+   
    private void revertUnsavedTargets(Command onCompleted)
    {
       // collect up unsaved targets

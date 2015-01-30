@@ -70,7 +70,13 @@ public class SourceVimCommands
    public native final void createNewDocument(Source source) /*-{
    
       var callback = $entry(function(cm, params) {
-         if (params.args) {
+         
+         // Handle 'e!'
+         if (params.argString && params.argString === "!")
+            source.@org.rstudio.studio.client.workbench.views.source.Source::revertActiveDocument()();
+            
+         // Handle other editing targets
+         else if (params.args) {
             if (params.args.length === 1) {
                source.@org.rstudio.studio.client.workbench.views.source.Source::editFile(Ljava/lang/String;)(params.args[0]);
             }
