@@ -1997,25 +1997,15 @@ public class TextEditingTarget implements
       return fileType_;
    }
    
-   // We define a pattern that specifies valid lines for alignment. These
-   // are lines of the form:
-   //
-   //    x = 1,
-   //    y = 2,
-   //    z = 3
-   //
-   // For now, we disallow parentheses and such.
-   private static final String ID_PATTERN_STRING =
-         "[\\w._$@'\"]+";
+   private static final String VALID_WORD_FOR_ALIGN =
+         "[-+\\w._$@'\"]+";
    
-   private static final Pattern ALIGN_DELIM_PATTERN =
+   private static final Pattern DELIM_PATTERN =
          Pattern.create("(^\\s*" +
-               ID_PATTERN_STRING +
-               ")\\s*" +
-               "(<<-|<-|=)" +
-               "\\s*(" +
-               ID_PATTERN_STRING +
-               "\\s*[,;]?\\s*$)");
+               VALID_WORD_FOR_ALIGN +
+               "\\s*)" + "(<<-|<-|=(?!=))" + "(\\s*" +
+               VALID_WORD_FOR_ALIGN +
+               "[,;]?\\s*$)");
    
    private ArrayList<Pair<Integer, Integer>> getAlignmentRanges()
    {
@@ -2027,27 +2017,27 @@ public class TextEditingTarget implements
       
       for (int i = selectionStart; i <= selectionEnd; i++)
       {
-         String masked = StringUtil.maskStrings(
-               docDisplay_.getLine(i));
+         String line = docDisplay_.getLine(i);
+         String masked = StringUtil.maskStrings(line);
          
-         Match match = ALIGN_DELIM_PATTERN.match(masked, 0);
+         Match match = DELIM_PATTERN.match(masked, 0);
          if (match != null)
          {
             String delimiter = match.getGroup(2);
             int rangeStart = i;
             
-            int n = docDisplay_.getRowCount();
-            while (i++ < n)
+            while (i++ <= selectionEnd)
             {
-               String line = StringUtil.maskStrings(
-                     docDisplay_.getLine(i));
+               line = docDisplay_.getLine(i);
+               masked = StringUtil.maskStrings(line);
                
                // Allow empty lines, and comments, to live in the range.
-               if (line.matches("^\\s*$") ||
-                   line.matches("^\\s*#.*$"))
+               if (masked.matches("^\\s*$") ||
+                   masked.matches("^\\s*#.*$"))
                   continue;
                
-               match = ALIGN_DELIM_PATTERN.match(line, 0);
+               // If this line doesn't match, bail
+               match = DELIM_PATTERN.match(masked, 0);
                if (match == null || !match.getGroup(2).equals(delimiter))
                   break;
             }
@@ -2075,20 +2065,30 @@ public class TextEditingTarget implements
       ArrayList<String> ends = new ArrayList<String>();
       for (int i = 0; i < splat.length; i++)
       {
-         Match match = ALIGN_DELIM_PATTERN.match(
-               StringUtil.maskStrings(splat[i]), 0);
+         String line = splat[i];
+         String masked = StringUtil.maskStrings(splat[i]);
+         Match match = DELIM_PATTERN.match(masked, 0);
          
          if (match == null)
          {
-            starts.add(splat[i]);
+            starts.add(line);
             delimiters.add("");
             ends.add("");
          }
          else
          {
-            starts.add(match.getGroup(1));
+            String start = line.substring(0, match.getGroup(1).length());
+            start = start.replaceAll("\\s*$", "");
+            starts.add(start);
+            
             delimiters.add(match.getGroup(2));
-            ends.add(match.getGroup(3));
+            
+            int endOfDelim = match.getGroup(1).length() +
+                  match.getGroup(2).length();
+            
+            String end = line.substring(endOfDelim);
+            end = end.replaceAll("^\\s*", "");
+            ends.add(end);
          }
       }
       
