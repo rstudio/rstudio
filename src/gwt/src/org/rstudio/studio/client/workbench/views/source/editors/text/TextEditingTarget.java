@@ -2193,6 +2193,12 @@ public class TextEditingTarget implements
       private int data_;
    }
    
+   private static final Pattern ENDS_WITH_NEWLINE =
+         Pattern.create("\\n\\s*$", "");
+
+   private static final Pattern STARTS_WITH_NEWLINE =
+         Pattern.create("^\\s*\\n", "");
+   
    class SimpleTokenCursor {
       
       public SimpleTokenCursor(ArrayList<Token> tokens)
@@ -2252,7 +2258,7 @@ public class TextEditingTarget implements
       
       public boolean moveToNextToken()
       {
-         if (offset_ == n_ - 1)
+         if (offset_ >= n_ - 1)
             return false;
          ++offset_;
          return true;
@@ -2260,7 +2266,7 @@ public class TextEditingTarget implements
       
       public boolean moveToPreviousToken()
       {
-         if (offset_ == 0)
+         if (offset_ <= 0)
             return false;
          --offset_;
          return true;
@@ -2435,6 +2441,43 @@ public class TextEditingTarget implements
          return false;
       }
       
+      public void ensureNewlinePreceeds()
+      {
+         String value = getValue();
+         String prev = peek(-1).getValue();
+         
+         if (ENDS_WITH_NEWLINE.test(prev) ||
+             STARTS_WITH_NEWLINE.test(value))
+            return;
+             
+         SimpleTokenCursor clone = clone();
+         clone.moveToPreviousToken();
+         clone.setValue(clone.getValue() + "\n");
+      }
+      
+      public void ensureNewlineFollows()
+      {
+         String value = getValue();
+         String next = peek(1).getValue();
+         
+         if (ENDS_WITH_NEWLINE.test(value) ||
+             STARTS_WITH_NEWLINE.test(next))
+            return;
+         
+         SimpleTokenCursor clone = clone();
+         clone.moveToNextToken();
+         clone.setValue("\n" + clone.getValue());
+      }
+      
+      public void ensureSingleSpaceFollows()
+      {
+         setValue(getValue().replaceAll("\\s*$", ""));
+         SimpleTokenCursor clone = clone();
+         clone.moveToNextToken();
+         clone.setValue(clone.getValue().replaceAll("^\\s*", ""));
+         setValue(getValue() + " ");
+      }
+      
       public void ensureWhitespaceFollows()
       {
          String value = getValue();
@@ -2506,9 +2549,9 @@ public class TextEditingTarget implements
       // NOTE: see 'r_highlight_rules.js' for token type info
       public boolean isWhitespaceOrNewline()
       {
-         Token token = tokens_.get(offset_);
-         return token.getType() == "text" &&
-                token.getValue().matches("^\\s+$");
+         Token token = currentToken();
+         return token.getType().equals("text") &&
+                token.getValue().matches("^[\\s\\n]+$");
       }
       
       public void trimWhitespaceFwd()
@@ -2706,10 +2749,16 @@ public class TextEditingTarget implements
          //
          //    tryCatch({
          //
-         if (clone.currentValue().equals("function") ||
-             clone.currentValue().equals("{"))
+         if (clone.currentValue().equals("function"))
+            if (clone.previousSignificantToken().getValue().contains(","))
+               overrideNewlineInsertionAsFalse = true;
+         
+         if (clone.currentValue().equals("{"))
          {
-            overrideNewlineInsertionAsFalse = true;
+            SimpleTokenCursor peek = clone.clone();
+            if (peek.moveToPreviousSignificantToken())
+               if (peek.isLeftBrace())
+                  overrideNewlineInsertionAsFalse = true;
          }
          
          // If we encounter an '=', presumedly
@@ -2730,7 +2779,11 @@ public class TextEditingTarget implements
             if (clone.moveToNextSignificantToken())
             {
                if (clone.currentValue().equals("function"))
+               {
                   newlineAfterBrace = true;
+                  newlineAfterComma = true;
+                  continue;
+               }
             }
          }
          
@@ -2910,6 +2963,23 @@ public class TextEditingTarget implements
          if (!rootState && cursor.isRightBrace())
             break;
          
+         // Ensure whitespace following 'if'
+         if (cursor.currentValue().equals("if"))
+            cursor.ensureSingleSpaceFollows();
+         
+         // Ensure newlines around 'naked' else
+         if (cursor.currentValue().equals("else"))
+         {
+            if (!cursor.previousSignificantToken().getValue().equals("}"))
+               cursor.ensureNewlinePreceeds();
+            
+            String nextValue = cursor.nextSignificantToken().getValue();
+            if (!(nextValue.equals("{") || nextValue.equals("if")))
+               cursor.ensureNewlineFollows();
+            
+            continue;
+         }
+         
          // Ensure spaces around operators.
          if (cursor.isOperator())
          {
@@ -3077,6 +3147,23 @@ public class TextEditingTarget implements
             if (!success)
                return;
          }
+      }
+      
+      // If we ended on a ')' in e.g.
+      //
+      //    function(a, b) a
+      //
+      // that is, a function without an opening brace, ensure
+      // a newline following the closing paren.
+      // Similar logic applies for e.g.
+      //
+      //    if (foo) bar
+      //
+      if (cursor.currentValue().equals(")") &&
+          beforeStartCursor.isKeyword() &&
+          !cursor.nextSignificantToken().equals("{"))
+      {
+         cursor.ensureNewlineFollows();
       }
       
       // If we ended on a ')', maybe insert newline before
