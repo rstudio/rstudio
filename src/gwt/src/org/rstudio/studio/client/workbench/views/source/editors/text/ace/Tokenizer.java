@@ -25,6 +25,12 @@ public class Tokenizer extends JavaScriptObject
    {
    }
    
+   public static final native Tokenizer createRTokenizer() /*-{
+      var Tokenizer = $wnd.require("ace/tokenizer").Tokenizer;
+      var RHighlightRules = $wnd.require("mode/r_highlight_rules").RHighlightRules;
+      return new Tokenizer(new RHighlightRules().getRules());
+   }-*/;
+   
    // This is a wrapper function that takes a line (that may have
    // new lines) and properly tokenizes it as a flat token array, which
    // makes it very easy to iterate and munge. This will work for any

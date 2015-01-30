@@ -1055,7 +1055,8 @@ public class TextEditingTargetReformatHelper
          String selectionText = docDisplay_.getSelectionValue();
          
          // Tokenize the selection and walk through and replace
-         Tokenizer tokenizer = editor.getSession().getMode().getTokenizer();
+         // TODO: Enable for other modes?
+         Tokenizer tokenizer = Tokenizer.createRTokenizer();
          ArrayList<Token> tokens = tokenizer.tokenize(selectionText);
          
          SimpleTokenCursor cursor = new SimpleTokenCursor(tokens);
