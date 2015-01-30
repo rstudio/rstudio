@@ -2193,14 +2193,14 @@ public class TextEditingTarget implements
       private int data_;
    }
    
-   class TokenCursor {
+   class SimpleTokenCursor {
       
-      public TokenCursor(ArrayList<Token> tokens)
+      public SimpleTokenCursor(ArrayList<Token> tokens)
       {
          this(tokens, 0, tokens.size());
       }
       
-      private TokenCursor(ArrayList<Token> tokens,
+      private SimpleTokenCursor(ArrayList<Token> tokens,
                           int offset,
                           int n)
       {
@@ -2221,7 +2221,7 @@ public class TextEditingTarget implements
          n_ = n;
       }
       
-      private TokenCursor(ArrayList<Token> tokens,
+      private SimpleTokenCursor(ArrayList<Token> tokens,
                           int offset,
                           int n,
                           HashMap<String, String> complements)
@@ -2232,18 +2232,18 @@ public class TextEditingTarget implements
          complements_ = complements;
       }
       
-      public TokenCursor clone()
+      public SimpleTokenCursor clone()
       {
-         return new TokenCursor(
+         return new SimpleTokenCursor(
                tokens_,
                offset_,
                n_,
                complements_);
       }
       
-      public TokenCursor clone(int offset)
+      public SimpleTokenCursor clone(int offset)
       {
-         return new TokenCursor(
+         return new SimpleTokenCursor(
                tokens_,
                offset_ + offset,
                n_,
@@ -2292,7 +2292,7 @@ public class TextEditingTarget implements
       
       public Token previousSignificantToken()
       {
-         TokenCursor clone = clone();
+         SimpleTokenCursor clone = clone();
          if (!clone.moveToPreviousToken())
             return Token.create();
          
@@ -2305,7 +2305,7 @@ public class TextEditingTarget implements
       
       public Token nextSignificantToken()
       {
-         TokenCursor clone = clone();
+         SimpleTokenCursor clone = clone();
          if (!clone.moveToNextToken())
             return Token.create();
          
@@ -2316,17 +2316,17 @@ public class TextEditingTarget implements
          return clone.currentToken();
       }
       
-      public TokenCursor peek(int offset)
+      public SimpleTokenCursor peek(int offset)
       {
          int index = offset_ + offset;
          if (index < 0 || index >= n_)
          {
             ArrayList<Token> dummyTokens = new ArrayList<Token>();
             dummyTokens.add(Token.create("__ERROR__", "error", 0));
-            return new TokenCursor(dummyTokens, 0, 1, complements_);
+            return new SimpleTokenCursor(dummyTokens, 0, 1, complements_);
          }
          
-         TokenCursor clone = clone();
+         SimpleTokenCursor clone = clone();
          clone.offset_ = index;
          return clone;
       }
@@ -2366,7 +2366,7 @@ public class TextEditingTarget implements
          
          int stack = 0;
          String rhs = complements_.get(lhs);
-         TokenCursor cursor = clone();
+         SimpleTokenCursor cursor = clone();
          while (cursor.moveToNextToken())
          {
             String value = cursor.currentValue();
@@ -2414,7 +2414,7 @@ public class TextEditingTarget implements
          
          int stack = 0;
          String lhs = complements_.get(rhs);
-         TokenCursor cursor = clone();
+         SimpleTokenCursor cursor = clone();
          
          while (cursor.moveToPreviousToken())
          {
@@ -2484,7 +2484,7 @@ public class TextEditingTarget implements
       
       public void trimWhitespaceFwd()
       {
-         TokenCursor clone = clone();
+         SimpleTokenCursor clone = clone();
          while (clone.isWhitespaceOrNewline())
          {
             clone.setValue("");
@@ -2495,7 +2495,7 @@ public class TextEditingTarget implements
       
       public void trimWhitespaceBwd()
       {
-         TokenCursor clone = clone();
+         SimpleTokenCursor clone = clone();
          while (clone.isWhitespaceOrNewline())
          {
             clone.setValue("");
@@ -2519,6 +2519,12 @@ public class TextEditingTarget implements
          return tokens_.get(offset_).getType().equals("keyword");
       }
       
+      public boolean isControlFlowKeyword()
+      {
+         return tokens_.get(offset_).getValue().matches(
+               "^(?:if|else|try|for|while|repeat|break|next)$");
+      }
+      
       public boolean isBinaryOp()
       {
          String type = tokens_.get(offset_).getType();
@@ -2529,10 +2535,10 @@ public class TextEditingTarget implements
       @Override
       public boolean equals(Object object)
       {
-         if (!(object instanceof TokenCursor))
+         if (!(object instanceof SimpleTokenCursor))
             return false;
          
-         return offset_ == ((TokenCursor) object).offset_;
+         return offset_ == ((SimpleTokenCursor) object).offset_;
       }
       
       private final ArrayList<Token> tokens_;
@@ -2546,27 +2552,24 @@ public class TextEditingTarget implements
    // 'cursor': The current token cursor, unique to this block.
    // 'opener': The open brace ('[', '{', '(', '[['),
    // 'closer': The closing brace (']', '}', ')', ']]')
-   // 'nestLevel': The nesting level within parentheses; e.g. '()'.
-   //              This is used to infer appropriate newline levels
-   //              for deeply nested function calls.
-   // 'preferNewlineAfterComma': Does the parent scope prefer that this scope
-   //                            insert a newline after commas?
-   // 'preferNewlineAfterBrace': Does the parent scope prefer that this scope
-   //                            insert a newline after braces?
-   void doInsertPrettyNewlines(TokenCursor cursor,
+   // 'parenNestLevel': The nesting level within parentheses; e.g. '()'.
+   //                   This is used to infer appropriate newline levels
+   //                   for deeply nested function calls.
+   // 'braceNestLevel': The number of braces encompassing this scope.
+   // 'topLevel': Is this a top level cursor?
+   void doInsertPrettyNewlines(SimpleTokenCursor cursor,
                                String opener,
                                String closer,
-                               int nestLevel,
-                               boolean preferNewlineAfterComma,
-                               boolean preferNewlineAfterBrace,
+                               int parenNestLevel,
+                               int braceNestLevel,
                                boolean topLevel)
    {
       // Root state == top level of document; no open braces yet
       // encountered.
-      boolean rootState = nestLevel == 0 && opener.isEmpty();
+      boolean rootState = parenNestLevel == 0 && opener.isEmpty();
       
-      boolean newlineAfterComma = preferNewlineAfterComma;
-      boolean newlineAfterBrace = preferNewlineAfterBrace;
+      boolean newlineAfterComma = false;
+      boolean newlineAfterBrace = false;
       
       int commaCount = 0;
       int equalsCount = 0;
@@ -2581,15 +2584,17 @@ public class TextEditingTarget implements
       boolean overrideNewlineInsertionAsFalse = false;
       
       String startValue = cursor.currentValue();
-      String prevSignificantValue =
-            cursor.previousSignificantToken().getValue();
+      SimpleTokenCursor beforeStartCursor = cursor.clone();
+      beforeStartCursor.moveToPreviousSignificantToken();
+      
+      String prevSignificantValue = beforeStartCursor.getValue();
       
       // Trim whitespace following the 'opener' -- we may add it back later.
       if (!rootState)
          cursor.peek(1).trimWhitespaceFwd();
       
       // Scan through once to figure out whether we want to insert newlines.
-      TokenCursor clone = cursor.clone();
+      SimpleTokenCursor clone = cursor.clone();
       
       // Accumulate the length of the (non-whitespace)
       // tokens within this scope.
@@ -2698,39 +2703,51 @@ public class TextEditingTarget implements
       // Heuristically decide if we want to insert newlines after
       // commas, parens. We 'score' whether we would like to insert
       // newlines after commas, and after braces.
-      int commaScore = accumulatedLength + commaCount * 5;
+      int commaScore = commaCount == 0 ?
+            0 :
+            (commaCount - 1) * 15;
       
       // Within a function argument list, we almost always want to insert
       // newlines after commas, expect for very short function argument
       // lists.
       if (prevSignificantValue.equals("function"))
-         commaScore += 100;
+         commaScore += 20;
       
       // For scopes containing many `=`, we typically prefer inserting a
       // newline following a '('.
-      int equalsScore = accumulatedLength + equalsCount * 20;
+      int equalsScore = equalsCount == 0 ?
+            0 :
+            (equalsCount - 1) * 20;
       
       /*
       Debug.logToConsole("Accumulated length: " + accumulatedLength);
       Debug.logToConsole("Root state: " + rootState);
-      Debug.logToConsole("Nest level: " + nestLevel);
+      Debug.logToConsole("Paren Nest level: " + parenNestLevel);
+      Debug.logToConsole("Brace Nest level: " + braceNestLevel);
       Debug.logToConsole("Comma count: " + commaCount);
       Debug.logToConsole("Equals count: " + equalsCount);
       Debug.logToConsole("Cursor value: " + cursor.currentValue());
       Debug.logToConsole("Previous value: " + cursor.previousSignificantToken().getValue());
       Debug.logToConsole("Comma Score: " + commaScore);
       Debug.logToConsole("Equals score: " + equalsScore);
-      **/
+      */
       
       if (!rootState && startValue.equals("("))
       {
-         if (commaScore + equalsScore + nestLevel * 50 >= 180)
+         if (accumulatedLength +
+               commaScore +
+               equalsScore +
+               parenNestLevel * 20 +
+               braceNestLevel * docDisplay_.getTabSize() >= 80)
          {
             newlineAfterBrace = true;
-            nestLevel = 0;
+            parenNestLevel = 0;
          }
          
-         if (commaScore + equalsScore >= 160)
+         if (accumulatedLength +
+             commaScore +
+             equalsScore +
+             braceNestLevel * docDisplay_.getTabSize() >= 60)
             newlineAfterComma = true;
       }
       
@@ -2767,7 +2784,7 @@ public class TextEditingTarget implements
          newlineAfterBrace = false;
       }
       
-      TokenCursor peekFwd = cursor.peek(1);
+      SimpleTokenCursor peekFwd = cursor.peek(1);
       
       // Always insert newlines following '{'.
       // TODO: Allow very compact single line functions?
@@ -2808,11 +2825,28 @@ public class TextEditingTarget implements
          if (!rootState && cursor.isRightBrace())
             break;
          
-         // Ensure spaces around operators
+         // Ensure spaces around operators.
+         // TODO: Insert newlines after certain operators for long lines?
          if (cursor.isBinaryOp())
          {
             String value = cursor.currentValue();
-            if (value.equals("$") ||
+            
+            // Prefer newlines after comparison operators within 'if'
+            // statements when the enclosed selection is long
+            if (prevSignificantValue.equals("if"))
+            {
+               if (accumulatedLength >= 20 &&
+                   value.equals("&&") ||
+                   value.equals("||") ||
+                   value.equals("&") ||
+                   value.equals("|"))
+               {
+                  if (cursor.peek(1).currentValue().indexOf('\n') == -1)
+                     cursor.setValue(cursor.currentValue() + "\n");
+               }
+            }
+            
+            else if (value.equals("$") ||
                 value.equals("@") ||
                 value.equals(":") ||
                 value.equals("::") ||
@@ -2837,21 +2871,13 @@ public class TextEditingTarget implements
                if (value.equals("-") || value.equals("+"))
                {
                   // Figure out if the current token is binary or unary.
-                  TokenCursor previousCursor =
+                  SimpleTokenCursor previousCursor =
                         cursor.clone();
                   previousCursor.moveToPreviousSignificantToken();
                   
-                  TokenCursor nextCursor =
+                  SimpleTokenCursor nextCursor =
                         cursor.clone();
                   nextCursor.moveToNextSignificantToken();
-                  
-                  /*
-                  Debug.logToConsole("Previous cursor is right brace: " + previousCursor.isRightBrace());
-                  Debug.logToConsole("Previous cursor's type: " + previousCursor.currentType());
-                  
-                  Debug.logToConsole("Next cursor is left brace: " +nextCursor.isLeftBrace());
-                  Debug.logToConsole("Next cursor's type: " + nextCursor.currentType());
-                  */
                   
                   boolean isBinary =
                     (previousCursor.isRightBrace() ||
@@ -2926,6 +2952,23 @@ public class TextEditingTarget implements
              cursor.currentValue().equals("[") ||
              cursor.currentValue().equals("[["))
          {
+            // If we encounter a non-paren opener, this implies that we can
+            // reset the function nesting level.
+            if (!startValue.equals("("))
+               parenNestLevel = 0;
+            
+            // Otherwise, if we inserted newlines after parens for this
+            // block, reset the nest level
+            else
+            {
+               if (newlineAfterBrace)
+                  parenNestLevel = 0;
+            }
+            
+            // Increment the nest level for non-keyword '(' calls
+            int incrementParenNest = startValue.equals("(") &&
+                  !beforeStartCursor.isControlFlowKeyword() ? 1 : 0;
+            
             /*
             Debug.logToConsole("Found opening paren");
             Debug.logToConsole("--------------------");
@@ -2933,31 +2976,22 @@ public class TextEditingTarget implements
             Debug.logToConsole("-- Recursing with: '" + cursor.currentValue() + "'");
             */
             
-            TokenCursor recursingCursor = cursor.clone();
-            boolean success = cursor.fwdToMatchingToken();
+            // Update brace nest level
+            int incrementBraceNest =
+                  cursor.currentValue().equals("{") ? 1 : 0;
             
-            // If we encounter a non-paren opener, this implies that we can
-            // reset the function nesting level. Otherwise, we increment.
-            if (startValue.equals("("))
-               nestLevel++;
-            else
-               nestLevel = 0;
+            SimpleTokenCursor recursingCursor = cursor.clone();
+            boolean success = cursor.fwdToMatchingToken();
             
             // Signal children scopes whether we'd prefer them to insert
             // newlines. TODO: less magic numbers
-            preferNewlineAfterComma =
-                  accumulatedLength >= 80  && !rootState && !startValue.equals("{");
-                  
-            preferNewlineAfterBrace =
-                  accumulatedLength >= 200 && !rootState && !startValue.equals("{");
-                  
+            
             doInsertPrettyNewlines(
                   recursingCursor,
                   recursingCursor.currentValue(),
                   recursingCursor.getComplement(recursingCursor.currentValue()),
-                  nestLevel,
-                  preferNewlineAfterComma,
-                  preferNewlineAfterBrace,
+                  parenNestLevel + incrementParenNest,
+                  braceNestLevel + incrementBraceNest,
                   false);
             
             // If we weren't able to move the current active cursor to a
@@ -2971,7 +3005,7 @@ public class TextEditingTarget implements
       // If we ended on a ')', maybe insert newline before
       if (cursor.currentValue().equals(closer))
       {
-         TokenCursor peek = cursor.peek(-1);
+         SimpleTokenCursor peek = cursor.peek(-1);
          if (newlineAfterBrace || cursor.currentValue().equals("}"))
          {
             if (peek.currentValue().indexOf('\n') == -1)
@@ -2994,7 +3028,7 @@ public class TextEditingTarget implements
          Tokenizer tokenizer = editor.getSession().getMode().getTokenizer();
          ArrayList<Token> tokens = tokenizer.tokenize(selectionText);
          
-         TokenCursor cursor = new TokenCursor(tokens);
+         SimpleTokenCursor cursor = new SimpleTokenCursor(tokens);
          
          // Set the initial state -- we recurse every time we encounter
          // an opening paren, so check for that initially.
@@ -3006,7 +3040,9 @@ public class TextEditingTarget implements
             rhs = cursor.getComplement(lhs);
          }
          
-         doInsertPrettyNewlines(cursor, lhs, rhs, 0, false, false, true);
+         // TODO: Figure out current nesting level for the
+         // active selection.
+         doInsertPrettyNewlines(cursor, lhs, rhs, 0, 0, true);
          
          // Build the replacement from the modified token set
          StringBuilder builder = new StringBuilder();
