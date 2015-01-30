@@ -3459,7 +3459,8 @@ public class TextEditingTarget implements
                   docPath, 
                   line, 
                   column, 
-                  new VoidServerRequestCallback());
+                  new CppCompletionServerRequestCallback(
+                                          "Finding usages..."));
          }
          
       });
@@ -3488,6 +3489,31 @@ public class TextEditingTarget implements
       }
    }
    
+   private class CppCompletionServerRequestCallback 
+                        extends VoidServerRequestCallback
+   {
+      public CppCompletionServerRequestCallback(String message)
+      {
+         super();
+         progressDelayer_ =  new GlobalProgressDelayer(
+               globalDisplay_, 1000, "Finding usages..");
+      }
+
+      @Override
+      public void onSuccess()
+      {
+         progressDelayer_.dismiss();
+      }
+
+      @Override
+      public void onFailure()
+      {
+         progressDelayer_.dismiss();
+      }
+
+      private final GlobalProgressDelayer progressDelayer_;
+   }
+
    
    @Handler
    public void onSetWorkingDirToActiveDoc()
