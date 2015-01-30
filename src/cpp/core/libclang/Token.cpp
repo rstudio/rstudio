@@ -28,26 +28,23 @@ CXTokenKind Token::kind() const
 
 std::string Token::spelling() const
 {
-   return toStdString(libclang::clang().getTokenSpelling(
-                         tu_.getCXTranslationUnit(), token_));
+   return toStdString(libclang::clang().getTokenSpelling(tu_, token_));
 }
 
 SourceLocation Token::location() const
 {
-   return SourceLocation(libclang::clang().getTokenLocation(
-                         tu_.getCXTranslationUnit(), token_));
+   return SourceLocation(libclang::clang().getTokenLocation(tu_, token_));
 }
 
 SourceRange Token::extent() const
 {
-   return SourceRange(libclang::clang().getTokenExtent(
-                         tu_.getCXTranslationUnit(), token_));
+   return SourceRange(libclang::clang().getTokenExtent(tu_, token_));
 }
 
-Tokens::Tokens(TranslationUnit tu, const SourceRange &sourceRange)
+Tokens::Tokens(CXTranslationUnit tu, const SourceRange &sourceRange)
    : tu_(tu), pTokens_(NULL), numTokens_(0)
 {
-   libclang::clang().tokenize(tu_.getCXTranslationUnit(),
+   libclang::clang().tokenize(tu_,
                               sourceRange.getCXSourceRange(),
                               &pTokens_,
                               &numTokens_);
@@ -59,7 +56,7 @@ Tokens::~Tokens()
    {
       if (pTokens_ != NULL)
       {
-        libclang::clang().disposeTokens(tu_.getCXTranslationUnit(),
+        libclang::clang().disposeTokens(tu_,
                                         pTokens_,
                                         numTokens_);
       }

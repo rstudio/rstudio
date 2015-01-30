@@ -139,6 +139,15 @@ inline FileInfo toFileInfo(const FilePath& filePath)
    return FileInfo(filePath);
 }
 
+inline std::string fileInfoAbsolutePath(const FileInfo& fileInfo)
+{
+   return fileInfo.absolutePath();
+}
+
+inline bool fileInfoIsDirectory(const FileInfo& fileInfo)
+{
+   return fileInfo.isDirectory();
+}
    
 std::ostream& operator << (std::ostream& stream, const FileInfo& fileInfo) ;
 

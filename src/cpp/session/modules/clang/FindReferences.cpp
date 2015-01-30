@@ -22,12 +22,19 @@
 #include <core/FileSerializer.hpp>
 #include <core/libclang/LibClang.hpp>
 
+#include <core/system/ProcessArgs.hpp>
+
 #include <session/SessionModuleContext.hpp>
 
 #include "RSourceIndex.hpp"
 #include "RCompilationDatabase.hpp"
 
-// TODO: multi-file project searches
+// TODO: factor cpp completion stuff into it's own helper
+
+// TODO: test various scenarios
+//  connection.cpp:10:SqlConnectionWrapper -- no highlight
+//  RSqllite.h:142:sqlite3_open_v2 -- over-highlight
+//  RSqllite.h:155:sqlite3_backup_step -- over-highlight
 
 using namespace rstudio::core;
 using namespace rstudio::core::libclang;
@@ -41,14 +48,14 @@ namespace {
 
 struct FindReferencesData
 {
-   FindReferencesData(TranslationUnit tu, const std::string& USR)
+   FindReferencesData(CXTranslationUnit tu, const std::string& USR)
       : tu(tu), USR(USR)
    {
    }
-   TranslationUnit tu;
+   CXTranslationUnit tu;
    std::string USR;
    std::string spelling;
-   std::vector<SourceRange> references;
+   std::vector<FileRange> references;
 };
 
 CXChildVisitResult findReferencesVisitor(CXCursor cxCursor,
@@ -93,14 +100,14 @@ CXChildVisitResult findReferencesVisitor(CXCursor cxCursor,
                    token.spelling() == cursor.spelling())
                {
                   SourceRange range = token.extent();
-                  pData->references.push_back(range);
+                  pData->references.push_back(range.getFileRange());
                   break;
                }
            }
          }
          else
          {
-            pData->references.push_back(cursor.getExtent());
+            pData->references.push_back(cursor.getExtent().getFileRange());
          }
       }
    }
@@ -113,14 +120,14 @@ class SourceMarkerGenerator
 {
 public:
    std::vector<module_context::SourceMarker> markersForCursorLocations(
-              const std::vector<core::libclang::SourceRange>& locations)
+              const std::vector<core::libclang::FileRange>& locations)
    {
       using namespace module_context;
       std::vector<SourceMarker> markers;
 
-      BOOST_FOREACH(const libclang::SourceRange& loc, locations)
+      BOOST_FOREACH(const libclang::FileRange& loc, locations)
       {
-         FileLocation startLoc = loc.getStart().getSpellingLocation();
+         FileLocation startLoc = loc.start;
 
          // get file contents and use it to create the message
          std::size_t line = startLoc.line - 1;
@@ -148,11 +155,11 @@ public:
 
 private:
 
-   static std::string htmlMessage(const libclang::SourceRange& loc,
+   static std::string htmlMessage(const libclang::FileRange& loc,
                                   const std::string& message)
    {
-      FileLocation startLoc = loc.getStart().getSpellingLocation();
-      FileLocation endLoc = loc.getEnd().getSpellingLocation();
+      FileLocation startLoc = loc.start;
+      FileLocation endLoc = loc.end;
 
       unsigned extent = 0;
       if (startLoc.line == endLoc.line)
@@ -240,11 +247,31 @@ private:
    SourceFileContentsMap sourceFileContents_;
 };
 
+void findReferences(std::string USR,
+                    CXTranslationUnit tu,
+                    std::string* pSpelling,
+                    std::vector<core::libclang::FileRange>* pRefs)
+{
+   FindReferencesData findReferencesData(tu, USR);
+   libclang::clang().visitChildren(
+               libclang::clang().getTranslationUnitCursor(tu),
+               findReferencesVisitor,
+               (CXClientData)&findReferencesData);
+
+   // copy the locations to the out parameter
+   *pSpelling = findReferencesData.spelling;
+   std::copy(findReferencesData.references.begin(),
+             findReferencesData.references.end(),
+             std::back_inserter(*pRefs));
+}
+
 } // anonymous namespace
+
+
 
 core::Error findReferences(const core::libclang::FileLocation& location,
                            std::string* pSpelling,
-                           std::vector<core::libclang::SourceRange>* pRefs)
+                           std::vector<core::libclang::FileRange>* pRefs)
 {
    Cursor cursor = rSourceIndex().referencedCursorForFileLocation(location);
    if (!cursor.isValid() || !cursor.isDeclaration())
@@ -255,37 +282,74 @@ core::Error findReferences(const core::libclang::FileLocation& location,
    if (USR.empty())
       return Success();
 
-   // determine what translation units to look in
-   std::vector<TranslationUnit> units;
-
-   //if (rCompilationDatabase().isProjectTranslationUnit(location.filePath))
-   if (false)
+   // determine what translation units to look in -- if this is a package
+   // then we look throughout all the source code in the package.
+   if (rCompilationDatabase().hasTranslationUnit(
+                                         location.filePath.absolutePath()))
    {
+      // get all translation units to search
+      std::vector<std::string> files = rCompilationDatabase()
+                                                .translationUnits();
 
+      // get translation units we've already indexed
+      std::map<std::string,CXTranslationUnit> indexedUnits =
+                           rSourceIndex().getIndexedTranslationUnits();
+
+      BOOST_FOREACH(const std::string& filename, files)
+      {
+         // first look in already indexed translation units
+         // (this will pickup unsaved files)
+         std::map<std::string,CXTranslationUnit>::iterator it =
+                                                   indexedUnits.find(filename);
+         if (it != indexedUnits.end())
+         {
+            findReferences(USR, it->second, pSpelling, pRefs);
+         }
+         else
+         {
+            // get the compilation arguments for this file and use them to
+            // create a temporary translation unit to search
+            std::vector<std::string> compileArgs =
+               rCompilationDatabase().compileArgsForTranslationUnit(filename);
+
+            if (compileArgs.empty())
+               continue;
+
+            // create temporary index
+            CXIndex index = libclang::clang().createIndex(
+                                                1 /* Exclude PCH */,
+                                                0 /* No diagnostics */);
+
+            // get args in form clang expects
+            core::system::ProcessArgs argsArray(compileArgs);
+
+            // parse the translation unit
+            CXTranslationUnit tu = libclang::clang().parseTranslationUnit(
+                                  index,
+                                  filename.c_str(),
+                                  argsArray.args(),
+                                  argsArray.argCount(),
+                                  NULL, 0, // no unsaved files
+                                  CXTranslationUnit_None |
+                                  CXTranslationUnit_Incomplete);
+
+            // find references
+            findReferences(USR, tu, pSpelling, pRefs);
+
+            // dispose translation unit and index
+            libclang::clang().disposeTranslationUnit(tu);
+            libclang::clang().disposeIndex(index);
+         }
+      }
    }
+   // not a package, just search locally
    else
    {
       TranslationUnit tu = rSourceIndex().getTranslationUnit(
                                              location.filePath.absolutePath(),
                                              true);
       if (!tu.empty())
-         units.push_back(tu);
-   }
-
-   // visit all the translation units
-   BOOST_FOREACH(TranslationUnit tu, units)
-   {
-      // visit the cursors and accumulate references
-      FindReferencesData findReferencesData(tu, USR);
-      libclang::clang().visitChildren(tu.getCursor().getCXCursor(),
-                                      findReferencesVisitor,
-                                      (CXClientData)&findReferencesData);
-
-      // copy the locations to the out parameter
-      *pSpelling = findReferencesData.spelling;
-      std::copy(findReferencesData.references.begin(),
-                findReferencesData.references.end(),
-                std::back_inserter(*pRefs));
+         findReferences(USR, tu.getCXTranslationUnit(), pSpelling, pRefs);
    }
 
    return Success();
@@ -313,7 +377,7 @@ Error findUsages(const json::JsonRpcRequest& request,
 
    // find the references
    std::string spelling;
-   std::vector<core::libclang::SourceRange> usageLocations;
+   std::vector<core::libclang::FileRange> usageLocations;
    error = findReferences(location, &spelling, &usageLocations);
    if (error)
       return error;
@@ -323,8 +387,11 @@ Error findUsages(const json::JsonRpcRequest& request,
    std::vector<SourceMarker> markers = SourceMarkerGenerator()
                                  .markersForCursorLocations(usageLocations);
 
-   SourceMarkerSet markerSet("C++ Find Usages: " + spelling, markers);
-   showSourceMarkers(markerSet, MarkerAutoSelectNone);
+   if (markers.size() > 0)
+   {
+      SourceMarkerSet markerSet("C++ Find Usages: " + spelling, markers);
+      showSourceMarkers(markerSet, MarkerAutoSelectNone);
+   }
 
    return Success();
 }

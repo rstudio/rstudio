@@ -41,6 +41,14 @@ SourceLocation SourceRange::getEnd() const
    return SourceLocation(clang().getRangeEnd(range_));
 }
 
+FileRange SourceRange::getFileRange() const
+{
+   FileRange range;
+   range.start = getStart().getSpellingLocation();
+   range.end = getEnd().getSpellingLocation();
+   return range;
+}
+
 bool SourceRange::operator==(const SourceRange& other) const
 {
    return clang().equalRanges(range_, other.range_) != 0;

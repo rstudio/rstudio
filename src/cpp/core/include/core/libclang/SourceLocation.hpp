@@ -21,11 +21,32 @@
 
 #include "clang-c/Index.h"
 
+#include <core/FilePath.hpp>
+
 namespace rstudio {
 namespace core {
+
 namespace libclang {
 
-class FileLocation;
+// file location
+struct FileLocation
+{
+   FileLocation()
+      : line(0), column(0)
+   {
+   }
+
+   FileLocation(const FilePath& filePath, unsigned line, unsigned column)
+      : filePath(filePath), line(line), column(column)
+   {
+   }
+
+   bool empty() const { return filePath.empty(); }
+
+   core::FilePath filePath;
+   unsigned line;
+   unsigned column;
+};
 
 class SourceLocation
 {

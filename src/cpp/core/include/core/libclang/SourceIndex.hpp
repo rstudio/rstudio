@@ -35,6 +35,8 @@ namespace libclang {
 
 struct CompilationDatabase
 {
+   boost::function<bool(const std::string&)> hasTranslationUnit;
+   boost::function<std::vector<std::string>()> translationUnits;
    boost::function<std::vector<std::string>(const std::string&)>
                                             compileArgsForTranslationUnit;
 };

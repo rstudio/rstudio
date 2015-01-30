@@ -27,7 +27,7 @@ namespace rstudio {
 namespace core {
 namespace libclang {
    struct FileLocation;
-   struct SourceRange;
+   struct FileRange;
 }
 }
 
@@ -37,7 +37,7 @@ namespace clang {
 
 core::Error findReferences(const core::libclang::FileLocation& location,
                            std::string* pSpelling,
-                           std::vector<core::libclang::SourceRange>* pRefs);
+                           std::vector<core::libclang::FileRange>* pRefs);
 
 core::Error findUsages(const core::json::JsonRpcRequest& request,
                        core::json::JsonRpcResponse* pResponse);

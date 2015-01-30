@@ -21,11 +21,18 @@
 
 #include "clang-c/Index.h"
 
+#include <core/libclang/SourceLocation.hpp>
+
 namespace rstudio {
 namespace core {
 namespace libclang {
 
-class SourceLocation;
+// file range
+struct FileRange
+{
+   FileLocation start;
+   FileLocation end;
+};
 
 class SourceRange
 {
@@ -47,6 +54,8 @@ public:
    SourceLocation getStart() const;
 
    SourceLocation getEnd() const;
+
+   FileRange getFileRange() const;
 
    bool operator==(const SourceRange& other) const ;
    bool operator!=(const SourceRange& other) const ;

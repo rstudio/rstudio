@@ -54,33 +54,6 @@ bool insertDefinition(const CppDefinition& definition,
    return true;
 }
 
-bool isIndexableFile(const FileInfo& fileInfo,
-                     const FilePath& pkgSrcDir,
-                     const FilePath& pkgIncludeDir)
-{
-   FilePath filePath(fileInfo.absolutePath());
-
-   if (pkgSrcDir.exists() &&
-       filePath.isWithin(pkgSrcDir) &&
-       SourceIndex::isSourceFile(filePath) &&
-       !boost::algorithm::starts_with(filePath.stem(), kCompilationDbPrefix) &&
-       (filePath.filename() != "RcppExports.cpp"))
-   {
-      return true;
-   }
-   else if (pkgIncludeDir.exists() &&
-            filePath.isWithin(pkgIncludeDir) &&
-            SourceIndex::isSourceFile(filePath) &&
-            !boost::algorithm::ends_with(filePath.stem(), "_RcppExports"))
-   {
-      return true;
-   }
-   else
-   {
-      return false;
-   }
-}
-
 typedef boost::function<bool(const CppDefinition&)> DefinitionVisitor;
 
 CXChildVisitResult cursorVisitor(CXCursor cxCursor,

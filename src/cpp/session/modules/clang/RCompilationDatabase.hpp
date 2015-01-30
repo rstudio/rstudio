@@ -46,7 +46,9 @@ public:
    std::vector<std::string> compileArgsForTranslationUnit(
                                              const std::string& filename);
 
-   bool isProjectTranslationUnit(const core::FilePath& filePath) const;
+   bool isProjectTranslationUnit(const std::string& filename) const;
+
+   std::vector<std::string> projectTranslationUnits() const;
 
 private:
 

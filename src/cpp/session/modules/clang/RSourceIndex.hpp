@@ -19,11 +19,21 @@
 #include <core/libclang/SourceIndex.hpp>
 
 namespace rstudio {
+
+namespace core {
+   class FileInfo;
+   class FilePath;
+}
+
 namespace session {
 namespace modules {      
 namespace clang {
 
 core::libclang::SourceIndex& rSourceIndex();
+
+bool isIndexableFile(const core::FileInfo& fileInfo,
+                     const core::FilePath& pkgSrcDir,
+                     const core::FilePath& pkgIncludeDir);
 
 } // namespace clang
 } // namepace handlers

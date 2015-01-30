@@ -36,7 +36,7 @@ class SourceLocation;
 class Token
 {
 public:
-   Token(TranslationUnit tu, CXToken token)
+   Token(CXTranslationUnit tu, CXToken token)
       : tu_(tu), token_(token)
    {
    }
@@ -50,21 +50,21 @@ public:
    SourceRange extent() const;
 
 private:
-   TranslationUnit tu_;
+   CXTranslationUnit tu_;
    CXToken token_;
 };
 
 class Tokens : boost::noncopyable
 {
 public:
-   Tokens(TranslationUnit tu, const SourceRange& sourceRange);
+   Tokens(CXTranslationUnit tu, const SourceRange& sourceRange);
    virtual ~Tokens();
 
    unsigned numTokens() const { return numTokens_; }
    Token getToken(unsigned index) const { return Token(tu_, pTokens_[index]); }
 
 private:
-   TranslationUnit tu_;
+   CXTranslationUnit tu_;
    CXToken* pTokens_;
    unsigned numTokens_;
 };

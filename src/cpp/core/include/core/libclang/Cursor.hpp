@@ -26,26 +26,6 @@ namespace rstudio {
 namespace core {
 namespace libclang {
 
-// file location
-struct FileLocation
-{
-   FileLocation()
-      : line(0), column(0)
-   {
-   }
-
-   FileLocation(const FilePath& filePath, unsigned line, unsigned column)
-      : filePath(filePath), line(line), column(column)
-   {
-   }
-
-   bool empty() const { return filePath.empty(); }
-
-   core::FilePath filePath;
-   unsigned line;
-   unsigned column;
-};
-
 class SourceRange;
 
 class Cursor
