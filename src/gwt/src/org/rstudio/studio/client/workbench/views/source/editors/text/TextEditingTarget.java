@@ -2000,7 +2000,10 @@ public class TextEditingTarget implements
    {
       // Only allow if entire selection in R mode for now
       if (!DocumentMode.isSelectionInRMode(docDisplay_))
+      {
+         showRModeWarning("Reformat Code");
          return;
+      }
       
       reformatHelper_.insertPrettyNewlines();
    }
