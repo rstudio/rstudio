@@ -63,6 +63,7 @@ public:
    static const wchar_t COMMA;
    static const wchar_t SEMI;
    static const wchar_t WHITESPACE;
+   static const wchar_t NEWLINE;
    static const wchar_t STRING;
    static const wchar_t NUMBER;
    static const wchar_t ID;
@@ -100,6 +101,11 @@ public:
    bool contentEquals(const std::wstring& text) const
    {
       return std::equal(begin_, end_, text.begin());
+   }
+   
+   bool contentContains(const wchar_t character) const
+   {
+      return std::find(begin_, end_, character) != end_;
    }
 
    bool contentStartsWith(const std::wstring& text) const
@@ -169,6 +175,7 @@ public:
 
 private:
    RToken matchWhitespace();
+   RToken matchNewline();
    RToken matchStringLiteral();
    RToken matchNumber();
    RToken matchIdentifier();
@@ -331,6 +338,26 @@ inline bool isComma(const RToken& rToken)
 inline bool isWhitespace(const RToken& rToken)
 {
    return rToken.isType(RToken::WHITESPACE);
+}
+
+inline bool isValidAsIdentifier(const RToken& rToken)
+{
+   return rToken.isType(RToken::ID) ||
+          rToken.isType(RToken::NUMBER) ||
+          rToken.isType(RToken::STRING);
+}
+
+inline bool hasNewline(const RToken& rToken)
+{
+   return rToken.isType(RToken::WHITESPACE) &&
+          rToken.contentContains(L'\n');
+}
+
+inline bool isValidAsUnaryOperator(const RToken& rToken)
+{
+   return rToken.contentEquals(L"-") ||
+          rToken.contentEquals(L"+") ||
+          rToken.contentEquals(L"!");
 }
 
 } // end namespace token_utils

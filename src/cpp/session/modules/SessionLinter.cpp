@@ -44,9 +44,48 @@ namespace session {
 namespace modules {
 namespace linter {
 
-using namespace rstudio::core;
-using namespace rstudio::core::r_util;
-using namespace rstudio::core::r_util::token_utils;
+using namespace core;
+using namespace core::r_util;
+using namespace core::r_util::token_utils;
+
+namespace {
+
+std::vector<std::string> makeNSEFunctions()
+{
+   std::vector<std::string> s;
+   
+   s.push_back("library");
+   s.push_back("require");
+   s.push_back("quote");
+   s.push_back("substitute");
+   s.push_back("enquote");
+   s.push_back("expression");
+   s.push_back("evalq");
+   
+   return s;
+}
+
+static std::vector<std::string> s_nseFunctions =
+      makeNSEFunctions();
+
+std::map<std::wstring, std::wstring> makeComplementVector()
+{
+   std::map<std::wstring, std::wstring> m;
+   m[L"["] = L"]";
+   m[L"("] = L")";
+   m[L"{"] = L"}";
+   m[L"[["] = L"]]";
+   m[L"]"] = L"[";
+   m[L")"] = L"(";
+   m[L"}"] = L"{";
+   m[L"]]"] = L"[[";
+   return m;
+}
+
+static std::map<std::wstring, std::wstring> s_complements =
+      makeComplementVector();
+
+}
 
 struct Position
 {
@@ -119,7 +158,12 @@ public:
    
    bool contentEquals(const std::wstring& text) const
    {
-      return std::equal(token_.begin(), token_.end(), text.begin());
+      return token_.contentEquals(text);
+   }
+   
+   bool contentContains(wchar_t character) const
+   {
+      return token_.contentContains(character);
    }
    
    const RToken& token() const
@@ -884,6 +928,11 @@ public:
       return rTokens_.at(offset_).contentEquals(content);
    }
    
+   bool contentContains(wchar_t character) const
+   {
+      return rTokens_.at(offset_).contentContains(character);
+   }
+   
    bool fwdOverWhitespace()
    {
       while (currentToken().isType(RToken::WHITESPACE))
@@ -898,6 +947,171 @@ public:
          if (!moveToPreviousToken())
             return false;
       return true;
+   }
+   
+   // Move over whitespace tokens (that do not contain newlines)
+   bool fwdOverBlank()
+   {
+      while (currentToken().isType(RToken::WHITESPACE) &&
+             !currentToken().contentContains(L'\n'))
+         if (!moveToNextToken())
+            return false;
+      return true;
+   }
+   
+   bool bwdOverBlank()
+   {
+      while (currentToken().isType(RToken::WHITESPACE) &&
+             !currentToken().contentContains(L'\n'))
+         if (!moveToPreviousToken())
+            return false;
+      return true;
+   }
+   
+   bool finishesExpression()
+   {
+      bool isSemi = currentToken().isType(RToken::SEMI);
+      bool hasNewline = currentToken().isType(RToken::WHITESPACE) &&
+            currentToken().contentContains(L'\n');
+      bool isFinalToken = offset_ == n_ - 1;
+      
+      return isSemi || hasNewline || isFinalToken;
+   }
+   
+   // Move over a full R expression.
+   //
+   // The cursor is placed on the first token following the full
+   // expression, e.g.
+   //
+   //    x + foo[[1]]()()$bar - -y; x
+   //    ^~~~~~~~~~~~~~~~~~~~~~~~~~~^
+   //
+   // or, if no token exists after the end of the expression, we
+   // set the cursor at the end of the document.
+   bool moveFromStartToEndOfExpression(LintItems* pLintItems)
+   {
+      // We move a cloned cursor so that the current cursor stays
+      // put on failure.
+      TokenCursor cursor = clone();
+      
+      // Otherwise, we walk over pairs of 'symbols' and
+      // binary operators.
+      while (true)
+      {
+         UNARY_OPERATOR_OR_IDENTIFIER:
+         
+         if (isValidAsUnaryOperator(cursor))
+         {
+            if (!cursor.moveToNextSignificantToken())
+            {
+               if (pLintItems)
+                  pLintItems->addUnexpectedEndOfDocument(cursor);
+               return false;
+            }
+         }
+         
+         // symbol
+         if (!isValidAsIdentifier(cursor))
+         {
+            pLintItems->addUnexpectedToken(cursor, "'identifier'");
+            return false;
+         }
+         
+         // An expression may end following an identifier,
+         // and this can be a little tricky to figure out.
+         // For example, we might have the line
+         //
+         //    a + b    ;
+         //        ^----^
+         //
+         // so we need to:
+         //
+         //  1. Move over _blanks_ (not newlines! those can end an expression),
+         //  2. Check to see if we finish the expression normally.
+         if (!cursor.moveToNextToken())
+         {
+            if (pLintItems)
+               pLintItems->addUnexpectedEndOfDocument(cursor);
+            return false;
+         }
+         
+         if (!cursor.fwdOverBlank())
+         {
+            if (pLintItems)
+               pLintItems->addUnexpectedEndOfDocument(cursor);
+            return false;
+         }
+         
+         // An identifier in an expression is followed by either:
+         //
+         // 1. A binary operator (continuing the expression),
+         // 2  An open brace (e.g. for function calls)
+         // 3. A newline (ending the expression),
+         // 4. A semicolon (ending the expression)
+         if (cursor.finishesExpression())
+         {
+            cursor.moveToNextSignificantToken();
+            offset_ = cursor.offset_;
+            return true;
+         }
+         
+         if (isLeftBrace(cursor))
+            goto OPEN_BRACE;
+         
+         if (isBinaryOp(cursor))
+            goto BINARY_OPERATOR;
+         
+         if (pLintItems)
+            pLintItems->addUnexpectedToken(cursor);
+         
+         return false;
+         
+         OPEN_BRACE:
+         
+         while (cursor.fwdToMatchingToken())
+         {
+            if (cursor.finishesExpression())
+            {
+               cursor.moveToNextSignificantToken();
+               offset_ = cursor.offset_;
+               return true;
+            }
+            
+            if (!cursor.moveToNextSignificantToken())
+            {
+               if (pLintItems)
+                  pLintItems->addUnexpectedEndOfDocument();
+               return false;
+            }
+            
+            if (isBinaryOp(cursor))
+               goto BINARY_OPERATOR;
+         }
+         
+         if (pLintItems)
+            pLintItems->addUnexpectedToken(cursor);
+         
+         return false;
+         
+         BINARY_OPERATOR:
+         
+         if (cursor.moveToNextSignificantToken())
+         {
+            if (isLeftBrace(cursor))
+               goto OPEN_BRACE;
+            
+            goto UNARY_OPERATOR_OR_IDENTIFIER;
+         }
+         
+         if (pLintItems)
+            pLintItems->addUnexpectedToken(cursor);
+         return false;
+      }
+   }
+   
+   bool moveFromStartToEndOfExpression()
+   {
+      return moveFromStartToEndOfExpression(NULL);
    }
    
    friend std::ostream& operator <<(std::ostream& os, const TokenCursor& cursor)
@@ -979,6 +1193,19 @@ namespace {
       }                                                                        \
    } while (0)
 
+// Utility macros for inspecting and handling tokens
+#define FWD_TO_MATCHING_TOKEN(__CURSOR__, __LINT_ITEMS__)                      \
+   do                                                                          \
+   {                                                                           \
+      if (!__CURSOR__.fwdToMatchingToken())                                    \
+      {                                                                        \
+         DEBUG("Encountered unexpected end of document");                      \
+         __LINT_ITEMS__.addUnexpectedEndOfDocument(__CURSOR__.currentToken()); \
+         return;                                                               \
+      }                                                                        \
+   } while (0)
+
+
 #define FWD_OVER_WHITESPACE(__CURSOR__, __LINT_ITEMS__)                        \
    do                                                                          \
    {                                                                           \
@@ -1032,14 +1259,17 @@ void handleIdToken(TokenCursor& cursor,
 
       return;
    }
-
-   // If the previous symbol is a '$' or an '@', then we don't
+   
+   // If the previous symbol is a '$', '@', or namespace symbol then we don't
    // touch it for now.
+   //
+   // Note that namespace symbols are handled (in one go) in an above block.
    //
    // TODO: Add another map for 'containers' in a scope?
    const AnnotatedRToken& prevToken = cursor.previousSignificantToken();
    if (isAt(prevToken) ||
-       isDollar(prevToken))
+       isDollar(prevToken) ||
+       isNamespace(prevToken))
       return;
 
    // Check to see if there is a left assign following the token.
@@ -1067,11 +1297,41 @@ void handleIdToken(TokenCursor& cursor,
       DEBUG("Adding defined variable '" << cursor.currentToken().contentAsUtf8() << "'");
       pNode->addDefinedSymbol(cursor);
    }
-
+   
+   // In a 'for (<var> in ...)', the 'in' is an implicit definition of a variable.
+   if (nextToken.contentEquals(L"in"))
+   {
+      DEBUG("Adding 'for-in' defined variable: '" << cursor.currentToken().contentAsUtf8() << "'");
+      pNode->addDefinedSymbol(cursor);
+   }
+   
    // TODO: Handle 'global' assign. This implies searching
    // parent scopes to see if the variable is defined locally
    // or defined in a parent scope. We likely want to warn if
    // a 'global' assign sees no variables in the parent scope.
+   
+   // TODO: Handle function tokens. Resolving these will require more work,
+   // especially for e.g. packages (need to know all of the top level functions
+   // available for that package; not to mention parsing of NAMESPACE imports
+   // and exports...)
+   //
+   // For now, to avoid spurious warnings, we just ignore function tokens.
+   if (cursor.nextSignificantToken().contentEquals(L"("))
+   {
+      // Move the cursor over functions that perform non-standard evaluation;
+      // that is, functions that accept raw symbols as arguments.
+      std::string content = cursor.currentToken().contentAsUtf8();
+      
+      if (std::find(s_nseFunctions.begin(),
+                    s_nseFunctions.end(),
+                    content) != s_nseFunctions.end())
+      {
+         DEBUG("- Skipping arguments within function that performs NSE");
+         FWD_TO_MATCHING_TOKEN(cursor, lintItems);
+      }
+      
+      return;
+   }
    
    // Add a reference to this variable
    DEBUG("Adding reference to variable '" << cursor.currentToken().contentAsUtf8() << "'");
@@ -1185,6 +1445,73 @@ void handleFunctionToken(TokenCursor& cursor,
          if (!isWhitespace(cursor.nextToken()))
             lintItems.addShouldUseWhitespace(cursor.nextToken());
          
+         // if the next significant token is a 'function' keyword,
+         // we need to recurse
+         if (cursor.nextSignificantToken().contentEquals(L"function"))
+         {
+            DEBUG("-- Encountered function token -- recursing!");
+            
+            // Move on to the 'function' token.
+            cursor.moveToNextSignificantToken();
+            
+            // Clone a cursor and recurse.
+            TokenCursor clone = cursor.clone();
+            handleFunctionToken(clone, ppNode, lintItems);
+            
+            // There should be a '(' following the function token.
+            if (!cursor.nextSignificantToken().contentEquals(L"("))
+            {
+               lintItems.addUnexpectedToken(cursor.nextSignificantToken(), L"(");
+               return;
+            }
+            
+            // There shouldn't be whitespace following the 'function' token.
+            if (isWhitespace(cursor.nextToken()))
+               lintItems.addShouldRemoveWhitespace(cursor.nextToken());
+            
+            // We want to move the token cursor onto the next argument in the list,
+            // or hit the end of the argument list.
+            
+            // Move on to the '('
+            if (!cursor.moveToNextSignificantToken())
+               return;
+            
+            // Move to matching ')' (end of this function's argument list)
+            if (!cursor.fwdToMatchingToken())
+               return;
+            
+            // For this function, we either expect a '{' body, or a single expression.
+            // Move over that.
+            
+            // Suggest whitespace following.
+            if (!isWhitespace(cursor.nextToken()))
+               lintItems.addShouldUseWhitespace(cursor.nextToken());
+            
+            // Move over the expression.
+            DEBUG("-- About to move over expression...");
+            DEBUG("-- Cursor before: " + cursor.currentToken().asString());
+            if (!cursor.moveFromStartToEndOfExpression(&lintItems))
+            {
+               DEBUG("--- FAILED: Couldn't move to end of expression!");
+               return;
+            }
+            
+            DEBUG("-- Cursor after: " + cursor.currentToken().asString());
+            if (!cursor.moveToNextSignificantToken())
+               return;
+            
+            // We should now be on either a ',' or a ')' closing the argument list.
+            if (cursor.contentEquals(L","))
+               continue;
+            else if (cursor.contentEquals(L")"))
+               goto ENCOUNTERED_END_OF_ARGUMENT_LIST;
+            else
+            {
+               lintItems.addUnexpectedToken(cursor, "',' or ')'");
+               return;
+            }
+         }
+         
          DEBUG("Found '='; looking for next argument name");
          
          // TODO: Parse expression following '='. 
@@ -1282,23 +1609,6 @@ void handleStringToken(TokenCursor& cursor,
       pNode->addDefinedSymbol(cursor);
 }
 
-std::map<std::wstring, std::wstring> makeComplementVector()
-{
-   std::map<std::wstring, std::wstring> m;
-   m[L"["] = L"]";
-   m[L"("] = L")";
-   m[L"{"] = L"}";
-   m[L"[["] = L"]]";
-   m[L"]"] = L"[";
-   m[L")"] = L"(";
-   m[L"}"] = L"{";
-   m[L"]]"] = L"[[";
-   return m;
-}
-
-static std::map<std::wstring, std::wstring> s_complements =
-      makeComplementVector();
-
 std::wstring complement(const std::wstring string)
 {
    return s_complements[string];
@@ -1364,18 +1674,27 @@ LintResults parseAndLintRFile(const FilePath& filePath,
       if (isRightBrace(cursor))
       {
          DEBUG("Encountered '" << cursor.currentToken().contentAsUtf8() << "', updating brace stack");
-         if (cursor.contentEquals(L"}") && pNode->getParent() != NULL)
+         
+         // If the brace stack (the stack of non-closure-associated '{') is empty,
+         // then we must be closing a function body.
+         if (braceStack.empty())
          {
-            DEBUG("Encountered '}' closing function block");
-            pNode = pNode->getParent();
-            continue;
+            if (cursor.contentEquals(L"}") && pNode->getParent() != NULL)
+
+            {
+               DEBUG("Encountered '}' closing function block");
+               pNode = pNode->getParent();
+               continue;
+            }
+            else
+            {
+               DEBUG("Unexpected token " << cursor.currentToken().asString());
+               lintItems.addUnexpectedToken(cursor);
+               continue;
+            }
          }
-         else if (braceStack.empty())
-         {
-            DEBUG("Unexpected token " << cursor.currentToken().asString());
-            lintItems.addUnexpectedToken(cursor);
-            continue;
-         }
+         
+         // Otherwise, we are closing an expression block.
          else
          {
             const std::wstring& toBePopped =
@@ -1408,6 +1727,17 @@ LintResults parseAndLintRFile(const FilePath& filePath,
       if (isId(cursor))
       {
          DEBUG("Handling ID token");
+         
+         // TODO: Nodes should also have a 'local' brace stack, which keeps track
+         // of 'if/else' blocks. With this, we could warn on code like:
+         //
+         //    if (foo) {
+         //       x <- 1
+         //    }
+         //
+         // if the variable 'x' does not exist previously in that scope -- this
+         // implies conditionally creating a variable 'x', which is normally a
+         // code smell.
          handleIdToken(cursor, pNode, lintItems);
          continue;
       }

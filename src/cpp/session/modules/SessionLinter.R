@@ -13,6 +13,23 @@
 #
 #
 
+.rs.setVar(
+   "r.keywords",
+   c(
+      "TRUE",
+      "FALSE",
+      "NA",
+      "NA_real_",
+      "NA_complex_",
+      "NA_integer_",
+      "NA_character_",
+      "NULL",
+      "Inf",
+      "else",
+      "in"
+   )
+)
+
 .rs.addFunction("setLintEngine", function(engine)
 {
    if (identical(engine, "internal"))
@@ -44,7 +61,7 @@
       return(list())
       
    filePath <- .rs.normalizePath(filePath)
-   objects <- unlist(.rs.objectsOnSearchPath())
+   objects <- unlist(c(.rs.objectsOnSearchPath(), .rs.getVar("r.keywords")))
    lint <- .Call("rs_parseAndLintRFile", filePath, objects)
    markers <- .rs.createMarkersFromLint(lint, filePath)
    .rs.api.sourceMarkers(
