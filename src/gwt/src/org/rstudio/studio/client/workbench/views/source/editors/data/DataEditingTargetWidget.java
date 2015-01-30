@@ -1,7 +1,7 @@
 /*
  * DataEditingTargetWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,6 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
 package org.rstudio.studio.client.workbench.views.source.editors.data;
 
 
@@ -67,7 +68,6 @@ public class DataEditingTargetWidget extends Composite
 
       frame_ = new RStudioFrame(dataItem.getContentUrl());
       frame_.setSize("100%", "100%");
-
       table_ = new DataTable(this);
 
       Widget mainWidget;
@@ -106,11 +106,10 @@ public class DataEditingTargetWidget extends Composite
       }
       
 
-      PanelWithToolbars panel = new PanelWithToolbars(createToolbar(dataItem,
-                                                                  styles),
-                                                    mainWidget);
+      PanelWithToolbars panel = new PanelWithToolbars(
+            createToolbar(dataItem, styles), 
+            mainWidget);
 
-      table_ = new DataTable(this);
       initWidget(panel);
    }
 
@@ -143,10 +142,10 @@ public class DataEditingTargetWidget extends Composite
          table_.setFilterUIVisible(visible);
    }
    
-   public void refreshData(boolean structureChanged)
+   public void refreshData(boolean structureChanged, boolean sizeChanged)
    {
       if (table_ != null)
-         table_.refreshData(structureChanged);
+         table_.refreshData(structureChanged, sizeChanged);
    }
    
    public void applySizeChange()
