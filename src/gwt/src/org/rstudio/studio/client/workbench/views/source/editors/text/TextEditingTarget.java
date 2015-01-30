@@ -2445,8 +2445,6 @@ public class TextEditingTarget implements
              value.equals("<-") ||
              value.equals("<<-");
          
-         Debug.logToConsole("" + getCurrentLineLength());
-         
          if (mightWantNewline && 
              getCurrentLineLength() >= 70)
          {
