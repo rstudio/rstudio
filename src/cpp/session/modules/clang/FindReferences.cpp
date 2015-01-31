@@ -29,11 +29,6 @@
 #include "RSourceIndex.hpp"
 #include "RCompilationDatabase.hpp"
 
-// TODO: top to bottom code review
-
-// TODO: test various scenarios
-//  sqlite calls e.g. sqlite3_backup_step multiply included
-
 using namespace rstudio::core;
 using namespace rstudio::core::libclang;
 
@@ -91,13 +86,18 @@ CXChildVisitResult findReferencesVisitor(CXCursor cxCursor,
             if (token.kind() == CXToken_Identifier &&
                 token.spelling() == cursor.spelling())
             {
-               // record FileRange
+               // record FileRange as long as it's not a duplicate
+               // of the previously recorded range
                FileRange range = token.extent().getFileRange();
-               pData->references.push_back(range);
+               if (pData->references.empty() ||
+                   (pData->references.back() != range))
+               {
+                  pData->references.push_back(range);
 
-               // record spelling if necessary
-               if (pData->spelling.empty())
-                  pData->spelling = referencedCursor.spelling();
+                  // record spelling if necessary
+                  if (pData->spelling.empty())
+                     pData->spelling = referencedCursor.spelling();
+               }
 
                break;
             }

@@ -32,6 +32,17 @@ struct FileRange
 {
    FileLocation start;
    FileLocation end;
+
+   bool operator==(const FileRange& other) const
+   {
+      return start == other.start &&
+             end == other.end;
+   }
+
+   bool operator!=(const FileRange& other) const
+   {
+      return !(*this == other);
+   }
 };
 
 class SourceRange
