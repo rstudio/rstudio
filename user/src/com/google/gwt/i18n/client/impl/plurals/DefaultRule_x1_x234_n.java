@@ -34,7 +34,7 @@ public class DefaultRule_x1_x234_n {
   /*
    * Returns the list of plural forms, indicating the "many" form is optional.
    *
-   * The "many" form is marked "noWarn" to supress warning messages for
+   * The "many" form is marked "noWarn" to suppress warning messages for
    * older translations that only have 3 forms: "one", "few", and "other".
    * Old translations should be updated by moving "other" to "many" and adding
    * a new "other" form for fractional values (as defined below).

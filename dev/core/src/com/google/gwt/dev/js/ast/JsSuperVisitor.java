@@ -18,7 +18,7 @@ import com.google.gwt.dev.js.ast.JsVars.JsVar;
 /**
  * A visitor that walks up the type hierarchy. By default, if a subclass has no specific override
  * for a concrete node type, this visitor will call a visit/endVisit for its super class, and so on
- * up the type heirarchy.
+ * up the type hierarchy.
  */
 public class JsSuperVisitor extends JsVisitor {
 

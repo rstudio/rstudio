@@ -129,7 +129,7 @@ public class FieldReferenceConverter {
   }
 
   /**
-   * Reverses most of the work of {@link #convert}, turning a java expresion
+   * Reverses most of the work of {@link #convert}, turning a java expression
    * back into a dotted path.
    */
   public static String expressionToPath(String expression) {

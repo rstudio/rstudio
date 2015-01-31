@@ -34,11 +34,11 @@ import com.google.gwt.dev.util.TextOutput;
  * The goal is not to generate the input source tree. Rather, the goal is to
  * produce a set of classes that can be pasted into an enclosing class and
  * compiled with a standard Java compiler. In practice, there are cases that
- * require hand-editting to actually get a full compilation, due to Java's
+ * require hand-editing to actually get a full compilation, due to Java's
  * built-in reliance on particular built-in types.
  *
  * Known to be broken: Our generated String, Class, and Throwable are not
- * compatable with the real ones, which breaks string literals, class literals,
+ * compatible with the real ones, which breaks string literals, class literals,
  * try/catch/throw, and overrides of Object methods.
  */
 public class SourceGenerationVisitor extends ToStringGenerationVisitor {

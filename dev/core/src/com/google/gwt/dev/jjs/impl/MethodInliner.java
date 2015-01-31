@@ -185,7 +185,7 @@ public class MethodInliner {
          * optimizers to keep the AST sane. This was because it was possible to
          * tighten an instance call to its static impl after the static impl had
          * already been inlined, this meant any "flow" type optimizer would have
-         * to fake artifical flow from the instance method to the static impl.
+         * to fake artificial flow from the instance method to the static impl.
          *
          * TODO: allow the inlining if we are the last remaining call site, and
          * prune the static impl? But it might tend to generate more code.

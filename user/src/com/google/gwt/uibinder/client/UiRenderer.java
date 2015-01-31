@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Element;
  * generation for SafeHtml rendering.
  * <p>
  * <span style='color: red'>This is experimental code in active
- * developement. It is unsupported, and its api is subject to
+ * development. It is unsupported, and its api is subject to
  * change.</span>
  */
 public interface UiRenderer {

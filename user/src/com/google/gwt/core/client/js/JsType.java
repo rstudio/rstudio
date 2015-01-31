@@ -31,7 +31,7 @@ import java.lang.annotation.Target;
  * <p>
  * Furthermore, if the JsType is marked with a prototype reference, then concrete
  * implementations of the class emitted by the GWT compiler will use the specified prototype as
- * opposed the the ordinary one (e.g. java.lang.Object).
+ * opposed to the ordinary one (e.g. java.lang.Object).
  * <p>
  * JsTypes act like JavaScriptObject in terms of castability, except when a prototype is
  * specified, in which case, cast checks and instanceof checks will be delegated to the native

@@ -47,7 +47,7 @@ public interface AutoBeanFactory {
    * Allows non-property methods on simple bean implementations when applied.
    * For any given method, the specified classes will be searched for a public,
    * static method whose method signature is exactly equal to the declared
-   * method's signature, save for the addition of a new initial paramater that
+   * method's signature, save for the addition of a new initial parameter that
    * must accept <code>AutoBean&lt;T></code>.
    * 
    * <pre>

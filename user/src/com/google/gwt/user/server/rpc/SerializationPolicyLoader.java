@@ -36,7 +36,7 @@ import java.util.Set;
 public final class SerializationPolicyLoader {
 
   /**
-   * Keyword for listing the serializable fields of an enchanced class that are
+   * Keyword for listing the serializable fields of an enhanced class that are
    * visible to client code.
    */
   public static final String CLIENT_FIELDS_KEYWORD = "@ClientFields";

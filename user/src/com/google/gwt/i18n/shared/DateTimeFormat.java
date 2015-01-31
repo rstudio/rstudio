@@ -1338,7 +1338,7 @@ public class DateTimeFormat {
    * leftmost field; the others remain fixed. This allows "123456" => 12:34:56,
    * but "12345" => 1:23:45. Likewise, for the pattern "yyyyMMdd" we try 4/2/2,
    * 3/2/2, 2/2/2, and finally 1/2/2. The first field of connected numeric
-   * fields will be marked as abutStart, its width can be reduced to accomodate
+   * fields will be marked as abutStart, its width can be reduced to accommodate
    * others.
    */
   private void identifyAbutStart() {

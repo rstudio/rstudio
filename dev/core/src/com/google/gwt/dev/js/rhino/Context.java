@@ -153,7 +153,7 @@ public class Context {
             }
         } else {
             if (cx.enterCount != 0) {
-                // The suplied context must be the context for
+                // The supplied context must be the context for
                 // the current thread if it is already entered
                 if (cx != old) {
                     throw new RuntimeException

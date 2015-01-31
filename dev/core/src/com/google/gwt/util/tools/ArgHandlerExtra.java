@@ -16,7 +16,7 @@
 package com.google.gwt.util.tools;
 
 /**
- * Argument handler that handles arguments that do not have preceeding flags.
+ * Argument handler that handles arguments that do not have preceding flags.
  */
 public abstract class ArgHandlerExtra extends ArgHandler {
 

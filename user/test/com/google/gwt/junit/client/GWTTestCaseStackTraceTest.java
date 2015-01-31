@@ -121,7 +121,7 @@ public class GWTTestCaseStackTraceTest extends GWTTestCaseTestBase {
     }
   }
 
-  // @Propery added just to introduce a different module name for the test
+  // @Property added just to introduce a different module name for the test
   @WithProperties(@Property(name = "locale", value = "tr"))
   @ExpectedFailure(withAsserter = StackTraceAsserterFromDifferentModule.class)
   public void testStackTrace_fromDifferentModule() {

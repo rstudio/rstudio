@@ -557,7 +557,7 @@ public class DOM {
    * Gets the velocity of the mouse wheel associated with the event along the Y
    * axis.
    * <p>
-   * The velocity of the event is an artifical measurement for relative
+   * The velocity of the event is an artificial measurement for relative
    * comparisons of wheel activity. It is affected by some non-browser factors,
    * including choice of input hardware and mouse acceleration settings. The
    * sign of the velocity measurement agrees with the screen coordinate system;

@@ -147,7 +147,7 @@ public class StackPanelTest extends PanelTestBase<StackPanel> {
     p.remove(1);
     assertEquals("a d", curContents(p));
 
-    // Remove non-existant element
+    // Remove non-existent element
     assertFalse(p.remove(b));
 
     // Remove a.

@@ -225,7 +225,7 @@ public final class Class<T> implements Type {
   }-*/;
 
   /**
-   * Joins an array of strings with the speciefied separator.
+   * Joins an array of strings with the specified separator.
    * <p>
    * Written in JSNI to minimize dependencies (on String.+).
    */

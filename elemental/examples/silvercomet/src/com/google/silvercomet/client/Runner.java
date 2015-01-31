@@ -79,7 +79,7 @@ public final class Runner extends JavaScriptObject {
   }-*/;
 
   /**
-   * Allows updating of the runner's place to accomodate recordering by
+   * Allows updating of the runner's place to accommodate reordering by
    * {@link #bibTime()} instead of {@link #gunTime()}.
    */
   public native void setPlace(int place) /*-{

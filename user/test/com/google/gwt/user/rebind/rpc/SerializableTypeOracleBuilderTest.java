@@ -1804,7 +1804,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   }
 
   /**
-   * Tests that a type paramter that occurs within its bounds will not result in
+   * Tests that a type parameter that occurs within its bounds will not result in
    * infinite recursion.
    *
    * @throws UnableToCompleteException

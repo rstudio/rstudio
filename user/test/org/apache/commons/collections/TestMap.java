@@ -31,7 +31,7 @@ import java.util.Set;
  * operations, simply extend this class, and implement the {@link
  * #makeEmptyMap()} method.
  * <p>
- * On the other hand, if your map implemenation is wierd, you may have to
+ * On the other hand, if your map implemenation is weird, you may have to
  * override one or more of the other protected methods.  They're described
  * below.<P>
  *

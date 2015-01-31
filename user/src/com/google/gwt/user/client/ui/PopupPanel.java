@@ -1297,7 +1297,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
     // If there is not enough space for the popup's height below the text
     // box and there IS enough space for the popup's height above the text
-    // box, then then position the popup above the text box. However, if there
+    // box, then position the popup above the text box. However, if there
     // is not enough space on either side, then stick with displaying the
     // popup below the text box.
     if (distanceToWindowBottom < offsetHeight

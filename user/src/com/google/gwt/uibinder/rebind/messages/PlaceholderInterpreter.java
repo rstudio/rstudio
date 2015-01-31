@@ -78,7 +78,7 @@ public abstract class PlaceholderInterpreter implements
 
       /*
        * Likewise, if there are tokens from the UiWriter in the value string, we
-       * need it to replace them with the real expresions.
+       * need it to replace them with the real expressions.
        */
       value = uiWriter.detokenate(value);
       return nextPlaceholder(name, example, value);

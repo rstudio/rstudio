@@ -598,7 +598,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
      * that for arrays or lists this will return an expression giving the count
      * of items in the array or list.
      *
-     * @param i index of the paramter, 0 .. getCount() - 1
+     * @param i index of the parameter, 0 .. getCount() - 1
      * @return the source of code to access the parameter value
      */
     String getParameterExpression(int i);

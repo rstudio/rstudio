@@ -268,7 +268,7 @@ public abstract class SuggestOracle {
    * <code>SelectionHandler.onSelection(SelectionEvent&lt;Suggestion&gt; event)</code>
    * method, obtain the selected <code>Suggestion</code> object from the
    * {@link com.google.gwt.event.logical.shared.SelectionEvent} object, and downcast
-   * the <code>Suggestion</code> object to the subinterface. Then, acces the DTO
+   * the <code>Suggestion</code> object to the subinterface. Then, access the DTO
    * using the DTO getter method that was defined on the subinterface.
    * </p>
    */

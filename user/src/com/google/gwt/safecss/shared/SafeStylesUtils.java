@@ -666,7 +666,7 @@ public final class SafeStylesUtils {
    * 
    * @param styles the CSS properties string
    * @throws NullPointerException if the css is null
-   * @throws AssertionError if the css does not meet the contraints
+   * @throws AssertionError if the css does not meet the constraints
    */
   static void verifySafeStylesConstraints(String styles) {
     if (styles == null) {

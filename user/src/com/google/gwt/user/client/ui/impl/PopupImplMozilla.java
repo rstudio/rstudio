@@ -28,7 +28,7 @@ import com.google.gwt.user.client.DOM;
  * {@link com.google.gwt.user.client.ui.impl.PopupImpl} in the case where
  * Mozilla is NOT running on the Mac.
  * <p>
- * A different implemention is provided for the Mac in order to prevent
+ * A different implementation is provided for the Mac in order to prevent
  * scrollbars underneath the PopupPanel from being rendered on top of the
  * PopupPanel (issue #410). Unfortunately, the solution that fixes this problem
  * for the Mac causes a problem with dragging a

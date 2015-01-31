@@ -65,7 +65,7 @@ public abstract class ServiceLayer {
     ServiceLayerDecorator cache =
         ENABLE_CACHE ? new ServiceLayerCache() : new ServiceLayerDecorator();
     list.add(cache);
-    // The the user-provided decorators
+    // The user-provided decorators
     if (decorators != null) {
       list.addAll(Arrays.asList(decorators));
     }

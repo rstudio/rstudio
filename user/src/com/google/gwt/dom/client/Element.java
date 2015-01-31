@@ -346,7 +346,7 @@ public class Element extends Node {
   }
 
   /**
-   * The element immediately preceeding this element. If there is no such
+   * The element immediately preceding this element. If there is no such
    * element, this returns null.
    */
   public final Element getPreviousSiblingElement() {

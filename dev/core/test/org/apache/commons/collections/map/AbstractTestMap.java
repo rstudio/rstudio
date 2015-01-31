@@ -444,7 +444,7 @@ public abstract class AbstractTestMap extends AbstractTestObject {
     }
 
     /**
-     * Gets the compatability version, needed for package access.
+     * Gets the compatibility version, needed for package access.
      */
     @Override
     public String getCompatibilityVersion() {

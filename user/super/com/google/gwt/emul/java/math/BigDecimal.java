@@ -1941,7 +1941,7 @@ public class BigDecimal extends Number implements Comparable<BigDecimal>,
        * - 1) <= intVal < 10 ^(precision())
        */
       decimalDigits += (bitLength - 1) * LOG10_2;
-      // If after division the number isn't zero, exists an aditional digit
+      // If after division the number isn't zero, exists an additional digit
       if (getUnscaledValue().divide(Multiplication.powerOf10(decimalDigits)).signum() != 0) {
         decimalDigits++;
       }

@@ -225,7 +225,7 @@ public class DeckPanel extends ComplexPanel implements HasAnimation,
   private static SlideAnimation slideAnimation;
 
   /**
-   * The the container {@link Element} around a {@link Widget}.
+   * The container {@link Element} around a {@link Widget}.
    * 
    * @param w the {@link Widget}
    * @return the container {@link Element}

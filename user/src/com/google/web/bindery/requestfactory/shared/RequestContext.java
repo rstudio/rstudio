@@ -45,7 +45,7 @@ public interface RequestContext {
 
   /**
    * Returns a new mutable proxy that this request can carry to the server,
-   * perhaps to be persisted. If the object is succesfully persisted, a PERSIST
+   * perhaps to be persisted. If the object is successfully persisted, a PERSIST
    * event will be posted including the EntityProxyId of this proxy.
    * 
    * @param clazz a Class object of type T

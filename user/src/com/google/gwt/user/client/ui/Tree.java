@@ -1318,7 +1318,7 @@ public class Tree extends Widget implements HasTreeItems.ForIsWidget, HasWidgets
     // the currently selected item.
 
     // We initialize itemLevel to -1 because the level value is zero-based.
-    // Note that the root node is not a part of the TreeItem hierachy, and we
+    // Note that the root node is not a part of the TreeItem hierarchy, and we
     // do not consider the root node to have a designated level. The level of
     // the root's children is level 0, its children's children is level 1, etc.
 

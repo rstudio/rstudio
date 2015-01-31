@@ -53,7 +53,7 @@ public class MapKey {
   public static synchronized Map<String, MapKey> get() {
     HttpServletRequest req = RequestFactoryServlet.getThreadLocalRequest();
     if (req == null) {
-      // May be in a JRE test case, use the the singleton
+      // May be in a JRE test case, use the singleton
       return jreTestSingleton;
     } else {
       /*

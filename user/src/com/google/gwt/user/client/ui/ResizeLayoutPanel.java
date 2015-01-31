@@ -284,7 +284,7 @@ public class ResizeLayoutPanel extends SimplePanel implements ProvidesResize,
     }
 
     /**
-     * Initalize the onresize listener. This method doesn't create a memory leak
+     * Initialize the onresize listener. This method doesn't create a memory leak
      * because we don't set a back reference to the Impl class until we attach
      * to the DOM.
      */

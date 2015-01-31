@@ -45,7 +45,7 @@ public class LocaleUtils {
   static final String PROP_LOCALE = "locale";
 
   /**
-   * The config property identifying the URL query paramter name to possibly get
+   * The config property identifying the URL query parameter name to possibly get
    * the value of the locale property.
    */
   // @VisibleForTesting

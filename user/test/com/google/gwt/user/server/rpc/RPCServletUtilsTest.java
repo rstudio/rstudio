@@ -182,7 +182,7 @@ public class RPCServletUtilsTest extends TestCase {
 
   /**
    * Test that RPCServletUtils#getCharset() returns the correct
-   * default UTF-8 charachter set when passed a null encoding value.
+   * default UTF-8 character set when passed a null encoding value.
    */
   public void testGetDefaultCharset() {
     assertEquals(Charset.forName("UTF-8"), RPCServletUtils.CHARSET_UTF8);

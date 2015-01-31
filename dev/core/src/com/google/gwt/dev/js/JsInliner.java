@@ -1125,7 +1125,7 @@ public class JsInliner {
   private static class SingleInvocationVisitor extends JsVisitor {
     // Keep track of functions that are invoked once.
     // Invariant: singleInvokations(fn) = null => calls to fn have not been seen
-    //            singleInvokations(fn) = MULTIPLE =>  mutiple callsites to fn have been seen.
+    //            singleInvokations(fn) = MULTIPLE =>  multiple callsites to fn have been seen.
     //            singleInvokations(fn) = caller =>  one callsite has been seen an occurs in caller.
     private final Map<JsFunction, JsFunction> singleInvocations = Maps.newHashMap();
 

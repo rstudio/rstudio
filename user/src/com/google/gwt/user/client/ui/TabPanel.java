@@ -322,8 +322,8 @@ public class TabPanel extends Composite implements TabListener,
   }
 
   /**
-   * Gets the tab bar within this tab panel. Adding or removing tabs from from
-   * the TabBar is not supported and will throw UnsupportedOperationExceptions.
+   * Gets the tab bar within this tab panel. Adding or removing tabs from the
+   * TabBar is not supported and will throw UnsupportedOperationExceptions.
    *
    * @return the tab bar
    */

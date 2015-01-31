@@ -62,7 +62,7 @@ public class ElementBuilderFactoryNonChainingExample implements EntryPoint {
      * End the select and div elements. Note that ending the remaining elements
      * before calling asElement() below is optional, but a good practice. If we
      * did not call endOption() above, we would append each option element to
-     * the preceeding option element, which is not what we want.
+     * the preceding option element, which is not what we want.
      * 
      * In general, you must pay close attention to ensure that you close
      * elements correctly.

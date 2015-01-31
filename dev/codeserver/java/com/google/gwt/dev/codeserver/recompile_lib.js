@@ -157,7 +157,7 @@ Dialog.prototype.createTextElement = function(tagName, fontSize, text) {
 
 /**
  * Add a node to the dialog.
- * @param {external:Node} node - the node to add the the dialog
+ * @param {external:Node} node - the node to add to the dialog
  */
 Dialog.prototype.add = function(node) {
   this.__dialog.appendChild(node);

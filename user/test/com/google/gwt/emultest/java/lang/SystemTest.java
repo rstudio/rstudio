@@ -79,7 +79,7 @@ public class SystemTest extends GWTTestCase {
   public void testArraycopyEnumToInterface() {
     EnumImpl[] src = new EnumImpl[]{ EnumImpl.FOO, null, EnumImpl.BAZ };
     Interfaz[] dest = new Interfaz[5];
-    Arrays.fill(dest, null);  // undefined != null, wierd.
+    Arrays.fill(dest, null);  // undefined != null, weird.
 
     System.arraycopy(src, 0, dest, 1, 3);
     assertEquals(
@@ -90,7 +90,7 @@ public class SystemTest extends GWTTestCase {
   public void testArraycopyEnumToObject() {
     EnumImpl[] src = new EnumImpl[]{ EnumImpl.FOO, null, EnumImpl.BAZ };
     Object[] dest = new Object[5];
-    Arrays.fill(dest, null);  // undefined != null, wierd.
+    Arrays.fill(dest, null);  // undefined != null, weird.
 
     System.arraycopy(src, 0, dest, 1, 3);
     assertEquals(
@@ -159,7 +159,7 @@ public class SystemTest extends GWTTestCase {
     Interfaz[] src = new Interfaz[]{
         new InterfazImpl("foo"), null, new InterfazImpl("bar") };
     Object[] dest = new Object[5];
-    Arrays.fill(dest, null);  // undefined != null, wierd.
+    Arrays.fill(dest, null);  // undefined != null, weird.
 
     System.arraycopy(src, 0, dest, 1, 3);
     assertEquals(Arrays.asList(null, new InterfazImpl("foo"), null,

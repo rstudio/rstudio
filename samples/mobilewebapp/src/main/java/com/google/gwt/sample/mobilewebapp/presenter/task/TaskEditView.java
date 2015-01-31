@@ -64,7 +64,7 @@ public interface TaskEditView extends Editor<TaskProxy>, IsWidget {
   void setLocked(boolean locked);
 
   /**
-   * The the violation associated with the name.
+   * The violation associated with the name.
    * 
    * @param message the message to show, or null if no violation
    */

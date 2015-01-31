@@ -140,7 +140,7 @@ class ClientToDomainMapper extends TypeVisitorBase<TypeMirror> {
 
   /**
    * Utility method to convert a {@code Foo<BarProxy> -> BarDomain}. The
-   * {@code param} parameter specifies the index of the type paramater to
+   * {@code param} parameter specifies the index of the type parameter to
    * extract.
    */
   protected TypeMirror convertSingleParamType(DeclaredType x, DeclaredType convertTo, int param,
