@@ -63,6 +63,7 @@ import org.rstudio.studio.client.workbench.views.source.DocsMenu;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCppHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionManager;
@@ -98,6 +99,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(ClearAllDialog clearAllDialog);
    void injectMembers(TextEditingTargetPresentationHelper presHelper);
    void injectMembers(TextEditingTargetRMarkdownHelper rmarkdownHelper);
+   void injectMembers(TextEditingTargetCppHelper cppHelper);
    void injectMembers(EditingTargetCodeExecution codeExecution);
    void injectMembers(LocalRepositoriesWidget localRepositoriesWidget);
    void injectMembers(CppCompletionRequest request);

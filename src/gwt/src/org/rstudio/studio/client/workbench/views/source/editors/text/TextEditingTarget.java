@@ -373,7 +373,8 @@ public class TextEditingTarget implements
       codeExecution_ = new EditingTargetCodeExecution(docDisplay_, this);
       compilePdfHelper_ = new TextEditingTargetCompilePdfHelper(docDisplay_);
       rmarkdownHelper_ = new TextEditingTargetRMarkdownHelper();
-      cppHelper_ = new TextEditingTargetCppHelper(server);
+      cppHelper_ = new TextEditingTargetCppHelper(cppCompletionContext_, 
+                                                  docDisplay_);
       presentationHelper_ = new TextEditingTargetPresentationHelper(
                                                                   docDisplay_);
       docDisplay_.setRnwCompletionContext(compilePdfHelper_);
@@ -3451,69 +3452,8 @@ public class TextEditingTarget implements
    @Handler
    void onFindUsages()
    {
-      cppCompletionOperation(new CppCompletionOperation() {
-         @Override
-         public void execute(String docPath, int line, int column)
-         {
-            server_.findCppUsages(
-                  docPath, 
-                  line, 
-                  column, 
-                  new CppCompletionServerRequestCallback(
-                                          "Finding usages..."));
-         }
-         
-      });
+      cppHelper_.findUsages();
    }
-   
-   private interface CppCompletionOperation
-   {
-      void execute(String docPath, int line, int column);
-   }
-   
-   private void cppCompletionOperation(final CppCompletionOperation operation)
-   {
-      if (cppCompletionContext_.isCompletionEnabled())
-      {
-         cppCompletionContext_.withUpdatedDoc(new CommandWithArg<String>() {
-            @Override
-            public void execute(String docPath)
-            {
-               Position pos = docDisplay_.getSelectionStart();
-               
-               operation.execute(docPath, 
-                                 pos.getRow() + 1, 
-                                 pos.getColumn() + 1);
-            }
-         });
-      }
-   }
-   
-   private class CppCompletionServerRequestCallback 
-                        extends VoidServerRequestCallback
-   {
-      public CppCompletionServerRequestCallback(String message)
-      {
-         super();
-         progressDelayer_ =  new GlobalProgressDelayer(
-               globalDisplay_, 1000, "Finding usages..");
-      }
-
-      @Override
-      public void onSuccess()
-      {
-         progressDelayer_.dismiss();
-      }
-
-      @Override
-      public void onFailure()
-      {
-         progressDelayer_.dismiss();
-      }
-
-      private final GlobalProgressDelayer progressDelayer_;
-   }
-
    
    @Handler
    public void onSetWorkingDirToActiveDoc()
@@ -3536,7 +3476,6 @@ public class TextEditingTarget implements
          return;
       }
    }
-
 
    @SuppressWarnings("unused")
    private String stangle(String sweaveStr)
