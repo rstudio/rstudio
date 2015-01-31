@@ -569,7 +569,9 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
    std::copy(config.args.begin(), config.args.end(), std::back_inserter(args));
 
    // add precompiled headers if necessary
-   if (usePrecompiledHeaders_ && !config.PCH.empty() && config.isCpp)
+   if (usePrecompiledHeaders_ && !config.PCH.empty() && config.isCpp &&
+       (filePath.extensionLowerCase() != ".c") &&
+       (filePath.extensionLowerCase() != ".m"))
    {
       // extract any -std= argument
       std::string stdArg = extractStdArg(args);

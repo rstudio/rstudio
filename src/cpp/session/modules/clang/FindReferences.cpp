@@ -33,7 +33,6 @@
 
 // TODO: test various scenarios
 //  sqlite calls e.g. sqlite3_backup_step multiply included
-//  src/sqlite files don't get referenced (check diagnostics for errors)
 
 using namespace rstudio::core;
 using namespace rstudio::core::libclang;
