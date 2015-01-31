@@ -1713,6 +1713,7 @@ public class GwtAstBuilder {
       if (innerLambdaClass == null) {
         innerLambdaClass = createInnerClass(lambdaName, x, funcType, info);
         lambdaNameToInnerLambdaType.put(lambdaName, innerLambdaClass);
+        newTypes.add(innerLambdaClass);
 
         JConstructor ctor = new JConstructor(info, innerLambdaClass);
 
@@ -1876,7 +1877,6 @@ public class GwtAstBuilder {
       }
 
       push(allocLambda);
-      newTypes.add(innerLambdaClass);
     }
 
     private JExpression boxOrUnboxExpression(JExpression expr, TypeBinding fromType,

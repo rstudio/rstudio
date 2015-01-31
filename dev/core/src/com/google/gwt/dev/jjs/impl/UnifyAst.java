@@ -1462,6 +1462,9 @@ public class UnifyAst {
 
   private void resolveType(JDeclaredType type) {
     assert !type.isExternal();
+    if (type.getEnclosingType() != null) {
+      type.setEnclosingType(translate(type.getEnclosingType()));
+    }
     if (type instanceof JClassType && type.getSuperClass() != null) {
       ((JClassType) type).setSuperClass(translate(type.getSuperClass()));
     }
@@ -1498,7 +1501,6 @@ public class UnifyAst {
 
   private JDeclaredType internalFindType(String typeName,
       NameBasedTypeLocator nameBasedTypeLocator, boolean reportErrors) {
-
     if (nameBasedTypeLocator.resolvedTypeIsAvailable(typeName)) {
       // The type was already resolved.
       return nameBasedTypeLocator.getResolvedType(typeName);

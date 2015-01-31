@@ -24,6 +24,8 @@ import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.util.arg.SourceLevel;
 
+import java.util.Collections;
+
 /**
  * Tests that {@link com.google.gwt.dev.jjs.impl.GwtAstBuilder} correctly builds the AST for
  * features introduced in Java 8.
@@ -69,6 +71,9 @@ public class Java8AstTest extends JJSTestBase {
         "package test;",
         "public class Pojo {",
         "  public Pojo(int x, int y) {",
+        "  }",
+        "  public Integer fooInstance(int a, int b) {",
+        "    return a + b;",
         "  }",
         "}"
     ));
@@ -301,6 +306,46 @@ public class Java8AstTest extends JJSTestBase {
     JMethod samMethod = findMethod(lambdaInnerClass, "run");
     assertEquals(
         "public final Object run(int arg0,int arg1){return this.$$outer_0.foo(arg0,arg1);}",
+        formatSource(samMethod.toSource()));
+  }
+
+  public void testCompileInstanceReferenceBindingMultiple() throws Exception {
+    addSnippetClassDecl("Pojo instance1 = new Pojo(1, 2);");
+    addSnippetClassDecl("Pojo instance2 = new Pojo(3, 4);");
+    String reference =
+        "new AcceptsLambda<Integer>().accept(instance1::fooInstance);\n" +
+        "new AcceptsLambda<Integer>().accept(instance2::fooInstance);";
+    assertEqualBlock(
+        "(new AcceptsLambda()).accept(new Lambda$fooInstance__IILjava_lang_Integer_2$Type(this.instance1));\n"
+        + "(new AcceptsLambda()).accept(new Lambda$fooInstance__IILjava_lang_Integer_2$Type(this.instance2));",
+        reference);
+    JProgram program = compileSnippet("void", reference, false);
+
+    // created by GwtAstBuilder
+    JClassType lambdaInnerClass = (JClassType) getType(program,
+        "test.Lambda$fooInstance__IILjava_lang_Integer_2$Type");
+    assertNotNull(lambdaInnerClass);
+    assertEquals(1, Collections.frequency(program.getDeclaredTypes(), lambdaInnerClass));
+
+    // should have constructor taking the instance
+    JMethod ctor = findMethod(lambdaInnerClass, "Lambda$fooInstance__IILjava_lang_Integer_2$Type");
+    assertTrue(ctor instanceof JConstructor);
+    // instance capture
+    assertEquals(1, ctor.getParams().size());
+    assertEquals(lambdaInnerClass.getEnclosingType(), ctor.getOriginalParamTypes().get(0));
+
+    // should have 1 field to store the captured instance
+    assertEquals(1, lambdaInnerClass.getFields().size());
+    assertEquals(lambdaInnerClass.getEnclosingType(),
+        lambdaInnerClass.getFields().get(0).getType());
+
+    // should extends test.Lambda
+    assertTrue(lambdaInnerClass.getImplements().contains(program.getFromTypeMap("test.Lambda")));
+
+    // should implement run method and invoke lambda via captured instance
+    JMethod samMethod = findMethod(lambdaInnerClass, "run");
+    assertEquals(
+        "public final Object run(int arg0,int arg1){return this.$$outer_0.fooInstance(arg0,arg1);}",
         formatSource(samMethod.toSource()));
   }
 
