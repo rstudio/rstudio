@@ -77,7 +77,6 @@ TokenPatterns& tokenPatterns()
 
 } // anonymous namespace
 
-
 const wchar_t RToken::LPAREN         = L'(';
 const wchar_t RToken::RPAREN         = L')';
 const wchar_t RToken::LBRACKET       = L'[';
@@ -110,17 +109,51 @@ RToken RTokenizer::nextToken()
   case L'(': case L')':
   case L'{': case L'}':
   case L';': case L',':
-     return consumeToken(c, 1) ;
+     return consumeToken(c, 1);
+     
   case L'[':
+  {
+     RToken token;
      if (peek(1) == L'[')
-        return consumeToken(RToken::LDBRACKET, 2) ;
+     {
+        braceStack_.push_back(RToken::LDBRACKET);
+        token = consumeToken(RToken::LDBRACKET, 2);
+     }
      else
-        return consumeToken(c, 1) ;
+     {
+        braceStack_.push_back(RToken::LBRACKET);
+        token = consumeToken(c, 1);
+     }
+     return token;
+  }
+     
   case L']':
-     if (peek(1) == L']')
-        return consumeToken(RToken::RDBRACKET, 2) ;
+  {
+     if (braceStack_.empty()) // TODO: warn?
+     {
+        if (peek(1) == L']')
+           return consumeToken(RToken::RDBRACKET, 2) ;
+        else
+           return consumeToken(c, 1);
+     }
      else
-        return consumeToken(c, 1) ;
+     {
+        RToken token;
+        if (peek(1) == L']')
+        {
+           wchar_t top = braceStack_[braceStack_.size() - 1];
+           if (top == RToken::LDBRACKET)
+              token = consumeToken(RToken::RDBRACKET, 2);
+           else
+              token = consumeToken(c, 1);
+        }
+        else
+           token = consumeToken(c, 1);
+        
+        braceStack_.pop_back();
+        return token;
+     }
+  }
   case L'"':
   case L'\'':
      return matchStringLiteral() ;

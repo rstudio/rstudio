@@ -17,6 +17,7 @@
 #define CORE_R_UTIL_R_TOKENIZER_HPP
 
 #include <string>
+#include <vector>
 #include <deque>
 #include <algorithm>
 
@@ -190,10 +191,11 @@ private:
    std::wstring peek(const boost::wregex& regex);
    void eatUntil(const boost::wregex& regex);
    RToken consumeToken(wchar_t tokenType, std::size_t length);
-
+   
 private:
    std::wstring data_;
    std::wstring::const_iterator pos_;
+   std::vector<wchar_t> braceStack_; // needed for tokenization of `[[`, `[`
 };
 
 
