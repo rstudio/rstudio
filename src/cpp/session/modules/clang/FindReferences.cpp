@@ -311,8 +311,8 @@ core::Error findReferences(const core::libclang::FileLocation& location,
 
             // create temporary index
             CXIndex index = libclang::clang().createIndex(
-                                                1 /* Exclude PCH */,
-                                                0 /* No diagnostics */);
+                              1 /* Exclude PCH */,
+                              (rSourceIndex().verbose() > 0) ? 1 : 0);
 
             // get args in form clang expects
             core::system::ProcessArgs argsArray(compileArgs);

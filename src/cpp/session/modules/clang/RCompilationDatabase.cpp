@@ -843,7 +843,9 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
       // create args array
       core::system::ProcessArgs argsArray(args);
 
-      CXIndex index = clang().createIndex(0,0);
+      CXIndex index = clang().createIndex(
+                                 0,
+                                 (rSourceIndex().verbose() > 0) ? 1 : 0);
 
       CXTranslationUnit tu = clang().parseTranslationUnit(
                             index,

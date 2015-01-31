@@ -59,6 +59,8 @@ public:
    unsigned getGlobalOptions() const;
    void setGlobalOptions(unsigned options);
 
+   int verbose() const { return verbose_; }
+
    // functions used to keep the index "hot" based on recent user edits
    void primeEditorTranslationUnit(const std::string& filename);
    void reprimeEditorTranslationUnit(const std::string& filename);
