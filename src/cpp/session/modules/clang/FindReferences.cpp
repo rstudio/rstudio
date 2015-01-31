@@ -29,12 +29,11 @@
 #include "RSourceIndex.hpp"
 #include "RCompilationDatabase.hpp"
 
-// TODO: factor cpp completion stuff into it's own helper
+// TODO: top to bottom code review
 
 // TODO: test various scenarios
-//  connection.cpp:10:SqlConnectionWrapper -- no highlight
-//  RSqllite.h:142:sqlite3_open_v2 -- over-highlight
-//  RSqllite.h:155:sqlite3_backup_step -- over-highlight
+//  sqlite calls e.g. sqlite3_backup_step multiply included
+//  src/sqlite files don't get referenced (check diagnostics for errors)
 
 using namespace rstudio::core;
 using namespace rstudio::core::libclang;
@@ -84,31 +83,26 @@ CXChildVisitResult findReferencesVisitor(CXCursor cxCursor,
       // check for matching USR
       if (referencedCursor.getUSR() == pData->USR)
       {
-         // record spelling
-         if (pData->spelling.empty())
-            pData->spelling = referencedCursor.spelling();
-
-         // if the cursor is a declaration then we need to
-         // tokenize it in order to get the type name
-         if (cursor.isDeclaration())
+         // tokenize to extrat identifer location for cursors that
+         // represent larger source constructs
+         libclang::Tokens tokens(pData->tu, cursor.getExtent());
+         for (unsigned i=0; i<tokens.numTokens(); ++i)
          {
-            libclang::Tokens tokens(pData->tu, cursor.getExtent());
-            for (unsigned i=0; i<tokens.numTokens(); ++i)
+            Token token = tokens.getToken(i);
+            if (token.kind() == CXToken_Identifier &&
+                token.spelling() == cursor.spelling())
             {
-               Token token = tokens.getToken(i);
-               if (token.kind() == CXToken_Identifier &&
-                   token.spelling() == cursor.spelling())
-               {
-                  SourceRange range = token.extent();
-                  pData->references.push_back(range.getFileRange());
-                  break;
-               }
-           }
-         }
-         else
-         {
-            pData->references.push_back(cursor.getExtent().getFileRange());
-         }
+               // record FileRange
+               FileRange range = token.extent().getFileRange();
+               pData->references.push_back(range);
+
+               // record spelling if necessary
+               if (pData->spelling.empty())
+                  pData->spelling = referencedCursor.spelling();
+
+               break;
+            }
+        }
       }
    }
 
