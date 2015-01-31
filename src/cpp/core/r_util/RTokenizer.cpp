@@ -278,13 +278,13 @@ RToken RTokenizer::matchOperator()
    case L'&':
       return consumeToken(RToken::OPER, cNext == L'&' ? 2 : 1);
       
-   case L'<': // <=, <-, <<-, but not <<
+   case L'<': // <=, <-, <<-
       
       if (cNext == L'=' || cNext == L'-') // <=, <-
          return consumeToken(RToken::OPER, 2);
       else if (cNext == L'<')
       {
-         if (cNextNext == L'=') // <<=
+         if (cNextNext == L'-') // <<-
             return consumeToken(RToken::OPER, 3); 
       }
       else // plain old <
