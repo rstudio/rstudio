@@ -658,7 +658,7 @@ public:
       return children_;
    }
    
-   void addChild(boost::shared_ptr<ParseNode> pChild,
+   void addChild(boost::shared_ptr<ParseNode>& pChild,
                  const Position& position)
    {
       pChild->pParent_ = this;
@@ -821,8 +821,9 @@ public:
    ParseNode* node() { return *ppNode_; }
    BraceStack& stack() { return stack_; }
    LintItems& lint() { return lint_; }
+   boost::shared_ptr<ParseNode> root() { return pRoot_; }
    
-   void addChildAndSetAsCurrentNode(const boost::shared_ptr<ParseNode>& pChild,
+   void addChildAndSetAsCurrentNode(boost::shared_ptr<ParseNode>& pChild,
                                     const Position& position)
    {
       node()->addChild(pChild, position);
@@ -841,12 +842,10 @@ private:
    LintItems lint_;
 };
 
-
-
 namespace {
 
 void addUnreferencedSymbol(const ParseItem& item,
-                           LintItems* pLint)
+                           LintItems& lint)
 {
    const ParseNode* pNode = item.pNode;
    if (!pNode)
@@ -854,7 +853,7 @@ void addUnreferencedSymbol(const ParseItem& item,
    
    // Attempt to find a similarly named candidate in scope
    std::string candidate = pNode->suggestSimilarSymbolFor(item);
-   pLint->noSymbolNamed(item, candidate);
+   lint.noSymbolNamed(item, candidate);
    
    // Check to see if there is a symbol in that node of
    // the parse tree (but defined later)
@@ -866,7 +865,7 @@ void addUnreferencedSymbol(const ParseItem& item,
       ParseNode::Positions positions = symbols[item.symbol];
       BOOST_FOREACH(const Position& position, positions)
       {
-         pLint->symbolDefinedAfterUsage(item, position);
+         lint.symbolDefinedAfterUsage(item, position);
       }
    }
 }
@@ -1299,7 +1298,7 @@ void handleFor(TokenCursor& cursor, ParseStatus& status);
 void handleWhile(TokenCursor& cursor, ParseStatus& status);
 void handleIf(TokenCursor& cursor, ParseStatus& status);
 void handleArgument(TokenCursor& cursor, ParseStatus& status);
-void handleArgumentList(TokenCursor& cursor, ParseStatus& status, bool cacheIdentifiers);
+void handleArgumentList(TokenCursor& cursor, ParseStatus& status);
 void handleFunction(TokenCursor& cursor, ParseStatus& status);
 void handleRepeat(TokenCursor& cursor, ParseStatus& status);
 void handleIdentifier(TokenCursor& cursor, ParseStatus& status);
@@ -1549,8 +1548,7 @@ void handleStatementOrExpression(TokenCursor& cursor,
 //
 // This is true for '(', '[' and '[['.
 void handleArgumentList(TokenCursor& cursor,
-                        ParseStatus& status,
-                        bool cacheIdentifiers = true)
+                        ParseStatus& status)
 {
    if (!isLeftBrace(cursor))
       status.lint().unexpectedToken(cursor);
@@ -1587,8 +1585,7 @@ void handleArgumentList(TokenCursor& cursor,
 // identifier names (as they are made part of the scope of
 // the associated expression)
 void handleArgument(TokenCursor& cursor,
-                    ParseStatus& status,
-                    bool cacheIdentifiers = false)
+                    ParseStatus& status)
 {
    if (isId(cursor) &&
        cursor.nextSignificantToken().contentEquals(L"="))
@@ -1654,13 +1651,14 @@ void handleFunction(TokenCursor& cursor,
    
    // Create the child node, and set
    // that as the current node.
-   status.addChildAndSetAsCurrentNode(ParseNode::createNode(fnName),
+   boost::shared_ptr<ParseNode> pChild = ParseNode::createNode(fnName);
+   status.addChildAndSetAsCurrentNode(pChild,
                                       cursor.currentPosition());
    
    ENSURE_CONTENT(cursor, status, L"function");
    MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_WHITESPACE(cursor, status);
    ENSURE_TYPE(cursor, status, RToken::LPAREN);
-   handleArgumentList(cursor, status, true);
+   handleArgumentList(cursor, status);
    ENSURE_TYPE(cursor, status, RToken::LPAREN);
    MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
    
@@ -1710,170 +1708,20 @@ LintResults parseAndLintRFile(const FilePath& filePath,
    // and update lint.
    TokenCursor cursor(rTokens);
    
-   // An R script is really just a big R expression to evaluate,
-   // so that's where we start!
-   handleExpression(&cursor, &status);
-   
    do
    {
       DEBUG("Current token: " << cursor);
-      DEBUG("Current type:  " << cursor.type());
-      
-      // bail if too many errors
-      if (lintItems.errorCount() > maxErrors)
-      {
-         lintItems.tooManyErrors(cursor.currentPosition());
-         break;
-      }
-      
-      // Update the brace stack
-      if (isLeftBrace(cursor))
-      {
-         DEBUG("* Encountered '" << cursor << "'; adding to brace stack");
-         braceStack.push(cursor);
-         braceCount += cursor.currentToken().contentEquals(L"{") ? 1 : 0;
-         continue;
-      }
-      
-      // If we encounter a right brace, check to see if
-      // its partner is on the token stack; if not, parse error
-      if (isRightBrace(cursor))
-      {
-         bool isRightBrace = cursor.contentEquals(L"}");
-         
-         // If the brace stack is empty...
-         if (braceStack.empty())
-         {
-            // ... but the cursor is a right brace, and there is
-            // a function scope to close, then close it
-            if (isRightBrace && pNode->getParent() != NULL)
-            {
-               DEBUG("* Encounterd '" << cursor << "'; closing function body");
-               pNode = pNode->getParent();
-               continue;
-            }
-            lintItems.unexpectedClosingBracket(cursor, braceStack);
-         }
-         
-         // If the brace stack is not empty...
-         else
-         {
-            const ParseItem& topOfStack = braceStack.peek();
-
-            // ... and the cursor is on a '}'
-            if (isRightBrace)
-            {
-               // ... and the expression stack has a '{',
-               // then close the expression
-               if (topOfStack.symbol == "{")
-               {
-                  DEBUG("* Encountered '" << cursor << "'; closing expression body");
-                  braceStack.pop();
-                  continue;
-               }
-               
-               // ... otherwise, this must be closing a
-               // function body
-               else if (pNode->getParent() != NULL)
-               {
-                  DEBUG("* Encountered '" << cursor << "'; closing function body");
-                  pNode = pNode->getParent();
-                  continue;
-               }
-               
-               // ... otherwise, there was no expression or
-               // function body to close
-               else
-               {
-                  lintItems.unexpectedClosingBracket(cursor, braceStack);
-               }
-            }
-            
-            // ... just pop the brace stack
-            else
-            {
-               if (complement(cursor.contentAsUtf8()) != topOfStack.symbol)
-                  lintItems.unexpectedClosingBracket(cursor, braceStack);
-               else
-                  braceStack.pop();
-                  
-               continue;
-            }
-         }
-         
-      }
-         
-      // Handle a 'function' token.
-      if (isFunction(cursor))
-      {
-         DEBUG("*** Handling function token");
-         handleFunctionToken(cursor, &pNode, lintItems, braceStack);
-         continue;
-      }
-      
-      // Handle an identifier (implies we should check to see if it has a reference
-      // in the parse tree)
-      if (isId(cursor))
-      {
-         DEBUG("*** Handling ID token");
-         
-         // TODO: Nodes should also have a 'local' brace stack, which keeps track
-         // of 'if/else' blocks. With this, we could warn on code like:
-         //
-         //    if (foo) {
-         //       x <- 1
-         //    }
-         //
-         // if the variable 'x' does not exist previously in that scope -- this
-         // implies conditionally creating a variable 'x', which is normally a
-         // code smell.
-         handleIdToken(cursor, pNode, lintItems);
-         continue;
-      }
-      
-      // Strings can be assigned to, too. One could do something like:
-      //
-      //    "abc" <- function() {}
-      //    "abc"()
-      if (isString(cursor))
-      {
-         DEBUG("*** Handling string token");
-         handleStringToken(cursor, pNode, lintItems);
-         continue;
-      }
-      
-   } while (cursor.moveToNextToken());
-   
-   DEBUG("- Finished building parse tree");
-   if (!braceStack.empty())
-   {
-      DEBUG("Unexpected end of document; unclosed brace(s)");
-      lintItems.unexpectedEndOfDocument(cursor.currentToken());
-      
-      DEBUG_BLOCK
-      {
-         std::cerr << "Brace stack:" << std::endl;
-         for (std::size_t i = 0; i < braceStack.size(); ++i)
-         {
-            std::cerr << "-- "
-                      << braceStack[i].position.row
-                      << ", "
-                      << braceStack[i].position.column
-                      << ", "
-                      << "'" << braceStack[i].symbol << "'"
-                      << std::endl;
-         }
-      }
-   }
+      handleStatementOrExpression(cursor, status);
+   } while (cursor.moveToNextSignificantToken());
    
    // TODO: Should we report missing matches? Probably need a way
    // of specifying a 'full' lint vs. 'partial' lint; ie,
    // to differentiate between 'does it look okay so far' and
    // 'is this entire document okay'.
-   if (pNode->getParent() != NULL)
+   if (status.node()->getParent() != NULL)
    {
       DEBUG("Unexpected end of document; unclosed function brace");
-      lintItems.unexpectedEndOfDocument(cursor.currentToken());
+      status.lint().unexpectedEndOfDocument(cursor.currentToken());
    }
    
    // Now that we have parsed through the whole document and
@@ -1881,7 +1729,7 @@ LintResults parseAndLintRFile(const FilePath& filePath,
    // ensure that they exist either on the search path, or a parent
    // closure.
    std::vector<ParseItem> unresolvedItems;
-   root->findAllUnresolvedSymbols(&unresolvedItems);
+   status.root()->findAllUnresolvedSymbols(&unresolvedItems);
    
    // Finally, prune the set of lintItems -- we exclude any symbols
    // that were on the search path.
@@ -1889,11 +1737,11 @@ LintResults parseAndLintRFile(const FilePath& filePath,
    {
       if (objects.count(item.symbol) == 0)
       {
-         addUnreferencedSymbol(item, &lintItems);
+         addUnreferencedSymbol(item, status.lint());
       }
    }
    
-   return std::make_pair(root, lintItems);
+   return std::make_pair(status.root(), status.lint());
 }
 
 SEXP rs_parseAndLintRFile(SEXP pathSEXP,
