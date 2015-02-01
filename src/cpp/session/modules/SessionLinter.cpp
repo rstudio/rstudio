@@ -1295,10 +1295,17 @@ std::wstring typeToString(char type)
                                                              __STATUS__)       \
    do                                                                          \
    {                                                                           \
-      MOVE_TO_NEXT_TOKEN(__CURSOR__, __STATUS__);                              \
-      if (!isWhitespace(__CURSOR__))                                           \
-         __STATUS__.lint().unnecessaryWhitespace(__CURSOR__);                  \
-      FWD_OVER_WHITESPACE_AND_COMMENTS(__CURSOR__, __STATUS__);                \
+      if (isWhitespace(__CURSOR__))                                            \
+      {                                                                        \
+         MOVE_TO_NEXT_SIGNIFICANT_TOKEN(__CURSOR__, __STATUS__);               \
+      }                                                                        \
+      else                                                                     \
+      {                                                                        \
+         MOVE_TO_NEXT_TOKEN(__CURSOR__, __STATUS__);                           \
+         if (!isWhitespace(__CURSOR__))                                        \
+            __STATUS__.lint().expectedWhitespace(__CURSOR__);                  \
+         FWD_OVER_WHITESPACE_AND_COMMENTS(__CURSOR__, __STATUS__);             \
+      }                                                                        \
    } while (0)
 
 #define ENSURE_CONTENT(__CURSOR__, __STATUS__, __CONTENT__)                    \
@@ -1332,9 +1339,17 @@ std::wstring typeToString(char type)
 // may modify the objects passed in.
 //
 // A handler's duty is to take a token cursor, and move it to the
-// last token that is part of that expression.
+// last token that is part of that expression. This is so that
+// a top-level driver can be called basically as:
+//
+//     do { handleExpression() } while (moveToNextToken())
+//
+// so it becomes 'easy' to run from a top level.
 void handleExpression(TokenCursor& cursor, ParseStatus& status);
+
+// Control flow is handled specially.
 void handleControlFlow(TokenCursor& cursor, ParseStatus& status, bool* pWasHandled);
+
 void handleFor(TokenCursor& cursor, ParseStatus& status);
 void handleWhile(TokenCursor& cursor, ParseStatus& status);
 void handleIf(TokenCursor& cursor, ParseStatus& status);
@@ -1349,15 +1364,15 @@ void handleControlFlow(TokenCursor& cursor,
                        bool* pWasHandled)
 {
    if (cursor.contentEquals(L"if"))
-      handleIf(cursor, status);
+      return handleIf(cursor, status);
    else if (cursor.contentEquals(L"for"))
-      handleFor(cursor, status);
+      return handleFor(cursor, status);
    else if (cursor.contentEquals(L"while"))
-      handleWhile(cursor, status);
+      return handleWhile(cursor, status);
    else if (cursor.contentEquals(L"repeat"))
-      handleRepeat(cursor, status);
+      return handleRepeat(cursor, status);
    else if (cursor.contentEquals(L"function"))
-      handleFunction(cursor, status);
+      return handleFunction(cursor, status);
    
    *pWasHandled = false;
 }
@@ -1416,16 +1431,24 @@ void handleIf(TokenCursor& cursor,
    ENSURE_TYPE(cursor, status, RToken::RPAREN);
    MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
    handleExpression(cursor, status);
-   FWD_OVER_WHITESPACE_AND_COMMENTS(cursor, status);
+   DEBUG("*** Cursor: " << cursor);
+   DEBUG("*** Next: " << cursor.nextSignificantToken().contentAsUtf8());
    
-   // After parsing the 'if () ...' block, we may see either a:
+   // After handling the 'if' expression, the token cursor should either
+   // be on a (token containing a) newline, or a semicolon, or a closing
+   // brace.
    //
-   //     1. else if (...)
-   //     2. else ...
-   //
-   if (cursor.contentEquals(L"else"))
+   // Check to see if the next significant token is an 'else', and continue
+   // parsing here if so.
+   if (cursor.nextSignificantToken().contentEquals(L"else"))
    {
+      // Move onto the 'else' token
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
+      
+      // Move to the next token
+      MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
+      
+      // Now, handle a new 'if' block, or a final expression.
       if (cursor.contentEquals(L"if"))
          return handleIf(cursor, status);
       else
