@@ -77,24 +77,24 @@ TokenPatterns& tokenPatterns()
 
 } // anonymous namespace
 
-const wchar_t RToken::LPAREN         = L'(';
-const wchar_t RToken::RPAREN         = L')';
-const wchar_t RToken::LBRACKET       = L'[';
-const wchar_t RToken::RBRACKET       = L']';
-const wchar_t RToken::LBRACE         = L'{';
-const wchar_t RToken::RBRACE         = L'}';
-const wchar_t RToken::COMMA          = L',';
-const wchar_t RToken::SEMI           = L';';
-const wchar_t RToken::WHITESPACE     = 0x1001;
-const wchar_t RToken::STRING         = 0x1002;
-const wchar_t RToken::NUMBER         = 0x1003;
-const wchar_t RToken::ID             = 0x1004;
-const wchar_t RToken::OPER           = 0x1005;
-const wchar_t RToken::UOPER          = 0x1006;
-const wchar_t RToken::ERR            = 0x1007;
-const wchar_t RToken::LDBRACKET      = 0x1008;
-const wchar_t RToken::RDBRACKET      = 0x1009;
-const wchar_t RToken::COMMENT        = 0x100A;
+const char RToken::LPAREN         =  1;
+const char RToken::RPAREN         =  2;
+const char RToken::LBRACKET       =  3;
+const char RToken::RBRACKET       =  4;
+const char RToken::LBRACE         =  5;
+const char RToken::RBRACE         =  6;
+const char RToken::COMMA          =  7;
+const char RToken::SEMI           =  8;
+const char RToken::WHITESPACE     =  9;
+const char RToken::STRING         = 10;
+const char RToken::NUMBER         = 11;
+const char RToken::ID             = 12;
+const char RToken::OPER           = 13;
+const char RToken::UOPER          = 14;
+const char RToken::ERR            = 15;
+const char RToken::LDBRACKET      = 16;
+const char RToken::RDBRACKET      = 17;
+const char RToken::COMMENT        = 18;
 
 
 RToken RTokenizer::nextToken()
@@ -106,10 +106,18 @@ RToken RTokenizer::nextToken()
 
   switch (c)
   {
-  case L'(': case L')':
-  case L'{': case L'}':
-  case L';': case L',':
-     return consumeToken(c, 1);
+  case L'(':
+     return consumeToken(RToken::LPAREN, 1);
+  case L')':
+     return consumeToken(RToken::RPAREN, 1);
+  case L'{':
+     return consumeToken(RToken::LBRACE, 1);
+  case L'}':
+     return consumeToken(RToken::RBRACE, 1);
+  case L';':
+     return consumeToken(RToken::SEMI, 1);
+  case L',':
+     return consumeToken(RToken::COMMA, 1);
      
   case L'[':
   {
@@ -122,7 +130,7 @@ RToken RTokenizer::nextToken()
      else
      {
         braceStack_.push_back(RToken::LBRACKET);
-        token = consumeToken(c, 1);
+        token = consumeToken(RToken::LBRACKET, 1);
      }
      return token;
   }
@@ -134,7 +142,7 @@ RToken RTokenizer::nextToken()
         if (peek(1) == L']')
            return consumeToken(RToken::RDBRACKET, 2) ;
         else
-           return consumeToken(c, 1);
+           return consumeToken(RToken::RBRACKET, 1);
      }
      else
      {
@@ -145,10 +153,10 @@ RToken RTokenizer::nextToken()
            if (top == RToken::LDBRACKET)
               token = consumeToken(RToken::RDBRACKET, 2);
            else
-              token = consumeToken(c, 1);
+              token = consumeToken(RToken::RBRACKET, 1);
         }
         else
-           token = consumeToken(c, 1);
+           token = consumeToken(RToken::RBRACKET, 1);
         
         braceStack_.pop_back();
         return token;
@@ -402,7 +410,7 @@ void RTokenizer::eatUntil(const boost::wregex& regex)
 }
 
 
-RToken RTokenizer::consumeToken(wchar_t tokenType, std::size_t length)
+RToken RTokenizer::consumeToken(char tokenType, std::size_t length)
 {
    if (length == 0)
    {

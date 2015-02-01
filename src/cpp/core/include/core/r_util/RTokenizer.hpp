@@ -55,25 +55,25 @@ class RToken : public virtual RToken_lock
 {
 public:
 
-   static const wchar_t LPAREN;
-   static const wchar_t RPAREN;
-   static const wchar_t LBRACKET;
-   static const wchar_t RBRACKET;
-   static const wchar_t LBRACE;
-   static const wchar_t RBRACE;
-   static const wchar_t COMMA;
-   static const wchar_t SEMI;
-   static const wchar_t WHITESPACE;
-   static const wchar_t NEWLINE;
-   static const wchar_t STRING;
-   static const wchar_t NUMBER;
-   static const wchar_t ID;
-   static const wchar_t OPER;
-   static const wchar_t UOPER;
-   static const wchar_t ERR;
-   static const wchar_t LDBRACKET;
-   static const wchar_t RDBRACKET;
-   static const wchar_t COMMENT;
+   static const char LPAREN;
+   static const char RPAREN;
+   static const char LBRACKET;
+   static const char RBRACKET;
+   static const char LBRACE;
+   static const char RBRACE;
+   static const char COMMA;
+   static const char SEMI;
+   static const char WHITESPACE;
+   static const char NEWLINE;
+   static const char STRING;
+   static const char NUMBER;
+   static const char ID;
+   static const char OPER;
+   static const char UOPER;
+   static const char ERR;
+   static const char LDBRACKET;
+   static const char RDBRACKET;
+   static const char COMMENT;
 
 public:
    RToken()
@@ -81,18 +81,16 @@ public:
    {
    }
 
-   RToken(wchar_t type,
+   RToken(char type,
           std::wstring::const_iterator begin,
           std::wstring::const_iterator end,
           std::size_t offset)
       : type_(type), begin_(begin), end_(end), offset_(offset)
    {
    }
-
-   // COPYING: via compiler (copyable members)
-
+   
    // accessors
-   wchar_t type() const { return type_; }
+   char type() const { return type_; }
    std::wstring content() const { return std::wstring(begin_, end_); }
    std::string contentAsUtf8() const;
    std::size_t offset() const { return offset_; }
@@ -120,7 +118,7 @@ public:
               std::equal(begin_, end_, op.begin());
    }
 
-   bool isType(wchar_t type) const
+   bool isType(char type) const
    {
       return type_ == type;
    }
@@ -150,7 +148,7 @@ public:
    }
 
 private:
-   wchar_t type_;
+   char type_;
    std::wstring::const_iterator begin_;
    std::wstring::const_iterator end_;
    std::size_t offset_;
@@ -190,12 +188,12 @@ private:
    wchar_t eat();
    std::wstring peek(const boost::wregex& regex);
    void eatUntil(const boost::wregex& regex);
-   RToken consumeToken(wchar_t tokenType, std::size_t length);
+   RToken consumeToken(char tokenType, std::size_t length);
    
 private:
    std::wstring data_;
    std::wstring::const_iterator pos_;
-   std::vector<wchar_t> braceStack_; // needed for tokenization of `[[`, `[`
+   std::vector<char> braceStack_; // needed for tokenization of `[[`, `[`
 };
 
 
@@ -360,6 +358,12 @@ inline bool isValidAsUnaryOperator(const RToken& rToken)
    return rToken.contentEquals(L"-") ||
           rToken.contentEquals(L"+") ||
           rToken.contentEquals(L"!");
+}
+
+inline bool canStartExpression(const RToken& rToken)
+{
+   return isValidAsUnaryOperator(rToken) ||
+          isValidAsIdentifier(rToken);
 }
 
 } // end namespace token_utils
