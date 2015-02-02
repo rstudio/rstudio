@@ -70,6 +70,8 @@ context("Linter")
       EXPECT_NO_ERRORS("a[,,]");
       EXPECT_NO_ERRORS("a(,,1,,,{{}},)");
       
+      EXPECT_NO_ERRORS("{if(!(a)){};if(b){}}");
+      
       EXPECT_ERRORS("for {i in 1:10}");
       EXPECT_ERRORS("((()})");
       

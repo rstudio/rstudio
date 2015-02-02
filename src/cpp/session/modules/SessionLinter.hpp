@@ -171,9 +171,9 @@ public:
    {
       std::stringstream ss;
       ss << "("
-         << row_
+         << row_ + 1
          << ", "
-         << column_
+         << column_ + 1
          << ", '"
          << string_utils::jsonLiteralEscape(token_.contentAsUtf8())
          << "')";
@@ -643,6 +643,13 @@ public:
      return isWhitespace(currentToken()) ||
             isType(RToken::SEMI) ||
             isType(RToken::COMMA);
+  }
+  
+  bool appearsToBeBinaryOperator() const
+  {
+     return isBinaryOp(currentToken()) &&
+            isValidAsIdentifier(previousSignificantToken()) &&
+            isValidAsIdentifier(nextSignificantToken());
   }
   
 private:

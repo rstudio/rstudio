@@ -282,6 +282,8 @@ void handleControlFlow(TokenCursor& cursor,
                        ParseStatus& status,
                        bool* pWasHandled)
 {
+   *pWasHandled = true;
+   
    if (cursor.contentEquals(L"if"))
       return handleIf(cursor, status);
    else if (cursor.contentEquals(L"for"))
@@ -442,6 +444,16 @@ void doHandleExpression(TokenCursor& cursor,
    DEBUG("---- Depth: '" << depth << "'");
    DEBUG("---- Stack: '" << status.stack().size() << "'");
    
+   // Move off of separators.
+   // TODO: Check current brace stack to confirm that these
+   // are the valid separators for this scope.
+   while (cursor.isType(RToken::COMMA) ||
+          cursor.isType(RToken::SEMI) ||
+          cursor.isType(RToken::WHITESPACE))
+   {
+      MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+   }
+   
    // Check for control flow work. These are single expressions,
    // but are parsed separately.
    bool controlFlowHandled = true;
@@ -451,23 +463,18 @@ void doHandleExpression(TokenCursor& cursor,
       // Does this control flow expression finish this expression?
       if (depth == status.stack().size())
          return;
-   }
-   
-   // Move off of separators.
-   while (cursor.isType(RToken::COMMA) ||
-          cursor.isType(RToken::SEMI) ||
-          cursor.isType(RToken::WHITESPACE))
-   {
-      MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+      else
+         return doHandleExpression(cursor, status, depth);
    }
    
    if (isLeftBrace(cursor))
       return handleLeftBracket(cursor, status, depth);
    else if (isRightBrace(cursor))
       return handleRightBracket(cursor, status, depth);
-   else if (isBinaryOp(cursor))
+   else if (cursor.appearsToBeBinaryOperator())
       return handleBinaryOperator(cursor, status, depth);
-   else if (isValidAsIdentifier(cursor))
+   else if (isValidAsIdentifier(cursor) ||
+            isValidAsUnaryOperator(cursor))
       return handleStatement(cursor, status, depth);
    else
    {
@@ -609,14 +616,24 @@ void handleStatement(TokenCursor& cursor,
 {
    DEBUG("-- handleStatement -- (" << cursor << ")");
    
-   // Move over a unary operator
+   // If we see a unary operator, we move over it and restart.
+   // Note that any kind of expression can follow a unary operator,
+   // e.g.
+   //
+   //    --!!--for(i in 1:10) 1
+   //
+   // is a legal R expression.
    if (isValidAsUnaryOperator(cursor))
+   {
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_WHITESPACE(cursor, status);
+      return doHandleExpression(cursor, status, depth);
+   }
    
    // We should now see a symbol (or string).
    if (!isValidAsIdentifier(cursor))
    {
       UNEXPECTED_TOKEN(cursor, status);
+      MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       return;
    }
    
