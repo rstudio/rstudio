@@ -41,6 +41,13 @@ import java.util.HashMap;
 public class DataEditingTarget extends UrlContentEditingTarget
                                implements DataViewChangedEvent.Handler
 {
+   enum QueuedRefreshType
+   {
+      NoRefresh,
+      DataRefresh,
+      StructureRefresh
+   }
+
    @Inject
    public DataEditingTarget(SourceServerOperations server,
                             Commands commands,
@@ -50,6 +57,7 @@ public class DataEditingTarget extends UrlContentEditingTarget
    {
       super(server, commands, globalDisplay, events);
       satelliteManager_ = satelliteManager;
+      isActive_ = true;
       events.addHandler(DataViewChangedEvent.TYPE, this);
    }
 
@@ -78,7 +86,21 @@ public class DataEditingTarget extends UrlContentEditingTarget
    {
       if (event.getData().getCacheKey().equals(getDataItem().getCacheKey()))
       {
-         view_.refreshData(event.getData().structureChanged());
+         // figure out what kind of refresh we need--if we already have a full
+         // (structural) refresh queued, it trumps other refresh types
+         if (queuedRefresh_ != QueuedRefreshType.StructureRefresh)
+         {
+            queuedRefresh_ = event.getData().structureChanged() ? 
+                  QueuedRefreshType.StructureRefresh : 
+                  QueuedRefreshType.DataRefresh;
+         }
+
+         // perform the refresh immediately if the tab is active; otherwise,
+         // leave it in the queue and it'll be run when the tab is activated
+         if (isActive_)
+         {
+            doQueuedRefresh(false);
+         }
       }
    }
 
@@ -87,7 +109,34 @@ public class DataEditingTarget extends UrlContentEditingTarget
    {
       super.onActivate();
       if (view_ != null)
-         view_.applySizeChange();
+      {
+         if (queuedRefresh_ != QueuedRefreshType.NoRefresh)
+         {
+            // the data change while the window wasn't active, so refresh it,
+            // and recompute the size when finished
+            doQueuedRefresh(true);
+         }
+         else
+         {
+            view_.applySizeChange();
+         }
+      }
+   }
+
+   @Override
+   public void onDeactivate()
+   {
+      super.onDeactivate();
+      isActive_ = false;
+   }
+   
+   private void doQueuedRefresh(boolean onActivate)
+   {
+      if (queuedRefresh_ == QueuedRefreshType.DataRefresh)
+         view_.refreshData(false, onActivate);
+      else if (queuedRefresh_ == QueuedRefreshType.StructureRefresh)
+         view_.refreshData(true, onActivate);
+      queuedRefresh_ = QueuedRefreshType.NoRefresh;
    }
 
    private void clearDisplay()
@@ -226,8 +275,9 @@ public class DataEditingTarget extends UrlContentEditingTarget
                                });
    }
 
-
    private SimplePanelWithProgress progressPanel_;
    private DataEditingTargetWidget view_;
    private final SatelliteManager satelliteManager_;
+   private boolean isActive_;
+   private QueuedRefreshType queuedRefresh_;
 }

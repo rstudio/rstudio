@@ -23,19 +23,20 @@
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 
+#include <core/FilePath.hpp>
+
 #include "clang-c/Index.h"
 
 #include "TranslationUnit.hpp"
 
 namespace rstudio {
 namespace core {
-
-class FilePath;
-
 namespace libclang {
 
 struct CompilationDatabase
 {
+   boost::function<bool(const std::string&)> hasTranslationUnit;
+   boost::function<std::vector<std::string>()> translationUnits;
    boost::function<std::vector<std::string>(const std::string&)>
                                             compileArgsForTranslationUnit;
 };
@@ -58,6 +59,8 @@ public:
    unsigned getGlobalOptions() const;
    void setGlobalOptions(unsigned options);
 
+   int verbose() const { return verbose_; }
+
    // functions used to keep the index "hot" based on recent user edits
    void primeEditorTranslationUnit(const std::string& filename);
    void reprimeEditorTranslationUnit(const std::string& filename);
@@ -73,6 +76,8 @@ public:
    // or a header file)
    TranslationUnit getTranslationUnit(const std::string& filename,
                                       bool alwaysReparse = false);
+
+   Cursor referencedCursorForFileLocation(const FileLocation& loc);
 
 private:
 

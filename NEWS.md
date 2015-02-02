@@ -21,6 +21,7 @@
     - Code completion
     - F2 code navigation (go to definition)
     - Go to file/function for C/C++
+    - Find usages for C++ symbols
     - Intelligent auto-indentation
     - Scope tree for quick intra-file navigation
 * Improvements in file/function navigation:
@@ -31,6 +32,7 @@
 * Support for multiple cursors via Ctrl+Alt+Up/Down
 * Alt+Enter to run code while retaining cursor position
 * Comment/uncomment respects indent level when appropriate
+* New Reformat Code command for R scripts
 * Shift+Enter now searches backwards in Find/Replace
 * Find All option added in Find/Replace
 * New option to control comment continuation on insertion of new lines

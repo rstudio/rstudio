@@ -27,6 +27,20 @@ namespace rstudio {
 namespace core {
 namespace html_utils {
    
+
+class HTML
+{
+public:
+   HTML() {}
+   explicit HTML(const std::string& text, bool isHTML = false);
+
+   const std::string& text() const { return text_; }
+
+ private:
+   std::string text_;
+};
+
+
 std::string defaultTitle(const std::string& htmlContent);
 
 // convert images to base64

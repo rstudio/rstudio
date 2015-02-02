@@ -27,6 +27,10 @@ Cursor::Cursor()
 {
 }
 
+std::string Cursor::spelling() const
+{
+   return toStdString(clang().getCursorSpelling(cursor_));
+}
 
 std::string Cursor::displayName() const
 {
@@ -103,6 +107,11 @@ Cursor Cursor::getCannonical() const
    return Cursor(clang().getCanonicalCursor(cursor_));
 }
 
+Cursor Cursor::getLexicalParent() const
+{
+   return Cursor(clang().getCursorLexicalParent(cursor_));
+}
+
 Cursor Cursor::getSemanticParent() const
 {
    return Cursor(clang().getCursorSemanticParent(cursor_));
@@ -127,6 +136,17 @@ std::string Cursor::getUSR() const
 SourceLocation Cursor::getSourceLocation() const
 {
    return SourceLocation(clang().getCursorLocation(cursor_));
+}
+
+
+SourceRange Cursor::getExtent() const
+{
+   return SourceRange(clang().getCursorExtent(cursor_));
+}
+
+unsigned Cursor::hash() const
+{
+   return clang().hashCursor(cursor_);
 }
 
 bool Cursor::isNull() const

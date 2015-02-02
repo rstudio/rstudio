@@ -2360,12 +2360,10 @@ SEXP rs_listInferredPackages(SEXP documentIdSEXP)
 {
    std::string documentId = r::sexp::asString(documentIdSEXP);
    boost::shared_ptr<core::r_util::RSourceIndex> index = rSourceIndex().get(documentId);
-   
+
+   // NOTE: can occur when user edits file not in source index
    if (index == NULL)
-   {
-      LOG_ERROR_MESSAGE("No index for document '" + documentId + "'");
       return R_NilValue;
-   }
    
    std::set<std::string> pkgs = index->getInferredPackages();
    

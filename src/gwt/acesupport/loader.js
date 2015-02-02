@@ -34,6 +34,7 @@ var Utils = require("mode/utils");
 var RStudioEditor = function(renderer, session) {
    Editor.call(this, renderer, session);
    this.setBehavioursEnabled(true);
+   this.$blockScrolling = Infinity;
 };
 oop.inherits(RStudioEditor, Editor);
 
@@ -89,7 +90,7 @@ oop.inherits(RStudioEditSession, EditSession);
             var state = Utils.getPrimaryState(this, i - 1);
             if (state == 'qstring' || state == 'qqstring')
                continue;
-            
+
             var line = this.getLine(i - 1);
             var newline = this.getLine(i);
 

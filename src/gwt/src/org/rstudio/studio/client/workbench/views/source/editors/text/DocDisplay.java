@@ -240,4 +240,6 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setPopupVisible(boolean visible);
    boolean isPopupVisible();
    void selectAll(String needle);
+   
+   int getTabSize();
 }

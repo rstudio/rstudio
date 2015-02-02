@@ -4,7 +4,6 @@ setlocal
 
 set PATH=%PATH%;%CD%\tools
 
-call:install packrat master
 call:install rsconnect master
 
 GOTO:EOF
