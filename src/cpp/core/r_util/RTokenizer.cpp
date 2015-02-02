@@ -338,7 +338,7 @@ RToken RTokenizer::matchOperator()
          return consumeToken(RToken::OPER, 1);
       
    case L'+': case L'*': case L'/':
-   case L'^': case L'~': case L'$':
+   case L'^': case L'~': case L'$': case L'@':
       // single-character operators
       return consumeToken(RToken::OPER, 1) ;
       
