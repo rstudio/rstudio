@@ -83,6 +83,18 @@ public class DependencyManager implements InstallShinyEvent.Handler
                        command);
    }
    
+   public void withPackrat(String userAction, final Command command)
+   {
+      withDependencies(
+         "Packrat",
+         userAction,
+         new Dependency[] {
+            Dependency.cranPackage("packrat", "0.4.3")
+         },
+         false,
+         command);
+   }
+   
    public void withRSConnect(String userAction, final Command command)
    {
       withDependencies(
@@ -93,7 +105,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
           Dependency.cranPackage("RCurl", "1.95"),
           Dependency.cranPackage("RJSONIO", "1.0"),
           Dependency.cranPackage("PKI", "0.1"),
-          Dependency.embeddedPackage("packrat"),
+          Dependency.cranPackage("packrat", "0.4.3"),
           Dependency.embeddedPackage("rsconnect")
         },
         false,
@@ -114,7 +126,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
           Dependency.cranPackage("bitops", "1.0-6"),
           Dependency.cranPackage("rmarkdown", "0.4.2")
         }, 
-        true,
+        false,
         command
      );
    }
