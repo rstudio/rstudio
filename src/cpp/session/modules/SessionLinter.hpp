@@ -1109,7 +1109,8 @@ public:
    ParseStatus()
       : pRoot_(ParseNode::createRootNode()),
         pNode_(pRoot_.get()),
-        depth_(0)
+        depth_(0),
+        lastCursorPosition_(Position(0, 0))
    {
    }
    
@@ -1162,12 +1163,23 @@ public:
       return depth_;
    }
    
+   void setLastCursorPosition(const Position& position)
+   {
+      lastCursorPosition_ = position;
+   }
+
+   const Position& getLastCursorPosition() const
+   {
+      return lastCursorPosition_;
+   }
+   
 private:
    boost::shared_ptr<ParseNode> pRoot_;
    ParseNode* pNode_;
    BraceStack stack_;
    LintItems lint_;
    std::size_t depth_;
+   Position lastCursorPosition_;
 };
 
 typedef std::pair<

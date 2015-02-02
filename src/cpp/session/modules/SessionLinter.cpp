@@ -332,8 +332,13 @@ void handleWhile(TokenCursor& cursor,
    ENSURE_CONTENT(cursor, status, L"while");
    MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
    ENSURE_TYPE(cursor, status, RToken::LPAREN);
-   handleExpression(cursor, status); // parenthetical expression following while
-   handleExpression(cursor, status); // expression associated with while
+   status.push(cursor);
+   MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_WHITESPACE(cursor, status);
+   handleExpression(cursor, status);
+   ENSURE_TYPE(cursor, status, RToken::RPAREN);
+   status.pop(cursor);
+   MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
+   handleExpression(cursor, status);
    DEBUG("-- end handleWhile -- (" << cursor << ")");
 }
 
@@ -407,6 +412,7 @@ void handleExpression(TokenCursor& cursor,
 {
    DEBUG("-- Handle expression -- (" << cursor << ")");
    status.setDepth(status.stack().size());
+   status.setLastCursorPosition(cursor.currentPosition());
    return doHandleExpression(cursor, status);
 }
 
@@ -425,7 +431,9 @@ void doHandleExpression(TokenCursor& cursor,
    while (cursor.isType(RToken::COMMA) ||
           cursor.isType(RToken::SEMI) ||
           cursor.isType(RToken::WHITESPACE))
+   {
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+   }
    
    if (isLeftBrace(cursor))
       return handleLeftBracket(cursor, status);
@@ -829,6 +837,7 @@ ParseResults parse(const std::string& string)
       handleExpression(cursor, status);
       if (cursor.currentPosition() == lastPosition)
       {
+         status.lint().unexpectedToken(cursor);
          DEBUG("** Failed to move to next expression -- parse error?");
          cursor.moveToNextSignificantToken();
       }
@@ -864,9 +873,19 @@ ParseResults parseAndLintRFile(const FilePath& filePath,
    
    // Move to the first significant token in the document.
    cursor.fwdOverWhitespaceAndComments();
+   Position lastPosition = cursor.currentPosition();
    
    while (!cursor.isAtEndOfDocument())
+   {
       handleExpression(cursor, status);
+      if (cursor.currentPosition() == lastPosition)
+      {
+         status.lint().unexpectedToken(cursor);
+         DEBUG("** Failed to move to next expression -- parse error?");
+         cursor.moveToNextSignificantToken();
+      }
+      lastPosition = cursor.currentPosition();
+   }
    
    // TODO: Should we report missing matches? Probably need a way
    // of specifying a 'full' lint vs. 'partial' lint; ie,
