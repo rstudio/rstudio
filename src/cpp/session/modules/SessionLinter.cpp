@@ -36,8 +36,6 @@
 #include <core/collection/Tree.hpp>
 #include <core/collection/Stack.hpp>
 
-#define RSTUDIO_ENABLE_DEBUG_MACROS
-#define RSTUDIO_DEBUG_LABEL "linter"
 #include <core/Macros.hpp>
 
 namespace rstudio {
@@ -189,6 +187,15 @@ std::string typeToString(char type)
 #define FWD_OVER_BLANK(__CURSOR__, __STATUS__)                                 \
    RSTUDIO_LINT_ACTION(__CURSOR__, __STATUS__, fwdOverBlank);
 
+#define MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(__CURSOR__, __STATUS__)   \
+   do                                                                          \
+   {                                                                           \
+      MOVE_TO_NEXT_TOKEN(__CURSOR__, __STATUS__);                              \
+      if (isWhitespace(__CURSOR__) && !__CURSOR__.contentContains(L'\n'))      \
+         __STATUS__.lint().unnecessaryWhitespace(__CURSOR__);                  \
+      FWD_OVER_WHITESPACE_AND_COMMENTS(__CURSOR__, __STATUS__);                \
+   } while (0)
+
 #define MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_WHITESPACE(__CURSOR__,          \
                                                           __STATUS__)          \
    do                                                                          \
@@ -265,8 +272,11 @@ void handleControlFlow(TokenCursor& cursor, ParseStatus& status, bool* pWasHandl
 void handleFor(TokenCursor& cursor, ParseStatus& status);
 void handleWhile(TokenCursor& cursor, ParseStatus& status);
 void handleIf(TokenCursor& cursor, ParseStatus& status);
-void handleFunction(TokenCursor& cursor, ParseStatus& status);
 void handleRepeat(TokenCursor& cursor, ParseStatus& status);
+
+void handleFunction(TokenCursor& cursor, ParseStatus& status);
+void handleFunctionParameterList(TokenCursor& cursor, ParseStatus& status);
+void handleFunctionParameter(TokenCursor& cursor, ParseStatus& status);
 
 void handleArgument(TokenCursor& cursor, ParseStatus& status);
 void handleArgumentList(TokenCursor& cursor, ParseStatus& status);
@@ -310,8 +320,9 @@ void handleFor(TokenCursor& cursor,
    MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
    ENSURE_TYPE(cursor, status, RToken::LPAREN);
    status.push(cursor);
-   MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_WHITESPACE(cursor, status);
+   MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
    ENSURE_TYPE(cursor, status, RToken::ID);
+   status.node()->addDefinedSymbol(cursor);
    handleIdentifier(cursor, status);
    MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
    ENSURE_CONTENT(cursor, status, L"in");
@@ -338,7 +349,7 @@ void handleWhile(TokenCursor& cursor,
    MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
    ENSURE_TYPE(cursor, status, RToken::LPAREN);
    status.push(cursor);
-   MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_WHITESPACE(cursor, status);
+   MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
    
    DEBUG("*- Begin while condition -* (" << cursor << ")");
    
@@ -655,7 +666,9 @@ void handleStatement(TokenCursor& cursor,
    // First, move over a function, parsing its argument list if necessary.
    if (isLeftBrace(cursor.nextSignificantToken()))
    {
-      MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_WHITESPACE(cursor, status);
+      // Warn if there is non-newline containing whitespace separating
+      // the cursor and the next argument.
+      MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
       
       DEBUG("*-* Before Arg List: " << cursor);
       while (isLeftBrace(cursor))
@@ -727,6 +740,74 @@ void handleStatement(TokenCursor& cursor,
    MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
 }
 
+// A function argument list is of the form:
+//
+//   '(' (<f-expr> (',' <f-expr>)*)? ')'
+//
+// where <f-expr> is of the form:
+//
+//    (<id> | <id> '=' <expr>)
+//
+// with comma delimiters between the 'function' expressions.
+void handleFunctionParameterList(TokenCursor& cursor,
+                                 ParseStatus& status)
+{
+   ENSURE_TYPE(cursor, status, RToken::LPAREN);
+   MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
+   
+   // empty argument list
+   if (cursor.isType(RToken::RPAREN))
+      return;
+   
+   // empty names forbidden
+   if (cursor.isType(RToken::COMMA))
+      status.lint().unexpectedToken(cursor);
+   
+   if (!cursor.isType(RToken::ID))
+      status.lint().unexpectedToken(cursor);
+   
+   status.node()->addDefinedSymbol(cursor);
+   
+   handleFunctionParameter(cursor, status);
+   while (cursor.isType(RToken::COMMA))
+   {
+      MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
+      status.node()->addDefinedSymbol(cursor);
+      handleFunctionParameter(cursor, status);
+   }
+}
+
+void handleFunctionParameter(TokenCursor& cursor,
+                             ParseStatus& status)
+{
+   ENSURE_TYPE(cursor, status, RToken::ID);
+   const AnnotatedRToken& next = cursor.nextSignificantToken();
+   
+   // Check for comma or ')' (meaing we just have an identifier)
+   if (next.isType(RToken::COMMA) ||
+       next.isType(RToken::RPAREN))
+   {
+      MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
+      return;
+   }
+   
+   // If an '=' follows, we have a default argument.
+   MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
+   ENSURE_CONTENT(cursor, status, L"=");
+   MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
+   
+   // Return for default argument as missing, e.g.
+   //
+   //    function(a = )
+   if (cursor.isType(RToken::COMMA) ||
+       cursor.isType(RToken::RPAREN))
+   {
+      status.lint().unexpectedToken(cursor);
+   }
+   
+   handleExpression(cursor, status);
+}
+
 // An argument list is of the form:
 //
 //    <l-bracket> <r-bracket>
@@ -747,7 +828,7 @@ void handleArgumentList(TokenCursor& cursor,
    std::string lhs = cursor.contentAsUtf8();
    std::string rhs = complement(lhs);
    
-   MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_WHITESPACE(cursor, status);
+   MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
    
    // Check for an empty argument list.
    if (isRightBrace(cursor))
@@ -757,12 +838,6 @@ void handleArgumentList(TokenCursor& cursor,
          status.lint().unexpectedToken(cursor, string_utils::utf8ToWide(rhs));
       return;
    }
-   
-   // Move over initial commas (for empty arguments).
-   //
-   // No whitespace for the first comma.
-   if (cursor.isType(RToken::COMMA))
-      MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_WHITESPACE(cursor, status);
    
    while (cursor.isType(RToken::COMMA))
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
@@ -809,7 +884,7 @@ void handleArgument(TokenCursor& cursor,
    if (isId(cursor) &&
        cursor.nextSignificantToken().contentEquals(L"="))
    {
-      DEBUG("Found an '='");
+      handleIdentifier(cursor, status);
       
       // Move on to '='
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
@@ -839,6 +914,15 @@ void handleIdentifier(TokenCursor& cursor,
 {
    // Check to see if we are defining a symbol at this location.
    // Note that both string and id are valid for assignments.
+   
+   // Don't cache identifiers if the previous or next tokens
+   // are 'extraction' operators (e.g. '$').
+   //
+   // TODO: Handle namespaced symbols explicitly.
+   if (isExtractionOperator(cursor.previousSignificantToken()) ||
+       isExtractionOperator(cursor.nextSignificantToken()))
+      return;
+   
    if (cursor.isType(RToken::ID) ||
        cursor.isType(RToken::STRING))
    {
@@ -882,9 +966,9 @@ void handleFunction(TokenCursor& cursor,
                                       cursor.currentPosition());
    
    ENSURE_CONTENT(cursor, status, L"function");
-   MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_WHITESPACE(cursor, status);
+   MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
    ENSURE_TYPE(cursor, status, RToken::LPAREN);
-   handleArgumentList(cursor, status);
+   handleFunctionParameterList(cursor, status);
    ENSURE_TYPE(cursor, status, RToken::RPAREN);
    MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
    handleExpression(cursor, status);

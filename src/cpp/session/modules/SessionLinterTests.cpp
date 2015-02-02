@@ -37,6 +37,21 @@ namespace linter {
       expect_false(results.second.hasErrors());                                \
    } while (0)
 
+#define EXPECT_LINT(__STRING__)                                                \
+   do                                                                          \
+   {                                                                           \
+      ParseResults results = parse(__STRING__);                                \
+      expect_false(results.second.get().empty());                              \
+   } while (0)
+
+#define EXPECT_NO_LINT(__STRING__)                                             \
+   do                                                                          \
+   {                                                                           \
+      ParseResults results = parse(__STRING__);                                \
+      expect_true(results.second.get().empty());                               \
+   } while (0)
+
+
 context("Linter")
 {
    test_that("valid expressions generate no lint")
@@ -74,6 +89,8 @@ context("Linter")
       
       EXPECT_ERRORS("for {i in 1:10}");
       EXPECT_ERRORS("((()})");
+      
+      EXPECT_NO_LINT("(function(a) a)");
       
    }
 }

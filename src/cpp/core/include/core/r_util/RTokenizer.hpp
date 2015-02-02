@@ -368,6 +368,13 @@ inline bool canStartExpression(const RToken& rToken)
           isValidAsIdentifier(rToken);
 }
 
+inline bool isExtractionOperator(const RToken& rToken)
+{
+   return isNamespace(rToken) ||
+          isDollar(rToken) ||
+          isAt(rToken);
+}
+
 } // end namespace token_utils
 
 } // namespace r_util

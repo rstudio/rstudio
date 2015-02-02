@@ -32,7 +32,6 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/range/adaptor/map.hpp>
 
-#define RSTUDIO_ENABLE_DEBUG_MACROS
 #include <core/Macros.hpp>
 
 namespace rstudio {
