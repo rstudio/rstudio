@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.rsconnect.ui;
 
 import org.rstudio.core.client.widget.WizardPage;
+import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountInput;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 
@@ -26,7 +27,7 @@ public class NewRSConnectCloudPage
 {
    public NewRSConnectCloudPage()
    {
-      super("ShinyApps.io", 
+      super(RSConnect.CLOUD_SERVICE_NAME,
             "A cloud service run by RStudio. Publish Shiny applications " +
             "and interactive documents to the Internet.",
             "Connect ShinyApps.io Account",
@@ -37,15 +38,17 @@ public class NewRSConnectCloudPage
    @Override
    public void focus()
    {
+      if (accountWidget_ != null)
+         accountWidget_.focus();
    }
 
    @Override
    protected Widget createWidget()
    {
-      if (accountWidget == null)
-         accountWidget = new RSConnectCloudAccount();
+      if (accountWidget_ == null)
+         accountWidget_ = new RSConnectCloudAccount();
       
-      return accountWidget;
+      return accountWidget_;
    }
 
    @Override
@@ -57,7 +60,7 @@ public class NewRSConnectCloudPage
    protected NewRSConnectAccountResult collectInput()
    {
       return new NewRSConnectAccountResult(
-            accountWidget.getAccountInfo());
+            accountWidget_.getAccountInfo());
    }
 
    @Override
@@ -66,5 +69,5 @@ public class NewRSConnectCloudPage
       return input.getCloudSecret().length() > 0;
    }
    
-   private RSConnectCloudAccount accountWidget;
+   private RSConnectCloudAccount accountWidget_;
 }

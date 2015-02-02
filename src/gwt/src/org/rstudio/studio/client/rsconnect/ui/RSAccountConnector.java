@@ -408,6 +408,8 @@ public class RSAccountConnector implements WindowClosedEvent.Handler,
                                  AUTH_WINDOW_NAME);
                         }
                         
+                        // on the server, we open a waiting dialog; if that
+                        // exists, close it
                         if (waitDialog_ != null)
                         {
                            waitDialog_.closeDialog();

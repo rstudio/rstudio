@@ -47,6 +47,11 @@ public class RSConnectLocalAccount extends Composite
       return accountName_.getText();
    }
    
+   public void focus()
+   {
+      serverUrl_.setFocus(true);
+   }
+   
    @UiField TextBoxWithCue serverUrl_;
    @UiField TextBoxWithCue accountName_;
 }

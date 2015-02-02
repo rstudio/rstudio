@@ -16,5 +16,6 @@ package org.rstudio.studio.client.rsconnect.model;
 
 public class NewRSConnectAccountInput
 {
-
+   // This class is a stand-in type for input to the New Account wizard for
+   // publishing content.
 }

@@ -56,6 +56,11 @@ public class RSConnectCloudAccount extends Composite
       });
    }
    
+   public void focus()
+   {
+      accountInfo.setFocus(true);
+   }
+   
    public void setOnAccountInfoChanged(Command cmd)
    {
       onAccountInfoChanged_ = cmd;

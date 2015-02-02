@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.rsconnect.model;
 
+import org.rstudio.studio.client.rsconnect.RSConnect;
+
 import com.google.gwt.core.client.JavaScriptObject;
 
 public class RSConnectAccount extends JavaScriptObject
@@ -30,21 +32,22 @@ public class RSConnectAccount extends JavaScriptObject
    }-*/;
    
    public final native String getName() /*-{
-      return this.name;
+      return this.name || "";
    }-*/;
 
    public final native String getServer() /*-{
-      return this.server;
+      return this.server || "";
    }-*/;
    
    public final boolean isCloudAccount()
    {
-      return getServer() == "shinyapps.io";
+      return getServer().compareToIgnoreCase(
+            RSConnect.CLOUD_SERVICE_NAME) == 0;
    }
 
    public final boolean equals(RSConnectAccount other)
    {
-      return getName() == other.getName() && 
-             getServer() == other.getServer();
+      return getName().equals(other.getName()) && 
+             getServer().equals(other.getServer());
    }
 }

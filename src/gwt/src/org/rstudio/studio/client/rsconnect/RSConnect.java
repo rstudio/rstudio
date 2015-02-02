@@ -402,4 +402,6 @@ public class RSConnect implements SessionInitHandler,
    
    private RSConnectDirectoryState dirState_;
    private boolean dirStateDirty_ = false;
+   
+   public final static String CLOUD_SERVICE_NAME = "ShinyApps.io";
 }

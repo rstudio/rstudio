@@ -39,6 +39,8 @@ public class NewRSConnectLocalPage
    @Override
    public void focus()
    {
+      if (local_ != null)
+         local_.focus();
    }
 
    @Override
