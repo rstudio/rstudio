@@ -20,13 +20,12 @@
 
 #include <core/FilePath.hpp>
 
-#include "SourceLocation.hpp"
-
 namespace rstudio {
 namespace core {
 namespace libclang {
 
 class SourceRange;
+class SourceLocation;
 
 class Cursor
 {
