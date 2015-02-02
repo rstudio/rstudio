@@ -195,7 +195,7 @@ QString Options::fixedWidthFont() const
 
    QStringList fontList;
    fontList <<
-#if defined(Q_OS_MACX)
+#if defined(Q_OS_MAC)
            QString::fromUtf8("Monaco")
 #elif defined (Q_OS_LINUX)
            QString::fromUtf8("Ubuntu Mono") << QString::fromUtf8("Droid Sans Mono") << QString::fromUtf8("DejaVu Sans Mono") << QString::fromUtf8("Monospace")

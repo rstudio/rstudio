@@ -27,7 +27,7 @@ namespace {
 
 QIcon icon(const char* name)
 {
-#ifdef Q_OS_MACX
+#ifdef Q_OS_MAC
    static QString suffix(QString::fromUtf8("_mac"));
 #else
    static QString suffix(QString::fromUtf8(""));
@@ -43,7 +43,7 @@ SecondaryWindow::SecondaryWindow(QUrl baseUrl, bool showToolbar, QWidget* pParen
    setAttribute(Qt::WA_QuitOnClose, false);
    setAttribute(Qt::WA_DeleteOnClose, true);
 
-#ifdef Q_OS_MACX
+#ifdef Q_OS_MAC
    setIconSize(QSize(26, 22));
 #else
    setIconSize(QSize(26, 20));
