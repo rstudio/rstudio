@@ -51,17 +51,4 @@ public class JsArrayUtil
          list.add(jsArray.get(i));
       }
    }
-   
-   // clones an existing array by copying each element (shallow copy)
-   public static <T extends JavaScriptObject> JsArray<T> cloneJsArray(
-         JsArray<T> jsArray)
-   {
-      JsArray<T> newArray = JsArray.createArray().cast();
-      newArray.setLength(jsArray.length());
-      for (int i = 0; i < jsArray.length(); i++)
-      {
-         newArray.set(i, newArray.get(i));
-      }
-      return newArray;
-   }
 }

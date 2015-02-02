@@ -225,8 +225,14 @@ public class DependencyManager implements InstallShinyEvent.Handler
                      // as expected when this code is executed from a satellite
                      // (see RemoteServer.sendRequestViaMainWorkbench), so we
                      // clone it before passing to the dependency installer
+                     JsArray<Dependency> newArray = JsArray.createArray().cast();
+                     newArray.setLength(unsatisfiedDeps.length());
+                     for (int i = 0; i < unsatisfiedDeps.length(); i++)
+                     {
+                        newArray.set(i, unsatisfiedDeps.get(i));
+                     }
                      installDependencies(
-                           JsArrayUtil.cloneJsArray(unsatisfiedDeps), 
+                           newArray, 
                            silentUpdate, command);
                   }
                };
