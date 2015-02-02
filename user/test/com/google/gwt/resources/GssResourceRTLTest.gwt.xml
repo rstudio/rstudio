@@ -1,0 +1,11 @@
+<module>
+  <inherits name="com.google.gwt.resources.Resources" />
+  <inherits name="com.google.gwt.i18n.I18N"/>
+
+  <!-- Use an RTL language -->
+  <extend-property name="locale" values="ar"/>
+  <set-property name="locale" value="ar" />
+  <!-- enable GSS -->
+  <set-configuration-property name="CssResource.enableGss" value="true" />
+  <set-configuration-property name="CssResource.conversionMode" value="strict" />
+</module>

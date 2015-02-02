@@ -1,0 +1,6 @@
+@noflip {
+  .ltrRowCell {
+    direction: ltr;
+    text-align: left;
+  }
+}

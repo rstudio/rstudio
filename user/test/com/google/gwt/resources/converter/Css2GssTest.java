@@ -112,6 +112,11 @@ public class Css2GssTest extends TestCase {
         "charset.css", "charset.gss", true);
   }
 
+  public void testNoFlip() throws IOException, UnableToCompleteException {
+    assertFileContentEqualsAfterConversionAndIsGssCompatible(
+        "noflip.css", "noflip.gss", false);
+  }
+
   public void testEscaping() throws IOException, UnableToCompleteException {
     assertFileContentEqualsAfterConversionAndIsGssCompatible("escape.css", "escape.gss", true);
   }

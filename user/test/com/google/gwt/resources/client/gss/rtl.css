@@ -1,0 +1,7 @@
+@noflip {
+  .a {
+    padding-bottom: 10px;
+    direction: ltr;
+    text-align: left;
+  }
+}

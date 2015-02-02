@@ -89,6 +89,7 @@ import com.google.gwt.thirdparty.common.css.compiler.passes.EliminateEmptyRulese
 import com.google.gwt.thirdparty.common.css.compiler.passes.EliminateUnitsFromZeroNumericValues;
 import com.google.gwt.thirdparty.common.css.compiler.passes.EliminateUselessRulesetNodes;
 import com.google.gwt.thirdparty.common.css.compiler.passes.HandleUnknownAtRuleNodes;
+import com.google.gwt.thirdparty.common.css.compiler.passes.MarkNonFlippableNodes;
 import com.google.gwt.thirdparty.common.css.compiler.passes.MarkRemovableRulesetNodes;
 import com.google.gwt.thirdparty.common.css.compiler.passes.MergeAdjacentRulesetNodesWithSameDeclarations;
 import com.google.gwt.thirdparty.common.css.compiler.passes.MergeAdjacentRulesetNodesWithSameSelector;
@@ -713,6 +714,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
         allowedAtRules, true, false).runPass();
     new ProcessKeyframes(cssTree.getMutatingVisitController(), errorManager, true, true).runPass();
     new ProcessRefiners(cssTree.getMutatingVisitController(), errorManager, true).runPass();
+    new MarkNonFlippableNodes(cssTree.getMutatingVisitController(), errorManager).runPass();
   }
 
   private ConstantDefinitions optimizeTree(CssParsingResult cssParsingResult, ResourceContext context,
@@ -788,6 +790,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
       // Merge of rules with same styles.
       new MergeAdjacentRulesetNodesWithSameDeclarations(cssTree).runPass();
       new EliminateUselessRulesetNodes(cssTree).runPass();
+      new MarkNonFlippableNodes(cssTree.getMutatingVisitController(), errorManager).runPass();
     }
 
     return collectConstantDefinitionsPass.getConstantDefinitions();
