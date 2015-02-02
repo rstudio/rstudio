@@ -20,6 +20,10 @@
 #include <vector>
 #include <deque>
 #include <algorithm>
+#include <iostream>
+#include <sstream>
+
+#include <core/StringUtils.hpp>
 
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
@@ -376,6 +380,126 @@ inline bool isExtractionOperator(const RToken& rToken)
 }
 
 } // end namespace token_utils
+
+class AnnotatedRToken
+{
+public:
+   
+   AnnotatedRToken(std::size_t row,
+                   std::size_t column,
+                   const RToken& token)
+      : token_(token), row_(row), column_(column) {}
+   
+   const RToken& get() const { return token_; }
+   const std::size_t row() const { return row_; }
+   const std::size_t column() const { return column_; }
+   
+   char type() const { return token_.type(); }
+   bool isType(char type) const { return token_.isType(type); }
+   std::wstring content() const { return token_.content(); }
+   std::string contentAsUtf8() const { return token_.contentAsUtf8(); }
+   
+   bool contentEquals(const std::wstring& text) const
+   {
+      return text.size() && token_.contentEquals(text);
+   }
+   
+   bool contentContains(wchar_t character) const
+   {
+      return token_.contentContains(character);
+   }
+   
+   const RToken& token() const { return token_; }
+   operator const RToken&() const { return token_; }
+   
+   std::string asString() const
+   {
+      std::stringstream ss;
+      ss << "("
+         << row_ + 1
+         << ", "
+         << column_ + 1
+         << ", '"
+         << string_utils::jsonLiteralEscape(token_.contentAsUtf8())
+         << "')";
+      
+      return ss.str();
+   }
+   
+   friend std::ostream& operator <<(std::ostream& os,
+                                    const AnnotatedRToken& token)
+   {
+      os << token.asString();
+      return os;
+   } 
+   
+private:
+   RToken token_;
+   std::size_t row_;
+   std::size_t column_;
+};
+
+class AnnotatedRTokens
+{
+public:
+   
+   // NOTE: Must be constructed from tokens that have not
+   // stripped whitespace
+  explicit AnnotatedRTokens(const RTokens& rTokens)
+      : dummyText_(L"ERR"),
+        dummyToken_(
+            AnnotatedRToken(-1, -1, RToken(RToken::ERR, dummyText_.begin(),
+                                           dummyText_.end(), rTokens.size())))
+   {
+      std::size_t row = 0;
+      std::size_t column = 0;
+      
+      std::size_t n = rTokens.size();
+      for (std::size_t i = 0; i < n; ++i)
+      {
+         // Add the token if it's not whitespace
+         const RToken& token = rTokens.at(i);
+         tokens_.push_back(
+                  AnnotatedRToken(row, column, token));
+         
+         // Update the current row, column
+         std::wstring content = token.content();
+         std::size_t numNewLines =
+               string_utils::countNewLines(content);
+         
+         if (numNewLines > 0)
+         {
+            row += numNewLines;
+            column = content.length() - content.find_last_of(L"\r\n") - 1;
+         }
+         else
+         {
+            column += content.length();
+         }
+      }
+   }
+   
+   const AnnotatedRToken& at(std::size_t index) const
+   {
+      if (index >= tokens_.size())
+         return dummyToken_;
+      
+      return tokens_[index];
+   }
+   
+   const std::size_t size() const
+   {
+      return tokens_.size();
+   }
+   
+private:
+   std::vector<AnnotatedRToken> tokens_;
+   std::wstring dummyText_;
+   AnnotatedRToken dummyToken_;
+   
+};
+
+
 
 } // namespace r_util
 } // namespace core 

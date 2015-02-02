@@ -21,34 +21,36 @@ namespace session {
 namespace modules {
 namespace linter {
 
+using namespace core::r_util;
+
 // We use macros so that the test output gives
 // meaningful line numbers.
 #define EXPECT_ERRORS(__STRING__)                                              \
    do                                                                          \
    {                                                                           \
       ParseResults results = parse(__STRING__);                                \
-      expect_true(results.second.hasErrors());                                 \
+      expect_true(results.lint().hasErrors());                                 \
    } while (0)
 
 #define EXPECT_NO_ERRORS(__STRING__)                                           \
    do                                                                          \
    {                                                                           \
       ParseResults results = parse(__STRING__);                                \
-      expect_false(results.second.hasErrors());                                \
+      expect_false(results.lint().hasErrors());                                \
    } while (0)
 
 #define EXPECT_LINT(__STRING__)                                                \
    do                                                                          \
    {                                                                           \
       ParseResults results = parse(__STRING__);                                \
-      expect_false(results.second.get().empty());                              \
+      expect_false(results.lint().get().empty());                              \
    } while (0)
 
 #define EXPECT_NO_LINT(__STRING__)                                             \
    do                                                                          \
    {                                                                           \
       ParseResults results = parse(__STRING__);                                \
-      expect_true(results.second.get().empty());                               \
+      expect_true(results.lint().get().empty());                               \
    } while (0)
 
 
