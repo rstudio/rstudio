@@ -1,7 +1,7 @@
 /*
  * DependencyManager.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ package org.rstudio.studio.client.common.dependencies;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -222,7 +223,13 @@ public class DependencyManager implements InstallShinyEvent.Handler
                   @Override
                   public void execute()
                   {
-                     installDependencies(unsatisfiedDeps, silentUpdate, command);
+                     // the incoming JsArray from the server may not serialize
+                     // as expected when this code is executed from a satellite
+                     // (see RemoteServer.sendRequestViaMainWorkbench), so we
+                     // clone it before passing to the dependency installer
+                     installDependencies(
+                           JsArrayUtil.cloneJsArray(unsatisfiedDeps), 
+                           silentUpdate, command);
                   }
                };
                

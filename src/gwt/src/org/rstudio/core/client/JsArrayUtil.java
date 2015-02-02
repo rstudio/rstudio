@@ -1,7 +1,7 @@
 /*
  * JsArrayUtil.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,10 +45,23 @@ public class JsArrayUtil
       return null;
    }-*/;
    
-   public static <T extends JavaScriptObject> void fillList(JsArray<T> jsArray, List<T> list) {
+   public static <T extends JavaScriptObject> void fillList(JsArray<T> jsArray, 
+         List<T> list) {
       for (int i = 0; i < jsArray.length(); ++i) {
          list.add(jsArray.get(i));
       }
    }
    
+   // clones an existing array by copying each element (shallow copy)
+   public static <T extends JavaScriptObject> JsArray<T> cloneJsArray(
+         JsArray<T> jsArray)
+   {
+      JsArray<T> newArray = JsArray.createArray().cast();
+      newArray.setLength(jsArray.length());
+      for (int i = 0; i < jsArray.length(); i++)
+      {
+         newArray.set(i, newArray.get(i));
+      }
+      return newArray;
+   }
 }
