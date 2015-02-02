@@ -21,6 +21,13 @@ namespace rstudio {
 namespace core {
 namespace libclang {
 
+std::ostream& operator << (std::ostream& stream, const FileRange& loc)
+{
+   stream << "start: " << loc.start << std::endl;
+   stream << "end  : " << loc.end << std::endl;
+   return stream;
+}
+
 SourceRange::SourceRange()
    : range_(clang().getNullRange())
 {

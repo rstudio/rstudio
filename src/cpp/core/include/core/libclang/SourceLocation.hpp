@@ -60,6 +60,9 @@ struct FileLocation
    unsigned column;
 };
 
+std::ostream& operator << (std::ostream& stream, const FileLocation& loc);
+
+
 class SourceLocation
 {
 public:

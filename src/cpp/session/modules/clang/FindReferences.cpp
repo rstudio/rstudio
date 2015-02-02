@@ -77,31 +77,57 @@ CXChildVisitResult findReferencesVisitor(CXCursor cxCursor,
       // check for matching USR
       if (referencedCursor.getUSR() == pData->USR)
       {
-         // tokenize to extrat identifer location for cursors that
+         // tokenize to extract identifer location for cursors that
          // represent larger source constructs
+         FileRange foundRange;
          libclang::Tokens tokens(pData->tu, cursor.getExtent());
-         for (unsigned i=0; i<tokens.numTokens(); ++i)
+         std::vector<unsigned> indexes;
+
+         // for constructors & destructors we search backwards so that the
+         // match is for the constructor identifier rather than the class
+         // identifer
+         unsigned numTokens = tokens.numTokens();
+         if (referencedCursor.getKind() == CXCursor_Constructor ||
+             referencedCursor.getKind() == CXCursor_Destructor)
+         {
+            for (unsigned i = 0; i < numTokens; i++)
+               indexes.push_back(numTokens - i - 1);
+         }
+         else
+         {
+            for (unsigned i = 0; i < numTokens; i++)
+               indexes.push_back(i);
+         }
+
+         // cycle through the tokens
+         BOOST_FOREACH(unsigned i, indexes)
          {
             Token token = tokens.getToken(i);
             if (token.kind() == CXToken_Identifier &&
                 token.spelling() == cursor.spelling())
             {
-               // record FileRange as long as it's not a duplicate
-               // of the previously recorded range
-               FileRange range = token.extent().getFileRange();
-               if (pData->references.empty() ||
-                   (pData->references.back() != range))
-               {
-                  pData->references.push_back(range);
-
-                  // record spelling if necessary
-                  if (pData->spelling.empty())
-                     pData->spelling = referencedCursor.spelling();
-               }
-
+               foundRange = token.extent().getFileRange();
                break;
             }
-        }
+         }
+
+         // if we didn't find an identifier that matches use the
+         // original match (i.e. important for constructors where
+         // the 'spelling' of the invocation is the name of the
+         // variable declared)
+         if (foundRange.empty())
+            foundRange = cursor.getExtent().getFileRange();
+
+         // record the range if it's not a duplicate of the previous range
+         if (pData->references.empty() ||
+             (pData->references.back() != foundRange))
+         {
+            pData->references.push_back(foundRange);
+
+            // record spelling if necessary
+            if (pData->spelling.empty())
+               pData->spelling = referencedCursor.spelling();
+         }
       }
    }
 

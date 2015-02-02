@@ -33,6 +33,8 @@ struct FileRange
    FileLocation start;
    FileLocation end;
 
+   bool empty() const { return start.empty(); }
+
    bool operator==(const FileRange& other) const
    {
       return start == other.start &&
@@ -44,6 +46,8 @@ struct FileRange
       return !(*this == other);
    }
 };
+
+std::ostream& operator << (std::ostream& stream, const FileRange& loc);
 
 class SourceRange
 {

@@ -21,6 +21,12 @@ namespace rstudio {
 namespace core {
 namespace libclang {
 
+std::ostream& operator << (std::ostream& stream, const FileLocation& loc)
+{
+   stream << loc.filePath << " [" << loc.line << ", " << loc.column << "]";
+   return stream;
+}
+
 SourceLocation::SourceLocation()
    : location_(clang().getNullLocation())
 {
