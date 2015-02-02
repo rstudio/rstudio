@@ -25,7 +25,7 @@
 #include "DesktopUtils.hpp"
 
 // per-platform synctex implemetnations
-#if defined(Q_OS_MACX)
+#if defined(Q_OS_MAC)
 
 #elif defined(Q_OS_WIN)
 #include "synctex/sumatra/SumatraSynctex.hpp"
@@ -128,7 +128,7 @@ SynctexViewerInfo Synctex::desktopViewerInfo()
 Synctex* Synctex::create(MainWindow* pMainWindow)
 {
    // per-platform synctex implemetnations
-#if defined(Q_OS_MACX)
+#if defined(Q_OS_MAC)
    return new Synctex(pMainWindow);
 #elif defined(Q_OS_WIN)
    return new synctex::SumatraSynctex(pMainWindow);

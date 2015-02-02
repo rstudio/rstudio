@@ -119,7 +119,7 @@ WebView* BrowserWindow::webView()
 
 void BrowserWindow::avoidMoveCursorIfNecessary()
 {
-#ifdef Q_OS_MACX
+#ifdef Q_OS_MAC
    webView()->page()->mainFrame()->evaluateJavaScript(
          QString::fromUtf8("document.body.className = document.body.className + ' avoid-move-cursor'"));
 #endif
