@@ -16,7 +16,7 @@
 package com.google.gwt.dev.util.arg;
 
 /**
- * Encapsulates a compiler option to disable runtime cast checking.
+ * Encapsulates a compiler option to disable {@link Class#getName()}.
  */
 public interface OptionDisableClassMetadata {
   boolean isClassMetadataDisabled();
