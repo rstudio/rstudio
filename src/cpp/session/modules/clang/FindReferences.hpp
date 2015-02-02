@@ -1,5 +1,5 @@
 /*
- * RSourceIndex.hpp
+ * FindReferences.hpp
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -13,31 +13,38 @@
  *
  */
 
-#ifndef SESSION_MODULES_CLANG_R_SOURCE_INDEX_HPP
-#define SESSION_MODULES_CLANG_R_SOURCE_INDEX_HPP
+#ifndef SESSION_MODULES_CLANG_FIND_REFERENCES_HPP
+#define SESSION_MODULES_CLANG_FIND_REFERENCES_HPP
 
-#include <core/libclang/SourceIndex.hpp>
+#include <vector>
 
+#include <core/Error.hpp>
+
+#include <core/json/JsonRpc.hpp>
+ 
 namespace rstudio {
 
 namespace core {
-   class FileInfo;
-   class FilePath;
+namespace libclang {
+   struct FileLocation;
+   struct FileRange;
+}
 }
 
 namespace session {
 namespace modules {      
 namespace clang {
 
-core::libclang::SourceIndex& rSourceIndex();
+core::Error findReferences(const core::libclang::FileLocation& location,
+                           std::string* pSpelling,
+                           std::vector<core::libclang::FileRange>* pRefs);
 
-bool isIndexableFile(const core::FileInfo& fileInfo,
-                     const core::FilePath& pkgSrcDir,
-                     const core::FilePath& pkgIncludeDir);
-
+core::Error findUsages(const core::json::JsonRpcRequest& request,
+                       core::json::JsonRpcResponse* pResponse);
+   
 } // namespace clang
-} // namepace handlers
+} // namepace modules
 } // namesapce session
 } // namespace rstudio
 
-#endif // SESSION_MODULES_CLANG_R_SOURCE_INDEX_HPP
+#endif // SESSION_MODULES_CLANG_FIND_REFERENCES_HPP

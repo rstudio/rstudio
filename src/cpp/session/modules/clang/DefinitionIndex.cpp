@@ -54,33 +54,6 @@ bool insertDefinition(const CppDefinition& definition,
    return true;
 }
 
-bool isIndexableFile(const FileInfo& fileInfo,
-                     const FilePath& pkgSrcDir,
-                     const FilePath& pkgIncludeDir)
-{
-   FilePath filePath(fileInfo.absolutePath());
-
-   if (pkgSrcDir.exists() &&
-       filePath.isWithin(pkgSrcDir) &&
-       SourceIndex::isSourceFile(filePath) &&
-       !boost::algorithm::starts_with(filePath.stem(), kCompilationDbPrefix) &&
-       (filePath.filename() != "RcppExports.cpp"))
-   {
-      return true;
-   }
-   else if (pkgIncludeDir.exists() &&
-            filePath.isWithin(pkgIncludeDir) &&
-            SourceIndex::isSourceFile(filePath) &&
-            !boost::algorithm::ends_with(filePath.stem(), "_RcppExports"))
-   {
-      return true;
-   }
-   else
-   {
-      return false;
-   }
-}
-
 typedef boost::function<bool(const CppDefinition&)> DefinitionVisitor;
 
 CXChildVisitResult cursorVisitor(CXCursor cxCursor,
@@ -145,18 +118,12 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
       parentName = parent.displayName();
    }
 
-   // get the source location
-   SourceLocation loc = cursor.getSourceLocation();
-   std::string file;
-   unsigned line, column;
-   loc.getSpellingLocation(&file, &line, &column);
-
    // create the definition
    CppDefinition definition(cursor.getUSR(),
                             kind,
                             parentName,
                             name,
-                            FileLocation(FilePath(file), line, column));
+                            cursor.getSourceLocation().getSpellingLocation());
 
    // yield the definition (break if requested)
    DefinitionVisitor& visitor = *((DefinitionVisitor*)clientData);
@@ -195,8 +162,8 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
       {
          // create index
          CXIndex index = libclang::clang().createIndex(
-                                             1 /* Exclude PCH */,
-                                             0 /* No diagnostics */);
+                   1 /* Exclude PCH */,
+                   (rSourceIndex().verbose() > 0) ? 1 : 0);
 
          // get args in form clang expects
          core::system::ProcessArgs argsArray(compileArgs);
@@ -305,24 +272,10 @@ FileLocation findDefinitionLocation(const FileLocation& location)
    if (!s_initialized)
       return FileLocation();
 
-   // get the translation unit
-   std::string filename = location.filePath.absolutePath();
-   TranslationUnit tu = rSourceIndex().getTranslationUnit(filename, true);
-   if (tu.empty())
+   // get the definition cursor for this file location
+   Cursor cursor = rSourceIndex().referencedCursorForFileLocation(location);
+   if (cursor.isNull())
       return FileLocation();
-
-   // get the cursor
-   Cursor cursor = tu.getCursor(filename, location.line, location.column);
-   if (!cursor.isValid())
-      return FileLocation();
-
-   // follow reference if we need to
-   if (cursor.isReference() || cursor.isExpression())
-   {
-      cursor = cursor.getReferenced();
-      if (!cursor.isValid())
-         return FileLocation();
-   }
 
    // get the USR for the cursor and search for it
    std::string USR = cursor.getUSR();
@@ -372,6 +325,7 @@ FileLocation findDefinitionLocation(const FileLocation& location)
    // return the location
    SourceLocation loc = cursor.getSourceLocation();
    unsigned line, column;
+   std::string filename = location.filePath.absolutePath();
    loc.getSpellingLocation(&filename, &line, &column);
    return FileLocation(FilePath(filename), line, column);
 }

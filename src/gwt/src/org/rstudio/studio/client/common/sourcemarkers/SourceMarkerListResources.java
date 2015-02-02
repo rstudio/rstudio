@@ -33,6 +33,7 @@ public interface SourceMarkerListResources extends ClientBundle
       String boxIcon();
       String infoIcon();
       String styleIcon();
+      String noIcon();
       String lineCell();
       String messageCell();
       String disclosure();

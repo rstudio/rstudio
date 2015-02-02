@@ -371,7 +371,8 @@ public class TextEditingTarget implements
       codeExecution_ = new EditingTargetCodeExecution(docDisplay_, this);
       compilePdfHelper_ = new TextEditingTargetCompilePdfHelper(docDisplay_);
       rmarkdownHelper_ = new TextEditingTargetRMarkdownHelper();
-      cppHelper_ = new TextEditingTargetCppHelper(server);
+      cppHelper_ = new TextEditingTargetCppHelper(cppCompletionContext_, 
+                                                  docDisplay_);
       presentationHelper_ = new TextEditingTargetPresentationHelper(
                                                                   docDisplay_);
       reformatHelper_ = new TextEditingTargetReformatHelper(docDisplay_);
@@ -3231,6 +3232,12 @@ public class TextEditingTarget implements
    } 
    
    @Handler
+   void onFindUsages()
+   {
+      cppHelper_.findUsages();
+   }
+   
+   @Handler
    public void onSetWorkingDirToActiveDoc()
    {
       // get path
@@ -3251,7 +3258,6 @@ public class TextEditingTarget implements
          return;
       }
    }
-
 
    @SuppressWarnings("unused")
    private String stangle(String sweaveStr)

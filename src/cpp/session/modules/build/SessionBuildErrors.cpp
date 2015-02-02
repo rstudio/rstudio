@@ -130,7 +130,7 @@ std::vector<module_context::SourceMarker> parseRErrors(
                              rSrcFile,
                              core::safe_convert::stringTo<int>(line, 1),
                              core::safe_convert::stringTo<int>(column, 1),
-                             message,
+                             core::html_utils::HTML(message),
                              false);
             errors.push_back(err);
          }
@@ -203,7 +203,7 @@ std::vector<module_context::SourceMarker> parseGccErrors(
                        filePath,
                        core::safe_convert::stringTo<int>(line, 1),
                        core::safe_convert::stringTo<int>(column, 1),
-                       message,
+                       core::html_utils::HTML(message),
                        true);
       errors.push_back(err);
    }

@@ -124,6 +124,7 @@ set (SESSION_SOURCE_FILES
    modules/build/SessionSourceCpp.cpp
    modules/clang/CodeCompletion.cpp
    modules/clang/DefinitionIndex.cpp
+   modules/clang/FindReferences.cpp
    modules/clang/GoToDefinition.cpp
    modules/clang/RCompilationDatabase.cpp
    modules/clang/RSourceIndex.cpp

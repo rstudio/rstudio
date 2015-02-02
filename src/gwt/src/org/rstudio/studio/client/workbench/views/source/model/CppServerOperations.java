@@ -14,15 +14,23 @@
  */
 package org.rstudio.studio.client.workbench.views.source.model;
 
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 
-public interface CppServerOperations
+public interface CppServerOperations extends BuildServerOperations
 {
    void goToCppDefinition(
                 String docPath, 
                 int line, 
                 int column,
                 ServerRequestCallback<CppSourceLocation> requestCallback);
+   
+   void findCppUsages(
+                String docPath,
+                int line,
+                int column,
+                ServerRequestCallback<Void> requestCallback);
    
    void getCppCompletions(
                 String docPath, 

@@ -556,6 +556,19 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "go_to_cpp_definition", params, requestCallback);
    }
    
+   public void findCppUsages(
+                  String docPath,
+                  int line,
+                  int column,
+                  ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(docPath));
+      params.set(1, new JSONNumber(line));
+      params.set(2, new JSONNumber(column));
+      sendRequest(RPC_SCOPE, "find_cpp_usages", params, requestCallback);
+   }
+   
    public void getCppCompletions(
                   String docPath,
                   int line, 

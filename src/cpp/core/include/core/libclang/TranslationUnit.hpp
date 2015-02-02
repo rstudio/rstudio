@@ -52,12 +52,23 @@ public:
 
    bool empty() const { return ! tu_; }
 
+   CXTranslationUnit getCXTranslationUnit() const { return tu_; }
+
    std::string getSpelling() const;
 
    bool includesFile(const std::string& filename) const;
 
+   CXFile getFile(const std::string& filename = std::string()) const;
+
+   CXResult findReferencesInFile(Cursor cursor,
+                                 CXCursorAndRangeVisitor visitor,
+                                 const std::string& filename = std::string());
+
    unsigned getNumDiagnostics() const;
    boost::shared_ptr<Diagnostic> getDiagnostic(unsigned index) const;
+
+   // get the cursor for the translation unit
+   Cursor getCursor();
 
    // NOTE: this can return a null cursor if no cursor is found
    Cursor getCursor(const std::string& filename,

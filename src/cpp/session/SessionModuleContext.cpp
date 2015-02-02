@@ -1724,7 +1724,7 @@ json::Value sourceMarkerJson(const SourceMarker& sourceMarker)
    obj["path"] = module_context::createAliasedPath(sourceMarker.path);
    obj["line"] = sourceMarker.line;
    obj["column"] = sourceMarker.column;
-   obj["message"] = sourceMarker.message;
+   obj["message"] = sourceMarker.message.text();
    obj["log_path"] = "";
    obj["log_line"] = -1;
    obj["show_error_list"] = sourceMarker.showErrorList;
@@ -1755,6 +1755,8 @@ SourceMarker::Type sourceMarkerTypeFromString(const std::string& type)
       return SourceMarker::Info;
    else if (type == "style")
       return SourceMarker::Style;
+   else if (type == "usage")
+      return SourceMarker::Usage;
    else
       return SourceMarker::Error;
 }
