@@ -85,7 +85,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
    public void withRSConnect(String userAction, final Command command)
    {
       withDependencies(
-        "Establishing connection",
+        "Publishing",
         userAction,
         new Dependency[] {
           Dependency.cranPackage("digest", "0.6"),
