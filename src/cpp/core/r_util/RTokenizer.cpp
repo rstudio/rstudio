@@ -311,7 +311,7 @@ RToken RTokenizer::matchOperator()
    switch (peek())
    {
    case L':':
-      return consumeToken(RToken::OPER, (cNext == L':') + (cNextNext == L':') + 1);
+      return consumeToken(RToken::OPER, 1 + (cNext == L':') + (cNextNext == L':'));
       
    case L'|':
       return consumeToken(RToken::OPER, cNext == L'|' ? 2 : 1);

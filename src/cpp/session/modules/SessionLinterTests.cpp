@@ -21,6 +21,42 @@ namespace session {
 namespace modules {
 namespace linter {
 
+// We use macros so that the test output gives
+// meaningful line numbers.
+#define EXPECT_HAS_NO_LINT(__STRING__)                                         \
+   do                                                                          \
+   {                                                                           \
+      ParseResults results = parse(__STRING__);                                \
+      expect_true(results.second.get().empty());                               \
+   } while (0)
+
+#define EXPECT_HAS_LINT(__STRING__)                                            \
+   do                                                                          \
+   {                                                                           \
+      ParseResults results = parse(__STRING__);                                \
+      expect_false(results.second.get().empty());                              \
+   } while (0)
+
+
+context("Linter")
+{
+   test_that("valid expressions generate no lint")
+   {
+      EXPECT_HAS_NO_LINT("print(1)");
+      EXPECT_HAS_NO_LINT("1 + 1");
+      EXPECT_HAS_NO_LINT("{{{}}}");
+      EXPECT_HAS_NO_LINT("for (i in 1) 1");
+      EXPECT_HAS_NO_LINT("(for (i in 1:10) i)");
+      EXPECT_HAS_NO_LINT("for (i in 10) {}");
+      EXPECT_HAS_NO_LINT("while ((for (i in 10) {})) 1");
+      EXPECT_HAS_NO_LINT("while (for (i in 0) 0) 0");
+      EXPECT_HAS_NO_LINT("1; 2; 3; 4; 5");
+      
+      EXPECT_HAS_LINT("{)");
+      
+   }
+}
+
 } // namespace linter
 } // namespace modules
 } // namespace session

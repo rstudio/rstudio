@@ -44,7 +44,7 @@
 # define RSTUDIO_DEBUG(x)                                                      \
    do                                                                          \
    {                                                                           \
-      std::cerr << "(" << RSTUDIO_DEBUG_LABEL << "): "                         \
+      std::cerr << "(" << RSTUDIO_DEBUG_LABEL << ":" << __LINE__ << "): "      \
                 << x << std::endl;                                             \
    } while (0)
 

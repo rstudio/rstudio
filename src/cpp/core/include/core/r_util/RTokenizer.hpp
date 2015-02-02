@@ -99,7 +99,9 @@ public:
    // efficient comparison operations
    bool contentEquals(const std::wstring& text) const
    {
-      return std::equal(begin_, end_, text.begin());
+      std::size_t distance = std::distance(begin_, end_);
+      return distance == text.size() &&
+             std::equal(begin_, end_, text.begin());
    }
    
    bool contentContains(const wchar_t character) const
