@@ -82,6 +82,18 @@ public class DependencyManager implements InstallShinyEvent.Handler
                        command);
    }
    
+   public void withPackrat(String userAction, final Command command)
+   {
+      withDependencies(
+         "Packrat",
+         userAction,
+         new Dependency[] {
+            Dependency.cranPackage("packrat", "0.4.3")
+         },
+         false,
+         command);
+   }
+
    public void withShinyapps(String userAction, final Command command)
    {
       withDependencies(

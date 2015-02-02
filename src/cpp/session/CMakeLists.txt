@@ -28,9 +28,6 @@ endif()
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc")
   message(FATAL_ERROR "pandoc not found (re-run install-dependencies script to install)")
 endif()
-if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/packrat")
-  message(FATAL_ERROR "packrat package not found (re-run install-dependencies script to install)")
-endif()
 if(NOT EXISTS "${RSTUDIO_DEPENDENCIES_DIR}/common/shinyapps")
   message(FATAL_ERROR "shinyapps package not found (re-run install-dependencies script to install)")
 endif()
@@ -346,11 +343,6 @@ if (NOT RSTUDIO_SESSION_WIN64)
    install(FILES ${PANDOC_FILES}
            PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
            DESTINATION  ${RSTUDIO_INSTALL_BIN}/pandoc)
-
-   # install packrat package
-   file(GLOB PACKRAT_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/packrat*.tar.gz")
-   install(FILES ${PACKRAT_PACKAGE}
-           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R/packages)
 
    # install shinyapps package
    file(GLOB SHINYAPPS_PACKAGE "${RSTUDIO_DEPENDENCIES_DIR}/common/shinyapps*.tar.gz")
