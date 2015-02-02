@@ -26,6 +26,7 @@ import org.rstudio.core.client.widget.LocalRepositoriesWidget;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.packrat.model.PackratPrerequisites;
 import org.rstudio.studio.client.packrat.model.PackratServerOperations;
@@ -42,6 +43,7 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
@@ -53,10 +55,12 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
 {
    @Inject
    public ProjectPackratPreferencesPane(Session session,
-                                        PackratServerOperations server)
+                                        PackratServerOperations server,
+                                        DependencyManager dependencyManager)
    {
       session_ = session;
       server_ = server;
+      dependencyManager_ = dependencyManager;
    }
 
    @Override
@@ -237,26 +241,27 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
                  }
                  else
                  {
-                    indicator.onProgress("Installing Packrat...");
+                    setUsePackrat(false);
+                    
+                    // install packrat (with short delay to allow
+                    // the progress indicator to clear)
+                    new Timer() {
+                     @Override
+                     public void run()
+                     { 
+                        dependencyManager_.withPackrat(
+                              "Managing packages with packrat",
+                              new Command() {
 
-                    server_.installPackrat(new ServerRequestCallback<Boolean>() {
-
-                       @Override
-                       public void onResponseReceived(Boolean success)
-                       {
-                          setUsePackrat(success);
-                          
-                          indicator.onCompleted();
-                       }
-   
-                       @Override
-                       public void onError(ServerError error)
-                       {
-                          setUsePackrat(false);
-                          
-                          indicator.onError(error.getUserMessage());
-                       }
-                    });
+                               @Override
+                               public void execute()
+                               {
+                                  setUsePackrat(true);
+                               }
+                                 
+                              });
+                     }   
+                    }.schedule(250);
                  }
               }
               else
@@ -313,6 +318,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
  
    private final Session session_;
    private final PackratServerOperations server_;
+   private final DependencyManager dependencyManager_;
    
    private CheckBox chkUsePackrat_;
    private CheckBox chkAutoSnapshot_;
