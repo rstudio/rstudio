@@ -7411,6 +7411,9 @@ var oop = require("../lib/oop");
 var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 
 var XmlHighlightRules = function(normalize) {
+
+    var tagRegex = "[a-zA-Z][-_a-zA-Z0-9]*";
+
     this.$rules = {
         start : [
             {token : "string.cdata.xml", regex : "<\\!\\[CDATA\\[", next : "cdata"},
@@ -7420,7 +7423,7 @@ var XmlHighlightRules = function(normalize) {
             },
             {
                 token : ["punctuation.instruction.xml", "keyword.instruction.xml"],
-                regex : "(<\\?)([-_a-zA-Z0-9]+)", next : "processing_instruction",
+                regex : "(<\\?)(" + tagRegex + ")", next : "processing_instruction",
             },
             {token : "comment.xml", regex : "<\\!--", next : "comment"},
             {
@@ -7436,7 +7439,7 @@ var XmlHighlightRules = function(normalize) {
 
         xml_decl : [{
             token : "entity.other.attribute-name.decl-attribute-name.xml",
-            regex : "(?:[-_a-zA-Z0-9]+:)?[-_a-zA-Z0-9]+"
+            regex : "(?:" + tagRegex + ":)?" + tagRegex + ""
         }, {
             token : "keyword.operator.decl-attribute-equals.xml",
             regex : "="
@@ -7472,7 +7475,7 @@ var XmlHighlightRules = function(normalize) {
             next: "pop"
         }, {
             token : ["punctuation.markup-decl.xml", "keyword.markup-decl.xml"],
-            regex : "(<\\!)([-_a-zA-Z0-9]+)",
+            regex : "(<\\!)(" + tagRegex + ")",
             push : [{
                 token : "text",
                 regex : "\\s+"
@@ -7508,7 +7511,7 @@ var XmlHighlightRules = function(normalize) {
 
         tag : [{
             token : ["meta.tag.punctuation.tag-open.xml", "meta.tag.punctuation.end-tag-open.xml", "meta.tag.tag-name.xml"],
-            regex : "(?:(<)|(</))((?:[-_a-zA-Z0-9]+:)?[-_a-zA-Z0-9]+)",
+            regex : "(?:(<)|(</))((?:" + tagRegex + ":)?" + tagRegex + ")",
             next: [
                 {include : "attributes"},
                 {token : "meta.tag.punctuation.tag-close.xml", regex : "/?>", next : "start"}
@@ -7539,7 +7542,7 @@ var XmlHighlightRules = function(normalize) {
 
         attributes: [{
             token : "entity.other.attribute-name.xml",
-            regex : "(?:[-_a-zA-Z0-9]+:)?[-_a-zA-Z0-9]+"
+            regex : "(?:" + tagRegex + ":)?" + tagRegex + ""
         }, {
             token : "keyword.operator.attribute-equals.xml",
             regex : "="
@@ -37170,7 +37173,10 @@ var Editor = function(renderer, session) {
             }
             
             if (token.type.indexOf("tag-open") != -1)
+            {
                 token = iterator.stepForward();
+                if (!token) return;
+            }
 
             var tag = token.value;
             var depth = 0;

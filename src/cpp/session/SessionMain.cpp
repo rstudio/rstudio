@@ -1751,19 +1751,27 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    return Success();
 }
 
+void rSessionInitHook(bool newSession)
+{
+   // allow any packages listening to complete initialization
+   modules::rhooks::invokeHook(kSessionInitHook, newSession);
+
+   // finish off initialization
+   module_context::events().afterSessionInitHook(newSession);
+
+   // fire an event to the client
+   ClientEvent event(client_events::kDeferredInitCompleted);
+   module_context::enqueClientEvent(event);
+}
+
 void rDeferredInit(bool newSession)
 {
    module_context::events().onDeferredInit(newSession);
    
-   // allow any packages listening to complete initialization
-   modules::rhooks::invokeHook(kSessionInitHook, newSession);
-   
-   // finish off initialization
-   module_context::events().afterDeferredInit(newSession);
-   
-   // fire an event to the client
-   ClientEvent event(client_events::kDeferredInitCompleted);
-   module_context::enqueClientEvent(event);
+   // schedule execution of the session init hook
+   module_context::scheduleDelayedWork(
+                        boost::posix_time::seconds(1),
+                        boost::bind(rSessionInitHook, newSession));
 }
    
 void consolePrompt(const std::string& prompt, bool addToHistory)

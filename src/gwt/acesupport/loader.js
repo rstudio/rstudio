@@ -29,10 +29,12 @@ var Editor = require("ace/editor").Editor;
 var EditSession = require("ace/edit_session").EditSession;
 var UndoManager = require("ace/undomanager").UndoManager;
 var Range = require("ace/range").Range;
+var Utils = require("mode/utils");
 
 var RStudioEditor = function(renderer, session) {
    Editor.call(this, renderer, session);
    this.setBehavioursEnabled(true);
+   this.$blockScrolling = Infinity;
 };
 oop.inherits(RStudioEditor, Editor);
 
@@ -85,10 +87,10 @@ oop.inherits(RStudioEditSession, EditSession);
             this.applyIndent(i, "");
          }
          else {
-            var state = this.getState(i - 1);
+            var state = Utils.getPrimaryState(this, i - 1);
             if (state == 'qstring' || state == 'qqstring')
                continue;
-            
+
             var line = this.getLine(i - 1);
             var newline = this.getLine(i);
 

@@ -210,6 +210,8 @@ public class Source implements InsertSourceHandler,
       pMruList_ = pMruList;
       uiPrefs_ = uiPrefs;
       rnwWeaveRegistry_ = rnwWeaveRegistry;
+      
+      vimCommands_ = new SourceVimCommands();
 
       view_.addTabClosingHandler(this);
       view_.addTabCloseHandler(this);
@@ -449,97 +451,18 @@ public class Source implements InsertSourceHandler,
    
    private void initVimCommands()
    {
-      vimOnSave(this);
-      vimOnNextTab(this);
-      vimOnPreviousTab(this);
-      vimOnCloseTab(this);
-      vimOnCloseAll(this);
-      vimOnNewDoc(this);
-      vimOnSaveAndCloseTab(this);
-      
-      // TODO: Infer encoding from source document?
-      vimOnReadFile(this, uiPrefs_.defaultEncoding().getValue());
-      
-      vimOnRunRScript(this);
+      vimCommands_.save(this);
+      vimCommands_.selectNextTab(this);
+      vimCommands_.selectPreviousTab(this);
+      vimCommands_.closeActiveTab(this);
+      vimCommands_.closeAllTabs(this);
+      vimCommands_.createNewDocument(this);
+      vimCommands_.saveAndCloseActiveTab(this);
+      vimCommands_.readFile(this, uiPrefs_.defaultEncoding().getValue());
+      vimCommands_.runRScript(this);
    }
    
-   private final native void vimOnSave(Source source) /*-{
-      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("write", "w",
-         $entry(function(cm, params) {
-            source.@org.rstudio.studio.client.workbench.views.source.Source::saveActiveSourceDoc()();
-         })
-      );
-   }-*/;
-   
-   private void saveActiveSourceDoc()
-   {
-      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
-      {
-         TextEditingTarget target = (TextEditingTarget) activeEditor_;
-         target.save();
-      }
-   }
-   
-   private void saveAndCloseActiveSourceDoc()
-   {
-      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
-      {
-         TextEditingTarget target = (TextEditingTarget) activeEditor_;
-         target.save(new Command()
-         {
-            @Override
-            public void execute()
-            {
-               onCloseSourceDoc();
-            }
-         });
-      }
-   }
-   
-   private native final void vimOnNextTab(Source source) /*-{
-      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("bnext", "bn",
-         $entry(function(cm, params) {
-            source.@org.rstudio.studio.client.workbench.views.source.Source::onNextTab()();
-         })
-      );
-   }-*/;
-   
-   private native final void vimOnPreviousTab(Source source) /*-{
-      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("bprev", "bp",
-         $entry(function(cm, params) {
-            source.@org.rstudio.studio.client.workbench.views.source.Source::onPreviousTab()();
-         })
-      );
-   }-*/;
-   
-   private native final void vimOnCloseTab(Source source) /*-{
-      var callback = $entry(function(cm, params) {
-      
-         var interactive = true;
-         if (params.argString && params.argString === "!")
-            interactive = false;
-         
-         source.@org.rstudio.studio.client.workbench.views.source.Source::closeSourceDoc(Z)(interactive);
-      });
-       
-      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("bdelete", "bd", callback);
-      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("quit", "q", callback);
-   }-*/;
-   
-   private native final void vimOnCloseAll(Source source) /*-{
-      var callback = $entry(function(cm, params) {
-      
-         var interactive = true;
-         if (params.argString && params.argString === "!")
-            interactive = false;
-         
-         source.@org.rstudio.studio.client.workbench.views.source.Source::doVimOnCloseAll(Z)(interactive);
-      });
-       
-      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("qall", "qa", callback);
-   }-*/;
-   
-   private void doVimOnCloseAll(boolean interactive)
+   private void closeAllTabs(boolean interactive)
    {
       if (interactive)
       {
@@ -573,57 +496,30 @@ public class Source implements InsertSourceHandler,
       }
    }
    
-   private native final void vimOnNewDoc(Source source) /*-{
+   private void saveActiveSourceDoc()
+   {
+      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+      {
+         TextEditingTarget target = (TextEditingTarget) activeEditor_;
+         target.save();
+      }
+   }
    
-      var callback = $entry(function(cm, params) {
-         if (params.args) {
-            if (params.args.length === 1) {
-               source.@org.rstudio.studio.client.workbench.views.source.Source::editFile(Ljava/lang/String;)(params.args[0]);
+   private void saveAndCloseActiveSourceDoc()
+   {
+      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+      {
+         TextEditingTarget target = (TextEditingTarget) activeEditor_;
+         target.save(new Command()
+         {
+            @Override
+            public void execute()
+            {
+               onCloseSourceDoc();
             }
-            // TODO: on error?
-         } else {
-            source.@org.rstudio.studio.client.workbench.views.source.Source::onNewSourceDoc()();
-         }
-      });
-      
-      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("badd", "bad", callback);
-      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("edit", "e", callback);
-      
-   }-*/;
-   
-   private native final void vimOnSaveAndCloseTab(Source source) /*-{
-   
-      var callback = $entry(function(cm, params) {
-         source.@org.rstudio.studio.client.workbench.views.source.Source::saveAndCloseActiveSourceDoc()();
-      });
-      
-      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("wq", "wq", callback);
-      
-   }-*/;
-   
-   private native final void vimOnReadFile(Source source, String encoding) /*-{
-   
-      var callback = $entry(function(cm, params) {
-         if (params.args && params.args.length === 1) {
-            source.@org.rstudio.studio.client.workbench.views.source.Source::pasteFileContentsAtCursor(Ljava/lang/String;Ljava/lang/String;)(params.args[0], encoding);
-         }
-      });
-      
-      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("read", "r", callback);
-   
-   }-*/;
-   
-   private native final void vimOnRunRScript(Source source) /*-{
-      
-      var callback = $entry(function(cm, params) {
-         if (params.args) {
-            source.@org.rstudio.studio.client.workbench.views.source.Source::pasteRCodeExecutionResult(Ljava/lang/String;)(params.argString);
-         }
-      });
-      
-      $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("Rscript", "R", callback);
-   
-   }-*/;
+         });
+      }
+   }
    
    /**
     * @param isNewTabPending True if a new tab is about to be created. (If
@@ -1614,6 +1510,18 @@ public class Source implements InsertSourceHandler,
             revertUnsavedTargets(onCompleted);
          }
       });   
+   }
+   
+   private void revertActiveDocument()
+   {
+      if (activeEditor_ == null)
+         return;
+      
+      if (activeEditor_.getPath() != null)
+         activeEditor_.revertChanges(null);
+      
+      // Ensure that the document is in view
+      activeEditor_.ensureCursorVisible();
    }
    
    private void revertUnsavedTargets(Command onCompleted)
@@ -3003,6 +2911,7 @@ public class Source implements InsertSourceHandler,
    private final HashSet<AppCommand> dynamicCommands_;
    private final SourceNavigationHistory sourceNavigationHistory_ = 
                                               new SourceNavigationHistory(30);
+   private final SourceVimCommands vimCommands_;
 
    private boolean suspendSourceNavigationAdding_;
   

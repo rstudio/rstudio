@@ -28,6 +28,7 @@ var SweaveHighlightRules = require("mode/sweave_highlight_rules").SweaveHighligh
 var RCodeModel = require("mode/r_code_model").RCodeModel;
 var RMatchingBraceOutdent = require("mode/r_matching_brace_outdent").RMatchingBraceOutdent;
 var unicode = require("ace/unicode");
+var Utils = require("mode/utils");
 
 var Mode = function(suppressHighlighting, session) {
    if (suppressHighlighting)
@@ -81,11 +82,13 @@ oop.inherits(Mode, TextMode);
 
    this.getLanguageMode = function(position)
    {
-      return this.$session.getState(position.row).match(/^r-/) ? 'R' : 'TeX';
+      var state = Utils.getPrimaryState(this.$session, position.row);
+      return state.match(/^r-/) ? 'R' : 'TeX';
    };
 
    this.getNextLineIndent = function(state, line, tab)
    {
+      state = Utils.primaryState(state);
       return this.codeModel.getNextLineIndent(state, line, tab);
    };
 
