@@ -632,7 +632,7 @@ public class CssResourceGenerator extends AbstractCssResourceGenerator
    * Builds a CSV file mapping obfuscated CSS class names to their qualified source name and
    * outputs it as a private build artifact.
    */
-  protected void outputCssMapArtifact(TreeLogger logger, ResourceContext context, JMethod method,
+  protected static void outputCssMapArtifact(TreeLogger logger, ResourceContext context, JMethod method,
       Map<JMethod, String> actualReplacements) {
     // There may be several css resources that have the same css resource subtype (e.g. CssResource)
     // so the qualified accessor method name is used for the unique output file name.

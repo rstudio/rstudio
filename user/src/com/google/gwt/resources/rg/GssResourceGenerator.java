@@ -130,6 +130,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -415,11 +416,13 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     sw.println("new " + method.getReturnType().getQualifiedSourceName() + "() {");
     sw.indent();
 
-    writeMethods(logger, context, method, sw, constantDefinitions,
+    Map<JMethod, String> actualReplacements = writeMethods(logger, context, method, sw, constantDefinitions,
         cssParsingResult.originalConstantNameMapping, renamingResult.mapping);
 
     sw.outdent();
     sw.println("}");
+
+    CssResourceGenerator.outputCssMapArtifact(logger, context, method, actualReplacements);
 
     return sw.toString();
   }
@@ -1146,13 +1149,15 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     return true;
   }
 
-  private void writeMethods(TreeLogger logger, ResourceContext context, JMethod method,
+  private Map<JMethod, String> writeMethods(TreeLogger logger, ResourceContext context, JMethod method,
       SourceWriter sw, ConstantDefinitions constantDefinitions,
       Map<String, String> originalConstantNameMapping, Map<String, String> substitutionMap)
       throws UnableToCompleteException {
     JClassType gssResource = method.getReturnType().isInterface();
 
     boolean success = true;
+
+    Map<JMethod, String> methodToClassName = new LinkedHashMap<>();
 
     for (JMethod toImplement : gssResource.getOverridableMethods()) {
       if (toImplement == getTextMethod) {
@@ -1163,18 +1168,20 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
         writeGetName(method, sw);
       } else {
         success &= writeUserMethod(logger, toImplement, sw, constantDefinitions,
-            originalConstantNameMapping, substitutionMap);
+            originalConstantNameMapping, substitutionMap, methodToClassName);
       }
     }
 
     if (!success) {
       throw new UnableToCompleteException();
     }
+
+    return methodToClassName;
   }
 
-  private boolean writeUserMethod(TreeLogger logger, JMethod userMethod,
-      SourceWriter sw, ConstantDefinitions constantDefinitions,
-      Map<String, String> originalConstantNameMapping, Map<String, String> substitutionMap)
+  private boolean writeUserMethod(TreeLogger logger, JMethod userMethod, SourceWriter sw,
+      ConstantDefinitions constantDefinitions, Map<String, String> originalConstantNameMapping,
+      Map<String, String> substitutionMap, Map<JMethod, String> methodToClassName)
       throws UnableToCompleteException {
 
     String className = getClassName(userMethod);
@@ -1182,6 +1189,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     // method to access style class ?
     if (substitutionMap.containsKey(className) &&
         isReturnTypeString(userMethod.getReturnType().isClass())) {
+      methodToClassName.put(userMethod, substitutionMap.get(className));
       return writeClassMethod(logger, userMethod, substitutionMap, sw);
     }
 
