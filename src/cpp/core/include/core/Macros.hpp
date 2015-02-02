@@ -16,6 +16,9 @@
 #ifndef CORE_MACROS_HPP
 #define CORE_MACROS_HPP
 
+#include <iostream>
+#include <iomanip>
+
 /* Utility Macros */
 
 #if defined(__GNUC__)
@@ -44,7 +47,8 @@
 # define RSTUDIO_DEBUG(x)                                                      \
    do                                                                          \
    {                                                                           \
-      std::cerr << "(" << RSTUDIO_DEBUG_LABEL << ":" << __LINE__ << "): "      \
+      std::cerr << "(" << RSTUDIO_DEBUG_LABEL << ":"                           \
+                << std::setw(4) << std::setfill('0') << __LINE__ << "): "      \
                 << x << std::endl;                                             \
    } while (0)
 

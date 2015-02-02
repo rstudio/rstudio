@@ -257,7 +257,7 @@ std::string typeToString(char type)
 // may modify the objects passed in.
 //
 void handleExpression(TokenCursor& cursor, ParseStatus& status);
-void doHandleExpression(TokenCursor& cursor, ParseStatus& status);
+void doHandleExpression(TokenCursor& cursor, ParseStatus& status, size_t depth);
 
 // Control flow is handled specially.
 void handleControlFlow(TokenCursor& cursor, ParseStatus& status, bool* pWasHandled);
@@ -265,15 +265,18 @@ void handleControlFlow(TokenCursor& cursor, ParseStatus& status, bool* pWasHandl
 void handleFor(TokenCursor& cursor, ParseStatus& status);
 void handleWhile(TokenCursor& cursor, ParseStatus& status);
 void handleIf(TokenCursor& cursor, ParseStatus& status);
-void handleArgument(TokenCursor& cursor, ParseStatus& status);
-void handleArgumentList(TokenCursor& cursor, ParseStatus& status);
 void handleFunction(TokenCursor& cursor, ParseStatus& status);
 void handleRepeat(TokenCursor& cursor, ParseStatus& status);
+
+void handleArgument(TokenCursor& cursor, ParseStatus& status);
+void handleArgumentList(TokenCursor& cursor, ParseStatus& status);
+
 void handleIdentifier(TokenCursor& cursor, ParseStatus& status);
-void handleLeftBracket(TokenCursor &cursor, ParseStatus &status);
-void handleRightBracket(TokenCursor &cursor, ParseStatus &status);
-void handleBinaryOperator(TokenCursor &cursor, ParseStatus &status);
-void handleStatement(TokenCursor &cursor, ParseStatus &status);
+
+void handleLeftBracket(TokenCursor& cursor, ParseStatus& status, std::size_t depth);
+void handleRightBracket(TokenCursor& cursor, ParseStatus& status, std::size_t depth);
+void handleBinaryOperator(TokenCursor& cursor, ParseStatus& status, std::size_t depth);
+void handleStatement(TokenCursor& cursor, ParseStatus& status, std::size_t depth);
 
 void handleControlFlow(TokenCursor& cursor,
                        ParseStatus& status,
@@ -334,7 +337,15 @@ void handleWhile(TokenCursor& cursor,
    ENSURE_TYPE(cursor, status, RToken::LPAREN);
    status.push(cursor);
    MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_WHITESPACE(cursor, status);
-   handleExpression(cursor, status);
+   
+   DEBUG("*- Begin while condition -* (" << cursor << ")");
+   
+   if (isRightBrace(cursor))
+      status.lint().unexpectedToken(cursor);
+   else
+      handleExpression(cursor, status);
+   
+   DEBUG("*- End while condition -* (" << cursor << ")");
    ENSURE_TYPE(cursor, status, RToken::RPAREN);
    status.pop(cursor);
    MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
@@ -354,10 +365,23 @@ void handleIf(TokenCursor& cursor,
    ENSURE_CONTENT(cursor, status, L"if");
    MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
    ENSURE_TYPE(cursor, status, RToken::LPAREN);
-   handleExpression(cursor, status);
+   status.push(cursor);
+   MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_WHITESPACE(cursor, status);
+   
+   DEBUG("*- Begin if condition -* (" << cursor << ")");
+   
+   if (isRightBrace(cursor))
+      status.lint().unexpectedToken(cursor);
+   else
+      handleExpression(cursor, status);
+   
+   DEBUG("*- End if condition -* (" << cursor << ")");
+   
    ENSURE_TYPE(cursor, status, RToken::RPAREN);
+   status.pop(cursor);
    MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
    handleExpression(cursor, status);
+   DEBUG("-- end handleIf -- (" << cursor << ")");
    
    // After handling the 'if' expression, the token cursor should either
    // be on a (token containing a) newline, or a semicolon, or a closing
@@ -365,12 +389,8 @@ void handleIf(TokenCursor& cursor,
    //
    // Check to see if the next significant token is an 'else', and continue
    // parsing here if so.
-   if (cursor.nextSignificantToken().contentEquals(L"else"))
+   if (cursor.contentEquals(L"else"))
    {
-      // Move onto the 'else' token
-      DEBUG("** Moving on to 'else' token");
-      MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
-      
       // Move to the next token
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
       
@@ -411,21 +431,27 @@ void handleExpression(TokenCursor& cursor,
                       ParseStatus& status)
 {
    DEBUG("-- Handle expression -- (" << cursor << ")");
-   status.setDepth(status.stack().size());
-   status.setLastCursorPosition(cursor.currentPosition());
-   return doHandleExpression(cursor, status);
+   return doHandleExpression(cursor, status, status.stack().size());
 }
 
 void doHandleExpression(TokenCursor& cursor,
-                        ParseStatus& status)
+                        ParseStatus& status,
+                        std::size_t depth)
 {
    DEBUG("-- doHandleExpression -- (" << cursor << ")");
+   DEBUG("---- Depth: '" << depth << "'");
+   DEBUG("---- Stack: '" << status.stack().size() << "'");
+   
    // Check for control flow work. These are single expressions,
    // but are parsed separately.
    bool controlFlowHandled = true;
    handleControlFlow(cursor, status, &controlFlowHandled);
    if (controlFlowHandled)
-      return;
+   {
+      // Does this control flow expression finish this expression?
+      if (depth == status.stack().size())
+         return;
+   }
    
    // Move off of separators.
    while (cursor.isType(RToken::COMMA) ||
@@ -436,67 +462,65 @@ void doHandleExpression(TokenCursor& cursor,
    }
    
    if (isLeftBrace(cursor))
-      return handleLeftBracket(cursor, status);
+      return handleLeftBracket(cursor, status, depth);
    else if (isRightBrace(cursor))
-      return handleRightBracket(cursor, status);
+      return handleRightBracket(cursor, status, depth);
    else if (isBinaryOp(cursor))
-      return handleBinaryOperator(cursor, status);
+      return handleBinaryOperator(cursor, status, depth);
+   else if (isValidAsIdentifier(cursor))
+      return handleStatement(cursor, status, depth);
    else
-      return handleStatement(cursor, status);
+   {
+      status.lint().unexpectedToken(cursor);
+      MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+   }
 }
 
 void handleLeftBracket(TokenCursor& cursor,
-                       ParseStatus& status)
+                       ParseStatus& status,
+                       std::size_t depth)
 {
    DEBUG("-- handleLeftBracket -- (" << cursor << ")");
    
    status.push(cursor);
    MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
-   return doHandleExpression(cursor, status);
+   return doHandleExpression(cursor, status, depth);
 }
 
 void handleRightBracket(TokenCursor& cursor,
-                        ParseStatus& status)
+                        ParseStatus& status,
+                        std::size_t depth)
 {
    DEBUG("-- handleRightBracket -- (" << cursor << ")");
-   DEBUG("---- Depth: (" << status.getDepth() << ")");
+   DEBUG("---- Depth: (" << depth << ")");
    DEBUG("---- Stack size: (" << status.stack().size() << ")");
    
    // The question here is: do we consume the right bracket
    // as part of this expression, or return and let it be handled
-   // as part of a different expression? We only want to handle
-   // it here if the stack size is greater than the start depth.
+   // as part of a different expression?
    //
-   // E.g. to trace this out for an example:
+   // E.g. to trace this out for an example (not all expressions
+   // annotated)
    //
    //                  (for (i in 1:10) 10)
    //                  ^    ^         ^   ^
    //    Brace Stack:  1    2         1   0
+   //    Expression :  A    BC       CB   A
    //
    // When parsing the expression 1:10, we do not want to
-   // consume the ')' as part of that expression.
-   std::size_t depth = status.getDepth();
-   std::size_t stackSize = status.stack().size();
-   
-   if (depth == stackSize)
+   // consume the ')' as part of that expression, as the
+   // ')' __implicitly__ closes the expression.
+   if (depth == status.stack().size())
    {
       return;
    }
-   
-   // If the stack size is greater than the depth, that implies
-   // this expression contains its own parens, e.g.
-   //
-   //                  ( for ( i in ( 1 : 10 ) ) )
-   //                  ^     ^      ^        ^ ^ ^ 
-   //    Brace Stack:  1     2      3        2 1 0    
-   //    Depth:                     2        2 
-   else if (stackSize > depth)
+   else if (status.stack().size() > depth)
    {
       status.pop(cursor);
       if (isBinaryOp(cursor.nextSignificantToken()))
       {
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
-         return handleBinaryOperator(cursor, status);
+         return handleBinaryOperator(cursor, status, depth);
       }
       else
       {
@@ -504,7 +528,20 @@ void handleRightBracket(TokenCursor& cursor,
             return;
          
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
-         return doHandleExpression(cursor, status);
+         
+         // It is possible that this closing bracket __explicitly__ closes
+         // the expression -- this will occur if the expression was
+         // started by an opening bracket.
+         if (depth == status.stack().size())
+         {
+            DEBUG("*-* Returning control to caller");
+            return;
+         }
+         else
+         {
+            DEBUG("*-* Continuing parse of expression");
+            return doHandleExpression(cursor, status, depth);
+         }
       }
    }
    
@@ -515,20 +552,18 @@ void handleRightBracket(TokenCursor& cursor,
       status.lint().unexpectedClosingBracket(cursor, status.stack());
       
       // Pop off the stack anyway to stay consistent
-      if (stackSize > 0)
+      if (status.stack().size() > 0)
          status.pop(cursor);
       
-      // And ensure we move forward (there is no parent to handle)
-      if (cursor.isAtEndOfDocument())
-         return;
-      
+      // And ensure we move forward
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       return;
    }
 }
 
 void handleBinaryOperator(TokenCursor& cursor,
-                          ParseStatus& status)
+                          ParseStatus& status,
+                          std::size_t depth)
 {
    DEBUG("-- handleBinaryOperator -- (" << cursor << ")");
    
@@ -548,7 +583,7 @@ void handleBinaryOperator(TokenCursor& cursor,
    }
    
    MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
-   return doHandleExpression(cursor, status);
+   return doHandleExpression(cursor, status, depth);
 }
 
 // A block statement can be ended by:
@@ -569,7 +604,8 @@ void handleBinaryOperator(TokenCursor& cursor,
 // the statement), or a closing brace (closing a parent argument list
 // or expression)
 void handleStatement(TokenCursor& cursor,
-                     ParseStatus& status)
+                     ParseStatus& status,
+                     std::size_t depth)
 {
    DEBUG("-- handleStatement -- (" << cursor << ")");
    
@@ -603,6 +639,8 @@ void handleStatement(TokenCursor& cursor,
    if (isLeftBrace(cursor.nextSignificantToken()))
    {
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_WHITESPACE(cursor, status);
+      
+      DEBUG("*-* Before Arg List: " << cursor);
       while (isLeftBrace(cursor))
       {
          if (cursor.isType(RToken::LPAREN) ||
@@ -617,21 +655,31 @@ void handleStatement(TokenCursor& cursor,
             }
          }
          else
+         {
             UNEXPECTED_TOKEN(cursor, status);
+            MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
+         }
       }
+      
+      DEBUG("*-* After Arg List: " << cursor);
+      if (!isRightBrace(cursor))
+         status.lint().unexpectedToken(cursor);
+      
    }
    
    // Check for a binary operator, to continue the statement.
    if (isBinaryOp(cursor.nextSignificantToken()))
    {
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
-      return handleBinaryOperator(cursor, status);
+      return handleBinaryOperator(cursor, status, depth);
    }
    
+   // Check for a right brace, to (implicitly or explicitly)
+   // close the expression.
    if (isRightBrace(cursor.nextSignificantToken()))
    {
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
-      return doHandleExpression(cursor, status);
+      return handleRightBracket(cursor, status, depth);
    }
    
    // Check for end of the document.
@@ -639,26 +687,22 @@ void handleStatement(TokenCursor& cursor,
       return;
    
    // Check for the end of the statement.
-   if (cursor.nextToken().contentContains(L'\n') ||
-       cursor.nextSignificantToken().isType(RToken::SEMI) ||
-       cursor.nextSignificantToken().isType(RToken::COMMA))
+   DEBUG("*-* End of statement: " << cursor);
+   DEBUG("*-* Next cursor     : " << cursor.nextToken());
+   DEBUG("*-* Next significant: " << cursor.nextSignificantToken());
+   
+   // Note that, following a statement, _any_ kind of whitespace will end
+   // the expression, not just newlines.
+   if (cursor.isAtEndOfExpression())
    {
-      if (cursor.nextToken().contentContains(L'\n'))
-      {
-         MOVE_TO_NEXT_TOKEN(cursor, status);
-      }
-      else
-      {
-         MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
-      }
-      
+      MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       if (cursor.isAtEndOfDocument())
          return;
       
-      if (status.getDepth() > status.stack().size())
-         return doHandleExpression(cursor, status);
-      else
+      if (depth == status.stack().size())
          return;
+      else
+         return doHandleExpression(cursor, status, depth);
    }
    
    // Shouldn't get here!
@@ -691,13 +735,25 @@ void handleArgumentList(TokenCursor& cursor,
    // Check for an empty argument list.
    if (isRightBrace(cursor))
    {
+      status.pop(cursor);
       if (cursor.contentAsUtf8() != rhs)
          status.lint().unexpectedToken(cursor, string_utils::utf8ToWide(rhs));
       return;
    }
    
+   // Move over initial commas (for empty arguments).
+   //
+   // No whitespace for the first comma.
+   if (cursor.isType(RToken::COMMA))
+      MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_WHITESPACE(cursor, status);
+   
+   while (cursor.isType(RToken::COMMA))
+      MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
+   
    // Check for a single argument.
+   DEBUG("**** Before First arg: " << cursor);
    handleArgument(cursor, status);
+   DEBUG("**** After First arg : " << cursor);
    
    // We should now lie either on a comma, or on the closing bracket.
    while (cursor.isType(RToken::COMMA))
@@ -707,6 +763,7 @@ void handleArgumentList(TokenCursor& cursor,
    }
    
    ENSURE_CONTENT(cursor, status, string_utils::utf8ToWide(rhs));
+   status.pop(cursor);
 }
 
 // An argument is of the form:

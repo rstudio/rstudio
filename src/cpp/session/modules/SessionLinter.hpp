@@ -181,6 +181,13 @@ public:
       return ss.str();
    }
    
+   friend std::ostream& operator <<(std::ostream& os,
+                                    const AnnotatedRToken& token)
+   {
+      os << token.asString();
+      return os;
+   } 
+   
 private:
    RToken token_;
    std::size_t row_;
@@ -621,7 +628,23 @@ public:
      return doBwdToMatchingToken(type(),
                                  complements()[type()]);
   }
-
+  
+public:
+  
+  bool isAtEndOfExpression() const
+  {
+     return isWhitespace(nextToken()) ||
+            nextSignificantToken().isType(RToken::SEMI) ||
+            nextSignificantToken().isType(RToken::COMMA);
+  }
+  
+  bool endsExpression() const
+  {
+     return isWhitespace(currentToken()) ||
+            isType(RToken::SEMI) ||
+            isType(RToken::COMMA);
+  }
+  
 private:
    
    const AnnotatedRTokens& rTokens_;
@@ -832,10 +855,8 @@ public:
    iterator begin() { return lintItems_.begin(); }
    iterator end() { return lintItems_.end(); }
    
-   std::size_t errorCount()
-   {
-      return errorCount_;
-   }
+   std::size_t errorCount() const { return errorCount_; }
+   bool hasErrors() const { return errorCount_ > 0; }
    
 private:
    std::vector<LintItem> lintItems_;
@@ -1108,9 +1129,7 @@ public:
    
    ParseStatus()
       : pRoot_(ParseNode::createRootNode()),
-        pNode_(pRoot_.get()),
-        depth_(0),
-        lastCursorPosition_(Position(0, 0))
+        pNode_(pRoot_.get())
    {
    }
    
@@ -1153,33 +1172,11 @@ public:
       return !lint_.get().empty();
    }
    
-   void setDepth(std::size_t depth)
-   {
-      depth_ = depth;
-   }
-   
-   std::size_t getDepth()
-   {
-      return depth_;
-   }
-   
-   void setLastCursorPosition(const Position& position)
-   {
-      lastCursorPosition_ = position;
-   }
-
-   const Position& getLastCursorPosition() const
-   {
-      return lastCursorPosition_;
-   }
-   
 private:
    boost::shared_ptr<ParseNode> pRoot_;
    ParseNode* pNode_;
    BraceStack stack_;
    LintItems lint_;
-   std::size_t depth_;
-   Position lastCursorPosition_;
 };
 
 typedef std::pair<
