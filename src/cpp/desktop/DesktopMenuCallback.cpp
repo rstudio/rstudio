@@ -123,7 +123,7 @@ void MenuCallback::addCommand(QString commandId,
    shortcut = shortcut.replace(QString::fromUtf8("Enter"), QString::fromUtf8("\n"));
 
    QKeySequence keySequence(shortcut);
-#ifndef Q_OS_MACX
+#ifndef Q_OS_MAC
    if (shortcut.contains(QString::fromUtf8("\n")))
    {
       int value = (keySequence[0] & Qt::MODIFIER_MASK) + Qt::Key_Enter;

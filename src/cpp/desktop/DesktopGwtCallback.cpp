@@ -864,7 +864,7 @@ void GwtCallback::openTerminal(QString terminalPath,
    core::system::addToPath(&path, extraPathEntries.toStdString());
    core::system::setenv("PATH", path);
 
-#if defined(Q_OS_MACX)
+#if defined(Q_OS_MAC)
 
    // call Terminal.app with an applescript that navigates it
    // to the specified directory. note we don't reference the
@@ -1054,9 +1054,9 @@ bool GwtCallback::isOSXMavericks()
 
 QString GwtCallback::getScrollingCompensationType()
 {
-#if defined(Q_WS_MACX)
+#if defined(Q_OS_MAC)
    return QString::fromUtf8("Mac");
-#elif defined(Q_WS_WIN)
+#elif defined(Q_OS_WIN)
    return QString::fromUtf8("Win");
 #else
    return QString::fromUtf8("None");
@@ -1065,7 +1065,7 @@ QString GwtCallback::getScrollingCompensationType()
 
 void GwtCallback::setBusy(bool)
 {
-#if defined(Q_WS_MACX)
+#if defined(Q_OS_MAC)
    // call AppNap apis for Mac (we use Cocoa on the Mac though so
    // this codepath will never be hit)
 #endif
@@ -1076,13 +1076,13 @@ void GwtCallback::setWindowTitle(QString title)
    pMainWindow_->setWindowTitle(title + QString::fromUtf8(" - RStudio"));
 }
 
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
 void GwtCallback::installRtools(QString version, QString installerPath)
 {
    // silent install
    QStringList args;
-   args.push_back(QString::fromAscii("/SP-"));
-   args.push_back(QString::fromAscii("/SILENT"));
+   args.push_back(QString::fromUtf8("/SP-"));
+   args.push_back(QString::fromUtf8("/SILENT"));
 
    // custom install directory
    std::string systemDrive = core::system::getenv("SYSTEMDRIVE");

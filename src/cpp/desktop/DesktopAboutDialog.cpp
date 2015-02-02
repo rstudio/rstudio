@@ -50,7 +50,7 @@ AboutDialog::AboutDialog(QWidget *parent) :
    if (!error)
    {
       ui->textBrowser->setFontFamily(options().fixedWidthFont());
-#ifdef Q_OS_MACX
+#ifdef Q_OS_MAC
       ui->textBrowser->setFontPointSize(11);
 #else
       ui->textBrowser->setFontPointSize(9);
