@@ -125,7 +125,7 @@ const int kDataViewChanged = 100;
 const int kViewFunction = 101;
 const int kMarkersChanged = 102;
 const int kEnableRStudioConnect = 103;
-const int kUpdateGutterMarkers = 103;
+const int kUpdateGutterMarkers = 104;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
