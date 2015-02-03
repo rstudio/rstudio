@@ -53,11 +53,24 @@ void AsyncRProcess::start(const char* rCommand,
       args.push_back("--vanilla");
    args.push_back("-e");
 
+   bool needsQuote = false;
+
+   // On Windows, we turn the vector of strings into a single
+   // string to send over the command line, so we must ensure
+   // that the arguments following '-e' are quoted, so that
+   // they are all interpretted as a single argument (rather
+   // than multiple arguments) to '-e'.
+
+#ifdef _WIN32
+   needsQuote = strlen(rCommand) > 0 && rCommand[0] != '"';
+#endif
+
+   std::stringstream command;
+   if (needsQuote)
+      command << "\"";
+
    if (rSourceFiles.size())
    {
-      // form the command that we send (over the command line)
-      std::stringstream command;
-
       // Use shims for the main RStudio functions
       command << "options(error = traceback); ";
 
@@ -83,13 +96,16 @@ void AsyncRProcess::start(const char* rCommand,
          command << "source('" << it->absolutePath() << "');";
       
       command << rCommand;
-
-      args.push_back(command.str());
    }
    else
    {
-      args.push_back(rCommand);
+      command << rCommand;
    }
+
+   if (needsQuote)
+      command << "\"";
+
+   args.push_back(command.str());
 
    // options
    core::system::ProcessOptions options;

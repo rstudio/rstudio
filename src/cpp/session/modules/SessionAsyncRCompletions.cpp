@@ -208,7 +208,7 @@ void AsyncRCompletions::update()
    // Construct a call to .rs.getAsyncExports
    std::stringstream ss;
    ss << ".rs.getAsyncExports(";
-   ss << "\"" << pkgs[0] << "\"";
+   ss << "'" << pkgs[0] << "'";
    
    if (pkgs.size() > 0)
    {
@@ -216,7 +216,7 @@ void AsyncRCompletions::update()
            it != pkgs.end();
            ++it)
       {
-         ss << ",\"" << *it << "\"";
+         ss << ",'" << *it << "'";
       }
    }
    ss << ");";
