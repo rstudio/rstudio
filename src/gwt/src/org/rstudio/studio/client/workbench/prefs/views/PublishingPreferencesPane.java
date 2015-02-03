@@ -105,7 +105,7 @@ public class PublishingPreferencesPane extends PreferencesPane
       
       // set up the UI to be shown in the pane if the packages *are* installed
       final VerticalPanel accountPanel = new VerticalPanel();
-      Label accountLabel = new Label("Connected Accounts");
+      Label accountLabel = new Label("Publishing Accounts");
       HorizontalPanel hpanel = new HorizontalPanel();
       
       accountLabel.setStyleName(
@@ -133,6 +133,8 @@ public class PublishingPreferencesPane extends PreferencesPane
       hpanel.add(vpanel);
       connectButton_ = new ThemedButton("Connect...");
       connectButton_.getElement().getStyle().setMarginBottom(5, Unit.PX);
+      connectButton_.setWidth("100%");
+      connectButton_.setWrapperWidth("100%");
       connectButton_.addClickHandler(new ClickHandler()
       {
          @Override
@@ -143,6 +145,8 @@ public class PublishingPreferencesPane extends PreferencesPane
       });
       vpanel.add(connectButton_);
       disconnectButton_ = new ThemedButton("Disconnect");
+      disconnectButton_.setWidth("100%");
+      disconnectButton_.setWrapperWidth("100%");
       disconnectButton_.addClickHandler(new ClickHandler()
       {
          @Override
