@@ -26,3 +26,4 @@ CMakeLists.txt.user
 .#*
 *.autosave
 *~
+.orig
