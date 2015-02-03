@@ -97,7 +97,7 @@ import org.rstudio.studio.client.workbench.views.history.events.HistoryEntriesAd
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindResultEvent;
-import org.rstudio.studio.client.workbench.views.output.lint.events.UpdateGutterMarkersEvent;
+import org.rstudio.studio.client.workbench.views.output.lint.events.LintEvent;
 import org.rstudio.studio.client.workbench.views.output.markers.events.MarkersChangedEvent;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.events.SourceCppCompletedEvent;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.events.SourceCppStartedEvent;
@@ -636,8 +636,8 @@ public class ClientEventDispatcher
          }
          else if (type.equals(ClientEvent.UpdateGutterMarkers))
          {
-            UpdateGutterMarkersEvent.Data data = event.getData();
-            eventBus_.fireEvent(new UpdateGutterMarkersEvent(data));
+            LintEvent.Data data = event.getData();
+            eventBus_.fireEvent(new LintEvent(data));
          }
          else
          {

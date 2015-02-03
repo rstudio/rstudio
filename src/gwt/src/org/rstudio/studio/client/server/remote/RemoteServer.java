@@ -3928,11 +3928,11 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void lint(String documentId,
-                    ServerRequestCallback<JsArray<LintItem>> requestCallback)
-                    {
-      sendRequest(RPC_SCOPE, LINT, documentId, requestCallback);
-                    }
+   public void lintRSourceDocument(String documentId,
+                                   ServerRequestCallback<JsArray<LintItem>> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, LINT_R_SOURCE_DOCUMENT, documentId, requestCallback);
+   }
    
    private String clientId_;
    private double clientVersion_ = 0;
@@ -4254,6 +4254,6 @@ public class RemoteServer implements Server
    private static final String PACKRAT_BOOTSTRAP = "packrat_bootstrap";
    private static final String GET_PENDING_ACTIONS = "get_pending_actions";
    
-   private static final String LINT = "lint";
+   private static final String LINT_R_SOURCE_DOCUMENT = "lint_r_source_document";
   
 }

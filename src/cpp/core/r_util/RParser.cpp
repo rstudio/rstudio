@@ -904,9 +904,15 @@ void handleFunction(TokenCursor& cursor,
 
 } // end anonymous namespace
 
-ParseResults parse(const std::string& string)
+ParseResults parse(const std::string& rCode)
 {
-   RTokens tokens(string_utils::utf8ToWide(string));
+   if (rCode.empty() ||
+       rCode.find_first_not_of(" \n\t\v") == std::string::npos)
+   {
+      return ParseResults();
+   }
+   
+   RTokens tokens(string_utils::utf8ToWide(rCode));
    AnnotatedRTokens rTokens(tokens);
    ParseStatus status;
    TokenCursor cursor(rTokens);
@@ -928,9 +934,6 @@ ParseResults parse(const std::string& string)
    
    if (status.node()->getParent() != NULL)
       status.lint().unexpectedEndOfDocument(cursor.currentToken());
-   
-   std::vector<ParseItem> unresolvedItems;
-   status.root()->findAllUnresolvedSymbols(&unresolvedItems);
    
    return ParseResults(status.root(), status.lint());
 }

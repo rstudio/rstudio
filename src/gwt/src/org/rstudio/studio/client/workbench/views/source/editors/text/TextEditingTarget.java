@@ -2012,7 +2012,7 @@ public class TextEditingTarget implements
    }
    
    @Handler
-   void onLint()
+   void onLintRSourceDocument()
    {
       if (!docDisplay_.getFileType().isR())
          return;
@@ -2022,8 +2022,8 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            server_.lint(
-                  docUpdateSentinel_.getPath(),
+            server_.lintRSourceDocument(
+                  docUpdateSentinel_.getId(),
                   new ServerRequestCallback<JsArray<LintItem>>()
                   {
                      @Override
@@ -4588,6 +4588,11 @@ public class TextEditingTarget implements
                                                    pos))); 
               }           
            }));
+   }
+   
+   public DocDisplay getDocDisplay()
+   {
+      return docDisplay_;
    }
    
    private StatusBar statusBar_;

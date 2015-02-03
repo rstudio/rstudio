@@ -134,6 +134,7 @@ import org.rstudio.studio.client.workbench.views.output.find.FindOutputPane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputPresenter;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
+import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
 import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputPane;
 import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputPresenter;
@@ -234,6 +235,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(DebugCommander.class).asEagerSingleton();
       bind(ShortcutViewer.class).asEagerSingleton();
       bind(RSConnect.class).asEagerSingleton();
+      bind(LintManager.class).asEagerSingleton();
       bind(RmdOutput.class).in(Singleton.class);
       bind(HelpStrategy.class).in(Singleton.class);
       bind(RSAccountConnector.class).in(Singleton.class);

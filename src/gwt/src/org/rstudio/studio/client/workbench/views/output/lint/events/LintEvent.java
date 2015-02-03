@@ -21,7 +21,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class UpdateGutterMarkersEvent extends GwtEvent<UpdateGutterMarkersEvent.Handler>
+public class LintEvent extends GwtEvent<LintEvent.Handler>
 {
    static public class Data extends JavaScriptObject
    {
@@ -29,18 +29,22 @@ public class UpdateGutterMarkersEvent extends GwtEvent<UpdateGutterMarkersEvent.
       {
       }
       
-      public native final JsArray<LintItem> get() /*-{
-         return this;
+      public native final JsArray<LintItem> getLint() /*-{
+         return this["lint"];
+      }-*/;
+      
+      public native final String getDocumentId() /*-{
+         return this["document_id"];
       }-*/;
       
    }
    
    public interface Handler extends EventHandler
    {
-      void onUpdateGutterMarkers(UpdateGutterMarkersEvent event);
+      void onLintEvent(LintEvent event);
    }
 
-   public UpdateGutterMarkersEvent(Data data)
+   public LintEvent(Data data)
    {
       data_ = data;
    }
@@ -54,7 +58,17 @@ public class UpdateGutterMarkersEvent extends GwtEvent<UpdateGutterMarkersEvent.
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onUpdateGutterMarkers(this);
+      handler.onLintEvent(this);
+   }
+   
+   public JsArray<LintItem> getLint()
+   {
+      return data_.getLint();
+   }
+   
+   public String getDocumentId()
+   {
+      return data_.getDocumentId();
    }
 
    public static final Type<Handler> TYPE = new Type<Handler>();

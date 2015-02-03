@@ -106,21 +106,11 @@ void addUnreferencedSymbol(const ParseItem& item,
 
 } // end anonymous namespace
 
-ParseResults parseAndLintRFile(const FilePath& filePath)
+ParseResults parse(const std::string& rCode)
 {
-   std::string contents = file_utils::readFile(filePath);
-   if (contents.empty() || contents.find_first_not_of(" \n\t\v") == std::string::npos)
-      return ParseResults();
-   
-   ParseResults results = parse(contents);
+   ParseResults results = r_util::parse(rCode);
    ParseNode* pRoot = results.parseTree();
    
-   // Augment the parse results.
-   //
-   // Now that we have parsed through the whole document and
-   // built a parse / lint tree, we now walk through each identifier and
-   // ensure that they exist either on the search path, or a parent
-   // closure.
    std::vector<ParseItem> unresolvedItems;
    pRoot->findAllUnresolvedSymbols(&unresolvedItems);
    
@@ -142,37 +132,6 @@ ParseResults parseAndLintRFile(const FilePath& filePath)
    }
    
    return results;
-}
-
-SEXP rs_parseAndLintRFile(SEXP pathSEXP)
-{
-   std::string path = r::sexp::asString(pathSEXP);
-   FilePath filePath(module_context::resolveAliasedPath(path));
-   
-   ParseResults parsed = parseAndLintRFile(filePath);
-   const std::vector<LintItem>& lintItems = parsed.lint().get();
-   
-   using namespace rstudio::r::sexp;
-   Protect protect;
-   ListBuilder result(&protect);
-   for (std::size_t i = 0; i < lintItems.size(); ++i)
-   {
-      const LintItem& item = lintItems[i];
-      
-      ListBuilder lintList(&protect);
-      
-      // NOTE: Convert from C++ to R indexing
-      lintList.add("start.row", item.startRow + 1);
-      lintList.add("end.row", item.endRow + 1);
-      lintList.add("start.column", item.startColumn + 1);
-      lintList.add("end.column", item.endColumn + 1);
-      lintList.add("type", lintTypeToString(item.type));
-      lintList.add("message", item.message);
-      
-      result.add(static_cast<SEXP>(lintList));
-   }
-   
-   return result;
 }
 
 namespace {
@@ -200,22 +159,23 @@ json::Array lintAsJson(const LintItems& items)
    return jsonArray;
 }
 
-} // anonymous namespace
-
-void showGutterMarkers(const LintItems& items)
+void emitLintEvent(const std::string& documentId,
+                   const LintItems& lint)
 {
-   json::Array json = lintAsJson(items);
-   ClientEvent event(client_events::kUpdateGutterMarkers, json);
+   json::Object eventDataJson;
+   
+   eventDataJson["lint"] = lintAsJson(lint);
+   eventDataJson["document_id"] = documentId;
+   
+   ClientEvent event(client_events::kUpdateGutterMarkers, eventDataJson);
    module_context::enqueClientEvent(event);
 }
-
-namespace {
 
 Error lint(const json::JsonRpcRequest& request,
            json::JsonRpcResponse* pResponse)
 {
-   std::string docPath;
-   Error error = json::readParams(request.params, &docPath);
+   std::string documentId;
+   Error error = json::readParams(request.params, &documentId);
    
    if (error)
    {
@@ -223,26 +183,52 @@ Error lint(const json::JsonRpcRequest& request,
       return error;
    }
    
-   FilePath filePath(module_context::resolveAliasedPath(docPath));
+   // Try to get the contents from the database
+   boost::shared_ptr<source_database::SourceDocument> pDoc;
+   error = source_database::get(documentId, pDoc);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
    
-   // TODO: No file exists?
-   if (!filePath.exists())
+   // TODO: Handle R code in multi-mode documents
+   if (!pDoc->canContainRCode())
       return Success();
    
-   ParseResults results = parseAndLintRFile(filePath);
+   ParseResults results = parse(pDoc->contents());
    pResponse->setResult(lintAsJson(results.lint()));
    
    return Success();
    
 }
 
-SEXP rs_showGutterMarkers(SEXP filePathSEXP)
+void lintFileAndUpdateGutter(const std::string& documentId,
+                             const std::string& contents)
 {
-   FilePath path = FilePath(r::sexp::asString(filePathSEXP));
-   std::string contents = file_utils::readFile(path);
    ParseResults results = parse(contents);
-   showGutterMarkers(results.lint());
-   return R_NilValue;
+   emitLintEvent(documentId, results.lint());
+}
+
+typedef std::map<std::string, std::string> IdToFile;
+void onSourceDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   // ignore if the file doesn't have a path
+   if (pDoc->path().empty())
+      return;
+
+   // resolve to a full path
+   FilePath filePath = module_context::resolveAliasedPath(pDoc->path());
+   std::string absolutePath = filePath.absolutePath();
+
+   // verify it's a lintable R file.
+   // TODO: linting of '.Rmd. and so on?
+   
+   // schedule work
+   module_context::scheduleDelayedWork(
+            boost::posix_time::milliseconds(3000),
+            boost::bind(lintFileAndUpdateGutter, pDoc->id(), pDoc->contents()),
+            true); // require idle
 }
 
 } // anonymous namespace
@@ -251,13 +237,18 @@ core::Error initialize()
 {
    // on client init, schedule incremental work
    // onDocUpdated, schedule work
+   source_database::events().onDocUpdated.connect(
+             boost::bind(onSourceDocUpdated, _1));
+//    source_database::events().onDocRemoved.connect(
+//                 boost::bind(onSourceDocRemoved, pIdToFile, _1));
+//       source_database::events().onRemoveAll.connect(
+//                 boost::bind(onAllSourceDocsRemoved, pIdToFile));
+
+   
    // stateful object: shared_ptr<> 
    using namespace rstudio::core;
    using boost::bind;
    using namespace module_context;
-   
-   RS_REGISTER_CALL_METHOD(rs_parseAndLintRFile, 1);
-   RS_REGISTER_CALL_METHOD(rs_showGutterMarkers, 0);
    
    ExecBlock initBlock;
    initBlock.addFunctions()
