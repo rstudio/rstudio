@@ -83,6 +83,48 @@
                                 privateKey)
 })
 
+.rs.addJsonRpcHandler("get_lint_results", function(target) {
+   err <- ""
+   results <- NULL
+   basePath <- ""
+
+   # validate and lint the requested target
+   if (!file.exists(target)) {
+     err <- paste("The file or directory ", target, " does not exist.")
+   } else {
+     tryCatch({
+       info <- file.info(target)
+       if (info$isdir) {
+         # a directory was specified--lint the whole thing
+         basePath <- target
+         results <- rsconnect::lint(basePath)
+       } else {
+         # a single file was specified--lint just that file
+         basePath <- dirname(target)
+         results <- rsconnect::lint(basePath, basename(target))
+       }
+    }, error = function(e) {
+      err <<- e$message
+    })
+  }
+
+  # empty or missing results; no need to do further work
+  if (identical(length(results), 0) || !rsconnect:::hasLint(results)) {
+    return(list(
+      has_lint = .rs.scalar(FALSE),
+      error_message = .rs.scalar(err)))
+  }
+
+  # we have a list of lint results; convert them to markers and emit them to
+  # the Markers pane
+  rsconnect:::showRstudioSourceMarkers(basePath, results)
+  
+  # return the result to the client
+  list(
+    has_lint = .rs.scalar(TRUE), 
+    error_message = .rs.scalar(err)) 
+})
+
 .rs.addFunction("maxDirectoryList", function(dir, root, cur_size, max_size, 
                                              exclude_dirs, exclude_ext) {
   # generate a list of files at this level
