@@ -78,7 +78,7 @@
       cols$file <- .rs.normalizePath(cols$file, mustWork = TRUE)
       
       # check for html
-      cols$messageHTML <- inherits(cols$message, "html")
+      cols$messageHTML <- .rs.scalar(inherits(cols$message, "html"))
       
    } else if (is.list(markers)) {
       markers <- lapply(markers, function(marker) {
@@ -99,7 +99,7 @@
          marker$line <- .rs.scalar(marker$line)
          marker$column <- .rs.scalar(marker$column)
          marker$message <- .rs.scalar(marker$message)
-         marker$messageHTML <- inherits(marker$message, "html")
+         marker$messageHTML <- .rs.scalar(inherits(marker$message, "html"))
          
          marker
       })
