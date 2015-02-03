@@ -3708,7 +3708,7 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(target));
       sendRequest(RPC_SCOPE,
-            GET_LINT_RESULTS,
+            GET_RSCONNECT_LINT_RESULTS,
             params,
             requestCallback);
    }
@@ -4242,7 +4242,7 @@ public class RemoteServer implements Server
    private static final String GET_AUTH_TOKEN = "get_auth_token";
    private static final String GET_USER_FROM_TOKEN = "get_user_from_token";
    private static final String REGISTER_USER_TOKEN = "register_user_token";
-   private static final String GET_LINT_RESULTS = "get_lint_results";
+   private static final String GET_RSCONNECT_LINT_RESULTS = "get_rsconnect_lint_results";
 
    private static final String RENDER_RMD = "render_rmd";
    private static final String RENDER_RMD_SOURCE = "render_rmd_source";

@@ -83,7 +83,7 @@
                                 privateKey)
 })
 
-.rs.addJsonRpcHandler("get_lint_results", function(target) {
+.rs.addJsonRpcHandler("get_rsconnect_lint_results", function(target) {
    err <- ""
    results <- NULL
    basePath <- ""
