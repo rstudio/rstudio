@@ -162,6 +162,18 @@ public interface TestResources extends ClientBundle {
   interface Charset extends CssResource {
   }
 
+  /**
+   * Used to test constants that use other constants.
+   */
+  interface Constants extends CssResource {
+    String COLOR1();
+    String MYCOLOR();
+    String MYCOLOR1();
+  }
+
+  @Source("constants.gss")
+  Constants constants();
+
   ClassNameAnnotation classNameAnnotation();
 
   SomeGssResource mixin();

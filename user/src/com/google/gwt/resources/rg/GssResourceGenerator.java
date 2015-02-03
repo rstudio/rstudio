@@ -45,6 +45,7 @@ import com.google.gwt.resources.ext.ResourceContext;
 import com.google.gwt.resources.ext.ResourceGeneratorUtil;
 import com.google.gwt.resources.ext.SupportsGeneratorResultCaching;
 import com.google.gwt.resources.gss.BooleanConditionCollector;
+import com.google.gwt.resources.gss.ConstantResolver;
 import com.google.gwt.resources.gss.CreateRuntimeConditionalNodes;
 import com.google.gwt.resources.gss.CssPrinter;
 import com.google.gwt.resources.gss.ExtendedEliminateConditionalNodes;
@@ -718,6 +719,7 @@ public class GssResourceGenerator extends AbstractCssResourceGenerator implement
     new ProcessKeyframes(cssTree.getMutatingVisitController(), errorManager, true, true).runPass();
     new ProcessRefiners(cssTree.getMutatingVisitController(), errorManager, true).runPass();
     new MarkNonFlippableNodes(cssTree.getMutatingVisitController(), errorManager).runPass();
+    new ConstantResolver(cssTree, cssTree.getMutatingVisitController()).runPass();
   }
 
   private ConstantDefinitions optimizeTree(CssParsingResult cssParsingResult, ResourceContext context,

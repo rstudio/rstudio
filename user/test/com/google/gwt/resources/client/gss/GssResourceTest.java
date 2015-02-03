@@ -179,6 +179,12 @@ public class GssResourceTest extends RenamingClassNameTest {
     assertEquals("div{content:\"\\008305\\008306\\008307\"}", charset.getText());
   }
 
+  public void testConstantAccess() {
+    assertEquals("#012345", res().constants().COLOR1());
+    assertEquals("#012345", res().constants().MYCOLOR());
+    assertEquals("#012345", res().constants().MYCOLOR1());
+  }
+
   private String runtimeExpectedCss(String color, String padding, String foo) {
     String s = "." + foo + "{width:100%}" + "." + foo + "{color:" + color + "}";
 
