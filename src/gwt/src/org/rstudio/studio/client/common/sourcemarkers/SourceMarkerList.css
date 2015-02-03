@@ -23,6 +23,11 @@
    padding-right: 8px;
 }
 
+.messageCell strong {
+   font-weight: normal;
+   color: #66A;
+}
+
 .selectedRow {
    background-color: #ccc;
 }
@@ -63,6 +68,10 @@
 
 @sprite .styleIcon {
    gwt-image: 'style';
+}
+
+.noIcon {
+  width: 3%;
 }
 
 div.disclosure {

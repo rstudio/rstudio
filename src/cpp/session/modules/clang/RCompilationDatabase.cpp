@@ -23,14 +23,17 @@
 #include <boost/algorithm/string/trim_all.hpp>
 
 #include <core/Hash.hpp>
+#include <core/Algorithm.hpp>
 #include <core/PerformanceTimer.hpp>
 #include <core/FileSerializer.hpp>
 
 #include <core/r_util/RToolsInfo.hpp>
+#include <core/r_util/RPackageInfo.hpp>
 
 #include <core/system/ProcessArgs.hpp>
+#include <core/system/FileScanner.hpp>
 
-#include <core/r_util/RPackageInfo.hpp>
+#include <core/libclang/LibClang.hpp>
 
 #include <r/RExec.hpp>
 
@@ -38,7 +41,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUserSettings.hpp>
 
-#include <core/libclang/LibClang.hpp>
+#include "RSourceIndex.hpp"
 
 using namespace rstudio::core ;
 using namespace rstudio::core::libclang;
@@ -451,6 +454,80 @@ core::Error RCompilationDatabase::executeRCmdSHLIB(
    return core::system::runCommand(rCmd.commandString(), options, pResult);
 }
 
+bool RCompilationDatabase::isProjectTranslationUnit(
+                                          const std::string& filename) const
+{
+   using namespace projects;
+   FilePath filePath(filename);
+   FilePath pkgPath = projectContext().buildTargetPath();
+   FilePath srcDirPath = pkgPath.childPath("src");
+   FilePath includePath = pkgPath.childPath("inst/include");
+   return ((projectContext().config().buildType == r_util::kBuildTypePackage) &&
+          (!filePath.relativePath(srcDirPath).empty() ||
+           !filePath.relativePath(includePath).empty()));
+}
+
+namespace {
+
+// allow only non-hidden directories and source files through
+// the translation filters (we'll remove the directories
+// in a separate pass)
+bool translationUnitFilter(const FileInfo& fileInfo,
+                           const FilePath& pkgSrcDir,
+                           const FilePath& pkgIncludeDir)
+{
+   FilePath filePath(fileInfo.absolutePath());
+   if (core::system::isHiddenFile(fileInfo))
+      return false;
+   else if (filePath.isDirectory())
+      return true;
+   else
+      return isIndexableFile(fileInfo, pkgSrcDir, pkgIncludeDir);
+}
+
+bool isNotDirectory(const FileInfo& fileInfo)
+{
+   return !fileInfo.isDirectory();
+}
+
+} // anonymous namespace
+
+std::vector<std::string> RCompilationDatabase::projectTranslationUnits() const
+{
+   // units to return
+   std::vector<std::string> units;
+
+   using namespace projects;
+   using namespace rstudio::core::system;
+   if (projectContext().hasProject())
+   {
+      // setup options for file scanning (including filter)
+      FilePath pkgPath = projectContext().buildTargetPath();
+      FilePath srcDirPath = pkgPath.childPath("src");
+      FilePath includePath = pkgPath.childPath("inst/include");
+      FileScannerOptions options;
+      options.recursive = true;
+      options.filter =
+            boost::bind(translationUnitFilter, _1, srcDirPath, includePath);
+
+      // scan the files
+      tree<FileInfo> files;
+      Error error = scanFiles(FileInfo(pkgPath), options, &files);
+      if (error)
+         LOG_ERROR(error);
+
+      // copy them to the out vector if they aren't directories
+      core::algorithm::copy_transformed_if(
+                              files.begin(),
+                              files.end(),
+                              std::back_inserter(units),
+                              isNotDirectory,
+                              fileInfoAbsolutePath);
+   }
+
+   return units;
+}
+
 
 std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
                                             const std::string& filename)
@@ -462,14 +539,8 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
    FilePath filePath(filename);
 
    // if this is a package source file then return the package args
-   using namespace projects;
    CompilationConfig config;
-   FilePath pkgPath = projectContext().buildTargetPath();
-   FilePath srcDirPath = pkgPath.childPath("src");
-   FilePath includePath = pkgPath.childPath("inst/include");
-   if ((projectContext().config().buildType == r_util::kBuildTypePackage) &&
-       (!filePath.relativePath(srcDirPath).empty() ||
-        !filePath.relativePath(includePath).empty()))
+   if (isProjectTranslationUnit(filePath.absolutePath()))
    {
       // (re-)create on demand
       updateForCurrentPackage();
@@ -498,7 +569,9 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
    std::copy(config.args.begin(), config.args.end(), std::back_inserter(args));
 
    // add precompiled headers if necessary
-   if (usePrecompiledHeaders_ && !config.PCH.empty() && config.isCpp)
+   if (usePrecompiledHeaders_ && !config.PCH.empty() && config.isCpp &&
+       (filePath.extensionLowerCase() != ".c") &&
+       (filePath.extensionLowerCase() != ".m"))
    {
       // extract any -std= argument
       std::string stdArg = extractStdArg(args);
@@ -669,6 +742,16 @@ core::system::Options RCompilationDatabase::compilationEnvironment() const
    return env;
 }
 
+namespace {
+
+FilePath precompiledHeaderDir(const std::string& pkgName)
+{
+   return module_context::tempDir().childPath("rstudio/libclang/precompiled/"
+                                              + pkgName);
+}
+
+} // anonymous namespace
+
 std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
                                                   const std::string& pkgName,
                                                   const std::string& stdArg)
@@ -676,10 +759,8 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
    // args to return
    std::vector<std::string> args;
 
-   // precompiled rcpp dir
-   const std::string kPrecompiledDir = "libclang/precompiled/" + pkgName;
-   FilePath precompiledDir = module_context::userScratchPath().
-                                            childPath(kPrecompiledDir);
+   // precompiled header dir
+   FilePath precompiledDir = precompiledHeaderDir(pkgName);
 
    // further scope to actual path of package (as the locations of the
    // header files must be stable)
@@ -764,7 +845,9 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
       // create args array
       core::system::ProcessArgs argsArray(args);
 
-      CXIndex index = clang().createIndex(0,0);
+      CXIndex index = clang().createIndex(
+                                 0,
+                                 (rSourceIndex().verbose() > 0) ? 1 : 0);
 
       CXTranslationUnit tu = clang().parseTranslationUnit(
                             index,
@@ -817,6 +900,12 @@ core::libclang::CompilationDatabase rCompilationDatabase()
    static RCompilationDatabase instance;
 
    CompilationDatabase compilationDatabase;
+   compilationDatabase.hasTranslationUnit =
+      boost::bind(&RCompilationDatabase::isProjectTranslationUnit,
+                  &instance, _1);
+   compilationDatabase.translationUnits =
+      boost::bind(&RCompilationDatabase::projectTranslationUnits,
+                  &instance);
    compilationDatabase.compileArgsForTranslationUnit =
       boost::bind(&RCompilationDatabase::compileArgsForTranslationUnit,
                   &instance, _1);

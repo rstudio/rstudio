@@ -21,6 +21,12 @@ namespace rstudio {
 namespace core {
 namespace libclang {
 
+std::ostream& operator << (std::ostream& stream, const FileLocation& loc)
+{
+   stream << loc.filePath << " [" << loc.line << ", " << loc.column << "]";
+   return stream;
+}
+
 SourceLocation::SourceLocation()
    : location_(clang().getNullLocation())
 {
@@ -72,6 +78,14 @@ void SourceLocation::getSpellingLocation(std::string* pFile,
 
    CXString filename = clang().getFileName(file);
    *pFile = toStdString(filename);
+}
+
+FileLocation SourceLocation::getSpellingLocation() const
+{
+   std::string file;
+   unsigned line, column;
+   getSpellingLocation(&file, &line, &column);
+   return FileLocation(FilePath(file), line, column);
 }
 
 void SourceLocation::printSpellingLocation(std::ostream& ostr)

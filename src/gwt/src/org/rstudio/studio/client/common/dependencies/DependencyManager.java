@@ -1,7 +1,7 @@
 /*
  * DependencyManager.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ package org.rstudio.studio.client.common.dependencies;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
@@ -82,17 +83,29 @@ public class DependencyManager implements InstallShinyEvent.Handler
                        command);
    }
    
+   public void withPackrat(String userAction, final Command command)
+   {
+      withDependencies(
+         "Packrat",
+         userAction,
+         new Dependency[] {
+            Dependency.cranPackage("packrat", "0.4.3")
+         },
+         false,
+         command);
+   }
+   
    public void withRSConnect(String userAction, final Command command)
    {
       withDependencies(
-        "Establishing connection",
+        "Publishing",
         userAction,
         new Dependency[] {
           Dependency.cranPackage("digest", "0.6"),
           Dependency.cranPackage("RCurl", "1.95"),
           Dependency.cranPackage("RJSONIO", "1.0"),
           Dependency.cranPackage("PKI", "0.1"),
-          Dependency.embeddedPackage("packrat"),
+          Dependency.cranPackage("packrat", "0.4.3"),
           Dependency.embeddedPackage("rsconnect")
         },
         false,
@@ -113,7 +126,7 @@ public class DependencyManager implements InstallShinyEvent.Handler
           Dependency.cranPackage("bitops", "1.0-6"),
           Dependency.cranPackage("rmarkdown", "0.4.2")
         }, 
-        true,
+        false,
         command
      );
    }
@@ -210,7 +223,19 @@ public class DependencyManager implements InstallShinyEvent.Handler
                   @Override
                   public void execute()
                   {
-                     installDependencies(unsatisfiedDeps, silentUpdate, command);
+                     // the incoming JsArray from the server may not serialize
+                     // as expected when this code is executed from a satellite
+                     // (see RemoteServer.sendRequestViaMainWorkbench), so we
+                     // clone it before passing to the dependency installer
+                     JsArray<Dependency> newArray = JsArray.createArray().cast();
+                     newArray.setLength(unsatisfiedDeps.length());
+                     for (int i = 0; i < unsatisfiedDeps.length(); i++)
+                     {
+                        newArray.set(i, unsatisfiedDeps.get(i));
+                     }
+                     installDependencies(
+                           newArray, 
+                           silentUpdate, command);
                   }
                };
                

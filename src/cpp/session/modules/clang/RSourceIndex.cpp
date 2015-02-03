@@ -16,6 +16,10 @@
 #include "RSourceIndex.hpp"
 
 #include <boost/bind.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+
+#include <core/FileInfo.hpp>
+#include <core/FilePath.hpp>
 
 #include <session/SessionUserSettings.hpp>
 
@@ -54,6 +58,33 @@ SourceIndex& rSourceIndex()
    if (s_pRSourceIndex == NULL)
       s_pRSourceIndex = new RSourceIndex();
    return *s_pRSourceIndex;
+}
+
+bool isIndexableFile(const FileInfo& fileInfo,
+                     const FilePath& pkgSrcDir,
+                     const FilePath& pkgIncludeDir)
+{
+   FilePath filePath(fileInfo.absolutePath());
+
+   if (pkgSrcDir.exists() &&
+       filePath.isWithin(pkgSrcDir) &&
+       SourceIndex::isSourceFile(filePath) &&
+       !boost::algorithm::starts_with(filePath.stem(), kCompilationDbPrefix) &&
+       (filePath.filename() != "RcppExports.cpp"))
+   {
+      return true;
+   }
+   else if (pkgIncludeDir.exists() &&
+            filePath.isWithin(pkgIncludeDir) &&
+            SourceIndex::isSourceFile(filePath) &&
+            !boost::algorithm::ends_with(filePath.stem(), "_RcppExports"))
+   {
+      return true;
+   }
+   else
+   {
+      return false;
+   }
 }
 
 } // namespace clang

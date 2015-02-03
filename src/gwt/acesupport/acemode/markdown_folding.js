@@ -55,7 +55,7 @@ var BaseFoldMode = require("ace/mode/folding/fold_mode").FoldMode;
 var Range = require("ace/range").Range;
 
 var FoldMode = exports.FoldMode = function() {};
-var Utils = require("ace/mode");
+var Utils = require("mode/utils");
 
 oop.inherits(FoldMode, BaseFoldMode);
 

@@ -45,26 +45,6 @@ enum CppDefinitionKind
    CppMemberFunctionDefinition = 6
 };
 
-// source location
-struct FileLocation
-{
-   FileLocation()
-      : line(0), column(0)
-   {
-   }
-
-   FileLocation(const core::FilePath& filePath, unsigned line, unsigned column)
-      : filePath(filePath), line(line), column(column)
-   {
-   }
-
-   bool empty() const { return filePath.empty(); }
-
-   core::FilePath filePath;
-   unsigned line;
-   unsigned column;
-};
-
 // C++ symbol definition
 struct CppDefinition
 {
@@ -77,7 +57,7 @@ struct CppDefinition
                  CppDefinitionKind kind,
                  const std::string& parentName,
                  const std::string& name,
-                 const FileLocation& location)
+                 const core::libclang::FileLocation& location)
       : USR(USR),
         kind(kind),
         parentName(parentName),
@@ -92,12 +72,13 @@ struct CppDefinition
    CppDefinitionKind kind;
    std::string parentName; // e.g. containing C++ class
    std::string name;
-   FileLocation location;
+   core::libclang::FileLocation location;
 };
 
 std::ostream& operator<<(std::ostream& os, const CppDefinition& definition);
 
-FileLocation findDefinitionLocation(const FileLocation& location);
+core::libclang::FileLocation findDefinitionLocation(
+                     const core::libclang::FileLocation& location);
 
 void searchDefinitions(const std::string& term,
                        std::vector<CppDefinition>* pDefinitions);

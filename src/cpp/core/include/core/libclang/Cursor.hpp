@@ -18,11 +18,14 @@
 
 #include "clang-c/Index.h"
 
-#include "SourceLocation.hpp"
+#include <core/FilePath.hpp>
 
 namespace rstudio {
 namespace core {
 namespace libclang {
+
+class SourceRange;
+class SourceLocation;
 
 class Cursor
 {
@@ -37,6 +40,7 @@ public:
 
 public:
 
+   std::string spelling() const;
    std::string displayName() const;
 
    CXCursorKind getKind() const;
@@ -59,6 +63,7 @@ public:
 
    Cursor getCannonical() const;
 
+   Cursor getLexicalParent() const;
    Cursor getSemanticParent() const;
 
    CXLinkageKind getLinkageKind() const;
@@ -66,7 +71,13 @@ public:
 
    std::string getUSR() const;
 
+   CXCursor getCXCursor() const { return cursor_; }
+
+   unsigned hash() const;
+
    SourceLocation getSourceLocation() const;
+
+   SourceRange getExtent() const;
 
    bool isNull() const;
    bool isValid() const;

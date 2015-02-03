@@ -43,7 +43,7 @@ json::Object sourceMarkerSetAsJson(const module_context::SourceMarkerSet& set)
    jsonSet["name"] = set.name;
    if (set.basePath.empty())
    {
-      jsonSet["base_path"] = json::Value();
+      jsonSet["base_path"] = std::string();
    }
    else
    {
@@ -169,7 +169,7 @@ public:
                       module_context::resolveAliasedPath(path),
                       line,
                       column,
-                      message,
+                      core::html_utils::HTML(message, true),
                       showErrorList);
 
                   markers.push_back(marker);
@@ -364,13 +364,15 @@ SEXP rs_sourceMarkers(SEXP nameSEXP,
             std::string path;
             double line, column;
             std::string message;
+            bool messageHTML;
             Error error = json::readObject(
                markerJson.get_obj(),
                "type", &type,
                "file", &path,
                "line", &line,
                "column", &column,
-               "message", &message);
+               "message", &message,
+               "messageHTML", &messageHTML);
             if (error)
             {
                LOG_ERROR(error);
@@ -382,7 +384,7 @@ SEXP rs_sourceMarkers(SEXP nameSEXP,
                 FilePath(path),
                 safe_convert::numberTo<int>(line, 1),
                 safe_convert::numberTo<int>(column, 1),
-                message,
+                core::html_utils::HTML(message, messageHTML),
                 true);
 
             markers.push_back(marker);
@@ -413,7 +415,7 @@ SEXP rs_sourceMarkers(SEXP nameSEXP,
 
 FilePath sourceMarkersFilePath()
 {
-   return module_context::scopedScratchPath().childPath("source_markers_db");
+   return module_context::scopedScratchPath().childPath("saved_source_markers");
 }
 
 void readSourceMarkers()

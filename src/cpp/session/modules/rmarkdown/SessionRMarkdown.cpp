@@ -511,7 +511,7 @@ private:
                      targetFile_.parent().complete(matches[3].str()),
                      boost::lexical_cast<int>(matches[1].str()),
                      1,
-                     matches[4].str(),
+                     core::html_utils::HTML(matches[4].str()),
                      true);
             knitrErrors_.push_back(err);
          }

@@ -21,9 +21,47 @@
 
 #include "clang-c/Index.h"
 
+#include <core/FilePath.hpp>
+
 namespace rstudio {
 namespace core {
+
 namespace libclang {
+
+// file location
+struct FileLocation
+{
+   FileLocation()
+      : line(0), column(0)
+   {
+   }
+
+   FileLocation(const FilePath& filePath, unsigned line, unsigned column)
+      : filePath(filePath), line(line), column(column)
+   {
+   }
+
+   bool empty() const { return filePath.empty(); }
+
+   bool operator==(const FileLocation& other) const
+   {
+      return filePath == other.filePath &&
+             line == other.line &&
+             column == other.column;
+   }
+
+   bool operator!=(const FileLocation& other) const
+   {
+      return !(*this == other);
+   }
+
+   core::FilePath filePath;
+   unsigned line;
+   unsigned column;
+};
+
+std::ostream& operator << (std::ostream& stream, const FileLocation& loc);
+
 
 class SourceLocation
 {
@@ -55,6 +93,8 @@ public:
                             unsigned* pLine,
                             unsigned* pColumn,
                             unsigned* pOffset = NULL) const;
+
+   FileLocation getSpellingLocation() const;
 
    void printSpellingLocation(std::ostream& ostr);
 

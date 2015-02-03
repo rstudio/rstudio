@@ -60,6 +60,27 @@ bool TranslationUnit::includesFile(const std::string& filename) const
    return clang().getFile(tu_, filename.c_str()) != NULL;
 }
 
+CXFile TranslationUnit::getFile(const std::string& filename) const
+{
+   std::string targetFile = filename;
+   if (targetFile.empty())
+      targetFile = filename_;
+
+   return clang().getFile(tu_, targetFile.c_str());
+}
+
+CXResult TranslationUnit::findReferencesInFile(
+                              Cursor cursor,
+                              CXCursorAndRangeVisitor visitor,
+                              const std::string& filename)
+{
+   CXFile file = getFile(filename);
+   if (file == NULL)
+      return CXResult_Invalid;
+
+   return clang().findReferencesInFile(cursor.getCXCursor(), file, visitor);
+}
+
 unsigned TranslationUnit::getNumDiagnostics() const
 {
    return clang().getNumDiagnostics(tu_);
@@ -70,6 +91,11 @@ boost::shared_ptr<Diagnostic>
 {
    return boost::shared_ptr<Diagnostic>(
                      new Diagnostic(clang().getDiagnostic(tu_, index)));
+}
+
+Cursor TranslationUnit::getCursor()
+{
+   return Cursor(clang().getTranslationUnitCursor(tu_));
 }
 
 Cursor TranslationUnit::getCursor(const std::string& filename,
