@@ -53,8 +53,8 @@ public:
    {
       boost::shared_ptr<ShinyAppDeploy> pDeploy(new ShinyAppDeploy(file));
 
-      std::string cmd("{ options(repos = c(CRAN=\"" +
-                       module_context::CRANReposURL() + "\")); ");
+      std::string cmd("{ options(repos = c(CRAN='" +
+                       module_context::CRANReposURL() + "')); ");
 
       cmd += "rsconnect::deployApp("
              "appDir = '" + dir + "',"
