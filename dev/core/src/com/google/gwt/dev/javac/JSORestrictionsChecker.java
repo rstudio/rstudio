@@ -253,8 +253,9 @@ public class JSORestrictionsChecker {
         }
       }
       Map<String, MethodBinding> methodSignatures = new HashMap<String, MethodBinding>();
+      Map<String, MethodBinding> noExports = new HashMap<String, MethodBinding>();
 
-      checkJsTypeMethodsForOverloads(methodSignatures, binding);
+      checkJsTypeMethodsForOverloads(methodSignatures, noExports, binding);
       for (MethodBinding mb : binding.methods()) {
         checkJsProperty(mb, true);
       }
@@ -332,10 +333,14 @@ public class JSORestrictionsChecker {
     }
 
     private void checkJsTypeMethodsForOverloads(Map<String, MethodBinding> methodNamesAndSigs,
-                                                ReferenceBinding binding) {
+        Map<String, MethodBinding> noExports, ReferenceBinding binding) {
       if (isJsType(binding)) {
         for (MethodBinding mb : binding.methods()) {
           String methodName = String.valueOf(mb.selector);
+          if (JdtUtil.getAnnotation(mb, JsInteropUtil.JSNOEXPORT_CLASS) != null) {
+            noExports.put(methodName, mb);
+            continue;
+          }
           if (mb.isConstructor() || mb.isStatic()) {
             continue;
           }
@@ -347,6 +352,10 @@ public class JSORestrictionsChecker {
           }
           if (methodNamesAndSigs.containsKey(methodName)) {
             if (!methodNamesAndSigs.get(methodName).areParameterErasuresEqual(mb)) {
+              if (noExports.containsKey(methodName)
+                  && noExports.get(methodName).areParameterErasuresEqual(mb)) {
+                continue;
+              }
               errorOn(mb, ERR_JSTYPE_OVERLOADS_NOT_ALLOWED);
             }
           } else {
@@ -355,7 +364,7 @@ public class JSORestrictionsChecker {
         }
       }
       for (ReferenceBinding rb : binding.superInterfaces()) {
-        checkJsTypeMethodsForOverloads(methodNamesAndSigs, rb);
+        checkJsTypeMethodsForOverloads(methodNamesAndSigs, noExports, rb);
       }
     }
 
