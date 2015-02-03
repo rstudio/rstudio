@@ -220,6 +220,10 @@
         <fileset dir="${gwt.build.lib}" includes="gwt-user.jar,gwt-dev.jar"/>
         <pathelement path="${java.class.path}"/>
         <pathelement location="${gwt.tools.lib}/apache/ant-1.6.5.jar"/>
+        <pathelement location="${gwt.tools.lib}/javax/validation/validation-api-1.0.0.GA.jar"/>
+        <pathelement
+            location="${gwt.tools.lib}/hibernate/validator/hibernate-validator-4.1.0.Final.jar"/>
+
       </classpath>
       <arg value="-refJar"/>
       <arg path="${gwt.apicheck.referencelibs}"/>
