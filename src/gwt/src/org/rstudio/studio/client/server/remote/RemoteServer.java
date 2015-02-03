@@ -85,9 +85,13 @@ import org.rstudio.studio.client.rmarkdown.model.RmdCreatedTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateContent;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
+import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
+import org.rstudio.studio.client.rsconnect.model.RSConnectAuthUser;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
+import org.rstudio.studio.client.rsconnect.model.RSConnectPreAuthToken;
+import org.rstudio.studio.client.rsconnect.model.RSConnectServerInfo;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.server.ClientException;
 import org.rstudio.studio.client.server.Server;
@@ -3552,7 +3556,7 @@ public class RemoteServer implements Server
 
    @Override
    public void getRSConnectAccountList(
-         ServerRequestCallback<JsArrayString> requestCallback)
+         ServerRequestCallback<JsArray<RSConnectAccount>> requestCallback)
    {
       sendRequest(RPC_SCOPE,
             GET_RSCONNECT_ACCOUNT_LIST,
@@ -3560,11 +3564,12 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void removeRSConnectAccount(String accountName,
+   public void removeRSConnectAccount(String accountName, String server,
          ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(accountName));
+      params.set(1, new JSONString(server));
       sendRequest(RPC_SCOPE,
             REMOVE_RSCONNECT_ACCOUNT,
             params,
@@ -3586,10 +3591,12 @@ public class RemoteServer implements Server
    @Override
    public void getRSConnectAppList(
          String accountName,
+         String server,
          ServerRequestCallback<JsArray<RSConnectApplicationInfo>> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(accountName));
+      params.set(1, new JSONString(server));
       sendRequest(RPC_SCOPE,
             GET_RSCONNECT_APP_LIST,
             params,
@@ -3611,15 +3618,72 @@ public class RemoteServer implements Server
    
    @Override
    public void deployShinyApp(String dir, String file, String account, 
-         String appName, ServerRequestCallback<Boolean> requestCallback)
+         String server, String appName, ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(dir));
       params.set(1, new JSONString(file));
       params.set(2, new JSONString(account));
-      params.set(3, new JSONString(appName));
+      params.set(3, new JSONString(server));
+      params.set(4, new JSONString(appName));
       sendRequest(RPC_SCOPE,
             DEPLOY_SHINY_APP,
+            params,
+            requestCallback);
+   }
+   
+   @Override
+   public void validateServerUrl(String url, 
+         ServerRequestCallback<RSConnectServerInfo> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(url));
+      sendRequest(RPC_SCOPE,
+            VALIDATE_SERVER_URL,
+            params,
+            requestCallback);
+   }
+
+   @Override
+   public void getPreAuthToken(String serverName, 
+         ServerRequestCallback<RSConnectPreAuthToken> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(serverName));
+      sendRequest(RPC_SCOPE,
+            GET_AUTH_TOKEN,
+            params,
+            requestCallback);
+   }
+
+   @Override
+   public void getUserFromToken(String url, 
+         RSConnectPreAuthToken token,
+         ServerRequestCallback<RSConnectAuthUser> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(url));
+      params.set(1, new JSONString(token.getToken()));
+      params.set(2, new JSONString(token.getPrivateKey()));
+      sendRequest(RPC_SCOPE,
+            GET_USER_FROM_TOKEN,
+            params,
+            requestCallback);
+   }
+
+   @Override
+   public void registerUserToken(String serverName, String accountName, int userId, 
+                RSConnectPreAuthToken token, 
+                ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(serverName));
+      params.set(1, new JSONString(accountName));
+      params.set(2, new JSONNumber(userId));
+      params.set(3, new JSONString(token.getToken()));
+      params.set(4, new JSONString(token.getPrivateKey()));
+      sendRequest(RPC_SCOPE,
+            REGISTER_USER_TOKEN,
             params,
             requestCallback);
    }
@@ -4161,6 +4225,10 @@ public class RemoteServer implements Server
    private static final String GET_RSCONNECT_DEPLOYMENTS = "get_rsconnect_deployments";
    private static final String DEPLOY_SHINY_APP = "deploy_shiny_app";
    private static final String GET_DEPLOYMENT_FILES = "get_deployment_files";
+   private static final String VALIDATE_SERVER_URL = "validate_server_url";
+   private static final String GET_AUTH_TOKEN = "get_auth_token";
+   private static final String GET_USER_FROM_TOKEN = "get_user_from_token";
+   private static final String REGISTER_USER_TOKEN = "register_user_token";
 
    private static final String RENDER_RMD = "render_rmd";
    private static final String RENDER_RMD_SOURCE = "render_rmd_source";

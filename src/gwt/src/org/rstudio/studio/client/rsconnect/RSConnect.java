@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.command.CommandBinder;
-import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.ModalDialogTracker;
@@ -31,11 +30,12 @@ import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentStartedEvent;
+import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDirectoryState;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
-import org.rstudio.studio.client.rsconnect.ui.RSConnectAccountManagerDialog;
+import org.rstudio.studio.client.rsconnect.ui.RSAccountConnector;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectDeployDialog;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -45,12 +45,15 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
@@ -70,7 +73,9 @@ public class RSConnect implements SessionInitHandler,
                     GlobalDisplay display,
                     DependencyManager dependencyManager,
                     Binder binder, 
-                    RSConnectServerOperations server)
+                    RSConnectServerOperations server,
+                    RSAccountConnector connector,
+                    Provider<UIPrefs> pUiPrefs)
                     
    {
       commands_ = commands;
@@ -80,6 +85,8 @@ public class RSConnect implements SessionInitHandler,
       server_ = server;
       events_ = events;
       satellite_ = satellite;
+      connector_ = connector;
+      pUiPrefs_ = pUiPrefs;
 
       binder.bind(commands, this);
 
@@ -101,7 +108,7 @@ public class RSConnect implements SessionInitHandler,
    public void onRSConnectAction(final RSConnectActionEvent event)
    {
       dependencyManager_.withRSConnect(
-         "Publishing shiny applications", new Command() {
+         "Publishing Shiny applications", null, new Command() {
 
             @Override
             public void execute()
@@ -121,7 +128,7 @@ public class RSConnect implements SessionInitHandler,
 
          final String dir = FilePathUtils.dirFromFile(event.getPath());
          RSConnectDeploymentRecord record = dirState_.getLastDeployment(dir);
-         final String lastAccount = record == null ? null : record.getAccount();
+         final RSConnectAccount lastAccount = record == null ? null : record.getAccount();
          final String lastAppName = record == null ? null : record.getName();
          
          // don't consider this to be a deployment of a specific file unless
@@ -134,7 +141,7 @@ public class RSConnect implements SessionInitHandler,
 
          RSConnectDeployDialog dialog = 
                new RSConnectDeployDialog(
-                         server_, display_, events_, 
+                         server_, connector_, display_, session_, events_, 
                          dir, file, lastAccount, lastAppName,
                          satellite_.isCurrentWindowSatellite());
          dialog.showModal();
@@ -151,7 +158,8 @@ public class RSConnect implements SessionInitHandler,
    {
       server_.deployShinyApp(event.getPath(), 
                              event.getSourceFile(),
-                             event.getRecord().getAccount(), 
+                             event.getRecord().getAccountName(), 
+                             event.getRecord().getServer(),
                              event.getRecord().getName(), 
       new ServerRequestCallback<Boolean>()
       {
@@ -195,29 +203,15 @@ public class RSConnect implements SessionInitHandler,
       }
    }
 
-   @Handler
-   public void onRsconnectManageAccounts()
-   {
-      dependencyManager_.withRSConnect(
-         "Publishing shiny applications", new Command() {
-            @Override
-            public void execute()
-            {
-               RSConnectAccountManagerDialog dialog = 
-                     new RSConnectAccountManagerDialog(server_, display_);
-               dialog.showModal();
-            }
-         });
-   }
-   
    public void ensureSessionInit()
    {
       if (sessionInited_)
          return;
       
-      // "Manage accounts" can be invoked any time the package is available
+      // "Manage accounts" can be invoked any time we're permitted to
+      // publish 
       commands_.rsconnectManageAccounts().setVisible(
-            session_.getSessionInfo().getRSConnectAvailable());
+            SessionUtils.showPublishUi(session_, pUiPrefs_.get()));
       
       // This object keeps track of the most recent deployment we made of each
       // directory, and is used to default directory deployments to last-used
@@ -324,7 +318,8 @@ public class RSConnect implements SessionInitHandler,
       
       // We need to further filter the list by deployments that are 
       // eligible for termination (i.e. are currently running)
-      server_.getRSConnectAppList(recordList.get(0).getAccount(),
+      server_.getRSConnectAppList(recordList.get(0).getAccountName(),
+            recordList.get(0).getServer(),
             new ServerRequestCallback<JsArray<RSConnectApplicationInfo>>()
       {
          @Override
@@ -399,9 +394,14 @@ public class RSConnect implements SessionInitHandler,
    private final DependencyManager dependencyManager_;
    private final EventBus events_;
    private final Satellite satellite_;
+   private final RSAccountConnector connector_;
+   private final Provider<UIPrefs> pUiPrefs_;
+   
    private boolean launchBrowser_ = false;
    private boolean sessionInited_ = false;
    
    private RSConnectDirectoryState dirState_;
    private boolean dirStateDirty_ = false;
+   
+   public final static String CLOUD_SERVICE_NAME = "ShinyApps.io";
 }

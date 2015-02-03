@@ -47,7 +47,8 @@ const static NSString *kRunningApplicationsContext = @"RunningAppsContext";
 {
    if (self = [super initWithURLRequest: [NSURLRequest requestWithURL: url]
                                    name: nil
-                             clientName: nil])
+                             clientName: nil
+                  allowExternalNavigate: false])
    {
       // initialize the global instance
       instance_ = self;

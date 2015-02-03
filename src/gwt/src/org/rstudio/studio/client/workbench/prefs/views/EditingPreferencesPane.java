@@ -120,7 +120,7 @@ public class EditingPreferencesPane extends PreferencesPane
       completionPanel.add(checkboxPref("Use tab for multiline autocompletions", prefs.allowTabMultilineCompletion()));
       
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel();
-      tabPanel.setSize("435px", "460px");     
+      tabPanel.setSize("435px", "498px");     
       tabPanel.add(editingPanel, "Editing");
       tabPanel.add(displayPanel, "Display");
       tabPanel.add(completionPanel, "Completion");

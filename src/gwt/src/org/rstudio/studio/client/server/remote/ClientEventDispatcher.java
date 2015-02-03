@@ -63,6 +63,7 @@ import org.rstudio.studio.client.rmarkdown.events.RmdTemplateDiscoveryCompletedE
 import org.rstudio.studio.client.rmarkdown.model.RmdDiscoveredTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdRenderResult;
 import org.rstudio.studio.client.rmarkdown.model.RmdShinyDocInfo;
+import org.rstudio.studio.client.rsconnect.events.EnableRStudioConnectUIEvent;
 import org.rstudio.studio.client.server.Bool;
 import org.rstudio.studio.client.shiny.events.ShinyApplicationStatusEvent;
 import org.rstudio.studio.client.shiny.events.RSConnectDeploymentCompletedEvent;
@@ -626,6 +627,11 @@ public class ClientEventDispatcher
          {
             MarkersChangedEvent.Data data = event.getData();
             eventBus_.fireEvent(new MarkersChangedEvent(data));
+         }
+         else if (type.equals(ClientEvent.EnableRStudioConnect))
+         {
+            EnableRStudioConnectUIEvent.Data data = event.getData();
+            eventBus_.fireEvent(new EnableRStudioConnectUIEvent(data));
          }
          else
          {

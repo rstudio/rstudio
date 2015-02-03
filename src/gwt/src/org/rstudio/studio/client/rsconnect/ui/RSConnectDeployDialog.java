@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.application.Desktop;
@@ -26,40 +27,40 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
+import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentFiles;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.PopupPanel;
 
 public class RSConnectDeployDialog 
              extends RSConnectDialog<RSConnectDeploy>
 {
    public RSConnectDeployDialog(RSConnectServerOperations server, 
+                                RSAccountConnector connector,
                                 final GlobalDisplay display, 
+                                Session session,
                                 EventBus events,
                                 final String sourceDir, 
                                 String sourceFile,
-                                final String lastAccount, 
+                                final RSConnectAccount lastAccount, 
                                 String lastAppName, 
                                 boolean isSatellite)
                                 
    {
-      super(server, display, new RSConnectDeploy());
+      super(server, display, new RSConnectDeploy(server, connector, display, session));
       setText("Publish to Server");
       setWidth("350px");
       deployButton_ = new ThemedButton("Publish");
@@ -71,6 +72,7 @@ public class RSConnectDeployDialog
       lastAppName_ = lastAppName;
       isSatellite_ = isSatellite;
       defaultAccount_ = lastAccount;
+      connector_ = connector;
 
       launchCheck_ = new CheckBox("Launch browser");
       launchCheck_.setValue(true);
@@ -148,31 +150,29 @@ public class RSConnectDeployDialog
          }
       });
       
-      server_.getRSConnectAccountList(new ServerRequestCallback<JsArrayString>()
+      server_.getRSConnectAccountList(new ServerRequestCallback<JsArray<RSConnectAccount>>()
       {
          @Override
-         public void onResponseReceived(JsArrayString accounts)
+         public void onResponseReceived(JsArray<RSConnectAccount> accounts)
          {
             if (accounts.length() == 0)
             {
                // The user has no accounts connected--hide ourselves and 
                // ask the user to connect an account before we continue.
                hide();
-               RSConnectConnectAccountDialog dialog = 
-                     new RSConnectConnectAccountDialog(server_, display_);
-               dialog.addCloseHandler(new CloseHandler<PopupPanel>()
+               connector_.showAccountWizard(new OperationWithInput<Boolean>() 
                {
                   @Override
-                  public void onClose(CloseEvent<PopupPanel> event)
+                  public void execute(Boolean input)
                   {
                      onConnectAccountFinished();
                   }
                });
-               dialog.showModal();
             }
             else
             {
-               contents_.setAccountList(accounts);
+               // TODO Populate with accounts properly
+               // contents_.setAccountList(accounts);
                if (defaultAccount_ != null)
                   contents_.setDefaultAccount(defaultAccount_);
                updateApplicationList();
@@ -252,14 +252,14 @@ public class RSConnectDeployDialog
    
    private void updateApplicationList()
    {
-      final String accountName = contents_.getSelectedAccount();
-      if (accountName == null)
+      final RSConnectAccount account = contents_.getSelectedAccount();
+      if (account == null)
          return;
 
       // Check to see if the app list is already in our cache
-      if (apps_.containsKey(accountName))
+      if (apps_.containsKey(account))
       {
-         setAppList(apps_.get(accountName));
+         setAppList(apps_.get(account));
          return;
       }
       
@@ -275,7 +275,7 @@ public class RSConnectDeployDialog
       t.schedule(500);
 
       // Not already in our cache, fetch it and populate the cache
-      server_.getRSConnectAppList(accountName,
+      server_.getRSConnectAppList(account.getName(), account.getServer(),
             new ServerRequestCallback<JsArray<RSConnectApplicationInfo>>()
       {
          @Override
@@ -285,7 +285,7 @@ public class RSConnectDeployDialog
 
             t.cancel();
             indicator_.onCompleted();
-            apps_.put(accountName, apps);
+            apps_.put(account, apps);
             setAppList(apps);
          }
 
@@ -320,10 +320,10 @@ public class RSConnectDeployDialog
    // Runs when we've finished doing a just-in-time account connection
    private void onConnectAccountFinished()
    {
-      server_.getRSConnectAccountList(new ServerRequestCallback<JsArrayString>()
+      server_.getRSConnectAccountList(new ServerRequestCallback<JsArray<RSConnectAccount>>()
       {
          @Override
-         public void onResponseReceived(JsArrayString accounts)
+         public void onResponseReceived(JsArray<RSConnectAccount> accounts)
          {
             if (accounts.length() == 0)
             {
@@ -335,7 +335,6 @@ public class RSConnectDeployDialog
             {
                // We have an account, show it and re-display ourselves
                contents_.setAccountList(accounts);
-               contents_.setDefaultAccount(accounts.get(0));
                updateApplicationList();
                showModal();
             }
@@ -357,7 +356,7 @@ public class RSConnectDeployDialog
       if (appName == null || appName == "Create New")
          appName = contents_.getNewAppName();
       
-      String account = contents_.getSelectedAccount();
+      RSConnectAccount account = contents_.getSelectedAccount();
       
       if (isSatellite_)
       {
@@ -406,6 +405,7 @@ public class RSConnectDeployDialog
    
    private final EventBus events_;
    private final boolean isSatellite_;
+   private final RSAccountConnector connector_;
    
    private String sourceDir_;
    private String sourceFile_;
@@ -413,11 +413,11 @@ public class RSConnectDeployDialog
    private ThemedButton deployButton_;
    private ProgressIndicator indicator_;
    private CheckBox launchCheck_;
-   private String defaultAccount_;
+   private RSConnectAccount defaultAccount_;
    
-   // Map of account name to a list of applications owned by that account
-   private Map<String, JsArray<RSConnectApplicationInfo>> apps_ = 
-         new HashMap<String, JsArray<RSConnectApplicationInfo>>();
+   // Map of account to a list of applications owned by that account
+   private Map<RSConnectAccount, JsArray<RSConnectApplicationInfo>> apps_ = 
+         new HashMap<RSConnectAccount, JsArray<RSConnectApplicationInfo>>();
    
    // Map of app URL to the deployment made to that URL
    private Map<String, RSConnectDeploymentRecord> deployments_ = 

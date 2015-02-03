@@ -115,6 +115,11 @@ void raiseAndActivateWindow(QWidget* pWindow)
    pWindow->activateWindow();
 }
 
+void closeWindow(QWidget* pWindow)
+{
+   pWindow->close();
+}
+
 QMessageBox::Icon safeMessageBoxIcon(QMessageBox::Icon icon)
 {
    // if a gtk theme has a missing or corrupt icon for one of the stock

@@ -384,6 +384,16 @@ public class UIPrefsAccessor extends Prefs
    {
       return integer("rmd_viewer_type", RmdOutput.RMD_VIEWER_TYPE_WINDOW);
    }
+   
+   public PrefValue<Boolean> showPublishUi()
+   {
+      return bool("show_publish_ui", true);
+   }
+
+   public PrefValue<Boolean> enableRStudioConnect()
+   {
+      return bool("enable_rstudio_connect", false);
+   }
 
    private String getDefaultPdfPreview()
    {

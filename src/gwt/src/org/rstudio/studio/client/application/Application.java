@@ -63,6 +63,7 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Agreement;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
@@ -608,8 +609,8 @@ public class Application implements ApplicationEventHandlers
          commands_.exportFiles().remove();
       }
       
-      // disable rpubs if requested
-      if (!sessionInfo.getAllowRpubsPublish())
+      // disable external publishing if requested
+      if (!SessionUtils.showExternalPublishUi(session_, uiPrefs_.get()))
       {
          commands_.publishHTML().remove();
          commands_.publishPlotToRPubs().remove();

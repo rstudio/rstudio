@@ -40,7 +40,8 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
                             PaneLayoutPreferencesPane paneLayout,
                             PackagesPreferencesPane packages,
                             SourceControlPreferencesPane sourceControl,
-                            SpellingPreferencesPane spelling)
+                            SpellingPreferencesPane spelling, 
+                            PublishingPreferencesPane publishing)
    {
       super("Options", 
             res.styles().panelContainer(),
@@ -52,20 +53,16 @@ public class PreferencesDialog extends PreferencesDialogBase<RPrefs>
                                    packages,
                                    compilePdf,
                                    spelling,
-                                   sourceControl}); 
-
+                                   sourceControl, 
+                                   publishing}); 
       session_ = session;
       server_ = server;
       
       if (!session.getSessionInfo().getAllowVcs())
-         hidePane(7);
-   }
-   
-
-   
-   public void activateSourceControl()
-   {
-      activatePane(4);
+         hidePane(SourceControlPreferencesPane.class);
+      
+      if (!session.getSessionInfo().getAllowPublish())
+         hidePane(PublishingPreferencesPane.class);
    }
    
    @Override

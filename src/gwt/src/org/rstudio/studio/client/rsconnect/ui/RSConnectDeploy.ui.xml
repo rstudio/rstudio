@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	xmlns:g="urn:import:com.google.gwt.user.client.ui"
+	xmlns:rsc="urn:import:org.rstudio.studio.client.rsconnect.ui">
 	<ui:with field="res" type="org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy.DeployResources" />
 	<ui:with field="projRes" type="org.rstudio.studio.client.projects.ui.newproject.NewProjectResources" />
 	<ui:style type="org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy.DeployStyle">
@@ -64,7 +65,7 @@
 	{
 	  background-color: #ffffff;
      border: 1px solid gray;
-     height: 110px;
+     height: 165px;
      width: 250px;
      padding: 7px;
      margin-top: 5px;
@@ -92,6 +93,20 @@
 	  display: block;
 	}
 	
+	.accountList
+	{
+	  height: 100px;
+	}
+	
+	.accountAnchor
+	{
+	  text-align: right;
+	  font-size: x-small;
+	  display: block;
+	  margin-top: 5px;
+	  cursor: pointer;
+	}
+	
 	</ui:style>
 	<g:HTMLPanel>
 	<g:Image resource="{res.deployIllustration}"></g:Image>
@@ -107,17 +122,17 @@
      </g:customCell>
      <g:customCell styleName="{style.rootCell}">
       <g:HTMLPanel>
-        <g:HTML>
-          Deploy To: <a href="http://www.shinyapps.io/" target="_blank">ShinyApps.io</a>
-        </g:HTML>
-         <g:Label styleName="{style.controlLabel}" text="Account:"></g:Label>
-         <g:ListBox styleName="{style.dropListControl}" ui:field="accountList"></g:ListBox>
+         <g:HorizontalPanel width="100%">
+         <g:Label styleName="{style.controlLabel}" text="Destination Account:"></g:Label>
+         <g:Anchor styleName="rstudio-HyperlinkLabel {style.accountAnchor}" ui:field="addAccountAnchor" text="Add New Account"></g:Anchor>
+         </g:HorizontalPanel>
+         <rsc:RSConnectAccountList styleName="{style.accountList}" ui:field="accountList"></rsc:RSConnectAccountList>
          <g:Label styleName="{style.controlLabel}" text="Application:"></g:Label>
          <g:ListBox styleName="{style.dropListControl}" ui:field="appList"></g:ListBox>
          <g:Label styleName="{style.controlLabel}" ui:field="nameLabel" text="Name:"></g:Label>
          <g:TextBox styleName="{style.gridControl}" ui:field="appName" maxLength="63"></g:TextBox>
          <g:HTMLPanel styleName="{style.controlLabel}" visible="false" ui:field="appInfoPanel">
-            <g:InlineLabel text="Status:"></g:InlineLabel>
+            <g:InlineLabel text="URL:"></g:InlineLabel>
             <g:InlineLabel styleName="{style.statusLabel}" ui:field="statusLabel"></g:InlineLabel>
             <g:Anchor styleName="{style.urlAnchor}" ui:field="urlAnchor" target="_blank"></g:Anchor>
          </g:HTMLPanel>

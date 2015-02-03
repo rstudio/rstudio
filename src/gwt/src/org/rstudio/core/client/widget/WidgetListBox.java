@@ -39,6 +39,7 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 // A list box that can contain arbitrary GWT widgets as options.
@@ -66,6 +67,7 @@ public class WidgetListBox<T extends Widget>
       String anyItem();
       String listPanel();
       String outerPanel();
+      String emptyMessage();
    }
 
    public interface Resources extends ClientBundle
@@ -84,6 +86,9 @@ public class WidgetListBox<T extends Widget>
       add(panel_);
       panel_.addStyleName(style_.listPanel());
       addStyleName(style_.outerPanel());
+      emptyTextLabel_ = new Label();
+      emptyTextLabel_.addStyleName(style_.listPanel());
+      emptyTextLabel_.addStyleName(style_.emptyMessage());
    }
 
    @Override 
@@ -162,6 +167,8 @@ public class WidgetListBox<T extends Widget>
          setSelectedIndex(0);
       else if (!atEnd && getSelectedIndex() == 1 && options_.size() > 1)
          setSelectedIndex(0, true);
+      
+      updateEmptyText();
    }
    
    public void setSelectedIndex(int itemIdx)
@@ -213,9 +220,39 @@ public class WidgetListBox<T extends Widget>
       itemPaddingUnit_ = unit;
    }
    
+   public void clearItems()
+   {
+      panel_.clear();
+      options_.clear();
+      items_.clear();
+      selectedIdx_ = 0;
+      updateEmptyText();
+   }
+   
+   public void setEmptyText(String text)
+   {
+      emptyTextLabel_.setText(text);
+      updateEmptyText();
+   }
+   
+   private void updateEmptyText()
+   {
+      if (emptyTextLabel_.getParent() == this && items_.size() > 0)
+      {
+         clear();
+         add(panel_);
+      }
+      else if (emptyTextLabel_.getParent() != this && items_.size() == 0)
+      {
+         clear();
+         add(emptyTextLabel_);
+      }
+   }
+   
    private int selectedIdx_ = 0;
 
    private FlowPanel panel_;
+   private Label emptyTextLabel_;
    private List<HTMLPanel> options_ = new ArrayList<HTMLPanel>();
    private List<T> items_ = new ArrayList<T>();
 

@@ -36,7 +36,7 @@
 namespace rstudio {
 namespace desktop {
 
-WebView::WebView(QUrl baseUrl, QWidget *parent) :
+WebView::WebView(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
     QWebView(parent),
     baseUrl_(baseUrl),
     pWebInspector_(NULL),
@@ -50,7 +50,7 @@ WebView::WebView(QUrl baseUrl, QWidget *parent) :
          setStyle(QStyleFactory::create(fusion));
    }
 #endif
-   pWebPage_ = new WebPage(baseUrl, this);
+   pWebPage_ = new WebPage(baseUrl, this, allowExternalNavigate);
    setPage(pWebPage_);
 
    // QWebView can create its own QWebInspector instance, but it doesn't always
@@ -83,10 +83,9 @@ void WebView::activateSatelliteWindow(QString name)
    pWebPage_->activateWindow(name);
 }
 
-void WebView::prepareForSatelliteWindow(
-                              const PendingSatelliteWindow& pendingWnd)
+void WebView::prepareForWindow(const PendingWindow& pendingWnd)
 {
-   pWebPage_->prepareForSatelliteWindow(pendingWnd);
+   pWebPage_->prepareForWindow(pendingWnd);
 }
 
 QString WebView::promptForFilename(const QNetworkRequest& request,
