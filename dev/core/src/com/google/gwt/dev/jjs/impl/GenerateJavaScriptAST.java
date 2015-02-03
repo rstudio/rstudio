@@ -2573,10 +2573,7 @@ public class GenerateJavaScriptAST {
       } else {
         // setup extension of native JS object
         JsNameRef jsProtoClassRef =
-            JsInteropUtil.convertQualifiedPrototypeToNameRef(
-                x.getSourceInfo(), jsPrototype);
-        // TODO(cromwellian) deal with module vs global scoping issue
-        // jsProtoClassRef.setQualifier(new JsNameRef(x.getSourceInfo(), "$wnd"));
+            JsInteropUtil.convertQualifiedPrototypeToNameRef(x.getSourceInfo(), jsPrototype);
         JsNameRef jsProtoFieldRef = new JsNameRef(x.getSourceInfo(), "prototype");
 
         jsProtoFieldRef.setQualifier(jsProtoClassRef);
@@ -2766,7 +2763,7 @@ public class GenerateJavaScriptAST {
     private void generateExports(JDeclaredType x, List<JsStatement> globalStmts) {
       TreeLogger branch = logger.branch(TreeLogger.Type.INFO, "Exporting " + x.getName());
 
-      String lastProvidedNamespace = "";
+      String lastProvidedNamespace = null;
       boolean createdClinit = false;
 
       // export 1 constructor
@@ -2863,9 +2860,7 @@ public class GenerateJavaScriptAST {
         JsExpression exportRhs, Pair<String, String> exportNamespacePair) {
       JsNameRef leaf = new JsNameRef(x.getSourceInfo(), exportNamespacePair.getRight());
       leaf.setQualifier(getExportLhsQualifier(x, exportNamespacePair.getLeft()));
-      JsExprStmt astStat = new JsExprStmt(x.getSourceInfo(),
-           createAssignment(leaf,
-               exportRhs));
+      JsExprStmt astStat = new JsExprStmt(x.getSourceInfo(), createAssignment(leaf, exportRhs));
       globalStmts.add(astStat);
     }
 
@@ -2890,8 +2885,8 @@ public class GenerateJavaScriptAST {
     }
 
     private String exportProvidedNamespace(JDeclaredType x, List<JsStatement> globalStmts,
-                                           String lastProvidedNamespace, Pair<String, String> exportNamespacePair) {
-      if (!lastProvidedNamespace.equals(exportNamespacePair.getLeft())) {
+        String lastProvidedNamespace, Pair<String, String> exportNamespacePair) {
+      if (!exportNamespacePair.getLeft().equals(lastProvidedNamespace)) {
         if (jsInteropMode == OptionJsInteropMode.Mode.JS) {
           JsName provideFunc = indexedFunctions.get("JavaClassHierarchySetupUtil.provide").getName();
           JsNameRef provideFuncRef = provideFunc.makeRef(x.getSourceInfo());
@@ -2905,8 +2900,7 @@ public class GenerateJavaScriptAST {
           JsExprStmt provideStat = createAssignment(globalTemp.makeRef(x.getSourceInfo()),
               provideCall).makeStmt();
           globalStmts.add(provideStat);
-        } else if (jsInteropMode == OptionJsInteropMode.Mode.JS &&
-                   jsExportClosureStyle) {
+        } else if (jsInteropMode == OptionJsInteropMode.Mode.JS && jsExportClosureStyle) {
           // goog.provide statements prepended by linker, so namespace already exists
           // but enclosing constructor exports may have overwritten them
           // so write foo.bar.Baz = foo.bar.Baz || {}

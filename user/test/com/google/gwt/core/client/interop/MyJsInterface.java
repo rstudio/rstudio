@@ -19,16 +19,8 @@ import com.google.gwt.core.client.js.JsProperty;
 import com.google.gwt.core.client.js.JsType;
 import com.google.gwt.core.client.js.impl.PrototypeOfJsType;
 
-@JsType(prototype = "$wnd.MyJsInterface")
+@JsType(prototype = "MyJsInterface")
 interface MyJsInterface {
-
-  @JsType(prototype = "MyJsInterface")
-  interface LocalMyClass {
-  }
-
-  @JsType
-  interface ButtonLikeJso {
-  }
 
   @JsProperty
   int x();

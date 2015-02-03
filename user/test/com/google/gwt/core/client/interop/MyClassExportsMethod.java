@@ -17,40 +17,45 @@ package com.google.gwt.core.client.interop;
 
 import com.google.gwt.core.client.js.JsExport;
 
-import junit.framework.Assert;
+class MyClassExportsMethod {
+  public static boolean calledFromJs = false;
 
-class MyClassImpl3 {
-  public static boolean calledFromJsModuleWindow = false;
-  public static int foo = 0;
-  static {
-    // prevent optimizations from inlining this clinit()
-    if (Math.random() > -1) {
-      foo = 42;
-    }
+  @JsExport("exportedFromJava")
+  public static void callMe() {
+    calledFromJs = true;
   }
 
-  @JsExport("$wnd.MyClassImpl3")
-  public MyClassImpl3() {
-      // ensure clinit() is called even when invoked from JS
-      Assert.assertEquals(42, foo);
-      calledFromJsModuleWindow = true;
-  }
-
-  public static boolean calledFromBar = false;
+  static boolean calledFromFoo = false;
+  static boolean calledFromBar = false;
 
   public static class A {
-    void bar() {
+    public void bar() {
       calledFromBar = true;
     }
+
+    public void foo() {
+      calledFromFoo = true;
+    }
+  }
+
+  public static class SubclassOfA extends A {
+    @Override
+    public void foo() { }
   }
 
   // There should be no calls to this method from java.
-  @JsExport("$wnd.MyClassImpl3.foo")
-  public static void foo(A a) {
+  @JsExport("callBar")
+  public static void callBar(A a) {
     a.bar();
   }
 
-  @JsExport("$wnd.newA")
+  // There should be a call to this method from java.
+  @JsExport("callFoo")
+  public static void callFoo(A a) {
+    a.foo();
+  }
+
+  @JsExport("newA")
   private static A newA() {
     return new A();
   }

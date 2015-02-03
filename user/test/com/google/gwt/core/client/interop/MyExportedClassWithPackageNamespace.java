@@ -16,16 +16,14 @@
 package com.google.gwt.core.client.interop;
 
 import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsNamespace;
 
 /**
- * Test namespace on a class.
+ * An exported class.
  */
-@JsNamespace("$wnd.foo")
-@JsExport
-public class NamespaceTester {
+@JsExport // Uses the namespace from the package
+public class MyExportedClassWithPackageNamespace {
   /**
    * Exported field.
    */
-  public final static int BAR = 42;
+  public final static int WOO = 1001;
 }

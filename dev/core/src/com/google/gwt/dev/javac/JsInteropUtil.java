@@ -132,14 +132,12 @@ public final class JsInteropUtil {
   }
 
   public static JsNameRef convertQualifiedPrototypeToNameRef(SourceInfo sourceInfo, String jsPrototype) {
-    String parts[] = jsPrototype.split("\\.");
-    JsNameRef toReturn = new JsNameRef(sourceInfo, parts[parts.length - 1]);
-    JsNameRef ref = toReturn;
-    for (int i = parts.length - 2; i >= 0; i--) {
-      JsNameRef qualifier = new JsNameRef(sourceInfo, parts[i]);
-      ref.setQualifier(qualifier);
-      ref = qualifier;
+    JsNameRef ref = new JsNameRef(sourceInfo, "$wnd");
+    for (String part : jsPrototype.split("\\.")) {
+      JsNameRef newRef = new JsNameRef(sourceInfo, part);
+      newRef.setQualifier(ref);
+      ref = newRef;
     }
-    return toReturn;
+    return ref;
   }
 }

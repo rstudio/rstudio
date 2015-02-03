@@ -16,18 +16,16 @@
 package com.google.gwt.core.client.interop;
 
 import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsNamespace;
+import com.google.gwt.core.client.js.JsType;
 
-/**
- * Test namespace inherited from outer class.
- */
-@JsNamespace("$wnd.foo")
-public class OuternamespaceTester {
-  /**
-   * Exported field.
-   */
+class MyClassWithNestedEnum {
+  @JsType
   @JsExport
-  public static class Inner {
-    public static final int BAZ = 99;
+  public enum NestedEnum {
+    FOO, BAR;
+
+    public String name2() {
+      return name();
+    }
   }
 }

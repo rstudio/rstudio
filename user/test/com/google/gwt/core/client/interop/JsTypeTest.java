@@ -15,9 +15,9 @@
  */
 package com.google.gwt.core.client.interop;
 
+import static com.google.gwt.core.client.ScriptInjector.TOP_WINDOW;
+
 import com.google.gwt.core.client.ScriptInjector;
-import com.google.gwt.junit.DoNotRunWith;
-import com.google.gwt.junit.Platform;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.Iterator;
@@ -28,122 +28,37 @@ import java.util.Iterator;
 public class JsTypeTest extends GWTTestCase {
 
   @Override
+  public String getModuleName() {
+    return "com.google.gwt.core.Core";
+  }
+
+  @Override
   protected void gwtSetUp() throws Exception {
-    ScriptInjector.fromString("function MyJsInterface() {}\n" +
-      "MyJsInterface.prototype.sum = function sum(bias) { return this.x + this.y + bias; }\n" +
-      "MyJsInterface.prototype.go = function(cb) { cb('Hello'); }")
-        .setWindow(ScriptInjector.TOP_WINDOW).inject();
-    ScriptInjector.fromString("function MyJsInterface() {}\n" +
-        "MyJsInterface.prototype.sum = function sum(bias) { return this.x + this.y +   bias; }\n")
-        .inject();
-    patchPrototype(MyClassImpl.class);
+    ScriptInjector.fromString("function MyJsInterface() {}\n"
+        + "MyJsInterface.prototype.sum = function sum(bias) { return this.x + this.y + bias; }\n"
+        + "MyJsInterface.prototype.go = function(cb) { cb('Hello'); }")
+        .setWindow(TOP_WINDOW).inject();
+    patchPrototype(MyClassExtendsJsPrototype.class);
   }
 
   /**
    * Workaround for the fact that the script is injected after defineClass() has been called.
    */
-  private native void patchPrototype(Class<MyClassImpl> myClass) /*-{
+  private native void patchPrototype(Class<MyClassExtendsJsPrototype> myClass) /*-{
       @java.lang.Class::getPrototypeForClass(Ljava/lang/Class;)(myClass).prototype = $wnd.MyClass;
   }-*/;
-
-  @Override
-  public String getModuleName() {
-    return "com.google.gwt.core.Core";
-  }
-
-  private native int callShouldBeAvailable(Object ref) /*-{
-    return ref.shouldBeAvailable();
-  }-*/;
-
-  private native String getEnumNameViaJs(NestedTest.NestedEnum ref) /*-{
-      return ref.name2();
-  }-*/;
-
-  private native int getFooBAR() /*-{
-      return $wnd && $wnd.foo && $wnd.foo.NamespaceTester && $wnd.foo.NamespaceTester.BAR || 0;
-  }-*/;
-
-  private native int getWOO() /*-{
-      return $wnd && $wnd.woo && $wnd.woo.PackageNamespaceTester
-          && $wnd.woo.PackageNamespaceTester.WOO || 0;
-  }-*/;
-
-  private native Object getStaticInitializerStaticField1() /*-{
-      return $wnd && $wnd.woo && $wnd.woo.StaticInitializerStaticField
-          && $wnd.woo.StaticInitializerStaticField.EXPORTED_1;
-  }-*/;
-
-  private native Object getStaticInitializerStaticField2() /*-{
-    return $wnd && $wnd.woo && $wnd.woo.StaticInitializerStaticField
-        && $wnd.woo.StaticInitializerStaticField.EXPORTED_2;
-  }-*/;
-
-  private native Object getExportedFieldOnInterface() /*-{
-    return $wnd && $wnd.woo && $wnd.woo.StaticInitializerStaticField
-        && $wnd.woo.StaticInitializerStaticField.InterfaceWithField
-        && $wnd.woo.StaticInitializerStaticField.InterfaceWithField.STATIC;
-  }-*/;
-
-  private native Object getStaticInitializerStaticMethod() /*-{
-      return $wnd && $wnd.woo && $wnd.woo.StaticInitializerStaticMethod
-          && $wnd.woo.StaticInitializerStaticMethod.getInstance();
-  }-*/;
-
-  private native Object getNotExportedFields() /*-{
-    return $wnd.woo.StaticInitializerStaticField.NOT_EXPORTED_1
-        || $wnd.woo.StaticInitializerStaticField.NOT_EXPORTED_2;
-  }-*/;
-
-  private native Object getNotExportedMethods() /*-{
-    return $wnd.woo.StaticInitializerStaticMethod.notExported_1
-        || $wnd.woo.StaticInitializerStaticMethod.notExported_2;
-  }-*/;
-
-  private native Object getStaticInitializerVirtualMethod() /*-{
-      if($wnd && $wnd.woo && $wnd.woo.StaticInitializerVirtualMethod) {
-          var obj = new $wnd.woo.StaticInitializerVirtualMethod();
-          return obj.getInstance();
-      }
-      return null;
-  }-*/;
-
-  public void testClassNamespace() {
-    assertEquals(NamespaceTester.BAR, getFooBAR());
-  }
-
-  public void testPackageNamespace() {
-    assertEquals(PackageNamespaceTester.WOO, getWOO());
-  }
-
-  public void testStaticInitializerStaticField() {
-    assertNotNull(getStaticInitializerStaticField1());
-    assertNotNull(getStaticInitializerStaticField2());
-    assertNotNull(getExportedFieldOnInterface());
-  }
-
-  public void testStaticInitializerStaticMethod() {
-    assertNotNull(getStaticInitializerStaticMethod());
-  }
-
-  public void testStaticInitializerVirtualMethod() {
-    assertNotNull(getStaticInitializerVirtualMethod());
-  }
-
-  public void testNotExport() {
-    assertNull(getNotExportedMethods());
-    assertNull(getNotExportedFields());
-  }
 
   public void testVirtualUpRefs() {
     ListImpl l2 = new ListImpl();
     FooImpl f2 = new FooImpl(); // both inherit .add(), but this one shouldn't be exported
     // prevent type tightening, force c to be Collection holding l2
-    Collection c = localMyClass() != null ? l2 : f2;
+    Collection c = alwaysTrue() ? l2 : f2;
+
     // should invoke obfuscated method
     c.add("Hello");
     assertEquals("HelloListImpl", l2.x);
     // force ListImpl to be assigned to collection without tightening
-    Collection c2 = localMyClass() != null ? f2 : l2;
+    Collection c2 = alwaysTrue() ? f2 : l2;
     c2.add("World");
     assertEquals("WorldCollectionBaseFooImpl", f2.x);
 
@@ -161,120 +76,69 @@ public class JsTypeTest extends GWTTestCase {
     assertEquals("TwoListImpl", l2.x);
   }
 
-  public void testJsTypeNestedEnum() {
-      assertEquals(NestedTest.NestedEnum.FOO.name(),
-        getEnumNameViaJs(NestedTest.NestedEnum.FOO));
-  }
-
   public void testJsTypeCallableFromJs() {
     MyJsTypeClass jsType = new MyJsTypeClass();
     assertEquals(1138, callShouldBeAvailable(jsType));
   }
 
+  private static native int callShouldBeAvailable(Object ref) /*-{
+    return ref.shouldBeAvailable();
+  }-*/;
+
   public void testSubClassWithSuperCalls() {
-    MyClassImpl mc = new MyClassImpl();
+    MyClassExtendsJsPrototype mc = new MyClassExtendsJsPrototype();
     assertEquals(150, mc.sum(1));
   }
 
   public void testJsProperties() {
-    MyClassImpl mc = new MyClassImpl();
+    MyClassExtendsJsPrototype mc = new MyClassExtendsJsPrototype();
     // test both fluent and non-fluent accessors
     mc.x(-mc.x()).setY(0);
     assertEquals(58, mc.sum(0));
     // TODO(cromwellian): Add test cases for property overriding of @JsProperty methods in java object
   }
 
-  public void testJsExports() {
-    // Test exported method can be called from JS in host page
-    ScriptInjector.fromString("exportedFromJava();").setWindow(ScriptInjector.TOP_WINDOW).inject();
-    assertTrue(MyClassImpl2.calledFromJsHostPageWindow);
-
-    // Test exported method can be called from JS in module window
-    ScriptInjector.fromString("exportedFromJava2();").inject();
-    assertTrue(MyClassImpl2.calledFromJsModuleWindow);
-
-    // Test exported constructor called from JS in module window
-    ScriptInjector.fromString("new $wnd.MyClassImpl3();").inject();
-    assertTrue(MyClassImpl3.calledFromJsModuleWindow);
-
-    // This is to reproduce the problem where we incorrectly type-tighten an exported method params.
-    ScriptInjector.fromString("$wnd.MyClassImpl3.foo($wnd.newA());").inject();
-    assertTrue(MyClassImpl3.calledFromBar);
-  }
-
   public void testCasts() {
-    MyJsInterface doc1 = null;
-    MyJsInterface.LocalMyClass doc2 = null;
-    MyJsInterface.ButtonLikeJso doc3 = null;
-    try {
-      assertNotNull(doc1 = (MyJsInterface) mainMyClass());
-      assertNotNull(doc2 = (MyJsInterface.LocalMyClass) localMyClass());
-      assertNotNull(doc2 = (MyJsInterface.LocalMyClass) mainMyClass());
-    } catch (ClassCastException cce) {
-      fail();
-    }
+    MyJsInterface myClass;
+    assertNotNull(myClass = (MyJsInterface) createMyJsInterface());
 
     try {
-      assertNotNull(doc1 = (MyJsInterface) localMyClass());
+      assertNotNull(myClass = (MyJsInterface) createNativeButton());
       fail();
     } catch (ClassCastException cce) {
+      // Expected.
     }
 
-    try {
-      assertNotNull(doc3 = (MyJsInterface.ButtonLikeJso) mainMyClass());
-      assertNotNull(doc3 = (MyJsInterface.ButtonLikeJso) localMyClass());
-    } catch (ClassCastException cce) {
-      fail();
-    }
+    ElementLikeJsInterface button;
+    // JsTypes without prototypes can cross-cast like JSOs
+    assertNotNull(button = (ElementLikeJsInterface) createMyJsInterface());
 
     /*
-     * If full optimizations are turned on, it is possible for the compiler to dead-strip the
-     * doc1/doc2/doc3 variables since they are not used, therefore the casts could potentially
-     * be stripped
+     * If the optimizations are turned on, it is possible for the compiler to dead-strip the
+     * variables since they are not used. Therefore the casts could potentially be stripped.
      */
-    assertNotNull(doc1);
-    assertNotNull(doc2);
-    assertNotNull(doc3);
+    assertNotNull(myClass);
+    assertNotNull(button);
   }
 
   public void testInstanceOf() {
-    // check that instanceof works between frames
-    assertTrue(mainMyClass() instanceof MyJsInterface);
-    assertTrue(localMyClass() instanceof MyJsInterface.LocalMyClass);
-    assertTrue(mainMyClass() instanceof MyJsInterface.LocalMyClass);
+    assertTrue(createMyJsInterface() instanceof MyJsInterface);
 
-    // check that JsTypes without prototypes can cross-cast like JSOs
-    assertTrue(mainMyClass() instanceof MyJsInterface.ButtonLikeJso);
-    assertTrue(localMyClass() instanceof MyJsInterface.ButtonLikeJso);
-
-    // check that it doesn't work if $wnd is forced
-    assertFalse(localMyClass() instanceof MyJsInterface);
+    // JsTypes without prototypes can cross-cast like JSOs
+    assertTrue(createMyJsInterface() instanceof ElementLikeJsInterface);
   }
 
-  static native boolean isIE8() /*-{
-    return $wnd.navigator.userAgent.toLowerCase().indexOf('msie') != -1 && $doc.documentMode == 8;
-  }-*/;
-
-  static native boolean isFirefox40OrEarlier() /*-{
-    return @com.google.gwt.dom.client.DOMImplMozilla::isGecko2OrBefore()();
-  }-*/;
-
-  // TODO: re-enable after removing $wnd support in casts.
-  @DoNotRunWith(Platform.HtmlUnitBug)
   public void testInstanceOfNative() {
-    if (isIE8() || isFirefox40OrEarlier()) {
-      return;
-    }
-    Object obj = makeNativeButton();
+    Object obj = createNativeButton();
     assertTrue(obj instanceof Object);
     assertTrue(obj instanceof HTMLButtonElement);
     assertTrue(obj instanceof HTMLElement);
     assertFalse(obj instanceof Iterator);
     assertTrue(obj instanceof HTMLAnotherElement);
-    assertFalse(obj instanceof MyJsInterface.LocalMyClass);
+    assertFalse(obj instanceof MyJsInterface);
 
     // to foil type tightening
-    obj = alwaysTrue() ? new MyButtonWithIterator() : null;
+    obj = alwaysTrue() ? new MyCustomHtmlButtonWithIterator() : null;
     assertTrue(obj instanceof Object);
     assertTrue(obj instanceof HTMLButtonElement);
     assertTrue(obj instanceof HTMLElement);
@@ -286,24 +150,51 @@ public class JsTypeTest extends GWTTestCase {
      * result, as well as add a test here that can be type-tightened.
      */
     assertTrue(obj instanceof HTMLAnotherElement);
-    assertFalse(obj instanceof MyJsInterface.LocalMyClass);
+    assertFalse(obj instanceof MyJsInterface);
   }
 
-  private native boolean alwaysTrue() /*-{
+  public void testInstanceOfWithNameSpace() {
+    Object obj1 = createMyNamespacedJsInterface();
+    Object obj2 = createMyWrongNamespacedJsInterface();
+
+    assertTrue(obj1 instanceof MyNamespacedJsInterface);
+    assertFalse(obj1 instanceof MyJsInterface);
+
+    assertFalse(obj2 instanceof MyNamespacedJsInterface);
+  }
+
+  private static native boolean alwaysTrue() /*-{
     return !!$wnd;
   }-*/;
 
-  private native Object makeNativeButton() /*-{
+  private static native Object createNativeButton() /*-{
     return $doc.createElement("button");
   }-*/;
 
-  private native Object localMyClass() /*-{
-    return new MyJsInterface();
-  }-*/;
-
-  private native Object mainMyClass() /*-{
+  private static native Object createMyJsInterface() /*-{
     return new $wnd.MyJsInterface();
   }-*/;
+
+  private static native Object createMyNamespacedJsInterface() /*-{
+    $wnd.testfoo = {};
+    $wnd.testfoo.bar = {};
+    $wnd.testfoo.bar.MyJsInterface = function(){};
+    return new $wnd.testfoo.bar.MyJsInterface();
+  }-*/;
+
+  private static native Object createMyWrongNamespacedJsInterface() /*-{
+    $wnd["testfoo.bar.MyJsInterface"] = function(){};
+    return new $wnd['testfoo.bar.MyJsInterface']();
+  }-*/;
+
+  private static native boolean isIE8() /*-{
+    return $wnd.navigator.userAgent.toLowerCase().indexOf('msie') != -1 && $doc.documentMode == 8;
+  }-*/;
+
+  private static native boolean isFirefox40OrEarlier() /*-{
+    return @com.google.gwt.dom.client.DOMImplMozilla::isGecko2OrBefore()();
+  }-*/;
+
   /*
    * TODO (cromwellian): Add test case for following:
    * interface ANonJsType {
@@ -317,5 +208,5 @@ public class JsTypeTest extends GWTTestCase {
    * }
    * verify methodA() is dispatched properly from both interfaces.
    * Add similar test case with methodA implemented in parent JS class.
-  */
+   */
 }

@@ -15,12 +15,13 @@
  */
 package com.google.gwt.core.client.interop;
 
-class MyClassImpl extends MyJsInterface.Prototype {
+class MyClassExtendsJsPrototype extends MyJsInterface.Prototype {
 
-  MyClassImpl() {
+  MyClassExtendsJsPrototype() {
     x(42).setY(7);
   }
 
+  @Override
   public int sum(int bias) {
     return super.sum(bias) + 100;
   }

@@ -15,17 +15,25 @@
  */
 package com.google.gwt.core.client.interop;
 
+import static junit.framework.Assert.assertEquals;
+
 import com.google.gwt.core.client.js.JsExport;
-import com.google.gwt.core.client.js.JsType;
 
-@JsType class NestedTest {
-  @JsType
-  @JsExport
-  public enum NestedEnum {
-    FOO, BAR;
+class MyClassExportsMethodWithClinit {
 
-    public String name2() {
-      return name();
+  public static int magicNumber = 0;
+
+  static {
+    // prevent optimizations from inlining this clinit()
+    if (Math.random() > -1) {
+      magicNumber = 42;
     }
+  }
+
+  @JsExport("MyClassExportsMethodWithClinit")
+  public MyClassExportsMethodWithClinit() {
+    // ensure clinit() is called even when invoked from JS
+    assertEquals(42, magicNumber);
+    magicNumber = 23;
   }
 }

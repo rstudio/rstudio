@@ -149,50 +149,11 @@ final class Cast {
         return false;
     }
 
-    // fast check for $wnd versions when CastNormalizer can pass function refs directly
-    // TODO(cromwellian) restore JSymbolLiteral to allow JS reference literals to be passed through
-    var jsType = window[jsTypeStr];
-    if (typeof(jsType) === 'function'  && obj instanceof jsType) {
-        return true;
+    var jsType = $wnd;
+    for (var i = 0, parts = jsTypeStr.split("."), l = parts.length; i < l ; i++) {
+      jsType = jsType && jsType[parts[i]];
     }
-
-    // early out for non-Java types because this check is expensive
-    if (typeof(obj) === 'string' || @Util::hasTypeMarker(Ljava/lang/Object;)(obj)) {
-        return false;
-    }
-
-    // hack workaround for HtmlUnit and fast early exit
-    // This *ONLY* works for functions in JS that are non-anonymous and doesn't obey hierarchy
-    // TODO(cromwellian) TEMPORARY: fix HtmlUnit patch upstream and remove this
-    if (obj.constructor && obj.constructor.name == jsTypeStr) {
-        return true;
-    }
-
-    // More general check, works on all browsers
-    if (obj.constructor) {
-      // TODO: remove support for $wnd
-      var isMainWindow = jsTypeStr.substring(0, 5) == '$wnd.';
-      var jsFunction = obj.constructor;
-      var jsTypeInContext = $wnd;
-      if (!isMainWindow) {
-        // Find native 'Function' function
-        while (jsFunction != jsFunction.constructor) {
-          jsFunction = jsFunction.constructor;
-        }
-        // eval 'return this' in context to get global scope which defines obj's constructor
-        var jsTypeInContext = jsFunction("return window || self;")();
-      } else {
-        // strip of $wnd.
-        jsTypeStr = jsTypeStr.substring(5);
-      }
-      // build up contextWindow.some.type.Path
-      for (var parts = jsTypeStr.split("."), i = 0, l = parts.length; i < l && jsTypeInContext;
-          i++) {
-          jsTypeInContext = jsTypeInContext[parts[i]];
-      }
-      return obj instanceof jsTypeInContext;
-    }
-    return false;
+    return jsType && obj instanceof jsType;
   }-*/;
 
   static native boolean jsNotEquals(Object a, Object b) /*-{

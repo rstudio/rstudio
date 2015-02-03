@@ -13,24 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.core;
+package com.google.gwt.core.client.interop;
 
-import com.google.gwt.core.client.interop.JsExportTest;
-import com.google.gwt.core.client.interop.JsTypeTest;
+import java.util.Iterator;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
-
-/**
- * All core tests that require js interop.
- */
-public class CoreJsInteropSuite {
-  public static Test suite() {
-    TestSuite suite = new TestSuite("All core js interop tests");
-
-    suite.addTestSuite(JsTypeTest.class);
-    suite.addTestSuite(JsExportTest.class);
-
-    return suite;
+class MyCustomHtmlButtonWithIterator extends HTMLButtonElement.Prototype implements Iterable {
+  @Override
+  public Iterator iterator() {
+    return null;
   }
 }

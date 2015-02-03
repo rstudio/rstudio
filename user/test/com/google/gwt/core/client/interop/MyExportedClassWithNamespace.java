@@ -16,18 +16,16 @@
 package com.google.gwt.core.client.interop;
 
 import com.google.gwt.core.client.js.JsExport;
+import com.google.gwt.core.client.js.JsNamespace;
 
-class MyClassImpl2 {
-  public static boolean calledFromJsHostPageWindow = false;
-  public static boolean calledFromJsModuleWindow = false;
-
-  @JsExport("$wnd.exportedFromJava")
-  public static void callMe() {
-        calledFromJsHostPageWindow = true;
-    }
-
-  @JsExport("exportedFromJava2")
-  public static void callMe2() {
-        calledFromJsModuleWindow = true;
-    }
+/**
+ * Test namespace on a class.
+ */
+@JsNamespace("foo")
+@JsExport
+public class MyExportedClassWithNamespace {
+  /**
+   * Exported field.
+   */
+  public final static int BAR = 42;
 }

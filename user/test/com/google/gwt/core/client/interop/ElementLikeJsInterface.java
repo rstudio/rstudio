@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Google Inc.
+ * Copyright 2015 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,15 +15,15 @@
  */
 package com.google.gwt.core.client.interop;
 
-import com.google.gwt.core.client.js.JsExport;
+
+import com.google.gwt.core.client.js.JsProperty;
+import com.google.gwt.core.client.js.JsType;
 
 /**
- * Test namespace inherited from containing package.
+ * An interface that represent part of HTML element's contract.
  */
-@JsExport
-public class PackageNamespaceTester {
-  /**
-   * Exported field.
-   */
-  public final static int WOO = 1001;
+@JsType
+public interface ElementLikeJsInterface {
+  @JsProperty
+  String getTagName();
 }

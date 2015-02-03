@@ -22,9 +22,9 @@ import com.google.gwt.core.client.JavaScriptObject;
  * JavaScript.
  */
 public class JavaClassHierarchySetupUtil {
-  /*
-  * Holds a map from typeIds to prototype objects.
-  */
+  /**
+   * Holds a map from typeIds to prototype objects.
+   */
   private static JavaScriptObject prototypesByTypeId = JavaScriptObject.createObject();
 
   /**
@@ -80,8 +80,8 @@ public class JavaClassHierarchySetupUtil {
   /**
    * Like defineClass() but second parameter is a native JS prototype reference.
    */
-  public static native JavaScriptObject defineClassWithPrototype(int typeId, JavaScriptObject jsSuperClass,
-                                                    JavaScriptObject castableTypeMap) /*-{
+  public static native JavaScriptObject defineClassWithPrototype(int typeId,
+      JavaScriptObject jsSuperClass, JavaScriptObject castableTypeMap) /*-{
       // Setup aliases for (horribly long) JSNI references.
       var prototypesByTypeId = @com.google.gwt.lang.JavaClassHierarchySetupUtil::prototypesByTypeId;
 
@@ -156,19 +156,12 @@ public class JavaClassHierarchySetupUtil {
    * @return a nested object literal representing the namespace
    */
   public static native JavaScriptObject provide(JavaScriptObject namespace) /*-{
-      var cur = this; // global this
-      // TODO: remove and switch default assume via compile-time config/flag
-      if (namespace == '$wnd') {
-          return $wnd;
-      } else if (namespace === '') {
+      var cur = $wnd;
+
+      if (namespace === '') {
           return cur;
       }
 
-      // if namespace begins with $wnd, then we root the namespace there
-      if (namespace.substring(0, 5) == '$wnd.') {
-          cur = $wnd;
-          namespace = namespace.substring(5);
-      }
       // borrowed from Closure's base.js
       var parts = namespace.split('.');
 
