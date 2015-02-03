@@ -887,75 +887,35 @@ private:
 // global source file index
 SourceFileIndex s_projectIndex;
 
-// maintain an in-memory list of R source document indexes (for fast
-// code searching)
-class RSourceIndexes : boost::noncopyable
+} // anonymous namespace
+
+void RSourceIndexes::initialize()
 {
-public:
-   RSourceIndexes() {}
-   virtual ~RSourceIndexes() {}
+   source_database::events().onDocUpdated.connect(
+       boost::bind(&RSourceIndexes::update, this, _1));
+   source_database::events().onDocRemoved.connect(
+       boost::bind(&RSourceIndexes::remove, this, _1));
+   source_database::events().onRemoveAll.connect(
+       boost::bind(&RSourceIndexes::removeAll, this));
+}
 
-   // COPYING: boost::noncopyable
+void RSourceIndexes::update(
+    boost::shared_ptr<session::source_database::SourceDocument> pDoc)
+{
+   // is this indexable? if not then bail
+   if (!pDoc->canContainRCode())
+      return;
 
-   void initialize()
-   {
-      source_database::events().onDocUpdated.connect(
-                              boost::bind(&RSourceIndexes::update, this, _1));
-      source_database::events().onDocRemoved.connect(
-                              boost::bind(&RSourceIndexes::remove, this, _1));
-      source_database::events().onRemoveAll.connect(
-                              boost::bind(&RSourceIndexes::removeAll, this));
-   }
+   // index the source
+   boost::shared_ptr<r_util::RSourceIndex> pIndex(
+       new r_util::RSourceIndex(pDoc->path(), pDoc->contents()));
 
-   void update(boost::shared_ptr<session::source_database::SourceDocument> pDoc)
-   {
-      // is this indexable? if not then bail
-      if (!pDoc->canContainRCode())
-         return;
-      
-      // index the source
-      boost::shared_ptr<r_util::RSourceIndex> pIndex(
-                 new r_util::RSourceIndex(pDoc->path(), pDoc->contents()));
-      
-      // insert it
-      indexes_[pDoc->id()] = pIndex;
+   // insert it
+   indexes_[pDoc->id()] = pIndex;
 
-      // kick off an update if necessary
-      r_completions::AsyncRCompletions::update();
-   }
-   
-   boost::shared_ptr<r_util::RSourceIndex> get(const std::string& id)
-   {
-      if (indexes_.find(id) != indexes_.end())
-         return indexes_[id];
-      return boost::shared_ptr<r_util::RSourceIndex>();
-   }
-   
-   void remove(const std::string& id)
-   {
-      indexes_.erase(id);
-   }
-
-   void removeAll()
-   {
-      indexes_.clear();
-   }
-
-   std::vector<boost::shared_ptr<r_util::RSourceIndex> > indexes()
-   {
-      std::vector<boost::shared_ptr<r_util::RSourceIndex> > indexes;
-      BOOST_FOREACH(const IndexMap::value_type& index, indexes_)
-      {
-         indexes.push_back(index.second);
-      }
-      return indexes;
-   }
-
-private:
-   typedef std::map<std::string, boost::shared_ptr<r_util::RSourceIndex> >
-                                                                    IndexMap;
-   IndexMap indexes_;
-};
+   // kick off an update if necessary
+   r_completions::AsyncRCompletions::update();
+}
 
 RSourceIndexes& rSourceIndex()
 {
@@ -963,7 +923,7 @@ RSourceIndexes& rSourceIndex()
    return instance;
 }
 
-
+namespace {
 
 // if we have a project active then restrict results to the project
 bool sourceDatabaseFilter(const r_util::RSourceIndex& index)

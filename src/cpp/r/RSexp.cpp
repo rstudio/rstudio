@@ -413,7 +413,18 @@ Error extract(SEXP valueSEXP, std::vector<std::string>* pVector)
    
    return Success();
 }
+
+Error extract(SEXP valueSEXP, std::set<std::string>* pSet)
+{
+   if (TYPEOF(valueSEXP) != STRSXP)
+      return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
+
+   pSet->clear();
+   for (int i=0; i<Rf_length(valueSEXP); i++)
+      pSet->insert(Rf_translateChar(STRING_ELT(valueSEXP, i)));
    
+   return Success();
+}
    
 SEXP create(const json::Value& value, Protect* pProtect)
 {

@@ -21,6 +21,7 @@
 #include <core/Error.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include "SessionCodeSearch.hpp"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
@@ -34,9 +35,11 @@
 #include <core/FileUtils.hpp>
 #include <core/r_util/RTokenizer.hpp>
 #include <core/r_util/RParser.hpp>
+#include <core/r_util/RSourceIndex.hpp>
 #include <core/FileUtils.hpp>
 #include <core/collection/Tree.hpp>
 #include <core/collection/Stack.hpp>
+
 
 #include <core/Macros.hpp>
 
@@ -103,8 +106,7 @@ void addUnreferencedSymbol(const ParseItem& item,
 
 } // end anonymous namespace
 
-ParseResults parseAndLintRFile(const FilePath& filePath,
-                               const std::set<std::string>& objects)
+ParseResults parseAndLintRFile(const FilePath& filePath)
 {
    std::string contents = file_utils::readFile(filePath);
    if (contents.empty() || contents.find_first_not_of(" \n\t\v") == std::string::npos)
@@ -124,34 +126,30 @@ ParseResults parseAndLintRFile(const FilePath& filePath,
    
    // Finally, prune the set of lintItems -- we exclude any symbols
    // that were on the search path.
-   BOOST_FOREACH(const ParseItem& item, unresolvedItems)
+   std::set<std::string> objects;
+   Error error = r::exec::RFunction(".rs.availableRSymbols").call(&objects);
+   if (error)
+      LOG_ERROR(error);
+   else
    {
-      if (objects.count(item.symbol) == 0)
+      BOOST_FOREACH(const ParseItem& item, unresolvedItems)
       {
-         addUnreferencedSymbol(item, results.lint());
+         if (objects.count(item.symbol) == 0)
+         {
+            addUnreferencedSymbol(item, results.lint());
+         }
       }
    }
    
    return results;
 }
 
-SEXP rs_parseAndLintRFile(SEXP pathSEXP,
-                          SEXP searchPathObjectsSEXP)
+SEXP rs_parseAndLintRFile(SEXP pathSEXP)
 {
    std::string path = r::sexp::asString(pathSEXP);
    FilePath filePath(module_context::resolveAliasedPath(path));
    
-   std::set<std::string> objects;
-   bool success = r::sexp::fillSetString(searchPathObjectsSEXP, &objects);
-   if (!success)
-   {
-      DEBUG("Failed to fill search path vector");
-      return R_NilValue;
-   }
-   
-   DEBUG("Number of objects on search path: " << objects.size());
-   
-   ParseResults parsed = parseAndLintRFile(filePath, objects);
+   ParseResults parsed = parseAndLintRFile(filePath);
    const std::vector<LintItem>& lintItems = parsed.lint().get();
    
    using namespace rstudio::r::sexp;
@@ -213,6 +211,31 @@ void showGutterMarkers(const LintItems& items)
 
 namespace {
 
+Error lint(const json::JsonRpcRequest& request,
+           json::JsonRpcResponse* pResponse)
+{
+   std::string docPath;
+   Error error = json::readParams(request.params, &docPath);
+   
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+   
+   FilePath filePath(module_context::resolveAliasedPath(docPath));
+   
+   // TODO: No file exists?
+   if (!filePath.exists())
+      return Success();
+   
+   ParseResults results = parseAndLintRFile(filePath);
+   pResponse->setResult(lintAsJson(results.lint()));
+   
+   return Success();
+   
+}
+
 SEXP rs_showGutterMarkers(SEXP filePathSEXP)
 {
    FilePath path = FilePath(r::sexp::asString(filePathSEXP));
@@ -226,16 +249,20 @@ SEXP rs_showGutterMarkers(SEXP filePathSEXP)
 
 core::Error initialize()
 {
+   // on client init, schedule incremental work
+   // onDocUpdated, schedule work
+   // stateful object: shared_ptr<> 
    using namespace rstudio::core;
    using boost::bind;
    using namespace module_context;
    
-   RS_REGISTER_CALL_METHOD(rs_parseAndLintRFile, 2);
+   RS_REGISTER_CALL_METHOD(rs_parseAndLintRFile, 1);
    RS_REGISTER_CALL_METHOD(rs_showGutterMarkers, 0);
    
    ExecBlock initBlock;
    initBlock.addFunctions()
-         (bind(sourceModuleRFile, "SessionLinter.R"));
+         (bind(sourceModuleRFile, "SessionLinter.R"))
+         (bind(registerRpcMethod, "lint", lint));
 
    return initBlock.execute();
 

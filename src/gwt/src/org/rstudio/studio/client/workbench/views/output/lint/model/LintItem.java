@@ -59,13 +59,14 @@ public class LintItem extends JavaScriptObject
    /*-{
       
       var aceAnnotations = [];
-      for (var item in items)
+      
+      for (var key in items)
       {
          aceAnnotations.push({
-            row: items["start.row"],
-            column: items["start.column"],
-            text: items["text"],
-            type: items["type"]
+            row: items[key]["start.row"],
+            column: items[key]["start.column"],
+            text: items[key]["text"],
+            type: items[key]["type"]
          });
       }
       

@@ -192,4 +192,8 @@ public class EditSession extends JavaScriptObject
    public native final void setAnnotations(JsArray<AceAnnotation> annotations) /*-{
       this.setAnnotations(annotations);
    }-*/;
+   
+   public native final JsArray<AceAnnotation> getAnnotations() /*-{
+      return this.getAnnotations();
+   }-*/;
 }

@@ -30,10 +30,15 @@
    )
 )
 
+.rs.addFunction("parseAndLint", function(filePath)
+{
+   .Call("rs_parseAndLintRFile", filePath)
+})
+
 .rs.addFunction("setLintEngine", function(engine)
 {
    if (identical(engine, "internal"))
-      .rs.setVar("r.lint.engine", .rs.internalLinter)
+      .rs.setVar("r.lint.engine", .rs.internalLintEngine)
    else if (!is.function(engine))
       stop("'engine' must be a function taking a single argument (file path)")
    else
@@ -44,7 +49,7 @@
 {
    engine <- .rs.getVar("r.lint.engine")
    if (is.null(engine))
-      .rs.internalLinter
+      .rs.internalLintEngine
    else
       engine
 })
@@ -55,14 +60,19 @@
    engine(filePath)
 })
 
-.rs.addFunction("internalLinter", function(filePath)
+.rs.addFunction("availableRSymbols", function()
+{
+   unlist(c(.rs.objectsOnSearchPath(), .rs.getVar("r.keywords")))
+})
+
+.rs.addFunction("internalLintEngine", function(filePath)
 {
    if (!file.exists(filePath))
       return(list())
       
    filePath <- .rs.normalizePath(filePath)
-   objects <- unlist(c(.rs.objectsOnSearchPath(), .rs.getVar("r.keywords")))
-   lint <- .Call("rs_parseAndLintRFile", filePath, objects)
+   lint <- .rs.parseAndLint(filePath)
+   .rs.showLintMarkers(lint, filePath)
 })
 
 .rs.addFunction("showLintMarkers", function(lint, filePath)
@@ -76,7 +86,7 @@
 })
 
 .rs.addFunction("createMarkersFromLint", function(lint, file) {
-   markers <- lapply(lint, function(x) {
+   lapply(lint, function(x) {
       list(
          type = x$type,
          file = file,
@@ -86,5 +96,4 @@
          messageHTML = FALSE
       )
    })
-   markers
 })

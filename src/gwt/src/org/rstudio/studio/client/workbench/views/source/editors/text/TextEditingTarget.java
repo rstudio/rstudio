@@ -2017,23 +2017,29 @@ public class TextEditingTarget implements
       if (!docDisplay_.getFileType().isR())
          return;
       
-      server_.lint(
-            docUpdateSentinel_.getId(),
-            new ServerRequestCallback<JsArray<LintItem>>()
-            {
-               @Override
-               public void onResponseReceived(JsArray<LintItem> items)
-               {
-                  showLintItems(items);
-               }
+      docUpdateSentinel_.withSavedDoc(new Command()
+      {
+         @Override
+         public void execute()
+         {
+            server_.lint(
+                  docUpdateSentinel_.getPath(),
+                  new ServerRequestCallback<JsArray<LintItem>>()
+                  {
+                     @Override
+                     public void onResponseReceived(JsArray<LintItem> items)
+                     {
+                        showLintItems(items);
+                     }
 
-               @Override
-               public void onError(ServerError error)
-               {
-                  Debug.logError(error);
-               }
-            });
-            
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        Debug.logError(error);
+                     }
+                  });
+         }
+      });
    }
    
    void showLintItems(JsArray<LintItem> items)
