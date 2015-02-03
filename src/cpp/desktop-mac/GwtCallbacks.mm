@@ -458,7 +458,8 @@ private:
       controller = [[WebViewController alloc] initWithURLRequest:
                   [NSURLRequest requestWithURL: [NSURL URLWithString: url]]
                                           name: windowName
-                                    clientName: name];
+                                    clientName: name
+                         allowExternalNavigate: false];
       
       if ([windowName isEqualToString: @"_rstudio_viewer_zoom_minimal"])
          [[controller window] setTitle: @"Viewer Zoom"];
@@ -498,6 +499,18 @@ private:
                                           height: height];
 }
 
+- (void) prepareForNamedWindow: (NSString*) name
+         allowExternalNavigate: (bool) allowExternalNavigate
+{
+   [WebViewController prepareForNamedWindow: name
+                      allowExternalNavigate: allowExternalNavigate];
+}
+
+- (void) closeNamedWindow: (NSString*) name
+{
+   [WebViewController closeNamedWindow: name];
+   [self bringMainFrameToFront];
+}
 
 - (void) copyImageToClipboard: (int) left top: (int) top
                         width: (int) width height: (int) height
@@ -1092,7 +1105,11 @@ enum RS_NSActivityOptions : uint64_t
       return @"setWindowTitle";
    else if (sel == @selector(reloadViewerZoomWindow:))
       return @"reloadViewerZoomWindow";
-  
+   else if (sel == @selector(prepareForNamedWindow:allowExternalNavigate:))
+      return @"prepareForNamedWindow";
+   else if (sel == @selector(closeNamedWindow:))
+      return @"closeNamedWindow";
+   
    return nil;
 }
 

@@ -35,7 +35,9 @@ public:
                            bool adjustTitle,
                            QString name,
                            QUrl baseUrl = QUrl(),
-                           QWidget *parent = NULL);
+                           QWidget *parent = NULL,
+                           WebPage *pOpener = NULL,
+                           bool allowExternalNavigate = false);
     WebView* webView();
 
 protected slots:
@@ -46,8 +48,6 @@ protected slots:
      virtual void onJavaScriptWindowObjectCleared();
      void printRequested(QWebFrame* frame);
 
-     void onCloseRequested();
-
 protected:
      void avoidMoveCursorIfNecessary();
 
@@ -56,6 +56,7 @@ protected:
      virtual WebPage* webPage();
      virtual void postWebViewEvent(QEvent *event);
      virtual void triggerPageAction(QWebPage::WebAction action);
+     virtual void closeEvent(QCloseEvent *event);
 
      // hooks for subclasses
      virtual QSize printDialogMinimumSize()
@@ -71,6 +72,7 @@ private:
      int progress_;
      bool adjustTitle_;
      QString name_;
+     WebPage* pOpener_;
 };
 
 } // namespace desktop

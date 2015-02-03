@@ -1,7 +1,7 @@
 /*
- * RSConnectConnectAccount.java
+ * RSConnectCloudAccount.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,14 +25,13 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 
-public class RSConnectConnectAccount extends Composite
+public class RSConnectCloudAccount extends Composite
 {
+   private static RSConnectCloudAccountUiBinder uiBinder = GWT
+         .create(RSConnectCloudAccountUiBinder.class);
 
-   private static RSConnectConnectAccountUiBinder uiBinder = GWT
-         .create(RSConnectConnectAccountUiBinder.class);
-
-   interface RSConnectConnectAccountUiBinder extends
-         UiBinder<Widget, RSConnectConnectAccount>
+   interface RSConnectCloudAccountUiBinder extends
+         UiBinder<Widget, RSConnectCloudAccount>
    {
    }
    
@@ -41,7 +40,7 @@ public class RSConnectConnectAccount extends Composite
       String spaced();
    }
 
-   public RSConnectConnectAccount()
+   public RSConnectCloudAccount()
    {
       initWidget(uiBinder.createAndBindUi(this));
       accountInfo.addKeyUpHandler(new KeyUpHandler()
@@ -55,6 +54,11 @@ public class RSConnectConnectAccount extends Composite
             }
          }
       });
+   }
+   
+   public void focus()
+   {
+      accountInfo.setFocus(true);
    }
    
    public void setOnAccountInfoChanged(Command cmd)

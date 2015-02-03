@@ -49,6 +49,7 @@ public:
          const std::string& dir,
          const std::string& file, 
          const std::string& account,
+         const std::string& server,
          const std::string& app)
    {
       boost::shared_ptr<ShinyAppDeploy> pDeploy(new ShinyAppDeploy(file));
@@ -59,7 +60,7 @@ public:
       cmd += "rsconnect::deployApp("
              "appDir = '" + dir + "',"
              "account = '" + account + "',"
-             "server = 'shinyapps.io', "
+             "server = '" + server + "', "
              "appName = '" + app + "', "
              "launch.browser = function (url) { "
              "   message('" kFinishedMarker "', url) "
@@ -140,9 +141,9 @@ boost::shared_ptr<ShinyAppDeploy> s_pShinyAppDeploy_;
 Error deployShinyApp(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse* pResponse)
 {
-   std::string sourceDir, sourceFile, account, appName;
+   std::string sourceDir, sourceFile, account, server, appName;
    Error error = json::readParams(request.params, &sourceDir, &sourceFile, 
-                                  &account, &appName);
+                                  &account, &server, &appName);
    if (error)
       return error;
 
@@ -154,7 +155,7 @@ Error deployShinyApp(const json::JsonRpcRequest& request,
    else
    {
       s_pShinyAppDeploy_ = ShinyAppDeploy::create(sourceDir, sourceFile, 
-                                                  account, appName);
+                                                  account, server, appName);
       pResponse->setResult(true);
    }
 

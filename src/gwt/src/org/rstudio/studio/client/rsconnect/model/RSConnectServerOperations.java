@@ -18,20 +18,19 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
 
 public interface RSConnectServerOperations
 {
-   void removeRSConnectAccount(String accountName, 
+   void removeRSConnectAccount(String accountName, String server,
                ServerRequestCallback<Void> requestCallback);
 
    void getRSConnectAccountList(
-               ServerRequestCallback<JsArrayString> requestCallback);
+               ServerRequestCallback<JsArray<RSConnectAccount>> requestCallback);
 
    void connectRSConnectAccount(String command, 
                ServerRequestCallback<Void> requestCallback);
 
-   void getRSConnectAppList(String accountName,
+   void getRSConnectAppList(String accountName, String server,
                ServerRequestCallback<JsArray<RSConnectApplicationInfo>> requestCallback);
    
    void getRSConnectDeployments(String dir, 
@@ -40,6 +39,19 @@ public interface RSConnectServerOperations
    void getDeploymentFiles (String dir, 
                ServerRequestCallback<RSConnectDeploymentFiles> requestCallback);
    
-   void deployShinyApp(String dir, String file, String account, String appName, 
+   void deployShinyApp(String dir, String file, String account, String server, String appName, 
                ServerRequestCallback<Boolean> requestCallback);
+
+   void validateServerUrl (String url, 
+               ServerRequestCallback<RSConnectServerInfo> requestCallback);
+   
+   void getPreAuthToken(String serverName, 
+               ServerRequestCallback<RSConnectPreAuthToken> requestCallback);
+   
+   void getUserFromToken(String url, RSConnectPreAuthToken token,
+               ServerRequestCallback<RSConnectAuthUser> requestCallback);
+   
+   void registerUserToken(String serverName, String accountName, int userId, 
+                RSConnectPreAuthToken token, 
+                ServerRequestCallback<Void> requestCallback);
 }

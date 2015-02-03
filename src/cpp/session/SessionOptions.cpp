@@ -197,7 +197,13 @@ core::ProgramStatus Options::read(int argc, char * const argv[])
          "allow removal of the user public folder")
       ("allow-rpubs-publish",
          value<bool>(&allowRpubsPublish_)->default_value(true),
-        "allow publishing to rpubs");
+        "allow publishing content to external services")
+      ("allow-external-publish",
+         value<bool>(&allowExternalPublish_)->default_value(true),
+        "allow publishing content to external services")
+      ("allow-publish",
+         value<bool>(&allowPublish_)->default_value(true),
+        "allow publishing content");
 
    // r options
    bool rShellEscape; // no longer works but don't want to break any

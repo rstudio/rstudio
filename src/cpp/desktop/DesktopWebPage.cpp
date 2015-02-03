@@ -43,10 +43,11 @@ WindowTracker s_windowTracker;
 
 } // anonymous namespace
 
-WebPage::WebPage(QUrl baseUrl, QWidget *parent) :
+WebPage::WebPage(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
       QWebPage(parent),
       baseUrl_(baseUrl),
-      navigated_(false)
+      navigated_(false),
+      allowExternalNav_(allowExternalNavigate)
 {
    settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
    settings()->setAttribute(QWebSettings::JavascriptCanOpenWindows, true);
@@ -67,95 +68,100 @@ void WebPage::activateWindow(QString name)
       desktop::raiseAndActivateWindow(pWindow);
 }
 
-void WebPage::prepareForSatelliteWindow(
-                              const PendingSatelliteWindow& pendingWnd)
+void WebPage::closeWindow(QString name)
 {
-   pendingSatelliteWindow_ = pendingWnd;
+   BrowserWindow* pWindow = s_windowTracker.getWindow(name);
+   if (pWindow)
+      desktop::closeWindow(pWindow);
 }
 
-void WebPage::prepareForNamedWindow(const QString name)
+void WebPage::prepareForWindow(const PendingWindow& pendingWnd)
 {
-   pendingNamedWindow_ = name;
+   pendingWindow_ = pendingWnd;
 }
 
 QWebPage* WebPage::createWindow(QWebPage::WebWindowType)
 {
+   QString name;
+   bool isSatellite = false;
+   bool showToolbar = true;
+   bool allowExternalNavigate = false;
+   int width = 0;
+   int height = 0;
+   MainWindow* pMainWindow = NULL;
+   BrowserWindow* pWindow = NULL;
+
    // check if this is a satellite window
-   if (!pendingSatelliteWindow_.isEmpty())
+   if (!pendingWindow_.isEmpty())
    {
       // capture pending window params then clear them (one time only)
-      QString name = pendingSatelliteWindow_.name;
-      MainWindow* pMainWindow = pendingSatelliteWindow_.pMainWindow;
+      name = pendingWindow_.name;
+      isSatellite = pendingWindow_.isSatellite;
+      showToolbar = pendingWindow_.showToolbar;
+      pMainWindow = pendingWindow_.pMainWindow;
+      allowExternalNavigate = pendingWindow_.allowExternalNavigate;
 
       // get width and height, and adjust for high DPI
       double dpiZoomScaling = getDpiZoomScaling();
-      int width = pendingSatelliteWindow_.width * dpiZoomScaling;
-      int height = pendingSatelliteWindow_.height * dpiZoomScaling;
+      width = pendingWindow_.width * dpiZoomScaling;
+      height = pendingWindow_.height * dpiZoomScaling;
 
-      pendingSatelliteWindow_ = PendingSatelliteWindow();
+      pendingWindow_ = PendingWindow();
 
       // check for an existing window of this name
-      BrowserWindow* pSatellite = s_windowTracker.getWindow(name);
-      if (pSatellite)
+      pWindow = s_windowTracker.getWindow(name);
+      if (pWindow)
       {
          // activate the browser then return NULL to indicate
          // we didn't create a new WebView
-         desktop::raiseAndActivateWindow(pSatellite);
+         desktop::raiseAndActivateWindow(pWindow);
          return NULL;
       }
-      // create a new window if we didn't find one
-      else
+   }
+
+   if (isSatellite)
+   {
+      // create and size
+      pWindow = new SatelliteWindow(pMainWindow, name);
+      pWindow->resize(width, height);
+
+      // try to tile the window (but leave pdf window alone
+      // since it is so large)
+      if (name != QString::fromUtf8("pdf"))
       {
-         // create and size
-         pSatellite = new SatelliteWindow(pMainWindow, name);
-         pSatellite->resize(width, height);
+         // calculate location to move to
 
-         // try to tile the window (but leave pdf window alone
-         // since it is so large)
-         if (name != QString::fromUtf8("pdf"))
-         {
-            // calculate location to move to
+         // y always attempts to be 25 pixels above then faults back
+         // to 25 pixels below if that would be offscreen
+         const int OVERLAP = 25;
+         int moveY = pMainWindow->y() - OVERLAP;
+         if (moveY < 0)
+            moveY = pMainWindow->y() + OVERLAP;
 
-            // y always attempts to be 25 pixels above then faults back
-            // to 25 pixels below if that would be offscreen
-            const int OVERLAP = 25;
-            int moveY = pMainWindow->y() - OVERLAP;
-            if (moveY < 0)
-               moveY = pMainWindow->y() + OVERLAP;
+         // x is based on centering over main window
+         int moveX = pMainWindow->x() +
+                     (pMainWindow->width() / 2) -
+                     (width / 2);
 
-            // x is based on centering over main window
-            int moveX = pMainWindow->x() +
-                        (pMainWindow->width() / 2) -
-                        (width / 2);
-
-            // perform movve
-            pSatellite->move(moveX, moveY);
-         }
-
-         // add to tracker
-         s_windowTracker.addWindow(name, pSatellite);
-
-         // show and return the browser
-         pSatellite->show();
-         return pSatellite->webView()->webPage();
+         // perform move
+         pWindow->move(moveX, moveY);
       }
    }
    else
    {
-      // show toolbar unless this is the pdf.js window
-      SecondaryWindow* pWindow = new SecondaryWindow(baseUrl_,
-         pendingNamedWindow_ != QString::fromUtf8("rstudio_pdfjs"));
-      pWindow->show();
-
-      // if we have a name set, start tracking this window
-      if (!pendingNamedWindow_.isEmpty())
-      {
-         s_windowTracker.addWindow(pendingNamedWindow_, pWindow);
-         pendingNamedWindow_.clear();
-      }
-
-      return pWindow->webView()->webPage();
+      pWindow = new SecondaryWindow(showToolbar, name, baseUrl_, NULL, this,
+                                    allowExternalNavigate);
    }
+
+   // if we have a name set, start tracking this window
+   if (!name.isEmpty())
+   {
+      s_windowTracker.addWindow(name, pWindow);
+   }
+
+   // show and return the browser
+   pWindow->show();
+   return pWindow->webView()->webPage();
 }
 
 void WebPage::closeRequested()
@@ -228,6 +234,11 @@ bool WebPage::acceptNavigationRequest(QWebFrame* pWebFrame,
       else if (navType == QWebPage::NavigationTypeLinkClicked)
       {
          desktop::openUrl(url);
+      }
+      else if (allowExternalNav_)
+      {
+         navigated_ = true;
+         return true;
       }
 
       if (!navigated_)
@@ -341,6 +352,5 @@ void WebPage::setViewerUrl(const QString& viewerUrl)
    viewerUrl_ = url.scheme() + QString::fromUtf8("://") +
                 url.authority() + QString::fromUtf8("/");
 }
-
 }
 }

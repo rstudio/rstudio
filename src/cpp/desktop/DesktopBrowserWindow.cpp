@@ -32,14 +32,17 @@ BrowserWindow::BrowserWindow(bool showToolbar,
                              bool adjustTitle,
                              QString name,
                              QUrl baseUrl,
-                             QWidget* pParent) :
+                             QWidget* pParent,
+                             WebPage* pOpener,
+                             bool allowExternalNavigate) :
    QMainWindow(pParent),
-   name_(name)
+   name_(name),
+   pOpener_(pOpener)
 {
    adjustTitle_ = adjustTitle;
    progress_ = 0;
 
-   pView_ = new WebView(baseUrl, this);
+   pView_ = new WebView(baseUrl, this, allowExternalNavigate);
    QWebFrame* mainFrame = pView_->page()->mainFrame();
    connect(mainFrame, SIGNAL(javaScriptWindowObjectCleared()),
            this, SLOT(onJavaScriptWindowObjectCleared()));
@@ -82,16 +85,33 @@ void BrowserWindow::printRequested(QWebFrame* frame)
    dialog.exec();
 }
 
-void BrowserWindow::onCloseRequested()
+void BrowserWindow::closeEvent(QCloseEvent *event)
 {
-   QString cmd = QString::fromUtf8("if (window.opener && "
-      "window.opener.unregisterDesktopChildWindow))"
-      "   window.opener.unregisterDesktopChildWindow('");
-   cmd.append(name_);
-   cmd.append(QString::fromUtf8("');"));
+   if (pOpener_ == NULL)
+   {
+      // if we don't know where we were opened from, check window.opener
+      // (note that this could also be empty)
+      QString cmd = QString::fromUtf8("if (window.opener && "
+         "window.opener.unregisterDesktopChildWindow))"
+         "   window.opener.unregisterDesktopChildWindow('");
+      cmd.append(name_);
+      cmd.append(QString::fromUtf8("');"));
+      webView()->page()->mainFrame()->evaluateJavaScript(cmd);
+   }
+   else if (pOpener_->mainFrame())
+   {
+      // if we do know where we were opened from and it has the appropriate
+      // handlers, let it know we're closing
+      QString cmd = QString::fromUtf8(
+                  "if (window.unregisterDesktopChildWindow) "
+                  "   window.unregisterDesktopChildWindow('");
+      cmd.append(name_);
+      cmd.append(QString::fromUtf8("');"));
+      pOpener_->mainFrame()->evaluateJavaScript(cmd);
+   }
 
-   webView()->page()->mainFrame()->evaluateJavaScript(cmd);
-   close();
+   // forward the close event to the web view
+   webView()->event(event);
 }
 
 void BrowserWindow::adjustTitle()

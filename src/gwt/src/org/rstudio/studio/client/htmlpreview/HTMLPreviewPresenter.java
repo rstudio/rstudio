@@ -43,7 +43,9 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
+import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 
 import com.google.gwt.dom.client.NativeEvent;
@@ -102,6 +104,7 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
                                RemoteFileSystemContext fileSystemContext,
                                HTMLPreviewServerOperations server,
                                RPubsPresenter rpubsPresenter,
+                               UIPrefs prefs,
                                Provider<FileExport> pFileExport)
    {
       view_ = view;
@@ -111,13 +114,14 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
       fileDialogs_ = fileDialogs;
       fileSystemContext_ = fileSystemContext;
       pFileExport_ = pFileExport;
+      prefs_ = prefs;
       
       rpubsPresenter.setContext(this);
       
       binder.bind(commands, this);  
       
-      // disable rpubs if requested
-      if (!session.getSessionInfo().getAllowRpubsPublish())
+      // disable external publishing if requested
+      if (!SessionUtils.showExternalPublishUi(session, prefs))
       {
          commands.publishHTML().remove();
       }
@@ -206,7 +210,7 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
                   result.getHtmlFile(),
                   result.getEnableSaveAs(),
                   isMarkdownFile(result.getSourceFile()) &&
-                  session_.getSessionInfo().getAllowRpubsPublish(),
+                  SessionUtils.showPublishUi(session_, prefs_),
                   result.getEnableRefresh(),
                   lastPreviewOutput_.length() > 0);
 
@@ -434,4 +438,5 @@ public class HTMLPreviewPresenter implements IsWidget, RPubsPresenter.Context
    private final RemoteFileSystemContext fileSystemContext_;
    private final HTMLPreviewServerOperations server_;
    private final Provider<FileExport> pFileExport_;
+   private final UIPrefs prefs_;
 }

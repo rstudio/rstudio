@@ -9,7 +9,6 @@
 #import <WebKit/WebFrame.h>
 #import <Webkit/WebUIDelegate.h>
 
-
 #import "Options.hpp"
 #import "WebViewController.h"
 #import "GwtCallbacks.h"
@@ -23,15 +22,21 @@
 
 using namespace rstudio;
 
-struct PendingSatelliteWindow
+struct PendingWindow
 {
-   PendingSatelliteWindow()
+   PendingWindow()
       : name(), width(-1), height(-1)
    {
    }
    
-   PendingSatelliteWindow(std::string name, int width, int height)
-      : name(name), width(width), height(height)
+   PendingWindow(std::string name, int width, int height)
+      : name(name), width(width), height(height), isSatellite(true)
+   {
+   }
+   
+   PendingWindow(std::string name, bool allowExternalNavigation)
+      : name(name), allowExternalNavigate(allowExternalNavigation),
+        isSatellite(false)
    {
    }
    
@@ -40,7 +45,23 @@ struct PendingSatelliteWindow
    std::string name;
    int width;
    int height;
+   bool allowExternalNavigate;
+   bool isSatellite;
 };
+
+NSString* authorityFromUrl (NSString* url)
+{
+   // extract the authority (domain and port) from the URL:
+   // e.g. for http://foo:8402/bar/baz.html, extract http://foo:8402/
+   NSURL* authorityUrl = [NSURL URLWithString: url];
+   NSString* port = @"";
+   if ([authorityUrl port] != nil) {
+      port = [NSString stringWithFormat: @":%@", [authorityUrl port]];
+   }
+   NSString* prefix = [NSString stringWithFormat: @"%@://%@%@/",
+                       [authorityUrl scheme], [authorityUrl host], port];
+   return prefix;
+}
 
 // get access to private webview zoom apis
 @interface WebView (Zoom)
@@ -52,19 +73,25 @@ struct PendingSatelliteWindow
 @implementation WebViewController
 
 static NSMutableDictionary* namedWindows_;
-static PendingSatelliteWindow pendingWindow_;
+static PendingWindow pendingWindow_;
 
 + (void) initialize
 {
    namedWindows_ = [[NSMutableDictionary alloc] init];
-   pendingWindow_ = PendingSatelliteWindow();
+   pendingWindow_ = PendingWindow();
 }
 
 + (void) prepareForSatelliteWindow: (NSString*) name
                              width: (int) width
                             height: (int) height
 {
-   pendingWindow_ = PendingSatelliteWindow([name UTF8String], width, height);
+   pendingWindow_ = PendingWindow([name UTF8String], width, height);
+}
+
++ (void) prepareForNamedWindow: (NSString *) name
+         allowExternalNavigate: (bool) allow
+{
+   pendingWindow_ = PendingWindow([name UTF8String], allow);
 }
 
 + (WebViewController*) windowNamed: (NSString*) name
@@ -79,6 +106,12 @@ static PendingSatelliteWindow pendingWindow_;
       [[controller window] makeKeyAndOrderFront: self];
 }
 
++ (void) closeNamedWindow: (NSString *)name
+{
+   WebViewController* controller = [self windowNamed: name];
+   if (controller)
+      [[controller window] close];
+}
 
 - (WebView*) webView
 {
@@ -90,6 +123,7 @@ static PendingSatelliteWindow pendingWindow_;
    [name_ release];
    [webView_ release];
    [baseUrl_ release];
+   [viewerUrl_ release];
    [super dealloc];
 }
 
@@ -103,9 +137,14 @@ static PendingSatelliteWindow pendingWindow_;
 - (id)initWithURLRequest: (NSURLRequest*) request
                     name: (NSString*) name
               clientName: (NSString*) clientName
+   allowExternalNavigate: (bool) allowExternalNavigate
 {
    // record base url
    baseUrl_ = [[request URL] retain];
+   
+   // indicate whether this window is permitted to load external (non-local)
+   // URLs
+   allowExternalNav_ = allowExternalNavigate;
    
    // create window and become it's delegate
    NSRect frameRect =  NSMakeRect(20, 20, 1024, 768);
@@ -162,7 +201,7 @@ static PendingSatelliteWindow pendingWindow_;
          clientName_ = [clientName copy];
       }
       
-      // set fullscreen mode (defualt to non-primary)
+      // set fullscreen mode (default to non-primary)
       desktop::utils::enableFullscreenMode(window, false);
       
    }
@@ -222,17 +261,7 @@ static PendingSatelliteWindow pendingWindow_;
          return;
       }
       
-      // extract the authority (domain and port) from the URL; we'll agree to
-      // serve requests for the viewer pane that match this prefix.
-      // e.g. for http://foo:8402/bar/baz.html, extract http://foo:8402/
-      NSURL* viewerUrl = [NSURL URLWithString: url];
-      NSString* port = @"";
-      if ([viewerUrl port] != nil) {
-         port = [NSString stringWithFormat: @":%@", [viewerUrl port]];
-      }
-      NSString* prefix = [NSString stringWithFormat: @"%@://%@%@/",
-                          [viewerUrl scheme], [viewerUrl host], port];
-      viewerUrl_ = [prefix retain];
+      viewerUrl_ = [authorityFromUrl(url) retain];
    }
 }
 
@@ -296,7 +325,6 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
    [frameView printOperationWithPrintInfo: [NSPrintInfo sharedPrintInfo]];
    [printOperation runOperation];
 }
-
 
 // WebViewController is a self-freeing object so free it when the window closes
 - (void)windowWillClose:(NSNotification *) notification
@@ -403,14 +431,21 @@ runJavaScriptAlertPanelWithMessage: (NSString *) message
          [self handleBase64Download: url
                          forElement: [actionInformation
                                       objectForKey:WebActionElementKey]];
+         [listener ignore];
       }
       // show external links in a new window
       else if (navType == WebNavigationTypeLinkClicked)
       {
          desktop::utils::browseURL(url);
+         [listener ignore];
       }
-      
-      [listener ignore];
+      else
+      {
+         if (allowExternalNav_)
+            [listener use];
+         else
+            [listener ignore];
+      }
    }
 }
 
@@ -480,43 +515,47 @@ decidePolicyForMIMEType: (NSDictionary *) actionInformation
 - (WebView *) webView: (WebView *) sender
               createWebViewWithRequest:(NSURLRequest *)request
 {
-   // check for a pending satellite request
+   NSString* name = nil;
+   bool isSatellite = false;
+   bool allowExternalNavigate = false;
+
+   // check to see if this window is one we're expecting
    if (!pendingWindow_.empty())
    {
-      // capture and then clear the pending window
-      PendingSatelliteWindow pendingWindow = pendingWindow_;
-      pendingWindow_ = PendingSatelliteWindow();
-      
-      // get the name
-      NSString* name =
-        [NSString stringWithUTF8String: pendingWindow.name.c_str()];
-     
-      // check for an existing window
+      PendingWindow pendingWindow = pendingWindow_;
+      pendingWindow_ = PendingWindow();
+      name = [NSString stringWithUTF8String: pendingWindow.name.c_str()];
+      isSatellite = pendingWindow.isSatellite;
+      allowExternalNavigate = pendingWindow.allowExternalNavigate;
+
+      // check for an existing window, and activate it
       WebViewController* controller = [namedWindows_ objectForKey: name];
       if (controller)
       {
          [[controller window] makeKeyAndOrderFront: self];
          return nil;
       }
-      else
-      {
-         // self-freeing so don't auto-release
-         SatelliteController* satelliteController =
-         [[SatelliteController alloc] initWithURLRequest: request
-                                                    name: name
-                                              clientName: name];
-         
-         // return it
-         return [satelliteController webView];
-      }
+   }
+   
+   // create the appropriate controller type; these are self-freeing so don't
+   // auto-release
+   if (isSatellite)
+   {
+      SatelliteController* satelliteController =
+      [[SatelliteController alloc] initWithURLRequest: request
+                                                 name: name
+                                           clientName: name
+                                allowExternalNavigate: allowExternalNavigate];
+      
+      return [satelliteController webView];
    }
    else
    {
-      // self-freeing so don't auto-release
       SecondaryWindowController * controller =
          [[SecondaryWindowController alloc] initWithURLRequest: request
-                                                          name: nil
-                                                    clientName: nil];
+                                                          name: name
+                                                    clientName: name
+                                         allowExternalNavigate: allowExternalNavigate];
       return [controller webView];
    }
 }

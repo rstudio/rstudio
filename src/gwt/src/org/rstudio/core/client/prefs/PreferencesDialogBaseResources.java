@@ -48,6 +48,7 @@ public interface PreferencesDialogBaseResources extends ClientBundle
    ImageResource iconR();
    ImageResource iconSpelling();
    ImageResource iconSourceControl();
+   ImageResource iconPublishing();
    
    static PreferencesDialogBaseResources INSTANCE = (PreferencesDialogBaseResources)GWT.create(PreferencesDialogBaseResources.class) ;
 }

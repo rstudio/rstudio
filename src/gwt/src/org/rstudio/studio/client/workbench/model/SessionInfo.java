@@ -320,8 +320,12 @@ public class SessionInfo extends JavaScriptObject
       return this.allow_remove_public_folder;
    }-*/;
    
-   public final native boolean getAllowRpubsPublish() /*-{
-      return this.allow_rpubs_publish;
+   public final native boolean getAllowExternalPublish() /*-{
+      return this.allow_external_publish;
+   }-*/;
+   
+   public final native boolean getAllowPublish() /*-{
+      return this.allow_publish;
    }-*/;
    
    public final native String getSwitchToProject() /*-{
@@ -354,10 +358,6 @@ public class SessionInfo extends JavaScriptObject
 
    public final native boolean getHaveAdvancedStepCommands() /*-{
       return this.have_advanced_step_commands;
-   }-*/;
-   
-   public final native boolean getRSConnectAvailable() /*-{
-      return this.rsconnect_available;
    }-*/;
    
    public final native boolean getRMarkdownPackageAvailable() /*-{

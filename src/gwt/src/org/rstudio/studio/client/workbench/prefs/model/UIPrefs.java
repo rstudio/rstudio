@@ -310,6 +310,10 @@ public class UIPrefs extends UIPrefsAccessor implements UiPrefsChangedHandler
          // preferred R Markdown template
          rmdPreferredTemplatePath().setGlobalValue(
                newUiPrefs.rmdPreferredTemplatePath().getGlobalValue());
+
+         // whether to show publish UI 
+         showPublishUi().setGlobalValue(
+               newUiPrefs.showPublishUi().getGlobalValue());
       }
       else if (e.getType().equals(UiPrefsChangedEvent.PROJECT_TYPE))
       {

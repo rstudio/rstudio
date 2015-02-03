@@ -453,13 +453,26 @@ void GwtCallback::prepareForSatelliteWindow(QString name,
                                             int width,
                                             int height)
 {
-   pOwner_->webPage()->prepareForSatelliteWindow(
-                PendingSatelliteWindow(name, pMainWindow_, width, height));
+   pOwner_->webPage()->prepareForWindow(
+                PendingWindow(name, pMainWindow_, width, height));
 }
 
-void GwtCallback::prepareForNamedWindow(QString name)
+void GwtCallback::prepareForNamedWindow(QString name,
+                                        bool allowExternalNavigate,
+                                        bool showDesktopToolbar)
 {
-   pOwner_->webPage()->prepareForNamedWindow(name);
+   pOwner_->webPage()->prepareForWindow(
+                PendingWindow(name, allowExternalNavigate, showDesktopToolbar));
+}
+
+void GwtCallback::closeNamedWindow(QString name)
+{
+   // close the requested window
+   pOwner_->webPage()->closeWindow(name);
+
+   // bring the main window to the front (so we don't lose RStudio context
+   // entirely)
+   desktop::raiseAndActivateWindow(pMainWindow_);
 }
 
 void GwtCallback::activateSatelliteWindow(QString name)
@@ -1034,9 +1047,6 @@ void GwtCallback::reloadViewerZoomWindow(QString url)
       pBrowser->webView()->setUrl(url);
 }
 
-
-
-
 bool GwtCallback::isOSXMavericks()
 {
    return desktop::isOSXMavericks();
@@ -1091,8 +1101,6 @@ void GwtCallback::installRtools(QString version, QString installerPath)
 {
 }
 #endif
-
-
 
 
 } // namespace desktop

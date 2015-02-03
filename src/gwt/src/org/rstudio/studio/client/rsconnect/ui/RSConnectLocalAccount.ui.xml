@@ -1,0 +1,39 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui"
+	xmlns:rsw="urn:import:org.rstudio.core.client.widget">
+	<ui:style>
+	.explanatoryText
+	{
+		font-size: x-small;
+	}
+	.spaced
+	{
+	  margin-top: 15px;
+	}
+	
+	.textControl
+	{
+	  margin-top: 5px;
+	  padding: 3px;
+	}
+	</ui:style>
+	<g:HTMLPanel>
+      <g:VerticalPanel>
+         <g:Label text="Enter the URL of the RStudio Connect server:">
+         </g:Label>
+         <rsw:TextBoxWithCue styleName="{style.textControl}"
+                             cueText="http://servername/" 
+                             width="250px"
+                             ui:field="serverUrl_"></rsw:TextBoxWithCue>
+         <g:Label styleName="{style.spaced}" text="Enter a nickname for your account: (optional)">
+         </g:Label>
+         <rsw:TextBoxWithCue styleName="{style.textControl}"
+                             cueText="jsmith"
+                             ui:field="accountName_"></rsw:TextBoxWithCue>
+         <g:Label styleName="{style.spaced} {style.explanatoryText}"
+                  text="Contact your RStudio Connect server administrator if you need its URL.">
+         </g:Label>
+       </g:VerticalPanel>
+	</g:HTMLPanel>
+</ui:UiBinder> 

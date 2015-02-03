@@ -77,6 +77,7 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
@@ -2417,7 +2418,7 @@ public class Source implements InsertSourceHandler,
    private void manageRSConnectCommands()
    {
       boolean shinyCommandsAvailable = 
-            session_.getSessionInfo().getRSConnectAvailable() &&
+            SessionUtils.showPublishUi(session_, uiPrefs_) &&
             (activeEditor_ != null) &&
             (activeEditor_.getPath() != null) &&
             ((activeEditor_.getExtendedFileType() == "shiny"));

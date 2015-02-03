@@ -51,6 +51,7 @@ import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
 import org.rstudio.studio.client.workbench.views.edit.ui.EditDialog;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
@@ -247,7 +248,7 @@ public class TextEditingTargetWidget
       shinyLaunchButton_.setVisible(false);
       toolbar.addRightWidget(shinyLaunchButton_);
       
-      if (session_.getSessionInfo().getRSConnectAvailable())
+      if (SessionUtils.showPublishUi(session_, uiPrefs_))
       {
          toolbar.addRightSeparator();
          RSConnectUtils.addPublishCommands(toolbar, null, false);
