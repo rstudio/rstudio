@@ -78,7 +78,7 @@
       cols$file <- .rs.normalizePath(cols$file, mustWork = TRUE)
       
       # check for html
-      cols$messageHTML <- inherits(cols$message, "html")
+      cols$messageHTML <- .rs.scalar(inherits(cols$message, "html"))
       
    } else if (is.list(markers)) {
       markers <- lapply(markers, function(marker) {
@@ -96,10 +96,10 @@
          
          marker$type <- .rs.scalar(marker$type)
          marker$file <- .rs.scalar(.rs.normalizePath(marker$file, mustWork = TRUE))
-         marker$line <- .rs.scalar(marker$line)
-         marker$column <- .rs.scalar(marker$column)
+         marker$line <- .rs.scalar(as.numeric(marker$line))
+         marker$column <- .rs.scalar(as.numeric(marker$column))
          marker$message <- .rs.scalar(marker$message)
-         marker$messageHTML <- inherits(marker$message, "html")
+         marker$messageHTML <- .rs.scalar(inherits(marker$message, "html"))
          
          marker
       })
@@ -113,7 +113,8 @@
    else if (!is.character(basePath))
       stop("basePath parameter is not of type character", call. = FALSE)
    
-   # pass everything on
+   str(markers)
+   
    invisible(.Call("rs_sourceMarkers", name, markers, basePath, autoSelect))
 })
 

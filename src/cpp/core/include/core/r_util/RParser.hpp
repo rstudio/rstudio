@@ -80,7 +80,7 @@ enum LintType
    LintTypeError
 };
 
-inline std::string asString(LintType type)
+inline std::string lintTypeToString(LintType type)
 {
    switch (type)
    {
@@ -92,7 +92,6 @@ inline std::string asString(LintType type)
    
    return std::string();
 }
-
 
 struct LintItem
 {
@@ -294,8 +293,10 @@ public:
    typedef std::vector<LintItem>::iterator iterator;
    typedef std::vector<LintItem>::const_iterator const_iterator;
    
-   iterator begin() { return lintItems_.begin(); }
-   iterator end() { return lintItems_.end(); }
+   const_iterator begin() const { return lintItems_.begin(); }
+   const_iterator end() const { return lintItems_.end(); }
+   std::size_t size() const { return lintItems_.size(); }
+   std::size_t empty() const { return lintItems_.empty(); }
    
    std::size_t errorCount() const { return errorCount_; }
    bool hasErrors() const { return errorCount_ > 0; }

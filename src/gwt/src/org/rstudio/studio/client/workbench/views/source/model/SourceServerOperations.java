@@ -26,6 +26,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
+import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 
@@ -45,7 +46,8 @@ public interface SourceServerOperations extends FilesServerOperations,
                                                 TexServerOperations,
                                                 HTMLPreviewServerOperations,
                                                 BuildServerOperations,
-                                                PresentationServerOperations
+                                                PresentationServerOperations,
+                                                LintServerOperations
 {
    /**
     * Create a new, empty document, without a path but with a unique ID, and

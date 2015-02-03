@@ -107,6 +107,8 @@ import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.help.events.ShowHelpEvent;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
+import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
+import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.source.SourceBuildHelper;
@@ -2007,6 +2009,39 @@ public class TextEditingTarget implements
       }
       
       reformatHelper_.insertPrettyNewlines();
+   }
+   
+   @Handler
+   void onLint()
+   {
+      if (!docDisplay_.getFileType().isR())
+         return;
+      
+      server_.lint(
+            docUpdateSentinel_.getId(),
+            new ServerRequestCallback<JsArray<LintItem>>()
+            {
+               @Override
+               public void onResponseReceived(JsArray<LintItem> items)
+               {
+                  showLintItems(items);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
+            
+   }
+   
+   void showLintItems(JsArray<LintItem> items)
+   {
+      JsArray<AceAnnotation> annotations =
+            LintItem.asAceAnnotations(items);
+      
+      docDisplay_.setAnnotations(annotations);
    }
    
    @Handler

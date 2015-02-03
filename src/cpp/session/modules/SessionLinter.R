@@ -63,6 +63,10 @@
    filePath <- .rs.normalizePath(filePath)
    objects <- unlist(c(.rs.objectsOnSearchPath(), .rs.getVar("r.keywords")))
    lint <- .Call("rs_parseAndLintRFile", filePath, objects)
+})
+
+.rs.addFunction("showLintMarkers", function(lint, filePath)
+{
    markers <- .rs.createMarkersFromLint(lint, filePath)
    .rs.api.sourceMarkers(
       name = "Linter",
@@ -78,7 +82,8 @@
          file = file,
          line = x$start.row,
          column = x$start.column,
-         message = x$message
+         message = x$message,
+         messageHTML = FALSE
       )
    })
    markers

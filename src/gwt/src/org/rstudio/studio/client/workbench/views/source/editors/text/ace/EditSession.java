@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
+import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
@@ -185,5 +187,9 @@ public class EditSession extends JavaScriptObject
    
    public native final void clearBreakpoints(int[] lines) /*-{
       this.clearBreakpoints(lines);
+   }-*/;
+   
+   public native final void setAnnotations(JsArray<AceAnnotation> annotations) /*-{
+      this.setAnnotations(annotations);
    }-*/;
 }

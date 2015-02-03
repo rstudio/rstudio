@@ -63,6 +63,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
+import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
@@ -2025,6 +2026,11 @@ public class AceEditor implements DocDisplay,
    public int getTabSize()
    {
       return widget_.getEditor().getSession().getTabSize();
+   }
+   
+   public void setAnnotations(JsArray<AceAnnotation> annotations)
+   {
+      widget_.getEditor().getSession().setAnnotations(annotations);
    }
 
    private static final int DEBUG_CONTEXT_LINES = 2;

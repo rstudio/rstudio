@@ -22,6 +22,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
+import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
@@ -236,6 +237,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void removeAllBreakpoints();
    void toggleBreakpointAtCursor();
    boolean hasBreakpoints();
+   
+   void setAnnotations(JsArray<AceAnnotation> annotations);
    
    void setPopupVisible(boolean visible);
    boolean isPopupVisible();

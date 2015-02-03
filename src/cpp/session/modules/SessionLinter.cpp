@@ -31,7 +31,9 @@
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 
+#include <core/FileUtils.hpp>
 #include <core/r_util/RTokenizer.hpp>
+#include <core/r_util/RParser.hpp>
 #include <core/FileUtils.hpp>
 #include <core/collection/Tree.hpp>
 #include <core/collection/Stack.hpp>
@@ -166,7 +168,7 @@ SEXP rs_parseAndLintRFile(SEXP pathSEXP,
       lintList.add("end.row", item.endRow + 1);
       lintList.add("start.column", item.startColumn + 1);
       lintList.add("end.column", item.endColumn + 1);
-      lintList.add("type", asString(item.type));
+      lintList.add("type", lintTypeToString(item.type));
       lintList.add("message", item.message);
       
       result.add(static_cast<SEXP>(lintList));
@@ -175,6 +177,53 @@ SEXP rs_parseAndLintRFile(SEXP pathSEXP,
    return result;
 }
 
+namespace {
+
+json::Array lintAsJson(const LintItems& items)
+{
+   json::Array jsonArray;
+   jsonArray.reserve(items.size());
+   
+   BOOST_FOREACH(const LintItem& item, items)
+   {
+      json::Object jsonObject;
+      
+      jsonObject["start.row"] = item.startRow;
+      jsonObject["end.row"] = item.endRow;
+      jsonObject["start.column"] = item.startColumn;
+      jsonObject["end.column"] = item.endColumn;
+      jsonObject["text"] = item.message;
+      jsonObject["raw"] = item.message;
+      jsonObject["type"] = lintTypeToString(item.type);
+      
+      jsonArray.push_back(jsonObject);
+      
+   }
+   return jsonArray;
+}
+
+} // anonymous namespace
+
+void showGutterMarkers(const LintItems& items)
+{
+   json::Array json = lintAsJson(items);
+   ClientEvent event(client_events::kUpdateGutterMarkers, json);
+   module_context::enqueClientEvent(event);
+}
+
+namespace {
+
+SEXP rs_showGutterMarkers(SEXP filePathSEXP)
+{
+   FilePath path = FilePath(r::sexp::asString(filePathSEXP));
+   std::string contents = file_utils::readFile(path);
+   ParseResults results = parse(contents);
+   showGutterMarkers(results.lint());
+   return R_NilValue;
+}
+
+} // anonymous namespace
+
 core::Error initialize()
 {
    using namespace rstudio::core;
@@ -182,6 +231,7 @@ core::Error initialize()
    using namespace module_context;
    
    RS_REGISTER_CALL_METHOD(rs_parseAndLintRFile, 2);
+   RS_REGISTER_CALL_METHOD(rs_showGutterMarkers, 0);
    
    ExecBlock initBlock;
    initBlock.addFunctions()
