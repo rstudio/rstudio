@@ -108,7 +108,7 @@ public class RSConnect implements SessionInitHandler,
    public void onRSConnectAction(final RSConnectActionEvent event)
    {
       dependencyManager_.withRSConnect(
-         "Publishing shiny applications", null, new Command() {
+         "Publishing Shiny applications", null, new Command() {
 
             @Override
             public void execute()

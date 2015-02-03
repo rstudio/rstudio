@@ -15,7 +15,6 @@
 
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -29,7 +28,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -60,51 +58,9 @@ public class PublishingPreferencesPane extends PreferencesPane
       uiPrefs_ = prefs;
       server_ = server;
       connector_ = connector;
+      deps_ = deps;
       
-      final VerticalPanel rootPanel = new VerticalPanel();
-      
-      // set up the UI to be shown in the preferences pane if the packages
-      // aren't installed
-      final VerticalPanel missingDepsPanel = new VerticalPanel();
-      rootPanel.add(missingDepsPanel);
-      Label missingDepsLabel = new Label("Install Needed Packages");
-      missingDepsLabel.setStyleName(
-            PreferencesDialogBaseResources.INSTANCE.styles().headerLabel());
-      missingDepsPanel.add(missingDepsLabel);
-
-      Label missingDepsText = new Label(
-                  "Publishing apps and documents requires up to date " +
-                  "versions of one or more packages. After the packages " +
-                  "are installed, you may return to this pane to create or " +
-                  "connect accounts.");
-      missingDepsText.getElement().getStyle().setMarginBottom(5, Unit.PX);
-      missingDepsPanel.add(missingDepsText);
-      
-      missingDepsPanel.add(new Label("Packages to be installed or updated:"));
-
-      final Label missingDepsDesc = new Label("");
-      missingDepsDesc.getElement().getStyle().setFontWeight(FontWeight.BOLD);
-      missingDepsPanel.add(missingDepsDesc);
-      installButton_ = new ThemedButton("Install", 
-            new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent arg0)
-         {
-            if (installDepsCommand_ != null)
-            {
-               installButton_.setText("Installing...");
-               installButton_.setEnabled(false);
-               installDepsCommand_.execute();
-            }
-         }
-      });
-      installButton_.getElement().getStyle().setMarginTop(5, Unit.PX);
-      installButton_.getElement().getStyle().setMarginBottom(15, Unit.PX);
-      missingDepsPanel.add(installButton_);
-      
-      // set up the UI to be shown in the pane if the packages *are* installed
-      final VerticalPanel accountPanel = new VerticalPanel();
+      VerticalPanel accountPanel = new VerticalPanel();
       Label accountLabel = new Label("Publishing Accounts");
       HorizontalPanel hpanel = new HorizontalPanel();
       
@@ -131,6 +87,7 @@ public class PublishingPreferencesPane extends PreferencesPane
       
       VerticalPanel vpanel = new VerticalPanel();
       hpanel.add(vpanel);
+
       connectButton_ = new ThemedButton("Connect...");
       connectButton_.getElement().getStyle().setMarginBottom(5, Unit.PX);
       connectButton_.setWidth("100%");
@@ -159,38 +116,8 @@ public class PublishingPreferencesPane extends PreferencesPane
       setDisconnectButtonEnabledState();
 
       accountPanel.add(hpanel);
+      add(accountPanel);
       
-      // find out if our needed packages are installed, and show the appropriate UI
-      deps.withRSConnect(null, new CommandWith2Args<String,Command>()
-            {
-               @Override
-               public void execute(String unmetDeps, Command install)
-               {
-                  missingDepsDesc.setText(unmetDeps);
-                  installDepsCommand_ = install;
-                  rootPanel.insert(missingDepsPanel, 0);
-               }
-            }, 
-            new Command() 
-            {
-               @Override
-               public void execute()
-               {
-                  // runs when the dependencies have finished installing
-                  if (missingDepsPanel.isAttached())
-                  {
-                     rootPanel.remove(missingDepsPanel);
-                  }
-                  rootPanel.insert(accountPanel, 0);
-                  
-                  // in case there's any account metadata from a previous
-                  // installation of the package
-                  accountList_.refreshAccountList();
-               }
-            });
-      
-      add(rootPanel);
-
       Label settingsLabel = new Label("Settings");
       settingsLabel.setStyleName(
             PreferencesDialogBaseResources.INSTANCE.styles().headerLabel());
@@ -242,7 +169,6 @@ public class PublishingPreferencesPane extends PreferencesPane
 
    private void onDisconnect()
    {
-      // TODO: read selected account
       final RSConnectAccount account = accountList_.getSelectedAccount();
       if (account == null)
       {
@@ -291,6 +217,32 @@ public class PublishingPreferencesPane extends PreferencesPane
    
    private void onConnect()
    {
+      // if there's already at least one account connected, the requisite
+      // packages must be installed
+      if (accountList_.getAccountCount() > 0)
+      {
+         showAccountWizard();
+      }
+      else
+      {
+         deps_.withRSConnect("Connecting a publishing account", null, new Command() 
+         {
+            @Override
+            public void execute()
+            {
+               // refresh the account list in case there are accounts already on
+               // the system (e.g. package was installed at one point and some
+               // metadata remains)
+               accountList_.refreshAccountList();
+
+               showAccountWizard();
+            }
+         });
+      }
+   }
+   
+   private void showAccountWizard()
+   {
       connector_.showAccountWizard(new OperationWithInput<Boolean>() 
       {
          @Override
@@ -314,12 +266,11 @@ public class PublishingPreferencesPane extends PreferencesPane
    private final UIPrefs uiPrefs_;
    private final RSConnectServerOperations server_;
    private final RSAccountConnector connector_;
+   private final DependencyManager deps_;
 
    private RSConnectAccountList accountList_;
    private ThemedButton connectButton_;
    private ThemedButton disconnectButton_;
-   private ThemedButton installButton_;
    private boolean reloadRequired_;
-   private Command installDepsCommand_;
 }
 

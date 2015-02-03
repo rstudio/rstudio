@@ -145,6 +145,14 @@ public class RSConnectAccountList extends Composite
       return accountList_.addChangeHandler(handler);
    }
    
+   public int getAccountCount() 
+   {
+      if (accounts_ == null)
+         return 0;
+      else
+         return accounts_.length();
+   }
+   
    private final WidgetListBox<AccountEntry> accountList_;
    private final RSConnectServerOperations server_; 
    private final GlobalDisplay display_;
