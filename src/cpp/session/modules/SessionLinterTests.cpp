@@ -14,13 +14,28 @@
  */
 
 #include <tests/TestThat.hpp>
+
 #include "SessionLinter.hpp"
+
+#include <iostream>
+
+#include <core/collection/Tree.hpp>
+#include <core/FilePath.hpp>
+#include <core/system/FileScanner.hpp>
+#include <core/FileUtils.hpp>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/bind.hpp>
+#include <boost/foreach.hpp>
+
+#include <session/SessionOptions.hpp>
 
 namespace rstudio {
 namespace session {
 namespace modules {
 namespace linter {
 
+using namespace core;
 using namespace core::r_util;
 
 // We use macros so that the test output gives
@@ -53,6 +68,50 @@ using namespace core::r_util;
       expect_true(results.lint().get().empty());                               \
    } while (0)
 
+bool isRFile(const FileInfo& info)
+{
+   std::string ext = string_utils::getExtension(info.absolutePath());
+   return string_utils::toLower(ext) == ".r";
+}
+
+void lintRFilesInSubdirectory(const FilePath& path)
+{
+   tree<core::FileInfo> fileTree;
+   
+   core::system::FileScannerOptions fsOptions;
+   fsOptions.recursive = true;
+   fsOptions.yield = true;
+   
+   core::system::scanFiles(core::toFileInfo(path),
+             fsOptions,
+             &fileTree);
+   
+   tree<core::FileInfo>::leaf_iterator it = fileTree.begin_leaf();
+   for (; fileTree.is_valid(it); ++it)
+   {
+      const FileInfo& info = *it;
+      
+      if (info.isDirectory())
+         continue;
+      
+      if (!isRFile(info))
+         continue;
+      
+      std::string content = file_utils::readFile(core::toFilePath(info));
+      ParseResults results = parse(content);
+      
+      if (results.lint().hasErrors())
+      {
+         FAIL("Lint errors: '" + info.absolutePath() + "'");
+      }
+   }
+}
+
+void lintRStudioRFiles()
+{
+   lintRFilesInSubdirectory(options().coreRSourcePath());
+   lintRFilesInSubdirectory(options().modulesRSourcePath());
+}
 
 context("Linter")
 {
@@ -86,6 +145,10 @@ context("Linter")
       EXPECT_NO_ERRORS("a[,a]");
       EXPECT_NO_ERRORS("a[,,]");
       EXPECT_NO_ERRORS("a(,,1,,,{{}},)");
+      EXPECT_NO_ERRORS("x[x,,a]");
+      EXPECT_NO_ERRORS("x(x,,a)");
+      EXPECT_NO_ERRORS("x[1,,]");
+      EXPECT_NO_ERRORS("x(1,,)");
       
       EXPECT_NO_ERRORS("{if(!(a)){};if(b){}}");
       
@@ -93,8 +156,9 @@ context("Linter")
       EXPECT_ERRORS("((()})");
       
       EXPECT_NO_LINT("(function(a) a)");
-      
    }
+   
+   lintRStudioRFiles();
 }
 
 } // namespace linter

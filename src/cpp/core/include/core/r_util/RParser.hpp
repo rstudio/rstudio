@@ -24,6 +24,8 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <iostream>
+#include <iomanip>
 
 #include "RTokenizer.hpp"
 
@@ -34,6 +36,7 @@
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 
+// #define RSTUDIO_ENABLE_DEBUG_MACROS
 #include <core/Macros.hpp>
 
 namespace rstudio {
@@ -597,7 +600,7 @@ public:
    
    void push(const AnnotatedRToken& token)
    {
-      DEBUG("*** Pushing " << cursor << " on to brace stack");
+      DEBUG("*** Pushing " << token << " on to brace stack");
       stack_.push(ParseItem(
                      token.contentAsUtf8(),
                      Position(token.row(), token.column()),

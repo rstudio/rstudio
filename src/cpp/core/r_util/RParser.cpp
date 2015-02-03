@@ -152,7 +152,8 @@ std::wstring typeToWideString(char type)
    {                                                                           \
       if (!__CURSOR__.isType(__TYPE__))                                        \
       {                                                                        \
-         DEBUG("(" << __LINE__ << "): Expected " << typeToString(__TYPE__));   \
+         DEBUG("(" << __LINE__ << "): Expected "                               \
+                   << string_utils::wideToUtf8(typeToWideString(__TYPE__)));   \
          __STATUS__.lint().unexpectedToken(                                    \
              __CURSOR__, L"'" + typeToWideString(__TYPE__) + L"'");            \
          return;                                                               \
@@ -764,6 +765,15 @@ void handleArgumentList(TokenCursor& cursor,
    while (cursor.isType(RToken::COMMA))
    {
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
+      
+      // Move over missing arguments.
+      while (cursor.isType(RToken::COMMA))
+         MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
+      
+      // Check if we hit the end of the argument list.
+      if (isRightBrace(cursor))
+         break;
+      
       handleArgument(cursor, status);
    }
    

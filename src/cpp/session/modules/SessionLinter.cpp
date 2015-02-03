@@ -61,6 +61,7 @@ std::vector<std::string> makeNSEFunctions()
    s.push_back("enquote");
    s.push_back("expression");
    s.push_back("evalq");
+   s.push_back("subset");
    
    return s;
 }
