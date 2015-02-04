@@ -4355,7 +4355,8 @@ public class TextEditingTarget implements
       public boolean isCompletionEnabled()
       {
          return session_.getSessionInfo().getClangAvailable() &&
-                (docUpdateSentinel_.getPath() != null);
+                (docUpdateSentinel_.getPath() != null) &&
+                fileType_.isC();
       }
 
       @Override
