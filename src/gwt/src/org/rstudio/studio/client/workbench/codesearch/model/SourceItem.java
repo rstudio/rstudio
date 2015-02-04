@@ -30,7 +30,8 @@ public class SourceItem extends JavaScriptObject
    public static final int METHOD = 2;
    public static final int CLASS = 3;
    public static final int ENUM = 4;
-   public static final int NAMESPACE = 5;   
+   public static final int ENUM_VALUE = 5;
+   public static final int NAMESPACE = 6;   
 
    public final native int getType() /*-{
       return this.type;

@@ -84,6 +84,9 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
       case CXCursor_EnumDecl:
          kind = CppEnumDefinition;
          break;
+      case CXCursor_EnumConstantDecl:
+         kind = CppEnumValue;
+         break;
       case CXCursor_FunctionDecl:
       case CXCursor_FunctionTemplate:
          kind = CppFunctionDefinition;
@@ -133,7 +136,8 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
    // recurse if necessary
    if (kind == CppNamespaceDefinition ||
        kind == CppClassDefinition ||
-       kind == CppStructDefinition)
+       kind == CppStructDefinition ||
+       kind == CppEnumDefinition)
    {
       return CXChildVisit_Recurse;
    }
@@ -217,6 +221,9 @@ std::ostream& operator<<(std::ostream& os, const CppDefinition& definition)
          break;
       case CppEnumDefinition:
          kindStr = "E";
+         break;
+      case CppEnumValue:
+         kindStr = "V";
          break;
       case CppFunctionDefinition:
          kindStr = "F";

@@ -1323,7 +1323,8 @@ public:
       Method = 2,
       Class = 3,
       Enum = 4,
-      Namespace = 5
+      EnumValue = 5,
+      Namespace = 6
    };
 
    SourceItem()
@@ -1429,6 +1430,9 @@ SourceItem fromCppDefinition(const clang::CppDefinition& cppDefinition)
       break;
    case CppEnumDefinition:
       type = SourceItem::Enum;
+      break;
+   case CppEnumValue:
+      type = SourceItem::EnumValue;
       break;
    case CppFunctionDefinition:
       type = SourceItem::Function;
