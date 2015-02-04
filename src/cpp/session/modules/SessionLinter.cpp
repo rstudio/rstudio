@@ -159,13 +159,35 @@ json::Array lintAsJson(const LintItems& items)
    return jsonArray;
 }
 
+module_context::SourceMarkerSet asSourceMarkerSet(const LintItems& items,
+                                                  const FilePath& filePath)
+{
+   using namespace module_context;
+   std::vector<SourceMarker> markers;
+   markers.reserve(items.size());
+   BOOST_FOREACH(const LintItem& item, items)
+   {
+      markers.push_back(SourceMarker(
+                           sourceMarkerTypeFromString(lintTypeToString(item.type)),
+                           filePath,
+                           item.startRow + 1,
+                           item.startColumn + 1,
+                           core::html_utils::HTML(item.message),
+                           true));
+   }
+   return SourceMarkerSet("Linter", markers);
+}
+
 Error lintRSourceDocument(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
    using namespace source_database;
    
    std::string documentId;
-   Error error = json::readParams(request.params, &documentId);
+   bool showMarkersTab = false;
+   Error error = json::readParams(request.params,
+                                  &documentId,
+                                  &showMarkersTab);
    
    if (error)
    {
@@ -189,8 +211,15 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
    ParseResults results = parse(pDoc->contents());
    pResponse->setResult(lintAsJson(results.lint()));
    
-   return Success();
+   if (showMarkersTab)
+   {
+      using namespace module_context;
+      SourceMarkerSet markers = asSourceMarkerSet(results.lint(),
+                                                  core::FilePath(pDoc->path()));
+      showSourceMarkers(markers, MarkerAutoSelectNone);
+   }
    
+   return Success();
 }
 
 SEXP rs_lintRFile(SEXP filePathSEXP)

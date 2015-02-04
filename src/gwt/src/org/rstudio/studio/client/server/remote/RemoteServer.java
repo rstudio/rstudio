@@ -3929,9 +3929,13 @@ public class RemoteServer implements Server
    
    @Override
    public void lintRSourceDocument(String documentId,
+                                   boolean showMarkersPane,
                                    ServerRequestCallback<JsArray<LintItem>> requestCallback)
    {
-      sendRequest(RPC_SCOPE, LINT_R_SOURCE_DOCUMENT, documentId, requestCallback);
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(documentId));
+      params.set(1, JSONBoolean.getInstance(showMarkersPane));
+      sendRequest(RPC_SCOPE, LINT_R_SOURCE_DOCUMENT, params, requestCallback);
    }
    
    private String clientId_;

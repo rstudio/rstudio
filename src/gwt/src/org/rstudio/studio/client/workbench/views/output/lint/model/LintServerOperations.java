@@ -20,5 +20,6 @@ import com.google.gwt.core.client.JsArray;
 public interface LintServerOperations
 {
    void lintRSourceDocument(String documentId,
+                            boolean showMarkersPane,
                             ServerRequestCallback<JsArray<LintItem>> requestCallback);
 }

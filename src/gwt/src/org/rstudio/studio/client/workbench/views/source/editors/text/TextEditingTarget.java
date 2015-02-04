@@ -2029,6 +2029,7 @@ public class TextEditingTarget implements
          {
             server_.lintRSourceDocument(
                   docUpdateSentinel_.getId(),
+                  true,
                   new ServerRequestCallback<JsArray<LintItem>>()
                   {
                      @Override

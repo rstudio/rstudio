@@ -107,6 +107,7 @@ public class LintManager
       
       server_.lintRSourceDocument(
             documentId,
+            false,
             new ServerRequestCallback<JsArray<LintItem>>()
             {
                @Override
