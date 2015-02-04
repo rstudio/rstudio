@@ -30,11 +30,6 @@
    )
 )
 
-.rs.addFunction("parseAndLint", function(filePath)
-{
-   .Call("rs_parseAndLintRFile", filePath)
-})
-
 .rs.addFunction("setLintEngine", function(engine)
 {
    if (identical(engine, "internal"))
@@ -70,9 +65,14 @@
    if (!file.exists(filePath))
       return(list())
       
-   filePath <- .rs.normalizePath(filePath)
-   lint <- .rs.parseAndLint(filePath)
-   .rs.showLintMarkers(lint, filePath)
+   filePath <- .rs.normalizePath(filePath, mustWork = TRUE)
+   lint <- .rs.lintRFile(filePath)
+   invisible(.rs.showLintMarkers(lint, filePath))
+})
+
+.rs.addFunction("lintRFile", function(filePath)
+{
+   .Call("rs_lintRFile", filePath)
 })
 
 .rs.addFunction("showLintMarkers", function(lint, filePath)

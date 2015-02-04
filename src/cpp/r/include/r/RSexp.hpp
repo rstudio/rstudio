@@ -26,6 +26,8 @@
 #include <boost/any.hpp>
 #include <boost/utility.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/type_traits.hpp>
+#include <boost/type_traits/is_same.hpp>
 
 #include <core/Error.hpp>
 #include <core/json/Json.hpp>
@@ -292,18 +294,6 @@ public:
    explicit ListBuilder(Protect* pProtect)
       : pProtect_(pProtect) {}
    
-   void add(const std::string& name, SEXP object)
-   {
-      objects_.push_back(object);
-      names_.push_back(name);
-   }
-   
-   void add(SEXP object)
-   {
-      objects_.push_back(object);
-      names_.push_back(std::string());
-   }
-
    template <typename T>
    void add(const std::string& name, const T& object)
    {
@@ -315,6 +305,12 @@ public:
    void add(const T& object)
    {
       objects_.push_back(create(object, pProtect_));
+      names_.push_back(std::string());
+   }
+   
+   void add(const ListBuilder& builder)
+   {
+      objects_.push_back(static_cast<SEXP>(builder));
       names_.push_back(std::string());
    }
 

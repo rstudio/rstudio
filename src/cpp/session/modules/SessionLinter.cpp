@@ -193,6 +193,37 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
    
 }
 
+SEXP rs_lintRFile(SEXP filePathSEXP)
+{
+   using namespace r::sexp;
+   std::string path = safeAsString(filePathSEXP);
+   FilePath filePath(module_context::resolveAliasedPath(path));
+   std::string rCode = file_utils::readFile(filePath);
+   ParseResults results = parse(rCode);
+   const std::vector<LintItem>& lint = results.lint().get();
+   
+   Protect protect;
+   ListBuilder builder(&protect);
+   std::size_t n = lint.size();
+   for (std::size_t i = 0; i < n; ++i)
+   {
+      const LintItem& item = lint[i];
+      ListBuilder el(&protect);
+      
+      // NOTE: R / document indexing is 1-based, so adjust for that.
+      el.add("start.row", item.startRow + 1);
+      el.add("start.column", item.startColumn + 1);
+      el.add("end.row", item.endRow + 1);
+      el.add("end.column", item.endColumn + 1);
+      el.add("message", item.message);
+      el.add("type", lintTypeToString(item.type));
+      
+      builder.add(el);
+   }
+   
+   return builder;
+}
+
 } // anonymous namespace
 
 core::Error initialize()
@@ -200,6 +231,8 @@ core::Error initialize()
    using namespace rstudio::core;
    using boost::bind;
    using namespace module_context;
+   
+   RS_REGISTER_CALL_METHOD(rs_lintRFile, 1);
    
    ExecBlock initBlock;
    initBlock.addFunctions()
