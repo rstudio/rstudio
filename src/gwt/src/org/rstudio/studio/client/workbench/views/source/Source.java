@@ -408,7 +408,6 @@ public class Source implements InsertSourceHandler,
          @Override
          public void onLintEvent(LintEvent event)
          {
-            Debug.logObject(event);
             String documentId = event.getDocumentId();
             final EditingTarget target = getEditingTargetForId(documentId);
             if (target != null && target instanceof TextEditingTarget)
