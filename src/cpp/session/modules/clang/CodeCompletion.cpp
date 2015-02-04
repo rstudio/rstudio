@@ -23,6 +23,7 @@
 #include <session/SessionModuleContext.hpp>
 
 #include "RSourceIndex.hpp"
+#include "Diagnostics.hpp"
 
 using namespace rstudio::core ;
 using namespace rstudio::core::libclang;
@@ -175,10 +176,12 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
    {
       std::string lastTypedText;
       json::Array completionsJson;
+      json::Array diagnosticsJson;
       boost::shared_ptr<CodeCompleteResults> pResults =
                               tu.codeCompleteAt(filename, line, column);
       if (!pResults->empty())
       {
+         // get results
          for (unsigned i = 0; i<pResults->getNumResults(); i++)
          {
             CodeCompleteResult result = pResults->getResult(i);
@@ -213,10 +216,18 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
             lastTypedText = typedText;
          }
 
+         // get diagnostics
+         for (unsigned i = 0; i<pResults->getNumDiagnostics(); i++)
+         {
+            diagnosticsJson.push_back(
+                          diagnosticToJson(*pResults->getDiagnostic(i)));
+         }
+
       }
 
       json::Object resultJson;
       resultJson["completions"] = completionsJson;
+      resultJson["diagnostics"] = diagnosticsJson;
       pResponse->setResult(resultJson);
    }
    else

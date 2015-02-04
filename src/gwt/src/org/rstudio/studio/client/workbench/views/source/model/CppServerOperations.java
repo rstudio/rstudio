@@ -18,6 +18,8 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 
+import com.google.gwt.core.client.JsArray;
+
 public interface CppServerOperations extends BuildServerOperations
 {
    void goToCppDefinition(
@@ -38,4 +40,8 @@ public interface CppServerOperations extends BuildServerOperations
                 int column,
                 String userText,
                 ServerRequestCallback<CppCompletionResult> requestCallback);
+   
+   void getCppDiagnostics(
+                String docPath,
+                ServerRequestCallback<JsArray<CppDiagnostic>> requestCallback);
 }

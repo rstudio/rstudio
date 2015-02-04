@@ -132,6 +132,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListRe
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
 import org.rstudio.studio.client.workbench.views.source.model.CppCapabilities;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResult;
+import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
 import org.rstudio.studio.client.workbench.views.source.model.CppSourceLocation;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.source.model.RdShellResult;
@@ -587,6 +588,13 @@ public class RemoteServer implements Server
       params.set(2, new JSONNumber(column));
       params.set(3,  new JSONString(userText));
       sendRequest(RPC_SCOPE, "get_cpp_completions", params, requestCallback);
+   }
+   
+   public void getCppDiagnostics(
+                 String docPath,
+                 ServerRequestCallback<JsArray<CppDiagnostic>> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "get_cpp_diagnostics", docPath, requestCallback);
    }
    
    public void printCppCompletions(String docId, 

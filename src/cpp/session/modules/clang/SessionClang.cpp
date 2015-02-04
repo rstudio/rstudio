@@ -31,6 +31,7 @@
 
 #include <core/libclang/LibClang.hpp>
 
+#include "Diagnostics.hpp"
 #include "DefinitionIndex.hpp"
 #include "FindReferences.hpp"
 #include "GoToDefinition.hpp"
@@ -240,6 +241,7 @@ Error initialize()
    using namespace module_context;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionClang.R"))
+      (bind(registerRpcMethod, "get_cpp_diagnostics", getCppDiagnostics))
       (bind(registerRpcMethod, "go_to_cpp_definition", goToCppDefinition))
       (bind(registerRpcMethod, "get_cpp_completions", getCppCompletions))
       (bind(registerRpcMethod, "find_cpp_usages", findUsages));

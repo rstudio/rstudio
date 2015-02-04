@@ -1,5 +1,5 @@
 /*
- * CppCompletionResult.java
+ * CppDiagnostic.java
  *
  * Copyright (C) 2009-12 by RStudio, Inc.
  *
@@ -12,24 +12,41 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
 package org.rstudio.studio.client.workbench.views.source.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
 
-public class CppCompletionResult extends JavaScriptObject
+import com.google.gwt.core.client.JavaScriptObject;
+
+public class CppDiagnostic extends JavaScriptObject
 {
-   protected CppCompletionResult()
+   protected CppDiagnostic()
    {
    }
    
-   public native final JsArray<CppCompletion> getCompletions() /*-{
-      return this.completions;
+   // severity types
+   public static final int IGNORED = 0;
+   public static final int NOTE = 1;
+   public static final int WARNING = 2;
+   public static final int ERROR = 3;
+   public static final int FATAL = 4; 
+   
+   public native final String getFormat() /*-{
+      return this.format;
    }-*/;
    
-   public native final JsArray<CppDiagnostic> getDiagnostics() /*-{
-      return this.diagnostics;
+   public native final int getSeverity() /*-{
+      return this.severity;
+   }-*/;   
+   
+   public native final String getFile() /*-{
+      return this.file;
    }-*/;
    
+   public native final int getLine() /*-{
+      return this.line;
+   }-*/;   
+   
+   public native final int getColumn() /*-{
+      return this.column;
+   }-*/;   
 }
