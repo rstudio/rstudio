@@ -285,7 +285,7 @@ inline bool isRightAssign(const RToken& token)
             token.content() == L"->>");
 }
 
-inline bool isRightBrace(const RToken& rToken)
+inline bool isRightBracket(const RToken& rToken)
 {
    return rToken.isType(RToken::RBRACE) ||
           rToken.isType(RToken::RBRACKET) ||
@@ -293,7 +293,7 @@ inline bool isRightBrace(const RToken& rToken)
           rToken.isType(RToken::RPAREN);
 }
 
-inline bool isLeftBrace(const RToken& rToken)
+inline bool isLeftBracket(const RToken& rToken)
 {
    return rToken.isType(RToken::LBRACE) ||
           rToken.isType(RToken::LBRACKET) ||

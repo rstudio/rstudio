@@ -17,13 +17,13 @@ test_that("RStudio .R files can be linted", {
       recursive = TRUE
    )
    
-      results <- lapply(rFiles, function(x) {
-         results <- lint(x)
-         errors <- results[unlist(lapply(results, function(x) {
-            x$type == "error"
-         }))]
-         if (length(errors))
-            warning("Lint errors in file: '", x, "'", call. = FALSE)
-      })
+   results <- lapply(rFiles, function(x) {
+      results <- lint(x)
+      errors <- results[unlist(lapply(results, function(x) {
+         x$type == "error"
+      }))]
+      if (length(errors))
+         warning("Lint errors in file: '", x, "'", call. = FALSE)
+   })
    
 })

@@ -259,7 +259,7 @@ public:
       bool isComma = token.isType(RToken::COMMA);
       bool hasNewline = token.isType(RToken::WHITESPACE) &&
             token.contentContains(L'\n');
-      bool isRightParen = isRightBrace(token);
+      bool isRightParen = isRightBracket(token);
       bool isFinalToken = offset_ == n_ - 1;
 
       return isSemi || hasNewline || isFinalToken || isRightParen || isComma;

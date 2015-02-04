@@ -13,6 +13,10 @@
  *
  */
 
+// #define RSTUDIO_ENABLE_DEBUG_MACROS
+#define RSTUDIO_DEBUG_LABEL "parser"
+#include <core/Macros.hpp>
+
 #include <core/r_util/RParser.hpp>
 #include <core/r_util/RTokenCursor.hpp>
 
@@ -267,7 +271,7 @@ void handleWhile(TokenCursor& cursor,
    
    DEBUG("*- Begin while condition -* (" << cursor << ")");
    
-   if (isRightBrace(cursor))
+   if (isRightBracket(cursor))
       status.lint().unexpectedToken(cursor);
    else
       handleExpression(cursor, status);
@@ -297,7 +301,7 @@ void handleIf(TokenCursor& cursor,
    
    DEBUG("*- Begin if condition -* (" << cursor << ")");
    
-   if (isRightBrace(cursor))
+   if (isRightBracket(cursor))
       status.lint().unexpectedToken(cursor);
    else
       handleExpression(cursor, status);
@@ -392,9 +396,9 @@ void doHandleExpression(TokenCursor& cursor,
          return doHandleExpression(cursor, status, depth);
    }
    
-   if (isLeftBrace(cursor))
+   if (isLeftBracket(cursor))
       return handleLeftBracket(cursor, status, depth);
-   else if (isRightBrace(cursor))
+   else if (isRightBracket(cursor))
       return handleRightBracket(cursor, status, depth);
    else if (cursor.appearsToBeBinaryOperator())
       return handleBinaryOperator(cursor, status, depth);
@@ -464,8 +468,23 @@ void handleRightBracket(TokenCursor& cursor,
          // It is possible that this closing bracket __explicitly__ closes
          // the expression -- this will occur if the expression was
          // started by an opening bracket.
+         //
+         // However, we need to be aware of continuations of an expression that
+         // can arise here as well -- for example, in
+         //
+         //    (function() {})()
+         //
+         //                  ^
+         // Although this appears to be the end of the expression, it is
+         // still continued by the following open parens.
          if (depth == status.stack().size())
          {
+            if (isBinaryOp(cursor) ||
+                isLeftBracket(cursor))
+            {
+               return doHandleExpression(cursor, status, depth);
+            }
+            
             DEBUG("*-* Returning control to caller");
             return;
          }
@@ -578,21 +597,21 @@ void handleStatement(TokenCursor& cursor,
    // We handle each case separately.
    
    // First, move over a function, parsing its argument list if necessary.
-   if (isLeftBrace(cursor.nextSignificantToken()))
+   if (isLeftBracket(cursor.nextSignificantToken()))
    {
       // Warn if there is non-newline containing whitespace separating
       // the cursor and the next argument.
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
       
       DEBUG("*-* Before Arg List: " << cursor);
-      while (isLeftBrace(cursor))
+      while (isLeftBracket(cursor))
       {
          if (cursor.isType(RToken::LPAREN) ||
              cursor.isType(RToken::LBRACKET) ||
              cursor.isType(RToken::LDBRACKET))
          {
             handleArgumentList(cursor, status);
-            if (isLeftBrace(cursor.nextSignificantToken()))
+            if (isLeftBracket(cursor.nextSignificantToken()))
             {
                MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
                continue;
@@ -606,7 +625,7 @@ void handleStatement(TokenCursor& cursor,
       }
       
       DEBUG("*-* After Arg List: " << cursor);
-      if (!isRightBrace(cursor))
+      if (!isRightBracket(cursor))
          status.lint().unexpectedToken(cursor);
       
    }
@@ -620,7 +639,7 @@ void handleStatement(TokenCursor& cursor,
    
    // Check for a right brace, to (implicitly or explicitly)
    // close the expression.
-   if (isRightBrace(cursor.nextSignificantToken()))
+   if (isRightBracket(cursor.nextSignificantToken()))
    {
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       return handleRightBracket(cursor, status, depth);
@@ -734,7 +753,7 @@ void handleArgumentList(TokenCursor& cursor,
 {
    DEBUG("-- handleArgumentList -- (" << cursor << ")");
    
-   if (!isLeftBrace(cursor))
+   if (!isLeftBracket(cursor))
       status.lint().unexpectedToken(cursor);
    
    status.push(cursor);
@@ -745,7 +764,7 @@ void handleArgumentList(TokenCursor& cursor,
    MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_ON_BLANK(cursor, status);
    
    // Check for an empty argument list.
-   if (isRightBrace(cursor))
+   if (isRightBracket(cursor))
    {
       status.pop(cursor);
       if (cursor.contentAsUtf8() != rhs)
@@ -771,7 +790,7 @@ void handleArgumentList(TokenCursor& cursor,
          MOVE_TO_NEXT_SIGNIFICANT_TOKEN_WARN_IF_NO_WHITESPACE(cursor, status);
       
       // Check if we hit the end of the argument list.
-      if (isRightBrace(cursor))
+      if (isRightBracket(cursor))
          break;
       
       handleArgument(cursor, status);
@@ -819,7 +838,7 @@ void handleArgument(TokenCursor& cursor,
    // An 'empty' argument will just be a comma -- in such a case,
    // just move over it.
    if (cursor.isType(RToken::COMMA) ||
-       isRightBrace(cursor))
+       isRightBracket(cursor))
    {
       MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
       return;

@@ -13,6 +13,10 @@
  *
  */
 
+// #define RSTUDIO_ENABLE_DEBUG_MACROS
+#define RSTUDIO_DEBUG_LABEL "linter"
+#include <core/Macros.hpp>
+
 #include "SessionLinter.hpp"
 #include "SessionCodeSearch.hpp"
 
@@ -40,9 +44,6 @@
 #include <core/FileUtils.hpp>
 #include <core/collection/Tree.hpp>
 #include <core/collection/Stack.hpp>
-
-
-#include <core/Macros.hpp>
 
 namespace rstudio {
 namespace session {
