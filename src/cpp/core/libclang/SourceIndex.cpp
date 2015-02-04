@@ -118,13 +118,14 @@ void SourceIndex::reprimeEditorTranslationUnit(const std::string& filename)
 }
 
 
-std::map<std::string,CXTranslationUnit>
-                           SourceIndex::getIndexedTranslationUnits() const
+std::map<std::string,TranslationUnit>
+                           SourceIndex::getIndexedTranslationUnits()
 {
-   std::map<std::string,CXTranslationUnit> units;
-   BOOST_FOREACH(const TranslationUnits::value_type& t, translationUnits_)
+   std::map<std::string,TranslationUnit> units;
+   BOOST_FOREACH(TranslationUnits::value_type& t, translationUnits_)
    {
-      units.insert(std::make_pair(t.first, t.second.tu));
+      TranslationUnit unit(t.first, t.second.tu, &unsavedFiles_);
+      units.insert(std::make_pair(t.first, unit));
    }
    return units;
 }

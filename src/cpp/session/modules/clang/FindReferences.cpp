@@ -311,18 +311,21 @@ core::Error findReferences(const core::libclang::FileLocation& location,
                                                 .translationUnits();
 
       // get translation units we've already indexed
-      std::map<std::string,CXTranslationUnit> indexedUnits =
+      std::map<std::string,TranslationUnit> indexedUnits =
                            rSourceIndex().getIndexedTranslationUnits();
 
       BOOST_FOREACH(const std::string& filename, files)
       {
          // first look in already indexed translation units
          // (this will pickup unsaved files)
-         std::map<std::string,CXTranslationUnit>::iterator it =
+         std::map<std::string,TranslationUnit>::iterator it =
                                                    indexedUnits.find(filename);
          if (it != indexedUnits.end())
          {
-            findReferences(USR, it->second, pSpelling, pRefs);
+            findReferences(USR,
+                           it->second.getCXTranslationUnit(),
+                           pSpelling,
+                           pRefs);
          }
          else
          {

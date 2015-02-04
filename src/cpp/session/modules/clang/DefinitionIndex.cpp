@@ -262,7 +262,7 @@ bool findUSR(const std::string& USR,
    }
 }
 
-typedef std::map<std::string,CXTranslationUnit> TranslationUnits;
+typedef std::map<std::string,TranslationUnit> TranslationUnits;
 
 } // anonymous namespace
 
@@ -291,7 +291,8 @@ FileLocation findDefinitionLocation(const FileLocation& location)
 
          // visit the cursors
          libclang::clang().visitChildren(
-              libclang::clang().getTranslationUnitCursor(unit.second),
+              libclang::clang().getTranslationUnitCursor(
+                     unit.second.getCXTranslationUnit()),
               cursorVisitor,
               (CXClientData)&visitor);
 
@@ -375,7 +376,8 @@ void searchDefinitions(const std::string& term,
 
       // visit the cursors
       libclang::clang().visitChildren(
-           libclang::clang().getTranslationUnitCursor(unit.second),
+           libclang::clang().getTranslationUnitCursor(
+                                 unit.second.getCXTranslationUnit()),
            cursorVisitor,
            (CXClientData)&visitor);
    }
