@@ -55,10 +55,10 @@
     col_vals <- ""
     col_search_type <- ""
     # ensure that the column contains some scalar values we can examine 
-    # (treat vector-valued columns as of unknown type)
-    if (length(x[[idx]]) > 0 && length(x[[1]][idx]) == 1)
+    # (treat vector-valued columns as of unknown type) 
+    if (length(x[[idx]]) > 0 && length(x[[idx]][1]) == 1)
     {
-      val <- x[[1]][idx]
+      val <- x[[idx]][1]
       if (is.factor(val))
       {
         col_type <- "factor"
