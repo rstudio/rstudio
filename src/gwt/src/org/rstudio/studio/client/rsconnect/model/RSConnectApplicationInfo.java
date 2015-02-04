@@ -33,6 +33,10 @@ public class RSConnectApplicationInfo extends JavaScriptObject
    public final native String getUrl() /*-{
       return this.url;
    }-*/;
+   
+   public final native String getConfigUrl() /*-{
+      return this.config_url;
+   }-*/;
 
    public final native String getStatus() /*-{
       return this.status;

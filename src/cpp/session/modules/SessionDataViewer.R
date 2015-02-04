@@ -56,9 +56,9 @@
     col_search_type <- ""
     # ensure that the column contains some scalar values we can examine 
     # (treat vector-valued columns as of unknown type)
-    if (length(x[[idx]]) > 0 && length(x[1,idx]) == 1)
+    if (length(x[[idx]]) > 0 && length(x[[1]][idx]) == 1)
     {
-      val <- x[1,idx]
+      val <- x[[1]][idx]
       if (is.factor(val))
       {
         col_type <- "factor"

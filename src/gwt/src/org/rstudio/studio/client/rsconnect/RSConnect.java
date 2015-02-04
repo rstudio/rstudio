@@ -435,10 +435,7 @@ public class RSConnect implements SessionInitHandler,
             if (candidate.getName().equals(records.get(i).getName()))
             {
                // show the management ui
-               display_.openWindow(
-                 "https://www.shinyapps.io/admin/#/application/" + 
-                 Math.round(candidate.getId()));
-               
+               display_.openWindow(candidate.getConfigUrl());
                return;
             }
          }
