@@ -33,6 +33,7 @@
 * Alt+Enter to run code while retaining cursor position
 * Comment/uncomment respects indent level when appropriate
 * New Reformat Code command for R scripts
+* New integrated linter for R scripts
 * Shift+Enter now searches backwards in Find/Replace
 * Find All option added in Find/Replace
 * New option to control comment continuation on insertion of new lines
@@ -45,7 +46,9 @@
     - Marks (`m`)
     - Quick find (`/`)
     - Support a subset of commands in `:`
-* Syntax highlighting modes for many new languages including Clojure, CoffeeScript, C#, Go, Groovy, Haskell, Java, Julia, Lisp, Lua, Matlab, Perl, Ruby, Rust, and Scala.
+* Syntax highlighting modes for many new languages including Clojure,
+  CoffeeScript, C#, Go, Groovy, Haskell, Java, Julia, Lisp, Lua, Matlab, Perl,
+  Ruby, Rust, and Scala.
 * Syntax highlighting for GraphViz and mermaid.js diagrams. 
 * Diagram previews using the `DiagrammeR` package (requires recent version from GitHub).
 * A wide variety of new editor themes (color schemes) are now available.
