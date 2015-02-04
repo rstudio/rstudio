@@ -566,17 +566,17 @@ bool isSafeSourceDocument(const FilePath& docDbPath,
    uintmax_t docSizeKb = docDbPath.size() / 1024;
    std::string kbStr = safe_convert::numberToString(docSizeKb);
 
-   // if it's larger than 2MB then always drop it (that's the limit
+   // if it's larger than 10MB then always drop it (that's the limit
    // enforced by the editor)
-   if (docSizeKb > (2 * 1024))
+   if (docSizeKb > (10 * 1024))
    {
       logUnsafeSourceDocument(filePath, "File too large (" + kbStr + ")");
       return false;
    }
 
-   // if it's larger then 500K and not dirty then drop it as well
+   // if it's larger then 2MB and not dirty then drop it as well
    // (that's the file size considered "large" on the client)
-   else if (!pDoc->dirty() && (docSizeKb > 512))
+   else if (!pDoc->dirty() && (docSizeKb > (2 * 1024)))
    {
       logUnsafeSourceDocument(filePath, "File too large (" + kbStr + ")");
       return false;
