@@ -80,24 +80,24 @@ public class LintManager
    private void lintActiveDocument(final Invalidation.Token token)
    {
       EditingTarget editor = source_.getActiveEditor();
-      if (editor != null && editor instanceof TextEditingTarget)
+      if (editor == null || !(editor instanceof TextEditingTarget))
+         return;
+      
+      final TextEditingTarget target = (TextEditingTarget) editor;
+      final DocDisplay docDisplay = target.getDocDisplay();
+      final String documentId = editor.getId();
+
+      target.withSavedDoc(new Command()
       {
-         final TextEditingTarget target = (TextEditingTarget) editor;
-         final DocDisplay docDisplay = target.getDocDisplay();
-         final String documentId = editor.getId();
-         
-         target.withSavedDoc(new Command()
+         @Override
+         public void execute()
          {
-            @Override
-            public void execute()
-            {
-               performLintServerRequest(
-                     token,
-                     documentId,
-                     docDisplay);
-            }
-         });
-      }
+            performLintServerRequest(
+                  token,
+                  documentId,
+                  docDisplay);
+         }
+      });
    }
 
    private void performLintServerRequest(final Invalidation.Token token,
@@ -147,6 +147,4 @@ public class LintManager
    private final Invalidation invalidation_;
    
    private LintServerOperations server_;
-   private EventBus events_;
-   
 }
