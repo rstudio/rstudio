@@ -14,6 +14,7 @@
  */
 
 #include "SessionLinter.hpp"
+#include "SessionCodeSearch.hpp"
 
 #include <set>
 
@@ -21,7 +22,7 @@
 #include <core/Error.hpp>
 
 #include <session/SessionModuleContext.hpp>
-#include "SessionCodeSearch.hpp"
+#include <session/projects/SessionProjects.hpp>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
@@ -110,6 +111,21 @@ ParseResults parse(const std::string& rCode)
 {
    ParseResults results = r_util::parse(rCode);
    ParseNode* pRoot = results.parseTree();
+   if (!pRoot)
+   {
+      std::string codeSnippet;
+      if (rCode.length() > 40)
+         codeSnippet = rCode.substr(0, 40) + "...";
+      else
+         codeSnippet = rCode;
+      
+      std::string message = std::string() +
+            "Parse failed: no parse tree available for code " +
+            "'" + codeSnippet + "'";
+      
+      LOG_ERROR_MESSAGE(message);
+      return ParseResults();
+   }
    
    std::vector<ParseItem> unresolvedItems;
    pRoot->findAllUnresolvedSymbols(&unresolvedItems);
@@ -225,14 +241,33 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
 SEXP rs_lintRFile(SEXP filePathSEXP)
 {
    using namespace r::sexp;
+   
+   Protect protect;
+   ListBuilder builder(&protect);
+   
    std::string path = safeAsString(filePathSEXP);
    FilePath filePath(module_context::resolveAliasedPath(path));
+   
+   if (!filePath.exists())
+      return builder;
+   
+   std::string contents;
+   Error error = module_context::readAndDecodeFile(
+            filePath,
+            projects::projectContext().defaultEncoding(),
+            false,
+            &contents);
+   
+   if (error)
+   {
+      LOG_ERROR(error);
+      return builder;
+   }
+   
    std::string rCode = file_utils::readFile(filePath);
    ParseResults results = parse(rCode);
    const std::vector<LintItem>& lint = results.lint().get();
    
-   Protect protect;
-   ListBuilder builder(&protect);
    std::size_t n = lint.size();
    for (std::size_t i = 0; i < n; ++i)
    {

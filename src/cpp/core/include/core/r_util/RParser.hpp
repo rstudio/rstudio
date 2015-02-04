@@ -632,7 +632,9 @@ class ParseResults {
    
 public:
    
-   ParseResults() {}
+   ParseResults()
+      : parseTree_(ParseNode::createRootNode())
+   {}
    
    ParseResults(boost::shared_ptr<ParseNode> parseTree,
                 LintItems lint)

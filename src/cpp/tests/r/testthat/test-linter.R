@@ -6,7 +6,7 @@ context("Linter")
 setwd(.rs.getProjectDirectory())
 
 lint <- function(x) {
-   .Call("rs_parseAndLintRFile", x, unlist(.rs.objectsOnSearchPath()))
+   invisible(.rs.lintRFile(x))
 }
 
 test_that("RStudio .R files can be linted", {
@@ -17,11 +17,13 @@ test_that("RStudio .R files can be linted", {
       recursive = TRUE
    )
    
-   system.time({
       results <- lapply(rFiles, function(x) {
-         cat("Linting file: '", x, "'\n", sep = "")
-         lint(x)
+         results <- lint(x)
+         errors <- results[unlist(lapply(results, function(x) {
+            x$type == "error"
+         }))]
+         if (length(errors))
+            warning("Lint errors in file: '", x, "'", call. = FALSE)
       })
-   })
    
 })

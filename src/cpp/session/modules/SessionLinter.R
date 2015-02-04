@@ -52,7 +52,7 @@
 .rs.addFunction("lint", function(filePath)
 {
    engine <- .rs.getLintEngine()
-   engine(filePath)
+   invisible(engine(filePath))
 })
 
 .rs.addFunction("availableRSymbols", function()
