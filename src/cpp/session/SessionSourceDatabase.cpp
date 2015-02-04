@@ -566,9 +566,9 @@ bool isSafeSourceDocument(const FilePath& docDbPath,
    uintmax_t docSizeKb = docDbPath.size() / 1024;
    std::string kbStr = safe_convert::numberToString(docSizeKb);
 
-   // if it's larger than 10MB then always drop it (that's the limit
+   // if it's larger than 5MB then always drop it (that's the limit
    // enforced by the editor)
-   if (docSizeKb > (10 * 1024))
+   if (docSizeKb > (5 * 1024))
    {
       logUnsafeSourceDocument(filePath, "File too large (" + kbStr + ")");
       return false;

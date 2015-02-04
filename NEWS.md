@@ -53,7 +53,7 @@
    - Create a new cursor above / below the current cursor with CTRL + ALT + {up / down}
    - Move the active cursor up / down with CTRL + SHIFT + ALT + {up / down}
    - Create multiple cursors by pressing CTRL + ALT and clicking + dragging the mouse
-* Increase file size limit to 10MB (was previously 2MB)
+* Increase file size limit to 5MB (was previously 2MB)
 
 ### Data Viewer
 

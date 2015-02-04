@@ -1413,7 +1413,7 @@ public class TextEditingTarget implements
 
    public long getFileSizeLimit()
    {
-      return 10 * 1024 * 1024;
+      return 5 * 1024 * 1024;
    }
 
    public long getLargeFileSize()
