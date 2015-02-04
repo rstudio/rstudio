@@ -61,6 +61,88 @@ std::string Diagnostic::getSpelling() const
    return toStdString(clang().getDiagnosticSpelling(diagnostic_));
 }
 
+unsigned Diagnostic::category() const
+{
+   return clang().getDiagnosticCategory(diagnostic_);
+}
+
+std::string Diagnostic::categoryText() const
+{
+   return toStdString(clang().getDiagnosticCategoryText(diagnostic_));
+}
+
+std::string Diagnostic::enableOption() const
+{
+   return toStdString(clang().getDiagnosticOption(diagnostic_, NULL));
+}
+
+std::string Diagnostic::disableOption() const
+{
+   CXString disableStr;
+   clang().getDiagnosticOption(diagnostic_, &disableStr);
+   return toStdString(disableStr);
+}
+
+unsigned Diagnostic::numRanges() const
+{
+   return clang().getDiagnosticNumRanges(diagnostic_);
+}
+
+SourceRange Diagnostic::getSourceRange(unsigned i) const
+{
+   return SourceRange(clang().getDiagnosticRange(diagnostic_, i));
+}
+
+unsigned Diagnostic::numFixIts() const
+{
+   return clang().getDiagnosticNumFixIts(diagnostic_);
+}
+
+FixIt Diagnostic::getFixIt(unsigned i) const
+{
+   CXSourceRange cxRange;
+   CXString cxReplacement = clang().getDiagnosticFixIt(diagnostic_,
+                                                       i,
+                                                       &cxRange);
+
+   return FixIt(SourceRange(cxRange), toStdString(cxReplacement));
+}
+
+
+boost::shared_ptr<DiagnosticSet> Diagnostic::children() const
+{
+   boost::shared_ptr<DiagnosticSet> pChildren;
+   CXDiagnosticSet set = clang().getChildDiagnostics(diagnostic_);
+   if (set != NULL)
+      pChildren.reset(new DiagnosticSet(set, false));
+   return pChildren;
+}
+
+DiagnosticSet::~DiagnosticSet()
+{
+   try
+   {
+      if (dispose_)
+         clang().disposeDiagnosticSet(diagnosticSet_);
+   }
+   catch(...)
+   {
+   }
+}
+
+unsigned DiagnosticSet::diagnostics() const
+{
+   return clang().getNumDiagnosticsInSet(diagnosticSet_);
+}
+
+boost::shared_ptr<Diagnostic> DiagnosticSet::getDiagnostic(unsigned i) const
+{
+   return boost::shared_ptr<Diagnostic>(
+     new Diagnostic(clang().getDiagnosticInSet(diagnosticSet_, i))
+   );
+}
+
+
 } // namespace libclang
 } // namespace core
 } // namespace rstudio
