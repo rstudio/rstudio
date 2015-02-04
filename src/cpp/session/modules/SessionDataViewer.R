@@ -345,6 +345,25 @@
    env
 })
 
+# attempts to determine whether the View(...) function the user has an 
+# override (i.e. it's not the handler RStudio uses)
+.rs.addFunction("isViewOverride", function() {
+   # check to see if View has been overridden: find the View() call in the 
+   # stack and examine the function being evaluated there
+   for (i in seq_along(sys.calls()))
+   {
+     if (identical(deparse(sys.call(i)[[1]]), "View"))
+     {
+       # the first statement in the override function should be a call to 
+       # .rs.callAs
+       return(!identical(deparse(body(sys.function(i))[[1]]), ".rs.callAs"))
+     }
+   }
+   # if we can't find View on the callstack, presume the common case (no
+   # override)
+   FALSE
+})
+
 
 .rs.registerReplaceHook("View", "utils", function(original, x, title) 
 {
@@ -355,10 +374,18 @@
    name <- ""
    env <- emptyenv()
 
-   # if the argument is the name of a variable, we can monitor it in its
-   # environment, and don't need to make a copy for viewing
-   if (is.name(substitute(x)))
+
+   if (.rs.isViewOverride()) 
    {
+     # if the View() invoked wasn't our own, we have no way of knowing what's
+     # been done to the data since the user invoked View() on it, so just view
+     # a snapshot of the data
+     name <- title
+   }
+   else if (is.name(substitute(x)))
+   {
+     # if the argument is the name of a variable, we can monitor it in its
+     # environment, and don't need to make a copy for viewing
      name <- deparse(substitute(x))
      env <- .rs.findViewingEnv(name)
    }
