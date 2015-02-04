@@ -17,7 +17,6 @@ package org.rstudio.studio.client.workbench.views.output.lint;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
@@ -70,10 +69,8 @@ public class LintManager
    }
    
    @Inject
-   void initialize(EventBus events,
-                   LintServerOperations server)
+   void initialize(LintServerOperations server)
    {
-      events_ = events;
       server_ = server;
    }
    
