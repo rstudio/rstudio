@@ -320,6 +320,13 @@ public:
       inferredPkgNames_.insert(packageName);
       s_allInferredPkgNames_.insert(packageName);
    }
+   
+public:
+   
+   const std::vector<RSourceItem>& items() const
+   {
+      return items_;
+   }
 
 private:
    std::string context_;

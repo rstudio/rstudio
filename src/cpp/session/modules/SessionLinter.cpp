@@ -106,9 +106,36 @@ void addUnreferencedSymbol(const ParseItem& item,
    }
 }
 
+Error getAllAvailableRSymbols(const FilePath& filePath,
+                              std::set<std::string>* pSymbols)
+{
+   using namespace r::exec;
+   
+   Error error = RFunction(".rs.availableRSymbols").call(pSymbols);
+   if (error)
+      return error;
+
+   // TODO: Think a little more about how to handle cross-file symbol
+   // resolution, especially for packages.
+   if (filePath.isWithin(projects::projectContext().directory()))
+   {
+      using namespace session::modules::code_search;
+      BOOST_FOREACH(const boost::shared_ptr<RSourceIndex>& pIndex,
+                    rSourceIndex().indexMap() | boost::adaptors::map_values)
+      {
+         BOOST_FOREACH(const RSourceItem& item, pIndex->items())
+         {
+            pSymbols->insert(item.name());
+         }
+      }
+   }
+   return Success();
+}
+
 } // end anonymous namespace
 
-ParseResults parse(const std::string& rCode)
+ParseResults parse(const std::string& rCode,
+                   const FilePath& origin)
 {
    ParseResults results = r_util::parse(rCode);
    ParseNode* pRoot = results.parseTree();
@@ -134,7 +161,7 @@ ParseResults parse(const std::string& rCode)
    // Finally, prune the set of lintItems -- we exclude any symbols
    // that were on the search path.
    std::set<std::string> objects;
-   Error error = r::exec::RFunction(".rs.availableRSymbols").call(&objects);
+   Error error = getAllAvailableRSymbols(origin, &objects);
    if (error)
       LOG_ERROR(error);
    else
@@ -222,10 +249,12 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
    }
    
    // TODO: Handle R code in multi-mode documents
-   if (!pDoc->canContainRCode())
+   if (pDoc->type() != "r_source")
       return Success();
    
-   ParseResults results = parse(pDoc->contents());
+   FilePath origin = module_context::resolveAliasedPath(pDoc->path());
+   ParseResults results = parse(pDoc->contents(), origin);
+   
    pResponse->setResult(lintAsJson(results.lint()));
    
    if (showMarkersTab)
@@ -266,13 +295,14 @@ SEXP rs_lintRFile(SEXP filePathSEXP)
    }
    
    std::string rCode = file_utils::readFile(filePath);
-   ParseResults results = parse(rCode);
+   ParseResults results = parse(rCode, filePath);
    const std::vector<LintItem>& lint = results.lint().get();
    
    std::size_t n = lint.size();
    for (std::size_t i = 0; i < n; ++i)
    {
       const LintItem& item = lint[i];
+      
       ListBuilder el(&protect);
       
       // NOTE: R / document indexing is 1-based, so adjust for that.

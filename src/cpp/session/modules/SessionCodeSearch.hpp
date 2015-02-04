@@ -42,6 +42,8 @@ private:
    
 public:
    
+  typedef std::map< std::string, boost::shared_ptr<RSourceIndex> > IndexMap;
+   
    RSourceIndexes() {}
    virtual ~RSourceIndexes() {}
 
@@ -69,9 +71,13 @@ public:
       }
       return indexes;
    }
+   
+   const IndexMap& indexMap() const
+   {
+      return indexes_;
+   }
 
 private:
-  typedef std::map< std::string, boost::shared_ptr<RSourceIndex> > IndexMap;
   IndexMap indexes_;
 };
 

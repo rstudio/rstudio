@@ -115,6 +115,7 @@ public:
    }
    
    // is this an R, or potentially R-containing, source file?
+   // TODO: Export these types as an 'enum' and provide converters.
    bool canContainRCode()
    {
       return type_.size() > 0 && (
